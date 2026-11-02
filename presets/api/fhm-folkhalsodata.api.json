@@ -1,0 +1,28 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "fhm-folkhalsodata",
+  "name": "Folkhälsomyndigheten Folkhälsodata",
+  "publisher": "Folkhälsomyndigheten",
+  "description": "Folkhälsostatistik: nationella folkhälsoenkäten, skolbarns hälsovanor, smittsamma sjukdomar, vaccinationer, ANDTS-indikatorer, antibiotika med mera. Bläddra i ämnesträdet, välj tabell och värden per variabel (PxWeb).",
+  "docs": "https://www.folkhalsomyndigheten.se/folkhalsorapportering-statistik/statistikdatabaser-och-visualisering/folkhalsodata/",
+  "license": { "name": "Fri användning med källhänvisning, se Folkhälsomyndighetens villkor", "url": "https://www.folkhalsomyndigheten.se/om-webbplatsen/" },
+  "level": 1,
+  "baseUrl": "https://fohm-app.folkhalsomyndigheten.se/Folkhalsodata/api/v1/sv/A_Folkhalsodata",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 10 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000 },
+  "endpoints": [
+    {
+      "id": "folder",
+      "name": "Lista innehållet i en mapp",
+      "description": "Mappar och tabeller under en sökväg, till exempel B_HLV. Tom sökväg ger ämnesområdena.",
+      "method": "GET",
+      "path": "/{path}/",
+      "params": [
+        { "name": "path", "in": "path", "label": "Sökväg", "type": "string", "raw": true, "example": "B_HLV" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Folkhälsodata mapp {path}" }
+    }
+  ]
+}

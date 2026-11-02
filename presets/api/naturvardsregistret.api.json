@@ -1,0 +1,32 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "naturvardsregistret",
+  "name": "Naturvårdsregistret (Naturvårdsverket)",
+  "publisher": "Naturvårdsverket",
+  "description": "Skyddade områden i Sverige: nationalparker, naturreservat, Natura 2000 med flera, med namn, skyddsform, beslutsdatum, areal och kommun. Geometrin kan tas med som GeoJSON-text; ytorna är stora, så lämna den borta för en ren tabell.",
+  "docs": "https://www.naturvardsverket.se/verktyg-och-tjanster/kartor-och-karttjanster/",
+  "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+  "level": 1,
+  "baseUrl": "https://geodata.naturvardsverket.se/naturvardsregistret/wfs",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "features",
+      "name": "Skyddade områden (WFS)",
+      "method": "GET",
+      "path": "",
+      "params": [
+        { "name": "typeNames", "in": "query", "label": "Lager", "type": "enum", "required": true, "default": "Naturvardsregistret_WFS:SkyddadeOmraden", "options": [{ "value": "Naturvardsregistret_WFS:SkyddadeOmraden", "label": "Skyddade områden (ytor)" }, { "value": "Naturvardsregistret_WFS:SkyddadePunkter", "label": "Skyddade punkter" }] },
+        { "name": "geometry", "in": "option", "label": "Ta med geometri (GeoJSON som text)", "type": "boolean", "default": false },
+        { "name": "service", "in": "query", "type": "string", "default": "WFS", "hidden": true },
+        { "name": "version", "in": "query", "type": "string", "default": "2.0.0", "hidden": true },
+        { "name": "request", "in": "query", "type": "string", "default": "GetFeature", "hidden": true },
+        { "name": "outputFormat", "in": "query", "type": "string", "default": "GEOJSON", "hidden": true }
+      ],
+      "pagination": { "type": "offset", "param": "startIndex", "sizeParam": "count", "size": 1000, "start": 0, "maxPages": 20 },
+      "response": { "format": "geojson" },
+      "dataset": { "name": "Naturvårdsregistret" }
+    }
+  ]
+}

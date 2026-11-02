@@ -1,0 +1,129 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * Dialog that turns an operation's parameter schema into a form, previews the effect when the
+ * operation supports it, and applies it as a recipe step.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('ui/op-dialog', ['ui/base', 'ui/overlays', 'ui/basic', 'data/operations', 'data/recipes', 'data/types'], (base, overlays, basic, ops, recipes, types) => {
+    const { h, t, i18n, replace } = base;
+    const TEXT_ONLY_OPS = new Set(['replace_text', 'trim', 'change_case', 'fix_encoding']);
+
+    function optionLabel(param, value) {
+      if (param.name === 'type') return t('type.' + value);
+      const key = `opt.${param.name}.${value}`;
+      return i18n.has(key) ? t(key) : (i18n.has('opt.' + value) ? t('opt.' + value) : String(value));
+    }
+    function paramLabel(opId, param) {
+      const specific = `op.${opId}.${param.name}`;
+      return i18n.has(specific) ? t(specific) : (i18n.has('param.' + param.name) ? t('param.' + param.name) : param.name);
+    }
+
+    /**
+     * @param {{datasetId: string, opId: string, preset?: Record<string, any>, columns: any[], onApplied?: (result: any) => void, title?: string}} options
+     */
+    async function open(options) {
+      const op = ops.get(options.opId);
+      const columns = options.columns;
+      const values = Object.assign({}, options.preset || {});
+      for (const p of op.params) if (values[p.name] === undefined && p.default !== undefined) values[p.name] = p.default;
+      const fields = [];
+      const previewEl = h('div', { class: 'dm-op-preview dm-help' });
+      let previewTimer = 0;
+
+      const textOnly = TEXT_ONLY_OPS.has(op.id);
+      for (const p of op.params) {
+        if (p.type === 'column') {
+          const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
+          const list = textOnly ? columns.filter((c) => c.type === 'text') : columns;
+          sel.options = list.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` }));
+          sel.value = values[p.name] || (list[0] && list[0].name);
+          values[p.name] = sel.value;
+          sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
+          fields.push(sel);
+        } else if (p.type === 'columns') {
+          const chosen = new Set(values[p.name] || []);
+          const boxes = columns.map((c) => {
+            const sw = /** @type {any} */ (h('dm-switch', { label: `${c.name} (${t('type.' + c.type)})` }));
+            const disabled = textOnly && c.type !== 'text';
+            if (disabled) sw.setAttribute('disabled', '');
+            sw.checked = chosen.has(c.name) && !disabled;
+            sw.addEventListener('change', () => { if (sw.checked) chosen.add(c.name); else chosen.delete(c.name); values[p.name] = columns.map((x) => x.name).filter((n) => chosen.has(n)); schedulePreview(); });
+            return sw;
+          });
+          values[p.name] = columns.map((x) => x.name).filter((n) => chosen.has(n) && !(textOnly && columns.find((c) => c.name === n).type !== 'text'));
+          fields.push(h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: paramLabel(op.id, p) }), h('div', { class: 'dm-columns-pick' }, boxes)));
+        } else if (p.type === 'select') {
+          const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
+          sel.options = p.options.map((v) => ({ value: v, label: optionLabel(p, v) }));
+          sel.value = values[p.name] || p.options[0];
+          values[p.name] = sel.value;
+          sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
+          fields.push(sel);
+        } else if (p.type === 'switch') {
+          const sw = /** @type {any} */ (h('dm-switch', { label: paramLabel(op.id, p) }));
+          sw.checked = !!values[p.name];
+          sw.addEventListener('change', () => { values[p.name] = sw.checked; schedulePreview(); });
+          fields.push(sw);
+        } else if (p.type === 'expression') {
+          const help = i18n.has(`op.${op.id}.${p.name}.help`) ? t(`op.${op.id}.${p.name}.help`) : '';
+          const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: paramLabel(op.id, p), mono: true, help: help ? help + ' ' + t('op.columns.available', { columns: columns.map((c) => c.name).join(', ') }) : t('op.columns.available', { columns: columns.map((c) => c.name).join(', ') }) }));
+          ta.value = values[p.name] || '';
+          ta.addEventListener('input', () => { values[p.name] = ta.value; schedulePreview(); });
+          fields.push(ta);
+        } else {
+          const input = /** @type {any} */ (h('dm-input', { type: p.type === 'number' ? 'number' : 'text', label: paramLabel(op.id, p), placeholder: i18n.has(`op.${op.id}.${p.name}.placeholder`) ? t(`op.${op.id}.${p.name}.placeholder`) : '' }));
+          input.value = values[p.name] === undefined || values[p.name] === null ? '' : values[p.name];
+          input.addEventListener('input', () => { values[p.name] = p.type === 'number' ? Number(input.value) : input.value; schedulePreview(); });
+          fields.push(input);
+        }
+      }
+
+      function missing() {
+        return op.params.filter((p) => p.required && (values[p.name] === undefined || values[p.name] === null || values[p.name] === '' || (Array.isArray(values[p.name]) && !values[p.name].length))).map((p) => paramLabel(op.id, p));
+      }
+
+      async function runPreview() {
+        if (!op.preview) { previewEl.textContent = ''; return; }
+        if (missing().length) { previewEl.textContent = t('op.preview.incomplete'); return; }
+        previewEl.textContent = t('common.loading');
+        try {
+          const res = await recipes.preview(options.datasetId, op.id, values);
+          const parts = [h('span', { text: t('op.preview.rows', { n: i18n.formatNumber(res.rows || 0) }) })];
+          if (res.samples && res.samples.length) parts.push(h('ul', { class: 'dm-op-samples' }, res.samples.map((s) => h('li', null, h('code', { text: String(s.before) }), ' → ', h('code', { text: String(s.after) })))));
+          replace(previewEl, parts);
+        } catch (err) { previewEl.textContent = t('op.preview.error', { message: (err && err.message) || String(err) }); }
+      }
+      function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(runPreview, 300); }
+
+      const body = h('div', { class: 'dm-stack' },
+        i18n.has(`op.${op.id}.help`) ? h('p', { class: 'dm-help', text: t(`op.${op.id}.help`) }) : null,
+        h('div', { class: 'dm-stack' }, fields),
+        previewEl);
+      schedulePreview();
+      const choice = await overlays.dialog.open({
+        title: options.title || t('op.' + op.id),
+        body,
+        size: 'lg',
+        actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true, primary: true }],
+      });
+      if (choice !== true) return null;
+      const lacking = missing();
+      if (lacking.length) { overlays.toast.show(t('op.missing', { fields: lacking.join(', ') }), { kind: 'warn' }); return open(Object.assign({}, options, { preset: values })); }
+      try {
+        const result = await recipes.apply(options.datasetId, op.id, values);
+        const description = recipes.describe(op.id, values, result);
+        overlays.toast.show(description, { kind: 'ok' });
+        if (options.onApplied) options.onApplied(result, description);
+        return result;
+      } catch (err) {
+        overlays.toast.show(t('op.failed', { message: (err && err.message) || String(err) }), { kind: 'error' });
+        return open(Object.assign({}, options, { preset: values }));
+      }
+    }
+
+    return { open, paramLabel, optionLabel, TEXT_ONLY_OPS };
+  });
+})();

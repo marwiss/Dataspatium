@@ -1,0 +1,29 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "scb-pxweb",
+  "name": "SCB Statistikdatabasen",
+  "publisher": "Statistiska centralbyrån (SCB)",
+  "description": "Sveriges officiella statistik om befolkning, arbetsmarknad, ekonomi, boende, miljö och mycket mer. Bläddra i ämnesträdet, välj tabell och värden per variabel. Högst 150 000 celler per anrop; större urval delas upp automatiskt.",
+  "docs": "https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/",
+  "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+  "level": 1,
+  "baseUrl": "https://api.scb.se/OV0104/v1/doris/sv/ssd",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 10 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 150000 },
+  "endpoints": [
+    {
+      "id": "folder",
+      "name": "Lista innehållet i en mapp",
+      "description": "Mappar och tabeller under en sökväg i ämnesträdet, till exempel BE/BE0101/BE0101A. Tom sökväg ger ämnesområdena.",
+      "method": "GET",
+      "path": "/{path}/",
+      "params": [
+        { "name": "path", "in": "path", "label": "Sökväg", "type": "string", "raw": true, "example": "BE/BE0101/BE0101A" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "SCB mapp {path}" }
+    }
+  ],
+  "notes": "Ange källa: SCB. Tabellsökvägar och variabelkoder är stabila och kan delas i konfigurationer."
+}

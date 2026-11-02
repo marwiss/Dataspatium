@@ -1,0 +1,3 @@
+The R packages in this directory are redistributed unchanged from https://repo.r-wasm.org/ (built by the webR
+project from CRAN sources). Each package keeps its own license, listed in THIRD_PARTY_LICENSES.md.
+Sources: https://cran.r-project.org/web/packages/

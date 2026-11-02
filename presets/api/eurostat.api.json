@@ -1,0 +1,34 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "eurostat",
+  "name": "Eurostat",
+  "publisher": "Eurostat (Europeiska kommissionen)",
+  "description": "EU-statistik per land och region. Ange datamängdens kod (till exempel demo_pjan för befolkning eller nama_10_gdp för BNP) och filtrera på länder och period. Koder och dimensioner hittar du i Eurostats Data browser.",
+  "docs": "https://wikis.ec.europa.eu/display/EUROSTATHELP/API+-+Getting+started+with+statistics+API",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "baseUrl": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 5 },
+  "endpoints": [
+    {
+      "id": "data",
+      "name": "Hämta datamängd",
+      "description": "Högst 50 000 celler per anrop. Utan filter kan stora datamängder avvisas av tjänsten; välj då länder och period.",
+      "method": "GET",
+      "path": "/{dataset}",
+      "params": [
+        { "name": "dataset", "in": "path", "label": "Datamängdens kod", "type": "string", "required": true, "example": "demo_pjan" },
+        { "name": "geo", "in": "query", "label": "Länder eller regioner (geo-koder)", "type": "multi", "style": "repeat", "example": "SE,DK,FI,NO" },
+        { "name": "sinceTimePeriod", "in": "query", "label": "Från period", "type": "string", "example": "2015" },
+        { "name": "untilTimePeriod", "in": "query", "label": "Till period", "type": "string" },
+        { "name": "lastTimePeriod", "in": "query", "label": "Bara de senaste n perioderna", "type": "number" },
+        { "name": "filters", "in": "query", "label": "Fler filter", "type": "querylines", "help": "En per rad som dimension=kod, till exempel sex=T eller age=TOTAL.", "example": "sex=T" },
+        { "name": "lang", "in": "query", "label": "Språk för etiketter", "type": "enum", "default": "EN", "options": [{ "value": "EN", "label": "Engelska" }, { "value": "DE", "label": "Tyska" }, { "value": "FR", "label": "Franska" }] },
+        { "name": "format", "in": "query", "type": "string", "default": "JSON", "hidden": true }
+      ],
+      "response": { "format": "jsonstat" },
+      "dataset": { "name": "Eurostat {dataset}" }
+    }
+  ]
+}

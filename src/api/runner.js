@@ -1,0 +1,133 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * Runs an endpoint: builds the request, applies credentials and rate limits, walks through the pages,
+ * parses every response and merges the rows into one table. Also turns tables into datasets, appends
+ * or replaces rows of existing datasets and re-fetches a dataset from the source stored in its metadata.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'data/types', 'data/datasets', 'io/import'],
+    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, types, datasets, importer) => {
+      const families = { pxweb, socialstyrelsen };
+
+      /** Union of columns by name; rows padded with null. */
+      function mergeTables(acc, table) {
+        if (!acc.columns.length) { acc.columns = table.columns.slice(); acc.rows = table.rows.slice(); acc.types = Object.assign({}, table.types || {}); return acc; }
+        const index = new Map(acc.columns.map((c, i) => [c, i]));
+        for (const c of table.columns) if (!index.has(c)) { index.set(c, acc.columns.length); acc.columns.push(c); }
+        const width = acc.columns.length;
+        for (let i = 0; i < acc.rows.length; i++) if (acc.rows[i].length < width) acc.rows[i] = acc.rows[i].concat(new Array(width - acc.rows[i].length).fill(null));
+        const map = table.columns.map((c) => index.get(c));
+        for (const r of table.rows) { const out = new Array(width).fill(null); for (let j = 0; j < map.length; j++) out[map[j]] = r[j]; acc.rows.push(out); }
+        Object.assign(acc.types, table.types || {});
+        return acc;
+      }
+
+      /**
+       * Fetch all pages of an endpoint into one table.
+       * @param {any} connector @param {any} endpoint @param {Record<string, any>} params
+       * @param {{maxPages?: number, firstPageOnly?: boolean, signal?: AbortSignal, onProgress?: (info: {pages: number, rows: number, url: string}) => void}} [options]
+       */
+      async function fetchTable(connector, endpoint, params = {}, options = {}) {
+        const spec = endpoint.response || { format: 'json' };
+        const pag = endpoint.pagination || { type: 'none' };
+        const maxPages = options.firstPageOnly ? 1 : (options.maxPages || pag.maxPages || 100);
+        const values = request.normalizeParams(endpoint, params);
+        let req = request.build(connector, endpoint, values);
+        const runtimeOptions = req.options;
+        const state = pagination.start(pag, req);
+        const acc = { columns: [], rows: [], types: {}, meta: {} };
+        const requests = [];
+        let pages = 0; let truncated = false; let firstData = null; let lastMeta = null;
+        while (req) {
+          const authed = await auth.apply(connector, req, { signal: options.signal });
+          const res = await http.request(Object.assign({}, authed, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
+          pages++;
+          if (!res.ok) throw http.httpError(res, connector.name);
+          const parsed = await parsers.parse(res.text, spec, { options: runtimeOptions });
+          if (firstData === null) firstData = parsed.data;
+          lastMeta = parsed.meta;
+          mergeTables(acc, parsed);
+          requests.push({ url: secrets.mask(req.url, connector.id), status: res.status, ms: Math.round(res.ms), rows: parsed.rows.length });
+          if (options.onProgress) options.onProgress({ pages, rows: acc.rows.length, url: secrets.mask(req.url, connector.id) });
+          const nextReq = pagination.next(pag, state, { request: req, response: res, data: parsed.data, table: parsed });
+          if (nextReq && pages >= maxPages) { truncated = true; break; }
+          req = nextReq;
+        }
+        return { columns: acc.columns, rows: acc.rows, types: acc.types, meta: Object.assign({}, lastMeta || {}, { pages, requests, truncated, firstData }), values };
+      }
+
+      /**
+       * Create a dataset from a table. Column types are inferred (point decimals), with explicit type
+       * hints from the parser (codes stay text) taking precedence.
+       */
+      async function toDataset(table, options = {}) {
+        const cleaned = types.cleanColumnNames(table.columns);
+        const decimal = options.decimal || 'point';
+        const inferred = types.inferColumns(cleaned, table.rows, { decimal, sample: 2000 });
+        const specs = inferred.map((c, i) => {
+          const hint = table.types && table.types[table.columns[i]];
+          return Object.assign({ include: true, label: table.columns[i] }, c, { name: cleaned[i], type: hint || c.type, decimal });
+        });
+        const { columns, rows } = importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
+        return datasets.create({ name: options.name || 'Hämtad datamängd', description: options.description || '', columns, rows, source: options.source || { kind: 'api' }, importOptions: { decimal } });
+      }
+
+      /** Append to or replace the rows of an existing dataset. */
+      async function intoDataset(id, table, options = {}) {
+        return datasets.appendRows(id, { columns: table.columns, rows: table.rows }, { mode: options.mode || 'append', dedupeKeys: options.dedupeKeys, source: options.source, decimal: options.decimal || 'point' });
+      }
+
+      /** Source descriptor stored in dataset metadata for later re-fetching. */
+      function describeSource(connector, endpoint, values, result) {
+        return {
+          kind: 'api', connectorId: connector.id, connectorName: connector.name, publisher: connector.publisher || null,
+          endpointId: endpoint.id, endpointName: endpoint.name, params: values,
+          url: result && result.meta && result.meta.requests && result.meta.requests[0] ? result.meta.requests[0].url : null,
+          pages: result && result.meta ? result.meta.pages : null, rows: result ? result.rows.length : null,
+          truncated: !!(result && result.meta && result.meta.truncated), fetchedAt: new Date().toISOString(),
+          license: connector.license ? connector.license.name : null,
+        };
+      }
+
+      /** Re-run the fetch recorded in a dataset's source. Returns a table. */
+      async function refetch(source, options = {}) {
+        if (!source || source.kind !== 'api') throw new Error('Datamängden har ingen API-källa att hämta från.');
+        const connector = await connectors.get(source.connectorId);
+        if (!connector) throw new Error(`API-konfigurationen ${source.connectorName || source.connectorId} finns inte längre i arbetsytan.`);
+        if (source.family) {
+          const fam = families[source.family];
+          if (!fam) throw new Error('Okänd källtyp: ' + source.family);
+          return fam.refetch(connector, source, options);
+        }
+        const endpoint = (connector.endpoints || []).find((e) => e.id === source.endpointId);
+        if (!endpoint) throw new Error(`Endpointen ${source.endpointId} finns inte i ${connector.name}.`);
+        return fetchTable(connector, endpoint, source.params || {}, options);
+      }
+
+      /**
+       * Options for a parameter with `optionsFrom`: runs the referenced endpoint (all pages) and maps
+       * value/label paths. Cached per connector, endpoint and dependent values.
+       */
+      const optionCache = new Map();
+      async function optionsFor(connector, param, values = {}) {
+        const spec = param.optionsFrom;
+        const endpoint = (connector.endpoints || []).find((e) => e.id === spec.endpoint);
+        if (!endpoint) return [];
+        const dep = {};
+        for (const [k, tpl] of Object.entries(spec.params || {})) dep[k] = request.substitute(tpl, values, null);
+        const key = JSON.stringify([connector.id, spec.endpoint, dep]);
+        if (optionCache.has(key)) return optionCache.get(key);
+        const table = await fetchTable(connector, endpoint, dep, { maxPages: 20 });
+        const vi = table.columns.indexOf(spec.value); const li = spec.label ? table.columns.indexOf(spec.label) : -1;
+        const list = vi < 0 ? [] : table.rows.map((r) => ({ value: String(r[vi]), label: li >= 0 && r[li] !== null && r[li] !== undefined ? `${r[li]} (${r[vi]})` : String(r[vi]) }));
+        optionCache.set(key, list);
+        return list;
+      }
+      function clearOptionCache() { optionCache.clear(); }
+
+      return { fetchTable, toDataset, intoDataset, describeSource, refetch, optionsFor, clearOptionCache, mergeTables, families };
+    });
+})();

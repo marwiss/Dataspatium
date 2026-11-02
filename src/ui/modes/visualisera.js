@@ -1,0 +1,189 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * Mode "Visualisera": Vega-Lite builder, D3 templates and R scripts with live preview, saved charts
+ * (shareable viz files), export to SVG/PNG/PDF, batch generation per group and a gallery/panel view.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme'],
+    (base, vegaControls, d3Controls, rPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme) => {
+      const { h, t, i18n, replace } = base;
+
+      function createMode(ctx) {
+        const { ui, services, store, shell } = ctx;
+        let slots = null; let unsubStore = null; let unsubCharts = null; let unsubTheme = null;
+        let view = 'gallery';
+        let chart = null; let dirty = false; let columns = [];
+        let controls = null; let rpanel = null; let gallery = null; let handle = null; let renderTimer = 0; let renderSeq = 0;
+        let list = [];
+        let previewEl = null; let infoEl = null; let nameInput = null;
+
+        async function activate(s) {
+          slots = s;
+          unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); });
+          unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); });
+          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0); });
+          list = await charts.list();
+          render();
+        }
+        function deactivate() {
+          slots = null;
+          if (unsubStore) unsubStore(); if (unsubCharts) unsubCharts(); if (unsubTheme) unsubTheme();
+          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } if (gallery) { gallery.destroy(); gallery = null; }
+        }
+        function disposePreview() { if (handle) { try { handle.finalize(); } catch (_e) { /* ignore */ } handle = null; } }
+        function selectedDataset() { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; }
+
+        function render() { if (!slots) return; renderLeft(); renderCenter(); renderRight(); }
+
+        // ---- left: datasets, new chart, saved charts ----
+        function renderLeft() {
+          if (!slots) return;
+          const st = store.get();
+          ui.datasetList.render(slots.left, { datasets: st.datasets, selectedId: st.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
+          slots.left.appendChild(h('hr'));
+          slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('viz.saved') }), ui.button({ label: t('viz.new'), icon: 'plus', size: 'sm', variant: 'primary', onClick: newChart })));
+          slots.left.appendChild(h('div', { class: 'dm-list' },
+            h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'gallery' ? 'true' : null, onclick: () => openGallery() }, ui.icon('layout-grid', 16), h('span', { class: 'dm-list-main' }, h('span', { text: t('viz.gallery') }), h('span', { class: 'dm-list-sub', text: t('viz.count', { n: list.length }) }))),
+            list.map((c) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'chart' && chart && chart.id === c.id ? 'true' : null, onclick: () => openChart(c) },
+              ui.icon(c.kind === 'r' ? 'terminal' : (c.kind === 'd3' ? 'trending-up' : 'chart-column'), 16),
+              h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: c.datasetName || '' }))))));
+          slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('viz.import'), icon: 'upload', size: 'sm', onClick: importChart })));
+        }
+
+        async function newChart() {
+          const ds = selectedDataset();
+          if (!ds) { ui.toast.show(t('shell.select.dataset'), { kind: 'warn' }); return; }
+          if (dirty && !(await confirmDiscard())) return;
+          let kind = null;
+          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'd3', 'r'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
+          await ui.dialog.open({ title: t('viz.new.title'), body, actions: [{ label: t('common.cancel'), value: false }] });
+          if (!kind) return;
+          const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
+          await openChart(record, true);
+        }
+        async function importChart() {
+          const [file] = await services.files.pick({ accept: '.json' });
+          if (!file) return;
+          try { const c = await charts.importJson(await file.text()); shell.log(t('viz.imported', { name: c.name }), 'ok'); await openChart(c); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        }
+        async function confirmDiscard() { return ui.dialog.confirm(t('viz.unsaved'), { okLabel: t('common.ok') }); }
+
+        async function openGallery() {
+          if (dirty && !(await confirmDiscard())) return;
+          view = 'gallery'; chart = null; dirty = false;
+          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; }
+          render();
+        }
+        async function openChart(record, fresh = false) {
+          if (!fresh && dirty && !(await confirmDiscard())) return;
+          view = 'chart'; chart = JSON.parse(JSON.stringify(record)); dirty = fresh;
+          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } controls = null;
+          columns = chart.datasetId ? await services.datasets.columns(chart.datasetId).catch(() => []) : [];
+          if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
+          render();
+          if (chart.kind !== 'r') schedulePreview(0);
+        }
+
+        // ---- centre ----
+        function renderCenter() {
+          if (view === 'gallery') {
+            if (gallery) gallery.destroy();
+            gallery = galleryMod.create({ charts: list, onOpen: (c) => openChart(c), onExport: (c) => exportDialog.exportChart(c), onDelete: (c) => removeChart(c) });
+            replace(slots.center, gallery.el);
+            return;
+          }
+          if (!chart) return;
+          const missing = !columns.length;
+          nameInput = /** @type {any} */ (h('dm-input', { 'aria-label': t('viz.name'), placeholder: t('viz.name'), inline: true }));
+          nameInput.value = chart.name || '';
+          nameInput.addEventListener('input', () => { chart.name = nameInput.value; dirty = true; });
+          const saveBtn = ui.button({ label: t('viz.save'), icon: 'save', variant: 'primary', onClick: saveChart });
+          const head = h('div', { class: 'dm-page-head' },
+            h('h1', null, ui.icon(chart.kind === 'r' ? 'terminal' : 'chart-column', 20), nameInput, h('dm-badge', { text: t('viz.kind.badge.' + chart.kind) })),
+            h('div', { class: 'dm-row-wrap' },
+              saveBtn,
+              ui.button({ label: t('viz.export'), icon: 'download', onClick: () => exportDialog.exportChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
+              ui.button({ label: t('viz.batch'), icon: 'layers', onClick: () => exportDialog.batchChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
+              ui.button({ label: t('api.export'), icon: 'file-output', variant: 'ghost', onClick: () => files.download(new Blob([charts.exportJson(chart)], { type: 'application/json' }), files.safeName(chart.name || 'diagram', 'viz.json')) }),
+              chart.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => removeChart(chart) }) : null));
+          if (missing) { replace(slots.center, head, h('div', { class: 'dm-card' }, h('p', { class: 'dm-error', text: t('viz.dataset.missing') }))); return; }
+          previewEl = h('div', { class: 'dm-chart-preview' }, h('p', { class: 'dm-help', text: t('viz.preview.empty') }));
+          infoEl = h('p', { class: 'dm-help' });
+          let controlsEl;
+          if (chart.kind === 'vega') {
+            controls = vegaControls.create({ columns, state: chart.vega.state, customSpec: chart.vega.customSpec || null, onChange: (state, customSpec) => { chart.vega.state = state; chart.vega.customSpec = customSpec; dirty = true; schedulePreview(); } });
+            controlsEl = controls.el;
+          } else if (chart.kind === 'd3') {
+            controls = d3Controls.create({ columns, template: chart.d3.template, params: chart.d3.params, filters: (chart.options && chart.options.filters) || [], onChange: (template, params, filters) => { chart.d3.template = template; chart.d3.params = params; chart.options = Object.assign({}, chart.options, { filters }); dirty = true; schedulePreview(); } });
+            controlsEl = controls.el;
+          } else {
+            rpanel = rPanel.create({ chart, columns, onChange: (code) => { chart.r.code = code; dirty = true; }, log: (m, k) => shell.log(m, k) });
+            controlsEl = null;
+          }
+          replace(slots.center, head,
+            chart.kind === 'r' ? rpanel.el : h('div', { class: 'dm-viz-layout' }, h('div', { class: 'dm-viz-side' }, controlsEl), h('div', { class: 'dm-viz-main' }, previewEl, infoEl)));
+        }
+
+        function schedulePreview(delay = 300) { clearTimeout(renderTimer); renderTimer = setTimeout(renderPreview, delay); }
+        async function renderPreview() {
+          if (!previewEl || !chart || chart.kind === 'r') return;
+          const seq = ++renderSeq;
+          if (chart.kind === 'vega' && !chart.vega.customSpec) {
+            const problems = builder.validate(chart.vega.state);
+            if (problems.length) { replace(previewEl, h('p', { class: 'dm-help', text: t('viz.problem', { text: problems.join(' ') }) })); infoEl.textContent = ''; return; }
+          }
+          previewEl.classList.add('dm-rendering');
+          try {
+            disposePreview();
+            const hd = await vizRender.renderInto(chart, previewEl, {});
+            if (seq !== renderSeq) { hd.finalize(); return; }
+            handle = hd;
+            const info = hd.info || {};
+            infoEl.textContent = [t('viz.rows.used', { rows: i18n.formatNumber(info.rows || 0), total: i18n.formatNumber(info.total || 0) }), info.aggregated ? t('viz.rows.aggregated') : '', info.truncated && !info.aggregated ? t('viz.rows.truncated', { rows: i18n.formatNumber(info.rows || 0) }) : ''].filter(Boolean).join(' · ');
+            renderRight();
+          } catch (err) {
+            if (seq === renderSeq) replace(previewEl, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }));
+          } finally { previewEl.classList.remove('dm-rendering'); }
+        }
+
+        async function saveChart() {
+          if (!chart) return;
+          chart.name = nameInput ? nameInput.value.trim() || chart.name : chart.name;
+          if (chart.kind === 'vega' && !chart.vega.customSpec) { const problems = builder.validate(chart.vega.state); if (problems.length) { ui.toast.show(problems.join(' '), { kind: 'warn' }); return; } }
+          try {
+            chart.thumbnail = chart.kind === 'r' ? (rpanel ? await rpanel.thumbnail() : chart.thumbnail) : await vizRender.thumbnail(chart);
+            const saved = await charts.save(chart);
+            chart.id = saved.id; chart.createdAt = saved.createdAt; chart.updatedAt = saved.updatedAt; dirty = false;
+            shell.log(t('viz.saved.toast', { name: saved.name }), 'ok'); ui.toast.show(t('viz.saved.toast', { name: saved.name }), { kind: 'ok' });
+            renderLeft();
+          } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        }
+        async function removeChart(c) {
+          if (!c.id) return;
+          if (!(await ui.dialog.confirm(t('viz.delete.confirm', { name: c.name }), { okLabel: t('common.delete'), danger: true }))) return;
+          await charts.remove(c.id);
+          shell.log(t('viz.deleted'), 'ok');
+          if (chart && chart.id === c.id) { dirty = false; await openGallery(); }
+        }
+
+        // ---- right ----
+        function renderRight() {
+          if (!slots) return;
+          if (view === 'gallery' || !chart) { replace(slots.right, h('p', { class: 'dm-help', text: t('mode.visualisera.desc') })); return; }
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [{ label: t('shell.datasets'), value: chart.datasetName || '–' }, { label: t('common.type'), value: t('viz.kind.' + chart.kind) }, chart.updatedAt ? { label: t('common.updated'), value: i18n.formatDateTime(chart.updatedAt) } : null].filter(Boolean);
+          const spec = handle && handle.info && handle.info.spec ? JSON.stringify(Object.assign({}, handle.info.spec, { data: { values: '…' } }), null, 2) : null;
+          replace(slots.right,
+            h('h4', { text: chart.name || t('viz.name') }), kv,
+            h('p', { class: 'dm-help', text: t('viz.kind.' + chart.kind + '.help') }),
+            spec ? h('details', { class: 'dm-more' }, h('summary', { text: t('viz.spec') }), h('pre', { class: 'dm-viz-spec', text: spec })) : null);
+        }
+
+        return { id: 'visualisera', activate, deactivate };
+      }
+      return { createMode };
+    });
+})();

@@ -1,0 +1,32 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "lantmateriet-direkt",
+  "name": "Lantmäteriet Direkt (Ortnamn)",
+  "publisher": "Lantmäteriet",
+  "description": "Sök ortnamn via Ortnamn Direkt. Kräver ett kostnadsfritt konto i Lantmäteriets Geotorget med API-nycklar för öppna data; token hämtas med dina nycklar direkt från webbläsaren.",
+  "docs": "https://www.lantmateriet.se/sv/geodata/vara-produkter/produktlista/ortnamn-direkt/",
+  "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+  "level": 2,
+  "baseUrl": "https://api.lantmateriet.se/distribution/produkter",
+  "auth": {
+    "type": "oauth2_client_credentials",
+    "tokenUrl": "https://api.lantmateriet.se/token",
+    "help": "Skapa ett konto i Geotorget, lägg till produkten Ortnamn Direkt (öppna data) och skapa API-nycklar. Klient-id (consumer key) och klienthemlighet (consumer secret) anges här.",
+    "signupUrl": "https://geotorget.lantmateriet.se/"
+  },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "ortnamn-fritext",
+      "name": "Sök ortnamn (fritext)",
+      "method": "GET",
+      "path": "/ortnamn/v2.1/referens/fritext/{text}",
+      "params": [
+        { "name": "text", "in": "path", "label": "Söktext", "type": "string", "required": true, "example": "Uppsala" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Ortnamn: {text}" }
+    }
+  ],
+  "notes": "Svaret är en lista med ortnamnsreferenser. Fler Direkt-tjänster (belägenhetsadress, fastighet) kan läggas till som egna konfigurationer med samma autentisering."
+}

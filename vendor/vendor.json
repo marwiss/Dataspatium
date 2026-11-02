@@ -1,0 +1,250 @@
+{
+  "$comment": "Pinned third-party components. Maintainer workflow: python tools/fetch_vendor.py && python tools/wrap_assets.py. Encodings: text (JS string), base64 (already compressed binaries), gzip (gzip+base64), auto (by extension), false (copied as-is and loaded with <script src>).",
+  "libraries": {
+    "webr": {
+      "version": "0.5.9",
+      "npm": "webr",
+      "license": "MIT",
+      "homepage": "https://docs.r-wasm.org/webr/latest/",
+      "licenseUrl": "https://raw.githubusercontent.com/r-wasm/webr/v0.5.9/LICENSE.md",
+      "notes": "Pinned to the 0.5.x series (R 4.5): with webR 0.6.0 and the R 4.6 repository, compiled packages such as RSQLite, jsonlite, nanoparquet and fastmap fail to load (dynamic linking TypeError), verified against the official CDN on 2026-11-02. The R runtime (R.wasm, libRblas.so, libRlapack.so and the virtual filesystem) is GNU R, licensed GPL-2 | GPL-3. Source: https://github.com/r-wasm/webr and https://cran.r-project.org/sources.html",
+      "files": [
+        { "path": "dist/webr.js", "as": "webr.mjs", "wrap": "text" },
+        { "path": "dist/webr-worker.js", "as": "webr-worker.js", "wrap": "text" },
+        { "path": "dist/R.js", "as": "R.js", "wrap": "text" },
+        { "path": "dist/R.wasm", "as": "R.wasm", "wrap": "gzip" },
+        { "path": "dist/libRblas.so", "as": "libRblas.so", "wrap": "gzip" },
+        { "path": "dist/libRlapack.so", "as": "libRlapack.so", "wrap": "gzip" },
+        { "glob": "dist/vfs/**", "strip": "dist/", "wrap": "auto", "bundle": "vfs" }
+      ]
+    },
+    "webr-repo": {
+      "type": "r-repo",
+      "repo": "https://repo.r-wasm.org",
+      "rVersion": "4.5",
+      "license": "Various (per package, see PACKAGES); R packages are mostly GPL-2, GPL-3 or MIT",
+      "homepage": "https://repo.r-wasm.org/",
+      "packages": ["ggplot2", "dplyr", "tidyr", "readr", "stringr", "lubridate", "forcats", "data.table", "haven", "readxl", "writexl", "nanoparquet", "svglite", "jsonlite", "RSQLite", "DBI", "knitr", "pxR"]
+    },
+    "sqljs": {
+      "version": "1.15.2",
+      "npm": "sql.js",
+      "license": "MIT",
+      "homepage": "https://sql.js.org/",
+      "files": [
+        { "path": "dist/sql-wasm.js", "as": "sql-wasm.js", "wrap": "text" },
+        { "path": "dist/sql-wasm.wasm", "as": "sql-wasm.wasm", "wrap": "gzip" }
+      ]
+    },
+    "dexie": {
+      "version": "4.4.7",
+      "npm": "dexie",
+      "license": "Apache-2.0",
+      "homepage": "https://dexie.org/",
+      "files": [ { "path": "dist/dexie.min.js", "as": "dexie.min.js", "wrap": false } ]
+    },
+    "papaparse": {
+      "version": "5.7.0",
+      "npm": "papaparse",
+      "license": "MIT",
+      "homepage": "https://www.papaparse.com/",
+      "files": [ { "path": "papaparse.min.js", "as": "papaparse.min.js", "wrap": false } ]
+    },
+    "sheetjs": {
+      "version": "0.20.3",
+      "license": "Apache-2.0",
+      "homepage": "https://sheetjs.com/",
+      "licenseUrl": "https://cdn.sheetjs.com/xlsx-0.20.3/package/LICENSE",
+      "notes": "SheetJS Community Edition, distributed from cdn.sheetjs.com.",
+      "files": [ { "url": "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js", "as": "xlsx.full.min.js", "wrap": false } ]
+    },
+    "fflate": {
+      "version": "0.8.3",
+      "npm": "fflate",
+      "license": "MIT",
+      "homepage": "https://github.com/101arrowz/fflate",
+      "files": [ { "path": "umd/index.js", "as": "fflate.min.js", "wrap": false } ]
+    },
+    "fonts": {
+      "version": "5.3.0",
+      "npm": "@fontsource/inter",
+      "license": "OFL-1.1",
+      "homepage": "https://rsms.me/inter/",
+      "notes": "Inter by Rasmus Andersson, SIL Open Font License 1.1, packaged by Fontsource. Loaded with the FontFace API because file:// pages cannot load fonts through CSS.",
+      "files": [
+        { "path": "files/inter-latin-400-normal.woff2", "as": "inter-latin-400-normal.woff2", "wrap": "base64" },
+        { "path": "files/inter-latin-500-normal.woff2", "as": "inter-latin-500-normal.woff2", "wrap": "base64" },
+        { "path": "files/inter-latin-600-normal.woff2", "as": "inter-latin-600-normal.woff2", "wrap": "base64" }
+      ]
+    },
+    "lucide": {
+      "version": "1.66.0",
+      "npm": "lucide-static",
+      "license": "ISC",
+      "homepage": "https://lucide.dev/",
+      "files": [
+        { "path": "icons/download.svg", "as": "icons/download.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/layout-grid.svg", "as": "icons/layout-grid.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/trending-up.svg", "as": "icons/trending-up.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-line.svg", "as": "icons/chart-line.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-area.svg", "as": "icons/chart-area.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-scatter.svg", "as": "icons/chart-scatter.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-pie.svg", "as": "icons/chart-pie.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/grid-2x2.svg", "as": "icons/grid-2x2.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-candlestick.svg", "as": "icons/chart-candlestick.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-bar-big.svg", "as": "icons/chart-bar-big.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/list-ordered.svg", "as": "icons/list-ordered.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/align-center-vertical.svg", "as": "icons/align-center-vertical.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/upload.svg", "as": "icons/upload.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/database.svg", "as": "icons/database.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/table.svg", "as": "icons/table.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/pencil.svg", "as": "icons/pencil.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/wand-sparkles.svg", "as": "icons/wand-sparkles.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chart-column.svg", "as": "icons/chart-column.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/file-output.svg", "as": "icons/file-output.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/settings.svg", "as": "icons/settings.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/search.svg", "as": "icons/search.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/plus.svg", "as": "icons/plus.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/trash-2.svg", "as": "icons/trash-2.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/x.svg", "as": "icons/x.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/check.svg", "as": "icons/check.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chevron-down.svg", "as": "icons/chevron-down.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chevron-right.svg", "as": "icons/chevron-right.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chevron-left.svg", "as": "icons/chevron-left.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/chevron-up.svg", "as": "icons/chevron-up.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/panel-left.svg", "as": "icons/panel-left.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/panel-right.svg", "as": "icons/panel-right.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/panel-bottom.svg", "as": "icons/panel-bottom.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/terminal.svg", "as": "icons/terminal.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/play.svg", "as": "icons/play.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/square.svg", "as": "icons/square.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/refresh-cw.svg", "as": "icons/refresh-cw.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/save.svg", "as": "icons/save.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/folder.svg", "as": "icons/folder.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/folder-open.svg", "as": "icons/folder-open.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/file.svg", "as": "icons/file.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/file-spreadsheet.svg", "as": "icons/file-spreadsheet.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/file-json.svg", "as": "icons/file-json.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/file-text.svg", "as": "icons/file-text.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/braces.svg", "as": "icons/braces.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/filter.svg", "as": "icons/filter.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/arrow-up-down.svg", "as": "icons/arrow-up-down.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/arrow-up.svg", "as": "icons/arrow-up.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/arrow-down.svg", "as": "icons/arrow-down.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/info.svg", "as": "icons/info.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/triangle-alert.svg", "as": "icons/triangle-alert.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/circle-alert.svg", "as": "icons/circle-alert.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/circle-check.svg", "as": "icons/circle-check.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/loader-circle.svg", "as": "icons/loader-circle.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/moon.svg", "as": "icons/moon.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/sun.svg", "as": "icons/sun.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/copy.svg", "as": "icons/copy.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/external-link.svg", "as": "icons/external-link.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/eye.svg", "as": "icons/eye.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/eye-off.svg", "as": "icons/eye-off.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/key-round.svg", "as": "icons/key-round.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/lock.svg", "as": "icons/lock.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/history.svg", "as": "icons/history.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/layers.svg", "as": "icons/layers.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/columns-3.svg", "as": "icons/columns-3.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/rows-3.svg", "as": "icons/rows-3.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/list.svg", "as": "icons/list.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/grip-vertical.svg", "as": "icons/grip-vertical.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/more-horizontal.svg", "as": "icons/more-horizontal.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/sparkles.svg", "as": "icons/sparkles.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/package.svg", "as": "icons/package.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/globe.svg", "as": "icons/globe.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/link.svg", "as": "icons/link.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/hard-drive.svg", "as": "icons/hard-drive.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/clipboard-paste.svg", "as": "icons/clipboard-paste.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/circle-help.svg", "as": "icons/circle-help.svg", "wrap": "text", "bundle": "icons" }
+      ]
+    },
+    "d3": {
+      "version": "7.9.0",
+      "npm": "d3",
+      "license": "ISC",
+      "homepage": "https://d3js.org/",
+      "files": [ { "path": "dist/d3.min.js", "as": "d3.min.js", "wrap": false } ]
+    },
+    "jspdf": {
+      "version": "4.2.1",
+      "npm": "jspdf",
+      "license": "MIT",
+      "homepage": "https://github.com/parallax/jsPDF",
+      "notes": "PDF export of charts (with svg2pdf.js) and documents. Standard PDF fonts (Helvetica) are used for text.",
+      "files": [ { "path": "dist/jspdf.umd.min.js", "as": "jspdf.umd.min.js", "wrap": false } ]
+    },
+    "svg2pdf.js": {
+      "version": "2.9.0",
+      "npm": "svg2pdf.js",
+      "license": "MIT",
+      "homepage": "https://github.com/yWorks/svg2pdf.js",
+      "files": [ { "path": "dist/svg2pdf.umd.min.js", "as": "svg2pdf.umd.min.js", "wrap": false } ]
+    },
+    "jspdf-autotable": {
+      "version": "5.0.9",
+      "npm": "jspdf-autotable",
+      "license": "MIT",
+      "homepage": "https://github.com/simonbengtsson/jsPDF-AutoTable",
+      "notes": "Tables in PDF documents; registers autoTable on jsPDF when loaded after jspdf.",
+      "files": [ { "path": "dist/jspdf.plugin.autotable.min.js", "as": "jspdf.plugin.autotable.min.js", "wrap": false } ]
+    },
+    "mustache": {
+      "version": "4.2.0",
+      "npm": "mustache",
+      "license": "MIT",
+      "homepage": "https://github.com/janl/mustache.js",
+      "notes": "Template engine for document templates (src/docgen).",
+      "files": [ { "path": "mustache.min.js", "as": "mustache.min.js", "wrap": false } ]
+    },
+    "vega": {
+      "version": "6.4.0",
+      "npm": "vega",
+      "license": "BSD-3-Clause",
+      "homepage": "https://vega.github.io/vega/",
+      "files": [ { "path": "build/vega.min.js", "as": "vega.min.js", "wrap": false } ]
+    },
+    "vega-lite": {
+      "version": "6.5.0",
+      "npm": "vega-lite",
+      "license": "BSD-3-Clause",
+      "homepage": "https://vega.github.io/vega-lite/",
+      "files": [ { "path": "build/vega-lite.min.js", "as": "vega-lite.min.js", "wrap": false } ]
+    },
+    "vega-embed": {
+      "version": "7.3.0",
+      "npm": "vega-embed",
+      "license": "BSD-3-Clause",
+      "homepage": "https://github.com/vega/vega-embed",
+      "files": [ { "path": "build/vega-embed.min.js", "as": "vega-embed.min.js", "wrap": false } ]
+    },
+    "docx": {
+      "version": "9.15.1",
+      "npm": "docx",
+      "license": "MIT",
+      "homepage": "https://docx.js.org/",
+      "files": [ { "path": "dist/index.iife.js", "as": "docx.iife.js", "wrap": false } ]
+    },
+    "codemirror5": {
+      "version": "5.65.21",
+      "npm": "codemirror",
+      "license": "MIT",
+      "homepage": "https://codemirror.net/5/",
+      "notes": "CodeMirror 5 is used instead of 6 because it ships as classic scripts with ready-made R, SQL and LaTeX modes; CodeMirror 6 would need a bundler to combine its packages.",
+      "files": [
+        { "path": "lib/codemirror.js", "as": "lib/codemirror.js", "wrap": false },
+        { "path": "lib/codemirror.css", "as": "lib/codemirror.css", "wrap": false },
+        { "path": "mode/r/r.js", "as": "mode/r/r.js", "wrap": false },
+        { "path": "mode/sql/sql.js", "as": "mode/sql/sql.js", "wrap": false },
+        { "path": "mode/stex/stex.js", "as": "mode/stex/stex.js", "wrap": false },
+        { "path": "mode/javascript/javascript.js", "as": "mode/javascript/javascript.js", "wrap": false },
+        { "path": "addon/edit/matchbrackets.js", "as": "addon/edit/matchbrackets.js", "wrap": false },
+        { "path": "addon/edit/closebrackets.js", "as": "addon/edit/closebrackets.js", "wrap": false },
+        { "path": "addon/display/placeholder.js", "as": "addon/display/placeholder.js", "wrap": false },
+        { "path": "addon/selection/active-line.js", "as": "addon/selection/active-line.js", "wrap": false },
+        { "path": "addon/comment/comment.js", "as": "addon/comment/comment.js", "wrap": false }
+      ]
+    }
+  }
+}

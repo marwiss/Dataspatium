@@ -1,0 +1,35 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "boverket-energideklarationer",
+  "name": "Boverket energideklarationer",
+  "publisher": "Boverket",
+  "description": "Energideklarationer för byggnader via Boverkets API. Kräver en prenumerationsnyckel från Boverkets API-portal. Anropen beskrivs i portalen; ange sökväg och parametrar här.",
+  "docs": "https://api-portal.boverket.se/",
+  "license": { "name": "Se villkor i Boverkets API-portal", "url": "https://api-portal.boverket.se/" },
+  "level": 2,
+  "baseUrl": "https://api.boverket.se/energideklarationer",
+  "auth": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "Ocp-Apim-Subscription-Key",
+    "help": "Registrera dig i Boverkets API-portal och prenumerera på API:et för energideklarationer. Nyckeln finns under din profil i portalen.",
+    "signupUrl": "https://api-portal.boverket.se/"
+  },
+  "rateLimit": { "requests": 10, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "custom",
+      "name": "Anrop enligt API-portalen",
+      "description": "Sökvägen relativt https://api.boverket.se/energideklarationer och eventuella frågeparametrar, enligt dokumentationen i portalen.",
+      "method": "GET",
+      "path": "/{path}",
+      "params": [
+        { "name": "path", "in": "path", "label": "Sökväg", "type": "string", "required": true, "raw": true, "example": "v2/energideklarationer" },
+        { "name": "query", "in": "query", "label": "Frågeparametrar", "type": "querylines", "example": "kommun=0180" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Boverket {path}" }
+    }
+  ],
+  "notes": "Högst 10 anrop per 2 sekunder och 1 500 per dag enligt Boverket."
+}

@@ -1,0 +1,75 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "smhi-metobs",
+  "name": "SMHI meteorologiska observationer",
+  "publisher": "SMHI",
+  "description": "Mätvärden från SMHI:s väderstationer: temperatur, nederbörd, vind, lufttryck med mera. Välj parameter, station och tidsutsnitt. Det kvalitetskontrollerade arkivet hämtas som CSV och kan vara stort.",
+  "docs": "https://opendata.smhi.se/apidocs/metobs/index.html",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "baseUrl": "https://opendata-download-metobs.smhi.se/api/version",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "parameters",
+      "name": "Parametrar",
+      "description": "Alla mätparametrar med nyckel, namn och enhet.",
+      "method": "GET",
+      "path": "/1.0.json",
+      "response": { "format": "json", "path": "resource", "drop": ["link"] },
+      "dataset": { "name": "SMHI parametrar" }
+    },
+    {
+      "id": "stations",
+      "name": "Stationer för en parameter",
+      "method": "GET",
+      "path": "/1.0/parameter/{parameter}.json",
+      "params": [
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
+      ],
+      "response": { "format": "json", "path": "station", "drop": ["link", "summary"], "convert": { "from": "epoch-ms", "to": "epoch-ms", "updated": "epoch-ms" }, "rename": { "key": "station_id", "name": "station", "from": "fran", "to": "till", "updated": "uppdaterad", "height": "hojd", "latitude": "latitud", "longitude": "longitud", "owner": "agare", "active": "aktiv" } },
+      "dataset": { "name": "SMHI stationer parameter {parameter}" }
+    },
+    {
+      "id": "data",
+      "name": "Mätvärden för en station",
+      "description": "Senaste timmen, dygnet eller fyra månaderna för en parameter och station. Tider i lokal tid.",
+      "method": "GET",
+      "path": "/1.0/parameter/{parameter}/station/{station}/period/{period}/data.json",
+      "params": [
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
+        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } },
+        { "name": "period", "in": "path", "label": "Tidsutsnitt", "type": "enum", "required": true, "default": "latest-day", "options": [{ "value": "latest-hour", "label": "Senaste timmen" }, { "value": "latest-day", "label": "Senaste dygnet" }, { "value": "latest-months", "label": "Senaste fyra månaderna" }] }
+      ],
+      "response": { "format": "json", "path": "value", "constants": { "parameter": "parameter.name", "enhet": "parameter.unit", "station": "station.name", "station_id": "station.key" }, "convert": { "date": "epoch-ms" }, "rename": { "date": "tid", "value": "varde", "quality": "kvalitet" } },
+      "dataset": { "name": "SMHI {period} station {station}", "keys": ["station_id", "parameter", "tid"] }
+    },
+    {
+      "id": "archive",
+      "name": "Kvalitetskontrollerat arkiv för en station (CSV)",
+      "description": "Hela den granskade mätserien för en parameter och station. Kan vara hundratusentals rader.",
+      "method": "GET",
+      "path": "/1.0/parameter/{parameter}/station/{station}/period/corrected-archive/data.csv",
+      "headers": { "Accept": "text/csv, text/plain, */*" },
+      "params": [
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
+        { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } }
+      ],
+      "response": { "format": "csv", "options": { "delimiter": ";", "skipUntil": "Datum;", "decimal": "point" } },
+      "dataset": { "name": "SMHI arkiv parameter {parameter} station {station}" }
+    },
+    {
+      "id": "latest-all",
+      "name": "Senaste timmen för alla stationer",
+      "description": "Det senaste värdet från varje station för en parameter, med position.",
+      "method": "GET",
+      "path": "/1.0/parameter/{parameter}/station-set/all/period/latest-hour/data.json",
+      "params": [
+        { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } }
+      ],
+      "response": { "format": "json", "path": "station", "explode": "value", "constants": { "parameter": "parameter.name", "enhet": "parameter.unit" }, "convert": { "date": "epoch-ms", "from": "epoch-ms", "to": "epoch-ms" }, "rename": { "key": "station_id", "name": "station", "date": "tid", "value": "varde", "quality": "kvalitet", "height": "hojd", "latitude": "latitud", "longitude": "longitud", "owner": "agare" }, "drop": ["link", "from", "to", "ownerCategory", "measuringStations"] },
+      "dataset": { "name": "SMHI {parameter} senaste timmen", "keys": ["station_id", "tid"] }
+    }
+  ]
+}

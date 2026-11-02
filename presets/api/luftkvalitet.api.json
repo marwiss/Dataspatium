@@ -1,0 +1,52 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "luftkvalitet",
+  "name": "Luftkvalitet (Naturvårdsverkets datavärdskap)",
+  "publisher": "Naturvårdsverket, datavärd SMHI",
+  "description": "Mätningar av luftföroreningar (NO2, PM10, PM2.5, ozon med mera) från Sveriges mätstationer. Lista stationer och tidsserier, hämta sedan värden för en tidsserie och ett tidsintervall.",
+  "docs": "https://datavardluft.smhi.se/",
+  "license": { "name": "Öppna data, se datavärdskapets villkor", "url": "https://datavardluft.smhi.se/" },
+  "level": 1,
+  "baseUrl": "https://datavardluft.smhi.se/52North/api",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "stations",
+      "name": "Mätstationer",
+      "method": "GET",
+      "path": "/stations",
+      "params": [
+        { "name": "expanded", "in": "query", "type": "string", "default": "true", "hidden": true }
+      ],
+      "response": { "format": "geojson", "options": { "geometry": false }, "rename": { "label": "station", "classification": "klassning", "id": "station_id" } },
+      "dataset": { "name": "Luftkvalitet mätstationer" }
+    },
+    {
+      "id": "timeseries",
+      "name": "Tidsserier",
+      "description": "Alla tidsserier med station, ämne, enhet och period. Kolumnen id används för att hämta värden.",
+      "method": "GET",
+      "path": "/timeseries",
+      "params": [
+        { "name": "station", "in": "query", "label": "Station (id, valfritt)", "type": "string" },
+        { "name": "phenomenon", "in": "query", "label": "Ämne (id, valfritt)", "type": "string" },
+        { "name": "expanded", "in": "query", "type": "string", "default": "true", "hidden": true }
+      ],
+      "response": { "format": "json", "convert": { "firstValue.timestamp": "epoch-ms", "lastValue.timestamp": "epoch-ms" }, "rename": { "label": "tidsserie", "uom": "enhet", "station.properties.label": "station", "station.id": "station_id", "parameters.phenomenon.label": "amne", "parameters.phenomenon.id": "amne_id", "firstValue.timestamp": "forsta_tid", "lastValue.timestamp": "senaste_tid", "firstValue.value": "forsta_varde", "lastValue.value": "senaste_varde" }, "drop": ["extras", "aggregationTypes", "station.type", "station.geometry.type", "station.properties.classification", "parameters.procedure.id", "parameters.procedure.label", "parameters.category.id", "parameters.category.label", "parameters.offering.id", "parameters.offering.label", "parameters.feature.id", "parameters.feature.label", "parameters.service.id", "parameters.service.label", "renderingHints", "statusIntervals"] },
+      "dataset": { "name": "Luftkvalitet tidsserier" }
+    },
+    {
+      "id": "data",
+      "name": "Värden för en tidsserie",
+      "method": "GET",
+      "path": "/timeseries/{id}/getData",
+      "params": [
+        { "name": "id", "in": "path", "label": "Tidsserie (id från listan Tidsserier)", "type": "string", "required": true, "example": "78" },
+        { "name": "timespan", "in": "query", "label": "Tidsintervall (ISO 8601)", "type": "string", "required": true, "example": "2024-01-01T00:00:00Z/2024-01-31T23:00:00Z", "help": "Start/slut, eller en längd och en sluttid som PT24H/2026-11-02T00:00:00Z." }
+      ],
+      "response": { "format": "json", "path": "values", "convert": { "timestamp": "epoch-ms" }, "rename": { "timestamp": "tid", "value": "varde" } },
+      "dataset": { "name": "Luftkvalitet tidsserie {id}", "keys": ["tid"] }
+    }
+  ]
+}

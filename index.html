@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Dataspatium</title>
+  <link rel="stylesheet" href="src/ui/design/tokens.css">
+  <link rel="stylesheet" href="src/ui/design/base.css">
+  <link rel="stylesheet" href="src/ui/design/components.css">
+  <link rel="stylesheet" href="src/ui/shell/shell.css">
+  <!-- Classic scripts only: pages opened via file:// cannot load ES module files. -->
+  <script src="src/boot.js"></script>
+</head>
+<body>
+  <noscript>Dataspatium kräver JavaScript.</noscript>
+  <div id="app">
+    <p class="dm-muted" style="padding: 24px">Dataspatium startar …</p>
+  </div>
+  <script>
+    document.addEventListener('dataspatium:ready', function () {
+      Dataspatium.require('app').start(document.getElementById('app')).catch(function (err) {
+        console.error(err);
+        document.getElementById('app').textContent = 'Dataspatium kunde inte starta: ' + (err && err.message || err);
+      });
+    });
+    document.addEventListener('dataspatium:boot-error', function (ev) {
+      document.getElementById('app').textContent = 'Dataspatium kunde inte starta: ' + ev.detail;
+    });
+  </script>
+</body>
+</html>

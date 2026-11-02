@@ -1,0 +1,10 @@
+# Raw downloaded third-party originals (regenerate with tools/fetch_vendor.py; wrappers in vendor/ are committed)
+vendor-src/
+# Local working documents that are not part of the published repository
+CLAUDE.md
+docs/plan.md
+# Local scratch and OS files
+.DS_Store
+Thumbs.db
+*.log
+.tmp/

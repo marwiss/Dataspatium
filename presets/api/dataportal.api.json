@@ -1,0 +1,30 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "dataportal",
+  "name": "Sveriges dataportal (sök datamängder)",
+  "publisher": "Digg, Myndigheten för digital förvaltning",
+  "description": "Sök bland alla myndigheters, regioners och kommuners publicerade datamängder. Resultatet är en tabell med titel, utgivare, format och nedladdningslänk; filer importeras sedan via Filer.",
+  "docs": "https://www.dataportal.se/",
+  "license": { "name": "Metadata: CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+  "level": 1,
+  "baseUrl": "https://admin.dataportal.se/store",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "search",
+      "name": "Sök datamängder",
+      "method": "GET",
+      "path": "/search",
+      "params": [
+        { "name": "q", "in": "template", "label": "Sökord", "type": "string", "required": true, "example": "befolkning" },
+        { "name": "type", "in": "query", "type": "string", "default": "solr", "hidden": true },
+        { "name": "query", "in": "query", "type": "string", "hidden": true, "template": "(title:\"{q}\" OR description:\"{q}\") AND rdfType:http\\://www.w3.org/ns/dcat#Dataset" },
+        { "name": "limit", "in": "query", "type": "number", "default": 50, "hidden": true }
+      ],
+      "pagination": { "type": "offset", "param": "offset", "sizeParam": "limit", "size": 50, "start": 0, "totalPath": "results", "maxPages": 4 },
+      "response": { "format": "entryscape" },
+      "dataset": { "name": "Dataportalen: {q}" }
+    }
+  ]
+}

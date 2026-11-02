@@ -1,0 +1,70 @@
+# Format och import
+
+## Filformat som stöds
+
+| Format | Import | Export | Kommentar |
+|---|---|---|---|
+| CSV, TSV, TXT med avgränsare | Ja | Ja | Avgränsare, teckenkodning och rubrikrad identifieras automatiskt och kan ändras |
+| Excel xlsx, xlsm, xls, xlsb | Ja | xlsx | Välj blad; datum och ja/nej blir riktiga typer |
+| ODS (LibreOffice) | Ja | Ja | Samma typhantering som Excel |
+| JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
+| NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad |
+| JSON-stat | Ja | Nej | Känns igen automatiskt (`class: dataset`, version 2.0); en rad per cell med koder, texter och värde |
+| GeoJSON | Ja | Nej | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn |
+| XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
+| SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
+| SPSS sav, zsav, por | Ja | sav | Via R-paketet haven. Variabeletiketter blir kolumnetiketter, värdeetiketter blir text |
+| Stata dta | Ja | dta | Via haven. Vid export kortas kolumnnamnen till Statas regler (32 tecken, ASCII) |
+| SAS sas7bdat, xpt | Ja | Nej | Via haven |
+| PX (PC-Axis, SCB) | Ja | Nej | Via R-paketet pxR; teckenkodningen läses ur filens CODEPAGE eller CHARSET. Resultatet är en lång tabell med en värdekolumn |
+| Parquet | Ja | Ja | Via R-paketet nanoparquet; behåller typer exakt |
+| RDS, RData | Ja | rds | R-objekt; en RData-fil måste innehålla en data.frame |
+| Inklistrad text | Ja | | Tabb-, semikolon- eller kommaavgränsad |
+
+Formaten som går via R startar R-sessionen vid behov (några sekunder första gången) och saknar
+förhandsgranskning: filen läses av R och lämnas över med `dm_write()`, så kolumntyperna kommer från R. Ja/nej
+blir 0/1 i SPSS och Stata, som saknar logisk typ. GeoPackage (via R-paketet sf) står på backloggen.
+
+## Teckenkodning
+
+Textfiler kontrolleras i denna ordning: byte order mark (UTF-8, UTF-16), UTF-16 utan BOM (många nollbytes),
+ren ASCII, strikt UTF-8-validering av det första megabytet, annars Windows-1252. Windows-1252 är det vanliga för
+filer som sparats från äldre svenska Excel-versioner. Du kan alltid byta kodning i importsteget.
+
+## Avgränsare och decimaltecken
+
+Avgränsaren gissas bland semikolon, komma, tabb och lodstreck. Svenska CSV-filer använder oftast semikolon
+eftersom komma är decimaltecken. Decimaltecknet avgörs per kolumn: om kommadecimaler är minst lika vanliga som
+punktdecimaler väljs komma. Tusentalsavgränsare (mellanslag, hårt mellanslag, punkt vid kommadecimal) tas bort.
+
+## Kolumntyper
+
+| Typ | Känns igen som | Lagras som |
+|---|---|---|
+| Text | Allt som inte passar något annat, och alla tal med inledande nolla (kommunkoder, postnummer, personnummer) | TEXT |
+| Heltal | `12`, `-3`, `1 234` | INTEGER |
+| Decimaltal | `1 234,5`, `1.5`, `2,0`, `1.5e3` | REAL |
+| Datum | `2024-01-31`, `31/12/2024`, `31.12.2024`, `31-12-2024` | TEXT, ISO 8601 `ÅÅÅÅ-MM-DD` |
+| Datum och tid | `2024-01-31 10:05`, `2024-01-31T10:05:00Z`, Excel-datum med klockslag | TEXT, `ÅÅÅÅ-MM-DD HH:MM:SS` |
+| Ja/nej | `ja`, `nej`, `true`, `false`, `sant`, `falskt`, `j`, `n` | INTEGER 0/1 |
+
+En kolumn får en typ bara om alla ifyllda värden i urvalet passar. Tomma värden blir alltid "tom" (NULL).
+Värden som inte går att tolka med den typ du väljer manuellt blir också tomma.
+
+## Datamängdens fil
+
+Varje datamängd är en SQLite-fil med fyra tabeller: `data` (raderna), `_columns` (namn, typ, etikett,
+ursprungsnamn), `_meta` (namn, beskrivning, tidsstämplar, källa, importinställningar) och `_log` (allt som gjorts
+med datamängden). Filen går att öppna i R med RSQLite, i DB Browser for SQLite och i de flesta andra verktyg.
+
+## Arbetsytans filer
+
+Säkerhetskopian (ZIP) och den portabla mappen (Edge och Chrome) har samma uppbyggnad: `manifest.json` med en
+lista över innehållet, `datasets/<id>.sqlite` per datamängd, `charts/<id>.viz.json` per sparat diagram och
+`documents/<id>.doc.json` per egen dokumentmall. Med automatisk sparning på skrivs ändrade datamängder till mappen
+strax efter varje sparning och filer för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator;
+datamängder som redan finns (samma id) och diagram eller mallar med samma namn hoppas över.
+
+Raderna i `_log` har tidsstämpel, åtgärdstyp och detaljer som JSON. Åtgärdstyperna är bland andra `import`, `op`
+(ett receptsteg med `op`, `params`, `result` och `description`; det är dessa rader som utgör receptet), `undo`,
+`snapshot` och `restore`. Receptexporten i Bearbeta bygger på `op`-raderna, se [bearbeta.md](bearbeta.md).

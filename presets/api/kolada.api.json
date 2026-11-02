@@ -1,0 +1,90 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "kolada",
+  "name": "Kolada (kommun- och regiondatabasen)",
+  "publisher": "Rådet för främjande av kommunala analyser (RKA)",
+  "description": "Nyckeltal för kommuner och regioner: ekonomi, skola, omsorg, befolkning, miljö och mycket mer. Sök nyckeltal (id som N01951), hämta värden per år för alla kommuner eller för valda kommuner över tid.",
+  "docs": "https://api.kolada.se/v3/docs",
+  "license": { "name": "Öppna data, fri att använda med källangivelse Kolada/RKA", "url": "https://www.kolada.se/" },
+  "level": 1,
+  "baseUrl": "https://api.kolada.se/v3",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "kpi",
+      "name": "Sök nyckeltal",
+      "description": "Nyckeltal vars titel innehåller sökordet. Kolumnen id används sedan för att hämta värden.",
+      "method": "GET",
+      "path": "/kpi",
+      "params": [
+        { "name": "title", "in": "query", "label": "Sökord i titeln", "type": "string", "required": true, "example": "invånare" },
+        { "name": "operating_area", "in": "query", "label": "Verksamhetsområde (valfritt)", "type": "string", "example": "Befolkning" },
+        { "name": "per_page", "in": "query", "type": "number", "default": 500, "hidden": true }
+      ],
+      "pagination": { "type": "next-url", "path": "next_url", "maxPages": 20 },
+      "response": { "format": "json", "path": "values", "drop": ["search_score"] },
+      "dataset": { "name": "Kolada nyckeltal: {title}" }
+    },
+    {
+      "id": "municipalities",
+      "name": "Kommuner och regioner",
+      "description": "Lista över kommuner (typ K) och regioner (typ L) med Koladas id.",
+      "method": "GET",
+      "path": "/municipality",
+      "params": [
+        { "name": "type", "in": "query", "label": "Typ", "type": "enum", "options": [{ "value": "K", "label": "Kommuner" }, { "value": "L", "label": "Regioner" }] },
+        { "name": "per_page", "in": "query", "type": "number", "default": 500, "hidden": true }
+      ],
+      "pagination": { "type": "next-url", "path": "next_url", "maxPages": 10 },
+      "response": { "format": "json", "path": "values" },
+      "dataset": { "name": "Kolada kommuner och regioner" }
+    },
+    {
+      "id": "data-year",
+      "name": "Värden per år (alla kommuner och regioner)",
+      "description": "Alla kommuners och regioners värden för ett eller flera nyckeltal och år.",
+      "method": "GET",
+      "path": "/data/kpi/{kpi_id}/year/{year}",
+      "params": [
+        { "name": "kpi_id", "in": "path", "label": "Nyckeltal (id, flera med komma)", "type": "string", "required": true, "raw": true, "example": "N01951" },
+        { "name": "year", "in": "path", "label": "År (flera med komma)", "type": "string", "required": true, "raw": true, "example": "2022,2023" },
+        { "name": "per_page", "in": "query", "type": "number", "default": 2000, "hidden": true }
+      ],
+      "pagination": { "type": "next-url", "path": "next_url", "maxPages": 100 },
+      "response": { "format": "json", "path": "values", "explode": "values", "rename": { "kpi": "nyckeltal", "municipality": "kommun_id", "period": "ar", "gender": "kon", "value": "varde", "count": "antal" }, "drop": ["isdeleted"] },
+      "dataset": { "name": "Kolada {kpi_id} {year}", "keys": ["nyckeltal", "kommun_id", "ar", "kon"] }
+    },
+    {
+      "id": "data-municipality",
+      "name": "Värden för valda kommuner (alla år)",
+      "description": "Hela tidsserien för ett eller flera nyckeltal i valda kommuner eller regioner.",
+      "method": "GET",
+      "path": "/data/kpi/{kpi_id}/municipality/{municipality_id}",
+      "params": [
+        { "name": "kpi_id", "in": "path", "label": "Nyckeltal (id, flera med komma)", "type": "string", "required": true, "raw": true, "example": "N01951" },
+        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
+        { "name": "per_page", "in": "query", "type": "number", "default": 2000, "hidden": true }
+      ],
+      "pagination": { "type": "next-url", "path": "next_url", "maxPages": 100 },
+      "response": { "format": "json", "path": "values", "explode": "values", "rename": { "kpi": "nyckeltal", "municipality": "kommun_id", "period": "ar", "gender": "kon", "value": "varde", "count": "antal" }, "drop": ["isdeleted"] },
+      "dataset": { "name": "Kolada {kpi_id} per kommun", "keys": ["nyckeltal", "kommun_id", "ar", "kon"] }
+    },
+    {
+      "id": "data-municipality-year",
+      "name": "Värden för valda kommuner och år",
+      "method": "GET",
+      "path": "/data/kpi/{kpi_id}/municipality/{municipality_id}/year/{year}",
+      "params": [
+        { "name": "kpi_id", "in": "path", "label": "Nyckeltal (id, flera med komma)", "type": "string", "required": true, "raw": true, "example": "N01951" },
+        { "name": "municipality_id", "in": "path", "label": "Kommun eller region", "type": "multi", "required": true, "optionsFrom": { "endpoint": "municipalities", "value": "id", "label": "title" } },
+        { "name": "year", "in": "path", "label": "År (flera med komma)", "type": "string", "required": true, "raw": true, "example": "2020,2021,2022,2023" },
+        { "name": "per_page", "in": "query", "type": "number", "default": 2000, "hidden": true }
+      ],
+      "pagination": { "type": "next-url", "path": "next_url", "maxPages": 100 },
+      "response": { "format": "json", "path": "values", "explode": "values", "rename": { "kpi": "nyckeltal", "municipality": "kommun_id", "period": "ar", "gender": "kon", "value": "varde", "count": "antal" }, "drop": ["isdeleted"] },
+      "dataset": { "name": "Kolada {kpi_id} {year}", "keys": ["nyckeltal", "kommun_id", "ar", "kon"] }
+    }
+  ],
+  "notes": "kon: T = totalt, M = män, K = kvinnor. kommun_id 0000 är riket; regioner har id 00xx."
+}

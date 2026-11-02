@@ -1,0 +1,32 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "scb-pxweb-v2",
+  "name": "SCB Statistikdatabasen (API v2, beta)",
+  "publisher": "Statistiska centralbyrån (SCB)",
+  "description": "Samma statistik som SCB Statistikdatabasen via SCB:s nya API: sök bland tabeller i stället för att bläddra i trädet. API:et är i betaversion och kan ändras.",
+  "docs": "https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/",
+  "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+  "level": 1,
+  "baseUrl": "https://api.scb.se/OV0104/v2beta/api/v2",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 10 },
+  "family": { "type": "pxweb", "version": 2, "lang": "sv", "maxCells": 150000 },
+  "endpoints": [
+    {
+      "id": "tables",
+      "name": "Sök tabeller",
+      "description": "Lista över tabeller som matchar sökorden, med id, period och ämnesväg.",
+      "method": "GET",
+      "path": "/tables",
+      "params": [
+        { "name": "query", "in": "query", "label": "Sökord", "type": "string", "example": "folkmängd kommun" },
+        { "name": "pastDays", "in": "query", "label": "Uppdaterade de senaste dagarna", "type": "number" },
+        { "name": "lang", "in": "query", "type": "string", "default": "sv", "hidden": true },
+        { "name": "pageSize", "in": "query", "type": "number", "default": 100, "hidden": true }
+      ],
+      "pagination": { "type": "page", "param": "pageNumber", "start": 1, "totalPagesPath": "page.totalPages", "maxPages": 10 },
+      "response": { "format": "json", "path": "tables", "drop": ["links", "paths"] },
+      "dataset": { "name": "SCB tabeller: {query}" }
+    }
+  ]
+}

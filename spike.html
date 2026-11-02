@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dataspatium – teknisk spik</title>
+  <link rel="stylesheet" href="src/spike/spike.css">
+  <script src="src/boot.js"></script>
+</head>
+<body>
+  <main id="app"><p class="muted">Dataspatium startar …</p></main>
+  <script>
+    // Diagnostics page from phase 0: runs the full chain (SQLite, WebR, libraries) and reports
+    // DATASPATIUM-LOG lines. Open spike.html?autorun=1 or use tools/run-tests.ps1 -Url "spike.html?autorun=1".
+    document.addEventListener('dataspatium:ready', async function () {
+      await Dataspatium.assets.loadScript((globalThis.DATASPATIUM_BASE || '') + 'src/spike/spike.js');
+      Dataspatium.require('spike/main').mount(document.getElementById('app'));
+    });
+    document.addEventListener('dataspatium:boot-error', function (ev) {
+      document.getElementById('app').textContent = 'Kunde inte starta: ' + ev.detail;
+    });
+  </script>
+</body>
+</html>

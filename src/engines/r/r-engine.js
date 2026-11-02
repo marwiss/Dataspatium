@@ -1,0 +1,173 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * WebR client.
+ *
+ * webR is loaded as ES module text (blob import). Because the base URL `dataspatium-asset://webr/` is
+ * cross-origin, webR fetches its worker script with XMLHttpRequest and creates a Blob worker from the
+ * response; our net shim answers that request with "worker shim + webr-worker.js", and the global
+ * Worker subclass then feeds the worker every `webr/*` and `webr-repo/*` asset before webR's own init
+ * message is delivered. R therefore starts entirely from embedded files, with no network access.
+ *
+ * Channel: PostMessage (SharedArrayBuffer is unavailable on file://), so running R code cannot be
+ * interrupted; the engine must be restarted instead.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('engines/r', ['engines/r/packages'], (packages) => {
+    const BASE_URL = 'dataspatium-asset://webr/';
+    const REPO_URL = 'dataspatium-asset://webr-repo';
+    const MAIN_THREAD_ONLY = new Set(['webr/webr.mjs', 'webr/webr-worker.js']);
+    /** Packages always shipped at startup: what r/dataspatium.R itself needs. */
+    const STARTUP_PACKAGES = ['DBI', 'RSQLite'];
+
+    class REngine {
+      constructor() {
+        /** @type {any} */ this.webR = null;
+        /** @type {any} */ this.module = null;
+        /** @type {Promise<REngine>|null} */ this.ready = null;
+        this.startupMs = 0;
+        /** @type {Set<string>} package tgz assets already delivered to the worker */
+        this.shippedAssets = new Set();
+        this.handlers = {
+          stdout: (/** @type {string} */ _text) => {},
+          stderr: (/** @type {string} */ _text) => {},
+          prompt: (/** @type {string} */ _text) => {},
+          canvasImage: (/** @type {ImageBitmap} */ _image) => {},
+          canvasNewPage: (/** @type {any} */ _data) => {},
+          closed: () => {},
+        };
+      }
+
+      /** Register an output handler: stdout, stderr, prompt, canvasImage, canvasNewPage, closed. */
+      on(event, fn) { this.handlers[event] = fn; return this; }
+
+      /** Start R (idempotent). */
+      start() {
+        if (!this.ready) this.ready = this.boot();
+        return this.ready;
+      }
+
+      async boot() {
+        const t0 = performance.now();
+        D.net.virtual('webr/webr-worker.js', async () => ({
+          kind: 'text',
+          data: D.workerShim.buildWorkerSource({ namespace: 'webr' }, await D.assets.loadText('webr/webr-worker.js')),
+        }));
+        await packages.load();
+        // Startup payload: the R runtime, the package index and the packages the helpers need. Other
+        // packages are shipped on demand by ensurePackages() because webR downloads them with
+        // synchronous XHR inside the worker, which cannot wait for the main thread.
+        const startupRepo = D.assets.names('webr-repo/').filter((n) => /\/PACKAGES(\.gz)?$/.test(n)).concat(packages.assetsFor(packages.closure(STARTUP_PACKAGES)));
+        for (const n of startupRepo) this.shippedAssets.add(n);
+        D.workers.provider('webr', {
+          initial: async () => D.assets.names('webr/').filter((n) => !MAIN_THREAD_ONLY.has(n)).concat(startupRepo),
+          request: async () => true,
+        });
+        this.module = await D.assets.importModule('webr/webr.mjs');
+        const { WebR, ChannelType } = this.module;
+        this.webR = new WebR({ baseUrl: BASE_URL, repoUrl: REPO_URL, channelType: ChannelType.PostMessage, interactive: true });
+        await this.webR.init();
+        // Plots go to the canvas device; images arrive as `canvas` messages in pump(). r/dataspatium.R
+        // (loaded by data/r-bridge.js) refines the device options for the console.
+        await this.webR.evalRVoid('options(device = function(...) webr::canvas(width = 420, height = 420, ...))');
+        this.pump();
+        this.startupMs = performance.now() - t0;
+        D.log('r', 'webR ready in', Math.round(this.startupMs), 'ms');
+        return this;
+      }
+
+      /** Forward webR output messages to the registered handlers. */
+      async pump() {
+        for (;;) {
+          let msg;
+          try { msg = await this.webR.read(); } catch (err) { D.log('r', 'read loop ended', err); return; }
+          switch (msg.type) {
+            case 'stdout': this.handlers.stdout(String(msg.data)); break;
+            case 'stderr': this.handlers.stderr(String(msg.data)); break;
+            case 'prompt': this.handlers.prompt(String(msg.data)); break;
+            case 'canvas': {
+              const d = msg.data || {};
+              if (d.event === 'canvasImage') this.handlers.canvasImage(d.image);
+              else if (d.event === 'canvasNewPage') this.handlers.canvasNewPage(d);
+              break;
+            }
+            case 'closed': this.handlers.closed(); return;
+            default: D.log('r', 'unhandled message type', msg.type); break;
+          }
+        }
+      }
+
+      /** Send a line to R's interactive console. */
+      writeConsole(line) { this.webR.writeConsole(line); }
+      evalR(code, options) { return this.webR.evalR(code, options); }
+      evalRVoid(code) { return this.webR.evalRVoid(code); }
+      /** @returns {Promise<string>} */
+      evalRString(code) { return this.webR.evalRString(code); }
+      /** @returns {Promise<number>} */
+      evalRNumber(code) { return this.webR.evalRNumber(code); }
+
+      /**
+       * Evaluate code and capture printed output.
+       * @returns {Promise<{text: string, output: Array<{type: string, data: string}>}>}
+       */
+      async capture(code, options = {}) {
+        const shelter = await new this.webR.Shelter();
+        try {
+          const res = await shelter.captureR(code, Object.assign({ withAutoprint: true, captureGraphics: false }, options));
+          const output = res.output.map((o) => ({ type: String(o.type), data: String(o.data) }));
+          return { text: output.map((o) => o.data).join('\n'), output };
+        } finally {
+          await shelter.purge();
+        }
+      }
+
+      /** @param {string} path @param {ArrayBuffer|Uint8Array} bytes */
+      async writeFile(path, bytes) {
+        await this.webR.FS.writeFile(path, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+      }
+      /** @returns {Promise<Uint8Array>} */
+      readFile(path) { return this.webR.FS.readFile(path); }
+      async mkdir(path) { try { await this.webR.FS.mkdir(path); } catch (_err) { /* already exists */ } }
+
+      /** The worker webR created for this session (a DataspatiumWorker with namespace "webr"). */
+      worker() {
+        const list = D.workers.list().filter((w) => w.dmNamespace === 'webr');
+        return list[list.length - 1] || null;
+      }
+
+      /**
+       * Ship the dependency closure of the named packages to the worker so that webr::install() /
+       * library() can mount them. Unknown packages are ignored.
+       * @param {string[]} names
+       * @returns {Promise<string[]>} packages that were made available
+       */
+      async ensurePackages(names) {
+        const wanted = packages.closure(names);
+        const assets = packages.assetsFor(wanted).filter((a) => !this.shippedAssets.has(a));
+        if (assets.length) {
+          const worker = this.worker();
+          if (!worker) throw new Error('R worker not available');
+          await D.workers.sendAssets(worker, assets, false);
+          for (const a of assets) this.shippedAssets.add(a);
+        }
+        return wanted;
+      }
+
+      /** Install packages from the embedded repository (they must be present in vendor/webr-repo). */
+      async installPackages(names) {
+        await this.ensurePackages(names);
+        const list = names.map((p) => JSON.stringify(String(p))).join(', ');
+        return this.webR.evalRVoid(`suppressWarnings(webr::install(c(${list}), quiet = TRUE))`);
+      }
+
+      /** Stop the worker; a new start() boots a fresh R session. */
+      async close() {
+        if (this.webR) { try { await this.webR.close(); } catch (_err) { /* ignore */ } }
+        this.webR = null; this.ready = null;
+      }
+    }
+    return { REngine };
+  });
+})();

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <title>Dataspatium – prestandatest</title>
+  <link rel="stylesheet" href="../src/ui/design/tokens.css">
+  <link rel="stylesheet" href="../src/ui/design/base.css">
+  <link rel="stylesheet" href="../src/ui/design/components.css">
+  <style>
+    body { overflow: auto; padding: 24px; }
+    ul.results { list-style: none; padding: 0; }
+    ul.results li { font-family: var(--dm-font-mono); font-size: 13px; padding: 2px 0; }
+    .ok { color: var(--dm-ok); } .fail { color: var(--dm-error); }
+  </style>
+  <script src="../src/boot.js"></script>
+</head>
+<body>
+  <h1>Dataspatium: prestandatest</h1>
+  <p class="dm-muted">Skapar en stor datamängd (standard 1 000 000 rader × 20 kolumner; <code>?rows=200000</code> för färre), mäter
+    bläddring, SQL-aggregering och <code>dm_read()</code> i R. Resultat skrivs till konsolen som <code>DATASPATIUM-LOG</code>-rader.
+    Kör headless med <code>powershell -File tools/run-tests.ps1 -Browsers edge -Url tests/perf.html -TimeoutSec 900</code>.</p>
+  <p id="summary" class="dm-muted">Kör …</p>
+  <ul id="results" class="results"></ul>
+  <script>
+    document.addEventListener('dataspatium:ready', async function () {
+      var files = ['harness.js', 'perf.js'];
+      for (var i = 0; i < files.length; i++) await Dataspatium.assets.loadScript(files[i]);
+      Dataspatium.require('tests/harness').run(document.getElementById('results'), document.getElementById('summary'));
+    });
+    document.addEventListener('dataspatium:boot-error', function (ev) {
+      console.log('DATASPATIUM-LOG: FAIL | boot :: ' + ev.detail);
+      console.log('DATASPATIUM-TESTS: pass=0 fail=1');
+    });
+  </script>
+</body>
+</html>

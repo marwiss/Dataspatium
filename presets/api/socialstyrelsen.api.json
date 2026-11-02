@@ -1,0 +1,26 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "socialstyrelsen",
+  "name": "Socialstyrelsen Statistikdatabasen",
+  "publisher": "Socialstyrelsen",
+  "description": "Dödsorsaker, diagnoser i sluten och öppen vård, läkemedel, operationer, graviditeter och förlossningar, tandhälsa, skador med mera. Välj ämne och värden per variabel; resultatet hämtas i sidor om 5 000 rader.",
+  "docs": "https://www.socialstyrelsen.se/statistik-och-data/statistik/statistikdatabasen/",
+  "license": { "name": "Se Socialstyrelsens villkor för statistikdatabasen", "url": "https://www.socialstyrelsen.se/statistik-och-data/statistik/statistikdatabasen/" },
+  "level": 1,
+  "baseUrl": "https://sdb.socialstyrelsen.se/api/v1/sv",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 2 },
+  "family": { "type": "socialstyrelsen" },
+  "endpoints": [
+    {
+      "id": "subjects",
+      "name": "Lista ämnen",
+      "description": "Ämnesområden i statistikdatabasen med deras id.",
+      "method": "GET",
+      "path": "",
+      "response": { "format": "json", "rename": { "namn": "id", "text": "amne" } },
+      "dataset": { "name": "Socialstyrelsen ämnen" }
+    }
+  ],
+  "notes": "Variabler utan urval hämtas med alla värden. Måttet 'Antal döda per 100 000' med flera är beräknade värden; se databasens beskrivning."
+}
