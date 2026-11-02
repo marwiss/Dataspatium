@@ -83,6 +83,7 @@ backloggen; det kräver att typbyten (som bygger om kolumnen) först tar bort in
 3. Bygg ZIP-filen ur taggen så att bara spårade filer följer med:
    `git archive --format=zip --prefix=dataspatium-1.0.0/ -o dataspatium-1.0.0.zip v1.0.0`.
 4. Kontrollera utgåvan som en ny användare: packa upp ZIP-filen i en tom mapp, öppna `index.html` via file:// och
-   kör testerna därifrån: `powershell -File tools/run-tests.ps1 -Browsers edge -Url "<mappen>/tests/index.html"`.
+   kör testerna därifrån med en fullständig file-adress (relativa sökvägar tolkas mot repots rot):
+   `powershell -File tools/run-tests.ps1 -Browsers edge -Url "file:///C:/Temp/dataspatium-1.0.0/tests/index.html"`.
 5. Skapa utgåvan: `gh release create v1.0.0 dataspatium-1.0.0.zip --title "Dataspatium 1.0.0" --notes-file notes.md`,
    där noten inleds med Kom igång-stegen från README.
