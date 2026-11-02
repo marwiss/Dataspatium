@@ -9,7 +9,7 @@
  * Besides plain SQL it registers Dataspatium's helper functions so that cleaning operations run inside
  * the engine: regexp(), regexp_replace(), dm_replace(), dm_parse_number(), dm_parse_date(),
  * dm_parse_datetime(), dm_parse_bool(), dm_upper(), dm_lower(), dm_title(), dm_fix_encoding(),
- * dm_fingerprint(), dm_squish().
+ * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix) and dm_mask().
  *
  * Message protocol: {id, op, args} -> {id, ok, value} | {id, ok: false, error}
  */
@@ -113,7 +113,62 @@
       var uniq = Array.from(new Set(parts)).sort();
       return uniq.join(' ');
     }
+    // SHA-256 (FIPS 180-4) in plain JS: pseudonymisation runs inside synchronous SQL functions, where Web Crypto cannot be awaited.
+    var K256 = new Uint32Array([0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
+    var sha256Encoder = new TextEncoder();
+    function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+    function sha256Hex(message) {
+      var bytes = sha256Encoder.encode(message);
+      var len = bytes.length;
+      var padded = new Uint8Array((((len + 9) + 63) >> 6) << 6);
+      padded.set(bytes);
+      padded[len] = 0x80;
+      var view = new DataView(padded.buffer);
+      view.setUint32(padded.length - 8, Math.floor((len * 8) / 4294967296));
+      view.setUint32(padded.length - 4, (len * 8) >>> 0);
+      var H = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+      var W = new Uint32Array(64);
+      for (var off = 0; off < padded.length; off += 64) {
+        var i;
+        for (i = 0; i < 16; i++) W[i] = view.getUint32(off + i * 4);
+        for (i = 16; i < 64; i++) {
+          var s0 = rotr(W[i - 15], 7) ^ rotr(W[i - 15], 18) ^ (W[i - 15] >>> 3);
+          var s1 = rotr(W[i - 2], 17) ^ rotr(W[i - 2], 19) ^ (W[i - 2] >>> 10);
+          W[i] = (W[i - 16] + s0 + W[i - 7] + s1) >>> 0;
+        }
+        var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], hh = H[7];
+        for (i = 0; i < 64; i++) {
+          var S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+          var ch = (e & f) ^ (~e & g);
+          var t1 = (hh + S1 + ch + K256[i] + W[i]) >>> 0;
+          var S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+          var maj = (a & b) ^ (a & c) ^ (b & c);
+          var t2 = (S0 + maj) >>> 0;
+          hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+        }
+        H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += hh;
+      }
+      var hex = '';
+      for (var j = 0; j < 8; j++) hex += ('00000000' + H[j].toString(16)).slice(-8);
+      return hex;
+    }
+    /** Keep the first/last characters and separators, replace the rest with the mask character. */
+    function maskText(s, keepStart, keepEnd, ch) {
+      var chars = Array.from(s); var n = chars.length; var out = '';
+      for (var i = 0; i < n; i++) { var c = chars[i]; out += (i < keepStart || i >= n - keepEnd || /[\s\-\/.+]/.test(c)) ? c : ch; }
+      return out;
+    }
     function registerFunctions(database) {
+      database.create_function('dm_hash', function (text, salt, length) {
+        if (text === null) return null;
+        var key = salt === null || salt === undefined || salt === '' ? String(text) : String(salt) + '|' + String(text);
+        var n = length === null || length === undefined ? 16 : Math.max(4, Math.min(64, Number(length) || 16));
+        return sha256Hex(key).slice(0, n);
+      });
+      database.create_function('dm_mask', function (text, keepStart, keepEnd, ch) {
+        if (text === null) return null;
+        return maskText(String(text), Number(keepStart) || 0, Number(keepEnd) || 0, ch === null || ch === undefined || ch === '' ? '*' : Array.from(String(ch))[0]);
+      });
       database.create_function('regexp', function (pattern, text) { if (text === null || pattern === null) return 0; try { return regex(String(pattern), '').test(String(text)) ? 1 : 0; } catch (e) { return 0; } });
       database.create_function('regexp_replace', function (text, pattern, repl, flags) { if (text === null) return null; try { return String(text).replace(regex(String(pattern), flags === null || flags === undefined ? 'g' : String(flags)), repl === null ? '' : String(repl)); } catch (e) { return text; } });
       database.create_function('dm_replace', function (text, find, repl, ci) {

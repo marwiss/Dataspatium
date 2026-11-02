@@ -75,6 +75,8 @@
     'src/viz/charts.js',
     'src/viz/render.js',
     'src/viz/batch.js',
+    'src/viz/pptx.js',
+    'src/viz/dashboards.js',
     // Documents
     'src/docgen/template.js',
     'src/docgen/markdown.js',
@@ -100,6 +102,7 @@
     // UI: shell and modes
     'src/ui/shell/state.js',
     'src/ui/shell/dataset-list.js',
+    'src/ui/shell/command-palette.js',
     'src/ui/shell/shell.js',
     'src/ui/op-dialog.js',
     'src/ui/dialogs.js',
@@ -114,6 +117,7 @@
     'src/ui/viz/d3-controls.js',
     'src/ui/viz/r-panel.js',
     'src/ui/viz/gallery.js',
+    'src/ui/viz/dashboard-view.js',
     'src/ui/docs/document-panel.js',
     'src/ui/modes/inhamta.js',
     'src/ui/modes/hantera.js',

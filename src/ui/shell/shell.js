@@ -10,8 +10,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb'],
-    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette'],
+    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera'];
       const MODE_ICONS = { inhamta: 'download', hantera: 'database', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output' };
@@ -30,6 +30,10 @@
             services: { datasets, workspace, importer, exporter, files, idb },
             ui: Object.assign({ h, t, i18n, replace, icon: icons.icon, button: basic.button, datasetList }, overlays),
           };
+          // Command palette (Ctrl+K): modes register their own commands through ctx.palette.register().
+          this.palette = paletteMod.create(this);
+          this.ctx.palette = this.palette;
+          this.palette.register(() => this.builtinCommands());
           this.build();
           this.store.subscribe((state, changed) => this.onState(state, changed));
           datasets.subscribe((type, payload) => this.onDatasets(type, payload));
@@ -43,7 +47,7 @@
           }, icons.icon(MODE_ICONS[id], 16), h('span', { text: t('mode.' + id) }))));
           this.statusEl = h('span', { class: 'dm-status', 'data-state': 'saved' }, icons.icon('circle-check', 14), h('span', { text: t('shell.status.saved') }));
           this.storageEl = h('span', { class: 'dm-status', text: '' });
-          this.themeBtn = basic.button({ label: t('shell.theme'), icon: THEME_ICON[theme.get()], 'icon-only': true, variant: 'ghost', onClick: () => { const next = theme.cycle(); this.themeBtn.setAttribute('icon', THEME_ICON[next]); this.toast(t('shell.theme.' + next)); } });
+          this.themeBtn = basic.button({ label: t('shell.theme'), icon: THEME_ICON[theme.get()], 'icon-only': true, variant: 'ghost', onClick: () => this.toggleTheme() });
           this.logList = h('ul', { class: 'dm-log', 'aria-live': 'polite' });
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
             h('header', { class: 'dm-topbar' },
@@ -54,6 +58,7 @@
                 basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('left') }),
                 basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('right') }),
                 basic.button({ label: t('shell.toggle.drawer'), icon: 'panel-bottom', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('drawer') }),
+                basic.button({ label: t('palette.open'), icon: 'search', 'icon-only': true, variant: 'ghost', onClick: () => this.palette.open() }),
                 this.themeBtn,
                 basic.button({ label: t('shell.help'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', onClick: () => this.showHelp() }))),
             h('aside', { class: 'dm-left' }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left),
@@ -130,6 +135,32 @@
 
         onKey(e) {
           if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-6]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
+          else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); this.palette.open(); }
+        }
+
+        toggleTheme() {
+          const next = theme.cycle();
+          this.themeBtn.setAttribute('icon', THEME_ICON[next]);
+          this.toast(t('shell.theme.' + next));
+        }
+
+        /** Commands always available in the palette: modes, datasets, the workspace, theme and help. */
+        builtinCommands() {
+          const state = this.store.get();
+          const cmds = MODES.map((id) => ({ id: 'mode:' + id, label: t('palette.goto', { mode: t('mode.' + id) }), hint: t('mode.' + id + '.desc'), group: t('palette.group.modes'), icon: MODE_ICONS[id], run: () => this.activate(id) }));
+          for (const d of state.datasets) {
+            cmds.push({
+              id: 'dataset:' + d.id, label: d.name, group: t('palette.group.datasets'), icon: 'table', keywords: ['datamängd'],
+              hint: t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) }) + ' · ' + t('common.columns', { n: d.columnCount || 0 }),
+              run: () => { this.store.set({ selectedId: d.id }); if (!this.store.get().mode || this.store.get().mode === 'inhamta') this.activate('bearbeta'); },
+            });
+          }
+          // '__workspace' is the workspace entry's id in the Hantera dataset list (WORKSPACE in ui/modes/hantera).
+          cmds.push({ id: 'workspace', label: t('datasets.storage.title'), hint: t('datasets.backup'), group: t('palette.group.actions'), icon: 'hard-drive', run: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } });
+          cmds.push({ id: 'theme', label: t('shell.theme'), group: t('palette.group.actions'), icon: THEME_ICON[theme.get()], run: () => this.toggleTheme() });
+          cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
+          cmds.push({ id: 'update', label: t('update.check'), group: t('palette.group.actions'), icon: 'refresh-cw', run: () => this.showHelp() });
+          return cmds;
         }
 
         /** Append to the log drawer and the console. */

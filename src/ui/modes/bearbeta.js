@@ -13,7 +13,7 @@
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
-      { op: 'clusters', icon: 'layers', textOnly: true }, { op: 'replace_value', icon: 'pencil' }, { op: 'fill_missing', icon: 'rows-3' }, { op: 'split_column', icon: 'columns-3', textOnly: true }, { op: 'drop_columns', icon: 'trash-2' },
+      { op: 'clusters', icon: 'layers', textOnly: true }, { op: 'replace_value', icon: 'pencil' }, { op: 'fill_missing', icon: 'rows-3' }, { op: 'pseudonymize', icon: 'key-round' }, { op: 'split_column', icon: 'columns-3', textOnly: true }, { op: 'drop_columns', icon: 'trash-2' },
     ];
 
     function createMode(ctx) {
@@ -54,6 +54,24 @@
           onApplied: () => { const d = current(); if (d) { refresh(d); if (selectedColumn) showStats(d, selectedColumn); } },
           onDerived: (meta) => { store.set({ selectedId: meta.id }); },
         };
+      }
+
+      // Command palette: every operation, run on the selected dataset.
+      if (ctx.palette) {
+        ctx.palette.register(async () => {
+          const ds = current();
+          if (!ds) return [];
+          const cmds = [];
+          for (const g of dialogs.GROUPS) {
+            for (const id of g.ops) {
+              cmds.push({
+                id: 'op:' + id, label: t('op.' + id), hint: t('palette.op.hint', { name: ds.name }), group: t('palette.group.ops'), icon: 'wand-sparkles', keywords: [t('op.group.' + g.id)],
+                run: async () => { shell.activate('bearbeta'); const cols = await services.datasets.columns(ds.id); await dialogs.run(dialogCtx(ds, cols), id); },
+              });
+            }
+          }
+          return cmds;
+        });
       }
 
       async function renderTable(ds) {

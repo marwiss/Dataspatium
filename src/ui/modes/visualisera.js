@@ -7,8 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme'],
-    (base, vegaControls, d3Controls, rPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme) => {
+  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
+    (base, vegaControls, d3Controls, rPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme, dashboardView, dashboards) => {
       const { h, t, i18n, replace } = base;
 
       function createMode(ctx) {
@@ -19,19 +19,24 @@
         let controls = null; let rpanel = null; let gallery = null; let handle = null; let renderTimer = 0; let renderSeq = 0;
         let list = [];
         let previewEl = null; let infoEl = null; let nameInput = null;
+        let dashList = []; let dashView = null; let dashboard = null; let unsubDash = null;
 
         async function activate(s) {
           slots = s;
           unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); });
-          unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); });
-          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0); });
+          unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); if (view === 'dashboard' && dashView) dashView.reload(); });
+          unsubDash = dashboards.subscribe(async () => { dashList = await dashboards.list(); renderLeft(); });
+          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0); if (view === 'dashboard' && dashView) dashView.reload(); });
           list = await charts.list();
+          dashList = await dashboards.list();
           render();
+          // A chart opened before the lists finished loading (command palette) needs its preview drawn again.
+          if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0);
         }
         function deactivate() {
           slots = null;
-          if (unsubStore) unsubStore(); if (unsubCharts) unsubCharts(); if (unsubTheme) unsubTheme();
-          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } if (gallery) { gallery.destroy(); gallery = null; }
+          if (unsubStore) unsubStore(); if (unsubCharts) unsubCharts(); if (unsubTheme) unsubTheme(); if (unsubDash) unsubDash();
+          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } if (gallery) { gallery.destroy(); gallery = null; } if (dashView) { dashView.destroy(); dashView = null; }
         }
         function disposePreview() { if (handle) { try { handle.finalize(); } catch (_e) { /* ignore */ } handle = null; } }
         function selectedDataset() { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; }
@@ -51,6 +56,31 @@
               ui.icon(c.kind === 'r' ? 'terminal' : (c.kind === 'd3' ? 'trending-up' : 'chart-column'), 16),
               h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: c.datasetName || '' }))))));
           slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('viz.import'), icon: 'upload', size: 'sm', onClick: importChart })));
+          slots.left.appendChild(h('hr'));
+          slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('dash.title') }), ui.button({ label: t('dash.new'), icon: 'plus', size: 'sm', onClick: newDashboard })));
+          slots.left.appendChild(h('div', { class: 'dm-list' }, dashList.map((d) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'dashboard' && dashboard && dashboard.id === d.id ? 'true' : null, onclick: () => openDashboard(d) },
+            ui.icon('layout-grid', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: d.name }), h('span', { class: 'dm-list-sub dm-truncate', text: t('viz.count', { n: (d.items || []).length }) }))))));
+          slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('dash.import'), icon: 'upload', size: 'sm', onClick: importDashboard })));
+        }
+
+        async function newDashboard() {
+          if (dirty && !(await confirmDiscard())) return;
+          const name = await ui.dialog.prompt(t('dash.new.prompt'), { title: t('dash.new'), value: '' });
+          if (!name || !name.trim()) return;
+          const saved = await dashboards.save(dashboards.create(name.trim()));
+          shell.log(t('dash.saved', { name: saved.name }), 'ok');
+          await openDashboard(saved, true);
+        }
+        async function openDashboard(record, fresh = false) {
+          if (!fresh && dirty && !(await confirmDiscard())) return;
+          view = 'dashboard'; chart = null; dirty = false; dashboard = record;
+          disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; }
+          render();
+        }
+        async function importDashboard() {
+          const [file] = await services.files.pick({ accept: '.json' });
+          if (!file) return;
+          try { const d = await dashboards.importJson(await file.text()); shell.log(t('dash.imported', { name: d.name }), 'ok'); await openDashboard(d); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
         }
 
         async function newChart() {
@@ -73,13 +103,13 @@
 
         async function openGallery() {
           if (dirty && !(await confirmDiscard())) return;
-          view = 'gallery'; chart = null; dirty = false;
+          view = 'gallery'; chart = null; dirty = false; dashboard = null;
           disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; }
           render();
         }
         async function openChart(record, fresh = false) {
           if (!fresh && dirty && !(await confirmDiscard())) return;
-          view = 'chart'; chart = JSON.parse(JSON.stringify(record)); dirty = fresh;
+          view = 'chart'; chart = JSON.parse(JSON.stringify(record)); dirty = fresh; dashboard = null;
           disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } controls = null;
           columns = chart.datasetId ? await services.datasets.columns(chart.datasetId).catch(() => []) : [];
           if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
@@ -89,6 +119,14 @@
 
         // ---- centre ----
         function renderCenter() {
+          if (view !== 'dashboard' && dashView) { dashView.destroy(); dashView = null; }
+          if (view === 'dashboard' && dashboard) {
+            if (dashView) dashView.destroy();
+            dashView = dashboardView.create({ dashboard, onOpenChart: (c) => openChart(c), onDeleted: () => openGallery(), log: (m, k) => shell.log(m, k) });
+            replace(slots.center, dashView.el);
+            dashView.start().then(() => renderRight()).catch((err) => shell.log(String((err && err.message) || err), 'error'));
+            return;
+          }
           if (view === 'gallery') {
             if (gallery) gallery.destroy();
             gallery = galleryMod.create({ charts: list, onOpen: (c) => openChart(c), onExport: (c) => exportDialog.exportChart(c), onDelete: (c) => removeChart(c) });
@@ -172,6 +210,7 @@
         // ---- right ----
         function renderRight() {
           if (!slots) return;
+          if (view === 'dashboard' && dashView) { replace(slots.right, dashView.inspector()); return; }
           if (view === 'gallery' || !chart) { replace(slots.right, h('p', { class: 'dm-help', text: t('mode.visualisera.desc') })); return; }
           const kv = /** @type {any} */ (h('dm-kv'));
           kv.items = [{ label: t('shell.datasets'), value: chart.datasetName || '–' }, { label: t('common.type'), value: t('viz.kind.' + chart.kind) }, chart.updatedAt ? { label: t('common.updated'), value: i18n.formatDateTime(chart.updatedAt) } : null].filter(Boolean);
@@ -180,6 +219,20 @@
             h('h4', { text: chart.name || t('viz.name') }), kv,
             h('p', { class: 'dm-help', text: t('viz.kind.' + chart.kind + '.help') }),
             spec ? h('details', { class: 'dm-more' }, h('summary', { text: t('viz.spec') }), h('pre', { class: 'dm-viz-spec', text: spec })) : null);
+        }
+
+        // Command palette: new chart, gallery, every saved chart and every dashboard.
+        if (ctx.palette) {
+          ctx.palette.register(async () => {
+            const ds = selectedDataset();
+            const cmds = [];
+            if (ds) cmds.push({ id: 'viz:new', label: t('viz.new'), hint: ds.name, group: t('palette.group.charts'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newChart(); } });
+            cmds.push({ id: 'viz:gallery', label: t('viz.gallery'), group: t('palette.group.charts'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openGallery(); } });
+            for (const c of await charts.list()) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: c.kind === 'r' ? 'terminal' : 'chart-column', run: async () => { shell.activate('visualisera'); await openChart(c); } });
+            cmds.push({ id: 'dash:new', label: t('dash.new'), group: t('palette.group.dashboards'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newDashboard(); } });
+            for (const d of await dashboards.list()) cmds.push({ id: 'dash:' + d.id, label: t('palette.dash.open', { name: d.name }), hint: t('viz.count', { n: (d.items || []).length }), group: t('palette.group.dashboards'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openDashboard(d); } });
+            return cmds;
+          });
         }
 
         return { id: 'visualisera', activate, deactivate };

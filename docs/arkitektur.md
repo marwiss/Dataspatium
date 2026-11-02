@@ -139,7 +139,14 @@ nätverkstrafik behövs; `tests/index.html?live=1` kör dessutom ett röktest mo
 - `d3-templates.js`: mallar med parameterschema som ritar SVG med D3.
 - `export.js`: SVG med inbäddat typsnitt, PNG via canvas och PDF via jsPDF och svg2pdf.js (laddas vid behov).
 - `charts.js`: sparade diagram i IndexedDB-tabellen `charts` och viz-filer (`dataspatium-viz/1`); `render.js`
-  renderar vilket sparat diagram som helst; `batch.js` skapar ett diagram per gruppvärde till en ZIP.
+  renderar vilket sparat diagram som helst (med `extraFilters` för dashboards och batch); `batch.js` skapar ett
+  diagram per gruppvärde till en ZIP eller, med `deck`, en PowerPoint med en bild per grupp.
+- `pptx.js`: PowerPoint via PptxGenJS (laddas vid behov): titelbild och en bild per diagram, renderade headless
+  till PNG.
+- `dashboards.js`: dashboards i IndexedDB-tabellen `dashboards` (Dexie version 5): diagram i ordning med
+  kolumnbredd, gemensamma filterkolumner (`sharedColumns` är snittet av de ingående datamängdernas kolumner),
+  dash-filer (`dataspatium-dash/1`) med diagramdefinitionerna inbäddade, samt export till fristående HTML och
+  PowerPoint. Vyn är `src/ui/viz/dashboard-view.js`; den sparar ändringar automatiskt.
 
 UI:t ligger i `src/ui/viz/` (byggarens kontroller, D3-formulär, R-panel, galleri, export- och batchdialog) och
 monteras av läget Visualisera; Exportera återanvänder dialogerna.
@@ -168,6 +175,12 @@ sparstatus) och ger varje läge samma tre ytor (vänster, mitten, höger) och sa
 `{ id, activate(slots), deactivate() }` som skapas av `createMode(ctx)` i `src/ui/modes/`. Läget prenumererar
 själv på tillståndet medan det är aktivt. Skalet lyssnar på datamängdernas händelser `dirty`, `saving` och
 `saved` och visar sparstatusen i övre raden.
+
+Kommandopaletten (`src/ui/shell/command-palette.js`, Ctrl+K) samlar kommandon från leverantörer: skalet bidrar
+med lägen, datamängder, arbetsyta, tema och hjälp, och varje läge registrerar sina egna via `ctx.palette.register`
+(Bearbeta alla åtgärder på den valda datamängden, Visualisera diagram och dashboards, Exportera dataexport). Ett
+kommando är `{id, label, hint, group, icon, keywords, run}`; träffar poängsätts (prefix, ordstart, delsträng,
+nyckelord) och senast körda kommandon sparas i inställningen `palette:recent`.
 
 Dialogerna i Bearbeta ligger i `src/ui/op-dialog.js` (formulär genererat ur en åtgärds parameterschema, med
 förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, recept, kategorier, aggregera,

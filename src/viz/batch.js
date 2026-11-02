@@ -48,6 +48,35 @@
       return { blob, count: names.length, files: names, errors };
     }
 
-    return { run, fileName };
+    /**
+     * One PowerPoint slide per group value (Vega and D3 headless; R through options.renderR).
+     * @param {any} chart
+     * @param {{groupColumn: string, width?: number, limit?: number, signal?: AbortSignal, onProgress?: Function, renderR?: Function}} options
+     * @returns {Promise<{blob: Blob, count: number, errors: Array<{group: any, message: string}>}>}
+     */
+    async function deck(chart, options) {
+      const pptx = D.require('viz/pptx');
+      const values = await vizData.distinctValues(chart.datasetId, options.groupColumn, options.limit || 500);
+      if (!values.length) throw new Error('Grupperingskolumnen saknar värden.');
+      const slides = []; const errors = [];
+      let done = 0;
+      for (const value of values) {
+        if (options.signal && options.signal.aborted) throw Object.assign(new Error('Avbrutet.'), { kind: 'aborted' });
+        try {
+          const png = chart.kind === 'r'
+            ? await (options.renderR ? options.renderR(chart, value, 'png') : Promise.reject(new Error('R-diagram kräver R-sessionen.')))
+            : await render.toBlob(chart, 'png', { extraFilters: [{ field: options.groupColumn, op: '=', value }], titleSuffix: ` – ${value}`, width: options.width || 1200, scale: 2 });
+          const size = await pptx.imageSize(png);
+          slides.push({ title: `${chart.name || 'Diagram'} – ${value}`, png, width: size.width, height: size.height, note: chart.datasetName || '' });
+        } catch (err) { errors.push({ group: value, message: (err && err.message) || String(err) }); }
+        done++;
+        if (options.onProgress) options.onProgress({ done, total: values.length, value });
+      }
+      if (!slides.length) throw new Error('Inga diagram kunde skapas: ' + (errors[0] ? errors[0].message : ''));
+      const blob = await pptx.build({ title: chart.name || 'Diagram', subtitle: [chart.datasetName, `${options.groupColumn}: ${values.length}`].filter(Boolean).join(' · '), slides });
+      return { blob, count: slides.length, errors };
+    }
+
+    return { run, deck, fileName };
   });
 })();

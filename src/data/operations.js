@@ -203,6 +203,65 @@
       toR: (p) => p.mode === 'constant' ? `df$${q(p.column)}[is.na(df$${q(p.column)})] <- ${rstr(p.value)}` : `df$${q(p.column)} <- zoo::na.locf(df$${q(p.column)}, na.rm = FALSE)`,
     });
 
+    // Pseudonymisation of identifiers (personnummer, customer ids) before sharing. Hashing with a salt is
+    // pseudonymisation, not anonymisation: the same input gives the same output, and anyone who knows the salt
+    // can test candidates. The salt is marked secret and never written to the log or the recipe.
+    define({
+      id: 'pseudonymize', group: 'values',
+      params: [
+        { name: 'columns', type: 'columns', required: true },
+        { name: 'method', type: 'select', required: true, options: ['hash', 'mask', 'sequence'], default: 'hash' },
+        { name: 'salt', type: 'text', secret: true },
+        { name: 'length', type: 'number', default: 16 },
+        { name: 'keepStart', type: 'number', default: 0 },
+        { name: 'keepEnd', type: 'number', default: 0 },
+        { name: 'prefix', type: 'text', default: 'P' },
+      ],
+      hashLength(p) { return Math.max(4, Math.min(64, Number(p.length) || 16)); },
+      seqWidth(p) { return Math.max(1, Math.min(12, Number(p.length) || 6)); },
+      expr(p, name) {
+        const c = `cast(${q(name)} as text)`;
+        if (p.method === 'mask') return `dm_mask(${c}, ${Number(p.keepStart) || 0}, ${Number(p.keepEnd) || 0}, '*')`;
+        return `dm_hash(${c}, ${lit(p.salt || '')}, ${this.hashLength(p)})`;
+      },
+      async preview(ctx, p) { let rows = 0; for (const n of p.columns) { const r = await ctx.engine.exec(`select count(*) from data where ${q(n)} is not null`); rows += Number(r[0].values[0][0]); } return { rows }; },
+      async apply(ctx, p) {
+        let rows = 0;
+        for (const n of p.columns) {
+          if (p.method === 'sequence') {
+            // Stable running numbers per distinct value, numbered in sorted order of the original values.
+            const width = this.seqWidth(p);
+            await ctx.engine.run('drop table if exists temp._dm_seq');
+            await ctx.engine.run(`create temp table _dm_seq as select v, row_number() over (order by v) as r from (select distinct ${q(n)} as v from data where ${q(n)} is not null)`);
+            await ctx.engine.run('create index temp._dm_seq_v on _dm_seq(v)');
+            rows += await ctx.engine.run(`update data set ${q(n)} = (select ${lit(String(p.prefix || 'P'))} || substr('000000000000' || r, -${width}, ${width}) from _dm_seq where _dm_seq.v = data.${q(n)}) where ${q(n)} is not null`);
+            await ctx.engine.run('drop table if exists temp._dm_seq');
+          } else {
+            rows += await ctx.engine.run(`update data set ${q(n)} = ${this.expr(p, n)} where ${q(n)} is not null`);
+          }
+          const col = ctx.column(n);
+          if (col && col.type !== 'text') ctx.setType(n, 'text');
+        }
+        return { rows };
+      },
+      toSQL(p) {
+        return p.columns.map((n) => (p.method === 'sequence'
+          ? `-- ${q(n)}: löpnummer per unikt värde (utförs av appen med en temporär tabell)`
+          : `UPDATE data SET ${q(n)} = ${this.expr(p, n)};  -- dm_hash och dm_mask är Dataspatiums SQL-funktioner`));
+      },
+      toR(p) {
+        const lines = [];
+        if (p.method === 'mask') lines.push('dm_mask <- function(x, keep_start = 0, keep_end = 0, ch = "*") { vapply(as.character(x), function(s) { if (is.na(s)) return(NA_character_); chars <- strsplit(s, "")[[1]]; n <- length(chars); idx <- seq_len(n); keep <- idx <= keep_start | idx > n - keep_end | grepl("[[:space:]/.+-]", chars); paste0(ifelse(keep, chars, ch), collapse = "") }, "", USE.NAMES = FALSE) }');
+        for (const n of p.columns) {
+          const col = `df$${q(n)}`;
+          if (p.method === 'mask') lines.push(`${col} <- dm_mask(${col}, ${Number(p.keepStart) || 0}, ${Number(p.keepEnd) || 0})`);
+          else if (p.method === 'sequence') lines.push(`${col} <- ifelse(is.na(${col}), NA, paste0(${rstr(p.prefix || 'P')}, formatC(as.integer(factor(${col})), width = ${this.seqWidth(p)}, flag = "0")))`);
+          else lines.push(`${col} <- substr(vapply(${p.salt ? `paste0(${rstr(p.salt)}, "|", as.character(${col}))` : `as.character(${col})`}, digest::digest, "", algo = "sha256", serialize = FALSE), 1, ${this.hashLength(p)})  # kräver paketet digest`);
+        }
+        return lines.join('\n');
+      },
+    });
+
     define({
       id: 'edit_cell', group: 'values',
       params: [{ name: 'rowid', type: 'number', required: true }, { name: 'column', type: 'column', required: true }, { name: 'value', type: 'text' }],

@@ -6,6 +6,11 @@ lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänste
 egenskapspanelen till höger och loggen längst ned. Panelerna byter aldrig plats. Alt+1 till Alt+6 växlar läge.
 En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera.
 
+Kommandopaletten (Ctrl+K eller förstoringsglaset högst upp) når allt från ett sökfält: växla läge, öppna en
+datamängd, ett diagram eller en dashboard, köra en bearbetningsåtgärd på den valda datamängden, exportera, öppna
+arbetsytan, byta tema eller söka efter uppdatering. Pil upp och ned väljer, Enter kör och Esc stänger; de senast
+körda kommandona ligger överst.
+
 ## Inhämta
 
 Här kommer data in: filer som släpps på ytan, inklistrad text och öppna API:er. Filimporten går i steg: fil,
@@ -47,13 +52,14 @@ och eventuellt Python.
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,
 histogram, värmekartor, låddiagram och cirklar; D3-mallar för rangordning, lutningsdiagram och
-befolkningspyramid; och R-skript med ggplot2. Sparade diagram kan exporteras som SVG, PNG och PDF, delas som
-viz-filer, visas i ett galleri eller som panel och skapas i batch per grupp. Se [visualisera.md](visualisera.md).
+befolkningspyramid; och R-skript med ggplot2. Sparade diagram kan exporteras som SVG, PNG, PDF och PowerPoint,
+delas som viz-filer, visas i ett galleri och skapas i batch per grupp. Dashboards samlar sparade diagram i ett
+rutnät med gemensamma filter och exporteras som HTML eller PowerPoint. Se [visualisera.md](visualisera.md).
 
 ## Exportera
 
 Tre flikar. **Data**: CSV (Excel-anpassad eller standard), Excel, ODS, JSON, XML, SQLite samt via R: Parquet,
-SPSS, Stata och RDS. **Diagram**: sparade diagram som
+SPSS, Stata och RDS. **Diagram**: sparade diagram och dashboards (även alla diagram som en PowerPoint) som
 SVG, PNG och PDF, enstaka eller i batch per grupp till ZIP. **Dokument**: rapporter, kodböcker och sammanställningar
 ur mallar i Markdown med platshållare, som HTML, Word, PDF, Markdown eller LaTeX, enstaka eller i batch per grupp
 (se [dokumentmallar.md](dokumentmallar.md)). Senare: Dataspatium-paket för delning av hela arbetsytor.

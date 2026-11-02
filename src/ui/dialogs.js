@@ -12,7 +12,7 @@
       const { h, t, i18n, replace } = base;
       const GROUPS = [
         { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'drop_columns', 'reorder_columns'] },
-        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'fill_missing'] },
+        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'fill_missing', 'pseudonymize'] },
         { id: 'rows', ops: ['delete_rows', 'remove_duplicates'] },
         { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'pivot_longer', 'pivot_wider', 'sql'] },
         { id: 'derive', ops: ['aggregate', 'join', 'append', 'clusters'] },

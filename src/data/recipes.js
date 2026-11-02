@@ -37,6 +37,7 @@
         case 'set_type': return `Ändra typ för ${params.column} till ${params.type}${n}`;
         case 'replace_text': return `Ersätt "${params.find}" med "${params.replace || ''}" i ${cols}${n}`;
         case 'trim': return `Trimma ${cols}${n}`;
+        case 'pseudonymize': return `Pseudonymisera ${cols} (${params.method === 'mask' ? 'maskering' : params.method === 'sequence' ? 'löpnummer' : 'hash'})${n}`;
         case 'change_case': return `Ändra skiftläge (${params.mode}) i ${cols}${n}`;
         case 'fix_encoding': return `Reparera teckenkodning i ${cols}${n}`;
         case 'replace_value': return `Ersätt värde i ${params.column}${n}`;
@@ -82,7 +83,7 @@
       }
       if (ctx.columnsChanged) await datasets.writeColumns(handle, ctx.columns);
       const description = options.description || describe(opId, params, result);
-      await datasets.appendLog(handle, options.logAction || 'op', { op: opId, params, result: result || {}, description });
+      await datasets.appendLog(handle, options.logAction || 'op', { op: opId, params: redactSecrets(op, params), result: result || {}, description });
       await datasets.refreshCounts(handle);
       datasets.scheduleSave(id);
       return result || {};
@@ -116,10 +117,24 @@
     }
 
     /** Replay recipe steps on another dataset. Stops at the first failing step. */
+    /** Secret parameters (salts) are never written to the log or the recipe. */
+    function redactSecrets(op, params) {
+      const secret = ((op && op.params) || []).filter((p) => p.secret && params && params[p.name] !== undefined && params[p.name] !== '');
+      if (!secret.length) return params;
+      const out = Object.assign({}, params);
+      for (const p of secret) out[p.name] = '***';
+      return out;
+    }
+
     async function replay(targetId, recipeSteps) {
       const done = [];
       for (const step of recipeSteps) {
-        try { await apply(targetId, step.op, step.params); done.push({ step, ok: true }); }
+        try {
+          const op = ops.get(step.op);
+          const missing = ((op && op.params) || []).filter((p) => p.secret && step.params && step.params[p.name] === '***');
+          if (missing.length) throw new Error(`Steget "${step.op}" kräver ett hemligt värde (${missing.map((p) => p.name).join(', ')}) som inte sparas i receptet. Kör steget på nytt och ange värdet.`);
+          await apply(targetId, step.op, step.params); done.push({ step, ok: true });
+        }
         catch (err) { done.push({ step, ok: false, error: (err && err.message) || String(err) }); break; }
       }
       return done;

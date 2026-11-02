@@ -8,14 +8,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/exportera', ['ui/base', 'io/export', 'viz/charts', 'ui/viz/export-dialog', 'ui/docs/document-panel'], (base, exporter, charts, exportDialog, documentPanel) => {
+  D.define('ui/modes/exportera', ['ui/base', 'io/export', 'viz/charts', 'ui/viz/export-dialog', 'ui/docs/document-panel', 'viz/dashboards', 'viz/pptx'], (base, exporter, charts, exportDialog, documentPanel, dashboards, pptx) => {
     const { h, t, i18n, replace } = base;
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
       let slots = null; let unsubscribe = null; let unsubCharts = null;
       const form = { format: 'csv', profile: 'excel-sv', filename: '' };
-      let chartList = [];
+      let chartList = []; let dashList = []; let unsubDash = null;
       let tab = 'data';
       let docPanel = null;
 
@@ -23,10 +23,12 @@
         slots = s;
         unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) { render(); } });
         unsubCharts = charts.subscribe(() => charts.list().then((l) => { chartList = l; if (tab === 'charts') render(); }));
+        unsubDash = dashboards.subscribe(() => dashboards.list().then((l) => { dashList = l; if (tab === 'charts') render(); }));
         charts.list().then((l) => { chartList = l; if (tab === 'charts') render(); });
+        dashboards.list().then((l) => { dashList = l; if (tab === 'charts') render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubCharts) unsubCharts(); if (docPanel) { docPanel.destroy(); docPanel = null; } }
+      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubCharts) unsubCharts(); if (unsubDash) unsubDash(); if (docPanel) { docPanel.destroy(); docPanel = null; } }
 
       function tabs() {
         const el = /** @type {any} */ (h('dm-tabs'));
@@ -67,16 +69,55 @@
 
       /** Saved charts with export and batch actions. */
       function chartsCard() {
-        return h('div', { class: 'dm-card dm-stack' },
-          h('h3', { text: t('export.charts.saved') }),
-          chartList.length ? h('div', { class: 'dm-list' }, chartList.map((c) => h('div', { class: 'dm-list-item', style: { cursor: 'default' } },
-            ui.icon(c.kind === 'r' ? 'terminal' : 'chart-column', 16),
-            h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: [t('viz.kind.badge.' + c.kind), c.datasetName].filter(Boolean).join(' · ') })),
-            h('span', { class: 'dm-row' },
-              c.kind !== 'r' ? ui.button({ label: t('viz.export'), icon: 'download', size: 'sm', onClick: () => exportDialog.exportChart(c) }) : null,
-              c.kind !== 'r' ? ui.button({ label: t('viz.batch'), icon: 'layers', size: 'sm', onClick: () => exportDialog.batchChart(c) }) : null,
-              c.kind === 'r' ? ui.button({ label: t('export.charts.open'), size: 'sm', onClick: () => shell.activate('visualisera') }) : null))))
-            : h('p', { class: 'dm-help', text: t('export.charts.none') }));
+        const exportable = chartList.filter((c) => c.kind !== 'r');
+        return h('div', { class: 'dm-stack' },
+          h('div', { class: 'dm-card dm-stack' },
+            h('div', { class: 'dm-row' }, h('h3', { class: 'dm-grow', text: t('export.charts.saved') }), exportable.length ? ui.button({ label: t('viz.export.pptx.all'), icon: 'file-output', size: 'sm', onClick: () => allChartsPptx(exportable) }) : null),
+            chartList.length ? h('div', { class: 'dm-list' }, chartList.map((c) => h('div', { class: 'dm-list-item', style: { cursor: 'default' } },
+              ui.icon(c.kind === 'r' ? 'terminal' : 'chart-column', 16),
+              h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: [t('viz.kind.badge.' + c.kind), c.datasetName].filter(Boolean).join(' · ') })),
+              h('span', { class: 'dm-row' },
+                c.kind !== 'r' ? ui.button({ label: t('viz.export'), icon: 'download', size: 'sm', onClick: () => exportDialog.exportChart(c) }) : null,
+                c.kind !== 'r' ? ui.button({ label: t('viz.batch'), icon: 'layers', size: 'sm', onClick: () => exportDialog.batchChart(c) }) : null,
+                c.kind === 'r' ? ui.button({ label: t('export.charts.open'), size: 'sm', onClick: () => shell.activate('visualisera') }) : null))))
+              : h('p', { class: 'dm-help', text: t('export.charts.none') })),
+          h('div', { class: 'dm-card dm-stack' },
+            h('h3', { text: t('export.dashboards') }),
+            dashList.length ? h('div', { class: 'dm-list' }, dashList.map((d) => h('div', { class: 'dm-list-item', style: { cursor: 'default' } },
+              ui.icon('layout-grid', 16),
+              h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: d.name }), h('span', { class: 'dm-list-sub dm-truncate', text: t('viz.count', { n: (d.items || []).length }) })),
+              h('span', { class: 'dm-row' },
+                ui.button({ label: t('dash.export.html'), icon: 'file-text', size: 'sm', onClick: () => dashExport(d, 'html') }),
+                ui.button({ label: t('dash.export.pptx'), icon: 'file-output', size: 'sm', onClick: () => dashExport(d, 'pptx') })))))
+              : h('p', { class: 'dm-help', text: t('export.dashboards.none') })));
+      }
+
+      async function allChartsPptx(list) {
+        const toast = ui.toast.show(t('common.loading'), { kind: 'info', timeout: 0 });
+        try {
+          const res = await pptx.fromCharts(list, { title: t('export.charts.saved'), subtitle: t('dash.html.generated', { date: i18n.formatDateTime(new Date()) }) });
+          const name = services.files.safeName('dataspatium-diagram', 'pptx');
+          services.files.download(res.blob, name);
+          shell.log(t('viz.export.pptx.done', { name, n: res.count }), 'ok'); ui.toast.show(t('viz.export.pptx.done', { name, n: res.count }), { kind: 'ok' });
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 10000 }); }
+        finally { toast.remove(); }
+      }
+
+      async function dashExport(d, kind) {
+        const toast = ui.toast.show(t('common.loading'), { kind: 'info', timeout: 0 });
+        try {
+          const opts = { filtersLabel: t('dash.filters.label'), generatedText: t('dash.html.generated', { date: i18n.formatDateTime(new Date()) }) };
+          if (kind === 'html') {
+            const blob = await dashboards.toHtml(d, opts);
+            const name = services.files.safeName(d.name || 'dashboard', 'html');
+            services.files.download(blob, name); ui.toast.show(t('dash.exported', { name }), { kind: 'ok' });
+          } else {
+            const res = await dashboards.toPptx(d, opts);
+            const name = services.files.safeName(d.name || 'dashboard', 'pptx');
+            services.files.download(res.blob, name); ui.toast.show(t('viz.export.pptx.done', { name, n: res.count }), { kind: 'ok' });
+          }
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 10000 }); }
+        finally { toast.remove(); }
       }
 
       function dataForm(ds) {
@@ -106,6 +147,15 @@
           h('div', { class: 'dm-form-grid' }, formatSel, form.format === 'csv' ? profileSel : null, filename),
           fmt.viaR ? h('p', { class: 'dm-help dm-small', text: t('export.viaR.hint') }) : null,
           h('div', null, runBtn));
+      }
+
+      // Command palette: export the selected dataset.
+      if (ctx.palette) {
+        ctx.palette.register(() => {
+          const state = store.get();
+          const ds = state.datasets.find((d) => d.id === state.selectedId);
+          return ds ? [{ id: 'export:data', label: t('palette.export.data', { name: ds.name }), group: t('palette.group.export'), icon: 'file-output', run: () => { tab = 'data'; shell.activate('exportera'); } }] : [];
+        });
       }
 
       return { id: 'exportera', activate, deactivate };

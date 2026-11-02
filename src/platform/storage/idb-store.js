@@ -27,6 +27,7 @@
           instance.version(2).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt' });
           instance.version(3).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt' });
           instance.version(4).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt' });
+          instance.version(5).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt' });
           await instance.open();
           db = instance;
           return instance;
@@ -96,6 +97,10 @@
     async function getChart(id) { const d = await open(); return d.charts.get(id); }
     async function putChart(chart) { const d = await open(); await d.charts.put(chart); return chart; }
     async function deleteChart(id) { const d = await open(); await d.charts.delete(id); }
+    async function listDashboards() { const d = await open(); return d.dashboards.orderBy('updatedAt').reverse().toArray(); }
+    async function getDashboard(id) { const d = await open(); return d.dashboards.get(id); }
+    async function putDashboard(dash) { const d = await open(); await d.dashboards.put(dash); return dash; }
+    async function deleteDashboard(id) { const d = await open(); await d.dashboards.delete(id); }
 
     // ---- document templates ----
     async function listDocuments() { const d = await open(); return d.documents.orderBy('updatedAt').reverse().toArray(); }
@@ -118,6 +123,6 @@
     /** Remove everything (used by tests and by "återställ arbetsytan"). */
     async function clearAll() { const d = await open(); await d.transaction('rw', d.datasets, d.blobs, d.settings, async () => { await d.datasets.clear(); await d.blobs.clear(); await d.settings.clear(); }); }
 
-    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
+    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDashboards, getDashboard, putDashboard, deleteDashboard, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
   });
 })();

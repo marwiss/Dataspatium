@@ -56,23 +56,44 @@ Export sker via R (svglite för SVG, `png()` och `pdf()`), och batchkörningar k
 
 ## Exportera
 
-**Exportera** öppnar en dialog med format (PNG, SVG, PDF), bredd, höjd, skala för PNG och filnamn. PNG ritas i
-webbläsaren med appens typsnitt. SVG innehåller typsnittet inbäddat så att filen ser likadan ut på andra datorer.
-PDF är vektorgrafik (jsPDF och svg2pdf.js); text sätts med PDF-standardtypsnittet Helvetica. Diagrammen kan
-också exporteras från läget Exportera, där alla sparade diagram listas.
+**Exportera** öppnar en dialog med format (PNG, SVG, PDF, PowerPoint), bredd, höjd, skala för PNG och filnamn.
+PNG ritas i webbläsaren med appens typsnitt. SVG innehåller typsnittet inbäddat så att filen ser likadan ut på
+andra datorer. PDF är vektorgrafik (jsPDF och svg2pdf.js); text sätts med PDF-standardtypsnittet Helvetica.
+PowerPoint (pptx, via PptxGenJS) ger en presentation med en titelbild och diagrammet som bild i hög upplösning; i
+läget Exportera finns dessutom **Alla diagram som PowerPoint**, en bild per sparat diagram. Diagrammen kan också
+exporteras från läget Exportera, där alla sparade diagram listas.
 
 ## Batch per grupp
 
 **Batch per grupp** skapar diagrammet en gång per värde i en grupperingskolumn (till exempel varje kommun eller
 år), filtrerat på värdet och med värdet i rubriken, och packar alla filer i en ZIP tillsammans med `manifest.json`.
 Välj kolumn, format (ett eller flera), filnamnsmönster (`{diagram}` och `{grupp}` ersätts), bredd och högsta
-antal grupper. Körningen kan avbrytas. Grupper som misslyckas listas i manifestet.
+antal grupper. Körningen kan avbrytas. Grupper som misslyckas listas i manifestet. Formatet PowerPoint ger i
+stället för en ZIP en enda presentation med en bild per grupp.
 
 ## Galleri och panel
 
 **Galleri** visar alla sparade diagram som kort med miniatyr, datamängd och tidpunkt. Välj antal kolumner, och
 tryck **Rendera alla (panel)** för att rita diagrammen live sida vid sida. Härifrån öppnas, exporteras och tas
 diagram bort.
+
+## Dashboards
+
+En dashboard är ett namngivet urval av sparade diagram i ett rutnät med gemensamma filter. Skapa en med **Ny
+dashboard** i objektpanelen, ge den ett namn och klicka på **Lägg till diagram** för att välja bland de sparade
+diagrammen. Varje kort kan göras bredare (en, två eller tre kolumner), flyttas upp eller ned, öppnas i byggaren
+eller tas bort från dashboarden; antal kolumner i rutnätet och en beskrivning sätts i egenskapspanelen. Alla
+ändringar sparas automatiskt.
+
+**Filter** visar de kolumner som finns i alla datamängder som dashboardens diagram använder (text, heltal, datum
+och ja/nej). Varje valt filter blir en väljare ovanför diagrammen, och valet gäller alla Vega- och D3-diagram
+samtidigt (R-diagram visas som sparad bild). Filtren läggs till diagrammens egna filter.
+
+Dashboarden exporteras som fristående **HTML** (diagrammen som inbäddad SVG, med de aktiva filtren angivna), som
+**PowerPoint** (titelbild plus en bild per diagram) eller delas som `*.dash.json`, en fil som innehåller
+diagrammens definitioner. Vid import kopplas diagrammen till befintliga diagram med samma namn och datamängd; de
+som saknas återskapas ur filen. Säkerhetskopian och den portabla mappen innehåller alla dashboards. Dashboards kan
+också öppnas via kommandopaletten (Ctrl+K) och exporteras från läget Exportera.
 
 ## Dela diagram
 
@@ -85,4 +106,5 @@ Säkerhetskopian av arbetsytan (Hantera) innehåller alla diagram som sådana fi
 - Diagrammen lever i webbläsaren; mycket stora datamängder utan aggregering begränsas till radgränsen.
 - PDF använder Helvetica, inte Inter, för text.
 - R-diagram kräver att R-sessionen är startad och exporteras därför bara från Visualisera.
-- Kartor med kommungränser och interaktiva paneler med gemensamma filter kommer i en senare fas.
+- Kartor med kommungränser kommer i en senare utgåva.
+- PowerPoint-export använder bilder (PNG) av diagrammen, inte redigerbara PowerPoint-diagram.

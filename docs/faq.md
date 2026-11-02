@@ -73,6 +73,13 @@ Ja, om arbetsgivaren är en myndighet, kommun, region, skola, ett lärosäte ell
 säga icke-kommersiell användning. Kommersiell användning kräver tillstånd från licensgivaren. Se
 [licenser.md](licenser.md).
 
+## Kan jag ta bort personnummer innan jag delar en datamängd?
+
+Ja. Åtgärden *Pseudonymisera* i Bearbeta ersätter identifierare med saltade hashvärden, maskerade värden eller
+löpnummer, och datakvalitetsprofilen föreslår den när en kolumn ser ut att innehålla personnummer. Det är
+pseudonymisering, inte anonymisering: andra kolumner kan fortfarande peka ut personer, så gå igenom hela
+datamängden innan du delar den. Se [bearbeta.md](bearbeta.md).
+
 ## Hur delar jag data med en kollega?
 
 Exportera datamängden som SQLite (behåller typer, etiketter och historik) eller ta en säkerhetskopia av hela

@@ -181,3 +181,20 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-doc-help li { font-size: var(--dm-text-xs); }
 .dm-doc-help-pre { font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); background: var(--dm-bg); padding: var(--dm-s-2); border-radius: var(--dm-radius-sm); white-space: pre-wrap; margin: 0 0 var(--dm-s-2); }
 @media (max-width: 1100px) { .dm-doc-layout { grid-template-columns: 1fr; } }
+
+/* Command palette (Ctrl+K) */
+dialog.dm-palette { width: min(640px, calc(100vw - 32px)); margin-top: 10vh; padding: 0; }
+.dm-palette-head { display: flex; align-items: center; gap: var(--dm-s-2); padding: var(--dm-s-3) var(--dm-s-4); border-bottom: 1px solid var(--dm-border); color: var(--dm-text-muted); }
+.dm-palette-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--dm-text); font: inherit; }
+.dm-palette-list { list-style: none; margin: 0; padding: var(--dm-s-2); max-height: 50vh; overflow: auto; }
+.dm-palette-item { display: flex; align-items: center; gap: var(--dm-s-3); padding: var(--dm-s-2) var(--dm-s-3); border-radius: var(--dm-radius-sm); cursor: pointer; color: var(--dm-text); }
+.dm-palette-item[aria-selected="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); }
+.dm-palette-item .dm-list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dm-palette-group { font-size: var(--dm-text-xs); color: var(--dm-text-faint); white-space: nowrap; }
+.dm-palette-empty { padding: var(--dm-s-3); color: var(--dm-text-muted); }
+.dm-palette-hint { margin: 0; padding: var(--dm-s-2) var(--dm-s-4) var(--dm-s-3); font-size: var(--dm-text-xs); color: var(--dm-text-faint); border-top: 1px solid var(--dm-border); }
+
+/* Dashboards */
+.dm-dashboard-filters { align-items: flex-end; padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); }
+.dm-dashboard-filters[hidden] { display: none; }
+.dm-dashboard-grid .dm-chart-preview { min-height: 200px; }

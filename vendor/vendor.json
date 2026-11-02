@@ -182,6 +182,14 @@
       "homepage": "https://github.com/yWorks/svg2pdf.js",
       "files": [ { "path": "dist/svg2pdf.umd.min.js", "as": "svg2pdf.umd.min.js", "wrap": false } ]
     },
+    "pptxgenjs": {
+      "version": "4.0.1",
+      "npm": "pptxgenjs",
+      "license": "MIT",
+      "homepage": "https://gitbrent.github.io/PptxGenJS/",
+      "notes": "PowerPoint export of charts and dashboards (one chart per slide). The browser bundle includes JSZip (MIT).",
+      "files": [ { "path": "dist/pptxgen.bundle.js", "as": "pptxgen.bundle.js", "wrap": false } ]
+    },
     "jspdf-autotable": {
       "version": "5.0.9",
       "npm": "jspdf-autotable",

@@ -46,8 +46,17 @@
         files[path] = D.require('docgen/documents').exportJson(doc);
         docEntries.push({ id: doc.id, name: doc.name, file: path });
       }
-      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: 'workspace-backup', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries }, null, 2);
-      return { files, counts: { datasets: list.length, charts: charts.length, documents: docs.length } };
+      // Dashboards travel as self-contained dash files (chart definitions embedded).
+      const dashMod = D.has('viz/dashboards') ? D.require('viz/dashboards') : null;
+      const dashes = dashMod ? await dashMod.list() : [];
+      const dashEntries = [];
+      for (const dash of dashes) {
+        const path = `dashboards/${dash.id}.dash.json`;
+        files[path] = await dashMod.exportJson(dash);
+        dashEntries.push({ id: dash.id, name: dash.name, file: path });
+      }
+      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: 'workspace-backup', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries }, null, 2);
+      return { files, counts: { datasets: list.length, charts: charts.length, documents: docs.length, dashboards: dashes.length } };
     }
 
     /** @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>} */
@@ -103,7 +112,20 @@
           } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
         }
       }
-      return { manifest, imported, skipped, charts, documents, existing };
+      const dashboardsOut = [];
+      if (D.has('viz/dashboards')) {
+        const dashMod = D.require('viz/dashboards');
+        const have = options.dedupe ? await dashMod.list() : [];
+        for (const [path, bytes] of Object.entries(entries)) {
+          if (!/\.dash\.json$/i.test(path)) continue;
+          try {
+            const text = zip.text(bytes);
+            if (options.dedupe) { const obj = JSON.parse(text); if (have.some((d) => d.name === obj.name)) { existing++; continue; } }
+            dashboardsOut.push(await dashMod.importJson(text));
+          } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
+        }
+      }
+      return { manifest, imported, skipped, charts, documents, dashboards: dashboardsOut, existing };
     }
 
     /** @param {Blob|ArrayBuffer} source */
@@ -141,7 +163,7 @@
         // The manifest, charts and templates are small and always rewritten.
         const { files } = await collect({ datasetIds: [] });
         for (const [path, data] of Object.entries(files)) await folder.writeFile(root, path, data);
-        for (const prefix of ['charts/', 'documents/']) {
+        for (const prefix of ['charts/', 'documents/', 'dashboards/']) {
           for (const path of await folder.listFiles(root, prefix)) if (!(path in files)) { await folder.removeFile(root, path); removed++; }
         }
         fs.lastSync = new Date().toISOString(); fs.error = '';
@@ -155,7 +177,7 @@
     /** Read a folder written by saveToFolder; datasets, charts and templates already present are skipped. */
     async function loadFromFolder(root) {
       if (!root) throw new Error('Ingen mapp vald.');
-      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p);
+      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p);
       /** @type {Record<string, Uint8Array>} */
       const entries = {};
       for (const path of await folder.listFiles(root)) if (wanted(path)) entries[path] = await folder.readFile(root, path);

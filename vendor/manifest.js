@@ -1954,6 +1954,16 @@ Dataspatium.assets.manifest({
    ],
    "assets": 0
   },
+  "pptxgenjs": {
+   "version": "4.0.1",
+   "license": "MIT",
+   "homepage": "https://gitbrent.github.io/PptxGenJS/",
+   "direct": [
+    "pptxgen.bundle.js"
+   ],
+   "assets": 0,
+   "notes": "PowerPoint export of charts and dashboards (one chart per slide). The browser bundle includes JSZip (MIT)."
+  },
   "jspdf-autotable": {
    "version": "5.0.9",
    "license": "MIT",

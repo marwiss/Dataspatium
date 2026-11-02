@@ -41,16 +41,19 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
   dataportal (se [docs/api-konfiguration.md](docs/api-konfiguration.md)).
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
-  koppla data, med ångra, versioner och recept som kan exporteras som R eller SQL (se
-  [docs/bearbeta.md](docs/bearbeta.md)).
+  koppla data, pseudonymisera personnummer inför delning, med ångra, versioner och recept som kan exporteras som
+  R eller SQL (se [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)) och en
   SQL-konsol, helt i webbläsaren.
-- **Visualisera**: diagram med Vega-Lite, D3-mallar eller R, exporterade som SVG, PNG och PDF, även i batch per
-  grupp (se [docs/visualisera.md](docs/visualisera.md)).
+- **Visualisera**: diagram med Vega-Lite, D3-mallar eller R, exporterade som SVG, PNG, PDF och PowerPoint, även i
+  batch per grupp, och dashboards med gemensamma filter som blir HTML eller PowerPoint (se
+  [docs/visualisera.md](docs/visualisera.md)).
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument
   per kommun eller år (se [docs/dokumentmallar.md](docs/dokumentmallar.md)).
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
   säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome, en portabel mapp med vanliga filer.
+- **Hitta snabbt**: kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder, diagram och dashboards och kör
+  åtgärder från ett enda sökfält.
 
 ## Lär dig mer
 

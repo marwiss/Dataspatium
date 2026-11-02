@@ -69,7 +69,26 @@ unika värden, intervall och iakttagelser. Iakttagelserna pekar på en åtgärd 
 - tal eller datum lagrade som text: Ändra typ
 - trolig teckenkodningsskada: Reparera teckenkodning
 - värden som bara skiljer sig i skiftläge: Ändra skiftläge
+- värden som ser ut som personnummer: Pseudonymisera
 - kolumn med samma värde på alla rader (upplysning)
+
+## Pseudonymisera
+
+Åtgärden **Pseudonymisera** (gruppen Värden, även i kolumnmenyn och kommandopaletten) ersätter identifierare som
+personnummer eller kundnummer inför delning. Tre metoder:
+
+- **Hashvärde**: SHA-256 av ett salt och värdet, förkortat till valfri längd (standard 16 tecken). Samma värde ger
+  samma hashvärde, så kopplingar mellan tabeller överlever om samma salt används. Saltet är en hemlig text som du
+  väljer; den sparas aldrig i loggen eller receptet (där står `***`), och ett recept med ett sådant steg kan inte
+  spelas upp utan att saltet anges på nytt.
+- **Maskera tecken**: behåller valfritt antal tecken i början och slutet samt skiljetecken, och ersätter resten
+  med `*` (`19800101-1234` blir `198001**-****` med sex tecken i början).
+- **Löpnummer**: varje unikt värde får ett löpnummer med prefix i sorterad ordning (`P0001`, `P0002`).
+
+Hashning med salt är pseudonymisering, inte anonymisering: den som känner saltet kan testa kandidater, och
+kombinationer av andra kolumner kan fortfarande peka ut personer. Ta bort eller grovklassa övriga känsliga
+kolumner, och dela aldrig saltet tillsammans med datan. Receptexporten till SQL använder Dataspatiums funktioner
+`dm_hash` och `dm_mask`; exporten till R använder paketet digest för hashvärden.
 
 ## Versioner
 

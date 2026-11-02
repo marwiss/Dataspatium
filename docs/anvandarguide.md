@@ -9,8 +9,10 @@ dokument i [dokumentmallar.md](dokumentmallar.md). Vanliga frågor besvaras i [f
 ## Arbetsytan
 
 Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Bearbeta, Analysera, Visualisera,
-Exportera; Alt+1 till Alt+6 fungerar också) och ser arbetsytans status (sparat eller osparat), tema (ljust eller
-mörkt) och hjälpknappen med versionsnummer och *Sök efter uppdatering*. Till vänster finns objekten för läget
+Exportera; Alt+1 till Alt+6 fungerar också) och ser arbetsytans status (sparat eller osparat), kommandopaletten
+(förstoringsglaset eller Ctrl+K), tema (ljust eller mörkt) och hjälpknappen med versionsnummer och *Sök efter
+uppdatering*. Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge,
+öppna en datamängd, ett diagram eller en dashboard, eller köra en bearbetningsåtgärd på den valda datamängden. Till vänster finns objekten för läget
 (datamängder, källor, diagram, mallar), i mitten arbetsytan och till höger inspektören med egenskaper och
 statistik. Längst ned ligger loggen, där varje åtgärd, varning och fel skrivs ut; det är den du läser när något inte
 blir som du tänkt.
@@ -42,7 +44,8 @@ med sökfältet. Dubbelklicka på en cell för att ändra den.
 teckenkodningsfel, avvikande kategorier) med en knapp som utför rätt åtgärd. Alla åtgärder finns också i paletten:
 ta bort tomma rader, trimma, skiftläge, sök och ersätt med reguljära uttryck, byt typ, tolka datum och tal, fyll
 saknade värden, dubbletter, klustra liknande kategorier och mer. Varje åtgärd loggas som ett receptsteg och kan
-ångras.
+ångras. Inför delning kan identifierare som personnummer pseudonymiseras med saltade hashvärden, maskering eller
+löpnummer; saltet sparas aldrig i receptet.
 
 ### 3. Kombinera och omforma (Bearbeta)
 
@@ -70,8 +73,9 @@ rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som rec
 Diagrambyggaren skapar stapel-, linje-, yt-, punkt-, cirkel- och andra diagram ur en datamängd: välj kolumner för
 axlar, färg och fasetter, aggregering, sortering och titlar. D3-mallar ger specialdiagram (lollipop, slopegraph,
 befolkningspyramid) och R-diagram kan sparas med sin kod. Alla motorer använder samma färger och typsnitt. Sparade
-diagram samlas i galleriet och exporteras som SVG, PNG eller PDF, enstaka eller ett per grupp (till exempel per
-kommun) till en ZIP.
+diagram samlas i galleriet och exporteras som SVG, PNG, PDF eller PowerPoint, enstaka eller ett per grupp (till
+exempel per kommun) till en ZIP eller en presentation. En dashboard samlar flera sparade diagram i ett rutnät med
+gemensamma filter, till exempel län eller år, och exporteras som fristående HTML eller PowerPoint.
 
 ### 6. Dokument (Exportera, fliken Dokument)
 
@@ -101,8 +105,8 @@ arbetsytan dessutom speglas till en portabel mapp på disk, automatiskt vid varj
 
 ## Tangentbord
 
-Alt+1 till Alt+6 växlar läge. Allt nås med Tabb och Enter; dialoger stängs med Esc. I tabellen flyttar
-piltangenterna mellan celler och Enter redigerar.
+Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Allt nås med Tabb och Enter; dialoger stängs
+med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar.
 
 ## När något går fel
 

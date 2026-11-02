@@ -35,9 +35,12 @@
             sum(case when ${c} != dm_fix_encoding(${c}) then 1 else 0 end),
             count(distinct dm_lower(${c})),
             sum(case when ${c} regexp '\\s{2,}' then 1 else 0 end),
-            sum(case when ${c} regexp '^0[0-9]+$' then 1 else 0 end)
+            sum(case when ${c} regexp '^0[0-9]+$' then 1 else 0 end),
+            sum(case when ${c} regexp '^(19|20)?[0-9]{6}[-+]?[0-9]{4}$' then 1 else 0 end)
             from data where ${c} is not null`);
-          const [spaces, empties, numbers, dates, mojibake, distinctCi, doubleSpaces, leadingZeros] = checks[0].values[0].map((v) => Number(v) || 0);
+          const [spaces, empties, numbers, dates, mojibake, distinctCi, doubleSpaces, leadingZeros, personalIds] = checks[0].values[0].map((v) => Number(v) || 0);
+          // Swedish personal identity numbers (personnummer) in most values: suggest pseudonymisation before sharing.
+          if (personalIds && personalIds >= Math.max(1, Math.round((entry.nonNull - empties) * 0.9))) entry.warnings.push({ kind: 'personal_id', count: personalIds, op: 'pseudonymize' });
           if (spaces) entry.warnings.push({ kind: 'whitespace', count: spaces, op: 'trim' });
           if (doubleSpaces) entry.warnings.push({ kind: 'double_spaces', count: doubleSpaces, op: 'trim' });
           if (empties) entry.warnings.push({ kind: 'empty_strings', count: empties, op: 'replace_value' });
