@@ -114,12 +114,23 @@ namn hämtas ur `gpkg_spatial_ref_sys`. `fixed-width.js` läser text med fasta k
 mellanslag som alla rader delar eller anges av användaren. `src/io/url-import.js` hämtar en webbadress som File
 för guiden eller lägger till en Dataspatium-konfiguration direkt via modulen som formatfältet pekar ut.
 
-Kartdiagrammet är diagramtypen `map` i `viz/vega-builder.js` (`geo: true`): x bär geometrikolumnen, y etiketten
-och color värdet; `toSpec` tolkar GeoJSON-texten, väljer projektion (`identity` med `reflectY` för projicerade
-meter, `mercator` för longitud/latitud, avgjort av första koordinatens storlek) och ritar med `geoshape`.
-Kartor aggregeras aldrig i SQL.
+Geometrihjälpen `src/data/geo.js` tolkar geometriceller (GeoJSON-objekt eller -text, Feature, WKT med Z/M och
+`SRID=`-prefix), avgör om koordinater är projicerade, beräknar utbredning och räknar om mellan SWEREF 99 TM
+(EPSG:3006) och WGS 84 med Lantmäteriets Gauss-Krüger-serier (`swerefToWgs84`, `wgs84ToSweref`, `toWgs84`).
 
-Exporten (`src/io/export.js`) har CSV, xlsx och ods (SheetJS), JSON, XML, SQLite samt R-formaten Parquet, sav,
+Kartorna är två diagramtyper i `viz/vega-builder.js` (`geo: true`). Koropletkartan `map`: x bär geometrikolumnen,
+y etiketten och color värdet; `toSpec` tolkar geometritexten, väljer projektion (`identity` med `reflectY` för
+projicerade meter; för longitud/latitud `transverseMercator` kring 15° öst inom Europa, annars `mercator`) och
+ritar med `geoshape`. Punktkartan `pointmap` (`points: true`): x och y bär longitud- och latitudkolumner (meter
+känns igen och räknas om till grader), size och color värden, facet etiketten och `state.basemap` en medföljande
+bakgrund; specifikationen blir ett `layer` med gränserna (`geoshape`) under punkterna (`circle`).
+`viz/basemaps.js` läser och cachar gränserna ur `presets/geo/*.geojson` (SCB:s *Digitala gränser*, CC0,
+omräknade till WGS 84 av `tools/build_boundaries.py`); `viz/render.js` hämtar dem före `toSpec` när
+`builder.basemapOf(state)` pekar ut en. Samma filer är förinställningar i Inhämta (`format: 'geojson'` i
+`presets/presets.js`, importerade via JSON-importerarens FeatureCollection-väg). Kartor aggregeras aldrig i SQL.
+
+Exporten (`src/io/export.js`) har CSV, xlsx och ods (SheetJS), JSON, GeoJSON (geometrikolumnen hittas på namn
+eller genom att första värdet tolkas; övriga kolumner blir egenskaper), XML, SQLite samt R-formaten Parquet, sav,
 dta och rds: `toViaR` speglar datamängden till R, kör skrivfunktionen och läser tillbaka filen via
 `r-bridge` (`writeFile`, `readFile`, `mkdir`, `removeFile`).
 
@@ -160,6 +171,8 @@ med injicerbar hämtfunktion för tester; Hantera och kommandopaletten erbjuder 
   läses ur designtokens vid varje rendering (därför följer diagrammen ljust och mörkt tema). Färgskalorna
   `dataspatium-seq` och `dataspatium-div` registreras i Vega ur tokens.
 - `data.js`: rader för diagram med filter som SQL och gruppering i SQLite när diagrammet bara behöver aggregat.
+- `basemaps.js`: de medföljande kommun- och länsgränserna (`presets/geo`) som bakgrund i punktkartor, lästa och
+  cachade per session.
 - `vega-builder.js`: diagramtyper, byggartillstånd och översättning till Vega-Lite-specifikation, inklusive beslutet
   om aggregering i SQL. `vega-render.js` laddar Vega, Vega-Lite och vega-embed från `vendor/` och renderar i DOM
   eller headless (export, batch).

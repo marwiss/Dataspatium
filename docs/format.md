@@ -11,7 +11,7 @@
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
 | NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad |
 | JSON-stat | Ja | Nej | Känns igen automatiskt (`class: dataset`, version 2.0); en rad per cell med koder, texter och värde |
-| GeoJSON | Ja | Nej | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn med GeoJSON som kartdiagrammet ritar (kartan läser även WKT-text i en kolumn, till exempel från CSV) |
+| GeoJSON | Ja | Ja | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn med GeoJSON som kartdiagrammet ritar (kartan läser även WKT-text i en kolumn, till exempel från CSV). Vid export blir geometrikolumnen (GeoJSON eller WKT) varje features geometri och övriga kolumner dess egenskaper |
 | Shapefile (ZIP med shp, dbf, prj, cpg, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
 | XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
@@ -30,7 +30,11 @@ anteckningsbok) känns igen på fältet `format` och läggs till direkt.
 
 Formaten som går via R startar R-sessionen vid behov (några sekunder första gången) och saknar
 förhandsgranskning: filen läses av R och lämnas över med `dm_write()`, så kolumntyperna kommer från R. Ja/nej
-blir 0/1 i SPSS och Stata, som saknar logisk typ. GeoPackage (via R-paketet sf) står på backloggen.
+blir 0/1 i SPSS och Stata, som saknar logisk typ.
+
+Med appen följer också data som läggs till med en knapp i Inhämta: exempeldatan *Befolkning per kommun 2024*
+samt SCB:s kommun- och länsgränser (*Digitala gränser*, CC0) som GeoJSON i longitud och latitud, se
+`presets/geo/KALLA.md`. Ingenting hämtas från nätet.
 
 ## Teckenkodning
 

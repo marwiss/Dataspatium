@@ -27,7 +27,9 @@ själv hämtar från ett API, kontrollerar version eller exporterar.
 Släpp en fil på ytan, klistra in en tabell eller hämta en fil från en webbadress (servern måste tillåta CORS; en
 delad Dataspatium-konfiguration läggs till direkt). Kontrollera förhandsgranskningen: teckenkodning, avgränsare,
 rubrikrad och decimaltecken gissas men kan ändras. I kolumnsteget får varje kolumn en typ; koder med inledande
-nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera.
+nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera. Knapparna under
+ytan lägger till data som följer med appen: exempeldatan *Befolkning per kommun 2024* samt SCB:s kommun- och
+länsgränser för kartor.
 
 Under *Öppna API:er* finns förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat,
 SMHI, luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket
@@ -82,7 +84,9 @@ axlar, färg och fasetter, aggregering, sortering och titlar. D3-mallar ger spec
 befolkningspyramid) och R-diagram kan sparas med sin kod. Alla motorer använder samma färger och typsnitt. Sparade
 diagram samlas i galleriet och exporteras som SVG, PNG, PDF eller PowerPoint, enstaka eller ett per grupp (till
 exempel per kommun) till en ZIP eller en presentation. Kartor ritas med diagramtypen *Karta* ur en datamängd med
-geometri från GeoJSON eller shapefile (kommungränser från SCB) kopplad till värden per kommunkod. En dashboard samlar flera sparade diagram i ett rutnät med
+geometri (de medföljande kommun- eller länsgränserna, eller egna från GeoJSON, shapefile och GeoPackage)
+kopplad till värden per kommunkod, och med *Punktkarta* ur longitud och latitud med gränserna som bakgrund.
+En dashboard samlar flera sparade diagram i ett rutnät med
 gemensamma filter, till exempel län eller år, och exporteras som fristående HTML eller PowerPoint.
 
 ### 6. Dokument (Exportera, fliken Dokument)
@@ -94,8 +98,9 @@ eller ett dokument per grupp.
 
 ### 7. Exportera data (Exportera, fliken Data)
 
-CSV (anpassad för svenskt Excel eller standard), Excel, ODS, JSON, XML, SQLite samt via R: Parquet, SPSS, Stata
-och RDS. SQLite och Parquet behåller typerna exakt; alla format kan importeras igen.
+CSV (anpassad för svenskt Excel eller standard), Excel, ODS, JSON, GeoJSON (för datamängder med geometri), XML,
+SQLite samt via R: Parquet, SPSS, Stata och RDS. SQLite och Parquet behåller typerna exakt; alla format kan
+importeras igen.
 
 ## Hålla ordning (Hantera)
 

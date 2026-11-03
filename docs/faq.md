@@ -81,10 +81,11 @@ säga icke-kommersiell användning. Kommersiell användning kräver tillstånd f
 
 ## Hur gör jag en karta över kommuner eller län?
 
-Hämta gränserna som shapefile från SCB:s sida *Digitala gränser* (kommun- eller länsgränser i SWEREF99 TM) och
-importera ZIP-filen i Inhämta, gärna med toleransen 100 meter under *Förenkla geometri*. Koppla sedan dina värden
-till gränserna på kommunkoden i Bearbeta (*Koppla*), och välj diagramtypen *Karta* i Visualisera. Se
-[visualisera.md](visualisera.md).
+Klicka på *Kommungränser (SCB)* eller *Länsgränser (SCB)* i Inhämta; gränserna följer med appen (SCB:s
+förenklade gränser för tematiska kartor, CC0). Koppla sedan dina värden till gränserna på kommunkoden eller
+länskoden i Bearbeta (*Koppla*), och välj diagramtypen *Karta* i Visualisera. Punkter med longitud och latitud
+(till exempel mätstationer) ritas med *Punktkarta*, med gränserna som bakgrund. Egna gränser kan importeras från
+GeoJSON, shapefile eller GeoPackage. Se [visualisera.md](visualisera.md).
 
 ## Hur kontrollerar jag att datan håller måttet?
 

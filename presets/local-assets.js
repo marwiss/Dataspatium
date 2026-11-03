@@ -12,6 +12,18 @@ Dataspatium.assets.addEntries({
   "size": 13121,
   "library": "dataspatium"
  },
+ "presets/geo/lan.geojson": {
+  "file": "presets/geo/lan.geojson.js",
+  "encoding": "text",
+  "size": 78867,
+  "library": "dataspatium"
+ },
+ "presets/geo/kommuner.geojson": {
+  "file": "presets/geo/kommuner.geojson.js",
+  "encoding": "text",
+  "size": 239831,
+  "library": "dataspatium"
+ },
  "presets/api/boverket-energideklarationer.api.json": {
   "file": "presets/api/boverket-energideklarationer.api.json.js",
   "encoding": "text",

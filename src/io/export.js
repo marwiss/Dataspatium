@@ -7,12 +7,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/export', ['data/datasets', 'platform/files'], (datasets, files) => {
+  D.define('io/export', ['data/datasets', 'platform/files', 'data/geo'], (datasets, files, geo) => {
     const FORMATS = [
       { id: 'csv', key: 'export.format.csv', ext: 'csv' },
       { id: 'xlsx', key: 'export.format.xlsx', ext: 'xlsx' },
       { id: 'ods', key: 'export.format.ods', ext: 'ods' },
       { id: 'json', key: 'export.format.json', ext: 'json' },
+      { id: 'geojson', key: 'export.format.geojson', ext: 'geojson' },
       { id: 'xml', key: 'export.format.xml', ext: 'xml' },
       { id: 'sqlite', key: 'export.format.sqlite', ext: 'sqlite' },
       { id: 'parquet', key: 'export.format.parquet', ext: 'parquet', viaR: true },
@@ -145,12 +146,35 @@
       else if (fmt.id === 'xlsx') blob = await toXlsx(id, options);
       else if (fmt.id === 'ods') blob = await toOds(id, options);
       else if (fmt.id === 'json') blob = await toJson(id);
+      else if (fmt.id === 'geojson') blob = await toGeoJson(id);
       else if (fmt.id === 'xml') blob = await toXml(id);
       else if (fmt.viaR) blob = await toViaR(id, fmt.id);
       else blob = await toSqlite(id);
       return { blob, filename };
     }
 
-    return { FORMATS, toCsv, toJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
+    /**
+     * GeoJSON FeatureCollection from a dataset with a geometry column (GeoJSON or WKT text, found by
+     * name or by parsing the first non-empty value); the other columns become feature properties.
+     */
+    async function toGeoJson(id) {
+      const cols = await datasets.columns(id);
+      const rows = await datasets.allRows(id);
+      const textCols = cols.map((c, i) => ({ c, i })).filter((x) => x.c.type === 'text');
+      const firstGeometry = (i) => { const r = rows.find((row) => row[i] !== null && row[i] !== undefined && row[i] !== ''); const g = r ? geo.parseGeometry(r[i]) : null; return g && g.type ? g : null; };
+      const named = textCols.find((x) => /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(x.c.name));
+      const found = named || textCols.find((x) => firstGeometry(x.i));
+      if (!found) throw new Error('Datamängden har ingen geometrikolumn (GeoJSON eller WKT som text). Importera från GeoJSON, shapefile eller GeoPackage, eller lägg till en kolumn med WKT.');
+      const skip = new Set([found.i, cols.findIndex((c) => c.name === 'geometry_type')]);
+      const features = rows.map((r) => {
+        const properties = {};
+        cols.forEach((c, i) => { if (!skip.has(i)) properties[c.name] = r[i] === undefined ? null : (c.type === 'boolean' && r[i] !== null ? !!r[i] : r[i]); });
+        const g = geo.parseGeometry(r[found.i]);
+        return { type: 'Feature', properties, geometry: g && g.type ? g : null };
+      });
+      return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });
+    }
+
+    return { FORMATS, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
   });
 })();

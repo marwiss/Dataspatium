@@ -14,6 +14,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 LOCAL_FILES = [
     "r/dataspatium.R",
     "presets/exempeldata/befolkning-kommuner-2024.csv",
+    "presets/geo/lan.geojson",
+    "presets/geo/kommuner.geojson",
 ]
 LOCAL_GLOBS = [
     "presets/api/*.api.json",

@@ -44,4 +44,6 @@ licenstexterna.
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och
 bilder med appen via meddelanden; det är sådan samdistribution ("mere aggregation") som GPL tillåter, och
 R-delarna behåller alla sina GPL-rättigheter för dig som användare. Exempeldata i `presets/` kommer från öppna
-källor och behåller sina ursprungslicenser (CC0 eller CC BY enligt respektive myndighet).
+källor och behåller sina ursprungslicenser (CC0 eller CC BY enligt respektive myndighet). Kommun- och
+länsgränserna i `presets/geo/` är SCB:s *Digitala gränser* under CC0 1.0, omräknade till longitud och latitud;
+se `presets/geo/KALLA.md`.

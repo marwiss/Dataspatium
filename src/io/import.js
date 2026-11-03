@@ -97,7 +97,13 @@
     async function runPreset(preset) {
       const text = await D.assets.loadText(preset.asset);
       const options = Object.assign({ header: true }, preset.options || {});
-      const table = await csv.parseText(text, options);
+      let table;
+      if (preset.format === 'geojson') {
+        // Bundled boundaries: a FeatureCollection becomes one row per feature with a geometry text column.
+        table = Object.assign(json.tabulate(json.toRecords(json.parseJsonText(text), '')), { meta: { format: 'geojson' } });
+      } else {
+        table = await csv.parseText(text, options);
+      }
       table.columns = types.cleanColumnNames(table.columns);
       const specs = types.inferColumns(table.columns, table.rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
       const { columns, rows } = materialize(table, specs, options);

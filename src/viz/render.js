@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/datasets'], (builder, vegaRender, d3t, vizData, vizExport, theme, datasets) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'viz/basemaps', 'data/datasets'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
@@ -25,7 +25,10 @@
       const state = Object.assign({}, v.state || builder.defaultState(v.type || 'bar', columns), options.extraFilters ? { filters: ((v.state && v.state.filters) || []).concat(options.extraFilters) } : {});
       const request = builder.dataRequest(state, columns, meta.rowCount || 0);
       const data = await vizData.fetchRows(chart.datasetId, request);
-      const spec = builder.toSpec(state, columns, { values: data.rows, aliases: request.aliases, width: options.width, height: options.height });
+      // Point maps draw over bundled county or municipality boundaries.
+      const basemapId = builder.basemapOf(state);
+      const basemap = basemapId ? await basemaps.features(basemapId) : undefined;
+      const spec = builder.toSpec(state, columns, { values: data.rows, aliases: request.aliases, width: options.width, height: options.height, basemap });
       if (options.titleSuffix) spec.title = spec.title ? (typeof spec.title === 'string' ? spec.title + options.titleSuffix : Object.assign({}, spec.title, { text: spec.title.text + options.titleSuffix })) : options.titleSuffix.replace(/^\s*[–-]\s*/, '');
       return { spec, data, columns, meta, state };
     }

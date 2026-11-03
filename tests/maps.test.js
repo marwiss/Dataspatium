@@ -111,12 +111,14 @@
     assert.equal(prep.spec.encoding.color.field, 'Folkmangd');
     assert.equal(prep.spec.encoding.color.scale.scheme, 'dataspatium-seq');
     assert.equal(prep.spec.data.values.length, 2);
-    assert.equal(prep.spec.data.values[0].geometry.type, 'Polygon', 'geometry text parsed for Vega');
+    assert.equal(prep.spec.data.values[0].geometry.type, 'Feature', 'geometry text parsed into Features so that Vega can fit the projection');
+    assert.equal(prep.spec.data.values[0].geometry.geometry.type, 'Polygon');
     assert.equal(prep.spec.encoding.tooltip.length, 2);
     const svg = await (await render.toBlob(chart, 'svg', { width: 400 })).text();
     assert.ok(svg.includes('<path'), 'rendered paths');
+    assert.ok(!/NaN,NaN|MNaN/.test(svg), 'the projection was fitted to the data (no NaN coordinates in paths)');
     const lonlat = builder.toSpec(state, columns, { values: [{ geometry: JSON.stringify({ type: 'Polygon', coordinates: [[[18, 59], [18, 60], [19, 60], [19, 59], [18, 59]]] }), Folkmangd: 1, KnNamn: 'x' }] });
-    assert.equal(lonlat.projection.type, 'mercator', 'longitude/latitude uses Mercator');
+    assert.equal(lonlat.projection.type, 'transverseMercator', 'longitude/latitude in Europe uses a transverse Mercator about 15°E');
     const problems = builder.validate(Object.assign({}, state, { color: null }));
     assert.equal(problems.length, 1);
     return prep.spec.projection.type;

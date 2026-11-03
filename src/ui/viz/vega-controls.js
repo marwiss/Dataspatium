@@ -44,9 +44,11 @@
         const isCount = key === 'y' && type.y === 'count';
         const nodes = [];
         if (isCount) { nodes.push(h('div', { class: 'dm-help', text: t('viz.agg.count') })); return h('div', { class: 'dm-card dm-stack-sm dm-viz-channel' }, h('strong', { text: label }), nodes); }
-        nodes.push(columnSelect(label, ch && ch.field, (col) => { state[key] = col ? builder.channel(col, { aggregate: ch && ch.aggregate && col.type !== 'text' ? ch.aggregate : (key === 'y' && (col.type === 'integer' || col.type === 'number') && type.aggregate !== 'none' ? type.aggregate : 'none') }) : null; render(); emit(true); }, { optional, kinds: type.geo && key === 'x' ? ['text'] : null }));
-        // Maps: the geometry and label channels need no interpretation, aggregate or sort options.
-        if (ch && ch.field && !(type.geo && key !== 'color')) {
+        // Maps: the geometry column is text; point maps take numeric longitude/latitude columns.
+        const kinds = type.geo ? (type.points ? ((key === 'x' || key === 'y') ? ['integer', 'number'] : null) : (key === 'x' ? ['text'] : null)) : null;
+        nodes.push(columnSelect(label, ch && ch.field, (col) => { state[key] = col ? builder.channel(col, { aggregate: ch && ch.aggregate && col.type !== 'text' ? ch.aggregate : (key === 'y' && (col.type === 'integer' || col.type === 'number') && type.aggregate !== 'none' ? type.aggregate : 'none') }) : null; render(); emit(true); }, { optional, kinds }));
+        // Maps: geometry, coordinate and label channels need no interpretation, aggregate or sort options.
+        if (ch && ch.field && !(type.geo && (key === 'x' || key === 'y' || key === 'facet'))) {
           const row = [];
           row.push(smallSelect(t('viz.channel.type'), FIELD_TYPES.map((ft) => ({ value: ft, label: t('viz.type.' + ft) })), ch.type, (v) => { ch.type = v; if (v !== 'quantitative') ch.aggregate = 'none'; render(); emit(); }));
           if (allowAggregate && ch.type === 'quantitative') row.push(smallSelect(t('viz.aggregate'), builder.AGGREGATES.map((a) => ({ value: a, label: t('viz.agg.' + a) })), ch.aggregate || 'none', (v) => { ch.aggregate = v; emit(); }));
@@ -92,6 +94,8 @@
         const facetCols = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.facet.columns'), min: '1', max: '8' })); facetCols.value = String(state.facetColumns || 3); facetCols.addEventListener('change', () => { state.facetColumns = Number(facetCols.value) || 3; emit(); });
         const maxRows = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.maxrows'), min: '100', max: '1000000' })); maxRows.value = String(state.maxRows || 50000); maxRows.addEventListener('change', () => { state.maxRows = Number(maxRows.value) || 50000; emit(); });
         const scheme = smallSelect(t('viz.colorscheme'), ['auto', 'sequential', 'diverging'].map((v) => ({ value: v, label: t('viz.scheme.' + v) })), state.colorScheme || 'auto', (v) => { state.colorScheme = v; emit(); });
+        // Point maps: which bundled boundaries to draw underneath.
+        const basemap = smallSelect(t('viz.basemap'), [{ value: 'none', label: t('viz.basemap.none') }].concat(D.require('viz/basemaps').BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }))), state.basemap || 'none', (v) => { state.basemap = v; emit(); });
         const customSwitch = /** @type {any} */ (h('dm-switch', { label: t('viz.custom') })); customSwitch.checked = customSpec !== null;
         const customEditor = /** @type {any} */ (h('dm-code', { language: 'json' }));
         customEditor.value = customSpec || '';
@@ -100,12 +104,12 @@
         replace(el,
           h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: t('viz.type') }), typeTiles),
           customSpec === null ? [
-            channelCard('x', type.geo ? t('viz.channel.geometry') : t('viz.channel.x'), { optional: false, allowAggregate: !type.geo }),
-            channelCard('y', type.geo ? t('viz.channel.label') : t('viz.channel.y'), { optional: !!type.geo, allowAggregate: !type.geo }),
-            channelCard('color', type.geo ? t('viz.channel.value') : t('viz.channel.color'), { optional: !type.geo }),
-            channelCard('size', t('viz.channel.size'), { optional: true }),
-            channelCard('facet', t('viz.channel.facet'), { optional: true, allowAggregate: false }),
-            h('div', { class: 'dm-form-grid' }, title, subtitle, yFormat, height, legend, state.facet ? facetCols : null, (type.mark === 'bar' || type.mark === 'area') && state.color ? stack : null),
+            channelCard('x', type.points ? t('viz.channel.longitude') : (type.geo ? t('viz.channel.geometry') : t('viz.channel.x')), { optional: false, allowAggregate: !type.geo }),
+            channelCard('y', type.points ? t('viz.channel.latitude') : (type.geo ? t('viz.channel.label') : t('viz.channel.y')), { optional: !!type.geo && !type.points, allowAggregate: !type.geo }),
+            channelCard('color', type.geo && !type.points ? t('viz.channel.value') : t('viz.channel.color'), { optional: !type.geo || !!type.points }),
+            channelCard('size', t('viz.channel.size'), { optional: true, allowAggregate: !type.geo }),
+            channelCard('facet', type.points ? t('viz.channel.label') : t('viz.channel.facet'), { optional: true, allowAggregate: false }),
+            h('div', { class: 'dm-form-grid' }, title, subtitle, yFormat, height, legend, type.points ? basemap : null, state.facet && !type.geo ? facetCols : null, (type.mark === 'bar' || type.mark === 'area') && state.color ? stack : null),
             h('div', { class: 'dm-row-wrap' }, type.mark === 'bar' ? labels : null, type.mark === 'line' ? points : null),
             filtersEditor(),
           ] : h('p', { class: 'dm-help', text: t('viz.custom.help') }),

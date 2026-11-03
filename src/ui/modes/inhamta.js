@@ -152,9 +152,11 @@
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT });
         dz.addEventListener('dm-files', async (e) => { wiz.file = /** @type {any} */ (e).detail.files[0]; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; await runPreview(); });
-        const example = D.require('presets').examples[0];
+        // Bundled data: the example table first, then the SCB boundaries for maps.
+        const examples = D.require('presets').examples;
         return h('div', { class: 'dm-stack' }, dz,
-          h('div', { class: 'dm-row' }, ui.button({ label: t('presets.try'), icon: 'sparkles', onClick: () => importPreset(example) }), h('span', { class: 'dm-help', text: t('presets.try.hint') })));
+          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : p.name, icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
+          h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 
       async function importPreset(preset) {

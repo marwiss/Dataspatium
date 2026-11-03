@@ -22,9 +22,14 @@
       { id: 'heatmap', label: 'Värmekarta', icon: 'grid-2x2', mark: 'rect', channels: ['x', 'y', 'color'], x: 'category', y: 'category', aggregate: 'sum' },
       { id: 'boxplot', label: 'Låddiagram', icon: 'chart-candlestick', mark: 'boxplot', channels: ['x', 'y', 'color'], x: 'category', y: 'measure', aggregate: 'none' },
       { id: 'pie', label: 'Cirkel', icon: 'chart-pie', mark: 'arc', channels: ['x', 'y'], x: 'category', y: 'measure', aggregate: 'sum' },
-      // Choropleth map: x holds the geometry column (GeoJSON text from the GeoJSON or shapefile importer), y a label, color the value.
+      // Choropleth map: x holds the geometry column (GeoJSON or WKT text), y a label, color the value.
       { id: 'map', label: 'Karta', icon: 'globe', mark: 'geoshape', geo: true, channels: ['x', 'y', 'color'], x: 'geometry', y: 'label', aggregate: 'none' },
+      // Point map: x/y hold longitude/latitude (or SWEREF 99 TM metres), size and color values, facet a
+      // label for the tooltip; drawn over the bundled county or municipality boundaries (state.basemap).
+      { id: 'pointmap', label: 'Punktkarta', icon: 'map-pin', mark: 'circle', geo: true, points: true, channels: ['x', 'y', 'color', 'size', 'facet'], x: 'longitude', y: 'latitude', aggregate: 'none' },
     ];
+    // Longitude span within which the SWEREF 99 TM-like transverse Mercator about 15°E looks right.
+    const TM_LON_RANGE = [-25, 55];
 
     function fieldType(column) {
       if (!column) return 'nominal';
@@ -35,18 +40,22 @@
     function typeOf(id) { return CHART_TYPES.find((c) => c.id === id) || CHART_TYPES[0]; }
     function channel(column, overrides) { return column ? Object.assign({ field: column.name, type: fieldType(column), aggregate: 'none', bin: false, timeUnit: '', sort: '', title: '', format: '' }, overrides || {}) : null; }
 
-    /** Pick a first column of a kind: category (text/boolean), measure (numeric), time (date), any. */
+    /** Pick a first column of a kind: category (text/boolean), measure (numeric), time (date), geometry, label, longitude, latitude, any. */
     function pick(columns, kind, used = []) {
       const free = columns.filter((c) => !used.includes(c.name));
       const by = (pred) => free.find(pred) || columns.find(pred) || null;
       const numeric = (c) => c.type === 'integer' || c.type === 'number';
       const yearLike = (c) => /^(ar|år|year|period|manad|månad|vecka|kvartal)$/i.test(c.name);
       const idLike = (c) => /^(fid|id|rowid|objectid|gid|ogc_fid)$/i.test(c.name);
+      const codeLike = (c) => /kod$|code$|_id$|^id$|nr$/i.test(c.name);
       if (kind === 'measure') return by((c) => numeric(c) && !yearLike(c) && !idLike(c)) || by((c) => numeric(c) && !yearLike(c)) || by(numeric);
       if (kind === 'time') return by((c) => c.type === 'date' || c.type === 'datetime') || by((c) => /^(ar|år|year|tid|period|manad|månad)$/i.test(c.name)) || by((c) => c.type === 'text');
       if (kind === 'category') return by((c) => c.type === 'text' || c.type === 'boolean') || by((c) => c.type === 'integer');
       if (kind === 'geometry') return by((c) => c.type === 'text' && /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(c.name)) || by((c) => c.type === 'text' && /geom|wkt/i.test(c.name));
-      if (kind === 'label') return by((c) => c.type === 'text' && /namn|name|kommun|region|lan|län|omrade|område/i.test(c.name)) || by((c) => c.type === 'text' && !/geom|wkt|shape/i.test(c.name));
+      // Labels: a name column first (kommun before kommunkod), then any text column that is not a code or geometry.
+      if (kind === 'label') return by((c) => c.type === 'text' && /^(namn|name|kommun|kommunnamn|lan|län|lansnamn|länsnamn|region|regionnamn|omrade|område|station|stationsnamn|plats|ort)$/i.test(c.name)) || by((c) => c.type === 'text' && !codeLike(c) && /namn|name|kommun|region|lan|län|omrade|område|station|plats|ort/i.test(c.name)) || by((c) => c.type === 'text' && !codeLike(c) && !/geom|wkt|shape/i.test(c.name)) || by((c) => c.type === 'text' && !/geom|wkt|shape/i.test(c.name));
+      if (kind === 'longitude') return by((c) => numeric(c) && /^(lon|long|lng|longitude|longitud|x|e|east|easting|ost|öst|x_koord|xkoord|lon_wgs84|longitude_wgs84)$/i.test(c.name)) || by((c) => numeric(c) && /lon|long|east|öst|ost/i.test(c.name) && !/lat/i.test(c.name));
+      if (kind === 'latitude') return by((c) => numeric(c) && /^(lat|latitude|latitud|y|n|north|northing|nord|y_koord|ykoord|lat_wgs84|latitude_wgs84)$/i.test(c.name)) || by((c) => numeric(c) && /lat|north|nord/i.test(c.name));
       return free[0] || columns[0] || null;
     }
 
@@ -59,6 +68,17 @@
         stack: 'zero', labels: false, points: false, interpolate: 'linear', title: '', subtitle: '', width: 0, height: 360, legend: 'right', colorScheme: 'auto', maxRows: 50000, filters: [], yFormat: '', xFormat: '',
       };
       if (type.geo) {
+        if (type.points) {
+          const y = pick(columns, 'latitude', x ? [x.name] : []);
+          state.y = channel(y);
+          const used = [x && x.name, y && y.name].filter(Boolean);
+          const size = pick(columns, 'measure', used);
+          state.size = size && !used.includes(size.name) ? channel(size, { aggregate: 'none' }) : null;
+          state.facet = channel(pick(columns, 'label'));
+          state.basemap = 'lan';
+          state.height = 480;
+          return state;
+        }
         state.y = channel(pick(columns, 'label', x ? [x.name] : []));
         state.color = channel(pick(columns, 'measure'), { aggregate: 'none' });
         state.height = 480;
@@ -75,7 +95,12 @@
     /** Change chart type while keeping compatible channels. */
     function switchType(state, typeId, columns) {
       const next = defaultState(typeId, columns);
-      for (const key of ['x', 'y', 'color', 'facet', 'size']) if (state[key] && typeOf(typeId).channels.includes(key) && columns.some((c) => c.name === state[key].field)) next[key] = Object.assign({}, state[key]);
+      const from = typeOf(state.type); const to = typeOf(typeId);
+      for (const key of ['x', 'y', 'color', 'facet', 'size']) {
+        // Maps give x, y and facet other meanings (geometry, coordinates, label), so those start fresh.
+        if ((from.geo || to.geo) && from.id !== to.id && (key === 'x' || key === 'y' || key === 'facet')) continue;
+        if (state[key] && to.channels.includes(key) && columns.some((c) => c.name === state[key].field)) next[key] = Object.assign({}, state[key]);
+      }
       if (typeId === 'histogram') { next.y = { field: null, type: 'quantitative', aggregate: 'count', bin: false, timeUnit: '', sort: '', title: '', format: '' }; if (next.x) next.x.bin = true; }
       for (const key of ['title', 'subtitle', 'filters', 'width', 'height', 'legend', 'maxRows', 'stack']) next[key] = state[key];
       return next;
@@ -133,9 +158,75 @@
     }
 
     /**
+     * Projection for longitude/latitude data: transverse Mercator about 15°E (the look of SWEREF 99 TM
+     * maps) when the data lies within Europe, Mercator elsewhere.
+     * @param {{minX: number, maxX: number}|null} b bounds of the data in degrees
+     */
+    function lonLatProjection(b) {
+      if (!b || (b.minX >= TM_LON_RANGE[0] && b.maxX <= TM_LON_RANGE[1])) return { type: 'transverseMercator', rotate: [-15, 0, 0] };
+      return { type: 'mercator' };
+    }
+
+    /** Id of the bundled boundary layer a state draws under its points, or null. */
+    function basemapOf(state) {
+      const type = typeOf(state && state.type);
+      return type.points && state.basemap && state.basemap !== 'none' ? state.basemap : null;
+    }
+
+    /**
+     * Geometry as a GeoJSON Feature. Vega fits the projection with its geojson transform, which expects
+     * Feature objects; bare geometries draw but leave the fit empty (every path becomes NaN).
+     */
+    function feature(geometry) { return geometry && geometry.type === 'Feature' ? geometry : { type: 'Feature', properties: {}, geometry }; }
+
+    /** Layered spec for a point map: bundled boundaries underneath, one circle per row on top. */
+    function pointMapSpec(state, data, spec) {
+      const tokens = theme.tokens();
+      const lonField = state.x && state.x.field; const latField = state.y && state.y.field;
+      const num = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
+      let values = null; let b = null;
+      if (data.values) {
+        const rows = lonField && latField ? data.values.filter((r) => Number.isFinite(num(r[lonField])) && Number.isFinite(num(r[latField]))) : [];
+        // Metres (SWEREF 99 TM) become degrees so that the points and the boundaries share one projection.
+        const projected = rows.some((r) => Math.abs(num(r[lonField])) > 180 || Math.abs(num(r[latField])) > 90);
+        values = rows.map((r) => { let lon = num(r[lonField]); let lat = num(r[latField]); if (projected) [lon, lat] = geo.swerefToWgs84(lon, lat); return Object.assign({}, r, { __lon: lon, __lat: lat }); });
+        b = geo.bounds(values.map((v) => ({ coordinates: [v.__lon, v.__lat] })));
+      }
+      const layers = [];
+      const basemap = data.basemap || [];
+      if (basemap.length) layers.push({ data: { values: basemap.map((f) => ({ geometry: feature(f.geometry), namn: f.name })) }, mark: { type: 'geoshape', fill: tokens.grid, stroke: tokens.background, strokeWidth: 0.8 }, encoding: { shape: { field: 'geometry', type: 'geojson' }, tooltip: [{ field: 'namn', type: 'nominal', title: 'Område' }] } });
+      const enc = { longitude: { field: '__lon', type: 'quantitative' }, latitude: { field: '__lat', type: 'quantitative' } };
+      const legend = state.legend === 'none' ? null : { orient: state.legend || 'right' };
+      const numberFormat = state.yFormat ? { format: state.yFormat } : {};
+      if (state.size && state.size.field) enc.size = { field: state.size.field, type: 'quantitative', title: state.size.title || state.size.field, scale: { range: [16, 900], zero: true }, legend: legend ? Object.assign({}, legend, numberFormat) : null };
+      if (state.color && state.color.field) {
+        const color = { field: state.color.field, type: state.color.type, title: state.color.title || state.color.field, legend: legend ? Object.assign({}, legend, state.color.type === 'quantitative' ? numberFormat : {}) : null };
+        if (color.type === 'quantitative' || state.colorScheme === 'sequential') color.scale = { scheme: 'dataspatium-seq' };
+        if (state.colorScheme === 'diverging') color.scale = { scheme: 'dataspatium-div' };
+        enc.color = color;
+      }
+      const tips = [];
+      if (state.facet && state.facet.field) tips.push({ field: state.facet.field, type: 'nominal', title: state.facet.title || state.facet.field });
+      for (const key of ['color', 'size']) {
+        const ch = state[key];
+        if (ch && ch.field && !tips.some((tp) => tp.field === ch.field)) tips.push(Object.assign({ field: ch.field, type: ch.type, title: ch.title || ch.field }, ch.type === 'quantitative' ? numberFormat : {}));
+      }
+      if (tips.length) enc.tooltip = tips;
+      const pointLayer = { mark: { type: 'circle', opacity: 0.85, stroke: tokens.background, strokeWidth: 0.5, size: 60 }, encoding: enc };
+      if (values) pointLayer.data = { values };
+      else pointLayer.transform = [{ calculate: `toNumber(datum[${JSON.stringify(lonField || '')}])`, as: '__lon' }, { calculate: `toNumber(datum[${JSON.stringify(latField || '')}])`, as: '__lat' }];
+      layers.push(pointLayer);
+      spec.layer = layers;
+      if (values) delete spec.data;
+      spec.height = data.height !== undefined ? data.height : (state.height || 480);
+      spec.projection = lonLatProjection(b);
+      return spec;
+    }
+
+    /**
      * Vega-Lite spec from a builder state.
      * @param {any} state @param {Array<{name: string, type: string}>} columns
-     * @param {{values?: any[], name?: string, aliases?: Record<string, string>, width?: number, height?: number}} [data]
+     * @param {{values?: any[], name?: string, aliases?: Record<string, string>, width?: number, height?: number, basemap?: any[]}} [data]
      */
     function toSpec(state, columns, data = {}) {
       const type = typeOf(state.type);
@@ -143,15 +234,17 @@
       const spec = { $schema: SCHEMA, data: data.values ? { values: data.values } : { name: data.name || 'table' }, width: data.width !== undefined ? data.width : (state.width > 0 ? state.width : 'container'), height: data.height !== undefined ? data.height : (state.height || 360) };
       if (state.title) spec.title = state.subtitle ? { text: state.title, subtitle: state.subtitle } : state.title;
       const enc = {};
+      if (type.geo && type.points) return pointMapSpec(state, data, spec);
       if (type.geo) {
-        // Geometry arrives as GeoJSON text; parse it and let Vega-Lite draw it with geoshape. Projected
-        // coordinates (SWEREF99 TM metres) are drawn as-is, longitude/latitude through Mercator.
+        // Geometry arrives as GeoJSON or WKT text; parse it into Features and let Vega-Lite draw them with
+        // geoshape. Projected coordinates (SWEREF99 TM metres) are drawn as-is, longitude/latitude through
+        // a transverse Mercator.
         const geomField = state.x && state.x.field;
-        // Geometry cells may hold GeoJSON or WKT text (GeoPackage, PostGIS and spreadsheet exports).
-        const values = geomField ? (data.values || []).map((row) => Object.assign({}, row, { [geomField]: geo.parseGeometry(row[geomField]) })).filter((row) => row[geomField]) : (data.values || []);
+        const geometries = geomField ? (data.values || []).map((row) => geo.parseGeometry(row[geomField])) : [];
+        const values = geomField ? (data.values || []).map((row, i) => Object.assign({}, row, { [geomField]: geometries[i] ? feature(geometries[i]) : null })).filter((row) => row[geomField]) : (data.values || []);
         spec.data = data.values ? { values } : { name: data.name || 'table' };
         spec.height = data.height !== undefined ? data.height : (state.height || 480);
-        spec.projection = isProjected(values, geomField) ? { type: 'identity', reflectY: true } : { type: 'mercator' };
+        spec.projection = geo.isProjected(geometries) ? { type: 'identity', reflectY: true } : lonLatProjection(geo.bounds(geometries));
         spec.mark = { type: 'geoshape', stroke: theme.tokens().background, strokeWidth: 0.6 };
         if (geomField) enc.shape = { field: geomField, type: 'geojson' };
         if (state.color && state.color.field) {
@@ -208,14 +301,18 @@
     }
 
     /** True when the first coordinate cannot be longitude/latitude (projected metres, e.g. SWEREF99 TM). */
-    function isProjected(values, field) { return geo.isProjected((values || []).map((row) => (row && field ? row[field] : null))); }
+    function isProjected(values, field) { return geo.isProjected((values || []).map((row) => { const g = row && field ? row[field] : null; return g && g.type === 'Feature' ? g.geometry : g; })); }
 
     /** Problems in the state the user should fix before rendering. */
     function validate(state) {
       const type = typeOf(state.type);
       const problems = [];
       if (type.geo) {
-        if (!state.x || !state.x.field) problems.push('Välj kolumnen med geometri (GeoJSON från GeoJSON- eller shapefile-import).');
+        if (type.points) {
+          if (!state.x || !state.x.field || !state.y || !state.y.field) problems.push('Välj kolumnerna med longitud och latitud (eller SWEREF 99 TM öst och norr).');
+          return problems;
+        }
+        if (!state.x || !state.x.field) problems.push('Välj kolumnen med geometri (GeoJSON eller WKT, till exempel från GeoJSON-, shapefile- eller GeoPackage-import).');
         if (!state.color || !state.color.field) problems.push('Välj en värdekolumn för färgen.');
         return problems;
       }
@@ -225,6 +322,6 @@
       return problems;
     }
 
-    return { CHART_TYPES, AGGREGATES, TIME_UNITS, NUMBER_FORMATS: locale.NUMBER_FORMATS, fieldType, typeOf, channel, defaultState, switchType, toSpec, dataRequest, needsRawRows, validate, isAggregated, isProjected };
+    return { CHART_TYPES, AGGREGATES, TIME_UNITS, NUMBER_FORMATS: locale.NUMBER_FORMATS, fieldType, typeOf, channel, defaultState, switchType, toSpec, dataRequest, needsRawRows, validate, isAggregated, isProjected, lonLatProjection, basemapOf, feature };
   });
 })();

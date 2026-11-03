@@ -18,6 +18,24 @@
         options: { delimiter: ';', header: true, decimal: 'point' },
         source: { kind: 'preset', publisher: 'SCB, Statistikdatabasen', table: 'BE0101N1 Folkmängden efter region, ålder och kön. År 1968–2024', url: 'https://www.statistikdatabasen.scb.se/', license: 'CC0' },
       },
+      // County and municipality boundaries from SCB's "Digitala gränser" (CC0), converted to WGS 84 by
+      // tools/build_boundaries.py. Simplified for thematic maps; see presets/geo/KALLA.md.
+      {
+        id: 'lan-scb',
+        name: 'Länsgränser (SCB)',
+        description: 'Sveriges 21 län som förenklade ytor för tematiska kartor, med länskod och länsnamn, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
+        asset: 'presets/geo/lan.geojson',
+        format: 'geojson',
+        source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
+      },
+      {
+        id: 'kommuner-scb',
+        name: 'Kommungränser (SCB)',
+        description: 'Sveriges 290 kommuner som förenklade ytor för tematiska kartor, med kommunkod, kommunnamn, länskod och län, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
+        asset: 'presets/geo/kommuner.geojson',
+        format: 'geojson',
+        source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
+      },
     ],
     /** Snippets offered in the R console. */
     rSnippets: [

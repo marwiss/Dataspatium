@@ -24,9 +24,15 @@ och i workers. Se `src/platform/assets.js`, `net-shim.js` och `worker-shim.js`.
 
 ## Egna inbäddade filer
 
-R-hjälpfunktionerna i `r/dataspatium.R` och exempeldata i `presets/exempeldata/` måste också bäddas in som JavaScript
-för att kunna läsas via file://. Kör `python tools/wrap_local.py` efter ändringar; den skriver `<fil>.js` bredvid
-originalet och `presets/local-assets.js`.
+R-hjälpfunktionerna i `r/dataspatium.R`, exempeldata i `presets/exempeldata/` och gränserna i `presets/geo/`
+måste också bäddas in som JavaScript för att kunna läsas via file://. Kör `python tools/wrap_local.py` efter
+ändringar; den skriver `<fil>.js` bredvid originalet och `presets/local-assets.js`.
+
+Kommun- och länsgränserna byggs av `python tools/build_boundaries.py [arkiv.zip]` ur SCB:s *Digitala gränser*
+(shapefiler i SWEREF 99 TM, CC0): skriptet läser shapefilerna med standardbiblioteket, räknar om koordinaterna
+till WGS 84 med Lantmäteriets Gauss-Krüger-formler och skriver `presets/geo/lan.geojson`,
+`presets/geo/kommuner.geojson` och `presets/geo/KALLA.md`. Utan argument hämtas det aktuella arkivet från SCB.
+Kör sedan `python tools/wrap_local.py`.
 
 ## Skärmbilder
 

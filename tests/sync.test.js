@@ -76,7 +76,8 @@
     assert.equal(state.x.field, 'wkt', 'wkt column picked as geometry');
     const spec = builder.toSpec(state, columns, { values: [{ namn: 'A', wkt: 'POLYGON((600000 6500000, 600000 6501000, 601000 6501000, 600000 6500000))', varde: 1 }, { namn: 'B', wkt: 'not geometry', varde: 2 }] });
     assert.equal(spec.data.values.length, 1, 'unparsable geometry rows are dropped');
-    assert.equal(spec.data.values[0].wkt.type, 'Polygon');
+    assert.equal(spec.data.values[0].wkt.type, 'Feature');
+    assert.equal(spec.data.values[0].wkt.geometry.type, 'Polygon');
     assert.equal(spec.projection.type, 'identity');
     return 'ok';
   });

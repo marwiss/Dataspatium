@@ -74,6 +74,7 @@
     'src/viz/locale.js',
     'src/viz/theme.js',
     'src/viz/data.js',
+    'src/viz/basemaps.js',
     'src/viz/vega-builder.js',
     'src/viz/vega-render.js',
     'src/viz/d3-templates.js',
