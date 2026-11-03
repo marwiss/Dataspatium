@@ -15,7 +15,9 @@
     const { h, t } = base;
 
     /**
-     * @param {{title?: string, body?: Node|string, actions?: Array<{label: string, variant?: string, value?: any, primary?: boolean, close?: boolean}>, size?: string, closable?: boolean}} options
+     * A body given as a function receives `done(value)`, which closes the dialog with that value (choices made
+     * inside the body, such as a list of languages).
+     * @param {{title?: string, body?: Node|string|((done: (value?: any) => void) => Node), actions?: Array<{label: string, variant?: string, value?: any, primary?: boolean, close?: boolean}>, size?: string, closable?: boolean}} options
      * @returns {Promise<any>} resolves with the chosen action's value (undefined when dismissed)
      */
     function open(options) {
@@ -29,11 +31,13 @@
           h('div', { class: 'dm-dialog-head' },
             h('h2', { id: 'dm-dialog-title', text: options.title || '' }),
             options.closable === false ? null : basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, variant: 'ghost', onClick: () => finish(undefined) })),
-          h('div', { class: 'dm-dialog-body' }, options.body || null),
+          h('div', { class: 'dm-dialog-body' }, (typeof options.body === 'function' ? options.body(finish) : options.body) || null),
           h('div', { class: 'dm-dialog-actions' }, actionEls),
         );
         dlg.addEventListener('cancel', (e) => { e.preventDefault(); if (options.closable !== false) finish(undefined); });
         dlg.addEventListener('click', (e) => { if (e.target === dlg && options.closable !== false) finish(undefined); });
+        // A dialog closed in any other way still settles its promise.
+        dlg.addEventListener('close', () => finish(undefined));
         document.body.appendChild(dlg);
         dlg.showModal();
         const primary = actionEls.find((_, i) => actions[i].primary || actions[i].variant === 'primary');

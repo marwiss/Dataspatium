@@ -179,31 +179,38 @@
          * With `required` (the first start) the dialog cannot be dismissed; the detected language is
          * preselected and keeping it just records the choice without a reload.
          * @param {{required?: boolean}} [options]
+         * @returns {Promise<string|null>} the chosen language code, or null when cancelled
          */
         async chooseLanguage(options = {}) {
           const required = !!options.required;
-          let chosen = null;
+          let done = (_code) => {};
           const list = h('div', { class: 'dm-list', role: 'radiogroup', 'aria-label': t('lang.title') }, i18n.LANGUAGES.map((l) => h('button', {
             type: 'button', class: 'dm-list-item', role: 'radio', lang: l.locale.split('-')[0], 'aria-checked': l.code === i18n.language() ? 'true' : 'false', 'aria-current': l.code === i18n.language() ? 'true' : null,
-            onclick: () => { chosen = l.code; closeDialog(list); },
+            onclick: () => done(l.code),
           }, icons.icon('languages', 14), h('span', { class: 'dm-list-main' }, h('span', { text: l.label }), h('span', { class: 'dm-list-sub', text: l.locale })))));
-          const closeDialog = (el) => { const dlg = el.closest('dialog'); if (dlg) { dlg.close(); dlg.remove(); } };
           const currentLabel = (i18n.LANGUAGES.find((l) => l.code === i18n.language()) || i18n.LANGUAGES[0]).label;
           const intro = required
             ? h('p', { class: 'dm-help' }, i18n.LANGUAGES.map((l, i) => h('span', { lang: l.locale.split('-')[0], text: i18n.tIn(l.code, 'lang.first.hint') + (i < i18n.LANGUAGES.length - 1 ? ' · ' : '') })))
             : h('p', { class: 'dm-help', text: t('lang.hint') });
-          await overlays.dialog.open({
+          let chosen = await overlays.dialog.open({
             title: required ? t('lang.first.title') : t('lang.title'),
-            body: h('div', { class: 'dm-stack' }, intro, list),
+            body: (close) => { done = close; return h('div', { class: 'dm-stack' }, intro, list); },
             actions: required ? [{ label: t('lang.first.keep', { language: currentLabel }), value: 'keep' }] : [{ label: t('common.cancel'), value: false }],
             closable: !required,
           });
-          if (required && !chosen) chosen = i18n.language();
-          if (!chosen) return;
-          if (chosen === i18n.language()) { i18n.setLanguage(chosen); return; }
+          if (chosen === 'keep' || (required && !chosen)) chosen = i18n.language();
+          if (!chosen) return null;
+          if (chosen === i18n.language()) { i18n.setLanguage(chosen); return chosen; }
           try { await datasets.flushSaves(); } catch (_err) { /* best effort before the reload */ }
           i18n.setLanguage(chosen);
-          location.reload();
+          this.reload();
+          return chosen;
+        }
+
+        /** Reload the page; a new language applies everywhere after a reload. Tests replace this method. */
+        reload() {
+          const target = withoutLangParam(location.href);
+          if (target) location.replace(target); else location.reload();
         }
 
         /** Commands always available in the palette: modes, datasets, the workspace, theme and help. */
@@ -263,7 +270,20 @@
         }
       }
 
+      /**
+       * `href` without its `lang` parameter, which would override a newly chosen language at the reload;
+       * null when there is none.
+       * @param {string} href
+       * @returns {string|null}
+       */
+      function withoutLangParam(href) {
+        const url = new URL(href);
+        if (!url.searchParams.has('lang')) return null;
+        url.searchParams.delete('lang');
+        return url.toString();
+      }
+
       function create(root) { return new Shell(root); }
-      return { create, MODES, MODE_ICONS };
+      return { create, MODES, MODE_ICONS, withoutLangParam };
     });
 })();

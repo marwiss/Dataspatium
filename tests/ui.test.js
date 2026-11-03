@@ -121,6 +121,59 @@
     }
   }, 60000);
 
+  test('app: the language chooser saves the clicked language and reloads; cancelling or keeping it does not', async (assert) => {
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    const before = i18n.language();
+    const option = (code) => document.querySelector(`dialog.dm-dialog .dm-list-item[lang="${code}"]`);
+    const actionButton = () => document.querySelector('dialog.dm-dialog .dm-dialog-actions dm-button button');
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      let reloads = 0;
+      shell.reload = () => { reloads++; };
+      // The ordinary chooser: clicking Danish saves it and reloads the page.
+      let pending = shell.chooseLanguage();
+      await waitFor(() => option('da'), 3000, 'language list');
+      option('da').click();
+      assert.equal(await pending, 'da');
+      assert.equal(reloads, 1, 'page reloaded');
+      assert.equal(localStorage.getItem(i18n.KEY), 'da', 'choice saved');
+      assert.ok(!document.querySelector('dialog.dm-dialog'), 'dialog closed');
+      i18n.setLanguage(before);
+      // Cancel changes nothing.
+      pending = shell.chooseLanguage();
+      await waitFor(actionButton, 3000, 'cancel button');
+      actionButton().click();
+      assert.equal(await pending, null);
+      assert.equal(reloads, 1, 'no reload after cancel');
+      // The first start: another language reloads, keeping the proposed one only records the choice.
+      pending = shell.chooseLanguage({ required: true });
+      await waitFor(() => option('nb'), 3000, 'first-start list');
+      option('nb').click();
+      assert.equal(await pending, 'nb');
+      assert.equal(reloads, 2, 'reloaded for Norwegian');
+      i18n.setLanguage(before);
+      pending = shell.chooseLanguage({ required: true });
+      await waitFor(actionButton, 3000, 'keep button');
+      actionButton().click();
+      assert.equal(await pending, before);
+      assert.equal(reloads, 2, 'keeping the language does not reload');
+      assert.equal(localStorage.getItem(i18n.KEY), before);
+      // A ?lang= parameter would win over the new choice at the reload, so the reload drops it.
+      const strip = D.require('ui/shell').withoutLangParam;
+      assert.equal(strip('file:///C:/app/index.html?lang=en#/inhamta'), 'file:///C:/app/index.html#/inhamta');
+      assert.equal(strip('file:///C:/app/index.html?course=off&lang=da'), 'file:///C:/app/index.html?course=off');
+      assert.equal(strip('file:///C:/app/index.html#/hantera'), null);
+      return 'ok';
+    } finally {
+      i18n.setLanguage(before);
+      for (const dlg of Array.from(document.querySelectorAll('dialog.dm-dialog'))) dlg.remove();
+      root.remove();
+    }
+  }, 30000);
+
   test('app: cell editing with undo, operations palette and the SQL console', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
