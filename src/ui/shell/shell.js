@@ -49,7 +49,9 @@
           this.storageEl = h('span', { class: 'dm-status', text: '' });
           this.themeBtn = basic.button({ label: t('shell.theme'), icon: THEME_ICON[theme.get()], 'icon-only': true, variant: 'ghost', onClick: () => this.toggleTheme() });
           this.logList = h('ul', { class: 'dm-log', 'aria-live': 'polite' });
+          this.slots.center.setAttribute('tabindex', '-1');
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
+            h('a', { class: 'dm-skip', href: '#dm-center', text: t('shell.skip'), onclick: (e) => { e.preventDefault(); this.slots.center.focus(); } }),
             h('header', { class: 'dm-topbar' },
               h('div', { class: 'dm-brand' }, icons.icon('layers', 18), h('span', { text: t('app.name') })),
               this.modeNav,
@@ -61,10 +63,10 @@
                 basic.button({ label: t('palette.open'), icon: 'search', 'icon-only': true, variant: 'ghost', onClick: () => this.palette.open() }),
                 this.themeBtn,
                 basic.button({ label: t('shell.help'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', onClick: () => this.showHelp() }))),
-            h('aside', { class: 'dm-left' }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left),
+            h('aside', { class: 'dm-left', 'aria-label': t('shell.objects') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left),
             this.slots.center,
-            h('aside', { class: 'dm-right' }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
-            h('section', { class: 'dm-drawer' },
+            h('aside', { class: 'dm-right', 'aria-label': t('shell.inspector') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
+            h('section', { class: 'dm-drawer', 'aria-label': t('shell.drawer') },
               h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.drawer') }), basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') })),
               this.logList));
           replace(this.root, this.el);
@@ -110,8 +112,9 @@
           if (type === 'dirty') { this.setStatus('unsaved'); return; }
           if (type === 'saving') { this.setStatus('saving'); return; }
           if (type === 'saved') { this.setStatus(datasets.hasPendingSaves() ? 'unsaved' : 'saved'); return; }
+          if (type === 'remote') this.log(t('sync.' + (payload.action === 'deleted' ? 'deleted' : payload.action === 'created' ? 'created' : 'saved'), { name: payload.name || payload.id || '' }));
           await this.reloadDatasets();
-          if (type === 'deleted' && this.store.get().selectedId === payload.id) this.store.set({ selectedId: null });
+          if ((type === 'deleted' || (type === 'remote' && payload.action === 'deleted')) && this.store.get().selectedId === payload.id) this.store.set({ selectedId: null });
           if (type === 'created') this.store.set({ selectedId: payload.id });
           this.updateStorage();
         }

@@ -61,6 +61,12 @@ finns kvar när du öppnar den nya versionens `index.html` på samma dator och i
 finns *Sök efter uppdatering*, som jämför din version med den senaste utgåvan på GitHub. Kontrollen görs bara när
 du klickar.
 
+## Kan jag ha appen öppen i flera flikar?
+
+Ja. Flikarna delar samma arbetsyta och håller varandra underrättade: sparar eller tar du bort något i en flik
+läser de andra om sina listor och loggar vad som hänt. Redigera ändå inte samma datamängd i två flikar samtidigt;
+om båda har osparade ändringar vinner den som sparar sist.
+
 ## Kan en annan lokal HTML-fil läsa mina data?
 
 I Edge och Chrome delar alla filer som öppnas via file:// samma lagringsutrymme. Öppna därför inte okända

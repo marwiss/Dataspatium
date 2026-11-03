@@ -15,6 +15,7 @@
     // Platform
     'src/platform/registry.js',
     'src/platform/capabilities.js',
+    'src/platform/sync.js',
     'src/platform/assets.js',
     'vendor/manifest.js',
     'presets/local-assets.js',
@@ -35,6 +36,7 @@
     // Data
     'src/data/encoding.js',
     'src/data/types.js',
+    'src/data/geo.js',
     'src/data/datasets.js',
     'src/data/operations.js',
     'src/data/recipes.js',

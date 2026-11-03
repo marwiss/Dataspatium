@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('docgen/documents', ['platform/storage/idb'], (idb) => {
+  D.define('docgen/documents', ['platform/storage/idb', 'platform/sync'], (idb, sync) => {
     const FORMAT = 'dataspatium-doc/1';
     const listeners = new Set();
     function notify() { for (const fn of listeners) { try { fn(); } catch (err) { console.error(err); } } }
@@ -75,9 +75,11 @@ Urvalet omfattar **{{antal_rader}} rader**.
       const record = { id: doc.id && !String(doc.id).startsWith('builtin-') ? doc.id : 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: (doc.name || '').trim() || 'Namnlös mall', body: String(doc.body || ''), codebook: !!doc.codebook, description: doc.description || '', createdAt: doc.createdAt || now, updatedAt: now };
       await idb.putDocument(record);
       notify();
+      sync.broadcast('documents', 'saved', { id: record.id, name: record.name });
       return record;
     }
-    async function remove(id) { if (String(id).startsWith('builtin-')) return; await idb.deleteDocument(id); notify(); }
+    async function remove(id) { if (String(id).startsWith('builtin-')) return; await idb.deleteDocument(id); notify(); sync.broadcast('documents', 'deleted', { id }); }
+    sync.on((msg) => { if (msg.kind === 'documents') notify(); });
     function create(name, body) { return { id: null, name: name || '', body: body || REPORT, codebook: false, description: '' }; }
     function exportJson(doc) { return JSON.stringify({ format: FORMAT, name: doc.name, codebook: !!doc.codebook, description: doc.description || '', body: doc.body, app: 'Dataspatium', version: D.version, created: new Date().toISOString() }, null, 2) + '\n'; }
     async function importJson(text) {

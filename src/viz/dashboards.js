@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme'], (idb, charts, datasets, render, pptx, theme) => {
+  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme', 'platform/sync'], (idb, charts, datasets, render, pptx, theme, sync) => {
     const FORMAT = 'dataspatium-dash/1';
     const FILTERABLE = ['text', 'integer', 'date', 'boolean'];
     const listeners = new Set();
@@ -34,9 +34,11 @@
       });
       await idb.putDashboard(record);
       notify('saved', record);
+      sync.broadcast('dashboards', 'saved', { id: record.id, name: record.name });
       return record;
     }
-    async function remove(id) { await idb.deleteDashboard(id); notify('deleted', { id }); }
+    async function remove(id) { await idb.deleteDashboard(id); notify('deleted', { id }); sync.broadcast('dashboards', 'deleted', { id }); }
+    sync.on((msg) => { if (msg.kind === 'dashboards') notify('remote', msg.payload); });
 
     /** The dashboard's charts in order; charts that no longer exist are skipped. */
     async function resolveCharts(dash) {

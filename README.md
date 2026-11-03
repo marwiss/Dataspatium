@@ -81,6 +81,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - API:er som saknar CORS-stöd (till exempel Riksbankens) kan inte anropas direkt från webbläsaren.
 - En datamängd bör hålla sig under ett par miljoner rader; minnet i webbläsaren sätter gränsen.
 - R-kod kan inte avbrytas mitt i en beräkning; använd *Starta om R*.
+- Flera flikar fungerar och håller varandra underrättade, men redigera inte samma datamängd i två flikar
+  samtidigt: den som sparar sist vinner.
 - Den portabla mappen kräver Edge eller Chrome; Firefox saknar mappåtkomst (File System Access). Säkerhetskopia
   som ZIP fungerar överallt.
 - Safari och mobila webbläsare stöds inte.

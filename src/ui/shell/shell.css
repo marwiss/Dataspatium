@@ -217,3 +217,8 @@ dialog.dm-palette { width: min(640px, calc(100vw - 32px)); margin-top: 10vh; pad
 .dm-nb-md { padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-bg); border-radius: var(--dm-radius-sm); }
 .dm-nb-md > *:first-child { margin-top: 0; }
 .dm-nb-md > *:last-child { margin-bottom: 0; }
+
+/* Accessibility: skip link and reduced motion */
+.dm-skip { position: absolute; left: -9999px; top: var(--dm-s-2); z-index: 100; padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); color: var(--dm-accent); border: 1px solid var(--dm-accent); border-radius: var(--dm-radius-sm); text-decoration: none; }
+.dm-skip:focus { left: var(--dm-s-2); outline: none; }
+@media (prefers-reduced-motion: reduce) { .dm-shell *, .dm-shell *::before, .dm-shell *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }

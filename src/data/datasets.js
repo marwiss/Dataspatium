@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/datasets', ['engines/sqlite', 'platform/storage/idb', 'data/types'], (sqlite, idb, types) => {
+  D.define('data/datasets', ['engines/sqlite', 'platform/storage/idb', 'data/types', 'platform/sync'], (sqlite, idb, types, sync) => {
     /** @type {Map<string, {engine: any, meta: any, columns: any[]}>} */
     const openHandles = new Map();
     const listeners = new Set();
@@ -68,17 +68,32 @@
       openHandles.set(id, handle);
       await persist(handle);
       notify('created', handle.meta);
+      sync.broadcast('datasets', 'created', { id: handle.meta.id, name: handle.meta.name });
       return handle.meta;
     }
 
     async function persist(handle) {
-      const bytes = await handle.engine.export();
-      handle.meta.byteSize = bytes.byteLength;
-      const record = Object.assign({}, handle.meta, { columns: handle.columns.map((c) => ({ name: c.name, type: c.type, label: c.label })) });
-      await idb.saveBlob('ds:' + handle.meta.id, bytes);
-      await idb.putDataset(record);
-      return record;
+      // One tab at a time writes a given dataset file (Web Locks when available).
+      return sync.withLock('ds:' + handle.meta.id, async () => {
+        const bytes = await handle.engine.export();
+        handle.meta.byteSize = bytes.byteLength;
+        const record = Object.assign({}, handle.meta, { columns: handle.columns.map((c) => ({ name: c.name, type: c.type, label: c.label })) });
+        await idb.saveBlob('ds:' + handle.meta.id, bytes);
+        await idb.putDataset(record);
+        return record;
+      });
     }
+
+    // Other tabs: drop stale in-memory copies of datasets they saved or removed, then let the UI reload its lists.
+    sync.on((msg) => {
+      if (msg.kind !== 'datasets') return;
+      const id = msg.payload && msg.payload.id;
+      if (id && (msg.action === 'saved' || msg.action === 'deleted') && openHandles.has(id)) {
+        if (saveTimers.has(id)) D.log('datasets', 'remote change to a dataset with unsaved edits here; the last save wins', id);
+        else close(id);
+      }
+      notify('remote', Object.assign({ action: msg.action }, msg.payload || {}));
+    });
 
     async function list() { return idb.listDatasets(); }
     async function get(id) { return idb.getDataset(id); }
@@ -331,6 +346,7 @@
       const record = await persist(handle);
       notify('updated', record);
       notify('saved', { id });
+      sync.broadcast('datasets', 'saved', { id, name: handle.meta.name, updatedAt: handle.meta.updatedAt });
       return record;
     }
 
@@ -385,6 +401,7 @@
       if (handle) { handle.engine.terminate(); openHandles.delete(id); }
       await idb.deleteDataset(id);
       notify('deleted', { id });
+      sync.broadcast('datasets', 'deleted', { id });
     }
 
     /** @returns {Promise<ArrayBuffer>} the SQLite file */
@@ -417,6 +434,7 @@
       openHandles.set(meta.id, handle);
       await persist(handle);
       notify('created', handle.meta);
+      sync.broadcast('datasets', 'created', { id: handle.meta.id, name: handle.meta.name });
       return handle.meta;
     }
 

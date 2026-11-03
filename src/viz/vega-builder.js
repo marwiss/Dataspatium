@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/vega-builder', ['viz/locale', 'viz/theme'], (locale, theme) => {
+  D.define('viz/vega-builder', ['viz/locale', 'viz/theme', 'data/geo'], (locale, theme, geo) => {
     const SCHEMA = 'https://vega.github.io/schema/vega-lite/v6.json';
     const AGGREGATES = ['none', 'sum', 'mean', 'median', 'min', 'max', 'count', 'distinct'];
     const TIME_UNITS = ['', 'year', 'yearmonth', 'yearquarter', 'month', 'yearmonthdate', 'day', 'hours'];
@@ -45,7 +45,7 @@
       if (kind === 'measure') return by((c) => numeric(c) && !yearLike(c) && !idLike(c)) || by((c) => numeric(c) && !yearLike(c)) || by(numeric);
       if (kind === 'time') return by((c) => c.type === 'date' || c.type === 'datetime') || by((c) => /^(ar|år|year|tid|period|manad|månad)$/i.test(c.name)) || by((c) => c.type === 'text');
       if (kind === 'category') return by((c) => c.type === 'text' || c.type === 'boolean') || by((c) => c.type === 'integer');
-      if (kind === 'geometry') return by((c) => c.type === 'text' && /^(geometry|geom|wkt|shape)$/i.test(c.name)) || by((c) => c.type === 'text' && /geom/i.test(c.name));
+      if (kind === 'geometry') return by((c) => c.type === 'text' && /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(c.name)) || by((c) => c.type === 'text' && /geom|wkt/i.test(c.name));
       if (kind === 'label') return by((c) => c.type === 'text' && /namn|name|kommun|region|lan|län|omrade|område/i.test(c.name)) || by((c) => c.type === 'text' && !/geom|wkt|shape/i.test(c.name));
       return free[0] || columns[0] || null;
     }
@@ -147,7 +147,8 @@
         // Geometry arrives as GeoJSON text; parse it and let Vega-Lite draw it with geoshape. Projected
         // coordinates (SWEREF99 TM metres) are drawn as-is, longitude/latitude through Mercator.
         const geomField = state.x && state.x.field;
-        const values = geomField ? (data.values || []).map((row) => { let g = row[geomField]; if (typeof g === 'string') { try { g = JSON.parse(g); } catch (_e) { g = null; } } return Object.assign({}, row, { [geomField]: g }); }).filter((row) => row[geomField]) : (data.values || []);
+        // Geometry cells may hold GeoJSON or WKT text (GeoPackage, PostGIS and spreadsheet exports).
+        const values = geomField ? (data.values || []).map((row) => Object.assign({}, row, { [geomField]: geo.parseGeometry(row[geomField]) })).filter((row) => row[geomField]) : (data.values || []);
         spec.data = data.values ? { values } : { name: data.name || 'table' };
         spec.height = data.height !== undefined ? data.height : (state.height || 480);
         spec.projection = isProjected(values, geomField) ? { type: 'identity', reflectY: true } : { type: 'mercator' };
@@ -206,16 +207,8 @@
       return spec;
     }
 
-    function firstCoordinate(c) { let v = c; while (Array.isArray(v) && Array.isArray(v[0])) v = v[0]; return Array.isArray(v) && typeof v[0] === 'number' ? v : null; }
     /** True when the first coordinate cannot be longitude/latitude (projected metres, e.g. SWEREF99 TM). */
-    function isProjected(values, field) {
-      for (const row of values || []) {
-        const g = row && field ? row[field] : null;
-        const c = g && g.coordinates ? firstCoordinate(g.coordinates) : null;
-        if (c) return Math.abs(c[0]) > 180 || Math.abs(c[1]) > 90;
-      }
-      return false;
-    }
+    function isProjected(values, field) { return geo.isProjected((values || []).map((row) => (row && field ? row[field] : null))); }
 
     /** Problems in the state the user should fix before rendering. */
     function validate(state) {

@@ -202,6 +202,16 @@ och SQL-celler mot bokens datamängd (SELECT via motorn, ändrande satser som re
 översätter boken till dokumentmodellen, som fått blocktypen `code` (kod och textutdata) i alla byggare, så att
 exporten återanvänder HTML-, DOCX-, PDF-, Markdown- och LaTeX-byggarna.
 
+## Flera flikar
+
+`src/platform/sync.js` håller flikar i samma arbetsyta i takt: en `BroadcastChannel` (`dataspatium-sync`) bär
+ändringsbesked för datamängder, diagram, dashboards, anteckningsböcker och mallar, och `withLock` serialiserar
+skrivningar av samma datamängdsfil med Web Locks. Datamodulerna sänder efter `save` och `remove`; när ett besked
+kommer från en annan flik stänger `data/datasets` sin minneskopia av den berörda datamängden (om fliken inte själv
+har osparade ändringar; då vinner den sista sparningen) och sänder händelsen `remote`, varpå skalet läser om listan
+och loggar en rad. Övriga moduler vidarebefordrar beskedet som händelsen `remote` till sina prenumeranter, som läser
+om sina listor. Utan BroadcastChannel eller Web Locks fungerar allt som förut.
+
 ## UI-skal och lägen
 
 `src/ui/shell/shell.js` bygger skelettet, äger tillståndet (`createStore`: läge, datamängder, vald datamängd,

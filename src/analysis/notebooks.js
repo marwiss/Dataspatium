@@ -9,8 +9,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('analysis/notebooks', ['platform/storage/idb', 'data/datasets', 'data/recipes', 'data/r-bridge', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'platform/storage/zip', 'platform/files'],
-    (idb, datasets, recipes, rb, markdown, builders, office, zip, files) => {
+  D.define('analysis/notebooks', ['platform/storage/idb', 'data/datasets', 'data/recipes', 'data/r-bridge', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'platform/storage/zip', 'platform/files', 'platform/sync'],
+    (idb, datasets, recipes, rb, markdown, builders, office, zip, files, sync) => {
       const FORMAT = 'dataspatium-notebook/1';
       const CELL_TYPES = ['markdown', 'r', 'sql'];
       const SQL_LIMIT = 1000;
@@ -55,9 +55,11 @@
         });
         await idb.putNotebook(record);
         notify('saved', record);
+        sync.broadcast('notebooks', 'saved', { id: record.id, name: record.name });
         return record;
       }
-      async function remove(id) { await idb.deleteNotebook(id); notify('deleted', { id }); }
+      async function remove(id) { await idb.deleteNotebook(id); notify('deleted', { id }); sync.broadcast('notebooks', 'deleted', { id }); }
+      sync.on((msg) => { if (msg.kind === 'notebooks') notify('remote', msg.payload); });
 
       /** Run one cell; outputs replace the cell's previous outputs. Errors become an error output. */
       async function runCell(nb, c) {

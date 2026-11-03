@@ -92,6 +92,8 @@ geometrikolumn med GeoJSON, det vill säga en datamängd som importerats från G
    divergerande under *Fler alternativ* för avvikelser kring ett mittvärde).
 
 Projektionen väljs av koordinaterna: meter (SWEREF99 TM) ritas som de är, longitud och latitud genom Mercator.
+Geometrikolumnen får innehålla GeoJSON eller WKT (`POLYGON((...))`, `POINT(...)` med flera, även med
+`SRID=...;`-prefix), så att exporter från GeoPackage, PostGIS och kalkylblad fungerar direkt.
 Kartor exporteras, delas, läggs i dashboards och körs i batch som alla andra diagram i byggaren; filter i
 dashboards fungerar också på kartor.
 
@@ -124,5 +126,5 @@ Säkerhetskopian av arbetsytan (Hantera) innehåller alla diagram som sådana fi
 - Diagrammen lever i webbläsaren; mycket stora datamängder utan aggregering begränsas till radgränsen.
 - PDF använder Helvetica, inte Inter, för text.
 - R-diagram kräver att R-sessionen är startad och exporteras därför bara från Visualisera.
-- Kartor med kommungränser kommer i en senare utgåva.
+- Kommun- och länsgränser följer inte med appen; hämta dem som shapefile från SCB (Digitala gränser) och importera.
 - PowerPoint-export använder bilder (PNG) av diagrammen, inte redigerbara PowerPoint-diagram.

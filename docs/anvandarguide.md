@@ -115,8 +115,10 @@ arbetsytan dessutom speglas till en portabel mapp på disk, automatiskt vid varj
 
 ## Tangentbord
 
-Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Allt nås med Tabb och Enter; dialoger stängs
-med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar.
+Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Första Tabb-trycket på sidan visar länken
+*Hoppa till innehållet*, som flyttar fokus förbi lägesväxlaren och objektpanelen. Allt nås med Tabb och Enter;
+dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer
+systeminställningen för minskad rörelse.
 
 ## När något går fel
 

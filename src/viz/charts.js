@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/charts', ['platform/storage/idb', 'data/datasets'], (idb, datasets) => {
+  D.define('viz/charts', ['platform/storage/idb', 'data/datasets', 'platform/sync'], (idb, datasets, sync) => {
     const FORMAT = 'dataspatium-viz/1';
     const KINDS = ['vega', 'd3', 'r'];
     const listeners = new Set();
@@ -25,9 +25,11 @@
       const record = Object.assign({}, chart, { id: chart.id || newId(), createdAt: chart.createdAt || now, updatedAt: now, name: (chart.name || '').trim() || 'Namnlöst diagram' });
       await idb.putChart(record);
       notify('saved', record);
+      sync.broadcast('charts', 'saved', { id: record.id, name: record.name });
       return record;
     }
-    async function remove(id) { await idb.deleteChart(id); notify('deleted', { id }); }
+    async function remove(id) { await idb.deleteChart(id); notify('deleted', { id }); sync.broadcast('charts', 'deleted', { id }); }
+    sync.on((msg) => { if (msg.kind === 'charts') notify('remote', msg.payload); });
 
     /** New record for a dataset. */
     function create(kind, dataset, name) {
