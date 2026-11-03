@@ -8,3 +8,6 @@ docs/plan.md
 Thumbs.db
 *.log
 .tmp/
+
+# Claude Code session files
+.claude/
