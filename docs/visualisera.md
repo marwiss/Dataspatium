@@ -77,6 +77,24 @@ stället för en ZIP en enda presentation med en bild per grupp.
 tryck **Rendera alla (panel)** för att rita diagrammen live sida vid sida. Härifrån öppnas, exporteras och tas
 diagram bort.
 
+## Kartor
+
+Diagramtypen **Karta** ritar en koropletkarta (ytor färgade efter ett värde) ur en datamängd som har en
+geometrikolumn med GeoJSON, det vill säga en datamängd som importerats från GeoJSON eller shapefile. Gör så här:
+
+1. Hämta gränserna, till exempel kommun- eller länsgränser som shapefile från SCB:s sida *Digitala gränser*
+   (SWEREF99 TM), och importera ZIP-filen i Inhämta. Förenkla gärna geometrin med toleransen 100 meter; kartan
+   blir snabbare utan synlig skillnad.
+2. Koppla värdena till gränserna i Bearbeta (*Koppla*) på kommunkoden, så att datamängden får både `geometry` och
+   det värde som ska färgläggas. Alternativt har värdena redan importerats tillsammans med geometrin.
+3. Välj *Karta* i diagrambyggaren. Geometrikolumnen hittas automatiskt (kolumnen `geometry`), etiketten är en
+   textkolumn som visas när du pekar på en yta, och värdet styr färgen med appens sekventiella skala (välj
+   divergerande under *Fler alternativ* för avvikelser kring ett mittvärde).
+
+Projektionen väljs av koordinaterna: meter (SWEREF99 TM) ritas som de är, longitud och latitud genom Mercator.
+Kartor exporteras, delas, läggs i dashboards och körs i batch som alla andra diagram i byggaren; filter i
+dashboards fungerar också på kartor.
+
 ## Dashboards
 
 En dashboard är ett namngivet urval av sparade diagram i ett rutnät med gemensamma filter. Skapa en med **Ny

@@ -73,6 +73,13 @@ Ja, om arbetsgivaren är en myndighet, kommun, region, skola, ett lärosäte ell
 säga icke-kommersiell användning. Kommersiell användning kräver tillstånd från licensgivaren. Se
 [licenser.md](licenser.md).
 
+## Hur gör jag en karta över kommuner eller län?
+
+Hämta gränserna som shapefile från SCB:s sida *Digitala gränser* (kommun- eller länsgränser i SWEREF99 TM) och
+importera ZIP-filen i Inhämta, gärna med toleransen 100 meter under *Förenkla geometri*. Koppla sedan dina värden
+till gränserna på kommunkoden i Bearbeta (*Koppla*), och välj diagramtypen *Karta* i Visualisera. Se
+[visualisera.md](visualisera.md).
+
 ## Kan jag ta bort personnummer innan jag delar en datamängd?
 
 Ja. Åtgärden *Pseudonymisera* i Bearbeta ersätter identifierare med saltade hashvärden, maskerade värden eller

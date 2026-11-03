@@ -10,7 +10,8 @@
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
 | NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad |
 | JSON-stat | Ja | Nej | Känns igen automatiskt (`class: dataset`, version 2.0); en rad per cell med koder, texter och värde |
-| GeoJSON | Ja | Nej | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn |
+| GeoJSON | Ja | Nej | En rad per feature; egenskaperna blir kolumner, geometrin en textkolumn med GeoJSON som kartdiagrammet ritar |
+| Shapefile (ZIP med shp, dbf, prj, cpg, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
 | XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
 | SPSS sav, zsav, por | Ja | sav | Via R-paketet haven. Variabeletiketter blir kolumnetiketter, värdeetiketter blir text |

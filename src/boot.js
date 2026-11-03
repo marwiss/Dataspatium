@@ -49,6 +49,7 @@
     'src/io/importers/xml.js',
     'src/io/importers/sqlite.js',
     'src/io/importers/r-formats.js',
+    'src/io/importers/shapefile.js',
     'src/io/import.js',
     'src/io/export.js',
     // API connectors

@@ -164,7 +164,9 @@
               stat(est && est.quota ? i18n.formatBytes(est.quota) : '–', 'Kvot'),
               stat(String(store.get().datasets.length), t('shell.datasets')),
               stat(persisted ? t('datasets.persist.granted') : t('datasets.persist.denied'), 'Beständig lagring')),
-            persisted ? null : h('div', { class: 'dm-row' }, ui.button({ label: 'Begär beständig lagring', icon: 'lock', onClick: async () => { const ok = await services.idb.requestPersist(); shell.log(t('datasets.persist', { state: ok ? t('datasets.persist.granted') : t('datasets.persist.denied') }), ok ? 'ok' : 'warn'); render(); } }))),
+            h('div', { class: 'dm-row-wrap' },
+              persisted ? null : ui.button({ label: 'Begär beständig lagring', icon: 'lock', onClick: async () => { const ok = await services.idb.requestPersist(); shell.log(t('datasets.persist', { state: ok ? t('datasets.persist.granted') : t('datasets.persist.denied') }), ok ? 'ok' : 'warn'); render(); } }),
+              apiDatasets().length ? ui.button({ label: t('api.refresh.all', { n: apiDatasets().length }), icon: 'refresh-cw', onClick: refreshAllApi }) : null)),
           h('div', { class: 'dm-form-grid' },
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.backup') }), h('p', { class: 'dm-help', text: t('datasets.backup.hint') }),
               h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: backup }))),
@@ -172,6 +174,22 @@
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('bundle.title') }), h('p', { class: 'dm-help', text: t('bundle.card.hint') }),
               h('div', null, ui.button({ label: t('bundle.create'), icon: 'package', onClick: shareBundle })))),
           folderEl);
+      }
+
+      function apiDatasets() { return store.get().datasets.filter((d) => d.source && d.source.kind === 'api'); }
+
+      /** Re-fetch every API-sourced dataset (replace mode), one after the other, with progress in a toast. */
+      async function refreshAllApi() {
+        const runner = D.require('api/runner');
+        const abort = new AbortController();
+        const toast = ui.toast.show(t('api.refresh.all.running', { name: '', done: 0, total: apiDatasets().length }), { kind: 'info', timeout: 0, action: { label: t('api.cancel'), onClick: () => abort.abort() } });
+        try {
+          const results = await runner.refreshAll({ signal: abort.signal, onProgress: (p) => { const el = toast.querySelector('.dm-toast-text'); if (el) el.textContent = t('api.refresh.all.running', { name: p.name, done: p.done, total: p.total }); } });
+          const ok = results.filter((r) => r.ok).length; const failed = results.length - ok;
+          for (const r of results) shell.log(r.ok ? t('api.into.replaced', { name: r.name, rows: i18n.formatNumber(r.rows || 0) }) : `${r.name}: ${r.error}`, r.ok ? 'ok' : 'error');
+          ui.toast.show(t('api.refresh.all.done', { ok, failed }), { kind: failed ? 'warn' : 'ok', timeout: 10000 });
+        } catch (err) { shell.log(String((err && err.message) || err), 'error'); }
+        finally { toast.remove(); }
       }
 
       /** Selective sharing bundle: chosen datasets plus charts, dashboards, templates and notebooks. */
@@ -275,6 +293,15 @@
           { label: 'SharedArrayBuffer', value: c.sharedArrayBuffer ? t('common.yes') : t('common.no') },
         ];
         replace(slots.right, h('h4', { text: 'Miljö' }), kv);
+      }
+
+      // Command palette: re-fetch API datasets and share a bundle.
+      if (ctx.palette) {
+        ctx.palette.register(() => {
+          const cmds = [{ id: 'bundle', label: t('bundle.title'), hint: t('bundle.create'), group: t('palette.group.actions'), icon: 'package', run: () => shareBundle() }];
+          if (apiDatasets().length) cmds.push({ id: 'api:refresh', label: t('api.refresh.all', { n: apiDatasets().length }), group: t('palette.group.actions'), icon: 'refresh-cw', run: () => refreshAllApi() });
+          return cmds;
+        });
       }
 
       return { id: 'hantera', activate, deactivate };

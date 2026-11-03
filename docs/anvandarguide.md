@@ -78,7 +78,8 @@ Diagrambyggaren skapar stapel-, linje-, yt-, punkt-, cirkel- och andra diagram u
 axlar, färg och fasetter, aggregering, sortering och titlar. D3-mallar ger specialdiagram (lollipop, slopegraph,
 befolkningspyramid) och R-diagram kan sparas med sin kod. Alla motorer använder samma färger och typsnitt. Sparade
 diagram samlas i galleriet och exporteras som SVG, PNG, PDF eller PowerPoint, enstaka eller ett per grupp (till
-exempel per kommun) till en ZIP eller en presentation. En dashboard samlar flera sparade diagram i ett rutnät med
+exempel per kommun) till en ZIP eller en presentation. Kartor ritas med diagramtypen *Karta* ur en datamängd med
+geometri från GeoJSON eller shapefile (kommungränser från SCB) kopplad till värden per kommunkod. En dashboard samlar flera sparade diagram i ett rutnät med
 gemensamma filter, till exempel län eller år, och exporteras som fristående HTML eller PowerPoint.
 
 ### 6. Dokument (Exportera, fliken Dokument)

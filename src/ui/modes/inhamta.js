@@ -11,12 +11,12 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: 'Automatiskt' }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'excel', 'json', 'xml', 'sqlite', 'r'];
+    const FORMATS = ['csv', 'excel', 'json', 'xml', 'sqlite', 'shapefile', 'r'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'r'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'shapefile', 'r'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'r'];
-    const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.xlsx,.xlsm,.xls,.xlsb,.ods,.json,.ndjson,.jsonl,.geojson,.xml,.sqlite,.sqlite3,.db,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet';
+    const TYPED = ['sqlite', 'shapefile', 'r'];
+    const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.xlsx,.xlsm,.xls,.xlsb,.ods,.json,.ndjson,.jsonl,.geojson,.xml,.sqlite,.sqlite3,.db,.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -29,7 +29,7 @@
       /** @type {any} */ let apiUi = null;
       let apiId = null;
 
-      function reset() { return { step: 'file', file: null, text: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function reset() { return { step: 'file', file: null, text: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0 }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
       function activate(s) {
@@ -160,6 +160,8 @@
         if (!o.path) delete o.path;
         if (!o.recordTag) delete o.recordTag;
         if (!o.table) delete o.table;
+        if (!o.layer) delete o.layer;
+        if (!o.simplify) delete o.simplify;
         if (o.decimal === 'auto') delete o.decimal;
         return o;
       }
@@ -192,6 +194,14 @@
         if (wiz.options.format === 'sqlite' && p) {
           if (p.dataspatium) left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.sqlite.dataspatium') }));
           else if (p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
+        }
+        if (wiz.options.format === 'shapefile' && p) {
+          if (p.layers && p.layers.length > 1) left.appendChild(select(t('import.layer'), p.layers.map((s) => ({ value: s, label: s })), wiz.options.layer || p.layer, (v) => { wiz.options.layer = v; schedulePreview(); }));
+          const simp = /** @type {any} */ (h('dm-input', { type: 'number', label: t('import.simplify'), help: t('import.simplify.help'), min: '0' }));
+          simp.value = String(wiz.options.simplify || 0);
+          simp.addEventListener('change', () => { wiz.options.simplify = Number(simp.value) || 0; schedulePreview(); });
+          left.appendChild(simp);
+          left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.shapefile.info', { crs: p.crs || t('import.shapefile.crs.unknown'), points: i18n.formatNumber(p.points || 0) }) }));
         }
         const viaR = !!(p && p.viaR);
         if (viaR) left.appendChild(h('p', { class: 'dm-help', text: t('import.r.hint', { pkg: p.pkg, reader: p.reader }) }));

@@ -44,8 +44,9 @@
         const isCount = key === 'y' && type.y === 'count';
         const nodes = [];
         if (isCount) { nodes.push(h('div', { class: 'dm-help', text: t('viz.agg.count') })); return h('div', { class: 'dm-card dm-stack-sm dm-viz-channel' }, h('strong', { text: label }), nodes); }
-        nodes.push(columnSelect(label, ch && ch.field, (col) => { state[key] = col ? builder.channel(col, { aggregate: ch && ch.aggregate && col.type !== 'text' ? ch.aggregate : (key === 'y' && (col.type === 'integer' || col.type === 'number') && type.aggregate !== 'none' ? type.aggregate : 'none') }) : null; render(); emit(true); }, { optional }));
-        if (ch && ch.field) {
+        nodes.push(columnSelect(label, ch && ch.field, (col) => { state[key] = col ? builder.channel(col, { aggregate: ch && ch.aggregate && col.type !== 'text' ? ch.aggregate : (key === 'y' && (col.type === 'integer' || col.type === 'number') && type.aggregate !== 'none' ? type.aggregate : 'none') }) : null; render(); emit(true); }, { optional, kinds: type.geo && key === 'x' ? ['text'] : null }));
+        // Maps: the geometry and label channels need no interpretation, aggregate or sort options.
+        if (ch && ch.field && !(type.geo && key !== 'color')) {
           const row = [];
           row.push(smallSelect(t('viz.channel.type'), FIELD_TYPES.map((ft) => ({ value: ft, label: t('viz.type.' + ft) })), ch.type, (v) => { ch.type = v; if (v !== 'quantitative') ch.aggregate = 'none'; render(); emit(); }));
           if (allowAggregate && ch.type === 'quantitative') row.push(smallSelect(t('viz.aggregate'), builder.AGGREGATES.map((a) => ({ value: a, label: t('viz.agg.' + a) })), ch.aggregate || 'none', (v) => { ch.aggregate = v; emit(); }));
@@ -99,9 +100,9 @@
         replace(el,
           h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: t('viz.type') }), typeTiles),
           customSpec === null ? [
-            channelCard('x', t('viz.channel.x'), { optional: false }),
-            channelCard('y', t('viz.channel.y'), { optional: false }),
-            channelCard('color', t('viz.channel.color'), { optional: true }),
+            channelCard('x', type.geo ? t('viz.channel.geometry') : t('viz.channel.x'), { optional: false, allowAggregate: !type.geo }),
+            channelCard('y', type.geo ? t('viz.channel.label') : t('viz.channel.y'), { optional: !!type.geo, allowAggregate: !type.geo }),
+            channelCard('color', type.geo ? t('viz.channel.value') : t('viz.channel.color'), { optional: !type.geo }),
             channelCard('size', t('viz.channel.size'), { optional: true }),
             channelCard('facet', t('viz.channel.facet'), { optional: true, allowAggregate: false }),
             h('div', { class: 'dm-form-grid' }, title, subtitle, yFormat, height, legend, state.facet ? facetCols : null, (type.mark === 'bar' || type.mark === 'area') && state.color ? stack : null),

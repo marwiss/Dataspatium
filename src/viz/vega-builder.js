@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/vega-builder', ['viz/locale'], (locale) => {
+  D.define('viz/vega-builder', ['viz/locale', 'viz/theme'], (locale, theme) => {
     const SCHEMA = 'https://vega.github.io/schema/vega-lite/v6.json';
     const AGGREGATES = ['none', 'sum', 'mean', 'median', 'min', 'max', 'count', 'distinct'];
     const TIME_UNITS = ['', 'year', 'yearmonth', 'yearquarter', 'month', 'yearmonthdate', 'day', 'hours'];
@@ -22,6 +22,8 @@
       { id: 'heatmap', label: 'Värmekarta', icon: 'grid-2x2', mark: 'rect', channels: ['x', 'y', 'color'], x: 'category', y: 'category', aggregate: 'sum' },
       { id: 'boxplot', label: 'Låddiagram', icon: 'chart-candlestick', mark: 'boxplot', channels: ['x', 'y', 'color'], x: 'category', y: 'measure', aggregate: 'none' },
       { id: 'pie', label: 'Cirkel', icon: 'chart-pie', mark: 'arc', channels: ['x', 'y'], x: 'category', y: 'measure', aggregate: 'sum' },
+      // Choropleth map: x holds the geometry column (GeoJSON text from the GeoJSON or shapefile importer), y a label, color the value.
+      { id: 'map', label: 'Karta', icon: 'globe', mark: 'geoshape', geo: true, channels: ['x', 'y', 'color'], x: 'geometry', y: 'label', aggregate: 'none' },
     ];
 
     function fieldType(column) {
@@ -42,6 +44,8 @@
       if (kind === 'measure') return by((c) => numeric(c) && !yearLike(c)) || by(numeric);
       if (kind === 'time') return by((c) => c.type === 'date' || c.type === 'datetime') || by((c) => /^(ar|år|year|tid|period|manad|månad)$/i.test(c.name)) || by((c) => c.type === 'text');
       if (kind === 'category') return by((c) => c.type === 'text' || c.type === 'boolean') || by((c) => c.type === 'integer');
+      if (kind === 'geometry') return by((c) => c.type === 'text' && /^(geometry|geom|wkt|shape)$/i.test(c.name)) || by((c) => c.type === 'text' && /geom/i.test(c.name));
+      if (kind === 'label') return by((c) => c.type === 'text' && /namn|name|kommun|region|lan|län|omrade|område/i.test(c.name)) || by((c) => c.type === 'text' && !/geom|wkt|shape/i.test(c.name));
       return free[0] || columns[0] || null;
     }
 
@@ -53,6 +57,12 @@
         type: type.id, x: channel(x), y: null, color: null, size: null, facet: null, facetColumns: 3,
         stack: 'zero', labels: false, points: false, interpolate: 'linear', title: '', subtitle: '', width: 0, height: 360, legend: 'right', colorScheme: 'auto', maxRows: 50000, filters: [], yFormat: '', xFormat: '',
       };
+      if (type.geo) {
+        state.y = channel(pick(columns, 'label', x ? [x.name] : []));
+        state.color = channel(pick(columns, 'measure'), { aggregate: 'none' });
+        state.height = 480;
+        return state;
+      }
       if (type.y === 'count') state.y = { field: null, type: 'quantitative', aggregate: 'count', bin: false, timeUnit: '', sort: '', title: '', format: '' };
       else state.y = channel(pick(columns, type.y, x ? [x.name] : []), { aggregate: type.aggregate });
       if (type.id === 'histogram' && state.x) { state.x.bin = true; }
@@ -73,6 +83,7 @@
     function isAggregated(ch) { return !!(ch && ch.aggregate && ch.aggregate !== 'none'); }
     function needsRawRows(state) {
       const type = typeOf(state.type);
+      if (type.geo) return true;
       if (type.mark === 'boxplot' || type.mark === 'point') return true;
       const chans = ['x', 'y', 'color', 'size', 'facet'].map((k) => state[k]).filter(Boolean);
       if (chans.some((c) => c.bin || c.timeUnit)) return true;
@@ -131,6 +142,29 @@
       const spec = { $schema: SCHEMA, data: data.values ? { values: data.values } : { name: data.name || 'table' }, width: data.width !== undefined ? data.width : (state.width > 0 ? state.width : 'container'), height: data.height !== undefined ? data.height : (state.height || 360) };
       if (state.title) spec.title = state.subtitle ? { text: state.title, subtitle: state.subtitle } : state.title;
       const enc = {};
+      if (type.geo) {
+        // Geometry arrives as GeoJSON text; parse it and let Vega-Lite draw it with geoshape. Projected
+        // coordinates (SWEREF99 TM metres) are drawn as-is, longitude/latitude through Mercator.
+        const geomField = state.x && state.x.field;
+        const values = geomField ? (data.values || []).map((row) => { let g = row[geomField]; if (typeof g === 'string') { try { g = JSON.parse(g); } catch (_e) { g = null; } } return Object.assign({}, row, { [geomField]: g }); }).filter((row) => row[geomField]) : (data.values || []);
+        spec.data = data.values ? { values } : { name: data.name || 'table' };
+        spec.height = data.height !== undefined ? data.height : (state.height || 480);
+        spec.projection = isProjected(values, geomField) ? { type: 'identity', reflectY: true } : { type: 'mercator' };
+        spec.mark = { type: 'geoshape', stroke: theme.tokens().background, strokeWidth: 0.6 };
+        if (geomField) enc.shape = { field: geomField, type: 'geojson' };
+        if (state.color && state.color.field) {
+          const color = encode(state.color, { alias: aliases.color });
+          color.scale = { scheme: state.colorScheme === 'diverging' ? 'dataspatium-div' : 'dataspatium-seq' };
+          color.legend = state.legend === 'none' ? null : Object.assign({ orient: state.legend || 'right' }, state.yFormat ? { format: state.yFormat } : {});
+          enc.color = color;
+        }
+        const tips = [];
+        if (state.y && state.y.field) tips.push({ field: state.y.field, type: 'nominal', title: state.y.title || state.y.field });
+        if (state.color && state.color.field) tips.push(Object.assign({ field: state.color.field, type: state.color.type, title: state.color.title || state.color.field }, state.yFormat ? { format: state.yFormat } : {}));
+        if (tips.length) enc.tooltip = tips;
+        spec.encoding = enc;
+        return spec;
+      }
       const x = encode(state.x, { alias: aliases.x }); const y = encode(state.y, { alias: aliases.y });
       if (type.id === 'pie') {
         spec.mark = { type: 'arc', innerRadius: state.donut ? 60 : 0 };
@@ -171,16 +205,32 @@
       return spec;
     }
 
+    function firstCoordinate(c) { let v = c; while (Array.isArray(v) && Array.isArray(v[0])) v = v[0]; return Array.isArray(v) && typeof v[0] === 'number' ? v : null; }
+    /** True when the first coordinate cannot be longitude/latitude (projected metres, e.g. SWEREF99 TM). */
+    function isProjected(values, field) {
+      for (const row of values || []) {
+        const g = row && field ? row[field] : null;
+        const c = g && g.coordinates ? firstCoordinate(g.coordinates) : null;
+        if (c) return Math.abs(c[0]) > 180 || Math.abs(c[1]) > 90;
+      }
+      return false;
+    }
+
     /** Problems in the state the user should fix before rendering. */
     function validate(state) {
       const type = typeOf(state.type);
       const problems = [];
+      if (type.geo) {
+        if (!state.x || !state.x.field) problems.push('Välj kolumnen med geometri (GeoJSON från GeoJSON- eller shapefile-import).');
+        if (!state.color || !state.color.field) problems.push('Välj en värdekolumn för färgen.');
+        return problems;
+      }
       if (!state.x || !state.x.field) problems.push('Välj en kolumn för X.');
       if (type.y !== 'count' && (!state.y || !state.y.field)) problems.push('Välj en kolumn för Y.');
       if (type.id === 'heatmap' && (!state.color || !state.color.field)) problems.push('Välj en kolumn för färg (värde).');
       return problems;
     }
 
-    return { CHART_TYPES, AGGREGATES, TIME_UNITS, NUMBER_FORMATS: locale.NUMBER_FORMATS, fieldType, typeOf, channel, defaultState, switchType, toSpec, dataRequest, needsRawRows, validate, isAggregated };
+    return { CHART_TYPES, AGGREGATES, TIME_UNITS, NUMBER_FORMATS: locale.NUMBER_FORMATS, fieldType, typeOf, channel, defaultState, switchType, toSpec, dataRequest, needsRawRows, validate, isAggregated, isProjected };
   });
 })();

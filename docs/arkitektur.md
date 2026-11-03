@@ -98,7 +98,16 @@ datamängden. Två adaptrar avviker: SQLite-filer som är Dataspatium-datamängd
 `importViaR` skriver filen till R:s filsystem, kör rätt läsfunktion (haven, pxR, nanoparquet, base R), gör
 etikettkolumner till text och lämnar över med `dm_write()`, som bevarar variabeletiketter som kolumnetiketter.
 PX-filer avkodas i JS enligt CODEPAGE/CHARSET och skrivs som UTF-8 innan pxR läser dem. JSON-stat upptäcks i
-JSON-adaptern och tabelleras med `api/jsonstat`.
+JSON-adaptern och tabelleras med `api/jsonstat`. Shapefile-adaptern (`shapefile.js`) läser .shp (punkt, linje,
+polygon, multipunkt, med eller utan Z/M; yttre ringar medurs enligt shapefile-konventionen behålls eftersom
+d3-geo förväntar sig samma riktning), .dbf (typer C, N, F, D, L; teckenkodning från .cpg eller UTF-8-prov) och
+namnet i .prj, kan förenkla geometrin med Douglas-Peucker och ger samma kolumner som GeoJSON-importen
+(`geometry_type`, `geometry` med GeoJSON som text).
+
+Kartdiagrammet är diagramtypen `map` i `viz/vega-builder.js` (`geo: true`): x bär geometrikolumnen, y etiketten
+och color värdet; `toSpec` tolkar GeoJSON-texten, väljer projektion (`identity` med `reflectY` för projicerade
+meter, `mercator` för longitud/latitud, avgjort av första koordinatens storlek) och ritar med `geoshape`.
+Kartor aggregeras aldrig i SQL.
 
 Exporten (`src/io/export.js`) har CSV, xlsx och ods (SheetJS), JSON, XML, SQLite samt R-formaten Parquet, sav,
 dta och rds: `toViaR` speglar datamängden till R, kör skrivfunktionen och läser tillbaka filen via
@@ -129,6 +138,9 @@ UI:t ligger i `src/ui/api/`: `variable-picker.js` (komponenten `dm-variable-pick
 `endpoint-form.js`, `pxweb-view.js`, `sos-view.js` och `api-view.js`, som Inhämta monterar per vald källa.
 Tester kör mot en låtsastjänst via virtuella `dataspatium-asset://`-adresser i nätverks-shimmen, så att ingen
 nätverkstrafik behövs; `tests/index.html?live=1` kör dessutom ett röktest mot de riktiga tjänsterna.
+
+`api/runner.refreshAll` hämtar om varje datamängd med `source.kind === 'api'` i tur och ordning (ersättningsläge),
+med injicerbar hämtfunktion för tester; Hantera och kommandopaletten erbjuder det som "Hämta om API-datamängder".
 
 ## Visualisering
 

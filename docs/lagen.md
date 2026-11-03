@@ -15,7 +15,7 @@ körda kommandona ligger överst.
 
 Här kommer data in: filer som släpps på ytan, inklistrad text och öppna API:er. Filimporten går i steg: fil,
 inställningar med förhandsgranskning, kolumner med typer, klart. Format: CSV och annan avgränsad text, Excel, ODS,
-JSON (även JSON-stat och GeoJSON), XML, SQLite samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
+JSON (även JSON-stat och GeoJSON), XML, SQLite, shapefile samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 [format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning. Under Öppna API:er finns förinställningar för
 SCB (bläddra i ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
 luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
@@ -25,7 +25,7 @@ Lantmäteriet Direkt för den som har nycklar. Egna konfigurationer läggs till 
 ## Hantera
 
 Datamängdernas hem. Översikt med metadata, kolumnlista, historik över det som gjorts med datamängden, versioner,
-byt namn, ta bort. Här finns också arbetsytan: hur mycket lagring som används, beständig lagring,
+byt namn, ta bort, hämta igen från API (en datamängd eller alla på en gång). Här finns också arbetsytan: hur mycket lagring som används, beständig lagring,
 säkerhetskopiering till ZIP och återställning samt, i Edge och Chrome, en portabel mapp: arbetsytan sparas som
 vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill, och kan läsas in på en annan dator.
 *Dela paket* skapar en ZIP med valda datamängder, diagram, dashboards, mallar och anteckningsböcker för en
@@ -53,7 +53,8 @@ LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senare: statistiska modeller 
 ## Visualisera
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,
-histogram, värmekartor, låddiagram och cirklar; D3-mallar för rangordning, lutningsdiagram och
+histogram, värmekartor, låddiagram, cirklar och kartor (koropletkartor ur GeoJSON- eller shapefile-data); D3-mallar
+för rangordning, lutningsdiagram och
 befolkningspyramid; och R-skript med ggplot2. Sparade diagram kan exporteras som SVG, PNG, PDF och PowerPoint,
 delas som viz-filer, visas i ett galleri och skapas i batch per grupp. Dashboards samlar sparade diagram i ett
 rutnät med gemensamma filter och exporteras som HTML eller PowerPoint. Se [visualisera.md](visualisera.md).

@@ -93,6 +93,26 @@
       }
 
       /** Re-run the fetch recorded in a dataset's source. Returns a table. */
+      /**
+       * Fetch every API-sourced dataset again, in turn, replacing its rows (a saved fetch job run by hand).
+       * @param {{fetch?: (source: any) => Promise<any>, mode?: string, signal?: AbortSignal, onProgress?: Function}} [options] fetch is injectable for tests
+       * @returns {Promise<Array<{id: string, name: string, ok: boolean, rows?: number, error?: string}>>}
+       */
+      async function refreshAll(options = {}) {
+        const list = (await datasets.list()).filter((d) => d.source && d.source.kind === 'api');
+        const results = [];
+        for (const ds of list) {
+          if (options.signal && options.signal.aborted) break;
+          try {
+            const table = await (options.fetch || refetch)(ds.source);
+            const res = await intoDataset(ds.id, table, { mode: options.mode || 'replace', source: Object.assign({}, ds.source, { fetchedAt: new Date().toISOString(), rows: table.rows.length }) });
+            results.push({ id: ds.id, name: ds.name, ok: true, rows: res && typeof res.rows === 'number' ? res.rows : table.rows.length });
+          } catch (err) { results.push({ id: ds.id, name: ds.name, ok: false, error: (err && err.message) || String(err) }); }
+          if (options.onProgress) options.onProgress({ done: results.length, total: list.length, name: ds.name });
+        }
+        return results;
+      }
+
       async function refetch(source, options = {}) {
         if (!source || source.kind !== 'api') throw new Error('Datamängden har ingen API-källa att hämta från.');
         const connector = await connectors.get(source.connectorId);
@@ -128,6 +148,6 @@
       }
       function clearOptionCache() { optionCache.clear(); }
 
-      return { fetchTable, toDataset, intoDataset, describeSource, refetch, optionsFor, clearOptionCache, mergeTables, families };
+      return { fetchTable, toDataset, intoDataset, describeSource, refetch, refreshAll, optionsFor, clearOptionCache, mergeTables, families };
     });
 })();
