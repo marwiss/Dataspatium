@@ -40,9 +40,9 @@
       return base;
     }
 
-    /** Shareable JSON (no thumbnail, no ids). */
+    /** Shareable JSON (no thumbnail, no ids). `created` is the chart's last change, so an unchanged chart exports the same. */
     function exportJson(chart) {
-      const out = { format: FORMAT, kind: chart.kind, name: chart.name, datasetName: chart.datasetName, datasetShort: chart.datasetShort || '', created: new Date().toISOString(), app: 'Dataspatium', version: D.version };
+      const out = { format: FORMAT, kind: chart.kind, name: chart.name, datasetName: chart.datasetName, datasetShort: chart.datasetShort || '', created: chart.updatedAt || chart.createdAt || new Date().toISOString(), app: 'Dataspatium', version: D.version };
       if (chart.kind === 'vega') out.vega = chart.vega;
       if (chart.kind === 'd3') out.d3 = chart.d3;
       if (chart.kind === 'r') out.r = chart.r;

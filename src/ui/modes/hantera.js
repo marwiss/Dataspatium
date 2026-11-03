@@ -1,8 +1,8 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Mode "Hantera": datasets (overview, columns, history, rename, delete) and the workspace
- * (storage status, backup and restore as ZIP).
+ * Mode "Hantera": datasets (overview, columns, comments, history, rename, delete) and the workspace
+ * (storage status, backup and restore as ZIP, sharing bundles, the portable folder and GitHub sync).
  */
 (function () {
   'use strict';
@@ -10,10 +10,14 @@
   D.define('ui/modes/hantera', ['ui/base', 'platform/storage/folder'], (base, folder) => {
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
+    /** Key-store id of the GitHub token (api/secrets; encrypted when saved). */
+    const GITHUB_KEY = 'workspace.github';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
       let slots = null; let tab = 'overview'; let unsubscribe = null; let unsubFolder = null;
+      /** The GitHub card's credentials panel (it listens to the key store until it is replaced). */
+      let githubPanel = null;
 
       function activate(s) {
         slots = s;
@@ -22,7 +26,8 @@
         unsubFolder = services.workspace.onFolder((status) => { if (slots && !status.busy && store.get().selectedId === WORKSPACE) render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); }
+      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); dropGithubPanel(); }
+      function dropGithubPanel() { if (githubPanel) { githubPanel.destroy(); githubPanel = null; } }
 
       function render() {
         if (!slots) return;
@@ -58,7 +63,7 @@
 
       async function renderDataset(ds) {
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
+        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'comments', label: t('comments.title'), icon: 'message-square' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
@@ -93,14 +98,49 @@
           replace(body, h('div', { class: 'dm-table-wrap' }, table));
           table.setData({ columns: [{ key: 'position', label: '#', type: 'integer', width: 70 }, { key: 'name', label: t('common.name'), type: 'text', width: 220 }, { key: 'type', label: t('common.type'), type: 'text', width: 130 }, { key: 'label', label: t('param.label'), type: 'text', width: 220 }, { key: 'description', label: t('column.description'), type: 'text', width: 280 }, { key: 'unit', label: t('column.unit'), type: 'text', width: 120 }, { key: 'valueLabels', label: t('column.valuelabels'), type: 'text', width: 240 }, { key: 'source', label: t('common.source'), type: 'text', width: 200 }],
             rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', services.datasets.valueLabelsText(c.valueLabels), c.sourceName]) });
+        } else if (tab === 'comments') {
+          await renderComments(ds, body);
         } else {
           const log = await services.datasets.log(ds.id);
-          replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon('history', 14),
-            h('span', { class: 'dm-list-main' }, h('span', { text: `${i18n.formatDateTime(e.ts)} · ${e.action}` }), h('span', { class: 'dm-list-sub dm-truncate', text: typeof e.details === 'string' ? e.details : JSON.stringify(e.details) }))))));
+          const changelog = D.require('data/changelog');
+          replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(e.action === 'comment' ? 'message-square' : 'history', 14),
+            h('span', { class: 'dm-list-main' }, h('span', { text: `${i18n.formatDateTime(e.ts)} · ${changelog.actionLabel(e.action)}` }), h('span', { class: 'dm-list-sub dm-truncate', text: changelog.describe(e) }))))));
         }
       }
 
-      /** Human-readable origin of a dataset. */
+      /** Comments on the dataset and its columns: the list (resolve, delete) and a form for a new one. */
+      async function renderComments(ds, body) {
+        const comments = D.require('data/comments');
+        const [list, cols, author] = await Promise.all([comments.list(ds.id), services.datasets.columns(ds.id), comments.author()]);
+        const again = () => renderComments(ds, body).catch((err) => shell.log(String((err && err.message) || err), 'error'));
+        const text = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('comments.new') }));
+        const column = /** @type {any} */ (h('dm-select', { label: t('comments.column') }));
+        column.options = [{ value: '', label: t('comments.column.all') }].concat(cols.map((c) => ({ value: c.name, label: c.label && c.label !== c.name ? `${c.name} (${c.label})` : c.name })));
+        column.value = '';
+        const name = /** @type {any} */ (h('dm-input', { label: t('comments.author'), help: t('comments.author.help') }));
+        name.value = author;
+        async function add() {
+          try {
+            if (name.value.trim() !== author) await comments.setAuthor(name.value);
+            await comments.add(ds.id, { text: text.value, column: column.value || null });
+            shell.log(t('comments.added'), 'ok');
+            again();
+          } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        }
+        const items = list.map((c) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(c.resolved ? 'check' : 'message-square', 14),
+          h('span', { class: 'dm-list-main' + (c.resolved ? ' dm-muted' : '') },
+            h('span', { class: 'dm-small', text: [c.author || t('comments.anonymous'), i18n.formatDateTime(c.ts), c.column, c.resolved ? t('comments.resolved') : ''].filter(Boolean).join(' · ') }),
+            h('span', { text: c.text })),
+          ui.button({ label: c.resolved ? t('comments.reopen') : t('comments.resolve'), variant: 'ghost', onClick: async () => { await comments.setResolved(ds.id, c.id, !c.resolved); again(); } }),
+          ui.button({ label: t('common.delete'), icon: 'trash-2', 'icon-only': true, variant: 'ghost', onClick: async () => {
+            if (await ui.dialog.confirm(t('comments.delete.confirm'), { okLabel: t('common.delete'), danger: true })) { await comments.remove(ds.id, c.id); again(); }
+          } })));
+        replace(body, h('div', { class: 'dm-stack' },
+          list.length ? h('ul', { class: 'dm-list' }, items) : h('p', { class: 'dm-help', text: t('comments.empty') }),
+          h('div', { class: 'dm-card dm-stack' }, text, h('div', { class: 'dm-form-grid' }, column, name),
+            h('div', null, ui.button({ label: t('comments.add'), icon: 'message-square', variant: 'primary', onClick: add })))));
+      }
+
       /** Fetch a dataset again from the API it came from (append or replace rows). */
       async function refetch(ds) {
         const choice = await ui.dialog.open({
@@ -127,6 +167,7 @@
         } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
       }
 
+      /** Human-readable origin of a dataset. */
       function describeSource(src) {
         if (!src) return '';
         if (src.kind === 'api') return [src.connectorName, src.table && src.table.title ? src.table.title : src.endpointName, src.fetchedAt ? t('api.fetched.at', { date: i18n.formatDateTime(src.fetchedAt) }) : '', src.license ? `(${src.license})` : ''].filter(Boolean).join(' · ');
@@ -174,11 +215,15 @@
         restoreZone.addEventListener('dm-files', async (e) => {
           const file = /** @type {any} */ (e).detail.files[0];
           try {
-            const res = await services.workspace.restore(file);
-            shell.log(t('datasets.restore.done', { n: res.imported.length }), 'ok');
-            ui.toast.show(t('datasets.restore.done', { n: res.imported.length }), { kind: 'ok' });
-            if (res.existing) shell.log(t('datasets.restore.existing', { n: res.existing }), 'info');
-            for (const s of res.skipped) shell.log(s, 'warn');
+            const opened = await services.workspace.inspect(file);
+            let replaceIds = [];
+            // A bundle shows its message and changes first; datasets that already exist can take its version.
+            if (opened.manifest && opened.manifest.kind === 'bundle') {
+              const choice = await incomingSummary(opened, t('bundle.open.title', { name: opened.manifest.name || t('bundle.default.name') }));
+              if (!choice) return;
+              replaceIds = choice.replaceIds;
+            }
+            reportRestore(await services.workspace.restore(opened, { replaceIds }));
           } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(t('common.error') + ': ' + ((err && err.message) || err), { kind: 'error' }); }
         });
         replace(slots.center,
@@ -200,7 +245,102 @@
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('bundle.title') }), h('p', { class: 'dm-help', text: t('bundle.card.hint') }),
               h('div', null, ui.button({ label: t('bundle.create'), icon: 'package', onClick: shareBundle })))),
-          folderEl);
+          folderEl, await githubCard());
+      }
+
+      /** Log and announce what a restore brought in. */
+      function reportRestore(res) {
+        const text = res.replaced && res.replaced.length ? t('datasets.restore.done.replaced', { n: res.imported.length, replaced: res.replaced.length }) : t('datasets.restore.done', { n: res.imported.length });
+        shell.log(text, 'ok');
+        ui.toast.show(text, { kind: 'ok' });
+        if (res.existing) shell.log(t('datasets.restore.existing', { n: res.existing }), 'info');
+        for (const s of res.skipped) shell.log(s, 'warn');
+      }
+
+      /**
+       * What a bundle or a GitHub folder brings: sender, message, the changes per dataset and, for datasets that already
+       * exist here, whether to take the incoming version. Resolves with {replaceIds} or null when cancelled.
+       */
+      async function incomingSummary(opened, title) {
+        const manifest = opened.manifest || {};
+        const existing = new Map((opened.existing || []).map((d) => [d.id, d]));
+        const replace = new Set();
+        const changes = new Map((manifest.changes || []).map((c) => [c.id, c]));
+        const sender = [manifest.author || t('comments.anonymous'), manifest.created ? i18n.formatDateTime(manifest.created) : ''].filter(Boolean).join(', ');
+        const sections = (manifest.datasets || []).map((d) => {
+          const here = existing.get(d.id);
+          const steps = (changes.get(d.id) || { entries: [] }).entries;
+          const nodes = [h('h4', null, d.name, ' ', h('dm-badge', { kind: here ? 'warn' : 'ok', text: here ? t('bundle.open.exists') : t('bundle.open.new') }))];
+          if (steps.length) {
+            nodes.push(h('ul', { class: 'dm-help' }, steps.slice(-8).map((s) => h('li', { text: `${i18n.formatDateTime(s.ts)}: ${s.text}` }))));
+            if (steps.length > 8) nodes.push(h('p', { class: 'dm-help', text: t('bundle.open.more', { n: steps.length - 8 }) }));
+          }
+          if (here) {
+            const sw = /** @type {any} */ (h('dm-switch', { label: t('bundle.open.replace', { name: here.local }) }));
+            sw.addEventListener('change', () => { if (sw.checked) replace.add(d.id); else replace.delete(d.id); });
+            nodes.push(sw);
+          }
+          return h('div', { class: 'dm-stack-sm' }, nodes);
+        });
+        const body = h('div', { class: 'dm-stack' },
+          h('p', { class: 'dm-help', text: t('bundle.open.from', { sender }) }),
+          manifest.message ? h('div', { class: 'dm-card' }, h('p', { text: manifest.message })) : null,
+          sections.length ? h('div', { class: 'dm-stack' }, sections) : h('p', { class: 'dm-help', text: t('bundle.open.nodatasets') }),
+          existing.size ? h('p', { class: 'dm-help', text: t('bundle.open.replace.help') }) : null);
+        const ok = await ui.dialog.open({ title, body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.open.ok'), variant: 'primary', value: true, primary: true }] });
+        return ok === true ? { replaceIds: Array.from(replace) } : null;
+      }
+
+      /** GitHub card: repository, branch and folder, the key, and push or pull of the whole workspace. */
+      async function githubCard() {
+        dropGithubPanel();
+        const cfg = await services.workspace.githubConfig();
+        const secrets = D.require('api/secrets');
+        const connector = { id: GITHUB_KEY, name: 'GitHub', auth: { type: 'bearer', help: t('github.token.help') } };
+        const repoIn = /** @type {any} */ (h('dm-input', { label: t('github.repo'), placeholder: t('github.repo.placeholder'), value: cfg.repo }));
+        const branchIn = /** @type {any} */ (h('dm-input', { label: t('github.branch'), value: cfg.branch }));
+        const pathIn = /** @type {any} */ (h('dm-input', { label: t('github.path'), help: t('github.path.help'), value: cfg.path }));
+        const saveConfig = () => services.workspace.setGithubConfig({ repo: repoIn.value.trim(), branch: branchIn.value.trim() || 'main', path: pathIn.value.trim() });
+        for (const input of [repoIn, branchIn, pathIn]) input.addEventListener('change', () => { saveConfig().catch((err) => shell.log(String((err && err.message) || err), 'error')); });
+        githubPanel = D.require('ui/api/auth-panel').create(connector, { quiet: true });
+        const token = () => { const values = secrets.get(GITHUB_KEY); return values ? values.token : ''; };
+        const status = [cfg.lastPush ? t('github.last.push', { date: i18n.formatDateTime(cfg.lastPush) }) : '', cfg.lastPull ? t('github.last.pull', { date: i18n.formatDateTime(cfg.lastPull) }) : ''].filter(Boolean).join(' · ');
+        async function push() {
+          const message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('github.commit.message'), help: t('github.commit.help') }));
+          message.value = t('github.commit.default');
+          const ok = await ui.dialog.open({ title: t('github.push'), body: message, actions: [{ label: t('common.cancel'), value: false }, { label: t('github.push'), variant: 'primary', value: true, primary: true }] });
+          if (ok !== true) return;
+          await saveConfig();
+          shell.setStatus('saving');
+          try {
+            const res = await services.workspace.pushToGitHub({ token: token(), message: message.value.trim() || t('github.commit.default') });
+            const text = res.commit ? t('github.pushed', { written: res.written, removed: res.removed }) : t('github.pushed.none');
+            shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
+            render();
+          } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
+          shell.setStatus('saved');
+        }
+        async function pull() {
+          await saveConfig();
+          try {
+            const fetched = await services.workspace.fetchFromGitHub({ token: token() });
+            const choice = await incomingSummary(fetched, t('github.pull.title', { repo: repoIn.value.trim() }));
+            if (!choice) return;
+            reportRestore(await services.workspace.restoreFromGitHub(fetched, { replaceIds: choice.replaceIds }));
+            render();
+          } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
+        }
+        const repo = D.require('platform/storage/github').parseRepo(cfg.repo);
+        return h('div', { class: 'dm-card dm-stack' },
+          h('h3', null, ui.icon('git-branch', 18), ' ', t('github.title')),
+          h('p', { class: 'dm-help', text: t('github.hint') }),
+          h('div', { class: 'dm-form-grid' }, repoIn, branchIn, pathIn),
+          githubPanel.el,
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('github.push'), icon: 'upload', onClick: push }),
+            ui.button({ label: t('github.pull'), icon: 'download', onClick: pull }),
+            repo && cfg.lastCommit ? h('a', { href: D.require('platform/storage/github').webUrl(Object.assign({}, repo, { branch: cfg.branch, path: cfg.path }), cfg.lastCommit), target: '_blank', rel: 'noopener noreferrer', text: t('github.open') }) : null),
+          status ? h('p', { class: 'dm-help', text: status }) : null);
       }
 
       function apiDatasets() { return store.get().datasets.filter((d) => d.source && d.source.kind === 'api'); }
@@ -222,7 +362,12 @@
       /** Selective sharing bundle: chosen datasets plus charts, dashboards, templates and notebooks. */
       async function shareBundle() {
         const list = store.get().datasets;
+        const comments = D.require('data/comments');
+        const author = await comments.author();
         const name = /** @type {any} */ (h('dm-input', { label: t('bundle.name'), value: t('bundle.default.name') }));
+        const authorIn = /** @type {any} */ (h('dm-input', { label: t('comments.author'), help: t('bundle.author.help') }));
+        authorIn.value = author;
+        const message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('bundle.message'), help: t('bundle.message.help') }));
         const chosen = new Set(list.map((d) => d.id));
         const switches = list.map((d) => {
           const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) })})` }));
@@ -238,7 +383,7 @@
           return sw;
         });
         const body = h('div', { class: 'dm-stack' },
-          h('p', { class: 'dm-help', text: t('bundle.help') }), name,
+          h('p', { class: 'dm-help', text: t('bundle.help') }), name, message, authorIn,
           h('h4', { text: t('shell.datasets') }), list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
           h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
         const ok = await ui.dialog.open({ title: t('bundle.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
@@ -246,7 +391,8 @@
         try {
           shell.setStatus('saving');
           const label = name.value.trim() || t('bundle.default.name');
-          const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc });
+          if (authorIn.value.trim() !== author) await comments.setAuthor(authorIn.value);
+          const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc, author: authorIn.value.trim(), message: message.value });
           const file = services.files.safeName(label, 'dataspatium.zip');
           services.files.download(res.blob, file);
           shell.log(t('bundle.done', { name: file, n: res.counts.datasets }), 'ok');

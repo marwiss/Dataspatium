@@ -83,22 +83,29 @@ Värden som inte går att tolka med den typ du väljer manuellt blir också tomm
 
 ## Datamängdens fil
 
-Varje datamängd är en SQLite-fil med fyra tabeller: `data` (raderna), `_columns` (namn, typ, etikett,
-ursprungsnamn, beskrivning och enhet; de två sista läggs till när en äldre fil öppnas), `_meta` (namn, kortnamn,
-beskrivning, tidsstämplar, källa, importinställningar) och `_log` (allt som gjorts med datamängden). Filen går att öppna i R med RSQLite, i DB Browser for SQLite och i de flesta andra verktyg.
+Varje datamängd är en SQLite-fil med tabellerna `data` (raderna), `_columns` (namn, typ, etikett, ursprungsnamn,
+beskrivning, enhet och värdeetiketter; de tre sista läggs till när en äldre fil öppnas), `_meta` (namn, kortnamn,
+beskrivning, tidsstämplar, källa, importinställningar), `_log` (allt som gjorts med datamängden) och, när någon har
+kommenterat, `_comments` (tid, namn, text, kolumn och om kommentaren är löst). Filen går att öppna i R med RSQLite,
+i DB Browser for SQLite och i de flesta andra verktyg.
 
 ## Arbetsytans filer
 
-Säkerhetskopian (ZIP) och den portabla mappen (Edge och Chrome) har samma uppbyggnad: `manifest.json` med en
-lista över innehållet, `datasets/<id>.sqlite` per datamängd, `charts/<id>.viz.json` per sparat diagram,
-`documents/<id>.doc.json` per egen dokumentmall, `dashboards/<id>.dash.json` per dashboard,
+Säkerhetskopian (ZIP), den portabla mappen (Edge och Chrome) och mappen i ett GitHub-repo har samma uppbyggnad:
+`manifest.json` med en lista över innehållet, `datasets/<id>.sqlite` per datamängd, `charts/<id>.viz.json` per
+sparat diagram, `documents/<id>.doc.json` per egen dokumentmall, `dashboards/<id>.dash.json` per dashboard,
 `notebooks/<id>.nb.json` per anteckningsbok och `scripts/<id>.script.json` per sparat R-skript, SQL-skript eller
-regexmönster. Ett delningspaket (*Dela paket* under Hantera) har samma uppbyggnad
-men innehåller bara det du valt och har `kind: bundle` i manifestet; när det läses in hoppas allt som redan finns
-över (datamängder med samma id, diagram, dashboards, mallar och anteckningsböcker med samma namn). Med automatisk sparning på skrivs ändrade datamängder till mappen
-strax efter varje sparning och filer för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator;
-datamängder som redan finns (samma id) och diagram eller mallar med samma namn hoppas över.
+regexmönster. Ett delningspaket (*Dela paket* under Hantera) har samma uppbyggnad men innehåller bara det du valt.
+Dess manifest har `kind: bundle`, avsändarens namn (`author`), meddelandet (`message`) och ändringarna i varje
+datamängd sedan den senast delades eller togs emot (`changes`), och paketet har dessutom `CHANGELOG.md` med samma
+sak och de olösta kommentarerna i läsbar form. När ett paket läses in visas meddelandet och ändringarna, och allt
+som redan finns hoppas över (datamängder med samma id, diagram, dashboards, mallar och anteckningsböcker med samma
+namn), utom de datamängder du väljer att ersätta med paketets version; din version sparas då under *Versioner*.
+Med automatisk sparning på skrivs ändrade datamängder till den portabla mappen strax efter varje sparning och filer
+för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator på samma sätt som ett paket.
 
 Raderna i `_log` har tidsstämpel, åtgärdstyp och detaljer som JSON. Åtgärdstyperna är bland andra `import`, `op`
 (ett receptsteg med `op`, `params`, `result` och `description`; det är dessa rader som utgör receptet), `undo`,
-`snapshot` och `restore`. Receptexporten i Bearbeta bygger på `op`-raderna, se [bearbeta.md](bearbeta.md).
+`snapshot`, `restore`, `comment` (en ny kommentar), `shared` och `received` (när datamängden delades eller togs emot i
+ett paket eller från GitHub; ändringsloggen i nästa paket börjar efter den senaste av dem). Hantera visar raderna som
+läsbar text. Receptexporten i Bearbeta bygger på `op`-raderna, se [bearbeta.md](bearbeta.md).

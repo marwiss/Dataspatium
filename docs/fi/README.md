@@ -38,7 +38,7 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - Microsoft Edge tai Google Chrome (versio 120 tai uudempi) tai Firefox (versio 128 tai uudempi). Safaria ei tueta.
 - Noin 300 Mt vapaata tilaa sovelluskansiolle ja vähintään 4 Gt muistia (8 Gt suositellaan suurille aineistoille).
   Järjestelmänvalvojan oikeuksia ei tarvita.
-- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista tai tarkistat päivitykset.
+- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, synkronoit GitHubin kanssa tai tarkistat päivitykset.
 
 ## Mitä voit tehdä
 
@@ -64,8 +64,9 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - **Dokumentoida**: raportteja ja koodikirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa, myös yksi
   asiakirja kuntaa tai vuotta kohden (ks. [dokumentmallar.md](dokumentmallar.md)).
 - **Viedä ja jakaa**: dataa CSV-, Excel-, ODS-, JSON-, GeoJSON-, XML-, SQLite-, Parquet-, SPSS-, Stata- ja RDS-muotoon;
-  paketteja valituista aineistoista ja kohteista, työtilan varmuuskopio ZIP-tiedostona ja Edgessä ja Chromessa siirrettävä
-  kansio tavallisina tiedostoina.
+  paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, kommentit aineistoihin ja sarakkeisiin,
+  työtilan varmuuskopio ZIP-tiedostona, synkronointi GitHub-repositorioon ja Edgessä ja Chromessa siirrettävä kansio
+  tavallisina tiedostoina.
 - **Löytää nopeasti**: komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja, kaavioita ja kojelautoja ja suorittaa
   toimintoja yhdestä hakukentästä.
 - **Kuusi kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja

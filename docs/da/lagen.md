@@ -25,13 +25,14 @@ og opdaterer dem med ét klik, ét ad gangen eller alle. Se
 
 ## Håndter
 
-Datasættenes hjem. Oversigt med metadata, kolonneliste, historik over det, der er gjort med datasættet, versioner,
+Datasættenes hjem. Oversigt med metadata, kolonneliste, kommentarer, historik over det, der er gjort med datasættet, versioner,
 omdøb og kortnavn (kortnavnet bruges i SQL, R og diagramfiler), slet, hent igen fra API (ét datasæt eller alle på én
 gang). Her findes også arbejdsområdet: hvor meget lager der bruges, vedvarende lager, backup til ZIP og gendannelse
 samt, i Edge og Chrome, en portabel mappe: arbejdsområdet gemmes som almindelige filer i en mappe, du vælger,
 automatisk efter hver ændring, hvis du vil, og kan indlæses på en anden computer. *Del pakke* opretter en ZIP med
-valgte datasæt, diagrammer, dashboards, skabeloner og notesbøger til en kollega, der indlæser den under *Gendan fra
-ZIP*.
+valgte datasæt, diagrammer, dashboards, skabeloner og notesbøger, en besked og en ændringslog til en kollega, der
+indlæser den under *Gendan fra ZIP* og kan erstatte sine versioner af datasættene. *GitHub* sender arbejdsområdet til et
+repository og henter det derfra, med et adgangstoken, der gemmes krypteret.
 
 ## Bearbejd
 

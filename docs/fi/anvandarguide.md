@@ -141,7 +141,7 @@ uudelleen.
 ## Järjestyksen pitäminen (Hallitse)
 
 Jokaisella aineistolla on yleiskatsaus (lähde, koko, kuvaus), sarakeluettelo tyyppeineen, selitteineen, kuvauksineen ja
-yksikköineen (asetetaan Muokkaa-tilassa toiminnolla *Selite, kuvaus ja yksikkö*), historia kaikesta tehdystä ja versiot.
+yksikköineen (asetetaan Muokkaa-tilassa toiminnolla *Selite, kuvaus ja yksikkö*), kommentit, luettava historia kaikesta tehdystä ja versiot.
 Nimeä uudelleen ja vaihda lyhytnimi, poista tai nouda uudelleen rajapinnasta (päivitä reseptin kanssa tai lisää rivejä). Kohdassa *Työtila* näet käytetyn
 tallennustilan, pyydät pysyvää tallennustilaa, otat varmuuskopion ZIP-tiedostona ja palautat. Sovellus muistuttaa
 käynnistyessään, kun edellisestä varmuuskopiosta on kulunut valittua päivämäärää pidempään (oletuksena 30 päivää; muutetaan
@@ -151,8 +151,20 @@ automaattisesti jokaisen muutoksen yhteydessä.
 ## Jakaminen muiden kanssa
 
 - Valikoima: *Jaa paketti* Hallitse-tilassa tuottaa ZIP-tiedoston valituista aineistoista, kaavioista, kojelaudoista,
-  malleista ja muistikirjoista. Vastaanottaja lataa sen kohdassa *Palauta ZIP-tiedostosta*; jo olemassa olevat ohitetaan.
+  malleista ja muistikirjoista sekä viestin ja muutoslokin: mitä kullekin aineistolle on tehty sen jälkeen, kun se
+  viimeksi jaettiin, ja ratkaisemattomat kommentit. Vastaanottaja lataa sen kohdassa *Palauta ZIP-tiedostosta*, näkee
+  viestin ja muutokset ja valitsee jo olemassa oleville aineistoille, korvataanko ne paketin versiolla (oma versio
+  tallennetaan kohtaan *Versiot*); muut ohitetaan.
+- Kommentit: jokaisella aineistolla on Hallitse-tilassa välilehti *Kommentit*, ja Muokkaa-tilassa kommentoit saraketta
+  ominaisuuspaneelista. Kommentit ovat aineiston tiedostossa ja kulkevat mukana paketeissa, varmuuskopioissa,
+  siirrettävässä kansiossa ja GitHubissa. Näytettävän nimen annat itse; se tallennetaan vain selaimeen.
 - Koko työtila: varmuuskopio (ZIP) palautetaan Hallitse-tilassa toisella tietokoneella.
+- Tietokoneiden välillä GitHubin kautta: kohdassa *Hallitse → Työtila* lähetät työtilan GitHub-repositorioon (mieluiten
+  yksityiseen) ja noudat sen toisella tietokoneella. Se vaatii hienojakoisen käyttöoikeustunnuksen (fine-grained personal
+  access token), joka saa vain lukea ja kirjoittaa juuri sen repositorion sisältöä. Tunnusta käytetään istunnon ajan tai se
+  tallennetaan salattuna, eikä mitään lähetetä ennen kuin painat *Lähetä GitHubiin* tai *Nouda GitHubista*. Vain
+  muuttuneet tiedostot lähetetään yhtenä committina viestisi kera; noudettaessa valitset, kuten paketeille, korvataanko
+  olemassa olevat aineistot.
 - Yksi aineisto: vie SQLite- (kaikki mukana) tai Parquet-muodossa.
 - API-määritykset (`.api.json`), kaaviot ja asiakirjamallit (JSON) ja reseptit (JSON, R tai SQL) viedään ja ladataan
   tiedostoina. Avaimet eivät koskaan kulje mukana.

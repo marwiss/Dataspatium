@@ -36,7 +36,7 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri) eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt.
 - Um 300 MB laust pláss fyrir forritsmöppuna og minnst 4 GB vinnsluminni (8 GB mælt með fyrir stór gagnasöfn). Engin
   stjórnandaréttindi þarf.
-- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum eða leitar að uppfærslum.
+- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, samstillir við GitHub eða leitar að uppfærslum.
 
 ## Hvað þú getur gert
 
@@ -59,7 +59,8 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert
   sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
 - **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakka með völdum
-  gagnasöfnum og hlutum, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með venjulegum skrám.
+  gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu
+  sem ZIP, samstillingu við GitHub-safn og, í Edge og Chrome, færanlega möppu með venjulegum skrám.
 - **Finna hratt**: skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og mælaborð og keyrir aðgerðir úr einum
   leitarreit.
 - **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.

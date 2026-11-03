@@ -83,22 +83,30 @@ arvot, joita ei voi tulkita käsin valitsemallasi tyypillä, muuttuvat tyhjiksi.
 
 ## Aineiston tiedosto
 
-Jokainen aineisto on SQLite-tiedosto, jossa on neljä taulua: `data` (rivit), `_columns` (nimi, tyyppi, selite, alkuperäinen
-nimi, kuvaus ja yksikkö; kaksi viimeistä lisätään, kun vanhempi tiedosto avataan), `_meta` (nimi, lyhytnimi, kuvaus,
-aikaleimat, lähde, tuontiasetukset) ja `_log` (kaikki aineistolle tehty). Tiedoston voi avata R:ssä RSQLitellä, DB Browser for
-SQLite -ohjelmassa ja useimmissa muissa työkaluissa.
+Jokainen aineisto on SQLite-tiedosto, jossa on taulut `data` (rivit), `_columns` (nimi, tyyppi, selite, alkuperäinen nimi,
+kuvaus, yksikkö ja arvoselitteet; kolme viimeistä lisätään, kun vanhempi tiedosto avataan), `_meta` (nimi, lyhytnimi,
+kuvaus, aikaleimat, lähde, tuontiasetukset), `_log` (kaikki aineistolle tehty) ja, kun joku on kommentoinut, `_comments`
+(aika, nimi, teksti, sarake ja onko kommentti ratkaistu). Tiedoston voi avata R:ssä RSQLitellä, DB Browser for SQLite
+-ohjelmassa ja useimmissa muissa työkaluissa.
 
 ## Työtilan tiedostot
 
-Varmuuskopiolla (ZIP) ja siirrettävällä kansiolla (Edge ja Chrome) on sama rakenne: `manifest.json` sisältöluetteloineen,
-`datasets/<id>.sqlite` aineistoa kohden, `charts/<id>.viz.json` tallennettua kaaviota kohden, `documents/<id>.doc.json` omaa
-asiakirjamallia kohden, `dashboards/<id>.dash.json` kojelautaa kohden ja `notebooks/<id>.nb.json` muistikirjaa kohden ja `scripts/<id>.script.json` kutakin tallennettua R-skriptiä, SQL-skriptiä tai regex-kuviota kohden. Paketilla
-(*Jaa paketti* Hallitse-tilassa) on sama rakenne, mutta se sisältää vain valitsemasi ja manifestissa on `kind: bundle`;
-ladattaessa kaikki jo olemassa oleva ohitetaan (samalla id:llä olevat aineistot sekä samannimiset kaaviot, kojelaudat, mallit
-ja muistikirjat). Kun automaattinen tallennus on käytössä, muuttuneet aineistot kirjoitetaan kansioon pian jokaisen
-tallennuksen jälkeen ja poistettujen aineistojen tiedostot poistetaan. Kansion voi ladata toisella tietokoneella; jo olemassa
-olevat aineistot (sama id) ja samannimiset kaaviot tai mallit ohitetaan.
+Varmuuskopiolla (ZIP), siirrettävällä kansiolla (Edge ja Chrome) ja GitHub-repositorion kansiolla on sama rakenne:
+`manifest.json` sisältöluetteloineen, `datasets/<id>.sqlite` aineistoa kohden, `charts/<id>.viz.json` tallennettua kaaviota
+kohden, `documents/<id>.doc.json` omaa asiakirjamallia kohden, `dashboards/<id>.dash.json` kojelautaa kohden,
+`notebooks/<id>.nb.json` muistikirjaa kohden ja `scripts/<id>.script.json` kutakin tallennettua R-skriptiä, SQL-skriptiä tai
+regex-kuviota kohden. Paketilla (*Jaa paketti* Hallitse-tilassa) on sama rakenne, mutta se sisältää vain valitsemasi. Sen
+manifestissa on `kind: bundle`, lähettäjän nimi (`author`), viesti (`message`) ja kunkin aineiston muutokset sen jälkeen,
+kun se viimeksi jaettiin tai vastaanotettiin (`changes`), ja paketissa on lisäksi `CHANGELOG.md`, jossa sama ja
+ratkaisemattomat kommentit ovat luettavassa muodossa. Kun paketti ladataan, viesti ja muutokset näytetään, ja kaikki jo
+olemassa oleva ohitetaan (samalla id:llä olevat aineistot sekä samannimiset kaaviot, kojelaudat, mallit ja muistikirjat),
+paitsi aineistot, jotka valitset korvattaviksi paketin versiolla; oma versiosi tallennetaan silloin kohtaan *Versiot*. Kun
+automaattinen tallennus on käytössä, muuttuneet aineistot kirjoitetaan siirrettävään kansioon pian jokaisen tallennuksen
+jälkeen ja poistettujen aineistojen tiedostot poistetaan. Kansion voi ladata toisella tietokoneella samalla tavalla kuin
+paketin.
 
 `_log`-taulun riveillä on aikaleima, toimintotyyppi ja yksityiskohdat JSON-muodossa. Toimintotyyppejä ovat muun muassa
 `import`, `op` (reseptin vaihe, jossa `op`, `params`, `result` ja `description`; nämä rivit muodostavat reseptin), `undo`,
-`snapshot` ja `restore`. Muokkaa-tilan reseptin vienti perustuu `op`-riveihin, ks. [bearbeta.md](bearbeta.md).
+`snapshot`, `restore`, `comment` (uusi kommentti), `shared` ja `received` (kun aineisto jaettiin tai vastaanotettiin
+paketissa tai GitHubista; seuraavan paketin muutosloki alkaa niistä viimeisimmän jälkeen). Hallitse-tila näyttää rivit
+luettavana tekstinä. Muokkaa-tilan reseptin vienti perustuu `op`-riveihin, ks. [bearbeta.md](bearbeta.md).

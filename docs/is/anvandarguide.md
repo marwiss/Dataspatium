@@ -133,7 +133,7 @@ gegnum R: Parquet, SPSS, Stata og RDS. SQLite og Parquet halda gerðunum nákvæ
 ## Halda röð og reglu (Umsjón)
 
 Hvert gagnasafn hefur yfirlit (uppruni, stærð, lýsing), dálkalista með gerðum, merkimiðum, lýsingum og einingum (stillt undir
-Vinna með *Merkimiði, lýsing og eining*), sögu alls sem hefur verið gert og útgáfur. Endurnefndu og breyttu stuttheiti, eyddu
+Vinna með *Merkimiði, lýsing og eining*), athugasemdir, læsilega sögu alls sem hefur verið gert og útgáfur. Endurnefndu og breyttu stuttheiti, eyddu
 eða sæktu aftur úr vefþjónustu (uppfærðu með uppskriftinni eða bættu við röðum). Undir *Vinnusvæði* sérðu hversu mikil geymsla er í notkun, biður um varanlega geymslu, tekur
 afrit sem ZIP og endurheimtir. Forritið minnir þig við ræsingu þegar lengri tími en valinn fjöldi daga er liðinn frá síðasta
 afriti (30 dagar sjálfgefið; breytt eða slökkt á í sama spjaldi). Í Edge og Chrome má auk þess spegla vinnusvæðið í færanlega
@@ -141,9 +141,20 @@ möppu á diski, sjálfkrafa við hverja breytingu.
 
 ## Deila með öðrum
 
-- Úrval: *Deila pakka* undir Umsjón gefur ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og minnisbókum. Viðtakandinn
-  hleður henni inn undir *Endurheimta úr ZIP*; því sem þegar er til er sleppt.
+- Úrval: *Deila pakka* undir Umsjón gefur ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og minnisbókum,
+  skilaboðum og breytingaskrá: því sem gert hefur verið við hvert gagnasafn síðan því var síðast deilt, og óleystum
+  athugasemdum. Viðtakandinn hleður henni inn undir *Endurheimta úr ZIP*, sér skilaboðin og breytingarnar og velur fyrir
+  gagnasöfn sem þegar eru til hvort skipta eigi þeim út fyrir útgáfu pakkans (eigin útgáfa er vistuð undir *Útgáfur*);
+  öðru er sleppt.
+- Athugasemdir: hvert gagnasafn hefur flipann *Athugasemdir* í Umsjón, og í Vinna gerirðu athugasemd við dálk úr
+  eiginleikaspjaldinu. Athugasemdirnar eru í skrá gagnasafnsins og fylgja í pökkum, afritum, færanlegu möppunni og
+  GitHub. Nafnið sem birtist velur þú; það er aðeins vistað í vafranum.
 - Allt vinnusvæðið: afritið (ZIP) er endurheimt undir Umsjón á annarri tölvu.
+- Milli tölva gegnum GitHub: undir *Umsjón → Vinnusvæði* sendirðu vinnusvæðið í GitHub-safn (helst lokað) og sækir það á
+  annarri tölvu. Til þess þarf nákvæman aðgangslykil (fine-grained personal access token) sem má aðeins lesa og skrifa
+  innihald einmitt þess safns. Lykillinn er notaður í lotunni eða vistaður dulkóðaður, og ekkert er sent fyrr en þú ýtir á
+  *Senda á GitHub* eða *Sækja frá GitHub*. Aðeins breyttar skrár eru sendar, í einni færslu (commit) með skilaboðum
+  þínum; þegar sótt er velurðu, eins og fyrir pakka, hvort skipta eigi út gagnasöfnum sem eru til.
 - Eitt gagnasafn: fluttu út sem SQLite (allt fylgir) eða Parquet.
 - API-uppsetningar (`.api.json`), myndrit og skjalasnið (JSON) og uppskriftir (JSON, R eða SQL) eru fluttar út og hlaðnar inn
   sem skrár. Lyklar fylgja aldrei með.

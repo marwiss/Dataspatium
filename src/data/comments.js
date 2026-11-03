@@ -1,0 +1,77 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * Comments on a dataset or on one of its columns. They are kept in the dataset's SQLite file (table `_comments`), so
+ * they travel with backups, shared bundles, the portable folder and GitHub sync. The author is the name the user
+ * gives (setting `user.name`, empty by default); nothing else about the user is stored.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('data/comments', ['data/datasets', 'platform/storage/idb'], (datasets, idb) => {
+    const AUTHOR = 'user.name';
+    const SCHEMA = 'create table if not exists _comments (id text primary key, ts text, author text, text text, column_name text, resolved integer default 0)';
+    const MAX_TEXT = 4000;
+
+    /** The name shown with comments and in shared bundles ('' when none is given). */
+    async function author() { return String((await idb.getSetting(AUTHOR, '')) || ''); }
+    /** @param {string} name */
+    async function setAuthor(name) { await idb.setSetting(AUTHOR, String(name || '').trim().slice(0, 80)); }
+
+    async function open(id) {
+      const handle = await datasets.ensureOpen(id);
+      await handle.engine.run(SCHEMA);
+      return handle;
+    }
+
+    /**
+     * The comments of a dataset, oldest first.
+     * @param {string} id
+     * @returns {Promise<Array<{id: string, ts: string, author: string, text: string, column: string|null, resolved: boolean}>>}
+     */
+    async function list(id) {
+      const handle = await open(id);
+      const res = await handle.engine.exec('select id, ts, author, text, column_name, resolved from _comments order by ts, rowid');
+      return (res[0] ? res[0].values : []).map((r) => ({ id: r[0], ts: r[1], author: r[2] || '', text: r[3] || '', column: r[4] || null, resolved: !!r[5] }));
+    }
+
+    /**
+     * Add a comment to the dataset (or to one of its columns); it is also noted in the dataset's history.
+     * @param {string} id
+     * @param {{text: string, column?: string|null, author?: string}} input author defaults to the saved name
+     */
+    async function add(id, input) {
+      const text = String(input.text || '').trim().slice(0, MAX_TEXT);
+      if (!text) throw new Error(D.t('comments.err.empty'));
+      const handle = await open(id);
+      const column = input.column || null;
+      if (column && !handle.columns.some((c) => c.name === column)) throw new Error(D.t('op.err.unknown.column', { name: column }));
+      const comment = {
+        id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        ts: new Date().toISOString(),
+        author: input.author !== undefined ? String(input.author).trim().slice(0, 80) : await author(),
+        text, column, resolved: false,
+      };
+      await handle.engine.run('insert into _comments (id, ts, author, text, column_name, resolved) values (?, ?, ?, ?, ?, 0)', [comment.id, comment.ts, comment.author, comment.text, comment.column]);
+      await datasets.appendLog(handle, 'comment', { id: comment.id, author: comment.author, column, text: text.length > 120 ? text.slice(0, 119) + '…' : text });
+      datasets.scheduleSave(id);
+      return comment;
+    }
+
+    /** @param {string} id @param {string} commentId @param {boolean} resolved */
+    async function setResolved(id, commentId, resolved) {
+      const handle = await open(id);
+      await handle.engine.run('update _comments set resolved = ? where id = ?', [resolved ? 1 : 0, commentId]);
+      datasets.scheduleSave(id);
+    }
+
+    /** @param {string} id @param {string} commentId */
+    async function remove(id, commentId) {
+      const handle = await open(id);
+      await handle.engine.run('delete from _comments where id = ?', [commentId]);
+      datasets.scheduleSave(id);
+    }
+
+    return { list, add, setResolved, remove, author, setAuthor };
+  });
+})();

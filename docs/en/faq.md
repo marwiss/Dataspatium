@@ -9,7 +9,7 @@ ordinary files on disk (see [kom-igang.md](kom-igang.md)).
 
 ## Do I need internet?
 
-No. Internet is needed only when you fetch data from an API or click *Check for updates*. Everything else, R
+No. Internet is needed only when you fetch data from an API, sync with GitHub or click *Check for updates*. Everything else, R
 included, works without a network.
 
 ## Why does it take time the first time I use R?
@@ -136,11 +136,13 @@ dataset before you share it. See [bearbeta.md](bearbeta.md).
 
 ## How do I share data with a colleague?
 
-Easiest with *Share bundle* under *Manage → Workspace*: choose datasets and whether charts, dashboards, templates
-and notebooks should come along, and send the ZIP file. The colleague drops it on *Restore from ZIP*. You can also
-export a single dataset as SQLite (keeps types, labels and history) or take a backup of the whole workspace. Charts
-and document templates can be exported as JSON files, API configurations as `.api.json`, and recipes as JSON, R or
-SQL.
+Easiest with *Share bundle* under *Manage → Workspace*: choose datasets and whether charts, dashboards, templates and
+notebooks should come along, write a message and send the ZIP file. The colleague drops it on *Restore from ZIP*, sees
+your message and what has changed and can replace their own versions. Comments on datasets and columns come along. If
+you work on the same workspace, you can also use a shared GitHub repository (*GitHub* under *Manage → Workspace*). You
+can also export a single dataset as SQLite (keeps types, labels, comments and history) or take a backup of the whole
+workspace. Charts and document templates can be exported as JSON files, API configurations as `.api.json`, and recipes
+as JSON, R or SQL.
 
 ## How do I open the beginner's course again?
 

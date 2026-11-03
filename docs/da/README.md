@@ -38,7 +38,7 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   understøttes ikke.
 - Omkring 300 MB ledig plads til appmappen og mindst 4 GB hukommelse (8 GB anbefales til store datasæt). Der kræves
   ingen administratorrettigheder.
-- Internet kræves kun, når du henter data fra åbne API'er eller søger efter opdateringer.
+- Internet kræves kun, når du henter data fra åbne API'er, synkroniserer med GitHub eller søger efter opdateringer.
 
 ## Hvad du kan
 
@@ -62,7 +62,8 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
 - **Dokumentere**: rapporter og kodebøger fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX, også ét dokument
   pr. kommune eller år (se [dokumentmallar.md](dokumentmallar.md)).
 - **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakker
-  med valgte datasæt og objekter, backup af arbejdsområdet som ZIP og, i Edge og Chrome, en portabel mappe med
+  med valgte datasæt og objekter, en besked og en ændringslog, kommentarer til datasæt og kolonner, backup af
+  arbejdsområdet som ZIP, synkronisering med et GitHub-repository og, i Edge og Chrome, en portabel mappe med
   almindelige filer.
 - **Finde hurtigt**: kommandopaletten (Ctrl+K) skifter tilstand, åbner datasæt, diagrammer og dashboards og kører
   handlinger fra ét søgefelt.

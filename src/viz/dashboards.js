@@ -76,7 +76,7 @@
       const out = {
         format: FORMAT, name: dash.name, description: dash.description || '', columns: dash.columns || 2, filters: (dash.filters || []).map((f) => ({ column: f.column })),
         items: resolved.map(({ item, chart }) => ({ span: item.span || 1, chart: JSON.parse(charts.exportJson(chart)) })),
-        created: new Date().toISOString(), app: 'Dataspatium', version: D.version,
+        created: dash.updatedAt || dash.createdAt || new Date().toISOString(), app: 'Dataspatium', version: D.version,
       };
       return JSON.stringify(out, null, 2) + '\n';
     }

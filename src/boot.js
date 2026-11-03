@@ -35,6 +35,7 @@
     'src/platform/storage/zip-bundle.js',
     'src/platform/storage/files.js',
     'src/platform/storage/folder-store.js',
+    'src/platform/storage/github-store.js',
     'src/platform/updates.js',
     // Engines
     'src/engines/sqlite/sqlite-worker.js',
@@ -57,6 +58,8 @@
     'src/data/derive.js',
     'src/data/profile.js',
     'src/data/rules.js',
+    'src/data/changelog.js',
+    'src/data/comments.js',
     'src/data/workspace.js',
     'src/data/r-bridge.js',
     // Import and export

@@ -82,22 +82,29 @@ ikke kan tolkes med typen du velger manuelt, blir også tomme.
 
 ## Datasettets fil
 
-Hvert datasett er en SQLite-fil med fire tabeller: `data` (radene), `_columns` (navn, type, etikett, opprinnelig navn,
-beskrivelse og enhet; de to siste legges til når en eldre fil åpnes), `_meta` (navn, kortnavn, beskrivelse, tidsstempler,
-kilde, importinnstillinger) og `_log` (alt som er gjort med datasettet). Filen kan åpnes i R med RSQLite, i DB Browser for
-SQLite og i de fleste andre verktøy.
+Hvert datasett er en SQLite-fil med tabellene `data` (radene), `_columns` (navn, type, etikett, opprinnelig navn,
+beskrivelse, enhet og verdietiketter; de tre siste legges til når en eldre fil åpnes), `_meta` (navn, kortnavn,
+beskrivelse, tidsstempler, kilde, importinnstillinger), `_log` (alt som er gjort med datasettet) og, når noen har
+kommentert, `_comments` (tid, navn, tekst, kolonne og om kommentaren er løst). Filen kan åpnes i R med RSQLite, i DB
+Browser for SQLite og i de fleste andre verktøy.
 
 ## Arbeidsområdets filer
 
-Sikkerhetskopien (ZIP) og den portable mappen (Edge og Chrome) har samme oppbygning: `manifest.json` med en liste over
-innholdet, `datasets/<id>.sqlite` per datasett, `charts/<id>.viz.json` per lagret diagram, `documents/<id>.doc.json` per egen
-dokumentmal, `dashboards/<id>.dash.json` per dashbord og `notebooks/<id>.nb.json` per notatbok og `scripts/<id>.script.json` per lagret R-skript, SQL-skript eller regex-mønster. En pakke (*Del pakke* under
-Håndter) har samme oppbygning, men inneholder bare det du har valgt, og har `kind: bundle` i manifestet; når den lastes inn,
-hoppes alt som allerede finnes over (datasett med samme id, diagrammer, dashbord, maler og notatbøker med samme navn). Med
-automatisk lagring slått på skrives endrede datasett til mappen kort etter hver lagring, og filer for slettede datasett
-fjernes. Mappen kan lastes inn på en annen datamaskin; datasett som allerede finnes (samme id), og diagrammer eller maler
-med samme navn hoppes over.
+Sikkerhetskopien (ZIP), den portable mappen (Edge og Chrome) og mappen i et GitHub-repository har samme oppbygning:
+`manifest.json` med en liste over innholdet, `datasets/<id>.sqlite` per datasett, `charts/<id>.viz.json` per lagret
+diagram, `documents/<id>.doc.json` per egen dokumentmal, `dashboards/<id>.dash.json` per dashbord,
+`notebooks/<id>.nb.json` per notatbok og `scripts/<id>.script.json` per lagret R-skript, SQL-skript eller regex-mønster.
+En pakke (*Del pakke* under Håndter) har samme oppbygning, men inneholder bare det du har valgt. Manifestet har
+`kind: bundle`, avsenderens navn (`author`), meldingen (`message`) og endringene i hvert datasett siden det sist ble delt
+eller mottatt (`changes`), og pakken har dessuten `CHANGELOG.md` med det samme og de uløste kommentarene i lesbar form.
+Når en pakke lastes inn, vises meldingen og endringene, og alt som allerede finnes, hoppes over (datasett med samme id,
+diagrammer, dashbord, maler og notatbøker med samme navn), unntatt datasettene du velger å erstatte med pakkens versjon;
+din versjon lagres da under *Versjoner*. Med automatisk lagring slått på skrives endrede datasett til den portable mappen
+kort etter hver lagring, og filer for slettede datasett fjernes. Mappen kan lastes inn på en annen datamaskin på samme
+måte som en pakke.
 
 Radene i `_log` har tidsstempel, handlingstype og detaljer som JSON. Handlingstypene er blant andre `import`, `op` (et trinn
-i oppskriften med `op`, `params`, `result` og `description`; det er disse radene som utgjør oppskriften), `undo`, `snapshot`
-og `restore`. Oppskriftens eksport i Bearbeid bygger på `op`-radene, se [bearbeta.md](bearbeta.md).
+i oppskriften med `op`, `params`, `result` og `description`; det er disse radene som utgjør oppskriften), `undo`,
+`snapshot`, `restore`, `comment` (en ny kommentar), `shared` og `received` (når datasettet ble delt eller mottatt i en
+pakke eller fra GitHub; endringsloggen i neste pakke begynner etter den siste av dem). Håndter viser radene som lesbar
+tekst. Oppskriftens eksport i Bearbeid bygger på `op`-radene, se [bearbeta.md](bearbeta.md).

@@ -29,13 +29,14 @@ an API and updates them with one click, one at a time or all of them. See
 
 ## Manage
 
-The datasets' home. Overview with metadata, column list, history of what has been done with the dataset,
+The datasets' home. Overview with metadata, column list, comments, history of what has been done with the dataset,
 versions, rename and short name (the short name is used in SQL, R and chart files), delete, re-fetch from API (one
 dataset or all at once). The workspace also lives here: how much storage is used, persistent storage, backup to
 ZIP and restore and, in Edge and Chrome, a portable folder: the workspace is saved as ordinary files in a folder you
 choose, automatically after every change if you want, and can be loaded on another computer. *Share bundle*
-creates a ZIP with chosen datasets, charts, dashboards, templates and notebooks for a colleague, who loads it under
-*Restore from ZIP*.
+creates a ZIP with chosen datasets, charts, dashboards, templates and notebooks, a message and a change log for a
+colleague, who loads it under *Restore from ZIP* and can replace their versions of the datasets. *GitHub* pushes the
+workspace to a repository and fetches it from there, with an access token that is stored encrypted.
 
 ## Process
 

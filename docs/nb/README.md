@@ -37,7 +37,7 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
 - Microsoft Edge eller Google Chrome (versjon 120 eller nyere) eller Firefox (versjon 128 eller nyere). Safari støttes ikke.
 - Rundt 300 MB ledig plass til appmappen og minst 4 GB minne (8 GB anbefales for store datasett). Det kreves ingen
   administratorrettigheter.
-- Internett trengs bare når du henter data fra åpne API-er eller ser etter oppdateringer.
+- Internett trengs bare når du henter data fra åpne API-er, synkroniserer med GitHub eller ser etter oppdateringer.
 
 ## Hva du kan gjøre
 
@@ -61,7 +61,8 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
 - **Dokumentere**: rapporter og kodebøker fra maler som HTML, Word, PDF, Markdown eller LaTeX, også ett dokument per kommune
   eller år (se [dokumentmallar.md](dokumentmallar.md)).
 - **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakker med
-  valgte datasett og objekter, sikkerhetskopi av arbeidsområdet som ZIP og, i Edge og Chrome, en portabel mappe med vanlige
+  valgte datasett og objekter, en melding og en endringslogg, kommentarer til datasett og kolonner, sikkerhetskopi av
+  arbeidsområdet som ZIP, synkronisering med et GitHub-repository og, i Edge og Chrome, en portabel mappe med vanlige
   filer.
 - **Finne raskt**: kommandopaletten (Ctrl+K) bytter modus, åpner datasett, diagrammer og dashbord og kjører handlinger fra
   ett søkefelt.

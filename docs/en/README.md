@@ -39,7 +39,7 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   supported.
 - About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large
   datasets). No administrator rights are needed.
-- Internet is needed only when you fetch data from open APIs or check for updates.
+- Internet is needed only when you fetch data from open APIs, sync with GitHub or check for updates.
 
 ## What you can do
 
@@ -63,8 +63,8 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
 - **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
   municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
 - **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; bundles
-  with chosen datasets and objects, a workspace backup as ZIP and, in Edge and Chrome, a portable folder with
-  ordinary files.
+  with chosen datasets and objects, a message and a change log, comments on datasets and columns, a workspace backup
+  as ZIP, sync with a GitHub repository and, in Edge and Chrome, a portable folder with ordinary files.
 - **Find things fast**: the command palette (Ctrl+K) switches mode, opens datasets, charts and dashboards and runs
   actions from a single search field.
 - **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,

@@ -5,18 +5,22 @@
  * dashboards, the user's document templates, notebooks and saved scripts), selective sharing bundles with the same
  * layout, and the same layout written to a portable folder on disk through the File System Access API
  * (Chromium, see platform/storage/folder-store.js). With auto-save on, the folder is brought up to date
- * shortly after each change.
+ * shortly after each change. Bundles carry a message, the sender's name and a change log; opening one can replace
+ * datasets that already exist. The same layout can also be pushed to and pulled from a GitHub repository
+ * (platform/storage/github-store.js).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/workspace', ['data/datasets', 'platform/storage/zip', 'platform/storage/idb', 'platform/storage/folder'], (datasets, zip, idb, folder) => {
+  D.define('data/workspace', ['data/datasets', 'platform/storage/zip', 'platform/storage/idb', 'platform/storage/folder', 'platform/storage/github', 'data/changelog', 'data/comments'], (datasets, zip, idb, folder, github, changelog, comments) => {
     const MANIFEST = 'manifest.json';
     const AUTOSAVE_SETTING = 'folder:autosave';
     const AUTOSAVE_DELAY = 1500;
     const PREFIXES = ['charts/', 'documents/', 'dashboards/', 'notebooks/', 'scripts/'];
     const SCRIPT_LANGUAGES = ['r', 'sql', 'regex'];
     const optional = (name) => (D.has(name) ? D.require(name) : null);
+    /** Files of the workspace layout (anything else in a folder or repository is left alone). */
+    const isWorkspaceFile = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
 
     /** A saved script (R, SQL or a regex pattern) as a script file. */
     function scriptJson(sc) {
@@ -37,7 +41,7 @@
 
     /**
      * Everything that makes up the workspace as path -> bytes|string.
-     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}, kind?: string, name?: string}} [options]
+     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}, kind?: string, name?: string, extra?: Record<string, any>}} [options]
      *   datasetIds: datasets whose bytes are included (default all); listAll=false also limits the manifest to them
      */
     async function collect(options = {}) {
@@ -98,7 +102,7 @@
         files[path] = scriptJson(sc);
         scriptEntries.push({ id: sc.id, name: sc.name, language: sc.language, file: path });
       }
-      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, null, 2);
+      files[MANIFEST] = JSON.stringify(Object.assign({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, options.extra || {}), null, 2);
       return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length, scripts: scriptEntries.length } };
     }
 
@@ -140,33 +144,86 @@
      * @param {{name?: string, datasetIds: string[], include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}}} options
      */
     async function bundle(options) {
-      const { files, counts } = await collect({ datasetIds: options.datasetIds || [], listAll: false, include: options.include, kind: 'bundle', name: options.name });
+      const ids = options.datasetIds || [];
+      const name = options.name || '';
+      const author = options.author !== undefined ? String(options.author).trim() : await comments.author();
+      const message = String(options.message || '').trim();
+      const created = new Date().toISOString();
+      // What changed in each dataset since it was last shared or received, and the comments still open.
+      const changes = await changelog.forDatasets(ids);
+      const open = [];
+      for (const ds of changes) for (const c of await comments.list(ds.id)) if (!c.resolved) open.push({ dataset: ds.name, author: c.author, column: c.column, text: c.text });
+      const { files, counts } = await collect({ datasetIds: ids, listAll: false, include: options.include, kind: 'bundle', name, extra: { author, message, changes } });
+      files['CHANGELOG.md'] = changelog.markdown({ name: name || D.t('bundle.default.name'), author, message, created, changes, comments: open });
       const blob = await zip.createZip(files, { level: 6 });
+      // The next bundle's change log starts here.
+      for (const id of ids) await markLog(id, 'shared', { name, author, message });
       return { blob, counts };
+    }
+
+    /** Note in a dataset's history that it was shared or received (the change log of the next bundle starts after it). */
+    async function markLog(id, action, details) {
+      try {
+        const handle = await datasets.ensureOpen(id);
+        await datasets.appendLog(handle, action, details);
+        await datasets.save(id);
+      } catch (err) { D.log('workspace', 'could not log ' + action, err); }
+    }
+
+    /**
+     * Look inside a backup or bundle before restoring it: its manifest and which of its datasets already exist.
+     * @param {Blob|ArrayBuffer|Uint8Array} source
+     * @returns {Promise<{entries: Record<string, Uint8Array>, manifest: any, existing: Array<{id: string, name: string, local: string}>}>}
+     */
+    async function inspect(source) {
+      const entries = await zip.readZip(source);
+      const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
+      return { entries, manifest, existing: await existingIn(entries, manifest) };
+    }
+    /** Datasets in the entries that already exist here, with their name in the entries and here. */
+    async function existingIn(entries, manifest) {
+      const local = new Map((await datasets.list()).map((m) => [m.id, m]));
+      const named = new Map(((manifest && manifest.datasets) || []).map((d) => [d.id, d.name]));
+      const out = [];
+      for (const path of Object.keys(entries)) {
+        const m = /^datasets\/([^/]+)\.sqlite$/i.exec(path);
+        if (m && local.has(m[1])) out.push({ id: m[1], name: named.get(m[1]) || local.get(m[1]).name, local: local.get(m[1]).name });
+      }
+      return out;
     }
 
     /**
      * Restore from path -> bytes entries (the contents of a ZIP or of a folder).
      * @param {Record<string, Uint8Array>} entries
-     * @param {{skipIds?: Set<string>, dedupe?: boolean}} [options] skipIds: dataset ids already in the
-     *   workspace; dedupe: skip charts, dashboards, templates and notebooks that already exist with the same name
-     * @returns {Promise<{manifest: any, imported: any[], skipped: string[], charts: any[], documents: any[], dashboards: any[], notebooks: any[], scripts: any[], existing: number}>}
+     * @param {{skipIds?: Set<string>, dedupe?: boolean, replaceIds?: Set<string>, received?: {name?: string, author?: string, message?: string}}} [options]
+     *   skipIds: dataset ids already in the workspace; dedupe: skip charts, dashboards, templates and notebooks that
+     *   already exist with the same name; replaceIds: existing datasets that get the incoming version (the current
+     *   one is kept as a version first); received: noted in the history of the datasets that came in
+     * @returns {Promise<{manifest: any, imported: any[], replaced: any[], skipped: string[], charts: any[], documents: any[], dashboards: any[], notebooks: any[], scripts: any[], existing: number}>}
      */
     async function restoreEntries(entries, options = {}) {
       const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
-      const imported = []; const skipped = [];
+      const imported = []; const replaced = []; const skipped = [];
       let existing = 0;
       for (const [path, bytes] of Object.entries(entries)) {
         if (!/\.sqlite$/i.test(path)) continue;
         const m = /([^/]+)\.sqlite$/i.exec(path);
-        if (options.skipIds && m && options.skipIds.has(m[1])) { existing++; continue; }
+        const id = m ? m[1] : '';
         try {
           const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+          if (options.replaceIds && options.replaceIds.has(id) && (await datasets.get(id))) {
+            await datasets.snapshot(id, D.t('bundle.replaced.version', { name: (options.received && options.received.name) || D.t('bundle.default.name') }));
+            await datasets.replaceBytes(id, buffer, null);
+            replaced.push(await datasets.get(id));
+            continue;
+          }
+          if (options.skipIds && options.skipIds.has(id)) { existing++; continue; }
           imported.push(await datasets.importBytes(buffer));
         } catch (err) {
           skipped.push(path + ': ' + ((err && err.message) || err));
         }
       }
+      if (options.received) for (const meta of imported.concat(replaced)) await markLog(meta.id, 'received', options.received);
       /** Import every file matching `re` through a module, skipping existing items when deduplicating. */
       async function importKind(re, moduleName, same) {
         const mod = optional(moduleName);
@@ -196,16 +253,22 @@
           if (record) scripts.push(record); else existing++;
         } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
       }
-      return { manifest, imported, skipped, charts, documents, dashboards, notebooks, scripts, existing };
+      return { manifest, imported, replaced, skipped, charts, documents, dashboards, notebooks, scripts, existing };
     }
 
-    /** Restore a backup (everything is added) or a bundle (what already exists is skipped). */
-    async function restore(source) {
-      const entries = await zip.readZip(source);
-      const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
+    /**
+     * Restore a backup (everything is added) or a bundle (what already exists is skipped, unless it is among
+     * `replaceIds`). Takes a source or the result of inspect().
+     * @param {Blob|ArrayBuffer|Uint8Array|{entries: Record<string, Uint8Array>, manifest: any}} source
+     * @param {{replaceIds?: string[]}} [options]
+     */
+    async function restore(source, options = {}) {
+      const opened = source && /** @type {any} */ (source).entries ? /** @type {any} */ (source) : await inspect(/** @type {any} */ (source));
+      const { entries, manifest } = opened;
       if (manifest && manifest.kind === 'bundle') {
         const existing = new Set((await datasets.list()).map((m) => m.id));
-        return restoreEntries(entries, { skipIds: existing, dedupe: true });
+        const received = { name: manifest.name || '', author: manifest.author || '', message: manifest.message || '' };
+        return restoreEntries(entries, { skipIds: existing, dedupe: true, replaceIds: new Set(options.replaceIds || []), received });
       }
       return restoreEntries(entries);
     }
@@ -256,10 +319,9 @@
     /** Read a folder written by saveToFolder; datasets and objects already present are skipped. */
     async function loadFromFolder(root) {
       if (!root) throw new Error(D.t('folder.err.none'));
-      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
       /** @type {Record<string, Uint8Array>} */
       const entries = {};
-      for (const path of await folder.listFiles(root)) if (wanted(path)) entries[path] = await folder.readFile(root, path);
+      for (const path of await folder.listFiles(root)) if (isWorkspaceFile(path)) entries[path] = await folder.readFile(root, path);
       const existing = new Set((await datasets.list()).map((m) => m.id));
       const res = await restoreEntries(entries, { skipIds: existing, dedupe: true });
       for (const meta of res.imported) fs.written.set(meta.id, meta.updatedAt);
@@ -296,6 +358,64 @@
     async function setAutoSaveSetting(enabled) { await idb.setSetting(AUTOSAVE_SETTING, !!enabled); setAutoSave(enabled); }
     async function autoSaveSetting() { return !!(await idb.getSetting(AUTOSAVE_SETTING, false)); }
 
-    return { backup, bundle, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, MANIFEST, AUTOSAVE_SETTING };
+    // ---- GitHub ----
+    const GITHUB_SETTING = 'github.sync';
+    /** Repository, branch and folder for GitHub sync, with the times of the last push and pull. */
+    async function githubConfig() {
+      return Object.assign({ repo: '', branch: 'main', path: 'dataspatium', lastPush: null, lastPull: null, lastCommit: null }, (await idb.getSetting(GITHUB_SETTING, null)) || {});
+    }
+    /** @param {Record<string, any>} patch */
+    async function setGithubConfig(patch) {
+      const cfg = Object.assign(await githubConfig(), patch);
+      await idb.setSetting(GITHUB_SETTING, cfg);
+      return cfg;
+    }
+    async function githubTarget(token, fetchImpl) {
+      const cfg = await githubConfig();
+      const repo = github.parseRepo(cfg.repo);
+      if (!repo) throw new Error(D.t('github.err.repo'));
+      if (!token) throw new Error(D.t('github.err.notoken'));
+      return { cfg, target: Object.assign({}, repo, { branch: cfg.branch || 'main', path: cfg.path, token, fetch: fetchImpl }) };
+    }
+
+    /**
+     * Commit the whole workspace (datasets, charts, dashboards, templates, notebooks, scripts) to the repository.
+     * @param {{token: string, message?: string, fetch?: Function}} options
+     */
+    async function pushToGitHub(options) {
+      const { target } = await githubTarget(options.token, options.fetch);
+      const { files } = await collect({ kind: 'workspace-backup', extra: { author: await comments.author() } });
+      const res = await github.push(target, files, options.message || D.t('github.commit.default'), { managed: isWorkspaceFile, volatile: (p) => p === MANIFEST });
+      await setGithubConfig({ lastPush: new Date().toISOString(), lastCommit: res.commit || (await githubConfig()).lastCommit });
+      return Object.assign({ url: github.webUrl(target, res.commit) }, res);
+    }
+
+    /**
+     * Download the workspace files from the repository (nothing changes here yet); restore them with restore().
+     * @param {{token: string, fetch?: Function}} options
+     * @returns {Promise<{entries: Record<string, Uint8Array>, manifest: any, existing: Array<{id: string, name: string, local: string}>, commit: string}>}
+     */
+    async function fetchFromGitHub(options) {
+      const { target } = await githubTarget(options.token, options.fetch);
+      const { commit, files } = await github.pull(target, { wanted: isWorkspaceFile });
+      if (!files[MANIFEST]) throw new Error(D.t('github.err.empty.folder'));
+      const manifest = JSON.parse(zip.text(files[MANIFEST]));
+      return { entries: files, manifest, existing: await existingIn(files, manifest), commit };
+    }
+
+    /**
+     * Add what fetchFromGitHub() found: what exists here is skipped, unless it is among `replaceIds`.
+     * @param {{entries: Record<string, Uint8Array>, manifest: any, commit: string}} fetched
+     * @param {{replaceIds?: string[]}} [options]
+     */
+    async function restoreFromGitHub(fetched, options = {}) {
+      const existing = new Set((await datasets.list()).map((m) => m.id));
+      const cfg = await githubConfig();
+      const res = await restoreEntries(fetched.entries, { skipIds: existing, dedupe: true, replaceIds: new Set(options.replaceIds || []), received: { name: cfg.repo, author: (fetched.manifest && fetched.manifest.author) || '' } });
+      await setGithubConfig({ lastPull: new Date().toISOString(), lastCommit: fetched.commit });
+      return res;
+    }
+
+    return { backup, bundle, inspect, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, githubConfig, setGithubConfig, pushToGitHub, fetchFromGitHub, restoreFromGitHub, isWorkspaceFile, MANIFEST, AUTOSAVE_SETTING };
   });
 })();

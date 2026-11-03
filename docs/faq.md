@@ -9,7 +9,7 @@ säkerhetskopior under *Hantera → Arbetsyta*, eller använd en portabel mapp i
 
 ## Behöver jag internet?
 
-Nej. Internet behövs bara när du hämtar data från ett API eller klickar på *Sök efter uppdatering*. Allt annat,
+Nej. Internet behövs bara när du hämtar data från ett API, synkar med GitHub eller klickar på *Sök efter uppdatering*. Allt annat,
 även R, fungerar utan nätverk.
 
 ## Varför tar det tid första gången jag använder R?
@@ -142,9 +142,11 @@ datamängden innan du delar den. Se [bearbeta.md](bearbeta.md).
 ## Hur delar jag data med en kollega?
 
 Enklast med *Dela paket* under *Hantera → Arbetsyta*: välj datamängder och om diagram, dashboards, mallar och
-anteckningsböcker ska följa med, och skicka ZIP-filen. Kollegan släpper den på *Återställ från ZIP*. Du kan också
-exportera en enskild datamängd som SQLite (behåller typer, etiketter och historik) eller ta en säkerhetskopia av
-hela arbetsytan. Diagram och dokumentmallar kan exporteras som
+anteckningsböcker ska följa med, skriv ett meddelande och skicka ZIP-filen. Kollegan släpper den på *Återställ från
+ZIP*, ser ditt meddelande och vad som ändrats och kan ersätta sina egna versioner. Kommentarer på datamängder och
+kolumner följer med. Arbetar ni med samma arbetsyta kan ni också använda ett gemensamt GitHub-repo (*GitHub* under
+*Hantera → Arbetsyta*). Du kan också exportera en enskild datamängd som SQLite (behåller typer, etiketter, kommentarer
+och historik) eller ta en säkerhetskopia av hela arbetsytan. Diagram och dokumentmallar kan exporteras som
 JSON-filer, API-konfigurationer som `.api.json`, och recept som JSON, R eller SQL.
 
 ## Hittar jag inte svaret här?

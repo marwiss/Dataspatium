@@ -94,6 +94,8 @@
         { "path": "icons/languages.svg", "as": "icons/languages.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/graduation-cap.svg", "as": "icons/graduation-cap.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/regex.svg", "as": "icons/regex.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/message-square.svg", "as": "icons/message-square.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/git-branch.svg", "as": "icons/git-branch.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/grid-2x2.svg", "as": "icons/grid-2x2.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/chart-candlestick.svg", "as": "icons/chart-candlestick.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/chart-bar-big.svg", "as": "icons/chart-bar-big.svg", "wrap": "text", "bundle": "icons" },

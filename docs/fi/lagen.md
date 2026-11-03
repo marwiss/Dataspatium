@@ -25,13 +25,15 @@ yhdellä napsautuksella, yksi kerrallaan tai kaikki. Ks. [api-konfiguration.md](
 
 ## Hallitse
 
-Aineistojen koti. Yleiskatsaus metatietoineen, sarakeluettelo, historia aineistolle tehdyistä toimista, versiot, uudelleen
+Aineistojen koti. Yleiskatsaus metatietoineen, sarakeluettelo, kommentit, historia aineistolle tehdyistä toimista, versiot, uudelleen
 nimeäminen ja lyhytnimi (lyhytnimeä käytetään SQL:ssä, R:ssä ja kaaviotiedostoissa), poistaminen ja uudelleennouto
 rajapinnasta (yksi aineisto tai kaikki kerralla). Täällä on myös työtila: käytetyn tallennustilan määrä, pysyvä
 tallennustila, varmuuskopiointi ZIP-tiedostoon ja palautus sekä Edgessä ja Chromessa siirrettävä kansio: työtila tallennetaan
 tavallisina tiedostoina valitsemaasi kansioon, halutessasi automaattisesti jokaisen muutoksen jälkeen, ja sen voi ladata
 toisella tietokoneella. *Jaa paketti* luo ZIP-tiedoston valituista aineistoista, kaavioista, kojelaudoista, malleista ja
-muistikirjoista kollegalle, joka lataa sen kohdassa *Palauta ZIP-tiedostosta*.
+muistikirjoista sekä viestin ja muutoslokin kollegalle, joka lataa sen kohdassa *Palauta ZIP-tiedostosta* ja voi korvata
+omat versionsa aineistoista. *GitHub* lähettää työtilan repositorioon ja noutaa sen sieltä käyttöoikeustunnuksella, joka
+tallennetaan salattuna.
 
 ## Muokkaa
 

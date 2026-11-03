@@ -133,7 +133,7 @@ R: Parquet, SPSS, Stata og RDS. SQLite og Parquet beholder typene nøyaktig; all
 ## Holde orden (Håndter)
 
 Hvert datasett har en oversikt (kilde, størrelse, beskrivelse), en kolonneliste med typer, etiketter, beskrivelser og
-enheter (settes under Bearbeid med *Etikett, beskrivelse og enhet*), historikk over alt som er gjort, og versjoner. Gi nytt
+enheter (settes under Bearbeid med *Etikett, beskrivelse og enhet*), kommentarer, en lesbar historikk over alt som er gjort, og versjoner. Gi nytt
 navn og kortnavn, slett eller hent igjen fra API (oppdater med oppskriften, eller legg til rader). Under *Arbeidsområde* ser du hvor mye lagring som brukes, ber om vedvarende
 lagring, tar sikkerhetskopi som ZIP og gjenoppretter. Appen minner deg ved oppstart når det har gått lenger enn valgt antall
 dager siden siste sikkerhetskopi (30 dager som standard; endres eller slås av i samme kort). I Edge og Chrome kan
@@ -141,9 +141,19 @@ arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ve
 
 ## Dele med andre
 
-- Et utvalg: *Del pakke* under Håndter gir en ZIP med valgte datasett, diagrammer, dashbord, maler og notatbøker. Mottakeren
-  laster den inn under *Gjenopprett fra ZIP*; det som allerede finnes, hoppes over.
+- Et utvalg: *Del pakke* under Håndter gir en ZIP med valgte datasett, diagrammer, dashbord, maler og notatbøker, en
+  melding og en endringslogg: det som er gjort med hvert datasett siden det sist ble delt, og kommentarene som ikke er
+  løst. Mottakeren laster den inn under *Gjenopprett fra ZIP*, ser meldingen og endringene og velger for datasett som
+  allerede finnes, om de skal erstattes med pakkens versjon (den egne lagres under *Versjoner*); resten hoppes over.
+- Kommentarer: hvert datasett har fanen *Kommentarer* i Håndter, og i Bearbeid kommenterer du en kolonne fra
+  egenskapspanelet. Kommentarene ligger i datasettets fil og følger med i pakker, sikkerhetskopier, den portable mappen
+  og GitHub. Navnet som vises, angir du selv; det lagres bare i nettleseren.
 - Hele arbeidsområdet: sikkerhetskopien (ZIP) gjenopprettes under Håndter på en annen datamaskin.
+- Mellom datamaskiner via GitHub: under *Håndter → Arbeidsområde* sender du arbeidsområdet til et GitHub-repository
+  (helst privat) og henter det på en annen datamaskin. Det krever et finkornet tilgangstoken (fine-grained personal access
+  token) som bare får lese og skrive innholdet i akkurat det repositoryet. Tokenet brukes i økten eller lagres kryptert,
+  og ingenting sendes før du trykker *Send til GitHub* eller *Hent fra GitHub*. Bare endrede filer sendes, i én commit med
+  meldingen din; ved henting velger du, som for pakker, om eksisterende datasett skal erstattes.
 - Ett datasett: eksporter som SQLite (alt følger med) eller Parquet.
 - API-konfigurasjoner (`.api.json`), diagrammer og dokumentmaler (JSON) og oppskrifter (JSON, R eller SQL) eksporteres og
   lastes inn som filer. Nøkler følger aldri med.

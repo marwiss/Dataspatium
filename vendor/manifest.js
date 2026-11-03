@@ -1402,6 +1402,20 @@ Dataspatium.assets.manifest({
    "sha256": "e8f01ea2843b00ad6c4b08e29cb6f4e34df40ffd14df0c91b5be55e3c5c9c20f",
    "library": "lucide"
   },
+  "lucide/icons/message-square.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 424,
+   "sha256": "535b1413a4254e3a54cfec0d28a56e60de33188a23ee7dd80ed550636277b7af",
+   "library": "lucide"
+  },
+  "lucide/icons/git-branch.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 394,
+   "sha256": "9109e7222531e6f688d19d6bd2c017b2de8c387aec8bdaf3277a46951790aa64",
+   "library": "lucide"
+  },
   "lucide/icons/grid-2x2.svg": {
    "file": "vendor/lucide/icons.bundle.js",
    "encoding": "text",
@@ -1952,7 +1966,7 @@ Dataspatium.assets.manifest({
    "license": "ISC",
    "homepage": "https://lucide.dev/",
    "direct": [],
-   "assets": 79
+   "assets": 81
   },
   "d3": {
    "version": "7.9.0",

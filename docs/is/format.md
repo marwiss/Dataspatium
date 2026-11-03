@@ -82,22 +82,29 @@ túlka með gerðinni sem þú velur handvirkt verða líka tóm.
 
 ## Skrá gagnasafnsins
 
-Hvert gagnasafn er SQLite-skrá með fjórum töflum: `data` (raðirnar), `_columns` (heiti, gerð, merkimiði, upprunalegt heiti,
-lýsing og eining; tveimur síðustu er bætt við þegar eldri skrá er opnuð), `_meta` (heiti, stuttheiti, lýsing, tímastimplar,
-uppruni, innflutningsstillingar) og `_log` (allt sem gert hefur verið við gagnasafnið). Skrána má opna í R með RSQLite, í DB
-Browser for SQLite og í flestum öðrum verkfærum.
+Hvert gagnasafn er SQLite-skrá með töflunum `data` (raðirnar), `_columns` (heiti, gerð, merkimiði, upprunalegt heiti,
+lýsing, eining og gildismerkimiðar; þremur síðustu er bætt við þegar eldri skrá er opnuð), `_meta` (heiti, stuttheiti,
+lýsing, tímastimplar, uppruni, innflutningsstillingar), `_log` (allt sem gert hefur verið við gagnasafnið) og, þegar
+einhver hefur gert athugasemd, `_comments` (tími, nafn, texti, dálkur og hvort athugasemdin er leyst). Skrána má opna í R
+með RSQLite, í DB Browser for SQLite og í flestum öðrum verkfærum.
 
 ## Skrár vinnusvæðisins
 
-Afritið (ZIP) og færanlega mappan (Edge og Chrome) hafa sömu uppbyggingu: `manifest.json` með lista yfir innihaldið,
-`datasets/<id>.sqlite` fyrir hvert gagnasafn, `charts/<id>.viz.json` fyrir hvert vistað myndrit, `documents/<id>.doc.json` fyrir
-hvert eigið skjalasnið, `dashboards/<id>.dash.json` fyrir hvert mælaborð og `notebooks/<id>.nb.json` fyrir hverja minnisbók og `scripts/<id>.script.json` fyrir hverja vistaða R-skriftu, SQL-skriftu eða regex-mynstur.
-Pakki (*Deila pakka* undir Umsjón) hefur sömu uppbyggingu en inniheldur aðeins það sem þú valdir og hefur `kind: bundle` í
-skráarlistanum; þegar honum er hlaðið inn er öllu sem þegar er til sleppt (gagnasöfnum með sama auðkenni og myndritum,
-mælaborðum, sniðum og minnisbókum með sama heiti). Með sjálfvirka vistun á eru breytt gagnasöfn skrifuð í möppuna stuttu eftir
-hverja vistun og skrár eyddra gagnasafna fjarlægðar. Möppunni má hlaða inn á annarri tölvu; gagnasöfnum sem þegar eru til
-(sama auðkenni) og myndritum eða sniðum með sama heiti er sleppt.
+Afritið (ZIP), færanlega mappan (Edge og Chrome) og mappan í GitHub-safni hafa sömu uppbyggingu: `manifest.json` með
+lista yfir innihaldið, `datasets/<id>.sqlite` fyrir hvert gagnasafn, `charts/<id>.viz.json` fyrir hvert vistað myndrit,
+`documents/<id>.doc.json` fyrir hvert eigið skjalasnið, `dashboards/<id>.dash.json` fyrir hvert mælaborð,
+`notebooks/<id>.nb.json` fyrir hverja minnisbók og `scripts/<id>.script.json` fyrir hverja vistaða R-skriftu, SQL-skriftu
+eða regex-mynstur. Pakki (*Deila pakka* undir Umsjón) hefur sömu uppbyggingu en inniheldur aðeins það sem þú valdir.
+Skráarlisti hans hefur `kind: bundle`, nafn sendanda (`author`), skilaboðin (`message`) og breytingarnar á hverju
+gagnasafni síðan því var síðast deilt eða það móttekið (`changes`), og pakkinn hefur auk þess `CHANGELOG.md` með því sama
+og óleystum athugasemdum á læsilegu formi. Þegar pakka er hlaðið inn birtast skilaboðin og breytingarnar, og öllu sem
+þegar er til er sleppt (gagnasöfnum með sama auðkenni og myndritum, mælaborðum, sniðum og minnisbókum með sama heiti),
+nema þeim gagnasöfnum sem þú velur að skipta út fyrir útgáfu pakkans; þín útgáfa er þá vistuð undir *Útgáfur*. Með
+sjálfvirka vistun á eru breytt gagnasöfn skrifuð í færanlegu möppuna stuttu eftir hverja vistun og skrár eyddra
+gagnasafna fjarlægðar. Möppunni má hlaða inn á annarri tölvu á sama hátt og pakka.
 
-Raðirnar í `_log` hafa tímastimpil, gerð aðgerðar og nánari upplýsingar sem JSON. Aðgerðagerðirnar eru meðal annars `import`,
-`op` (skref í uppskrift með `op`, `params`, `result` og `description`; það eru þessar raðir sem mynda uppskriftina), `undo`,
-`snapshot` og `restore`. Útflutningur uppskriftar í Vinna byggir á `op`-röðunum, sjá [bearbeta.md](bearbeta.md).
+Raðirnar í `_log` hafa tímastimpil, gerð aðgerðar og nánari upplýsingar sem JSON. Aðgerðagerðirnar eru meðal annars
+`import`, `op` (skref í uppskrift með `op`, `params`, `result` og `description`; það eru þessar raðir sem mynda
+uppskriftina), `undo`, `snapshot`, `restore`, `comment` (ný athugasemd), `shared` og `received` (þegar gagnasafninu var
+deilt eða það móttekið í pakka eða frá GitHub; breytingaskrá næsta pakka hefst á eftir því síðasta af þeim). Umsjón sýnir
+raðirnar sem læsilegan texta. Útflutningur uppskriftar í Vinna byggir á `op`-röðunum, sjá [bearbeta.md](bearbeta.md).

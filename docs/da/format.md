@@ -82,22 +82,29 @@ Værdier, der ikke kan fortolkes med den type, du vælger manuelt, bliver også 
 
 ## Datasættets fil
 
-Hvert datasæt er en SQLite-fil med fire tabeller: `data` (rækkerne), `_columns` (navn, type, etiket, oprindeligt navn,
-beskrivelse og enhed; de to sidste tilføjes, når en ældre fil åbnes), `_meta` (navn, kortnavn, beskrivelse, tidsstempler,
-kilde, importindstillinger) og `_log` (alt, hvad der er gjort med datasættet). Filen kan åbnes i R med RSQLite, i DB
+Hvert datasæt er en SQLite-fil med tabellerne `data` (rækkerne), `_columns` (navn, type, etiket, oprindeligt navn,
+beskrivelse, enhed og værdietiketter; de tre sidste tilføjes, når en ældre fil åbnes), `_meta` (navn, kortnavn,
+beskrivelse, tidsstempler, kilde, importindstillinger), `_log` (alt, hvad der er gjort med datasættet) og, når nogen har
+kommenteret, `_comments` (tid, navn, tekst, kolonne og om kommentaren er løst). Filen kan åbnes i R med RSQLite, i DB
 Browser for SQLite og i de fleste andre værktøjer.
 
 ## Arbejdsområdets filer
 
-Backuppen (ZIP) og den portable mappe (Edge og Chrome) har samme opbygning: `manifest.json` med en liste over indholdet,
-`datasets/<id>.sqlite` pr. datasæt, `charts/<id>.viz.json` pr. gemt diagram, `documents/<id>.doc.json` pr. egen
-dokumentskabelon, `dashboards/<id>.dash.json` pr. dashboard og `notebooks/<id>.nb.json` pr. notesbog og `scripts/<id>.script.json` pr. gemt R-script, SQL-script eller regex-mønster. En pakke (*Del pakke*
-under Håndter) har samme opbygning, men indeholder kun det, du har valgt, og har `kind: bundle` i manifestet; når den
-indlæses, springes alt, der allerede findes, over (datasæt med samme id, diagrammer, dashboards, skabeloner og notesbøger
-med samme navn). Med automatisk gemning slået til skrives ændrede datasæt til mappen kort efter hver gemning, og filer for
-slettede datasæt fjernes. Mappen kan indlæses på en anden computer; datasæt, der allerede findes (samme id), og diagrammer
-eller skabeloner med samme navn springes over.
+Backuppen (ZIP), den portable mappe (Edge og Chrome) og mappen i et GitHub-repository har samme opbygning:
+`manifest.json` med en liste over indholdet, `datasets/<id>.sqlite` pr. datasæt, `charts/<id>.viz.json` pr. gemt
+diagram, `documents/<id>.doc.json` pr. egen dokumentskabelon, `dashboards/<id>.dash.json` pr. dashboard,
+`notebooks/<id>.nb.json` pr. notesbog og `scripts/<id>.script.json` pr. gemt R-script, SQL-script eller regex-mønster. En
+pakke (*Del pakke* under Håndter) har samme opbygning, men indeholder kun det, du har valgt. Dens manifest har
+`kind: bundle`, afsenderens navn (`author`), beskeden (`message`) og ændringerne i hvert datasæt, siden det sidst blev
+delt eller modtaget (`changes`), og pakken har desuden `CHANGELOG.md` med det samme og de uløste kommentarer i læsbar
+form. Når en pakke indlæses, vises beskeden og ændringerne, og alt, der allerede findes, springes over (datasæt med samme
+id, diagrammer, dashboards, skabeloner og notesbøger med samme navn), undtagen de datasæt, du vælger at erstatte med
+pakkens version; din version gemmes så under *Versioner*. Med automatisk gemning slået til skrives ændrede datasæt til den
+portable mappe kort efter hver gemning, og filer for slettede datasæt fjernes. Mappen kan indlæses på en anden computer
+på samme måde som en pakke.
 
 Rækkerne i `_log` har tidsstempel, handlingstype og detaljer som JSON. Handlingstyperne er blandt andre `import`, `op` (et
-trin i recepten med `op`, `params`, `result` og `description`; det er disse rækker, der udgør recepten), `undo`, `snapshot`
-og `restore`. Receptens eksport i Bearbejd bygger på `op`-rækkerne, se [bearbeta.md](bearbeta.md).
+trin i recepten med `op`, `params`, `result` og `description`; det er disse rækker, der udgør recepten), `undo`,
+`snapshot`, `restore`, `comment` (en ny kommentar), `shared` og `received` (når datasættet blev delt eller modtaget i en
+pakke eller fra GitHub; ændringsloggen i den næste pakke begynder efter den seneste af dem). Håndter viser rækkerne som
+læsbar tekst. Receptens eksport i Bearbejd bygger på `op`-rækkerne, se [bearbeta.md](bearbeta.md).

@@ -128,6 +128,10 @@
       shell.activate('hantera');
       await waitFor(() => toolbar(root, t('common.rename')), 5000, 'hantera');
       await dialog('common.rename', () => press(toolbar(root, t('common.rename'))));
+      // The comments tab with its form.
+      /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.includes(t('comments.title')))).click();
+      await waitFor(() => toolbar(root, t('comments.add')), 5000, 'comments tab');
+      area('hantera comments');
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-left button.dm-list-item')).find((b) => b.textContent.includes(t('datasets.storage.title')))).click();
       await waitFor(() => toolbar(root, t('bundle.create')), 5000, 'workspace view');
       area('hantera workspace');

@@ -141,8 +141,8 @@ importeras igen.
 ## Hålla ordning (Hantera)
 
 Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer, etiketter, beskrivningar
-och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), historik över
-allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API (uppdatera med receptet, eller lägg till rader). Under *Arbetsyta* ser du hur mycket
+och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), kommentarer, en
+läsbar historik över allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API (uppdatera med receptet, eller lägg till rader). Under *Arbetsyta* ser du hur mycket
 lagring som används, begär beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid
 start när det gått längre än det valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard;
 ändras eller stängs av i samma kort). I Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på
@@ -151,8 +151,19 @@ disk, automatiskt vid varje ändring.
 ## Dela med andra
 
 - Ett urval: *Dela paket* under Hantera ger en ZIP med valda datamängder, diagram, dashboards, mallar och
-  anteckningsböcker. Mottagaren läser in den under *Återställ från ZIP*; det som redan finns hoppas över.
+  anteckningsböcker, ett meddelande och en ändringslogg: det som gjorts med varje datamängd sedan den senast delades
+  och de kommentarer som inte är lösta. Mottagaren läser in den under *Återställ från ZIP*, ser meddelandet och
+  ändringarna och väljer för datamängder som redan finns om de ska ersättas med paketets version (den egna sparas
+  under *Versioner*); resten hoppas över.
+- Kommentarer: varje datamängd har fliken *Kommentarer* i Hantera, och i Bearbeta kommenterar du en kolumn från
+  inspektören. Kommentarerna ligger i datamängdens fil och följer med i paket, säkerhetskopior, den portabla mappen och
+  GitHub. Namnet som visas anger du själv; det sparas bara i webbläsaren.
 - Hela arbetsytan: säkerhetskopian (ZIP) återställs under Hantera på en annan dator.
+- Mellan datorer via GitHub: under *Hantera → Arbetsyta* skickar du arbetsytan till ett GitHub-repo (helst privat) och
+  hämtar den på en annan dator. Det kräver en finkornig åtkomstnyckel (fine-grained personal access token) som bara
+  får läsa och skriva innehållet i just det repot. Nyckeln används under sessionen eller sparas krypterad, och ingenting
+  skickas förrän du trycker *Skicka till GitHub* eller *Hämta från GitHub*. Bara ändrade filer skickas, i en commit med
+  ditt meddelande; vid hämtning väljer du, som för paket, om befintliga datamängder ska ersättas.
 - En datamängd: exportera som SQLite (allt följer med) eller Parquet.
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras
   och läses in som filer. Nycklar följer aldrig med.

@@ -36,7 +36,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   Safari stöds inte.
 - Ungefär 300 MB ledigt utrymme för appmappen och minst 4 GB arbetsminne (8 GB rekommenderas för stora
   datamängder). Inga administratörsrättigheter behövs.
-- Internet behövs bara när du hämtar data från öppna API:er eller söker efter uppdatering.
+- Internet behövs bara när du hämtar data från öppna API:er, synkar med GitHub eller söker efter uppdatering.
 
 ## Vad du kan göra
 
@@ -69,8 +69,9 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument
   per kommun eller år (se [docs/dokumentmallar.md](docs/dokumentmallar.md)).
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
-  delningspaket med valda datamängder och objekt, säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome,
-  en portabel mapp med vanliga filer.
+  delningspaket med valda datamängder och objekt, ett meddelande och en ändringslogg, kommentarer på datamängder och
+  kolumner, säkerhetskopia av arbetsytan som ZIP, synk med ett GitHub-repo och, i Edge och Chrome, en portabel mapp
+  med vanliga filer.
 - **Hitta snabbt**: kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder, diagram och dashboards och kör
   åtgärder från ett enda sökfält.
 - **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,

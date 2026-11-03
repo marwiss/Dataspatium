@@ -145,7 +145,7 @@ again.
 ## Keeping order (Manage)
 
 Every dataset has an overview (source, size, description), a column list with types, labels, descriptions and
-units (set under Process with *Label, description and unit*), a history of everything done and versions. Rename
+units (set under Process with *Label, description and unit*), comments, a readable history of everything done and versions. Rename
 and change the short name, delete or re-fetch from API (update with the recipe, or add rows). Under *Workspace* you see how much storage is used, request
 persistent storage, take a backup as ZIP and restore. The app reminds you at start when more than the chosen
 number of days have passed since the last backup (30 days by default; changed or switched off in the same card).
@@ -154,8 +154,19 @@ In Edge and Chrome the workspace can also be mirrored to a portable folder on di
 ## Sharing with others
 
 - A selection: *Share bundle* under Manage gives a ZIP with chosen datasets, charts, dashboards, templates and
-  notebooks. The recipient loads it under *Restore from ZIP*; whatever already exists is skipped.
+  notebooks, a message and a change log: what was done with each dataset since it was last shared, and the comments
+  that are not resolved. The recipient loads it under *Restore from ZIP*, sees the message and the changes and chooses,
+  for datasets that already exist, whether to replace them with the bundle's version (their own is kept under
+  *Versions*); the rest is skipped.
+- Comments: every dataset has the tab *Comments* in Manage, and in Process you comment on a column from the inspector.
+  The comments live in the dataset's file and travel in bundles, backups, the portable folder and GitHub. You give the
+  name shown yourself; it is stored only in the browser.
 - The whole workspace: the backup (ZIP) is restored under Manage on another computer.
+- Between computers through GitHub: under *Manage → Workspace* you push the workspace to a GitHub repository
+  (preferably private) and fetch it on another computer. This needs a fine-grained personal access token that may only
+  read and write the contents of that repository. The token is used for the session or stored encrypted, and nothing is
+  sent until you press *Push to GitHub* or *Fetch from GitHub*. Only changed files are sent, in one commit with your
+  message; when fetching you choose, as for bundles, whether existing datasets are replaced.
 - One dataset: export as SQLite (everything comes along) or Parquet.
 - API configurations (`.api.json`), charts and document templates (JSON) and recipes (JSON, R or SQL) are exported
   and loaded as files. Keys never come along.

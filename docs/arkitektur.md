@@ -64,6 +64,9 @@ En datamängd är en SQLite-fil med tabellerna `data`, `_columns`, `_meta` och `
 `value_labels`: värdeetiketter som JSON, `{"values": "codes" | "labels", "labels": [[kod, "etikett"], ...]}`, där
 `values` säger om kolumnen har koderna eller redan etiketterna som text. `r/dataspatium.R` gör dem till
 `haven::labelled` i `dm_read()`, läser tillbaka dem i `dm_write()` och skriver koderna till .sav och .dta.
+Kommentarer ligger i tabellen `_comments` (`src/data/comments.js`, skapas vid första kommentaren) och följer därmed
+med filen överallt. `src/data/changelog.js` gör `_log`-raderna läsbara och plockar ut stegen sedan senaste `shared`
+eller `received` för paketens ändringslogg.
 
 Varje datamängd har ett kortnamn (`_meta.shortName`, även i IndexedDB-posten): en SQL-säker identifierare som
 `datasets.shortNameFrom` härleder ur namnet (translitterering, `[a-z0-9_]`, högst 32 tecken, reserverade ord och
@@ -91,7 +94,15 @@ prenumererar på datamängdshändelser med fördröjd sparning. Mappåtkomsten (
 handtaget i IndexedDB, fråga om lov igen efter omstart, läsa, skriva, lista, ta bort) ligger i
 `src/platform/storage/folder-store.js` och tar rotkatalogen som argument, så att tester kan skicka in en
 minnesbaserad ersättning. `bundle` bygger ett delningspaket med samma filer för ett urval (manifestets `kind` är
-`bundle`), och `restore` hoppar över det som redan finns när ett paket läses in.
+`bundle`, med `author`, `message` och `changes`, plus `CHANGELOG.md`) och loggar `shared` i datamängderna;
+`inspect` läser ett paket utan att ändra något och `restore` hoppar över det som redan finns, utom `replaceIds`, som
+får paketets fil efter en ögonblicksbild av den egna, och loggar `received`. GitHub-synken
+(`src/platform/storage/github-store.js`) skickar samma filer med GitHubs Git Data API: blobbar för filer vars
+git-hash skiljer sig från repots, ett träd ovanpå det nuvarande (`sha: null` tar bort filer som inte längre finns),
+en commit och en snabbspolning av grenen (422 betyder att repot ändrats sedan senaste hämtningen). Ett tomt repo får
+sin första commit via contents-API:t. Hämtning läser trädet och blobbarna (`application/vnd.github.raw+json`) och går
+via samma `restoreEntries`. Klienten tar emot `fetch` som argument, så testerna kör mot en låtsas-GitHub i minnet;
+nyckeln lagras av `api/secrets` och skickas bara till api.github.com.
 
 Sortering av stora tabeller använder index på begäran: första sorterade sidan i en tabell med minst
 `datasets.indexing.threshold` rader (200 000) skapar `_idx_<kolumn>` i SQLite-filen, och `recipes.apply` tar

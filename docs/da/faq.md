@@ -9,7 +9,7 @@ disken (se [kom-igang.md](kom-igang.md)).
 
 ## Har jeg brug for internet?
 
-Nej. Internet kræves kun, når du henter data fra et API eller klikker på *Søg efter opdateringer*. Alt andet, også R,
+Nej. Internet kræves kun, når du henter data fra et API, synkroniserer med GitHub eller klikker på *Søg efter opdateringer*. Alt andet, også R,
 fungerer uden netværk.
 
 ## Hvorfor tager det tid første gang, jeg bruger R?
@@ -123,9 +123,12 @@ det. Se [bearbeta.md](bearbeta.md).
 ## Hvordan deler jeg data med en kollega?
 
 Nemmest med *Del pakke* under *Håndter → Arbejdsområde*: vælg datasæt, og om diagrammer, dashboards, skabeloner og
-notesbøger skal med, og send ZIP-filen. Kollegaen slipper den på *Gendan fra ZIP*. Du kan også eksportere et enkelt datasæt
-som SQLite (bevarer typer, etiketter og historik) eller tage backup af hele arbejdsområdet. Diagrammer og
-dokumentskabeloner kan eksporteres som JSON-filer, API-konfigurationer som `.api.json` og recepter som JSON, R eller SQL.
+notesbøger skal med, skriv en besked, og send ZIP-filen. Kollegaen slipper den på *Gendan fra ZIP*, ser din besked og hvad
+der er ændret og kan erstatte sine egne versioner. Kommentarer til datasæt og kolonner følger med. Arbejder I med samme
+arbejdsområde, kan I også bruge et fælles GitHub-repository (*GitHub* under *Håndter → Arbejdsområde*). Du kan også
+eksportere et enkelt datasæt som SQLite (bevarer typer, etiketter, kommentarer og historik) eller tage backup af hele
+arbejdsområdet. Diagrammer og dokumentskabeloner kan eksporteres som JSON-filer, API-konfigurationer som `.api.json` og
+recepter som JSON, R eller SQL.
 
 ## Hvordan åbner jeg grundkurset igen?
 

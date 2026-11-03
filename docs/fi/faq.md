@@ -9,7 +9,7 @@ tiedostoina levyllä (ks. [kom-igang.md](kom-igang.md)).
 
 ## Tarvitsenko internetiä?
 
-En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta tai napsautat *Tarkista päivitykset*. Kaikki muu, myös R, toimii
+En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta, synkronoit GitHubin kanssa tai napsautat *Tarkista päivitykset*. Kaikki muu, myös R, toimii
 ilman verkkoa.
 
 ## Miksi R:n ensimmäinen käyttökerta kestää?
@@ -123,10 +123,13 @@ jakamista. Ks. [bearbeta.md](bearbeta.md).
 
 ## Miten jaan dataa kollegan kanssa?
 
-Helpoimmin toiminnolla *Jaa paketti* kohdassa *Hallitse → Työtila*: valitse aineistot ja otetaanko kaaviot, kojelaudat, mallit
-ja muistikirjat mukaan, ja lähetä ZIP-tiedosto. Kollega pudottaa sen alueelle *Palauta ZIP-tiedostosta*. Voit myös viedä
-yksittäisen aineiston SQLite-muodossa (säilyttää tyypit, selitteet ja historian) tai varmuuskopioida koko työtilan. Kaaviot ja
-asiakirjamallit voi viedä JSON-tiedostoina, API-määritykset `.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa.
+Helpoimmin toiminnolla *Jaa paketti* kohdassa *Hallitse → Työtila*: valitse aineistot ja otetaanko kaaviot, kojelaudat,
+mallit ja muistikirjat mukaan, kirjoita viesti ja lähetä ZIP-tiedosto. Kollega pudottaa sen alueelle *Palauta
+ZIP-tiedostosta*, näkee viestisi ja muutokset ja voi korvata omat versionsa. Aineistojen ja sarakkeiden kommentit tulevat
+mukana. Jos työskentelette samassa työtilassa, voitte käyttää myös yhteistä GitHub-repositoriota (*GitHub* kohdassa
+*Hallitse → Työtila*). Voit myös viedä yksittäisen aineiston SQLite-muodossa (säilyttää tyypit, selitteet, kommentit ja
+historian) tai varmuuskopioida koko työtilan. Kaaviot ja asiakirjamallit voi viedä JSON-tiedostoina, API-määritykset
+`.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa.
 
 ## Miten avaan peruskurssin uudelleen?
 

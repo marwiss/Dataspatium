@@ -29,13 +29,15 @@ från ett API och uppdaterar dem med ett klick, en i taget eller alla. Se
 
 ## Hantera
 
-Datamängdernas hem. Översikt med metadata, kolumnlista, historik över det som gjorts med datamängden, versioner,
+Datamängdernas hem. Översikt med metadata, kolumnlista, kommentarer, historik över det som gjorts med datamängden, versioner,
 byt namn och kortnamn (kortnamnet används i SQL, R och diagramfiler), ta bort, hämta igen från API (en datamängd
 eller alla på en gång). Här finns också arbetsytan: hur mycket lagring som används, beständig lagring,
 säkerhetskopiering till ZIP och återställning samt, i Edge och Chrome, en portabel mapp: arbetsytan sparas som
 vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill, och kan läsas in på en annan dator.
-*Dela paket* skapar en ZIP med valda datamängder, diagram, dashboards, mallar och anteckningsböcker för en
-kollega, som läser in den under *Återställ från ZIP*.
+*Dela paket* skapar en ZIP med valda datamängder, diagram, dashboards, mallar och anteckningsböcker, ett meddelande
+och en ändringslogg för en kollega, som läser in den under *Återställ från ZIP* och kan ersätta sina versioner av
+datamängderna. *GitHub* skickar arbetsytan till ett repo och hämtar den därifrån, med en åtkomstnyckel som sparas
+krypterad.
 
 ## Bearbeta
 

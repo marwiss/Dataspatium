@@ -8,7 +8,7 @@ möppu í Edge og Chrome svo vinnusvæðið sé líka til sem venjulegar skrár 
 
 ## Þarf ég net?
 
-Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu eða smellir á *Leita að uppfærslum*. Allt annað, líka R, virkar án
+Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu, samstillir við GitHub eða smellir á *Leita að uppfærslum*. Allt annað, líka R, virkar án
 nettengingar.
 
 ## Af hverju tekur það tíma í fyrsta skipti sem ég nota R?
@@ -120,10 +120,12 @@ einstaklinga, svo farðu yfir allt gagnasafnið áður en þú deilir því. Sj�
 
 ## Hvernig deili ég gögnum með samstarfsmanni?
 
-Einfaldast með *Deila pakka* undir *Umsjón → Vinnusvæði*: veldu gagnasöfn og hvort myndrit, mælaborð, snið og minnisbækur eigi
-að fylgja, og sendu ZIP-skrána. Samstarfsmaðurinn sleppir henni á *Endurheimta úr ZIP*. Þú getur líka flutt út eitt gagnasafn
-sem SQLite (heldur gerðum, merkimiðum og sögu) eða tekið afrit af öllu vinnusvæðinu. Myndrit og skjalasnið má flytja út sem
-JSON-skrár, API-uppsetningar sem `.api.json` og uppskriftir sem JSON, R eða SQL.
+Einfaldast með *Deila pakka* undir *Umsjón → Vinnusvæði*: veldu gagnasöfn og hvort myndrit, mælaborð, snið og minnisbækur
+eigi að fylgja, skrifaðu skilaboð og sendu ZIP-skrána. Samstarfsmaðurinn sleppir henni á *Endurheimta úr ZIP*, sér skilaboð
+þín og hvað hefur breyst og getur skipt út eigin útgáfum. Athugasemdir við gagnasöfn og dálka fylgja með. Ef þið vinnið í
+sama vinnusvæði getið þið líka notað sameiginlegt GitHub-safn (*GitHub* undir *Umsjón → Vinnusvæði*). Þú getur líka flutt
+út eitt gagnasafn sem SQLite (heldur gerðum, merkimiðum, athugasemdum og sögu) eða tekið afrit af öllu vinnusvæðinu.
+Myndrit og skjalasnið má flytja út sem JSON-skrár, API-uppsetningar sem `.api.json` og uppskriftir sem JSON, R eða SQL.
 
 ## Hvernig opna ég grunnnámskeiðið aftur?
 

@@ -23,12 +23,14 @@ vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Sjá 
 
 ## Umsjón
 
-Heimili gagnasafnanna. Yfirlit með lýsigögnum, dálkalisti, saga þess sem gert hefur verið við gagnasafnið, útgáfur, endurnefna
+Heimili gagnasafnanna. Yfirlit með lýsigögnum, dálkalisti, athugasemdir, saga þess sem gert hefur verið við gagnasafnið, útgáfur, endurnefna
 og stuttheiti (stuttheitið er notað í SQL, R og myndritaskrám), eyða, sækja aftur úr vefþjónustu (eitt gagnasafn eða öll í
 einu). Hér er líka vinnusvæðið: hversu mikil geymsla er í notkun, varanleg geymsla, afritun í ZIP og endurheimt og, í Edge og
 Chrome, færanleg mappa: vinnusvæðið er vistað sem venjulegar skrár í möppu sem þú velur, sjálfkrafa eftir hverja breytingu ef
 þú vilt, og má hlaða inn á annarri tölvu. *Deila pakka* býr til ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og
-minnisbókum handa samstarfsmanni, sem hleður henni inn undir *Endurheimta úr ZIP*.
+minnisbókum, skilaboðum og breytingaskrá handa samstarfsmanni, sem hleður henni inn undir *Endurheimta úr ZIP* og getur
+skipt út sínum útgáfum gagnasafnanna. *GitHub* sendir vinnusvæðið í safn og sækir það þaðan, með aðgangslykli sem er
+vistaður dulkóðaður.
 
 ## Vinna
 

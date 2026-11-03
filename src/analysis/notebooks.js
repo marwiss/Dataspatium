@@ -178,7 +178,7 @@
       /** Shareable JSON (cells with outputs; no ids). */
       function exportJson(nb) {
         return JSON.stringify({
-          format: FORMAT, name: nb.name, datasetName: nb.datasetName || '', datasetShort: nb.datasetShort || '', created: new Date().toISOString(), app: 'Dataspatium', version: D.version,
+          format: FORMAT, name: nb.name, datasetName: nb.datasetName || '', datasetShort: nb.datasetShort || '', created: nb.updatedAt || nb.createdAt || new Date().toISOString(), app: 'Dataspatium', version: D.version,
           cells: (nb.cells || []).map((c) => ({ type: c.type, source: c.source, outputs: c.outputs || [] })),
         }, null, 2) + '\n';
       }

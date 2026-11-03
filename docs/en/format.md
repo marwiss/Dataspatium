@@ -84,22 +84,29 @@ that cannot be interpreted with a type you choose manually also become empty.
 
 ## The dataset's file
 
-Each dataset is an SQLite file with four tables: `data` (the rows), `_columns` (name, type, label, original name,
-description and unit; the last two are added when an older file is opened), `_meta` (name, short name, description,
-timestamps, source, import settings) and `_log` (everything done with the dataset). The file can be opened in R with
-RSQLite, in DB Browser for SQLite and in most other tools.
+Each dataset is an SQLite file with the tables `data` (the rows), `_columns` (name, type, label, original name,
+description, unit and value labels; the last three are added when an older file is opened), `_meta` (name, short name,
+description, timestamps, source, import settings), `_log` (everything done with the dataset) and, once someone has
+commented, `_comments` (time, name, text, column and whether the comment is resolved). The file can be opened in R
+with RSQLite, in DB Browser for SQLite and in most other tools.
 
 ## The workspace's files
 
-The backup (ZIP) and the portable folder (Edge and Chrome) have the same structure: `manifest.json` with a list of the
-contents, `datasets/<id>.sqlite` per dataset, `charts/<id>.viz.json` per saved chart, `documents/<id>.doc.json` per
-document template of your own, `dashboards/<id>.dash.json` per dashboard and `notebooks/<id>.nb.json` per notebook and `scripts/<id>.script.json` per saved R script, SQL script or regex pattern. A
-bundle (*Share bundle* under Manage) has the same structure but contains only what you chose and has `kind: bundle`
-in the manifest; when it is loaded, everything that already exists is skipped (datasets with the same id, charts,
-dashboards, templates and notebooks with the same name). With automatic saving on, changed datasets are written to
-the folder shortly after each save and files for deleted datasets are removed. The folder can be loaded on another
-computer; datasets that already exist (same id) and charts or templates with the same name are skipped.
+The backup (ZIP), the portable folder (Edge and Chrome) and the folder in a GitHub repository have the same
+structure: `manifest.json` with a list of the contents, `datasets/<id>.sqlite` per dataset, `charts/<id>.viz.json` per
+saved chart, `documents/<id>.doc.json` per document template of your own, `dashboards/<id>.dash.json` per dashboard,
+`notebooks/<id>.nb.json` per notebook and `scripts/<id>.script.json` per saved R script, SQL script or regex pattern. A
+bundle (*Share bundle* under Manage) has the same structure but contains only what you chose. Its manifest has
+`kind: bundle`, the sender's name (`author`), the message (`message`) and the changes in each dataset since it was last
+shared or received (`changes`), and the bundle also has `CHANGELOG.md` with the same and the unresolved comments in
+readable form. When a bundle is loaded, the message and the changes are shown, and everything that already exists is
+skipped (datasets with the same id, charts, dashboards, templates and notebooks with the same name), except the
+datasets you choose to replace with the bundle's version; your version is then kept under *Versions*. With automatic
+saving on, changed datasets are written to the portable folder shortly after each save and files for deleted datasets
+are removed. The folder can be loaded on another computer in the same way as a bundle.
 
 The rows in `_log` have a timestamp, action type and details as JSON. The action types are among others `import`, `op`
-(a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot` and
-`restore`. The recipe export in Process builds on the `op` rows, see [bearbeta.md](bearbeta.md).
+(a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot`,
+`restore`, `comment` (a new comment), `shared` and `received` (when the dataset was shared or received in a bundle or
+from GitHub; the change log of the next bundle starts after the latest of them). Manage shows the rows as readable
+text. The recipe export in Process builds on the `op` rows, see [bearbeta.md](bearbeta.md).

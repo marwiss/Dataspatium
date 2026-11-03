@@ -24,12 +24,14 @@ API, og oppdaterer dem med ett klikk, ett om gangen eller alle. Se [api-konfigur
 
 ## Håndter
 
-Datasettenes hjem. Oversikt med metadata, kolonneliste, historikk over det som er gjort med datasettet, versjoner, nytt navn
+Datasettenes hjem. Oversikt med metadata, kolonneliste, kommentarer, historikk over det som er gjort med datasettet, versjoner, nytt navn
 og kortnavn (kortnavnet brukes i SQL, R og diagramfiler), slett, hent igjen fra API (ett datasett eller alle på en gang). Her
 finnes også arbeidsområdet: hvor mye lagring som brukes, vedvarende lagring, sikkerhetskopi til ZIP og gjenoppretting samt,
 i Edge og Chrome, en portabel mappe: arbeidsområdet lagres som vanlige filer i en mappe du velger, automatisk etter hver
 endring om du vil, og kan lastes inn på en annen datamaskin. *Del pakke* lager en ZIP med valgte datasett, diagrammer,
-dashbord, maler og notatbøker til en kollega, som laster den inn under *Gjenopprett fra ZIP*.
+dashbord, maler og notatbøker, en melding og en endringslogg til en kollega, som laster den inn under *Gjenopprett fra
+ZIP* og kan erstatte sine versjoner av datasettene. *GitHub* sender arbeidsområdet til et repository og henter det
+derfra, med et tilgangstoken som lagres kryptert.
 
 ## Bearbeid
 

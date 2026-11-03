@@ -163,6 +163,7 @@
           const column = cols.find((c) => c.name === columnName);
           if (!column) { renderInspector(ds); return; }
           const s = await services.datasets.columnStats(ds.id, columnName);
+          const notes = (await D.require('data/comments').list(ds.id)).filter((c) => c.column === columnName);
           const fmt = (v) => (v === null || v === undefined ? '–' : (typeof v === 'number' ? i18n.formatNumber(v, { maximumFractionDigits: 4 }) : String(v)));
           // Codes are shown with their value label, as in "1 = Man".
           const labelOf = new Map(column.valueLabels && column.valueLabels.values === 'codes' ? column.valueLabels.labels.map(([code, label]) => [String(code), label]) : []);
@@ -186,8 +187,29 @@
             h('h4', { text: column.label || column.name }), kv,
             h('h4', { text: t('bearbeta.quick') }), h('div', { class: 'dm-list' }, actions),
             h('h4', { text: t('table.stats.top') }),
-            h('ul', { class: 'dm-top-values' }, s.top.map(([v, n]) => h('li', null, h('span', { class: 'dm-truncate', text: codeLabel(v) }), h('span', { class: 'dm-muted dm-num', text: i18n.formatNumber(n) })))));
+            h('ul', { class: 'dm-top-values' }, s.top.map(([v, n]) => h('li', null, h('span', { class: 'dm-truncate', text: codeLabel(v) }), h('span', { class: 'dm-muted dm-num', text: i18n.formatNumber(n) })))),
+            h('h4', { text: t('comments.title') }),
+            notes.length ? h('ul', { class: 'dm-list' }, notes.map((c) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(c.resolved ? 'check' : 'message-square', 14),
+              h('span', { class: 'dm-list-main' + (c.resolved ? ' dm-muted' : '') }, h('span', { class: 'dm-small', text: `${c.author || t('comments.anonymous')} · ${i18n.formatDateTime(c.ts)}` }), h('span', { text: c.text }))))) : h('p', { class: 'dm-help', text: t('comments.column.none') }),
+            h('div', null, ui.button({ label: t('comments.add.column'), icon: 'message-square', onClick: () => commentDialog(ds, column) })));
         } catch (err) { replace(slots.right, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })); }
+      }
+
+      /** A comment on a column, from the inspector; it is also listed under Hantera > Comments. */
+      async function commentDialog(ds, column) {
+        const comments = D.require('data/comments');
+        const author = await comments.author();
+        const text = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '4', label: t('comments.new') }));
+        const name = /** @type {any} */ (h('dm-input', { label: t('comments.author'), help: t('comments.author.help') }));
+        name.value = author;
+        const ok = await ui.dialog.open({ title: t('comments.add.title', { column: column.label || column.name }), body: h('div', { class: 'dm-stack' }, text, name), actions: [{ label: t('common.cancel'), value: false }, { label: t('comments.add'), variant: 'primary', value: true, primary: true }] });
+        if (ok !== true) return;
+        try {
+          if (name.value.trim() !== author) await comments.setAuthor(name.value);
+          await comments.add(ds.id, { text: text.value, column: column.name });
+          shell.log(t('comments.added'), 'ok');
+          showStats(ds, column.name);
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
       function presetFor(opId, column) {
