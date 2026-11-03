@@ -50,16 +50,17 @@ brug for dem.
 Slip en fil på fladen, indsæt en tabel, eller hent en fil fra en webadresse (serveren skal tillade CORS; en delt
 Dataspatium-konfiguration tilføjes direkte). Kontrollér forhåndsvisningen: tegnkodning, skilletegn, overskriftsrække og
 decimaltegn gættes, men kan ændres. I kolonnetrinnet får hver kolonne en type; koder med foranstillede nuller
-(kommunekoder, personnumre) bevares som tekst. Giv datasættet et navn, og importér. Knapperne under fladen tilføjer data,
-der følger med appen: eksempeldataene *Befolkning pr. kommune 2024 (Sverige)* og SCB's svenske kommune- og
-länsgrænser til kort.
+(kommunekoder, personnumre) bevares som tekst. Giv datasættet et navn, og importér. Under fladen findes data,
+der følger med appen: knappen til eksempeldataene *Befolkning pr. kommune 2024 (Sverige)* og listen *Grænser til kort*
+med kommune- og regionsgrænser for Sverige, Danmark, Norge og Finland.
 
 Under *Åbne API'er* findes forudindstillinger for statistikbureauerne og flere andre myndigheder i Danmark, Norge,
 Finland og Island, de selvstyrende områder, Nordic Statistics, Eurostat og de svenske myndigheder (SCB,
 Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriet, Sveriges dataportal samt Boverket
 for dem, der har nøgler). Landeknapperne over listen vælger, hvilke landes kilder der vises. Gennemse eller søg en
 tabel frem, vælg variabler, forhåndsvis, og hent til et nyt datasæt, eller tilføj til et eksisterende. Et hentet datasæt
-husker sin forespørgsel, så det kan hentes igen fra Håndter, når kilden er opdateret.
+husker sin forespørgsel, så det kan hentes igen fra Håndter, når kilden er opdateret, og *Gemte hentninger* i Hent
+opdaterer sådanne datasæt med ét klik og afspiller deres opskrifter.
 
 ### 2. Gennemse og ret (Bearbejd)
 
@@ -139,7 +140,7 @@ R: Parquet, SPSS, Stata og RDS. SQLite og Parquet bevarer typerne nøjagtigt; al
 
 Hvert datasæt har en oversigt (kilde, størrelse, beskrivelse), en kolonneliste med typer, etiketter, beskrivelser og
 enheder (sættes under Bearbejd med *Etiket, beskrivelse og enhed*), historik over alt, hvad der er gjort, og versioner.
-Omdøb og ændr kortnavn, slet, eller hent igen fra API. Under *Arbejdsområde* ser du, hvor meget lager der bruges, beder om
+Omdøb og ændr kortnavn, slet, eller hent igen fra API (opdatér med opskriften, eller tilføj rækker). Under *Arbejdsområde* ser du, hvor meget lager der bruges, beder om
 vedvarende lager, tager backup som ZIP og gendanner. Appen minder dig ved start, når der er gået længere tid end det valgte
 antal dage siden seneste backup (30 dage som standard; ændres eller slås fra i samme kort). I Edge og Chrome kan
 arbejdsområdet desuden spejles til en portabel mappe på disken, automatisk ved hver ændring.

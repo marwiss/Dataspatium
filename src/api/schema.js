@@ -15,10 +15,10 @@
     const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
-    const FORMATS = ['json', 'jsonstat', 'csv', 'geojson', 'xml', 'entryscape', 'text'];
+    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text'];
     const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi'];
     /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
-    const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU'];
+    const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT'];
     const ID = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' };
 
     const paramSchema = {

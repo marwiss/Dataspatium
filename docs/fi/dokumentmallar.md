@@ -35,7 +35,7 @@ Paikkamerkit kirjoitetaan kaksinkertaisiin aaltosulkeisiin (Mustache). Luvut saa
 | `{{summor.kolumn}}`, `{{medel.kolumn}}`, `{{minsta.kolumn}}`, `{{storsta.kolumn}}` | Numerosarakkeen summa, keskiarvo, pienin ja suurin (korvaa `kolumn` sarakkeen nimellä) |
 | `{{grupp}}`, `{{gruppkolumn}}` | Ryhmän arvo ja sarakkeen nimi eräajoissa |
 | `{{#rader}} … {{/rader}}` | Toistetaan jokaiselle riville (enintään 1 000); sisällä käytetään sarakkeiden nimiä, esimerkiksi `{{kommun}}` |
-| `{{#kolumner}} … {{/kolumner}}` | Toistetaan jokaiselle sarakkeelle: `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}` ja `{{enhet}}` (kaksi viimeistä ovat tyhjiä, ellei niitä ole asetettu Muokkaa-tilassa) |
+| `{{#kolumner}} … {{/kolumner}}` | Toistetaan jokaiselle sarakkeelle: `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}`, `{{enhet}}` ja `{{vardeetiketter}}` (esimerkiksi `1 = Mies; 2 = Nainen`; kolme viimeistä ovat tyhjiä, ellei niitä ole asetettu Muokkaa-tilassa) |
 | `{{#beskrivning}} … {{/beskrivning}}` | Näytetään vain, jos arvo on olemassa (Mustache-osio) |
 
 Sarakkeiden nimet kirjoitetaan kuten taulukossa (siistityt nimet, esimerkiksi `folkmangd`).
@@ -49,7 +49,7 @@ Sarakkeiden nimet kirjoitetaan kuten taulukossa (siistityt nimet, esimerkiksi `f
 Kaikki osat ovat valinnaisia: ilman `kolumner`-osaa mukaan tulevat kaikki sarakkeet, ilman `topp`-osaa näytetään 50 riviä
 (enintään 5 000), `sortera` saa arvon `stigande` (nouseva) tai `fallande` (laskeva), `filter` saa ehtoja operaattoreilla `=`,
 `!=`, `>`, `>=`, `<`, `<=` tai `innehåller` (sisältää), joita voi yhdistää sanoilla `och` tai `and`, ja `rubrik` on taulukon
-otsikko. `kalla: kolumner` tuottaa sen sijaan taulukon aineiston sarakkeista (nimi, tyyppi, selite, kuvaus ja yksikkö).
+otsikko. `kalla: kolumner` tuottaa sen sijaan taulukon aineiston sarakkeista (nimi, tyyppi, selite, kuvaus ja yksikkö sekä arvoselitteet, jos jollakin sarakkeella on niitä).
 Numerosarakkeet tasataan oikealle.
 
 ### Kaaviot

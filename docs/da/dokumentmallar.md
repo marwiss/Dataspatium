@@ -34,7 +34,7 @@ Pladsholdere skrives med dobbelte krøllede parenteser (Mustache). Tal får form
 | `{{summor.kolumn}}`, `{{medel.kolumn}}`, `{{minsta.kolumn}}`, `{{storsta.kolumn}}` | Sum, gennemsnit, mindste og største for en talkolonne (erstat `kolumn` med kolonnenavnet) |
 | `{{grupp}}`, `{{gruppkolumn}}` | Gruppens værdi og kolonnenavn i batchkørsler |
 | `{{#rader}} … {{/rader}}` | Gentages for hver række (højst 1 000); indeni bruges kolonnenavnene, for eksempel `{{kommun}}` |
-| `{{#kolumner}} … {{/kolumner}}` | Gentages for hver kolonne med `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}` og `{{enhet}}` (de to sidste er tomme, medmindre de er sat under Bearbejd) |
+| `{{#kolumner}} … {{/kolumner}}` | Gentages for hver kolonne med `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}`, `{{enhet}}` og `{{vardeetiketter}}` (for eksempel `1 = Mand; 2 = Kvinde`; de tre sidste er tomme, medmindre de er sat under Bearbejd) |
 | `{{#beskrivning}} … {{/beskrivning}}` | Vises kun, hvis værdien findes (Mustache-sektion) |
 
 Kolonnenavne skrives som i tabellen (rensede navne, for eksempel `folkmangd`).
@@ -48,7 +48,7 @@ Kolonnenavne skrives som i tabellen (rensede navne, for eksempel `folkmangd`).
 Alle dele er valgfrie: uden `kolumner` tages alle kolonner med, uden `topp` vises 50 rækker (højst 5 000), `sortera` tager
 `stigande` (stigende) eller `fallande` (faldende), `filter` tager betingelser med `=`, `!=`, `>`, `>=`, `<`, `<=` eller
 `innehåller` (indeholder), der kan kombineres med `och` eller `and`, og `rubrik` er tabellens overskrift. `kalla: kolumner`
-giver i stedet en tabel over datasættets kolonner (navn, type, etiket, beskrivelse og enhed). Talkolonner højrestilles.
+giver i stedet en tabel over datasættets kolonner (navn, type, etiket, beskrivelse og enhed samt værdietiketter, når en kolonne har dem). Talkolonner højrestilles.
 
 ### Diagrammer
 

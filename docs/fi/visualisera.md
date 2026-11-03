@@ -101,16 +101,21 @@ määrä ja paina **Piirrä kaikki (paneeli)** piirtääksesi kaaviot rinnakkain
 ## Kartat
 
 Kaksi kaaviotyyppiä piirtää karttoja, molemmat ilman karttapalvelinta: **Kartta** (teemakartta: alueet värjättynä arvon
-mukaan) ja **Pistekartta** (pisteet koordinaateissa, koko ja väri arvojen mukaan). SCB:n Ruotsin kuntien ja läänien rajat
-tulevat sovelluksen mukana; muiden maiden rajat tuodaan GeoJSON-, shapefile- tai GeoPackage-tiedostosta.
+mukaan) ja **Pistekartta** (pisteet koordinaateissa, koko ja väri arvojen mukaan). Ruotsin, Tanskan, Norjan ja Suomen
+kuntien ja alueiden rajat tulevat sovelluksen mukana; muiden maiden rajat tuodaan GeoJSON-, shapefile- tai
+GeoPackage-tiedostosta.
 
 ![Teemakartta väestöstä kunnittain ja pistekartta mittausasemista kojelaudalla](../images/kartor.png)
 
 ### Teemakartta (Kartta)
 
-1. Hae rajat: napsauta Nouda-tilassa **Ruotsin kuntien rajat (SCB)** tai **Ruotsin läänien rajat (SCB)** tai tuo omat rajat
-   GeoJSON-, shapefile- tai GeoPackage-tiedostosta. Niistä tulee aineistoja, joissa on koodi, nimi ja geometriasarake
-   (`geometry`, GeoJSON pituus- ja leveysasteina).
+1. Hae rajat: valitse esimerkiksi **Suomen kuntien rajat (Tilastokeskus)** tai **Ruotsin kuntien rajat (SCB)** Nouda-tilan
+   luettelosta *Rajat karttoja varten* ja paina **Tuo rajat**, tai tuo omat rajat GeoJSON-, shapefile- tai
+   GeoPackage-tiedostosta. Niistä tulee aineistoja, joissa on koodi, nimi ja geometriasarake (`geometry`, GeoJSON pituus-
+   ja leveysasteina). Koodit ovat virallisia: nelinumeroiset kuntakoodit Ruotsissa, Tanskassa (DAGI, kuten `0101`;
+   Danmarks Statistik kirjoittaa `101`) ja Norjassa, kolminumeroiset Suomessa (kuten `091`; StatFin kirjoittaa `KU091`).
+   Jos tilaston koodit poikkeavat, ne voi sovittaa Muokkaa-tilassa toiminnoilla *Täydennä etunollilla* tai *Etsi ja
+   korvaa*.
 2. Yhdistä arvot rajoihin Muokkaa-tilassa (*Yhdistä aineistoja*) koodin perusteella, jotta aineistossa on sekä `geometry` että
    värjättävä arvo. Vaihtoehtoisesti arvot on jo tuotu geometrian kanssa.
 3. Valitse rakentajasta *Kartta*. Geometriasarake löydetään automaattisesti (sarake `geometry`), selite on tekstisarake, joka
@@ -125,18 +130,20 @@ joten viennit GeoPackagesta, PostGIS:stä ja laskentataulukoista toimivat suoraa
 Valitse *Pistekartta* aineistolle, jossa on koordinaatit, esimerkiksi sääasemat tai osoitteet pituus- ja leveysasteineen.
 Sarakkeet löydetään nimen perusteella (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`), ja ne voi vaihtaa.
 Metreinä annetut koordinaatit (SWEREF 99 TM) tunnistetaan ja muunnetaan pituus- ja leveysasteiksi. **Koko** ja **Väri**
-ottavat arvosarakkeita (tai luokan värille), **Selite** näytetään, kun osoitat pistettä, ja **Tausta** valitsee Ruotsin
-lääni- tai kuntarajat tai ei taustaa. Jos aineistossa on alueita pisteiden sijaan, *Muokkaa > Paikkatieto > Keskipiste
+ottavat arvosarakkeita (tai luokan värille), **Selite** näytetään, kun osoitat pistettä, ja **Tausta** valitsee jonkin
+mukana tulevista rajoista tai ei taustaa. Jos aineistossa on alueita pisteiden sijaan, *Muokkaa > Paikkatieto > Keskipiste
 geometriasta* antaa jokaiselle alueelle pituus- ja leveysasteen, jolloin arvot voi piirtää kuplina.
 
 ### Projektio ja rajat
 
 Projektio valitaan koordinaattien mukaan: metrit (SWEREF 99 TM) piirretään sellaisenaan, Euroopan pituus- ja leveysasteet
-transversaalisen Mercator-projektion kautta 15° itäisen pituuden ympärillä ja muut Mercatorin kautta. Mukana tulevat rajat
-ovat SCB:n yksinkertaistettuja kunta- ja läänirajoja teemakarttoja varten (CC0, versio helmikuu 2026), muunnettuna pituus- ja
-leveysasteiksi; ne eivät sovellu tarkkoihin rajanvetoihin (ks. `presets/geo/KALLA.md`). Karttoja viedään, jaetaan, lisätään
-kojelautoihin ja ajetaan eräajoina kuten muitakin rakentajan kaavioita; kojelautojen suodattimet toimivat myös kartoissa.
-Geometriaa sisältävän aineiston voi viedä GeoJSON-muotoon Vie-tilasta.
+transversaalisen Mercator-projektion kautta sen maan ruudukon keskimeridiaanin ympärillä, jossa data sijaitsee (9° itää
+Tanskalle, 15° itää Ruotsille ja Norjalle, 27° itää Suomelle), ja muut Mercatorin kautta. Mukana tulevat rajat on
+yksinkertaistettu teemakarttoja varten, eivätkä ne sovellu tarkkoihin rajanvetoihin: SCB:n kunta- ja läänirajat (CC0,
+versio helmikuu 2026), DAGI 1:500 000 Tanskalle, Kartverketin N1000 Norjalle (rajattu rantaviivaa pitkin, koska Norjan
+kunnat ulottuvat muuten merelle) ja Tilastokeskuksen 1:1 000 000 -aluejako Suomelle (ks. `presets/geo/KALLA.md`).
+Karttoja viedään, jaetaan, lisätään kojelautoihin ja ajetaan eräajoina kuten muitakin rakentajan kaavioita; kojelautojen
+suodattimet toimivat myös kartoissa. Geometriaa sisältävän aineiston voi viedä GeoJSON-muotoon Vie-tilasta.
 
 ## Kojelaudat
 
@@ -167,5 +174,5 @@ tiedostosta. Varmuuskopio ja siirrettävä kansio sisältävät kaikki kojelauda
 - Kaaviot elävät selaimessa; hyvin suuret aineistot ilman koostamista rajataan rivirajaan.
 - PDF käyttää tekstille Helveticaa, ei Interiä.
 - R-kaaviot vaativat käynnissä olevan R-istunnon, joten ne viedään vain Visualisoi-tilasta.
-- Mukana tulevat kunta- ja läänirajat ovat SCB:n yksinkertaistettuja rajoja teemakarttoja varten, eivät tarkkoja rajoja.
+- Mukana tulevat rajat on yksinkertaistettu teemakarttoja varten, eivätkä ne ole tarkkoja rajoja.
 - PowerPoint-vienti käyttää kaavioista kuvia (PNG), ei muokattavia PowerPoint-kaavioita.

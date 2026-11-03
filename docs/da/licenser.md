@@ -44,5 +44,8 @@ Dataspatiums kode linker ikke mod R. R kører som en separat fortolker i en work
 billeder med appen via meddelelser; det er den slags samdistribution ("mere aggregation"), som GPL tillader, og R-delene
 beholder alle deres GPL-rettigheder for dig som bruger. Eksempeldata i `presets/` kommer fra åbne kilder og beholder deres
 oprindelige licenser (CC0 eller CC BY efter den enkelte myndighed). De svenske kommune- og länsgrænser i `presets/geo/` er
-SCB's *Digitala gränser* under CC0 1.0, omregnet til længde- og breddegrad; se `presets/geo/KALLA.md`. Data, der hentes fra
+SCB's *Digitala gränser* under CC0 1.0, omregnet til længde- og breddegrad. De danske grænser er DAGI 1:500 000 fra
+Geodatastyrelsen (nu Klimadatastyrelsen), frie data, der må bruges og deles med kildeangivelse; de norske kommer fra
+Kartverkets N1000 Kartdata og de finske fra Statistikcentralen, begge under CC BY 4.0 (kildeangivelse "© Kartverket"
+og "Tilastokeskus / Statistikcentralen"). Se `presets/geo/KALLA.md`. Data, der hentes fra
 de åbne API'er, er omfattet af den enkelte udgivers licens, som vises sammen med kilden i appen.

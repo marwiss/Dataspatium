@@ -138,6 +138,57 @@
     return fc.features.length + ' features';
   }, 30000);
 
+  test('geo: the Nordic boundaries ship as presets and map backgrounds with codes, names and clockwise rings', async (assert) => {
+    const expected = {
+      'regioner-dk': { n: 5, code: '1084', name: 'Region Hovedstaden', columns: ['regionskode', 'region'], box: [7.5, 54.4, 15.3, 57.8] },
+      'kommuner-dk': { n: 99, code: '0101', name: 'København', columns: ['kommunekode', 'kommune', 'regionskode', 'region'], box: [7.5, 54.4, 15.3, 57.8] },
+      'fylker-no': { n: 15, code: '03', name: 'Oslo', columns: ['fylkesnummer', 'fylke'], box: [4, 57.9, 31.3, 71.3] },
+      'kommuner-no': { n: 357, code: '0301', name: 'Oslo', columns: ['kommunenummer', 'kommune', 'fylkesnummer', 'fylke'], box: [4, 57.9, 31.3, 71.3] },
+      'maakunnat-fi': { n: 19, code: '01', name: 'Uusimaa', columns: ['maakuntakoodi', 'maakunta', 'landskap'], box: [19, 59.7, 31.7, 70.1] },
+      'kunnat-fi': { n: 308, code: '091', name: 'Helsinki', columns: ['kuntakoodi', 'kunta', 'kommun', 'maakuntakoodi', 'maakunta', 'landskap'], box: [19, 59.7, 31.7, 70.1] },
+    };
+    // Twice the signed area in degrees: negative for clockwise rings.
+    const signed = (ring) => ring.reduce((s, p, i) => { const q = ring[(i + 1) % ring.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0);
+    for (const [id, e] of Object.entries(expected)) {
+      const def = basemaps.get(id);
+      assert.ok(def, id + ' is a map background');
+      const feats = await basemaps.features(id);
+      assert.equal(feats.length, e.n, id + ' areas');
+      const hit = feats.find((f) => f.code === e.code);
+      assert.ok(hit && hit.name === e.name, `${id}: ${e.code} is ${e.name}, got ${hit && hit.name}`);
+      const b = geo.bounds(feats.map((f) => f.geometry));
+      assert.ok(b.minX > e.box[0] && b.minY > e.box[1] && b.maxX < e.box[2] && b.maxY < e.box[3], id + ' extent ' + JSON.stringify(b));
+      for (const f of feats.slice(0, 20)) {
+        const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+        assert.ok(polys.every((p) => signed(p[0]) < 0), `${id} ${f.code}: outer rings are clockwise`);
+      }
+      const preset = presets.examples.find((p) => p.id === id);
+      assert.ok(preset && preset.format === 'geojson' && preset.asset === def.asset, id + ' preset');
+      assert.ok(D.t(preset.nameKey) !== preset.nameKey && D.t(preset.descriptionKey) !== preset.descriptionKey, id + ' has texts');
+    }
+    // Importing gives the codes as text columns next to the geometry.
+    const meta = await importer.runPreset(presets.examples.find((p) => p.id === 'kunnat-fi'));
+    created.push(meta.id);
+    const cols = await datasets.columns(meta.id);
+    assert.deepEqual(cols.map((c) => c.name), expected['kunnat-fi'].columns.concat(['geometry_type', 'geometry']));
+    assert.equal(cols[0].type, 'text', 'codes with leading zeros stay text');
+    const rows = await datasets.query(meta.id, { orderBy: 'kuntakoodi' });
+    assert.equal(rows.length, 308);
+    assert.deepEqual(rows.find((r) => r[0] === '091').slice(0, 3), ['091', 'Helsinki', 'Helsingfors']);
+    // Norwegian municipalities are land only: Utsira (an island) is far smaller than its sea area would be.
+    const utsira = (await basemaps.features('kommuner-no')).find((f) => f.code === '1151');
+    const ub = geo.bounds([utsira.geometry]);
+    assert.ok(ub.maxX - ub.minX < 0.1 && ub.maxY - ub.minY < 0.05, 'Utsira is the island only: ' + JSON.stringify(ub));
+    // The map projection follows the national grid of the data.
+    const projection = (minX, maxX) => builder.toSpec(Object.assign(builder.defaultState('pointmap', [{ name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }]), { basemap: 'none' }),
+      [{ name: 'lon', type: 'number' }, { name: 'lat', type: 'number' }], { values: [{ lon: minX, lat: 60 }, { lon: maxX, lat: 61 }] }).projection;
+    assert.deepEqual(projection(8.1, 12.6).rotate, [-9, 0, 0], 'Denmark: 9°E');
+    assert.deepEqual(projection(11.1, 24.1).rotate, [-15, 0, 0], 'Sweden: 15°E');
+    assert.deepEqual(projection(20.5, 31.5).rotate, [-27, 0, 0], 'Finland: 27°E');
+    assert.equal(projection(-70, 20).type, 'mercator', 'outside Europe');
+    return Object.entries(expected).map(([id, e]) => `${id} ${e.n}`).join(', ');
+  }, 60000);
+
   test('geo: cleanup', async (assert) => {
     for (const id of created) { try { await datasets.remove(id); } catch (_err) { /* ignore */ } }
     assert.ok(true);

@@ -96,16 +96,19 @@ bregðast eru taldir upp í skráarlistanum. Sniðið PowerPoint gefur í stað 
 ## Kort
 
 Tvær myndritagerðir teikna kort, báðar án kortaþjóns: **Kort** (þemakort: svæði lituð eftir gildi) og **Punktakort** (punktar á
-hnitum með stærð og lit eftir gildum). Sænsk sveitarfélaga- og lénamörk SCB fylgja forritinu; mörk annarra landa, þar á meðal
-Íslands, eru flutt inn úr GeoJSON, shapefile eða GeoPackage.
+hnitum með stærð og lit eftir gildum). Mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg og Finnland fylgja
+forritinu; mörk annarra landa, þar á meðal Íslands, eru flutt inn úr GeoJSON, shapefile eða GeoPackage.
 
 ![Þemakort af mannfjölda eftir sveitarfélögum og punktakort af mælistöðvum í mælaborði](../images/kartor.png)
 
 ### Þemakort (Kort)
 
-1. Sæktu mörkin: smelltu á **Sveitarfélagamörk Svíþjóðar (SCB)** eða **Lénamörk Svíþjóðar (SCB)** í Sækja, eða fluttu inn eigin
-   mörk úr GeoJSON, shapefile eða GeoPackage. Þau verða gagnasöfn með kóða, heiti og rúmfræðidálki (`geometry`, GeoJSON í lengd
-   og breidd).
+1. Sæktu mörkin: veldu til dæmis **Sveitarfélagamörk Noregs (Kartverket)** eða **Sveitarfélagamörk Svíþjóðar (SCB)** í
+   listanum *Mörk fyrir kort* í Sækja og ýttu á **Flytja inn mörk**, eða fluttu inn eigin mörk úr GeoJSON, shapefile eða
+   GeoPackage. Þau verða gagnasöfn með kóða, heiti og rúmfræðidálki (`geometry`, GeoJSON í lengd og breidd). Kóðarnir
+   eru þeir opinberu: fjögurra stafa sveitarfélagakóðar í Svíþjóð, Danmörku (DAGI, eins og `0101`; Danmarks Statistik
+   skrifar `101`) og Noregi, þriggja stafa í Finnlandi (eins og `091`; StatFin skrifar `KU091`). Ef kóðarnir í
+   tölfræðinni eru öðruvísi má samræma þá í Vinna með *Fylla með núllum í upphafi* eða *Finna og skipta út*.
 2. Tengdu gildin við mörkin í Vinna (*Tengja gagnasöfn*) á kóðanum, svo gagnasafnið hafi bæði `geometry` og gildið sem á að
    lita. Einnig geta gildin þegar hafa verið flutt inn með rúmfræðinni.
 3. Veldu *Kort* í myndritasmiðnum. Rúmfræðidálkurinn finnst sjálfkrafa (dálkurinn `geometry`), merkimiðinn er textadálkur sem
@@ -120,17 +123,20 @@ Rúmfræðidálkurinn má innihalda GeoJSON eða WKT (`POLYGON((...))`, `POINT(.
 Veldu *Punktakort* fyrir gagnasafn með hnitum, til dæmis veðurstöðvar eða heimilisföng með lengd og breidd. Dálkarnir finnast
 eftir heiti (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`) og má skipta um þá. Hnit í metrum (SWEREF 99 TM) eru
 greind og umreiknuð í lengd og breidd. **Stærð** og **Litur** taka gildisdálka (eða flokk fyrir litinn), **Merkimiði** birtist
-þegar þú bendir á punkt og **Bakgrunnur** velur sænsk léna- eða sveitarfélagamörk eða engan bakgrunn. Ef gagnasafnið hefur svæði
+þegar þú bendir á punkt og **Bakgrunnur** velur ein af meðfylgjandi mörkunum eða engan bakgrunn. Ef gagnasafnið hefur svæði
 í stað punkta gefur *Vinna > Landupplýsingar > Miðpunktur úr rúmfræði* lengd og breidd fyrir hvert svæði, svo teikna megi gildi
 sem bólur.
 
 ### Vörpun og mörk
 
 Vörpunin er valin eftir hnitunum: metrar (SWEREF 99 TM) eru teiknaðir eins og þeir eru, lengd og breidd innan Evrópu gegnum
-þverlæga Mercator-vörpun kringum 15° austur og annað gegnum Mercator. Meðfylgjandi mörk eru einfölduð sveitarfélaga- og
-lénamörk SCB fyrir þemakort (CC0, útgáfa febrúar 2026), umreiknuð í lengd og breidd; þau eru ekki ætluð til nákvæmrar
-markalýsingar (sjá `presets/geo/KALLA.md`). Kort eru flutt út, þeim deilt, sett í mælaborð og keyrð í hópkeyrslu eins og öll
-önnur myndrit smiðsins; síur í mælaborðum virka líka á kort. Gagnasafn með rúmfræði má flytja út sem GeoJSON úr Flytja út.
+þverlæga Mercator-vörpun kringum miðlengdarbaug hnitakerfis landsins þar sem gögnin liggja (9° austur fyrir Danmörku, 15° austur
+fyrir Svíþjóð og Noreg, 27° austur fyrir Finnland) og annað gegnum Mercator. Meðfylgjandi mörk eru einfölduð fyrir þemakort og
+ekki ætluð til nákvæmrar markalýsingar: sveitarfélaga- og lénamörk SCB (CC0, útgáfa febrúar 2026), DAGI 1:500 000 fyrir
+Danmörku, N1000 frá Kartverket fyrir Noreg (skorið eftir strandlínunni, þar sem norsk sveitarfélög ná annars út á haf) og
+skipting Hagstofu Finnlands 1:1 000 000 fyrir Finnland (sjá `presets/geo/KALLA.md`). Kort eru flutt út, þeim deilt, sett í
+mælaborð og keyrð í hópkeyrslu eins og öll önnur myndrit smiðsins; síur í mælaborðum virka líka á kort. Gagnasafn með
+rúmfræði má flytja út sem GeoJSON úr Flytja út.
 
 ## Mælaborð
 
@@ -160,5 +166,5 @@ inniheldur öll myndrit sem slíkar skrár.
 - Myndritin lifa í vafranum; mjög stór gagnasöfn án samantektar eru takmörkuð við raðatakmarkið.
 - PDF notar Helvetica, ekki Inter, fyrir texta.
 - R-myndrit krefjast þess að R-setan sé ræst og eru því aðeins flutt út úr Myndgera.
-- Meðfylgjandi sveitarfélaga- og lénamörk eru einfölduð mörk SCB fyrir þemakort, ekki nákvæm mörk.
+- Meðfylgjandi mörk eru einfölduð fyrir þemakort, ekki nákvæm mörk.
 - PowerPoint-útflutningur notar myndir (PNG) af myndritunum, ekki breytanleg PowerPoint-myndrit.

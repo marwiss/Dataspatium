@@ -76,6 +76,8 @@
         case 'running_total': return D.t('recipe.running_total', { name: params.name, column: params.column, group: groupText(params) });
         case 'change_previous': return D.t('recipe.change_previous', { name: params.name, column: params.column, group: groupText(params) });
         case 'standardize': return D.t('recipe.standardize', { name: params.name, column: params.column });
+        case 'set_value_labels': return D.t(String(params.labels || '').trim() ? 'recipe.set_value_labels' : 'recipe.set_value_labels.none', { column: params.column });
+        case 'apply_value_labels': return D.t(params.direction === 'codes' ? 'recipe.apply_value_labels.codes' : 'recipe.apply_value_labels', { column: params.column, n });
         case 'regex_filter': return D.t(params.keep === 'other' ? 'recipe.regex_filter.other' : 'recipe.regex_filter', { pattern: params.pattern, column: params.column, n });
         case 'regex_extract': return D.t('recipe.regex_extract', { pattern: params.pattern, column: params.column, names: params.names || '' });
         case 'regex_flag': return D.t('recipe.regex_flag', { pattern: params.pattern, column: params.column, name: params.name });
@@ -118,7 +120,8 @@
       }
       if (ctx.columnsChanged) await datasets.writeColumns(handle, ctx.columns);
       const description = options.description || describe(opId, params, result);
-      await datasets.appendLog(handle, options.logAction || 'op', { op: opId, params: redactSecrets(op, params), result: result || {}, description });
+      // A recipe replayed on the same dataset (an API update) is already in its log.
+      if (!options.noLog) await datasets.appendLog(handle, options.logAction || 'op', { op: opId, params: redactSecrets(op, params), result: result || {}, description });
       await datasets.refreshCounts(handle);
       datasets.scheduleSave(id);
       return result || {};

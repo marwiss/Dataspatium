@@ -33,7 +33,7 @@ tusentalsavgränsare och decimalkomma.
 | `{{summor.kolumn}}`, `{{medel.kolumn}}`, `{{minsta.kolumn}}`, `{{storsta.kolumn}}` | Summa, medel, minsta och största för en talkolumn |
 | `{{grupp}}`, `{{gruppkolumn}}` | Gruppens värde och kolumnnamn i batchkörningar |
 | `{{#rader}} … {{/rader}}` | Upprepas för varje rad (högst 1 000); inuti används kolumnnamnen, till exempel `{{kommun}}` |
-| `{{#kolumner}} … {{/kolumner}}` | Upprepas för varje kolumn med `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}` och `{{enhet}}` (de två sista är tomma om de inte satts under Bearbeta) |
+| `{{#kolumner}} … {{/kolumner}}` | Upprepas för varje kolumn med `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}`, `{{enhet}}` och `{{vardeetiketter}}` (till exempel `1 = Man; 2 = Kvinna`; de tre sista är tomma om de inte satts under Bearbeta) |
 | `{{#beskrivning}} … {{/beskrivning}}` | Visas bara om värdet finns (Mustache-sektion) |
 
 Kolumnnamn skrivs som i tabellen (städade namn, till exempel `folkmangd`).
@@ -47,7 +47,7 @@ Kolumnnamn skrivs som i tabellen (städade namn, till exempel `folkmangd`).
 Alla delar är valfria: utan `kolumner` tas alla kolumner med, utan `topp` visas 50 rader (högst 5 000),
 `sortera` tar `stigande` eller `fallande`, `filter` tar villkor med `=`, `!=`, `>`, `>=`, `<`, `<=` eller
 `innehåller` som kan kombineras med `och`. `kalla: kolumner` ger i stället en tabell över datamängdens kolumner
-(namn, typ, etikett, beskrivning och enhet).
+(namn, typ, etikett, beskrivning och enhet, och värdeetiketter när någon kolumn har sådana).
 Talkolumner högerställs.
 
 ### Diagram

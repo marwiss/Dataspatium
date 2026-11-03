@@ -26,6 +26,7 @@ det er mulig, vises en forhåndsvisning av hvor mange rader som påvirkes, og ek
 |---|---|---|
 | Kolonner | Gi kolonnen nytt navn | Nytt kolonnenavn; etiketten følger med hvis den var lik navnet |
 | | Etikett, beskrivelse og enhet | Etiketten er visningsnavnet i tabelloverskrifter og diagrammer; beskrivelse og enhet vises i inspektøren og kodeboken, følger med SQLite-filen og når R som attributtene `description` og `unit` |
+| | Verdietiketter | Navn på kolonnens koder, én per linje `kode = etikett` (for eksempel `1 = Mann`); verdiene endres ikke. Etikettene vises i egenskapspanelet (også ved de vanligste verdiene) og kodeboken, når R som `haven::labelled` og skrives til .sav og .dta. Tom tekst fjerner dem |
 | | Slett kolonner | Fjerner valgte kolonner |
 | | Endre kolonnerekkefølgen | Flytt kolonner opp og ned |
 | | Endre type | Tekst til heltall, desimaltall, dato, dato og tid eller ja/nei. Desimaltegn og datoformat kan angis; verdier som ikke kan tolkes, blir tomme, og antallet rapporteres |
@@ -37,6 +38,7 @@ det er mulig, vises en forhåndsvisning av hvor mange rader som påvirkes, og ek
 | | Reparer tegnkoding | Retter mojibake (Ã¸ blir til ø) som har oppstått ved import med feil tegnkoding |
 | | Erstatt verdi | Én nøyaktig verdi med en annen; en tom verdi kan velges som fra eller til |
 | | Omkod verdier | Flere verdier på én gang etter en liste med én linje per verdi, `gammel = ny` (for eksempel `01 = Stockholms län`); andre verdier beholdes eller tømmes |
+| | Bytt koder mot etiketter | Bytter kolonnens koder mot verdietikettene deres, eller tilbake. Etikettene lagres, slik at .sav og .dta får kodene igjen ved eksport; verdier uten etikett blir stående som de er, og tilbake til koder blir kolonnen tall hvis alle kodene er tall |
 | | Fyll inn manglende verdier | Konstant verdi, forrige eller neste rads verdi, gjennomsnitt, median eller vanligste verdi |
 | | Rund av tall | Til valgt antall desimaler: til nærmeste (en halv rundes bort fra null), nedover, oppover eller ved å stryke desimalene; et negativt antall runder av til tiere (−1), hundrere (−2) og så videre |
 | | Fyll ut med innledende nuller | Til en bestemt lengde, for eksempel kommunekoden 114 til 0114; tall blir tekst, slik at nullene beholdes |

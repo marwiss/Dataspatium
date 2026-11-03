@@ -27,7 +27,8 @@
     write.nocols = "Datamängden saknar kolumner.",
     write.sent = "Datamängden \"%s\" skickas till appen (%d rader, %d kolumner).",
     write.log = "Skapad med dm_write() i R",
-    plot.gone = "Diagrammet finns inte längre i R-sessionen."
+    plot.gone = "Diagrammet finns inte längre i R-sessionen.",
+    labels.named = "Värdeetiketterna ska vara en namngiven vektor, till exempel c(\"Man\" = 1, \"Kvinna\" = 2)."
   ),
   da = c(
     list.empty = "Ingen datasæt er tilgængelige i R-sessionen endnu. Importér under Hent.",
@@ -39,7 +40,8 @@
     write.nocols = "Datasættet har ingen kolonner.",
     write.sent = "Datasættet \"%s\" sendes til appen (%d rækker, %d kolonner).",
     write.log = "Oprettet med dm_write() i R",
-    plot.gone = "Diagrammet findes ikke længere i R-sessionen."
+    plot.gone = "Diagrammet findes ikke længere i R-sessionen.",
+    labels.named = "Værdietiketterne skal være en navngivet vektor, for eksempel c(\"Mand\" = 1, \"Kvinde\" = 2)."
   ),
   nb = c(
     list.empty = "Ingen datasett er tilgjengelige i R-sesjonen ennå. Importer under Hent.",
@@ -51,7 +53,8 @@
     write.nocols = "Datasettet har ingen kolonner.",
     write.sent = "Datasettet \"%s\" sendes til appen (%d rader, %d kolonner).",
     write.log = "Opprettet med dm_write() i R",
-    plot.gone = "Diagrammet finnes ikke lenger i R-sesjonen."
+    plot.gone = "Diagrammet finnes ikke lenger i R-sesjonen.",
+    labels.named = "Verdietikettene må være en navngitt vektor, for eksempel c(\"Mann\" = 1, \"Kvinne\" = 2)."
   ),
   fi = c(
     list.empty = "R-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
@@ -63,7 +66,8 @@
     write.nocols = "Aineistossa ei ole sarakkeita.",
     write.sent = "Aineisto \"%s\" lähetetään sovellukseen (%d riviä, %d saraketta).",
     write.log = "Luotu dm_write()-funktiolla R:ssä",
-    plot.gone = "Kaaviota ei enää ole R-istunnossa."
+    plot.gone = "Kaaviota ei enää ole R-istunnossa.",
+    labels.named = "Arvoselitteiden on oltava nimetty vektori, esimerkiksi c(\"Mies\" = 1, \"Nainen\" = 2)."
   ),
   is = c(
     list.empty = "Engin gagnasöfn eru tiltæk í R-setunni enn. Flyttu inn undir Sækja.",
@@ -75,7 +79,8 @@
     write.nocols = "Gagnasafnið hefur enga dálka.",
     write.sent = "Gagnasafnið \"%s\" er sent til forritsins (%d raðir, %d dálkar).",
     write.log = "Búið til með dm_write() í R",
-    plot.gone = "Myndritið er ekki lengur til í R-setunni."
+    plot.gone = "Myndritið er ekki lengur til í R-setunni.",
+    labels.named = "Gildismerkimiðar verða að vera nefndur vigur, til dæmis c(\"Karl\" = 1, \"Kona\" = 2)."
   ),
   en = c(
     list.empty = "No datasets are available in the R session yet. Import one in Import.",
@@ -87,7 +92,8 @@
     write.nocols = "The dataset has no columns.",
     write.sent = "The dataset \"%s\" is being sent to the app (%d rows, %d columns).",
     write.log = "Created with dm_write() in R",
-    plot.gone = "The plot no longer exists in the R session."
+    plot.gone = "The plot no longer exists in the R session.",
+    labels.named = "Value labels must be a named vector, for example c(\"Man\" = 1, \"Woman\" = 2)."
   )
 )
 
@@ -128,6 +134,88 @@ dm_index <- function() {
   x <- gsub("\r", "\\\\r", x)
   x <- gsub("\t", "\\\\t", x)
   paste0("\"", x, "\"")
+}
+
+# Value labels (SPSS and Stata codes with names) travel as JSON in _columns.value_labels:
+# {"values":"codes" or "labels","labels":[[code,"label"],...]}. "labels" means that the column already holds
+# the labels (an SPSS import with labels as text) and the codes are kept for export.
+.dm_labels_json <- function(labs, values = "codes") {
+  if (is.null(labs) || !length(labs)) return(NA_character_)
+  codes <- unname(labs)
+  codes <- if (is.numeric(codes)) as.character(codes) else vapply(as.character(codes), .dm_json_string, character(1))
+  pairs <- paste0("[", codes, ",", vapply(names(labs), .dm_json_string, character(1)), "]", collapse = ",")
+  paste0("{\"values\":\"", values, "\",\"labels\":[", pairs, "]}")
+}
+
+# A bundled package, installed on first use (pkg:: alone does not go through webR's install shim).
+.dm_need <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) suppressWarnings(webr::install(pkg, quiet = TRUE))
+  requireNamespace(pkg, quietly = TRUE)
+}
+
+# A column holding codes with value labels becomes haven::labelled; a column that already holds the labels
+# keeps them as text, with the JSON as the attribute "value_labels" so that dm_write() keeps it.
+.dm_apply_labels <- function(x, json) {
+  if (is.null(json) || is.na(json) || !nzchar(json)) return(x)
+  if (!.dm_need("jsonlite")) { attr(x, "value_labels") <- json; return(x) }
+  vl <- jsonlite::fromJSON(json, simplifyVector = FALSE)
+  if (identical(vl$values, "labels") || !length(vl$labels) || !.dm_need("haven")) { attr(x, "value_labels") <- json; return(x) }
+  codes <- unlist(lapply(vl$labels, `[[`, 1))
+  labs <- if (is.numeric(x)) as.numeric(codes) else as.character(codes)
+  if (is.integer(x) && is.numeric(labs) && all(labs == round(labs))) labs <- as.integer(labs)
+  names(labs) <- vapply(vl$labels, function(p) as.character(p[[2]]), character(1))
+  keep <- attributes(x)[intersect(names(attributes(x)), c("label", "description", "unit"))]
+  y <- haven::labelled(as.vector(x), labels = labs)
+  for (a in names(keep)) attr(y, a) <- keep[[a]]
+  y
+}
+
+# Value labels for one column, as a named vector c("Man" = 1, "Kvinna" = 2). to = "labels" replaces the
+# codes with their labels, to = "codes" turns labels back into codes, NULL only sets the labels and NULL
+# labels remove them. Values without a code or label stay as they are.
+dm_value_labels <- function(x, labels, to = NULL) {
+  keep <- attributes(x)[intersect(names(attributes(x)), c("label", "description", "unit"))]
+  old <- attr(x, "value_labels", exact = TRUE)
+  v <- if (is.factor(x)) as.character(x) else as.vector(unclass(x))
+  restore <- function(y) { for (a in names(keep)) attr(y, a) <- keep[[a]]; y }
+  if (!length(labels)) return(restore(v))
+  if (is.null(names(labels))) stop(.dm_msg("labels.named"), call. = FALSE)
+  if (identical(to, "codes")) {
+    i <- match(as.character(v), names(labels))
+    v <- ifelse(is.na(i), as.character(v), as.character(unname(labels)[i]))
+    if (is.numeric(labels) && !anyNA(suppressWarnings(as.numeric(v[!is.na(v)])))) v <- as.numeric(v)
+  } else if (identical(to, "labels")) {
+    i <- match(as.character(v), as.character(unname(labels)))
+    v <- ifelse(is.na(i), as.character(v), names(labels)[i])
+  }
+  as_text <- identical(to, "labels") || (is.null(to) && !is.null(old) && grepl('"values":"labels"', old, fixed = TRUE))
+  if (!as_text && is.numeric(v) == is.numeric(labels) && .dm_need("haven")) {
+    return(restore(haven::labelled(v, labels = if (is.numeric(v)) labels else stats::setNames(as.character(labels), names(labels)))))
+  }
+  restore(structure(v, value_labels = .dm_labels_json(labels, if (as_text) "labels" else "codes")))
+}
+
+# For SPSS and Stata: columns that hold the labels as text get their codes back as haven::labelled, when
+# every value has a code or is a number among numeric codes; other columns are left as they are.
+.dm_labels_for_export <- function(df) {
+  df[] <- lapply(df, function(x) {
+    j <- attr(x, "value_labels", exact = TRUE)
+    if (is.null(j) || !.dm_need("jsonlite") || !.dm_need("haven")) return(x)
+    vl <- jsonlite::fromJSON(j, simplifyVector = FALSE)
+    if (!identical(vl$values, "labels") || !length(vl$labels)) return(x)
+    codes <- unlist(lapply(vl$labels, `[[`, 1))
+    labs <- vapply(vl$labels, function(p) as.character(p[[2]]), character(1))
+    y <- codes[match(as.character(x), labs)]
+    # A value without a label may itself be a code (3 when only 1 and 2 have labels).
+    rest <- is.na(y) & !is.na(x)
+    if (is.numeric(codes) && any(rest)) y[rest] <- suppressWarnings(as.numeric(as.character(x[rest])))
+    if (any(is.na(y) & !is.na(x))) return(x)
+    a <- attr(x, "label", exact = TRUE)
+    y <- haven::labelled(y, labels = stats::setNames(codes, labs))
+    if (!is.null(a)) attr(y, "label") <- a
+    y
+  })
+  df
 }
 
 #' List the datasets available to R.
@@ -195,6 +283,7 @@ dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
       val <- cols[[a]][i]
       if (!is.na(val) && nzchar(val) && !(a == "label" && identical(val, nm))) attr(df[[nm]], a) <- val
     }
+    if ("value_labels" %in% names(cols)) df[[nm]] <- .dm_apply_labels(df[[nm]], cols$value_labels[i])
   }
   meta <- DBI::dbReadTable(con, "_meta")
   attr(df, "dataspatium") <- list(id = id, name = meta$value[meta$key == "name"], columns = cols)
@@ -221,6 +310,13 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
   if (is.null(labels)) labels <- attr_of("label")
   if (is.null(descriptions)) descriptions <- attr_of("description")
   if (is.null(units)) units <- attr_of("unit")
+  # Value labels: from haven::labelled columns (codes) or the "value_labels" attribute that dm_read() set.
+  value_labels <- vapply(df, function(x) {
+    if (inherits(x, "haven_labelled")) return(.dm_labels_json(attr(x, "labels", exact = TRUE)))
+    j <- attr(x, "value_labels", exact = TRUE)
+    if (is.null(j)) NA_character_ else as.character(j)[1]
+  }, character(1))
+  df[] <- lapply(df, function(x) if (inherits(x, "haven_labelled")) as.vector(unclass(x)) else x)
   df <- as.data.frame(df, stringsAsFactors = FALSE)
   if (!ncol(df)) stop(.dm_msg("write.nocols"), call. = FALSE)
   labels <- as.character(labels); length(labels) <- ncol(df)
@@ -246,10 +342,11 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
   qi <- function(x) vapply(x, function(v) as.character(DBI::dbQuoteIdentifier(con, v)), character(1))
   DBI::dbExecute(con, paste0("create table data (", paste(paste(qi(names(out)), sql_types[types]), collapse = ", "), ")"))
   DBI::dbAppendTable(con, "data", out)
-  DBI::dbExecute(con, "create table _columns (position integer, name text, type text, label text, format text, source_name text, description text, unit text)")
+  DBI::dbExecute(con, "create table _columns (position integer, name text, type text, label text, format text, source_name text, description text, unit text, value_labels text)")
   DBI::dbAppendTable(con, "_columns", data.frame(position = seq_along(out) - 1L, name = names(out), type = unname(types),
                                                  label = unname(labels), format = NA_character_, source_name = names(out),
-                                                 description = unname(descriptions), unit = unname(units), stringsAsFactors = FALSE))
+                                                 description = unname(descriptions), unit = unname(units),
+                                                 value_labels = unname(value_labels), stringsAsFactors = FALSE))
   now <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   source_json <- paste0("{\"kind\":\"r\",\"expression\":", .dm_json_string(deparse(substitute(df))[1]), "}")
   DBI::dbExecute(con, "create table _meta (key text primary key, value text)")

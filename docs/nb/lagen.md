@@ -19,7 +19,8 @@ bredde, Excel, ODS, JSON (også JSON-stat og GeoJSON), XML, SQLite, GeoPackage, 
 Parquet, RDS og RData (se [format.md](format.md)); R-formatene importeres i ett trinn uten forhåndsvisning. Under Åpne API-er
 finnes forhåndsinnstillinger for statistikkbyråene og flere andre etater i Norge, Danmark, Finland, Island, Grønland,
 Færøyene, Åland og Sverige, Nordic Statistics og Eurostat; landknappene over listen velger hvilke lands kilder som vises.
-Egne konfigurasjoner legges til fra fil og kan deles. Se [api-konfiguration.md](api-konfiguration.md).
+Egne konfigurasjoner legges til fra fil og kan deles. *Lagrede hentinger* viser datasettene som er kommet fra et
+API, og oppdaterer dem med ett klikk, ett om gangen eller alle. Se [api-konfiguration.md](api-konfiguration.md).
 
 ## Håndter
 

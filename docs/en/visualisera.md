@@ -101,17 +101,20 @@ the manifest. The PowerPoint format gives a single presentation with one slide p
 ## Maps
 
 Two chart types draw maps, both without a map server: **Map** (choropleth: areas coloured by a value) and **Point
-map** (points at coordinates, with size and colour by values). SCB's municipality and county boundaries for Sweden
-ship with the app, so a map of Sweden's municipalities or counties needs no download. Boundaries for other countries
-are imported from GeoJSON, shapefile or GeoPackage.
+map** (points at coordinates, with size and colour by values). Municipality and region boundaries for Sweden,
+Denmark, Norway and Finland ship with the app, so a map of their municipalities or regions needs no download.
+Boundaries for other countries are imported from GeoJSON, shapefile or GeoPackage.
 
 ![Choropleth map of population per municipality and point map of measuring stations in a dashboard](../images/kartor.png)
 
 ### Choropleth map (Map)
 
-1. Get the boundaries: click **Swedish municipality boundaries (SCB)** or **Swedish county boundaries (SCB)** in Import. They become
-   datasets with municipality or county code, name and a geometry column (`geometry`, GeoJSON in longitude and
-   latitude). Your own boundaries are imported from GeoJSON, shapefile (for example SCB's *Digitala gränser* in
+1. Get the boundaries: choose for example **Swedish municipality boundaries (SCB)** or **Norwegian municipality
+   boundaries (Kartverket)** in the list *Boundaries for maps* in Import and press **Import boundaries**. They become
+   datasets with code, name and a geometry column (`geometry`, GeoJSON in longitude and latitude). The codes are the
+   official ones: four-digit municipality codes in Sweden, Denmark (DAGI, such as `0101`; Statistics Denmark writes
+   `101`) and Norway, three digits in Finland (such as `091`; StatFin writes `KU091`). If the codes in the statistics
+   differ, they can be matched in Process with *Pad with leading zeros* or *Find and replace*. Your own boundaries are imported from GeoJSON, shapefile (for example SCB's *Digitala gränser* in
    SWEREF 99 TM; simplify with a tolerance of 100 metres) or GeoPackage.
 2. Join the values to the boundaries in Process (*Join*) on the municipality or county code, so that the dataset has
    both `geometry` and the value to colour. Alternatively, the values were already imported together with the
@@ -129,18 +132,20 @@ Choose *Point map* for a dataset with coordinates, for example weather stations 
 latitude. The columns are found by name (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`) and can be
 changed. Coordinates in metres (SWEREF 99 TM) are recognised and converted to longitude and latitude. **Size** and
 **Colour** take value columns (or a category for the colour), **Label** is shown when you point at a point and
-**Background** chooses county boundaries, municipality boundaries or no background. If the dataset has areas instead
+**Background** chooses one of the bundled boundary sets or no background. If the dataset has areas instead
 of points (for example municipalities), *Process > Geodata > Centroid from geometry* gives longitude and latitude for
 each area, so that values can be drawn as bubbles per municipality.
 
 ### Projection and boundaries
 
 The projection is chosen from the coordinates: metres (SWEREF 99 TM) are drawn as they are, longitude and latitude
-within Europe through a transverse Mercator around 15° east (the same look as SWEREF 99 TM) and others through
-Mercator. The bundled boundaries are SCB's simplified municipality and county boundaries for thematic maps (CC0,
-version February 2026), converted to longitude and latitude; they are not intended for exact boundary work (see
-`presets/geo/KALLA.md`). Maps are exported, shared, placed in dashboards and run in batch like every other chart in
-the builder; filters in dashboards work on maps too. A dataset with geometry can be exported as GeoJSON from Export.
+within Europe through a transverse Mercator around the grid meridian of the country where the data lies (9° east for
+Denmark, 15° east for Sweden and Norway, 27° east for Finland) and others through Mercator. The bundled boundaries
+are simplified for thematic maps and not intended for exact boundary work: SCB's municipality and county boundaries
+(CC0, version February 2026), DAGI 1:500 000 for Denmark, Kartverket's N1000 for Norway (cut along the coastline,
+since Norwegian municipalities otherwise reach out to sea) and Statistics Finland's 1:1 000 000 division for Finland
+(see `presets/geo/KALLA.md`). Maps are exported, shared, placed in dashboards and run in batch like every other chart
+in the builder; filters in dashboards work on maps too. A dataset with geometry can be exported as GeoJSON from Export.
 
 ## Dashboards
 
@@ -170,6 +175,6 @@ backup (Manage) contains all charts as such files.
 - The charts live in the browser; very large datasets without aggregation are limited to the row limit.
 - PDF uses Helvetica, not Inter, for text.
 - R charts require the R session to be started and are therefore exported only from Visualise.
-- The bundled municipality and county boundaries are SCB's simplified boundaries for thematic maps, not exact
-  boundaries; fetch exact boundaries from Lantmäteriet and import them as GeoPackage or shapefile.
+- The bundled boundaries are simplified for thematic maps, not exact boundaries; fetch exact boundaries from
+  Lantmäteriet (or the corresponding agency) and import them as GeoPackage or shapefile.
 - PowerPoint export uses images (PNG) of the charts, not editable PowerPoint charts.

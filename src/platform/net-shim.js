@@ -53,7 +53,9 @@
     if (name === null) return realFetch(input, init);
     return lookupAsync(name, url).then((entry) => {
       const buf = entry.kind === 'text' ? new TextEncoder().encode(entry.data).buffer : entry.data.slice(0);
-      return new Response(buf, { status: 200, statusText: 'OK', headers: { 'Content-Type': mimeFor(name), 'Content-Length': String(buf.byteLength) } });
+      // A virtual provider may answer with another status (the tests use it for server errors).
+      const status = typeof entry.status === 'number' ? entry.status : 200;
+      return new Response(buf, { status, statusText: status === 200 ? 'OK' : 'Error', headers: { 'Content-Type': mimeFor(name), 'Content-Length': String(buf.byteLength) } });
     }, (err) => new Response(String((err && err.message) || err), { status: 404, statusText: 'Not Found' }));
   };
 

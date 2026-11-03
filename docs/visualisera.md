@@ -102,16 +102,20 @@ diagram bort.
 ## Kartor
 
 Två diagramtyper ritar kartor, båda utan kartserver: **Karta** (koropletkarta: ytor färgade efter ett värde)
-och **Punktkarta** (punkter på koordinater, med storlek och färg efter värden). SCB:s kommun- och länsgränser
-följer med appen, så en karta över Sveriges kommuner eller län kräver ingen nedladdning.
+och **Punktkarta** (punkter på koordinater, med storlek och färg efter värden). Kommun- och regiongränser för
+Sverige, Danmark, Norge och Finland följer med appen, så en karta över kommunerna eller länen kräver ingen
+nedladdning.
 
 ![Koropletkarta över folkmängd per kommun och punktkarta över mätstationer i en dashboard](images/kartor.png)
 
 ### Koropletkarta (Karta)
 
-1. Hämta gränserna: klicka på **Kommungränser (SCB)** eller **Länsgränser (SCB)** i Inhämta. De blir
-   datamängder med kommunkod eller länskod, namn och en geometrikolumn (`geometry`, GeoJSON i longitud och
-   latitud). Egna gränser importeras från GeoJSON, shapefile (till exempel SCB:s *Digitala gränser* i
+1. Hämta gränserna: välj till exempel **Kommungränser (SCB)** eller **Kommungränser Norge (Kartverket)** i listan
+   *Gränser för kartor* i Inhämta och tryck **Importera gränser**. De blir datamängder med kod, namn och en
+   geometrikolumn (`geometry`, GeoJSON i longitud och latitud). Koderna är de officiella: fyrsiffriga kommunkoder
+   i Sverige, Danmark (DAGI, som `0101`; Danmarks Statistik skriver `101`) och Norge, tresiffriga i Finland (som
+   `091`; StatFin skriver `KU091`). Skiljer sig koderna i statistiken går de att jämka i Bearbeta med *Fyll ut
+   med inledande nollor* eller *Sök och ersätt*. Egna gränser importeras från GeoJSON, shapefile (till exempel SCB:s *Digitala gränser* i
    SWEREF 99 TM; förenkla gärna med toleransen 100 meter) eller GeoPackage.
 2. Koppla värdena till gränserna i Bearbeta (*Koppla*) på kommunkoden eller länskoden, så att datamängden får
    både `geometry` och det värde som ska färgläggas. Alternativt har värdena redan importerats tillsammans med
@@ -129,16 +133,18 @@ Välj *Punktkarta* för en datamängd med koordinater, till exempel SMHI:s mäts
 longitud och latitud. Kolumnerna hittas på namn (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`)
 och kan bytas. Koordinater i meter (SWEREF 99 TM) känns igen och räknas om till longitud och latitud.
 **Storlek** och **Färg** tar värdekolumner (eller en kategori för färgen), **Etikett** visas när du pekar på en
-punkt och **Bakgrund** väljer länsgränser, kommungränser eller ingen bakgrund. Har datamängden ytor i stället
+punkt och **Bakgrund** väljer någon av de medföljande gränserna eller ingen bakgrund. Har datamängden ytor i stället
 för punkter (till exempel kommuner) ger *Bearbeta > Geodata > Mittpunkt ur geometri* longitud och latitud för
 varje yta, så att värden kan ritas som bubblor per kommun.
 
 ### Projektion och gränser
 
 Projektionen väljs av koordinaterna: meter (SWEREF 99 TM) ritas som de är, longitud och latitud inom Europa
-genom en transversal Mercator kring 15° öst (samma utseende som SWEREF 99 TM) och övriga genom Mercator. De
-medföljande gränserna är SCB:s förenklade kommun- och länsgränser för tematiska kartor (CC0, version februari
-2026), omräknade till longitud och latitud; de är inte avsedda för exakta gränsdragningar (se
+genom en transversal Mercator kring landets rutnätsmeridian (9° öst för Danmark, 15° öst för Sverige och Norge,
+27° öst för Finland, efter var datan ligger) och övriga genom Mercator. De medföljande gränserna är förenklade för
+tematiska kartor och inte avsedda för exakta gränsdragningar: SCB:s kommun- och länsgränser (CC0, version
+februari 2026), DAGI 1:500 000 för Danmark, Kartverkets N1000 för Norge (klippt längs kusten, eftersom norska
+kommuner annars sträcker sig ut till havs) och Statistikcentralens indelning 1:1 000 000 för Finland (se
 `presets/geo/KALLA.md`). Kartor exporteras, delas, läggs i dashboards och körs i batch som alla andra diagram
 i byggaren; filter i dashboards fungerar också på kartor. En datamängd med geometri kan exporteras som GeoJSON
 från Exportera.
@@ -172,6 +178,6 @@ Säkerhetskopian av arbetsytan (Hantera) innehåller alla diagram som sådana fi
 - Diagrammen lever i webbläsaren; mycket stora datamängder utan aggregering begränsas till radgränsen.
 - PDF använder Helvetica, inte Inter, för text.
 - R-diagram kräver att R-sessionen är startad och exporteras därför bara från Visualisera.
-- De medföljande kommun- och länsgränserna är SCB:s förenklade gränser för tematiska kartor, inte exakta gränser;
-  hämta exakta gränser från Lantmäteriet och importera dem som GeoPackage eller shapefile.
+- De medföljande gränserna är förenklade för tematiska kartor, inte exakta gränser; hämta exakta gränser från
+  Lantmäteriet (eller motsvarande myndighet) och importera dem som GeoPackage eller shapefile.
 - PowerPoint-export använder bilder (PNG) av diagrammen, inte redigerbara PowerPoint-diagram.

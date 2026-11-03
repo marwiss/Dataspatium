@@ -19,7 +19,8 @@ fast bredde, Excel, ODS, JSON (også JSON-stat og GeoJSON), XML, SQLite, GeoPack
 SAS, PX, Parquet, RDS og RData (se [format.md](format.md)); R-formaterne importeres i ét trin uden forhåndsvisning.
 Under Åbne API'er findes forudindstillinger for statistikbureauerne og flere andre myndigheder i Danmark, Norge,
 Finland, Island, Grønland, Færøerne, Åland og Sverige, Nordic Statistics og Eurostat; landeknapperne over listen
-vælger, hvilke landes kilder der vises. Egne konfigurationer tilføjes fra fil og kan deles. Se
+vælger, hvilke landes kilder der vises. Egne konfigurationer tilføjes fra fil og kan deles. *Gemte hentninger* viser de datasæt, der er kommet fra et API,
+og opdaterer dem med ét klik, ét ad gangen eller alle. Se
 [api-konfiguration.md](api-konfiguration.md).
 
 ## Håndter

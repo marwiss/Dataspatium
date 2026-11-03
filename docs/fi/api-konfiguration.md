@@ -7,7 +7,7 @@ kutsut selaimista (CORS); kaikki alla olevat valmisasetukset on tarkistettu sen 
 ## Valmiit lähteet
 
 Nouda-tilan luettelo on ryhmitelty maittain. Sen yläpuolella olevat maapainikkeet (Ruotsi, Tanska, Norja, Suomi, Islanti,
-Färsaaret, Grönlanti, Ahvenanmaa, Pohjoismaat, EU) valitsevat, minkä maiden lähteet näytetään; valinta tallennetaan
+Färsaaret, Grönlanti, Ahvenanmaa, Pohjoismaat, EU, Kansainvälinen) valitsevat, minkä maiden lähteet näytetään; valinta tallennetaan
 selaimeen. Lähteiden nimet ja kuvaukset noudattavat sovelluksen kieltä, ja useilla kielillä saatavat PxWeb-palvelut (SCB, SSB,
 Tilastokeskus, Hagstofa, Grönlannin tilastovirasto, ÅSUB) selataan sovelluksen kielellä, kun palvelussa on se. Kaikki alla
 olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi viimeistä ruotsalaista vaativat avaimen.
@@ -38,6 +38,8 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 | Färsaaret | Hagstova Føroya | Virallinen tilasto englanniksi | Selaa, valitse arvot |
 | Pohjoismaat | Nordic Statistics database | Vertailukelpoinen pohjoismainen tilasto englanniksi | Selaa, valitse arvot |
 | EU | Eurostat | EU-tilastot | Anna aineiston koodi ja suodattimet |
+| EU | Euroopan keskuspankki (EKP) | Valuuttakurssit ja EKP:n tilastot (SDMX) | Valitse valuutat ja tiheys valuuttakursseille tai anna tietovirta ja sarja-avain |
+| Kansainvälinen | OECD | Työttömyys, BKT:n kasvu ja OECD:n muut tilastot (SDMX) | Valitse maat tai anna tietovirta ja sarja-avain |
 
 Ei mukana: Tanskan DMI ja Norjan Frost (MET) vaativat avaimen; Energi Data Servicestä ja data.norge.no:sta puuttuu CORS;
 opingogn.is:llä ei enää ole hakurajapintaa. Lähteitä ilman CORS-tukea ei tavoiteta suoraan selaimesta; ne vaativat oman
@@ -61,9 +63,13 @@ Ominaisuuspaneeli näyttää julkaisijan, lisenssin, pyyntörajan ja viimeisimm�
 
 ## Noudetun aineiston päivittäminen
 
-Rajapinnasta tulevat aineistot muistavat valintansa. **Hallitse**-tilassa on painike **Nouda uudelleen**, joka toistaa noudon
-ja joko lisää rivit tai korvaa kaikki rivit. Aineistolle tehdyt reseptit voi sen jälkeen ajaa uudelleen kohdasta **Muokkaa ›
-Resepti**.
+Rajapinnasta tulevat aineistot muistavat lähteen ja valinnat. Nouda-tilan kohdassa **Tallennetut haut** ne näytetään lähteen,
+viimeisimmän haun ja rivimäärän kanssa. **Päivitä** hakee samat tiedot uudelleen, korvaa rivit ja toistaa aineiston reseptin,
+jotta puhdistukset ja lasketut sarakkeet palaavat; **Päivitä kaikki** tekee saman kaikille vuorollaan, ja komentopaletti ja
+Hallitse-tila tarjoavat saman toiminnolla **Nouda API-aineistot uudelleen**. Jos haku tai reseptin vaihe epäonnistuu,
+aineisto jää ennalleen ja virhe näytetään. Reseptin vaihetta, joka tarvitsee salaisuuden (esimerkiksi pseudonymisoinnin
+avaimen), ei voi toistaa automaattisesti. **Hallitse**-tilassa on myös **Nouda uudelleen**, jossa valitset päivittämisen
+tai uusien rivien lisäämisen loppuun reseptiä suorittamatta.
 
 ## Avaimet ja tietoturva
 
@@ -93,7 +99,7 @@ tekstit omalla kielellään. Muoto on kuvattu kokonaisuudessaan [englanninkielis
 [ruotsinkielisessä](../api-konfiguration.md); kentät ovat:
 
 - ylin taso: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ei avainta,
-  2 = avain), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`), `i18n`, `baseUrl`, `headers`, `auth`,
+  2 = avain), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,
   `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) ja `endpoints`;
 - päätepiste: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
   `dataset`;
@@ -113,8 +119,9 @@ tekstit omalla kielellään. Muoto on kuvattu kokonaisuudessaan [englanninkielis
 
 - MET Norwayn ehdot edellyttävät, että kutsuva ohjelma tunnistautuu User-Agent-otsakkeella. Selaimet lähettävät oman
   tunnisteensa, jonka palvelu tällä hetkellä hyväksyy; pidä kutsujen määrä pienenä.
-- SDMX-JSONia ei vielä tueta; käytä JSON-statia, jos palvelu tarjoaa sitä. JSON-stat 1.x (Danmarks Statistik) ja 2.0
-  luetaan molemmat.
+- SDMX luetaan SDMX-JSON 1.0- tai 2.0-muodossa (datasanomat; EKP ja OECD lähettävät sitä parametrilla `format=jsondata`
+  tai `Accept`-otsakkeella). SDMX-ML:ää ja SDMX-CSV:tä ei jäsennetä. JSON-stat 1.x (Danmarks Statistik) ja 2.0 luetaan
+  molemmat.
 - PX-tiedostoja ei jäsennetä JavaScriptillä; nouda JSON-stat tai käytä R:ssä pakettia pxR.
 - Suurten vastausten (satoja tuhansia rivejä) jäsentäminen selaimessa vie aikaa. Rajaa valintaa tai käytä `maxPages`-asetusta.
 - Kutsuja tehdään vain, kun painat Nouda tai avaat kentän, jonka vaihtoehdot tulevat palvelusta.

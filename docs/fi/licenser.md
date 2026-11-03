@@ -46,6 +46,8 @@ Dataspatiumin koodi ei linkity R:ään. R toimii erillisenä tulkkina workerissa
 sovelluksen kanssa viestien välityksellä; tällaisen yhteisjakelun ("mere aggregation") GPL sallii, ja R:n osat säilyttävät
 kaikki GPL-oikeutensa sinulle käyttäjänä. Kansion `presets/` esimerkkidata on peräisin avoimista lähteistä ja säilyttää
 alkuperäiset lisenssinsä (CC0 tai CC BY kunkin viranomaisen mukaan). Kansion `presets/geo/` Ruotsin kuntien ja läänien rajat
-ovat SCB:n *Digitala gränser* -aineistoa CC0 1.0 -lisenssillä, muunnettuna pituus- ja leveysasteiksi; ks.
-`presets/geo/KALLA.md`. Avoimista rajapinnoista noudettuun dataan sovelletaan kunkin julkaisijan lisenssiä, joka näytetään
+ovat SCB:n *Digitala gränser* -aineistoa CC0 1.0 -lisenssillä, muunnettuna pituus- ja leveysasteiksi. Tanskan rajat ovat
+Geodatastyrelsenin (nykyään Klimadatastyrelsen) DAGI 1:500 000 -aineistoa, avointa dataa, jota saa käyttää ja jakaa lähde
+mainiten; Norjan rajat ovat Kartverketin N1000 Kartdata -aineistosta ja Suomen rajat Tilastokeskukselta, molemmat
+CC BY 4.0 -lisenssillä (lähdemaininta "© Kartverket" ja "Tilastokeskus"). Ks. `presets/geo/KALLA.md`. Avoimista rajapinnoista noudettuun dataan sovelletaan kunkin julkaisijan lisenssiä, joka näytetään
 lähteen yhteydessä sovelluksessa.

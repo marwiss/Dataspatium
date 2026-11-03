@@ -57,8 +57,12 @@
     function isJsonStat(data) {
       return !!data && typeof data === 'object' && !Array.isArray(data) && ((data.class === 'dataset' && data.dimension) || (data.class === 'collection' && data.link) || (data.version === '2.0' && data.dimension));
     }
-    function jsonStatTable(data) {
-      const t = D.require('api/jsonstat').toTable(data);
+    /** SDMX-JSON data messages (ECB, OECD) become one row per observation via api/sdmx. */
+    const isSdmx = (data) => D.has('api/sdmx') && D.require('api/sdmx').isSdmxJson(data);
+    /** 'json-stat', 'sdmx-json' or 'json'. */
+    const kindOf = (data, path) => (path ? 'json' : isJsonStat(data) ? 'json-stat' : isSdmx(data) ? 'sdmx-json' : 'json');
+    function jsonStatTable(data, kind = 'json-stat') {
+      const t = kind === 'sdmx-json' ? D.require('api/sdmx').toTable(data) : D.require('api/jsonstat').toTable(data);
       return { columns: t.columns, rows: t.rows };
     }
 
@@ -81,19 +85,20 @@
     async function preview(file, options = {}) {
       const read = await encoding.readText(file, { encoding: options.encoding });
       const data = parseJsonText(read.text);
-      const stat = !options.path && isJsonStat(data);
-      const { columns, rows } = stat ? jsonStatTable(data) : tabulate(toRecords(data, options.path));
+      const kind = kindOf(data, options.path);
+      const stat = kind !== 'json';
+      const { columns, rows } = stat ? jsonStatTable(data, kind) : tabulate(toRecords(data, options.path));
       const suggestions = !Array.isArray(data) && data && typeof data === 'object' && !stat ? Object.entries(data).filter(([, v]) => Array.isArray(v)).map(([k]) => k) : [];
-      return { kind: 'json', columns, dataRows: rows.slice(0, options.previewRows || 100), totalRows: rows.length, header: true, encoding: read.encoding, pathSuggestions: suggestions, jsonStat: stat };
+      return { kind: 'json', columns, dataRows: rows.slice(0, options.previewRows || 100), totalRows: rows.length, header: true, encoding: read.encoding, pathSuggestions: suggestions, jsonStat: stat, statFormat: stat ? kind : null };
     }
 
     /** @param {File} file @param {{encoding?: string, path?: string}} options */
     async function parse(file, options) {
       const read = await encoding.readText(file, { encoding: options.encoding });
       const data = parseJsonText(read.text);
-      const stat = !options.path && isJsonStat(data);
-      const { columns, rows } = stat ? jsonStatTable(data) : tabulate(toRecords(data, options.path));
-      return { columns, rows, meta: { format: stat ? 'json-stat' : 'json', path: options.path || '', encoding: read.encoding } };
+      const kind = kindOf(data, options.path);
+      const { columns, rows } = kind !== 'json' ? jsonStatTable(data, kind) : tabulate(toRecords(data, options.path));
+      return { columns, rows, meta: { format: kind, path: options.path || '', encoding: read.encoding } };
     }
 
     return { id: 'json', detect, preview, parse, tabulate, toRecords, parseJsonText, isJsonStat };

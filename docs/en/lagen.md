@@ -23,7 +23,8 @@ the Public Health Agency of Sweden, the National Board of Health and Welfare, Ko
 data, the Nature Conservation Register, Lantmäteriet's geodata catalogue and Sweden's data portal, as well as
 Boverket and Lantmäteriet Direkt for those who have keys, and in addition sources in Denmark, Norway, Finland,
 Iceland, Greenland, the Faroe Islands and Åland and Nordic Statistics; the country buttons above the list choose
-which countries' sources are shown. Your own configurations are added from file and can be shared. See
+which countries' sources are shown. Your own configurations are added from file and can be shared. *Saved fetches* lists the datasets that came from
+an API and updates them with one click, one at a time or all of them. See
 [api-konfiguration.md](api-konfiguration.md).
 
 ## Manage

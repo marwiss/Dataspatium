@@ -16,14 +16,15 @@
 | JSON | Ja | Ja | Liste af objekter, et objekt, der indeholder en liste (sti kan angives), liste af lister |
 | NDJSON, JSON Lines | Ja | Nej | Ét objekt pr. linje |
 | JSON-stat | Ja | Nej | Genkendes automatisk (`class: dataset`); én række pr. celle med koder, tekster og værdi |
+| SDMX-JSON | Ja | Nej | Datameddelelser i SDMX-JSON 1.0 og 2.0 (for eksempel fra ECB og OECD) genkendes automatisk; én række pr. observation med kode- og tekstkolonne pr. dimension, tidsperiode, værdi og attributter |
 | GeoJSON | Ja | Ja | Én række pr. feature; egenskaberne bliver kolonner, geometrien en tekstkolonne med GeoJSON, som kortdiagrammet tegner (kortet læser også WKT-tekst i en kolonne, for eksempel fra CSV). Ved eksport bliver geometrikolonnen (GeoJSON eller WKT) hver features geometri og de øvrige kolonner dens egenskaber |
 | Shapefile (ZIP med shp, dbf, prj, cpg eller kun shp) | Ja | Nej | Attributterne bliver typede kolonner efter dbf-skemaet, geometrien GeoJSON i kolonnen `geometry`. Vælg lag, hvis ZIP-filen har flere, og forenkl geometrien med en tolerance i kortenheder. Koordinaterne bevares |
 | XML | Ja | Ja | Én række pr. gentaget element (vælges i importtrinnet); attributter og underelementer bliver kolonner, indlejrede elementer får punktnavne som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil gendannes med typer, etiketter og historik; i andre databaser vælger du tabel, og typerne tages fra skemaet |
 | SQL-script (sql) | Ja | Nej | Et script med `CREATE TABLE` og `INSERT`, for eksempel et databasedump, køres i en tom SQLite-database, og tabellerne vises til valg. MySQL-specifikke linjer (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og tabelvalg som `ENGINE=`) fjernes først; andre dialekter fungerer, så længe de følger SQLites syntaks |
 | GeoPackage (gpkg) | Ja | Nej | Lagene (feature- og attributtabeller) vælges som tabeller; geometrikolonnen bliver GeoJSON, som kortdiagrammet tegner, referencesystemet vises |
-| SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter bliver kolonneetiketter, værdietiketter bliver tekst |
-| Stata dta | Ja | dta | Via haven. Ved eksport forkortes kolonnenavnene efter Statas regler (32 tegn, ASCII) |
+| SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter bliver kolonneetiketter og værdietiketter kolonnemetadata (se nedenfor) |
+| Stata dta | Ja | dta | Via haven. Værdietiketter som for SPSS. Ved eksport forkortes kolonnenavnene efter Statas regler (32 tegn, ASCII) |
 | SAS sas7bdat, xpt | Ja | Nej | Via haven |
 | PX (PC-Axis, bruges af de nordiske statistikbureauer) | Ja | Nej | Via R-pakken pxR; tegnkodningen læses fra filens CODEPAGE eller CHARSET. Resultatet er en lang tabel med én værdikolonne |
 | Parquet | Ja | Ja | Via R-pakken nanoparquet; bevarer typer nøjagtigt |
@@ -42,9 +43,16 @@ Formaterne, der går via R, starter R-sessionen ved behov (nogle sekunder først
 læses af R og overdrages med `dm_write()`, så kolonnetyperne kommer fra R. Ja/nej bliver til 0/1 i SPSS og Stata, der
 mangler en logisk type.
 
-Med appen følger også data, der tilføjes med en knap i Hent: eksempeldataene *Befolkning pr. kommune 2024 (Sverige)* og
-SCB's svenske kommune- og länsgrænser (*Digitala gränser*, CC0) som GeoJSON i længde- og breddegrad, se
-`presets/geo/KALLA.md`. Intet hentes fra nettet.
+Værdietiketter (koder med navne, som `1 = Mand` og `2 = Kvinde`) følger kolonnen som metadata i SQLite-filen
+(`_columns.value_labels`). Ved import af SPSS, Stata og SAS vælger du i indstillingstrinnet, om kolonnen skal vise
+etiketterne som tekst (standard) eller beholde koderne; etiketterne gemmes i begge tilfælde. De kan sættes, ændres og
+skiftes ud med koderne i Bearbejd, vises i kodebogen, når R som `haven::labelled` og skrives til .sav og .dta, hvor en
+kolonne med etiketterne som tekst får sine koder tilbage.
+
+Med appen følger også data, der tilføjes i Hent: eksempeldataene *Befolkning pr. kommune 2024 (Sverige)* og grænser til
+kort som GeoJSON i længde- og breddegrad: kommuner og län i Sverige (SCB, CC0), kommuner og regioner i Danmark (DAGI),
+kommuner og fylker i Norge (Kartverket, CC BY 4.0) samt kommuner og landskaber i Finland (Statistikcentralen,
+CC BY 4.0). Kilder og licenser står i `presets/geo/KALLA.md`. Intet hentes fra nettet.
 
 ## Tegnkodning
 

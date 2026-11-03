@@ -70,6 +70,7 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Datamängd | Dataset, tabell (om det inte är själva vyn), fil |
 | Kortnamn (datamängdens identifierare i SQL och R) | Alias, slug, tabellnamn |
 | Etikett, beskrivning, enhet (kolumnmetadata) | Label, rubrik |
+| Värdeetikett (namn på en kod, som `1 = Man`), kod | Värdelabel, kodtext |
 | Inhämta, Importera | Ladda upp, hämta in |
 | Hämta (från API) | Ladda ned (från API) |
 | Exportera, Ladda ned | Spara som, exportera ut |

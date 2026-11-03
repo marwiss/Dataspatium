@@ -11,3 +11,5 @@ Thumbs.db
 
 # Claude Code session files
 .claude/
+# Python bytecode from running the tools
+__pycache__/

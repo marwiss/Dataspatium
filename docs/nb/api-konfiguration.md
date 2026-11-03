@@ -7,7 +7,7 @@ kall fra nettlesere (CORS); alle forhåndsinnstillingene nedenfor er kontrollert
 ## Forhåndsinnstilte kilder
 
 Listen i Hent er gruppert etter land. Landknappene over den (Sverige, Danmark, Norge, Finland, Island, Færøyene, Grønland,
-Åland, Norden, EU) velger hvilke lands kilder som vises; valget lagres i nettleseren. Kildenes navn og beskrivelser følger
+Åland, Norden, EU, Internasjonalt) velger hvilke lands kilder som vises; valget lagres i nettleseren. Kildenes navn og beskrivelser følger
 appens språk, og PxWeb-tjenester som finnes på flere språk (SCB, SSB, Statistikcentralen, Hagstofa, Grønlands Statistik,
 ÅSUB), blas på appens språk når tjenesten har det. Alle kildene nedenfor er kontrollert for CORS i november 2026, og bare de
 to siste svenske krever nøkkel.
@@ -35,6 +35,8 @@ to siste svenske krever nøkkel.
 | Åland | ÅSUB | Offisiell statistikk, svensk og engelsk | Bla, velg verdier |
 | Norden | Nordic Statistics database | Sammenlignbar nordisk statistikk, engelsk | Bla, velg verdier |
 | EU | Eurostat | EU-statistikk | Angi datasettets kode og filtre |
+| EU | Den europeiske sentralbanken (ECB) | Valutakurser og ECBs statistikk (SDMX) | Velg valutaer og frekvens for valutakursene, eller angi dataflyt og serienøkkel |
+| Internasjonalt | OECD | Arbeidsledighet, BNP-vekst og OECDs øvrige statistikk (SDMX) | Velg land, eller angi dataflyt og serienøkkel |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, velg verdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkehelse, helse, nøkkeltall for kommuner, vær, luftkvalitet, verneområder, geodata | Se den svenske veiledningen |
 | Sverige | Lantmäteriet Direkt, Boverket | Stedsnavn, energiattester | Krever nøkkel |
@@ -60,9 +62,13 @@ Egenskapspanelet viser utgiver, lisens, hastighetsgrense og de siste kallene med
 
 ## Oppdater et hentet datasett
 
-Datasett som kommer fra et API, husker utvalget sitt. I **Håndter** finnes knappen **Hent igjen**, som gjentar hentingen og
-enten legger til radene eller erstatter alle rader. Oppskrifter som er gjort på datasettet, kan deretter kjøres igjen fra
-**Bearbeid › Oppskrift**.
+Datasett som kommer fra et API, husker kilden og utvalget. Under **Lagrede hentinger** i Hent vises de med kilde, siste
+henting og antall rader. **Oppdater** henter de samme dataene igjen, erstatter radene og spiller av datasettets oppskrift,
+slik at rensinger og beregnede kolonner kommer tilbake; **Oppdater alle** gjør det for alle etter tur, og kommandopaletten
+og Håndter tilbyr det samme som **Hent API-datasett igjen**. Mislykkes hentingen eller et oppskriftssteg, blir datasettet
+stående som det var, og feilen vises. Et oppskriftssteg som trenger en hemmelighet (for eksempel en nøkkel for
+pseudonymisering), kan ikke spilles av automatisk. I **Håndter** finnes også **Hent igjen**, der du velger mellom å
+oppdatere og å legge de nye radene sist uten å kjøre oppskriften.
 
 ## Nøkler og sikkerhet
 
@@ -89,7 +95,7 @@ tekstene på sitt eget språk. Formatet er beskrevet i sin helhet i den [engelsk
 den [svenske](../api-konfiguration.md); feltene er:
 
 - toppnivå: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ingen nøkkel,
-  2 = nøkkel), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`), `i18n`, `baseUrl`, `headers`,
+  2 = nøkkel), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`,
   `auth`, `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`;
 - endpoint: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
   `dataset`;
@@ -110,8 +116,8 @@ den [svenske](../api-konfiguration.md); feltene er:
 
 - MET Norways vilkår krever at kallende programmer identifiserer seg med en User-Agent. Nettlesere sender sin egen
   identifikasjon, som tjenesten godtar i dag; hold antallet kall lavt.
-- SDMX-JSON støttes ikke ennå; bruk JSON-stat der tjenesten tilbyr det. JSON-stat 1.x (Danmarks Statistik) og 2.0 leses
-  begge.
+- SDMX leses som SDMX-JSON 1.0 eller 2.0 (datameldinger; ECB og OECD sender det med parameteren `format=jsondata`
+  eller en `Accept`-header). SDMX-ML og SDMX-CSV tolkes ikke. JSON-stat 1.x (Danmarks Statistik) og 2.0 leses begge.
 - PX-filer tolkes ikke i JavaScript; hent JSON-stat, eller bruk pakken pxR i R.
 - Store svar (hundretusener av rader) tar tid å tolke i nettleseren. Begrens utvalget, eller bruk `maxPages`.
 - Kall gjøres bare når du trykker Hent eller åpner et felt med alternativer fra tjenesten.

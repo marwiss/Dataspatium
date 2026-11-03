@@ -79,6 +79,7 @@
     'src/api/http.js',
     'src/api/auth.js',
     'src/api/jsonstat.js',
+    'src/api/sdmx.js',
     'src/api/parsers.js',
     'src/api/request.js',
     'src/api/pagination.js',

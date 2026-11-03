@@ -7,7 +7,7 @@ til þjónustu stofnunarinnar, og svarið verður gagnasafn í vinnusvæðinu. �
 ## Forstilltir upprunar
 
 Listinn í Sækja er flokkaður eftir löndum. Landahnapparnir fyrir ofan hann (Svíþjóð, Danmörk, Noregur, Finnland, Ísland,
-Færeyjar, Grænland, Álandseyjar, Norðurlönd, ESB) velja hvaða landa upprunar birtast; valið er vistað í vafranum. Heiti og
+Færeyjar, Grænland, Álandseyjar, Norðurlönd, ESB, Alþjóðlegt) velja hvaða landa upprunar birtast; valið er vistað í vafranum. Heiti og
 lýsingar upprunanna fylgja tungumáli forritsins, og PxWeb-þjónustur sem eru á fleiri tungumálum (Hagstofa Íslands, SCB, SSB,
 Hagstofa Finnlands, Hagstofa Grænlands, ÅSUB) eru skoðaðar á tungumáli forritsins þegar þjónustan býður upp á það. Allir upprunar
 hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðeins tveir síðustu sænsku krefjast lykils.
@@ -35,6 +35,8 @@ hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðe
 | Álandseyjar | ÅSUB | Opinberar hagtölur, á sænsku og ensku | Flettu, veldu gildi |
 | Norðurlönd | Nordic Statistics database | Samanburðarhæfar norrænar hagtölur, á ensku | Flettu, veldu gildi |
 | ESB | Eurostat | Hagtölur ESB | Gefðu upp kóða gagnasafnsins og síur |
+| ESB | Seðlabanki Evrópu (ECB) | Gengi gjaldmiðla og hagtölur ECB (SDMX) | Veldu gjaldmiðla og tíðni fyrir gengið, eða gefðu upp gagnaflæði og raðlykil |
+| Alþjóðlegt | OECD | Atvinnuleysi, hagvöxtur og aðrar hagtölur OECD (SDMX) | Veldu lönd, eða gefðu upp gagnaflæði og raðlykil |
 | Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
 | Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
 | Svíþjóð | Lantmäteriet Direkt, Boverket | Örnefni, orkuvottorð | Krefjast lykils |
@@ -61,9 +63,13 @@ Eiginleikaspjaldið sýnir útgefanda, leyfi, beiðnamörk og nýjustu köllin m
 
 ## Uppfæra sótt gagnasafn
 
-Gagnasöfn sem koma úr vefþjónustu muna val sitt. Í **Umsjón** er hnappurinn **Sækja aftur**, sem endurtekur niðurhalið og bætir
-annaðhvort röðunum við eða skiptir út öllum röðum. Uppskriftir sem gerðar hafa verið á gagnasafnið má síðan keyra aftur úr
-**Vinna › Uppskrift**.
+Gagnasöfn sem koma úr vefþjónustu muna upprunann og valið. Undir **Vistaðar sóknir** í Sækja eru þau sýnd með uppruna, síðustu
+sókn og fjölda raða. **Uppfæra** sækir sömu gögn aftur, skiptir út röðunum og keyrir uppskrift gagnasafnsins aftur, svo að
+hreinsanir og reiknaðir dálkar koma aftur; **Uppfæra allt** gerir það fyrir þau öll í röð, og skipanaspjaldið og Umsjón bjóða
+það sama sem **Sækja API-gagnasöfn aftur**. Ef sóknin eða skref í uppskriftinni mistekst helst gagnasafnið eins og það var og
+villan birtist. Skref í uppskrift sem þarf leyndarmál (til dæmis lykil fyrir dulnefningu) er ekki hægt að keyra sjálfkrafa. Í
+**Umsjón** er líka **Sækja aftur**, þar sem þú velur á milli þess að uppfæra og að setja nýju raðirnar aftast án þess að keyra
+uppskriftina.
 
 ## Lyklar og öryggi
 
@@ -91,7 +97,7 @@ textana á sínu eigin tungumáli. Sniðinu er lýst að fullu í [ensku leiðbe
 [þeim sænsku](../api-konfiguration.md); reitirnir eru:
 
 - efsta stig: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = enginn lykill,
-  2 = lykill), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`), `i18n`, `baseUrl`, `headers`, `auth`,
+  2 = lykill), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,
   `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`;
 - endapunktur: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
   `dataset`;
@@ -111,7 +117,8 @@ textana á sínu eigin tungumáli. Sniðinu er lýst að fullu í [ensku leiðbe
 
 - Skilmálar MET Norway krefjast þess að forrit sem kalla auðkenni sig með User-Agent. Vafrar senda eigin auðkenningu, sem
   þjónustan samþykkir í dag; haltu fjölda kalla lágum.
-- SDMX-JSON er ekki stutt enn; notaðu JSON-stat þar sem þjónustan býður upp á það. JSON-stat 1.x (Danmarks Statistik) og 2.0
+- SDMX er lesið sem SDMX-JSON 1.0 eða 2.0 (gagnaskeyti; Seðlabanki Evrópu og OECD senda það með færibreytunni
+  `format=jsondata` eða `Accept`-haus). SDMX-ML og SDMX-CSV eru ekki þáttuð. JSON-stat 1.x (Danmarks Statistik) og 2.0
   eru bæði lesin.
 - PX-skrár eru ekki þáttaðar í JavaScript; sæktu JSON-stat eða notaðu pakkann pxR í R.
 - Stór svör (hundruð þúsunda raða) taka tíma að þátta í vafranum. Takmarkaðu valið eða notaðu `maxPages`.

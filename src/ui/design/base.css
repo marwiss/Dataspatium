@@ -52,6 +52,8 @@ table { border-collapse: collapse; }
 /* Utilities */
 .dm-row { display: flex; align-items: center; gap: var(--dm-s-2); }
 .dm-row-wrap { display: flex; align-items: center; gap: var(--dm-s-2); flex-wrap: wrap; }
+/* A field with its label above and a button beside it: line up on the field */
+.dm-row-end { display: flex; align-items: flex-end; gap: var(--dm-s-2); flex-wrap: wrap; }
 .dm-stack { display: flex; flex-direction: column; gap: var(--dm-s-3); }
 .dm-stack-sm { display: flex; flex-direction: column; gap: var(--dm-s-2); }
 .dm-grow { flex: 1 1 auto; min-width: 0; }

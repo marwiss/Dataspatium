@@ -11,7 +11,7 @@
   D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes'], (base, dialogs, recipes) => {
     const { h, t, i18n, replace } = base;
     const QUICK = [
-      { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
+      { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
       { op: 'clusters', icon: 'layers', textOnly: true }, { op: 'replace_value', icon: 'pencil' }, { op: 'fill_missing', icon: 'rows-3' }, { op: 'pseudonymize', icon: 'key-round' }, { op: 'split_column', icon: 'columns-3', textOnly: true }, { op: 'drop_columns', icon: 'trash-2' },
     ];
@@ -115,8 +115,15 @@
 
       async function refresh(ds) {
         if (!table || !ds) return;
-        const cols = await services.datasets.columns(ds.id);
-        const total = await services.datasets.count(ds.id, { search });
+        let cols; let total;
+        try {
+          cols = await services.datasets.columns(ds.id);
+          total = await services.datasets.count(ds.id, { search });
+        } catch (err) {
+          // The dataset can be removed (here or in another tab) while the table reloads; only report other errors.
+          if (await services.datasets.get(ds.id)) shell.log(String((err && err.message) || err), 'error');
+          return;
+        }
         rowIds = new Map();
         table.countBadge.textContent = search ? t('table.rows.shown', { shown: i18n.formatNumber(total), total: i18n.formatNumber(ds.rowCount) }) : t('common.rows', { n: i18n.formatNumber(total) });
         const data = {
@@ -157,11 +164,15 @@
           if (!column) { renderInspector(ds); return; }
           const s = await services.datasets.columnStats(ds.id, columnName);
           const fmt = (v) => (v === null || v === undefined ? '–' : (typeof v === 'number' ? i18n.formatNumber(v, { maximumFractionDigits: 4 }) : String(v)));
+          // Codes are shown with their value label, as in "1 = Man".
+          const labelOf = new Map(column.valueLabels && column.valueLabels.values === 'codes' ? column.valueLabels.labels.map(([code, label]) => [String(code), label]) : []);
+          const codeLabel = (v) => (labelOf.has(String(v)) ? `${v} = ${labelOf.get(String(v))}` : String(v));
           const kv = /** @type {any} */ (h('dm-kv'));
           kv.items = [
             { label: t('common.type'), value: t('type.' + s.column.type) },
             column.description ? { label: t('column.description'), value: column.description } : null,
             column.unit ? { label: t('column.unit'), value: column.unit } : null,
+            column.valueLabels ? { label: t('column.valuelabels'), value: services.datasets.valueLabelsText(column.valueLabels) } : null,
             { label: t('table.stats.count'), value: i18n.formatNumber(s.total) },
             { label: t('table.stats.nulls'), value: i18n.formatNumber(s.nulls) },
             { label: t('table.stats.distinct'), value: i18n.formatNumber(s.distinct) },
@@ -170,18 +181,19 @@
             s.mean !== null && s.mean !== undefined ? { label: t('table.stats.mean'), value: fmt(s.mean) } : null,
             s.sum !== null && s.sum !== undefined ? { label: t('table.stats.sum'), value: fmt(s.sum) } : null,
           ].filter(Boolean);
-          const actions = QUICK.filter((a) => !a.textOnly || column.type === 'text').map((a) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => dialogs.run(dialogCtx(ds, cols), a.op, presetFor(a.op, column)) }, ui.icon(a.icon, 14), h('span', { class: 'dm-list-main', text: t('op.' + a.op) })));
+          const actions = QUICK.filter((a) => (!a.textOnly || column.type === 'text') && (!a.labelled || column.valueLabels)).map((a) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => dialogs.run(dialogCtx(ds, cols), a.op, presetFor(a.op, column)) }, ui.icon(a.icon, 14), h('span', { class: 'dm-list-main', text: t('op.' + a.op) })));
           replace(slots.right,
             h('h4', { text: column.label || column.name }), kv,
             h('h4', { text: t('bearbeta.quick') }), h('div', { class: 'dm-list' }, actions),
             h('h4', { text: t('table.stats.top') }),
-            h('ul', { class: 'dm-top-values' }, s.top.map(([v, n]) => h('li', null, h('span', { class: 'dm-truncate', text: String(v) }), h('span', { class: 'dm-muted dm-num', text: i18n.formatNumber(n) })))));
+            h('ul', { class: 'dm-top-values' }, s.top.map(([v, n]) => h('li', null, h('span', { class: 'dm-truncate', text: codeLabel(v) }), h('span', { class: 'dm-muted dm-num', text: i18n.formatNumber(n) })))));
         } catch (err) { replace(slots.right, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })); }
       }
 
       function presetFor(opId, column) {
         if (['trim', 'replace_text', 'change_case', 'fix_encoding', 'drop_columns'].includes(opId)) return { columns: [column.name] };
         if (opId === 'set_label') return { column: column.name, label: column.label || column.name, description: column.description || '', unit: column.unit || '' };
+        if (opId === 'apply_value_labels') return { column: column.name, direction: column.valueLabels && column.valueLabels.values === 'labels' ? 'codes' : 'labels' };
         return { column: column.name };
       }
 

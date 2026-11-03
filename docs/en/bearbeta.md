@@ -27,6 +27,7 @@ parameters, and where possible a preview shows how many rows are affected and ex
 |---|---|---|
 | Columns | Rename column | New column name; the label follows if it was equal to the name |
 | | Label, description and unit | The label is the display name in table headers and charts; description and unit are shown in the inspector and the codebook, travel with the SQLite file and reach R as the attributes `description` and `unit` |
+| | Value labels | Names for the column's codes, one per line `code = label` (for example `1 = Man`); the values are not changed. The labels are shown in the inspector (also next to the most common values) and the codebook, reach R as `haven::labelled` and are written to .sav and .dta. Empty text removes them |
 | | Delete columns | Removes the chosen columns |
 | | Reorder columns | Move columns up and down |
 | | Change type | Text to integer, decimal number, date, date and time or yes/no. Decimal separator and date format can be given; values that cannot be interpreted become empty and the count is reported |
@@ -38,6 +39,7 @@ parameters, and where possible a preview shows how many rows are affected and ex
 | | Repair character encoding | Fixes mojibake (Ã¶ becomes ö) that arose at import with the wrong encoding |
 | | Replace value | One exact value for another; an empty value can be chosen as from or to |
 | | Recode values | Several values at once from a list with one line per value, `old = new` (for example `01 = Stockholms län`); other values are kept or emptied |
+| | Swap codes for labels | Replaces the column's codes with their value labels, or back again. The labels are kept, so .sav and .dta get the codes back on export; values without a label are left as they are, and back to codes the column becomes numbers if all codes are numbers |
 | | Fill missing values | Constant value, the previous or next row's value, mean, median or most common value |
 | | Round numbers | To a chosen number of decimals: to nearest (a half rounds away from zero), down, up or by dropping the decimals; a negative number rounds to tens (−1), hundreds (−2) and so on |
 | | Pad with leading zeros | To a given length, for example the municipality code 114 to 0114; numbers become text so that the zeros are kept |

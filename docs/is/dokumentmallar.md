@@ -33,7 +33,7 @@ Staðgenglar eru skrifaðir með tvöföldum slaufusvigum (Mustache). Tölur fá
 | `{{summor.kolumn}}`, `{{medel.kolumn}}`, `{{minsta.kolumn}}`, `{{storsta.kolumn}}` | Summa, meðaltal, lægsta og hæsta gildi töludálks (skiptu `kolumn` út fyrir heiti dálksins) |
 | `{{grupp}}`, `{{gruppkolumn}}` | Gildi hópsins og heiti dálksins í hópkeyrslum |
 | `{{#rader}} … {{/rader}}` | Endurtekið fyrir hverja röð (að hámarki 1 000); innan þess eru dálkaheitin notuð, til dæmis `{{kommun}}` |
-| `{{#kolumner}} … {{/kolumner}}` | Endurtekið fyrir hvern dálk með `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}` og `{{enhet}}` (tvö síðustu eru tóm nema þau hafi verið stillt undir Vinna) |
+| `{{#kolumner}} … {{/kolumner}}` | Endurtekið fyrir hvern dálk með `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}`, `{{enhet}}` og `{{vardeetiketter}}` (til dæmis `1 = Karl; 2 = Kona`; þrjú síðustu eru tóm nema þau hafi verið stillt undir Vinna) |
 | `{{#beskrivning}} … {{/beskrivning}}` | Birtist aðeins ef gildið er til (Mustache-hluti) |
 
 Dálkaheiti eru skrifuð eins og í töflunni (hreinsuð heiti, til dæmis `folkmangd`).
@@ -47,7 +47,7 @@ Dálkaheiti eru skrifuð eins og í töflunni (hreinsuð heiti, til dæmis `folk
 Allir hlutar eru valfrjálsir: án `kolumner` eru allir dálkar teknir með, án `topp` eru 50 raðir sýndar (að hámarki 5 000),
 `sortera` tekur `stigande` (vaxandi) eða `fallande` (minnkandi), `filter` tekur skilyrði með `=`, `!=`, `>`, `>=`, `<`, `<=`
 eða `innehåller` (inniheldur) sem má sameina með `och` eða `and`, og `rubrik` er fyrirsögn töflunnar. `kalla: kolumner` gefur
-í staðinn töflu yfir dálka gagnasafnsins (heiti, gerð, merkimiði, lýsing og eining). Töludálkar eru hægrijafnaðir.
+í staðinn töflu yfir dálka gagnasafnsins (heiti, gerð, merkimiði, lýsing og eining, og gildismerkimiðar þegar einhver dálkur hefur þá). Töludálkar eru hægrijafnaðir.
 
 ### Myndrit
 

@@ -48,7 +48,7 @@
     for (const id of ['scb-pxweb', 'scb-pxweb-v2', 'kolada', 'eurostat', 'socialstyrelsen', 'smhi-metobs', 'fhm-folkhalsodata', 'naturvardsregistret', 'luftkvalitet', 'lantmateriet-geodata', 'lantmateriet-direkt', 'boverket-energideklarationer', 'dataportal',
       'dst-statistikbanken', 'opendata-dk', 'ssb-statistikkbanken', 'ssb-pxweb-v2', 'fhi-statistikk', 'brreg-enhetsregisteret', 'kartverket-kommuneinfo', 'met-locationforecast', 'statfin', 'kuntien-avainluvut', 'sotkanet', 'prh-ytj', 'digitraffic-tiesaa', 'fmi-observations', 'avoindata-fi', 'hagstofa', 'vedur-observations', 'nordic-statistics', 'stat-greenland', 'hagstova-foroya', 'asub-aland']) assert.ok(ids.includes(id), 'preset ' + id);
     const byCountry = {}; for (const p of presets) byCountry[p.country] = (byCountry[p.country] || 0) + 1;
-    for (const c of ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU']) assert.ok(byCountry[c] >= 1, 'presets for ' + c);
+    for (const c of ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT']) assert.ok(byCountry[c] >= 1, 'presets for ' + c);
     const bad = schema.validate({ format: 'dataspatium-api/1', id: 'Bad Id', name: '', baseUrl: 'ftp://x', endpoints: [] });
     assert.ok(bad.some((e) => e.startsWith('id')) && bad.some((e) => e.startsWith('baseUrl')) && bad.some((e) => e.startsWith('name')), bad.join(' | '));
     const semantic = schema.validate({ format: 'dataspatium-api/1', id: 'ok-id', name: 'X', baseUrl: 'https://x', auth: { type: 'apiKey' }, endpoints: [{ id: 'a', name: 'A', pagination: { type: 'page' } }, { id: 'a', name: 'B' }] });

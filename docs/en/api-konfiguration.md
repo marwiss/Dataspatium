@@ -7,7 +7,7 @@ service to allow requests from browsers (CORS); all presets below have been chec
 ## Preset sources
 
 The list in Import is grouped by country. The country buttons above it (Sweden, Denmark, Norway, Finland, Iceland,
-Faroe Islands, Greenland, Åland, Nordic region, EU) choose which countries' sources are shown; the choice is stored
+Faroe Islands, Greenland, Åland, Nordic region, EU, International) choose which countries' sources are shown; the choice is stored
 in the browser. The sources' names and descriptions follow the app's language, and PxWeb services available in
 several languages (SCB, Statistics Norway, Statistics Finland, Statistics Iceland, Statistics Greenland, ÅSUB) are
 browsed in the app's language when the service has it.
@@ -21,6 +21,8 @@ browsed in the app's language when the service has it.
 | Public Health Agency of Sweden (Folkhälsodata) | Public health surveys, communicable diseases, vaccinations and more | No | Browse, choose values, Fetch |
 | Kolada | Key figures for municipalities and regions | No | Search for key figures (id), fetch values per year or per municipality |
 | Eurostat | EU statistics | No | Give the dataset code and filters |
+| European Central Bank (ECB) | Exchange rates and the ECB's statistics (SDMX) | No | Choose currencies and frequency for the exchange rates, or give the dataflow and series key |
+| OECD | Unemployment, GDP growth and the OECD's other statistics (SDMX) | No | Choose countries, or give the dataflow and series key |
 | National Board of Health and Welfare | Causes of death, diagnoses, medicines, operations and more | No | Choose subject, choose values per variable, Fetch |
 | SMHI meteorological observations | The weather stations' measurements | No | Choose parameter, station and period |
 | Air quality (Swedish EPA data host) | Air pollutants per measuring station | No | List time series, fetch values for a time series |
@@ -81,9 +83,13 @@ The properties panel shows publisher, licence, rate limit and the latest request
 
 ## Updating a fetched dataset
 
-Datasets that come from an API remember their selection. In **Manage** there is the button **Fetch again**, which
-repeats the fetch and either appends the rows or replaces all rows. Recipes done on the dataset can then be run again
-from **Process › Recipe**.
+Datasets that come from an API remember their source and selection. Under **Saved fetches** in Import they are
+listed with source, last fetch and number of rows. **Update** fetches the same data again, replaces the rows and
+replays the dataset's recipe, so that cleaning and computed columns come back; **Update all** does it for all of them
+in turn, and the command palette and Manage offer the same as **Re-fetch API datasets**. If the fetch or a recipe
+step fails, the dataset is left as it was and the error is shown. A recipe step that needs a secret (for example a
+key for pseudonymisation) cannot be replayed automatically. **Manage** also has **Fetch again**, where you choose
+between updating and putting the new rows last without running the recipe.
 
 ## Keys and security
 
@@ -164,7 +170,7 @@ app folder and are good starting points.
 | `id` | Unique id, lower-case letters, digits, hyphens |
 | `name`, `publisher`, `description`, `docs`, `license`, `notes` | Shown in the app |
 | `level` | 1 = no key, 2 = key required |
-| `country` | Country or area for the country filter: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC` or `EU` |
+| `country` | Country or area for the country filter: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU` or `INT` |
 | `i18n` | Translations per language (Swedish is the file's base language): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<name>": { "label", "help", "example", "options": { "<value>": "label" } } } } }, "dataset": { "<id>": "name template" } } }`. The app shows the texts of its language; the export contains all of them |
 | `baseUrl` | Address that the endpoints' paths are appended to |
 | `headers` | Default headers for all requests |
@@ -184,7 +190,7 @@ app folder and are good starting points.
 | `params` | Parameters, see below |
 | `body`, `bodyType` | Body for POST: a JSON template where `"{name}"` is replaced by the value (`json`, default), `form` or `text` |
 | `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`), `next-url` (`path` to the next address in the response), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` to a list of links, `rel`); `maxPages` limits the number of requests |
-| `response` | `format`: `json` (`path` to the records, `explode` for a nested list), `jsonstat`, `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`. Common: `constants` (column: path in the root document), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
+| `response` | `format`: `json` (`path` to the records, `explode` for a nested list), `jsonstat`, `sdmx` (SDMX-JSON 1.0 and 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`. Common: `constants` (column: path in the root document), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` with placeholders, `keys` for the duplicate check when appending rows |
 
 ### Parameter
@@ -203,6 +209,8 @@ app folder and are good starting points.
 
 JSON records are flattened (nested objects become columns with a dot in the name, lists become JSON text). JSON-stat
 gives one row per cell with a code and label column per dimension, a time column and one value column per measure.
+SDMX-JSON gives one row per observation: for each dimension a code column (`<name>_kod`) and a text column when the
+codes have texts, the time period, the value (`varde`) and the series and observation attributes that have values.
 Column names are cleaned as at file import (å, ä, ö become a, a, o) and types are derived with a decimal point; codes
 with leading zeros remain text.
 
@@ -221,8 +229,9 @@ with leading zeros remain text.
 - MET Norway's terms require calling programs to identify themselves with a User-Agent. Browsers send their own
   identification, which the service accepts today; keep the number of requests low and expect that the service may
   throttle anonymous requests.
-- SDMX-JSON is not supported yet; use JSON-stat where the service offers it (SCB, Eurostat, the Public Health Agency).
-  JSON-stat 1.x (Statistics Denmark) and 2.0 are both read.
+- SDMX is read as SDMX-JSON 1.0 or 2.0 (data messages; the ECB and the OECD send it with the parameter
+  `format=jsondata` or an `Accept` header). SDMX-ML and SDMX-CSV are not parsed. JSON-stat 1.x (Statistics Denmark)
+  and 2.0 are both read.
 - PX files are not parsed in JavaScript; fetch JSON-stat or use the package pxR in R.
 - Large responses (hundreds of thousands of rows) take time to parse in the browser. Limit the selection or use
   `maxPages`.

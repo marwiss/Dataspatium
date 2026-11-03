@@ -43,5 +43,7 @@ Kóði Dataspatium tengist ekki R. R keyrir sem sérstakur túlkur í worker og 
 forritið gegnum skilaboð; það er sú tegund samdreifingar („mere aggregation“) sem GPL leyfir, og R-hlutarnir halda öllum
 GPL-réttindum sínum fyrir þig sem notanda. Sýnigögn í `presets/` koma frá opnum uppruna og halda upprunalegum leyfum sínum (CC0
 eða CC BY eftir hverri stofnun). Sænsku sveitarfélaga- og lénamörkin í `presets/geo/` eru *Digitala gränser* SCB undir CC0 1.0,
-umreiknuð í lengd og breidd; sjá `presets/geo/KALLA.md`. Gögn sem sótt eru úr opnu vefþjónustunum falla undir leyfi hvers
+umreiknuð í lengd og breidd. Dönsku mörkin eru DAGI 1:500 000 frá Geodatastyrelsen (nú Klimadatastyrelsen), frjáls gögn
+sem nota má og deila með tilvísun í heimild; þau norsku koma úr N1000 Kartdata frá Kartverket og þau finnsku frá Hagstofu
+Finnlands, bæði undir CC BY 4.0 (heimild „© Kartverket“ og „Tilastokeskus / Hagstofa Finnlands“). Sjá `presets/geo/KALLA.md`. Gögn sem sótt eru úr opnu vefþjónustunum falla undir leyfi hvers
 útgefanda, sem birtist með upprunanum í forritinu.

@@ -45,6 +45,9 @@ Dataspatium's code does not link against R. R runs as a separate interpreter in 
 files and images with the app through messages; that is the kind of co-distribution ("mere aggregation") the GPL
 allows, and the R parts keep all their GPL rights for you as a user. Example data in `presets/` comes from open
 sources and keeps its original licences (CC0 or CC BY according to each agency). The municipality and county
-boundaries in `presets/geo/` are SCB's *Digitala gränser* under CC0 1.0, converted to longitude and latitude; see
+boundaries in `presets/geo/` are SCB's *Digitala gränser* under CC0 1.0, converted to longitude and latitude. The
+Danish boundaries are DAGI 1:500 000 from Geodatastyrelsen (now Klimadatastyrelsen), free data that may be used and
+shared with attribution; the Norwegian ones come from Kartverket's N1000 Kartdata and the Finnish ones from Statistics
+Finland, both under CC BY 4.0 (attribution "© Kartverket" and "Tilastokeskus / Statistics Finland"). See
 `presets/geo/KALLA.md`. Data fetched from the open APIs is covered by each publisher's licence, which is shown
 with the source in the app.

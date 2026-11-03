@@ -18,7 +18,8 @@ breidd, Excel, ODS, JSON (líka JSON-stat og GeoJSON), XML, SQLite, GeoPackage, 
 Parquet, RDS og RData (sjá [format.md](format.md)); R-sniðin eru flutt inn í einu skrefi án forskoðunar. Undir Opnar
 vefþjónustur eru forstillingar fyrir hagstofur og fleiri stofnanir á Íslandi, í Danmörku, Noregi, Finnlandi, Svíþjóð,
 Grænlandi, Færeyjum og á Álandseyjum, Nordic Statistics og Eurostat; landahnapparnir fyrir ofan listann velja hvaða landa
-upprunar birtast. Eigin uppsetningum er bætt við úr skrá og þeim má deila. Sjá [api-konfiguration.md](api-konfiguration.md).
+upprunar birtast. Eigin uppsetningum er bætt við úr skrá og þeim má deila. *Vistaðar sóknir* sýnir gagnasöfnin sem komu úr
+vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Sjá [api-konfiguration.md](api-konfiguration.md).
 
 ## Umsjón
 

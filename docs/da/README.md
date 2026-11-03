@@ -42,14 +42,14 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
 
 ## Hvad du kan
 
-- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabeller i HTML-, Markdown-, Word- og LaTeX-dokumenter, kortfiler i KML, KMZ, GPX og TopoJSON, SQL-scripts, ældre regnearksformater (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst
-  med fast kolonnebredde, statistikfiler fra SPSS, Stata, SAS og PX-formatet samt Parquet og RDS (via R), indsat
+- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabeller i HTML-, Markdown-, Word- og LaTeX-dokumenter, kortfiler i KML, KMZ, GPX og TopoJSON, SQL-scripts, ældre regnearksformater (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst
+  med fast kolonnebredde, statistikfiler fra SPSS, Stata og SAS (med værdietiketter) og PX-formatet samt Parquet og RDS (via R), indsat
   tekst, filer fra webadresser og data direkte fra åbne API'er hos Danmarks Statistik, Open Data DK, SSB,
   Folkehelseinstituttet, Brønnøysundregistrene, Kartverket, MET Norway, Statistikcentralen, THL, PRH, Fintraffic,
   Meteorologiska institutet, Hagstofa Íslands, Veðurstofa Íslands, Grønlands Statistik, Hagstova Føroya, ÅSUB,
-  Nordic Statistics, Eurostat og svenske myndigheder som SCB, Kolada og SMHI, med landefilter og genhentning af alle
-  API-datasæt med et tryk (se [api-konfiguration.md](api-konfiguration.md)). Eksempeldata og SCB's svenske kommune-
-  og länsgrænser følger med.
+  Nordic Statistics, Eurostat, ECB, OECD og svenske myndigheder som SCB, Kolada og SMHI, med landefilter og gemte
+  hentninger, der opdateres med ét klik og afspiller deres opskrifter (se [api-konfiguration.md](api-konfiguration.md)).
+  Eksempeldata og kommune- og regionsgrænser for Sverige, Danmark, Norge og Finland følger med.
 - **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, omkode, inddele i klasser, rangordne, beregne andele, løbende summer og ændringer, pivotere
   og sammenkoble data, kontrollere datakvalitet med profil og regler (blandt andet formater, nordiske identitetsnumre, referencer til andre datasæt og afvigende værdier), pseudonymisere personnumre før deling, med
   fortryd, versioner og recepter, der kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).

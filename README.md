@@ -40,16 +40,16 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 
 ## Vad du kan göra
 
-- **Hämta in**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- och shapefile-filer,
+- **Hämta in**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- och shapefile-filer,
   tabeller i HTML-, Markdown-, Word- och LaTeX-dokument, kartfiler i KML, KMZ, GPX och TopoJSON, SQL-skript,
   äldre kalkylformat (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), text med fasta kolumnbredder, statistikfiler
-  från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS
+  från SPSS, Stata och SAS (med värdeetiketter) och SCB:s PX-format samt Parquet och RDS
   (via R), inklistrad text, filer från webbadresser, och data direkt från öppna API:er hos SCB,
   Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
   dataportal samt statistikbyråerna och andra myndigheter i Danmark, Norge, Finland, Island, Grönland, Färöarna
-  och Åland och Nordic Statistics, med landsfilter och omhämtning av alla API-datamängder på en knapptryckning (se
-  [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och SCB:s kommun- och länsgränser
-  följer med.
+  och Åland, Nordic Statistics, ECB och OECD, med landsfilter och sparade hämtningar som uppdateras med ett klick
+  och spelar upp sina recept (se [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och
+  kommun- och regiongränser för Sverige, Danmark, Norge och Finland följer med.
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, koda om,
   klassindela, rangordna, beräkna andelar, löpande summor och förändringar, pivotera och koppla data,
   kontrollera datakvalitet med profil och regler (bland annat format, nordiska identitetsnummer, referenser till

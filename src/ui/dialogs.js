@@ -11,8 +11,8 @@
     (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files, rulesMod) => {
       const { h, t, i18n, replace } = base;
       const GROUPS = [
-        { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'drop_columns', 'reorder_columns', 'duplicate_column', 'clean_names'] },
-        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'recode_values', 'fill_missing', 'round_numbers', 'pad_text', 'clean_chars', 'pseudonymize'] },
+        { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'set_value_labels', 'drop_columns', 'reorder_columns', 'duplicate_column', 'clean_names'] },
+        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'recode_values', 'apply_value_labels', 'fill_missing', 'round_numbers', 'pad_text', 'clean_chars', 'pseudonymize'] },
         { id: 'rows', ops: ['delete_rows', 'remove_duplicates', 'remove_empty', 'sort_rows', 'keep_top', 'sample_rows'] },
         { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'substring', 'pivot_longer', 'pivot_wider', 'sql'] },
         { id: 'calc', ops: ['share_of_total', 'rank_values', 'running_total', 'change_previous', 'bin_numeric', 'standardize', 'date_part', 'date_diff'] },

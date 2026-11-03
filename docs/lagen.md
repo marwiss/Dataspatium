@@ -23,7 +23,9 @@ SCB (bläddra i ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socials
 luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
 Lantmäteriet Direkt för den som har nycklar, och därtill källor i Danmark, Norge, Finland, Island, Grönland,
 Färöarna och Åland samt Nordic Statistics; landsknapparna ovanför listan väljer vilka länders källor som visas.
-Egna konfigurationer läggs till från fil och kan delas. Se [api-konfiguration.md](api-konfiguration.md).
+Egna konfigurationer läggs till från fil och kan delas. *Sparade hämtningar* listar datamängderna som kommit
+från ett API och uppdaterar dem med ett klick, en i taget eller alla. Se
+[api-konfiguration.md](api-konfiguration.md).
 
 ## Hantera
 

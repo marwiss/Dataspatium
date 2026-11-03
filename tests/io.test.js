@@ -43,6 +43,9 @@
     const listed = await datasets.list();
     assert.ok(listed.some((d) => d.id === meta.id), 'listed in IndexedDB');
     datasets.close(meta.id);
+    // Two callers that open the dataset at the same time (a scheduled save and a view) share one handle.
+    const [first, second] = await Promise.all([datasets.ensureOpen(meta.id), datasets.ensureOpen(meta.id)]);
+    assert.ok(first === second, 'one handle for concurrent opens');
     const again = await datasets.query(meta.id, { limit: 1 });
     assert.equal(again[0][0], 'Stockholm');
     const log = await datasets.log(meta.id);

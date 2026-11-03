@@ -60,7 +60,10 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
 
 En datamängd är en SQLite-fil med tabellerna `data`, `_columns`, `_meta` och `_log` (se [format.md](format.md)).
 `_columns` fick kolumnerna `description` och `unit` i 1.9; `readColumns` lägger till dem med `alter table` när en
-äldre fil (eller en fil från `dm_write()` i R) öppnas, så att alla kodvägar kan räkna med dem.
+äldre fil (eller en fil från `dm_write()` i R) öppnas, så att alla kodvägar kan räkna med dem. I 1.15 tillkom
+`value_labels`: värdeetiketter som JSON, `{"values": "codes" | "labels", "labels": [[kod, "etikett"], ...]}`, där
+`values` säger om kolumnen har koderna eller redan etiketterna som text. `r/dataspatium.R` gör dem till
+`haven::labelled` i `dm_read()`, läser tillbaka dem i `dm_write()` och skriver koderna till .sav och .dta.
 
 Varje datamängd har ett kortnamn (`_meta.shortName`, även i IndexedDB-posten): en SQL-säker identifierare som
 `datasets.shortNameFrom` härleder ur namnet (translitterering, `[a-z0-9_]`, högst 32 tecken, reserverade ord och
@@ -139,7 +142,8 @@ räknar rader, loggar, sparar och sänder `created` (`abortImport` kastar allt v
 `importViaR` skriver filen till R:s filsystem, kör rätt läsfunktion (haven, pxR, nanoparquet, base R), gör
 etikettkolumner till text och lämnar över med `dm_write()`, som bevarar variabeletiketter som kolumnetiketter.
 PX-filer avkodas i JS enligt CODEPAGE/CHARSET och skrivs som UTF-8 innan pxR läser dem. JSON-stat upptäcks i
-JSON-adaptern och tabelleras med `api/jsonstat`. Shapefile-adaptern (`shapefile.js`) läser .shp (punkt, linje,
+JSON-adaptern och tabelleras med `api/jsonstat`; SDMX-JSON 1.0 och 2.0 (datameddelanden) på samma sätt med
+`api/sdmx`. Shapefile-adaptern (`shapefile.js`) läser .shp (punkt, linje,
 polygon, multipunkt, med eller utan Z/M; yttre ringar medurs enligt shapefile-konventionen behålls eftersom
 d3-geo förväntar sig samma riktning), .dbf (typer C, N, F, D, L; teckenkodning från .cpg eller UTF-8-prov) och
 namnet i .prj, kan förenkla geometrin med Douglas-Peucker och ger samma kolumner som GeoJSON-importen
@@ -179,7 +183,8 @@ ritar med `geoshape`. Punktkartan `pointmap` (`points: true`): x och y bär long
 känns igen och räknas om till grader), size och color värden, facet etiketten och `state.basemap` en medföljande
 bakgrund; specifikationen blir ett `layer` med gränserna (`geoshape`) under punkterna (`circle`).
 `data/boundaries.js` läser och cachar gränserna ur `presets/geo/*.geojson` (SCB:s *Digitala gränser*, CC0,
-omräknade till WGS 84 av `tools/build_boundaries.py`); `viz/render.js` hämtar dem före `toSpec` när
+omräknade till WGS 84 av `tools/build_boundaries.py`, och de danska, norska och finska från
+`tools/build_nordic_boundaries.py`); `viz/render.js` hämtar dem före `toSpec` när
 `builder.basemapOf(state)` pekar ut en, och geodataåtgärderna i Bearbeta använder dem för uppslag av kommun
 och län. Geodataåtgärderna (`geo_centroid`, `geo_area`, `geo_reproject` och `geo_region` i
 `data/operations.js`) är vanliga receptsteg som kör SQL mot funktionerna `dm_geo_lon`, `dm_geo_lat`,
@@ -206,8 +211,9 @@ dta och rds: `toViaR` speglar datamängden till R, kör skrivfunktionen och läs
   proxy och felmeddelanden som förklarar CORS och statuskoder.
 - `auth.js`: API-nyckel i header eller fråga, Basic, Bearer och OAuth2 client credentials med tokencache.
 - `request.js`, `pagination.js`, `parsers.js`, `jsonstat.js`: bygger anrop ur parameterscheman, bläddrar
-  sidor (sida, offset, nästa-URL, cursor, Link-header, länklistor) och tolkar JSON, JSON-stat 2, CSV, GeoJSON,
-  XML och dataportalens EntryScape-svar till tabeller.
+  sidor (sida, offset, nästa-URL, cursor, Link-header, länklistor) och tolkar JSON, JSON-stat 2, SDMX-JSON
+  (`sdmx.js`), CSV, GeoJSON, XML och dataportalens EntryScape-svar till tabeller. GET-anrop försöks igen även
+  vid 500, 502 och 504.
 - `runner.js`: kör en endpoint sida för sida till en tabell, skapar datamängder (`toDataset`), lägger till eller
   ersätter rader (`intoDataset` via `datasets.appendRows`), hämtar om en datamängd från källan i dess metadata
   (`refetch`) och levererar alternativ till fält med `optionsFrom`.
@@ -219,8 +225,11 @@ UI:t ligger i `src/ui/api/`: `variable-picker.js` (komponenten `dm-variable-pick
 Tester kör mot en låtsastjänst via virtuella `dataspatium-asset://`-adresser i nätverks-shimmen, så att ingen
 nätverkstrafik behövs; `tests/index.html?live=1` kör dessutom ett röktest mot de riktiga tjänsterna.
 
-`api/runner.refreshAll` hämtar om varje datamängd med `source.kind === 'api'` i tur och ordning (ersättningsläge),
-med injicerbar hämtfunktion för tester; Hantera och kommandopaletten erbjuder det som "Hämta om API-datamängder".
+`api/runner.refreshDataset` uppdaterar en datamängd med `source.kind === 'api'`: hämtar om källan, bygger om
+tabellen `data` med samma kolumnmetadata (`datasets.rebuild`), spelar upp receptet (stegen i `_log`) utan
+ångra- och loggposter och återställer filen om något steg misslyckas. `refreshAll` gör det för alla i tur och
+ordning, med injicerbar hämtfunktion för tester; Inhämta (*Sparade hämtningar*), Hantera och kommandopaletten
+använder dem.
 
 ## Visualisering
 

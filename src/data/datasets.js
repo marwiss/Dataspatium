@@ -141,12 +141,12 @@
       const id = newId();
       const engine = await newEngine();
       const names = types.cleanColumnNames(input.columns.map((c) => c.name));
-      const columns = input.columns.map((c, i) => ({ position: i, name: names[i], type: c.type || 'text', label: c.label || names[i], format: null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null }));
+      const columns = input.columns.map((c, i) => ({ position: i, name: names[i], type: c.type || 'text', label: c.label || names[i], format: null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null, valueLabels: normaliseValueLabels(c.valueLabels) }));
       await engine.run(`create table data (${columns.map((c) => `${q(c.name)} ${types.sqlType(c.type)}`).join(', ')})`);
-      await engine.run('create table _columns (position integer, name text, type text, label text, format text, source_name text, description text, unit text)');
+      await engine.run(`create table _columns (${COLUMN_FIELDS.map((f) => `${f} ${f === 'position' ? 'integer' : 'text'}`).join(', ')})`);
       await engine.run('create table _meta (key text primary key, value text)');
       await engine.run('create table _log (ts text, action text, details text)');
-      await engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit'], columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit]));
+      await engine.insertRows('_columns', COLUMN_FIELDS, columns.map(columnRow));
       const now = new Date().toISOString();
       const shortName = await uniqueShortName(input.shortName || input.name || 'datamangd');
       const meta = {
@@ -213,9 +213,15 @@
     async function list() { return idb.listDatasets(); }
     async function get(id) { return idb.getDataset(id); }
 
+    /** Opens in progress: callers that ask for the same dataset at the same time share one handle. */
+    const opening = new Map();
     async function ensureOpen(id) {
       const existing = openHandles.get(id);
       if (existing) return existing;
+      if (!opening.has(id)) opening.set(id, openHandle(id).finally(() => opening.delete(id)));
+      return opening.get(id);
+    }
+    async function openHandle(id) {
       const record = await idb.getDataset(id);
       if (!record) throw new Error('Dataset not found: ' + id);
       const bytes = await idb.loadBlob('ds:' + id);
@@ -239,16 +245,33 @@
       return bytes;
     }
 
-    /** `_columns` gained description and unit in 1.9; older files (and files written by dm_write in R) get them on open. */
+    /** The fields of _columns. description and unit came in 1.9 and value_labels in 1.15; older files (and files written
+     * by dm_write in R before that) get them when opened. */
+    const COLUMN_FIELDS = ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit', 'value_labels'];
     async function ensureColumnsSchema(engine) {
       const info = await engine.exec('pragma table_info(_columns)');
       const have = new Set((info[0] ? info[0].values : []).map((r) => r[1]));
-      for (const extra of ['description', 'unit']) if (!have.has(extra)) await engine.run(`alter table _columns add column ${extra} text`);
+      for (const extra of ['description', 'unit', 'value_labels']) if (!have.has(extra)) await engine.run(`alter table _columns add column ${extra} text`);
     }
+    /**
+     * Value labels of a column: the label of every code, and whether the column holds the codes or already
+     * the labels (as after an SPSS import with labels as text). Stored as JSON in _columns.value_labels.
+     * @returns {{values: 'codes'|'labels', labels: Array<[any, string]>}|null}
+     */
+    function normaliseValueLabels(v) {
+      let o = v;
+      if (typeof o === 'string') { try { o = JSON.parse(o); } catch (_err) { return null; } }
+      if (!o || !Array.isArray(o.labels)) return null;
+      const labels = o.labels.filter((p) => Array.isArray(p) && p.length >= 2 && p[0] !== null && p[0] !== undefined && p[0] !== '').map((p) => [p[0], String(p[1])]);
+      return labels.length ? { values: o.values === 'labels' ? 'labels' : 'codes', labels } : null;
+    }
+    /** Value labels on one line for display, e.g. "1 = Man; 2 = Kvinna". */
+    const valueLabelsText = (vl) => (vl && vl.labels ? vl.labels.map(([code, label]) => `${code} = ${label}`).join('; ') : '');
+    const columnRow = (c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit, c.valueLabels ? JSON.stringify(c.valueLabels) : null];
     async function readColumns(engine) {
       await ensureColumnsSchema(engine);
-      const res = await engine.exec('select position, name, type, label, format, source_name, description, unit from _columns order by position');
-      return (res[0] ? res[0].values : []).map((r) => ({ position: r[0], name: r[1], type: r[2], label: r[3], format: r[4], sourceName: r[5], description: r[6] || null, unit: r[7] || null }));
+      const res = await engine.exec(`select ${COLUMN_FIELDS.join(', ')} from _columns order by position`);
+      return (res[0] ? res[0].values : []).map((r) => ({ position: r[0], name: r[1], type: r[2], label: r[3], format: r[4], sourceName: r[5], description: r[6] || null, unit: r[7] || null, valueLabels: normaliseValueLabels(r[8]) }));
     }
 
     function buildWhere(columns, options) {
@@ -339,9 +362,10 @@
 
     /** Rewrite the _columns table from a columns array (after schema-changing operations). */
     async function writeColumns(handle, columns) {
-      handle.columns = columns.map((c, i) => ({ position: i, name: c.name, type: c.type || 'text', label: c.label || c.name, format: c.format || null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null }));
+      handle.columns = columns.map((c, i) => ({ position: i, name: c.name, type: c.type || 'text', label: c.label || c.name, format: c.format || null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null, valueLabels: normaliseValueLabels(c.valueLabels) }));
+      await ensureColumnsSchema(handle.engine);
       await handle.engine.run('delete from _columns');
-      await handle.engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit'], handle.columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit]));
+      await handle.engine.insertRows('_columns', COLUMN_FIELDS, handle.columns.map(columnRow));
       handle.meta.columnCount = handle.columns.length;
       await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['columnCount', JSON.stringify(handle.columns.length)]);
     }
@@ -381,6 +405,34 @@
     }
     function hasPendingSaves() { return saveTimers.size > 0; }
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSaves(); });
+
+    /**
+     * Rebuild a dataset's table from new typed rows and columns (an API table fetched again), keeping its id,
+     * name, short name, metadata, rules and log. Labels, descriptions and units of columns with the same name
+     * are kept. Returns the file from before, for a rollback with replaceBytes.
+     * @param {string} id @param {{columns: Array<{name: string, type: string, label?: string, sourceName?: string}>, rows: any[][], source?: any}} input
+     * @returns {Promise<ArrayBuffer>}
+     */
+    async function rebuild(id, input) {
+      const handle = await ensureOpen(id);
+      await dropIndexes(handle);
+      const before = await handle.engine.export();
+      const names = types.cleanColumnNames(input.columns.map((c) => c.name));
+      const old = new Map(handle.columns.map((c) => [c.name, c]));
+      const columns = input.columns.map((c, i) => {
+        const o = old.get(names[i]);
+        return { name: names[i], type: c.type || 'text', label: (o && o.label) || c.label || names[i], format: o ? o.format : null, sourceName: c.sourceName || c.name, description: o ? o.description : null, unit: o ? o.unit : null, valueLabels: o ? o.valueLabels : null };
+      });
+      await handle.engine.execMany(['drop table if exists data', `create table data (${columns.map((c) => `${q(c.name)} ${types.sqlType(c.type)}`).join(', ')})`]);
+      await writeColumns(handle, columns);
+      await handle.engine.insertRows('data', handle.columns.map((c) => c.name), input.rows);
+      if (input.source) {
+        handle.meta.source = input.source;
+        await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['source', JSON.stringify(input.source)]);
+      }
+      await refreshCounts(handle);
+      return before;
+    }
 
     /** Replace the dataset file wholesale (undo, version restore). */
     async function replaceBytes(id, bytes, logEntry) {
@@ -591,10 +643,10 @@
 
     return {
       create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
-      replaceBytes, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
+      replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version,
-      updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing,
+      updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
     };
   });
 })();

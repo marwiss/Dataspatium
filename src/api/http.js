@@ -1,8 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * HTTP layer for API connectors: rate limiting per connector, timeouts, retries on 429/503, an
- * optional user-run proxy for services without CORS, and Swedish error messages that say what to do.
+ * HTTP layer for API connectors: rate limiting per connector, timeouts, retries on 429/503 (and on 500, 502
+ * and 504 for GET), an optional user-run proxy for services without CORS, and Swedish error messages that
+ * say what to do.
  * fetch() against https hosts works from file:// when the service sends Access-Control-Allow-Origin.
  */
 (function () {
@@ -94,7 +95,9 @@
         }
         clearTimeout(timer);
         const ms = performance.now() - t0;
-        if ((res.status === 429 || res.status === 503) && attempt < retries) {
+        // Busy services (429, 503) are retried; for GET, which is safe to repeat, also passing server errors.
+        const transient = res.status === 429 || res.status === 503 || ((req.method || 'GET').toUpperCase() === 'GET' && [500, 502, 504].includes(res.status));
+        if (transient && attempt < retries) {
           attempt++;
           const retryAfter = Number(res.headers.get('Retry-After'));
           await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 30) * 1000 : 1500 * attempt, req.signal);

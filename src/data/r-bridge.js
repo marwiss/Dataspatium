@@ -89,13 +89,18 @@
       /** Write the dataset index and the given datasets into /data. */
       async mirror(ids) {
         const list = await datasets.list();
+        let labelled = false;
         for (const id of ids) {
           const meta = list.find((d) => d.id === id);
-          if (!meta || this.mirrored.get(id) === meta.updatedAt) continue;
+          if (!meta) continue;
+          // dm_read() turns columns with value labels into haven::labelled, reading the labels with jsonlite.
+          if (!labelled) { try { labelled = (await datasets.columns(id)).some((c) => c.valueLabels); } catch (_err) { /* not open */ } }
+          if (this.mirrored.get(id) === meta.updatedAt) continue;
           const bytes = await datasets.exportBytes(id);
           await this.engine.writeFile(`${DATA_DIR}/${id}.sqlite`, bytes);
           this.mirrored.set(id, meta.updatedAt);
         }
+        if (labelled) await this.engine.ensurePackages(['haven', 'jsonlite']);
         const index = list.map((m) => ({ id: m.id, name: m.name, shortName: m.shortName || '', file: `${DATA_DIR}/${m.id}.sqlite`, rowCount: m.rowCount || 0, columnCount: m.columnCount || 0, updatedAt: m.updatedAt, mirrored: this.mirrored.has(m.id) }));
         // Tab-separated so that r/dataspatium.R can read it with base R only.
         const clean = (v) => String(v === null || v === undefined ? '' : v).replace(/[\t\r\n]+/g, ' ');

@@ -16,14 +16,15 @@
 | JSON | Kyllä | Kyllä | Luettelo objekteja, objekti, joka sisältää luettelon (polun voi antaa), luettelo luetteloita |
 | NDJSON, JSON Lines | Kyllä | Ei | Yksi objekti riviä kohden |
 | JSON-stat | Kyllä | Ei | Tunnistetaan automaattisesti (`class: dataset`); yksi rivi solua kohden koodein, tekstein ja arvoin |
+| SDMX-JSON | Kyllä | Ei | SDMX-JSON 1.0- ja 2.0-datasanomat (esimerkiksi EKP:ltä ja OECD:ltä) tunnistetaan automaattisesti; yksi rivi havaintoa kohden, jokaiselle ulottuvuudelle koodi- ja tekstisarake, ajanjakso, arvo ja attribuutit |
 | GeoJSON | Kyllä | Kyllä | Yksi rivi featurea kohden; ominaisuuksista tulee sarakkeita, geometriasta tekstisarake GeoJSON-muodossa, jonka karttakaavio piirtää (kartta lukee myös sarakkeessa olevaa WKT-tekstiä, esimerkiksi CSV:stä). Viennissä geometriasarakkeesta (GeoJSON tai WKT) tulee kunkin featuren geometria ja muista sarakkeista sen ominaisuudet |
 | Shapefile (ZIP, jossa shp, dbf, prj, cpg, tai pelkkä shp) | Kyllä | Ei | Attribuuteista tulee tyypitettyjä sarakkeita dbf-rakenteen mukaan, geometriasta GeoJSON sarakkeeseen `geometry`. Valitse taso, jos ZIP-tiedostossa on useita, ja yksinkertaista geometriaa toleranssilla karttayksiköissä. Koordinaatit säilytetään |
 | XML | Kyllä | Kyllä | Yksi rivi toistuvaa elementtiä kohden (valitaan tuontivaiheessa); attribuuteista ja alielementeistä tulee sarakkeita, sisäkkäiset elementit saavat pistenimiä kuten `lage.lan` |
 | SQLite | Kyllä | Kyllä | Dataspatiumin oma tiedosto palautetaan tyyppeineen, selitteineen ja historioineen; muista tietokannoista valitset taulun, ja tyypit otetaan rakenteesta |
 | SQL-skripti (sql) | Kyllä | Ei | Skripti, jossa on `CREATE TABLE`- ja `INSERT`-lauseita, esimerkiksi tietokantavedos, ajetaan tyhjässä SQLite-tietokannassa, ja taulut tarjotaan valittaviksi. MySQL:n omat rivit (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` ja taulujen asetukset kuten `ENGINE=`) poistetaan ensin; muut murteet toimivat siltä osin kuin ne noudattavat SQLiten syntaksia |
 | GeoPackage (gpkg) | Kyllä | Ei | Tasot (feature- ja attribuuttitaulut) valitaan tauluina; geometriasarakkeesta tulee GeoJSON, jonka karttakaavio piirtää, ja koordinaattijärjestelmä näytetään |
-| SPSS sav, zsav, por | Kyllä | sav | R-paketin haven kautta. Muuttujaselitteistä tulee sarakeselitteitä, arvoselitteistä tekstiä |
-| Stata dta | Kyllä | dta | havenin kautta. Viennissä sarakkeiden nimet lyhennetään Statan sääntöjen mukaan (32 merkkiä, ASCII) |
+| SPSS sav, zsav, por | Kyllä | sav | R-paketin haven kautta. Muuttujaselitteistä tulee sarakeselitteitä ja arvoselitteistä sarakkeen metatietoja (ks. alla) |
+| Stata dta | Kyllä | dta | havenin kautta. Arvoselitteet kuten SPSS:ssä. Viennissä sarakkeiden nimet lyhennetään Statan sääntöjen mukaan (32 merkkiä, ASCII) |
 | SAS sas7bdat, xpt | Kyllä | Ei | havenin kautta |
 | PX (PC-Axis, Pohjoismaiden tilastovirastojen käyttämä) | Kyllä | Ei | R-paketin pxR kautta; merkistökoodaus luetaan tiedoston CODEPAGE- tai CHARSET-kentästä. Tuloksena on pitkä taulukko, jossa on yksi arvosarake |
 | Parquet | Kyllä | Kyllä | R-paketin nanoparquet kautta; säilyttää tyypit tarkasti |
@@ -42,9 +43,16 @@ R:n kautta kulkevat muodot käynnistävät R-istunnon tarvittaessa (muutama seku
 esikatselua: R lukee tiedoston ja luovuttaa sen `dm_write()`-funktiolla, joten saraketyypit tulevat R:stä. Kyllä/ei muuttuu
 arvoiksi 0/1 SPSS:ssä ja Statassa, joista puuttuu looginen tyyppi.
 
-Sovelluksen mukana tulee myös dataa, joka lisätään Nouda-tilan painikkeella: esimerkkiaineisto *Väestö kunnittain 2024
-(Ruotsi)* sekä SCB:n Ruotsin kuntien ja läänien rajat (*Digitala gränser*, CC0) GeoJSON-muodossa pituus- ja leveysasteina, ks.
-`presets/geo/KALLA.md`. Mitään ei noudeta verkosta.
+Arvoselitteet (koodit nimineen, kuten `1 = Mies` ja `2 = Nainen`) kulkevat sarakkeen mukana metatietoina SQLite-tiedostossa
+(`_columns.value_labels`). SPSS-, Stata- ja SAS-tiedostoja tuotaessa valitset asetusvaiheessa, näyttääkö sarake selitteet
+tekstinä (oletus) vai säilyttääkö se koodit; selitteet tallennetaan kummassakin tapauksessa. Niitä voi asettaa, muuttaa ja
+vaihtaa koodeihin Muokkaa-tilassa, ne näkyvät koodikirjassa, välittyvät R:lle `haven::labelled`-muodossa ja kirjoitetaan
+.sav- ja .dta-tiedostoihin, jolloin sarake, jossa selitteet ovat tekstinä, saa koodinsa takaisin.
+
+Sovelluksen mukana tulee myös dataa, joka lisätään Nouda-tilassa: esimerkkiaineisto *Väestö kunnittain 2024 (Ruotsi)* ja
+karttojen rajat GeoJSON-muodossa pituus- ja leveysasteina: Ruotsin kunnat ja läänit (SCB, CC0), Tanskan kunnat ja alueet
+(DAGI), Norjan kunnat ja läänit (Kartverket, CC BY 4.0) sekä Suomen kunnat ja maakunnat (Tilastokeskus, CC BY 4.0).
+Lähteet ja lisenssit ovat tiedostossa `presets/geo/KALLA.md`. Mitään ei noudeta verkosta.
 
 ## Merkistökoodaus
 

@@ -64,15 +64,53 @@
        * hints from the parser (codes stay text) taking precedence.
        */
       async function toDataset(table, options = {}) {
-        const cleaned = types.cleanColumnNames(table.columns);
         const decimal = options.decimal || 'point';
+        const { columns, rows } = typedTable(table, decimal);
+        return datasets.create({ name: options.name || D.t('api.fetched.name'), description: options.description || '', columns, rows, source: options.source || { kind: 'api' }, importOptions: { decimal } });
+      }
+      /** Columns with inferred types and typed rows of an API table; type hints from the parser win. */
+      function typedTable(table, decimal = 'point') {
+        const cleaned = types.cleanColumnNames(table.columns);
         const inferred = types.inferColumns(cleaned, table.rows, { decimal, sample: 2000 });
         const specs = inferred.map((c, i) => {
           const hint = table.types && table.types[table.columns[i]];
           return Object.assign({ include: true, label: table.columns[i] }, c, { name: cleaned[i], type: hint || c.type, decimal });
         });
-        const { columns, rows } = importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
-        return datasets.create({ name: options.name || D.t('api.fetched.name'), description: options.description || '', columns, rows, source: options.source || { kind: 'api' }, importOptions: { decimal } });
+        return importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
+      }
+
+      /**
+       * Update an API dataset with one click: fetch it again, rebuild its table from the new rows and replay
+       * its recipe, so that cleaned, renamed and computed columns come back. Name, metadata, rules and log are
+       * kept. Nothing changes when the fetch or a recipe step fails.
+       * @param {string} id
+       * @param {{fetch?: (source: any) => Promise<any>, signal?: AbortSignal}} [options] fetch is injectable for tests
+       * @returns {Promise<{rows: number, steps: number}>}
+       */
+      async function refreshDataset(id, options = {}) {
+        const meta = await datasets.get(id);
+        const source = meta && meta.source;
+        if (!source || source.kind !== 'api') throw new Error(D.t('api.err.nosource'));
+        const recipes = D.require('data/recipes');
+        const ops = D.require('data/operations');
+        const steps = await recipes.steps(id);
+        // Steps with a secret (the salt of a pseudonymisation) cannot be replayed without it.
+        const secret = steps.find((s) => ((ops.get(s.op) || {}).params || []).some((p) => p.secret && s.params && s.params[p.name] === '***'));
+        if (secret) throw new Error(D.t('api.refresh.secret', { step: secret.description }));
+        const table = await (options.fetch || refetch)(source, options);
+        const { columns, rows } = typedTable(table, (meta.importOptions && meta.importOptions.decimal) || 'point');
+        const before = await datasets.rebuild(id, { columns, rows, source: Object.assign({}, source, { fetchedAt: new Date().toISOString(), rows: rows.length }) });
+        let done = 0;
+        try {
+          for (const step of steps) { await recipes.apply(id, step.op, step.params, { noUndo: true, noLog: true }); done++; }
+        } catch (err) {
+          await datasets.replaceBytes(id, before, null);
+          throw new Error(D.t('api.refresh.replay.failed', { step: steps[done].description, message: (err && err.message) || String(err) }));
+        }
+        const handle = await datasets.ensureOpen(id);
+        await datasets.appendLog(handle, 'refresh', { source: { kind: 'api', connectorName: source.connectorName, endpointName: source.endpointName }, rows: handle.meta.rowCount, steps: steps.length });
+        await datasets.save(id);
+        return { rows: handle.meta.rowCount, steps: steps.length };
       }
 
       /** Append to or replace the rows of an existing dataset. */
@@ -104,9 +142,8 @@
         for (const ds of list) {
           if (options.signal && options.signal.aborted) break;
           try {
-            const table = await (options.fetch || refetch)(ds.source);
-            const res = await intoDataset(ds.id, table, { mode: options.mode || 'replace', source: Object.assign({}, ds.source, { fetchedAt: new Date().toISOString(), rows: table.rows.length }) });
-            results.push({ id: ds.id, name: ds.name, ok: true, rows: res && typeof res.rows === 'number' ? res.rows : table.rows.length });
+            const res = await refreshDataset(ds.id, options);
+            results.push({ id: ds.id, name: ds.name, ok: true, rows: res.rows, steps: res.steps });
           } catch (err) { results.push({ id: ds.id, name: ds.name, ok: false, error: (err && err.message) || String(err) }); }
           if (options.onProgress) options.onProgress({ done: results.length, total: list.length, name: ds.name });
         }
@@ -148,6 +185,6 @@
       }
       function clearOptionCache() { optionCache.clear(); }
 
-      return { fetchTable, toDataset, intoDataset, describeSource, refetch, refreshAll, optionsFor, clearOptionCache, mergeTables, families };
+      return { fetchTable, toDataset, typedTable, intoDataset, describeSource, refetch, refreshDataset, refreshAll, optionsFor, clearOptionCache, mergeTables, families };
     });
 })();

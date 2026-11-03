@@ -20,7 +20,8 @@ shapefile sekä R:n kautta SPSS, Stata, SAS, PX, Parquet, RDS ja RData (ks. [for
 vaiheessa ilman esikatselua. Avointen rajapintojen alla on valmisasetukset Suomen, Ruotsin, Norjan, Tanskan, Islannin,
 Grönlannin, Färsaarten ja Ahvenanmaan tilastovirastoille ja useille muille viranomaisille sekä Nordic Statisticsille ja
 Eurostatille; luettelon yläpuolella olevat maapainikkeet valitsevat, minkä maiden lähteet näytetään. Omat määritykset
-lisätään tiedostosta, ja niitä voi jakaa. Ks. [api-konfiguration.md](api-konfiguration.md).
+lisätään tiedostosta, ja niitä voi jakaa. *Tallennetut haut* luettelee rajapinnoista tulleet aineistot ja päivittää ne
+yhdellä napsautuksella, yksi kerrallaan tai kaikki. Ks. [api-konfiguration.md](api-konfiguration.md).
 
 ## Hallitse
 

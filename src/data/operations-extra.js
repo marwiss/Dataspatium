@@ -396,6 +396,97 @@
       toR: (p) => `df$${q(p.name)} <- ${p.method === 'minmax' ? `(df$${q(p.column)} - min(df$${q(p.column)}, na.rm = TRUE)) / diff(range(df$${q(p.column)}, na.rm = TRUE))` : `as.numeric(scale(df$${q(p.column)}))`}`,
     });
 
-    return { cleanName, mapping };
+    // ---- value labels (codes with names, as in SPSS and Stata) ---------------------------------------
+    /** Lines "code = label" as pairs; the codes are numbers when all of them are (codes such as 01 stay text). */
+    function labelPairs(text) {
+      const pairs = mapping(text).filter(([, label]) => label !== '');
+      const numeric = pairs.length && pairs.every(([code]) => /^-?(0|[1-9]\d*)([.,]\d+)?$/.test(code));
+      return pairs.map(([code, label]) => [numeric ? Number(code.replace(',', '.')) : code, label]);
+    }
+    const labelLines = (vl) => (vl ? vl.labels.map(([code, label]) => `${code} = ${label}`).join('\n') : '');
+    /** R vector c("label" = code, …) for haven. */
+    const rLabels = (vl) => `c(${vl.labels.map(([code, label]) => `${rstr(label)} = ${typeof code === 'number' ? code : rstr(code)}`).join(', ')})`;
+    /** Codes compare as numbers in a number column when every code is a number (1.0 equals 1). */
+    const numericCodes = (c, vl) => (c.type === 'integer' || c.type === 'number') && vl.labels.every(([code]) => typeof code === 'number');
+    /** SQL condition: the value is one of the codes (side 'codes') or one of the labels. */
+    function labelMatch(n, vl, side, numeric) {
+      if (side === 'codes' && numeric) return `${q(n)} in (${vl.labels.map(([code]) => code).join(', ')})`;
+      return `cast(${q(n)} as text) in (${vl.labels.map(([code, label]) => lit(side === 'codes' ? String(code) : label)).join(', ')})`;
+    }
+    define({
+      id: 'set_value_labels', group: 'column',
+      // The labels describe the codes; the data is not changed (see apply_value_labels).
+      params: [{ name: 'column', type: 'column', required: true }, { name: 'labels', type: 'lines' }],
+      defaults(ctx, p) { const c = ctx.column(p.column); return { labels: labelLines(c && c.valueLabels) }; },
+      async apply(ctx, p) {
+        const c = ctx.column(p.column);
+        if (!c) throw new Error(D.t('op.err.unknown.column', { name: p.column }));
+        const pairs = labelPairs(p.labels);
+        c.valueLabels = pairs.length ? { values: (c.valueLabels && c.valueLabels.values) || 'codes', labels: pairs } : null;
+        ctx.columnsChanged = true;
+        return { labels: pairs.length };
+      },
+      toSQL: () => [],
+      toR(p) {
+        const pairs = labelPairs(p.labels);
+        return `df$${q(p.column)} <- dm_value_labels(df$${q(p.column)}, ${pairs.length ? rLabels({ labels: pairs }) : 'NULL'})`;
+      },
+    });
+
+    /** CASE expression from one side of the value labels to the other; other values stay as they are. */
+    function labelCase(n, vl, toLabels, numeric) {
+      if (toLabels && numeric) return `case ${q(n)} ${vl.labels.map(([code, label]) => `when ${code} then ${lit(label)}`).join(' ')} else ${q(n)} end`;
+      const whens = vl.labels.map(([code, label]) => (toLabels ? `when ${lit(String(code))} then ${lit(label)}` : `when ${lit(label)} then ${lit(code)}`)).join(' ');
+      return `case cast(${q(n)} as text) ${whens} else ${q(n)} end`;
+    }
+    define({
+      id: 'apply_value_labels', group: 'values',
+      params: [{ name: 'column', type: 'column', required: true }, { name: 'direction', type: 'select', options: ['labels', 'codes'], default: 'labels' }],
+      plan(ctx, p) {
+        const c = ctx.column(p.column);
+        if (!c) throw new Error(D.t('op.err.unknown.column', { name: p.column }));
+        if (!c.valueLabels) throw new Error(D.t('op.err.no.value.labels', { name: p.column }));
+        const vl = c.valueLabels;
+        const toLabels = p.direction !== 'codes';
+        const numeric = numericCodes(c, vl);
+        // The rows that change: codes when turning them into labels, labels when turning them back.
+        return { c, vl, toLabels, numeric, source: labelMatch(p.column, vl, toLabels ? 'codes' : 'labels', toLabels && numeric) };
+      },
+      async preview(ctx, p) {
+        const { source } = this.plan(ctx, p);
+        return { rows: await count(ctx, source) };
+      },
+      async apply(ctx, p) {
+        const { c, vl, toLabels, numeric, source } = this.plan(ctx, p);
+        const rows = await count(ctx, source);
+        let type = 'text';
+        if (!toLabels) {
+          // Back to codes: numbers when every code is one and every value without a label is a number too.
+          if (vl.labels.every(([code]) => typeof code === 'number')) {
+            const num = `cast(${q(p.column)} as numeric)`;
+            const res = await ctx.engine.exec(`select sum(cast(${num} as text) != cast(${q(p.column)} as text)), sum(typeof(${num}) = 'real') from data where ${q(p.column)} is not null and not (${source})`);
+            const [other, fractions] = res[0].values[0].map(Number);
+            if (!other) type = !fractions && vl.labels.every(([code]) => Number.isInteger(code)) ? 'integer' : 'number';
+          }
+          if (type === 'text' && !rows) type = c.type;
+        }
+        await ctx.rebuildColumn(p.column, type, labelCase(p.column, vl, toLabels, numeric));
+        const col = ctx.column(p.column);
+        col.valueLabels = Object.assign({}, vl, { values: toLabels ? 'labels' : 'codes' });
+        ctx.columnsChanged = true;
+        return { rows };
+      },
+      toSQL(p, ctx) {
+        const c = ctx && ctx.column(p.column);
+        return c && c.valueLabels ? [`UPDATE data SET ${q(p.column)} = ${labelCase(p.column, c.valueLabels, p.direction !== 'codes', p.direction !== 'codes' && numericCodes(c, c.valueLabels))};`] : [];
+      },
+      toR(p, ctx) {
+        const c = ctx && ctx.column(p.column);
+        if (!c || !c.valueLabels) return `# ${D.t('op.err.no.value.labels', { name: p.column })}`;
+        return `df$${q(p.column)} <- dm_value_labels(df$${q(p.column)}, ${rLabels(c.valueLabels)}, to = ${rstr(p.direction === 'codes' ? 'codes' : 'labels')})`;
+      },
+    });
+
+    return { cleanName, mapping, labelPairs };
   });
 })();

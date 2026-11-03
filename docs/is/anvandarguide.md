@@ -49,14 +49,16 @@ sem frá var horfið. Það býr til sýnigagnasafnið, dálk í því og myndri
 Slepptu skrá á flötinn, límdu inn töflu eða sæktu skrá af vefslóð (þjónninn þarf að leyfa CORS; deildri Dataspatium-uppsetningu
 er bætt við beint). Athugaðu forskoðunina: giskað er á stafakóðun, aðgreini, fyrirsagnaröð og tugabrotstákn, en þeim má breyta.
 Í dálkaskrefinu fær hver dálkur gerð; kóðar með núlli fremst (sveitarfélagakóðar, kennitölur) eru geymdir sem texti. Gefðu
-gagnasafninu heiti og fluttu inn. Hnapparnir undir fletinum bæta við gögnum sem fylgja forritinu: sýnigögnunum *Mannfjöldi
-eftir sveitarfélögum 2024 (Svíþjóð)* og sænskum sveitarfélaga- og lénamörkum SCB fyrir kort.
+gagnasafninu heiti og fluttu inn. Undir fletinum eru gögn sem fylgja forritinu: hnappur fyrir sýnigögnin *Mannfjöldi
+eftir sveitarfélögum 2024 (Svíþjóð)* og listinn *Mörk fyrir kort* með mörkum sveitarfélaga og svæða fyrir Svíþjóð,
+Danmörku, Noreg og Finnland.
 
 Undir *Opnar vefþjónustur* eru forstillingar fyrir hagstofur og fleiri stofnanir á Íslandi, í Danmörku, Noregi, Finnlandi og
 Svíþjóð, sjálfstjórnarsvæðin, Nordic Statistics og Eurostat (á Íslandi Hagstofa Íslands og Veðurstofa Íslands). Landahnapparnir
 fyrir ofan listann velja hvaða landa upprunar birtast. Flettu eða leitaðu að töflu, veldu breytur, forskoðaðu og sæktu í nýtt
 gagnasafn eða bættu við fyrirliggjandi. Sótt gagnasafn man fyrirspurn sína, svo sækja má það aftur úr Umsjón þegar uppruninn
-hefur verið uppfærður.
+hefur verið uppfærður, og *Vistaðar sóknir* í Sækja uppfærir slík gagnasöfn með einum smelli og keyrir uppskriftir
+þeirra aftur.
 
 ### 2. Farðu yfir og leiðréttu (Vinna)
 
@@ -132,7 +134,7 @@ gegnum R: Parquet, SPSS, Stata og RDS. SQLite og Parquet halda gerðunum nákvæ
 
 Hvert gagnasafn hefur yfirlit (uppruni, stærð, lýsing), dálkalista með gerðum, merkimiðum, lýsingum og einingum (stillt undir
 Vinna með *Merkimiði, lýsing og eining*), sögu alls sem hefur verið gert og útgáfur. Endurnefndu og breyttu stuttheiti, eyddu
-eða sæktu aftur úr vefþjónustu. Undir *Vinnusvæði* sérðu hversu mikil geymsla er í notkun, biður um varanlega geymslu, tekur
+eða sæktu aftur úr vefþjónustu (uppfærðu með uppskriftinni eða bættu við röðum). Undir *Vinnusvæði* sérðu hversu mikil geymsla er í notkun, biður um varanlega geymslu, tekur
 afrit sem ZIP og endurheimtir. Forritið minnir þig við ræsingu þegar lengri tími en valinn fjöldi daga er liðinn frá síðasta
 afriti (30 dagar sjálfgefið; breytt eða slökkt á í sama spjaldi). Í Edge og Chrome má auk þess spegla vinnusvæðið í færanlega
 möppu á diski, sjálfkrafa við hverja breytingu.

@@ -158,13 +158,15 @@
     }
 
     /**
-     * Projection for longitude/latitude data: transverse Mercator about 15°E (the look of SWEREF 99 TM
-     * maps) when the data lies within Europe, Mercator elsewhere.
+     * Projection for longitude/latitude data: transverse Mercator when the data lies within Europe, about the
+     * central meridian of the national grid where the data lies (9°E as UTM 32 in Denmark, 15°E as SWEREF 99 TM
+     * and UTM 33 in Sweden and Norway, 27°E as TM35FIN in Finland), Mercator elsewhere.
      * @param {{minX: number, maxX: number}|null} b bounds of the data in degrees
      */
     function lonLatProjection(b) {
-      if (!b || (b.minX >= TM_LON_RANGE[0] && b.maxX <= TM_LON_RANGE[1])) return { type: 'transverseMercator', rotate: [-15, 0, 0] };
-      return { type: 'mercator' };
+      if (b && (b.minX < TM_LON_RANGE[0] || b.maxX > TM_LON_RANGE[1])) return { type: 'mercator' };
+      const mid = b ? (b.minX + b.maxX) / 2 : 15;
+      return { type: 'transverseMercator', rotate: [mid < 11 ? -9 : mid > 21 ? -27 : -15, 0, 0] };
     }
 
     /** Id of the bundled boundary layer a state draws under its points, or null. */

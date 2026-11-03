@@ -36,7 +36,7 @@ English 1,234.5; in Swedish 1 234,5).
 | `{{summor.kolumn}}`, `{{medel.kolumn}}`, `{{minsta.kolumn}}`, `{{storsta.kolumn}}` | Sum, mean, minimum and maximum of a number column (replace `kolumn` with the column name) |
 | `{{grupp}}`, `{{gruppkolumn}}` | The group's value and column name in batch runs |
 | `{{#rader}} … {{/rader}}` | Repeated for each row (at most 1,000); inside, the column names are used, for example `{{kommun}}` |
-| `{{#kolumner}} … {{/kolumner}}` | Repeated for each column with `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}` and `{{enhet}}` (the last two are empty unless set under Process) |
+| `{{#kolumner}} … {{/kolumner}}` | Repeated for each column with `{{namn}}`, `{{typ}}`, `{{etikett}}`, `{{beskrivning}}`, `{{enhet}}` and `{{vardeetiketter}}` (for example `1 = Man; 2 = Woman`; the last three are empty unless set under Process) |
 | `{{#beskrivning}} … {{/beskrivning}}` | Shown only if the value exists (Mustache section) |
 
 Column names are written as in the table (cleaned names, for example `folkmangd`).
@@ -50,7 +50,7 @@ Column names are written as in the table (cleaned names, for example `folkmangd`
 All parts are optional: without `kolumner` all columns are included, without `topp` 50 rows are shown (at most
 5,000), `sortera` takes `stigande` (ascending) or `fallande` (descending), `filter` takes conditions with `=`, `!=`,
 `>`, `>=`, `<`, `<=` or `innehåller` (contains) that can be combined with `och` or `and`, and `rubrik` is the table's
-caption. `kalla: kolumner` instead gives a table of the dataset's columns (name, type, label, description and unit).
+caption. `kalla: kolumner` instead gives a table of the dataset's columns (name, type, label, description and unit, and value labels when a column has them).
 Number columns are right-aligned.
 
 ### Charts

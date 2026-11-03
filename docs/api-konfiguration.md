@@ -13,6 +13,8 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Folkhälsomyndigheten Folkhälsodata | Folkhälsoenkäter, smittsamma sjukdomar, vaccinationer m.m. | Nej | Bläddra, välj värden, Hämta |
 | Kolada | Nyckeltal för kommuner och regioner | Nej | Sök nyckeltal (id), hämta värden per år eller per kommun |
 | Eurostat | EU-statistik | Nej | Ange datamängdens kod och filter |
+| Europeiska centralbanken (ECB) | Valutakurser och ECB:s statistik (SDMX) | Nej | Välj valutor och frekvens för växelkurserna, eller ange dataflöde och serienyckel |
+| OECD | Arbetslöshet, BNP-tillväxt och OECD:s övriga statistik (SDMX) | Nej | Välj länder, eller ange dataflöde och serienyckel |
 | Socialstyrelsen Statistikdatabasen | Dödsorsaker, diagnoser, läkemedel, operationer m.m. | Nej | Välj ämne, välj värden per variabel, Hämta |
 | SMHI meteorologiska observationer | Väderstationernas mätvärden | Nej | Välj parameter, station och tidsutsnitt |
 | Luftkvalitet (Naturvårdsverkets datavärdskap) | Luftföroreningar per mätstation | Nej | Lista tidsserier, hämta värden för en tidsserie |
@@ -31,7 +33,8 @@ behövs en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare
 Statistikbyråerna och flera andra myndigheter i Danmark, Norge, Finland och Island, de självstyrande områdena
 och Nordic Statistics ingår också. Alla är kontrollerade för CORS (anrop med `Origin`-header) i november 2026
 och kräver ingen nyckel. Landsknapparna ovanför listan i Inhämta väljer vilka länders källor som visas
-(Sverige, Danmark, Norge, Finland, Island, Färöarna, Grönland, Åland, Norden, EU); valet sparas i webbläsaren.
+(Sverige, Danmark, Norge, Finland, Island, Färöarna, Grönland, Åland, Norden, EU, Internationellt); valet sparas i
+webbläsaren.
 Källornas namn och beskrivningar följer appens språk, och PxWeb-tjänster som finns på flera språk (SCB, SSB,
 Statistikcentralen, Hagstofa, Grønlands Statistik, ÅSUB) bläddras på appens språk när tjänsten har det.
 
@@ -80,9 +83,13 @@ Egenskapspanelen visar utgivare, licens, anropsgräns och de senaste anropen med
 
 ## Uppdatera en hämtad datamängd
 
-Datamängder som kommer från ett API minns sitt urval. I **Hantera** finns knappen **Hämta igen** som gör om
-hämtningen och antingen lägger till raderna eller ersätter alla rader. Recept som gjorts på datamängden kan sedan
-köras igen från **Bearbeta › Recept**.
+Datamängder som kommer från ett API minns källan och urvalet. Under **Sparade hämtningar** i Inhämta listas de med
+källa, senaste hämtning och antal rader. **Uppdatera** hämtar samma uppgifter igen, ersätter raderna och spelar upp
+datamängdens recept, så att rensningar och beräknade kolumner kommer tillbaka; **Uppdatera alla** gör det för alla
+i tur och ordning, och kommandopaletten och Hantera har samma sak som **Hämta om API-datamängder**. Misslyckas
+hämtningen eller ett receptsteg lämnas datamängden som den var och felet visas. Ett receptsteg som behöver en
+hemlighet (till exempel en nyckel för pseudonymisering) kan inte spelas upp automatiskt. I **Hantera** finns också
+**Hämta igen**, där du väljer mellan att uppdatera och att lägga de nya raderna sist utan att köra receptet.
 
 ## Nycklar och säkerhet
 
@@ -159,7 +166,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `id` | Unikt id, små bokstäver, siffror, bindestreck |
 | `name`, `publisher`, `description`, `docs`, `license`, `notes` | Visas i appen |
 | `level` | 1 = ingen nyckel, 2 = nyckel krävs |
-| `country` | Land eller område för landsfiltret: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC` eller `EU` |
+| `country` | Land eller område för landsfiltret: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU` eller `INT` |
 | `i18n` | Översättningar per språk (`sv` är grundspråket i filen): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<namn>": { "label", "help", "example", "options": { "<värde>": "etikett" } } } } }, "dataset": { "<id>": "namnmall" } } }`. Appen visar texterna för sitt språk; exporten innehåller alla |
 | `baseUrl` | Adress som endpointernas sökvägar läggs till efter |
 | `headers` | Standardheaders för alla anrop |
@@ -179,7 +186,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `params` | Parametrar, se nedan |
 | `body`, `bodyType` | Kropp för POST: JSON-mall där `"{namn}"` byts mot värdet (`json`, standard), `form` eller `text` |
 | `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`), `next-url` (`path` till nästa adress i svaret), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` till en länklista, `rel`); `maxPages` begränsar antalet anrop |
-| `response` | `format`: `json` (`path` till posterna, `explode` för nästlad lista), `jsonstat`, `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`. Gemensamt: `constants` (kolumn: sökväg i rotdokumentet), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
+| `response` | `format`: `json` (`path` till posterna, `explode` för nästlad lista), `jsonstat`, `sdmx` (SDMX-JSON 1.0 och 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`. Gemensamt: `constants` (kolumn: sökväg i rotdokumentet), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` med platshållare, `keys` för dubblettkontroll vid Lägg till rader |
 
 ### Parameter
@@ -197,7 +204,9 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 ### Tabellen som skapas
 
 JSON-poster plattas ut (nästlade objekt blir kolumner med punkt i namnet, listor blir JSON-text). JSON-stat ger en
-rad per cell med kod- och etikettkolumn per dimension, tidskolumn och en värdekolumn per mått. Kolumnnamn
+rad per cell med kod- och etikettkolumn per dimension, tidskolumn och en värdekolumn per mått. SDMX-JSON ger en
+rad per observation: för varje dimension en kodkolumn (`<namn>_kod`) och en textkolumn när koderna har texter,
+tidsperioden, värdet (`varde`) och serie- och observationsattributen som har värden. Kolumnnamn
 städas som vid filimport (å, ä, ö blir a, a, o) och typer härleds med decimalpunkt; koder med inledande nollor
 förblir text.
 
@@ -216,8 +225,9 @@ förblir text.
 - MET Norways villkor kräver att anropande program identifierar sig med en User-Agent. Webbläsare skickar sin
   egen identifiering, som tjänsten i dag accepterar; håll antalet anrop lågt och räkna med att tjänsten kan
   strypa anonyma anrop.
-- SDMX-JSON stöds inte ännu; använd JSON-stat där tjänsten erbjuder det (SCB, Eurostat, Folkhälsomyndigheten).
-  JSON-stat 1.x (Danmarks Statistik) och 2.0 läses båda.
+- SDMX läses som SDMX-JSON 1.0 eller 2.0 (datameddelanden; ECB och OECD skickar det med parametern
+  `format=jsondata` eller `Accept`-header). SDMX-ML och SDMX-CSV tolkas inte. JSON-stat 1.x (Danmarks Statistik)
+  och 2.0 läses båda.
 - PX-filer tolkas inte i JavaScript; hämta JSON-stat eller använd paketet pxR i R.
 - Stora svar (hundratusentals rader) tar tid att tolka i webbläsaren. Begränsa urvalet eller använd `maxPages`.
 - Anrop sker bara när du trycker Hämta eller öppnar ett fält med alternativ från tjänsten.

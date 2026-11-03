@@ -1,0 +1,458 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "ecb",
+  "name": "Europeiska centralbanken (ECB)",
+  "publisher": "Europeiska centralbanken",
+  "description": "Växelkurser, räntor, inflation och annan statistik från ECB:s Data Portal i formatet SDMX-JSON. Varje observation blir en rad med serienyckelns koder och namn, period och värde.",
+  "docs": "https://data.ecb.europa.eu/help/api/overview",
+  "license": {
+    "name": "Fri återanvändning med källangivelse (ECB)",
+    "url": "https://www.ecb.europa.eu/home/disclaimer/html/index.en.html"
+  },
+  "level": 1,
+  "country": "EU",
+  "baseUrl": "https://data-api.ecb.europa.eu/service/data",
+  "auth": {
+    "type": "none"
+  },
+  "rateLimit": {
+    "requests": 5,
+    "perSeconds": 1
+  },
+  "endpoints": [
+    {
+      "id": "exchange",
+      "name": "Växelkurser mot euro",
+      "description": "ECB:s referenskurser, hur många enheter av valutan en euro kostar. Välj valutor och frekvens; medelkursen per period hämtas.",
+      "method": "GET",
+      "path": "/EXR/{freq}.{currency}.EUR.SP00.A",
+      "params": [
+        {
+          "name": "freq",
+          "in": "path",
+          "label": "Frekvens",
+          "type": "enum",
+          "default": "M",
+          "options": [
+            {
+              "value": "D",
+              "label": "Dag"
+            },
+            {
+              "value": "M",
+              "label": "Månad"
+            },
+            {
+              "value": "A",
+              "label": "År"
+            }
+          ]
+        },
+        {
+          "name": "currency",
+          "in": "path",
+          "label": "Valutor",
+          "type": "multi",
+          "join": "+",
+          "required": true,
+          "default": "SEK,NOK,DKK,ISK,USD",
+          "example": "SEK,NOK,DKK,ISK,USD",
+          "help": "ISO-koder åtskilda med kommatecken, till exempel SEK,NOK,USD."
+        },
+        {
+          "name": "startPeriod",
+          "in": "query",
+          "label": "Från period",
+          "type": "string",
+          "example": "2020-01"
+        },
+        {
+          "name": "endPeriod",
+          "in": "query",
+          "label": "Till period",
+          "type": "string"
+        },
+        {
+          "name": "lastNObservations",
+          "in": "query",
+          "label": "Bara de senaste n observationerna",
+          "type": "number"
+        },
+        {
+          "name": "format",
+          "in": "query",
+          "type": "string",
+          "default": "jsondata",
+          "hidden": true
+        }
+      ],
+      "response": {
+        "format": "sdmx"
+      },
+      "dataset": {
+        "name": "ECB växelkurser {currency}"
+      }
+    },
+    {
+      "id": "data",
+      "name": "Hämta serier (SDMX)",
+      "description": "Valfritt dataflöde och serienyckel från ECB Data Portal. Exempel: FM med B.U2.EUR.4F.KR.MRR_FR.LEV ger styrräntan, ICP med M.SE+DK+FI.N.000000.4.ANR inflationen. Nycklar hittar du på data.ecb.europa.eu.",
+      "method": "GET",
+      "path": "/{flow}/{key}",
+      "params": [
+        {
+          "name": "flow",
+          "in": "path",
+          "label": "Dataflöde",
+          "type": "string",
+          "required": true,
+          "example": "ICP"
+        },
+        {
+          "name": "key",
+          "in": "path",
+          "label": "Serienyckel",
+          "type": "string",
+          "required": true,
+          "raw": true,
+          "example": "M.SE+DK+FI.N.000000.4.ANR",
+          "help": "Dimensionernas koder åtskilda med punkt; + väljer flera koder och en tom position alla."
+        },
+        {
+          "name": "startPeriod",
+          "in": "query",
+          "label": "Från period",
+          "type": "string",
+          "example": "2020-01"
+        },
+        {
+          "name": "endPeriod",
+          "in": "query",
+          "label": "Till period",
+          "type": "string"
+        },
+        {
+          "name": "lastNObservations",
+          "in": "query",
+          "label": "Bara de senaste n observationerna",
+          "type": "number"
+        },
+        {
+          "name": "format",
+          "in": "query",
+          "type": "string",
+          "default": "jsondata",
+          "hidden": true
+        }
+      ],
+      "response": {
+        "format": "sdmx"
+      },
+      "dataset": {
+        "name": "ECB {flow} {key}"
+      }
+    }
+  ],
+  "i18n": {
+    "en": {
+      "name": "European Central Bank (ECB)",
+      "publisher": "European Central Bank",
+      "description": "Exchange rates, interest rates, inflation and other statistics from the ECB Data Portal in the SDMX-JSON format. Every observation becomes a row with the codes and names of the series key, the period and the value.",
+      "endpoints": {
+        "exchange": {
+          "name": "Exchange rates against the euro",
+          "description": "The ECB reference rates: how many units of the currency one euro costs. Choose currencies and frequency; the average rate per period is fetched.",
+          "params": {
+            "freq": {
+              "label": "Frequency",
+              "options": {
+                "D": "Day",
+                "M": "Month",
+                "A": "Year"
+              }
+            },
+            "currency": {
+              "label": "Currencies",
+              "help": "ISO codes separated by commas, for example SEK,NOK,USD."
+            },
+            "startPeriod": {
+              "label": "From period"
+            },
+            "endPeriod": {
+              "label": "To period"
+            },
+            "lastNObservations": {
+              "label": "Only the latest n observations"
+            }
+          }
+        },
+        "data": {
+          "name": "Fetch series (SDMX)",
+          "description": "Any dataflow and series key from the ECB Data Portal. Examples: FM with B.U2.EUR.4F.KR.MRR_FR.LEV gives the main refinancing rate, ICP with M.SE+DK+FI.N.000000.4.ANR inflation. Keys are found on data.ecb.europa.eu.",
+          "params": {
+            "flow": {
+              "label": "Dataflow"
+            },
+            "key": {
+              "label": "Series key",
+              "help": "The codes of the dimensions separated by full stops; + chooses several codes and an empty position all of them."
+            },
+            "startPeriod": {
+              "label": "From period"
+            },
+            "endPeriod": {
+              "label": "To period"
+            },
+            "lastNObservations": {
+              "label": "Only the latest n observations"
+            }
+          }
+        }
+      },
+      "dataset": {
+        "exchange": "ECB exchange rates {currency}",
+        "data": "ECB {flow} {key}"
+      }
+    },
+    "da": {
+      "name": "Den Europæiske Centralbank (ECB)",
+      "publisher": "Den Europæiske Centralbank",
+      "description": "Valutakurser, renter, inflation og anden statistik fra ECB's Data Portal i formatet SDMX-JSON. Hver observation bliver en række med seriens koder og navne, periode og værdi.",
+      "endpoints": {
+        "exchange": {
+          "name": "Valutakurser over for euro",
+          "description": "ECB's referencekurser: hvor mange enheder af valutaen en euro koster. Vælg valutaer og frekvens; gennemsnitskursen pr. periode hentes.",
+          "params": {
+            "freq": {
+              "label": "Frekvens",
+              "options": {
+                "D": "Dag",
+                "M": "Måned",
+                "A": "År"
+              }
+            },
+            "currency": {
+              "label": "Valutaer",
+              "help": "ISO-koder adskilt med kommaer, for eksempel DKK,NOK,USD."
+            },
+            "startPeriod": {
+              "label": "Fra periode"
+            },
+            "endPeriod": {
+              "label": "Til periode"
+            },
+            "lastNObservations": {
+              "label": "Kun de seneste n observationer"
+            }
+          }
+        },
+        "data": {
+          "name": "Hent serier (SDMX)",
+          "description": "Vilkårligt dataflow og serienøgle fra ECB Data Portal. Eksempler: FM med B.U2.EUR.4F.KR.MRR_FR.LEV giver styringsrenten, ICP med M.SE+DK+FI.N.000000.4.ANR inflationen. Nøgler findes på data.ecb.europa.eu.",
+          "params": {
+            "flow": {
+              "label": "Dataflow"
+            },
+            "key": {
+              "label": "Serienøgle",
+              "help": "Dimensionernes koder adskilt med punktum; + vælger flere koder og en tom position dem alle."
+            },
+            "startPeriod": {
+              "label": "Fra periode"
+            },
+            "endPeriod": {
+              "label": "Til periode"
+            },
+            "lastNObservations": {
+              "label": "Kun de seneste n observationer"
+            }
+          }
+        }
+      },
+      "dataset": {
+        "exchange": "ECB valutakurser {currency}",
+        "data": "ECB {flow} {key}"
+      }
+    },
+    "nb": {
+      "name": "Den europeiske sentralbanken (ECB)",
+      "publisher": "Den europeiske sentralbanken",
+      "description": "Valutakurser, renter, inflasjon og annen statistikk fra ECBs Data Portal i formatet SDMX-JSON. Hver observasjon blir en rad med seriens koder og navn, periode og verdi.",
+      "endpoints": {
+        "exchange": {
+          "name": "Valutakurser mot euro",
+          "description": "ECBs referansekurser: hvor mange enheter av valutaen en euro koster. Velg valutaer og frekvens; gjennomsnittskursen per periode hentes.",
+          "params": {
+            "freq": {
+              "label": "Frekvens",
+              "options": {
+                "D": "Dag",
+                "M": "Måned",
+                "A": "År"
+              }
+            },
+            "currency": {
+              "label": "Valutaer",
+              "help": "ISO-koder skilt med komma, for eksempel NOK,SEK,USD."
+            },
+            "startPeriod": {
+              "label": "Fra periode"
+            },
+            "endPeriod": {
+              "label": "Til periode"
+            },
+            "lastNObservations": {
+              "label": "Bare de siste n observasjonene"
+            }
+          }
+        },
+        "data": {
+          "name": "Hent serier (SDMX)",
+          "description": "Valgfri dataflyt og serienøkkel fra ECB Data Portal. Eksempler: FM med B.U2.EUR.4F.KR.MRR_FR.LEV gir styringsrenten, ICP med M.SE+DK+FI.N.000000.4.ANR inflasjonen. Nøkler finner du på data.ecb.europa.eu.",
+          "params": {
+            "flow": {
+              "label": "Dataflyt"
+            },
+            "key": {
+              "label": "Serienøkkel",
+              "help": "Dimensjonenes koder skilt med punktum; + velger flere koder og en tom posisjon alle."
+            },
+            "startPeriod": {
+              "label": "Fra periode"
+            },
+            "endPeriod": {
+              "label": "Til periode"
+            },
+            "lastNObservations": {
+              "label": "Bare de siste n observasjonene"
+            }
+          }
+        }
+      },
+      "dataset": {
+        "exchange": "ECB valutakurser {currency}",
+        "data": "ECB {flow} {key}"
+      }
+    },
+    "fi": {
+      "name": "Euroopan keskuspankki (EKP)",
+      "publisher": "Euroopan keskuspankki",
+      "description": "Valuuttakurssit, korot, inflaatio ja muut tilastot EKP:n Data Portalista SDMX-JSON-muodossa. Jokaisesta havainnosta tulee rivi, jossa ovat sarja-avaimen koodit ja nimet, ajanjakso ja arvo.",
+      "endpoints": {
+        "exchange": {
+          "name": "Valuuttakurssit euroa vastaan",
+          "description": "EKP:n viitekurssit: montako valuutan yksikköä euro maksaa. Valitse valuutat ja tiheys; kauden keskikurssi haetaan.",
+          "params": {
+            "freq": {
+              "label": "Tiheys",
+              "options": {
+                "D": "Päivä",
+                "M": "Kuukausi",
+                "A": "Vuosi"
+              }
+            },
+            "currency": {
+              "label": "Valuutat",
+              "help": "ISO-koodit pilkuin erotettuina, esimerkiksi SEK,NOK,USD."
+            },
+            "startPeriod": {
+              "label": "Alkaen"
+            },
+            "endPeriod": {
+              "label": "Päättyen"
+            },
+            "lastNObservations": {
+              "label": "Vain n viimeisintä havaintoa"
+            }
+          }
+        },
+        "data": {
+          "name": "Hae sarjoja (SDMX)",
+          "description": "Mikä tahansa EKP:n Data Portalin tietovirta ja sarja-avain. Esimerkkejä: FM ja B.U2.EUR.4F.KR.MRR_FR.LEV antaa ohjauskoron, ICP ja M.SE+DK+FI.N.000000.4.ANR inflaation. Avaimet löytyvät osoitteesta data.ecb.europa.eu.",
+          "params": {
+            "flow": {
+              "label": "Tietovirta"
+            },
+            "key": {
+              "label": "Sarja-avain",
+              "help": "Ulottuvuuksien koodit pisteillä erotettuina; + valitsee useita koodeja ja tyhjä kohta kaikki."
+            },
+            "startPeriod": {
+              "label": "Alkaen"
+            },
+            "endPeriod": {
+              "label": "Päättyen"
+            },
+            "lastNObservations": {
+              "label": "Vain n viimeisintä havaintoa"
+            }
+          }
+        }
+      },
+      "dataset": {
+        "exchange": "EKP valuuttakurssit {currency}",
+        "data": "EKP {flow} {key}"
+      }
+    },
+    "is": {
+      "name": "Seðlabanki Evrópu (ECB)",
+      "publisher": "Seðlabanki Evrópu",
+      "description": "Gengi, vextir, verðbólga og önnur tölfræði úr Data Portal ECB á SDMX-JSON-sniði. Hver athugun verður að röð með kóðum og heitum raðlykilsins, tímabili og gildi.",
+      "endpoints": {
+        "exchange": {
+          "name": "Gengi gagnvart evru",
+          "description": "Viðmiðunargengi ECB: hve margar einingar gjaldmiðilsins ein evra kostar. Veldu gjaldmiðla og tíðni; meðalgengi hvers tímabils er sótt.",
+          "params": {
+            "freq": {
+              "label": "Tíðni",
+              "options": {
+                "D": "Dagur",
+                "M": "Mánuður",
+                "A": "Ár"
+              }
+            },
+            "currency": {
+              "label": "Gjaldmiðlar",
+              "help": "ISO-kóðar aðgreindir með kommum, til dæmis ISK,SEK,USD."
+            },
+            "startPeriod": {
+              "label": "Frá tímabili"
+            },
+            "endPeriod": {
+              "label": "Til tímabils"
+            },
+            "lastNObservations": {
+              "label": "Aðeins n nýjustu athuganirnar"
+            }
+          }
+        },
+        "data": {
+          "name": "Sækja raðir (SDMX)",
+          "description": "Hvaða gagnaflæði og raðlykill sem er úr Data Portal ECB. Dæmi: FM með B.U2.EUR.4F.KR.MRR_FR.LEV gefur stýrivexti, ICP með M.SE+DK+FI.N.000000.4.ANR verðbólgu. Lykla má finna á data.ecb.europa.eu.",
+          "params": {
+            "flow": {
+              "label": "Gagnaflæði"
+            },
+            "key": {
+              "label": "Raðlykill",
+              "help": "Kóðar víddanna aðgreindir með punktum; + velur marga kóða og auð staða alla."
+            },
+            "startPeriod": {
+              "label": "Frá tímabili"
+            },
+            "endPeriod": {
+              "label": "Til tímabils"
+            },
+            "lastNObservations": {
+              "label": "Aðeins n nýjustu athuganirnar"
+            }
+          }
+        }
+      },
+      "dataset": {
+        "exchange": "Gengi ECB {currency}",
+        "data": "ECB {flow} {key}"
+      }
+    }
+  }
+}

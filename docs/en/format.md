@@ -16,14 +16,15 @@
 | JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
 | NDJSON, JSON Lines | Yes | No | One object per line |
 | JSON-stat | Yes | No | Recognised automatically (`class: dataset`, versions 1.x and 2.0); one row per cell with codes, texts and value |
+| SDMX-JSON | Yes | No | Data messages in SDMX-JSON 1.0 and 2.0 (for example from the ECB and the OECD) are recognised automatically; one row per observation with a code and text column per dimension, the time period, the value and the attributes |
 | GeoJSON | Yes | Yes | One row per feature; the properties become columns, the geometry a text column with GeoJSON that the map chart draws (the map also reads WKT text in a column, for example from CSV). At export the geometry column (GeoJSON or WKT) becomes each feature's geometry and the other columns its properties |
 | Shapefile (ZIP with shp, dbf, prj, cpg, or shp alone) | Yes | No | The attributes become typed columns according to the dbf schema, the geometry GeoJSON in the column `geometry`. Choose the layer if the ZIP file has several, and simplify the geometry with a tolerance in map units. The coordinates are kept (for example SWEREF 99 TM or longitude/latitude) |
 | XML | Yes | Yes | One row per repeated element (chosen in the import step); attributes and child elements become columns, nested elements get dotted names such as `lage.lan` |
 | SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
 | SQL script (sql) | Yes | No | A script with `CREATE TABLE` and `INSERT`, for example a database dump, is run in an empty SQLite database and the tables are offered for selection. MySQL-specific lines (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` and table options such as `ENGINE=`) are removed first; other dialects work as far as they follow SQLite's syntax |
 | GeoPackage (gpkg) | Yes | No | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
-| SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels, value labels become text |
-| Stata dta | Yes | dta | Through haven. At export the column names are shortened to Stata's rules (32 characters, ASCII) |
+| SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels and value labels column metadata (see below) |
+| Stata dta | Yes | dta | Through haven. Value labels as for SPSS. At export the column names are shortened to Stata's rules (32 characters, ASCII) |
 | SAS sas7bdat, xpt | Yes | No | Through haven |
 | PX (PC-Axis, used by the Nordic statistics offices) | Yes | No | Through the R package pxR; the character encoding is read from the file's CODEPAGE or CHARSET. The result is a long table with one value column |
 | Parquet | Yes | Yes | Through the R package nanoparquet; keeps types exactly |
@@ -42,9 +43,17 @@ The formats that go through R start the R session when needed (a few seconds the
 the file is read by R and handed over with `dm_write()`, so the column types come from R. Yes/no becomes 0/1 in SPSS
 and Stata, which lack a logical type.
 
-Data that is added with a button in Import also ships with the app: the example data *Population per municipality
-2024 (Sweden)* and SCB's municipality and county boundaries (*Digitala gränser*, CC0) as GeoJSON in longitude and latitude,
-see `presets/geo/KALLA.md`. Nothing is fetched from the internet.
+Value labels (codes with names, such as `1 = Man` and `2 = Woman`) travel with the column as metadata in the SQLite
+file (`_columns.value_labels`). When importing SPSS, Stata and SAS you choose in the settings step whether the column
+shows the labels as text (the default) or keeps the codes; the labels are kept either way. They can be set, changed
+and swapped for the codes in Process, are shown in the codebook, reach R as `haven::labelled` and are written to .sav
+and .dta, where a column with the labels as text gets its codes back.
+
+Data that is added in Import also ships with the app: the example data *Population per municipality 2024 (Sweden)*
+and boundaries for maps as GeoJSON in longitude and latitude: municipalities and counties in Sweden (SCB, CC0),
+municipalities and regions in Denmark (DAGI), municipalities and counties in Norway (Kartverket, CC BY 4.0) and
+municipalities and regions in Finland (Statistics Finland, CC BY 4.0). Sources and licences are in
+`presets/geo/KALLA.md`. Nothing is fetched from the internet.
 
 ## Character encoding
 

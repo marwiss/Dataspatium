@@ -25,7 +25,7 @@
           ? `select count(${c}), count(distinct ${c}), min(${c}), max(${c}), avg(${c}) from data`
           : `select count(${c}), count(distinct ${c}), min(${c}), max(${c}), null from data`);
         const [nonNull, distinct, min, max, mean] = base[0].values[0];
-        const entry = { name: col.name, type: col.type, label: col.label, description: col.description || null, unit: col.unit || null, nonNull: Number(nonNull), nulls: rows - Number(nonNull), distinct: Number(distinct), min, max, mean, warnings: [] };
+        const entry = { name: col.name, type: col.type, label: col.label, description: col.description || null, unit: col.unit || null, valueLabels: col.valueLabels || null, nonNull: Number(nonNull), nulls: rows - Number(nonNull), distinct: Number(distinct), min, max, mean, warnings: [] };
         if (col.type === 'text') {
           const checks = await engine.exec(`select
             sum(case when ${c} != trim(${c}) then 1 else 0 end),

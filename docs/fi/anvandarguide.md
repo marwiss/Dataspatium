@@ -50,16 +50,17 @@ kun et enää tarvitse niitä.
 Pudota tiedosto alueelle, liitä taulukko tai nouda tiedosto verkko-osoitteesta (palvelimen on sallittava CORS; jaettu
 Dataspatium-määritys lisätään suoraan). Tarkista esikatselu: merkistökoodaus, erotin, otsikkorivi ja desimaalierotin
 arvataan, mutta niitä voi muuttaa. Sarakevaiheessa jokainen sarake saa tyypin; etunollilla alkavat koodit (kuntakoodit,
-henkilötunnukset) säilytetään tekstinä. Anna aineistolle nimi ja tuo se. Alueen alla olevat painikkeet lisäävät sovelluksen
-mukana tulevaa dataa: esimerkkiaineisto *Väestö kunnittain 2024 (Ruotsi)* sekä SCB:n Ruotsin kuntien ja läänien rajat
-karttoja varten.
+henkilötunnukset) säilytetään tekstinä. Anna aineistolle nimi ja tuo se. Alueen alla on sovelluksen
+mukana tulevaa dataa: painike esimerkkiaineistolle *Väestö kunnittain 2024 (Ruotsi)* ja luettelo *Rajat karttoja
+varten*, jossa ovat Ruotsin, Tanskan, Norjan ja Suomen kuntien ja alueiden rajat.
 
 *Avointen rajapintojen* alla on valmisasetukset Suomen, Ruotsin, Norjan, Tanskan ja Islannin tilastovirastoille ja useille
 muille viranomaisille, itsehallintoalueille, Nordic Statisticsille ja Eurostatille (Suomesta esimerkiksi Tilastokeskus,
 Kuntien avainluvut, THL:n Sotkanet, PRH:n YTJ, Digitraffic, Ilmatieteen laitos ja avoindata.fi). Luettelon yläpuolella olevat
 maapainikkeet valitsevat, minkä maiden lähteet näytetään. Selaa tai hae taulukko, valitse muuttujat, esikatsele ja nouda
 uuteen aineistoon tai lisää olemassa olevaan. Noudettu aineisto muistaa kyselynsä, joten sen voi noutaa uudelleen
-Hallitse-tilasta, kun lähde on päivittynyt.
+Hallitse-tilasta, kun lähde on päivittynyt, ja Nouda-tilan *Tallennetut haut* päivittää tällaiset aineistot yhdellä
+napsautuksella ja toistaa niiden reseptit.
 
 ### 2. Tarkista ja korjaa (Muokkaa)
 
@@ -141,7 +142,7 @@ uudelleen.
 
 Jokaisella aineistolla on yleiskatsaus (lähde, koko, kuvaus), sarakeluettelo tyyppeineen, selitteineen, kuvauksineen ja
 yksikköineen (asetetaan Muokkaa-tilassa toiminnolla *Selite, kuvaus ja yksikkö*), historia kaikesta tehdystä ja versiot.
-Nimeä uudelleen ja vaihda lyhytnimi, poista tai nouda uudelleen rajapinnasta. Kohdassa *Työtila* näet käytetyn
+Nimeä uudelleen ja vaihda lyhytnimi, poista tai nouda uudelleen rajapinnasta (päivitä reseptin kanssa tai lisää rivejä). Kohdassa *Työtila* näet käytetyn
 tallennustilan, pyydät pysyvää tallennustilaa, otat varmuuskopion ZIP-tiedostona ja palautat. Sovellus muistuttaa
 käynnistyessään, kun edellisestä varmuuskopiosta on kulunut valittua päivämäärää pidempään (oletuksena 30 päivää; muutetaan
 tai poistetaan käytöstä samassa kortissa). Edgessä ja Chromessa työtilan voi lisäksi peilata siirrettävään kansioon levylle

@@ -52,8 +52,9 @@ Drop a file on the surface, paste a table or fetch a file from a web address (th
 Dataspatium configuration is added directly). Check the preview: character encoding, delimiter, header row and
 decimal separator are guessed but can be changed. In the column step each column gets a type; codes with leading
 zeros (municipality codes, personal identity numbers) are kept as text. Give the dataset a name and import. The
-buttons below the surface add data that ships with the app: the example data *Population per municipality 2024 (Sweden)*
-and SCB's municipality and county boundaries for maps.
+area below the surface has data that ships with the app: the button for the example data *Population per
+municipality 2024 (Sweden)* and the list *Boundaries for maps* with municipality and region boundaries for Sweden,
+Denmark, Norway and Finland.
 
 Under *Open APIs* there are presets for SCB, the Public Health Agency of Sweden, the National Board of Health and
 Welfare, Kolada, Eurostat, SMHI, air quality data, the Nature Conservation Register, Lantmäteriet's geodata
@@ -61,7 +62,8 @@ catalogue and Sweden's data portal, as well as Boverket and Lantmäteriet Direkt
 In addition there are the statistics offices and several other agencies in Denmark, Norway, Finland and Iceland,
 the self-governing areas and Nordic Statistics; the country buttons above the list choose which countries'
 sources are shown. Browse or search for a table, choose variables, preview and fetch into a new dataset or add to an existing one. A
-fetched dataset remembers its query, so it can be fetched again from Manage when the source has been updated.
+fetched dataset remembers its query, so it can be fetched again from Manage when the source has been updated, and
+*Saved fetches* in Import updates such datasets with one click and replays their recipes.
 
 ### 2. Review and correct (Process)
 
@@ -144,7 +146,7 @@ again.
 
 Every dataset has an overview (source, size, description), a column list with types, labels, descriptions and
 units (set under Process with *Label, description and unit*), a history of everything done and versions. Rename
-and change the short name, delete or re-fetch from API. Under *Workspace* you see how much storage is used, request
+and change the short name, delete or re-fetch from API (update with the recipe, or add rows). Under *Workspace* you see how much storage is used, request
 persistent storage, take a backup as ZIP and restore. The app reminds you at start when more than the chosen
 number of days have passed since the last backup (30 days by default; changed or switched off in the same card).
 In Edge and Chrome the workspace can also be mirrored to a portable folder on disk, automatically on every change.

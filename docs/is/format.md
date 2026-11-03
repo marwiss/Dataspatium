@@ -16,14 +16,15 @@
 | JSON | Já | Já | Listi af hlutum, hlutur sem inniheldur lista (gefa má upp slóð), listi af listum |
 | NDJSON, JSON Lines | Já | Nei | Einn hlutur í hverri línu |
 | JSON-stat | Já | Nei | Greint sjálfkrafa (`class: dataset`); ein röð fyrir hvern reit með kóðum, textum og gildi |
+| SDMX-JSON | Já | Nei | Gagnaskeyti í SDMX-JSON 1.0 og 2.0 (til dæmis frá Seðlabanka Evrópu og OECD) eru greind sjálfkrafa; ein röð fyrir hverja athugun með kóða- og textadálki fyrir hverja vídd, tímabili, gildi og eigindum |
 | GeoJSON | Já | Já | Ein röð fyrir hvert feature; eiginleikarnir verða dálkar, rúmfræðin textadálkur með GeoJSON sem kortamyndritið teiknar (kortið les líka WKT-texta í dálki, til dæmis úr CSV). Við útflutning verður rúmfræðidálkurinn (GeoJSON eða WKT) rúmfræði hvers features og hinir dálkarnir eiginleikar þess |
 | Shapefile (ZIP með shp, dbf, prj, cpg, eða aðeins shp) | Já | Nei | Eigindirnar verða dálkar með gerðum samkvæmt dbf-skemanu, rúmfræðin GeoJSON í dálkinum `geometry`. Veldu lag ef ZIP-skráin hefur fleiri en eitt, og einfaldaðu rúmfræðina með þoli í einingum kortsins. Hnitunum er haldið |
 | XML | Já | Já | Ein röð fyrir hvert endurtekið stak (valið í innflutningsskrefinu); eigindir og undirstök verða dálkar, hreiðruð stök fá punktaheiti eins og `lage.lan` |
 | SQLite | Já | Já | Eigin skrá Dataspatium er endurheimt með gerðum, merkimiðum og sögu; í öðrum gagnagrunnum velurðu töflu og gerðirnar eru teknar úr skemanu |
 | SQL-skrifta (sql) | Já | Nei | Skrifta með `CREATE TABLE` og `INSERT`, til dæmis afrit úr gagnagrunni, er keyrð í tómum SQLite-gagnagrunni og töflurnar boðnar til vals. MySQL-sértækar línur (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og töfluvalkostir eins og `ENGINE=`) eru fjarlægðar fyrst; aðrar mállýskur virka að því marki sem þær fylgja málskipan SQLite |
 | GeoPackage (gpkg) | Já | Nei | Lögin (feature- og eigindatöflur) eru valin sem töflur; rúmfræðidálkurinn verður GeoJSON sem kortamyndritið teiknar, hnitakerfið er sýnt |
-| SPSS sav, zsav, por | Já | sav | Gegnum R-pakkann haven. Breytumerkimiðar verða dálkamerkimiðar, gildismerkimiðar verða texti |
-| Stata dta | Já | dta | Gegnum haven. Við útflutning eru dálkaheitin stytt samkvæmt reglum Stata (32 stafir, ASCII) |
+| SPSS sav, zsav, por | Já | sav | Gegnum R-pakkann haven. Breytumerkimiðar verða dálkamerkimiðar og gildismerkimiðar lýsigögn dálksins (sjá neðar) |
+| Stata dta | Já | dta | Gegnum haven. Gildismerkimiðar eins og fyrir SPSS. Við útflutning eru dálkaheitin stytt samkvæmt reglum Stata (32 stafir, ASCII) |
 | SAS sas7bdat, xpt | Já | Nei | Gegnum haven |
 | PX (PC-Axis, notað af norrænu hagstofunum) | Já | Nei | Gegnum R-pakkann pxR; stafakóðunin er lesin úr CODEPAGE eða CHARSET skrárinnar. Niðurstaðan er löng tafla með einum gildisdálki |
 | Parquet | Já | Já | Gegnum R-pakkann nanoparquet; heldur gerðum nákvæmlega |
@@ -42,9 +43,16 @@ Sniðin sem fara gegnum R ræsa R-setuna þegar þörf krefur (nokkrar sekúndur
 skrána og afhendir hana með `dm_write()`, svo dálkgerðirnar koma frá R. Já/nei verður 0/1 í SPSS og Stata, sem hafa ekki
 rökgerð.
 
-Með forritinu fylgja líka gögn sem bætt er við með hnappi í Sækja: sýnigögnin *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)*
-og sænsk sveitarfélaga- og lénamörk SCB (*Digitala gränser*, CC0) sem GeoJSON í lengd og breidd, sjá `presets/geo/KALLA.md`.
-Ekkert er sótt af netinu.
+Gildismerkimiðar (kóðar með heitum, eins og `1 = Karl` og `2 = Kona`) fylgja dálkinum sem lýsigögn í SQLite-skránni
+(`_columns.value_labels`). Við innflutning SPSS, Stata og SAS velur þú í stillingaskrefinu hvort dálkurinn sýni merkimiðana
+sem texta (sjálfgefið) eða haldi kóðunum; merkimiðarnir eru vistaðir í báðum tilvikum. Þá má stilla, breyta og skipta út
+fyrir kóðana í Vinna, þeir birtast í kóðabókinni, ná til R sem `haven::labelled` og eru skrifaðir í .sav og .dta, þar sem
+dálkur með merkimiðunum sem texta fær kóðana sína aftur.
+
+Með forritinu fylgja líka gögn sem bætt er við í Sækja: sýnigögnin *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* og mörk
+fyrir kort sem GeoJSON í lengd og breidd: sveitarfélög og lén í Svíþjóð (SCB, CC0), sveitarfélög og svæði í Danmörku (DAGI),
+sveitarfélög og fylki í Noregi (Kartverket, CC BY 4.0) og sveitarfélög og héruð í Finnlandi (Hagstofa Finnlands, CC BY 4.0).
+Heimildir og leyfi eru í `presets/geo/KALLA.md`. Ekkert er sótt af netinu.
 
 ## Stafakóðun
 

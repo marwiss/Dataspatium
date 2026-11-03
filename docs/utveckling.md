@@ -32,6 +32,13 @@ Kommun- och länsgränserna byggs av `python tools/build_boundaries.py [arkiv.zi
 (shapefiler i SWEREF 99 TM, CC0): skriptet läser shapefilerna med standardbiblioteket, räknar om koordinaterna
 till WGS 84 med Lantmäteriets Gauss-Krüger-formler och skriver `presets/geo/lan.geojson`,
 `presets/geo/kommuner.geojson` och `presets/geo/KALLA.md`. Utan argument hämtas det aktuella arkivet från SCB.
+
+Gränserna för Danmark, Norge och Finland byggs av `python tools/build_nordic_boundaries.py [dk] [no] [fi]`
+(standardbiblioteket): DAGI 1:500 000 från en kopia på GitHub (Dataforsyningen kräver numera inloggning),
+Kartverkets N1000 via Geonorges nedladdnings-API och Statistikcentralens WFS. De norska kommunerna klipps längs
+kusten i en plan graf, och gemensamma gränser förenklas en gång per båge så att grannytor inte får glipor.
+Nedladdningarna sparas i `--cache`; `SETTINGS` i skriptet styr toleransen och minsta ö. Källorna står i
+`presets/geo/KALLA.md` (avsnittet om Sverige skrivs om av `build_boundaries.py`, de andra lämnas orörda).
 Kör sedan `python tools/wrap_local.py`.
 
 ## Språk och översättningar

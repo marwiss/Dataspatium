@@ -183,6 +183,20 @@ def write_collection(path, features, name):
     print(f"  wrote {path.relative_to(ROOT).as_posix()} ({len(features)} features, {len(text.encode('utf-8')) // 1024} kB)")
 
 
+def write_source_note(section):
+    """Replace the Swedish section of presets/geo/KALLA.md; the sections of the other countries (written by hand
+    for tools/build_nordic_boundaries.py) stay as they are."""
+    path = OUT / "KALLA.md"
+    text = path.read_text(encoding="utf-8") if path.exists() else "# Kommun- och regiongränser\n"
+    start = text.find("## Sverige")
+    if start < 0:
+        text = text.rstrip("\n") + "\n\n" + section
+    else:
+        end = text.find("\n## ", start + 1)
+        text = text[:start] + section + (text[end:] if end >= 0 else "")
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
 def main(argv):
     if len(argv) > 1:
         archive = pathlib.Path(argv[1]).read_bytes()
@@ -227,16 +241,15 @@ def main(argv):
             kommun_features.append({"type": "Feature", "properties": {"kommunkod": code, "kommun": row["KnNamn"], "lanskod": code[:2], "lan": lan_name.get(code[:2], "")}, "geometry": geom})
     write_collection(OUT / "kommuner.geojson", kommun_features, "Kommungränser (SCB)")
 
-    (OUT / "KALLA.md").write_text(
-        "# Kommun- och länsgränser\n\n"
+    write_source_note(
+        "## Sverige: `lan.geojson`, `kommuner.geojson`\n\n"
         f"Källa: SCB, *Digitala gränser* ({SCB_PAGE}), arkiv `{pathlib.Path(source).name}` (version {version}), "
         "koordinatsystem SWEREF 99 TM i originalet.\n\n"
         "Licens: CC0 1.0. SCB: \"Vi använder licensen CC0 för dessa data, vilket innebär att du får använda och sprida "
         "eller tillgängliggöra sådana data utan krav på att ange källa.\" Gränserna är förenklade för tematiska kartor "
         "och inte avsedda för analyser av exakta gränser.\n\n"
         "Filerna här är omräknade till WGS 84 (longitud, latitud; fem decimaler) och skrivna som GeoJSON av "
-        "`tools/build_boundaries.py`. Yttre ringar är medurs som i shapefilen.\n",
-        encoding="utf-8", newline="\n")
+        "`tools/build_boundaries.py`. Yttre ringar är medurs som i shapefilen.\n")
     print("  wrote presets/geo/KALLA.md")
 
 

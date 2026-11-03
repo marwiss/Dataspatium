@@ -40,12 +40,13 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 
 ## Hvað þú getur gert
 
-- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, töflur í HTML-, Markdown-, Word- og LaTeX-skjölum, kortaskrár á KML-, KMZ-, GPX- og TopoJSON-sniði, SQL-skriftur, eldri töflureiknissnið (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), texta með fastri
-  dálkbreidd, tölfræðiskrár úr SPSS, Stata, SAS og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
+- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, töflur í HTML-, Markdown-, Word- og LaTeX-skjölum, kortaskrár á KML-, KMZ-, GPX- og TopoJSON-sniði, SQL-skriftur, eldri töflureiknissnið (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), texta með fastri
+  dálkbreidd, tölfræðiskrár úr SPSS, Stata og SAS (með gildismerkimiðum) og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
   og gögn beint úr opnum vefþjónustum hjá Hagstofu Íslands, Veðurstofu Íslands, hagstofum Danmerkur, Noregs, Finnlands,
-  Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat og fleiri stofnunum, með landasíu og endurnýjun
-  allra API-gagnasafna með einum smelli (sjá [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og sænsk
-  sveitarfélaga- og lénamörk SCB fylgja með.
+  Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat, Seðlabanka Evrópu, OECD og fleiri stofnunum,
+  með landasíu og vistuðum sóknum sem uppfærast með einum smelli og keyra uppskriftir sínar aftur (sjá
+  [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg
+  og Finnland fylgja með.
 - **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
   gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
   út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).

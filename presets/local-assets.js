@@ -3,25 +3,13 @@ Dataspatium.assets.addEntries({
  "r/dataspatium.R": {
   "file": "r/dataspatium.R.js",
   "encoding": "text",
-  "size": 17958,
+  "size": 24088,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
   "file": "presets/exempeldata/befolkning-kommuner-2024.csv.js",
   "encoding": "text",
   "size": 13121,
-  "library": "dataspatium"
- },
- "presets/geo/lan.geojson": {
-  "file": "presets/geo/lan.geojson.js",
-  "encoding": "text",
-  "size": 78867,
-  "library": "dataspatium"
- },
- "presets/geo/kommuner.geojson": {
-  "file": "presets/geo/kommuner.geojson.js",
-  "encoding": "text",
-  "size": 239831,
   "library": "dataspatium"
  },
  "presets/api/asub-aland.api.json": {
@@ -64,6 +52,12 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/dst-statistikbanken.api.json.js",
   "encoding": "text",
   "size": 3592,
+  "library": "dataspatium"
+ },
+ "presets/api/ecb.api.json": {
+  "file": "presets/api/ecb.api.json.js",
+  "encoding": "text",
+  "size": 15543,
   "library": "dataspatium"
  },
  "presets/api/eurostat.api.json": {
@@ -156,6 +150,12 @@ Dataspatium.assets.addEntries({
   "size": 3079,
   "library": "dataspatium"
  },
+ "presets/api/oecd.api.json": {
+  "file": "presets/api/oecd.api.json.js",
+  "encoding": "text",
+  "size": 14870,
+  "library": "dataspatium"
+ },
  "presets/api/opendata-dk.api.json": {
   "file": "presets/api/opendata-dk.api.json.js",
   "encoding": "text",
@@ -226,6 +226,54 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/vedur-observations.api.json.js",
   "encoding": "text",
   "size": 6711,
+  "library": "dataspatium"
+ },
+ "presets/geo/fylker-no.geojson": {
+  "file": "presets/geo/fylker-no.geojson.js",
+  "encoding": "text",
+  "size": 247372,
+  "library": "dataspatium"
+ },
+ "presets/geo/kommuner-dk.geojson": {
+  "file": "presets/geo/kommuner-dk.geojson.js",
+  "encoding": "text",
+  "size": 228627,
+  "library": "dataspatium"
+ },
+ "presets/geo/kommuner-no.geojson": {
+  "file": "presets/geo/kommuner-no.geojson.js",
+  "encoding": "text",
+  "size": 471909,
+  "library": "dataspatium"
+ },
+ "presets/geo/kommuner.geojson": {
+  "file": "presets/geo/kommuner.geojson.js",
+  "encoding": "text",
+  "size": 239831,
+  "library": "dataspatium"
+ },
+ "presets/geo/kunnat-fi.geojson": {
+  "file": "presets/geo/kunnat-fi.geojson.js",
+  "encoding": "text",
+  "size": 412327,
+  "library": "dataspatium"
+ },
+ "presets/geo/lan.geojson": {
+  "file": "presets/geo/lan.geojson.js",
+  "encoding": "text",
+  "size": 78867,
+  "library": "dataspatium"
+ },
+ "presets/geo/maakunnat-fi.geojson": {
+  "file": "presets/geo/maakunnat-fi.geojson.js",
+  "encoding": "text",
+  "size": 151735,
+  "library": "dataspatium"
+ },
+ "presets/geo/regioner-dk.geojson": {
+  "file": "presets/geo/regioner-dk.geojson.js",
+  "encoding": "text",
+  "size": 112022,
   "library": "dataspatium"
  }
 });

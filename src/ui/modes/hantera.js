@@ -33,7 +33,11 @@
         });
         const selected = state.datasets.find((d) => d.id === state.selectedId);
         if (state.selectedId === WORKSPACE) { renderWorkspace(); renderWorkspaceInspector(); }
-        else if (selected) { renderDataset(selected); renderInspector(selected); }
+        else if (selected) {
+          // The dataset can be removed (here or in another tab) while its views load; only report other errors.
+          renderDataset(selected).catch(async (err) => { if (await services.datasets.get(selected.id)) shell.log(String((err && err.message) || err), 'error'); });
+          renderInspector(selected);
+        }
         else { renderEmpty(); replace(slots.right, h('p', { class: 'dm-help', text: t('mode.hantera.desc') })); }
       }
 
@@ -87,8 +91,8 @@
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));
           replace(body, h('div', { class: 'dm-table-wrap' }, table));
-          table.setData({ columns: [{ key: 'position', label: '#', type: 'integer', width: 70 }, { key: 'name', label: t('common.name'), type: 'text', width: 220 }, { key: 'type', label: t('common.type'), type: 'text', width: 130 }, { key: 'label', label: t('param.label'), type: 'text', width: 220 }, { key: 'description', label: t('column.description'), type: 'text', width: 280 }, { key: 'unit', label: t('column.unit'), type: 'text', width: 120 }, { key: 'source', label: t('common.source'), type: 'text', width: 200 }],
-            rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', c.sourceName]) });
+          table.setData({ columns: [{ key: 'position', label: '#', type: 'integer', width: 70 }, { key: 'name', label: t('common.name'), type: 'text', width: 220 }, { key: 'type', label: t('common.type'), type: 'text', width: 130 }, { key: 'label', label: t('param.label'), type: 'text', width: 220 }, { key: 'description', label: t('column.description'), type: 'text', width: 280 }, { key: 'unit', label: t('column.unit'), type: 'text', width: 120 }, { key: 'valueLabels', label: t('column.valuelabels'), type: 'text', width: 240 }, { key: 'source', label: t('common.source'), type: 'text', width: 200 }],
+            rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', services.datasets.valueLabelsText(c.valueLabels), c.sourceName]) });
         } else {
           const log = await services.datasets.log(ds.id);
           replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon('history', 14),
@@ -102,15 +106,22 @@
         const choice = await ui.dialog.open({
           title: t('api.refetch.title', { name: ds.source.connectorName || '' }),
           body: h('p', { text: t('api.refetch.text') }),
-          actions: [{ label: t('common.cancel'), value: null }, { label: t('api.into.mode.append'), value: 'append' }, { label: t('api.into.mode.replace'), variant: 'primary', value: 'replace', primary: true }],
+          actions: [{ label: t('common.cancel'), value: null }, { label: t('api.into.mode.append'), value: 'append' }, { label: t('api.saved.update'), variant: 'primary', value: 'update', primary: true }],
         });
         if (!choice) return;
         const runner = D.require('api/runner');
         shell.log(t('api.refetch.running', { name: ds.name }));
         try {
-          const table = await runner.refetch(ds.source);
-          const res = await runner.intoDataset(ds.id, table, { mode: choice, source: Object.assign({}, ds.source, { fetchedAt: new Date().toISOString(), rows: table.rows.length }) });
-          const text = choice === 'replace' ? t('api.into.replaced', { name: ds.name, rows: i18n.formatNumber(res.rows) }) : t('api.into.appended', { name: ds.name, rows: i18n.formatNumber(res.rows) });
+          let text;
+          if (choice === 'update') {
+            // The rows are replaced and the dataset's recipe is replayed (see api/runner refreshDataset).
+            const res = await runner.refreshDataset(ds.id);
+            text = res.steps ? t('api.refresh.done.steps', { name: ds.name, rows: i18n.formatNumber(res.rows), steps: res.steps }) : t('api.refresh.done', { name: ds.name, rows: i18n.formatNumber(res.rows) });
+          } else {
+            const table = await runner.refetch(ds.source);
+            const res = await runner.intoDataset(ds.id, table, { mode: 'append', source: Object.assign({}, ds.source, { fetchedAt: new Date().toISOString(), rows: table.rows.length }) });
+            text = t('api.into.appended', { name: ds.name, rows: i18n.formatNumber(res.rows) });
+          }
           shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
           render();
         } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }

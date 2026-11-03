@@ -101,16 +101,19 @@ presentasjon med ett lysbilde per gruppe.
 ## Kart
 
 To diagramtyper tegner kart, begge uten kartserver: **Kart** (koroplettkart: områder farget etter en verdi) og **Punktkart**
-(punkter på koordinater med størrelse og farge etter verdier). SCBs svenske kommune- og länsgrenser følger med appen;
-grenser for andre land importeres fra GeoJSON, shapefile eller GeoPackage.
+(punkter på koordinater med størrelse og farge etter verdier). Kommune- og regiongrenser for Sverige, Danmark, Norge og
+Finland følger med appen; grenser for andre land importeres fra GeoJSON, shapefile eller GeoPackage.
 
 ![Koroplettkart over befolkning per kommune og punktkart over målestasjoner i et dashbord](../images/kartor.png)
 
 ### Koroplettkart (Kart)
 
-1. Hent grensene: klikk på **Svenske kommunegrenser (SCB)** eller **Svenske länsgrenser (SCB)** i Hent, eller importer egne
-   grenser fra GeoJSON, shapefile eller GeoPackage. De blir datasett med kode, navn og en geometrikolonne (`geometry`,
-   GeoJSON i lengde- og breddegrad).
+1. Hent grensene: velg for eksempel **Norske kommunegrenser (Kartverket)** eller **Svenske kommunegrenser (SCB)** i
+   listen *Grenser for kart* i Hent, og trykk **Importer grenser**, eller importer egne grenser fra GeoJSON, shapefile
+   eller GeoPackage. De blir datasett med kode, navn og en geometrikolonne (`geometry`, GeoJSON i lengde- og breddegrad).
+   Kodene er de offisielle: firesifrede kommunenumre i Sverige, Danmark (DAGI, som `0101`; Danmarks Statistik skriver
+   `101`) og Norge, tresifrede i Finland (som `091`; StatFin skriver `KU091`). Avviker kodene i statistikken, kan de
+   tilpasses i Bearbeid med *Fyll ut med innledende nuller* eller *Søk og erstatt*.
 2. Koble verdiene til grensene i Bearbeid (*Koble datasett*) på koden, slik at datasettet har både `geometry` og verdien som
    skal fargelegges. Alternativt er verdiene allerede importert sammen med geometrien.
 3. Velg *Kart* i diagrambyggeren. Geometrikolonnen finnes automatisk (kolonnen `geometry`), etiketten er en tekstkolonne
@@ -125,18 +128,20 @@ slik at eksporter fra GeoPackage, PostGIS og regneark fungerer direkte.
 Velg *Punktkart* for et datasett med koordinater, for eksempel værstasjoner eller adresser med lengde- og breddegrad.
 Kolonnene finnes på navn (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`) og kan byttes. Koordinater i meter
 (SWEREF 99 TM) gjenkjennes og regnes om til lengde- og breddegrad. **Størrelse** og **Farge** tar verdikolonner (eller en
-kategori for fargen), **Etikett** vises når du peker på et punkt, og **Bakgrunn** velger svenske läns- eller kommunegrenser
+kategori for fargen), **Etikett** vises når du peker på et punkt, og **Bakgrunn** velger en av de medfølgende grensene
 eller ingen bakgrunn. Har datasettet områder i stedet for punkter, gir *Bearbeid > Geodata > Sentroide fra geometri* lengde-
 og breddegrad for hvert område, slik at verdier kan tegnes som bobler.
 
 ### Projeksjon og grenser
 
 Projeksjonen velges ut fra koordinatene: meter (SWEREF 99 TM) tegnes som de er, lengde- og breddegrad innenfor Europa
-gjennom en transversal Mercator rundt 15° øst og øvrige gjennom Mercator. De medfølgende grensene er SCBs forenklede
-kommune- og länsgrenser for tematiske kart (CC0, versjon februar 2026), omregnet til lengde- og breddegrad; de er ikke ment
-for nøyaktige grensedragninger (se `presets/geo/KALLA.md`). Kart eksporteres, deles, legges i dashbord og kjøres i batch som
-alle andre diagrammer i byggeren; filtre i dashbord virker også på kart. Et datasett med geometri kan eksporteres som
-GeoJSON fra Eksporter.
+gjennom en transversal Mercator rundt rutenettmeridianen i landet der dataene ligger (9° øst for Danmark, 15° øst for
+Sverige og Norge, 27° øst for Finland), og øvrige gjennom Mercator. De medfølgende grensene er forenklede for tematiske
+kart og ikke ment for nøyaktige grensedragninger: SCBs kommune- og länsgrenser (CC0, versjon februar 2026), DAGI
+1:500 000 for Danmark, Kartverkets N1000 for Norge (klippet langs kysten, siden norske kommuner ellers strekker seg ut i
+havet) og Statistikcentralens inndeling 1:1 000 000 for Finland (se `presets/geo/KALLA.md`). Kart eksporteres, deles,
+legges i dashbord og kjøres i batch som alle andre diagrammer i byggeren; filtre i dashbord virker også på kart. Et
+datasett med geometri kan eksporteres som GeoJSON fra Eksporter.
 
 ## Dashbord
 
@@ -166,5 +171,5 @@ Sikkerhetskopien av arbeidsområdet (Håndter) inneholder alle diagrammer som sl
 - Diagrammene lever i nettleseren; svært store datasett uten aggregering begrenses til radgrensen.
 - PDF bruker Helvetica, ikke Inter, for tekst.
 - R-diagrammer krever at R-sesjonen er startet, og eksporteres derfor bare fra Visualiser.
-- De medfølgende kommune- og länsgrensene er SCBs forenklede grenser for tematiske kart, ikke nøyaktige grenser.
+- De medfølgende grensene er forenklede for tematiske kart, ikke nøyaktige grenser.
 - PowerPoint-eksport bruker bilder (PNG) av diagrammene, ikke redigerbare PowerPoint-diagrammer.

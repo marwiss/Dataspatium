@@ -28,6 +28,7 @@ och efter.
 |---|---|---|
 | Kolumner | Byt namn på kolumn | Nytt kolumnnamn; etiketten följer med om den var lika med namnet |
 | | Etikett, beskrivning och enhet | Etiketten är visningsnamnet i tabellrubriker och diagram; beskrivning och enhet visas i inspektören och kodboken, följer med i SQLite-filen och når R som attributen `description` och `unit` |
+| | Värdeetiketter | Namn på kolumnens koder, en per rad `kod = etikett` (till exempel `1 = Man`); värdena ändras inte. Etiketterna visas i inspektören (även vid de vanligaste värdena) och kodboken, följer med till R som `haven::labelled` och skrivs till .sav och .dta. Tom text tar bort dem |
 | | Ta bort kolumner | Tar bort valda kolumner |
 | | Ändra kolumnordning | Flytta kolumner upp och ned |
 | | Ändra typ | Text till heltal, decimaltal, datum, datum och tid eller ja/nej. Decimaltecken och datumformat kan anges; värden som inte går att tolka blir tomma och antalet rapporteras |
@@ -39,6 +40,7 @@ och efter.
 | | Reparera teckenkodning | Rättar mojibake (Ã¶ blir ö) som uppstått vid import med fel teckenkodning |
 | | Ersätt värde | Ett exakt värde mot ett annat; tomt värde kan väljas som från eller till |
 | | Koda om värden | Flera värden på en gång enligt en lista med en rad per värde, `gammalt = nytt` (till exempel `01 = Stockholms län`); övriga värden behålls eller töms |
+| | Byt koder mot etiketter | Byter kolumnens koder mot deras värdeetiketter, eller tillbaka. Etiketterna sparas, så att .sav och .dta får koderna igen vid export; värden utan etikett lämnas som de är, och tillbaka till koder blir kolumnen tal om alla koder är tal |
 | | Fyll saknade värden | Konstant värde, föregående eller nästa rads värde, medelvärde, median eller vanligaste värde |
 | | Avrunda tal | Till valt antal decimaler: till närmaste (en halv avrundas bort från noll), nedåt, uppåt eller genom att stryka decimalerna; ett negativt antal avrundar till tiotal (−1), hundratal (−2) och så vidare |
 | | Fyll ut med inledande nollor | Till en viss längd, till exempel kommunkoden 114 till 0114; tal blir text så att nollorna behålls |

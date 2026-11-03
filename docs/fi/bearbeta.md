@@ -28,6 +28,7 @@ parametreista, ja mahdollisuuksien mukaan esikatselu näyttää, montaako riviä
 |---|---|---|
 | Sarakkeet | Nimeä sarake uudelleen | Uusi sarakkeen nimi; selite seuraa mukana, jos se oli sama kuin nimi |
 | | Selite, kuvaus ja yksikkö | Selite on näyttönimi taulukon otsikoissa ja kaavioissa; kuvaus ja yksikkö näytetään tarkastelupaneelissa ja koodikirjassa, kulkevat SQLite-tiedoston mukana ja välittyvät R:lle attribuutteina `description` ja `unit` |
+| | Arvoselitteet | Nimet sarakkeen koodeille, yksi riviä kohden `koodi = selite` (esimerkiksi `1 = Mies`); arvot eivät muutu. Selitteet näytetään ominaisuuspaneelissa (myös yleisimpien arvojen vieressä) ja koodikirjassa, ne välittyvät R:lle `haven::labelled`-muodossa ja kirjoitetaan .sav- ja .dta-tiedostoihin. Tyhjä teksti poistaa ne |
 | | Poista sarakkeita | Poistaa valitut sarakkeet |
 | | Järjestä sarakkeet uudelleen | Siirrä sarakkeita ylös ja alas |
 | | Vaihda tyyppi | Teksti kokonaisluvuksi, desimaaliluvuksi, päivämääräksi, päivämääräksi ja ajaksi tai kyllä/ei-arvoksi. Desimaalierottimen ja päivämäärämuodon voi antaa; arvot, joita ei voi tulkita, muuttuvat tyhjiksi, ja niiden määrä ilmoitetaan |
@@ -39,6 +40,7 @@ parametreista, ja mahdollisuuksien mukaan esikatselu näyttää, montaako riviä
 | | Korjaa merkistökoodaus | Korjaa mojibaken (Ã¶ muuttuu ö:ksi), joka on syntynyt tuonnissa väärällä koodauksella |
 | | Korvaa arvo | Yksi tarkka arvo toisella; tyhjän arvon voi valita lähtö- tai kohdearvoksi |
 | | Koodaa arvot uudelleen | Useita arvoja kerralla luettelon mukaan, yksi rivi arvoa kohden, `vanha = uusi` (esimerkiksi `01 = Stockholms län`); muut arvot säilytetään tai tyhjennetään |
+| | Vaihda koodit selitteisiin | Vaihtaa sarakkeen koodit niiden arvoselitteisiin tai takaisin. Selitteet säilytetään, joten .sav- ja .dta-tiedostot saavat koodit takaisin viennissä; arvot, joilla ei ole selitettä, jäävät ennalleen, ja koodeiksi palautettaessa sarakkeesta tulee luku, jos kaikki koodit ovat lukuja |
 | | Täytä puuttuvat arvot | Vakioarvo, edellisen tai seuraavan rivin arvo, keskiarvo, mediaani tai yleisin arvo |
 | | Pyöristä luvut | Valittuun desimaalimäärään: lähimpään (puolikas pyöristetään poispäin nollasta), alaspäin, ylöspäin tai katkaisemalla desimaalit; negatiivinen määrä pyöristää kymmeniin (−1), satoihin (−2) ja niin edelleen |
 | | Täydennä etunollilla | Tiettyyn pituuteen, esimerkiksi kuntakoodi 114 muotoon 0114; luvuista tulee tekstiä, jotta nollat säilyvät |

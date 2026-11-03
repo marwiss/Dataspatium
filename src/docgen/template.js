@@ -28,6 +28,7 @@
     const fmt = (v) => (v === null || v === undefined ? '' : (typeof v === 'number' ? i18n.formatNumber(v) : String(v)));
     const pad = (n) => String(n).padStart(2, '0');
     const key = (s) => String(s).trim().toLowerCase().replace(/å/g, 'a').replace(/ä/g, 'a').replace(/ö/g, 'o');
+    const valueLabelsText = datasets.valueLabelsText;
 
     /** Parse the body of a {{#tabell}} tag. */
     function parseTableSpec(text) {
@@ -75,7 +76,7 @@
       return {
         datamangd: meta.name, beskrivning: meta.description || '',
         antal_rader: fmt(data.total), antal_rader_visade: fmt(data.rows.length), antal_kolumner: String(columns.length),
-        kolumner: columns.map((c) => ({ namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '' })),
+        kolumner: columns.map((c) => ({ namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '', vardeetiketter: valueLabelsText(c.valueLabels) })),
         rader, forsta: rader[0] || {}, summor: stats.summor, medel: stats.medel, minsta: stats.minsta, storsta: stats.storsta,
         grupp: options.group ? String(options.group.value) : '', gruppkolumn: options.group ? options.group.column : '',
         datum: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`, tid: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
@@ -90,7 +91,7 @@
       const prof = await profileMod.profile(datasetId);
       ctx.dubbletter = fmt(prof.duplicates);
       ctx.kolumner = prof.columns.map((c) => ({
-        namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '', saknade: fmt(c.nulls), unika: fmt(c.distinct), minsta: fmt(c.min), storsta: fmt(c.max),
+        namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '', vardeetiketter: valueLabelsText(c.valueLabels), saknade: fmt(c.nulls), unika: fmt(c.distinct), minsta: fmt(c.min), storsta: fmt(c.max),
         medel: c.mean === null || c.mean === undefined ? '' : fmt(Math.round(c.mean * 100) / 100), ar_unik: !!c.unique,
         anmarkningar: c.warnings.map((w) => t('profile.warn.' + w.kind, { n: fmt(w.count) })).join('; '),
       }));
@@ -99,7 +100,7 @@
 
     async function resolveTable(spec, ctx) {
       if (spec.kalla === 'kolumner') {
-        const cols = ['namn', 'typ', 'etikett', 'beskrivning', 'enhet'];
+        const cols = ['namn', 'typ', 'etikett', 'beskrivning', 'enhet'].concat(ctx.kolumner.some((k) => k.vardeetiketter) ? ['vardeetiketter'] : []);
         return { caption: spec.rubrik, columns: cols, rows: ctx.kolumner.map((k) => cols.map((c) => k[c] || '')), numeric: cols.map(() => false) };
       }
       const columns = ctx._columns;

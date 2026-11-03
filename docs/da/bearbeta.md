@@ -27,6 +27,7 @@ og hvor det er muligt, vises en forhåndsvisning af, hvor mange rækker der påv
 |---|---|---|
 | Kolonner | Omdøb kolonne | Nyt kolonnenavn; etiketten følger med, hvis den var lig med navnet |
 | | Etiket, beskrivelse og enhed | Etiketten er visningsnavnet i tabeloverskrifter og diagrammer; beskrivelse og enhed vises i inspektøren og kodebogen, følger med SQLite-filen og når R som attributterne `description` og `unit` |
+| | Værdietiketter | Navne til kolonnens koder, én pr. linje `kode = etiket` (for eksempel `1 = Mand`); værdierne ændres ikke. Etiketterne vises i egenskabspanelet (også ved de hyppigste værdier) og kodebogen, når R som `haven::labelled` og skrives til .sav og .dta. Tom tekst fjerner dem |
 | | Slet kolonner | Fjerner valgte kolonner |
 | | Ændr kolonnernes rækkefølge | Flyt kolonner op og ned |
 | | Skift type | Tekst til heltal, decimaltal, dato, dato og tid eller ja/nej. Decimaltegn og datoformat kan angives; værdier, der ikke kan fortolkes, bliver tomme, og antallet rapporteres |
@@ -38,6 +39,7 @@ og hvor det er muligt, vises en forhåndsvisning af, hvor mange rækker der påv
 | | Reparér tegnkodning | Retter mojibake (Ã¸ bliver til ø), der er opstået ved import med forkert tegnkodning |
 | | Erstat værdi | Én nøjagtig værdi med en anden; en tom værdi kan vælges som fra eller til |
 | | Omkod værdier | Flere værdier på én gang efter en liste med én linje pr. værdi, `gammel = ny` (for eksempel `01 = Stockholms län`); øvrige værdier beholdes eller tømmes |
+| | Skift koder ud med etiketter | Skifter kolonnens koder ud med deres værdietiketter eller tilbage igen. Etiketterne gemmes, så .sav og .dta får koderne igen ved eksport; værdier uden etiket bliver, som de er, og tilbage til koder bliver kolonnen tal, hvis alle koder er tal |
 | | Udfyld manglende værdier | Konstant værdi, forrige eller næste rækkes værdi, gennemsnit, median eller hyppigste værdi |
 | | Afrund tal | Til valgt antal decimaler: til nærmeste (en halv afrundes væk fra nul), nedad, opad eller ved at stryge decimalerne; et negativt antal afrunder til tiere (−1), hundreder (−2) og så videre |
 | | Udfyld med foranstillede nuller | Til en bestemt længde, for eksempel kommunekoden 114 til 0114; tal bliver tekst, så nullerne bevares |

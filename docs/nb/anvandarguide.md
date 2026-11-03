@@ -48,15 +48,17 @@ eksempeldatasettet, en kolonne i det og et diagram, som du sletter som vanlig n�
 Slipp en fil på flaten, lim inn en tabell eller hent en fil fra en nettadresse (serveren må tillate CORS; en delt
 Dataspatium-konfigurasjon legges til direkte). Kontroller forhåndsvisningen: tegnkoding, skilletegn, overskriftsrad og
 desimaltegn gjettes, men kan endres. I kolonnetrinnet får hver kolonne en type; koder med innledende nuller (kommunenumre,
-personnumre) beholdes som tekst. Gi datasettet et navn, og importer. Knappene under flaten legger til data som følger med
-appen: eksempeldataene *Befolkning per kommune 2024 (Sverige)* og SCBs svenske kommune- og länsgrenser for kart.
+personnumre) beholdes som tekst. Gi datasettet et navn, og importer. Under flaten finnes data som følger med
+appen: knappen for eksempeldataene *Befolkning per kommune 2024 (Sverige)* og listen *Grenser for kart* med kommune- og
+regiongrenser for Sverige, Danmark, Norge og Finland.
 
 Under *Åpne API-er* finnes forhåndsinnstillinger for statistikkbyråene og flere andre etater i Norge, Danmark, Finland og
 Island, de selvstyrte områdene, Nordic Statistics, Eurostat og de svenske etatene (SCB, Folkhälsomyndigheten,
 Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriet, Sveriges dataportal samt Boverket for dem som har nøkler).
 Landknappene over listen velger hvilke lands kilder som vises. Bla eller søk fram en tabell, velg variabler, forhåndsvis, og
 hent til et nytt datasett eller legg til i et eksisterende. Et hentet datasett husker spørringen sin, så det kan hentes på
-nytt fra Håndter når kilden er oppdatert.
+nytt fra Håndter når kilden er oppdatert, og *Lagrede hentinger* i Hent oppdaterer slike datasett med ett klikk og
+spiller av oppskriftene deres.
 
 ### 2. Gå gjennom og rett (Bearbeid)
 
@@ -132,7 +134,7 @@ R: Parquet, SPSS, Stata og RDS. SQLite og Parquet beholder typene nøyaktig; all
 
 Hvert datasett har en oversikt (kilde, størrelse, beskrivelse), en kolonneliste med typer, etiketter, beskrivelser og
 enheter (settes under Bearbeid med *Etikett, beskrivelse og enhet*), historikk over alt som er gjort, og versjoner. Gi nytt
-navn og kortnavn, slett eller hent igjen fra API. Under *Arbeidsområde* ser du hvor mye lagring som brukes, ber om vedvarende
+navn og kortnavn, slett eller hent igjen fra API (oppdater med oppskriften, eller legg til rader). Under *Arbeidsområde* ser du hvor mye lagring som brukes, ber om vedvarende
 lagring, tar sikkerhetskopi som ZIP og gjenoppretter. Appen minner deg ved oppstart når det har gått lenger enn valgt antall
 dager siden siste sikkerhetskopi (30 dager som standard; endres eller slås av i samme kort). I Edge og Chrome kan
 arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ved hver endring.

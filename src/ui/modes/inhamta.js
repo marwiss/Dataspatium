@@ -34,15 +34,19 @@
       function reset() { return { step: 'file', file: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
+      let unsubStore = null;
       function activate(s) {
         slots = s;
         unsubConnectors = connectors.subscribe(reloadConnectors);
+        // The saved fetches follow the datasets (count in the source list, rows and times in the view).
+        unsubStore = store.subscribe((state, changed) => { if (!changed.includes('datasets') || !slots) return; renderLeft(); if (source === 'saved') renderSaved(); });
         reloadConnectors();
         render();
       }
       function deactivate() {
         slots = null;
         if (unsubConnectors) unsubConnectors();
+        if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
       }
       async function reloadConnectors() {
@@ -62,7 +66,8 @@
           h('div', { class: 'dm-list' },
             sourceItem('file', 'folder-open', t('import.sources.files'), null),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
-            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint'))),
+            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
+            sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length }))),
           h('h4', { text: t('api.sources') }),
           renderCountryChips(),
           h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
@@ -120,10 +125,58 @@
       // ---- centre ----
       function renderCenter() {
         if (source.startsWith('api:')) { renderApi(); return; }
+        if (source === 'saved') { renderSaved(); return; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step;
         const body = wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('download', 20), t('import.title')), stepper), body);
+      }
+
+      // ---- saved fetches: every dataset from an API, updated with one click ----
+      const apiDatasets = () => store.get().datasets.filter((d) => d.source && d.source.kind === 'api');
+      /** Ids being updated; '*' while everything is. */
+      const updating = new Set();
+      function renderSaved() {
+        if (!slots) return;
+        const list = apiDatasets();
+        const busy = updating.size > 0;
+        const head = h('div', { class: 'dm-page-head' },
+          h('h1', null, ui.icon('refresh-cw', 20), t('api.saved.title')),
+          h('div', { class: 'dm-row' }, list.length ? ui.button({ label: t('api.saved.update.all', { n: list.length }), icon: 'refresh-cw', variant: 'primary', loading: updating.has('*'), disabled: busy && !updating.has('*'), onClick: updateAll }) : null));
+        if (!list.length) { replace(slots.center, head, h('dm-empty-state', { icon: 'globe', heading: t('api.saved.empty'), text: t('api.saved.empty.hint') })); return; }
+        const where = (src) => [src.connectorName, src.table && src.table.title ? src.table.title : src.endpointName].filter(Boolean).join(' · ');
+        const rows = list.map((d) => h('tr', null,
+          h('td', null, h('div', { text: d.name }), h('code', { class: 'dm-list-code', text: d.shortName || '' })),
+          h('td', { text: where(d.source) }),
+          h('td', { text: d.source.fetchedAt ? i18n.formatDateTime(d.source.fetchedAt) : '–' }),
+          h('td', { class: 'dm-num', text: i18n.formatNumber(d.rowCount || 0) }),
+          h('td', null, ui.button({ label: t('api.saved.update'), icon: 'refresh-cw', size: 'sm', loading: updating.has(d.id), disabled: busy && !updating.has(d.id), onClick: () => updateOne(d) }))));
+        replace(slots.center, head,
+          h('p', { class: 'dm-help', text: t('api.saved.intro') }),
+          h('div', { class: 'dm-table-wrap' }, h('table', { class: 'dm-columns-table' },
+            h('thead', null, h('tr', null, ...['api.saved.col.dataset', 'api.saved.col.source', 'api.saved.col.fetched', 'api.saved.col.rows', ''].map((k, i) => h('th', { class: i === 3 ? 'dm-num' : null, text: k ? t(k) : '' })))),
+            h('tbody', null, ...rows))));
+      }
+      async function updateOne(d) {
+        updating.add(d.id); renderSaved();
+        try {
+          const res = await D.require('api/runner').refreshDataset(d.id);
+          const text = res.steps ? t('api.refresh.done.steps', { name: d.name, rows: i18n.formatNumber(res.rows), steps: res.steps }) : t('api.refresh.done', { name: d.name, rows: i18n.formatNumber(res.rows) });
+          shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
+        } catch (err) {
+          const message = (err && err.message) || String(err);
+          shell.log(`${d.name}: ${message}`, 'error'); ui.toast.show(`${d.name}: ${message}`, { kind: 'error', timeout: 12000 });
+        } finally { updating.delete(d.id); renderSaved(); }
+      }
+      async function updateAll() {
+        updating.add('*'); renderSaved();
+        try {
+          const results = await D.require('api/runner').refreshAll();
+          for (const r of results) shell.log(r.ok ? t('api.refresh.done', { name: r.name, rows: i18n.formatNumber(r.rows || 0) }) : `${r.name}: ${r.error}`, r.ok ? 'ok' : 'error');
+          const ok = results.filter((r) => r.ok).length;
+          ui.toast.show(t('api.refresh.all.done', { ok, failed: results.length - ok }), { kind: ok === results.length ? 'ok' : 'warn', timeout: 10000 });
+        } catch (err) { shell.log(String((err && err.message) || err), 'error'); }
+        finally { updating.delete('*'); renderSaved(); }
       }
 
       function renderApi() {
@@ -186,10 +239,17 @@
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT });
         dz.addEventListener('dm-files', async (e) => { wiz.file = /** @type {any} */ (e).detail.files[0]; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; await runPreview(); });
-        // Bundled data: the example table first, then the SCB boundaries for maps.
+        // Bundled data: the example table as a button, the boundaries for maps in a list.
         const examples = D.require('presets').examples;
+        const tables = examples.filter((p) => p.format !== 'geojson');
+        const boundaries = examples.filter((p) => p.format === 'geojson');
+        const pick = /** @type {any} */ (h('dm-select', { label: t('presets.geo.label') }));
+        pick.options = boundaries.map((p) => ({ value: p.id, label: p.nameKey ? t(p.nameKey) : p.name }));
+        pick.value = wiz.boundary || boundaries[0].id;
+        pick.addEventListener('change', () => { wiz.boundary = pick.value; });
         return h('div', { class: 'dm-stack' }, dz,
-          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
+          h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
+          h('div', { class: 'dm-row-end' }, pick, ui.button({ label: t('presets.geo.import'), icon: 'globe', onClick: () => importPreset(boundaries.find((p) => p.id === pick.value) || boundaries[0]) })),
           h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 
@@ -303,6 +363,10 @@
           const name = /** @type {any} */ (h('dm-input', { label: t('import.name'), value: wiz.name }));
           name.addEventListener('input', () => { wiz.name = name.value; });
           left.appendChild(name);
+          // SPSS, Stata and SAS keep their value labels as column metadata; the column holds labels or codes.
+          if (/^(spss|stata|sas)/.test(p.format || '')) {
+            left.appendChild(select(t('import.valuelabels'), [{ value: 'labels', label: t('import.valuelabels.labels') }, { value: 'codes', label: t('import.valuelabels.codes') }], wiz.options.valueLabels || 'labels', (v) => { wiz.options.valueLabels = v; }));
+          }
           if (wiz.busy) left.appendChild(h('dm-progress', { indeterminate: true, label: t('import.r.running') }));
         }
         if (wiz.error) left.appendChild(h('p', { class: 'dm-error dm-small', text: wiz.error }));
@@ -392,6 +456,7 @@
       // ---- right ----
       function renderRight() {
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
+        if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         const items = [];
         if (wiz.file) {
           items.push(h('h4', { text: t('import.step.file') }));

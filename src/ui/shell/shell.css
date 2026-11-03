@@ -60,6 +60,7 @@
 .dm-columns-table th { text-align: left; font-weight: var(--dm-weight-semibold); color: var(--dm-text-muted); font-size: var(--dm-text-xs); text-transform: uppercase; letter-spacing: 0.04em; padding: var(--dm-s-2); border-bottom: 1px solid var(--dm-border); }
 .dm-columns-table td { padding: var(--dm-s-1) var(--dm-s-2); border-bottom: 1px solid var(--dm-border); vertical-align: middle; }
 .dm-columns-table dm-input, .dm-columns-table dm-select { min-width: 120px; }
+.dm-columns-table .dm-num { text-align: right; font-variant-numeric: tabular-nums; }
 .dm-success { display: flex; flex-direction: column; gap: var(--dm-s-3); align-items: flex-start; padding: var(--dm-s-5); background: var(--dm-ok-soft); border: 1px solid var(--dm-ok); border-radius: var(--dm-radius-md); }
 .dm-stat { display: flex; flex-direction: column; gap: 2px; }
 .dm-stat .dm-stat-value { font-size: var(--dm-text-lg); font-weight: var(--dm-weight-semibold); font-variant-numeric: tabular-nums; }

@@ -50,9 +50,9 @@ behöver dem längre.
 Släpp en fil på ytan, klistra in en tabell eller hämta en fil från en webbadress (servern måste tillåta CORS; en
 delad Dataspatium-konfiguration läggs till direkt). Kontrollera förhandsgranskningen: teckenkodning, avgränsare,
 rubrikrad och decimaltecken gissas men kan ändras. I kolumnsteget får varje kolumn en typ; koder med inledande
-nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera. Knapparna under
-ytan lägger till data som följer med appen: exempeldatan *Befolkning per kommun 2024* samt SCB:s kommun- och
-länsgränser för kartor.
+nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera. Under ytan finns data
+som följer med appen: knappen för exempeldatan *Befolkning per kommun 2024* och listan *Gränser för kartor* med
+kommun- och regiongränser för Sverige, Danmark, Norge och Finland.
 
 Under *Öppna API:er* finns förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat,
 SMHI, luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket
@@ -142,7 +142,7 @@ importeras igen.
 
 Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer, etiketter, beskrivningar
 och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), historik över
-allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API. Under *Arbetsyta* ser du hur mycket
+allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API (uppdatera med receptet, eller lägg till rader). Under *Arbetsyta* ser du hur mycket
 lagring som används, begär beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid
 start när det gått längre än det valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard;
 ändras eller stängs av i samma kort). I Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på

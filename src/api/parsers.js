@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Response parsers: turn an API response body into {columns, rows}. Formats: json (records at a path,
- * optionally exploding a nested array), jsonstat, csv, geojson, xml (repeated element), entryscape
+ * optionally exploding a nested array), jsonstat, sdmx (SDMX-JSON 1.0 and 2.0), csv, geojson, xml (repeated element), entryscape
  * (Sveriges dataportal search) and text. Post-processing shared by all formats: constants from the
  * root document, rename, convert (epoch timestamps) and drop.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'data/types'], (jsonImp, csv, jsonstat, types) => {
+  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types'], (jsonImp, csv, jsonstat, sdmx, types) => {
     function resolvePath(data, path) {
       if (!path) return data;
       let node = data;
@@ -154,6 +154,7 @@
       const parseJson = () => { try { return jsonImp.parseJsonText(text); } catch (err) { throw new Error(D.t('api.err.json', { text: String(text || '').slice(0, 120) })); } };
       if (format === 'json') { data = parseJson(); table = jsonImp.tabulate(jsonRecords(data, spec)); }
       else if (format === 'jsonstat') { data = parseJson(); const t = jsonstat.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
+      else if (format === 'sdmx') { data = parseJson(); const t = sdmx.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
       else if (format === 'geojson') { data = parseJson(); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }
       else if (format === 'csv') {
         let body = text;

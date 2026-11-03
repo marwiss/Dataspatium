@@ -26,6 +26,7 @@ sem því verður við komið sýnir forskoðun hversu margar raðir verða fyri
 |---|---|---|
 | Dálkar | Endurnefna dálk | Nýtt dálkheiti; merkimiðinn fylgir ef hann var sá sami og heitið |
 | | Merkimiði, lýsing og eining | Merkimiðinn er birtingarheitið í töflufyrirsögnum og myndritum; lýsing og eining birtast í eiginleikaspjaldinu og kóðabókinni, fylgja SQLite-skránni og ná til R sem eigindirnar `description` og `unit` |
+| | Gildismerkimiðar | Heiti á kóðum dálksins, einn í hverri línu `kóði = merkimiði` (til dæmis `1 = Karl`); gildunum er ekki breytt. Merkimiðarnir birtast í eiginleikaspjaldinu (líka við algengustu gildin) og kóðabókinni, ná til R sem `haven::labelled` og eru skrifaðir í .sav og .dta. Auður texti fjarlægir þá |
 | | Eyða dálkum | Fjarlægir valda dálka |
 | | Endurraða dálkum | Færa dálka upp og niður |
 | | Breyta gerð | Texti í heiltölu, tugabrot, dagsetningu, dagsetningu og tíma eða já/nei. Tilgreina má tugabrotstákn og dagsetningarsnið; gildi sem ekki er hægt að túlka verða tóm og fjöldi þeirra er tilkynntur |
@@ -37,6 +38,7 @@ sem því verður við komið sýnir forskoðun hversu margar raðir verða fyri
 | | Lagfæra stafakóðun | Lagfærir brenglaða stafi (Ã¶ verður ö) sem urðu til við innflutning með rangri kóðun |
 | | Skipta út gildi | Einu nákvæmu gildi fyrir annað; tómt gildi má velja sem frá eða til |
 | | Endurkóða gildi | Mörg gildi í einu eftir lista með einni línu fyrir hvert gildi, `gamalt = nýtt` (til dæmis `01 = Stockholms län`); önnur gildi haldast eða eru tæmd |
+| | Skipta kóðum út fyrir merkimiða | Skiptir kóðum dálksins út fyrir gildismerkimiða þeirra, eða til baka. Merkimiðarnir eru vistaðir, svo .sav og .dta fá kóðana aftur við útflutning; gildi án merkimiða haldast óbreytt, og til baka í kóða verður dálkurinn tölur ef allir kóðar eru tölur |
 | | Fylla í vantandi gildi | Fast gildi, gildi fyrri eða næstu raðar, meðaltal, miðgildi eða algengasta gildi |
 | | Námunda tölur | Í valinn fjölda aukastafa: að næsta (helmingur námundast frá núlli), niður, upp eða með því að sleppa aukastöfunum; neikvæður fjöldi námundar að tugum (−1), hundruðum (−2) og svo framvegis |
 | | Fylla með núllum í upphafi | Upp í tiltekna lengd, til dæmis sveitarfélagsnúmerið 114 í 0114; tölur verða texti svo að núllin haldist |

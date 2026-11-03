@@ -23,9 +23,10 @@
     ];
     const R_WRITERS = {
       parquet: (out) => `nanoparquet::write_parquet(df, ${out})`,
-      // SPSS and Stata have no logical type; haven expects numbers.
-      sav: (out) => `df[] <- lapply(df, function(x) if (is.logical(x)) as.integer(x) else x); haven::write_sav(df, ${out})`,
-      dta: (out) => `df[] <- lapply(df, function(x) if (is.logical(x)) as.integer(x) else x); names(df) <- make.unique(substr(gsub("[^A-Za-z0-9_]", "_", iconv(names(df), to = "ASCII//TRANSLIT", sub = "_")), 1, 32)); haven::write_dta(df, ${out})`,
+      // SPSS and Stata have no logical type; haven expects numbers. Value labels are written as such: columns
+      // that hold the labels as text get their codes back first (see .dm_labels_for_export in r/dataspatium.R).
+      sav: (out) => `df <- .dm_labels_for_export(df); df[] <- lapply(df, function(x) if (is.logical(x)) as.integer(x) else x); haven::write_sav(df, ${out})`,
+      dta: (out) => `df <- .dm_labels_for_export(df); df[] <- lapply(df, function(x) if (is.logical(x)) as.integer(x) else x); names(df) <- make.unique(substr(gsub("[^A-Za-z0-9_]", "_", iconv(names(df), to = "ASCII//TRANSLIT", sub = "_")), 1, 32)); haven::write_dta(df, ${out})`,
       rds: (out) => `saveRDS(df, ${out})`,
     };
     const R_PACKAGES = { parquet: 'nanoparquet', sav: 'haven', dta: 'haven' };
@@ -96,7 +97,7 @@
       const rows = await datasets.allRows(id);
       const names = cols.map((c) => xmlName(c.name));
       const parts = [`<?xml version="1.0" encoding="UTF-8"?>\n<dataspatium datamangd="${escXml(meta ? meta.name : '')}" skapad="${new Date().toISOString()}">\n`];
-      parts.push('  <kolumner>' + cols.map((c, i) => `<kolumn namn="${escXml(c.name)}" element="${names[i]}" typ="${c.type}"${c.label && c.label !== c.name ? ` etikett="${escXml(c.label)}"` : ''}${c.description ? ` beskrivning="${escXml(c.description)}"` : ''}${c.unit ? ` enhet="${escXml(c.unit)}"` : ''}/>`).join('') + '</kolumner>\n  <rader>\n');
+      parts.push('  <kolumner>' + cols.map((c, i) => `<kolumn namn="${escXml(c.name)}" element="${names[i]}" typ="${c.type}"${c.label && c.label !== c.name ? ` etikett="${escXml(c.label)}"` : ''}${c.description ? ` beskrivning="${escXml(c.description)}"` : ''}${c.unit ? ` enhet="${escXml(c.unit)}"` : ''}${c.valueLabels ? ` vardeetiketter="${escXml(datasets.valueLabelsText(c.valueLabels))}"` : ''}/>`).join('') + '</kolumner>\n  <rader>\n');
       for (const r of rows) {
         parts.push('    <rad>' + r.map((v, i) => (v === null || v === undefined ? `<${names[i]}/>` : `<${names[i]}>${escXml(cols[i].type === 'boolean' ? (v ? 'true' : 'false') : v)}</${names[i]}>`)).join('') + '</rad>\n');
       }

@@ -4,7 +4,8 @@
  * Statistics formats read by R in the browser: SPSS (.sav, .zsav, .por), Stata (.dta) and SAS (.sas7bdat,
  * .xpt) via haven, PC-Axis (.px) via pxR, R objects (.rds, .rda, .RData) with base R and Parquet via
  * nanoparquet. The file is written to the R session's filesystem, read with the right package and handed
- * back through dm_write(), which keeps variable labels as column labels; value labels become text.
+ * back through dm_write(), which keeps variable labels as column labels and value labels as column metadata
+ * (the column holds the labels as text, or the codes when the import option valueLabels is "codes").
  * There is no data preview: the wizard shows how the file will be read and imports in one step.
  */
 (function () {
@@ -23,16 +24,27 @@
       { ext: /\.(rda|rdata)$/i, format: 'rdata', label: 'R (RData)', pkg: 'base', code: (p) => `local({ e <- new.env(); load(${p}, envir = e); nms <- Filter(function(n) is.data.frame(get(n, envir = e)), ls(e)); if (!length(nms)) stop(${JSON.stringify(D.t('import.err.rdata.nodf'))}, call. = FALSE); get(nms[[1]], envir = e) })` },
       { ext: /\.parquet$/i, format: 'parquet', label: 'Parquet', pkg: 'nanoparquet', code: (p) => `nanoparquet::read_parquet(${p})` },
     ];
-    /** R code run after reading: labelled, factor and time-of-day columns become text; variable labels are kept. */
-    const NORMALISE = [
+    /**
+     * R code run after reading: factor and time-of-day columns become text and variable labels are kept. The
+     * value labels of labelled columns are kept as column metadata (see .dm_labels_json in r/dataspatium.R);
+     * the column holds the labels as text (`labels`, the default) or the codes (`codes`).
+     * @param {'labels'|'codes'} mode
+     */
+    const normalise = (mode) => [
       'df <- as.data.frame(df, stringsAsFactors = FALSE)',
       'for (nm in names(df)) {',
-      '  x <- df[[nm]]; lbl <- attr(x, "label", exact = TRUE)',
-      '  if (inherits(x, "haven_labelled")) x <- as.character(haven::as_factor(x, levels = "default"))',
-      '  else if (is.factor(x)) x <- as.character(x)',
+      '  x <- df[[nm]]; lbl <- attr(x, "label", exact = TRUE); vl <- NULL',
+      '  if (inherits(x, "haven_labelled")) {',
+      '    labs <- attr(x, "labels", exact = TRUE)',
+      mode === 'codes'
+        ? '    vl <- .dm_labels_json(labs, "codes"); x <- as.vector(unclass(x))'
+        : '    vl <- .dm_labels_json(labs, "labels"); x <- as.character(haven::as_factor(x, levels = "default"))',
+      '  } else if (is.factor(x)) x <- as.character(x)',
       '  else if (inherits(x, "difftime")) x <- as.character(x)',
       '  else next',
-      '  attr(x, "label") <- lbl; df[[nm]] <- x',
+      '  attr(x, "label") <- lbl',
+      '  if (!is.null(vl) && !is.na(vl)) attr(x, "value_labels") <- vl',
+      '  df[[nm]] <- x',
       '}',
     ].join('\n');
 
@@ -65,7 +77,7 @@
 
     /**
      * Read the file in R and hand it to the app with dm_write(). Resolves with the new dataset's metadata.
-     * @param {File} file @param {string} name @param {{description?: string}} [options]
+     * @param {File} file @param {string} name @param {{description?: string, valueLabels?: "labels"|"codes"}} [options]
      */
     async function importViaR(file, name, options = {}) {
       const reader = readerFor(file.name);
@@ -80,7 +92,7 @@
       const description = options.description || D.t('import.r.description', { file: file.name, label: reader.label, pkg: reader.pkg });
       // library() goes through webR's shim, which installs a bundled package on first use; `pkg::` alone does not.
       const libs = reader.pkg === 'base' ? '' : `suppressPackageStartupMessages(library(${reader.pkg}))\n`;
-      const code = [`${libs}df <- ${reader.code(JSON.stringify(path))}`, NORMALISE, `dm_write(df, ${JSON.stringify(dsName)}, description = ${JSON.stringify(description)})`].join('\n');
+      const code = [`${libs}df <- ${reader.code(JSON.stringify(path))}`, normalise(options.valueLabels === 'codes' ? 'codes' : 'labels'), `dm_write(df, ${JSON.stringify(dsName)}, description = ${JSON.stringify(description)})`].join('\n');
       let result;
       try { result = await bridge.run(code); } finally { await bridge.removeFile(path); }
       const error = result.entries.find((e) => e.kind === 'error');

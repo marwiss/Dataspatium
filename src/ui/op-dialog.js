@@ -32,6 +32,13 @@
       const fields = [];
       const previewEl = h('div', { class: 'dm-op-preview dm-help' });
       let previewTimer = 0;
+      // Fields an operation can fill from the chosen column (op.defaults), until the user edits them.
+      const inputs = {}; const touched = new Set();
+      function applyDefaults() {
+        if (!op.defaults) return;
+        const found = op.defaults({ column: (n) => columns.find((c) => c.name === n) || null }, values) || {};
+        for (const [k, v] of Object.entries(found)) if (inputs[k] && !touched.has(k) && !(options.preset && options.preset[k])) { inputs[k].value = v; values[k] = v; }
+      }
 
       const textOnly = TEXT_ONLY_OPS.has(op.id);
       for (const p of op.params) {
@@ -45,7 +52,7 @@
           const preferred = p.prefer ? list.find((c) => p.prefer.test(c.name)) : null;
           sel.value = values[p.name] !== undefined ? values[p.name] : p.optional ? '' : ((preferred && preferred.name) || (list[0] && list[0].name));
           values[p.name] = sel.value;
-          sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
+          sel.addEventListener('change', () => { values[p.name] = sel.value; applyDefaults(); schedulePreview(); });
           fields.push(sel);
         } else if (p.type === 'columns') {
           const chosen = new Set(values[p.name] || []);
@@ -74,7 +81,8 @@
         } else if (p.type === 'lines') {
           const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '5', label: paramLabel(op.id, p), mono: true, help: i18n.has(`op.${op.id}.${p.name}.help`) ? t(`op.${op.id}.${p.name}.help`) : '' }));
           ta.value = values[p.name] || '';
-          ta.addEventListener('input', () => { values[p.name] = ta.value; schedulePreview(); });
+          ta.addEventListener('input', () => { values[p.name] = ta.value; touched.add(p.name); schedulePreview(); });
+          inputs[p.name] = ta;
           fields.push(ta);
         } else if (p.type === 'expression') {
           const help = i18n.has(`op.${op.id}.${p.name}.help`) ? t(`op.${op.id}.${p.name}.help`) : '';
@@ -122,6 +130,7 @@
         i18n.has(`op.${op.id}.help`) ? h('p', { class: 'dm-help', text: t(`op.${op.id}.help`) }) : null,
         h('div', { class: 'dm-stack' }, fields),
         previewEl);
+      applyDefaults();
       schedulePreview();
       const choice = await overlays.dialog.open({
         title: options.title || t('op.' + op.id),
