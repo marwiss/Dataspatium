@@ -5,6 +5,7 @@
 | Format | Import | Export | Kommentar |
 |---|---|---|---|
 | CSV, TSV, TXT med avgränsare | Ja | Ja | Avgränsare, teckenkodning och rubrikrad identifieras automatiskt och kan ändras |
+| Text med fasta kolumnbredder | Ja | Nej | Välj formatet i importsteget (filer som heter .fwf eller .prn känns igen). Kolumnstarterna hittas ur mellanslag som finns på alla rader, eller anges som positioner |
 | Excel xlsx, xlsm, xls, xlsb | Ja | xlsx | Välj blad; datum och ja/nej blir riktiga typer |
 | ODS (LibreOffice) | Ja | Ja | Samma typhantering som Excel |
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
@@ -14,6 +15,7 @@
 | Shapefile (ZIP med shp, dbf, prj, cpg, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
 | XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
+| GeoPackage (gpkg) | Ja | Nej | Lagren (feature- och attributtabeller) väljs som tabeller; geometrikolumnen blir GeoJSON som kartdiagrammet ritar, referenssystemet visas |
 | SPSS sav, zsav, por | Ja | sav | Via R-paketet haven. Variabeletiketter blir kolumnetiketter, värdeetiketter blir text |
 | Stata dta | Ja | dta | Via haven. Vid export kortas kolumnnamnen till Statas regler (32 tecken, ASCII) |
 | SAS sas7bdat, xpt | Ja | Nej | Via haven |
@@ -21,6 +23,10 @@
 | Parquet | Ja | Ja | Via R-paketet nanoparquet; behåller typer exakt |
 | RDS, RData | Ja | rds | R-objekt; en RData-fil måste innehålla en data.frame |
 | Inklistrad text | Ja | | Tabb-, semikolon- eller kommaavgränsad |
+
+Alla filformat kan också hämtas från en webbadress under *Från webbadress* i Inhämta, om servern tillåter
+anrop från webbläsaren (CORS). Dataspatiums egna konfigurationsfiler (API-källa, diagram, dashboard, dokumentmall,
+anteckningsbok) känns igen på fältet `format` och läggs till direkt.
 
 Formaten som går via R startar R-sessionen vid behov (några sekunder första gången) och saknar
 förhandsgranskning: filen läses av R och lämnas över med `dm_write()`, så kolumntyperna kommer från R. Ja/nej

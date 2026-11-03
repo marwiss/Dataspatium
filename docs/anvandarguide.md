@@ -24,7 +24,8 @@ själv hämtar från ett API, kontrollerar version eller exporterar.
 
 ### 1. Hämta in data (Inhämta)
 
-Släpp en fil på ytan eller klistra in en tabell. Kontrollera förhandsgranskningen: teckenkodning, avgränsare,
+Släpp en fil på ytan, klistra in en tabell eller hämta en fil från en webbadress (servern måste tillåta CORS; en
+delad Dataspatium-konfiguration läggs till direkt). Kontrollera förhandsgranskningen: teckenkodning, avgränsare,
 rubrikrad och decimaltecken gissas men kan ändras. I kolumnsteget får varje kolumn en typ; koder med inledande
 nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn och importera.
 
@@ -41,7 +42,9 @@ och se kolumnens statistik till höger: antal, saknade, unika, minsta, största,
 med sökfältet. Dubbelklicka på en cell för att ändra den.
 
 *Datakvalitet* går igenom alla kolumner och pekar på problem (tal lagrade som text, blandade datumformat, dubbletter,
-teckenkodningsfel, avvikande kategorier) med en knapp som utför rätt åtgärd. Alla åtgärder finns också i paletten:
+teckenkodningsfel, avvikande kategorier) med en knapp som utför rätt åtgärd. *Regler* låter dig skriva ned vad som
+ska gälla (får inte saknas, unik, intervall, lista, mönster, längd, SQL-villkor), köra kontrollen när som helst,
+spara felande rader som egen datamängd och ladda ned en rapport. Alla åtgärder finns också i paletten:
 ta bort tomma rader, trimma, skiftläge, sök och ersätt med reguljära uttryck, byt typ, tolka datum och tal, fyll
 saknade värden, dubbletter, klustra liknande kategorier och mer. Varje åtgärd loggas som ett receptsteg och kan
 ångras. Inför delning kan identifierare som personnummer pseudonymiseras med saltade hashvärden, maskering eller

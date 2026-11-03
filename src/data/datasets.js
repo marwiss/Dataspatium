@@ -16,7 +16,7 @@
     /** @type {Map<string, {engine: any, meta: any, columns: any[]}>} */
     const openHandles = new Map();
     const listeners = new Set();
-    const META_KEYS = ['id', 'name', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions'];
+    const META_KEYS = ['id', 'name', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
 
     const q = (ident) => '"' + String(ident).replace(/"/g, '""') + '"';
     function newId() { return 'ds_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -36,7 +36,7 @@
     function rowsToMeta(rows) {
       const meta = {};
       for (const [k, v] of rows) {
-        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
+        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
         else meta[k] = v;
       }
       return meta;

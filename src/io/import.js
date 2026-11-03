@@ -7,8 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, types, datasets) => {
-    const importers = [excel, json, xml, sqliteImp, shapefile, rFormats, csv];
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, types, datasets) => {
+    const importers = [excel, json, xml, sqliteImp, shapefile, rFormats, fixedWidth, csv];
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {

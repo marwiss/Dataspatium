@@ -70,6 +70,8 @@
               });
             }
           }
+          cmds.push({ id: 'rules', label: t('bearbeta.rules'), hint: t('palette.op.hint', { name: ds.name }), group: t('palette.group.ops'), icon: 'circle-alert', run: async () => { shell.activate('bearbeta'); const cols = await services.datasets.columns(ds.id); await dialogs.rulesDialog(dialogCtx(ds, cols)); } });
+          cmds.push({ id: 'profile', label: t('bearbeta.profile'), hint: t('palette.op.hint', { name: ds.name }), group: t('palette.group.ops'), icon: 'circle-check', run: async () => { shell.activate('bearbeta'); const cols = await services.datasets.columns(ds.id); await dialogs.profileDialog(dialogCtx(ds, cols)); } });
           return cmds;
         });
       }
@@ -93,6 +95,7 @@
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
+              ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => dialogs.versionsDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.recipe'), icon: 'list', onClick: async () => dialogs.recipeDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }))),
           h('p', { class: 'dm-help', text: t('bearbeta.edit.hint') }),

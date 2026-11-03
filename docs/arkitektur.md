@@ -87,6 +87,10 @@ Bearbetning bygger på fyra moduler:
   rader kopieras till en temporär tabell eftersom sql.js inte kan ATTACH-a filer) samt kategoriklustring på
   fingeravtryck.
 - `src/data/profile.js`: datakvalitetsprofil per kolumn med varningar som pekar på en åtgärd.
+- `src/data/rules.js`: kvalitetsregler per datamängd (`_meta.rules`, så att de följer med filen). Varje regeltyp
+  översätts till ett SQL-villkor för de rader som bryter mot regeln (`violation`), körningen räknar och tar
+  exempel, loggar `validate` och kan skapa en datamängd av de felande raderna via `createFromQuery`; `suggest`
+  härleder regler ur profilen och `toMarkdown` ger rapporten som dokumentbyggarna gör till HTML.
 
 ## Import och export
 
@@ -103,6 +107,12 @@ polygon, multipunkt, med eller utan Z/M; yttre ringar medurs enligt shapefile-ko
 d3-geo förväntar sig samma riktning), .dbf (typer C, N, F, D, L; teckenkodning från .cpg eller UTF-8-prov) och
 namnet i .prj, kan förenkla geometrin med Douglas-Peucker och ger samma kolumner som GeoJSON-importen
 (`geometry_type`, `geometry` med GeoJSON som text).
+
+SQLite-adaptern känner igen GeoPackage (tabellerna `gpkg_contents` och `gpkg_geometry_columns`): lagren listas som
+tabeller, geometriblobbar (GPB-huvud följt av WKB, även Z/M och EWKB) tolkas till GeoJSON-text och referenssystemets
+namn hämtas ur `gpkg_spatial_ref_sys`. `fixed-width.js` läser text med fasta kolumnbredder; kolumnstarter hittas ur
+mellanslag som alla rader delar eller anges av användaren. `src/io/url-import.js` hämtar en webbadress som File
+för guiden eller lägger till en Dataspatium-konfiguration direkt via modulen som formatfältet pekar ut.
 
 Kartdiagrammet är diagramtypen `map` i `viz/vega-builder.js` (`geo: true`): x bär geometrikolumnen, y etiketten
 och color värdet; `toSpec` tolkar GeoJSON-texten, väljer projektion (`identity` med `reflectY` för projicerade

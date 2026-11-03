@@ -13,9 +13,10 @@ körda kommandona ligger överst.
 
 ## Inhämta
 
-Här kommer data in: filer som släpps på ytan, inklistrad text och öppna API:er. Filimporten går i steg: fil,
-inställningar med förhandsgranskning, kolumner med typer, klart. Format: CSV och annan avgränsad text, Excel, ODS,
-JSON (även JSON-stat och GeoJSON), XML, SQLite, shapefile samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
+Här kommer data in: filer som släpps på ytan, inklistrad text, webbadresser och öppna API:er. Filimporten går i
+steg: fil, inställningar med förhandsgranskning, kolumner med typer, klart. Format: CSV och annan avgränsad text,
+text med fasta kolumnbredder, Excel, ODS, JSON (även JSON-stat och GeoJSON), XML, SQLite, GeoPackage, shapefile
+samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 [format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning. Under Öppna API:er finns förinställningar för
 SCB (bläddra i ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
 luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
@@ -37,7 +38,9 @@ Allt man gör med tabellen via knappar och dialoger: redigera celler direkt i ta
 kolumnstatistik; åtgärder för rensning (sök och ersätt med reguljära uttryck, trimma, skiftläge,
 teckenkodningsreparation, ersätt värde, fyll saknade, dubbletter, kategorirensning), typer (tal, datum, ja/nej),
 struktur (beräknade kolumner, dela och kombinera, ta bort rader, pivotera) och nya datamängder (gruppera och
-aggregera, koppla, lägg ihop). Datakvalitetsprofilen pekar på vad som bör rättas. Allt loggas som recept som
+aggregera, koppla, lägg ihop). Datakvalitetsprofilen pekar på vad som bör rättas, och kvalitetsregler (får inte
+saknas, unik, intervall, lista, mönster, längd, SQL-villkor) kontrollerar datan på begäran med rapport och felande
+rader som egen datamängd. Allt loggas som recept som
 kan ångras, spelas upp på en annan datamängd och exporteras som R- eller SQL-kod. Versioner sparar
 ögonblicksbilder att gå tillbaka till. Se [bearbeta.md](bearbeta.md).
 

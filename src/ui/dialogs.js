@@ -7,8 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/dialogs', ['ui/base', 'ui/overlays', 'ui/basic', 'ui/op-dialog', 'data/operations', 'data/recipes', 'data/derive', 'data/profile', 'data/datasets', 'platform/files'],
-    (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files) => {
+  D.define('ui/dialogs', ['ui/base', 'ui/overlays', 'ui/basic', 'ui/op-dialog', 'data/operations', 'data/recipes', 'data/derive', 'data/profile', 'data/datasets', 'platform/files', 'data/rules'],
+    (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files, rulesMod) => {
       const { h, t, i18n, replace } = base;
       const GROUPS = [
         { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'drop_columns', 'reorder_columns'] },
@@ -84,6 +84,81 @@
       const fmt = (v) => (typeof v === 'number' ? i18n.formatNumber(v, { maximumFractionDigits: 3 }) : String(v));
       function stat(value, label) { return h('div', { class: 'dm-stat' }, h('span', { class: 'dm-stat-value', text: value }), h('span', { class: 'dm-stat-label', text: label })); }
       function closeDialog(node) { const dlg = node.closest('dialog'); if (dlg) { const btn = dlg.querySelector('.dm-dialog-actions dm-button button'); if (btn) btn.click(); } }
+
+      /** Validation rules: list with results, run, suggestions, failing rows as a dataset, HTML report. */
+      async function rulesDialog(ctx) {
+        const body = h('div', { class: 'dm-stack' });
+        const dlg = overlays.dialog.open({ title: t('rules.title'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+        let rules = await rulesMod.list(ctx.datasetId);
+        let lastRun = null;
+        const sel = (label, options, value, onPick) => { const s = /** @type {any} */ (h('dm-select', { label })); s.options = options; s.value = value; s.addEventListener('change', () => onPick(s.value)); return s; };
+        async function exportReport() {
+          const meta = await datasets.get(ctx.datasetId);
+          const md = rulesMod.toMarkdown(lastRun, meta);
+          const html = D.require('docgen/builders').toHtml(D.require('docgen/markdown').parse(md), { title: `Datakvalitetsrapport: ${meta ? meta.name : ''}` });
+          const name = files.safeName(`datakvalitet ${meta ? meta.name : ''}`, 'html');
+          files.download(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
+          overlays.toast.show(t('rules.report.done', { name }), { kind: 'ok' });
+        }
+        function ruleForm() {
+          const values = { type: 'notnull' };
+          const wrap = h('div', { class: 'dm-stack-sm' });
+          const draw = () => {
+            const fields = [sel(t('rules.type'), rulesMod.TYPES.map((ty) => ({ value: ty, label: t('rules.type.' + ty) })), values.type, (v) => { values.type = v; draw(); })];
+            const input = (name, label, type, help) => { const el = /** @type {any} */ (h('dm-input', { type: type || 'text', label, help: help || '' })); el.value = values[name] === undefined ? '' : values[name]; el.addEventListener('input', () => { values[name] = el.value; }); return el; };
+            if (values.type === 'unique') { values.columnsText = values.columnsText || (ctx.columns[0] ? ctx.columns[0].name : ''); fields.push(input('columnsText', t('rules.columns'), 'text', t('rules.columns.help'))); }
+            else if (values.type !== 'sql') { values.column = values.column || (ctx.columns[0] ? ctx.columns[0].name : ''); fields.push(sel(t('rules.column'), ctx.columns.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` })), values.column, (v) => { values.column = v; })); }
+            if (values.type === 'range' || values.type === 'length') fields.push(input('min', t('rules.min')), input('max', t('rules.max')));
+            if (values.type === 'inset') fields.push(input('values', t('rules.values'), 'text', t('rules.values.help')));
+            if (values.type === 'regex') fields.push(input('pattern', t('rules.pattern'), 'text', t('rules.pattern.help')));
+            if (values.type === 'sql') fields.push(input('expression', t('rules.expression'), 'text', t('rules.expression.help')));
+            replace(wrap, h('div', { class: 'dm-form-grid' }, fields), h('div', null, basic.button({ label: t('rules.add'), icon: 'plus', onClick: async () => {
+              const rule = { type: values.type };
+              if (values.type === 'unique') rule.columns = String(values.columnsText || '').split(/[,;+]/).map((s) => s.trim()).filter(Boolean);
+              else if (values.type !== 'sql') rule.column = values.column;
+              for (const k of ['min', 'max', 'values', 'pattern', 'expression']) if (values[k] !== undefined && values[k] !== '') rule[k] = values[k];
+              if ((values.type === 'unique' && !rule.columns.length) || (values.type === 'sql' && !rule.expression) || (values.type === 'regex' && !rule.pattern) || (values.type === 'inset' && !rule.values)) { overlays.toast.show(t('op.missing', { fields: t('rules.type.' + values.type) }), { kind: 'warn' }); return; }
+              await rulesMod.add(ctx.datasetId, rule);
+              rules = await rulesMod.list(ctx.datasetId); lastRun = null; render();
+            } })));
+          };
+          draw();
+          return wrap;
+        }
+        const render = () => {
+          replace(body,
+            h('p', { class: 'dm-help', text: t('rules.help') }),
+            h('div', { class: 'dm-row-wrap' },
+              basic.button({ label: t('rules.run'), icon: 'play', variant: 'primary', disabled: !rules.length, onClick: async () => { lastRun = await rulesMod.run(ctx.datasetId, rules); render(); } }),
+              basic.button({ label: t('rules.suggest'), icon: 'sparkles', onClick: async () => {
+                const suggestions = await rulesMod.suggest(ctx.datasetId);
+                let added = 0;
+                for (const s of suggestions) {
+                  if (rules.some((r) => r.type === s.type && (r.column || '') === (s.column || '') && JSON.stringify(r.columns || []) === JSON.stringify(s.columns || []))) continue;
+                  rules.push(Object.assign({ id: 'rule_' + Math.random().toString(36).slice(2, 8) }, s)); added++;
+                }
+                await rulesMod.save(ctx.datasetId, rules);
+                overlays.toast.show(t('rules.suggested', { n: added }), { kind: 'ok' });
+                render();
+              } }),
+              lastRun ? basic.button({ label: t('rules.report'), icon: 'file-text', onClick: exportReport }) : null),
+            rules.length ? h('table', { class: 'dm-columns-table' },
+              h('thead', null, h('tr', null, h('th', { text: t('rules.rule') }), h('th', { text: t('rules.result') }), h('th', { text: t('rules.failures') }), h('th'))),
+              h('tbody', null, rules.map((r) => {
+                const res = lastRun && lastRun.results.find((x) => x.rule.id === r.id);
+                return h('tr', null,
+                  h('td', null, h('strong', { text: rulesMod.describe(r) }), h('div', { class: 'dm-help', text: t('rules.type.' + r.type) })),
+                  h('td', null, res ? (res.error ? h('span', { class: 'dm-error dm-small', text: res.error }) : h('span', { class: res.ok ? 'dm-ok dm-small' : 'dm-warn dm-small', text: res.ok ? t('rules.ok') : t('rules.broken') })) : h('span', { class: 'dm-faint dm-small', text: t('rules.notrun') })),
+                  h('td', { class: 'dm-num', text: res && res.failures !== null ? i18n.formatNumber(res.failures) + (res.failures ? ` (${i18n.formatNumber(res.share * 100, { maximumFractionDigits: 1 })} %)` : '') : '' }),
+                  h('td', null, h('div', { class: 'dm-row' },
+                    res && res.failures ? basic.button({ label: t('rules.failing.rows'), size: 'sm', onClick: async () => { const meta = await rulesMod.failingRows(ctx.datasetId, r); overlays.toast.show(t('rules.failing.created', { name: meta.name }), { kind: 'ok' }); if (ctx.onDerived) ctx.onDerived(meta); closeDialog(body); } }) : null,
+                    basic.button({ label: t('common.delete'), icon: 'trash-2', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: async () => { rules = await rulesMod.remove(ctx.datasetId, r.id); lastRun = null; render(); } }))));
+              }))) : h('p', { class: 'dm-help', text: t('rules.none') }),
+            h('h4', { text: t('rules.add') }), ruleForm());
+        };
+        render();
+        return dlg;
+      }
 
       async function versionsDialog(ctx) {
         const body = h('div', { class: 'dm-stack' });
@@ -236,6 +311,6 @@
         } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); return null; }
       }
 
-      return { palette, run, profileDialog, versionsDialog, recipeDialog, clustersDialog, aggregateDialog, joinDialog, appendDialog, reorderDialog, GROUPS };
+      return { palette, run, profileDialog, rulesDialog, versionsDialog, recipeDialog, clustersDialog, aggregateDialog, joinDialog, appendDialog, reorderDialog, GROUPS };
     });
 })();

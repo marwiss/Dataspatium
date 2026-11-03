@@ -36,8 +36,9 @@ knapparna uppe till höger. Alt+1 till Alt+6 växlar läge med tangentbordet.
 
 1. Gå till *Inhämta* och släpp en fil på den streckade ytan (eller klicka och välj fil). Filformat som stöds:
    CSV, TSV och andra textfiler med avgränsare, Excel (xlsx, xls, xlsm, xlsb), ODS, JSON, NDJSON, JSON-stat,
-   GeoJSON, XML, SQLite, shapefile (ZIP med shp och dbf) samt statistikfiler från SPSS (sav), Stata (dta), SAS
-   (sas7bdat, xpt), SCB:s PX-format, Parquet och R (rds, RData). De sista läses av R och importeras i ett steg utan förhandsgranskning; första
+   GeoJSON, XML, SQLite, GeoPackage, shapefile (ZIP med shp och dbf), text med fasta kolumnbredder samt
+   statistikfiler från SPSS (sav), Stata (dta), SAS (sas7bdat, xpt), SCB:s PX-format, Parquet och R (rds, RData).
+   Filer kan också hämtas direkt från en webbadress under *Från webbadress*. De sista läses av R och importeras i ett steg utan förhandsgranskning; första
    gången tar det några sekunder medan R startar. Se [format.md](format.md).
 2. Kontrollera inställningarna. Dataspatium gissar teckenkodning (UTF-8 eller Windows-1252), avgränsare, om första
    raden är rubriker och om decimaltecknet är komma eller punkt. Förhandsgranskningen visar de första 100 raderna.

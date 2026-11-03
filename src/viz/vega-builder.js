@@ -41,7 +41,8 @@
       const by = (pred) => free.find(pred) || columns.find(pred) || null;
       const numeric = (c) => c.type === 'integer' || c.type === 'number';
       const yearLike = (c) => /^(ar|år|year|period|manad|månad|vecka|kvartal)$/i.test(c.name);
-      if (kind === 'measure') return by((c) => numeric(c) && !yearLike(c)) || by(numeric);
+      const idLike = (c) => /^(fid|id|rowid|objectid|gid|ogc_fid)$/i.test(c.name);
+      if (kind === 'measure') return by((c) => numeric(c) && !yearLike(c) && !idLike(c)) || by((c) => numeric(c) && !yearLike(c)) || by(numeric);
       if (kind === 'time') return by((c) => c.type === 'date' || c.type === 'datetime') || by((c) => /^(ar|år|year|tid|period|manad|månad)$/i.test(c.name)) || by((c) => c.type === 'text');
       if (kind === 'category') return by((c) => c.type === 'text' || c.type === 'boolean') || by((c) => c.type === 'integer');
       if (kind === 'geometry') return by((c) => c.type === 'text' && /^(geometry|geom|wkt|shape)$/i.test(c.name)) || by((c) => c.type === 'text' && /geom/i.test(c.name));

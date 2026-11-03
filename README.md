@@ -36,14 +36,15 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 
 ## Vad du kan göra
 
-- **Hämta in**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite- och shapefile-filer,
-  statistikfiler från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS (via R), inklistrad text, och data
-  direkt från öppna API:er hos SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket,
-  Lantmäteriet och Sveriges dataportal, med omhämtning av alla API-datamängder på en knapptryckning (se
+- **Hämta in**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- och shapefile-filer,
+  text med fasta kolumnbredder, statistikfiler från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS
+  (via R), inklistrad text, filer från webbadresser, och data direkt från öppna API:er hos SCB,
+  Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
+  dataportal, med omhämtning av alla API-datamängder på en knapptryckning (se
   [docs/api-konfiguration.md](docs/api-konfiguration.md)).
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
-  koppla data, pseudonymisera personnummer inför delning, med ångra, versioner och recept som kan exporteras som
-  R eller SQL (se [docs/bearbeta.md](docs/bearbeta.md)).
+  koppla data, kontrollera datakvalitet med profil och regler, pseudonymisera personnummer inför delning, med
+  ångra, versioner och recept som kan exporteras som R eller SQL (se [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
   SQL-konsol och anteckningsböcker med text-, R- och SQL-celler som blir rapporter i HTML, Word, PDF, Markdown
   eller LaTeX (se [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.

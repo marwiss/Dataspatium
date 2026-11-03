@@ -40,6 +40,7 @@
     'src/data/recipes.js',
     'src/data/derive.js',
     'src/data/profile.js',
+    'src/data/rules.js',
     'src/data/workspace.js',
     'src/data/r-bridge.js',
     // Import and export
@@ -50,8 +51,10 @@
     'src/io/importers/sqlite.js',
     'src/io/importers/r-formats.js',
     'src/io/importers/shapefile.js',
+    'src/io/importers/fixed-width.js',
     'src/io/import.js',
     'src/io/export.js',
+    'src/io/url-import.js',
     // API connectors
     'src/api/schema.js',
     'src/api/secrets.js',

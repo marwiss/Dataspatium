@@ -80,6 +80,13 @@ importera ZIP-filen i Inhämta, gärna med toleransen 100 meter under *Förenkla
 till gränserna på kommunkoden i Bearbeta (*Koppla*), och välj diagramtypen *Karta* i Visualisera. Se
 [visualisera.md](visualisera.md).
 
+## Hur kontrollerar jag att datan håller måttet?
+
+*Datakvalitet* i Bearbeta profilerar alla kolumner och föreslår åtgärder. *Regler* låter dig skriva ned krav
+(får inte saknas, unik, intervall, lista, mönster, längd eller ett SQL-villkor) och köra dem efter varje import;
+felande rader kan sparas som egen datamängd och resultatet laddas ned som rapport. Reglerna sparas i datamängden
+och följer med när du delar den. Se [bearbeta.md](bearbeta.md).
+
 ## Kan jag ta bort personnummer innan jag delar en datamängd?
 
 Ja. Åtgärden *Pseudonymisera* i Bearbeta ersätter identifierare med saltade hashvärden, maskerade värden eller

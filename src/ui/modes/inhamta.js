@@ -11,12 +11,12 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: 'Automatiskt' }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'excel', 'json', 'xml', 'sqlite', 'shapefile', 'r'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'json', 'xml', 'sqlite', 'shapefile', 'r'];
     /** Formats without a header-row switch (structure carries the names). */
     const NO_HEADER = ['json', 'xml', 'sqlite', 'shapefile', 'r'];
     /** Formats whose values are already typed (no decimal-separator choice). */
     const TYPED = ['sqlite', 'shapefile', 'r'];
-    const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.xlsx,.xlsm,.xls,.xlsb,.ods,.json,.ndjson,.jsonl,.geojson,.xml,.sqlite,.sqlite3,.db,.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet';
+    const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.json,.ndjson,.jsonl,.geojson,.xml,.sqlite,.sqlite3,.db,.gpkg,.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -29,7 +29,7 @@
       /** @type {any} */ let apiUi = null;
       let apiId = null;
 
-      function reset() { return { step: 'file', file: null, text: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0 }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function reset() { return { step: 'file', file: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
       function activate(s) {
@@ -59,7 +59,8 @@
           h('h4', { text: t('import.sources') }),
           h('div', { class: 'dm-list' },
             sourceItem('file', 'folder-open', t('import.sources.files'), null),
-            sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint'))),
+            sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
+            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint'))),
           h('h4', { text: t('api.sources') }),
           h('div', { class: 'dm-list' }, connectorList.map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
           h('div', { class: 'dm-row' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector })),
@@ -107,7 +108,43 @@
         replace(slots.center, apiUi.el);
       }
 
+      /** Fetch a web address: configurations are added directly, data files continue in the wizard. */
+      async function fetchUrl(url) {
+        wiz.url = url; wiz.busy = true; wiz.error = ''; render();
+        try {
+          const urlImport = D.require('io/url-import');
+          const file = await urlImport.fetchFile(url);
+          if (/\.json$/i.test(file.name) || /json/.test(file.type)) {
+            const text = await file.text();
+            if (urlImport.configFormat(text)) {
+              const res = await urlImport.importConfig(text);
+              const msg = t('import.url.config.done', { kind: t('import.url.kind.' + res.kind), name: res.record && res.record.name ? res.record.name : file.name });
+              shell.log(msg, 'ok'); ui.toast.show(msg, { kind: 'ok' });
+              if (res.kind === 'api') await reloadConnectors();
+              wiz.busy = false; render();
+              return;
+            }
+          }
+          wiz.file = file; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          wiz.busy = false;
+          await runPreview();
+          return;
+        } catch (err) {
+          wiz.error = (err && err.message) || String(err);
+          shell.log(t('import.error', { message: wiz.error }), 'error');
+        }
+        wiz.busy = false; render();
+      }
+
       function stepFile() {
+        if (source === 'url') {
+          const input = /** @type {any} */ (h('dm-input', { type: 'url', label: t('import.url.label'), placeholder: 'https://', value: wiz.url || '' }));
+          input.addEventListener('keydown', (e) => { if (/** @type {any} */ (e).key === 'Enter') fetchUrl(input.value.trim()); });
+          return h('div', { class: 'dm-stack' }, input,
+            h('div', { class: 'dm-row' }, ui.button({ label: t('import.url.fetch'), variant: 'primary', icon: 'download', loading: wiz.busy, onClick: () => fetchUrl(input.value.trim()) })),
+            wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+            h('p', { class: 'dm-help', text: t('import.url.help') }));
+        }
         if (source === 'paste') {
           const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '12', label: t('import.paste.label'), mono: true }));
           ta.value = wiz.text;
@@ -162,6 +199,7 @@
         if (!o.table) delete o.table;
         if (!o.layer) delete o.layer;
         if (!o.simplify) delete o.simplify;
+        if (!o.breaks) delete o.breaks;
         if (o.decimal === 'auto') delete o.decimal;
         return o;
       }
@@ -174,10 +212,16 @@
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
         if (wiz.file) left.appendChild(format);
-        if (wiz.options.format === 'csv') {
+        if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
           const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? ' (identifierad)' : '') }));
           if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
-          left.appendChild(select(t('import.delimiter'), csv.DELIMITERS.map((d) => ({ value: d.value, label: d.value === 'auto' ? 'Automatiskt' + (p && p.delimiter ? ` (${describeDelimiter(p.delimiter)})` : '') : t(d.key) })), wiz.options.delimiter, (v) => { wiz.options.delimiter = v; schedulePreview(); }));
+          if (wiz.options.format === 'csv') left.appendChild(select(t('import.delimiter'), csv.DELIMITERS.map((d) => ({ value: d.value, label: d.value === 'auto' ? 'Automatiskt' + (p && p.delimiter ? ` (${describeDelimiter(p.delimiter)})` : '') : t(d.key) })), wiz.options.delimiter, (v) => { wiz.options.delimiter = v; schedulePreview(); }));
+          else {
+            const breaks = /** @type {any} */ (h('dm-input', { label: t('import.breaks'), help: t('import.breaks.help'), placeholder: p && p.breaksText ? p.breaksText : '0, 12, 20' }));
+            breaks.value = wiz.options.breaks || '';
+            breaks.addEventListener('change', () => { wiz.options.breaks = breaks.value; schedulePreview(); });
+            left.appendChild(breaks);
+          }
         }
         if (wiz.options.format === 'excel' && p && p.sheets) {
           left.appendChild(select(t('import.sheet'), p.sheets.map((s) => ({ value: s, label: s })), wiz.options.sheet || p.sheet, (v) => { wiz.options.sheet = v; wiz.options.header = undefined; schedulePreview(); }));

@@ -72,6 +72,19 @@ unika värden, intervall och iakttagelser. Iakttagelserna pekar på en åtgärd 
 - värden som ser ut som personnummer: Pseudonymisera
 - kolumn med samma värde på alla rader (upplysning)
 
+## Regler
+
+Knappen **Regler** öppnar datamängdens kvalitetsregler: vad som ska gälla för att datan ska vara rätt. Sju
+regeltyper finns: får inte saknas, unik (en eller flera kolumner tillsammans), inom intervall (tal, datum eller
+text), finns i lista, matchar mönster (reguljärt uttryck), textlängd och fritt SQL-villkor som ska vara sant för
+varje rad. **Föreslå regler** lägger till regler ur datakvalitetsprofilen: kolumner utan saknade värden, unika
+kolumner och koder med fast längd.
+
+**Kör regler** räknar raderna som bryter mot varje regel, visar andelen och några exempel, och loggar körningen i
+datamängdens historik. För en bruten regel kan de felande raderna sparas som en egen datamängd, och hela
+resultatet kan laddas ned som en HTML-rapport. Reglerna lagras i datamängdens metadata och följer därför med i
+säkerhetskopior, delningspaket och den portabla mappen.
+
 ## Pseudonymisera
 
 Åtgärden **Pseudonymisera** (gruppen Värden, även i kolumnmenyn och kommandopaletten) ersätter identifierare som
