@@ -82,6 +82,17 @@
           ta.value = values[p.name] || '';
           ta.addEventListener('input', () => { values[p.name] = ta.value; schedulePreview(); });
           fields.push(ta);
+        } else if (p.type === 'pattern') {
+          // A regular expression: monospace, checked as it is typed.
+          const input = /** @type {any} */ (h('dm-input', { label: paramLabel(op.id, p), mono: true, help: t('regex.pattern.help') }));
+          input.value = values[p.name] || '';
+          input.addEventListener('input', () => {
+            values[p.name] = input.value;
+            const res = D.require('data/regex-syntax').compile(input.value);
+            input.error = input.value && res.error ? t('regex.err.invalid', { message: res.error }) : '';
+            schedulePreview();
+          });
+          fields.push(input);
         } else {
           const input = /** @type {any} */ (h('dm-input', { type: p.type === 'number' ? 'number' : 'text', label: paramLabel(op.id, p), placeholder: i18n.has(`op.${op.id}.${p.name}.placeholder`) ? t(`op.${op.id}.${p.name}.placeholder`) : '' }));
           input.value = values[p.name] === undefined || values[p.name] === null ? '' : values[p.name];

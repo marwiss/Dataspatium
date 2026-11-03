@@ -84,7 +84,7 @@ SQLite -ohjelmassa ja useimmissa muissa työkaluissa.
 
 Varmuuskopiolla (ZIP) ja siirrettävällä kansiolla (Edge ja Chrome) on sama rakenne: `manifest.json` sisältöluetteloineen,
 `datasets/<id>.sqlite` aineistoa kohden, `charts/<id>.viz.json` tallennettua kaaviota kohden, `documents/<id>.doc.json` omaa
-asiakirjamallia kohden, `dashboards/<id>.dash.json` kojelautaa kohden ja `notebooks/<id>.nb.json` muistikirjaa kohden. Paketilla
+asiakirjamallia kohden, `dashboards/<id>.dash.json` kojelautaa kohden ja `notebooks/<id>.nb.json` muistikirjaa kohden ja `scripts/<id>.script.json` kutakin tallennettua R-skriptiä, SQL-skriptiä tai regex-kuviota kohden. Paketilla
 (*Jaa paketti* Hallitse-tilassa) on sama rakenne, mutta se sisältää vain valitsemasi ja manifestissa on `kind: bundle`;
 ladattaessa kaikki jo olemassa oleva ohitetaan (samalla id:llä olevat aineistot sekä samannimiset kaaviot, kojelaudat, mallit
 ja muistikirjat). Kun automaattinen tallennus on käytössä, muuttuneet aineistot kirjoitetaan kansioon pian jokaisen

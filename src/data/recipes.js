@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
-  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra'], (datasets, ops) => {
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex'], (datasets, ops) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -76,6 +76,11 @@
         case 'running_total': return D.t('recipe.running_total', { name: params.name, column: params.column, group: groupText(params) });
         case 'change_previous': return D.t('recipe.change_previous', { name: params.name, column: params.column, group: groupText(params) });
         case 'standardize': return D.t('recipe.standardize', { name: params.name, column: params.column });
+        case 'regex_filter': return D.t(params.keep === 'other' ? 'recipe.regex_filter.other' : 'recipe.regex_filter', { pattern: params.pattern, column: params.column, n });
+        case 'regex_extract': return D.t('recipe.regex_extract', { pattern: params.pattern, column: params.column, names: params.names || '' });
+        case 'regex_flag': return D.t('recipe.regex_flag', { pattern: params.pattern, column: params.column, name: params.name });
+        case 'regex_count': return D.t('recipe.regex_count', { pattern: params.pattern, column: params.column, name: params.name });
+        case 'regex_split': return D.t('recipe.regex_split', { pattern: params.pattern, column: params.column, name: params.name });
         default: return opId;
       }
     }

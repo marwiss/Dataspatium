@@ -48,8 +48,9 @@ og PDF og `dm_read()`/`dm_write()` for å flytte data mellom appen og R (se [r-g
 valgte datasettet (`data`), der andre datasett nås med kortnavnene sine, slik at én spørring kan gjøre join over flere
 datasett; spørringer viser resultater som kan lagres som nytt datasett, og endrende setninger logges som trinn i oppskriften
 (se [bearbeta.md](bearbeta.md)). Notatboken blander tekst (Markdown), R og SQL i celler som kjøres i rekkefølge og blir en
-rapport i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senere: statistiske modeller og
-kanskje Python.
+rapport i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Fanen Regex prøver regulære uttrykk på en kolonne med treffene markert og bruker dem til å filtrere, hente ut,
+erstatte, dele opp, markere, telle eller lage en kvalitetsregel, med en mønsterprofil og et bibliotek med
+nordiske mønstre (se [regex.md](regex.md)). Senere: statistiske modeller.
 
 ## Visualiser
 

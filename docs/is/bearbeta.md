@@ -62,6 +62,11 @@ sem því verður við komið sýnir forskoðun hversu margar raðir verða fyri
 | | Staðla | z-gildi (fjarlægð frá meðaltali í staðalfrávikum, staðalfrávik úrtaks) eða gildin kvörðuð á bilið 0–1 |
 | | Taka hluta úr dagsetningu | Ár, ársfjórðung, mánuð, ISO-viku, vikudag (1 = mánudagur), dag, dag ársins, ár og mánuð (`2024-03`) eða klukkustund úr dagsetningu |
 | | Tími milli dagsetninga | Fjöldi heilla daga, vikna, mánaða eða ára milli tveggja dagsetninga, til dæmis aldur; án lokadagsetningar er talið til dagsins í dag þegar skrefið er keyrt |
+| Reglulegar segðir | Sía með mynstri | Heldur eða fjarlægir raðir eftir því hvort dálkur passar við reglulega segð |
+| | Draga út með mynstri | Nýir dálkar úr hópum mynstursins eða allri samsvöruninni, til dæmis ártalið úr texta |
+| | Merkja samsvaranir | Já/nei-dálkur sem sýnir hvort gildið passar |
+| | Telja samsvaranir | Dálkur með fjölda samsvarana í hverju gildi |
+| | Skipta upp með mynstri | Skiptir dálki í marga þar sem mynstrið passar; síðasti hlutinn fær afganginn af textanum |
 | Ný gagnasöfn | Hópa og taka saman | Summa, meðaltal, lægst, hæst, fjöldi, fjöldi ólíkra eða miðgildi fyrir hvern hóp, í nýtt gagnasafn |
 | | Tengja gagnasöfn | Vinstri eða innri tenging við annað gagnasafn á lykli |
 | | Skeyta gagnasöfnum saman | Staflar röðum úr mörgum gagnasöfnum; dálkar eru paraðir eftir heiti |
@@ -70,6 +75,10 @@ sem því verður við komið sýnir forskoðun hversu margar raðir verða fyri
 Aðgerðir sem búa til nýtt gagnasafn láta frumgögnin óhreyfð og velja nýja gagnasafnið þegar því er lokið.
 Útreikningarnir bæta við nýjum dálki og láta þá sem fyrir eru óhreyfða; þeir byggja á gluggaföllum SQL og eru fluttir
 út í R sem dplyr-kóði með `group_by()` og `mutate()`.
+Aðgerðirnar með reglulegum segðum er auðveldast að prófa í Regex-flipanum í Greina, þar sem samsvaranirnar sjást
+meðan mynstrið er skrifað; þar eru líka mynsturasafnið og mynsturyfirlitið (sjá [regex.md](regex.md)). Sama
+JavaScript-málskipan gildir í *Finna og skipta út*, þar sem `(?i)` fremst í mynstrinu eða valið *Hunsa há- og
+lágstafi* gerir leitina óháða há- og lágstöfum.
 
 ## Afturkalla
 
@@ -224,7 +233,9 @@ keyrir alla skriftuna, valinn texti keyrir sér.
 - Eiginleikaspjaldið sýnir dálka gagnasafnsins (smellur setur heitið inn), stuttheiti allra gagnasafna og aukaföll SQL sem
   Dataspatium bætir við: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`, `dm_upper`,
   `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` og
-  `dm_valid_id` (til dæmis `select * from data where dm_valid_id(kennitala, 'is_kt') = 0`).
+  `dm_valid_id` (til dæmis `select * from data where dm_valid_id(kennitala, 'is_kt') = 0`), auk regex-fallanna
+  `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` og `dm_shape` sem lýst
+  er í [regex.md](regex.md).
 - SQL-skriftur eru vistaðar í hlutaspjaldinu á sama hátt og R-skriftur.
 
 SQLite-mállýskan gildir: `||` fyrir samtengingu texta, `cast(x as integer)`, `strftime()` fyrir dagsetningar, `group_concat()`,

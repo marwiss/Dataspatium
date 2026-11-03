@@ -181,7 +181,7 @@ dm-kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 }
 .dm-list-item:hover { background: var(--dm-surface-hover); }
 .dm-list-item-static, .dm-list-item-static:hover { cursor: default; background: transparent; }
-.dm-list-code { font-family: var(--dm-font-mono); font-size: var(--dm-font-size-xs); color: var(--dm-text-muted); }
+.dm-list-code { font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); color: var(--dm-text-muted); }
 dm-table.dm-table-tall { height: 360px; }
 dm-table.dm-table-preview { min-height: 320px; }
 .dm-list-item[aria-current="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); }

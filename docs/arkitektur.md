@@ -270,6 +270,20 @@ och SQL-celler mot bokens datamängd (SELECT via motorn, ändrande satser som re
 översätter boken till dokumentmodellen, som fått blocktypen `code` (kod och textutdata) i alla byggare, så att
 exporten återanvänder HTML-, DOCX-, PDF-, Markdown- och LaTeX-byggarna.
 
+Reguljära uttryck är JavaScript-mönster (ECMAScript) med samma regler överallt: en inledande grupp som `(?i)` blir
+flaggor och Unicode-flaggan läggs till när mönstret tillåter det. `src/data/regex-syntax.js` (utan beroenden) har
+`compile`, gruppnamn, mönster ur en form i mönsterprofilen, mönsterbiblioteket och R-formen av mönster och
+ersättningar (stringr/ICU, `$1` blir `\\1`). SQLite-workern har samma regler i `regex()` och funktionerna
+`dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` och `dm_shape`.
+`src/analysis/regex.js` kör mönster i en egen Blob-worker med tidsgräns (`run`), eftersom JavaScript inte kan
+avbryta ett mönster som backtrackar katastrofalt; workern avslutas när tiden går ut och skapas igen vid nästa
+anrop. `stats` räknar träffar över de vanligaste olika värdena, `profile` grupperar former med `dm_shape` och
+`guard` prövar varje värde i en kolumn (i rowid-ordning, 5 000 åt gången) innan ett receptsteg kör samma mönster i
+SQLite. Receptstegen finns i `src/data/operations-regex.js` (`regex_filter`, `regex_extract`, `regex_flag`,
+`regex_count`, `regex_split`; ersättning går genom `replace_text` med `regex: true`, som också anropar `guard`).
+Fliken är `src/ui/analysis/regex-panel.js` som fjärde flik i Analysera; sparade mönster är skript med språket
+`regex` i IndexedDB-tabellen `scripts` och följer med i säkerhetskopior och paket som `scripts/<id>.script.json`.
+
 ## Flera flikar
 
 `src/platform/sync.js` håller flikar i samma arbetsyta i takt: en `BroadcastChannel` (`dataspatium-sync`) bär

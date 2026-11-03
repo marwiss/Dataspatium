@@ -107,6 +107,12 @@ Fliken *Anteckningsbok* samlar text (Markdown), R och SQL i celler som körs i o
 färdig bok exporteras som HTML, Word, PDF, Markdown eller LaTeX, med eller utan koden. Se
 [anteckningsbok.md](anteckningsbok.md).
 
+Fliken *Regex* prövar ett reguljärt uttryck på en kolumn medan du skriver: de vanligaste värdena visas med
+träffarna markerade och antalet matchande rader räknas. Samma mönster kan sedan filtrera rader, extrahera grupper
+till nya kolumner, ersätta, dela upp, markera eller räkna träffar, eller bli en kvalitetsregel. *Mönsterprofil*
+visar vilka former värdena har (till exempel `9999-99-99` och `99/99/9999` för datum), och biblioteket till vänster
+har färdiga mönster för bland annat personnummer, postnummer och datum. Se [regex.md](regex.md).
+
 ### 5. Visualisera (Visualisera)
 
 Diagrambyggaren skapar stapel-, linje-, yt-, punkt-, cirkel- och andra diagram ur en datamängd: välj kolumner för

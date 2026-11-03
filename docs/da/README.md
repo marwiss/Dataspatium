@@ -55,7 +55,7 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   fortryd, versioner og recepter, der kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
 - **Analysere**: en indbygget R-konsol med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsol, hvor
   datasæt kobles sammen med join via deres kortnavne, og notesbøger med tekst-, R- og SQL-celler, der bliver til
-  rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), helt i browseren.
+  rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane, hvor regulære udtryk afprøves på en kolonne og bruges til at filtrere, udtrække, erstatte og opdele (se [regex.md](regex.md)), helt i browseren.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
@@ -82,6 +82,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Ofte stillede spørgsmål](faq.md): lager, sikkerhed, R, API'er og opdateringer.
 - [De seks tilstande](lagen.md): hvad der findes hvor og hvorfor.
 - [Notesbog](anteckningsbok.md): tekst, R og SQL i celler, der bliver til en rapport.
+- [Regulære udtryk](regex.md): mønstre til at analysere, rette og opdele tekst i datasæt.
 - [Formater og import](format.md): filformater, tegnkodning, decimaltegn, datoer og kolonnetyper.
 - [Åbne API'er](api-konfiguration.md): de forudindstillede kilder, nøgler og egne konfigurationer.
 - [R i Dataspatium](r-guide.md): R-konsollen, `dm_read()`, `dm_write()` og de medfølgende pakker.

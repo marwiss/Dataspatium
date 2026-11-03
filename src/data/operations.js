@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/operations', ['data/types', 'data/boundaries'], (types, boundaries) => {
+  D.define('data/operations', ['data/types', 'data/boundaries', 'data/regex-syntax'], (types, boundaries, regexSyntax) => {
     const q = (ident) => '"' + String(ident).replace(/"/g, '""') + '"';
     const lit = (v) => (v === null || v === undefined ? 'NULL' : typeof v === 'number' ? String(v) : "'" + String(v).replace(/'/g, "''") + "'");
     const rstr = (s) => JSON.stringify(String(s));
@@ -152,11 +152,18 @@
       },
       async apply(ctx, p) {
         let rows = 0;
+        // A regular expression is first tried on every value within a time limit (see analysis/regex.js).
+        if (p.regex) for (const name of TEXT_ONLY(ctx, p.columns)) await D.require('analysis/regex').guard({ engine: ctx.engine }, name, p.find, p.caseInsensitive ? 'i' : '');
         for (const name of TEXT_ONLY(ctx, p.columns)) rows += await ctx.engine.run(`update data set ${q(name)} = ${this.expr(p, name)} where ${this.where(p, name)}`);
         return { rows };
       },
       toSQL(p, ctx) { return TEXT_ONLY(ctx, p.columns).map((n) => `UPDATE data SET ${q(n)} = ${this.expr(p, n)} WHERE ${this.where(p, n)};`); },
-      toR(p) { const fn = p.regex ? 'gsub' : 'gsub'; const pat = p.regex ? rstr(p.find) : rstr(p.find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); return p.columns.map((c) => `df$${q(c)} <- ${fn}(${pat}, ${rstr(p.replace || '')}, df$${q(c)}${p.caseInsensitive ? ', ignore.case = TRUE' : ''}${p.regex ? ', perl = TRUE' : ''})`).join('\n'); },
+      toR(p) {
+        // A regex replacement's $1 and $<name> become R's \1; in plain text a backslash is doubled.
+        const pat = p.regex ? p.find : String(p.find).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const repl = p.regex ? regexSyntax.rReplacement(p.replace || '', p.find) : String(p.replace || '').replace(/\\/g, '\\\\');
+        return p.columns.map((c) => `df$${q(c)} <- gsub(${rstr(pat)}, ${rstr(repl)}, df$${q(c)}${p.caseInsensitive ? ', ignore.case = TRUE' : ''}${p.regex ? ', perl = TRUE' : ''})`).join('\n');
+      },
     });
 
     define({

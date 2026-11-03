@@ -51,7 +51,9 @@ mod det valgte datasæt (`data`), hvor andre datasæt nås med deres kortnavne, 
 datasæt; forespørgsler viser resultater, der kan gemmes som nyt datasæt, og ændrende sætninger logges som trin i
 recepten (se [bearbeta.md](bearbeta.md)). Notesbogen blander tekst (Markdown), R og SQL i celler, der køres i
 rækkefølge og bliver til en rapport i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)).
-Senere: statistiske modeller og muligvis Python.
+Fanen Regex afprøver regulære udtryk på en kolonne med træfferne markeret og bruger dem til at filtrere,
+udtrække, erstatte, opdele, markere, tælle eller oprette en kvalitetsregel, med en mønsterprofil og et bibliotek
+med nordiske mønstre (se [regex.md](regex.md)). Senere: statistiske modeller.
 
 ## Visualisér
 

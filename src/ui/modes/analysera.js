@@ -1,20 +1,22 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Mode "Analysera": code and statistics. Two consoles share the same layout, chosen with tabs:
+ * Mode "Analysera": code and statistics, in four tabs that share the same layout:
  *   R   (WebR): editor on top, console output with inline plots below, saved R scripts in the object
  *               panel, session info and snippets in the inspector.
  *   SQL (SQLite): editor on top, result table below; SELECT shows rows, other statements change the
  *               selected dataset as a logged recipe step. Saved SQL scripts, dataset columns in the inspector.
+ *   Anteckningsbok: notebooks with text, R and SQL cells (ui/analysis/notebook-panel.js).
+ *   Regex: regular expressions tried on a column and applied as recipe steps (ui/analysis/regex-panel.js).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel'], (base, rb, recipes, presets, notebooks, notebookPanel) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel'], (base, rb, recipes, presets, notebooks, notebookPanel, regexPanelModule) => {
     const { h, t, i18n, replace } = base;
     const bridge = rb.bridge;
     const SQL_LIMIT = 5000;
-    const SQL_FUNCTIONS = ['regexp', 'regexp_replace', 'dm_parse_number', 'dm_parse_date', 'dm_fix_encoding', 'dm_title', 'dm_squish', 'dm_round', 'dm_pad', 'dm_date_part', 'dm_date_diff', 'dm_valid_id'];
+    const SQL_FUNCTIONS = ['regexp', 'regexp_replace', 'dm_parse_number', 'dm_parse_date', 'dm_fix_encoding', 'dm_title', 'dm_squish', 'dm_round', 'dm_pad', 'dm_date_part', 'dm_date_diff', 'dm_valid_id', 'dm_regex_test', 'dm_regex_extract', 'dm_regex_count', 'dm_regex_split'];
     const READ_ONLY_SQL = /^(select|with|values|pragma|explain)\b/i;
 
     function createMode(ctx) {
@@ -29,6 +31,17 @@
       let outputEl = null; let statusEl = null; let runBtn = null;
       let sqlOut = null; let sqlSaveBtn = null; let sqlResult = null; let sqlRunBtn = null; let sqlBadge = null;
       let nbList = []; let nbView = null; let notebook = null; let unsubNb = null;
+      /** The Regex tab keeps its pattern and choices while the mode is open in other tabs. */
+      let rxPanel = null;
+      function regexPanel() {
+        if (!rxPanel) {
+          rxPanel = regexPanelModule.create(ctx, {
+            openTab: (lang, code) => store.set({ pendingCode: { lang, code } }),
+            rerender: () => { if (slots && tab === 'regex') { renderCenter(); renderRight(); } },
+          });
+        }
+        return rxPanel;
+      }
 
       function activate(s) {
         slots = s;
@@ -38,6 +51,7 @@
           renderLeft();
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
           if (tab === 'notebook' && changed.includes('datasets')) renderRight();
+          if (tab === 'regex') { regexPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
         });
         unsubBridge = bridge.on(onBridgeEvent);
         unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
@@ -50,6 +64,7 @@
       function deactivate() {
         for (const lang of ['r', 'sql']) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
         if (nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
+        if (rxPanel) rxPanel.destroy();
         slots = null; outputEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
         if (unsubBridge) unsubBridge();
@@ -122,6 +137,7 @@
         const v = st[tab];
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         if (tab === 'notebook') { renderNotebookLeft(); return; }
+        if (tab === 'regex') { regexPanel().left(slots.left, renderLeft); return; }
         const selected = selectedDataset();
         if (tab === 'r') slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode('r', `df <- dm_read(${JSON.stringify(selected.shortName || selected.name)})\n`) })));
         slots.left.appendChild(h('hr'));
@@ -177,7 +193,7 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
+        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => {
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
@@ -187,7 +203,7 @@
           if (tab === 'r') startR();
         });
         if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
-        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : renderNotebook();
+        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
@@ -406,6 +422,7 @@
       async function renderRight() {
         if (!slots) return;
         if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
+        if (tab === 'regex') { replace(slots.right, regexPanel().inspector()); return; }
         if (tab === 'sql') {
           const ds = selectedDataset();
           let cols = [];
@@ -451,6 +468,7 @@
           const cmds = [
             { id: 'analysera:r', label: t('palette.analyze.r'), group: t('palette.group.modes'), icon: 'terminal', run: () => { tab = 'r'; shell.activate('analysera'); } },
             { id: 'analysera:sql', label: t('palette.analyze.sql'), group: t('palette.group.modes'), icon: 'database', run: () => { tab = 'sql'; shell.activate('analysera'); } },
+            { id: 'analysera:regex', label: t('palette.analyze.regex'), group: t('palette.group.modes'), icon: 'regex', run: () => { tab = 'regex'; shell.activate('analysera'); } },
             { id: 'nb:new', label: t('nb.new'), group: t('palette.group.notebooks'), icon: 'plus', run: async () => { shell.activate('analysera'); await newNotebook(); } },
           ];
           for (const n of await notebooks.list()) cmds.push({ id: 'nb:' + n.id, label: t('palette.nb.open', { name: n.name }), hint: n.datasetName || '', group: t('palette.group.notebooks'), icon: 'file-text', run: () => { notebook = n; tab = 'notebook'; shell.activate('analysera'); } });

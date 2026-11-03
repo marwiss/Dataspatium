@@ -99,6 +99,11 @@ inn dm_read()* og R-eksemplene i inspektøren bruker også kortnavnet.
 
 Fanen *Notatbok* samler tekst (Markdown), R og SQL i celler som kjøres i rekkefølge og lagrer utdataene sine. En ferdig
 notatbok eksporteres som HTML, Word, PDF, Markdown eller LaTeX, med eller uten koden. Se [anteckningsbok.md](anteckningsbok.md).
+Fanen *Regex* prøver et regulært uttrykk på en kolonne mens du skriver: de vanligste verdiene vises med treffene
+markert, og radene som matcher, telles. Samme mønster kan så filtrere rader, hente ut grupper til nye kolonner,
+erstatte, dele opp, markere eller telle treff, eller bli en kvalitetsregel. *Mønsterprofil* viser hvilke former
+verdiene har (for eksempel `9999-99-99` og `99/99/9999` for datoer), og biblioteket til venstre har ferdige
+mønstre for blant annet personnumre, postnumre og datoer. Se [regex.md](regex.md).
 
 ### 5. Visualiser (Visualiser)
 

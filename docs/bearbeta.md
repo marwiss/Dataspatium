@@ -64,6 +64,11 @@ och efter.
 | | Standardisera | z-värden (avståndet från medelvärdet i standardavvikelser, stickprovets standardavvikelse) eller värdena skalade till 0–1 |
 | | Ta ut datumdel | År, kvartal, månad, ISO-vecka, veckodag (1 = måndag), dag, dag på året, år och månad (`2024-03`) eller timme ur ett datum |
 | | Tid mellan datum | Antal hela dagar, veckor, månader eller år mellan två datum, till exempel ålder; utan slutdatum räknas till dagens datum när steget körs |
+| Reguljära uttryck | Filtrera med mönster | Behåller eller tar bort rader beroende på om en kolumn matchar ett reguljärt uttryck |
+| | Extrahera med mönster | Nya kolumner av mönstrets grupper eller av hela träffen, till exempel årtalet ur en text |
+| | Markera träffar | En ja/nej-kolumn som visar om värdet matchar |
+| | Räkna träffar | En kolumn med antalet träffar i varje värde |
+| | Dela upp med mönster | Delar en kolumn i flera där mönstret matchar; den sista delen får resten av texten |
 | Nya datamängder | Gruppera och aggregera | Summa, medelvärde, minsta, största, antal, antal unika eller median per grupp, till en ny datamängd |
 | | Koppla datamängder | Vänster- eller inre koppling med en annan datamängd på en nyckel |
 | | Lägg ihop datamängder | Staplar rader från flera datamängder; kolumner matchas på namn |
@@ -71,7 +76,10 @@ och efter.
 
 Åtgärder som skapar en ny datamängd lämnar originalet orört och väljer den nya datamängden när den är klar.
 Beräkningarna lägger till en ny kolumn och lämnar de befintliga orörda; de bygger på SQL:s fönsterfunktioner och
-exporteras till R som dplyr-kod med `group_by()` och `mutate()`.
+exporteras till R som dplyr-kod med `group_by()` och `mutate()`. Åtgärderna med reguljära uttryck prövas enklast i
+fliken Regex i Analysera, där träffarna syns medan mönstret skrivs; där finns också mönsterbiblioteket och
+mönsterprofilen (se [regex.md](regex.md)). Samma JavaScript-syntax gäller i *Sök och ersätt*, där `(?i)` först i
+mönstret eller valet *Ignorera skiftläge* gör sökningen okänslig för skiftläge.
 
 ## Ångra
 
@@ -232,7 +240,9 @@ SQL-konsolen ligger i läget Analysera under fliken SQL och arbetar mot den vald
 - Egenskapspanelen listar datamängdens kolumner (klick infogar namnet) och de extra SQL-funktioner som
   Dataspatium lägger till: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`,
   `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` och
-  `dm_valid_id` (till exempel `select * from data where dm_valid_id(personnummer, 'se_pnr') = 0`).
+  `dm_valid_id` (till exempel `select * from data where dm_valid_id(personnummer, 'se_pnr') = 0`), samt
+  regexfunktionerna `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` och
+  `dm_shape` som beskrivs i [regex.md](regex.md).
 - SQL-skript sparas i objektpanelen på samma sätt som R-skript.
 
 SQLite-dialekten gäller: `||` för textkonkatenering, `cast(x as integer)`, `strftime()` för datum,

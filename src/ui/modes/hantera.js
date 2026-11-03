@@ -219,7 +219,7 @@
           sw.addEventListener('change', () => { if (sw.checked) chosen.add(d.id); else chosen.delete(d.id); });
           return sw;
         });
-        const inc = { charts: true, dashboards: true, documents: true, notebooks: true };
+        const inc = { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true };
         const incSwitches = Object.keys(inc).map((k) => {
           const sw = /** @type {any} */ (h('dm-switch', { label: t('bundle.include.' + k) }));
           sw.checked = true;

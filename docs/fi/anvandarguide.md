@@ -105,6 +105,11 @@ nimen alla kohdepaneelissa), joten yksi kysely voi yhdistää useita aineistoja,
 Välilehti *Muistikirja* kokoaa tekstiä (Markdown), R:ää ja SQL:ää soluihin, jotka suoritetaan järjestyksessä ja jotka
 tallentavat tulosteensa. Valmis muistikirja viedään HTML-, Word-, PDF-, Markdown- tai LaTeX-muotoon koodin kanssa tai ilman.
 Ks. [anteckningsbok.md](anteckningsbok.md).
+*Regex*-välilehti kokeilee säännöllistä lauseketta sarakkeeseen kirjoittaessasi: yleisimmät arvot näytetään
+osumat merkittyinä, ja vastaavat rivit lasketaan. Samalla kuviolla voi sitten suodattaa rivejä, poimia ryhmiä
+uusiin sarakkeisiin, korvata, jakaa, merkitä tai laskea osumia tai luoda laatusäännön. *Kuvioprofiili* näyttää
+arvojen muodot (esimerkiksi `9999-99-99` ja `99/99/9999` päivämäärille), ja vasemmalla olevassa kirjastossa on
+valmiita kuvioita muun muassa henkilötunnuksille, postinumeroille ja päivämäärille. Ks. [regex.md](regex.md).
 
 ### 5. Visualisoi (Visualisoi)
 

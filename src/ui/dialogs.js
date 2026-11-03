@@ -16,6 +16,7 @@
         { id: 'rows', ops: ['delete_rows', 'remove_duplicates', 'remove_empty', 'sort_rows', 'keep_top', 'sample_rows'] },
         { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'substring', 'pivot_longer', 'pivot_wider', 'sql'] },
         { id: 'calc', ops: ['share_of_total', 'rank_values', 'running_total', 'change_previous', 'bin_numeric', 'standardize', 'date_part', 'date_diff'] },
+        { id: 'regex', ops: ['regex_filter', 'regex_extract', 'regex_flag', 'regex_count', 'regex_split'] },
         { id: 'geo', ops: ['geo_centroid', 'geo_area', 'geo_reproject', 'geo_region'] },
         { id: 'derive', ops: ['aggregate', 'join', 'append', 'clusters'] },
       ];

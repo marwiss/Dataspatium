@@ -52,8 +52,10 @@ vienti SVG-, PNG- ja PDF-muotoon sekä `dm_read()`/`dm_write()` datan siirtämis
 lyhytnimillä, joten yksi kysely voi yhdistää useita aineistoja join-liitoksella; kyselyt näyttävät tuloksia, jotka voi
 tallentaa uutena aineistona, ja muuttavat lauseet kirjataan reseptin vaiheina (ks. [bearbeta.md](bearbeta.md)). Muistikirja
 yhdistää tekstiä (Markdown), R:ää ja SQL:ää soluihin, jotka suoritetaan järjestyksessä, ja niistä syntyy raportti HTML-,
-Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)). Myöhemmin: tilastolliset mallit ja
-mahdollisesti Python.
+Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)). Regex-välilehti kokeilee säännöllisiä lausekkeita sarakkeeseen osumat merkittyinä ja käyttää niitä
+suodattamiseen, poimimiseen, korvaamiseen, jakamiseen, merkitsemiseen, laskemiseen tai laatusäännön luomiseen;
+mukana on kuvioprofiili ja pohjoismaisten kuvioiden kirjasto (ks. [regex.md](regex.md)). Myöhemmin: tilastolliset
+mallit.
 
 ## Visualisoi
 

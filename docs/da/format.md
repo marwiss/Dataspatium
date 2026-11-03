@@ -83,7 +83,7 @@ Browser for SQLite og i de fleste andre værktøjer.
 
 Backuppen (ZIP) og den portable mappe (Edge og Chrome) har samme opbygning: `manifest.json` med en liste over indholdet,
 `datasets/<id>.sqlite` pr. datasæt, `charts/<id>.viz.json` pr. gemt diagram, `documents/<id>.doc.json` pr. egen
-dokumentskabelon, `dashboards/<id>.dash.json` pr. dashboard og `notebooks/<id>.nb.json` pr. notesbog. En pakke (*Del pakke*
+dokumentskabelon, `dashboards/<id>.dash.json` pr. dashboard og `notebooks/<id>.nb.json` pr. notesbog og `scripts/<id>.script.json` pr. gemt R-script, SQL-script eller regex-mønster. En pakke (*Del pakke*
 under Håndter) har samme opbygning, men indeholder kun det, du har valgt, og har `kind: bundle` i manifestet; når den
 indlæses, springes alt, der allerede findes, over (datasæt med samme id, diagrammer, dashboards, skabeloner og notesbøger
 med samme navn). Med automatisk gemning slået til skrives ændrede datasæt til mappen kort efter hver gemning, og filer for

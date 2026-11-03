@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Workspace files: backup and restore as a ZIP (manifest.json, one SQLite file per dataset, saved charts,
- * dashboards, the user's document templates and notebooks), selective sharing bundles with the same
+ * dashboards, the user's document templates, notebooks and saved scripts), selective sharing bundles with the same
  * layout, and the same layout written to a portable folder on disk through the File System Access API
  * (Chromium, see platform/storage/folder-store.js). With auto-save on, the folder is brought up to date
  * shortly after each change.
@@ -14,19 +14,37 @@
     const MANIFEST = 'manifest.json';
     const AUTOSAVE_SETTING = 'folder:autosave';
     const AUTOSAVE_DELAY = 1500;
-    const PREFIXES = ['charts/', 'documents/', 'dashboards/', 'notebooks/'];
+    const PREFIXES = ['charts/', 'documents/', 'dashboards/', 'notebooks/', 'scripts/'];
+    const SCRIPT_LANGUAGES = ['r', 'sql', 'regex'];
     const optional = (name) => (D.has(name) ? D.require(name) : null);
+
+    /** A saved script (R, SQL or a regex pattern) as a script file. */
+    function scriptJson(sc) {
+      return JSON.stringify({ app: 'Dataspatium', kind: 'script', version: D.version, id: sc.id, name: sc.name, language: sc.language, code: sc.code, options: sc.options || null, createdAt: sc.createdAt, updatedAt: sc.updatedAt }, null, 2);
+    }
+    /** Store a script file; with `dedupe` a script with the same name and language is skipped (returns null). */
+    async function importScript(text, dedupe) {
+      const obj = JSON.parse(text);
+      if (!obj || obj.kind !== 'script' || !SCRIPT_LANGUAGES.includes(obj.language) || typeof obj.code !== 'string') throw new Error(D.t('workspace.err.script'));
+      const have = await idb.listScripts(obj.language);
+      if (dedupe && have.some((s) => s.name === obj.name)) return null;
+      const now = new Date().toISOString();
+      const id = typeof obj.id === 'string' && obj.id && !(dedupe && have.some((s) => s.id === obj.id)) ? obj.id : 'sc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const record = { id, name: String(obj.name || ''), language: obj.language, code: obj.code, options: obj.options || null, createdAt: obj.createdAt || now, updatedAt: obj.updatedAt || now };
+      await idb.putScript(record);
+      return record;
+    }
 
     /**
      * Everything that makes up the workspace as path -> bytes|string.
-     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean}, kind?: string, name?: string}} [options]
+     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}, kind?: string, name?: string}} [options]
      *   datasetIds: datasets whose bytes are included (default all); listAll=false also limits the manifest to them
      */
     async function collect(options = {}) {
       const list = await datasets.list();
       const only = options.datasetIds ? new Set(options.datasetIds) : null;
       const listed = only && options.listAll === false ? list.filter((m) => only.has(m.id)) : list;
-      const inc = Object.assign({ charts: true, dashboards: true, documents: true, notebooks: true }, options.include || {});
+      const inc = Object.assign({ charts: true, dashboards: true, documents: true, notebooks: true, scripts: true }, options.include || {});
       /** @type {Record<string, Uint8Array|string>} */
       const files = {};
       const entries = [];
@@ -71,8 +89,17 @@
         files[path] = nbMod.exportJson(nb);
         nbEntries.push({ id: nb.id, name: nb.name, file: path });
       }
-      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries }, null, 2);
-      return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length } };
+      // Saved R and SQL scripts and regex patterns.
+      const scripts = inc.scripts ? await idb.listScripts() : [];
+      const scriptEntries = [];
+      for (const sc of scripts) {
+        if (!SCRIPT_LANGUAGES.includes(sc.language)) continue;
+        const path = `scripts/${sc.id}.script.json`;
+        files[path] = scriptJson(sc);
+        scriptEntries.push({ id: sc.id, name: sc.name, language: sc.language, file: path });
+      }
+      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, null, 2);
+      return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length, scripts: scriptEntries.length } };
     }
 
     /** @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>} */
@@ -110,7 +137,7 @@
     /**
      * A shareable package: the chosen datasets plus, optionally, every chart, dashboard, template and notebook.
      * Restoring a bundle skips datasets, charts, dashboards, templates and notebooks that already exist.
-     * @param {{name?: string, datasetIds: string[], include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean}}} options
+     * @param {{name?: string, datasetIds: string[], include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean, scripts?: boolean}}} options
      */
     async function bundle(options) {
       const { files, counts } = await collect({ datasetIds: options.datasetIds || [], listAll: false, include: options.include, kind: 'bundle', name: options.name });
@@ -123,7 +150,7 @@
      * @param {Record<string, Uint8Array>} entries
      * @param {{skipIds?: Set<string>, dedupe?: boolean}} [options] skipIds: dataset ids already in the
      *   workspace; dedupe: skip charts, dashboards, templates and notebooks that already exist with the same name
-     * @returns {Promise<{manifest: any, imported: any[], skipped: string[], charts: any[], documents: any[], dashboards: any[], notebooks: any[], existing: number}>}
+     * @returns {Promise<{manifest: any, imported: any[], skipped: string[], charts: any[], documents: any[], dashboards: any[], notebooks: any[], scripts: any[], existing: number}>}
      */
     async function restoreEntries(entries, options = {}) {
       const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
@@ -161,7 +188,15 @@
       const documents = await importKind(/\.doc\.json$/i, 'docgen/documents', (d, obj) => d.name === obj.name);
       const dashboards = await importKind(/\.dash\.json$/i, 'viz/dashboards', (d, obj) => d.name === obj.name);
       const notebooks = await importKind(/\.nb\.json$/i, 'analysis/notebooks', (n, obj) => n.name === obj.name);
-      return { manifest, imported, skipped, charts, documents, dashboards, notebooks, existing };
+      const scripts = [];
+      for (const [path, bytes] of Object.entries(entries)) {
+        if (!/^scripts\/[^/]+\.script\.json$/i.test(path)) continue;
+        try {
+          const record = await importScript(zip.text(bytes), !!options.dedupe);
+          if (record) scripts.push(record); else existing++;
+        } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
+      }
+      return { manifest, imported, skipped, charts, documents, dashboards, notebooks, scripts, existing };
     }
 
     /** Restore a backup (everything is added) or a bundle (what already exists is skipped). */
@@ -221,7 +256,7 @@
     /** Read a folder written by saveToFolder; datasets and objects already present are skipped. */
     async function loadFromFolder(root) {
       if (!root) throw new Error(D.t('folder.err.none'));
-      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p);
+      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
       /** @type {Record<string, Uint8Array>} */
       const entries = {};
       for (const path of await folder.listFiles(root)) if (wanted(path)) entries[path] = await folder.readFile(root, path);

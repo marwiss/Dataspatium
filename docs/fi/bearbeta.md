@@ -64,6 +64,11 @@ parametreista, ja mahdollisuuksien mukaan esikatselu näyttää, montaako riviä
 | | Standardoi | z-arvot (etäisyys keskiarvosta keskihajontoina, otoksen keskihajonta) tai arvot skaalattuna välille 0–1 |
 | | Poimi päivämäärän osa | Vuosi, neljännes, kuukausi, ISO-viikko, viikonpäivä (1 = maanantai), päivä, vuoden päivä, vuosi ja kuukausi (`2024-03`) tai tunti päivämäärästä |
 | | Aika päivämäärien välillä | Kokonaisten päivien, viikkojen, kuukausien tai vuosien määrä kahden päivämäärän välillä, esimerkiksi ikä; ilman loppupäivää lasketaan siihen päivään, jona vaihe ajetaan |
+| Säännölliset lausekkeet | Suodata kuviolla | Säilyttää tai poistaa rivejä sen mukaan, vastaako sarake säännöllistä lauseketta |
+| | Poimi kuviolla | Uudet sarakkeet kuvion ryhmistä tai koko osumasta, esimerkiksi vuosiluku tekstistä |
+| | Merkitse osumat | Kyllä/ei-sarake, joka näyttää, vastaako arvo kuviota |
+| | Laske osumat | Sarake, jossa on osumien määrä kussakin arvossa |
+| | Jaa kuviolla | Jakaa sarakkeen useaksi kohdista, joissa kuvio vastaa; viimeinen osa saa loput tekstistä |
 | Uudet aineistot | Ryhmittele ja koosta | Summa, keskiarvo, pienin, suurin, lukumäärä, erillisten lukumäärä tai mediaani ryhmittäin uuteen aineistoon |
 | | Yhdistä aineistoja | Vasen liitos tai sisäliitos toiseen aineistoon avaimen perusteella |
 | | Liitä aineistoja | Pinoaa rivit useista aineistoista; sarakkeet yhdistetään nimen perusteella |
@@ -72,6 +77,10 @@ parametreista, ja mahdollisuuksien mukaan esikatselu näyttää, montaako riviä
 Uuden aineiston luovat toiminnot jättävät alkuperäisen ennalleen ja valitsevat uuden aineiston, kun se on valmis.
 Laskelmat lisäävät uuden sarakkeen ja jättävät olemassa olevat ennalleen; ne perustuvat SQL:n ikkunafunktioihin, ja
 ne viedään R:ään dplyr-koodina, jossa on `group_by()` ja `mutate()`.
+Säännöllisiä lausekkeita käyttäviä toimintoja on helpointa kokeilla Analysoi-tilan Regex-välilehdellä, jossa
+osumat näkyvät kuviota kirjoitettaessa; siellä ovat myös kuviokirjasto ja kuvioprofiili (ks. [regex.md](regex.md)).
+Sama JavaScript-syntaksi pätee toiminnossa *Etsi ja korvaa*, jossa kuvion alkuun kirjoitettu `(?i)` tai valinta
+*Älä huomioi kirjainkokoa* tekee hausta kirjainkoosta riippumattoman.
 
 ## Kumoa
 
@@ -230,7 +239,9 @@ suorittaa koko skriptin, valittu teksti suoritetaan erikseen.
 - Ominaisuuspaneeli luettelee aineiston sarakkeet (napsautus lisää nimen), kaikkien aineistojen lyhytnimet ja Dataspatiumin
   lisäämät SQL-funktiot: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`, `dm_upper`,
   `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` ja
-  `dm_valid_id` (esimerkiksi `select * from data where dm_valid_id(hetu, 'fi_hetu') = 0`).
+  `dm_valid_id` (esimerkiksi `select * from data where dm_valid_id(hetu, 'fi_hetu') = 0`) sekä regex-funktiot
+  `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` ja `dm_shape`, jotka
+  kuvataan ohjeessa [regex.md](regex.md).
 - SQL-skriptit tallennetaan kohdepaneeliin samoin kuin R-skriptit.
 
 SQLiten murre on voimassa: `||` tekstin yhdistämiseen, `cast(x as integer)`, `strftime()` päivämääriin, `group_concat()`,

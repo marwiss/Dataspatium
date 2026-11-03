@@ -62,6 +62,11 @@ det er mulig, vises en forhåndsvisning av hvor mange rader som påvirkes, og ek
 | | Standardiser | z-verdier (avstanden fra gjennomsnittet i standardavvik, utvalgets standardavvik) eller verdiene skalert til 0–1 |
 | | Hent ut datodel | År, kvartal, måned, ISO-uke, ukedag (1 = mandag), dag, dag i året, år og måned (`2024-03`) eller time fra en dato |
 | | Tid mellom datoer | Antall hele dager, uker, måneder eller år mellom to datoer, for eksempel alder; uten sluttdato regnes det til dagens dato når steget kjøres |
+| Regulære uttrykk | Filtrer med mønster | Beholder eller fjerner rader avhengig av om en kolonne matcher et regulært uttrykk |
+| | Hent ut med mønster | Nye kolonner av mønsterets grupper eller av hele treffet, for eksempel årstallet i en tekst |
+| | Marker treff | En ja/nei-kolonne som viser om verdien matcher |
+| | Tell treff | En kolonne med antall treff i hver verdi |
+| | Del opp med mønster | Deler en kolonne i flere der mønsteret matcher; den siste delen får resten av teksten |
 | Nye datasett | Grupper og aggreger | Sum, gjennomsnitt, minste, største, antall, antall unike eller median per gruppe, til et nytt datasett |
 | | Koble datasett | Venstre- eller indre kobling med et annet datasett på en nøkkel |
 | | Slå sammen datasett | Stabler rader fra flere datasett; kolonner matches på navn |
@@ -70,6 +75,10 @@ det er mulig, vises en forhåndsvisning av hvor mange rader som påvirkes, og ek
 Handlinger som lager et nytt datasett, lar originalen være urørt og velger det nye datasettet når det er ferdig.
 Beregningene legger til en ny kolonne og lar de eksisterende være urørt; de bygger på SQLs vindusfunksjoner og
 eksporteres til R som dplyr-kode med `group_by()` og `mutate()`.
+Handlingene med regulære uttrykk prøves enklest i fanen Regex i Analyser, der treffene vises mens mønsteret
+skrives; der finnes også mønsterbiblioteket og mønsterprofilen (se [regex.md](regex.md)). Samme JavaScript-syntaks
+gjelder i *Søk og erstatt*, der `(?i)` først i mønsteret eller valget *Ignorer store og små bokstaver* gjør søket
+uavhengig av store og små bokstaver.
 
 ## Angre
 
@@ -225,7 +234,9 @@ Ctrl+Enter kjører hele skriptet, markert tekst kjøres alene.
 - Egenskapspanelet viser datasettets kolonner (et klikk setter inn navnet), alle datasetts kortnavn og de ekstra
   SQL-funksjonene Dataspatium legger til: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`,
   `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` og
-  `dm_valid_id` (for eksempel `select * from data where dm_valid_id(fodselsnummer, 'no_fnr') = 0`).
+  `dm_valid_id` (for eksempel `select * from data where dm_valid_id(fodselsnummer, 'no_fnr') = 0`), og
+  regex-funksjonene `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` og
+  `dm_shape` som er beskrevet i [regex.md](regex.md).
 - SQL-skript lagres i objektpanelet på samme måte som R-skript.
 
 SQLite-dialekten gjelder: `||` for tekstsammenslåing, `cast(x as integer)`, `strftime()` for datoer, `group_concat()`,

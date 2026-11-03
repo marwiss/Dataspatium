@@ -83,8 +83,9 @@ beskrivning, tidsstämplar, källa, importinställningar) och `_log` (allt som g
 
 Säkerhetskopian (ZIP) och den portabla mappen (Edge och Chrome) har samma uppbyggnad: `manifest.json` med en
 lista över innehållet, `datasets/<id>.sqlite` per datamängd, `charts/<id>.viz.json` per sparat diagram,
-`documents/<id>.doc.json` per egen dokumentmall, `dashboards/<id>.dash.json` per dashboard och
-`notebooks/<id>.nb.json` per anteckningsbok. Ett delningspaket (*Dela paket* under Hantera) har samma uppbyggnad
+`documents/<id>.doc.json` per egen dokumentmall, `dashboards/<id>.dash.json` per dashboard,
+`notebooks/<id>.nb.json` per anteckningsbok och `scripts/<id>.script.json` per sparat R-skript, SQL-skript eller
+regexmönster. Ett delningspaket (*Dela paket* under Hantera) har samma uppbyggnad
 men innehåller bara det du valt och har `kind: bundle` i manifestet; när det läses in hoppas allt som redan finns
 över (datamängder med samma id, diagram, dashboards, mallar och anteckningsböcker med samma namn). Med automatisk sparning på skrivs ändrade datamängder till mappen
 strax efter varje sparning och filer för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator;

@@ -99,6 +99,11 @@ SQL-flipinn spyr töflu gagnasafnsins `data` beint með SQLite. Önnur gagnasöf
 
 Flipinn *Minnisbók* safnar texta (Markdown), R og SQL í reiti sem keyra í röð og vista úttak sitt. Fullbúin minnisbók er flutt
 út sem HTML, Word, PDF, Markdown eða LaTeX, með eða án kóðans. Sjá [anteckningsbok.md](anteckningsbok.md).
+Flipinn *Regex* prófar reglulega segð á dálki meðan þú skrifar: algengustu gildin birtast með samsvaranirnar
+merktar og raðirnar sem passa eru taldar. Sama mynstur getur síðan síað raðir, dregið hópa út í nýja dálka, skipt
+út, skipt upp, merkt eða talið samsvaranir eða orðið að gæðareglu. *Mynsturyfirlit* sýnir form gildanna (til dæmis
+`9999-99-99` og `99/99/9999` fyrir dagsetningar) og safnið til vinstri hefur tilbúin mynstur meðal annars fyrir
+kennitölur, póstnúmer og dagsetningar. Sjá [regex.md](regex.md).
 
 ### 5. Myndgerðu (Myndgera)
 

@@ -55,7 +55,9 @@ SVG, PNG and PDF, and `dm_read()`/`dm_write()` for moving data between the app a
 their short names so that one query can join several datasets; queries show results that can be saved as a new
 dataset, modifying statements are logged as recipe steps (see [bearbeta.md](bearbeta.md)). The notebook mixes
 text (Markdown), R and SQL in cells that run in order and become a report in HTML, Word, PDF, Markdown or LaTeX
-(see [anteckningsbok.md](anteckningsbok.md)). Later: statistical models and possibly Python.
+(see [anteckningsbok.md](anteckningsbok.md)). The Regex tab tries regular expressions on a column with the matches marked and uses them to filter, extract,
+replace, split, flag, count or create a quality rule, with a pattern profile and a library of Nordic patterns
+(see [regex.md](regex.md)). Later: statistical models.
 
 ## Visualise
 

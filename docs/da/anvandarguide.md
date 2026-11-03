@@ -104,6 +104,11 @@ Knappen *Indsæt dm_read()* og R-eksemplerne i inspektøren bruger også kortnav
 Fanen *Notesbog* samler tekst (Markdown), R og SQL i celler, der køres i rækkefølge og gemmer deres output. En færdig
 notesbog eksporteres som HTML, Word, PDF, Markdown eller LaTeX, med eller uden koden. Se
 [anteckningsbok.md](anteckningsbok.md).
+Fanen *Regex* afprøver et regulært udtryk på en kolonne, mens du skriver: de hyppigste værdier vises med træfferne
+markeret, og de matchende rækker tælles. Samme mønster kan derefter filtrere rækker, udtrække grupper til nye
+kolonner, erstatte, opdele, markere eller tælle træffere eller blive en kvalitetsregel. *Mønsterprofil* viser
+værdiernes former (for eksempel `9999-99-99` og `99/99/9999` for datoer), og biblioteket til venstre har færdige
+mønstre for blandt andet personnumre, postnumre og datoer. Se [regex.md](regex.md).
 
 ### 5. Visualisér (Visualisér)
 

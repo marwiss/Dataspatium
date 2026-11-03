@@ -76,6 +76,7 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Språk | Locale, lokalisering (i gränssnittet) |
 | Land (filtret för API-källor) | Region, område |
 | Grundkurs (den interaktiva genomgången), steg, uppgift | Guide, tur, tutorial, lektion |
+| Reguljärt uttryck, mönster, träff; fliken heter Regex | Regexp, sökmönster, match (i löpande text) |
 
 Skrivsätt: korta meningar, verb först i knappar ("Importera", "Spara"), inga utropstecken, inga versaler i
 löpande ord utom namn. Felmeddelanden säger vad som hände och vad användaren kan göra.

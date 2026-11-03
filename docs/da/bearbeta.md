@@ -63,6 +63,11 @@ og hvor det er muligt, vises en forhåndsvisning af, hvor mange rækker der påv
 | | Standardisér | z-værdier (afstanden fra gennemsnittet i standardafvigelser, stikprøvens standardafvigelse) eller værdierne skaleret til 0–1 |
 | | Udtræk datodel | År, kvartal, måned, ISO-uge, ugedag (1 = mandag), dag, dag i året, år og måned (`2024-03`) eller time fra en dato |
 | | Tid mellem datoer | Antal hele dage, uger, måneder eller år mellem to datoer, for eksempel alder; uden slutdato regnes til dags dato, når trinnet køres |
+| Regulære udtryk | Filtrér med mønster | Beholder eller fjerner rækker afhængigt af, om en kolonne matcher et regulært udtryk |
+| | Udtræk med mønster | Nye kolonner af mønsterets grupper eller af hele træffet, for eksempel årstallet i en tekst |
+| | Markér træffere | En ja/nej-kolonne, der viser, om værdien matcher |
+| | Tæl træffere | En kolonne med antallet af træffere i hver værdi |
+| | Opdel med mønster | Opdeler en kolonne i flere, hvor mønsteret matcher; den sidste del får resten af teksten |
 | Nye datasæt | Gruppér og aggregér | Sum, gennemsnit, mindste, største, antal, antal unikke eller median pr. gruppe, til et nyt datasæt |
 | | Sammenkobl datasæt | Venstre eller indre sammenkobling med et andet datasæt på en nøgle |
 | | Sammenlæg datasæt | Stabler rækker fra flere datasæt; kolonner matches på navn |
@@ -71,6 +76,10 @@ og hvor det er muligt, vises en forhåndsvisning af, hvor mange rækker der påv
 Handlinger, der opretter et nyt datasæt, lader originalen være urørt og vælger det nye datasæt, når det er færdigt.
 Beregningerne tilføjer en ny kolonne og lader de eksisterende være urørte; de bygger på SQL's vinduesfunktioner og
 eksporteres til R som dplyr-kode med `group_by()` og `mutate()`.
+Handlingerne med regulære udtryk afprøves nemmest i fanen Regex i Analysér, hvor træfferne vises, mens mønsteret
+skrives; der findes også mønsterbiblioteket og mønsterprofilen (se [regex.md](regex.md)). Samme JavaScript-syntaks
+gælder i *Søg og erstat*, hvor `(?i)` først i mønsteret eller valget *Ignorér store og små bogstaver* gør søgningen
+uafhængig af store og små bogstaver.
 
 ## Fortryd
 
@@ -226,7 +235,9 @@ Ctrl+Enter kører hele scriptet, markeret tekst køres alene.
 - Egenskabspanelet viser datasættets kolonner (et klik indsætter navnet), alle datasæts kortnavne og de ekstra
   SQL-funktioner, Dataspatium tilføjer: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`,
   `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` og
-  `dm_valid_id` (for eksempel `select * from data where dm_valid_id(cpr, 'dk_cpr') = 0`).
+  `dm_valid_id` (for eksempel `select * from data where dm_valid_id(cpr, 'dk_cpr') = 0`) samt regex-funktionerne
+  `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` og `dm_shape`, der er
+  beskrevet i [regex.md](regex.md).
 - SQL-scripts gemmes i objektpanelet på samme måde som R-scripts.
 
 SQLite-dialekten gælder: `||` til tekstsammenkædning, `cast(x as integer)`, `strftime()` til datoer, `group_concat()`,

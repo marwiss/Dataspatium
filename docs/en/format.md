@@ -84,7 +84,7 @@ RSQLite, in DB Browser for SQLite and in most other tools.
 
 The backup (ZIP) and the portable folder (Edge and Chrome) have the same structure: `manifest.json` with a list of the
 contents, `datasets/<id>.sqlite` per dataset, `charts/<id>.viz.json` per saved chart, `documents/<id>.doc.json` per
-document template of your own, `dashboards/<id>.dash.json` per dashboard and `notebooks/<id>.nb.json` per notebook. A
+document template of your own, `dashboards/<id>.dash.json` per dashboard and `notebooks/<id>.nb.json` per notebook and `scripts/<id>.script.json` per saved R script, SQL script or regex pattern. A
 bundle (*Share bundle* under Manage) has the same structure but contains only what you chose and has `kind: bundle`
 in the manifest; when it is loaded, everything that already exists is skipped (datasets with the same id, charts,
 dashboards, templates and notebooks with the same name). With automatic saving on, changed datasets are written to

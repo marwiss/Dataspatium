@@ -108,6 +108,11 @@ The button *Insert dm_read()* and the R examples in the inspector use the short 
 The *Notebook* tab gathers text (Markdown), R and SQL in cells that run in order and save their output. A finished
 notebook is exported as HTML, Word, PDF, Markdown or LaTeX, with or without the code. See
 [anteckningsbok.md](anteckningsbok.md).
+The *Regex* tab tries a regular expression on a column as you type: the most common values are shown with the
+matches marked and the matching rows are counted. The same pattern can then filter rows, extract groups into new
+columns, replace, split, flag or count matches, or become a quality rule. *Pattern profile* shows the shapes of the
+values (for example `9999-99-99` and `99/99/9999` for dates), and the library on the left has ready-made patterns
+for personal identity numbers, postcodes and dates, among others. See [regex.md](regex.md).
 
 ### 5. Visualise (Visualise)
 

@@ -10,7 +10,9 @@
  * the engine: regexp(), regexp_replace(), dm_replace(), dm_parse_number(), dm_parse_date(),
  * dm_parse_datetime(), dm_parse_bool(), dm_upper(), dm_lower(), dm_title(), dm_fix_encoding(),
  * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix), dm_mask(), dm_round(), dm_pad(),
- * dm_date_part(), dm_date_diff(), dm_valid_id() (Nordic identity numbers), and for geodata
+ * dm_date_part(), dm_date_diff(), dm_valid_id() (Nordic identity numbers), the regex functions
+ * dm_regex_test(), dm_regex_extract(), dm_regex_all(), dm_regex_count(), dm_regex_split() and dm_shape()
+ * (pattern profile), and for geodata
  * dm_geo_lon()/dm_geo_lat()/dm_geo_area() (centroids and areas of GeoJSON or WKT geometry),
  * dm_to_lon()/dm_to_lat()/dm_to_east()/dm_to_north() (SWEREF 99 TM <-> WGS 84) and dm_region()
  * (region of a coordinate among boundaries loaded with the 'regions' message).
@@ -36,11 +38,65 @@
     }).then(function (module) { SQL = module; });
 
     // ---- helper functions available in SQL -----------------------------------------------------
-    var regexCache = { key: null, re: null };
+    // Patterns are JavaScript (ECMAScript) regular expressions. A leading inline flag group such as (?i), as
+    // written in R, Python and PCRE, becomes flags, and the Unicode flag is added whenever the pattern allows
+    // it, so that \p{L} works while older patterns that are only valid without it keep working. The same
+    // rules are applied in analysis/regex.js.
+    var regexCache = new Map();
     function regex(pattern, flags) {
       var key = pattern + '\u0000' + (flags || '');
-      if (regexCache.key !== key) { regexCache.key = key; regexCache.re = new RegExp(pattern, flags || ''); }
-      return regexCache.re;
+      var cached = regexCache.get(key);
+      if (cached) { cached.lastIndex = 0; return cached; }
+      var p = String(pattern); var f = '';
+      var lead = /^(?:\(\?[ims]+\))+/.exec(p);
+      if (lead) p = p.slice(lead[0].length);
+      String(flags || '').concat(lead ? lead[0].replace(/[^ims]/g, '') : '').split('').forEach(function (c) { if ('dgimsuyv'.indexOf(c) >= 0 && f.indexOf(c) < 0) f += c; });
+      var re;
+      if (f.indexOf('u') < 0 && f.indexOf('v') < 0) { try { re = new RegExp(p, f + 'u'); } catch (e) { re = new RegExp(p, f); } } else re = new RegExp(p, f);
+      if (regexCache.size >= 64) regexCache.clear();
+      regexCache.set(key, re);
+      return re;
+    }
+    /** Matches of a global copy of a pattern, at most `limit`; empty matches advance one position. */
+    function regexMatches(text, pattern, flags, limit) {
+      var re = regex(pattern, String(flags || '').replace(/g/g, '') + 'g');
+      var out = []; var m;
+      while (out.length < (limit || 1e6) && (m = re.exec(text)) !== null) {
+        out.push(m);
+        if (m[0] === '') re.lastIndex++;
+      }
+      return out;
+    }
+    /** A group of a match by number or name (null when it did not take part). */
+    function matchGroup(m, group) {
+      var g = group === null || group === undefined || group === '' ? 0 : group;
+      var v = /^\d+$/.test(String(g)) ? m[Number(g)] : (m.groups ? m.groups[String(g)] : undefined);
+      return v === undefined ? null : v;
+    }
+    /** Part `part` (1-based) of `text` split at the matches; with `parts` the last part keeps the rest. */
+    function regexSplit(text, pattern, flags, part, parts) {
+      var n = Math.max(1, Math.trunc(Number(part) || 1));
+      var max = Math.trunc(Number(parts) || 0);
+      var cuts = regexMatches(text, pattern, flags, max > 0 ? max - 1 : 0).filter(function (m) { return !(m[0] === '' && (m.index === 0 || m.index >= text.length)); });
+      var starts = [0]; var ends = [];
+      cuts.forEach(function (m) { ends.push(m.index); starts.push(m.index + m[0].length); });
+      ends.push(text.length);
+      if (n > starts.length) return null;
+      return text.slice(starts[n - 1], ends[n - 1]);
+    }
+    var SHAPE_UPPER = /\p{Lu}/u; var SHAPE_LETTER = /\p{L}/u; var SHAPE_DIGIT = /\p{Nd}/u;
+    /**
+     * Shape of a text: A for an upper-case letter, a for another letter, 9 for a digit, other characters as
+     * they are; with `collapse` a run of the same class is written once followed by +.
+     */
+    function textShape(text, collapse) {
+      var out = ''; var prev = ''; var run = false;
+      Array.from(String(text)).forEach(function (ch) {
+        var c = SHAPE_UPPER.test(ch) ? 'A' : SHAPE_LETTER.test(ch) ? 'a' : SHAPE_DIGIT.test(ch) ? '9' : ch;
+        if (collapse && c === prev && (c === 'A' || c === 'a' || c === '9')) { if (!run) { out += '+'; run = true; } return; }
+        out += c; prev = c; run = false;
+      });
+      return out;
     }
     var pad = function (x) { return String(x).padStart(2, '0'); };
     function parseNumber(raw, decimal) {
@@ -510,6 +566,21 @@
       });
       database.create_function('regexp', function (pattern, text) { if (text === null || pattern === null) return 0; try { return regex(String(pattern), '').test(String(text)) ? 1 : 0; } catch (e) { return 0; } });
       database.create_function('regexp_replace', function (text, pattern, repl, flags) { if (text === null) return null; try { return String(text).replace(regex(String(pattern), flags === null || flags === undefined ? 'g' : String(flags)), repl === null ? '' : String(repl)); } catch (e) { return text; } });
+      // Regex functions for the Regex tab and its recipe steps; an invalid pattern is an SQL error.
+      database.create_function('dm_regex_test', function (text, pattern, flags) { if (text === null || pattern === null) return null; return regex(String(pattern), String(flags || '').replace(/g/g, '')).test(String(text)) ? 1 : 0; });
+      database.create_function('dm_regex_extract', function (text, pattern, group, flags) {
+        if (text === null || pattern === null) return null;
+        var m = regex(String(pattern), String(flags || '').replace(/g/g, '')).exec(String(text));
+        return m ? matchGroup(m, group) : null;
+      });
+      database.create_function('dm_regex_all', function (text, pattern, group, sep, flags) {
+        if (text === null || pattern === null) return null;
+        var found = regexMatches(String(text), String(pattern), flags, 10000).map(function (m) { return matchGroup(m, group); }).filter(function (v) { return v !== null && v !== ''; });
+        return found.length ? found.join(sep === null || sep === undefined ? ', ' : String(sep)) : null;
+      });
+      database.create_function('dm_regex_count', function (text, pattern, flags) { if (text === null || pattern === null) return null; return regexMatches(String(text), String(pattern), flags).filter(function (m) { return m[0] !== ''; }).length; });
+      database.create_function('dm_regex_split', function (text, pattern, part, parts, flags) { if (text === null || pattern === null) return null; return regexSplit(String(text), String(pattern), flags, part, parts); });
+      database.create_function('dm_shape', function (text, collapse) { return text === null ? null : textShape(text, !!collapse); });
       database.create_function('dm_replace', function (text, find, repl, ci) {
         if (text === null || find === null) return text;
         var s = String(text); var f = String(find); var r = repl === null ? '' : String(repl);

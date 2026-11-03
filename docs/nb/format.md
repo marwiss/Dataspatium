@@ -83,7 +83,7 @@ SQLite og i de fleste andre verktøy.
 
 Sikkerhetskopien (ZIP) og den portable mappen (Edge og Chrome) har samme oppbygning: `manifest.json` med en liste over
 innholdet, `datasets/<id>.sqlite` per datasett, `charts/<id>.viz.json` per lagret diagram, `documents/<id>.doc.json` per egen
-dokumentmal, `dashboards/<id>.dash.json` per dashbord og `notebooks/<id>.nb.json` per notatbok. En pakke (*Del pakke* under
+dokumentmal, `dashboards/<id>.dash.json` per dashbord og `notebooks/<id>.nb.json` per notatbok og `scripts/<id>.script.json` per lagret R-skript, SQL-skript eller regex-mønster. En pakke (*Del pakke* under
 Håndter) har samme oppbygning, men inneholder bare det du har valgt, og har `kind: bundle` i manifestet; når den lastes inn,
 hoppes alt som allerede finnes over (datasett med samme id, diagrammer, dashbord, maler og notatbøker med samme navn). Med
 automatisk lagring slått på skrives endrede datasett til mappen kort etter hver lagring, og filer for slettede datasett

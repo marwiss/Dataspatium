@@ -55,7 +55,10 @@ SVG, PNG och PDF, och `dm_read()`/`dm_write()` för att flytta data mellan appen
 kortnamn så att en fråga kan göra join över flera datamängder; frågor visar resultat som kan sparas som ny
 datamängd, ändrande satser loggas som receptsteg (se [bearbeta.md](bearbeta.md)). Anteckningsboken blandar
 text (Markdown), R och SQL i celler som körs i ordning och blir en rapport i HTML, Word, PDF, Markdown eller
-LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senare: statistiska modeller och eventuellt Python.
+LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Fliken Regex prövar reguljära uttryck på en kolumn med
+träffarna markerade och använder dem för att filtrera, extrahera, ersätta, dela upp, markera, räkna eller skapa en
+kvalitetsregel, med en mönsterprofil och ett bibliotek med nordiska mönster (se [regex.md](regex.md)). Senare:
+statistiska modeller.
 
 ## Visualisera
 

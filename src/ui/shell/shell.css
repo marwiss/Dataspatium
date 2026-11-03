@@ -89,6 +89,17 @@
 .dm-console-figure { margin: var(--dm-s-2) 0; display: flex; flex-direction: column; gap: var(--dm-s-2); align-items: flex-start; }
 .dm-console-plot { width: 672px; max-width: 100%; height: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: white; }
 .dm-console-dataset { display: flex; align-items: center; gap: var(--dm-s-2); font-family: var(--dm-font-sans); color: var(--dm-ok); }
+
+/* Regex tab (Analysera): values with their matches marked, the syntax summary and code snippets */
+.dm-regex-preview { flex: 1 1 auto; min-height: 200px; overflow: auto; background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); }
+.dm-regex-preview .dm-columns-table td { font-variant-numeric: tabular-nums; vertical-align: top; }
+.dm-regex-preview .dm-columns-table .dm-num { text-align: right; }
+.dm-regex-value { font-family: var(--dm-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dm-regex-hit { background: var(--dm-warn-soft); color: var(--dm-text); box-shadow: inset 0 -2px 0 var(--dm-warn); border-radius: 2px; }
+.dm-regex-syntax { display: grid; grid-template-columns: auto 1fr; gap: var(--dm-s-1) var(--dm-s-3); margin: 0; font-size: var(--dm-text-sm); }
+.dm-regex-syntax dt { font-family: var(--dm-font-mono); color: var(--dm-accent); }
+.dm-regex-syntax dd { margin: 0; color: var(--dm-text-muted); }
+.dm-regex-snippet { margin: 0; padding: var(--dm-s-2); font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--dm-surface-2); border-radius: var(--dm-radius-sm); }
 .dm-console-empty { font-family: var(--dm-font-sans); }
 
 /* Bearbeta: operations palette, previews, cell editing */
@@ -157,7 +168,7 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-gallery-body { min-height: 120px; }
 .dm-gallery-thumb { display: block; width: 100%; height: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface); }
 .dm-gallery-placeholder { display: flex; align-items: center; justify-content: center; height: 160px; color: var(--dm-text-faint); }
-.dm-page-head h1 dm-input { min-width: 260px; font-size: var(--dm-text-base); font-weight: var(--dm-weight-regular); }
+.dm-page-head h1 dm-input { min-width: 260px; font-size: var(--dm-text-md); font-weight: var(--dm-weight-regular); }
 @media (max-width: 1100px) { .dm-viz-layout { grid-template-columns: 1fr; } .dm-viz-side { max-height: none; } .dm-viz-main { position: static; } }
 
 /* Documents (Exportera) */

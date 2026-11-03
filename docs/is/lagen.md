@@ -46,8 +46,9 @@ og PDF og `dm_read()`/`dm_write()` til að flytja gögn milli forritsins og R (s
 valda gagnasafnið (`data`), þar sem önnur gagnasöfn nást með stuttheitum sínum svo ein fyrirspurn getur tengt fleiri
 gagnasöfn með join; fyrirspurnir sýna niðurstöður sem má vista sem nýtt gagnasafn og breytandi setningar eru skráðar sem skref
 í uppskriftinni (sjá [bearbeta.md](bearbeta.md)). Minnisbókin blandar saman texta (Markdown), R og SQL í reitum sem keyra í röð
-og verða að skýrslu í HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)). Síðar: tölfræðileg
-líkön og hugsanlega Python.
+og verða að skýrslu í HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)). Regex-flipinn prófar reglulegar segðir á dálki með samsvaranirnar merktar og notar þær til að sía, draga út,
+skipta út, skipta upp, merkja, telja eða búa til gæðareglu, með mynsturyfirliti og safni norrænna mynstra (sjá
+[regex.md](regex.md)). Síðar: tölfræðileg líkön.
 
 ## Myndgera
 

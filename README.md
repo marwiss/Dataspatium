@@ -59,7 +59,9 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
   SQL-konsol där datamängder kopplas ihop med join via sina kortnamn, och anteckningsböcker med text-, R- och
   SQL-celler som blir rapporter i HTML, Word, PDF, Markdown eller LaTeX (se
-  [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.
+  [docs/anteckningsbok.md](docs/anteckningsbok.md)), och en Regex-flik där reguljära uttryck prövas på en kolumn
+  och används för att filtrera, extrahera, ersätta och dela upp (se [docs/regex.md](docs/regex.md)), helt i
+  webbläsaren.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som
@@ -85,6 +87,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
 - [De sex lägena](docs/lagen.md): vad som finns var och varför.
 - [Anteckningsbok](docs/anteckningsbok.md): text, R och SQL i celler som blir en rapport.
+- [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
 - [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
 - [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för

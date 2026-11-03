@@ -56,7 +56,7 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   [bearbeta.md](bearbeta.md)).
 - **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
   where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
-  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), entirely in the browser.
+  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
@@ -84,6 +84,7 @@ everywhere.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
 - [The six modes](lagen.md): what is where and why.
 - [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
+- [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
 - [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.
 - [R in Dataspatium](r-guide.md): the R console, `dm_read()`, `dm_write()` and the bundled packages.

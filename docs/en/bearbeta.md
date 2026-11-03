@@ -63,6 +63,11 @@ parameters, and where possible a preview shows how many rows are affected and ex
 | | Standardise | z-scores (the distance from the mean in standard deviations, sample standard deviation) or the values scaled to 0–1 |
 | | Extract date part | Year, quarter, month, ISO week, weekday (1 = Monday), day, day of year, year and month (`2024-03`) or hour from a date |
 | | Time between dates | Number of whole days, weeks, months or years between two dates, for example age; without an end date it counts to today's date when the step runs |
+| Regular expressions | Filter with a pattern | Keeps or removes rows depending on whether a column matches a regular expression |
+| | Extract with a pattern | New columns from the pattern's groups or from the whole match, for example the year in a text |
+| | Flag matches | A yes/no column that shows whether the value matches |
+| | Count matches | A column with the number of matches in each value |
+| | Split with a pattern | Splits a column into several where the pattern matches; the last part gets the rest of the text |
 | New datasets | Group and aggregate | Sum, mean, minimum, maximum, count, distinct count or median per group, into a new dataset |
 | | Join datasets | Left or inner join with another dataset on a key |
 | | Append datasets | Stacks rows from several datasets; columns are matched by name |
@@ -71,6 +76,10 @@ parameters, and where possible a preview shows how many rows are affected and ex
 Actions that create a new dataset leave the original untouched and select the new dataset when done.
 The calculations add a new column and leave the existing ones untouched; they build on SQL window functions and are
 exported to R as dplyr code with `group_by()` and `mutate()`.
+The actions with regular expressions are easiest to try in the Regex tab in Analyse, where the matches show as the
+pattern is typed; the pattern library and the pattern profile are there too (see [regex.md](regex.md)). The same
+JavaScript syntax applies in *Find and replace*, where `(?i)` at the start of the pattern or the choice *Ignore case*
+makes the search case-insensitive.
 
 ## Undo
 
@@ -229,7 +238,9 @@ The SQL console is in Analyse mode under the SQL tab and works against the selec
 - The properties panel lists the dataset's columns (a click inserts the name), the short names of all datasets and
   the extra SQL functions Dataspatium adds: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`,
   `dm_fix_encoding`, `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` and
-  `dm_valid_id` (for example `select * from data where dm_valid_id(personnummer, 'se_pnr') = 0`).
+  `dm_valid_id` (for example `select * from data where dm_valid_id(personnummer, 'se_pnr') = 0`), and the regex
+  functions `dm_regex_test`, `dm_regex_extract`, `dm_regex_all`, `dm_regex_count`, `dm_regex_split` and `dm_shape`
+  described in [regex.md](regex.md).
 - SQL scripts are saved in the object panel in the same way as R scripts.
 
 The SQLite dialect applies: `||` for text concatenation, `cast(x as integer)`, `strftime()` for dates,

@@ -83,7 +83,7 @@ Browser for SQLite og í flestum öðrum verkfærum.
 
 Afritið (ZIP) og færanlega mappan (Edge og Chrome) hafa sömu uppbyggingu: `manifest.json` með lista yfir innihaldið,
 `datasets/<id>.sqlite` fyrir hvert gagnasafn, `charts/<id>.viz.json` fyrir hvert vistað myndrit, `documents/<id>.doc.json` fyrir
-hvert eigið skjalasnið, `dashboards/<id>.dash.json` fyrir hvert mælaborð og `notebooks/<id>.nb.json` fyrir hverja minnisbók.
+hvert eigið skjalasnið, `dashboards/<id>.dash.json` fyrir hvert mælaborð og `notebooks/<id>.nb.json` fyrir hverja minnisbók og `scripts/<id>.script.json` fyrir hverja vistaða R-skriftu, SQL-skriftu eða regex-mynstur.
 Pakki (*Deila pakka* undir Umsjón) hefur sömu uppbyggingu en inniheldur aðeins það sem þú valdir og hefur `kind: bundle` í
 skráarlistanum; þegar honum er hlaðið inn er öllu sem þegar er til sleppt (gagnasöfnum með sama auðkenni og myndritum,
 mælaborðum, sniðum og minnisbókum með sama heiti). Með sjálfvirka vistun á eru breytt gagnasöfn skrifuð í möppuna stuttu eftir
