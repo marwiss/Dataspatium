@@ -23,7 +23,7 @@
 
         async function activate(s) {
           slots = s;
-          unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); });
+          unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); if (changed.includes('openChartId')) takeOpenChart(); });
           unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); if (view === 'dashboard' && dashView) dashView.reload(); });
           unsubDash = dashboards.subscribe(async () => { dashList = await dashboards.list(); renderLeft(); });
           unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0); if (view === 'dashboard' && dashView) dashView.reload(); });
@@ -32,6 +32,15 @@
           render();
           // A chart opened before the lists finished loading (command palette) needs its preview drawn again.
           if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0);
+          takeOpenChart();
+        }
+        /** A chart handed over through the store (the beginner's course) is opened in the builder. */
+        async function takeOpenChart() {
+          const id = store.get().openChartId;
+          if (!id || !slots) return;
+          store.set({ openChartId: null });
+          const record = await charts.get(id);
+          if (record) await openChart(record);
         }
         function deactivate() {
           slots = null;
@@ -49,7 +58,7 @@
           const st = store.get();
           ui.datasetList.render(slots.left, { datasets: st.datasets, selectedId: st.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
           slots.left.appendChild(h('hr'));
-          slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('viz.saved') }), ui.button({ label: t('viz.new'), icon: 'plus', size: 'sm', variant: 'primary', onClick: newChart })));
+          slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('viz.saved') }), ui.button({ label: t('viz.new'), icon: 'plus', size: 'sm', variant: 'primary', 'data-course': 'new-chart', onClick: newChart })));
           slots.left.appendChild(h('div', { class: 'dm-list' },
             h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'gallery' ? 'true' : null, onclick: () => openGallery() }, ui.icon('layout-grid', 16), h('span', { class: 'dm-list-main' }, h('span', { text: t('viz.gallery') }), h('span', { class: 'dm-list-sub', text: t('viz.count', { n: list.length }) }))),
             list.map((c) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'chart' && chart && chart.id === c.id ? 'true' : null, onclick: () => openChart(c) },

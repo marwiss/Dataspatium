@@ -127,6 +127,11 @@ være med, og send ZIP-filen. Kollegaen slipper den på *Gjenopprett fra ZIP*. D
 SQLite (beholder typer, etiketter og historikk) eller ta en sikkerhetskopi av hele arbeidsområdet. Diagrammer og
 dokumentmaler kan eksporteres som JSON-filer, API-konfigurasjoner som `.api.json` og oppskrifter som JSON, R eller SQL.
 
+## Hvordan åpner jeg grunnkurset igjen?
+
+Klikk på spørsmålstegnet øverst til høyre og velg *Åpne grunnkurset*, eller trykk Ctrl+K og skriv *grunnkurs*. Kurset
+fortsetter der du slapp; har du fullført det, begynner det på nytt. Det finnes på alle seks språk.
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

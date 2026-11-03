@@ -18,8 +18,9 @@ appen på svensk.
 2. **Pak ud.** Højreklik på ZIP-filen, og vælg *Udpak alle* (Windows), eller dobbeltklik på den (macOS). Læg mappen,
    hvor du vil have den, for eksempel i Dokumenter. Appen fungerer ikke direkte inde i ZIP-filen.
 3. **Åbn.** Dobbeltklik på `index.html` i mappen, eller træk filen til et browservindue. Hvis Windows spørger, hvilken
-   app der skal bruges, vælger du Edge, Chrome eller Firefox. Første gang spørger appen, hvilket sprog du vil have;
-   valget kan ændres når som helst med sprogknappen øverst til højre.
+   app der skal bruges, vælger du Edge, Chrome eller Firefox. Første gang spørger appen, hvilket sprog du vil have
+   (det kan ændres med sprogknappen øverst til højre), og starter derefter **grundkurset**, en interaktiv gennemgang
+   af alle tilstande med eksempeldata, som tager omkring ti minutter. Åbn det igen fra hjælpen (?).
 4. **Importér.** I tilstanden *Hent* slipper du en fil på fladen (eller klikker på *Prøv med eksempeldata*),
    kontrollerer kolonnernes typer og klikker på *Importér*. Datasættet gemmes i browseren på din computer.
 5. **Arbejd videre.** Skift tilstand øverst: *Håndter* viser dine datasæt og arbejdsområdet, *Bearbejd* viser
@@ -67,11 +68,15 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   handlinger fra ét søgefelt.
 - **Seks sprog**: brugerflade, meddelelser og dokumentation på svensk, dansk, norsk (bokmål), finsk, islandsk og
   engelsk.
+- **Grundkursus**: en interaktiv gennemgang af alle seks tilstande med eksempeldata på alle seks sprog. Det vises første
+  gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
 
 ## Lær mere
 
 Filnavnene er de samme på alle sprog (de svenske originaler), så links virker ens overalt.
 
+- **Grundkurset** i appen: en interaktiv gennemgang af alle tilstande med eksempeldata; åbn det fra hjælpen (?) eller
+  med Ctrl+K.
 - [Kom i gang](kom-igang.md): trin for trin med almindelige spørgsmål.
 - [Brugervejledning](anvandarguide.md): hele arbejdsgangen fra fil til rapport.
 - [Ofte stillede spørgsmål](faq.md): lager, sikkerhed, R, API'er og opdateringer.

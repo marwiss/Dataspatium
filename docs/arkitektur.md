@@ -264,6 +264,15 @@ med lägen, datamängder, arbetsyta, tema och hjälp, och varje läge registrera
 kommando är `{id, label, hint, group, icon, keywords, run}`; träffar poängsätts (prefix, ordstart, delsträng,
 nyckelord) och senast körda kommandon sparas i inställningen `palette:recent`.
 
+Grundkursen (`src/ui/shell/course.js`, modulen `ui/course`) är en styrenhet per skal (`shell.course`) som visar
+nio steg i den flytande panelen `overlays.floating`. Varje steg har ett läge, en markerad kontroll (attributet
+`data-course` i läget), en kontroll av om uppgiften är gjord och en åtgärd för *Gör det åt mig*. Kursen arbetar
+bara genom vanliga API:er (`io/import`, `data/recipes`, `viz/charts`) och tillståndet: den lämnar kod till Analysera
+i `pendingCode` och ett diagram till Visualisera i `openChartId`, och Analysera och Exportera rapporterar
+`lastRun` och `lastExport`. Kontrollerna körs varje sekund och direkt när läget eller de nycklarna ändras.
+Framstegen sparas i `localStorage` (`dataspatium.course`): `open` återupptas vid start, `closed` och `done` visas
+inte automatiskt, och en arbetsyta utan kursnyckel får kursen öppnad (tom) eller erbjuden i en toast (befintlig).
+
 Dialogerna i Bearbeta ligger i `src/ui/op-dialog.js` (formulär genererat ur en åtgärds parameterschema, med
 förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, recept, kategorier, aggregera,
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen

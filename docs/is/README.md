@@ -17,8 +17,9 @@ Viðmótið er á sænsku, dönsku, norsku, finnsku, íslensku og ensku. Skjámy
 2. **Afþjappaðu.** Hægrismelltu á ZIP-skrána og veldu *Extract all* (Windows) eða tvísmelltu á hana (macOS). Settu möppuna
    þar sem þú vilt hafa hana, til dæmis í Skjöl. Forritið virkar ekki beint inni í ZIP-skránni.
 3. **Opnaðu.** Tvísmelltu á `index.html` í möppunni eða dragðu skrána í vafraglugga. Ef Windows spyr hvaða forrit eigi að
-   nota velurðu Edge, Chrome eða Firefox. Í fyrsta skipti spyr forritið hvaða tungumál þú vilt; valinu má breyta hvenær sem
-   er með tungumálahnappnum efst til hægri.
+   nota velurðu Edge, Chrome eða Firefox. Í fyrsta skipti spyr forritið hvaða tungumál þú vilt (því má breyta með
+   tungumálahnappnum efst til hægri) og hefur síðan **grunnnámskeiðið**, gagnvirka yfirferð yfir alla hami með
+   sýnigögnum sem tekur um tíu mínútur. Opnaðu það aftur úr hjálpinni (?).
 4. **Flyttu inn.** Í hamnum *Sækja* sleppirðu skrá á flötinn (eða smellir á *Prófa með sýnigögnum*), athugar gerðir dálkanna
    og smellir á *Flytja inn*. Gagnasafnið er vistað í vafranum á tölvunni þinni.
 5. **Haltu áfram.** Skiptu um ham efst: *Umsjón* sýnir gagnasöfnin þín og vinnusvæðið, *Vinna* sýnir töfluna með röðun, síum
@@ -61,11 +62,15 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - **Finna hratt**: skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og mælaborð og keyrir aðgerðir úr einum
   leitarreit.
 - **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
+- **Grunnnámskeið**: gagnvirk yfirferð yfir alla sex hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
+  fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
 ## Lærðu meira
 
 Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo tenglar virka eins alls staðar.
 
+- **Grunnnámskeiðið** í forritinu: gagnvirk yfirferð yfir alla hami með sýnigögnum; opnaðu það úr hjálpinni (?) eða
+  með Ctrl+K.
 - [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
 - [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.

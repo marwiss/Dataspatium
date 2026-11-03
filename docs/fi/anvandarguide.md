@@ -20,6 +20,29 @@ Alhaalla on loki, johon kirjataan jokainen toiminto, varoitus ja virhe; sitä lu
 Kaikki luomasi tallennetaan automaattisesti selaimen tietokantaan tietokoneellasi. Mitään ei lähetetä minnekään, ellet itse
 nouda rajapinnasta, tarkista päivityksiä tai vie.
 
+## Peruskurssi
+
+Peruskurssi on hyvä tapa tutustua sovellukseen. Se alkaa kielen valinnan jälkeen, kun sovellus avataan ensimmäisen
+kerran, ja muuten ohjeesta (kysymysmerkki oikeassa yläkulmassa) tai komentopaletin komennolla *Avaa peruskurssi*.
+Kurssi näkyy oikean alakulman paneelissa, kun työskentelet oikeassa sovelluksessa, ja se seuraa esimerkkiä *Väestö
+kunnittain 2024 (Ruotsi)* yhdeksässä vaiheessa:
+
+1. Tervetuloa: mitä sovellus tekee ja miten näkymä on järjestetty.
+2. Nouda: esimerkkidatan tuonti ja mikä aineisto on.
+3. Hallitse: nimi ja lyhyt nimi, lähde, sarakkeet, versiot ja varmuuskopiot.
+4. Muokkaa: taulukko, sarakeprofiilit ja laskettu sarake, josta tulee vaihe reseptiin.
+5. Analysoi SQL:llä: väkiluku lääneittäin ja miten lyhyet nimet yhdistävät aineistoja.
+6. Analysoi R:llä: `dm_read()`, yhteenveto ja histogrammi ggplot2:lla.
+7. Visualisoi: vaakapalkkikaavio väkiluvusta lääneittäin.
+8. Vie: data, kaaviot ja asiakirjat.
+9. Valmis: miten jatkaa.
+
+Jokainen vaihe selittää käsitteen ja antaa tehtävän. Kehys merkitsee painikkeen, jota napsauttaa, ja vaihe kuitataan
+tehdyksi, kun sovellus huomaa tehtävän tehdyksi. *Tee se puolestani* (tai *Näytä*) tekee vaiheen, joten voit seurata
+mukana kirjoittamatta mitään. Kurssin voi pienentää nuolesta ja sulkea rastista; seuraavalla kerralla se jatkuu
+siitä, mihin jäit. Kurssi luo esimerkkiaineiston, siihen sarakkeen ja kaavion, jotka voit poistaa tavalliseen tapaan,
+kun et enää tarvitse niitä.
+
 ## Työnkulku tiedostosta raporttiin
 
 ### 1. Nouda data (Nouda)

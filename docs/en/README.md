@@ -19,8 +19,9 @@ documentation show the app in Swedish.
 2. **Unpack.** Right-click the ZIP file and choose *Extract all* (Windows) or double-click it (macOS). Put the
    folder where you want it, for example in Documents. The app does not work directly inside the ZIP file.
 3. **Open.** Double-click `index.html` in the folder, or drag the file into a browser window. If Windows asks which
-   app to use, choose Edge, Chrome or Firefox. The first time, the app asks which language you want; the choice
-   can be changed at any time with the language button at the top right.
+   app to use, choose Edge, Chrome or Firefox. The first time, the app asks which language you want (it can be
+   changed with the language button at the top right) and then starts the **beginner's course**, an interactive
+   walkthrough of all the modes with example data that takes about ten minutes. Reopen it from the help (?).
 4. **Import.** In *Import* mode, drop a file on the surface (or click *Try with example data*), check the column
    types and click *Import*. The dataset is stored in the browser on your computer.
 5. **Carry on.** Switch mode at the top: *Manage* shows your datasets and the workspace, *Process* shows the table
@@ -68,12 +69,16 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   actions from a single search field.
 - **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
   Norwegian (Bokmål), Finnish, Icelandic and English.
+- **Beginner's course**: an interactive walkthrough of all six modes with example data, in all six languages. It is
+  shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
 ## Learn more
 
 The file names are the same in every language (they are the Swedish originals), so links work the same way
 everywhere.
 
+- **The beginner's course** in the app: an interactive walkthrough of all the modes with example data; open it from
+  the help (?) or with Ctrl+K.
 - [Getting started](kom-igang.md): step by step with common questions.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
 - [FAQ](faq.md): storage, security, R, APIs and updates.

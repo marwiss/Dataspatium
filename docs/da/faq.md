@@ -127,6 +127,11 @@ notesbøger skal med, og send ZIP-filen. Kollegaen slipper den på *Gendan fra Z
 som SQLite (bevarer typer, etiketter og historik) eller tage backup af hele arbejdsområdet. Diagrammer og
 dokumentskabeloner kan eksporteres som JSON-filer, API-konfigurationer som `.api.json` og recepter som JSON, R eller SQL.
 
+## Hvordan åbner jeg grundkurset igen?
+
+Klik på spørgsmålstegnet øverst til højre, og vælg *Åbn grundkurset*, eller tryk Ctrl+K, og skriv *grundkurs*.
+Kurset fortsætter, hvor du slap; har du gennemført det, begynder det forfra. Det findes på alle seks sprog.
+
 ## Finder du ikke svaret her?
 
 Læs [anvandarguide.md](anvandarguide.md), eller opret et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

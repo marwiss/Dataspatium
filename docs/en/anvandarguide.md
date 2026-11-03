@@ -21,6 +21,29 @@ written; that is what you read when something does not turn out as you intended.
 Everything you create is saved automatically in the browser's database on your computer. Nothing is sent anywhere
 unless you yourself fetch from an API, check the version or export.
 
+## The beginner's course
+
+The beginner's course is a good way to get to know the app. It starts after the language choice the first time the
+app is opened, and otherwise from the help (the question mark at the top right) or with the command *Open the
+beginner's course* in the command palette. The course is shown in a panel at the bottom right while you work in the
+real app, and it follows the example *Population per municipality 2024 (Sweden)* in nine steps:
+
+1. Welcome: what the app does and how the screen is arranged.
+2. Import: import the example data, and what a dataset is.
+3. Manage: name and short name, source, columns, versions and backups.
+4. Process: the table, column profiles and a calculated column that becomes a step in the recipe.
+5. Analyse with SQL: the population per county, and how short names combine datasets.
+6. Analyse with R: `dm_read()`, a summary and a histogram with ggplot2.
+7. Visualise: a horizontal bar chart of the population per county.
+8. Export: data, charts and documents.
+9. Done: where to go next.
+
+Each step explains a concept and gives a task. A frame marks the button to click, and the step is ticked off when the
+app sees that the task is done. *Do it for me* (or *Show me*) performs the step, so you can follow along without
+typing anything. The course can be minimised with the arrow and closed with the cross; next time it continues where
+you left off. It creates the example dataset, a column in it and a chart, which you delete as usual when you no longer
+need them.
+
 ## A workflow from file to report
 
 ### 1. Import data (Import)

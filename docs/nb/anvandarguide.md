@@ -19,6 +19,28 @@ der hver handling, advarsel og feil skrives; det er den du leser når noe ikke b
 Alt du lager, lagres automatisk i nettleserens database på datamaskinen din. Ingenting sendes noe sted med mindre du selv
 henter fra et API, ser etter oppdateringer eller eksporterer.
 
+## Grunnkurset
+
+Grunnkurset er en god måte å bli kjent med appen på. Det starter etter språkvalget første gang appen åpnes, og ellers
+fra hjelpen (spørsmålstegnet øverst til høyre) eller med kommandoen *Åpne grunnkurset* i kommandopaletten. Kurset vises
+i et panel nederst til høyre mens du arbeider i den virkelige appen, og det følger eksempelet *Befolkning per kommune
+2024 (Sverige)* i ni trinn:
+
+1. Velkommen: hva appen gjør, og hvordan skjermen er ordnet.
+2. Hent: importer eksempeldata, og hva et datasett er.
+3. Håndter: navn og kortnavn, kilde, kolonner, versjoner og sikkerhetskopier.
+4. Bearbeid: tabellen, kolonneprofiler og en beregnet kolonne som blir et trinn i oppskriften.
+5. Analyser med SQL: folketallet per län, og hvordan kortnavn kobler sammen datasett.
+6. Analyser med R: `dm_read()`, en oppsummering og et histogram med ggplot2.
+7. Visualiser: et liggende stolpediagram over folketallet per län.
+8. Eksporter: data, diagrammer og dokumenter.
+9. Ferdig: hvor du går videre.
+
+Hvert trinn forklarer et begrep og gir en oppgave. En ramme markerer knappen du skal klikke på, og trinnet hukes av når
+appen ser at oppgaven er gjort. *Gjør det for meg* (eller *Vis meg*) utfører trinnet, slik at du kan følge med uten å
+skrive noe. Kurset kan minimeres med pilen og lukkes med krysset; neste gang fortsetter det der du slapp. Det oppretter
+eksempeldatasettet, en kolonne i det og et diagram, som du sletter som vanlig når du ikke trenger dem lenger.
+
 ## En arbeidsflyt fra fil til rapport
 
 ### 1. Hent data (Hent)

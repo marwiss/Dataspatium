@@ -1,18 +1,19 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Overlays: modal dialogs (confirm, prompt, custom) built on <dialog>, and toasts.
+ * Overlays: modal dialogs (confirm, prompt, custom) built on <dialog>, toasts and a non-modal floating panel.
  * Usage:
  *   const ok = await dialog.confirm('Ta bort datamängden?', {danger: true});
  *   const name = await dialog.prompt('Nytt namn', {value: 'Befolkning'});
  *   const result = await dialog.open({title, body: node, actions: [{label, variant, value}]});
  *   toast.show('Sparat', {kind: 'ok'});
+ *   const panel = floating({onClose}); panel.update({title, meta, body: [nodes], actions: [buttons]});
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/overlays', ['ui/base', 'ui/icons', 'ui/basic', 'ui/fields'], (base, icons, basic) => {
-    const { h, t } = base;
+    const { h, t, replace } = base;
 
     /**
      * A body given as a function receives `done(value)`, which closes the dialog with that value (choices made
@@ -101,6 +102,47 @@
       return el;
     }
 
-    return { dialog: { open, confirm, prompt }, toast: { show } };
+    // ---- floating panel ----
+    /**
+     * Non-modal panel docked at the bottom right (the beginner's course). The page stays usable behind it,
+     * and the panel can be collapsed to its header.
+     * @param {{label?: string, collapseLabel?: string, expandLabel?: string, onClose?: Function}} [options]
+     * @returns {{el: HTMLElement, update: (content: {title?: string, meta?: string, body?: Array<Node|string>, actions?: Node[]}) => void, collapse: (on: boolean) => void, collapsed: () => boolean, focus: () => void, close: () => void}}
+     */
+    function floating(options = {}) {
+      const titleEl = h('h2', { class: 'dm-floating-title', id: 'dm-floating-title', tabindex: '-1' });
+      const metaEl = h('span', { class: 'dm-floating-meta' });
+      const body = h('div', { class: 'dm-floating-body' });
+      const actions = h('div', { class: 'dm-floating-actions' });
+      let collapsed = false; let closed = false;
+      const collapseLabel = options.collapseLabel || t('floating.collapse');
+      const toggle = basic.button({ label: collapseLabel, icon: 'chevron-down', 'icon-only': true, variant: 'ghost', size: 'sm', onClick: () => collapse(!collapsed) });
+      const el = h('section', { class: 'dm-floating', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'dm-floating-title' },
+        h('div', { class: 'dm-floating-head' },
+          h('div', { class: 'dm-floating-titles' }, metaEl, titleEl),
+          toggle,
+          basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, variant: 'ghost', size: 'sm', onClick: () => close() })),
+        body, actions);
+      function update(content) {
+        const hadFocus = el.contains(document.activeElement);
+        if (content.title !== undefined) titleEl.textContent = content.title;
+        if (content.meta !== undefined) metaEl.textContent = content.meta;
+        if (content.body) replace(body, content.body);
+        if (content.actions) replace(actions, content.actions);
+        // Re-rendered buttons lose focus; keep keyboard users inside the panel.
+        if (hadFocus && !el.contains(document.activeElement)) titleEl.focus();
+      }
+      function collapse(on) {
+        collapsed = !!on;
+        el.toggleAttribute('data-collapsed', collapsed);
+        toggle.setAttribute('icon', collapsed ? 'chevron-up' : 'chevron-down');
+        toggle.setAttribute('label', collapsed ? (options.expandLabel || t('floating.expand')) : collapseLabel);
+      }
+      function close() { if (closed) return; closed = true; el.remove(); if (options.onClose) options.onClose(); }
+      document.body.appendChild(el);
+      return { el, update, collapse, collapsed: () => collapsed, focus: () => titleEl.focus(), close };
+    }
+
+    return { dialog: { open, confirm, prompt }, toast: { show }, floating };
   });
 })();

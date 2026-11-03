@@ -19,6 +19,17 @@ Ensimmäisellä kerralla sovellus kysyy, mitä kieltä haluat käyttää: ruotsi
 Valinta tallennetaan selaimeen, ja sitä voi muuttaa milloin tahansa oikean yläkulman kielipainikkeella (kirjainkuvake) tai
 komentopaletista. Fontit ja kuvakkeet ladataan kansiosta; se kestää hetken. Mitään ei noudeta internetistä.
 
+### Peruskurssi
+
+Kielen valinnan jälkeen alkaa **peruskurssi**, vuorovaikutteinen läpikäynti oikean alakulman paneelissa. Se kestää noin
+kymmenen minuuttia ja seuraa esimerkkiä *Väestö kunnittain 2024 (Ruotsi)* kaikkien kuuden tilan läpi: nouda dataa,
+tutki aineistoa, laske sarake, kysy SQL:llä, laske R:llä, tee kaavio ja vie. Jokainen vaihe selittää käsitteen ja
+antaa tehtävän. Kehys näyttää, mitä napsauttaa, ja vaihe kuitataan tehdyksi, kun olet tehnyt sen. *Tee se puolestani*
+tekee vaiheen puolestasi, jos haluat mieluummin katsoa, miten se tehdään.
+
+Kurssin voi pienentää ja sulkea, ja sen voi avata uudelleen milloin tahansa ohjeesta (kysymysmerkki oikeassa
+yläkulmassa) tai komentopaletista (Ctrl+K, *Avaa peruskurssi*). Se jatkuu siitä, mihin jäit.
+
 ## 3. Tilat
 
 Yläreunassa on kuusi tilaa. Vasemmanpuoleinen paneeli näyttää kohteet (aineistot ja lähteet), keskellä on työalue,

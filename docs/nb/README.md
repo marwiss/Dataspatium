@@ -18,8 +18,9 @@ appen på svensk.
 2. **Pakk ut.** Høyreklikk på ZIP-filen, og velg *Pakk ut alle* (Windows), eller dobbeltklikk på den (macOS). Legg mappen
    der du vil ha den, for eksempel i Dokumenter. Appen fungerer ikke direkte inne i ZIP-filen.
 3. **Åpne.** Dobbeltklikk på `index.html` i mappen, eller dra filen til et nettleservindu. Hvis Windows spør hvilken app som
-   skal brukes, velger du Edge, Chrome eller Firefox. Første gang spør appen hvilket språk du vil ha; valget kan endres når
-   som helst med språkknappen øverst til høyre.
+   skal brukes, velger du Edge, Chrome eller Firefox. Første gang spør appen hvilket språk du vil ha (det kan endres med
+   språkknappen øverst til høyre), og starter deretter **grunnkurset**, en interaktiv gjennomgang av alle moduser med
+   eksempeldata som tar omtrent ti minutter. Åpne det igjen fra hjelpen (?).
 4. **Importer.** I modusen *Hent* slipper du en fil på flaten (eller klikker på *Prøv med eksempeldata*), kontrollerer
    kolonnetypene og klikker på *Importer*. Datasettet lagres i nettleseren på datamaskinen din.
 5. **Arbeid videre.** Bytt modus øverst: *Håndter* viser datasettene dine og arbeidsområdet, *Bearbeid* viser tabellen med
@@ -65,11 +66,15 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
   ett søkefelt.
 - **Seks språk**: brukergrensesnitt, meldinger og dokumentasjon på svensk, dansk, norsk (bokmål), finsk, islandsk og
   engelsk.
+- **Grunnkurs**: en interaktiv gjennomgang av alle seks moduser med eksempeldata, på alle seks språk. Det vises første
+  gang appen åpnes og kan åpnes når som helst fra hjelpen eller kommandopaletten.
 
 ## Lær mer
 
 Filnavnene er de samme på alle språk (de svenske originalene), så lenkene virker likt overalt.
 
+- **Grunnkurset** i appen: en interaktiv gjennomgang av alle moduser med eksempeldata; åpne det fra hjelpen (?) eller
+  med Ctrl+K.
 - [Kom i gang](kom-igang.md): trinn for trinn med vanlige spørsmål.
 - [Brukerveiledning](anvandarguide.md): hele arbeidsflyten fra fil til rapport.
 - [Vanlige spørsmål](faq.md): lagring, sikkerhet, R, API-er og oppdateringer.

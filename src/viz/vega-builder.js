@@ -273,7 +273,12 @@
         if (type.mark === 'boxplot') markDef.extent = 'min-max';
         spec.mark = markDef;
         const horizontal = !!type.horizontal;
-        if (x) { if (x.type === 'nominal' && !x.sort && (type.mark === 'bar') && y && isAggregated(state.y)) x.sort = horizontal ? '-x' : '-y'; enc[horizontal ? 'y' : 'x'] = x; }
+        if (x) {
+          if (x.type === 'nominal' && !x.sort && (type.mark === 'bar') && y && isAggregated(state.y)) x.sort = horizontal ? '-x' : '-y';
+          // "By value" names the value axis, which is x once a horizontal chart has swapped the axes.
+          else if (horizontal && (x.sort === '-y' || x.sort === 'y')) x.sort = x.sort === '-y' ? '-x' : 'x';
+          enc[horizontal ? 'y' : 'x'] = x;
+        }
         if (y) {
           if ((type.mark === 'bar' || type.mark === 'area') && state.color && state.stack) y.stack = state.stack === 'normalize' ? 'normalize' : (state.stack === 'none' ? null : 'zero');
           if (state.yFormat) y.axis = Object.assign(y.axis || {}, { format: state.yFormat });

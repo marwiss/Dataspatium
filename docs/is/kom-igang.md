@@ -18,6 +18,17 @@ skaltu hægrismella og velja *Opna með* og vafrann þinn, eða draga skrána í
 vistað í vafranum og má breyta hvenær sem er með tungumálahnappnum (táknið með bókstöfum) efst til hægri eða gegnum
 skipanaspjaldið. Leturgerðir og tákn eru hlaðin úr möppunni; það tekur augnablik. Ekkert er sótt af netinu.
 
+### Grunnnámskeiðið
+
+Eftir tungumálavalið hefst **grunnnámskeiðið**, gagnvirk yfirferð í spjaldi neðst til hægri. Það tekur um tíu mínútur
+og fylgir dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* gegnum alla sex hamina: sækja gögn, skoða
+gagnasafnið, reikna dálk, spyrja með SQL, reikna með R, búa til myndrit og flytja út. Hvert skref útskýrir hugtak og
+gefur verkefni. Rammi sýnir hvar á að smella og skrefið er merkt lokið þegar þú hefur gert það. *Gera það fyrir mig*
+framkvæmir skrefið ef þú vilt frekar sjá hvernig það er gert.
+
+Hægt er að lágmarka námskeiðið og loka því, og opna það aftur hvenær sem er úr hjálpinni (spurningarmerkið efst til
+hægri) eða af skipanaspjaldinu (Ctrl+K, *Opna grunnnámskeiðið*). Það heldur áfram þar sem frá var horfið.
+
 ## 3. Hamirnir
 
 Efst eru sex hamir. Spjaldið til vinstri sýnir hluti (gagnasöfn og uppruna), í miðjunni er vinnuflöturinn, spjaldið til

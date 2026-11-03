@@ -142,6 +142,12 @@ export a single dataset as SQLite (keeps types, labels and history) or take a ba
 and document templates can be exported as JSON files, API configurations as `.api.json`, and recipes as JSON, R or
 SQL.
 
+## How do I open the beginner's course again?
+
+Click the question mark at the top right and choose *Open the beginner's course*, or press Ctrl+K and type *course*.
+The course continues where you left off; if you have finished it, it starts again from the beginning. It is
+available in all six languages.
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

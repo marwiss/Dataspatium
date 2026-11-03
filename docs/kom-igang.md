@@ -20,6 +20,17 @@ engelska. Valet sparas i webbläsaren och kan ändras när som helst med språkk
 till höger eller via kommandopaletten. Typsnitt och ikoner laddas från mappen; det tar någon sekund. Inget hämtas
 från internet.
 
+### Grundkursen
+
+Efter språkvalet startar **Grundkursen**, en interaktiv genomgång i en panel nere till höger. Den tar ungefär tio
+minuter och följer exemplet *Befolkning per kommun 2024* genom alla sex lägen: hämta data, titta på datamängden,
+beräkna en kolumn, fråga med SQL, räkna med R, göra ett diagram och exportera. Varje steg förklarar ett begrepp och
+ger en uppgift. En ram visar var du ska klicka, och steget bockas av när du har gjort det. *Gör det åt mig* utför
+steget åt dig om du hellre vill se hur det går till.
+
+Kursen kan minimeras och stängas, och den öppnas igen när som helst från hjälpen (frågetecknet uppe till höger) eller
+från kommandopaletten (Ctrl+K, *Öppna Grundkursen*). Den fortsätter där du slutade.
+
 ## 3. Lägena
 
 Längst upp finns sex lägen. Panelen till vänster visar objekt (datamängder och källor), mitten är arbetsytan,

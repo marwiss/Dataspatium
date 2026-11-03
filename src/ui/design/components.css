@@ -97,6 +97,35 @@ dialog.dm-dialog .dm-dialog-actions { display: flex; justify-content: flex-end; 
 .dm-toast[data-kind="error"] { border-left-color: var(--dm-error); }
 .dm-toast .dm-toast-text { flex: 1 1 auto; }
 
+/* Floating panel: non-modal, docked bottom right above the log bar (the beginner's course) */
+.dm-floating {
+  position: fixed; right: var(--dm-s-4); bottom: calc(var(--dm-s-12) + var(--dm-s-2)); z-index: var(--dm-z-floating);
+  width: min(var(--dm-floating-w), calc(100vw - 2 * var(--dm-s-4))); max-height: min(70vh, var(--dm-floating-max-h)); display: flex; flex-direction: column;
+  background: var(--dm-surface); color: var(--dm-text); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); box-shadow: var(--dm-shadow-lg);
+}
+.dm-floating-head { display: flex; align-items: flex-start; gap: var(--dm-s-1); padding: var(--dm-s-3) var(--dm-s-3) var(--dm-s-2) var(--dm-s-4); }
+.dm-floating-titles { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--dm-s-1); min-width: 0; }
+.dm-floating-meta { font-size: var(--dm-text-xs); font-weight: var(--dm-weight-medium); color: var(--dm-text-muted); }
+.dm-floating-title { margin: 0; font-size: var(--dm-text-lg); font-weight: var(--dm-weight-semibold); }
+.dm-floating-title:focus { outline: none; }
+.dm-floating:focus-within { border-color: var(--dm-focus); }
+.dm-floating-body { display: flex; flex-direction: column; gap: var(--dm-s-2); padding: 0 var(--dm-s-4) var(--dm-s-3); overflow: auto; font-size: var(--dm-text-sm); }
+.dm-floating-body p { margin: 0; }
+.dm-floating-actions { display: flex; align-items: center; gap: var(--dm-s-2); padding: var(--dm-s-3) var(--dm-s-4); border-top: 1px solid var(--dm-border); }
+.dm-floating-actions > :first-child { margin-right: auto; }
+.dm-floating[data-collapsed] .dm-floating-body, .dm-floating[data-collapsed] .dm-floating-actions { display: none; }
+/* While the panel is open, toasts appear to its left instead of on top of it. */
+@media (min-width: 1100px) { body:has(> .dm-floating) .dm-toasts { right: calc(var(--dm-floating-w) + 2 * var(--dm-s-4)); } }
+
+/* Beginner's course: task box, code to type, done line and the highlighted control */
+.dm-course-task { display: flex; flex-direction: column; gap: var(--dm-s-2); padding: var(--dm-s-3); background: var(--dm-surface-2); border-left: 3px solid var(--dm-accent); border-radius: var(--dm-radius-sm); }
+.dm-course-task[data-done] { border-left-color: var(--dm-ok); }
+.dm-course-task h4 { margin: 0; font-size: var(--dm-text-xs); }
+.dm-course-code { padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); font-size: var(--dm-text-xs); white-space: pre; overflow-x: auto; }
+.dm-course-done { display: flex; align-items: flex-start; gap: var(--dm-s-2); color: var(--dm-ok); }
+.dm-course-done > span { color: var(--dm-text); }
+.dm-course-target { outline: 2px solid var(--dm-accent); outline-offset: 2px; border-radius: var(--dm-radius-sm); }
+
 /* Badge */
 dm-badge { display: inline-flex; align-items: center; padding: 1px var(--dm-s-2); border-radius: 999px; font-size: var(--dm-text-xs); font-weight: var(--dm-weight-medium); background: var(--dm-surface-2); color: var(--dm-text-muted); white-space: nowrap; }
 dm-badge[kind="accent"] { background: var(--dm-accent-soft); color: var(--dm-accent); }

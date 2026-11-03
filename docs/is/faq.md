@@ -125,6 +125,12 @@ að fylgja, og sendu ZIP-skrána. Samstarfsmaðurinn sleppir henni á *Endurheim
 sem SQLite (heldur gerðum, merkimiðum og sögu) eða tekið afrit af öllu vinnusvæðinu. Myndrit og skjalasnið má flytja út sem
 JSON-skrár, API-uppsetningar sem `.api.json` og uppskriftir sem JSON, R eða SQL.
 
+## Hvernig opna ég grunnnámskeiðið aftur?
+
+Smelltu á spurningarmerkið efst til hægri og veldu *Opna grunnnámskeiðið*, eða ýttu á Ctrl+K og skrifaðu *námskeið*.
+Námskeiðið heldur áfram þar sem frá var horfið; ef þú hefur lokið því byrjar það upp á nýtt. Það er til á öllum sex
+tungumálunum.
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

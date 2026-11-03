@@ -10,8 +10,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette'],
-    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course'],
+    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera'];
       const MODE_ICONS = { inhamta: 'download', hantera: 'database', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output' };
@@ -23,7 +23,7 @@
           this.root = root;
           this.modes = new Map();
           this.active = null;
-          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, status: 'saved' });
+          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null });
           this.ctx = {
             store: this.store,
             shell: this,
@@ -34,6 +34,8 @@
           this.palette = paletteMod.create(this);
           this.ctx.palette = this.palette;
           this.palette.register(() => this.builtinCommands());
+          // Beginner's course (Grundkurs): opened at the first start, from the help dialog and the palette.
+          this.course = courseMod.create(this);
           this.build();
           this.store.subscribe((state, changed) => this.onState(state, changed));
           datasets.subscribe((type, payload) => this.onDatasets(type, payload));
@@ -89,6 +91,7 @@
           const landing = this.store.get().datasets.length ? 'hantera' : 'inhamta';
           this.activate(MODES.includes(fromHash) ? fromHash : landing);
           window.addEventListener('hashchange', () => { const id = (location.hash || '').replace(/^#\/?/, ''); if (MODES.includes(id) && id !== this.store.get().mode) this.activate(id); });
+          this.course.autoStart();
           this.remindBackup();
         }
 
@@ -229,6 +232,7 @@
           cmds.push({ id: 'theme', label: t('shell.theme'), group: t('palette.group.actions'), icon: THEME_ICON[theme.get()], run: () => this.toggleTheme() });
           cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
           cmds.push({ id: 'lang', label: t('lang.title'), hint: 'Svenska · Dansk · Norsk · Suomi · Íslenska · English', group: t('palette.group.actions'), icon: 'languages', run: () => this.chooseLanguage() });
+          cmds.push({ id: 'course', label: t('course.open'), hint: t('course.open.hint'), group: t('palette.group.actions'), icon: 'graduation-cap', keywords: [t('course.title')], run: () => this.course.open() });
           cmds.push({ id: 'update', label: t('update.check'), group: t('palette.group.actions'), icon: 'refresh-cw', run: () => this.showHelp() });
           return cmds;
         }
@@ -258,6 +262,7 @@
             checkBtn.loading = false;
           } });
           overlays.dialog.open({
+            actions: [{ label: t('course.open'), value: 'course' }, { label: t('common.ok'), variant: 'primary', value: true }],
             title: t('shell.help'),
             body: h('div', { class: 'dm-prose' },
               h('p', { text: t('app.tagline') }),
@@ -266,7 +271,7 @@
               h('p', { class: 'dm-help' }, t('shell.help.docs') + ' ', h('a', { href: i18n.docsUrl(), target: '_blank', rel: 'noopener', text: t('shell.help.docs.link') })),
               h('div', { class: 'dm-row' }, checkBtn),
               result),
-          });
+          }).then((choice) => { if (choice === 'course') this.course.open(); });
         }
       }
 

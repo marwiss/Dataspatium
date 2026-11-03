@@ -38,6 +38,11 @@
       }
 
       function renderEmpty() {
+        if (store.get().datasets.length) {
+          replace(slots.center, h('dm-empty-state', { icon: 'database', heading: t('datasets.choose'), text: t('shell.select.dataset') },
+            ui.button({ label: t('datasets.storage.title'), icon: 'hard-drive', onClick: () => store.set({ selectedId: WORKSPACE }) })));
+          return;
+        }
         replace(slots.center, h('dm-empty-state', { icon: 'database', heading: t('datasets.empty'), text: t('datasets.empty.hint') },
           ui.button({ label: t('mode.inhamta'), icon: 'download', variant: 'primary', onClick: () => shell.activate('inhamta') }),
           ui.button({ label: t('presets.try'), icon: 'sparkles', onClick: async () => {

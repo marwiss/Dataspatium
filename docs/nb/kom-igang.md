@@ -18,6 +18,17 @@ Første gang spør appen hvilket språk du vil bruke: svensk, dansk, norsk, fins
 nettleseren og kan endres når som helst med språkknappen (ikonet med bokstaver) øverst til høyre eller via
 kommandopaletten. Skrifttyper og ikoner lastes fra mappen; det tar et øyeblikk. Ingenting hentes fra internett.
 
+### Grunnkurset
+
+Etter språkvalget starter **grunnkurset**, en interaktiv gjennomgang i et panel nederst til høyre. Det tar omtrent ti
+minutter og følger eksempelet *Befolkning per kommune 2024 (Sverige)* gjennom alle seks moduser: hent data, se på
+datasettet, beregn en kolonne, spør med SQL, regn med R, lag et diagram og eksporter. Hvert trinn forklarer et begrep og
+gir en oppgave. En ramme viser hvor du skal klikke, og trinnet hukes av når du har gjort det. *Gjør det for meg* utfører
+trinnet for deg hvis du heller vil se hvordan det gjøres.
+
+Kurset kan minimeres og lukkes, og det kan åpnes igjen når som helst fra hjelpen (spørsmålstegnet øverst til høyre)
+eller fra kommandopaletten (Ctrl+K, *Åpne grunnkurset*). Det fortsetter der du slapp.
+
 ## 3. Modusene
 
 Øverst finnes seks moduser. Panelet til venstre viser objekter (datasett og kilder), midten er arbeidsflaten, panelet til

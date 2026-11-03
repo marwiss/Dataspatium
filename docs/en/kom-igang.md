@@ -20,6 +20,17 @@ The choice is stored in the browser and can be changed at any time with the lang
 letters) at the top right, or through the command palette. Fonts and icons are loaded from the folder; that takes
 a second. Nothing is fetched from the internet.
 
+### The beginner's course
+
+After the language choice, the **beginner's course** starts: an interactive walkthrough in a panel at the bottom
+right. It takes about ten minutes and follows the example *Population per municipality 2024 (Sweden)* through all six
+modes: get data, look at the dataset, calculate a column, query with SQL, calculate with R, make a chart and export.
+Each step explains a concept and gives a task. A frame shows where to click, and the step is ticked off when you have
+done it. *Do it for me* performs the step for you if you would rather watch how it is done.
+
+The course can be minimised and closed, and it can be reopened at any time from the help (the question mark at the
+top right) or from the command palette (Ctrl+K, *Open the beginner's course*). It continues where you left off.
+
 ## 3. The modes
 
 At the top there are six modes. The panel on the left shows objects (datasets and sources), the middle is the

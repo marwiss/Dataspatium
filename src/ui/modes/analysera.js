@@ -33,6 +33,7 @@
       function activate(s) {
         slots = s;
         unsubStore = store.subscribe((state, changed) => {
+          if (changed.includes('pendingCode')) takePending();
           if (!changed.includes('datasets') && !changed.includes('selectedId')) return;
           renderLeft();
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
@@ -44,6 +45,7 @@
         for (const lang of ['r', 'sql']) services.idb.listScripts(lang).then((list) => { st[lang].scripts = list; renderLeft(); });
         notebooks.list().then((list) => { nbList = list; renderLeft(); });
         if (tab === 'r') startR();
+        takePending();
       }
       function deactivate() {
         for (const lang of ['r', 'sql']) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
@@ -89,6 +91,20 @@
         return { head: nbView.headEl, body: nbView.bodyEl };
       }
       function startR() { bridge.start().catch((err) => shell.log('R: ' + ((err && err.message) || err), 'error')); }
+      /** Code handed over through the store (the beginner's course): added to its tab's editor and optionally run. */
+      function takePending() {
+        const p = store.get().pendingCode;
+        if (!p || !st[p.lang] || !slots) return;
+        store.set({ pendingCode: null });
+        const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
+        const target = st[p.lang];
+        const existing = (target.draft || target.current.code || '').trim();
+        if (!existing.includes(p.code.trim())) target.draft = existing ? existing + '\n\n' + p.code : p.code;
+        tab = p.lang;
+        render();
+        if (tab === 'r') startR();
+        if (p.run) { if (tab === 'sql') runSql({ code: p.code }); else run({ code: p.code }); }
+      }
       function selectedDataset() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
       function onBridgeEvent(type, payload) {
@@ -211,7 +227,7 @@
         const editor = st.r.editor;
         if (!editor) return;
         const selection = detail && detail.selection && editor.cm && editor.cm.somethingSelected() ? detail.selection : '';
-        const code = (selection || editor.value).trim();
+        const code = ((detail && detail.code) || selection || editor.value).trim();
         if (!code) return;
         st.r.draft = editor.value;
         const empty = outputEl.querySelector('.dm-console-empty');
@@ -221,6 +237,7 @@
           appendEntries(res.entries);
           appendEntries([{ kind: 'meta', text: t('analysera.took', { ms: i18n.formatNumber(Math.round(res.ms)) }) }]);
           for (const e of res.entries) if (e.kind === 'dataset') { shell.log(t('analysera.dataset.created', { name: e.meta.name, rows: i18n.formatNumber(e.meta.rowCount) }), 'ok'); }
+          store.set({ lastRun: { lang: 'r', at: Date.now(), ok: !res.entries.some((e) => e.kind === 'error') } });
         } catch (err) {
           appendEntries([{ kind: 'error', text: (err && err.message) || String(err) }]);
         }
@@ -303,7 +320,7 @@
         const ds = selectedDataset();
         if (!ds) { ui.toast.show(t('sql.no.dataset'), { kind: 'warn' }); return; }
         const selection = detail && detail.selection && editor.cm && editor.cm.somethingSelected() ? detail.selection : '';
-        const code = (selection || editor.value).trim().replace(/;\s*$/, '');
+        const code = ((detail && detail.code) || selection || editor.value).trim().replace(/;\s*$/, '');
         if (!code) return;
         st.sql.draft = editor.value;
         const t0 = performance.now();
@@ -317,6 +334,7 @@
             sqlResult = { message: t('sql.changed', { n: i18n.formatNumber(result.rows || 0) }) };
             shell.log(recipes.describe('sql', { statement: code }, result), 'ok');
           }
+          store.set({ lastRun: { lang: 'sql', at: Date.now(), ok: true } });
         } catch (err) {
           sqlResult = { error: t('sql.error', { message: (err && err.message) || String(err) }) };
         }

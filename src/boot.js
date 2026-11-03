@@ -120,6 +120,7 @@
     'src/ui/shell/state.js',
     'src/ui/shell/dataset-list.js',
     'src/ui/shell/command-palette.js',
+    'src/ui/shell/course.js',
     'src/ui/shell/shell.js',
     'src/ui/op-dialog.js',
     'src/ui/dialogs.js',

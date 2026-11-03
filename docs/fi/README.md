@@ -19,8 +19,9 @@ kuvakaappaukset näyttävät sovelluksen ruotsiksi.
    (macOS). Sijoita kansio haluamaasi paikkaan, esimerkiksi Tiedostot-kansioon. Sovellus ei toimi suoraan ZIP-tiedoston
    sisältä.
 3. **Avaa.** Kaksoisnapsauta kansion `index.html`-tiedostoa tai vedä se selainikkunaan. Jos Windows kysyy, millä sovelluksella
-   tiedosto avataan, valitse Edge, Chrome tai Firefox. Ensimmäisellä kerralla sovellus kysyy, mitä kieltä haluat käyttää;
-   valintaa voi muuttaa milloin tahansa oikean yläkulman kielipainikkeella.
+   tiedosto avataan, valitse Edge, Chrome tai Firefox. Ensimmäisellä kerralla sovellus kysyy, mitä kieltä haluat käyttää
+   (sen voi vaihtaa oikean yläkulman kielipainikkeella), ja aloittaa sitten **peruskurssin**, noin kymmenen minuutin
+   vuorovaikutteisen läpikäynnin kaikista tiloista esimerkkidatalla. Avaa se uudelleen ohjeesta (?).
 4. **Tuo.** Pudota *Nouda*-tilassa tiedosto alueelle (tai napsauta *Kokeile esimerkkidatalla*), tarkista saraketyypit ja
    napsauta *Tuo*. Aineisto tallennetaan tietokoneesi selaimeen.
 5. **Jatka.** Vaihda tilaa yläreunasta: *Hallitse* näyttää aineistosi ja työtilan, *Muokkaa* näyttää taulukon lajittelun,
@@ -67,11 +68,15 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
   toimintoja yhdestä hakukentästä.
 - **Kuusi kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja
   englanniksi.
+- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kuudesta tilasta esimerkkidatalla kaikilla kuudella kielellä.
+  Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
 ## Lue lisää
 
 Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), joten linkit toimivat samoin kaikkialla.
 
+- **Peruskurssi** sovelluksessa: vuorovaikutteinen läpikäynti kaikista tiloista esimerkkidatalla; avaa se ohjeesta (?)
+  tai näppäimillä Ctrl+K.
 - [Aloitusopas](kom-igang.md): vaihe vaiheelta ja yleiset kysymykset.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
 - [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.

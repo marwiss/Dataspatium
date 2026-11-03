@@ -92,7 +92,7 @@
             h('h1', null, ui.icon('wand-sparkles', 20), ds.name),
             h('div', { class: 'dm-toolbar' },
               searchInput, countBadge,
-              ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
+              ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),

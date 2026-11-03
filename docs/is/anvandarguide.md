@@ -19,6 +19,29 @@ hana lestu þegar eitthvað fer ekki eins og þú ætlaðir.
 Allt sem þú býrð til er vistað sjálfkrafa í gagnagrunni vafrans á tölvunni þinni. Ekkert er sent neitt nema þú sækir sjálf(ur)
 úr vefþjónustu, leitar að uppfærslum eða flytur út.
 
+## Grunnnámskeiðið
+
+Grunnnámskeiðið er góð leið til að kynnast forritinu. Það hefst eftir tungumálavalið í fyrsta skipti sem forritið er
+opnað og annars úr hjálpinni (spurningarmerkið efst til hægri) eða með skipuninni *Opna grunnnámskeiðið* á
+skipanaspjaldinu. Námskeiðið birtist í spjaldi neðst til hægri á meðan þú vinnur í raunverulega forritinu og fylgir
+dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* í níu skrefum:
+
+1. Velkomin: hvað forritið gerir og hvernig skjánum er skipað.
+2. Sækja: innflutningur sýnigagna og hvað gagnasafn er.
+3. Umsjón: heiti og stutt heiti, heimild, dálkar, útgáfur og afrit.
+4. Vinna: taflan, snið dálka og reiknaður dálkur sem verður skref í uppskriftinni.
+5. Greina með SQL: mannfjöldi eftir lénum og hvernig stutt heiti tengja gagnasöfn.
+6. Greina með R: `dm_read()`, samantekt og stuðlarit með ggplot2.
+7. Myndgera: lárétt súlurit yfir mannfjölda eftir lénum.
+8. Flytja út: gögn, myndrit og skjöl.
+9. Lokið: hvert þú heldur næst.
+
+Hvert skref útskýrir hugtak og gefur verkefni. Rammi merkir hnappinn sem á að smella á og skrefið er merkt lokið þegar
+forritið sér að verkefnið er búið. *Gera það fyrir mig* (eða *Sýna mér*) framkvæmir skrefið svo að þú getur fylgst með
+án þess að skrifa neitt. Hægt er að lágmarka námskeiðið með örinni og loka því með krossinum; næst heldur það áfram þar
+sem frá var horfið. Það býr til sýnigagnasafnið, dálk í því og myndrit, sem þú eyðir eins og venjulega þegar þú þarft
+þau ekki lengur.
+
 ## Vinnuferli frá skrá til skýrslu
 
 ### 1. Sæktu gögn (Sækja)

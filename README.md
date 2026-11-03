@@ -17,7 +17,8 @@ exporterar den.
    Lägg mappen där du vill ha den, till exempel i Dokument. Appen fungerar inte direkt inifrån ZIP-filen.
 3. **Öppna.** Dubbelklicka på `index.html` i mappen, eller dra filen till ett webbläsarfönster. Om Windows frågar
    vilken app som ska användas väljer du Edge, Chrome eller Firefox. Första gången frågar appen vilket språk du
-   vill ha; valet kan ändras när som helst med språkknappen uppe till höger.
+   vill ha (det kan ändras med språkknappen uppe till höger) och startar sedan **Grundkursen**, en interaktiv
+   genomgång av alla lägen med exempeldata som tar ungefär tio minuter. Kursen öppnas igen från hjälpen (?).
 4. **Importera.** I läget *Inhämta* släpper du en fil på ytan (eller klickar på *Prova med exempeldata*),
    kontrollerar kolumnernas typer och klickar på *Importera*. Datamängden sparas i webbläsaren på din dator.
 5. **Arbeta vidare.** Växla läge högst upp: *Hantera* visar dina datamängder och arbetsytan, *Bearbeta* visar
@@ -68,9 +69,13 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   åtgärder från ett enda sökfält.
 - **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,
   isländska och engelska.
+- **Grundkurs**: en interaktiv genomgång av alla sex lägen med exempeldata, på alla sex språk. Den visas första
+  gången appen öppnas och kan öppnas när som helst från hjälpen eller kommandopaletten.
 
 ## Lär dig mer
 
+- **Grundkursen** i appen: en interaktiv genomgång av alla lägen med exempeldata; öppna den från hjälpen (?)
+  eller med Ctrl+K.
 - [Kom igång](docs/kom-igang.md): steg för steg med vanliga frågor.
 - [Användarguide](docs/anvandarguide.md): hela arbetsflödet från fil till rapport.
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.

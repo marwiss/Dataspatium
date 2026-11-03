@@ -78,6 +78,9 @@
     assert.equal(builder.validate(Object.assign({}, st, { x: null })).length, 1);
     const sw = builder.switchType(st, 'barh', columns);
     assert.equal(sw.x.field, 'kommun'); assert.equal(builder.toSpec(sw, columns, { values: [] }).encoding.y.field, 'kommun', 'horizontal swaps axes');
+    const byValue = Object.assign({}, sw, { x: Object.assign({}, sw.x, { sort: '-y' }) });
+    assert.equal(builder.toSpec(byValue, columns, { values: [] }).encoding.y.sort, '-x', 'sorting by value follows the value axis in horizontal bars');
+    assert.equal(builder.toSpec(Object.assign({}, st, { x: Object.assign({}, st.x, { sort: '-y' }) }), columns, { values: [] }).encoding.x.sort, '-y', 'vertical bars keep -y');
     const stacked = Object.assign({}, st, { color: builder.channel(columns.find((c) => c.name === 'lan')), stack: 'normalize' });
     assert.equal(builder.toSpec(stacked, columns, { values: [] }).encoding.y.stack, 'normalize');
     const labelled = Object.assign({}, st, { labels: true });

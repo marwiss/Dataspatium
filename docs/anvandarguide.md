@@ -20,6 +20,29 @@ blir som du tänkt.
 Allt du skapar sparas automatiskt i webbläsarens databas på din dator. Ingenting skickas någonstans utan att du
 själv hämtar från ett API, kontrollerar version eller exporterar.
 
+## Grundkursen
+
+Grundkursen är ett bra sätt att lära känna appen. Den startar efter språkvalet första gången appen öppnas och
+öppnas annars från hjälpen (frågetecknet uppe till höger) eller med kommandot *Öppna Grundkursen* i
+kommandopaletten. Kursen visas i en panel nere till höger medan du arbetar i den riktiga appen, och den följer
+exemplet *Befolkning per kommun 2024* i nio steg:
+
+1. Välkommen: vad appen gör och hur skärmen är ordnad.
+2. Inhämta: importera exempeldata och vad en datamängd är.
+3. Hantera: namn och kortnamn, källa, kolumner, versioner och säkerhetskopior.
+4. Bearbeta: tabellen, kolumnprofiler och en beräknad kolumn som blir ett steg i receptet.
+5. Analysera med SQL: folkmängden per län, och hur kortnamn kopplar ihop datamängder.
+6. Analysera med R: `dm_read()`, en sammanfattning och ett histogram med ggplot2.
+7. Visualisera: ett liggande stapeldiagram över folkmängden per län.
+8. Exportera: data, diagram och dokument.
+9. Klart: var du går vidare.
+
+Varje steg förklarar ett begrepp och ger en uppgift. En ram markerar knappen du ska klicka på, och steget bockas av
+när appen ser att uppgiften är gjord. *Gör det åt mig* (eller *Visa mig*) utför steget, så att du kan följa med
+utan att skriva något. Kursen kan minimeras med pilen och stängas med krysset; nästa gång fortsätter den där du
+slutade. Den skapar exempeldatamängden, en kolumn i den och ett diagram, som du tar bort som vanligt när du inte
+behöver dem längre.
+
 ## Ett arbetsflöde från fil till rapport
 
 ### 1. Hämta in data (Inhämta)

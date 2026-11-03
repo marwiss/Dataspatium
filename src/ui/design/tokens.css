@@ -101,7 +101,10 @@
   --dm-panel-w: 280px;
   --dm-inspector-w: 320px;
   --dm-drawer-h: 220px;
+  --dm-floating-w: 400px;
+  --dm-floating-max-h: 640px;
   --dm-z-drawer: 10;
+  --dm-z-floating: 50;
   --dm-z-dialog: 100;
   --dm-z-toast: 200;
 }

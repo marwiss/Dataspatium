@@ -187,7 +187,7 @@
         // Bundled data: the example table first, then the SCB boundaries for maps.
         const examples = D.require('presets').examples;
         return h('div', { class: 'dm-stack' }, dz,
-          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
+          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
           h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 

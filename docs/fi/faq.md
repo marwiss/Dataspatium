@@ -128,6 +128,12 @@ ja muistikirjat mukaan, ja lähetä ZIP-tiedosto. Kollega pudottaa sen alueelle 
 yksittäisen aineiston SQLite-muodossa (säilyttää tyypit, selitteet ja historian) tai varmuuskopioida koko työtilan. Kaaviot ja
 asiakirjamallit voi viedä JSON-tiedostoina, API-määritykset `.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa.
 
+## Miten avaan peruskurssin uudelleen?
+
+Napsauta oikean yläkulman kysymysmerkkiä ja valitse *Avaa peruskurssi*, tai paina Ctrl+K ja kirjoita *peruskurssi*.
+Kurssi jatkuu siitä, mihin jäit; jos olet käynyt sen loppuun, se alkaa alusta. Kurssi on saatavilla kaikilla kuudella
+kielellä.
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

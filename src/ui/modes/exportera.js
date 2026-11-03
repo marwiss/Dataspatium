@@ -132,12 +132,13 @@
         profileSel.addEventListener('change', () => { form.profile = profileSel.value; });
         const filename = /** @type {any} */ (h('dm-input', { label: t('export.filename'), value: form.filename || services.files.safeName(ds.name, fmt.ext) }));
         filename.addEventListener('input', () => { form.filename = filename.value; });
-        const runBtn = ui.button({ label: t('export.run'), icon: 'download', variant: 'primary', onClick: async () => {
+        const runBtn = ui.button({ label: t('export.run'), icon: 'download', variant: 'primary', 'data-course': 'export', onClick: async () => {
           runBtn.loading = true;
           try {
             const options = form.format === 'csv' ? (form.profile === 'excel-sv' ? { delimiter: ';', decimal: 'comma', bom: true } : { delimiter: ',', decimal: 'point', bom: false }) : {};
             const { blob, filename: name } = await services.exporter.exportDataset(ds.id, form.format, Object.assign(options, { filename: filename.value.trim() || undefined }));
             services.files.download(blob, name);
+            store.set({ lastExport: { at: Date.now(), datasetId: ds.id } });
             shell.log(t('export.done', { name }) + ` (${i18n.formatBytes(blob.size)})`, 'ok');
             ui.toast.show(t('export.done', { name }), { kind: 'ok' });
           } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(t('common.error') + ': ' + ((err && err.message) || err), { kind: 'error' }); }

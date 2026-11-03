@@ -69,6 +69,11 @@ bokstäver) eller kommandot *Språk* i paletten samma val. Svenska, danska, nors
 engelska finns. Appen laddas om på det valda språket när osparade ändringar har sparats. Valet sparas i
 webbläsaren, så varje dator och profil har sitt eget. Dokumentationen finns på samma språk i mappen `docs`.
 
+## Hur öppnar jag Grundkursen igen?
+
+Klicka på frågetecknet uppe till höger och välj *Öppna Grundkursen*, eller tryck Ctrl+K och skriv *grundkurs*.
+Kursen fortsätter där du slutade; har du gått igenom den börjar den om från början. Den finns på alla sex språk.
+
 ## Finns det källor från andra nordiska länder?
 
 Ja. Under *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,

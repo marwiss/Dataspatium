@@ -71,6 +71,11 @@ verktyget användbart även för mätningar. Skalinstansen finns som `Dataspatiu
 välja datamängd och läge med `Dataspatium.shell.store.set({ selectedId })` och `Dataspatium.shell.activate('bearbeta')`,
 och dialogerna kan öppnas direkt via `Dataspatium.require('ui/dialogs')`.
 
+Grundkursen öppnas automatiskt i en ny profil eller erbjuds i en toast; lägg till `course=off` i adressen
+(`index.html?course=off#/inhamta`) för skärmbilder utan kurs, eller `course=on` för att öppna den.
+`Dataspatium.shell.course.open(4)` visar ett visst steg och `await Dataspatium.shell.course.perform('sql')` gör
+steget som *Gör det åt mig*.
+
 ## Tester
 - `powershell -File tools/run-tests.ps1` kör `tests/index.html` headless i Edge och Firefox och skriver ut varje
   testrad. Exit-kod 0 betyder grönt, 1 fel, 2 timeout eller saknad webbläsare.
@@ -82,6 +87,9 @@ och dialogerna kan öppnas direkt via `Dataspatium.require('ui/dialogs')`.
   `tests/fixtures/api-fixtures.js`.
 - `-Url "index.html?autorun=1" -TimeoutSec 480` kör spiksidan.
 - Nya tester läggs i `tests/*.test.js` och listas i `tests/index.html`.
+- Testsidan låser språket till svenska och sparar Grundkursen som stängd innan appen startar, så att testerna som
+  startar skalet inte får språkdialogen eller kurspanelen. `tests/course.test.js` sätter själv kursens tillstånd
+  och återställer det efteråt.
 - Testsidor skriver rader `DATASPATIUM-LOG: OK|FAIL | namn :: detalj` och avslutar med `DATASPATIUM-TESTS: pass=N fail=M`.
 
 ## Felsökning
