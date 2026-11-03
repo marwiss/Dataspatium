@@ -59,6 +59,20 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
 En datamängd är en SQLite-fil med tabellerna `data`, `_columns`, `_meta` och `_log` (se [format.md](format.md)).
 `_columns` fick kolumnerna `description` och `unit` i 1.9; `readColumns` lägger till dem med `alter table` när en
 äldre fil (eller en fil från `dm_write()` i R) öppnas, så att alla kodvägar kan räkna med dem.
+
+Varje datamängd har ett kortnamn (`_meta.shortName`, även i IndexedDB-posten): en SQL-säker identifierare som
+`datasets.shortNameFrom` härleder ur namnet (translitterering, `[a-z0-9_]`, högst 32 tecken, reserverade ord och
+dubbletter får suffix) och som användaren kan ändra under Hantera. `src/data/query.js` låter en SQL-sats mot den
+valda datamängden nämna andra datamängder med kortnamn: satsens identifierare matchas mot kortnamnen, de
+datamängderna "monteras" i den valda datamängdens worker (deras SQLite-bytes öppnas som egna sql.js-databaser, så
+att filerna finns i workerns virtuella filsystem) och ATTACH:as som `<kortnamn>__db` med en temporär vy per
+kortnamn; den valda datamängden får också en vy med sitt eget kortnamn på `main.data`. Före varje fråga jämförs
+`pragma database_list` med de kortnamn satsen nämner, så att ATTACH görs om efter att anslutningen öppnats om
+(sparning och ångra gör det), medan monteringarna ligger kvar och förnyas bara när `datasets.version(id)`
+(sparningstid plus ett revisionsnummer för osparade ändringar) ändrats. Ändrande
+receptsteg av typen `sql` kopplar in kortnamnen i `prepare`, efter ångra-ögonblicksbilden. R-bryggans index
+(`/data/index.tsv`) har kolumnen `shortName`, så `dm_read()` och `dm_find()` i R löser kortnamn, och diagram- och
+anteckningsboksfiler bär `datasetShort` som andra matchning vid import.
 Filen lagras i IndexedDB i bitar om 8 MB (`src/platform/storage/idb-store.js`), tillsammans med en metadatapost.
 `src/data/datasets.js` är den enda vägen till datamängderna: skapa, lista, fråga (sidvis med sortering och
 filter), statistik, logg, spara, byt namn, ta bort, exportera bytes, importera bytes, versioner

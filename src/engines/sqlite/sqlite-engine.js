@@ -80,6 +80,15 @@
       execMany(statements) { return this.call('execMany', { statements }); }
       /** Load boundary polygons ([{geometry, props}] in WGS 84) for the SQL function dm_region(lon, lat, field). */
       regions(features) { return this.call('regions', { features }); }
+      /** Mount another dataset's SQLite bytes under a short name for cross-dataset queries (see data/query). */
+      mount(name, bytes, version) { return this.call('mount', { name, bytes, version }, [bytes]); }
+      unmount(name) { return this.call('unmount', { name }); }
+      /** Mounted short names -> version marker. */
+      mounted() { return this.call('mounted'); }
+      /** Make the short names usable in the current connection (views on data and on mounted datasets). */
+      attach(names, self) { return this.call('attach', { names, self }); }
+      /** exec() with the short names attached first. */
+      query(sql, params, names, self) { return this.call('query', { sql, params, names, self }); }
       /** @returns {Promise<ArrayBuffer>} the database file */
       export() { return this.call('export'); }
       /** @returns {Promise<string>} */

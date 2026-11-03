@@ -72,8 +72,10 @@ data.frame med rätt typer, `dm_write(df, "Nytt namn")` skickar en data.frame ti
 SVG, PNG eller PDF. Paket som ggplot2, dplyr, tidyr, data.table, haven och readxl följer med och installeras i
 sessionen första gången de används. Skript kan sparas och köras igen. Första starten tar några sekunder.
 
-SQL-fliken frågar datamängdens tabell `data` direkt med SQLite. SELECT-frågor visar resultatet (upp till 5 000
-rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som receptsteg.
+SQL-fliken frågar datamängdens tabell `data` direkt med SQLite. Andra datamängder nås med sina kortnamn (visas
+under namnet i objektpanelen), så att en fråga kan göra join över flera datamängder, till exempel
+`select ... from befolkning b join kommuner k on k.kommunkod = b.kommunkod`. SELECT-frågor visar resultatet
+(upp till 5 000 rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som receptsteg.
 
 Fliken *Anteckningsbok* samlar text (Markdown), R och SQL i celler som körs i ordning och sparar sina utdata. En
 färdig bok exporteras som HTML, Word, PDF, Markdown eller LaTeX, med eller utan koden. Se
@@ -108,7 +110,7 @@ importeras igen.
 
 Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer, etiketter, beskrivningar
 och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), historik över
-allt som gjorts och versioner. Byt namn, ta bort eller hämta igen från API. Under *Arbetsyta* ser du hur mycket
+allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API. Under *Arbetsyta* ser du hur mycket
 lagring som används, begär beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid
 start när det gått längre än det valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard;
 ändras eller stängs av i samma kort). I Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på

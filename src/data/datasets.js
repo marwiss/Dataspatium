@@ -16,7 +16,53 @@
     /** @type {Map<string, {engine: any, meta: any, columns: any[]}>} */
     const openHandles = new Map();
     const listeners = new Set();
-    const META_KEYS = ['id', 'name', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
+    const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
+
+    // ---- short names: an identifier per dataset for SQL across datasets, dm_read() in R and chart files ----
+    const SHORT_NAME = /^[a-z][a-z0-9_]{0,31}$/;
+    const RESERVED_SHORT = new Set(['data', 'main', 'temp', 'df', 'rowid', 'sqlite_master', 'sqlite_schema', 'sqlite_sequence', 'select', 'from', 'where', 'table', 'index', 'view', 'join', 'on', 'as', 'and', 'or', 'not', 'null', 'order', 'group', 'by', 'limit', 'offset', 'union', 'all', 'distinct', 'case', 'when', 'then', 'else', 'end', 'in', 'is', 'like', 'between', 'exists', 'having', 'values', 'insert', 'update', 'delete', 'set', 'into', 'create', 'drop', 'alter', 'with', 'using', 'left', 'right', 'inner', 'outer', 'cross', 'natural', 'true', 'false']);
+    /** A short name derived from a dataset name: ASCII letters, digits and underscores, at most 32 characters. */
+    function shortNameFrom(name) {
+      let s = String(name || '').toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss').replace(/þ/g, 'th').replace(/ð/g, 'd');
+      s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+      s = s.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 32).replace(/_+$/g, '');
+      if (!s) s = 'datamangd';
+      if (!/^[a-z]/.test(s)) s = ('d_' + s).slice(0, 32);
+      if (RESERVED_SHORT.has(s)) s = s.slice(0, 30) + '_1';
+      return s;
+    }
+    /** A short name not used by any other dataset (suffix _2, _3, ... when needed). */
+    async function uniqueShortName(base, excludeId) {
+      const taken = new Set((await list()).filter((d) => d.id !== excludeId).map((d) => d.shortName).filter(Boolean));
+      const root = SHORT_NAME.test(String(base || '')) && !RESERVED_SHORT.has(base) ? base : shortNameFrom(base);
+      if (!taken.has(root)) return root;
+      for (let i = 2; ; i++) {
+        const suffix = '_' + i;
+        const cand = root.slice(0, 32 - suffix.length) + suffix;
+        if (!taken.has(cand)) return cand;
+      }
+    }
+    /** Normalise and check a user-typed short name; throws a Swedish message when it cannot be used. */
+    function validateShortName(value) {
+      const s = String(value || '').trim().toLowerCase();
+      if (!SHORT_NAME.test(s)) throw new Error('Kortnamnet får bara innehålla små bokstäver a–z, siffror och understreck, måste börja med en bokstav och får vara högst 32 tecken.');
+      if (RESERVED_SHORT.has(s)) throw new Error(`Kortnamnet "${s}" är reserverat i SQL. Välj ett annat.`);
+      return s;
+    }
+    /** Give datasets from older versions a short name (stored in the IndexedDB record; the file follows on the next save). */
+    async function ensureShortNames() {
+      const all = await list();
+      let changed = 0;
+      for (const record of all) {
+        if (record.shortName) continue;
+        const shortName = await uniqueShortName(record.name, record.id);
+        await idb.putDataset(Object.assign({}, record, { shortName }));
+        const open = openHandles.get(record.id);
+        if (open) open.meta.shortName = shortName;
+        changed++;
+      }
+      return changed;
+    }
 
     const q = (ident) => '"' + String(ident).replace(/"/g, '""') + '"';
     function newId() { return 'ds_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -69,8 +115,9 @@
       await engine.run('create table _log (ts text, action text, details text)');
       await engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit'], columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit]));
       const now = new Date().toISOString();
+      const shortName = await uniqueShortName(input.shortName || input.name || 'datamangd');
       const meta = {
-        id, name: input.name || 'Namnlös datamängd', description: input.description || '', createdAt: now, updatedAt: now,
+        id, name: input.name || 'Namnlös datamängd', shortName, description: input.description || '', createdAt: now, updatedAt: now,
         rowCount: 0, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
       };
       await engine.insertRows('_meta', ['key', 'value'], metaToRows(meta));
@@ -144,8 +191,19 @@
       const columns = await readColumns(engine);
       const handle = { engine, meta: Object.assign({}, record), columns };
       delete handle.meta.columns;
+      // The record is the source of truth for the short name; keep the file's _meta in step for exports.
+      if (record.shortName) await engine.run('insert or replace into _meta (key, value) values (?, ?)', ['shortName', record.shortName]);
       openHandles.set(id, handle);
       return handle;
+    }
+
+    /** Current bytes of a dataset: the live engine when it is open (unsaved edits included), else the stored file. */
+    async function bytesOf(id) {
+      const open = openHandles.get(id);
+      if (open) return open.engine.export();
+      const bytes = await idb.loadBlob('ds:' + id);
+      if (!bytes) throw new Error('Dataset file missing: ' + id);
+      return bytes;
     }
 
     /** `_columns` gained description and unit in 1.9; older files (and files written by dm_write in R) get them on open. */
@@ -267,7 +325,16 @@
     /** @type {Map<string, number>} */
     const saveTimers = new Map();
     const SAVE_DELAY = 1500;
+    /** A marker that changes whenever a dataset's content may have changed (saves and unsaved edits alike). */
+    async function version(id) {
+      const open = openHandles.get(id);
+      if (open) return `${open.meta.updatedAt || ''}#${open.revision || 0}`;
+      const record = await idb.getDataset(id);
+      return record ? String(record.updatedAt || '') : '';
+    }
     function scheduleSave(id, delay = SAVE_DELAY) {
+      const open = openHandles.get(id);
+      if (open) open.revision = (open.revision || 0) + 1;
       notify('dirty', { id });
       const existing = saveTimers.get(id);
       if (existing) clearTimeout(existing);
@@ -427,6 +494,11 @@
 
     async function updateMeta(id, patch) {
       const handle = await ensureOpen(id);
+      if (patch.shortName !== undefined) {
+        const s = validateShortName(patch.shortName);
+        if ((await list()).some((d) => d.id !== id && d.shortName === s)) throw new Error(`Kortnamnet "${s}" används redan av en annan datamängd.`);
+        patch = Object.assign({}, patch, { shortName: s });
+      }
       for (const [k, v] of Object.entries(patch)) {
         if (!META_KEYS.includes(k) || k === 'id') continue;
         handle.meta[k] = v;
@@ -466,6 +538,8 @@
       const meta = Object.assign(rowsToMeta(metaRows[0] ? metaRows[0].values : []), overrides);
       if (!meta.id || (await idb.getDataset(meta.id))) meta.id = newId();
       await engine.run('insert or replace into _meta (key, value) values (?, ?)', ['id', meta.id]);
+      meta.shortName = await uniqueShortName(meta.shortName || meta.name, meta.id);
+      await engine.run('insert or replace into _meta (key, value) values (?, ?)', ['shortName', meta.shortName]);
       const cols = await readColumns(engine);
       const countRes = await engine.exec('select count(*) from data');
       meta.rowCount = Number(countRes[0].values[0][0]);
@@ -486,6 +560,7 @@
       create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
+      shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version,
       updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing,
     };
   });

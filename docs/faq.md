@@ -96,6 +96,14 @@ och lan; koordinater i SWEREF 99 TM känns igen. Gränserna täcker landytan, s�
 Samma grupp har mittpunkt och area ur geometri samt omräkning mellan SWEREF 99 TM och WGS 84. Se
 [bearbeta.md](bearbeta.md).
 
+## Hur kombinerar jag flera datamängder i en SQL-fråga?
+
+Varje datamängd har ett kortnamn (visas under namnet i objektpanelen, ändras under Hantera > Byt namn). I
+SQL-fliken under Analysera heter den valda datamängden `data` men nås också med sitt kortnamn, och alla andra
+datamängder nås med sina kortnamn: `select k.kommun, b.folkmangd from befolkning_per_kommun_2024 b join
+kommungranser_scb k on k.kommunkod = b.kommunkod`. Resultatet kan sparas som ny datamängd. I R läser
+`dm_read("kortnamn")` samma datamängd. Se [bearbeta.md](bearbeta.md).
+
 ## Hur kontrollerar jag att datan håller måttet?
 
 *Datakvalitet* i Bearbeta profilerar alla kolumner och föreslår åtgärder. *Regler* låter dig skriva ned krav

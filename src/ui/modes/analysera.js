@@ -309,14 +309,9 @@
         const t0 = performance.now();
         try {
           if (READ_ONLY_SQL.test(code)) {
-            const handle = await services.datasets.ensureOpen(ds.id);
-            let res;
-            // Wrap to cap the result; PRAGMA and EXPLAIN cannot be wrapped and fall back to the raw statement.
-            try { res = await handle.engine.exec(`select * from (${code}) limit ${SQL_LIMIT + 1}`); }
-            catch (_wrapErr) { res = await handle.engine.exec(code); }
-            const r = res[0] || { columns: [], values: [] };
-            const truncated = r.values.length > SQL_LIMIT;
-            sqlResult = { sql: code, datasetId: ds.id, columns: r.columns, values: truncated ? r.values.slice(0, SQL_LIMIT) : r.values, truncated, ms: performance.now() - t0, sorted: null };
+            // Other datasets named by their short names are attached for the query (joins across datasets).
+            const r = await D.require('data/query').select(ds.id, code, { limit: SQL_LIMIT });
+            sqlResult = { sql: code, datasetId: ds.id, columns: r.columns, values: r.values, truncated: r.truncated, ms: performance.now() - t0, sorted: null, others: r.others };
           } else {
             const result = await recipes.apply(ds.id, 'sql', { statement: code });
             sqlResult = { message: t('sql.changed', { n: i18n.formatNumber(result.rows || 0) }) };
@@ -382,7 +377,7 @@
         const name = await ui.dialog.prompt(t('sql.dataset.name'), { title: t('sql.save.dataset'), value: t('sql.dataset.default') });
         if (!name || !name.trim()) return;
         try {
-          const meta = await services.datasets.createFromQuery(sqlResult.datasetId, sqlResult.sql, { name: name.trim(), source: { kind: 'sql', from: sqlResult.datasetId, sql: sqlResult.sql } });
+          const meta = await D.require('data/query').createDataset(sqlResult.datasetId, sqlResult.sql, { name: name.trim(), source: { kind: 'sql', from: sqlResult.datasetId, sql: sqlResult.sql } });
           const text = t('derive.created', { name: meta.name, rows: i18n.formatNumber(meta.rowCount) });
           shell.log(text, 'ok');
           ui.toast.show(text, { kind: 'ok', action: { label: t('analysera.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
@@ -400,11 +395,17 @@
           try { cols = ds ? await services.datasets.columns(ds.id) : []; } catch (_err) { cols = []; }
           if (!slots || tab !== 'sql') return;
           const quote = (name) => (/^[a-z_][a-z0-9_]*$/i.test(name) ? name : '"' + name.replace(/"/g, '""') + '"');
+          // Every dataset by short name: click to insert, so that joins across datasets are a few clicks away.
+          const all = store.get().datasets;
           replace(slots.right,
             h('h4', { text: t('sql.columns') }),
             ds ? h('div', { class: 'dm-list' }, cols.map((c) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode('sql', quote(c.name)) },
               ui.icon('columns-3', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub', text: t('type.' + c.type) })))))
               : h('p', { class: 'dm-help', text: t('sql.no.dataset') }),
+            h('h4', { text: t('sql.shortnames') }),
+            h('p', { class: 'dm-help', text: t('sql.shortnames.hint') }),
+            h('div', { class: 'dm-list' }, all.map((d) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': ds && d.id === ds.id ? 'true' : null, title: d.name, onclick: () => insertCode('sql', d.shortName || '') },
+              ui.icon('table', 14), h('span', { class: 'dm-list-main' }, h('code', { class: 'dm-list-code dm-truncate', text: d.shortName || '' }), h('span', { class: 'dm-list-sub dm-truncate', text: d.name }))))),
             h('h4', { text: t('sql.functions') }), h('ul', { class: 'dm-stack-sm' }, SQL_FUNCTIONS.map((f) => h('li', { class: 'dm-small', text: t('sql.fn.' + f) }))));
           return;
         }

@@ -42,7 +42,7 @@
           cells.push(cell('r', `df <- dm_read(${JSON.stringify(dataset.name)})\nsummary(df)`));
           cells.push(cell('sql', 'select * from data limit 10'));
         } else cells.push(cell('r', 'dm_list()'));
-        return { id: null, name: title, datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', cells };
+        return { id: null, name: title, datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', datasetShort: dataset ? dataset.shortName || '' : '', cells };
       }
 
       /** Insert or update; returns the stored record. */
@@ -71,10 +71,9 @@
             const statement = String(c.source || '').trim().replace(/;\s*$/, '');
             if (!statement) throw new Error('Cellen är tom.');
             if (READ_ONLY_SQL.test(statement)) {
-              const handle = await datasets.ensureOpen(nb.datasetId);
-              const res = await handle.engine.exec(`select * from (${statement}) limit ${SQL_LIMIT + 1}`);
-              const r = res[0] || { columns: [], values: [] };
-              outputs.push({ kind: 'table', columns: r.columns, rows: r.values.slice(0, SQL_LIMIT), truncated: r.values.length > SQL_LIMIT });
+              // Short names of other datasets are attached, as in the SQL console.
+              const r = await D.require('data/query').select(nb.datasetId, statement, { limit: SQL_LIMIT });
+              outputs.push({ kind: 'table', columns: r.columns, rows: r.values, truncated: r.truncated });
             } else {
               const result = await recipes.apply(nb.datasetId, 'sql', { statement });
               outputs.push({ kind: 'text', text: typeof result.rows === 'number' ? `${result.rows} rader påverkade.` : 'Satsen utfördes.' });
@@ -179,7 +178,7 @@
       /** Shareable JSON (cells with outputs; no ids). */
       function exportJson(nb) {
         return JSON.stringify({
-          format: FORMAT, name: nb.name, datasetName: nb.datasetName || '', created: new Date().toISOString(), app: 'Dataspatium', version: D.version,
+          format: FORMAT, name: nb.name, datasetName: nb.datasetName || '', datasetShort: nb.datasetShort || '', created: new Date().toISOString(), app: 'Dataspatium', version: D.version,
           cells: (nb.cells || []).map((c) => ({ type: c.type, source: c.source, outputs: c.outputs || [] })),
         }, null, 2) + '\n';
       }
@@ -190,8 +189,9 @@
         try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error('Filen är inte giltig JSON.'); }
         if (obj.format !== FORMAT || !Array.isArray(obj.cells)) throw new Error('Filen är inte en Dataspatium-anteckningsbok (format ' + FORMAT + ' saknas).');
         const all = await datasets.list();
-        const match = obj.datasetName ? all.find((d) => d.name === obj.datasetName) : null;
-        return save({ name: obj.name || 'Importerad anteckningsbok', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', cells: obj.cells.map((c) => cell(c.type, c.source)).map((c, i) => Object.assign(c, { outputs: Array.isArray(obj.cells[i].outputs) ? obj.cells[i].outputs : [] })) });
+        // The dataset is matched by name, else by short name (which survives renames in the other workspace).
+        const match = (obj.datasetName ? all.find((d) => d.name === obj.datasetName) : null) || (obj.datasetShort ? all.find((d) => d.shortName === obj.datasetShort) : null) || null;
+        return save({ name: obj.name || 'Importerad anteckningsbok', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), cells: obj.cells.map((c) => cell(c.type, c.source)).map((c, i) => Object.assign(c, { outputs: Array.isArray(obj.cells[i].outputs) ? obj.cells[i].outputs : [] })) });
       }
 
       return { list, get, create, cell, save, remove, runCell, runAll, toAst, renderMarkdown, exportNotebook, exportJson, importJson, subscribe, FORMAT, CELL_TYPES, EXPORT_FORMATS, SQL_LIMIT };

@@ -44,7 +44,7 @@
       async function reorderDialog(ctx) {
         let order = ctx.columns.map((c) => c.name);
         const list = h('div', { class: 'dm-list' });
-        const render = () => replace(list, order.map((name, i) => h('div', { class: 'dm-list-item', style: { cursor: 'default' } },
+        const render = () => replace(list, order.map((name, i) => h('div', { class: 'dm-list-item dm-list-item-static' },
           h('span', { class: 'dm-list-main', text: name }),
           basic.button({ label: '↑', size: 'sm', variant: 'ghost', disabled: i === 0, onClick: () => { [order[i - 1], order[i]] = [order[i], order[i - 1]]; render(); } }),
           basic.button({ label: '↓', size: 'sm', variant: 'ghost', disabled: i === order.length - 1, onClick: () => { [order[i + 1], order[i]] = [order[i], order[i + 1]]; render(); } }))));

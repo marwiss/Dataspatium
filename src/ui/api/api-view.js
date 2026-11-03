@@ -82,7 +82,7 @@
           if (state.error) { replace(resultEl, h('div', { class: 'dm-card' }, h('p', { class: 'dm-error', text: state.error }))); return; }
           const r = state.result;
           if (!r) { replace(resultEl); return; }
-          const table = /** @type {any} */ (h('dm-table', { style: { height: '360px' } }));
+          const table = /** @type {any} */ (h('dm-table', { class: 'dm-table-tall' }));
           const rows = r.table.rows.slice(0, PREVIEW_ROWS);
           const nameInput = /** @type {any} */ (h('dm-input', { label: t('api.name') }));
           nameInput.value = r.name || connector.name;

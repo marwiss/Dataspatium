@@ -50,6 +50,8 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Använd | Använd inte |
 |---|---|
 | Datamängd | Dataset, tabell (om det inte är själva vyn), fil |
+| Kortnamn (datamängdens identifierare i SQL och R) | Alias, slug, tabellnamn |
+| Etikett, beskrivning, enhet (kolumnmetadata) | Label, rubrik |
 | Inhämta, Importera | Ladda upp, hämta in |
 | Hämta (från API) | Ladda ned (från API) |
 | Exportera, Ladda ned | Spara som, exportera ut |

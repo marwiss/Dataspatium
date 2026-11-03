@@ -16,7 +16,7 @@
      */
     async function exportChart(chart, options = {}) {
       const format = /** @type {any} */ (h('dm-select', { label: t('viz.export.format') }));
-      format.options = [{ value: 'png', label: 'PNG' }, { value: 'svg', label: 'SVG' }, { value: 'pdf', label: 'PDF' }, { value: 'pptx', label: 'PowerPoint (pptx)' }];
+      format.options = [{ value: 'png', label: 'PNG' }, { value: 'svg', label: 'SVG' }, { value: 'pdf', label: 'PDF' }, { value: 'pptx', label: t('viz.export.pptx') }];
       format.value = 'png';
       const width = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.export.width'), min: '200', max: '4000' }));
       width.value = String(options.defaultWidth || 960);

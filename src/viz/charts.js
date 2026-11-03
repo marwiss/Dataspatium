@@ -33,7 +33,7 @@
 
     /** New record for a dataset. */
     function create(kind, dataset, name) {
-      const base = { id: null, kind, name: name || '', datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', thumbnail: null, options: {} };
+      const base = { id: null, kind, name: name || '', datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', datasetShort: dataset ? dataset.shortName || '' : '', thumbnail: null, options: {} };
       if (kind === 'vega') base.vega = { type: 'bar', state: null, customSpec: null };
       if (kind === 'd3') base.d3 = { template: 'lollipop', params: {} };
       if (kind === 'r') base.r = { code: '' };
@@ -42,7 +42,7 @@
 
     /** Shareable JSON (no thumbnail, no ids). */
     function exportJson(chart) {
-      const out = { format: FORMAT, kind: chart.kind, name: chart.name, datasetName: chart.datasetName, created: new Date().toISOString(), app: 'Dataspatium', version: D.version };
+      const out = { format: FORMAT, kind: chart.kind, name: chart.name, datasetName: chart.datasetName, datasetShort: chart.datasetShort || '', created: new Date().toISOString(), app: 'Dataspatium', version: D.version };
       if (chart.kind === 'vega') out.vega = chart.vega;
       if (chart.kind === 'd3') out.d3 = chart.d3;
       if (chart.kind === 'r') out.r = chart.r;
@@ -57,8 +57,9 @@
       if (obj.format !== FORMAT) throw new Error('Filen är inte ett Dataspatium-diagram (format ' + FORMAT + ' saknas).');
       if (!KINDS.includes(obj.kind)) throw new Error('Okänd diagramtyp: ' + obj.kind);
       const all = await datasets.list();
-      const match = all.find((d) => d.name === obj.datasetName) || null;
-      const chart = { id: null, kind: obj.kind, name: obj.name || 'Importerat diagram', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', thumbnail: null, options: obj.options || {} };
+      // Matched by name, else by short name (the short name follows the dataset through renames and sharing).
+      const match = all.find((d) => d.name === obj.datasetName) || (obj.datasetShort ? all.find((d) => d.shortName === obj.datasetShort) : null) || null;
+      const chart = { id: null, kind: obj.kind, name: obj.name || 'Importerat diagram', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), thumbnail: null, options: obj.options || {} };
       if (obj.kind === 'vega') chart.vega = obj.vega || { type: 'bar', state: null, customSpec: null };
       if (obj.kind === 'd3') chart.d3 = obj.d3 || { template: 'lollipop', params: {} };
       if (obj.kind === 'r') chart.r = obj.r || { code: '' };

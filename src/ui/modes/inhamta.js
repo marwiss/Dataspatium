@@ -10,7 +10,7 @@
   D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files'], (base, csv, encoding, types, connectors, apiView, files) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
-    const DECIMALS = [{ value: 'auto', label: 'Automatiskt' }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
+    const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
     const FORMATS = ['csv', 'fixed', 'excel', 'json', 'xml', 'sqlite', 'shapefile', 'r'];
     /** Formats without a header-row switch (structure carries the names). */
     const NO_HEADER = ['json', 'xml', 'sqlite', 'shapefile', 'r'];
@@ -279,7 +279,7 @@
       function describeDelimiter(d) { return d === ';' ? t('import.delimiter.semicolon') : d === ',' ? t('import.delimiter.comma') : d === '\t' ? t('import.delimiter.tab') : d === '|' ? t('import.delimiter.pipe') : JSON.stringify(d); }
 
       function previewTable(p) {
-        const table = /** @type {any} */ (h('dm-table', { style: { minHeight: '320px' } }));
+        const table = /** @type {any} */ (h('dm-table', { class: 'dm-table-preview' }));
         const rows = p.dataRows.map((r) => r.map((v) => (v instanceof Date ? types.parseDateTime(v) : v)));
         requestAnimationFrame(() => table.setData({
           columns: p.columns.map((name, i) => ({ key: name, label: name, type: p.inferred && p.inferred[i] ? p.inferred[i].type : 'text' })),
@@ -314,7 +314,7 @@
         return h('div', { class: 'dm-stack' },
           h('div', { class: 'dm-form-grid' }, name),
           h('p', { class: 'dm-help', text: t('import.columns.help') }),
-          h('table', { class: 'dm-columns-table' }, h('thead', null, h('tr', null, h('th', { text: t('import.column.include') }), h('th', { text: t('common.name') }), h('th', { text: t('common.type') }), h('th', { text: 'Exempel' }), h('th'))), h('tbody', null, rows)),
+          h('table', { class: 'dm-columns-table' }, h('thead', null, h('tr', null, h('th', { text: t('import.column.include') }), h('th', { text: t('common.name') }), h('th', { text: t('common.type') }), h('th', { text: t('import.column.sample') }), h('th'))), h('tbody', null, rows)),
           wiz.busy ? h('dm-progress', { indeterminate: true, label: wiz.progress ? t('import.progress', { rows: i18n.formatNumber(wiz.progress.rows) }) : t('import.running') }) : null,
           wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
           h('div', { class: 'dm-row' }, ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: () => { wiz.step = 'options'; render(); } }), importBtn));

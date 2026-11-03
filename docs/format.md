@@ -70,7 +70,7 @@ Värden som inte går att tolka med den typ du väljer manuellt blir också tomm
 ## Datamängdens fil
 
 Varje datamängd är en SQLite-fil med fyra tabeller: `data` (raderna), `_columns` (namn, typ, etikett,
-ursprungsnamn, beskrivning och enhet; de två sista läggs till när en äldre fil öppnas), `_meta` (namn,
+ursprungsnamn, beskrivning och enhet; de två sista läggs till när en äldre fil öppnas), `_meta` (namn, kortnamn,
 beskrivning, tidsstämplar, källa, importinställningar) och `_log` (allt som gjorts med datamängden). Filen går att öppna i R med RSQLite, i DB Browser for SQLite och i de flesta andra verktyg.
 
 ## Arbetsytans filer

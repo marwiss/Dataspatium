@@ -149,6 +149,24 @@ hur många steg som utfördes. Receptfilen har formen
 
 ## SQL-konsolen
 
+Varje datamängd har ett **kortnamn** (visas under namnet i objektpanelen och under Hantera, där det kan ändras
+tillsammans med namnet): små bokstäver, siffror och understreck, till exempel `befolkning_per_kommun_2024`.
+I SQL-konsolen heter den valda datamängden `data` men nås också med sitt kortnamn, och andra datamängder nås
+med sina kortnamn, så att en fråga kan koppla ihop flera datamängder:
+
+```sql
+select k.kommun, k.lan, b.folkmangd
+from befolkning_per_kommun_2024 b
+join kommungranser_scb k on k.kommunkod = b.kommunkod
+order by b.folkmangd desc
+```
+
+Andra datamängder är skrivskyddade i frågan; UPDATE, DELETE och ALTER gäller den valda datamängden men får
+läsa de andra (till exempel `update data set lan = (select lan from kommungranser_scb k where k.kommunkod =
+data.kommunkod)`). Högst nio andra datamängder kan ingå i samma fråga. Resultatet kan sparas som en ny
+datamängd. Kortnamnen fungerar också i R (`dm_read("kortnamn")`) och används när diagram och anteckningsböcker
+kopplas till datamängder vid import.
+
 SQL-konsolen ligger i läget Analysera under fliken SQL och arbetar mot den valda datamängden, vars tabell heter
 `data`. Ctrl+Enter kör hela skriptet, markerad text körs ensam.
 

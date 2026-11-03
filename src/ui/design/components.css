@@ -80,7 +80,7 @@ dialog.dm-dialog {
   padding: 0; width: min(560px, calc(100vw - 32px)); box-shadow: var(--dm-shadow-lg);
 }
 dialog.dm-dialog[data-size="lg"] { width: min(900px, calc(100vw - 32px)); }
-dialog.dm-dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+dialog.dm-dialog::backdrop { background: var(--dm-backdrop); }
 dialog.dm-dialog .dm-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: var(--dm-s-4) var(--dm-s-5) 0; }
 dialog.dm-dialog .dm-dialog-body { padding: var(--dm-s-3) var(--dm-s-5); display: flex; flex-direction: column; gap: var(--dm-s-3); max-height: 70vh; overflow: auto; }
 dialog.dm-dialog .dm-dialog-actions { display: flex; justify-content: flex-end; gap: var(--dm-s-2); padding: var(--dm-s-3) var(--dm-s-5) var(--dm-s-5); }
@@ -144,6 +144,10 @@ dm-kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
   border: 0; background: none; color: var(--dm-text); text-align: left; cursor: pointer; width: 100%; font-size: var(--dm-text-sm);
 }
 .dm-list-item:hover { background: var(--dm-surface-hover); }
+.dm-list-item-static, .dm-list-item-static:hover { cursor: default; background: transparent; }
+.dm-list-code { font-family: var(--dm-font-mono); font-size: var(--dm-font-size-xs); color: var(--dm-text-muted); }
+dm-table.dm-table-tall { height: 360px; }
+dm-table.dm-table-preview { min-height: 320px; }
 .dm-list-item[aria-current="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); }
 .dm-list-item .dm-list-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .dm-list-item .dm-list-sub { font-size: var(--dm-text-xs); color: var(--dm-text-muted); }

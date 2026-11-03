@@ -23,6 +23,9 @@
     'use strict';
     var SQL = null;
     var db = null;
+    // Other datasets mounted for cross-dataset queries: name -> {db, version}. Each is its own sql.js database
+    // whose file lives in the shared virtual file system, so the main connection can ATTACH it by path.
+    var mounts = {};
     var dm = self.__dataspatium;
     var readyPromise = dm.ready.then(function () {
       importScripts('dataspatium-asset://sqljs/sql-wasm.js');
@@ -393,6 +396,35 @@
     }
 
     function requireDb() { if (!db) throw new Error('No database is open'); return db; }
+    var ident = function (name) { return '"' + String(name).replace(/"/g, '""') + '"'; };
+    /**
+     * Make short names usable in the current connection: the primary dataset's own short name as a view on
+     * data, and each mounted dataset ATTACHed (as <name>__db) with a view named by its short name.
+     * Attachments do not survive export(), which reopens the connection, so this runs before every query.
+     */
+    /** Schemas attached in a connection (pragma database_list), so that no state has to be tracked across reopens. */
+    function attachedSchemas(d) {
+      var out = {};
+      var res = d.exec('pragma database_list');
+      if (res[0]) res[0].values.forEach(function (r) { out[String(r[1])] = true; });
+      return out;
+    }
+    function ensureAttached(d, names, self) {
+      var have = attachedSchemas(d);
+      if (self) d.exec('create temp view if not exists ' + ident(self) + ' as select * from main.data');
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i]; var m = mounts[name];
+        if (!m) continue;
+        if (!have[name + '__db']) d.exec("attach database '/" + m.db.filename + "' as " + ident(name + '__db'));
+        d.exec('create temp view if not exists ' + ident(name) + ' as select * from ' + ident(name + '__db') + '.data');
+      }
+    }
+    function detachMount(name) {
+      if (!db) return;
+      try {
+        if (attachedSchemas(db)[name + '__db']) { db.exec('drop view if exists ' + ident(name)); db.exec('detach database ' + ident(name + '__db')); }
+      } catch (e) { /* a statement may be running; the next mount will try again */ }
+    }
     function withSavepoint(d, name, fn) {
       d.exec('savepoint ' + name);
       try { var r = fn(); d.exec('release ' + name); return r; }
@@ -446,9 +478,30 @@
         }
         case 'regions':
           return { value: loadRegions(args.features) };
+        case 'mount': {
+          if (mounts[args.name]) { detachMount(args.name); mounts[args.name].db.close(); }
+          mounts[args.name] = { db: new SQL.Database(new Uint8Array(args.bytes)), version: args.version || '' };
+          return { value: true };
+        }
+        case 'unmount':
+          if (mounts[args.name]) { detachMount(args.name); mounts[args.name].db.close(); delete mounts[args.name]; }
+          return { value: true };
+        case 'mounted': {
+          var versions = {};
+          for (var mk in mounts) versions[mk] = mounts[mk].version;
+          return { value: versions };
+        }
+        case 'attach':
+          ensureAttached(requireDb(), args.names || [], args.self || null);
+          return { value: true };
+        case 'query': {
+          var dq = requireDb();
+          ensureAttached(dq, args.names || [], args.self || null);
+          return { value: dq.exec(args.sql, args.params).map(function (r) { return { columns: r.columns, values: r.values }; }) };
+        }
         case 'export': {
-          // sql.js closes and reopens the connection to export, which drops custom functions and temp
-          // tables; register the helpers again so later statements keep working.
+          // sql.js closes and reopens the connection to export, which drops custom functions, temp tables,
+          // views and attachments; register the helpers again so later statements keep working.
           var bytes = requireDb().export();
           registerFunctions(db);
           return { value: bytes.buffer, transfer: [bytes.buffer] };

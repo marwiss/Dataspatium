@@ -100,7 +100,8 @@
           const th = h('button', {
             type: 'button', class: 'dm-th', role: 'columnheader', style: { width: this.widthOf(col) + 'px', flex: `0 0 ${this.widthOf(col)}px` },
             'aria-sort': sorted ? (sorted === 'asc' ? 'ascending' : 'descending') : null,
-            title: `${col.label || col.key} (${t('type.' + (col.type || 'text'))})`,
+            // Tooltip: label, type and unit on the first line, the column description below.
+            title: [`${col.label || col.key} (${t('type.' + (col.type || 'text'))}${col.unit ? ', ' + col.unit : ''})`, col.description || ''].filter(Boolean).join('\n'),
             onclick: (e) => this.onHeaderClick(col, e),
           },
             h('span', { class: 'dm-th-label', text: col.label || col.key }),

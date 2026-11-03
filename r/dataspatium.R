@@ -18,12 +18,13 @@
 dm_index <- function() {
   # Tab-separated so that base R can read it without loading any package.
   path <- file.path(.dataspatium$data_dir, "index.tsv")
-  empty <- data.frame(id = character(), name = character(), file = character(), rowCount = integer(),
+  empty <- data.frame(id = character(), name = character(), shortName = character(), file = character(), rowCount = integer(),
                       columnCount = integer(), updatedAt = character(), stringsAsFactors = FALSE)
   if (!file.exists(path)) return(empty)
   idx <- utils::read.delim(path, sep = "\t", quote = "", stringsAsFactors = FALSE, encoding = "UTF-8",
                            colClasses = "character", na.strings = character())
   if (NROW(idx) == 0) return(empty)
+  if (is.null(idx$shortName)) idx$shortName <- ""
   idx$rowCount <- as.integer(idx$rowCount)
   idx$columnCount <- as.integer(idx$columnCount)
   idx
@@ -48,18 +49,19 @@ dm_list <- function() {
     message("Inga datamängder är tillgängliga i R-sessionen ännu. Importera i läget Inhämta.")
     return(invisible(idx))
   }
-  out <- idx[, c("name", "rowCount", "columnCount", "updatedAt", "id")]
-  names(out) <- c("namn", "rader", "kolumner", "ändrad", "id")
+  out <- idx[, c("name", "shortName", "rowCount", "columnCount", "updatedAt", "id")]
+  names(out) <- c("namn", "kortnamn", "rader", "kolumner", "ändrad", "id")
   out
 }
 
-#' Resolve a dataset reference (id, exact name, case-insensitive name or unique prefix) to an id.
+#' Resolve a dataset reference (id, short name, exact name, case-insensitive name or unique prefix) to an id.
 dm_find <- function(x) {
   idx <- dm_index()
   if (nrow(idx) == 0) stop("Inga datamängder finns i R-sessionen. Kör dm_list() för att se vad som finns.", call. = FALSE)
   x <- as.character(x)[1]
   hit <- which(idx$id == x)
   if (!length(hit)) hit <- which(idx$name == x)
+  if (!length(hit)) hit <- which(idx$shortName == tolower(x))
   if (!length(hit)) hit <- which(tolower(idx$name) == tolower(x))
   if (!length(hit)) hit <- which(startsWith(tolower(idx$name), tolower(x)))
   if (length(hit) == 1) return(idx$id[hit])

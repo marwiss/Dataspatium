@@ -35,6 +35,7 @@
   --dm-radius-md: 10px;
   --dm-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
   --dm-shadow-lg: 0 12px 32px rgb(16 24 40 / 0.18);
+  --dm-backdrop: rgb(16 24 40 / 0.35);
   --dm-transition: 120ms ease;
 
   /* Neutral scale */
@@ -135,6 +136,7 @@
   --dm-grid: #2e3745;
   --dm-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
   --dm-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.6);
+  --dm-backdrop: rgb(0 0 0 / 0.6);
 }
 
 /* ... or following the system when no explicit choice has been made. */
@@ -168,5 +170,6 @@
     --dm-grid: #2e3745;
     --dm-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
     --dm-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.6);
+    --dm-backdrop: rgb(0 0 0 / 0.6);
   }
 }

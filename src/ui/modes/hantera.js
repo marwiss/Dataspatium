@@ -68,6 +68,7 @@
           const src = ds.source || {};
           kv.items = [
             { label: t('common.name'), value: ds.name },
+            { label: t('datasets.shortname'), value: ds.shortName || '' },
             { label: t('common.description'), value: ds.description },
             { label: t('common.created'), value: i18n.formatDateTime(ds.createdAt) },
             { label: t('common.updated'), value: i18n.formatDateTime(ds.updatedAt) },
@@ -85,7 +86,7 @@
             rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', c.sourceName]) });
         } else {
           const log = await services.datasets.log(ds.id);
-          replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item', style: { cursor: 'default' } }, ui.icon('history', 14),
+          replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon('history', 14),
             h('span', { class: 'dm-list-main' }, h('span', { text: `${i18n.formatDateTime(e.ts)} · ${e.action}` }), h('span', { class: 'dm-list-sub dm-truncate', text: typeof e.details === 'string' ? e.details : JSON.stringify(e.details) }))))));
         }
       }
@@ -124,13 +125,22 @@
         desc.value = ds.description || '';
         desc.addEventListener('change', async () => { await services.datasets.updateMeta(ds.id, { description: desc.value }); shell.log(t('datasets.saved'), 'ok'); });
         const kv = /** @type {any} */ (h('dm-kv'));
-        kv.items = [{ label: 'Id', value: h('code', { text: ds.id }) }, { label: t('common.size'), value: i18n.formatBytes(ds.byteSize || 0) }];
+        kv.items = [{ label: t('common.id'), value: h('code', { text: ds.id }) }, { label: t('common.size'), value: i18n.formatBytes(ds.byteSize || 0) }];
         replace(slots.right, desc, kv);
       }
 
       async function rename(ds) {
-        const name = await ui.dialog.prompt(t('common.name'), { title: t('common.rename'), value: ds.name });
-        if (name && name.trim() && name.trim() !== ds.name) { await services.datasets.updateMeta(ds.id, { name: name.trim() }); shell.log(t('datasets.renamed'), 'ok'); }
+        // Name and short name together: the short name is what SQL, R and chart files refer to.
+        const nameIn = /** @type {any} */ (h('dm-input', { label: t('common.name') })); nameIn.value = ds.name;
+        const shortIn = /** @type {any} */ (h('dm-input', { label: t('datasets.shortname'), help: t('datasets.shortname.help'), mono: true })); shortIn.value = ds.shortName || '';
+        const ok = await ui.dialog.open({ title: t('common.rename'), body: h('div', { class: 'dm-stack' }, nameIn, shortIn), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.save'), variant: 'primary', value: true, primary: true }] });
+        if (ok !== true) return;
+        const patch = {};
+        if (nameIn.value.trim() && nameIn.value.trim() !== ds.name) patch.name = nameIn.value.trim();
+        if (shortIn.value.trim() && shortIn.value.trim() !== (ds.shortName || '')) patch.shortName = shortIn.value.trim();
+        if (!Object.keys(patch).length) return;
+        try { await services.datasets.updateMeta(ds.id, patch); shell.log(t('datasets.renamed'), 'ok'); }
+        catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
       async function remove(ds) {
         if (await ui.dialog.confirm(t('datasets.delete.confirm', { name: ds.name }), { okLabel: t('common.delete'), danger: true })) {
@@ -160,12 +170,12 @@
           h('div', { class: 'dm-card dm-stack' },
             h('p', { text: t('datasets.storage.text') }),
             h('div', { class: 'dm-stats-grid' },
-              stat(i18n.formatBytes(est && est.usage || 0), 'Använt'),
-              stat(est && est.quota ? i18n.formatBytes(est.quota) : '–', 'Kvot'),
+              stat(i18n.formatBytes(est && est.usage || 0), t('datasets.storage.used')),
+              stat(est && est.quota ? i18n.formatBytes(est.quota) : '–', t('datasets.storage.quota')),
               stat(String(store.get().datasets.length), t('shell.datasets')),
-              stat(persisted ? t('datasets.persist.granted') : t('datasets.persist.denied'), 'Beständig lagring')),
+              stat(persisted ? t('datasets.persist.granted') : t('datasets.persist.denied'), t('datasets.persist.label'))),
             h('div', { class: 'dm-row-wrap' },
-              persisted ? null : ui.button({ label: 'Begär beständig lagring', icon: 'lock', onClick: async () => { const ok = await services.idb.requestPersist(); shell.log(t('datasets.persist', { state: ok ? t('datasets.persist.granted') : t('datasets.persist.denied') }), ok ? 'ok' : 'warn'); render(); } }),
+              persisted ? null : ui.button({ label: t('datasets.persist.request'), icon: 'lock', onClick: async () => { const ok = await services.idb.requestPersist(); shell.log(t('datasets.persist', { state: ok ? t('datasets.persist.granted') : t('datasets.persist.denied') }), ok ? 'ok' : 'warn'); render(); } }),
               apiDatasets().length ? ui.button({ label: t('api.refresh.all', { n: apiDatasets().length }), icon: 'refresh-cw', onClick: refreshAllApi }) : null)),
           h('div', { class: 'dm-form-grid' },
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.backup') }), h('p', { class: 'dm-help', text: t('datasets.backup.hint') }),
@@ -302,13 +312,13 @@
         const c = D.capabilities;
         const kv = /** @type {any} */ (h('dm-kv'));
         kv.items = [
-          { label: 'Protokoll', value: c.protocol },
-          { label: 'Webbläsare', value: c.isFirefox ? 'Firefox' : c.isChromium ? 'Chromium' : 'Okänd' },
-          { label: 'IndexedDB', value: c.indexedDB ? t('common.yes') : t('common.no') },
-          { label: 'Mappåtkomst', value: c.fileSystemAccess ? t('common.yes') : t('common.no') },
-          { label: 'SharedArrayBuffer', value: c.sharedArrayBuffer ? t('common.yes') : t('common.no') },
+          { label: t('env.protocol'), value: c.protocol },
+          { label: t('env.browser'), value: c.isFirefox ? 'Firefox' : c.isChromium ? 'Chromium' : t('env.browser.unknown') },
+          { label: t('env.indexeddb'), value: c.indexedDB ? t('common.yes') : t('common.no') },
+          { label: t('env.folder'), value: c.fileSystemAccess ? t('common.yes') : t('common.no') },
+          { label: t('env.sab'), value: c.sharedArrayBuffer ? t('common.yes') : t('common.no') },
         ];
-        replace(slots.right, h('h4', { text: 'Miljö' }), kv);
+        replace(slots.right, h('h4', { text: t('env.title') }), kv);
       }
 
       // Command palette: re-fetch API datasets and share a bundle.

@@ -157,11 +157,11 @@
           h('p', { class: 'dm-help', text: t('doc.help.vars') }),
           h('ul', { class: 'dm-stack-sm dm-doc-help' }, items.map((k) => h('li', null, h('code', { text: '{{' + k + '}}' })))),
           h('p', { class: 'dm-help', text: t('doc.help.loops') }),
-          h('pre', { class: 'dm-doc-help-pre', text: '{{#rader}}\n- {{kommun}}: {{folkmangd}}\n{{/rader}}' }),
+          h('pre', { class: 'dm-doc-help-pre', text: t('doc.help.example.loop') }),
           h('p', { class: 'dm-help', text: t('doc.help.table') }),
-          h('pre', { class: 'dm-doc-help-pre', text: '{{#tabell}}kolumner: kommun, folkmangd;\nsortera: folkmangd fallande; topp: 10;\nfilter: lan = Skåne län; rubrik: Störst{{/tabell}}' }),
+          h('pre', { class: 'dm-doc-help-pre', text: t('doc.help.example.table') }),
           h('p', { class: 'dm-help', text: t('doc.help.chart') }),
-          h('pre', { class: 'dm-doc-help-pre', text: '{{diagram "Folkmängd per län" | bredd: 600}}' }),
+          h('pre', { class: 'dm-doc-help-pre', text: t('doc.help.example.chart') }),
           h('p', { class: 'dm-help', text: t('doc.help.markdown') }),
         ];
       }

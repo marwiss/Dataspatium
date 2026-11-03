@@ -120,7 +120,7 @@
         rowIds = new Map();
         table.countBadge.textContent = search ? t('table.rows.shown', { shown: i18n.formatNumber(total), total: i18n.formatNumber(ds.rowCount) }) : t('common.rows', { n: i18n.formatNumber(total) });
         const data = {
-          columns: cols.map((c) => ({ key: c.name, label: c.label || c.name, type: c.type })),
+          columns: cols.map((c) => ({ key: c.name, label: c.label || c.name, type: c.type, description: c.description, unit: c.unit })),
           rowCount: total,
           rowProvider: async (start, count, sort) => {
             const rows = await services.datasets.query(ds.id, { limit: count, offset: start, search, orderBy: sort ? sort.key : undefined, dir: sort ? sort.dir : undefined, withRowId: true });

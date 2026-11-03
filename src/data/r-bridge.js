@@ -95,11 +95,11 @@
           await this.engine.writeFile(`${DATA_DIR}/${id}.sqlite`, bytes);
           this.mirrored.set(id, meta.updatedAt);
         }
-        const index = list.map((m) => ({ id: m.id, name: m.name, file: `${DATA_DIR}/${m.id}.sqlite`, rowCount: m.rowCount || 0, columnCount: m.columnCount || 0, updatedAt: m.updatedAt, mirrored: this.mirrored.has(m.id) }));
+        const index = list.map((m) => ({ id: m.id, name: m.name, shortName: m.shortName || '', file: `${DATA_DIR}/${m.id}.sqlite`, rowCount: m.rowCount || 0, columnCount: m.columnCount || 0, updatedAt: m.updatedAt, mirrored: this.mirrored.has(m.id) }));
         // Tab-separated so that r/dataspatium.R can read it with base R only.
         const clean = (v) => String(v === null || v === undefined ? '' : v).replace(/[\t\r\n]+/g, ' ');
-        const lines = ['id\tname\tfile\trowCount\tcolumnCount\tupdatedAt\tmirrored'];
-        for (const m of index) lines.push([m.id, m.name, m.file, m.rowCount, m.columnCount, m.updatedAt, m.mirrored ? 'TRUE' : 'FALSE'].map(clean).join('\t'));
+        const lines = ['id\tname\tshortName\tfile\trowCount\tcolumnCount\tupdatedAt\tmirrored'];
+        for (const m of index) lines.push([m.id, m.name, m.shortName, m.file, m.rowCount, m.columnCount, m.updatedAt, m.mirrored ? 'TRUE' : 'FALSE'].map(clean).join('\t'));
         await this.engine.writeFile(`${DATA_DIR}/index.tsv`, new TextEncoder().encode(lines.join('\n') + '\n'));
         return index;
       }
@@ -123,7 +123,7 @@
         const ids = [];
         for (const n of names) {
           const lower = n.toLowerCase();
-          const exact = list.find((d) => d.id === n || d.name === n);
+          const exact = list.find((d) => d.id === n || d.name === n || d.shortName === lower);
           const ci = list.filter((d) => d.name.toLowerCase() === lower);
           const prefix = list.filter((d) => d.name.toLowerCase().startsWith(lower));
           const hit = exact || (ci.length === 1 ? ci[0] : null) || (prefix.length === 1 ? prefix[0] : null);

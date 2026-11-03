@@ -48,8 +48,9 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   upp kommun och län ur koordinater, med ångra, versioner och recept som kan exporteras som R eller SQL (se
   [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
-  SQL-konsol och anteckningsböcker med text-, R- och SQL-celler som blir rapporter i HTML, Word, PDF, Markdown
-  eller LaTeX (se [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.
+  SQL-konsol där datamängder kopplas ihop med join via sina kortnamn, och anteckningsböcker med text-, R- och
+  SQL-celler som blir rapporter i HTML, Word, PDF, Markdown eller LaTeX (se
+  [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

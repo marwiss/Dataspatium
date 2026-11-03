@@ -39,6 +39,7 @@
     'src/data/geo.js',
     'src/data/boundaries.js',
     'src/data/datasets.js',
+    'src/data/query.js',
     'src/data/operations.js',
     'src/data/recipes.js',
     'src/data/derive.js',

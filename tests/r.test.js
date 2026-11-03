@@ -18,11 +18,11 @@
     await D.require('data/recipes').apply(meta.id, 'set_label', { column: 'befolkning', label: 'Folkmängd', description: 'Antal invånare', unit: 'personer' });
     await bridge.start();
     assert.ok(/^R version 4\./.test(bridge.version), bridge.version);
-    const listed = await bridge.run('x <- dm_list(); cat("Bryggtest" %in% x$namn)');
-    assert.ok(stdoutOf(listed).includes('TRUE'), 'dm_list: ' + JSON.stringify(listed.entries));
+    const listed = await bridge.run('x <- dm_list(); cat("Bryggtest" %in% x$namn, "bryggtest" %in% x$kortnamn)');
+    assert.equal(stdoutOf(listed).trim(), 'TRUE TRUE', 'dm_list with short names: ' + JSON.stringify(listed.entries));
     const read = await bridge.run('df <- dm_read("Bryggtest"); cat(nrow(df), class(df$datum), class(df$befolkning), class(df$aktiv), df$kod[1], df$andel[1], attr(df$befolkning, "label"), attr(df$befolkning, "description"), attr(df$befolkning, "unit"), is.null(attr(df$kommun, "label")), sep = "|")');
     assert.equal(stdoutOf(read).trim(), '2|Date|integer|logical|0180|9.37|Folkmängd|Antal invånare|personer|TRUE', JSON.stringify(read.entries));
-    const filtered = await bridge.run('cat(nrow(dm_read("Bryggtest", columns = "kommun", where = "befolkning > 600000")))');
+    const filtered = await bridge.run('cat(nrow(dm_read("bryggtest", columns = "kommun", where = "befolkning > 600000")))');
     assert.equal(stdoutOf(filtered).trim(), '1');
     return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms`;
   }, 180000);

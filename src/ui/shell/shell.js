@@ -75,6 +75,8 @@
         registerMode(mode) { this.modes.set(mode.id, mode); }
 
         async init() {
+          // Datasets from versions before short names get one, derived from their name.
+          try { await datasets.ensureShortNames(); } catch (err) { D.log('shell', 'short names', err); }
           await this.reloadDatasets();
           this.updateStorage();
           // Land where the user most likely wants to be: an empty workspace starts in Inhämta, one with
@@ -174,7 +176,7 @@
           const cmds = MODES.map((id) => ({ id: 'mode:' + id, label: t('palette.goto', { mode: t('mode.' + id) }), hint: t('mode.' + id + '.desc'), group: t('palette.group.modes'), icon: MODE_ICONS[id], run: () => this.activate(id) }));
           for (const d of state.datasets) {
             cmds.push({
-              id: 'dataset:' + d.id, label: d.name, group: t('palette.group.datasets'), icon: 'table', keywords: ['datamängd'],
+              id: 'dataset:' + d.id, label: d.name, hint: d.shortName || '', group: t('palette.group.datasets'), icon: 'table', keywords: [t('shell.datasets'), d.shortName || ''],
               hint: t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) }) + ' · ' + t('common.columns', { n: d.columnCount || 0 }),
               run: () => { this.store.set({ selectedId: d.id }); if (!this.store.get().mode || this.store.get().mode === 'inhamta') this.activate('bearbeta'); },
             });
@@ -217,6 +219,7 @@
               h('p', { text: t('app.tagline') }),
               h('ul', null, MODES.map((id) => h('li', null, h('strong', { text: t('mode.' + id) + ': ' }), t('mode.' + id + '.desc')))),
               h('p', { class: 'dm-help', text: t('app.version', { version: D.version }) + '. ' + t('shell.shortcuts') }),
+              h('p', { class: 'dm-help' }, t('shell.help.docs') + ' ', h('a', { href: 'https://github.com/marwiss/Dataspatium#readme', target: '_blank', rel: 'noopener', text: t('shell.help.docs.link') })),
               h('div', { class: 'dm-row' }, checkBtn),
               result),
           });

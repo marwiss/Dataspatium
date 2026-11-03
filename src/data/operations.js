@@ -408,6 +408,8 @@
     define({
       id: 'sql', group: 'structure',
       params: [{ name: 'statement', type: 'expression', required: true }],
+      // Other datasets mentioned by short name are attached before the statement runs (see data/query).
+      async prepare(ctx, p) { if (ctx.datasetId) await D.require('data/query').attach(ctx.datasetId, p.statement); },
       async apply(ctx, p) {
         const rows = await ctx.engine.run(p.statement);
         // The statement may have changed the schema; re-read it.

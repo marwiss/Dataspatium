@@ -69,6 +69,7 @@
       const op = ops.get(opId);
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
+      ctx.datasetId = id;
       // Sort indexes would block column rebuilds (ALTER TABLE DROP COLUMN); they are recreated on the next sort.
       await datasets.dropIndexes(handle);
       let undoEntry = null;
@@ -77,6 +78,8 @@
         undoEntry = op.inverse ? { inverse: await op.inverse(ctx, params), label } : { bytes: await handle.engine.export(), label };
         pushUndo(id, undoEntry);
       }
+      // After the snapshot (export reopens the connection): operations that need other datasets attach them here.
+      if (op.prepare) await op.prepare(ctx, params);
       let result;
       try {
         await handle.engine.run('savepoint dm_op');
