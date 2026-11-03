@@ -96,7 +96,7 @@
       const rows = await datasets.allRows(id);
       const names = cols.map((c) => xmlName(c.name));
       const parts = [`<?xml version="1.0" encoding="UTF-8"?>\n<dataspatium datamangd="${escXml(meta ? meta.name : '')}" skapad="${new Date().toISOString()}">\n`];
-      parts.push('  <kolumner>' + cols.map((c, i) => `<kolumn namn="${escXml(c.name)}" element="${names[i]}" typ="${c.type}"${c.label && c.label !== c.name ? ` etikett="${escXml(c.label)}"` : ''}/>`).join('') + '</kolumner>\n  <rader>\n');
+      parts.push('  <kolumner>' + cols.map((c, i) => `<kolumn namn="${escXml(c.name)}" element="${names[i]}" typ="${c.type}"${c.label && c.label !== c.name ? ` etikett="${escXml(c.label)}"` : ''}${c.description ? ` beskrivning="${escXml(c.description)}"` : ''}${c.unit ? ` enhet="${escXml(c.unit)}"` : ''}/>`).join('') + '</kolumner>\n  <rader>\n');
       for (const r of rows) {
         parts.push('    <rad>' + r.map((v, i) => (v === null || v === undefined ? `<${names[i]}/>` : `<${names[i]}>${escXml(cols[i].type === 'boolean' ? (v ? 'true' : 'false') : v)}</${names[i]}>`)).join('') + '</rad>\n');
       }

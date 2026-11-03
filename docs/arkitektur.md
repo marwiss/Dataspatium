@@ -57,6 +57,8 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
 ## Datamodell
 
 En datamängd är en SQLite-fil med tabellerna `data`, `_columns`, `_meta` och `_log` (se [format.md](format.md)).
+`_columns` fick kolumnerna `description` och `unit` i 1.9; `readColumns` lägger till dem med `alter table` när en
+äldre fil (eller en fil från `dm_write()` i R) öppnas, så att alla kodvägar kan räkna med dem.
 Filen lagras i IndexedDB i bitar om 8 MB (`src/platform/storage/idb-store.js`), tillsammans med en metadatapost.
 `src/data/datasets.js` är den enda vägen till datamängderna: skapa, lista, fråga (sidvis med sortering och
 filter), statistik, logg, spara, byt namn, ta bort, exportera bytes, importera bytes, versioner

@@ -62,12 +62,12 @@
       const id = newId();
       const engine = await newEngine();
       const names = types.cleanColumnNames(input.columns.map((c) => c.name));
-      const columns = input.columns.map((c, i) => ({ position: i, name: names[i], type: c.type || 'text', label: c.label || names[i], format: null, sourceName: c.sourceName || c.name }));
+      const columns = input.columns.map((c, i) => ({ position: i, name: names[i], type: c.type || 'text', label: c.label || names[i], format: null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null }));
       await engine.run(`create table data (${columns.map((c) => `${q(c.name)} ${types.sqlType(c.type)}`).join(', ')})`);
-      await engine.run('create table _columns (position integer, name text, type text, label text, format text, source_name text)');
+      await engine.run('create table _columns (position integer, name text, type text, label text, format text, source_name text, description text, unit text)');
       await engine.run('create table _meta (key text primary key, value text)');
       await engine.run('create table _log (ts text, action text, details text)');
-      await engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name'], columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName]));
+      await engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit'], columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit]));
       const now = new Date().toISOString();
       const meta = {
         id, name: input.name || 'Namnlös datamängd', description: input.description || '', createdAt: now, updatedAt: now,
@@ -148,9 +148,16 @@
       return handle;
     }
 
+    /** `_columns` gained description and unit in 1.9; older files (and files written by dm_write in R) get them on open. */
+    async function ensureColumnsSchema(engine) {
+      const info = await engine.exec('pragma table_info(_columns)');
+      const have = new Set((info[0] ? info[0].values : []).map((r) => r[1]));
+      for (const extra of ['description', 'unit']) if (!have.has(extra)) await engine.run(`alter table _columns add column ${extra} text`);
+    }
     async function readColumns(engine) {
-      const res = await engine.exec('select position, name, type, label, format, source_name from _columns order by position');
-      return (res[0] ? res[0].values : []).map((r) => ({ position: r[0], name: r[1], type: r[2], label: r[3], format: r[4], sourceName: r[5] }));
+      await ensureColumnsSchema(engine);
+      const res = await engine.exec('select position, name, type, label, format, source_name, description, unit from _columns order by position');
+      return (res[0] ? res[0].values : []).map((r) => ({ position: r[0], name: r[1], type: r[2], label: r[3], format: r[4], sourceName: r[5], description: r[6] || null, unit: r[7] || null }));
     }
 
     function buildWhere(columns, options) {
@@ -241,9 +248,9 @@
 
     /** Rewrite the _columns table from a columns array (after schema-changing operations). */
     async function writeColumns(handle, columns) {
-      handle.columns = columns.map((c, i) => ({ position: i, name: c.name, type: c.type || 'text', label: c.label || c.name, format: c.format || null, sourceName: c.sourceName || c.name }));
+      handle.columns = columns.map((c, i) => ({ position: i, name: c.name, type: c.type || 'text', label: c.label || c.name, format: c.format || null, sourceName: c.sourceName || c.name, description: c.description || null, unit: c.unit || null }));
       await handle.engine.run('delete from _columns');
-      await handle.engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name'], handle.columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName]));
+      await handle.engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name', 'description', 'unit'], handle.columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName, c.description, c.unit]));
       handle.meta.columnCount = handle.columns.length;
       await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['columnCount', JSON.stringify(handle.columns.length)]);
     }

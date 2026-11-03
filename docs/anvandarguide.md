@@ -106,7 +106,8 @@ importeras igen.
 
 ## Hålla ordning (Hantera)
 
-Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer och etiketter, historik över
+Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer, etiketter, beskrivningar
+och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), historik över
 allt som gjorts och versioner. Byt namn, ta bort eller hämta igen från API. Under *Arbetsyta* ser du hur mycket
 lagring som används, begär beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid
 start när det gått längre än det valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard;

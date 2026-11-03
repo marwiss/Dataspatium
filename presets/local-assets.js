@@ -3,7 +3,7 @@ Dataspatium.assets.addEntries({
  "r/dataspatium.R": {
   "file": "r/dataspatium.R.js",
   "encoding": "text",
-  "size": 11813,
+  "size": 12692,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {

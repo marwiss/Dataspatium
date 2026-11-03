@@ -81,8 +81,8 @@
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));
           replace(body, h('div', { class: 'dm-table-wrap' }, table));
-          table.setData({ columns: [{ key: 'position', label: '#', type: 'integer', width: 70 }, { key: 'name', label: t('common.name'), type: 'text', width: 240 }, { key: 'type', label: t('common.type'), type: 'text', width: 140 }, { key: 'label', label: 'Etikett', type: 'text', width: 240 }, { key: 'source', label: t('common.source'), type: 'text', width: 220 }],
-            rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.sourceName]) });
+          table.setData({ columns: [{ key: 'position', label: '#', type: 'integer', width: 70 }, { key: 'name', label: t('common.name'), type: 'text', width: 220 }, { key: 'type', label: t('common.type'), type: 'text', width: 130 }, { key: 'label', label: t('param.label'), type: 'text', width: 220 }, { key: 'description', label: t('column.description'), type: 'text', width: 280 }, { key: 'unit', label: t('column.unit'), type: 'text', width: 120 }, { key: 'source', label: t('common.source'), type: 'text', width: 200 }],
+            rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', c.sourceName]) });
         } else {
           const log = await services.datasets.log(ds.id);
           replace(body, h('ul', { class: 'dm-list' }, log.map((e) => h('li', { class: 'dm-list-item', style: { cursor: 'default' } }, ui.icon('history', 14),

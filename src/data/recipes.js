@@ -31,7 +31,7 @@
       const n = result && typeof result.rows === 'number' ? ` (${result.rows} rader)` : '';
       switch (opId) {
         case 'rename_column': return `Byt namn på ${params.column} till ${params.name}`;
-        case 'set_label': return `Etikett för ${params.column}: ${params.label}`;
+        case 'set_label': return `Etikett för ${params.column}: ${params.label}${params.description ? `; beskrivning: ${params.description}` : ''}${params.unit ? `; enhet: ${params.unit}` : ''}`;
         case 'drop_columns': return `Ta bort kolumner ${cols}`;
         case 'reorder_columns': return 'Ändra kolumnordning';
         case 'set_type': return `Ändra typ för ${params.column} till ${params.type}${n}`;

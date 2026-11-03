@@ -17,6 +17,7 @@ behöver finns i appmappen: R, ett urval paket och Dataspatiums hjälpfunktioner
 | `dm_list()` | Visar datamängderna i sessionen: namn, rader, kolumner, ändrad, id. |
 | `dm_read("Namn")` | Läser in en datamängd som `data.frame` med rätt typer: datum blir `Date`, datum och tid `POSIXct`, ja/nej `logical`, heltal `integer`. Namnet kan vara id, exakt namn, namn oavsett skiftläge eller ett entydigt prefix. |
 | `dm_read("Namn", columns = c("a", "b"), where = "a > 10", n = 1000)` | Läser bara vissa kolumner, rader som uppfyller ett SQL-villkor, eller ett begränsat antal rader. |
+| `attr(df$kolumn, "label")`, `"description"`, `"unit"` | Kolumnens etikett, beskrivning och enhet från appen följer med som attribut (när de är satta); `dm_write()` tar dem tillbaka, eller via argumenten `labels`, `descriptions` och `units`. |
 | `dm_write(df, "Nytt namn", description = "…")` | Skickar en `data.frame` till appen som en ny datamängd. Den dyker upp i listan när kommandot är klart. |
 | `theme_dataspatium()` | ggplot2-tema med appens utseende. Sätts automatiskt när `library(ggplot2)` körs. |
 | `dm_palette()` | Appens färgpalett (Okabe-Ito, färgblindsäker). `scale_colour_dataspatium()` och `scale_fill_dataspatium()` finns också. |

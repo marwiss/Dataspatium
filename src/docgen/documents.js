@@ -46,7 +46,9 @@ Lägg in ett sparat diagram med taggen diagram följt av diagrammets namn inom c
 
 - Typ: {{typ}}
 - Etikett: {{etikett}}
-- Saknade värden: {{saknade}}
+{{#beskrivning}}- Beskrivning: {{beskrivning}}
+{{/beskrivning}}{{#enhet}}- Enhet: {{enhet}}
+{{/enhet}}- Saknade värden: {{saknade}}
 - Unika värden: {{unika}}{{#ar_unik}} (unik nyckel){{/ar_unik}}
 - Intervall: {{minsta}} – {{storsta}}
 {{#medel}}- Medel: {{medel}}

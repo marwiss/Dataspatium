@@ -27,7 +27,7 @@ och efter.
 | Grupp | Åtgärd | Vad den gör |
 |---|---|---|
 | Kolumner | Byt namn på kolumn | Nytt kolumnnamn; etiketten följer med om den var lika med namnet |
-| | Sätt etikett | Visningsnamn för tabellrubriker och diagram |
+| | Etikett, beskrivning och enhet | Etiketten är visningsnamnet i tabellrubriker och diagram; beskrivning och enhet visas i inspektören och kodboken, följer med i SQLite-filen och når R som attributen `description` och `unit` |
 | | Ta bort kolumner | Tar bort valda kolumner |
 | | Ändra kolumnordning | Flytta kolumner upp och ned |
 | | Ändra typ | Text till heltal, decimaltal, datum, datum och tid eller ja/nej. Decimaltecken och datumformat kan anges; värden som inte går att tolka blir tomma och antalet rapporteras |

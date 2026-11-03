@@ -11,7 +11,7 @@
   D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes'], (base, dialogs, recipes) => {
     const { h, t, i18n, replace } = base;
     const QUICK = [
-      { op: 'rename_column', icon: 'pencil' }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
+      { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
       { op: 'clusters', icon: 'layers', textOnly: true }, { op: 'replace_value', icon: 'pencil' }, { op: 'fill_missing', icon: 'rows-3' }, { op: 'pseudonymize', icon: 'key-round' }, { op: 'split_column', icon: 'columns-3', textOnly: true }, { op: 'drop_columns', icon: 'trash-2' },
     ];
@@ -160,6 +160,8 @@
           const kv = /** @type {any} */ (h('dm-kv'));
           kv.items = [
             { label: t('common.type'), value: t('type.' + s.column.type) },
+            column.description ? { label: t('column.description'), value: column.description } : null,
+            column.unit ? { label: t('column.unit'), value: column.unit } : null,
             { label: t('table.stats.count'), value: i18n.formatNumber(s.total) },
             { label: t('table.stats.nulls'), value: i18n.formatNumber(s.nulls) },
             { label: t('table.stats.distinct'), value: i18n.formatNumber(s.distinct) },
@@ -179,6 +181,7 @@
 
       function presetFor(opId, column) {
         if (['trim', 'replace_text', 'change_case', 'fix_encoding', 'drop_columns'].includes(opId)) return { columns: [column.name] };
+        if (opId === 'set_label') return { column: column.name, label: column.label || column.name, description: column.description || '', unit: column.unit || '' };
         return { column: column.name };
       }
 

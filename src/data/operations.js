@@ -57,10 +57,20 @@
 
     define({
       id: 'set_label', group: 'column',
-      params: [{ name: 'column', type: 'column', required: true }, { name: 'label', type: 'text' }],
-      async apply(ctx, p) { const col = ctx.column(p.column); if (col) { col.label = p.label || p.column; ctx.columnsChanged = true; } return {}; },
+      // Label for headings and charts; description and unit for the codebook, the inspector and R (as attributes).
+      params: [{ name: 'column', type: 'column', required: true }, { name: 'label', type: 'text' }, { name: 'description', type: 'text' }, { name: 'unit', type: 'text' }],
+      async apply(ctx, p) {
+        const col = ctx.column(p.column);
+        if (col) {
+          col.label = p.label || p.column;
+          if (p.description !== undefined) col.description = String(p.description || '').trim() || null;
+          if (p.unit !== undefined) col.unit = String(p.unit || '').trim() || null;
+          ctx.columnsChanged = true;
+        }
+        return {};
+      },
       toSQL: () => [],
-      toR: (p) => `attr(df$${p.column}, "label") <- ${rstr(p.label || '')}`,
+      toR: (p) => [`attr(df$${p.column}, "label") <- ${rstr(p.label || '')}`].concat(p.description ? [`attr(df$${p.column}, "description") <- ${rstr(p.description)}`] : [], p.unit ? [`attr(df$${p.column}, "unit") <- ${rstr(p.unit)}`] : []).join('\n'),
     });
 
     define({

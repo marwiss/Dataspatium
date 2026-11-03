@@ -74,7 +74,7 @@
       return {
         datamangd: meta.name, beskrivning: meta.description || '',
         antal_rader: fmt(data.total), antal_rader_visade: fmt(data.rows.length), antal_kolumner: String(columns.length),
-        kolumner: columns.map((c) => ({ namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name })),
+        kolumner: columns.map((c) => ({ namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '' })),
         rader, forsta: rader[0] || {}, summor: stats.summor, medel: stats.medel, minsta: stats.minsta, storsta: stats.storsta,
         grupp: options.group ? String(options.group.value) : '', gruppkolumn: options.group ? options.group.column : '',
         datum: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`, tid: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
@@ -89,7 +89,7 @@
       const prof = await profileMod.profile(datasetId);
       ctx.dubbletter = fmt(prof.duplicates);
       ctx.kolumner = prof.columns.map((c) => ({
-        namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, saknade: fmt(c.nulls), unika: fmt(c.distinct), minsta: fmt(c.min), storsta: fmt(c.max),
+        namn: c.name, typ: t('type.' + c.type), etikett: c.label || c.name, beskrivning: c.description || '', enhet: c.unit || '', saknade: fmt(c.nulls), unika: fmt(c.distinct), minsta: fmt(c.min), storsta: fmt(c.max),
         medel: c.mean === null || c.mean === undefined ? '' : fmt(Math.round(c.mean * 100) / 100), ar_unik: !!c.unique,
         anmarkningar: c.warnings.map((w) => t('profile.warn.' + w.kind, { n: fmt(w.count) })).join('; '),
       }));
@@ -98,8 +98,8 @@
 
     async function resolveTable(spec, ctx) {
       if (spec.kalla === 'kolumner') {
-        const cols = ['namn', 'typ', 'etikett'];
-        return { caption: spec.rubrik, columns: cols, rows: ctx.kolumner.map((k) => cols.map((c) => k[c] || '')), numeric: [false, false, false] };
+        const cols = ['namn', 'typ', 'etikett', 'beskrivning', 'enhet'];
+        return { caption: spec.rubrik, columns: cols, rows: ctx.kolumner.map((k) => cols.map((c) => k[c] || '')), numeric: cols.map(() => false) };
       }
       const columns = ctx._columns;
       const wanted = spec.kolumner.length ? spec.kolumner.filter((n) => columns.some((c) => c.name === n)) : columns.map((c) => c.name);
