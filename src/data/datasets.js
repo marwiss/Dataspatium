@@ -47,6 +47,18 @@
      * @param {{name: string, columns: Array<{name: string, type: string, label?: string, sourceName?: string}>, rows: any[][], source?: any, importOptions?: any, description?: string}} input
      */
     async function create(input) {
+      const handle = await createEmpty(input);
+      await appendImportRows(handle, input.rows);
+      return finishImport(handle);
+    }
+
+    /**
+     * Create the tables of a new dataset without rows, for chunked imports: follow with appendImportRows()
+     * per chunk and finishImport() (or abortImport() on failure). The dataset is not listed, saved
+     * or announced until finishImport().
+     * @param {{name: string, columns: Array<{name: string, type: string, label?: string, sourceName?: string}>, source?: any, importOptions?: any, description?: string}} input
+     */
+    async function createEmpty(input) {
       const id = newId();
       const engine = await newEngine();
       const names = types.cleanColumnNames(input.columns.map((c) => c.name));
@@ -56,20 +68,43 @@
       await engine.run('create table _meta (key text primary key, value text)');
       await engine.run('create table _log (ts text, action text, details text)');
       await engine.insertRows('_columns', ['position', 'name', 'type', 'label', 'format', 'source_name'], columns.map((c) => [c.position, c.name, c.type, c.label, c.format, c.sourceName]));
-      await engine.insertRows('data', columns.map((c) => c.name), input.rows);
       const now = new Date().toISOString();
       const meta = {
         id, name: input.name || 'Namnlös datamängd', description: input.description || '', createdAt: now, updatedAt: now,
-        rowCount: input.rows.length, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
+        rowCount: 0, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
       };
       await engine.insertRows('_meta', ['key', 'value'], metaToRows(meta));
-      await engine.insertRows('_log', ['ts', 'action', 'details'], [[now, 'import', JSON.stringify({ source: meta.source, rows: meta.rowCount, columns: columns.map((c) => ({ name: c.name, type: c.type })) })]]);
-      const handle = { engine, meta, columns };
+      const handle = { engine, meta, columns, importing: true };
       openHandles.set(id, handle);
+      return handle;
+    }
+
+    /** Insert a chunk of rows (arrays in column order) into a dataset being imported (see createEmpty). */
+    async function appendImportRows(handle, rows) {
+      if (!rows || !rows.length) return 0;
+      await handle.engine.insertRows('data', handle.columns.map((c) => c.name), rows);
+      return rows.length;
+    }
+
+    /** Complete a chunked import: counts, log, first save and the 'created' event. */
+    async function finishImport(handle, extra = {}) {
+      delete handle.importing;
+      await refreshCounts(handle);
+      if (extra.importOptions) {
+        handle.meta.importOptions = extra.importOptions;
+        await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['importOptions', JSON.stringify(extra.importOptions)]);
+      }
+      await appendLog(handle, 'import', Object.assign({ source: handle.meta.source, rows: handle.meta.rowCount, columns: handle.columns.map((c) => ({ name: c.name, type: c.type })) }, extra.streamed ? { streamed: true } : {}));
       await persist(handle);
       notify('created', handle.meta);
       sync.broadcast('datasets', 'created', { id: handle.meta.id, name: handle.meta.name });
       return handle.meta;
+    }
+
+    /** Abandon a chunked import after an error or cancellation: nothing was saved. */
+    function abortImport(handle) {
+      try { handle.engine.terminate(); } catch (_err) { /* ignore */ }
+      openHandles.delete(handle.meta.id);
     }
 
     async function persist(handle) {
@@ -443,6 +478,7 @@
     return {
       create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
+      createEmpty, appendImportRows, finishImport, abortImport,
       updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing,
     };
   });

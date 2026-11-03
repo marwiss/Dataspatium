@@ -62,7 +62,9 @@ Filen lagras i IndexedDB i bitar om 8 MB (`src/platform/storage/idb-store.js`), 
 filter), statistik, logg, spara, byt namn, ta bort, exportera bytes, importera bytes, versioner
 (ögonblicksbilder som egna blobbar i IndexedDB) och `createFromQuery` för härledda datamängder. Arbetsytan kan
 säkerhetskopieras som ZIP och, i Chromium, speglas till en portabel mapp (`src/data/workspace.js`): `collect`
-samlar manifest, datamängder, diagram och mallar som sökväg-till-bytes, `backup` zippar dem, `saveToFolder`
+samlar manifest, datamängder, diagram och mallar som sökväg-till-bytes, `backup` zippar dem (och noterar tiden i
+inställningen `backup.lastAt`; `backupStatus`/`isBackupDue` avgör mot `backup.remindDays`, standard 30, om skalet
+ska påminna vid start), `saveToFolder`
 skriver ändrade datamängder och rensar borttagna, `loadFromFolder` läser in det som saknas och `setAutoSave`
 prenumererar på datamängdshändelser med fördröjd sparning. Mappåtkomsten (File System Access: välja mapp, minnas
 handtaget i IndexedDB, fråga om lov igen efter omstart, läsa, skriva, lista, ta bort) ligger i
@@ -97,7 +99,11 @@ Bearbetning bygger på fyra moduler:
 Varje importformat är en adapter i `src/io/importers/` med `detect(file)`, `preview(file, options)` och
 `parse(file, options)`; `src/io/import.js` väljer adapter (Excel, JSON, XML, SQLite, R-format, annars CSV), rensar
 kolumnnamn, härleder typer ur förhandsgranskningen (deklarerade typer från ett SQLite-schema vinner) och skapar
-datamängden. Två adaptrar avviker: SQLite-filer som är Dataspatium-datamängder återställs via
+datamängden. Avgränsade textfiler på 64 MB eller mer (eller `options.stream`) går i stället genom `runStream`:
+`csv.parseStream` låter PapaParse läsa filen bit för bit (1 MB i taget, FileReader med den upptäckta
+teckenkodningen, paus/återupptagning som mottryck), varje omgång typas med `materialize` och skrivs med
+`datasets.appendImportRows` till en datamängd som `datasets.createEmpty` skapat utan rader; `finishImport`
+räknar rader, loggar, sparar och sänder `created` (`abortImport` kastar allt vid fel). Två adaptrar avviker: SQLite-filer som är Dataspatium-datamängder återställs via
 `datasets.importBytes` med metadata och historik, och R-formaten (`r-formats.js`, `viaR: true`) saknar `parse`:
 `importViaR` skriver filen till R:s filsystem, kör rätt läsfunktion (haven, pxR, nanoparquet, base R), gör
 etikettkolumner till text och lämnar över med `dm_write()`, som bevarar variabeletiketter som kolumnetiketter.

@@ -83,6 +83,27 @@
           const landing = this.store.get().datasets.length ? 'hantera' : 'inhamta';
           this.activate(MODES.includes(fromHash) ? fromHash : landing);
           window.addEventListener('hashchange', () => { const id = (location.hash || '').replace(/^#\/?/, ''); if (MODES.includes(id) && id !== this.store.get().mode) this.activate(id); });
+          this.remindBackup();
+        }
+
+        /** Once per start: a warning when the workspace has not been backed up within the interval set under Hantera. */
+        async remindBackup() {
+          try {
+            const st = await workspace.backupStatus();
+            if (!st.due) return;
+            const message = st.lastAt ? t('backup.due', { days: st.daysSince }) : t('backup.due.never');
+            this.log(message, 'warn');
+            this.toast(message, {
+              kind: 'warn', timeout: 15000,
+              action: { label: t('backup.now'), onClick: async () => {
+                try {
+                  const { blob } = await workspace.backup();
+                  files.download(blob, `dataspatium-arbetsyta-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.zip`);
+                  this.log(t('datasets.backup.done'), 'ok');
+                } catch (err) { this.log(String((err && err.message) || err), 'error'); }
+              } },
+            });
+          } catch (_err) { /* reminders are best effort */ }
         }
 
         /** Switch mode. */

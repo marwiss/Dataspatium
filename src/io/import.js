@@ -39,6 +39,9 @@
      * @param {Array<{name: string, type: string, include?: boolean, decimal?: string, label?: string}>} specs one per source column
      * @param {{decimal?: string}} [options]
      */
+    /** Delimited files at least this large are streamed in chunks instead of being read as one string. */
+    const STREAM_BYTES = 64 * 1024 * 1024;
+
     function materialize(table, specs, options = {}) {
       const included = specs.map((s, i) => Object.assign({ index: i }, s)).filter((s) => s.include !== false);
       const rows = new Array(table.rows.length);
@@ -61,7 +64,7 @@
      * @param {Array<any>|null} specs column specs from the wizard, or null to use inferred types
      * @param {string} [name]
      */
-    async function run(file, options, specs, name) {
+    async function run(file, options, specs, name, progress) {
       const importer = importerFor(file, options.format);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
@@ -69,6 +72,7 @@
         const info = await sqliteImp.preview(file, Object.assign({}, options, { previewRows: 1 }));
         if (info.dataspatium) return datasets.importBytes(await file.arrayBuffer(), name ? { name } : {});
       }
+      if (importer.id === 'csv' && (options.stream || file.size >= STREAM_BYTES)) return runStream(file, options, specs, name, progress);
       const table = await importer.parse(file, options);
       table.columns = types.cleanColumnNames(table.columns);
       const columnSpecs = specs || types.inferColumns(table.columns, table.rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
@@ -79,6 +83,46 @@
         source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: table.meta.format },
         importOptions: Object.assign({}, options, table.meta),
       });
+    }
+
+    /**
+     * Chunked import of a large delimited file: PapaParse streams the File, each chunk is typed and
+     * inserted into the new dataset's engine, and the text never sits in memory as a whole. Column types
+     * come from the wizard (specs) or are inferred from the first chunk. `progress({rows})` after each chunk.
+     */
+    async function runStream(file, options, specs, name, progress) {
+      let handle = null; let names = null; let columnSpecs = specs;
+      try {
+        const result = await csv.parseStream(file, options, async (rows, info) => {
+          if (!handle) {
+            names = types.cleanColumnNames(info.columns);
+            // Without specs from the wizard the types are inferred from the first chunk that has rows.
+            if (!columnSpecs && !rows.length) return;
+            if (!columnSpecs) columnSpecs = types.inferColumns(names, rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
+            const first = materialize({ columns: names, rows }, columnSpecs, options);
+            handle = await datasets.createEmpty({
+              name: name || baseName(file.name), columns: first.columns,
+              source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'csv' },
+              importOptions: Object.assign({}, options),
+            });
+            await datasets.appendImportRows(handle, first.rows);
+          } else {
+            await datasets.appendImportRows(handle, materialize({ columns: names, rows }, columnSpecs, options).rows);
+          }
+          if (progress) progress({ rows: info.total, bytes: file.size });
+        });
+        if (!handle) {
+          // An empty file: create the dataset from the header alone.
+          if (!result.columns.length) throw new Error('Filen innehåller inga kolumner. Kontrollera avgränsare och teckenkodning i förhandsgranskningen.');
+          names = types.cleanColumnNames(result.columns);
+          columnSpecs = columnSpecs || names.map((n) => ({ name: n, type: 'text', include: true }));
+          handle = await datasets.createEmpty({ name: name || baseName(file.name), columns: materialize({ columns: names, rows: [] }, columnSpecs, options).columns, source: { kind: 'file', fileName: file.name, size: file.size, format: 'csv' }, importOptions: Object.assign({}, options) });
+        }
+        return await datasets.finishImport(handle, { importOptions: Object.assign({}, options, result.meta), streamed: true });
+      } catch (err) {
+        if (handle) datasets.abortImport(handle);
+        throw err;
+      }
     }
 
     /** Import pasted text as a dataset. */

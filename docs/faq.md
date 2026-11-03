@@ -38,7 +38,8 @@ aldrig med när du delar en konfiguration.
 ## Hur stora datamängder klarar appen?
 
 Ett par miljoner rader i Edge och Chrome, något mindre i Firefox; minnet i webbläsaren sätter gränsen. Uppmätta
-tider för en miljon rader finns i [utveckling.md](utveckling.md).
+tider för en miljon rader finns i [utveckling.md](utveckling.md). Textfiler på 64 MB eller mer läses in i
+omgångar, så att själva inläsningen inte kräver att hela filen ryms i minnet som text.
 
 ## Vad skiljer Firefox från Edge och Chrome?
 

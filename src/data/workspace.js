@@ -79,8 +79,33 @@
     async function backup() {
       const { files, counts } = await collect();
       const blob = await zip.createZip(files, { level: 6 });
+      await markBackedUp();
       return { blob, count: counts.datasets, charts: counts.charts, documents: counts.documents };
     }
+
+    // ---- backup reminder: a setting for the interval and the time of the last backup ----
+    const BACKUP_LAST = 'backup.lastAt';
+    const BACKUP_REMIND = 'backup.remindDays';
+    const DEFAULT_REMIND_DAYS = 30;
+    async function markBackedUp(when = new Date()) { try { await idb.setSetting(BACKUP_LAST, when.toISOString()); } catch (_err) { /* best effort */ } }
+    /** The reminder rule: due when reminders are on, the workspace has datasets and the last backup is older than the interval. */
+    function isBackupDue({ lastAt, remindDays, datasetCount, now = Date.now() }) {
+      const days = Number(remindDays);
+      if (!days || days <= 0 || !datasetCount) return false;
+      if (!lastAt) return true;
+      const t = Date.parse(lastAt);
+      return !Number.isFinite(t) || now - t > days * 86400000;
+    }
+    /** @returns {Promise<{lastAt: string|null, remindDays: number, daysSince: number|null, due: boolean}>} */
+    async function backupStatus() {
+      const lastAt = await idb.getSetting(BACKUP_LAST, null);
+      const stored = await idb.getSetting(BACKUP_REMIND, null);
+      const remindDays = stored === null || stored === undefined ? DEFAULT_REMIND_DAYS : Number(stored) || 0;
+      const datasetCount = (await datasets.list()).length;
+      const daysSince = lastAt && Number.isFinite(Date.parse(lastAt)) ? Math.floor((Date.now() - Date.parse(lastAt)) / 86400000) : null;
+      return { lastAt, remindDays, daysSince, due: isBackupDue({ lastAt, remindDays, datasetCount }) };
+    }
+    async function setRemindDays(days) { await idb.setSetting(BACKUP_REMIND, Math.max(0, Number(days) || 0)); }
 
     /**
      * A shareable package: the chosen datasets plus, optionally, every chart, dashboard, template and notebook.
@@ -236,6 +261,6 @@
     async function setAutoSaveSetting(enabled) { await idb.setSetting(AUTOSAVE_SETTING, !!enabled); setAutoSave(enabled); }
     async function autoSaveSetting() { return !!(await idb.getSetting(AUTOSAVE_SETTING, false)); }
 
-    return { backup, bundle, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, MANIFEST, AUTOSAVE_SETTING };
+    return { backup, bundle, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, MANIFEST, AUTOSAVE_SETTING };
   });
 })();

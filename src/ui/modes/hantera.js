@@ -169,7 +169,8 @@
               apiDatasets().length ? ui.button({ label: t('api.refresh.all', { n: apiDatasets().length }), icon: 'refresh-cw', onClick: refreshAllApi }) : null)),
           h('div', { class: 'dm-form-grid' },
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.backup') }), h('p', { class: 'dm-help', text: t('datasets.backup.hint') }),
-              h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: backup }))),
+              h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: backup })),
+              backupInfo()),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('bundle.title') }), h('p', { class: 'dm-help', text: t('bundle.card.hint') }),
               h('div', null, ui.button({ label: t('bundle.create'), icon: 'package', onClick: shareBundle })))),
@@ -280,6 +281,21 @@
           shell.log(t('datasets.backup.done') + ` (${count} datamängder, ${i18n.formatBytes(blob.size)})`, 'ok');
         } catch (err) { shell.log(String((err && err.message) || err), 'error'); }
         shell.setStatus('saved');
+        render();
+      }
+
+      /** Last backup time and the reminder interval (filled in asynchronously). */
+      function backupInfo() {
+        const el = h('div', { class: 'dm-stack-sm' });
+        services.workspace.backupStatus().then((st) => {
+          const sel = /** @type {any} */ (h('dm-select', { label: t('backup.remind') }));
+          sel.options = [{ value: '0', label: t('backup.remind.off') }].concat([7, 14, 30, 90].map((n) => ({ value: String(n), label: t('backup.remind.days', { n }) })));
+          sel.value = String(st.remindDays);
+          sel.addEventListener('change', () => { services.workspace.setRemindDays(Number(sel.value)); });
+          const when = st.lastAt ? new Date(st.lastAt).toLocaleString('sv-SE', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+          replace(el, h('p', { class: st.due ? 'dm-warn dm-small' : 'dm-help', text: st.lastAt ? t('backup.last', { when }) : t('backup.last.never') }), sel);
+        }).catch(() => {});
+        return el;
       }
 
       function renderWorkspaceInspector() {

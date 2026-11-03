@@ -315,19 +315,21 @@
           h('div', { class: 'dm-form-grid' }, name),
           h('p', { class: 'dm-help', text: t('import.columns.help') }),
           h('table', { class: 'dm-columns-table' }, h('thead', null, h('tr', null, h('th', { text: t('import.column.include') }), h('th', { text: t('common.name') }), h('th', { text: t('common.type') }), h('th', { text: 'Exempel' }), h('th'))), h('tbody', null, rows)),
-          wiz.busy ? h('dm-progress', { indeterminate: true, label: t('import.running') }) : null,
+          wiz.busy ? h('dm-progress', { indeterminate: true, label: wiz.progress ? t('import.progress', { rows: i18n.formatNumber(wiz.progress.rows) }) : t('import.running') }) : null,
           wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
           h('div', { class: 'dm-row' }, ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: () => { wiz.step = 'options'; render(); } }), importBtn));
       }
 
       async function runImport() {
         if (wiz.busy) return;
-        wiz.busy = true; wiz.error = ''; render();
+        wiz.busy = true; wiz.error = ''; wiz.progress = null; render();
         const t0 = performance.now();
         try {
           const opts = cleanOptions();
           const specs = wiz.specs.map((s) => ({ name: s.name, type: s.type, include: s.include !== false, decimal: s.decimal, label: s.label || s.name }));
-          const meta = wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
+          // Large delimited files are streamed; the progress callback shows the rows read so far.
+          const onProgress = (p) => { wiz.progress = p; render(); };
+          const meta = wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
           wiz.result = meta; wiz.step = 'done';
           shell.log(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
           ui.toast.show(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }), { kind: 'ok' });
