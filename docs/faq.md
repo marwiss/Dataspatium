@@ -82,8 +82,10 @@ datamängden innan du delar den. Se [bearbeta.md](bearbeta.md).
 
 ## Hur delar jag data med en kollega?
 
-Exportera datamängden som SQLite (behåller typer, etiketter och historik) eller ta en säkerhetskopia av hela
-arbetsytan som kollegan återställer under *Hantera → Arbetsyta*. Diagram och dokumentmallar kan exporteras som
+Enklast med *Dela paket* under *Hantera → Arbetsyta*: välj datamängder och om diagram, dashboards, mallar och
+anteckningsböcker ska följa med, och skicka ZIP-filen. Kollegan släpper den på *Återställ från ZIP*. Du kan också
+exportera en enskild datamängd som SQLite (behåller typer, etiketter och historik) eller ta en säkerhetskopia av
+hela arbetsytan. Diagram och dokumentmallar kan exporteras som
 JSON-filer, API-konfigurationer som `.api.json`, och recept som JSON, R eller SQL.
 
 ## Hittar jag inte svaret här?

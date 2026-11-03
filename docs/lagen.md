@@ -28,7 +28,8 @@ Datamängdernas hem. Översikt med metadata, kolumnlista, historik över det som
 byt namn, ta bort. Här finns också arbetsytan: hur mycket lagring som används, beständig lagring,
 säkerhetskopiering till ZIP och återställning samt, i Edge och Chrome, en portabel mapp: arbetsytan sparas som
 vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill, och kan läsas in på en annan dator.
-Senare: delning av paket.
+*Dela paket* skapar en ZIP med valda datamängder, diagram, dashboards, mallar och anteckningsböcker för en
+kollega, som läser in den under *Återställ från ZIP*.
 
 ## Bearbeta
 
@@ -45,8 +46,9 @@ kan ångras, spelas upp på en annan datamängd och exporteras som R- eller SQL-
 Kod och statistik. R-konsol med ggplot2, dplyr, tidyr och andra paket, sparade skript, diagram med export till
 SVG, PNG och PDF, och `dm_read()`/`dm_write()` för att flytta data mellan appen och R (se
 [r-guide.md](r-guide.md)). SQL-konsol mot den valda datamängden: frågor visar resultat som kan sparas som ny
-datamängd, ändrande satser loggas som receptsteg (se [bearbeta.md](bearbeta.md)). Senare: statistiska modeller
-och eventuellt Python.
+datamängd, ändrande satser loggas som receptsteg (se [bearbeta.md](bearbeta.md)). Anteckningsboken blandar
+text (Markdown), R och SQL i celler som körs i ordning och blir en rapport i HTML, Word, PDF, Markdown eller
+LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senare: statistiska modeller och eventuellt Python.
 
 ## Visualisera
 

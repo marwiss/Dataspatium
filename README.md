@@ -43,15 +43,17 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
   koppla data, pseudonymisera personnummer inför delning, med ångra, versioner och recept som kan exporteras som
   R eller SQL (se [docs/bearbeta.md](docs/bearbeta.md)).
-- **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)) och en
-  SQL-konsol, helt i webbläsaren.
+- **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
+  SQL-konsol och anteckningsböcker med text-, R- och SQL-celler som blir rapporter i HTML, Word, PDF, Markdown
+  eller LaTeX (se [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.
 - **Visualisera**: diagram med Vega-Lite, D3-mallar eller R, exporterade som SVG, PNG, PDF och PowerPoint, även i
   batch per grupp, och dashboards med gemensamma filter som blir HTML eller PowerPoint (se
   [docs/visualisera.md](docs/visualisera.md)).
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument
   per kommun eller år (se [docs/dokumentmallar.md](docs/dokumentmallar.md)).
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
-  säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome, en portabel mapp med vanliga filer.
+  delningspaket med valda datamängder och objekt, säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome,
+  en portabel mapp med vanliga filer.
 - **Hitta snabbt**: kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder, diagram och dashboards och kör
   åtgärder från ett enda sökfält.
 
@@ -61,6 +63,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - [Användarguide](docs/anvandarguide.md): hela arbetsflödet från fil till rapport.
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
 - [De sex lägena](docs/lagen.md): vad som finns var och varför.
+- [Anteckningsbok](docs/anteckningsbok.md): text, R och SQL i celler som blir en rapport.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
 - [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
 - [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för

@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets'], (base, rb, recipes, presets) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel'], (base, rb, recipes, presets, notebooks, notebookPanel) => {
     const { h, t, i18n, replace } = base;
     const bridge = rb.bridge;
     const SQL_LIMIT = 5000;
@@ -28,6 +28,7 @@
       };
       let outputEl = null; let statusEl = null; let runBtn = null;
       let sqlOut = null; let sqlSaveBtn = null; let sqlResult = null; let sqlRunBtn = null; let sqlBadge = null;
+      let nbList = []; let nbView = null; let notebook = null; let unsubNb = null;
 
       function activate(s) {
         slots = s;
@@ -35,17 +36,57 @@
           if (!changed.includes('datasets') && !changed.includes('selectedId')) return;
           renderLeft();
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
+          if (tab === 'notebook' && changed.includes('datasets')) renderRight();
         });
         unsubBridge = bridge.on(onBridgeEvent);
+        unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
         render();
         for (const lang of ['r', 'sql']) services.idb.listScripts(lang).then((list) => { st[lang].scripts = list; renderLeft(); });
+        notebooks.list().then((list) => { nbList = list; renderLeft(); });
         if (tab === 'r') startR();
       }
       function deactivate() {
         for (const lang of ['r', 'sql']) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
+        if (nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
         slots = null; outputEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
         if (unsubBridge) unsubBridge();
+        if (unsubNb) unsubNb();
+      }
+
+      // ---- notebooks ----
+      async function newNotebook() {
+        const name = await ui.dialog.prompt(t('nb.new.prompt'), { title: t('nb.new'), value: '' });
+        if (!name || !name.trim()) return;
+        const saved = await notebooks.save(notebooks.create(name.trim(), selectedDataset()));
+        shell.log(t('nb.saved', { name: saved.name }), 'ok');
+        openNotebook(saved);
+      }
+      function openNotebook(record) {
+        notebook = record; tab = 'notebook';
+        renderCenter(); renderLeft(); renderRight();
+      }
+      async function importNotebook() {
+        const [file] = await services.files.pick({ accept: '.json' });
+        if (!file) return;
+        try { const nb = await notebooks.importJson(await file.text()); shell.log(t('nb.imported', { name: nb.name }), 'ok'); openNotebook(nb); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+      }
+      function renderNotebookLeft() {
+        slots.left.appendChild(h('hr'));
+        slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('nb.title') }), ui.button({ label: t('nb.new'), icon: 'plus', size: 'sm', 'icon-only': true, variant: 'ghost', onClick: newNotebook })));
+        slots.left.appendChild(h('div', { class: 'dm-list' }, nbList.map((n) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': notebook && notebook.id === n.id ? 'true' : null, onclick: () => openNotebook(n) },
+          ui.icon('file-text', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: n.name }), h('span', { class: 'dm-list-sub dm-truncate', text: [t('nb.cells', { n: (n.cells || []).length }), n.datasetName].filter(Boolean).join(' · ') }))))));
+        slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('nb.import'), icon: 'upload', size: 'sm', onClick: importNotebook })));
+      }
+      function renderNotebook() {
+        if (nbView) { nbView.destroy(); nbView = null; }
+        if (!notebook) {
+          const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('file-text', 20), t('nb.title')));
+          return { head, body: h('dm-empty-state', { icon: 'file-text', heading: t('nb.title'), text: t('nb.empty') }, ui.button({ label: t('nb.new'), icon: 'plus', variant: 'primary', onClick: newNotebook })) };
+        }
+        nbView = notebookPanel.create(ctx, { notebook, onDeleted: () => { notebook = null; renderCenter(); renderLeft(); renderRight(); }, onSaved: (saved) => { notebook = saved; }, log: (m, k) => shell.log(m, k) });
+        nbView.start();
+        return { head: nbView.headEl, body: nbView.bodyEl };
       }
       function startR() { bridge.start().catch((err) => shell.log('R: ' + ((err && err.message) || err), 'error')); }
       function selectedDataset() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
@@ -64,6 +105,7 @@
         const state = store.get();
         const v = st[tab];
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
+        if (tab === 'notebook') { renderNotebookLeft(); return; }
         const selected = selectedDataset();
         if (tab === 'r') slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode('r', `df <- dm_read(${JSON.stringify(selected.name)})\n`) })));
         slots.left.appendChild(h('hr'));
@@ -119,15 +161,17 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }];
+        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => {
-          const v = st[tab]; if (v.editor) v.draft = v.editor.value;
+          const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
+          if (nbView) { notebook = nbView.notebook; }
           tab = /** @type {any} */ (e).detail.id;
           renderCenter(); renderLeft(); renderRight();
           if (tab === 'r') startR();
         });
-        const view = tab === 'r' ? renderR() : renderSql();
+        if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
+        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
@@ -348,6 +392,7 @@
       // ---- right: session info and snippets (R) or schema and functions (SQL) ----
       async function renderRight() {
         if (!slots) return;
+        if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
         if (tab === 'sql') {
           const ds = selectedDataset();
           let cols = [];
@@ -379,6 +424,19 @@
           h('p', { class: 'dm-help', text: t('analysera.no.sab') }),
           h('h4', { text: t('analysera.functions') }), h('ul', { class: 'dm-stack-sm' }, fns),
           h('h4', { text: t('analysera.snippets') }), snippets);
+      }
+
+      // Command palette: the consoles and every notebook.
+      if (ctx.palette) {
+        ctx.palette.register(async () => {
+          const cmds = [
+            { id: 'analysera:r', label: t('palette.analyze.r'), group: t('palette.group.modes'), icon: 'terminal', run: () => { tab = 'r'; shell.activate('analysera'); } },
+            { id: 'analysera:sql', label: t('palette.analyze.sql'), group: t('palette.group.modes'), icon: 'database', run: () => { tab = 'sql'; shell.activate('analysera'); } },
+            { id: 'nb:new', label: t('nb.new'), group: t('palette.group.notebooks'), icon: 'plus', run: async () => { shell.activate('analysera'); await newNotebook(); } },
+          ];
+          for (const n of await notebooks.list()) cmds.push({ id: 'nb:' + n.id, label: t('palette.nb.open', { name: n.name }), hint: n.datasetName || '', group: t('palette.group.notebooks'), icon: 'file-text', run: () => { notebook = n; tab = 'notebook'; shell.activate('analysera'); } });
+          return cmds;
+        });
       }
 
       return { id: 'analysera', activate, deactivate };

@@ -84,6 +84,7 @@
     'src/docgen/builders-office.js',
     'src/docgen/documents.js',
     'src/docgen/generate.js',
+    'src/analysis/notebooks.js',
     // UI: language, design, components
     'src/ui/i18n/sv.js',
     'src/ui/i18n/i18n.js',
@@ -119,6 +120,7 @@
     'src/ui/viz/gallery.js',
     'src/ui/viz/dashboard-view.js',
     'src/ui/docs/document-panel.js',
+    'src/ui/analysis/notebook-panel.js',
     'src/ui/modes/inhamta.js',
     'src/ui/modes/hantera.js',
     'src/ui/modes/bearbeta.js',

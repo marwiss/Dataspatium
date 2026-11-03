@@ -1,10 +1,11 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Workspace backup and restore as a ZIP file (manifest.json, one SQLite file per dataset, saved charts and
- * the user's document templates), and the same layout written to a portable folder on disk through the
- * File System Access API (Chromium, see platform/storage/folder-store.js). With auto-save on, the folder
- * is brought up to date shortly after each change.
+ * Workspace files: backup and restore as a ZIP (manifest.json, one SQLite file per dataset, saved charts,
+ * dashboards, the user's document templates and notebooks), selective sharing bundles with the same
+ * layout, and the same layout written to a portable folder on disk through the File System Access API
+ * (Chromium, see platform/storage/folder-store.js). With auto-save on, the folder is brought up to date
+ * shortly after each change.
  */
 (function () {
   'use strict';
@@ -13,50 +14,65 @@
     const MANIFEST = 'manifest.json';
     const AUTOSAVE_SETTING = 'folder:autosave';
     const AUTOSAVE_DELAY = 1500;
+    const PREFIXES = ['charts/', 'documents/', 'dashboards/', 'notebooks/'];
+    const optional = (name) => (D.has(name) ? D.require(name) : null);
 
     /**
-     * Everything that makes up the workspace as path -> bytes|string. Dataset bytes are included only for
-     * `datasetIds` (default: all); the manifest always lists every dataset.
-     * @param {{datasetIds?: string[]}} [options]
+     * Everything that makes up the workspace as path -> bytes|string.
+     * @param {{datasetIds?: string[], listAll?: boolean, include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean}, kind?: string, name?: string}} [options]
+     *   datasetIds: datasets whose bytes are included (default all); listAll=false also limits the manifest to them
      */
     async function collect(options = {}) {
       const list = await datasets.list();
-      const include = options.datasetIds ? new Set(options.datasetIds) : null;
+      const only = options.datasetIds ? new Set(options.datasetIds) : null;
+      const listed = only && options.listAll === false ? list.filter((m) => only.has(m.id)) : list;
+      const inc = Object.assign({ charts: true, dashboards: true, documents: true, notebooks: true }, options.include || {});
       /** @type {Record<string, Uint8Array|string>} */
       const files = {};
       const entries = [];
-      for (const meta of list) {
+      for (const meta of listed) {
         const path = `datasets/${meta.id}.sqlite`;
-        if (!include || include.has(meta.id)) files[path] = new Uint8Array(await datasets.exportBytes(meta.id));
+        if (!only || only.has(meta.id)) files[path] = new Uint8Array(await datasets.exportBytes(meta.id));
         entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: meta.columnCount, updatedAt: meta.updatedAt, file: path });
       }
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
-      const charts = D.has('viz/charts') ? await D.require('viz/charts').list() : await idb.listCharts();
+      const vizCharts = optional('viz/charts');
+      const charts = inc.charts ? (vizCharts ? await vizCharts.list() : await idb.listCharts()) : [];
       const chartEntries = [];
       for (const chart of charts) {
         const path = `charts/${chart.id}.viz.json`;
-        files[path] = D.has('viz/charts') ? D.require('viz/charts').exportJson(chart) : JSON.stringify(chart);
+        files[path] = vizCharts ? vizCharts.exportJson(chart) : JSON.stringify(chart);
         chartEntries.push({ id: chart.id, name: chart.name, kind: chart.kind, datasetName: chart.datasetName, file: path });
       }
       // Document templates (the user's own, not the built-in ones) travel as doc files.
-      const docs = D.has('docgen/documents') ? (await D.require('docgen/documents').list()).filter((d) => !d.builtin) : [];
+      const docMod = optional('docgen/documents');
+      const docs = inc.documents && docMod ? (await docMod.list()).filter((d) => !d.builtin) : [];
       const docEntries = [];
       for (const doc of docs) {
         const path = `documents/${doc.id}.doc.json`;
-        files[path] = D.require('docgen/documents').exportJson(doc);
+        files[path] = docMod.exportJson(doc);
         docEntries.push({ id: doc.id, name: doc.name, file: path });
       }
       // Dashboards travel as self-contained dash files (chart definitions embedded).
-      const dashMod = D.has('viz/dashboards') ? D.require('viz/dashboards') : null;
-      const dashes = dashMod ? await dashMod.list() : [];
+      const dashMod = optional('viz/dashboards');
+      const dashes = inc.dashboards && dashMod ? await dashMod.list() : [];
       const dashEntries = [];
       for (const dash of dashes) {
         const path = `dashboards/${dash.id}.dash.json`;
         files[path] = await dashMod.exportJson(dash);
         dashEntries.push({ id: dash.id, name: dash.name, file: path });
       }
-      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: 'workspace-backup', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries }, null, 2);
-      return { files, counts: { datasets: list.length, charts: charts.length, documents: docs.length, dashboards: dashes.length } };
+      // Notebooks travel with their cells and saved outputs.
+      const nbMod = optional('analysis/notebooks');
+      const notebooks = inc.notebooks && nbMod ? await nbMod.list() : [];
+      const nbEntries = [];
+      for (const nb of notebooks) {
+        const path = `notebooks/${nb.id}.nb.json`;
+        files[path] = nbMod.exportJson(nb);
+        nbEntries.push({ id: nb.id, name: nb.name, file: path });
+      }
+      files[MANIFEST] = JSON.stringify({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries }, null, 2);
+      return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length } };
     }
 
     /** @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>} */
@@ -67,15 +83,26 @@
     }
 
     /**
+     * A shareable package: the chosen datasets plus, optionally, every chart, dashboard, template and notebook.
+     * Restoring a bundle skips datasets, charts, dashboards, templates and notebooks that already exist.
+     * @param {{name?: string, datasetIds: string[], include?: {charts?: boolean, dashboards?: boolean, documents?: boolean, notebooks?: boolean}}} options
+     */
+    async function bundle(options) {
+      const { files, counts } = await collect({ datasetIds: options.datasetIds || [], listAll: false, include: options.include, kind: 'bundle', name: options.name });
+      const blob = await zip.createZip(files, { level: 6 });
+      return { blob, counts };
+    }
+
+    /**
      * Restore from path -> bytes entries (the contents of a ZIP or of a folder).
      * @param {Record<string, Uint8Array>} entries
      * @param {{skipIds?: Set<string>, dedupe?: boolean}} [options] skipIds: dataset ids already in the
-     *   workspace; dedupe: skip charts and templates that already exist with the same name
-     * @returns {Promise<{manifest: any, imported: any[], skipped: string[], charts: any[], documents: any[], existing: number}>}
+     *   workspace; dedupe: skip charts, dashboards, templates and notebooks that already exist with the same name
+     * @returns {Promise<{manifest: any, imported: any[], skipped: string[], charts: any[], documents: any[], dashboards: any[], notebooks: any[], existing: number}>}
      */
     async function restoreEntries(entries, options = {}) {
       const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
-      const imported = []; const skipped = []; const charts = []; const documents = [];
+      const imported = []; const skipped = [];
       let existing = 0;
       for (const [path, bytes] of Object.entries(entries)) {
         if (!/\.sqlite$/i.test(path)) continue;
@@ -88,48 +115,40 @@
           skipped.push(path + ': ' + ((err && err.message) || err));
         }
       }
-      if (D.has('viz/charts')) {
-        const vizCharts = D.require('viz/charts');
-        const have = options.dedupe ? await vizCharts.list() : [];
+      /** Import every file matching `re` through a module, skipping existing items when deduplicating. */
+      async function importKind(re, moduleName, same) {
+        const mod = optional(moduleName);
+        const out = [];
+        if (!mod) return out;
+        const have = options.dedupe ? await mod.list() : [];
         for (const [path, bytes] of Object.entries(entries)) {
-          if (!/\.viz\.json$/i.test(path)) continue;
+          if (!re.test(path)) continue;
           try {
             const text = zip.text(bytes);
-            if (options.dedupe) { const obj = JSON.parse(text); if (have.some((c) => c.name === obj.name && c.kind === obj.kind && c.datasetName === obj.datasetName)) { existing++; continue; } }
-            charts.push(await vizCharts.importJson(text));
+            if (options.dedupe) { const obj = JSON.parse(text); if (have.some((item) => same(item, obj))) { existing++; continue; } }
+            out.push(await mod.importJson(text));
           } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
         }
+        return out;
       }
-      if (D.has('docgen/documents')) {
-        const docs = D.require('docgen/documents');
-        const have = options.dedupe ? await docs.list() : [];
-        for (const [path, bytes] of Object.entries(entries)) {
-          if (!/\.doc\.json$/i.test(path)) continue;
-          try {
-            const text = zip.text(bytes);
-            if (options.dedupe) { const obj = JSON.parse(text); if (have.some((d) => d.name === obj.name)) { existing++; continue; } }
-            documents.push(await docs.importJson(text));
-          } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
-        }
-      }
-      const dashboardsOut = [];
-      if (D.has('viz/dashboards')) {
-        const dashMod = D.require('viz/dashboards');
-        const have = options.dedupe ? await dashMod.list() : [];
-        for (const [path, bytes] of Object.entries(entries)) {
-          if (!/\.dash\.json$/i.test(path)) continue;
-          try {
-            const text = zip.text(bytes);
-            if (options.dedupe) { const obj = JSON.parse(text); if (have.some((d) => d.name === obj.name)) { existing++; continue; } }
-            dashboardsOut.push(await dashMod.importJson(text));
-          } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
-        }
-      }
-      return { manifest, imported, skipped, charts, documents, dashboards: dashboardsOut, existing };
+      // Charts first: dashboards and notebooks refer to them and to datasets by name.
+      const charts = await importKind(/\.viz\.json$/i, 'viz/charts', (c, obj) => c.name === obj.name && c.kind === obj.kind && c.datasetName === obj.datasetName);
+      const documents = await importKind(/\.doc\.json$/i, 'docgen/documents', (d, obj) => d.name === obj.name);
+      const dashboards = await importKind(/\.dash\.json$/i, 'viz/dashboards', (d, obj) => d.name === obj.name);
+      const notebooks = await importKind(/\.nb\.json$/i, 'analysis/notebooks', (n, obj) => n.name === obj.name);
+      return { manifest, imported, skipped, charts, documents, dashboards, notebooks, existing };
     }
 
-    /** @param {Blob|ArrayBuffer} source */
-    async function restore(source) { return restoreEntries(await zip.readZip(source)); }
+    /** Restore a backup (everything is added) or a bundle (what already exists is skipped). */
+    async function restore(source) {
+      const entries = await zip.readZip(source);
+      const manifest = entries[MANIFEST] ? JSON.parse(zip.text(entries[MANIFEST])) : null;
+      if (manifest && manifest.kind === 'bundle') {
+        const existing = new Set((await datasets.list()).map((m) => m.id));
+        return restoreEntries(entries, { skipIds: existing, dedupe: true });
+      }
+      return restoreEntries(entries);
+    }
 
     // ---- portable folder ----
     const fs = { written: new Map(), lastSync: null, timer: 0, unsubscribe: null, enabled: false, busy: false, error: '', listeners: new Set() };
@@ -139,7 +158,7 @@
 
     /**
      * Write the workspace into a folder. Datasets unchanged since the last write are skipped unless
-     * `force`; files of removed datasets, charts and templates are deleted.
+     * `force`; files of removed datasets, charts, dashboards, templates and notebooks are deleted.
      * @param {any} root directory handle
      * @param {{force?: boolean}} [options]
      * @returns {Promise<{written: number, removed: number, datasets: number}>}
@@ -160,10 +179,10 @@
           const m = /([^/]+)\.sqlite$/i.exec(path);
           if (m && !ids.has(m[1])) { await folder.removeFile(root, path); fs.written.delete(m[1]); removed++; }
         }
-        // The manifest, charts and templates are small and always rewritten.
+        // The manifest and the small JSON files are always rewritten.
         const { files } = await collect({ datasetIds: [] });
         for (const [path, data] of Object.entries(files)) await folder.writeFile(root, path, data);
-        for (const prefix of ['charts/', 'documents/', 'dashboards/']) {
+        for (const prefix of PREFIXES) {
           for (const path of await folder.listFiles(root, prefix)) if (!(path in files)) { await folder.removeFile(root, path); removed++; }
         }
         fs.lastSync = new Date().toISOString(); fs.error = '';
@@ -174,10 +193,10 @@
       } finally { fs.busy = false; emitFolder(); }
     }
 
-    /** Read a folder written by saveToFolder; datasets, charts and templates already present are skipped. */
+    /** Read a folder written by saveToFolder; datasets and objects already present are skipped. */
     async function loadFromFolder(root) {
       if (!root) throw new Error('Ingen mapp vald.');
-      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p);
+      const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p);
       /** @type {Record<string, Uint8Array>} */
       const entries = {};
       for (const path of await folder.listFiles(root)) if (wanted(path)) entries[path] = await folder.readFile(root, path);
@@ -217,6 +236,6 @@
     async function setAutoSaveSetting(enabled) { await idb.setSetting(AUTOSAVE_SETTING, !!enabled); setAutoSave(enabled); }
     async function autoSaveSetting() { return !!(await idb.getSetting(AUTOSAVE_SETTING, false)); }
 
-    return { backup, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, MANIFEST, AUTOSAVE_SETTING };
+    return { backup, bundle, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, MANIFEST, AUTOSAVE_SETTING };
   });
 })();

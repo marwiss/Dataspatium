@@ -22,7 +22,7 @@
   <ul id="results" class="results"></ul>
   <script>
     document.addEventListener('dataspatium:ready', async function () {
-      var files = ['harness.js', 'fixtures/api-fixtures.js', 'platform.test.js', 'sqlite.test.js', 'data.test.js', 'io.test.js', 'operations.test.js', 'api.test.js', 'viz.test.js', 'docgen.test.js', 'updates.test.js', 'pseudonymize.test.js', 'dashboards.test.js', 'ui.test.js', 'palette.test.js', 'r.test.js', 'formats.test.js'];
+      var files = ['harness.js', 'fixtures/api-fixtures.js', 'platform.test.js', 'sqlite.test.js', 'data.test.js', 'io.test.js', 'operations.test.js', 'api.test.js', 'viz.test.js', 'docgen.test.js', 'updates.test.js', 'pseudonymize.test.js', 'indexes.test.js', 'bundle.test.js', 'dashboards.test.js', 'ui.test.js', 'palette.test.js', 'r.test.js', 'formats.test.js', 'notebooks.test.js'];
       for (var i = 0; i < files.length; i++) await Dataspatium.assets.loadScript(files[i]);
       Dataspatium.require('tests/harness').run(document.getElementById('results'), document.getElementById('summary'));
     });

@@ -65,6 +65,8 @@
       const op = ops.get(opId);
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
+      // Sort indexes would block column rebuilds (ALTER TABLE DROP COLUMN); they are recreated on the next sort.
+      await datasets.dropIndexes(handle);
       let undoEntry = null;
       if (!options.noUndo) {
         const label = describe(opId, params);

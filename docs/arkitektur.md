@@ -67,7 +67,12 @@ skriver ändrade datamängder och rensar borttagna, `loadFromFolder` läser in d
 prenumererar på datamängdshändelser med fördröjd sparning. Mappåtkomsten (File System Access: välja mapp, minnas
 handtaget i IndexedDB, fråga om lov igen efter omstart, läsa, skriva, lista, ta bort) ligger i
 `src/platform/storage/folder-store.js` och tar rotkatalogen som argument, så att tester kan skicka in en
-minnesbaserad ersättning.
+minnesbaserad ersättning. `bundle` bygger ett delningspaket med samma filer för ett urval (manifestets `kind` är
+`bundle`), och `restore` hoppar över det som redan finns när ett paket läses in.
+
+Sortering av stora tabeller använder index på begäran: första sorterade sidan i en tabell med minst
+`datasets.indexing.threshold` rader (200 000) skapar `_idx_<kolumn>` i SQLite-filen, och `recipes.apply` tar
+bort alla sådana index innan en åtgärd körs, eftersom typbyten bygger om kolumner med `ALTER TABLE DROP COLUMN`.
 
 Bearbetning bygger på fyra moduler:
 
@@ -167,6 +172,13 @@ monteras av läget Visualisera; Exportera återanvänder dialogerna.
   ZIP (LaTeX och Markdown med figurer som en mapp per grupp).
 
 UI:t är `src/ui/docs/document-panel.js` i Exporteras flik Dokument. Arbetsytans säkerhetskopia tar med egna mallar.
+
+Anteckningsböcker (`src/analysis/notebooks.js`, UI i `src/ui/analysis/notebook-panel.js` som tredje flik i
+Analysera) lagras i IndexedDB-tabellen `notebooks` (Dexie version 6) med celler `{type, source, outputs}`.
+`runCell` kör R-celler genom `data/r-bridge` (utdata, fel, diagram som PNG-dataadresser och skapade datamängder)
+och SQL-celler mot bokens datamängd (SELECT via motorn, ändrande satser som receptsteget `sql`). `toAst`
+översätter boken till dokumentmodellen, som fått blocktypen `code` (kod och textutdata) i alla byggare, så att
+exporten återanvänder HTML-, DOCX-, PDF-, Markdown- och LaTeX-byggarna.
 
 ## UI-skal och lägen
 

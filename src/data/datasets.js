@@ -119,14 +119,38 @@
      * @param {{orderBy?: string, dir?: 'asc'|'desc', search?: string, where?: {sql: string, params?: any[]}, limit?: number, offset?: number, withRowId?: boolean}} [options]
      * @returns {Promise<any[][]>} rows in column order; with `withRowId` the SQLite rowid comes first
      */
+    /**
+     * Index on demand: sorting a big table re-sorts every page, so the first sorted page of a table with
+     * at least `indexing.threshold` rows creates an index on the sort column. Operations that rebuild
+     * columns drop the indexes first (recipes.apply calls dropIndexes); they come back on the next sort.
+     */
+    const indexing = { threshold: 200000 };
+    const indexName = (column) => '_idx_' + String(column).replace(/[^A-Za-z0-9_]/g, '_');
+    async function ensureIndex(handle, column) {
+      if (!handle.indexes) handle.indexes = new Set();
+      if (handle.indexes.has(column)) return false;
+      await handle.engine.run(`create index if not exists ${q(indexName(column))} on data(${q(column)})`);
+      handle.indexes.add(column);
+      return true;
+    }
+    async function dropIndexes(handle) {
+      const res = await handle.engine.exec("select name from sqlite_master where type = 'index' and name like '\\_idx\\_%' escape '\\'");
+      const names = (res[0] ? res[0].values : []).map((r) => String(r[0]));
+      for (const name of names) await handle.engine.run(`drop index if exists ${q(name)}`);
+      handle.indexes = new Set();
+      return names.length;
+    }
+
     async function query(id, options = {}) {
       const handle = await ensureOpen(id);
       const cols = handle.columns;
       const where = buildWhere(cols, options);
       const select = (options.withRowId ? ['rowid'] : []).concat(cols.map((c) => q(c.name)));
       let sql = `select ${select.join(', ')} from data${where.sql}`;
-      if (options.orderBy && cols.some((c) => c.name === options.orderBy)) sql += ` order by ${q(options.orderBy)} ${options.dir === 'desc' ? 'desc' : 'asc'} nulls last, rowid`;
-      else sql += ' order by rowid';
+      if (options.orderBy && cols.some((c) => c.name === options.orderBy)) {
+        if ((handle.meta.rowCount || 0) >= indexing.threshold) { try { await ensureIndex(handle, options.orderBy); } catch (err) { D.log('datasets', 'index skipped', err); } }
+        sql += ` order by ${q(options.orderBy)} ${options.dir === 'desc' ? 'desc' : 'asc'} nulls last, rowid`;
+      } else sql += ' order by rowid';
       if (options.limit !== undefined) sql += ` limit ${Math.max(0, Number(options.limit) | 0)} offset ${Math.max(0, Number(options.offset) | 0)}`;
       const res = await handle.engine.exec(sql, where.params);
       return res[0] ? res[0].values : [];
@@ -401,7 +425,7 @@
     return {
       create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
-      updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q,
+      updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing,
     };
   });
 })();

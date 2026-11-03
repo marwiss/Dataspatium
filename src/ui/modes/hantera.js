@@ -151,6 +151,7 @@
             const res = await services.workspace.restore(file);
             shell.log(t('datasets.restore.done', { n: res.imported.length }), 'ok');
             ui.toast.show(t('datasets.restore.done', { n: res.imported.length }), { kind: 'ok' });
+            if (res.existing) shell.log(t('datasets.restore.existing', { n: res.existing }), 'info');
             for (const s of res.skipped) shell.log(s, 'warn');
           } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(t('common.error') + ': ' + ((err && err.message) || err), { kind: 'error' }); }
         });
@@ -167,8 +168,46 @@
           h('div', { class: 'dm-form-grid' },
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.backup') }), h('p', { class: 'dm-help', text: t('datasets.backup.hint') }),
               h('div', null, ui.button({ label: t('datasets.backup'), icon: 'download', variant: 'primary', onClick: backup }))),
-            h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone)),
+            h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone),
+            h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('bundle.title') }), h('p', { class: 'dm-help', text: t('bundle.card.hint') }),
+              h('div', null, ui.button({ label: t('bundle.create'), icon: 'package', onClick: shareBundle })))),
           folderEl);
+      }
+
+      /** Selective sharing bundle: chosen datasets plus charts, dashboards, templates and notebooks. */
+      async function shareBundle() {
+        const list = store.get().datasets;
+        const name = /** @type {any} */ (h('dm-input', { label: t('bundle.name'), value: 'dataspatium-paket' }));
+        const chosen = new Set(list.map((d) => d.id));
+        const switches = list.map((d) => {
+          const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) })})` }));
+          sw.checked = true;
+          sw.addEventListener('change', () => { if (sw.checked) chosen.add(d.id); else chosen.delete(d.id); });
+          return sw;
+        });
+        const inc = { charts: true, dashboards: true, documents: true, notebooks: true };
+        const incSwitches = Object.keys(inc).map((k) => {
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('bundle.include.' + k) }));
+          sw.checked = true;
+          sw.addEventListener('change', () => { inc[k] = sw.checked; });
+          return sw;
+        });
+        const body = h('div', { class: 'dm-stack' },
+          h('p', { class: 'dm-help', text: t('bundle.help') }), name,
+          h('h4', { text: t('shell.datasets') }), list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
+          h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
+        const ok = await ui.dialog.open({ title: t('bundle.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
+        if (ok !== true) return;
+        try {
+          shell.setStatus('saving');
+          const label = name.value.trim() || 'dataspatium-paket';
+          const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc });
+          const file = services.files.safeName(label, 'dataspatium.zip');
+          services.files.download(res.blob, file);
+          shell.log(t('bundle.done', { name: file, n: res.counts.datasets }), 'ok');
+          ui.toast.show(t('bundle.done', { name: file, n: res.counts.datasets }), { kind: 'ok' });
+        } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        shell.setStatus('saved');
       }
 
       /** Portable folder card (File System Access; Chromium only, see platform/storage/folder-store.js). */

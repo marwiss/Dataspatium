@@ -35,6 +35,8 @@ caption, figcaption { caption-side: bottom; text-align: left; color: #6b7583; fo
 figure { margin: 12px 0 18px; } img { max-width: 100%; height: auto; display: block; }
 hr { border: 0; border-top: 1px solid #e1e4e9; margin: 20px 0; } .pagebreak { page-break-after: always; break-after: page; }
 code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; background: #eef0f3; padding: 1px 4px; border-radius: 3px; }
+pre.code { margin: 0 0 12px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; overflow: auto; font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; } pre.code code { background: none; padding: 0; }
+pre.lang-output { background: #f7f8fa; border: 1px solid #e1e4e9; } pre.lang-error { background: #fdecec; color: #8a1c1c; }
 @media print { body { background: #fff; } main.doc { border: 0; margin: 0; padding: 0; max-width: none; } }`;
 
     function blockHtml(b, images) {
@@ -44,6 +46,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; backgr
         case 'list': return `<${b.ordered ? 'ol' : 'ul'}>${b.items.map((it) => `<li>${runsHtml(it)}</li>`).join('')}</${b.ordered ? 'ol' : 'ul'}>`;
         case 'table': return `<table>${b.caption ? `<caption>${escHtml(b.caption)}</caption>` : ''}<thead><tr>${b.columns.map((c, i) => `<th${b.numeric && b.numeric[i] ? ' class="num"' : ''}>${escHtml(c)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c, i) => `<td${b.numeric && b.numeric[i] ? ' class="num"' : ''}>${escHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
         case 'image': { const src = images ? images(b) : `data:image/png;base64,${toB64(b.png)}`; return `<figure><img src="${src}" width="${b.width}" height="${b.height}" alt="${escHtml(b.caption || '')}">${b.caption ? `<figcaption>${escHtml(b.caption)}</figcaption>` : ''}</figure>`; }
+        case 'code': return `<pre class="code${b.language ? ' lang-' + escHtml(String(b.language).replace(/[^a-z0-9-]/gi, '')) : ''}"><code>${escHtml(b.text)}</code></pre>`;
         case 'rule': return '<hr>';
         case 'pagebreak': return '<div class="pagebreak"></div>';
         default: return '';
@@ -79,6 +82,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; backgr
           const cell = (c) => String(c).replace(/\|/g, '\\|');
           out.push(`| ${b.columns.map(cell).join(' | ')} |\n| ${b.columns.map((c, i) => (b.numeric && b.numeric[i] ? '---:' : '---')).join(' | ')} |\n${b.rows.map((r) => `| ${r.map(cell).join(' | ')} |`).join('\n')}\n${b.caption ? '\n*' + b.caption + '*\n' : ''}`);
         } else if (b.type === 'image') { n++; const path = `figures/fig-${n}.png`; figures[path] = new Uint8Array(b.png); out.push(`![${b.caption || ''}](${path})\n`); }
+        else if (b.type === 'code') out.push('```' + (b.language && b.language !== 'output' && b.language !== 'error' ? b.language : '') + '\n' + String(b.text).replace(/```/g, '` ` `') + '\n```\n');
         else if (b.type === 'rule') out.push('---\n');
         else if (b.type === 'pagebreak') out.push('<div style="page-break-after: always"></div>\n');
       }
@@ -106,6 +110,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; backgr
           const spec = b.columns.map((c, i) => (b.numeric && b.numeric[i] ? 'r' : 'l')).join('');
           body.push(`\\begin{longtable}{${spec}}\n${b.caption ? `\\caption{${escTex(b.caption)}}\\\\\n` : ''}\\toprule\n${b.columns.map((c) => `\\textbf{${escTex(c)}}`).join(' & ')} \\\\\n\\midrule\n\\endhead\n\\bottomrule\n\\endfoot\n${b.rows.map((r) => r.map(escTex).join(' & ') + ' \\\\').join('\n')}\n\\end{longtable}\n`);
         } else if (b.type === 'image') { n++; const path = `figures/fig-${n}.png`; figures[path] = new Uint8Array(b.png); body.push(`\\begin{figure}[htbp]\n  \\centering\n  \\includegraphics[width=\\linewidth]{${path}}\n${b.caption ? `  \\caption{${escTex(b.caption)}}\n` : ''}\\end{figure}\n`); }
+        else if (b.type === 'code') body.push(`\\begin{verbatim}\n${String(b.text).replace(/\\end\{verbatim\}/g, '\\end {verbatim}')}\n\\end{verbatim}\n`);
         else if (b.type === 'rule') body.push('\\noindent\\rule{\\linewidth}{0.4pt}\n');
         else if (b.type === 'pagebreak') body.push('\\clearpage\n');
         first = false;

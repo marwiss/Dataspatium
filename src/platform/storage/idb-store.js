@@ -28,6 +28,7 @@
           instance.version(3).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt' });
           instance.version(4).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt' });
           instance.version(5).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt' });
+          instance.version(6).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt', notebooks: 'id, name, datasetId, updatedAt' });
           await instance.open();
           db = instance;
           return instance;
@@ -101,6 +102,10 @@
     async function getDashboard(id) { const d = await open(); return d.dashboards.get(id); }
     async function putDashboard(dash) { const d = await open(); await d.dashboards.put(dash); return dash; }
     async function deleteDashboard(id) { const d = await open(); await d.dashboards.delete(id); }
+    async function listNotebooks() { const d = await open(); return d.notebooks.orderBy('updatedAt').reverse().toArray(); }
+    async function getNotebook(id) { const d = await open(); return d.notebooks.get(id); }
+    async function putNotebook(nb) { const d = await open(); await d.notebooks.put(nb); return nb; }
+    async function deleteNotebook(id) { const d = await open(); await d.notebooks.delete(id); }
 
     // ---- document templates ----
     async function listDocuments() { const d = await open(); return d.documents.orderBy('updatedAt').reverse().toArray(); }
@@ -123,6 +128,6 @@
     /** Remove everything (used by tests and by "återställ arbetsytan"). */
     async function clearAll() { const d = await open(); await d.transaction('rw', d.datasets, d.blobs, d.settings, async () => { await d.datasets.clear(); await d.blobs.clear(); await d.settings.clear(); }); }
 
-    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDashboards, getDashboard, putDashboard, deleteDashboard, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
+    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDashboards, getDashboard, putDashboard, deleteDashboard, listNotebooks, getNotebook, putNotebook, deleteNotebook, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
   });
 })();

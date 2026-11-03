@@ -50,6 +50,10 @@
           const width = Math.min(PAGE_WIDTH_PX, b.width || PAGE_WIDTH_PX); const height = Math.round(width * (b.height || Math.round(width * 0.56)) / (b.width || width));
           children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: 'png', data: new Uint8Array(b.png), transformation: { width, height } })], spacing: { before: 120, after: 60 } }));
           if (b.caption) children.push(new Paragraph({ children: [new TextRun({ text: b.caption, italics: true, color: MUTED, size: 20 })], spacing: { after: 160 } }));
+        } else if (b.type === 'code') {
+          // One monospace paragraph per line keeps line breaks intact in Word.
+          const lines = String(b.text).split('\n');
+          lines.forEach((line, i) => children.push(new Paragraph({ children: [new TextRun({ text: line || ' ', font: 'Consolas', size: 18, color: b.language === 'error' ? '8A1C1C' : undefined })], spacing: { after: i === lines.length - 1 ? 160 : 0 }, shading: { type: ShadingType.CLEAR, fill: b.language === 'error' ? 'FDECEC' : 'EEF0F3' } })));
         } else if (b.type === 'rule') children.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: BORDER, space: 4 } }, spacing: { after: 160 } }));
         else if (b.type === 'pagebreak') children.push(new Paragraph({ children: [new PageBreak()] }));
       }
@@ -107,6 +111,14 @@
           doc.addImage(new Uint8Array(b.png), 'PNG', margin, y, w, h);
           y += h + 4;
           if (b.caption) text(b.caption, 9, 'italic', [107, 117, 131]);
+          y += 8;
+        } else if (b.type === 'code') {
+          doc.setFont('courier', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...(b.language === 'error' ? [138, 28, 28] : [31, 37, 46]));
+          const lh = 8.5 * 1.4;
+          for (const raw of String(b.text).split('\n')) {
+            const lines = doc.splitTextToSize(raw || ' ', maxW - 12);
+            for (const line of lines) { ensure(lh); doc.setFillColor(...(b.language === 'error' ? [253, 236, 236] : [238, 240, 243])); doc.rect(margin, y, maxW, lh, 'F'); doc.text(line, margin + 6, y + 8.5 * 0.85 + 1); y += lh; }
+          }
           y += 8;
         } else if (b.type === 'rule') { ensure(12); doc.setDrawColor(225, 228, 233); doc.line(margin, y + 4, W - margin, y + 4); y += 14; }
         else if (b.type === 'pagebreak') { doc.addPage(); y = margin; }

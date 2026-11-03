@@ -68,6 +68,10 @@ sessionen första gången de används. Skript kan sparas och köras igen. Först
 SQL-fliken frågar datamängdens tabell `data` direkt med SQLite. SELECT-frågor visar resultatet (upp till 5 000
 rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som receptsteg.
 
+Fliken *Anteckningsbok* samlar text (Markdown), R och SQL i celler som körs i ordning och sparar sina utdata. En
+färdig bok exporteras som HTML, Word, PDF, Markdown eller LaTeX, med eller utan koden. Se
+[anteckningsbok.md](anteckningsbok.md).
+
 ### 5. Visualisera (Visualisera)
 
 Diagrambyggaren skapar stapel-, linje-, yt-, punkt-, cirkel- och andra diagram ur en datamängd: välj kolumner för
@@ -98,6 +102,8 @@ arbetsytan dessutom speglas till en portabel mapp på disk, automatiskt vid varj
 
 ## Dela med andra
 
+- Ett urval: *Dela paket* under Hantera ger en ZIP med valda datamängder, diagram, dashboards, mallar och
+  anteckningsböcker. Mottagaren läser in den under *Återställ från ZIP*; det som redan finns hoppas över.
 - Hela arbetsytan: säkerhetskopian (ZIP) återställs under Hantera på en annan dator.
 - En datamängd: exportera som SQLite (allt följer med) eller Parquet.
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras

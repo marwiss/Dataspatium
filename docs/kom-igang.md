@@ -81,6 +81,10 @@ mapp. Slå på *Spara automatiskt vid ändringar* så hålls mappen uppdaterad. 
 och klickar på *Läs in från mappen*. Efter en omstart av webbläsaren frågar den en gång om lov att använda mappen
 igen; klicka på *Återanslut*.
 
+Vill du skicka ett urval till en kollega, använd *Dela paket* på samma sida: välj datamängder och om diagram,
+dashboards, mallar och anteckningsböcker ska följa med. Kollegan släpper paketet på *Återställ från ZIP*; det som
+redan finns i hens arbetsyta hoppas över.
+
 ## Vanliga frågor
 
 **Sidan är tom eller visar bara "Dataspatium startar".** Kontrollera att hela mappen packats upp (inte bara
