@@ -23,13 +23,17 @@ appen på svensk.
    af alle tilstande med eksempeldata, som tager omkring ti minutter. Åbn det igen fra hjælpen (?).
 4. **Importér.** I tilstanden *Hent* slipper du en fil på fladen (eller klikker på *Prøv med eksempeldata*),
    kontrollerer kolonnernes typer og klikker på *Importér*. Datasættet gemmes i browseren på din computer.
-5. **Arbejd videre.** Skift tilstand øverst: *Håndter* viser dine datasæt og arbejdsområdet, *Bearbejd* viser
-   tabellen med sortering, filtre og handlinger, *Analysér* åbner R- og SQL-konsollen, *Visualisér* bygger diagrammer,
-   og *Eksportér* downloader data, diagrammer og dokumenter.
+5. **Arbejd videre.** Skift tilstand øverst: *Håndter* viser dine datasæt og arbejdsområdet, *Søg* finder rækker i
+   dem, *Bearbejd* viser tabellen med sortering, filtre og handlinger, *Analysér* åbner R- og SQL-konsollen,
+   *Visualisér* bygger diagrammer, *Eksportér* downloader data, diagrammer og dokumenter, og *Del* giver dem til andre.
 
 Data gemmes i browserens egen database. Rydder du webstedsdata, forsvinder de, så tag backup regelmæssigt under
 *Håndter > Arbejdsområde*. Backuppen er en ZIP-fil, der kan gendannes på samme eller en anden computer. Trin for trin
 med flere detaljer: [kom-igang.md](kom-igang.md).
+
+Appen findes også direkte på nettet, uden download: <https://marwiss.github.io/Dataspatium/>. Fra en webserver kan
+den installeres som en selvstændig app (Edge og Chrome: *Installér* i adresselinjen) og fungerer derefter også uden
+netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data mellem dem med en backup eller en pakke.
 
 ## Hvad der kræves
 
@@ -38,7 +42,8 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   understøttes ikke.
 - Omkring 300 MB ledig plads til appmappen og mindst 4 GB hukommelse (8 GB anbefales til store datasæt). Der kræves
   ingen administratorrettigheder.
-- Internet kræves kun, når du henter data fra åbne API'er, synkroniserer med GitHub eller søger efter opdateringer.
+- Internet kræves kun, når du henter data fra åbne API'er, sender til GitHub, søger efter opdateringer eller henter
+  en komponent eller en R-pakke, der ikke følger med i mappen; appen spørger om lov først.
 
 ## Hvad du kan
 
@@ -61,15 +66,19 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   PowerPoint (se [visualisera.md](visualisera.md)).
 - **Dokumentere**: rapporter og kodebøger fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX, også ét dokument
   pr. kommune eller år (se [dokumentmallar.md](dokumentmallar.md)).
-- **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakker
-  med valgte datasæt og objekter, en besked og en ændringslog, kommentarer til datasæt og kolonner, backup af
-  arbejdsområdet som ZIP, synkronisering med et GitHub-repository og, i Edge og Chrome, en portabel mappe med
-  almindelige filer.
-- **Finde hurtigt**: kommandopaletten (Ctrl+K) skifter tilstand, åbner datasæt, diagrammer og dashboards og kører
-  handlinger fra ét søgefelt.
+- **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; i
+  tilstanden *Del* pakker med valgte datasæt og objekter, en besked og en ændringslog, synkronisering med et
+  GitHub-repository, computerens delingsmenu og udgivelse af dashboards og dokumenter som selvstændig HTML (se
+  [dela.md](dela.md)); kommentarer til datasæt og kolonner, backup af arbejdsområdet som ZIP og, i Edge og Chrome, en
+  portabel mappe med almindelige filer.
+- **Holde orden**: mapper og tags til datasæt, filter og sortering, og batchhandlinger på flere datasæt på én gang
+  (ordn, pak, eksportér, hent igen, kør opskrift, slet).
+- **Finde hurtigt**: tilstanden *Søg* leder i alle kolonner i ét eller alle datasæt, med facetter, der indsnævrer, og
+  gemte lister (se [soka.md](soka.md)); kommandopaletten (Ctrl+K) skifter tilstand, åbner datasæt, diagrammer og
+  dashboards og kører handlinger fra ét søgefelt.
 - **Seks sprog**: brugerflade, meddelelser og dokumentation på svensk, dansk, norsk (bokmål), finsk, islandsk og
   engelsk.
-- **Grundkursus**: en interaktiv gennemgang af alle seks tilstande med eksempeldata på alle seks sprog. Det vises første
+- **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle seks sprog. Det vises første
   gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
 
 ## Lær mere
@@ -81,7 +90,8 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Kom i gang](kom-igang.md): trin for trin med almindelige spørgsmål.
 - [Brugervejledning](anvandarguide.md): hele arbejdsgangen fra fil til rapport.
 - [Ofte stillede spørgsmål](faq.md): lager, sikkerhed, R, API'er og opdateringer.
-- [De seks tilstande](lagen.md): hvad der findes hvor og hvorfor.
+- [De otte tilstande](lagen.md): hvad der findes hvor og hvorfor.
+- [Søg](soka.md) og [Del](dela.md): find uden kode, og giv data til andre.
 - [Notesbog](anteckningsbok.md): tekst, R og SQL i celler, der bliver til en rapport.
 - [Regulære udtryk](regex.md): mønstre til at analysere, rette og opdele tekst i datasæt.
 - [Formater og import](format.md): filformater, tegnkodning, decimaltegn, datoer og kolonnetyper.
@@ -107,7 +117,8 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
   gemmer sidst, vinder.
 - Den portable mappe kræver Edge eller Chrome; Firefox mangler mappeadgang (File System Access). Backup som ZIP
   fungerer overalt.
-- Safari og mobile browsere understøttes ikke.
+- Safari og mobile browsere understøttes ikke endnu; en mobilside til telefoner og tablets er planlagt til næste
+  version. I smalle vinduer åbnes panelerne allerede nu som ark over arbejdsfladen.
 - De medfølgende eksempeldata og kortgrænser er svenske; selve appen fungerer med data fra hvor som helst.
 
 ## Fejl og forslag

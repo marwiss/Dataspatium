@@ -14,8 +14,8 @@ forritsmöppunni: R, úrval pakka og hjálparföll Dataspatium.
 
 | Fall | Gerir |
 |---|---|
-| `dm_list()` | Sýnir gagnasöfnin í setunni: heiti, stuttheiti, raðir, dálkar, breytt, auðkenni. |
-| `dm_read("stuttheiti")` | Les gagnasafn sem `data.frame` með réttum gerðum: dagsetningar verða `Date`, dagsetning og tími `POSIXct`, já/nei `logical`, heiltölur `integer`. Viðfangið er helst stuttheitið (til dæmis `dm_read("befolkning_2024")`, sem er það sem hnappurinn *Setja inn dm_read()* skrifar) en getur líka verið auðkenni, nákvæmt heiti, heiti óháð há- og lágstöfum eða ótvírætt forskeyti; `dm_list()` sýnir stuttheitin. |
+| `dm_list()` | Sýnir gagnasöfnin í setunni: heiti, stuttheiti, mappa, raðir, dálkar, breytt, auðkenni. |
+| `dm_read("stuttheiti")` | Les gagnasafn sem `data.frame` með réttum gerðum: dagsetningar verða `Date`, dagsetning og tími `POSIXct`, já/nei `logical`, heiltölur `integer`. Viðfangið er helst stuttheitið (til dæmis `dm_read("befolkning_2024")`, sem er það sem hnappurinn *Setja inn dm_read()* skrifar) en getur líka verið auðkenni, nákvæmt heiti, heiti óháð há- og lágstöfum eða ótvírætt forskeyti; `dm_list()` sýnir stuttheitin. Liggi gagnasafnið í möppu virka líka `dm_read("Mappa/Heiti")` og `dm_read("Mappa/stuttheiti")`. |
 | `dm_read("stuttheiti", columns = c("a", "b"), where = "a > 10", n = 1000)` | Les aðeins tiltekna dálka, raðir sem uppfylla SQL-skilyrði eða takmarkaðan fjölda raða. |
 | `attr(df$dálkur, "label")`, `"description"`, `"unit"` | Merkimiði, lýsing og eining dálksins úr forritinu fylgja sem eigindir (þegar þær eru stilltar); `dm_write()` tekur þær til baka, eða gegnum viðföngin `labels`, `descriptions` og `units`. |
 | `dm_value_labels(x, c("Karl" = 1, "Kona" = 2), to = "labels")` | Gildismerkimiðar. Dálkur með kóðum og merkimiðum verður `haven::labelled` í `dm_read()` (dálkur sem þegar hefur merkimiðana sem texta heldur kóðunum í eigindinni `value_labels`), og `dm_write()` vistar þá. `dm_value_labels()` stillir merkimiða (`to = NULL`), skiptir kóðum út fyrir merkimiða (`"labels"`) eða til baka (`"codes"`); án merkimiða eru þeir fjarlægðir. |
@@ -55,8 +55,12 @@ lubridate, forcats, data.table, haven (SPSS, Stata, SAS), readxl, writexl, nanop
 og knitr, auk þeirra pakka sem þeir byggja á (meðal annars tibble, purrr, rlang, cli, stringi). `library(pakki)` setur pakkann
 upp úr innbyggða safninu í fyrsta skipti sem hann er notaður.
 
-Ekki er hægt að setja upp aðra CRAN-pakka, því forritið sækir ekkert af netinu. Ef þig vantar fleiri pakka skaltu stofna issue
-og þá má bæta þeim við í næstu útgáfu.
+Aðrir pakkar eru sóttir eftir þörfum úr pakkasafni webR (repo.r-wasm.org, yfir 20 000 CRAN-pakkar byggðir fyrir
+vafrann): kalli kóðinn á `library()`, `require()` eða `pakki::` fyrir pakka utan úrvalsins er hann sóttur með því sem
+hann byggir á áður en kóðinn keyrir. Í fyrsta skipti spyr forritið um leyfi til að hafa samband við netið fyrir
+íhluti; síðan eru pakkarnir vistaðir í vafranum, eru enn til við næstu ræsingu og birtast undir *Umsjón → Vinnusvæði
+→ Íhlutir*, þar sem þá má líka fjarlægja. Án nets, eða ef þú svarar nei, fær kóðinn venjulegu villuna um að pakkann
+vanti. Pakka sem krefjast kerfissafna sem ekki eru til í vafranum getur vantað í pakkasafnið.
 
 ## Hvernig gögn flytjast milli forritsins og R
 
@@ -71,7 +75,7 @@ Gagnasöfn stærri en 50 MB eru aðeins spegluð þegar vísað er í þau í k�
 ## Tungumál
 
 Skilaboð frá `dm_list()`, `dm_read()` og `dm_write()` fylgja tungumáli forritsins (sænsku, dönsku, norsku, finnsku, íslensku eða
-ensku); dálkaheitin í `dm_list()` eru hins vegar alltaf þau sömu (`namn`, `kortnamn`, `rader`, `kolumner`, `ändrad`, `id`), svo
+ensku); dálkaheitin í `dm_list()` eru hins vegar alltaf þau sömu (`namn`, `kortnamn`, `mapp`, `rader`, `kolumner`, `ändrad`, `id`), svo
 skriftur virka óháð tungumáli.
 
 ## Takmarkanir

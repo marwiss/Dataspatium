@@ -8,16 +8,22 @@ skráarsnið í [format.md](format.md), um vefþjónustur í [api-konfiguration.
 
 ## Vinnusvæðið
 
-Skjárinn lítur eins út í öllum hömum. Efst skiptirðu um ham (Sækja, Umsjón, Vinna, Greina, Myndgera, Flytja út; Alt+1 til
-Alt+6 virka líka) og sérð stöðu vinnusvæðisins (vistað eða óvistað), skipanaspjaldið (stækkunarglerið eða Ctrl+K),
-tungumálahnappinn, þemað (ljóst eða dökkt) og hjálparhnappinn með útgáfunúmeri og *Leita að uppfærslum*. Skipanaspjaldið er
-fljótlegasta leiðin að flestu: skrifaðu nokkra stafi til að skipta um ham, opna gagnasafn, myndrit eða mælaborð, eða keyra
-aðgerð á valda gagnasafnið. Til vinstri eru hlutir hamsins (gagnasöfn, upprunar, myndrit, snið), í miðjunni vinnuflöturinn og
-til hægri eiginleikaspjaldið með eiginleikum og tölfræði. Neðst er dagbókin, þar sem hver aðgerð, viðvörun og villa er skráð;
-hana lestu þegar eitthvað fer ekki eins og þú ætlaðir.
+Skjárinn lítur eins út í öllum hömum. Efst skiptirðu um ham (Sækja, Umsjón, Leita, Vinna, Greina, Myndgera, Flytja
+út, Deila; Alt+1 til Alt+8 virka líka) og nærð skipanaspjaldinu (stækkunarglerið eða Ctrl+K), tungumálahnappinum,
+þemanu (ljóst eða dökkt) og hjálparhnappinum með útgáfunúmeri og *Leita að uppfærslum*. Skipanaspjaldið er
+fljótlegasta leiðin að flestu: skrifaðu nokkra stafi til að skipta um ham, opna gagnasafn, myndrit eða mælaborð,
+leita í gögnum eða keyra aðgerð á valda gagnasafnið. Til vinstri eru hlutir hamsins (gagnasöfn, upprunar, myndrit,
+snið), í miðjunni vinnuflöturinn og til hægri eiginleikaspjaldið með eiginleikum og tölfræði. Neðst er stöðustikan:
+vistunarstaða, geymsla, valda gagnasafnið, R-vélin, netköll í gangi og hnapparnir sem fella spjöldin inn og opna
+dagbókina, þar sem hver aðgerð, viðvörun og villa er skráð; hana lestu þegar eitthvað fer ekki eins og þú ætlaðir.
+Breidd spjaldanna er breytt með því að draga brúnina að vinnuflötinum, og í þröngum gluggum opnast spjöldin sem
+yfirlagsspjöld yfir vinnuflötinn (sjá [lagen.md](lagen.md)).
 
-Allt sem þú býrð til er vistað sjálfkrafa í gagnagrunni vafrans á tölvunni þinni. Ekkert er sent neitt nema þú sækir sjálf(ur)
-úr vefþjónustu, leitar að uppfærslum eða flytur út.
+Allt sem þú býrð til er vistað sjálfkrafa í gagnagrunni vafrans á tölvunni þinni. Ekkert er sent neitt nema þú sækir
+sjálf(ur) úr vefþjónustu, leitar að uppfærslum, sendir á GitHub eða deilir. Í fyrsta skipti sem forritið þarf netið í
+einhverjum tilgangi spyr það um leyfi, og svarið má vista; undir *Umsjón → Vinnusvæði → Netaðgangur* sérðu hvað er
+leyft og hvaða köll hafa verið gerð. Hlutar forritsins sem fylgja ekki í möppunni (sumir íhlutir og R-pakkar) eru
+sóttir á sama hátt þegar þeirra er þörf og síðan vistaðir á tölvunni.
 
 ## Grunnnámskeiðið
 
@@ -130,38 +136,59 @@ hópasamantekt eru innbyggð. Búðu til sem HTML, Word, PDF, Markdown eða LaTe
 CSV (aðlagað fyrir Excel á Norðurlöndum eða staðlað), Excel, ODS, JSON, GeoJSON (fyrir gagnasöfn með rúmfræði), XML, SQLite og
 gegnum R: Parquet, SPSS, Stata og RDS. SQLite og Parquet halda gerðunum nákvæmlega; öll snið má flytja aftur inn.
 
+## Finna í gögnum (Leita)
+
+Leita finnur raðir án kóða. Skrifaðu eitt eða fleiri orð, veldu öll gagnasöfn eða aðeins það valda og ýttu á *Leita*.
+Niðurstöðurnar birtast eftir gagnasafni; flokkarnir (algengustu gildin í dálkum með fá ólík gildi) afmarka með einum
+smelli, og röð í töflunni sýnir alla færsluna í eiginleikaspjaldinu. Leitina má vista sem lista, gera að nýju
+gagnasafni eða opna í Vinna með gagnasafnið valið. Sjá [soka.md](soka.md).
+
 ## Halda röð og reglu (Umsjón)
 
-Hvert gagnasafn hefur yfirlit (uppruni, stærð, lýsing), dálkalista með gerðum, merkimiðum, lýsingum og einingum (stillt undir
-Vinna með *Merkimiði, lýsing og eining*), athugasemdir, læsilega sögu alls sem hefur verið gert og útgáfur. Endurnefndu og breyttu stuttheiti, eyddu
-eða sæktu aftur úr vefþjónustu (uppfærðu með uppskriftinni eða bættu við röðum). Undir *Vinnusvæði* sérðu hversu mikil geymsla er í notkun, biður um varanlega geymslu, tekur
-afrit sem ZIP og endurheimtir. Forritið minnir þig við ræsingu þegar lengri tími en valinn fjöldi daga er liðinn frá síðasta
-afriti (30 dagar sjálfgefið; breytt eða slökkt á í sama spjaldi). Í Edge og Chrome má auk þess spegla vinnusvæðið í færanlega
-möppu á diski, sjálfkrafa við hverja breytingu.
+Hvert gagnasafn hefur yfirlit (uppruni, stærð, lýsing, mappa og merki), dálkalista með gerðum, merkimiðum, lýsingum
+og einingum (stillt undir Vinna með *Merkimiði, lýsing og eining*), athugasemdir, læsilega sögu alls sem hefur verið
+gert og útgáfur. Endurnefndu og breyttu stuttheiti, raðaðu, eyddu eða sæktu aftur úr vefþjónustu (uppfærðu með
+uppskriftinni eða bættu við röðum). Undir *Vinnusvæði* sérðu hversu mikil geymsla er í notkun, biður um varanlega
+geymslu, tekur afrit sem ZIP og endurheimtir. Forritið minnir þig við ræsingu þegar lengri tími en valinn fjöldi daga
+er liðinn frá síðasta afriti (30 dagar sjálfgefið; breytt eða slökkt á í sama spjaldi). Í Edge og Chrome má auk þess
+spegla vinnusvæðið í færanlega möppu á diski, sjálfkrafa við hverja breytingu.
+
+Hlutaspjaldið í Umsjón er tré. *Raða* gefur gagnasafni möppu (með undirmöppum, eins og `Fjármál/2026`) og merki;
+möppur má fella saman, og gagnasafn má draga í aðra möppu. Síureiturinn leitar í heiti, stuttheiti, merki og möppu,
+og listanum má raða eftir breytt, heiti eða röðum. Gátreitirnir velja fleiri gagnasöfn (Shift velur bil), og
+hnappurinn *Aðgerðir (n)* gerir það sama við þau öll í einu: raða, pakka, flytja út sem ZIP með CSV-skrám, sækja
+aftur úr vefþjónustu, keyra uppskrift eða eyða. Mappa og merki eru vistuð í skrá gagnasafnsins og fylgja í pökkum,
+afritum og GitHub; í R sýnir `dm_list()` möppuna og `dm_read("Mappa/Heiti")` les gagnasafn í möppu.
 
 ## Deila með öðrum
 
-- Úrval: *Deila pakka* undir Umsjón gefur ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og minnisbókum,
+Allt sem á að fara til annars fólks er í hamnum *Deila* (sjá [dela.md](dela.md)):
+
+- Úrval: *Pakki* gefur ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum, minnisbókum og skriftum,
   skilaboðum og breytingaskrá: því sem gert hefur verið við hvert gagnasafn síðan því var síðast deilt, og óleystum
-  athugasemdum. Viðtakandinn hleður henni inn undir *Endurheimta úr ZIP*, sér skilaboðin og breytingarnar og velur fyrir
-  gagnasöfn sem þegar eru til hvort skipta eigi þeim út fyrir útgáfu pakkans (eigin útgáfa er vistuð undir *Útgáfur*);
-  öðru er sleppt.
+  athugasemdum. Viðtakandinn opnar hann undir *Taka á móti*, sér skilaboðin og breytingarnar og velur fyrir gagnasöfn
+  sem þegar eru til hvort skipta eigi þeim út fyrir útgáfu pakkans (eigin útgáfa er vistuð undir *Útgáfur*); öðru er
+  sleppt. Undir Umsjón gera *Aðgerðir* á fleiri völdum gagnasöfnum það sama.
 - Athugasemdir: hvert gagnasafn hefur flipann *Athugasemdir* í Umsjón, og í Vinna gerirðu athugasemd við dálk úr
   eiginleikaspjaldinu. Athugasemdirnar eru í skrá gagnasafnsins og fylgja í pökkum, afritum, færanlegu möppunni og
   GitHub. Nafnið sem birtist velur þú; það er aðeins vistað í vafranum.
 - Allt vinnusvæðið: afritið (ZIP) er endurheimt undir Umsjón á annarri tölvu.
-- Milli tölva gegnum GitHub: undir *Umsjón → Vinnusvæði* sendirðu vinnusvæðið í GitHub-safn (helst lokað) og sækir það á
-  annarri tölvu. Til þess þarf nákvæman aðgangslykil (fine-grained personal access token) sem má aðeins lesa og skrifa
-  innihald einmitt þess safns. Lykillinn er notaður í lotunni eða vistaður dulkóðaður, og ekkert er sent fyrr en þú ýtir á
-  *Senda á GitHub* eða *Sækja frá GitHub*. Aðeins breyttar skrár eru sendar, í einni færslu (commit) með skilaboðum
-  þínum; þegar sótt er velurðu, eins og fyrir pakka, hvort skipta eigi út gagnasöfnum sem eru til.
-- Eitt gagnasafn: fluttu út sem SQLite (allt fylgir) eða Parquet.
+- Milli tölva gegnum GitHub: flipinn *GitHub* sendir vinnusvæðið í GitHub-safn (helst lokað) og sækir það á annarri
+  tölvu. Til þess þarf nákvæman aðgangslykil (fine-grained personal access token) sem má aðeins lesa og skrifa
+  innihald einmitt þess safns. Lykillinn er notaður í lotunni eða vistaður dulkóðaður, og ekkert er sent fyrr en þú
+  ýtir á *Senda á GitHub* eða *Sækja frá GitHub*. Aðeins breyttar skrár eru sendar, í einni færslu (commit) með
+  skilaboðum þínum; þegar sótt er velurðu, eins og fyrir pakka, hvort skipta eigi út gagnasöfnum sem eru til.
+- Um deilivalmynd tölvunnar eða símans: flipinn *Deilivalmynd* sendir gagnasafn sem CSV, Excel, ODS eða JSON, eða öll
+  gagnasöfn sem pakka, í tölvupóst, Teams og önnur forrit (Edge og Chrome; Firefox vistar skrána).
+- Sem tilbúin vefsíða: flipinn *Birta* gerir mælaborð eða skjal að sjálfstæðri HTML-skrá.
+- Eitt gagnasafn: fluttu út sem SQLite (allt fylgir) eða Parquet undir Flytja út.
 - API-uppsetningar (`.api.json`), myndrit og skjalasnið (JSON) og uppskriftir (JSON, R eða SQL) eru fluttar út og hlaðnar inn
   sem skrár. Lyklar fylgja aldrei með.
 
 ## Lyklaborð
 
-Alt+1 til Alt+6 skipta um ham og Ctrl+K opnar skipanaspjaldið. Fyrsta ýting á Tab á síðunni sýnir tengilinn *Fara í efnið*, sem
+Alt+1 til Alt+8 skipta um ham og Ctrl+K opnar skipanaspjaldið. Brúnin milli spjalds og vinnuflatar getur fengið fókus
+með Tab og er færð með örvalyklunum (Shift fyrir stærri skref, Home og End fyrir minnstu og mestu breidd). Fyrsta ýting á Tab á síðunni sýnir tengilinn *Fara í efnið*, sem
 færir fókus framhjá hamavalinu og hlutaspjaldinu. Allt næst með Tab og Enter; gluggum er lokað með Esc. Í töflunni færa
 örvalyklarnir milli reita og Enter breytir. Forritið fylgir kerfisstillingunni um minni hreyfingu.
 

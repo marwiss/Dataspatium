@@ -5,7 +5,7 @@
   <title>Dataspatium – tester</title>
   <link rel="icon" type="image/svg+xml" href="../src/ui/design/favicon.svg">
   <!-- The tests assert Swedish messages and drive the shell themselves; pin the UI language and keep the course closed. -->
-  <script>try { localStorage.setItem('dataspatium.lang', 'sv'); localStorage.setItem('dataspatium.course', '{"status":"closed","step":0}'); } catch (e) { /* storage may be unavailable */ }</script>
+  <script>try { localStorage.setItem('dataspatium.lang', 'sv'); localStorage.setItem('dataspatium.course', '{"status":"closed","step":0}'); localStorage.setItem('dataspatium.consent', 'granted'); } catch (e) { /* storage may be unavailable */ }</script>
   <link rel="stylesheet" href="../src/ui/design/tokens.css">
   <link rel="stylesheet" href="../src/ui/design/base.css">
   <link rel="stylesheet" href="../src/ui/design/components.css">
@@ -25,7 +25,7 @@
   <ul id="results" class="results"></ul>
   <script>
     document.addEventListener('dataspatium:ready', async function () {
-      var files = ['harness.js', 'a11y.js', 'fixtures/api-fixtures.js', 'platform.test.js', 'i18n.test.js', 'sqlite.test.js', 'data.test.js', 'io.test.js', 'operations.test.js', 'operations2.test.js', 'api.test.js', 'viz.test.js', 'docgen.test.js', 'updates.test.js', 'pseudonymize.test.js', 'indexes.test.js', 'bundle.test.js', 'maps.test.js', 'rules.test.js', 'formats2.test.js', 'formats3.test.js', 'sync.test.js', 'basemaps.test.js', 'geo-ops.test.js', 'stream.test.js', 'metadata.test.js', 'shortnames.test.js', 'dashboards.test.js', 'ui.test.js', 'palette.test.js', 'r.test.js', 'formats.test.js', 'notebooks.test.js', 'regex.test.js', 'fixtures/sdmx-fixtures.js', 'sdmx.test.js', 'refresh.test.js', 'valuelabels.test.js', 'comments.test.js', 'github.test.js', 'a11y.test.js', 'flows.test.js', 'course.test.js'];
+      var files = ['harness.js', 'a11y.js', 'fixtures/api-fixtures.js', 'platform.test.js', 'i18n.test.js', 'sqlite.test.js', 'data.test.js', 'io.test.js', 'operations.test.js', 'operations2.test.js', 'api.test.js', 'viz.test.js', 'docgen.test.js', 'updates.test.js', 'pseudonymize.test.js', 'indexes.test.js', 'bundle.test.js', 'maps.test.js', 'rules.test.js', 'formats2.test.js', 'formats3.test.js', 'sync.test.js', 'basemaps.test.js', 'geo-ops.test.js', 'stream.test.js', 'metadata.test.js', 'shortnames.test.js', 'dashboards.test.js', 'ui.test.js', 'statusbar.test.js', 'soka.test.js', 'folders.test.js', 'tooltips.test.js', 'consent.test.js', 'palette.test.js', 'r.test.js', 'formats.test.js', 'notebooks.test.js', 'regex.test.js', 'fixtures/sdmx-fixtures.js', 'sdmx.test.js', 'refresh.test.js', 'valuelabels.test.js', 'comments.test.js', 'github.test.js', 'a11y.test.js', 'flows.test.js', 'course.test.js'];
       for (var i = 0; i < files.length; i++) await Dataspatium.assets.loadScript(files[i]);
       Dataspatium.require('tests/harness').run(document.getElementById('results'), document.getElementById('summary'));
     });

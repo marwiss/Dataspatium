@@ -9,8 +9,12 @@ tiedostoina levyllä (ks. [kom-igang.md](kom-igang.md)).
 
 ## Tarvitsenko internetiä?
 
-En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta, synkronoit GitHubin kanssa tai napsautat *Tarkista päivitykset*. Kaikki muu, myös R, toimii
-ilman verkkoa.
+En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta, lähetät GitHubiin tai noudat sieltä, napsautat
+*Tarkista päivitykset* tai käytät jotakin, mikä ei tule kansion mukana: jotkin komponentit (esimerkiksi
+taustakartat) ja sisäänrakennetun valikoiman ulkopuoliset R-paketit noudetaan tarvittaessa ja tallennetaan sitten
+paikallisesti. Kun sovellus tarvitsee ensimmäisen kerran internetiä jotakin tarkoitusta varten, se kysyy lupaa;
+vastauksen voi tallentaa ja muuttaa kohdassa *Hallitse → Työtila → Internetyhteys*, jossa on myös kutsujen loki.
+Kaikki muu, myös R, toimii ilman verkkoa.
 
 ## Miksi R:n ensimmäinen käyttökerta kestää?
 
@@ -57,6 +61,11 @@ selain ei salli service workereita, mutta palvelin, joka itse lähettää otsakk
 ja `Cross-Origin-Embedder-Policy: credentialless`, antaa saman tuloksen. Kaikki muu toimii kuten kansiosta. Selain
 tallentaa datan osoitekohtaisesti, joten kansion työtila ja palvelimen työtila ovat erillään; siirrä niiden välillä
 varmuuskopiolla tai paketilla.
+
+Verkkopalvelimelta, myös osoitteesta <https://marwiss.github.io/Dataspatium/>, sovelluksen voi asentaa omaksi
+sovellukseksi: Edgessä ja Chromessa osoiterivin *Asenna*-kuvakkeesta tai selaimen valikosta. Se saa silloin oman
+ikkunan ja kuvakkeen, tiedostot tallennetaan selaimeen, jotta se toimii ilman verkkoa, ja tallennustilasta tulee
+pysyvä. Uudet versiot noudetaan, kun sovellus avataan uudelleen verkon kanssa.
 
 ## Voinko avata index.html-tiedoston suoraan ZIP-tiedostosta?
 
@@ -132,19 +141,42 @@ jakamista. Ks. [bearbeta.md](bearbeta.md).
 
 ## Miten jaan dataa kollegan kanssa?
 
-Helpoimmin toiminnolla *Jaa paketti* kohdassa *Hallitse → Työtila*: valitse aineistot ja otetaanko kaaviot, kojelaudat,
-mallit ja muistikirjat mukaan, kirjoita viesti ja lähetä ZIP-tiedosto. Kollega pudottaa sen alueelle *Palauta
-ZIP-tiedostosta*, näkee viestisi ja muutokset ja voi korvata omat versionsa. Aineistojen ja sarakkeiden kommentit tulevat
-mukana. Jos työskentelette samassa työtilassa, voitte käyttää myös yhteistä GitHub-repositoriota (*GitHub* kohdassa
-*Hallitse → Työtila*). Voit myös viedä yksittäisen aineiston SQLite-muodossa (säilyttää tyypit, selitteet, kommentit ja
-historian) tai varmuuskopioida koko työtilan. Kaaviot ja asiakirjamallit voi viedä JSON-tiedostoina, API-määritykset
-`.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa.
+Helpoimmin *Jaa*-tilassa: kohdassa *Paketti* valitset aineistot ja otetaanko kaaviot, kojelaudat, mallit,
+muistikirjat ja skriptit mukaan, kirjoitat viestin ja lähetät ZIP-tiedoston, esimerkiksi välilehdeltä *Jakovalikko*
+(sähköposti, Teams ja muut sovellukset). Kollega avaa sen kohdassa *Vastaanota*, näkee viestisi ja muutokset ja voi
+korvata omat versionsa. Kommentit, kansiot ja tunnisteet tulevat mukana. Jos työskentelette samassa työtilassa,
+voitte käyttää myös yhteistä GitHub-repositoriota (välilehti *GitHub*). Kojelaudat ja asiakirjat voi julkaista
+itsenäisinä HTML-tiedostoina (välilehti *Julkaise*). Voit myös viedä yksittäisen aineiston SQLite-muodossa
+(säilyttää tyypit, selitteet, kommentit ja historian) tai varmuuskopioida koko työtilan. Kaaviot ja asiakirjamallit
+voi viedä JSON-tiedostoina, API-määritykset `.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa. Ks.
+[dela.md](dela.md).
 
 ## Miten avaan peruskurssin uudelleen?
 
 Napsauta oikean yläkulman kysymysmerkkiä ja valitse *Avaa peruskurssi*, tai paina Ctrl+K ja kirjoita *peruskurssi*.
 Kurssi jatkuu siitä, mihin jäit; jos olet käynyt sen loppuun, se alkaa alusta. Kurssi on saatavilla kaikilla kuudella
 kielellä.
+
+## Miten pidän järjestystä monissa aineistoissa?
+
+Anna niille kansiot ja tunnisteet: *Järjestä* Hallitse-tilassa, tai vedä aineisto kansioon kohdepaneelissa.
+Kansioilla voi olla alikansioita (`Talous/2026`), suodatinkenttä hakee nimestä, tunnisteesta ja kansiosta, ja
+valintaruudut valitsevat useita aineistoja erätoimintoja varten. Kansio ja tunnisteet kulkevat aineiston mukana
+paketeissa ja varmuuskopioissa, ja R:ssä `dm_list()` näyttää kansion.
+
+## Mitä komponentit ovat?
+
+Sovelluksen osia, jotka eivät tule kansion mukana, jotta se pysyy pienenä: esimerkiksi taustakartat ja
+sisäänrakennetun valikoiman ulkopuoliset R-paketit. Ne noudetaan kiinteästä osoitteesta, kun jokin tarvitsee niitä,
+luvan antamisen jälkeen, ja ne tarkistetaan tunnettua tarkistussummaa vastaan, kun sellainen on. Sen jälkeen ne
+tallennetaan selaimeen, eikä niitä tarvitse noutaa uudelleen. Kohdassa *Hallitse → Työtila → Komponentit* näet,
+mitä komponentteja on ja kuinka suuria ne ovat, ja voit noutaa ne etukäteen tai poistaa ne.
+
+## Voinko käyttää sovellusta puhelimessa?
+
+Ei vielä. Mobiilisivu puhelimille ja tableteille sekä suora siirto laitteiden välillä on suunniteltu seuraavaan
+versioon. Ikkuna mukautuu jo nyt: kapeissa ikkunoissa tilanvalitsin näyttää kuvakkeet ja paneelit avautuvat
+työalueen päälle.
 
 ## Etkö löydä vastausta täältä?
 

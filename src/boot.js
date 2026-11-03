@@ -11,17 +11,25 @@
  */
 (function () {
   'use strict';
+  /**
+   * Languages: Swedish (the source language) always, plus the chosen one. The choice lives in localStorage
+   * (`dataspatium.lang`) or in a ?lang= parameter. Before the first choice every language is loaded, so that the
+   * first-start chooser can show each language in itself; afterwards other languages load on demand through
+   * Dataspatium.require('ui/i18n').loadLanguage(code).
+   */
+  const LANGUAGES = ['sv', 'da', 'nb', 'fi', 'is', 'en'];
+  function chosenLanguages() {
+    let chosen = null;
+    try { chosen = new URLSearchParams(location.search).get('lang') || localStorage.getItem('dataspatium.lang'); } catch (_e) { chosen = null; }
+    if (!chosen || LANGUAGES.indexOf(chosen) < 0) return LANGUAGES.slice();
+    return chosen === 'sv' ? ['sv'] : ['sv', chosen];
+  }
   const scripts = [
     // Platform
     'src/platform/registry.js',
     'src/platform/capabilities.js',
     // Languages first: every later module may build user-facing text with Dataspatium.t at load time.
-    'src/ui/i18n/sv.js',
-    'src/ui/i18n/da.js',
-    'src/ui/i18n/nb.js',
-    'src/ui/i18n/fi.js',
-    'src/ui/i18n/is.js',
-    'src/ui/i18n/en.js',
+  ].concat(chosenLanguages().map((code) => 'src/ui/i18n/' + code + '.js'), [
     'src/ui/i18n/i18n.js',
     'src/platform/sync.js',
     'src/platform/assets.js',
@@ -32,6 +40,8 @@
     'src/platform/net-shim.js',
     'src/platform/workers.js',
     'src/platform/storage/idb-store.js',
+    'src/platform/consent.js',
+    'src/platform/components.js',
     'src/platform/storage/zip-bundle.js',
     'src/platform/storage/files.js',
     'src/platform/storage/folder-store.js',
@@ -41,6 +51,7 @@
     'src/engines/sqlite/sqlite-worker.js',
     'src/engines/sqlite/sqlite-engine.js',
     'src/engines/r/package-index.js',
+    'src/engines/r/remote-packages.js',
     'src/engines/r/r-engine.js',
     // Data
     'src/data/encoding.js',
@@ -58,6 +69,8 @@
     'src/data/derive.js',
     'src/data/profile.js',
     'src/data/rules.js',
+    'src/analysis/search.js',
+    'src/data/lists.js',
     'src/data/changelog.js',
     'src/data/comments.js',
     'src/data/workspace.js',
@@ -125,6 +138,7 @@
     'src/ui/components/dropzone.js',
     'src/ui/components/table.js',
     'src/ui/components/code-editor.js',
+    'src/ui/components/tooltip.js',
     'src/ui/components/index.js',
     // UI: shell and modes
     'src/ui/shell/state.js',
@@ -149,14 +163,20 @@
     'src/ui/docs/document-panel.js',
     'src/ui/analysis/notebook-panel.js',
     'src/ui/analysis/regex-panel.js',
+    'src/ui/share/bundle-dialog.js',
+    'src/ui/share/github-card.js',
+    'src/ui/datasets/batch-actions.js',
+    'src/ui/settings/network-card.js',
     'src/ui/modes/inhamta.js',
     'src/ui/modes/hantera.js',
+    'src/ui/modes/soka.js',
     'src/ui/modes/bearbeta.js',
     'src/ui/modes/analysera.js',
     'src/ui/modes/visualisera.js',
     'src/ui/modes/exportera.js',
+    'src/ui/modes/dela.js',
     'src/app.js',
-  ];
+  ]);
   // The page may live anywhere; resolve paths relative to this script's own src attribute.
   const current = /** @type {HTMLScriptElement|null} */ (document.currentScript);
   const src = (current && current.getAttribute('src')) || 'src/boot.js';

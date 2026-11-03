@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/i18n', ['i18n/sv', 'i18n/da', 'i18n/nb', 'i18n/fi', 'i18n/is', 'i18n/en'], (sv, da, nb, fi, is, en) => {
+  D.define('ui/i18n', ['i18n/sv'], (sv) => {
     const LANGUAGES = [
       { code: 'sv', label: 'Svenska', locale: 'sv-SE' },
       { code: 'da', label: 'Dansk', locale: 'da-DK' },
@@ -20,15 +20,34 @@
       { code: 'is', label: 'Íslenska', locale: 'is-IS' },
       { code: 'en', label: 'English', locale: 'en-GB' },
     ];
-    /** @type {Record<string, Record<string, string>>} */
-    const languages = { sv, da, nb, fi, is, en };
+    const isCode = (code) => LANGUAGES.some((l) => l.code === code);
+    /**
+     * Dictionaries that are loaded: Swedish always, the chosen language from the start (src/boot.js), the others
+     * on demand through loadLanguage().
+     * @type {Record<string, Record<string, string>>}
+     */
+    const languages = { sv };
+    for (const l of LANGUAGES) if (l.code !== 'sv' && D.has('i18n/' + l.code)) languages[l.code] = D.require('i18n/' + l.code);
     const KEY = 'dataspatium.lang';
     const DOCS_BASE = 'https://github.com/marwiss/Dataspatium';
     const numberFormats = new Map();
 
     /** True when a language has been chosen (by the user or a ?lang= link); false on the very first start. */
     function hasChoice() {
-      try { const saved = localStorage.getItem(KEY); return !!(saved && languages[saved]); } catch (_e) { return true; }
+      try { const saved = localStorage.getItem(KEY); return !!(saved && isCode(saved)); } catch (_e) { return true; }
+    }
+
+    /**
+     * Load a language's dictionary that was not loaded at the start (the script is injected like any other).
+     * @param {string} code
+     * @returns {Promise<boolean>} true when the dictionary is available
+     */
+    async function loadLanguage(code) {
+      if (!isCode(code)) return false;
+      if (languages[code]) return true;
+      if (!D.has('i18n/' + code)) await D.assets.loadScript((globalThis.DATASPATIUM_BASE || '') + 'src/ui/i18n/' + code + '.js');
+      languages[code] = D.require('i18n/' + code);
+      return true;
     }
 
     /**
@@ -38,14 +57,14 @@
     function detect() {
       try {
         const q = new URLSearchParams(location.search).get('lang');
-        if (q && languages[q]) { try { localStorage.setItem(KEY, q); } catch (_e) { /* ignore */ } return q; }
+        if (q && isCode(q)) { try { localStorage.setItem(KEY, q); } catch (_e) { /* ignore */ } return q; }
       } catch (_e) { /* no location */ }
-      try { const saved = localStorage.getItem(KEY); if (saved && languages[saved]) return saved; } catch (_e) { /* storage may be unavailable */ }
+      try { const saved = localStorage.getItem(KEY); if (saved && isCode(saved)) return saved; } catch (_e) { /* storage may be unavailable */ }
       const prefs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'sv']).map((l) => String(l).toLowerCase());
       for (const p of prefs) {
         const base = p.split('-')[0];
         const code = base === 'no' || base === 'nn' ? 'nb' : base;
-        if (languages[code]) return code;
+        if (isCode(code)) return code;
       }
       return 'sv';
     }
@@ -109,7 +128,7 @@
 
     /** Switch language (persisted). Modules build their text when they render, so callers reload the page. */
     function setLanguage(code, options = {}) {
-      if (!languages[code]) return false;
+      if (!isCode(code)) return false;
       current = code;
       numberFormats.clear();
       if (options.persist !== false) { try { localStorage.setItem(KEY, code); } catch (_e) { /* ignore */ } }
@@ -127,7 +146,7 @@
 
     apply();
     D.t = t;
-    return { t, tIn, formatNumber, formatBytes, formatDateTime, setLanguage, language, locale, has, hasChoice, keys, detect, docsUrl, LANGUAGES, KEY };
+    return { t, tIn, formatNumber, formatBytes, formatDateTime, setLanguage, loadLanguage, language, locale, has, hasChoice, keys, detect, docsUrl, LANGUAGES, KEY };
   });
   // Instantiate right away so that Dataspatium.t exists before any other module's factory runs.
   D.require('ui/i18n');

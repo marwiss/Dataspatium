@@ -36,10 +36,16 @@
           else if (this.iconEl.getAttribute('name') !== iconName) this.iconEl.setAttribute('name', iconName);
         } else if (this.iconEl) { this.iconEl.remove(); this.iconEl = null; }
         const label = this.getAttribute('label');
+        // Tooltips come from the shared dm-tooltip (data-tip), never from the browser's title: an icon-only button
+        // shows its label (or an explicit title), a labelled button only an explicit title.
+        // The title attribute is read once and then removed (removing it re-runs sync, so the text is kept here).
+        if (this.hasAttribute('title')) { this.tipText = this.getAttribute('title') || ''; this.removeAttribute('title'); return; }
+        const tip = this.tipText || '';
         if (label !== null) {
-          if (this.hasFlag('icon-only')) { this.btn.setAttribute('aria-label', label); this.btn.title = this.attr('title', label); this.labelEl.textContent = ''; }
-          else { this.labelEl.textContent = label; this.btn.removeAttribute('aria-label'); }
-        }
+          if (this.hasFlag('icon-only')) { this.btn.setAttribute('aria-label', label); this.btn.setAttribute('data-tip', tip || label); this.labelEl.textContent = ''; }
+          else { this.labelEl.textContent = label; this.btn.removeAttribute('aria-label'); if (tip) this.btn.setAttribute('data-tip', tip); else this.btn.removeAttribute('data-tip'); }
+        } else if (tip) this.btn.setAttribute('data-tip', tip);
+        this.btn.removeAttribute('title');
         if (this.hasFlag('icon-only')) this.labelEl.hidden = true;
       }
       get label() { return this.getAttribute('label') || this.labelEl?.textContent || ''; }

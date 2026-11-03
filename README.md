@@ -21,13 +21,18 @@ exporterar den.
    genomgång av alla lägen med exempeldata som tar ungefär tio minuter. Kursen öppnas igen från hjälpen (?).
 4. **Importera.** I läget *Inhämta* släpper du en fil på ytan (eller klickar på *Prova med exempeldata*),
    kontrollerar kolumnernas typer och klickar på *Importera*. Datamängden sparas i webbläsaren på din dator.
-5. **Arbeta vidare.** Växla läge högst upp: *Hantera* visar dina datamängder och arbetsytan, *Bearbeta* visar
-   tabellen med sortering, filter och åtgärder, *Analysera* öppnar R- och SQL-konsolen, *Visualisera* bygger
-   diagram och *Exportera* laddar ned data, diagram och dokument.
+5. **Arbeta vidare.** Växla läge högst upp: *Hantera* visar dina datamängder och arbetsytan, *Söka* hittar rader
+   i dem, *Bearbeta* visar tabellen med sortering, filter och åtgärder, *Analysera* öppnar R- och SQL-konsolen,
+   *Visualisera* bygger diagram, *Exportera* laddar ned data, diagram och dokument och *Dela* ger dem till andra.
 
 Data sparas i webbläsarens egen databas. Rensar du webbplatsdata försvinner den, så ta regelbundet en
 säkerhetskopia under *Hantera > Arbetsyta*. Säkerhetskopian är en ZIP-fil som kan återställas på samma eller en
 annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igang.md).
+
+Appen finns också direkt på webben, utan nedladdning: <https://marwiss.github.io/Dataspatium/>. Från en webbserver
+kan den installeras som egen app (Edge och Chrome: *Installera* i adressfältet) och fungerar sedan även utan
+nätverk. Webbversionen och mappversionen har skilda arbetsytor; flytta data mellan dem med en säkerhetskopia eller
+ett paket.
 
 ## Vad som krävs
 
@@ -36,7 +41,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   Safari stöds inte.
 - Ungefär 300 MB ledigt utrymme för appmappen och minst 4 GB arbetsminne (8 GB rekommenderas för stora
   datamängder). Inga administratörsrättigheter behövs.
-- Internet behövs bara när du hämtar data från öppna API:er, synkar med GitHub eller söker efter uppdatering.
+- Internet behövs bara när du hämtar data från öppna API:er, skickar till GitHub, söker efter uppdatering eller
+  hämtar en komponent eller ett R-paket som inte följer med i mappen; appen frågar om lov först.
 
 ## Vad du kan göra
 
@@ -69,14 +75,18 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument
   per kommun eller år (se [docs/dokumentmallar.md](docs/dokumentmallar.md)).
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
-  delningspaket med valda datamängder och objekt, ett meddelande och en ändringslogg, kommentarer på datamängder och
-  kolumner, säkerhetskopia av arbetsytan som ZIP, synk med ett GitHub-repo och, i Edge och Chrome, en portabel mapp
-  med vanliga filer.
-- **Hitta snabbt**: kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder, diagram och dashboards och kör
-  åtgärder från ett enda sökfält.
+  i läget *Dela* paket med valda datamängder och objekt, ett meddelande och en ändringslogg, synk med ett
+  GitHub-repo, datorns delningsmeny och publicering av dashboards och dokument som fristående HTML (se
+  [docs/dela.md](docs/dela.md)); kommentarer på datamängder och kolumner, säkerhetskopia av arbetsytan som ZIP
+  och, i Edge och Chrome, en portabel mapp med vanliga filer.
+- **Hålla ordning**: mappar och taggar för datamängder, filter och sortering, och batchåtgärder på flera
+  datamängder på en gång (ordna, paketera, exportera, hämta igen, köra recept, ta bort).
+- **Hitta snabbt**: läget *Söka* letar i alla kolumner i en eller alla datamängder, med fasetter som avgränsar och
+  sparade listor (se [docs/soka.md](docs/soka.md)); kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder,
+  diagram och dashboards och kör åtgärder från ett enda sökfält.
 - **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,
   isländska och engelska.
-- **Grundkurs**: en interaktiv genomgång av alla sex lägen med exempeldata, på alla sex språk. Den visas första
+- **Grundkurs**: en interaktiv genomgång av alla åtta lägen med exempeldata, på alla sex språk. Den visas första
   gången appen öppnas och kan öppnas när som helst från hjälpen eller kommandopaletten.
 
 ## Lär dig mer
@@ -86,7 +96,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - [Kom igång](docs/kom-igang.md): steg för steg med vanliga frågor.
 - [Användarguide](docs/anvandarguide.md): hela arbetsflödet från fil till rapport.
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
-- [De sex lägena](docs/lagen.md): vad som finns var och varför.
+- [De åtta lägena](docs/lagen.md): vad som finns var och varför.
+- [Söka](docs/soka.md) och [Dela](docs/dela.md): hitta utan kod, och ge data till andra.
 - [Anteckningsbok](docs/anteckningsbok.md): text, R och SQL i celler som blir en rapport.
 - [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
@@ -94,6 +105,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för
   den som vill förstå koden; hur bidrag tas emot står i [CONTRIBUTING.md](CONTRIBUTING.md).
 - [Teknisk spik, fas 0](docs/fas0-spik.md): hur det bevisades att allt fungerar utan server.
+- [Teknisk spik inför 2.0](docs/fas0-2.md): WebRTC, Python, IFC, grafer och databaser prövade från file://.
 - Externa resurser: [WebR](https://docs.r-wasm.org/webr/latest/), [R för nybörjare](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [SCB:s API](https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/).
 
@@ -109,7 +121,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   samtidigt: den som sparar sist vinner.
 - Den portabla mappen kräver Edge eller Chrome; Firefox saknar mappåtkomst (File System Access). Säkerhetskopia
   som ZIP fungerar överallt.
-- Safari och mobila webbläsare stöds inte.
+- Safari och mobila webbläsare stöds inte ännu; en mobilsida för telefoner och surfplattor är planerad till nästa
+  version. I smala fönster öppnas panelerna redan nu som flak över arbetsytan.
 
 ## Fel och förslag
 

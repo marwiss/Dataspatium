@@ -13,3 +13,4 @@ Thumbs.db
 .claude/
 # Python bytecode from running the tools
 __pycache__/
+docs/plan-2.md

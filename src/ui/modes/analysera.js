@@ -193,7 +193,8 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }];
+        // Fixed order: R, (Python later), SQL, Regex; the notebook is always last because it joins pieces from the others.
+        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => {
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;

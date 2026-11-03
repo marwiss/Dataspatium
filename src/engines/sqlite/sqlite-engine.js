@@ -94,7 +94,14 @@
       /** @returns {Promise<string>} */
       version() { return this.call('version'); }
       close() { return this.call('close'); }
-      terminate() { if (this.worker) this.worker.terminate(); this.worker = null; this.pending.clear(); }
+      terminate() {
+        if (this.worker) this.worker.terminate();
+        this.worker = null;
+        // Callers waiting for a reply would otherwise hang forever.
+        const err = new Error('SqliteEngine terminated');
+        for (const p of this.pending.values()) p.reject(err);
+        this.pending.clear();
+      }
     }
     return { SqliteEngine };
   });

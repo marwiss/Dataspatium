@@ -9,8 +9,11 @@ ordinary files on disk (see [kom-igang.md](kom-igang.md)).
 
 ## Do I need internet?
 
-No. Internet is needed only when you fetch data from an API, sync with GitHub or click *Check for updates*. Everything else, R
-included, works without a network.
+No. Internet is needed only when you fetch data from an API, push to or fetch from GitHub, click *Check for updates*
+or use something that does not ship in the folder: some components (for example base maps) and R packages outside the
+built-in selection are fetched when needed and then stored locally. The first time the app needs the internet for a
+purpose it asks for permission; the answer can be remembered and changed under *Manage → Workspace → Internet
+access*, where the log of requests is too. Everything else, R included, works without a network.
 
 ## Why does it take time the first time I use R?
 
@@ -57,6 +60,11 @@ an intranet the browser allows no service workers, but a server that itself send
 `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless` gives the same. Everything
 else works as from the folder. The browser stores data per address, so the workspace in the folder and the one on the
 server are separate; move between them with a backup or a bundle.
+
+From a web server, including <https://marwiss.github.io/Dataspatium/>, the app can be installed as an app of its own:
+in Edge and Chrome through the *Install* icon in the address bar or the browser menu. It then gets its own window and
+icon, the files are stored in the browser so that it works without a network, and storage becomes persistent. New
+versions are fetched when the app is opened again with a network.
 
 ## Can I open index.html directly inside the ZIP file?
 
@@ -144,19 +152,41 @@ dataset before you share it. See [bearbeta.md](bearbeta.md).
 
 ## How do I share data with a colleague?
 
-Easiest with *Share bundle* under *Manage → Workspace*: choose datasets and whether charts, dashboards, templates and
-notebooks should come along, write a message and send the ZIP file. The colleague drops it on *Restore from ZIP*, sees
-your message and what has changed and can replace their own versions. Comments on datasets and columns come along. If
-you work on the same workspace, you can also use a shared GitHub repository (*GitHub* under *Manage → Workspace*). You
-can also export a single dataset as SQLite (keeps types, labels, comments and history) or take a backup of the whole
-workspace. Charts and document templates can be exported as JSON files, API configurations as `.api.json`, and recipes
-as JSON, R or SQL.
+Easiest in the *Share* mode: under *Bundle* you choose datasets and whether charts, dashboards, templates, notebooks
+and scripts should come along, write a message and send the ZIP file, for example through the *Share menu* tab
+(e-mail, Teams and other apps). The colleague opens it under *Receive*, sees your message and what has changed and can
+replace their own versions. Comments, folders and tags come along. If you work on the same workspace, you can also use
+a shared GitHub repository (the *GitHub* tab). Dashboards and documents can be published as standalone HTML files (the
+*Publish* tab). You can also export a single dataset as SQLite (keeps types, labels, comments and history) or take a
+backup of the whole workspace. Charts and document templates can be exported as JSON files, API configurations as
+`.api.json`, and recipes as JSON, R or SQL. See [dela.md](dela.md).
 
 ## How do I open the beginner's course again?
 
 Click the question mark at the top right and choose *Open the beginner's course*, or press Ctrl+K and type *course*.
 The course continues where you left off; if you have finished it, it starts again from the beginning. It is
 available in all six languages.
+
+## How do I keep order among many datasets?
+
+Give them folders and tags: *Organise* in Manage, or drag a dataset to a folder in the object panel. Folders can
+have subfolders (`Economy/2026`), the filter field searches name, tag and folder, and the checkboxes select several
+datasets for batch actions. Folder and tags travel with the dataset in bundles and backups, and in R `dm_list()`
+shows the folder.
+
+## What are components?
+
+Parts of the app that do not ship in the folder, to keep it small: for example base maps and R packages outside the
+built-in selection. They are fetched from a fixed address when something needs them, after you have given
+permission, and are checked against a known checksum where one exists. They are then stored in the browser and need
+not be fetched again. Under *Manage → Workspace → Components* you see which ones exist and how large they are, and
+can fetch them in advance or remove them.
+
+## Can I use the app on my phone?
+
+Not yet. A mobile page for phones and tablets, and transfer directly between devices, is planned for the next
+version. The window already adapts: in narrow windows the mode switcher shows icons and the panels open as sheets
+over the work area.
 
 ## Can't find the answer here?
 

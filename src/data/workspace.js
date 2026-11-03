@@ -55,7 +55,7 @@
       for (const meta of listed) {
         const path = `datasets/${meta.id}.sqlite`;
         if (!only || only.has(meta.id)) files[path] = new Uint8Array(await datasets.exportBytes(meta.id));
-        entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: meta.columnCount, updatedAt: meta.updatedAt, file: path });
+        entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: meta.columnCount, updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path });
       }
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
       const vizCharts = optional('viz/charts');
@@ -102,7 +102,8 @@
         files[path] = scriptJson(sc);
         scriptEntries.push({ id: sc.id, name: sc.name, language: sc.language, file: path });
       }
-      files[MANIFEST] = JSON.stringify(Object.assign({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, options.extra || {}), null, 2);
+      // format 2 (2.0): dataset entries carry folder and tags; readers of format 1 ignore them, and 1.x files open as before.
+      files[MANIFEST] = JSON.stringify(Object.assign({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', format: 2, name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, options.extra || {}), null, 2);
       return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length, scripts: scriptEntries.length } };
     }
 

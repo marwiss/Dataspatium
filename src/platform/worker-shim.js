@@ -186,18 +186,20 @@ function dataspatiumWorkerShim(config, makeXHR) {
   // SharedArrayBuffer channel this worker waits for R requests and never reads further messages, so assets
   // needed later are written there with webR's FS.writeFile instead (see engines/r ensurePackages).
   var FS_ASSETS = '/dataspatium-assets/';
-  function lookupSync(name) {
-    var entry = assets.get(name);
-    if (entry) return entry;
+  // A file written there later replaces what the map holds (a re-sent package index, for example).
+  function fromFs(name) {
     var fs = self.Module && self.Module.FS;
     if (!fs) return null;
     try {
       var bytes = fs.readFile(FS_ASSETS + encodeURIComponent(name));
-      entry = { kind: 'binary', data: bytes.slice().buffer };
+      var entry = { kind: 'binary', data: bytes.slice().buffer };
       assets.set(name, entry);
       try { fs.unlink(FS_ASSETS + encodeURIComponent(name)); } catch (e) { /* keep it */ }
       return entry;
     } catch (e) { return null; }
+  }
+  function lookupSync(name) {
+    return fromFs(name) || assets.get(name) || null;
   }
   function lookupAsync(name) {
     var entry = assets.get(name);

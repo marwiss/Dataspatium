@@ -17,6 +17,8 @@ param(
   [string]$Url = "tests/index.html",
   [int]$TimeoutSec = 300,
   [string[]]$Browsers = @("edge", "firefox"),
+  [int]$Width = 1400,
+  [int]$Height = 1000,
   [switch]$KeepProfile,
   [switch]$AllConsole
 )
@@ -83,7 +85,7 @@ foreach ($browser in $Browsers) {
     if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-Item -Recurse -Force $profileDir }
     $log = Join-Path $work "edge.log"
     if (Test-Path $log) { Remove-Item -Force $log }
-    $edgeArgs = @('--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--window-size=1400,1000',
+    $edgeArgs = @('--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', "--window-size=$Width,$Height",
                   '--enable-logging=stderr', '--v=0', "--user-data-dir=$profileDir", $pageUrl)
     $proc = Start-Process -FilePath $edgeExe -ArgumentList $edgeArgs -RedirectStandardError $log -RedirectStandardOutput (Join-Path $work "edge.out") -PassThru
     $finished = Wait-ForSummary @($log) $TimeoutSec
@@ -113,7 +115,7 @@ foreach ($browser in $Browsers) {
     $log = Join-Path $work "firefox.log"
     $err = Join-Path $work "firefox.err"
     foreach ($f in @($log, $err)) { if (Test-Path $f) { Remove-Item -Force $f } }
-    $proc = Start-Process -FilePath $ffExe -ArgumentList @('--headless', '--no-remote', '--profile', "`"$profileDir`"", $pageUrl) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+    $proc = Start-Process -FilePath $ffExe -ArgumentList @('--headless', '--no-remote', '--width', "$Width", '--height', "$Height", '--profile', "`"$profileDir`"", $pageUrl) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
     $finished = Wait-ForSummary @($log, $err) $TimeoutSec
     Stop-Browser $proc "firefox-profile"
     Start-Sleep -Milliseconds 800

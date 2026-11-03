@@ -34,6 +34,7 @@
     async function fetchFile(url) {
       const clean = String(url || '').trim();
       if (!/^https?:\/\//i.test(clean) && !/^dataspatium-asset:\/\//.test(clean)) throw new Error(D.t('url.err.scheme'));
+      if (/^https?:\/\//i.test(clean)) await D.require('platform/consent').require('url', { host: D.require('platform/consent').hostOf(clean) });
       let res;
       try { res = await fetch(clean, { mode: 'cors' }); } catch (err) {
         throw new Error(D.t('url.err.fetch', { message: (err && err.message) || err }));

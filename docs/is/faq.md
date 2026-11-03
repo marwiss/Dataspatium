@@ -8,8 +8,11 @@ möppu í Edge og Chrome svo vinnusvæðið sé líka til sem venjulegar skrár 
 
 ## Þarf ég net?
 
-Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu, samstillir við GitHub eða smellir á *Leita að uppfærslum*. Allt annað, líka R, virkar án
-nettengingar.
+Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu, sendir á eða sækir frá GitHub, smellir á *Leita að
+uppfærslum* eða notar eitthvað sem fylgir ekki í möppunni: sumir íhlutir (til dæmis grunnkort) og R-pakkar utan
+innbyggða úrvalsins eru sóttir þegar þeirra er þörf og síðan vistaðir á tölvunni. Í fyrsta skipti sem forritið þarf
+netið í einhverjum tilgangi spyr það um leyfi; svarið má vista og breyta undir *Umsjón → Vinnusvæði → Netaðgangur*,
+þar sem dagbókin yfir köll er líka. Allt annað, líka R, virkar án nettengingar.
 
 ## Af hverju tekur það tíma í fyrsta skipti sem ég nota R?
 
@@ -55,6 +58,11 @@ venjulegt http á innraneti leyfir vafrinn engar þjónustuvinnslur, en þjónn 
 `Cross-Origin-Opener-Policy: same-origin` og `Cross-Origin-Embedder-Policy: credentialless` gefur það sama. Allt annað
 virkar eins og úr möppunni. Vafrinn geymir gögn eftir vefslóð, svo vinnusvæðið í möppunni og það á þjóninum eru aðskilin;
 færðu á milli með afriti eða pakka.
+
+Af vefþjóni, líka <https://marwiss.github.io/Dataspatium/>, má setja forritið upp sem sjálfstætt forrit: í Edge og
+Chrome um táknið *Setja upp* í veffangastikunni eða valmynd vafrans. Það fær þá eigin glugga og eigið tákn, skrárnar
+eru vistaðar í vafranum svo það virki án nets, og geymslan verður varanleg. Nýjar útgáfur eru sóttar þegar forritið
+er opnað aftur með neti.
 
 ## Get ég opnað index.html beint í ZIP-skránni?
 
@@ -128,18 +136,40 @@ einstaklinga, svo farðu yfir allt gagnasafnið áður en þú deilir því. Sj�
 
 ## Hvernig deili ég gögnum með samstarfsmanni?
 
-Einfaldast með *Deila pakka* undir *Umsjón → Vinnusvæði*: veldu gagnasöfn og hvort myndrit, mælaborð, snið og minnisbækur
-eigi að fylgja, skrifaðu skilaboð og sendu ZIP-skrána. Samstarfsmaðurinn sleppir henni á *Endurheimta úr ZIP*, sér skilaboð
-þín og hvað hefur breyst og getur skipt út eigin útgáfum. Athugasemdir við gagnasöfn og dálka fylgja með. Ef þið vinnið í
-sama vinnusvæði getið þið líka notað sameiginlegt GitHub-safn (*GitHub* undir *Umsjón → Vinnusvæði*). Þú getur líka flutt
-út eitt gagnasafn sem SQLite (heldur gerðum, merkimiðum, athugasemdum og sögu) eða tekið afrit af öllu vinnusvæðinu.
-Myndrit og skjalasnið má flytja út sem JSON-skrár, API-uppsetningar sem `.api.json` og uppskriftir sem JSON, R eða SQL.
+Einfaldast í hamnum *Deila*: undir *Pakki* velurðu gagnasöfn og hvort myndrit, mælaborð, snið, minnisbækur og
+skriftur eigi að fylgja, skrifar skilaboð og sendir ZIP-skrána, til dæmis um flipann *Deilivalmynd* (tölvupóstur,
+Teams og önnur forrit). Samstarfsmaðurinn opnar hana undir *Taka á móti*, sér skilaboð þín og hvað hefur breyst og
+getur skipt út eigin útgáfum. Athugasemdir, möppur og merki fylgja með. Ef þið vinnið í sama vinnusvæði getið þið
+líka notað sameiginlegt GitHub-safn (flipinn *GitHub*). Mælaborð og skjöl má birta sem sjálfstæðar HTML-skrár
+(flipinn *Birta*). Þú getur líka flutt út eitt gagnasafn sem SQLite (heldur gerðum, merkimiðum, athugasemdum og
+sögu) eða tekið afrit af öllu vinnusvæðinu. Myndrit og skjalasnið má flytja út sem JSON-skrár, API-uppsetningar sem
+`.api.json` og uppskriftir sem JSON, R eða SQL. Sjá [dela.md](dela.md).
 
 ## Hvernig opna ég grunnnámskeiðið aftur?
 
 Smelltu á spurningarmerkið efst til hægri og veldu *Opna grunnnámskeiðið*, eða ýttu á Ctrl+K og skrifaðu *námskeið*.
 Námskeiðið heldur áfram þar sem frá var horfið; ef þú hefur lokið því byrjar það upp á nýtt. Það er til á öllum sex
 tungumálunum.
+
+## Hvernig held ég röð og reglu á mörgum gagnasöfnum?
+
+Gefðu þeim möppur og merki: *Raða* í Umsjón, eða dragðu gagnasafn í möppu í hlutaspjaldinu. Möppur geta haft
+undirmöppur (`Fjármál/2026`), síureiturinn leitar í heiti, merki og möppu, og gátreitirnir velja fleiri gagnasöfn
+fyrir hópaðgerðir. Mappa og merki fylgja gagnasafninu í pökkum og afritum, og í R sýnir `dm_list()` möppuna.
+
+## Hvað eru íhlutir?
+
+Hlutar forritsins sem fylgja ekki í möppunni, til að halda henni lítilli: til dæmis grunnkort og R-pakkar utan
+innbyggða úrvalsins. Þeir eru sóttir af fastri vefslóð þegar eitthvað þarf þá, eftir að þú hefur gefið leyfi, og
+athugaðir gegn þekktri prófsummu þar sem slík er til. Síðan eru þeir vistaðir í vafranum og þarf ekki að sækja aftur.
+Undir *Umsjón → Vinnusvæði → Íhlutir* sérðu hverjir eru til og hversu stórir þeir eru, og getur sótt þá fyrirfram eða
+fjarlægt þá.
+
+## Get ég notað forritið í símanum?
+
+Ekki enn. Farsímasíða fyrir síma og spjaldtölvur, og flutningur beint milli tækja, er áætluð í næstu útgáfu.
+Glugginn aðlagar sig þegar nú: í þröngum gluggum sýnir hamavalið tákn og spjöldin opnast sem yfirlagsspjöld yfir
+vinnuflötinn.
 
 ## Finnurðu ekki svarið hér?
 

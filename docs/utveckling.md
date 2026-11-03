@@ -57,6 +57,9 @@ på en gång.
 - Språkvalet sparas i `localStorage` under `dataspatium.lang`. Första starten (ingen sparad nyckel) visar
   språkvalet innan något annat; `index.html?lang=en` väljer och sparar ett språk, vilket skärmbildsverktyget
   och testerna använder (`tests/index.html` låser svenska eftersom testerna kontrollerar svenska texter).
+- Vid start laddas bara `sv.js` och det valda språket (`chosenLanguages()` i `src/boot.js`; alla sex innan ett
+  språk valts). Byte av språk laddar ordboken med `i18n.loadLanguage(kod)`, som också tester som jämför alla
+  språk anropar först.
 - Tal formateras med `Intl.NumberFormat` i språkets locale (`i18n.formatNumber`); Vega och D3 får samma
   avgränsare via `src/viz/locale.js`. Datum skrivs alltid `ÅÅÅÅ-MM-DD`.
 - R-meddelandena i `r/dataspatium.R` finns i samma sex språk (`.dm_msg`) och väljs med `dm_setup(lang)`.
@@ -69,8 +72,8 @@ på en gång.
   attribut, API-parametrar och reservnamn i operationer (till exempel `variabel`/`varde` när ett äldre recept
   saknar namnen).
 
-Lägga till ett språk: skapa `src/ui/i18n/<kod>.js` med alla nycklar, lägg till filen i `src/boot.js` före
-`i18n.js`, lägg till posten i `LANGUAGES` i `src/ui/i18n/i18n.js`, lägg till meddelandena i `r/dataspatium.R`
+Lägga till ett språk: skapa `src/ui/i18n/<kod>.js` med alla nycklar, lägg till koden i `LANGUAGES` i
+`src/boot.js` och posten i `LANGUAGES` i `src/ui/i18n/i18n.js`, lägg till meddelandena i `r/dataspatium.R`
 och i förinställningarnas `i18n`-block, översätt `docs/` till `docs/<kod>/` och kör testerna.
 
 ## Skärmbilder
@@ -90,6 +93,13 @@ steget som *Gör det åt mig*.
 ## Tester
 - `powershell -File tools/run-tests.ps1` kör `tests/index.html` headless i Edge och Firefox och skriver ut varje
   testrad. Exit-kod 0 betyder grönt, 1 fel, 2 timeout eller saknad webbläsare.
+- `-Width` och `-Height` (standard 1400 × 1000) sätter fönstrets storlek. Kör också sviten i surfplattestorlek,
+  `-Width 768 -Height 1024`, när skalet eller ett läges layout ändrats, så att flaken och lägesväxlarens ikonläge
+  testas.
+- Testsidan ger samtycke till alla internetändamål i förväg (`localStorage` `dataspatium.consent = granted`), så
+  att samtyckesdialogen inte stoppar tester; `tests/consent.test.js` tar bort nyckeln medan den testar dialogen.
+- Appen laddar bara svenska och det valda språket vid start; tester som läser alla språk anropar
+  `i18n.loadLanguage(kod)` först.
 - API-testerna kör mot en låtsastjänst (virtuella `dataspatium-asset://`-adresser via `Dataspatium.net.virtual`) och
   behöver inget nätverk. `powershell -File tools/run-tests.ps1 -Browsers edge -Url "tests/index.html?live=1"` kör
   dessutom ett röktest mot SCB, Kolada, SMHI, Eurostat, dataportalen och Socialstyrelsen; det kräver nätverk och
@@ -113,7 +123,7 @@ steget som *Gör det åt mig*.
 - `tests/a11y.js` är en egen tillgänglighetskontroll (axe-core har licensen MPL-2.0, som inte är tillåten här):
   alla knappar, länkar, flikar och fält har ett tillgängligt namn, id är unika och de id som ARIA-attribut pekar på
   finns, dialoger har namn, roller är giltiga, ingen positiv `tabindex`, inga interaktiva element i varandra och
-  inga tomma rubriker. `tests/a11y.test.js` kör kontrollen i alla sex lägen och deras flikar, kontrollerar
+  inga tomma rubriker. `tests/a11y.test.js` kör kontrollen i alla åtta lägen och deras flikar, kontrollerar
   landmärken, länken *Hoppa till innehållet*, tangentbordsnavigering i flikar och att designtokens klarar WCAG AA:
   4,5:1 för text och 3:1 för kanter på fält och växlar, i både ljust och mörkt tema.
 
@@ -150,7 +160,8 @@ slår i JavaScript-motorns gräns för arraylängd nära 128 MB; `engines/r` skr
 om 4 MB i taget. Stora CSV-filer tolkas i bitar om 512 kB med ett uppehåll mellan tolkning och typning.
 
 ## Release
-1. Kör alla tester i båda webbläsarna och sätt versionsnumret i `src/platform/registry.js` (`Dataspatium.version`).
+1. Kör alla tester i båda webbläsarna och sätt versionsnumret i `src/platform/registry.js` (`Dataspatium.version`)
+   och i `sw-coi.js` (`CACHE`), så att installerade appar hämtar de nya filerna.
 2. Checka in och tagga: `git tag -a v1.0.0 -m "Dataspatium 1.0.0"` följt av `git push origin main --tags`.
    Taggen måste heta `v<version>`, eftersom uppdateringskontrollen i appen (hjälpknappen, `src/platform/updates.js`)
    jämför `tag_name` i `https://api.github.com/repos/marwiss/Dataspatium/releases/latest` med `Dataspatium.version`.
@@ -164,3 +175,6 @@ om 4 MB i taget. Stora CSV-filer tolkas i bitar om 512 kB med ett uppehåll mell
 6. Skapa utgåvan: `gh release create v1.0.0 dataspatium-1.0.0.zip --title "Dataspatium 1.0.0" --notes-file notes.md`,
    där noten inleds med Kom igång-stegen från README. Kontrollera efteråt att GitHubs egen kontrollsumma för
    filen (`gh release view v1.0.0 --json assets`, fältet `digest`) är densamma som den i noten.
+7. GitHub Pages bygger från `main` och publicerar appen på <https://marwiss.github.io/Dataspatium/> några minuter
+   efter pushen. Öppna adressen, kontrollera versionsnumret under hjälpen och kör sviten därifrån:
+   `powershell -File tools/run-tests.ps1 -Browsers edge -Url "https://marwiss.github.io/Dataspatium/tests/index.html"`.

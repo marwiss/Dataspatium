@@ -21,8 +21,8 @@ kommandopaletten. Skrifttyper og ikoner indlæses fra mappen; det tager et øjeb
 ### Grundkurset
 
 Efter sprogvalget starter **grundkurset**, en interaktiv gennemgang i et panel nederst til højre. Det tager omkring ti
-minutter og følger eksemplet *Befolkning pr. kommune 2024 (Sverige)* gennem alle seks tilstande: hent data, se på
-datasættet, beregn en kolonne, spørg med SQL, regn med R, lav et diagram og eksportér. Hvert trin forklarer et begreb
+minutter og følger eksemplet *Befolkning pr. kommune 2024 (Sverige)* gennem alle otte tilstande: hent data, se på
+datasættet, søg, beregn en kolonne, spørg med SQL, regn med R, lav et diagram, eksportér og del. Hvert trin forklarer et begreb
 og giver en opgave. En ramme viser, hvor du skal klikke, og trinnet bliver krydset af, når du har gjort det. *Gør det
 for mig* udfører trinnet for dig, hvis du hellere vil se, hvordan det gøres.
 
@@ -31,18 +31,21 @@ eller fra kommandopaletten (Ctrl+K, *Åbn grundkurset*). Det fortsætter, hvor d
 
 ## 3. Tilstandene
 
-Øverst findes seks tilstande. Panelet til venstre viser objekter (datasæt og kilder), midten er arbejdsfladen,
-panelet til højre viser egenskaber og statistik, og nederst er der en log. Panelerne kan foldes ind med knapperne
-øverst til højre. Alt+1 til Alt+6 skifter tilstand med tastaturet.
+Øverst findes otte tilstande. Panelet til venstre viser objekter (datasæt og kilder), midten er arbejdsfladen,
+panelet til højre viser egenskaber og statistik, og nederst findes statuslinjen med gemmestatus, lager, det valgte
+datasæt, R-motoren og knapperne, der folder panelerne ind og åbner loggen. Panelernes bredde ændres ved at trække i
+kanten mod arbejdsfladen. Alt+1 til Alt+8 skifter tilstand med tastaturet.
 
 | Tilstand | Hvad du gør der |
 |---|---|
 | Hent | Importerer filer, indsætter tabeller og henter fra åbne API'er i Norden, som Danmarks Statistik, SSB, Statistikcentralen, Hagstofa Íslands, SCB og Eurostat ([api-konfiguration.md](api-konfiguration.md)) |
-| Håndter | Ser dine datasæt, omdøber, sletter, gemmer versioner, tager backup af og gendanner arbejdsområdet |
+| Håndter | Ser dine datasæt i mapper med tags, omdøber, sletter, gemmer versioner, kører batchhandlinger på flere datasæt, tager backup af og gendanner arbejdsområdet |
+| Søg | Søger i alle kolonner i ét eller alle datasæt, indsnævrer med facetter og gemmer søgninger som lister ([soka.md](soka.md)) |
 | Bearbejd | Redigerer celler, sorterer og filtrerer, renser og sætter typer, beregner kolonner, pivoterer, sammenkobler datasæt; alt med fortryd, versioner og recepter ([bearbeta.md](bearbeta.md)) |
-| Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; SQL-konsol mod det valgte datasæt |
+| Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; SQL-konsol mod det valgte datasæt; regulære udtryk; notesbog, der bliver til rapport |
 | Visualisér | Bygger diagrammer med Vega-Lite, D3-skabeloner eller R-scripts, gemmer, eksporterer og opretter dem i batch ([visualisera.md](visualisera.md)) |
 | Eksportér | Downloader data som CSV, Excel, JSON eller SQLite, gemte diagrammer som SVG, PNG eller PDF og dokumenter fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
+| Del | Pakker datasæt med diagrammer og skabeloner til kolleger, sender arbejdsområdet til GitHub, deler via computerens delingsmenu og udgiver dashboards som HTML ([dela.md](dela.md)) |
 
 ## 4. Importér en fil
 
@@ -93,9 +96,9 @@ synkroniseret mappe. Slå *Gem automatisk ved ændringer* til, så holdes mappen
 du samme mappe og klikker på *Indlæs fra mappen*. Efter en genstart af browseren spørger den én gang om lov til at
 bruge mappen igen; klik på *Tilslut igen*.
 
-Vil du sende et udvalg til en kollega, så brug *Del pakke* på samme side: vælg datasæt, og om diagrammer, dashboards,
-skabeloner og notesbøger skal med. Kollegaen slipper pakken på *Gendan fra ZIP*; det, der allerede findes i
-vedkommendes arbejdsområde, springes over.
+Vil du sende et udvalg til en kollega, så gå til tilstanden *Del* og fanen *Pakke*: vælg datasæt, og om diagrammer,
+dashboards, skabeloner, notesbøger og scripts skal med. Kollegaen åbner pakken under *Modtag* i samme tilstand; det,
+der allerede findes i vedkommendes arbejdsområde, springes over.
 
 ## Almindelige spørgsmål
 

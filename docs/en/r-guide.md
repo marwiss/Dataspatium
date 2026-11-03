@@ -14,8 +14,8 @@ Everything you need is in the app folder: R, a selection of packages and Dataspa
 
 | Function | Does |
 |---|---|
-| `dm_list()` | Shows the datasets in the session: name, short name, rows, columns, changed, id. |
-| `dm_read("shortname")` | Reads a dataset as a `data.frame` with the right types: dates become `Date`, date and time `POSIXct`, yes/no `logical`, integers `integer`. The argument is preferably the short name (for example `dm_read("befolkning_2024")`, which is what the button *Insert dm_read()* writes) but can also be the id, the exact name, the name regardless of case or an unambiguous prefix; `dm_list()` shows the short names. |
+| `dm_list()` | Shows the datasets in the session: name, short name, folder, rows, columns, changed, id. |
+| `dm_read("shortname")` | Reads a dataset as a `data.frame` with the right types: dates become `Date`, date and time `POSIXct`, yes/no `logical`, integers `integer`. The argument is preferably the short name (for example `dm_read("befolkning_2024")`, which is what the button *Insert dm_read()* writes) but can also be the id, the exact name, the name regardless of case or an unambiguous prefix; `dm_list()` shows the short names. If the dataset is in a folder, `dm_read("Folder/Name")` and `dm_read("Folder/shortname")` work too. |
 | `dm_read("shortname", columns = c("a", "b"), where = "a > 10", n = 1000)` | Reads only some columns, rows meeting an SQL condition, or a limited number of rows. |
 | `attr(df$column, "label")`, `"description"`, `"unit"` | The column's label, description and unit from the app come along as attributes (when set); `dm_write()` takes them back, or through the arguments `labels`, `descriptions` and `units`. |
 | `dm_value_labels(x, c("Man" = 1, "Woman" = 2), to = "labels")` | Value labels. A column with codes and labels becomes `haven::labelled` in `dm_read()` (a column that already holds the labels as text keeps the codes in the attribute `value_labels`), and `dm_write()` keeps them. `dm_value_labels()` sets labels (`to = NULL`), swaps codes for labels (`"labels"`) or back (`"codes"`); without labels they are removed. |
@@ -55,8 +55,13 @@ tidyr, readr, stringr, lubridate, forcats, data.table, haven (SPSS, Stata, SAS),
 (Parquet), svglite, jsonlite, RSQLite, DBI and knitr, plus their dependencies (among them tibble, purrr, rlang, cli,
 stringi). `library(package)` installs the package from the built-in repository the first time it is used.
 
-Other CRAN packages cannot be installed, since the app does not fetch anything from the internet. If you need more
-packages, open an issue and they can be added in the next release.
+Other packages are fetched when needed from webR's package repository (repo.r-wasm.org, more than 20,000 CRAN
+packages built for the browser): when the code calls `library()`, `require()` or `package::` for a package outside
+the selection, it is fetched with its dependencies before the code runs. The first time, the app asks for permission
+to contact the internet for components; the packages are then stored in the browser, remain at the next start and are
+shown under *Manage → Workspace → Components*, where they can also be removed. Without a network, or if you say no,
+the code gets the usual error that the package is missing. Packages that need system libraries not available in the
+browser may be missing from the repository.
 
 ## How data moves between the app and R
 
@@ -72,7 +77,7 @@ Datasets larger than 50 MB are mirrored only when they are referred to in the co
 ## Language
 
 Messages from `dm_list()`, `dm_read()` and `dm_write()` follow the app's language (Swedish, Danish, Norwegian,
-Finnish, Icelandic or English); the column names in `dm_list()`, however, are always the same (`namn`, `kortnamn`,
+Finnish, Icelandic or English); the column names in `dm_list()`, however, are always the same (`namn`, `kortnamn`, `mapp`,
 `rader`, `kolumner`, `ändrad`, `id`) so that scripts work regardless of language.
 
 ## Limitations

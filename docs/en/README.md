@@ -24,13 +24,18 @@ documentation show the app in Swedish.
    walkthrough of all the modes with example data that takes about ten minutes. Reopen it from the help (?).
 4. **Import.** In *Import* mode, drop a file on the surface (or click *Try with example data*), check the column
    types and click *Import*. The dataset is stored in the browser on your computer.
-5. **Carry on.** Switch mode at the top: *Manage* shows your datasets and the workspace, *Process* shows the table
-   with sorting, filters and actions, *Analyse* opens the R and SQL consoles, *Visualise* builds charts and
-   *Export* downloads data, charts and documents.
+5. **Carry on.** Switch mode at the top: *Manage* shows your datasets and the workspace, *Search* finds rows in
+   them, *Process* shows the table with sorting, filters and actions, *Analyse* opens the R and SQL consoles,
+   *Visualise* builds charts, *Export* downloads data, charts and documents and *Share* gives them to others.
 
 Data is stored in the browser's own database. If you clear site data it disappears, so back up regularly under
 *Manage > Workspace*. The backup is a ZIP file that can be restored on the same or another computer. Step by step
 with more detail: [kom-igang.md](kom-igang.md) (Getting started).
+
+The app is also available directly on the web, with nothing to download: <https://marwiss.github.io/Dataspatium/>.
+From a web server it can be installed as an app of its own (Edge and Chrome: *Install* in the address bar) and then
+works without a network too. The web version and the folder version have separate workspaces; move data between them
+with a backup or a bundle.
 
 ## Requirements
 
@@ -39,7 +44,8 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   supported.
 - About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large
   datasets). No administrator rights are needed.
-- Internet is needed only when you fetch data from open APIs, sync with GitHub or check for updates.
+- Internet is needed only when you fetch data from open APIs, push to GitHub, check for updates or fetch a
+  component or an R package that does not ship in the folder; the app asks for permission first.
 
 ## What you can do
 
@@ -62,14 +68,19 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
 - **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
   municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
-- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; bundles
-  with chosen datasets and objects, a message and a change log, comments on datasets and columns, a workspace backup
-  as ZIP, sync with a GitHub repository and, in Edge and Chrome, a portable folder with ordinary files.
-- **Find things fast**: the command palette (Ctrl+K) switches mode, opens datasets, charts and dashboards and runs
-  actions from a single search field.
+- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; in the
+  *Share* mode bundles with chosen datasets and objects, a message and a change log, sync with a GitHub repository, the
+  computer's share menu and publishing of dashboards and documents as standalone HTML (see [dela.md](dela.md));
+  comments on datasets and columns, a workspace backup as ZIP and, in Edge and Chrome, a portable folder with ordinary
+  files.
+- **Keeping order**: folders and tags for datasets, filter and sorting, and batch actions on several datasets at
+  once (organise, bundle, export, re-fetch, run recipe, delete).
+- **Find things fast**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
+  the hits and saved lists (see [soka.md](soka.md)); the command palette (Ctrl+K) switches mode, opens datasets,
+  charts and dashboards and runs actions from a single search field.
 - **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
   Norwegian (Bokmål), Finnish, Icelandic and English.
-- **Beginner's course**: an interactive walkthrough of all six modes with example data, in all six languages. It is
+- **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all six languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
 ## Learn more
@@ -82,7 +93,8 @@ everywhere.
 - [Getting started](kom-igang.md): step by step with common questions.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
-- [The six modes](lagen.md): what is where and why.
+- [The eight modes](lagen.md): what is where and why.
+- [Search](soka.md) and [Share](dela.md): finding without code, and giving data to others.
 - [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
 - [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
@@ -109,7 +121,8 @@ everywhere.
   the one that saves last wins.
 - The portable folder requires Edge or Chrome; Firefox lacks folder access (File System Access). Backup as ZIP
   works everywhere.
-- Safari and mobile browsers are not supported.
+- Safari and mobile browsers are not supported yet; a mobile page for phones and tablets is planned for the next
+  version. In narrow windows the panels already open as sheets over the work area.
 - The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
   anywhere.
 

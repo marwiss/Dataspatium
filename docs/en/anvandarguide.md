@@ -9,17 +9,23 @@ have opened the app as described in [kom-igang.md](kom-igang.md). Details about 
 
 ## The workspace
 
-The screen looks the same in every mode. At the top you switch mode (Import, Manage, Process, Analyse, Visualise,
-Export; Alt+1 to Alt+6 work too) and see the workspace status (saved or unsaved), the command palette (the
-magnifying glass or Ctrl+K), the language button, the theme (light or dark) and the help button with the version
-number and *Check for updates*. The command palette is the fastest way to most things: type a few letters to switch
-mode, open a dataset, a chart or a dashboard, or run a processing action on the selected dataset. On the left are
-the objects of the mode (datasets, sources, charts, templates), in the middle the workspace and on the right the
-inspector with properties and statistics. At the bottom is the log, where every action, warning and error is
-written; that is what you read when something does not turn out as you intended.
+The screen looks the same in every mode. At the top you switch mode (Import, Manage, Search, Process, Analyse,
+Visualise, Export, Share; Alt+1 to Alt+8 work too) and reach the command palette (the magnifying glass or Ctrl+K),
+the language button, the theme (light or dark) and the help button with the version number and *Check for updates*.
+The command palette is the fastest way to most things: type a few letters to switch mode, open a dataset, a chart
+or a dashboard, search in data or run a processing action on the selected dataset. On the left are the objects of
+the mode (datasets, sources, charts, templates), in the middle the work area and on the right the inspector with
+properties and statistics. At the bottom is the status bar: save state, storage, the selected dataset, the R engine,
+internet requests in progress and the buttons that collapse the panels and open the log, where every action, warning
+and error is written; that is what you read when something does not turn out as you intended. Panel widths are
+changed by dragging the edge towards the work area, and in narrow windows the panels open as sheets over the work
+area (see [lagen.md](lagen.md)).
 
 Everything you create is saved automatically in the browser's database on your computer. Nothing is sent anywhere
-unless you yourself fetch from an API, check the version or export.
+unless you yourself fetch from an API, check the version, push to GitHub or share. The first time the app needs the
+internet for a purpose it asks for permission, and the answer can be remembered; under *Manage → Workspace → Internet
+access* you see what is allowed and which requests have been made. Parts of the app that do not ship in the folder
+(some components and R packages) are fetched the same way when needed and then stored locally.
 
 ## The beginner's course
 
@@ -142,38 +148,61 @@ CSV (adapted for Excel in Sweden or standard), Excel, ODS, JSON, GeoJSON (for da
 and, via R: Parquet, SPSS, Stata and RDS. SQLite and Parquet keep the types exactly; all formats can be imported
 again.
 
+## Finding things in data (Search)
+
+Search finds rows without code. Type one or more words, choose all datasets or only the selected one and press
+*Search*. Hits are shown per dataset; the facets (the most common values in columns with few distinct values) narrow
+the search with one click, and a row in the table shows the whole record in the inspector. The search can be saved as
+a list, become a new dataset or be opened in Process with the dataset selected. See [soka.md](soka.md).
+
 ## Keeping order (Manage)
 
-Every dataset has an overview (source, size, description), a column list with types, labels, descriptions and
-units (set under Process with *Label, description and unit*), comments, a readable history of everything done and versions. Rename
-and change the short name, delete or re-fetch from API (update with the recipe, or add rows). Under *Workspace* you see how much storage is used, request
-persistent storage, take a backup as ZIP and restore. The app reminds you at start when more than the chosen
-number of days have passed since the last backup (30 days by default; changed or switched off in the same card).
-In Edge and Chrome the workspace can also be mirrored to a portable folder on disk, automatically on every change.
+Every dataset has an overview (source, size, description, folder and tags), a column list with types, labels,
+descriptions and units (set under Process with *Label, description and unit*), comments, a readable history of
+everything done and versions. Rename and change the short name, organise, delete or re-fetch from API (update with
+the recipe, or add rows). Under *Workspace* you see how much storage is used, request persistent storage, take a
+backup as ZIP and restore. The app reminds you at start when more than the chosen number of days have passed since
+the last backup (30 days by default; changed or switched off in the same card). In Edge and Chrome the workspace can
+also be mirrored to a portable folder on disk, automatically on every change.
+
+The object panel in Manage is a tree. *Organise* gives a dataset a folder (with subfolders, such as `Economy/2026`)
+and tags; folders can be collapsed, and a dataset can be dragged to another folder. The filter field searches name,
+short name, tag and folder, and the list can be sorted by changed, name or rows. The checkboxes select several
+datasets (Shift selects a range), and the button *Actions (n)* does the same thing with all of them at once:
+organise, bundle, export as ZIP with CSV files, re-fetch from API, run a recipe or delete. Folder and tags are stored
+in the dataset's file and travel in bundles, backups and GitHub; in R, `dm_list()` shows the folder and
+`dm_read("Folder/Name")` reads a dataset in a folder.
 
 ## Sharing with others
 
-- A selection: *Share bundle* under Manage gives a ZIP with chosen datasets, charts, dashboards, templates and
-  notebooks, a message and a change log: what was done with each dataset since it was last shared, and the comments
-  that are not resolved. The recipient loads it under *Restore from ZIP*, sees the message and the changes and chooses,
-  for datasets that already exist, whether to replace them with the bundle's version (their own is kept under
-  *Versions*); the rest is skipped.
+Everything meant for other people is in the *Share* mode (see [dela.md](dela.md)):
+
+- A selection: *Bundle* gives a ZIP with chosen datasets, charts, dashboards, templates, notebooks and scripts, a
+  message and a change log: what was done with each dataset since it was last shared, and the comments that are not
+  resolved. The recipient opens it under *Receive*, sees the message and the changes and chooses, for datasets that
+  already exist, whether to replace them with the bundle's version (their own is kept under *Versions*); the rest is
+  skipped. Under Manage, *Actions* on several selected datasets does the same.
 - Comments: every dataset has the tab *Comments* in Manage, and in Process you comment on a column from the inspector.
   The comments live in the dataset's file and travel in bundles, backups, the portable folder and GitHub. You give the
   name shown yourself; it is stored only in the browser.
 - The whole workspace: the backup (ZIP) is restored under Manage on another computer.
-- Between computers through GitHub: under *Manage → Workspace* you push the workspace to a GitHub repository
-  (preferably private) and fetch it on another computer. This needs a fine-grained personal access token that may only
-  read and write the contents of that repository. The token is used for the session or stored encrypted, and nothing is
-  sent until you press *Push to GitHub* or *Fetch from GitHub*. Only changed files are sent, in one commit with your
-  message; when fetching you choose, as for bundles, whether existing datasets are replaced.
-- One dataset: export as SQLite (everything comes along) or Parquet.
+- Between computers through GitHub: the *GitHub* tab pushes the workspace to a GitHub repository (preferably private)
+  and fetches it on another computer. This needs a fine-grained personal access token that may only read and write the
+  contents of that repository. The token is used for the session or stored encrypted, and nothing is sent until you
+  press *Push to GitHub* or *Fetch from GitHub*. Only changed files are sent, in one commit with your message; when
+  fetching you choose, as for bundles, whether existing datasets are replaced.
+- Through the computer's or phone's share menu: the *Share menu* tab sends a dataset as CSV, Excel, ODS or JSON, or
+  all datasets as a bundle, to e-mail, Teams and other apps (Edge and Chrome; Firefox saves the file).
+- As a finished web page: the *Publish* tab turns a dashboard or a document into a standalone HTML file.
+- One dataset: export as SQLite (everything comes along) or Parquet under Export.
 - API configurations (`.api.json`), charts and document templates (JSON) and recipes (JSON, R or SQL) are exported
   and loaded as files. Keys never come along.
 
 ## Keyboard
 
-Alt+1 to Alt+6 switch mode and Ctrl+K opens the command palette. The first Tab press on the page shows the link
+Alt+1 to Alt+8 switch mode and Ctrl+K opens the command palette. The edge between a panel and the work area can
+receive focus with Tab and be moved with the arrow keys (Shift for larger steps, Home and End for the smallest and
+largest width). The first Tab press on the page shows the link
 *Skip to content*, which moves focus past the mode switcher and the object panel. Everything is reachable with
 Tab and Enter; dialogs close with Esc. In the table the arrow keys move between cells and Enter edits. The app
 follows the system setting for reduced motion.

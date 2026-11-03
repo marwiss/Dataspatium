@@ -94,7 +94,7 @@ Sikkerhetskopien (ZIP), den portable mappen (Edge og Chrome) og mappen i et GitH
 `manifest.json` med en liste over innholdet, `datasets/<id>.sqlite` per datasett, `charts/<id>.viz.json` per lagret
 diagram, `documents/<id>.doc.json` per egen dokumentmal, `dashboards/<id>.dash.json` per dashbord,
 `notebooks/<id>.nb.json` per notatbok og `scripts/<id>.script.json` per lagret R-skript, SQL-skript eller regex-mønster.
-En pakke (*Del pakke* under Håndter) har samme oppbygning, men inneholder bare det du har valgt. Manifestet har
+En pakke (*Pakke* i modusen Del) har samme oppbygning, men inneholder bare det du har valgt. Manifestet har
 `kind: bundle`, avsenderens navn (`author`), meldingen (`message`) og endringene i hvert datasett siden det sist ble delt
 eller mottatt (`changes`), og pakken har dessuten `CHANGELOG.md` med det samme og de uløste kommentarene i lesbar form.
 Når en pakke lastes inn, vises meldingen og endringene, og alt som allerede finnes, hoppes over (datasett med samme id,
@@ -102,6 +102,11 @@ diagrammer, dashbord, maler og notatbøker med samme navn), unntatt datasettene 
 din versjon lagres da under *Versjoner*. Med automatisk lagring slått på skrives endrede datasett til den portable mappen
 kort etter hver lagring, og filer for slettede datasett fjernes. Mappen kan lastes inn på en annen datamaskin på samme
 måte som en pakke.
+
+Manifestet har `format: 2` siden versjon 2.0: hvert datasett i listen har i tillegg til `id`, `name` og `shortName`
+også `folder` (mappen, som `Økonomi/2026`, eller tom) og `tags` (en liste). Eldre pakker og sikkerhetskopier (uten
+`format`) leses som før. Mappe og tagger ligger også i datasettets egen fil (`_meta`), så de følger med uansett hvor
+filen havner, i likhet med `kind` (`table`, `graph`, `document`, `images`, `model`); i 2.0 er alle datasett tabeller.
 
 Radene i `_log` har tidsstempel, handlingstype og detaljer som JSON. Handlingstypene er blant andre `import`, `op` (et trinn
 i oppskriften med `op`, `params`, `result` og `description`; det er disse radene som utgjør oppskriften), `undo`,

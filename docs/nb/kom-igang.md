@@ -21,8 +21,8 @@ kommandopaletten. Skrifttyper og ikoner lastes fra mappen; det tar et øyeblikk.
 ### Grunnkurset
 
 Etter språkvalget starter **grunnkurset**, en interaktiv gjennomgang i et panel nederst til høyre. Det tar omtrent ti
-minutter og følger eksempelet *Befolkning per kommune 2024 (Sverige)* gjennom alle seks moduser: hent data, se på
-datasettet, beregn en kolonne, spør med SQL, regn med R, lag et diagram og eksporter. Hvert trinn forklarer et begrep og
+minutter og følger eksempelet *Befolkning per kommune 2024 (Sverige)* gjennom alle åtte moduser: hent data, se på
+datasettet, søk, beregn en kolonne, spør med SQL, regn med R, lag et diagram, eksporter og del. Hvert trinn forklarer et begrep og
 gir en oppgave. En ramme viser hvor du skal klikke, og trinnet hukes av når du har gjort det. *Gjør det for meg* utfører
 trinnet for deg hvis du heller vil se hvordan det gjøres.
 
@@ -31,18 +31,21 @@ eller fra kommandopaletten (Ctrl+K, *Åpne grunnkurset*). Det fortsetter der du 
 
 ## 3. Modusene
 
-Øverst finnes seks moduser. Panelet til venstre viser objekter (datasett og kilder), midten er arbeidsflaten, panelet til
-høyre viser egenskaper og statistikk, og nederst er det en logg. Panelene kan felles inn med knappene øverst til høyre.
-Alt+1 til Alt+6 bytter modus med tastaturet.
+Øverst finnes åtte moduser. Panelet til venstre viser objekter (datasett og kilder), midten er arbeidsflaten, panelet
+til høyre viser egenskaper og statistikk, og nederst finnes statuslinjen med lagringsstatus, lagring, det valgte
+datasettet, R-motoren og knappene som folder panelene inn og åpner loggen. Panelenes bredde endres ved å dra i kanten
+mot arbeidsflaten. Alt+1 til Alt+8 bytter modus med tastaturet.
 
 | Modus | Hva du gjør der |
 |---|---|
 | Hent | Importerer filer, limer inn tabeller og henter fra åpne API-er i Norden, som SSB, Danmarks Statistik, Statistikcentralen, Hagstofa Íslands, SCB og Eurostat ([api-konfiguration.md](api-konfiguration.md)) |
-| Håndter | Ser datasettene dine, gir nytt navn, sletter, lagrer versjoner, sikkerhetskopierer og gjenoppretter arbeidsområdet |
+| Håndter | Ser datasettene dine i mapper med tagger, gir nytt navn, sletter, lagrer versjoner, kjører batchhandlinger på flere datasett, sikkerhetskopierer og gjenoppretter arbeidsområdet |
+| Søk | Søker i alle kolonner i ett eller alle datasett, avgrenser med fasetter og lagrer søk som lister ([soka.md](soka.md)) |
 | Bearbeid | Redigerer celler, sorterer og filtrerer, renser og setter typer, beregner kolonner, pivoterer, kobler datasett; alt med angre, versjoner og oppskrifter ([bearbeta.md](bearbeta.md)) |
-| Analyser | R-konsoll med ggplot2 og tidyverse, lagrede skript og diagrameksport; SQL-konsoll mot det valgte datasettet |
+| Analyser | R-konsoll med ggplot2 og tidyverse, lagrede skript og diagrameksport; SQL-konsoll mot det valgte datasettet; regulære uttrykk; notatbok som blir rapport |
 | Visualiser | Lager diagrammer med Vega-Lite, D3-maler eller R-skript, lagrer, eksporterer og lager dem i batch ([visualisera.md](visualisera.md)) |
 | Eksporter | Laster ned data som CSV, Excel, JSON eller SQLite, lagrede diagrammer som SVG, PNG eller PDF og dokumenter fra maler som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
+| Del | Pakker datasett med diagrammer og maler for kolleger, sender arbeidsområdet til GitHub, deler via datamaskinens delingsmeny og publiserer dashbord som HTML ([dela.md](dela.md)) |
 
 ## 4. Importer en fil
 
@@ -93,9 +96,9 @@ datasett samt diagrammer og maler) i en mappe du velger, for eksempel på en min
 *Last inn fra mappen*. Etter en omstart av nettleseren spør den én gang om lov til å bruke mappen igjen; klikk på *Koble til
 igjen*.
 
-Vil du sende et utvalg til en kollega, bruker du *Del pakke* på samme side: velg datasett, og om diagrammer, dashbord, maler
-og notatbøker skal være med. Kollegaen slipper pakken på *Gjenopprett fra ZIP*; det som allerede finnes i arbeidsområdet
-hennes eller hans, hoppes over.
+Vil du sende et utvalg til en kollega, går du til modusen *Del* og fanen *Pakke*: velg datasett, og om diagrammer,
+dashbord, maler, notatbøker og skript skal være med. Kollegaen åpner pakken under *Motta* i samme modus; det som
+allerede finnes i arbeidsområdet hennes eller hans, hoppes over.
 
 ## Vanlige spørsmål
 

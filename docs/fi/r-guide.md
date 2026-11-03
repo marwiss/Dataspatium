@@ -15,8 +15,8 @@ sovelluskansiossa: R, valikoima paketteja ja Dataspatiumin apufunktiot.
 
 | Funktio | Tekee |
 |---|---|
-| `dm_list()` | Näyttää istunnon aineistot: nimi, lyhytnimi, rivit, sarakkeet, muutettu, id. |
-| `dm_read("lyhytnimi")` | Lukee aineiston `data.frame`-muodossa oikein tyypein: päivämääristä tulee `Date`, päivämäärästä ja ajasta `POSIXct`, kyllä/ei-arvoista `logical`, kokonaisluvuista `integer`. Argumentti on mieluiten lyhytnimi (esimerkiksi `dm_read("befolkning_2024")`, jonka painike *Lisää dm_read()* kirjoittaa), mutta se voi olla myös id, tarkka nimi, nimi kirjainkoosta riippumatta tai yksiselitteinen alkuosa; `dm_list()` näyttää lyhytnimet. |
+| `dm_list()` | Näyttää istunnon aineistot: nimi, lyhytnimi, kansio, rivit, sarakkeet, muutettu, id. |
+| `dm_read("lyhytnimi")` | Lukee aineiston `data.frame`-muodossa oikein tyypein: päivämääristä tulee `Date`, päivämäärästä ja ajasta `POSIXct`, kyllä/ei-arvoista `logical`, kokonaisluvuista `integer`. Argumentti on mieluiten lyhytnimi (esimerkiksi `dm_read("befolkning_2024")`, jonka painike *Lisää dm_read()* kirjoittaa), mutta se voi olla myös id, tarkka nimi, nimi kirjainkoosta riippumatta tai yksiselitteinen alkuosa; `dm_list()` näyttää lyhytnimet. Jos aineisto on kansiossa, myös `dm_read("Kansio/Nimi")` ja `dm_read("Kansio/lyhytnimi")` toimivat. |
 | `dm_read("lyhytnimi", columns = c("a", "b"), where = "a > 10", n = 1000)` | Lukee vain tietyt sarakkeet, SQL-ehdon täyttävät rivit tai rajatun määrän rivejä. |
 | `attr(df$sarake, "label")`, `"description"`, `"unit"` | Sarakkeen selite, kuvaus ja yksikkö sovelluksesta tulevat mukana attribuutteina (kun ne on asetettu); `dm_write()` vie ne takaisin, tai argumenttien `labels`, `descriptions` ja `units` kautta. |
 | `dm_value_labels(x, c("Mies" = 1, "Nainen" = 2), to = "labels")` | Arvoselitteet. Sarakkeesta, jossa on koodit ja selitteet, tulee `dm_read()`-funktiossa `haven::labelled` (sarake, jossa selitteet ovat jo tekstinä, säilyttää koodit attribuutissa `value_labels`), ja `dm_write()` tallentaa ne. `dm_value_labels()` asettaa selitteet (`to = NULL`), vaihtaa koodit selitteisiin (`"labels"`) tai takaisin (`"codes"`); ilman selitteitä ne poistetaan. |
@@ -56,8 +56,13 @@ readr, stringr, lubridate, forcats, data.table, haven (SPSS, Stata, SAS), readxl
 jsonlite, RSQLite, DBI ja knitr sekä niiden riippuvuudet (muun muassa tibble, purrr, rlang, cli, stringi). `library(paketti)`
 asentaa paketin sisäänrakennetusta arkistosta ensimmäisellä käyttökerralla.
 
-Muita CRAN-paketteja ei voi asentaa, koska sovellus ei nouda mitään internetistä. Jos tarvitset lisää paketteja, avaa issue,
-niin ne voidaan lisätä seuraavaan julkaisuun.
+Muut paketit noudetaan tarvittaessa webR:n pakettivarastosta (repo.r-wasm.org, yli 20 000 selaimelle käännettyä
+CRAN-pakettia): kun koodi kutsuu `library()`-, `require()`- tai `paketti::`-muotoa valikoiman ulkopuoliselle
+paketille, se noudetaan riippuvuuksineen ennen koodin suorittamista. Ensimmäisellä kerralla sovellus kysyy lupaa
+ottaa yhteys internetiin komponentteja varten; sen jälkeen paketit tallennetaan selaimeen, ne säilyvät seuraavaan
+käynnistykseen ja näkyvät kohdassa *Hallitse → Työtila → Komponentit*, jossa ne voi myös poistaa. Ilman verkkoa, tai
+jos vastaat ei, koodi saa tavallisen virheen puuttuvasta paketista. Paketit, jotka tarvitsevat selaimesta puuttuvia
+järjestelmäkirjastoja, voivat puuttua varastosta.
 
 ## Miten data siirtyy sovelluksen ja R:n välillä
 
@@ -72,7 +77,7 @@ Yli 50 Mt:n aineistot peilataan vain, kun koodissa viitataan niihin.
 ## Kieli
 
 `dm_list()`-, `dm_read()`- ja `dm_write()`-funktioiden viestit noudattavat sovelluksen kieltä (ruotsi, tanska, norja, suomi,
-islanti tai englanti); `dm_list()`-funktion sarakkeiden nimet ovat sen sijaan aina samat (`namn`, `kortnamn`, `rader`,
+islanti tai englanti); `dm_list()`-funktion sarakkeiden nimet ovat sen sijaan aina samat (`namn`, `kortnamn`, `mapp`, `rader`,
 `kolumner`, `ändrad`, `id`), joten skriptit toimivat kielestä riippumatta.
 
 ## Rajoitukset

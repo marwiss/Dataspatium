@@ -95,7 +95,7 @@ Varmuuskopiolla (ZIP), siirrettävällä kansiolla (Edge ja Chrome) ja GitHub-re
 `manifest.json` sisältöluetteloineen, `datasets/<id>.sqlite` aineistoa kohden, `charts/<id>.viz.json` tallennettua kaaviota
 kohden, `documents/<id>.doc.json` omaa asiakirjamallia kohden, `dashboards/<id>.dash.json` kojelautaa kohden,
 `notebooks/<id>.nb.json` muistikirjaa kohden ja `scripts/<id>.script.json` kutakin tallennettua R-skriptiä, SQL-skriptiä tai
-regex-kuviota kohden. Paketilla (*Jaa paketti* Hallitse-tilassa) on sama rakenne, mutta se sisältää vain valitsemasi. Sen
+regex-kuviota kohden. Paketilla (*Paketti* Jaa-tilassa) on sama rakenne, mutta se sisältää vain valitsemasi. Sen
 manifestissa on `kind: bundle`, lähettäjän nimi (`author`), viesti (`message`) ja kunkin aineiston muutokset sen jälkeen,
 kun se viimeksi jaettiin tai vastaanotettiin (`changes`), ja paketissa on lisäksi `CHANGELOG.md`, jossa sama ja
 ratkaisemattomat kommentit ovat luettavassa muodossa. Kun paketti ladataan, viesti ja muutokset näytetään, ja kaikki jo
@@ -104,6 +104,12 @@ paitsi aineistot, jotka valitset korvattaviksi paketin versiolla; oma versiosi t
 automaattinen tallennus on käytössä, muuttuneet aineistot kirjoitetaan siirrettävään kansioon pian jokaisen tallennuksen
 jälkeen ja poistettujen aineistojen tiedostot poistetaan. Kansion voi ladata toisella tietokoneella samalla tavalla kuin
 paketin.
+
+Manifestissa on versiosta 2.0 alkaen `format: 2`: jokaisella luettelon aineistolla on `id`-, `name`- ja
+`shortName`-kenttien lisäksi `folder` (kansio, kuten `Talous/2026`, tai tyhjä) ja `tags` (luettelo). Vanhemmat
+paketit ja varmuuskopiot (ilman `format`-kenttää) luetaan kuten ennen. Kansio ja tunnisteet ovat myös aineiston
+omassa tiedostossa (`_meta`), joten ne kulkevat mukana minne tahansa tiedosto päätyy, samoin kuin `kind` (`table`,
+`graph`, `document`, `images`, `model`); versiossa 2.0 kaikki aineistot ovat taulukoita.
 
 `_log`-taulun riveillä on aikaleima, toimintotyyppi ja yksityiskohdat JSON-muodossa. Toimintotyyppejä ovat muun muassa
 `import`, `op` (reseptin vaihe, jossa `op`, `params`, `result` ja `description`; nämä rivit muodostavat reseptin), `undo`,

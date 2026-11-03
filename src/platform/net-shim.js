@@ -45,12 +45,32 @@
   }
   function lookupSync(name) { return D.assets.peek(name); }
 
+  // Activity count and a short log of real network calls, for the status bar and the network settings view.
+  const activity = { active: 0, listeners: new Set(), log: [] };
+  const LOG_MAX = 200;
+  function notify() { for (const fn of Array.from(activity.listeners)) { try { fn(activity.active); } catch (err) { console.error('[net] listener failed', err); } } }
+  function isNetworkUrl(url) {
+    if (/^https?:/i.test(url)) return true;
+    return !/^[a-z][a-z0-9+.-]*:/i.test(url) && /^https?:$/.test(globalThis.location ? location.protocol : '');
+  }
+  /** Track one request: counts it while in flight and records url, method, status and duration. */
+  function track(url, init, promise) {
+    const entry = { at: Date.now(), url: String(url), method: ((init && init.method) || 'GET').toUpperCase(), status: null, ms: null };
+    activity.log.push(entry);
+    if (activity.log.length > LOG_MAX) activity.log.shift();
+    activity.active++;
+    notify();
+    const t0 = Date.now();
+    const done = (res) => { activity.active--; entry.ms = Date.now() - t0; entry.status = res && typeof res.status === 'number' ? res.status : 'error'; notify(); return res; };
+    return promise.then(done, (err) => { done(null); throw err; });
+  }
+
   // fetch()
   const realFetch = globalThis.fetch.bind(globalThis);
   globalThis.fetch = function fetch(input, init) {
     const url = typeof input === 'string' ? input : (input instanceof URL ? input.href : (input && input.url) || String(input));
     const name = assetName(url);
-    if (name === null) return realFetch(input, init);
+    if (name === null) { const p = realFetch(input, init); return isNetworkUrl(url) ? track(url, init, p) : p; }
     return lookupAsync(name, url).then((entry) => {
       const buf = entry.kind === 'text' ? new TextEncoder().encode(entry.data).buffer : entry.data.slice(0);
       // A virtual provider may answer with another status (the tests use it for server errors).
@@ -86,6 +106,12 @@
     virtual(name, provider) { virtual.set(name, provider); },
     unvirtual(name) { virtual.delete(name); },
     assetUrl(name) { return SCHEME + name; },
+    /** Number of real network requests in flight. */
+    get active() { return activity.active; },
+    /** Subscribe to changes of the in-flight count; returns the unsubscribe function. */
+    onActivity(fn) { activity.listeners.add(fn); return () => activity.listeners.delete(fn); },
+    /** The most recent real network requests (newest last): {at, url, method, status, ms}. */
+    log() { return activity.log.slice(); },
   };
   D.define('platform/net', [], () => D.net);
 })();

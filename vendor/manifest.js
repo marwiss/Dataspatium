@@ -1402,6 +1402,160 @@ Dataspatium.assets.manifest({
    "sha256": "e8f01ea2843b00ad6c4b08e29cb6f4e34df40ffd14df0c91b5be55e3c5c9c20f",
    "library": "lucide"
   },
+  "lucide/icons/text-search.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 426,
+   "sha256": "983256b4be76bd8dd21de34aa2943dde85478e782dcd69b45bb18440aaff9d0b",
+   "library": "lucide"
+  },
+  "lucide/icons/share-2.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 496,
+   "sha256": "ad11b4351ae4bfd2da612018f6ab0173b82c3ee872200553e2b852b1f1b06f71",
+   "library": "lucide"
+  },
+  "lucide/icons/folder-plus.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 471,
+   "sha256": "5817f83f9c38aafda92b58d3f108d42f35c576a4629163532fac5d423e639924",
+   "library": "lucide"
+  },
+  "lucide/icons/tag.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 504,
+   "sha256": "124e536fd59d6143c0ce94bed6af9f3d9b67b69daec2f485711eb5df54aa29eb",
+   "library": "lucide"
+  },
+  "lucide/icons/tags.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 581,
+   "sha256": "ae6c2c1b42270466e3e156dd093306121f092f063a19010f33e9272aa3a2c4f9",
+   "library": "lucide"
+  },
+  "lucide/icons/activity.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 425,
+   "sha256": "655ae1c9f68ccd6be5648ee997cb5a5647488e72fc22fb9f3f30a3bac6e3bcae",
+   "library": "lucide"
+  },
+  "lucide/icons/list-checks.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 418,
+   "sha256": "4baeebe19593af834339fdb75ef49dd156742ca8e0d45f095713a3b5cf0a53e4",
+   "library": "lucide"
+  },
+  "lucide/icons/square-check-big.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 407,
+   "sha256": "de8ce679546f6b1aa50f490e804f9fc4e6a268933ade58ed96af5e0d3bf217a7",
+   "library": "lucide"
+  },
+  "lucide/icons/square-check.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 378,
+   "sha256": "e4210311bad2d640f014e3f35d48192eabd5829a3a88289c9db7d1e99d66397a",
+   "library": "lucide"
+  },
+  "lucide/icons/circle-dot.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 360,
+   "sha256": "05da2c5d8955aeffb94e735288dd13c0b93f97e22931b72067c9aec2d13aaa20",
+   "library": "lucide"
+  },
+  "lucide/icons/logs.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 490,
+   "sha256": "7c2372fff3130614785771617327135580e93e288bffbd37ed5f4ef36b4eccae",
+   "library": "lucide"
+  },
+  "lucide/icons/map.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 590,
+   "sha256": "cf4df1f2ad25b8f2d0b74f03ce308310d773df886b41f6c9e1941b97f8c37457",
+   "library": "lucide"
+  },
+  "lucide/icons/network.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 523,
+   "sha256": "a50c3d7043f4d6034823c183420d791cadf520362d050d3b988cab033d799830",
+   "library": "lucide"
+  },
+  "lucide/icons/code.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 341,
+   "sha256": "3ac4fe86aeab15c7bbdeab3db5f9a7d50f680838051a9f5f6e2913edf1e5fca9",
+   "library": "lucide"
+  },
+  "lucide/icons/cpu.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 664,
+   "sha256": "b2aa3fd7000a5607c99506fe765e091dd869a5ed0746927a43ba0ec297d3fe5e",
+   "library": "lucide"
+  },
+  "lucide/icons/wifi.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 432,
+   "sha256": "463c00603f50caa383a975fbc4e72a8c60ffcab7f76bf581857ea2fb81eddbe7",
+   "library": "lucide"
+  },
+  "lucide/icons/wifi-off.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 573,
+   "sha256": "1ea189b8f9c326bd6e33529e2b3cdc20009fc950d4e26ef10f434b0ef7171f29",
+   "library": "lucide"
+  },
+  "lucide/icons/arrow-right-left.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 400,
+   "sha256": "db3c05680c92ad8b51b3e4e703038678dbaa4305003cce4a8a2cbe518b3247ea",
+   "library": "lucide"
+  },
+  "lucide/icons/smartphone.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 375,
+   "sha256": "f9c52d2a5c665e5d862e085e83b123a52d1b3662bbfdc041a0a7b77e0856f0e4",
+   "library": "lucide"
+  },
+  "lucide/icons/qr-code.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 698,
+   "sha256": "df02c0dbca9c5676863809ef6c5f6074ce2828245e8f01f2f9032744ce93acfa",
+   "library": "lucide"
+  },
+  "lucide/icons/scan-line.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 470,
+   "sha256": "142d23f6f2fe5fbc13ea022fb7270ada6e0da2a2d5a24f3cd751a09ffcb379d8",
+   "library": "lucide"
+  },
+  "lucide/icons/monitor.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 424,
+   "sha256": "e268f29d5d23e55cf3631abdb91b363178c91bddc1a6ba73d65f0a4d9182979e",
+   "library": "lucide"
+  },
   "lucide/icons/message-square.svg": {
    "file": "vendor/lucide/icons.bundle.js",
    "encoding": "text",
@@ -1966,7 +2120,7 @@ Dataspatium.assets.manifest({
    "license": "ISC",
    "homepage": "https://lucide.dev/",
    "direct": [],
-   "assets": 81
+   "assets": 103
   },
   "d3": {
    "version": "7.9.0",

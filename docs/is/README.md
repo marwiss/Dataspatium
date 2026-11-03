@@ -22,13 +22,17 @@ Viðmótið er á sænsku, dönsku, norsku, finnsku, íslensku og ensku. Skjámy
    sýnigögnum sem tekur um tíu mínútur. Opnaðu það aftur úr hjálpinni (?).
 4. **Flyttu inn.** Í hamnum *Sækja* sleppirðu skrá á flötinn (eða smellir á *Prófa með sýnigögnum*), athugar gerðir dálkanna
    og smellir á *Flytja inn*. Gagnasafnið er vistað í vafranum á tölvunni þinni.
-5. **Haltu áfram.** Skiptu um ham efst: *Umsjón* sýnir gagnasöfnin þín og vinnusvæðið, *Vinna* sýnir töfluna með röðun, síum
-   og aðgerðum, *Greina* opnar R- og SQL-stjórnborðið, *Myndgera* býr til myndrit og *Flytja út* hleður niður gögnum, myndritum
-   og skjölum.
+5. **Haltu áfram.** Skiptu um ham efst: *Umsjón* sýnir gagnasöfnin þín og vinnusvæðið, *Leita* finnur raðir í þeim, *Vinna*
+   sýnir töfluna með röðun, síum og aðgerðum, *Greina* opnar R- og SQL-stjórnborðið, *Myndgera* býr til myndrit, *Flytja út*
+   hleður niður gögnum, myndritum og skjölum og *Deila* gefur þau öðrum.
 
 Gögn eru vistuð í eigin gagnagrunni vafrans. Ef þú hreinsar vefgögn hverfa þau, svo taktu afrit reglulega undir *Umsjón >
 Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri tölvu. Skref fyrir skref með nánari upplýsingum:
 [kom-igang.md](kom-igang.md).
+
+Forritið er líka beint á vefnum, án niðurhals: <https://marwiss.github.io/Dataspatium/>. Af vefþjóni má setja það upp
+sem sjálfstætt forrit (Edge og Chrome: *Setja upp* í veffangastikunni) og það virkar síðan líka án nets. Vefútgáfan og
+möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með afriti eða pakka.
 
 ## Kröfur
 
@@ -36,7 +40,8 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri) eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt.
 - Um 300 MB laust pláss fyrir forritsmöppuna og minnst 4 GB vinnsluminni (8 GB mælt með fyrir stór gagnasöfn). Engin
   stjórnandaréttindi þarf.
-- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, samstillir við GitHub eða leitar að uppfærslum.
+- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, sendir á GitHub, leitar að uppfærslum eða sækir íhlut eða
+  R-pakka sem fylgir ekki í möppunni; forritið spyr fyrst um leyfi.
 
 ## Hvað þú getur gert
 
@@ -58,13 +63,18 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
   [visualisera.md](visualisera.md)).
 - **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert
   sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
-- **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakka með völdum
-  gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu
-  sem ZIP, samstillingu við GitHub-safn og, í Edge og Chrome, færanlega möppu með venjulegum skrám.
-- **Finna hratt**: skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og mælaborð og keyrir aðgerðir úr einum
-  leitarreit.
+- **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; í hamnum
+  *Deila* pakka með völdum gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, samstillingu við GitHub-safn,
+  deilivalmynd tölvunnar og birtingu mælaborða og skjala sem sjálfstæðra HTML-skráa (sjá [dela.md](dela.md));
+  athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með
+  venjulegum skrám.
+- **Halda röð og reglu**: möppur og merki fyrir gagnasöfn, síun og röðun, og hópaðgerðir á fleiri gagnasöfn í einu
+  (raða, pakka, flytja út, sækja aftur, keyra uppskrift, eyða).
+- **Finna hratt**: hamurinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum, með flokkum sem afmarka og
+  vistuðum listum (sjá [soka.md](soka.md)); skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og
+  mælaborð og keyrir aðgerðir úr einum leitarreit.
 - **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
-- **Grunnnámskeið**: gagnvirk yfirferð yfir alla sex hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
+- **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
 ## Lærðu meira
@@ -76,7 +86,8 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
 - [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
-- [Hamirnir sex](lagen.md): hvað er hvar og hvers vegna.
+- [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
+- [Leita](soka.md) og [Deila](dela.md): finna án kóða, og gefa öðrum gögn.
 - [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
 - [Reglulegar segðir](regex.md): mynstur til að greina, leiðrétta og skipta upp texta í gagnasöfnum.
 - [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
@@ -101,7 +112,8 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
   síðast vinnur.
 - Færanlega mappan krefst Edge eða Chrome; Firefox hefur ekki möppuaðgang (File System Access). Afrit sem ZIP virkar alls
   staðar.
-- Safari og farsímavafrar eru ekki studdir.
+- Safari og farsímavafrar eru ekki studdir enn; farsímasíða fyrir síma og spjaldtölvur er áætluð í næstu útgáfu. Í
+  þröngum gluggum opnast spjöldin þegar nú sem yfirlagsspjöld yfir vinnuflötinn.
 - Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
 
 ## Villur og tillögur

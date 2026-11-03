@@ -71,6 +71,9 @@
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
+      // Real servers are contacted only with the user's consent for API fetches (asked once); the app's own
+      // virtual sources (dataspatium-asset://, used by presets and tests) never leave the page.
+      if (!/^dataspatium-asset:/.test(String(req.url))) await D.require('platform/consent').require('api', { host: hostOf(req.url) });
       const proxyUrl = await getProxy();
       const url = applyProxy(req.url, proxyUrl);
       const retries = req.retries === undefined ? 2 : req.retries;

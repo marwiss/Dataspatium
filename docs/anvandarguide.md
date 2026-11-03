@@ -8,17 +8,23 @@ dokument i [dokumentmallar.md](dokumentmallar.md). Vanliga frågor besvaras i [f
 
 ## Arbetsytan
 
-Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Bearbeta, Analysera, Visualisera,
-Exportera; Alt+1 till Alt+6 fungerar också) och ser arbetsytans status (sparat eller osparat), kommandopaletten
-(förstoringsglaset eller Ctrl+K), språkknappen, tema (ljust eller mörkt) och hjälpknappen med versionsnummer och
-*Sök efter uppdatering*. Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge,
-öppna en datamängd, ett diagram eller en dashboard, eller köra en bearbetningsåtgärd på den valda datamängden. Till vänster finns objekten för läget
-(datamängder, källor, diagram, mallar), i mitten arbetsytan och till höger inspektören med egenskaper och
-statistik. Längst ned ligger loggen, där varje åtgärd, varning och fel skrivs ut; det är den du läser när något inte
-blir som du tänkt.
+Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Söka, Bearbeta, Analysera,
+Visualisera, Exportera, Dela; Alt+1 till Alt+8 fungerar också) och når kommandopaletten (förstoringsglaset eller
+Ctrl+K), språkknappen, tema (ljust eller mörkt) och hjälpknappen med versionsnummer och *Sök efter uppdatering*.
+Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge, öppna en
+datamängd, ett diagram eller en dashboard, söka i data eller köra en bearbetningsåtgärd på den valda datamängden.
+Till vänster finns objekten för läget (datamängder, källor, diagram, mallar), i mitten arbetsytan och till höger
+inspektören med egenskaper och statistik. Längst ned ligger statusraden: sparstatus, lagring, den valda
+datamängden, R-motorn, pågående internetanrop och knapparna som fäller in panelerna och öppnar loggen, där varje
+åtgärd, varning och fel skrivs ut; det är den du läser när något inte blir som du tänkt. Panelernas bredd ändras
+genom att dra i kanten mot arbetsytan, och i smala fönster öppnas panelerna som flak över arbetsytan (se
+[lagen.md](lagen.md)).
 
 Allt du skapar sparas automatiskt i webbläsarens databas på din dator. Ingenting skickas någonstans utan att du
-själv hämtar från ett API, kontrollerar version eller exporterar.
+själv hämtar från ett API, kontrollerar version, skickar till GitHub eller delar. Första gången appen behöver
+internet för ett ändamål frågar den om lov, och svaret kan sparas; under *Hantera → Arbetsyta → Internetåtkomst*
+ser du vad som är tillåtet och vilka anrop som gjorts. Delar av appen som inte följer med i mappen (vissa
+komponenter och R-paket) hämtas på samma sätt när de behövs och sparas sedan lokalt.
 
 ## Grundkursen
 
@@ -138,39 +144,60 @@ CSV (anpassad för svenskt Excel eller standard), Excel, ODS, JSON, GeoJSON (fö
 SQLite samt via R: Parquet, SPSS, Stata och RDS. SQLite och Parquet behåller typerna exakt; alla format kan
 importeras igen.
 
+## Hitta i data (Söka)
+
+Söka hittar rader utan kod. Skriv ett eller flera ord, välj alla datamängder eller bara den valda och tryck på
+*Sök*. Träffarna visas per datamängd; fasetterna (de vanligaste värdena i kolumner med få olika värden) avgränsar
+med ett klick, och en rad i tabellen visar hela posten i inspektören. Sökningen kan sparas som lista, bli en ny
+datamängd eller öppnas i Bearbeta med datamängden vald. Se [soka.md](soka.md).
+
 ## Hålla ordning (Hantera)
 
-Varje datamängd har en översikt (källa, storlek, beskrivning), kolumnlista med typer, etiketter, beskrivningar
-och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), kommentarer, en
-läsbar historik över allt som gjorts och versioner. Byt namn och kortnamn, ta bort eller hämta igen från API (uppdatera med receptet, eller lägg till rader). Under *Arbetsyta* ser du hur mycket
-lagring som används, begär beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid
-start när det gått längre än det valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard;
-ändras eller stängs av i samma kort). I Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på
-disk, automatiskt vid varje ändring.
+Varje datamängd har en översikt (källa, storlek, beskrivning, mapp och taggar), kolumnlista med typer, etiketter,
+beskrivningar och enheter (sätts under Bearbeta med *Etikett, beskrivning och enhet*), kommentarer, en läsbar
+historik över allt som gjorts och versioner. Byt namn och kortnamn, ordna, ta bort eller hämta igen från API
+(uppdatera med receptet, eller lägg till rader). Under *Arbetsyta* ser du hur mycket lagring som används, begär
+beständig lagring, tar säkerhetskopia som ZIP och återställer. Appen påminner vid start när det gått längre än det
+valda antalet dagar sedan senaste säkerhetskopian (30 dagar som standard; ändras eller stängs av i samma kort). I
+Edge och Chrome kan arbetsytan dessutom speglas till en portabel mapp på disk, automatiskt vid varje ändring.
+
+Objektpanelen i Hantera är ett träd. *Ordna* ger en datamängd en mapp (med undermappar, som `Ekonomi/2026`) och
+taggar; mappar kan fällas ihop, och en datamängd kan dras till en annan mapp. Filterfältet söker på namn, kortnamn,
+tagg och mapp, och listan kan sorteras på ändrad, namn eller rader. Kryssrutorna väljer flera datamängder (Skift
+väljer ett spann), och knappen *Åtgärder (n)* gör samma sak med alla på en gång: ordna, paketera, exportera som ZIP
+med CSV-filer, hämta igen från API, köra ett recept eller ta bort. Mapp och taggar sparas i datamängdens fil och
+följer med i paket, säkerhetskopior och GitHub; i R visar `dm_list()` mappen och `dm_read("Mapp/Namn")` läser en
+datamängd i en mapp.
 
 ## Dela med andra
 
-- Ett urval: *Dela paket* under Hantera ger en ZIP med valda datamängder, diagram, dashboards, mallar och
-  anteckningsböcker, ett meddelande och en ändringslogg: det som gjorts med varje datamängd sedan den senast delades
-  och de kommentarer som inte är lösta. Mottagaren läser in den under *Återställ från ZIP*, ser meddelandet och
-  ändringarna och väljer för datamängder som redan finns om de ska ersättas med paketets version (den egna sparas
-  under *Versioner*); resten hoppas över.
+Allt som ska till andra människor finns i läget *Dela* (se [dela.md](dela.md)):
+
+- Ett urval: *Paket* ger en ZIP med valda datamängder, diagram, dashboards, mallar, anteckningsböcker och skript,
+  ett meddelande och en ändringslogg: det som gjorts med varje datamängd sedan den senast delades och de
+  kommentarer som inte är lösta. Mottagaren öppnar den under *Ta emot*, ser meddelandet och ändringarna och väljer
+  för datamängder som redan finns om de ska ersättas med paketets version (den egna sparas under *Versioner*);
+  resten hoppas över. Under Hantera gör *Åtgärder* på flera valda datamängder samma sak.
 - Kommentarer: varje datamängd har fliken *Kommentarer* i Hantera, och i Bearbeta kommenterar du en kolumn från
   inspektören. Kommentarerna ligger i datamängdens fil och följer med i paket, säkerhetskopior, den portabla mappen och
   GitHub. Namnet som visas anger du själv; det sparas bara i webbläsaren.
 - Hela arbetsytan: säkerhetskopian (ZIP) återställs under Hantera på en annan dator.
-- Mellan datorer via GitHub: under *Hantera → Arbetsyta* skickar du arbetsytan till ett GitHub-repo (helst privat) och
-  hämtar den på en annan dator. Det kräver en finkornig åtkomstnyckel (fine-grained personal access token) som bara
-  får läsa och skriva innehållet i just det repot. Nyckeln används under sessionen eller sparas krypterad, och ingenting
-  skickas förrän du trycker *Skicka till GitHub* eller *Hämta från GitHub*. Bara ändrade filer skickas, i en commit med
-  ditt meddelande; vid hämtning väljer du, som för paket, om befintliga datamängder ska ersättas.
-- En datamängd: exportera som SQLite (allt följer med) eller Parquet.
+- Mellan datorer via GitHub: fliken *GitHub* skickar arbetsytan till ett GitHub-repo (helst privat) och hämtar den
+  på en annan dator. Det kräver en finkornig åtkomstnyckel (fine-grained personal access token) som bara får läsa
+  och skriva innehållet i just det repot. Nyckeln används under sessionen eller sparas krypterad, och ingenting
+  skickas förrän du trycker *Skicka till GitHub* eller *Hämta från GitHub*. Bara ändrade filer skickas, i en commit
+  med ditt meddelande; vid hämtning väljer du, som för paket, om befintliga datamängder ska ersättas.
+- Via datorns eller telefonens delningsmeny: fliken *Delningsmeny* skickar en datamängd som CSV, Excel, ODS eller
+  JSON, eller alla datamängder som paket, till e-post, Teams och andra appar (Edge och Chrome; Firefox sparar filen).
+- Som färdig webbsida: fliken *Publicera* gör en dashboard eller ett dokument till en fristående HTML-fil.
+- En datamängd: exportera som SQLite (allt följer med) eller Parquet under Exportera.
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras
   och läses in som filer. Nycklar följer aldrig med.
 
 ## Tangentbord
 
-Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Första Tabb-trycket på sidan visar länken
+Alt+1 till Alt+8 växlar läge och Ctrl+K öppnar kommandopaletten. Kanten mellan en panel och arbetsytan kan få
+fokus med Tabb och flyttas med piltangenterna (Skift för större steg, Home och End för minsta och största bredd). Första Tabb-trycket på sidan visar länken
 *Hoppa till innehållet*, som flyttar fokus förbi lägesväxlaren och objektpanelen. Allt nås med Tabb och Enter;
 dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer
 systeminställningen för minskad rörelse.

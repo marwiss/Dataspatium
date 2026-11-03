@@ -21,8 +21,8 @@ skipanaspjaldið. Leturgerðir og tákn eru hlaðin úr möppunni; það tekur a
 ### Grunnnámskeiðið
 
 Eftir tungumálavalið hefst **grunnnámskeiðið**, gagnvirk yfirferð í spjaldi neðst til hægri. Það tekur um tíu mínútur
-og fylgir dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* gegnum alla sex hamina: sækja gögn, skoða
-gagnasafnið, reikna dálk, spyrja með SQL, reikna með R, búa til myndrit og flytja út. Hvert skref útskýrir hugtak og
+og fylgir dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* gegnum alla átta hamina: sækja gögn, skoða
+gagnasafnið, leita, reikna dálk, spyrja með SQL, reikna með R, búa til myndrit, flytja út og deila. Hvert skref útskýrir hugtak og
 gefur verkefni. Rammi sýnir hvar á að smella og skrefið er merkt lokið þegar þú hefur gert það. *Gera það fyrir mig*
 framkvæmir skrefið ef þú vilt frekar sjá hvernig það er gert.
 
@@ -31,18 +31,21 @@ hægri) eða af skipanaspjaldinu (Ctrl+K, *Opna grunnnámskeiðið*). Það held
 
 ## 3. Hamirnir
 
-Efst eru sex hamir. Spjaldið til vinstri sýnir hluti (gagnasöfn og uppruna), í miðjunni er vinnuflöturinn, spjaldið til
-hægri sýnir eiginleika og tölfræði og neðst er dagbók. Spjöldin má fella inn með hnöppunum efst til hægri. Alt+1 til Alt+6
-skipta um ham með lyklaborðinu.
+Efst eru átta hamir. Spjaldið til vinstri sýnir hluti (gagnasöfn og uppruna), í miðjunni er vinnuflöturinn, spjaldið
+til hægri sýnir eiginleika og tölfræði og neðst er stöðustikan með vistunarstöðu, geymslu, valda gagnasafninu,
+R-vélinni og hnöppunum sem fella spjöldin inn og opna dagbókina. Breidd spjaldanna er breytt með því að draga brúnina
+að vinnuflötinum. Alt+1 til Alt+8 skipta um ham með lyklaborðinu.
 
 | Hamur | Hvað þú gerir þar |
 |---|---|
 | Sækja | Flytur inn skrár, límir inn töflur og sækir úr opnum vefþjónustum á Norðurlöndum, eins og Hagstofu Íslands, Veðurstofu Íslands, SCB, SSB, Hagstofu Finnlands og Eurostat ([api-konfiguration.md](api-konfiguration.md)) |
-| Umsjón | Sérð gagnasöfnin þín, endurnefnir, eyðir, vistar útgáfur, tekur afrit af og endurheimtir vinnusvæðið |
+| Umsjón | Sérð gagnasöfnin þín í möppum með merkjum, endurnefnir, eyðir, vistar útgáfur, keyrir hópaðgerðir á fleiri gagnasöfn, tekur afrit af og endurheimtir vinnusvæðið |
+| Leita | Leitar í öllum dálkum í einu eða öllum gagnasöfnum, afmarkar með flokkum og vistar leitir sem lista ([soka.md](soka.md)) |
 | Vinna | Breytir reitum, raðar og síar, hreinsar og ákvarðar gerðir, reiknar dálka, snýrð og tengir gagnasöfn; allt með afturköllun, útgáfum og uppskriftum ([bearbeta.md](bearbeta.md)) |
-| Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; SQL-stjórnborð á valda gagnasafnið |
+| Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; SQL-stjórnborð á valda gagnasafnið; reglulegar segðir; minnisbók sem verður að skýrslu |
 | Myndgera | Býrð til myndrit með Vega-Lite, D3-sniðum eða R-skriftum, vistar, flytur út og býrð þau til í hópkeyrslu ([visualisera.md](visualisera.md)) |
 | Flytja út | Hleður niður gögnum sem CSV, Excel, JSON eða SQLite, vistuðum myndritum sem SVG, PNG eða PDF og skjölum úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
+| Deila | Pakkar gagnasöfnum með myndritum og sniðum fyrir samstarfsfólk, sendir vinnusvæðið á GitHub, deilir um deilivalmynd tölvunnar og birtir mælaborð sem HTML ([dela.md](dela.md)) |
 
 ## 4. Flyttu inn skrá
 
@@ -92,9 +95,9 @@ hvert gagnasafn auk myndrita og sniða) í möppu sem þú velur, til dæmis á 
 sjálfkrafa við breytingar* svo mappan haldist uppfærð. Á annarri tölvu velurðu sömu möppu og smellir á *Hlaða úr möppunni*.
 Eftir endurræsingu vafrans biður hann einu sinni um leyfi til að nota möppuna aftur; smelltu á *Tengjast aftur*.
 
-Ef þú vilt senda úrval til samstarfsmanns notarðu *Deila pakka* á sömu síðu: veldu gagnasöfn og hvort myndrit, mælaborð, snið
-og minnisbækur eigi að fylgja. Samstarfsmaðurinn sleppir pakkanum á *Endurheimta úr ZIP*; því sem þegar er til í vinnusvæði
-hans eða hennar er sleppt.
+Ef þú vilt senda úrval til samstarfsmanns ferðu í haminn *Deila* og flipann *Pakki*: veldu gagnasöfn og hvort myndrit,
+mælaborð, snið, minnisbækur og skriftur eigi að fylgja. Samstarfsmaðurinn opnar pakkann undir *Taka á móti* í sama
+ham; því sem þegar er til í vinnusvæði hans eða hennar er sleppt.
 
 ## Algengar spurningar
 

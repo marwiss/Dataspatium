@@ -133,8 +133,18 @@
       await waitFor(() => toolbar(root, t('comments.add')), 5000, 'comments tab');
       area('hantera comments');
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-left button.dm-list-item')).find((b) => b.textContent.includes(t('datasets.storage.title')))).click();
-      await waitFor(() => toolbar(root, t('bundle.create')), 5000, 'workspace view');
+      await waitFor(() => toolbar(root, t('datasets.backup')), 5000, 'workspace view');
       area('hantera workspace');
+      // Dela: every tab, and the bundle dialog from Paket.
+      shell.activate('dela');
+      await waitFor(() => toolbar(root, t('bundle.create')), 5000, 'dela');
+      for (const id of D.require('ui/modes/dela').TABS) {
+        /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.includes(t('dela.tabs.' + id)))).click();
+        await wait(300);
+        area('dela ' + id);
+      }
+      /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((b) => b.textContent.includes(t('dela.tabs.paket')))).click();
+      await waitFor(() => toolbar(root, t('bundle.create')), 5000, 'dela paket');
       await dialog('bundle.create', () => press(toolbar(root, t('bundle.create'))));
       // Visualisera: the kind of chart, then the builder with its axis options open.
       shell.store.set({ selectedId: meta.id });

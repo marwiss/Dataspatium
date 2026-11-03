@@ -112,13 +112,14 @@
 dm_index <- function() {
   # Tab-separated so that base R can read it without loading any package.
   path <- file.path(.dataspatium$data_dir, "index.tsv")
-  empty <- data.frame(id = character(), name = character(), shortName = character(), file = character(), rowCount = integer(),
-                      columnCount = integer(), updatedAt = character(), stringsAsFactors = FALSE)
+  empty <- data.frame(id = character(), name = character(), shortName = character(), folder = character(), file = character(),
+                      rowCount = integer(), columnCount = integer(), updatedAt = character(), stringsAsFactors = FALSE)
   if (!file.exists(path)) return(empty)
   idx <- utils::read.delim(path, sep = "\t", quote = "", stringsAsFactors = FALSE, encoding = "UTF-8",
                            colClasses = "character", na.strings = character())
   if (NROW(idx) == 0) return(empty)
   if (is.null(idx$shortName)) idx$shortName <- ""
+  if (is.null(idx$folder)) idx$folder <- ""
   idx$rowCount <- as.integer(idx$rowCount)
   idx$columnCount <- as.integer(idx$columnCount)
   idx
@@ -225,8 +226,8 @@ dm_list <- function() {
     message(.dm_msg("list.empty"))
     return(invisible(idx))
   }
-  out <- idx[, c("name", "shortName", "rowCount", "columnCount", "updatedAt", "id")]
-  names(out) <- c("namn", "kortnamn", "rader", "kolumner", "ändrad", "id")
+  out <- idx[, c("name", "shortName", "folder", "rowCount", "columnCount", "updatedAt", "id")]
+  names(out) <- c("namn", "kortnamn", "mapp", "rader", "kolumner", "ändrad", "id")
   out
 }
 
@@ -239,6 +240,11 @@ dm_find <- function(x) {
   if (!length(hit)) hit <- which(idx$name == x)
   if (!length(hit)) hit <- which(idx$shortName == tolower(x))
   if (!length(hit)) hit <- which(tolower(idx$name) == tolower(x))
+  # "Mapp/Namn" or "mapp/kortnamn" addresses a dataset through its folder.
+  qualified <- ifelse(nzchar(idx$folder), paste0(idx$folder, "/", idx$name), idx$name)
+  qshort <- ifelse(nzchar(idx$folder), paste0(idx$folder, "/", idx$shortName), idx$shortName)
+  if (!length(hit)) hit <- which(tolower(qualified) == tolower(x))
+  if (!length(hit)) hit <- which(tolower(qshort) == tolower(x))
   if (!length(hit)) hit <- which(startsWith(tolower(idx$name), tolower(x)))
   if (length(hit) == 1) return(idx$id[hit])
   if (length(hit) > 1) stop(.dm_msg("find.many", x, paste(idx$name[hit], collapse = ", ")), call. = FALSE)

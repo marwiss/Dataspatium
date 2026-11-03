@@ -1,69 +1,118 @@
-# Hamirnir sex
+# Hamirnir átta
 
-Dataspatium skiptist í sex hami sem fylgja gangi vinnunnar, í anda hagskýrslugerðar þar sem gögnum er safnað, þau unnin,
-greind og birt: Sækja, Umsjón, Vinna, Greina, Myndgera, Flytja út. Allir hamir hafa sömu grind: hamaval efst, hlutaspjald til
-vinstri, vinnuflöt í miðju, eiginleikaspjald til hægri og dagbók neðst. Spjöldin skipta aldrei um stað. Alt+1 til Alt+6 skipta
-um ham. Tómt vinnusvæði opnast í Sækja, vinnusvæði með gagnasöfnum í Umsjón. Hnapparnir efst til hægri fella inn spjöldin,
-skipta um þema (ljóst, dökkt, fylgja kerfinu), skipta um tungumál og opna hjálpina.
+Dataspatium er skipt í átta hami sem fylgja gangi vinnunnar, í sama anda og hagskýrslugerðin safna, vinna, greina
+og miðla: Sækja, Umsjón, Leita, Vinna, Greina, Myndgera, Flytja út, Deila. Allir hamir hafa sömu beinagrind:
+hamavalið efst, hlutaspjaldið til vinstri, vinnuflötinn í miðjunni, eiginleikaspjaldið til hægri og stöðustikuna
+neðst, með dagbókina fellda inn fyrir ofan hana. Spjöldin skipta aldrei um stað. Alt+1 til Alt+8 skipta um ham. Tómt
+vinnusvæði opnast í Sækja, vinnusvæði með gagnasöfnum í Umsjón. Hnapparnir efst til hægri opna skipanaspjaldið,
+skipta um tungumál, skipta um þema (ljóst, dökkt, fylgja kerfinu) og opna hjálpina.
 
-Skipanaspjaldið (Ctrl+K eða stækkunarglerið efst) nær til alls úr einum leitarreit: skipta um ham, opna gagnasafn, myndrit eða
-mælaborð, keyra aðgerð á valda gagnasafnið, flytja út, opna vinnusvæðið, skipta um þema eða leita að uppfærslum. Örvar upp og
-niður velja, Enter keyrir og Esc lokar; síðast keyrðu skipanirnar eru efst.
+**Stöðustikan** sýnir vistunarstöðu, hversu mikla geymslu vinnusvæðið notar, valda gagnasafnið (heiti, raðir og
+dálkar; smellur opnar það í Umsjón), stöðu R-vélarinnar (slökkt, ræsist, tilbúin, upptekin; smellur ræsir hana),
+netköll í gangi (smellur sýnir dagbók yfir köll), hnappana sem fella hlutaspjaldið, eiginleikaspjaldið og dagbókina
+inn og út, og fjölda lína í dagbókinni.
+
+**Breidd spjaldanna** er breytt með því að draga brúnina milli spjalds og vinnuflatar; tvísmellur endurstillir, og
+með lyklaborðinu færa örvalyklarnir brúnina (Shift fyrir stærri skref, Home og End fyrir minnstu og mestu breidd).
+Breiddirnar eru vistaðar. Í þrengri gluggum (undir 1 100 px) sýnir hamavalið aðeins tákn, með texta á virka hamnum,
+og eiginleikaspjaldið opnast sem yfirlagsspjald yfir vinnuflötinn; undir 760 px gerir hlutaspjaldið það sama.
+Yfirlagsspjaldi er lokað með Esc eða smelli á vinnuflötinn.
+
+**Ábendingar** birtast fyrir alla hnappa þegar bendillinn hvílir á þeim eða þegar þeir fá fókus með lyklaborðinu; á
+snertiskjá með því að halda fingri á hnappnum.
+
+Skipanaspjaldið (Ctrl+K eða stækkunarglerið efst) nær öllu úr einum leitarreit: skipta um ham, opna gagnasafn,
+myndrit eða mælaborð, keyra vinnsluaðgerð á valda gagnasafnið, flytja út, opna vinnusvæðið, leita í gögnum, búa til
+pakka, skipta um þema eða leita að uppfærslum. Ör upp og niður velja, Enter keyrir og Esc lokar; síðast keyrðu
+skipanirnar eru efst.
 
 ## Sækja
 
-Hér koma gögn inn: skrár sem sleppt er á flötinn, límdur texti, vefslóðir og opnar vefþjónustur. Innflutningur skráa fer fram í
-skrefum: skrá, stillingar með forskoðun, dálkar með gerðum, lokið. Snið: CSV og annar aðgreindur texti, texti með fastri
-breidd, Excel, ODS, JSON (líka JSON-stat og GeoJSON), XML, SQLite, GeoPackage, shapefile og gegnum R: SPSS, Stata, SAS, PX,
-Parquet, RDS og RData (sjá [format.md](format.md)); R-sniðin eru flutt inn í einu skrefi án forskoðunar. Undir Opnar
-vefþjónustur eru forstillingar fyrir hagstofur og fleiri stofnanir á Íslandi, í Danmörku, Noregi, Finnlandi, Svíþjóð,
-Grænlandi, Færeyjum og á Álandseyjum, Nordic Statistics og Eurostat; landahnapparnir fyrir ofan listann velja hvaða landa
-upprunar birtast. Eigin uppsetningum er bætt við úr skrá og þeim má deila. *Vistaðar sóknir* sýnir gagnasöfnin sem komu úr
-vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Sjá [api-konfiguration.md](api-konfiguration.md).
+Hér koma gögn inn: skrár sem sleppt er á flötinn, límdur texti, vefslóðir og opnar vefþjónustur. Innflutningur skráa
+fer í skrefum: skrá, stillingar með forskoðun, dálkar með gerðum, lokið. Snið: CSV og annar aðgreindur texti, texti
+með fastri dálkbreidd, Excel, ODS, JSON (líka JSON-stat og GeoJSON), XML, SQLite, GeoPackage, shapefile og gegnum R:
+SPSS, Stata, SAS, PX, Parquet, RDS og RData (sjá [format.md](format.md)); R-sniðin eru flutt inn í einu skrefi án
+forskoðunar. Undir Opnar vefþjónustur eru forstillingar fyrir Hagstofu Íslands, Veðurstofu Íslands og hagstofur og
+stofnanir hinna Norðurlandanna, SCB (flettu í efnistrénu eða leitaðu að töflu), Eurostat, Nordic Statistics og
+fleiri, auk uppruna sem krefjast lykla; landahnapparnir ofan við listann velja hvaða landa upprunar birtast. Eigin
+uppsetningum er bætt við úr skrá og þeim má deila. *Vistaðar sóknir* telur upp gagnasöfnin sem komið hafa úr
+vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Í fyrsta skipti sem forritið þarf að hafa samband
+við netið í einhverjum tilgangi (vefþjónustur, vefslóðir, GitHub, íhlutir) spyr það um leyfi; svarið má vista. Sjá
+[api-konfiguration.md](api-konfiguration.md).
 
 ## Umsjón
 
-Heimili gagnasafnanna. Yfirlit með lýsigögnum, dálkalisti, athugasemdir, saga þess sem gert hefur verið við gagnasafnið, útgáfur, endurnefna
-og stuttheiti (stuttheitið er notað í SQL, R og myndritaskrám), eyða, sækja aftur úr vefþjónustu (eitt gagnasafn eða öll í
-einu). Hér er líka vinnusvæðið: hversu mikil geymsla er í notkun, varanleg geymsla, afritun í ZIP og endurheimt og, í Edge og
-Chrome, færanleg mappa: vinnusvæðið er vistað sem venjulegar skrár í möppu sem þú velur, sjálfkrafa eftir hverja breytingu ef
-þú vilt, og má hlaða inn á annarri tölvu. *Deila pakka* býr til ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og
-minnisbókum, skilaboðum og breytingaskrá handa samstarfsmanni, sem hleður henni inn undir *Endurheimta úr ZIP* og getur
-skipt út sínum útgáfum gagnasafnanna. *GitHub* sendir vinnusvæðið í safn og sækir það þaðan, með aðgangslykli sem er
-vistaður dulkóðaður.
+Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
+merki; síureitur leitar í heiti, stuttheiti, merki og möppu, og listanum má raða eftir breytt, heiti eða röðum.
+Möppur fellast saman og opnast, og gagnasöfn má draga í möppu. Gátreitirnir velja fleiri gagnasöfn (Shift velur bil)
+og hnappurinn *Aðgerðir (n)* opnar hópaðgerðirnar: raða (mappa og merki), pakka, flytja út sem ZIP með CSV-skrám,
+sækja aftur úr vefþjónustu, keyra uppskrift og eyða. Mappa og merki fylgja gagnasafninu í skrá þess, í pökkum og í
+afritum.
+
+Yfirlit gagnasafns sýnir lýsigögn, dálkalista, athugasemdir, sögu þess sem gert hefur verið við gagnasafnið og
+útgáfur, og hér endurnefnir þú og breytir stuttheiti (stuttheitið er notað í SQL, R og myndritaskrám), raðar, eyðir
+og sækir aftur úr vefþjónustu. Undir *Vinnusvæði* er hversu mikil geymsla er í notkun, varanleg geymsla, afrit í ZIP
+og endurheimt, í Edge og Chrome færanleg mappa (vinnusvæðið er vistað sem venjulegar skrár í möppu sem þú velur,
+sjálfkrafa eftir hverja breytingu ef þú vilt, og má hlaða inn á annarri tölvu), *Netaðgangur* (hvaða tilgangir mega
+hafa samband við netið, með dagbók yfir köll) og *Íhlutir* (hlutar forritsins og R-pakkar sem eru sóttir þegar þeirra
+er þörf, með stærð, uppruna og hnöppum til að sækja fyrirfram eða fjarlægja). Pakkar og GitHub hafa flust í haminn
+Deila.
+
+## Leita
+
+Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að
+finnast í röðinni, óháð há- og lágstöfum. Niðurstöðurnar birtast eftir gagnasafni með fjölda, flokkum (algengustu
+gildin í dálkum með fá ólík gildi, sem afmarka leitina með einum smelli) og töflu þar sem röð opnar alla færsluna í
+eiginleikaspjaldinu. Leit má vista sem lista, gera að nýju gagnasafni eða opna í Vinna. Flipinn *Listar* safnar
+vistuðum leitum eftir gagnasafni og keyrir þær aftur á gögnum dagsins. Sjá [soka.md](soka.md).
 
 ## Vinna
 
-Allt sem gert er við töfluna með hnöppum og gluggum: breyta reitum beint í töflunni, raða, sía og sjá dálkatölfræði; aðgerðir
-til hreinsunar (finna og skipta út með reglulegum segðum, fjarlægja bil, há- og lágstafir, lagfæring stafakóðunar, skipta út
-gildi, fylla í vantandi, tvítök, hreinsun flokka), gerðir (tölur, dagsetningar, já/nei), uppbygging (reiknaðir dálkar, skipta
-og sameina, eyða röðum, snúa) og ný gagnasöfn (hópa og taka saman, tengja, skeyta saman). Gagnagæðasniðið bendir á það sem
-ætti að lagfæra og gæðareglur (má ekki vanta, einkvæmt, bil, listi, mynstur, lengd, SQL-skilyrði) athuga gögnin eftir þörfum
-með skýrslu og röðum sem bregðast sem sérstöku gagnasafni. Allt er skráð sem uppskriftir sem má afturkalla, keyra á annað
-gagnasafn og flytja út sem R- eða SQL-kóða. Útgáfur vista skyndimyndir til að fara aftur í. Sjá [bearbeta.md](bearbeta.md).
+Allt sem gert er við töfluna með hnöppum og gluggum: breyta reitum beint í töflunni, raða, sía og sjá dálkatölfræði;
+aðgerðir til hreinsunar (leita og skipta út með reglulegum segðum, snyrta, há- og lágstafir, lagfæring stafakóðunar,
+skipta út gildi, fylla í vantandi, tvítök, hreinsun flokka), gerðir (tala, dagsetning, já/nei), uppbygging
+(reiknaðir dálkar, skipta og sameina, eyða röðum, snúa) og ný gagnasöfn (hópa og safna saman, tengja, leggja saman).
+Gagnagæðasniðið bendir á hvað ætti að leiðrétta, og gæðareglur (má ekki vanta, einkvæmt, bil, listi, mynstur, lengd,
+SQL-skilyrði) athuga gögnin eftir óskum með skýrslu og röðum sem bregðast sem eigið gagnasafn. Allt er skráð sem
+uppskrift sem má afturkalla, spila á öðru gagnasafni og flytja út sem R- eða SQL-kóða. Útgáfur vista skyndimyndir
+til að hverfa aftur til. Sjá [bearbeta.md](bearbeta.md).
 
 ## Greina
 
-Kóði og tölfræði. R-stjórnborð með ggplot2, dplyr, tidyr og öðrum pökkum, vistaðar skriftur, myndrit með útflutningi í SVG, PNG
-og PDF og `dm_read()`/`dm_write()` til að flytja gögn milli forritsins og R (sjá [r-guide.md](r-guide.md)). SQL-stjórnborð á
-valda gagnasafnið (`data`), þar sem önnur gagnasöfn nást með stuttheitum sínum svo ein fyrirspurn getur tengt fleiri
-gagnasöfn með join; fyrirspurnir sýna niðurstöður sem má vista sem nýtt gagnasafn og breytandi setningar eru skráðar sem skref
-í uppskriftinni (sjá [bearbeta.md](bearbeta.md)). Minnisbókin blandar saman texta (Markdown), R og SQL í reitum sem keyra í röð
-og verða að skýrslu í HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)). Regex-flipinn prófar reglulegar segðir á dálki með samsvaranirnar merktar og notar þær til að sía, draga út,
-skipta út, skipta upp, merkja, telja eða búa til gæðareglu, með mynsturyfirliti og safni norrænna mynstra (sjá
-[regex.md](regex.md)). Síðar: tölfræðileg líkön.
+Kóði og tölfræði. Verkfærin eru í fastri röð: R, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;
+Python bætist við eftir R í komandi útgáfu. R-stjórnborðið hefur ggplot2, dplyr, tidyr og aðra pakka, vistaðar
+skriftur, myndrit með útflutningi í SVG, PNG og PDF, og `dm_read()`/`dm_write()` til að flytja gögn milli forritsins
+og R (sjá [r-guide.md](r-guide.md)); pakkar sem fylgja ekki forritinu eru sóttir úr pakkasafni webR þegar kóðinn þarf
+þá, eftir að þú hefur gefið leyfi. SQL-stjórnborðið vinnur á valda gagnasafnið (`data`), þar sem önnur gagnasöfn nást
+með stuttheitum sínum svo fyrirspurn geti gert join yfir fleiri gagnasöfn; fyrirspurnir sýna niðurstöður sem má vista
+sem nýtt gagnasafn, breytandi setningar eru skráðar sem uppskriftarskref (sjá [bearbeta.md](bearbeta.md)). Flipinn
+Regex prófar reglulegar segðir á dálki með niðurstöðurnar merktar og notar þær til að sía, draga út, skipta út,
+skipta upp, merkja, telja eða búa til gæðareglu, með mynstursniði og safni norrænna mynstra (sjá [regex.md](regex.md)).
+Minnisbókin blandar texta (Markdown), R og SQL í reitum sem keyra í röð og verða að skýrslu í HTML, Word, PDF,
+Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)). Síðar: tölfræðilíkön.
 
 ## Myndgera
 
-Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum, stuðlaritum,
-hitakortum, kassaritum, kökuritum og kortum (þemakort úr GeoJSON- eða shapefile-gögnum); D3-snið fyrir röðun, hallarit og
-aldurspíramída; og R-skriftur með ggplot2. Vistuð myndrit má flytja út sem SVG, PNG, PDF og PowerPoint, deila sem viz-skrám,
-sýna í safni og búa til í hópkeyrslu eftir hópum. Mælaborð safna vistuðum myndritum í hnitanet með sameiginlegum síum og eru
-flutt út sem HTML eða PowerPoint. Sjá [visualisera.md](visualisera.md).
+Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum,
+stuðlaritum, hitakortum, kassaritum, kökum og kortum (þemakort úr GeoJSON- eða shapefile-gögnum); D3-snið fyrir
+röðun, hallarit og aldurspýramída; og R-skriftur með ggplot2. Vistuð myndrit má flytja út sem SVG, PNG, PDF og
+PowerPoint, deila sem viz-skrám, sýna í safni og búa til í hópkeyrslu eftir hópum. Mælaborð safna vistuðum myndritum
+í grind með sameiginlegum síum og eru flutt út sem HTML eða PowerPoint. Sjá [visualisera.md](visualisera.md).
 
 ## Flytja út
 
-Þrír flipar. **Gögn**: CSV (aðlagað Excel eða staðlað), Excel, ODS, JSON, XML, SQLite og gegnum R: Parquet, SPSS, Stata og RDS.
-**Myndrit**: vistuð myndrit og mælaborð (líka öll myndrit sem ein PowerPoint) sem SVG, PNG og PDF, eitt í einu eða í hópkeyrslu
-eftir hópum í ZIP. **Skjöl**: skýrslur, kóðabækur og samantektir úr sniðum í Markdown með staðgenglum, sem HTML, Word, PDF,
-Markdown eða LaTeX, eitt í einu eða í hópkeyrslu eftir hópum (sjá [dokumentmallar.md](dokumentmallar.md)).
+Skrár á eigin tölvu, í þremur flipum. **Gögn**: CSV (Excel-aðlagað eða staðlað), Excel, ODS, JSON, XML, SQLite og
+gegnum R: Parquet, SPSS, Stata og RDS. **Myndrit**: vistuð myndrit og mælaborð (líka öll myndrit sem ein PowerPoint)
+sem SVG, PNG og PDF, eitt og eitt eða í hópkeyrslu eftir hópum í ZIP. **Skjöl**: skýrslur, kóðabækur og samantektir
+úr sniðum í Markdown með staðgenglum, sem HTML, Word, PDF, Markdown eða LaTeX, eitt og eitt eða í hópkeyrslu eftir
+hópum (sjá [dokumentmallar.md](dokumentmallar.md)). Það sem á að fara til annarra er í Deila.
+
+## Deila
+
+Gefa öðrum gögn. **Pakki**: ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum, minnisbókum og skriftum,
+skilaboðum og breytingaskrá, sem viðtakandinn opnar undir *Taka á móti* og getur skipt út sínum útgáfum með.
+**GitHub**: vinnusvæðið sem mappa í safni, senda og sækja, með aðgangslykli sem er vistaður dulkóðaður.
+**Deilivalmynd**: eigin deilivalmynd tölvunnar eða símans fyrir skrá eða pakka (tölvupóstur, Teams, skilaboðaforrit).
+**Birta**: mælaborð og skjöl sem sjálfstæðar HTML-skrár. **Taka á móti**: pakkar úr skrá eða af vefslóð, með sendanda
+og breytingar sýnilegar áður en nokkuð er tekið inn. Beinn flutningur milli tækja kemur í síðari útgáfu. Sjá
+[dela.md](dela.md).

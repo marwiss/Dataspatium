@@ -20,7 +20,9 @@
       const KEY = 'dataspatium.course';
       const EXAMPLE = 'befolkning-kommuner-2024';
       const EXPRESSION = 'round(folkmangd / 1000.0, 1)';
-      const MODES = ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera'];
+      const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela'];
+      /** The word the search step looks for in the example data. */
+      const QUERY = 'Stockholm';
       const CHECK_MS = 1000;
 
       /**
@@ -31,11 +33,13 @@
         { id: 'welcome' },
         { id: 'import', mode: 'inhamta', target: '[data-course="example"]', action: 'doit' },
         { id: 'manage', mode: 'hantera', action: 'show' },
+        { id: 'search', mode: 'soka', target: '[data-course="search"]', action: 'doit' },
         { id: 'process', mode: 'bearbeta', target: '[data-course="actions"]', action: 'doit' },
         { id: 'sql', mode: 'analysera', action: 'doit' },
         { id: 'r', mode: 'analysera', action: 'doit' },
         { id: 'viz', mode: 'visualisera', target: '[data-course="new-chart"]', action: 'doit' },
         { id: 'export', mode: 'exportera', target: '[data-course="export"]', action: 'show' },
+        { id: 'share', mode: 'dela', action: 'show' },
         { id: 'finish' },
       ];
 
@@ -96,7 +100,7 @@
         const rCode = () => `df <- dm_read("${shortName()}")\nsummary(df$folkmangd)\nlibrary(ggplot2)\nggplot(df, aes(folkmangd)) +\n  geom_histogram(bins = 30) +\n  scale_x_log10() +\n  theme_dataspatium()`;
 
         // React at once when the user switches mode, runs code or exports, instead of at the next poll.
-        shell.store.subscribe((state, changed) => { if (panel && (changed.includes('mode') || changed.includes('lastRun') || changed.includes('lastExport'))) tick(); });
+        shell.store.subscribe((state, changed) => { if (panel && (changed.includes('mode') || changed.includes('lastRun') || changed.includes('lastExport') || changed.includes('lastSearch'))) tick(); });
 
         /** Texts of a step: paragraphs, the task (with code to type) and the line shown when it is done. */
         function content(step) {
@@ -105,6 +109,8 @@
             case 'welcome': return { paragraphs: [p('p1'), p('p2', { example: strong(t('preset.befolkning.name')), modes: MODES.map((m) => t('mode.' + m)).join(' → ') }), p('p3')] };
             case 'import': return { paragraphs: [p('p1')], task: p('task', { mode: mode('inhamta'), button: strong(t('presets.try')), name: strong(t('preset.befolkning.name')) }), done: p('done', { short: code(shortName()) }) };
             case 'manage': return { paragraphs: [p('p1', { mode: mode('hantera'), short: code(shortName()) }), p('p2', { backup: strong(t('datasets.backup')) })], task: p('task', { mode: mode('hantera') }), done: p('done') };
+            case 'search': return { paragraphs: [p('p1', { mode: mode('soka') })], task: p('task', { mode: mode('soka'), query: code(QUERY), run: strong(t('soka.run')) }), done: p('done', { save: strong(t('soka.save.list')), lists: strong(t('soka.tabs.listor')) }) };
+            case 'share': return { paragraphs: [p('p1', { mode: mode('dela') })], task: p('task', { mode: mode('dela') }), done: p('done', { bundle: strong(t('bundle.create')), receive: strong(t('dela.tabs.receive')) }) };
             case 'process': return {
               paragraphs: [p('p1', { mode: mode('bearbeta') }), p('p2', { recipe: strong(t('bearbeta.recipe')) })],
               task: p('task', { mode: mode('bearbeta'), actions: strong(t('bearbeta.actions')), group: strong(t('op.group.structure')), op: strong(t('op.add_column')), column: code(column()), expression: code(EXPRESSION) }),
@@ -244,6 +250,8 @@
             const mine = (await charts.list(ex.id)).find((c) => c.name === t('course.viz.chart'));
             const chart = mine || await charts.save(countyChart(ex, await datasets.columns(ex.id)));
             handOver = { openChartId: chart.id };
+          } else if (id === 'search') {
+            handOver = { selectedId: ex.id, pendingSearch: { text: QUERY, at: Date.now() } };
           }
           // Go to the step's mode unless already there (activating rebuilds the mode), then hand over code or a chart.
           const step = STEPS.find((s) => s.id === id);
@@ -257,6 +265,8 @@
           switch (step.id) {
             case 'import': return !!example;
             case 'manage': return state.mode === 'hantera';
+            case 'share': return state.mode === 'dela';
+            case 'search': return !!state.lastSearch && state.lastSearch.at >= enteredAt;
             case 'process': return !!example && (await datasets.columns(example.id)).some((c) => c.name === column());
             case 'sql': case 'r': return !!state.lastRun && state.lastRun.lang === step.id && state.lastRun.ok !== false && state.lastRun.at >= enteredAt;
             case 'viz': return !!example && (await charts.list(example.id)).some((c) => c.name === t('course.viz.chart') || Date.parse(c.updatedAt || '') >= enteredAt);

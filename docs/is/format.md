@@ -94,7 +94,7 @@ Afritið (ZIP), færanlega mappan (Edge og Chrome) og mappan í GitHub-safni haf
 lista yfir innihaldið, `datasets/<id>.sqlite` fyrir hvert gagnasafn, `charts/<id>.viz.json` fyrir hvert vistað myndrit,
 `documents/<id>.doc.json` fyrir hvert eigið skjalasnið, `dashboards/<id>.dash.json` fyrir hvert mælaborð,
 `notebooks/<id>.nb.json` fyrir hverja minnisbók og `scripts/<id>.script.json` fyrir hverja vistaða R-skriftu, SQL-skriftu
-eða regex-mynstur. Pakki (*Deila pakka* undir Umsjón) hefur sömu uppbyggingu en inniheldur aðeins það sem þú valdir.
+eða regex-mynstur. Pakki (*Pakki* í hamnum Deila) hefur sömu uppbyggingu en inniheldur aðeins það sem þú valdir.
 Skráarlisti hans hefur `kind: bundle`, nafn sendanda (`author`), skilaboðin (`message`) og breytingarnar á hverju
 gagnasafni síðan því var síðast deilt eða það móttekið (`changes`), og pakkinn hefur auk þess `CHANGELOG.md` með því sama
 og óleystum athugasemdum á læsilegu formi. Þegar pakka er hlaðið inn birtast skilaboðin og breytingarnar, og öllu sem
@@ -102,6 +102,11 @@ og óleystum athugasemdum á læsilegu formi. Þegar pakka er hlaðið inn birta
 nema þeim gagnasöfnum sem þú velur að skipta út fyrir útgáfu pakkans; þín útgáfa er þá vistuð undir *Útgáfur*. Með
 sjálfvirka vistun á eru breytt gagnasöfn skrifuð í færanlegu möppuna stuttu eftir hverja vistun og skrár eyddra
 gagnasafna fjarlægðar. Möppunni má hlaða inn á annarri tölvu á sama hátt og pakka.
+
+Skráarlistinn hefur `format: 2` síðan útgáfu 2.0: hvert gagnasafn í listanum hefur auk `id`, `name` og `shortName`
+einnig `folder` (möppuna, eins og `Fjármál/2026`, eða tómt) og `tags` (lista). Eldri pakkar og afrit (án `format`)
+eru lesin eins og áður. Mappa og merki eru líka í eigin skrá gagnasafnsins (`_meta`), svo þau fylgja hvert sem skráin
+fer, eins og `kind` (`table`, `graph`, `document`, `images`, `model`); í 2.0 eru öll gagnasöfn töflur.
 
 Raðirnar í `_log` hafa tímastimpil, gerð aðgerðar og nánari upplýsingar sem JSON. Aðgerðagerðirnar eru meðal annars
 `import`, `op` (skref í uppskrift með `op`, `params`, `result` og `description`; það eru þessar raðir sem mynda

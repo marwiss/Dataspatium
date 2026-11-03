@@ -14,8 +14,8 @@ ligger i appmappen: R, et utvalg pakker og Dataspatiums hjelpefunksjoner.
 
 | Funksjon | Gjør |
 |---|---|
-| `dm_list()` | Viser datasettene i sesjonen: navn, kortnavn, rader, kolonner, endret, id. |
-| `dm_read("kortnavn")` | Leser et datasett som `data.frame` med riktige typer: datoer blir `Date`, dato og tid `POSIXct`, ja/nei `logical`, heltall `integer`. Argumentet er helst kortnavnet (for eksempel `dm_read("befolkning_2024")`, som er det knappen *Sett inn dm_read()* skriver), men kan også være id, det nøyaktige navnet, navnet uavhengig av store og små bokstaver eller et entydig prefiks; `dm_list()` viser kortnavnene. |
+| `dm_list()` | Viser datasettene i sesjonen: navn, kortnavn, mappe, rader, kolonner, endret, id. |
+| `dm_read("kortnavn")` | Leser et datasett som `data.frame` med riktige typer: datoer blir `Date`, dato og tid `POSIXct`, ja/nei `logical`, heltall `integer`. Argumentet er helst kortnavnet (for eksempel `dm_read("befolkning_2024")`, som er det knappen *Sett inn dm_read()* skriver), men kan også være id, det nøyaktige navnet, navnet uavhengig av store og små bokstaver eller et entydig prefiks; `dm_list()` viser kortnavnene. Ligger datasettet i en mappe, virker også `dm_read("Mappe/Navn")` og `dm_read("Mappe/kortnavn")`. |
 | `dm_read("kortnavn", columns = c("a", "b"), where = "a > 10", n = 1000)` | Leser bare enkelte kolonner, rader som oppfyller en SQL-betingelse, eller et begrenset antall rader. |
 | `attr(df$kolonne, "label")`, `"description"`, `"unit"` | Kolonnens etikett, beskrivelse og enhet fra appen følger med som attributter (når de er satt); `dm_write()` tar dem med tilbake, eller via argumentene `labels`, `descriptions` og `units`. |
 | `dm_value_labels(x, c("Mann" = 1, "Kvinne" = 2), to = "labels")` | Verdietiketter. En kolonne med koder og etiketter blir `haven::labelled` i `dm_read()` (en kolonne som allerede har etikettene som tekst, beholder kodene i attributtet `value_labels`), og `dm_write()` lagrer dem. `dm_value_labels()` setter etiketter (`to = NULL`), bytter koder mot etiketter (`"labels"`) eller tilbake (`"codes"`); uten etiketter fjernes de. |
@@ -55,8 +55,12 @@ lubridate, forcats, data.table, haven (SPSS, Stata, SAS), readxl, writexl, nanop
 RSQLite, DBI og knitr samt avhengighetene deres (blant annet tibble, purrr, rlang, cli, stringi). `library(pakke)`
 installerer pakken fra det innebygde arkivet første gang den brukes.
 
-Andre CRAN-pakker kan ikke installeres, fordi appen ikke henter noe fra internett. Trenger du flere pakker, kan du opprette
-et issue, så kan de legges til i neste utgivelse.
+Andre pakker hentes ved behov fra webR sitt pakkearkiv (repo.r-wasm.org, over 20 000 CRAN-pakker bygd for
+nettleseren): kaller koden `library()`, `require()` eller `pakke::` for en pakke utenfor utvalget, hentes den med
+avhengighetene sine før koden kjøres. Første gang spør appen om lov til å kontakte internett for komponenter;
+deretter lagres pakkene i nettleseren, finnes fortsatt ved neste oppstart og vises under *Håndter → Arbeidsområde →
+Komponenter*, der de også kan fjernes. Uten nettverk, eller om du svarer nei, får koden den vanlige feilen om at
+pakken mangler. Pakker som krever systembiblioteker som ikke finnes i nettleseren, kan mangle i arkivet.
 
 ## Slik flyttes data mellom appen og R
 
@@ -71,7 +75,7 @@ Datasett større enn 50 MB speiles bare når det vises til dem i koden.
 ## Språk
 
 Meldinger fra `dm_list()`, `dm_read()` og `dm_write()` følger appens språk (svensk, dansk, norsk, finsk, islandsk eller
-engelsk); kolonnenavnene i `dm_list()` er derimot alltid de samme (`namn`, `kortnamn`, `rader`, `kolumner`, `ändrad`, `id`),
+engelsk); kolonnenavnene i `dm_list()` er derimot alltid de samme (`namn`, `kortnamn`, `mapp`, `rader`, `kolumner`, `ändrad`, `id`),
 så skript fungerer uavhengig av språk.
 
 ## Begrensninger

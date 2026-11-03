@@ -24,13 +24,18 @@ kuvakaappaukset näyttävät sovelluksen ruotsiksi.
    vuorovaikutteisen läpikäynnin kaikista tiloista esimerkkidatalla. Avaa se uudelleen ohjeesta (?).
 4. **Tuo.** Pudota *Nouda*-tilassa tiedosto alueelle (tai napsauta *Kokeile esimerkkidatalla*), tarkista saraketyypit ja
    napsauta *Tuo*. Aineisto tallennetaan tietokoneesi selaimeen.
-5. **Jatka.** Vaihda tilaa yläreunasta: *Hallitse* näyttää aineistosi ja työtilan, *Muokkaa* näyttää taulukon lajittelun,
-   suodattimien ja toimintojen kanssa, *Analysoi* avaa R- ja SQL-konsolin, *Visualisoi* rakentaa kaavioita ja *Vie* lataa
-   dataa, kaavioita ja asiakirjoja.
+5. **Jatka.** Vaihda tilaa yläreunasta: *Hallitse* näyttää aineistosi ja työtilan, *Hae* löytää niistä rivejä,
+   *Muokkaa* näyttää taulukon lajittelun, suodattimien ja toimintojen kanssa, *Analysoi* avaa R- ja SQL-konsolin,
+   *Visualisoi* rakentaa kaavioita, *Vie* lataa dataa, kaavioita ja asiakirjoja ja *Jaa* antaa ne muille.
 
 Data tallennetaan selaimen omaan tietokantaan. Jos tyhjennät sivustotiedot, data katoaa, joten tee varmuuskopio
 säännöllisesti kohdassa *Hallitse > Työtila*. Varmuuskopio on ZIP-tiedosto, jonka voi palauttaa samalle tai toiselle
 tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
+
+Sovellus on myös suoraan verkossa ilman latausta: <https://marwiss.github.io/Dataspatium/>. Verkkopalvelimelta sen
+voi asentaa omaksi sovellukseksi (Edge ja Chrome: *Asenna* osoiterivillä), ja se toimii sen jälkeen myös ilman
+verkkoa. Verkkoversiolla ja kansioversiolla on erilliset työtilat; siirrä dataa niiden välillä varmuuskopiolla tai
+paketilla.
 
 ## Vaatimukset
 
@@ -38,7 +43,8 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - Microsoft Edge tai Google Chrome (versio 120 tai uudempi) tai Firefox (versio 128 tai uudempi). Safaria ei tueta.
 - Noin 300 Mt vapaata tilaa sovelluskansiolle ja vähintään 4 Gt muistia (8 Gt suositellaan suurille aineistoille).
   Järjestelmänvalvojan oikeuksia ei tarvita.
-- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, synkronoit GitHubin kanssa tai tarkistat päivitykset.
+- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, lähetät GitHubiin, tarkistat päivitykset tai
+  noudat komponentin tai R-paketin, joka ei tule kansion mukana; sovellus kysyy ensin lupaa.
 
 ## Mitä voit tehdä
 
@@ -64,14 +70,18 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - **Dokumentoida**: raportteja ja koodikirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa, myös yksi
   asiakirja kuntaa tai vuotta kohden (ks. [dokumentmallar.md](dokumentmallar.md)).
 - **Viedä ja jakaa**: dataa CSV-, Excel-, ODS-, JSON-, GeoJSON-, XML-, SQLite-, Parquet-, SPSS-, Stata- ja RDS-muotoon;
-  paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, kommentit aineistoihin ja sarakkeisiin,
-  työtilan varmuuskopio ZIP-tiedostona, synkronointi GitHub-repositorioon ja Edgessä ja Chromessa siirrettävä kansio
-  tavallisina tiedostoina.
-- **Löytää nopeasti**: komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja, kaavioita ja kojelautoja ja suorittaa
-  toimintoja yhdestä hakukentästä.
+  *Jaa*-tilassa paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, synkronointi
+  GitHub-repositorioon, tietokoneen jakovalikko ja kojelautojen ja asiakirjojen julkaiseminen itsenäisenä HTML:nä
+  (ks. [dela.md](dela.md)); kommentit aineistoihin ja sarakkeisiin, työtilan varmuuskopio ZIP-tiedostona ja Edgessä ja
+  Chromessa siirrettävä kansio tavallisina tiedostoina.
+- **Pitää järjestystä**: kansiot ja tunnisteet aineistoille, suodatus ja lajittelu sekä erätoiminnot usealle
+  aineistolle kerralla (järjestä, paketoi, vie, nouda uudelleen, suorita resepti, poista).
+- **Löytää nopeasti**: *Hae*-tila etsii kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaavilla faseteilla
+  ja tallennetuilla listoilla (ks. [soka.md](soka.md)); komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja,
+  kaavioita ja kojelautoja ja suorittaa toimintoja yhdestä hakukentästä.
 - **Kuusi kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja
   englanniksi.
-- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kuudesta tilasta esimerkkidatalla kaikilla kuudella kielellä.
+- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla kuudella kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
 ## Lue lisää
@@ -83,7 +93,8 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
 - [Aloitusopas](kom-igang.md): vaihe vaiheelta ja yleiset kysymykset.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
 - [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
-- [Kuusi tilaa](lagen.md): mitä on missä ja miksi.
+- [Kahdeksan tilaa](lagen.md): mitä on missä ja miksi.
+- [Hae](soka.md) ja [Jaa](dela.md): löydä ilman koodia ja anna tietoa muille.
 - [Muistikirja](anteckningsbok.md): tekstiä, R:ää ja SQL:ää soluissa, joista syntyy raportti.
 - [Säännölliset lausekkeet](regex.md): kuviot tekstin analysointiin, korjaamiseen ja jakamiseen aineistoissa.
 - [Tiedostomuodot ja tuonti](format.md): tiedostomuodot, merkistökoodaus, desimaalierotin, päivämäärät ja saraketyypit.
@@ -109,7 +120,8 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
   yhtä aikaa: viimeksi tallentava voittaa.
 - Siirrettävä kansio vaatii Edgen tai Chromen; Firefoxista puuttuu kansioiden käyttö (File System Access). ZIP-varmuuskopio
   toimii kaikkialla.
-- Safaria ja mobiiliselaimia ei tueta.
+- Safaria ja mobiiliselaimia ei tueta vielä; mobiilisivu puhelimille ja tableteille on suunniteltu seuraavaan versioon.
+  Kapeissa ikkunoissa paneelit avautuvat jo nyt työalueen päälle.
 - Mukana tulevat esimerkkidata ja karttarajat ovat ruotsalaisia; itse sovellus toimii datan kanssa mistä tahansa.
 
 ## Virheet ja ehdotukset

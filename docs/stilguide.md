@@ -38,10 +38,16 @@ kapat, så att de tillsammans bildar ett D. I accentfärgen är det också favic
 
 ## Layout
 
-Samma skelett i alla sex lägen: lägesväxlare högst upp, objektpanel till vänster (280 px), arbetsyta i mitten,
-egenskapspanel till höger (320 px), logglåda längst ned. Panelerna kan fällas in men byter aldrig plats. Vyer i
-arbetsytan börjar med `.dm-page-head` (rubrik med ikon till vänster, åtgärder till höger) och använder kort
-(`.dm-card`) för grupperat innehåll.
+Samma skelett i alla åtta lägen: lägesväxlare högst upp, objektpanel till vänster (280 px som standard, 200 till
+560 px med avdelaren `dm-splitter`), arbetsyta i mitten, inspektör till höger (320 px som standard), logglåda
+ovanför statusraden längst ned (`--dm-statusbar-h`). Statusraden visar sparstatus, lagring, vald datamängd,
+R-motorn, nätverksaktivitet och knapparna som fäller in panelerna och loggen; överst till höger finns bara
+kommandopaletten, språk, tema och hjälp. Panelerna byter aldrig plats. Under 1 100 px visar lägesväxlaren bara
+ikoner (text på det aktiva läget) och inspektören blir ett flak (`data-right="sheet"`, bredd `--dm-sheet-w`) över
+arbetsytan; under 760 px blir också objektpanelen ett flak och de valfria delarna av statusraden döljs. Flak
+stängs med Esc eller klick i arbetsytan, och pekytor är minst 44 px i de smala lägena. Vyer i arbetsytan börjar
+med `.dm-page-head` (rubrik med ikon till vänster, åtgärder till höger) och använder kort (`.dm-card`) för
+grupperat innehåll.
 
 ## Regler
 
@@ -55,6 +61,15 @@ arbetsytan börjar med `.dm-page-head` (rubrik med ikon till vänster, åtgärde
   högerställda.
 - Datum visas som `ÅÅÅÅ-MM-DD` och tid som `HH:MM` på alla språk.
 - Kortvariga meddelanden som toaster, bestående information i loggen.
+- Varje knapp har ett tips: `title` på `dm-button` blir tipset (`data-tip`), som visas efter 400 ms när pekaren
+  vilar, direkt vid tangentbordsfokus och vid långtryck på pekskärm. Knappar med bara ikon har alltid tips och
+  `aria-label`; knappar med text får tips bara när tipset säger mer än texten. Inga egna tooltip-lösningar.
+- Inga nätverksanrop utan användarens åtgärd och samtycke per ändamål (`platform/consent`: api, url, github,
+  components, basemaps, databases med flera); komponenter hämtas från fasta adresser och kontrolleras mot SHA-256
+  när summan är känd.
+- Analysverktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop delar
+  från de andra. Verktyg för andra slags datamängder (grafer, bilder, text, modeller) läggs efter SQL respektive
+  Regex, aldrig efter anteckningsboken.
 - Allt ska gå att nå med tangentbord; fokus syns alltid; kontrast enligt WCAG AA. Flikar byts med piltangenterna,
   Home och End, och fokus följer den aktiva fliken. Alla knappar, fält och kodredigerare har ett namn som
   skärmläsare läser upp (`label` på `dm-code`, `aria-label` på knappar med bara ikon), och varje dialog läses upp
@@ -81,7 +96,14 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Kolumn, rad, värde | Fält, post (utom i API-sammanhang), cell |
 | Tom (värde saknas) | null, NA, saknas (i gränssnittet) |
 | Arbetsyta | Workspace, projekt |
-| Läge | Vy, flik, sida (för de sex lägena) |
+| Läge | Vy, flik, sida (för de åtta lägena) |
+| Mapp, tagg (ordning bland datamängder) | Katalog, folder, etikett (som är kolumnmetadata) |
+| Paket (delningspaket i Dela) | Bundle, exportpaket |
+| Lista (sparad sökning i Söka) | Urval, filter, sparad sökning |
+| Flak (panel som läggs över arbetsytan i smala fönster) | Sheet, drawer, sidopanel |
+| Komponent (del av appen som hämtas vid behov) | Plugin, modul, tillägg |
+| Tips (text som visas när pekaren vilar på en knapp) | Tooltip, verktygstips |
+| Statusrad (raden längst ned) | Fot, footer, statusfält |
 | Språk | Locale, lokalisering (i gränssnittet) |
 | Land (filtret för API-källor) | Region, område |
 | Grundkurs (den interaktiva genomgången), steg, uppgift | Guide, tur, tutorial, lektion |

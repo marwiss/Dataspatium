@@ -16,7 +16,34 @@
     /** @type {Map<string, {engine: any, meta: any, columns: any[]}>} */
     const openHandles = new Map();
     const listeners = new Set();
-    const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
+    const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
+    /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
+    const KINDS = ['table', 'graph', 'document', 'images', 'model'];
+
+    // ---- folders and tags: how the dataset list is organised; stored in _meta, so they travel with the file ----
+    /** A folder path: segments separated by "/", trimmed, without empty segments; '' is the root. */
+    function normalizeFolder(path) {
+      return String(path || '').split('/').map((s) => s.trim().replace(/\s+/g, ' ')).filter(Boolean).join('/').slice(0, 200);
+    }
+    /** Tags: trimmed, non-empty and unique, in the given order; a string is split on commas. */
+    function normalizeTags(tags) {
+      const list = Array.isArray(tags) ? tags : String(tags || '').split(',');
+      const out = [];
+      for (const raw of list) {
+        const tag = String(raw || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+        if (tag && !out.includes(tag)) out.push(tag);
+      }
+      return out;
+    }
+    /** Every folder path in use by the given datasets, parents included, sorted. */
+    function folderPaths(list) {
+      const set = new Set();
+      for (const d of list) {
+        const segs = normalizeFolder(d.folder).split('/').filter(Boolean);
+        for (let i = 1; i <= segs.length; i++) set.add(segs.slice(0, i).join('/'));
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    }
 
     // ---- short names: an identifier per dataset for SQL across datasets, dm_read() in R and chart files ----
     /** Hard limit for a short name (user-typed) and the target length for derived ones. */
@@ -115,7 +142,7 @@
     function rowsToMeta(rows) {
       const meta = {};
       for (const [k, v] of rows) {
-        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
+        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules' || k === 'tags') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
         else meta[k] = v;
       }
       return meta;
@@ -152,6 +179,7 @@
       const meta = {
         id, name: input.name || D.t('datasets.untitled'), shortName, description: input.description || '', createdAt: now, updatedAt: now,
         rowCount: 0, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
+        folder: normalizeFolder(input.folder), tags: normalizeTags(input.tags), kind: KINDS.includes(input.kind) ? input.kind : 'table',
       };
       await engine.insertRows('_meta', ['key', 'value'], metaToRows(meta));
       const handle = { engine, meta, columns, importing: true };
@@ -190,10 +218,14 @@
     async function persist(handle) {
       // One tab at a time writes a given dataset file (Web Locks when available).
       return sync.withLock('ds:' + handle.meta.id, async () => {
+        const snapshot = () => Object.assign({}, handle.meta, { columns: handle.columns.map((c) => ({ name: c.name, type: c.type, label: c.label })) });
+        if (handle.removed) return snapshot(); // removed while waiting for the lock
         const bytes = await handle.engine.export();
         handle.meta.byteSize = bytes.byteLength;
-        const record = Object.assign({}, handle.meta, { columns: handle.columns.map((c) => ({ name: c.name, type: c.type, label: c.label })) });
+        const record = snapshot();
         await idb.saveBlob('ds:' + handle.meta.id, bytes);
+        // Removed meanwhile: the catalogue entry must not come back without its file.
+        if (handle.removed) return record;
         await idb.putDataset(record);
         return record;
       });
@@ -584,6 +616,8 @@
         if ((await list()).some((d) => d.id !== id && d.shortName === s)) throw new Error(D.t('datasets.shortname.taken', { name: s }));
         patch = Object.assign({}, patch, { shortName: s });
       }
+      if (patch.folder !== undefined) patch = Object.assign({}, patch, { folder: normalizeFolder(patch.folder) });
+      if (patch.tags !== undefined) patch = Object.assign({}, patch, { tags: normalizeTags(patch.tags) });
       for (const [k, v] of Object.entries(patch)) {
         if (!META_KEYS.includes(k) || k === 'id') continue;
         handle.meta[k] = v;
@@ -597,8 +631,9 @@
       const pending = saveTimers.get(id);
       if (pending) { clearTimeout(pending); saveTimers.delete(id); }
       const handle = openHandles.get(id);
-      if (handle) { handle.engine.terminate(); openHandles.delete(id); }
-      await idb.deleteDataset(id);
+      if (handle) { handle.removed = true; handle.engine.terminate(); openHandles.delete(id); }
+      // Same lock as persist(): a save in flight finishes first and cannot re-create the entry afterwards.
+      await sync.withLock('ds:' + id, () => idb.deleteDataset(id));
       notify('deleted', { id });
       sync.broadcast('datasets', 'deleted', { id });
     }
@@ -645,7 +680,7 @@
       create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
-      shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version,
+      shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version, normalizeFolder, normalizeTags, folderPaths, KINDS,
       updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
     };
   });

@@ -9,8 +9,11 @@ säkerhetskopior under *Hantera → Arbetsyta*, eller använd en portabel mapp i
 
 ## Behöver jag internet?
 
-Nej. Internet behövs bara när du hämtar data från ett API, synkar med GitHub eller klickar på *Sök efter uppdatering*. Allt annat,
-även R, fungerar utan nätverk.
+Nej. Internet behövs bara när du hämtar data från ett API, skickar till eller hämtar från GitHub, klickar på *Sök
+efter uppdatering* eller använder något som inte följer med i mappen: vissa komponenter (till exempel
+bakgrundskartor) och R-paket utanför det inbyggda urvalet hämtas när de behövs och sparas sedan lokalt. Första
+gången appen behöver internet för ett ändamål frågar den om lov; svaret kan sparas och ändras under *Hantera →
+Arbetsyta → Internetåtkomst*, där också loggen över anrop finns. Allt annat, även R, fungerar utan nätverk.
 
 ## Varför tar det tid första gången jag använder R?
 
@@ -57,6 +60,11 @@ intranät tillåter webbläsaren inga service workers, men en server som själv 
 `Cross-Origin-Opener-Policy: same-origin` och `Cross-Origin-Embedder-Policy: credentialless` ger samma sak. Allt annat
 fungerar som från mappen. Webbläsaren lagrar data per adress, så arbetsytan i mappen och den på servern är skilda åt;
 flytta mellan dem med säkerhetskopia eller paket.
+
+Från en webbserver, även <https://marwiss.github.io/Dataspatium/>, kan appen installeras som en egen app: i Edge och
+Chrome via ikonen *Installera* i adressfältet eller webbläsarens meny. Den får då ett eget fönster och en egen ikon,
+filerna sparas i webbläsaren så att den fungerar utan nätverk, och lagringen blir beständig. Nya versioner hämtas
+när appen öppnas igen med nätverk.
 
 ## Kan jag öppna index.html direkt i ZIP-filen?
 
@@ -149,13 +157,35 @@ datamängden innan du delar den. Se [bearbeta.md](bearbeta.md).
 
 ## Hur delar jag data med en kollega?
 
-Enklast med *Dela paket* under *Hantera → Arbetsyta*: välj datamängder och om diagram, dashboards, mallar och
-anteckningsböcker ska följa med, skriv ett meddelande och skicka ZIP-filen. Kollegan släpper den på *Återställ från
-ZIP*, ser ditt meddelande och vad som ändrats och kan ersätta sina egna versioner. Kommentarer på datamängder och
-kolumner följer med. Arbetar ni med samma arbetsyta kan ni också använda ett gemensamt GitHub-repo (*GitHub* under
-*Hantera → Arbetsyta*). Du kan också exportera en enskild datamängd som SQLite (behåller typer, etiketter, kommentarer
-och historik) eller ta en säkerhetskopia av hela arbetsytan. Diagram och dokumentmallar kan exporteras som
-JSON-filer, API-konfigurationer som `.api.json`, och recept som JSON, R eller SQL.
+Enklast i läget *Dela*: under *Paket* väljer du datamängder och om diagram, dashboards, mallar, anteckningsböcker
+och skript ska följa med, skriver ett meddelande och skickar ZIP-filen, till exempel via fliken *Delningsmeny*
+(e-post, Teams och andra appar). Kollegan öppnar den under *Ta emot*, ser ditt meddelande och vad som ändrats och
+kan ersätta sina egna versioner. Kommentarer, mappar och taggar följer med. Arbetar ni med samma arbetsyta kan ni
+också använda ett gemensamt GitHub-repo (fliken *GitHub*). Dashboards och dokument kan publiceras som fristående
+HTML-filer (fliken *Publicera*). Du kan också exportera en enskild datamängd som SQLite (behåller typer, etiketter,
+kommentarer och historik) eller ta en säkerhetskopia av hela arbetsytan. Diagram och dokumentmallar kan exporteras
+som JSON-filer, API-konfigurationer som `.api.json`, och recept som JSON, R eller SQL. Se [dela.md](dela.md).
+
+## Hur håller jag ordning på många datamängder?
+
+Ge dem mappar och taggar: *Ordna* i Hantera, eller dra en datamängd till en mapp i objektpanelen. Mappar kan ha
+undermappar (`Ekonomi/2026`), filterfältet söker på namn, tagg och mapp, och kryssrutorna väljer flera datamängder
+för batchåtgärder. Mapp och taggar följer med datamängden i paket och säkerhetskopior, och i R visar `dm_list()`
+mappen.
+
+## Vad är komponenter?
+
+Delar av appen som inte följer med i mappen, för att hålla den liten: till exempel bakgrundskartor och R-paket
+utanför det inbyggda urvalet. De hämtas från en fast adress när något behöver dem, efter att du gett lov, och
+kontrolleras mot en känd kontrollsumma där en sådan finns. Sedan sparas de i webbläsaren och behöver inte hämtas
+igen. Under *Hantera → Arbetsyta → Komponenter* ser du vilka som finns och hur stora de är, och kan hämta dem i
+förväg eller ta bort dem.
+
+## Kan jag använda appen i telefonen?
+
+Inte ännu. En mobilsida för telefoner och surfplattor, och överföring direkt mellan enheter, är planerad till nästa
+version. Redan nu anpassar sig fönstret: i smala fönster visar lägesväxlaren ikoner och panelerna öppnas som flak
+över arbetsytan.
 
 ## Hittar jag inte svaret här?
 

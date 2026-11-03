@@ -27,7 +27,7 @@ SharedArrayBuffer och R kan avbrytas (se R nedan). Under file:// händer inget a
 UI               src/ui: design (tokens, tema, typsnitt, ikoner), components (dm-*), shell, modes, i18n
 Tjänster         src/data (datamängder, typer, kodning, arbetsyta), src/io (importers, exporters)
 Motorer          src/engines/sqlite (sql.js i worker), src/engines/r (WebR)
-Plattform        src/platform: registry, assets, net-shim, workers + worker-shim, capabilities, storage
+Plattform        src/platform: registry, assets, net-shim, workers + worker-shim, capabilities, storage, consent, components
 ```
 
 ## Resurser och shims
@@ -327,10 +327,18 @@ om sina listor. Utan BroadcastChannel eller Web Locks fungerar allt som förut.
 ## UI-skal och lägen
 
 `src/ui/shell/shell.js` bygger skelettet, äger tillståndet (`createStore`: läge, datamängder, vald datamängd,
-sparstatus) och ger varje läge samma tre ytor (vänster, mitten, höger) och samma tjänster. Ett läge är ett objekt
-`{ id, activate(slots), deactivate() }` som skapas av `createMode(ctx)` i `src/ui/modes/`. Läget prenumererar
-själv på tillståndet medan det är aktivt. Skalet lyssnar på datamängdernas händelser `dirty`, `saving` och
-`saved` och visar sparstatusen i övre raden.
+valda datamängder för batch, sparstatus och överlämningar som `pendingCode`, `openChartId` och `pendingSearch`)
+och ger varje läge samma tre ytor (vänster, mitten, höger) och samma tjänster. Ett läge är ett objekt
+`{ id, activate(slots), deactivate() }` som skapas av `createMode(ctx)` i `src/ui/modes/`; de åtta lägena
+registreras i `src/app.js`, och `MODES` i skalet avgör ordningen och Alt+1 till Alt+8. Läget prenumererar själv
+på tillståndet medan det är aktivt. Statusraden (`footer.dm-statusbar`) visar sparstatus (datamängdernas händelser
+`dirty`, `saving` och `saved`), lagring, vald datamängd, R-motorns tillstånd (`shell.setEngine`), nätverksaktivitet
+(`D.net.onActivity` från net-shimmen, som räknar pågående http-anrop och för en logg över dem) och knapparna för
+panelerna och loggen. Panelbredderna sätts av `dm-splitter` (komponenten i `layout.js`) via CSS-variablerna
+`--dm-panel-w` och `--dm-inspector-w` och sparas i inställningarna `ui.panel.left` och `ui.panel.right`;
+brytpunkterna 1099 px (inspektören som flak, `data-right="sheet"`) och 759 px (objektpanelen) hanteras med
+`matchMedia` i skalet och regler i `shell.css`. Tips ritas av en enda `div#dm-tooltip` (`ui/tooltip`, installeras
+av `ui/components`) ur attributet `data-tip`, som `dm-button` fyller från `title`.
 
 Kommandopaletten (`src/ui/shell/command-palette.js`, Ctrl+K) samlar kommandon från leverantörer: skalet bidrar
 med lägen, datamängder, arbetsyta, tema och hjälp, och varje läge registrerar sina egna via `ctx.palette.register`
@@ -339,11 +347,11 @@ kommando är `{id, label, hint, group, icon, keywords, run}`; träffar poängsä
 nyckelord) och senast körda kommandon sparas i inställningen `palette:recent`.
 
 Grundkursen (`src/ui/shell/course.js`, modulen `ui/course`) är en styrenhet per skal (`shell.course`) som visar
-nio steg i den flytande panelen `overlays.floating`. Varje steg har ett läge, en markerad kontroll (attributet
+elva steg i den flytande panelen `overlays.floating`. Varje steg har ett läge, en markerad kontroll (attributet
 `data-course` i läget), en kontroll av om uppgiften är gjord och en åtgärd för *Gör det åt mig*. Kursen arbetar
 bara genom vanliga API:er (`io/import`, `data/recipes`, `viz/charts`) och tillståndet: den lämnar kod till Analysera
-i `pendingCode` och ett diagram till Visualisera i `openChartId`, och Analysera och Exportera rapporterar
-`lastRun` och `lastExport`. Kontrollerna körs varje sekund och direkt när läget eller de nycklarna ändras.
+i `pendingCode`, ett diagram till Visualisera i `openChartId` och en sökning till Söka i `pendingSearch`, och
+Analysera, Exportera och Söka rapporterar `lastRun`, `lastExport` och `lastSearch`. Kontrollerna körs varje sekund och direkt när läget eller de nycklarna ändras.
 Framstegen sparas i `localStorage` (`dataspatium.course`): `open` återupptas vid start, `closed` och `done` visas
 inte automatiskt, och en arbetsyta utan kursnyckel får kursen öppnad (tom) eller erbjuden i en toast (befintlig).
 
@@ -351,6 +359,38 @@ Dialogerna i Bearbeta ligger i `src/ui/op-dialog.js` (formulär genererat ur en 
 förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, recept, kategorier, aggregera,
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
+
+## Samtycke, komponenter och språk
+
+`platform/consent` håller samtycke per ändamål (`api`, `url`, `github`, `components`, `basemaps`, `databases`,
+`neo4j`, `stun`): `require(purpose, info)` frågar via skalets dialog första gången och sparar svaret i
+inställningen `consent.<ändamål>` när användaren vill; utan registrerad frågare (tester, skript) tillåts anropet
+och loggas. Testsidan sätter `localStorage` `dataspatium.consent = granted`. Anropen går genom `api/http.js` (alla
+adresser utom `dataspatium-asset://`), `io/url-import.js` och `platform/storage/github-store.js`.
+
+`platform/components` hämtar delar av appen som inte följer med i mappen: en komponent har id, storlek, en eller
+flera källadresser och, när den är känd, SHA-256; den begär samtycke, hämtar, kontrollerar summan, sparar binären i
+IndexedDB (`component:<id>`) med metadata i inställningarna och gör den tillgänglig som resurs med
+`D.assets.provide(name, kind, data)`. `engines/r/remote-packages` använder samma väg för R-paket utanför det
+inbyggda urvalet: webR:s paketindex hämtas och cachas i sju dagar, beroendeslutningen räknas ut utan de inbyggda
+paketen, paketens tgz-filer levereras som resurser och ett utökat `PACKAGES`-index skickas till R-workern
+(`engine.shipAssets`); `r-bridge.ensureRemote(names)` körs efter `ensurePackages` innan användarkod körs.
+
+Språk laddas vid behov: `boot.js` läser in svenska och det valda språket (alla sex vid första start, innan valet
+gjorts) och `i18n.loadLanguage(kod)` injicerar `src/ui/i18n/<kod>.js` när användaren byter språk. Tester som
+jämför alla språk anropar `loadLanguage` först.
+
+Datamängder har `kind` i `_meta` (`table`, `graph`, `document`, `images`, `model`; `datasets.KINDS`) som
+förberedelse för fler slags datamängder; 2.0 skapar bara `table`. Mapp (`folder`) och taggar (`tags`) ligger också
+i `_meta` och i manifestets lista (`format: 2`). Dexie-schemat är version 7 med indexet `folder` och lagret `lists`
+för sparade sökningar (`data/lists`); `analysis/search` söker med `dm_regex_test` i SQL-workern och räknar fasetter
+för kolumner med få olika värden.
+
+I serverläge (http och https) registrerar `index.html` `sw-coi.js`, som förutom cross-origin isolation cachar
+appens filer (`CACHE = 'dataspatium-<version>'`; cache först för `vendor/`, `presets/`, `src/` och `r/`, nätverk
+först för resten, gamla cachar tas bort vid aktivering) och gör sidan installerbar via `manifest.webmanifest`;
+beständig lagring begärs när appen körs fristående. Från file:// finns inga service workers och inget av detta
+används.
 
 ## Tester
 

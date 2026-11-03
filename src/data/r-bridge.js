@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/r-bridge', ['engines/r', 'engines/r/packages', 'data/datasets'], (rmod, packages, datasets) => {
+  D.define('data/r-bridge', ['engines/r', 'engines/r/packages', 'data/datasets', 'engines/r/remote-packages'], (rmod, packages, datasets, remote) => {
     const DATA_DIR = '/data';
     const OUT_DIR = '/data/out';
     const MIRROR_LIMIT = 50 * 1024 * 1024;
@@ -71,6 +71,10 @@
           } catch (err) {
             this.error = (err && err.message) || String(err);
             this.setState('error');
+            // A failed start is not replayed forever: the next start() tries again with a fresh engine.
+            const failed = this.engine;
+            this.engine = null; this.ready = null; this.mirrored.clear();
+            if (failed) { try { await failed.close(); } catch (_err) { /* already gone */ } }
             throw err;
           }
         })();
@@ -96,16 +100,22 @@
           // dm_read() turns columns with value labels into haven::labelled, reading the labels with jsonlite.
           if (!labelled) { try { labelled = (await datasets.columns(id)).some((c) => c.valueLabels); } catch (_err) { /* not open */ } }
           if (this.mirrored.get(id) === meta.updatedAt) continue;
-          const bytes = await datasets.exportBytes(id);
+          let bytes;
+          try { bytes = await datasets.exportBytes(id); }
+          catch (err) {
+            // Removed between list() and here (a batch delete, another tab): leave it out instead of failing the run.
+            if (!(await datasets.get(id))) { this.mirrored.delete(id); D.log('r', 'mirror skipped a removed dataset', id); continue; }
+            throw err;
+          }
           await this.engine.writeFile(`${DATA_DIR}/${id}.sqlite`, bytes);
           this.mirrored.set(id, meta.updatedAt);
         }
         if (labelled) await this.engine.ensurePackages(['haven', 'jsonlite']);
-        const index = list.map((m) => ({ id: m.id, name: m.name, shortName: m.shortName || '', file: `${DATA_DIR}/${m.id}.sqlite`, rowCount: m.rowCount || 0, columnCount: m.columnCount || 0, updatedAt: m.updatedAt, mirrored: this.mirrored.has(m.id) }));
+        const index = list.map((m) => ({ id: m.id, name: m.name, shortName: m.shortName || '', folder: m.folder || '', file: `${DATA_DIR}/${m.id}.sqlite`, rowCount: m.rowCount || 0, columnCount: m.columnCount || 0, updatedAt: m.updatedAt, mirrored: this.mirrored.has(m.id) }));
         // Tab-separated so that r/dataspatium.R can read it with base R only.
         const clean = (v) => String(v === null || v === undefined ? '' : v).replace(/[\t\r\n]+/g, ' ');
-        const lines = ['id\tname\tshortName\tfile\trowCount\tcolumnCount\tupdatedAt\tmirrored'];
-        for (const m of index) lines.push([m.id, m.name, m.shortName, m.file, m.rowCount, m.columnCount, m.updatedAt, m.mirrored ? 'TRUE' : 'FALSE'].map(clean).join('\t'));
+        const lines = ['id\tname\tshortName\tfolder\tfile\trowCount\tcolumnCount\tupdatedAt\tmirrored'];
+        for (const m of index) lines.push([m.id, m.name, m.shortName, m.folder, m.file, m.rowCount, m.columnCount, m.updatedAt, m.mirrored ? 'TRUE' : 'FALSE'].map(clean).join('\t'));
         await this.engine.writeFile(`${DATA_DIR}/index.tsv`, new TextEncoder().encode(lines.join('\n') + '\n'));
         return index;
       }
@@ -125,11 +135,32 @@
         return names;
       }
 
+      /**
+       * Packages that are not bundled come from webR's repository after consent and are shipped together with the
+       * extended package index. A refusal or a network error only leaves R to report the missing package.
+       */
+      async ensureRemote(names) {
+        if (!remote.missing(names).length) return;
+        try {
+          const res = await remote.ensure(names);
+          if (res.assets.length) {
+            this.emit('stream', { kind: 'stderr', text: D.t('r.remote.packages', { names: res.packages.join(', ') }) + '\n' });
+            await this.engine.shipAssets(res.assets);
+            if (res.indexAsset) await this.engine.shipAssets([res.indexAsset], { force: true });
+          }
+        } catch (err) {
+          D.log('r-bridge', err && err.name === 'ConsentError' ? 'remote packages not allowed' : 'remote packages failed', err);
+        }
+      }
+
       resolveIds(names, list) {
         const ids = [];
         for (const n of names) {
           const lower = n.toLowerCase();
-          const exact = list.find((d) => d.id === n || d.name === n || d.shortName === lower);
+          // "Mapp/Namn" and "mapp/kortnamn" address a dataset through its folder.
+          const qualified = (d) => ((d.folder ? d.folder + '/' : '') + d.name).toLowerCase();
+          const qualifiedShort = (d) => (d.folder ? d.folder.toLowerCase() + '/' : '') + (d.shortName || '');
+          const exact = list.find((d) => d.id === n || d.name === n || d.shortName === lower || qualified(d) === lower || qualifiedShort(d) === lower);
           const ci = list.filter((d) => d.name.toLowerCase() === lower);
           const prefix = list.filter((d) => d.name.toLowerCase().startsWith(lower));
           const hit = exact || (ci.length === 1 ? ci[0] : null) || (prefix.length === 1 ? prefix[0] : null);
@@ -157,8 +188,11 @@
           const list = await datasets.list();
           const ids = this.resolveIds(this.referencedNames(code), list);
           await this.mirror(ids);
-          // Ship bundled packages the code mentions before R asks for them.
-          await this.engine.ensurePackages(packages.referenced(code));
+          // Ship bundled packages the code mentions before R asks for them; packages that are not bundled come
+          // from webR's repository after consent (a refusal just leaves R to report the missing package).
+          const referenced = packages.referenced(code);
+          await this.engine.ensurePackages(referenced);
+          await this.ensureRemote(referenced);
           const res = await this.engine.capture(code, { captureConditions: false });
           for (const o of res.output) {
             const text = String(o.data);

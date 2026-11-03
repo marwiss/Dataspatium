@@ -8,16 +8,22 @@ dokumenter i [dokumentmallar.md](dokumentmallar.md). Vanlige spørsmål besvares
 
 ## Arbeidsområdet
 
-Skjermen ser lik ut i alle moduser. Øverst bytter du modus (Hent, Håndter, Bearbeid, Analyser, Visualiser, Eksporter;
-Alt+1 til Alt+6 virker også) og ser arbeidsområdets status (lagret eller ulagret), kommandopaletten (forstørrelsesglasset
-eller Ctrl+K), språkknappen, tema (lyst eller mørkt) og hjelpeknappen med versjonsnummer og *Se etter oppdateringer*.
-Kommandopaletten er den raskeste veien til det meste: skriv noen bokstaver for å bytte modus, åpne et datasett, et diagram
-eller et dashbord, eller kjøre en handling på det valgte datasettet. Til venstre finnes modusens objekter (datasett, kilder,
-diagrammer, maler), i midten arbeidsflaten og til høyre inspektøren med egenskaper og statistikk. Nederst ligger loggen,
-der hver handling, advarsel og feil skrives; det er den du leser når noe ikke blir som du tenkte.
+Skjermen ser lik ut i alle moduser. Øverst bytter du modus (Hent, Håndter, Søk, Bearbeid, Analyser, Visualiser,
+Eksporter, Del; Alt+1 til Alt+8 virker også) og når kommandopaletten (forstørrelsesglasset eller Ctrl+K),
+språkknappen, tema (lyst eller mørkt) og hjelpeknappen med versjonsnummer og *Se etter oppdateringer*.
+Kommandopaletten er den raskeste veien til det meste: skriv noen bokstaver for å bytte modus, åpne et datasett, et
+diagram eller et dashbord, søke i data eller kjøre en handling på det valgte datasettet. Til venstre finnes modusens
+objekter (datasett, kilder, diagrammer, maler), i midten arbeidsflaten og til høyre inspektøren med egenskaper og
+statistikk. Nederst ligger statuslinjen: lagringsstatus, lagring, det valgte datasettet, R-motoren, pågående
+internettkall og knappene som folder panelene inn og åpner loggen, der hver handling, advarsel og feil skrives; det
+er den du leser når noe ikke blir som du tenkte. Panelenes bredde endres ved å dra i kanten mot arbeidsflaten, og i
+smale vinduer åpnes panelene som ark over arbeidsflaten (se [lagen.md](lagen.md)).
 
-Alt du lager, lagres automatisk i nettleserens database på datamaskinen din. Ingenting sendes noe sted med mindre du selv
-henter fra et API, ser etter oppdateringer eller eksporterer.
+Alt du lager, lagres automatisk i nettleserens database på datamaskinen din. Ingenting sendes noe sted med mindre du
+selv henter fra et API, ser etter oppdateringer, sender til GitHub eller deler. Første gang appen trenger internett
+for et formål, spør den om lov, og svaret kan lagres; under *Håndter → Arbeidsområde → Internettilgang* ser du hva
+som er tillatt, og hvilke kall som er gjort. Deler av appen som ikke følger med i mappen (enkelte komponenter og
+R-pakker), hentes på samme måte når de trengs, og lagres deretter lokalt.
 
 ## Grunnkurset
 
@@ -130,37 +136,60 @@ gruppesammendrag er innebygd. Generer som HTML, Word, PDF, Markdown eller LaTeX,
 CSV (tilpasset Excel i Norden eller standard), Excel, ODS, JSON, GeoJSON (for datasett med geometri), XML, SQLite samt via
 R: Parquet, SPSS, Stata og RDS. SQLite og Parquet beholder typene nøyaktig; alle formater kan importeres igjen.
 
+## Finne i data (Søk)
+
+Søk finner rader uten kode. Skriv ett eller flere ord, velg alle datasett eller bare det valgte, og trykk på *Søk*.
+Treffene vises per datasett; fasettene (de vanligste verdiene i kolonner med få ulike verdier) avgrenser med ett
+klikk, og en rad i tabellen viser hele posten i inspektøren. Søket kan lagres som liste, bli et nytt datasett eller
+åpnes i Bearbeid med datasettet valgt. Se [soka.md](soka.md).
+
 ## Holde orden (Håndter)
 
-Hvert datasett har en oversikt (kilde, størrelse, beskrivelse), en kolonneliste med typer, etiketter, beskrivelser og
-enheter (settes under Bearbeid med *Etikett, beskrivelse og enhet*), kommentarer, en lesbar historikk over alt som er gjort, og versjoner. Gi nytt
-navn og kortnavn, slett eller hent igjen fra API (oppdater med oppskriften, eller legg til rader). Under *Arbeidsområde* ser du hvor mye lagring som brukes, ber om vedvarende
-lagring, tar sikkerhetskopi som ZIP og gjenoppretter. Appen minner deg ved oppstart når det har gått lenger enn valgt antall
-dager siden siste sikkerhetskopi (30 dager som standard; endres eller slås av i samme kort). I Edge og Chrome kan
-arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ved hver endring.
+Hvert datasett har en oversikt (kilde, størrelse, beskrivelse, mappe og tagger), en kolonneliste med typer,
+etiketter, beskrivelser og enheter (settes under Bearbeid med *Etikett, beskrivelse og enhet*), kommentarer, en
+lesbar historikk over alt som er gjort, og versjoner. Gi nytt navn og kortnavn, ordne, slett eller hent igjen fra API
+(oppdater med oppskriften, eller legg til rader). Under *Arbeidsområde* ser du hvor mye lagring som brukes, ber om
+vedvarende lagring, tar sikkerhetskopi som ZIP og gjenoppretter. Appen minner deg ved oppstart når det har gått
+lenger enn valgt antall dager siden siste sikkerhetskopi (30 dager som standard; endres eller slås av i samme kort).
+I Edge og Chrome kan arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ved hver endring.
+
+Objektpanelet i Håndter er et tre. *Ordne* gir et datasett en mappe (med undermapper, som `Økonomi/2026`) og
+tagger; mapper kan foldes sammen, og et datasett kan dras til en annen mappe. Filterfeltet søker på navn, kortnavn,
+tagg og mappe, og listen kan sorteres etter endret, navn eller rader. Avkrysningsboksene velger flere datasett
+(Skift velger et spenn), og knappen *Handlinger (n)* gjør det samme med alle på én gang: ordne, pakke, eksportere
+som ZIP med CSV-filer, hente igjen fra API, kjøre en oppskrift eller slette. Mappe og tagger lagres i datasettets
+fil og følger med i pakker, sikkerhetskopier og GitHub; i R viser `dm_list()` mappen, og `dm_read("Mappe/Navn")`
+leser et datasett i en mappe.
 
 ## Dele med andre
 
-- Et utvalg: *Del pakke* under Håndter gir en ZIP med valgte datasett, diagrammer, dashbord, maler og notatbøker, en
-  melding og en endringslogg: det som er gjort med hvert datasett siden det sist ble delt, og kommentarene som ikke er
-  løst. Mottakeren laster den inn under *Gjenopprett fra ZIP*, ser meldingen og endringene og velger for datasett som
-  allerede finnes, om de skal erstattes med pakkens versjon (den egne lagres under *Versjoner*); resten hoppes over.
+Alt som skal til andre mennesker, finnes i modusen *Del* (se [dela.md](dela.md)):
+
+- Et utvalg: *Pakke* gir en ZIP med valgte datasett, diagrammer, dashbord, maler, notatbøker og skript, en melding og
+  en endringslogg: det som er gjort med hvert datasett siden det sist ble delt, og kommentarene som ikke er løst.
+  Mottakeren åpner den under *Motta*, ser meldingen og endringene og velger for datasett som allerede finnes, om de
+  skal erstattes med pakkens versjon (den egne lagres under *Versjoner*); resten hoppes over. Under Håndter gjør
+  *Handlinger* på flere valgte datasett det samme.
 - Kommentarer: hvert datasett har fanen *Kommentarer* i Håndter, og i Bearbeid kommenterer du en kolonne fra
-  egenskapspanelet. Kommentarene ligger i datasettets fil og følger med i pakker, sikkerhetskopier, den portable mappen
-  og GitHub. Navnet som vises, angir du selv; det lagres bare i nettleseren.
+  inspektøren. Kommentarene ligger i datasettets fil og følger med i pakker, sikkerhetskopier, den portable mappen og
+  GitHub. Navnet som vises, angir du selv; det lagres bare i nettleseren.
 - Hele arbeidsområdet: sikkerhetskopien (ZIP) gjenopprettes under Håndter på en annen datamaskin.
-- Mellom datamaskiner via GitHub: under *Håndter → Arbeidsområde* sender du arbeidsområdet til et GitHub-repository
-  (helst privat) og henter det på en annen datamaskin. Det krever et finkornet tilgangstoken (fine-grained personal access
-  token) som bare får lese og skrive innholdet i akkurat det repositoryet. Tokenet brukes i økten eller lagres kryptert,
-  og ingenting sendes før du trykker *Send til GitHub* eller *Hent fra GitHub*. Bare endrede filer sendes, i én commit med
-  meldingen din; ved henting velger du, som for pakker, om eksisterende datasett skal erstattes.
-- Ett datasett: eksporter som SQLite (alt følger med) eller Parquet.
+- Mellom datamaskiner via GitHub: fanen *GitHub* sender arbeidsområdet til et GitHub-repository (helst privat) og
+  henter det på en annen datamaskin. Det krever et finkornet tilgangstoken (fine-grained personal access token) som
+  bare får lese og skrive innholdet i akkurat det repositoryet. Tokenet brukes i økten eller lagres kryptert, og
+  ingenting sendes før du trykker *Send til GitHub* eller *Hent fra GitHub*. Bare endrede filer sendes, i én commit
+  med meldingen din; ved henting velger du, som for pakker, om eksisterende datasett skal erstattes.
+- Via datamaskinens eller telefonens delingsmeny: fanen *Delingsmeny* sender et datasett som CSV, Excel, ODS eller
+  JSON, eller alle datasett som pakke, til e-post, Teams og andre apper (Edge og Chrome; Firefox lagrer filen).
+- Som ferdig nettside: fanen *Publiser* gjør et dashbord eller et dokument til en frittstående HTML-fil.
+- Ett datasett: eksporter som SQLite (alt følger med) eller Parquet under Eksporter.
 - API-konfigurasjoner (`.api.json`), diagrammer og dokumentmaler (JSON) og oppskrifter (JSON, R eller SQL) eksporteres og
   lastes inn som filer. Nøkler følger aldri med.
 
 ## Tastatur
 
-Alt+1 til Alt+6 bytter modus, og Ctrl+K åpner kommandopaletten. Første trykk på Tab på siden viser lenken *Gå til innholdet*,
+Alt+1 til Alt+8 bytter modus, og Ctrl+K åpner kommandopaletten. Kanten mellom et panel og arbeidsflaten kan få fokus
+med Tab og flyttes med piltastene (Skift for større steg, Home og End for minste og største bredde). Første trykk på Tab på siden viser lenken *Gå til innholdet*,
 som flytter fokus forbi modusvelgeren og objektpanelet. Alt nås med Tab og Enter; dialoger lukkes med Esc. I tabellen
 flytter piltastene mellom celler, og Enter redigerer. Appen følger systeminnstillingen for redusert bevegelse.
 

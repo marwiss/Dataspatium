@@ -23,8 +23,8 @@ från internet.
 ### Grundkursen
 
 Efter språkvalet startar **Grundkursen**, en interaktiv genomgång i en panel nere till höger. Den tar ungefär tio
-minuter och följer exemplet *Befolkning per kommun 2024* genom alla sex lägen: hämta data, titta på datamängden,
-beräkna en kolumn, fråga med SQL, räkna med R, göra ett diagram och exportera. Varje steg förklarar ett begrepp och
+minuter och följer exemplet *Befolkning per kommun 2024* genom alla åtta lägen: hämta data, titta på datamängden, söka,
+beräkna en kolumn, fråga med SQL, räkna med R, göra ett diagram, exportera och dela. Varje steg förklarar ett begrepp och
 ger en uppgift. En ram visar var du ska klicka, och steget bockas av när du har gjort det. *Gör det åt mig* utför
 steget åt dig om du hellre vill se hur det går till.
 
@@ -33,18 +33,21 @@ från kommandopaletten (Ctrl+K, *Öppna Grundkursen*). Den fortsätter där du s
 
 ## 3. Lägena
 
-Längst upp finns sex lägen. Panelen till vänster visar objekt (datamängder och källor), mitten är arbetsytan,
-panelen till höger visar egenskaper och statistik, och längst ned finns en logg. Panelerna kan fällas in med
-knapparna uppe till höger. Alt+1 till Alt+6 växlar läge med tangentbordet.
+Längst upp finns åtta lägen. Panelen till vänster visar objekt (datamängder och källor), mitten är arbetsytan,
+panelen till höger visar egenskaper och statistik, och längst ned finns statusraden med sparstatus, lagring, den
+valda datamängden, R-motorn och knapparna som fäller in panelerna och öppnar loggen. Panelernas bredd ändras genom
+att dra i kanten mot arbetsytan. Alt+1 till Alt+8 växlar läge med tangentbordet.
 
 | Läge | Vad du gör där |
 |---|---|
 | Inhämta | Importerar filer, klistrar in tabeller och hämtar från öppna API:er i Sverige och övriga Norden, som SCB, Kolada, Eurostat, Socialstyrelsen, SMHI, Danmarks Statistik, SSB, Tilastokeskus och Hagstofa Íslands ([api-konfiguration.md](api-konfiguration.md)) |
-| Hantera | Ser dina datamängder, byter namn, tar bort, sparar versioner, säkerhetskopierar och återställer arbetsytan |
+| Hantera | Ser dina datamängder i mappar med taggar, byter namn, tar bort, sparar versioner, kör batchåtgärder på flera datamängder, säkerhetskopierar och återställer arbetsytan |
+| Söka | Söker i alla kolumner i en eller alla datamängder, avgränsar med fasetter och sparar sökningar som listor ([soka.md](soka.md)) |
 | Bearbeta | Redigerar celler, sorterar och filtrerar, rensar och typar, beräknar kolumner, pivoterar, kopplar datamängder; allt med ångra, versioner och recept ([bearbeta.md](bearbeta.md)) |
-| Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; SQL-konsol mot den valda datamängden |
+| Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; SQL-konsol mot den valda datamängden; reguljära uttryck; anteckningsbok som blir rapport |
 | Visualisera | Bygger diagram med Vega-Lite, D3-mallar eller R-skript, sparar, exporterar och skapar dem i batch ([visualisera.md](visualisera.md)) |
 | Exportera | Laddar ned data som CSV, Excel, JSON eller SQLite, sparade diagram som SVG, PNG eller PDF och dokument ur mallar som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
+| Dela | Paketerar datamängder med diagram och mallar för kollegor, skickar arbetsytan till GitHub, delar via datorns delningsmeny och publicerar dashboards som HTML ([dela.md](dela.md)) |
 
 ## 4. Importera en fil
 
@@ -96,9 +99,9 @@ mapp. Slå på *Spara automatiskt vid ändringar* så hålls mappen uppdaterad. 
 och klickar på *Läs in från mappen*. Efter en omstart av webbläsaren frågar den en gång om lov att använda mappen
 igen; klicka på *Återanslut*.
 
-Vill du skicka ett urval till en kollega, använd *Dela paket* på samma sida: välj datamängder och om diagram,
-dashboards, mallar och anteckningsböcker ska följa med. Kollegan släpper paketet på *Återställ från ZIP*; det som
-redan finns i hens arbetsyta hoppas över.
+Vill du skicka ett urval till en kollega, gå till läget *Dela* och fliken *Paket*: välj datamängder och om diagram,
+dashboards, mallar, anteckningsböcker och skript ska följa med. Kollegan öppnar paketet under *Ta emot* i samma läge;
+det som redan finns i hens arbetsyta hoppas över.
 
 ## Vanliga frågor
 

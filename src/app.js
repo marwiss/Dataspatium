@@ -1,23 +1,25 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Application entry point: loads fonts, builds the shell and registers the six modes.
+ * Application entry point: loads fonts, builds the shell and registers the eight modes.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/bearbeta', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera'],
-    (shellMod, fonts, _theme, inhamta, hantera, bearbeta, analysera, visualisera, exportera) => ({
+  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/soka', 'ui/modes/bearbeta', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera', 'ui/modes/dela'],
+    (shellMod, fonts, _theme, inhamta, hantera, soka, bearbeta, analysera, visualisera, exportera, dela) => ({
       /** @param {HTMLElement} root */
       async start(root) {
         fonts.loadFonts();
         const shell = shellMod.create(root);
         shell.registerMode(inhamta.createMode(shell.ctx));
         shell.registerMode(hantera.createMode(shell.ctx));
+        shell.registerMode(soka.createMode(shell.ctx));
         shell.registerMode(bearbeta.createMode(shell.ctx));
         shell.registerMode(analysera.createMode(shell.ctx));
         shell.registerMode(visualisera.createMode(shell.ctx));
         shell.registerMode(exportera.createMode(shell.ctx));
+        shell.registerMode(dela.createMode(shell.ctx));
         await shell.init();
         // Resume auto-save to the portable folder when it was on (Chromium only, see data/workspace.js).
         D.require('data/workspace').initFolder().catch((err) => D.log('folder', 'init failed', err));

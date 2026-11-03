@@ -34,9 +34,10 @@
     return { store, toasts, activate(id) { store.set({ mode: id }); }, log() {}, toast(message, options) { toasts.push({ message, options }); } };
   }
 
-  test('course: every step has its texts in all six languages', (assert) => {
-    assert.equal(courseMod.STEPS.length, 9);
-    assert.deepEqual(courseMod.STEPS.map((s) => s.id), ['welcome', 'import', 'manage', 'process', 'sql', 'r', 'viz', 'export', 'finish']);
+  test('course: every step has its texts in all six languages', async (assert) => {
+    for (const l of i18n.LANGUAGES) await i18n.loadLanguage(l.code);
+    assert.equal(courseMod.STEPS.length, 11);
+    assert.deepEqual(courseMod.STEPS.map((s) => s.id), ['welcome', 'import', 'manage', 'search', 'process', 'sql', 'r', 'viz', 'export', 'share', 'finish']);
     for (const lang of i18n.LANGUAGES.map((l) => l.code)) {
       for (const step of courseMod.STEPS) {
         for (const part of ['title', 'p1']) {
@@ -61,7 +62,7 @@
       const panel = document.querySelector('.dm-floating');
       assert.ok(panel, 'floating panel in the page');
       assert.equal(panel.querySelector('.dm-floating-title').textContent, t('course.welcome.title'));
-      assert.ok(panel.querySelector('.dm-floating-meta').textContent.includes(t('course.step', { n: 1, total: 9 })), 'step counter');
+      assert.ok(panel.querySelector('.dm-floating-meta').textContent.includes(t('course.step', { n: 1, total: 11 })), 'step counter');
       course.next();
       assert.equal(course.step, 'import');
       assert.ok(panel.querySelector('.dm-course-task'), 'task box');
@@ -130,12 +131,19 @@
         assert.equal(shell.store.get().selectedId, example.id, 'example selected');
 
         course.open(3);
+        await course.perform('search');
+        assert.equal(shell.store.get().mode, 'soka');
+        await settle(course, 'search');
+        assert.ok(shell.store.get().lastSearch.hits > 0, 'the search found rows');
+        assert.ok(root.querySelector('.dm-center .dm-search-result'), 'search results shown');
+
+        course.open(4);
         await course.perform('process');
         assert.equal(shell.store.get().mode, 'bearbeta');
         await settle(course, 'process');
         assert.ok((await datasets.columns(example.id)).some((c) => c.name === t('course.process.column')), 'column added');
 
-        course.open(4);
+        course.open(5);
         await course.perform('sql');
         assert.equal(shell.store.get().mode, 'analysera');
         await waitFor(() => { const r = shell.store.get().lastRun; return r && r.lang === 'sql'; }, 10000, 'SQL run');
@@ -145,12 +153,12 @@
         assert.equal(Number(counties.values[0][0]), 21, 'the query groups 21 counties');
 
         // Highlight: in Analysera the R step needs no mode button; elsewhere the mode button is marked.
-        course.open(5);
+        course.open(6);
         shell.activate('hantera');
         await course.tick();
         assert.ok(root.querySelector('.dm-mode-btn[data-mode="analysera"]').classList.contains('dm-course-target'), 'Analysera highlighted');
 
-        course.open(6);
+        course.open(7);
         await course.perform('viz');
         assert.equal(shell.store.get().mode, 'visualisera');
         await settle(course, 'viz');
@@ -159,13 +167,18 @@
         assert.equal(made[0].vega.type, 'barh');
         assert.equal(made[0].vega.state.x.field, 'lan');
 
-        course.open(7);
+        course.open(8);
         await course.perform('export');
         assert.equal(shell.store.get().mode, 'exportera');
         await course.tick();
         assert.ok(!course.isDone('export'), 'export not done before a file is exported');
         shell.store.set({ lastExport: { at: Date.now() } });
         await settle(course, 'export');
+
+        course.open(9);
+        await course.perform('share');
+        assert.equal(shell.store.get().mode, 'dela');
+        await settle(course, 'share');
 
         course.open(2);
         await course.perform('manage');

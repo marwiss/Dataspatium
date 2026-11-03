@@ -95,7 +95,9 @@
     }
 
     function all() { return index ? Array.from(index.keys()) : []; }
+    /** The contrib path of the embedded repository, e.g. "webr-repo/bin/emscripten/contrib/4.5/" (after load). */
+    function contrib() { return contribPath; }
 
-    return { load, has, closure, assetsFor, referenced, all, BASE };
+    return { load, has, closure, assetsFor, referenced, all, parse, contrib, indexAssetName, BASE };
   });
 })();

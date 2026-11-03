@@ -7,7 +7,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/layout', ['ui/base', 'ui/icons'], (base, icons) => {
-    const { h, DmElement, define, replace } = base;
+    const { h, DmElement, define, replace, t } = base;
 
     /**
      * Keyboard focus for the active tab when the tabs are drawn anew right after a key press (modes often
@@ -137,6 +137,71 @@
     }
     define('dm-kv', DmKv);
 
-    return { DmTabs, DmPanel, DmEmptyState, DmStepper, DmKv };
+    /**
+     * <dm-splitter for="left|right"> on a side panel's inner edge. Dragging, the arrow keys (Shift for larger
+     * steps), Home and End change the panel's width through the shell's CSS variable (`--dm-panel-w` or
+     * `--dm-inspector-w`) within --dm-panel-min-w and --dm-panel-max-w; a double click resets it. Emits
+     * `dm-resize` {side, width} when a change is done (width null after a reset), so the shell can persist it.
+     */
+    class DmSplitter extends DmElement {
+      connectedCallback() {
+        if (this.built) return;
+        this.built = true;
+        this.setAttribute('role', 'separator');
+        this.setAttribute('aria-orientation', 'vertical');
+        this.setAttribute('tabindex', '0');
+        if (!this.getAttribute('aria-label')) this.setAttribute('aria-label', t('shell.splitter'));
+        this.addEventListener('pointerdown', (e) => this.onDown(e));
+        this.addEventListener('keydown', (e) => this.onKey(e));
+        this.addEventListener('dblclick', () => this.apply(null));
+      }
+      get side() { return this.getAttribute('for') === 'right' ? 'right' : 'left'; }
+      get varName() { return this.side === 'right' ? '--dm-inspector-w' : '--dm-panel-w'; }
+      shell() { return /** @type {HTMLElement|null} */ (this.closest('.dm-shell')); }
+      limits() {
+        const cs = getComputedStyle(this.shell() || document.documentElement);
+        return { min: parseFloat(cs.getPropertyValue('--dm-panel-min-w')) || 200, max: parseFloat(cs.getPropertyValue('--dm-panel-max-w')) || 560 };
+      }
+      current() { const shell = this.shell(); return shell ? parseFloat(getComputedStyle(shell).getPropertyValue(this.varName)) || 280 : 280; }
+      clamp(width) { const { min, max } = this.limits(); return Math.round(Math.max(min, Math.min(max, width))); }
+      /** @param {number|null} width null resets to the default */
+      apply(width) {
+        const shell = this.shell(); if (!shell) return;
+        if (width === null) shell.style.removeProperty(this.varName); else shell.style.setProperty(this.varName, this.clamp(width) + 'px');
+        this.setAttribute('aria-valuenow', String(this.current()));
+        this.emit('dm-resize', { side: this.side, width: width === null ? null : this.current() });
+      }
+      onDown(e) {
+        if (e.button !== 0) return;
+        const shell = this.shell(); if (!shell) return;
+        e.preventDefault();
+        // Capture keeps the drag alive outside the handle; Firefox throws for a pointer it does not know (synthetic events).
+        try { this.setPointerCapture(e.pointerId); } catch (_err) { /* drag still works while the pointer stays on the handle */ }
+        this.setAttribute('data-active', '');
+        const rect = shell.getBoundingClientRect();
+        let pending = null;
+        const move = (ev) => { pending = this.clamp(this.side === 'left' ? ev.clientX - rect.left : rect.right - ev.clientX); shell.style.setProperty(this.varName, pending + 'px'); };
+        const up = () => {
+          this.removeEventListener('pointermove', move); this.removeEventListener('pointerup', up); this.removeEventListener('pointercancel', up);
+          this.removeAttribute('data-active');
+          if (pending !== null) this.apply(pending);
+        };
+        this.addEventListener('pointermove', move); this.addEventListener('pointerup', up); this.addEventListener('pointercancel', up);
+      }
+      onKey(e) {
+        const step = e.shiftKey ? 64 : 16; const dir = this.side === 'left' ? 1 : -1;
+        let next;
+        if (e.key === 'ArrowRight') next = this.current() + step * dir;
+        else if (e.key === 'ArrowLeft') next = this.current() - step * dir;
+        else if (e.key === 'Home') next = this.limits().min;
+        else if (e.key === 'End') next = this.limits().max;
+        else return;
+        e.preventDefault();
+        this.apply(next);
+      }
+    }
+    define('dm-splitter', DmSplitter);
+
+    return { DmTabs, DmPanel, DmEmptyState, DmStepper, DmKv, DmSplitter };
   });
 })();

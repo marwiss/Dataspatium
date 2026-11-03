@@ -23,8 +23,9 @@ a second. Nothing is fetched from the internet.
 ### The beginner's course
 
 After the language choice, the **beginner's course** starts: an interactive walkthrough in a panel at the bottom
-right. It takes about ten minutes and follows the example *Population per municipality 2024 (Sweden)* through all six
-modes: get data, look at the dataset, calculate a column, query with SQL, calculate with R, make a chart and export.
+right. It takes about ten minutes and follows the example *Population per municipality 2024 (Sweden)* through all eight
+modes: get data, look at the dataset, search, calculate a column, query with SQL, calculate with R, make a chart,
+export and share.
 Each step explains a concept and gives a task. A frame shows where to click, and the step is ticked off when you have
 done it. *Do it for me* performs the step for you if you would rather watch how it is done.
 
@@ -33,18 +34,21 @@ top right) or from the command palette (Ctrl+K, *Open the beginner's course*). I
 
 ## 3. The modes
 
-At the top there are six modes. The panel on the left shows objects (datasets and sources), the middle is the
-workspace, the panel on the right shows properties and statistics, and at the bottom there is a log. The panels can
-be collapsed with the buttons at the top right. Alt+1 to Alt+6 switch mode from the keyboard.
+At the top there are eight modes. The panel on the left shows objects (datasets and sources), the middle is the
+work area, the panel on the right shows properties and statistics, and at the bottom is the status bar with the save
+state, storage, the selected dataset, the R engine and the buttons that collapse the panels and open the log. Panel
+widths are changed by dragging the edge towards the work area. Alt+1 to Alt+8 switch mode from the keyboard.
 
 | Mode | What you do there |
 |---|---|
 | Import | Import files, paste tables and fetch from open APIs in Sweden and the other Nordic countries, such as SCB, Kolada, Eurostat, the National Board of Health and Welfare, SMHI, Statistics Denmark, Statistics Norway, Statistics Finland and Statistics Iceland ([api-konfiguration.md](api-konfiguration.md)) |
-| Manage | See your datasets, rename, delete, save versions, back up and restore the workspace |
+| Manage | See your datasets in folders with tags, rename, delete, save versions, run batch actions on several datasets, back up and restore the workspace |
+| Search | Search every column of one or all datasets, narrow with facets and save searches as lists ([soka.md](soka.md)) |
 | Process | Edit cells, sort and filter, clean and type, calculate columns, pivot, join datasets; all with undo, versions and recipes ([bearbeta.md](bearbeta.md)) |
-| Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; SQL console against the selected dataset |
+| Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; SQL console against the selected dataset; regular expressions; a notebook that becomes a report |
 | Visualise | Build charts with Vega-Lite, D3 templates or R scripts, save, export and create them in batch ([visualisera.md](visualisera.md)) |
 | Export | Download data as CSV, Excel, JSON or SQLite, saved charts as SVG, PNG or PDF and documents from templates as HTML, Word, PDF, Markdown or LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
+| Share | Bundle datasets with charts and templates for colleagues, push the workspace to GitHub, share through the computer's share menu and publish dashboards as HTML ([dela.md](dela.md)) |
 
 ## 4. Import a file
 
@@ -98,9 +102,9 @@ synchronised folder. Switch on *Save automatically on changes* and the folder is
 computer you choose the same folder and click *Load from the folder*. After a browser restart it asks once for
 permission to use the folder again; click *Reconnect*.
 
-If you want to send a selection to a colleague, use *Share bundle* on the same page: choose datasets and whether
-charts, dashboards, templates and notebooks should come along. The colleague drops the bundle on *Restore from
-ZIP*; whatever already exists in their workspace is skipped.
+If you want to send a selection to a colleague, go to the *Share* mode and the *Bundle* tab: choose datasets and
+whether charts, dashboards, templates, notebooks and scripts should come along. The colleague opens the bundle under
+*Receive* in the same mode; whatever already exists in their workspace is skipped.
 
 ## Common questions
 

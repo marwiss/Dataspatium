@@ -96,7 +96,7 @@ The backup (ZIP), the portable folder (Edge and Chrome) and the folder in a GitH
 structure: `manifest.json` with a list of the contents, `datasets/<id>.sqlite` per dataset, `charts/<id>.viz.json` per
 saved chart, `documents/<id>.doc.json` per document template of your own, `dashboards/<id>.dash.json` per dashboard,
 `notebooks/<id>.nb.json` per notebook and `scripts/<id>.script.json` per saved R script, SQL script or regex pattern. A
-bundle (*Share bundle* under Manage) has the same structure but contains only what you chose. Its manifest has
+bundle (*Bundle* in the Share mode) has the same structure but contains only what you chose. Its manifest has
 `kind: bundle`, the sender's name (`author`), the message (`message`) and the changes in each dataset since it was last
 shared or received (`changes`), and the bundle also has `CHANGELOG.md` with the same and the unresolved comments in
 readable form. When a bundle is loaded, the message and the changes are shown, and everything that already exists is
@@ -104,6 +104,12 @@ skipped (datasets with the same id, charts, dashboards, templates and notebooks 
 datasets you choose to replace with the bundle's version; your version is then kept under *Versions*. With automatic
 saving on, changed datasets are written to the portable folder shortly after each save and files for deleted datasets
 are removed. The folder can be loaded on another computer in the same way as a bundle.
+
+The manifest has `format: 2` since version 2.0: every dataset in the list has, besides `id`, `name` and `shortName`,
+also `folder` (the folder, such as `Economy/2026`, or empty) and `tags` (a list). Older bundles and backups (without
+`format`) are read as before. Folder and tags are also in the dataset's own file (`_meta`), so they come along
+wherever the file goes, as does `kind` (`table`, `graph`, `document`, `images`, `model`); in 2.0 all datasets are
+tables.
 
 The rows in `_log` have a timestamp, action type and details as JSON. The action types are among others `import`, `op`
 (a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot`,

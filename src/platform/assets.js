@@ -69,6 +69,7 @@
     if (registry.has(name)) return;
     const entry = manifestData.assets[name];
     if (!entry) throw new Error('Unknown asset: ' + name);
+    if (entry.provided) throw new Error('Provided asset ' + name + ' is no longer in memory');
     const url = base() + entry.file;
     await loadScript(url);
     if (!registry.has(name)) {
@@ -112,6 +113,16 @@
   /** Decoded entry if already in memory, otherwise null (no loading). */
   function peek(name) { return decoded.get(name) || null; }
 
+  /**
+   * Provide an asset that was not shipped as a wrapper file: a component fetched on demand (platform/components) or
+   * generated text. It behaves like a decoded asset from then on (until taken by a worker transfer).
+   * @param {string} name @param {'text'|'binary'} kind @param {string|ArrayBuffer} data
+   */
+  function provide(name, kind, data) {
+    decoded.set(name, { kind, data });
+    if (!manifestData.assets[name]) manifestData.assets[name] = { file: null, encoding: kind === 'text' ? 'text' : 'binary', size: kind === 'text' ? String(data).length : /** @type {ArrayBuffer} */ (data).byteLength, provided: true };
+  }
+
   /** Remove a decoded asset from the cache (after transferring its buffer to a worker). */
   function take(name) { const e = decoded.get(name); decoded.delete(name); return e; }
 
@@ -136,6 +147,6 @@
   /** Load a directly shipped (non-wrapped) vendor script such as vendor/d3/d3.min.js. */
   function loadVendorScript(relativePath) { return loadScript(base() + relativePath); }
 
-  D.assets = { manifest, addEntries, register, decode, load, loadText, loadAll, peek, take, names, info, libraries, importModule, loadScript, loadVendorScript, decodeBase64, gunzip };
+  D.assets = { manifest, addEntries, register, decode, load, loadText, loadAll, peek, take, provide, names, info, libraries, importModule, loadScript, loadVendorScript, decodeBase64, gunzip };
   D.define('platform/assets', [], () => D.assets);
 })();

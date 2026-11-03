@@ -9,8 +9,11 @@ ligger som vanlige filer på disken (se [kom-igang.md](kom-igang.md)).
 
 ## Trenger jeg internett?
 
-Nei. Internett trengs bare når du henter data fra et API, synkroniserer med GitHub eller klikker på *Se etter oppdateringer*. Alt annet, også R,
-fungerer uten nettverk.
+Nei. Internett trengs bare når du henter data fra et API, sender til eller henter fra GitHub, klikker på *Se etter
+oppdateringer* eller bruker noe som ikke følger med i mappen: enkelte komponenter (for eksempel bakgrunnskart) og
+R-pakker utenfor det innebygde utvalget hentes når de trengs, og lagres deretter lokalt. Første gang appen trenger
+internett for et formål, spør den om lov; svaret kan lagres og endres under *Håndter → Arbeidsområde →
+Internettilgang*, der også loggen over kall finnes. Alt annet, også R, fungerer uten nettverk.
 
 ## Hvorfor tar det tid første gang jeg bruker R?
 
@@ -56,6 +59,11 @@ et intranett tillater ikke nettleseren service workers, men en server som selv s
 `Cross-Origin-Opener-Policy: same-origin` og `Cross-Origin-Embedder-Policy: credentialless`, gir det samme. Alt annet
 fungerer som fra mappen. Nettleseren lagrer data per adresse, så arbeidsområdet i mappen og det på serveren er atskilt;
 flytt mellom dem med sikkerhetskopi eller pakke.
+
+Fra en nettserver, også <https://marwiss.github.io/Dataspatium/>, kan appen installeres som en egen app: i Edge og
+Chrome via ikonet *Installer* i adressefeltet eller nettleserens meny. Den får da sitt eget vindu og sitt eget ikon,
+filene lagres i nettleseren slik at den fungerer uten nettverk, og lagringen blir vedvarende. Nye versjoner hentes når
+appen åpnes igjen med nettverk.
 
 ## Kan jeg åpne index.html direkte i ZIP-filen?
 
@@ -130,18 +138,40 @@ deler det. Se [bearbeta.md](bearbeta.md).
 
 ## Hvordan deler jeg data med en kollega?
 
-Enklest med *Del pakke* under *Håndter → Arbeidsområde*: velg datasett, og om diagrammer, dashbord, maler og notatbøker skal
-være med, skriv en melding og send ZIP-filen. Kollegaen slipper den på *Gjenopprett fra ZIP*, ser meldingen din og hva som
-er endret, og kan erstatte sine egne versjoner. Kommentarer til datasett og kolonner følger med. Arbeider dere med samme
-arbeidsområde, kan dere også bruke et felles GitHub-repository (*GitHub* under *Håndter → Arbeidsområde*). Du kan også
-eksportere ett enkelt datasett som SQLite (beholder typer, etiketter, kommentarer og historikk) eller ta en
-sikkerhetskopi av hele arbeidsområdet. Diagrammer og dokumentmaler kan eksporteres som JSON-filer, API-konfigurasjoner som
-`.api.json` og oppskrifter som JSON, R eller SQL.
+Enklest i modusen *Del*: under *Pakke* velger du datasett og om diagrammer, dashbord, maler, notatbøker og skript skal
+være med, skriver en melding og sender ZIP-filen, for eksempel via fanen *Delingsmeny* (e-post, Teams og andre
+apper). Kollegaen åpner den under *Motta*, ser meldingen din og hva som er endret, og kan erstatte sine egne
+versjoner. Kommentarer, mapper og tagger følger med. Arbeider dere med samme arbeidsområde, kan dere også bruke et
+felles GitHub-repository (fanen *GitHub*). Dashbord og dokumenter kan publiseres som frittstående HTML-filer (fanen
+*Publiser*). Du kan også eksportere ett enkelt datasett som SQLite (beholder typer, etiketter, kommentarer og
+historikk) eller ta en sikkerhetskopi av hele arbeidsområdet. Diagrammer og dokumentmaler kan eksporteres som
+JSON-filer, API-konfigurasjoner som `.api.json` og oppskrifter som JSON, R eller SQL. Se [dela.md](dela.md).
 
 ## Hvordan åpner jeg grunnkurset igjen?
 
 Klikk på spørsmålstegnet øverst til høyre og velg *Åpne grunnkurset*, eller trykk Ctrl+K og skriv *grunnkurs*. Kurset
 fortsetter der du slapp; har du fullført det, begynner det på nytt. Det finnes på alle seks språk.
+
+## Hvordan holder jeg orden på mange datasett?
+
+Gi dem mapper og tagger: *Ordne* i Håndter, eller dra et datasett til en mappe i objektpanelet. Mapper kan ha
+undermapper (`Økonomi/2026`), filterfeltet søker på navn, tagg og mappe, og avkrysningsboksene velger flere datasett
+for batchhandlinger. Mappe og tagger følger med datasettet i pakker og sikkerhetskopier, og i R viser `dm_list()`
+mappen.
+
+## Hva er komponenter?
+
+Deler av appen som ikke følger med i mappen, for å holde den liten: for eksempel bakgrunnskart og R-pakker utenfor
+det innebygde utvalget. De hentes fra en fast adresse når noe trenger dem, etter at du har gitt lov, og kontrolleres
+mot en kjent kontrollsum der en slik finnes. Deretter lagres de i nettleseren og trenger ikke hentes igjen. Under
+*Håndter → Arbeidsområde → Komponenter* ser du hvilke som finnes, og hvor store de er, og kan hente dem på forhånd
+eller fjerne dem.
+
+## Kan jeg bruke appen på telefonen?
+
+Ikke ennå. En mobilside for telefoner og nettbrett, og overføring direkte mellom enheter, er planlagt til neste
+versjon. Allerede nå tilpasser vinduet seg: i smale vinduer viser modusvelgeren ikoner, og panelene åpnes som ark
+over arbeidsflaten.
 
 ## Finner du ikke svaret her?
 

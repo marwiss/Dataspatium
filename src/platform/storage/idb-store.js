@@ -31,6 +31,8 @@
           instance.version(4).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt' });
           instance.version(5).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt' });
           instance.version(6).stores({ datasets: 'id, name, updatedAt', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt', notebooks: 'id, name, datasetId, updatedAt' });
+          // 2.0: datasets get a folder index (Hantera's tree) and Söka's saved lists get a store.
+          instance.version(7).stores({ datasets: 'id, name, updatedAt, folder', blobs: 'key, parent', settings: 'key', scripts: 'id, name, language, updatedAt', charts: 'id, name, kind, datasetId, updatedAt', documents: 'id, name, updatedAt', dashboards: 'id, name, updatedAt', notebooks: 'id, name, datasetId, updatedAt', lists: 'id, name, datasetId, updatedAt' });
           await instance.open();
           db = instance;
           return instance;
@@ -45,9 +47,10 @@
     async function putDataset(meta) { const d = await open(); await d.datasets.put(meta); return meta; }
     async function deleteDataset(id) {
       const d = await open();
-      await d.transaction('rw', d.datasets, d.blobs, async () => {
+      await d.transaction('rw', d.datasets, d.blobs, d.lists, async () => {
         await d.datasets.delete(id);
         await d.blobs.where('parent').equals('ds:' + id).delete();
+        await d.lists.where('datasetId').equals(id).delete();
       });
     }
 
@@ -114,6 +117,12 @@
     async function putNotebook(nb) { const d = await open(); await d.notebooks.put(nb); return nb; }
     async function deleteNotebook(id) { const d = await open(); await d.notebooks.delete(id); }
 
+    // ---- lists (Söka's saved selections) ----
+    async function listLists() { const d = await open(); return d.lists.orderBy('updatedAt').reverse().toArray(); }
+    async function getList(id) { const d = await open(); return d.lists.get(id); }
+    async function putList(rec) { const d = await open(); await d.lists.put(rec); return rec; }
+    async function deleteList(id) { const d = await open(); await d.lists.delete(id); }
+
     // ---- document templates ----
     async function listDocuments() { const d = await open(); return d.documents.orderBy('updatedAt').reverse().toArray(); }
     async function getDocument(id) { const d = await open(); return d.documents.get(id); }
@@ -135,6 +144,6 @@
     /** Remove everything (used by tests and by "återställ arbetsytan"). */
     async function clearAll() { const d = await open(); await d.transaction('rw', d.datasets, d.blobs, d.settings, async () => { await d.datasets.clear(); await d.blobs.clear(); await d.settings.clear(); }); }
 
-    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDashboards, getDashboard, putDashboard, deleteDashboard, listNotebooks, getNotebook, putNotebook, deleteNotebook, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
+    return { open, listDatasets, getDataset, putDataset, deleteDataset, saveBlob, loadBlob, deleteBlob, listScripts, getScript, putScript, deleteScript, listCharts, getChart, putChart, deleteChart, listDashboards, getDashboard, putDashboard, deleteDashboard, listNotebooks, getNotebook, putNotebook, deleteNotebook, listLists, getList, putList, deleteList, listDocuments, getDocument, putDocument, deleteDocument, getSetting, setSetting, deleteSetting, listSettings, estimate, persisted, requestPersist, clearAll, CHUNK };
   });
 })();

@@ -86,7 +86,7 @@ dialog.dm-dialog .dm-dialog-body { padding: var(--dm-s-3) var(--dm-s-5); display
 dialog.dm-dialog .dm-dialog-actions { display: flex; justify-content: flex-end; gap: var(--dm-s-2); padding: var(--dm-s-3) var(--dm-s-5) var(--dm-s-5); }
 
 /* Toasts */
-.dm-toasts { position: fixed; right: var(--dm-s-4); bottom: var(--dm-s-4); display: flex; flex-direction: column; gap: var(--dm-s-2); z-index: var(--dm-z-toast); max-width: 420px; }
+.dm-toasts { position: fixed; right: var(--dm-s-4); bottom: calc(var(--dm-statusbar-h) + var(--dm-s-4)); display: flex; flex-direction: column; gap: var(--dm-s-2); z-index: var(--dm-z-toast); max-width: 420px; }
 .dm-toast {
   display: flex; align-items: flex-start; gap: var(--dm-s-2); padding: var(--dm-s-3) var(--dm-s-4);
   background: var(--dm-surface); border: 1px solid var(--dm-border); border-left: 3px solid var(--dm-info); border-radius: var(--dm-radius-md);
@@ -97,9 +97,13 @@ dialog.dm-dialog .dm-dialog-actions { display: flex; justify-content: flex-end; 
 .dm-toast[data-kind="error"] { border-left-color: var(--dm-error); }
 .dm-toast .dm-toast-text { flex: 1 1 auto; }
 
-/* Floating panel: non-modal, docked bottom right above the log bar (the beginner's course) */
+/* Tooltip: one floating element for the page (ui/tooltip), above sheets and inside dialogs */
+.dm-tooltip { position: fixed; z-index: var(--dm-z-toast); max-width: 280px; padding: var(--dm-s-1) var(--dm-s-2); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface); color: var(--dm-text); box-shadow: var(--dm-shadow-lg); font-size: var(--dm-text-xs); line-height: 1.4; pointer-events: none; white-space: normal; }
+.dm-tooltip[hidden] { display: none; }
+
+/* Floating panel: non-modal, docked bottom right above the status bar (the beginner's course) */
 .dm-floating {
-  position: fixed; right: var(--dm-s-4); bottom: calc(var(--dm-s-12) + var(--dm-s-2)); z-index: var(--dm-z-floating);
+  position: fixed; right: var(--dm-s-4); bottom: calc(var(--dm-statusbar-h) + var(--dm-s-4)); z-index: var(--dm-z-floating);
   width: min(var(--dm-floating-w), calc(100vw - 2 * var(--dm-s-4))); max-height: min(70vh, var(--dm-floating-max-h)); display: flex; flex-direction: column;
   background: var(--dm-surface); color: var(--dm-text); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); box-shadow: var(--dm-shadow-lg);
 }

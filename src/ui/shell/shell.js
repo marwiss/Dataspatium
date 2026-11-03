@@ -1,8 +1,8 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Application shell: builds the fixed layout (top bar with the six modes, object panel, workspace,
- * inspector, log drawer), owns the store and hands each mode the same slots and services.
+ * Application shell: builds the fixed layout (top bar with the eight modes, object panel, workspace,
+ * inspector, log drawer, status bar), owns the store and hands each mode the same slots and services.
  *
  * Mode contract: { id, activate(slots), deactivate(), update?(state, changed) } created by
  * `createMode(ctx)` in src/ui/modes/*.js.
@@ -10,12 +10,17 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course'],
-    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge'],
+    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge) => {
       const { h, t, i18n, replace } = base;
-      const MODES = ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera'];
-      const MODE_ICONS = { inhamta: 'download', hantera: 'database', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output' };
+      const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela'];
+      const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
       const THEME_ICON = { auto: 'sun', light: 'sun', dark: 'moon' };
+      const ENGINE_STATES = { idle: 'shell.engine.state.idle', starting: 'shell.engine.state.starting', ready: 'shell.engine.state.ready', busy: 'shell.engine.state.busy', error: 'shell.engine.state.error' };
+      /** Settings keys for the panel widths set with the splitters. */
+      const WIDTH_SETTINGS = { left: 'ui.panel.left', right: 'ui.panel.right' };
+      /** Below these widths a side panel is a sheet over the workspace instead of a column (shell.css). */
+      const SHEET_BREAKPOINT = { right: '(max-width: 1099px)', left: '(max-width: 759px)' };
 
       class Shell {
         /** @param {HTMLElement} root */
@@ -23,7 +28,7 @@
           this.root = root;
           this.modes = new Map();
           this.active = null;
-          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null });
+          this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null });
           this.ctx = {
             store: this.store,
             shell: this,
@@ -36,6 +41,8 @@
           this.palette.register(() => this.builtinCommands());
           // Beginner's course (Grundkurs): opened at the first start, from the help dialog and the palette.
           this.course = courseMod.create(this);
+          // Internet access is asked for per purpose the first time it is needed (platform/consent).
+          D.require('platform/consent').setAsker((purpose, info) => this.askConsent(purpose, info));
           this.build();
           this.store.subscribe((state, changed) => this.onState(state, changed));
           datasets.subscribe((type, payload) => this.onDatasets(type, payload));
@@ -47,33 +54,116 @@
           this.modeNav = h('nav', { class: 'dm-modes', 'aria-label': t('shell.modes') }, MODES.map((id) => h('button', {
             type: 'button', class: 'dm-mode-btn', 'data-mode': id, title: `${t('mode.' + id)} (Alt+${MODES.indexOf(id) + 1})`, onclick: () => this.activate(id),
           }, icons.icon(MODE_ICONS[id], 16), h('span', { text: t('mode.' + id) }))));
-          this.statusEl = h('span', { class: 'dm-status', 'data-state': 'saved' }, icons.icon('circle-check', 14), h('span', { text: t('shell.status.saved') }));
-          this.storageEl = h('span', { class: 'dm-status', text: '' });
           this.themeBtn = basic.button({ label: t('shell.theme'), icon: THEME_ICON[theme.get()], 'icon-only': true, variant: 'ghost', onClick: () => this.toggleTheme() });
           this.langBtn = basic.button({ label: t('lang.title'), icon: 'languages', 'icon-only': true, variant: 'ghost', onClick: () => this.chooseLanguage() });
           this.logList = h('ul', { class: 'dm-log', 'aria-live': 'polite' });
           this.slots.center.setAttribute('tabindex', '-1');
+          // Status bar at the bottom: save state, storage, the selected dataset, engines, network, panel toggles, log.
+          this.statusEl = h('span', { class: 'dm-sb', 'data-state': 'saved' }, icons.icon('circle-check', 14), h('span', { text: t('shell.status.saved') }));
+          this.storageEl = h('span', { class: 'dm-sb dm-sb-optional', text: '' });
+          this.datasetEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-optional', 'aria-label': t('shell.dataset.current'), title: t('shell.dataset.current'), hidden: true, onclick: () => this.activate('hantera') });
+          this.engineEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-optional', 'data-engine': 'idle', title: t('shell.engine.hint'), onclick: () => this.activate('analysera') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: '' }));
+          this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
+          this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl,
+            h('span', { class: 'dm-sb-grow' }),
+            this.engineEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
+            basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
+            basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('right') }),
+            basic.button({ label: t('shell.log'), icon: 'panel-bottom', size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') }));
+          this.setEngine('r', rBridge.bridge.state);
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
             h('a', { class: 'dm-skip', href: '#dm-center', text: t('shell.skip'), onclick: (e) => { e.preventDefault(); this.slots.center.focus(); } }),
             h('header', { class: 'dm-topbar' },
               h('div', { class: 'dm-brand' }, icons.icon('dataspatium', 18), h('span', { text: t('app.name') })),
               this.modeNav,
               h('div', { class: 'dm-topbar-right' },
-                this.statusEl, this.storageEl,
-                basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('left') }),
-                basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('right') }),
-                basic.button({ label: t('shell.toggle.drawer'), icon: 'panel-bottom', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('drawer') }),
                 basic.button({ label: t('palette.open'), icon: 'search', 'icon-only': true, variant: 'ghost', onClick: () => this.palette.open() }),
                 this.langBtn,
                 this.themeBtn,
                 basic.button({ label: t('shell.help'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', onClick: () => this.showHelp() }))),
-            h('aside', { class: 'dm-left', 'aria-label': t('shell.objects') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left),
+            h('aside', { class: 'dm-left', 'aria-label': t('shell.objects') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left, h('dm-splitter', { for: 'left' })),
             this.slots.center,
-            h('aside', { class: 'dm-right', 'aria-label': t('shell.inspector') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
+            h('aside', { class: 'dm-right', 'aria-label': t('shell.inspector') }, h('dm-splitter', { for: 'right' }), h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
             h('section', { class: 'dm-drawer', 'aria-label': t('shell.drawer') },
               h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.drawer') }), basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') })),
-              this.logList));
+              this.logList),
+            this.statusBar);
+          this.el.addEventListener('dm-resize', (e) => this.onPanelResize(/** @type {CustomEvent} */ (e).detail));
+          // A side panel shown as a sheet closes when the workspace behind it is used or Escape is pressed; the
+          // sheets start closed and the columns start open, following the window width.
+          this.slots.center.addEventListener('pointerdown', () => this.closeSheets());
+          this.el.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeSheets(); });
+          for (const side of ['left', 'right']) {
+            const mq = matchMedia(SHEET_BREAKPOINT[side]);
+            mq.addEventListener('change', () => this.el.setAttribute('data-' + side, mq.matches ? 'closed' : 'open'));
+            if (mq.matches) this.el.setAttribute('data-' + side, 'closed');
+          }
+          rBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('r', payload.state); });
+          if (D.net && D.net.onActivity) D.net.onActivity((active) => this.setNet(active));
           replace(this.root, this.el);
+        }
+
+        /** Engine indicator in the status bar: a dot coloured by state and the text "R redo". */
+        setEngine(engine, state) {
+          if (!this.engineEl) return;
+          this.engineEl.setAttribute('data-engine', state);
+          /** @type {HTMLElement} */ (this.engineEl.lastChild).textContent = `${t('shell.engine.' + engine)} ${t(ENGINE_STATES[state] || ENGINE_STATES.idle)}`;
+        }
+
+        /** Network indicator: lit while real network requests are in flight. */
+        setNet(active) {
+          this.netEl.setAttribute('data-net', active > 0 ? 'active' : 'idle');
+          this.netEl.title = active > 0 ? t('shell.net.active', { n: active }) : t('shell.net.idle');
+        }
+
+        updateDatasetSummary(state) {
+          const ds = state.datasets.find((d) => d.id === state.selectedId);
+          this.datasetEl.textContent = ds ? `${ds.shortName || ds.name} · ${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })}` : '';
+          this.datasetEl.hidden = !ds;
+        }
+
+        /** Panel widths from the last session, set through the splitters. */
+        async applyWidths() {
+          for (const [side, key] of Object.entries(WIDTH_SETTINGS)) {
+            try {
+              const w = await idb.getSetting(key, null);
+              if (typeof w === 'number' && w > 0) this.el.style.setProperty(side === 'left' ? '--dm-panel-w' : '--dm-inspector-w', w + 'px');
+            } catch (_err) { /* defaults */ }
+          }
+        }
+
+        onPanelResize(detail) {
+          const key = WIDTH_SETTINGS[detail.side];
+          if (!key) return;
+          (detail.width === null ? idb.deleteSetting(key) : idb.setSetting(key, detail.width)).catch((err) => D.log('shell', 'panel width', err));
+        }
+
+        /**
+         * The consent question for a network purpose: what it is for, which host, and whether to remember.
+         * @returns {Promise<{allow: boolean, remember: boolean}>}
+         */
+        async askConsent(purpose, info = {}) {
+          const remember = /** @type {any} */ (h('dm-switch', { label: t('consent.remember') }));
+          remember.checked = true;
+          const details = [info.host ? t('consent.host', { host: info.host }) : '', info.label || '', info.size ? i18n.formatBytes(info.size) : ''].filter(Boolean).join(' · ');
+          const choice = await overlays.dialog.open({
+            title: t('consent.title'),
+            body: h('div', { class: 'dm-stack' },
+              h('p', null, h('strong', { text: t('consent.purpose.' + purpose) + ': ' }), t('consent.purpose.' + purpose + '.body')),
+              details ? h('p', { class: 'dm-help', text: details }) : null,
+              h('p', { class: 'dm-help', text: t('consent.change.hint') }),
+              remember),
+            actions: [{ label: t('consent.deny'), value: false }, { label: t('consent.allow'), variant: 'primary', value: true, primary: true }],
+          });
+          const allow = choice === true;
+          this.log(t(allow ? 'consent.logged.allow' : 'consent.logged.deny', { purpose: t('consent.purpose.' + purpose) }), allow ? 'info' : 'warn');
+          return { allow, remember: choice === undefined ? false : !!remember.checked };
+        }
+
+        /** Close side panels shown as sheets (narrow windows). */
+        closeSheets() {
+          for (const side of ['left', 'right']) if (this.el.getAttribute('data-' + side) === 'sheet') this.el.setAttribute('data-' + side, 'closed');
         }
 
         registerMode(mode) { this.modes.set(mode.id, mode); }
@@ -85,6 +175,7 @@
           try { await datasets.ensureShortNames(); } catch (err) { D.log('shell', 'short names', err); }
           await this.reloadDatasets();
           this.updateStorage();
+          await this.applyWidths();
           // Land where the user most likely wants to be: an empty workspace starts in Inhämta, one with
           // datasets in Hantera. An explicit #/mode in the URL wins.
           const fromHash = (location.hash || '').replace(/^#\/?/, '');
@@ -93,6 +184,31 @@
           window.addEventListener('hashchange', () => { const id = (location.hash || '').replace(/^#\/?/, ''); if (MODES.includes(id) && id !== this.store.get().mode) this.activate(id); });
           this.course.autoStart();
           this.remindBackup();
+          this.versionNotice();
+          // An installed app (served from a web server, added to the home screen) asks the browser to keep its storage.
+          if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) idb.requestPersist().catch(() => {});
+        }
+
+        /** Download a backup of the workspace (the action of reminders and notices). */
+        async backupNow() {
+          try {
+            const { blob } = await workspace.backup();
+            files.download(blob, t('datasets.backup.file', { stamp: new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') }));
+            this.log(t('datasets.backup.done'), 'ok');
+          } catch (err) { this.log(String((err && err.message) || err), 'error'); }
+        }
+
+        /** The first start after a new main version: suggest a backup, since the storage format moved on. */
+        async versionNotice() {
+          const KEY = 'app.lastVersion';
+          let last = null;
+          try { last = await idb.getSetting(KEY, null); } catch (_err) { last = null; }
+          if (last !== D.version) idb.setSetting(KEY, D.version).catch(() => {});
+          const major = (v) => Number(String(v || '').split('.')[0]) || 0;
+          if (!last || !this.store.get().datasets.length || major(last) >= major(D.version)) return;
+          const message = t('app.upgraded', { from: last, to: D.version });
+          this.log(message, 'info');
+          this.toast(message, { kind: 'info', timeout: 20000, action: { label: t('backup.now'), onClick: () => this.backupNow() } });
         }
 
         /** Once per start: a warning when the workspace has not been backed up within the interval set under Hantera. */
@@ -102,16 +218,7 @@
             if (!st.due) return;
             const message = st.lastAt ? t('backup.due', { days: st.daysSince }) : t('backup.due.never');
             this.log(message, 'warn');
-            this.toast(message, {
-              kind: 'warn', timeout: 15000,
-              action: { label: t('backup.now'), onClick: async () => {
-                try {
-                  const { blob } = await workspace.backup();
-                  files.download(blob, t('datasets.backup.file', { stamp: new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') }));
-                  this.log(t('datasets.backup.done'), 'ok');
-                } catch (err) { this.log(String((err && err.message) || err), 'error'); }
-              } },
-            });
+            this.toast(message, { kind: 'warn', timeout: 15000, action: { label: t('backup.now'), onClick: () => this.backupNow() } });
           } catch (_err) { /* reminders are best effort */ }
         }
 
@@ -135,6 +242,7 @@
             this.statusEl.setAttribute('data-state', state.status);
             replace(this.statusEl, icons.icon(icon, 14), h('span', { text: t(key) }));
           }
+          if (changed.includes('selectedId') || changed.includes('datasets')) this.updateDatasetSummary(state);
           if (this.active && this.active.update && !changed.includes('mode')) this.active.update(state, changed);
         }
 
@@ -151,7 +259,11 @@
 
         async reloadDatasets() {
           const list = await datasets.list();
-          this.store.set({ datasets: list });
+          // Multi-selection (Hantera) keeps only datasets that still exist.
+          const ids = new Set(list.map((d) => d.id));
+          const current = this.store.get().selectedIds || [];
+          const kept = current.filter((id) => ids.has(id));
+          this.store.set(kept.length === current.length ? { datasets: list } : { datasets: list, selectedIds: kept });
           return list;
         }
 
@@ -160,14 +272,21 @@
           this.storageEl.textContent = est && est.usage ? t('shell.storage', { used: i18n.formatBytes(est.usage) }) : '';
         }
 
+        /**
+         * Show or hide a panel. The drawer opens and closes in place; a side panel is a column on wide windows
+         * ("open") and a sheet over the workspace on narrow ones ("sheet"), see SHEET_BREAKPOINT.
+         * @param {'left'|'right'|'drawer'} which
+         */
         toggle(which) {
           const key = 'data-' + which;
-          const open = this.el.getAttribute(key) === 'open';
-          this.el.setAttribute(key, open ? 'closed' : 'open');
+          const current = this.el.getAttribute(key);
+          if (which === 'drawer') { this.el.setAttribute(key, current === 'open' ? 'closed' : 'open'); return; }
+          const shown = current === 'open' || current === 'sheet';
+          this.el.setAttribute(key, shown ? 'closed' : (matchMedia(SHEET_BREAKPOINT[which]).matches ? 'sheet' : 'open'));
         }
 
         onKey(e) {
-          if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-6]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
+          if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
           else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); this.palette.open(); }
         }
 

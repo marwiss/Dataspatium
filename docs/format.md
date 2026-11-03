@@ -95,7 +95,7 @@ Säkerhetskopian (ZIP), den portabla mappen (Edge och Chrome) och mappen i ett G
 `manifest.json` med en lista över innehållet, `datasets/<id>.sqlite` per datamängd, `charts/<id>.viz.json` per
 sparat diagram, `documents/<id>.doc.json` per egen dokumentmall, `dashboards/<id>.dash.json` per dashboard,
 `notebooks/<id>.nb.json` per anteckningsbok och `scripts/<id>.script.json` per sparat R-skript, SQL-skript eller
-regexmönster. Ett delningspaket (*Dela paket* under Hantera) har samma uppbyggnad men innehåller bara det du valt.
+regexmönster. Ett delningspaket (*Paket* i läget Dela) har samma uppbyggnad men innehåller bara det du valt.
 Dess manifest har `kind: bundle`, avsändarens namn (`author`), meddelandet (`message`) och ändringarna i varje
 datamängd sedan den senast delades eller togs emot (`changes`), och paketet har dessutom `CHANGELOG.md` med samma
 sak och de olösta kommentarerna i läsbar form. När ett paket läses in visas meddelandet och ändringarna, och allt
@@ -103,6 +103,12 @@ som redan finns hoppas över (datamängder med samma id, diagram, dashboards, ma
 namn), utom de datamängder du väljer att ersätta med paketets version; din version sparas då under *Versioner*.
 Med automatisk sparning på skrivs ändrade datamängder till den portabla mappen strax efter varje sparning och filer
 för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator på samma sätt som ett paket.
+
+Manifestet har `format: 2` sedan version 2.0: varje datamängd i listan har förutom `id`, `name` och `shortName`
+även `folder` (mappen, som `Ekonomi/2026`, eller tom) och `tags` (en lista). Äldre paket och säkerhetskopior (utan
+`format`) läses som förut. Mapp och taggar ligger också i datamängdens egen fil (`_meta`), så de följer med var
+filen än hamnar, liksom `kind` (`table`, `graph`, `document`, `images`, `model`); i 2.0 är alla datamängder
+tabeller.
 
 Raderna i `_log` har tidsstämpel, åtgärdstyp och detaljer som JSON. Åtgärdstyperna är bland andra `import`, `op`
 (ett receptsteg med `op`, `params`, `result` och `description`; det är dessa rader som utgör receptet), `undo`,

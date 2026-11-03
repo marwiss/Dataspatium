@@ -169,7 +169,18 @@
        */
       async ensurePackages(names) {
         const wanted = packages.closure(names);
-        const assets = packages.assetsFor(wanted).filter((a) => !this.shippedAssets.has(a));
+        await this.shipAssets(packages.assetsFor(wanted));
+        return wanted;
+      }
+
+      /**
+       * Send assets (package files, a replaced package index) to the worker; already shipped ones are skipped unless
+       * `force` is set, which re-sends them (the worker shim then serves the new content).
+       * @param {string[]} names asset names
+       * @param {{force?: boolean}} [options]
+       */
+      async shipAssets(names, options = {}) {
+        const assets = names.filter((a) => options.force || !this.shippedAssets.has(a));
         if (assets.length) {
           if (this.interruptible) {
             // With the SharedArrayBuffer channel the worker waits for R requests and never reads further messages, so
@@ -187,7 +198,7 @@
           }
           for (const a of assets) this.shippedAssets.add(a);
         }
-        return wanted;
+        return assets;
       }
 
       /** Install packages from the embedded repository (they must be present in vendor/webr-repo). */

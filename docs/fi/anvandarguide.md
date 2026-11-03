@@ -9,16 +9,24 @@ avannut sovelluksen tiedoston [kom-igang.md](kom-igang.md) ohjeiden mukaan. Kunk
 
 ## Työtila
 
-Näkymä on samanlainen kaikissa tiloissa. Ylhäällä vaihdat tilaa (Nouda, Hallitse, Muokkaa, Analysoi, Visualisoi, Vie;
-myös Alt+1 … Alt+6 toimii) ja näet työtilan tilan (tallennettu tai tallentamaton), komentopaletin (suurennuslasi tai
-Ctrl+K), kielipainikkeen, teeman (vaalea tai tumma) ja ohjepainikkeen versionumeroineen ja toimintoineen *Tarkista
-päivitykset*. Komentopaletti on nopein tie useimpiin asioihin: kirjoita muutama kirjain vaihtaaksesi tilaa, avataksesi
-aineiston, kaavion tai kojelaudan tai suorittaaksesi muokkaustoiminnon valitulle aineistolle. Vasemmalla ovat tilan kohteet
-(aineistot, lähteet, kaaviot, mallit), keskellä työalue ja oikealla tarkastelupaneeli ominaisuuksineen ja tilastoineen.
-Alhaalla on loki, johon kirjataan jokainen toiminto, varoitus ja virhe; sitä luet, kun jokin ei mene niin kuin ajattelit.
+Näkymä on samanlainen kaikissa tiloissa. Ylhäällä vaihdat tilaa (Nouda, Hallitse, Hae, Muokkaa, Analysoi,
+Visualisoi, Vie, Jaa; myös Alt+1 … Alt+8 toimii) ja tavoitat komentopaletin (suurennuslasi tai Ctrl+K),
+kielipainikkeen, teeman (vaalea tai tumma) ja ohjepainikkeen versionumeroineen ja toimintoineen *Tarkista
+päivitykset*. Komentopaletti on nopein tie useimpiin asioihin: kirjoita muutama kirjain vaihtaaksesi tilaa,
+avataksesi aineiston, kaavion tai kojelaudan, hakeaksesi datasta tai suorittaaksesi muokkaustoiminnon valitulle
+aineistolle. Vasemmalla ovat tilan kohteet (aineistot, lähteet, kaaviot, mallit), keskellä työalue ja oikealla
+tarkastelupaneeli ominaisuuksineen ja tilastoineen. Alhaalla on tilarivi: tallennuksen tila, tallennustila, valittu
+aineisto, R-moottori, käynnissä olevat internetkutsut ja painikkeet, jotka piilottavat paneelit ja avaavat lokin,
+johon kirjataan jokainen toiminto, varoitus ja virhe; sitä luet, kun jokin ei mene niin kuin ajattelit. Paneelien
+leveyttä muutetaan vetämällä reunaa työaluetta kohti, ja kapeissa ikkunoissa paneelit avautuvat työalueen päälle
+(ks. [lagen.md](lagen.md)).
 
-Kaikki luomasi tallennetaan automaattisesti selaimen tietokantaan tietokoneellasi. Mitään ei lähetetä minnekään, ellet itse
-nouda rajapinnasta, tarkista päivityksiä tai vie.
+Kaikki luomasi tallennetaan automaattisesti selaimen tietokantaan tietokoneellasi. Mitään ei lähetetä minnekään,
+ellet itse nouda rajapinnasta, tarkista päivityksiä, lähetä GitHubiin tai jaa. Kun sovellus tarvitsee ensimmäisen
+kerran internetiä jotakin tarkoitusta varten, se kysyy lupaa, ja vastauksen voi tallentaa; kohdassa *Hallitse →
+Työtila → Internetyhteys* näet, mikä on sallittu ja mitä kutsuja on tehty. Sovelluksen osat, jotka eivät tule
+kansion mukana (jotkin komponentit ja R-paketit), noudetaan samalla tavalla tarvittaessa ja tallennetaan sitten
+paikallisesti.
 
 ## Peruskurssi
 
@@ -138,40 +146,64 @@ CSV (sovitettu pohjoismaiselle Excelille tai vakio), Excel, ODS, JSON, GeoJSON (
 SQLite sekä R:n kautta Parquet, SPSS, Stata ja RDS. SQLite ja Parquet säilyttävät tyypit tarkasti; kaikki muodot voi tuoda
 uudelleen.
 
+## Datasta hakeminen (Hae)
+
+Hae löytää rivejä ilman koodia. Kirjoita yksi tai useampi sana, valitse kaikki aineistot tai vain valittu ja paina
+*Hae*. Osumat näytetään aineistoittain; fasetit (yleisimmät arvot sarakkeissa, joissa on vähän eri arvoja) rajaavat
+yhdellä napsautuksella, ja taulukon rivi näyttää koko tietueen tarkastelupaneelissa. Haun voi tallentaa listaksi,
+siitä voi tehdä uuden aineiston tai sen voi avata Muokkaa-tilassa aineisto valittuna. Ks. [soka.md](soka.md).
+
 ## Järjestyksen pitäminen (Hallitse)
 
-Jokaisella aineistolla on yleiskatsaus (lähde, koko, kuvaus), sarakeluettelo tyyppeineen, selitteineen, kuvauksineen ja
-yksikköineen (asetetaan Muokkaa-tilassa toiminnolla *Selite, kuvaus ja yksikkö*), kommentit, luettava historia kaikesta tehdystä ja versiot.
-Nimeä uudelleen ja vaihda lyhytnimi, poista tai nouda uudelleen rajapinnasta (päivitä reseptin kanssa tai lisää rivejä). Kohdassa *Työtila* näet käytetyn
+Jokaisella aineistolla on yleiskatsaus (lähde, koko, kuvaus, kansio ja tunnisteet), sarakeluettelo tyyppeineen,
+selitteineen, kuvauksineen ja yksikköineen (asetetaan Muokkaa-tilassa toiminnolla *Selite, kuvaus ja yksikkö*),
+kommentit, luettava historia kaikesta tehdystä ja versiot. Nimeä uudelleen ja vaihda lyhytnimi, järjestä, poista tai
+nouda uudelleen rajapinnasta (päivitä reseptin kanssa tai lisää rivejä). Kohdassa *Työtila* näet käytetyn
 tallennustilan, pyydät pysyvää tallennustilaa, otat varmuuskopion ZIP-tiedostona ja palautat. Sovellus muistuttaa
-käynnistyessään, kun edellisestä varmuuskopiosta on kulunut valittua päivämäärää pidempään (oletuksena 30 päivää; muutetaan
-tai poistetaan käytöstä samassa kortissa). Edgessä ja Chromessa työtilan voi lisäksi peilata siirrettävään kansioon levylle
-automaattisesti jokaisen muutoksen yhteydessä.
+käynnistyessään, kun edellisestä varmuuskopiosta on kulunut valittua päivämäärää pidempään (oletuksena 30 päivää;
+muutetaan tai poistetaan käytöstä samassa kortissa). Edgessä ja Chromessa työtilan voi lisäksi peilata siirrettävään
+kansioon levylle automaattisesti jokaisen muutoksen yhteydessä.
+
+Hallitse-tilan kohdepaneeli on puu. *Järjestä* antaa aineistolle kansion (alikansioineen, kuten `Talous/2026`) ja
+tunnisteita; kansiot voi sulkea, ja aineiston voi vetää toiseen kansioon. Suodatinkenttä hakee nimestä,
+lyhytnimestä, tunnisteesta ja kansiosta, ja luettelon voi lajitella muutosajan, nimen tai rivimäärän mukaan.
+Valintaruudut valitsevat useita aineistoja (Vaihto valitsee välin), ja painike *Toiminnot (n)* tekee saman kaikille
+kerralla: järjestä, paketoi, vie ZIP-tiedostona CSV-tiedostoineen, nouda uudelleen rajapinnasta, suorita resepti tai
+poista. Kansio ja tunnisteet tallennetaan aineiston tiedostoon ja kulkevat mukana paketeissa, varmuuskopioissa ja
+GitHubissa; R:ssä `dm_list()` näyttää kansion ja `dm_read("Kansio/Nimi")` lukee kansiossa olevan aineiston.
 
 ## Jakaminen muiden kanssa
 
-- Valikoima: *Jaa paketti* Hallitse-tilassa tuottaa ZIP-tiedoston valituista aineistoista, kaavioista, kojelaudoista,
-  malleista ja muistikirjoista sekä viestin ja muutoslokin: mitä kullekin aineistolle on tehty sen jälkeen, kun se
-  viimeksi jaettiin, ja ratkaisemattomat kommentit. Vastaanottaja lataa sen kohdassa *Palauta ZIP-tiedostosta*, näkee
-  viestin ja muutokset ja valitsee jo olemassa oleville aineistoille, korvataanko ne paketin versiolla (oma versio
-  tallennetaan kohtaan *Versiot*); muut ohitetaan.
+Kaikki, mikä on tarkoitettu muille ihmisille, on *Jaa*-tilassa (ks. [dela.md](dela.md)):
+
+- Valikoima: *Paketti* tuottaa ZIP-tiedoston valituista aineistoista, kaavioista, kojelaudoista, malleista,
+  muistikirjoista ja skripteistä sekä viestin ja muutoslokin: mitä kullekin aineistolle on tehty sen jälkeen, kun se
+  viimeksi jaettiin, ja ratkaisemattomat kommentit. Vastaanottaja avaa sen kohdassa *Vastaanota*, näkee viestin ja
+  muutokset ja valitsee jo olemassa oleville aineistoille, korvataanko ne paketin versiolla (oma versio tallennetaan
+  kohtaan *Versiot*); muut ohitetaan. Hallitse-tilassa *Toiminnot* usealle valitulle aineistolle tekee saman.
 - Kommentit: jokaisella aineistolla on Hallitse-tilassa välilehti *Kommentit*, ja Muokkaa-tilassa kommentoit saraketta
-  ominaisuuspaneelista. Kommentit ovat aineiston tiedostossa ja kulkevat mukana paketeissa, varmuuskopioissa,
+  tarkastelupaneelista. Kommentit ovat aineiston tiedostossa ja kulkevat mukana paketeissa, varmuuskopioissa,
   siirrettävässä kansiossa ja GitHubissa. Näytettävän nimen annat itse; se tallennetaan vain selaimeen.
 - Koko työtila: varmuuskopio (ZIP) palautetaan Hallitse-tilassa toisella tietokoneella.
-- Tietokoneiden välillä GitHubin kautta: kohdassa *Hallitse → Työtila* lähetät työtilan GitHub-repositorioon (mieluiten
-  yksityiseen) ja noudat sen toisella tietokoneella. Se vaatii hienojakoisen käyttöoikeustunnuksen (fine-grained personal
-  access token), joka saa vain lukea ja kirjoittaa juuri sen repositorion sisältöä. Tunnusta käytetään istunnon ajan tai se
-  tallennetaan salattuna, eikä mitään lähetetä ennen kuin painat *Lähetä GitHubiin* tai *Nouda GitHubista*. Vain
-  muuttuneet tiedostot lähetetään yhtenä committina viestisi kera; noudettaessa valitset, kuten paketeille, korvataanko
-  olemassa olevat aineistot.
-- Yksi aineisto: vie SQLite- (kaikki mukana) tai Parquet-muodossa.
+- Tietokoneiden välillä GitHubin kautta: välilehti *GitHub* lähettää työtilan GitHub-repositorioon (mieluiten
+  yksityiseen) ja noutaa sen toisella tietokoneella. Se vaatii hienojakoisen käyttöoikeustunnuksen (fine-grained
+  personal access token), joka saa vain lukea ja kirjoittaa juuri sen repositorion sisältöä. Tunnusta käytetään
+  istunnon ajan tai se tallennetaan salattuna, eikä mitään lähetetä ennen kuin painat *Lähetä GitHubiin* tai *Nouda
+  GitHubista*. Vain muuttuneet tiedostot lähetetään yhtenä committina viestisi kera; noudettaessa valitset, kuten
+  paketeille, korvataanko olemassa olevat aineistot.
+- Tietokoneen tai puhelimen jakovalikon kautta: välilehti *Jakovalikko* lähettää aineiston CSV-, Excel-, ODS- tai
+  JSON-muodossa tai kaikki aineistot pakettina sähköpostiin, Teamsiin ja muihin sovelluksiin (Edge ja Chrome; Firefox
+  tallentaa tiedoston).
+- Valmiina verkkosivuna: välilehti *Julkaise* tekee kojelaudasta tai asiakirjasta itsenäisen HTML-tiedoston.
+- Yksi aineisto: vie SQLite- (kaikki mukana) tai Parquet-muodossa Vie-tilassa.
 - API-määritykset (`.api.json`), kaaviot ja asiakirjamallit (JSON) ja reseptit (JSON, R tai SQL) viedään ja ladataan
   tiedostoina. Avaimet eivät koskaan kulje mukana.
 
 ## Näppäimistö
 
-Alt+1 … Alt+6 vaihtaa tilaa ja Ctrl+K avaa komentopaletin. Ensimmäinen Sarkain-painallus sivulla näyttää linkin *Siirry
+Alt+1 … Alt+8 vaihtaa tilaa ja Ctrl+K avaa komentopaletin. Paneelin ja työalueen välinen reuna voi saada kohdistuksen
+Sarkaimella, ja sitä siirretään nuolinäppäimillä (Vaihto suuremmille askelille, Home ja End pienimmälle ja
+suurimmalle leveydelle). Ensimmäinen Sarkain-painallus sivulla näyttää linkin *Siirry
 sisältöön*, joka siirtää kohdistuksen tilanvalitsimen ja kohdepaneelin ohi. Kaiken voi tavoittaa Sarkaimella ja Enterillä;
 valintaikkunat suljetaan Escillä. Taulukossa nuolinäppäimet siirtävät solusta toiseen ja Enter aloittaa muokkauksen.
 Sovellus noudattaa järjestelmän asetusta vähennetystä liikkeestä.

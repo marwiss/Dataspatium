@@ -70,6 +70,8 @@
       const base = `${API}/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
       async function request(method, path, body, accept) {
         let res;
+        // GitHub is contacted only with the user's consent (asked once, changeable under Hantera).
+        await D.require('platform/consent').require('github', { host: 'api.github.com' });
         try {
           const headers = { Authorization: `Bearer ${cfg.token}`, Accept: accept || 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
           if (body) headers['Content-Type'] = 'application/json';
