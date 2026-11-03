@@ -1985,5 +1985,10 @@
     'github.err.truncated': 'Repositoryet er for stort til at blive læst på én gang. Vælg en egen mappe i et mindre repository.',
     'github.err.toolarge': '{path} er større end 100 MB, som er GitHubs grænse for én fil. Brug backup eller den portable mappe til så store datasæt.',
     'github.err.empty.folder': 'Mappen i repositoryet indeholder intet arbejdsområde fra Dataspatium.',
+    'analysera.stop': 'Afbryd',
+    'analysera.stop.hint': 'Stopper koden, der kører. R-sessionen og dens objekter bevares.',
+    'analysera.stopping': 'Afbryder R-koden …',
+    'analysera.restart.hint': 'Starter en ny R-session. Når appen åbnes fra en mappe (file://), kan R-kode ikke afbrydes; kør appen fra en webserver for at kunne afbryde i stedet for at genstarte.',
+    'r.interrupted': 'Afbrudt.',
   }));
 })();

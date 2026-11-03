@@ -76,8 +76,9 @@ isländska eller engelska); kolumnnamnen i `dm_list()` är däremot alltid desam
 
 ## Begränsningar
 
-- R-kod kan inte avbrytas när den körs (webbläsaren saknar den funktionen när appen öppnas från en mapp). Om
-  något hänger sig: *Starta om R*. Sparade skript påverkas inte, men objekt i R-sessionen försvinner.
+- När appen öppnas från en mapp (file://) kan R-kod inte avbrytas medan den körs. Om något hänger sig: *Starta om R*.
+  Sparade skript påverkas inte, men objekt i R-sessionen försvinner. Körs appen från en webbserver (localhost eller
+  https) finns knappen *Avbryt*, som stoppar koden och behåller sessionen (se [faq.md](faq.md)).
 - Minnet begränsas av webbläsaren och WebAssembly; håll datamängder under några hundra megabyte i R.
 - Inmatning under körning (`readline()`, `menu()`) fungerar inte.
 - Grafikfönster, systemkommandon, nätverksanrop och filer utanför det virtuella filsystemet är inte tillgängliga.

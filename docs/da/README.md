@@ -101,7 +101,8 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
   ZIP-fil.
 - API'er uden CORS-understøttelse (for eksempel Energi Data Service) kan ikke kaldes direkte fra browseren.
 - Et datasæt bør holde sig under et par millioner rækker; browserens hukommelse sætter grænsen.
-- R-kode kan ikke afbrydes midt i en beregning; brug *Genstart R*.
+- Når appen åbnes fra en mappe, kan R-kode ikke afbrydes midt i en beregning; brug *Genstart R*. Fra en webserver
+  (localhost eller https) findes knappen *Afbryd*.
 - Flere faner fungerer og holder hinanden orienteret, men redigér ikke samme datasæt i to faner samtidig: den, der
   gemmer sidst, vinder.
 - Den portable mappe kræver Edge eller Chrome; Firefox mangler mappeadgang (File System Access). Backup som ZIP

@@ -15,7 +15,11 @@ headless-tester i Edge och Firefox (se [fas0-spik.md](fas0-spik.md)):
 4. OPFS, SharedArrayBuffer, File System Access och service workers får inte förutsättas; `Dataspatium.capabilities`
    talar om vad som finns.
 
-Samma kod fungerar oförändrad från en vanlig webbserver.
+Samma kod fungerar oförändrad från en vanlig webbserver. Över https eller localhost registrerar `src/boot.js` service
+workern `sw-coi.js` innan skripten laddas. Den lägger till `Cross-Origin-Opener-Policy: same-origin` och
+`Cross-Origin-Embedder-Policy: credentialless` på appens egna svar (anrop till andra webbplatser passerar orörda), och
+sidan laddas om en gång när den tar över. Sidan blir då cross-origin isolated, `Dataspatium.capabilities` rapporterar
+SharedArrayBuffer och R kan avbrytas (se R nedan). Under file:// händer inget av detta.
 
 ## Lager
 
@@ -49,12 +53,16 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
   `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`, `dm_title`, `dm_squish`,
   `dm_fingerprint` med flera) och registrerar dem på nytt efter `export`, eftersom sql.js då öppnar
   anslutningen igen.
-- R: WebR 0.5.9 (R 4.5.1) med PostMessage-kanalen. Eftersom basadressen `dataspatium-asset://webr/` har ett annat
+- R: WebR 0.5.9 (R 4.5.1), under file:// med PostMessage-kanalen. Eftersom basadressen `dataspatium-asset://webr/` har ett annat
   ursprung hämtar WebR sin worker-kod med XMLHttpRequest och skapar en Blob-worker av svaret; vårt nätverks-shim
   svarar med "worker-shim + webr-worker.js". Paketrepot är inbäddat under `webr-repo/` och installeras med
   `webr::install()`. R och JS delar data genom SQLite-filer i WebR:s virtuella filsystem (RSQLite). WebR 0.5.9
   gör om varje fil som skrivs till en vanlig array (`Object.values`), vilket slår i taket för arraylängd nära
   128 MB; `writeFile` i `src/engines/r/r-engine.js` skriver därför större filer i delar om 16 MB som R fogar ihop.
+  På en cross-origin isolated sida används i stället SharedArrayBuffer-kanalen, och `interrupt()` stoppar körande kod
+  (knappen *Avbryt* i Analysera). Med den kanalen väntar webR:s worker på R-anrop och läser inga fler meddelanden,
+  så paket som behövs efter starten skrivs med `webR.FS.writeFile` till `/dataspatium-assets/` i R:s filsystem, där
+  worker-shimmen letar efter resurser den saknar.
 
 ## Datamodell
 

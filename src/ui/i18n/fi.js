@@ -1985,5 +1985,10 @@
     'github.err.truncated': 'Repositorio on liian suuri luettavaksi kerralla. Valitse oma kansio pienemmässä repositoriossa.',
     'github.err.toolarge': '{path} on suurempi kuin 100 Mt, joka on GitHubin raja yhdelle tiedostolle. Käytä niin suurille aineistoille varmuuskopiota tai siirrettävää kansiota.',
     'github.err.empty.folder': 'Repositorion kansiossa ei ole Dataspatiumin työtilaa.',
+    'analysera.stop': 'Keskeytä',
+    'analysera.stop.hint': 'Pysäyttää käynnissä olevan koodin. R-istunto ja sen objektit säilyvät.',
+    'analysera.stopping': 'Keskeytetään R-koodia …',
+    'analysera.restart.hint': 'Käynnistää uuden R-istunnon. Kun sovellus avataan kansiosta (file://), R-koodia ei voi keskeyttää; aja sovellus verkkopalvelimelta, niin voit keskeyttää uudelleenkäynnistyksen sijaan.',
+    'r.interrupted': 'Keskeytetty.',
   }));
 })();

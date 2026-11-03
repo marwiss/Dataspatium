@@ -35,6 +35,7 @@ den portable mappe.
 
 ## Begrænsninger
 
-- R-kode kan ikke afbrydes under file://; brug *Genstart R* i R-fanen, hvis en celle hænger.
+- R-kode kan ikke afbrydes under file://; brug *Genstart R* i R-fanen, hvis en celle hænger. Kører appen fra en
+  webserver, stopper knappen *Afbryd* i R-fanen også en celle, der kører.
 - Output gemmes i browseren sammen med notesbogen. Mange store diagrammer gør notesbogen større.
 - Redigeringsfeltet til tekst har ingen syntaksfremhævning af Markdown.

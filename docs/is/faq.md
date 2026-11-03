@@ -19,8 +19,10 @@ gagnasöfnin þín og skriftur eru áfram til.
 
 ## Get ég rofið R-kóða sem hefur fest?
 
-Nei. Undir file:// leyfir vafrinn ekki þann búnað sem þarf til að rjúfa R í miðjum útreikningi. Notaðu *Endurræsa R* í Greina;
-gagnasöfnin verða ekki fyrir áhrifum.
+Já, þegar forritið keyrir af vefþjóni (til dæmis `python -m http.server 8080` á eigin tölvu, eða https á innraneti): þá
+er hnappurinn *Stöðva* við hliðina á *Keyra* í R-flipanum, og R-lotan með hlutum sínum helst. Þegar forritið er opnað
+úr möppu (file://) leyfir vafrinn ekki þann búnað sem þarf; notaðu þá *Endurræsa R* í Greina. Gagnasöfnin verða ekki
+fyrir áhrifum.
 
 ## Af hverju virkar vefþjónusta ekki?
 
@@ -46,7 +48,13 @@ staðar.
 
 ## Má keyra forritið af vefþjóni eða innra neti?
 
-Já. Settu möppuna óbreytta á hvaða kyrrstæðan vefþjón sem er. Enga þjónsvirkni þarf.
+Já. Settu möppuna óbreytta á hvaða kyrrstæðan vefþjón sem er; enga þjónsvirkni þarf. Yfir https, og á eigin tölvu
+yfir `http://localhost`, skráir forritið þjónustuvinnsluna (service worker) `sw-coi.js` sem gerir síðuna *cross-origin
+isolated*, og þá er hægt að stöðva R-kóða. Í fyrsta skipti hleðst síðan einu sinni aftur þegar hún tekur við. Yfir
+venjulegt http á innraneti leyfir vafrinn engar þjónustuvinnslur, en þjónn sem sjálfur sendir hausana
+`Cross-Origin-Opener-Policy: same-origin` og `Cross-Origin-Embedder-Policy: credentialless` gefur það sama. Allt annað
+virkar eins og úr möppunni. Vafrinn geymir gögn eftir vefslóð, svo vinnusvæðið í möppunni og það á þjóninum eru aðskilin;
+færðu á milli með afriti eða pakka.
 
 ## Get ég opnað index.html beint í ZIP-skránni?
 

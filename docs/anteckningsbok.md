@@ -34,6 +34,7 @@ säkerhetskopian, delningspaket och den portabla mappen.
 
 ## Begränsningar
 
-- R-kod kan inte avbrytas under file://; använd *Starta om R* i R-fliken om en cell hänger sig.
+- R-kod kan inte avbrytas under file://; använd *Starta om R* i R-fliken om en cell hänger sig. Körs appen från en
+  webbserver stoppar knappen *Avbryt* i R-fliken även en cell som körs.
 - Utdata lagras i webbläsaren tillsammans med boken. Många stora diagram gör boken större.
 - Redigeringsfältet för text har ingen syntaxmarkering för Markdown.

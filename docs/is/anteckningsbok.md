@@ -32,6 +32,7 @@ pökkum og færanlegu möppunni.
 
 ## Takmarkanir
 
-- Ekki er hægt að rjúfa R-kóða undir file://; notaðu *Endurræsa R* í R-flipanum ef reitur frýs.
+- Ekki er hægt að rjúfa R-kóða undir file://; notaðu *Endurræsa R* í R-flipanum ef reitur frýs. Keyri forritið af
+  vefþjóni stöðvar hnappurinn *Stöðva* í R-flipanum líka reit sem keyrir.
 - Úttak er geymt í vafranum ásamt minnisbókinni. Mörg stór myndrit stækka minnisbókina.
 - Breytingareitur textans hefur enga málskipunarlitun fyrir Markdown.

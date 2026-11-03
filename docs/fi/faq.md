@@ -20,8 +20,10 @@ aineistosi ja skriptisi säilyvät.
 
 ## Voinko keskeyttää jumittuneen R-koodin?
 
-Et. file://-tilassa selain ei salli mekanismia, jota R:n keskeyttäminen kesken laskennan vaatii. Käytä Analysoi-tilassa
-toimintoa *Käynnistä R uudelleen*; aineistot eivät muutu.
+Voit, kun sovellus ajetaan verkkopalvelimelta (esimerkiksi `python -m http.server 8080` omalla tietokoneella tai https
+intranetissä): silloin R-välilehdellä on *Suorita*-painikkeen vieressä painike *Keskeytä*, ja R-istunto objekteineen
+säilyy. Kun sovellus avataan kansiosta (file://), selain ei salli tarvittavaa mekanismia; käytä silloin Analysoi-tilassa
+toimintoa *Käynnistä R uudelleen*. Aineistot eivät muutu.
 
 ## Miksi jokin rajapinta ei toimi?
 
@@ -47,7 +49,14 @@ ZIP-varmuuskopio toimii kaikkialla.
 
 ## Voiko sovellusta käyttää verkkopalvelimelta tai intranetistä?
 
-Voi. Sijoita kansio muuttamattomana mille tahansa staattiselle verkkopalvelimelle. Palvelintoimintoja ei tarvita.
+Voi. Sijoita kansio muuttamattomana mille tahansa staattiselle verkkopalvelimelle; palvelintoimintoja ei tarvita.
+https-yhteydellä ja omalla tietokoneella osoitteessa `http://localhost` sovellus rekisteröi service workerin
+(`sw-coi.js`), joka tekee sivusta *cross-origin isolated* -tilaisen, ja silloin R-koodin voi keskeyttää. Ensimmäisellä
+kerralla sivu latautuu kerran uudelleen, kun service worker ottaa ohjauksen. Tavallisella http-yhteydellä intranetissä
+selain ei salli service workereita, mutta palvelin, joka itse lähettää otsakkeet `Cross-Origin-Opener-Policy: same-origin`
+ja `Cross-Origin-Embedder-Policy: credentialless`, antaa saman tuloksen. Kaikki muu toimii kuten kansiosta. Selain
+tallentaa datan osoitekohtaisesti, joten kansion työtila ja palvelimen työtila ovat erillään; siirrä niiden välillä
+varmuuskopiolla tai paketilla.
 
 ## Voinko avata index.html-tiedoston suoraan ZIP-tiedostosta?
 

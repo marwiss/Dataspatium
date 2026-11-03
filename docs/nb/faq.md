@@ -20,8 +20,10 @@ og skriptene dine finnes fortsatt.
 
 ## Kan jeg avbryte R-kode som har hengt seg?
 
-Nei. Under file:// tillater ikke nettleseren mekanismen som kreves for å avbryte R midt i en beregning. Bruk *Start R på
-nytt* i Analyser; datasettene påvirkes ikke.
+Ja, når appen kjører fra en nettserver (for eksempel `python -m http.server 8080` på din egen datamaskin eller https på
+et intranett): da finnes knappen *Avbryt* ved siden av *Kjør* i R-fanen, og R-økten med objektene beholdes. Når appen
+åpnes fra en mappe (file://), tillater ikke nettleseren mekanismen som kreves; bruk da *Start R på nytt* i Analyser.
+Datasettene påvirkes ikke.
 
 ## Hvorfor virker ikke et API?
 
@@ -47,7 +49,13 @@ som ZIP fungerer overalt.
 
 ## Kan appen kjøres fra en nettserver eller et intranett?
 
-Ja. Legg mappen uendret på en vilkårlig statisk nettserver. Det trengs ingen serverfunksjoner.
+Ja. Legg mappen uendret på en vilkårlig statisk nettserver; det trengs ingen serverfunksjoner. Over https, og på din egen
+datamaskin over `http://localhost`, registrerer appen en service worker (`sw-coi.js`) som gjør siden *cross-origin
+isolated*, og da kan R-kode avbrytes. Første gang lastes siden inn på nytt én gang når den tar over. Over vanlig http på
+et intranett tillater ikke nettleseren service workers, men en server som selv sender hodene
+`Cross-Origin-Opener-Policy: same-origin` og `Cross-Origin-Embedder-Policy: credentialless`, gir det samme. Alt annet
+fungerer som fra mappen. Nettleseren lagrer data per adresse, så arbeidsområdet i mappen og det på serveren er atskilt;
+flytt mellom dem med sikkerhetskopi eller pakke.
 
 ## Kan jeg åpne index.html direkte i ZIP-filen?
 

@@ -182,7 +182,23 @@ function dataspatiumWorkerShim(config, makeXHR) {
       default: return 'application/octet-stream';
     }
   }
-  function lookupSync(name) { return assets.get(name) || null; }
+  // Assets the main thread wrote into the hosted code's file system (webR's Emscripten FS). With webR's
+  // SharedArrayBuffer channel this worker waits for R requests and never reads further messages, so assets
+  // needed later are written there with webR's FS.writeFile instead (see engines/r ensurePackages).
+  var FS_ASSETS = '/dataspatium-assets/';
+  function lookupSync(name) {
+    var entry = assets.get(name);
+    if (entry) return entry;
+    var fs = self.Module && self.Module.FS;
+    if (!fs) return null;
+    try {
+      var bytes = fs.readFile(FS_ASSETS + encodeURIComponent(name));
+      entry = { kind: 'binary', data: bytes.slice().buffer };
+      assets.set(name, entry);
+      try { fs.unlink(FS_ASSETS + encodeURIComponent(name)); } catch (e) { /* keep it */ }
+      return entry;
+    } catch (e) { return null; }
+  }
   function lookupAsync(name) {
     var entry = assets.get(name);
     if (entry) return Promise.resolve(entry);

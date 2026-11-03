@@ -2007,5 +2007,10 @@
     'github.err.truncated': 'Repot är för stort för att läsas på en gång. Välj en egen mapp i ett mindre repo.',
     'github.err.toolarge': '{path} är större än 100 MB, som är GitHubs gräns för en fil. Använd säkerhetskopia eller den portabla mappen för så stora datamängder.',
     'github.err.empty.folder': 'Mappen i repot innehåller ingen arbetsyta från Dataspatium.',
+    'analysera.stop': 'Avbryt',
+    'analysera.stop.hint': 'Stoppar koden som körs. R-sessionen och dess objekt finns kvar.',
+    'analysera.stopping': 'Avbryter R-koden …',
+    'analysera.restart.hint': 'Startar en ny R-session. När appen öppnas från en mapp (file://) går R-kod inte att avbryta; kör appen från en webbserver för att kunna avbryta i stället för att starta om.',
+    'r.interrupted': 'Avbrutet.',
   }));
 })();

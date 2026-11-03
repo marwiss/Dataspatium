@@ -36,6 +36,7 @@ in bundles and in the portable folder.
 
 ## Limitations
 
-- R code cannot be interrupted under file://; use *Restart R* in the R tab if a cell hangs.
+- R code cannot be interrupted under file://; use *Restart R* in the R tab if a cell hangs. When the app runs from a
+  web server, the button *Stop* in the R tab also stops a running cell.
 - Output is stored in the browser together with the notebook. Many large charts make the notebook larger.
 - The text editing field has no syntax highlighting for Markdown.

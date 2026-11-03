@@ -77,8 +77,9 @@ islanti tai englanti); `dm_list()`-funktion sarakkeiden nimet ovat sen sijaan ai
 
 ## Rajoitukset
 
-- R-koodia ei voi keskeyttää sen ollessa käynnissä (selaimesta puuttuu tämä toiminto, kun sovellus avataan kansiosta). Jos
-  jokin jumittuu: *Käynnistä R uudelleen*. Tallennetut skriptit säilyvät, mutta R-istunnon objektit katoavat.
+- Kun sovellus avataan kansiosta (file://), käynnissä olevaa R-koodia ei voi keskeyttää. Jos jokin jumittuu: *Käynnistä R
+  uudelleen*. Tallennetut skriptit säilyvät, mutta R-istunnon objektit katoavat. Kun sovellus ajetaan verkkopalvelimelta
+  (localhost tai https), painike *Keskeytä* pysäyttää koodin ja säilyttää istunnon (ks. [faq.md](faq.md)).
 - Muistia rajoittavat selain ja WebAssembly; pidä R:ssä käsiteltävät aineistot alle muutaman sadan megatavun.
 - Syöte suorituksen aikana (`readline()`, `menu()`) ei toimi.
 - Grafiikkaikkunat, järjestelmäkomennot, verkkokutsut ja virtuaalisen tiedostojärjestelmän ulkopuoliset tiedostot eivät ole

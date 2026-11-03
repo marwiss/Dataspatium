@@ -77,8 +77,9 @@ Finnish, Icelandic or English); the column names in `dm_list()`, however, are al
 
 ## Limitations
 
-- R code cannot be interrupted while it runs (the browser lacks that feature when the app is opened from a folder).
-  If something hangs: *Restart R*. Saved scripts are not affected, but objects in the R session disappear.
+- When the app is opened from a folder (file://), R code cannot be stopped while it runs. If something hangs:
+  *Restart R*. Saved scripts are not affected, but objects in the R session disappear. When the app runs from a web
+  server (localhost or https), the button *Stop* stops the code and keeps the session (see [faq.md](faq.md)).
 - Memory is limited by the browser and WebAssembly; keep datasets in R below a few hundred megabytes.
 - Input during a run (`readline()`, `menu()`) does not work.
 - Graphics windows, system commands, network calls and files outside the virtual file system are not available.

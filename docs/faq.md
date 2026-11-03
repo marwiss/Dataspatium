@@ -20,8 +20,10 @@ laddar om sidan, men dina datamängder och skript finns kvar.
 
 ## Kan jag avbryta R-kod som fastnat?
 
-Nej. Under file:// tillåter webbläsaren inte den mekanism som krävs för att avbryta R mitt i en beräkning.
-Använd *Starta om R* i Analysera; datamängderna påverkas inte.
+Ja, när appen körs från en webbserver (till exempel `python -m http.server 8080` på den egna datorn, eller https på
+ett intranät): då finns knappen *Avbryt* bredvid *Kör* i R-fliken, och R-sessionen med sina objekt finns kvar. När
+appen öppnas från en mapp (file://) tillåter webbläsaren inte den mekanism som krävs; använd då *Starta om R* i
+Analysera. Datamängderna påverkas inte.
 
 ## Varför fungerar inte ett API?
 
@@ -48,7 +50,13 @@ Säkerhetskopia som ZIP fungerar överallt.
 
 ## Kan appen köras från en webbserver eller ett intranät?
 
-Ja. Lägg mappen oförändrad på valfri statisk webbserver. Inga serverfunktioner behövs.
+Ja. Lägg mappen oförändrad på valfri statisk webbserver; inga serverfunktioner behövs. Över https, och på den egna
+datorn över `http://localhost`, registrerar appen en service worker (`sw-coi.js`) som gör sidan *cross-origin
+isolated*, och då kan R-kod avbrytas. Första gången laddas sidan om en gång när den tar över. Över vanlig http på ett
+intranät tillåter webbläsaren inga service workers, men en server som själv skickar huvudena
+`Cross-Origin-Opener-Policy: same-origin` och `Cross-Origin-Embedder-Policy: credentialless` ger samma sak. Allt annat
+fungerar som från mappen. Webbläsaren lagrar data per adress, så arbetsytan i mappen och den på servern är skilda åt;
+flytta mellan dem med säkerhetskopia eller paket.
 
 ## Kan jag öppna index.html direkt i ZIP-filen?
 

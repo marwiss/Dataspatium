@@ -57,6 +57,24 @@
     return 'ok';
   }, 180000);
 
+  test('r: running code stops with interrupt() when the page is cross-origin isolated (from a web server)', async (assert) => {
+    if (!bridge.canInterrupt) {
+      assert.ok(!D.capabilities.sharedArrayBuffer, 'no SharedArrayBuffer without isolation');
+      assert.equal(bridge.interrupt(), false, 'nothing to stop');
+      return 'not isolated (file://): only a restart helps';
+    }
+    await bridge.start();
+    assert.ok(bridge.engine.interruptible, 'the SharedArrayBuffer channel is used');
+    const running = bridge.run('x <- 0\nwhile (TRUE) x <- x + 1');
+    await new Promise((r) => setTimeout(r, 1500));
+    assert.ok(bridge.interrupt(), 'the interrupt is sent');
+    const res = await running;
+    assert.ok(res.entries.some((e) => e.kind === 'error' && e.text === D.t('r.interrupted')), JSON.stringify(res.entries));
+    const after = await bridge.run('cat(x > 0, 1 + 1)');
+    assert.equal(stdoutOf(after).trim(), 'TRUE 2', 'the session and its objects remain');
+    return 'stopped after ' + Math.round(res.ms) + ' ms';
+  }, 120000);
+
   test('r: cleanup', async (assert) => {
     for (const id of created) await datasets.remove(id);
     assert.ok(true);

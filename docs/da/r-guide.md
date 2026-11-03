@@ -76,8 +76,9 @@ så scripts fungerer uanset sprog.
 
 ## Begrænsninger
 
-- R-kode kan ikke afbrydes, mens den kører (browseren mangler den funktion, når appen åbnes fra en mappe). Hvis noget
-  hænger: *Genstart R*. Gemte scripts påvirkes ikke, men objekter i R-sessionen forsvinder.
+- Når appen åbnes fra en mappe (file://), kan R-kode ikke afbrydes, mens den kører. Hvis noget hænger: *Genstart R*.
+  Gemte scripts påvirkes ikke, men objekter i R-sessionen forsvinder. Kører appen fra en webserver (localhost eller
+  https), findes knappen *Afbryd*, der stopper koden og bevarer sessionen (se [faq.md](faq.md)).
 - Hukommelsen begrænses af browseren og WebAssembly; hold datasæt i R under nogle hundrede megabyte.
 - Input under kørsel (`readline()`, `menu()`) fungerer ikke.
 - Grafikvinduer, systemkommandoer, netværkskald og filer uden for det virtuelle filsystem er ikke tilgængelige.

@@ -28,7 +28,7 @@
         r: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null },
         sql: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null },
       };
-      let outputEl = null; let statusEl = null; let runBtn = null;
+      let outputEl = null; let statusEl = null; let runBtn = null; let stopBtn = null;
       let sqlOut = null; let sqlSaveBtn = null; let sqlResult = null; let sqlRunBtn = null; let sqlBadge = null;
       let nbList = []; let nbView = null; let notebook = null; let unsubNb = null;
       /** The Regex tab keeps its pattern and choices while the mode is open in other tabs. */
@@ -211,6 +211,9 @@
         const v = st.r;
         statusEl = h('dm-badge', { text: '' });
         runBtn = ui.button({ label: t('analysera.run'), icon: 'play', variant: 'primary', title: t('analysera.run.hint'), onClick: () => run() });
+        // Running code can be stopped when the page is cross-origin isolated (served from a web server); on file://
+        // only a restart helps.
+        stopBtn = bridge.canInterrupt ? ui.button({ label: t('analysera.stop'), icon: 'square', title: t('analysera.stop.hint'), onClick: () => { if (bridge.interrupt()) shell.log(t('analysera.stopping')); } }) : null;
         v.nameInput = /** @type {any} */ (h('dm-input', { placeholder: t('analysera.script.untitled'), 'aria-label': t('analysera.script.name'), inline: true }));
         v.nameInput.value = v.current.name;
         v.editor = /** @type {any} */ (h('dm-code', { language: 'r', placeholder: t('analysera.editor.placeholder') }));
@@ -222,10 +225,11 @@
           h('h1', null, ui.icon('terminal', 20), t('analysera.title'), ' ', statusEl),
           h('div', { class: 'dm-row' },
             runBtn,
+            stopBtn,
             ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript('r') }),
             v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript('r') }) : null,
             ui.button({ label: t('analysera.clear'), icon: 'x', variant: 'ghost', onClick: clearOutput }),
-            ui.button({ label: t('analysera.restart'), icon: 'refresh-cw', variant: 'ghost', onClick: restart })));
+            ui.button({ label: t('analysera.restart'), icon: 'refresh-cw', variant: 'ghost', title: bridge.canInterrupt ? undefined : t('analysera.restart.hint'), onClick: restart })));
         updateStatus();
         return { head, body: [h('div', { class: 'dm-row' }, v.nameInput, h('span', { class: 'dm-help', text: t('analysera.run.hint') })), h('div', { class: 'dm-editor-wrap' }, v.editor), outputEl] };
       }
@@ -237,6 +241,7 @@
         statusEl.textContent = t(key);
         if (kind) statusEl.setAttribute('kind', kind); else statusEl.removeAttribute('kind');
         if (runBtn) { runBtn.disabled = bridge.state === 'busy' || bridge.state === 'starting'; runBtn.loading = bridge.state === 'busy'; }
+        if (stopBtn) stopBtn.disabled = bridge.state !== 'busy';
       }
 
       async function run(detail) {

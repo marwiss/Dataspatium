@@ -99,7 +99,8 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - Appen må åpnes fra en utpakket mappe (file://) eller en vanlig nettserver; den fungerer ikke direkte inne i en ZIP-fil.
 - API-er uten CORS-støtte (for eksempel data.norge.no) kan ikke kalles direkte fra nettleseren.
 - Et datasett bør holde seg under et par millioner rader; nettleserens minne setter grensen.
-- R-kode kan ikke avbrytes midt i en beregning; bruk *Start R på nytt*.
+- Når appen åpnes fra en mappe, kan R-kode ikke avbrytes midt i en beregning; bruk *Start R på nytt*. Fra en
+  nettserver (localhost eller https) finnes knappen *Avbryt*.
 - Flere faner fungerer og holder hverandre oppdatert, men ikke rediger samme datasett i to faner samtidig: den som lagrer
   sist, vinner.
 - Den portable mappen krever Edge eller Chrome; Firefox mangler mappetilgang (File System Access). Sikkerhetskopi som ZIP

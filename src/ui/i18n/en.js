@@ -1985,5 +1985,10 @@
     'github.err.truncated': 'The repository is too large to read at once. Choose a folder of its own in a smaller repository.',
     'github.err.toolarge': '{path} is larger than 100 MB, which is GitHub\'s limit for one file. Use a backup or the portable folder for datasets that large.',
     'github.err.empty.folder': 'The folder in the repository holds no Dataspatium workspace.',
+    'analysera.stop': 'Stop',
+    'analysera.stop.hint': 'Stops the running code. The R session and its objects remain.',
+    'analysera.stopping': 'Stopping the R code …',
+    'analysera.restart.hint': 'Starts a new R session. When the app is opened from a folder (file://), R code cannot be stopped; run the app from a web server to stop code instead of restarting.',
+    'r.interrupted': 'Stopped.',
   }));
 })();

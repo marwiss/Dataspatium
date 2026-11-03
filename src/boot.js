@@ -162,6 +162,35 @@
   const src = (current && current.getAttribute('src')) || 'src/boot.js';
   const base = src.replace(/src\/boot\.js(\?.*)?$/, '');
   globalThis.DATASPATIUM_BASE = base;
+
+  /**
+   * Served over http(s) from a web server, the page is made cross-origin isolated by the service worker sw-coi.js
+   * (it adds the COOP and COEP headers), so that SharedArrayBuffer works and R code can be interrupted. The worker
+   * is registered once and the page reloads when it takes over; nothing happens on file://, when the page is
+   * already isolated, or when the browser has no service workers. Loading continues without isolation if the
+   * worker does not take over within a few seconds.
+   */
+  function isolate() {
+    const w = /** @type {any} */ (globalThis);
+    if (!/^https?:$/.test(location.protocol) || w.crossOriginIsolated || !w.isSecureContext || !('serviceWorker' in navigator)) return Promise.resolve();
+    const FLAG = 'dataspatium.isolation.reload';
+    const reloadOnce = () => {
+      let done = false;
+      try { done = sessionStorage.getItem(FLAG) === '1'; sessionStorage.setItem(FLAG, '1'); } catch (_e) { done = true; }
+      if (done) return Promise.resolve();
+      location.reload();
+      return new Promise(() => {});
+    };
+    const scope = new URL(base || './', location.href).href;
+    return navigator.serviceWorker.register(new URL('sw-coi.js', scope).href, { scope }).then(() => {
+      if (navigator.serviceWorker.controller) return reloadOnce();
+      return new Promise((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => { reloadOnce().then(resolve); }, { once: true });
+        setTimeout(resolve, 4000);
+      });
+    }).catch((err) => { console.warn('[boot] cross-origin isolation unavailable', err); });
+  }
+
   let index = 0;
   function next() {
     if (index >= scripts.length) {
@@ -179,5 +208,5 @@
     };
     document.head.appendChild(el);
   }
-  next();
+  isolate().then(next);
 })();

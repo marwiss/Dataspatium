@@ -76,8 +76,9 @@ skriftur virka óháð tungumáli.
 
 ## Takmarkanir
 
-- Ekki er hægt að rjúfa R-kóða meðan hann keyrir (vafrann vantar þá virkni þegar forritið er opnað úr möppu). Ef eitthvað
-  frýs: *Endurræsa R*. Vistaðar skriftur verða ekki fyrir áhrifum, en hlutir í R-setunni hverfa.
+- Þegar forritið er opnað úr möppu (file://) er ekki hægt að stöðva R-kóða meðan hann keyrir. Ef eitthvað frýs:
+  *Endurræsa R*. Vistaðar skriftur verða ekki fyrir áhrifum, en hlutir í R-setunni hverfa. Keyri forritið af vefþjóni
+  (localhost eða https) stöðvar hnappurinn *Stöðva* kóðann og heldur lotunni (sjá [faq.md](faq.md)).
 - Vafrinn og WebAssembly takmarka minnið; haltu gagnasöfnum í R undir nokkrum hundruðum megabæta.
 - Inntak meðan á keyrslu stendur (`readline()`, `menu()`) virkar ekki.
 - Grafíkgluggar, kerfisskipanir, netköll og skrár utan sýndarskráakerfisins eru ekki aðgengileg.

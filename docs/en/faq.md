@@ -20,8 +20,10 @@ you reload the page, but your datasets and scripts remain.
 
 ## Can I interrupt R code that is stuck?
 
-No. Under file:// the browser does not allow the mechanism required to interrupt R in the middle of a
-calculation. Use *Restart R* in Analyse; the datasets are not affected.
+Yes, when the app runs from a web server (for example `python -m http.server 8080` on your own computer, or https on
+an intranet): then the button *Stop* sits next to *Run* in the R tab, and the R session with its objects remains. When
+the app is opened from a folder (file://) the browser does not allow the mechanism this needs; use *Restart R* in
+Analyse instead. The datasets are not affected.
 
 ## Why does an API not work?
 
@@ -48,7 +50,13 @@ Backup as ZIP works everywhere.
 
 ## Can the app run from a web server or an intranet?
 
-Yes. Put the folder unchanged on any static web server. No server functions are needed.
+Yes. Put the folder unchanged on any static web server; no server functions are needed. Over https, and on your own
+computer over `http://localhost`, the app registers a service worker (`sw-coi.js`) that makes the page *cross-origin
+isolated*, and then R code can be stopped. The first time, the page reloads once when it takes over. Over plain http on
+an intranet the browser allows no service workers, but a server that itself sends the headers
+`Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless` gives the same. Everything
+else works as from the folder. The browser stores data per address, so the workspace in the folder and the one on the
+server are separate; move between them with a backup or a bundle.
 
 ## Can I open index.html directly inside the ZIP file?
 

@@ -9,8 +9,9 @@
  * Worker subclass then feeds the worker every `webr/*` and `webr-repo/*` asset before webR's own init
  * message is delivered. R therefore starts entirely from embedded files, with no network access.
  *
- * Channel: PostMessage (SharedArrayBuffer is unavailable on file://), so running R code cannot be
- * interrupted; the engine must be restarted instead.
+ * Channel: PostMessage on file:// (no SharedArrayBuffer there), so running R code cannot be interrupted and the
+ * engine must be restarted instead. Served from a web server, the page is cross-origin isolated (see src/boot.js
+ * and sw-coi.js) and the SharedArrayBuffer channel is used, which lets interrupt() stop running code.
  */
 (function () {
   'use strict';
@@ -23,6 +24,8 @@
     const WRITE_PART = 16 * 1024 * 1024;
     /** Packages always shipped at startup: what r/dataspatium.R itself needs. */
     const STARTUP_PACKAGES = ['DBI', 'RSQLite'];
+    /** Where packages for the worker are written when it cannot take messages (see ensurePackages). */
+    const FS_ASSETS = '/dataspatium-assets';
 
     class REngine {
       constructor() {
@@ -30,6 +33,8 @@
         /** @type {any} */ this.module = null;
         /** @type {Promise<REngine>|null} */ this.ready = null;
         this.startupMs = 0;
+        /** Whether running code can be interrupted (a cross-origin isolated page with the SharedArrayBuffer channel). */
+        this.interruptible = false;
         /** @type {Set<string>} package tgz assets already delivered to the worker */
         this.shippedAssets = new Set();
         this.handlers = {
@@ -69,7 +74,8 @@
         });
         this.module = await D.assets.importModule('webr/webr.mjs');
         const { WebR, ChannelType } = this.module;
-        this.webR = new WebR({ baseUrl: BASE_URL, repoUrl: REPO_URL, channelType: ChannelType.PostMessage, interactive: true });
+        this.interruptible = !!(D.capabilities && D.capabilities.sharedArrayBuffer);
+        this.webR = new WebR({ baseUrl: BASE_URL, repoUrl: REPO_URL, channelType: this.interruptible ? ChannelType.SharedArrayBuffer : ChannelType.PostMessage, interactive: true });
         await this.webR.init();
         // Plots go to the canvas device; images arrive as `canvas` messages in pump(). r/dataspatium.R
         // (loaded by data/r-bridge.js) refines the device options for the console.
@@ -103,6 +109,8 @@
 
       /** Send a line to R's interactive console. */
       writeConsole(line) { this.webR.writeConsole(line); }
+      /** Stop the running R code (only with the SharedArrayBuffer channel; see `interruptible`). */
+      interrupt() { if (this.webR && this.interruptible) this.webR.interrupt(); }
       evalR(code, options) { return this.webR.evalR(code, options); }
       evalRVoid(code) { return this.webR.evalRVoid(code); }
       /** @returns {Promise<string>} */
@@ -163,9 +171,20 @@
         const wanted = packages.closure(names);
         const assets = packages.assetsFor(wanted).filter((a) => !this.shippedAssets.has(a));
         if (assets.length) {
-          const worker = this.worker();
-          if (!worker) throw new Error('R worker not available');
-          await D.workers.sendAssets(worker, assets, false);
+          if (this.interruptible) {
+            // With the SharedArrayBuffer channel the worker waits for R requests and never reads further messages, so
+            // the packages go into R's file system, where the worker shim looks for assets it does not have.
+            if (!this.assetDir) { try { await this.webR.FS.mkdir(FS_ASSETS); } catch (_err) { /* already there */ } this.assetDir = true; }
+            for (const a of assets) {
+              const e = await D.assets.decode(a);
+              await this.webR.FS.writeFile(FS_ASSETS + '/' + encodeURIComponent(a), e.kind === 'text' ? new TextEncoder().encode(e.data) : new Uint8Array(e.data));
+              D.assets.take(a);
+            }
+          } else {
+            const worker = this.worker();
+            if (!worker) throw new Error('R worker not available');
+            await D.workers.sendAssets(worker, assets, false);
+          }
           for (const a of assets) this.shippedAssets.add(a);
         }
         return wanted;

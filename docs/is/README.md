@@ -95,7 +95,8 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - Opna þarf forritið úr afþjappaðri möppu (file://) eða venjulegum vefþjóni; það virkar ekki beint inni í ZIP-skrá.
 - Vefþjónustur án CORS-stuðnings er ekki hægt að kalla beint úr vafranum.
 - Gagnasafn ætti að vera undir nokkrum milljónum raða; minni vafrans setur mörkin.
-- Ekki er hægt að rjúfa R-kóða í miðjum útreikningi; notaðu *Endurræsa R*.
+- Þegar forritið er opnað úr möppu er ekki hægt að stöðva R-kóða í miðjum útreikningi; notaðu *Endurræsa R*. Af
+  vefþjóni (localhost eða https) er hnappurinn *Stöðva* til staðar.
 - Fleiri flipar virka og halda hver öðrum upplýstum, en breyttu ekki sama gagnasafni í tveimur flipum samtímis: sá sem vistar
   síðast vinnur.
 - Færanlega mappan krefst Edge eða Chrome; Firefox hefur ekki möppuaðgang (File System Access). Afrit sem ZIP virkar alls

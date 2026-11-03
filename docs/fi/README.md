@@ -103,7 +103,8 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
   sisältä.
 - Rajapintoja, joilla ei ole CORS-tukea, ei voi kutsua suoraan selaimesta.
 - Aineiston kannattaa pysyä alle parin miljoonan rivin; selaimen muisti asettaa rajan.
-- R-koodia ei voi keskeyttää kesken laskennan; käytä toimintoa *Käynnistä R uudelleen*.
+- Kun sovellus avataan kansiosta, R-koodia ei voi keskeyttää kesken laskennan; käytä toimintoa *Käynnistä R
+  uudelleen*. Verkkopalvelimelta (localhost tai https) ajettaessa käytössä on painike *Keskeytä*.
 - Useat välilehdet toimivat ja pitävät toisensa ajan tasalla, mutta älä muokkaa samaa aineistoa kahdessa välilehdessä
   yhtä aikaa: viimeksi tallentava voittaa.
 - Siirrettävä kansio vaatii Edgen tai Chromen; Firefoxista puuttuu kansioiden käyttö (File System Access). ZIP-varmuuskopio

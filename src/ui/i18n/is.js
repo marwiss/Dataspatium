@@ -1985,5 +1985,10 @@
     'github.err.truncated': 'Safnið er of stórt til að lesa í einu. Veldu sérstaka möppu í minna safni.',
     'github.err.toolarge': '{path} er stærri en 100 MB, sem eru mörk GitHub fyrir eina skrá. Notaðu afrit eða færanlegu möppuna fyrir svo stór gagnasöfn.',
     'github.err.empty.folder': 'Mappan í safninu inniheldur ekkert vinnusvæði úr Dataspatium.',
+    'analysera.stop': 'Stöðva',
+    'analysera.stop.hint': 'Stöðvar kóðann sem keyrir. R-lotan og hlutir hennar haldast.',
+    'analysera.stopping': 'Stöðva R-kóðann …',
+    'analysera.restart.hint': 'Ræsir nýja R-lotu. Þegar forritið er opnað úr möppu (file://) er ekki hægt að stöðva R-kóða; keyrðu forritið af vefþjóni til að geta stöðvað í stað þess að endurræsa.',
+    'r.interrupted': 'Stöðvað.',
   }));
 })();

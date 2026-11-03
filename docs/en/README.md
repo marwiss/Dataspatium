@@ -103,7 +103,8 @@ everywhere.
   inside a ZIP file.
 - APIs without CORS support (for example the Riksbank's) cannot be called directly from the browser.
 - A dataset should stay below a couple of million rows; the browser's memory sets the limit.
-- R code cannot be interrupted in the middle of a calculation; use *Restart R*.
+- When the app is opened from a folder, R code cannot be stopped in the middle of a calculation; use *Restart R*.
+  From a web server (localhost or https) there is the button *Stop*.
 - Several tabs work and keep each other informed, but do not edit the same dataset in two tabs at the same time:
   the one that saves last wins.
 - The portable folder requires Edge or Chrome; Firefox lacks folder access (File System Access). Backup as ZIP

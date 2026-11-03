@@ -34,6 +34,7 @@ i pakker og i den portable mappen.
 
 ## Begrensninger
 
-- R-kode kan ikke avbrytes under file://; bruk *Start R på nytt* i R-fanen hvis en celle henger.
+- R-kode kan ikke avbrytes under file://; bruk *Start R på nytt* i R-fanen hvis en celle henger. Kjører appen fra en
+  nettserver, stopper knappen *Avbryt* i R-fanen også en celle som kjører.
 - Utdata lagres i nettleseren sammen med notatboken. Mange store diagrammer gjør notatboken større.
 - Redigeringsfeltet for tekst har ingen syntaksfremheving for Markdown.

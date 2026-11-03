@@ -76,8 +76,9 @@ så skript fungerer uavhengig av språk.
 
 ## Begrensninger
 
-- R-kode kan ikke avbrytes mens den kjører (nettleseren mangler den funksjonen når appen åpnes fra en mappe). Hvis noe
-  henger: *Start R på nytt*. Lagrede skript påvirkes ikke, men objekter i R-sesjonen forsvinner.
+- Når appen åpnes fra en mappe (file://), kan R-kode ikke avbrytes mens den kjører. Hvis noe henger: *Start R på nytt*.
+  Lagrede skript påvirkes ikke, men objekter i R-sesjonen forsvinner. Kjører appen fra en nettserver (localhost eller
+  https), finnes knappen *Avbryt*, som stopper koden og beholder økten (se [faq.md](faq.md)).
 - Minnet begrenses av nettleseren og WebAssembly; hold datasett i R under noen hundre megabyte.
 - Inndata under kjøring (`readline()`, `menu()`) fungerer ikke.
 - Grafikkvinduer, systemkommandoer, nettverkskall og filer utenfor det virtuelle filsystemet er ikke tilgjengelige.

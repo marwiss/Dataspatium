@@ -38,5 +38,6 @@ kulkevat mukana myös varmuuskopiossa, paketeissa ja siirrettävässä kansiossa
 ## Rajoitukset
 
 - R-koodia ei voi keskeyttää file://-tilassa; käytä R-välilehden toimintoa *Käynnistä R uudelleen*, jos solu jumittuu.
+  Kun sovellus ajetaan verkkopalvelimelta, R-välilehden painike *Keskeytä* pysäyttää myös käynnissä olevan solun.
 - Tulosteet tallennetaan selaimeen muistikirjan mukana. Monet suuret kaaviot kasvattavat muistikirjaa.
 - Tekstin muokkauskentässä ei ole Markdown-syntaksin korostusta.

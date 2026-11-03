@@ -151,6 +151,7 @@
         this.pages = [[]];
         const entries = [{ kind: 'input', text: code }];
         const installed = [];
+        this.interrupted = false;
         try {
           if (this.warmup) { await this.warmup; this.warmup = null; }
           const list = await datasets.list();
@@ -173,8 +174,9 @@
             }
           }
         } catch (err) {
-          entries.push({ kind: 'error', text: cleanError(err) });
+          entries.push({ kind: 'error', text: this.interrupted ? D.t('r.interrupted') : cleanError(err) });
         }
+        if (this.interrupted && !entries.some((e) => e.kind === 'error')) entries.push({ kind: 'error', text: D.t('r.interrupted') });
         if (installed.length) entries.splice(1, 0, { kind: 'packages', names: installed });
         // Canvas images arrive through the message pump; give them a moment to flush.
         await new Promise((r) => setTimeout(r, 80));
@@ -236,6 +238,17 @@
       async installedPackages() {
         const res = await this.engine.capture('cat(sort(rownames(installed.packages())), sep = "\\n")');
         return res.text.split('\n').map((s) => s.trim()).filter(Boolean);
+      }
+
+      /** Whether running code can be stopped with interrupt() (the page is cross-origin isolated, see src/boot.js). */
+      get canInterrupt() { return !!(D.capabilities && D.capabilities.sharedArrayBuffer); }
+
+      /** Stop the code that is running; the session and its objects stay. */
+      interrupt() {
+        if (!this.engine || this.state !== 'busy' || !this.canInterrupt) return false;
+        this.interrupted = true;
+        this.engine.interrupt();
+        return true;
       }
 
       /** Stop and start a fresh session. */

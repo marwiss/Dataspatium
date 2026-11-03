@@ -10,7 +10,11 @@ utseendet i [stilguide.md](stilguide.md) och resultatet av den tekniska spiken i
 
 ## Köra appen
 Öppna `index.html` direkt i webbläsaren (file://). Allt ska fungera där. Vid behov går det också att serva mappen med
-`python -m http.server 8080` och öppna `http://localhost:8080/`.
+`python -m http.server 8080` och öppna `http://localhost:8080/`. Då registrerar `src/boot.js` service workern
+`sw-coi.js`, som lägger till COOP- och COEP-huvuden så att sidan blir cross-origin isolated (sidan laddas om en gång
+när den tar över). R använder då webR:s SharedArrayBuffer-kanal och kan avbrytas. Testerna körs på samma sätt med
+`powershell -File tools/run-tests.ps1 -Url http://localhost:8080/tests/index.html`; testet för avbrott i
+`tests/r.test.js` gör sin kontroll bara där.
 
 ## Tredjepartskomponenter
 1. Lägg till eller ändra posten i `vendor/vendor.json` (pinnad version, licens, filer, inbäddningssätt).
