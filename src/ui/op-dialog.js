@@ -37,9 +37,12 @@
       for (const p of op.params) {
         if (p.type === 'column') {
           const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
-          const list = textOnly ? columns.filter((c) => c.type === 'text') : columns;
+          // Parameters may restrict the column types (kinds) and suggest a default by name (prefer, a RegExp).
+          const wanted = p.kinds ? columns.filter((c) => p.kinds.includes(c.type)) : (textOnly ? columns.filter((c) => c.type === 'text') : columns);
+          const list = wanted.length ? wanted : columns;
           sel.options = list.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` }));
-          sel.value = values[p.name] || (list[0] && list[0].name);
+          const preferred = p.prefer ? list.find((c) => p.prefer.test(c.name)) : null;
+          sel.value = values[p.name] || (preferred && preferred.name) || (list[0] && list[0].name);
           values[p.name] = sel.value;
           sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
           fields.push(sel);

@@ -87,6 +87,14 @@ länskoden i Bearbeta (*Koppla*), och välj diagramtypen *Karta* i Visualisera. 
 (till exempel mätstationer) ritas med *Punktkarta*, med gränserna som bakgrund. Egna gränser kan importeras från
 GeoJSON, shapefile eller GeoPackage. Se [visualisera.md](visualisera.md).
 
+## Hur får jag fram kommun eller län ur koordinater?
+
+Välj *Geodata > Kommun och län ur koordinater* i Bearbeta (via Åtgärder eller paletten). Åtgärden slår upp
+varje punkts kommun och län i SCB:s medföljande gränser och lägger till kolumnerna kommunkod, kommun, lanskod
+och lan; koordinater i SWEREF 99 TM känns igen. Gränserna täcker landytan, så punkter i vatten blir tomma.
+Samma grupp har mittpunkt och area ur geometri samt omräkning mellan SWEREF 99 TM och WGS 84. Se
+[bearbeta.md](bearbeta.md).
+
 ## Hur kontrollerar jag att datan håller måttet?
 
 *Datakvalitet* i Bearbeta profilerar alla kolumner och föreslår åtgärder. *Regler* låter dig skriva ned krav

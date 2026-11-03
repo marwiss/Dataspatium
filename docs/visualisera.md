@@ -109,7 +109,9 @@ Välj *Punktkarta* för en datamängd med koordinater, till exempel SMHI:s mäts
 longitud och latitud. Kolumnerna hittas på namn (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`)
 och kan bytas. Koordinater i meter (SWEREF 99 TM) känns igen och räknas om till longitud och latitud.
 **Storlek** och **Färg** tar värdekolumner (eller en kategori för färgen), **Etikett** visas när du pekar på en
-punkt och **Bakgrund** väljer länsgränser, kommungränser eller ingen bakgrund.
+punkt och **Bakgrund** väljer länsgränser, kommungränser eller ingen bakgrund. Har datamängden ytor i stället
+för punkter (till exempel kommuner) ger *Bearbeta > Geodata > Mittpunkt ur geometri* longitud och latitud för
+varje yta, så att värden kan ritas som bubblor per kommun.
 
 ### Projektion och gränser
 

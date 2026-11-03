@@ -57,6 +57,8 @@ löpnummer; saltet sparas aldrig i receptet.
 Beräknade kolumner, dela och slå ihop kolumner, filtrera bort rader, byt namn och ordning, pivotera mellan bred och
 lång form, gruppera och aggregera, koppla två datamängder på en nyckel och lägg ihop datamängder med samma
 kolumner. Aggregeringar, kopplingar och sammanslagningar blir nya datamängder, så ursprunget finns kvar.
+Gruppen *Geodata* ger mittpunkt och area ur geometrier, omräkning mellan SWEREF 99 TM och WGS 84 samt kommun
+och län ur koordinater med de medföljande gränserna.
 
 Receptet (alla steg i ordning) kan visas, spelas upp på en ny version av datan och exporteras som JSON, R-kod eller
 SQL. Versioner tas vid import, före massoperationer och på begäran; två versioner kan jämföras och en äldre

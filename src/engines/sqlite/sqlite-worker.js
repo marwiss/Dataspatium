@@ -9,7 +9,10 @@
  * Besides plain SQL it registers Dataspatium's helper functions so that cleaning operations run inside
  * the engine: regexp(), regexp_replace(), dm_replace(), dm_parse_number(), dm_parse_date(),
  * dm_parse_datetime(), dm_parse_bool(), dm_upper(), dm_lower(), dm_title(), dm_fix_encoding(),
- * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix) and dm_mask().
+ * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix), dm_mask(), and for geodata
+ * dm_geo_lon()/dm_geo_lat()/dm_geo_area() (centroids and areas of GeoJSON or WKT geometry),
+ * dm_to_lon()/dm_to_lat()/dm_to_east()/dm_to_north() (SWEREF 99 TM <-> WGS 84) and dm_region()
+ * (region of a coordinate among boundaries loaded with the 'regions' message).
  *
  * Message protocol: {id, op, args} -> {id, ok, value} | {id, ok: false, error}
  */
@@ -158,6 +161,194 @@
       for (var i = 0; i < n; i++) { var c = chars[i]; out += (i < keepStart || i >= n - keepEnd || /[\s\-\/.+]/.test(c)) ? c : ch; }
       return out;
     }
+    // ---- geodata: GeoJSON/WKT parsing, SWEREF 99 TM <-> WGS 84, centroids, areas, point in polygon ----
+    var regions = null; // boundaries for dm_region(), loaded with the 'regions' message: [{polys, bbox, props}]
+    var geoMemo = { text: null, geom: null, centroid: undefined };
+    var regionMemo = { lon: null, lat: null, index: -1 };
+    var GEO = { a: 6378137, f: 1 / 298.257222101, k0: 0.9996, lon0: 15, falseE: 500000, deg: Math.PI / 180, radius: 6371008.8 };
+    function geoConst() { var e2 = GEO.f * (2 - GEO.f); var n = GEO.f / (2 - GEO.f); return { e2: e2, n: n, aHat: GEO.a / (1 + n) * (1 + n * n / 4 + Math.pow(n, 4) / 64) }; }
+    /** SWEREF 99 TM metres -> [longitude, latitude] (Lantmäteriet's Gauss-Krüger series). */
+    function swerefToWgs84(x, y) {
+      var c = geoConst(); var n = c.n; var e2 = c.e2;
+      var xi = y / (GEO.k0 * c.aHat); var eta = (x - GEO.falseE) / (GEO.k0 * c.aHat);
+      var d1 = n / 2 - 2 * n * n / 3 + 37 * Math.pow(n, 3) / 96 - Math.pow(n, 4) / 360;
+      var d2 = n * n / 48 + Math.pow(n, 3) / 15 - 437 * Math.pow(n, 4) / 1440;
+      var d3 = 17 * Math.pow(n, 3) / 480 - 37 * Math.pow(n, 4) / 840;
+      var d4 = 4397 * Math.pow(n, 4) / 161280;
+      var xiP = xi - d1 * Math.sin(2 * xi) * Math.cosh(2 * eta) - d2 * Math.sin(4 * xi) * Math.cosh(4 * eta) - d3 * Math.sin(6 * xi) * Math.cosh(6 * eta) - d4 * Math.sin(8 * xi) * Math.cosh(8 * eta);
+      var etaP = eta - d1 * Math.cos(2 * xi) * Math.sinh(2 * eta) - d2 * Math.cos(4 * xi) * Math.sinh(4 * eta) - d3 * Math.cos(6 * xi) * Math.sinh(6 * eta) - d4 * Math.cos(8 * xi) * Math.sinh(8 * eta);
+      var phiStar = Math.asin(Math.sin(xiP) / Math.cosh(etaP));
+      var dLon = Math.atan(Math.sinh(etaP) / Math.cos(xiP));
+      var aS = e2 + e2 * e2 + Math.pow(e2, 3) + Math.pow(e2, 4);
+      var bS = -(7 * e2 * e2 + 17 * Math.pow(e2, 3) + 30 * Math.pow(e2, 4)) / 6;
+      var cS = (224 * Math.pow(e2, 3) + 889 * Math.pow(e2, 4)) / 120;
+      var dS = -(4279 * Math.pow(e2, 4)) / 1260;
+      var s = Math.sin(phiStar);
+      var phi = phiStar + s * Math.cos(phiStar) * (aS + bS * s * s + cS * Math.pow(s, 4) + dS * Math.pow(s, 6));
+      return [GEO.lon0 + dLon / GEO.deg, phi / GEO.deg];
+    }
+    /** [longitude, latitude] -> SWEREF 99 TM [east, north]. */
+    function wgs84ToSweref(lon, lat) {
+      var c = geoConst(); var n = c.n; var e2 = c.e2;
+      var phi = lat * GEO.deg;
+      var aC = e2; var bC = (5 * e2 * e2 - Math.pow(e2, 3)) / 6; var cC = (104 * Math.pow(e2, 3) - 45 * Math.pow(e2, 4)) / 120; var dC = 1237 * Math.pow(e2, 4) / 1260;
+      var s = Math.sin(phi);
+      var phiStar = phi - s * Math.cos(phi) * (aC + bC * s * s + cC * Math.pow(s, 4) + dC * Math.pow(s, 6));
+      var dLon = (lon - GEO.lon0) * GEO.deg;
+      var xiP = Math.atan(Math.tan(phiStar) / Math.cos(dLon));
+      var etaP = Math.atanh(Math.cos(phiStar) * Math.sin(dLon));
+      var b1 = n / 2 - 2 * n * n / 3 + 5 * Math.pow(n, 3) / 16 + 41 * Math.pow(n, 4) / 180;
+      var b2 = 13 * n * n / 48 - 3 * Math.pow(n, 3) / 5 + 557 * Math.pow(n, 4) / 1440;
+      var b3 = 61 * Math.pow(n, 3) / 240 - 103 * Math.pow(n, 4) / 140;
+      var b4 = 49561 * Math.pow(n, 4) / 161280;
+      var north = GEO.k0 * c.aHat * (xiP + b1 * Math.sin(2 * xiP) * Math.cosh(2 * etaP) + b2 * Math.sin(4 * xiP) * Math.cosh(4 * etaP) + b3 * Math.sin(6 * xiP) * Math.cosh(6 * etaP) + b4 * Math.sin(8 * xiP) * Math.cosh(8 * etaP));
+      var east = GEO.k0 * c.aHat * (etaP + b1 * Math.cos(2 * xiP) * Math.sinh(2 * etaP) + b2 * Math.cos(4 * xiP) * Math.sinh(4 * etaP) + b3 * Math.cos(6 * xiP) * Math.sinh(6 * etaP) + b4 * Math.cos(8 * xiP) * Math.sinh(8 * etaP)) + GEO.falseE;
+      return [east, north];
+    }
+    /** WKT (POINT, LINESTRING, POLYGON, MULTI*, optional SRID prefix and Z/M) -> GeoJSON geometry, or null. */
+    function wktToGeoJson(text) {
+      var s = String(text).trim().replace(/^SRID=\d+\s*;\s*/i, '');
+      var m = /^(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON)\s*(ZM|Z|M)?\s*(EMPTY|\([\s\S]*\))\s*$/i.exec(s);
+      if (!m || m[3].toUpperCase() === 'EMPTY') return null;
+      var body = m[3]; var i = 0;
+      function list() {
+        if (body[i] !== '(') throw new Error('wkt');
+        i++;
+        var items = [];
+        for (;;) {
+          while (i < body.length && /\s/.test(body[i])) i++;
+          if (body[i] === '(') items.push(list());
+          else {
+            var start = i;
+            while (i < body.length && body[i] !== ',' && body[i] !== ')') i++;
+            var nums = body.slice(start, i).trim().split(/\s+/).map(Number);
+            if (nums.length < 2 || !isFinite(nums[0]) || !isFinite(nums[1])) throw new Error('wkt');
+            items.push([nums[0], nums[1]]);
+          }
+          while (i < body.length && /\s/.test(body[i])) i++;
+          if (body[i] === ',') { i++; continue; }
+          if (body[i] === ')') { i++; return items; }
+          throw new Error('wkt');
+        }
+      }
+      var items;
+      try { items = list(); } catch (e) { return null; }
+      var type = m[1].toUpperCase();
+      var isPt = function (v) { return Array.isArray(v) && typeof v[0] === 'number'; };
+      if (type === 'POINT') return isPt(items[0]) ? { type: 'Point', coordinates: items[0] } : null;
+      if (type === 'LINESTRING') return { type: 'LineString', coordinates: items };
+      if (type === 'POLYGON') return { type: 'Polygon', coordinates: items };
+      if (type === 'MULTIPOINT') return { type: 'MultiPoint', coordinates: items.map(function (it) { return isPt(it) ? it : it[0]; }) };
+      if (type === 'MULTILINESTRING') return { type: 'MultiLineString', coordinates: items };
+      return { type: 'MultiPolygon', coordinates: items };
+    }
+    /** A geometry cell (GeoJSON text or object, Feature, WKT) -> geometry or null; the last text is memoised. */
+    function geoParse(value) {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'object') return value.type === 'Feature' ? value.geometry || null : value;
+      var s = String(value).trim();
+      if (!s) return null;
+      if (geoMemo.text === s) return geoMemo.geom;
+      var g = null;
+      if (s.charAt(0) === '{') { try { g = JSON.parse(s); if (g && g.type === 'Feature') g = g.geometry || null; } catch (e) { g = null; } }
+      else g = wktToGeoJson(s);
+      geoMemo.text = s; geoMemo.geom = g; geoMemo.centroid = undefined;
+      return g;
+    }
+    function geoPositions(g, out) {
+      out = out || [];
+      if (!g) return out;
+      if (g.type === 'GeometryCollection') { (g.geometries || []).forEach(function (gg) { geoPositions(gg, out); }); return out; }
+      (function walk(c) { if (!Array.isArray(c)) return; if (typeof c[0] === 'number') out.push(c); else c.forEach(walk); })(g.coordinates);
+      return out;
+    }
+    /** Polygons of a geometry as [[outerRing, hole, ...], ...]. */
+    function geoPolygons(g) {
+      if (!g) return [];
+      if (g.type === 'Polygon') return [g.coordinates || []];
+      if (g.type === 'MultiPolygon') return g.coordinates || [];
+      if (g.type === 'GeometryCollection') return (g.geometries || []).reduce(function (acc, gg) { return acc.concat(geoPolygons(gg)); }, []);
+      return [];
+    }
+    /** Metres rather than degrees: any position outside the longitude/latitude range. */
+    function geoIsProjected(g) { var p = geoPositions(g); for (var i = 0; i < p.length; i++) if (Math.abs(p[i][0]) > 180 || Math.abs(p[i][1]) > 90) return true; return false; }
+    function ringSignedArea(ring) { var a = 0; for (var i = 0, n = ring.length; i < n; i++) { var p = ring[i], r = ring[(i + 1) % n]; a += p[0] * r[1] - r[0] * p[1]; } return a / 2; }
+    function ringCentroid(ring) { var a = 0, cx = 0, cy = 0; for (var i = 0, n = ring.length; i < n; i++) { var p = ring[i], r = ring[(i + 1) % n]; var f = p[0] * r[1] - r[0] * p[1]; a += f; cx += (p[0] + r[0]) * f; cy += (p[1] + r[1]) * f; } return a ? [cx / (3 * a), cy / (3 * a), a / 2] : null; }
+    /** Centroid as [longitude, latitude]: area-weighted for polygons in a local planar frame, mean of vertices otherwise. */
+    function geoCentroid(g) {
+      if (!g) return null;
+      var projected = geoIsProjected(g);
+      var toWgs = function (x, y) { return projected ? swerefToWgs84(x, y) : [x, y]; };
+      var polys = geoPolygons(g);
+      var pts = geoPositions(g);
+      if (!pts.length) return null;
+      if (polys.length) {
+        // Metres are planar already; degrees get longitude scaled by cos(latitude) so both axes share a unit.
+        var lat0 = 0; if (!projected) { for (var i = 0; i < pts.length; i++) lat0 += pts[i][1]; lat0 /= pts.length; }
+        var k = projected ? 1 : (Math.cos(lat0 * GEO.deg) || 1e-9);
+        var sumA = 0, sumX = 0, sumY = 0;
+        polys.forEach(function (poly) { poly.forEach(function (ring) { var c = ringCentroid(ring.map(function (p) { return [p[0] * k, p[1]]; })); if (c) { sumA += c[2]; sumX += c[0] * c[2]; sumY += c[1] * c[2]; } }); });
+        if (Math.abs(sumA) > 1e-12) return toWgs(sumX / sumA / k, sumY / sumA);
+      }
+      var mx = 0, my = 0; for (var j = 0; j < pts.length; j++) { mx += pts[j][0]; my += pts[j][1]; }
+      return toWgs(mx / pts.length, my / pts.length);
+    }
+    /** Area of a longitude/latitude ring on the sphere (square metres). */
+    function ringSphereArea(ring) {
+      var pts = ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? ring.slice(0, -1) : ring;
+      var n = pts.length; if (n < 3) return 0;
+      var total = 0;
+      for (var i = 0; i < n; i++) { var prev = pts[(i + n - 1) % n], cur = pts[i], next = pts[(i + 1) % n]; total += (next[0] - prev[0]) * GEO.deg * Math.sin(cur[1] * GEO.deg); }
+      return Math.abs(total) * GEO.radius * GEO.radius / 2;
+    }
+    /** Area in square kilometres: planar for projected metres, spherical for degrees; holes subtracted. */
+    function geoArea(g) {
+      var polys = geoPolygons(g);
+      if (!polys.length) return null;
+      var projected = geoIsProjected(g);
+      var total = 0;
+      polys.forEach(function (poly) { poly.forEach(function (ring, idx) { var a = projected ? Math.abs(ringSignedArea(ring)) : ringSphereArea(ring); total += idx === 0 ? a : -a; }); });
+      return Math.max(0, total) / 1e6;
+    }
+    function pointInRing(x, y, ring) {
+      var inside = false;
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+    /** Index of the loaded region containing a coordinate (degrees, or SWEREF 99 TM metres), or -1. */
+    function regionIndex(lon, lat) {
+      if (!regions || lon === null || lat === null) return -1;
+      if (regionMemo.lon === lon && regionMemo.lat === lat) return regionMemo.index;
+      var p = Math.abs(lon) > 180 || Math.abs(lat) > 90 ? swerefToWgs84(lon, lat) : [lon, lat];
+      var found = -1;
+      for (var r = 0; r < regions.length && found < 0; r++) {
+        var reg = regions[r]; var b = reg.bbox;
+        if (p[0] < b[0] || p[0] > b[2] || p[1] < b[1] || p[1] > b[3]) continue;
+        for (var k = 0; k < reg.polys.length; k++) {
+          var poly = reg.polys[k];
+          if (!poly.length || !pointInRing(p[0], p[1], poly[0])) continue;
+          var inHole = false;
+          for (var h = 1; h < poly.length; h++) if (pointInRing(p[0], p[1], poly[h])) { inHole = true; break; }
+          if (!inHole) { found = r; break; }
+        }
+      }
+      regionMemo.lon = lon; regionMemo.lat = lat; regionMemo.index = found;
+      return found;
+    }
+    function loadRegions(features) {
+      regions = (features || []).map(function (f) {
+        var polys = geoPolygons(f.geometry);
+        var bbox = [Infinity, Infinity, -Infinity, -Infinity];
+        polys.forEach(function (poly) { (poly[0] || []).forEach(function (p) { if (p[0] < bbox[0]) bbox[0] = p[0]; if (p[1] < bbox[1]) bbox[1] = p[1]; if (p[0] > bbox[2]) bbox[2] = p[0]; if (p[1] > bbox[3]) bbox[3] = p[1]; }); });
+        return { polys: polys, bbox: bbox, props: f.props || {} };
+      });
+      regionMemo.lon = null; regionMemo.lat = null; regionMemo.index = -1;
+      return regions.length;
+    }
+
     function registerFunctions(database) {
       database.create_function('dm_hash', function (text, salt, length) {
         if (text === null) return null;
@@ -188,6 +379,17 @@
       database.create_function('dm_squish', function (text) { return text === null ? null : String(text).replace(/\s+/g, ' ').trim(); });
       database.create_function('dm_fix_encoding', function (text) { return text === null ? null : fixEncoding(String(text)); });
       database.create_function('dm_fingerprint', function (text) { return text === null ? null : fingerprint(text); });
+      // Geodata: centroids, areas, SWEREF 99 TM <-> WGS 84 and region lookup against loaded boundaries.
+      var centroidOf = function (text) { var g = geoParse(text); if (!g) return null; if (geoMemo.geom === g && geoMemo.centroid !== undefined) return geoMemo.centroid; var c = geoCentroid(g); if (geoMemo.geom === g) geoMemo.centroid = c; return c; };
+      var num = function (v) { return v === null || v === undefined || v === '' || !isFinite(Number(v)) ? null : Number(v); };
+      database.create_function('dm_geo_lon', function (text) { var c = centroidOf(text); return c ? c[0] : null; });
+      database.create_function('dm_geo_lat', function (text) { var c = centroidOf(text); return c ? c[1] : null; });
+      database.create_function('dm_geo_area', function (text) { var g = geoParse(text); return g ? geoArea(g) : null; });
+      database.create_function('dm_to_lon', function (x, y) { var a = num(x), b = num(y); return a === null || b === null ? null : swerefToWgs84(a, b)[0]; });
+      database.create_function('dm_to_lat', function (x, y) { var a = num(x), b = num(y); return a === null || b === null ? null : swerefToWgs84(a, b)[1]; });
+      database.create_function('dm_to_east', function (lon, lat) { var a = num(lon), b = num(lat); return a === null || b === null ? null : wgs84ToSweref(a, b)[0]; });
+      database.create_function('dm_to_north', function (lon, lat) { var a = num(lon), b = num(lat); return a === null || b === null ? null : wgs84ToSweref(a, b)[1]; });
+      database.create_function('dm_region', function (lon, lat, field) { var idx = regionIndex(num(lon), num(lat)); if (idx < 0) return null; var v = regions[idx].props[String(field)]; return v === undefined ? null : v; });
     }
 
     function requireDb() { if (!db) throw new Error('No database is open'); return db; }
@@ -242,6 +444,8 @@
           });
           return { value: args.pairs.length };
         }
+        case 'regions':
+          return { value: loadRegions(args.features) };
         case 'export': {
           // sql.js closes and reopens the connection to export, which drops custom functions and temp
           // tables; register the helpers again so later statements keep working.

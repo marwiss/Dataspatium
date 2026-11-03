@@ -103,6 +103,26 @@ kombinationer av andra kolumner kan fortfarande peka ut personer. Ta bort eller 
 kolumner, och dela aldrig saltet tillsammans med datan. Receptexporten till SQL använder Dataspatiums funktioner
 `dm_hash` och `dm_mask`; exporten till R använder paketet digest för hashvärden.
 
+## Geodata
+
+Åtgärdsgruppen *Geodata* arbetar med geometrikolumner (GeoJSON eller WKT som text, i longitud/latitud eller
+SWEREF 99 TM) och koordinatkolumner:
+
+- **Mittpunkt ur geometri** lägger till longitud och latitud (WGS 84) för varje ytas eller linjes mittpunkt,
+  till exempel för att rita kommuner som bubblor i en punktkarta.
+- **Area ur geometri** lägger till arean i kvadratkilometer (planärt för SWEREF 99 TM, på jordklotet för
+  longitud/latitud; hål dras av).
+- **Omprojicera koordinater** räknar om två kolumner mellan SWEREF 99 TM (öst, norr) och WGS 84 (longitud,
+  latitud) till nya kolumner, med Lantmäteriets formler.
+- **Kommun och län ur koordinater** slår upp vilken kommun och vilket län varje punkt ligger i med SCB:s
+  medföljande gränser och lägger till `kommunkod`, `kommun`, `lanskod` och `lan` (eller bara län). Koordinater
+  i SWEREF 99 TM känns igen. Gränserna är SCB:s förenklade landgränser för tematiska kartor: punkter i sjöar,
+  hav eller utanför Sverige blir tomma, och punkter mycket nära en gräns kan hamna i grannkommunen.
+
+Alla fyra är receptsteg som kan ångras och spelas upp igen. I SQL-exporten syns de som anrop till Dataspatiums
+funktioner (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` med flera); R-exporten ger motsvarande kod
+med paketet sf.
+
 ## Versioner
 
 Knappen **Versioner** (finns också i Hantera) sparar en ögonblicksbild av datamängden med en beskrivning. En

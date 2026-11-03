@@ -78,6 +78,8 @@
       }
       /** Run several statements atomically. @param {Array<string|{sql: string, params?: any[]}>} statements */
       execMany(statements) { return this.call('execMany', { statements }); }
+      /** Load boundary polygons ([{geometry, props}] in WGS 84) for the SQL function dm_region(lon, lat, field). */
+      regions(features) { return this.call('regions', { features }); }
       /** @returns {Promise<ArrayBuffer>} the database file */
       export() { return this.call('export'); }
       /** @returns {Promise<string>} */

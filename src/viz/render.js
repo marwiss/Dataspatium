@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'viz/basemaps', 'data/datasets'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);

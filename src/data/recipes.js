@@ -51,6 +51,10 @@
         case 'pivot_longer': return `Pivotera ${cols} till långt format`;
         case 'pivot_wider': return `Pivotera ${params.names}/${params.values} till brett format`;
         case 'sql': return `SQL: ${String(params.statement).slice(0, 80)}`;
+        case 'geo_centroid': return `Mittpunkt ur ${params.column} till ${params.lonName || 'lon'}/${params.latName || 'lat'}${n}`;
+        case 'geo_area': return `Area (km²) ur ${params.column} till ${params.name || 'area_km2'}${n}`;
+        case 'geo_reproject': return `Omprojicera ${params.xColumn}/${params.yColumn} till ${params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84'}${n}`;
+        case 'geo_region': return `${params.level === 'lan' ? 'Län' : 'Kommun och län'} ur ${params.lonColumn}/${params.latColumn}${result && typeof result.matched === 'number' ? ` (${result.matched} av ${result.rows} rader träffade)` : n}`;
         default: return opId;
       }
     }

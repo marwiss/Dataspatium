@@ -44,8 +44,9 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och SCB:s kommun- och länsgränser
   följer med.
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
-  koppla data, kontrollera datakvalitet med profil och regler, pseudonymisera personnummer inför delning, med
-  ångra, versioner och recept som kan exporteras som R eller SQL (se [docs/bearbeta.md](docs/bearbeta.md)).
+  koppla data, kontrollera datakvalitet med profil och regler, pseudonymisera personnummer inför delning, slå
+  upp kommun och län ur koordinater, med ångra, versioner och recept som kan exporteras som R eller SQL (se
+  [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
   SQL-konsol och anteckningsböcker med text-, R- och SQL-celler som blir rapporter i HTML, Word, PDF, Markdown
   eller LaTeX (se [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.

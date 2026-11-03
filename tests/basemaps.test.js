@@ -9,7 +9,7 @@
   const importer = D.require('io/import');
   const exporter = D.require('io/export');
   const builder = D.require('viz/vega-builder');
-  const basemaps = D.require('viz/basemaps');
+  const basemaps = D.require('data/boundaries');
   const charts = D.require('viz/charts');
   const render = D.require('viz/render');
   const geo = D.require('data/geo');

@@ -95,7 +95,7 @@
         const maxRows = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.maxrows'), min: '100', max: '1000000' })); maxRows.value = String(state.maxRows || 50000); maxRows.addEventListener('change', () => { state.maxRows = Number(maxRows.value) || 50000; emit(); });
         const scheme = smallSelect(t('viz.colorscheme'), ['auto', 'sequential', 'diverging'].map((v) => ({ value: v, label: t('viz.scheme.' + v) })), state.colorScheme || 'auto', (v) => { state.colorScheme = v; emit(); });
         // Point maps: which bundled boundaries to draw underneath.
-        const basemap = smallSelect(t('viz.basemap'), [{ value: 'none', label: t('viz.basemap.none') }].concat(D.require('viz/basemaps').BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }))), state.basemap || 'none', (v) => { state.basemap = v; emit(); });
+        const basemap = smallSelect(t('viz.basemap'), [{ value: 'none', label: t('viz.basemap.none') }].concat(D.require('data/boundaries').BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }))), state.basemap || 'none', (v) => { state.basemap = v; emit(); });
         const customSwitch = /** @type {any} */ (h('dm-switch', { label: t('viz.custom') })); customSwitch.checked = customSpec !== null;
         const customEditor = /** @type {any} */ (h('dm-code', { language: 'json' }));
         customEditor.value = customSpec || '';

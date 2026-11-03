@@ -124,9 +124,14 @@ projicerade meter; för longitud/latitud `transverseMercator` kring 15° öst in
 ritar med `geoshape`. Punktkartan `pointmap` (`points: true`): x och y bär longitud- och latitudkolumner (meter
 känns igen och räknas om till grader), size och color värden, facet etiketten och `state.basemap` en medföljande
 bakgrund; specifikationen blir ett `layer` med gränserna (`geoshape`) under punkterna (`circle`).
-`viz/basemaps.js` läser och cachar gränserna ur `presets/geo/*.geojson` (SCB:s *Digitala gränser*, CC0,
+`data/boundaries.js` läser och cachar gränserna ur `presets/geo/*.geojson` (SCB:s *Digitala gränser*, CC0,
 omräknade till WGS 84 av `tools/build_boundaries.py`); `viz/render.js` hämtar dem före `toSpec` när
-`builder.basemapOf(state)` pekar ut en. Samma filer är förinställningar i Inhämta (`format: 'geojson'` i
+`builder.basemapOf(state)` pekar ut en, och geodataåtgärderna i Bearbeta använder dem för uppslag av kommun
+och län. Geodataåtgärderna (`geo_centroid`, `geo_area`, `geo_reproject` och `geo_region` i
+`data/operations.js`) är vanliga receptsteg som kör SQL mot funktionerna `dm_geo_lon`, `dm_geo_lat`,
+`dm_geo_area`, `dm_to_lon`/`dm_to_lat`/`dm_to_east`/`dm_to_north` och `dm_region` i `sqlite-worker.js`;
+workern har egna kopior av WKT-tolkningen och Gauss-Krüger-formlerna (den kan inte läsa `data/geo`), och
+gränspolygonerna skickas till den med meddelandet `regions` och slås upp med bbox-filter och ray casting. Samma filer är förinställningar i Inhämta (`format: 'geojson'` i
 `presets/presets.js`, importerade via JSON-importerarens FeatureCollection-väg). Kartor aggregeras aldrig i SQL.
 
 Exporten (`src/io/export.js`) har CSV, xlsx och ods (SheetJS), JSON, GeoJSON (geometrikolumnen hittas på namn
@@ -171,8 +176,6 @@ med injicerbar hämtfunktion för tester; Hantera och kommandopaletten erbjuder 
   läses ur designtokens vid varje rendering (därför följer diagrammen ljust och mörkt tema). Färgskalorna
   `dataspatium-seq` och `dataspatium-div` registreras i Vega ur tokens.
 - `data.js`: rader för diagram med filter som SQL och gruppering i SQLite när diagrammet bara behöver aggregat.
-- `basemaps.js`: de medföljande kommun- och länsgränserna (`presets/geo`) som bakgrund i punktkartor, lästa och
-  cachade per session.
 - `vega-builder.js`: diagramtyper, byggartillstånd och översättning till Vega-Lite-specifikation, inklusive beslutet
   om aggregering i SQL. `vega-render.js` laddar Vega, Vega-Lite och vega-embed från `vendor/` och renderar i DOM
   eller headless (export, batch).

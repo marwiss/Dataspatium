@@ -6,7 +6,7 @@
  * itself as SQL and as R for recipe export.
  *
  * Operation contract:
- *   { id, group, params: [{name, type, required?, options?, default?}],
+ *   { id, group, params: [{name, type, required?, options?, default?, kinds?, prefer?}],
  *     apply(ctx, p) -> Promise<{rows?: number}>, toSQL(p, ctx) -> string[], toR(p, ctx) -> string }
  * ctx: { engine, columns, q(ident), lit(value), column(name), setType(name, type), rename(old, new),
  *        addColumn({name, type, label}), dropColumn(name), rebuildColumn(name, type, expr) }
@@ -14,7 +14,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/operations', ['data/types'], (types) => {
+  D.define('data/operations', ['data/types', 'data/boundaries'], (types, boundaries) => {
     const q = (ident) => '"' + String(ident).replace(/"/g, '""') + '"';
     const lit = (v) => (v === null || v === undefined ? 'NULL' : typeof v === 'number' ? String(v) : "'" + String(v).replace(/'/g, "''") + "'");
     const rstr = (s) => JSON.stringify(String(s));
@@ -409,6 +409,85 @@
       },
       toSQL: (p) => [p.statement.trim().replace(/;?$/, ';')],
       toR: (p) => `# SQL: ${p.statement.replace(/\n/g, ' ')}\n# (kör mot datamängdens SQLite-fil med DBI::dbExecute)`,
+    });
+
+    // ---- geodata ------------------------------------------------------------------------------
+    // Geometry columns hold GeoJSON or WKT text; coordinates are longitude/latitude or SWEREF 99 TM metres.
+    // The work is done by the engine's dm_geo_*, dm_to_* and dm_region() functions (sqlite-worker.js).
+    async function addColumnOf(ctx, name, type) {
+      const n = String(name || '').trim();
+      if (!n) throw new Error('Kolumnnamnet får inte vara tomt.');
+      if (ctx.column(n)) throw new Error(`Kolumnen ${n} finns redan.`);
+      await ctx.engine.run(`alter table data add column ${q(n)} ${types.sqlType(type)}`);
+      ctx.addColumn({ name: n, type, label: n });
+      return n;
+    }
+    const GEO_SQL_NOTE = '  -- dm_geo_*, dm_to_* och dm_region är Dataspatiums SQL-funktioner';
+    // Column suggestions for the forms: geometry by name among text columns, coordinates among numeric ones.
+    const GEOMETRY_PARAM = { name: 'column', type: 'column', required: true, kinds: ['text'], prefer: /^(geometry|geom|wkt|shape|the_geom|geometri)$/i };
+    const NUMERIC = ['number', 'integer'];
+    const PREFER_X = /^(lon|long|lng|longitude|longitud|x|e|east|easting|ost|öst|x_koord|xkoord)$/i;
+    const PREFER_Y = /^(lat|latitude|latitud|y|n|north|northing|nord|norr|y_koord|ykoord)$/i;
+
+    define({
+      id: 'geo_centroid', group: 'geo',
+      params: [GEOMETRY_PARAM, { name: 'lonName', type: 'text', default: 'lon' }, { name: 'latName', type: 'text', default: 'lat' }],
+      names(p) { return [String(p.lonName || 'lon').trim(), String(p.latName || 'lat').trim()]; },
+      async apply(ctx, p) {
+        const [lon, lat] = this.names(p);
+        await addColumnOf(ctx, lon, 'number'); await addColumnOf(ctx, lat, 'number');
+        const rows = await ctx.engine.run(`update data set ${q(lon)} = dm_geo_lon(${q(p.column)}), ${q(lat)} = dm_geo_lat(${q(p.column)}) where ${q(p.column)} is not null`);
+        return { rows };
+      },
+      toSQL(p) { const [lon, lat] = this.names(p); return [`ALTER TABLE data ADD COLUMN ${q(lon)} REAL;`, `ALTER TABLE data ADD COLUMN ${q(lat)} REAL;`, `UPDATE data SET ${q(lon)} = dm_geo_lon(${q(p.column)}), ${q(lat)} = dm_geo_lat(${q(p.column)});${GEO_SQL_NOTE}`]; },
+      toR(p) { const [lon, lat] = this.names(p); return `# kräver paketet sf; geometrin som GeoJSON-text (använd sf::st_as_sfc(wkt) för WKT)\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\nxy <- sf::st_coordinates(sf::st_centroid(g))\ndf$${q(lon)} <- xy[, 1]\ndf$${q(lat)} <- xy[, 2]`; },
+    });
+
+    define({
+      id: 'geo_area', group: 'geo',
+      params: [GEOMETRY_PARAM, { name: 'name', type: 'text', default: 'area_km2' }],
+      async apply(ctx, p) {
+        const name = await addColumnOf(ctx, p.name || 'area_km2', 'number');
+        const rows = await ctx.engine.run(`update data set ${q(name)} = dm_geo_area(${q(p.column)}) where ${q(p.column)} is not null`);
+        return { rows };
+      },
+      toSQL: (p) => [`ALTER TABLE data ADD COLUMN ${q(p.name || 'area_km2')} REAL;`, `UPDATE data SET ${q(p.name || 'area_km2')} = dm_geo_area(${q(p.column)});${GEO_SQL_NOTE}`],
+      toR: (p) => `# kräver paketet sf\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\ndf$${q(p.name || 'area_km2')} <- as.numeric(sf::st_area(g)) / 1e6`,
+    });
+
+    define({
+      id: 'geo_reproject', group: 'geo',
+      params: [{ name: 'xColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_X }, { name: 'yColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_Y }, { name: 'direction', type: 'select', required: true, options: ['to_wgs84', 'to_sweref'], default: 'to_wgs84' }, { name: 'xName', type: 'text' }, { name: 'yName', type: 'text' }],
+      names(p) { const sweref = p.direction === 'to_sweref'; return [String(p.xName || (sweref ? 'ost' : 'lon')).trim(), String(p.yName || (sweref ? 'norr' : 'lat')).trim()]; },
+      exprs(p) { const x = q(p.xColumn); const y = q(p.yColumn); return p.direction === 'to_sweref' ? [`dm_to_east(${x}, ${y})`, `dm_to_north(${x}, ${y})`] : [`dm_to_lon(${x}, ${y})`, `dm_to_lat(${x}, ${y})`]; },
+      async apply(ctx, p) {
+        const [xn, yn] = this.names(p); const [ex, ey] = this.exprs(p);
+        await addColumnOf(ctx, xn, 'number'); await addColumnOf(ctx, yn, 'number');
+        const rows = await ctx.engine.run(`update data set ${q(xn)} = ${ex}, ${q(yn)} = ${ey} where ${q(p.xColumn)} is not null and ${q(p.yColumn)} is not null`);
+        return { rows };
+      },
+      toSQL(p) { const [xn, yn] = this.names(p); const [ex, ey] = this.exprs(p); return [`ALTER TABLE data ADD COLUMN ${q(xn)} REAL;`, `ALTER TABLE data ADD COLUMN ${q(yn)} REAL;`, `UPDATE data SET ${q(xn)} = ${ex}, ${q(yn)} = ${ey};${GEO_SQL_NOTE}`]; },
+      toR(p) { const [xn, yn] = this.names(p); const from = p.direction === 'to_sweref' ? 4326 : 3006; const to = p.direction === 'to_sweref' ? 3006 : 4326; return `# kräver paketet sf\npts <- sf::st_transform(sf::st_as_sf(df, coords = c(${rstr(p.xColumn)}, ${rstr(p.yColumn)}), crs = ${from}, remove = FALSE), ${to})\nxy <- sf::st_coordinates(pts)\ndf$${q(xn)} <- xy[, 1]\ndf$${q(yn)} <- xy[, 2]`; },
+    });
+
+    define({
+      id: 'geo_region', group: 'geo',
+      params: [{ name: 'lonColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_X }, { name: 'latColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_Y }, { name: 'level', type: 'select', required: true, options: ['kommun', 'lan'], default: 'kommun' }],
+      fields(p) { return p.level === 'lan' ? ['lanskod', 'lan'] : ['kommunkod', 'kommun', 'lanskod', 'lan']; },
+      file(p) { return p.level === 'lan' ? 'lan' : 'kommuner'; },
+      async apply(ctx, p) {
+        const fields = this.fields(p);
+        for (const f of fields) if (ctx.column(f)) throw new Error(`Kolumnen ${f} finns redan.`);
+        const feats = await boundaries.features(this.file(p));
+        await ctx.engine.regions(feats.map((f) => ({ geometry: f.geometry, props: f.props })));
+        for (const f of fields) await addColumnOf(ctx, f, 'text');
+        const lon = q(p.lonColumn); const lat = q(p.latColumn);
+        const rows = await ctx.engine.run(`update data set ${fields.map((f) => `${q(f)} = dm_region(${lon}, ${lat}, ${lit(f)})`).join(', ')} where ${lon} is not null and ${lat} is not null`);
+        const hit = await ctx.engine.exec(`select count(*) from data where ${q(fields[0])} is not null`);
+        return { rows, matched: Number(hit[0].values[0][0]) };
+      },
+      toSQL(p) { const fields = this.fields(p); const lon = q(p.lonColumn); const lat = q(p.latColumn); return fields.map((f) => `ALTER TABLE data ADD COLUMN ${q(f)} TEXT;`).concat([`UPDATE data SET ${fields.map((f) => `${q(f)} = dm_region(${lon}, ${lat}, ${lit(f)})`).join(', ')};${GEO_SQL_NOTE} (dm_region slår upp SCB:s gränser i presets/geo)`]); },
+      toR(p) { const file = `presets/geo/${this.file(p)}.geojson`; return `# kräver paketet sf och gränsfilen ${file} ur appmappen\ngranser <- sf::st_read(${rstr(file)}, quiet = TRUE)\npts <- sf::st_as_sf(df, coords = c(${rstr(p.lonColumn)}, ${rstr(p.latColumn)}), crs = 4326, remove = FALSE)\ndf <- sf::st_drop_geometry(sf::st_join(pts, granser[, c(${this.fields(p).map(rstr).join(', ')})], join = sf::st_within))`; },
     });
 
     function get(id) { const op = registry.get(id); if (!op) throw new Error('Unknown operation: ' + id); return op; }
