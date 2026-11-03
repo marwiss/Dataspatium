@@ -8,9 +8,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'data/types', 'data/datasets', 'io/import'],
-    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, types, datasets, importer) => {
-      const families = { pxweb, socialstyrelsen };
+  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'api/families/statbank', 'api/families/fhi', 'data/types', 'data/datasets', 'io/import'],
+    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, statbank, fhi, types, datasets, importer) => {
+      const families = { pxweb, socialstyrelsen, statbank, fhi };
 
       /** Union of columns by name; rows padded with null. */
       function mergeTables(acc, table) {
@@ -72,7 +72,7 @@
           return Object.assign({ include: true, label: table.columns[i] }, c, { name: cleaned[i], type: hint || c.type, decimal });
         });
         const { columns, rows } = importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
-        return datasets.create({ name: options.name || 'Hämtad datamängd', description: options.description || '', columns, rows, source: options.source || { kind: 'api' }, importOptions: { decimal } });
+        return datasets.create({ name: options.name || D.t('api.fetched.name'), description: options.description || '', columns, rows, source: options.source || { kind: 'api' }, importOptions: { decimal } });
       }
 
       /** Append to or replace the rows of an existing dataset. */
@@ -114,16 +114,16 @@
       }
 
       async function refetch(source, options = {}) {
-        if (!source || source.kind !== 'api') throw new Error('Datamängden har ingen API-källa att hämta från.');
+        if (!source || source.kind !== 'api') throw new Error(D.t('api.err.nosource'));
         const connector = await connectors.get(source.connectorId);
-        if (!connector) throw new Error(`API-konfigurationen ${source.connectorName || source.connectorId} finns inte längre i arbetsytan.`);
+        if (!connector) throw new Error(D.t('api.err.connector.gone', { name: source.connectorName || source.connectorId }));
         if (source.family) {
           const fam = families[source.family];
-          if (!fam) throw new Error('Okänd källtyp: ' + source.family);
+          if (!fam) throw new Error(D.t('api.err.family', { family: source.family }));
           return fam.refetch(connector, source, options);
         }
         const endpoint = (connector.endpoints || []).find((e) => e.id === source.endpointId);
-        if (!endpoint) throw new Error(`Endpointen ${source.endpointId} finns inte i ${connector.name}.`);
+        if (!endpoint) throw new Error(D.t('api.err.endpoint.gone', { endpoint: source.endpointId, name: connector.name }));
         return fetchTable(connector, endpoint, source.params || {}, options);
       }
 

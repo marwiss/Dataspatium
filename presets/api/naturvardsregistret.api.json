@@ -7,6 +7,7 @@
   "docs": "https://www.naturvardsverket.se/verktyg-och-tjanster/kartor-och-karttjanster/",
   "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://geodata.naturvardsverket.se/naturvardsregistret/wfs",
   "auth": { "type": "none" },
   "rateLimit": { "requests": 5, "perSeconds": 2 },
@@ -28,5 +29,12 @@
       "response": { "format": "geojson" },
       "dataset": { "name": "Naturvårdsregistret" }
     }
-  ]
+  ],
+  "i18n": {
+    "en": {"name": "Nature Conservation Register (Swedish EPA)", "publisher": "Swedish Environmental Protection Agency", "description": "Protected areas in Sweden: national parks, nature reserves, Natura 2000 and more, with name, form of protection, decision date, area and municipality. The geometry can be included as GeoJSON text; the areas are large, so leave it out for a plain table.", "endpoints": {"features": {"name": "Protected areas (WFS)", "params": {"typeNames": {"label": "Layer", "options": {"Naturvardsregistret_WFS:SkyddadeOmraden": "Protected areas (polygons)", "Naturvardsregistret_WFS:SkyddadePunkter": "Protected points"}}, "geometry": {"label": "Include geometry (GeoJSON as text)"}}}}, "dataset": {"features": "Nature Conservation Register"}},
+    "da": {"name": "Naturvårdsregistret (svensk miljømyndighed)", "publisher": "Naturvårdsverket", "description": "Beskyttede områder i Sverige: nationalparker, naturreservater, Natura 2000 med flere, med navn, beskyttelsesform, beslutningsdato, areal og kommune. Geometrien kan tages med som GeoJSON-tekst; fladerne er store, så udelad den for en ren tabel.", "endpoints": {"features": {"name": "Beskyttede områder (WFS)", "params": {"typeNames": {"label": "Lag", "options": {"Naturvardsregistret_WFS:SkyddadeOmraden": "Beskyttede områder (flader)", "Naturvardsregistret_WFS:SkyddadePunkter": "Beskyttede punkter"}}, "geometry": {"label": "Tag geometri med (GeoJSON som tekst)"}}}}, "dataset": {"features": "Naturvårdsregistret"}},
+    "nb": {"name": "Naturvårdsregistret (svensk miljømyndighet)", "publisher": "Naturvårdsverket", "description": "Verneområder i Sverige: nasjonalparker, naturreservater, Natura 2000 med flere, med navn, verneform, vedtaksdato, areal og kommune. Geometrien kan tas med som GeoJSON-tekst; flatene er store, så utelat den for en ren tabell.", "endpoints": {"features": {"name": "Verneområder (WFS)", "params": {"typeNames": {"label": "Lag", "options": {"Naturvardsregistret_WFS:SkyddadeOmraden": "Verneområder (flater)", "Naturvardsregistret_WFS:SkyddadePunkter": "Vernede punkter"}}, "geometry": {"label": "Ta med geometri (GeoJSON som tekst)"}}}}, "dataset": {"features": "Naturvårdsregistret"}},
+    "fi": {"name": "Naturvårdsregistret (Ruotsin ympäristövirasto)", "publisher": "Naturvårdsverket", "description": "Ruotsin suojelualueet: kansallispuistot, luonnonsuojelualueet, Natura 2000 ja muut, nimineen, suojelumuotoineen, päätöspäivineen, pinta-aloineen ja kuntineen. Geometrian voi ottaa mukaan GeoJSON-tekstinä; alueet ovat suuria, joten jätä se pois saadaksesi pelkän taulukon.", "endpoints": {"features": {"name": "Suojelualueet (WFS)", "params": {"typeNames": {"label": "Taso", "options": {"Naturvardsregistret_WFS:SkyddadeOmraden": "Suojelualueet (alueet)", "Naturvardsregistret_WFS:SkyddadePunkter": "Suojellut pisteet"}}, "geometry": {"label": "Ota geometria mukaan (GeoJSON tekstinä)"}}}}, "dataset": {"features": "Naturvårdsregistret"}},
+    "is": {"name": "Naturvårdsregistret (sænska umhverfisstofnunin)", "publisher": "Naturvårdsverket", "description": "Verndarsvæði í Svíþjóð: þjóðgarðar, friðlönd, Natura 2000 og fleiri, með heiti, verndarformi, ákvörðunardegi, flatarmáli og sveitarfélagi. Taka má rúmfræðina með sem GeoJSON-texta; svæðin eru stór, svo slepptu henni til að fá hreina töflu.", "endpoints": {"features": {"name": "Verndarsvæði (WFS)", "params": {"typeNames": {"label": "Lag", "options": {"Naturvardsregistret_WFS:SkyddadeOmraden": "Verndarsvæði (fletir)", "Naturvardsregistret_WFS:SkyddadePunkter": "Verndaðir punktar"}}, "geometry": {"label": "Taka rúmfræði með (GeoJSON sem texti)"}}}}, "dataset": {"features": "Naturvårdsregistret"}}
+  }
 }

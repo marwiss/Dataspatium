@@ -29,7 +29,7 @@
     async function aggregate(id, spec) {
       const groupBy = spec.groupBy || [];
       const aggs = (spec.aggregations || []).filter((a) => AGG_FUNCTIONS.includes(a.fn));
-      if (!aggs.length) throw new Error('Välj minst en beräkning.');
+      if (!aggs.length) throw new Error(D.t('derive.err.aggs'));
       const handle = await datasets.ensureOpen(id);
       const typeOf = (name) => { const c = handle.columns.find((x) => x.name === name); return c ? c.type : 'text'; };
       const selects = groupBy.map(q);
@@ -41,7 +41,7 @@
         outTypes[alias] = a.fn === 'count' || a.fn === 'count_distinct' ? 'integer' : (a.fn === 'avg' || a.fn === 'median' ? 'number' : typeOf(a.column || ''));
       }
       const sql = `select ${selects.join(', ')} from data${groupBy.length ? ' group by ' + groupBy.map(q).join(', ') : ''} order by ${groupBy.length ? groupBy.map(q).join(', ') : '1'}`;
-      return datasets.createFromQuery(id, sql, { name: spec.name || 'Aggregering', types: outTypes, source: { kind: 'aggregate', from: id, groupBy, aggregations: aggs } });
+      return datasets.createFromQuery(id, sql, { name: spec.name || D.t('derive.default.name'), types: outTypes, source: { kind: 'aggregate', from: id, groupBy, aggregations: aggs } });
     }
 
     /**
@@ -50,7 +50,7 @@
      * @param {{keys: Array<[string, string]>, type: 'left'|'inner', rightColumns?: string[], name: string}} spec
      */
     async function join(leftId, rightId, spec) {
-      if (!spec.keys || !spec.keys.length) throw new Error('Välj minst ett nyckelpar.');
+      if (!spec.keys || !spec.keys.length) throw new Error(D.t('derive.err.keys'));
       const left = await datasets.ensureOpen(leftId);
       const rightCols = await datasets.copyInto(left, rightId, 'dm_right');
       try {
@@ -66,7 +66,7 @@
         }
         const on = spec.keys.map(([l, r]) => `a.${q(l)} = b.${q(r)}`).join(' and ');
         const sql = `select ${selects.join(', ')} from data a ${spec.type === 'inner' ? 'inner' : 'left'} join dm_right b on ${on}`;
-        return await datasets.createFromQuery(leftId, sql, { name: spec.name || 'Kopplad datamängd', types: outTypes, source: { kind: 'join', left: leftId, right: rightId, keys: spec.keys, type: spec.type } });
+        return await datasets.createFromQuery(leftId, sql, { name: spec.name || D.t('derive.joined.name'), types: outTypes, source: { kind: 'join', left: leftId, right: rightId, keys: spec.keys, type: spec.type } });
       } finally {
         await left.engine.run('drop table if exists dm_right');
       }
@@ -74,7 +74,7 @@
 
     /** Append rows of other datasets to a copy of the first (columns matched by name). */
     async function append(ids, name) {
-      if (!ids || ids.length < 2) throw new Error('Välj minst två datamängder.');
+      if (!ids || ids.length < 2) throw new Error(D.t('derive.err.two'));
       const base = await datasets.ensureOpen(ids[0]);
       const baseNames = base.columns.map((c) => c.name);
       const unions = [`select ${baseNames.map(q).join(', ')} from data`];
@@ -88,7 +88,7 @@
           unions.push(`select ${baseNames.map((n) => (names.includes(n) ? q(n) : 'NULL as ' + q(n))).join(', ')} from ${q(tmp)}`);
         }
         const sql = unions.join(' union all ');
-        return await datasets.createFromQuery(ids[0], sql, { name: name || 'Sammanslagen datamängd', types: Object.fromEntries(base.columns.map((c) => [c.name, c.type])), source: { kind: 'append', from: ids } });
+        return await datasets.createFromQuery(ids[0], sql, { name: name || D.t('derive.appended.name'), types: Object.fromEntries(base.columns.map((c) => [c.name, c.type])), source: { kind: 'append', from: ids } });
       } finally {
         for (const t of temps) await base.engine.run(`drop table if exists ${q(t)}`);
       }

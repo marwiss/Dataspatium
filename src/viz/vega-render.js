@@ -59,7 +59,7 @@
     async function toSvg(view) { return view.toSVG(); }
     async function toPng(view, scale = 2) {
       const canvas = await view.toCanvas(scale);
-      return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Kunde inte skapa PNG.'))), 'image/png'));
+      return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(D.t('viz.err.png')))), 'image/png'));
     }
 
     return { ensureLibs, registerSchemes, embed, headless, toSvg, toPng };

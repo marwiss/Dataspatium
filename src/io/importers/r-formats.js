@@ -20,7 +20,7 @@
       // The file is re-encoded to UTF-8 by pxToUtf8() first; pxR itself only tells ANSI from UTF-8.
       { ext: /\.px$/i, format: 'px', label: 'PC-Axis (PX)', pkg: 'pxR', code: (p) => `as.data.frame(pxR::read.px(${p}, encoding = "UTF-8"))` },
       { ext: /\.rds$/i, format: 'rds', label: 'R (RDS)', pkg: 'base', code: (p) => `readRDS(${p})` },
-      { ext: /\.(rda|rdata)$/i, format: 'rdata', label: 'R (RData)', pkg: 'base', code: (p) => `local({ e <- new.env(); load(${p}, envir = e); nms <- Filter(function(n) is.data.frame(get(n, envir = e)), ls(e)); if (!length(nms)) stop("Filen innehåller ingen data.frame.", call. = FALSE); get(nms[[1]], envir = e) })` },
+      { ext: /\.(rda|rdata)$/i, format: 'rdata', label: 'R (RData)', pkg: 'base', code: (p) => `local({ e <- new.env(); load(${p}, envir = e); nms <- Filter(function(n) is.data.frame(get(n, envir = e)), ls(e)); if (!length(nms)) stop(${JSON.stringify(D.t('import.err.rdata.nodf'))}, call. = FALSE); get(nms[[1]], envir = e) })` },
       { ext: /\.parquet$/i, format: 'parquet', label: 'Parquet', pkg: 'nanoparquet', code: (p) => `nanoparquet::read_parquet(${p})` },
     ];
     /** R code run after reading: labelled, factor and time-of-day columns become text; variable labels are kept. */
@@ -61,7 +61,7 @@
       const reader = readerFor(file.name);
       return { kind: 'r', viaR: true, columns: [], dataRows: [], totalRows: undefined, header: true, reader: reader ? reader.label : '', pkg: reader ? reader.pkg : '', format: reader ? reader.format : '' };
     }
-    async function parse() { throw new Error('Formatet läses av R; använd importViaR().'); }
+    async function parse() { throw new Error('r-formats: the format is read by R; use importViaR()'); }
 
     /**
      * Read the file in R and hand it to the app with dm_write(). Resolves with the new dataset's metadata.
@@ -69,7 +69,7 @@
      */
     async function importViaR(file, name, options = {}) {
       const reader = readerFor(file.name);
-      if (!reader) throw new Error('Okänt format: ' + file.name);
+      if (!reader) throw new Error(D.t('err.unknown.format', { format: file.name }));
       const bridge = rb.bridge;
       const safe = file.name.replace(/[^A-Za-z0-9._-]+/g, '_');
       const path = `/tmp/dataspatium-import/${Date.now().toString(36)}-${safe}`;
@@ -77,7 +77,7 @@
       if (reader.format === 'px') bytes = pxToUtf8(bytes);
       await bridge.writeFile(path, bytes);
       const dsName = name || file.name.replace(/\.[^.]+$/, '');
-      const description = options.description || `Importerad från ${file.name} (${reader.label}, R-paketet ${reader.pkg})`;
+      const description = options.description || D.t('import.r.description', { file: file.name, label: reader.label, pkg: reader.pkg });
       // library() goes through webR's shim, which installs a bundled package on first use; `pkg::` alone does not.
       const libs = reader.pkg === 'base' ? '' : `suppressPackageStartupMessages(library(${reader.pkg}))\n`;
       const code = [`${libs}df <- ${reader.code(JSON.stringify(path))}`, NORMALISE, `dm_write(df, ${JSON.stringify(dsName)}, description = ${JSON.stringify(description)})`].join('\n');
@@ -85,7 +85,7 @@
       try { result = await bridge.run(code); } finally { await bridge.removeFile(path); }
       const error = result.entries.find((e) => e.kind === 'error');
       const dataset = result.entries.find((e) => e.kind === 'dataset');
-      if (!dataset) throw new Error(error ? error.text : 'R skapade ingen datamängd.');
+      if (!dataset) throw new Error(error ? error.text : D.t('import.r.none'));
       return dataset.meta;
     }
 

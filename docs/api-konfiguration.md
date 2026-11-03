@@ -26,9 +26,46 @@ Källor utan CORS, till exempel Riksbanken och Världsbanken, kan inte nås dire
 behövs en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
 öppet API; deras statistik importeras som filer.
 
+### Övriga Norden
+
+Statistikbyråerna och flera andra myndigheter i Danmark, Norge, Finland och Island, de självstyrande områdena
+och Nordic Statistics ingår också. Alla är kontrollerade för CORS (anrop med `Origin`-header) i november 2026
+och kräver ingen nyckel. Landsknapparna ovanför listan i Inhämta väljer vilka länders källor som visas
+(Sverige, Danmark, Norge, Finland, Island, Färöarna, Grönland, Åland, Norden, EU); valet sparas i webbläsaren.
+Källornas namn och beskrivningar följer appens språk, och PxWeb-tjänster som finns på flera språk (SCB, SSB,
+Statistikcentralen, Hagstofa, Grønlands Statistik, ÅSUB) bläddras på appens språk när tjänsten har det.
+
+| Land | Källa | Vad | Så hämtar du |
+|---|---|---|---|
+| Danmark | Danmarks Statistik Statistikbanken | Officiell statistik (api.statbank.dk) | Bläddra i ämnesträdet, välj tabell och värden per variabel; variabler som inte väljs summeras bort |
+| Danmark | Open Data DK | Danska kommuners och regioners dataportal | Sök datamängder, en rad per fil, importera filen via Från webbadress |
+| Norge | SSB Statistikkbanken (API v1 och v2) | Officiell statistik, norska och engelska | Bläddra i ämnesträdet eller sök tabell, välj värden; 800 000 celler per anrop |
+| Norge | FHI Statistikk | Folkhälsostatistik från Folkehelseinstituttets register och statistikbanker | Välj källa, tabell och värden per dimension (måtten i MEASURE_TYPE) |
+| Norge | Enhetsregisteret (Brønnøysundregistrene) | Företag och organisationer | Sök på namn, kommun, organisationsform eller näringsgrenskod |
+| Norge | Kartverket kommuneinfo | Kommuner och fylken | Hämta listorna, även kommuner per fylke |
+| Norge | MET Norway Locationforecast | Väderprognos per koordinat | Ange latitud och longitud |
+| Finland | Statistikcentralen StatFin | Officiell statistik, finska, svenska och engelska | Bläddra i ämnesträdet, välj värden; 100 000 celler per anrop |
+| Finland | Kommunernas nyckeltal (Statistikcentralen) | Nyckeltal per kommun och välfärdsområde | Bläddra, välj värden |
+| Finland | Sotkanet (THL) | Indikatorer för hälsa och välfärd | Hämta indikatorer och regioner, sedan värden för en indikator och år |
+| Finland | YTJ företagsregister (PRH) | Företag | Sök på namn, ort, FO-nummer eller bransch |
+| Finland | Digitraffic vägväder (Fintraffic) | Vägväderstationer och mätvärden | Hämta stationer (punktkarta) och senaste mätvärden |
+| Finland | Meteorologiska institutet FMI | Väderobservationer per ort eller station | Ange ort eller stations-id, parametrar och period |
+| Finland | Avoindata.fi | Finlands dataportal | Sök datamängder, en rad per fil |
+| Island | Hagstofa Íslands | Officiell statistik, isländska och engelska | Bläddra bland databaserna, välj värden; 10 000 celler per anrop |
+| Island | Veðurstofa Íslands | Väderobservationer per station | Ange stationsnummer |
+| Grönland | Grønlands Statistik | Officiell statistik, danska och engelska | Bläddra, välj värden |
+| Färöarna | Hagstova Føroya | Officiell statistik, engelska | Bläddra, välj värden |
+| Åland | ÅSUB | Officiell statistik, svenska och engelska | Bläddra, välj värden |
+| Norden | Nordic Statistics database | Jämförbar nordisk statistik, engelska | Bläddra, välj värden |
+
+Inte med: Danmarks DMI och Norges Frost (MET) kräver nyckel; Energi Data Service och data.norge.no saknar
+CORS; opingogn.is har inget sök-API längre. Egna konfigurationer för sådana tjänster kan läggas till med en
+proxy eller nyckel enligt nedan.
+
 ## Så här gör du
 
-1. Öppna läget **Inhämta** och välj en källa under **Öppna API:er** i objektpanelen.
+1. Öppna läget **Inhämta** och välj en källa under **Öppna API:er** i objektpanelen. Landsknapparna ovanför
+   listan begränsar den till valda länder.
 2. Kräver källan nyckel: ange den under **Autentisering**. Välj **Använd i den här sessionen** (glöms när sidan
    stängs) eller **Spara krypterat** med en lösenfras.
 3. Bläddra eller sök fram det du vill ha. För SCB, Folkhälsomyndigheten och Socialstyrelsen väljer du värden per
@@ -122,11 +159,13 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `id` | Unikt id, små bokstäver, siffror, bindestreck |
 | `name`, `publisher`, `description`, `docs`, `license`, `notes` | Visas i appen |
 | `level` | 1 = ingen nyckel, 2 = nyckel krävs |
+| `country` | Land eller område för landsfiltret: `SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC` eller `EU` |
+| `i18n` | Översättningar per språk (`sv` är grundspråket i filen): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<namn>": { "label", "help", "example", "options": { "<värde>": "etikett" } } } } }, "dataset": { "<id>": "namnmall" } } }`. Appen visar texterna för sitt språk; exporten innehåller alla |
 | `baseUrl` | Adress som endpointernas sökvägar läggs till efter |
 | `headers` | Standardheaders för alla anrop |
 | `auth` | `none`, `apiKey` (`in`: `header` eller `query`, `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |
 | `rateLimit` | `requests` per `perSeconds`; anrop köas så att gränsen hålls, och 429-svar väntas ut |
-| `family` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells" }` eller `{ "type": "socialstyrelsen" }` |
+| `family` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Danmarks Statistik), `{ "type": "fhi" }` (Folkehelseinstituttet) eller `{ "type": "socialstyrelsen" }`. `urls` ger en rot per appspråk för PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` anger vilka appspråk tjänstens `lang`-parameter förstår, som lista eller som karta från appens kod till tjänstens (`{ "nb": "no" }`) |
 | `endpoints` | Lista över anrop (se nedan) |
 
 ### Endpoint
@@ -174,7 +213,11 @@ förblir text.
 
 ## Begränsningar
 
+- MET Norways villkor kräver att anropande program identifierar sig med en User-Agent. Webbläsare skickar sin
+  egen identifiering, som tjänsten i dag accepterar; håll antalet anrop lågt och räkna med att tjänsten kan
+  strypa anonyma anrop.
 - SDMX-JSON stöds inte ännu; använd JSON-stat där tjänsten erbjuder det (SCB, Eurostat, Folkhälsomyndigheten).
+  JSON-stat 1.x (Danmarks Statistik) och 2.0 läses båda.
 - PX-filer tolkas inte i JavaScript; hämta JSON-stat eller använd paketet pxR i R.
 - Stora svar (hundratusentals rader) tar tid att tolka i webbläsaren. Begränsa urvalet eller använd `maxPages`.
 - Anrop sker bara när du trycker Hämta eller öppnar ett fält med alternativ från tjänsten.

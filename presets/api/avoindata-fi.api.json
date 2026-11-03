@@ -1,0 +1,37 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "avoindata-fi",
+  "name": "Avoindata.fi (sök datamängder)",
+  "publisher": "Myndigheten för digitalisering och befolkningsdata (DVV)",
+  "description": "Sök bland datamängder som finländska myndigheter, kommuner och organisationer publicerar på avoindata.fi. Resultatet är en tabell med en rad per fil: datamängdens titel, utgivare, licens, filformat och nedladdningslänk. Filer importeras sedan via Från webbadress eller Filer.",
+  "docs": "https://www.avoindata.fi/",
+  "license": { "name": "Metadata: öppna data, se respektive datamängd", "url": "https://www.avoindata.fi/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://www.avoindata.fi/data/api/3/action",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "search",
+      "name": "Sök datamängder",
+      "description": "Fritextsökning i katalogen (CKAN). En rad per fil i de datamängder som matchar.",
+      "method": "GET",
+      "path": "/package_search",
+      "params": [
+        { "name": "q", "in": "query", "label": "Sökord", "type": "string", "required": true, "example": "väestö" },
+        { "name": "rows", "in": "query", "type": "number", "default": 50, "hidden": true }
+      ],
+      "pagination": { "type": "offset", "param": "start", "sizeParam": "rows", "size": 50, "start": 0, "totalPath": "result.count", "maxPages": 4 },
+      "response": { "format": "json", "path": "result.results", "explode": "resources", "drop": ["author", "author_email", "cache_last_updated", "cache_url", "creator_user_id", "datastore_active", "extras", "groups", "hash", "isopen", "license_id", "maintainer", "maintainer_email", "metadata_created", "mimetype", "mimetype_inner", "notes_translated", "num_tags", "organization.approval_status", "organization.created", "organization.description", "organization.id", "organization.image_url", "organization.is_organization", "organization.name", "organization.state", "organization.type", "owner_org", "package_id", "position", "private", "relationships_as_object", "relationships_as_subject", "resource_type", "state", "tags", "title_translated", "type", "url_type", "version"] },
+      "dataset": { "name": "Avoindata.fi: {q}" }
+    }
+  ],
+  "i18n": {
+    "en": { "name": "Avoindata.fi (search datasets)", "publisher": "Digital and Population Data Services Agency (DVV)", "description": "Search the datasets that Finnish agencies, municipalities and organisations publish on avoindata.fi. The result is a table with one row per file: dataset title, publisher, licence, file format and download link. Files are then imported through From web address or Files.", "endpoints": { "search": { "name": "Search datasets", "description": "Free-text search in the catalogue (CKAN). One row per file in the matching datasets.", "params": { "q": { "label": "Search words", "example": "väestö" } } } } },
+    "da": { "name": "Avoindata.fi (søg datasæt)", "publisher": "Myndigheden for digitalisering og befolkningsdata (DVV)", "description": "Søg blandt de datasæt, som finske myndigheder, kommuner og organisationer offentliggør på avoindata.fi. Resultatet er en tabel med én række pr. fil: datasættets titel, udgiver, licens, filformat og downloadlink. Filer importeres derefter via Fra webadresse eller Filer.", "endpoints": { "search": { "name": "Søg datasæt", "description": "Fritekstsøgning i kataloget (CKAN). Én række pr. fil i de datasæt, der matcher.", "params": { "q": { "label": "Søgeord", "example": "väestö" } } } } },
+    "nb": { "name": "Avoindata.fi (søk datasett)", "publisher": "Myndigheten for digitalisering og befolkningsdata (DVV)", "description": "Søk blant datasettene som finske etater, kommuner og organisasjoner publiserer på avoindata.fi. Resultatet er en tabell med én rad per fil: datasettets tittel, utgiver, lisens, filformat og nedlastingslenke. Filer importeres deretter via Fra nettadresse eller Filer.", "endpoints": { "search": { "name": "Søk datasett", "description": "Fritekstsøk i katalogen (CKAN). Én rad per fil i datasettene som matcher.", "params": { "q": { "label": "Søkeord", "example": "väestö" } } } } },
+    "fi": { "name": "Avoindata.fi (hae aineistoja)", "publisher": "Digi- ja väestötietovirasto (DVV)", "description": "Hae aineistoja, joita suomalaiset viranomaiset, kunnat ja organisaatiot julkaisevat avoindata.fi-palvelussa. Tulos on taulukko, jossa on yksi rivi per tiedosto: aineiston nimi, julkaisija, lisenssi, tiedostomuoto ja latauslinkki. Tiedostot tuodaan sen jälkeen kohdasta Verkko-osoitteesta tai Tiedostot.", "endpoints": { "search": { "name": "Hae aineistoja", "description": "Vapaatekstihaku luettelosta (CKAN). Yksi rivi per tiedosto hakua vastaavissa aineistoissa.", "params": { "q": { "label": "Hakusanat", "example": "väestö" } } } } },
+    "is": { "name": "Avoindata.fi (leita að gagnasöfnum)", "publisher": "Stafræna- og mannfjöldaskrárstofnun Finnlands (DVV)", "description": "Leitaðu meðal gagnasafna sem finnskar stofnanir, sveitarfélög og samtök birta á avoindata.fi. Niðurstaðan er tafla með einni röð fyrir hverja skrá: heiti gagnasafns, útgefandi, leyfi, skráarsnið og niðurhalstengill. Skrár eru síðan fluttar inn með Af vefslóð eða Skrár.", "endpoints": { "search": { "name": "Leita að gagnasöfnum", "description": "Textaleit í skránni (CKAN). Ein röð fyrir hverja skrá í gagnasöfnunum sem passa.", "params": { "q": { "label": "Leitarorð", "example": "väestö" } } } } }
+  }
+}

@@ -176,7 +176,7 @@
       }
       function shareJson() {
         syncSources();
-        const name = files.safeName(nb.name || 'anteckningsbok', 'nb.json');
+        const name = files.safeName(nb.name || t('nb.default.name').toLowerCase(), 'nb.json');
         files.download(new Blob([notebooks.exportJson(nb)], { type: 'application/json' }), name);
         overlays.toast.show(t('nb.export.done', { name }), { kind: 'ok' });
       }

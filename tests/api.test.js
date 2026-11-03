@@ -40,10 +40,15 @@
 
   test('api: schema validates every preset and rejects broken configurations', async (assert) => {
     const presets = await connectors.loadPresets();
-    assert.ok(presets.length >= 12, 'presets loaded: ' + presets.length);
+    assert.ok(presets.length >= 33, 'presets loaded: ' + presets.length);
     for (const p of presets) assert.deepEqual(schema.validate(p), [], p.id);
+    for (const p of presets) assert.ok(schema.COUNTRIES.includes(p.country), p.id + ' has a country');
+    for (const p of presets) for (const lang of ['da', 'nb', 'fi', 'is', 'en']) if (p.i18n) assert.ok(p.i18n[lang] && p.i18n[lang].name, p.id + ' translated to ' + lang);
     const ids = presets.map((p) => p.id);
-    for (const id of ['scb-pxweb', 'scb-pxweb-v2', 'kolada', 'eurostat', 'socialstyrelsen', 'smhi-metobs', 'fhm-folkhalsodata', 'naturvardsregistret', 'luftkvalitet', 'lantmateriet-geodata', 'lantmateriet-direkt', 'boverket-energideklarationer', 'dataportal']) assert.ok(ids.includes(id), 'preset ' + id);
+    for (const id of ['scb-pxweb', 'scb-pxweb-v2', 'kolada', 'eurostat', 'socialstyrelsen', 'smhi-metobs', 'fhm-folkhalsodata', 'naturvardsregistret', 'luftkvalitet', 'lantmateriet-geodata', 'lantmateriet-direkt', 'boverket-energideklarationer', 'dataportal',
+      'dst-statistikbanken', 'opendata-dk', 'ssb-statistikkbanken', 'ssb-pxweb-v2', 'fhi-statistikk', 'brreg-enhetsregisteret', 'kartverket-kommuneinfo', 'met-locationforecast', 'statfin', 'kuntien-avainluvut', 'sotkanet', 'prh-ytj', 'digitraffic-tiesaa', 'fmi-observations', 'avoindata-fi', 'hagstofa', 'vedur-observations', 'nordic-statistics', 'stat-greenland', 'hagstova-foroya', 'asub-aland']) assert.ok(ids.includes(id), 'preset ' + id);
+    const byCountry = {}; for (const p of presets) byCountry[p.country] = (byCountry[p.country] || 0) + 1;
+    for (const c of ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU']) assert.ok(byCountry[c] >= 1, 'presets for ' + c);
     const bad = schema.validate({ format: 'dataspatium-api/1', id: 'Bad Id', name: '', baseUrl: 'ftp://x', endpoints: [] });
     assert.ok(bad.some((e) => e.startsWith('id')) && bad.some((e) => e.startsWith('baseUrl')) && bad.some((e) => e.startsWith('name')), bad.join(' | '));
     const semantic = schema.validate({ format: 'dataspatium-api/1', id: 'ok-id', name: 'X', baseUrl: 'https://x', auth: { type: 'apiKey' }, endpoints: [{ id: 'a', name: 'A', pagination: { type: 'page' } }, { id: 'a', name: 'B' }] });
@@ -320,6 +325,129 @@
     assert.equal(table.meta.pages, 2);
     const r = Object.fromEntries(table.columns.map((col, i) => [col, table.rows[0][i]]));
     assert.equal(r['Region'], 'Riket'); assert.equal(r['Region_kod'], '00'); assert.equal(r['Mått'], 'Antal döda'); assert.equal(r.varde, 6); assert.equal(r.ar, 2023);
+  });
+
+  test('api: JSON-stat 1.x from Statistics Denmark converts to a table', (assert) => {
+    const t1 = jsonstat.toTable(fx.dstData);
+    assert.equal(t1.rows.length, 12, '2 regions x 3 sexes x 2 quarters');
+    assert.ok(t1.columns.includes('region_kod') && t1.columns.includes('region') && t1.columns.includes('sex') && t1.columns.includes('time'), t1.columns.join(','));
+    assert.ok(t1.columns.includes('Population at the first day of the quarter'), 'the metric becomes a value column');
+    const first = t1.rows[0];
+    assert.equal(first[t1.columns.indexOf('region')], 'All Denmark');
+    assert.equal(typeof first[t1.columns.indexOf('Population at the first day of the quarter')], 'number');
+    assert.equal(t1.meta.cells, 12);
+    const dims = jsonstat.dimensions(jsonstat.pickDataset(fx.dstData));
+    assert.deepEqual(dims.map((d) => d.code), ['OMRÅDE', 'KØN', 'ContentsCode', 'Tid']);
+    assert.ok(dims[3].time && dims[2].metric, 'roles lifted from dimension.role');
+  });
+
+  test('api: Statistics Denmark family browses subjects and tables, normalises tableinfo and fetches data', async (assert) => {
+    const statbank = D.require('api/families/statbank');
+    serve('tests/api/dst/subjects', () => fx.dstSubjects);
+    serve('tests/api/dst/subjects/3401', () => fx.dstSubject3401);
+    serve('tests/api/dst/tableinfo/FOLK1A', () => fx.dstTableinfo);
+    serve('tests/api/dst/data/FOLK1A/JSONSTAT', () => fx.dstData);
+    const c = connector({ id: 'dst', baseUrl: BASE + '/dst', family: { type: 'statbank', lang: 'da', langs: ['da', 'en'], maxCells: 100000 } });
+    assert.equal(statbank.version(c), 1);
+    assert.equal(statbank.lang(c), 'sv' === D.require('ui/i18n').language() ? 'da' : statbank.lang(c), 'Swedish UI falls back to the service default');
+    const root = await statbank.listFolder(c, []);
+    assert.equal(root.length, 3); assert.equal(root[0].type, 'folder'); assert.equal(root[0].text, 'People');
+    const sub = await statbank.listFolder(c, ['3401']);
+    assert.ok(sub.some((e) => e.type === 'folder') && sub.some((e) => e.type === 'table' && e.id === 'FOLK1A'), 'sub-subjects and tables');
+    assert.ok(served.some((u) => u.includes('/dst/subjects/3401?lang=da&includeTables=true')), 'includeTables requested');
+    const meta = await statbank.tableMetaV1(c, ['3401', 'FOLK1A']);
+    assert.equal(meta.title.slice(0, 7), 'FOLK1A:');
+    assert.deepEqual(meta.variables.map((v) => v.code), ['OMRÅDE', 'KØN', 'Tid']);
+    assert.ok(meta.variables[0].elimination && !meta.variables[2].elimination && meta.variables[2].time, 'elimination and time flags');
+    const sel = { 'OMRÅDE': { filter: 'item', values: ['000', '101'] }, 'KØN': { filter: 'all' }, Tid: { filter: 'top', n: 2 } };
+    const built = statbank.buildRequest(c, 'FOLK1A', meta.variables, sel);
+    const u = new URL(built.url);
+    assert.equal(u.searchParams.get('OMRÅDE'), '000,101');
+    assert.equal(u.searchParams.get('KØN'), '*');
+    assert.equal(u.searchParams.get('Tid'), meta.variables[2].values.slice(-2).map((x) => x.code).join(','), 'top n picks the last codes');
+    assert.equal(u.searchParams.get('lang'), 'da');
+    assert.equal(built.body.table, 'FOLK1A'); assert.equal(built.body.format, 'JSONSTAT');
+    const omitted = statbank.buildRequest(c, 'FOLK1A', meta.variables, { Tid: { filter: 'all' } });
+    assert.ok(!new URL(omitted.url).searchParams.has('OMRÅDE'), 'eliminable variables are left to the service');
+    assert.equal(statbank.cellCount(meta.variables, sel), 2 * 3 * 2);
+    const table = await statbank.fetchData(c, { path: ['3401', 'FOLK1A'], id: 'FOLK1A', title: meta.title }, meta.variables, sel);
+    assert.equal(table.rows.length, 12); assert.equal(table.meta.pages, 1);
+    const source = statbank.describeSource(c, { path: ['3401', 'FOLK1A'], id: 'FOLK1A', title: meta.title }, meta.variables, sel, table);
+    assert.equal(source.family, 'statbank'); assert.equal(source.table.id, 'FOLK1A');
+    const again = await statbank.refetch(c, source);
+    assert.equal(again.rows.length, 12);
+  });
+
+  test('api: FHI family lists sources and tables, flattens dimensions, builds queries and fetches JSON-stat 2', async (assert) => {
+    const fhi = D.require('api/families/fhi');
+    serve('tests/api/fhi/Common/source', () => fx.fhiSources);
+    serve('tests/api/fhi/nokkel/Table', () => fx.fhiTables);
+    serve('tests/api/fhi/nokkel/Table/670/dimension', () => fx.fhiDims);
+    serve('tests/api/fhi/nokkel/Table/670/data', () => fx.fhiData);
+    const c = connector({ id: 'fhi', baseUrl: BASE + '/fhi', family: { type: 'fhi', maxCells: 100000 } });
+    const root = await fhi.listFolder(c, []);
+    assert.deepEqual(root.map((e) => e.id), ['abr', 'daar', 'nokkel']); assert.ok(root.every((e) => e.type === 'folder'));
+    const tables = await fhi.listFolder(c, ['nokkel']);
+    assert.equal(tables.length, 2); assert.equal(tables[0].id, '670'); assert.equal(tables[0].type, 'table');
+    const meta = await fhi.tableMetaV1(c, ['nokkel', '670']);
+    assert.deepEqual(meta.variables.map((v) => v.code), ['GEO', 'AAR', 'KJONN', 'MEASURE_TYPE'], 'dimensions in the order the service lists them');
+    const geo = meta.variables.find((v) => v.code === 'GEO');
+    assert.equal(geo.values.length, 5, 'hierarchy flattened: country, county, municipality, two districts');
+    assert.equal(geo.values[0].code, '0'); assert.equal(geo.values[1].code, '03'); assert.ok(/^ /.test(geo.values[1].text), 'children indented');
+    assert.ok(meta.variables.find((v) => v.code === 'MEASURE_TYPE').metric && meta.variables.find((v) => v.code === 'AAR').time);
+    const sel = { KJONN: { filter: 'item', values: ['0'] }, AAR: { filter: 'top', n: 1 }, GEO: { filter: 'item', values: ['0', '03'] }, MEASURE_TYPE: { filter: 'none' } };
+    const q = fhi.buildQuery(meta.variables, sel);
+    const by = Object.fromEntries(q.dimensions.map((d) => [d.code, d]));
+    assert.deepEqual(by.KJONN, { code: 'KJONN', filter: 'item', values: ['0'] });
+    assert.deepEqual(by.AAR, { code: 'AAR', filter: 'top', values: ['1'] });
+    assert.deepEqual(by.MEASURE_TYPE, { code: 'MEASURE_TYPE', filter: 'all', values: ['*'] });
+    assert.equal(q.response.format, 'json-stat2');
+    const table = await fhi.fetchData(c, { path: ['nokkel', '670'], id: '670', title: 'Leseferdighet' }, meta.variables, sel);
+    assert.equal(table.rows.length, 100, '400 cells over 4 measures give 100 rows');
+    assert.ok(table.columns.includes('Geografi') && table.columns.some((col) => /andel \(prosent\)/.test(col)), table.columns.join(','));
+    assert.ok(served.some((u) => u.endsWith('/fhi/nokkel/Table/670/data')), 'data requested by POST to the table');
+    const source = fhi.describeSource(c, { path: ['nokkel', '670'], id: '670', title: 'Leseferdighet' }, meta.variables, sel, table);
+    assert.equal(source.family, 'fhi');
+    assert.equal((await fhi.refetch(c, source)).rows.length, 100);
+  });
+
+  test('api: connectors carry a country and translations; PxWeb roots and languages follow the UI language', async (assert) => {
+    const i18n = D.require('ui/i18n');
+    const all = await connectors.list();
+    assert.ok(all.every((c) => !c.country || schema.COUNTRIES.includes(c.country)));
+    assert.ok(all.findIndex((c) => c.country === 'SE') < all.findIndex((c) => c.country === 'DK'), 'Sweden sorts before Denmark');
+    const raw = (await connectors.loadPresets()).find((p) => p.id === 'ssb-statistikkbanken');
+    assert.equal(connectors.localize(raw, 'sv').name, 'SSB Statistikkbanken');
+    assert.equal(connectors.localize(raw, 'en').name, 'Statistics Norway StatBank');
+    assert.equal(connectors.localize(raw, 'xx'), raw, 'unknown language keeps the stored object');
+    const brreg = (await connectors.loadPresets()).find((p) => p.id === 'brreg-enhetsregisteret');
+    const fi = connectors.localize(brreg, 'fi');
+    assert.equal(fi.endpoints[0].params[0].label, 'Nimi (osa)');
+    assert.equal(fi.endpoints[1].dataset.name, 'Norjan kunnat (Enhetsregisteret)', 'dataset name templates are translated');
+    assert.equal(brreg.endpoints[0].params[0].label, 'Namn (del av)', 'the stored object is untouched');
+    const vedur = (await connectors.loadPresets()).find((p) => p.id === 'vedur-observations');
+    assert.equal(connectors.localize(vedur, 'is').endpoints[0].params.find((p) => p.name === 'lang').options[0].label, 'Íslenska', 'option labels are translated');
+    const exported = JSON.parse(connectors.exportJson(connectors.localize(raw, 'en')));
+    assert.equal(exported.name, 'SSB Statistikkbanken', 'export writes the stored Swedish original');
+    assert.ok(exported.i18n && exported.i18n.en, 'translations travel with the export');
+    const statfin = (await connectors.loadPresets()).find((p) => p.id === 'statfin');
+    const ssb2 = (await connectors.loadPresets()).find((p) => p.id === 'ssb-pxweb-v2');
+    const before = i18n.language();
+    try {
+      i18n.setLanguage('en', { persist: false });
+      assert.ok(/\/en\/StatFin$/.test(pxweb.base(statfin)), 'English root for an English UI');
+      assert.equal(pxweb.lang(ssb2), 'en');
+      i18n.setLanguage('fi', { persist: false });
+      assert.ok(/\/fi\/StatFin$/.test(pxweb.base(statfin)));
+      assert.equal(pxweb.lang(ssb2), 'no', 'languages the service lacks fall back to its default');
+      i18n.setLanguage('nb', { persist: false });
+      assert.equal(pxweb.lang(ssb2), 'no', 'UI code nb maps to the service code no');
+    } finally { i18n.setLanguage(before, { persist: false }); }
+    assert.ok(/\/sv\/StatFin$/.test(pxweb.base(statfin)), 'Swedish root again');
+    serve('tests/api/hag/', () => fx.hagstofaRoot);
+    const hag = connector({ id: 'hag', baseUrl: BASE + '/hag', family: { type: 'pxweb', version: 1 } });
+    const dbs = await pxweb.listFolder(hag, []);
+    assert.equal(dbs.length, 5); assert.equal(dbs[2].id, 'Ibuar'); assert.ok(dbs.every((e) => e.type === 'folder'), 'database roots behave as folders');
   });
 
   test('api: tables become datasets; rows can be appended, replaced and deduplicated; refetch works', async (assert) => {

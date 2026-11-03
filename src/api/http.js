@@ -55,13 +55,13 @@
 
     /** Swedish explanation of an HTTP status. */
     function describeStatus(status) {
-      if (status === 400) return 'Felaktig förfrågan (400). Kontrollera parametrarna.';
-      if (status === 401) return 'Behörighet saknas (401). Kontrollera API-nyckeln eller inloggningen.';
-      if (status === 403) return 'Åtkomst nekad (403). Nyckeln saknar rättighet, eller tjänsten kräver registrering.';
-      if (status === 404) return 'Hittades inte (404). Kontrollera sökväg och id.';
-      if (status === 429) return 'För många anrop (429). Vänta en stund och försök igen.';
-      if (status >= 500) return `Tjänsten svarade med fel (${status}). Försök igen senare.`;
-      return `Tjänsten svarade med status ${status}.`;
+      if (status === 400) return D.t('api.http.400');
+      if (status === 401) return D.t('api.http.401');
+      if (status === 403) return D.t('api.http.403');
+      if (status === 404) return D.t('api.http.404');
+      if (status === 429) return D.t('api.http.429');
+      if (status >= 500) return D.t('api.http.5xx', { status });
+      return D.t('api.http.other', { status });
     }
 
     /**
@@ -87,8 +87,8 @@
         } catch (err) {
           clearTimeout(timer);
           if (req.signal && req.signal.aborted) throw new ApiError('Avbrutet.', { kind: 'aborted' });
-          if (controller.signal.aborted) throw new ApiError(`Tjänsten ${hostOf(req.url)} svarade inte inom tidsgränsen.`, { kind: 'timeout', url: req.url });
-          throw new ApiError(`Kunde inte nå ${hostOf(req.url)}. Antingen tillåter tjänsten inte anrop från webbläsaren (CORS) eller så saknas nätverk. En egen proxy kan anges under Fler alternativ.`, { kind: 'network', url: req.url, cause: err });
+          if (controller.signal.aborted) throw new ApiError(D.t('api.err.timeout', { host: hostOf(req.url) }), { kind: 'timeout', url: req.url });
+          throw new ApiError(D.t('api.err.network', { host: hostOf(req.url) }), { kind: 'network', url: req.url, cause: err });
         } finally {
           if (req.signal) req.signal.removeEventListener('abort', onAbort);
         }

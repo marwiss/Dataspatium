@@ -34,15 +34,15 @@
 
     const templates = [
       {
-        id: 'lollipop', name: 'Rangordning', icon: 'list-ordered',
-        description: 'En rad per kategori sorterad efter värde, med punkt och linje. Bra för att jämföra kommuner eller grupper.',
+        id: 'lollipop', name: D.t('d3.lollipop.name'), icon: 'list-ordered',
+        description: D.t('d3.lollipop.description'),
         params: [
-          { name: 'category', label: 'Kategori', type: 'column', kinds: ['text', 'boolean', 'integer'], required: true },
-          { name: 'value', label: 'Värde', type: 'column', kinds: ['integer', 'number'], required: true },
-          { name: 'aggregate', label: 'Beräkning per kategori', type: 'select', options: [{ value: 'sum', label: 'Summa' }, { value: 'mean', label: 'Medel' }, { value: 'max', label: 'Största' }, { value: 'min', label: 'Minsta' }], default: 'sum' },
-          { name: 'top', label: 'Visa högst', type: 'number', default: 20 },
-          { name: 'order', label: 'Ordning', type: 'select', options: [{ value: 'desc', label: 'Störst först' }, { value: 'asc', label: 'Minst först' }], default: 'desc' },
-          { name: 'format', label: 'Talformat', type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: ',.0f' },
+          { name: 'category', label: D.t('d3.param.category'), type: 'column', kinds: ['text', 'boolean', 'integer'], required: true },
+          { name: 'value', label: D.t('d3.param.value'), type: 'column', kinds: ['integer', 'number'], required: true },
+          { name: 'aggregate', label: D.t('d3.param.aggregate'), type: 'select', options: [{ value: 'sum', label: D.t('d3.agg.sum') }, { value: 'mean', label: D.t('d3.agg.mean') }, { value: 'max', label: D.t('d3.agg.max') }, { value: 'min', label: D.t('d3.agg.min') }], default: 'sum' },
+          { name: 'top', label: D.t('d3.param.top'), type: 'number', default: 20 },
+          { name: 'order', label: D.t('d3.param.order'), type: 'select', options: [{ value: 'desc', label: D.t('d3.order.desc') }, { value: 'asc', label: D.t('d3.order.asc') }], default: 'desc' },
+          { name: 'format', label: D.t('d3.param.format'), type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: ',.0f' },
         ],
         render(d3, container, rows, p, style, size) {
           const groups = d3.rollups(rows.filter((r) => Number.isFinite(num(r[p.value]))), (v) => (p.aggregate === 'mean' ? d3.mean(v, (r) => num(r[p.value])) : p.aggregate === 'max' ? d3.max(v, (r) => num(r[p.value])) : p.aggregate === 'min' ? d3.min(v, (r) => num(r[p.value])) : d3.sum(v, (r) => num(r[p.value]))), (r) => String(r[p.category]));
@@ -65,16 +65,16 @@
         },
       },
       {
-        id: 'slopegraph', name: 'Lutningsdiagram', icon: 'trending-up',
-        description: 'Jämför två tidpunkter per kategori med en linje emellan. Visar vilka som ökat och minskat.',
+        id: 'slopegraph', name: D.t('d3.slope.name'), icon: 'trending-up',
+        description: D.t('d3.slope.description'),
         params: [
-          { name: 'category', label: 'Kategori', type: 'column', kinds: ['text', 'boolean'], required: true },
-          { name: 'period', label: 'Period (kolumn)', type: 'column', kinds: ['text', 'integer', 'date', 'datetime'], required: true },
-          { name: 'from', label: 'Första period (värde)', type: 'string', required: true },
-          { name: 'to', label: 'Andra period (värde)', type: 'string', required: true },
-          { name: 'value', label: 'Värde', type: 'column', kinds: ['integer', 'number'], required: true },
-          { name: 'top', label: 'Visa högst', type: 'number', default: 15 },
-          { name: 'format', label: 'Talformat', type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: ',.0f' },
+          { name: 'category', label: D.t('d3.param.category'), type: 'column', kinds: ['text', 'boolean'], required: true },
+          { name: 'period', label: D.t('d3.param.period'), type: 'column', kinds: ['text', 'integer', 'date', 'datetime'], required: true },
+          { name: 'from', label: D.t('d3.param.from'), type: 'string', required: true },
+          { name: 'to', label: D.t('d3.param.to'), type: 'string', required: true },
+          { name: 'value', label: D.t('d3.param.value'), type: 'column', kinds: ['integer', 'number'], required: true },
+          { name: 'top', label: D.t('d3.param.top'), type: 'number', default: 15 },
+          { name: 'format', label: D.t('d3.param.format'), type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: ',.0f' },
         ],
         render(d3, container, rows, p, style, size) {
           const by = new Map();
@@ -109,15 +109,15 @@
         },
       },
       {
-        id: 'pyramid', name: 'Befolkningspyramid', icon: 'align-center-vertical',
-        description: 'Åldersgrupper (eller andra grupper) som staplar åt två håll, till exempel kvinnor och män.',
+        id: 'pyramid', name: D.t('d3.pyramid.name'), icon: 'align-center-vertical',
+        description: D.t('d3.pyramid.description'),
         params: [
-          { name: 'group', label: 'Grupp (ålder)', type: 'column', kinds: ['text', 'integer'], required: true },
-          { name: 'side', label: 'Sida (kön)', type: 'column', kinds: ['text', 'boolean'], required: true },
-          { name: 'value', label: 'Värde', type: 'column', kinds: ['integer', 'number'], required: true },
-          { name: 'left', label: 'Värde för vänster sida', type: 'string', required: true },
-          { name: 'right', label: 'Värde för höger sida', type: 'string', required: true },
-          { name: 'format', label: 'Talformat', type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: '~s' },
+          { name: 'group', label: D.t('d3.param.group'), type: 'column', kinds: ['text', 'integer'], required: true },
+          { name: 'side', label: D.t('d3.param.side'), type: 'column', kinds: ['text', 'boolean'], required: true },
+          { name: 'value', label: D.t('d3.param.value'), type: 'column', kinds: ['integer', 'number'], required: true },
+          { name: 'left', label: D.t('d3.param.left'), type: 'string', required: true },
+          { name: 'right', label: D.t('d3.param.right'), type: 'string', required: true },
+          { name: 'format', label: D.t('d3.param.format'), type: 'select', options: locale.NUMBER_FORMATS.map((f) => ({ value: f.pattern, label: f.label })), default: '~s' },
         ],
         render(d3, container, rows, p, style, size) {
           const sum = (side) => d3.rollup(rows.filter((r) => String(r[p.side]) === String(side)), (v) => d3.sum(v, (r) => num(r[p.value]) || 0), (r) => String(r[p.group]));
@@ -154,8 +154,8 @@
     async function render(templateId, container, rows, params, options = {}) {
       const d3 = await ensureD3();
       const tpl = get(templateId);
-      if (!tpl) throw new Error('Okänd D3-mall: ' + templateId);
-      for (const p of tpl.params) if (p.required && (params[p.name] === undefined || params[p.name] === null || params[p.name] === '')) throw new Error(`Fyll i ${p.label}.`);
+      if (!tpl) throw new Error(D.t('d3.err.unknown', { template: templateId }));
+      for (const p of tpl.params) if (p.required && (params[p.name] === undefined || params[p.name] === null || params[p.name] === '')) throw new Error(D.t('common.err.required', { name: p.label }));
       const style = theme.d3Style();
       const size = { width: options.width || 720, height: options.height || 0 };
       return tpl.render(d3, container, rows, params, style, size);

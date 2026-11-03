@@ -16,11 +16,11 @@
       const SQL_LIMIT = 1000;
       const READ_ONLY_SQL = /^\s*(select|with|values|pragma|explain)\b/i;
       const EXPORT_FORMATS = [
-        { id: 'html', label: 'HTML (fristående sida)', ext: 'html', mime: 'text/html;charset=utf-8' },
+        { id: 'html', label: D.t('doc.format.html'), ext: 'html', mime: 'text/html;charset=utf-8' },
         { id: 'docx', label: 'Word (DOCX)', ext: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
         { id: 'pdf', label: 'PDF', ext: 'pdf', mime: 'application/pdf' },
         { id: 'md', label: 'Markdown', ext: 'md', mime: 'text/markdown;charset=utf-8' },
-        { id: 'tex', label: 'LaTeX (ZIP med main.tex och figurer)', ext: 'zip', mime: 'application/zip' },
+        { id: 'tex', label: D.t('doc.format.tex'), ext: 'zip', mime: 'application/zip' },
       ];
       const listeners = new Set();
       function notify(type, payload) { for (const fn of listeners) { try { fn(type, payload); } catch (err) { console.error(err); } } }
@@ -36,10 +36,10 @@
 
       /** New notebook with a short starter: a heading, an R cell and (with a dataset) an SQL cell. */
       function create(name, dataset) {
-        const title = name || 'Anteckningsbok';
-        const cells = [cell('markdown', `# ${title}\n\nText skrivs i Markdown, kod i R- och SQL-celler. Kör en cell med Ctrl+Enter eller alla med *Kör alla*.`)];
+        const title = name || D.t('nb.default.name');
+        const cells = [cell('markdown', D.t('nb.first.cell', { title }))];
         if (dataset) {
-          cells.push(cell('r', `df <- dm_read(${JSON.stringify(dataset.name)})\nsummary(df)`));
+          cells.push(cell('r', `df <- dm_read(${JSON.stringify(dataset.shortName || dataset.name)})\nsummary(df)`));
           cells.push(cell('sql', 'select * from data limit 10'));
         } else cells.push(cell('r', 'dm_list()'));
         return { id: null, name: title, datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', datasetShort: dataset ? dataset.shortName || '' : '', cells };
@@ -50,7 +50,7 @@
         const now = new Date().toISOString();
         const record = Object.assign({}, nb, {
           id: nb.id || newId(), createdAt: nb.createdAt || now, updatedAt: now,
-          name: (nb.name || '').trim() || 'Namnlös anteckningsbok',
+          name: (nb.name || '').trim() || D.t('nb.untitled'),
           cells: (nb.cells || []).map((c) => ({ id: c.id || newCellId(), type: CELL_TYPES.includes(c.type) ? c.type : 'markdown', source: String(c.source || ''), outputs: Array.isArray(c.outputs) ? c.outputs : [], ran: c.ran || null, ms: c.ms || null })),
         });
         await idb.putNotebook(record);
@@ -67,20 +67,20 @@
         const outputs = [];
         try {
           if (c.type === 'sql') {
-            if (!nb.datasetId) throw new Error('Anteckningsboken saknar datamängd. Välj en i egenskapspanelen.');
+            if (!nb.datasetId) throw new Error(D.t('nb.err.nodataset'));
             const statement = String(c.source || '').trim().replace(/;\s*$/, '');
-            if (!statement) throw new Error('Cellen är tom.');
+            if (!statement) throw new Error(D.t('nb.err.empty'));
             if (READ_ONLY_SQL.test(statement)) {
               // Short names of other datasets are attached, as in the SQL console.
               const r = await D.require('data/query').select(nb.datasetId, statement, { limit: SQL_LIMIT });
               outputs.push({ kind: 'table', columns: r.columns, rows: r.values, truncated: r.truncated });
             } else {
               const result = await recipes.apply(nb.datasetId, 'sql', { statement });
-              outputs.push({ kind: 'text', text: typeof result.rows === 'number' ? `${result.rows} rader påverkade.` : 'Satsen utfördes.' });
+              outputs.push({ kind: 'text', text: typeof result.rows === 'number' ? D.t('sql.rows.affected', { n: result.rows }) : D.t('sql.statement.done') });
             }
           } else if (c.type === 'r') {
             const code = String(c.source || '').trim();
-            if (!code) throw new Error('Cellen är tom.');
+            if (!code) throw new Error(D.t('nb.err.empty'));
             const res = await rb.bridge.run(code);
             let text = '';
             const flush = () => { if (text) { outputs.push({ kind: 'text', text: text.replace(/\n$/, '') }); text = ''; } };
@@ -89,7 +89,7 @@
               else if (e.kind === 'error') { flush(); outputs.push({ kind: 'error', text: e.text }); }
               else if (e.kind === 'plot') { flush(); outputs.push({ kind: 'image', dataUrl: e.canvas.toDataURL('image/png'), width: e.canvas.width, height: e.canvas.height }); }
               else if (e.kind === 'dataset') { flush(); outputs.push({ kind: 'dataset', id: e.meta.id, name: e.meta.name, rows: e.meta.rowCount || 0 }); }
-              else if (e.kind === 'packages') { flush(); outputs.push({ kind: 'text', text: 'Installerade paket: ' + e.names.join(', ') }); }
+              else if (e.kind === 'packages') { flush(); outputs.push({ kind: 'text', text: D.t('nb.packages.installed', { names: e.names.join(', ') }) }); }
             }
             flush();
           }
@@ -136,7 +136,7 @@
             } else if (o.kind === 'image') {
               const scale = o.width > 672 ? 672 / o.width : 1;
               blocks.push({ type: 'image', png: dataUrlToBytes(o.dataUrl), width: Math.round(o.width * scale), height: Math.round(o.height * scale), caption: '' });
-            } else if (o.kind === 'dataset') blocks.push({ type: 'paragraph', runs: [{ text: `Ny datamängd: ${o.name} (${o.rows} rader)` }] });
+            } else if (o.kind === 'dataset') blocks.push({ type: 'paragraph', runs: [{ text: D.t('nb.new.dataset', { name: o.name, rows: o.rows }) }] });
           }
         }
         return { blocks };
@@ -153,13 +153,13 @@
        */
       async function exportNotebook(nb, format, options = {}) {
         const fmt = EXPORT_FORMATS.find((f) => f.id === format);
-        if (!fmt) throw new Error('Okänt format: ' + format);
+        if (!fmt) throw new Error(D.t('err.unknown.format', { format }));
         const ast = toAst(nb, options);
-        const title = nb.name || markdown.title(ast) || 'Anteckningsbok';
-        const base = options.filename || nb.name || 'anteckningsbok';
+        const title = nb.name || markdown.title(ast) || D.t('nb.default.name');
+        const base = options.filename || nb.name || D.t('nb.default.name').toLowerCase();
         let blob;
         if (format === 'html') blob = new Blob([builders.toHtml(ast, { title })], { type: fmt.mime });
-        else if (format === 'docx') blob = await office.toDocx(ast, { title, description: 'Skapad av Dataspatium' });
+        else if (format === 'docx') blob = await office.toDocx(ast, { title, description: D.t('nb.created.by') });
         else if (format === 'pdf') blob = await office.toPdf(ast, { title });
         else if (format === 'md') {
           const md = builders.toMarkdown(ast);
@@ -186,12 +186,12 @@
       /** Import a notebook file; the dataset is matched by name in this workspace. */
       async function importJson(text) {
         let obj;
-        try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error('Filen är inte giltig JSON.'); }
-        if (obj.format !== FORMAT || !Array.isArray(obj.cells)) throw new Error('Filen är inte en Dataspatium-anteckningsbok (format ' + FORMAT + ' saknas).');
+        try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error(D.t('err.invalid.json')); }
+        if (obj.format !== FORMAT || !Array.isArray(obj.cells)) throw new Error(D.t('nb.err.format', { format: FORMAT }));
         const all = await datasets.list();
         // The dataset is matched by name, else by short name (which survives renames in the other workspace).
         const match = (obj.datasetName ? all.find((d) => d.name === obj.datasetName) : null) || (obj.datasetShort ? all.find((d) => d.shortName === obj.datasetShort) : null) || null;
-        return save({ name: obj.name || 'Importerad anteckningsbok', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), cells: obj.cells.map((c) => cell(c.type, c.source)).map((c, i) => Object.assign(c, { outputs: Array.isArray(obj.cells[i].outputs) ? obj.cells[i].outputs : [] })) });
+        return save({ name: obj.name || D.t('nb.imported.name'), datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), cells: obj.cells.map((c) => cell(c.type, c.source)).map((c, i) => Object.assign(c, { outputs: Array.isArray(obj.cells[i].outputs) ? obj.cells[i].outputs : [] })) });
       }
 
       return { list, get, create, cell, save, remove, runCell, runAll, toAst, renderMarkdown, exportNotebook, exportJson, importJson, subscribe, FORMAT, CELL_TYPES, EXPORT_FORMATS, SQL_LIMIT };

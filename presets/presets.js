@@ -9,11 +9,17 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('presets', [], () => ({
+    // Names and descriptions are i18n keys (nameKey, descriptionKey; name and description are the Swedish
+    // fallback). The short name is fixed so that charts, recipes and notebooks shared between users with
+    // different UI languages still find the example data.
     examples: [
       {
         id: 'befolkning-kommuner-2024',
         name: 'Befolkning per kommun 2024',
+        nameKey: 'preset.befolkning.name',
+        shortName: 'befolkning_2024',
         description: 'Folkmängd 31 december 2024 för Sveriges 290 kommuner, med kommunkod, län och länskod.',
+        descriptionKey: 'preset.befolkning.description',
         asset: 'presets/exempeldata/befolkning-kommuner-2024.csv',
         options: { delimiter: ';', header: true, decimal: 'point' },
         source: { kind: 'preset', publisher: 'SCB, Statistikdatabasen', table: 'BE0101N1 Folkmängden efter region, ålder och kön. År 1968–2024', url: 'https://www.statistikdatabasen.scb.se/', license: 'CC0' },
@@ -23,6 +29,9 @@
       {
         id: 'lan-scb',
         name: 'Länsgränser (SCB)',
+        nameKey: 'preset.lan.name',
+        shortName: 'lansgranser',
+        descriptionKey: 'preset.lan.description',
         description: 'Sveriges 21 län som förenklade ytor för tematiska kartor, med länskod och länsnamn, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
         asset: 'presets/geo/lan.geojson',
         format: 'geojson',
@@ -31,20 +40,23 @@
       {
         id: 'kommuner-scb',
         name: 'Kommungränser (SCB)',
+        nameKey: 'preset.kommuner.name',
+        shortName: 'kommungranser',
+        descriptionKey: 'preset.kommuner.description',
         description: 'Sveriges 290 kommuner som förenklade ytor för tematiska kartor, med kommunkod, kommunnamn, länskod och län, i longitud och latitud (WGS 84). Källa: SCB, Digitala gränser (CC0), version februari 2026.',
         asset: 'presets/geo/kommuner.geojson',
         format: 'geojson',
         source: { kind: 'preset', publisher: 'SCB, Digitala gränser', url: 'https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/digitala-granser/', license: 'CC0', crs: 'WGS 84 (EPSG:4326)' },
       },
     ],
-    /** Snippets offered in the R console. */
+    /** Snippets offered in the R console; labels are i18n keys, datasets are referred to by short name. */
     rSnippets: [
-      { label: 'Lista datamängder', code: 'dm_list()' },
-      { label: 'Läs in en datamängd', code: 'df <- dm_read("Befolkning per kommun 2024")\nhead(df)' },
-      { label: 'Sammanfatta', code: 'summary(df)' },
-      { label: 'Gruppera med dplyr', code: 'library(dplyr)\ndf |>\n  group_by(lan) |>\n  summarise(folkmangd = sum(folkmangd), kommuner = n()) |>\n  arrange(desc(folkmangd))' },
-      { label: 'Stapeldiagram med ggplot2', code: 'library(ggplot2)\nlibrary(dplyr)\ndf |>\n  group_by(lan) |>\n  summarise(folkmangd = sum(folkmangd)) |>\n  ggplot(aes(x = reorder(lan, folkmangd), y = folkmangd / 1000)) +\n  geom_col(fill = dm_palette()[1]) +\n  coord_flip() +\n  labs(title = "Folkmängd per län 2024", x = NULL, y = "Tusental")' },
-      { label: 'Skicka resultat till appen', code: 'resultat <- df |> dplyr::filter(folkmangd > 100000)\ndm_write(resultat, "Stora kommuner")' },
+      { labelKey: 'snippet.list', code: 'dm_list()' },
+      { labelKey: 'snippet.read', code: 'df <- dm_read("befolkning_2024")\nhead(df)' },
+      { labelKey: 'snippet.summary', code: 'summary(df)' },
+      { labelKey: 'snippet.group', code: 'library(dplyr)\ndf |>\n  group_by(lan) |>\n  summarise(folkmangd = sum(folkmangd), kommuner = n()) |>\n  arrange(desc(folkmangd))' },
+      { labelKey: 'snippet.bar', code: 'library(ggplot2)\nlibrary(dplyr)\ndf |>\n  group_by(lan) |>\n  summarise(folkmangd = sum(folkmangd)) |>\n  ggplot(aes(x = reorder(lan, folkmangd), y = folkmangd / 1000)) +\n  geom_col(fill = dm_palette()[1]) +\n  coord_flip() +\n  labs(title = "Folkmängd per län 2024", x = NULL, y = "Tusental")' },
+      { labelKey: 'snippet.write', code: 'resultat <- df |> dplyr::filter(folkmangd > 100000)\ndm_write(resultat, "Stora kommuner")' },
     ],
   }));
 })();

@@ -16,7 +16,9 @@
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
     const FORMATS = ['json', 'jsonstat', 'csv', 'geojson', 'xml', 'entryscape', 'text'];
-    const FAMILIES = ['pxweb', 'socialstyrelsen'];
+    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi'];
+    /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
+    const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU'];
     const ID = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' };
 
     const paramSchema = {
@@ -93,6 +95,10 @@
         docs: { type: 'string' },
         license: { type: 'object', properties: { name: { type: 'string' }, url: { type: 'string' } } },
         level: { type: 'number', enum: [1, 2] },
+        country: { type: 'string', enum: COUNTRIES },
+        // Translations of name, publisher, description, notes and endpoint/parameter texts per UI language:
+        // { "en": { "name": "...", "endpoints": { "<id>": { "name": "...", "params": { "<name>": { "label": "..." } } } } } }
+        i18n: { type: 'object' },
         baseUrl: { type: 'string', pattern: '^(https?://|dataspatium-asset://)' },
         headers: { type: 'object' },
         auth: {
@@ -100,7 +106,9 @@
           properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
         },
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
-        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' } } },
+        // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
+        // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.
+        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
         endpoints: { type: 'array', items: endpointSchema },
         notes: { type: 'string' },
       },
@@ -117,23 +125,23 @@
       if (node.type) {
         const t = typeOf(value);
         const ok = node.type === 'integer' ? (t === 'number' && Number.isInteger(value)) : t === node.type;
-        if (!ok) { errors.push(`${path || 'roten'}: förväntade ${node.type}, fick ${t}`); return; }
+        if (!ok) { errors.push(D.t('api.schema.type', { path: path || D.t('api.schema.root'), expected: node.type, actual: t })); return; }
       }
-      if (node.enum && !node.enum.some((e) => e === value)) errors.push(`${path}: värdet ${JSON.stringify(value)} är inte ett av ${node.enum.map((e) => JSON.stringify(e)).join(', ')}`);
+      if (node.enum && !node.enum.some((e) => e === value)) errors.push(D.t('api.schema.enum', { path, value: JSON.stringify(value), allowed: node.enum.map((e) => JSON.stringify(e)).join(', ') }));
       if (typeof value === 'string') {
-        if (node.pattern && !new RegExp(node.pattern).test(value)) errors.push(`${path}: "${value}" matchar inte mönstret ${node.pattern}`);
-        if (node.minLength !== undefined && value.length < node.minLength) errors.push(`${path}: får inte vara tom`);
+        if (node.pattern && !new RegExp(node.pattern).test(value)) errors.push(D.t('api.schema.pattern', { path, value, pattern: node.pattern }));
+        if (node.minLength !== undefined && value.length < node.minLength) errors.push(D.t('api.schema.empty', { path }));
       }
-      if (typeof value === 'number' && node.minimum !== undefined && value < node.minimum) errors.push(`${path}: måste vara minst ${node.minimum}`);
+      if (typeof value === 'number' && node.minimum !== undefined && value < node.minimum) errors.push(D.t('api.schema.minimum', { path, minimum: node.minimum }));
       if (Array.isArray(value)) {
-        if (node.minItems !== undefined && value.length < node.minItems) errors.push(`${path}: minst ${node.minItems} poster krävs`);
+        if (node.minItems !== undefined && value.length < node.minItems) errors.push(D.t('api.schema.minitems', { path, n: node.minItems }));
         if (node.items) value.forEach((item, i) => check(item, node.items, `${path}[${i}]`, errors));
       }
       if (value && typeof value === 'object' && !Array.isArray(value)) {
-        for (const key of node.required || []) if (value[key] === undefined) errors.push(`${path ? path + '.' : ''}${key} saknas`);
+        for (const key of node.required || []) if (value[key] === undefined) errors.push(D.t('api.schema.required', { path: `${path ? path + '.' : ''}${key}` }));
         if (node.properties) {
           for (const [key, sub] of Object.entries(node.properties)) if (value[key] !== undefined) check(value[key], sub, path ? `${path}.${key}` : key, errors);
-          if (node.additionalProperties === false) for (const key of Object.keys(value)) if (!node.properties[key]) errors.push(`${path}.${key}: okänt fält`);
+          if (node.additionalProperties === false) for (const key of Object.keys(value)) if (!node.properties[key]) errors.push(D.t('api.schema.unknown', { path: `${path}.${key}` }));
         }
       }
     }
@@ -147,27 +155,27 @@
       check(obj, schema, '', errors);
       if (errors.length) return errors;
       const auth = obj.auth || { type: 'none' };
-      if (auth.type === 'apiKey' && !auth.name) errors.push('auth.name saknas (namnet på header eller frågeparameter för nyckeln)');
-      if (auth.type === 'oauth2_client_credentials' && !auth.tokenUrl) errors.push('auth.tokenUrl saknas');
+      if (auth.type === 'apiKey' && !auth.name) errors.push(D.t('api.schema.auth.name'));
+      if (auth.type === 'oauth2_client_credentials' && !auth.tokenUrl) errors.push(D.t('api.schema.auth.tokenurl'));
       const ids = new Set();
       for (const ep of obj.endpoints || []) {
-        if (ids.has(ep.id)) errors.push(`endpoints: id ${ep.id} förekommer flera gånger`);
+        if (ids.has(ep.id)) errors.push(D.t('api.schema.endpoint.dup', { id: ep.id }));
         ids.add(ep.id);
         const names = new Set();
         for (const p of ep.params || []) {
-          if (names.has(p.name)) errors.push(`endpoints.${ep.id}: parametern ${p.name} förekommer flera gånger`);
+          if (names.has(p.name)) errors.push(D.t('api.schema.param.dup', { id: ep.id, name: p.name }));
           names.add(p.name);
-          if (p.optionsFrom && !(obj.endpoints || []).some((e) => e.id === p.optionsFrom.endpoint)) errors.push(`endpoints.${ep.id}.${p.name}: optionsFrom pekar på okänd endpoint ${p.optionsFrom.endpoint}`);
+          if (p.optionsFrom && !(obj.endpoints || []).some((e) => e.id === p.optionsFrom.endpoint)) errors.push(D.t('api.schema.optionsfrom', { id: ep.id, name: p.name, endpoint: p.optionsFrom.endpoint }));
         }
         const pag = ep.pagination;
-        if (pag && (pag.type === 'page' || pag.type === 'offset') && !pag.param) errors.push(`endpoints.${ep.id}.pagination.param saknas`);
-        if (pag && (pag.type === 'next-url' || pag.type === 'cursor' || pag.type === 'link-rel') && !pag.path) errors.push(`endpoints.${ep.id}.pagination.path saknas`);
-        if (pag && pag.type === 'cursor' && !pag.param) errors.push(`endpoints.${ep.id}.pagination.param saknas`);
+        if (pag && (pag.type === 'page' || pag.type === 'offset') && !pag.param) errors.push(D.t('api.schema.pagination.param', { id: ep.id }));
+        if (pag && (pag.type === 'next-url' || pag.type === 'cursor' || pag.type === 'link-rel') && !pag.path) errors.push(D.t('api.schema.pagination.path', { id: ep.id }));
+        if (pag && pag.type === 'cursor' && !pag.param) errors.push(D.t('api.schema.pagination.param', { id: ep.id }));
       }
-      if (!obj.family && !(obj.endpoints && obj.endpoints.length)) errors.push('Konfigurationen behöver minst en endpoint eller en family');
+      if (!obj.family && !(obj.endpoints && obj.endpoints.length)) errors.push(D.t('api.schema.need.endpoint'));
       return errors;
     }
 
-    return { schema, validate, FORMAT_ID, AUTH_TYPES, PARAM_TYPES, PARAM_IN, PAGINATION_TYPES, FORMATS, FAMILIES };
+    return { schema, validate, FORMAT_ID, AUTH_TYPES, PARAM_TYPES, PARAM_IN, PAGINATION_TYPES, FORMATS, FAMILIES, COUNTRIES };
   });
 })();

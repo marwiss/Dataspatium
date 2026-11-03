@@ -14,7 +14,7 @@
     async function lib() {
       await D.assets.loadVendorScript('vendor/pptxgenjs/pptxgen.bundle.js');
       const P = /** @type {any} */ (globalThis).PptxGenJS;
-      if (!P) throw new Error('PptxGenJS kunde inte laddas.');
+      if (!P) throw new Error(D.t('viz.err.pptx.load'));
       return P;
     }
     const hex = (css) => String(css || '').trim().replace(/^#/, '').slice(0, 6) || '1F2937';
@@ -80,7 +80,7 @@
         done++;
         if (options.onProgress) options.onProgress({ done, total: chartList.length });
       }
-      if (!slides.length) throw new Error('Inga diagram att exportera (R-diagram exporteras från R-fliken).');
+      if (!slides.length) throw new Error(D.t('viz.err.pptx.none'));
       const blob = await build({ title: options.title, subtitle: options.subtitle, slides });
       return { blob, count: slides.length, skipped };
     }

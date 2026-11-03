@@ -15,10 +15,10 @@
     /** Which credential fields a connector needs. */
     function requiredFields(auth) {
       switch ((auth || {}).type) {
-        case 'apiKey': return [{ key: 'apiKey', label: 'API-nyckel', secret: true }];
-        case 'basic': return [{ key: 'username', label: 'Användarnamn', secret: false }, { key: 'password', label: 'Lösenord', secret: true }];
-        case 'bearer': return [{ key: 'token', label: 'Åtkomsttoken', secret: true }];
-        case 'oauth2_client_credentials': return [{ key: 'clientId', label: 'Klient-id (consumer key)', secret: false }, { key: 'clientSecret', label: 'Klienthemlighet (consumer secret)', secret: true }];
+        case 'apiKey': return [{ key: 'apiKey', label: D.t('api.auth.apikey'), secret: true }];
+        case 'basic': return [{ key: 'username', label: D.t('api.auth.username'), secret: false }, { key: 'password', label: D.t('api.auth.password'), secret: true }];
+        case 'bearer': return [{ key: 'token', label: D.t('api.auth.token'), secret: true }];
+        case 'oauth2_client_credentials': return [{ key: 'clientId', label: D.t('api.auth.clientid'), secret: false }, { key: 'clientSecret', label: D.t('api.auth.clientsecret'), secret: true }];
         default: return [];
       }
     }
@@ -38,10 +38,10 @@
         url: auth.tokenUrl, method: 'POST', body, signal: options.signal, rateKey: connector.id,
         headers: { Authorization: 'Basic ' + btoa(`${values.clientId}:${values.clientSecret}`), 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       });
-      if (!res.ok) throw http.httpError(res, 'Kunde inte hämta åtkomsttoken');
+      if (!res.ok) throw http.httpError(res, D.t('api.err.token'));
       let data;
-      try { data = JSON.parse(res.text); } catch (_e) { throw new http.ApiError('Tokensvaret var inte JSON.', { kind: 'auth' }); }
-      if (!data.access_token) throw new http.ApiError('Tokensvaret saknar access_token.', { kind: 'auth' });
+      try { data = JSON.parse(res.text); } catch (_e) { throw new http.ApiError(D.t('api.err.token.json'), { kind: 'auth' }); }
+      if (!data.access_token) throw new http.ApiError(D.t('api.err.token.missing'), { kind: 'auth' });
       const ttl = Number(data.expires_in) > 0 ? Number(data.expires_in) * 1000 : 3600000;
       tokens.set(connector.id, { token: data.access_token, expiresAt: Date.now() + ttl });
       return data.access_token;
@@ -56,7 +56,7 @@
       const auth = connector.auth || { type: 'none' };
       if (auth.type === 'none') return req;
       const values = secrets.get(connector.id);
-      if (!values || !requiredFields(auth).every((f) => values[f.key])) throw new http.ApiError(`Ange nyckel för ${connector.name} under Autentisering först.`, { kind: 'auth' });
+      if (!values || !requiredFields(auth).every((f) => values[f.key])) throw new http.ApiError(D.t('api.err.key.first', { name: connector.name }), { kind: 'auth' });
       const out = Object.assign({}, req, { headers: Object.assign({}, req.headers || {}) });
       switch (auth.type) {
         case 'apiKey': {

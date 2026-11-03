@@ -16,7 +16,7 @@
 
     function parseJsonText(text) {
       const trimmed = text.replace(/^﻿/, '').trim();
-      if (!trimmed) throw new Error('Filen är tom');
+      if (!trimmed) throw new Error(D.t('import.err.empty'));
       try { return JSON.parse(trimmed); } catch (err) {
         // NDJSON: one JSON value per line
         const lines = trimmed.split(/\r?\n/).filter((l) => l.trim());

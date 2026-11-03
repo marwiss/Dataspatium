@@ -206,7 +206,7 @@
       /** Selective sharing bundle: chosen datasets plus charts, dashboards, templates and notebooks. */
       async function shareBundle() {
         const list = store.get().datasets;
-        const name = /** @type {any} */ (h('dm-input', { label: t('bundle.name'), value: 'dataspatium-paket' }));
+        const name = /** @type {any} */ (h('dm-input', { label: t('bundle.name'), value: t('bundle.default.name') }));
         const chosen = new Set(list.map((d) => d.id));
         const switches = list.map((d) => {
           const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) })})` }));
@@ -229,7 +229,7 @@
         if (ok !== true) return;
         try {
           shell.setStatus('saving');
-          const label = name.value.trim() || 'dataspatium-paket';
+          const label = name.value.trim() || t('bundle.default.name');
           const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc });
           const file = services.files.safeName(label, 'dataspatium.zip');
           services.files.download(res.blob, file);
@@ -287,8 +287,8 @@
           shell.setStatus('saving');
           const { blob, count } = await services.workspace.backup();
           const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-          services.files.download(blob, `dataspatium-arbetsyta-${stamp}.zip`);
-          shell.log(t('datasets.backup.done') + ` (${count} datamängder, ${i18n.formatBytes(blob.size)})`, 'ok');
+          services.files.download(blob, t('datasets.backup.file', { stamp }));
+          shell.log(t('datasets.backup.done') + ' ' + t('datasets.backup.stats', { count, size: i18n.formatBytes(blob.size) }), 'ok');
         } catch (err) { shell.log(String((err && err.message) || err), 'error'); }
         shell.setStatus('saved');
         render();

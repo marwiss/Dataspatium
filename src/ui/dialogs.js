@@ -96,8 +96,8 @@
         async function exportReport() {
           const meta = await datasets.get(ctx.datasetId);
           const md = rulesMod.toMarkdown(lastRun, meta);
-          const html = D.require('docgen/builders').toHtml(D.require('docgen/markdown').parse(md), { title: `Datakvalitetsrapport: ${meta ? meta.name : ''}` });
-          const name = files.safeName(`datakvalitet ${meta ? meta.name : ''}`, 'html');
+          const html = D.require('docgen/builders').toHtml(D.require('docgen/markdown').parse(md), { title: t('rules.report.page', { name: meta ? meta.name : '' }) });
+          const name = files.safeName(t('rules.report.file', { name: meta ? meta.name : '' }), 'html');
           files.download(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
           overlays.toast.show(t('rules.report.done', { name }), { kind: 'ok' });
         }
@@ -190,7 +190,7 @@
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('recipe.copy.r'), icon: 'copy', disabled: !steps.length, onClick: async () => { await navigator.clipboard.writeText(await recipes.toR(ctx.datasetId)); overlays.toast.show(t('common.copied'), { kind: 'ok' }); } }),
             basic.button({ label: t('recipe.copy.sql'), icon: 'copy', disabled: !steps.length, onClick: async () => { await navigator.clipboard.writeText(await recipes.toSQL(ctx.datasetId)); overlays.toast.show(t('common.copied'), { kind: 'ok' }); } }),
-            basic.button({ label: t('recipe.download'), icon: 'download', disabled: !steps.length, onClick: async () => { const meta = await datasets.get(ctx.datasetId); files.download(new Blob([recipes.exportJson(steps, meta ? meta.name : '')], { type: 'application/json' }), files.safeName((meta ? meta.name : 'recept') + ' recept', 'recipe.json')); } })),
+            basic.button({ label: t('recipe.download'), icon: 'download', disabled: !steps.length, onClick: async () => { const meta = await datasets.get(ctx.datasetId); files.download(new Blob([recipes.exportJson(steps, meta ? meta.name : '')], { type: 'application/json' }), files.safeName(t('recipe.file', { name: meta ? meta.name : t('recipe.default.name').toLowerCase() }), 'recipe.json')); } })),
           others.length && steps.length ? h('div', { class: 'dm-row' }, target, basic.button({ label: t('recipe.replay'), icon: 'play', onClick: async () => { const res = await recipes.replay(target.value, steps); const failed = res.filter((r) => !r.ok); overlays.toast.show(failed.length ? t('recipe.replay.partial', { done: res.length - failed.length, total: steps.length, error: failed[0].error }) : t('recipe.replay.done', { n: res.length }), { kind: failed.length ? 'warn' : 'ok', timeout: 8000 }); } })) : null,
           h('div', { class: 'dm-row' }, basic.button({ label: t('recipe.import'), icon: 'upload', onClick: async () => { const [file] = await files.pick({ accept: '.json' }); if (!file) return; try { const data = JSON.parse(await file.text()); const res = await recipes.replay(ctx.datasetId, data.steps || []); const failed = res.filter((r) => !r.ok); overlays.toast.show(failed.length ? t('recipe.replay.partial', { done: res.length - failed.length, total: (data.steps || []).length, error: failed[0].error }) : t('recipe.replay.done', { n: res.length }), { kind: failed.length ? 'warn' : 'ok', timeout: 8000 }); if (ctx.onApplied) ctx.onApplied({}, t('recipe.import')); closeDialog(body); } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); } } })));
         return overlays.dialog.open({ title: t('bearbeta.recipe'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });

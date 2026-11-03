@@ -16,12 +16,12 @@
       const num = columns.find((c) => c.type === 'integer' || c.type === 'number');
       const cat = columns.find((c) => c.type === 'text');
       const x = cat ? cat.name : (columns[0] ? columns[0].name : 'x'); const y = num ? num.name : (columns[1] ? columns[1].name : 'y');
-      return `library(ggplot2)\nlibrary(dplyr)\n\n# df är datamängden "${datasetName}"\ndf |>\n  group_by(${x}) |>\n  summarise(${y} = sum(${y}, na.rm = TRUE)) |>\n  slice_max(${y}, n = 15) |>\n  ggplot(aes(x = reorder(${x}, ${y}), y = ${y})) +\n  geom_col(fill = dm_palette()[1]) +\n  coord_flip() +\n  labs(title = "${datasetName}", x = NULL, y = "${y}") +\n  theme_dataspatium()\n`;
+      return `library(ggplot2)\nlibrary(dplyr)\n\n${D.t('r.snippet.comment', { name: datasetName })}\ndf |>\n  group_by(${x}) |>\n  summarise(${y} = sum(${y}, na.rm = TRUE)) |>\n  slice_max(${y}, n = 15) |>\n  ggplot(aes(x = reorder(${x}, ${y}), y = ${y})) +\n  geom_col(fill = dm_palette()[1]) +\n  coord_flip() +\n  labs(title = "${datasetName}", x = NULL, y = "${y}") +\n  theme_dataspatium()\n`;
     }
 
-    /** Code that loads the dataset (optionally filtered) before the user's script. */
-    function prelude(datasetName, group) {
-      const lines = [`df <- dm_read(${JSON.stringify(datasetName)})`];
+    /** Code that loads the dataset (by short name when known, optionally filtered) before the user's script. */
+    function prelude(datasetRef, group) {
+      const lines = [`df <- dm_read(${JSON.stringify(datasetRef)})`];
       if (group) lines.push(`df <- df[!is.na(df[[${JSON.stringify(group.column)}]]) & as.character(df[[${JSON.stringify(group.column)}]]) == ${JSON.stringify(String(group.value))}, , drop = FALSE]`);
       return lines.join('\n') + '\n';
     }
@@ -52,7 +52,7 @@
         if (running) return null;
         running = true; updateStatus(); runBtn.loading = true;
         try {
-          const res = await bridge.run(prelude(chart.datasetName, group) + editor.value);
+          const res = await bridge.run(prelude(chart.datasetShort || chart.datasetName, group) + editor.value);
           const plots = res.entries.filter((e) => e.kind === 'plot');
           const texts = res.entries.filter((e) => e.kind === 'stdout' || e.kind === 'stderr' || e.kind === 'error').map((e) => e.text).join('\n');
           output.textContent = texts.slice(0, 4000);

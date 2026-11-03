@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "nordic-statistics",
+  "name": "Nordic Statistics database",
+  "publisher": "Nordiska ministerrådet (Nordic Council of Ministers)",
+  "description": "Jämförbar statistik för de nordiska länderna och de självstyrande områdena: befolkning, ekonomi, arbetsmarknad, miljö, hälsa, utbildning och mer, på engelska. Bläddra i ämnesträdet, välj tabell och värden per variabel.",
+  "docs": "https://www.nordicstatistics.org/",
+  "license": { "name": "Fri att använda med källangivelse (Nordic Statistics)", "url": "https://www.nordicstatistics.org/about-nordic-statistics/" },
+  "level": 1,
+  "country": "NORDIC",
+  "baseUrl": "https://pxweb.nordicstatistics.org/api/v1/en/Nordic%20Statistics",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000 },
+  "notes": "Ange källa: Nordic Statistics database, Nordiska ministerrådet.",
+  "i18n": {
+    "en": { "name": "Nordic Statistics database", "publisher": "Nordic Council of Ministers", "description": "Comparable statistics for the Nordic countries and the self-governing areas: population, economy, labour market, environment, health, education and more, in English. Browse the subject tree, pick a table and values per variable.", "notes": "Cite the source: Nordic Statistics database, Nordic Council of Ministers." },
+    "da": { "name": "Nordic Statistics database", "publisher": "Nordisk Ministerråd", "description": "Sammenlignelig statistik for de nordiske lande og de selvstyrende områder: befolkning, økonomi, arbejdsmarked, miljø, sundhed, uddannelse og mere, på engelsk. Gennemse emnetræet, vælg tabel og værdier pr. variabel.", "notes": "Angiv kilde: Nordic Statistics database, Nordisk Ministerråd." },
+    "nb": { "name": "Nordic Statistics database", "publisher": "Nordisk ministerråd", "description": "Sammenlignbar statistikk for de nordiske landene og de selvstyrte områdene: befolkning, økonomi, arbeidsmarked, miljø, helse, utdanning og mer, på engelsk. Bla i emnetreet, velg tabell og verdier per variabel.", "notes": "Oppgi kilde: Nordic Statistics database, Nordisk ministerråd." },
+    "fi": { "name": "Nordic Statistics -tietokanta", "publisher": "Pohjoismaiden ministerineuvosto", "description": "Vertailukelpoista tilastoa Pohjoismaista ja itsehallintoalueista: väestö, talous, työmarkkinat, ympäristö, terveys, koulutus ja muuta, englanniksi. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain.", "notes": "Mainitse lähde: Nordic Statistics database, Pohjoismaiden ministerineuvosto." },
+    "is": { "name": "Nordic Statistics gagnagrunnur", "publisher": "Norræna ráðherranefndin", "description": "Samanburðarhæfar hagtölur fyrir Norðurlöndin og sjálfstjórnarsvæðin: mannfjöldi, efnahagur, vinnumarkaður, umhverfi, heilsa, menntun og fleira, á ensku. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu.", "notes": "Tilgreindu heimild: Nordic Statistics database, Norræna ráðherranefndin." }
+  }
+}

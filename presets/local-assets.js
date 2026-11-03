@@ -3,7 +3,7 @@ Dataspatium.assets.addEntries({
  "r/dataspatium.R": {
   "file": "r/dataspatium.R.js",
   "encoding": "text",
-  "size": 12866,
+  "size": 17958,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -24,82 +24,208 @@ Dataspatium.assets.addEntries({
   "size": 239831,
   "library": "dataspatium"
  },
+ "presets/api/asub-aland.api.json": {
+  "file": "presets/api/asub-aland.api.json.js",
+  "encoding": "text",
+  "size": 2730,
+  "library": "dataspatium"
+ },
+ "presets/api/avoindata-fi.api.json": {
+  "file": "presets/api/avoindata-fi.api.json.js",
+  "encoding": "text",
+  "size": 5566,
+  "library": "dataspatium"
+ },
  "presets/api/boverket-energideklarationer.api.json": {
   "file": "presets/api/boverket-energideklarationer.api.json.js",
   "encoding": "text",
-  "size": 1684,
+  "size": 6051,
+  "library": "dataspatium"
+ },
+ "presets/api/brreg-enhetsregisteret.api.json": {
+  "file": "presets/api/brreg-enhetsregisteret.api.json.js",
+  "encoding": "text",
+  "size": 7784,
   "library": "dataspatium"
  },
  "presets/api/dataportal.api.json": {
   "file": "presets/api/dataportal.api.json.js",
   "encoding": "text",
-  "size": 1574,
+  "size": 3930,
+  "library": "dataspatium"
+ },
+ "presets/api/digitraffic-tiesaa.api.json": {
+  "file": "presets/api/digitraffic-tiesaa.api.json.js",
+  "encoding": "text",
+  "size": 8836,
+  "library": "dataspatium"
+ },
+ "presets/api/dst-statistikbanken.api.json": {
+  "file": "presets/api/dst-statistikbanken.api.json.js",
+  "encoding": "text",
+  "size": 3592,
   "library": "dataspatium"
  },
  "presets/api/eurostat.api.json": {
   "file": "presets/api/eurostat.api.json.js",
   "encoding": "text",
-  "size": 2286,
+  "size": 7241,
+  "library": "dataspatium"
+ },
+ "presets/api/fhi-statistikk.api.json": {
+  "file": "presets/api/fhi-statistikk.api.json.js",
+  "encoding": "text",
+  "size": 3573,
   "library": "dataspatium"
  },
  "presets/api/fhm-folkhalsodata.api.json": {
   "file": "presets/api/fhm-folkhalsodata.api.json.js",
   "encoding": "text",
-  "size": 1462,
+  "size": 4979,
+  "library": "dataspatium"
+ },
+ "presets/api/fmi-observations.api.json": {
+  "file": "presets/api/fmi-observations.api.json.js",
+  "encoding": "text",
+  "size": 8900,
+  "library": "dataspatium"
+ },
+ "presets/api/hagstofa.api.json": {
+  "file": "presets/api/hagstofa.api.json.js",
+  "encoding": "text",
+  "size": 3079,
+  "library": "dataspatium"
+ },
+ "presets/api/hagstova-foroya.api.json": {
+  "file": "presets/api/hagstova-foroya.api.json.js",
+  "encoding": "text",
+  "size": 2664,
+  "library": "dataspatium"
+ },
+ "presets/api/kartverket-kommuneinfo.api.json": {
+  "file": "presets/api/kartverket-kommuneinfo.api.json.js",
+  "encoding": "text",
+  "size": 5814,
   "library": "dataspatium"
  },
  "presets/api/kolada.api.json": {
   "file": "presets/api/kolada.api.json.js",
   "encoding": "text",
-  "size": 5972,
+  "size": 16106,
+  "library": "dataspatium"
+ },
+ "presets/api/kuntien-avainluvut.api.json": {
+  "file": "presets/api/kuntien-avainluvut.api.json.js",
+  "encoding": "text",
+  "size": 3194,
   "library": "dataspatium"
  },
  "presets/api/lantmateriet-direkt.api.json": {
   "file": "presets/api/lantmateriet-direkt.api.json.js",
   "encoding": "text",
-  "size": 1626,
+  "size": 6082,
   "library": "dataspatium"
  },
  "presets/api/lantmateriet-geodata.api.json": {
   "file": "presets/api/lantmateriet-geodata.api.json.js",
   "encoding": "text",
-  "size": 1843,
+  "size": 4590,
   "library": "dataspatium"
  },
  "presets/api/luftkvalitet.api.json": {
   "file": "presets/api/luftkvalitet.api.json.js",
   "encoding": "text",
-  "size": 3494,
+  "size": 8785,
+  "library": "dataspatium"
+ },
+ "presets/api/met-locationforecast.api.json": {
+  "file": "presets/api/met-locationforecast.api.json.js",
+  "encoding": "text",
+  "size": 6612,
   "library": "dataspatium"
  },
  "presets/api/naturvardsregistret.api.json": {
   "file": "presets/api/naturvardsregistret.api.json.js",
   "encoding": "text",
-  "size": 2049,
+  "size": 5833,
+  "library": "dataspatium"
+ },
+ "presets/api/nordic-statistics.api.json": {
+  "file": "presets/api/nordic-statistics.api.json.js",
+  "encoding": "text",
+  "size": 3079,
+  "library": "dataspatium"
+ },
+ "presets/api/opendata-dk.api.json": {
+  "file": "presets/api/opendata-dk.api.json.js",
+  "encoding": "text",
+  "size": 5558,
+  "library": "dataspatium"
+ },
+ "presets/api/prh-ytj.api.json": {
+  "file": "presets/api/prh-ytj.api.json.js",
+  "encoding": "text",
+  "size": 7093,
   "library": "dataspatium"
  },
  "presets/api/scb-pxweb-v2.api.json": {
   "file": "presets/api/scb-pxweb-v2.api.json.js",
   "encoding": "text",
-  "size": 1701,
+  "size": 4696,
   "library": "dataspatium"
  },
  "presets/api/scb-pxweb.api.json": {
   "file": "presets/api/scb-pxweb.api.json.js",
   "encoding": "text",
-  "size": 1448,
+  "size": 5437,
   "library": "dataspatium"
  },
  "presets/api/smhi-metobs.api.json": {
   "file": "presets/api/smhi-metobs.api.json.js",
   "encoding": "text",
-  "size": 5411,
+  "size": 13799,
   "library": "dataspatium"
  },
  "presets/api/socialstyrelsen.api.json": {
   "file": "presets/api/socialstyrelsen.api.json.js",
   "encoding": "text",
-  "size": 1340,
+  "size": 5049,
+  "library": "dataspatium"
+ },
+ "presets/api/sotkanet.api.json": {
+  "file": "presets/api/sotkanet.api.json.js",
+  "encoding": "text",
+  "size": 9055,
+  "library": "dataspatium"
+ },
+ "presets/api/ssb-pxweb-v2.api.json": {
+  "file": "presets/api/ssb-pxweb-v2.api.json.js",
+  "encoding": "text",
+  "size": 2580,
+  "library": "dataspatium"
+ },
+ "presets/api/ssb-statistikkbanken.api.json": {
+  "file": "presets/api/ssb-statistikkbanken.api.json.js",
+  "encoding": "text",
+  "size": 3031,
+  "library": "dataspatium"
+ },
+ "presets/api/stat-greenland.api.json": {
+  "file": "presets/api/stat-greenland.api.json.js",
+  "encoding": "text",
+  "size": 2825,
+  "library": "dataspatium"
+ },
+ "presets/api/statfin.api.json": {
+  "file": "presets/api/statfin.api.json.js",
+  "encoding": "text",
+  "size": 3261,
+  "library": "dataspatium"
+ },
+ "presets/api/vedur-observations.api.json": {
+  "file": "presets/api/vedur-observations.api.json.js",
+  "encoding": "text",
+  "size": 6711,
   "library": "dataspatium"
  }
 });

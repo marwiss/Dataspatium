@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "ssb-statistikkbanken",
+  "name": "SSB Statistikkbanken",
+  "publisher": "Statistisk sentralbyrå (SSB)",
+  "description": "Norges officiella statistik: befolkning, arbetsmarknad, ekonomi, miljö med mera. Bläddra i ämnesträdet, välj tabell och värden per variabel. Högst 800 000 celler per anrop och 30 anrop per minut; större urval delas upp automatiskt.",
+  "docs": "https://www.ssb.no/en/api/pxwebapi",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "NO",
+  "baseUrl": "https://data.ssb.no/api/v0/no/table",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 60 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 800000, "urls": { "nb": "https://data.ssb.no/api/v0/no/table", "en": "https://data.ssb.no/api/v0/en/table" } },
+  "notes": "Ange källa: Statistisk sentralbyrå.",
+  "i18n": {
+    "en": { "name": "Statistics Norway StatBank", "publisher": "Statistics Norway (SSB)", "description": "Norway's official statistics: population, labour market, economy, environment and more. Browse the subject tree, pick a table and values per variable. At most 800,000 cells per request and 30 requests per minute; larger selections are split automatically.", "notes": "Cite the source: Statistics Norway." },
+    "da": { "name": "SSB Statistikkbanken", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Norges officielle statistik: befolkning, arbejdsmarked, økonomi, miljø og meget mere. Gennemse emnetræet, vælg tabel og værdier pr. variabel. Højst 800 000 celler pr. kald og 30 kald pr. minut; større udvalg opdeles automatisk.", "notes": "Angiv kilde: Statistisk sentralbyrå." },
+    "nb": { "name": "SSB Statistikkbanken", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Norges offisielle statistikk: befolkning, arbeidsmarked, økonomi, miljø og mer. Bla i emnetreet, velg tabell og verdier per variabel. Høyst 800 000 celler per kall og 30 kall per minutt; større utvalg deles opp automatisk.", "notes": "Oppgi kilde: Statistisk sentralbyrå." },
+    "fi": { "name": "Norjan tilastokeskus (Statistikkbanken)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Norjan virallinen tilasto: väestö, työmarkkinat, talous, ympäristö ja paljon muuta. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain. Enintään 800 000 solua per pyyntö ja 30 pyyntöä minuutissa; suuremmat valinnat jaetaan automaattisesti.", "notes": "Mainitse lähde: Statistisk sentralbyrå." },
+    "is": { "name": "Hagstofa Noregs (Statistikkbanken)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Opinber hagtölur Noregs: mannfjöldi, vinnumarkaður, efnahagur, umhverfi og fleira. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu. Að hámarki 800 000 reitir í hverju kalli og 30 köll á mínútu; stærra val er skipt upp sjálfkrafa.", "notes": "Tilgreindu heimild: Statistisk sentralbyrå." }
+  }
+}

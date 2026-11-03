@@ -189,7 +189,7 @@
      * @returns {Promise<{written: number, removed: number, datasets: number}>}
      */
     async function saveToFolder(root, options = {}) {
-      if (!root) throw new Error('Ingen mapp vald.');
+      if (!root) throw new Error(D.t('folder.err.none'));
       fs.busy = true; emitFolder();
       try {
         const list = await datasets.list();
@@ -220,7 +220,7 @@
 
     /** Read a folder written by saveToFolder; datasets and objects already present are skipped. */
     async function loadFromFolder(root) {
-      if (!root) throw new Error('Ingen mapp vald.');
+      if (!root) throw new Error(D.t('folder.err.none'));
       const wanted = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p);
       /** @type {Record<string, Uint8Array>} */
       const entries = {};

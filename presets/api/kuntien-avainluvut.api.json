@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "kuntien-avainluvut",
+  "name": "Kommunernas nyckeltal (Statistikcentralen)",
+  "publisher": "Statistikcentralen (Tilastokeskus)",
+  "description": "Nyckeltal för Finlands kommuner, välfärdsområden och landskap efter områdesindelningens år: befolkning, boende, utbildning, arbetsmarknad, näringsliv och kommunal ekonomi. Bläddra, välj tabell och värden per variabel.",
+  "docs": "https://stat.fi/fi/palvelut/tilastodatapalvelut/avoin-data-ja-rajapinnat/tietokantojen-rajapintakaytto",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://pxdata.stat.fi/PxWeb/api/v1/sv/Kuntien_avainluvut",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 10 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000, "urls": { "fi": "https://pxdata.stat.fi/PxWeb/api/v1/fi/Kuntien_avainluvut", "sv": "https://pxdata.stat.fi/PxWeb/api/v1/sv/Kuntien_avainluvut", "en": "https://pxdata.stat.fi/PxWeb/api/v1/en/Kuntien_avainluvut" } },
+  "notes": "Ange källa: Statistikcentralen.",
+  "i18n": {
+    "en": { "name": "Municipal key figures (Statistics Finland)", "publisher": "Statistics Finland (Tilastokeskus)", "description": "Key figures for Finland's municipalities, wellbeing services counties and regions by the year of the regional division: population, housing, education, labour market, business and municipal finances. Browse, pick a table and values per variable.", "notes": "Cite the source: Statistics Finland." },
+    "da": { "name": "Kommunernes nøgletal (Statistikcentralen)", "publisher": "Statistikcentralen (Tilastokeskus)", "description": "Nøgletal for Finlands kommuner, velfærdsområder og landskaber efter områdeinddelingens år: befolkning, boliger, uddannelse, arbejdsmarked, erhverv og kommunal økonomi. Gennemse, vælg tabel og værdier pr. variabel.", "notes": "Angiv kilde: Statistikcentralen." },
+    "nb": { "name": "Kommunenes nøkkeltall (Statistikcentralen)", "publisher": "Statistikcentralen (Tilastokeskus)", "description": "Nøkkeltall for Finlands kommuner, velferdsområder og landskap etter områdeinndelingens år: befolkning, bolig, utdanning, arbeidsmarked, næringsliv og kommunal økonomi. Bla, velg tabell og verdier per variabel.", "notes": "Oppgi kilde: Statistikcentralen." },
+    "fi": { "name": "Kuntien avainluvut (Tilastokeskus)", "publisher": "Tilastokeskus", "description": "Suomen kuntien, hyvinvointialueiden ja maakuntien avainluvut aluejaon vuoden mukaan: väestö, asuminen, koulutus, työmarkkinat, elinkeinot ja kuntatalous. Selaa, valitse taulukko ja arvot muuttujittain.", "notes": "Mainitse lähde: Tilastokeskus." },
+    "is": { "name": "Lykiltölur sveitarfélaga (Hagstofa Finnlands)", "publisher": "Tilastokeskus (Hagstofa Finnlands)", "description": "Lykiltölur fyrir sveitarfélög, velferðarsvæði og landshluta Finnlands eftir ári svæðaskiptingar: mannfjöldi, húsnæði, menntun, vinnumarkaður, atvinnulíf og fjármál sveitarfélaga. Flettu, veldu töflu og gildi fyrir hverja breytu.", "notes": "Tilgreindu heimild: Tilastokeskus." }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "sotkanet",
+  "name": "Sotkanet (THL)",
+  "publisher": "Institutet för hälsa och välfärd (THL)",
+  "description": "Finlands indikatorbank för hälsa och välfärd: cirka 3 800 indikatorer per kommun, välfärdsområde, landskap och hela landet, från 1990-talet och framåt. Hämta först listan över indikatorer (id, titel på finska, svenska och engelska) och regioner, därefter värden för en indikator och valda år.",
+  "docs": "https://sotkanet.fi/sotkanet/sv/tietoa-palvelusta",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://sotkanet.fi/rest/1.1",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "indicators",
+      "name": "Indikatorer",
+      "description": "Alla indikatorer med id, titel på finska, svenska och engelska samt organisation. Kolumnen id används för att hämta värden.",
+      "method": "GET",
+      "path": "/indicators",
+      "params": [],
+      "response": { "format": "json", "drop": ["classifications"] },
+      "dataset": { "name": "Sotkanet indikatorer", "keys": ["id"] }
+    },
+    {
+      "id": "regions",
+      "name": "Regioner",
+      "description": "Kommuner, välfärdsområden, landskap och andra områden med Sotkanets id, kod och kategori.",
+      "method": "GET",
+      "path": "/regions",
+      "params": [],
+      "response": { "format": "json", "drop": ["memberOf", "uri"] },
+      "dataset": { "name": "Sotkanet regioner", "keys": ["id"] }
+    },
+    {
+      "id": "data",
+      "name": "Hämta värden",
+      "description": "Värden för en indikator per region, år och kön. Kolumnen region är Sotkanets region-id (se tabellen Regioner).",
+      "method": "GET",
+      "path": "/json",
+      "params": [
+        { "name": "indicator", "in": "query", "label": "Indikator (id)", "type": "string", "required": true, "example": "4" },
+        { "name": "years", "in": "query", "label": "År (flera med komma)", "type": "multi", "style": "repeat", "required": true, "example": "2021,2022,2023" },
+        { "name": "genders", "in": "query", "label": "Kön (total, male, female)", "type": "multi", "style": "repeat", "default": "total", "example": "total" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Sotkanet {indicator} {years}", "keys": ["indicator", "region", "year", "gender"] }
+    }
+  ],
+  "notes": "Ange källa: THL, Sotkanet. Indikatorer från andra producenter kan ha egna villkor.",
+  "i18n": {
+    "en": { "name": "Sotkanet (THL)", "publisher": "Finnish Institute for Health and Welfare (THL)", "description": "Finland's indicator bank for health and welfare: about 3,800 indicators per municipality, wellbeing services county, region and the whole country, from the 1990s onwards. First fetch the list of indicators (id, title in Finnish, Swedish and English) and regions, then values for an indicator and chosen years.", "notes": "Cite the source: THL, Sotkanet. Indicators from other producers may have their own terms.", "endpoints": { "indicators": { "name": "Indicators", "description": "All indicators with id, title in Finnish, Swedish and English and organisation. The id column is used to fetch values." }, "regions": { "name": "Regions", "description": "Municipalities, wellbeing services counties, regions and other areas with Sotkanet's id, code and category." }, "data": { "name": "Fetch values", "description": "Values for an indicator per region, year and gender. The region column is Sotkanet's region id (see the Regions table).", "params": { "indicator": { "label": "Indicator (id)" }, "years": { "label": "Years (several with commas)" }, "genders": { "label": "Gender (total, male, female)" } } } }, "dataset": { "indicators": "Sotkanet indicators", "regions": "Sotkanet regions" } },
+    "da": { "name": "Sotkanet (THL)", "publisher": "Institut for sundhed og velfærd (THL)", "description": "Finlands indikatorbank for sundhed og velfærd: cirka 3 800 indikatorer pr. kommune, velfærdsområde, landskab og hele landet fra 1990'erne og frem. Hent først listen over indikatorer (id, titel på finsk, svensk og engelsk) og regioner, derefter værdier for en indikator og valgte år.", "notes": "Angiv kilde: THL, Sotkanet. Indikatorer fra andre producenter kan have egne vilkår.", "endpoints": { "indicators": { "name": "Indikatorer", "description": "Alle indikatorer med id, titel på finsk, svensk og engelsk samt organisation. Kolonnen id bruges til at hente værdier." }, "regions": { "name": "Regioner", "description": "Kommuner, velfærdsområder, landskaber og andre områder med Sotkanets id, kode og kategori." }, "data": { "name": "Hent værdier", "description": "Værdier for en indikator pr. region, år og køn. Kolonnen region er Sotkanets region-id (se tabellen Regioner).", "params": { "indicator": { "label": "Indikator (id)" }, "years": { "label": "År (flere med komma)" }, "genders": { "label": "Køn (total, male, female)" } } } }, "dataset": { "indicators": "Sotkanet indikatorer", "regions": "Sotkanet regioner" } },
+    "nb": { "name": "Sotkanet (THL)", "publisher": "Institutet för hälsa och välfärd (THL)", "description": "Finlands indikatorbank for helse og velferd: om lag 3 800 indikatorer per kommune, velferdsområde, landskap og hele landet fra 1990-tallet og framover. Hent først listen over indikatorer (id, tittel på finsk, svensk og engelsk) og regioner, deretter verdier for en indikator og valgte år.", "notes": "Oppgi kilde: THL, Sotkanet. Indikatorer fra andre produsenter kan ha egne vilkår.", "endpoints": { "indicators": { "name": "Indikatorer", "description": "Alle indikatorer med id, tittel på finsk, svensk og engelsk og organisasjon. Kolonnen id brukes for å hente verdier." }, "regions": { "name": "Regioner", "description": "Kommuner, velferdsområder, landskap og andre områder med Sotkanets id, kode og kategori." }, "data": { "name": "Hent verdier", "description": "Verdier for en indikator per region, år og kjønn. Kolonnen region er Sotkanets region-id (se tabellen Regioner).", "params": { "indicator": { "label": "Indikator (id)" }, "years": { "label": "År (flere med komma)" }, "genders": { "label": "Kjønn (total, male, female)" } } } }, "dataset": { "indicators": "Sotkanet indikatorer", "regions": "Sotkanet regioner" } },
+    "fi": { "name": "Sotkanet (THL)", "publisher": "Terveyden ja hyvinvoinnin laitos (THL)", "description": "Suomen terveyden ja hyvinvoinnin indikaattoripankki: noin 3 800 indikaattoria kunnittain, hyvinvointialueittain, maakunnittain ja koko maan tasolla 1990-luvulta alkaen. Nouda ensin indikaattoriluettelo (id, nimi suomeksi, ruotsiksi ja englanniksi) ja alueet, sitten arvot indikaattorille ja valituille vuosille.", "notes": "Mainitse lähde: THL, Sotkanet. Muiden tuottajien indikaattoreilla voi olla omat ehtonsa.", "endpoints": { "indicators": { "name": "Indikaattorit", "description": "Kaikki indikaattorit: id, nimi suomeksi, ruotsiksi ja englanniksi sekä organisaatio. Saraketta id käytetään arvojen noutamiseen." }, "regions": { "name": "Alueet", "description": "Kunnat, hyvinvointialueet, maakunnat ja muut alueet Sotkanetin id:llä, koodilla ja luokalla." }, "data": { "name": "Nouda arvot", "description": "Indikaattorin arvot alueittain, vuosittain ja sukupuolittain. Sarake region on Sotkanetin alue-id (ks. taulukko Alueet).", "params": { "indicator": { "label": "Indikaattori (id)" }, "years": { "label": "Vuodet (useita pilkulla)" }, "genders": { "label": "Sukupuoli (total, male, female)" } } } }, "dataset": { "indicators": "Sotkanet indikaattorit", "regions": "Sotkanet alueet" } },
+    "is": { "name": "Sotkanet (THL)", "publisher": "Heilbrigðis- og velferðarstofnun Finnlands (THL)", "description": "Vísitölubanki Finnlands fyrir heilsu og velferð: um 3 800 vísar fyrir sveitarfélög, velferðarsvæði, landshluta og landið allt frá tíunda áratugnum. Sæktu fyrst listann yfir vísa (auðkenni, heiti á finnsku, sænsku og ensku) og svæði, síðan gildi fyrir vísi og valin ár.", "notes": "Tilgreindu heimild: THL, Sotkanet. Vísar frá öðrum framleiðendum geta haft eigin skilmála.", "endpoints": { "indicators": { "name": "Vísar", "description": "Allir vísar með auðkenni, heiti á finnsku, sænsku og ensku og stofnun. Dálkurinn id er notaður til að sækja gildi." }, "regions": { "name": "Svæði", "description": "Sveitarfélög, velferðarsvæði, landshlutar og önnur svæði með auðkenni, kóða og flokki Sotkanet." }, "data": { "name": "Sækja gildi", "description": "Gildi fyrir vísi eftir svæði, ári og kyni. Dálkurinn region er svæðisauðkenni Sotkanet (sjá töfluna Svæði).", "params": { "indicator": { "label": "Vísir (auðkenni)" }, "years": { "label": "Ár (fleiri með kommum)" }, "genders": { "label": "Kyn (total, male, female)" } } } }, "dataset": { "indicators": "Sotkanet vísar", "regions": "Sotkanet svæði" } }
+  }
+}

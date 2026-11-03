@@ -7,10 +7,11 @@
   "docs": "https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/",
   "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://api.scb.se/OV0104/v1/doris/sv/ssd",
   "auth": { "type": "none" },
   "rateLimit": { "requests": 30, "perSeconds": 10 },
-  "family": { "type": "pxweb", "version": 1, "maxCells": 150000 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 150000, "urls": { "sv": "https://api.scb.se/OV0104/v1/doris/sv/ssd", "en": "https://api.scb.se/OV0104/v1/doris/en/ssd" } },
   "endpoints": [
     {
       "id": "folder",
@@ -25,5 +26,12 @@
       "dataset": { "name": "SCB mapp {path}" }
     }
   ],
-  "notes": "Ange källa: SCB. Tabellsökvägar och variabelkoder är stabila och kan delas i konfigurationer."
+  "notes": "Ange källa: SCB. Tabellsökvägar och variabelkoder är stabila och kan delas i konfigurationer.",
+  "i18n": {
+    "en": {"name": "SCB Statistical Database", "publisher": "Statistics Sweden (SCB)", "description": "Sweden's official statistics on population, labour market, economy, housing, environment and much more, in Swedish and English. Browse the subject tree, pick a table and values per variable. At most 150,000 cells per request; larger selections are split automatically.", "endpoints": {"folder": {"name": "List the contents of a folder", "description": "Folders and tables under a path in the subject tree, for example BE/BE0101/BE0101A. An empty path gives the subject areas.", "params": {"path": {"label": "Path"}}}}, "dataset": {"folder": "SCB folder {path}"}, "notes": "Cite the source: SCB. Table paths and variable codes are stable and can be shared in configurations."},
+    "da": {"name": "SCB Statistikdatabasen", "publisher": "Statistiska centralbyrån (SCB, Sveriges statistik)", "description": "Sveriges officielle statistik om befolkning, arbejdsmarked, økonomi, boliger, miljø og meget mere, på svensk og engelsk. Gennemse emnetræet, vælg tabel og værdier pr. variabel. Højst 150 000 celler pr. kald; større udvalg opdeles automatisk.", "endpoints": {"folder": {"name": "Vis indholdet i en mappe", "description": "Mapper og tabeller under en sti i emnetræet, for eksempel BE/BE0101/BE0101A. En tom sti giver emneområderne.", "params": {"path": {"label": "Sti"}}}}, "dataset": {"folder": "SCB mappe {path}"}, "notes": "Angiv kilde: SCB. Tabelstier og variabelkoder er stabile og kan deles i konfigurationer."},
+    "nb": {"name": "SCB Statistikdatabasen", "publisher": "Statistiska centralbyrån (SCB, Sveriges statistikkbyrå)", "description": "Sveriges offisielle statistikk om befolkning, arbeidsmarked, økonomi, bolig, miljø og mye mer, på svensk og engelsk. Bla i emnetreet, velg tabell og verdier per variabel. Høyst 150 000 celler per kall; større utvalg deles opp automatisk.", "endpoints": {"folder": {"name": "List innholdet i en mappe", "description": "Mapper og tabeller under en sti i emnetreet, for eksempel BE/BE0101/BE0101A. En tom sti gir emneområdene.", "params": {"path": {"label": "Sti"}}}}, "dataset": {"folder": "SCB mappe {path}"}, "notes": "Oppgi kilde: SCB. Tabellstier og variabelkoder er stabile og kan deles i konfigurasjoner."},
+    "fi": {"name": "SCB Statistikdatabasen", "publisher": "Ruotsin tilastokeskus (SCB)", "description": "Ruotsin virallinen tilasto väestöstä, työmarkkinoista, taloudesta, asumisesta, ympäristöstä ja paljon muusta ruotsiksi ja englanniksi. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain. Enintään 150 000 solua per kutsu; suuremmat valinnat jaetaan automaattisesti.", "endpoints": {"folder": {"name": "Luettele kansion sisältö", "description": "Kansiot ja taulukot aihepuun polun alla, esimerkiksi BE/BE0101/BE0101A. Tyhjä polku antaa aihealueet.", "params": {"path": {"label": "Polku"}}}}, "dataset": {"folder": "SCB kansio {path}"}, "notes": "Mainitse lähde: SCB. Taulukkopolut ja muuttujakoodit ovat pysyviä ja niitä voi jakaa määrityksissä."},
+    "is": {"name": "SCB Statistikdatabasen", "publisher": "Hagstofa Svíþjóðar (SCB)", "description": "Opinberar hagtölur Svíþjóðar um mannfjölda, vinnumarkað, efnahag, húsnæði, umhverfi og margt fleira, á sænsku og ensku. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu. Að hámarki 150 000 reitir í hverju kalli; stærra val er skipt upp sjálfkrafa.", "endpoints": {"folder": {"name": "Sýna innihald möppu", "description": "Möppur og töflur undir slóð í efnistrénu, til dæmis BE/BE0101/BE0101A. Auð slóð gefur efnissviðin.", "params": {"path": {"label": "Slóð"}}}}, "dataset": {"folder": "SCB mappa {path}"}, "notes": "Tilgreindu heimild: SCB. Slóðir taflna og breytukóðar eru stöðug og má deila í uppsetningum."}
+  }
 }

@@ -1,0 +1,45 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "fmi-observations",
+  "name": "Meteorologiska institutet FMI: väderobservationer",
+  "publisher": "Meteorologiska institutet (Ilmatieteen laitos)",
+  "description": "Observationer från Finlands väderstationer: temperatur, luftfuktighet, vind, nederbörd, lufttryck med mera, per ort eller stations-id. Resultatet är långt: en rad per tidpunkt och parameter med stationens position. Högst en vecka per anrop.",
+  "docs": "https://en.ilmatieteenlaitos.fi/open-data-manual",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://opendata.fmi.fi",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 2, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "observations",
+      "name": "Väderobservationer",
+      "description": "Parametrar: t2m (temperatur), rh (luftfuktighet), ws_10min (vind), wd_10min (vindriktning), r_1h (nederbörd), p_sea (lufttryck), snow_aws (snödjup), vis (sikt). Ange ort eller stations-id.",
+      "method": "GET",
+      "path": "/wfs",
+      "params": [
+        { "name": "service", "in": "query", "type": "string", "default": "WFS", "hidden": true },
+        { "name": "version", "in": "query", "type": "string", "default": "2.0.0", "hidden": true },
+        { "name": "request", "in": "query", "type": "string", "default": "getFeature", "hidden": true },
+        { "name": "storedquery_id", "in": "query", "type": "string", "default": "fmi::observations::weather::simple", "hidden": true },
+        { "name": "place", "in": "query", "label": "Ort", "type": "string", "example": "Helsinki" },
+        { "name": "fmisid", "in": "query", "label": "Stations-id (fmisid)", "type": "string", "example": "100971" },
+        { "name": "parameters", "in": "query", "label": "Parametrar (komma mellan)", "type": "string", "default": "t2m,rh,ws_10min,r_1h", "example": "t2m,rh" },
+        { "name": "starttime", "in": "query", "label": "Från (ISO 8601, UTC)", "type": "string", "example": "2026-01-01T00:00:00Z" },
+        { "name": "endtime", "in": "query", "label": "Till (ISO 8601, UTC)", "type": "string", "example": "2026-01-07T00:00:00Z" },
+        { "name": "timestep", "in": "query", "label": "Tidssteg (minuter)", "type": "number", "default": 60 }
+      ],
+      "response": { "format": "xml", "recordTag": "BsWfsElement", "rename": { "Location.Point.pos": "position", "Time": "time", "ParameterName": "parameter", "ParameterValue": "value" }, "convert": { "ParameterValue": "number" }, "drop": ["@gml:id", "Location.Point.@gml:id", "Location.Point.@srsDimension", "Location.Point.@srsName"] },
+      "dataset": { "name": "FMI observationer {place} {fmisid}" }
+    }
+  ],
+  "notes": "Ange källa: Meteorologiska institutet. Positionen är latitud och longitud (EPSG:4258) i en kolumn; dela den med Dela kolumn vid behov.",
+  "i18n": {
+    "en": { "name": "Finnish Meteorological Institute: weather observations", "publisher": "Finnish Meteorological Institute (FMI)", "description": "Observations from Finland's weather stations: temperature, humidity, wind, precipitation, air pressure and more, per place or station id. The result is long: one row per time and parameter with the station's position. At most one week per request.", "notes": "Cite the source: Finnish Meteorological Institute. The position is latitude and longitude (EPSG:4258) in one column; split it with Split column if needed.", "endpoints": { "observations": { "name": "Weather observations", "description": "Parameters: t2m (temperature), rh (humidity), ws_10min (wind), wd_10min (wind direction), r_1h (precipitation), p_sea (air pressure), snow_aws (snow depth), vis (visibility). Give a place or a station id.", "params": { "place": { "label": "Place" }, "fmisid": { "label": "Station id (fmisid)" }, "parameters": { "label": "Parameters (comma-separated)" }, "starttime": { "label": "From (ISO 8601, UTC)" }, "endtime": { "label": "Until (ISO 8601, UTC)" }, "timestep": { "label": "Time step (minutes)" } } } }, "dataset": { "observations": "FMI observations {place} {fmisid}" } },
+    "da": { "name": "Meteorologisk institut FMI: vejrobservationer", "publisher": "Meteorologisk institut (Ilmatieteen laitos)", "description": "Observationer fra Finlands vejrstationer: temperatur, luftfugtighed, vind, nedbør, lufttryk og mere, pr. by eller stations-id. Resultatet er langt: én række pr. tidspunkt og parameter med stationens position. Højst en uge pr. kald.", "notes": "Angiv kilde: Meteorologisk institut. Positionen er bredde- og længdegrad (EPSG:4258) i én kolonne; opdel den med Opdel kolonne ved behov.", "endpoints": { "observations": { "name": "Vejrobservationer", "description": "Parametre: t2m (temperatur), rh (luftfugtighed), ws_10min (vind), wd_10min (vindretning), r_1h (nedbør), p_sea (lufttryk), snow_aws (snedybde), vis (sigtbarhed). Angiv by eller stations-id.", "params": { "place": { "label": "By" }, "fmisid": { "label": "Stations-id (fmisid)" }, "parameters": { "label": "Parametre (komma imellem)" }, "starttime": { "label": "Fra (ISO 8601, UTC)" }, "endtime": { "label": "Til (ISO 8601, UTC)" }, "timestep": { "label": "Tidsskridt (minutter)" } } } }, "dataset": { "observations": "FMI observationer {place} {fmisid}" } },
+    "nb": { "name": "Meteorologisk institutt FMI: værobservasjoner", "publisher": "Meteorologisk institutt (Ilmatieteen laitos)", "description": "Observasjoner fra Finlands værstasjoner: temperatur, luftfuktighet, vind, nedbør, lufttrykk og mer, per sted eller stasjons-id. Resultatet er langt: én rad per tidspunkt og parameter med stasjonens posisjon. Høyst en uke per kall.", "notes": "Oppgi kilde: Meteorologisk institutt. Posisjonen er bredde- og lengdegrad (EPSG:4258) i én kolonne; del den opp med Del opp kolonne ved behov.", "endpoints": { "observations": { "name": "Værobservasjoner", "description": "Parametere: t2m (temperatur), rh (luftfuktighet), ws_10min (vind), wd_10min (vindretning), r_1h (nedbør), p_sea (lufttrykk), snow_aws (snødybde), vis (sikt). Angi sted eller stasjons-id.", "params": { "place": { "label": "Sted" }, "fmisid": { "label": "Stasjons-id (fmisid)" }, "parameters": { "label": "Parametere (komma mellom)" }, "starttime": { "label": "Fra (ISO 8601, UTC)" }, "endtime": { "label": "Til (ISO 8601, UTC)" }, "timestep": { "label": "Tidssteg (minutter)" } } } }, "dataset": { "observations": "FMI observasjoner {place} {fmisid}" } },
+    "fi": { "name": "Ilmatieteen laitos: säähavainnot", "publisher": "Ilmatieteen laitos", "description": "Havaintoja Suomen sääasemilta: lämpötila, kosteus, tuuli, sade, ilmanpaine ja muuta, paikkakunnan tai aseman tunnuksen mukaan. Tulos on pitkä: yksi rivi per ajankohta ja parametri aseman sijainnin kanssa. Enintään viikko per pyyntö.", "notes": "Mainitse lähde: Ilmatieteen laitos. Sijainti on leveys- ja pituusaste (EPSG:4258) yhdessä sarakkeessa; jaa se tarvittaessa toiminnolla Jaa sarake.", "endpoints": { "observations": { "name": "Säähavainnot", "description": "Parametrit: t2m (lämpötila), rh (kosteus), ws_10min (tuuli), wd_10min (tuulen suunta), r_1h (sade), p_sea (ilmanpaine), snow_aws (lumensyvyys), vis (näkyvyys). Anna paikkakunta tai aseman tunnus.", "params": { "place": { "label": "Paikkakunta" }, "fmisid": { "label": "Aseman tunnus (fmisid)" }, "parameters": { "label": "Parametrit (pilkuin erotettuina)" }, "starttime": { "label": "Alkaen (ISO 8601, UTC)" }, "endtime": { "label": "Asti (ISO 8601, UTC)" }, "timestep": { "label": "Aikaväli (minuuttia)" } } } }, "dataset": { "observations": "FMI havainnot {place} {fmisid}" } },
+    "is": { "name": "Veðurstofa Finnlands FMI: veðurathuganir", "publisher": "Veðurstofa Finnlands (Ilmatieteen laitos)", "description": "Athuganir frá veðurstöðvum Finnlands: hiti, loftraki, vindur, úrkoma, loftþrýstingur og fleira, eftir stað eða auðkenni stöðvar. Niðurstaðan er löng: ein röð fyrir hvern tíma og breytu með staðsetningu stöðvarinnar. Að hámarki ein vika í hverju kalli.", "notes": "Tilgreindu heimild: Veðurstofa Finnlands. Staðsetningin er breidd og lengd (EPSG:4258) í einum dálki; skiptu honum með Skipta dálki ef þarf.", "endpoints": { "observations": { "name": "Veðurathuganir", "description": "Breytur: t2m (hiti), rh (loftraki), ws_10min (vindur), wd_10min (vindátt), r_1h (úrkoma), p_sea (loftþrýstingur), snow_aws (snjódýpt), vis (skyggni). Gefðu upp stað eða auðkenni stöðvar.", "params": { "place": { "label": "Staður" }, "fmisid": { "label": "Auðkenni stöðvar (fmisid)" }, "parameters": { "label": "Breytur (kommur á milli)" }, "starttime": { "label": "Frá (ISO 8601, UTC)" }, "endtime": { "label": "Til (ISO 8601, UTC)" }, "timestep": { "label": "Tímaskref (mínútur)" } } } }, "dataset": { "observations": "FMI athuganir {place} {fmisid}" } }
+  }
+}

@@ -16,7 +16,7 @@
       return importers.find((i) => i.detect(file)) || csv;
     }
 
-    function baseName(fileName) { return String(fileName || 'Datamängd').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Datamängd'; }
+    function baseName(fileName) { return String(fileName || D.t('datasets.default.name')).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || D.t('datasets.default.name'); }
 
     /**
      * Preview a file: columns, sample rows and inferred types.
@@ -113,7 +113,7 @@
         });
         if (!handle) {
           // An empty file: create the dataset from the header alone.
-          if (!result.columns.length) throw new Error('Filen innehåller inga kolumner. Kontrollera avgränsare och teckenkodning i förhandsgranskningen.');
+          if (!result.columns.length) throw new Error(D.t('import.err.nocolumns'));
           names = types.cleanColumnNames(result.columns);
           columnSpecs = columnSpecs || names.map((n) => ({ name: n, type: 'text', include: true }));
           handle = await datasets.createEmpty({ name: name || baseName(file.name), columns: materialize({ columns: names, rows: [] }, columnSpecs, options).columns, source: { kind: 'file', fileName: file.name, size: file.size, format: 'csv' }, importOptions: Object.assign({}, options) });
@@ -131,7 +131,7 @@
       table.columns = types.cleanColumnNames(table.columns);
       const columnSpecs = specs || types.inferColumns(table.columns, table.rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
       const { columns, rows } = materialize(table, columnSpecs, options);
-      return datasets.create({ name: name || 'Inklistrad tabell', columns, rows, source: { kind: 'paste', format: 'text' }, importOptions: Object.assign({}, options, table.meta) });
+      return datasets.create({ name: name || D.t('import.paste.name'), columns, rows, source: { kind: 'paste', format: 'text' }, importOptions: Object.assign({}, options, table.meta) });
     }
 
     /**
@@ -151,7 +151,9 @@
       table.columns = types.cleanColumnNames(table.columns);
       const specs = types.inferColumns(table.columns, table.rows, { decimal: options.decimal }).map((c) => Object.assign({ include: true }, c));
       const { columns, rows } = materialize(table, specs, options);
-      return datasets.create({ name: preset.name, description: preset.description || '', columns, rows, source: Object.assign({ kind: 'preset', preset: preset.id }, preset.source || {}), importOptions: Object.assign({}, options, table.meta) });
+      const name = preset.nameKey ? D.t(preset.nameKey) : preset.name;
+      const description = preset.descriptionKey ? D.t(preset.descriptionKey) : (preset.description || '');
+      return datasets.create({ name, shortName: preset.shortName, description, columns, rows, source: Object.assign({ kind: 'preset', preset: preset.id }, preset.source || {}), importOptions: Object.assign({}, options, table.meta) });
     }
 
     async function previewText(text, options = {}) {

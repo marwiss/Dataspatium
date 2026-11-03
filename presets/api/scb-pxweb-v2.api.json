@@ -7,10 +7,11 @@
   "docs": "https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/",
   "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://api.scb.se/OV0104/v2beta/api/v2",
   "auth": { "type": "none" },
   "rateLimit": { "requests": 30, "perSeconds": 10 },
-  "family": { "type": "pxweb", "version": 2, "lang": "sv", "maxCells": 150000 },
+  "family": { "type": "pxweb", "version": 2, "lang": "sv", "langs": ["sv", "en"], "maxCells": 150000 },
   "endpoints": [
     {
       "id": "tables",
@@ -28,5 +29,12 @@
       "response": { "format": "json", "path": "tables", "drop": ["links", "paths"] },
       "dataset": { "name": "SCB tabeller: {query}" }
     }
-  ]
+  ],
+  "i18n": {
+    "en": {"name": "SCB Statistical Database (API v2, beta)", "publisher": "Statistics Sweden (SCB)", "description": "The same statistics as the SCB Statistical Database through SCB's new API: search among tables instead of browsing the tree. The API is in beta and may change.", "endpoints": {"tables": {"name": "Search tables", "description": "List of tables matching the search words, with id, period and subject path.", "params": {"query": {"label": "Search words"}, "pastDays": {"label": "Updated in the last days"}}}}, "dataset": {"tables": "SCB tables: {query}"}},
+    "da": {"name": "SCB Statistikdatabasen (API v2, beta)", "publisher": "Statistiska centralbyrån (SCB, Sveriges statistik)", "description": "Samme statistik som SCB Statistikdatabasen via SCB's nye API: søg blandt tabeller i stedet for at gennemse træet. API'et er i beta og kan ændres.", "endpoints": {"tables": {"name": "Søg tabeller", "description": "Liste over tabeller, der matcher søgeordene, med id, periode og emnesti.", "params": {"query": {"label": "Søgeord"}, "pastDays": {"label": "Opdateret inden for de seneste dage"}}}}, "dataset": {"tables": "SCB tabeller: {query}"}},
+    "nb": {"name": "SCB Statistikdatabasen (API v2, beta)", "publisher": "Statistiska centralbyrån (SCB, Sveriges statistikkbyrå)", "description": "Samme statistikk som SCB Statistikdatabasen via SCBs nye API: søk blant tabeller i stedet for å bla i treet. API-et er i beta og kan endres.", "endpoints": {"tables": {"name": "Søk tabeller", "description": "Liste over tabeller som matcher søkeordene, med id, periode og emnesti.", "params": {"query": {"label": "Søkeord"}, "pastDays": {"label": "Oppdatert de siste dagene"}}}}, "dataset": {"tables": "SCB tabeller: {query}"}},
+    "fi": {"name": "SCB Statistikdatabasen (API v2, beta)", "publisher": "Ruotsin tilastokeskus (SCB)", "description": "Sama tilasto kuin SCB:n tilastotietokannassa SCB:n uuden rajapinnan kautta: hae taulukoita puun selaamisen sijaan. Rajapinta on beta-vaiheessa ja voi muuttua.", "endpoints": {"tables": {"name": "Hae taulukoita", "description": "Luettelo hakusanoja vastaavista taulukoista id:n, jakson ja aihepolun kera.", "params": {"query": {"label": "Hakusanat"}, "pastDays": {"label": "Päivitetty viime päivinä"}}}}, "dataset": {"tables": "SCB taulukot: {query}"}},
+    "is": {"name": "SCB Statistikdatabasen (API v2, beta)", "publisher": "Hagstofa Svíþjóðar (SCB)", "description": "Sömu hagtölur og í gagnagrunni SCB gegnum nýja vefþjónustu SCB: leitaðu meðal taflna í stað þess að fletta í trénu. Vefþjónustan er í beta-útgáfu og getur breyst.", "endpoints": {"tables": {"name": "Leita í töflum", "description": "Listi yfir töflur sem passa við leitarorðin, með auðkenni, tímabili og efnisslóð.", "params": {"query": {"label": "Leitarorð"}, "pastDays": {"label": "Uppfært síðustu daga"}}}}, "dataset": {"tables": "SCB töflur: {query}"}}
+  }
 }

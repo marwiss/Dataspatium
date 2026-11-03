@@ -4,7 +4,8 @@ Dataspatium är uppdelat i sex lägen som följer arbetets gång, i samma anda s
 samla in, bearbeta, analysera och sprida: Inhämta, Hantera, Bearbeta, Analysera, Visualisera, Exportera. Alla
 lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänster, arbetsytan i mitten,
 egenskapspanelen till höger och loggen längst ned. Panelerna byter aldrig plats. Alt+1 till Alt+6 växlar läge.
-En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera.
+En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera. Knapparna uppe till höger fäller in
+panelerna, byter tema (ljust, mörkt, följ systemet), byter språk och öppnar hjälpen.
 
 Kommandopaletten (Ctrl+K eller förstoringsglaset högst upp) når allt från ett sökfält: växla läge, öppna en
 datamängd, ett diagram eller en dashboard, köra en bearbetningsåtgärd på den valda datamängden, exportera, öppna
@@ -20,8 +21,9 @@ samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
 [format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning. Under Öppna API:er finns förinställningar för
 SCB (bläddra i ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
 luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
-Lantmäteriet Direkt för den som har nycklar. Egna konfigurationer läggs till från fil och kan delas. Se
-[api-konfiguration.md](api-konfiguration.md).
+Lantmäteriet Direkt för den som har nycklar, och därtill källor i Danmark, Norge, Finland, Island, Grönland,
+Färöarna och Åland samt Nordic Statistics; landsknapparna ovanför listan väljer vilka länders källor som visas.
+Egna konfigurationer läggs till från fil och kan delas. Se [api-konfiguration.md](api-konfiguration.md).
 
 ## Hantera
 

@@ -13,7 +13,7 @@
     function coerce(param, value) {
       if (value === undefined || value === null) return value;
       switch (param.type) {
-        case 'number': { if (value === '') return undefined; const n = Number(String(value).replace(',', '.')); if (!Number.isFinite(n)) throw new Error(`${param.label || param.name} måste vara ett tal.`); return n; }
+        case 'number': { if (value === '') return undefined; const n = Number(String(value).replace(',', '.')); if (!Number.isFinite(n)) throw new Error(D.t('api.err.number', { name: param.label || param.name })); return n; }
         case 'boolean': return value === true || value === 'true' || value === 1 || value === '1';
         case 'multi': return Array.isArray(value) ? value.map(String).filter((v) => v !== '') : String(value).split(',').map((s) => s.trim()).filter(Boolean);
         case 'querylines': return typeof value === 'string' ? value : String(value || '');
@@ -46,12 +46,12 @@
         if (isEmpty(v) && p.default !== undefined) v = p.default;
         v = coerce(p, v);
         if (!isEmpty(v)) values[p.name] = v;
-        else if (p.required) throw new Error(`Fyll i ${p.label || p.name}.`);
+        else if (p.required) throw new Error(D.t('common.err.required', { name: p.label || p.name }));
       }
       for (const p of params) if (p.template) {
         const v = substitute(p.template, values, null);
         if (!/\{[a-zA-Z0-9_.-]+\}/.test(v)) values[p.name] = v;
-        else if (p.required) throw new Error(`Fyll i ${p.label || p.name}.`);
+        else if (p.required) throw new Error(D.t('common.err.required', { name: p.label || p.name }));
       }
       return values;
     }

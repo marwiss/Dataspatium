@@ -57,7 +57,7 @@
     function xmlRecords(text, spec) {
       const doc = new DOMParser().parseFromString(text, 'application/xml');
       const error = doc.querySelector('parsererror');
-      if (error) throw new Error('Svaret var inte giltig XML.');
+      if (error) throw new Error(D.t('api.err.xml'));
       const tag = spec.recordTag || '';
       const nodes = tag ? Array.from(doc.getElementsByTagNameNS('*', tag)) : Array.from(doc.documentElement.children);
       const flattenEl = (el, prefix, out) => {
@@ -151,7 +151,7 @@
       const options = Object.assign({}, spec.options || {}, ctx.options || {});
       let data = null;
       let table;
-      const parseJson = () => { try { return jsonImp.parseJsonText(text); } catch (err) { throw new Error('Svaret var inte giltig JSON: ' + String(text || '').slice(0, 120)); } };
+      const parseJson = () => { try { return jsonImp.parseJsonText(text); } catch (err) { throw new Error(D.t('api.err.json', { text: String(text || '').slice(0, 120) })); } };
       if (format === 'json') { data = parseJson(); table = jsonImp.tabulate(jsonRecords(data, spec)); }
       else if (format === 'jsonstat') { data = parseJson(); const t = jsonstat.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
       else if (format === 'geojson') { data = parseJson(); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }

@@ -11,9 +11,9 @@
   D.define('viz/data', ['data/datasets', 'data/types'], (datasets, types) => {
     const q = datasets.quoteIdent;
     const OPERATORS = [
-      { id: '=', label: 'är lika med' }, { id: '!=', label: 'är inte lika med' }, { id: '>', label: 'större än' }, { id: '>=', label: 'minst' },
-      { id: '<', label: 'mindre än' }, { id: '<=', label: 'högst' }, { id: 'contains', label: 'innehåller' }, { id: 'in', label: 'är en av (komma)' },
-      { id: 'empty', label: 'är tom' }, { id: 'notempty', label: 'är inte tom' },
+      { id: '=', label: D.t('viz.op.eq') }, { id: '!=', label: D.t('viz.op.ne') }, { id: '>', label: D.t('viz.op.gt') }, { id: '>=', label: D.t('viz.op.ge') },
+      { id: '<', label: D.t('viz.op.lt') }, { id: '<=', label: D.t('viz.op.le') }, { id: 'contains', label: D.t('viz.op.contains') }, { id: 'in', label: D.t('viz.op.in') },
+      { id: 'empty', label: D.t('viz.op.empty') }, { id: 'notempty', label: D.t('viz.op.notempty') },
     ];
     const AGG_SQL = { sum: 'sum', mean: 'avg', average: 'avg', min: 'min', max: 'max', count: 'count', distinct: 'count(distinct', median: null };
 

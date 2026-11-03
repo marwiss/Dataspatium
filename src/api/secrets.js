@@ -43,7 +43,7 @@
       try {
         const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(record.iv) }, key, fromB64(record.data));
         return dec.decode(plain);
-      } catch (_err) { throw new Error('Fel lösenfras.'); }
+      } catch (_err) { throw new Error(D.t('api.err.passphrase')); }
     }
 
     /** Credentials for a connector in this session, or null. */
@@ -68,8 +68,8 @@
 
     /** Store credentials encrypted with the passphrase and keep them in the session. */
     async function persist(connectorId, values, passphrase) {
-      if (!passphrase || passphrase.length < 6) throw new Error('Lösenfrasen måste ha minst 6 tecken.');
-      if (!(await verifyPassphrase(passphrase))) throw new Error('Fel lösenfras. Använd samma lösenfras som för dina andra sparade nycklar.');
+      if (!passphrase || passphrase.length < 6) throw new Error(D.t('api.err.passphrase.short'));
+      if (!(await verifyPassphrase(passphrase))) throw new Error(D.t('api.err.passphrase.same'));
       await idb.setSetting(PREFIX + connectorId, await encrypt(passphrase, JSON.stringify(values)));
       session.set(connectorId, Object.assign({}, values));
       unlocked = true;
@@ -78,7 +78,7 @@
 
     /** Decrypt every persisted secret into the session. Returns the number of connectors unlocked. */
     async function unlock(passphrase) {
-      if (!(await verifyPassphrase(passphrase))) throw new Error('Fel lösenfras.');
+      if (!(await verifyPassphrase(passphrase))) throw new Error(D.t('api.err.passphrase'));
       let n = 0;
       for (const row of await idb.listSettings(PREFIX)) {
         try { session.set(row.key.slice(PREFIX.length), JSON.parse(await decrypt(passphrase, row.value))); n++; } catch (err) { D.log('secrets', 'could not decrypt', row.key, err); }

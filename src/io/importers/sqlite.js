@@ -33,7 +33,7 @@
           if (type === 7) return { type: 'GeometryCollection', geometries: parts };
           return { type: { 4: 'MultiPoint', 5: 'MultiLineString', 6: 'MultiPolygon' }[type], coordinates: parts.map((p) => p.coordinates) };
         }
-        default: throw new Error('Okänd WKB-geometrityp: ' + type);
+        default: throw new Error(D.t('import.err.wkb', { type }));
       }
     }
     /** GeoPackage binary (GPB) blob -> GeoJSON text, or null for empty geometries. */
@@ -50,7 +50,7 @@
     async function openFile(file) {
       const bytes = await file.arrayBuffer();
       const head = new TextDecoder('latin1').decode(new Uint8Array(bytes.slice(0, 15)));
-      if (head !== 'SQLite format 3') throw new Error('Filen är inte en SQLite-databas.');
+      if (head !== 'SQLite format 3') throw new Error(D.t('import.err.notsqlite'));
       const engine = new sqlite.SqliteEngine();
       await engine.start();
       await engine.open(bytes);
@@ -100,7 +100,7 @@
         let name = '';
         if (dataspatium) { const m = await engine.exec("select value from _meta where key = 'name'"); name = m[0] && m[0].values[0] ? String(m[0].values[0][0]) : ''; }
         const table = dataspatium ? 'data' : (options.table && tables.includes(options.table) ? options.table : tables[0]);
-        if (!table) throw new Error('Databasen innehåller inga tabeller.');
+        if (!table) throw new Error(D.t('import.err.notables'));
         const cols = dataspatium ? (await engine.exec('select name, type from _columns order by position'))[0].values.map((r) => ({ name: String(r[0]), type: String(r[1]) })) : await tableColumns(engine, table);
         const geomCol = gpkg ? geometryColumns.get(table) : null;
         const count = await engine.exec(`select count(*) from ${q(table)}`);
@@ -115,7 +115,7 @@
       try {
         const { tables, dataspatium, gpkg, geometryColumns, crs } = await describe(engine);
         const table = dataspatium ? 'data' : (options.table && tables.includes(options.table) ? options.table : tables[0]);
-        if (!table) throw new Error('Databasen innehåller inga tabeller.');
+        if (!table) throw new Error(D.t('import.err.notables'));
         const cols = await tableColumns(engine, table);
         const geomCol = gpkg ? geometryColumns.get(table) : null;
         const res = await engine.exec(`select * from ${q(table)}`);

@@ -15,6 +15,14 @@
     // Platform
     'src/platform/registry.js',
     'src/platform/capabilities.js',
+    // Languages first: every later module may build user-facing text with Dataspatium.t at load time.
+    'src/ui/i18n/sv.js',
+    'src/ui/i18n/da.js',
+    'src/ui/i18n/nb.js',
+    'src/ui/i18n/fi.js',
+    'src/ui/i18n/is.js',
+    'src/ui/i18n/en.js',
+    'src/ui/i18n/i18n.js',
     'src/platform/sync.js',
     'src/platform/assets.js',
     'vendor/manifest.js',
@@ -71,6 +79,8 @@
     'src/api/connectors.js',
     'src/api/families/pxweb.js',
     'src/api/families/socialstyrelsen.js',
+    'src/api/families/statbank.js',
+    'src/api/families/fhi.js',
     'src/api/runner.js',
     // Visualisation
     'src/viz/locale.js',
@@ -94,8 +104,6 @@
     'src/docgen/generate.js',
     'src/analysis/notebooks.js',
     // UI: language, design, components
-    'src/ui/i18n/sv.js',
-    'src/ui/i18n/i18n.js',
     'src/ui/design/theme.js',
     'src/ui/design/fonts.js',
     'src/ui/design/icons.js',

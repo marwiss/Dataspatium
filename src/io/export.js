@@ -107,7 +107,7 @@
     /** Formats written by R packages (haven, nanoparquet, base): the dataset is mirrored into R first. */
     async function toViaR(id, format) {
       const writer = R_WRITERS[format];
-      if (!writer) throw new Error('Okänt R-format: ' + format);
+      if (!writer) throw new Error(D.t('export.err.rformat', { format }));
       const meta = await datasets.get(id);
       const bridge = D.require('data/r-bridge').bridge;
       const dir = '/tmp/dataspatium-export';
@@ -164,7 +164,7 @@
       const firstGeometry = (i) => { const r = rows.find((row) => row[i] !== null && row[i] !== undefined && row[i] !== ''); const g = r ? geo.parseGeometry(r[i]) : null; return g && g.type ? g : null; };
       const named = textCols.find((x) => /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(x.c.name));
       const found = named || textCols.find((x) => firstGeometry(x.i));
-      if (!found) throw new Error('Datamängden har ingen geometrikolumn (GeoJSON eller WKT som text). Importera från GeoJSON, shapefile eller GeoPackage, eller lägg till en kolumn med WKT.');
+      if (!found) throw new Error(D.t('export.err.nogeometry'));
       const skip = new Set([found.i, cols.findIndex((c) => c.name === 'geometry_type')]);
       const features = rows.map((r) => {
         const properties = {};

@@ -1,0 +1,150 @@
+# Visualiser
+
+Modusen Visualiser lager diagrammer av datasettene med tre motorer som alle bruker appens palett, skrifttype og tallformat:
+en diagrambygger (Vega-Lite), ferdige D3-maler og R-skript (ggplot2). Diagrammer lagres i arbeidsområdet, kan eksporteres
+som SVG, PNG og PDF, deles som filer og lages i batch per gruppe.
+
+## Lag et diagram
+
+1. Velg et datasett i objektpanelet, og trykk **Nytt diagram**.
+2. Velg motor: **Diagrambygger**, **D3-mal** eller **R-skript**.
+3. Gi diagrammet et navn i tittelfeltet, og trykk **Lagre**. Lagrede diagrammer vises under Diagrammer i objektpanelet og i
+   galleriet.
+
+Forhåndsvisningen oppdateres mens du endrer. Under diagrammet står hvor mange rader som ble brukt; store datasett
+aggregeres i SQL når diagrammet bare trenger summer, gjennomsnitt eller antall, ellers begrenses antallet rader (standard
+50 000, endres under Flere alternativer).
+
+## Diagrambyggeren (Vega-Lite)
+
+| Diagramtype | Brukes til |
+|---|---|
+| Stolper, Liggende stolper | Å sammenligne kategorier, med valgfri fargeoppdeling og stabling |
+| Linje, Areal | Utvikling over tid eller ordnede kategorier |
+| Punkter | Sammenheng mellom to tall, farge og størrelse som ekstra dimensjoner |
+| Histogram | Fordeling av et tall i intervaller |
+| Varmekart | To kategorier med en verdi som farge |
+| Boksplott | Spredning per kategori |
+| Sektor | Andeler av en helhet (få kategorier) |
+| Kart | Områder farget etter en verdi (koroplettkart) fra en geometrikolonne, se *Kart* nedenfor |
+| Punktkart | Punkter fra lengde- og breddegrad (eller SWEREF 99 TM) med størrelse og farge etter verdier, over kommune- eller länsgrenser |
+
+For hver kanal (X, Y, Farge, Størrelse, Små paneler) velger du kolonne, hvordan den skal tolkes (tall, kategori, ordnet
+kategori, tid), beregning (sum, gjennomsnitt, median, minste, største, antall, antall unike), sortering, tidsenhet og
+aksetittel. Øvrige innstillinger: tittel og undertittel, tallformat, høyde, forklaringens plassering, stabling (stablet,
+prosent, overlappende), verdietiketter på stolper og punkter på linjer. **Filtre** begrenser radene med betingelser på
+kolonner. Under **Flere alternativer** finnes radgrense, fargeskala (sekvensiell eller divergerende) og **Egen
+Vega-Lite-spesifikasjon**: JSON-spesifikasjonen kan redigeres direkte for alt byggeren ikke dekker; data settes inn fra
+datasettet når diagrammet gjengis.
+
+Diagrammet lagres som byggerens tilstand (eller den egne spesifikasjonen) sammen med datasettets navn og kortnavn, slik at
+det kan gjenskapes på nye data med de samme kolonnene.
+
+## D3-maler
+
+- **Rangering**: én rad per kategori sortert etter verdi, med prikk og strek. Velg kategori, verdi, beregning, antall og
+  rekkefølge.
+- **Helningsdiagram**: to perioder per kategori med en strek imellom; grønne streker øker, røde synker.
+- **Befolkningspyramide**: grupper (aldre) som stolper i to retninger, for eksempel kvinner og menn.
+
+Malene er skrevet i D3 med appens stilmodul og gir vektorgrafikk som eksporteres uendret.
+
+## R-skript
+
+Skriptet kjøres i R-sesjonen med datasettet lest inn som `df` (lest med kortnavnet). Tegn med ggplot2 eller basisgrafikk;
+`theme_dataspatium()` og `dm_palette()` gir appens utseende. Det siste diagrammet vises og lagres med skriptet. Eksport skjer
+via R (svglite for SVG, `png()` og `pdf()`), og batchkjøringer kjører skriptet én gang per gruppe med `df` filtrert.
+Ctrl+Enter kjører skriptet.
+
+## Eksporter
+
+**Eksporter** åpner en dialog med format (PNG, SVG, PDF, PowerPoint), bredde, høyde, skala for PNG og filnavn. PNG tegnes i
+nettleseren med appens skrifttype. SVG har skrifttypen innebygd, så filen ser lik ut på andre datamaskiner. PDF er
+vektorgrafikk (jsPDF og svg2pdf.js); tekst settes med PDF-standardskrifttypen Helvetica. PowerPoint (pptx, via PptxGenJS)
+gir en presentasjon med et tittellysbilde og diagrammet som bilde i høy oppløsning; i modusen Eksporter finnes dessuten
+**Alle diagrammer som PowerPoint**, ett lysbilde per lagret diagram. Diagrammene kan også eksporteres fra modusen
+Eksporter, der alle lagrede diagrammer vises.
+
+## Batch per gruppe
+
+**Batch per gruppe** lager diagrammet én gang per verdi i en grupperingskolonne (for eksempel hver kommune eller hvert år),
+filtrert på verdien og med verdien i tittelen, og pakker alle filer i en ZIP sammen med `manifest.json`. Velg kolonne,
+format (ett eller flere), mønster for filnavn (`{diagram}` og `{grupp}` erstattes), bredde og høyeste antall grupper.
+Kjøringen kan avbrytes. Grupper som mislykkes, vises i manifestet. Formatet PowerPoint gir i stedet for en ZIP én
+presentasjon med ett lysbilde per gruppe.
+
+## Galleri og panel
+
+**Galleri** viser alle lagrede diagrammer som kort med miniatyr, datasett og tidspunkt. Velg antall kolonner, og trykk
+**Gjengi alle (panel)** for å tegne diagrammene live side ved side. Herfra åpnes, eksporteres og slettes diagrammer.
+
+## Kart
+
+To diagramtyper tegner kart, begge uten kartserver: **Kart** (koroplettkart: områder farget etter en verdi) og **Punktkart**
+(punkter på koordinater med størrelse og farge etter verdier). SCBs svenske kommune- og länsgrenser følger med appen;
+grenser for andre land importeres fra GeoJSON, shapefile eller GeoPackage.
+
+![Koroplettkart over befolkning per kommune og punktkart over målestasjoner i et dashbord](../images/kartor.png)
+
+### Koroplettkart (Kart)
+
+1. Hent grensene: klikk på **Svenske kommunegrenser (SCB)** eller **Svenske länsgrenser (SCB)** i Hent, eller importer egne
+   grenser fra GeoJSON, shapefile eller GeoPackage. De blir datasett med kode, navn og en geometrikolonne (`geometry`,
+   GeoJSON i lengde- og breddegrad).
+2. Koble verdiene til grensene i Bearbeid (*Koble datasett*) på koden, slik at datasettet har både `geometry` og verdien som
+   skal fargelegges. Alternativt er verdiene allerede importert sammen med geometrien.
+3. Velg *Kart* i diagrambyggeren. Geometrikolonnen finnes automatisk (kolonnen `geometry`), etiketten er en tekstkolonne
+   som vises når du peker på et område, og verdien styrer fargen med appens sekvensielle skala (velg divergerende under
+   *Flere alternativer* for avvik rundt en midtverdi).
+
+Geometrikolonnen kan inneholde GeoJSON eller WKT (`POLYGON((...))`, `POINT(...)` med flere, også med `SRID=...;`-prefiks),
+slik at eksporter fra GeoPackage, PostGIS og regneark fungerer direkte.
+
+### Punktkart
+
+Velg *Punktkart* for et datasett med koordinater, for eksempel værstasjoner eller adresser med lengde- og breddegrad.
+Kolonnene finnes på navn (`longitude`/`latitude`, `lon`/`lat`, `x`/`y`, `öst`/`norr`) og kan byttes. Koordinater i meter
+(SWEREF 99 TM) gjenkjennes og regnes om til lengde- og breddegrad. **Størrelse** og **Farge** tar verdikolonner (eller en
+kategori for fargen), **Etikett** vises når du peker på et punkt, og **Bakgrunn** velger svenske läns- eller kommunegrenser
+eller ingen bakgrunn. Har datasettet områder i stedet for punkter, gir *Bearbeid > Geodata > Sentroide fra geometri* lengde-
+og breddegrad for hvert område, slik at verdier kan tegnes som bobler.
+
+### Projeksjon og grenser
+
+Projeksjonen velges ut fra koordinatene: meter (SWEREF 99 TM) tegnes som de er, lengde- og breddegrad innenfor Europa
+gjennom en transversal Mercator rundt 15° øst og øvrige gjennom Mercator. De medfølgende grensene er SCBs forenklede
+kommune- og länsgrenser for tematiske kart (CC0, versjon februar 2026), omregnet til lengde- og breddegrad; de er ikke ment
+for nøyaktige grensedragninger (se `presets/geo/KALLA.md`). Kart eksporteres, deles, legges i dashbord og kjøres i batch som
+alle andre diagrammer i byggeren; filtre i dashbord virker også på kart. Et datasett med geometri kan eksporteres som
+GeoJSON fra Eksporter.
+
+## Dashbord
+
+Et dashbord er et navngitt utvalg av lagrede diagrammer i et rutenett med felles filtre. Lag et med **Nytt dashbord** i
+objektpanelet, gi det et navn, og klikk på **Legg til diagram** for å velge blant de lagrede diagrammene. Hvert kort kan gjøres
+bredere (én, to eller tre kolonner), flyttes opp eller ned, åpnes i byggeren eller fjernes fra dashbordet; antall kolonner i
+rutenettet og en beskrivelse settes i egenskapspanelet. Alle endringer lagres automatisk.
+
+**Filtre** viser kolonnene som finnes i alle datasett dashbordets diagrammer bruker (tekst, heltall, dato og ja/nei). Hvert
+valgt filter blir en velger over diagrammene, og valget gjelder alle Vega- og D3-diagrammer samtidig (R-diagrammer vises som
+lagret bilde). Filtrene legges til diagrammenes egne filtre.
+
+Dashbordet eksporteres som frittstående **HTML** (diagrammene som innebygd SVG, med de aktive filtrene oppgitt), som
+**PowerPoint** (tittellysbilde pluss ett lysbilde per diagram) eller deles som `*.dash.json`, en fil som inneholder
+diagrammenes definisjoner. Ved import kobles diagrammene til eksisterende diagrammer med samme navn og datasett; de som
+mangler, gjenskapes fra filen. Sikkerhetskopien og den portable mappen inneholder alle dashbord. Dashbord kan også åpnes via
+kommandopaletten (Ctrl+K) og eksporteres fra modusen Eksporter.
+
+## Del diagrammer
+
+**Eksporter konfigurasjon** laster ned diagrammet som `*.viz.json` uten data. En annen bruker legger til filen med
+**Importer diagram (fil)**; diagrammet kobles til et datasett med samme kortnavn eller navn i det arbeidsområdet.
+Sikkerhetskopien av arbeidsområdet (Håndter) inneholder alle diagrammer som slike filer.
+
+## Begrensninger
+
+- Diagrammene lever i nettleseren; svært store datasett uten aggregering begrenses til radgrensen.
+- PDF bruker Helvetica, ikke Inter, for tekst.
+- R-diagrammer krever at R-sesjonen er startet, og eksporteres derfor bare fra Visualiser.
+- De medfølgende kommune- og länsgrensene er SCBs forenklede grenser for tematiske kart, ikke nøyaktige grenser.
+- PowerPoint-eksport bruker bilder (PNG) av diagrammene, ikke redigerbare PowerPoint-diagrammer.

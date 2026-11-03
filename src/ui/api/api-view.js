@@ -28,7 +28,11 @@
         const api = { connector, runFetch, log: (m, k) => shell.log(m, k) };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
-        const browser = family === 'pxweb' ? pxwebView.create(api) : (family === 'socialstyrelsen' ? sosView.create(api) : null);
+        // Statistics Denmark (statbank) and FHI browse like PxWeb v1: folders, tables, a variable picker.
+        const browser = family === 'pxweb' ? pxwebView.create(api)
+          : family === 'statbank' ? pxwebView.create(api, D.require('api/families/statbank'))
+            : family === 'fhi' ? pxwebView.create(api, D.require('api/families/fhi'))
+              : (family === 'socialstyrelsen' ? sosView.create(api) : null);
         const form = connector.endpoints && connector.endpoints.length ? endpointForm.create(api) : null;
         let tab = browser ? 'browse' : 'endpoints';
 
@@ -153,10 +157,10 @@
             connector.publisher ? { label: t('api.publisher'), value: connector.publisher } : null,
             { label: t('api.auth'), value: connectors.describeAuth(connector) },
             connector.license && connector.license.name ? { label: t('api.license'), value: connector.license.url ? h('a', { href: connector.license.url, target: '_blank', rel: 'noopener', text: connector.license.name }) : connector.license.name } : null,
-            { label: t('api.baseurl'), value: h('code', { class: 'dm-break', text: connector.baseUrl }) },
+            { label: t('api.baseurl'), value: h('code', { class: 'dm-break', text: family === 'pxweb' ? D.require('api/families/pxweb').base(connector) : connector.baseUrl }) },
             connector.rateLimit ? { label: t('api.ratelimit'), value: t('api.ratelimit.value', { n: connector.rateLimit.requests, s: connector.rateLimit.perSeconds }) } : null,
           ].filter(Boolean);
-          const reqs = state.requests.length ? h('ul', { class: 'dm-api-requests' }, state.requests.slice(-8).map((r) => h('li', null, h('span', { class: 'dm-row' }, h('dm-badge', { kind: r.status >= 400 ? 'error' : 'ok', text: String(r.status) }), h('span', { class: 'dm-muted', text: `${i18n.formatNumber(r.rows || 0)} rader · ${r.ms || 0} ms` })), h('code', { class: 'dm-break dm-xs', title: r.url, text: r.url })))) : h('p', { class: 'dm-help', text: t('api.requests.empty') });
+          const reqs = state.requests.length ? h('ul', { class: 'dm-api-requests' }, state.requests.slice(-8).map((r) => h('li', null, h('span', { class: 'dm-row' }, h('dm-badge', { kind: r.status >= 400 ? 'error' : 'ok', text: String(r.status) }), h('span', { class: 'dm-muted', text: `${t('common.rows', { n: i18n.formatNumber(r.rows || 0) })} · ${r.ms || 0} ms` })), h('code', { class: 'dm-break dm-xs', title: r.url, text: r.url })))) : h('p', { class: 'dm-help', text: t('api.requests.empty') });
           const proxyInput = /** @type {any} */ (h('dm-input', { label: t('api.proxy'), help: t('api.proxy.help'), placeholder: 'https://…/?url={url}' }));
           http.getProxy().then((p) => { proxyInput.value = p; });
           proxyInput.addEventListener('change', async () => { await http.setProxy(proxyInput.value); overlays.toast.show(t('api.proxy.saved'), { kind: 'ok' }); });

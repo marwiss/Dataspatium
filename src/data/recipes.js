@@ -25,36 +25,36 @@
       while (stack.length > UNDO_LIMIT || (stack.length > 1 && size() > UNDO_MAX_BYTES)) stack.shift();
     }
 
-    /** Human-readable step description (Swedish). */
+    /** Human-readable step description in the UI language. */
     function describe(opId, params, result) {
       const cols = (params.columns || (params.column ? [params.column] : [])).join(', ');
-      const n = result && typeof result.rows === 'number' ? ` (${result.rows} rader)` : '';
+      const n = result && typeof result.rows === 'number' ? D.t('recipe.rows', { n: result.rows }) : '';
       switch (opId) {
-        case 'rename_column': return `Byt namn på ${params.column} till ${params.name}`;
-        case 'set_label': return `Etikett för ${params.column}: ${params.label}${params.description ? `; beskrivning: ${params.description}` : ''}${params.unit ? `; enhet: ${params.unit}` : ''}`;
-        case 'drop_columns': return `Ta bort kolumner ${cols}`;
-        case 'reorder_columns': return 'Ändra kolumnordning';
-        case 'set_type': return `Ändra typ för ${params.column} till ${params.type}${n}`;
-        case 'replace_text': return `Ersätt "${params.find}" med "${params.replace || ''}" i ${cols}${n}`;
-        case 'trim': return `Trimma ${cols}${n}`;
-        case 'pseudonymize': return `Pseudonymisera ${cols} (${params.method === 'mask' ? 'maskering' : params.method === 'sequence' ? 'löpnummer' : 'hash'})${n}`;
-        case 'change_case': return `Ändra skiftläge (${params.mode}) i ${cols}${n}`;
-        case 'fix_encoding': return `Reparera teckenkodning i ${cols}${n}`;
-        case 'replace_value': return `Ersätt värde i ${params.column}${n}`;
-        case 'fill_missing': return `Fyll saknade värden i ${params.column}${n}`;
-        case 'edit_cell': return `Redigera cell i ${params.column} (rad ${params.rowid})`;
-        case 'delete_rows': return `${params.keep ? 'Behåll' : 'Ta bort'} rader där ${params.where}${n}`;
-        case 'remove_duplicates': return `Ta bort dubbletter${cols ? ' på ' + cols : ''}${n}`;
-        case 'add_column': return `Ny kolumn ${params.name} = ${params.expression}`;
-        case 'combine_columns': return `Kombinera ${cols} till ${params.name}`;
-        case 'split_column': return `Dela ${params.column} på "${params.delimiter}"`;
-        case 'pivot_longer': return `Pivotera ${cols} till långt format`;
-        case 'pivot_wider': return `Pivotera ${params.names}/${params.values} till brett format`;
+        case 'rename_column': return D.t('recipe.rename_column', { column: params.column, name: params.name });
+        case 'set_label': return D.t('recipe.set_label', { column: params.column, label: params.label, extra: (params.description ? D.t('recipe.set_label.description', { description: params.description }) : '') + (params.unit ? D.t('recipe.set_label.unit', { unit: params.unit }) : '') });
+        case 'drop_columns': return D.t('recipe.drop_columns', { cols });
+        case 'reorder_columns': return D.t('recipe.reorder_columns');
+        case 'set_type': return D.t('recipe.set_type', { column: params.column, type: params.type, n });
+        case 'replace_text': return D.t('recipe.replace_text', { find: params.find, replace: params.replace || '', cols, n });
+        case 'trim': return D.t('recipe.trim', { cols, n });
+        case 'pseudonymize': return D.t('recipe.pseudonymize', { cols, method: D.t('recipe.pseudonymize.' + (params.method === 'mask' ? 'mask' : params.method === 'sequence' ? 'sequence' : 'hash')), n });
+        case 'change_case': return D.t('recipe.change_case', { mode: params.mode, cols, n });
+        case 'fix_encoding': return D.t('recipe.fix_encoding', { cols, n });
+        case 'replace_value': return D.t('recipe.replace_value', { column: params.column, n });
+        case 'fill_missing': return D.t('recipe.fill_missing', { column: params.column, n });
+        case 'edit_cell': return D.t('recipe.edit_cell', { column: params.column, row: params.rowid });
+        case 'delete_rows': return D.t(params.keep ? 'recipe.delete_rows.keep' : 'recipe.delete_rows.drop', { where: params.where, n });
+        case 'remove_duplicates': return D.t('recipe.remove_duplicates', { on: cols ? D.t('recipe.remove_duplicates.on', { cols }) : '', n });
+        case 'add_column': return D.t('recipe.add_column', { name: params.name, expression: params.expression });
+        case 'combine_columns': return D.t('recipe.combine_columns', { cols, name: params.name });
+        case 'split_column': return D.t('recipe.split_column', { column: params.column, delimiter: params.delimiter });
+        case 'pivot_longer': return D.t('recipe.pivot_longer', { cols });
+        case 'pivot_wider': return D.t('recipe.pivot_wider', { names: params.names, values: params.values });
         case 'sql': return `SQL: ${String(params.statement).slice(0, 80)}`;
-        case 'geo_centroid': return `Mittpunkt ur ${params.column} till ${params.lonName || 'lon'}/${params.latName || 'lat'}${n}`;
-        case 'geo_area': return `Area (km²) ur ${params.column} till ${params.name || 'area_km2'}${n}`;
-        case 'geo_reproject': return `Omprojicera ${params.xColumn}/${params.yColumn} till ${params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84'}${n}`;
-        case 'geo_region': return `${params.level === 'lan' ? 'Län' : 'Kommun och län'} ur ${params.lonColumn}/${params.latColumn}${result && typeof result.matched === 'number' ? ` (${result.matched} av ${result.rows} rader träffade)` : n}`;
+        case 'geo_centroid': return D.t('recipe.geo_centroid', { column: params.column, lon: params.lonName || 'lon', lat: params.latName || 'lat', n });
+        case 'geo_area': return D.t('recipe.geo_area', { column: params.column, name: params.name || 'area_km2', n });
+        case 'geo_reproject': return D.t('recipe.geo_reproject', { x: params.xColumn, y: params.yColumn, crs: params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84', n });
+        case 'geo_region': return D.t(params.level === 'lan' ? 'recipe.geo_region.lan' : 'recipe.geo_region.kommun', { lon: params.lonColumn, lat: params.latColumn, n: result && typeof result.matched === 'number' ? D.t('recipe.geo_region.matched', { matched: result.matched, rows: result.rows }) : n });
         default: return opId;
       }
     }
@@ -112,10 +112,10 @@
     /** Restore the state before the last operation. */
     async function undo(id) {
       const stack = undoStacks.get(id);
-      if (!stack || !stack.length) throw new Error('Inget att ångra.');
+      if (!stack || !stack.length) throw new Error(D.t('recipe.err.nothing.undo'));
       const entry = stack.pop();
-      if (entry.inverse) await apply(id, entry.inverse.op, entry.inverse.params, { noUndo: true, logAction: 'undo', description: 'Ångra: ' + entry.label });
-      else await datasets.replaceBytes(id, entry.bytes, { action: 'undo', description: 'Ångra: ' + entry.label });
+      if (entry.inverse) await apply(id, entry.inverse.op, entry.inverse.params, { noUndo: true, logAction: 'undo', description: D.t('recipe.undo.prefix', { label: entry.label }) });
+      else await datasets.replaceBytes(id, entry.bytes, { action: 'undo', description: D.t('recipe.undo.prefix', { label: entry.label }) });
       return entry.label;
     }
 
@@ -141,7 +141,7 @@
         try {
           const op = ops.get(step.op);
           const missing = ((op && op.params) || []).filter((p) => p.secret && step.params && step.params[p.name] === '***');
-          if (missing.length) throw new Error(`Steget "${step.op}" kräver ett hemligt värde (${missing.map((p) => p.name).join(', ')}) som inte sparas i receptet. Kör steget på nytt och ange värdet.`);
+          if (missing.length) throw new Error(D.t('recipe.err.secret', { op: step.op, params: missing.map((p) => p.name).join(', ') }));
           await apply(targetId, step.op, step.params); done.push({ step, ok: true });
         }
         catch (err) { done.push({ step, ok: false, error: (err && err.message) || String(err) }); break; }
@@ -152,7 +152,7 @@
     async function toSQL(id) {
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
-      const lines = ['-- Dataspatium-recept, SQL mot tabellen data', ''];
+      const lines = [D.t('recipe.sql.header'), ''];
       for (const s of await steps(id)) { lines.push('-- ' + s.description); for (const l of ops.get(s.op).toSQL(s.params, ctx)) lines.push(l); lines.push(''); }
       return lines.join('\n');
     }
@@ -161,14 +161,14 @@
       const meta = await datasets.get(id);
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
-      const lines = ['# Dataspatium-recept som R-kod', `df <- dm_read(${JSON.stringify(meta ? meta.name : id)})`, ''];
+      const lines = [D.t('recipe.r.header'), `df <- dm_read(${JSON.stringify(meta ? (meta.shortName || meta.name) : id)})`, ''];
       for (const s of await steps(id)) { lines.push('# ' + s.description); lines.push(ops.get(s.op).toR(s.params, ctx)); lines.push(''); }
-      lines.push(`dm_write(df, ${JSON.stringify((meta ? meta.name : 'Datamängd') + ' (bearbetad)')})`);
+      lines.push(`dm_write(df, ${JSON.stringify((meta ? meta.name : D.t('datasets.default.name')) + D.t('recipe.r.suffix'))})`);
       return lines.join('\n');
     }
 
     function exportJson(recipeSteps, name) {
-      return JSON.stringify({ app: 'Dataspatium', kind: 'recipe', version: D.version, name: name || 'Recept', created: new Date().toISOString(), steps: recipeSteps.map((s) => ({ op: s.op, params: s.params, description: s.description })) }, null, 2);
+      return JSON.stringify({ app: 'Dataspatium', kind: 'recipe', version: D.version, name: name || D.t('recipe.default.name'), created: new Date().toISOString(), steps: recipeSteps.map((s) => ({ op: s.op, params: s.params, description: s.description })) }, null, 2);
     }
 
     return { apply, preview, undo, canUndo, undoLabel, steps, replay, toSQL, toR, exportJson, describe };

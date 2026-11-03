@@ -57,8 +57,8 @@
         if (tok) {
           flush();
           if (line.trim() === TOKEN + 'PAGEBREAK' + TOKEN) blocks.push({ type: 'pagebreak' });
-          else if (tok[1] === 'TABLE') { const tb = (resolved.tables || [])[Number(tok[2])]; if (tb && !tb.error) blocks.push(Object.assign({ type: 'table' }, tb)); else blocks.push({ type: 'paragraph', runs: [{ text: (tb && tb.error) || 'Tabellen saknas.', italic: true }] }); }
-          else { const im = (resolved.images || [])[Number(tok[2])]; if (im && im.png) blocks.push(Object.assign({ type: 'image' }, im)); else blocks.push({ type: 'paragraph', runs: [{ text: (im && im.error) || 'Diagrammet saknas.', italic: true }] }); }
+          else if (tok[1] === 'TABLE') { const tb = (resolved.tables || [])[Number(tok[2])]; if (tb && !tb.error) blocks.push(Object.assign({ type: 'table' }, tb)); else blocks.push({ type: 'paragraph', runs: [{ text: (tb && tb.error) || D.t('doc.table.missing'), italic: true }] }); }
+          else { const im = (resolved.images || [])[Number(tok[2])]; if (im && im.png) blocks.push(Object.assign({ type: 'image' }, im)); else blocks.push({ type: 'paragraph', runs: [{ text: (im && im.error) || D.t('doc.chart.missing'), italic: true }] }); }
           continue;
         }
         const heading = line.match(/^(#{1,4})\s+(.*\S)\s*#*\s*$/);

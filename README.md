@@ -1,3 +1,5 @@
+**Svenska** · [Dansk](docs/da/README.md) · [Norsk](docs/nb/README.md) · [Suomi](docs/fi/README.md) · [Íslenska](docs/is/README.md) · [English](docs/en/README.md)
+
 # Dataspatium
 
 Dataspatium är en webbapp för data från källa till rapport: hämta in data från filer och öppna API:er, lagra och
@@ -14,7 +16,8 @@ exporterar den.
 2. **Packa upp.** Högerklicka på ZIP-filen och välj *Extrahera alla* (Windows) eller dubbelklicka på den (macOS).
    Lägg mappen där du vill ha den, till exempel i Dokument. Appen fungerar inte direkt inifrån ZIP-filen.
 3. **Öppna.** Dubbelklicka på `index.html` i mappen, eller dra filen till ett webbläsarfönster. Om Windows frågar
-   vilken app som ska användas väljer du Edge, Chrome eller Firefox.
+   vilken app som ska användas väljer du Edge, Chrome eller Firefox. Första gången frågar appen vilket språk du
+   vill ha; valet kan ändras när som helst med språkknappen uppe till höger.
 4. **Importera.** I läget *Inhämta* släpper du en fil på ytan (eller klickar på *Prova med exempeldata*),
    kontrollerar kolumnernas typer och klickar på *Importera*. Datamängden sparas i webbläsaren på din dator.
 5. **Arbeta vidare.** Växla läge högst upp: *Hantera* visar dina datamängder och arbetsytan, *Bearbeta* visar
@@ -40,7 +43,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   text med fasta kolumnbredder, statistikfiler från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS
   (via R), inklistrad text, filer från webbadresser, och data direkt från öppna API:er hos SCB,
   Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
-  dataportal, med omhämtning av alla API-datamängder på en knapptryckning (se
+  dataportal samt statistikbyråerna och andra myndigheter i Danmark, Norge, Finland, Island, Grönland, Färöarna
+  och Åland och Nordic Statistics, med landsfilter och omhämtning av alla API-datamängder på en knapptryckning (se
   [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och SCB:s kommun- och länsgränser
   följer med.
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
@@ -62,6 +66,8 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   en portabel mapp med vanliga filer.
 - **Hitta snabbt**: kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder, diagram och dashboards och kör
   åtgärder från ett enda sökfält.
+- **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,
+  isländska och engelska.
 
 ## Lär dig mer
 

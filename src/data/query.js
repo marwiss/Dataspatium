@@ -45,7 +45,7 @@
     async function attach(primaryId, sql) {
       const handle = await datasets.ensureOpen(primaryId);
       const { others, self } = await referenced(primaryId, sql);
-      if (others.length > MAX_OTHERS) throw new Error(`Högst ${MAX_OTHERS} andra datamängder kan användas i samma fråga.`);
+      if (others.length > MAX_OTHERS) throw new Error(D.t('query.err.toomany', { n: MAX_OTHERS }));
       const mounted = others.length ? await handle.engine.mounted() : {};
       for (const d of others) {
         const ver = await datasets.version(d.id);

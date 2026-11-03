@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "asub-aland",
+  "name": "ÅSUB Ålands statistik",
+  "publisher": "Ålands statistik- och utredningsbyrå (ÅSUB)",
+  "description": "Ålands officiella statistik: befolkning, arbetsmarknad, ekonomi, boende, turism, miljö och mer, på svenska och engelska. Bläddra i ämnesträdet, välj tabell och värden per variabel.",
+  "docs": "https://www.asub.ax/sv/statistik",
+  "license": { "name": "Fri att använda med källangivelse (ÅSUB)", "url": "https://www.asub.ax/sv/statistik" },
+  "level": 1,
+  "country": "AX",
+  "baseUrl": "https://pxweb.asub.ax/PXWeb/api/v1/sv/Statistik",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000, "urls": { "sv": "https://pxweb.asub.ax/PXWeb/api/v1/sv/Statistik", "en": "https://pxweb.asub.ax/PXWeb/api/v1/en/Statistik" } },
+  "notes": "Ange källa: ÅSUB.",
+  "i18n": {
+    "en": { "name": "ÅSUB Statistics Åland", "publisher": "Statistics and Research Åland (ÅSUB)", "description": "Åland's official statistics: population, labour market, economy, housing, tourism, environment and more, in Swedish and English. Browse the subject tree, pick a table and values per variable.", "notes": "Cite the source: ÅSUB." },
+    "da": { "name": "ÅSUB Ålands statistik", "publisher": "Ålands statistik- och utredningsbyrå (ÅSUB)", "description": "Ålands officielle statistik: befolkning, arbejdsmarked, økonomi, boliger, turisme, miljø og mere, på svensk og engelsk. Gennemse emnetræet, vælg tabel og værdier pr. variabel.", "notes": "Angiv kilde: ÅSUB." },
+    "nb": { "name": "ÅSUB Ålands statistikk", "publisher": "Ålands statistik- och utredningsbyrå (ÅSUB)", "description": "Ålands offisielle statistikk: befolkning, arbeidsmarked, økonomi, bolig, turisme, miljø og mer, på svensk og engelsk. Bla i emnetreet, velg tabell og verdier per variabel.", "notes": "Oppgi kilde: ÅSUB." },
+    "fi": { "name": "ÅSUB Ahvenanmaan tilastot", "publisher": "Ahvenanmaan tilasto- ja tutkimustoimisto (ÅSUB)", "description": "Ahvenanmaan virallinen tilasto: väestö, työmarkkinat, talous, asuminen, matkailu, ympäristö ja muuta, ruotsiksi ja englanniksi. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain.", "notes": "Mainitse lähde: ÅSUB." },
+    "is": { "name": "ÅSUB hagtölur Álandseyja", "publisher": "Ålands statistik- och utredningsbyrå (ÅSUB)", "description": "Opinber hagtölur Álandseyja: mannfjöldi, vinnumarkaður, efnahagur, húsnæði, ferðaþjónusta, umhverfi og fleira, á sænsku og ensku. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu.", "notes": "Tilgreindu heimild: ÅSUB." }
+  }
+}

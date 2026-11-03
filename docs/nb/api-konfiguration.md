@@ -1,0 +1,117 @@
+# Åpne API-er og API-konfigurasjoner
+
+Dataspatium henter data direkte fra åpne API-er til nettleseren din. Ingenting går via noen server: kallene går fra
+datamaskinen din til etatens tjeneste, og svaret blir et datasett i arbeidsområdet. Det forutsetter at tjenesten tillater
+kall fra nettlesere (CORS); alle forhåndsinnstillingene nedenfor er kontrollert for det.
+
+## Forhåndsinnstilte kilder
+
+Listen i Hent er gruppert etter land. Landknappene over den (Sverige, Danmark, Norge, Finland, Island, Færøyene, Grønland,
+Åland, Norden, EU) velger hvilke lands kilder som vises; valget lagres i nettleseren. Kildenes navn og beskrivelser følger
+appens språk, og PxWeb-tjenester som finnes på flere språk (SCB, SSB, Statistikcentralen, Hagstofa, Grønlands Statistik,
+ÅSUB), blas på appens språk når tjenesten har det. Alle kildene nedenfor er kontrollert for CORS i november 2026, og bare de
+to siste svenske krever nøkkel.
+
+| Land | Kilde | Hva | Slik henter du |
+|---|---|---|---|
+| Norge | SSB Statistikkbanken (API v1 og v2) | Offisiell statistikk, norsk og engelsk | Bla i emnetreet eller søk tabell, velg verdier; 800 000 celler per kall |
+| Norge | FHI Statistikk | Folkehelsestatistikk fra Folkehelseinstituttets registre og statistikkbanker | Velg kilde, tabell og verdier per dimensjon (målene i MEASURE_TYPE) |
+| Norge | Enhetsregisteret (Brønnøysundregistrene) | Foretak og organisasjoner | Søk på navn, kommune, organisasjonsform eller næringskode |
+| Norge | Kartverket kommuneinfo | Kommuner og fylker | Hent listene, også kommuner per fylke |
+| Norge | MET Norway Locationforecast | Værvarsel per koordinat | Angi bredde- og lengdegrad |
+| Danmark | Danmarks Statistik Statistikbanken | Offisiell statistikk (api.statbank.dk) | Bla i emnetreet, velg tabell og verdier per variabel; variabler som ikke velges, summeres bort |
+| Danmark | Open Data DK | Danske kommuners og regioners dataportal | Søk datasett, én rad per fil, importer filen via Fra nettadresse |
+| Finland | Statistikcentralen StatFin | Offisiell statistikk, finsk, svensk og engelsk | Bla i emnetreet, velg verdier; 100 000 celler per kall |
+| Finland | Kommunenes nøkkeltall (Statistikcentralen) | Nøkkeltall per kommune og velferdsområde | Bla, velg verdier |
+| Finland | Sotkanet (THL) | Indikatorer for helse og velferd | Hent indikatorer og regioner, deretter verdier for en indikator og år |
+| Finland | YTJ foretaksregister (PRH) | Foretak | Søk på navn, sted, FO-nummer eller bransje |
+| Finland | Digitraffic veivær (Fintraffic) | Veiværstasjoner og målinger | Hent stasjoner (punktkart) og siste målinger |
+| Finland | Meteorologisk institutt FMI | Værobservasjoner per sted eller stasjon | Angi sted eller stasjons-id, parametere og periode |
+| Finland | Avoindata.fi | Finlands dataportal | Søk datasett, én rad per fil |
+| Island | Hagstofa Íslands | Offisiell statistikk, islandsk og engelsk | Bla i databasene, velg verdier; 10 000 celler per kall |
+| Island | Veðurstofa Íslands | Værobservasjoner per stasjon | Angi stasjonsnumre |
+| Grønland | Grønlands Statistik | Offisiell statistikk, dansk og engelsk | Bla, velg verdier |
+| Færøyene | Hagstova Føroya | Offisiell statistikk, engelsk | Bla, velg verdier |
+| Åland | ÅSUB | Offisiell statistikk, svensk og engelsk | Bla, velg verdier |
+| Norden | Nordic Statistics database | Sammenlignbar nordisk statistikk, engelsk | Bla, velg verdier |
+| EU | Eurostat | EU-statistikk | Angi datasettets kode og filtre |
+| Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, velg verdier |
+| Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkehelse, helse, nøkkeltall for kommuner, vær, luftkvalitet, verneområder, geodata | Se den svenske veiledningen |
+| Sverige | Lantmäteriet Direkt, Boverket | Stedsnavn, energiattester | Krever nøkkel |
+
+Ikke med: Norges Frost (MET) og Danmarks DMI krever nøkkel; data.norge.no og Energi Data Service mangler CORS; opingogn.is
+har ikke lenger et søke-API. Kilder uten CORS kan ikke nås direkte fra nettleseren; de krever en egen proxy, se nedenfor.
+
+## Slik gjør du
+
+1. Åpne modusen **Hent**, og velg en kilde under **Åpne API-er** i objektpanelet. Landknappene over listen begrenser den til
+   valgte land.
+2. Krever kilden en nøkkel, angir du den under **Autentisering**. Velg **Bruk i denne sesjonen** (glemmes når siden lukkes)
+   eller **Lagre kryptert** med en passordfrase.
+3. Bla eller søk fram det du vil ha. For PxWeb-tjenestene (SSB, SCB, de andre nordiske statistikkbyråene,
+   Folkhälsomyndigheten), Danmarks Statistik, FHI og Socialstyrelsen velger du verdier per variabel; antallet celler vises,
+   og utvalg over tjenestens grense deles automatisk opp i flere kall. For de øvrige kildene fyller du inn kallets
+   parametere. Lister (stasjoner, kommuner, produkter) hentes fra tjenesten når du åpner feltet.
+4. Trykk **Hent**. Framdriften vises og kan avbrytes. **Forhåndsvis første side** henter bare ett kall.
+5. Gå gjennom tabellen, og trykk **Lagre som datasett**, eller legg radene til i et eksisterende datasett (legg til eller
+   erstatt). Datasettet får kilden i beskrivelsen sin: utgiver, tabell, adresse og lisens.
+
+Egenskapspanelet viser utgiver, lisens, hastighetsgrense og de siste kallene med status og svartid.
+
+## Oppdater et hentet datasett
+
+Datasett som kommer fra et API, husker utvalget sitt. I **Håndter** finnes knappen **Hent igjen**, som gjentar hentingen og
+enten legger til radene eller erstatter alle rader. Oppskrifter som er gjort på datasettet, kan deretter kjøres igjen fra
+**Bearbeid › Oppskrift**.
+
+## Nøkler og sikkerhet
+
+- Nøkler lagres aldri i klartekst. Som standard finnes de bare i minnet under sesjonen.
+- **Lagre kryptert** krypterer nøkkelen med en passordfrase (PBKDF2 og AES-GCM) i nettleserens database. Samme passordfrase
+  gjelder for alle lagrede nøkler. Passordfrasen lagres ikke; glemmer du den, må du angi nøklene på nytt.
+- Når appen åpnes igjen, er lagrede nøkler låst til du angir passordfrasen (**Lås opp lagrede nøkler**).
+- Nøkler sendes bare til adressen som konfigurasjonen angir, og følger aldri med når en konfigurasjon eksporteres eller
+  arbeidsområdet sikkerhetskopieres.
+- Under file:// deler alle lokalt åpnede HTML-sider lagring i Chromium. Derfor er kryptering standard for lagrede nøkler.
+
+## Proxy for tjenester uten CORS
+
+Under **Flere alternativer** i egenskapspanelet kan du angi adressen til en proxy som du selv drifter, for eksempel
+`https://min-proxy.eksempel/?url={url}`. `{url}` erstattes med den kodede måladressen; mangler `{url}`, legges måladressen
+til sist. Dataspatium leverer ingen proxy og sender aldri noe til en annen server enn den du selv angir.
+
+## Konfigurasjonsformat
+
+En kilde beskrives av en JSON-fil med endelsen `.api.json`. Egne konfigurasjoner legges til med **Legg til API fra fil** og
+kan eksporteres med **Eksporter konfigurasjon** for å deles. Forhåndsinnstillingene ligger i `presets/api/` i appmappen og er
+gode å ta utgangspunkt i. Filens grunnspråk er svensk; oversettelser legges i feltet `i18n` per språk, og appen viser
+tekstene på sitt eget språk. Formatet er beskrevet i sin helhet i den [engelske veiledningen](../en/api-konfiguration.md) og
+den [svenske](../api-konfiguration.md); feltene er:
+
+- toppnivå: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ingen nøkkel,
+  2 = nøkkel), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`), `i18n`, `baseUrl`, `headers`,
+  `auth`, `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`;
+- endpoint: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
+  `dataset`;
+- parameter: `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`,
+  `optionsFrom`.
+
+## Skriv en egen konfigurasjon
+
+1. Les tjenestens dokumentasjon, og prøv et kall i nettleseren eller med `curl`.
+2. Kontroller CORS: `curl -s -D - -o /dev/null -H "Origin: null" "https://api.eksempel.no/..."` skal vise
+   `Access-Control-Allow-Origin: *` (eller `null`). Mangler linjen, fungerer tjenesten bare via proxy.
+3. Ta utgangspunkt i en forhåndsinnstilling i `presets/api/`, endre den, og lagre som `min-tjeneste.api.json`.
+4. Legg til filen i Hent. Feil i konfigurasjonen vises med feltnavn; formatet kontrolleres mot et skjema
+   (`src/api/schema.js`).
+5. Del filen. Den inneholder aldri nøkler.
+
+## Begrensninger
+
+- MET Norways vilkår krever at kallende programmer identifiserer seg med en User-Agent. Nettlesere sender sin egen
+  identifikasjon, som tjenesten godtar i dag; hold antallet kall lavt.
+- SDMX-JSON støttes ikke ennå; bruk JSON-stat der tjenesten tilbyr det. JSON-stat 1.x (Danmarks Statistik) og 2.0 leses
+  begge.
+- PX-filer tolkes ikke i JavaScript; hent JSON-stat, eller bruk pakken pxR i R.
+- Store svar (hundretusener av rader) tar tid å tolke i nettleseren. Begrens utvalget, eller bruk `maxPages`.
+- Kall gjøres bare når du trykker Hent eller åpner et felt med alternativer fra tjenesten.

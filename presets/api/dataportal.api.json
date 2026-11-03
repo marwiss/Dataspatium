@@ -7,6 +7,7 @@
   "docs": "https://www.dataportal.se/",
   "license": { "name": "Metadata: CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://admin.dataportal.se/store",
   "auth": { "type": "none" },
   "rateLimit": { "requests": 5, "perSeconds": 2 },
@@ -26,5 +27,12 @@
       "response": { "format": "entryscape" },
       "dataset": { "name": "Dataportalen: {q}" }
     }
-  ]
+  ],
+  "i18n": {
+    "en": {"name": "Sweden's data portal (search datasets)", "publisher": "Digg, Swedish Agency for Digital Government", "description": "Search the published datasets of all Swedish agencies, regions and municipalities. The result is a table with title, publisher, format and download link; files are then imported through Files.", "endpoints": {"search": {"name": "Search datasets", "params": {"q": {"label": "Search words"}}}}, "dataset": {"search": "Data portal: {q}"}},
+    "da": {"name": "Sveriges dataportal (søg datasæt)", "publisher": "Digg, den svenske myndighed for digital forvaltning", "description": "Søg blandt alle svenske myndigheders, regioners og kommuners offentliggjorte datasæt. Resultatet er en tabel med titel, udgiver, format og downloadlink; filer importeres derefter via Filer.", "endpoints": {"search": {"name": "Søg datasæt", "params": {"q": {"label": "Søgeord"}}}}},
+    "nb": {"name": "Sveriges dataportal (søk datasett)", "publisher": "Digg, den svenske etaten for digital forvaltning", "description": "Søk blant alle svenske etaters, regioners og kommuners publiserte datasett. Resultatet er en tabell med tittel, utgiver, format og nedlastingslenke; filer importeres deretter via Filer.", "endpoints": {"search": {"name": "Søk datasett", "params": {"q": {"label": "Søkeord"}}}}},
+    "fi": {"name": "Ruotsin dataportaali (hae aineistoja)", "publisher": "Digg, Ruotsin digitaalisen hallinnon virasto", "description": "Hae kaikkien Ruotsin viranomaisten, alueiden ja kuntien julkaisemia aineistoja. Tulos on taulukko, jossa on nimi, julkaisija, muoto ja latauslinkki; tiedostot tuodaan sen jälkeen kohdasta Tiedostot.", "endpoints": {"search": {"name": "Hae aineistoja", "params": {"q": {"label": "Hakusanat"}}}}, "dataset": {"search": "Dataportaali: {q}"}},
+    "is": {"name": "Gagnagátt Svíþjóðar (leita að gagnasöfnum)", "publisher": "Digg, stofnun Svíþjóðar um stafræna stjórnsýslu", "description": "Leitaðu meðal birtra gagnasafna allra sænskra stofnana, landshluta og sveitarfélaga. Niðurstaðan er tafla með heiti, útgefanda, sniði og niðurhalstengli; skrár eru síðan fluttar inn gegnum Skrár.", "endpoints": {"search": {"name": "Leita að gagnasöfnum", "params": {"q": {"label": "Leitarorð"}}}}, "dataset": {"search": "Gagnagáttin: {q}"}}
+  }
 }

@@ -15,7 +15,7 @@ behöver finns i appmappen: R, ett urval paket och Dataspatiums hjälpfunktioner
 | Funktion | Gör |
 |---|---|
 | `dm_list()` | Visar datamängderna i sessionen: namn, rader, kolumner, ändrad, id. |
-| `dm_read("Namn")` | Läser in en datamängd som `data.frame` med rätt typer: datum blir `Date`, datum och tid `POSIXct`, ja/nej `logical`, heltal `integer`. Namnet kan vara kortnamnet (till exempel `dm_read("befolkning_per_kommun_2024")`), id, exakt namn, namn oavsett skiftläge eller ett entydigt prefix; `dm_list()` visar kortnamnen. |
+| `dm_read("kortnamn")` | Läser in en datamängd som `data.frame` med rätt typer: datum blir `Date`, datum och tid `POSIXct`, ja/nej `logical`, heltal `integer`. Argumentet är helst kortnamnet (till exempel `dm_read("befolkning_2024")`, det som knappen *Infoga dm_read()* skriver) men kan också vara id, exakt namn, namn oavsett skiftläge eller ett entydigt prefix; `dm_list()` visar kortnamnen. |
 | `dm_read("Namn", columns = c("a", "b"), where = "a > 10", n = 1000)` | Läser bara vissa kolumner, rader som uppfyller ett SQL-villkor, eller ett begränsat antal rader. |
 | `attr(df$kolumn, "label")`, `"description"`, `"unit"` | Kolumnens etikett, beskrivning och enhet från appen följer med som attribut (när de är satta); `dm_write()` tar dem tillbaka, eller via argumenten `labels`, `descriptions` och `units`. |
 | `dm_write(df, "Nytt namn", description = "…")` | Skickar en `data.frame` till appen som en ny datamängd. Den dyker upp i listan när kommandot är klart. |
@@ -25,7 +25,7 @@ behöver finns i appmappen: R, ett urval paket och Dataspatiums hjälpfunktioner
 Exempel:
 
 ```r
-df <- dm_read("Befolkning per kommun 2024")
+df <- dm_read("befolkning_2024")
 library(dplyr)
 per_lan <- df |>
   group_by(lan) |>
@@ -66,6 +66,12 @@ hämtar och lägger till i arbetsytan när kommandot är klart. Vill du använda
 `DBI::dbConnect(RSQLite::SQLite(), "/data/<id>.sqlite")` där id visas av `dm_list()`.
 
 Datamängder större än 50 MB speglas bara när de refereras i koden.
+
+## Språk
+
+Meddelanden från `dm_list()`, `dm_read()` och `dm_write()` följer appens språk (svenska, danska, norska, finska,
+isländska eller engelska); kolumnnamnen i `dm_list()` är däremot alltid desamma (`namn`, `kortnamn`, `rader`,
+`kolumner`, `ändrad`, `id`) så att skript fungerar oavsett språk.
 
 ## Begränsningar
 

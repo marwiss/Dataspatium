@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "hagstova-foroya",
+  "name": "Hagstova Føroya (Statistics Faroe Islands)",
+  "publisher": "Hagstova Føroya",
+  "description": "Färöarnas officiella statistik: befolkning, arbetsmarknad, ekonomi, fiske, utbildning och mer, på engelska (färöiska på webbplatsen). Bläddra i ämnesträdet, välj tabell och värden per variabel.",
+  "docs": "https://hagstova.fo/en",
+  "license": { "name": "Fri att använda med källangivelse (Hagstova Føroya)", "url": "https://hagstova.fo/en" },
+  "level": 1,
+  "country": "FO",
+  "baseUrl": "https://statbank.hagstova.fo/api/v1/en/H2",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000 },
+  "notes": "Ange källa: Hagstova Føroya.",
+  "i18n": {
+    "en": { "name": "Statistics Faroe Islands (Hagstova Føroya)", "publisher": "Statistics Faroe Islands", "description": "The Faroe Islands' official statistics: population, labour market, economy, fisheries, education and more, in English (Faroese on the website). Browse the subject tree, pick a table and values per variable.", "notes": "Cite the source: Statistics Faroe Islands." },
+    "da": { "name": "Hagstova Føroya (Færøernes statistik)", "publisher": "Hagstova Føroya", "description": "Færøernes officielle statistik: befolkning, arbejdsmarked, økonomi, fiskeri, uddannelse og mere, på engelsk (færøsk på webstedet). Gennemse emnetræet, vælg tabel og værdier pr. variabel.", "notes": "Angiv kilde: Hagstova Føroya." },
+    "nb": { "name": "Hagstova Føroya (Færøyenes statistikk)", "publisher": "Hagstova Føroya", "description": "Færøyenes offisielle statistikk: befolkning, arbeidsmarked, økonomi, fiskeri, utdanning og mer, på engelsk (færøysk på nettstedet). Bla i emnetreet, velg tabell og verdier per variabel.", "notes": "Oppgi kilde: Hagstova Føroya." },
+    "fi": { "name": "Färsaarten tilastokeskus (Hagstova Føroya)", "publisher": "Hagstova Føroya", "description": "Färsaarten virallinen tilasto: väestö, työmarkkinat, talous, kalastus, koulutus ja muuta, englanniksi (fääriksi verkkosivustolla). Selaa aihepuuta, valitse taulukko ja arvot muuttujittain.", "notes": "Mainitse lähde: Hagstova Føroya." },
+    "is": { "name": "Hagstofa Færeyja (Hagstova Føroya)", "publisher": "Hagstova Føroya", "description": "Opinber hagtölur Færeyja: mannfjöldi, vinnumarkaður, efnahagur, fiskveiðar, menntun og fleira, á ensku (færeyska á vefsíðunni). Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu.", "notes": "Tilgreindu heimild: Hagstova Føroya." }
+  }
+}

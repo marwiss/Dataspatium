@@ -5,13 +5,101 @@
 #   dm_read("Namn")      read a dataset as a data.frame with restored types
 #   dm_write(df, "Namn") hand a data.frame back to the app as a new dataset
 #   theme_dataspatium()     ggplot2 theme and palette shared with the rest of the app
-# Code comments are in English; messages shown to the user are in Swedish.
+# Code comments are in English; messages shown to the user follow the app's language (dm_setup(lang)).
 
 .dataspatium <- new.env(parent = emptyenv())
 .dataspatium$data_dir <- "/data"
 .dataspatium$out_dir <- "/data/out"
 .dataspatium$plots <- list()
 .dataspatium$palette <- c("#0072B2", "#E69F00", "#009E73", "#D55E00", "#56B4E9", "#CC79A7", "#F0E442", "#7F7F7F")
+.dataspatium$lang <- "sv"
+
+# ---- user-facing messages in the six UI languages (sv is the fallback) -------------------------
+
+.dataspatium$messages <- list(
+  sv = c(
+    list.empty = "Inga datamängder är tillgängliga i R-sessionen ännu. Importera i läget Inhämta.",
+    find.none = "Inga datamängder finns i R-sessionen. Kör dm_list() för att se vad som finns.",
+    find.many = "Flera datamängder matchar \"%s\": %s",
+    find.missing = "Hittar ingen datamängd som heter \"%s\". Kör dm_list() för att se vad som finns.",
+    read.notmirrored = "Datamängden \"%s\" är inte speglad till R ännu. Prova igen om en stund.",
+    write.df = "dm_write() behöver en data.frame.",
+    write.nocols = "Datamängden saknar kolumner.",
+    write.sent = "Datamängden \"%s\" skickas till appen (%d rader, %d kolumner).",
+    write.log = "Skapad med dm_write() i R",
+    plot.gone = "Diagrammet finns inte längre i R-sessionen."
+  ),
+  da = c(
+    list.empty = "Ingen datasæt er tilgængelige i R-sessionen endnu. Importér under Hent.",
+    find.none = "Der findes ingen datasæt i R-sessionen. Kør dm_list() for at se, hvad der findes.",
+    find.many = "Flere datasæt matcher \"%s\": %s",
+    find.missing = "Kan ikke finde et datasæt med navnet \"%s\". Kør dm_list() for at se, hvad der findes.",
+    read.notmirrored = "Datasættet \"%s\" er ikke spejlet til R endnu. Prøv igen om et øjeblik.",
+    write.df = "dm_write() kræver en data.frame.",
+    write.nocols = "Datasættet har ingen kolonner.",
+    write.sent = "Datasættet \"%s\" sendes til appen (%d rækker, %d kolonner).",
+    write.log = "Oprettet med dm_write() i R",
+    plot.gone = "Diagrammet findes ikke længere i R-sessionen."
+  ),
+  nb = c(
+    list.empty = "Ingen datasett er tilgjengelige i R-sesjonen ennå. Importer under Hent.",
+    find.none = "Det finnes ingen datasett i R-sesjonen. Kjør dm_list() for å se hva som finnes.",
+    find.many = "Flere datasett matcher \"%s\": %s",
+    find.missing = "Finner ikke noe datasett som heter \"%s\". Kjør dm_list() for å se hva som finnes.",
+    read.notmirrored = "Datasettet \"%s\" er ikke speilet til R ennå. Prøv igjen om et øyeblikk.",
+    write.df = "dm_write() krever en data.frame.",
+    write.nocols = "Datasettet har ingen kolonner.",
+    write.sent = "Datasettet \"%s\" sendes til appen (%d rader, %d kolonner).",
+    write.log = "Opprettet med dm_write() i R",
+    plot.gone = "Diagrammet finnes ikke lenger i R-sesjonen."
+  ),
+  fi = c(
+    list.empty = "R-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
+    find.none = "R-istunnossa ei ole aineistoja. Aja dm_list() nähdäksesi, mitä on saatavilla.",
+    find.many = "Useat aineistot vastaavat hakua \"%s\": %s",
+    find.missing = "Aineistoa nimeltä \"%s\" ei löydy. Aja dm_list() nähdäksesi, mitä on saatavilla.",
+    read.notmirrored = "Aineistoa \"%s\" ei ole vielä peilattu R:ään. Yritä hetken kuluttua uudelleen.",
+    write.df = "dm_write() tarvitsee data.frame-olion.",
+    write.nocols = "Aineistossa ei ole sarakkeita.",
+    write.sent = "Aineisto \"%s\" lähetetään sovellukseen (%d riviä, %d saraketta).",
+    write.log = "Luotu dm_write()-funktiolla R:ssä",
+    plot.gone = "Kaaviota ei enää ole R-istunnossa."
+  ),
+  is = c(
+    list.empty = "Engin gagnasöfn eru tiltæk í R-setunni enn. Flyttu inn undir Sækja.",
+    find.none = "Engin gagnasöfn eru í R-setunni. Keyrðu dm_list() til að sjá hvað er til.",
+    find.many = "Fleiri gagnasöfn passa við \"%s\": %s",
+    find.missing = "Finn ekkert gagnasafn sem heitir \"%s\". Keyrðu dm_list() til að sjá hvað er til.",
+    read.notmirrored = "Gagnasafnið \"%s\" hefur ekki verið speglað til R enn. Reyndu aftur eftir augnablik.",
+    write.df = "dm_write() þarf data.frame.",
+    write.nocols = "Gagnasafnið hefur enga dálka.",
+    write.sent = "Gagnasafnið \"%s\" er sent til forritsins (%d raðir, %d dálkar).",
+    write.log = "Búið til með dm_write() í R",
+    plot.gone = "Myndritið er ekki lengur til í R-setunni."
+  ),
+  en = c(
+    list.empty = "No datasets are available in the R session yet. Import one in Import.",
+    find.none = "There are no datasets in the R session. Run dm_list() to see what exists.",
+    find.many = "Several datasets match \"%s\": %s",
+    find.missing = "No dataset called \"%s\" was found. Run dm_list() to see what exists.",
+    read.notmirrored = "The dataset \"%s\" has not been mirrored to R yet. Try again in a moment.",
+    write.df = "dm_write() needs a data.frame.",
+    write.nocols = "The dataset has no columns.",
+    write.sent = "The dataset \"%s\" is being sent to the app (%d rows, %d columns).",
+    write.log = "Created with dm_write() in R",
+    plot.gone = "The plot no longer exists in the R session."
+  )
+)
+
+# Message in the session language, formatted with sprintf when arguments are given.
+.dm_msg <- function(key, ...) {
+  table <- .dataspatium$messages[[.dataspatium$lang]]
+  if (is.null(table)) table <- .dataspatium$messages$sv
+  text <- table[[key]]
+  if (is.null(text)) text <- .dataspatium$messages$sv[[key]]
+  if (is.null(text)) text <- key
+  if (...length()) sprintf(text, ...) else text
+}
 
 # ---- index of datasets mirrored by the app ---------------------------------------------------
 
@@ -46,7 +134,7 @@ dm_index <- function() {
 dm_list <- function() {
   idx <- dm_index()
   if (nrow(idx) == 0) {
-    message("Inga datamängder är tillgängliga i R-sessionen ännu. Importera i läget Inhämta.")
+    message(.dm_msg("list.empty"))
     return(invisible(idx))
   }
   out <- idx[, c("name", "shortName", "rowCount", "columnCount", "updatedAt", "id")]
@@ -57,7 +145,7 @@ dm_list <- function() {
 #' Resolve a dataset reference (id, short name, exact name, case-insensitive name or unique prefix) to an id.
 dm_find <- function(x) {
   idx <- dm_index()
-  if (nrow(idx) == 0) stop("Inga datamängder finns i R-sessionen. Kör dm_list() för att se vad som finns.", call. = FALSE)
+  if (nrow(idx) == 0) stop(.dm_msg("find.none"), call. = FALSE)
   x <- as.character(x)[1]
   hit <- which(idx$id == x)
   if (!length(hit)) hit <- which(idx$name == x)
@@ -65,8 +153,8 @@ dm_find <- function(x) {
   if (!length(hit)) hit <- which(tolower(idx$name) == tolower(x))
   if (!length(hit)) hit <- which(startsWith(tolower(idx$name), tolower(x)))
   if (length(hit) == 1) return(idx$id[hit])
-  if (length(hit) > 1) stop("Flera datamängder matchar \"", x, "\": ", paste(idx$name[hit], collapse = ", "), call. = FALSE)
-  stop("Hittar ingen datamängd som heter \"", x, "\". Kör dm_list() för att se vad som finns.", call. = FALSE)
+  if (length(hit) > 1) stop(.dm_msg("find.many", x, paste(idx$name[hit], collapse = ", ")), call. = FALSE)
+  stop(.dm_msg("find.missing", x), call. = FALSE)
 }
 
 .dm_connect <- function(file) {
@@ -82,7 +170,7 @@ dm_find <- function(x) {
 dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
   id <- dm_find(x)
   file <- file.path(.dataspatium$data_dir, paste0(id, ".sqlite"))
-  if (!file.exists(file)) stop("Datamängden \"", x, "\" är inte speglad till R ännu. Prova igen om en stund.", call. = FALSE)
+  if (!file.exists(file)) stop(.dm_msg("read.notmirrored", x), call. = FALSE)
   con <- .dm_connect(file)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
   cols <- DBI::dbReadTable(con, "_columns")
@@ -125,7 +213,7 @@ dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
 #' Hand a data.frame to the app as a new dataset. The app picks up the file after the command ends.
 #' @return the new dataset id (invisibly)
 dm_write <- function(df, name = NULL, description = "", labels = NULL, descriptions = NULL, units = NULL) {
-  if (!is.data.frame(df)) stop("dm_write() behöver en data.frame.", call. = FALSE)
+  if (!is.data.frame(df)) stop(.dm_msg("write.df"), call. = FALSE)
   if (is.null(name)) name <- deparse(substitute(df))[1]
   # Variable labels (SPSS, Stata, SAS) become column labels unless given explicitly; "description" and
   # "unit" attributes (as set by dm_read) become column descriptions and units.
@@ -134,7 +222,7 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
   if (is.null(descriptions)) descriptions <- attr_of("description")
   if (is.null(units)) units <- attr_of("unit")
   df <- as.data.frame(df, stringsAsFactors = FALSE)
-  if (!ncol(df)) stop("Datamängden saknar kolumner.", call. = FALSE)
+  if (!ncol(df)) stop(.dm_msg("write.nocols"), call. = FALSE)
   labels <- as.character(labels); length(labels) <- ncol(df)
   labels <- ifelse(is.na(labels) | labels == "", names(df), labels)
   descriptions <- as.character(descriptions); length(descriptions) <- ncol(df)
@@ -171,9 +259,9 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
     stringsAsFactors = FALSE))
   DBI::dbExecute(con, "create table _log (ts text, action text, details text)")
   DBI::dbAppendTable(con, "_log", data.frame(ts = now, action = "r",
-    details = "{\"message\":\"Skapad med dm_write() i R\"}", stringsAsFactors = FALSE))
+    details = paste0("{\"message\":", .dm_json_string(.dm_msg("write.log")), "}"), stringsAsFactors = FALSE))
   cat(sprintf("[dataspatium:write] %s\n", file))
-  message("Datamängden \"", name, "\" skickas till appen (", nrow(out), " rader, ", ncol(out), " kolumner).")
+  message(.dm_msg("write.sent", name, nrow(out), ncol(out)))
   invisible(id)
 }
 
@@ -220,7 +308,7 @@ dm_plot_record <- function(key) {
 dm_plot_export <- function(key, format = c("svg", "png", "pdf"), file, width = 7, height = 5, dpi = 150) {
   format <- match.arg(format)
   rec <- .dataspatium$plots[[as.character(key)]]
-  if (is.null(rec)) stop("Diagrammet finns inte längre i R-sessionen.", call. = FALSE)
+  if (is.null(rec)) stop(.dm_msg("plot.gone"), call. = FALSE)
   if (format == "svg" && !requireNamespace("svglite", quietly = TRUE)) suppressWarnings(webr::install("svglite", quiet = TRUE))
   if (format == "svg") svglite::svglite(file, width = width, height = height)
   else if (format == "png") grDevices::png(file, width = width, height = height, units = "in", res = dpi)
@@ -233,7 +321,9 @@ dm_plot_export <- function(key, format = c("svg", "png", "pdf"), file, width = 7
 # ---- session setup -----------------------------------------------------------------------------
 
 #' Called once by the app after R has started.
-dm_setup <- function() {
+#' @param lang language code for user-facing messages (sv, da, nb, fi, is or en)
+dm_setup <- function(lang = "sv") {
+  if (is.character(lang) && length(lang) == 1 && !is.null(.dataspatium$messages[[lang]])) .dataspatium$lang <- lang
   dir.create(.dataspatium$data_dir, showWarnings = FALSE, recursive = TRUE)
   dir.create(.dataspatium$out_dir, showWarnings = FALSE, recursive = TRUE)
   # Packages dm_read()/dm_write() need; svglite is installed on first SVG export.

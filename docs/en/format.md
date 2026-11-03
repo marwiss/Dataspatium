@@ -1,0 +1,90 @@
+# Formats and import
+
+## Supported file formats
+
+| Format | Import | Export | Comment |
+|---|---|---|---|
+| CSV, TSV, TXT with delimiters | Yes | Yes | Delimiter, character encoding and header row are detected automatically and can be changed |
+| Fixed-width text | Yes | No | Choose the format in the import step (files named .fwf or .prn are recognised). Column starts are found from spaces present on every line, or given as positions |
+| Excel xlsx, xlsm, xls, xlsb | Yes | xlsx | Choose sheet; dates and yes/no become real types |
+| ODS (LibreOffice) | Yes | Yes | Same type handling as Excel |
+| JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
+| NDJSON, JSON Lines | Yes | No | One object per line |
+| JSON-stat | Yes | No | Recognised automatically (`class: dataset`, versions 1.x and 2.0); one row per cell with codes, texts and value |
+| GeoJSON | Yes | Yes | One row per feature; the properties become columns, the geometry a text column with GeoJSON that the map chart draws (the map also reads WKT text in a column, for example from CSV). At export the geometry column (GeoJSON or WKT) becomes each feature's geometry and the other columns its properties |
+| Shapefile (ZIP with shp, dbf, prj, cpg, or shp alone) | Yes | No | The attributes become typed columns according to the dbf schema, the geometry GeoJSON in the column `geometry`. Choose the layer if the ZIP file has several, and simplify the geometry with a tolerance in map units. The coordinates are kept (for example SWEREF 99 TM or longitude/latitude) |
+| XML | Yes | Yes | One row per repeated element (chosen in the import step); attributes and child elements become columns, nested elements get dotted names such as `lage.lan` |
+| SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
+| GeoPackage (gpkg) | Yes | No | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
+| SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels, value labels become text |
+| Stata dta | Yes | dta | Through haven. At export the column names are shortened to Stata's rules (32 characters, ASCII) |
+| SAS sas7bdat, xpt | Yes | No | Through haven |
+| PX (PC-Axis, used by the Nordic statistics offices) | Yes | No | Through the R package pxR; the character encoding is read from the file's CODEPAGE or CHARSET. The result is a long table with one value column |
+| Parquet | Yes | Yes | Through the R package nanoparquet; keeps types exactly |
+| RDS, RData | Yes | rds | R objects; an RData file must contain a data.frame |
+| Pasted text | Yes | | Tab-, semicolon- or comma-separated |
+
+Delimited text files of 64 MB or more are read in chunks: the preview shows the first rows as usual, and at import
+the rows are written to the dataset while the file is read, so that the whole text never needs to be in memory. The
+column types are taken from the column step or guessed from the first chunk. Progress is shown as the rows read.
+
+All file formats can also be fetched from a web address under *From web address* in Import, if the server allows
+requests from the browser (CORS). Dataspatium's own configuration files (API source, chart, dashboard, document
+template, notebook) are recognised by the field `format` and added directly.
+
+The formats that go through R start the R session when needed (a few seconds the first time) and have no preview:
+the file is read by R and handed over with `dm_write()`, so the column types come from R. Yes/no becomes 0/1 in SPSS
+and Stata, which lack a logical type.
+
+Data that is added with a button in Import also ships with the app: the example data *Population per municipality
+2024 (Sweden)* and SCB's municipality and county boundaries (*Digitala gränser*, CC0) as GeoJSON in longitude and latitude,
+see `presets/geo/KALLA.md`. Nothing is fetched from the internet.
+
+## Character encoding
+
+Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain
+ASCII, strict UTF-8 validation of the first megabyte, otherwise Windows-1252. Windows-1252 is common for files saved
+from older Nordic Excel versions. You can always change the encoding in the import step.
+
+## Delimiters and decimal separators
+
+The delimiter is guessed among semicolon, comma, tab and pipe. Nordic CSV files usually use semicolons, since the
+comma is the decimal separator. The decimal separator is decided per column: if comma decimals are at least as
+common as point decimals, comma is chosen. Thousands separators (space, non-breaking space, point with comma
+decimals) are removed.
+
+## Column types
+
+| Type | Recognised as | Stored as |
+|---|---|---|
+| Text | Everything that fits nothing else, and all numbers with a leading zero (municipality codes, postcodes, personal identity numbers) | TEXT |
+| Integer | `12`, `-3`, `1 234` | INTEGER |
+| Decimal number | `1 234,5`, `1.5`, `2,0`, `1.5e3` | REAL |
+| Date | `2024-01-31`, `31/12/2024`, `31.12.2024`, `31-12-2024` | TEXT, ISO 8601 `YYYY-MM-DD` |
+| Date and time | `2024-01-31 10:05`, `2024-01-31T10:05:00Z`, Excel dates with time | TEXT, `YYYY-MM-DD HH:MM:SS` |
+| Yes/no | `ja`, `nej`, `true`, `false`, `sant`, `falskt`, `j`, `n`, `yes`, `no` | INTEGER 0/1 |
+
+A column gets a type only if all filled-in values in the sample fit. Empty values always become "empty" (NULL). Values
+that cannot be interpreted with a type you choose manually also become empty.
+
+## The dataset's file
+
+Each dataset is an SQLite file with four tables: `data` (the rows), `_columns` (name, type, label, original name,
+description and unit; the last two are added when an older file is opened), `_meta` (name, short name, description,
+timestamps, source, import settings) and `_log` (everything done with the dataset). The file can be opened in R with
+RSQLite, in DB Browser for SQLite and in most other tools.
+
+## The workspace's files
+
+The backup (ZIP) and the portable folder (Edge and Chrome) have the same structure: `manifest.json` with a list of the
+contents, `datasets/<id>.sqlite` per dataset, `charts/<id>.viz.json` per saved chart, `documents/<id>.doc.json` per
+document template of your own, `dashboards/<id>.dash.json` per dashboard and `notebooks/<id>.nb.json` per notebook. A
+bundle (*Share bundle* under Manage) has the same structure but contains only what you chose and has `kind: bundle`
+in the manifest; when it is loaded, everything that already exists is skipped (datasets with the same id, charts,
+dashboards, templates and notebooks with the same name). With automatic saving on, changed datasets are written to
+the folder shortly after each save and files for deleted datasets are removed. The folder can be loaded on another
+computer; datasets that already exist (same id) and charts or templates with the same name are skipped.
+
+The rows in `_log` have a timestamp, action type and details as JSON. The action types are among others `import`, `op`
+(a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot` and
+`restore`. The recipe export in Process builds on the `op` rows, see [bearbeta.md](bearbeta.md).

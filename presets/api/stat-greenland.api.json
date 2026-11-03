@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "stat-greenland",
+  "name": "Grønlands Statistik (Statbank Greenland)",
+  "publisher": "Grønlands Statistik (Naatsorsueqqissaartarfik)",
+  "description": "Grönlands officiella statistik: befolkning, arbetsmarknad, ekonomi, fiske, utbildning och mer, på danska och engelska. Bläddra i ämnesträdet, välj tabell och värden per variabel.",
+  "docs": "https://stat.gl/",
+  "license": { "name": "Fri att använda med källangivelse (Grønlands Statistik)", "url": "https://stat.gl/" },
+  "level": 1,
+  "country": "GL",
+  "baseUrl": "https://bank.stat.gl/api/v1/en/Greenland",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000, "urls": { "da": "https://bank.stat.gl/api/v1/da/Greenland", "en": "https://bank.stat.gl/api/v1/en/Greenland" } },
+  "notes": "Ange källa: Grønlands Statistik.",
+  "i18n": {
+    "en": { "name": "Statistics Greenland (Statbank Greenland)", "publisher": "Statistics Greenland", "description": "Greenland's official statistics: population, labour market, economy, fisheries, education and more, in Danish and English. Browse the subject tree, pick a table and values per variable.", "notes": "Cite the source: Statistics Greenland." },
+    "da": { "name": "Grønlands Statistik (Statistikbanken)", "publisher": "Grønlands Statistik (Naatsorsueqqissaartarfik)", "description": "Grønlands officielle statistik: befolkning, arbejdsmarked, økonomi, fiskeri, uddannelse og mere, på dansk og engelsk. Gennemse emnetræet, vælg tabel og værdier pr. variabel.", "notes": "Angiv kilde: Grønlands Statistik." },
+    "nb": { "name": "Grønlands Statistik (Statbank Greenland)", "publisher": "Grønlands Statistik (Naatsorsueqqissaartarfik)", "description": "Grønlands offisielle statistikk: befolkning, arbeidsmarked, økonomi, fiskeri, utdanning og mer, på dansk og engelsk. Bla i emnetreet, velg tabell og verdier per variabel.", "notes": "Oppgi kilde: Grønlands Statistik." },
+    "fi": { "name": "Grönlannin tilastokeskus (Statbank Greenland)", "publisher": "Grønlands Statistik (Naatsorsueqqissaartarfik)", "description": "Grönlannin virallinen tilasto: väestö, työmarkkinat, talous, kalastus, koulutus ja muuta, tanskaksi ja englanniksi. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain.", "notes": "Mainitse lähde: Grønlands Statistik." },
+    "is": { "name": "Hagstofa Grænlands (Statbank Greenland)", "publisher": "Grønlands Statistik (Naatsorsueqqissaartarfik)", "description": "Opinber hagtölur Grænlands: mannfjöldi, vinnumarkaður, efnahagur, fiskveiðar, menntun og fleira, á dönsku og ensku. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu.", "notes": "Tilgreindu heimild: Grønlands Statistik." }
+  }
+}

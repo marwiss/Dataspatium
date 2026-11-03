@@ -10,8 +10,8 @@ dokument i [dokumentmallar.md](dokumentmallar.md). Vanliga frågor besvaras i [f
 
 Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Bearbeta, Analysera, Visualisera,
 Exportera; Alt+1 till Alt+6 fungerar också) och ser arbetsytans status (sparat eller osparat), kommandopaletten
-(förstoringsglaset eller Ctrl+K), tema (ljust eller mörkt) och hjälpknappen med versionsnummer och *Sök efter
-uppdatering*. Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge,
+(förstoringsglaset eller Ctrl+K), språkknappen, tema (ljust eller mörkt) och hjälpknappen med versionsnummer och
+*Sök efter uppdatering*. Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge,
 öppna en datamängd, ett diagram eller en dashboard, eller köra en bearbetningsåtgärd på den valda datamängden. Till vänster finns objekten för läget
 (datamängder, källor, diagram, mallar), i mitten arbetsytan och till höger inspektören med egenskaper och
 statistik. Längst ned ligger loggen, där varje åtgärd, varning och fel skrivs ut; det är den du läser när något inte
@@ -33,7 +33,9 @@ länsgränser för kartor.
 
 Under *Öppna API:er* finns förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat,
 SMHI, luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket
-och Lantmäteriet Direkt för den som har egna nycklar. Bläddra eller sök fram en tabell, välj variabler, förhandsgranska
+och Lantmäteriet Direkt för den som har egna nycklar. Därtill statistikbyråerna och flera andra myndigheter i
+Danmark, Norge, Finland och Island, de självstyrande områdena och Nordic Statistics; landsknapparna ovanför
+listan väljer vilka länders källor som visas. Bläddra eller sök fram en tabell, välj variabler, förhandsgranska
 och hämta till en ny datamängd eller lägg till i en befintlig. En hämtad datamängd kommer ihåg sin fråga, så den kan
 hämtas igen från Hantera när källan uppdaterats.
 
@@ -74,8 +76,9 @@ sessionen första gången de används. Skript kan sparas och köras igen. Först
 
 SQL-fliken frågar datamängdens tabell `data` direkt med SQLite. Andra datamängder nås med sina kortnamn (visas
 under namnet i objektpanelen), så att en fråga kan göra join över flera datamängder, till exempel
-`select ... from befolkning b join kommuner k on k.kommunkod = b.kommunkod`. SELECT-frågor visar resultatet
-(upp till 5 000 rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som receptsteg.
+`select ... from befolkning_2024 b join kommungranser k on k.kommunkod = b.kommunkod`. SELECT-frågor visar
+resultatet (upp till 5 000 rader) och kan sparas som ny datamängd; UPDATE, DELETE och ALTER loggas som receptsteg.
+Knappen *Infoga dm_read()* och R-exemplen i inspektören använder också kortnamnet.
 
 Fliken *Anteckningsbok* samlar text (Markdown), R och SQL i celler som körs i ordning och sparar sina utdata. En
 färdig bok exporteras som HTML, Word, PDF, Markdown eller LaTeX, med eller utan koden. Se
@@ -132,8 +135,18 @@ Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Första Tabb
 dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer
 systeminställningen för minskad rörelse.
 
+## Språk
+
+Gränssnittet finns på svenska, danska, norska (bokmål), finska, isländska och engelska. Första gången appen
+öppnas väljer du språk; språkknappen uppe till höger (eller kommandot *Språk* i paletten) byter det senare. Valet
+sparas i webbläsaren, så varje dator och webbläsarprofil har sitt eget. Tal i gränssnittet följer språkets
+konventioner; själva datan ändras aldrig. R:s meddelanden följer samma val, medan mallarnas platshållare som
+`{{datamangd}}` och tabellnyckelorden `kolumner`, `sortera`, `topp`, `filter` och `rubrik` är en del av
+mallspråket och är desamma på alla språk. Dokumentationen finns på alla sex språken under `docs/` (svenska i
+`docs/`, övriga i `docs/<språk>/`).
+
 ## När något går fel
 
-Läs loggen längst ned: fel som du kan åtgärda beskrivs på svenska med förslag. Om R hänger sig, använd *Starta om
+Läs loggen längst ned: fel som du kan åtgärda beskrivs på ditt språk med förslag. Om R hänger sig, använd *Starta om
 R*; datamängderna påverkas inte. Ta säkerhetskopia innan du rensar webbläsardata. Buggar rapporteras som ärenden på
 GitHub, se [CONTRIBUTING.md](../CONTRIBUTING.md).

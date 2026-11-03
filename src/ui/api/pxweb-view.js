@@ -7,11 +7,16 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/pxweb-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/variable-picker', 'api/families/pxweb'], (base, basic, icons, _picker, pxweb) => {
+  D.define('ui/api/pxweb-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/variable-picker', 'api/families/pxweb'], (base, basic, icons, _picker, pxwebFamily) => {
     const { h, t, i18n, replace } = base;
 
-    /** @param {{connector: any, runFetch: Function, log: Function}} api */
-    function create(api) {
+    /**
+     * @param {{connector: any, runFetch: Function, log: Function}} api
+     * @param {any} [family] family module with the PxWeb browsing interface (listFolder, tableMetaV1,
+     *   cellCount, maxCells, fetchData, describeSource, version); Statistics Denmark and FHI reuse this view.
+     */
+    function create(api, family) {
+      const pxweb = family || pxwebFamily;
       const { connector } = api;
       const v2 = pxweb.version(connector) === 2;
       const state = { path: [], crumbs: [], entries: [], filter: '', loading: false, error: '', query: '', results: [], page: { number: 1, totalPages: 1, totalElements: 0 }, table: null, meta: null };

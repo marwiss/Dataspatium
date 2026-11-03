@@ -10,20 +10,39 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/pxweb', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets'], (http, auth, jsonstat, secrets) => {
+  D.define('api/families/pxweb', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'ui/i18n'], (http, auth, jsonstat, secrets, i18n) => {
     const DEFAULT_MAX_CELLS = 150000;
     const MAX_URL = 6000;
 
-    function base(connector) { return String(connector.baseUrl).replace(/\/+$/, ''); }
+    /**
+     * Service root. API v1 puts the language in the URL, so a preset may list one root per language
+     * (`family.urls`); the app's language is used when the service offers it, else `baseUrl`.
+     */
+    function base(connector) {
+      const urls = connector.family && connector.family.urls;
+      const ui = i18n.language();
+      const url = urls && urls[ui] ? urls[ui] : connector.baseUrl;
+      return String(url).replace(/\/+$/, '');
+    }
     function version(connector) { return (connector.family && connector.family.version) || 1; }
-    function lang(connector) { return (connector.family && connector.family.lang) || 'sv'; }
+    /**
+     * Language parameter (API v2): the app's language when the service accepts it (`family.langs`, a list
+     * of UI codes or a map from UI code to the service's code, e.g. {"nb": "no"}), else `family.lang`.
+     */
+    function lang(connector) {
+      const langs = connector.family && connector.family.langs;
+      const ui = i18n.language();
+      if (Array.isArray(langs) && langs.includes(ui)) return ui;
+      if (langs && typeof langs === 'object' && !Array.isArray(langs) && langs[ui]) return String(langs[ui]);
+      return (connector.family && connector.family.lang) || 'sv';
+    }
     function maxCells(connector) { return (connector.family && connector.family.maxCells) || DEFAULT_MAX_CELLS; }
 
     async function getJson(connector, url, options = {}) {
       const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
       const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
       if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error('Svaret från ' + connector.name + ' var inte JSON.'); }
+      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }
     async function postJson(connector, url, body, options = {}) {
       // PxWeb API v1 answers CORS preflights without Access-Control-Allow-Headers, so a JSON content type
@@ -32,7 +51,7 @@
       const req = await auth.apply(connector, { url, method: 'POST', headers: { Accept: 'application/json', 'Content-Type': contentType }, body: JSON.stringify(body) });
       const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
       if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error('Svaret från ' + connector.name + ' var inte JSON.'); }
+      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }
 
     // ---- v1 ----
@@ -40,7 +59,8 @@
     async function listFolder(connector, path = [], options) {
       // The database root needs a trailing slash; folders are addressed without one.
       const data = await getJson(connector, base(connector) + (path.length ? '/' + path.map(encodeURIComponent).join('/') : '/'), options);
-      return (Array.isArray(data) ? data : []).map((e) => ({ id: e.id, type: e.type === 't' ? 'table' : 'folder', text: String(e.text || '').trim(), updated: e.updated || null }));
+      // A root above the databases (Statistics Iceland) lists {dbid, text} entries; they behave as folders.
+      return (Array.isArray(data) ? data : []).map((e) => ({ id: e.id !== undefined ? e.id : e.dbid, type: e.type === 't' ? 'table' : 'folder', text: String(e.text || '').trim(), updated: e.updated || null }));
     }
     function normalizeV1(meta) {
       return {
@@ -133,7 +153,7 @@
         const values = sel && sel.filter === 'all' ? v.values.map((x) => x.code) : (sel && sel.filter === 'item' ? sel.values : null);
         if (values && values.length > 1 && (!best || values.length > best.values.length)) best = { v, values };
       }
-      if (!best) throw new Error(`Urvalet ger ${total} celler men tjänsten tillåter högst ${limit} per anrop. Välj färre värden.`);
+      if (!best) throw new Error(D.t('api.err.toomany.cells', { total, limit }));
       const perChunk = Math.max(1, Math.floor(best.values.length / Math.ceil(total / limit)));
       const chunks = [];
       for (let i = 0; i < best.values.length; i += perChunk) chunks.push(Object.assign({}, selection, { [best.v.code]: { filter: 'item', values: best.values.slice(i, i + perChunk) } }));
@@ -184,6 +204,6 @@
       return fetchData(connector, Object.assign({}, source.table, { title: meta.title }), meta.variables, source.selection, options);
     }
 
-    return { version, lang, maxCells, listFolder, tableMetaV1, tableMetaV2, searchTables, buildQuery, buildV2, normalizeV1, normalizeV2, cellCount, chunk, fetchData, describeSource, refetch };
+    return { base, version, lang, maxCells, listFolder, tableMetaV1, tableMetaV2, searchTables, buildQuery, buildV2, normalizeV1, normalizeV2, cellCount, chunk, fetchData, describeSource, refetch };
   });
 })();

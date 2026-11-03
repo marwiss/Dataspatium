@@ -1,0 +1,67 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "digitraffic-tiesaa",
+  "name": "Digitraffic vägväder (Fintraffic)",
+  "publisher": "Fintraffic (Digitraffic)",
+  "description": "Finlands vägväderstationer och deras senaste mätvärden: lufttemperatur, vägyta, nederbörd, vind, sikt och mer, uppdaterade varje minut. Stationstabellen har longitud och latitud och kan ritas som punktkarta.",
+  "docs": "https://www.digitraffic.fi/en/road-traffic/",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://tie.digitraffic.fi/api/weather/v1",
+  "headers": { "Digitraffic-User": "Dataspatium" },
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "stations",
+      "name": "Vägväderstationer",
+      "description": "Alla stationer med id, namn, vägnummer och koordinater.",
+      "method": "GET",
+      "path": "/stations",
+      "params": [],
+      "response": { "format": "geojson", "options": { "geometry": false } },
+      "dataset": { "name": "Digitraffic vägväderstationer", "keys": ["id"] }
+    },
+    {
+      "id": "data",
+      "name": "Senaste mätvärden (alla stationer)",
+      "description": "Ett värde per station och sensor: sensorns namn, kortnamn, enhet, värde och mättidpunkt.",
+      "method": "GET",
+      "path": "/stations/data",
+      "params": [],
+      "response": { "format": "json", "path": "stations", "explode": "sensorValues" },
+      "dataset": { "name": "Digitraffic vägväder, senaste mätvärden" }
+    },
+    {
+      "id": "station-data",
+      "name": "Senaste mätvärden för en station",
+      "description": "Alla sensorvärden för en station (id från tabellen Vägväderstationer).",
+      "method": "GET",
+      "path": "/stations/{id}/data",
+      "params": [
+        { "name": "id", "in": "path", "label": "Stations-id", "type": "number", "required": true, "example": "1001" }
+      ],
+      "response": { "format": "json", "path": "sensorValues" },
+      "dataset": { "name": "Digitraffic station {id}" }
+    },
+    {
+      "id": "sensors",
+      "name": "Sensorer",
+      "description": "Beskrivning av sensorerna: id, namn, enhet och beskrivning på finska.",
+      "method": "GET",
+      "path": "/sensors",
+      "params": [],
+      "response": { "format": "json", "path": "sensors" },
+      "dataset": { "name": "Digitraffic sensorer", "keys": ["id"] }
+    }
+  ],
+  "notes": "Ange källa: Fintraffic / digitraffic.fi. Anropen skickar headern Digitraffic-User enligt tjänstens riktlinjer.",
+  "i18n": {
+    "en": { "name": "Digitraffic road weather (Fintraffic)", "publisher": "Fintraffic (Digitraffic)", "description": "Finland's road weather stations and their latest measurements: air temperature, road surface, precipitation, wind, visibility and more, updated every minute. The station table has longitude and latitude and can be drawn as a point map.", "notes": "Cite the source: Fintraffic / digitraffic.fi. Requests send the Digitraffic-User header as the service recommends.", "endpoints": { "stations": { "name": "Road weather stations", "description": "All stations with id, name, road number and coordinates." }, "data": { "name": "Latest measurements (all stations)", "description": "One value per station and sensor: sensor name, short name, unit, value and time of measurement." }, "station-data": { "name": "Latest measurements for one station", "description": "All sensor values for a station (id from the Road weather stations table).", "params": { "id": { "label": "Station id" } } }, "sensors": { "name": "Sensors", "description": "Description of the sensors: id, name, unit and description in Finnish." } }, "dataset": { "stations": "Digitraffic road weather stations", "data": "Digitraffic road weather, latest measurements", "sensors": "Digitraffic sensors" } },
+    "da": { "name": "Digitraffic vejvejr (Fintraffic)", "publisher": "Fintraffic (Digitraffic)", "description": "Finlands vejvejrstationer og deres seneste målinger: lufttemperatur, vejbane, nedbør, vind, sigtbarhed og mere, opdateret hvert minut. Stationstabellen har længde- og breddegrad og kan tegnes som punktkort.", "notes": "Angiv kilde: Fintraffic / digitraffic.fi. Kaldene sender headeren Digitraffic-User som tjenesten anbefaler.", "endpoints": { "stations": { "name": "Vejvejrstationer", "description": "Alle stationer med id, navn, vejnummer og koordinater." }, "data": { "name": "Seneste målinger (alle stationer)", "description": "Én værdi pr. station og sensor: sensorens navn, kortnavn, enhed, værdi og måletidspunkt." }, "station-data": { "name": "Seneste målinger for én station", "description": "Alle sensorværdier for en station (id fra tabellen Vejvejrstationer).", "params": { "id": { "label": "Stations-id" } } }, "sensors": { "name": "Sensorer", "description": "Beskrivelse af sensorerne: id, navn, enhed og beskrivelse på finsk." } }, "dataset": { "stations": "Digitraffic vejvejrstationer", "data": "Digitraffic vejvejr, seneste målinger", "sensors": "Digitraffic sensorer" } },
+    "nb": { "name": "Digitraffic veivær (Fintraffic)", "publisher": "Fintraffic (Digitraffic)", "description": "Finlands veiværstasjoner og deres siste målinger: lufttemperatur, veibane, nedbør, vind, sikt og mer, oppdatert hvert minutt. Stasjonstabellen har lengde- og breddegrad og kan tegnes som punktkart.", "notes": "Oppgi kilde: Fintraffic / digitraffic.fi. Kallene sender headeren Digitraffic-User slik tjenesten anbefaler.", "endpoints": { "stations": { "name": "Veiværstasjoner", "description": "Alle stasjoner med id, navn, veinummer og koordinater." }, "data": { "name": "Siste målinger (alle stasjoner)", "description": "Én verdi per stasjon og sensor: sensorens navn, kortnavn, enhet, verdi og måletidspunkt." }, "station-data": { "name": "Siste målinger for én stasjon", "description": "Alle sensorverdier for en stasjon (id fra tabellen Veiværstasjoner).", "params": { "id": { "label": "Stasjons-id" } } }, "sensors": { "name": "Sensorer", "description": "Beskrivelse av sensorene: id, navn, enhet og beskrivelse på finsk." } }, "dataset": { "stations": "Digitraffic veiværstasjoner", "data": "Digitraffic veivær, siste målinger", "sensors": "Digitraffic sensorer" } },
+    "fi": { "name": "Digitraffic tiesää (Fintraffic)", "publisher": "Fintraffic (Digitraffic)", "description": "Suomen tiesääasemat ja niiden viimeisimmät mittaukset: ilman lämpötila, tienpinta, sade, tuuli, näkyvyys ja muuta, päivittyy joka minuutti. Asemataulukossa on pituus- ja leveysaste, joten sen voi piirtää pistekarttana.", "notes": "Mainitse lähde: Fintraffic / digitraffic.fi. Pyynnöt lähettävät Digitraffic-User-otsakkeen palvelun ohjeiden mukaan.", "endpoints": { "stations": { "name": "Tiesääasemat", "description": "Kaikki asemat: id, nimi, tienumero ja koordinaatit." }, "data": { "name": "Viimeisimmät mittaukset (kaikki asemat)", "description": "Yksi arvo per asema ja anturi: anturin nimi, lyhyt nimi, yksikkö, arvo ja mittausaika." }, "station-data": { "name": "Viimeisimmät mittaukset yhdelle asemalle", "description": "Aseman kaikki anturiarvot (id taulukosta Tiesääasemat).", "params": { "id": { "label": "Aseman id" } } }, "sensors": { "name": "Anturit", "description": "Antureiden kuvaus: id, nimi, yksikkö ja kuvaus suomeksi." } }, "dataset": { "stations": "Digitraffic tiesääasemat", "data": "Digitraffic tiesää, viimeisimmät mittaukset", "sensors": "Digitraffic anturit" } },
+    "is": { "name": "Digitraffic vegveður (Fintraffic)", "publisher": "Fintraffic (Digitraffic)", "description": "Vegveðurstöðvar Finnlands og nýjustu mælingar þeirra: lofthiti, vegyfirborð, úrkoma, vindur, skyggni og fleira, uppfært hverja mínútu. Stöðvataflan hefur lengd og breidd og má teikna sem punktakort.", "notes": "Tilgreindu heimild: Fintraffic / digitraffic.fi. Köllin senda hausinn Digitraffic-User eins og þjónustan mælir með.", "endpoints": { "stations": { "name": "Vegveðurstöðvar", "description": "Allar stöðvar með auðkenni, heiti, vegnúmeri og hnitum." }, "data": { "name": "Nýjustu mælingar (allar stöðvar)", "description": "Eitt gildi fyrir hverja stöð og skynjara: heiti skynjara, stuttheiti, eining, gildi og mælitími." }, "station-data": { "name": "Nýjustu mælingar fyrir eina stöð", "description": "Öll skynjaragildi fyrir stöð (auðkenni úr töflunni Vegveðurstöðvar).", "params": { "id": { "label": "Auðkenni stöðvar" } } }, "sensors": { "name": "Skynjarar", "description": "Lýsing skynjaranna: auðkenni, heiti, eining og lýsing á finnsku." } }, "dataset": { "stations": "Digitraffic vegveðurstöðvar", "data": "Digitraffic vegveður, nýjustu mælingar", "sensors": "Digitraffic skynjarar" } }
+  }
+}

@@ -15,13 +15,22 @@
   async function fails(fn, re) { try { await fn(); } catch (e) { return re.test(String(e && e.message || e)) ? null : 'wrong error: ' + e.message; } return 'did not throw'; }
 
   test('shortnames: datasets get unique SQL-safe short names derived from their names', async (assert) => {
-    assert.equal(datasets.shortNameFrom('Befolkning per kommun 2024'), 'befolkning_per_kommun_2024');
-    assert.equal(datasets.shortNameFrom('Länsgränser (SCB)'), 'lansgranser_scb');
-    assert.equal(datasets.shortNameFrom('Ö Ä Å é ü ø æ'), 'o_a_a_e_u_o_ae');
-    assert.equal(datasets.shortNameFrom('2024 data'), 'd_2024_data');
+    assert.equal(datasets.shortNameFrom('Befolkning per kommun 2024'), 'befolkning_2024', 'filler words dropped, year kept, within 15 characters');
+    assert.equal(datasets.shortNameFrom('Länsgränser (SCB)'), 'lansgranser', 'parenthesised qualifiers dropped');
+    assert.equal(datasets.shortNameFrom('Kommungränser (SCB)'), 'kommungranser');
+    assert.equal(datasets.shortNameFrom('Folkmängd per län 2024'), 'folkmangd_2024');
+    assert.equal(datasets.shortNameFrom('Ærø Þórshöfn'), 'aero_thorshofn', 'Nordic letters and accents folded to ASCII');
+    assert.equal(datasets.shortNameFrom('Ö Ä Å é ü ø æ'), 'o_e_u_o_ae', 'single-letter filler words (å, á, i) are dropped');
+    assert.equal(datasets.shortNameFrom('2024 data'), 'data_2024');
+    assert.equal(datasets.shortNameFrom('2024'), 'd_2024', 'a name must start with a letter');
     assert.equal(datasets.shortNameFrom('data'), 'data_1', 'reserved words get a suffix');
+    assert.equal(datasets.shortNameFrom('for'), 'for_1', 'R keywords are reserved too');
     assert.equal(datasets.shortNameFrom('   '), 'datamangd');
-    assert.equal(datasets.shortNameFrom('x'.repeat(50)).length, 32);
+    assert.equal(datasets.shortNameFrom('x'.repeat(50)).length, 15);
+    assert.equal(datasets.shortNameFrom('Arbetslöshet efter kommun och kön 2020'), 'arbetsloshet_2020');
+    assert.ok(datasets.shortNameFrom('Arbetslöshet efter kommun och kön 2020').length <= 17);
+    assert.equal(datasets.shortNameFrom('Statistics Norway population 2025'), 'statistics_2025');
+    assert.ok(['befolkning_2024', 'kommungranser', 'lansgranser'].every((s) => /^[a-z][a-z0-9_]*$/.test(s) && s.length <= 15));
     assert.equal(datasets.validateShortName(' Kommuner '), 'kommuner');
     assert.equal(await fails(async () => datasets.validateShortName('1abc'), /Kortnamnet/), null);
     const a = await importer.run(new File(['kommunkod;befolkning\n0180;984748\n1480;596841\n'], 'a.csv'), {}, null, 'Befolkning test');

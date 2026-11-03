@@ -90,7 +90,7 @@
       async function saveTemplate(asCopy) {
         const doc = state.doc;
         const record = Object.assign({}, doc, { id: asCopy || doc.builtin ? null : doc.id, name: nameInput ? nameInput.value.trim() : doc.name, body: editor ? editor.value : doc.body, builtin: false });
-        if (doc.builtin && record.name === doc.name) record.name = doc.name + ' (kopia)';
+        if (doc.builtin && record.name === doc.name) record.name = doc.name + t('doc.copy.suffix');
         const saved = await documents.save(record);
         state.doc = Object.assign({}, saved); state.dirty = false;
         shell.log(t('doc.saved', { name: saved.name }), 'ok'); overlays.toast.show(t('doc.saved', { name: saved.name }), { kind: 'ok' });

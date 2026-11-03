@@ -23,7 +23,7 @@
       const height = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.export.height'), min: '100', max: '4000', help: chart.kind === 'vega' ? t('viz.export.height.vega') : '' }));
       height.value = chart.kind === 'vega' ? String((chart.vega && chart.vega.state && chart.vega.state.height) || 360) : '';
       const scale = /** @type {any} */ (h('dm-select', { label: t('viz.export.scale') }));
-      scale.options = [{ value: '1', label: '1×' }, { value: '2', label: '2× (standard)' }, { value: '3', label: '3×' }];
+      scale.options = [{ value: '1', label: '1×' }, { value: '2', label: t('viz.export.scale.standard') }, { value: '3', label: '3×' }];
       scale.value = '2';
       const filename = /** @type {any} */ (h('dm-input', { label: t('viz.export.filename') }));
       filename.value = files.safeName(chart.name || 'diagram');
@@ -87,14 +87,14 @@
         let result = null;
         if (fileFormats.length) {
           result = await batch.run(chart, Object.assign({ formats: fileFormats, pattern: pattern.value }, common));
-          const name = files.safeName(`${chart.name || 'diagram'} per ${column.value}`, 'zip');
+          const name = files.safeName(t('viz.batch.file', { name: chart.name || t('viz.chart.word').toLowerCase(), column: column.value }), 'zip');
           files.download(result.blob, name);
           overlays.toast.show(t('viz.batch.done', { n: result.count, name }) + (result.errors.length ? ' ' + t('viz.batch.errors', { n: result.errors.length }) : ''), { kind: result.errors.length ? 'warn' : 'ok', timeout: 10000 });
         }
         if (chosen.includes('pptx')) {
           // One presentation with a slide per group rather than one file per group.
           const deck = await batch.deck(chart, common);
-          const name = files.safeName(`${chart.name || 'diagram'} per ${column.value}`, 'pptx');
+          const name = files.safeName(t('viz.batch.file', { name: chart.name || t('viz.chart.word').toLowerCase(), column: column.value }), 'pptx');
           files.download(deck.blob, name);
           overlays.toast.show(t('viz.export.pptx.done', { name, n: deck.count }) + (deck.errors.length ? ' ' + t('viz.batch.errors', { n: deck.errors.length }) : ''), { kind: deck.errors.length ? 'warn' : 'ok', timeout: 10000 });
           if (!result) result = { blob: deck.blob, count: deck.count, files: [name], errors: deck.errors };

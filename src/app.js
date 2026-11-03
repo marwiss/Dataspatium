@@ -23,7 +23,7 @@
         D.require('data/workspace').initFolder().catch((err) => D.log('folder', 'init failed', err));
         // Exposed on the Dataspatium namespace for debugging and for tools/screenshot.ps1 -EvalFile scripts.
         D.shell = shell;
-        shell.log(`Dataspatium ${D.version} startad från ${location.protocol}`);
+        shell.log(D.t('app.started', { version: D.version, protocol: location.protocol }));
         return shell;
       },
     }));

@@ -1,0 +1,121 @@
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk](../nb/README.md) · [Suomi](../fi/README.md) · **Íslenska** · [English](../en/README.md)
+
+# Dataspatium
+
+Dataspatium er vefforrit fyrir gögn frá uppruna til skýrslu: sæktu gögn úr skrám og opnum vefþjónustum, vistaðu og haltu
+utan um gagnasöfn, farðu yfir og leiðréttu gildi, greindu með R, myndgerðu og fluttu út. Allt keyrir í þínum eigin vafra.
+Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei tölvuna nema þú flytjir þau sjálf(ur) út.
+
+![Dataspatium í hamnum Vinna með töflu yfir sænsk sveitarfélög](../images/bearbeta.png)
+
+Viðmótið er á sænsku, dönsku, norsku, finnsku, íslensku og ensku. Skjámyndirnar í skjöluninni sýna forritið á sænsku.
+
+## Sækja og hefjast handa
+
+1. **Sæktu.** Farðu í [nýjustu útgáfuna](https://github.com/marwiss/Dataspatium/releases/latest) og sæktu ZIP-skrána undir
+   *Assets* (`dataspatium-<útgáfa>.zip`, um 100 MB; R og allir R-pakkar fylgja með).
+2. **Afþjappaðu.** Hægrismelltu á ZIP-skrána og veldu *Extract all* (Windows) eða tvísmelltu á hana (macOS). Settu möppuna
+   þar sem þú vilt hafa hana, til dæmis í Skjöl. Forritið virkar ekki beint inni í ZIP-skránni.
+3. **Opnaðu.** Tvísmelltu á `index.html` í möppunni eða dragðu skrána í vafraglugga. Ef Windows spyr hvaða forrit eigi að
+   nota velurðu Edge, Chrome eða Firefox. Í fyrsta skipti spyr forritið hvaða tungumál þú vilt; valinu má breyta hvenær sem
+   er með tungumálahnappnum efst til hægri.
+4. **Flyttu inn.** Í hamnum *Sækja* sleppirðu skrá á flötinn (eða smellir á *Prófa með sýnigögnum*), athugar gerðir dálkanna
+   og smellir á *Flytja inn*. Gagnasafnið er vistað í vafranum á tölvunni þinni.
+5. **Haltu áfram.** Skiptu um ham efst: *Umsjón* sýnir gagnasöfnin þín og vinnusvæðið, *Vinna* sýnir töfluna með röðun, síum
+   og aðgerðum, *Greina* opnar R- og SQL-stjórnborðið, *Myndgera* býr til myndrit og *Flytja út* hleður niður gögnum, myndritum
+   og skjölum.
+
+Gögn eru vistuð í eigin gagnagrunni vafrans. Ef þú hreinsar vefgögn hverfa þau, svo taktu afrit reglulega undir *Umsjón >
+Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri tölvu. Skref fyrir skref með nánari upplýsingum:
+[kom-igang.md](kom-igang.md).
+
+## Kröfur
+
+- Windows, macOS eða Linux.
+- Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri) eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt.
+- Um 300 MB laust pláss fyrir forritsmöppuna og minnst 4 GB vinnsluminni (8 GB mælt með fyrir stór gagnasöfn). Engin
+  stjórnandaréttindi þarf.
+- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum eða leitar að uppfærslum.
+
+## Hvað þú getur gert
+
+- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, texta með fastri
+  dálkbreidd, tölfræðiskrár úr SPSS, Stata, SAS og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
+  og gögn beint úr opnum vefþjónustum hjá Hagstofu Íslands, Veðurstofu Íslands, hagstofum Danmerkur, Noregs, Finnlands,
+  Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat og fleiri stofnunum, með landasíu og endurnýjun
+  allra API-gagnasafna með einum smelli (sjá [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og sænsk
+  sveitarfélaga- og lénamörk SCB fylgja með.
+- **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, reikna, snúa og tengja gögn, athuga
+  gagnagæði með sniði og reglum, dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
+  út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).
+- **Greina**: innbyggt R-stjórnborð með ggplot2 og tidyverse (sjá [r-guide.md](r-guide.md)), SQL-stjórnborð þar sem
+  gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
+  HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), allt í vafranum.
+- **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
+  PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
+  [visualisera.md](visualisera.md)).
+- **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert
+  sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
+- **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakka með völdum
+  gagnasöfnum og hlutum, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með venjulegum skrám.
+- **Finna hratt**: skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og mælaborð og keyrir aðgerðir úr einum
+  leitarreit.
+- **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
+
+## Lærðu meira
+
+Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo tenglar virka eins alls staðar.
+
+- [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
+- [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
+- [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
+- [Hamirnir sex](lagen.md): hvað er hvar og hvers vegna.
+- [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
+- [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
+- [Opnar vefþjónustur](api-konfiguration.md): forstilltir upprunar, lyklar og eigin uppsetningar.
+- [R í Dataspatium](r-guide.md): R-stjórnborðið, `dm_read()`, `dm_write()` og meðfylgjandi pakkar.
+- [Myndgera](visualisera.md): myndritasmiðurinn, D3-snið, R-myndrit, kort og mælaborð.
+- [Skjöl og snið](dokumentmallar.md): sniðmálið og úttakssniðin.
+- [Leyfi](licenser.md): hvað þú mátt gera með forritið og hvaða leyfi íhlutir þriðja aðila hafa.
+- [Þróun](../utveckling.md), [Högun](../arkitektur.md) og [Stílleiðbeiningar](../stilguide.md) fyrir þau sem vilja skilja
+  kóðann (á sænsku); hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
+- Ytri upprunar: [WebR](https://docs.r-wasm.org/webr/latest/), [R fyrir byrjendur](https://www.r-project.org/),
+  [Vega-Lite](https://vega.github.io/vega-lite/), [opin gögn Hagstofu Íslands](https://hagstofa.is/).
+
+## Takmarkanir í stuttu máli
+
+- Opna þarf forritið úr afþjappaðri möppu (file://) eða venjulegum vefþjóni; það virkar ekki beint inni í ZIP-skrá.
+- Vefþjónustur án CORS-stuðnings er ekki hægt að kalla beint úr vafranum.
+- Gagnasafn ætti að vera undir nokkrum milljónum raða; minni vafrans setur mörkin.
+- Ekki er hægt að rjúfa R-kóða í miðjum útreikningi; notaðu *Endurræsa R*.
+- Fleiri flipar virka og halda hver öðrum upplýstum, en breyttu ekki sama gagnasafni í tveimur flipum samtímis: sá sem vistar
+  síðast vinnur.
+- Færanlega mappan krefst Edge eða Chrome; Firefox hefur ekki möppuaðgang (File System Access). Afrit sem ZIP virkar alls
+  staðar.
+- Safari og farsímavafrar eru ekki studdir.
+- Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
+
+## Villur og tillögur
+
+Tilkynntu villur eða óskir sem *Issues* hér á GitHub. Lýstu vafranum, útgáfu Dataspatium (birtist undir hjálparhnappnum) og
+hvað þú gerðir. Sjá [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+## Þróun
+
+- Ekkert smíðaskref, ekkert node.js. Opnaðu `index.html` beint eða berðu möppuna fram með `python -m http.server 8080`.
+- Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
+- Prófanir: `powershell -File tools/run-tests.ps1` (headless Edge og Firefox). Sjá [utveckling.md](../utveckling.md) (á
+  sænsku).
+
+## Leyfi
+
+Eigin kóði Dataspatium, skjölun og forstillingar (allt nema `vendor/`) eru með leyfið
+[PolyForm Strict 1.0.0](../../LICENSE): frjálst að hlaða niður og nota í óviðskiptalegum tilgangi, líka hjá stjórnvöldum og
+öðrum opinberum stofnunum, en ekki að breyta, byggja á eða dreifa áfram án skriflegs leyfis. Leyfisveitandi er höfundur
+Dataspatium, sem næst í gegnum GitHub-aðganginn [marwiss](https://github.com/marwiss); stofnaðu issue fyrir aðra skilmála.
+Hvað leyfið þýðir í reynd er útskýrt í [licenser.md](licenser.md).
+
+Íhlutir þriðja aðila í `vendor/` hafa sín eigin leyfi (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL og GPL), sjá
+[THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R og GPL-leyfðir R-pakkar eru dreifðir óbreyttir; frumkóðinn fæst hjá
+[R-verkefninu](https://cran.r-project.org/sources.html), [webR](https://github.com/r-wasm/webr) og
+[CRAN](https://cran.r-project.org/) í þeim útgáfum sem þar eru tilgreindar.

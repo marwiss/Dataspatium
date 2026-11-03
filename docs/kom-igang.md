@@ -15,7 +15,10 @@ Dubbelklicka på `index.html`. Webbläsaren öppnar appen från din dator (adres
 Fungerar inte dubbelklicket, högerklicka och välj *Öppna med* och din webbläsare, eller dra filen till ett öppet
 webbläsarfönster.
 
-Första gången laddas typsnitt och ikoner från mappen; det tar någon sekund. Inget hämtas från internet.
+Första gången frågar appen vilket språk du vill använda: svenska, danska, norska, finska, isländska eller
+engelska. Valet sparas i webbläsaren och kan ändras när som helst med språkknappen (ikonen med bokstäver) uppe
+till höger eller via kommandopaletten. Typsnitt och ikoner laddas från mappen; det tar någon sekund. Inget hämtas
+från internet.
 
 ## 3. Lägena
 
@@ -25,7 +28,7 @@ knapparna uppe till höger. Alt+1 till Alt+6 växlar läge med tangentbordet.
 
 | Läge | Vad du gör där |
 |---|---|
-| Inhämta | Importerar filer, klistrar in tabeller och hämtar från öppna API:er som SCB, Kolada, Eurostat, Socialstyrelsen och SMHI ([api-konfiguration.md](api-konfiguration.md)) |
+| Inhämta | Importerar filer, klistrar in tabeller och hämtar från öppna API:er i Sverige och övriga Norden, som SCB, Kolada, Eurostat, Socialstyrelsen, SMHI, Danmarks Statistik, SSB, Tilastokeskus och Hagstofa Íslands ([api-konfiguration.md](api-konfiguration.md)) |
 | Hantera | Ser dina datamängder, byter namn, tar bort, sparar versioner, säkerhetskopierar och återställer arbetsytan |
 | Bearbeta | Redigerar celler, sorterar och filtrerar, rensar och typar, beräknar kolumner, pivoterar, kopplar datamängder; allt med ångra, versioner och recept ([bearbeta.md](bearbeta.md)) |
 | Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; SQL-konsol mot den valda datamängden |

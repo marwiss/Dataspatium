@@ -29,7 +29,7 @@
 
     async function defaultFetchJson(url) {
       const res = await fetch(url, { headers: { Accept: 'application/vnd.github+json' } });
-      if (!res.ok) throw new Error(`GitHub svarade ${res.status}`);
+      if (!res.ok) throw new Error(D.t('updates.err.status', { status: res.status }));
       return res.json();
     }
 
@@ -43,10 +43,10 @@
       const fetchJson = options.fetchJson || defaultFetchJson;
       let data;
       try { data = await fetchJson(API_URL); } catch (err) {
-        throw new Error('Kunde inte nå GitHub för att kontrollera versionen. Kontrollera internetanslutningen. (' + ((err && err.message) || err) + ')');
+        throw new Error(D.t('update.err.network', { message: (err && err.message) || err }));
       }
       const latest = String((data && (data.tag_name || data.name)) || '').replace(/^v/, '');
-      if (!parseVersion(latest)) throw new Error('Inget versionsnummer hittades i den senaste utgåvan.');
+      if (!parseVersion(latest)) throw new Error(D.t('update.err.version'));
       return { current, latest, url: (data && data.html_url) || RELEASES_URL, newer: compareVersions(current, latest) < 0, published: (data && data.published_at) || null };
     }
 

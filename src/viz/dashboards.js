@@ -27,7 +27,7 @@
       const now = new Date().toISOString();
       const record = Object.assign({}, dash, {
         id: dash.id || newId(), createdAt: dash.createdAt || now, updatedAt: now,
-        name: (dash.name || '').trim() || 'Namnlös dashboard',
+        name: (dash.name || '').trim() || D.t('dash.untitled'),
         columns: Math.max(1, Math.min(3, Number(dash.columns) || 2)),
         items: (dash.items || []).map((it) => ({ chartId: it.chartId, span: Math.max(1, Math.min(3, Number(it.span) || 1)) })),
         filters: (dash.filters || []).map((f) => ({ column: f.column })),
@@ -87,8 +87,8 @@
      */
     async function importJson(text) {
       let obj;
-      try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error('Filen är inte giltig JSON.'); }
-      if (obj.format !== FORMAT || !Array.isArray(obj.items)) throw new Error('Filen är inte en Dataspatium-dashboard (format ' + FORMAT + ' saknas).');
+      try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error(D.t('err.invalid.json')); }
+      if (obj.format !== FORMAT || !Array.isArray(obj.items)) throw new Error(D.t('dash.err.format', { format: FORMAT }));
       const existing = await charts.list();
       const items = [];
       for (const it of obj.items) {
@@ -97,7 +97,7 @@
         if (!match) { match = await charts.importJson(JSON.stringify(c)); existing.push(match); }
         items.push({ chartId: match.id, span: it.span || 1 });
       }
-      return save({ name: obj.name || 'Importerad dashboard', description: obj.description || '', columns: obj.columns || 2, items, filters: obj.filters || [] });
+      return save({ name: obj.name || D.t('dash.imported.name'), description: obj.description || '', columns: obj.columns || 2, items, filters: obj.filters || [] });
     }
 
     const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

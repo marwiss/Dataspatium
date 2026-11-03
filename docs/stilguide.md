@@ -21,8 +21,10 @@ i webbläsaren (`src/ui/design/theme.js`).
 
 Allt gränssnitt byggs av komponenterna i `src/ui/components/` (prefix `dm-`): `dm-button`, `dm-input`,
 `dm-select`, `dm-switch`, `dm-tabs`, `dm-panel`, `dm-empty-state`, `dm-stepper`, `dm-kv`, `dm-badge`,
-`dm-progress`, `dm-dropzone`, `dm-table`, `dm-icon` samt dialoger och toaster från `ui/overlays`. Saknas något:
-lägg till en komponent, aldrig en engångslösning i en vy. Ikoner kommer från Lucide via `dm-icon`.
+`dm-progress`, `dm-dropzone`, `dm-table`, `dm-icon` samt dialoger och toaster från `ui/overlays`. Rader av
+växlingsknappar (landsfiltret i Inhämta) använder `.dm-chips` och `.dm-chip` med `aria-pressed`. Saknas något:
+lägg till en komponent, aldrig en engångslösning i en vy. Ikoner kommer från Lucide via `dm-icon`; appens märke är
+Lucide-ikonen *layers* i accentfärgen, som också är favicon (`src/ui/design/favicon.svg`).
 
 ## Layout
 
@@ -37,8 +39,11 @@ arbetsytan börjar med `.dm-page-head` (rubrik med ikon till vänster, åtgärde
 - Avancerade val göms under "Fler alternativ".
 - Farliga åtgärder (ta bort) har variant `danger` och kräver bekräftelse i dialog.
 - Tomma tillstånd (`dm-empty-state`) förklarar vad som visas här och erbjuder nästa steg.
-- Tal visas med svenskt format (mellanslag som tusentalsavgränsare, decimalkomma) och högerställda.
-- Datum visas som `ÅÅÅÅ-MM-DD` och tid som `HH:MM`.
+- Alla texter hämtas med `t('nyckel')` och finns på alla sex språk (svenska är grundspråket); inga hårdkodade
+  strängar i komponenter eller vyer.
+- Tal visas med det valda språkets format (på svenska mellanslag som tusentalsavgränsare och decimalkomma) och
+  högerställda.
+- Datum visas som `ÅÅÅÅ-MM-DD` och tid som `HH:MM` på alla språk.
 - Kortvariga meddelanden som toaster, bestående information i loggen.
 - Allt ska gå att nå med tangentbord; fokus syns alltid; kontrast enligt WCAG AA.
 - Inga animationer utöver korta övergångar; respektera `prefers-reduced-motion`.
@@ -63,6 +68,8 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Tom (värde saknas) | null, NA, saknas (i gränssnittet) |
 | Arbetsyta | Workspace, projekt |
 | Läge | Vy, flik, sida (för de sex lägena) |
+| Språk | Locale, lokalisering (i gränssnittet) |
+| Land (filtret för API-källor) | Region, område |
 
 Skrivsätt: korta meningar, verb först i knappar ("Importera", "Spara"), inga utropstecken, inga versaler i
 löpande ord utom namn. Felmeddelanden säger vad som hände och vad användaren kan göra.

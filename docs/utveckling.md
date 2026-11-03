@@ -34,6 +34,34 @@ till WGS 84 med Lantmäteriets Gauss-Krüger-formler och skriver `presets/geo/la
 `presets/geo/kommuner.geojson` och `presets/geo/KALLA.md`. Utan argument hämtas det aktuella arkivet från SCB.
 Kör sedan `python tools/wrap_local.py`.
 
+## Språk och översättningar
+
+Alla texter i gränssnittet hämtas med `t('nyckel')` (`Dataspatium.t` utanför UI-lagret) ur ordböckerna i
+`src/ui/i18n/`: `sv.js` är grundspråket och `da.js`, `nb.js`, `fi.js`, `is.js` och `en.js` har exakt samma
+nycklar. Saknas en nyckel i det valda språket används den svenska texten; saknas den helt visas nyckeln och en
+rad loggas. Platshållare skrivs `{namn}`. Testet `tests/i18n.test.js` kontrollerar att alla sex ordböcker har
+samma nycklar, att inga texter är tomma och att platshållarna stämmer, så en ny text läggs till i alla sex filer
+på en gång.
+
+- Språkvalet sparas i `localStorage` under `dataspatium.lang`. Första starten (ingen sparad nyckel) visar
+  språkvalet innan något annat; `index.html?lang=en` väljer och sparar ett språk, vilket skärmbildsverktyget
+  och testerna använder (`tests/index.html` låser svenska eftersom testerna kontrollerar svenska texter).
+- Tal formateras med `Intl.NumberFormat` i språkets locale (`i18n.formatNumber`); Vega och D3 får samma
+  avgränsare via `src/viz/locale.js`. Datum skrivs alltid `ÅÅÅÅ-MM-DD`.
+- R-meddelandena i `r/dataspatium.R` finns i samma sex språk (`.dm_msg`) och väljs med `dm_setup(lang)`.
+- API-förinställningarna i `presets/api/` har svenska texter och ett `i18n`-block per språk; `connectors.list()`
+  returnerar kopior på appens språk, exporten skriver originalet. PxWeb-rötter per språk anges i `family.urls`.
+- Dokumentationen: svenska i `docs/`, övriga språk i `docs/<kod>/` med samma filnamn.
+- Även kommentarer i genererad R- och SQL-kod (*Kopiera som R/SQL*, nycklarna `code.*`), receptsteg, regelbeskrivningar,
+  standardnamn, filnamn för säkerhetskopior och paket samt felmeddelanden från data- och API-lagret går genom
+  ordböckerna. Lika på alla språk är mallarnas platshållare (`{{datamangd}}` …), XML-exportens element och
+  attribut, API-parametrar och reservnamn i operationer (till exempel `variabel`/`varde` när ett äldre recept
+  saknar namnen).
+
+Lägga till ett språk: skapa `src/ui/i18n/<kod>.js` med alla nycklar, lägg till filen i `src/boot.js` före
+`i18n.js`, lägg till posten i `LANGUAGES` i `src/ui/i18n/i18n.js`, lägg till meddelandena i `r/dataspatium.R`
+och i förinställningarnas `i18n`-block, översätt `docs/` till `docs/<kod>/` och kör testerna.
+
 ## Skärmbilder
 
 `powershell -File tools/screenshot.ps1 -Url "index.html#/bearbeta" -Out shots/bearbeta.png -Theme light` tar en

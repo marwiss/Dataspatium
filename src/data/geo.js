@@ -15,7 +15,7 @@
       let i = 0;
       const skipWs = () => { while (i < str.length && /\s/.test(str[i])) i++; };
       function list() {
-        if (str[i] !== '(') throw new Error('WKT: förväntade (');
+        if (str[i] !== '(') throw new Error(D.t('geo.err.wkt.paren'));
         i++;
         const items = [];
         for (;;) {
@@ -25,13 +25,13 @@
             const start = i;
             while (i < str.length && str[i] !== ',' && str[i] !== ')') i++;
             const nums = str.slice(start, i).trim().split(/\s+/).map(Number);
-            if (nums.length < 2 || nums.slice(0, 2).some((n) => !Number.isFinite(n))) throw new Error('WKT: ogiltig koordinat');
+            if (nums.length < 2 || nums.slice(0, 2).some((n) => !Number.isFinite(n))) throw new Error(D.t('geo.err.wkt.coord'));
             items.push([nums[0], nums[1]]);
           }
           skipWs();
           if (str[i] === ',') { i++; continue; }
           if (str[i] === ')') { i++; return items; }
-          throw new Error('WKT: oväntat tecken');
+          throw new Error(D.t('geo.err.wkt.char'));
         }
       }
       skipWs();

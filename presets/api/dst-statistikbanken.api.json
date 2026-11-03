@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "dst-statistikbanken",
+  "name": "Danmarks Statistik Statistikbanken",
+  "publisher": "Danmarks Statistik",
+  "description": "Danmarks officiella statistik: befolkning, arbetsmarknad, ekonomi, miljö med mera. Bläddra i ämnesträdet, välj tabell och värden per variabel; variabler som inte väljs summeras bort av tjänsten. Högst 100 000 celler per anrop; större urval delas upp automatiskt.",
+  "docs": "https://www.dst.dk/da/Statistik/brug-statistikken/muligheder-i-statistikbanken/api",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "DK",
+  "baseUrl": "https://api.statbank.dk/v1",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "statbank", "lang": "da", "langs": ["da", "en"], "maxCells": 100000 },
+  "notes": "Ange källa: Danmarks Statistik. Tabellkoder och variabelkoder är stabila och kan delas i konfigurationer.",
+  "i18n": {
+    "en": { "name": "Statistics Denmark StatBank", "publisher": "Statistics Denmark", "description": "Denmark's official statistics: population, labour market, economy, environment and more. Browse the subject tree, pick a table and values per variable; variables you leave out are summed away by the service. At most 100,000 cells per request; larger selections are split automatically.", "notes": "Cite the source: Statistics Denmark. Table and variable codes are stable and can be shared in configurations." },
+    "da": { "name": "Danmarks Statistik Statistikbanken", "publisher": "Danmarks Statistik", "description": "Danmarks officielle statistik: befolkning, arbejdsmarked, økonomi, miljø og meget mere. Gennemse emnetræet, vælg tabel og værdier pr. variabel; variabler, der ikke vælges, summeres væk af tjenesten. Højst 100 000 celler pr. kald; større udvalg opdeles automatisk.", "notes": "Angiv kilde: Danmarks Statistik. Tabel- og variabelkoder er stabile og kan deles i konfigurationer." },
+    "nb": { "name": "Danmarks Statistik Statistikbanken", "publisher": "Danmarks Statistik", "description": "Danmarks offisielle statistikk: befolkning, arbeidsmarked, økonomi, miljø og mer. Bla i emnetreet, velg tabell og verdier per variabel; variabler som ikke velges, summeres bort av tjenesten. Høyst 100 000 celler per kall; større utvalg deles opp automatisk.", "notes": "Oppgi kilde: Danmarks Statistik. Tabell- og variabelkoder er stabile og kan deles i konfigurasjoner." },
+    "fi": { "name": "Tanskan tilastokeskus (Statistikbanken)", "publisher": "Danmarks Statistik", "description": "Tanskan virallinen tilasto: väestö, työmarkkinat, talous, ympäristö ja paljon muuta. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain; valitsematta jätetyt muuttujat palvelu summaa pois. Enintään 100 000 solua per pyyntö; suuremmat valinnat jaetaan automaattisesti.", "notes": "Mainitse lähde: Danmarks Statistik. Taulukko- ja muuttujakoodit ovat pysyviä ja niitä voi jakaa määrityksissä." },
+    "is": { "name": "Hagstofa Danmarkar (Statistikbanken)", "publisher": "Danmarks Statistik", "description": "Opinber hagtölur Danmarkar: mannfjöldi, vinnumarkaður, efnahagur, umhverfi og fleira. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu; breytur sem ekki eru valdar eru lagðar saman af þjónustunni. Að hámarki 100 000 reitir í hverju kalli; stærra val er skipt upp sjálfkrafa.", "notes": "Tilgreindu heimild: Danmarks Statistik. Töflu- og breytukóðar eru stöðugir og má deila í uppsetningum." }
+  }
+}

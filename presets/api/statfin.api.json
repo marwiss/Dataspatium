@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "statfin",
+  "name": "Statistikcentralen StatFin",
+  "publisher": "Statistikcentralen (Tilastokeskus)",
+  "description": "Finlands officiella statistik: befolkning, arbetsmarknad, ekonomi, boende, miljö med mera, på finska, svenska och engelska. Bläddra i ämnesträdet, välj tabell och värden per variabel. Högst 100 000 celler per anrop; större urval delas upp automatiskt.",
+  "docs": "https://stat.fi/fi/palvelut/tilastodatapalvelut/avoin-data-ja-rajapinnat/tietokantojen-rajapintakaytto",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://pxdata.stat.fi/PxWeb/api/v1/sv/StatFin",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 10 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 100000, "urls": { "fi": "https://pxdata.stat.fi/PxWeb/api/v1/fi/StatFin", "sv": "https://pxdata.stat.fi/PxWeb/api/v1/sv/StatFin", "en": "https://pxdata.stat.fi/PxWeb/api/v1/en/StatFin" } },
+  "notes": "Ange källa: Statistikcentralen.",
+  "i18n": {
+    "en": { "name": "Statistics Finland StatFin", "publisher": "Statistics Finland (Tilastokeskus)", "description": "Finland's official statistics: population, labour market, economy, housing, environment and more, in Finnish, Swedish and English. Browse the subject tree, pick a table and values per variable. At most 100,000 cells per request; larger selections are split automatically.", "notes": "Cite the source: Statistics Finland." },
+    "da": { "name": "Statistikcentralen StatFin", "publisher": "Statistikcentralen (Tilastokeskus)", "description": "Finlands officielle statistik: befolkning, arbejdsmarked, økonomi, boliger, miljø og meget mere, på finsk, svensk og engelsk. Gennemse emnetræet, vælg tabel og værdier pr. variabel. Højst 100 000 celler pr. kald; større udvalg opdeles automatisk.", "notes": "Angiv kilde: Statistikcentralen." },
+    "nb": { "name": "Statistikcentralen StatFin", "publisher": "Statistikcentralen (Tilastokeskus)", "description": "Finlands offisielle statistikk: befolkning, arbeidsmarked, økonomi, bolig, miljø og mer, på finsk, svensk og engelsk. Bla i emnetreet, velg tabell og verdier per variabel. Høyst 100 000 celler per kall; større utvalg deles opp automatisk.", "notes": "Oppgi kilde: Statistikcentralen." },
+    "fi": { "name": "Tilastokeskus StatFin", "publisher": "Tilastokeskus", "description": "Suomen virallinen tilasto: väestö, työmarkkinat, talous, asuminen, ympäristö ja paljon muuta suomeksi, ruotsiksi ja englanniksi. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain. Enintään 100 000 solua per pyyntö; suuremmat valinnat jaetaan automaattisesti.", "notes": "Mainitse lähde: Tilastokeskus." },
+    "is": { "name": "Hagstofa Finnlands StatFin", "publisher": "Tilastokeskus (Hagstofa Finnlands)", "description": "Opinber hagtölur Finnlands: mannfjöldi, vinnumarkaður, efnahagur, húsnæði, umhverfi og fleira, á finnsku, sænsku og ensku. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu. Að hámarki 100 000 reitir í hverju kalli; stærra val er skipt upp sjálfkrafa.", "notes": "Tilgreindu heimild: Tilastokeskus." }
+  }
+}

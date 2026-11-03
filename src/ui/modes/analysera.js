@@ -107,7 +107,7 @@
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         if (tab === 'notebook') { renderNotebookLeft(); return; }
         const selected = selectedDataset();
-        if (tab === 'r') slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode('r', `df <- dm_read(${JSON.stringify(selected.name)})\n`) })));
+        if (tab === 'r') slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode('r', `df <- dm_read(${JSON.stringify(selected.shortName || selected.name)})\n`) })));
         slots.left.appendChild(h('hr'));
         slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('analysera.scripts.' + tab) }), ui.button({ label: t('analysera.new.script'), icon: 'plus', size: 'sm', 'icon-only': true, variant: 'ghost', onClick: () => newScript(tab) })));
         slots.left.appendChild(h('div', { class: 'dm-list' }, v.scripts.map((sc) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': sc.id === v.current.id ? 'true' : null, onclick: () => openScript(tab, sc) },
@@ -418,7 +418,7 @@
           { label: t('analysera.session.packages'), value: String(pkgIndex.all().length) },
         ];
         const fns = ['dm_list', 'dm_read', 'dm_write', 'theme'].map((k) => h('li', { class: 'dm-small', text: t('analysera.fn.' + k) }));
-        const snippets = h('div', { class: 'dm-list' }, (presets.rSnippets || []).map((sn) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode('r', sn.code + '\n') }, ui.icon('braces', 14), h('span', { class: 'dm-list-main' }, h('span', { text: sn.label })))));
+        const snippets = h('div', { class: 'dm-list' }, (presets.rSnippets || []).map((sn) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode('r', sn.code + '\n') }, ui.icon('braces', 14), h('span', { class: 'dm-list-main' }, h('span', { text: sn.labelKey ? t(sn.labelKey) : sn.label })))));
         replace(slots.right,
           h('h4', { text: t('analysera.session') }), kv,
           bridge.state === 'error' && bridge.error ? h('p', { class: 'dm-error dm-small', text: bridge.error }) : null,

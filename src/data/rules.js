@@ -53,21 +53,22 @@
           return { sql: `(${col} is not null and (${parts.join(' or ') || '0'}))`, params };
         }
         case 'sql': return { sql: `not (${rule.expression || '1'})`, params: [] };
-        default: throw new Error('Okänd regeltyp: ' + rule.type);
+        default: throw new Error(D.t('rules.err.type', { type: rule.type }));
       }
     }
 
-    /** Human-readable rule text (Swedish, used in dialogs, logs and reports). */
+    /** Human-readable rule text in the UI language (dialogs, logs and reports). */
     function describe(rule) {
       const cols = (rule.columns && rule.columns.length ? rule.columns : [rule.column]).join(' + ');
+      const bound = (v) => (v === undefined || v === '' ? '…' : v);
       switch (rule.type) {
-        case 'notnull': return `${rule.column} får inte saknas`;
-        case 'unique': return `${cols} ska vara unik`;
-        case 'range': return `${rule.column} mellan ${rule.min === undefined || rule.min === '' ? '…' : rule.min} och ${rule.max === undefined || rule.max === '' ? '…' : rule.max}`;
-        case 'inset': return `${rule.column} finns i listan (${splitValues(rule.values).length} värden)`;
-        case 'regex': return `${rule.column} matchar mönstret ${rule.pattern}`;
-        case 'length': return `${rule.column} har ${rule.min === undefined || rule.min === '' ? '…' : rule.min} till ${rule.max === undefined || rule.max === '' ? '…' : rule.max} tecken`;
-        case 'sql': return `Villkor: ${rule.expression}`;
+        case 'notnull': return D.t('rules.describe.notnull', { column: rule.column });
+        case 'unique': return D.t('rules.describe.unique', { cols });
+        case 'range': return D.t('rules.describe.range', { column: rule.column, min: bound(rule.min), max: bound(rule.max) });
+        case 'inset': return D.t('rules.describe.inset', { column: rule.column, n: splitValues(rule.values).length });
+        case 'regex': return D.t('rules.describe.regex', { column: rule.column, pattern: rule.pattern });
+        case 'length': return D.t('rules.describe.length', { column: rule.column, min: bound(rule.min), max: bound(rule.max) });
+        case 'sql': return D.t('rules.describe.sql', { expression: rule.expression });
         default: return String(rule.type);
       }
     }
@@ -99,7 +100,7 @@
     async function failingRows(id, rule, name) {
       const handle = await datasets.ensureOpen(id);
       const v = violation(rule, handle.columns);
-      return datasets.createFromQuery(id, `select * from data where ${v.sql}`, { params: v.params, name: name || `${handle.meta.name}: bryter mot ${describe(rule)}`, description: `Rader i ${handle.meta.name} som bryter mot regeln "${describe(rule)}".`, source: { kind: 'derived', op: 'rules', parent: id, rule: describe(rule) } });
+      return datasets.createFromQuery(id, `select * from data where ${v.sql}`, { params: v.params, name: name || D.t('rules.failing.name', { name: handle.meta.name, rule: describe(rule) }), description: D.t('rules.failing.description', { name: handle.meta.name, rule: describe(rule) }), source: { kind: 'derived', op: 'rules', parent: id, rule: describe(rule) } });
     }
 
     /** Suggested rules from the profile: non-null and unique columns, fixed-width codes. */
@@ -116,13 +117,13 @@
 
     /** Markdown report of a run (the caller renders it with the document builders). */
     function toMarkdown(result, meta) {
-      const name = meta && meta.name ? meta.name : 'Datamängd';
-      const lines = [`# Datakvalitetsrapport: ${name}`, '', `${result.total} rader, ${result.summary.rules} regler, ${result.summary.passed} uppfyllda, ${result.summary.failed} brutna. Körd ${result.summary.ran.slice(0, 16).replace('T', ' ')}.`, '', '| Regel | Resultat | Antal | Andel |', '|---|---|---|---|'];
+      const name = meta && meta.name ? meta.name : D.t('datasets.default.name');
+      const lines = [D.t('rules.report.title', { name }), '', D.t('rules.report.summary', { total: result.total, rules: result.summary.rules, passed: result.summary.passed, failed: result.summary.failed, ran: result.summary.ran.slice(0, 16).replace('T', ' ') }), '', D.t('rules.report.header'), '|---|---|---|---|'];
       const esc = (v) => String(v === null || v === undefined ? '' : v).replace(/\|/g, '\\|');
-      for (const r of result.results) lines.push(`| ${esc(describe(r.rule))} | ${r.error ? 'Fel: ' + esc(r.error) : r.ok ? 'OK' : 'Bryts'} | ${r.failures === null ? '' : r.failures} | ${r.failures ? (100 * r.share).toFixed(1) + ' %' : ''} |`);
+      for (const r of result.results) lines.push(`| ${esc(describe(r.rule))} | ${r.error ? esc(D.t('rules.report.error', { error: r.error })) : r.ok ? 'OK' : D.t('rules.broken')} | ${r.failures === null ? '' : r.failures} | ${r.failures ? (100 * r.share).toFixed(1) + ' %' : ''} |`);
       for (const r of result.results) {
         if (!r.sample || !r.sample.length) continue;
-        lines.push('', `## Exempel: ${describe(r.rule)}`, '', `| ${r.sampleColumns.map(esc).join(' | ')} |`, `|${r.sampleColumns.map(() => '---').join('|')}|`);
+        lines.push('', D.t('rules.report.sample', { rule: describe(r.rule) }), '', `| ${r.sampleColumns.map(esc).join(' | ')} |`, `|${r.sampleColumns.map(() => '---').join('|')}|`);
         for (const row of r.sample) lines.push(`| ${row.map(esc).join(' | ')} |`);
       }
       return lines.join('\n') + '\n';

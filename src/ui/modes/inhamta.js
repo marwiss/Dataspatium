@@ -62,9 +62,41 @@
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint'))),
           h('h4', { text: t('api.sources') }),
-          h('div', { class: 'dm-list' }, connectorList.map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
+          renderCountryChips(),
+          h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
+          visibleConnectors().length ? null : h('p', { class: 'dm-help dm-xs', text: t('api.countries.none') }),
           h('div', { class: 'dm-row' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector })),
           h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }));
+      }
+
+      // ---- country filter for the API sources (remembered per browser) ----
+      const COUNTRY_KEY = 'dataspatium.api.countries';
+      /** @type {Set<string>|null} null means every country */
+      let countryFilter = loadCountryFilter();
+      function loadCountryFilter() {
+        try { const raw = localStorage.getItem(COUNTRY_KEY); const arr = raw ? JSON.parse(raw) : null; return Array.isArray(arr) ? new Set(arr) : null; } catch (_e) { return null; }
+      }
+      function saveCountryFilter() {
+        try { if (countryFilter) localStorage.setItem(COUNTRY_KEY, JSON.stringify(Array.from(countryFilter))); else localStorage.removeItem(COUNTRY_KEY); } catch (_e) { /* storage may be unavailable */ }
+      }
+      function availableCountries() { return connectors.COUNTRIES.filter((code) => connectorList.some((c) => c.country === code)); }
+      function visibleConnectors() { return connectorList.filter((c) => !countryFilter || !c.country || countryFilter.has(c.country)); }
+      function toggleCountry(code) {
+        const all = availableCountries();
+        if (!countryFilter) countryFilter = new Set(all.filter((c) => c !== code));
+        else if (countryFilter.has(code)) countryFilter.delete(code);
+        else countryFilter.add(code);
+        if (all.every((c) => countryFilter.has(c))) countryFilter = null;
+        saveCountryFilter();
+        renderLeft();
+      }
+      function renderCountryChips() {
+        const all = availableCountries();
+        if (all.length < 2) return null;
+        const chip = (label, pressed, onclick) => h('button', { type: 'button', class: 'dm-chip', 'aria-pressed': pressed ? 'true' : 'false', onclick }, label);
+        return h('div', { class: 'dm-chips', role: 'group', 'aria-label': t('api.countries'), title: t('api.countries.hint') },
+          chip(t('api.countries.all'), !countryFilter, () => { countryFilter = null; saveCountryFilter(); renderLeft(); }),
+          all.map((code) => chip(t('country.' + code), !countryFilter || countryFilter.has(code), () => toggleCountry(code))));
       }
       function sourceItem(id, icon, label, sub) {
         return h('button', { type: 'button', class: 'dm-list-item', 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
@@ -155,7 +187,7 @@
         // Bundled data: the example table first, then the SCB boundaries for maps.
         const examples = D.require('presets').examples;
         return h('div', { class: 'dm-stack' }, dz,
-          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : p.name, icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
+          h('div', { class: 'dm-row-wrap' }, examples.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), icon: p.format === 'geojson' ? 'globe' : 'sparkles', onClick: () => importPreset(p) }))),
           h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 
@@ -182,7 +214,7 @@
           if (wiz.preview.sheet !== undefined) wiz.options.sheet = wiz.preview.sheet;
           if (wiz.options.header === undefined) wiz.options.header = wiz.preview.header;
           wiz.specs = wiz.preview.inferred.map((c) => Object.assign({}, c));
-          if (!wiz.name) wiz.name = wiz.file ? services.importer.baseName(wiz.file.name) : 'Inklistrad tabell';
+          if (!wiz.name) wiz.name = wiz.file ? services.importer.baseName(wiz.file.name) : t('import.paste.name');
           wiz.step = wiz.step === 'file' ? 'options' : wiz.step;
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
@@ -215,9 +247,9 @@
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
         if (wiz.file) left.appendChild(format);
         if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
-          const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? ' (identifierad)' : '') }));
+          const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? t('import.encoding.detected') : '') }));
           if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
-          if (wiz.options.format === 'csv') left.appendChild(select(t('import.delimiter'), csv.DELIMITERS.map((d) => ({ value: d.value, label: d.value === 'auto' ? 'Automatiskt' + (p && p.delimiter ? ` (${describeDelimiter(p.delimiter)})` : '') : t(d.key) })), wiz.options.delimiter, (v) => { wiz.options.delimiter = v; schedulePreview(); }));
+          if (wiz.options.format === 'csv') left.appendChild(select(t('import.delimiter'), csv.DELIMITERS.map((d) => ({ value: d.value, label: d.value === 'auto' ? t('import.delimiter.auto') + (p && p.delimiter ? ` (${describeDelimiter(p.delimiter)})` : '') : t(d.key) })), wiz.options.delimiter, (v) => { wiz.options.delimiter = v; schedulePreview(); }));
           else {
             const breaks = /** @type {any} */ (h('dm-input', { label: t('import.breaks'), help: t('import.breaks.help'), placeholder: p && p.breaksText ? p.breaksText : '0, 12, 20' }));
             breaks.value = wiz.options.breaks || '';
@@ -308,7 +340,7 @@
           const typeSel = select('', types.TYPES.map((ty) => ({ value: ty, label: t('type.' + ty) })), spec.type, (v) => { spec.type = v; });
           typeSel.setAttribute('aria-label', t('common.type'));
           const sample = (wiz.preview.dataRows.slice(0, 3).map((r) => r[i]).filter((v) => v !== null && v !== undefined && String(v) !== '').map(String).join(', ')).slice(0, 60);
-          return h('tr', null, h('td', null, include), h('td', null, nameIn), h('td', null, typeSel), h('td', { class: 'dm-muted dm-small', text: sample }), h('td', { class: 'dm-faint dm-xs', text: spec.reason === 'leading-zero' ? 'inledande nollor' : '' }));
+          return h('tr', null, h('td', null, include), h('td', null, nameIn), h('td', null, typeSel), h('td', { class: 'dm-muted dm-small', text: sample }), h('td', { class: 'dm-faint dm-xs', text: spec.reason === 'leading-zero' ? t('import.reason.leading') : '' }));
         });
         const importBtn = ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport });
         return h('div', { class: 'dm-stack' },

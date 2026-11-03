@@ -1,0 +1,53 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "kartverket-kommuneinfo",
+  "name": "Kartverket kommuneinfo",
+  "publisher": "Kartverket (Statens kartverk)",
+  "description": "Norges kommuner och fylken med nummer och namn, inklusive kommunerna per fylke. Praktisk som nyckeltabell för att koppla kommunnummer till namn och fylke i andra datamängder.",
+  "docs": "https://ws.geonorge.no/kommuneinfo/v1/",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "NO",
+  "baseUrl": "https://ws.geonorge.no/kommuneinfo/v1",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "kommuner",
+      "name": "Kommuner",
+      "description": "Alla kommuner med kommunnummer, namn och namn på norska.",
+      "method": "GET",
+      "path": "/kommuner",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Norska kommuner (Kartverket)", "keys": ["kommunenummer"] }
+    },
+    {
+      "id": "fylker",
+      "name": "Fylken",
+      "description": "Alla fylken med fylkesnummer och namn.",
+      "method": "GET",
+      "path": "/fylker",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Norska fylken (Kartverket)", "keys": ["fylkesnummer"] }
+    },
+    {
+      "id": "fylkerkommuner",
+      "name": "Kommuner per fylke",
+      "description": "En rad per kommun med tillhörande fylke.",
+      "method": "GET",
+      "path": "/fylkerkommuner",
+      "params": [],
+      "response": { "format": "json", "explode": "kommuner", "drop": ["avgrensningsboks"] },
+      "dataset": { "name": "Norska kommuner per fylke (Kartverket)", "keys": ["kommunenummer"] }
+    }
+  ],
+  "i18n": {
+    "en": { "name": "Norwegian Mapping Authority: municipality info", "publisher": "Norwegian Mapping Authority (Kartverket)", "description": "Norway's municipalities and counties with numbers and names, including the municipalities per county. Handy as a key table for joining municipality numbers to names and counties in other datasets.", "endpoints": { "kommuner": { "name": "Municipalities", "description": "All municipalities with number, name and Norwegian name." }, "fylker": { "name": "Counties", "description": "All counties with number and name." }, "fylkerkommuner": { "name": "Municipalities per county", "description": "One row per municipality with its county." } }, "dataset": { "kommuner": "Norwegian municipalities (Kartverket)", "fylker": "Norwegian counties (Kartverket)", "fylkerkommuner": "Norwegian municipalities per county (Kartverket)" } },
+    "da": { "name": "Kartverket kommuneinfo", "publisher": "Kartverket (Statens kartverk)", "description": "Norges kommuner og fylker med numre og navne, herunder kommunerne pr. fylke. Praktisk som nøgletabel til at koble kommunenumre til navne og fylker i andre datasæt.", "endpoints": { "kommuner": { "name": "Kommuner", "description": "Alle kommuner med kommunenummer, navn og norsk navn." }, "fylker": { "name": "Fylker", "description": "Alle fylker med fylkesnummer og navn." }, "fylkerkommuner": { "name": "Kommuner pr. fylke", "description": "Én række pr. kommune med tilhørende fylke." } }, "dataset": { "kommuner": "Norske kommuner (Kartverket)", "fylker": "Norske fylker (Kartverket)", "fylkerkommuner": "Norske kommuner pr. fylke (Kartverket)" } },
+    "nb": { "name": "Kartverket kommuneinfo", "publisher": "Kartverket", "description": "Norges kommuner og fylker med nummer og navn, inkludert kommunene per fylke. Praktisk som nøkkeltabell for å koble kommunenummer til navn og fylke i andre datasett.", "endpoints": { "kommuner": { "name": "Kommuner", "description": "Alle kommuner med kommunenummer, navn og norsk navn." }, "fylker": { "name": "Fylker", "description": "Alle fylker med fylkesnummer og navn." }, "fylkerkommuner": { "name": "Kommuner per fylke", "description": "Én rad per kommune med tilhørende fylke." } }, "dataset": { "kommuner": "Norske kommuner (Kartverket)", "fylker": "Norske fylker (Kartverket)", "fylkerkommuner": "Norske kommuner per fylke (Kartverket)" } },
+    "fi": { "name": "Kartverket: kuntatiedot", "publisher": "Kartverket (Norjan maanmittauslaitos)", "description": "Norjan kunnat ja fylket (maakunnat) numeroineen ja nimineen, myös kunnat fylkeittäin. Käytännöllinen avaintaulukko kuntanumeroiden yhdistämiseen nimiin ja fylkeihin muissa aineistoissa.", "endpoints": { "kommuner": { "name": "Kunnat", "description": "Kaikki kunnat numeroineen, nimineen ja norjankielisine nimineen." }, "fylker": { "name": "Fylket", "description": "Kaikki fylket numeroineen ja nimineen." }, "fylkerkommuner": { "name": "Kunnat fylkeittäin", "description": "Yksi rivi per kunta ja sen fylke." } }, "dataset": { "kommuner": "Norjan kunnat (Kartverket)", "fylker": "Norjan fylket (Kartverket)", "fylkerkommuner": "Norjan kunnat fylkeittäin (Kartverket)" } },
+    "is": { "name": "Kartverket: upplýsingar um sveitarfélög", "publisher": "Kartverket (Landmælingar Noregs)", "description": "Sveitarfélög og fylki Noregs með númerum og heitum, þar með talið sveitarfélög eftir fylkjum. Hentugt sem lykiltafla til að tengja sveitarfélagsnúmer við heiti og fylki í öðrum gagnasöfnum.", "endpoints": { "kommuner": { "name": "Sveitarfélög", "description": "Öll sveitarfélög með númeri, heiti og norsku heiti." }, "fylker": { "name": "Fylki", "description": "Öll fylki með númeri og heiti." }, "fylkerkommuner": { "name": "Sveitarfélög eftir fylkjum", "description": "Ein röð fyrir hvert sveitarfélag með tilheyrandi fylki." } }, "dataset": { "kommuner": "Norsk sveitarfélög (Kartverket)", "fylker": "Norsk fylki (Kartverket)", "fylkerkommuner": "Norsk sveitarfélög eftir fylkjum (Kartverket)" } }
+  }
+}

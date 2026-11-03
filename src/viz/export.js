@@ -51,13 +51,13 @@
       const text = await svgWithFonts(svgText);
       const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' }));
       try {
-        const img = await new Promise((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error('Kunde inte rita SVG till bild.')); i.src = url; });
+        const img = await new Promise((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = () => reject(new Error(D.t('viz.err.svg.image'))); i.src = url; });
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
         const ctx = canvas.getContext('2d');
         if (options.background) { ctx.fillStyle = options.background; ctx.fillRect(0, 0, canvas.width, canvas.height); }
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        return await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Kunde inte skapa PNG.'))), 'image/png'));
+        return await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(D.t('viz.err.png')))), 'image/png'));
       } finally { URL.revokeObjectURL(url); }
     }
 
@@ -80,7 +80,7 @@
       const doc = new jsPDF({ orientation: width >= height ? 'landscape' : 'portrait', unit: 'pt', format: [width, height], compress: true });
       const parsed = new DOMParser().parseFromString(svgText, 'image/svg+xml');
       const el = parsed.documentElement;
-      if (el.querySelector('parsererror')) throw new Error('SVG kunde inte tolkas för PDF.');
+      if (el.querySelector('parsererror')) throw new Error(D.t('viz.err.svg.pdf'));
       // svg2pdf needs the element in a document to resolve computed styles.
       const holder = document.createElement('div');
       holder.style.cssText = 'position:absolute; left:-20000px; top:0;';

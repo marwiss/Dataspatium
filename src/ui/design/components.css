@@ -104,6 +104,13 @@ dm-badge[kind="ok"] { background: var(--dm-ok-soft); color: var(--dm-ok); }
 dm-badge[kind="warn"] { background: var(--dm-warn-soft); color: var(--dm-warn); }
 dm-badge[kind="error"] { background: var(--dm-error-soft); color: var(--dm-error); }
 
+/* Chips: a row of toggles (the country filter in Inhämta); aria-pressed carries the state */
+.dm-chips { display: flex; flex-wrap: wrap; gap: var(--dm-s-1); margin-bottom: var(--dm-s-2); }
+.dm-chip { display: inline-flex; align-items: center; padding: 1px var(--dm-s-2); border: 1px solid var(--dm-border); border-radius: 999px; background: var(--dm-surface); color: var(--dm-text-muted); font: inherit; font-size: var(--dm-text-xs); font-weight: var(--dm-weight-medium); line-height: 1.5; cursor: pointer; transition: background var(--dm-transition), color var(--dm-transition); }
+.dm-chip:hover { border-color: var(--dm-border-strong); color: var(--dm-text); }
+.dm-chip[aria-pressed="true"] { background: var(--dm-accent-soft); color: var(--dm-accent); border-color: transparent; }
+.dm-chip:focus-visible { outline: 2px solid var(--dm-accent); outline-offset: 1px; }
+
 /* Progress */
 dm-progress { display: block; height: 6px; border-radius: 3px; background: var(--dm-surface-2); overflow: hidden; }
 dm-progress > span { display: block; height: 100%; background: var(--dm-accent); border-radius: 3px; transition: width var(--dm-transition); }

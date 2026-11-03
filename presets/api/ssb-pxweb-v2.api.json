@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "ssb-pxweb-v2",
+  "name": "SSB Statistikkbanken (API v2)",
+  "publisher": "Statistisk sentralbyrå (SSB)",
+  "description": "Samma statistik som SSB Statistikkbanken via SSB:s nya API: sök bland tabeller i stället för att bläddra i trädet. Högst 800 000 celler per anrop och 30 anrop per minut.",
+  "docs": "https://www.ssb.no/en/api/pxwebapiv2",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "NO",
+  "baseUrl": "https://data.ssb.no/api/pxwebapi/v2-beta",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 30, "perSeconds": 60 },
+  "family": { "type": "pxweb", "version": 2, "lang": "no", "langs": { "nb": "no", "en": "en" }, "maxCells": 800000 },
+  "notes": "Ange källa: Statistisk sentralbyrå.",
+  "i18n": {
+    "en": { "name": "Statistics Norway StatBank (API v2)", "publisher": "Statistics Norway (SSB)", "description": "The same statistics as Statistics Norway StatBank through SSB's new API: search among tables instead of browsing the tree. At most 800,000 cells per request and 30 requests per minute.", "notes": "Cite the source: Statistics Norway." },
+    "da": { "name": "SSB Statistikkbanken (API v2)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Samme statistik som SSB Statistikkbanken via SSB's nye API: søg blandt tabeller i stedet for at gennemse træet. Højst 800 000 celler pr. kald og 30 kald pr. minut.", "notes": "Angiv kilde: Statistisk sentralbyrå." },
+    "nb": { "name": "SSB Statistikkbanken (API v2)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Samme statistikk som SSB Statistikkbanken via SSBs nye API: søk blant tabeller i stedet for å bla i treet. Høyst 800 000 celler per kall og 30 kall per minutt.", "notes": "Oppgi kilde: Statistisk sentralbyrå." },
+    "fi": { "name": "Norjan tilastokeskus (API v2)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Sama tilasto kuin Norjan Statistikkbanken SSB:n uuden rajapinnan kautta: hae taulukoita puun selaamisen sijaan. Enintään 800 000 solua per pyyntö ja 30 pyyntöä minuutissa.", "notes": "Mainitse lähde: Statistisk sentralbyrå." },
+    "is": { "name": "Hagstofa Noregs (API v2)", "publisher": "Statistisk sentralbyrå (SSB)", "description": "Sömu hagtölur og í Statistikkbanken gegnum nýtt API SSB: leitaðu meðal taflna í stað þess að fletta í trénu. Að hámarki 800 000 reitir í hverju kalli og 30 köll á mínútu.", "notes": "Tilgreindu heimild: Statistisk sentralbyrå." }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "opendata-dk",
+  "name": "Open Data DK (sök datamängder)",
+  "publisher": "Open Data DK (danska kommuner och regioner)",
+  "description": "Sök bland datamängder som danska kommuner, regioner och myndigheter publicerar på opendata.dk. Resultatet är en tabell med en rad per fil: datamängdens titel, utgivare, licens, filformat och nedladdningslänk. Filer importeras sedan via Från webbadress eller Filer.",
+  "docs": "https://www.opendata.dk/",
+  "license": { "name": "Metadata: öppna data, se respektive datamängd", "url": "https://www.opendata.dk/" },
+  "level": 1,
+  "country": "DK",
+  "baseUrl": "https://admin.opendata.dk/api/3/action",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 2 },
+  "endpoints": [
+    {
+      "id": "search",
+      "name": "Sök datamängder",
+      "description": "Fritextsökning i katalogen (CKAN). En rad per fil i de datamängder som matchar.",
+      "method": "GET",
+      "path": "/package_search",
+      "params": [
+        { "name": "q", "in": "query", "label": "Sökord", "type": "string", "required": true, "example": "befolkning" },
+        { "name": "rows", "in": "query", "type": "number", "default": 50, "hidden": true }
+      ],
+      "pagination": { "type": "offset", "param": "start", "sizeParam": "rows", "size": 50, "start": 0, "totalPath": "result.count", "maxPages": 4 },
+      "response": { "format": "json", "path": "result.results", "explode": "resources", "drop": ["author", "author_email", "cache_last_updated", "cache_url", "cpr", "creator_user_id", "data_directory", "datastore_active", "extras", "groups", "hash", "isopen", "license_id", "maintainer", "maintainer_email", "metadata_created", "mimetype", "mimetype_inner", "notes_translated", "num_tags", "organization.approval_status", "organization.created", "organization.description", "organization.id", "organization.image_url", "organization.is_organization", "organization.name", "organization.state", "organization.type", "owner_org", "package_id", "position", "private", "relationships_as_object", "relationships_as_subject", "resource_type", "state", "tags", "title_translated", "type", "url_type", "version"] },
+      "dataset": { "name": "Open Data DK: {q}" }
+    }
+  ],
+  "i18n": {
+    "en": { "name": "Open Data DK (search datasets)", "publisher": "Open Data DK (Danish municipalities and regions)", "description": "Search the datasets that Danish municipalities, regions and agencies publish on opendata.dk. The result is a table with one row per file: dataset title, publisher, licence, file format and download link. Files are then imported through From web address or Files.", "endpoints": { "search": { "name": "Search datasets", "description": "Free-text search in the catalogue (CKAN). One row per file in the matching datasets.", "params": { "q": { "label": "Search words", "example": "befolkning" } } } }, "dataset": { "search": "Open Data DK: {q}" } },
+    "da": { "name": "Open Data DK (søg datasæt)", "publisher": "Open Data DK (danske kommuner og regioner)", "description": "Søg blandt de datasæt, som danske kommuner, regioner og myndigheder offentliggør på opendata.dk. Resultatet er en tabel med én række pr. fil: datasættets titel, udgiver, licens, filformat og downloadlink. Filer importeres derefter via Fra webadresse eller Filer.", "endpoints": { "search": { "name": "Søg datasæt", "description": "Fritekstsøgning i kataloget (CKAN). Én række pr. fil i de datasæt, der matcher.", "params": { "q": { "label": "Søgeord", "example": "befolkning" } } } } },
+    "nb": { "name": "Open Data DK (søk datasett)", "publisher": "Open Data DK (danske kommuner og regioner)", "description": "Søk blant datasettene som danske kommuner, regioner og etater publiserer på opendata.dk. Resultatet er en tabell med én rad per fil: datasettets tittel, utgiver, lisens, filformat og nedlastingslenke. Filer importeres deretter via Fra nettadresse eller Filer.", "endpoints": { "search": { "name": "Søk datasett", "description": "Fritekstsøk i katalogen (CKAN). Én rad per fil i datasettene som matcher.", "params": { "q": { "label": "Søkeord", "example": "befolkning" } } } } },
+    "fi": { "name": "Open Data DK (hae aineistoja)", "publisher": "Open Data DK (Tanskan kunnat ja alueet)", "description": "Hae aineistoja, joita Tanskan kunnat, alueet ja viranomaiset julkaisevat opendata.dk-portaalissa. Tulos on taulukko, jossa on yksi rivi per tiedosto: aineiston nimi, julkaisija, lisenssi, tiedostomuoto ja latauslinkki. Tiedostot tuodaan sen jälkeen kohdasta Verkko-osoitteesta tai Tiedostot.", "endpoints": { "search": { "name": "Hae aineistoja", "description": "Vapaatekstihaku luettelosta (CKAN). Yksi rivi per tiedosto hakua vastaavissa aineistoissa.", "params": { "q": { "label": "Hakusanat", "example": "befolkning" } } } } },
+    "is": { "name": "Open Data DK (leita að gagnasöfnum)", "publisher": "Open Data DK (dönsk sveitarfélög og landshlutar)", "description": "Leitaðu meðal gagnasafna sem dönsk sveitarfélög, landshlutar og stofnanir birta á opendata.dk. Niðurstaðan er tafla með einni röð fyrir hverja skrá: heiti gagnasafns, útgefandi, leyfi, skráarsnið og niðurhalstengill. Skrár eru síðan fluttar inn með Af vefslóð eða Skrár.", "endpoints": { "search": { "name": "Leita að gagnasöfnum", "description": "Textaleit í skránni (CKAN). Ein röð fyrir hverja skrá í gagnasöfnunum sem passa.", "params": { "q": { "label": "Leitarorð", "example": "befolkning" } } } } }
+  }
+}

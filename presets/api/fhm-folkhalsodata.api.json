@@ -7,6 +7,7 @@
   "docs": "https://www.folkhalsomyndigheten.se/folkhalsorapportering-statistik/statistikdatabaser-och-visualisering/folkhalsodata/",
   "license": { "name": "Fri användning med källhänvisning, se Folkhälsomyndighetens villkor", "url": "https://www.folkhalsomyndigheten.se/om-webbplatsen/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://fohm-app.folkhalsomyndigheten.se/Folkhalsodata/api/v1/sv/A_Folkhalsodata",
   "auth": { "type": "none" },
   "rateLimit": { "requests": 30, "perSeconds": 10 },
@@ -24,5 +25,12 @@
       "response": { "format": "json" },
       "dataset": { "name": "Folkhälsodata mapp {path}" }
     }
-  ]
+  ],
+  "i18n": {
+    "en": {"name": "Public Health Agency of Sweden: Folkhälsodata", "publisher": "Public Health Agency of Sweden (Folkhälsomyndigheten)", "description": "Public health statistics: the national public health survey, schoolchildren's health habits, communicable diseases, vaccinations, indicators for alcohol, narcotics, doping, tobacco and gambling, antibiotics and more. Browse the subject tree, pick a table and values per variable (PxWeb).", "endpoints": {"folder": {"name": "List the contents of a folder", "description": "Folders and tables under a path, for example B_HLV. An empty path gives the subject areas.", "params": {"path": {"label": "Path"}}}}, "dataset": {"folder": "Folkhälsodata folder {path}"}},
+    "da": {"name": "Folkhälsomyndigheten Folkhälsodata", "publisher": "Folkhälsomyndigheten (Sveriges folkesundhedsmyndighed)", "description": "Svensk folkesundhedsstatistik: den nationale folkesundhedsundersøgelse, skolebørns sundhedsvaner, smitsomme sygdomme, vaccinationer, indikatorer for alkohol, narkotika, doping, tobak og spil, antibiotika med mere. Gennemse emnetræet, vælg tabel og værdier pr. variabel (PxWeb).", "endpoints": {"folder": {"name": "Vis indholdet i en mappe", "description": "Mapper og tabeller under en sti, for eksempel B_HLV. En tom sti giver emneområderne.", "params": {"path": {"label": "Sti"}}}}, "dataset": {"folder": "Folkhälsodata mappe {path}"}},
+    "nb": {"name": "Folkhälsomyndigheten Folkhälsodata", "publisher": "Folkhälsomyndigheten (Sveriges folkehelsemyndighet)", "description": "Svensk folkehelsestatistikk: den nasjonale folkehelseundersøkelsen, skolebarns helsevaner, smittsomme sykdommer, vaksinasjoner, indikatorer for alkohol, narkotika, doping, tobakk og pengespill, antibiotika med mer. Bla i emnetreet, velg tabell og verdier per variabel (PxWeb).", "endpoints": {"folder": {"name": "List innholdet i en mappe", "description": "Mapper og tabeller under en sti, for eksempel B_HLV. En tom sti gir emneområdene.", "params": {"path": {"label": "Sti"}}}}, "dataset": {"folder": "Folkhälsodata mappe {path}"}},
+    "fi": {"name": "Ruotsin kansanterveysvirasto: Folkhälsodata", "publisher": "Folkhälsomyndigheten (Ruotsin kansanterveysvirasto)", "description": "Ruotsin kansanterveystilastot: kansallinen terveyskysely, koululaisten terveystottumukset, tartuntataudit, rokotukset, alkoholi-, huume-, doping-, tupakka- ja rahapeli-indikaattorit, antibiootit ja muuta. Selaa aihepuuta, valitse taulukko ja arvot muuttujittain (PxWeb).", "endpoints": {"folder": {"name": "Luettele kansion sisältö", "description": "Kansiot ja taulukot polun alla, esimerkiksi B_HLV. Tyhjä polku antaa aihealueet.", "params": {"path": {"label": "Polku"}}}}, "dataset": {"folder": "Folkhälsodata kansio {path}"}},
+    "is": {"name": "Lýðheilsustofnun Svíþjóðar: Folkhälsodata", "publisher": "Folkhälsomyndigheten (Lýðheilsustofnun Svíþjóðar)", "description": "Sænskar lýðheilsutölur: landskönnun á lýðheilsu, heilsuvenjur skólabarna, smitsjúkdómar, bólusetningar, vísar um áfengi, fíkniefni, lyfjamisnotkun, tóbak og fjárhættuspil, sýklalyf og fleira. Flettu í efnistrénu, veldu töflu og gildi fyrir hverja breytu (PxWeb).", "endpoints": {"folder": {"name": "Sýna innihald möppu", "description": "Möppur og töflur undir slóð, til dæmis B_HLV. Auð slóð gefur efnissviðin.", "params": {"path": {"label": "Slóð"}}}}, "dataset": {"folder": "Folkhälsodata mappa {path}"}}
+  }
 }

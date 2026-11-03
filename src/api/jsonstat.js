@@ -43,18 +43,25 @@
       });
     }
 
+    /** JSON-stat 1.x keeps id, size and role inside `dimension`; lift them to the 2.0 positions. */
+    function upgrade(ds) {
+      if (ds && !Array.isArray(ds.id) && ds.dimension && Array.isArray(ds.dimension.id)) {
+        return Object.assign({}, ds, { version: ds.version || '1.x', class: 'dataset', id: ds.dimension.id, size: ds.dimension.size || null, role: ds.dimension.role || ds.role || {} });
+      }
+      return ds;
+    }
     function pickDataset(root) {
-      if (root && root.class === 'dataset') return root;
+      if (root && root.class === 'dataset') return upgrade(root);
       if (root && root.class === 'collection' && root.link && Array.isArray(root.link.item)) {
         const first = root.link.item.find((it) => it.class === 'dataset');
-        if (first) return first;
+        if (first) return upgrade(first);
       }
       if (root && typeof root === 'object' && !root.class) {
-        // JSON-stat 1.x bundle: {name: {dataset}}
+        // JSON-stat 1.x bundle: {name: {dataset}} (Statistics Denmark answers {dataset: {...}})
         const first = Object.values(root).find((v) => v && typeof v === 'object' && v.dimension);
-        if (first) return first;
+        if (first) return upgrade(first);
       }
-      throw new Error('Svaret är inte en JSON-stat-datamängd.');
+      throw new Error(D.t('api.err.jsonstat'));
     }
 
     /**

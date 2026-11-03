@@ -91,6 +91,7 @@
         { "path": "icons/chart-scatter.svg", "as": "icons/chart-scatter.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/chart-pie.svg", "as": "icons/chart-pie.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/map-pin.svg", "as": "icons/map-pin.svg", "wrap": "text", "bundle": "icons" },
+        { "path": "icons/languages.svg", "as": "icons/languages.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/grid-2x2.svg", "as": "icons/grid-2x2.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/chart-candlestick.svg", "as": "icons/chart-candlestick.svg", "wrap": "text", "bundle": "icons" },
         { "path": "icons/chart-bar-big.svg", "as": "icons/chart-bar-big.svg", "wrap": "text", "bundle": "icons" },

@@ -9,11 +9,11 @@
   const D = globalThis.Dataspatium;
   D.define('docgen/generate', ['docgen/template', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'viz/data', 'platform/storage/zip', 'platform/files'], (template, markdown, builders, office, vizData, zip, files) => {
     const FORMATS = [
-      { id: 'html', label: 'HTML (fristående sida)', ext: 'html', mime: 'text/html;charset=utf-8' },
+      { id: 'html', label: D.t('doc.format.html'), ext: 'html', mime: 'text/html;charset=utf-8' },
       { id: 'docx', label: 'Word (DOCX)', ext: 'docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
       { id: 'pdf', label: 'PDF', ext: 'pdf', mime: 'application/pdf' },
       { id: 'md', label: 'Markdown', ext: 'md', mime: 'text/markdown;charset=utf-8' },
-      { id: 'tex', label: 'LaTeX (ZIP med main.tex och figurer)', ext: 'zip', mime: 'application/zip' },
+      { id: 'tex', label: D.t('doc.format.tex'), ext: 'zip', mime: 'application/zip' },
     ];
 
     /** Template + dataset -> document model. */
@@ -29,13 +29,13 @@
      */
     async function generate(doc, datasetId, format, options = {}) {
       const fmt = FORMATS.find((f) => f.id === format);
-      if (!fmt) throw new Error('Okänt format: ' + format);
+      if (!fmt) throw new Error(D.t('err.unknown.format', { format }));
       const { ast, ctx } = await buildAst(doc, datasetId, options);
       const title = options.title || markdown.title(ast) || doc.name;
       const baseName = options.filename || `${doc.name} ${ctx.datamangd}${ctx.grupp ? ' ' + ctx.grupp : ''}`;
       let blob;
       if (format === 'html') blob = new Blob([builders.toHtml(ast, { title })], { type: fmt.mime });
-      else if (format === 'docx') blob = await office.toDocx(ast, { title, description: `Skapat av Dataspatium ur ${ctx.datamangd}` });
+      else if (format === 'docx') blob = await office.toDocx(ast, { title, description: D.t('doc.created.from', { name: ctx.datamangd }) });
       else if (format === 'pdf') blob = await office.toPdf(ast, { title });
       else if (format === 'md') {
         const md = builders.toMarkdown(ast);
@@ -61,7 +61,7 @@
      */
     async function batch(doc, datasetId, options) {
       const values = await vizData.distinctValues(datasetId, options.groupColumn, options.limit || 500);
-      if (!values.length) throw new Error('Grupperingskolumnen saknar värden.');
+      if (!values.length) throw new Error(D.t('doc.err.group.empty'));
       const fmt = FORMATS.find((f) => f.id === options.format) || FORMATS[0];
       const out = {}; const names = []; const errors = [];
       let done = 0;
@@ -83,7 +83,7 @@
         done++;
         if (options.onProgress) options.onProgress({ done, total: values.length, value });
       }
-      if (!names.length) throw new Error('Inga dokument kunde skapas: ' + (errors[0] ? errors[0].message : ''));
+      if (!names.length) throw new Error(D.t('doc.err.none.created', { message: errors[0] ? errors[0].message : '' }));
       out['manifest.json'] = new TextEncoder().encode(JSON.stringify({ app: 'Dataspatium', kind: 'document-batch', template: doc.name, dataset: datasetId, groupColumn: options.groupColumn, format: fmt.id, groups: values.length, files: names, errors, created: new Date().toISOString() }, null, 2));
       const blob = await zip.createZip(out, { level: 6 });
       return { blob, count: names.length, files: names, errors };

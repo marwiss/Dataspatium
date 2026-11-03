@@ -2488,6 +2488,1062 @@
    "text": "Miljöhälsoenkäten barn, nationella och regionala resultat"
   }
  ],
- "smhiArchiveCsv": "Stationsnamn;Stationsnummer;Stationsnät;Mäthöjd (meter över marken)\nStockholm-Observatoriekullen A;98230;SMHIs stationsnät;2.0\n\nParameternamn;Beskrivning;Enhet\nLufttemperatur;momentanvärde, 1 gång/tim;celsius\n\nTidsperiod (fr.o.m);Tidsperiod (t.o.m);Höjd (meter över havet);Latitud (decimalgrader);Longitud (decimalgrader)\n1996-10-01 00:00:00;2026-10-31 23:00:00;43.133;59.3417;18.0549\n\nDatum;Tid (UTC);Lufttemperatur;Kvalitet;;Tidsutsnitt:\n2024-01-01;00:00:00;-3.2;G;;Kvalitetskontrollerade historiska data (utom de senaste 3 månaderna)\n2024-01-01;01:00:00;-3.5;G;;\n2024-01-01;02:00:00;-3.9;Y;;\n"
+ "smhiArchiveCsv": "Stationsnamn;Stationsnummer;Stationsnät;Mäthöjd (meter över marken)\nStockholm-Observatoriekullen A;98230;SMHIs stationsnät;2.0\n\nParameternamn;Beskrivning;Enhet\nLufttemperatur;momentanvärde, 1 gång/tim;celsius\n\nTidsperiod (fr.o.m);Tidsperiod (t.o.m);Höjd (meter över havet);Latitud (decimalgrader);Longitud (decimalgrader)\n1996-10-01 00:00:00;2026-10-31 23:00:00;43.133;59.3417;18.0549\n\nDatum;Tid (UTC);Lufttemperatur;Kvalitet;;Tidsutsnitt:\n2024-01-01;00:00:00;-3.2;G;;Kvalitetskontrollerade historiska data (utom de senaste 3 månaderna)\n2024-01-01;01:00:00;-3.5;G;;\n2024-01-01;02:00:00;-3.9;Y;;\n",
+ "dstSubjects": [
+ {
+  "id": "1",
+  "description": "People",
+  "active": true,
+  "hasSubjects": true,
+  "subjects": []
+ },
+ {
+  "id": "2",
+  "description": "Labour and income",
+  "active": true,
+  "hasSubjects": true,
+  "subjects": []
+ },
+ {
+  "id": "3",
+  "description": "Economy",
+  "active": true,
+  "hasSubjects": true,
+  "subjects": []
+ }
+],
+ "dstSubject3401": [
+ {
+  "id": "3401",
+  "description": "Population",
+  "active": true,
+  "hasSubjects": true,
+  "subjects": [
+   {
+    "id": "20021",
+    "description": "Population figures",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20024",
+    "description": "Immigrants and their descendants",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20022",
+    "description": "Population projections",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20019",
+    "description": "Adoptions",
+    "active": false,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20017",
+    "description": "Births",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20018",
+    "description": "Fertility",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20014",
+    "description": "Deaths",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   },
+   {
+    "id": "20015",
+    "description": "Life expectancy",
+    "active": true,
+    "hasSubjects": false,
+    "subjects": [],
+    "tables": []
+   }
+  ],
+  "tables": [
+   {
+    "id": "FOLK1A",
+    "text": "Population at the first day of the quarter",
+    "unit": "Number",
+    "updated": "2026-08-10T08:00:00",
+    "firstPeriod": "2008Q1",
+    "latestPeriod": "2026Q3",
+    "active": true,
+    "variables": [
+     "region",
+     "sex",
+     "age",
+     "marital status",
+     "time"
+    ]
+   }
+  ]
+ }
+],
+ "dstTableinfo": {
+ "id": "FOLK1A",
+ "text": "Population at the first day of the quarter",
+ "description": "Population at the first day of the quarter by region, sex, age, marital status and time",
+ "unit": "Number",
+ "suppressedDataValue": "0",
+ "updated": "2026-08-10T08:00:00",
+ "active": true,
+ "contacts": [
+  {
+   "name": "Dorthe Larsen",
+   "phone": "+4523498326",
+   "mail": "dla@dst.dk"
+  }
+ ],
+ "documentation": {
+  "id": "4a12721d-a8b0-4bde-82d7-1d1c6f319de3",
+  "url": "https://www.dst.dk/documentationofstatistics/4a12721d-a8b0-4bde-82d7-1d1c6f319de3"
+ },
+ "footnote": null,
+ "variables": [
+  {
+   "id": "OMRÅDE",
+   "text": "region",
+   "elimination": true,
+   "time": false,
+   "map": "denmark_municipality_07",
+   "values": [
+    {
+     "id": "000",
+     "text": "All Denmark"
+    },
+    {
+     "id": "084",
+     "text": "Region Hovedstaden"
+    },
+    {
+     "id": "101",
+     "text": "Copenhagen"
+    }
+   ]
+  },
+  {
+   "id": "KØN",
+   "text": "sex",
+   "elimination": true,
+   "time": false,
+   "values": [
+    {
+     "id": "TOT",
+     "text": "Total"
+    },
+    {
+     "id": "1",
+     "text": "Men"
+    },
+    {
+     "id": "2",
+     "text": "Women"
+    }
+   ]
+  },
+  {
+   "id": "Tid",
+   "text": "time",
+   "elimination": false,
+   "time": true,
+   "values": [
+    {
+     "id": "2008K1",
+     "text": "2008Q1"
+    },
+    {
+     "id": "2008K2",
+     "text": "2008Q2"
+    },
+    {
+     "id": "2008K3",
+     "text": "2008Q3"
+    }
+   ]
+  }
+ ]
+},
+ "dstData": {
+ "dataset": {
+  "dimension": {
+   "OMRÅDE": {
+    "label": "region",
+    "category": {
+     "index": {
+      "000": 0,
+      "101": 1
+     },
+     "label": {
+      "000": "All Denmark",
+      "101": "Copenhagen"
+     }
+    }
+   },
+   "KØN": {
+    "label": "sex",
+    "category": {
+     "index": {
+      "TOT": 0,
+      "1": 1,
+      "2": 2
+     },
+     "label": {
+      "TOT": "Total",
+      "1": "Men",
+      "2": "Women"
+     }
+    }
+   },
+   "ContentsCode": {
+    "label": "Indhold",
+    "category": {
+     "index": {
+      "FOLK1A": 0
+     },
+     "label": {
+      "FOLK1A": "Population at the first day of the quarter"
+     },
+     "unit": {
+      "FOLK1A": {
+       "base": "Number",
+       "decimals": 0
+      }
+     }
+    }
+   },
+   "Tid": {
+    "label": "time",
+    "category": {
+     "index": {
+      "2024K1": 0,
+      "2024K2": 1
+     },
+     "label": {
+      "2024K1": "2024Q1",
+      "2024K2": "2024Q2"
+     }
+    }
+   },
+   "id": [
+    "OMRÅDE",
+    "KØN",
+    "ContentsCode",
+    "Tid"
+   ],
+   "size": [
+    2,
+    3,
+    1,
+    2
+   ],
+   "role": {
+    "geo": [
+     "OMRÅDE"
+    ],
+    "metric": [
+     "ContentsCode"
+    ],
+    "time": [
+     "Tid"
+    ]
+   }
+  },
+  "label": "Population at the first day of the quarter by region, sex, Indhold and time",
+  "source": "Statistics Denmark",
+  "updated": "2026-08-10T06:00:00Z",
+  "value": [
+   5961249,
+   5967824,
+   2963691,
+   2966881,
+   2997558,
+   3000943,
+   659350,
+   662366,
+   324666,
+   325960,
+   334684,
+   336406
+  ],
+  "extension": {
+   "px": {
+    "infofile": "https://www.dst.dk/documentationofstatistics/4a12721d-a8b0-4bde-82d7-1d1c6f319de3",
+    "tableid": "FOLK1A",
+    "decimals": 0
+   }
+  }
+ }
+},
+ "fhiSources": [
+ {
+  "id": "abr",
+  "title": "Abortregisteret (ABR)",
+  "description": "Om svangerskapsbrudd i Norge fra 1979 til i dag.",
+  "aboutUrl": "https://www.fhi.no/op/abortregisteret",
+  "publishedBy": "Folkehelseinstituttet"
+ },
+ {
+  "id": "daar",
+  "title": "Dødsårsaksregisteret (DÅR)",
+  "description": "Om dødsfall og dødsårsaker i Norge fra 1951 til i dag.",
+  "aboutUrl": "https://www.fhi.no/op/dodsarsaksregisteret/",
+  "publishedBy": "Folkehelseinstituttet"
+ },
+ {
+  "id": "nokkel",
+  "title": "Folkehelsestatistikk",
+  "description": "Statistikk om befolkning, oppvekst og levekår, miljø, skader, helserelatert atferd og helsetilstand.",
+  "aboutUrl": "https://www.helsedirektoratet.no/forebygging-diagnose-og-behandling/forebygging-og-levevaner/folkehelsestatistikk-og-profiler",
+  "publishedBy": "Helsedirektoratet"
+ }
+],
+ "fhiTables": [
+ {
+  "tableId": 670,
+  "title": "Leseferdighet_utdann_3",
+  "publishedAt": "2026-02-10T10:42:04.095025Z",
+  "modifiedAt": "2026-07-27T08:42:51.964641Z"
+ },
+ {
+  "tableId": 619,
+  "title": "Kreft, nye tilfeller_ettårig_LFKB",
+  "publishedAt": "2026-09-21T10:14:31.36535Z",
+  "modifiedAt": "2026-09-21T10:35:17.015237Z"
+ }
+],
+ "fhiDims": {
+ "dimensions": [
+  {
+   "code": "GEO",
+   "label": "Geografi",
+   "categories": [
+    {
+     "label": "Hele landet",
+     "value": "0",
+     "children": [
+      {
+       "label": "Oslo (fylke)",
+       "value": "03",
+       "children": [
+        {
+         "label": "Oslo",
+         "value": "0301",
+         "children": [
+          {
+           "label": "Bydel Gamle Oslo",
+           "value": "030101",
+           "children": []
+          },
+          {
+           "label": "Bydel Grünerløkka",
+           "value": "030102",
+           "children": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "AAR",
+   "label": "Skoleår",
+   "categories": [
+    {
+     "label": "2022/23-2024/25",
+     "value": "2022_2024",
+     "children": []
+    },
+    {
+     "label": "2023/24-2025/26",
+     "value": "2023_2025",
+     "children": []
+    }
+   ]
+  },
+  {
+   "code": "KJONN",
+   "label": "Kjønn",
+   "categories": [
+    {
+     "label": "kjønn samlet",
+     "value": "0",
+     "children": []
+    }
+   ]
+  },
+  {
+   "code": "MEASURE_TYPE",
+   "label": "Måltall",
+   "categories": [
+    {
+     "label": "årlig antall",
+     "value": "TELLER",
+     "children": null
+    },
+    {
+     "label": "andel (prosent)",
+     "value": "RATE",
+     "children": null
+    },
+    {
+     "label": "forholdstall (Norge=100), standardisert",
+     "value": "SMR",
+     "children": null
+    },
+    {
+     "label": "andel (prosent, standardisert)",
+     "value": "MEIS",
+     "children": null
+    }
+   ]
+  }
+ ]
+},
+ "fhiData": {
+ "class": "dataset",
+ "version": "2.0",
+ "href": null,
+ "label": "Leseferdighet_utdann_3",
+ "updated": "2026-02-10T10:42:04.095025+00:00",
+ "source": null,
+ "id": [
+  "GEO",
+  "AAR",
+  "KJONN",
+  "UTDANN",
+  "INNVKAT",
+  "FERDNIVAA",
+  "TRINN",
+  "MEASURE_TYPE"
+ ],
+ "size": [
+  2,
+  1,
+  1,
+  5,
+  1,
+  5,
+  2,
+  4
+ ],
+ "role": {
+  "time": null,
+  "geo": [
+   "GEO"
+  ],
+  "metric": [
+   "MEASURE_TYPE"
+  ]
+ },
+ "dimension": {
+  "GEO": {
+   "label": "Geografi",
+   "category": {
+    "index": [
+     "0",
+     "03"
+    ],
+    "label": {
+     "0": "Hele landet",
+     "03": "Oslo (fylke)"
+    }
+   }
+  },
+  "AAR": {
+   "label": "Skoleår",
+   "category": {
+    "index": [
+     "2023_2025"
+    ],
+    "label": {
+     "2023_2025": "2023/24-2025/26"
+    }
+   }
+  },
+  "KJONN": {
+   "label": "Kjønn",
+   "category": {
+    "index": [
+     "0"
+    ],
+    "label": {
+     "0": "kjønn samlet"
+    }
+   }
+  },
+  "UTDANN": {
+   "label": "Foreldrenes utdanningsnivå",
+   "category": {
+    "index": [
+     "0",
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "label": {
+     "0": "alle utdanningsnivåer",
+     "1": "grunnskole",
+     "2": "videregående skole",
+     "3": "universitet/ høgskole",
+     "4": "uoppgitt"
+    }
+   }
+  },
+  "INNVKAT": {
+   "label": "Innvandringsbakgrunn",
+   "category": {
+    "index": [
+     "0"
+    ],
+    "label": {
+     "0": "total"
+    }
+   }
+  },
+  "FERDNIVAA": {
+   "label": "Mestringsnivå",
+   "category": {
+    "index": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ],
+    "label": {
+     "1": "mestringsnivå 1 (laveste)",
+     "2": "mestringsnivå 2",
+     "3": "mestringsnivå 3",
+     "4": "mestringsnivå 4",
+     "5": "mestringsnivå 5"
+    }
+   }
+  },
+  "TRINN": {
+   "label": "Klassetrinn",
+   "category": {
+    "index": [
+     "5",
+     "8"
+    ],
+    "label": {
+     "5": "5. trinn",
+     "8": "8. trinn"
+    }
+   }
+  },
+  "MEASURE_TYPE": {
+   "label": "Måltall",
+   "category": {
+    "index": [
+     "TELLER",
+     "RATE",
+     "SMR",
+     "MEIS"
+    ],
+    "label": {
+     "TELLER": "årlig antall",
+     "RATE": "andel (prosent)",
+     "SMR": "forholdstall (Norge=100), standardisert",
+     "MEIS": "andel (prosent, standardisert)"
+    },
+    "unit": {
+     "TELLER": {
+      "decimals": 0,
+      "label": "årlig antall",
+      "symbol": null,
+      "position": null
+     },
+     "RATE": {
+      "decimals": 0,
+      "label": "andel (prosent)",
+      "symbol": null,
+      "position": null
+     },
+     "SMR": {
+      "decimals": 0,
+      "label": "forholdstall (Norge=100), standardisert",
+      "symbol": null,
+      "position": null
+     },
+     "MEIS": {
+      "decimals": 0,
+      "label": "andel (prosent, standardisert)",
+      "symbol": null,
+      "position": null
+     }
+    }
+   }
+  }
+ },
+ "value": [
+  15123,
+  26.8982444906889,
+  100,
+  26.8982444906889,
+  6946,
+  11.4265973547411,
+  100,
+  11.4265973547411,
+  26673.6666666667,
+  47.4426243115214,
+  100,
+  47.4426243115214,
+  13981,
+  22.9996051852339,
+  100,
+  22.9996051852339,
+  14426.3333333333,
+  25.6591311977898,
+  100,
+  25.6591311977898,
+  23456.6666666667,
+  38.5876598451449,
+  100,
+  38.5876598451449,
+  ":",
+  ":",
+  ":",
+  ":",
+  11595.6666666667,
+  19.0755850935492,
+  100,
+  19.0755850935492,
+  ":",
+  ":",
+  ":",
+  ":",
+  4808.66666666667,
+  7.91055252133096,
+  100,
+  7.91055252133096,
+  2014.33333333333,
+  50.0579854208085,
+  100,
+  50.0579854208085,
+  1311,
+  28.3807187184298,
+  100,
+  28.3807187184298,
+  1700.33333333333,
+  42.2548045062956,
+  100,
+  42.2548045062956,
+  1611.66666666667,
+  34.8895944580748,
+  100,
+  34.8895944580748,
+  309.333333333333,
+  7.68721007289596,
+  100,
+  7.68721007289596,
+  1331,
+  28.8136816279405,
+  100,
+  28.8136816279405,
+  ":",
+  ":",
+  ":",
+  ":",
+  315.666666666667,
+  6.83359792177803,
+  100,
+  6.83359792177803,
+  ":",
+  ":",
+  ":",
+  ":",
+  50,
+  1.08240727377688,
+  100,
+  1.08240727377688,
+  5223.66666666667,
+  36.5862769360073,
+  100,
+  36.5862769360073,
+  2595.66666666667,
+  15.8885941644562,
+  100,
+  15.8885941644562,
+  6978.33333333333,
+  48.8758667382626,
+  100,
+  48.8758667382625,
+  4997,
+  30.5876351764946,
+  100,
+  30.5876351764946,
+  2075.66666666667,
+  14.5378563257302,
+  100,
+  14.5378563257302,
+  6318,
+  38.6737400530504,
+  100,
+  38.6737400530504,
+  ":",
+  ":",
+  ":",
+  ":",
+  1964.33333333333,
+  12.0240767190369,
+  100,
+  12.0240767190369,
+  ":",
+  ":",
+  ":",
+  ":",
+  461.666666666667,
+  2.82595388696184,
+  100,
+  2.82595388696184,
+  7406.33333333333,
+  20.010987625412,
+  100,
+  20.010987625412,
+  2625,
+  6.76604519288599,
+  100,
+  6.76604519288599,
+  17666,
+  47.7313255399247,
+  100,
+  47.7313255399247,
+  7038.66666666667,
+  18.1424521006959,
+  100,
+  18.1424521006959,
+  11939,
+  32.2576868346633,
+  100,
+  32.2576868346633,
+  15597.3333333333,
+  40.2027665607011,
+  100,
+  40.2027665607011,
+  ":",
+  ":",
+  ":",
+  ":",
+  9257,
+  23.8602972763983,
+  100,
+  23.8602972763983,
+  ":",
+  ":",
+  ":",
+  ":",
+  4278.66666666667,
+  11.0284388693187,
+  100,
+  11.0284388693187,
+  478.666666666667,
+  52.6007326007326,
+  100,
+  52.6007326007326,
+  414.333333333333,
+  40.0193174500966,
+  100,
+  40.0193174500966,
+  329,
+  36.1538461538462,
+  100,
+  36.1538461538462,
+  333.666666666667,
+  32.2279459111397,
+  100,
+  32.2279459111397,
+  102.333333333333,
+  11.2454212454212,
+  100,
+  11.2454212454212,
+  210.333333333333,
+  20.3155183515776,
+  100,
+  20.3155183515776,
+  ":",
+  ":",
+  ":",
+  ":",
+  58.6666666666667,
+  5.66645202833226,
+  100,
+  5.66645202833226,
+  ":",
+  ":",
+  ":",
+  ":",
+  18.3333333333333,
+  1.77076625885383,
+  100,
+  1.77076625885383,
+  1256,
+  19.7019607843137,
+  73.0986286126902,
+  19.6622478435821,
+  576,
+  8.70178265686373,
+  76.1866043753801,
+  8.70553652022423,
+  2801.66666666667,
+  43.9477124183007,
+  92.6584932063978,
+  43.9596208246279,
+  1081.33333333333,
+  16.3359854970289,
+  71.0393039923281,
+  16.3387594445736,
+  2317.33333333333,
+  36.3503267973856,
+  141.895604628685,
+  36.4091793555713,
+  2236.66666666667,
+  33.7899083492799,
+  87.5596491030429,
+  33.7872195574846,
+  ":",
+  ":",
+  ":",
+  ":",
+  1627,
+  24.5795145533286,
+  128.830950780712,
+  24.5752576430031,
+  ":",
+  ":",
+  ":",
+  ":",
+  1098.33333333333,
+  16.5928089434988,
+  209.690245463271,
+  16.5876569994799,
+  288,
+  49.4562106468231,
+  98.7380842238912,
+  49.4262958055811,
+  187,
+  27.392578125,
+  96.6408922178788,
+  27.4273797873371,
+  253.666666666667,
+  43.5603892386949,
+  103.146465808971,
+  43.5843374827335,
+  222.333333333333,
+  32.568359375,
+  93.3614413517151,
+  32.5734282678267,
+  40.6666666666667,
+  6.98340011448197,
+  90.9281425756298,
+  6.98983733517102,
+  203.333333333333,
+  29.78515625,
+  103.259397726736,
+  29.7528341119105,
+  ":",
+  ":",
+  ":",
+  ":",
+  58.3333333333333,
+  8.544921875,
+  124.897261562625,
+  8.53497667050119,
+  ":",
+  ":",
+  ":",
+  ":",
+  11.6666666666667,
+  1.708984375,
+  157.570593072553,
+  1.70555556075068,
+  321.333333333333,
+  35.3113553113553,
+  96.5602363935675,
+  35.3277954970139,
+  157.333333333333,
+  14.5007680491551,
+  91.2804633745675,
+  14.5031823770201,
+  450,
+  49.4505494505495,
+  101.154030601244,
+  49.4399091970453,
+  299.333333333333,
+  27.5883256528418,
+  90.1987575364187,
+  27.5896668889707,
+  138.666666666667,
+  15.2380952380952,
+  104.769764937077,
+  15.2312778993574,
+  418,
+  38.5253456221198,
+  99.6100526207911,
+  38.5229328172715,
+  ":",
+  ":",
+  ":",
+  ":",
+  152.333333333333,
+  14.0399385560676,
+  116.753016442668,
+  14.0384722688562,
+  ":",
+  ":",
+  ":",
+  ":",
+  58,
+  5.34562211981567,
+  189.131318612598,
+  5.3447638497949,
+  603.666666666667,
+  12.6281291402273,
+  62.8904193340882,
+  12.5849940305141,
+  191,
+  4.03862418945588,
+  59.6980572442964,
+  4.03919753242404,
+  2053.33333333333,
+  42.9537689143017,
+  89.9913103423742,
+  42.9540452971625,
+  516.333333333333,
+  10.9176769100648,
+  60.1813879044507,
+  10.918379474099,
+  2123.33333333333,
+  44.418101945471,
+  137.989814506802,
+  44.512322227337,
+  1588,
+  33.577671271497,
+  83.5201533202353,
+  33.5774122704738,
+  ":",
+  ":",
+  ":",
+  ":",
+  1408.66666666667,
+  29.7857344234565,
+  124.828903720507,
+  29.7845475145821,
+  ":",
+  ":",
+  ":",
+  ":",
+  1025.33333333333,
+  21.6802932055258,
+  196.569881154662,
+  21.6785891786343,
+  43,
+  42.0195439739414,
+  79.9922488130995,
+  42.0765088994912,
+  40.6666666666667,
+  33.2425068119891,
+  83.6612626645625,
+  33.4806662884904,
+  44.6666666666667,
+  43.6482084690554,
+  120.579384563411,
+  43.59408518831,
+  43.3333333333333,
+  35.4223433242507,
+  109.557380486496,
+  35.3080933248495,
+  14.6666666666667,
+  14.3322475570033,
+  127.1519483221,
+  14.2987722105805,
+  27.3333333333333,
+  22.3433242506812,
+  109.12314045193,
+  22.1689316243297,
+  ":",
+  ":",
+  ":",
+  ":",
+  7.66666666666667,
+  6.26702997275204,
+  110.45119873848,
+  6.25866419123388,
+  ":",
+  ":",
+  ":",
+  ":",
+  3.33333333333333,
+  2.72479564032698,
+  152.755108640651,
+  2.70493592248416
+ ],
+ "status": "",
+ "extension": {
+  "flags": {
+   "index": [
+    "..",
+    ".",
+    ":"
+   ],
+   "label": {
+    "..": "Manglende data",
+    ".": "Lar seg ikke beregne",
+    ":": "Anonymisert eller skjult av andre årsaker"
+   }
+  }
+ }
+},
+ "hagstofaRoot": [
+ {
+  "dbid": "Atvinnuvegir",
+  "text": "Atvinnuvegir"
+ },
+ {
+  "dbid": "Efnahagur",
+  "text": "Efnahagur"
+ },
+ {
+  "dbid": "Ibuar",
+  "text": "Ibuar"
+ },
+ {
+  "dbid": "Samfelag",
+  "text": "Samfelag"
+ },
+ {
+  "dbid": "Umhverfi",
+  "text": "Umhverfi"
+ }
+]
 }));
 })();

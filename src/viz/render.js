@@ -11,7 +11,7 @@
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
-      if (!meta) throw new Error('Datamängden finns inte längre i arbetsytan.');
+      if (!meta) throw new Error(D.t('err.dataset.gone'));
       const columns = await datasets.columns(chart.datasetId);
       const v = chart.vega || {};
       if (v.customSpec) {
@@ -35,10 +35,10 @@
 
     async function prepareD3(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
-      if (!meta) throw new Error('Datamängden finns inte längre i arbetsytan.');
+      if (!meta) throw new Error(D.t('err.dataset.gone'));
       const params = Object.assign({}, (chart.d3 && chart.d3.params) || {});
       const tpl = d3t.get(chart.d3 && chart.d3.template);
-      if (!tpl) throw new Error('Okänd D3-mall.');
+      if (!tpl) throw new Error(D.t('d3.err.unknown.short'));
       const fields = tpl.params.filter((p) => p.type === 'column' && params[p.name]).map((p) => params[p.name]);
       const data = await vizData.fetchRows(chart.datasetId, { fields, filters: ((chart.options && chart.options.filters) || []).concat(options.extraFilters || []), limit: (chart.options && chart.options.maxRows) || 200000 });
       if (options.titleSuffix) params.title = (params.title || chart.name || '') + options.titleSuffix;
@@ -67,7 +67,7 @@
         const text = () => d3t.svgString(svg);
         return { kind: 'd3', info: { rows: prep.data.rows.length, total: prep.data.total, truncated: prep.data.truncated }, svg: async () => text(), png: async (scale = 2) => vizExport.svgToPng(text(), { scale }), finalize: () => {} };
       }
-      throw new Error('Diagram av typen ' + chart.kind + ' renderas i R-fliken.');
+      throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
     }
 
     /** Export a chart to a blob without showing it (vega and d3). */
@@ -86,11 +86,11 @@
         svgText = d3t.svgString(svg);
         if (format === 'png') return vizExport.svgToPng(svgText, { scale: options.scale || 2 });
       } else {
-        throw new Error('R-diagram exporteras från R-fliken i Visualisera.');
+        throw new Error(D.t('viz.err.r.export'));
       }
       if (format === 'svg') return vizExport.svgBlob(await vizExport.svgWithFonts(svgText));
       if (format === 'pdf') return vizExport.svgToPdf(svgText, { title: chart.name });
-      throw new Error('Okänt format: ' + format);
+      throw new Error(D.t('err.unknown.format', { format }));
     }
 
     /** Small PNG data URL for lists and the gallery. */

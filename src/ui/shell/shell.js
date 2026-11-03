@@ -42,12 +42,13 @@
 
         build() {
           this.slots = { left: h('div', { class: 'dm-pane-body' }), center: h('main', { class: 'dm-center', id: 'dm-center' }), right: h('div', { class: 'dm-pane-body' }) };
-          this.modeNav = h('nav', { class: 'dm-modes', 'aria-label': 'Lägen' }, MODES.map((id) => h('button', {
+          this.modeNav = h('nav', { class: 'dm-modes', 'aria-label': t('shell.modes') }, MODES.map((id) => h('button', {
             type: 'button', class: 'dm-mode-btn', 'data-mode': id, title: `${t('mode.' + id)} (Alt+${MODES.indexOf(id) + 1})`, onclick: () => this.activate(id),
           }, icons.icon(MODE_ICONS[id], 16), h('span', { text: t('mode.' + id) }))));
           this.statusEl = h('span', { class: 'dm-status', 'data-state': 'saved' }, icons.icon('circle-check', 14), h('span', { text: t('shell.status.saved') }));
           this.storageEl = h('span', { class: 'dm-status', text: '' });
           this.themeBtn = basic.button({ label: t('shell.theme'), icon: THEME_ICON[theme.get()], 'icon-only': true, variant: 'ghost', onClick: () => this.toggleTheme() });
+          this.langBtn = basic.button({ label: t('lang.title'), icon: 'languages', 'icon-only': true, variant: 'ghost', onClick: () => this.chooseLanguage() });
           this.logList = h('ul', { class: 'dm-log', 'aria-live': 'polite' });
           this.slots.center.setAttribute('tabindex', '-1');
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
@@ -61,6 +62,7 @@
                 basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('right') }),
                 basic.button({ label: t('shell.toggle.drawer'), icon: 'panel-bottom', 'icon-only': true, variant: 'ghost', onClick: () => this.toggle('drawer') }),
                 basic.button({ label: t('palette.open'), icon: 'search', 'icon-only': true, variant: 'ghost', onClick: () => this.palette.open() }),
+                this.langBtn,
                 this.themeBtn,
                 basic.button({ label: t('shell.help'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', onClick: () => this.showHelp() }))),
             h('aside', { class: 'dm-left', 'aria-label': t('shell.objects') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left),
@@ -75,6 +77,8 @@
         registerMode(mode) { this.modes.set(mode.id, mode); }
 
         async init() {
+          // The very first start: let the user pick the language before anything else is shown.
+          if (!i18n.hasChoice()) await this.chooseLanguage({ required: true });
           // Datasets from versions before short names get one, derived from their name.
           try { await datasets.ensureShortNames(); } catch (err) { D.log('shell', 'short names', err); }
           await this.reloadDatasets();
@@ -100,7 +104,7 @@
               action: { label: t('backup.now'), onClick: async () => {
                 try {
                   const { blob } = await workspace.backup();
-                  files.download(blob, `dataspatium-arbetsyta-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.zip`);
+                  files.download(blob, t('datasets.backup.file', { stamp: new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') }));
                   this.log(t('datasets.backup.done'), 'ok');
                 } catch (err) { this.log(String((err && err.message) || err), 'error'); }
               } },
@@ -170,6 +174,38 @@
           this.toast(t('shell.theme.' + next));
         }
 
+        /**
+         * Language chooser: the choice is saved and the page reloads, after pending saves are flushed.
+         * With `required` (the first start) the dialog cannot be dismissed; the detected language is
+         * preselected and keeping it just records the choice without a reload.
+         * @param {{required?: boolean}} [options]
+         */
+        async chooseLanguage(options = {}) {
+          const required = !!options.required;
+          let chosen = null;
+          const list = h('div', { class: 'dm-list', role: 'radiogroup', 'aria-label': t('lang.title') }, i18n.LANGUAGES.map((l) => h('button', {
+            type: 'button', class: 'dm-list-item', role: 'radio', lang: l.locale.split('-')[0], 'aria-checked': l.code === i18n.language() ? 'true' : 'false', 'aria-current': l.code === i18n.language() ? 'true' : null,
+            onclick: () => { chosen = l.code; closeDialog(list); },
+          }, icons.icon('languages', 14), h('span', { class: 'dm-list-main' }, h('span', { text: l.label }), h('span', { class: 'dm-list-sub', text: l.locale })))));
+          const closeDialog = (el) => { const dlg = el.closest('dialog'); if (dlg) { dlg.close(); dlg.remove(); } };
+          const currentLabel = (i18n.LANGUAGES.find((l) => l.code === i18n.language()) || i18n.LANGUAGES[0]).label;
+          const intro = required
+            ? h('p', { class: 'dm-help' }, i18n.LANGUAGES.map((l, i) => h('span', { lang: l.locale.split('-')[0], text: i18n.tIn(l.code, 'lang.first.hint') + (i < i18n.LANGUAGES.length - 1 ? ' · ' : '') })))
+            : h('p', { class: 'dm-help', text: t('lang.hint') });
+          await overlays.dialog.open({
+            title: required ? t('lang.first.title') : t('lang.title'),
+            body: h('div', { class: 'dm-stack' }, intro, list),
+            actions: required ? [{ label: t('lang.first.keep', { language: currentLabel }), value: 'keep' }] : [{ label: t('common.cancel'), value: false }],
+            closable: !required,
+          });
+          if (required && !chosen) chosen = i18n.language();
+          if (!chosen) return;
+          if (chosen === i18n.language()) { i18n.setLanguage(chosen); return; }
+          try { await datasets.flushSaves(); } catch (_err) { /* best effort before the reload */ }
+          i18n.setLanguage(chosen);
+          location.reload();
+        }
+
         /** Commands always available in the palette: modes, datasets, the workspace, theme and help. */
         builtinCommands() {
           const state = this.store.get();
@@ -185,6 +221,7 @@
           cmds.push({ id: 'workspace', label: t('datasets.storage.title'), hint: t('datasets.backup'), group: t('palette.group.actions'), icon: 'hard-drive', run: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } });
           cmds.push({ id: 'theme', label: t('shell.theme'), group: t('palette.group.actions'), icon: THEME_ICON[theme.get()], run: () => this.toggleTheme() });
           cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
+          cmds.push({ id: 'lang', label: t('lang.title'), hint: 'Svenska · Dansk · Norsk · Suomi · Íslenska · English', group: t('palette.group.actions'), icon: 'languages', run: () => this.chooseLanguage() });
           cmds.push({ id: 'update', label: t('update.check'), group: t('palette.group.actions'), icon: 'refresh-cw', run: () => this.showHelp() });
           return cmds;
         }
@@ -219,7 +256,7 @@
               h('p', { text: t('app.tagline') }),
               h('ul', null, MODES.map((id) => h('li', null, h('strong', { text: t('mode.' + id) + ': ' }), t('mode.' + id + '.desc')))),
               h('p', { class: 'dm-help', text: t('app.version', { version: D.version }) + '. ' + t('shell.shortcuts') }),
-              h('p', { class: 'dm-help' }, t('shell.help.docs') + ' ', h('a', { href: 'https://github.com/marwiss/Dataspatium#readme', target: '_blank', rel: 'noopener', text: t('shell.help.docs.link') })),
+              h('p', { class: 'dm-help' }, t('shell.help.docs') + ' ', h('a', { href: i18n.docsUrl(), target: '_blank', rel: 'noopener', text: t('shell.help.docs.link') })),
               h('div', { class: 'dm-row' }, checkBtn),
               result),
           });

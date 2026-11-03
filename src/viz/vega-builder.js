@@ -13,20 +13,20 @@
     const AGGREGATES = ['none', 'sum', 'mean', 'median', 'min', 'max', 'count', 'distinct'];
     const TIME_UNITS = ['', 'year', 'yearmonth', 'yearquarter', 'month', 'yearmonthdate', 'day', 'hours'];
     const CHART_TYPES = [
-      { id: 'bar', label: 'Staplar', icon: 'chart-column', mark: 'bar', channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
-      { id: 'barh', label: 'Liggande staplar', icon: 'chart-bar-big', mark: 'bar', horizontal: true, channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
-      { id: 'line', label: 'Linje', icon: 'chart-line', mark: 'line', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
-      { id: 'area', label: 'Yta', icon: 'chart-area', mark: 'area', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
-      { id: 'point', label: 'Punkter', icon: 'chart-scatter', mark: 'point', channels: ['x', 'y', 'color', 'size', 'facet'], x: 'measure', y: 'measure', aggregate: 'none' },
-      { id: 'histogram', label: 'Histogram', icon: 'chart-column', mark: 'bar', channels: ['x', 'color', 'facet'], x: 'measure', y: 'count', aggregate: 'count' },
-      { id: 'heatmap', label: 'Värmekarta', icon: 'grid-2x2', mark: 'rect', channels: ['x', 'y', 'color'], x: 'category', y: 'category', aggregate: 'sum' },
-      { id: 'boxplot', label: 'Låddiagram', icon: 'chart-candlestick', mark: 'boxplot', channels: ['x', 'y', 'color'], x: 'category', y: 'measure', aggregate: 'none' },
-      { id: 'pie', label: 'Cirkel', icon: 'chart-pie', mark: 'arc', channels: ['x', 'y'], x: 'category', y: 'measure', aggregate: 'sum' },
+      { id: 'bar', label: D.t('viz.charttype.bar'), icon: 'chart-column', mark: 'bar', channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
+      { id: 'barh', label: D.t('viz.charttype.barh'), icon: 'chart-bar-big', mark: 'bar', horizontal: true, channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
+      { id: 'line', label: D.t('viz.charttype.line'), icon: 'chart-line', mark: 'line', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
+      { id: 'area', label: D.t('viz.charttype.area'), icon: 'chart-area', mark: 'area', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
+      { id: 'point', label: D.t('viz.charttype.point'), icon: 'chart-scatter', mark: 'point', channels: ['x', 'y', 'color', 'size', 'facet'], x: 'measure', y: 'measure', aggregate: 'none' },
+      { id: 'histogram', label: D.t('viz.charttype.histogram'), icon: 'chart-column', mark: 'bar', channels: ['x', 'color', 'facet'], x: 'measure', y: 'count', aggregate: 'count' },
+      { id: 'heatmap', label: D.t('viz.charttype.heatmap'), icon: 'grid-2x2', mark: 'rect', channels: ['x', 'y', 'color'], x: 'category', y: 'category', aggregate: 'sum' },
+      { id: 'boxplot', label: D.t('viz.charttype.boxplot'), icon: 'chart-candlestick', mark: 'boxplot', channels: ['x', 'y', 'color'], x: 'category', y: 'measure', aggregate: 'none' },
+      { id: 'pie', label: D.t('viz.charttype.pie'), icon: 'chart-pie', mark: 'arc', channels: ['x', 'y'], x: 'category', y: 'measure', aggregate: 'sum' },
       // Choropleth map: x holds the geometry column (GeoJSON or WKT text), y a label, color the value.
-      { id: 'map', label: 'Karta', icon: 'globe', mark: 'geoshape', geo: true, channels: ['x', 'y', 'color'], x: 'geometry', y: 'label', aggregate: 'none' },
+      { id: 'map', label: D.t('viz.charttype.map'), icon: 'globe', mark: 'geoshape', geo: true, channels: ['x', 'y', 'color'], x: 'geometry', y: 'label', aggregate: 'none' },
       // Point map: x/y hold longitude/latitude (or SWEREF 99 TM metres), size and color values, facet a
       // label for the tooltip; drawn over the bundled county or municipality boundaries (state.basemap).
-      { id: 'pointmap', label: 'Punktkarta', icon: 'map-pin', mark: 'circle', geo: true, points: true, channels: ['x', 'y', 'color', 'size', 'facet'], x: 'longitude', y: 'latitude', aggregate: 'none' },
+      { id: 'pointmap', label: D.t('viz.charttype.pointmap'), icon: 'map-pin', mark: 'circle', geo: true, points: true, channels: ['x', 'y', 'color', 'size', 'facet'], x: 'longitude', y: 'latitude', aggregate: 'none' },
     ];
     // Longitude span within which the SWEREF 99 TM-like transverse Mercator about 15°E looks right.
     const TM_LON_RANGE = [-25, 55];
@@ -153,7 +153,7 @@
       return out;
     }
     function aggregateTitle(ch) {
-      const names = { sum: 'Summa', mean: 'Medel', median: 'Median', min: 'Minsta', max: 'Största', count: 'Antal', distinct: 'Antal unika' };
+      const names = Object.fromEntries(['sum', 'mean', 'median', 'min', 'max', 'count', 'distinct'].map((a) => [a, D.t('viz.aggname.' + a)]));
       return ch.field ? `${names[ch.aggregate] || ch.aggregate} ${ch.field}` : (names[ch.aggregate] || ch.aggregate);
     }
 
@@ -194,7 +194,7 @@
       }
       const layers = [];
       const basemap = data.basemap || [];
-      if (basemap.length) layers.push({ data: { values: basemap.map((f) => ({ geometry: feature(f.geometry), namn: f.name })) }, mark: { type: 'geoshape', fill: tokens.grid, stroke: tokens.background, strokeWidth: 0.8 }, encoding: { shape: { field: 'geometry', type: 'geojson' }, tooltip: [{ field: 'namn', type: 'nominal', title: 'Område' }] } });
+      if (basemap.length) layers.push({ data: { values: basemap.map((f) => ({ geometry: feature(f.geometry), namn: f.name })) }, mark: { type: 'geoshape', fill: tokens.grid, stroke: tokens.background, strokeWidth: 0.8 }, encoding: { shape: { field: 'geometry', type: 'geojson' }, tooltip: [{ field: 'namn', type: 'nominal', title: D.t('viz.tooltip.area') }] } });
       const enc = { longitude: { field: '__lon', type: 'quantitative' }, latitude: { field: '__lat', type: 'quantitative' } };
       const legend = state.legend === 'none' ? null : { orient: state.legend || 'right' };
       const numberFormat = state.yFormat ? { format: state.yFormat } : {};
@@ -309,16 +309,16 @@
       const problems = [];
       if (type.geo) {
         if (type.points) {
-          if (!state.x || !state.x.field || !state.y || !state.y.field) problems.push('Välj kolumnerna med longitud och latitud (eller SWEREF 99 TM öst och norr).');
+          if (!state.x || !state.x.field || !state.y || !state.y.field) problems.push(D.t('viz.problem.lonlat'));
           return problems;
         }
-        if (!state.x || !state.x.field) problems.push('Välj kolumnen med geometri (GeoJSON eller WKT, till exempel från GeoJSON-, shapefile- eller GeoPackage-import).');
-        if (!state.color || !state.color.field) problems.push('Välj en värdekolumn för färgen.');
+        if (!state.x || !state.x.field) problems.push(D.t('viz.problem.geometry'));
+        if (!state.color || !state.color.field) problems.push(D.t('viz.problem.value'));
         return problems;
       }
-      if (!state.x || !state.x.field) problems.push('Välj en kolumn för X.');
-      if (type.y !== 'count' && (!state.y || !state.y.field)) problems.push('Välj en kolumn för Y.');
-      if (type.id === 'heatmap' && (!state.color || !state.color.field)) problems.push('Välj en kolumn för färg (värde).');
+      if (!state.x || !state.x.field) problems.push(D.t('viz.problem.x'));
+      if (type.y !== 'count' && (!state.y || !state.y.field)) problems.push(D.t('viz.problem.y'));
+      if (type.id === 'heatmap' && (!state.color || !state.color.field)) problems.push(D.t('viz.problem.color'));
       return problems;
     }
 

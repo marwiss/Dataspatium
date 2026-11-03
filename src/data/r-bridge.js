@@ -53,13 +53,14 @@
             this.engine.on('canvasNewPage', () => this.onNewPage());
             this.engine.on('stdout', (text) => this.emit('stream', { kind: 'stdout', text }));
             this.engine.on('stderr', (text) => this.emit('stream', { kind: 'stderr', text }));
-            this.engine.on('closed', () => { this.setState('error'); this.error = 'R-sessionen avslutades'; });
+            this.engine.on('closed', () => { this.setState('error'); this.error = D.t('r.err.closed'); });
             await this.engine.start();
             const src = await D.assets.loadText('r/dataspatium.R');
             await this.engine.mkdir(DATA_DIR);
             await this.engine.mkdir(OUT_DIR);
             await this.engine.writeFile('/home/web_user/dataspatium.R', new TextEncoder().encode(src));
-            await this.engine.evalRVoid('source("/home/web_user/dataspatium.R"); dm_setup()');
+            // User-facing R messages follow the app's language (see .dm_msg in r/dataspatium.R).
+            await this.engine.evalRVoid('source("/home/web_user/dataspatium.R"); dm_setup(lang = "' + D.require('ui/i18n').language() + '")');
             await this.mirrorAll();
             this.version = await this.engine.evalRString('R.version.string');
             this.startupMs = performance.now() - t0;
@@ -139,7 +140,7 @@
        */
       async run(code) {
         await this.start();
-        if (this.state === 'busy') throw new Error('R är upptagen med ett tidigare kommando.');
+        if (this.state === 'busy') throw new Error(D.t('r.err.busy'));
         this.setState('busy');
         const t0 = performance.now();
         this.pages = [[]];

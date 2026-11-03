@@ -22,7 +22,7 @@
     /** Insert or update; returns the stored record. */
     async function save(chart) {
       const now = new Date().toISOString();
-      const record = Object.assign({}, chart, { id: chart.id || newId(), createdAt: chart.createdAt || now, updatedAt: now, name: (chart.name || '').trim() || 'Namnlöst diagram' });
+      const record = Object.assign({}, chart, { id: chart.id || newId(), createdAt: chart.createdAt || now, updatedAt: now, name: (chart.name || '').trim() || D.t('viz.untitled') });
       await idb.putChart(record);
       notify('saved', record);
       sync.broadcast('charts', 'saved', { id: record.id, name: record.name });
@@ -53,13 +53,13 @@
     /** Import a viz file; the dataset is matched by name in this workspace (or left unbound). */
     async function importJson(text) {
       let obj;
-      try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error('Filen är inte giltig JSON.'); }
-      if (obj.format !== FORMAT) throw new Error('Filen är inte ett Dataspatium-diagram (format ' + FORMAT + ' saknas).');
-      if (!KINDS.includes(obj.kind)) throw new Error('Okänd diagramtyp: ' + obj.kind);
+      try { obj = JSON.parse(String(text).replace(/^﻿/, '')); } catch (_e) { throw new Error(D.t('err.invalid.json')); }
+      if (obj.format !== FORMAT) throw new Error(D.t('viz.err.format', { format: FORMAT }));
+      if (!KINDS.includes(obj.kind)) throw new Error(D.t('viz.err.kind', { kind: obj.kind }));
       const all = await datasets.list();
       // Matched by name, else by short name (the short name follows the dataset through renames and sharing).
       const match = all.find((d) => d.name === obj.datasetName) || (obj.datasetShort ? all.find((d) => d.shortName === obj.datasetShort) : null) || null;
-      const chart = { id: null, kind: obj.kind, name: obj.name || 'Importerat diagram', datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), thumbnail: null, options: obj.options || {} };
+      const chart = { id: null, kind: obj.kind, name: obj.name || D.t('viz.imported.name'), datasetId: match ? match.id : null, datasetName: obj.datasetName || '', datasetShort: obj.datasetShort || (match ? match.shortName : ''), thumbnail: null, options: obj.options || {} };
       if (obj.kind === 'vega') chart.vega = obj.vega || { type: 'bar', state: null, customSpec: null };
       if (obj.kind === 'd3') chart.d3 = obj.d3 || { template: 'lollipop', params: {} };
       if (obj.kind === 'r') chart.r = obj.r || { code: '' };

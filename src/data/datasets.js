@@ -19,16 +19,49 @@
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
 
     // ---- short names: an identifier per dataset for SQL across datasets, dm_read() in R and chart files ----
-    const SHORT_NAME = /^[a-z][a-z0-9_]{0,31}$/;
-    const RESERVED_SHORT = new Set(['data', 'main', 'temp', 'df', 'rowid', 'sqlite_master', 'sqlite_schema', 'sqlite_sequence', 'select', 'from', 'where', 'table', 'index', 'view', 'join', 'on', 'as', 'and', 'or', 'not', 'null', 'order', 'group', 'by', 'limit', 'offset', 'union', 'all', 'distinct', 'case', 'when', 'then', 'else', 'end', 'in', 'is', 'like', 'between', 'exists', 'having', 'values', 'insert', 'update', 'delete', 'set', 'into', 'create', 'drop', 'alter', 'with', 'using', 'left', 'right', 'inner', 'outer', 'cross', 'natural', 'true', 'false']);
-    /** A short name derived from a dataset name: ASCII letters, digits and underscores, at most 32 characters. */
-    function shortNameFrom(name) {
-      let s = String(name || '').toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss').replace(/þ/g, 'th').replace(/ð/g, 'd');
+    /** Hard limit for a short name (user-typed) and the target length for derived ones. */
+    const SHORT_MAX = 20;
+    const SHORT_TARGET = 15;
+    const SHORT_NAME = /^[a-z][a-z0-9_]{0,19}$/;
+    /** Words that may be used neither as SQL identifiers (SQLite keywords, our own tables) nor as R names. */
+    const RESERVED_SHORT = new Set(['data', 'main', 'temp', 'df', 'rowid', 'sqlite_master', 'sqlite_schema', 'sqlite_sequence', 'select', 'from', 'where', 'table', 'index', 'view', 'join', 'on', 'as', 'and', 'or', 'not', 'null', 'order', 'group', 'by', 'limit', 'offset', 'union', 'all', 'distinct', 'case', 'when', 'then', 'else', 'end', 'in', 'is', 'like', 'between', 'exists', 'having', 'values', 'insert', 'update', 'delete', 'set', 'into', 'create', 'drop', 'alter', 'with', 'using', 'left', 'right', 'inner', 'outer', 'cross', 'natural', 'true', 'false',
+      'default', 'primary', 'key', 'references', 'check', 'constraint', 'column', 'add', 'rename', 'to', 'escape', 'glob', 'regexp', 'match', 'collate', 'cast', 'pragma', 'explain', 'begin', 'commit', 'rollback', 'transaction', 'replace', 'attach', 'detach', 'database', 'temporary', 'trigger', 'vacuum', 'reindex', 'analyze', 'recursive', 'window', 'over', 'partition', 'filter', 'if', 'repeat', 'while', 'function', 'for', 'next', 'break', 'inf', 'nan', 'na']);
+    /** Filler words dropped when a short name is derived (Swedish, Danish, Norwegian, Finnish, Icelandic, English). */
+    const STOP_WORDS = new Set(['per', 'och', 'av', 'i', 'for', 'fran', 'med', 'till', 'pa', 'om', 'en', 'ett', 'og', 'af', 'fra', 'ved', 'et', 'ja', 'tai', 'mukaan', 'eftir', 'a', 'ad', 'um', 'the', 'of', 'and', 'in', 'by', 'to', 'at', 'an']);
+    /** ASCII folding of a dataset name into lower-case words (å ä → a, ö ø → o, æ → ae, þ → th, ð → d, accents removed). */
+    function asciiWords(name) {
+      let s = String(name || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss').replace(/þ/g, 'th').replace(/ð/g, 'd');
       s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-      s = s.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 32).replace(/_+$/g, '');
+      return s.split(/[^a-z0-9]+/).filter(Boolean);
+    }
+    /**
+     * A short name derived from a dataset name: lower-case ASCII letters, digits and underscores, starting
+     * with a letter, normally within SHORT_TARGET characters. Filler words are dropped, words are added while
+     * they fit and a year is kept as a suffix ("Befolkning per kommun 2024" becomes "befolkning_2024"). A first
+     * word that is longer than the room left is kept whole when the result stays within SHORT_MAX
+     * ("arbetsloshet_2020"), otherwise cut.
+     */
+    function shortNameFrom(name) {
+      const words = asciiWords(name);
+      const content = words.filter((w) => !STOP_WORDS.has(w));
+      const pool = content.length ? content : words;
+      const isYear = (w) => /^(1[89]|20)\d\d$/.test(w);
+      const year = pool.find(isYear) || '';
+      const rest = pool.filter((w) => !isYear(w));
+      const room = SHORT_TARGET - (year ? year.length + 1 : 0);
+      let s = '';
+      for (const w of rest) {
+        const cand = s ? s + '_' + w : w;
+        if (cand.length <= room) s = cand; else break;
+      }
+      if (!s && rest.length) {
+        const first = rest[0];
+        s = first.length + (year ? year.length + 1 : 0) <= SHORT_MAX ? first : first.slice(0, Math.max(3, room));
+      }
+      if (year) s = s ? s + '_' + year : year;
       if (!s) s = 'datamangd';
-      if (!/^[a-z]/.test(s)) s = ('d_' + s).slice(0, 32);
-      if (RESERVED_SHORT.has(s)) s = s.slice(0, 30) + '_1';
+      if (!/^[a-z]/.test(s)) s = ('d_' + s).slice(0, SHORT_MAX);
+      if (RESERVED_SHORT.has(s)) s = s.slice(0, SHORT_MAX - 2) + '_1';
       return s;
     }
     /** A short name not used by any other dataset (suffix _2, _3, ... when needed). */
@@ -38,15 +71,15 @@
       if (!taken.has(root)) return root;
       for (let i = 2; ; i++) {
         const suffix = '_' + i;
-        const cand = root.slice(0, 32 - suffix.length) + suffix;
+        const cand = root.slice(0, SHORT_MAX - suffix.length).replace(/_+$/g, '') + suffix;
         if (!taken.has(cand)) return cand;
       }
     }
-    /** Normalise and check a user-typed short name; throws a Swedish message when it cannot be used. */
+    /** Normalise and check a user-typed short name; throws a message in the UI language when it cannot be used. */
     function validateShortName(value) {
       const s = String(value || '').trim().toLowerCase();
-      if (!SHORT_NAME.test(s)) throw new Error('Kortnamnet får bara innehålla små bokstäver a–z, siffror och understreck, måste börja med en bokstav och får vara högst 32 tecken.');
-      if (RESERVED_SHORT.has(s)) throw new Error(`Kortnamnet "${s}" är reserverat i SQL. Välj ett annat.`);
+      if (!SHORT_NAME.test(s)) throw new Error(D.t('datasets.shortname.invalid'));
+      if (RESERVED_SHORT.has(s)) throw new Error(D.t('datasets.shortname.reserved', { name: s }));
       return s;
     }
     /** Give datasets from older versions a short name (stored in the IndexedDB record; the file follows on the next save). */
@@ -117,7 +150,7 @@
       const now = new Date().toISOString();
       const shortName = await uniqueShortName(input.shortName || input.name || 'datamangd');
       const meta = {
-        id, name: input.name || 'Namnlös datamängd', shortName, description: input.description || '', createdAt: now, updatedAt: now,
+        id, name: input.name || D.t('datasets.untitled'), shortName, description: input.description || '', createdAt: now, updatedAt: now,
         rowCount: 0, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
       };
       await engine.insertRows('_meta', ['key', 'value'], metaToRows(meta));
@@ -377,10 +410,10 @@
     async function listVersions(id) { const record = await idb.getDataset(id); return (record && record.versions) || []; }
     async function restoreVersion(id, n) {
       const bytes = await idb.loadBlob(`ds:${id}:v${n}`);
-      if (!bytes) throw new Error('Versionen finns inte längre.');
+      if (!bytes) throw new Error(D.t('datasets.version.gone'));
       const versions = await listVersions(id);
       const v = versions.find((x) => x.n === n);
-      return replaceBytes(id, bytes, { action: 'restore', n, description: 'Återställd till ' + (v ? v.label : 'version ' + n) });
+      return replaceBytes(id, bytes, { action: 'restore', n, description: D.t('datasets.restored.to', { label: v ? v.label : D.t('datasets.version.n', { n }) }) });
     }
     async function deleteVersion(id, n) {
       const handle = await ensureOpen(id);
@@ -392,7 +425,7 @@
     async function compareVersion(id, n) {
       const handle = await ensureOpen(id);
       const bytes = await idb.loadBlob(`ds:${id}:v${n}`);
-      if (!bytes) throw new Error('Versionen finns inte längre.');
+      if (!bytes) throw new Error(D.t('datasets.version.gone'));
       const other = await newEngine(bytes);
       try {
         const oldCols = await readColumns(other);
@@ -496,7 +529,7 @@
       const handle = await ensureOpen(id);
       if (patch.shortName !== undefined) {
         const s = validateShortName(patch.shortName);
-        if ((await list()).some((d) => d.id !== id && d.shortName === s)) throw new Error(`Kortnamnet "${s}" används redan av en annan datamängd.`);
+        if ((await list()).some((d) => d.id !== id && d.shortName === s)) throw new Error(D.t('datasets.shortname.taken', { name: s }));
         patch = Object.assign({}, patch, { shortName: s });
       }
       for (const [k, v] of Object.entries(patch)) {

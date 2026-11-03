@@ -26,19 +26,19 @@
         if (last && /\.[A-Za-z0-9]+$/.test(last)) return last;
         const ct = String(contentType || '').toLowerCase();
         const ext = /json/.test(ct) ? 'json' : /csv/.test(ct) ? 'csv' : /xml/.test(ct) ? 'xml' : /zip/.test(ct) ? 'zip' : /excel|spreadsheet/.test(ct) ? 'xlsx' : 'txt';
-        return `${last || u.hostname || 'fil'}.${ext}`;
-      } catch (_err) { return 'fil.txt'; }
+        return `${last || u.hostname || D.t('url.file.name')}.${ext}`;
+      } catch (_err) { return D.t('url.file.name') + '.txt'; }
     }
 
     /** Fetch a URL (CORS) and return it as a File. */
     async function fetchFile(url) {
       const clean = String(url || '').trim();
-      if (!/^https?:\/\//i.test(clean) && !/^dataspatium-asset:\/\//.test(clean)) throw new Error('Ange en webbadress som börjar med http:// eller https://.');
+      if (!/^https?:\/\//i.test(clean) && !/^dataspatium-asset:\/\//.test(clean)) throw new Error(D.t('url.err.scheme'));
       let res;
       try { res = await fetch(clean, { mode: 'cors' }); } catch (err) {
-        throw new Error('Adressen kunde inte hämtas. Servern måste tillåta anrop från webbläsaren (CORS) och adressen måste gå att nå. (' + ((err && err.message) || err) + ')');
+        throw new Error(D.t('url.err.fetch', { message: (err && err.message) || err }));
       }
-      if (!res.ok) throw new Error(`Servern svarade ${res.status}${res.statusText ? ' ' + res.statusText : ''}.`);
+      if (!res.ok) throw new Error(D.t('url.err.status', { status: `${res.status}${res.statusText ? ' ' + res.statusText : ''}` }));
       const type = res.headers.get('content-type') || '';
       const blob = await res.blob();
       return new File([blob], fileName(clean, type), { type: type.split(';')[0].trim() });
@@ -52,7 +52,7 @@
     /** Add a configuration file through its module. */
     async function importConfig(text) {
       const format = configFormat(text);
-      if (!format) throw new Error('Filen är ingen Dataspatium-konfiguration.');
+      if (!format) throw new Error(D.t('url.err.notconfig'));
       const entry = FORMAT_MODULES[format];
       const record = await D.require(entry.module).importJson(text);
       return { format, kind: entry.kind, record };

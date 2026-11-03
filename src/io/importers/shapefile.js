@@ -35,7 +35,7 @@
             parts[file.name] = { name: file.name.replace(/\.shp$/i, ''), shp: new Uint8Array(await file.arrayBuffer()) };
           }
           const layers = Object.values(parts).filter((l) => l.shp);
-          if (!layers.length) throw new Error('Filen innehåller ingen shapefile (.shp).');
+          if (!layers.length) throw new Error(D.t('import.err.noshp'));
           return layers;
         })();
         cache.set(file, p);
@@ -46,7 +46,7 @@
     // ---- .shp ----
     function parseShp(bytes) {
       const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-      if (bytes.length < 100 || dv.getInt32(0, false) !== 9994) throw new Error('Filen är inte en shapefile (fel filkod).');
+      if (bytes.length < 100 || dv.getInt32(0, false) !== 9994) throw new Error(D.t('import.err.notshp'));
       const shapeType = dv.getInt32(32, true);
       const geoms = [];
       let pos = 100;

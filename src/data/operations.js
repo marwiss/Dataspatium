@@ -45,8 +45,8 @@
       params: [{ name: 'column', type: 'column', required: true }, { name: 'name', type: 'text', required: true }],
       async apply(ctx, p) {
         const name = String(p.name).trim();
-        if (!name) throw new Error('Namnet får inte vara tomt.');
-        if (ctx.column(name) && name !== p.column) throw new Error(`Kolumnen ${name} finns redan.`);
+        if (!name) throw new Error(D.t('op.err.name.empty'));
+        if (ctx.column(name) && name !== p.column) throw new Error(D.t('op.err.column.exists', { name }));
         await ctx.engine.run(`alter table data rename column ${q(p.column)} to ${q(name)}`);
         ctx.rename(p.column, name);
         return {};
@@ -77,7 +77,7 @@
       id: 'drop_columns', group: 'column',
       params: [{ name: 'columns', type: 'columns', required: true }],
       async apply(ctx, p) {
-        if (p.columns.length >= ctx.columns.length) throw new Error('Minst en kolumn måste finnas kvar.');
+        if (p.columns.length >= ctx.columns.length) throw new Error(D.t('op.err.keep.one'));
         for (const name of p.columns) { await ctx.engine.run(`alter table data drop column ${q(name)}`); ctx.dropColumn(name); }
         return {};
       },
@@ -105,7 +105,7 @@
       params: [{ name: 'column', type: 'column', required: true }, { name: 'type', type: 'select', required: true, options: types.TYPES }, { name: 'decimal', type: 'select', options: ['auto', 'comma', 'point'], default: 'auto' }, { name: 'dateFormat', type: 'text' }],
       async apply(ctx, p) {
         const col = ctx.column(p.column);
-        if (!col) throw new Error('Okänd kolumn: ' + p.column);
+        if (!col) throw new Error(D.t('op.err.unknown.column', { name: p.column }));
         if (col.type === p.type) return { rows: 0 };
         const before = await ctx.engine.exec(`select count(${q(p.column)}) from data`);
         await ctx.rebuildColumn(p.column, p.type, conversionExpr(p.column, p.type, p));
@@ -209,7 +209,7 @@
         for (const [rowid, v] of (res[0] ? res[0].values : [])) { if (v === null || v === '') { if (last !== null) pairs.push([rowid, last]); } else last = v; }
         return { rows: await ctx.engine.updateRows('data', p.column, pairs) };
       },
-      toSQL: (p) => p.mode === 'constant' ? [`UPDATE data SET ${q(p.column)} = ${lit(p.value)} WHERE ${q(p.column)} IS NULL;`] : [`-- fyll med föregående värde (utförs radvis)`],
+      toSQL: (p) => p.mode === 'constant' ? [`UPDATE data SET ${q(p.column)} = ${lit(p.value)} WHERE ${q(p.column)} IS NULL;`] : ['-- ' + D.t('code.fill_down')],
       toR: (p) => p.mode === 'constant' ? `df$${q(p.column)}[is.na(df$${q(p.column)})] <- ${rstr(p.value)}` : `df$${q(p.column)} <- zoo::na.locf(df$${q(p.column)}, na.rm = FALSE)`,
     });
 
@@ -256,8 +256,8 @@
       },
       toSQL(p) {
         return p.columns.map((n) => (p.method === 'sequence'
-          ? `-- ${q(n)}: löpnummer per unikt värde (utförs av appen med en temporär tabell)`
-          : `UPDATE data SET ${q(n)} = ${this.expr(p, n)};  -- dm_hash och dm_mask är Dataspatiums SQL-funktioner`));
+          ? '-- ' + D.t('code.sequence', { column: q(n) })
+          : `UPDATE data SET ${q(n)} = ${this.expr(p, n)};  -- ${D.t('code.hash.functions')}`));
       },
       toR(p) {
         const lines = [];
@@ -266,7 +266,7 @@
           const col = `df$${q(n)}`;
           if (p.method === 'mask') lines.push(`${col} <- dm_mask(${col}, ${Number(p.keepStart) || 0}, ${Number(p.keepEnd) || 0})`);
           else if (p.method === 'sequence') lines.push(`${col} <- ifelse(is.na(${col}), NA, paste0(${rstr(p.prefix || 'P')}, formatC(as.integer(factor(${col})), width = ${this.seqWidth(p)}, flag = "0")))`);
-          else lines.push(`${col} <- substr(vapply(${p.salt ? `paste0(${rstr(p.salt)}, "|", as.character(${col}))` : `as.character(${col})`}, digest::digest, "", algo = "sha256", serialize = FALSE), 1, ${this.hashLength(p)})  # kräver paketet digest`);
+          else lines.push(`${col} <- substr(vapply(${p.salt ? `paste0(${rstr(p.salt)}, "|", as.character(${col}))` : `as.character(${col})`}, digest::digest, "", algo = "sha256", serialize = FALSE), 1, ${this.hashLength(p)})  # ${D.t('code.requires', { pkg: 'digest' })}`);
         }
         return lines.join('\n');
       },
@@ -284,11 +284,11 @@
       async apply(ctx, p) {
         const col = ctx.column(p.column);
         const value = p.value === null || p.value === undefined || p.value === '' ? null : types.parseValue(p.value, col ? col.type : 'text');
-        if (value === null && p.value !== null && p.value !== undefined && p.value !== '' && col && col.type !== 'text') throw new Error(`Värdet ${p.value} går inte att tolka som ${col.type}.`);
+        if (value === null && p.value !== null && p.value !== undefined && p.value !== '' && col && col.type !== 'text') throw new Error(D.t('op.err.value.type', { value: p.value, type: col.type }));
         return { rows: await ctx.engine.run(`update data set ${q(p.column)} = ? where rowid = ?`, [value, Number(p.rowid)]), value };
       },
       toSQL: (p) => [`UPDATE data SET ${q(p.column)} = ${lit(p.value)} WHERE rowid = ${Number(p.rowid)};`],
-      toR: (p) => `df[${Number(p.rowid)}, ${rstr(p.column)}] <- ${rstr(p.value)}  # radnummer vid tidpunkten`,
+      toR: (p) => `df[${Number(p.rowid)}, ${rstr(p.column)}] <- ${rstr(p.value)}  # ${D.t('code.rowid')}`,
     });
 
     // ---- rows ------------------------------------------------------------------------------
@@ -299,7 +299,7 @@
       async preview(ctx, p) { const r = await ctx.engine.exec(`select count(*) from data where ${this.cond(p)}`); return { rows: Number(r[0].values[0][0]) }; },
       async apply(ctx, p) { return { rows: await ctx.engine.run(`delete from data where ${this.cond(p)}`) }; },
       toSQL(p) { return [`DELETE FROM data WHERE ${this.cond(p)};`]; },
-      toR: (p) => `# SQL-villkor: ${p.where}\ndf <- df[${p.keep ? '' : '!'}(with(df, ${p.where.replace(/=/g, '==').replace(/<>/g, '!=')})), ]`,
+      toR: (p) => `# ${D.t('code.sql.where', { where: p.where })}\ndf <- df[${p.keep ? '' : '!'}(with(df, ${p.where.replace(/=/g, '==').replace(/<>/g, '!=')})), ]`,
     });
 
     define({
@@ -318,8 +318,8 @@
       params: [{ name: 'name', type: 'text', required: true }, { name: 'type', type: 'select', required: true, options: types.TYPES, default: 'number' }, { name: 'expression', type: 'expression', required: true }],
       async apply(ctx, p) {
         const name = String(p.name).trim();
-        if (!name) throw new Error('Namnet får inte vara tomt.');
-        if (ctx.column(name)) throw new Error(`Kolumnen ${name} finns redan.`);
+        if (!name) throw new Error(D.t('op.err.name.empty'));
+        if (ctx.column(name)) throw new Error(D.t('op.err.column.exists', { name }));
         await ctx.engine.exec(`select (${p.expression}) from data limit 1`); // validates the expression
         await ctx.engine.run(`alter table data add column ${q(name)} ${types.sqlType(p.type)}`);
         const rows = await ctx.engine.run(`update data set ${q(name)} = (${p.expression})`);
@@ -327,7 +327,7 @@
         return { rows };
       },
       toSQL: (p) => [`ALTER TABLE data ADD COLUMN ${q(p.name)} ${types.sqlType(p.type)};`, `UPDATE data SET ${q(p.name)} = (${p.expression});`],
-      toR: (p) => `# SQL-uttryck: ${p.expression}\ndf$${q(p.name)} <- with(df, ${p.expression})`,
+      toR: (p) => `# ${D.t('code.sql.expr', { expression: p.expression })}\ndf$${q(p.name)} <- with(df, ${p.expression})`,
     });
 
     define({
@@ -335,7 +335,7 @@
       params: [{ name: 'columns', type: 'columns', required: true }, { name: 'separator', type: 'text', default: ' ' }, { name: 'name', type: 'text', required: true }],
       expr(p) { return p.columns.map((c) => `coalesce(cast(${q(c)} as text), '')`).join(` || ${lit(p.separator === undefined ? ' ' : p.separator)} || `); },
       async apply(ctx, p) {
-        if (ctx.column(p.name)) throw new Error(`Kolumnen ${p.name} finns redan.`);
+        if (ctx.column(p.name)) throw new Error(D.t('op.err.column.exists', { name: p.name }));
         await ctx.engine.run(`alter table data add column ${q(p.name)} TEXT`);
         const rows = await ctx.engine.run(`update data set ${q(p.name)} = ${this.expr(p)}`);
         ctx.addColumn({ name: p.name, type: 'text', label: p.name });
@@ -363,16 +363,16 @@
         for (let i = 0; i < parts; i++) rows += await ctx.engine.updateRows('data', names[i], perPart[i]);
         return { rows: res[0] ? res[0].values.length : 0, columns: names };
       },
-      toSQL: (p) => [`-- dela ${q(p.column)} på ${lit(p.delimiter)} i ${p.parts} delar (utförs radvis)`],
+      toSQL: (p) => ['-- ' + D.t('code.split', { column: q(p.column), delimiter: lit(p.delimiter), parts: p.parts })],
       toR: (p) => `delar <- strsplit(df$${q(p.column)}, ${rstr(p.delimiter)}, fixed = TRUE)\n${Array.from({ length: Number(p.parts) || 2 }, (_, i) => `df$${q(p.column + '_' + (i + 1))} <- sapply(delar, function(x) x[${i + 1}])`).join('\n')}`,
     });
 
     define({
       id: 'pivot_longer', group: 'structure',
-      params: [{ name: 'columns', type: 'columns', required: true }, { name: 'namesTo', type: 'text', default: 'variabel' }, { name: 'valuesTo', type: 'text', default: 'varde' }],
+      params: [{ name: 'columns', type: 'columns', required: true }, { name: 'namesTo', type: 'text', default: D.t('op.pivot_longer.names.default') }, { name: 'valuesTo', type: 'text', default: D.t('op.pivot_longer.values.default') }],
       async apply(ctx, p) {
         const keep = ctx.columns.map((c) => c.name).filter((n) => !p.columns.includes(n));
-        if (!p.columns.length) throw new Error('Välj minst en kolumn att pivotera.');
+        if (!p.columns.length) throw new Error(D.t('op.err.pivot.columns'));
         const namesTo = p.namesTo || 'variabel'; const valuesTo = p.valuesTo || 'varde';
         const selects = p.columns.map((c) => `select ${keep.map(q).concat([`${lit(c)} as ${q(namesTo)}`, `cast(${q(c)} as text) as ${q(valuesTo)}`]).join(', ')} from data`);
         await ctx.engine.execMany([`create table data_new as ${selects.join(' union all ')}`, 'drop table data', 'alter table data_new rename to data']);
@@ -381,7 +381,7 @@
         const count = await ctx.engine.exec('select count(*) from data');
         return { rows: Number(count[0].values[0][0]) };
       },
-      toSQL: (p) => [`-- pivotera ${p.columns.map(q).join(', ')} till långt format (${p.namesTo || 'variabel'}, ${p.valuesTo || 'varde'})`],
+      toSQL: (p) => ['-- ' + D.t('code.pivot_longer', { cols: p.columns.map(q).join(', '), names: p.namesTo || 'variabel', values: p.valuesTo || 'varde' })],
       toR: (p) => `df <- tidyr::pivot_longer(df, cols = c(${p.columns.map(rstr).join(', ')}), names_to = ${rstr(p.namesTo || 'variabel')}, values_to = ${rstr(p.valuesTo || 'varde')})`,
     });
 
@@ -392,7 +392,7 @@
         const keep = ctx.columns.map((c) => c.name).filter((n) => n !== p.names && n !== p.values);
         const keysRes = await ctx.engine.exec(`select distinct cast(${q(p.names)} as text) from data where ${q(p.names)} is not null order by 1 limit 500`);
         const keys = (keysRes[0] ? keysRes[0].values : []).map((r) => String(r[0]));
-        if (!keys.length) throw new Error('Inga värden att skapa kolumner av.');
+        if (!keys.length) throw new Error(D.t('op.err.pivot.values'));
         const valueCol = ctx.column(p.values);
         const agg = valueCol && (valueCol.type === 'number' || valueCol.type === 'integer') ? 'sum' : 'max';
         const cols = keys.map((k) => `${agg}(case when cast(${q(p.names)} as text) = ${lit(k)} then ${q(p.values)} end) as ${q(k)}`);
@@ -401,7 +401,7 @@
         const count = await ctx.engine.exec('select count(*) from data');
         return { rows: Number(count[0].values[0][0]), columns: keys };
       },
-      toSQL: (p) => [`-- pivotera ${q(p.names)}/${q(p.values)} till brett format`],
+      toSQL: (p) => ['-- ' + D.t('code.pivot_wider', { names: q(p.names), values: q(p.values) })],
       toR: (p) => `df <- tidyr::pivot_wider(df, names_from = ${rstr(p.names)}, values_from = ${rstr(p.values)})`,
     });
 
@@ -420,7 +420,7 @@
         return { rows };
       },
       toSQL: (p) => [p.statement.trim().replace(/;?$/, ';')],
-      toR: (p) => `# SQL: ${p.statement.replace(/\n/g, ' ')}\n# (kör mot datamängdens SQLite-fil med DBI::dbExecute)`,
+      toR: (p) => `# SQL: ${p.statement.replace(/\n/g, ' ')}\n# ${D.t('code.sql.run')}`,
     });
 
     // ---- geodata ------------------------------------------------------------------------------
@@ -428,13 +428,13 @@
     // The work is done by the engine's dm_geo_*, dm_to_* and dm_region() functions (sqlite-worker.js).
     async function addColumnOf(ctx, name, type) {
       const n = String(name || '').trim();
-      if (!n) throw new Error('Kolumnnamnet får inte vara tomt.');
-      if (ctx.column(n)) throw new Error(`Kolumnen ${n} finns redan.`);
+      if (!n) throw new Error(D.t('op.err.colname.empty'));
+      if (ctx.column(n)) throw new Error(D.t('op.err.column.exists', { name: n }));
       await ctx.engine.run(`alter table data add column ${q(n)} ${types.sqlType(type)}`);
       ctx.addColumn({ name: n, type, label: n });
       return n;
     }
-    const GEO_SQL_NOTE = '  -- dm_geo_*, dm_to_* och dm_region är Dataspatiums SQL-funktioner';
+    const GEO_SQL_NOTE = '  -- ' + D.t('code.geo.functions');
     // Column suggestions for the forms: geometry by name among text columns, coordinates among numeric ones.
     const GEOMETRY_PARAM = { name: 'column', type: 'column', required: true, kinds: ['text'], prefer: /^(geometry|geom|wkt|shape|the_geom|geometri)$/i };
     const NUMERIC = ['number', 'integer'];
@@ -452,7 +452,7 @@
         return { rows };
       },
       toSQL(p) { const [lon, lat] = this.names(p); return [`ALTER TABLE data ADD COLUMN ${q(lon)} REAL;`, `ALTER TABLE data ADD COLUMN ${q(lat)} REAL;`, `UPDATE data SET ${q(lon)} = dm_geo_lon(${q(p.column)}), ${q(lat)} = dm_geo_lat(${q(p.column)});${GEO_SQL_NOTE}`]; },
-      toR(p) { const [lon, lat] = this.names(p); return `# kräver paketet sf; geometrin som GeoJSON-text (använd sf::st_as_sfc(wkt) för WKT)\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\nxy <- sf::st_coordinates(sf::st_centroid(g))\ndf$${q(lon)} <- xy[, 1]\ndf$${q(lat)} <- xy[, 2]`; },
+      toR(p) { const [lon, lat] = this.names(p); return `# ${D.t('code.geo.centroid')}\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\nxy <- sf::st_coordinates(sf::st_centroid(g))\ndf$${q(lon)} <- xy[, 1]\ndf$${q(lat)} <- xy[, 2]`; },
     });
 
     define({
@@ -464,7 +464,7 @@
         return { rows };
       },
       toSQL: (p) => [`ALTER TABLE data ADD COLUMN ${q(p.name || 'area_km2')} REAL;`, `UPDATE data SET ${q(p.name || 'area_km2')} = dm_geo_area(${q(p.column)});${GEO_SQL_NOTE}`],
-      toR: (p) => `# kräver paketet sf\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\ndf$${q(p.name || 'area_km2')} <- as.numeric(sf::st_area(g)) / 1e6`,
+      toR: (p) => `# ${D.t('code.requires', { pkg: 'sf' })}\ng <- sf::st_as_sfc(df$${q(p.column)}, GeoJSON = TRUE)\ndf$${q(p.name || 'area_km2')} <- as.numeric(sf::st_area(g)) / 1e6`,
     });
 
     define({
@@ -479,7 +479,7 @@
         return { rows };
       },
       toSQL(p) { const [xn, yn] = this.names(p); const [ex, ey] = this.exprs(p); return [`ALTER TABLE data ADD COLUMN ${q(xn)} REAL;`, `ALTER TABLE data ADD COLUMN ${q(yn)} REAL;`, `UPDATE data SET ${q(xn)} = ${ex}, ${q(yn)} = ${ey};${GEO_SQL_NOTE}`]; },
-      toR(p) { const [xn, yn] = this.names(p); const from = p.direction === 'to_sweref' ? 4326 : 3006; const to = p.direction === 'to_sweref' ? 3006 : 4326; return `# kräver paketet sf\npts <- sf::st_transform(sf::st_as_sf(df, coords = c(${rstr(p.xColumn)}, ${rstr(p.yColumn)}), crs = ${from}, remove = FALSE), ${to})\nxy <- sf::st_coordinates(pts)\ndf$${q(xn)} <- xy[, 1]\ndf$${q(yn)} <- xy[, 2]`; },
+      toR(p) { const [xn, yn] = this.names(p); const from = p.direction === 'to_sweref' ? 4326 : 3006; const to = p.direction === 'to_sweref' ? 3006 : 4326; return `# ${D.t('code.requires', { pkg: 'sf' })}\npts <- sf::st_transform(sf::st_as_sf(df, coords = c(${rstr(p.xColumn)}, ${rstr(p.yColumn)}), crs = ${from}, remove = FALSE), ${to})\nxy <- sf::st_coordinates(pts)\ndf$${q(xn)} <- xy[, 1]\ndf$${q(yn)} <- xy[, 2]`; },
     });
 
     define({
@@ -489,7 +489,7 @@
       file(p) { return p.level === 'lan' ? 'lan' : 'kommuner'; },
       async apply(ctx, p) {
         const fields = this.fields(p);
-        for (const f of fields) if (ctx.column(f)) throw new Error(`Kolumnen ${f} finns redan.`);
+        for (const f of fields) if (ctx.column(f)) throw new Error(D.t('op.err.column.exists', { name: f }));
         const feats = await boundaries.features(this.file(p));
         await ctx.engine.regions(feats.map((f) => ({ geometry: f.geometry, props: f.props })));
         for (const f of fields) await addColumnOf(ctx, f, 'text');
@@ -498,8 +498,8 @@
         const hit = await ctx.engine.exec(`select count(*) from data where ${q(fields[0])} is not null`);
         return { rows, matched: Number(hit[0].values[0][0]) };
       },
-      toSQL(p) { const fields = this.fields(p); const lon = q(p.lonColumn); const lat = q(p.latColumn); return fields.map((f) => `ALTER TABLE data ADD COLUMN ${q(f)} TEXT;`).concat([`UPDATE data SET ${fields.map((f) => `${q(f)} = dm_region(${lon}, ${lat}, ${lit(f)})`).join(', ')};${GEO_SQL_NOTE} (dm_region slår upp SCB:s gränser i presets/geo)`]); },
-      toR(p) { const file = `presets/geo/${this.file(p)}.geojson`; return `# kräver paketet sf och gränsfilen ${file} ur appmappen\ngranser <- sf::st_read(${rstr(file)}, quiet = TRUE)\npts <- sf::st_as_sf(df, coords = c(${rstr(p.lonColumn)}, ${rstr(p.latColumn)}), crs = 4326, remove = FALSE)\ndf <- sf::st_drop_geometry(sf::st_join(pts, granser[, c(${this.fields(p).map(rstr).join(', ')})], join = sf::st_within))`; },
+      toSQL(p) { const fields = this.fields(p); const lon = q(p.lonColumn); const lat = q(p.latColumn); return fields.map((f) => `ALTER TABLE data ADD COLUMN ${q(f)} TEXT;`).concat([`UPDATE data SET ${fields.map((f) => `${q(f)} = dm_region(${lon}, ${lat}, ${lit(f)})`).join(', ')};${GEO_SQL_NOTE} ${D.t('code.geo.region.lookup')}`]); },
+      toR(p) { const file = `presets/geo/${this.file(p)}.geojson`; return `# ${D.t('code.geo.region.r', { file })}\ngranser <- sf::st_read(${rstr(file)}, quiet = TRUE)\npts <- sf::st_as_sf(df, coords = c(${rstr(p.lonColumn)}, ${rstr(p.latColumn)}), crs = 4326, remove = FALSE)\ndf <- sf::st_drop_geometry(sf::st_join(pts, granser[, c(${this.fields(p).map(rstr).join(', ')})], join = sf::st_within))`; },
     });
 
     function get(id) { const op = registry.get(id); if (!op) throw new Error('Unknown operation: ' + id); return op; }

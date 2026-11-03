@@ -13,7 +13,7 @@
 
     function parseDoc(text) {
       const doc = new DOMParser().parseFromString(text.replace(/^﻿/, ''), 'application/xml');
-      if (doc.querySelector('parsererror')) throw new Error('Filen är inte giltig XML.');
+      if (doc.querySelector('parsererror')) throw new Error(D.t('import.err.notxml'));
       return doc;
     }
     /** Candidate record tags: element names that repeat under one parent, most frequent first. */

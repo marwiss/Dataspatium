@@ -1,0 +1,148 @@
+# Frequently asked questions
+
+## Where is my data stored?
+
+In the browser's own database (IndexedDB) on the computer and in the browser profile you use. Nothing is sent
+anywhere. If you clear site data, switch profile or uninstall the browser, the data disappears. So take backups
+under *Manage → Workspace*, or use a portable folder in Edge and Chrome so that the workspace also lives as
+ordinary files on disk (see [kom-igang.md](kom-igang.md)).
+
+## Do I need internet?
+
+No. Internet is needed only when you fetch data from an API or click *Check for updates*. Everything else, R
+included, works without a network.
+
+## Why does it take time the first time I use R?
+
+R is loaded as WebAssembly (about 50 MB) and starts in a few seconds. Packages such as ggplot2 are installed in
+the R session when you use them for the first time, which takes a few more seconds. The R session starts over when
+you reload the page, but your datasets and scripts remain.
+
+## Can I interrupt R code that is stuck?
+
+No. Under file:// the browser does not allow the mechanism required to interrupt R in the middle of a
+calculation. Use *Restart R* in Analyse; the datasets are not affected.
+
+## Why does an API not work?
+
+Most often the API lacks CORS support, that is, the browser is not allowed to read the response. Then Dataspatium
+can only reach it through a proxy that you run yourself (setting under Import). Some APIs also require a key, for
+example Boverket and Lantmäteriet Direkt. See [api-konfiguration.md](api-konfiguration.md), which also describes
+how to get keys.
+
+## How are API keys stored?
+
+Either only in memory during the session or encrypted with a passphrase you choose. Never in clear text, and they
+never come along when you share a configuration.
+
+## How large datasets can the app handle?
+
+A couple of million rows in Edge and Chrome, somewhat fewer in Firefox; the browser's memory sets the limit.
+Measured times for one million rows are in [utveckling.md](../utveckling.md) (Swedish). Text files of 64 MB or more are read
+in chunks, so the import itself does not require the whole file to fit in memory as text.
+
+## What is the difference between Firefox and Edge or Chrome?
+
+Look and features are the same, but Firefox lacks folder access, so the portable folder is not available there.
+Backup as ZIP works everywhere.
+
+## Can the app run from a web server or an intranet?
+
+Yes. Put the folder unchanged on any static web server. No server functions are needed.
+
+## Can I open index.html directly inside the ZIP file?
+
+No. Unpack the ZIP file first (right-click and choose *Extract all* in Windows) and then open `index.html` in the
+unpacked folder.
+
+## How do I update?
+
+Download the new version and unpack it into a new folder. Your data lives in the browser, not in the folder, so it
+remains when you open the new version's `index.html` on the same computer and in the same browser. Under the help
+button there is *Check for updates*, which compares your version with the latest release on GitHub. The check is
+made only when you click.
+
+## Can I change the language?
+
+Yes. The first time the app is opened you choose a language; afterwards the language button at the top right (the
+icon with letters) or the command *Language* in the palette opens the same chooser. Swedish, Danish, Norwegian
+(Bokmål), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
+changes have been saved. The choice is stored in the browser, so each computer and profile has its own.
+
+## Are there sources from the other Nordic countries?
+
+Yes. Under *Open APIs* in Import there are the statistics offices of Denmark, Norway, Finland, Iceland,
+Greenland, the Faroe Islands and Åland, Nordic Statistics, the Norwegian Institute of Public Health, the
+Brønnøysund register, the Norwegian Mapping Authority, MET Norway, THL's Sotkanet, PRH's company register,
+Digitraffic, the Finnish Meteorological Institute, the Icelandic Met Office and the Danish and Finnish data
+portals. The country buttons above the list choose which countries' sources are shown; the choice is stored in
+the browser. All sources have been checked for CORS and need no key. See
+[api-konfiguration.md](api-konfiguration.md).
+
+## Can I have the app open in several tabs?
+
+Yes. The tabs share the same workspace and keep each other informed: if you save or delete something in one tab,
+the others reload their lists and log what happened. Still, do not edit the same dataset in two tabs at the same
+time; if both have unsaved changes, the one that saves last wins.
+
+## Can another local HTML file read my data?
+
+In Edge and Chrome all files opened via file:// share the same storage. So do not open unknown HTML files locally
+while you have sensitive data in the app. Keys are never stored in clear text. Firefox keeps local files apart.
+
+## May I use the app at work?
+
+Yes, if the employer is a public authority, municipality, region, school, university or a non-profit organisation,
+that is, non-commercial use. Commercial use requires permission from the licensor. See
+[licenser.md](licenser.md).
+
+## How do I make a map of municipalities or counties?
+
+Click *Swedish municipality boundaries (SCB)* or *Swedish county boundaries (SCB)* in Import; the boundaries ship with the app
+(SCB's simplified boundaries for thematic maps, CC0). Then join your values to the boundaries on the municipality
+code or county code in Process (*Join*), and choose the chart type *Map* in Visualise. Points with longitude and
+latitude (for example measuring stations) are drawn with *Point map*, with the boundaries as background. Your own
+boundaries can be imported from GeoJSON, shapefile or GeoPackage. See [visualisera.md](visualisera.md).
+
+## How do I get municipality or county from coordinates?
+
+Choose *Geodata > Municipality and county from coordinates* in Process (through Actions or the palette). The
+action looks up each point's municipality and county in SCB's bundled boundaries and adds the columns kommunkod,
+kommun, lanskod and lan; coordinates in SWEREF 99 TM are recognised. The boundaries cover the land area, so points
+in water become empty. The same group has centroid and area from geometry and conversion between SWEREF 99 TM and
+WGS 84. See [bearbeta.md](bearbeta.md).
+
+## How do I combine several datasets in one SQL query?
+
+Every dataset has a short name (shown below the name in the object panel, changed under Manage > Rename). In the
+SQL tab under Analyse the selected dataset is called `data` but is also reached by its short name, and all other
+datasets are reached by their short names: `select k.kommun, b.folkmangd from befolkning_2024 b join
+kommungranser k on k.kommunkod = b.kommunkod`. The result can be saved as a new dataset. In R,
+`dm_read("shortname")` reads the same dataset. See [bearbeta.md](bearbeta.md).
+
+## How do I check that the data is up to standard?
+
+*Data quality* in Process profiles all columns and suggests actions. *Rules* let you write down requirements (must
+not be missing, unique, range, list, pattern, length or an SQL condition) and run them after every import; failing
+rows can be saved as a dataset of their own and the result downloaded as a report. The rules are stored in the
+dataset and come along when you share it. See [bearbeta.md](bearbeta.md).
+
+## Can I remove personal identity numbers before I share a dataset?
+
+Yes. The action *Pseudonymise* in Process replaces identifiers with salted hashes, masked values or running
+numbers, and the data quality profile suggests it when a column looks like it contains personal identity numbers.
+It is pseudonymisation, not anonymisation: other columns can still point out persons, so go through the whole
+dataset before you share it. See [bearbeta.md](bearbeta.md).
+
+## How do I share data with a colleague?
+
+Easiest with *Share bundle* under *Manage → Workspace*: choose datasets and whether charts, dashboards, templates
+and notebooks should come along, and send the ZIP file. The colleague drops it on *Restore from ZIP*. You can also
+export a single dataset as SQLite (keeps types, labels and history) or take a backup of the whole workspace. Charts
+and document templates can be exported as JSON files, API configurations as `.api.json`, and recipes as JSON, R or
+SQL.
+
+## Can't find the answer here?
+
+Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see
+[CONTRIBUTING.md](../../CONTRIBUTING.md)).

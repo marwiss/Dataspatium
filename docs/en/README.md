@@ -1,0 +1,133 @@
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · **English**
+
+# Dataspatium
+
+Dataspatium is a web app for data from source to report: import data from files and open APIs, store and
+manage datasets, review and correct values, analyse with R, visualise and export. Everything runs in your own
+browser. No server, no installation, no accounts. Your data never leaves your computer unless you export it
+yourself.
+
+![Dataspatium in Process mode with a table of Swedish municipalities](../images/bearbeta.png)
+
+The interface is available in Swedish, Danish, Norwegian, Finnish, Icelandic and English. The screenshots in the
+documentation show the app in Swedish.
+
+## Download and get started
+
+1. **Download.** Go to the [latest release](https://github.com/marwiss/Dataspatium/releases/latest) and fetch
+   the ZIP file under *Assets* (`dataspatium-<version>.zip`, about 100 MB; R and all R packages are included).
+2. **Unpack.** Right-click the ZIP file and choose *Extract all* (Windows) or double-click it (macOS). Put the
+   folder where you want it, for example in Documents. The app does not work directly inside the ZIP file.
+3. **Open.** Double-click `index.html` in the folder, or drag the file into a browser window. If Windows asks which
+   app to use, choose Edge, Chrome or Firefox. The first time, the app asks which language you want; the choice
+   can be changed at any time with the language button at the top right.
+4. **Import.** In *Import* mode, drop a file on the surface (or click *Try with example data*), check the column
+   types and click *Import*. The dataset is stored in the browser on your computer.
+5. **Carry on.** Switch mode at the top: *Manage* shows your datasets and the workspace, *Process* shows the table
+   with sorting, filters and actions, *Analyse* opens the R and SQL consoles, *Visualise* builds charts and
+   *Export* downloads data, charts and documents.
+
+Data is stored in the browser's own database. If you clear site data it disappears, so back up regularly under
+*Manage > Workspace*. The backup is a ZIP file that can be restored on the same or another computer. Step by step
+with more detail: [kom-igang.md](kom-igang.md) (Getting started).
+
+## Requirements
+
+- Windows, macOS or Linux.
+- Microsoft Edge or Google Chrome (version 120 or later), or Firefox (version 128 or later). Safari is not
+  supported.
+- About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large
+  datasets). No administrator rights are needed.
+- Internet is needed only when you fetch data from open APIs or check for updates.
+
+## What you can do
+
+- **Import**: CSV, Excel, ODS, JSON, JSON-stat, GeoJSON, XML, SQLite, GeoPackage and shapefile files, fixed-width
+  text, statistical files from SPSS, Stata, SAS and Statistics Sweden's PX format, Parquet and RDS (via R), pasted
+  text, files from web addresses, and data straight from open APIs at Statistics Sweden (SCB), the Public Health
+  Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, the Swedish Environmental
+  Protection Agency, Lantmäteriet and Sweden's data portal, with re-fetching of all API datasets at the press of a
+  button (see [api-konfiguration.md](api-konfiguration.md)). Example data and SCB's municipality and county
+  boundaries are included.
+- **Process**: browse, sort and filter large tables, edit cells, clean, type, calculate, pivot and join data,
+  check data quality with a profile and rules, pseudonymise personal identity numbers before sharing, look up
+  municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
+  [bearbeta.md](bearbeta.md)).
+- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
+  where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
+  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), entirely in the browser.
+- **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
+  county boundaries), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
+  dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
+- **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
+  municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
+- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; bundles
+  with chosen datasets and objects, a workspace backup as ZIP and, in Edge and Chrome, a portable folder with
+  ordinary files.
+- **Find things fast**: the command palette (Ctrl+K) switches mode, opens datasets, charts and dashboards and runs
+  actions from a single search field.
+- **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
+  Norwegian (Bokmål), Finnish, Icelandic and English.
+
+## Learn more
+
+The file names are the same in every language (they are the Swedish originals), so links work the same way
+everywhere.
+
+- [Getting started](kom-igang.md): step by step with common questions.
+- [User guide](anvandarguide.md): the whole workflow from file to report.
+- [FAQ](faq.md): storage, security, R, APIs and updates.
+- [The six modes](lagen.md): what is where and why.
+- [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
+- [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
+- [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.
+- [R in Dataspatium](r-guide.md): the R console, `dm_read()`, `dm_write()` and the bundled packages.
+- [Visualise](visualisera.md): the chart builder, D3 templates, R charts, maps and dashboards.
+- [Documents and templates](dokumentmallar.md): the template language and the output formats.
+- [Licences](licenser.md): what you may do with the app and which licences the third-party components have.
+- [Development](../utveckling.md), [Architecture](../arkitektur.md) and [Style guide](../stilguide.md) for those
+  who want to understand the code (in Swedish); how contributions are received is in
+  [CONTRIBUTING.md](../../CONTRIBUTING.md) (Swedish).
+- External resources: [WebR](https://docs.r-wasm.org/webr/latest/), [R for beginners](https://www.r-project.org/),
+  [Vega-Lite](https://vega.github.io/vega-lite/), [Statistics Sweden's API](https://www.scb.se/en/services/open-data-api/).
+
+## Limitations in brief
+
+- The app must be opened from an unpacked folder (file://) or an ordinary web server; it does not work directly
+  inside a ZIP file.
+- APIs without CORS support (for example the Riksbank's) cannot be called directly from the browser.
+- A dataset should stay below a couple of million rows; the browser's memory sets the limit.
+- R code cannot be interrupted in the middle of a calculation; use *Restart R*.
+- Several tabs work and keep each other informed, but do not edit the same dataset in two tabs at the same time:
+  the one that saves last wins.
+- The portable folder requires Edge or Chrome; Firefox lacks folder access (File System Access). Backup as ZIP
+  works everywhere.
+- Safari and mobile browsers are not supported.
+- The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
+  anywhere.
+
+## Bugs and suggestions
+
+Report bugs or requests as *Issues* here on GitHub. Describe the browser, the Dataspatium version (shown under the
+help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+## Development
+
+- No build step, no node.js. Open `index.html` directly, or serve the folder with `python -m http.server 8080`.
+- Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
+- Tests: `powershell -File tools/run-tests.ps1` (headless Edge and Firefox). See [utveckling.md](../utveckling.md)
+  (Swedish).
+
+## Licence
+
+Dataspatium's own code, documentation and presets (everything except `vendor/`) are licensed under
+[PolyForm Strict 1.0.0](../../LICENSE): free to download and use for non-commercial purposes, including in public
+authorities and other public institutions, but not to modify, build on or redistribute without written
+permission. The licensor is Dataspatium's author, reachable through the GitHub account
+[marwiss](https://github.com/marwiss); open an issue for other terms. What the licence means in practice is
+explained in [licenser.md](licenser.md).
+
+Third-party components in `vendor/` have their own licences (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL and GPL), see
+[THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R and the GPL-licensed R packages are distributed
+unchanged; the source code is available from the [R project](https://cran.r-project.org/sources.html),
+[webR](https://github.com/r-wasm/webr) and [CRAN](https://cran.r-project.org/) in the versions stated there.

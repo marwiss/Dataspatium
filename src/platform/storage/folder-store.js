@@ -34,7 +34,7 @@
 
     /** Ask the user for a folder (must run from a user gesture). */
     async function choose() {
-      if (!supported()) throw new Error('Webbläsaren saknar mappåtkomst (File System Access). Använd Edge eller Chrome.');
+      if (!supported()) throw new Error(D.t('folder.err.unsupported'));
       const handle = await /** @type {any} */ (globalThis).showDirectoryPicker({ mode: 'readwrite', id: 'dataspatium-workspace' });
       await setHandle(handle);
       return handle;
@@ -56,7 +56,7 @@
     async function resolve(root, path, create) {
       const parts = String(path).split('/').filter(Boolean);
       const name = parts.pop();
-      if (!name) throw new Error('Tom sökväg');
+      if (!name) throw new Error('folder-store: empty path');
       let dir = root;
       for (const part of parts) dir = await dir.getDirectoryHandle(part, { create });
       return { dir, name };

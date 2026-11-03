@@ -7,6 +7,7 @@
   "docs": "https://www.lantmateriet.se/sv/geodata/vara-produkter/oppna-data/",
   "license": { "name": "CC0 1.0", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
   "level": 1,
+  "country": "SE",
   "baseUrl": "https://api.lantmateriet.se/stac-vektor/v1",
   "auth": { "type": "none" },
   "endpoints": [
@@ -31,5 +32,12 @@
       "response": { "format": "geojson", "options": { "geometry": false }, "drop": ["links", "stac_version", "stac_extensions", "collection", "type"] },
       "dataset": { "name": "Lantmäteriet {collection} filer" }
     }
-  ]
+  ],
+  "i18n": {
+    "en": {"name": "Lantmäteriet open geodata (catalogue)", "description": "Catalogue (STAC) of Lantmäteriet's open vector data for Sweden: place names, administrative divisions, topography and more, with download links. The files are downloaded in the browser and then imported as files.", "endpoints": {"collections": {"name": "Products (collections)"}, "items": {"name": "Files in a product", "params": {"collection": {"label": "Product"}}}}, "dataset": {"collections": "Lantmäteriet products", "items": "Lantmäteriet {collection} files"}},
+    "da": {"name": "Lantmäteriet åbne geodata (katalog)", "description": "Katalog (STAC) over Lantmäteriets åbne vektordata for Sverige: stednavne, administrativ inddeling, topografi med mere, med downloadlinks. Filerne downloades i browseren og importeres derefter som filer.", "endpoints": {"collections": {"name": "Produkter (samlinger)"}, "items": {"name": "Filer i et produkt", "params": {"collection": {"label": "Produkt"}}}}, "dataset": {"collections": "Lantmäteriet produkter", "items": "Lantmäteriet {collection} filer"}},
+    "nb": {"name": "Lantmäteriet åpne geodata (katalog)", "description": "Katalog (STAC) over Lantmäteriets åpne vektordata for Sverige: stedsnavn, administrativ inndeling, topografi med mer, med nedlastingslenker. Filene lastes ned i nettleseren og importeres deretter som filer.", "endpoints": {"collections": {"name": "Produkter (samlinger)"}, "items": {"name": "Filer i et produkt", "params": {"collection": {"label": "Produkt"}}}}, "dataset": {"collections": "Lantmäteriet produkter", "items": "Lantmäteriet {collection} filer"}},
+    "fi": {"name": "Lantmäteriet: avoin paikkatieto (luettelo)", "description": "Luettelo (STAC) Lantmäterietin avoimesta vektoridatasta Ruotsista: paikannimet, hallinnollinen jako, topografia ja muuta latauslinkkeineen. Tiedostot ladataan selaimessa ja tuodaan sitten tiedostoina.", "endpoints": {"collections": {"name": "Tuotteet (kokoelmat)"}, "items": {"name": "Tuotteen tiedostot", "params": {"collection": {"label": "Tuote"}}}}, "dataset": {"collections": "Lantmäteriet tuotteet", "items": "Lantmäteriet {collection} tiedostot"}},
+    "is": {"name": "Lantmäteriet: opin landupplýsingagögn (skrá)", "description": "Skrá (STAC) yfir opin vigurgögn Lantmäteriet fyrir Svíþjóð: örnefni, stjórnsýsluskiptingu, landslag og fleira, með niðurhalstenglum. Skrárnar eru sóttar í vafranum og síðan fluttar inn sem skrár.", "endpoints": {"collections": {"name": "Vörur (söfn)"}, "items": {"name": "Skrár í vöru", "params": {"collection": {"label": "Vara"}}}}, "dataset": {"collections": "Lantmäteriet vörur", "items": "Lantmäteriet {collection} skrár"}}
+  }
 }

@@ -15,7 +15,7 @@
       const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
       const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
       if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error('Svaret från ' + connector.name + ' var inte JSON.'); }
+      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
     }
 
     /** Subjects (ämnen): [{id, text}]. */

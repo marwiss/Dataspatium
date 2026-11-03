@@ -1,0 +1,23 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "hagstofa",
+  "name": "Hagstofa Íslands (Statistics Iceland)",
+  "publisher": "Hagstofa Íslands",
+  "description": "Islands officiella statistik: befolkning, ekonomi, näringsliv, samhälle och miljö, på isländska och engelska. Bläddra bland databaserna och ämnena, välj tabell och värden per variabel. Högst 10 000 celler per anrop; större urval delas upp automatiskt.",
+  "docs": "https://statice.is/publications/open-data-access",
+  "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+  "level": 1,
+  "country": "IS",
+  "baseUrl": "https://px.hagstofa.is/pxen/api/v1/en",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 10, "perSeconds": 1 },
+  "family": { "type": "pxweb", "version": 1, "maxCells": 10000, "urls": { "is": "https://px.hagstofa.is/pxis/api/v1/is", "en": "https://px.hagstofa.is/pxen/api/v1/en" } },
+  "notes": "Ange källa: Hagstofa Íslands.",
+  "i18n": {
+    "en": { "name": "Statistics Iceland (Hagstofa Íslands)", "publisher": "Statistics Iceland", "description": "Iceland's official statistics: population, economy, business, society and environment, in Icelandic and English. Browse the databases and subjects, pick a table and values per variable. At most 10,000 cells per request; larger selections are split automatically.", "notes": "Cite the source: Statistics Iceland." },
+    "da": { "name": "Hagstofa Íslands (Islands statistik)", "publisher": "Hagstofa Íslands", "description": "Islands officielle statistik: befolkning, økonomi, erhverv, samfund og miljø, på islandsk og engelsk. Gennemse databaserne og emnerne, vælg tabel og værdier pr. variabel. Højst 10 000 celler pr. kald; større udvalg opdeles automatisk.", "notes": "Angiv kilde: Hagstofa Íslands." },
+    "nb": { "name": "Hagstofa Íslands (Islands statistikk)", "publisher": "Hagstofa Íslands", "description": "Islands offisielle statistikk: befolkning, økonomi, næringsliv, samfunn og miljø, på islandsk og engelsk. Bla i databasene og emnene, velg tabell og verdier per variabel. Høyst 10 000 celler per kall; større utvalg deles opp automatisk.", "notes": "Oppgi kilde: Hagstofa Íslands." },
+    "fi": { "name": "Islannin tilastokeskus (Hagstofa Íslands)", "publisher": "Hagstofa Íslands", "description": "Islannin virallinen tilasto: väestö, talous, elinkeinot, yhteiskunta ja ympäristö islanniksi ja englanniksi. Selaa tietokantoja ja aiheita, valitse taulukko ja arvot muuttujittain. Enintään 10 000 solua per pyyntö; suuremmat valinnat jaetaan automaattisesti.", "notes": "Mainitse lähde: Hagstofa Íslands." },
+    "is": { "name": "Hagstofa Íslands", "publisher": "Hagstofa Íslands", "description": "Opinber hagtölur Íslands: mannfjöldi, efnahagur, atvinnuvegir, samfélag og umhverfi, á íslensku og ensku. Flettu í gagnasöfnunum og efnisflokkunum, veldu töflu og gildi fyrir hverja breytu. Að hámarki 10 000 reitir í hverju kalli; stærra val er skipt upp sjálfkrafa.", "notes": "Tilgreindu heimild: Hagstofa Íslands." }
+  }
+}

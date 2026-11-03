@@ -62,6 +62,22 @@ finns kvar när du öppnar den nya versionens `index.html` på samma dator och i
 finns *Sök efter uppdatering*, som jämför din version med den senaste utgåvan på GitHub. Kontrollen görs bara när
 du klickar.
 
+## Kan jag byta språk?
+
+Ja. Första gången appen öppnas väljer du språk; därefter öppnar språkknappen uppe till höger (ikonen med
+bokstäver) eller kommandot *Språk* i paletten samma val. Svenska, danska, norska (bokmål), finska, isländska och
+engelska finns. Appen laddas om på det valda språket när osparade ändringar har sparats. Valet sparas i
+webbläsaren, så varje dator och profil har sitt eget. Dokumentationen finns på samma språk i mappen `docs`.
+
+## Finns det källor från andra nordiska länder?
+
+Ja. Under *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,
+Färöarna och Åland, Nordic Statistics, Folkehelseinstituttet, Enhetsregisteret, Kartverket, MET Norway, THL:s
+Sotkanet, PRH:s företagsregister, Digitraffic, Meteorologiska institutet, Veðurstofa Íslands och de danska och
+finländska dataportalerna. Landsknapparna ovanför listan väljer vilka länders källor som visas; valet sparas i
+webbläsaren. Alla källor är kontrollerade för CORS och kräver ingen nyckel. Se
+[api-konfiguration.md](api-konfiguration.md).
+
 ## Kan jag ha appen öppen i flera flikar?
 
 Ja. Flikarna delar samma arbetsyta och håller varandra underrättade: sparar eller tar du bort något i en flik
@@ -100,8 +116,8 @@ Samma grupp har mittpunkt och area ur geometri samt omräkning mellan SWEREF 99 
 
 Varje datamängd har ett kortnamn (visas under namnet i objektpanelen, ändras under Hantera > Byt namn). I
 SQL-fliken under Analysera heter den valda datamängden `data` men nås också med sitt kortnamn, och alla andra
-datamängder nås med sina kortnamn: `select k.kommun, b.folkmangd from befolkning_per_kommun_2024 b join
-kommungranser_scb k on k.kommunkod = b.kommunkod`. Resultatet kan sparas som ny datamängd. I R läser
+datamängder nås med sina kortnamn: `select k.kommun, b.folkmangd from befolkning_2024 b join
+kommungranser k on k.kommunkod = b.kommunkod`. Resultatet kan sparas som ny datamängd. I R läser
 `dm_read("kortnamn")` samma datamängd. Se [bearbeta.md](bearbeta.md).
 
 ## Hur kontrollerar jag att datan håller måttet?

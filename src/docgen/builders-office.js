@@ -79,7 +79,7 @@
       if (typeof doc.autoTable === 'function') return doc.autoTable(opts);
       if (typeof globalThis.autoTable === 'function') return globalThis.autoTable(doc, opts);
       if (globalThis.jspdf && typeof globalThis.jspdf.autoTable === 'function') return globalThis.jspdf.autoTable(doc, opts);
-      throw new Error('Tabellstöd för PDF (jspdf-autotable) kunde inte laddas.');
+      throw new Error(D.t('doc.err.autotable'));
     }
     async function toPdf(ast, options = {}) {
       const jsPDF = await ensurePdf();
@@ -127,7 +127,7 @@
       for (let p = 1; p <= pages; p++) {
         doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(107, 117, 131);
         doc.text(title, margin, H - 28);
-        doc.text(`Sida ${p} av ${pages}`, W - margin, H - 28, { align: 'right' });
+        doc.text(D.t('doc.page', { p, pages }), W - margin, H - 28, { align: 'right' });
       }
       doc.setProperties({ title, creator: 'Dataspatium ' + D.version });
       return doc.output('blob');
