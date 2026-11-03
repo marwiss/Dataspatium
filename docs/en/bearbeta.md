@@ -30,26 +30,47 @@ parameters, and where possible a preview shows how many rows are affected and ex
 | | Delete columns | Removes the chosen columns |
 | | Reorder columns | Move columns up and down |
 | | Change type | Text to integer, decimal number, date, date and time or yes/no. Decimal separator and date format can be given; values that cannot be interpreted become empty and the count is reported |
+| | Copy column | A copy with a new name, for example before the original is changed |
+| | Clean column names | All names become lower-case letters, digits and underscores (`Folkmängd 2024` becomes `folkmangd_2024`), easy to type in SQL and R; the labels keep the original names |
 | Values | Find and replace | Text or regular expression in chosen text columns, with preview |
 | | Trim whitespace | Leading, trailing and (optionally) double spaces |
 | | Change case | UPPER CASE, lower case or Title Case |
 | | Repair character encoding | Fixes mojibake (Ã¶ becomes ö) that arose at import with the wrong encoding |
 | | Replace value | One exact value for another; an empty value can be chosen as from or to |
-| | Fill missing values | Constant value or the previous row's value |
+| | Recode values | Several values at once from a list with one line per value, `old = new` (for example `01 = Stockholms län`); other values are kept or emptied |
+| | Fill missing values | Constant value, the previous or next row's value, mean, median or most common value |
+| | Round numbers | To a chosen number of decimals: to nearest (a half rounds away from zero), down, up or by dropping the decimals; a negative number rounds to tens (−1), hundreds (−2) and so on |
+| | Pad with leading zeros | To a given length, for example the municipality code 114 to 0114; numbers become text so that the zeros are kept |
+| | Remove characters | Keep only digits (phone and organisation numbers), keep only letters and spaces, remove punctuation and symbols, or remove all spaces |
 | Rows | Delete rows | SQL condition, for example `befolkning < 1000`; choose Keep to keep only the matching rows instead |
 | | Remove duplicates | On chosen columns or the whole row; the first occurrence is kept |
+| | Remove empty rows and columns | Rows where every value is missing and, if you like, columns without any values |
+| | Sort rows | Changes the order of the rows permanently, ascending or descending on one column, so that exports and documents get the same order; empty values go last |
+| | Keep the top rows | The rows with the largest or smallest value, in total or per group (for example the three largest municipalities in each county) |
+| | Random sample | A number of rows or a percentage; the same seed always gives the same sample so that the recipe can be replayed |
 | Structure | New calculated column | SQL expression, for example `round(befolkning / 1000.0, 1)` or `case when andel > 5 then 'stor' else 'liten' end` |
 | | Combine columns | Several columns into one text column with a separator |
 | | Split column | One text column into several at a delimiter |
+| | Extract part of text | A new column with a number of characters counted from the start or the end of the text, from a chosen position (the county code is the first two characters of the municipality code) |
 | | Pivot to long format | Chosen columns become rows with name and value |
 | | Pivot to wide format | The values in a name column become new columns |
 | | SQL statement | Any UPDATE, DELETE or ALTER TABLE against the table `data` |
+| Calculations | Share of total | Each value's share of the total as a percentage or a ratio, in total or per group (the municipality's share of the county's population) |
+| | Rank | Place in the order, largest or smallest first, in total or per group; equal values get the same place (with or without a gap after) or consecutive places |
+| | Running total | The cumulative sum in the order given by another column, in total or per group |
+| | Change from previous | The difference or the percentage change from the previous row in the order given by another column, for example from the previous year per municipality |
+| | Group into classes | Numbers into classes with your own lower limits (`0, 18, 65` gives `0–17`, `18–64` and `65–`), a number of equally wide classes or groups with equally many rows (quantiles) |
+| | Standardise | z-scores (the distance from the mean in standard deviations, sample standard deviation) or the values scaled to 0–1 |
+| | Extract date part | Year, quarter, month, ISO week, weekday (1 = Monday), day, day of year, year and month (`2024-03`) or hour from a date |
+| | Time between dates | Number of whole days, weeks, months or years between two dates, for example age; without an end date it counts to today's date when the step runs |
 | New datasets | Group and aggregate | Sum, mean, minimum, maximum, count, distinct count or median per group, into a new dataset |
 | | Join datasets | Left or inner join with another dataset on a key |
 | | Append datasets | Stacks rows from several datasets; columns are matched by name |
 | | Clean categories | Finds spelling variants of the same value (case, whitespace, accents) and merges them |
 
 Actions that create a new dataset leave the original untouched and select the new dataset when done.
+The calculations add a new column and leave the existing ones untouched; they build on SQL window functions and are
+exported to R as dplyr code with `group_by()` and `mutate()`.
 
 ## Undo
 
@@ -73,11 +94,39 @@ distinct values, range and findings. The findings point at an action that fixes 
 
 ## Rules
 
-The **Rules** button opens the dataset's quality rules: what must hold for the data to be correct. There are seven
-rule types: must not be missing, unique (one or more columns together), within range (numbers, dates or text), in
-list, matches pattern (regular expression), text length and a free SQL condition that must be true for every row.
+The **Rules** button opens the dataset's quality rules: what must hold for the data to be correct. The rule types are:
+
+| Rule type | Broken by |
+|---|---|
+| Must not be missing | Missing values |
+| Unique | Values (or combinations of several columns) that occur more than once |
+| Within range | Numbers, dates or text outside the limits |
+| In list | Values that are not in the list |
+| No forbidden values | Values that are in the list, for example `unknown` or `-99` |
+| Matches pattern | Text that does not match the regular expression |
+| Has a format | Text that is not an e-mail address, a web address, an ISO date, a postcode (Swedish, Danish, Norwegian, Finnish or Icelandic) or a Swedish municipality or county code |
+| Text length | Text that is shorter or longer than the limits |
+| No surplus spaces | Text with spaces at the start or end, or double spaces |
+| Can be read as a type | Text that cannot be read as an integer, decimal number, date, date and time or yes/no |
+| Valid identity number | Numbers with the wrong form, an invalid date or a wrong check digit, see below |
+| Compare two columns | Rows where the condition between two columns does not hold, for example that the start date is less than or equal to the end date |
+| Found in another dataset | Values missing from a column in another dataset (referential integrity, like a foreign key) |
+| Share of filled-in values | The column as a whole, when the share of filled-in values is below the threshold (for example 95 %) |
+| No outliers | Numbers further from the quartiles than a chosen number of interquartile ranges (default 1.5), or further from the mean than a chosen number of standard deviations (default 3) |
+| SQL condition | Rows where the free SQL condition is not true |
+
+The identity numbers are checked like this: Swedish personal identity number and coordination number (10 or 12
+digits, valid date, day plus 60 for coordination numbers, check digit by Luhn), Swedish organisation number (third
+digit at least 2, Luhn), Norwegian fødselsnummer and D-number (both check digits by modulus 11), Danish CPR number
+(valid date; modulus 11 is not checked because it has not applied to all numbers since 2007), Finnish personal
+identity code (century sign and check character) and Icelandic kennitala (check digit by modulus 11, valid date,
+century digit). The check only says that the number can exist, not that it belongs to anyone.
+
 **Suggest rules** adds rules from the data quality profile: columns without missing values, unique columns and codes
-of fixed length.
+of fixed length. Columns whose names contain personnummer, organisationsnummer, CPR, fødselsnummer, henkilötunnus or
+kennitala get a rule for the kind of identity number that at least half of the values pass, columns with postnummer
+in the name a rule for the postcode format most values follow, and columns with e-mail (or e-post) in the name a rule
+for e-mail addresses.
 
 **Run rules** counts the rows that break each rule, shows the share and some examples, and logs the run in the
 dataset's history. For a broken rule the failing rows can be saved as a dataset of their own, and the whole result
@@ -179,7 +228,8 @@ The SQL console is in Analyse mode under the SQL tab and works against the selec
   statement and can be undone in Process.
 - The properties panel lists the dataset's columns (a click inserts the name), the short names of all datasets and
   the extra SQL functions Dataspatium adds: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`,
-  `dm_fix_encoding`, `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`.
+  `dm_fix_encoding`, `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` and
+  `dm_valid_id` (for example `select * from data where dm_valid_id(personnummer, 'se_pnr') = 0`).
 - SQL scripts are saved in the object panel in the same way as R scripts.
 
 The SQLite dialect applies: `||` for text concatenation, `cast(x as integer)`, `strftime()` for dates,

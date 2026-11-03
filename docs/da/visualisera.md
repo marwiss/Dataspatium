@@ -40,6 +40,25 @@ fra datasættet, når diagrammet gengives.
 Diagrammet gemmes som byggerens tilstand (eller den egne specifikation) sammen med datasættets navn og kortnavn, så det kan
 genskabes på nye data med de samme kolonner.
 
+### Akser og linjer
+
+Afsnittet **Akser og linjer** (alle diagramtyper undtagen cirkel og kort) styrer akserne og tilføjer linjer. Tomme
+felter giver automatiske værdier.
+
+| Indstilling | Hvad den gør |
+|---|---|
+| Værdiaksens mindste og største værdi | Faste grænser for værdiaksen (Y, eller X i liggende søjler), for eksempel 0–100 for procent eller samme skala i flere diagrammer. Det, der falder uden for grænserne, klippes væk |
+| X-aksens mindste og største værdi | Vises, når x-aksen er et tal (punkter og linjer), for eksempel for at zoome ind på et interval |
+| Skala på værdiaksen | Lineær, logaritmisk (for værdier, der spænder over flere tierpotenser; kræver positive værdier) eller kvadratrod |
+| Begynd værdiaksen ved nul | Slået til som standard; slå fra for at lade aksen begynde nær den mindste værdi, for eksempel for temperaturer |
+| Etiketternes vinkel | Automatisk, 0°, 45° eller 90° for kategorier med lange navne |
+| Gitterlinjer | Gitteret bag diagrammet, slået til som standard |
+| Referencelinje ved værdien | En stiplet linje ved en værdi på værdiaksen, for eksempel et mål eller et landsgennemsnit, med valgfri tekst |
+| Trendlinje | Punkter og linjer med et tal på x-aksen: ret linje (lineær regression) eller udjævnet kurve (loess), én pr. farvegruppe |
+| Dækning | Hvor uigennemsigtige punkter, flader og søjler er (0,05–1), for eksempel ved mange overlappende punkter |
+
+Reference- og trendlinjer tegnes ikke i diagrammer med små paneler. Indstillingerne gemmes med diagrammet og følger
+med i delte diagramfiler og batchkørsler.
 ## D3-skabeloner
 
 - **Rangering**: én række pr. kategori sorteret efter værdi, med prik og streg. Vælg kategori, værdi, beregning, antal og

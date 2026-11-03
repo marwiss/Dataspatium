@@ -31,26 +31,47 @@ parametreista, ja mahdollisuuksien mukaan esikatselu näyttää, montaako riviä
 | | Poista sarakkeita | Poistaa valitut sarakkeet |
 | | Järjestä sarakkeet uudelleen | Siirrä sarakkeita ylös ja alas |
 | | Vaihda tyyppi | Teksti kokonaisluvuksi, desimaaliluvuksi, päivämääräksi, päivämääräksi ja ajaksi tai kyllä/ei-arvoksi. Desimaalierottimen ja päivämäärämuodon voi antaa; arvot, joita ei voi tulkita, muuttuvat tyhjiksi, ja niiden määrä ilmoitetaan |
+| | Kopioi sarake | Kopio uudella nimellä, esimerkiksi ennen kuin alkuperäistä muutetaan |
+| | Siisti sarakkeiden nimet | Kaikista nimistä tulee pieniä kirjaimia, numeroita ja alaviivoja (`Folkmängd 2024` muuttuu muotoon `folkmangd_2024`), joita on helppo kirjoittaa SQL:ssä ja R:ssä; selitteet säilyttävät alkuperäiset nimet |
 | Arvot | Etsi ja korvaa | Teksti tai säännöllinen lauseke valituissa tekstisarakkeissa, esikatselun kera |
 | | Poista välilyönnit | Alussa ja lopussa olevat sekä (valinnaisesti) kaksoisvälilyönnit |
 | | Vaihda kirjainkoko | SUURAAKKOSET, pienaakkoset tai Isot Alkukirjaimet |
 | | Korjaa merkistökoodaus | Korjaa mojibaken (Ã¶ muuttuu ö:ksi), joka on syntynyt tuonnissa väärällä koodauksella |
 | | Korvaa arvo | Yksi tarkka arvo toisella; tyhjän arvon voi valita lähtö- tai kohdearvoksi |
-| | Täytä puuttuvat arvot | Vakioarvo tai edellisen rivin arvo |
+| | Koodaa arvot uudelleen | Useita arvoja kerralla luettelon mukaan, yksi rivi arvoa kohden, `vanha = uusi` (esimerkiksi `01 = Stockholms län`); muut arvot säilytetään tai tyhjennetään |
+| | Täytä puuttuvat arvot | Vakioarvo, edellisen tai seuraavan rivin arvo, keskiarvo, mediaani tai yleisin arvo |
+| | Pyöristä luvut | Valittuun desimaalimäärään: lähimpään (puolikas pyöristetään poispäin nollasta), alaspäin, ylöspäin tai katkaisemalla desimaalit; negatiivinen määrä pyöristää kymmeniin (−1), satoihin (−2) ja niin edelleen |
+| | Täydennä etunollilla | Tiettyyn pituuteen, esimerkiksi kuntakoodi 114 muotoon 0114; luvuista tulee tekstiä, jotta nollat säilyvät |
+| | Poista merkkejä | Säilytä vain numerot (puhelinnumerot ja Y-tunnukset), säilytä vain kirjaimet ja välilyönnit, poista välimerkit ja symbolit tai poista kaikki välilyönnit |
 | Rivit | Poista rivejä | SQL-ehto, esimerkiksi `befolkning < 1000`; valitse Säilytä, jos haluat sen sijaan säilyttää vain vastaavat rivit |
 | | Poista kaksoiskappaleet | Valittujen sarakkeiden tai koko rivin perusteella; ensimmäinen esiintymä säilytetään |
+| | Poista tyhjät rivit ja sarakkeet | Rivit, joilta kaikki arvot puuttuvat, ja halutessasi sarakkeet, joissa ei ole yhtään arvoa |
+| | Lajittele rivit | Muuttaa rivien järjestyksen pysyvästi, nousevasti tai laskevasti yhden sarakkeen mukaan, jotta viennit ja asiakirjat saavat saman järjestyksen; tyhjät arvot tulevat viimeisiksi |
+| | Säilytä ylimmät rivit | Rivit, joilla on suurin tai pienin arvo, kaikkiaan tai ryhmittäin (esimerkiksi kunkin maakunnan kolme suurinta kuntaa) |
+| | Satunnaisotos | Rivien määrä tai prosenttiosuus; sama siemenluku antaa aina saman otoksen, joten resepti voidaan toistaa |
 | Rakenne | Uusi laskettu sarake | SQL-lauseke, esimerkiksi `round(befolkning / 1000.0, 1)` tai `case when andel > 5 then 'stor' else 'liten' end` |
 | | Yhdistä sarakkeita | Useita sarakkeita yhdeksi tekstisarakkeeksi erottimella |
 | | Jaa sarake | Yksi tekstisarake useaksi erottimen kohdalta |
+| | Poimi osa tekstistä | Uusi sarake, jossa on tietty määrä merkkejä tekstin alusta tai lopusta laskettuna valitusta kohdasta (Ruotsin läänikoodi on kuntakoodin kaksi ensimmäistä merkkiä) |
 | | Pivotoi pitkään muotoon | Valituista sarakkeista tulee rivejä, joissa on nimi ja arvo |
 | | Pivotoi leveään muotoon | Nimisarakkeen arvoista tulee uusia sarakkeita |
 | | SQL-lause | Mikä tahansa UPDATE, DELETE tai ALTER TABLE taulua `data` vastaan |
+| Laskelmat | Osuus summasta | Kunkin arvon osuus summasta prosentteina tai suhdelukuna, kaikkiaan tai ryhmittäin (kunnan osuus maakunnan väestöstä) |
+| | Järjestä sijoille | Sija järjestyksessä, suurin tai pienin ensin, kaikkiaan tai ryhmittäin; yhtä suuret arvot saavat saman sijan (aukolla tai ilman) tai juoksevan sijan |
+| | Kumulatiivinen summa | Kertyvä summa toisen sarakkeen osoittamassa järjestyksessä, kaikkiaan tai ryhmittäin |
+| | Muutos edellisestä | Erotus tai prosenttimuutos edelliseen riviin toisen sarakkeen osoittamassa järjestyksessä, esimerkiksi edelliseen vuoteen kunnittain |
+| | Luokittele | Luvut luokkiin omilla alarajoilla (`0, 18, 65` antaa `0–17`, `18–64` ja `65–`), tietty määrä yhtä leveitä luokkia tai ryhmiä, joissa on yhtä monta riviä (kvantiilit) |
+| | Standardoi | z-arvot (etäisyys keskiarvosta keskihajontoina, otoksen keskihajonta) tai arvot skaalattuna välille 0–1 |
+| | Poimi päivämäärän osa | Vuosi, neljännes, kuukausi, ISO-viikko, viikonpäivä (1 = maanantai), päivä, vuoden päivä, vuosi ja kuukausi (`2024-03`) tai tunti päivämäärästä |
+| | Aika päivämäärien välillä | Kokonaisten päivien, viikkojen, kuukausien tai vuosien määrä kahden päivämäärän välillä, esimerkiksi ikä; ilman loppupäivää lasketaan siihen päivään, jona vaihe ajetaan |
 | Uudet aineistot | Ryhmittele ja koosta | Summa, keskiarvo, pienin, suurin, lukumäärä, erillisten lukumäärä tai mediaani ryhmittäin uuteen aineistoon |
 | | Yhdistä aineistoja | Vasen liitos tai sisäliitos toiseen aineistoon avaimen perusteella |
 | | Liitä aineistoja | Pinoaa rivit useista aineistoista; sarakkeet yhdistetään nimen perusteella |
 | | Puhdista luokat | Etsii saman arvon kirjoitusmuunnelmat (kirjainkoko, välilyönnit, tarkkeet) ja yhdistää ne |
 
 Uuden aineiston luovat toiminnot jättävät alkuperäisen ennalleen ja valitsevat uuden aineiston, kun se on valmis.
+Laskelmat lisäävät uuden sarakkeen ja jättävät olemassa olevat ennalleen; ne perustuvat SQL:n ikkunafunktioihin, ja
+ne viedään R:ään dplyr-koodina, jossa on `group_by()` ja `mutate()`.
 
 ## Kumoa
 
@@ -74,10 +95,40 @@ arvot, vaihteluväli ja havainnot. Havainnot osoittavat toimintoon, joka korjaa 
 
 ## Säännöt
 
-**Säännöt**-painike avaa aineiston laatusäännöt: mitä on pädettävä, jotta data on oikein. Sääntötyyppejä on seitsemän: ei saa
-puuttua, yksilöllinen (yksi tai useampi sarake yhdessä), välillä (luvut, päivämäärät tai teksti), luettelossa, vastaa kuviota
-(säännöllinen lauseke), tekstin pituus ja vapaa SQL-ehto, jonka on oltava tosi jokaisella rivillä. **Ehdota sääntöjä** lisää
-sääntöjä datan laatuprofiilista: sarakkeet ilman puuttuvia arvoja, yksilölliset sarakkeet ja kiinteän pituiset koodit.
+**Säännöt**-painike avaa aineiston laatusäännöt: mitä on pädettävä, jotta data on oikein. Sääntötyypit ovat:
+
+| Sääntötyyppi | Rikkoo |
+|---|---|
+| Ei saa puuttua | Puuttuvat arvot |
+| Yksilöllinen | Arvot (tai useamman sarakkeen yhdistelmät), jotka esiintyvät useammin kuin kerran |
+| Välillä | Luvut, päivämäärät tai teksti rajojen ulkopuolella |
+| Luettelossa | Arvot, joita ei ole luettelossa |
+| Ei kiellettyjä arvoja | Arvot, jotka ovat luettelossa, esimerkiksi `tuntematon` tai `-99` |
+| Vastaa kuviota | Teksti, joka ei vastaa säännöllistä lauseketta |
+| Tietty muoto | Teksti, joka ei ole sähköpostiosoite, verkko-osoite, ISO-päivämäärä, postinumero (ruotsalainen, tanskalainen, norjalainen, suomalainen tai islantilainen) tai Ruotsin kunta- tai läänikoodi |
+| Tekstin pituus | Teksti, joka on rajoja lyhyempi tai pidempi |
+| Ei ylimääräisiä välilyöntejä | Teksti, jonka alussa tai lopussa on välilyöntejä tai jossa on kaksoisvälilyöntejä |
+| Voidaan tulkita tyypiksi | Teksti, jota ei voi tulkita kokonaisluvuksi, desimaaliluvuksi, päivämääräksi, päivämääräksi ja ajaksi tai kyllä/ei-arvoksi |
+| Kelvollinen tunnus | Numerot, joiden muoto on väärä, päivämäärä virheellinen tai tarkiste väärä, ks. alla |
+| Vertaa kahta saraketta | Rivit, joilla kahden sarakkeen välinen ehto ei päde, esimerkiksi että alkupäivä on pienempi tai yhtä suuri kuin loppupäivä |
+| Löytyy toisesta aineistosta | Arvot, jotka puuttuvat toisen aineiston sarakkeesta (viite-eheys, kuten vierasavain) |
+| Täytettyjen arvojen osuus | Sarake kokonaisuutena, kun täytettyjen arvojen osuus on kynnysarvoa pienempi (esimerkiksi 95 %) |
+| Ei poikkeavia arvoja | Luvut, jotka ovat kvartiileista kauempana kuin valittu määrä kvartiilivälejä (oletus 1,5) tai keskiarvosta kauempana kuin valittu määrä keskihajontoja (oletus 3) |
+| SQL-ehto | Rivit, joilla vapaa SQL-ehto ei ole tosi |
+
+Tunnukset tarkistetaan näin: ruotsalainen henkilötunnus ja samordningsnummer (10 tai 12 numeroa, kelvollinen
+päivämäärä, päivä plus 60 samordningsnummerissa, tarkiste Luhnin mukaan), ruotsalainen organisaationumero (kolmas
+numero vähintään 2, Luhn), norjalainen fødselsnummer ja D-numero (molemmat tarkisteet modulo 11), tanskalainen
+CPR-numero (kelvollinen päivämäärä; modulo 11 -tarkistetta ei tarkisteta, koska se ei ole koskenut kaikkia numeroita
+vuodesta 2007), suomalainen henkilötunnus (välimerkki ja tarkistusmerkki) ja islantilainen kennitala (tarkiste modulo
+11, kelvollinen päivämäärä, vuosisatanumero). Tarkistus kertoo vain, että numero voi olla olemassa, ei että se
+kuuluu jollekulle.
+
+**Ehdota sääntöjä** lisää sääntöjä datan laatuprofiilista: sarakkeet ilman puuttuvia arvoja, yksilölliset sarakkeet
+ja kiinteän pituiset koodit. Sarakkeet, joiden nimessä on henkilötunnus, hetu, personnummer, CPR, fødselsnummer tai
+kennitala, saavat säännön sille tunnuslajille, jonka vähintään puolet arvoista läpäisee; sarakkeet, joiden nimessä
+on postinumero, saavat säännön sille postinumeromuodolle, jota useimmat arvot noudattavat; ja sarakkeet, joiden
+nimessä on sähköposti tai e-mail, saavat säännön sähköpostiosoitteille.
 
 **Aja säännöt** laskee kutakin sääntöä rikkovat rivit, näyttää osuuden ja muutaman esimerkin ja kirjaa ajon aineiston
 historiaan. Rikotun säännön rikkovat rivit voi tallentaa omaksi aineistokseen, ja koko tuloksen voi ladata HTML-raporttina.
@@ -178,7 +229,8 @@ suorittaa koko skriptin, valittu teksti suoritetaan erikseen.
   kumota Muokkaa-tilassa.
 - Ominaisuuspaneeli luettelee aineiston sarakkeet (napsautus lisää nimen), kaikkien aineistojen lyhytnimet ja Dataspatiumin
   lisäämät SQL-funktiot: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`, `dm_upper`,
-  `dm_lower`, `dm_title`, `dm_squish`.
+  `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` ja
+  `dm_valid_id` (esimerkiksi `select * from data where dm_valid_id(hetu, 'fi_hetu') = 0`).
 - SQL-skriptit tallennetaan kohdepaneeliin samoin kuin R-skriptit.
 
 SQLiten murre on voimassa: `||` tekstin yhdistämiseen, `cast(x as integer)`, `strftime()` päivämääriin, `group_concat()`,

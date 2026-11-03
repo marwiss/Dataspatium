@@ -41,15 +41,19 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 ## Vad du kan göra
 
 - **Hämta in**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- och shapefile-filer,
-  text med fasta kolumnbredder, statistikfiler från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS
+  tabeller i HTML-, Markdown-, Word- och LaTeX-dokument, kartfiler i KML, KMZ, GPX och TopoJSON, SQL-skript,
+  äldre kalkylformat (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), text med fasta kolumnbredder, statistikfiler
+  från SPSS, Stata, SAS och SCB:s PX-format samt Parquet och RDS
   (via R), inklistrad text, filer från webbadresser, och data direkt från öppna API:er hos SCB,
   Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
   dataportal samt statistikbyråerna och andra myndigheter i Danmark, Norge, Finland, Island, Grönland, Färöarna
   och Åland och Nordic Statistics, med landsfilter och omhämtning av alla API-datamängder på en knapptryckning (se
   [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och SCB:s kommun- och länsgränser
   följer med.
-- **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, beräkna, pivotera och
-  koppla data, kontrollera datakvalitet med profil och regler, pseudonymisera personnummer inför delning, slå
+- **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, koda om,
+  klassindela, rangordna, beräkna andelar, löpande summor och förändringar, pivotera och koppla data,
+  kontrollera datakvalitet med profil och regler (bland annat format, nordiska identitetsnummer, referenser till
+  andra datamängder och avvikande värden), pseudonymisera personnummer inför delning, slå
   upp kommun och län ur koordinater, med ångra, versioner och recept som kan exporteras som R eller SQL (se
   [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
@@ -57,7 +61,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   SQL-celler som blir rapporter i HTML, Word, PDF, Markdown eller LaTeX (se
   [docs/anteckningsbok.md](docs/anteckningsbok.md)), helt i webbläsaren.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
-  länsgränser), D3-mallar eller R,
+  länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som
   blir HTML eller PowerPoint (se [docs/visualisera.md](docs/visualisera.md)).
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument

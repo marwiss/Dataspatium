@@ -7,7 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/recipes', ['data/datasets', 'data/operations'], (datasets, ops) => {
+  // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra'], (datasets, ops) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -26,6 +27,7 @@
     }
 
     /** Human-readable step description in the UI language. */
+    const groupText = (params) => (params.group ? D.t('recipe.group', { group: params.group }) : '');
     function describe(opId, params, result) {
       const cols = (params.columns || (params.column ? [params.column] : [])).join(', ');
       const n = result && typeof result.rows === 'number' ? D.t('recipe.rows', { n: result.rows }) : '';
@@ -55,6 +57,25 @@
         case 'geo_area': return D.t('recipe.geo_area', { column: params.column, name: params.name || 'area_km2', n });
         case 'geo_reproject': return D.t('recipe.geo_reproject', { x: params.xColumn, y: params.yColumn, crs: params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84', n });
         case 'geo_region': return D.t(params.level === 'lan' ? 'recipe.geo_region.lan' : 'recipe.geo_region.kommun', { lon: params.lonColumn, lat: params.latColumn, n: result && typeof result.matched === 'number' ? D.t('recipe.geo_region.matched', { matched: result.matched, rows: result.rows }) : n });
+        case 'duplicate_column': return D.t('recipe.duplicate_column', { column: params.column, name: params.name });
+        case 'clean_names': return D.t('recipe.clean_names', { count: result && typeof result.columns === 'number' ? result.columns : '' });
+        case 'round_numbers': return D.t('recipe.round_numbers', { cols, decimals: Number(params.decimals) || 0, n });
+        case 'pad_text': return D.t('recipe.pad_text', { cols, length: params.length, n });
+        case 'clean_chars': return D.t('recipe.clean_chars', { cols, mode: D.t('opt.mode.' + params.mode), n });
+        case 'recode_values': return D.t('recipe.recode_values', { column: params.column, n });
+        case 'remove_empty': return D.t('recipe.remove_empty', { n });
+        case 'sort_rows': return D.t('recipe.sort_rows', { column: params.column, direction: D.t('opt.direction.' + (params.direction === 'desc' ? 'desc' : 'asc')) });
+        case 'keep_top': return D.t('recipe.keep_top', { count: params.count, column: params.column, group: groupText(params), n });
+        case 'sample_rows': return D.t(params.unit === 'percent' ? 'recipe.sample_rows.percent' : 'recipe.sample_rows', { count: params.count, n });
+        case 'substring': return D.t('recipe.substring', { name: params.name, column: params.column });
+        case 'date_part': return D.t('recipe.date_part', { name: params.name, part: D.t('opt.part.' + params.part), column: params.column });
+        case 'date_diff': return D.t('recipe.date_diff', { name: params.name, unit: D.t('opt.unit.' + params.unit), start: params.start, end: params.end || D.t('recipe.today') });
+        case 'bin_numeric': return D.t('recipe.bin_numeric', { name: params.name, column: params.column });
+        case 'share_of_total': return D.t('recipe.share_of_total', { name: params.name, column: params.column, group: groupText(params) });
+        case 'rank_values': return D.t('recipe.rank_values', { name: params.name, column: params.column, group: groupText(params) });
+        case 'running_total': return D.t('recipe.running_total', { name: params.name, column: params.column, group: groupText(params) });
+        case 'change_previous': return D.t('recipe.change_previous', { name: params.name, column: params.column, group: groupText(params) });
+        case 'standardize': return D.t('recipe.standardize', { name: params.name, column: params.column });
         default: return opId;
       }
     }

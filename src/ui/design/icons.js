@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * <dm-icon name="search" size="16"> renders a Lucide icon (ISC licence, vendor/lucide) as inline SVG.
+ * <dm-icon name="search" size="16"> renders a Lucide icon (ISC licence, vendor/lucide), or one of the app's own glyphs, as inline SVG.
  * Icons are embedded as text assets and parsed once per name. Icons are decorative by default
  * (aria-hidden); pass `label` to make one meaningful to screen readers.
  */
@@ -12,12 +12,20 @@
     /** @type {Map<string, Promise<SVGElement|null>>} */
     const cache = new Map();
     const parser = new DOMParser();
+    /**
+     * The app's own glyphs, drawn in the Lucide style (24 px grid, 2 px stroke). `dataspatium` is the mark:
+     * Lucide's stacked sheets ("layers") with the left corner of each sheet cut off, so that together they form
+     * a D; centred, with the original space between the sheets.
+     */
+    const OWN = {
+      dataspatium: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.33 2.18a2 2 0 0 0-1.66 0L5.23 3.75 Q4.5 4.08 4.5 4.88 L4.5 9.12 Q4.5 9.92 5.23 10.25 L8.68 11.82a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="M4.5 13.12 L4.5 14.12 Q4.5 14.92 5.23 15.25 L8.68 16.82 a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 19.5 12"/><path d="M4.5 18.12 L4.5 19.12 Q4.5 19.92 5.23 20.25 L8.68 21.82 a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 19.5 17"/></svg>',
+    };
 
     /** @param {string} name @returns {Promise<SVGElement|null>} */
     function loadIcon(name) {
       let p = cache.get(name);
       if (!p) {
-        p = D.assets.loadText(`lucide/icons/${name}.svg`).then((text) => {
+        p = (OWN[name] ? Promise.resolve(OWN[name]) : D.assets.loadText(`lucide/icons/${name}.svg`)).then((text) => {
           const doc = parser.parseFromString(text, 'image/svg+xml');
           const svg = doc.documentElement;
           if (!(svg instanceof SVGElement) || svg.nodeName !== 'svg') return null;

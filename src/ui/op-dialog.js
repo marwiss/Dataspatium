@@ -9,7 +9,7 @@
   const D = globalThis.Dataspatium;
   D.define('ui/op-dialog', ['ui/base', 'ui/overlays', 'ui/basic', 'data/operations', 'data/recipes', 'data/types'], (base, overlays, basic, ops, recipes, types) => {
     const { h, t, i18n, replace } = base;
-    const TEXT_ONLY_OPS = new Set(['replace_text', 'trim', 'change_case', 'fix_encoding']);
+    const TEXT_ONLY_OPS = new Set(['replace_text', 'trim', 'change_case', 'fix_encoding', 'clean_chars']);
 
     function optionLabel(param, value) {
       if (param.name === 'type') return t('type.' + value);
@@ -40,9 +40,10 @@
           // Parameters may restrict the column types (kinds) and suggest a default by name (prefer, a RegExp).
           const wanted = p.kinds ? columns.filter((c) => p.kinds.includes(c.type)) : (textOnly ? columns.filter((c) => c.type === 'text') : columns);
           const list = wanted.length ? wanted : columns;
-          sel.options = list.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` }));
+          // An optional column (for example "per group") starts empty.
+          sel.options = (p.optional ? [{ value: '', label: t('op.column.none') }] : []).concat(list.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` })));
           const preferred = p.prefer ? list.find((c) => p.prefer.test(c.name)) : null;
-          sel.value = values[p.name] || (preferred && preferred.name) || (list[0] && list[0].name);
+          sel.value = values[p.name] !== undefined ? values[p.name] : p.optional ? '' : ((preferred && preferred.name) || (list[0] && list[0].name));
           values[p.name] = sel.value;
           sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
           fields.push(sel);
@@ -70,6 +71,11 @@
           sw.checked = !!values[p.name];
           sw.addEventListener('change', () => { values[p.name] = sw.checked; schedulePreview(); });
           fields.push(sw);
+        } else if (p.type === 'lines') {
+          const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '5', label: paramLabel(op.id, p), mono: true, help: i18n.has(`op.${op.id}.${p.name}.help`) ? t(`op.${op.id}.${p.name}.help`) : '' }));
+          ta.value = values[p.name] || '';
+          ta.addEventListener('input', () => { values[p.name] = ta.value; schedulePreview(); });
+          fields.push(ta);
         } else if (p.type === 'expression') {
           const help = i18n.has(`op.${op.id}.${p.name}.help`) ? t(`op.${op.id}.${p.name}.help`) : '';
           const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: paramLabel(op.id, p), mono: true, help: help ? help + ' ' + t('op.columns.available', { columns: columns.map((c) => c.name).join(', ') }) : t('op.columns.available', { columns: columns.map((c) => c.name).join(', ') }) }));

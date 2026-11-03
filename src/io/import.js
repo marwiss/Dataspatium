@@ -7,13 +7,28 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, types, datasets) => {
-    const importers = [excel, json, xml, sqliteImp, shapefile, rFormats, fixedWidth, csv];
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, types, datasets) => {
+    const importers = [excel, tables, geo, json, xml, sqliteImp, shapefile, rFormats, fixedWidth, csv];
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
       if (forced) { const found = importers.find((i) => i.id === forced); if (found) return found; }
       return importers.find((i) => i.detect(file)) || csv;
+    }
+
+    /**
+     * Like importerFor, but looks at the start of the file where the extension is ambiguous: a TopoJSON
+     * topology saved as .json goes to the map importer, an Excel 2003 XML workbook saved as .xml to the
+     * spreadsheet importer.
+     * @param {File} file @param {string} [forced] importer id
+     */
+    async function resolveImporter(file, forced) {
+      const importer = importerFor(file, forced);
+      if (forced || (importer !== json && importer !== xml)) return importer;
+      const head = await file.slice(0, 65536).text();
+      if (importer === json && /"type"\s*:\s*"Topology"/.test(head)) return geo;
+      if (importer === xml && /urn:schemas-microsoft-com:office:spreadsheet/.test(head)) return excel;
+      return importer;
     }
 
     function baseName(fileName) { return String(fileName || D.t('datasets.default.name')).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || D.t('datasets.default.name'); }
@@ -24,7 +39,7 @@
      * @param {Record<string, any>} [options] format, encoding, delimiter, header, sheet, path, decimal
      */
     async function preview(file, options = {}) {
-      const importer = importerFor(file, options.format);
+      const importer = await resolveImporter(file, options.format);
       const p = await importer.preview(file, options);
       const columns = types.cleanColumnNames(p.columns);
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
@@ -65,7 +80,7 @@
      * @param {string} [name]
      */
     async function run(file, options, specs, name, progress) {
-      const importer = importerFor(file, options.format);
+      const importer = await resolveImporter(file, options.format);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.

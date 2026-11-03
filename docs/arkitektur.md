@@ -98,6 +98,13 @@ Bearbetning bygger på fyra moduler:
   genereras ur), `apply(ctx, params)` som kör SQL mot `data`, `toSQL` och `toR` för receptexport och, där det
   går, `preview`. Typändringar bygger om kolumnen (ny kolumn, uppdatera, ta bort, byt namn) eftersom SQLite
   inte låter en kolumns typ ändras på plats. `edit_cell` har dessutom `inverse` för billig ångra.
+  `src/data/operations-extra.js` registrerar fler åtgärder i samma register (kopiera kolumn, städa kolumnnamn,
+  avrunda, fyll ut, ta bort tecken, koda om, sortera, behåll översta, slumpmässigt urval, ta bort tomma, del av
+  text, datumdel, tid mellan datum, klassindela, andel av summan, rangordna, löpande summa, förändring mot
+  föregående, standardisera). Beräkningar som behöver fönsterfunktioner skriver resultatet till en temporär tabell
+  `__dm_calc (rid integer primary key, v)` med `rowid` som nyckel och uppdaterar sedan `data`, så att även
+  miljontals rader går i en sats; avrundning, utfyllnad, datumdelar, datumskillnader och identitetsnummer är
+  SQL-funktioner i SQLite-workern (`dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff`, `dm_valid_id`).
 - `src/data/recipes.js`: `apply` kör en åtgärd i en savepoint, loggar steget i `_log` (action `op`),
   uppdaterar `_columns` och schemalägger sparning. Ångra-stacken håller tio steg per datamängd som
   ögonblicksbild eller omvänd åtgärd. `steps`, `replay`, `toSQL`, `toR` och `exportJson` ger recepten.
@@ -108,12 +115,18 @@ Bearbetning bygger på fyra moduler:
 - `src/data/rules.js`: kvalitetsregler per datamängd (`_meta.rules`, så att de följer med filen). Varje regeltyp
   översätts till ett SQL-villkor för de rader som bryter mot regeln (`violation`), körningen räknar och tar
   exempel, loggar `validate` och kan skapa en datamängd av de felande raderna via `createFromQuery`; `suggest`
-  härleder regler ur profilen och `toMarkdown` ger rapporten som dokumentbyggarna gör till HTML.
+  härleder regler ur profilen och `toMarkdown` ger rapporten som dokumentbyggarna gör till HTML. Regler som
+  behöver mer än ett villkor per rad förbereds asynkront i `prepare`: referensregeln kopierar den andra
+  datamängdens nyckelvärden till en temporär tabell, och regeln för avvikande värden räknar ut gränserna
+  (kvartiler eller medelvärde och standardavvikelse) innan villkoret ställs. Andelen ifyllda värden gäller hela
+  kolumnen och avgörs av `passes` i stället för per rad.
 
 ## Import och export
 
 Varje importformat är en adapter i `src/io/importers/` med `detect(file)`, `preview(file, options)` och
-`parse(file, options)`; `src/io/import.js` väljer adapter (Excel, JSON, XML, SQLite, R-format, annars CSV), rensar
+`parse(file, options)`; `src/io/import.js` väljer adapter (Excel, tabeller i dokument, kartfiler, JSON, XML,
+SQLite, shapefile, R-format, fast bredd, annars CSV) med `resolveImporter`, som också läser de första 64 kB för
+att känna igen TopoJSON i en .json-fil och Excel 2003 XML i en .xml-fil, rensar
 kolumnnamn, härleder typer ur förhandsgranskningen (deklarerade typer från ett SQLite-schema vinner) och skapar
 datamängden. Avgränsade textfiler på 64 MB eller mer (eller `options.stream`) går i stället genom `runStream`:
 `csv.parseStream` låter PapaParse läsa filen bit för bit (1 MB i taget, FileReader med den upptäckta
@@ -136,9 +149,26 @@ namn hämtas ur `gpkg_spatial_ref_sys`. `fixed-width.js` läser text med fasta k
 mellanslag som alla rader delar eller anges av användaren. `src/io/url-import.js` hämtar en webbadress som File
 för guiden eller lägger till en Dataspatium-konfiguration direkt via modulen som formatfältet pekar ut.
 
+`tables.js` hittar tabeller i dokument och erbjuder dem med namn som tabeller att välja: HTML via `DOMParser`
+(närmaste rubrik eller `caption` som namn), Markdown-tabeller med avgränsningsrad, Word via `word/document.xml` i
+ZIP-filen (`w:tbl`, `gridSpan` och `vMerge`) och LaTeX-miljöerna `tabular`, `tabularx`, `longtable` med flera
+(`\multicolumn`, `\\` som radslut, `booktabs`-regler som rubrikmarkering). Sammanslagna celler upprepas i alla
+rutor de täcker (`grid`). `geo.js` läser KML och KMZ (platsmärken med mappsökväg, tid och `ExtendedData`),
+GPX (vägpunkter, rutter, spår och spårpunkter som lager, längd med haversine) och TopoJSON (deltaavkodade,
+kvantiserade bågar, ett lager per objekt) och ger samma kolumner som GeoJSON-importen. Excel-adaptern lämnar de
+äldre kalkylformaten till SheetJS, och SQLite-adaptern kör `.sql`-skript i en tom databas efter att ha tagit bort
+MySQL-specifika rader.
+
 Geometrihjälpen `src/data/geo.js` tolkar geometriceller (GeoJSON-objekt eller -text, Feature, WKT med Z/M och
 `SRID=`-prefix), avgör om koordinater är projicerade, beräknar utbredning och räknar om mellan SWEREF 99 TM
 (EPSG:3006) och WGS 84 med Lantmäteriets Gauss-Krüger-serier (`swerefToWgs84`, `wgs84ToSweref`, `toWgs84`).
+
+Axlar och linjer i `viz/vega-builder.js`: `applyAxes` lägger byggarens gränser och val på värdeaxelns skala
+(`domainMin`, `domainMax`, `type` log eller sqrt, `zero`), på X-skalan när X är ett tal, på axlarna (`labelAngle`,
+`grid`) och på märket (`clip` när en gräns är satt, `opacity`). `guideLayers` ger extra lager: en streckad `rule`
+med `datum` på värdeaxeln och en `text` för referenslinjen, och en `regression`- eller `loess`-transform (med
+`groupby` på färgkolumnen) för trendlinjen. När det finns sådana lager flyttas kodningen in i ett eget lager så att
+huvudmärket och linjerna delar skalor.
 
 Kartorna är två diagramtyper i `viz/vega-builder.js` (`geo: true`). Koropletkartan `map`: x bär geometrikolumnen,
 y etiketten och color värdet; `toSpec` tolkar geometritexten, väljer projektion (`identity` med `reflectY` för

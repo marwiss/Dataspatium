@@ -56,7 +56,7 @@
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
             h('a', { class: 'dm-skip', href: '#dm-center', text: t('shell.skip'), onclick: (e) => { e.preventDefault(); this.slots.center.focus(); } }),
             h('header', { class: 'dm-topbar' },
-              h('div', { class: 'dm-brand' }, icons.icon('layers', 18), h('span', { text: t('app.name') })),
+              h('div', { class: 'dm-brand' }, icons.icon('dataspatium', 18), h('span', { text: t('app.name') })),
               this.modeNav,
               h('div', { class: 'dm-topbar-right' },
                 this.statusEl, this.storageEl,

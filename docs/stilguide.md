@@ -27,8 +27,9 @@ Allt gränssnitt byggs av komponenterna i `src/ui/components/` (prefix `dm-`): `
 toaster visas till vänster om den medan den är öppen. Kursen markerar knappen användaren ska
 klicka på med klassen `.dm-course-target` (en ram i accentfärgen) och hittar knappar via attributet `data-course`. Rader av
 växlingsknappar (landsfiltret i Inhämta) använder `.dm-chips` och `.dm-chip` med `aria-pressed`. Saknas något:
-lägg till en komponent, aldrig en engångslösning i en vy. Ikoner kommer från Lucide via `dm-icon`; appens märke är
-Lucide-ikonen *layers* i accentfärgen, som också är favicon (`src/ui/design/favicon.svg`).
+lägg till en komponent, aldrig en engångslösning i en vy. Ikoner kommer från Lucide via `dm-icon`. Appens märke är en egen
+ikon i samma stil, `dm-icon name="dataspatium"` (`OWN` i `src/ui/design/icons.js`): tre staplade ark vars vänstra hörn är
+kapat, så att de tillsammans bildar ett D. I accentfärgen är det också favicon (`src/ui/design/favicon.svg`).
 
 ## Layout
 

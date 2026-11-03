@@ -7,7 +7,12 @@
 | CSV, TSV, TXT med avgränsare | Ja | Ja | Avgränsare, teckenkodning och rubrikrad identifieras automatiskt och kan ändras |
 | Text med fasta kolumnbredder | Ja | Nej | Välj formatet i importsteget (filer som heter .fwf eller .prn känns igen). Kolumnstarterna hittas ur mellanslag som finns på alla rader, eller anges som positioner |
 | Excel xlsx, xlsm, xls, xlsb | Ja | xlsx | Välj blad; datum och ja/nej blir riktiga typer |
-| ODS (LibreOffice) | Ja | Ja | Samma typhantering som Excel |
+| ODS och FODS (LibreOffice) | Ja | ods | Samma typhantering som Excel |
+| Äldre kalkylformat: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Ja | Nej | Läses av samma kalkylbladsläsare som Excel; välj blad. Excel 2003 XML känns igen på innehållet även om filen heter .xml |
+| Tabeller i dokument: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Ja | Nej | Alla tabeller i filen visas i en lista med rubrik eller bildtext, antal rader och kolumner. Sammanslagna celler (colspan och rowspan, Words sammanfogade celler, `\multicolumn`) fylls i på alla rader och kolumner de täcker. Rubrikraden tas från `th`, `thead`, Markdowns avgränsningsrad, Words rubrikrad eller `booktabs` (`\midrule`) |
+| KML och KMZ (Google Earth) | Ja | Nej | En rad per plats med namn, beskrivning, mappsökväg, tid och utökade data som kolumner; punkter, linjer, polygoner och sammansatta geometrier blir GeoJSON |
+| GPX (GPS-spår) | Ja | Nej | Välj lager: vägpunkter, rutter, spår (med antal punkter och längd i km) eller spårpunkter (en rad per punkt med tid och höjd) |
+| TopoJSON | Ja | Nej | Varje objekt i topologin är ett lager; bågarna avkodas till vanliga GeoJSON-geometrier. Känns igen på innehållet även om filen heter .json |
 | JSON | Ja | Ja | Lista med objekt, objekt som innehåller en lista (sökväg kan anges), lista med listor |
 | NDJSON, JSON Lines | Ja | Nej | Ett objekt per rad |
 | JSON-stat | Ja | Nej | Känns igen automatiskt (`class: dataset`, version 2.0); en rad per cell med koder, texter och värde |
@@ -15,6 +20,7 @@
 | Shapefile (ZIP med shp, dbf, prj, cpg, eller bara shp) | Ja | Nej | Attributen blir typade kolumner enligt dbf-schemat, geometrin GeoJSON i kolumnen `geometry`. Välj lager om ZIP-filen har flera, och förenkla geometrin med en tolerans i kartenheter. Koordinaterna behålls (SWEREF99 TM eller longitud/latitud) |
 | XML | Ja | Ja | En rad per upprepat element (väljs i importsteget); attribut och underelement blir kolumner, nästlade element får punktnamn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil återställs med typer, etiketter och historik; i andra databaser väljer du tabell och typerna tas från schemat |
+| SQL-skript (sql) | Ja | Nej | Ett skript med `CREATE TABLE` och `INSERT`, till exempel en databasdump, körs i en tom SQLite-databas och tabellerna visas för val. MySQL-specifika rader (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` och tabellval som `ENGINE=`) tas bort först; andra dialekter fungerar så långt de följer SQLite:s syntax |
 | GeoPackage (gpkg) | Ja | Nej | Lagren (feature- och attributtabeller) väljs som tabeller; geometrikolumnen blir GeoJSON som kartdiagrammet ritar, referenssystemet visas |
 | SPSS sav, zsav, por | Ja | sav | Via R-paketet haven. Variabeletiketter blir kolumnetiketter, värdeetiketter blir text |
 | Stata dta | Ja | dta | Via haven. Vid export kortas kolumnnamnen till Statas regler (32 tecken, ASCII) |

@@ -1,14 +1,15 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Spreadsheet importer (xlsx, xlsm, xls, xlsb, ods) built on SheetJS Community Edition.
+ * Spreadsheet importer built on SheetJS Community Edition: Excel (xlsx, xlsm, xls, xlsb and the 2003 XML
+ * format), OpenDocument (ods, fods), dBASE (dbf), SYLK, DIF, Lotus 1-2-3 (wk1, wk3, wk4, wks) and Quattro Pro.
  * Dates are returned as JS Date objects (cellDates) and typed by data/types.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('io/importers/excel', ['io/importers/csv'], (csv) => {
-    const EXT = /\.(xlsx|xlsm|xls|xlsb|ods)$/i;
+    const EXT = /\.(xlsx|xlsm|xls|xlsb|ods|fods|dbf|slk|sylk|dif|wk1|wk3|wk4|wks|wq1|wq2|wb1|wb2|wb3|qpw)$/i;
     /** @type {WeakMap<File, Promise<any>>} parsed workbooks per file (reused between preview and parse) */
     const cache = new WeakMap();
 

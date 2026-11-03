@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <!-- Dataspatium mark: the Lucide "layers" glyph (ISC licence, see vendor/lucide/LICENSE) on the accent colour. -->
+  <!-- Dataspatium mark: Lucide's stacked sheets (ISC licence, see vendor/lucide/LICENSE) with the left corner of each
+       sheet cut off so that together they form a D (same paths as `dataspatium` in src/ui/design/icons.js). -->
   <rect width="32" height="32" rx="7" fill="#2b6cb0"/>
   <g transform="translate(4 4)" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/>
-    <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/>
-    <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>
+    <path d="M10.33 2.18a2 2 0 0 0-1.66 0L5.23 3.75 Q4.5 4.08 4.5 4.88 L4.5 9.12 Q4.5 9.92 5.23 10.25 L8.68 11.82a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+    <path d="M4.5 13.12 L4.5 14.12 Q4.5 14.92 5.23 15.25 L8.68 16.82 a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 19.5 12"/>
+    <path d="M4.5 18.12 L4.5 19.12 Q4.5 19.92 5.23 20.25 L8.68 21.82 a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 19.5 17"/>
   </g>
 </svg>

@@ -87,6 +87,10 @@ steget som *Gör det åt mig*.
   `tests/fixtures/api-fixtures.js`.
 - `-Url "index.html?autorun=1" -TimeoutSec 480` kör spiksidan.
 - Nya tester läggs i `tests/*.test.js` och listas i `tests/index.html`.
+- `tests/index.html?only=viz:,formats3` kör bara de tester vars namn innehåller något av de kommaseparerade
+  orden, till exempel medan ett test felsöks:
+  `powershell -File tools/run-tests.ps1 -Browsers edge -Url "tests/index.html?only=viz:"`. `-Browsers` tar en
+  webbläsare åt gången.
 - Testsidan låser språket till svenska och sparar Grundkursen som stängd innan appen startar, så att testerna som
   startar skalet inte får språkdialogen eller kurspanelen. `tests/course.test.js` sätter själv kursens tillstånd
   och återställer det efteråt.

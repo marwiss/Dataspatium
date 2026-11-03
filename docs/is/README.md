@@ -40,19 +40,19 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 
 ## Hvað þú getur gert
 
-- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, texta með fastri
+- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, töflur í HTML-, Markdown-, Word- og LaTeX-skjölum, kortaskrár á KML-, KMZ-, GPX- og TopoJSON-sniði, SQL-skriftur, eldri töflureiknissnið (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), texta með fastri
   dálkbreidd, tölfræðiskrár úr SPSS, Stata, SAS og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
   og gögn beint úr opnum vefþjónustum hjá Hagstofu Íslands, Veðurstofu Íslands, hagstofum Danmerkur, Noregs, Finnlands,
   Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat og fleiri stofnunum, með landasíu og endurnýjun
   allra API-gagnasafna með einum smelli (sjá [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og sænsk
   sveitarfélaga- og lénamörk SCB fylgja með.
-- **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, reikna, snúa og tengja gögn, athuga
-  gagnagæði með sniði og reglum, dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
+- **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
+  gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
   út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).
 - **Greina**: innbyggt R-stjórnborð með ggplot2 og tidyverse (sjá [r-guide.md](r-guide.md)), SQL-stjórnborð þar sem
   gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
   HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), allt í vafranum.
-- **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
+- **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).
 - **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert

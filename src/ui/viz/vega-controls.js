@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Controls for the Vega-Lite builder: chart type, channels (column, interpretation, aggregate),
- * stacking, labels, titles, formats, filters and, under "Fler alternativ", row limit, colour scheme
- * and a raw specification editor. Calls `onChange(state)` after every change.
+ * stacking, labels, titles, formats, filters, "Axlar och linjer" (axis limits, scale, zero baseline,
+ * label angle, gridlines, reference and trend lines, opacity) and, under "Fler alternativ", row limit,
+ * colour scheme and a raw specification editor. Calls `onChange(state)` after every change.
  */
 (function () {
   'use strict';
@@ -19,7 +20,7 @@
       let { state, customSpec } = options;
       const columns = options.columns;
       const el = h('div', { class: 'dm-stack dm-viz-controls' });
-      let timer = 0;
+      let timer = 0; let axesOpen = false;
       const emit = (immediate) => { clearTimeout(timer); timer = setTimeout(() => options.onChange(state, customSpec), immediate ? 0 : 250); };
 
       function columnSelect(label, value, onPick, { optional = true, kinds = null } = {}) {
@@ -80,6 +81,34 @@
         return h('div', { class: 'dm-stack-sm' }, h('div', { class: 'dm-row' }, h('strong', { text: t('viz.filters') }), basic.button({ label: t('viz.filters.add'), icon: 'plus', size: 'sm', onClick: () => { state.filters = state.filters || []; state.filters.push({ field: columns[0] ? columns[0].name : '', op: '=', value: '' }); draw(); } })), list);
       }
 
+      /** Axis limits, scale, zero baseline, label angle, gridlines, a reference line, a trend line and opacity. */
+      function axesSection(type) {
+        const auto = t('viz.auto');
+        const num = (key, label) => {
+          const el = /** @type {any} */ (h('dm-input', { type: 'number', label, placeholder: auto }));
+          el.value = state[key] === undefined || state[key] === null || state[key] === '' ? '' : String(state[key]);
+          el.addEventListener('change', () => { state[key] = el.value === '' ? '' : Number(el.value); emit(); });
+          return el;
+        };
+        const text = (key, label) => { const el = /** @type {any} */ (h('dm-input', { label })); el.value = state[key] || ''; el.addEventListener('input', () => { state[key] = el.value; emit(); }); return el; };
+        const sw = (key, label, fallback) => { const el = /** @type {any} */ (h('dm-switch', { label })); el.checked = state[key] === undefined ? fallback : !!state[key]; el.addEventListener('change', () => { state[key] = el.checked; emit(); }); return el; };
+        const xQuantitative = !!state.x && state.x.type === 'quantitative' && !state.x.bin;
+        const traced = type.mark === 'point' || type.mark === 'line';
+        const opaque = ['point', 'circle', 'area', 'bar'].includes(type.mark);
+        const details = h('details', { class: 'dm-more', open: axesOpen || null, ontoggle: () => { axesOpen = details.hasAttribute('open'); } }, h('summary', { text: t('viz.axes') }), h('div', { class: 'dm-stack-sm' },
+          h('p', { class: 'dm-help', text: t('viz.axes.help') }),
+          h('div', { class: 'dm-form-grid' },
+            num('yMin', t('viz.ymin')), num('yMax', t('viz.ymax')),
+            smallSelect(t('viz.scale'), ['linear', 'log', 'sqrt'].map((v) => ({ value: v, label: t('viz.scale.' + v) })), state.yScale || 'linear', (v) => { state.yScale = v; emit(); }),
+            xQuantitative ? num('xMin', t('viz.xmin')) : null, xQuantitative ? num('xMax', t('viz.xmax')) : null,
+            smallSelect(t('viz.labelangle'), [{ value: '', label: auto }, { value: '0', label: '0°' }, { value: '-45', label: '45°' }, { value: '-90', label: '90°' }], state.labelAngle === undefined || state.labelAngle === '' ? '' : String(state.labelAngle), (v) => { state.labelAngle = v === '' ? '' : Number(v); emit(); }),
+            num('refValue', t('viz.refline')), text('refLabel', t('viz.refline.label')),
+            traced && xQuantitative ? smallSelect(t('viz.trend'), ['none', 'linear', 'loess'].map((v) => ({ value: v, label: t('viz.trend.' + v) })), state.trend || 'none', (v) => { state.trend = v; emit(); }) : null,
+            opaque ? num('opacity', t('viz.opacity')) : null),
+          h('div', { class: 'dm-row-wrap' }, sw('yZero', t('viz.zero'), true), sw('grid', t('viz.grid'), true))));
+        return details;
+      }
+
       function render() {
         const type = builder.typeOf(state.type);
         const typeTiles = h('div', { class: 'dm-viz-types', role: 'radiogroup', 'aria-label': t('viz.type') }, builder.CHART_TYPES.map((ct) => h('button', { type: 'button', class: 'dm-viz-type', role: 'radio', 'aria-checked': ct.id === state.type ? 'true' : 'false', title: ct.label, onclick: () => { state = builder.switchType(state, ct.id, columns); render(); emit(true); } }, icons.icon(ct.icon, 18), h('span', { text: ct.label }))));
@@ -112,6 +141,7 @@
             h('div', { class: 'dm-form-grid' }, title, subtitle, yFormat, height, legend, type.points ? basemap : null, state.facet && !type.geo ? facetCols : null, (type.mark === 'bar' || type.mark === 'area') && state.color ? stack : null),
             h('div', { class: 'dm-row-wrap' }, type.mark === 'bar' ? labels : null, type.mark === 'line' ? points : null),
             filtersEditor(),
+            !type.geo && type.id !== 'pie' ? axesSection(type) : null,
           ] : h('p', { class: 'dm-help', text: t('viz.custom.help') }),
           h('details', { class: 'dm-more', open: customSpec !== null ? true : null }, h('summary', { text: t('common.more') }), h('div', { class: 'dm-stack-sm' }, h('div', { class: 'dm-form-grid' }, maxRows, scheme), customSwitch, customSpec !== null ? h('div', { class: 'dm-editor-wrap' }, customEditor) : null)));
       }

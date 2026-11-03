@@ -42,7 +42,7 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
 
 ## Hvad du kan
 
-- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tekst
+- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabeller i HTML-, Markdown-, Word- og LaTeX-dokumenter, kortfiler i KML, KMZ, GPX og TopoJSON, SQL-scripts, ældre regnearksformater (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst
   med fast kolonnebredde, statistikfiler fra SPSS, Stata, SAS og PX-formatet samt Parquet og RDS (via R), indsat
   tekst, filer fra webadresser og data direkte fra åbne API'er hos Danmarks Statistik, Open Data DK, SSB,
   Folkehelseinstituttet, Brønnøysundregistrene, Kartverket, MET Norway, Statistikcentralen, THL, PRH, Fintraffic,
@@ -50,13 +50,13 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   Nordic Statistics, Eurostat og svenske myndigheder som SCB, Kolada og SMHI, med landefilter og genhentning af alle
   API-datasæt med et tryk (se [api-konfiguration.md](api-konfiguration.md)). Eksempeldata og SCB's svenske kommune-
   og länsgrænser følger med.
-- **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, beregne, pivotere
-  og sammenkoble data, kontrollere datakvalitet med profil og regler, pseudonymisere personnumre før deling, med
+- **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, omkode, inddele i klasser, rangordne, beregne andele, løbende summer og ændringer, pivotere
+  og sammenkoble data, kontrollere datakvalitet med profil og regler (blandt andet formater, nordiske identitetsnumre, referencer til andre datasæt og afvigende værdier), pseudonymisere personnumre før deling, med
   fortryd, versioner og recepter, der kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
 - **Analysere**: en indbygget R-konsol med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsol, hvor
   datasæt kobles sammen med join via deres kortnavne, og notesbøger med tekst-, R- og SQL-celler, der bliver til
   rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), helt i browseren.
-- **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort), D3-skabeloner eller R, eksporteret
+- **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
 - **Dokumentere**: rapporter og kodebøger fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX, også ét dokument

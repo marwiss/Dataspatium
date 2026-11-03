@@ -30,26 +30,47 @@ og hvor det er muligt, vises en forhåndsvisning af, hvor mange rækker der påv
 | | Slet kolonner | Fjerner valgte kolonner |
 | | Ændr kolonnernes rækkefølge | Flyt kolonner op og ned |
 | | Skift type | Tekst til heltal, decimaltal, dato, dato og tid eller ja/nej. Decimaltegn og datoformat kan angives; værdier, der ikke kan fortolkes, bliver tomme, og antallet rapporteres |
+| | Kopiér kolonne | En kopi med et nyt navn, for eksempel før originalen ændres |
+| | Ryd op i kolonnenavne | Alle navne bliver små bogstaver, cifre og understreger (`Folkmängd 2024` bliver `folkmangd_2024`), som er nemme at skrive i SQL og R; etiketterne beholder de oprindelige navne |
 | Værdier | Søg og erstat | Tekst eller regulært udtryk i valgte tekstkolonner, med forhåndsvisning |
 | | Fjern mellemrum | Indledende, afsluttende og (valgfrit) dobbelte mellemrum |
 | | Skift store og små bogstaver | STORE BOGSTAVER, små bogstaver eller Stort Begyndelsesbogstav |
 | | Reparér tegnkodning | Retter mojibake (Ã¸ bliver til ø), der er opstået ved import med forkert tegnkodning |
 | | Erstat værdi | Én nøjagtig værdi med en anden; en tom værdi kan vælges som fra eller til |
-| | Udfyld manglende værdier | Konstant værdi eller forrige rækkes værdi |
+| | Omkod værdier | Flere værdier på én gang efter en liste med én linje pr. værdi, `gammel = ny` (for eksempel `01 = Stockholms län`); øvrige værdier beholdes eller tømmes |
+| | Udfyld manglende værdier | Konstant værdi, forrige eller næste rækkes værdi, gennemsnit, median eller hyppigste værdi |
+| | Afrund tal | Til valgt antal decimaler: til nærmeste (en halv afrundes væk fra nul), nedad, opad eller ved at stryge decimalerne; et negativt antal afrunder til tiere (−1), hundreder (−2) og så videre |
+| | Udfyld med foranstillede nuller | Til en bestemt længde, for eksempel kommunekoden 114 til 0114; tal bliver tekst, så nullerne bevares |
+| | Fjern tegn | Behold kun cifre (telefon- og CVR-numre), behold kun bogstaver og mellemrum, fjern tegnsætning og symboler, eller fjern alle mellemrum |
 | Rækker | Slet rækker | SQL-betingelse, for eksempel `befolkning < 1000`; vælg Behold for i stedet kun at beholde de rækker, der matcher |
 | | Fjern dubletter | På valgte kolonner eller hele rækken; første forekomst beholdes |
+| | Fjern tomme rækker og kolonner | Rækker, hvor alle værdier mangler, og om ønsket kolonner helt uden værdier |
+| | Sortér rækker | Ændrer rækkernes rækkefølge permanent, stigende eller faldende på én kolonne, så eksporter og dokumenter får samme rækkefølge; tomme værdier kommer sidst |
+| | Behold de øverste rækker | De rækker, der har størst eller mindst værdi, i alt eller pr. gruppe (for eksempel de tre største kommuner i hver region) |
+| | Tilfældig stikprøve | Et antal rækker eller en andel i procent; samme frø giver altid samme stikprøve, så opskriften kan afspilles igen |
 | Struktur | Ny beregnet kolonne | SQL-udtryk, for eksempel `round(befolkning / 1000.0, 1)` eller `case when andel > 5 then 'stor' else 'liten' end` |
 | | Kombinér kolonner | Flere kolonner til én tekstkolonne med skilletegn |
 | | Opdel kolonne | Én tekstkolonne til flere ved et skilletegn |
+| | Udtræk del af tekst | En ny kolonne med et antal tegn regnet fra begyndelsen eller slutningen af teksten, fra en valgt position (lænskoden er de to første tegn i den svenske kommunekode) |
 | | Pivotér til langt format | Valgte kolonner bliver rækker med navn og værdi |
 | | Pivotér til bredt format | Værdierne i en navnekolonne bliver nye kolonner |
 | | SQL-sætning | Vilkårlig UPDATE, DELETE eller ALTER TABLE mod tabellen `data` |
+| Beregninger | Andel af summen | Hver værdis andel af summen i procent eller som brøk, i alt eller pr. gruppe (kommunens andel af regionens befolkning) |
+| | Rangordn | Plads i rækkefølgen, størst eller mindst først, i alt eller pr. gruppe; lige værdier får samme plads (med eller uden hul bagefter) eller fortløbende plads |
+| | Løbende sum | Den akkumulerede sum i den rækkefølge, en anden kolonne angiver, i alt eller pr. gruppe |
+| | Ændring i forhold til forrige | Forskellen eller den procentvise ændring i forhold til forrige række i den rækkefølge, en anden kolonne angiver, for eksempel i forhold til året før pr. kommune |
+| | Inddel i klasser | Tal i klasser med egne nedre grænser (`0, 18, 65` giver `0–17`, `18–64` og `65–`), et antal lige brede klasser eller grupper med lige mange rækker (kvantiler) |
+| | Standardisér | z-værdier (afstanden fra gennemsnittet i standardafvigelser, stikprøvens standardafvigelse) eller værdierne skaleret til 0–1 |
+| | Udtræk datodel | År, kvartal, måned, ISO-uge, ugedag (1 = mandag), dag, dag i året, år og måned (`2024-03`) eller time fra en dato |
+| | Tid mellem datoer | Antal hele dage, uger, måneder eller år mellem to datoer, for eksempel alder; uden slutdato regnes til dags dato, når trinnet køres |
 | Nye datasæt | Gruppér og aggregér | Sum, gennemsnit, mindste, største, antal, antal unikke eller median pr. gruppe, til et nyt datasæt |
 | | Sammenkobl datasæt | Venstre eller indre sammenkobling med et andet datasæt på en nøgle |
 | | Sammenlæg datasæt | Stabler rækker fra flere datasæt; kolonner matches på navn |
 | | Rens kategorier | Finder stavevarianter af samme værdi (store/små bogstaver, mellemrum, accenter) og slår dem sammen |
 
 Handlinger, der opretter et nyt datasæt, lader originalen være urørt og vælger det nye datasæt, når det er færdigt.
+Beregningerne tilføjer en ny kolonne og lader de eksisterende være urørte; de bygger på SQL's vinduesfunktioner og
+eksporteres til R som dplyr-kode med `group_by()` og `mutate()`.
 
 ## Fortryd
 
@@ -73,11 +94,39 @@ værdier, interval og bemærkninger. Bemærkningerne peger på en handling, der 
 
 ## Regler
 
-Knappen **Regler** åbner datasættets kvalitetsregler: hvad der skal gælde, for at data er korrekte. Der findes syv
-regeltyper: må ikke mangle, unik (en eller flere kolonner sammen), inden for interval (tal, datoer eller tekst), i liste,
-matcher mønster (regulært udtryk), tekstlængde og en fri SQL-betingelse, der skal være sand for hver række. **Foreslå
-regler** tilføjer regler fra datakvalitetsprofilen: kolonner uden manglende værdier, unikke kolonner og koder med fast
-længde.
+Knappen **Regler** åbner datasættets kvalitetsregler: hvad der skal gælde, for at data er korrekte. Regeltyperne er:
+
+| Regeltype | Brydes af |
+|---|---|
+| Må ikke mangle | Manglende værdier |
+| Unik | Værdier (eller kombinationer af flere kolonner), der forekommer mere end én gang |
+| Inden for interval | Tal, datoer eller tekst uden for grænserne |
+| I liste | Værdier, der ikke står i listen |
+| Har ikke forbudte værdier | Værdier, der står i listen, for eksempel `ukendt` eller `-99` |
+| Matcher mønster | Tekst, der ikke matcher det regulære udtryk |
+| Har et bestemt format | Tekst, der ikke er en e-mailadresse, en webadresse, en ISO-dato, et postnummer (svensk, dansk, norsk, finsk eller islandsk) eller en svensk kommune- eller lænskode |
+| Tekstlængde | Tekst, der er kortere eller længere end grænserne |
+| Ingen overflødige mellemrum | Tekst med mellemrum i begyndelsen eller slutningen eller dobbelte mellemrum |
+| Kan læses som type | Tekst, der ikke kan læses som heltal, decimaltal, dato, dato og tid eller ja/nej |
+| Gyldigt identitetsnummer | Numre med forkert form, ugyldig dato eller forkert kontrolciffer, se nedenfor |
+| Sammenlign to kolonner | Rækker, hvor betingelsen mellem to kolonner ikke gælder, for eksempel at startdatoen er mindre end eller lig med slutdatoen |
+| Findes i andet datasæt | Værdier, der mangler i en kolonne i et andet datasæt (referentiel integritet, som en fremmednøgle) |
+| Andel udfyldte værdier | Kolonnen som helhed, når andelen af udfyldte værdier er lavere end tærsklen (for eksempel 95 %) |
+| Ingen afvigende værdier | Tal længere fra kvartilerne end et valgt antal kvartilafstande (standard 1,5) eller længere fra gennemsnittet end et valgt antal standardafvigelser (standard 3) |
+| SQL-betingelse | Rækker, hvor den frie SQL-betingelse ikke er sand |
+
+Identitetsnumrene kontrolleres sådan: svensk personnummer og samordningsnummer (10 eller 12 cifre, gyldig dato, dag
+plus 60 for samordningsnumre, kontrolciffer efter Luhn), svensk organisationsnummer (tredje ciffer mindst 2, Luhn),
+norsk fødselsnummer og D-nummer (begge kontrolcifre efter modulus 11), dansk CPR-nummer (gyldig dato; modulus 11
+kontrolleres ikke, fordi den ikke har gældt alle numre siden 2007), finsk personbeteckning (århundredemarkør og
+kontroltegn) og islandsk kennitala (kontrolciffer efter modulus 11, gyldig dato, århundredeciffer). Kontrollen siger
+kun, at nummeret kan findes, ikke at det tilhører nogen.
+
+**Foreslå regler** tilføjer regler fra datakvalitetsprofilen: kolonner uden manglende værdier, unikke kolonner og
+koder med fast længde. Kolonner, hvis navne indeholder personnummer, organisationsnummer, CPR, fødselsnummer,
+henkilötunnus eller kennitala, får en regel for den slags identitetsnummer, som mindst halvdelen af værdierne
+består, kolonner med postnummer i navnet en regel for det postnummerformat, flest værdier følger, og kolonner med
+e-mail (eller e-post) i navnet en regel for e-mailadresser.
 
 **Kør regler** tæller de rækker, der bryder hver regel, viser andelen og nogle eksempler og logger kørslen i datasættets
 historik. For en brudt regel kan de fejlende rækker gemmes som et selvstændigt datasæt, og hele resultatet kan downloades
@@ -176,7 +225,8 @@ Ctrl+Enter kører hele scriptet, markeret tekst køres alene.
   fortrydes i Bearbejd.
 - Egenskabspanelet viser datasættets kolonner (et klik indsætter navnet), alle datasæts kortnavne og de ekstra
   SQL-funktioner, Dataspatium tilføjer: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`,
-  `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`.
+  `dm_upper`, `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` og
+  `dm_valid_id` (for eksempel `select * from data where dm_valid_id(cpr, 'dk_cpr') = 0`).
 - SQL-scripts gemmes i objektpanelet på samme måde som R-scripts.
 
 SQLite-dialekten gælder: `||` til tekstsammenkædning, `cast(x as integer)`, `strftime()` til datoer, `group_concat()`,

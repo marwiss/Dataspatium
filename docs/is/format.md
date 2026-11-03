@@ -7,7 +7,12 @@
 | CSV, TSV, TXT með aðgreinum | Já | Já | Aðgreinir, stafakóðun og fyrirsagnaröð eru greind sjálfkrafa og má breyta |
 | Texti með fastri dálkbreidd | Já | Nei | Veldu sniðið í innflutningsskrefinu (skrár sem enda á .fwf eða .prn eru greindar). Upphaf dálka finnst út frá bilum sem eru í öllum línum, eða er gefið upp sem stöður |
 | Excel xlsx, xlsm, xls, xlsb | Já | xlsx | Veldu blað; dagsetningar og já/nei verða raunverulegar gerðir |
-| ODS (LibreOffice) | Já | Já | Sama meðferð gerða og í Excel |
+| ODS og FODS (LibreOffice) | Já | ods | Sama meðferð gerða og í Excel |
+| Eldri töflureiknissnið: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Já | Nei | Lesin með sama töflureiknislesara og Excel; veldu blað. Excel 2003 XML þekkist á innihaldinu þótt skráin heiti .xml |
+| Töflur í skjölum: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Já | Nei | Allar töflur skrárinnar birtast í lista með fyrirsögn eða myndatexta og fjölda raða og dálka. Sameinaðir reitir (colspan og rowspan, sameinaðir reitir í Word, `\multicolumn`) eru fylltir út í öllum röðum og dálkum sem þeir ná yfir. Fyrirsagnarlínan er tekin úr `th`, `thead`, aðgreiningarlínu Markdown, fyrirsagnarlínu Word eða `booktabs` (`\midrule`) |
+| KML og KMZ (Google Earth) | Já | Nei | Ein röð fyrir hvern stað með heiti, lýsingu, möppuslóð, tíma og viðbótargögnum sem dálkum; punktar, línur, marghyrningar og samsettar rúmfræðir verða GeoJSON |
+| GPX (GPS-ferlar) | Já | Nei | Veldu lag: leiðarpunkta, leiðir, ferla (með fjölda punkta og lengd í km) eða ferilpunkta (ein röð fyrir hvern punkt með tíma og hæð) |
+| TopoJSON | Já | Nei | Hver hlutur í grannfræðinni (topology) er lag; bogarnir eru afkóðaðir í venjulegar GeoJSON-rúmfræðir. Þekkist á innihaldinu þótt skráin heiti .json |
 | JSON | Já | Já | Listi af hlutum, hlutur sem inniheldur lista (gefa má upp slóð), listi af listum |
 | NDJSON, JSON Lines | Já | Nei | Einn hlutur í hverri línu |
 | JSON-stat | Já | Nei | Greint sjálfkrafa (`class: dataset`); ein röð fyrir hvern reit með kóðum, textum og gildi |
@@ -15,6 +20,7 @@
 | Shapefile (ZIP með shp, dbf, prj, cpg, eða aðeins shp) | Já | Nei | Eigindirnar verða dálkar með gerðum samkvæmt dbf-skemanu, rúmfræðin GeoJSON í dálkinum `geometry`. Veldu lag ef ZIP-skráin hefur fleiri en eitt, og einfaldaðu rúmfræðina með þoli í einingum kortsins. Hnitunum er haldið |
 | XML | Já | Já | Ein röð fyrir hvert endurtekið stak (valið í innflutningsskrefinu); eigindir og undirstök verða dálkar, hreiðruð stök fá punktaheiti eins og `lage.lan` |
 | SQLite | Já | Já | Eigin skrá Dataspatium er endurheimt með gerðum, merkimiðum og sögu; í öðrum gagnagrunnum velurðu töflu og gerðirnar eru teknar úr skemanu |
+| SQL-skrifta (sql) | Já | Nei | Skrifta með `CREATE TABLE` og `INSERT`, til dæmis afrit úr gagnagrunni, er keyrð í tómum SQLite-gagnagrunni og töflurnar boðnar til vals. MySQL-sértækar línur (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og töfluvalkostir eins og `ENGINE=`) eru fjarlægðar fyrst; aðrar mállýskur virka að því marki sem þær fylgja málskipan SQLite |
 | GeoPackage (gpkg) | Já | Nei | Lögin (feature- og eigindatöflur) eru valin sem töflur; rúmfræðidálkurinn verður GeoJSON sem kortamyndritið teiknar, hnitakerfið er sýnt |
 | SPSS sav, zsav, por | Já | sav | Gegnum R-pakkann haven. Breytumerkimiðar verða dálkamerkimiðar, gildismerkimiðar verða texti |
 | Stata dta | Já | dta | Gegnum haven. Við útflutning eru dálkaheitin stytt samkvæmt reglum Stata (32 stafir, ASCII) |

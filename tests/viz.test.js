@@ -87,6 +87,38 @@
     assert.ok(builder.toSpec(labelled, columns, { values: [] }).layer.length === 2, 'value labels add a text layer');
   });
 
+  test('viz: axis limits, scales, label angle, gridlines, opacity, reference and trend lines', (assert) => {
+    const bar = Object.assign(builder.defaultState('bar', columns), { yMin: 100, yMax: 1000, yScale: 'log', labelAngle: -45, grid: false });
+    const spec = builder.toSpec(bar, columns, { values: [] });
+    assert.deepEqual(spec.encoding.y.scale, { domainMin: 100, domainMax: 1000, type: 'log', zero: false }, 'limits and a log scale without zero');
+    assert.equal(spec.encoding.x.axis.labelAngle, -45);
+    assert.equal(spec.encoding.y.axis.grid, false);
+    assert.equal(spec.mark.clip, true, 'bars outside the limits are clipped');
+    const zeroOff = builder.toSpec(Object.assign(builder.defaultState('line', columns), { yZero: false }), columns, { values: [] });
+    assert.equal(zeroOff.encoding.y.scale.zero, false);
+    const withRef = builder.toSpec(Object.assign({}, bar, { refValue: 500, refLabel: 'Mål' }), columns, { values: [] });
+    assert.ok(Array.isArray(withRef.layer) && !withRef.encoding && !withRef.mark, 'the layers carry the encodings');
+    assert.equal(withRef.layer[0].encoding.x.field, bar.x.field, 'the bars keep their encoding');
+    assert.deepEqual([withRef.layer[1].mark.type, withRef.layer[1].encoding.y.datum], ['rule', 500]);
+    assert.equal(withRef.layer[2].encoding.text.value, 'Mål');
+    const labelled = builder.toSpec(Object.assign({}, bar, { labels: true, refValue: 500 }), columns, { values: [] });
+    assert.equal(labelled.layer.length, 3, 'bars, value labels and the reference line');
+    const ar = columns.find((c) => c.name === 'ar'); const bef = columns.find((c) => c.name === 'befolkning');
+    const scatter = Object.assign(builder.defaultState('point', columns), { x: builder.channel(ar, { type: 'quantitative' }), y: builder.channel(bef), trend: 'linear', opacity: 0.4, xMin: 2020 });
+    const ss = builder.toSpec(scatter, columns, { values: [] });
+    const trend = ss.layer.find((l) => l.transform);
+    assert.deepEqual(trend.transform[0], { regression: 'befolkning', on: 'ar', method: 'linear' });
+    assert.equal(ss.layer[0].mark.opacity, 0.4);
+    assert.equal(ss.layer[0].encoding.x.scale.domainMin, 2020);
+    const loess = builder.toSpec(Object.assign({}, scatter, { trend: 'loess' }), columns, { values: [] });
+    assert.equal(loess.layer.find((l) => l.transform).transform[0].loess, 'befolkning');
+    const barh = Object.assign(builder.switchType(bar, 'barh', columns), { yMax: 50, refValue: 10 });
+    const hs = builder.toSpec(barh, columns, { values: [] });
+    assert.equal(hs.layer[0].encoding.x.scale.domainMax, 50, 'horizontal bars: the value axis is x');
+    assert.equal(hs.layer[1].encoding.x.datum, 10);
+    return 'ok';
+  });
+
   test('viz: chart data with filters, SQL aggregation and distinct values', async (assert) => {
     const raw = await vizData.fetchRows(id, { fields: ['kommun', 'befolkning'], filters: [{ field: 'ar', op: '=', value: '2024' }] });
     assert.equal(raw.rows.length, 3); assert.equal(raw.total, 3); assert.deepEqual(Object.keys(raw.rows[0]), ['kommun', 'befolkning']);
@@ -112,6 +144,17 @@
     assert.ok(svg.toLowerCase().includes(theme.tokens().palette[0].toLowerCase()), 'first palette colour used');
     const png = await vegaRender.toPng(view, 1);
     assert.equal(png.type, 'image/png'); assert.ok(png.size > 1000, 'png bytes ' + png.size);
+    // Axis limits, a reference line with text and a trend line render as well.
+    const guided = Object.assign(builder.defaultState('bar', columns), { yMax: 2000000, refValue: 500000, refLabel: 'Referensvärde', labelAngle: -45 });
+    const gData = await vizData.fetchRows(id, builder.dataRequest(guided, columns, 6));
+    const gSvg = await vegaRender.toSvg(await vegaRender.headless(builder.toSpec(guided, columns, { values: gData.rows, width: 400, height: 200 }), { width: 400 }));
+    assert.ok(gSvg.includes('Referensvärde'), 'reference text');
+    assert.ok(gSvg.replace(/[  ]/g, ' ').includes('2 000 000'), 'the axis reaches its maximum');
+    const ar = columns.find((c) => c.name === 'ar'); const bef = columns.find((c) => c.name === 'befolkning');
+    const scatter = Object.assign(builder.defaultState('point', columns), { x: builder.channel(ar, { type: 'quantitative' }), y: builder.channel(bef), trend: 'linear' });
+    const sData = await vizData.fetchRows(id, builder.dataRequest(scatter, columns, 6));
+    const sSvg = await vegaRender.toSvg(await vegaRender.headless(builder.toSpec(scatter, columns, { values: sData.rows, width: 400, height: 200 }), { width: 400 }));
+    assert.ok((sSvg.match(/stroke-dasharray/g) || []).length >= 1, 'a dashed trend line is drawn');
     const heat = builder.defaultState('heatmap', columns);
     const hdata = await vizData.fetchRows(id, builder.dataRequest(heat, columns, 6));
     const hsvg = await vegaRender.toSvg(await vegaRender.headless(builder.toSpec(heat, columns, { values: hdata.rows, width: 300, height: 200 }), { width: 300 }));

@@ -294,15 +294,79 @@
         }
         if (state.size && type.channels.includes('size')) enc.size = encode(state.size, { alias: aliases.size });
         if (state.facet && type.channels.includes('facet')) { enc.facet = Object.assign(encode(state.facet, { alias: aliases.facet }), { columns: state.facetColumns || 3 }); }
+        applyAxes(state, type, enc, markDef, horizontal);
         if (state.labels && type.mark === 'bar' && y) {
           const text = Object.assign({}, y); delete text.axis; delete text.stack;
           spec.layer = [{ mark: markDef }, { mark: { type: 'text', align: horizontal ? 'left' : 'center', baseline: horizontal ? 'middle' : 'bottom', dx: horizontal ? 4 : 0, dy: horizontal ? 0 : -4 }, encoding: { text: Object.assign(text, { format: state.yFormat || ',.0f' }) } }];
           delete spec.mark;
         }
+        // Reference and trend lines are layers of their own; the chart's encoding then moves into its layers.
+        const extras = guideLayers(state, type, enc, horizontal);
+        if (extras.length) {
+          spec.layer = (spec.layer || [{ mark: markDef }]).map((l) => Object.assign({}, l, { encoding: Object.assign({}, enc, l.encoding || {}) })).concat(extras);
+          delete spec.mark;
+          if (state.facet && spec.width === 'container') spec.width = 260;
+          return spec;
+        }
       }
       spec.encoding = enc;
       if (state.facet && spec.width === 'container') spec.width = 260;
       return spec;
+    }
+
+    const isNum = (v) => v !== undefined && v !== null && v !== '' && Number.isFinite(Number(v));
+    /**
+     * Axis settings from the builder: limits (domainMin/domainMax), scale type, zero baseline, label angle,
+     * gridlines and mark opacity. Values outside the limits are clipped.
+     */
+    function applyAxes(state, type, enc, markDef, horizontal) {
+      const valueEnc = enc[horizontal ? 'x' : 'y']; const catEnc = enc[horizontal ? 'y' : 'x'];
+      const scale = (e, extra) => { e.scale = Object.assign(e.scale || {}, extra); };
+      const axis = (e, extra) => { e.axis = Object.assign(e.axis || {}, extra); };
+      let clip = false;
+      if (valueEnc && valueEnc.type === 'quantitative') {
+        if (isNum(state.yMin)) { scale(valueEnc, { domainMin: Number(state.yMin) }); clip = true; }
+        if (isNum(state.yMax)) { scale(valueEnc, { domainMax: Number(state.yMax) }); clip = true; }
+        if (state.yScale === 'log' || state.yScale === 'sqrt') scale(valueEnc, { type: state.yScale });
+        if (state.yZero === false || state.yScale === 'log') scale(valueEnc, { zero: false });
+      }
+      if (catEnc && catEnc.type === 'quantitative') {
+        if (isNum(state.xMin)) { scale(catEnc, { domainMin: Number(state.xMin) }); clip = true; }
+        if (isNum(state.xMax)) { scale(catEnc, { domainMax: Number(state.xMax) }); clip = true; }
+      }
+      if (catEnc && isNum(state.labelAngle)) axis(catEnc, { labelAngle: Number(state.labelAngle) });
+      if (state.grid === false) { if (valueEnc) axis(valueEnc, { grid: false }); if (catEnc) axis(catEnc, { grid: false }); }
+      if (clip) markDef.clip = true;
+      if (isNum(state.opacity) && ['point', 'circle', 'area', 'bar'].includes(type.mark)) markDef.opacity = Math.max(0.05, Math.min(1, Number(state.opacity)));
+    }
+
+    /** A reference line at a value (with its text) and a trend line (linear regression or loess) for points and lines. */
+    function guideLayers(state, type, enc, horizontal) {
+      const out = [];
+      const valueEnc = enc[horizontal ? 'x' : 'y']; const catEnc = enc[horizontal ? 'y' : 'x'];
+      if (enc.facet || !valueEnc) return out;
+      const tokens = theme.tokens();
+      if (isNum(state.refValue)) {
+        const at = { [horizontal ? 'x' : 'y']: { datum: Number(state.refValue) } };
+        out.push({ mark: { type: 'rule', color: tokens.text, strokeDash: [5, 4], strokeWidth: 1.5 }, encoding: at });
+        if (state.refLabel) {
+          out.push({
+            mark: { type: 'text', color: tokens.text, align: horizontal ? 'left' : 'right', baseline: 'bottom', dx: horizontal ? 4 : -4, dy: -4 },
+            encoding: Object.assign({ text: { value: String(state.refLabel) } }, horizontal ? { y: { value: 0 } } : { x: { value: 'width' } }, at),
+          });
+        }
+      }
+      if (state.trend && state.trend !== 'none' && (type.mark === 'point' || type.mark === 'line') && catEnc && catEnc.type === 'quantitative' && catEnc.field && valueEnc.field && !valueEnc.aggregate) {
+        const transform = state.trend === 'loess' ? { loess: valueEnc.field, on: catEnc.field } : { regression: valueEnc.field, on: catEnc.field, method: 'linear' };
+        const groupColor = enc.color && enc.color.field && enc.color.type !== 'quantitative';
+        if (groupColor) transform.groupby = [enc.color.field];
+        out.push({
+          mark: { type: 'line', strokeDash: [6, 3], strokeWidth: 2, color: groupColor ? undefined : tokens.text },
+          transform: [transform],
+          encoding: Object.assign({ x: { field: catEnc.field, type: 'quantitative' }, y: { field: valueEnc.field, type: 'quantitative' } }, groupColor ? { color: { field: enc.color.field, type: enc.color.type } } : {}),
+        });
+      }
+      return out;
     }
 
     /** True when the first coordinate cannot be longitude/latitude (projected metres, e.g. SWEREF99 TM). */

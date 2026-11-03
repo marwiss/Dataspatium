@@ -29,26 +29,47 @@ sem því verður við komið sýnir forskoðun hversu margar raðir verða fyri
 | | Eyða dálkum | Fjarlægir valda dálka |
 | | Endurraða dálkum | Færa dálka upp og niður |
 | | Breyta gerð | Texti í heiltölu, tugabrot, dagsetningu, dagsetningu og tíma eða já/nei. Tilgreina má tugabrotstákn og dagsetningarsnið; gildi sem ekki er hægt að túlka verða tóm og fjöldi þeirra er tilkynntur |
+| | Afrita dálk | Afrit með nýju heiti, til dæmis áður en upprunalega dálknum er breytt |
+| | Snyrta dálkaheiti | Öll heiti verða lágstafir, tölustafir og undirstrik (`Folkmängd 2024` verður `folkmangd_2024`) sem auðvelt er að skrifa í SQL og R; merkimiðarnir halda upprunalegu heitunum |
 | Gildi | Finna og skipta út | Texti eða regluleg segð í völdum textadálkum, með forskoðun |
 | | Fjarlægja bil | Bil fremst og aftast og (valfrjálst) tvöföld bil |
 | | Breyta há- og lágstöfum | HÁSTAFIR, lágstafir eða Stór Upphafsstafur |
 | | Lagfæra stafakóðun | Lagfærir brenglaða stafi (Ã¶ verður ö) sem urðu til við innflutning með rangri kóðun |
 | | Skipta út gildi | Einu nákvæmu gildi fyrir annað; tómt gildi má velja sem frá eða til |
-| | Fylla í vantandi gildi | Fast gildi eða gildi fyrri raðar |
+| | Endurkóða gildi | Mörg gildi í einu eftir lista með einni línu fyrir hvert gildi, `gamalt = nýtt` (til dæmis `01 = Stockholms län`); önnur gildi haldast eða eru tæmd |
+| | Fylla í vantandi gildi | Fast gildi, gildi fyrri eða næstu raðar, meðaltal, miðgildi eða algengasta gildi |
+| | Námunda tölur | Í valinn fjölda aukastafa: að næsta (helmingur námundast frá núlli), niður, upp eða með því að sleppa aukastöfunum; neikvæður fjöldi námundar að tugum (−1), hundruðum (−2) og svo framvegis |
+| | Fylla með núllum í upphafi | Upp í tiltekna lengd, til dæmis sveitarfélagsnúmerið 114 í 0114; tölur verða texti svo að núllin haldist |
+| | Fjarlægja tákn | Halda aðeins tölustöfum (síma- og fyrirtækjanúmer), halda aðeins bókstöfum og bilum, fjarlægja greinarmerki og tákn eða fjarlægja öll bil |
 | Raðir | Eyða röðum | SQL-skilyrði, til dæmis `befolkning < 1000`; veldu Halda til að halda þess í stað aðeins röðum sem passa |
 | | Fjarlægja tvítök | Á völdum dálkum eða allri röðinni; fyrsta tilvikinu er haldið |
+| | Fjarlægja auðar raðir og dálka | Raðir þar sem öll gildi vantar og, ef þú vilt, dálka sem eru alveg án gilda |
+| | Raða röðum | Breytir röð raðanna varanlega, hækkandi eða lækkandi eftir einum dálki, svo að útflutningur og skjöl fái sömu röð; tóm gildi koma síðast |
+| | Halda efstu röðunum | Raðirnar með hæsta eða lægsta gildið, alls eða eftir hópum (til dæmis þrjú stærstu sveitarfélögin í hverjum landshluta) |
+| | Slembiúrtak | Fjöldi raða eða hlutfall í prósentum; sama fræ gefur alltaf sama úrtak svo að hægt er að keyra uppskriftina aftur |
 | Uppbygging | Nýr reiknaður dálkur | SQL-segð, til dæmis `round(befolkning / 1000.0, 1)` eða `case when andel > 5 then 'stor' else 'liten' end` |
 | | Sameina dálka | Marga dálka í einn textadálk með aðgreini |
 | | Skipta dálki | Einn textadálk í marga við aðgreini |
+| | Taka hluta úr texta | Nýr dálkur með tilteknum fjölda stafa, talið frá upphafi eða enda textans, frá valinni stöðu (sænski lénskóðinn er fyrstu tveir stafirnir í sveitarfélagsnúmerinu) |
 | | Snúa í langt snið | Valdir dálkar verða raðir með heiti og gildi |
 | | Snúa í breitt snið | Gildin í heitisdálki verða nýir dálkar |
 | | SQL-setning | Hvaða UPDATE, DELETE eða ALTER TABLE sem er á töfluna `data` |
+| Útreikningar | Hlutfall af summu | Hlutfall hvers gildis af summunni í prósentum eða sem hlutfallstala, alls eða eftir hópum (hlutur sveitarfélagsins í íbúafjölda landshlutans) |
+| | Raða í sæti | Sæti í röðinni, hæsta eða lægsta fyrst, alls eða eftir hópum; jöfn gildi fá sama sæti (með eða án bils á eftir) eða samfelld sæti |
+| | Uppsöfnuð summa | Uppsafnaða summan í þeirri röð sem annar dálkur segir til um, alls eða eftir hópum |
+| | Breyting frá fyrri | Mismunurinn eða prósentubreytingin frá fyrri röð í þeirri röð sem annar dálkur segir til um, til dæmis frá fyrra ári eftir sveitarfélögum |
+| | Skipta í flokka | Tölur í flokka með eigin neðri mörkum (`0, 18, 65` gefur `0–17`, `18–64` og `65–`), tiltekinn fjölda jafnbreiðra flokka eða hópa með jafnmörgum röðum (hlutfallsmörk) |
+| | Staðla | z-gildi (fjarlægð frá meðaltali í staðalfrávikum, staðalfrávik úrtaks) eða gildin kvörðuð á bilið 0–1 |
+| | Taka hluta úr dagsetningu | Ár, ársfjórðung, mánuð, ISO-viku, vikudag (1 = mánudagur), dag, dag ársins, ár og mánuð (`2024-03`) eða klukkustund úr dagsetningu |
+| | Tími milli dagsetninga | Fjöldi heilla daga, vikna, mánaða eða ára milli tveggja dagsetninga, til dæmis aldur; án lokadagsetningar er talið til dagsins í dag þegar skrefið er keyrt |
 | Ný gagnasöfn | Hópa og taka saman | Summa, meðaltal, lægst, hæst, fjöldi, fjöldi ólíkra eða miðgildi fyrir hvern hóp, í nýtt gagnasafn |
 | | Tengja gagnasöfn | Vinstri eða innri tenging við annað gagnasafn á lykli |
 | | Skeyta gagnasöfnum saman | Staflar röðum úr mörgum gagnasöfnum; dálkar eru paraðir eftir heiti |
 | | Hreinsa flokka | Finnur rittilbrigði af sama gildi (há-/lágstafir, bil, broddstafir) og sameinar þau |
 
 Aðgerðir sem búa til nýtt gagnasafn láta frumgögnin óhreyfð og velja nýja gagnasafnið þegar því er lokið.
+Útreikningarnir bæta við nýjum dálki og láta þá sem fyrir eru óhreyfða; þeir byggja á gluggaföllum SQL og eru fluttir
+út í R sem dplyr-kóði með `group_by()` og `mutate()`.
 
 ## Afturkalla
 
@@ -72,10 +93,38 @@ athugasemdir. Athugasemdirnar benda á aðgerð sem lagfærir þær með einum s
 
 ## Reglur
 
-Hnappurinn **Reglur** opnar gæðareglur gagnasafnsins: hvað þarf að gilda til að gögnin séu rétt. Sjö gerðir reglna eru til: má
-ekki vanta, einkvæmt (einn eða fleiri dálkar saman), innan bils (tölur, dagsetningar eða texti), í lista, passar við mynstur
-(regluleg segð), textalengd og frjálst SQL-skilyrði sem þarf að vera satt fyrir hverja röð. **Leggja til reglur** bætir við
-reglum úr gagnagæðasniðinu: dálkar án vantandi gilda, einkvæmir dálkar og kóðar með fasta lengd.
+Hnappurinn **Reglur** opnar gæðareglur gagnasafnsins: hvað þarf að gilda til að gögnin séu rétt. Gerðir reglna eru:
+
+| Gerð reglu | Brotin af |
+|---|---|
+| Má ekki vanta | Vantandi gildum |
+| Einkvæmt | Gildum (eða samsetningum margra dálka) sem koma oftar en einu sinni fyrir |
+| Innan bils | Tölum, dagsetningum eða texta utan markanna |
+| Í lista | Gildum sem eru ekki í listanum |
+| Engin bönnuð gildi | Gildum sem eru í listanum, til dæmis `óþekkt` eða `-99` |
+| Passar við mynstur | Texta sem passar ekki við reglulegu segðina |
+| Ákveðið snið | Texta sem er ekki netfang, veffang, ISO-dagsetning, póstnúmer (sænskt, danskt, norskt, finnskt eða íslenskt) eða sænskur sveitarfélags- eða lénskóði |
+| Textalengd | Texta sem er styttri eða lengri en mörkin |
+| Engin óþörf bil | Texta með bilum fremst eða aftast, eða tvöföldum bilum |
+| Hægt að lesa sem gerð | Texta sem ekki er hægt að lesa sem heiltölu, tugabrot, dagsetningu, dagsetningu og tíma eða já/nei |
+| Gilt auðkennisnúmer | Númerum á röngu formi, með ógilda dagsetningu eða ranga vartölu, sjá hér á eftir |
+| Bera saman tvo dálka | Röðum þar sem skilyrðið milli tveggja dálka gildir ekki, til dæmis að upphafsdagsetning sé minni en eða jöfn lokadagsetningu |
+| Er í öðru gagnasafni | Gildum sem vantar í dálk í öðru gagnasafni (tilvísunarheilleiki, eins og ytri lykill) |
+| Hlutfall útfylltra gilda | Dálkinum í heild, þegar hlutfall útfylltra gilda er lægra en þröskuldurinn (til dæmis 95 %) |
+| Engin frávik | Tölum sem eru lengra frá fjórðungsmörkunum en valinn fjöldi fjórðungsbila (sjálfgefið 1,5) eða lengra frá meðaltalinu en valinn fjöldi staðalfrávika (sjálfgefið 3) |
+| SQL-skilyrði | Röðum þar sem frjálsa SQL-skilyrðið er ekki satt |
+
+Auðkennisnúmerin eru athuguð svona: sænskt personnummer og samordningsnummer (10 eða 12 tölustafir, gild dagsetning,
+dagur plús 60 fyrir samordningsnummer, vartala samkvæmt Luhn), sænskt organisationsnummer (þriðji tölustafurinn að
+minnsta kosti 2, Luhn), norskt fødselsnummer og D-númer (báðar vartölurnar samkvæmt modulus 11), danskt CPR-númer
+(gild dagsetning; modulus 11 er ekki athugað þar sem það hefur ekki gilt um öll númer síðan 2007), finnskt
+henkilötunnus (aldarmerki og vartákn) og íslensk kennitala (vartala samkvæmt modulus 11, gild dagsetning,
+aldartölustafur). Athugunin segir aðeins að númerið geti verið til, ekki að það tilheyri einhverjum.
+
+**Leggja til reglur** bætir við reglum úr gagnagæðasniðinu: dálkum án vantandi gilda, einkvæmum dálkum og kóðum með
+fasta lengd. Dálkar með kennitala, personnummer, CPR, fødselsnummer eða henkilötunnus í heitinu fá reglu fyrir þá
+tegund auðkennisnúmers sem að minnsta kosti helmingur gildanna stenst, dálkar með póstnúmer í heitinu reglu fyrir það
+póstnúmerasnið sem flest gildin fylgja og dálkar með netfang eða e-mail í heitinu reglu fyrir netföng.
 
 **Keyra reglur** telur raðirnar sem brjóta hverja reglu, sýnir hlutfallið og nokkur dæmi og skráir keyrsluna í sögu
 gagnasafnsins. Fyrir brotna reglu má vista raðirnar sem bregðast sem sérstakt gagnasafn, og hlaða má allri niðurstöðunni niður
@@ -174,7 +223,8 @@ keyrir alla skriftuna, valinn texti keyrir sér.
   má afturkalla í Vinna.
 - Eiginleikaspjaldið sýnir dálka gagnasafnsins (smellur setur heitið inn), stuttheiti allra gagnasafna og aukaföll SQL sem
   Dataspatium bætir við: `regexp`, `regexp_replace`, `dm_parse_number`, `dm_parse_date`, `dm_fix_encoding`, `dm_upper`,
-  `dm_lower`, `dm_title`, `dm_squish`.
+  `dm_lower`, `dm_title`, `dm_squish`, `dm_round`, `dm_pad`, `dm_date_part`, `dm_date_diff` og
+  `dm_valid_id` (til dæmis `select * from data where dm_valid_id(kennitala, 'is_kt') = 0`).
 - SQL-skriftur eru vistaðar í hlutaspjaldinu á sama hátt og R-skriftur.
 
 SQLite-mállýskan gildir: `||` fyrir samtengingu texta, `cast(x as integer)`, `strftime()` fyrir dagsetningar, `group_concat()`,

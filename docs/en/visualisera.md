@@ -40,6 +40,25 @@ cover; data is inserted from the dataset when the chart is rendered.
 The chart is saved as the builder's state (or the custom specification) together with the dataset's name and short
 name, so it can be recreated on new data with the same columns.
 
+### Axes and lines
+
+The **Axes and lines** section (all chart types except pie and maps) controls the axes and adds lines. Empty fields
+give automatic values.
+
+| Setting | What it does |
+|---|---|
+| Value axis minimum and maximum | Fixed limits for the value axis (Y, or X in horizontal bars), for example 0–100 for percentages or the same scale in several charts. Whatever falls outside the limits is clipped |
+| X axis minimum and maximum | Shown when the X axis is a number (points and lines), for example to zoom in on an interval |
+| Value axis scale | Linear, logarithmic (for values spanning several powers of ten; requires positive values) or square root |
+| Start the value axis at zero | On by default; turn it off to let the axis start near the smallest value, for example for temperatures |
+| Label angle | Automatic, 0°, 45° or 90° for categories with long names |
+| Gridlines | The grid behind the chart, on by default |
+| Reference line at value | A dashed line at a value on the value axis, for example a target or a national average, with optional text |
+| Trend line | Points and lines with a number on the X axis: straight line (linear regression) or smoothed curve (loess), one per colour group |
+| Opacity | How opaque points, areas and bars are (0.05–1), for example for many overlapping points |
+
+Reference and trend lines are not drawn in charts with small multiples. The settings are saved with the chart and
+travel with shared chart files and batch runs.
 ## D3 templates
 
 - **Ranking**: one row per category sorted by value, with a dot and a line. Choose category, value, calculation,

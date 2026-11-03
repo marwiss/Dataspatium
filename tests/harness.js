@@ -3,6 +3,7 @@
 /**
  * Tiny browser test harness. Tests register with `test(name, fn, timeoutMs)`; `run()` executes them
  * sequentially, renders results and prints the machine-readable lines tools/run-tests.ps1 looks for.
+ * `?only=word1,word2` in the address runs a subset.
  */
 (function () {
   'use strict';
@@ -31,9 +32,16 @@
       },
     };
 
+    /** `tests/index.html?only=formats3` runs only the tests whose names contain one of the comma-separated words. */
+    function selected() {
+      let only = [];
+      try { only = (new URLSearchParams(location.search).get('only') || '').split(',').map((s) => s.trim()).filter(Boolean); } catch (_e) { /* no location */ }
+      return only.length ? tests.filter((t) => only.some((w) => t.name.includes(w))) : tests;
+    }
+
     async function run(listEl, summaryEl) {
       let pass = 0; let fail = 0;
-      for (const t of tests) {
+      for (const t of selected()) {
         const t0 = performance.now();
         let line;
         try {

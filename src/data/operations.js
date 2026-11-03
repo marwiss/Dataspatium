@@ -199,18 +199,49 @@
 
     define({
       id: 'fill_missing', group: 'values',
-      params: [{ name: 'column', type: 'column', required: true }, { name: 'mode', type: 'select', required: true, options: ['constant', 'previous'], default: 'constant' }, { name: 'value', type: 'text' }],
+      params: [{ name: 'column', type: 'column', required: true }, { name: 'mode', type: 'select', required: true, options: ['constant', 'previous', 'next', 'mean', 'median', 'mostcommon'], default: 'constant' }, { name: 'value', type: 'text' }],
+      /** The value that fills the gaps for the mean, median and most common modes. */
+      async statistic(ctx, p) {
+        const c = q(p.column);
+        const col = ctx.column(p.column);
+        if ((p.mode === 'mean' || p.mode === 'median') && !(col && (col.type === 'integer' || col.type === 'number'))) throw new Error(D.t('op.err.numeric'));
+        if (p.mode === 'mean') { const r = await ctx.engine.exec(`select avg(${c}) from data`); const v = r[0].values[0][0]; return v === null ? null : (col.type === 'integer' ? Math.round(v) : v); }
+        if (p.mode === 'median') {
+          const n = Number((await ctx.engine.exec(`select count(${c}) from data`))[0].values[0][0]);
+          if (!n) return null;
+          const r = await ctx.engine.exec(`select ${c} from data where ${c} is not null order by ${c} limit ${n % 2 ? 1 : 2} offset ${Math.floor((n - 1) / 2)}`);
+          const vals = r[0].values.map((x) => Number(x[0]));
+          const m = vals.reduce((a, b) => a + b, 0) / vals.length;
+          return col.type === 'integer' ? Math.round(m) : m;
+        }
+        const r = await ctx.engine.exec(`select ${c} from data where ${c} is not null and cast(${c} as text) != '' group by ${c} order by count(*) desc, ${c} limit 1`);
+        return r[0] ? r[0].values[0][0] : null;
+      },
       async apply(ctx, p) {
         const col = ctx.column(p.column);
         if (p.mode === 'constant') return { rows: await ctx.engine.run(`update data set ${q(p.column)} = ? where ${q(p.column)} is null`, [types.parseValue(p.value, col ? col.type : 'text')]) };
-        // previous: carry the last non-empty value downwards in row order
-        const res = await ctx.engine.exec(`select rowid, ${q(p.column)} from data order by rowid`);
+        if (p.mode === 'mean' || p.mode === 'median' || p.mode === 'mostcommon') {
+          const v = await this.statistic(ctx, p);
+          return { rows: v === null ? 0 : await ctx.engine.run(`update data set ${q(p.column)} = ? where ${q(p.column)} is null or cast(${q(p.column)} as text) = ''`, [v]) };
+        }
+        // previous / next: carry the nearest non-empty value down (previous) or up (next) in row order
+        const res = await ctx.engine.exec(`select rowid, ${q(p.column)} from data order by rowid ${p.mode === 'next' ? 'desc' : 'asc'}`);
         const pairs = []; let last = null;
         for (const [rowid, v] of (res[0] ? res[0].values : [])) { if (v === null || v === '') { if (last !== null) pairs.push([rowid, last]); } else last = v; }
         return { rows: await ctx.engine.updateRows('data', p.column, pairs) };
       },
       toSQL: (p) => p.mode === 'constant' ? [`UPDATE data SET ${q(p.column)} = ${lit(p.value)} WHERE ${q(p.column)} IS NULL;`] : ['-- ' + D.t('code.fill_down')],
-      toR: (p) => p.mode === 'constant' ? `df$${q(p.column)}[is.na(df$${q(p.column)})] <- ${rstr(p.value)}` : `df$${q(p.column)} <- zoo::na.locf(df$${q(p.column)}, na.rm = FALSE)`,
+      toR: (p) => {
+        const x = `df$${q(p.column)}`;
+        switch (p.mode) {
+          case 'constant': return `${x}[is.na(${x})] <- ${rstr(p.value)}`;
+          case 'next': return `${x} <- zoo::na.locf(${x}, na.rm = FALSE, fromLast = TRUE)`;
+          case 'mean': return `${x}[is.na(${x})] <- mean(${x}, na.rm = TRUE)`;
+          case 'median': return `${x}[is.na(${x})] <- median(${x}, na.rm = TRUE)`;
+          case 'mostcommon': return `${x}[is.na(${x})] <- names(sort(table(${x}), decreasing = TRUE))[1]`;
+          default: return `${x} <- zoo::na.locf(${x}, na.rm = FALSE)`;
+        }
+      },
     });
 
     // Pseudonymisation of identifiers (personnummer, customer ids) before sharing. Hashing with a salt is

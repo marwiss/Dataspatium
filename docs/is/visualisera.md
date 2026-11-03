@@ -38,6 +38,25 @@ gögn eru sett inn úr gagnasafninu þegar myndritið er teiknað.
 Myndritið er vistað sem staða smiðsins (eða eigin lýsing) ásamt heiti og stuttheiti gagnasafnsins, svo endurgera má það á ný
 gögn með sömu dálkum.
 
+### Ásar og línur
+
+Hlutinn **Ásar og línur** (allar myndritagerðir nema kökurit og kort) stýrir ásunum og bætir við línum. Auð svæði
+gefa sjálfvirk gildi.
+
+| Stilling | Hvað hún gerir |
+|---|---|
+| Lægsta og hæsta gildi gildisáss | Föst mörk fyrir gildisásinn (Y, eða X í láréttum súlum), til dæmis 0–100 fyrir prósentur eða sami kvarði í mörgum myndritum. Það sem lendir utan markanna er klippt burt |
+| Lægsta og hæsta gildi x-áss | Birtist þegar x-ásinn er tala (punktar og línur), til dæmis til að þysja inn á bil |
+| Kvarði gildisáss | Línulegur, lograkvarði (fyrir gildi sem spanna mörg tíuveldi; krefst jákvæðra gilda) eða kvaðratrót |
+| Gildisás byrjar á núlli | Sjálfgefið kveikt; slökktu til að láta ásinn byrja nálægt lægsta gildinu, til dæmis fyrir hitastig |
+| Halli merkimiða | Sjálfvirkt, 0°, 45° eða 90° fyrir flokka með löng heiti |
+| Hnitalínur | Netið á bak við myndritið, sjálfgefið kveikt |
+| Viðmiðunarlína við gildið | Strikalína við gildi á gildisásnum, til dæmis markmið eða landsmeðaltal, með valfrjálsum texta |
+| Leitnilína | Punktar og línur með tölu á x-ásnum: bein lína (línuleg aðhvarfsgreining) eða jöfnuð lína (loess), ein fyrir hvern litahóp |
+| Þekja | Hversu ógegnsæir punktar, fletir og súlur eru (0,05–1), til dæmis þegar margir punktar skarast |
+
+Viðmiðunar- og leitnilínur eru ekki teiknaðar í myndritum með smáspjöldum. Stillingarnar eru vistaðar með myndritinu
+og fylgja deildum myndritaskrám og hópkeyrslum.
 ## D3-snið
 
 - **Röðun**: ein röð fyrir hvern flokk, raðað eftir gildi, með punkti og línu. Veldu flokk, gildi, útreikning, fjölda og röð.

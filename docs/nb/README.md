@@ -41,20 +41,20 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
 
 ## Hva du kan gjøre
 
-- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tekst med fast
+- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabeller i HTML-, Markdown-, Word- og LaTeX-dokumenter, kartfiler i KML, KMZ, GPX og TopoJSON, SQL-skript, eldre regnearkformater (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst med fast
   kolonnebredde, statistikkfiler fra SPSS, Stata, SAS og PX-formatet samt Parquet og RDS (via R), innlimt tekst, filer fra
   nettadresser og data direkte fra åpne API-er hos SSB, Folkehelseinstituttet, Brønnøysundregistrene, Kartverket, MET
   Norway, Danmarks Statistik, Open Data DK, Statistikcentralen, THL, PRH, Fintraffic, Meteorologiska institutet, Hagstofa
   Íslands, Veðurstofa Íslands, Grønlands Statistik, Hagstova Føroya, ÅSUB, Nordic Statistics, Eurostat og svenske etater som
   SCB, Kolada og SMHI, med landfilter og ny henting av alle API-datasett med ett trykk (se
   [api-konfiguration.md](api-konfiguration.md)). Eksempeldata og SCBs svenske kommune- og länsgrenser følger med.
-- **Bearbeide**: bla gjennom, sortere og filtrere store tabeller, redigere celler, rense, sette typer, beregne, pivotere og
-  koble data, kontrollere datakvalitet med profil og regler, pseudonymisere personnumre før deling, med angre, versjoner og
+- **Bearbeide**: bla gjennom, sortere og filtrere store tabeller, redigere celler, rense, sette typer, omkode, dele inn i klasser, rangere, beregne andeler, løpende summer og endringer, pivotere og
+  koble data, kontrollere datakvalitet med profil og regler (blant annet formater, nordiske identitetsnumre, referanser til andre datasett og avvikende verdier), pseudonymisere personnumre før deling, med angre, versjoner og
   oppskrifter som kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
 - **Analysere**: en innebygd R-konsoll med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsoll der datasett
   kobles med join via kortnavnene sine, og notatbøker med tekst-, R- og SQL-celler som blir rapporter i HTML, Word, PDF,
   Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), helt i nettleseren.
-- **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart), D3-maler eller R, eksportert som SVG,
+- **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).
 - **Dokumentere**: rapporter og kodebøker fra maler som HTML, Word, PDF, Markdown eller LaTeX, også ett dokument per kommune

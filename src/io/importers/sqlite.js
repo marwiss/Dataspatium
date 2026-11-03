@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * SQLite importer. A Dataspatium file (tables data, _columns, _meta) is restored with its metadata;
- * any other SQLite database offers its tables and imports the chosen one with types from the schema.
+ * any other SQLite database, GeoPackage or SQL script offers its tables and imports the chosen one with
+ * types from the schema.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/importers/sqlite', ['engines/sqlite'], (sqlite) => {
-    const EXT = /\.(sqlite|sqlite3|db|s3db|gpkg)$/i;
+  D.define('io/importers/sqlite', ['engines/sqlite', 'data/encoding'], (sqlite, encoding) => {
+    const EXT = /\.(sqlite|sqlite3|db|s3db|gpkg|sql)$/i;
     function detect(file) { return EXT.test(file.name) || /sqlite|geopackage/.test(file.type || ''); }
 
     // ---- GeoPackage: geometry blobs (GPB header + WKB) become GeoJSON text like the GeoJSON importer ----
@@ -47,7 +48,28 @@
       try { const geom = readWkb(dv, { pos: 0 }); return geom ? JSON.stringify(geom) : null; } catch (_err) { return null; }
     }
 
+    /**
+     * An SQL script in SQLite's dialect (for example from `sqlite3 .dump`). Statements in simple MySQL dumps
+     * that SQLite cannot run (SET, LOCK TABLES, version comments, table options) are left out.
+     * @param {string} text
+     */
+    function cleanScript(text) {
+      return text.replace(/^﻿/, '')
+        .replace(/\/\*![\s\S]*?\*\/\s*;?/g, '')
+        .replace(/^\s*(SET|LOCK TABLES|UNLOCK TABLES|USE|DELIMITER)\b[^;]*;\s*$/gim, '')
+        .replace(/\)\s*(ENGINE|DEFAULT CHARSET|CHARSET|COLLATE|AUTO_INCREMENT|ROW_FORMAT)\s*=[^;]*;/gi, ');');
+    }
+    async function openScript(file) {
+      const { text } = await encoding.readText(file);
+      const engine = new sqlite.SqliteEngine();
+      await engine.start();
+      await engine.open();
+      try { await engine.exec(cleanScript(text)); } catch (err) { engine.terminate(); throw new Error(D.t('import.err.sqlscript', { message: (err && err.message) || String(err) })); }
+      return { engine, bytes: null };
+    }
+
     async function openFile(file) {
+      if (/\.sql$/i.test(file.name)) return openScript(file);
       const bytes = await file.arrayBuffer();
       const head = new TextDecoder('latin1').decode(new Uint8Array(bytes.slice(0, 15)));
       if (head !== 'SQLite format 3') throw new Error(D.t('import.err.notsqlite'));

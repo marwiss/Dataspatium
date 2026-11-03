@@ -7,7 +7,12 @@
 | CSV, TSV, TXT with delimiters | Yes | Yes | Delimiter, character encoding and header row are detected automatically and can be changed |
 | Fixed-width text | Yes | No | Choose the format in the import step (files named .fwf or .prn are recognised). Column starts are found from spaces present on every line, or given as positions |
 | Excel xlsx, xlsm, xls, xlsb | Yes | xlsx | Choose sheet; dates and yes/no become real types |
-| ODS (LibreOffice) | Yes | Yes | Same type handling as Excel |
+| ODS and FODS (LibreOffice) | Yes | ods | Same type handling as Excel |
+| Older spreadsheet formats: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Yes | No | Read by the same spreadsheet reader as Excel; choose sheet. Excel 2003 XML is recognised by its content even when the file is called .xml |
+| Tables in documents: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Yes | No | All tables in the file are listed with their heading or caption and their number of rows and columns. Merged cells (colspan and rowspan, Word's merged cells, `\multicolumn`) are filled in on every row and column they cover. The header row comes from `th`, `thead`, Markdown's delimiter row, Word's header row or `booktabs` (`\midrule`) |
+| KML and KMZ (Google Earth) | Yes | No | One row per place with name, description, folder path, time and extended data as columns; points, lines, polygons and multi-geometries become GeoJSON |
+| GPX (GPS tracks) | Yes | No | Choose a layer: waypoints, routes, tracks (with number of points and length in km) or track points (one row per point with time and elevation) |
+| TopoJSON | Yes | No | Each object in the topology is a layer; the arcs are decoded into ordinary GeoJSON geometries. Recognised by its content even when the file is called .json |
 | JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
 | NDJSON, JSON Lines | Yes | No | One object per line |
 | JSON-stat | Yes | No | Recognised automatically (`class: dataset`, versions 1.x and 2.0); one row per cell with codes, texts and value |
@@ -15,6 +20,7 @@
 | Shapefile (ZIP with shp, dbf, prj, cpg, or shp alone) | Yes | No | The attributes become typed columns according to the dbf schema, the geometry GeoJSON in the column `geometry`. Choose the layer if the ZIP file has several, and simplify the geometry with a tolerance in map units. The coordinates are kept (for example SWEREF 99 TM or longitude/latitude) |
 | XML | Yes | Yes | One row per repeated element (chosen in the import step); attributes and child elements become columns, nested elements get dotted names such as `lage.lan` |
 | SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
+| SQL script (sql) | Yes | No | A script with `CREATE TABLE` and `INSERT`, for example a database dump, is run in an empty SQLite database and the tables are offered for selection. MySQL-specific lines (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` and table options such as `ENGINE=`) are removed first; other dialects work as far as they follow SQLite's syntax |
 | GeoPackage (gpkg) | Yes | No | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
 | SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels, value labels become text |
 | Stata dta | Yes | dta | Through haven. At export the column names are shortened to Stata's rules (32 characters, ASCII) |

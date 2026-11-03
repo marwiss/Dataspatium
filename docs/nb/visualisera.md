@@ -40,6 +40,25 @@ datasettet når diagrammet gjengis.
 Diagrammet lagres som byggerens tilstand (eller den egne spesifikasjonen) sammen med datasettets navn og kortnavn, slik at
 det kan gjenskapes på nye data med de samme kolonnene.
 
+### Akser og linjer
+
+Avsnittet **Akser og linjer** (alle diagramtyper unntatt sektor og kart) styrer aksene og legger til linjer. Tomme
+felt gir automatiske verdier.
+
+| Innstilling | Hva den gjør |
+|---|---|
+| Verdiaksens minste og største verdi | Faste grenser for verdiaksen (Y, eller X i liggende stolper), for eksempel 0–100 for prosent eller samme skala i flere diagrammer. Det som havner utenfor grensene, klippes bort |
+| X-aksens minste og største verdi | Vises når x-aksen er et tall (punkter og linjer), for eksempel for å zoome inn på et intervall |
+| Skala på verdiaksen | Lineær, logaritmisk (for verdier som spenner over flere tierpotenser; krever positive verdier) eller kvadratrot |
+| Start verdiaksen på null | På som standard; slå av for å la aksen begynne nær den minste verdien, for eksempel for temperaturer |
+| Etikettenes vinkel | Automatisk, 0°, 45° eller 90° for kategorier med lange navn |
+| Rutenett | Rutenettet bak diagrammet, på som standard |
+| Referanselinje ved verdien | En stiplet linje ved en verdi på verdiaksen, for eksempel et mål eller et landsgjennomsnitt, med valgfri tekst |
+| Trendlinje | Punkter og linjer med et tall på x-aksen: rett linje (lineær regresjon) eller utjevnet kurve (loess), én per fargegruppe |
+| Dekning | Hvor ugjennomsiktige punkter, flater og stolper er (0,05–1), for eksempel ved mange overlappende punkter |
+
+Referanse- og trendlinjer tegnes ikke i diagrammer med små paneler. Innstillingene lagres med diagrammet og følger
+med i delte diagramfiler og batchkjøringer.
 ## D3-maler
 
 - **Rangering**: én rad per kategori sortert etter verdi, med prikk og strek. Velg kategori, verdi, beregning, antall og

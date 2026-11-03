@@ -43,22 +43,22 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
 
 ## What you can do
 
-- **Import**: CSV, Excel, ODS, JSON, JSON-stat, GeoJSON, XML, SQLite, GeoPackage and shapefile files, fixed-width
+- **Import**: CSV, Excel, ODS, JSON, JSON-stat, GeoJSON, XML, SQLite, GeoPackage and shapefile files, tables in HTML, Markdown, Word and LaTeX documents, KML, KMZ, GPX and TopoJSON map files, SQL scripts, older spreadsheet formats (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), fixed-width
   text, statistical files from SPSS, Stata, SAS and Statistics Sweden's PX format, Parquet and RDS (via R), pasted
   text, files from web addresses, and data straight from open APIs at Statistics Sweden (SCB), the Public Health
   Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, the Swedish Environmental
   Protection Agency, Lantmäteriet and Sweden's data portal, with re-fetching of all API datasets at the press of a
   button (see [api-konfiguration.md](api-konfiguration.md)). Example data and SCB's municipality and county
   boundaries are included.
-- **Process**: browse, sort and filter large tables, edit cells, clean, type, calculate, pivot and join data,
-  check data quality with a profile and rules, pseudonymise personal identity numbers before sharing, look up
+- **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
+  check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
   municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
   [bearbeta.md](bearbeta.md)).
 - **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
   where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
   HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), entirely in the browser.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
-  county boundaries), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
+  county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
 - **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
   municipality or year (see [dokumentmallar.md](dokumentmallar.md)).

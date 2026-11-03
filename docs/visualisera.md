@@ -40,6 +40,26 @@ täcker; data läggs in från datamängden när diagrammet renderas.
 Diagrammet sparas som byggarens tillstånd (eller den egna specifikationen) tillsammans med datamängdens namn, så
 det kan återskapas på nya data med samma kolumner.
 
+### Axlar och linjer
+
+Avsnittet **Axlar och linjer** (alla diagramtyper utom cirkel och kartor) styr axlarna och lägger till linjer.
+Tomma fält ger automatiska värden.
+
+| Inställning | Vad den gör |
+|---|---|
+| Värdeaxelns minsta och största värde | Fasta gränser för värdeaxeln (Y, eller X i liggande staplar), till exempel 0–100 för procent eller samma skala i flera diagram. Det som hamnar utanför gränserna klipps bort |
+| X-axelns minsta och största värde | Visas när X-axeln är ett tal (punkter och linjer), till exempel för att zooma in på ett intervall |
+| Skala på värdeaxeln | Linjär, logaritmisk (för värden som spänner över flera tiopotenser; kräver positiva värden) eller kvadratrot |
+| Börja värdeaxeln på noll | På som standard; stäng av för att låta axeln börja nära det minsta värdet, till exempel för temperaturer |
+| Etiketternas vinkel | Automatiskt, 0°, 45° eller 90° för kategorier med långa namn |
+| Stödlinjer | Rutnätet bakom diagrammet, på som standard |
+| Referenslinje vid värdet | En streckad linje vid ett värde på värdeaxeln, till exempel ett mål eller ett riksgenomsnitt, med valfri text |
+| Trendlinje | Punkter och linjer med ett tal på X-axeln: rät linje (linjär regression) eller utjämnad kurva (loess), en per färggrupp |
+| Täckning | Hur ogenomskinliga punkter, ytor och staplar är (0,05–1), till exempel för många överlappande punkter |
+
+Referens- och trendlinjer ritas inte i diagram med småbilder. Inställningarna sparas med diagrammet och följer med i
+delade diagramfiler och batchkörningar.
+
 ## D3-mallar
 
 - **Rangordning**: en rad per kategori sorterad efter värde, med punkt och linje. Välj kategori, värde,

@@ -40,6 +40,25 @@ kaavio piirretään.
 Kaavio tallennetaan rakentajan tilana (tai omana määrityksenä) yhdessä aineiston nimen ja lyhytnimen kanssa, joten sen voi
 luoda uudelleen uudelle datalle, jossa on samat sarakkeet.
 
+### Akselit ja viivat
+
+Osio **Akselit ja viivat** (kaikki kaaviotyypit paitsi ympyrä ja kartat) ohjaa akseleita ja lisää viivoja. Tyhjät
+kentät antavat automaattiset arvot.
+
+| Asetus | Mitä se tekee |
+|---|---|
+| Arvoakselin pienin ja suurin arvo | Kiinteät rajat arvoakselille (Y, tai X vaakapalkeissa), esimerkiksi 0–100 prosenteille tai sama asteikko useassa kaaviossa. Rajojen ulkopuolelle jäävä osa leikataan pois |
+| X-akselin pienin ja suurin arvo | Näkyy, kun X-akseli on luku (pisteet ja viivat), esimerkiksi tietyn välin tarkentamiseen |
+| Arvoakselin asteikko | Lineaarinen, logaritminen (arvoille, jotka ulottuvat usean kymmenpotenssin yli; vaatii positiiviset arvot) tai neliöjuuri |
+| Arvoakseli alkaa nollasta | Oletuksena käytössä; poista käytöstä, jotta akseli alkaa läheltä pienintä arvoa, esimerkiksi lämpötiloille |
+| Selitteiden kulma | Automaattinen, 0°, 45° tai 90° pitkänimisille luokille |
+| Apuviivat | Kaavion taustan ruudukko, oletuksena käytössä |
+| Vertailuviiva arvon kohdalla | Katkoviiva arvoakselin arvon kohdalla, esimerkiksi tavoite tai valtakunnallinen keskiarvo, valinnaisella tekstillä |
+| Trendiviiva | Pisteet ja viivat, joiden X-akselilla on luku: suora (lineaarinen regressio) tai tasoitettu käyrä (loess), yksi väriryhmää kohden |
+| Peittävyys | Kuinka peittäviä pisteet, alueet ja palkit ovat (0,05–1), esimerkiksi kun päällekkäisiä pisteitä on paljon |
+
+Vertailu- ja trendiviivoja ei piirretä kaavioihin, joissa on pienet paneelit. Asetukset tallennetaan kaavion mukana,
+ja ne kulkevat mukana jaetuissa kaaviotiedostoissa ja eräajoissa.
 ## D3-mallit
 
 - **Järjestys**: yksi rivi luokkaa kohden arvon mukaan lajiteltuna, pisteellä ja viivalla. Valitse luokka, arvo, laskelma,

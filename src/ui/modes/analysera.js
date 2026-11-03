@@ -14,7 +14,7 @@
     const { h, t, i18n, replace } = base;
     const bridge = rb.bridge;
     const SQL_LIMIT = 5000;
-    const SQL_FUNCTIONS = ['regexp', 'regexp_replace', 'dm_parse_number', 'dm_parse_date', 'dm_fix_encoding', 'dm_title', 'dm_squish'];
+    const SQL_FUNCTIONS = ['regexp', 'regexp_replace', 'dm_parse_number', 'dm_parse_date', 'dm_fix_encoding', 'dm_title', 'dm_squish', 'dm_round', 'dm_pad', 'dm_date_part', 'dm_date_diff', 'dm_valid_id'];
     const READ_ONLY_SQL = /^(select|with|values|pragma|explain)\b/i;
 
     function createMode(ctx) {

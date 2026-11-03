@@ -9,7 +9,8 @@
  * Besides plain SQL it registers Dataspatium's helper functions so that cleaning operations run inside
  * the engine: regexp(), regexp_replace(), dm_replace(), dm_parse_number(), dm_parse_date(),
  * dm_parse_datetime(), dm_parse_bool(), dm_upper(), dm_lower(), dm_title(), dm_fix_encoding(),
- * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix), dm_mask(), and for geodata
+ * dm_fingerprint(), dm_squish(), dm_hash() (salted SHA-256 prefix), dm_mask(), dm_round(), dm_pad(),
+ * dm_date_part(), dm_date_diff(), dm_valid_id() (Nordic identity numbers), and for geodata
  * dm_geo_lon()/dm_geo_lat()/dm_geo_area() (centroids and areas of GeoJSON or WKT geometry),
  * dm_to_lon()/dm_to_lat()/dm_to_east()/dm_to_north() (SWEREF 99 TM <-> WGS 84) and dm_region()
  * (region of a coordinate among boundaries loaded with the 'regions' message).
@@ -352,7 +353,151 @@
       return regions.length;
     }
 
+    // ---- rounding, padding, dates and identity numbers (table operations and rules) ----------------
+    function roundNumber(x, decimals, mode) {
+      if (x === null || x === undefined || x === '') return null;
+      var v = Number(x);
+      if (!isFinite(v)) return x;
+      var d = Math.max(-10, Math.min(10, Math.trunc(Number(decimals) || 0)));
+      var f = Math.pow(10, d);
+      // 1.005 * 100 is 100.49999999999999 in binary; 15 significant digits undo that before rounding.
+      var s = Number((v * f).toPrecision(15));
+      var r = mode === 'floor' ? Math.floor(s) : mode === 'ceil' ? Math.ceil(s) : mode === 'trunc' ? Math.trunc(s) : Math.sign(s) * Math.round(Math.abs(s));
+      return Number((r / f).toPrecision(15));
+    }
+    function padText(x, length, ch, side) {
+      if (x === null || x === undefined) return null;
+      var s = String(x);
+      var n = Math.max(1, Math.min(100, Math.trunc(Number(length) || 1)));
+      var c = Array.from(ch === null || ch === undefined || ch === '' ? '0' : String(ch))[0];
+      if (s.length >= n) return s;
+      var fill = new Array(n - s.length + 1).join(c);
+      return side === 'right' ? s + fill : fill + s;
+    }
+    /** ISO date or date-time text (or another format parseDate understands) -> UTC Date, or null. */
+    function toDate(x) {
+      if (x === null || x === undefined || x === '') return null;
+      var s = String(x);
+      var m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+      if (!m) { var iso = parseDateTime(s, null) || parseDate(s, null); m = iso ? /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(iso) : null; }
+      if (!m) return null;
+      var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    function isoWeek(d) {
+      var t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+      var day = t.getUTCDay() || 7;
+      t.setUTCDate(t.getUTCDate() + 4 - day);
+      return Math.ceil(((t.getTime() - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
+    }
+    function datePart(x, part) {
+      var d = toDate(x);
+      if (!d) return null;
+      switch (String(part)) {
+        case 'year': return d.getUTCFullYear();
+        case 'quarter': return Math.floor(d.getUTCMonth() / 3) + 1;
+        case 'month': return d.getUTCMonth() + 1;
+        case 'week': return isoWeek(d);
+        case 'weekday': return d.getUTCDay() || 7;
+        case 'day': return d.getUTCDate();
+        case 'dayofyear': return Math.round((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(d.getUTCFullYear(), 0, 1)) / 86400000) + 1;
+        case 'yearmonth': return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1);
+        case 'hour': return d.getUTCHours();
+        default: return null;
+      }
+    }
+    /** Whole days, weeks, months or years from a to b (negative when b is earlier). */
+    function dateDiff(a, b, unit) {
+      var x = toDate(a); var y = toDate(b);
+      if (!x || !y) return null;
+      if (unit === 'months' || unit === 'years') {
+        var sign = y >= x ? 1 : -1; var lo = sign > 0 ? x : y; var hi = sign > 0 ? y : x;
+        var months = (hi.getUTCFullYear() - lo.getUTCFullYear()) * 12 + (hi.getUTCMonth() - lo.getUTCMonth());
+        var timeOfDay = function (d) { return ((d.getTime() % 86400000) + 86400000) % 86400000; };
+        if (hi.getUTCDate() < lo.getUTCDate() || (hi.getUTCDate() === lo.getUTCDate() && timeOfDay(hi) < timeOfDay(lo))) months -= 1;
+        return sign * (unit === 'years' ? Math.floor(months / 12) : months);
+      }
+      var days = (y.getTime() - x.getTime()) / 86400000;
+      return unit === 'weeks' ? Math.trunc(days / 7) : Math.trunc(days);
+    }
+    function luhn(digits) {
+      var sum = 0;
+      for (var i = 0; i < digits.length; i++) { var v = Number(digits[digits.length - 1 - i]) * (i % 2 ? 2 : 1); sum += v > 9 ? v - 9 : v; }
+      return sum % 10 === 0;
+    }
+    function validDay(year, month, day) {
+      if (month < 1 || month > 12 || day < 1) return false;
+      return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+    }
+    /**
+     * Nordic identity numbers: Swedish personnummer and samordningsnummer (date + Luhn), organisationsnummer
+     * (Luhn, third digit at least 2), Norwegian fødselsnummer and D-number (two mod-11 check digits), Danish
+     * CPR (date only; CPR has had no check digit since 2007), Finnish henkilötunnus (check character) and
+     * Icelandic kennitala (mod-11 check digit).
+     */
+    function validId(x, kind) {
+      if (x === null || x === undefined) return null;
+      var s = String(x).trim().toUpperCase();
+      var digits = s.replace(/[\s+-]/g, '');
+      switch (String(kind)) {
+        case 'se_pnr': {
+          if (!/^(\d{6}|\d{8})[-+]?\d{4}$/.test(s.replace(/\s/g, ''))) return 0;
+          var ten = digits.slice(-10);
+          var yy = Number(ten.slice(0, 2)); var mm = Number(ten.slice(2, 4)); var dd = Number(ten.slice(4, 6));
+          if (dd > 60) dd -= 60; // samordningsnummer
+          var years = digits.length === 12 ? [Number(digits.slice(0, 4))] : [1900 + yy, 2000 + yy];
+          if (!years.some(function (y) { return validDay(y, mm, dd); })) return 0;
+          return luhn(ten) ? 1 : 0;
+        }
+        case 'se_orgnr': {
+          if (!/^(16)?\d{6}-?\d{4}$/.test(s.replace(/\s/g, ''))) return 0;
+          var org = digits.slice(-10);
+          return Number(org[2]) >= 2 && luhn(org) ? 1 : 0;
+        }
+        case 'no_fnr': {
+          if (!/^\d{11}$/.test(digits)) return 0;
+          var n = digits.split('').map(Number);
+          var w1 = [3, 7, 6, 1, 8, 9, 4, 5, 2]; var w2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+          var k1 = 11 - (w1.reduce(function (a, w, i) { return a + w * n[i]; }, 0) % 11); if (k1 === 11) k1 = 0;
+          var k2 = 11 - (w2.reduce(function (a, w, i) { return a + w * n[i]; }, 0) % 11); if (k2 === 11) k2 = 0;
+          if (k1 === 10 || k2 === 10 || k1 !== n[9] || k2 !== n[10]) return 0;
+          var day = n[0] * 10 + n[1]; var month = n[2] * 10 + n[3];
+          if (day > 40) day -= 40; // D-number
+          if (month > 40) month -= 40; // H-number
+          return validDay(2000 + n[4] * 10 + n[5], month, day) || validDay(1900 + n[4] * 10 + n[5], month, day) ? 1 : 0;
+        }
+        case 'dk_cpr': {
+          if (!/^\d{10}$/.test(digits)) return 0;
+          var dy = Number(digits.slice(4, 6));
+          return validDay(2000 + dy, Number(digits.slice(2, 4)), Number(digits.slice(0, 2))) || validDay(1900 + dy, Number(digits.slice(2, 4)), Number(digits.slice(0, 2))) ? 1 : 0;
+        }
+        case 'fi_hetu': {
+          var m = /^(\d{2})(\d{2})(\d{2})([-+ABCDEFUVWXY])(\d{3})([0-9A-Y])$/.exec(s);
+          if (!m) return 0;
+          var century = m[4] === '+' ? 1800 : /[ABCDEF]/.test(m[4]) ? 2000 : 1900;
+          if (!validDay(century + Number(m[3]), Number(m[2]), Number(m[1]))) return 0;
+          return '0123456789ABCDEFHJKLMNPRSTUVWXY'[Number(m[1] + m[2] + m[3] + m[5]) % 31] === m[6] ? 1 : 0;
+        }
+        case 'is_kt': {
+          if (!/^\d{10}$/.test(digits)) return 0;
+          var k = digits.split('').map(Number);
+          var sum = [3, 2, 7, 6, 5, 4, 3, 2].reduce(function (a, w, i) { return a + w * k[i]; }, 0);
+          var c = 11 - (sum % 11); if (c === 11) c = 0;
+          if (c === 10 || c !== k[8]) return 0;
+          var kd = k[0] * 10 + k[1]; if (kd > 40) kd -= 40; // companies
+          var base = k[9] === 8 ? 1800 : k[9] === 9 ? 1900 : 2000;
+          return validDay(base + k[4] * 10 + k[5], k[2] * 10 + k[3], kd) ? 1 : 0;
+        }
+        default: return null;
+      }
+    }
+
     function registerFunctions(database) {
+      database.create_function('dm_round', function (x, decimals, mode) { return roundNumber(x, decimals, mode); });
+      database.create_function('dm_pad', function (x, length, ch, side) { return padText(x, length, ch, side); });
+      database.create_function('dm_date_part', function (x, part) { return datePart(x, part); });
+      database.create_function('dm_date_diff', function (a, b, unit) { return dateDiff(a, b, unit); });
+      database.create_function('dm_valid_id', function (x, kind) { return validId(x, kind); });
       database.create_function('dm_hash', function (text, salt, length) {
         if (text === null) return null;
         var key = salt === null || salt === undefined || salt === '' ? String(text) : String(salt) + '|' + String(text);

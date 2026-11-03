@@ -11,10 +11,11 @@
     (base, overlays, basic, opDialog, ops, recipes, derive, profileMod, datasets, files, rulesMod) => {
       const { h, t, i18n, replace } = base;
       const GROUPS = [
-        { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'drop_columns', 'reorder_columns'] },
-        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'fill_missing', 'pseudonymize'] },
-        { id: 'rows', ops: ['delete_rows', 'remove_duplicates'] },
-        { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'pivot_longer', 'pivot_wider', 'sql'] },
+        { id: 'column', ops: ['rename_column', 'set_type', 'set_label', 'drop_columns', 'reorder_columns', 'duplicate_column', 'clean_names'] },
+        { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'recode_values', 'fill_missing', 'round_numbers', 'pad_text', 'clean_chars', 'pseudonymize'] },
+        { id: 'rows', ops: ['delete_rows', 'remove_duplicates', 'remove_empty', 'sort_rows', 'keep_top', 'sample_rows'] },
+        { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'substring', 'pivot_longer', 'pivot_wider', 'sql'] },
+        { id: 'calc', ops: ['share_of_total', 'rank_values', 'running_total', 'change_previous', 'bin_numeric', 'standardize', 'date_part', 'date_diff'] },
         { id: 'geo', ops: ['geo_centroid', 'geo_area', 'geo_reproject', 'geo_region'] },
         { id: 'derive', ops: ['aggregate', 'join', 'append', 'clusters'] },
       ];
@@ -92,6 +93,8 @@
         const dlg = overlays.dialog.open({ title: t('rules.title'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
         let rules = await rulesMod.list(ctx.datasetId);
         let lastRun = null;
+        // Other datasets, for the rule that checks values against another dataset's column.
+        const others = (await datasets.list()).filter((d) => d.id !== ctx.datasetId);
         const sel = (label, options, value, onPick) => { const s = /** @type {any} */ (h('dm-select', { label })); s.options = options; s.value = value; s.addEventListener('change', () => onPick(s.value)); return s; };
         async function exportReport() {
           const meta = await datasets.get(ctx.datasetId);
@@ -104,21 +107,58 @@
         function ruleForm() {
           const values = { type: 'notnull' };
           const wrap = h('div', { class: 'dm-stack-sm' });
+          let refColumns = []; let refFor = null;
+          /** Columns of the dataset chosen for a reference rule (loaded once per chosen dataset). */
+          const loadRefColumns = async () => {
+            const id = values.dataset || (others[0] && others[0].id);
+            if (!id || refFor === id) return;
+            refFor = id;
+            try { refColumns = await datasets.columns(id); } catch (_err) { refColumns = []; }
+            values.refColumn = refColumns[0] ? refColumns[0].name : '';
+            draw();
+          };
           const draw = () => {
             const fields = [sel(t('rules.type'), rulesMod.TYPES.map((ty) => ({ value: ty, label: t('rules.type.' + ty) })), values.type, (v) => { values.type = v; draw(); })];
             const input = (name, label, type, help) => { const el = /** @type {any} */ (h('dm-input', { type: type || 'text', label, help: help || '' })); el.value = values[name] === undefined ? '' : values[name]; el.addEventListener('input', () => { values[name] = el.value; }); return el; };
             if (values.type === 'unique') { values.columnsText = values.columnsText || (ctx.columns[0] ? ctx.columns[0].name : ''); fields.push(input('columnsText', t('rules.columns'), 'text', t('rules.columns.help'))); }
             else if (values.type !== 'sql') { values.column = values.column || (ctx.columns[0] ? ctx.columns[0].name : ''); fields.push(sel(t('rules.column'), ctx.columns.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` })), values.column, (v) => { values.column = v; })); }
+            const pick = (name, label, options, fallback) => { if (values[name] === undefined) values[name] = fallback; return sel(label, options, values[name], (v) => { values[name] = v; if (name === 'dataset') loadRefColumns(); }); };
+            const columnOptions = ctx.columns.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` }));
             if (values.type === 'range' || values.type === 'length') fields.push(input('min', t('rules.min')), input('max', t('rules.max')));
             if (values.type === 'inset') fields.push(input('values', t('rules.values'), 'text', t('rules.values.help')));
+            if (values.type === 'not_in') fields.push(input('values', t('rules.values.forbidden'), 'text', t('rules.values.help')));
             if (values.type === 'regex') fields.push(input('pattern', t('rules.pattern'), 'text', t('rules.pattern.help')));
+            if (values.type === 'format') fields.push(pick('format', t('rules.format'), Object.keys(rulesMod.FORMATS).map((f) => ({ value: f, label: t('rules.format.' + f) })), 'email'));
+            if (values.type === 'parsable') fields.push(pick('target', t('rules.target'), ['number', 'integer', 'date', 'datetime', 'boolean'].map((ty) => ({ value: ty, label: t('type.' + ty) })), 'number'));
+            if (values.type === 'identifier') fields.push(pick('kind', t('rules.kind'), rulesMod.ID_KINDS.map((k) => ({ value: k, label: t('rules.id.' + k) })), 'se_pnr'));
+            if (values.type === 'compare') {
+              fields.push(pick('operator', t('rules.operator'), Object.keys(rulesMod.OPERATORS).map((o) => ({ value: o, label: t('rules.op.' + o) })), 'le'));
+              fields.push(pick('column2', t('rules.column2'), columnOptions, (ctx.columns[1] || ctx.columns[0] || { name: '' }).name));
+            }
+            if (values.type === 'reference') {
+              if (!others.length) fields.push(h('p', { class: 'dm-help', text: t('rules.reference.none') }));
+              else {
+                fields.push(pick('dataset', t('rules.dataset'), others.map((d) => ({ value: d.id, label: d.name })), others[0].id));
+                fields.push(pick('refColumn', t('rules.refcolumn'), refColumns.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` })), refColumns[0] ? refColumns[0].name : ''));
+                loadRefColumns();
+              }
+            }
+            if (values.type === 'completeness') { if (values.minShare === undefined) values.minShare = '95'; fields.push(input('minShare', t('rules.minshare'), 'number', t('rules.minshare.help'))); }
+            if (values.type === 'outliers') {
+              fields.push(pick('method', t('rules.method'), ['sd', 'iqr'].map((m) => ({ value: m, label: t('rules.method.' + m) })), 'sd'));
+              fields.push(input('factor', t('rules.factor'), 'number', t('rules.factor.help')));
+            }
             if (values.type === 'sql') fields.push(input('expression', t('rules.expression'), 'text', t('rules.expression.help')));
             replace(wrap, h('div', { class: 'dm-form-grid' }, fields), h('div', null, basic.button({ label: t('rules.add'), icon: 'plus', onClick: async () => {
               const rule = { type: values.type };
               if (values.type === 'unique') rule.columns = String(values.columnsText || '').split(/[,;+]/).map((s) => s.trim()).filter(Boolean);
               else if (values.type !== 'sql') rule.column = values.column;
-              for (const k of ['min', 'max', 'values', 'pattern', 'expression']) if (values[k] !== undefined && values[k] !== '') rule[k] = values[k];
-              if ((values.type === 'unique' && !rule.columns.length) || (values.type === 'sql' && !rule.expression) || (values.type === 'regex' && !rule.pattern) || (values.type === 'inset' && !rule.values)) { overlays.toast.show(t('op.missing', { fields: t('rules.type.' + values.type) }), { kind: 'warn' }); return; }
+              const own = { format: ['format'], parsable: ['target'], identifier: ['kind'], compare: ['operator', 'column2'], reference: ['dataset', 'refColumn'], completeness: ['minShare'], outliers: ['method', 'factor'] }[values.type] || [];
+              for (const k of ['min', 'max', 'values', 'pattern', 'expression'].concat(own)) if (values[k] !== undefined && values[k] !== '') rule[k] = values[k];
+              if (values.type === 'reference' && rule.dataset) { const other = others.find((d) => d.id === rule.dataset); rule.datasetName = other ? other.name : ''; }
+              const incomplete = (values.type === 'unique' && !rule.columns.length) || (values.type === 'sql' && !rule.expression) || (values.type === 'regex' && !rule.pattern)
+                || ((values.type === 'inset' || values.type === 'not_in') && !rule.values) || (values.type === 'reference' && !(rule.dataset && rule.refColumn)) || (values.type === 'compare' && !rule.column2);
+              if (incomplete) { overlays.toast.show(t('op.missing', { fields: t('rules.type.' + values.type) }), { kind: 'warn' }); return; }
               await rulesMod.add(ctx.datasetId, rule);
               rules = await rulesMod.list(ctx.datasetId); lastRun = null; render();
             } })));
