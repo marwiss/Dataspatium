@@ -16,6 +16,11 @@ i webbläsaren (`src/ui/design/theme.js`).
 - Radier: 6 px (fält, knappar) och 10 px (kort, dialoger).
 - Färger: en neutral gråskala, en accentfärg (blå) för primära åtgärder och markeringar, tre statusfärger (ok,
   varning, fel) och en datapalett (Okabe-Ito, färgblindsäker) som används av ggplot2, Vega-Lite och D3.
+- Kontrast: all text, även den dämpade (`--dm-text-muted`) och den svaga (`--dm-text-faint`), statusfärgerna och
+  accentfärgen har minst 4,5:1 mot `--dm-bg`, `--dm-surface` och `--dm-surface-2` i båda teman. Kanten på fält och
+  växlar (`--dm-border-input`) har minst 3:1 mot alla ytor; `--dm-border` och `--dm-border-strong` är för
+  avdelare och kort, där kanten inte bär information. `tests/a11y.test.js` räknar ut kvoterna, så en ändrad färg
+  som inte klarar kraven syns direkt.
 
 ## Komponenter
 
@@ -50,7 +55,10 @@ arbetsytan börjar med `.dm-page-head` (rubrik med ikon till vänster, åtgärde
   högerställda.
 - Datum visas som `ÅÅÅÅ-MM-DD` och tid som `HH:MM` på alla språk.
 - Kortvariga meddelanden som toaster, bestående information i loggen.
-- Allt ska gå att nå med tangentbord; fokus syns alltid; kontrast enligt WCAG AA.
+- Allt ska gå att nå med tangentbord; fokus syns alltid; kontrast enligt WCAG AA. Flikar byts med piltangenterna,
+  Home och End, och fokus följer den aktiva fliken. Alla knappar, fält och kodredigerare har ett namn som
+  skärmläsare läser upp (`label` på `dm-code`, `aria-label` på knappar med bara ikon), och varje dialog läses upp
+  med sin egen rubrik.
 - Inga animationer utöver korta övergångar; respektera `prefers-reduced-motion`.
 
 ## Ordlista

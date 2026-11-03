@@ -164,6 +164,11 @@ Alt+1 till Alt+6 växlar läge och Ctrl+K öppnar kommandopaletten. Första Tabb
 dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer
 systeminställningen för minskad rörelse.
 
+Flikar byts med vänster- och högerpil, Home och End. Alla knappar, fält och kodredigerare har namn som skärmläsare
+läser upp, dialoger läses upp med sin rubrik och sidan har landmärken för lägesväxlaren, objektpanelen, arbetsytan
+och inspektören. Text och fältkanter har kontrast enligt WCAG AA i både ljust och mörkt tema. Diagrammen i
+diagrambyggaren beskrivs för skärmläsare av Vega; i R-diagram och D3-mallar finns uppgifterna i tabellen i Bearbeta.
+
 ## Språk
 
 Gränssnittet finns på svenska, danska, norska (bokmål), finska, isländska och engelska. Första gången appen

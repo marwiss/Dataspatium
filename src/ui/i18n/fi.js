@@ -1835,5 +1835,10 @@
     'sql.fn.dm_regex_extract': 'dm_regex_extract(x, kuvio, ryhmä, liput): ryhmä (numero tai nimi, 0 koko osumalle) ensimmäisestä osumasta',
     'sql.fn.dm_regex_count': 'dm_regex_count(x, kuvio, liput): osumien määrä',
     'sql.fn.dm_regex_split': 'dm_regex_split(x, kuvio, osa, määrä, liput): osa numero osa, kun x jaetaan kuvion kohdalta enintään määrä osaan',
+    'code.editor.r': 'R-koodi',
+    'code.editor.sql': 'SQL-koodi',
+    'code.editor.json': 'JSON',
+    'code.editor.latex': 'LaTeX-koodi',
+    'code.editor.other': 'Koodi',
   }));
 })();

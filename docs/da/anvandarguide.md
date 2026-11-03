@@ -104,6 +104,7 @@ Knappen *Indsæt dm_read()* og R-eksemplerne i inspektøren bruger også kortnav
 Fanen *Notesbog* samler tekst (Markdown), R og SQL i celler, der køres i rækkefølge og gemmer deres output. En færdig
 notesbog eksporteres som HTML, Word, PDF, Markdown eller LaTeX, med eller uden koden. Se
 [anteckningsbok.md](anteckningsbok.md).
+
 Fanen *Regex* afprøver et regulært udtryk på en kolonne, mens du skriver: de hyppigste værdier vises med træfferne
 markeret, og de matchende rækker tælles. Samme mønster kan derefter filtrere rækker, udtrække grupper til nye
 kolonner, erstatte, opdele, markere eller tælle træffere eller blive en kvalitetsregel. *Mønsterprofil* viser
@@ -158,6 +159,12 @@ Alt+1 til Alt+6 skifter tilstand, og Ctrl+K åbner kommandopaletten. Første try
 indhold*, der flytter fokus forbi tilstandsvælgeren og objektpanelet. Alt kan nås med Tab og Enter; dialoger lukkes med
 Esc. I tabellen flytter piletasterne mellem celler, og Enter redigerer. Appen følger systemindstillingen for reduceret
 bevægelse.
+
+Faner skiftes med venstre og højre piletast, Home og End. Alle knapper, felter og kodeeditorer har navne, som
+skærmlæsere læser op, dialoger læses op med deres overskrift, og siden har landemærker for tilstandsvælgeren,
+objektpanelet, arbejdsfladen og inspektøren. Tekst og feltkanter har kontrast efter WCAG AA i både lyst og mørkt
+tema. Diagrammer fra diagrambyggeren beskrives for skærmlæsere af Vega; for R-diagrammer og D3-skabeloner findes
+tallene i tabellen i Bearbejd.
 
 ## Sprog
 

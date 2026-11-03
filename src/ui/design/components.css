@@ -39,7 +39,7 @@ dm-input[inline], dm-select[inline] { flex-direction: row; align-items: center; 
 .dm-label { font-size: var(--dm-text-sm); font-weight: var(--dm-weight-medium); color: var(--dm-text); }
 .dm-field {
   min-height: 32px; padding: 0 var(--dm-s-3); border-radius: var(--dm-radius-sm);
-  border: 1px solid var(--dm-border-strong); background: var(--dm-surface); color: var(--dm-text);
+  border: 1px solid var(--dm-border-input); background: var(--dm-surface); color: var(--dm-text);
   font-size: var(--dm-text-sm); width: 100%;
 }
 .dm-field:focus { outline: 2px solid var(--dm-focus); outline-offset: -1px; border-color: var(--dm-accent); }
@@ -50,7 +50,7 @@ dm-input[error] .dm-field { border-color: var(--dm-error); }
 .dm-field-error { font-size: var(--dm-text-xs); color: var(--dm-error); }
 dm-switch > label { display: inline-flex; align-items: center; gap: var(--dm-s-2); cursor: pointer; font-size: var(--dm-text-sm); }
 dm-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
-dm-switch .dm-switch-track { width: 32px; height: 18px; border-radius: 9px; background: var(--dm-border-strong); position: relative; transition: background var(--dm-transition); flex: 0 0 auto; }
+dm-switch .dm-switch-track { width: 32px; height: 18px; border-radius: 9px; background: var(--dm-border-input); position: relative; transition: background var(--dm-transition); flex: 0 0 auto; }
 dm-switch .dm-switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--dm-surface); transition: transform var(--dm-transition); box-shadow: var(--dm-shadow); }
 dm-switch input:checked + .dm-switch-track { background: var(--dm-accent); }
 dm-switch input:checked + .dm-switch-track::after { transform: translateX(14px); }

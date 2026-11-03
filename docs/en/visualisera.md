@@ -59,6 +59,7 @@ give automatic values.
 
 Reference and trend lines are not drawn in charts with small multiples. The settings are saved with the chart and
 travel with shared chart files and batch runs.
+
 ## D3 templates
 
 - **Ranking**: one row per category sorted by value, with a dot and a line. Choose category, value, calculation,

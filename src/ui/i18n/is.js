@@ -1835,5 +1835,10 @@
     'sql.fn.dm_regex_extract': 'dm_regex_extract(x, mynstur, hópur, flögg): hópurinn (númer eða heiti, 0 fyrir alla samsvörunina) í fyrstu samsvörun',
     'sql.fn.dm_regex_count': 'dm_regex_count(x, mynstur, flögg): fjöldi samsvarana',
     'sql.fn.dm_regex_split': 'dm_regex_split(x, mynstur, hluti, fjöldi, flögg): hluti númer hluti þegar x er skipt við mynstrið í mest fjöldi hluta',
+    'code.editor.r': 'R-kóði',
+    'code.editor.sql': 'SQL-kóði',
+    'code.editor.json': 'JSON',
+    'code.editor.latex': 'LaTeX-kóði',
+    'code.editor.other': 'Kóði',
   }));
 })();

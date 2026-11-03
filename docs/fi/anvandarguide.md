@@ -105,6 +105,7 @@ nimen alla kohdepaneelissa), joten yksi kysely voi yhdistää useita aineistoja,
 Välilehti *Muistikirja* kokoaa tekstiä (Markdown), R:ää ja SQL:ää soluihin, jotka suoritetaan järjestyksessä ja jotka
 tallentavat tulosteensa. Valmis muistikirja viedään HTML-, Word-, PDF-, Markdown- tai LaTeX-muotoon koodin kanssa tai ilman.
 Ks. [anteckningsbok.md](anteckningsbok.md).
+
 *Regex*-välilehti kokeilee säännöllistä lauseketta sarakkeeseen kirjoittaessasi: yleisimmät arvot näytetään
 osumat merkittyinä, ja vastaavat rivit lasketaan. Samalla kuviolla voi sitten suodattaa rivejä, poimia ryhmiä
 uusiin sarakkeisiin, korvata, jakaa, merkitä tai laskea osumia tai luoda laatusäännön. *Kuvioprofiili* näyttää
@@ -161,6 +162,12 @@ Alt+1 … Alt+6 vaihtaa tilaa ja Ctrl+K avaa komentopaletin. Ensimmäinen Sarkai
 sisältöön*, joka siirtää kohdistuksen tilanvalitsimen ja kohdepaneelin ohi. Kaiken voi tavoittaa Sarkaimella ja Enterillä;
 valintaikkunat suljetaan Escillä. Taulukossa nuolinäppäimet siirtävät solusta toiseen ja Enter aloittaa muokkauksen.
 Sovellus noudattaa järjestelmän asetusta vähennetystä liikkeestä.
+
+Välilehtiä vaihdetaan vasemmalla ja oikealla nuolinäppäimellä sekä Home- ja End-näppäimillä. Kaikilla painikkeilla,
+kentillä ja koodieditoreilla on nimi, jonka ruudunlukija lukee, valintaikkunat luetaan otsikkonsa kanssa, ja sivulla
+on maamerkit tilanvalitsimelle, objektipaneelille, työalueelle ja tarkastimelle. Tekstin ja kenttien reunojen
+kontrasti täyttää WCAG AA -tason sekä vaaleassa että tummassa teemassa. Vega kuvaa kaaviorakentajan kaaviot
+ruudunlukijoille; R-kaavioiden ja D3-mallien luvut löytyvät Muokkaa-tilan taulukosta.
 
 ## Kieli
 

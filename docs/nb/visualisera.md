@@ -59,6 +59,7 @@ felt gir automatiske verdier.
 
 Referanse- og trendlinjer tegnes ikke i diagrammer med små paneler. Innstillingene lagres med diagrammet og følger
 med i delte diagramfiler og batchkjøringer.
+
 ## D3-maler
 
 - **Rangering**: én rad per kategori sortert etter verdi, med prikk og strek. Velg kategori, verdi, beregning, antall og

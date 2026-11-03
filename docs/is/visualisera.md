@@ -57,6 +57,7 @@ gefa sjálfvirk gildi.
 
 Viðmiðunar- og leitnilínur eru ekki teiknaðar í myndritum með smáspjöldum. Stillingarnar eru vistaðar með myndritinu
 og fylgja deildum myndritaskrám og hópkeyrslum.
+
 ## D3-snið
 
 - **Röðun**: ein röð fyrir hvern flokk, raðað eftir gildi, með punkti og línu. Veldu flokk, gildi, útreikning, fjölda og röð.

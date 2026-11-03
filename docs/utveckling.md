@@ -95,6 +95,16 @@ steget som *Gör det åt mig*.
   startar skalet inte får språkdialogen eller kurspanelen. `tests/course.test.js` sätter själv kursens tillstånd
   och återställer det efteråt.
 - Testsidor skriver rader `DATASPATIUM-LOG: OK|FAIL | namn :: detalj` och avslutar med `DATASPATIUM-TESTS: pass=N fail=M`.
+- `tests/flows.test.js` klickar igenom appen: varje åtgärd i Bearbetas palett, verktygsdialogerna i Bearbeta och
+  Hantera, diagrambyggaren, källorna i Inhämta, kommandopaletten, hjälpen och språkväljaren. Varje dialog ska gå att
+  öppna och stänga utan fel i konsolen och klara tillgänglighetskontrollen. Testerna förutsätter tidigare tester på
+  samma sida och ska därför köras i hela sviten, inte ensamma med `?only=`.
+- `tests/a11y.js` är en egen tillgänglighetskontroll (axe-core har licensen MPL-2.0, som inte är tillåten här):
+  alla knappar, länkar, flikar och fält har ett tillgängligt namn, id är unika och de id som ARIA-attribut pekar på
+  finns, dialoger har namn, roller är giltiga, ingen positiv `tabindex`, inga interaktiva element i varandra och
+  inga tomma rubriker. `tests/a11y.test.js` kör kontrollen i alla sex lägen och deras flikar, kontrollerar
+  landmärken, länken *Hoppa till innehållet*, tangentbordsnavigering i flikar och att designtokens klarar WCAG AA:
+  4,5:1 för text och 3:1 för kanter på fält och växlar, i både ljust och mörkt tema.
 
 ## Felsökning
 - Loggar från den senaste testkörningen ligger i `%TEMP%\dataspatium-tests\` (`edge.log`, `firefox.log`, `firefox.err`).
@@ -103,23 +113,30 @@ steget som *Gör det åt mig*.
   (fetch av lokal fil, ES-modul, modul-worker eller Blob-URL inuti worker).
 
 ## Prestanda
-- `tests/perf.html` skapar en datamängd med en miljon rader och tjugo kolumner i omgångar om 50 000, och mäter
-  bläddring djupt in i tabellen (osorterat, sorterat, textfilter), en SQL-aggregering över alla rader och
-  `dm_read()` av hela tabellen i R. Kör med
-  `powershell -File tools/run-tests.ps1 -Browsers edge -Url tests/perf.html -TimeoutSec 900`
-  (`tests/perf.html?rows=200000` ger en snabbare körning). Målen från planen rapporteras i resultatraden.
-- Uppmätt 2026-11-02, Edge 156, Windows 11: se tabellen nedan.
+- `tests/perf.html` importerar först en CSV-fil med en miljon rader och tjugo kolumner, skapar sedan en lika stor
+  datamängd i omgångar om 50 000 och mäter bläddring djupt in i tabellen (osorterat, sorterat, textfilter), en
+  SQL-aggregering över alla rader, `dm_read()` av hela tabellen i R och sex åtgärder i Bearbeta (rangordna, andel
+  av summan per grupp, klassindela, räkna och extrahera med reguljärt uttryck, sortera). För import och åtgärder
+  mäts också den längsta tiden huvudtråden var blockerad (en timer på 10 ms; målet är högst 50 ms). Kör med
+  `powershell -File tools/run-tests.ps1 -Browsers edge -Url tests/perf.html -TimeoutSec 3000`
+  (`tests/perf.html?rows=200000` ger en snabbare körning). Målen rapporteras i resultatraden.
+- Uppmätt 2026-11-03, Edge, Windows 11: se tabellen nedan.
 
 | Mätning | Mål | Resultat |
 |---|---|---|
-| Skapa 1 000 000 rader × 20 kolumner inkl. sparning | 60 s | 21,9 s (SQLite-filen blir 126 MB) |
-| Sida om 100 rader från mitten av tabellen | 0,2 s | under 0,1 s osorterat; 5,8 s sorterad på en kolumn utan index; 2,4 s med textfilter |
-| SQL-aggregering över alla rader (290 grupper) | 2 s | 0,7 s |
-| `dm_read()` av hela tabellen i R, inkl. spegling | 30 s | 21,7 s (plus 2,8 s R-start) |
+| Importera en CSV-fil, 1 000 000 rader × 20 kolumner (115 MB) | 60 s, blockering 50 ms | 5,7 s, längsta blockering 25 ms |
+| Skapa 1 000 000 rader × 20 kolumner inkl. sparning | 60 s | 9,5 s (SQLite-filen blir 126 MB) |
+| Sida om 100 rader från mitten av tabellen | 0,2 s | under 0,1 s osorterat; 0,9 s sorterad (index skapas vid första sorteringen); 1,5 s med textfilter |
+| SQL-aggregering över alla rader (290 grupper) | 2 s | 0,5 s |
+| `dm_read()` av hela tabellen i R, inkl. spegling | 30 s | 9,4 s (plus 1,4 s R-start) |
+| Rangordna, andel av summan per kommun, klassindela | blockering 50 ms | 3,5 s, 4,5 s och 1,9 s; längsta blockering 8 ms |
+| Reguljära uttryck: räkna träffar, extrahera | blockering 50 ms | 0,6 s och 2,9 s; längsta blockering 9 ms |
+| Sortera raderna permanent | blockering 50 ms | 2,7 s; längsta blockering 7 ms |
 
-Känd begränsning: sortering och textfilter körs om för varje sida i en tabell med en miljon rader, så bläddring i
-sorterat läge tar några sekunder per sida på så stora tabeller. Ett index per sorterad kolumn på begäran står på
-backloggen; det kräver att typbyten (som bygger om kolumnen) först tar bort indexet.
+Lärdomar från mätningarna: webR 0.5.9 gör om en fil som skrivs till R:s filsystem till en vanlig array, vilket
+slår i JavaScript-motorns gräns för arraylängd nära 128 MB; `engines/r` skriver därför större filer i delar om
+16 MB som R fogar ihop. IndexedDB kopierar det som skrivs på huvudtråden, så stora filer sparas och läses en del
+om 4 MB i taget. Stora CSV-filer tolkas i bitar om 512 kB med ett uppehåll mellan tolkning och typning.
 
 ## Release
 1. Kör alla tester i båda webbläsarna och sätt versionsnumret i `src/platform/registry.js` (`Dataspatium.version`).
@@ -131,5 +148,8 @@ backloggen; det kräver att typbyten (som bygger om kolumnen) först tar bort in
 4. Kontrollera utgåvan som en ny användare: packa upp ZIP-filen i en tom mapp, öppna `index.html` via file:// och
    kör testerna därifrån med en fullständig file-adress (relativa sökvägar tolkas mot repots rot):
    `powershell -File tools/run-tests.ps1 -Browsers edge -Url "file:///C:/Temp/dataspatium-1.0.0/tests/index.html"`.
-5. Skapa utgåvan: `gh release create v1.0.0 dataspatium-1.0.0.zip --title "Dataspatium 1.0.0" --notes-file notes.md`,
-   där noten inleds med Kom igång-stegen från README.
+5. Räkna ut ZIP-filens SHA-256 (`Get-FileHash dataspatium-1.0.0.zip -Algorithm SHA256` eller `sha256sum`) och
+   lägg den sist i noten under *Kontrollsumma*, med kommandon för att kontrollera den i Windows, macOS och Linux.
+6. Skapa utgåvan: `gh release create v1.0.0 dataspatium-1.0.0.zip --title "Dataspatium 1.0.0" --notes-file notes.md`,
+   där noten inleds med Kom igång-stegen från README. Kontrollera efteråt att GitHubs egen kontrollsumma för
+   filen (`gh release view v1.0.0 --json assets`, fältet `digest`) är densamma som den i noten.

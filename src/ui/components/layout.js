@@ -10,7 +10,14 @@
     const { h, DmElement, define, replace } = base;
 
     /**
-     * <dm-tabs> with `tabs = [{id, label, icon?}]` and `active`; emits `dm-change` {id}.
+     * Keyboard focus for the active tab when the tabs are drawn anew right after a key press (modes often
+     * rebuild their tabs on dm-change): {key: the tab ids, id, source: the element that had focus, at}.
+     */
+    let refocus = null;
+
+    /**
+     * <dm-tabs> with `tabs = [{id, label, icon?}]` and `active`; emits `dm-change` {id}. Arrow keys, Home and
+     * End move between the tabs and keep the keyboard focus on the active one.
      */
     class DmTabs extends DmElement {
       connectedCallback() {
@@ -22,10 +29,17 @@
       get active() { return this._active || (this.tabs[0] && this.tabs[0].id) || null; }
       set active(id) { this._active = id; if (this.list) this.render(); }
       select(id, emit = true) { this._active = id; this.render(); if (emit) this.emit('dm-change', { id }); }
+      focusActive() { const b = this.list && this.list.querySelector('[aria-selected="true"]'); if (b) /** @type {HTMLElement} */ (b).focus(); }
       onKey(e) {
         const ids = this.tabs.map((t) => t.id); const i = ids.indexOf(this.active);
-        if (e.key === 'ArrowRight') { this.select(ids[(i + 1) % ids.length]); e.preventDefault(); }
-        if (e.key === 'ArrowLeft') { this.select(ids[(i - 1 + ids.length) % ids.length]); e.preventDefault(); }
+        const next = e.key === 'ArrowRight' ? ids[(i + 1) % ids.length] : e.key === 'ArrowLeft' ? ids[(i - 1 + ids.length) % ids.length]
+          : e.key === 'Home' ? ids[0] : e.key === 'End' ? ids[ids.length - 1] : null;
+        if (next === null || next === undefined) return;
+        e.preventDefault();
+        refocus = { key: ids.join('\u0000'), id: next, source: this, at: Date.now() };
+        this.select(next);
+        // Still in the page: nobody rebuilt the tabs, so the focus stays here.
+        if (this.isConnected) { refocus = null; this.focusActive(); }
       }
       render() {
         const active = this.active;
@@ -33,7 +47,11 @@
           role: 'tab', type: 'button', 'aria-selected': t.id === active ? 'true' : 'false', tabindex: t.id === active ? '0' : '-1',
           onclick: () => this.select(t.id),
         }, t.icon ? icons.icon(t.icon, 14) : null, t.label)));
-        for (const b of this.list.children) b.addEventListener('focus', () => {}, { once: true });
+        const r = refocus;
+        if (r && r.source !== this && r.id === active && Date.now() - r.at < 2000 && r.key === this.tabs.map((t) => t.id).join('\u0000')) {
+          refocus = null;
+          setTimeout(() => { if (this.isConnected) this.focusActive(); }, 0);
+        }
       }
     }
     define('dm-tabs', DmTabs);

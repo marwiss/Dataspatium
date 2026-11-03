@@ -44,8 +44,9 @@
   --dm-n-100: #eef0f3;
   --dm-n-200: #e1e4e9;
   --dm-n-300: #cbd0d8;
-  --dm-n-400: #9aa3b0;
-  --dm-n-500: #6b7583;
+  --dm-n-350: #808894;
+  --dm-n-400: #656e7b;
+  --dm-n-500: #545c69;
   --dm-n-600: #4b5563;
   --dm-n-700: #343c48;
   --dm-n-800: #1f252e;
@@ -58,6 +59,9 @@
   --dm-surface-hover: var(--dm-n-100);
   --dm-border: var(--dm-n-200);
   --dm-border-strong: var(--dm-n-300);
+  /* Borders of form fields and switches: at least 3:1 against every surface (WCAG 1.4.11). */
+  --dm-border-input: var(--dm-n-350);
+  /* Text tokens reach at least 4.5:1 on bg, surface and surface-2 (WCAG 1.4.3); checked by tests/a11y.test.js. */
   --dm-text: var(--dm-n-800);
   --dm-text-muted: var(--dm-n-500);
   --dm-text-faint: var(--dm-n-400);
@@ -71,9 +75,9 @@
   --dm-focus: #7fb0ea;
 
   /* Status */
-  --dm-ok: #1a7f4b;
+  --dm-ok: #16703f;
   --dm-ok-soft: #e4f4ea;
-  --dm-warn: #a86a12;
+  --dm-warn: #8f5a0b;
   --dm-warn-soft: #fbf1dd;
   --dm-error: #c0392b;
   --dm-error-soft: #fbe6e3;
@@ -118,9 +122,10 @@
   --dm-surface-hover: #262f3b;
   --dm-border: #2e3745;
   --dm-border-strong: #3b4657;
+  --dm-border-input: #6b7583;
   --dm-text: #e6e9ee;
-  --dm-text-muted: #9aa3b0;
-  --dm-text-faint: #6b7583;
+  --dm-text-muted: #a9b1bd;
+  --dm-text-faint: #8c95a2;
   --dm-selection: #1f3550;
   --dm-accent: #63a4ff;
   --dm-accent-hover: #7fb5ff;
@@ -152,9 +157,10 @@
     --dm-surface-hover: #262f3b;
     --dm-border: #2e3745;
     --dm-border-strong: #3b4657;
+    --dm-border-input: #6b7583;
     --dm-text: #e6e9ee;
-    --dm-text-muted: #9aa3b0;
-    --dm-text-faint: #6b7583;
+    --dm-text-muted: #a9b1bd;
+    --dm-text-faint: #8c95a2;
     --dm-selection: #1f3550;
     --dm-accent: #63a4ff;
     --dm-accent-hover: #7fb5ff;

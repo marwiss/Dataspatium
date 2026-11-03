@@ -13,7 +13,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/overlays', ['ui/base', 'ui/icons', 'ui/basic', 'ui/fields'], (base, icons, basic) => {
-    const { h, t, replace } = base;
+    const { h, t, replace, uid } = base;
 
     /**
      * A body given as a function receives `done(value)`, which closes the dialog with that value (choices made
@@ -23,14 +23,16 @@
      */
     function open(options) {
       return new Promise((resolve) => {
-        const dlg = /** @type {HTMLDialogElement} */ (h('dialog', { class: 'dm-dialog', 'data-size': options.size || 'md', 'aria-labelledby': 'dm-dialog-title' }));
+        // Every dialog has its own title id, so that a dialog opened from another one is announced by its own title.
+        const titleId = uid('dm-dialog-title');
+        const dlg = /** @type {HTMLDialogElement} */ (h('dialog', { class: 'dm-dialog', 'data-size': options.size || 'md', 'aria-labelledby': titleId }));
         let settled = false;
         const finish = (value) => { if (settled) return; settled = true; dlg.close(); dlg.remove(); resolve(value); };
         const actions = options.actions || [{ label: t('common.ok'), variant: 'primary', value: true }];
         const actionEls = actions.map((a) => basic.button({ label: a.label, variant: a.variant || 'default', onClick: () => finish(a.value) }));
         dlg.append(
           h('div', { class: 'dm-dialog-head' },
-            h('h2', { id: 'dm-dialog-title', text: options.title || '' }),
+            h('h2', { id: titleId, text: options.title || '' }),
             options.closable === false ? null : basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, variant: 'ghost', onClick: () => finish(undefined) })),
           h('div', { class: 'dm-dialog-body' }, (typeof options.body === 'function' ? options.body(finish) : options.body) || null),
           h('div', { class: 'dm-dialog-actions' }, actionEls),

@@ -19,6 +19,8 @@
   D.define('analysis/regex', ['data/regex-syntax', 'data/datasets'], (syntax, datasets) => {
     const TIMEOUT_MS = 2000;
     const CHUNK = 5000;
+    /** Up to this many distinct values, `guard` reads them with one query instead of going through every row. */
+    const FEW = 50000;
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
 
     /** Runs in the matching worker. Self-contained: it is serialised with toString(). */
@@ -144,14 +146,22 @@
 
     /**
      * Check every value of a column within the time limit before SQL runs the pattern on the whole column.
-     * The column is read in rowid order a chunk at a time; values already checked are skipped. Rejects
-     * with RegexTimeout when a chunk takes too long, and with an error for an invalid pattern.
+     * A column with at most FEW distinct values is checked from one query of them; otherwise the column is
+     * read in rowid order a chunk at a time and values already checked are skipped. Rejects with
+     * RegexTimeout when a chunk takes too long, and with an error for an invalid pattern.
      * @param {string|{engine: any}} target
      */
     async function guard(target, column, pattern, flags) {
       const compiled = syntax.compile(pattern, flags);
       if (compiled.error) throw new Error(D.t('regex.err.invalid', { message: compiled.error }));
       const engine = await engineOf(target);
+      // Few distinct values (codes, names, categories): one query gives them all.
+      const few = await engine.exec(`select cast(${q(column)} as text) from data where ${q(column)} is not null group by 1 limit ?`, [FEW + 1]);
+      const values = few[0] ? few[0].values.map((r) => r[0]) : [];
+      if (values.length <= FEW) {
+        for (let i = 0; i < values.length; i += CHUNK) await run({ op: 'test', pattern, flags, values: values.slice(i, i + CHUNK) }, TIMEOUT_MS * 2);
+        return;
+      }
       const seen = new Set();
       let after = -9007199254740991;
       for (;;) {

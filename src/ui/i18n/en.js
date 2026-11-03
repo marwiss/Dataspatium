@@ -1835,5 +1835,10 @@
     'sql.fn.dm_regex_extract': 'dm_regex_extract(x, pattern, group, flags): the group (number or name, 0 for the whole match) of the first match',
     'sql.fn.dm_regex_count': 'dm_regex_count(x, pattern, flags): the number of matches',
     'sql.fn.dm_regex_split': 'dm_regex_split(x, pattern, part, parts, flags): part number part when x is split at the pattern into at most parts parts',
+    'code.editor.r': 'R code',
+    'code.editor.sql': 'SQL code',
+    'code.editor.json': 'JSON',
+    'code.editor.latex': 'LaTeX code',
+    'code.editor.other': 'Code',
   }));
 })();

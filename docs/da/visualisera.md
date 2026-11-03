@@ -59,6 +59,7 @@ felter giver automatiske værdier.
 
 Reference- og trendlinjer tegnes ikke i diagrammer med små paneler. Indstillingerne gemmes med diagrammet og følger
 med i delte diagramfiler og batchkørsler.
+
 ## D3-skabeloner
 
 - **Rangering**: én række pr. kategori sorteret efter værdi, med prik og streg. Vælg kategori, værdi, beregning, antal og

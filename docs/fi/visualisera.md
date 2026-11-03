@@ -59,6 +59,7 @@ kentät antavat automaattiset arvot.
 
 Vertailu- ja trendiviivoja ei piirretä kaavioihin, joissa on pienet paneelit. Asetukset tallennetaan kaavion mukana,
 ja ne kulkevat mukana jaetuissa kaaviotiedostoissa ja eräajoissa.
+
 ## D3-mallit
 
 - **Järjestys**: yksi rivi luokkaa kohden arvon mukaan lajiteltuna, pisteellä ja viivalla. Valitse luokka, arvo, laskelma,

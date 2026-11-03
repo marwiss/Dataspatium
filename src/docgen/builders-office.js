@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('docgen/builders-office', ['docgen/markdown'], (markdown) => {
-    const TEXT = '1F252E'; const MUTED = '6B7583'; const BORDER = 'E1E4E9'; const SHADE = 'EEF0F3';
+    const TEXT = '1F252E'; const MUTED = '545C69'; const BORDER = 'E1E4E9'; const SHADE = 'EEF0F3';
     const PAGE_WIDTH_PX = 600; // A4 minus 25 mm margins at 96 px per inch, rounded down
 
     async function ensureDocx() {

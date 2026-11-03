@@ -19,6 +19,8 @@
     const BASE_URL = 'dataspatium-asset://webr/';
     const REPO_URL = 'dataspatium-asset://webr-repo';
     const MAIN_THREAD_ONLY = new Set(['webr/webr.mjs', 'webr/webr-worker.js']);
+    /** Files larger than this are written into R's file system in parts (see writeFile). */
+    const WRITE_PART = 16 * 1024 * 1024;
     /** Packages always shipped at startup: what r/dataspatium.R itself needs. */
     const STARTUP_PACKAGES = ['DBI', 'RSQLite'];
 
@@ -124,8 +126,22 @@
       }
 
       /** @param {string} path @param {ArrayBuffer|Uint8Array} bytes */
+      /**
+       * Write a file into R's file system. webR 0.5.9 turns the bytes into a plain array on the way
+       * (Object.values), which fails near 128 MB, so a larger file is written in parts that R joins.
+       */
       async writeFile(path, bytes) {
-        await this.webR.FS.writeFile(path, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+        const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+        if (data.byteLength <= WRITE_PART) { await this.webR.FS.writeFile(path, data); return; }
+        const parts = [];
+        for (let i = 0, n = 0; i < data.byteLength; i += WRITE_PART, n++) {
+          const part = `${path}.part${n}`;
+          // slice, not subarray: a view would be cloned with its whole underlying buffer.
+          await this.webR.FS.writeFile(part, data.slice(i, i + WRITE_PART));
+          parts.push(part);
+        }
+        const q = (s) => JSON.stringify(String(s));
+        await this.webR.evalRVoid(`local({ out <- file(${q(path)}, "wb"); on.exit(close(out)); for (p in c(${parts.map(q).join(', ')})) { writeBin(readBin(p, "raw", file.size(p)), out); invisible(file.remove(p)) } })`);
       }
       /** @returns {Promise<Uint8Array>} */
       readFile(path) { return this.webR.FS.readFile(path); }

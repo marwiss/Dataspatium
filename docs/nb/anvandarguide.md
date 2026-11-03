@@ -99,6 +99,7 @@ inn dm_read()* og R-eksemplene i inspektøren bruker også kortnavnet.
 
 Fanen *Notatbok* samler tekst (Markdown), R og SQL i celler som kjøres i rekkefølge og lagrer utdataene sine. En ferdig
 notatbok eksporteres som HTML, Word, PDF, Markdown eller LaTeX, med eller uten koden. Se [anteckningsbok.md](anteckningsbok.md).
+
 Fanen *Regex* prøver et regulært uttrykk på en kolonne mens du skriver: de vanligste verdiene vises med treffene
 markert, og radene som matcher, telles. Samme mønster kan så filtrere rader, hente ut grupper til nye kolonner,
 erstatte, dele opp, markere eller telle treff, eller bli en kvalitetsregel. *Mønsterprofil* viser hvilke former
@@ -150,6 +151,12 @@ arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ve
 Alt+1 til Alt+6 bytter modus, og Ctrl+K åpner kommandopaletten. Første trykk på Tab på siden viser lenken *Gå til innholdet*,
 som flytter fokus forbi modusvelgeren og objektpanelet. Alt nås med Tab og Enter; dialoger lukkes med Esc. I tabellen
 flytter piltastene mellom celler, og Enter redigerer. Appen følger systeminnstillingen for redusert bevegelse.
+
+Faner byttes med venstre og høyre piltast, Home og End. Alle knapper, felt og koderedigeringsprogrammer har navn
+som skjermlesere leser opp, dialoger leses opp med overskriften sin, og siden har landemerker for modusvelgeren,
+objektpanelet, arbeidsflaten og inspektøren. Tekst og feltkanter har kontrast etter WCAG AA i både lyst og mørkt
+tema. Diagrammer fra diagrambyggeren beskrives for skjermlesere av Vega; for R-diagrammer og D3-maler finnes
+tallene i tabellen i Bearbeid.
 
 ## Språk
 

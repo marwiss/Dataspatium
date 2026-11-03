@@ -52,7 +52,9 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
 - R: WebR 0.5.9 (R 4.5.1) med PostMessage-kanalen. Eftersom basadressen `dataspatium-asset://webr/` har ett annat
   ursprung hämtar WebR sin worker-kod med XMLHttpRequest och skapar en Blob-worker av svaret; vårt nätverks-shim
   svarar med "worker-shim + webr-worker.js". Paketrepot är inbäddat under `webr-repo/` och installeras med
-  `webr::install()`. R och JS delar data genom SQLite-filer i WebR:s virtuella filsystem (RSQLite).
+  `webr::install()`. R och JS delar data genom SQLite-filer i WebR:s virtuella filsystem (RSQLite). WebR 0.5.9
+  gör om varje fil som skrivs till en vanlig array (`Object.values`), vilket slår i taket för arraylängd nära
+  128 MB; `writeFile` i `src/engines/r/r-engine.js` skriver därför större filer i delar om 16 MB som R fogar ihop.
 
 ## Datamodell
 
@@ -73,7 +75,7 @@ kortnamn; den valda datamängden får också en vy med sitt eget kortnamn på `m
 receptsteg av typen `sql` kopplar in kortnamnen i `prepare`, efter ångra-ögonblicksbilden. R-bryggans index
 (`/data/index.tsv`) har kolumnen `shortName`, så `dm_read()` och `dm_find()` i R löser kortnamn, och diagram- och
 anteckningsboksfiler bär `datasetShort` som andra matchning vid import.
-Filen lagras i IndexedDB i bitar om 8 MB (`src/platform/storage/idb-store.js`), tillsammans med en metadatapost.
+Filen lagras i IndexedDB i bitar om 4 MB (`src/platform/storage/idb-store.js`), som skrivs och läses en i taget så att huvudtråden aldrig kopierar hela filen i ett svep, tillsammans med en metadatapost.
 `src/data/datasets.js` är den enda vägen till datamängderna: skapa, lista, fråga (sidvis med sortering och
 filter), statistik, logg, spara, byt namn, ta bort, exportera bytes, importera bytes, versioner
 (ögonblicksbilder som egna blobbar i IndexedDB) och `createFromQuery` för härledda datamängder. Arbetsytan kan
@@ -129,7 +131,7 @@ SQLite, shapefile, R-format, fast bredd, annars CSV) med `resolveImporter`, som 
 att känna igen TopoJSON i en .json-fil och Excel 2003 XML i en .xml-fil, rensar
 kolumnnamn, härleder typer ur förhandsgranskningen (deklarerade typer från ett SQLite-schema vinner) och skapar
 datamängden. Avgränsade textfiler på 64 MB eller mer (eller `options.stream`) går i stället genom `runStream`:
-`csv.parseStream` låter PapaParse läsa filen bit för bit (1 MB i taget, FileReader med den upptäckta
+`csv.parseStream` låter PapaParse läsa filen bit för bit (512 kB i taget med ett uppehåll före typningen, FileReader med den upptäckta
 teckenkodningen, paus/återupptagning som mottryck), varje omgång typas med `materialize` och skrivs med
 `datasets.appendImportRows` till en datamängd som `datasets.createEmpty` skapat utan rader; `finishImport`
 räknar rader, loggar, sparar och sänder `created` (`abortImport` kastar allt vid fel). Två adaptrar avviker: SQLite-filer som är Dataspatium-datamängder återställs via
@@ -326,4 +328,7 @@ koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`edita
 
 `tests/index.html` kör enhetstester i webbläsaren och skriver `DATASPATIUM-LOG`-rader; `tools/run-tests.ps1` kör
 sidan headless i Edge och Firefox. `spike.html` innehåller den tekniska spiken från fas 0 som också kan köras
-headless (`-Url "spike.html?autorun=1"`).
+headless (`-Url "spike.html?autorun=1"`). `tests/a11y.js` är en egen tillgänglighetskontroll (tillgängliga namn,
+unika id och giltiga ARIA-referenser, roller, dialognamn, kontrast) som `tests/a11y.test.js` kör i alla lägen och
+`tests/flows.test.js` i varje dialog som klicktesterna öppnar. `tests/perf.html` mäter tider och blockering av
+huvudtråden med en miljon rader (se [utveckling.md](utveckling.md)).

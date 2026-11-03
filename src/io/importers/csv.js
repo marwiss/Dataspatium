@@ -106,7 +106,7 @@
         Papa.parse(file, {
           delimiter, delimitersToGuess: GUESS, skipEmptyLines: 'greedy', encoding: head.encoding, newline,
           // Small chunks keep each main-thread parse well under 50 ms; the engine inserts while the next chunk is read.
-          chunkSize: options.chunkSize || 1024 * 1024,
+          chunkSize: options.chunkSize || 512 * 1024,
           chunk: (results, parser) => {
             used = results.meta.delimiter || used;
             let rows = results.data.filter((r) => !(r.length === 1 && String(r[0]).trim() === ''));
@@ -120,7 +120,8 @@
             rows = normalise(rows, columns.length);
             total += rows.length;
             parser.pause();
-            pending = Promise.resolve().then(() => onChunk(rows, { columns, total })).then(() => parser.resume(), (err) => { failed = err; parser.abort(); });
+            // A timer between parsing and typing the rows splits the work into two tasks, so the page stays responsive.
+            pending = new Promise((r) => setTimeout(r, 0)).then(() => onChunk(rows, { columns, total })).then(() => parser.resume(), (err) => { failed = err; parser.abort(); });
           },
           complete: () => resolve(undefined),
           error: (err) => reject(err instanceof Error ? err : new Error(String(err && err.message || err))),

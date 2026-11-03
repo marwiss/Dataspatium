@@ -1857,5 +1857,10 @@
     'sql.fn.dm_regex_extract': 'dm_regex_extract(x, mönster, grupp, flaggor): gruppen (nummer eller namn, 0 för hela träffen) i första träffen',
     'sql.fn.dm_regex_count': 'dm_regex_count(x, mönster, flaggor): antalet träffar',
     'sql.fn.dm_regex_split': 'dm_regex_split(x, mönster, del, antal, flaggor): del nummer del när x delas vid mönstret i högst antal delar',
+    'code.editor.r': 'R-kod',
+    'code.editor.sql': 'SQL-kod',
+    'code.editor.json': 'JSON',
+    'code.editor.latex': 'LaTeX-kod',
+    'code.editor.other': 'Kod',
   }));
 })();

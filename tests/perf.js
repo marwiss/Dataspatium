@@ -30,6 +30,37 @@
   }
   let id = null;
 
+  /**
+   * Runs `work` while a 10 ms timer ticks on the main thread; the longest gap beyond the timer's own 10 ms is
+   * how long the page was blocked (the target in CLAUDE.md is 50 ms).
+   */
+  async function blocking(work) {
+    let last = performance.now(); let max = 0; let running = true;
+    const tick = () => { const now = performance.now(); max = Math.max(max, now - last); last = now; if (running) setTimeout(tick, 10); };
+    setTimeout(tick, 10);
+    const t0 = performance.now();
+    try { await work(); } finally { running = false; }
+    return { ms: performance.now() - t0, blocked: Math.max(0, Math.round(max - 10)) };
+  }
+
+  // The import runs first, before the large dataset, R and the undo snapshots fill the memory.
+  test(`perf: importera en CSV-fil med ${ROWS} rader (mål 60 s)`, async (assert) => {
+    const parts = [columns.join(';') + '\n'];
+    for (let start = 0; start < ROWS; start += CHUNK) {
+      let s = '';
+      for (let i = start; i < Math.min(start + CHUNK, ROWS); i++) s += makeRow(i).join(';') + '\n';
+      parts.push(s);
+    }
+    const file = new File(parts, 'prestanda.csv', { type: 'text/csv' });
+    let meta = null;
+    const r = await blocking(async () => { meta = await D.require('io/import').run(file, {}, null, 'Prestanda CSV'); });
+    try {
+      assert.equal(await datasets.count(meta.id), ROWS);
+    } finally { if (meta) await datasets.remove(meta.id); }
+    return `${(file.size / 1048576).toFixed(0)} MB på ${fmt(r.ms)} (${target(r.ms, 60000)}), längsta blockering ${r.blocked} ms`;
+  }, 1800000);
+
+
   test(`perf: skapa ${ROWS} rader × ${COLS} kolumner i omgångar om ${CHUNK} (mål 60 s)`, async (assert) => {
     const t0 = performance.now();
     const first = [];
@@ -87,6 +118,22 @@
     assert.equal(out, `${ROWS} ${COLS}`, JSON.stringify(res.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 160))));
     return `R-start ${fmt(started)}; spegling + dm_read ${fmt(ms)} (${target(ms, 30000)})`;
   }, 900000);
+
+  test(`perf: åtgärder i Bearbeta och reguljära uttryck på ${ROWS} rader`, async (assert) => {
+    const recipes = D.require('data/recipes');
+    const regex = D.require('analysis/regex');
+    const parts = [];
+    const step = async (label, fn) => { const r = await blocking(fn); parts.push(`${label} ${fmt(r.ms)} (blockering ${r.blocked} ms)`); };
+    await step('rangordna', () => recipes.apply(id, 'rank_values', { column: 'v1', which: 'largest', method: 'min', name: 'rang' }));
+    await step('andel av summan per kommun', () => recipes.apply(id, 'share_of_total', { column: 'v1', group: 'kommun', percent: true, name: 'andel' }));
+    await step('klassindela', () => recipes.apply(id, 'bin_numeric', { column: 'v2', method: 'equal', count: 5, name: 'klass' }));
+    await step('regex: räkna träffar', async () => { const s = await regex.stats(id, 'kommun', '^Kommun 0\\d\\d$', ''); assert.ok(s.matching > 0, 'matches'); });
+    await step('regex: extrahera', () => recipes.apply(id, 'regex_extract', { column: 'kommun', pattern: '(\\d+)$', names: 'nummer' }));
+    await step('sortera rader', () => recipes.apply(id, 'sort_rows', { column: 'v3', direction: 'desc' }));
+    const handle = await datasets.ensureOpen(id);
+    assert.equal(handle.columns.filter((c) => ['rang', 'andel', 'klass', 'nummer'].includes(c.name)).length, 4, 'new columns');
+    return parts.join('; ');
+  }, 1800000);
 
   test('perf: städa', async (assert) => {
     if (id) await datasets.remove(id);

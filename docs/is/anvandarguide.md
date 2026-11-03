@@ -99,6 +99,7 @@ SQL-flipinn spyr töflu gagnasafnsins `data` beint með SQLite. Önnur gagnasöf
 
 Flipinn *Minnisbók* safnar texta (Markdown), R og SQL í reiti sem keyra í röð og vista úttak sitt. Fullbúin minnisbók er flutt
 út sem HTML, Word, PDF, Markdown eða LaTeX, með eða án kóðans. Sjá [anteckningsbok.md](anteckningsbok.md).
+
 Flipinn *Regex* prófar reglulega segð á dálki meðan þú skrifar: algengustu gildin birtast með samsvaranirnar
 merktar og raðirnar sem passa eru taldar. Sama mynstur getur síðan síað raðir, dregið hópa út í nýja dálka, skipt
 út, skipt upp, merkt eða talið samsvaranir eða orðið að gæðareglu. *Mynsturyfirlit* sýnir form gildanna (til dæmis
@@ -150,6 +151,12 @@ möppu á diski, sjálfkrafa við hverja breytingu.
 Alt+1 til Alt+6 skipta um ham og Ctrl+K opnar skipanaspjaldið. Fyrsta ýting á Tab á síðunni sýnir tengilinn *Fara í efnið*, sem
 færir fókus framhjá hamavalinu og hlutaspjaldinu. Allt næst með Tab og Enter; gluggum er lokað með Esc. Í töflunni færa
 örvalyklarnir milli reita og Enter breytir. Forritið fylgir kerfisstillingunni um minni hreyfingu.
+
+Skipt er um flipa með vinstri og hægri örvalykli, Home og End. Allir hnappar, reitir og kóðaritlar hafa heiti sem
+skjálesarar lesa upp, gluggar eru lesnir upp með fyrirsögn sinni og síðan hefur kennileiti fyrir hamaskiptinn,
+hlutaspjaldið, vinnusvæðið og eiginleikaspjaldið. Texti og reitarammar hafa birtuskil samkvæmt WCAG AA bæði í ljósu
+og dökku þema. Vega lýsir myndritum úr myndritasmiðnum fyrir skjálesara; tölurnar á bak við R-myndrit og D3-snið eru í
+töflunni í Vinna.
 
 ## Tungumál
 

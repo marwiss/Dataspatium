@@ -1835,5 +1835,10 @@
     'sql.fn.dm_regex_extract': 'dm_regex_extract(x, mønster, gruppe, flag): gruppen (nummer eller navn, 0 for hele træffet) i første træf',
     'sql.fn.dm_regex_count': 'dm_regex_count(x, mønster, flag): antallet af træffere',
     'sql.fn.dm_regex_split': 'dm_regex_split(x, mønster, del, antal, flag): del nummer del, når x opdeles ved mønsteret i højst antal dele',
+    'code.editor.r': 'R-kode',
+    'code.editor.sql': 'SQL-kode',
+    'code.editor.json': 'JSON',
+    'code.editor.latex': 'LaTeX-kode',
+    'code.editor.other': 'Kode',
   }));
 })();

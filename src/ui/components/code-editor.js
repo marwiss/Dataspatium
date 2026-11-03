@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * <dm-code language="r|sql|json|latex" placeholder="…"> code editor built on CodeMirror 5, which ships
+ * <dm-code language="r|sql|json|latex" placeholder="…" label="…"> code editor built on CodeMirror 5, which ships
  * as classic scripts and therefore works under file://. The library and language modes load lazily
  * the first time an editor is created. Ctrl+Enter / Cmd+Enter emits `dm-run`.
  */
@@ -9,7 +9,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/code-editor', ['ui/base'], (base) => {
-    const { h, DmElement, define } = base;
+    const { h, t, DmElement, define } = base;
     const BASE = 'vendor/codemirror5/';
     const MODES = { r: { file: 'mode/r/r.js', mime: 'text/x-rsrc' }, sql: { file: 'mode/sql/sql.js', mime: 'text/x-sqlite' }, json: { file: 'mode/javascript/javascript.js', mime: 'application/json' }, latex: { file: 'mode/stex/stex.js', mime: 'text/x-stex' } };
     let corePromise = null;
@@ -67,6 +67,8 @@
           extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, 'Shift-Enter': run, 'Ctrl-/': 'toggleComment', 'Cmd-/': 'toggleComment', Tab: (cm) => cm.execCommand(cm.somethingSelected() ? 'indentMore' : 'insertSoftTab') },
         });
         this.cm.on('change', () => this.emit('dm-change', { code: this.value }));
+        // CodeMirror types into a hidden textarea; it carries the editor's name for screen readers.
+        this.cm.getInputField().setAttribute('aria-label', this.getAttribute('label') || t('code.editor.' + (MODES[language] ? language : 'other')));
         this.pendingValue = null;
         this.emit('dm-ready', {});
       }

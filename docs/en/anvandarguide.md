@@ -108,6 +108,7 @@ The button *Insert dm_read()* and the R examples in the inspector use the short 
 The *Notebook* tab gathers text (Markdown), R and SQL in cells that run in order and save their output. A finished
 notebook is exported as HTML, Word, PDF, Markdown or LaTeX, with or without the code. See
 [anteckningsbok.md](anteckningsbok.md).
+
 The *Regex* tab tries a regular expression on a column as you type: the most common values are shown with the
 matches marked and the matching rows are counted. The same pattern can then filter rows, extract groups into new
 columns, replace, split, flag or count matches, or become a quality rule. *Pattern profile* shows the shapes of the
@@ -163,6 +164,12 @@ Alt+1 to Alt+6 switch mode and Ctrl+K opens the command palette. The first Tab p
 *Skip to content*, which moves focus past the mode switcher and the object panel. Everything is reachable with
 Tab and Enter; dialogs close with Esc. In the table the arrow keys move between cells and Enter edits. The app
 follows the system setting for reduced motion.
+
+Tabs are switched with the left and right arrow keys, Home and End. Every button, field and code editor has a name
+that screen readers announce, dialogs are announced with their title and the page has landmarks for the mode
+switcher, the object panel, the work area and the inspector. Text and field borders have WCAG AA contrast in both the
+light and the dark theme. Charts from the chart builder are described for screen readers by Vega; for R charts and
+D3 templates the figures are in the table in Process.
 
 ## Language
 

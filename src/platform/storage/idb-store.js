@@ -11,7 +11,9 @@
   const D = globalThis.Dataspatium;
   D.define('platform/storage/idb', [], () => {
     const DB_NAME = 'dataspatium';
-    const CHUNK = 8 * 1024 * 1024;
+    // Writing one chunk clones it on the main thread; 4 MB keeps each write well under 50 ms. Reading
+    // concatenates by index, so files saved with other chunk sizes still load.
+    const CHUNK = 4 * 1024 * 1024;
     /** @type {any} */
     let db = null;
     let opening = null;
@@ -50,26 +52,31 @@
     }
 
     // ---- large binaries, chunked ----
-    /** @param {string} parent @param {ArrayBuffer} buffer */
+    /**
+     * Store a large binary as chunks. Each chunk is copied and written on its own: the browser clones what is
+     * written on the main thread, and one bulk write of a few hundred MB would block the page for a second.
+     * @param {string} parent @param {ArrayBuffer} buffer
+     */
     async function saveBlob(parent, buffer) {
       const d = await open();
-      const chunks = [];
-      let n = 0;
-      for (let i = 0; i < buffer.byteLength || (i === 0 && n === 0); i += CHUNK, n++) {
-        chunks.push({ key: `${parent}:${n}`, parent, index: n, data: buffer.slice(i, Math.min(i + CHUNK, buffer.byteLength)) });
-        if (buffer.byteLength === 0) break;
-      }
+      const count = Math.max(1, Math.ceil(buffer.byteLength / CHUNK));
       await d.transaction('rw', d.blobs, async () => {
         await d.blobs.where('parent').equals(parent).delete();
-        await d.blobs.bulkPut(chunks);
+        for (let n = 0; n < count; n++) {
+          await d.blobs.put({ key: `${parent}:${n}`, parent, index: n, data: buffer.slice(n * CHUNK, Math.min((n + 1) * CHUNK, buffer.byteLength)) });
+        }
       });
       return buffer.byteLength;
     }
     /** @returns {Promise<ArrayBuffer|null>} */
     async function loadBlob(parent) {
       const d = await open();
-      const chunks = await d.blobs.where('parent').equals(parent).sortBy('index');
-      if (!chunks.length) return null;
+      const keys = await d.blobs.where('parent').equals(parent).primaryKeys();
+      if (!keys.length) return null;
+      // One chunk at a time, so that reading a large file never holds the page for long.
+      const chunks = [];
+      for (const key of keys) chunks.push(await d.blobs.get(key));
+      chunks.sort((a, b) => a.index - b.index);
       if (chunks.length === 1) return chunks[0].data;
       const total = chunks.reduce((s, c) => s + c.data.byteLength, 0);
       const out = new Uint8Array(total);

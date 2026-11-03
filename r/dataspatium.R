@@ -281,7 +281,7 @@ theme_dataspatium <- function(base_size = 12, base_family = "") {
       plot.title = ggplot2::element_text(face = "bold"),
       plot.title.position = "plot",
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      axis.title = ggplot2::element_text(colour = "#6b7583"),
+      axis.title = ggplot2::element_text(colour = "#545c69"),
       legend.position = "bottom"
     )
 }

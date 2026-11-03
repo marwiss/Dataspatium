@@ -31,7 +31,7 @@ p { margin: 0 0 12px; } ul, ol { margin: 0 0 12px; padding-left: 24px; }
 table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 13.5px; }
 th, td { border: 1px solid #e1e4e9; padding: 5px 8px; text-align: left; vertical-align: top; }
 th { background: #eef0f3; font-weight: 600; } td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-caption, figcaption { caption-side: bottom; text-align: left; color: #6b7583; font-size: 12.5px; padding: 6px 0; }
+caption, figcaption { caption-side: bottom; text-align: left; color: #545c69; font-size: 12.5px; padding: 6px 0; }
 figure { margin: 12px 0 18px; } img { max-width: 100%; height: auto; display: block; }
 hr { border: 0; border-top: 1px solid #e1e4e9; margin: 20px 0; } .pagebreak { page-break-after: always; break-after: page; }
 code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; background: #eef0f3; padding: 1px 4px; border-radius: 3px; }

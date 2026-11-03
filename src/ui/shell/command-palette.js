@@ -9,7 +9,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/command-palette', ['ui/base', 'ui/icons', 'platform/storage/idb'], (base, icons, idb) => {
-    const { h, t, replace } = base;
+    const { h, t, replace, uid } = base;
     const RECENT = 'palette:recent';
     const MAX = 40;
 
@@ -35,6 +35,8 @@
     /** @param {{log: Function}} shell */
     function create(shell) {
       const providers = [];
+      // Option ids are unique per palette, as aria-activedescendant points to them.
+      const optPrefix = uid('dm-palette-opt') + '-';
       let dlg = null; let input = null; let listEl = null;
       let items = []; let filtered = []; let active = 0;
 
@@ -80,7 +82,7 @@
       function renderList() {
         if (!listEl) return;
         replace(listEl, filtered.length
-          ? filtered.map((c, i) => h('li', { role: 'option', class: 'dm-palette-item', id: 'dm-palette-opt-' + i, 'aria-selected': i === active ? 'true' : 'false', onclick: () => run(c), onmousemove: () => { if (active !== i) { active = i; renderList(); } } },
+          ? filtered.map((c, i) => h('li', { role: 'option', class: 'dm-palette-item', id: optPrefix + i, 'aria-selected': i === active ? 'true' : 'false', onclick: () => run(c), onmousemove: () => { if (active !== i) { active = i; renderList(); } } },
             icons.icon(c.icon || 'chevron-right', 16),
             h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.label }), c.hint ? h('span', { class: 'dm-list-sub dm-truncate', text: c.hint }) : null),
             c.group ? h('span', { class: 'dm-palette-group', text: c.group }) : null))
