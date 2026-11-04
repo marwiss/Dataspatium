@@ -20,6 +20,8 @@ og kan afspilles igen på et andet datasæt. SQL-konsollen i tilstanden Analysé
 - Tabellen er virtualiseret: kun de synlige rækker findes i browserens DOM, resten ligger i SQLite. En million rækker
   gennemses lige så hurtigt som hundrede.
 
+**Kolonner, visningen kræver.** Grafen kræver nodens id, kortet sin geometri og galleriet sine filnavne. Tabellen kan ændres frit, men appen spørger først, hvis du er ved at fjerne, omdøbe eller ændre typen for sådan en kolonne. Fjerner et trin, der ikke kan forudses, den, for eksempel SQL eller en pivotering, vises en besked med Fortryd.
+
 ## Handlinger
 
 Knappen **Handlinger** åbner paletten. Hver handling har en dialog med felter, der dannes ud fra handlingens parametre,

@@ -86,7 +86,7 @@
       set options(list) {
         if (!this.control) { this.pendingOptions = list; return; }
         const current = this.control.value;
-        this.control.replaceChildren(...list.map((o) => h('option', { value: o.value, text: o.label })));
+        this.control.replaceChildren(...list.map((o) => h('option', { value: o.value, text: o.label, disabled: o.disabled ? '' : null })));
         if (list.some((o) => o.value === current)) this.control.value = current;
       }
       get options() { return this.control ? Array.from(this.control.options).map((o) => ({ value: o.value, label: o.textContent || '' })) : (this.pendingOptions || []); }

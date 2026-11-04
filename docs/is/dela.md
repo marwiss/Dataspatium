@@ -33,12 +33,27 @@ opna farsímasíðuna í fyrsta skipti.
 
 ## Yfirferð fyrir deilingu
 
-Þegar gagnasöfnum er pakkað, þau send í tæki eða þeim deilt um deilivalmyndina leitar forritið í dálkunum að
-kennitölum (sænskum, dönskum, norskum, finnskum og íslenskum), netföngum og símanúmerum, eftir dálkaheitum og
-gildum. Finnist eitthvað birtist gluggi þar sem þú velur fyrir hvern dálk *Halda*, *Dulnefna* (sama gildi gefur
-sama kóða en gildið verður ekki lesið) eða *Fjarlægja dálkinn*. Aðeins afritið sem deilt er breytist; gagnasafnið í
-forritinu helst óbreytt og skráarlisti pakkans tilgreinir hvaða dálkum var breytt. Yfirferðin sér ekki allt: nöfn,
-heimilisföng og frjálsan texta þarft þú að meta sjálf(ur).
+Allt sem fer úr forritinu með pökkum, tækjum eða deilivalmyndinni er fyrst yfirfarið og yfirferðin nær til allrar skrárinnar. Forritið leitar að kennitölum, netföngum og símanúmerum, bæði í heilum
+dálkum og inni í samfelldum texta, og sýnir það sem annars fylgir með án þess að sjást í töflunni. Fyrir hvern hluta velur þú hvað gerist í afritinu.
+
+| Hluti | Val |
+|---|---|
+| Dálkur með kennitölum, netföngum eða símanúmerum | Halda, dulnefna eða fjarlægja. Dulnefning merkir að sama gildi gefur sama kóða en gildið verður ekki lesið |
+| Samfelldur texti, til dæmis efnisgreinar skjala | Halda, fela það sem finnst eða fjarlægja dálkinn |
+| Leggir netsins og eiginleikar líkansins | Halda, fela það sem finnst eða fjarlægja í afritinu |
+| Upprunaskrár | Halda eða fjarlægja. Ekki er hægt að dulnefna þær, svo lagt er til að fjarlægja þær þegar öðru er breytt |
+| Myndir | Halda eða fjarlægja. Staðsetning er fjarlægð sér, bæði úr töflunni og úr myndskránni |
+| Athugasemdir og höfundar í lýsigögnum skjala | Halda eða fjarlægja |
+| Safnaðar raðir | Hægt er að dulnefna hver safnaði og fjarlægja staðsetningu |
+
+Aðeins afritið sem deilt er breytist og gagnasafnið í forritinu helst eins og það er. Ef þú breytir einhverju fylgja hvorki breytingaskrá né uppskrift með, því þau geta innihaldið upprunalegu gildin.
+Pakkar eru einnig hreinsaðir af leifum fjarlægðra gilda í skránni sjálfri.
+
+Yfirferðin sér ekki allt. Nöfn, heimilisföng og innihald upprunaskráa og mynda þarft þú að meta sjálf(ur). Gröf, minnisbækur og skjöl í pakka geta sýnt upprunalegu gildin, svo slepptu þeim ef þörf
+krefur. Skráarheiti fylgja með.
+
+Samstillingu við **GitHub** þarf að vera hægt að sækja aftur eins og hún var, svo þar er ekkert hægt að dulnefna. Forritið sýnir þess í stað hvað geta verið persónuupplýsingar áður en þú sendir.
+**Birta** býr til HTML-síðu með þeim gildum sem gröfin sýna, svo athugaðu þau áður en þú setur síðuna út.
 
 ## Deilivalmynd
 

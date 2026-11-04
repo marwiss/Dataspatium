@@ -417,19 +417,19 @@ Dataspatium.assets.addEntries({
  "docs/sv/soka.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 4282,
+  "size": 4530,
   "library": "dataspatium"
  },
  "docs/sv/bearbeta.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22125,
+  "size": 22487,
   "library": "dataspatium"
  },
  "docs/sv/visualisera.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 14263,
+  "size": 14415,
   "library": "dataspatium"
  },
  "docs/sv/anteckningsbok.md": {
@@ -483,7 +483,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6322,
+  "size": 6710,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -531,7 +531,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/dela.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 4787,
+  "size": 6125,
   "library": "dataspatium"
  },
  "docs/sv/mobil.md": {
@@ -573,19 +573,19 @@ Dataspatium.assets.addEntries({
  "docs/da/soka.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 4305,
+  "size": 4561,
   "library": "dataspatium"
  },
  "docs/da/bearbeta.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 22243,
+  "size": 22593,
   "library": "dataspatium"
  },
  "docs/da/visualisera.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 14042,
+  "size": 14195,
   "library": "dataspatium"
  },
  "docs/da/anteckningsbok.md": {
@@ -639,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6262,
+  "size": 6637,
   "library": "dataspatium"
  },
  "docs/da/planer.md": {
@@ -687,7 +687,7 @@ Dataspatium.assets.addEntries({
  "docs/da/dela.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 4676,
+  "size": 6010,
   "library": "dataspatium"
  },
  "docs/da/mobil.md": {
@@ -729,19 +729,19 @@ Dataspatium.assets.addEntries({
  "docs/nb/soka.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 4161,
+  "size": 4398,
   "library": "dataspatium"
  },
  "docs/nb/bearbeta.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 21775,
+  "size": 22129,
   "library": "dataspatium"
  },
  "docs/nb/visualisera.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13826,
+  "size": 13970,
   "library": "dataspatium"
  },
  "docs/nb/anteckningsbok.md": {
@@ -795,7 +795,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 6171,
+  "size": 6539,
   "library": "dataspatium"
  },
  "docs/nb/planer.md": {
@@ -843,7 +843,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/dela.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 4646,
+  "size": 5958,
   "library": "dataspatium"
  },
  "docs/nb/mobil.md": {
@@ -885,19 +885,19 @@ Dataspatium.assets.addEntries({
  "docs/fi/soka.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 4530,
+  "size": 4769,
   "library": "dataspatium"
  },
  "docs/fi/bearbeta.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 23391,
+  "size": 23767,
   "library": "dataspatium"
  },
  "docs/fi/visualisera.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14590,
+  "size": 14735,
   "library": "dataspatium"
  },
  "docs/fi/anteckningsbok.md": {
@@ -951,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6745,
+  "size": 7143,
   "library": "dataspatium"
  },
  "docs/fi/planer.md": {
@@ -999,7 +999,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/dela.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 5087,
+  "size": 6471,
   "library": "dataspatium"
  },
  "docs/fi/mobil.md": {
@@ -1041,19 +1041,19 @@ Dataspatium.assets.addEntries({
  "docs/is/soka.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 4569,
+  "size": 4822,
   "library": "dataspatium"
  },
  "docs/is/bearbeta.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 22791,
+  "size": 23183,
   "library": "dataspatium"
  },
  "docs/is/visualisera.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 14318,
+  "size": 14459,
   "library": "dataspatium"
  },
  "docs/is/anteckningsbok.md": {
@@ -1107,7 +1107,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6338,
+  "size": 6704,
   "library": "dataspatium"
  },
  "docs/is/planer.md": {
@@ -1155,7 +1155,7 @@ Dataspatium.assets.addEntries({
  "docs/is/dela.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 4953,
+  "size": 6379,
   "library": "dataspatium"
  },
  "docs/is/mobil.md": {
@@ -1197,19 +1197,19 @@ Dataspatium.assets.addEntries({
  "docs/en/soka.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 4147,
+  "size": 4415,
   "library": "dataspatium"
  },
  "docs/en/bearbeta.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21641,
+  "size": 21981,
   "library": "dataspatium"
  },
  "docs/en/visualisera.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 14212,
+  "size": 14341,
   "library": "dataspatium"
  },
  "docs/en/anteckningsbok.md": {
@@ -1263,7 +1263,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6259,
+  "size": 6627,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {
@@ -1311,7 +1311,7 @@ Dataspatium.assets.addEntries({
  "docs/en/dela.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 4796,
+  "size": 6084,
   "library": "dataspatium"
  },
  "docs/en/mobil.md": {

@@ -27,6 +27,8 @@ Resultaterne vises pr. datasæt med antal. Hvert kort har:
 Søgningen kører i SQLite i en worker, så siden fryser ikke. I et datasæt med en million rækker tager en søgning
 omkring et sekund pr. ord.
 
+**Åbn fundet**, hvor det er. Knappen i inspektøren fører dig til den rigtige side i et dokument, det rigtige billede i en samling, noden med dens naboer i en graf, elementet i en model, objektet på en plan, stedet på kortet eller rækken i en tabel.
+
 ## Forespørgsel
 
 Fanen Forespørgsel bygger en forespørgsel, uden at du skriver SQL, og viser den SQL, der laves. Kortet **Datasæt**

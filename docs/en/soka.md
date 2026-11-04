@@ -26,6 +26,8 @@ Hits are shown per dataset with counts. Each card has:
 The search runs in SQLite in a worker, so the page does not lock up. In a dataset of a million rows a search takes
 about a second per word.
 
+**Open the hit** where it is. The button in the inspector takes you to the right page of a document, the right picture in a collection, the node with its neighbours in a graph, the element in a model, the object on a plan, the place on the map or the row in a table.
+
 ## Query
 
 The Query tab builds a query without you writing SQL, and shows the SQL it creates. The **Datasets** card chooses the

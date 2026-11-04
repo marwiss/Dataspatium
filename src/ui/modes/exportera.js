@@ -121,11 +121,17 @@
       }
 
       function dataForm(ds) {
-        const available = exporter.formatsFor(ds);
-        if (!available.some((f) => f.id === form.format)) form.format = available[0].id;
+        // Whether GeoJSON can be written takes a look at the data, so the form draws again when the answer is in.
+        const factsKey = ds.id + ':' + ds.updatedAt;
+        if (form.factsFor !== factsKey) {
+          form.factsFor = factsKey; form.facts = {};
+          exporter.geometrySource(ds.id).then((source) => { if (form.factsFor === factsKey) { form.facts = { geometry: !!source }; render(); } }).catch((err) => D.log('export', 'geometry', err));
+        }
+        const available = exporter.formatsFor(ds, form.facts);
+        if (!available.some((f) => f.id === form.format && !f.unavailable)) form.format = available[0].id;
         const fmt = available.find((f) => f.id === form.format) || available[0];
         const formatSel = /** @type {any} */ (h('dm-select', { label: t('export.format') }));
-        formatSel.options = available.map((f) => ({ value: f.id, label: t(f.key) }));
+        formatSel.options = available.map((f) => ({ value: f.id, label: f.unavailable ? `${t(f.key)}: ${t(f.unavailable)}` : t(f.key), disabled: !!f.unavailable }));
         formatSel.value = form.format;
         formatSel.addEventListener('change', () => { form.format = formatSel.value; form.filename = ''; render(); });
         const profileSel = /** @type {any} */ (h('dm-select', { label: t('export.profile') }));

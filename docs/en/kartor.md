@@ -20,6 +20,8 @@ Geodata can also be fetched straight from open services: *Add geodata source* in
 API Features or ArcGIS service, and the source *Geodataportalen* finds services in the national catalogue. The answers
 get a geometry column and open as maps. See [kallor.md](kallor.md#open-geodata).
 
+Names are not enough. The app also checks the values: a geometry column must hold a geometry, and coordinates must lie in degrees or in a projected system. Columns called only x and y count as coordinates when the values are projected, since small numbers under those names are usually something else. A table with coordinates can be exported as GeoJSON with points.
+
 ## The map in Process
 
 The map shows the dataset's features in the app's colour. Zoom with the wheel or the buttons, pan by dragging, and

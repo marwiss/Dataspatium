@@ -15,6 +15,8 @@ Forhåndsvisningen oppdateres mens du endrer. Under diagrammet står hvor mange 
 aggregeres i SQL når diagrammet bare trenger summer, gjennomsnitt eller antall, ellers begrenses antallet rader (standard
 50 000, endres under Flere alternativer).
 
+Det som passer datasettet, står først i dialogen. En diagramtype som ikke kan fungere, er grå og sier hva som trengs, for eksempel en graf.
+
 ## Diagrambyggeren (Vega-Lite)
 
 | Diagramtype | Brukes til |

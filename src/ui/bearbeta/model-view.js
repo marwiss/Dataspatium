@@ -45,6 +45,14 @@
         if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); }
         ds = dataset;
         s.error = '';
+        // A search hit: the element chosen, whatever a filter would have hidden.
+        const pending = ctx.store.get().openElement;
+        if (pending && pending.datasetId === dataset.id) {
+          ctx.store.set({ openElement: null });
+          s.filter = { typ: '', vaning: '', lager: '', search: '' };
+          s.selected = Number(pending.id);
+          s.showSelected = true;
+        }
         const dxfView = isDxf();
         const selects = [];
         const addFilter = (key, labelKey, list) => {
@@ -142,6 +150,7 @@
           host.querySelector('.dm-model-loading')?.remove();
           handle = hd;
           s.error = '';
+          if (s.showSelected && s.selected) { s.showSelected = false; hd.select([s.selected], { fit: true }); selectElement(s.selected, 'draw').catch((err) => D.log('model', err)); }
           renderInspector();
         } catch (err) {
           if (my !== seq || !host) return;

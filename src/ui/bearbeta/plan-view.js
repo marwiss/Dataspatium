@@ -121,6 +121,7 @@
           }
           updateLabels();
           fit();
+          openPending();
           renderInspector();
         } catch (err) {
           if (my !== seq) return;
@@ -132,6 +133,24 @@
       function highlight(lyr) {
         if (highlighted && highlighted.setStyle && highlighted._dmStyle) highlighted.setStyle(highlighted._dmStyle);
         if (lyr && lyr.setStyle) { lyr._dmStyle = Object.assign({}, lyr.options); lyr.setStyle({ weight: 4, color: '#e63946' }); highlighted = lyr; if (lyr.bringToFront) lyr.bringToFront(); }
+      }
+      /** A search hit: the plan object chosen and in view. */
+      function openPending() {
+        const pending = ctx.store.get().openPlanObject;
+        if (!pending || !s.id || pending.datasetId !== s.id) return;
+        ctx.store.set({ openPlanObject: null });
+        const row = s.rows.find((r) => String(r.objektid) === String(pending.objektid));
+        if (!row) return;
+        s.selected = row;
+        for (const g of groups) {
+          g.group.eachLayer((lyr) => {
+            if (!lyr.feature || lyr.feature.properties._i !== row._i) return;
+            highlight(lyr);
+            if (handle && lyr.getBounds) handle.map.fitBounds(lyr.getBounds(), { maxZoom: 16 });
+            else if (handle && lyr.getLatLng) handle.map.setView(lyr.getLatLng(), 16);
+          });
+        }
+        renderInspector();
       }
       /** Designation labels at the centre of every visible object (the plan boundary excluded). */
       function updateLabels() {

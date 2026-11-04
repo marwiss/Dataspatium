@@ -641,15 +641,15 @@
       return save(id);
     }
 
-    async function remove(id) {
+    async function remove(id, options = {}) {
       const pending = saveTimers.get(id);
       if (pending) { clearTimeout(pending); saveTimers.delete(id); }
       const handle = openHandles.get(id);
       if (handle) { handle.removed = true; handle.engine.terminate(); openHandles.delete(id); }
       // Same lock as persist(): a save in flight finishes first and cannot re-create the entry afterwards.
       await sync.withLock('ds:' + id, () => idb.deleteDataset(id));
-      notify('deleted', { id });
-      sync.broadcast('datasets', 'deleted', { id });
+      if (!options.quiet) notify('deleted', { id });
+      if (!options.quiet) sync.broadcast('datasets', 'deleted', { id });
     }
 
     /** @returns {Promise<ArrayBuffer>} the SQLite file */
@@ -666,7 +666,6 @@
       const drop = (options.drop || []).filter(Boolean);
       const hash = (options.hash || []).filter((c) => c && !drop.includes(c));
       const bytes = await exportBytes(id);
-      if (!drop.length && !hash.length) return bytes;
       const engine = await newEngine(bytes);
       try {
         const names = (await readColumns(engine)).map((c) => c.name);
@@ -689,6 +688,9 @@
           let position = 0;
           for (const row of (left[0] ? left[0].values : [])) await engine.run('update _columns set position = ? where name = ?', [position++, row[0]]);
         }
+        if (options.after) await options.after(engine);
+        // SQLite keeps removed values in free pages until told otherwise, and this copy leaves the app.
+        await engine.run('vacuum');
         return await engine.export();
       } finally { engine.terminate(); }
     }
@@ -701,7 +703,7 @@
      * Add a dataset from an existing SQLite file (restore from backup or import of a .sqlite file).
      * A new id is assigned when the file's id already exists.
      */
-    async function importBytes(bytes, overrides = {}) {
+    async function importBytes(bytes, overrides = {}, options = {}) {
       const engine = await newEngine(bytes.slice(0));
       const tables = await engine.exec("select name from sqlite_master where type='table'");
       const names = tables[0] ? tables[0].values.map((r) => r[0]) : [];
@@ -721,15 +723,17 @@
       const handle = { engine, meta, columns: cols };
       openHandles.set(meta.id, handle);
       await persist(handle);
-      notify('created', handle.meta);
-      sync.broadcast('datasets', 'created', { id: handle.meta.id, name: handle.meta.name });
+      if (!options.quiet) {
+        notify('created', handle.meta);
+        sync.broadcast('datasets', 'created', { id: handle.meta.id, name: handle.meta.name });
+      }
       return handle.meta;
     }
 
     function close(id) { const h = openHandles.get(id); if (h) { h.engine.terminate(); openHandles.delete(id); } }
 
     return {
-      contentMarker, create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
+      contentMarker, notify, create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version, normalizeFolder, normalizeTags, folderPaths, KINDS,

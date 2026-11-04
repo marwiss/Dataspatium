@@ -24,6 +24,13 @@
       async function load(dataset) {
         if (s.id !== dataset.id) { s.id = dataset.id; s.def = draw.defaultDef(dataset); s.selected = null; s.search = ''; s.hits = []; s.picked = []; s.error = ''; }
         ds = dataset; s.def.datasetName = dataset.name;
+        // A search hit: the node with its neighbours, chosen.
+        const pending = store.get().openNode;
+        if (pending && pending.datasetId === dataset.id) {
+          store.set({ openNode: null });
+          s.def.focus = [String(pending.id)]; s.def.mode = 'focus';
+          s.selected = { kind: 'node', id: String(pending.id), data: pending.data };
+        }
         s.info = await graph.summary(dataset.id);
         s.count = { nodes: s.info.nodes || dataset.rowCount || 0, edges: s.info.edges || 0 };
       }

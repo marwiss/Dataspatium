@@ -20,6 +20,8 @@ logs changes in the same way.
 - The table is virtualised: only the visible rows exist in the browser's DOM, the rest stays in SQLite. A million
   rows browse as fast as a hundred.
 
+**Columns the view needs.** The graph needs the node's id, the map its geometry and the gallery its file names. The table can be changed freely, but the app asks first if you are about to remove, rename or change the type of such a column. If a step that cannot be foreseen removes it, such as SQL or a pivot, a message appears with Undo.
+
 ## Actions
 
 The **Actions** button opens the palette. Each action has a dialog with fields generated from the action's

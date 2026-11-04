@@ -26,6 +26,8 @@ Treffene vises per datasett med antall. Hvert kort har:
 Søket kjøres i SQLite i en worker, så siden låser seg ikke. I et datasett med en million rader tar et søk omtrent
 ett sekund per ord.
 
+**Åpne treffet** der det er. Knappen i inspektøren tar deg til riktig side i et dokument, riktig bilde i en samling, noden med naboene i en graf, elementet i en modell, objektet på en plan, stedet på kartet eller raden i en tabell.
+
 ## Spørring
 
 Fanen Spørring bygger en spørring uten at du skriver SQL, og viser SQL-koden som lages. Kortet **Datasett** velger

@@ -103,6 +103,8 @@ ett paket.
   säsongsrensning), och en regression kan sparas och användas som receptsteget Prediktion (se [docs/statistik.md](docs/statistik.md)).
 - **Insamling i fält**: ett formulär byggt på en datamängds kolumner och regler skickas till Dataspatium Mobil. Telefonen samlar in rader utan nät, med
   foto och position, och raderna kommer tillbaka som en ny version. Fotona blir en bildsamling och positionerna hamnar på kartan (se [docs/insamling.md](docs/insamling.md)).
+- **Granskning av hela filen**: det som delas granskas i sin helhet, med löptext, originalfiler, bilders positioner, grafers kanter och kommentarer. Lägena följer dessutom datamängdens slag bättre: sökträffar
+  öppnas där de finns, och kartor erbjuds bara när värdena verkligen är koordinater (se [docs/dela.md](docs/dela.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

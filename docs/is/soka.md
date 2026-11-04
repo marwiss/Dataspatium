@@ -26,6 +26,8 @@ Niðurstöðurnar birtast eftir gagnasafni með fjölda. Hvert spjald hefur:
 Leitin keyrir í SQLite í vinnsluþræði, svo síðan frýs ekki. Í gagnasafni með milljón raða tekur leit um eina sekúndu
 á hvert orð.
 
+**Opnaðu það sem fannst** þar sem það er. Hnappurinn í skoðaranum fer á rétta síðu í skjali, rétta mynd í safni, hnútinn með nágrönnum í neti, eininguna í líkani, hlutinn á skipulagi, staðinn á kortinu eða röðina í töflu.
+
 ## Fyrirspurn
 
 Flipinn Fyrirspurn býr til fyrirspurn án þess að þú skrifir SQL og sýnir þá SQL sem verður til. Spjaldið

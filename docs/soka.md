@@ -26,6 +26,8 @@ Träffarna visas per datamängd med antal. Varje kort har:
 Sökningen körs i SQLite i en worker, så sidan låser sig inte. I en datamängd med en miljon rader tar en sökning
 någon sekund per ord.
 
+**Öppna träffen** där den finns. Knappen i inspektören tar dig till rätt sida i ett dokument, rätt bild i en samling, noden med sina grannar i en graf, elementet i en modell, objektet på en plan, platsen på kartan eller raden i en tabell.
+
 ## Fråga
 
 Fliken Fråga bygger en fråga utan att du skriver SQL och visar den SQL som skapas. Kortet **Datamängder** väljer

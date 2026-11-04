@@ -14,6 +14,8 @@ Forskoðunin uppfærist meðan þú breytir. Undir myndritinu kemur fram hve mar
 saman í SQL þegar myndritið þarf aðeins summur, meðaltöl eða fjölda, annars er fjöldi raða takmarkaður (sjálfgefið 50 000,
 breytt undir Fleiri valkostir).
 
+Það sem hentar gagnasafninu kemur fyrst í glugganum. Grafgerð sem getur ekki virkað er grá og segir hvað hún þarf, til dæmis net.
+
 ## Myndritasmiðurinn (Vega-Lite)
 
 | Myndritagerð | Notað fyrir |

@@ -26,6 +26,8 @@ Osumat näytetään aineistoittain lukumäärineen. Jokaisessa kortissa on:
 Haku suoritetaan SQLitessä workerissa, joten sivu ei jumitu. Miljoonan rivin aineistossa haku kestää noin sekunnin
 sanaa kohden.
 
+**Avaa osuma** siellä, missä se on. Tarkastimen painike vie oikealle sivulle asiakirjassa, oikeaan kuvaan kokoelmassa, solmuun naapureineen graafissa, elementtiin mallissa, kohteeseen kaavassa, paikkaan kartalla tai riville taulukossa.
+
 ## Kysely
 
 Kysely-välilehti rakentaa kyselyn ilman, että kirjoitat SQL:ää, ja näyttää luomansa SQL:n. Kortti **Aineistot**

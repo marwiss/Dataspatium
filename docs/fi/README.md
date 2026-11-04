@@ -100,6 +100,8 @@ paketilla.
   kausitasoitus), ja regression voi tallentaa ja käyttää reseptivaiheena Ennuste (katso [statistik.md](statistik.md)).
 - **Keruu maastossa**: aineiston sarakkeisiin ja sääntöihin perustuva lomake lähetetään Dataspatium Mobiliin. Puhelin kerää rivit ilman verkkoa, valokuvan ja
   sijainnin kera, ja rivit palaavat uutena versiona. Kuvista tulee kuvakokoelma, ja sijainnit päätyvät kartalle (katso [insamling.md](insamling.md)).
+- **Koko tiedoston tarkistus**: jaettava tarkistetaan kokonaan, juokseva teksti, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät ja kommentit mukaan lukien. Tilat seuraavat myös aineiston lajia paremmin: hakuosumat
+  avautuvat paikallaan, ja karttoja tarjotaan vain, kun arvot todella ovat koordinaatteja (katso [dela.md](dela.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

@@ -20,6 +20,8 @@ Landupplýsingar má einnig sækja beint úr opnum þjónustum: *Bæta við land
 úr WFS-, OGC API Features- eða ArcGIS-þjónustu, og uppsprettan *Geodataportalen* finnur þjónustur í sænsku landsskránni.
 Svörin fá rúmfræðidálk og opnast sem kort. Sjá [kallor.md](kallor.md#opin-landupplýsingagögn).
 
+Heiti duga ekki. Forritið athugar líka gildin: rúmfræðidálkur verður að innihalda rúmfræði og hnit verða að vera í gráðum eða í vörpuðu kerfi. Dálkar sem heita aðeins x og y teljast hnit þegar gildin eru vörpuð, því litlar tölur undir þeim heitum eru oftast eitthvað annað. Töflu með hnitum má flytja út sem GeoJSON með punktum.
+
 ## Kortið í Vinna
 
 Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga, og

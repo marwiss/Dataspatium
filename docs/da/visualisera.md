@@ -15,6 +15,8 @@ Forhåndsvisningen opdateres, mens du ændrer. Under diagrammet står, hvor mang
 aggregeres i SQL, når diagrammet kun behøver summer, gennemsnit eller antal, ellers begrænses antallet af rækker
 (standard 50 000, ændres under Flere indstillinger).
 
+Det, der passer til datasættet, står først i dialogen. En diagramtype, der ikke kan virke, er grå og siger, hvad der kræves, for eksempel en graf.
+
 ## Diagrambyggeren (Vega-Lite)
 
 | Diagramtype | Bruges til |

@@ -170,6 +170,71 @@
       return out;
     }
 
-    return { parse, buildApp1, insertApp1, isoDate };
+    /** A JPEG without its EXIF, XMP, IPTC and comment segments; the picture and its colour profile stay. */
+    function stripJpeg(bytes) {
+      const kept = [bytes.subarray(0, 2)];
+      let at = 2;
+      while (at + 4 <= bytes.length && bytes[at] === 0xFF) {
+        const marker = bytes[at + 1];
+        if (marker === 0xDA) break;
+        const size = (bytes[at + 2] << 8) | bytes[at + 3];
+        if (marker !== 0xE1 && marker !== 0xED && marker !== 0xFE) kept.push(bytes.subarray(at, at + 2 + size));
+        at += 2 + size;
+      }
+      kept.push(bytes.subarray(at));
+      return join(kept);
+    }
+    /** A PNG without its text, time and EXIF chunks. */
+    function stripPng(bytes) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const kept = [bytes.subarray(0, 8)];
+      let at = 8;
+      while (at + 12 <= bytes.length) {
+        const size = view.getUint32(at);
+        const type = String.fromCharCode(bytes[at + 4], bytes[at + 5], bytes[at + 6], bytes[at + 7]);
+        if (!['eXIf', 'tEXt', 'iTXt', 'zTXt', 'tIME'].includes(type)) kept.push(bytes.subarray(at, at + 12 + size));
+        at += 12 + size;
+      }
+      return join(kept);
+    }
+    /** A WebP without its EXIF and XMP chunks, with the header's size and flags in step. */
+    function stripWebp(bytes) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const kept = [];
+      let at = 12;
+      while (at + 8 <= bytes.length) {
+        const type = String.fromCharCode(bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]);
+        const size = view.getUint32(at + 4, true);
+        const end = at + 8 + size + (size % 2);
+        if (type !== 'EXIF' && type !== 'XMP ') kept.push(bytes.slice(at, end));
+        at = end;
+      }
+      for (const chunk of kept) if (String.fromCharCode(chunk[0], chunk[1], chunk[2], chunk[3]) === 'VP8X') chunk[8] &= ~0x0C;
+      const body = join(kept);
+      const out = new Uint8Array(12 + body.length);
+      out.set(bytes.subarray(0, 12));
+      out.set(body, 12);
+      new DataView(out.buffer).setUint32(4, out.length - 8, true);
+      return out;
+    }
+    function join(parts) {
+      const out = new Uint8Array(parts.reduce((sum, p) => sum + p.length, 0));
+      let at = 0;
+      for (const p of parts) { out.set(p, at); at += p.length; }
+      return out;
+    }
+    /**
+     * A picture without the metadata that can say where and by whom it was taken. Other formats come back as they are.
+     * @param {Uint8Array|ArrayBuffer} input @returns {Uint8Array}
+     */
+    function strip(input) {
+      const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+      if (bytes[0] === 0xFF && bytes[1] === 0xD8) return stripJpeg(bytes);
+      if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return stripPng(bytes);
+      if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45) return stripWebp(bytes);
+      return bytes;
+    }
+
+    return { parse, buildApp1, insertApp1, isoDate, strip };
   });
 })();

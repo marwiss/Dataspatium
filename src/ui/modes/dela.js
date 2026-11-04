@@ -96,21 +96,37 @@
           h('div', null, btn)));
       }
 
+      /** One dataset in a file format, from the reviewed copy when the review changed anything. */
+      async function exportReviewed(ds, formatId, transform) {
+        const shareScan = D.require('data/share-scan');
+        if (!shareScan.changes(transform)) return services.exporter.exportDataset(ds.id, formatId);
+        const datasets = services.datasets;
+        // A copy of its own for the moment it takes to write the file; it never shows in the list.
+        const temp = await datasets.importBytes(await shareScan.copy(ds.id, transform), { name: ds.name }, { quiet: true });
+        try { return await services.exporter.exportDataset(temp.id, formatId, { filename: services.files.safeName(ds.name, (services.exporter.FORMATS.find((f) => f.id === formatId) || {}).ext) }); }
+        finally { await datasets.remove(temp.id, { quiet: true }); }
+      }
       async function shareNow(what, formatId, btn) {
         const ds = selected();
         if (what === 'dataset' && !ds) { ui.toast.show(t('dela.share.nodataset'), { kind: 'warn' }); return; }
         btn.loading = true;
         try {
           let file;
+          const reviewModule = D.require('ui/share/review');
+          const ids = what === 'dataset' ? [ds.id] : store.get().datasets.map((d) => d.id);
+          const reviewed = await reviewModule.review(ctx, ids);
+          if (!reviewed) return;
+          const note = reviewModule.summary(reviewed.transform);
           if (what === 'dataset') {
-            const res = await services.exporter.exportDataset(ds.id, formatId);
+            const res = await exportReviewed(ds, formatId, reviewed.transform[ds.id]);
             file = new File([res.blob], res.filename, { type: res.blob.type || 'application/octet-stream' });
           } else {
             const state = store.get();
             const name = t('bundle.default.name');
-            const res = await services.workspace.bundle({ name, datasetIds: state.datasets.map((d) => d.id), include: { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true }, author: await D.require('data/comments').author(), message: '' });
+            const res = await services.workspace.bundle({ transform: reviewed.transform, name, datasetIds: state.datasets.map((d) => d.id), include: { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true }, author: await D.require('data/comments').author(), message: '' });
             file = new File([res.blob], services.files.safeName(name, 'dataspatium.zip'), { type: 'application/zip' });
           }
+          if (note) shell.log(note, 'info');
           if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
             try {
               await navigator.share({ files: [file], title: file.name });

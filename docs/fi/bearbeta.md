@@ -21,6 +21,8 @@ SQL-konsoli käsittelee samaa aineistoa ja kirjaa muutokset samalla tavalla.
 - Taulukko on virtualisoitu: vain näkyvät rivit ovat selaimen DOM:ssa, loput SQLitessä. Miljoonaa riviä selaa yhtä nopeasti
   kuin sataa.
 
+**Näkymän tarvitsemat sarakkeet.** Graafi tarvitsee solmun tunnisteen, kartta geometrian ja galleria tiedostonimet. Taulukkoa voi muuttaa vapaasti, mutta sovellus kysyy ensin, jos olet poistamassa, nimeämässä uudelleen tai muuttamassa tällaisen sarakkeen tyyppiä. Jos vaihe, jota ei voi ennakoida, kuten SQL tai pivotointi, poistaa sen, näkyy viesti, jossa on Kumoa.
+
 ## Toiminnot
 
 **Toiminnot**-painike avaa paletin. Jokaisella toiminnolla on valintaikkuna, jonka kentät muodostetaan toiminnon

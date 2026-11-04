@@ -669,6 +669,17 @@
           h('div', { class: 'dm-row' }, ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: () => { wiz.step = 'options'; render(); } }), importBtn));
       }
 
+      /** What was fetched, in the dataset's own terms: pages, pictures and nodes rather than rows and columns. */
+      function doneText(m) {
+        if (!m.kind || m.kind === 'table') return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
+        return t('import.done.kind', { name: m.name, summary: ui.datasetList.kindSummary(m) });
+      }
+      /** The way on from an import: read, look at, or work in the table. */
+      function openAfter(m) {
+        const OPEN = { document: ['hantera.read', 'book-open'], images: ['hantera.view.images', 'images'], plan: ['hantera.view.plan', 'layers'], model: ['hantera.view.model', 'box'], graph: ['hantera.view.graph', 'share-2'] };
+        const own = OPEN[m.kind];
+        return own ? { label: t(own[0]), icon: own[1] } : { label: t('import.open.bearbeta'), icon: 'pencil' };
+      }
       async function runImport() {
         if (wiz.busy) return;
         wiz.busy = true; wiz.error = ''; wiz.progress = null; render();
@@ -683,8 +694,8 @@
             : wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
           if (wiz.handle) await linked.link(meta.id, wiz.handle);
           wiz.result = meta; wiz.step = 'done';
-          shell.log(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
-          ui.toast.show(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }), { kind: 'ok' });
+          shell.log(doneText(meta) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
+          ui.toast.show(doneText(meta), { kind: 'ok' });
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
           shell.log(t('import.error', { message: wiz.error }), 'error');
@@ -695,9 +706,9 @@
       function stepDone() {
         const m = wiz.result;
         return h('div', { class: 'dm-success' },
-          h('h2', null, ui.icon('circle-check', 20), ' ', t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount })),
+          h('h2', null, ui.icon('circle-check', 20), ' ', doneText(m)),
           h('div', { class: 'dm-row' },
-            ui.button({ label: t('import.open.bearbeta'), variant: 'primary', icon: 'pencil', onClick: () => { store.set({ selectedId: m.id }); shell.activate('bearbeta'); } }),
+            ui.button(Object.assign(openAfter(m), { variant: 'primary', onClick: () => { store.set({ selectedId: m.id }); shell.activate('bearbeta'); } })),
             ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));
       }
 

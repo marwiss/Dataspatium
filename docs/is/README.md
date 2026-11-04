@@ -93,6 +93,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   vista og nota sem uppskriftarskrefið Spá (sjá [statistik.md](statistik.md)).
 - **Söfnun á vettvangi**: eyðublað byggt á dálkum og reglum gagnasafns er sent í Dataspatium Mobil. Síminn safnar röðum án nets, með mynd og staðsetningu, og
   raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
+- **Yfirferð allrar skrárinnar**: það sem deilt er er yfirfarið í heild, með samfelldum texta, upprunaskrám, staðsetningu mynda, leggjum neta og athugasemdum. Hamirnir fylgja einnig tegund gagnasafns betur: leitarniðurstöður
+  opnast þar sem þær eru og kort eru aðeins boðin þegar gildin eru í raun hnit (sjá [dela.md](dela.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

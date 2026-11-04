@@ -20,6 +20,8 @@ samma datamängd och loggar ändringar på samma sätt.
 - Tabellen är virtualiserad: bara de synliga raderna finns i webbläsarens DOM, resten ligger i SQLite. En
   miljon rader bläddras lika snabbt som hundra.
 
+**Kolumner som vyn behöver.** Grafen behöver nodens id, kartan sin geometri och galleriet sina filnamn. Tabellen går att ändra fritt, men appen frågar först om du tänker ta bort, byta namn på eller ändra typ för en sådan kolumn. Tar ett steg som inte går att förutse bort den, till exempel SQL eller en pivotering, visas ett meddelande med Ångra.
+
 ## Åtgärder
 
 Knappen **Åtgärder** öppnar paletten. Varje åtgärd har en dialog med fält som genereras ur åtgärdens

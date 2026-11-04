@@ -33,12 +33,27 @@ scannes for at åbne mobilsiden første gang.
 
 ## Gennemgang før deling
 
-Når datasæt pakkes, sendes til en enhed eller deles via delingsmenuen, gennemsøger appen kolonnerne efter
-identitetsnumre (svenske, danske, norske, finske og islandske), e-mailadresser og telefonnumre, på kolonnenavne og
-værdier. Findes der noget, vises en dialog, hvor du for hver kolonne vælger *Behold*, *Pseudonymisér* (samme værdi
-giver samme kode, men værdien kan ikke læses) eller *Fjern kolonnen*. Kun kopien, der deles, ændres; datasættet i
-appen forbliver, som det er, og pakkens manifest angiver, hvilke kolonner der er ændret. Gennemgangen ser ikke alt:
-navne, adresser og fritekst må du selv vurdere.
+Alt, der forlader appen via pakker, enheder eller delingsmenuen, gennemgås først, og gennemgangen gælder hele filen. Appen leder efter identitetsnumre, e-mailadresser og telefonnumre, både i
+hele kolonner og inde i løbende tekst, og viser det, der ellers følger med uden at ses i tabellen. For hver del vælger du, hvad der skal ske i kopien.
+
+| Del | Valg |
+|---|---|
+| Kolonne med identitetsnumre, e-mail eller telefon | Behold, pseudonymisér eller fjern. Pseudonymisér betyder, at samme værdi giver samme kode, men at værdien ikke kan læses |
+| Løbende tekst, for eksempel dokumenternes afsnit | Behold, maskér fundene eller fjern kolonnen |
+| Grafens kanter og modellens egenskaber | Behold, maskér fundene eller fjern i kopien |
+| Originalfiler | Behold eller fjern. De kan ikke pseudonymiseres, så det foreslås at fjerne dem, når noget andet ændres |
+| Billeder | Behold eller fjern. Positionen fjernes for sig, både fra tabellen og fra billedfilen |
+| Kommentarer og forfattere i dokumenternes metadata | Behold eller fjern |
+| Indsamlede rækker | Hvem der indsamlede kan pseudonymiseres, og positionen kan fjernes |
+
+Kun kopien, der deles, ændres, og datasættet i appen forbliver, som det er. Ændrer du noget, følger hverken ændringsloggen eller recepten med, da de kan indeholde de oprindelige værdier. Pakker
+renses også for rester af fjernede værdier i selve filen.
+
+Gennemgangen ser ikke alt. Navne, adresser og indholdet af originalfiler og billeder må du selv vurdere. Diagrammer, notesbøger og dokumenter i en pakke kan vise de oprindelige værdier, så fravælg
+dem, hvis det er nødvendigt. Filnavne følger med.
+
+En synkronisering til **GitHub** skal kunne hentes tilbage, som den var, så der kan intet pseudonymiseres. Appen viser i stedet, hvad der kan være personoplysninger, før du sender. **Publicér** laver en
+HTML-side med de værdier, diagrammerne viser, så kontrollér dem, før du lægger siden ud.
 
 ## Delingsmenu
 

@@ -32,10 +32,29 @@
       { id: 'model-svg', key: 'export.format.model-svg', ext: 'svg', kind: 'model', modelFormat: 'dxf' },
     ];
     /** The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. */
-    function formatsFor(meta) {
+    function formatsFor(meta, facts = {}) {
       const dxf = !!(meta && meta.model && meta.model.format === 'dxf');
       return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc'))))
-        .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f));
+        .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
+        // A format that cannot work stays visible and says what it needs.
+        .map((f) => (f.id === 'geojson' && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
+    }
+    /** The column GeoJSON can be written from: a geometry, found by name or by its first value, or else coordinates. */
+    async function geometrySource(id) {
+      const cols = await datasets.columns(id);
+      const text = cols.filter((c) => c.type === 'text');
+      const named = text.find((c) => /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(c.name));
+      if (named) return { column: named.name };
+      const handle = await datasets.ensureOpen(id);
+      for (const c of text) {
+        const name = '"' + c.name.replace(/"/g, '""') + '"';
+        const r = await handle.engine.exec(`select ${name} from data where ${name} is not null and ${name} != '' limit 1`);
+        const value = r[0] && r[0].values[0] ? r[0].values[0][0] : null;
+        const parsed = value === null ? null : geo.parseGeometry(value);
+        if (parsed && parsed.type) return { column: c.name };
+      }
+      const coords = D.require('viz/leaflet').coordinateColumns(cols);
+      return coords && await D.require('viz/leaflet').drawable(id) ? { lon: coords.lon, lat: coords.lat } : null;
     }
     /** A model dataset: the original file, its long tables as CSV, or a DXF drawing as SVG. */
     async function toModel(id, format, options = {}) {
@@ -214,21 +233,21 @@
     async function toGeoJson(id) {
       const cols = await datasets.columns(id);
       const rows = await datasets.allRows(id);
-      const textCols = cols.map((c, i) => ({ c, i })).filter((x) => x.c.type === 'text');
-      const firstGeometry = (i) => { const r = rows.find((row) => row[i] !== null && row[i] !== undefined && row[i] !== ''); const g = r ? geo.parseGeometry(r[i]) : null; return g && g.type ? g : null; };
-      const named = textCols.find((x) => /^(geometry|geom|wkt|shape|the_geom|geometri)$/i.test(x.c.name));
-      const found = named || textCols.find((x) => firstGeometry(x.i));
-      if (!found) throw new Error(D.t('export.err.nogeometry'));
-      const skip = new Set([found.i, cols.findIndex((c) => c.name === 'geometry_type')]);
+      const source = await geometrySource(id);
+      if (!source) throw new Error(D.t('export.err.nogeometry'));
+      const at = (name) => cols.findIndex((c) => c.name === name);
+      const skip = new Set(source.column ? [at(source.column), at('geometry_type')] : [at('geometry_type')]);
       const features = rows.map((r) => {
         const properties = {};
         cols.forEach((c, i) => { if (!skip.has(i)) properties[c.name] = r[i] === undefined ? null : (c.type === 'boolean' && r[i] !== null ? !!r[i] : r[i]); });
-        const g = geo.parseGeometry(r[found.i]);
-        return { type: 'Feature', properties, geometry: g && g.type ? g : null };
+        let geometry = null;
+        if (source.column) { const g = geo.parseGeometry(r[at(source.column)]); geometry = g && g.type ? g : null; }
+        else if (typeof r[at(source.lon)] === 'number' && typeof r[at(source.lat)] === 'number') { const point = { type: 'Point', coordinates: [r[at(source.lon)], r[at(source.lat)]] }; geometry = geo.toWgs84(point); }
+        return { type: 'Feature', properties, geometry };
       });
       return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });
     }
 
-    return { FORMATS, formatsFor, toModel, toGraph, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
+    return { FORMATS, formatsFor, geometrySource, toModel, toGraph, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
   });
 })();

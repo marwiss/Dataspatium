@@ -34,12 +34,27 @@ och felsökning finns i [mobil.md](mobil.md). Knappen *QR-kod till mobilsidan* v
 
 ## Granskning före delning
 
-När datamängder paketeras, skickas till en enhet eller delas via delningsmenyn söker appen igenom kolumnerna efter
-identitetsnummer (svenska, danska, norska, finska och isländska), e-postadresser och telefonnummer, på
-kolumnnamn och värden. Hittas något visas en dialog där du för varje kolumn väljer *Behåll*, *Pseudonymisera*
-(samma värde ger samma kod, men värdet kan inte läsas ut) eller *Ta bort kolumnen*. Bara kopian som delas ändras;
-datamängden i appen är kvar som den är, och paketets manifest anger vilka kolumner som ändrats. Granskningen ser
-inte allt: namn, adresser och fritext måste du bedöma själv.
+Allt som lämnar appen via paket, enheter eller delningsmenyn granskas först, och granskningen gäller hela filen. Appen letar efter identitetsnummer, e-postadresser och
+telefonnummer, både i hela kolumner och inne i löptext, och listar det som annars följer med utan att synas i tabellen. För varje del väljer du vad som ska hända i kopian.
+
+| Del | Val |
+|---|---|
+| Kolumn med identitetsnummer, e-post eller telefon | Behåll, pseudonymisera eller ta bort. Pseudonymisera betyder att samma värde ger samma kod, men att värdet inte kan läsas ut |
+| Löptext, till exempel dokumentens stycken | Behåll, maskera träffarna eller ta bort kolumnen |
+| Grafens kanter och modellens egenskaper | Behåll, maskera träffarna eller ta bort i kopian |
+| Originalfiler | Behåll eller ta bort. De kan inte pseudonymiseras, så de föreslås bort när något annat ändras |
+| Bilder | Behåll eller ta bort. Positionen tas bort för sig, både ur tabellen och ur bildfilen |
+| Kommentarer och författare i dokumentens metadata | Behåll eller ta bort |
+| Insamlade rader | Vem som samlade in kan pseudonymiseras, och positionen kan tas bort |
+
+Bara kopian som delas ändras, och datamängden i appen är kvar som den är. Ändrar du något följer varken ändringsloggen eller receptet med, eftersom de kan innehålla de ursprungliga
+värdena. Paket rensas också från rester av borttagna värden i själva filen.
+
+Granskningen ser inte allt. Namn, adresser och innehållet i originalfiler och bilder måste du bedöma själv. Diagram, anteckningsböcker och dokument i ett paket kan visa de ursprungliga
+värdena, så välj bort dem om det behövs. Filnamn följer med.
+
+En synkning till **GitHub** måste kunna hämtas tillbaka som den var, så där kan inget pseudonymiseras. Appen visar i stället vad som kan vara personuppgifter innan du skickar. **Publicera** skapar
+en HTML-sida med de värden som diagrammen visar, så kontrollera dem innan du lägger ut sidan.
 
 ## Delningsmeny
 

@@ -226,7 +226,29 @@
           h('h4', { text: ds ? ds.name : '' }),
           h('p', { class: 'dm-help', text: t('soka.hit.row', { n: i18n.formatNumber(hit.row[0]) }) }),
           kv,
-          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('soka.open.bearbeta'), icon: 'wand-sparkles', size: 'sm', onClick: () => { store.set({ selectedId: hit.datasetId }); shell.activate('bearbeta'); } })));
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t(hitTarget(ds, hit).label), icon: hitTarget(ds, hit).icon, size: 'sm', onClick: () => openHit(ds, hit) })));
+      }
+
+      /** Where a hit lives: a page, a picture, a node, a building element, a place on a map, or a row in the table. */
+      function hitTarget(ds, found) {
+        const value = (name) => { const i = found.columns.findIndex((c) => c.name === name); return i < 0 ? undefined : found.row[i + 1]; };
+        const id = found.datasetId;
+        const rowid = found.row[0];
+        switch (ds && ds.kind) {
+          case 'document': return { label: 'soka.open.document', icon: 'book-open', store: { openDocument: { datasetId: id, document: value('dokument'), page: value('sida') } } };
+          case 'images': return { label: 'soka.open.image', icon: 'images', store: { openImage: { datasetId: id, name: value('fil') } } };
+          case 'graph': return { label: 'soka.open.node', icon: 'share-2', store: { openNode: { datasetId: id, id: value('id'), data: { id: value('id'), etikett: value('etikett'), namn: value('namn'), egenskaper: value('egenskaper') } } } };
+          case 'model': return { label: 'soka.open.element', icon: 'box', store: { openElement: { datasetId: id, id: value('id') } } };
+          case 'plan': return { label: 'soka.open.plan', icon: 'layers', store: { openPlanObject: { datasetId: id, objektid: value('objektid') } } };
+          default: break;
+        }
+        const leaflet = D.require('viz/leaflet');
+        if (leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
+        return { label: 'soka.open.row', icon: 'table', store: { openRow: { datasetId: id, rowid } } };
+      }
+      function openHit(ds, found) {
+        store.set(Object.assign({ selectedId: found.datasetId }, hitTarget(ds, found).store));
+        shell.activate('bearbeta');
       }
 
       // Command palette: jump to the search field.

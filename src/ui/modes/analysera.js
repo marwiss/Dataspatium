@@ -77,7 +77,8 @@
         if (ds && (ds.kind === 'table' || !ds.kind)) {
           const cols = await services.datasets.columns(ds.id).catch(() => []);
           if (geoFor !== key) return;
-          geoOk = leaflet.mappable(cols);
+          geoOk = leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false);
+          if (geoFor !== key) return;
         }
         if (tabsEl) tabsEl.tabs = tabList();
       }

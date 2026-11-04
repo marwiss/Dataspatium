@@ -513,6 +513,17 @@ förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, r
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
 
+## Granskning av det som lämnar appen
+
+`data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via
+`datasets.exportBytesTransformed`, som alltid avslutar med `vacuum`, eftersom SQLite annars behåller gamla värden i lediga sidor. Ändras något tas också loggen bort, eftersom den kan innehålla ursprungsvärden.
+Maskering av löptext sker i motorn med `dm_has_personal` och `dm_mask_personal`. `exif.strip` tar bort metadata ur bildfiler utan att röra själva bilden.
+
+Paket, enheter och delningsmenyn går genom `ui/share/review`. GitHub-synken kan inte pseudonymisera eftersom den ska kunna hämtas tillbaka, så där varnar `review.warn` i stället. En säkerhetskopia är oförändrad.
+
+`data/protected-columns` namnger kolumner som en vy behöver. `op-dialog` frågar före, och `recipes.apply` meddelar efteråt med händelsen `protected-lost` för det som inte kan förutses. `viz/leaflet.drawable` avgör med värdena om
+en tabell kan ritas, eftersom namnen bara lovar något.
+
 ## Insamling i fält
 
 `data/field-form` körs på både datorn och telefonen och känner inte till datamängder: formuläret, typtolkningen, regelkontrollen och paketen. `data/field-collect` på

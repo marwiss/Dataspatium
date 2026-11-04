@@ -15,6 +15,8 @@ Esikatselu päivittyy muuttaessasi. Kaavion alla kerrotaan, montako riviä käyt
 kaavio tarvitsee vain summia, keskiarvoja tai lukumääriä, muuten rivien määrää rajataan (oletus 50 000, muutetaan kohdassa
 Lisää asetuksia).
 
+Aineistoon sopiva on valintaikkunassa ensimmäisenä. Kaaviotyyppi, joka ei voi toimia, on harmaa ja kertoo, mitä se tarvitsee, kuten graafin.
+
 ## Kaaviorakentaja (Vega-Lite)
 
 | Kaaviotyyppi | Käyttö |

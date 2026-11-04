@@ -113,6 +113,9 @@
       const handle = await datasets.ensureOpen(id);
       const ctx = ops.makeContext(handle.engine, handle.columns);
       ctx.datasetId = id;
+      const guard = D.has('data/protected-columns') ? D.require('data/protected-columns') : null;
+      const guarded = guard ? guard.list(handle.meta, handle.columns) : [];
+      const columnsBefore = handle.columns.map((c) => ({ name: c.name, type: c.type }));
       // Sort indexes would block column rebuilds (ALTER TABLE DROP COLUMN); they are recreated on the next sort.
       await datasets.dropIndexes(handle);
       let undoEntry = null;
@@ -139,6 +142,9 @@
       if (!options.noLog) await datasets.appendLog(handle, options.logAction || 'op', { op: opId, params: redactSecrets(op, params), result: result || {}, description });
       await datasets.refreshCounts(handle);
       datasets.scheduleSave(id);
+      // What no dialog could foresee (a pivot, a code step, SQL) is told afterwards, with the way back.
+      const gone = guard && guarded.length ? guard.lost(guarded, columnsBefore, handle.columns) : [];
+      if (gone.length && !options.noLog) datasets.notify('protected-lost', { id, columns: gone });
       return result || {};
     }
 

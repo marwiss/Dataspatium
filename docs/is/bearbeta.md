@@ -19,6 +19,8 @@ nýja dálka, snúa og tengja gagnasöfn. Hver aðgerð er skráð sem skref í 
 - Taflan er sýndarvædd: aðeins sýnilegu raðirnar eru í DOM vafrans, afgangurinn er í SQLite. Milljón röðum er flett jafn hratt
   og hundrað.
 
+**Dálkar sem sýnin þarf.** Netið þarf auðkenni hnútsins, kortið rúmfræði sína og myndasafnið skráarheiti sín. Töflunni má breyta að vild, en forritið spyr fyrst ef þú ætlar að fjarlægja slíkan dálk, endurnefna hann eða breyta gerð hans. Ef skref sem ekki er hægt að sjá fyrir fjarlægir hann, til dæmis SQL eða snúningur, birtast skilaboð með Afturkalla.
+
 ## Aðgerðir
 
 Hnappurinn **Aðgerðir** opnar spjaldið. Hver aðgerð hefur glugga með reitum sem myndaðir eru úr breytum aðgerðarinnar, og þar

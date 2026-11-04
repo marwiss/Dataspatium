@@ -173,6 +173,11 @@
       if (choice !== true) return null;
       const lacking = missing();
       if (lacking.length) { overlays.toast.show(t('op.missing', { fields: lacking.join(', ') }), { kind: 'warn' }); return open(Object.assign({}, options, { preset: values })); }
+      const guard = D.require('data/protected-columns');
+      const handle = await D.require('data/datasets').ensureOpen(options.datasetId);
+      const guarded = guard.list(handle.meta, handle.columns);
+      const hits = guard.touched(op.id, values).filter((c) => guarded.includes(c));
+      if (hits.length && !(await overlays.dialog.confirm(t('protected.confirm', { columns: hits.join(', ') }), { danger: true }))) return open(Object.assign({}, options, { preset: values }));
       try {
         const result = await recipes.apply(options.datasetId, op.id, values);
         const description = recipes.describe(op.id, values, result);

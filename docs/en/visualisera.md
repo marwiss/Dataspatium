@@ -15,6 +15,8 @@ The preview updates as you make changes. Below the chart it says how many rows w
 aggregated in SQL when the chart only needs sums, means or counts, otherwise the number of rows is limited (default
 50,000, changed under More options).
 
+What fits the dataset comes first in the dialog. A chart kind that cannot work is grey and says what it needs, such as a graph.
+
 ## The chart builder (Vega-Lite)
 
 | Chart type | Used for |

@@ -20,6 +20,8 @@ Geodata kan også hentes direkte fra åpne tjenester: *Legg til geodatakilde* i 
 Features- eller ArcGIS-tjeneste, og kilden *Geodataportalen* finner tjenester i den nasjonale katalogen. Svarene får en
 geometrikolonne og åpnes som kart. Se [kallor.md](kallor.md#åpne-geodata).
 
+Navn er ikke nok. Appen kontrollerer også verdiene: en geometrikolonne må inneholde en geometri, og koordinater må ligge i grader eller i et projisert system. Kolonner som bare heter x og y, regnes som koordinater når verdiene er projiserte, siden små tall under de navnene oftest er noe annet. En tabell med koordinater kan eksporteres som GeoJSON med punkter.
+
 ## Kartet i Bearbeid
 
 Kartet viser datasettets objekter i appens farge. Zoom med hjulet eller knappene, panorer ved å dra, og klikk på et

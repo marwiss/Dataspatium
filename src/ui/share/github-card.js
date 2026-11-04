@@ -34,6 +34,8 @@
       const fail = (err) => { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); };
 
       async function push() {
+        // A pushed workspace must come back exactly as it was, so nothing can be pseudonymised: the user decides with the facts.
+        if (!(await D.require('ui/share/review').warn(ctx, ctx.store.get().datasets.map((d) => d.id)))) return;
         const message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('github.commit.message'), help: t('github.commit.help') }));
         message.value = t('github.commit.default');
         const ok = await ui.dialog.open({ title: t('github.push'), help: 'dela#github', body: message, actions: [{ label: t('common.cancel'), value: false }, { label: t('github.push'), variant: 'primary', value: true, primary: true }] });

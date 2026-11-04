@@ -35,7 +35,7 @@
       /** The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null. */
       async function defaultView(ds) {
         if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
-        if (ds.kind === 'table' || !ds.kind) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols)) return 'map'; }
+        if (ds.kind === 'table' || !ds.kind) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols) && await leaflet.drawable(ds.id).catch(() => false)) return 'map'; }
         return null;
       }
 
@@ -110,6 +110,7 @@
 
       async function renderTable(ds) {
         const cols = await services.datasets.columns(ds.id);
+        const ownView = await viewFor(ds, cols);
         const searchInput = /** @type {any} */ (h('dm-input', { type: 'search', placeholder: t('table.filter.placeholder'), 'aria-label': t('common.filter'), inline: true }));
         searchInput.value = search;
         searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { search = searchInput.value.trim(); refresh(current()); }, 300); });
@@ -137,7 +138,7 @@
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               // Back to the dataset's own view: documents, pictures, or the map for a table with geometry or coordinates.
-              viewFor(ds, cols) ? ui.button({ label: t('bearbeta.view.' + viewFor(ds, cols)), icon: VIEW_ICONS[viewFor(ds, cols)], title: t('bearbeta.view.' + viewFor(ds, cols) + '.hint'), onClick: () => { viewId = viewFor(ds, cols); showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
+              ownView ? ui.button({ label: t('bearbeta.view.' + ownView), icon: VIEW_ICONS[ownView], title: t('bearbeta.view.' + ownView + '.hint'), onClick: () => { viewId = ownView; showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => dialogs.versionsDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
@@ -147,12 +148,20 @@
         table.countBadge = countBadge;
         await refresh(ds);
         updateUndo();
+        // A search hit in a plain table: the row is chosen and in view.
+        const pending = store.get().openRow;
+        if (pending && pending.datasetId === ds.id && table) {
+          store.set({ openRow: null });
+          const engine = (await services.datasets.ensureOpen(ds.id)).engine;
+          const before = await engine.exec('select count(*) from data where rowid < ?', [Number(pending.rowid)]);
+          if (table) table.selectRow(Number(before[0].values[0][0]), true);
+        }
       }
 
       /** The own view a dataset can switch to from the table (any table with geometry or coordinates gets the map). */
-      function viewFor(ds, cols) {
+      async function viewFor(ds, cols) {
         if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
-        return (ds.kind === 'table' || !ds.kind) && leaflet.mappable(cols) ? 'map' : null;
+        return (ds.kind === 'table' || !ds.kind) && leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false) ? 'map' : null;
       }
 
       function updateUndo() {

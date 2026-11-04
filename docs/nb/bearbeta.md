@@ -19,6 +19,8 @@ igjen på et annet datasett. SQL-konsollen i modusen Analyser arbeider mot samme
 - Tabellen er virtualisert: bare de synlige radene finnes i nettleserens DOM, resten ligger i SQLite. En million rader blas
   like raskt som hundre.
 
+**Kolonner visningen trenger.** Grafen trenger nodens id, kartet sin geometri og galleriet sine filnavn. Tabellen kan endres fritt, men appen spør først hvis du er i ferd med å fjerne, gi nytt navn til eller endre typen for en slik kolonne. Fjerner et steg som ikke kan forutses den, for eksempel SQL eller en pivotering, vises en melding med Angre.
+
 ## Handlinger
 
 Knappen **Handlinger** åpner paletten. Hver handling har en dialog med felter som lages ut fra handlingens parametere, og der

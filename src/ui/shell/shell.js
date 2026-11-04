@@ -336,6 +336,10 @@
         }
 
         async onDatasets(type, payload) {
+          if (type === 'protected-lost') {
+            this.ctx.ui.toast.show(t('protected.lost', { columns: payload.columns.join(', ') }), { kind: 'warn', timeout: 15000, action: { label: t('common.undo'), onClick: () => { D.require('data/recipes').undo(payload.id).catch((err) => this.log(String((err && err.message) || err), 'error')); } } });
+            return;
+          }
           if (type === 'dirty') { this.setStatus('unsaved'); return; }
           if (type === 'saving') { this.setStatus('saving'); return; }
           if (type === 'saved') { this.setStatus(datasets.hasPendingSaves() ? 'unsaved' : 'saved'); return; }

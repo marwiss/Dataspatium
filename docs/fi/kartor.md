@@ -21,6 +21,8 @@ Paikkatietoa voi noutaa myös suoraan avoimista palveluista: *Lisää paikkatiet
 OGC API Features- tai ArcGIS-palvelusta, ja lähde *Geodataportalen* hakee palveluja Ruotsin kansallisesta luettelosta.
 Vastaukset saavat geometriasarakkeen ja avautuvat karttoina. Katso [kallor.md](kallor.md#avoin-paikkatieto).
 
+Nimet eivät riitä. Sovellus tarkistaa myös arvot: geometriasarakkeessa on oltava geometria, ja koordinaattien on oltava asteina tai projisoidussa järjestelmässä. Pelkästään x- ja y-nimiset sarakkeet lasketaan koordinaateiksi, kun arvot ovat projisoituja, koska pienet luvut näillä nimillä ovat yleensä jotain muuta. Koordinaatteja sisältävän taulukon voi viedä GeoJSON-pisteinä.
+
 ## Kartta Muokkaa-tilassa
 
 Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä ja

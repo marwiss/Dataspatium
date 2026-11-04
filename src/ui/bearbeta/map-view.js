@@ -68,6 +68,7 @@
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          await showPending();
           renderInspector();
         } catch (err) {
           if (my !== seq) return;
@@ -112,6 +113,31 @@
             h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('map.edit.table'), icon: 'table', size: 'sm', title: t('map.edit.table.hint'), onClick: options.onTable })));
         } else items.push(h('p', { class: 'dm-help', text: t('map.help') }));
         replace(slots.right, items);
+      }
+
+      /** A search hit: the map goes to the row's place and marks it. */
+      async function showPending() {
+        const pending = store.get().openMapRow;
+        if (!pending || !ds || pending.datasetId !== ds.id || !handle) return;
+        store.set({ openMapRow: null });
+        const dsHandle = await D.require('data/datasets').ensureOpen(ds.id);
+        const leaflet2 = D.require('viz/leaflet');
+        const geoMod = D.require('data/geo');
+        const name = (c) => '"' + String(c).replace(/"/g, '""') + '"';
+        const geometry = leaflet2.geometryColumn(dsHandle.columns);
+        const coords = geometry ? null : leaflet2.coordinateColumns(dsHandle.columns);
+        const cols = geometry ? name(geometry) : `${name(coords.lon)}, ${name(coords.lat)}`;
+        const r = await dsHandle.engine.exec(`select ${cols} from data where rowid = ?`, [Number(pending.rowid)]);
+        if (!r[0] || !r[0].values.length || !handle) return;
+        const row = r[0].values[0];
+        const shape = geometry ? geoMod.parseGeometry(row[0]) : (typeof row[0] === 'number' && typeof row[1] === 'number' ? { type: 'Point', coordinates: [row[0], row[1]] } : null);
+        if (!shape) return;
+        const L = globalThis.L;
+        const place = geoMod.isProjected([shape]) ? geoMod.toWgs84(shape) : shape;
+        const color = D.require('viz/theme').tokens().accent;
+        const marked = L.geoJSON(place, { style: { color, weight: 4, fillOpacity: 0.1 }, pointToLayer: (_f, at) => L.circleMarker(at, { radius: 9, color, weight: 4, fillOpacity: 0.2 }) }).addTo(handle.map);
+        const bounds = marked.getBounds();
+        if (bounds.isValid()) handle.map.fitBounds(bounds.pad(0.5), { maxZoom: 15 });
       }
 
       function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }

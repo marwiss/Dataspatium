@@ -21,6 +21,10 @@
     const GEOMETRY_NAMES = /^(geometry|geom|wkt|shape|the_geom|geometri)$/i;
     const LON_NAMES = /^(lon|long|lng|longitude|longitud|x|e|east|easting|ost|öst|x_koord|xkoord|lon_wgs84|longitude_wgs84)$/i;
     const LAT_NAMES = /^(lat|latitude|latitud|y|n|north|northing|nord|y_koord|ykoord|lat_wgs84|latitude_wgs84)$/i;
+    /** Words in a column name that mean a coordinate: `ost_koord` does, `kostnad` does not. */
+    const LON_TOKENS = new Set(['lon', 'long', 'lng', 'longitude', 'longitud', 'east', 'easting', 'ost', 'öst']);
+    const LAT_TOKENS = new Set(['lat', 'latitude', 'latitud', 'north', 'northing', 'nord', 'norr']);
+    const hasToken = (name, set) => String(name).replace(/([a-zåäöæø])([A-ZÅÄÖÆØ])/g, '$1 $2').toLowerCase().split(/[^a-zåäöæø0-9]+/).some((word) => set.has(word));
     /** @type {Promise<any>|null} */ let loading = null;
     let cssLinked = false;
     const newId = () => 'ly_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -58,9 +62,35 @@
     /** Longitude and latitude columns of a table, or null. */
     function coordinateColumns(columns) {
       const nums = columns.filter(numeric);
-      const lon = nums.find((c) => LON_NAMES.test(c.name)) || nums.find((c) => /lon|long|east|öst|ost/i.test(c.name) && !/lat/i.test(c.name));
-      const lat = nums.find((c) => LAT_NAMES.test(c.name)) || nums.find((c) => /lat|north|nord/i.test(c.name));
+      const lon = nums.find((c) => LON_NAMES.test(c.name)) || nums.find((c) => hasToken(c.name, LON_TOKENS) && !hasToken(c.name, LAT_TOKENS));
+      const lat = nums.find((c) => LAT_NAMES.test(c.name)) || nums.find((c) => hasToken(c.name, LAT_TOKENS));
       return lon && lat && lon !== lat ? { lon: lon.name, lat: lat.name } : null;
+    }
+    /**
+     * Whether a table can really be drawn. The names only promise something; the values decide. A geometry column must hold
+     * a geometry, and coordinates must lie in degrees or in the range of a projected system. Columns called only x and y
+     * count as coordinates when they are projected, because small numbers under those names are usually something else.
+     * @param {string} id @returns {Promise<boolean>}
+     */
+    async function drawable(id) {
+      const handle = await datasets.ensureOpen(id);
+      const columns = handle.columns;
+      const q = (c) => '"' + String(c).replace(/"/g, '""') + '"';
+      const named = geometryColumn(columns);
+      if (named) {
+        const r = await handle.engine.exec(`select ${q(named)} from data where ${q(named)} is not null and ${q(named)} != '' limit 1`);
+        const value = r[0] && r[0].values[0] ? r[0].values[0][0] : null;
+        if (value === null || geo.parseGeometry(value)) return true;
+      }
+      const coords = coordinateColumns(columns);
+      if (!coords) return false;
+      const r = await handle.engine.exec(`select min(${q(coords.lon)}), max(${q(coords.lon)}), min(${q(coords.lat)}), max(${q(coords.lat)}), count(${q(coords.lon)}) from data`);
+      const [lonMin, lonMax, latMin, latMax, n] = r[0] ? r[0].values[0] : [null, null, null, null, 0];
+      if (!n) return mapDefault(columns);
+      const projected = lonMin >= 1e4 && lonMax <= 2e6 && latMin >= 1e6 && latMax <= 1e7;
+      const degrees = lonMin >= -180 && lonMax <= 180 && latMin >= -90 && latMax <= 90;
+      const onlyLetters = /^[xyen]$/i.test(coords.lon) || /^[xyen]$/i.test(coords.lat);
+      return projected || (degrees && !onlyLetters);
     }
     /** True when a table can be drawn on a map (geometry or coordinate columns). */
     function mappable(columns) { return !!(geometryColumn(columns) || coordinateColumns(columns)); }
@@ -530,6 +560,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

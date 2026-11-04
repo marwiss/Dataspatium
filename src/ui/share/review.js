@@ -1,49 +1,53 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The review before sharing: columns that look like personal data (identity numbers, e-mail addresses, phone
- * numbers) are listed per dataset, and for each the user keeps it, pseudonymises it or drops it in the copy that
- * leaves the app. The datasets themselves are never changed; data/datasets.exportBytesTransformed() applies the
- * choices to the exported file.
+ * The review before sharing: everything in a dataset that may be personal data is listed (data/share-scan), and for each
+ * the user chooses what happens in the copy that leaves the app. The datasets themselves are never changed.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/share/review', ['ui/base', 'data/rules', 'data/datasets'], (base, rules, datasets) => {
-    const { h, t } = base;
-    const PHONE_NAME = /telefon|mobil(?!itet)|phone|puhelin|s[ií]mi|^tlf$|\btel\b|^gsm$|farsimi|handy/i;
+  D.define('ui/share/review', ['ui/base', 'data/share-scan'], (base, shareScan) => {
+    const { h, t, i18n } = base;
     const SEP = '\u0000';
 
     /**
-     * Findings for one dataset.
-     * @param {string} id
-     * @returns {Promise<Array<{column: string, kind: 'identifier'|'email'|'phone', detail?: string}>>}
+     * Column findings for one dataset.
+     * @param {string} id @returns {Promise<any[]>}
      */
-    async function findings(id) {
-      const out = [];
-      const columns = await datasets.columns(id);
-      for (const r of await rules.suggest(id)) {
-        if (r.type === 'identifier' && !out.some((f) => f.column === r.column)) out.push({ column: r.column, kind: 'identifier', detail: r.kind });
-        else if (r.type === 'format' && r.format === 'email' && !out.some((f) => f.column === r.column)) out.push({ column: r.column, kind: 'email' });
-      }
-      for (const c of columns) {
-        if (c.type === 'text' && PHONE_NAME.test(c.name) && !out.some((f) => f.column === c.name)) out.push({ column: c.name, kind: 'phone' });
-      }
-      return out;
-    }
+    const findings = (id) => shareScan.columnFindings(id);
 
-    /** Findings for several datasets: a Map of id to findings, only for datasets with something to show. */
+    /** What each dataset would bring: a Map of id to findings, only for datasets with something to show. */
     async function scan(ids) {
       const map = new Map();
       for (const id of ids) {
-        try { const f = await findings(id); if (f.length) map.set(id, f); } catch (err) { D.log('review', 'scan failed', id, err); }
+        try {
+          const found = await shareScan.inspect(id);
+          if (found.columns.length || found.parts.length) map.set(id, found);
+        } catch (err) { D.log('review', 'scan failed', id, err); }
       }
       return map;
+    }
+    function partLabel(p) {
+      const n = i18n.formatNumber(p.count);
+      const names = (p.names || []).join(', ');
+      switch (p.kind) {
+        case 'text': return t('review.part.text', { column: p.column, n });
+        case 'side': return i18n.has('review.part.side.' + p.table) ? t('review.part.side.' + p.table, { n }) : t('review.part.side', { table: p.table, n });
+        default: return t('review.part.' + p.kind, { n, names });
+      }
+    }
+    function picker(label, choices, start, onChange) {
+      const sel = /** @type {any} */ (h('dm-select', { label }));
+      sel.options = choices.map((c) => ({ value: c, label: t('review.choice.' + c) }));
+      sel.value = start;
+      sel.addEventListener('change', () => onChange(sel.value));
+      return sel;
     }
 
     /**
      * The dialog. Resolves with { transform, findings } (transform may be empty) or null when the user cancelled.
-     * Nothing is shown when no dataset has findings.
+     * Nothing is shown when no dataset holds anything to decide on.
      * @param {any} ctx @param {string[]} ids
      */
     async function review(ctx, ids) {
@@ -55,36 +59,69 @@
       const rows = [];
       for (const [id, list] of found) {
         rows.push(h('h4', { text: names.get(id) || id }));
-        for (const f of list) {
-          const key = id + SEP + f.column;
-          choices.set(key, f.kind === 'identifier' ? 'hash' : 'keep');
-          const sel = /** @type {any} */ (h('dm-select', { label: `${t('review.kind.' + f.kind)}: ${f.column}` }));
-          sel.options = [{ value: 'keep', label: t('review.choice.keep') }, { value: 'hash', label: t('review.choice.hash') }, { value: 'drop', label: t('review.choice.drop') }];
-          sel.value = choices.get(key);
-          sel.addEventListener('change', () => choices.set(key, sel.value));
-          rows.push(sel);
+        for (const f of list.columns) {
+          const key = id + SEP + 'column' + SEP + f.column;
+          const offer = shareScan.columnChoices(f);
+          choices.set(key, offer.start);
+          rows.push(picker(`${t('review.kind.' + f.kind)}: ${f.column}`, offer.choices, offer.start, (v) => choices.set(key, v)));
+        }
+        for (const p of list.parts) {
+          const key = id + SEP + 'part' + SEP + p.id;
+          choices.set(key, p.start);
+          rows.push(picker(partLabel(p), p.choices, p.start, (v) => choices.set(key, v)));
         }
       }
-      const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('review.help') }), h('div', { class: 'dm-stack-sm' }, rows), h('p', { class: 'dm-help dm-small', text: t('review.note') }));
+      const body = h('div', { class: 'dm-stack' },
+        h('p', { class: 'dm-help', text: t('review.help') }),
+        h('div', { class: 'dm-stack-sm' }, rows),
+        h('p', { class: 'dm-help dm-small', text: t('review.note') }),
+        h('p', { class: 'dm-help dm-small', text: t('review.note.log') }),
+        h('p', { class: 'dm-help dm-small', text: t('review.note.extras') }));
       const ok = await ctx.ui.dialog.open({ title: t('review.title'), help: 'dela#granskning-före-delning', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       const transform = {};
       for (const [key, choice] of choices) {
         if (choice === 'keep') continue;
-        const [id, column] = key.split(SEP);
-        const tr = transform[id] || (transform[id] = { drop: [], hash: [] });
-        tr[choice].push(column);
+        const [id, type, what] = key.split(SEP);
+        const tr = transform[id] || (transform[id] = { drop: [], hash: [], mask: [], side: {} });
+        if (type === 'column') { tr[choice].push(what); continue; }
+        const at = what.indexOf(':');
+        const group = at > 0 ? what.slice(0, at) : what;
+        const name = at > 0 ? what.slice(at + 1) : '';
+        if (group === 'text') tr[choice === 'drop' ? 'drop' : 'mask'].push(name);
+        else if (group === 'side') tr.side[name] = choice;
+        else tr[group] = true;
       }
       return { transform, findings: found };
     }
 
-    /** A short line for the log: how many columns were pseudonymised and dropped. */
-    function summary(transform) {
-      let hash = 0; let drop = 0;
-      for (const tr of Object.values(transform || {})) { hash += (tr.hash || []).length; drop += (tr.drop || []).length; }
-      return hash || drop ? t('review.applied', { hash, drop }) : '';
+    /**
+     * Whether to go on when nothing can be changed in what leaves, as when a workspace is pushed to GitHub: a pseudonymised
+     * copy could not be fetched back. Shows what is there; nothing to show means yes.
+     * @param {any} ctx @param {string[]} ids @returns {Promise<boolean>}
+     */
+    async function warn(ctx, ids) {
+      const found = await scan(ids);
+      if (!found.size) return true;
+      const names = new Map(ctx.store.get().datasets.map((d) => [d.id, d.name]));
+      const body = h('div', { class: 'dm-stack' },
+        h('p', { text: t('review.warn.help') }),
+        h('ul', { class: 'dm-stack-xs' }, Array.from(found, ([id, list]) => h('li', { text: `${names.get(id) || id}: ${list.columns.map((f) => f.column).concat(list.parts.map(partLabel)).join(', ')}` }))));
+      const ok = await ctx.ui.dialog.open({ title: t('review.warn.title'), help: 'dela#granskning-före-delning', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
+      return ok === true;
     }
 
-    return { findings, scan, review, summary, PHONE_NAME };
+    /** A short line for the log: what was changed in the copy. */
+    function summary(transform) {
+      let hash = 0; let drop = 0; let other = 0;
+      for (const tr of Object.values(transform || {})) {
+        hash += (tr.hash || []).length; drop += (tr.drop || []).length;
+        other += (tr.mask || []).length + Object.keys(tr.side || {}).length + ['originals', 'pictures', 'positions', 'comments', 'authors'].filter((k) => tr[k]).length;
+      }
+      if (!hash && !drop && !other) return '';
+      return other ? `${t('review.applied', { hash, drop })} ${t('review.applied.more', { n: other })}` : t('review.applied', { hash, drop });
+    }
+
+    return { findings, scan, review, warn, summary, PHONE_NAME: shareScan.PHONE_NAME };
   });
 })();

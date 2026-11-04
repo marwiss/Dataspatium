@@ -20,6 +20,8 @@ Geodata kan också hämtas direkt från öppna tjänster: *Lägg till geodatakä
 Features- eller ArcGIS-tjänst, och källan *Geodataportalen* söker fram tjänster i den nationella katalogen. Svaren får en
 geometrikolumn och öppnas som karta. Se [kallor.md](kallor.md#öppna-geodata).
 
+Namnen räcker inte. Appen kontrollerar också värdena: en geometrikolumn måste innehålla en geometri, och koordinater måste ligga i grader eller i ett projicerat system. Kolumner som bara heter x och y räknas som koordinater när värdena är projicerade, eftersom små tal under de namnen oftast är något annat. En tabell med koordinater kan exporteras som GeoJSON med punkter.
+
 ## Kartan i Bearbeta
 
 Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra, och klicka

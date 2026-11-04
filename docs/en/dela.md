@@ -34,12 +34,27 @@ mobile page* shows the address to scan for opening the mobile page the first tim
 
 ## Review before sharing
 
-When datasets are bundled, sent to a device or shared through the share menu, the app looks through the columns
-for identity numbers (Swedish, Danish, Norwegian, Finnish and Icelandic), e-mail addresses and phone numbers, by
-column names and values. If something is found, a dialog lets you choose *Keep*, *Pseudonymise* (the same value
-gives the same code, but the value cannot be read back) or *Drop the column* for each column. Only the copy that
-is shared changes; the dataset in the app stays as it is, and the bundle's manifest records which columns were
-changed. The review does not see everything: names, addresses and free text you have to judge yourself.
+Everything that leaves the app through bundles, devices or the share menu is reviewed first, and the review covers the whole file. The app looks for identity numbers, e-mail addresses and
+phone numbers, both in whole columns and inside running text, and lists what otherwise comes along without showing in the table. For each part you choose what happens in the copy.
+
+| Part | Choice |
+|---|---|
+| Column with identity numbers, e-mail or phone | Keep, pseudonymise or drop. Pseudonymise means that the same value gives the same code, but the value cannot be read back |
+| Running text, such as the paragraphs of documents | Keep, mask the matches or drop the column |
+| The graph's edges and the model's properties | Keep, mask the matches or remove in the copy |
+| Original files | Keep or remove. They cannot be pseudonymised, so removal is suggested when anything else changes |
+| Pictures | Keep or remove. The position is removed separately, both from the table and from the picture file |
+| Comments and authors in the documents' metadata | Keep or remove |
+| Collected rows | Who collected can be pseudonymised, and the position can be removed |
+
+Only the copy that is shared changes, and the dataset in the app stays as it is. If you change anything, neither the change log nor the recipe comes along, since they can hold the original values.
+Bundles are also cleaned of traces of removed values in the file itself.
+
+The review does not see everything. Names, addresses and the contents of original files and pictures you have to judge yourself. Charts, notebooks and documents in a bundle can show the original
+values, so leave them out if needed. File names come along.
+
+A sync to **GitHub** must be able to come back as it was, so nothing can be pseudonymised there. Instead the app shows what may be personal data before you send. **Publish** creates an HTML page with
+the values the charts show, so check them before you put the page out.
 
 ## Share menu
 

@@ -36,12 +36,27 @@ ensimmäisen kerran.
 
 ## Tarkistus ennen jakamista
 
-Kun aineistoja paketoidaan, lähetetään laitteelle tai jaetaan jakovalikosta, sovellus käy sarakkeet läpi etsien
-henkilötunnuksia (ruotsalaisia, tanskalaisia, norjalaisia, suomalaisia ja islantilaisia), sähköpostiosoitteita ja
-puhelinnumeroita sarakkeiden nimistä ja arvoista. Jos jotakin löytyy, valintaikkunassa valitaan jokaiselle
-sarakkeelle *Säilytä*, *Pseudonymisoi* (sama arvo antaa saman koodin, mutta arvoa ei voi lukea) tai *Poista
-sarake*. Vain jaettava kopio muuttuu; sovelluksen aineisto säilyy ennallaan, ja paketin manifesti kertoo, mitkä
-sarakkeet muutettiin. Tarkistus ei näe kaikkea: nimet, osoitteet ja vapaa teksti on arvioitava itse.
+Kaikki, mikä lähtee sovelluksesta pakettien, laitteiden tai jakovalikon kautta, tarkistetaan ensin, ja tarkistus koskee koko tiedostoa. Sovellus etsii henkilötunnuksia, sähköpostiosoitteita ja
+puhelinnumeroita sekä kokonaisista sarakkeista että juoksevan tekstin sisältä ja luettelee sen, mikä muuten kulkee mukana näkymättä taulukossa. Valitset kullekin osalle, mitä kopiossa tapahtuu.
+
+| Osa | Valinta |
+|---|---|
+| Sarake, jossa on henkilötunnuksia, sähköposteja tai puhelinnumeroita | Säilytä, pseudonymisoi tai poista. Pseudonymisointi tarkoittaa, että sama arvo antaa saman koodin, mutta arvoa ei voi lukea |
+| Juokseva teksti, kuten asiakirjojen kappaleet | Säilytä, peitä osumat tai poista sarake |
+| Graafin särmät ja mallin ominaisuudet | Säilytä, peitä osumat tai poista kopiosta |
+| Alkuperäiset tiedostot | Säilytä tai poista. Niitä ei voi pseudonymisoida, joten poistamista ehdotetaan, kun jotain muuta muutetaan |
+| Kuvat | Säilytä tai poista. Sijainti poistetaan erikseen sekä taulukosta että kuvatiedostosta |
+| Kommentit ja tekijät asiakirjojen metatiedoissa | Säilytä tai poista |
+| Kerätyt rivit | Kerääjä voidaan pseudonymisoida ja sijainti poistaa |
+
+Vain jaettava kopio muuttuu, ja sovelluksen aineisto säilyy ennallaan. Jos muutat jotain, muutosloki ja resepti eivät tule mukaan, koska ne voivat sisältää alkuperäiset arvot. Paketeista poistetaan
+myös poistettujen arvojen jäänteet itse tiedostossa.
+
+Tarkistus ei näe kaikkea. Nimet, osoitteet ja alkuperäisten tiedostojen ja kuvien sisältö on arvioitava itse. Paketin kaaviot, muistikirjat ja asiakirjat voivat näyttää alkuperäiset arvot, joten jätä
+ne tarvittaessa pois. Tiedostonimet kulkevat mukana.
+
+**GitHub**-synkronointi on voitava noutaa takaisin sellaisena kuin se oli, joten siinä mitään ei voi pseudonymisoida. Sovellus näyttää sen sijaan ennen lähetystä, mikä voi olla henkilötietoja.
+**Julkaise** luo HTML-sivun kaavioiden näyttämistä arvoista, joten tarkista ne ennen sivun julkaisemista.
 
 ## Jakovalikko
 

@@ -21,7 +21,7 @@
       assert.equal(kinds.telefon, 'phone');
       assert.ok(!kinds.ort, 'a place name is not flagged');
       const scanned = await review.scan([ds.id]);
-      assert.equal(scanned.get(ds.id).length, 3);
+      assert.equal(scanned.get(ds.id).columns.length, 3);
       assert.ok(review.summary({ [ds.id]: { hash: ['personnummer'], drop: ['epost'] } }).length > 0, 'summary text');
 
       const bytes = await datasets.exportBytesTransformed(ds.id, { drop: ['epost'], hash: ['personnummer'], salt: 'testsalt' });

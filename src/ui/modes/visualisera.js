@@ -102,10 +102,20 @@
           if (!ds) { ui.toast.show(t('shell.select.dataset'), { kind: 'warn' }); return; }
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
-          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
+          const all = store.get().datasets;
+          const cols = await services.datasets.columns(ds.id).catch(() => []);
+          const onMap = (!ds.kind || ds.kind === 'table') && leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false);
+          /** A chart of its own kind needs a dataset of that kind; the panel can pick another one than the selected. */
+          const stands = (k) => (k === 'graph' || k === 'model') && ds.kind !== k && !all.some((d) => d.kind === k);
+          const fits = (k) => k === ds.kind || (k === 'map' && (onMap || ds.kind === 'plan'));
+          const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].slice().sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
+          const body = h('div', { class: 'dm-stack-sm' }, order.map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, disabled: stands(k) ? '' : null, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },
+            h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: stands(k) ? t('viz.kind.need.' + k) : t('viz.kind.' + k + '.help') }))));
           await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
           if (!kind) return;
-          const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
+          // A graph or model chart starts from a dataset it can draw.
+          const source = (kind === 'graph' || kind === 'model') && ds.kind !== kind ? store.get().datasets.find((d) => d.kind === kind) : ds;
+          const record = charts.create(kind, source, `${source.name}: ${t('viz.kind.badge.' + kind)}`);
           await openChart(record, true);
         }
         async function importChart() {

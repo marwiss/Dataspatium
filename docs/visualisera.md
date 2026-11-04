@@ -15,6 +15,8 @@ Förhandsgranskningen uppdateras medan du ändrar. Under diagrammet står hur m�
 datamängder aggregeras i SQL när diagrammet bara behöver summor, medelvärden eller antal, annars begränsas
 antalet rader (standard 50 000, ändras under Fler alternativ).
 
+Det som passar datamängden står först i dialogen. Ett diagramslag som inte kan fungera är grått och säger vad som behövs, till exempel en graf.
+
 ## Diagrambyggaren (Vega-Lite)
 
 | Diagramtyp | Används för |

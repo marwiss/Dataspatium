@@ -280,6 +280,8 @@
     'src/ui/bearbeta/model-view.js',
     'src/ui/share/review.js',
     'src/ui/share/devices-panel.js',
+    'src/data/share-scan.js',
+    'src/data/protected-columns.js',
     'src/ui/share/bundle-dialog.js',
     'src/ui/share/github-card.js',
     'src/ui/share/qr.js',
