@@ -46,14 +46,18 @@
         hit: (value, id) => ({ label: 'soka.open.plan', icon: 'layers', store: { openPlanObject: { datasetId: id, objektid: value('objektid') } } }),
       },
       graph: {
-        icon: 'share-2', view: 'graph', tab: 'graph', chart: 'graph', sideTables: ['_edges', '_layout'], files: 'originals', cypher: true, noStats: true, loses: 'export.loses.graph',
+        icon: 'share-2', view: 'graph', tab: 'graph', chart: 'graph', sideTables: ['_edges', '_layout'], chartTables: ['_edges'], files: 'originals', cypher: true, noStats: true, loses: 'export.loses.graph',
+        // A word on an edge finds the nodes at both ends.
+        sideSearch: { table: '_edges', columns: ['typ', 'egenskaper'], keys: ['kalla', 'mal'], on: 'id' },
         open: { label: 'hantera.view.graph', hint: 'hantera.view.graph.hint', icon: 'share-2' },
         protect: () => ['id', 'etikett', 'namn', 'egenskaper'],
         summary: (ds) => `${t('graph.nodes.n', { n: n(ds.rowCount) })} · ${t('graph.edges.n', { n: n(ds.graph && ds.graph.edges) })}`,
         hit: (value, id) => ({ label: 'soka.open.node', icon: 'share-2', store: { openNode: { datasetId: id, id: value('id'), data: { id: value('id'), etikett: value('etikett'), namn: value('namn'), egenskaper: value('egenskaper') } } } }),
       },
       model: {
-        icon: 'box', view: 'model', tab: 'model', chart: 'model', sideTables: ['_properties', '_quantities', '_entities'], files: 'originals', loses: 'export.loses.model',
+        icon: 'box', view: 'model', tab: 'model', chart: 'model', sideTables: ['_properties', '_quantities', '_entities'], chartTables: ['_properties', '_quantities'], files: 'originals', loses: 'export.loses.model',
+        // A word in a property set finds the element that has it.
+        sideSearch: { table: '_properties', columns: ['uppsattning', 'namn', 'varde'], keys: ['id'], on: 'id' },
         open: { label: 'hantera.view.model', hint: 'hantera.view.model.hint', icon: 'box' },
         protect: (ds) => (isDxf(ds) ? ['id', 'typ', 'lager'] : ['id', 'guid', 'typ']),
         summary: (ds) => (isDxf(ds) ? t('model.entities.n', { n: n(ds.rowCount) }) : t('model.elements.n', { n: n(ds.model && ds.model.elements ? ds.model.elements : ds.rowCount) })),

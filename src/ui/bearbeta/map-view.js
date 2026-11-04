@@ -53,6 +53,8 @@
             h('div', { class: 'dm-toolbar' }, basemapSel,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }),
+              ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
+              options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'arrow-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           mapEl);
         await draw();
@@ -106,6 +108,10 @@
         }
         if (s.selected) {
           const props = s.selected.properties || {};
+          // The picture of a place: its own when this is a photo, or the ones the row names.
+          const pictures = h('div', { class: 'dm-photos dm-map-photos' });
+          showPictures(pictures, props).catch((err) => D.log('map', err));
+          items.push(pictures);
           const kv2 = /** @type {any} */ (h('dm-kv'));
           kv2.items = Object.keys(props).slice(0, 40).map((k) => ({ label: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
           items.push(h('h4', { text: t('map.selected') }), kv2,
@@ -115,6 +121,24 @@
         replace(slots.right, items);
       }
 
+      function openPicture(albumId, name) {
+        store.set({ selectedId: albumId, openImage: { datasetId: albumId, name } });
+        if (albumId === ds.id && options.onOwnView) options.onOwnView(); else shell.activate('bearbeta');
+      }
+      async function showPictures(el, props) {
+        const list = ds.kind === 'images' && props.fil
+          ? [{ name: props.fil, albumId: ds.id, url: await D.require('data/dataset-files').url(ds.id, props.fil, 'thumb').catch(() => null) }].filter((p) => p.url)
+          : await D.require('data/media').picturesOf(ds.id, (column) => props[column]);
+        el.replaceChildren(...list.map((p) => h('button', { type: 'button', class: 'dm-photos-item', title: t('map.picture.open'), onclick: () => openPicture(p.albumId, p.name) }, h('img', { src: p.url, alt: p.name }), h('span', { class: 'dm-truncate dm-small', text: p.name }))));
+      }
+      /** What the map shows right now becomes the selection, so that it can follow to the other modes. */
+      async function useWhatShows() {
+        if (!handle) return;
+        const box = handle.map.getBounds();
+        const rowids = await D.require('data/spatial-search').rowsWithin(ds.id, { type: 'box', west: box.getWest(), east: box.getEast(), south: box.getSouth(), north: box.getNorth() });
+        const made = D.require('data/selection').set({ datasetId: ds.id, rowids: rowids || [] });
+        ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+      }
       /** A search hit: the map goes to the row's place and marks it. */
       async function showPending() {
         const pending = store.get().openMapRow;
@@ -141,7 +165,7 @@
       }
 
       function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
-      return { render, destroy, state: s };
+      return { render, destroy, state: s, get handle() { return handle; } };
     }
     return { create };
   });

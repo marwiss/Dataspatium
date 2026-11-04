@@ -17,6 +17,8 @@ antalet rader (standard 50 000, ändras under Fler alternativ).
 
 Det som passar datamängden står först i dialogen. Ett diagramslag som inte kan fungera är grått och säger vad som behövs, till exempel en graf.
 
+En graf kan ritas från sina kanter och en modell från sina egenskaper eller mängder. Välj *Tabell* i diagrammets rubrik, så byter byggaren kolumner.
+
 ## Diagrambyggaren (Vega-Lite)
 
 | Diagramtyp | Används för |

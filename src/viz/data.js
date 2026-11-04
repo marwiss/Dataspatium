@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/data', ['data/datasets', 'data/types', 'data/lists', 'analysis/search'], (datasets, types, lists, search) => {
+  D.define('viz/data', ['data/datasets', 'data/types', 'data/lists', 'analysis/search', 'data/kinds'], (datasets, types, lists, search, kinds) => {
     const q = datasets.quoteIdent;
     const OPERATORS = [
       { id: '=', label: D.t('viz.op.eq') }, { id: '!=', label: D.t('viz.op.ne') }, { id: '>', label: D.t('viz.op.gt') }, { id: '>=', label: D.t('viz.op.ge') },
@@ -50,6 +50,26 @@
       return rows.map((r) => { const o = {}; for (let i = 0; i < names.length; i++) o[names[i]] = r[i]; return o; });
     }
 
+    /** A side table a chart may read: only those its kind offers, so a name from a saved chart cannot reach anything else. */
+    function sideTable(handle, name) {
+      if (!name) return null;
+      return (kinds.of(handle.meta).chartTables || []).includes(name) ? name : null;
+    }
+    /** The columns of a side table, in the same form as a dataset's. */
+    async function tableColumns(handle, table) {
+      const r = await handle.engine.exec(`pragma table_info(${q(table)})`);
+      return (r[0] ? r[0].values : []).map((row) => ({ name: String(row[1]), label: String(row[1]), type: /int|real|num/i.test(String(row[2] || '')) ? 'number' : 'text' }));
+    }
+    /**
+     * The columns a chart can use: the dataset's own, or those of a side table.
+     * @param {string} datasetId @param {string|null} [table] @returns {Promise<any[]>}
+     */
+    async function columnsOf(datasetId, table) {
+      const handle = await datasets.ensureOpen(datasetId);
+      const side = sideTable(handle, table);
+      return side ? tableColumns(handle, side) : handle.columns;
+    }
+
     /**
      * Fetch rows for a chart.
      * @param {string} datasetId
@@ -58,20 +78,22 @@
      */
     async function fetchRows(datasetId, request = {}) {
       const handle = await datasets.ensureOpen(datasetId);
-      const columns = handle.columns;
+      const table = sideTable(handle, request.table);
+      const columns = table ? await tableColumns(handle, table) : handle.columns;
+      const from = table ? q(table) : 'data';
       const where = whereClause(request.filters || [], columns);
       // A saved list from Söka narrows the rows first; only search lists of this very dataset apply.
       if (request.listId) {
         const rec = await lists.get(request.listId);
         if (rec && rec.datasetId === datasetId && (rec.kind || 'search') !== 'query') {
-          const lw = lists.whereOf(rec, columns);
+          const lw = lists.whereOf(rec, columns, kinds.of(handle.meta).sideSearch || null);
           where.sql = where.sql ? `(${where.sql}) and (${lw.sql})` : lw.sql;
           where.params = where.params.concat(lw.params);
         }
       }
       const whereSql = where.sql ? ' where ' + where.sql : '';
       const limit = Math.max(1, Number(request.limit) || 50000);
-      const countRes = await handle.engine.exec(`select count(*) from data${whereSql}`, where.params);
+      const countRes = await handle.engine.exec(`select count(*) from ${from}${whereSql}`, where.params);
       const total = Number(countRes[0].values[0][0]);
       if (request.aggregates && request.aggregates.length) {
         const groupBy = (request.groupBy || []).filter((g) => columns.some((c) => c.name === g));
@@ -83,14 +105,14 @@
           const expr = a.fn === 'count' && !a.field ? 'count(*)' : (a.fn === 'distinct' ? `count(distinct ${q(a.field)})` : `${fn}(${q(a.field)})`);
           selects.push(`${expr} as ${q(a.as)}`); names.push(a.as);
         }
-        const sql = `select ${selects.join(', ')} from data${whereSql}${groupBy.length ? ' group by ' + groupBy.map(q).join(', ') : ''} order by ${groupBy.length ? groupBy.map(q).join(', ') : '1'} limit ${limit}`;
+        const sql = `select ${selects.join(', ')} from ${from}${whereSql}${groupBy.length ? ' group by ' + groupBy.map(q).join(', ') : ''} order by ${groupBy.length ? groupBy.map(q).join(', ') : '1'} limit ${limit}`;
         const res = await handle.engine.exec(sql, where.params);
         const rows = res[0] ? res[0].values : [];
         return { columns: names, rows: toObjects(names, rows), total, truncated: rows.length >= limit, aggregated: true, sql };
       }
       const fields = (request.fields && request.fields.length ? request.fields : columns.map((c) => c.name)).filter((f) => columns.some((c) => c.name === f));
       const orderBy = request.orderBy && columns.some((c) => c.name === request.orderBy) ? `${q(request.orderBy)} ${request.orderDir === 'desc' ? 'desc' : 'asc'} nulls last, rowid` : 'rowid';
-      const sql = `select ${fields.map(q).join(', ')} from data${whereSql} order by ${orderBy} limit ${limit}`;
+      const sql = `select ${fields.map(q).join(', ')} from ${from}${whereSql} order by ${orderBy} limit ${limit}`;
       const res = await handle.engine.exec(sql, where.params);
       const rows = res[0] ? res[0].values : [];
       return { columns: fields, rows: toObjects(fields, rows), total, truncated: total > rows.length, aggregated: false, sql };
@@ -104,6 +126,6 @@
       return (res[0] ? res[0].values : []).map((r) => r[0]);
     }
 
-    return { fetchRows, whereClause, distinctValues, coerce, OPERATORS, AGG_SQL };
+    return { fetchRows, columnsOf, whereClause, distinctValues, coerce, OPERATORS, AGG_SQL };
   });
 })();

@@ -106,6 +106,7 @@ ett paket.
 - **Granskning av hela filen**: det som delas granskas i sin helhet, med löptext, originalfiler, bilders positioner, grafers kanter och kommentarer. Lägena följer dessutom datamängdens slag bättre: sökträffar
   öppnas där de finns, och kartor erbjuds bara när värdena verkligen är koordinater (se [docs/dela.md](docs/dela.md)).
 - **Lägena följer datamängden**: appen visar vad en datamängd också kan användas som och säger varför, öppnar Analysera i rätt verktyg och visar vad som behöver ses över. Ett urval följer med mellan lägena, och exporten säger vad som följer med (se [docs/lagen.md](docs/lagen.md)).
+- **Sök och rita efter datamängdens innehåll**: sök efter plats, hitta noder via sina kanter och element via sina egenskaper, se bilder på kartan och rita diagram från kanter, egenskaper och mängder (se [docs/soka.md](docs/soka.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

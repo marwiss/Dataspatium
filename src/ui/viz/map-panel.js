@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries'], (base, basic, leaflet, datasets, boundaries) => {
+  D.define('ui/viz/map-panel', ['ui/base', 'ui/basic', 'viz/leaflet', 'data/datasets', 'data/boundaries', 'data/kinds'], (base, basic, leaflet, datasets, boundaries, kinds) => {
     const { h, t, i18n, replace } = base;
     const MODES = ['none', 'category', 'graduated'];
 
@@ -186,7 +186,7 @@
       }
       function addCard() {
         const dsSel = /** @type {any} */ (h('dm-select', { label: t('map.add.dataset') }));
-        dsSel.options = allDatasets.filter((d) => d.kind === 'table' || !d.kind).map((d) => ({ value: d.id, label: d.name }));
+        dsSel.options = allDatasets.filter((d) => { const profile = kinds.of(d); return !kinds.isCollection(d) || profile.files === 'pictures' || d.kind === 'plan'; }).map((d) => ({ value: d.id, label: d.name }));
         dsSel.value = chart.datasetId && dsSel.options.some((o) => o.value === chart.datasetId) ? chart.datasetId : (dsSel.options[0] ? dsSel.options[0].value : '');
         const bSel = /** @type {any} */ (h('dm-select', { label: t('map.add.boundary') }));
         bSel.options = boundaries.BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }));

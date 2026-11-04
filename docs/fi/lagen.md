@@ -139,6 +139,8 @@ muokata. *Näytä taulukkona* antaa molemmissa tapauksissa tavallisen taulukon k
 
 Aineistot, joissa on geometria tai koordinaatit, avautuvat **karttana**, jota voi lähentää ja panoroida; kohteen napsautus näyttää ominaisuudet, taustakartta suostumuksen jälkeen, *Tallenna karttanäkymänä* Visualisoi-tilaan. *Näytä taulukkona* antaa taulukon (katso [kartor.md](kartor.md)).
 
+Hae-tilasta tehty valinta merkitään 3D-malliin, ja kamera kääntyy sitä kohti.
+
 ## Analysoi
 
 Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia

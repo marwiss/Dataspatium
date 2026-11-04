@@ -176,10 +176,13 @@
         controls.update();
         schedule();
       }
+      /** @type {number[]} */
+      let marked = [];
       /** Marks elements; `fit` aims the camera at them too. */
       function select(ids, opts = {}) {
+        marked = (ids || []).filter((id) => meshes.byElement.has(id));
         while (highlight.children.length) { const c = highlight.children.pop(); c.geometry.dispose(); }
-        const list = (ids || []).filter((id) => meshes.byElement.has(id));
+        const list = marked;
         if (list.length) {
           meshes.batches.forEach((b, no) => {
             const index = indexFor(meshes, no, list);
@@ -258,6 +261,7 @@
         info: { elements: meshes.elements, triangles: meshes.triangles, colors: meshes.batches.length },
         meshes, renderer, scene, camera,
         fit, select, setVisible, pickAt, resize, redraw: draw,
+        marked: () => marked.slice(),
         view: () => ({ position: camera.position.toArray(), target: controls.target.toArray(), near: camera.near, far: camera.far }),
         /** The current picture as a PNG data URL. */
         png: () => { draw(); return canvas.toDataURL('image/png'); },

@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('analysis/search', ['data/datasets'], (datasets) => {
+  D.define('analysis/search', ['data/datasets', 'data/kinds'], (datasets, kinds) => {
     const q = datasets.quoteIdent;
     /** Rows returned per dataset. */
     const ROWS = 100;
@@ -31,12 +31,21 @@
      * @param {Array<{column: string, value: any}>} [filters]
      * @returns {{sql: string, params: any[]}}
      */
-    function where(columns, text, filters = []) {
+    function where(columns, text, filters = [], side = null) {
       const clauses = []; const params = [];
       const ws = words(text);
       if (ws.length) {
         const expr = rowText(columns);
-        for (const w of ws) { clauses.push(`dm_regex_test(${expr}, ?, 'i') = 1`); params.push(escapeRegex(w)); }
+        // A word may also be in the side table of a graph or a model; the row it belongs to is then the hit.
+        const sideExpr = side ? rowText(side.columns.map((name) => ({ name }))) : null;
+        for (const w of ws) {
+          const own = `dm_regex_test(${expr}, ?, 'i') = 1`;
+          params.push(escapeRegex(w));
+          if (!side) { clauses.push(own); continue; }
+          const subs = side.keys.map((key) => `${q(side.on)} in (select ${q(key)} from ${q(side.table)} where dm_regex_test(${sideExpr}, ?, 'i') = 1)`);
+          side.keys.forEach(() => params.push(escapeRegex(w)));
+          clauses.push(`(${own} or ${subs.join(' or ')})`);
+        }
       }
       for (const f of filters) {
         if (!columns.some((c) => c.name === f.column)) continue;
@@ -65,6 +74,14 @@
       return out;
     }
 
+    /** The side table a dataset's kind searches, when the dataset really has it. */
+    async function sideOf(handle) {
+      const side = kinds.of(handle.meta).sideSearch;
+      if (!side) return null;
+      const r = await handle.engine.exec("select count(*) from sqlite_master where type = 'table' and name = ?", [side.table]);
+      return r[0] && Number(r[0].values[0][0]) ? side : null;
+    }
+
     /**
      * Search one dataset.
      * @param {string} id
@@ -76,7 +93,9 @@
     async function searchDataset(id, text, filters = [], options = {}) {
       const handle = await datasets.ensureOpen(id);
       const cols = handle.columns;
-      const w = options.rowids ? { sql: `rowid in (${options.rowids.map(Number).join(',')})`, params: [] } : where(cols, text, filters);
+      const w = where(cols, text, filters, await sideOf(handle));
+      // Rows already chosen, by a list or by where they are.
+      if (options.rowids) w.sql = `(${w.sql}) and rowid in (${options.rowids.map(Number).join(',')})`;
       const limit = Math.max(1, options.limit || ROWS);
       const c = await handle.engine.exec(`select count(*) from data where ${w.sql}`, w.params);
       const count = c[0] ? Number(c[0].values[0][0]) : 0;
@@ -99,18 +118,30 @@
       const results = [];
       for (const id of ids) {
         if (options.signal && options.signal.aborted) break;
-        try { results.push(await searchDataset(id, text, (options.filters && options.filters[id]) || [], options)); }
+        // Searching by place: only datasets with places take part.
+        const place = options.rowidsFor ? options.rowidsFor.get(id) : undefined;
+        if (options.rowidsFor && !place) continue;
+        try { results.push(await searchDataset(id, text, (options.filters && options.filters[id]) || [], place ? Object.assign({}, options, { rowids: place }) : options)); }
         catch (err) { D.log('search', 'skipped', id, err); }
       }
       return results;
     }
 
+    /**
+     * The condition for a search in a dataset, side table included.
+     * @param {string} id @param {string} text @param {any[]} [filters] @returns {Promise<{sql: string, params: any[]}>}
+     */
+    async function whereIn(id, text, filters = []) {
+      const handle = await datasets.ensureOpen(id);
+      return where(handle.columns, text, filters, await sideOf(handle));
+    }
+
     /** SQL selecting the hits of one dataset (used to turn a list into a dataset). */
-    function hitsSql(columns, text, filters) {
-      const w = where(columns, text, filters);
+    function hitsSql(columns, text, filters, side = null) {
+      const w = where(columns, text, filters, side);
       return { sql: `select ${columns.map((c) => q(c.name)).join(', ')} from data where ${w.sql}`, params: w.params };
     }
 
-    return { search, searchDataset, where, hitsSql, escapeRegex, words, ROWS };
+    return { search, searchDataset, where, whereIn, hitsSql, escapeRegex, words, ROWS };
   });
 })();

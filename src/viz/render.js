@@ -13,12 +13,12 @@
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
       if (!meta) throw new Error(D.t('err.dataset.gone'));
-      const columns = await datasets.columns(chart.datasetId);
       const v = chart.vega || {};
+      const columns = await vizData.columnsOf(chart.datasetId, v.table);
       if (v.customSpec) {
         const spec = JSON.parse(v.customSpec);
         const fields = v.state ? undefined : [];
-        const data = await vizData.fetchRows(chart.datasetId, { fields, filters: (v.state && v.state.filters) || [], listId: v.state && v.state.listId, limit: (v.state && v.state.maxRows) || 50000 });
+        const data = await vizData.fetchRows(chart.datasetId, { table: v.table, fields, filters: (v.state && v.state.filters) || [], listId: v.state && v.state.listId, limit: (v.state && v.state.maxRows) || 50000 });
         spec.data = { values: data.rows };
         if (options.width !== undefined && spec.width === 'container') spec.width = options.width;
         return { spec, data, columns, meta };
@@ -26,6 +26,7 @@
       const state = Object.assign({}, v.state || builder.defaultState(v.type || 'bar', columns), options.extraFilters ? { filters: ((v.state && v.state.filters) || []).concat(options.extraFilters) } : {});
       const request = builder.dataRequest(state, columns, meta.rowCount || 0);
       if (state.listId) request.listId = state.listId;
+      if (v.table) request.table = v.table;
       const data = await vizData.fetchRows(chart.datasetId, request);
       // Point maps draw over bundled county or municipality boundaries.
       const basemapId = builder.basemapOf(state);

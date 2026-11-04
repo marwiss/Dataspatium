@@ -103,6 +103,7 @@ paketilla.
 - **Koko tiedoston tarkistus**: jaettava tarkistetaan kokonaan, juokseva teksti, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät ja kommentit mukaan lukien. Tilat seuraavat myös aineiston lajia paremmin: hakuosumat
   avautuvat paikallaan, ja karttoja tarjotaan vain, kun arvot todella ovat koordinaatteja (katso [dela.md](dela.md)).
 - **Tilat seuraavat aineistoa**: sovellus näyttää, miten aineistoa voi käyttää myös, ja kertoo syyn, avaa Analysoi-tilan oikeassa työkalussa ja näyttää tarkistettavat asiat. Valinta seuraa tilasta toiseen, ja vienti kertoo, mitä tulee mukaan (katso [lagen.md](lagen.md)).
+- **Hae ja piirrä aineiston sisällön mukaan**: hae paikan mukaan, löydä solmut särmiensä ja elementit ominaisuuksiensa kautta, katso kuvia kartalla ja piirrä kaavioita särmistä, ominaisuuksista ja määristä (ks. [soka.md](soka.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

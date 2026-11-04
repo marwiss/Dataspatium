@@ -65,7 +65,8 @@
       if (rec.kind === 'query') return querybuilder.toDataset(rec.spec, name || rec.name);
       if (rec.kind === 'rows') return datasets.createFromQuery(rec.datasetId, `select * from data where rowid in (${rec.rowids.join(',')})`, { name: name || rec.name, source: { list: { id: rec.id, name: rec.name } } });
       const cols = await datasets.columns(rec.datasetId);
-      const { sql, params } = search.hitsSql(cols, rec.text, rec.filters);
+      const meta = await datasets.get(rec.datasetId);
+      const { sql, params } = search.hitsSql(cols, rec.text, rec.filters, D.require('data/kinds').of(meta).sideSearch || null);
       return datasets.createFromQuery(rec.datasetId, sql, { name: name || rec.name, params, source: { list: { id: rec.id, name: rec.name, text: rec.text, filters: rec.filters } } });
     }
 
@@ -73,10 +74,10 @@
      * The condition a list puts on its dataset's rows, or null for a query, which stands on its own.
      * @param {any} rec @param {any[]} columns @returns {{sql: string, params: any[]}|null}
      */
-    function whereOf(rec, columns) {
+    function whereOf(rec, columns, side = null) {
       if (rec.kind === 'query') return null;
       if (rec.kind === 'rows') return { sql: `rowid in (${(rec.rowids || []).join(',')})`, params: [] };
-      return search.where(columns, rec.text, rec.filters || []);
+      return search.where(columns, rec.text, rec.filters || [], side);
     }
 
     /** Readable summary of what a list selects. */

@@ -74,7 +74,13 @@
         table = null;
         if (kindView && kindViewFor !== viewId) { kindView.destroy(); kindView = null; }
         if (!kindView) {
-          kindView = mod.create(ctx, { onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); }, onChanged: () => updateUndo() });
+          kindView = mod.create(ctx, {
+            onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); },
+            onChanged: () => updateUndo(),
+            // A collection with places can also be seen on a map, and go back to its own view from there.
+            onMap: () => { viewId = 'map'; const d = current(); if (d) renderMain(d); },
+            onOwnView: viewId === 'map' && kinds.of(ds).view ? () => { viewId = kinds.of(ds).view; const d = current(); if (d) renderMain(d); } : null,
+          });
           kindViewFor = viewId;
         }
         kindView.render(ds, slots).catch((err) => shell.log(String((err && err.message) || err), 'error'));
@@ -126,7 +132,7 @@
         listSel.addEventListener('change', () => {
           usingSelection = listSel.value === '__selection';
           activeList = myLists.find((l) => l.id === listSel.value) || null;
-          listWhere = usingSelection ? selectionMod.whereOf(ds.id) : activeList ? listsMod.whereOf(activeList, cols) : null;
+          listWhere = usingSelection ? selectionMod.whereOf(ds.id) : activeList ? listsMod.whereOf(activeList, cols, kinds.of(ds).sideSearch || null) : null;
           refresh(current());
         });
         // What the table now shows can follow to the other modes.

@@ -16,6 +16,8 @@ breytt undir Fleiri valkostir).
 
 Það sem hentar gagnasafninu kemur fyrst í glugganum. Grafgerð sem getur ekki virkað er grá og segir hvað hún þarf, til dæmis net.
 
+Net má teikna út frá leggjum sínum og líkan út frá eiginleikum sínum eða magni. Veldu *Tafla* í haus myndritsins, og smiðurinn skiptir um dálka.
+
 ## Myndritasmiðurinn (Vega-Lite)
 
 | Myndritagerð | Notað fyrir |

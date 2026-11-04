@@ -33,6 +33,8 @@ slette rækker), ses på kortet.
 Store datasæt tegnes med canvas; 10 000 polygoner panoreres uden hak. Flere end 50 000 objekter pr. lag tegnes ikke
 (grænsen kan hæves pr. lag i kortvisningen).
 
+Billedsamlinger med position har knappen *Vis på kortet*. Klik på et sted, så viser inspektøren billedet. En tabel, hvis rækker navngiver billeder, viser dem på samme måde. *Brug det, der ses* gør det, kortet viser lige nu, til et udvalg, der følger med til de andre tilstande. I en kortvisning i Visualisér kan billedsamlinger og planer være lag.
+
 ## Kortvisninger i Visualisér
 
 *Nyt diagram → Kort* opretter en kortvisning med det valgte datasæt som første lag. Indstillingerne til venstre:

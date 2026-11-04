@@ -28,6 +28,10 @@ sanaa kohden.
 
 **Avaa osuma** siellä, missä se on. Tarkastimen painike vie oikealle sivulle asiakirjassa, oikeaan kuvaan kokoelmassa, solmuun naapureineen graafissa, elementtiin mallissa, kohteeseen kaavassa, paikkaan kartalla tai riville taulukossa.
 
+**Hae paikan mukaan.** Kohdassa *Hae paikan mukaan* valitset kunnan tai alueen tai pisteen ja etäisyyden. Voit hakea ilman sanoja, jolloin näytetään kaikki kyseisessä paikassa. Mukana ovat vain aineistot, joissa on paikkoja. Alue lasketaan keskipisteensä mukaan, joten kyseessä ei ole tarkka päällekkäisyys. Tarkat päällekkäisyydet teet kohdassa Geo Analysoi-tilassa.
+
+**Sivutaulukot ovat mukana.** Sana graafin särmässä löytää solmut molemmista päistä, ja arvo IFC-ominaisuudessa löytää elementin. Tämä koskee myös tallennettuja listoja ja valintoja.
+
 ## Kysely
 
 Kysely-välilehti rakentaa kyselyn ilman, että kirjoitat SQL:ää, ja näyttää luomansa SQL:n. Kortti **Aineistot**

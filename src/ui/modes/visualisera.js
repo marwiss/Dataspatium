@@ -137,7 +137,7 @@
           if (!fresh && dirty && !(await confirmDiscard())) return;
           view = 'chart'; chart = JSON.parse(JSON.stringify(record)); dirty = fresh; dashboard = null;
           disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } controls = null;
-          columns = chart.datasetId ? await services.datasets.columns(chart.datasetId).catch(() => []) : [];
+          columns = chart.datasetId ? await D.require('viz/data').columnsOf(chart.datasetId, chart.kind === 'vega' && chart.vega ? chart.vega.table : null).catch(() => []) : [];
           if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
           if (chart.kind === 'map' && !chart.map) chart.map = leaflet.defaultMap(columns, { id: chart.datasetId, name: chart.datasetName, shortName: chart.datasetShort });
           render();
@@ -166,9 +166,18 @@
           nameInput.value = chart.name || '';
           nameInput.addEventListener('input', () => { chart.name = nameInput.value; dirty = true; });
           const saveBtn = ui.button({ label: t('viz.save'), icon: 'save', variant: 'primary', onClick: saveChart });
+          // A graph's edges and a model's quantities can be charted as well as its main table.
+          const chartTables = chart.kind === 'vega' ? (D.require('data/kinds').of(store.get().datasets.find((d) => d.id === chart.datasetId)).chartTables || []) : [];
+          const tableSel = chartTables.length ? /** @type {any} */ (h('dm-select', { label: t('viz.table'), inline: true })) : null;
+          if (tableSel) {
+            tableSel.options = [{ value: '', label: t('viz.table.data') }].concat(chartTables.map((x) => ({ value: x, label: t('viz.table.' + x) })));
+            tableSel.value = chart.vega.table || '';
+            tableSel.addEventListener('change', () => { chart.vega.table = tableSel.value || null; chart.vega.state = null; chart.vega.customSpec = null; dirty = true; openChart(chart, true).catch((err) => shell.log(String((err && err.message) || err), 'error')); });
+          }
           const head = h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon(kindIcon(chart.kind), 20), nameInput, h('dm-badge', { text: t('viz.kind.badge.' + chart.kind) })),
             h('div', { class: 'dm-row-wrap' },
+              tableSel,
               saveBtn,
               ui.button({ label: t('viz.export'), icon: 'download', onClick: () => exportDialog.exportChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
               ui.button({ label: t('viz.batch'), icon: 'layers', onClick: () => exportDialog.batchChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),

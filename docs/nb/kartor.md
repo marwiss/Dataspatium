@@ -33,6 +33,8 @@ på kartet.
 Store datasett tegnes med canvas; 10 000 polygoner panoreres uten hakk. Flere enn 50 000 objekter per lag tegnes ikke
 (grensen kan heves per lag i kartvisningen).
 
+Bildesamlinger med posisjon har knappen *Vis på kartet*. Klikk på et sted, så viser inspektøren bildet. En tabell der radene navngir bilder, viser dem på samme måte. *Bruk det som vises* gjør det kartet viser akkurat nå, til et utvalg som følger med til de andre modusene. I en kartvisning i Visualiser kan bildesamlinger og planer være lag.
+
 ## Kartvisninger i Visualiser
 
 *Nytt diagram → Kart* lager en kartvisning med det valgte datasettet som første lag. Innstillingene til venstre:

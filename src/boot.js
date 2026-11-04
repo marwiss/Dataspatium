@@ -282,6 +282,8 @@
     'src/ui/share/devices-panel.js',
     'src/data/kinds.js',
     'src/data/selection.js',
+    'src/data/spatial-search.js',
+    'src/data/media.js',
     'src/data/facets.js',
     'src/data/kind-health.js',
     'src/ui/kinds/insight-cards.js',

@@ -132,6 +132,8 @@ beskrivelsen kan ændres. *Vis som tabel* giver i begge tilfælde den almindelig
 
 Datasæt med geometri eller koordinater åbnes som et **kort**, der kan zoomes og panoreres; klik på et objekt viser attributterne, baggrundskort efter samtykke, *Gem som kortvisning* til Visualisér. *Vis som tabel* giver tabellen (se [kartor.md](kartor.md)).
 
+Et udvalg fra Søg markeres i 3D-modellen, og kameraet rettes mod det.
+
 ## Analysér
 
 Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, Python, SQL, Regex og til sidst notesbogen, der samler dele fra

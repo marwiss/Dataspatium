@@ -28,6 +28,10 @@ ett sekund per ord.
 
 **Åpne treffet** der det er. Knappen i inspektøren tar deg til riktig side i et dokument, riktig bilde i en samling, noden med naboene i en graf, elementet i en modell, objektet på en plan, stedet på kartet eller raden i en tabell.
 
+**Søk etter sted.** Under *Søk etter sted* velger du en kommune eller region, eller et punkt og en avstand. Du kan søke uten ord, og da vises alt på stedet. Bare datasett med steder er med. En flate teller etter midtpunktet, så det er ikke et nøyaktig overlegg. Nøyaktige overlegg gjør du under Geo i Analyser.
+
+**Sidetabeller er med.** Et ord på en kant i en graf finner nodene i begge ender, og en verdi i en IFC-egenskap finner elementet. Det gjelder også lagrede lister og utvalg.
+
 ## Spørring
 
 Fanen Spørring bygger en spørring uten at du skriver SQL, og viser SQL-koden som lages. Kortet **Datasett** velger

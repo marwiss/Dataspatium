@@ -136,6 +136,8 @@ cases. See [dokument.md](dokument.md).
 
 Datasets with geometry or coordinates open as a **map** to zoom and pan in; a click on a feature shows its attributes, a background map after consent, *Save as map view* for Visualise. *Show as table* gives the table (see [kartor.md](kartor.md)).
 
+A selection from Search is marked in the 3D model, and the camera turns to it.
+
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from

@@ -133,6 +133,8 @@ lýsingunni má breyta. *Sýna sem töflu* gefur í báðum tilvikum venjulegu t
 
 Gagnasöfn með rúmfræði eða hnitum opnast sem **kort** til að þysja og færa; smellur á fitju sýnir eigindin, bakgrunnskort eftir samþykki, *Vista sem kortasýn* fyrir Myndgera. *Sýna sem töflu* gefur töfluna (sjá [kartor.md](kartor.md)).
 
+Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að því.
+
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;

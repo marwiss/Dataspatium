@@ -33,6 +33,8 @@ rader) syns på kartan.
 Stora datamängder ritas med canvas; 10 000 polygoner panoreras utan hack. Fler än 50 000 objekt per lager ritas
 inte (gränsen kan höjas per lager i kartvyn).
 
+Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats så visar inspektören bilden. En tabell vars rader namnger bilder visar dem på samma sätt. *Använd det som syns* gör det kartan visar just nu till ett urval som följer med till de andra lägena. I en kartvy i Visualisera kan bildsamlingar och planer vara lager.
+
 ## Kartvyer i Visualisera
 
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:

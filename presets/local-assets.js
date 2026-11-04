@@ -411,13 +411,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17724,
+  "size": 17799,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 4530,
+  "size": 5048,
   "library": "dataspatium"
  },
  "docs/sv/bearbeta.md": {
@@ -429,7 +429,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/visualisera.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 14415,
+  "size": 14570,
   "library": "dataspatium"
  },
  "docs/sv/anteckningsbok.md": {
@@ -483,7 +483,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6710,
+  "size": 7057,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -567,13 +567,13 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 17460,
+  "size": 17532,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 4561,
+  "size": 5073,
   "library": "dataspatium"
  },
  "docs/da/bearbeta.md": {
@@ -585,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/da/visualisera.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 14195,
+  "size": 14356,
   "library": "dataspatium"
  },
  "docs/da/anteckningsbok.md": {
@@ -639,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6637,
+  "size": 6997,
   "library": "dataspatium"
  },
  "docs/da/planer.md": {
@@ -723,13 +723,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 17204,
+  "size": 17276,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 4398,
+  "size": 4894,
   "library": "dataspatium"
  },
  "docs/nb/bearbeta.md": {
@@ -741,7 +741,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/visualisera.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13970,
+  "size": 14123,
   "library": "dataspatium"
  },
  "docs/nb/anteckningsbok.md": {
@@ -795,7 +795,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 6539,
+  "size": 6892,
   "library": "dataspatium"
  },
  "docs/nb/planer.md": {
@@ -879,13 +879,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 18951,
+  "size": 19035,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 4769,
+  "size": 5349,
   "library": "dataspatium"
  },
  "docs/fi/bearbeta.md": {
@@ -897,7 +897,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/visualisera.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14735,
+  "size": 14892,
   "library": "dataspatium"
  },
  "docs/fi/anteckningsbok.md": {
@@ -951,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 7143,
+  "size": 7530,
   "library": "dataspatium"
  },
  "docs/fi/planer.md": {
@@ -1035,13 +1035,13 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 18053,
+  "size": 18140,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 4822,
+  "size": 5355,
   "library": "dataspatium"
  },
  "docs/is/bearbeta.md": {
@@ -1053,7 +1053,7 @@ Dataspatium.assets.addEntries({
  "docs/is/visualisera.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 14459,
+  "size": 14617,
   "library": "dataspatium"
  },
  "docs/is/anteckningsbok.md": {
@@ -1107,7 +1107,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6704,
+  "size": 7041,
   "library": "dataspatium"
  },
  "docs/is/planer.md": {
@@ -1191,13 +1191,13 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17629,
+  "size": 17709,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 4415,
+  "size": 4931,
   "library": "dataspatium"
  },
  "docs/en/bearbeta.md": {
@@ -1209,7 +1209,7 @@ Dataspatium.assets.addEntries({
  "docs/en/visualisera.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 14341,
+  "size": 14499,
   "library": "dataspatium"
  },
  "docs/en/anteckningsbok.md": {
@@ -1263,7 +1263,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6627,
+  "size": 6982,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {

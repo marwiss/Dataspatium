@@ -155,6 +155,13 @@
           host.querySelector('.dm-model-loading')?.remove();
           handle = hd;
           s.error = '';
+          // A selection made elsewhere shows here: the walls found in Söka, marked in the model.
+          const chosen = D.require('data/selection').whereOf(ds.id);
+          if (chosen && !s.showSelected) {
+            const engine = (await datasets.ensureOpen(ds.id)).engine;
+            const r = await engine.exec(`select id from data where ${chosen.sql}`);
+            hd.select((r[0] ? r[0].values : []).map((row) => Number(row[0])), { fit: true });
+          }
           if (s.showSelected && s.selected) { s.showSelected = false; hd.select([s.selected], { fit: true }); selectElement(s.selected, 'draw').catch((err) => D.log('model', err)); }
           renderInspector();
         } catch (err) {
@@ -317,7 +324,7 @@
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
-      return { render, destroy, state: s };
+      return { render, destroy, state: s, get handle() { return handle; } };
     }
     return { create };
   });

@@ -521,6 +521,8 @@ koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`edita
 
 `data/selection` håller ett urval av rader i minnet, som rowid. Det försvinner när datamängdens innehåll ändras, eftersom rowid då inte längre betyder samma sak. Listor av slaget `rows` sparar ett urval, och `data/lists.whereOf` ger villkoret för alla slag av listor. Urval i kopior görs med `share-scan.copy(id, {only})`, och `share-scan.exportCopy` skriver en fil från en tillfällig kopia.
 
+`data/spatial-search` hittar rader efter plats. En rad räknas efter sina koordinater eller mitten av geometrins omslutande rektangel, och raderna läses i omgångar. `data/media` hittar vilken kolumn som namnger bilder och i vilken samling, utifrån värdena, så att en tabell från en fotoinventering får sina bilder. I `data/kinds` anger `chartTables` vilka sidotabeller som kan ritas och `sideSearch` vilken sidotabell som söks och hur dess nycklar pekar på noden eller elementet. `viz/data` släpper bara igenom de tabeller slaget erbjuder, så att ett sparat diagram inte kan läsa något annat.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

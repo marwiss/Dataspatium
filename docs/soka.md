@@ -28,6 +28,10 @@ någon sekund per ord.
 
 **Öppna träffen** där den finns. Knappen i inspektören tar dig till rätt sida i ett dokument, rätt bild i en samling, noden med sina grannar i en graf, elementet i en modell, objektet på en plan, platsen på kartan eller raden i en tabell.
 
+**Sök efter plats.** Under *Sök efter plats* väljer du en kommun eller region, eller en punkt och ett avstånd. Du kan söka utan ord, och då visas allt på platsen. Bara datamängder med platser ingår. En yta räknas efter sin mittpunkt, så det är inte ett exakt överlägg. Exakta överlägg gör du under Geo i Analysera.
+
+**Sidotabeller ingår.** Ett ord på en kant i en graf hittar noderna i båda ändarna, och ett värde i en IFC-egenskap hittar elementet. Det gäller också sparade listor och urval.
+
 ## Fråga
 
 Fliken Fråga bygger en fråga utan att du skriver SQL och visar den SQL som skapas. Kortet **Datamängder** väljer

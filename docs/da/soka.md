@@ -29,6 +29,10 @@ omkring et sekund pr. ord.
 
 **Åbn fundet**, hvor det er. Knappen i inspektøren fører dig til den rigtige side i et dokument, det rigtige billede i en samling, noden med dens naboer i en graf, elementet i en model, objektet på en plan, stedet på kortet eller rækken i en tabel.
 
+**Søg efter sted.** Under *Søg efter sted* vælger du en kommune eller region, eller et punkt og en afstand. Du kan søge uden ord, og så vises alt på stedet. Kun datasæt med steder indgår. En flade tæller efter sit midtpunkt, så det er ikke en nøjagtig overlejring. Nøjagtige overlejringer laver du under Geo i Analysér.
+
+**Sidetabeller indgår.** Et ord på en kant i en graf finder knuderne i begge ender, og en værdi i en IFC-egenskab finder elementet. Det gælder også gemte lister og udvalg.
+
 ## Forespørgsel
 
 Fanen Forespørgsel bygger en forespørgsel, uden at du skriver SQL, og viser den SQL, der laves. Kortet **Datasæt**

@@ -136,6 +136,8 @@ sida för sida, visa PDF-sidan som bild, sök i hela samlingen och hämta origin
 
 Datamängder med geometri eller koordinater öppnas som en **karta** att zooma och panorera i; klick på ett objekt visar attributen, bakgrundskarta efter samtycke, *Spara som kartvy* för Visualisera. *Visa som tabell* ger tabellen (se [kartor.md](kartor.md)).
 
+Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
+
 ## Analysera
 
 Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop

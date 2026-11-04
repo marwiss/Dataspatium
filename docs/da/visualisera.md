@@ -17,6 +17,8 @@ aggregeres i SQL, når diagrammet kun behøver summer, gennemsnit eller antal, e
 
 Det, der passer til datasættet, står først i dialogen. En diagramtype, der ikke kan virke, er grå og siger, hvad der kræves, for eksempel en graf.
 
+En graf kan tegnes ud fra sine kanter og en model ud fra sine egenskaber eller mængder. Vælg *Tabel* i diagrammets overskrift, så skifter byggeren kolonner.
+
 ## Diagrambyggeren (Vega-Lite)
 
 | Diagramtype | Bruges til |

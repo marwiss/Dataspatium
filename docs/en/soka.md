@@ -28,6 +28,10 @@ about a second per word.
 
 **Open the hit** where it is. The button in the inspector takes you to the right page of a document, the right picture in a collection, the node with its neighbours in a graph, the element in a model, the object on a plan, the place on the map or the row in a table.
 
+**Search by place.** Under *Search by place* you choose a municipality or region, or a point and a distance. You can search without words, and then everything in that place is shown. Only datasets with places take part. An area counts by its middle, so this is not an exact overlay. Exact overlays are done under Geo in Analyse.
+
+**Side tables take part.** A word on an edge in a graph finds the nodes at both ends, and a value in an IFC property finds the element. This also applies to saved lists and selections.
+
 ## Query
 
 The Query tab builds a query without you writing SQL, and shows the SQL it creates. The **Datasets** card chooses the

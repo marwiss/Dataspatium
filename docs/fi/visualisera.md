@@ -17,6 +17,8 @@ Lisää asetuksia).
 
 Aineistoon sopiva on valintaikkunassa ensimmäisenä. Kaaviotyyppi, joka ei voi toimia, on harmaa ja kertoo, mitä se tarvitsee, kuten graafin.
 
+Graafin voi piirtää sen särmistä ja mallin sen ominaisuuksista tai määristä. Valitse *Taulukko* kaavion otsikosta, niin rakentaja vaihtaa sarakkeet.
+
 ## Kaaviorakentaja (Vega-Lite)
 
 | Kaaviotyyppi | Käyttö |

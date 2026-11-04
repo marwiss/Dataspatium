@@ -33,6 +33,8 @@ röðum) sést á kortinu.
 Stór gagnasöfn eru teiknuð á striga; 10 000 marghyrningar færast án hiks. Fleiri en 50 000 fitjur í lagi eru ekki
 teiknaðar (mörkin má hækka fyrir hvert lag í kortasýninni).
 
+Myndasöfn með staðsetningu hafa hnappinn *Sýna á kortinu*. Smelltu á stað og skoðarinn sýnir myndina. Tafla þar sem raðir nefna myndir sýnir þær á sama hátt. *Nota það sem sést* gerir það sem kortið sýnir núna að vali sem fylgir í aðra hami. Í kortasýn í Myndgera geta myndasöfn og skipulög verið lög.
+
 ## Kortasýnir í Myndgera
 
 *Nýtt myndrit → Kort* býr til kortasýn með valda gagnasafnið sem fyrsta lag. Stillingarnar til vinstri:

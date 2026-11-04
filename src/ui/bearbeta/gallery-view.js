@@ -49,6 +49,8 @@
         const my = ++seq;
         await load(dataset);
         if (my !== seq || !slots) return;
+        const hasPlaces = await D.require('data/facets').has(dataset.id, 'spatial').catch(() => false);
+        if (my !== seq || !slots) return;
         const searchInput = /** @type {any} */ (h('dm-input', { type: 'search', placeholder: t('gallery.search.placeholder'), 'aria-label': t('common.filter'), inline: true }));
         searchInput.value = s.search;
         searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { s.search = searchInput.value.trim(); s.shown = PAGE; refresh(); }, 300); });
@@ -62,6 +64,7 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('images', 20), dataset.name),
             h('div', { class: 'dm-toolbar' }, searchInput, sortSel, countEl,
+              options.onMap && hasPlaces ? ui.button({ label: t('gallery.view.map'), icon: 'map', title: t('gallery.view.map.hint'), onClick: options.onMap }) : null,
               ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.hint'), onClick: () => {
                 const made = D.require('data/selection').set({ datasetId: dataset.id, rowids: rows.map((r) => r[0]) });
                 ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });

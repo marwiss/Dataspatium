@@ -17,6 +17,8 @@ aggregated in SQL when the chart only needs sums, means or counts, otherwise the
 
 What fits the dataset comes first in the dialog. A chart kind that cannot work is grey and says what it needs, such as a graph.
 
+A graph can be drawn from its edges and a model from its properties or quantities. Choose *Table* in the head of the chart, and the builder changes columns.
+
 ## The chart builder (Vega-Lite)
 
 | Chart type | Used for |

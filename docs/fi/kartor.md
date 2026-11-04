@@ -34,6 +34,8 @@ teet taulukossa (suodatat, korjaat, poistat rivejä), näkyy kartalla.
 Suuret aineistot piirretään canvasille; 10 000 polygonia panoroituu nykimättä. Yli 50 000 kohdetta tasoa kohti ei
 piirretä (rajaa voi nostaa tasoa kohti karttanäkymässä).
 
+Kuvakokoelmissa, joissa on sijainteja, on painike *Näytä kartalla*. Napsauta paikkaa, niin tarkastelija näyttää kuvan. Taulukko, jonka rivit nimeävät kuvia, näyttää ne samalla tavalla. *Käytä näkyvää* tekee siitä, mitä kartta juuri nyt näyttää, valinnan, joka seuraa muihin tiloihin. Karttanäkymässä Visualisoi-tilassa kuvakokoelmat ja kaavat voivat olla tasoja.
+
 ## Karttanäkymät Visualisoi-tilassa
 
 *Uusi kaavio → Kartta* luo karttanäkymän, jonka ensimmäinen taso on valittu aineisto. Asetukset vasemmalla:

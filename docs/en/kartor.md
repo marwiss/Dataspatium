@@ -33,6 +33,8 @@ correct, remove rows) shows on the map.
 Large datasets are drawn on a canvas; 10 000 polygons pan smoothly. More than 50 000 features per layer are not
 drawn (the limit can be raised per layer in the map view).
 
+Picture collections with positions have the button *Show on the map*. Click a place and the inspector shows the picture. A table whose rows name pictures shows them the same way. *Use what shows* turns what the map shows right now into a selection that follows to the other modes. In a map view in Visualise, picture collections and plans can be layers.
+
 ## Map views in Visualise
 
 *New chart → Map* creates a map view with the selected dataset as its first layer. The settings on the left:

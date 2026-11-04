@@ -99,6 +99,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Gennemgang af hele filen**: det, der deles, gennemgås i sin helhed, med løbende tekst, originalfiler, billeders positioner, grafers kanter og kommentarer. Tilstandene følger også datasættets type bedre: søgefund
   åbnes, hvor de er, og kort tilbydes kun, når værdierne virkelig er koordinater (se [dela.md](dela.md)).
 - **Tilstandene følger datasættet**: appen viser, hvad et datasæt også kan bruges som, og siger hvorfor, åbner Analysér i det rigtige værktøj og viser, hvad der er værd at se på. Et udvalg følger med mellem tilstandene, og eksporten siger, hvad der følger med (se [lagen.md](lagen.md)).
+- **Søg og tegn efter datasættets indhold**: søg efter sted, find knuder via deres kanter og elementer via deres egenskaber, se billeder på kortet og tegn diagrammer ud fra kanter, egenskaber og mængder (se [soka.md](soka.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
