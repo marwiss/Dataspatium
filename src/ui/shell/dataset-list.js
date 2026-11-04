@@ -26,6 +26,8 @@
       if (ds.kind === 'images') return t('datasets.sub.images', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) });
       // A plan is counted in plan objects (provisions or contents), under its kind of plan.
       if (ds.kind === 'plan') return `${t('plan.slag.' + (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan'))} · ${t('plan.objects.n', { n: i18n.formatNumber(ds.rowCount || 0) })}`;
+      // A graph is counted in nodes and edges.
+      if (ds.kind === 'graph') return `${t('graph.nodes.n', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('graph.edges.n', { n: i18n.formatNumber(ds.graph && ds.graph.edges ? ds.graph.edges : 0) })}`;
       return `${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`;
     }
     const COLLAPSED_SETTING = 'ui.folders.collapsed';

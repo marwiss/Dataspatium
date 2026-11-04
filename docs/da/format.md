@@ -68,6 +68,9 @@ plandatamodel (Ryhti-JSON), Skipulagsstofnuns stafrænt skipulag (GeoJSON eller 
 reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Genkendes på indholdet; GeoPackage-filer får valget
 *Hele planen som plan*. Se [planer.md](planer.md).
 
+**Grafer** (typen graf): GraphML, GEXF, JSON med knuder og kanter (D3, networkx, Cytoscape, Neo4j) og Cypher-scripts
+(APOC-eksport). Læses og skrives; genkendes på indholdet. Se [grafer.md](grafer.md).
+
 ## Tegnkodning
 
 Tekstfiler kontrolleres i denne rækkefølge: byte order mark (UTF-8, UTF-16), UTF-16 uden BOM (mange nulbytes), ren

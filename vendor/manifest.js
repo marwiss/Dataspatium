@@ -2916,6 +2916,86 @@ Dataspatium.assets.manifest({
    "direct": [],
    "assets": 70,
    "notes": "Reads Microsoft Access files (.mdb, .accdb) in the browser (io/importers/access). Fetched as an ES module graph from esm.sh together with its dependencies (Node polyfills by esm.sh, sha.js, browserify-aes, pako, fast-xml-parser, readable-stream and small helpers; MIT, ISC and BSD-2-Clause, see the licences below). tools/fetch_vendor.py inlines re-export barrels and turns the main module's import of its own ColumnTypes into a local alias, so that the graph loads without import maps."
+  },
+  "cytoscape": {
+   "version": "3.34.4",
+   "license": "MIT",
+   "homepage": "https://js.cytoscape.org/",
+   "direct": [
+    "cytoscape.min.js"
+   ],
+   "assets": 0,
+   "notes": "Graph drawing and interaction (UMD, global `cytoscape`) for the graph view in Bearbeta (ui/bearbeta/graph-view): the current view of a graph dataset, never more than a few thousand elements at a time. Loaded on first use with <script>."
+  },
+  "layout-base": {
+   "version": "2.0.1",
+   "license": "MIT",
+   "homepage": "https://github.com/iVis-at-Bilkent/layout-base",
+   "direct": [
+    "layout-base.js"
+   ],
+   "assets": 0,
+   "notes": "Base classes of the i-Vis layouts (global `layoutBase`), needed by cose-base and cytoscape-fcose."
+  },
+  "cose-base": {
+   "version": "2.2.0",
+   "license": "MIT",
+   "homepage": "https://github.com/iVis-at-Bilkent/cose-base",
+   "direct": [
+    "cose-base.js"
+   ],
+   "assets": 0,
+   "notes": "CoSE layout core (global `coseBase`), needed by cytoscape-fcose."
+  },
+  "cytoscape-fcose": {
+   "version": "2.2.0",
+   "license": "MIT",
+   "homepage": "https://github.com/iVis-at-Bilkent/cytoscape.js-fcose",
+   "direct": [
+    "cytoscape-fcose.js"
+   ],
+   "assets": 0,
+   "notes": "The fCoSE force-directed layout for Cytoscape (global `cytoscapeFcose`), the default layout of the graph view."
+  },
+  "cytoscape-dagre": {
+   "version": "4.0.1",
+   "license": "MIT",
+   "homepage": "https://github.com/cytoscape/cytoscape.js-dagre",
+   "direct": [
+    "cytoscape-dagre.js"
+   ],
+   "assets": 0,
+   "notes": "Layered (hierarchical) layout for Cytoscape (global `cytoscapeDagre`); version 4 bundles dagre, so no separate dagre build is needed."
+  },
+  "cytoscape-expand-collapse": {
+   "version": "4.1.1",
+   "license": "MIT",
+   "homepage": "https://github.com/iVis-at-Bilkent/cytoscape.js-expand-collapse",
+   "direct": [
+    "cytoscape-expand-collapse.js"
+   ],
+   "assets": 0,
+   "notes": "Collapses and expands compound nodes (global `cytoscapeExpandCollapse`): the graph view groups nodes by label and opens a group on double-click."
+  },
+  "graphology": {
+   "version": "0.26.0",
+   "license": "MIT",
+   "homepage": "https://graphology.github.io/",
+   "direct": [
+    "graphology.umd.min.js"
+   ],
+   "assets": 0,
+   "notes": "Graph data structure in JavaScript (UMD, global `graphology`), the model sigma draws from. Loaded with sigma for the whole-graph view."
+  },
+  "sigma": {
+   "version": "3.0.2",
+   "license": "MIT",
+   "homepage": "https://www.sigmajs.org/",
+   "direct": [
+    "sigma.min.js"
+   ],
+   "assets": 0,
+   "notes": "WebGL drawing of whole graphs with tens to hundreds of thousands of elements (UMD, global `Sigma`); 3.0.2 is the last series with a browser bundle (4.x ships ES modules only). Labels appear when zoomed in; positions come from the dataset's `_layout` table."
   }
  }
 });

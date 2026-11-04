@@ -68,6 +68,9 @@ sveitarfélagsskipulags), finnska skipulagsgagnalíkanið (Ryhti-JSON), stafræn
 GeoPackage-sniðmátið) og norskt reguleringsplan/kommuneplan sem GeoPackage (Rp-/Kp-töflur). Þekkist á innihaldinu;
 GeoPackage-skrár fá valið *Allt skipulagið sem skipulag*. Sjá [planer.md](planer.md).
 
+**Net** (tegundin net): GraphML, GEXF, JSON með hnútum og leggjum (D3, networkx, Cytoscape, Neo4j) og Cypher-skriftur
+(APOC-útflutningur). Lesið og skrifað; þekkist á innihaldinu. Sjá [grafer.md](grafer.md).
+
 ## Stafakóðun
 
 Textaskrár eru athugaðar í þessari röð: bætaröðunarmerki (UTF-8, UTF-16), UTF-16 án BOM (mörg núllbæti), hreint ASCII, ströng

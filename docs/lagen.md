@@ -63,6 +63,10 @@ Lantmäteriets referensobjekt, en översiktsplan enligt specifikationen eller Bo
 *Hela översiktsplanen som plan*). Filen känns igen på innehållet, planens uppgifter visas och planen öppnas som
 plankarta i Bearbeta med Boverkets färger (se [planer.md](planer.md)).
 
+Grafer (nätverk av noder och kanter) importeras som grafer från GraphML, GEXF, JSON med noder och kanter eller
+Cypher-skript; filen känns igen på innehållet, grafens uppgifter visas och grafen öppnas som grafvy i Bearbeta
+(se [grafer.md](grafer.md)). Två tabeller blir en graf med knappen *Gör graf av tabeller* i Hantera.
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -137,6 +141,9 @@ månad och dubbletter via bildhash). Båda ligger efter Regex och före Anteckni
 som en ny datamängd. Se [dokument.md](dokument.md).
 
 För datamängder med geometri finns fliken **Geo** (efter Regex): mått, punkter i områden, närmaste, buffert, överlagring, sammanslagning och förenkling, med Turf i webbläsaren; resultaten blir datamängder som öppnas som kartor.
+
+För grafer finns fliken **Cypher** direkt efter SQL (en Cypher-delmängd som översätts till SQL med SQL:en visad) och
+fliken **Graf** efter Regex (sammanfattning, grad, komponenter, kortaste väg, delgraf, noder och kanter som tabeller).
 
 ## Visualisera
 

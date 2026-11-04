@@ -62,6 +62,10 @@ Lantmäterietin viitekohteet, yleiskaava määrittelyn tai Boverketin ÖP-mallin
 yleiskaava kaavana*). Tiedosto tunnistetaan sisällöstä, kaavan tiedot näytetään ja kaava avautuu kaavakarttana
 Muokkaa-tilassa Boverketin väreillä (katso [planer.md](planer.md)).
 
+Verkot (solmujen ja särmien verkostot) tuodaan verkkoina GraphML-, GEXF-, solmu-särmä-JSON- tai Cypher-skriptitiedostoista;
+tiedosto tunnistetaan sisällöstä, verkon tiedot näytetään ja verkko avautuu verkkonäkymänä Muokkaa-tilassa (katso
+[grafer.md](grafer.md)). Kahdesta taulukosta tulee verkko painikkeella *Tee verkko taulukoista* Hallitse-tilassa.
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -142,6 +146,9 @@ ovat Regexin jälkeen ja ennen Muistikirjaa, ja jokaisen tuloksen voi tallentaa 
 [dokument.md](dokument.md).
 
 Geometrian sisältäville aineistoille on välilehti **Geo** (Regexin jälkeen): mitat, pisteet alueissa, lähin, puskuri, päällekkäisyys, yhdistäminen ja yksinkertaistus Turfilla selaimessa; tuloksista tulee aineistoja, jotka avautuvat karttoina.
+
+Verkot saavat välilehden **Cypher** heti SQL:n jälkeen (Cypher-osajoukko käännettynä SQL:ksi, SQL näytetään) ja välilehden
+**Verkko** Regexin jälkeen (yhteenveto, aste, komponentit, lyhin polku, aliverkko, solmut ja särmät taulukkoina).
 
 ## Visualisoi
 

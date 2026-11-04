@@ -69,6 +69,9 @@ kaavatietomalli (Ryhti-JSON), Skipulagsstofnuns stafrænt skipulag (GeoJSON elle
 reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Känns igen på innehållet; GeoPackage-filer får valet
 *Hela planen som plan*. Se [planer.md](planer.md).
 
+**Grafer** (slaget graf): GraphML, GEXF, JSON med noder och kanter (D3, networkx, Cytoscape, Neo4j) och Cypher-skript
+(APOC-export). Läses och skrivs; känns igen på innehållet. Se [grafer.md](grafer.md).
+
 ## Teckenkodning
 
 Textfiler kontrolleras i denna ordning: byte order mark (UTF-8, UTF-16), UTF-16 utan BOM (många nollbytes),

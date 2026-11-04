@@ -360,6 +360,21 @@ inbäddad). Färgerna uttrycks som Boverkets färgnamn i kolumnen `farg`, så pl
 geodata-view visar kortet *Hämta plan* för källor med `family.plans`. `data/geo` räknar om UTM 32–35, TM35FIN, GK-zonerna
 och ISN93 (Lambert) utöver SWEREF 99 och Web Mercator.
 
+### Grafer
+
+Datamängdsslaget `graph` lagrar noderna som datamängdens rader (id, etikett, namn, egenskaper som JSON-text) och kanterna
+i den egna tabellen `_edges` (kalla, mal, typ, egenskaper) med index på båda ändar; `_layout` cachar positioner och
+`_meta.graph` räknar etiketter och typer. `data/graph` är ren logik för utbytesformaten (GraphML, GEXF, node-link-JSON,
+Cypher-skript i APOC-format) åt båda håll, för åtkomst via SQL (noder per etikett eller sökning, kanter per typ eller
+nodmängd, grannskap i steg, delgraf) och för grafer av två tabeller. Lager 1, frågor: `analysis/cypher` tolkar en
+Cypher-delmängd till SQL mot `data` och `_edges` (`json_extract` för egenskaper, `coalesce` för `.name`, rekursiv CTE med
+cykelspärr för variabel längd, OPTIONAL MATCH som vänsterkopplad underfråga; alla literaler inlinas så att ordningen
+inte spelar roll). Lager 2, analys: `analysis/graph` laddar grafen en gång per version i en worker som kompakta
+kantlistor och svarar på grad, komponenter, kortaste väg och sammanfattning. `ui/bearbeta/graph-view` ritar aldrig mer
+än vyn: översikt med etikettgrupper (cytoscape-expand-collapse) upp till 5 000 element, annars gruppnoder med antal;
+fokus som växer med grannskap; hela grafen i sigma/graphology från `_layout`. Biblioteken är vendorade klassiska skript
+som laddas vid första användning. Exportera får grafformaten via `io/export.formatsFor`.
+
 ### Kartor
 
 `viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är

@@ -484,3 +484,36 @@ dm_setup <- function(lang = "sv") {
   webr::shim_install()
   invisible(TRUE)
 }
+
+#' Read the edges of a graph dataset (kind "graph") as a data.frame: id, kalla (source), mal (target), typ,
+#' and the edge properties as columns. Nodes are read with dm_read(); igraph::graph_from_data_frame() joins them.
+#' @param x name or id of the graph dataset
+dm_read_edges <- function(x) {
+  id <- dm_find(x)
+  file <- file.path(.dataspatium$data_dir, paste0(id, ".sqlite"))
+  if (!file.exists(file)) stop(.dm_msg("read.notmirrored", x), call. = FALSE)
+  con <- .dm_connect(file)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  tables <- DBI::dbListTables(con)
+  if (!"_edges" %in% tables) stop("not a graph dataset", call. = FALSE)
+  df <- DBI::dbGetQuery(con, "select id, kalla, mal, typ, egenskaper from _edges")
+  .dm_expand_json(df, "egenskaper")
+}
+
+# Expand a column of JSON objects into columns (graph node and edge properties).
+.dm_expand_json <- function(df, column) {
+  if (!column %in% names(df) || !requireNamespace("jsonlite", quietly = TRUE)) return(df)
+  parsed <- lapply(df[[column]], function(s) if (is.na(s) || !nzchar(s)) list() else tryCatch(jsonlite::fromJSON(s, simplifyVector = TRUE), error = function(e) list()))
+  keys <- unique(unlist(lapply(parsed, names)))
+  for (k in keys) {
+    if (k %in% names(df)) next
+    df[[k]] <- vapply(parsed, function(p) { v <- p[[k]]; if (is.null(v) || length(v) == 0) NA_character_ else if (length(v) > 1 || is.list(v)) jsonlite::toJSON(v, auto_unbox = TRUE) else as.character(v) }, character(1))
+    nums <- suppressWarnings(as.numeric(df[[k]]))
+    if (all(is.na(df[[k]]) | !is.na(nums))) df[[k]] <- nums
+  }
+  df[[column]] <- NULL
+  df
+}
+
+#' Nodes of a graph dataset with their properties as columns (id, etikett, namn, ...).
+dm_read_nodes <- function(x) .dm_expand_json(dm_read(x), "egenskaper")

@@ -69,6 +69,9 @@ Finland's plan data model (Ryhti JSON), Skipulagsstofnun's stafrænt skipulag (G
 Norwegian reguleringsplaner/kommuneplaner as GeoPackage (Rp/Kp tables). Recognised by their contents; GeoPackage files
 get the choice *The whole plan as a plan*. See [planer.md](planer.md).
 
+**Graphs** (kind graph): GraphML, GEXF, JSON with nodes and edges (D3, networkx, Cytoscape, Neo4j) and Cypher scripts
+(APOC export). Read and written; recognised by their contents. See [grafer.md](grafer.md).
+
 ## Character encoding
 
 Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain

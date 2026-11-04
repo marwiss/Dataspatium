@@ -88,6 +88,9 @@ ett paket.
 - **Nordiska planer**: Danmarks lokalplaner och kommuneplanrammer (Plandata.dk), Finlands kaavatietomalli och planindex
   (Ryhti), Islands stafrænt deili- och aðalskipulag (Skipulagsstofnun) och Norges reguleringsplaner (GeoPackage) öppnas
   som planer med respektive lands färger; en hel plan hämtas med sitt nummer från Plandata och Skipulagsstofnun.
+- **Grafer**: GraphML, GEXF, JSON med noder och kanter och Cypher-skript öppnas som grafer med översikt per etikett, fokus
+  och helgrafsvisning (Cytoscape och sigma), en Cypher-delmängd översatt till SQL, grafmått i bakgrunden och export i
+  alla fyra formaten; två tabeller blir en graf (se [docs/grafer.md](docs/grafer.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

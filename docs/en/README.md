@@ -83,6 +83,9 @@ with a backup or a bundle.
 - **Nordic plans**: Denmark's local plans and municipal plan frames (Plandata.dk), Finland's plan data model and plan
   index (Ryhti), Iceland's digital detailed and master plans (Skipulagsstofnun) and Norway's reguleringsplaner
   (GeoPackage) open as plans in each country's colours; a whole plan is fetched by its number from Plandata and Skipulagsstofnun.
+- **Graphs**: GraphML, GEXF, JSON with nodes and edges and Cypher scripts open as graphs with an overview per label, focus
+  and whole-graph views (Cytoscape and sigma), a Cypher subset translated to SQL, graph measures in the background and
+  export in all four formats; two tables become a graph (see [grafer.md](grafer.md)).
   [planer.md](planer.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and

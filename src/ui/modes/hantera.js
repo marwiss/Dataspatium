@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/hantera', ['ui/base', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network'], (base, folder, share, batch, settings) => {
+  D.define('ui/modes/hantera', ['ui/base', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'ui/analysis/graph-panel'], (base, folder, share, batch, settings, graphPanel) => {
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
 
@@ -78,6 +78,9 @@
               ds.kind === 'document' ? ui.button({ label: t('hantera.read'), icon: 'book-open', variant: 'primary', title: t('hantera.read.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'images' ? ui.button({ label: t('hantera.view.images'), icon: 'images', variant: 'primary', title: t('hantera.view.images.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'plan' ? ui.button({ label: t('hantera.view.plan'), icon: 'layers', variant: 'primary', title: t('hantera.view.plan.hint'), onClick: () => openView(ds) }) : null,
+              ds.kind === 'graph' ? ui.button({ label: t('hantera.view.graph'), icon: 'share-2', variant: 'primary', title: t('hantera.view.graph.hint'), onClick: () => openView(ds) }) : null,
+              // Two tables (nodes and edges) become a graph dataset.
+              !ds.kind || ds.kind === 'table' ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => graphPanel.fromTablesDialog(ctx, ds.id).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }) }) : null,
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
@@ -89,14 +92,19 @@
         if (tab === 'overview') {
           const kv = /** @type {any} */ (h('dm-kv'));
           const src = ds.source || {};
-          const collection = ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan';
+          const collection = ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph';
           const pl = ds.kind === 'plan' ? ds.plan || {} : null;
+          const gr = ds.kind === 'graph' ? ds.graph || {} : null;
           kv.items = [
             { label: t('common.name'), value: ds.name },
             { label: t('datasets.shortname'), value: ds.shortName || '' },
             { label: t('common.description'), value: ds.description },
             // Collections are described in their own units; the paragraph or picture table is one view of them.
             collection ? { label: t('datasets.kind'), value: pl ? t('plan.slag.' + (pl.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) : t('datasets.kind.' + ds.kind) } : null,
+            gr ? { label: t('graph.nodes'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
+            gr ? { label: t('graph.edges'), value: i18n.formatNumber(gr.edges || 0) } : null,
+            gr && gr.labels && gr.labels.length ? { label: t('graph.labels'), value: gr.labels.slice(0, 12).map((l) => `${l.name || t('graph.nolabel')} (${i18n.formatNumber(l.count)})`).join(', ') } : null,
+            gr && gr.types && gr.types.length ? { label: t('graph.types'), value: gr.types.slice(0, 12).map((l) => `${l.name || t('graph.notype')} (${i18n.formatNumber(l.count)})`).join(', ') } : null,
             pl && pl.beteckning ? { label: t('plan.field.beteckning'), value: pl.beteckning } : null,
             pl && (pl.kommun || pl.kommunkod) ? { label: t('plan.field.kommun'), value: [pl.kommun, pl.kommunkod].filter(Boolean).join(' ') } : null,
             pl && pl.status ? { label: t('plan.field.status'), value: pl.status } : null,
@@ -208,6 +216,7 @@
         }
         if (ds.kind === 'images') return [h('dm-badge', { text: t('gallery.count', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) }) })];
         if (ds.kind === 'plan') return [h('dm-badge', { text: t('plan.slag.' + (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) }), ' ', h('dm-badge', { text: t('plan.objects.n', { n: i18n.formatNumber(ds.rowCount || 0) }) })];
+        if (ds.kind === 'graph') return [h('dm-badge', { text: t('graph.nodes.n', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('graph.edges.n', { n: i18n.formatNumber(ds.graph && ds.graph.edges ? ds.graph.edges : 0) }) })];
         return [h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })];
       }
       /** Open a collection in Bearbeta's own view, at a document or picture when given. */

@@ -80,6 +80,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Nordiske planer**: Danmarks lokalplaner og kommuneplanrammer (Plandata.dk), Finlands plandatamodell og planindeks
   (Ryhti), Islands digitale regulerings- og kommuneplaner (Skipulagsstofnun) og Norges reguleringsplaner (GeoPackage) åpnes
   som planer med hvert lands farger; en hel plan hentes med nummeret sitt fra Plandata og Skipulagsstofnun.
+- **Grafer**: GraphML, GEXF, JSON med noder og kanter og Cypher-skript åpnes som grafer med oversikt per etikett, fokus og
+  helgrafvisning (Cytoscape og sigma), en Cypher-delmengde oversatt til SQL, grafmål i bakgrunnen og eksport i alle fire
+  formater; to tabeller blir en graf (se [grafer.md](grafer.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

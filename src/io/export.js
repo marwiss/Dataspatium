@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/export', ['data/datasets', 'platform/files', 'data/geo'], (datasets, files, geo) => {
+  D.define('io/export', ['data/datasets', 'platform/files', 'data/geo', 'data/graph'], (datasets, files, geo, graph) => {
     const FORMATS = [
       { id: 'csv', key: 'export.format.csv', ext: 'csv' },
       { id: 'xlsx', key: 'export.format.xlsx', ext: 'xlsx' },
@@ -20,7 +20,21 @@
       { id: 'sav', key: 'export.format.sav', ext: 'sav', viaR: true },
       { id: 'dta', key: 'export.format.dta', ext: 'dta', viaR: true },
       { id: 'rds', key: 'export.format.rds', ext: 'rds', viaR: true },
+      // Graph datasets: the whole graph (nodes and edges) in the exchange formats of data/graph.
+      { id: 'graphml', key: 'export.format.graphml', ext: 'graphml', kind: 'graph' },
+      { id: 'gexf', key: 'export.format.gexf', ext: 'gexf', kind: 'graph' },
+      { id: 'graph-json', key: 'export.format.graph-json', ext: 'json', kind: 'graph' },
+      { id: 'cypher', key: 'export.format.cypher', ext: 'cypher', kind: 'graph' },
     ];
+    /** The formats offered for a dataset: graph formats only for graphs; tables and the node table for the rest. */
+    function formatsFor(meta) { return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind)); }
+    /** A graph dataset in GraphML, GEXF, node-link JSON or a Cypher script. */
+    async function toGraph(id, format) {
+      const g = await graph.whole(id);
+      const text = graph.write(format === 'graph-json' ? 'nodelink' : format, g);
+      const type = format === 'graph-json' ? 'application/json' : format === 'cypher' ? 'text/plain' : 'application/xml';
+      return new Blob([text], { type });
+    }
     const R_WRITERS = {
       parquet: (out) => `nanoparquet::write_parquet(df, ${out})`,
       // SPSS and Stata have no logical type; haven expects numbers. Value labels are written as such: columns
@@ -143,7 +157,8 @@
       const fmt = FORMATS.find((f) => f.id === format) || FORMATS[0];
       const filename = options.filename || files.safeName(meta ? meta.name : 'dataspatium', fmt.ext);
       let blob;
-      if (fmt.id === 'csv') blob = await toCsv(id, options);
+      if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);
+      else if (fmt.id === 'csv') blob = await toCsv(id, options);
       else if (fmt.id === 'xlsx') blob = await toXlsx(id, options);
       else if (fmt.id === 'ods') blob = await toOds(id, options);
       else if (fmt.id === 'json') blob = await toJson(id);
@@ -176,6 +191,6 @@
       return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });
     }
 
-    return { FORMATS, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
+    return { FORMATS, formatsFor, toGraph, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
   });
 })();

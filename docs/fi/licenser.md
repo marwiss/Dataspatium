@@ -44,6 +44,7 @@ lisenssitekstien kanssa.
 | Python (Pyodide, CPython ja paketit kuten numpy, pandas ja matplotlib; haetaan tarvittaessa, ei kansiossa) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-lisenssi (PSF-pohjainen), MIT ja vastaavat muille | Haetaan muuttamattomina jsDelivristä ja tallennetaan selaimeen; lähdekoodi on Pyodide-projektilla ja PyPI:ssä sovelluksen luettelon versioina (Pyodide 314.0.7) |
 | pdf.js 3.11 (lukee PDF-tiedostoja) vakiokirjasimineen | Apache-2.0 (pdf.js), BSD-3-Clause (Foxitin kirjasimet), SIL Open Font License 1.1 (Liberation Sans) | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa; kirjasimet saa upottaa |
 | Leaflet 1.9 (kartat) ja Turf 7 (paikkatietotyökalut) | BSD-2-Clause (Leaflet), MIT (Turf) | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
+| Cytoscape 3.34 (fcose, dagre, expand-collapse), sigma 3 ja graphology (verkot) | MIT | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
 | Boverketin Planbestämmelsekatalog (upotettu kopio, `presets/plan/`) | Boverketin avoin data | Vapaasti käytettävä ja levitettävä; lähteenä on mainittava Boverket ja Planbestämmelsekatalogen |
 | plotly.js (haetaan tarvittaessa plotly-kaavioita varten), seaborn ja plotly (Python-wheelit PyPI:stä, haetaan tarvittaessa) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Haetaan muuttamattomina jsDelivristä ja PyPI:stä, lukittuina versioon ja tarkistesummaan, ja tallennetaan selaimeen |
 

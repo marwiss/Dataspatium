@@ -61,6 +61,10 @@ tilvísunarfitjur Lantmäteriet, aðalskipulag samkvæmt forskriftinni eða ÖP-
 aðalskipulagið sem skipulag*). Skráin þekkist á innihaldinu, upplýsingar skipulagsins birtast og skipulagið opnast
 sem skipulagskort í Vinna með litum Boverket (sjá [planer.md](planer.md)).
 
+Net (hnútar og leggir) eru flutt inn sem net úr GraphML, GEXF, JSON með hnútum og leggjum eða Cypher-skriftum; skráin
+þekkist á innihaldinu, upplýsingar netsins birtast og netið opnast sem netsýn í Vinna (sjá [grafer.md](grafer.md)).
+Tvær töflur verða net með hnappinum *Gera net úr töflum* í Umsjón.
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -133,6 +137,9 @@ tvítök með myndahakki). Báðir eru eftir Regex og á undan Minnisbókinni, o
 gagnasafn. Sjá [dokument.md](dokument.md).
 
 Fyrir gagnasöfn með rúmfræði er flipinn **Geo** (eftir Regex): mál, punktar í svæðum, næst, jaðarsvæði, yfirlögn, sameining og einföldun með Turf í vafranum; niðurstöðurnar verða gagnasöfn sem opnast sem kort.
+
+Net fá flipann **Cypher** strax eftir SQL (Cypher-hlutmengi þýtt í SQL, SQL sýnt) og flipann **Net** eftir Regex
+(samantekt, gráða, samhangandi hlutar, stysta leið, hlutnet, hnútar og leggir sem töflur).
 
 ## Myndgera
 

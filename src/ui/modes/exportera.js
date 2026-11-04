@@ -121,9 +121,11 @@
       }
 
       function dataForm(ds) {
-        const fmt = exporter.FORMATS.find((f) => f.id === form.format) || exporter.FORMATS[0];
+        const available = exporter.formatsFor(ds);
+        if (!available.some((f) => f.id === form.format)) form.format = available[0].id;
+        const fmt = available.find((f) => f.id === form.format) || available[0];
         const formatSel = /** @type {any} */ (h('dm-select', { label: t('export.format') }));
-        formatSel.options = exporter.FORMATS.map((f) => ({ value: f.id, label: t(f.key) }));
+        formatSel.options = available.map((f) => ({ value: f.id, label: t(f.key) }));
         formatSel.value = form.format;
         formatSel.addEventListener('change', () => { form.format = formatSel.value; form.filename = ''; render(); });
         const profileSel = /** @type {any} */ (h('dm-select', { label: t('export.profile') }));

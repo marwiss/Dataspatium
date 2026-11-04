@@ -61,6 +61,10 @@ Lantmäteriets referanseobjekter, en kommuneplan etter spesifikasjonen eller Bov
 *Hele kommuneplanen som plan*). Filen gjenkjennes på innholdet, planens opplysninger vises, og planen åpnes som
 plankart i Bearbeid med Boverkets farger (se [planer.md](planer.md)).
 
+Grafer (nettverk av noder og kanter) importeres som grafer fra GraphML, GEXF, JSON med noder og kanter eller
+Cypher-skript; filen gjenkjennes på innholdet, grafens opplysninger vises, og grafen åpnes som grafvisning i Bearbeid
+(se [grafer.md](grafer.md)). To tabeller blir en graf med knappen *Lag graf av tabeller* i Håndter.
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -134,6 +138,9 @@ kamera, år eller måned og duplikater via bildehash). Begge ligger etter Regex 
 lagres som et nytt datasett. Se [dokument.md](dokument.md).
 
 For datasett med geometri finnes fanen **Geo** (etter Regex): mål, punkter i områder, nærmeste, buffer, overlagring, sammenslåing og forenkling med Turf i nettleseren; resultatene blir datasett som åpnes som kart.
+
+Grafer får fanen **Cypher** rett etter SQL (en Cypher-delmengde oversatt til SQL med SQL-en vist) og fanen **Graf** etter
+Regex (sammendrag, grad, komponenter, korteste vei, delgraf, noder og kanter som tabeller).
 
 ## Visualiser
 

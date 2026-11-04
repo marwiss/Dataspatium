@@ -68,6 +68,9 @@ kehykset), kaavatietomalli (Ryhti-JSON), Skipulagsstofnunin stafrænt skipulag (
 norjalaiset reguleringsplan/kommuneplan GeoPackage-muodossa (Rp-/Kp-taulut). Tunnistetaan sisällöstä; GeoPackage-tiedostot
 saavat valinnan *Koko kaava kaavana*. Katso [planer.md](planer.md).
 
+**Verkot** (tyyppi verkko): GraphML, GEXF, JSON solmuilla ja särmillä (D3, networkx, Cytoscape, Neo4j) ja Cypher-skriptit
+(APOC-vienti). Luetaan ja kirjoitetaan; tunnistetaan sisällöstä. Katso [grafer.md](grafer.md).
+
 ## Merkistökoodaus
 
 Tekstitiedostot tarkistetaan tässä järjestyksessä: tavujärjestysmerkki (UTF-8, UTF-16), UTF-16 ilman BOM:ia (paljon

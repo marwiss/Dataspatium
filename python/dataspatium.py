@@ -632,3 +632,47 @@ def dm_setup(lang="sv"):
     # Importing pandas takes a moment in WebAssembly; do it now, while the user is still typing.
     import pandas  # noqa: F401
     return True
+
+
+def _expand_json(df, column):
+    """Expand a column of JSON objects into columns (graph node and edge properties)."""
+    import json as _json
+    if column not in df.columns:
+        return df
+    parsed = []
+    for s in df[column]:
+        try:
+            parsed.append(_json.loads(s) if isinstance(s, str) and s else {})
+        except ValueError:
+            parsed.append({})
+    keys = []
+    for p in parsed:
+        for k in p:
+            if k not in keys and k not in df.columns:
+                keys.append(k)
+    for k in keys:
+        df[k] = [p.get(k) if not isinstance(p.get(k), (list, dict)) else _json.dumps(p.get(k), ensure_ascii=False) for p in parsed]
+    return df.drop(columns=[column])
+
+
+def dm_read_edges(x):
+    """Edges of a graph dataset (kind "graph") as a DataFrame: id, kalla (source), mal (target), typ and the properties as columns."""
+    import pandas as pd
+    did = dm_find(x)
+    file = os.path.join(DATA_DIR, did + ".sqlite")
+    if not os.path.exists(file):
+        raise DataspatiumError(_msg("read.notmirrored", x))
+    con = sqlite3.connect(file)
+    try:
+        names = [r[0] for r in con.execute("select name from sqlite_master where type = 'table'")]
+        if "_edges" not in names:
+            raise DataspatiumError("not a graph dataset")
+        df = pd.read_sql_query("select id, kalla, mal, typ, egenskaper from _edges", con)
+    finally:
+        con.close()
+    return _expand_json(df, "egenskaper")
+
+
+def dm_read_nodes(x):
+    """Nodes of a graph dataset with their properties as columns (id, etikett, namn, ...)."""
+    return _expand_json(dm_read(x), "egenskaper")

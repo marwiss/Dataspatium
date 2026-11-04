@@ -60,6 +60,10 @@ Lantmäteriets referenceobjekter, en kommuneplan efter specifikationen eller Bov
 *Hele kommuneplanen som plan*). Filen genkendes på indholdet, planens oplysninger vises, og planen åbnes som plankort
 i Bearbejd med Boverkets farver (se [planer.md](planer.md)).
 
+Grafer (netværk af knuder og kanter) importeres som grafer fra GraphML, GEXF, JSON med knuder og kanter eller
+Cypher-scripts; filen genkendes på indholdet, grafens oplysninger vises, og grafen åbnes som grafvisning i Bearbejd
+(se [grafer.md](grafer.md)). To tabeller bliver en graf med knappen *Lav graf af tabeller* i Håndter.
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -133,6 +137,9 @@ kamera, år eller måned og dubletter via billedhash). Begge ligger efter Regex 
 kan gemmes som et nyt datasæt. Se [dokument.md](dokument.md).
 
 For datasæt med geometri findes fanen **Geo** (efter Regex): mål, punkter i områder, nærmeste, buffer, overlejring, sammenlægning og forenkling med Turf i browseren; resultaterne bliver datasæt, der åbnes som kort.
+
+Grafer får fanen **Cypher** lige efter SQL (en Cypher-delmængde oversat til SQL med SQL'en vist) og fanen **Graf** efter
+Regex (oversigt, grad, komponenter, korteste vej, delgraf, knuder og kanter som tabeller).
 
 ## Visualisér
 

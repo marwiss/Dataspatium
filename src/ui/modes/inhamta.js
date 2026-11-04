@@ -11,11 +11,11 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'r', 'documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'graph', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step). */
     const COLLECTIONS = ['documents', 'images'];
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
@@ -527,6 +527,22 @@
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.hint') }));
         }
         const opPlan = !!(wiz.options.format === 'sqlite' && p && p.planGpkg && wiz.options.plan);
+        // A graph file: the graph's facts (nodes, edges, labels, types) and one Import button; the nodes are the preview table.
+        const graphFile = !!(p && p.kind === 'graph' && wiz.options.format === 'graph');
+        if (graphFile) {
+          const g = p.graph || {};
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('plan.field.format'), value: t('graph.format.' + (p.graphFormat || 'nodelink')) },
+            { label: t('graph.nodes'), value: i18n.formatNumber(g.nodes || 0) },
+            { label: t('graph.edges'), value: i18n.formatNumber(g.edges || 0) },
+            { label: t('graph.directed'), value: g.directed === false ? t('common.no') : t('common.yes') },
+            g.labels && g.labels.length ? { label: t('graph.labels'), value: g.labels.slice(0, 12).map((l) => `${l.name || t('graph.nolabel')} (${i18n.formatNumber(l.count)})`).join(', ') } : null,
+            g.types && g.types.length ? { label: t('graph.types'), value: g.types.slice(0, 12).map((l) => `${l.name || t('graph.notype')} (${i18n.formatNumber(l.count)})`).join(', ') } : null,
+          ].filter(Boolean);
+          left.appendChild(h('div', { class: 'dm-card' }, kv));
+          left.appendChild(h('p', { class: 'dm-help dm-small', text: t('graph.import.hint') }));
+        }
         if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }
@@ -553,9 +569,9 @@
           left.appendChild(header);
         }
         if (!TYPED.includes(wiz.options.format)) left.appendChild(select(t('import.decimal'), DECIMALS, wiz.options.decimal, (v) => { wiz.options.decimal = v; schedulePreview(); }));
-        if (viaR || collection || planFile || opPlan) {
+        if (viaR || collection || planFile || opPlan || graphFile) {
           // No column step: R reads the file and dm_write() sets the types; documents, pictures and plans have fixed columns.
-          if ((planFile || opPlan) && !wiz.nameFromPlan && p && p.datasetName) { wiz.name = p.datasetName; wiz.nameFromPlan = true; }
+          if ((planFile || opPlan || graphFile) && !wiz.nameFromPlan && p && p.datasetName) { wiz.name = p.datasetName; wiz.nameFromPlan = true; }
           const name = /** @type {any} */ (h('dm-input', { label: t('import.name'), value: wiz.name }));
           name.addEventListener('input', () => { wiz.name = name.value; });
           left.appendChild(name);
@@ -569,7 +585,7 @@
         if (wiz.error) left.appendChild(h('p', { class: 'dm-error dm-small', text: wiz.error }));
         left.appendChild(h('div', { class: 'dm-row' },
           ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
-          (viaR || collection || planFile || opPlan) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
+          (viaR || collection || planFile || opPlan || graphFile) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
             : ui.button({ label: t('common.next'), icon: 'chevron-right', variant: 'primary', disabled: !p || !p.columns.length || wiz.busy, onClick: () => { wiz.step = 'columns'; render(); } })));
         const right = h('div', { class: 'dm-table-wrap' },
           h('h3', { text: t('import.preview', { n: p ? p.dataRows.length : 0 }) }),

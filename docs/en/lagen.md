@@ -64,6 +64,10 @@ Lantmäteriet's reference objects, a comprehensive plan per the specification or
 choice *The whole comprehensive plan as a plan*). The file is recognised by its contents, the plan's facts are shown
 and the plan opens as a plan map in Process with Boverket's colours (see [planer.md](planer.md)).
 
+Graphs (networks of nodes and edges) are imported as graphs from GraphML, GEXF, JSON with nodes and edges or Cypher
+scripts; the file is recognised by its contents, the graph's facts are shown and the graph opens as a graph view in
+Process (see [grafer.md](grafer.md)). Two tables become a graph with *Make graph from tables* in Manage.
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -137,6 +141,9 @@ by type, camera, year or month and duplicates by image hash). Both come after Re
 every result can be saved as a new dataset. See [dokument.md](dokument.md).
 
 For datasets with geometry there is the tab **Geo** (after Regex): measures, points in areas, nearest, buffer, overlay, dissolve and simplification, with Turf in the browser; the results become datasets that open as maps.
+
+Graphs get the tab **Cypher** right after SQL (a Cypher subset translated to SQL, with the SQL shown) and the tab
+**Graph** after Regex (summary, degree, components, shortest path, subgraph, nodes and edges as tables).
 
 ## Visualise
 
