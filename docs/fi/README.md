@@ -95,6 +95,9 @@ paketilla.
   DXF-piirustukset näkyvät SVG:nä tasoineen (katso [cad-bim.md](cad-bim.md)).
 - **Työnkulut ja seurannat**: tallennettu ketju (nouto, reseptit, skriptit, luettelot, kaaviot, koontinäytöt, asiakirjat, vienti) ajetaan
   yhdellä napsautuksella tai käynnistyksessä, ja seuratut lähteet kertovat tilarivillä uusista tiedoista (katso [floden.md](floden.md)).
+- **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin
+  lomakkeilla, jotka kirjoittavat ja näyttävät R- tai Python-koodin. Aikasarjatoiminnot Muokkaa-tilassa (jaksot, muutos, indeksi, liukuva keskiarvo,
+  kausitasoitus), ja regression voi tallentaa ja käyttää reseptivaiheena Ennuste (katso [statistik.md](statistik.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

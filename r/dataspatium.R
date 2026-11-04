@@ -530,3 +530,65 @@ dm_read_nodes <- function(x) .dm_expand_json(dm_read(x), "egenskaper")
 }
 dm_read_properties <- function(x) .dm_read_model_table(x, "_properties")
 dm_read_quantities <- function(x) .dm_read_model_table(x, "_quantities")
+
+# Periods as the recipes write them: 2024-03, 2024-Q1 and 2024, from 2024M03, 2024K1, 2024-Q1, Q1 2024, 202403, 2024 or a date.
+dm_period <- function(x, frequency = "auto") {
+  vapply(as.character(x), function(s) {
+    s <- trimws(s)
+    y <- m <- q <- NA_integer_
+    if (is.na(s)) return(NA_character_)
+    if (grepl("^[0-9]{4}$", s)) y <- as.integer(s)
+    else if (grepl("^[0-9]{4}[-/ ]?[KkQqT][1-4]$", s)) { y <- as.integer(substr(s, 1, 4)); q <- as.integer(substr(s, nchar(s), nchar(s))) }
+    else if (grepl("^[KkQq][1-4][-/ ][0-9]{4}$", s)) { y <- as.integer(substr(s, nchar(s) - 3, nchar(s))); q <- as.integer(substr(s, 2, 2)) }
+    else if (grepl("^[0-9]{4}[-/ ]?[Mm]?[0-9]{1,2}(-[0-9]{1,2}.*)?$", s)) {
+      y <- as.integer(substr(s, 1, 4))
+      m <- as.integer(sub("^[-/ ]?[Mm]?([0-9]{1,2}).*$", "\\1", substr(s, 5, nchar(s))))
+      if (m < 1 || m > 12) return(NA_character_)
+      q <- ceiling(m / 3)
+    } else return(NA_character_)
+    if (frequency == "year") return(as.character(y))
+    if (frequency == "quarter") return(if (is.na(q)) NA_character_ else paste0(y, "-Q", q))
+    if (frequency == "month") return(if (is.na(m)) NA_character_ else sprintf("%d-%02d", y, m))
+    if (!is.na(m)) return(sprintf("%d-%02d", y, m))
+    if (!is.na(q)) return(paste0(y, "-Q", q))
+    as.character(y)
+  }, character(1), USE.NAMES = FALSE)
+}
+# The first day of a period from dm_period().
+dm_period_date <- function(x) {
+  x <- dm_period(x)
+  out <- ifelse(grepl("-Q", x), sprintf("%s-%02d-01", substr(x, 1, 4), (as.integer(substr(x, 7, 7)) - 1) * 3 + 1), ifelse(nchar(x) == 7, paste0(x, "-01"), paste0(x, "-01-01")))
+  out[is.na(x)] <- NA
+  out
+}
+# How many periods a year a column holds: 12, 4 or 1.
+dm_periods_per_year <- function(x) {
+  x <- dm_period(x)[1]
+  if (is.na(x) || nchar(x) == 4) 1 else if (grepl("-Q", x)) 4 else 12
+}
+
+# Hands the result of a Statistik tool to the page as JSON, without depending on jsonlite.
+.dm_json_atom <- function(v) {
+  if (is.na(v)) return("null")
+  if (is.logical(v)) return(if (v) "true" else "false")
+  if (is.numeric(v)) return(if (is.finite(v)) format(v, digits = 15, trim = TRUE) else "null")
+  .dm_json_string(enc2utf8(as.character(v)))
+}
+.dm_json_value <- function(x) {
+  if (is.null(x)) return("null")
+  if (is.factor(x)) x <- as.character(x)
+  if (is.list(x)) return(paste0("{", paste(vapply(names(x), function(n) paste0(.dm_json_atom(n), ":", .dm_json_value(x[[n]])), character(1)), collapse = ","), "}"))
+  x <- unname(x)
+  if (length(x) == 1) return(.dm_json_atom(x))
+  paste0("[", paste(vapply(seq_along(x), function(i) .dm_json_atom(x[[i]]), character(1)), collapse = ","), "]")
+}
+.dm_stat_emit <- function(tabell, matt, start, slut) {
+  kolumner <- lapply(as.list(tabell), function(k) { if (is.factor(k)) k <- as.character(k); if (length(k) == 1) list(k) else k })
+  tabelltext <- paste0("{", paste(vapply(names(kolumner), function(n) {
+    k <- kolumner[[n]]
+    paste0(.dm_json_atom(n), ":[", paste(vapply(seq_along(k), function(i) .dm_json_atom(k[[i]]), character(1)), collapse = ","), "]")
+  }, character(1)), collapse = ","), "}")
+  cat(start, '{"tabell":', tabelltext, ',"matt":', .dm_json_value(matt), "}", slut, "
+", sep = "")
+  invisible(NULL)
+}

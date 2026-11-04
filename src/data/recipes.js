@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
-  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps'], (datasets, ops) => {
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps', 'data/operations-timeseries', 'data/models'], (datasets, ops) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -28,6 +28,8 @@
 
     /** Human-readable step description in the UI language. */
     const groupText = (params) => (params.group ? D.t('recipe.group', { group: params.group }) : '');
+    const groupsText = (params) => (params.groups && params.groups.length ? D.t('recipe.group', { group: params.groups.join(', ') }) : '');
+    const optText = (name, value) => (value ? D.t(`op.${name}.${value}`).toLowerCase() : '');
     function describe(opId, params, result) {
       const cols = (params.columns || (params.column ? [params.column] : [])).join(', ');
       const n = result && typeof result.rows === 'number' ? D.t('recipe.rows', { n: result.rows }) : '';
@@ -85,7 +87,18 @@
         case 'regex_flag': return D.t('recipe.regex_flag', { pattern: params.pattern, column: params.column, name: params.name });
         case 'regex_count': return D.t('recipe.regex_count', { pattern: params.pattern, column: params.column, name: params.name });
         case 'regex_split': return D.t('recipe.regex_split', { pattern: params.pattern, column: params.column, name: params.name });
-        default: return opId;
+        case 'ts_period': return D.t('recipe.ts_period', { name: params.name, column: params.column });
+        case 'ts_aggregate': return D.t('recipe.ts_aggregate', { to: optText('ts_aggregate.to', params.to), how: optText('ts_aggregate.how', params.how), cols, group: groupsText(params), n });
+        case 'ts_change': return D.t('recipe.ts_change', { name: params.name, column: params.column, compare: optText('ts_change.compare', params.compare), group: groupsText(params) });
+        case 'ts_index': return D.t('recipe.ts_index', { name: params.name, column: params.column, base: params.base, group: groupsText(params) });
+        case 'ts_moving': return D.t('recipe.ts_moving', { name: params.name, column: params.column, window: params.window, group: groupsText(params) });
+        case 'ts_seasonal': return D.t('recipe.ts_seasonal', { name: params.name, column: params.column, group: groupsText(params) });
+        case 'predict_model': return D.t('recipe.predict_model', { name: params.name, model: params.model ? params.model.name : '' });
+        default: {
+          // An operation without its own sentence still reads as its name in the recipe list, never as its id.
+          const title = D.t('op.' + opId);
+          return title === 'op.' + opId ? opId : title;
+        }
       }
     }
 

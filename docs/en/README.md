@@ -94,6 +94,9 @@ with a backup or a bundle.
   show as SVG with layers (see [cad-bim.md](cad-bim.md)).
 - **Flows and watches**: a saved chain (fetch, recipes, scripts, lists, charts, dashboards, documents, export) runs with one click or at
   start, and watched sources say so in the status bar when they have new data (see [floden.md](floden.md)).
+- **Statistics without code**: the Statistics tab does descriptive statistics, crosstabs, correlation, hypothesis tests, regression and
+  clustering with forms that write and show the R or Python code. Time series operations in Process (periods, change, index, moving average,
+  seasonal adjustment), and a regression can be saved and used as the recipe step Prediction (see [statistik.md](statistik.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

@@ -91,6 +91,9 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   lag (se [cad-bim.md](cad-bim.md)).
 - **Flows og overvågning**: en gemt kæde (hent, recepter, scripts, lister, diagrammer, dashboards, dokumenter, eksport) køres med ét klik
   eller ved start, og overvågede kilder siger til i statuslinjen, når de har nye data (se [floden.md](floden.md)).
+- **Statistik uden kode**: fanen Statistik laver beskrivende statistik, krydstabeller, korrelation, hypotesetest, regression og klyngeanalyse
+  med formularer, der skriver og viser R- eller Python-koden. Tidsserieoperationer i Bearbejd (perioder, ændring, indeks, glidende gennemsnit,
+  sæsonkorrektion), og en regression kan gemmes og bruges som recepttrinnet Prædiktion (se [statistik.md](statistik.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

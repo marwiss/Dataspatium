@@ -220,7 +220,7 @@
       await waitFor(() => !document.querySelector('dialog'), 3000, 'dialog closed');
       // SQL console: SELECT shows rows, UPDATE becomes a recipe step.
       shell.activate('analysera');
-      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 5, 5000, 'analysera tabs (R, Python, SQL, Regex, Anteckningsbok)');
+      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 6, 5000, 'analysera tabs (R, Python, SQL, Regex, Statistik, Anteckningsbok)');
       /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[2]).click();
       await waitFor(() => root.querySelector('dm-code[language="sql"]'), 3000, 'sql editor');
       const sqlEditor = /** @type {any} */ (root.querySelector('dm-code[language="sql"]'));

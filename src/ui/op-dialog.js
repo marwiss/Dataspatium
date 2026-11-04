@@ -11,7 +11,10 @@
     const { h, t, i18n, replace } = base;
     const TEXT_ONLY_OPS = new Set(['replace_text', 'trim', 'change_case', 'fix_encoding', 'clean_chars']);
 
-    function optionLabel(param, value) {
+    /** The label of a select option: the operation's own text first, then the shared ones. */
+    function optionLabel(param, value, opId) {
+      const own = opId ? `op.${opId}.${param.name}.${value}` : '';
+      if (own && i18n.has(own)) return t(own);
       if (param.name === 'type') return t('type.' + value);
       const key = `opt.${param.name}.${value}`;
       return i18n.has(key) ? t(key) : (i18n.has('opt.' + value) ? t('opt.' + value) : String(value));
@@ -67,9 +70,18 @@
           });
           values[p.name] = columns.map((x) => x.name).filter((n) => chosen.has(n) && !(textOnly && columns.find((c) => c.name === n).type !== 'text'));
           fields.push(h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: paramLabel(op.id, p) }), h('div', { class: 'dm-columns-pick' }, boxes)));
+        } else if (p.type === 'model') {
+          // A saved model: the recipe step keeps a copy of it, so it replays without the dataset that fitted it.
+          const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
+          fields.push(sel);
+          D.require('data/models').list().then((all) => {
+            sel.options = [{ value: '', label: all.length ? t('predict.pick') : t('predict.none') }].concat(all.map((m) => ({ value: m.id, label: `${m.name} (${m.datasetName})` })));
+            sel.value = values[p.name] ? values[p.name].id : '';
+            sel.addEventListener('change', () => { const m = all.find((x) => x.id === sel.value); if (m) { const copy = Object.assign({}, m); delete copy.datasetId; delete copy.datasetName; values[p.name] = copy; } else values[p.name] = null; schedulePreview(); });
+          });
         } else if (p.type === 'select') {
           const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
-          sel.options = p.options.map((v) => ({ value: v, label: optionLabel(p, v) }));
+          sel.options = p.options.map((v) => ({ value: v, label: optionLabel(p, v, op.id) }));
           sel.value = values[p.name] || p.options[0];
           values[p.name] = sel.value;
           sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });

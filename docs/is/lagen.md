@@ -147,6 +147,8 @@ Fyrir gagnasöfn með rúmfræði er flipinn **Geo** (eftir Regex): mál, punkta
 Net fá flipann **Cypher** strax eftir SQL (Cypher-hlutmengi þýtt í SQL, SQL sýnt) og flipann **Net** eftir Regex
 (samantekt, gráða, samhangandi hlutar, stysta leið, hlutnet, hnútar og leggir sem töflur).
 
+Flipinn **Tölfræði** á eftir Regex gerir algengar greiningar með eyðublöðum sem skrifa og sýna kóðann (sjá [statistik.md](statistik.md)).
+
 Líkön og teikningar fá flipann **Magn** eftir Regex (fjöldi, lengd, flatarmál og rúmmál eftir gerð, hæð og efni, úr skránni eða mælt á
 rúmfræðinni).
 

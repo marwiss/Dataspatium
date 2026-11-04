@@ -16,6 +16,8 @@
       { id: 'bar', label: D.t('viz.charttype.bar'), icon: 'chart-column', mark: 'bar', channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
       { id: 'barh', label: D.t('viz.charttype.barh'), icon: 'chart-bar-big', mark: 'bar', horizontal: true, channels: ['x', 'y', 'color', 'facet'], x: 'category', y: 'measure', aggregate: 'sum' },
       { id: 'line', label: D.t('viz.charttype.line'), icon: 'chart-line', mark: 'line', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
+      { id: 'timeseries', label: D.t('viz.charttype.timeseries'), icon: 'trending-up', mark: 'line', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
+      { id: 'smallmultiples', label: D.t('viz.charttype.smallmultiples'), icon: 'layout-grid', mark: 'line', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
       { id: 'area', label: D.t('viz.charttype.area'), icon: 'chart-area', mark: 'area', channels: ['x', 'y', 'color', 'facet'], x: 'time', y: 'measure', aggregate: 'sum' },
       { id: 'point', label: D.t('viz.charttype.point'), icon: 'chart-scatter', mark: 'point', channels: ['x', 'y', 'color', 'size', 'facet'], x: 'measure', y: 'measure', aggregate: 'none' },
       { id: 'histogram', label: D.t('viz.charttype.histogram'), icon: 'chart-column', mark: 'bar', channels: ['x', 'color', 'facet'], x: 'measure', y: 'count', aggregate: 'count' },
@@ -88,7 +90,10 @@
       else state.y = channel(pick(columns, type.y, x ? [x.name] : []), { aggregate: type.aggregate });
       if (type.id === 'histogram' && state.x) { state.x.bin = true; }
       if (type.id === 'heatmap') { state.y = channel(pick(columns, 'category', x ? [x.name] : [])); state.color = channel(pick(columns, 'measure'), { aggregate: 'sum' }); }
-      if (type.id === 'line' && state.x && state.x.type === 'quantitative' && /^(ar|år|year)$/i.test(state.x.field)) state.x.type = 'ordinal';
+      if ((type.id === 'line' || type.id === 'timeseries' || type.id === 'smallmultiples') && state.x && state.x.type === 'quantitative' && /^(ar|år|year)$/i.test(state.x.field)) state.x.type = 'ordinal';
+      // Time series: one line per series, or one small chart per series with room for a line each.
+      if (type.id === 'timeseries') { state.points = true; state.color = channel(pick(columns, 'category', [state.x && state.x.field, state.y && state.y.field].filter(Boolean))); }
+      if (type.id === 'smallmultiples') { state.facet = channel(pick(columns, 'category', [state.x && state.x.field, state.y && state.y.field].filter(Boolean))); state.height = 160; state.facetColumns = 3; state.legend = 'none'; }
       return state;
     }
 

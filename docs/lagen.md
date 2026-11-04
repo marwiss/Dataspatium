@@ -151,6 +151,8 @@ För datamängder med geometri finns fliken **Geo** (efter Regex): mått, punkte
 För grafer finns fliken **Cypher** direkt efter SQL (en Cypher-delmängd som översätts till SQL med SQL:en visad) och
 fliken **Graf** efter Regex (sammanfattning, grad, komponenter, kortaste väg, delgraf, noder och kanter som tabeller).
 
+Fliken **Statistik** efter Regex gör vanliga analyser med formulär som skriver och visar koden (se [statistik.md](statistik.md)).
+
 Modeller och ritningar får fliken **Mängder** efter Regex (antal, längd, area och volym per typ, våning och material, ur filen
 eller mätta på geometrin).
 

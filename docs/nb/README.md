@@ -90,6 +90,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   lag (se [cad-bim.md](cad-bim.md)).
 - **Flyter og overvåking**: en lagret kjede (hent, resepter, skript, lister, diagrammer, dashboards, dokumenter, eksport) kjøres med ett
   klikk eller ved start, og overvåkede kilder sier fra i statuslinjen når de har nye data (se [floden.md](floden.md)).
+- **Statistikk uten kode**: fanen Statistikk gjør beskrivende statistikk, krysstabeller, korrelasjon, hypotesetester, regresjon og klyngeanalyse
+  med skjemaer som skriver og viser R- eller Python-koden. Tidsserieoperasjoner i Bearbeid (perioder, endring, indeks, glidende gjennomsnitt,
+  sesongjustering), og en regresjon kan lagres og brukes som reseptsteget Prediksjon (se [statistik.md](statistik.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

@@ -513,6 +513,20 @@ förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, r
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
 
+## Statistik, tidsserier och modeller
+
+`analysis/stats` översätter ett formulär till vanlig R- eller Python-kod (`code`), som är precis det som visas. `run` kör koden i
+bryggan med en rad som lämnar över resultatet: `.dm_stat_emit` i `r/dataspatium.R` skriver JSON utan jsonlite, eftersom jsonlite inte
+ingår i paketrepot, och Python använder `json`. Markörerna `@@DMSTAT@@` och `@@END@@` skiljer resultatet från utskriften.
+
+`data/operations-timeseries` är vanliga åtgärder i gruppen `timeseries`. Perioder tolkas av SQLite-funktionerna `dm_period`,
+`dm_period_date` och `dm_period_shift` i motorns worker, och `dm_period` finns också i R för de exporterade recepten. Säsongsrensningen
+är ett kodsteg (`data/code-steps`) med genererad R-kod.
+
+`data/models` sparar en regression som koefficienter i `_meta.models`. Åtgärden `predict_model` räknar med ett SQL-uttryck, så ingen
+motor behövs, och kopierar in modellen i receptsteget. Därför följer bara linjära och logistiska modeller med; något annat skulle kräva
+sitt bibliotek vid uppspelning.
+
 ## Flöden och bevakningar
 
 `data/flows` binder ihop det som redan finns: ett flöde är en lista av steg (`STEPS`, var och en med fält för redigeraren och

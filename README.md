@@ -98,6 +98,9 @@ ett paket.
   SVG med lager (se [docs/cad-bim.md](docs/cad-bim.md)).
 - **Flöden och bevakningar**: en sparad kedja (hämta, recept, skript, listor, diagram, dashboards, dokument, export) körs med ett klick
   eller vid start, och bevakade källor säger till i statusraden när de har nya data (se [docs/floden.md](docs/floden.md)).
+- **Statistik utan kod**: fliken Statistik gör beskrivande statistik, korstabeller, korrelation, hypotestester, regression och klustring med
+  formulär som skriver och visar R- eller Python-koden. Tidsserieåtgärder i Bearbeta (perioder, förändring, index, glidande medelvärde,
+  säsongsrensning), och en regression kan sparas och användas som receptsteget Prediktion (se [docs/statistik.md](docs/statistik.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

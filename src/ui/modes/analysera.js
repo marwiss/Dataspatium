@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/stats-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, statsPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -59,6 +59,8 @@
       function textPanel() { if (!txPanel) txPanel = textPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'text') renderRight(); } }); return txPanel; }
       function imagesPanel() { if (!imPanel) imPanel = imagesPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'images') renderRight(); } }); return imPanel; }
       function planPanel() { if (!plPanel) plPanel = planPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'plan') renderRight(); } }); return plPanel; }
+      let stPanel = null;
+      function statsPanel() { if (!stPanel) stPanel = statsPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'stats') renderRight(); } }); return stPanel; }
       let moPanel = null;
       function modelPanel() { if (!moPanel) moPanel = modelPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'model') renderRight(); } }); return moPanel; }
       // Graphs get two tabs: Cypher (a query language, placed after SQL) and Graf (the code-free tools, after Regex).
@@ -79,14 +81,14 @@
         }
         if (tabsEl) tabsEl.tabs = tabList();
       }
-      const KIND_TAB_IDS = ['text', 'images', 'plan', 'geo', 'graph', 'cypher', 'model'];
-      const kindPanel = () => (tab === 'model' ? modelPanel() : tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
+      const KIND_TAB_IDS = ['text', 'images', 'plan', 'geo', 'graph', 'cypher', 'model', 'stats'];
+      const kindPanel = () => (tab === 'stats' ? statsPanel() : tab === 'model' ? modelPanel() : tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
       function tabList() {
         const ds = selectedDataset();
         const kind = ds && KIND_TABS[ds.kind] ? KIND_TABS[ds.kind] : null;
         const isGraph = !!(ds && ds.kind === 'graph') || tab === 'cypher';
         // Fixed order: R, Python, SQL, Regex, then the kind tool; the notebook is always last because it joins pieces from the others.
-        return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }].concat(isGraph ? [{ id: 'cypher', label: t('analysera.tabs.cypher'), icon: 'git-branch' }] : []).concat([{ id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }])
+        return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }].concat(isGraph ? [{ id: 'cypher', label: t('analysera.tabs.cypher'), icon: 'git-branch' }] : []).concat([{ id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }]).concat(!isGraph ? [{ id: 'stats', label: t('analysera.tabs.stats'), icon: 'chart-column' }] : [])
           .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : (tab === 'text' || tab === 'images' || tab === 'plan' || tab === 'graph') ? [{ id: tab, label: t(KIND_TABS[tab === 'text' ? 'document' : tab].label), icon: KIND_TABS[tab === 'text' ? 'document' : tab].icon }] : [])
           .concat(geoOk || tab === 'geo' ? [{ id: 'geo', label: t('analysera.tabs.geo'), icon: 'map' }] : [])
           .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }]);

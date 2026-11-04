@@ -147,6 +147,8 @@ For datasæt med geometri findes fanen **Geo** (efter Regex): mål, punkter i om
 Grafer får fanen **Cypher** lige efter SQL (en Cypher-delmængde oversat til SQL med SQL'en vist) og fanen **Graf** efter
 Regex (oversigt, grad, komponenter, korteste vej, delgraf, knuder og kanter som tabeller).
 
+Fanen **Statistik** efter Regex laver almindelige analyser med formularer, der skriver og viser koden (se [statistik.md](statistik.md)).
+
 Modeller og tegninger får fanen **Mængder** efter Regex (antal, længde, areal og volumen pr. type, etage og materiale, fra filen
 eller målt på geometrien).
 

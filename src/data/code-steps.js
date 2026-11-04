@@ -91,6 +91,6 @@
     const python = stepOp('python_step', 'python');
     const r = stepOp('r_step', 'r');
 
-    return { python, r, runCode, PREVIEW_ROWS, LABEL };
+    return { python, r, runCode, replaceTable, PREVIEW_ROWS, LABEL };
   });
 })();

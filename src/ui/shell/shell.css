@@ -476,3 +476,8 @@ body.dm-presenting { overflow: hidden; }
 .dm-flow-add { align-items: flex-end; }
 .dm-flow-log { list-style: none; padding: 0; margin: 0; font-size: var(--dm-text-sm); }
 .dm-sb-flow, .dm-sb-watch { color: var(--dm-accent); }
+
+/* The Statistik tab (ui/analysis/stats-panel) */
+.dm-stats-code { height: 180px; }
+.dm-stats-table { min-height: 160px; max-height: 320px; }
+.dm-stats-say { font-weight: var(--dm-weight-semibold); }

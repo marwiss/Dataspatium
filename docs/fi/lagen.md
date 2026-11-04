@@ -156,6 +156,8 @@ Geometrian sisältäville aineistoille on välilehti **Geo** (Regexin jälkeen):
 Verkot saavat välilehden **Cypher** heti SQL:n jälkeen (Cypher-osajoukko käännettynä SQL:ksi, SQL näytetään) ja välilehden
 **Verkko** Regexin jälkeen (yhteenveto, aste, komponentit, lyhin polku, aliverkko, solmut ja särmät taulukkoina).
 
+Välilehti **Tilastot** Regexin jälkeen tekee tavallisia analyyseja lomakkeilla, jotka kirjoittavat ja näyttävät koodin (katso [statistik.md](statistik.md)).
+
 Mallit ja piirustukset saavat välilehden **Määrät** Regexin jälkeen (lukumäärä, pituus, pinta-ala ja tilavuus tyypeittäin, kerroksittain
 ja materiaaleittain, tiedostosta tai geometriasta mitattuna).
 

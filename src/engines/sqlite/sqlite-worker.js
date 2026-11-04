@@ -410,6 +410,48 @@
     }
 
     // ---- rounding, padding, dates and identity numbers (table operations and rules) ----------------
+    /** A period in a table: 2024M03, 2024-03, 202403, 2024K1, 2024Q1, 2024-Q1, Q1 2024, 2024 or a date, as year, quarter and month. */
+    function periodParts(x) {
+      if (x === null || x === undefined) return null;
+      var s = String(x).trim();
+      var m = /^(\d{4})$/.exec(s);
+      if (m) return { y: +m[1] };
+      m = /^(\d{4})[-/ ]?[KkQq]([1-4])$/.exec(s) || /^(\d{4})[-/ ]?T([1-4])$/.exec(s);
+      if (m) return { y: +m[1], q: +m[2] };
+      m = /^[KkQq]([1-4])[-/ ](\d{4})$/.exec(s);
+      if (m) return { y: +m[2], q: +m[1] };
+      m = /^(\d{4})[-/ ]?[Mm]?(\d{2})$/.exec(s) || /^(\d{4})[Mm](\d{1})$/.exec(s) || /^(\d{4})-(\d{1})$/.exec(s);
+      if (m && +m[2] >= 1 && +m[2] <= 12) return { y: +m[1], m: +m[2], q: Math.ceil(+m[2] / 3) };
+      m = /^(\d{4})-(\d{1,2})-\d{1,2}/.exec(s);
+      if (m && +m[2] >= 1 && +m[2] <= 12) return { y: +m[1], m: +m[2], q: Math.ceil(+m[2] / 3) };
+      return null;
+    }
+    function periodOf(x, frequency) {
+      var p = periodParts(x);
+      if (!p) return null;
+      var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+      var f = frequency || 'auto';
+      if (f === 'year') return String(p.y);
+      if (f === 'quarter') return p.q ? p.y + '-Q' + p.q : null;
+      if (f === 'month') return p.m ? p.y + '-' + pad(p.m) : null;
+      if (p.m) return p.y + '-' + pad(p.m);
+      if (p.q) return p.y + '-Q' + p.q;
+      return String(p.y);
+    }
+    function periodDate(x) {
+      var p = periodParts(x);
+      if (!p) return null;
+      var month = p.m || (p.q ? (p.q - 1) * 3 + 1 : 1);
+      return p.y + '-' + (month < 10 ? '0' : '') + month + '-01';
+    }
+    function periodShift(x, years) {
+      var p = periodParts(x);
+      if (!p) return null;
+      var y = p.y + (Number(years) || 0);
+      if (p.m) return y + '-' + (p.m < 10 ? '0' : '') + p.m;
+      if (p.q) return y + '-Q' + p.q;
+      return String(y);
+    }
     function roundNumber(x, decimals, mode) {
       if (x === null || x === undefined || x === '') return null;
       var v = Number(x);
@@ -549,6 +591,10 @@
     }
 
     function registerFunctions(database) {
+      database.create_function('dm_period', function (x, frequency) { return periodOf(x, frequency); });
+      database.create_function('dm_period_date', function (x) { return periodDate(x); });
+      database.create_function('dm_period_shift', function (x, years) { return periodShift(x, years); });
+      database.create_function('dm_logistic', function (x) { return x === null || x === undefined ? null : 1 / (1 + Math.exp(-x)); });
       database.create_function('dm_round', function (x, decimals, mode) { return roundNumber(x, decimals, mode); });
       database.create_function('dm_pad', function (x, length, ch, side) { return padText(x, length, ch, side); });
       database.create_function('dm_date_part', function (x, part) { return datePart(x, part); });

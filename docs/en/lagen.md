@@ -151,6 +151,8 @@ For datasets with geometry there is the tab **Geo** (after Regex): measures, poi
 Graphs get the tab **Cypher** right after SQL (a Cypher subset translated to SQL, with the SQL shown) and the tab
 **Graph** after Regex (summary, degree, components, shortest path, subgraph, nodes and edges as tables).
 
+The tab **Statistics** after Regex does common analyses with forms that write and show the code (see [statistik.md](statistik.md)).
+
 Models and drawings get the tab **Quantities** after Regex (count, length, area and volume per type, storey and material, from
 the file or measured on the geometry).
 
