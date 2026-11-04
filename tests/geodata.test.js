@@ -244,8 +244,9 @@
       assert.equal(root.querySelectorAll('.dm-api-map svg path').length, 3, 'three polygons in the preview');
       buttonByText(t('api.save')).click();
       await waitFor(() => buttonByText(t('geodata.open.map')), 15000, 'saved with Öppna som karta');
-      const ds = shell.store.get().datasets.find((d) => !before.has(d.id));
-      assert.ok(ds, 'a new dataset'); savedId = ds.id;
+      // The store learns about the new dataset asynchronously (slower over https than from file://).
+      const ds = await waitFor(() => shell.store.get().datasets.find((d) => !before.has(d.id)), 10000, 'the new dataset in the store');
+      savedId = ds.id;
       assert.ok(leaflet.mapDefault(await datasets.columns(ds.id)), 'the dataset opens as a map');
       // The catalogue: search, one card with the organisation and the service buttons, add the WFS as a source.
       itemByText('Testkatalog').click();
