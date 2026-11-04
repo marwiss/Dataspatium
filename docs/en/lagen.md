@@ -93,6 +93,9 @@ A document or image collection is shown with its number of documents and pages o
 the first thumbnails on the overview tab, and with the button *Read* or *Show pictures* that opens the reading view or
 the gallery in Process (see [dokument.md](dokument.md)).
 
+**Flows and watches** are in the object panel: saved chains that run with one click or at start, and sources that say when they have
+new data (see [floden.md](floden.md)).
+
 ## Search
 
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on

@@ -70,8 +70,11 @@
           this.engineEl = this.engineEls.r;
           this.engineEls.python.hidden = true;
           this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
+          // A running flow and the news from the watches: only there when there is something to say.
+          this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
+          this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.flowEl, this.watchEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -120,6 +123,41 @@
           /** @type {HTMLElement} */ (el.lastChild).textContent = `${t('shell.engine.' + engine)} ${t(ENGINE_STATES[state] || ENGINE_STATES.idle)}`;
           // Python appears in the status bar once it has been started.
           if (engine === 'python') el.hidden = state === 'idle';
+        }
+
+        /** Hantera's page for flows and watches. */
+        openFlows(tab) {
+          this.activate('hantera');
+          this.store.set({ selectedId: '__flows', flowsTab: tab });
+        }
+        /** What a flow is doing, in the status bar and the log. */
+        listenToFlows() {
+          const flows = D.require('data/flows');
+          const watches = D.require('data/watches');
+          flows.subscribe((type, p) => {
+            if (type === 'step') {
+              this.flowEl.hidden = false;
+              this.flowEl.lastChild.textContent = t('shell.flow.step', { name: p.name, n: p.index + 1, total: p.total, step: p.label });
+            } else if (type === 'end') {
+              this.flowEl.hidden = true;
+              for (const x of p.steps) this.log(`${p.name}: ${t('flows.step.' + x.type)}: ${x.message}`, x.ok ? 'info' : 'error');
+              const text = t(p.ok ? 'flows.finished.ok' : (p.aborted ? 'flows.finished.aborted' : 'flows.finished.failed'), { name: p.name });
+              this.log(text, p.ok ? 'ok' : 'error');
+              overlays.toast.show(text, { kind: p.ok ? 'ok' : 'error', action: p.files.length ? { label: t('flows.fetch'), onClick: async () => { const out = await flows.output(p.flowId); if (out) D.require('platform/files').download(out.blob, out.name); } } : undefined });
+            }
+          });
+          const showWatches = async () => {
+            const n = (await watches.pending()).length;
+            this.watchEl.hidden = !n;
+            this.watchEl.lastChild.textContent = t('shell.watch.new', { n });
+          };
+          watches.subscribe(showWatches);
+          showWatches();
+          // Work at start waits until the page has settled, and never asks for anything.
+          setTimeout(() => {
+            flows.runOnStart({ onSkip: (flow, reasons) => this.log(t('flows.start.skipped', { name: flow.name, reason: reasons.join('; ') }), 'info') }).catch((err) => D.log('shell', 'flows at start', err));
+            watches.checkOnStart().catch((err) => D.log('shell', 'watches at start', err));
+          }, 1500);
         }
 
         /** Network indicator: lit while real network requests are in flight. */
@@ -188,6 +226,7 @@
           await this.reloadDatasets();
           this.updateStorage();
           await this.applyWidths();
+          this.listenToFlows();
           // Land where the user most likely wants to be: an empty workspace starts in Inhämta, one with
           // datasets in Hantera. An explicit #/mode in the URL wins.
           const route = this.parseRoute();

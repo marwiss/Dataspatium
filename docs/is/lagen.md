@@ -90,6 +90,9 @@ Skjala- eða myndasafn er sýnt með fjölda skjala og síðna eða mynda, með 
 yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrarsýnina eða myndasýnina í Vinna (sjá
 [dokument.md](dokument.md)).
 
+**Flæði og vöktun** eru í hlutaspjaldinu: vistaðar keðjur sem keyrðar eru með einum smelli eða við ræsingu og heimildir sem láta vita
+þegar ný gögn eru til (sjá [floden.md](floden.md)).
+
 ## Leita
 
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að

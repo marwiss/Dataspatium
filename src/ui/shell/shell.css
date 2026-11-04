@@ -471,3 +471,8 @@ body.dm-presenting { overflow: hidden; }
 .dm-dxf-svg { display: block; width: 100%; height: 100%; max-width: none; }
 .dm-dxf-selected, .dm-dxf-selected * { stroke: var(--dm-accent) !important; }
 .dm-dxf-selected text { fill: var(--dm-accent) !important; stroke: none !important; }
+
+/* Flows and watches (ui/flows/flows-view) and their place in the status bar */
+.dm-flow-add { align-items: flex-end; }
+.dm-flow-log { list-style: none; padding: 0; margin: 0; font-size: var(--dm-text-sm); }
+.dm-sb-flow, .dm-sb-watch { color: var(--dm-accent); }

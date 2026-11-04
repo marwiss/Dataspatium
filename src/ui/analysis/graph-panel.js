@@ -81,12 +81,14 @@
             const w = await cypherWrite.execute(ds.id, text);
             if (my !== seq) return;
             s.result = { columns: ['steg', 'noder', 'kanter', 'matchade'], rows: [[w.steps, w.nodes, w.edges, w.matched]], sql: w.ops.map((o) => `${o.op} ${JSON.stringify(o.params)}`).join('\n'), params: [], name: '', note: t('graph.cypher.wrote', { steps: i18n.formatNumber(w.steps) }) };
+            s.resultKey = contentKey();
             shell.log(t('graph.cypher.wrote', { steps: i18n.formatNumber(w.steps) }), 'ok');
             s.infoFor = '';
           } else {
             const out = await cypher.run(ds.id, text);
             if (my !== seq) return;
             s.result = { columns: out.columns, rows: out.rows, sql: out.sql, params: out.params, name: t('graph.cypher.dataset', { name: ds.name }), note: t('graph.cypher.note', { n: i18n.formatNumber(out.rows.length), limit: i18n.formatNumber(out.info.limit) }) };
+            s.resultKey = contentKey();
             shell.log(t('graph.cypher.ran', { n: i18n.formatNumber(out.rows.length) }), 'ok');
           }
         } catch (err) {
@@ -145,6 +147,7 @@
           const out = await compute(ds);
           if (my !== seq) return;
           s.result = out;
+          s.resultKey = contentKey();
         } catch (err) { s.result = null; s.error = String((err && err.message) || err); }
         s.busy = false; renderFields(); renderResult();
       }
@@ -278,7 +281,9 @@
         items.push(box, h('p', { class: 'dm-help dm-xs', text: t(mode === 'cypher' ? 'graph.cypher.about' : 'graph.tool.about') }));
         return h('div', { class: 'dm-inspector dm-stack' }, items);
       }
-      function datasetChanged() { s.result = null; s.error = ''; s.labels = new Set(); s.types = new Set(); if (fieldsEl) { if (mode === 'cypher') renderCypher(); else { renderFields(); renderResult(); } } }
+      /** What the result on screen was computed from; a save of the same content must not clear it. */
+      const contentKey = () => { const ds = selected(); return ds ? `${ds.id}#${datasets.contentMarker(ds.id)}` : ''; };
+      function datasetChanged() { if (s.result && s.resultKey === contentKey()) return; s.result = null; s.error = ''; s.labels = new Set(); s.types = new Set(); if (fieldsEl) { if (mode === 'cypher') renderCypher(); else { renderFields(); renderResult(); } } }
       function destroy() { seq++; fieldsEl = null; resultEl = null; editor = null; }
       return { center, inspector, datasetChanged, destroy, state: s, runCypher, runTool };
     }

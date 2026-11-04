@@ -513,6 +513,19 @@ förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, r
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
 
+## Flöden och bevakningar
+
+`data/flows` binder ihop det som redan finns: ett flöde är en lista av steg (`STEPS`, var och en med fält för redigeraren och
+`run`) som anropar `api/runner`, `data/recipes`, bryggorna, `data/lists`, `viz/render`, `viz/batch`, `viz/dashboards`,
+`docgen/generate` och `io/export`. Filer stannar i minnet tills användaren hämtar dem, eftersom allt som lämnar appen ska gå
+genom `ui/share/review`. Flöden lagras som inställningar (`flow:<id>`) och följer med i säkerhetskopior men inte i paket.
+`blockers` säger vad ett flöde skulle behöva fråga om; `runOnStart` hoppar över sådana, så att start aldrig leder till en fråga.
+
+`data/watches` lagrar per datamängd ett fingeravtryck av källans rader (sorterade radhashar och kolumnnamn, så att ordningen
+inte räknas och skillnaden kan räknas ut), läser källan med `runner.refetch` och jämför. `runner.onFetched` meddelar när en
+datamängd uppdaterats från källan, och då flyttas jämförelsen fram oavsett vem som uppdaterade. `ui/flows/flows-view` är sidan i
+Hantera och statusraden har knappar för pågående flöde och nya data.
+
 ## Samtycke, komponenter och språk
 
 `platform/consent` håller samtycke per ändamål (`api`, `url`, `github`, `components`, `basemaps`, `databases`,

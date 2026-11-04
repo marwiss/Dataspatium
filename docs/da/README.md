@@ -89,6 +89,8 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **CAD og BIM**: IFC-modeller åbnes i 3D (web-ifc og three.js) over en tabel med bygningsdelene, og udvalget følger med begge veje.
   Egenskaber og mængder bliver tabeller, fanen Mængder beregner pr. type, etage og materiale, og DXF-tegninger vises som SVG med
   lag (se [cad-bim.md](cad-bim.md)).
+- **Flows og overvågning**: en gemt kæde (hent, recepter, scripts, lister, diagrammer, dashboards, dokumenter, eksport) køres med ét klik
+  eller ved start, og overvågede kilder siger til i statuslinjen, når de har nye data (se [floden.md](floden.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

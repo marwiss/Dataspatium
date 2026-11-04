@@ -7,22 +7,24 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/hantera', ['ui/base', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'ui/analysis/graph-panel'], (base, folder, share, batch, settings, graphPanel) => {
+  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'ui/analysis/graph-panel'], (base, flowsView, watches, folder, share, batch, settings, graphPanel) => {
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
+    const FLOWS = '__flows';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
       let slots = null; let tab = 'overview'; let unsubscribe = null; let unsubFolder = null;
+      /** @type {any} */ let flowsUi = null;
 
       function activate(s) {
         slots = s;
-        unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId') || changed.includes('selectedIds')) render(); });
+        unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId') || changed.includes('selectedIds') || (changed.includes('flowsTab') && state.flowsTab)) render(); });
         // Re-render the workspace view when the portable folder finishes an automatic save.
         unsubFolder = services.workspace.onFolder((status) => { if (slots && !status.busy && store.get().selectedId === WORKSPACE) render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); }
+      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); if (flowsUi) { flowsUi.destroy(); flowsUi = null; } }
 
       function render() {
         if (!slots) return;
@@ -30,7 +32,7 @@
         const selectedIds = state.selectedIds || [];
         ui.datasetList.render(slots.left, {
           datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }),
-          extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }],
+          extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }, { id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }],
           // Several datasets at once: check boxes, drag and drop into folders, and the batch actions.
           multi: true, selectedIds, onToggle: (ids) => store.set({ selectedIds: ids }),
           onMove: (ids, path) => batch.move(ctx, ids, path),
@@ -40,7 +42,9 @@
           ] : [],
         });
         const selected = state.datasets.find((d) => d.id === state.selectedId);
-        if (state.selectedId === WORKSPACE) { renderWorkspace(); renderWorkspaceInspector(); }
+        if (state.selectedId !== FLOWS && flowsUi) { flowsUi.destroy(); flowsUi = null; }
+        if (state.selectedId === FLOWS) { if (!flowsUi) flowsUi = flowsView.create(ctx); flowsUi.render({ center: slots.center, right: slots.right }); }
+        else if (state.selectedId === WORKSPACE) { renderWorkspace(); renderWorkspaceInspector(); }
         else if (selected) {
           // The dataset can be removed (here or in another tab) while its views load; only report other errors.
           renderDataset(selected).catch(async (err) => { if (await services.datasets.get(selected.id)) shell.log(String((err && err.message) || err), 'error'); });
@@ -83,6 +87,7 @@
               // Two tables (nodes and edges) become a graph dataset.
               !ds.kind || ds.kind === 'table' ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => graphPanel.fromTablesDialog(ctx, ds.id).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }) }) : null,
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
+              watches.watchable(ds) ? watchButton(ds) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
               ui.button({ label: t('common.rename'), icon: 'pencil', onClick: () => rename(ds) }),
@@ -216,6 +221,24 @@
       }
 
       /** Badges in the head: documents and pages, pictures, or rows and columns. */
+      /** Starts or stops watching a dataset's source; the button finds out by itself which it is. */
+      function watchButton(ds) {
+        const btn = ui.button({ label: t('watch.on'), icon: 'eye', title: t('watch.on.hint'), onClick: async () => {
+          const on = !(await watches.get(ds.id));
+          try {
+            const w = await watches.setWatched(ds.id, on);
+            shell.log(t(on ? 'watch.started' : 'watch.stopped', { name: ds.name }), 'ok');
+            if (w && w.state === 'error') ui.toast.show(w.error, { kind: 'error' });
+          } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+          render();
+        } });
+        watches.get(ds.id).then((w) => {
+          if (!w) return;
+          btn.setAttribute('label', t('watch.off'));
+          btn.setAttribute('title', t('watch.off.hint'));
+        });
+        return btn;
+      }
       function kindBadges(ds) {
         if (ds.kind === 'document') {
           const docs = Array.isArray(ds.documents) ? ds.documents : [];

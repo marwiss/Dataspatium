@@ -20,7 +20,7 @@
     const SCRIPT_LANGUAGES = ['r', 'sql', 'regex'];
     const optional = (name) => (D.has(name) ? D.require(name) : null);
     /** Files of the workspace layout (anything else in a folder or repository is left alone). */
-    const isWorkspaceFile = (p) => p === MANIFEST || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
+    const isWorkspaceFile = (p) => p === MANIFEST || /^flows\/[^/]+\.flow\.json$/i.test(p) || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
 
     /** A saved script (R, SQL or a regex pattern) as a script file. */
     function scriptJson(sc) {
@@ -105,6 +105,10 @@
         files[path] = scriptJson(sc);
         scriptEntries.push({ id: sc.id, name: sc.name, language: sc.language, file: path });
       }
+      // Flows point at this workspace's datasets and scripts: they follow backups, never bundles to other people.
+      const flowMod = optional('data/flows');
+      const flowList = flowMod && (options.kind || 'workspace-backup') === 'workspace-backup' ? await flowMod.list() : [];
+      for (const flow of flowList) files[`flows/${flow.id}.flow.json`] = flowMod.exportJson(flow);
       // format 2 (2.0): dataset entries carry folder and tags; readers of format 1 ignore them, and 1.x files open as before.
       files[MANIFEST] = JSON.stringify(Object.assign({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', format: 2, name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, options.extra || {}), null, 2);
       return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length, scripts: scriptEntries.length } };
@@ -249,6 +253,7 @@
       const documents = await importKind(/\.doc\.json$/i, 'docgen/documents', (d, obj) => d.name === obj.name);
       const dashboards = await importKind(/\.dash\.json$/i, 'viz/dashboards', (d, obj) => d.name === obj.name);
       const notebooks = await importKind(/\.nb\.json$/i, 'analysis/notebooks', (n, obj) => n.name === obj.name);
+      const flows = await importKind(/\.flow\.json$/i, 'data/flows', (f, obj) => f.name === obj.name);
       const scripts = [];
       for (const [path, bytes] of Object.entries(entries)) {
         if (!/^scripts\/[^/]+\.script\.json$/i.test(path)) continue;
@@ -257,7 +262,7 @@
           if (record) scripts.push(record); else existing++;
         } catch (err) { skipped.push(path + ': ' + ((err && err.message) || err)); }
       }
-      return { manifest, imported, replaced, skipped, charts, documents, dashboards, notebooks, scripts, existing };
+      return { manifest, imported, replaced, skipped, charts, documents, dashboards, notebooks, scripts, flows, existing };
     }
 
     /**

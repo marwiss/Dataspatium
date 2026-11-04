@@ -240,6 +240,10 @@
       await waitFor(() => buttonByText(t('common.run')), 5000, 'run button');
       buttonByText(t('common.run')).click();
       await waitFor(() => root.querySelectorAll('.dm-tool-result dm-table .dm-tr').length === 4, 10000, 'four pagerank rows');
+      // A save of the same content must not clear the result on screen.
+      await datasets.save(meta.id);
+      await wait(300);
+      assert.equal(root.querySelectorAll('.dm-tool-result dm-table .dm-tr').length, 4, 'the result stays after a save');
       tabByText(t('graph.tool.pattern')).click();
       await waitFor(() => buttonByText(t('common.run')), 5000, 'pattern run');
       buttonByText(t('common.run')).click();

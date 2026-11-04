@@ -92,6 +92,9 @@ En dokumentsamling eller bildsamling visas med antal dokument och sidor respekti
 första miniatyrerna på översiktsfliken, och med knappen *Läs* eller *Visa bilder* som öppnar läsvyn respektive
 galleriet i Bearbeta (se [dokument.md](dokument.md)).
 
+**Flöden och bevakningar** finns i objektpanelen: sparade kedjor som körs med ett klick eller vid start, och källor som säger till
+när de har nya data (se [floden.md](floden.md)).
+
 ## Söka
 
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas

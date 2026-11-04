@@ -79,6 +79,11 @@
         return importer.materialize({ columns: table.columns, rows: table.rows }, specs, { decimal });
       }
 
+      /** @type {Set<(id: string, table: any) => any>} */
+      const fetchedListeners = new Set();
+      /** Tells a listener whenever a dataset has been updated from its source (with the table it was read from). */
+      function onFetched(fn) { fetchedListeners.add(fn); return () => fetchedListeners.delete(fn); }
+
       /**
        * Update an API dataset with one click: fetch it again, rebuild its table from the new rows and replay
        * its recipe, so that cleaned, renamed and computed columns come back. Name, metadata, rules and log are
@@ -110,6 +115,7 @@
         const handle = await datasets.ensureOpen(id);
         await datasets.appendLog(handle, 'refresh', { source: { kind: source.kind, connectorName: source.connectorName || source.label || source.fileName, endpointName: source.endpointName }, rows: handle.meta.rowCount, steps: steps.length });
         await datasets.save(id);
+        for (const fn of Array.from(fetchedListeners)) { try { await fn(id, table); } catch (err) { console.error('[runner] listener failed', err); } }
         return { rows: handle.meta.rowCount, steps: steps.length };
       }
 
@@ -189,6 +195,6 @@
       }
       function clearOptionCache() { optionCache.clear(); }
 
-      return { fetchTable, toDataset, typedTable, intoDataset, describeSource, refetch, refreshDataset, refreshAll, optionsFor, clearOptionCache, mergeTables, families };
+      return { fetchTable, toDataset, typedTable, intoDataset, describeSource, refetch, refreshDataset, refreshAll, onFetched, optionsFor, clearOptionCache, mergeTables, families };
     });
 })();

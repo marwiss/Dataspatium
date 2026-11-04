@@ -89,6 +89,9 @@ En dokument- eller billedsamling vises med antal dokumenter og sider henholdsvis
 første miniaturer på oversigtsfanen, og med knappen *Læs* eller *Vis billeder*, som åbner læsevisningen henholdsvis
 galleriet i Bearbejd (se [dokument.md](dokument.md)).
 
+**Flows og overvågning** findes i objektpanelet: gemte kæder, der køres med ét klik eller ved start, og kilder, der siger til, når de
+har nye data (se [floden.md](floden.md)).
+
 ## Søg
 
 Find og list uden kode. Fanen *Søg* søger i alle kolonner i ét eller alle datasæt; hvert ord skal findes på rækken,

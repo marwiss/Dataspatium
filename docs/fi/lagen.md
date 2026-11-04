@@ -93,6 +93,9 @@ Asiakirja- tai kuvakokoelma näytetään asiakirjojen ja sivujen tai kuvien mä�
 asiakirjaluettelona tai ensimmäisinä pienoiskuvina, ja painikkeella *Lue* tai *Näytä kuvat*, joka avaa lukunäkymän
 tai gallerian Muokkaa-tilassa (katso [dokument.md](dokument.md)).
 
+**Työnkulut ja seurannat** ovat objektipaneelissa: tallennetut ketjut, jotka ajetaan yhdellä napsautuksella tai käynnistyksessä, ja
+lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
+
 ## Hae
 
 Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhdessä tai kaikissa aineistoissa; jokaisen

@@ -124,7 +124,7 @@
           else if (s.tool === 'dissolve') out = await geoAnalysis.dissolve(src, s.column || null, { onProgress });
           else out = await geoAnalysis.simplify(src, s.tolerance, { onProgress });
           if (my !== seq) return;
-          last = Object.assign(out, { source: ds, truncated: src.truncated, note: t('geo.result.note', { rows: i18n.formatNumber(out.rows.length), features: i18n.formatNumber(src.features.length) }) + (out.matched !== undefined ? ' · ' + t('geo.points.matched', { n: i18n.formatNumber(out.matched) }) : '') + (src.truncated ? ' · ' + t('map.truncated', { n: i18n.formatNumber(geoAnalysis.MAX_ROWS) }) : '') });
+          last = Object.assign(out, { contentKey: contentKey(), source: ds, truncated: src.truncated, note: t('geo.result.note', { rows: i18n.formatNumber(out.rows.length), features: i18n.formatNumber(src.features.length) }) + (out.matched !== undefined ? ' · ' + t('geo.points.matched', { n: i18n.formatNumber(out.matched) }) : '') + (src.truncated ? ' · ' + t('map.truncated', { n: i18n.formatNumber(geoAnalysis.MAX_ROWS) }) : '') });
           renderResult();
         } catch (err) {
           if (my !== seq) return;
@@ -163,7 +163,9 @@
         return [h('h4', { text: t('geo.tool.' + s.tool) }), h('p', { class: 'dm-help', text: t('geo.about.' + s.tool) }), h('p', { class: 'dm-help dm-xs', text: t('geo.about.turf') }),
           ds ? h('p', { class: 'dm-help', text: t('geo.dataset.about', { name: ds.name, rows: i18n.formatNumber(ds.rowCount || 0) }) }) : null];
       }
-      function datasetChanged() { mappableFor = ''; last = null; if (fieldsEl) { renderFields(); renderResult(); } }
+      /** What the result on screen was computed from; a save of the same content must not clear it. */
+      const contentKey = () => { const ds = selected(); return ds ? `${ds.id}#${datasets.contentMarker(ds.id)}` : ''; };
+      function datasetChanged() { mappableFor = ''; if (!(last && last.contentKey === contentKey())) last = null; if (fieldsEl) { renderFields(); renderResult(); } }
       function destroy() { seq++; fieldsEl = null; resultEl = null; }
       return { center, inspector, datasetChanged, destroy, state: s };
     }

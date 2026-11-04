@@ -90,6 +90,9 @@ En dokument- eller bildesamling vises med antall dokumenter og sider respektive 
 første miniatyrene på oversiktsfanen, og med knappen *Les* eller *Vis bilder* som åpner lesevisningen respektive
 galleriet i Bearbeid (se [dokument.md](dokument.md)).
 
+**Flyter og overvåking** finnes i objektpanelet: lagrede kjeder som kjøres med ett klikk eller ved start, og kilder som sier fra når de
+har nye data (se [floden.md](floden.md)).
+
 ## Søk
 
 Finn og list uten kode. Fanen *Søk* søker i alle kolonner i ett eller alle datasett; hvert ord må finnes på raden,

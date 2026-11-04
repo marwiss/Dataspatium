@@ -423,6 +423,11 @@
       const record = await idb.getDataset(id);
       return record ? String(record.updatedAt || '') : '';
     }
+    /** A marker of an open dataset's content: unlike version(), a save of the same content leaves it unchanged. */
+    function contentMarker(id) {
+      const open = openHandles.get(id);
+      return open ? `${open.revision || 0}|${open.meta.rowCount || 0}|${open.meta.columnCount || 0}|${open.replaced || 0}` : '';
+    }
     function scheduleSave(id, delay = SAVE_DELAY) {
       const open = openHandles.get(id);
       if (open) open.revision = (open.revision || 0) + 1;
@@ -465,6 +470,7 @@
         await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['source', JSON.stringify(input.source)]);
       }
       await refreshCounts(handle);
+      handle.replaced = (handle.replaced || 0) + 1;
       return before;
     }
 
@@ -473,6 +479,7 @@
       const handle = await ensureOpen(id);
       await handle.engine.open(bytes.slice(0));
       handle.columns = await readColumns(handle.engine);
+      handle.replaced = (handle.replaced || 0) + 1;
       if (logEntry) await appendLog(handle, logEntry.action || 'restore', logEntry);
       await refreshCounts(handle);
       handle.meta.columnCount = handle.columns.length;
@@ -722,7 +729,7 @@
     function close(id) { const h = openHandles.get(id); if (h) { h.engine.terminate(); openHandles.delete(id); } }
 
     return {
-      create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
+      contentMarker, create, list, get, ensureOpen, query, count, columnStats, log, appendLog, writeColumns, refreshCounts, save, scheduleSave, flushSaves, hasPendingSaves,
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version, normalizeFolder, normalizeTags, folderPaths, KINDS,

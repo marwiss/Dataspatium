@@ -19,7 +19,7 @@ dragðu með hægri hnappi til að færa. Ramminn sýnir allt líkanið; stakir 
   eiginleika og magn, ásamt yfirborði og rúmmáli mældu á rúmfræðinni.
 - **Sía**: veldu gerð eða hæð, eða leitaðu að heiti, efni eða eiginleika. Taflan og líkanið sýna sama úrval.
 - **Sýna sem töflu**: allir dálkar sem venjuleg tafla með öllum verkfærum í Vinna.
-- **Vista sem graf**: sýnin með síu og sjónarhorni verður að grafi í Sjónræna.
+- **Vista sem graf**: sýnin með síu og sjónarhorni verður að grafi í Myndgera.
 
 Rúmfræðin er reiknuð úr upprunalegu skránni í fyrsta sinn sem líkanið opnast í lotu og er aðeins notuð til að teikna og mæla.
 Töflurnar eru áfram til þótt tölvuna vanti WebGL; þá birtast skilaboð í stað þrívíddarsýnarinnar.
