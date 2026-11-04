@@ -7,9 +7,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images,types, datasets) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'data/plan', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, plan, types, datasets) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
-    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv];
+    // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
+    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp];
     /** Importers that turn one or several files into one dataset of their own kind (documents, images). */
     const collections = [documents, images];
 
@@ -27,8 +28,10 @@
      */
     async function resolveImporter(file, forced) {
       const importer = importerFor(file, forced);
-      if (forced || (importer !== json && importer !== xml)) return importer;
+      if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
+      // Digital plans (national specification, NGP reference objects, ÖP exchange model) are GeoJSON with markers.
+      if ((importer === json || importer === geo) && detaljplanImp.sniff(head)) return detaljplanImp;
       if (importer === json && /"type"\s*:\s*"Topology"/.test(head)) return geo;
       if (importer === xml && /urn:schemas-microsoft-com:office:spreadsheet/.test(head)) return excel;
       return importer;
@@ -50,6 +53,8 @@
     async function preview(file, options = {}) {
       const importer = await resolveImporter(file, options.format);
       const p = await importer.preview(file, options);
+      // A GeoPackage in Boverket's ÖP model can be imported whole as a comprehensive plan.
+      if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) p.oversiktsplan = true;
       const columns = types.cleanColumnNames(p.columns);
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
       // Declared types (SQLite schemas) win over inference for empty or ambiguous columns.
@@ -109,6 +114,9 @@
       const importer = await resolveImporter(file, options.format);
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
+      // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
+      if (importer.id === 'detaljplan') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importOpGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.

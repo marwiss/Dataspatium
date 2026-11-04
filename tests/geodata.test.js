@@ -275,6 +275,45 @@
     }
   }, 120000);
 
+  test('geodata: the dialog lists the ready-made services, filters them, adds one with one click and opens a preset', async (assert) => {
+    const familyDialog = D.require('ui/api/family-dialog');
+    const ids = [];
+    const dialogs = () => Array.from(document.querySelectorAll('dialog.dm-dialog'));
+    try {
+      serve('tests/geo/ready-wfs', (u) => (u.searchParams.get('request') === 'GetCapabilities' ? CAPS : { type: 'FeatureCollection', features: ALL }));
+      familyDialog.setServices([
+        { id: 'scb-geodata', preset: 'scb-geodata', name: 'SCB öppna geodata', publisher: 'SCB', country: 'SE', kind: 'wfs', url: 'https://geodata.scb.se/geoserver/wfs', about: { sv: 'Gränser.' } },
+        { id: 'test-ready', name: 'Testverkets WFS', publisher: 'Testverket', country: 'NO', kind: 'wfs', url: BASE + '/ready-wfs', about: { sv: 'Kommuner i testlandet.', en: 'Municipalities of the test land.' } },
+      ]);
+      const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+      const dialog = await waitFor(() => { const d = dialogs().pop(); return d && d.querySelectorAll('.dm-geodata-ready-item').length === 2 ? d : null; }, 5000, 'dialog with two services');
+      const items = () => Array.from(dialog.querySelectorAll('.dm-geodata-ready-item'));
+      assert.ok(items()[0].textContent.includes('SCB öppna geodata') && items()[1].textContent.includes('Testverket'), 'names shown');
+      const filter = /** @type {any} */ (dialog.querySelector('.dm-geodata-ready dm-input'));
+      filter.value = 'testverket'; filter.dispatchEvent(new Event('input', { bubbles: true }));
+      await waitFor(() => items().length === 1, 3000, 'filtered to one');
+      const addBtn = /** @type {any} */ (items()[0].querySelector('dm-button'));
+      assert.equal(addBtn.textContent.trim(), t('geodata.ready.add'));
+      addBtn.click();
+      const connector = await promise;
+      assert.ok(connector && connector.family && connector.family.kind === 'wfs' && connector.baseUrl === BASE + '/ready-wfs', 'connector created from the list: ' + JSON.stringify(connector && { id: connector.id, baseUrl: connector.baseUrl }));
+      ids.push(connector.id);
+      assert.equal(connector.name, 'Testverkets WFS'); assert.deepEqual(geodata.layerEndpoints(connector).map((e) => e.id), ['layer-stat-kommuner', 'layer-stat-lan']);
+      // A preset entry opens the existing connector without creating anything.
+      const before = (await connectors.list()).length;
+      const promise2 = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+      const dialog2 = await waitFor(() => { const d = dialogs().pop(); return d && d !== dialog && d.querySelectorAll('.dm-geodata-ready-item').length === 2 ? d : null; }, 5000, 'second dialog');
+      /** @type {any} */ (dialog2.querySelectorAll('.dm-geodata-ready-item')[0].querySelector('dm-button')).click();
+      const preset = await promise2;
+      assert.ok(preset && preset.id === 'scb-geodata' && preset.preset, 'the preset itself is returned');
+      assert.equal((await connectors.list()).length, before, 'nothing new created');
+    } finally {
+      familyDialog.setServices(null);
+      for (const id of ids) await connectors.remove(id).catch(() => {});
+    }
+    return 'ok';
+  }, 30000);
+
   test('geodata: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);
     assert.ok(true);

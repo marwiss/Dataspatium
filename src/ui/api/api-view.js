@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet'],
-    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, runner, connectors, auth, http, files, datasets, leaflet) => {
+  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet', 'data/plan', 'io/importers/detaljplan'],
+    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, runner, connectors, auth, http, files, datasets, leaflet, plan, detaljplanImp) => {
       const { h, t, i18n, replace } = base;
       const PREVIEW_ROWS = 2000;
 
@@ -101,6 +101,8 @@
           const mode = /** @type {any} */ (h('dm-select', { label: t('api.into.mode') }));
           mode.options = [{ value: 'append', label: t('api.into.mode.append') }, { value: 'replace', label: t('api.into.mode.replace') }];
           const saveBtn = basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: state.saving, onClick: () => save(nameInput.value.trim()) });
+          // NGP reference objects (Lantmäteriet's detaljplan service) can be kept as a plan: drawn with Boverket's colours, provisions listed.
+          const planBtn = plan.detectTable(r.table.columns) ? basic.button({ label: t('plan.save'), icon: 'layers', loading: state.saving, title: t('plan.save.hint'), onClick: () => saveAsPlan(nameInput.value.trim()) }) : null;
           const intoBtn = basic.button({ label: t('api.into.run'), icon: 'rows-3', loading: state.saving, onClick: () => { if (target.value) into(target.value, mode.value); else overlays.toast.show(t('api.into.pick'), { kind: 'warn' }); } });
           // Geodata answers are shown as a small map above the table (the saved dataset opens as a map).
           const mapSvg = leaflet.tableSvg(r.table, { width: 640, height: 300, limit: 5000 });
@@ -117,7 +119,7 @@
             h('div', { class: 'dm-table-wrap' }, table),
             state.saved ? h('div', { class: 'dm-success' }, h('span', { text: state.saved.text }), h('div', { class: 'dm-row' }, basic.button({ label: t(mapEl ? 'geodata.open.map' : 'import.open.bearbeta'), icon: mapEl ? 'map' : 'pencil', variant: 'primary', onClick: () => { store.set({ selectedId: state.saved.id }); shell.activate('bearbeta'); } })))
               : h('div', { class: 'dm-stack-sm' },
-                h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, saveBtn),
+                h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, saveBtn, planBtn),
                 existing.length ? h('details', { class: 'dm-more' }, h('summary', { text: t('api.into') }), h('div', { class: 'dm-row-wrap dm-api-save' }, target, mode, intoBtn)) : null)));
           requestAnimationFrame(() => table.setData({
             columns: r.table.columns.map((c) => ({ key: c, label: c, type: (r.table.types && r.table.types[c]) || guessType(rows, r.table.columns.indexOf(c)) })),
@@ -132,6 +134,18 @@
           try {
             const meta = await runner.toDataset(state.result.table, { name: name || state.result.name || connector.name, description: descriptionFor(state.result), source: state.result.source });
             state.saved = { id: meta.id, text: t('api.saved', { name: meta.name, rows: i18n.formatNumber(meta.rowCount) }) };
+            shell.log(state.saved.text, 'ok');
+            if (hooks.onDataset) hooks.onDataset(meta);
+          } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+          state.saving = false; renderResult();
+        }
+        /** The answer as a plan dataset (kind plan) instead of a table. */
+        async function saveAsPlan(name) {
+          if (!state.result || state.saving) return;
+          state.saving = true; renderResult();
+          try {
+            const meta = await detaljplanImp.importTable(state.result.table.columns, state.result.table.rows, name || state.result.name || connector.name, Object.assign({ description: descriptionFor(state.result) }, state.result.source || {}));
+            state.saved = { id: meta.id, text: t('plan.saved', { name: meta.name, n: i18n.formatNumber(meta.rowCount) }) };
             shell.log(state.saved.text, 'ok');
             if (hooks.onDataset) hooks.onDataset(meta);
           } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); }

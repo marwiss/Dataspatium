@@ -59,6 +59,11 @@ national geodata catalogue and adds services with one click. Preset geodata sour
 Marine and Water Management, the National Heritage Board, the Forest Agency, Kartverket, Statistics Finland and SYKE,
 plus Lantmäteriet's geodata platform for those with a key. See [kallor.md](kallor.md#open-geodata).
 
+Digital plans are imported as plans: a Swedish detailed plan per the national specification (GeoJSON) or
+Lantmäteriet's reference objects, a comprehensive plan per the specification or Boverket's ÖP model (GeoPackage, the
+choice *The whole comprehensive plan as a plan*). The file is recognised by its contents, the plan's facts are shown
+and the plan opens as a plan map in Process with Boverket's colours (see [planer.md](planer.md)).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and

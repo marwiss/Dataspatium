@@ -1,0 +1,159 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "boverket-planbestammelsekatalogen",
+  "name": "Boverket Planbestämmelsekatalogen",
+  "publisher": "Boverket",
+  "description": "Boverkets katalog över planbestämmelser för detaljplan: slå upp en bestämmelse på dess UUID (den referens som digitala detaljplaner bär), lista releaser, färger, användningsformer, kategorier och symboler. Öppet API utan nyckel; ange Boverket och Planbestämmelsekatalogen som källa. Appen har en inbäddad kopia av katalogen för uppslag utan nät.",
+  "docs": "https://www.boverket.se/sv/om-boverket/oppna-data/planbestammelser/",
+  "license": { "name": "Öppna data (ange Boverket och Planbestämmelsekatalogen som källa)", "url": "https://www.boverket.se/sv/om-boverket/oppna-data/planbestammelser/" },
+  "level": 1,
+  "country": "SE",
+  "baseUrl": "https://api.boverket.se/planbestammelsekatalogen",
+  "auth": { "type": "none" },
+  "rateLimit": { "requests": 5, "perSeconds": 1 },
+  "endpoints": [
+    {
+      "id": "bestammelse",
+      "name": "Bestämmelse (aktuell release)",
+      "description": "En planbestämmelse i platt format: formulering, kod, beteckning, användningsform, kategori, färg, giltighet och Boverkets föreskrift och allmänna råd.",
+      "method": "GET",
+      "path": "/bestammelse/platt/aktuell/{id}",
+      "params": [
+        { "name": "id", "in": "path", "label": "Bestämmelsens UUID", "type": "string", "required": true, "example": "f9e056a6-cda8-4b92-a15d-dc70d61dfa36" }
+      ],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelse {id}" }
+    },
+    {
+      "id": "releaser",
+      "name": "Releaser",
+      "description": "Publicerade releaser av katalogen i fallande ordning.",
+      "method": "GET",
+      "path": "/release",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: releaser" }
+    },
+    {
+      "id": "farger",
+      "name": "Färger",
+      "description": "Värdedomänen för färger på plankartan.",
+      "method": "GET",
+      "path": "/vd/farg",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: färger" }
+    },
+    {
+      "id": "anvandningsformer",
+      "name": "Användningsformer",
+      "description": "Värdedomänen för användningsformer (allmän plats, kvartersmark, vattenområde …).",
+      "method": "GET",
+      "path": "/vd/anvandningsform",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: användningsformer" }
+    },
+    {
+      "id": "kategorier-anvandning",
+      "name": "Kategorier för användningsbestämmelser",
+      "method": "GET",
+      "path": "/vd/kategori/anvandning",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: kategorier (användning)" }
+    },
+    {
+      "id": "kategorier-egenskap",
+      "name": "Kategorier för egenskapsbestämmelser",
+      "method": "GET",
+      "path": "/vd/kategori/egenskap",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: kategorier (egenskap)" }
+    },
+    {
+      "id": "symboler",
+      "name": "Symboler",
+      "description": "Symbolbeteckningar med länkar till raster- och vektorbilder.",
+      "method": "GET",
+      "path": "/vd/symbol",
+      "params": [],
+      "response": { "format": "json" },
+      "dataset": { "name": "Planbestämmelsekatalogen: symboler" }
+    }
+  ],
+  "notes": "Katalogen finns också som inbäddad kopia (release 20251201) för uppslag i planvyn utan nät. Hela katalogen i ett svar (/release/full/platt/aktuell) är 13 MB och hämtas inte här.",
+  "i18n": {
+    "en": {
+      "name": "Boverket Planbestämmelsekatalogen (plan provisions catalogue)",
+      "description": "Boverket's catalogue of detailed-plan provisions: look up a provision by its UUID (the reference digital detailed plans carry), list releases, colours, use forms, categories and symbols. Open API without a key; name Boverket and Planbestämmelsekatalogen as the source. The app ships an embedded copy of the catalogue for offline lookups.",
+      "notes": "The catalogue also exists as an embedded copy (release 20251201) for lookups in the plan view without the net. The whole catalogue in one answer (/release/full/platt/aktuell) is 13 MB and is not fetched here.",
+      "endpoints": {
+        "bestammelse": { "name": "Provision (current release)", "description": "One plan provision in flat form: formulation, code, designation, use form, category, colour, validity and Boverket's regulation and general advice.", "params": { "id": { "label": "The provision's UUID" } } },
+        "releaser": { "name": "Releases", "description": "Published releases of the catalogue, latest first." },
+        "farger": { "name": "Colours", "description": "The value domain of colours on the plan map." },
+        "anvandningsformer": { "name": "Use forms", "description": "The value domain of use forms (public space, block land, water area …)." },
+        "kategorier-anvandning": { "name": "Categories of use provisions" },
+        "kategorier-egenskap": { "name": "Categories of property provisions" },
+        "symboler": { "name": "Symbols", "description": "Symbol designations with links to raster and vector images." }
+      }
+    },
+    "da": {
+      "name": "Boverket Planbestämmelsekatalogen (katalog over planbestemmelser)",
+      "description": "Boverkets katalog over bestemmelser i svenske lokalplaner (detaljplaner): slå en bestemmelse op på dens UUID (den reference digitale planer bærer), vis releaser, farver, anvendelsesformer, kategorier og symboler. Åbent API uden nøgle; angiv Boverket og Planbestämmelsekatalogen som kilde. Appen har en indbygget kopi af kataloget til opslag uden net.",
+      "notes": "Kataloget findes også som indbygget kopi (release 20251201) til opslag i planvisningen uden net. Hele kataloget i ét svar (/release/full/platt/aktuell) er 13 MB og hentes ikke her.",
+      "endpoints": {
+        "bestammelse": { "name": "Bestemmelse (aktuel release)", "description": "En planbestemmelse i fladt format: formulering, kode, betegnelse, anvendelsesform, kategori, farve, gyldighed samt Boverkets forskrift og almindelige råd.", "params": { "id": { "label": "Bestemmelsens UUID" } } },
+        "releaser": { "name": "Releaser", "description": "Publicerede releaser af kataloget, nyeste først." },
+        "farger": { "name": "Farver", "description": "Værdidomænet for farver på plankortet." },
+        "anvandningsformer": { "name": "Anvendelsesformer", "description": "Værdidomænet for anvendelsesformer (offentligt areal, byggegrund, vandområde …)." },
+        "kategorier-anvandning": { "name": "Kategorier for anvendelsesbestemmelser" },
+        "kategorier-egenskap": { "name": "Kategorier for egenskabsbestemmelser" },
+        "symboler": { "name": "Symboler", "description": "Symbolbetegnelser med links til raster- og vektorbilleder." }
+      }
+    },
+    "nb": {
+      "name": "Boverket Planbestämmelsekatalogen (katalog over planbestemmelser)",
+      "description": "Boverkets katalog over bestemmelser i svenske reguleringsplaner (detaljplaner): slå opp en bestemmelse på dens UUID (referansen digitale planer bærer), vis releaser, farger, bruksformer, kategorier og symboler. Åpent API uten nøkkel; oppgi Boverket og Planbestämmelsekatalogen som kilde. Appen har en innebygd kopi av katalogen for oppslag uten nett.",
+      "notes": "Katalogen finnes også som innebygd kopi (release 20251201) for oppslag i planvisningen uten nett. Hele katalogen i ett svar (/release/full/platt/aktuell) er 13 MB og hentes ikke her.",
+      "endpoints": {
+        "bestammelse": { "name": "Bestemmelse (gjeldende release)", "description": "En planbestemmelse i flatt format: formulering, kode, betegnelse, bruksform, kategori, farge, gyldighet samt Boverkets forskrift og allmenne råd.", "params": { "id": { "label": "Bestemmelsens UUID" } } },
+        "releaser": { "name": "Releaser", "description": "Publiserte releaser av katalogen, nyeste først." },
+        "farger": { "name": "Farger", "description": "Verdidomenet for farger på plankartet." },
+        "anvandningsformer": { "name": "Bruksformer", "description": "Verdidomenet for bruksformer (allmenn plass, kvartalsmark, vannområde …)." },
+        "kategorier-anvandning": { "name": "Kategorier for bruksbestemmelser" },
+        "kategorier-egenskap": { "name": "Kategorier for egenskapsbestemmelser" },
+        "symboler": { "name": "Symboler", "description": "Symbolbetegnelser med lenker til raster- og vektorbilder." }
+      }
+    },
+    "fi": {
+      "name": "Boverket Planbestämmelsekatalogen (kaavamääräysluettelo)",
+      "description": "Boverketin luettelo Ruotsin asemakaavojen määräyksistä: hae määräys sen UUID-tunnuksella (digitaalisten kaavojen viite), listaa julkaisut, värit, käyttömuodot, luokat ja symbolit. Avoin API ilman avainta; mainitse lähteenä Boverket ja Planbestämmelsekatalogen. Sovelluksessa on upotettu kopio luettelosta hakuihin ilman verkkoa.",
+      "notes": "Luettelo on myös upotettuna kopiona (julkaisu 20251201) kaavanäkymän hakuihin ilman verkkoa. Koko luettelo yhtenä vastauksena (/release/full/platt/aktuell) on 13 MB eikä sitä noudeta tässä.",
+      "endpoints": {
+        "bestammelse": { "name": "Määräys (nykyinen julkaisu)", "description": "Yksi kaavamääräys litteässä muodossa: muotoilu, koodi, merkintä, käyttömuoto, luokka, väri, voimassaolo sekä Boverketin määräys ja yleinen ohje.", "params": { "id": { "label": "Määräyksen UUID" } } },
+        "releaser": { "name": "Julkaisut", "description": "Luettelon julkaistut versiot, uusin ensin." },
+        "farger": { "name": "Värit", "description": "Kaavakartan värien arvoalue." },
+        "anvandningsformer": { "name": "Käyttömuodot", "description": "Käyttömuotojen arvoalue (yleinen alue, tonttimaa, vesialue …)." },
+        "kategorier-anvandning": { "name": "Käyttömääräysten luokat" },
+        "kategorier-egenskap": { "name": "Ominaisuusmääräysten luokat" },
+        "symboler": { "name": "Symbolit", "description": "Symbolimerkinnät linkkeineen rasteri- ja vektorikuviin." }
+      }
+    },
+    "is": {
+      "name": "Boverket Planbestämmelsekatalogen (skrá yfir skipulagsákvæði)",
+      "description": "Skrá Boverket yfir ákvæði í sænsku deiliskipulagi: finndu ákvæði eftir UUID þess (tilvísunin sem stafrænt skipulag ber), listaðu útgáfur, liti, notkunarform, flokka og tákn. Opið API án lykils; tilgreindu Boverket og Planbestämmelsekatalogen sem heimild. Forritið hefur innbyggt eintak af skránni fyrir uppflettingar án nets.",
+      "notes": "Skráin er einnig til sem innbyggt eintak (útgáfa 20251201) fyrir uppflettingar í skipulagssýninni án nets. Öll skráin í einu svari (/release/full/platt/aktuell) er 13 MB og er ekki sótt hér.",
+      "endpoints": {
+        "bestammelse": { "name": "Ákvæði (gildandi útgáfa)", "description": "Eitt skipulagsákvæði á flötu sniði: orðalag, kóði, merking, notkunarform, flokkur, litur, gildistími og reglugerð og almenn ráð Boverket.", "params": { "id": { "label": "UUID ákvæðisins" } } },
+        "releaser": { "name": "Útgáfur", "description": "Birtar útgáfur skrárinnar, nýjasta fyrst." },
+        "farger": { "name": "Litir", "description": "Gildissvið lita á skipulagskortinu." },
+        "anvandningsformer": { "name": "Notkunarform", "description": "Gildissvið notkunarforma (almennt svæði, lóðarland, vatnasvæði …)." },
+        "kategorier-anvandning": { "name": "Flokkar notkunarákvæða" },
+        "kategorier-egenskap": { "name": "Flokkar eiginleikaákvæða" },
+        "symboler": { "name": "Tákn", "description": "Táknmerkingar með tenglum á raster- og vektormyndir." }
+      }
+    }
+  }
+}

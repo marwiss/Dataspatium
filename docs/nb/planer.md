@@ -1,0 +1,67 @@
+# Planer: digitale reguleringsplaner og kommuneplaner
+
+Dataspatium åpner digitale planer som planer: en svensk detaljplan (reguleringsplan) tegnes som plankart med
+Boverkets farger og betegnelser, bestemmelsene listes og slås opp i Boverkets katalog over planbestemmelser
+(Planbestämmelsekatalogen), og en översiktsplan (kommuneplan) vises tema for tema. Planen er et datasett av typen
+*plan*: ett planobjekt per rad (planområdet og hver bestemmelse eller hvert innholdsobjekt) med geometri i WGS 84,
+planens opplysninger i metadata og originalfilen lagret i datasettet. Tabellen er alltid ett klikk unna.
+
+## Formater som leses
+
+| Format | Gjenkjennes på | Innhold |
+|---|---|---|
+| Nasjonal spesifikasjon Detaljplan (Lantmäteriet, versjon 4) | GeoJSON med `feature:typ` (detaljplan, anvandningsbestammelse, egenskapsbestammelse, administrativBestammelse, beslutsinformation, planbestammelsebeskrivning) eller `feature:mediatyp application/vnd.lm.detaljplan.v4+json` | Planområde, bestemmelser med katalogreferanse, formulering og verdi, beslutningsopplysninger (påbegynt, vedtatt, rettskraft, gjennomføringstid), begrunnelser |
+| Referanseobjekter fra den nasjonale geodataplattformen | STAC-objekter med `properties.detaljplan` og `properties.planbestammelse` (svaret fra Lantmäteriets reguleringsplan-API) | Planens opplysninger, bestemmelsenes formulering, katalogreferanse, kategori og verdi |
+| Nasjonal spesifikasjon Översiktsplan (testversjon 1.0) | GeoJSON med `feature:typ` oversiktsplan, innehallOP, beslutOP | Planens opplysninger og innholdsobjekter med innholdstype, navn, presisering og planhendelse |
+| Boverkets ÖP-modell (GeoPackage) | Tabeller `innehall_op_<tema>_<geometritype>` og `oversiktsplan` | Alle innholdslag som én plan med tema per lag |
+
+Koordinater i SWEREF 99 TM og de lokale SWEREF 99-sonene (EPSG:3006–3018, lest fra `koordinatsystemPlan`) samt Web
+Mercator regnes om til WGS 84. En GeoJSON-fil gjenkjennes på innholdet, ikke på filendelsen: slipp den i Hent inn,
+så vises planens opplysninger og knappen *Importer*. En GeoPackage-fil i ÖP-modellen får valget *Hele kommuneplanen
+som plan*; avslått importeres én tabell om gangen som før.
+
+Fra Lantmäteriets reguleringsplan-API (kilden *Lantmäteriet geodataplattformen: detaljplaner*, krever nøkkel fra en
+tilknyttet organisasjon) lagres et svar som plan med knappen *Lagre som plan* i stedet for som tabell.
+
+## Plankartet i Bearbeid
+
+En plan åpnes som plankart: bruksbestemmelsene fylt med Boverkets farger (boliger gul, sentrum brun, industri blågrå,
+gate lysegrå, park lysegrønn, vann blå og så videre etter de allmenne rådene til BFS 2020:5; nyansene er appens),
+egenskapsbestemmelser som blå stiplede konturer, administrative bestemmelser som lilla prikkede, plangrensen i svart
+og betegnelsene som etiketter. Klikk på et objekt, så viser inspektøren opplysningene og hva katalogen sier om
+bestemmelsen: kode, type, gyldighet og katalogens formulering. Lagene slås av og på per type, bakgrunnskart vises
+etter samtykke, og knappene gir *Lagre som kartvisning* (for Visualiser, dashboards og Publiser), *Planbestemmelser*
+(listen som Markdown) og *Vis som tabell*.
+
+En kommuneplan tegnes per tema: areal- og vannbruken fylt per innholdstype, øvrige temaer med én farge per tema og
+valgbar synlighet. Inspektøren viser arealet per areal- og vannbruk.
+
+## Fanen Plan i Analyser
+
+En plan får fanen **Plan** etter Regex:
+
+- **Sammendrag**: planens opplysninger, antall objekter per type, katalogreferansenes status og planens bruksareal.
+- **Bestemmelser**: alle bestemmelser som tabell med betegnelse, formulering, kategori, verdi, kode og katalogstatus;
+  kan lagres som datasett eller lastes ned som Markdown. For en kommuneplan: innholdet per tema.
+- **Arealer**: areal per bruksformål (sum av flatene, regnet i SWEREF 99 TM) og andel av planens bruksareal.
+- **Katalogkontroll**: hver katalogreferanse slås opp i katalogen: gjeldende, erstattet (og av hva), opphørt, ukjent
+  eller manglende, og om formuleringen følger katalogens mal.
+- **Søk i katalogen**: fritekstsøk blant katalogens 3 700 bestemmelser med filter på type, bruksform og gyldighet;
+  resultatet kan lagres som datasett.
+
+## Katalogen over planbestemmelser
+
+Appen har en innebygd kopi av Boverkets Planbestämmelsekatalog (åpne data; release 20251201), slik at oppslag, farger
+og katalogkontroll virker uten nett. Kilden skal oppgis: Boverket og Planbestämmelsekatalogen. Katalogen finnes også
+som kilde i Hent inn (*Boverket Planbestämmelsekatalogen*): slå opp en bestemmelse på dens UUID, vis releaser,
+farger, bruksformer, kategorier og symboler via Boverkets åpne API. Kopien oppdateres med
+`python tools/plan_catalog.py` før en ny utgave.
+
+## Begrensninger
+
+- Boverkets farger er oppgitt som navn i forskriftene; nyansene i appen er egne. Symbolbetegnelser (prikkmark,
+  kryssmark og andre) tegnes som konturer med betegnelse, ikke med Boverkets symboler.
+- Bestemmelsesbeskrivelser, planleggingsgrunnlag og beslutningsdokumenter følger bare med som tekst (begrunnelser)
+  eller som opplysninger i planens metadata; dokumentene hentes ikke.
+- Arealer er plane beregninger i SWEREF 99 TM; for planer i lokale soner er feilen ubetydelig.
+- Lantmäteriets reguleringsplan-API krever nøkkel; appen er testet mot den dokumenterte modellen med egne testdata.

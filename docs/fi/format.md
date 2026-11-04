@@ -58,6 +58,11 @@ karttojen rajat GeoJSON-muodossa pituus- ja leveysasteina: Ruotsin kunnat ja lä
 (DAGI), Norjan kunnat ja läänit (Kartverket, CC BY 4.0) sekä Suomen kunnat ja maakunnat (Tilastokeskus, CC BY 4.0).
 Lähteet ja lisenssit ovat tiedostossa `presets/geo/KALLA.md`. Mitään ei noudeta verkosta.
 
+**Digitaaliset kaavat** (tyyppi kaava): ruotsalaiset asemakaavat Lantmäterietin kansallisen määrittelyn mukaan
+(GeoJSON, `feature:typ`), viitekohteet kansalliselta paikkatietoalustalta, yleiskaavat määrittelyn testiversion mukaan
+(GeoJSON) ja Boverketin ÖP-malli (GeoPackage, jossa `innehall_op_*`). Tunnistetaan sisällöstä ja avataan
+kaavakarttana; katso [planer.md](planer.md).
+
 ## Merkistökoodaus
 
 Tekstitiedostot tarkistetaan tässä järjestyksessä: tavujärjestysmerkki (UTF-8, UTF-16), UTF-16 ilman BOM:ia (paljon

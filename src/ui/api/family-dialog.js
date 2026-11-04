@@ -1,19 +1,32 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * "Lägg till databaskälla" in Inhämta: pick a database family (api/families/databases), enter its address and
- * key, and get a connector with one endpoint per discovered table plus a generic one. The CORS requirement and
- * the documentation link of the family are shown; keys stay in the session (api/secrets).
+ * "Lägg till databaskälla" and "Lägg till geodatakälla" in Inhämta: pick a family (api/families/databases or
+ * api/families/geodata), enter its address and key, and get a connector with one endpoint per discovered table or
+ * layer plus a generic one. The geodata dialog also lists the ready-made open geodata services (presets/geodata/
+ * services.json, all verified to allow requests from the browser): a preset opens, any other is added with one click.
+ * The CORS requirement and the documentation link of the family are shown; keys stay in the session (api/secrets).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/databases', 'api/families/geodata'], (base, basic, overlays, families, geodata) => {
-    const { h, t, replace } = base;
+  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'api/families/databases', 'api/families/geodata', 'api/connectors'], (base, basic, overlays, icons, families, geodata, connectors) => {
+    const { h, t, i18n, replace } = base;
+    const SERVICES_ASSET = 'presets/geodata/services.json';
     /** Both groups of families share the dialog: databases (tables) and geodata services (layers with geometry). */
     const ALL = () => families.FAMILIES.concat(geodata.FAMILIES);
     const byId = (id) => families.byId(id) || geodata.byId(id);
     const createFor = (id, values) => (geodata.byId(id) ? geodata.createConnector(id, values) : families.createConnector(id, values));
+    /** @type {Promise<any[]>|null} */ let servicesLoading = null;
+    let servicesOverride = null;
+    /** The ready-made geodata services (tests may replace the list with setServices). */
+    function services() {
+      if (servicesOverride) return Promise.resolve(servicesOverride);
+      if (!servicesLoading) servicesLoading = D.assets.loadText(SERVICES_ASSET).then((text) => JSON.parse(text).services || []).catch((err) => { servicesLoading = null; D.log('geodata', 'services list unavailable', err); return []; });
+      return servicesLoading;
+    }
+    function setServices(list) { servicesOverride = Array.isArray(list) ? list : null; }
+    const aboutOf = (svc) => { const a = svc.about || {}; return a[i18n.language()] || a.sv || ''; };
 
     /**
      * @param {any} ctx the mode context (shell for the log)
@@ -23,7 +36,7 @@
     function open(ctx, options = {}) {
       const group = options.group || (geodata.byId(options.family || '') ? 'geodata' : 'databases');
       const list = () => (group === 'geodata' ? geodata.FAMILIES : families.FAMILIES);
-      const state = { family: options.family || list()[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '' };
+      const state = { family: options.family || list()[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '', filter: '', services: null, adding: '' };
       const body = h('div', { class: 'dm-stack' });
       let finish = null;
 
@@ -41,6 +54,8 @@
           return inp;
         });
         replace(body,
+          group === 'geodata' ? readyServices() : null,
+          group === 'geodata' ? h('h3', { class: 'dm-small', text: t('geodata.own.title') }) : null,
           sel,
           h('p', { class: 'dm-help', text: t('families.' + fam.id + '.desc') }),
           h('div', { class: 'dm-form-grid' }, fields),
@@ -49,26 +64,70 @@
           state.error ? h('p', { class: 'dm-error', text: state.error }) : null,
           h('div', { class: 'dm-row' }, basic.button({ label: t('families.add'), icon: 'plus', variant: 'primary', loading: state.busy, onClick: create })));
       }
+      /** The list of verified open geodata services: presets open, the others are added with one click. */
+      function readyServices() {
+        const box = h('div', { class: 'dm-stack-sm dm-geodata-ready' });
+        const filter = /** @type {any} */ (h('dm-input', { label: t('geodata.ready.filter'), placeholder: t('geodata.ready.filter.placeholder'), inline: true }));
+        filter.value = state.filter;
+        filter.addEventListener('input', () => { state.filter = filter.value; renderList(); });
+        const listEl = h('div', { class: 'dm-list dm-geodata-ready-list' });
+        const renderList = () => {
+          const all = state.services || [];
+          const q = state.filter.trim().toLowerCase();
+          const shown = q ? all.filter((s) => `${s.name} ${s.publisher} ${aboutOf(s)} ${t('country.' + s.country)} ${s.kind}`.toLowerCase().includes(q)) : all;
+          replace(listEl, shown.length ? shown.map(serviceItem) : h('p', { class: 'dm-help dm-small', text: state.services ? t('geodata.ready.none') : t('common.loading') }));
+        };
+        replace(box, h('h3', { class: 'dm-small', text: t('geodata.ready.title') }), h('p', { class: 'dm-help dm-xs', text: t('geodata.ready.hint') }), filter, listEl);
+        if (!state.services) services().then((svcs) => { state.services = svcs; renderList(); });
+        else renderList();
+        return box;
+      }
+      function serviceItem(svc) {
+        const busy = state.adding === svc.id;
+        const sub = [t('country.' + svc.country), svc.publisher, t('geodata.badge.' + svc.kind) || svc.kind, svc.key ? t('api.level2') : null].filter(Boolean).join(' · ');
+        return h('div', { class: 'dm-list-item dm-list-item-static dm-geodata-ready-item' },
+          icons.icon(svc.kind === 'geoportal' ? 'search' : svc.kind === 'arcgis' ? 'layers' : 'map', 16),
+          h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: svc.name }), h('span', { class: 'dm-list-sub dm-truncate', text: sub }), aboutOf(svc) ? h('span', { class: 'dm-list-sub', text: aboutOf(svc) }) : null),
+          basic.button({ label: t(svc.preset ? 'geodata.ready.open' : 'geodata.ready.add'), icon: svc.preset ? 'arrow-right' : 'plus', size: 'sm', variant: svc.preset ? 'ghost' : 'default', loading: busy, title: svc.url, onClick: () => useService(svc) }));
+      }
+      /** A preset opens as it is; another service becomes a connector of its family with the address filled in. */
+      async function useService(svc) {
+        if (state.busy || state.adding) return;
+        if (svc.preset) {
+          const existing = await connectors.get(svc.preset);
+          if (existing) { if (finish) finish(existing); return; }
+        }
+        if (!geodata.byId(svc.kind)) { state.error = t('geodata.ready.unsupported'); render(); return; }
+        state.adding = svc.id; state.error = ''; render();
+        try {
+          const res = await createFor(svc.kind, { baseUrl: svc.url, name: svc.name });
+          announce(res);
+          if (finish) finish(res.connector);
+        } catch (err) { state.adding = ''; state.error = (err && err.message) || String(err); render(); }
+      }
+      function announce(res) {
+        const msg = t('families.created', { name: res.connector.name, n: res.entities.length });
+        if (ctx && ctx.shell) ctx.shell.log(msg, 'ok');
+        overlays.toast.show(msg, { kind: 'ok' });
+        if (res.discoveryError) {
+          const warn = t('families.discover.failed', { message: res.discoveryError });
+          if (ctx && ctx.shell) ctx.shell.log(warn, 'warn');
+          overlays.toast.show(warn, { kind: 'warn', timeout: 10000 });
+        }
+      }
       async function create() {
         if (state.busy) return;
         state.busy = true; state.error = ''; render();
         try {
           const res = await createFor(state.family, state.values);
-          const msg = t('families.created', { name: res.connector.name, n: res.entities.length });
-          if (ctx && ctx.shell) ctx.shell.log(msg, 'ok');
-          overlays.toast.show(msg, { kind: 'ok' });
-          if (res.discoveryError) {
-            const warn = t('families.discover.failed', { message: res.discoveryError });
-            if (ctx && ctx.shell) ctx.shell.log(warn, 'warn');
-            overlays.toast.show(warn, { kind: 'warn', timeout: 10000 });
-          }
+          announce(res);
           if (finish) finish(res.connector);
         } catch (err) { state.busy = false; state.error = (err && err.message) || String(err); render(); }
       }
       render();
-      return overlays.dialog.open({ title: t(group === 'geodata' ? 'geodata.add.title' : 'families.title'), help: group === 'geodata' ? 'kallor#oppna-geodata' : 'kallor', size: 'lg', body: (done) => { finish = done; return body; }, actions: [{ label: t('common.cancel'), value: null }] })
+      return overlays.dialog.open({ title: t(group === 'geodata' ? 'geodata.add.title' : 'families.title'), help: group === 'geodata' ? 'kallor#öppna-geodata' : 'kallor', size: 'lg', body: (done) => { finish = done; return body; }, actions: [{ label: t('common.cancel'), value: null }] })
         .then((result) => (result && typeof result === 'object' ? result : null));
     }
-    return { open, ALL, byId };
+    return { open, ALL, byId, services, setServices, SERVICES_ASSET };
   });
 })();

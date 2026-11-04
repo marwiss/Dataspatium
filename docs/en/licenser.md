@@ -43,6 +43,7 @@ licence. Each library, its version and licence are listed in
 | Python (Pyodide, CPython and packages such as numpy, pandas and matplotlib; fetched on demand, not in the folder) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), the matplotlib licence (PSF-based), MIT and similar for the rest | Fetched unchanged from jsDelivr and kept in the browser; the source code is with the Pyodide project and on PyPI in the versions named in the app's catalogue (Pyodide 314.0.7) |
 | pdf.js 3.11 (reads PDF files) with its standard fonts | Apache-2.0 (pdf.js), BSD-3-Clause (Foxit fonts), SIL Open Font License 1.1 (Liberation Sans) | Free to use and distribute with the licence text and notices; the fonts may be embedded |
 | Leaflet 1.9 (maps) and Turf 7 (geo tools) | BSD-2-Clause (Leaflet), MIT (Turf) | Free to use and distribute with the licence text and notices |
+| Boverket's Planbestämmelsekatalog (embedded copy, `presets/plan/`) | Open data from Boverket | Free to use and distribute; Boverket and Planbestämmelsekatalogen must be named as the source |
 | plotly.js (fetched on demand for plotly charts), seaborn and plotly (Python wheels from PyPI, fetched on demand) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Fetched unchanged from jsDelivr and PyPI, pinned to version and digest, and kept in the browser |
 
 Dataspatium's code does not link against R. R runs as a separate interpreter in a worker and exchanges R code, SQLite

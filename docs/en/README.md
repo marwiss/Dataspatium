@@ -77,6 +77,10 @@ with a backup or a bundle.
 - **Open geodata**: WFS, OGC API Features and ArcGIS services become sources whose layers are fetched as maps, with
   presets for SCB, SGU, HaV, RAÄ, the Forest Agency, Kartverket, Statistics Finland and SYKE, search in
   Geodataportalen, and WMS services as background map or layer (see [kallor.md](kallor.md)).
+- **Plans**: Swedish digital detailed plans (the national specification, Lantmäteriet's geodata platform) open as plan
+  maps with Boverket's colours and designations, the provisions are looked up in Boverket's catalogue of plan provisions
+  (embedded copy), and comprehensive plans (the specification or Boverket's ÖP model) are shown theme by theme (see
+  [planer.md](planer.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

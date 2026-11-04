@@ -105,6 +105,15 @@ er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan brukes i egne
 
 ## Åpne geodata
 
+Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og
+ArcGIS-tjenester fra nordiske etater og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
+Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
+Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrollert å virke fra
+nettleseren. En forhåndsinnstilt kilde åpnes, de øvrige legges til med ett klikk, og lagene leses fra tjenesten;
+filtrer på navn, land eller innhold. Listen ligger i `presets/geodata/services.json`. Under listen finnes feltene for en
+egen tjeneste. Boverkets Planbestämmelsekatalog finnes som vanlig API-kilde (*Boverket Planbestämmelsekatalogen*), se
+[planer.md](planer.md).
+
 Knappen **Legg til geodatakilde** under *Databaser* i Hent inn gjør en vanlig API-kilde av adressen til en geodatatjeneste,
 på samme måte som databasekildene. Appen leser tjenestens lag og legger et endepunkt per lag pluss et allment der du
 oppgir laget selv. Svarene er GeoJSON i WGS 84: datasettet får en geometrikolonne og åpnes som kart i Bearbeid (se

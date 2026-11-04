@@ -59,6 +59,11 @@ kartor som GeoJSON i longitud och latitud: kommuner och län i Sverige (SCB, CC0
 (DAGI), kommuner och fylken i Norge (Kartverket, CC BY 4.0) samt kommuner och landskap i Finland
 (Statistikcentralen, CC BY 4.0). Källor och licenser står i `presets/geo/KALLA.md`. Ingenting hämtas från nätet.
 
+**Digitala planer** (slaget plan): detaljplaner enligt Lantmäteriets nationella specifikation (GeoJSON, `feature:typ`),
+referensobjekt från Nationella geodataplattformen, översiktsplaner enligt specifikationens testversion (GeoJSON) och
+Boverkets ÖP-modell (GeoPackage med `innehall_op_*`). Känns igen på innehållet och öppnas som plankarta; se
+[planer.md](planer.md).
+
 ## Teckenkodning
 
 Textfiler kontrolleras i denna ordning: byte order mark (UTF-8, UTF-16), UTF-16 utan BOM (många nollbytes),

@@ -56,6 +56,11 @@ geodatakatalogen og legger til tjenester med ett klikk. Forhåndsinnstilte geoda
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE samt Lantmäteriets
 geodataplattform for den som har nøkkel. Se [kallor.md](kallor.md#åpne-geodata).
 
+Digitale planer importeres som planer: en svensk detaljplan etter den nasjonale spesifikasjonen (GeoJSON) eller
+Lantmäteriets referanseobjekter, en kommuneplan etter spesifikasjonen eller Boverkets ÖP-modell (GeoPackage, valget
+*Hele kommuneplanen som plan*). Filen gjenkjennes på innholdet, planens opplysninger vises, og planen åpnes som
+plankart i Bearbeid med Boverkets farger (se [planer.md](planer.md)).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha

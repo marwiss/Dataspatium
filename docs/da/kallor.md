@@ -105,6 +105,15 @@ kolonner) er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan bru
 
 ## Åbne geodata
 
+Dialogen *Tilføj geodatakilde* begynder med en liste over **færdige geodatakilder**: åbne WFS-, OGC API Features- og
+ArcGIS-tjenester fra nordiske myndigheder og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsinki, Väylävirasto,
+Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrolleret til at virke
+fra browseren. En forudindstillet kilde åbnes, de øvrige tilføjes med ét klik, og lagene læses fra tjenesten; filtrér
+på navn, land eller indhold. Listen ligger i `presets/geodata/services.json`. Under listen findes felterne til en egen
+tjeneste. Boverkets Planbestämmelsekatalog findes som almindelig API-kilde (*Boverket Planbestämmelsekatalogen*), se
+[planer.md](planer.md).
+
 Knappen **Tilføj geodatakilde** under *Databaser* i Indsaml gør en almindelig API-kilde af adressen til en geodatatjeneste,
 på samme måde som databasekilderne. Appen læser tjenestens lag og lægger et endepunkt pr. lag plus et alment, hvor du
 angiver laget selv. Svarene er GeoJSON i WGS 84: datasættet får en geometrikolonne og åbnes som kort i Bearbejd (se

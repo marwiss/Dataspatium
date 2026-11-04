@@ -18,7 +18,7 @@
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
     /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
-    const KINDS = ['table', 'graph', 'document', 'images', 'model'];
+    const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan'];
 
     // ---- folders and tags: how the dataset list is organised; stored in _meta, so they travel with the file ----
     /** A folder path: segments separated by "/", trimmed, without empty segments; '' is the root. */

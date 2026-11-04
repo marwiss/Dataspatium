@@ -59,6 +59,11 @@ municipalities and regions in Denmark (DAGI), municipalities and counties in Nor
 municipalities and regions in Finland (Statistics Finland, CC BY 4.0). Sources and licences are in
 `presets/geo/KALLA.md`. Nothing is fetched from the internet.
 
+**Digital plans** (kind plan): Swedish detailed plans per Lantmäteriet's national specification (GeoJSON,
+`feature:typ`), reference objects from the national geodata platform, comprehensive plans per the specification's test
+version (GeoJSON) and Boverket's ÖP model (GeoPackage with `innehall_op_*`). Recognised by their contents and opened
+as a plan map; see [planer.md](planer.md).
+
 ## Character encoding
 
 Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain

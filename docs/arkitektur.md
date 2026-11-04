@@ -336,6 +336,20 @@ förhandsvisas som liten karta med `viz/leaflet.tableSvg`.
 UI:t ligger i `src/ui/viz/` (byggarens kontroller, D3-formulär, R-panel, galleri, export- och batchdialog) och
 monteras av läget Visualisera; Exportera återanvänder dialogerna.
 
+### Planer
+
+Datamängdsslaget `plan` följer mönstret för dokument och bilder: `io/importers/detaljplan` skapar planen med
+`dataset-files.createDataset` (kind `plan`, originalfilen i `_files`, planens uppgifter i `_meta.plan`), Bearbeta öppnar
+den i `ui/bearbeta/plan-view` och Analysera får fliken Plan (`ui/analysis/plan-panel`). All tolkning ligger i `data/plan`:
+igenkänning av Lantmäteriets referensobjekt (STAC), den nationella specifikationens GeoJSON-utbytesmodell (`feature:typ`,
+geometrier i `plangeometri`/`bestammelsegeometri` med `koordinatsystemPlan`) och översiktsplanens utbytesmodell samt
+Boverkets ÖP-modell (GeoPackage-tabeller `innehall_op_*`), rader med fasta kolumner och geometri i WGS 84, färger via
+`data/plan-catalog` (inbäddad kopia av Boverkets Planbestämmelsekatalog, gzip+base64-resurs byggd av
+`tools/plan_catalog.py`), areor i SWEREF 99 TM, katalogkontroll och bestämmelselista. JSON-filer väljs av
+`io/import.resolveImporter` genom att sniffa filens början, så att vanliga GeoJSON-filer förblir tabeller; ÖP-GeoPackage
+känns igen på tabellnamnen och importeras helt när `options.plan` är satt. `data/geo.toWgs84(geometry, crs)` räknar om
+SWEREF 99 TM, de lokala zonerna (EPSG:3007–3018) och Web Mercator.
+
 ### Kartor
 
 `viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är

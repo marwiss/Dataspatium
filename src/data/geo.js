@@ -107,6 +107,23 @@
     const FALSE_E = 500000;
     const FALSE_N = 0;
     const DEG = Math.PI / 180;
+    /** The SWEREF 99 projections: TM and the twelve local zones (central meridian, scale, false easting), by EPSG code. */
+    const SWEREF_ZONES = {
+      3006: { lon0: 15, k0: 0.9996, falseE: 500000 },
+      3007: { lon0: 12, k0: 1, falseE: 150000 }, 3008: { lon0: 13.5, k0: 1, falseE: 150000 }, 3009: { lon0: 15, k0: 1, falseE: 150000 },
+      3010: { lon0: 16.5, k0: 1, falseE: 150000 }, 3011: { lon0: 18, k0: 1, falseE: 150000 }, 3012: { lon0: 14.25, k0: 1, falseE: 150000 },
+      3013: { lon0: 15.75, k0: 1, falseE: 150000 }, 3014: { lon0: 17.25, k0: 1, falseE: 150000 }, 3015: { lon0: 18.75, k0: 1, falseE: 150000 },
+      3016: { lon0: 20.25, k0: 1, falseE: 150000 }, 3017: { lon0: 21.75, k0: 1, falseE: 150000 }, 3018: { lon0: 23.25, k0: 1, falseE: 150000 },
+    };
+    /** EPSG code of a CRS given as a number, "EPSG:3007", "urn:ogc:def:crs:EPSG::3007" or "SWEREF99 13 30"; 3006 for anything else. */
+    function swerefZone(crs) {
+      if (crs === null || crs === undefined || crs === '') return 3006;
+      const m = /(\d{4})\s*$/.exec(String(crs).trim());
+      if (m && SWEREF_ZONES[Number(m[1])]) return Number(m[1]);
+      const z = /sweref\s*99\s*(\d{2})\s*(\d{2})/i.exec(String(crs));
+      if (z) { const lon0 = Number(z[1]) + Number(z[2]) / 60; const hit = Object.keys(SWEREF_ZONES).find((k) => Number(k) !== 3006 && SWEREF_ZONES[k].lon0 === lon0); if (hit) return Number(hit); }
+      return 3006;
+    }
     function tmConstants() {
       const e2 = F * (2 - F);
       const n = F / (2 - F);
@@ -114,11 +131,12 @@
       return { e2, n, aHat };
     }
 
-    /** SWEREF 99 TM easting/northing in metres -> [longitude, latitude] in degrees. */
-    function swerefToWgs84(x, y) {
+    /** SWEREF 99 easting/northing in metres -> [longitude, latitude] in degrees; `epsg` picks the zone (default TM). */
+    function swerefToWgs84(x, y, epsg) {
+      const zone = SWEREF_ZONES[epsg] || SWEREF_ZONES[3006];
       const { e2, n, aHat } = tmConstants();
-      const xi = (y - FALSE_N) / (K0 * aHat);
-      const eta = (x - FALSE_E) / (K0 * aHat);
+      const xi = (y - FALSE_N) / (zone.k0 * aHat);
+      const eta = (x - zone.falseE) / (zone.k0 * aHat);
       const d1 = n / 2 - (2 * n ** 2) / 3 + (37 * n ** 3) / 96 - (n ** 4) / 360;
       const d2 = (n ** 2) / 48 + (n ** 3) / 15 - (437 * n ** 4) / 1440;
       const d3 = (17 * n ** 3) / 480 - (37 * n ** 4) / 840;
@@ -133,7 +151,7 @@
       const dS = -(4279 * e2 ** 4) / 1260;
       const s = Math.sin(phiStar);
       const phi = phiStar + s * Math.cos(phiStar) * (aS + bS * s ** 2 + cS * s ** 4 + dS * s ** 6);
-      return [LON0 + dLon / DEG, phi / DEG];
+      return [zone.lon0 + dLon / DEG, phi / DEG];
     }
 
     /** [longitude, latitude] in degrees -> SWEREF 99 TM [easting, northing] in metres. */
@@ -166,11 +184,22 @@
       return Object.assign({}, geometry, { coordinates: walk(geometry.coordinates || []) });
     }
 
-    /** Projected geometry (assumed SWEREF 99 TM, the Swedish standard) -> WGS 84; degrees pass through. */
-    function toWgs84(geometry) {
-      return isProjected([geometry]) ? mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1])) : geometry;
+    /**
+     * Projected geometry -> WGS 84; degrees pass through. Without `crs` the geometry is taken as SWEREF 99 TM (the
+     * Swedish standard); a CRS of a local SWEREF 99 zone (EPSG:3007–3018) selects that zone.
+     */
+    function toWgs84(geometry, crs) {
+      if (!isProjected([geometry])) return geometry;
+      if (/3857|900913|pseudo-?mercator|web ?mercator/i.test(String(crs || ''))) return mapCoordinates(geometry, (c) => mercatorToWgs84(c[0], c[1]));
+      const epsg = swerefZone(crs);
+      return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], epsg));
+    }
+    /** Web Mercator (EPSG:3857) metres -> [longitude, latitude]. */
+    function mercatorToWgs84(x, y) {
+      const R = 6378137;
+      return [(x / R) / DEG, Math.atan(Math.sinh(y / R)) / DEG];
     }
 
-    return { parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, mapCoordinates, toWgs84 };
+    return { SWEREF_ZONES, swerefZone, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, mercatorToWgs84, mapCoordinates, toWgs84 };
   });
 })();

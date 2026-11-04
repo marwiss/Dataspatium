@@ -101,6 +101,15 @@ kolumner) beskrivs i [api-konfiguration.md](api-konfiguration.md) och kan använ
 
 ## Öppna geodata
 
+Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
+och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
+Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
+fungera från webbläsaren. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
+tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns
+fälten för en egen tjänst. Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket
+Planbestämmelsekatalogen*), se [planer.md](planer.md).
+
 Knappen **Lägg till geodatakälla** under *Databaser* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
 på samma sätt som databaskällorna. Appen läser tjänstens lager och lägger en ändpunkt per lager plus en allmän där du
 anger lagret själv. Svaren är GeoJSON i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se

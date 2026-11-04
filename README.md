@@ -82,6 +82,9 @@ ett paket.
 - **Öppna geodata**: WFS-, OGC API Features- och ArcGIS-tjänster blir källor vars lager hämtas som kartor, med
   förinställningar för SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, sökning i
   Geodataportalen och WMS-tjänster som bakgrundskarta eller lager (se [docs/kallor.md](docs/kallor.md)).
+- **Planer**: digitala detaljplaner (nationella specifikationen, Lantmäteriets geodataplattform) öppnas som plankartor
+  med Boverkets färger och beteckningar, bestämmelserna slås upp i Boverkets Planbestämmelsekatalog (inbäddad kopia),
+  och översiktsplaner (specifikationen eller Boverkets ÖP-modell) visas tema för tema (se [docs/planer.md](docs/planer.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

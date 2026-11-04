@@ -15,7 +15,7 @@
   D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'platform/storage/idb'], (base, icons, idb) => {
     const { h, t, i18n, replace } = base;
     /** Icon per dataset kind (data/datasets KINDS); tables and unknown kinds share the table icon. */
-    const KIND_ICONS = { table: 'table', document: 'file-text', images: 'images', graph: 'share-2', model: 'package' };
+    const KIND_ICONS = { table: 'table', document: 'file-text', images: 'images', graph: 'share-2', model: 'package', plan: 'layers' };
     function kindIcon(kind) { return KIND_ICONS[kind] || 'table'; }
     /** One line about a dataset's size: documents and pages for a document collection, pictures for an image collection, rows and columns otherwise. */
     function kindSummary(ds) {
@@ -24,6 +24,8 @@
         return t('datasets.sub.document', { n: i18n.formatNumber(docs.length), pages: i18n.formatNumber(docs.reduce((s, d) => s + (Number(d.pages) || 0), 0)) });
       }
       if (ds.kind === 'images') return t('datasets.sub.images', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) });
+      // A plan is counted in plan objects (provisions or contents), under its kind of plan.
+      if (ds.kind === 'plan') return `${t('plan.slag.' + (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan'))} · ${t('plan.objects.n', { n: i18n.formatNumber(ds.rowCount || 0) })}`;
       return `${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`;
     }
     const COLLAPSED_SETTING = 'ui.folders.collapsed';

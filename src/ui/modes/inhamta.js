@@ -11,11 +11,11 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'r', 'documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step). */
     const COLLECTIONS = ['documents', 'images'];
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
@@ -298,7 +298,7 @@
         if (list.length > 1 && !collection) ui.toast.show(t('import.multi.first', { name: list[0].name }), { kind: 'info', timeout: 8000 });
         wiz.files = collection && list.length > 1 ? list : [];
         wiz.file = list[0]; wiz.handle = null; wiz.text = ''; wiz.name = '';
-        wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+        wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.nameFromPlan = false;
         if (wiz.files.length) wiz.name = t('import.collection.' + collection.id, { n: list.length });
         await runPreview();
       }
@@ -409,7 +409,7 @@
       async function pickLinked() {
         try {
           const { handle, file } = await linked.pick();
-          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.nameFromPlan = false;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
@@ -496,8 +496,36 @@
         }
         if (wiz.options.format === 'sqlite' && p) {
           if (p.dataspatium) left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.sqlite.dataspatium') }));
-          else if (p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
+          else {
+            // A GeoPackage in Boverket's ÖP model: the whole comprehensive plan as one plan dataset, or one table.
+            if (p.oversiktsplan) {
+              if (wiz.options.plan === undefined) wiz.options.plan = true;
+              const sw = /** @type {any} */ (h('dm-switch', { label: t('plan.import.op') }));
+              sw.checked = !!wiz.options.plan;
+              sw.addEventListener('change', () => { wiz.options.plan = sw.checked; render(); });
+              left.appendChild(sw);
+              left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.op.hint') }));
+            }
+            if (!wiz.options.plan && p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
+          }
         }
+        const planFile = !!(p && p.kind === 'plan' && wiz.options.format === 'detaljplan');
+        if (planFile) {
+          const info = p.plan || {};
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('plan.field.slag'), value: t('plan.slag.' + (info.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) },
+            info.namn ? { label: t('common.name'), value: info.namn } : null,
+            info.beteckning ? { label: t('plan.field.beteckning'), value: info.beteckning } : null,
+            info.kommun || info.kommunkod ? { label: t('plan.field.kommun'), value: [info.kommun, info.kommunkod].filter(Boolean).join(' ') } : null,
+            info.status ? { label: t('plan.field.status'), value: info.status } : null,
+            { label: t('plan.field.objects'), value: i18n.formatNumber(p.totalRows || 0) },
+            { label: t('plan.field.format'), value: t('plan.format.' + (p.planFormat || 'detaljplan')) },
+          ].filter(Boolean);
+          left.appendChild(h('div', { class: 'dm-card' }, kv));
+          left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.hint') }));
+        }
+        const opPlan = !!(wiz.options.format === 'sqlite' && p && p.oversiktsplan && wiz.options.plan);
         if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }
@@ -524,8 +552,9 @@
           left.appendChild(header);
         }
         if (!TYPED.includes(wiz.options.format)) left.appendChild(select(t('import.decimal'), DECIMALS, wiz.options.decimal, (v) => { wiz.options.decimal = v; schedulePreview(); }));
-        if (viaR || collection) {
-          // No column step: R reads the file and dm_write() sets the types; documents and pictures have fixed columns.
+        if (viaR || collection || planFile || opPlan) {
+          // No column step: R reads the file and dm_write() sets the types; documents, pictures and plans have fixed columns.
+          if ((planFile || opPlan) && !wiz.nameFromPlan && p && p.datasetName) { wiz.name = p.datasetName; wiz.nameFromPlan = true; }
           const name = /** @type {any} */ (h('dm-input', { label: t('import.name'), value: wiz.name }));
           name.addEventListener('input', () => { wiz.name = name.value; });
           left.appendChild(name);
@@ -539,7 +568,7 @@
         if (wiz.error) left.appendChild(h('p', { class: 'dm-error dm-small', text: wiz.error }));
         left.appendChild(h('div', { class: 'dm-row' },
           ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
-          (viaR || collection) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
+          (viaR || collection || planFile || opPlan) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
             : ui.button({ label: t('common.next'), icon: 'chevron-right', variant: 'primary', disabled: !p || !p.columns.length || wiz.busy, onClick: () => { wiz.step = 'columns'; render(); } })));
         const right = h('div', { class: 'dm-table-wrap' },
           h('h3', { text: t('import.preview', { n: p ? p.dataRows.length : 0 }) }),

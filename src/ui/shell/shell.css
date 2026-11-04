@@ -199,6 +199,20 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-api-view .dm-api-fields { align-items: start; }
 .dm-api-save { align-items: flex-end; }
 .dm-api-save dm-input, .dm-api-save dm-select { min-width: 220px; flex: 1 1 220px; }
+/* Plans: designation labels on the plan map, the legend and the provision lists in the inspector. */
+.dm-plan-label-wrap { background: transparent; border: 0; }
+.dm-plan-label { display: inline-block; transform: translate(-50%, -50%); font: 600 var(--dm-text-xs) var(--dm-font-sans); color: var(--dm-text); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: 0 var(--dm-s-1); white-space: nowrap; pointer-events: none; opacity: 0.92; }
+.dm-plan-label-use { font-size: var(--dm-text-sm); background: transparent; border-color: transparent; text-shadow: 0 0 3px var(--dm-surface), 0 0 3px var(--dm-surface); }
+.dm-plan-legend .dm-plan-legend-text { display: flex; gap: var(--dm-s-1); min-width: 0; align-items: baseline; }
+.dm-plan-provisions { margin: 0; padding-left: var(--dm-s-4); font-size: var(--dm-text-sm); display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-plan-provisions li { cursor: pointer; }
+.dm-plan-provisions li:hover { color: var(--dm-accent); }
+.dm-plan-layers dm-switch { display: block; }
+/* The ready-made geodata services in the dialog Lägg till geodatakälla. */
+.dm-geodata-ready-list { max-height: 300px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-geodata-ready-item { align-items: center; }
+.dm-geodata-ready-item .dm-list-main { white-space: normal; }
+.dm-geodata-ready-item .dm-list-sub { white-space: normal; }
 /* Geodata sources: the layer list, the map preview of an answer and the catalogue cards. */
 .dm-geo-head { align-items: flex-end; }
 .dm-geo-head dm-input { flex: 1 1 240px; min-width: 200px; }

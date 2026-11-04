@@ -56,6 +56,11 @@ eru til fyrir SCB, SGU, Havs- och vattenmyndigheten, Riksantikvarieämbetet, Sko
 Finnlands og SYKE auk landupplýsingavettvangs Lantmäteriet fyrir þá sem hafa lykil. Sjá
 [kallor.md](kallor.md#opin-landupplýsingagögn).
 
+Stafrænt skipulag er flutt inn sem skipulag: sænskt deiliskipulag samkvæmt landsforskriftinni (GeoJSON) eða
+tilvísunarfitjur Lantmäteriet, aðalskipulag samkvæmt forskriftinni eða ÖP-líkani Boverket (GeoPackage, valið *Allt
+aðalskipulagið sem skipulag*). Skráin þekkist á innihaldinu, upplýsingar skipulagsins birtast og skipulagið opnast
+sem skipulagskort í Vinna með litum Boverket (sjá [planer.md](planer.md)).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft

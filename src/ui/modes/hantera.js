@@ -77,6 +77,7 @@
               // Collections open in their own view: the reading view for documents, the gallery for pictures.
               ds.kind === 'document' ? ui.button({ label: t('hantera.read'), icon: 'book-open', variant: 'primary', title: t('hantera.read.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'images' ? ui.button({ label: t('hantera.view.images'), icon: 'images', variant: 'primary', title: t('hantera.view.images.hint'), onClick: () => openView(ds) }) : null,
+              ds.kind === 'plan' ? ui.button({ label: t('hantera.view.plan'), icon: 'layers', variant: 'primary', title: t('hantera.view.plan.hint'), onClick: () => openView(ds) }) : null,
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
@@ -88,13 +89,19 @@
         if (tab === 'overview') {
           const kv = /** @type {any} */ (h('dm-kv'));
           const src = ds.source || {};
-          const collection = ds.kind === 'document' || ds.kind === 'images';
+          const collection = ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan';
+          const pl = ds.kind === 'plan' ? ds.plan || {} : null;
           kv.items = [
             { label: t('common.name'), value: ds.name },
             { label: t('datasets.shortname'), value: ds.shortName || '' },
             { label: t('common.description'), value: ds.description },
             // Collections are described in their own units; the paragraph or picture table is one view of them.
-            collection ? { label: t('datasets.kind'), value: t('datasets.kind.' + ds.kind) } : null,
+            collection ? { label: t('datasets.kind'), value: pl ? t('plan.slag.' + (pl.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) : t('datasets.kind.' + ds.kind) } : null,
+            pl && pl.beteckning ? { label: t('plan.field.beteckning'), value: pl.beteckning } : null,
+            pl && (pl.kommun || pl.kommunkod) ? { label: t('plan.field.kommun'), value: [pl.kommun, pl.kommunkod].filter(Boolean).join(' ') } : null,
+            pl && pl.status ? { label: t('plan.field.status'), value: pl.status } : null,
+            pl && pl.datumLagakraft ? { label: t('plan.field.lagakraft'), value: pl.datumLagakraft } : null,
+            pl ? { label: t('plan.field.objects'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
             ds.kind === 'document' && Array.isArray(ds.documents) ? { label: t('document.files'), value: `${i18n.formatNumber(ds.documents.length)} · ${t('document.pages.n', { n: i18n.formatNumber(ds.documents.reduce((n, d) => n + (d.pages || 0), 0)) })}` } : null,
             ds.kind === 'document' ? { label: t('document.paragraphs'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
             ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
@@ -200,6 +207,7 @@
           return [h('dm-badge', { text: t('document.files.n', { n: i18n.formatNumber(docs.length) }) }), ' ', h('dm-badge', { text: t('document.pages.n', { n: i18n.formatNumber(docs.reduce((n, d) => n + (Number(d.pages) || 0), 0)) }) })];
         }
         if (ds.kind === 'images') return [h('dm-badge', { text: t('gallery.count', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) }) })];
+        if (ds.kind === 'plan') return [h('dm-badge', { text: t('plan.slag.' + (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) }), ' ', h('dm-badge', { text: t('plan.objects.n', { n: i18n.formatNumber(ds.rowCount || 0) }) })];
         return [h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })];
       }
       /** Open a collection in Bearbeta's own view, at a document or picture when given. */

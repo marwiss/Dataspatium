@@ -41,6 +41,7 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | Python (Pyodide, CPython og pakkar eins og numpy, pandas og matplotlib; sótt eftir þörfum, ekki í möppunni) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-leyfið (byggt á PSF), MIT og sambærilegt fyrir hitt | Sótt óbreytt frá jsDelivr og vistað í vafranum; frumkóðinn er hjá Pyodide-verkefninu og á PyPI í þeim útgáfum sem skrá forritsins tilgreinir (Pyodide 314.0.7) |
 | pdf.js 3.11 (les PDF-skrár) með staðalletri | Apache-2.0 (pdf.js), BSD-3-Clause (letur Foxit), SIL Open Font License 1.1 (Liberation Sans) | Frjálst að nota og dreifa með leyfistexta og tilkynningum; letrið má fella inn |
 | Leaflet 1.9 (kort) og Turf 7 (landfræðitól) | BSD-2-Clause (Leaflet), MIT (Turf) | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
+| Planbestämmelsekatalog Boverket (innbyggt eintak, `presets/plan/`) | Opin gögn frá Boverket | Frjálst að nota og dreifa; tilgreina skal Boverket og Planbestämmelsekatalogen sem heimild |
 | plotly.js (sótt eftir þörfum fyrir plotly-myndrit), seaborn og plotly (Python-hjól frá PyPI, sótt eftir þörfum) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Sótt óbreytt frá jsDelivr og PyPI, fest við útgáfu og prófsummu, og vistað í vafranum |
 
 Kóði Dataspatium tengist ekki R. R keyrir sem sérstakur túlkur í worker og skiptist á R-kóða, SQLite-skrám og myndum við

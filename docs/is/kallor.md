@@ -103,6 +103,15 @@ Lyklar og lykilorð haldast í setunni eða eru vistuð dulkóðuð; stillinguna
 
 ## Opin landupplýsingagögn
 
+Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,
+OGC API Features- og ArcGIS-þjónustur frá norrænum stofnunum og sveitarfélögum (SCB, SGU, Naturvårdsverket,
+Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Hagstofa Finnlands, SYKE,
+Helsinki, Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands og fleiri), allar
+staðfestar til að virka úr vafranum. Forstillt uppspretta opnast, öðrum er bætt við með einum smelli og lögin lesin úr
+þjónustunni; síaðu eftir heiti, landi eða innihaldi. Listinn er í `presets/geodata/services.json`. Undir listanum eru
+reitirnir fyrir eigin þjónustu. Planbestämmelsekatalog Boverket er venjuleg API-uppspretta (*Boverket
+Planbestämmelsekatalogen*), sjá [planer.md](planer.md).
+
 Hnappurinn **Bæta við landupplýsingauppsprettu** undir *Gagnagrunnar* í Safna gerir venjulega API-uppsprettu úr vistfangi
 landupplýsingaþjónustu, á sama hátt sem gagnagrunnsuppspretturnar. Forritið les lög þjónustunnar og setur einn endapunkt á
 hvert lag auk almenns þar sem þú tilgreinir lagið sjálf. Svörin eru GeoJSON í WGS 84: gagnasafnið fær rúmfræðidálk og

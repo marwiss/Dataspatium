@@ -42,6 +42,7 @@ versjon og lisens finnes i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.
 | Python (Pyodide, CPython og pakker som numpy, pandas og matplotlib; hentes ved behov, ikke i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-lisensen (PSF-basert), MIT og lignende for de øvrige | Hentes uendret fra jsDelivr og lagres i nettleseren; kildekoden finnes hos Pyodide-prosjektet og på PyPI i de versjonene appens katalog angir (Pyodide 314.0.7) |
 | pdf.js 3.11 (leser PDF-filer) med standardskrifter | Apache-2.0 (pdf.js), BSD-3-Clause (Foxits skrifter), SIL Open Font License 1.1 (Liberation Sans) | Frie å bruke og spre med lisenstekst og notiser; skriftene kan bygges inn |
 | Leaflet 1.9 (kart) og Turf 7 (geoverktøy) | BSD-2-Clause (Leaflet), MIT (Turf) | Frie å bruke og spre med lisenstekst og notiser |
+| Boverkets Planbestämmelsekatalog (innebygd kopi, `presets/plan/`) | Åpne data fra Boverket | Fri å bruke og spre; Boverket og Planbestämmelsekatalogen skal oppgis som kilde |
 | plotly.js (hentes ved behov for plotly-diagrammer), seaborn og plotly (Python-hjul fra PyPI, hentes ved behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hentes uendret fra jsDelivr og PyPI, låst til versjon og kontrollsum, og lagres i nettleseren |
 
 Dataspatiums kode lenker ikke mot R. R kjører som en separat tolk i en worker og utveksler R-kode, SQLite-filer og bilder

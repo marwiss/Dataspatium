@@ -58,6 +58,11 @@ fyrir kort sem GeoJSON í lengd og breidd: sveitarfélög og lén í Svíþjóð
 sveitarfélög og fylki í Noregi (Kartverket, CC BY 4.0) og sveitarfélög og héruð í Finnlandi (Hagstofa Finnlands, CC BY 4.0).
 Heimildir og leyfi eru í `presets/geo/KALLA.md`. Ekkert er sótt af netinu.
 
+**Stafrænt skipulag** (tegundin skipulag): sænskt deiliskipulag samkvæmt landsforskrift Lantmäteriet (GeoJSON,
+`feature:typ`), tilvísunarfitjur af landsvettvangi landupplýsinga, aðalskipulag samkvæmt prófunarútgáfu forskriftarinnar
+(GeoJSON) og ÖP-líkan Boverket (GeoPackage með `innehall_op_*`). Þekkist á innihaldinu og opnast sem skipulagskort; sjá
+[planer.md](planer.md).
+
 ## Stafakóðun
 
 Textaskrár eru athugaðar í þessari röð: bætaröðunarmerki (UTF-8, UTF-16), UTF-16 án BOM (mörg núllbæti), hreint ASCII, ströng

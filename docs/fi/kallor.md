@@ -109,6 +109,15 @@ kuvattu tiedostossa [api-konfiguration.md](api-konfiguration.md), ja niitä voi 
 
 ## Avoin paikkatieto
 
+Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
+Features- ja ArcGIS-palveluja pohjoismaisilta viranomaisilta ja kunnilta (SCB, SGU, Naturvårdsverket,
+Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
+Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands ja muita), kaikki
+tarkistettu toimiviksi selaimesta. Valmis lähde avataan, muut lisätään yhdellä napsautuksella ja tasot luetaan
+palvelusta; suodata nimen, maan tai sisällön mukaan. Luettelo on tiedostossa `presets/geodata/services.json`. Luettelon
+alla ovat oman palvelun kentät. Boverketin Planbestämmelsekatalog on tavallinen API-lähde (*Boverket
+Planbestämmelsekatalogen*), katso [planer.md](planer.md).
+
 Painike **Lisää paikkatietolähde** kohdassa *Tietokannat* Nouda-tilassa tekee tavallisen API-lähteen paikkatietopalvelun
 osoitteesta samalla tavalla kuin tietokantalähteistä. Sovellus lukee palvelun tasot ja tekee päätepisteen tasoa kohden sekä
 yleisen päätepisteen, jossa annat tason itse. Vastaukset ovat GeoJSONia WGS 84:ssä: aineisto saa geometriasarakkeen ja

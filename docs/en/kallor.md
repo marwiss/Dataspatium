@@ -105,6 +105,15 @@ configurations.
 
 ## Open geodata
 
+The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
+ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
+Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
+browser. A preset source opens, the others are added with one click and their layers read from the service; filter
+by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a
+service of your own. Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*),
+see [planer.md](planer.md).
+
 The button **Add geodata source** under *Databases* in Acquire makes an ordinary API source of the address of a geodata
 service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
 generic one where you name the layer yourself. The answers are GeoJSON in WGS 84: the dataset gets a geometry column

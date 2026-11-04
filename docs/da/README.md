@@ -75,6 +75,9 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Åbne geodata**: WFS-, OGC API Features- og ArcGIS-tjenester bliver kilder, hvis lag hentes som kort, med
   forudindstillinger for SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE, søgning i
   Geodataportalen og WMS-tjenester som baggrundskort eller lag (se [kallor.md](kallor.md)).
+- **Planer**: digitale svenske lokalplaner (den nationale specifikation, Lantmäteriets geodataplatform) åbnes som
+  plankort med Boverkets farver og betegnelser, bestemmelserne slås op i Boverkets Planbestämmelsekatalog (indbygget
+  kopi), og kommuneplaner (specifikationen eller Boverkets ÖP-model) vises tema for tema (se [planer.md](planer.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

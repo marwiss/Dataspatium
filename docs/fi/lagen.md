@@ -57,6 +57,11 @@ paikkatietoluettelosta ja lisää palveluja yhdellä napsautuksella. Valmiita pa
 Havs- och vattenmyndighetenille, Riksantikvarieämbetetille, Skogsstyrelsenille, Kartverketille, Tilastokeskukselle ja
 SYKElle sekä Lantmäterietin paikkatietoalustalle avaimen haltijoille. Katso [kallor.md](kallor.md#avoin-paikkatieto).
 
+Digitaaliset kaavat tuodaan kaavoina: ruotsalainen asemakaava kansallisen määrittelyn mukaan (GeoJSON) tai
+Lantmäterietin viitekohteet, yleiskaava määrittelyn tai Boverketin ÖP-mallin mukaan (GeoPackage, valinta *Koko
+yleiskaava kaavana*). Tiedosto tunnistetaan sisällöstä, kaavan tiedot näytetään ja kaava avautuu kaavakarttana
+Muokkaa-tilassa Boverketin väreillä (katso [planer.md](planer.md)).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
