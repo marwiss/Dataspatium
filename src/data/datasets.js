@@ -17,6 +17,8 @@
     const openHandles = new Map();
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
+    /** Metadata of the dataset kinds (set by their importers), restored with the file on undo and version restore. */
+    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images'];
     /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
     const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan'];
 
@@ -474,6 +476,11 @@
       if (logEntry) await appendLog(handle, logEntry.action || 'restore', logEntry);
       await refreshCounts(handle);
       handle.meta.columnCount = handle.columns.length;
+      // Kind-specific facts (a graph's counts, a plan's facts, a collection's files) live in the restored file's _meta too.
+      for (const key of KIND_META_KEYS) {
+        const r = await handle.engine.exec('select value from _meta where key = ?', [key]);
+        if (r[0] && r[0].values.length) { try { handle.meta[key] = JSON.parse(r[0].values[0][0]); } catch (_e) { /* keep the current value */ } }
+      }
       return save(id);
     }
 

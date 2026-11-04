@@ -375,6 +375,15 @@ kantlistor och svarar på grad, komponenter, kortaste väg och sammanfattning. `
 fokus som växer med grannskap; hela grafen i sigma/graphology från `_layout`. Biblioteken är vendorade klassiska skript
 som laddas vid första användning. Exportera får grafformaten via `io/export.formatsFor`.
 
+Grafer II: redigering sker som receptsteg i `data/graph-ops` (gruppen graph) så att ångra, logg och uppspelning fungerar
+som för tabeller; `analysis/cypher-write` delar en skrivande Cypher-sats i en läsande del som `analysis/cypher` löser
+till id:n och en skrivande del som blir steg. Ritningen delas av Bearbeta, Visualisera, dashboards och Publicera genom
+`viz/graph-draw`, vars headless-väg (`toSvg`) använder sparade positioner eller en headless Cytoscape-layout och ritar
+en egen SVG (cytoscape-svg är GPL). Neo4j är en familj i `databases.FAMILIES` utan HTTP: `api/families/neo4j` kör
+Cypher via drivrutinen över WebSocket efter samtycke och översätter poster till tabell och graf; `ui/api/neo4j-view`
+ersätter ändpunktsformuläret. Vid ångra och återställning läser `datasets.replaceBytes` tillbaka slagens metadata
+(graph, plan, documents, images) ur filens `_meta`.
+
 ### Kartor
 
 `viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är

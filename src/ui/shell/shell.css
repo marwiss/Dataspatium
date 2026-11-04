@@ -425,6 +425,8 @@ body.dm-presenting { overflow: hidden; }
 .dm-map .leaflet-container { font-family: var(--dm-font-sans); font-size: var(--dm-text-sm); background: var(--dm-surface-2); }
 .dm-map .leaflet-control-attribution { font-size: var(--dm-text-xs); color: var(--dm-text-muted); background: var(--dm-surface); }
 .dm-map .leaflet-tooltip { font-family: var(--dm-font-sans); border-color: var(--dm-border); color: var(--dm-text); background: var(--dm-surface); }
+/* base.css caps every canvas at the width of its parent, and Leaflet's panes have no width: the vector layer would be 0 px wide. */
+.leaflet-pane > canvas { max-width: none; }
 .dm-map-view { flex: 1 1 auto; min-height: 320px; }
 .dm-map-preview { padding: 0; min-height: 420px; height: 520px; overflow: hidden; }
 .dm-map-preview .dm-map { height: 100%; border-radius: 0; }
@@ -453,3 +455,6 @@ body.dm-presenting { overflow: hidden; }
 .dm-graph-swatch { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; border: 1px solid var(--dm-border); }
 .dm-graph-sql { font: var(--dm-text-xs) var(--dm-font-mono); white-space: pre-wrap; word-break: break-word; background: var(--dm-surface-2); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-2); max-height: 200px; overflow: auto; margin: 0; }
 .dm-graph-path { display: flex; flex-wrap: wrap; gap: var(--dm-s-1); align-items: center; }
+
+.dm-graph-preview { min-height: 420px; }
+.dm-graph-edit dm-button { flex: 0 0 auto; }

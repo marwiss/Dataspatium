@@ -86,6 +86,8 @@ with a backup or a bundle.
 - **Graphs**: GraphML, GEXF, JSON with nodes and edges and Cypher scripts open as graphs with an overview per label, focus
   and whole-graph views (Cytoscape and sigma), a Cypher subset translated to SQL, graph measures in the background and
   export in all four formats; two tables become a graph (see [grafer.md](grafer.md)).
+  The graph is edited in Process and with writing Cypher (recipe steps), Neo4j is a source over Bolt, the Graph tab has
+  PageRank, communities, centrality, pattern queries and layout, and graphs become charts in Visualise, dashboards and Publish.
   [planer.md](planer.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and

@@ -44,6 +44,7 @@ licenstexterna.
 | pdf.js 3.11 (läser PDF-filer) med standardtypsnitt | Apache-2.0 (pdf.js), BSD-3-Clause (Foxits typsnitt), SIL Open Font License 1.1 (Liberation Sans) | Fria att använda och sprida med licenstext och notiser; typsnitten får bäddas in |
 | Leaflet 1.9 (kartor) och Turf 7 (geoverktyg) | BSD-2-Clause (Leaflet), MIT (Turf) | Fria att använda och sprida med licenstext och notiser |
 | Cytoscape 3.34 med fcose, dagre och expand-collapse, sigma 3 och graphology (grafer) | MIT | Fria att använda och sprida med licenstext och notiser |
+| neo4j-driver-lite 6.3 (Neo4j över Bolt) | Apache-2.0 | Fri att använda och sprida med licenstext och notiser |
 | Boverkets Planbestämmelsekatalog (inbäddad kopia, `presets/plan/`) | Öppna data från Boverket | Fri att använda och sprida; Boverket och Planbestämmelsekatalogen ska anges som källa |
 | plotly.js (hämtas vid behov för plotly-diagram), seaborn och plotly (Python-hjul från PyPI, hämtas vid behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hämtas oförändrade från jsDelivr respektive PyPI, låsta till version och kontrollsumma, och lagras i webbläsaren |
 

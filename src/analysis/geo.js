@@ -68,8 +68,10 @@
      */
     async function measure(src, options = {}) {
       const turf = await ensure();
-      const cols = columnsFor(src.columns, [], [{ name: 'geometri_typ', type: 'text' }, { name: 'area_km2', type: 'number' }, { name: 'langd_km', type: 'number' }, { name: 'mitt_lon', type: 'number' }, { name: 'mitt_lat', type: 'number' }, { name: 'vast', type: 'number' }, { name: 'syd', type: 'number' }, { name: 'ost', type: 'number' }, { name: 'nord', type: 'number' }, { name: 'geometry', type: 'text' }]);
-      const own = cols.slice(0, cols.length - 10);
+      const extra = [{ name: 'geometri_typ', type: 'text' }, { name: 'area_km2', type: 'number' }, { name: 'langd_km', type: 'number' }, { name: 'mitt_lon', type: 'number' }, { name: 'mitt_lat', type: 'number' }, { name: 'vast', type: 'number' }, { name: 'syd', type: 'number' }, { name: 'ost', type: 'number' }, { name: 'nord', type: 'number' }, { name: 'geometry', type: 'text' }];
+      // The geometry has left the properties (featuresOf), and these columns replace the same names from an earlier run.
+      const cols = columnsFor(src.columns, [src.geometryColumn].concat(extra.map((e) => e.name)), extra);
+      const own = cols.slice(0, cols.length - extra.length);
       const rows = [];
       for (let i = 0; i < src.features.length; i++) {
         if (i && i % CHUNK === 0) { await pause(); if (options.onProgress) options.onProgress(i, src.features.length); }

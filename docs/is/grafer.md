@@ -51,7 +51,8 @@ stefna, breytileg lengd `*1..5` með mest 10 skrefum), `WHERE` með samanburði,
 `sum`, `avg`, `min`, `max`, `collect` (með óbeinni hópun Cypher), `ORDER BY`, `SKIP`, `LIMIT` auk fallanna `id()`,
 `labels()`, `type()`, `toLower()`, `toUpper()`, `size()`, `coalesce()`, `exists()`, `keys()`. Eiginleikar eru sóttir
 sem `n.eiginleiki`; `n.name` gefur heiti hnútsins jafnvel þegar það er ekki eiginleiki. Skrifandi setningar (`CREATE`,
-`MERGE`, `SET`, `DELETE`), `WITH`, `UNWIND`, `shortestPath` og regluleg segð eru ekki með; stysta leið er tól í flipanum Net.
+`MERGE`, `SET`, `REMOVE`, `DELETE`) verða uppskriftarskref, sjá *Breyta netinu*. `WITH`, `UNWIND`, `shortestPath` og
+regluleg segð eru ekki með; stysta leið er tól í flipanum Net.
 
 Dæmi:
 
@@ -94,10 +95,50 @@ g = nx.from_pandas_edgelist(leggir, "kalla", "mal", edge_attr=True, create_using
 nx.pagerank(g)
 ```
 
+## Breyta netinu
+
+Netsýnin breytir netinu með hnöppunum undir *Breyta* í skoðaranum: **Bæta við hnút** (auðkenni, merkimiði, heiti og
+eiginleikar sem `lykill: gildi` á línu), **Breyta** og **Fjarlægja** fyrir valinn hnút eða legg, **Velja sem upphaf** og
+síðan **Tengja** til að draga legg milli tveggja hnúta, og **Sameina**, sem flytur leggi valdra hnúta yfir á merkta hnútinn
+og fyllir inn eiginleika sem vantar. Hver breyting er uppskriftarskref (hópurinn Net: bæta við hnút, breyta hnútum,
+fjarlægja hnúta, sameina hnúta, bæta við legg, breyta leggjum, fjarlægja leggi) sem er skráð, má afturkalla og endurspila
+á nýrri útgáfu netsins; SQL og R uppskriftarinnar sýna hvað var gert.
+
+Sömu skref koma úr skrifandi Cypher í flipanum Cypher: `CREATE (a:Person {id: 'p9', name: 'Xenia'}),
+(a)-[:KNOWS {since: 2020}]->(b)`, `MERGE (c:City {id: 'c2', name: 'Göteborg'})`, `MATCH (n:Person) WHERE n.age > 40
+SET n.senior = true, n:Senior`, `MATCH (n {id: 'p1'}) REMOVE n.age`, `MATCH (a)-[r:KNOWS]->(b) DELETE r` og
+`MATCH (n {id: 'c1'}) DETACH DELETE n`. Lesandi hlutinn (MATCH … WHERE) ræður hverja hnúta og leggi er snert, skrifandi
+hlutinn verður skref; gildi eru fastar.
+
+## Neo4j sem uppspretta
+
+*Bæta við gagnagrunnsuppsprettu* í Safna hefur fjölskylduna **Neo4j (Bolt)**: vistfang (`neo4j+s://…databases.neo4j.io`
+fyrir Aura eða eigin þjónn), gagnagrunnur, notandanafn og lykilorð (aldrei vistað í hreinum texta). Uppsprettan opnar
+Cypher-ritil; *Keyra* tengist með rekli Neo4j yfir WebSocket eftir samþykki þitt (tilgangurinn Neo4j) og sýnir
+niðurstöðuna sem töflu þar sem hnútar og vensl eru flött niður í eiginleika sína. Innihaldi svarið hnúta og vensl vistar
+**Vista sem net** þau sem netgagnasafn; annars *Vista sem gagnasafn*. **Vista fyrirspurn** setur fyrirspurnina á
+uppsprettuna svo hana megi keyra aftur með einum smelli. Bolt yfir WebSocket fellur ekki undir CORS; eigin þjónn án TLS
+(`bolt://`) næst aðeins frá síðu yfir http://.
+
+## Fleiri tól í flipanum Net
+
+- **PageRank** (deyfing 0,85), **Samfélög** (merkimiðadreifing, númeruð eftir stærð) og **Miðlægni** (harmónísk nálægð
+  og millilegumiðlægni samkvæmt Brandes, metin út frá úrtaki upphafshnúta í stórum netum), öll reiknuð í bakgrunnsþræði
+  og vistanleg sem gagnasöfn.
+- **Mynstur**: fyrirspurn án kóða: frá-merkimiði, vensl, til-merkimiði, stefna og eitt skilyrði á eiginleika frá-hnútsins.
+  Fyrirspurnin er byggð sem Cypher, sýnd undir niðurstöðunni og má afrita í flipann Cypher.
+- **Uppröðun**: kraftbyggð uppröðun alls netsins í bakgrunni (Fruchterman–Reingold með rist); staðsetningar eru vistaðar
+  og notaðar í sýninni Allt netið.
+
+## Netmyndir í Myndgera
+
+**Vista sem mynd** í netsýninni, eða *Ný mynd* → *Net* í Myndgera, gefur netmynd: netgagnasafn, sýn (yfirlit, fókus með
+leituðum hnútum, allt netið), uppröðun og merki. Myndin er flutt út sem SVG, PNG og PDF (eigin SVG-teikning úr
+staðsetningum hnúta), er með í mælaborðum og birtum síðum sem innfelld SVG og í keyrslum og skjalasniðmátum eins og
+aðrar myndir.
+
 ## Takmarkanir
 
-- Cypher-hlutmengið er aðeins lesandi; breytingar á netum (bæta við, fjarlægja, sameina, draga leggi) koma í síðari
-  útgáfu með Neo4j-tengingu, PageRank og samfélögum.
-- Yfirlitið með opnanlegum hópum gildir fyrir net með allt að 5 000 fitjum; stærri net eru sýnd sem hópar með fjölda og í
+- Cypher vantar `WITH`, `UNWIND` og `shortestPath`; Neo4j-uppsprettan er aðeins lesandi (skrifað er í eigin net forritsins).- Yfirlitið með opnanlegum hópum gildir fyrir net með allt að 5 000 fitjum; stærri net eru sýnd sem hópar með fjölda og í
   fókus- og heildarsýn.
 - Eiginleikar eru vistaðir sem JSON-texti; tölur eru bornar saman sem tölur í Cypher en raðað sem texta í hnútatöflunni.

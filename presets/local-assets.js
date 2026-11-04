@@ -459,7 +459,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13223,
+  "size": 13843,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -495,7 +495,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/grafer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6354,
+  "size": 9480,
   "library": "dataspatium"
  },
  "docs/sv/dokumentmallar.md": {
@@ -525,7 +525,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5015,
+  "size": 5130,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -591,7 +591,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 12935,
+  "size": 13541,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -627,7 +627,7 @@ Dataspatium.assets.addEntries({
  "docs/da/grafer.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6373,
+  "size": 9488,
   "library": "dataspatium"
  },
  "docs/da/dokumentmallar.md": {
@@ -657,7 +657,7 @@ Dataspatium.assets.addEntries({
  "docs/da/licenser.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5116,
+  "size": 5227,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -723,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 12818,
+  "size": 13408,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -759,7 +759,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/grafer.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 6268,
+  "size": 9344,
   "library": "dataspatium"
  },
  "docs/nb/dokumentmallar.md": {
@@ -789,7 +789,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/licenser.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5084,
+  "size": 5191,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -855,7 +855,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 13836,
+  "size": 14447,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -891,7 +891,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/grafer.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6808,
+  "size": 10075,
   "library": "dataspatium"
  },
  "docs/fi/dokumentmallar.md": {
@@ -921,7 +921,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/licenser.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 5538,
+  "size": 5676,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -987,7 +987,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 13753,
+  "size": 14384,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -1023,7 +1023,7 @@ Dataspatium.assets.addEntries({
  "docs/is/grafer.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6573,
+  "size": 9766,
   "library": "dataspatium"
  },
  "docs/is/dokumentmallar.md": {
@@ -1053,7 +1053,7 @@ Dataspatium.assets.addEntries({
  "docs/is/licenser.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5282,
+  "size": 5402,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1119,7 +1119,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 12941,
+  "size": 13550,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {
@@ -1155,7 +1155,7 @@ Dataspatium.assets.addEntries({
  "docs/en/grafer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6430,
+  "size": 9490,
   "library": "dataspatium"
  },
  "docs/en/dokumentmallar.md": {
@@ -1185,7 +1185,7 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5220,
+  "size": 5340,
   "library": "dataspatium"
  }
 });

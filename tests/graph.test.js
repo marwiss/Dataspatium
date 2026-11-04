@@ -215,6 +215,7 @@
       shell.activate('bearbeta');
       shell.store.set({ selectedId: meta.id });
       await waitFor(() => root.querySelector('.dm-graph-view canvas'), 20000, 'cytoscape canvas');
+      assert.ok(Array.from(root.querySelectorAll('.dm-graph-view canvas')).every((c) => c.getBoundingClientRect().width > 0), 'the graph canvases have their width on screen');
       assert.ok(globalThis.cytoscape && globalThis.cytoscapeFcose && globalThis.cytoscapeExpandCollapse, 'graph libraries loaded on demand');
       await waitFor(() => root.querySelectorAll('.dm-right .dm-graph-legend li').length >= 3, 5000, 'legend with labels');
       assert.ok(buttonByText(t('bearbeta.view.table')), 'table button');

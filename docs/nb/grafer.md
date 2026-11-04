@@ -51,7 +51,8 @@ variabel lengde `*1..5` med høyst 10 steg), `WHERE` med sammenligninger, `AND`/
 `avg`, `min`, `max`, `collect` (med Cyphers implisitte gruppering), `ORDER BY`, `SKIP`, `LIMIT` samt funksjonene `id()`,
 `labels()`, `type()`, `toLower()`, `toUpper()`, `size()`, `coalesce()`, `exists()`, `keys()`. Egenskaper nås som
 `n.egenskap`; `n.name` gir nodens navn også når det ikke er en egenskap. Skrivende setninger (`CREATE`, `MERGE`, `SET`,
-`DELETE`), `WITH`, `UNWIND`, `shortestPath` og regulære uttrykk inngår ikke; korteste vei finnes som verktøy i fanen Graf.
+`REMOVE`, `DELETE`) blir reseptsteg, se *Rediger grafen*. `WITH`, `UNWIND`, `shortestPath` og regulære uttrykk inngår
+ikke; korteste vei finnes som verktøy i fanen Graf.
 
 Eksempler:
 
@@ -94,10 +95,50 @@ g = nx.from_pandas_edgelist(kanter, "kalla", "mal", edge_attr=True, create_using
 nx.pagerank(g)
 ```
 
+## Rediger grafen
+
+Grafvisningen redigerer grafen med knappene under *Rediger* i inspektøren: **Legg til node** (id, etikett, navn og
+egenskaper som `nøkkel: verdi` per linje), **Endre** og **Fjern** for den markerte noden eller kanten, **Velg som start**
+fulgt av **Koble** for å trekke en kant mellom to noder, og **Slå sammen**, som flytter kantene fra de valgte nodene til
+den markerte og fyller inn egenskaper som mangler. Hver endring er et reseptsteg (gruppen Graf: legg til node, endre
+noder, fjern noder, slå sammen noder, legg til kant, endre kanter, fjern kanter) som logges, kan angres og spilles av på
+en ny versjon av grafen; reseptens SQL og R viser hva som ble gjort.
+
+De samme stegene kommer fra skrivende Cypher i fanen Cypher: `CREATE (a:Person {id: 'p9', name: 'Xenia'}),
+(a)-[:KNOWS {since: 2020}]->(b)`, `MERGE (c:City {id: 'c2', name: 'Göteborg'})`, `MATCH (n:Person) WHERE n.age > 40
+SET n.senior = true, n:Senior`, `MATCH (n {id: 'p1'}) REMOVE n.age`, `MATCH (a)-[r:KNOWS]->(b) DELETE r` og
+`MATCH (n {id: 'c1'}) DETACH DELETE n`. Den lesende delen (MATCH … WHERE) avgjør hvilke noder og kanter som berøres, den
+skrivende delen blir steg; verdier er literaler.
+
+## Neo4j som kilde
+
+*Legg til databasekilde* i Hent inn har familien **Neo4j (Bolt)**: adresse (`neo4j+s://…databases.neo4j.io` for Aura
+eller en egen server), database, brukernavn og passord (lagres aldri i klartekst). Kilden åpner en Cypher-redigerer;
+*Kjør* kobler til med Neo4js driver over WebSocket etter ditt samtykke (formålet Neo4j) og viser resultatet som tabell
+der noder og relasjoner flates ut til egenskapene sine. Inneholder svaret noder og relasjoner, lagrer **Lagre som graf**
+dem som et grafdatasett; ellers *Lagre som datasett*. **Lagre spørringen** legger spørringen på kilden slik at den kan
+kjøres igjen med ett klikk. Bolt over WebSocket omfattes ikke av CORS; en egen server uten TLS (`bolt://`) nås bare fra
+en side over http://.
+
+## Flere verktøy i fanen Graf
+
+- **PageRank** (demping 0,85), **Fellesskap** (etikettspredning, nummerert etter størrelse) og **Sentralitet** (harmonisk
+  nærhet og mellomliggende sentralitet etter Brandes, anslått fra et utvalg startnoder i store grafer), alle beregnet i
+  bakgrunnstråden og kan lagres som datasett.
+- **Mønster**: spørring uten kode: fra-etikett, relasjon, til-etikett, retning og et vilkår på fra-nodens egenskap.
+  Spørringen bygges som Cypher, vises under resultatet og kan kopieres til fanen Cypher.
+- **Layout**: kraftbasert layout av hele grafen i bakgrunnen (Fruchterman–Reingold med rutenett); posisjonene lagres og
+  brukes av visningen Hele grafen.
+
+## Grafdiagrammer i Visualiser
+
+**Lagre som diagram** i grafvisningen, eller *Nytt diagram* → *Graf* i Visualiser, gir et grafdiagram: grafdatasett,
+visning (oversikt, fokus med søkte noder, hele grafen), layout og etiketter. Diagrammet eksporteres som SVG, PNG og PDF
+(egen SVG-tegning fra nodenes posisjoner), inngår i dashboards og publiserte sider som innebygd SVG, og i batchkjøringer
+og dokumentmaler som andre diagrammer.
+
 ## Begrensninger
 
-- Cypher-delmengden er lesende; redigering av grafer (legg til, fjern, slå sammen, dra kanter) kommer i en senere
-  utgave sammen med Neo4j-tilkobling, PageRank og fellesskap.
-- Oversikten med utfoldbare grupper gjelder grafer opptil 5 000 elementer; større grafer vises som grupper med antall og
+- Cypher mangler `WITH`, `UNWIND` og `shortestPath`; Neo4j-kilden er lesende (skriving skjer i appens egne grafer).- Oversikten med utfoldbare grupper gjelder grafer opptil 5 000 elementer; større grafer vises som grupper med antall og
   i fokus- og helgrafvisningen.
 - Egenskaper lagres som JSON-tekst; tall sammenlignes som tall i Cypher, men sorteres som tekst i nodetabellen.

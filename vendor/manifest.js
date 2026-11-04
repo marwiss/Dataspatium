@@ -2996,6 +2996,16 @@ Dataspatium.assets.manifest({
    ],
    "assets": 0,
    "notes": "WebGL drawing of whole graphs with tens to hundreds of thousands of elements (UMD, global `Sigma`); 3.0.2 is the last series with a browser bundle (4.x ships ES modules only). Labels appear when zoomed in; positions come from the dataset's `_layout` table."
+  },
+  "neo4j-driver-lite": {
+   "version": "6.3.0",
+   "license": "Apache-2.0",
+   "homepage": "https://github.com/neo4j/neo4j-javascript-driver",
+   "direct": [
+    "neo4j-lite-web.min.js"
+   ],
+   "assets": 0,
+   "notes": "Neo4j's lite driver for browsers (UMD, global `neo4j`): Bolt over WebSocket to Neo4j Aura or an own server from the Neo4j source in Inhämta (api/families/neo4j). Loaded on first use with <script>; the connection needs the user's consent (purpose neo4j) and credentials live in api/secrets."
   }
  }
 });

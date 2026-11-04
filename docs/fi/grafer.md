@@ -54,8 +54,8 @@ suunta, vaihteleva pituus `*1..5`, enintään 10 askelta), `WHERE` vertailuilla,
 `sum`, `avg`, `min`, `max`, `collect` (Cypherin implisiittisellä ryhmittelyllä), `ORDER BY`, `SKIP`, `LIMIT` sekä
 funktiot `id()`, `labels()`, `type()`, `toLower()`, `toUpper()`, `size()`, `coalesce()`, `exists()`, `keys()`.
 Ominaisuuksiin viitataan `n.ominaisuus`; `n.name` antaa solmun nimen, vaikka se ei olisi ominaisuus. Kirjoittavat lauseet
-(`CREATE`, `MERGE`, `SET`, `DELETE`), `WITH`, `UNWIND`, `shortestPath` ja säännölliset lausekkeet eivät sisälly; lyhin
-polku on työkalu Verkko-välilehdellä.
+(`CREATE`, `MERGE`, `SET`, `REMOVE`, `DELETE`) muuttuvat reseptivaiheiksi, katso *Verkon muokkaus*. `WITH`, `UNWIND`,
+`shortestPath` ja säännölliset lausekkeet eivät sisälly; lyhin polku on työkalu Verkko-välilehdellä.
 
 Esimerkkejä:
 
@@ -98,10 +98,50 @@ g = nx.from_pandas_edgelist(sarmat, "kalla", "mal", edge_attr=True, create_using
 nx.pagerank(g)
 ```
 
+## Verkon muokkaus
+
+Verkkonäkymä muokkaa verkkoa tarkastimen *Muokkaa*-painikkeilla: **Lisää solmu** (tunnus, tunniste, nimi ja ominaisuudet
+`avain: arvo` riviä kohden), **Muokkaa** ja **Poista** valitulle solmulle tai särmälle, **Valitse aluksi** ja sen jälkeen
+**Yhdistä** särmän vetämiseksi kahden solmun välille, sekä **Yhdistä solmut**, joka siirtää valittujen solmujen särmät
+merkittyyn solmuun ja täyttää puuttuvat ominaisuudet. Jokainen muutos on reseptiaskel (ryhmä Verkko: lisää solmu, muuta
+solmuja, poista solmuja, yhdistä solmuja, lisää särmä, muuta särmiä, poista särmiä), joka kirjataan, voidaan kumota ja
+toistaa verkon uudella versiolla; reseptin SQL ja R näyttävät mitä tehtiin.
+
+Samat askeleet syntyvät kirjoittavasta Cypheristä Cypher-välilehdellä: `CREATE (a:Person {id: 'p9', name: 'Xenia'}),
+(a)-[:KNOWS {since: 2020}]->(b)`, `MERGE (c:City {id: 'c2', name: 'Göteborg'})`, `MATCH (n:Person) WHERE n.age > 40
+SET n.senior = true, n:Senior`, `MATCH (n {id: 'p1'}) REMOVE n.age`, `MATCH (a)-[r:KNOWS]->(b) DELETE r` ja
+`MATCH (n {id: 'c1'}) DETACH DELETE n`. Lukeva osa (MATCH … WHERE) ratkaisee, mihin solmuihin ja särmiin kosketaan,
+kirjoittava osa muuttuu askeliksi; arvot ovat literaaleja.
+
+## Neo4j lähteenä
+
+*Lisää tietokantalähde* Nouda-tilassa sisältää perheen **Neo4j (Bolt)**: osoite (`neo4j+s://…databases.neo4j.io`
+Auralle tai oma palvelin), tietokanta, käyttäjätunnus ja salasana (ei koskaan selkotekstinä). Lähde avaa Cypher-editorin;
+*Aja* yhdistää Neo4j:n ajurilla WebSocketin yli suostumuksesi jälkeen (tarkoitus Neo4j) ja näyttää tuloksen taulukkona,
+jossa solmut ja suhteet on litistetty ominaisuuksiinsa. Jos vastaus sisältää solmuja ja suhteita, **Tallenna verkkona**
+tallentaa ne verkkoaineistona; muuten *Tallenna aineistona*. **Tallenna kysely** vie kyselyn lähteelle, jotta sen voi ajaa
+uudelleen yhdellä napsautuksella. Bolt WebSocketin yli ei kuulu CORS:n piiriin; oma palvelin ilman TLS:ää (`bolt://`)
+tavoitetaan vain http://-sivulta.
+
+## Lisää työkaluja Verkko-välilehdellä
+
+- **PageRank** (vaimennus 0,85), **Yhteisöt** (tunnisteiden leviäminen, numeroitu koon mukaan) ja **Keskeisyys**
+  (harmoninen läheisyys ja Brandesin välillisyys, suurissa verkoissa arvioitu lähtösolmujen otoksesta), kaikki laskettu
+  taustasäikeessä ja tallennettavia aineistoina.
+- **Kuvio**: kysely ilman koodia: lähtötunniste, suhde, kohdetunniste, suunta ja yksi ehto lähtösolmun ominaisuudelle.
+  Kysely rakennetaan Cypherinä, näytetään tuloksen alla ja sen voi kopioida Cypher-välilehdelle.
+- **Asettelu**: koko verkon voimapohjainen asettelu taustalla (Fruchterman–Reingold ruudukolla); sijainnit tallennetaan
+  ja Koko verkko -näkymä käyttää niitä.
+
+## Verkkokaaviot Visualisoi-tilassa
+
+**Tallenna kaaviona** verkkonäkymässä tai *Uusi kaavio* → *Verkko* Visualisoi-tilassa antaa verkkokaavion:
+verkkoaineisto, näkymä (yleiskuva, keskitys haetuilla solmuilla, koko verkko), asettelu ja nimiöt. Kaavio viedään SVG-,
+PNG- ja PDF-muodossa (oma SVG-piirros solmujen sijainneista), on mukana koontinäytöissä ja julkaistuilla sivuilla
+upotettuna SVG:nä sekä eräajoissa ja asiakirjamalleissa kuten muut kaaviot.
+
 ## Rajoitukset
 
-- Cypher-osajoukko on vain lukeva; verkkojen muokkaus (lisää, poista, yhdistä, vedä särmiä) tulee myöhemmässä
-  julkaisussa yhdessä Neo4j-yhteyden, PageRankin ja yhteisöjen kanssa.
-- Avattavien ryhmien yleiskuva koskee enintään 5 000 elementin verkkoja; suuremmat verkot näytetään ryhminä lukumäärineen
+- Cypheristä puuttuvat `WITH`, `UNWIND` ja `shortestPath`; Neo4j-lähde on vain lukeva (kirjoitus tapahtuu sovelluksen omissa verkoissa).- Avattavien ryhmien yleiskuva koskee enintään 5 000 elementin verkkoja; suuremmat verkot näytetään ryhminä lukumäärineen
   sekä keskitys- ja koko verkko -näkymissä.
 - Ominaisuudet tallennetaan JSON-tekstinä; luvut vertaillaan lukuina Cypherissä mutta lajitellaan tekstinä solmutaulukossa.

@@ -103,6 +103,14 @@ and shared without them. The response formats `graphql`, `sparql` and `influx-cs
 object into columns) are described in [api-konfiguration.md](api-konfiguration.md) and can be used in your own
 configurations.
 
+### Neo4j over Bolt
+
+The family **Neo4j (Bolt)** in *Add database source* connects to Neo4j Aura or an own server with Neo4j's driver over
+WebSocket (`neo4j+s://…`, database, user name and password; the password is never stored in clear text). The source opens
+a Cypher editor: the result becomes a table, or a graph dataset when the answer holds nodes and relationships; queries
+can be kept on the source. The connection needs consent (purpose Neo4j) and is not subject to CORS; an own server without
+TLS (`bolt://`) is reached only from a page over http://. See [grafer.md](grafer.md#neo4j-as-a-source).
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

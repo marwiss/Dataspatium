@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet', 'viz/graph-draw'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet, graphDraw) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
@@ -75,6 +75,13 @@
         const hd = await leaflet.render(container, chart, { height: options.height, extraFilters: options.extraFilters, onSelect: options.onSelect });
         return { kind: 'map', info: hd.info, svg: hd.svg, png: hd.png, finalize: hd.finalize, map: hd.map, legend: hd.legend };
       }
+      if (chart.kind === 'graph') {
+        // An interactive graph drawing (Cytoscape or sigma); export draws an SVG from the positions.
+        container.replaceChildren();
+        if (!chart.graph) throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
+        const hd = await graphDraw.render(container, chart.graph, { onSelect: options.onSelect });
+        return { kind: 'graph', info: hd.info, svg: hd.svg, png: hd.png, finalize: hd.destroy, legend: hd.legend };
+      }
       throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
     }
 
@@ -98,6 +105,8 @@
         return D.require('viz/code-charts').toBlob(chart, format, Object.assign({}, options, { width }));
       } else if (chart.kind === 'map') {
         return leaflet.toBlob(chart, format, Object.assign({}, options, { width, title: chart.name }));
+      } else if (chart.kind === 'graph') {
+        return graphDraw.toBlob(chart, format, Object.assign({}, options, { width }));
       } else {
         throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
       }

@@ -29,6 +29,13 @@
     document.body.appendChild(el);
     return el;
   }
+  /** The vector layer must really show on the page: as wide on screen as its own width, and with painted pixels. */
+  async function assertLayerVisible(assert, canvas, label) {
+    const width = canvas.getBoundingClientRect().width;
+    assert.ok(Math.abs(width - parseFloat(canvas.style.width)) < 1, `${label}: the vector layer is ${Math.round(width)} px wide on screen, its own width is ${canvas.style.width}`);
+    const painted = () => { const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data; for (let i = 3; i < data.length; i += 4) if (data[i] > 0) return true; return false; };
+    await waitFor(painted, 3000, `${label}: painted features`);
+  }
   async function makeAreas() {
     const rows = [['Norr', 'A', 120, JSON.stringify(square(17.0, 60.0, 0.5))], ['Söder', 'B', 80, JSON.stringify(square(17.0, 59.4, 0.5))], ['Öst', 'A', 45, JSON.stringify(square(17.6, 59.7, 0.5))]];
     const meta = await datasets.create({ name: 'Testområden', columns: [{ name: 'namn', type: 'text' }, { name: 'klass', type: 'text' }, { name: 'varde', type: 'integer' }, { name: 'geometry', type: 'text' }], rows });
@@ -61,6 +68,7 @@
       const hd = await leaflet.render(el, chart, { onSelect: (sel) => selected.push(sel) });
       assert.ok(el.classList.contains('leaflet-container'), 'the element became the map container');
       assert.ok(el.querySelector('.leaflet-overlay-pane canvas'), 'canvas renderer for the vector layers');
+      await assertLayerVisible(assert, el.querySelector('.leaflet-overlay-pane canvas'), 'render');
       assert.ok(!el.querySelector('.leaflet-tile-pane img'), 'no tiles without a background map');
       assert.equal(hd.info.rows, 3 + 4 + 21, 'three areas, four points and the 21 counties');
       assert.equal(hd.legend.length, 3);
@@ -216,6 +224,33 @@
     return `area ${Math.round(area)} km²`;
   }, 60000);
 
+  test('geo: the measures of an API answer have every column once and open as a map', async (assert) => {
+    // An API table holds the geometry in `geometri` with `geometri_typ` beside it (api/parsers.geojsonRecords).
+    const meta = await datasets.create({ name: 'Svar från API', columns: [{ name: 'namn', type: 'text' }, { name: 'geometri_typ', type: 'text' }, { name: 'geometri', type: 'text' }], rows: [['Norr', 'Polygon', JSON.stringify(square(17.0, 60.0, 0.5))], ['Söder', 'Polygon', JSON.stringify(square(17.0, 59.4, 0.5))]] });
+    created.push(meta.id);
+    const src = await geoAnalysis.featuresOfDataset(meta.id);
+    assert.equal(src.geometryColumn, 'geometri');
+    const m = await geoAnalysis.measure(src);
+    const names = m.columns.map((c) => c.name);
+    assert.ok(!names.includes('geometri'), 'no empty source geometry column: ' + names.join(','));
+    assert.equal(names.length, new Set(names).size, 'every column once: ' + names.join(','));
+    assert.equal(m.rows[0].length, names.length, 'rows as wide as the columns');
+    assert.equal(m.rows[0][names.indexOf('namn')], 'Norr');
+    assert.equal(m.rows[0][names.indexOf('geometri_typ')], 'Polygon');
+    assert.ok(m.rows[0][names.indexOf('area_km2')] > 1400, 'area: ' + m.rows[0][names.indexOf('area_km2')]);
+    // Saved as a dataset the result opens as a map with the same objects.
+    const saved = await datasets.create({ name: 'Mått av svaret', columns: m.columns, rows: m.rows });
+    created.push(saved.id);
+    const cols = await datasets.columns(saved.id);
+    assert.equal(leaflet.geometryColumn(cols), 'geometry');
+    const prepared = await leaflet.prepare({ kind: 'map', name: saved.name, datasetId: saved.id, map: leaflet.defaultMap(cols, saved), options: {} });
+    assert.equal(prepared.rows, 2, 'both objects on the map');
+    // Measuring that dataset again replaces the measures instead of doubling them.
+    const again = (await geoAnalysis.measure(await geoAnalysis.featuresOfDataset(saved.id))).columns.map((c) => c.name);
+    assert.equal(again.length, new Set(again).size, 'every column once the second time: ' + again.join(','));
+    return 'ok';
+  });
+
   test('qgis: a project gives the layers in tree order with single, categorized and graduated symbols, matches datasets by file name and becomes a map chart; .qgz is read', async (assert) => {
     const areas = await makeAreas();
     await datasets.updateMeta(areas.id, { source: { kind: 'file', fileName: 'omraden.gpkg', format: 'gpkg' }, importOptions: { table: 'omraden' } });
@@ -316,7 +351,7 @@
       // Bearbeta: the map by default, the table one click away and back.
       shell.activate('bearbeta');
       shell.store.set({ selectedId: areas.id });
-      await waitFor(() => root.querySelector('.dm-map-view.leaflet-container .leaflet-overlay-pane canvas'), 8000, 'map in Bearbeta');
+      await assertLayerVisible(assert, await waitFor(() => root.querySelector('.dm-map-view.leaflet-container .leaflet-overlay-pane canvas'), 8000, 'map in Bearbeta'), 'Bearbeta');
       assert.ok(buttonByText(t('bearbeta.view.table')), 'table button');
       buttonByText(t('bearbeta.view.table')).click();
       await waitFor(() => root.querySelectorAll('dm-table .dm-tr').length === 3, 5000, 'three rows in the table');
@@ -338,7 +373,7 @@
       chartId = (await charts.save(chart)).id;
       shell.store.set({ openChartId: chartId });
       shell.activate('visualisera');
-      await waitFor(() => root.querySelector('.dm-map-preview.leaflet-container .leaflet-overlay-pane canvas'), 8000, 'map in Visualisera');
+      await assertLayerVisible(assert, await waitFor(() => root.querySelector('.dm-map-preview.leaflet-container .leaflet-overlay-pane canvas'), 8000, 'map in Visualisera'), 'Visualisera');
       assert.ok(root.querySelector('.dm-map-layer'), 'layer card');
       await waitFor(() => root.querySelectorAll('.dm-right .dm-map-legend-list li').length === 2, 5000, 'legend with two categories in the inspector');
       // Inhämta: a QGIS project with its data file becomes a map view.

@@ -11,9 +11,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/graph-panel', ['ui/base', 'ui/overlays', 'data/datasets', 'data/graph', 'analysis/cypher', 'analysis/graph', 'platform/files'], (base, overlays, datasets, graph, cypher, measures, files) => {
+  D.define('ui/analysis/graph-panel', ['ui/base', 'ui/overlays', 'data/datasets', 'data/graph', 'analysis/cypher', 'analysis/graph', 'platform/files', 'analysis/cypher-write'], (base, overlays, datasets, graph, cypher, measures, files, cypherWrite) => {
     const { h, t, i18n, replace } = base;
-    const TOOLS = ['summary', 'degrees', 'components', 'path', 'subgraph', 'tables'];
+    const TOOLS = ['summary', 'degrees', 'components', 'pagerank', 'communities', 'centrality', 'path', 'pattern', 'subgraph', 'layout', 'tables'];
     const PREVIEW_ROWS = 2000;
 
     /**
@@ -22,7 +22,7 @@
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
       const mode = options.mode === 'cypher' ? 'cypher' : 'tools';
-      const s = { tool: 'summary', query: '', showSql: true, result: null, error: '', busy: false, from: '', to: '', undirected: false, labels: new Set(), types: new Set(), info: null, infoFor: '' };
+      const s = { tool: 'summary', query: '', showSql: true, result: null, error: '', busy: false, from: '', to: '', undirected: false, labels: new Set(), types: new Set(), info: null, infoFor: '', pattern: { a: '', type: '', b: '', direction: 'out', key: '', op: '=', value: '', limit: 200 }, iterations: 60 };
       let editor = null; let fieldsEl = null; let resultEl = null; let seq = 0;
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
@@ -76,10 +76,19 @@
         s.query = text; s.busy = true; s.error = ''; renderCypher();
         const my = ++seq;
         try {
-          const out = await cypher.run(ds.id, text);
-          if (my !== seq) return;
-          s.result = { columns: out.columns, rows: out.rows, sql: out.sql, params: out.params, name: t('graph.cypher.dataset', { name: ds.name }), note: t('graph.cypher.note', { n: i18n.formatNumber(out.rows.length), limit: i18n.formatNumber(out.info.limit) }) };
-          shell.log(t('graph.cypher.ran', { n: i18n.formatNumber(out.rows.length) }), 'ok');
+          if (cypherWrite.isWrite(text)) {
+            // CREATE, MERGE, SET, REMOVE and DELETE become recipe steps on the dataset (logged, undoable).
+            const w = await cypherWrite.execute(ds.id, text);
+            if (my !== seq) return;
+            s.result = { columns: ['steg', 'noder', 'kanter', 'matchade'], rows: [[w.steps, w.nodes, w.edges, w.matched]], sql: w.ops.map((o) => `${o.op} ${JSON.stringify(o.params)}`).join('\n'), params: [], name: '', note: t('graph.cypher.wrote', { steps: i18n.formatNumber(w.steps) }) };
+            shell.log(t('graph.cypher.wrote', { steps: i18n.formatNumber(w.steps) }), 'ok');
+            s.infoFor = '';
+          } else {
+            const out = await cypher.run(ds.id, text);
+            if (my !== seq) return;
+            s.result = { columns: out.columns, rows: out.rows, sql: out.sql, params: out.params, name: t('graph.cypher.dataset', { name: ds.name }), note: t('graph.cypher.note', { n: i18n.formatNumber(out.rows.length), limit: i18n.formatNumber(out.info.limit) }) };
+            shell.log(t('graph.cypher.ran', { n: i18n.formatNumber(out.rows.length) }), 'ok');
+          }
         } catch (err) {
           s.result = null; s.error = String((err && err.message) || err);
         }
@@ -104,6 +113,23 @@
             replace(box, group(t('graph.labels'), info.labels || [], s.labels), group(t('graph.types'), info.types || [], s.types));
           });
           nodes.push(box, h('p', { class: 'dm-help dm-small', text: t('graph.subgraph.hint') }), h('div', { class: 'dm-row' }, ui.button({ label: t('graph.subgraph.create'), icon: 'share-2', variant: 'primary', loading: s.busy, onClick: () => runTool() })));
+        } else if (s.tool === 'pattern') {
+          // Query without code: label – relationship – label, direction, one filter on the first node.
+          const pt = s.pattern; const box = h('div', { class: 'dm-stack-sm' });
+          infoOf(ds).then((info) => {
+            const labelOpts = [{ value: '', label: t('graph.pattern.any') }].concat((info.labels || []).map((l) => ({ value: l.name || '', label: l.name || t('graph.nolabel') })));
+            const typeOpts = [{ value: '', label: t('graph.pattern.any') }].concat((info.types || []).map((l) => ({ value: l.name || '', label: l.name || t('graph.notype') })));
+            const sel = (label, opts, value, key) => { const el = /** @type {any} */ (h('dm-select', { label, inline: true })); el.options = opts; el.value = value; el.addEventListener('change', () => { pt[key] = el.value; }); return el; };
+            const inp = (label, value, key, attrs = {}) => { const el = /** @type {any} */ (h('dm-input', Object.assign({ label, inline: true }, attrs))); el.value = String(value); el.addEventListener('input', () => { pt[key] = attrs.type === 'number' ? Number(el.value) : el.value; }); return el; };
+            replace(box,
+              h('div', { class: 'dm-row-wrap' }, sel(t('graph.pattern.a'), labelOpts, pt.a, 'a'), sel(t('graph.pattern.direction'), [{ value: 'out', label: '\u2192' }, { value: 'in', label: '\u2190' }, { value: 'both', label: '\u2014' }], pt.direction, 'direction'), sel(t('graph.pattern.type'), typeOpts, pt.type, 'type'), sel(t('graph.pattern.b'), labelOpts, pt.b, 'b')),
+              h('div', { class: 'dm-row-wrap' }, inp(t('graph.pattern.key'), pt.key, 'key', { placeholder: 'name' }), sel(t('graph.pattern.op'), ['=', '<>', '<', '<=', '>', '>=', 'CONTAINS', 'STARTS WITH'].map((o) => ({ value: o, label: o })), pt.op, 'op'), inp(t('graph.pattern.value'), pt.value, 'value'), inp(t('graph.pattern.limit'), pt.limit, 'limit', { type: 'number', min: '1' })),
+              h('p', { class: 'dm-help dm-xs', text: t('graph.pattern.hint') }));
+          });
+          nodes.push(box, h('div', { class: 'dm-row' }, ui.button({ label: t('common.run'), icon: 'play', variant: 'primary', loading: s.busy, onClick: () => runTool() })));
+        } else if (s.tool === 'layout') {
+          const it = /** @type {any} */ (h('dm-input', { type: 'number', label: t('graph.layout.iterations'), min: '10', max: '500', inline: true })); it.value = String(s.iterations); it.addEventListener('input', () => { s.iterations = Number(it.value) || 60; });
+          nodes.push(h('p', { class: 'dm-help dm-small', text: t('graph.layout.compute.hint') }), h('div', { class: 'dm-row-wrap' }, it, ui.button({ label: t('graph.layout.compute'), icon: 'play', variant: 'primary', loading: s.busy, onClick: () => runTool() })));
         } else if (s.tool === 'tables') {
           nodes.push(h('p', { class: 'dm-help dm-small', text: t('graph.tables.hint') }), h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('graph.tables.nodes'), icon: 'table', variant: 'primary', loading: s.busy, onClick: () => saveTable('nodes') }), ui.button({ label: t('graph.tables.edges'), icon: 'table', loading: s.busy, onClick: () => saveTable('edges') })));
         } else {
@@ -142,6 +168,38 @@
           const names = new Map((await graph.nodes(ds.id)).map((n) => [n.id, n.name]));
           const rows = c.members.sort((a, b) => a[1] - b[1]).map((r) => [r[0], names.get(r[0]) || '', r[1], c.sizes[r[1] - 1] || 0]);
           return { columns: ['id', 'namn', 'komponent', 'storlek'], rows, types: { komponent: 'integer', storlek: 'integer' }, name: t('graph.components.dataset', { name: ds.name }), note: t('graph.components.note', { n: i18n.formatNumber(c.count), largest: i18n.formatNumber(c.sizes[0] || 0) }) };
+        }
+        if (s.tool === 'pagerank') {
+          const pr = await measures.pagerank(ds.id);
+          const names = new Map((await graph.nodes(ds.id)).map((n) => [n.id, n.name]));
+          const rows = pr.sort((a, b) => b[1] - a[1]).map((r) => [r[0], names.get(r[0]) || '', Math.round(r[1] * 1e6) / 1e6]);
+          return { columns: ['id', 'namn', 'pagerank'], rows, types: { pagerank: 'number' }, name: t('graph.pagerank.dataset', { name: ds.name }), note: t('graph.pagerank.note') };
+        }
+        if (s.tool === 'communities') {
+          const c = await measures.communities(ds.id);
+          const names = new Map((await graph.nodes(ds.id)).map((n) => [n.id, n.name]));
+          const rows = c.members.sort((a, b) => a[1] - b[1]).map((r) => [r[0], names.get(r[0]) || '', r[1], c.sizes[r[1] - 1] || 0]);
+          return { columns: ['id', 'namn', 'samhalle', 'storlek'], rows, types: { samhalle: 'integer', storlek: 'integer' }, name: t('graph.communities.dataset', { name: ds.name }), note: t('graph.communities.note', { n: i18n.formatNumber(c.count), largest: i18n.formatNumber(c.sizes[0] || 0) }) };
+        }
+        if (s.tool === 'centrality') {
+          const ce = await measures.centrality(ds.id);
+          const names = new Map((await graph.nodes(ds.id)).map((n) => [n.id, n.name]));
+          const rows = ce.sort((a, b) => b[2] - a[2]).map((r) => [r[0], names.get(r[0]) || '', Math.round(r[1] * 1e4) / 1e4, Math.round(r[2] * 100) / 100]);
+          return { columns: ['id', 'namn', 'narhet', 'mellanliggande'], rows, types: { narhet: 'number', mellanliggande: 'number' }, name: t('graph.centrality.dataset', { name: ds.name }), note: t('graph.centrality.note') };
+        }
+        if (s.tool === 'pattern') {
+          const pt = s.pattern; const ident = (x) => (/^[A-Za-z_]\w*$/.test(x) ? x : '`' + x + '`');
+          const lbl = (l) => (l ? ':' + ident(l) : ''); const rel = pt.type ? ':' + ident(pt.type) : '';
+          const arrow = pt.direction === 'in' ? `<-[r${rel}]-` : pt.direction === 'both' ? `-[r${rel}]-` : `-[r${rel}]->`;
+          const value = /^-?\d+(\.\d+)?$/.test(String(pt.value).trim()) ? String(pt.value).trim() : JSON.stringify(String(pt.value));
+          const where = pt.key ? ` WHERE a.${ident(pt.key)} ${pt.op} ${value}` : '';
+          const text = `MATCH (a${lbl(pt.a)})${arrow}(b${lbl(pt.b)})${where} RETURN a.name AS fran, labels(a) AS fran_etikett, type(r) AS relation, b.name AS till, labels(b) AS till_etikett, id(a) AS fran_id, id(b) AS till_id LIMIT ${Math.max(1, Number(pt.limit) || 200)}`;
+          const out = await cypher.run(ds.id, text);
+          return { columns: out.columns, rows: out.rows, sql: text, name: t('graph.pattern.dataset', { name: ds.name }), note: t('graph.cypher.note', { n: i18n.formatNumber(out.rows.length), limit: i18n.formatNumber(Number(pt.limit) || 200) }) };
+        }
+        if (s.tool === 'layout') {
+          const positions = await measures.layout(ds.id, { iterations: s.iterations, save: true });
+          return { columns: ['id', 'x', 'y'], rows: positions, types: { x: 'number', y: 'number' }, name: '', note: t('graph.layout.computed', { n: i18n.formatNumber(positions.length) }) };
         }
         if (s.tool === 'path') {
           const find = async (text) => { const q = String(text || '').trim(); if (!q) throw new Error(t('graph.path.need')); const exact = await graph.nodes(ds.id, { ids: [q], limit: 1 }); if (exact.length) return exact[0]; const hits = await graph.nodes(ds.id, { search: q, limit: 1 }); if (!hits.length) throw new Error(t('graph.path.notfound', { text: q })); return hits[0]; };
@@ -188,7 +246,7 @@
         const nameInput = /** @type {any} */ (h('dm-input', { label: t('api.name'), inline: true })); nameInput.value = r.name || '';
         replace(resultEl, h('div', { class: 'dm-card dm-stack' },
           h('div', { class: 'dm-row-wrap' }, h('strong', { text: t('api.result', { rows: i18n.formatNumber(r.rows.length), cols: r.columns.length }) }), r.note ? h('span', { class: 'dm-help', text: r.note }) : null),
-          mode === 'cypher' && s.showSql && r.sql ? h('pre', { class: 'dm-graph-sql', text: r.sql + (r.params && r.params.length ? '\n-- ' + t('graph.cypher.params') + ': ' + JSON.stringify(r.params) : '') }) : null,
+          (mode === 'cypher' ? s.showSql : s.tool === 'pattern') && r.sql ? h('pre', { class: 'dm-graph-sql', text: r.sql + (r.params && r.params.length ? '\n-- ' + t('graph.cypher.params') + ': ' + JSON.stringify(r.params) : '') }) : null,
           h('div', { class: 'dm-table-wrap' }, table),
           r.name ? h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, ui.button({ label: t('graph.result.save'), icon: 'save', onClick: () => saveResult(nameInput.value.trim()) }), ui.button({ label: t('graph.result.download'), icon: 'download', onClick: () => download(r) })) : null));
         requestAnimationFrame(() => table.setData({ columns: r.columns.map((c) => ({ key: c, label: c, type: (r.types && r.types[c]) || 'text' })), rowCount: rows.length, rowProvider: async (start, count) => rows.slice(start, start + count) }));

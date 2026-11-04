@@ -143,7 +143,8 @@
       // Bearbeta: the plan map with filled uses, outlines, labels and the legend in the inspector.
       shell.activate('bearbeta');
       shell.store.set({ selectedId: meta.id });
-      await waitFor(() => root.querySelector('.dm-plan-view.leaflet-container .leaflet-overlay-pane canvas'), 10000, 'plan map');
+      const planCanvas = await waitFor(() => root.querySelector('.dm-plan-view.leaflet-container .leaflet-overlay-pane canvas'), 10000, 'plan map');
+      assert.ok(Math.abs(planCanvas.getBoundingClientRect().width - parseFloat(planCanvas.style.width)) < 1, 'the plan areas are visible: the layer is ' + Math.round(planCanvas.getBoundingClientRect().width) + ' px wide on screen');
       await waitFor(() => root.querySelectorAll('.dm-plan-label').length >= 2, 5000, 'designation labels');
       const labels = Array.from(root.querySelectorAll('.dm-plan-label')).map((e) => e.textContent);
       assert.ok(labels.includes('B'), 'label B: ' + labels.join(','));

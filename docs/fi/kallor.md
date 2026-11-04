@@ -107,6 +107,14 @@ Avaimet ja salasanat pysyvät istunnossa tai tallentuvat salattuina; luotu mää
 niitä. Vastausmuodot `graphql`, `sparql` ja `influx-csv` sekä `lift` (sisäkkäisen olion nosto sarakkeiksi) on
 kuvattu tiedostossa [api-konfiguration.md](api-konfiguration.md), ja niitä voi käyttää omissa määrityksissä.
 
+### Neo4j Boltin yli
+
+Perhe **Neo4j (Bolt)** kohdassa *Lisää tietokantalähde* yhdistää Neo4j Auraan tai omaan palvelimeen Neo4j:n ajurilla
+WebSocketin yli (`neo4j+s://…`, tietokanta, käyttäjätunnus ja salasana; salasanaa ei koskaan tallenneta selkotekstinä).
+Lähde avaa Cypher-editorin: tulos on taulukko tai verkkoaineisto, kun vastaus sisältää solmuja ja suhteita; kyselyt voi
+tallentaa lähteelle. Yhteys vaatii suostumuksen (tarkoitus Neo4j) eikä kuulu CORS:n piiriin; oma palvelin ilman TLS:ää
+(`bolt://`) tavoitetaan vain http://-sivulta. Katso [grafer.md](grafer.md#neo4j-lähteenä).
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

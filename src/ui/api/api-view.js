@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet', 'data/plan', 'io/importers/detaljplan'],
-    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, runner, connectors, auth, http, files, datasets, leaflet, plan, detaljplanImp) => {
+  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'ui/api/neo4j-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet', 'data/plan', 'io/importers/detaljplan'],
+    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, neo4jView, runner, connectors, auth, http, files, datasets, leaflet, plan, detaljplanImp) => {
       const { h, t, i18n, replace } = base;
       const PREVIEW_ROWS = 2000;
 
@@ -30,15 +30,17 @@
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
         const isGeodata = family === 'geodata';
+        const isNeo4j = family === 'neo4j';
         // Statistics Denmark (statbank) and FHI browse like PxWeb v1: folders, tables, a variable picker.
         const browser = family === 'pxweb' ? pxwebView.create(api)
           : family === 'statbank' ? pxwebView.create(api, D.require('api/families/statbank'))
             : family === 'fhi' ? pxwebView.create(api, D.require('api/families/fhi'))
               : family === 'socialstyrelsen' ? sosView.create(api)
                 : isGeodata ? geodataView.create(api)
-                  : (family === 'geoportal' ? geoportalView.create(api) : null);
+                  : family === 'geoportal' ? geoportalView.create(api)
+                    : family === 'neo4j' ? neo4jView.create(api) : null;
         // Geodata sources: the layer browser is the form (it holds the layers' endpoints); no second tab.
-        const form = !isGeodata && connector.endpoints && connector.endpoints.length ? endpointForm.create(api) : null;
+        const form = !isGeodata && !isNeo4j && connector.endpoints && connector.endpoints.length ? endpointForm.create(api) : null;
         let tab = browser ? 'browse' : 'endpoints';
 
         function render() {
@@ -50,7 +52,7 @@
           }
           replace(el,
             h('div', { class: 'dm-page-head' },
-              h('h1', null, icons.icon(isGeodata || family === 'geoportal' ? 'map' : 'globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null, isGeodata ? h('dm-badge', { text: t('geodata.badge.' + connector.family.kind) }) : null),
+              h('h1', null, icons.icon(isGeodata || family === 'geoportal' ? 'map' : isNeo4j ? 'database' : 'globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null, isGeodata ? h('dm-badge', { text: t('geodata.badge.' + connector.family.kind) }) : null),
               h('div', { class: 'dm-row' },
                 connector.docs ? basic.button({ label: t('api.docs'), icon: 'external-link', onClick: () => window.open(connector.docs, '_blank', 'noopener') }) : null,
                 basic.button({ label: t('api.export'), icon: 'download', variant: 'ghost', onClick: () => files.download(new Blob([connectors.exportJson(connector)], { type: 'application/json' }), files.safeName(connector.id, 'api.json')) }))),

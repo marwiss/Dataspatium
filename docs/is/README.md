@@ -81,6 +81,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Net**: GraphML, GEXF, JSON með hnútum og leggjum og Cypher-skriftur opnast sem net með yfirliti eftir merkimiða, fókus-
   og heildarsýn (Cytoscape og sigma), Cypher-hlutmengi þýddu í SQL, netmælingum í bakgrunni og útflutningi í öllum fjórum
   sniðum; tvær töflur verða net (sjá [grafer.md](grafer.md)).
+  Netinu er breytt í Vinna og með skrifandi Cypher (uppskriftarskref), Neo4j er uppspretta yfir Bolt, flipinn Net hefur PageRank,
+  samfélög, miðlægni, mynsturfyrirspurnir og uppröðun, og net verða myndir í Myndgera, mælaborðum og Birta.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

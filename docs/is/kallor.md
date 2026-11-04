@@ -101,6 +101,14 @@ Lyklar og lykilorð haldast í setunni eða eru vistuð dulkóðuð; stillinguna
 þeirra. Svarsniðunum `graphql`, `sparql` og `influx-csv` ásamt `lift` (lyfta hreiðruðum hlut upp í dálka) er lýst í
 [api-konfiguration.md](api-konfiguration.md) og má nota í eigin stillingum.
 
+### Neo4j yfir Bolt
+
+Fjölskyldan **Neo4j (Bolt)** í *Bæta við gagnagrunnsuppsprettu* tengist Neo4j Aura eða eigin þjóni með rekli Neo4j yfir
+WebSocket (`neo4j+s://…`, gagnagrunnur, notandanafn og lykilorð; lykilorðið er aldrei vistað í hreinum texta).
+Uppsprettan opnar Cypher-ritil: niðurstaðan verður tafla, eða netgagnasafn þegar svarið inniheldur hnúta og vensl;
+fyrirspurnir má vista á uppsprettunni. Tengingin krefst samþykkis (tilgangurinn Neo4j) og fellur ekki undir CORS; eigin
+þjónn án TLS (`bolt://`) næst aðeins frá síðu yfir http://. Sjá [grafer.md](grafer.md#neo4j-sem-uppspretta).
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

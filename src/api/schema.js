@@ -17,7 +17,7 @@
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
     const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv', 'geonetwork'];
     // geodata: a geodata service (family.kind wfs, ogcapi or arcgis) whose layers are discovered on demand; geoportal: a catalogue search.
-    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi', 'geodata', 'geoportal'];
+    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi', 'geodata', 'geoportal', 'neo4j'];
     /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
     const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT'];
     const ID = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' };
@@ -101,7 +101,7 @@
         // Translations of name, publisher, description, notes and endpoint/parameter texts per UI language:
         // { "en": { "name": "...", "endpoints": { "<id>": { "name": "...", "params": { "<name>": { "label": "..." } } } } } }
         i18n: { type: 'object' },
-        baseUrl: { type: 'string', pattern: '^(https?://|dataspatium-asset://)' },
+        baseUrl: { type: 'string', pattern: '^(https?://|dataspatium-asset://|neo4j(\\+s|\\+ssc)?://|bolt(\\+s|\\+ssc)?://)' },
         headers: { type: 'object' },
         auth: {
           type: 'object', required: ['type'],

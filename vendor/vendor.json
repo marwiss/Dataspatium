@@ -1304,6 +1304,21 @@
           "wrap": false
         }
       ]
+    },
+    "neo4j-driver-lite": {
+      "version": "6.3.0",
+      "npm": "neo4j-driver-lite",
+      "license": "Apache-2.0",
+      "homepage": "https://github.com/neo4j/neo4j-javascript-driver",
+      "licenseUrl": "https://raw.githubusercontent.com/neo4j/neo4j-javascript-driver/6.0/LICENSE",
+      "notes": "Neo4j's lite driver for browsers (UMD, global `neo4j`): Bolt over WebSocket to Neo4j Aura or an own server from the Neo4j source in Inh\u00e4mta (api/families/neo4j). Loaded on first use with <script>; the connection needs the user's consent (purpose neo4j) and credentials live in api/secrets.",
+      "files": [
+        {
+          "path": "lib/browser/neo4j-lite-web.min.js",
+          "as": "neo4j-lite-web.min.js",
+          "wrap": false
+        }
+      ]
     }
   }
 }

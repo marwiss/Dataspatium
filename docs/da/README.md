@@ -84,6 +84,8 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Grafer**: GraphML, GEXF, JSON med knuder og kanter og Cypher-scripts åbnes som grafer med oversigt pr. etiket, fokus og
   helgrafvisning (Cytoscape og sigma), en Cypher-delmængde oversat til SQL, grafmål i baggrunden og eksport i alle fire
   formater; to tabeller bliver en graf (se [grafer.md](grafer.md)).
+  Grafen redigeres i Bearbejd og med skrivende Cypher (recepttrin), Neo4j er en kilde via Bolt, fanen Graf har PageRank,
+  fællesskaber, centralitet, mønsterforespørgsler og layout, og grafer bliver diagrammer i Visualisér, dashboards og Publicér.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

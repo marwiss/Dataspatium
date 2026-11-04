@@ -103,6 +103,14 @@ Nøkler og passord blir i økten eller lagres kryptert; konfigurasjonen som oppr
 uten dem. Svarformatene `graphql`, `sparql` og `influx-csv` samt `lift` (løfte et nestet objekt opp til kolonner)
 er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan brukes i egne konfigurasjoner.
 
+### Neo4j over Bolt
+
+Familien **Neo4j (Bolt)** i *Legg til databasekilde* kobler til Neo4j Aura eller en egen server med Neo4js driver over
+WebSocket (`neo4j+s://…`, database, brukernavn og passord; passordet lagres aldri i klartekst). Kilden åpner en
+Cypher-redigerer: resultatet blir en tabell, eller et grafdatasett når svaret inneholder noder og relasjoner; spørringer
+kan lagres på kilden. Tilkoblingen krever samtykke (formålet Neo4j) og omfattes ikke av CORS; en egen server uten TLS
+(`bolt://`) nås bare fra en side over http://. Se [grafer.md](grafer.md#neo4j-som-kilde).
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

@@ -53,8 +53,8 @@ direction, variable length `*1..5` with at most 10 steps), `WHERE` with comparis
 `count`, `sum`, `avg`, `min`, `max`, `collect` (with Cypher's implicit grouping), `ORDER BY`, `SKIP`, `LIMIT`, and the
 functions `id()`, `labels()`, `type()`, `toLower()`, `toUpper()`, `size()`, `coalesce()`, `exists()`, `keys()`.
 Properties are reached as `n.property`; `n.name` gives the node's name even when it is not a property. Writing
-clauses (`CREATE`, `MERGE`, `SET`, `DELETE`), `WITH`, `UNWIND`, `shortestPath` and regular expressions are not
-included; the shortest path is a tool in the Graph tab.
+clauses (`CREATE`, `MERGE`, `SET`, `REMOVE`, `DELETE`) become recipe steps, see *Editing the graph*. `WITH`, `UNWIND`,
+`shortestPath` and regular expressions are not included; the shortest path is a tool in the Graph tab.
 
 Examples:
 
@@ -97,10 +97,50 @@ g = nx.from_pandas_edgelist(edges, "kalla", "mal", edge_attr=True, create_using=
 nx.pagerank(g)
 ```
 
+## Editing the graph
+
+The graph view edits the graph with the buttons under *Edit* in the inspector: **Add node** (id, label, name and
+properties as `key: value` per line), **Edit** and **Remove** for the selected node or edge, **Pick as start** followed by
+**Connect** to draw an edge between two nodes, and **Merge**, which moves the edges of the picked nodes to the selected
+one and fills in missing properties. Every change is a recipe step (group Graph: add node, change nodes, remove nodes,
+merge nodes, add edge, change edges, remove edges) that is logged, can be undone and replays on a new version of the
+graph; the recipe's SQL and R show what was done.
+
+The same steps come from writing Cypher in the Cypher tab: `CREATE (a:Person {id: 'p9', name: 'Xenia'}),
+(a)-[:KNOWS {since: 2020}]->(b)`, `MERGE (c:City {id: 'c2', name: 'Göteborg'})`, `MATCH (n:Person) WHERE n.age > 40
+SET n.senior = true, n:Senior`, `MATCH (n {id: 'p1'}) REMOVE n.age`, `MATCH (a)-[r:KNOWS]->(b) DELETE r` and
+`MATCH (n {id: 'c1'}) DETACH DELETE n`. The reading part (MATCH … WHERE) decides which nodes and edges are touched, the
+writing part becomes steps; values are literals.
+
+## Neo4j as a source
+
+*Add database source* in Acquire has the family **Neo4j (Bolt)**: address (`neo4j+s://…databases.neo4j.io` for Aura or an
+own server), database, user name and password (never stored in clear text). The source opens a Cypher editor; *Run*
+connects with Neo4j's driver over WebSocket after your consent (purpose Neo4j) and shows the result as a table where
+nodes and relationships are flattened to their properties. When the answer holds nodes and relationships, **Save as
+graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query** stores the query on the source so it
+runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
+only from a page over http://.
+
+## More tools in the Graph tab
+
+- **PageRank** (damping 0.85), **Communities** (label propagation, numbered by size) and **Centrality** (harmonic
+  closeness and betweenness per Brandes, estimated from a sample of start nodes in large graphs), all computed in the
+  background thread and saveable as datasets.
+- **Pattern**: a query without code: from label, relationship, to label, direction and one condition on the from node's
+  property. The query is built as Cypher, shown under the result and can be copied to the Cypher tab.
+- **Layout**: force-directed layout of the whole graph in the background (Fruchterman–Reingold with a grid); the
+  positions are kept and used by the whole-graph view.
+
+## Graph charts in Visualise
+
+**Save as chart** in the graph view, or *New chart* → *Graph* in Visualise, gives a graph chart: graph dataset, view
+(overview, focus with searched nodes, whole graph), layout and labels. The chart exports as SVG, PNG and PDF (own SVG
+drawing from the node positions), joins dashboards and published pages as inline SVG, and batch runs and document
+templates like other charts.
+
 ## Limitations
 
-- The Cypher subset is read-only; graph editing (add, remove, merge, draw edges) comes in a later release together
-  with a Neo4j connection, PageRank and communities.
-- The overview with expandable groups applies to graphs up to 5,000 elements; larger graphs are shown as groups with
+- Cypher lacks `WITH`, `UNWIND` and `shortestPath`; the Neo4j source is read-only (writing happens in the app's own graphs).- The overview with expandable groups applies to graphs up to 5,000 elements; larger graphs are shown as groups with
   counts and in the focus and whole-graph views.
 - Properties are stored as JSON text; numbers compare as numbers in Cypher but sort as text in the node table.

@@ -219,6 +219,8 @@
         if (v[f.name] && f.type === 'url' && !/^(https?|dataspatium-asset):\/\//i.test(v[f.name])) throw new Error(t('families.err.url', { field: t('families.field.' + f.name) }));
       }
       const connector = build(fam, v);
+      // Families that are not HTTP (Neo4j over Bolt) mark the connector so Inhämta shows their own browser.
+      if (fam.family) connector.family = fam.family(v);
       const creds = fam.secrets ? fam.secrets(v) : null;
       if (creds) secrets.set(connector.id, creds);
       let entities = []; let discoveryError = null;

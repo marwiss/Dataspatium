@@ -91,6 +91,8 @@ ett paket.
 - **Grafer**: GraphML, GEXF, JSON med noder och kanter och Cypher-skript öppnas som grafer med översikt per etikett, fokus
   och helgrafsvisning (Cytoscape och sigma), en Cypher-delmängd översatt till SQL, grafmått i bakgrunden och export i
   alla fyra formaten; två tabeller blir en graf (se [docs/grafer.md](docs/grafer.md)).
+  Grafen redigeras i Bearbeta och med skrivande Cypher (receptsteg), Neo4j är en källa via Bolt, fliken Graf har PageRank,
+  samhällen, centralitet, mönsterfrågor och layout, och grafer blir diagram i Visualisera, dashboards och Publicera.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som
