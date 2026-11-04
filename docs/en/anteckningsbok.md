@@ -20,7 +20,7 @@ bottom with the buttons *Text*, *R*, *Python* and *SQL*. Everything is saved aut
   restarted. Printed output, errors, charts and datasets created with `dm_write()` are gathered below the cell.
   Charts are saved as PNG.
 - **Python cells** run in the same Python session as the Python console (Python is fetched the first time, see
-  [python.md](python.md)). Output, errors, matplotlib charts and datasets from `dm_write()` are collected under the cell.
+  [python.md](python.md)). Output, errors, matplotlib and plotly charts and datasets from `dm_write()` are collected under the cell.
 - **SQL cells** run against the table `data` in the notebook's dataset. SELECT queries show up to 1,000 rows (the
   first 50 in the view); UPDATE, DELETE and other modifying statements are performed as a recipe step in the
   dataset and logged there.

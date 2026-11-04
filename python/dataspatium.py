@@ -50,6 +50,9 @@ MESSAGES = {
         "plot.gone": "Diagrammet finns inte längre i Python-sessionen.",
         "labels.named": "Värdeetiketterna ska vara en dict från kod till etikett, till exempel {1: \"Man\", 2: \"Kvinna\"}.",
         "labels.column": "Kolumnen \"%s\" finns inte i tabellen.",
+        "step.nofunction": "Koden måste definiera en funktion step(df).",
+        "step.notframe": "step(df) måste returnera en pandas DataFrame.",
+        "plot.plotly": "Ett plotly-diagram exporteras av appen, inte av Python.",
     },
     "da": {
         "list.empty": "Ingen datasæt er tilgængelige i Python-sessionen endnu. Importér under Hent.",
@@ -65,6 +68,9 @@ MESSAGES = {
         "plot.gone": "Diagrammet findes ikke længere i Python-sessionen.",
         "labels.named": "Værdietiketterne skal være en dict fra kode til etiket, for eksempel {1: \"Mand\", 2: \"Kvinde\"}.",
         "labels.column": "Kolonnen \"%s\" findes ikke i tabellen.",
+        "step.nofunction": "Koden skal definere en funktion step(df).",
+        "step.notframe": "step(df) skal returnere en pandas DataFrame.",
+        "plot.plotly": "Et plotly-diagram eksporteres af appen, ikke af Python.",
     },
     "nb": {
         "list.empty": "Ingen datasett er tilgjengelige i Python-sesjonen ennå. Importer under Hent.",
@@ -80,6 +86,9 @@ MESSAGES = {
         "plot.gone": "Diagrammet finnes ikke lenger i Python-sesjonen.",
         "labels.named": "Verdietikettene må være en dict fra kode til etikett, for eksempel {1: \"Mann\", 2: \"Kvinne\"}.",
         "labels.column": "Kolonnen \"%s\" finnes ikke i tabellen.",
+        "step.nofunction": "Koden må definere en funksjon step(df).",
+        "step.notframe": "step(df) må returnere en pandas DataFrame.",
+        "plot.plotly": "Et plotly-diagram eksporteres av appen, ikke av Python.",
     },
     "fi": {
         "list.empty": "Python-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
@@ -95,6 +104,9 @@ MESSAGES = {
         "plot.gone": "Kaaviota ei enää ole Python-istunnossa.",
         "labels.named": "Arvoselitteiden on oltava dict koodista selitteeseen, esimerkiksi {1: \"Mies\", 2: \"Nainen\"}.",
         "labels.column": "Saraketta \"%s\" ei ole taulukossa.",
+        "step.nofunction": "Koodin on määriteltävä funktio step(df).",
+        "step.notframe": "step(df):n on palautettava pandas DataFrame.",
+        "plot.plotly": "Sovellus vie plotly-kaavion, ei Python.",
     },
     "is": {
         "list.empty": "Engin gagnasöfn eru tiltæk í Python-setunni enn. Flyttu inn undir Sækja.",
@@ -110,6 +122,9 @@ MESSAGES = {
         "plot.gone": "Myndritið er ekki lengur til í Python-setunni.",
         "labels.named": "Gildismerkimiðar verða að vera dict frá kóða í merkimiða, til dæmis {1: \"Karl\", 2: \"Kona\"}.",
         "labels.column": "Dálkurinn \"%s\" er ekki í töflunni.",
+        "step.nofunction": "Kóðinn verður að skilgreina fall step(df).",
+        "step.notframe": "step(df) verður að skila pandas DataFrame.",
+        "plot.plotly": "Forritið flytur út plotly-myndrit, ekki Python.",
     },
     "en": {
         "list.empty": "No datasets are available in the Python session yet. Import one in Import.",
@@ -125,6 +140,9 @@ MESSAGES = {
         "plot.gone": "The plot no longer exists in the Python session.",
         "labels.named": "Value labels must be a dict from code to label, for example {1: \"Man\", 2: \"Woman\"}.",
         "labels.column": "The column \"%s\" is not in the table.",
+        "step.nofunction": "The code must define a function step(df).",
+        "step.notframe": "step(df) must return a pandas DataFrame.",
+        "plot.plotly": "A plotly chart is exported by the app, not by Python.",
     },
 }
 
@@ -213,11 +231,16 @@ def dm_read(x, columns=None, where=None, n=None):
     x: name, short name or id. columns: optional list of columns. where: optional SQL condition, e.g. "lan = 'Skåne län'".
     n: maximum number of rows. Column labels, descriptions, units and value labels are kept in df.attrs["dataspatium"].
     """
-    import pandas as pd
     did = dm_find(x)
     file = os.path.join(DATA_DIR, did + ".sqlite")
     if not os.path.exists(file):
         raise DataspatiumError(_msg("read.notmirrored", x))
+    return _read_file(file, columns=columns, where=where, n=n, did=did)
+
+
+def _read_file(file, columns=None, where=None, n=None, did=None):
+    """A Dataspatium SQLite file as a DataFrame (dm_read() and the code steps in recipes)."""
+    import pandas as pd
     con = sqlite3.connect(file)
     con.row_factory = sqlite3.Row
     try:
@@ -262,7 +285,7 @@ def dm_read(x, columns=None, where=None, n=None):
                 value_labels[name] = json.loads(c["value_labels"])
             except ValueError:
                 pass
-    df.attrs["dataspatium"] = {"id": did, "name": meta.get("name"), "types": types, "labels": labels,
+    df.attrs["dataspatium"] = {"id": did or meta.get("id"), "name": meta.get("name"), "types": types, "labels": labels,
                                "descriptions": descriptions, "units": units, "value_labels": value_labels}
     return df
 
@@ -396,6 +419,19 @@ def dm_write(df, name=None, description="", labels=None, descriptions=None, unit
         raise DataspatiumError(_msg("write.df"))
     if name is None:
         name = _caller_name(df) or _msg("write.default")
+    os.makedirs(OUT_DIR, exist_ok=True)
+    did = "ds_py%s%d" % (_dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%d%H%M%S"), random.randint(1000, 9999))
+    file = os.path.join(OUT_DIR, did + ".sqlite")
+    rows, cols = _write_file(df, file, did, name, description=description, labels=labels, descriptions=descriptions,
+                             units=units, value_labels=value_labels, source={"kind": "python", "expression": str(name)})
+    print("[dataspatium:write] %s" % file)
+    print(_msg("write.sent", name, rows, cols), file=sys.stderr)
+    return did
+
+
+def _write_file(df, file, did, name, description="", labels=None, descriptions=None, units=None, value_labels=None, source=None):
+    """Write a DataFrame as a Dataspatium SQLite file (dm_write() and the code steps). Returns (rows, columns)."""
+    import pandas as pd
     if df.shape[1] == 0:
         raise DataspatiumError(_msg("write.nocols"))
     meta = df.attrs.get("dataspatium") or {}
@@ -417,9 +453,8 @@ def dm_write(df, name=None, description="", labels=None, descriptions=None, unit
         types[n] = t
         columns.append([_cell(v, t) for v in s.tolist()])
     rows = list(zip(*columns)) if columns else []
-    os.makedirs(OUT_DIR, exist_ok=True)
-    did = "ds_py%s%d" % (_dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%d%H%M%S"), random.randint(1000, 9999))
-    file = os.path.join(OUT_DIR, did + ".sqlite")
+    if os.path.exists(file):
+        os.remove(file)
     sql_types = {"text": "TEXT", "integer": "INTEGER", "number": "REAL", "date": "TEXT", "datetime": "TEXT", "boolean": "INTEGER"}
     now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     con = sqlite3.connect(file)
@@ -436,15 +471,40 @@ def dm_write(df, name=None, description="", labels=None, descriptions=None, unit
         con.executemany("insert into _meta values (?, ?)", [
             ("id", did), ("name", str(name)), ("description", str(description or "")), ("createdAt", now), ("updatedAt", now),
             ("rowCount", str(len(rows))), ("columnCount", str(len(names))),
-            ("source", json.dumps({"kind": "python", "expression": str(name)}, ensure_ascii=False))])
+            ("source", json.dumps(source or {"kind": "python"}, ensure_ascii=False))])
         con.execute("create table _log (ts text, action text, details text)")
         con.execute("insert into _log values (?, ?, ?)", (now, "python", json.dumps({"message": _msg("write.log")}, ensure_ascii=False)))
         con.commit()
     finally:
         con.close()
-    print("[dataspatium:write] %s" % file)
-    print(_msg("write.sent", name, len(rows), len(names)), file=sys.stderr)
-    return did
+    return len(rows), len(names)
+
+
+def _run_step(code, in_file, out_file, limit=None, name=""):
+    """A code step in a recipe: the code defines step(df); the result replaces the dataset's table.
+
+    Called by the app with the dataset as a SQLite file. With `limit`, only the first rows are used (preview).
+    """
+    import pandas as pd
+    import numpy as np
+    df = _read_file(in_file)
+    if limit:
+        df = df.head(int(limit))
+    ns = {"__name__": "__dataspatium_step__", "pd": pd, "np": np, "dm_palette": dm_palette}
+    exec(compile(str(code), "<steg>", "exec"), ns)
+    fn = ns.get("step")
+    if not callable(fn):
+        raise DataspatiumError(_msg("step.nofunction"))
+    out = fn(df)
+    if out is None:
+        out = df
+    if not isinstance(out, pd.DataFrame):
+        raise DataspatiumError(_msg("step.notframe"))
+    if "dataspatium" not in out.attrs and "dataspatium" in df.attrs:
+        out.attrs["dataspatium"] = df.attrs["dataspatium"]
+    rows, cols = _write_file(out.reset_index(drop=True) if not isinstance(out.index, pd.RangeIndex) else out, out_file, "step",
+                             name or (df.attrs.get("dataspatium") or {}).get("name") or "step", source={"kind": "python_step"})
+    return json.dumps({"rows": rows, "columns": [str(c) for c in out.columns]})
 
 
 # ---- plots -------------------------------------------------------------------------------------
@@ -480,35 +540,78 @@ def _matplotlib_setup():
     return "ok"
 
 
+def _plotly_setup():
+    """Called by the app before code that uses plotly runs for the first time: fig.show() hands the figure to the app
+    (rendered with plotly.js and the app's theme) instead of trying to open a browser renderer."""
+    import plotly.basedatatypes as _pb
+    import plotly.io as pio
+
+    def _show(self, *args, **kwargs):
+        _state.setdefault("plotly", []).append(json.loads(self.to_json()))
+    _pb.BaseFigure.show = _show
+    pio.templates.default = "none"
+    _state["plotly_setup"] = True
+    return "ok"
+
+
+def _format_result(value):
+    """The console's representation of a command's last value: figures go to the plot area, the rest is repr()."""
+    if value is None:
+        return None
+    try:
+        import plotly.basedatatypes as _pb
+        if isinstance(value, _pb.BaseFigure):
+            _state.setdefault("plotly", []).append(json.loads(value.to_json()))
+            return None
+    except ImportError:
+        pass
+    try:
+        import matplotlib.figure as _mf
+        if isinstance(value, _mf.Figure):
+            return None
+    except ImportError:
+        pass
+    return repr(value)
+
+
 def _plot_collect():
-    """Called by the app after each run: every open figure becomes SVG and PNG; figures are kept for export."""
-    if "matplotlib" not in sys.modules:
-        return "[]"
-    import matplotlib.pyplot as plt
+    """Called by the app after each run: every open matplotlib figure becomes SVG and PNG and every shown plotly
+    figure its JSON; figures are kept for export."""
     out = []
-    for num in list(plt.get_fignums()):
-        fig = plt.figure(num)
+    if "matplotlib" in sys.modules:
+        import matplotlib.pyplot as plt
+        for num in list(plt.get_fignums()):
+            fig = plt.figure(num)
+            _state["plot_seq"] += 1
+            key = _state["plot_seq"]
+            w, h = fig.get_size_inches()
+            svg = io.StringIO()
+            fig.savefig(svg, format="svg")
+            png = io.BytesIO()
+            fig.savefig(png, format="png", dpi=96)
+            _state["figures"][key] = fig
+            out.append({"key": key, "width": int(round(w * 96)), "height": int(round(h * 96)),
+                        "svg": svg.getvalue(), "png": base64.b64encode(png.getvalue()).decode("ascii")})
+            plt.close(fig)
+    for fig_json in _state.get("plotly") or []:
         _state["plot_seq"] += 1
         key = _state["plot_seq"]
-        w, h = fig.get_size_inches()
-        svg = io.StringIO()
-        fig.savefig(svg, format="svg")
-        png = io.BytesIO()
-        fig.savefig(png, format="png", dpi=96)
-        _state["figures"][key] = fig
-        out.append({"key": key, "width": int(round(w * 96)), "height": int(round(h * 96)),
-                    "svg": svg.getvalue(), "png": base64.b64encode(png.getvalue()).decode("ascii")})
-        plt.close(fig)
+        _state["figures"][key] = {"plotly": fig_json}
+        layout = fig_json.get("layout") or {}
+        out.append({"key": key, "plotly": fig_json, "width": int(layout.get("width") or 672), "height": int(layout.get("height") or 480)})
+    _state["plotly"] = []
     while len(_state["figures"]) > 30:
         del _state["figures"][min(_state["figures"])]
     return json.dumps(out)
 
 
 def _plot_export(key, fmt, path, width=7, height=5, dpi=150):
-    """Export a kept figure to SVG, PNG or PDF at the given size in inches."""
+    """Export a kept matplotlib figure to SVG, PNG or PDF at the given size in inches."""
     fig = _state["figures"].get(int(key))
     if fig is None:
         raise DataspatiumError(_msg("plot.gone"))
+    if isinstance(fig, dict):
+        raise DataspatiumError(_msg("plot.plotly"))
     old = fig.get_size_inches()
     fig.set_size_inches(float(width), float(height))
     try:

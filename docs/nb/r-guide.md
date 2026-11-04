@@ -62,6 +62,15 @@ deretter lagres pakkene i nettleseren, finnes fortsatt ved neste oppstart og vis
 Komponenter*, der de også kan fjernes. Uten nettverk, eller om du svarer nei, får koden den vanlige feilen om at
 pakken mangler. Pakker som krever systembiblioteker som ikke finnes i nettleseren, kan mangle i arkivet.
 
+## R-steg i oppskrifter
+
+I Bearbeid finnes handlingen **R-steg** (gruppen Kode): en funksjon `function(df) { ... }` kjøres på hele tabellen,
+og det den returnerer, blir den nye tabellen med typer fra resultatet. Steget logges i oppskriften med koden sin, kan
+angres, spilles av på et annet datasett og eksporteres som R-kode (`df <- (function(df) {...})(df)`). *Forhåndsvis*
+kjører funksjonen på de første 200 radene. Pakker som koden bruker, hentes som i konsollen. R-diagrammer i Visualiser
+eksporteres nå også fra Eksporter, i batch og i dokumentmaler uten at R-fanen er åpen: appen kjører skriptet i
+R-sesjonen når det trengs.
+
 ## Slik flyttes data mellom appen og R
 
 Datasettene er SQLite-filer. Når du kjører kode, kopierer appen datasettene som koden viser til med `dm_read()`, til R sitt

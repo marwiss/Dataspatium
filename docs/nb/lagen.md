@@ -91,7 +91,7 @@ SQL-kode. Versjoner lagrer øyeblikksbilder å gå tilbake til. Se [bearbeta.md]
 ## Analyser
 
 Kode og statistikk. Verktøyene ligger i fast rekkefølge: R, Python, SQL, Regex og sist notatboken, som føyer sammen deler
-fra de andre. Python-konsollen har pandas og matplotlib og hentes som komponent første gang du starter den (se
+fra de andre. Python-konsollen har pandas, matplotlib, seaborn og plotly og hentes som komponent første gang du starter den (se
 [python.md](python.md)). R-konsollen har ggplot2, dplyr, tidyr og andre pakker,
 lagrede skript, diagrammer med eksport til SVG, PNG og PDF, og `dm_read()`/`dm_write()` for å flytte data mellom
 appen og R (se [r-guide.md](r-guide.md)); pakker som ikke følger med appen, hentes fra webR sitt pakkearkiv når koden

@@ -41,6 +41,7 @@ licence. Each library, its version and licence are listed in
 | R (R.wasm and others) | GPL-2 or GPL-3 | Free software. Distributed unchanged in binary form; the source code is available from the R project and the webR project in the stated versions |
 | R packages in `vendor/webr-repo` | Mostly MIT; also LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite and others) | Distributed unchanged; the source code is available on CRAN in the stated versions |
 | Python (Pyodide, CPython and packages such as numpy, pandas and matplotlib; fetched on demand, not in the folder) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), the matplotlib licence (PSF-based), MIT and similar for the rest | Fetched unchanged from jsDelivr and kept in the browser; the source code is with the Pyodide project and on PyPI in the versions named in the app's catalogue (Pyodide 314.0.7) |
+| plotly.js (fetched on demand for plotly charts), seaborn and plotly (Python wheels from PyPI, fetched on demand) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Fetched unchanged from jsDelivr and PyPI, pinned to version and digest, and kept in the browser |
 
 Dataspatium's code does not link against R. R runs as a separate interpreter in a worker and exchanges R code, SQLite
 files and images with the app through messages; that is the kind of co-distribution ("mere aggregation") the GPL

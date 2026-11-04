@@ -40,6 +40,7 @@ version og licens findes i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.
 | R (R.wasm med flere) | GPL-2 eller GPL-3 | Fri software. Distribueres uændret i binær form; kildekoden findes hos R-projektet og webR-projektet i de angivne versioner |
 | R-pakker i `vendor/webr-repo` | Mest MIT; også LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite med flere) | Distribueres uændret; kildekoden findes på CRAN i de angivne versioner |
 | Python (Pyodide, CPython og pakker som numpy, pandas og matplotlib; hentes efter behov, ikke i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-licensen (PSF-baseret), MIT og lignende for de øvrige | Hentes uændrede fra jsDelivr og gemmes i browseren; kildekoden findes hos Pyodide-projektet og på PyPI i de versioner, appens katalog angiver (Pyodide 314.0.7) |
+| plotly.js (hentes efter behov til plotly-diagrammer), seaborn og plotly (Python-hjul fra PyPI, hentes efter behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hentes uændrede fra jsDelivr og PyPI, låst til version og kontrolsum, og gemmes i browseren |
 
 Dataspatiums kode linker ikke mod R. R kører som en separat fortolker i en worker og udveksler R-kode, SQLite-filer og
 billeder med appen via meddelelser; det er den slags samdistribution ("mere aggregation"), som GPL tillader, og R-delene

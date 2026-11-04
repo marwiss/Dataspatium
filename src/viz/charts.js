@@ -3,14 +3,15 @@
 /**
  * Saved charts: records in IndexedDB (table `charts`), shareable `*.viz.json` files, and helpers to
  * create new chart records. A chart has a kind: 'vega' (builder state or custom spec), 'd3'
- * (template id and parameters) or 'r' (an R script that draws with ggplot2 or base graphics).
+ * (template id and parameters), 'r' (an R script that draws with ggplot2 or base graphics) or 'python' (a
+ * Python script that draws with matplotlib or plotly).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('viz/charts', ['platform/storage/idb', 'data/datasets', 'platform/sync'], (idb, datasets, sync) => {
     const FORMAT = 'dataspatium-viz/1';
-    const KINDS = ['vega', 'd3', 'r'];
+    const KINDS = ['vega', 'd3', 'r', 'python'];
     const listeners = new Set();
     function notify(type, payload) { for (const fn of listeners) { try { fn(type, payload); } catch (err) { console.error(err); } } }
     function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -37,6 +38,8 @@
       if (kind === 'vega') base.vega = { type: 'bar', state: null, customSpec: null };
       if (kind === 'd3') base.d3 = { template: 'lollipop', params: {} };
       if (kind === 'r') base.r = { code: '' };
+      // A Python chart keeps the plotly figure (JSON) it drew last, so dashboards can show it interactively.
+      if (kind === 'python') base.python = { code: '', plotly: null };
       return base;
     }
 
@@ -46,6 +49,7 @@
       if (chart.kind === 'vega') out.vega = chart.vega;
       if (chart.kind === 'd3') out.d3 = chart.d3;
       if (chart.kind === 'r') out.r = chart.r;
+      if (chart.kind === 'python') out.python = chart.python;
       out.options = chart.options || {};
       return JSON.stringify(out, null, 2) + '\n';
     }
@@ -63,6 +67,7 @@
       if (obj.kind === 'vega') chart.vega = obj.vega || { type: 'bar', state: null, customSpec: null };
       if (obj.kind === 'd3') chart.d3 = obj.d3 || { template: 'lollipop', params: {} };
       if (obj.kind === 'r') chart.r = obj.r || { code: '' };
+      if (obj.kind === 'python') chart.python = obj.python || { code: '', plotly: null };
       return save(chart);
     }
 

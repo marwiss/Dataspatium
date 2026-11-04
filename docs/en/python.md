@@ -67,6 +67,32 @@ removed. Pure Python packages from PyPI that are not part of Pyodide are install
 Digests: the runtime files are pinned to Pyodide 314.0.7 with SHA-256 in the app; the packages are checked against
 `pyodide-lock.json`, which is in turn pinned by its digest. A file with the wrong digest is not used.
 
+## Code steps in recipes
+
+Process has the action **Python step** (the Code group in the palette): a function `def step(df): ... return df` runs
+on the whole table with pandas, and what the function returns becomes the new table, with types from the result.
+The step is logged in the recipe with its code, can be undone, replayed on another dataset and travels with the
+exported recipe (as comments in the SQL and R code). The *Preview* button runs the function on the first 200 rows
+and shows the result's columns and a few rows before you apply. Import what you need in the code; `pd` and `np` are
+already there. The matching **R step** takes a function `function(df) { ... }` (see [r-guide.md](r-guide.md)).
+
+## seaborn and plotly
+
+seaborn and plotly are not part of Pyodide's distribution; the app pins their wheels from PyPI with digests and
+fetches them as components when the code imports them (`import seaborn as sns`, `import plotly.express as px`).
+seaborn draws through matplotlib and is shown like other figures. plotly figures are interactive: `fig.show()`, or
+`fig` as the last line, hands the figure to the app, which draws it with plotly.js (fetched as a component the first
+time, 4.8 MB) and the app's theme, and exports it to SVG, PNG and PDF. In the notebook, plotly figures are saved as
+PNG, with the interactive view kept as long as plotly.js is available.
+
+## Python charts in Visualise
+
+In Visualise a chart can be a **Python script**: the dataset is `df`, and the latest chart (matplotlib or plotly) is
+shown and saved with the script. Python charts export to SVG, PNG, PDF and PowerPoint, run in batches per group
+(the script runs once per value with `df` filtered) and can be placed in document templates with
+`{{diagram "Name"}}`; the same now goes for R charts. In dashboards and published HTML a saved plotly chart is
+interactive, other Python and R charts are shown as their saved image.
+
 ## How data moves between the app and Python
 
 Datasets are SQLite files. When you run code, the app copies the datasets the code refers to with `dm_read()` into

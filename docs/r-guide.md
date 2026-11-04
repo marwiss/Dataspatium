@@ -62,6 +62,15 @@ sparas paketen i webbläsaren, finns kvar vid nästa start och visas under *Hant
 de också kan tas bort. Utan nätverk, eller om du svarar nej, får koden det vanliga felet att paketet saknas. Paket
 som kräver systembibliotek som inte finns i webbläsaren kan saknas i förrådet.
 
+## R-steg i recept
+
+I Bearbeta finns åtgärden **R-steg** (gruppen Kod): en funktion `function(df) { ... }` körs på hela tabellen och det
+den returnerar blir den nya tabellen, med typer från resultatet. Steget loggas i receptet med sin kod, kan ångras,
+spelas upp på en annan datamängd och exporteras som R-kod (`df <- (function(df) {...})(df)`). *Förhandsgranska* kör
+funktionen på de första 200 raderna. Paket som koden använder hämtas som i konsolen. R-diagram i Visualisera
+exporteras numera även från Exportera, i batch och i dokumentmallar utan att R-fliken är öppen: appen kör skriptet
+i R-sessionen när det behövs.
+
 ## Hur data flyttas mellan appen och R
 
 Datamängderna är SQLite-filer. När du kör kod kopierar appen de datamängder som koden refererar med `dm_read()`

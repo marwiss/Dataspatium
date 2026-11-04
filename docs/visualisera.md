@@ -1,13 +1,13 @@
 # Visualisera
 
 Läget Visualisera gör diagram av datamängderna med tre motorer som alla använder appens palett, typsnitt och
-talformat: en diagrambyggare (Vega-Lite), färdiga D3-mallar och R-skript (ggplot2). Diagram sparas i
+talformat: en diagrambyggare (Vega-Lite), färdiga D3-mallar, R-skript (ggplot2) och Python-skript (matplotlib, plotly). Diagram sparas i
 arbetsytan, kan exporteras som SVG, PNG och PDF, delas som filer och skapas i batch per grupp.
 
 ## Skapa ett diagram
 
 1. Välj en datamängd i objektpanelen och tryck **Nytt diagram**.
-2. Välj motor: **Diagrambyggare**, **D3-mall** eller **R-skript**.
+2. Välj motor: **Diagrambyggare**, **D3-mall**, **R-skript** eller **Python-skript**.
 3. Ge diagrammet ett namn i rubrikfältet och tryck **Spara**. Sparade diagram listas under Diagram i objektpanelen
    och i galleriet.
 
@@ -79,6 +79,14 @@ Skriptet körs i R-sessionen med datamängden inläst som `df`. Rita med ggplot2
 `theme_dataspatium()` och `dm_palette()` ger appens utseende. Det senaste diagrammet visas och sparas med skriptet.
 Export sker via R (svglite för SVG, `png()` och `pdf()`), och batchkörningar kör skriptet en gång per grupp med
 `df` filtrerat. Ctrl+Enter kör skriptet.
+
+## Python-skript
+
+Skriptet körs i Python-sessionen med datamängden inläst som `df` (pandas). Rita med matplotlib (`fig, ax =
+plt.subplots()`) eller plotly (`fig.show()`); `theme_dataspatium()` sätts automatiskt. Det senaste diagrammet visas
+och sparas med skriptet; ett plotly-diagram sparas dessutom som figur och visas interaktivt i dashboards och
+publicerad HTML. Python startar på *Starta Python* eller *Kör* (hämtas första gången, se [python.md](python.md)).
+Export och batch per grupp fungerar som för R-skript.
 
 ## Exportera
 
@@ -163,7 +171,7 @@ eller tas bort från dashboarden; antal kolumner i rutnätet och en beskrivning 
 
 **Filter** visar de kolumner som finns i alla datamängder som dashboardens diagram använder (text, heltal, datum
 och ja/nej). Varje valt filter blir en väljare ovanför diagrammen, och valet gäller alla Vega- och D3-diagram
-samtidigt (R-diagram visas som sparad bild). Filtren läggs till diagrammens egna filter.
+samtidigt (R- och Python-diagram visas som sparad bild, plotly-diagram interaktivt). Filtren läggs till diagrammens egna filter.
 
 Dashboarden exporteras som fristående **HTML** (diagrammen som inbäddad SVG, med de aktiva filtren angivna), som
 **PowerPoint** (titelbild plus en bild per diagram) eller delas som `*.dash.json`, en fil som innehåller
@@ -187,7 +195,7 @@ Säkerhetskopian av arbetsytan (Hantera) innehåller alla diagram som sådana fi
 
 - Diagrammen lever i webbläsaren; mycket stora datamängder utan aggregering begränsas till radgränsen.
 - PDF använder Helvetica, inte Inter, för text.
-- R-diagram kräver att R-sessionen är startad och exporteras därför bara från Visualisera.
+- R- och Python-diagram körs i sin motor vid export, batch, dokument och PowerPoint; det tar några sekunder per diagram, och Python hämtas första gången.
 - De medföljande gränserna är förenklade för tematiska kartor, inte exakta gränser; hämta exakta gränser från
   Lantmäteriet (eller motsvarande myndighet) och importera dem som GeoPackage eller shapefile.
 - PowerPoint-export använder bilder (PNG) av diagrammen, inte redigerbara PowerPoint-diagram.

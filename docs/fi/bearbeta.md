@@ -210,6 +210,16 @@ suoritettiin. Reseptitiedosto on muotoa
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Poista välilyönnit sarakkeesta kommun" } ] }
 ```
 
+## Koodivaiheet
+
+Paletin ryhmässä **Koodi** on kaksi toimintoa, jotka suorittavat funktion koko taulukolle: **Python-vaihe**
+(`def step(df):` pandasilla, ks. [python.md](python.md)) ja **R-vaihe** (`function(df) { ... }`, ks.
+[r-guide.md](r-guide.md)). Funktion palauttama taulukko korvaa vanhan tyyppeineen; selitteet ja yksiköt seuraavat
+sarakkeita, jotka säilyttävät nimensä. *Esikatsele* suorittaa funktion ensimmäisille 200 riville ja näyttää sarakkeet
+ja muutaman rivin. Vaihe kirjataan reseptiin koodeineen, sen voi kumota ja toistaa muille aineistoille; SQL-viennissä
+koodi on kommenttina, R-viennissä R-vaihe suoritetaan koodina ja Python-vaihe on kommenttina. Python haetaan
+ensimmäisellä kerralla.
+
 ## SQL-konsoli
 
 Jokaisella aineistolla on **lyhytnimi** (näkyy nimen alla kohdepaneelissa ja Hallitse-tilassa, jossa sen voi muuttaa nimen

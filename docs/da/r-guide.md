@@ -62,6 +62,15 @@ derefter gemmes pakkerne i browseren, findes stadig ved næste start og vises un
 Komponenter*, hvor de også kan fjernes. Uden netværk, eller hvis du svarer nej, får koden den sædvanlige fejl om, at
 pakken mangler. Pakker, der kræver systembiblioteker, som ikke findes i browseren, kan mangle i arkivet.
 
+## R-trin i opskrifter
+
+I Bearbejd findes handlingen **R-trin** (gruppen Kode): en funktion `function(df) { ... }` køres på hele tabellen, og
+det, den returnerer, bliver den nye tabel med typer fra resultatet. Trinnet logges i opskriften med sin kode, kan
+fortrydes, afspilles på et andet datasæt og eksporteres som R-kode (`df <- (function(df) {...})(df)`). *Forhåndsvis*
+kører funktionen på de første 200 rækker. Pakker, som koden bruger, hentes som i konsollen. R-diagrammer i Visualisér
+eksporteres nu også fra Eksportér, i batch og i dokumentskabeloner, uden at R-fanen er åben: appen kører scriptet i
+R-sessionen, når der er brug for det.
+
 ## Sådan flyttes data mellem appen og R
 
 Datasættene er SQLite-filer. Når du kører kode, kopierer appen de datasæt, koden henviser til med `dm_read()`, til R's

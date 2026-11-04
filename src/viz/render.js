@@ -1,8 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * One entry point to render any saved chart (Vega-Lite, D3 template or R script) on screen or to
- * SVG/PNG/PDF blobs. Used by Visualisera, Exportera and the batch runner.
+ * One entry point to render any saved chart (Vega-Lite, D3 template, R or Python script) on screen or to
+ * SVG/PNG/PDF blobs. Used by Visualisera, Exportera and the batch runner. Code charts (viz/code-charts) are
+ * exported headless through their engines; on screen they are drawn by their panels.
  */
 (function () {
   'use strict';
@@ -86,8 +87,11 @@
         const svg = await d3t.render(prep.tpl.id, holder, prep.data.rows, prep.params, { width, height: options.height });
         svgText = d3t.svgString(svg);
         if (format === 'png') return vizExport.svgToPng(svgText, { scale: options.scale || 2 });
+      } else if (D.require('viz/code-charts').isCode(chart.kind)) {
+        // R and Python charts run their script in the engine and export through it (plotly figures via plotly.js).
+        return D.require('viz/code-charts').toBlob(chart, format, Object.assign({}, options, { width }));
       } else {
-        throw new Error(D.t('viz.err.r.export'));
+        throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
       }
       if (format === 'svg') return vizExport.svgBlob(await vizExport.svgWithFonts(svgText));
       if (format === 'pdf') return vizExport.svgToPdf(svgText, { title: chart.name });

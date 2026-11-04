@@ -112,17 +112,22 @@
       const resolved = await resolveCharts(dash);
       const tk = theme.tokens();
       const sections = [];
+      const codeCharts = D.require('viz/code-charts');
+      let plotlyUsed = false;
       for (const { chart } of resolved) {
         let body = '';
-        if (chart.kind === 'r') body = chart.thumbnail ? `<img src="${chart.thumbnail}" alt="${esc(chart.name)}">` : '';
+        // Python charts with a plotly figure stay interactive (plotly.js inlined once); other code charts are their saved image.
+        if (chart.kind === 'python' && chart.python && chart.python.plotly) { plotlyUsed = true; body = D.require('viz/plotly').htmlFor('plotly-' + sections.length, chart.python.plotly, { width: options.width || 900 }); }
+        else if (codeCharts.isCode(chart.kind)) body = chart.thumbnail ? `<img src="${chart.thumbnail}" alt="${esc(chart.name)}">` : '';
         else body = (await (await render.toBlob(chart, 'svg', { width: options.width || 900, extraFilters: options.extraFilters })).text()).replace(/^<\?xml[^>]*>\s*/, '');
         sections.push(`<section><h2>${esc(chart.name)}</h2>${body}<p class="src">${esc(chart.datasetName || '')}</p></section>`);
       }
+      const plotlyScript = plotlyUsed ? `<script>${(await D.require('viz/plotly').source()).replace(/<\/script/gi, '<\\/script')}</script>\n` : '';
       const filt = filtersText(options.extraFilters);
       const meta = [options.generatedText || '', filt ? `${options.filtersLabel ? options.filtersLabel + ' ' : ''}${filt}` : ''].filter(Boolean).map(esc).join(' · ');
       const html = `<!doctype html>\n<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(dash.name)}</title>\n`
         + `<style>body{font-family:${tk.font};margin:32px;color:${tk.text};background:${tk.background}} h1{font-size:24px;margin:0 0 8px} h2{font-size:16px;margin:0 0 8px} section{break-inside:avoid;margin:0 0 32px;padding:16px;border:1px solid ${tk.border};border-radius:8px} svg,img{max-width:100%;height:auto} p{margin:4px 0} .src,.meta{color:${tk.muted};font-size:12px}</style></head>\n`
-        + `<body><h1>${esc(dash.name)}</h1>${dash.description ? `<p>${esc(dash.description)}</p>` : ''}${meta ? `<p class="meta">${meta}</p>` : ''}\n${sections.join('\n')}\n</body></html>\n`;
+        + `<body>${plotlyScript}<h1>${esc(dash.name)}</h1>${dash.description ? `<p>${esc(dash.description)}</p>` : ''}${meta ? `<p class="meta">${meta}</p>` : ''}\n${sections.join('\n')}\n</body></html>\n`;
       return new Blob([html], { type: 'text/html;charset=utf-8' });
     }
 

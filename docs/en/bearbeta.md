@@ -209,6 +209,16 @@ performed. The recipe file has the form
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Trim kommun" } ] }
 ```
 
+## Code steps
+
+The **Code** group in the palette has two actions that run a function on the whole table: **Python step**
+(`def step(df):` with pandas, see [python.md](python.md)) and **R step** (`function(df) { ... }`, see
+[r-guide.md](r-guide.md)). What the function returns becomes the new table, with types from the result; labels and
+units follow columns that keep their name. *Preview* runs the function on the first 200 rows and shows the columns
+and a few rows. The step is logged in the recipe with its code, can be undone and replayed on other datasets; in the
+SQL export the code is a comment, in the R export the R step runs as code and the Python step is a comment. Python
+is fetched the first time.
+
 ## The SQL console
 
 Every dataset has a **short name** (shown below the name in the object panel and under Manage, where it can be changed

@@ -57,7 +57,7 @@ gir i stedet en tabell over datasettets kolonner (navn, type, etikett, beskrivel
 ```
 
 Setter inn et lagret diagram fra Visualiser (Vega-Lite eller D3) som bilde, gjengitt med samme filtre som dokumentet; `bredd`
-er bredden i piksler. I batchkjøringer filtreres diagrammet på gruppen. R-diagrammer kan ikke settes inn i dokumenter.
+er bredden i piksler. I batchkjøringer filtreres diagrammet på gruppen. R- og Python-diagrammer tegnes av motorene sine når dokumentet lages (noen sekunder per diagram).
 
 ### Sideskift og kodebok
 

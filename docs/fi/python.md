@@ -69,6 +69,32 @@ Tarkistesummat: ajoympäristön tiedostot on lukittu Pyodide-versioon 314.0.7 SH
 tarkistetaan `pyodide-lock.json`-tiedostoa vasten, joka on itse lukittu summallaan. Tiedostoa, jonka summa on väärä,
 ei käytetä.
 
+## Koodivaiheet resepteissä
+
+Muokkaa-tilassa on toiminto **Python-vaihe** (paletin ryhmä Koodi): funktio `def step(df): ... return df` suoritetaan
+koko taulukolle pandasilla, ja funktion palauttama taulukko korvaa vanhan tyyppeineen. Vaihe kirjataan reseptiin
+koodeineen, sen voi kumota, toistaa toiselle aineistolle, ja se kulkee viedyn reseptin mukana (kommentteina SQL- ja
+R-koodissa). Painike *Esikatsele* suorittaa funktion ensimmäisille 200 riville ja näyttää tuloksen sarakkeet ja
+muutaman rivin ennen käyttöä. Tuo tarvitsemasi moduulit koodissa; `pd` ja `np` ovat jo valmiina. Vastaava **R-vaihe**
+ottaa funktion `function(df) { ... }` (ks. [r-guide.md](r-guide.md)).
+
+## seaborn ja plotly
+
+seaborn ja plotly eivät kuulu Pyodiden valikoimaan; sovellus on kiinnittänyt niiden PyPI-wheelit tarkistesummineen ja
+hakee ne komponentteina, kun koodi tuo ne (`import seaborn as sns`, `import plotly.express as px`). seaborn piirtää
+matplotlibin kautta ja näkyy kuten muut kuvat. plotly-kuvat ovat vuorovaikutteisia: `fig.show()` tai `fig` viimeisenä
+rivinä antaa kuvan sovellukselle, joka piirtää sen plotly.js:llä (haetaan komponenttina ensimmäisellä kerralla,
+4,8 MB) ja sovelluksen teemalla ja vie sen SVG-, PNG- ja PDF-muotoon. Muistikirjassa plotly-kuvat tallennetaan
+PNG-muodossa, ja vuorovaikutteinen näkymä säilyy niin kauan kuin plotly.js on saatavilla.
+
+## Python-kaaviot Visualisoi-tilassa
+
+Visualisoi-tilassa kaavio voi olla **Python-skripti**: aineisto on `df`, ja viimeisin kaavio (matplotlib tai plotly)
+näytetään ja tallennetaan skriptin kanssa. Python-kaaviot viedään SVG-, PNG-, PDF- ja PowerPoint-muotoon, ajetaan
+eräajona ryhmittäin (skripti suoritetaan kerran arvoa kohden `df` suodatettuna), ja ne voi sijoittaa
+asiakirjamalleihin merkinnällä `{{diagram "Nimi"}}`; sama koskee nyt R-kaavioita. Koontinäytöissä ja julkaistussa
+HTML:ssä tallennettu plotly-kaavio on vuorovaikutteinen, muut Python- ja R-kaaviot näytetään tallennettuna kuvana.
+
 ## Miten data siirtyy sovelluksen ja Pythonin välillä
 
 Aineistot ovat SQLite-tiedostoja. Kun suoritat koodia, sovellus kopioi aineistot, joihin koodi viittaa `dm_read()`-

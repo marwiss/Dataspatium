@@ -39,6 +39,7 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | R (R.wasm og fleira) | GPL-2 eða GPL-3 | Frjáls hugbúnaður. Dreift óbreyttu á tvíundarformi; frumkóðinn fæst hjá R-verkefninu og webR-verkefninu í tilgreindum útgáfum |
 | R-pakkar í `vendor/webr-repo` | Aðallega MIT; líka LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite og fleiri) | Dreift óbreyttum; frumkóðinn fæst á CRAN í tilgreindum útgáfum |
 | Python (Pyodide, CPython og pakkar eins og numpy, pandas og matplotlib; sótt eftir þörfum, ekki í möppunni) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-leyfið (byggt á PSF), MIT og sambærilegt fyrir hitt | Sótt óbreytt frá jsDelivr og vistað í vafranum; frumkóðinn er hjá Pyodide-verkefninu og á PyPI í þeim útgáfum sem skrá forritsins tilgreinir (Pyodide 314.0.7) |
+| plotly.js (sótt eftir þörfum fyrir plotly-myndrit), seaborn og plotly (Python-hjól frá PyPI, sótt eftir þörfum) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Sótt óbreytt frá jsDelivr og PyPI, fest við útgáfu og prófsummu, og vistað í vafranum |
 
 Kóði Dataspatium tengist ekki R. R keyrir sem sérstakur túlkur í worker og skiptist á R-kóða, SQLite-skrám og myndum við
 forritið gegnum skilaboð; það er sú tegund samdreifingar („mere aggregation“) sem GPL leyfir, og R-hlutarnir halda öllum

@@ -60,8 +60,7 @@ Number columns are right-aligned.
 ```
 
 Inserts a saved chart from Visualise (Vega-Lite or D3) as an image, rendered with the same filters as the document;
-`bredd` is the width in pixels. In batch runs the chart is filtered on the group. R charts cannot be placed in
-documents.
+`bredd` is the width in pixels. In batch runs the chart is filtered on the group. R and Python charts are drawn by their engines when the document is created (a few seconds per chart).
 
 ### Page break and codebook
 

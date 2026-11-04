@@ -71,12 +71,21 @@
       }
       return out.join('\n').replace(/\n+$/, '');
     }
+    // The console's view of a command's last value: the session's __dm_format_result (python/dataspatium.py) lets
+    // figures go to the plot area; without it the plain repr is used.
     function reprOf(value) {
       if (value === undefined || value === null) return null;
-      if (!reprFn) reprFn = pyodide.runPython('repr');
-      var text = reprFn(value);
+      var text;
+      if (pyodide.globals.has('__dm_format_result')) {
+        var fmt = pyodide.globals.get('__dm_format_result');
+        try { text = fmt(value); } finally { fmt.destroy(); }
+      } else {
+        if (!reprFn) reprFn = pyodide.runPython('repr');
+        text = reprFn(value);
+      }
       if (value && typeof value.destroy === 'function') { try { value.destroy(); } catch (e) { /* already gone */ } }
-      return text === 'None' ? null : String(text);
+      if (text === undefined || text === null || text === 'None') return null;
+      return String(text);
     }
     var quiet = function () {};
 

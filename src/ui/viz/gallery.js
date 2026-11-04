@@ -21,14 +21,14 @@
 
       function card(chart) {
         const body = h('div', { class: 'dm-gallery-body' });
-        if (live && chart.kind !== 'r') {
+        if (live && !D.require('viz/code-charts').isCode(chart.kind)) {
           const holder = h('div', { class: 'dm-chart-preview' });
           body.appendChild(holder);
           render.renderInto(chart, holder, { width: undefined }).then((hd) => handles.push(hd)).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
         } else if (chart.thumbnail) {
           body.appendChild(h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }));
         } else {
-          body.appendChild(h('div', { class: 'dm-gallery-thumb dm-gallery-placeholder' }, icons.icon(chart.kind === 'r' ? 'terminal' : 'chart-column', 32)));
+          body.appendChild(h('div', { class: 'dm-gallery-thumb dm-gallery-placeholder' }, icons.icon(chart.kind === 'r' ? 'terminal' : chart.kind === 'python' ? 'code' : 'chart-column', 32)));
         }
         return h('article', { class: 'dm-gallery-card dm-card' },
           h('div', { class: 'dm-gallery-head' },
@@ -37,7 +37,7 @@
           body,
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('viz.gallery.open'), icon: 'pencil', size: 'sm', variant: 'primary', onClick: () => options.onOpen(chart) }),
-            chart.kind !== 'r' ? basic.button({ label: t('viz.export'), icon: 'download', size: 'sm', onClick: () => options.onExport(chart) }) : null,
+            basic.button({ label: t('viz.export'), icon: 'download', size: 'sm', onClick: () => options.onExport(chart) }),
             basic.button({ label: t('common.delete'), icon: 'trash-2', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => options.onDelete(chart) })));
       }
 

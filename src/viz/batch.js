@@ -30,8 +30,9 @@
         const extraFilters = [{ field: options.groupColumn, op: '=', value }];
         for (const format of formats) {
           try {
-            const blob = chart.kind === 'r'
-              ? await (options.renderR ? options.renderR(chart, value, format) : Promise.reject(new Error(D.t('viz.err.r.session'))))
+            // A code chart open in its panel exports through it (options.renderR); otherwise every kind renders headless.
+            const blob = options.renderR && D.require('viz/code-charts').isCode(chart.kind)
+              ? await options.renderR(chart, value, format)
               : await render.toBlob(chart, format, { extraFilters, titleSuffix: ` – ${value}`, width: options.width || 800, scale: options.scale || 2 });
             const name = fileName(options.pattern, chart, value, format);
             out[name] = new Uint8Array(await blob.arrayBuffer());
@@ -63,8 +64,8 @@
       for (const value of values) {
         if (options.signal && options.signal.aborted) throw Object.assign(new Error('Avbrutet.'), { kind: 'aborted' });
         try {
-          const png = chart.kind === 'r'
-            ? await (options.renderR ? options.renderR(chart, value, 'png') : Promise.reject(new Error(D.t('viz.err.r.session'))))
+          const png = options.renderR && D.require('viz/code-charts').isCode(chart.kind)
+            ? await options.renderR(chart, value, 'png')
             : await render.toBlob(chart, 'png', { extraFilters: [{ field: options.groupColumn, op: '=', value }], titleSuffix: ` – ${value}`, width: options.width || 1200, scale: 2 });
           const size = await pptx.imageSize(png);
           slides.push({ title: `${chart.name || D.t('viz.chart.word')} – ${value}`, png, width: size.width, height: size.height, note: chart.datasetName || '' });

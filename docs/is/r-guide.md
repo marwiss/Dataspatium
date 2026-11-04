@@ -62,6 +62,15 @@ hann byggir á áður en kóðinn keyrir. Í fyrsta skipti spyr forritið um ley
 → Íhlutir*, þar sem þá má líka fjarlægja. Án nets, eða ef þú svarar nei, fær kóðinn venjulegu villuna um að pakkann
 vanti. Pakka sem krefjast kerfissafna sem ekki eru til í vafranum getur vantað í pakkasafnið.
 
+## R-skref í uppskriftum
+
+Í Vinna er aðgerðin **R-skref** (hópurinn Kóði): fall `function(df) { ... }` keyrir á alla töfluna og það sem það
+skilar verður nýja taflan með tegundum úr niðurstöðunni. Skrefið er skráð í uppskriftina með kóðanum, má afturkalla,
+endurspila á öðru gagnasafni og flytja út sem R-kóða (`df <- (function(df) {...})(df)`). *Forskoða* keyrir fallið á
+fyrstu 200 röðunum. Pakkar sem kóðinn notar eru sóttir eins og í stjórnborðinu. R-myndrit í Myndgera eru nú einnig
+flutt út úr Flytja út, í hópkeyrslu og í skjalasniðmátum án þess að R-flipinn sé opinn: forritið keyrir skriftuna í
+R-setunni þegar þörf er á.
+
 ## Hvernig gögn flytjast milli forritsins og R
 
 Gagnasöfnin eru SQLite-skrár. Þegar þú keyrir kóða afritar forritið þau gagnasöfn sem kóðinn vísar í með `dm_read()` í sýndar-

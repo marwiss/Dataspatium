@@ -18,7 +18,7 @@ hnöppunum *Texti*, *R*, *Python* og *SQL*. Allt er vistað sjálfkrafa, líka �
 - **R-reitir** keyra í sömu R-setu og R-stjórnborðið, svo breytur lifa milli reita og keyrslna þar til R er endurræst.
   Útprentanir, villur, myndrit og gagnasöfn sem búin eru til með `dm_write()` safnast undir reitnum. Myndrit eru vistuð sem PNG.
 - **Python-reitir** keyra í sömu Python-setu og Python-stjórnborðið (Python er sótt í fyrsta sinn, sjá
-  [python.md](python.md)). Úttak, villur, matplotlib-myndrit og gagnasöfn úr `dm_write()` safnast undir reitinn.
+  [python.md](python.md)). Úttak, villur, matplotlib- og plotly-myndrit og gagnasöfn úr `dm_write()` safnast undir reitinn.
 - **SQL-reitir** keyra á töfluna `data` í gagnasafni minnisbókarinnar. SELECT-fyrirspurnir sýna allt að 1 000 raðir (fyrstu 50
   í yfirlitinu); UPDATE, DELETE og aðrar breytandi setningar eru framkvæmdar sem skref í uppskrift gagnasafnsins og skráðar þar.
 

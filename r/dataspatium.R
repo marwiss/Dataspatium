@@ -28,7 +28,9 @@
     write.sent = "Datamängden \"%s\" skickas till appen (%d rader, %d kolumner).",
     write.log = "Skapad med dm_write() i R",
     plot.gone = "Diagrammet finns inte längre i R-sessionen.",
-    labels.named = "Värdeetiketterna ska vara en namngiven vektor, till exempel c(\"Man\" = 1, \"Kvinna\" = 2)."
+    labels.named = "Värdeetiketterna ska vara en namngiven vektor, till exempel c(\"Man\" = 1, \"Kvinna\" = 2).",
+    step.nofunction = "Koden måste vara en funktion: function(df) { ... }.",
+    step.notframe = "Funktionen måste returnera en data.frame."
   ),
   da = c(
     list.empty = "Ingen datasæt er tilgængelige i R-sessionen endnu. Importér under Hent.",
@@ -41,7 +43,9 @@
     write.sent = "Datasættet \"%s\" sendes til appen (%d rækker, %d kolonner).",
     write.log = "Oprettet med dm_write() i R",
     plot.gone = "Diagrammet findes ikke længere i R-sessionen.",
-    labels.named = "Værdietiketterne skal være en navngivet vektor, for eksempel c(\"Mand\" = 1, \"Kvinde\" = 2)."
+    labels.named = "Værdietiketterne skal være en navngivet vektor, for eksempel c(\"Mand\" = 1, \"Kvinde\" = 2).",
+    step.nofunction = "Koden skal være en funktion: function(df) { ... }.",
+    step.notframe = "Funktionen skal returnere en data.frame."
   ),
   nb = c(
     list.empty = "Ingen datasett er tilgjengelige i R-sesjonen ennå. Importer under Hent.",
@@ -54,7 +58,9 @@
     write.sent = "Datasettet \"%s\" sendes til appen (%d rader, %d kolonner).",
     write.log = "Opprettet med dm_write() i R",
     plot.gone = "Diagrammet finnes ikke lenger i R-sesjonen.",
-    labels.named = "Verdietikettene må være en navngitt vektor, for eksempel c(\"Mann\" = 1, \"Kvinne\" = 2)."
+    labels.named = "Verdietikettene må være en navngitt vektor, for eksempel c(\"Mann\" = 1, \"Kvinne\" = 2).",
+    step.nofunction = "Koden må være en funksjon: function(df) { ... }.",
+    step.notframe = "Funksjonen må returnere en data.frame."
   ),
   fi = c(
     list.empty = "R-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
@@ -67,7 +73,9 @@
     write.sent = "Aineisto \"%s\" lähetetään sovellukseen (%d riviä, %d saraketta).",
     write.log = "Luotu dm_write()-funktiolla R:ssä",
     plot.gone = "Kaaviota ei enää ole R-istunnossa.",
-    labels.named = "Arvoselitteiden on oltava nimetty vektori, esimerkiksi c(\"Mies\" = 1, \"Nainen\" = 2)."
+    labels.named = "Arvoselitteiden on oltava nimetty vektori, esimerkiksi c(\"Mies\" = 1, \"Nainen\" = 2).",
+    step.nofunction = "Koodin on oltava funktio: function(df) { ... }.",
+    step.notframe = "Funktion on palautettava data.frame."
   ),
   is = c(
     list.empty = "Engin gagnasöfn eru tiltæk í R-setunni enn. Flyttu inn undir Sækja.",
@@ -80,7 +88,9 @@
     write.sent = "Gagnasafnið \"%s\" er sent til forritsins (%d raðir, %d dálkar).",
     write.log = "Búið til með dm_write() í R",
     plot.gone = "Myndritið er ekki lengur til í R-setunni.",
-    labels.named = "Gildismerkimiðar verða að vera nefndur vigur, til dæmis c(\"Karl\" = 1, \"Kona\" = 2)."
+    labels.named = "Gildismerkimiðar verða að vera nefndur vigur, til dæmis c(\"Karl\" = 1, \"Kona\" = 2).",
+    step.nofunction = "Kóðinn verður að vera fall: function(df) { ... }.",
+    step.notframe = "Fallið verður að skila data.frame."
   ),
   en = c(
     list.empty = "No datasets are available in the R session yet. Import one in Import.",
@@ -93,7 +103,9 @@
     write.sent = "The dataset \"%s\" is being sent to the app (%d rows, %d columns).",
     write.log = "Created with dm_write() in R",
     plot.gone = "The plot no longer exists in the R session.",
-    labels.named = "Value labels must be a named vector, for example c(\"Man\" = 1, \"Woman\" = 2)."
+    labels.named = "Value labels must be a named vector, for example c(\"Man\" = 1, \"Woman\" = 2).",
+    step.nofunction = "The code must be a function: function(df) { ... }.",
+    step.notframe = "The function must return a data.frame."
   )
 )
 
@@ -265,6 +277,11 @@ dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
   id <- dm_find(x)
   file <- file.path(.dataspatium$data_dir, paste0(id, ".sqlite"))
   if (!file.exists(file)) stop(.dm_msg("read.notmirrored", x), call. = FALSE)
+  .dm_read_file(file, columns = columns, where = where, n = n, id = id)
+}
+
+# A Dataspatium SQLite file as a data.frame (dm_read() and the code steps in recipes).
+.dm_read_file <- function(file, columns = NULL, where = NULL, n = Inf, id = NULL) {
   con <- .dm_connect(file)
   on.exit(DBI::dbDisconnect(con), add = TRUE)
   cols <- DBI::dbReadTable(con, "_columns")
@@ -292,6 +309,7 @@ dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
     if ("value_labels" %in% names(cols)) df[[nm]] <- .dm_apply_labels(df[[nm]], cols$value_labels[i])
   }
   meta <- DBI::dbReadTable(con, "_meta")
+  if (is.null(id)) id <- meta$value[meta$key == "id"]
   attr(df, "dataspatium") <- list(id = id, name = meta$value[meta$key == "name"], columns = cols)
   df
 }
@@ -309,7 +327,20 @@ dm_read <- function(x, columns = NULL, where = NULL, n = Inf) {
 #' @return the new dataset id (invisibly)
 dm_write <- function(df, name = NULL, description = "", labels = NULL, descriptions = NULL, units = NULL) {
   if (!is.data.frame(df)) stop(.dm_msg("write.df"), call. = FALSE)
-  if (is.null(name)) name <- deparse(substitute(df))[1]
+  expression <- deparse(substitute(df))[1]
+  if (is.null(name)) name <- expression
+  dir.create(.dataspatium$out_dir, showWarnings = FALSE, recursive = TRUE)
+  id <- paste0("ds_r", format(Sys.time(), "%Y%m%d%H%M%S"), sample(1000:9999, 1))
+  file <- file.path(.dataspatium$out_dir, paste0(id, ".sqlite"))
+  dims <- .dm_write_file(df, file, id, name, description = description, labels = labels, descriptions = descriptions, units = units,
+                         source_json = paste0("{\"kind\":\"r\",\"expression\":", .dm_json_string(expression), "}"))
+  cat(sprintf("[dataspatium:write] %s\n", file))
+  message(.dm_msg("write.sent", name, dims[1], dims[2]))
+  invisible(id)
+}
+
+# Write a data.frame as a Dataspatium SQLite file (dm_write() and the code steps). Returns c(rows, columns).
+.dm_write_file <- function(df, file, id, name, description = "", labels = NULL, descriptions = NULL, units = NULL, source_json = "{\"kind\":\"r\"}") {
   # Variable labels (SPSS, Stata, SAS) become column labels unless given explicitly; "description" and
   # "unit" attributes (as set by dm_read) become column descriptions and units.
   attr_of <- function(a) vapply(df, function(x) { l <- attr(x, a, exact = TRUE); if (is.null(l)) NA_character_ else as.character(l)[1] }, character(1))
@@ -329,9 +360,7 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
   labels <- ifelse(is.na(labels) | labels == "", names(df), labels)
   descriptions <- as.character(descriptions); length(descriptions) <- ncol(df)
   units <- as.character(units); length(units) <- ncol(df)
-  dir.create(.dataspatium$out_dir, showWarnings = FALSE, recursive = TRUE)
-  id <- paste0("ds_r", format(Sys.time(), "%Y%m%d%H%M%S"), sample(1000:9999, 1))
-  file <- file.path(.dataspatium$out_dir, paste0(id, ".sqlite"))
+  if (file.exists(file)) invisible(file.remove(file))
   types <- vapply(df, .dm_type_of, character(1))
   out <- df
   for (nm in names(out)) {
@@ -354,7 +383,6 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
                                                  description = unname(descriptions), unit = unname(units),
                                                  value_labels = unname(value_labels), stringsAsFactors = FALSE))
   now <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-  source_json <- paste0("{\"kind\":\"r\",\"expression\":", .dm_json_string(deparse(substitute(df))[1]), "}")
   DBI::dbExecute(con, "create table _meta (key text primary key, value text)")
   DBI::dbAppendTable(con, "_meta", data.frame(
     key = c("id", "name", "description", "createdAt", "updatedAt", "rowCount", "columnCount", "source"),
@@ -363,9 +391,24 @@ dm_write <- function(df, name = NULL, description = "", labels = NULL, descripti
   DBI::dbExecute(con, "create table _log (ts text, action text, details text)")
   DBI::dbAppendTable(con, "_log", data.frame(ts = now, action = "r",
     details = paste0("{\"message\":", .dm_json_string(.dm_msg("write.log")), "}"), stringsAsFactors = FALSE))
-  cat(sprintf("[dataspatium:write] %s\n", file))
-  message(.dm_msg("write.sent", name, nrow(out), ncol(out)))
-  invisible(id)
+  c(nrow(out), ncol(out))
+}
+
+# A code step in a recipe: `code` is an R expression giving a function(df); its result replaces the dataset's
+# table. Called by the app with the dataset as a SQLite file; `limit` keeps only the first rows (preview).
+.dm_run_step <- function(code, in_file, out_file, limit = NULL, name = "") {
+  df <- .dm_read_file(in_file)
+  if (!is.null(limit)) df <- utils::head(df, limit)
+  step <- eval(parse(text = code), envir = new.env(parent = globalenv()))
+  if (!is.function(step)) stop(.dm_msg("step.nofunction"), call. = FALSE)
+  out <- step(df)
+  if (is.null(out)) out <- df
+  if (!is.data.frame(out)) stop(.dm_msg("step.notframe"), call. = FALSE)
+  meta <- attr(df, "dataspatium")
+  if (!nzchar(name) && !is.null(meta$name)) name <- meta$name
+  dims <- .dm_write_file(out, out_file, "step", name, source_json = "{\"kind\":\"r_step\"}")
+  cat(sprintf("[dataspatium:step] %d %d\n", dims[1], dims[2]))
+  invisible(dims)
 }
 
 # ---- plots -------------------------------------------------------------------------------------

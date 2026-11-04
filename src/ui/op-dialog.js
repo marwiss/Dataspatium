@@ -46,7 +46,8 @@
           const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
           // Parameters may restrict the column types (kinds) and suggest a default by name (prefer, a RegExp).
           const wanted = p.kinds ? columns.filter((c) => p.kinds.includes(c.type)) : (textOnly ? columns.filter((c) => c.type === 'text') : columns);
-          const list = wanted.length ? wanted : columns;
+          // `labelled`: columns that have value labels come first, so the default is one the operation can use.
+          const list = (wanted.length ? wanted : columns).slice().sort((a, b) => (p.labelled ? (b.valueLabels ? 1 : 0) - (a.valueLabels ? 1 : 0) : 0));
           // An optional column (for example "per group") starts empty.
           sel.options = (p.optional ? [{ value: '', label: t('op.column.none') }] : []).concat(list.map((c) => ({ value: c.name, label: `${c.name} (${t('type.' + c.type)})` })));
           const preferred = p.prefer ? list.find((c) => p.prefer.test(c.name)) : null;
@@ -90,6 +91,14 @@
           ta.value = values[p.name] || '';
           ta.addEventListener('input', () => { values[p.name] = ta.value; schedulePreview(); });
           fields.push(ta);
+        } else if (p.type === 'code') {
+          // A code step: an editor in the parameter's language, starting from the operation's template.
+          const editor = /** @type {any} */ (h('dm-code', { language: p.language || 'python', label: paramLabel(op.id, p) }));
+          editor.value = values[p.name] || (i18n.has(`op.${op.id}.template`) ? t(`op.${op.id}.template`) : '');
+          values[p.name] = editor.value;
+          editor.addEventListener('dm-change', () => { values[p.name] = editor.value; });
+          inputs[p.name] = editor;
+          fields.push(h('div', { class: 'dm-stack-sm' }, i18n.has(`op.${op.id}.${p.name}.help`) ? h('p', { class: 'dm-help', text: t(`op.${op.id}.${p.name}.help`) }) : null, h('div', { class: 'dm-editor-wrap' }, editor)));
         } else if (p.type === 'pattern') {
           // A regular expression: monospace, checked as it is typed.
           const input = /** @type {any} */ (h('dm-input', { label: paramLabel(op.id, p), mono: true, help: t('regex.pattern.help') }));
@@ -119,16 +128,26 @@
         previewEl.textContent = t('common.loading');
         try {
           const res = await recipes.preview(options.datasetId, op.id, values);
-          const parts = [h('span', { text: t('op.preview.rows', { n: i18n.formatNumber(res.rows || 0) }) })];
+          // A code step previews the resulting table (its first rows); other operations the rows affected.
+          const parts = res.columns
+            ? [h('span', { text: t('op.preview.result.rows', { n: i18n.formatNumber(res.rows || 0), c: i18n.formatNumber(res.columns.length) }) })]
+            : [h('span', { text: t('op.preview.rows', { n: i18n.formatNumber(res.rows || 0) }) })];
           if (res.samples && res.samples.length) parts.push(h('ul', { class: 'dm-op-samples' }, res.samples.map((s) => h('li', null, h('code', { text: String(s.before) }), ' → ', h('code', { text: String(s.after) })))));
+          if (res.columns && res.sample) {
+            parts.push(h('div', { class: 'dm-table-wrap' }, h('table', { class: 'dm-nb-table' },
+              h('thead', null, h('tr', null, res.columns.map((c) => h('th', { text: String(c) })))),
+              h('tbody', null, res.sample.map((r) => h('tr', null, r.map((v) => h('td', { text: v === null || v === undefined ? '' : typeof v === 'number' ? i18n.formatNumber(v) : String(v) }))))))));
+          }
           replace(previewEl, parts);
         } catch (err) { previewEl.textContent = t('op.preview.error', { message: (err && err.message) || String(err) }); }
       }
-      function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(runPreview, 300); }
+      // Operations that run code preview on request only (the engines are slow and the code is being typed).
+      function schedulePreview() { if (op.manualPreview) return; clearTimeout(previewTimer); previewTimer = setTimeout(runPreview, 300); }
 
       const body = h('div', { class: 'dm-stack' },
         i18n.has(`op.${op.id}.help`) ? h('p', { class: 'dm-help', text: t(`op.${op.id}.help`) }) : null,
         h('div', { class: 'dm-stack' }, fields),
+        op.manualPreview && op.preview ? h('div', { class: 'dm-row' }, basic.button({ label: t('op.preview.run', { n: i18n.formatNumber(D.require('data/code-steps').PREVIEW_ROWS) }), icon: 'eye', onClick: runPreview })) : null,
         previewEl);
       applyDefaults();
       schedulePreview();

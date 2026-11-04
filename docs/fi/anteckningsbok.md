@@ -21,7 +21,7 @@ Soluja lisätään loppuun painikkeilla *Teksti*, *R*, *Python* ja *SQL*. Kaikki
   kunnes R käynnistetään uudelleen. Tulosteet, virheet, kaaviot ja `dm_write()`-funktiolla luodut aineistot kootaan solun
   alle. Kaaviot tallennetaan PNG-muodossa.
 - **Python-solut** suoritetaan samassa Python-istunnossa kuin Python-konsoli (Python haetaan ensimmäisellä kerralla,
-  ks. [python.md](python.md)). Tulosteet, virheet, matplotlib-kaaviot ja `dm_write()`-funktion aineistot kootaan solun alle.
+  ks. [python.md](python.md)). Tulosteet, virheet, matplotlib- ja plotly-kaaviot ja `dm_write()`-funktion aineistot kootaan solun alle.
 - **SQL-solut** suoritetaan muistikirjan aineiston taulua `data` vastaan. SELECT-kyselyt näyttävät enintään 1 000 riviä
   (näkymässä ensimmäiset 50); UPDATE, DELETE ja muut muuttavat lauseet suoritetaan aineiston reseptin vaiheena ja kirjataan
   sinne.

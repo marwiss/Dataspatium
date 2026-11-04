@@ -65,7 +65,7 @@
     }
 
     /**
-     * One slide per saved chart (Vega and D3; R charts are skipped), rendered headless.
+     * One slide per saved chart, rendered headless (R and Python through their engines; a failing chart is skipped).
      * @param {any[]} chartList
      * @param {{title?: string, subtitle?: string, note?: string, width?: number, extraFilters?: any[], onProgress?: Function}} [options]
      */
@@ -73,8 +73,10 @@
       const slides = []; const skipped = [];
       let done = 0;
       for (const chart of chartList) {
-        if (chart.kind === 'r') { skipped.push(chart.name); continue; }
-        const png = await render.toBlob(chart, 'png', { width: options.width || 1200, scale: 2, extraFilters: options.extraFilters });
+        let png;
+        // R and Python charts render through their engines; a chart that fails is skipped and named in the result.
+        try { png = await render.toBlob(chart, 'png', { width: options.width || 1200, scale: 2, extraFilters: options.extraFilters }); }
+        catch (err) { D.log('pptx', 'chart skipped', chart.name, err); skipped.push(chart.name); continue; }
         const size = await imageSize(png);
         slides.push({ title: chart.name, png, width: size.width, height: size.height, note: [chart.datasetName, options.note].filter(Boolean).join(' · ') });
         done++;

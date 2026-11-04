@@ -64,6 +64,15 @@ käynnistykseen ja näkyvät kohdassa *Hallitse → Työtila → Komponentit*, j
 jos vastaat ei, koodi saa tavallisen virheen puuttuvasta paketista. Paketit, jotka tarvitsevat selaimesta puuttuvia
 järjestelmäkirjastoja, voivat puuttua varastosta.
 
+## R-vaiheet resepteissä
+
+Muokkaa-tilassa on toiminto **R-vaihe** (ryhmä Koodi): funktio `function(df) { ... }` suoritetaan koko taulukolle, ja
+sen palauttama taulukko korvaa vanhan tyyppeineen. Vaihe kirjataan reseptiin koodeineen, sen voi kumota, toistaa
+toiselle aineistolle ja viedä R-koodina (`df <- (function(df) {...})(df)`). *Esikatsele* suorittaa funktion
+ensimmäisille 200 riville. Koodin käyttämät paketit haetaan kuten konsolissa. Visualisoi-tilan R-kaaviot viedään nyt
+myös Vie-tilasta, eräajoina ja asiakirjamalleissa ilman avointa R-välilehteä: sovellus suorittaa skriptin
+R-istunnossa tarvittaessa.
+
 ## Miten data siirtyy sovelluksen ja R:n välillä
 
 Aineistot ovat SQLite-tiedostoja. Kun suoritat koodia, sovellus kopioi aineistot, joihin koodi viittaa `dm_read()`-funktiolla,

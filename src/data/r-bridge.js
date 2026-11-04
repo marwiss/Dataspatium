@@ -230,6 +230,36 @@
         return { entries, ms: performance.now() - t0 };
       }
 
+      /**
+       * A code step in a recipe: run `function(df) {...}` on the dataset bytes (a SQLite file) and return the resulting
+       * file. Used by data/code-steps; an R error is thrown with its message.
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string}} [options]
+       * @returns {Promise<{bytes: ArrayBuffer, log: string[]}>}
+       */
+      async runStep(code, bytes, options = {}) {
+        await this.start();
+        if (this.state === 'busy') throw new Error(D.t('r.err.busy'));
+        this.setState('busy');
+        try {
+          if (this.warmup) { await this.warmup; this.warmup = null; }
+          await this.engine.mkdir('/data/step');
+          await this.engine.writeFile('/data/step/in.sqlite', bytes);
+          const referenced = packages.referenced(code);
+          await this.engine.ensurePackages(referenced);
+          await this.ensureRemote(referenced);
+          const q = (s) => JSON.stringify(String(s));
+          const res = await this.engine.capture(`.dm_run_step(${q(code)}, "/data/step/in.sqlite", "/data/step/out.sqlite", ${options.limit ? Number(options.limit) : 'NULL'}, ${q(options.name || '')})`, { captureConditions: false });
+          const isError = (o) => o.type === 'stderr' && /^(Error|Fel)\b/.test(String(o.data));
+          const failed = res.output.find(isError);
+          if (failed) throw new Error(cleanError(String(failed.data)));
+          const out = await this.engine.readFile('/data/step/out.sqlite');
+          for (const p of ['/data/step/in.sqlite', '/data/step/out.sqlite']) await this.removeFile(p);
+          return { bytes: out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength), log: res.output.filter((o) => !isError(o)).map((o) => String(o.data)) };
+        } finally {
+          if (this.state === 'busy') this.setState('ready');
+        }
+      }
+
       /** Import SQLite files written by dm_write() and remove them from the virtual filesystem. */
       async collectOutputs() {
         let node;

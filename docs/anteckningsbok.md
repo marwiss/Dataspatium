@@ -19,7 +19,7 @@ längst ned med knapparna *Text*, *R*, *Python* och *SQL*. Allt sparas automatis
   startas om. Utskrifter, fel, diagram och datamängder som skapas med `dm_write()` samlas under cellen. Diagram
   sparas som PNG.
 - **Python-celler** körs i samma Python-session som Python-konsolen (Python hämtas första gången, se
-  [python.md](python.md)). Utskrifter, fel, matplotlib-diagram och datamängder från `dm_write()` samlas under cellen.
+  [python.md](python.md)). Utskrifter, fel, matplotlib- och plotly-diagram och datamängder från `dm_write()` samlas under cellen.
 - **SQL-celler** körs mot tabellen `data` i bokens datamängd. SELECT-frågor visar upp till 1 000 rader (de första
   50 i vyn); UPDATE, DELETE och andra ändrande satser utförs som ett receptsteg i datamängden och loggas där.
 

@@ -57,7 +57,7 @@ Talkolumner högerställs.
 ```
 
 Lägger in ett sparat diagram från Visualisera (Vega-Lite eller D3) som bild, renderat med samma filter som
-dokumentet. I batchkörningar filtreras diagrammet på gruppen. R-diagram kan inte läggas in i dokument.
+dokumentet. I batchkörningar filtreras diagrammet på gruppen. R- och Python-diagram ritas av sina motorer när dokumentet skapas (några sekunder per diagram).
 
 ### Sidbrytning och kodbok
 

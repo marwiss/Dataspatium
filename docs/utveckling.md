@@ -45,6 +45,9 @@ fem filer; hjulen kontrolleras mot `pyodide-lock.json`. Vid uppgradering: kör `
 <version>` (hämtar filerna från jsDelivr och skriver RUNTIME-blocket), klistra in blocket i `catalog.js`, kontrollera
 att laddarens tre textändringar i `src/engines/python/python-engine.js` fortfarande hittar sina ställen i
 `pyodide.js` och `pyodide.asm.mjs` (workern kastar annars ett tydligt fel), och kör testsviten med `?python=1`.
+plotly.js är pinnat på samma sätt i `src/viz/plotly.js` (version och SHA-256 från jsDelivr), och de rena PyPI-hjulen
+(seaborn, plotly) i `EXTRA` i `src/engines/python/catalog.js` med adress, storlek och SHA-256 från PyPI:s JSON-API.
+`tests/code-steps.test.js` täcker R-steg och R-diagram headless utan nätverk.
 
 ## Egna inbäddade filer
 
@@ -133,7 +136,8 @@ steget som *Gör det åt mig*.
   behöver inget nätverk. `powershell -File tools/run-tests.ps1 -Browsers edge -Url "tests/index.html?live=1"` kör
   dessutom ett röktest mot SCB, Kolada, SMHI, Eurostat, dataportalen och Socialstyrelsen; det kräver nätverk och
   kan störas av tjänsternas anropsgränser.
-- `tests/python.test.js` kör Pyodide bara när komponenterna redan finns i webbläsaren eller sidan öppnas med
+- `tests/python.test.js` (Pyodide, seaborn, plotly och plotly.js, Python-steg och Python-diagram) kör de riktiga
+  komponenterna bara när de redan finns i webbläsaren eller sidan öppnas med
   `?python=1` (hämtar cirka 22 MB från jsDelivr); annars rapporteras testet som överhoppat, och den övriga
   Python-logiken testas med en låtsasmotor. Kör sviten en gång med `-Url "tests/index.html?python=1"` i varje
   webbläsare inför en release.

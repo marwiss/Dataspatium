@@ -19,7 +19,7 @@ nederst med knapperne *Tekst*, *R*, *Python* og *SQL*. Alt gemmes automatisk, og
   genstartes. Udskrifter, fejl, diagrammer og datasæt, der oprettes med `dm_write()`, samles under cellen. Diagrammer
   gemmes som PNG.
 - **Python-celler** køres i samme Python-session som Python-konsollen (Python hentes første gang, se
-  [python.md](python.md)). Output, fejl, matplotlib-diagrammer og datasæt fra `dm_write()` samles under cellen.
+  [python.md](python.md)). Output, fejl, matplotlib- og plotly-diagrammer og datasæt fra `dm_write()` samles under cellen.
 - **SQL-celler** køres mod tabellen `data` i notesbogens datasæt. SELECT-forespørgsler viser op til 1 000 rækker (de
   første 50 i visningen); UPDATE, DELETE og andre ændrende sætninger udføres som et trin i datasættets recept og logges
   der.

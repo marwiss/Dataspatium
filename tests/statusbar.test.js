@@ -40,7 +40,8 @@
       const csv = 'a;b\n1;2\n3;4\n';
       const meta = await shell.ctx.services.importer.run(new File([csv], 'sb.csv', { type: 'text/csv' }), {}, null, 'Statusrad');
       try {
-        await wait(50);
+        // The status bar reads the dataset from the store, which the import refreshes asynchronously.
+        for (let i = 0; i < 100 && !shell.store.get().datasets.some((d) => d.id === meta.id); i++) await wait(50);
         shell.store.set({ selectedId: meta.id });
         const ds = /** @type {HTMLElement} */ (bar.querySelector('.dm-sb-btn[aria-label]'));
         assert.ok(!ds.hidden && ds.textContent.includes(meta.shortName), 'dataset summary ' + ds.textContent);

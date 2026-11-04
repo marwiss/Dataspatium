@@ -63,6 +63,8 @@
   }, 60000);
 
   test('operations: duplicates, delete rows, combine/split, pivot and edit cell', async (assert) => {
+    const dupAll = await recipes.preview(id, 'remove_duplicates', {});
+    assert.ok(typeof dupAll.rows === 'number', 'preview over all columns counts distinct rows: ' + JSON.stringify(dupAll));
     const dup = await recipes.preview(id, 'remove_duplicates', { columns: ['kod'] });
     assert.equal(dup.rows, 1);
     await recipes.apply(id, 'remove_duplicates', { columns: ['kod'] });

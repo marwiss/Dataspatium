@@ -320,7 +320,11 @@
       function plotEntry(lang, e) {
         let image;
         if (e.canvas) { image = e.canvas; image.classList.add('dm-console-plot'); }
-        else {
+        else if (e.plotly) {
+          // A plotly figure from Python is drawn by plotly.js (a component fetched on first use) once the node is attached.
+          image = h('div', { class: 'dm-console-plot dm-plotly', style: { height: (e.height || 480) + 'px' } });
+          Promise.resolve().then(() => D.require('viz/plotly').render(image, e.plotly)).catch((err) => replace(image, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
+        } else {
           image = h('img', { class: 'dm-console-plot', alt: '', width: String(e.width || 672), height: String(e.height || 480) });
           image.src = e.svg ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(e.svg) : 'data:image/png;base64,' + (e.png || '');
         }

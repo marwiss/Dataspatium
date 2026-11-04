@@ -83,6 +83,19 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
   `dm_write`, `dm_value_labels`, `theme_dataspatium` och `dm_palette`. Avbryt fungerar som för R via SharedArrayBuffer
   (`setInterruptBuffer`) i serverläget. Python startar bara på användarens åtgärd (Starta Python eller Kör), inte när
   fliken öppnas, eftersom första starten hämtar cirka 22 MB.
+- Kod i recept och diagram: `data/code-steps` registrerar åtgärderna `python_step` och `r_step` (gruppen `code`):
+  `prepare` (före åtgärdens savepoint, där motorer inte kan arbeta) exporterar datamängden, kör `runStep` i bryggan
+  (`_run_step` i `python/dataspatium.py`, `.dm_run_step` i `r/dataspatium.R`: funktionen körs på hela tabellen eller de
+  första 200 raderna för förhandsgranskning, resultatet skrivs som SQLite) och öppnar resultatet i en tillfällig
+  SQLite-motor; `apply` byter ut tabellen `data` och kolumnerna. `ui/op-dialog` har fälttypen `code` (dm-code) och
+  manuell förhandsgranskning (`op.manualPreview`). `viz/code-charts` ger preludiet (`df` inläst och filtrerat, filter
+  som R- eller pandas-uttryck) och renderar R- och Python-diagram headless via bryggorna, vilket `viz/render.toBlob`
+  anropar för slagen `r` och `python`; därmed fungerar export, batch, PowerPoint och dokumentmallar för alla slag.
+  `viz/plotly` hämtar plotly.js 4.2.0 som komponent (pinnad SHA-256), bygger en layoutmall ur tokens och ritar och
+  exporterar plotly-figurer (`fig.show()` i Python skickar figurens JSON via `_plot_collect`); sparade Python-diagram
+  bär sin plotly-figur (`chart.python.plotly`) så att dashboards, presentation och publicerad HTML (plotly.js inlinat)
+  visar dem interaktivt. seaborn och plotly levereras som pinnade PyPI-hjul (`EXTRA` i `engines/python/catalog`),
+  installerade via sin resursadress efter beroendena.
 
 ## Datamodell
 
@@ -331,7 +344,7 @@ UI:t är `src/ui/docs/document-panel.js` i Exporteras flik Dokument. Arbetsytans
 
 Anteckningsböcker (`src/analysis/notebooks.js`, UI i `src/ui/analysis/notebook-panel.js` som tredje flik i
 Analysera) lagras i IndexedDB-tabellen `notebooks` (Dexie version 6) med celler `{type, source, outputs}`.
-`runCell` kör R- och Python-celler genom `data/r-bridge` respektive `data/python-bridge` (utdata, fel, diagram som PNG-dataadresser och skapade datamängder)
+`runCell` kör R- och Python-celler genom `data/r-bridge` respektive `data/python-bridge` (plotly-figurer blir PNG via `viz/plotly` och behåller sin JSON för den interaktiva vyn) (utdata, fel, diagram som PNG-dataadresser och skapade datamängder)
 och SQL-celler mot bokens datamängd (SELECT via motorn, ändrande satser som receptsteget `sql`). `toAst`
 översätter boken till dokumentmodellen, som fått blocktypen `code` (kod och textutdata) i alla byggare, så att
 exporten återanvänder HTML-, DOCX-, PDF-, Markdown- och LaTeX-byggarna.

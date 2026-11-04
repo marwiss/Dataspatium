@@ -28,8 +28,8 @@
       const filename = /** @type {any} */ (h('dm-input', { label: t('viz.export.filename') }));
       filename.value = files.safeName(chart.name || 'diagram');
       const body = h('div', { class: 'dm-stack' },
-        chart.kind === 'r' ? h('p', { class: 'dm-help', text: t('viz.export.r.note') }) : null,
-        h('div', { class: 'dm-form-grid' }, format, width, chart.kind === 'r' ? null : height, scale, filename));
+        D.require('viz/code-charts').isCode(chart.kind) ? h('p', { class: 'dm-help', text: t('viz.export.code.note') }) : null,
+        h('div', { class: 'dm-form-grid' }, format, width, height, scale, filename));
       const ok = await overlays.dialog.open({ help: 'visualisera#exportera', title: t('viz.export.title', { name: chart.name || '' }), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.download'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       const fmt = format.value;
@@ -37,10 +37,11 @@
       try {
         let blob;
         if (fmt === 'pptx') {
-          if (chart.kind === 'r') { const png = await options.rExport('png', opts); blob = await pptx.build({ title: chart.name, slides: [{ title: chart.name, png, note: chart.datasetName || '' }] }); }
+          // A code chart open in its panel exports through the panel (the plot already drawn); otherwise headless.
+          if (options.rExport && D.require('viz/code-charts').isCode(chart.kind)) { const png = await options.rExport('png', opts); blob = await pptx.build({ title: chart.name, slides: [{ title: chart.name, png, note: chart.datasetName || '' }] }); }
           else blob = (await pptx.fromCharts([chart], { title: chart.name, subtitle: chart.datasetName || '', width: opts.width })).blob;
         } else {
-          blob = chart.kind === 'r' ? await options.rExport(fmt, opts) : await render.toBlob(chart, fmt, opts);
+          blob = options.rExport && D.require('viz/code-charts').isCode(chart.kind) ? await options.rExport(fmt, opts) : await render.toBlob(chart, fmt, opts);
         }
         const name = files.safeName(filename.value.trim() || chart.name || 'diagram', fmt);
         files.download(blob, name);

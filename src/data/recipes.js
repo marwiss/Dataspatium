@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
-  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex'], (datasets, ops) => {
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps'], (datasets, ops) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -53,6 +53,8 @@
         case 'pivot_longer': return D.t('recipe.pivot_longer', { cols });
         case 'pivot_wider': return D.t('recipe.pivot_wider', { names: params.names, values: params.values });
         case 'sql': return `SQL: ${String(params.statement).slice(0, 80)}`;
+        case 'python_step': return D.t('recipe.python_step', { n: result && typeof result.rows === 'number' ? D.t('recipe.rows', { n: result.rows }) : '' });
+        case 'r_step': return D.t('recipe.r_step', { n: result && typeof result.rows === 'number' ? D.t('recipe.rows', { n: result.rows }) : '' });
         case 'geo_centroid': return D.t('recipe.geo_centroid', { column: params.column, lon: params.lonName || 'lon', lat: params.latName || 'lat', n });
         case 'geo_area': return D.t('recipe.geo_area', { column: params.column, name: params.name || 'area_km2', n });
         case 'geo_reproject': return D.t('recipe.geo_reproject', { x: params.xColumn, y: params.yColumn, crs: params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84', n });

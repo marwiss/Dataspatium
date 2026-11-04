@@ -15,6 +15,7 @@
         { id: 'values', ops: ['replace_text', 'trim', 'change_case', 'fix_encoding', 'replace_value', 'recode_values', 'apply_value_labels', 'fill_missing', 'round_numbers', 'pad_text', 'clean_chars', 'pseudonymize'] },
         { id: 'rows', ops: ['delete_rows', 'remove_duplicates', 'remove_empty', 'sort_rows', 'keep_top', 'sample_rows'] },
         { id: 'structure', ops: ['add_column', 'combine_columns', 'split_column', 'substring', 'pivot_longer', 'pivot_wider', 'sql'] },
+        { id: 'code', ops: ['python_step', 'r_step'] },
         { id: 'calc', ops: ['share_of_total', 'rank_values', 'running_total', 'change_previous', 'bin_numeric', 'standardize', 'date_part', 'date_diff'] },
         { id: 'regex', ops: ['regex_filter', 'regex_extract', 'regex_flag', 'regex_count', 'regex_split'] },
         { id: 'geo', ops: ['geo_centroid', 'geo_area', 'geo_reproject', 'geo_region'] },

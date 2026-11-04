@@ -94,7 +94,7 @@ SQL code. Versions save snapshots to go back to. See [bearbeta.md](bearbeta.md).
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from
-the others. The Python console has pandas and matplotlib and is fetched as a component the first time you start it (see
+the others. The Python console has pandas, matplotlib, seaborn and plotly and is fetched as a component the first time you start it (see
 [python.md](python.md)). The R console has ggplot2, dplyr, tidyr and other packages,
 saved scripts, charts with export to SVG, PNG and PDF, and `dm_read()`/`dm_write()` to move data between the app and
 R (see [r-guide.md](r-guide.md)); packages that do not ship with the app are fetched from webR's package repository

@@ -89,8 +89,7 @@
             for (const e of res.entries) {
               if (e.kind === 'stdout' || e.kind === 'stderr') text += e.text + (e.text.endsWith('\n') ? '' : '\n');
               else if (e.kind === 'error') { flush(); outputs.push({ kind: 'error', text: e.text }); }
-              // R draws on a canvas; Python hands over a PNG (and an SVG for the console).
-              else if (e.kind === 'plot') { flush(); outputs.push(e.canvas ? { kind: 'image', dataUrl: e.canvas.toDataURL('image/png'), width: e.canvas.width, height: e.canvas.height } : { kind: 'image', dataUrl: 'data:image/png;base64,' + (e.png || ''), width: e.width, height: e.height }); }
+              else if (e.kind === 'plot') { flush(); outputs.push(await plotOutput(e)); }
               else if (e.kind === 'dataset') { flush(); outputs.push({ kind: 'dataset', id: e.meta.id, name: e.meta.name, rows: e.meta.rowCount || 0 }); }
               else if (e.kind === 'packages') { flush(); outputs.push({ kind: 'text', text: D.t('nb.packages.installed', { names: e.names.join(', ') }) }); }
             }
@@ -110,6 +109,24 @@
           if (onProgress) onProgress(i + 1, nb.cells.length);
         }
         return nb;
+      }
+
+      /**
+       * A plot entry as a cell output: R draws on a canvas, Python hands over a PNG; a plotly figure is rendered to
+       * PNG by plotly.js for the stored output and documents, and keeps its JSON for the interactive view.
+       */
+      async function plotOutput(e) {
+        if (e.canvas) return { kind: 'image', dataUrl: e.canvas.toDataURL('image/png'), width: e.canvas.width, height: e.canvas.height };
+        if (e.plotly) {
+          try {
+            const blob = await D.require('viz/plotly').toBlob(e.plotly, 'png', { width: 960, height: 576, scale: 1 });
+            return { kind: 'image', dataUrl: await blobToDataUrl(blob), width: 960, height: 576, plotly: e.plotly };
+          } catch (err) { return { kind: 'error', text: (err && err.message) || String(err) }; }
+        }
+        return { kind: 'image', dataUrl: 'data:image/png;base64,' + (e.png || ''), width: e.width, height: e.height };
+      }
+      function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
       }
 
       function dataUrlToBytes(dataUrl) {

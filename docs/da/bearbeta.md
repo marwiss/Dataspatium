@@ -207,6 +207,16 @@ trin der blev udført. Receptfilen har formen
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Fjern mellemrum i kommun" } ] }
 ```
 
+## Kodetrin
+
+Gruppen **Kode** i paletten har to handlinger, der kører en funktion på hele tabellen: **Python-trin**
+(`def step(df):` med pandas, se [python.md](python.md)) og **R-trin** (`function(df) { ... }`, se
+[r-guide.md](r-guide.md)). Det, funktionen returnerer, bliver den nye tabel med typer fra resultatet; etiketter og
+enheder følger med kolonner, der beholder deres navn. *Forhåndsvis* kører funktionen på de første 200 rækker og viser
+kolonner og nogle rækker. Trinnet logges i opskriften med sin kode, kan fortrydes og afspilles på andre datasæt; i
+SQL-eksporten står koden som kommentar, i R-eksporten køres R-trinnet som kode, og Python-trinnet står som kommentar.
+Python hentes første gang.
+
 ## SQL-konsollen
 
 Hvert datasæt har et **kortnavn** (vises under navnet i objektpanelet og under Håndter, hvor det kan ændres sammen med

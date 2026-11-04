@@ -86,7 +86,8 @@
           const width = Math.max(240, colW * span(item) + GAP * (span(item) - 1) - 2 * PAD - 2);
           const holder = h('div', { class: 'dm-chart-preview dm-present-chart' });
           const card = h('article', { class: 'dm-present-card', style: { gridColumn: `span ${span(item)}` } }, h('h2', { class: 'dm-truncate', text: chart.name }), holder);
-          if (chart.kind === 'r') replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.r.note') }));
+          if (chart.kind === 'python' && chart.python && chart.python.plotly) { D.require('viz/plotly').render(holder, chart.python.plotly, { width, height }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }))); }
+          else if (D.require('viz/code-charts').isCode(chart.kind)) replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') }));
           else render.renderInto(chart, holder, { extraFilters, width, height }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
           return card;
         }));

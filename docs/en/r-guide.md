@@ -63,6 +63,15 @@ shown under *Manage → Workspace → Components*, where they can also be remove
 the code gets the usual error that the package is missing. Packages that need system libraries not available in the
 browser may be missing from the repository.
 
+## R steps in recipes
+
+Process has the action **R step** (the Code group): a function `function(df) { ... }` runs on the whole table and
+what it returns becomes the new table, with types from the result. The step is logged in the recipe with its code,
+can be undone, replayed on another dataset and exported as R code (`df <- (function(df) {...})(df)`). *Preview* runs
+the function on the first 200 rows. Packages the code uses are fetched as in the console. R charts in Visualise now
+also export from Export, in batches and in document templates without the R tab being open: the app runs the script
+in the R session when needed.
+
 ## How data moves between the app and R
 
 The datasets are SQLite files. When you run code, the app copies the datasets that the code refers to with

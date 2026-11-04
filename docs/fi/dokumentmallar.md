@@ -59,7 +59,7 @@ Numerosarakkeet tasataan oikealle.
 ```
 
 Lisää tallennetun Visualisoi-tilan kaavion (Vega-Lite tai D3) kuvana, piirrettynä samoilla suodattimilla kuin asiakirja;
-`bredd` on leveys pikseleinä. Eräajoissa kaavio suodatetaan ryhmän mukaan. R-kaavioita ei voi lisätä asiakirjoihin.
+`bredd` on leveys pikseleinä. Eräajoissa kaavio suodatetaan ryhmän mukaan. R- ja Python-kaaviot piirtävät moottorinsa, kun asiakirja luodaan (muutama sekunti kaaviota kohden).
 
 ### Sivunvaihto ja koodikirja
 

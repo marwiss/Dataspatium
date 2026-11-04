@@ -119,7 +119,7 @@
       const list = await charts.list();
       const chart = list.find((c) => c.name === spec.name);
       if (!chart) return { error: D.t('doc.err.chart.gone', { name: spec.name }), caption: spec.name };
-      if (chart.kind === 'r') return { error: D.t('doc.err.chart.r', { name: spec.name }), caption: spec.name };
+      // R and Python charts render headless through their engines (viz/code-charts) like the other kinds.
       const width = spec.opts.bredd || 720;
       try {
         const blob = await render.toBlob(chart, 'png', { width, height: spec.opts.hojd || undefined, scale: 2, extraFilters: ctx._filters.length ? ctx._filters : undefined });

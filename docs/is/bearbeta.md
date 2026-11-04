@@ -205,6 +205,15 @@ Uppskriftarskráin er á forminu
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Fjarlægja bil í kommun" } ] }
 ```
 
+## Kóðaskref
+
+Hópurinn **Kóði** í litaspjaldinu hefur tvær aðgerðir sem keyra fall á alla töfluna: **Python-skref** (`def step(df):`
+með pandas, sjá [python.md](python.md)) og **R-skref** (`function(df) { ... }`, sjá [r-guide.md](r-guide.md)). Það sem
+fallið skilar verður nýja taflan með tegundum úr niðurstöðunni; merkimiðar og einingar fylgja dálkum sem halda heiti
+sínu. *Forskoða* keyrir fallið á fyrstu 200 röðunum og sýnir dálka og nokkrar raðir. Skrefið er skráð í uppskriftina
+með kóðanum, má afturkalla og endurspila á öðrum gagnasöfnum; í SQL-útflutningi er kóðinn athugasemd, í R-útflutningi
+keyrir R-skrefið sem kóði og Python-skrefið er athugasemd. Python er sótt í fyrsta sinn.
+
 ## SQL-stjórnborðið
 
 Hvert gagnasafn hefur **stuttheiti** (birtist undir heitinu í hlutaspjaldinu og undir Umsjón, þar sem því má breyta ásamt

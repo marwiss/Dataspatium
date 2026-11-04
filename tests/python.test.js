@@ -20,7 +20,12 @@
   let real = false;
 
   test('python: the catalog maps imports to Pyodide packages and follows the lock', (assert) => {
+    // A small fake lock; reset afterwards so that the real test below loads the pinned one.
     catalog.reset();
+    try { catalogChecks(assert); } finally { catalog.reset(); }
+    return 'Pyodide ' + catalog.VERSION;
+  });
+  function catalogChecks(assert) {
     catalog.parse({ packages: {
       numpy: { version: '2', file_name: 'numpy-2.whl', sha256: 'a', depends: [], imports: ['numpy'] },
       pandas: { version: '3', file_name: 'pandas-3.whl', sha256: 'b', depends: ['numpy', 'pytz'], imports: ['pandas'] },
@@ -33,12 +38,15 @@
     assert.deepEqual(catalog.closure(['pandas']).sort(), ['numpy', 'pandas', 'pytz']);
     assert.deepEqual(catalog.closure(['unknown']), []);
     assert.ok(catalog.has('numpy') && !catalog.has('scipy'));
+    // Pinned wheels from PyPI (seaborn, plotly) join the index with their own addresses and import names.
+    assert.ok(catalog.has('seaborn') && catalog.info('seaborn').url.startsWith('https://files.pythonhosted.org/') && /^[0-9a-f]{64}$/.test(catalog.info('seaborn').sha256), 'seaborn pinned');
+    assert.deepEqual(catalog.referenced('import seaborn as sns\nimport plotly.express as px'), ['seaborn', 'plotly']);
+    assert.deepEqual(catalog.closure(['seaborn']).sort(), ['matplotlib', 'numpy', 'pandas', 'pytz', 'seaborn']);
+    assert.ok(catalog.EXTRA.every((e) => e.url && e.sha256 && e.size > 0 && e.imports.length), 'every extra wheel is pinned');
     assert.ok(catalog.RUNTIME.length === 5 && catalog.RUNTIME.every((f) => /^[0-9a-f]{64}$/.test(f.sha256) && f.size > 0), 'pinned runtime digests');
     assert.ok(catalog.BASE.startsWith('https://cdn.jsdelivr.net/pyodide/v' + catalog.VERSION + '/'), catalog.BASE);
     assert.deepEqual(catalog.STARTUP, ['numpy', 'pandas', 'micropip']);
-    catalog.reset();
-    return 'Pyodide ' + catalog.VERSION;
-  });
+  }
 
   test('python: the bridge mirrors datasets, turns output into console entries and imports dm_write() files', async (assert) => {
     const file = new File(['kommun;befolkning\nStockholm;984748\nGöteborg;596841\n'], 'pytest.csv', { type: 'text/csv' });
@@ -158,8 +166,41 @@
     const kinds = cell.outputs.map((o) => o.kind);
     assert.ok(kinds.includes('text') && kinds.includes('image'), JSON.stringify(cell.outputs.filter((o) => o.kind !== 'image')));
     assert.ok(cell.outputs.find((o) => o.kind === 'image').dataUrl.startsWith('data:image/png'), 'png data url');
-    return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms`;
-  }, 600000);
+    // A Python step in a recipe replaces the table (types from the result) and previews on the first rows.
+    const recipes = D.require('data/recipes');
+    const stepCode = 'def step(df):\n    df["tusental"] = (df["befolkning"] / 1000).round().astype(int)\n    return df.sort_values("kommun")';
+    const pv = await recipes.preview(meta.id, 'python_step', { code: stepCode });
+    assert.equal(pv.rows, 2); assert.equal(pv.columns[pv.columns.length - 1], 'tusental');
+    const stepped = await recipes.apply(meta.id, 'python_step', { code: stepCode });
+    assert.equal(stepped.rows, 2);
+    assert.deepEqual((await datasets.columns(meta.id)).map((c) => c.type), ['text', 'text', 'integer', 'number', 'date', 'boolean', 'integer']);
+    assert.equal((await datasets.query(meta.id))[0][0], 'Göteborg');
+    assert.ok((await recipes.toR(meta.id)).includes('# def step(df):'), 'R export carries the Python code as comments');
+    // seaborn: a pinned wheel from PyPI, installed by its asset address after its dependencies.
+    const sb = await bridge.run('import seaborn as sns\nsns.barplot(x=["a", "b"], y=[1, 2])');
+    assert.ok(sb.entries.some((e) => e.kind === 'plot' && e.svg), 'seaborn plot: ' + JSON.stringify(sb.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 120))));
+    // plotly: the figure arrives as JSON and is drawn and exported by plotly.js (a component).
+    const pl = await bridge.run('import plotly.express as px\nfig = px.bar(x=["a", "b"], y=[1, 2], title="Plotlytest")\nfig.show()\nfig');
+    const plPlots = pl.entries.filter((e) => e.kind === 'plot' && e.plotly);
+    assert.ok(plPlots.length === 2 && plPlots[0].plotly.data && plPlots[0].plotly.data.length === 1, 'plotly figures (show and last value): ' + JSON.stringify(pl.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 120))));
+    assert.ok(!pl.entries.some((e) => e.kind === 'stdout' && /Figure\(/.test(e.text)), 'no repr of the figure');
+    const plPng = await bridge.exportPlot(plPlots[0].key, 'png', { width: 6, height: 4 });
+    assert.ok(plPng.type === 'image/png' && plPng.size > 1000, 'plotly png via plotly.js ' + plPng.size);
+    assert.ok((await (await bridge.exportPlot(plPlots[0].key, 'svg')).text()).includes('<svg'), 'plotly svg');
+    const plDoc = document.createElement('div'); document.body.appendChild(plDoc);
+    try { const hd = await D.require('viz/plotly').render(plDoc, plPlots[0].plotly, { width: 400, height: 300 }); assert.ok(plDoc.querySelector('.plotly'), 'plotly drew into the element'); hd.finalize(); } finally { plDoc.remove(); }
+    // A saved Python chart renders headless with a filter (documents, batch, Exportera).
+    const charts = D.require('viz/charts'); const render = D.require('viz/render');
+    const chart = charts.create('python', meta, 'Pychart');
+    chart.python.code = 'import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.bar(df["kommun"], df["befolkning"])\nprint(len(df))';
+    const cpng = await render.toBlob(chart, 'png', { width: 640, height: 400, extraFilters: [{ field: 'kommun', op: '=', value: 'Göteborg' }] });
+    assert.ok(cpng.type === 'image/png' && cpng.size > 1000, 'python chart png ' + cpng.size);
+    let memory = '';
+    if (typeof performance.measureUserAgentSpecificMemory === 'function') {
+      try { await D.require('data/r-bridge').bridge.start(); const m = await performance.measureUserAgentSpecificMemory(); memory = `; ${Math.round(m.bytes / 1e6)} MB with R and Python started`; assert.ok(m.bytes < 1.5e9, 'R and Python together stay under 1.5 GB: ' + m.bytes); } catch (err) { memory = '; memory not measured (' + ((err && err.message) || err) + ')'; }
+    }
+    return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms${memory}`;
+  }, 900000);
 
   test('python: running code stops with interrupt() when the page is cross-origin isolated (from a web server)', async (assert) => {
     if (!real) return 'skipped: Pyodide not started in this run';

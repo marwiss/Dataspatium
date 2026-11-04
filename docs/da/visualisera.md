@@ -1,13 +1,13 @@
 # Visualisér
 
 Tilstanden Visualisér laver diagrammer af datasættene med tre motorer, der alle bruger appens palet, skrifttype og
-talformat: en diagrambygger (Vega-Lite), færdige D3-skabeloner og R-scripts (ggplot2). Diagrammer gemmes i
+talformat: en diagrambygger (Vega-Lite), færdige D3-skabeloner, R-scripts (ggplot2) og Python-scripts (matplotlib, plotly). Diagrammer gemmes i
 arbejdsområdet, kan eksporteres som SVG, PNG og PDF, deles som filer og oprettes i batch pr. gruppe.
 
 ## Opret et diagram
 
 1. Vælg et datasæt i objektpanelet, og tryk **Nyt diagram**.
-2. Vælg motor: **Diagrambygger**, **D3-skabelon** eller **R-script**.
+2. Vælg motor: **Diagrambygger**, **D3-skabelon**, **R-script** eller **Python-script**.
 3. Giv diagrammet et navn i titelfeltet, og tryk **Gem**. Gemte diagrammer vises under Diagrammer i objektpanelet og i
    galleriet.
 
@@ -79,6 +79,14 @@ Scriptet køres i R-sessionen med datasættet indlæst som `df` (læst med dets 
 `theme_dataspatium()` og `dm_palette()` giver appens udseende. Det seneste diagram vises og gemmes med scriptet. Eksport sker
 via R (svglite til SVG, `png()` og `pdf()`), og batchkørsler kører scriptet én gang pr. gruppe med `df` filtreret.
 Ctrl+Enter kører scriptet.
+
+## Python-scripts
+
+Scriptet køres i Python-sessionen med datasættet indlæst som `df` (pandas). Tegn med matplotlib (`fig, ax =
+plt.subplots()`) eller plotly (`fig.show()`); `theme_dataspatium()` sættes automatisk. Det seneste diagram vises og
+gemmes med scriptet; et plotly-diagram gemmes desuden som figur og vises interaktivt i dashboards og publiceret HTML.
+Python starter med *Start Python* eller *Kør* (hentes første gang, se [python.md](python.md)). Eksport og batch pr.
+gruppe fungerer som for R-scripts.
 
 ## Eksportér
 
@@ -156,7 +164,7 @@ gitteret og en beskrivelse sættes i egenskabspanelet. Alle ændringer gemmes au
 
 **Filtre** viser de kolonner, der findes i alle datasæt, dashboardets diagrammer bruger (tekst, heltal, dato og ja/nej).
 Hvert valgt filter bliver en vælger over diagrammerne, og valget gælder alle Vega- og D3-diagrammer på én gang
-(R-diagrammer vises som gemt billede). Filtrene lægges til diagrammernes egne filtre.
+(R- og Python-diagrammer vises som gemt billede, plotly-diagrammer interaktivt). Filtrene lægges til diagrammernes egne filtre.
 
 Dashboardet eksporteres som selvstændig **HTML** (diagrammerne som indlejret SVG, med de aktive filtre angivet), som
 **PowerPoint** (titeldias plus ét dias pr. diagram) eller deles som `*.dash.json`, en fil, der indeholder diagrammernes
@@ -180,6 +188,6 @@ arbejdsområdet (Håndter) indeholder alle diagrammer som sådanne filer.
 
 - Diagrammerne lever i browseren; meget store datasæt uden aggregering begrænses til rækkegrænsen.
 - PDF bruger Helvetica, ikke Inter, til tekst.
-- R-diagrammer kræver, at R-sessionen er startet, og eksporteres derfor kun fra Visualisér.
+- R- og Python-diagrammer køres i deres motor ved eksport, batch, dokumenter og PowerPoint; det tager nogle sekunder pr. diagram, og Python hentes første gang.
 - De medfølgende grænser er forenklede til tematiske kort, ikke nøjagtige grænser.
 - PowerPoint-eksport bruger billeder (PNG) af diagrammerne, ikke redigerbare PowerPoint-diagrammer.

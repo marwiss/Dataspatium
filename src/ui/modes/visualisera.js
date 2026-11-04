@@ -7,8 +7,11 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
-    (base, vegaControls, d3Controls, rPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme, dashboardView, dashboards) => {
+  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/python-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
+    (base, vegaControls, d3Controls, rPanel, pyPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme, dashboardView, dashboards) => {
+      /** Charts drawn by code (R, Python) have their own panel instead of the controls and the live preview. */
+      const isCode = (kind) => kind === 'r' || kind === 'python';
+      const kindIcon = (kind) => (kind === 'r' ? 'terminal' : kind === 'python' ? 'code' : kind === 'd3' ? 'trending-up' : 'chart-column');
       const { h, t, i18n, replace } = base;
 
       function createMode(ctx) {
@@ -26,12 +29,12 @@
           unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); if (changed.includes('openChartId')) takeOpenChart(); });
           unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); if (view === 'dashboard' && dashView) dashView.reload(); });
           unsubDash = dashboards.subscribe(async () => { dashList = await dashboards.list(); renderLeft(); });
-          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0); if (view === 'dashboard' && dashView) dashView.reload(); });
+          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && !isCode(chart.kind)) schedulePreview(0); if (view === 'dashboard' && dashView) dashView.reload(); });
           list = await charts.list();
           dashList = await dashboards.list();
           render();
           // A chart opened before the lists finished loading (command palette) needs its preview drawn again.
-          if (view === 'chart' && chart && chart.kind !== 'r') schedulePreview(0);
+          if (view === 'chart' && chart && !isCode(chart.kind)) schedulePreview(0);
           takeOpenChart();
         }
         /** A chart handed over through the store (the beginner's course) is opened in the builder. */
@@ -62,7 +65,7 @@
           slots.left.appendChild(h('div', { class: 'dm-list' },
             h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'gallery' ? 'true' : null, onclick: () => openGallery() }, ui.icon('layout-grid', 16), h('span', { class: 'dm-list-main' }, h('span', { text: t('viz.gallery') }), h('span', { class: 'dm-list-sub', text: t('viz.count', { n: list.length }) }))),
             list.map((c) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': view === 'chart' && chart && chart.id === c.id ? 'true' : null, onclick: () => openChart(c) },
-              ui.icon(c.kind === 'r' ? 'terminal' : (c.kind === 'd3' ? 'trending-up' : 'chart-column'), 16),
+              ui.icon(kindIcon(c.kind), 16),
               h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: c.datasetName || '' }))))));
           slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('viz.import'), icon: 'upload', size: 'sm', onClick: importChart })));
           slots.left.appendChild(h('hr'));
@@ -97,7 +100,7 @@
           if (!ds) { ui.toast.show(t('shell.select.dataset'), { kind: 'warn' }); return; }
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
-          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'd3', 'r'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
+          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
           await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
           if (!kind) return;
           const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
@@ -123,7 +126,7 @@
           columns = chart.datasetId ? await services.datasets.columns(chart.datasetId).catch(() => []) : [];
           if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
           render();
-          if (chart.kind !== 'r') schedulePreview(0);
+          if (!isCode(chart.kind)) schedulePreview(0);
         }
 
         // ---- centre ----
@@ -149,7 +152,7 @@
           nameInput.addEventListener('input', () => { chart.name = nameInput.value; dirty = true; });
           const saveBtn = ui.button({ label: t('viz.save'), icon: 'save', variant: 'primary', onClick: saveChart });
           const head = h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon(chart.kind === 'r' ? 'terminal' : 'chart-column', 20), nameInput, h('dm-badge', { text: t('viz.kind.badge.' + chart.kind) })),
+            h('h1', null, ui.icon(kindIcon(chart.kind), 20), nameInput, h('dm-badge', { text: t('viz.kind.badge.' + chart.kind) })),
             h('div', { class: 'dm-row-wrap' },
               saveBtn,
               ui.button({ label: t('viz.export'), icon: 'download', onClick: () => exportDialog.exportChart(chart, { rExport: rpanel ? rpanel.exportBlob : undefined }) }),
@@ -166,17 +169,20 @@
           } else if (chart.kind === 'd3') {
             controls = d3Controls.create({ columns, template: chart.d3.template, params: chart.d3.params, filters: (chart.options && chart.options.filters) || [], onChange: (template, params, filters) => { chart.d3.template = template; chart.d3.params = params; chart.options = Object.assign({}, chart.options, { filters }); dirty = true; schedulePreview(); } });
             controlsEl = controls.el;
+          } else if (chart.kind === 'python') {
+            rpanel = pyPanel.create({ chart, columns, onChange: (code, plotly) => { chart.python.code = code; chart.python.plotly = plotly; dirty = true; }, log: (m, k) => shell.log(m, k) });
+            controlsEl = null;
           } else {
             rpanel = rPanel.create({ chart, columns, onChange: (code) => { chart.r.code = code; dirty = true; }, log: (m, k) => shell.log(m, k) });
             controlsEl = null;
           }
           replace(slots.center, head,
-            chart.kind === 'r' ? rpanel.el : h('div', { class: 'dm-viz-layout' }, h('div', { class: 'dm-viz-side' }, controlsEl), h('div', { class: 'dm-viz-main' }, previewEl, infoEl)));
+            isCode(chart.kind) ? rpanel.el : h('div', { class: 'dm-viz-layout' }, h('div', { class: 'dm-viz-side' }, controlsEl), h('div', { class: 'dm-viz-main' }, previewEl, infoEl)));
         }
 
         function schedulePreview(delay = 300) { clearTimeout(renderTimer); renderTimer = setTimeout(renderPreview, delay); }
         async function renderPreview() {
-          if (!previewEl || !chart || chart.kind === 'r') return;
+          if (!previewEl || !chart || isCode(chart.kind)) return;
           const seq = ++renderSeq;
           if (chart.kind === 'vega' && !chart.vega.customSpec) {
             const problems = builder.validate(chart.vega.state);
@@ -201,7 +207,7 @@
           chart.name = nameInput ? nameInput.value.trim() || chart.name : chart.name;
           if (chart.kind === 'vega' && !chart.vega.customSpec) { const problems = builder.validate(chart.vega.state); if (problems.length) { ui.toast.show(problems.join(' '), { kind: 'warn' }); return; } }
           try {
-            chart.thumbnail = chart.kind === 'r' ? (rpanel ? await rpanel.thumbnail() : chart.thumbnail) : await vizRender.thumbnail(chart);
+            chart.thumbnail = isCode(chart.kind) ? (rpanel ? await rpanel.thumbnail() : chart.thumbnail) : await vizRender.thumbnail(chart);
             const saved = await charts.save(chart);
             chart.id = saved.id; chart.createdAt = saved.createdAt; chart.updatedAt = saved.updatedAt; dirty = false;
             shell.log(t('viz.saved.toast', { name: saved.name }), 'ok'); ui.toast.show(t('viz.saved.toast', { name: saved.name }), { kind: 'ok' });

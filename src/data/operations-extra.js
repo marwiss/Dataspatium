@@ -441,7 +441,7 @@
     }
     define({
       id: 'apply_value_labels', group: 'values',
-      params: [{ name: 'column', type: 'column', required: true }, { name: 'direction', type: 'select', options: ['labels', 'codes'], default: 'labels' }],
+      params: [{ name: 'column', type: 'column', required: true, labelled: true }, { name: 'direction', type: 'select', options: ['labels', 'codes'], default: 'labels' }],
       plan(ctx, p) {
         const c = ctx.column(p.column);
         if (!c) throw new Error(D.t('op.err.unknown.column', { name: p.column }));

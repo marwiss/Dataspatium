@@ -66,6 +66,32 @@ appen spør om lov før Python går på internett.
 Kontrollsummer: kjøretidens filer er låst til Pyodide 314.0.7 med SHA-256 i appen; pakkene kontrolleres mot
 `pyodide-lock.json`, som selv er låst med sin sum. En fil med feil sum brukes ikke.
 
+## Kodesteg i oppskrifter
+
+I Bearbeid finnes handlingen **Python-steg** (gruppen Kode i paletten): en funksjon `def step(df): ... return df`
+kjøres på hele tabellen med pandas, og det funksjonen returnerer, blir den nye tabellen med typer fra resultatet.
+Steget logges i oppskriften med koden sin, kan angres, spilles av på et annet datasett og følger med når oppskriften
+eksporteres (som kommentarer i SQL- og R-koden). Knappen *Forhåndsvis* kjører funksjonen på de første 200 radene og
+viser resultatets kolonner og noen rader før du bruker den. Importer det du trenger i koden; `pd` og `np` finnes
+allerede. Det tilsvarende **R-steget** tar en funksjon `function(df) { ... }` (se [r-guide.md](r-guide.md)).
+
+## seaborn og plotly
+
+seaborn og plotly inngår ikke i Pyodides utvalg; appen har hjulene deres fra PyPI låst med kontrollsummer og henter
+dem som komponenter når koden importerer dem (`import seaborn as sns`, `import plotly.express as px`). seaborn
+tegner via matplotlib og vises som andre figurer. plotly-figurer vises interaktivt: `fig.show()`, eller `fig` som
+siste linje, overlater figuren til appen, som tegner den med plotly.js (hentes som komponent første gang, 4,8 MB) og
+appens tema, og eksporterer den til SVG, PNG og PDF. I notatboken lagres plotly-figurer som PNG, med den interaktive
+visningen beholdt så lenge plotly.js finnes.
+
+## Python-diagrammer i Visualiser
+
+I Visualiser kan et diagram være et **Python-skript**: datasettet finnes som `df`, og det siste diagrammet (matplotlib
+eller plotly) vises og lagres med skriptet. Python-diagrammer eksporteres til SVG, PNG, PDF og PowerPoint, kjøres i
+batch per gruppe (skriptet kjøres én gang per verdi med `df` filtrert) og kan settes inn i dokumentmaler med
+`{{diagram "Navn"}}`; det samme gjelder nå R-diagrammer. I dashbord og i publisert HTML vises et lagret plotly-diagram
+interaktivt, øvrige Python- og R-diagrammer som lagret bilde.
+
 ## Slik flyttes data mellom appen og Python
 
 Datasettene er SQLite-filer. Når du kjører kode, kopierer appen datasettene som koden refererer til med `dm_read()`,

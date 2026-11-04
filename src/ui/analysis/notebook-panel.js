@@ -99,7 +99,12 @@
         for (const o of c.outputs || []) {
           if (o.kind === 'text') nodes.push(h('pre', { class: 'dm-console-stdout', text: o.text }));
           else if (o.kind === 'error') nodes.push(h('pre', { class: 'dm-console-error', text: o.text }));
-          else if (o.kind === 'image') nodes.push(h('img', { class: 'dm-nb-plot', src: o.dataUrl, alt: '' }));
+          else if (o.kind === 'image' && o.plotly) {
+            // Interactive when plotly.js is available; the stored PNG otherwise.
+            const holder = h('div', { class: 'dm-nb-plot dm-plotly', style: { height: '420px' } });
+            nodes.push(holder);
+            Promise.resolve().then(() => D.require('viz/plotly').render(holder, o.plotly)).catch(() => replace(holder, h('img', { class: 'dm-nb-plot', src: o.dataUrl, alt: '' })));
+          } else if (o.kind === 'image') nodes.push(h('img', { class: 'dm-nb-plot', src: o.dataUrl, alt: '' }));
           else if (o.kind === 'dataset') nodes.push(h('div', { class: 'dm-console-dataset' }, icons.icon('table', 14), h('span', { text: t('nb.output.dataset', { name: o.name, rows: i18n.formatNumber(o.rows || 0) }) }), basic.button({ label: t('analysera.open.bearbeta'), size: 'sm', onClick: () => { store.set({ selectedId: o.id }); shell.activate('bearbeta'); } })));
           else if (o.kind === 'table') {
             const rows = (o.rows || []).slice(0, PREVIEW_ROWS);

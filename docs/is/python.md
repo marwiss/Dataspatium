@@ -66,6 +66,32 @@ forritið spyr um leyfi áður en Python nær í internetið.
 Prófsummur: skrár keyrsluumhverfisins eru læstar við Pyodide 314.0.7 með SHA-256 í forritinu; pakkarnir eru bornir
 saman við `pyodide-lock.json`, sem er sjálf læst með sinni summu. Skrá með rangri summu er ekki notuð.
 
+## Kóðaskref í uppskriftum
+
+Í Vinna er aðgerðin **Python-skref** (hópurinn Kóði í litaspjaldinu): fall `def step(df): ... return df` keyrir á alla
+töfluna með pandas, og það sem fallið skilar verður nýja taflan með tegundum úr niðurstöðunni. Skrefið er skráð í
+uppskriftina með kóðanum, má afturkalla, endurspila á öðru gagnasafni og fylgir með þegar uppskriftin er flutt út (sem
+athugasemdir í SQL- og R-kóðanum). Hnappurinn *Forskoða* keyrir fallið á fyrstu 200 röðunum og sýnir dálka
+niðurstöðunnar og nokkrar raðir áður en þú beitir því. Flyttu inn það sem þú þarft í kóðanum; `pd` og `np` eru þegar
+til staðar. Samsvarandi **R-skref** tekur fall `function(df) { ... }` (sjá [r-guide.md](r-guide.md)).
+
+## seaborn og plotly
+
+seaborn og plotly eru ekki hluti af úrvali Pyodide; forritið hefur hjól þeirra frá PyPI fest með prófsummum og sækir
+þau sem einingar þegar kóðinn flytur þau inn (`import seaborn as sns`, `import plotly.express as px`). seaborn teiknar
+gegnum matplotlib og birtist eins og aðrar myndir. plotly-myndir eru gagnvirkar: `fig.show()`, eða `fig` sem síðasta
+lína, afhendir forritinu myndina, sem teiknar hana með plotly.js (sótt sem eining í fyrsta sinn, 4,8 MB) og þema
+forritsins og flytur hana út í SVG, PNG og PDF. Í minnisbókinni eru plotly-myndir vistaðar sem PNG og gagnvirka
+sýnin helst á meðan plotly.js er tiltækt.
+
+## Python-myndrit í Myndgera
+
+Í Myndgera getur myndrit verið **Python-skrifta**: gagnasafnið er `df`, og nýjasta myndritið (matplotlib eða plotly)
+birtist og er vistað með skriftunni. Python-myndrit eru flutt út í SVG, PNG, PDF og PowerPoint, keyrð í hópkeyrslu
+eftir hópum (skriftan keyrir einu sinni fyrir hvert gildi með `df` síað) og má setja inn í skjalasniðmát með
+`{{diagram "Heiti"}}`; það sama gildir nú um R-myndrit. Í mælaborðum og birtu HTML er vistað plotly-myndrit gagnvirkt,
+önnur Python- og R-myndrit birtast sem vistuð mynd.
+
 ## Hvernig gögn flytjast milli forritsins og Python
 
 Gagnasöfnin eru SQLite-skrár. Þegar þú keyrir kóða afritar forritið gagnasöfnin sem kóðinn vísar í með `dm_read()` í

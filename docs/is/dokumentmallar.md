@@ -56,7 +56,7 @@ eða `innehåller` (inniheldur) sem má sameina með `och` eða `and`, og `rubri
 ```
 
 Setur inn vistað myndrit úr Myndgera (Vega-Lite eða D3) sem mynd, teiknað með sömu síum og skjalið; `bredd` er breiddin í
-pixlum. Í hópkeyrslum er myndritið síað á hópinn. R-myndrit er ekki hægt að setja inn í skjöl.
+pixlum. Í hópkeyrslum er myndritið síað á hópinn. R- og Python-myndrit eru teiknuð af vélum sínum þegar skjalið er búið til (nokkrar sekúndur á myndrit).
 
 ### Síðuskil og kóðabók
 

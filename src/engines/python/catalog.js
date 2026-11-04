@@ -30,6 +30,14 @@
     const STARTUP = ['numpy', 'pandas', 'micropip'];
     /** Approximate wheel sizes for the consent dialog and progress (the lock has no sizes). */
     const KNOWN_SIZES = { numpy: 2960568, pandas: 4177749, matplotlib: 6982033, micropip: 115486, pillow: 1037806, fonttools: 1152647 };
+    /**
+     * Pure-Python wheels outside Pyodide's distribution, pinned to files on PyPI with their SHA-256. They are
+     * installed by their asset address after their dependencies from the distribution.
+     */
+    const EXTRA = [
+      { name: 'seaborn', version: '0.13.2', file: 'seaborn-0.13.2-py3-none-any.whl', url: 'https://files.pythonhosted.org/packages/83/11/00d3c3dfc25ad54e731d91449895a79e4bf2384dc3ac01809010ba88f6d5/seaborn-0.13.2-py3-none-any.whl', sha256: '636f8336facf092165e27924f223d3c62ca560b1f2bb5dff7ab7fad265361987', size: 294914, depends: ['numpy', 'pandas', 'matplotlib'], imports: ['seaborn'] },
+      { name: 'plotly', version: '7.1.0', file: 'plotly-7.1.0-py3-none-any.whl', url: 'https://files.pythonhosted.org/packages/e5/7d/905a3a3d51087515719058c94cfbda2ff0fc14417c20d557ae3e82d8b250/plotly-7.1.0-py3-none-any.whl', sha256: 'dbb7fa18afce40d0a8e80d1bf162eceb3faa0ce5a77fe741ad09a74cf78f53f3', size: 9692368, depends: ['narwhals', 'packaging'], imports: ['plotly'] },
+    ];
     const RUNTIME_SIZE = RUNTIME.reduce((n, f) => n + f.size, 0);
 
     /** @type {Map<string, {name: string, version: string, file: string, sha256: string, depends: string[], imports: string[]}>|null} */
@@ -51,6 +59,11 @@
         index.set(name, entry);
         for (const imp of entry.imports) if (!importMap.has(imp)) importMap.set(imp, name);
       }
+      for (const e of EXTRA) {
+        if (index.has(e.name)) continue;
+        index.set(e.name, Object.assign({}, e, { depends: e.depends.slice(), imports: e.imports.slice() }));
+        for (const imp of e.imports) if (!importMap.has(imp)) importMap.set(imp, e.name);
+      }
       return index;
     }
 
@@ -58,7 +71,7 @@
       return { id: 'pyodide:' + f.file, urls: [BASE + f.file], sha256: f.sha256, size: f.size, label: `Pyodide ${VERSION}: ${f.file}`, version: VERSION, purpose: 'components' };
     }
     function wheelSpec(entry) {
-      return { id: 'pyodide:' + entry.file, urls: [BASE + entry.file], sha256: entry.sha256, size: KNOWN_SIZES[entry.name] || null, label: `Python: ${entry.name} ${entry.version}`, version: entry.version, purpose: 'components' };
+      return { id: 'pyodide:' + entry.file, urls: [entry.url || BASE + entry.file], sha256: entry.sha256, size: entry.size || KNOWN_SIZES[entry.name] || null, label: `Python: ${entry.name} ${entry.version}`, version: entry.version, purpose: 'components' };
     }
 
     /** Fetch (or reuse) the package index; the lock file is pinned by its own digest. */
@@ -197,6 +210,6 @@
 
     function reset() { index = null; importMap = new Map(); provided.clear(); }
 
-    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
+    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
   });
 })();

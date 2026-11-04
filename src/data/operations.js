@@ -6,8 +6,11 @@
  * itself as SQL and as R for recipe export.
  *
  * Operation contract:
- *   { id, group, params: [{name, type, required?, options?, default?, kinds?, prefer?}],
- *     apply(ctx, p) -> Promise<{rows?: number}>, toSQL(p, ctx) -> string[], toR(p, ctx) -> string }
+ *   { id, group, params: [{name, type, required?, options?, default?, kinds?, prefer?, labelled?, language?}],
+ *     apply(ctx, p) -> Promise<{rows?: number}>, toSQL(p, ctx) -> string[], toR(p, ctx) -> string,
+ *     prepare?(ctx, p) (before the savepoint), preview?(ctx, p), manualPreview? (preview on request only) }
+ *   Param types: column (kinds limits the types, prefer a RegExp on the name, labelled puts columns with value
+ *   labels first), columns, select, switch, lines, expression, pattern, code (language: python|r), text, number.
  * ctx: { engine, columns, q(ident), lit(value), column(name), setType(name, type), rename(old, new),
  *        addColumn({name, type, label}), dropColumn(name), rebuildColumn(name, type, expr) }
  */
@@ -344,7 +347,8 @@
       id: 'remove_duplicates', group: 'rows',
       params: [{ name: 'columns', type: 'columns' }],
       keyCols(ctx, p) { return (p.columns && p.columns.length ? p.columns : ctx.columns.map((c) => c.name)).map(q).join(', '); },
-      async preview(ctx, p) { const r = await ctx.engine.exec(`select count(*) - count(distinct ${this.keyCols(ctx, p)}) from (select ${this.keyCols(ctx, p)} from data)`); return { rows: Number(r[0].values[0][0]) }; },
+      // count(distinct …) takes one argument in SQLite, so distinct rows are counted through a subquery.
+      async preview(ctx, p) { const r = await ctx.engine.exec(`select (select count(*) from data) - (select count(*) from (select distinct ${this.keyCols(ctx, p)} from data))`); return { rows: Number(r[0].values[0][0]) }; },
       async apply(ctx, p) { return { rows: await ctx.engine.run(`delete from data where rowid not in (select min(rowid) from data group by ${this.keyCols(ctx, p)})`) }; },
       toSQL(p, ctx) { return [`DELETE FROM data WHERE rowid NOT IN (SELECT min(rowid) FROM data GROUP BY ${this.keyCols(ctx, p)});`]; },
       toR: (p) => p.columns && p.columns.length ? `df <- df[!duplicated(df[, c(${p.columns.map(rstr).join(', ')})]), ]` : 'df <- df[!duplicated(df), ]',

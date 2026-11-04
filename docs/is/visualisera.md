@@ -7,7 +7,7 @@ PNG og PDF, deila sem skrám og búa til í hópkeyrslu eftir hópum.
 ## Búa til myndrit
 
 1. Veldu gagnasafn í hlutaspjaldinu og ýttu á **Nýtt myndrit**.
-2. Veldu vél: **Myndritasmiður**, **D3-snið** eða **R-skrifta**.
+2. Veldu vél: **Myndritasmiður**, **D3-snið**, **R-skrifta** eða **Python-skrifta**.
 3. Gefðu myndritinu heiti í titilreitnum og ýttu á **Vista**. Vistuð myndrit birtast undir Myndrit í hlutaspjaldinu og í safninu.
 
 Forskoðunin uppfærist meðan þú breytir. Undir myndritinu kemur fram hve margar raðir voru notaðar; stór gagnasöfn eru tekin
@@ -76,6 +76,14 @@ Skriftan keyrir í R-setunni með gagnasafnið hlaðið inn sem `df` (lesið me�
 grunnteikningu; `theme_dataspatium()` og `dm_palette()` gefa útlit forritsins. Nýjasta myndritið birtist og er vistað með
 skriftunni. Útflutningur fer gegnum R (svglite fyrir SVG, `png()` og `pdf()`), og hópkeyrslur keyra skriftuna einu sinni fyrir
 hvern hóp með `df` síað. Ctrl+Enter keyrir skriftuna.
+
+## Python-skriftur
+
+Skriftan keyrir í Python-setunni með gagnasafnið hlaðið sem `df` (pandas). Teiknaðu með matplotlib (`fig, ax =
+plt.subplots()`) eða plotly (`fig.show()`); `theme_dataspatium()` er sett sjálfkrafa. Nýjasta myndritið birtist og er
+vistað með skriftunni; plotly-myndrit er að auki vistað sem mynd og birtist gagnvirkt í mælaborðum og birtu HTML.
+Python ræsist með *Ræsa Python* eða *Keyra* (sótt í fyrsta sinn, sjá [python.md](python.md)). Útflutningur og
+hópkeyrsla eftir hópum virka eins og fyrir R-skriftur.
 
 ## Flytja út
 
@@ -150,7 +158,7 @@ breiðara (einn, tveir eða þrír dálkar), færa upp eða niður, opna í smi�
 hnitanetinu og lýsing eru stillt í eiginleikaspjaldinu. Allar breytingar eru vistaðar sjálfkrafa.
 
 **Síur** sýna þá dálka sem eru til í öllum gagnasöfnum sem myndrit mælaborðsins nota (texti, heiltala, dagsetning og já/nei).
-Hver valin sía verður valreitur fyrir ofan myndritin, og valið gildir um öll Vega- og D3-myndrit í einu (R-myndrit birtast sem
+Hver valin sía verður valreitur fyrir ofan myndritin, og valið gildir um öll Vega- og D3-myndrit í einu (R- og Python-myndrit birtast sem
 vistuð mynd). Síunum er bætt við eigin síur myndritanna.
 
 Mælaborðið er flutt út sem sjálfstæð **HTML** (myndritin sem innfelld SVG, með virku síunum tilgreindum), sem **PowerPoint**
@@ -175,6 +183,6 @@ inniheldur öll myndrit sem slíkar skrár.
 
 - Myndritin lifa í vafranum; mjög stór gagnasöfn án samantektar eru takmörkuð við raðatakmarkið.
 - PDF notar Helvetica, ekki Inter, fyrir texta.
-- R-myndrit krefjast þess að R-setan sé ræst og eru því aðeins flutt út úr Myndgera.
+- R- og Python-myndrit keyra í vél sinni við útflutning, hópkeyrslu, skjöl og PowerPoint; það tekur nokkrar sekúndur á myndrit, og Python er sótt í fyrsta sinn.
 - Meðfylgjandi mörk eru einfölduð fyrir þemakort, ekki nákvæm mörk.
 - PowerPoint-útflutningur notar myndir (PNG) af myndritunum, ekki breytanleg PowerPoint-myndrit.

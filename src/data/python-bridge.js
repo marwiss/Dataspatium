@@ -34,6 +34,9 @@
         /** stdout/stderr lines of the running command, in order. @type {Array<{kind: string, text: string}>} */
         this.streams = [];
         this.mplReady = false;
+        this.plotlyReady = false;
+        /** plotly figures shown this session (key -> figure JSON), exported by viz/plotly on the main thread. */
+        this.plotlyFigures = new Map();
         this.interrupted = false;
         this.listeners = new Set();
       }
@@ -63,7 +66,8 @@
             await this.engine.writeFile(`${HELPER_DIR}/dataspatium.py`, new TextEncoder().encode(src).buffer);
             // User-facing messages follow the app's language (see MESSAGES in python/dataspatium.py).
             const lang = D.require('ui/i18n').language();
-            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)})\n`);
+            // __dm_format_result lets the worker show figures as plots instead of their repr (see python-engine.js).
+            const setup = await this.engine.run(`import sys\nif ${JSON.stringify(HELPER_DIR)} not in sys.path: sys.path.insert(0, ${JSON.stringify(HELPER_DIR)})\nimport dataspatium as _dataspatium\nfrom dataspatium import *\n__dm_format_result = _dataspatium._format_result\n_dataspatium.dm_setup(lang=${JSON.stringify(lang)})\n`);
             if (!setup.ok) throw new Error(setup.error);
             this.streams = [];
             await this.mirrorAll();
@@ -163,14 +167,56 @@
           D.log('python-bridge', err && err.name === 'ConsentError' ? 'packages not allowed' : 'packages failed', err);
           return fetched;
         }
-        if (!this.mplReady && catalog.closure(names).includes('matplotlib')) {
+        const closure = catalog.closure(names);
+        // Wheels outside Pyodide's distribution (seaborn, plotly) are installed by their asset address, after their
+        // dependencies from the distribution: a wheel given as an address does not pull those in by itself.
+        const extras = closure.map((n) => catalog.info(n)).filter((e) => e && e.url);
+        if (extras.length) {
+          try {
+            const deps = closure.filter((n) => { const e = catalog.info(n); return e && !e.url; });
+            if (deps.length) await this.engine.loadPackages(deps);
+            await this.engine.loadPackages(extras.map((e) => catalog.INDEX_URL + e.file));
+          } catch (err) { D.log('python', 'extra wheels failed', err); }
+        }
+        if (!this.mplReady && closure.includes('matplotlib')) {
           try {
             await this.engine.loadPackages(['matplotlib']);
             const r = await this.engine.run('_dataspatium._matplotlib_setup()');
             if (r.ok) this.mplReady = true; else D.log('python', 'matplotlib setup failed', r.error);
           } catch (err) { D.log('python', 'matplotlib setup failed', err); }
         }
+        if (!this.plotlyReady && closure.includes('plotly')) {
+          try {
+            const r = await this.engine.run('_dataspatium._plotly_setup()');
+            if (r.ok) this.plotlyReady = true; else D.log('python', 'plotly setup failed', r.error);
+          } catch (err) { D.log('python', 'plotly setup failed', err); }
+        }
         return fetched;
+      }
+
+      /**
+       * A code step in a recipe: run `def step(df): ...` on the dataset bytes (a SQLite file) and return the resulting
+       * file. Used by data/code-steps; a Python error is thrown with its traceback.
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes @param {{limit?: number, name?: string}} [options]
+       * @returns {Promise<{bytes: ArrayBuffer, rows: number, columns: string[], log: Array<{kind: string, text: string}>}>}
+       */
+      async runStep(code, bytes, options = {}) {
+        await this.start();
+        if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
+        this.setState('busy');
+        try {
+          await this.engine.mkdir('/data/step');
+          await this.engine.writeFile('/data/step/in.sqlite', bytes);
+          await this.ensurePackages(catalog.referenced(code));
+          this.streams = [];
+          const info = await this.engine.evalJson(`_dataspatium._run_step(${JSON.stringify(String(code))}, "/data/step/in.sqlite", "/data/step/out.sqlite", ${options.limit ? Number(options.limit) : 'None'}, ${JSON.stringify(String(options.name || ''))})`);
+          const out = await this.engine.readFile('/data/step/out.sqlite');
+          for (const p of ['/data/step/in.sqlite', '/data/step/out.sqlite']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          return { bytes: out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength), rows: Number(info && info.rows) || 0, columns: (info && info.columns) || [], log: this.streams.slice() };
+        } finally {
+          this.streams = [];
+          if (this.state === 'busy') this.setState('ready');
+        }
       }
 
       /**
@@ -209,16 +255,22 @@
         }
         if (installed.length) entries.splice(1, 0, { kind: 'packages', names: installed });
         try {
-          for (const f of await this.collectPlots()) entries.push({ kind: 'plot', svg: f.svg, png: f.png, width: f.width, height: f.height, key: f.key });
+          for (const f of await this.collectPlots()) {
+            if (f.plotly) { this.plotlyFigures.set(f.key, f.plotly); entries.push({ kind: 'plot', plotly: f.plotly, width: f.width, height: f.height, key: f.key }); }
+            else entries.push({ kind: 'plot', svg: f.svg, png: f.png, width: f.width, height: f.height, key: f.key });
+          }
         } catch (err) { D.log('python', 'plot collection failed', err); }
         for (const meta of await this.collectOutputs()) entries.push({ kind: 'dataset', meta });
         if (this.state === 'busy') this.setState('ready');
         return { entries, ms: performance.now() - t0 };
       }
 
-      /** Open matplotlib figures as {key, svg, png (base64), width, height}; the figures stay in Python for export. */
+      /**
+       * Open matplotlib figures as {key, svg, png (base64), width, height} and shown plotly figures as {key, plotly};
+       * matplotlib figures stay in Python for export, plotly figures are exported by viz/plotly.
+       */
       async collectPlots() {
-        if (!this.engine || !this.mplReady) return [];
+        if (!this.engine || (!this.mplReady && !this.plotlyReady)) return [];
         return (await this.engine.evalJson('_dataspatium._plot_collect()')) || [];
       }
 
@@ -245,8 +297,10 @@
        * @returns {Promise<Blob>}
        */
       async exportPlot(key, format, options = {}) {
-        const file = `/tmp/dataspatium-plot-${Number(key)}.${format}`;
         const width = Number(options.width) || 7; const height = Number(options.height) || 5; const dpi = Number(options.dpi) || 150;
+        // plotly figures are drawn by plotly.js on the main thread; sizes in inches become pixels at 96 per inch.
+        if (this.plotlyFigures.has(Number(key))) return D.require('viz/plotly').toBlob(this.plotlyFigures.get(Number(key)), format, { width: Math.round(width * 96), height: Math.round(height * 96), scale: 2 });
+        const file = `/tmp/dataspatium-plot-${Number(key)}.${format}`;
         await this.engine.evalJson(`_dataspatium._plot_export(${Number(key)}, ${JSON.stringify(format)}, ${JSON.stringify(file)}, ${width}, ${height}, ${dpi})`);
         const bytes = await this.engine.readFile(file);
         try { await this.engine.unlink(file); } catch (_err) { /* ignore */ }
@@ -278,7 +332,7 @@
       /** Stop and start a fresh session. */
       async restart() {
         if (this.engine) { try { await this.engine.close(); } catch (_err) { /* ignore */ } }
-        this.engine = null; this.ready = null; this.mirrored.clear(); this.error = null; this.mplReady = false; this.streams = []; this.progress = null;
+        this.engine = null; this.ready = null; this.mirrored.clear(); this.error = null; this.mplReady = false; this.plotlyReady = false; this.plotlyFigures.clear(); this.streams = []; this.progress = null;
         this.setState('idle');
         return this.start();
       }

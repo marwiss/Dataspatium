@@ -209,6 +209,15 @@ hur många steg som utfördes. Receptfilen har formen
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Trimma kommun" } ] }
 ```
 
+## Kodsteg
+
+Gruppen **Kod** i paletten har två åtgärder som kör en funktion på hela tabellen: **Python-steg** (`def step(df):`
+med pandas, se [python.md](python.md)) och **R-steg** (`function(df) { ... }`, se [r-guide.md](r-guide.md)). Det
+funktionen returnerar blir den nya tabellen, med typer från resultatet; etiketter och enheter följer med kolumner som
+behåller sitt namn. *Förhandsgranska* kör funktionen på de första 200 raderna och visar kolumner och några rader.
+Steget loggas i receptet med sin kod, kan ångras och spelas upp på andra datamängder; i SQL-exporten står koden som
+kommentar, i R-exporten körs R-steget som kod och Python-steget står som kommentar. Python hämtas första gången.
+
 ## SQL-konsolen
 
 Varje datamängd har ett **kortnamn** (visas under namnet i objektpanelen och under Hantera, där det kan ändras

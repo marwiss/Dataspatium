@@ -59,6 +59,8 @@
     // A second dataset, so that joining and appending have something to work with.
     const other = await shell.ctx.services.importer.run(new File(['kod;region\n0180;Stockholm\n1480;Västra Götaland\n'], 'flows2.csv', { type: 'text/csv' }), {}, null, 'Klicktest regioner');
     await waitFor(() => [meta.id, other.id].every((id) => shell.store.get().datasets.some((d) => d.id === id)), 3000, 'datasets in store');
+    // Value labels on one column, so that the operations that need them have a column to preview on.
+    await D.require('data/recipes').apply(meta.id, 'set_value_labels', { column: 'kod', labels: '0180 = Stockholm\n1480 = Göteborg\n1280 = Malmö' });
     shell.store.set({ selectedId: meta.id });
     return { root, shell, meta, other };
   }
@@ -87,9 +89,11 @@
         /** @type {HTMLElement} */ (document.querySelector(`dialog .dm-op-tile[data-op="${id}"]`)).click();
         const dlg = await waitFor(() => openDialogs().find((d) => !d.querySelector('.dm-op-tile')), 5000, 'dialog of ' + id);
         opened++;
-        await wait(250);
-        for (const p of a11y.audit(dlg)) problems.push(`${id}: ${p.rule}: ${p.element}`);
+        // Past the preview's debounce (300 ms) and until it has settled, so the check is the same in every run.
+        await wait(400);
         const preview = dlg.querySelector('.dm-op-preview');
+        if (preview) await waitFor(() => preview.textContent.trim() !== t('common.loading'), 5000, 'preview settled for ' + id);
+        for (const p of a11y.audit(dlg)) problems.push(`${id}: ${p.rule}: ${p.element}`);
         if (preview && errorPrefix && preview.textContent.trim().startsWith(errorPrefix)) previewErrors.push(`${id}: ${preview.textContent.trim()}`);
         while (openDialogs().length) await closeTop(id);
       }

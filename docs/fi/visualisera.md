@@ -7,7 +7,7 @@ viedä SVG-, PNG- ja PDF-muotoon, jakaa tiedostoina ja luoda eräajona ryhmittä
 ## Luo kaavio
 
 1. Valitse aineisto kohdepaneelista ja paina **Uusi kaavio**.
-2. Valitse moottori: **Kaaviorakentaja**, **D3-malli** tai **R-skripti**.
+2. Valitse moottori: **Kaaviorakentaja**, **D3-malli**, **R-skripti** tai **Python-skripti**.
 3. Anna kaaviolle nimi otsikkokenttään ja paina **Tallenna**. Tallennetut kaaviot näkyvät kohdepaneelin kohdassa Kaaviot ja
    galleriassa.
 
@@ -80,6 +80,15 @@ Skripti suoritetaan R-istunnossa niin, että aineisto on ladattuna nimellä `df`
 perusgrafiikalla; `theme_dataspatium()` ja `dm_palette()` antavat sovelluksen ulkoasun. Viimeisin kaavio näytetään ja
 tallennetaan skriptin kanssa. Vienti tapahtuu R:n kautta (svglite SVG:lle, `png()` ja `pdf()`), ja eräajot suorittavat
 skriptin kerran ryhmää kohden suodatetulla `df`:llä. Ctrl+Enter suorittaa skriptin.
+
+## Python-skriptit
+
+Skripti suoritetaan Python-istunnossa, jossa aineisto on ladattu nimellä `df` (pandas). Piirrä matplotlibilla
+(`fig, ax = plt.subplots()`) tai plotlylla (`fig.show()`); `theme_dataspatium()` asetetaan automaattisesti. Viimeisin
+kaavio näytetään ja tallennetaan skriptin kanssa; plotly-kaavio tallennetaan lisäksi kuviona ja näytetään
+vuorovaikutteisena koontinäytöissä ja julkaistussa HTML:ssä. Python käynnistyy painikkeella *Käynnistä Python* tai
+*Suorita* (haetaan ensimmäisellä kerralla, ks. [python.md](python.md)). Vienti ja eräajo ryhmittäin toimivat kuten
+R-skripteissä.
 
 ## Vie
 
@@ -159,7 +168,7 @@ ruudukon sarakkeiden määrä ja kuvaus asetetaan ominaisuuspaneelissa. Kaikki m
 
 **Suodattimet** näyttää sarakkeet, jotka ovat kaikissa kojelaudan kaavioiden käyttämissä aineistoissa (teksti, kokonaisluku,
 päivämäärä ja kyllä/ei). Jokaisesta valitusta suodattimesta tulee valitsin kaavioiden yläpuolelle, ja valinta koskee kaikkia
-Vega- ja D3-kaavioita kerralla (R-kaaviot näytetään tallennettuina kuvina). Suodattimet lisätään kaavioiden omiin
+Vega- ja D3-kaavioita kerralla (R- ja Python-kaaviot näytetään tallennettuina kuvina, plotly-kaaviot vuorovaikutteisina). Suodattimet lisätään kaavioiden omiin
 suodattimiin.
 
 Kojelauta viedään itsenäisenä **HTML**-sivuna (kaaviot upotettuina SVG-kuvina, aktiiviset suodattimet mainittuina),
@@ -184,6 +193,6 @@ ja koskevat kaikkia kaavioita. Mikään ei muutu kojelaudassa esityksen aikana.
 
 - Kaaviot elävät selaimessa; hyvin suuret aineistot ilman koostamista rajataan rivirajaan.
 - PDF käyttää tekstille Helveticaa, ei Interiä.
-- R-kaaviot vaativat käynnissä olevan R-istunnon, joten ne viedään vain Visualisoi-tilasta.
+- R- ja Python-kaaviot suoritetaan moottorissaan vientiä, eräajoa, asiakirjoja ja PowerPointia varten; se vie muutaman sekunnin kaaviota kohden, ja Python haetaan ensimmäisellä kerralla.
 - Mukana tulevat rajat on yksinkertaistettu teemakarttoja varten, eivätkä ne ole tarkkoja rajoja.
 - PowerPoint-vienti käyttää kaavioista kuvia (PNG), ei muokattavia PowerPoint-kaavioita.

@@ -57,7 +57,7 @@ giver i stedet en tabel over datasættets kolonner (navn, type, etiket, beskrive
 ```
 
 Indsætter et gemt diagram fra Visualisér (Vega-Lite eller D3) som billede, gengivet med samme filtre som dokumentet;
-`bredd` er bredden i pixel. I batchkørsler filtreres diagrammet på gruppen. R-diagrammer kan ikke indsættes i dokumenter.
+`bredd` er bredden i pixel. I batchkørsler filtreres diagrammet på gruppen. R- og Python-diagrammer tegnes af deres motorer, når dokumentet oprettes (nogle sekunder pr. diagram).
 
 ### Sideskift og kodebog
 

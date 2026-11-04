@@ -206,6 +206,16 @@ trinn som ble utført. Oppskriftsfilen har formen
   "steps": [ { "op": "trim", "params": { "columns": ["kommun"], "squish": true }, "description": "Fjern mellomrom i kommun" } ] }
 ```
 
+## Kodesteg
+
+Gruppen **Kode** i paletten har to handlinger som kjører en funksjon på hele tabellen: **Python-steg**
+(`def step(df):` med pandas, se [python.md](python.md)) og **R-steg** (`function(df) { ... }`, se
+[r-guide.md](r-guide.md)). Det funksjonen returnerer, blir den nye tabellen med typer fra resultatet; etiketter og
+enheter følger med kolonner som beholder navnet sitt. *Forhåndsvis* kjører funksjonen på de første 200 radene og
+viser kolonner og noen rader. Steget logges i oppskriften med koden sin, kan angres og spilles av på andre datasett;
+i SQL-eksporten står koden som kommentar, i R-eksporten kjøres R-steget som kode og Python-steget står som kommentar.
+Python hentes første gang.
+
 ## SQL-konsollen
 
 Hvert datasett har et **kortnavn** (vises under navnet i objektpanelet og under Håndter, der det kan endres sammen med

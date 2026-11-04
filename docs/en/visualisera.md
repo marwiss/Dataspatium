@@ -1,13 +1,13 @@
 # Visualise
 
 Visualise mode turns datasets into charts with three engines that all use the app's palette, font and number
-format: a chart builder (Vega-Lite), ready-made D3 templates and R scripts (ggplot2). Charts are saved in the
+format: a chart builder (Vega-Lite), ready-made D3 templates, R scripts (ggplot2) and Python scripts (matplotlib, plotly). Charts are saved in the
 workspace, can be exported as SVG, PNG and PDF, shared as files and created in batch per group.
 
 ## Create a chart
 
 1. Choose a dataset in the object panel and press **New chart**.
-2. Choose an engine: **Chart builder**, **D3 template** or **R script**.
+2. Choose an engine: **Chart builder**, **D3 template**, **R script** or **Python script**.
 3. Give the chart a name in the title field and press **Save**. Saved charts are listed under Charts in the object
    panel and in the gallery.
 
@@ -80,6 +80,14 @@ The script runs in the R session with the dataset loaded as `df` (read by its sh
 graphics; `theme_dataspatium()` and `dm_palette()` give the app's look. The latest chart is shown and saved with the
 script. Export goes through R (svglite for SVG, `png()` and `pdf()`), and batch runs run the script once per group
 with `df` filtered. Ctrl+Enter runs the script.
+
+## Python scripts
+
+The script runs in the Python session with the dataset loaded as `df` (pandas). Draw with matplotlib (`fig, ax =
+plt.subplots()`) or plotly (`fig.show()`); `theme_dataspatium()` is applied automatically. The latest chart is shown
+and saved with the script; a plotly chart is also saved as a figure and shown interactively in dashboards and
+published HTML. Python starts on *Start Python* or *Run* (fetched the first time, see [python.md](python.md)). Export
+and batch per group work as for R scripts.
 
 ## Export
 
@@ -161,7 +169,7 @@ of grid columns and a description are set in the properties panel. All changes a
 
 **Filters** shows the columns that exist in every dataset the dashboard's charts use (text, integer, date and
 yes/no). Each chosen filter becomes a selector above the charts, and the choice applies to all Vega and D3 charts at
-once (R charts are shown as saved images). The filters are added to the charts' own filters.
+once (R and Python charts are shown as saved images, plotly charts interactively). The filters are added to the charts' own filters.
 
 The dashboard is exported as standalone **HTML** (the charts as embedded SVG, with the active filters stated), as
 **PowerPoint** (title slide plus one slide per chart) or shared as `*.dash.json`, a file that contains the charts'
@@ -185,7 +193,7 @@ backup (Manage) contains all charts as such files.
 
 - The charts live in the browser; very large datasets without aggregation are limited to the row limit.
 - PDF uses Helvetica, not Inter, for text.
-- R charts require the R session to be started and are therefore exported only from Visualise.
+- R and Python charts run in their engine for export, batch, documents and PowerPoint; that takes a few seconds per chart, and Python is fetched the first time.
 - The bundled boundaries are simplified for thematic maps, not exact boundaries; fetch exact boundaries from
   Lantmäteriet (or the corresponding agency) and import them as GeoPackage or shapefile.
 - PowerPoint export uses images (PNG) of the charts, not editable PowerPoint charts.

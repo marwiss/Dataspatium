@@ -90,7 +90,7 @@ til að hverfa aftur til. Sjá [bearbeta.md](bearbeta.md).
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;
-Python-stjórnborðið hefur pandas og matplotlib og er sótt sem eining í fyrsta sinn sem þú ræsir það (sjá
+Python-stjórnborðið hefur pandas, matplotlib, seaborn og plotly og er sótt sem eining í fyrsta sinn sem þú ræsir það (sjá
 [python.md](python.md)). R-stjórnborðið hefur ggplot2, dplyr, tidyr og aðra pakka, vistaðar
 skriftur, myndrit með útflutningi í SVG, PNG og PDF, og `dm_read()`/`dm_write()` til að flytja gögn milli forritsins
 og R (sjá [r-guide.md](r-guide.md)); pakkar sem fylgja ekki forritinu eru sóttir úr pakkasafni webR þegar kóðinn þarf
