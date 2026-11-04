@@ -44,6 +44,13 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 Ikke med: Danmarks DMI og Norges Frost (MET) kræver nøgle; Energi Data Service og data.norge.no mangler CORS; opingogn.is
 har ikke længere et søge-API. Kilder uden CORS kan ikke nås direkte fra browseren; de kræver en egen proxy, se nedenfor.
 
+Geodatakilder (familien `geodata` med `kind` `wfs`, `ogcapi` eller `arcgis`) leveres uden endepunkter: lagene læses fra
+tjenesten, når kilden åbnes, og gemmes i din kopi af konfigurationen. Forudindstillede: SCB åbne geodata, SGU, Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrative enheder, ejendomskort),
+Statistikcentralen, SYKE (ArcGIS) og, med nøgle, Lantmäteriets geodataplatform (lokalplaner). Kilden *Geodataportalen (sök
+geodata)* (familien `geoportal`, svarformatet `geonetwork`) søger i det svenske nationale katalog. Se
+[kallor.md](kallor.md#åbne-geodata).
+
 ## Sådan gør du
 
 1. Åbn tilstanden **Hent**, og vælg en kilde under **Åbne API'er** i objektpanelet. Landeknapperne over listen begrænser

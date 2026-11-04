@@ -103,6 +103,36 @@ and shared without them. The response formats `graphql`, `sparql` and `influx-cs
 object into columns) are described in [api-konfiguration.md](api-konfiguration.md) and can be used in your own
 configurations.
 
+## Open geodata
+
+The button **Add geodata source** under *Databases* in Acquire makes an ordinary API source of the address of a geodata
+service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
+generic one where you name the layer yourself. The answers are GeoJSON in WGS 84: the dataset gets a geometry column
+and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a
+layer, limit by an area (bbox) when you can, and fetch. The preview shows the answer as a small map above the table,
+and *Open as map* takes you to the saved dataset.
+
+| Family | Discovery | Fetching | Key |
+|---|---|---|---|
+| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature with `outputFormat=application/json` and `srsName=EPSG:4326`; area (bbox), CQL filter, columns; pages with `startIndex`/`count` | Bearer (optional) |
+| OGC API Features | `/collections` | `/collections/{id}/items` with bbox, datetime and filter; next links are followed | Bearer (optional; required by Lantmäteriet's geodata platform) |
+| ArcGIS REST (FeatureServer, MapServer) | The service description or a whole directory | `/{layer}/query` with where, area, `f=geojson` and `outSR=4326`; pages with `resultOffset` | Token (optional) |
+
+Preset geodata sources without a key (CORS verified): SCB open geodata, SGU, the Swedish Agency for Marine and Water
+Management, the National Heritage Board's ancient remains, the Swedish Forest Agency, Kartverket's administrative units
+and cadastral map (Norway), Statistics Finland and SYKE (Finland). The layers are read from the service the first time
+the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
+geodata platform (detailed plans) is a level 2 source with a Bearer key from a connected organisation.
+
+**Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
+The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,
+organisation, abstract and services: a WFS, OGC API or ArcGIS service is added as a geodata source with one click and
+opened at once, a WMS address is copied for use as a background map or WMS layer in a map view, and download files and
+metadata open in a new tab. The hit list can also be fetched as a table under the *Endpoints* tab.
+
+Geodata services often answer with many features: limit by an area or a filter, and raise *Maximum pages* under *More
+options* only when needed. Your own service must allow requests from the browser (CORS) just like the database sources;
+most agencies' GeoServer and ArcGIS Server do.
 ## Linked files
 
 In Chrome and Edge, Import has the button **Link a file on this computer**. The file is chosen with the computer's

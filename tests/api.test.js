@@ -54,7 +54,7 @@
     const semantic = schema.validate({ format: 'dataspatium-api/1', id: 'ok-id', name: 'X', baseUrl: 'https://x', auth: { type: 'apiKey' }, endpoints: [{ id: 'a', name: 'A', pagination: { type: 'page' } }, { id: 'a', name: 'B' }] });
     assert.ok(semantic.some((e) => e.includes('auth.name')) && semantic.some((e) => e.includes('pagination.param')) && semantic.some((e) => e.includes('flera gånger')), semantic.join(' | '));
     const level2 = presets.filter((p) => p.level === 2).map((p) => p.id).sort();
-    assert.deepEqual(level2, ['boverket-energideklarationer', 'lantmateriet-direkt']);
+    assert.deepEqual(level2, ['boverket-energideklarationer', 'lantmateriet-direkt', 'lantmateriet-ngp-detaljplan']);
     return presets.length + ' presets';
   });
 

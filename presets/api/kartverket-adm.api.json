@@ -1,0 +1,51 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "kartverket-adm",
+  "name": "Kartverket administrative enheter (WFS)",
+  "publisher": "Kartverket",
+  "description": "Fylken och kommuner i Norge från Kartverket (Geonorge) som geodata. Välj lager och hämta objekten med geometri.",
+  "docs": "https://kartkatalog.geonorge.no/metadata/administrative-enheter-kommuner/041f1e6e-bdbc-4091-b48f-8a5990f3cc5b",
+  "license": {
+    "name": "NLOD 2.0",
+    "url": "https://data.norge.no/nlod/no/2.0"
+  },
+  "level": 1,
+  "country": "NO",
+  "baseUrl": "https://wfs.geonorge.no/skwms1/wfs.administrative_enheter",
+  "auth": {
+    "type": "none"
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "wfs"
+  },
+  "endpoints": [],
+  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
+  "i18n": {
+    "en": {
+      "name": "Norwegian Mapping Authority administrative units (WFS)",
+      "description": "Counties and municipalities of Norway from Kartverket (Geonorge). Choose a layer and fetch the features with geometry.",
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
+    },
+    "da": {
+      "name": "Kartverket administrative enheder (WFS)",
+      "description": "Fylker og kommuner i Norge fra Kartverket (Geonorge) som geodata. Vælg et lag og hent objekterne med geometri.",
+      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort."
+    },
+    "nb": {
+      "name": "Kartverket administrative enheter (WFS)",
+      "description": "Fylker og kommuner i Norge fra Kartverket (Geonorge) som geodata. Velg lag og hent objektene med geometri.",
+      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart."
+    },
+    "fi": {
+      "name": "Kartverket hallinnolliset yksiköt (WFS)",
+      "description": "Norjan fylket ja kunnat Kartverketiltä (Geonorge) paikkatietona. Valitse taso ja nouda kohteet geometrioineen.",
+      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina."
+    },
+    "is": {
+      "name": "Stjórnsýslueiningar Kartverket (WFS)",
+      "description": "Fylki og sveitarfélög í Noregi frá Kartverket (Geonorge) sem landupplýsingar. Veldu lag og sæktu fitjurnar með rúmfræði.",
+      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort."
+    }
+  }
+}

@@ -13,7 +13,8 @@
   const D = globalThis.Dataspatium;
   D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent'], (theme, vizExport, vizData, datasets, geo, boundaries, consent) => {
     const VENDOR = 'vendor/leaflet/';
-    const BASEMAPS = ['none', 'osm', 'custom'];
+    const BASEMAPS = ['none', 'osm', 'custom', 'wms'];
+    const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
     const OSM = { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attributionKey: 'map.attribution.osm', maxZoom: 19 };
     const DEFAULT_VIEW = { center: [62, 15], zoom: 4 };
     const MAX_ROWS = 50000;
@@ -90,10 +91,20 @@
       const tk = theme.tokens();
       return { id: newId(), kind: 'boundary', boundary: id, name: D.t(def.key), style: { color: tk.muted, weight: 1, fillOpacity: 0.04, opacity: 0.8, radius: 4 }, colorBy: { column: null, mode: 'none' }, label: 'namn', popup: ['namn', 'kod'], visible: true };
     }
+    /**
+     * An overlay of images from a WMS service (OGC Web Map Service), drawn under the features after consent
+     * "basemaps". It has no features: nothing to click, no legend, and it is left out of SVG/PNG/PDF export.
+     * @param {{url: string, layers?: string, format?: string, transparent?: boolean, attribution?: string}} wms @param {string} [name]
+     */
+    function wmsLayer(wms, name) {
+      const w = Object.assign({}, WMS_DEFAULTS, { transparent: true }, wms || {});
+      w.url = wmsUrl(w.url);
+      return { id: newId(), kind: 'wms', name: name || w.layers || 'WMS', wms: w, style: { opacity: 0.8 }, visible: true };
+    }
     /** Default map definition for a dataset: its one layer, no background map, fit to the layers. */
     function defaultMap(columns, dataset) {
       const layer = dataset ? layerFor(columns, dataset, 0) : null;
-      return { layers: layer ? [layer] : [], basemap: 'none', custom: { url: '', attribution: '' }, view: null, legend: true, height: 480 };
+      return { layers: layer ? [layer] : [], basemap: 'none', custom: { url: '', attribution: '' }, wms: Object.assign({}, WMS_DEFAULTS), view: null, legend: true, height: 480 };
     }
 
     // ---- colours -------------------------------------------------------------------------------------------
@@ -182,7 +193,7 @@
       const def = chart.map || {};
       const out = []; let rows = 0;
       for (const layer of def.layers || []) {
-        if (layer.visible === false) continue;
+        if (layer.visible === false || layer.kind === 'wms') continue;
         const data = await featuresOf(layer, options);
         const st = styling(layer, data.features);
         out.push({ layer, features: data.features, styleOf: st.styleOf, legend: st.legend, truncated: data.truncated, total: data.total });
@@ -192,13 +203,35 @@
     }
 
     // ---- tiles ---------------------------------------------------------------------------------------------
-    /** Tile source of a definition, or null: OSM or the user's own XYZ template (consent "basemaps" in both cases). */
+    /** Tile source of a definition, or null: OSM, the user's own XYZ template or a WMS (consent "basemaps" in every case). */
     function tileSource(def) {
       if (!def || def.basemap === 'osm') return { url: OSM.url, attribution: D.t(OSM.attributionKey), maxZoom: OSM.maxZoom };
       if (def.basemap === 'custom' && def.custom && /^https?:\/\/.+\{x\}.*\{y\}|\{y\}.*\{x\}/i.test(def.custom.url || '')) return { url: def.custom.url, attribution: def.custom.attribution || '', maxZoom: 19 };
+      if (def.basemap === 'wms') return wmsSource(def.wms);
       return null;
     }
+    /** A WMS address without request parameters (capabilities links are often pasted whole); other parameters stay. */
+    function wmsUrl(input) {
+      const s = String(input || '').trim();
+      try {
+        const u = new URL(s);
+        for (const k of Array.from(u.searchParams.keys())) if (/^(service|request|version|layers|styles|format|transparent|crs|srs|bbox|width|height)$/i.test(k)) u.searchParams.delete(k);
+        u.hash = '';
+        return u.toString().replace(/\?$/, '');
+      } catch (_e) { return s; }
+    }
+    /**
+     * Tile parameters of a WMS definition {url, layers, format, transparent, version, attribution}, or null when the
+     * address or the layer list is missing. The result's `wms` holds the GetMap parameters for L.tileLayer.wms.
+     */
+    function wmsSource(w) {
+      if (!w || !/^(https?|dataspatium-asset):\/\//i.test(String(w.url || '')) || !String(w.layers || '').trim()) return null;
+      return { url: wmsUrl(w.url), attribution: w.attribution || '', maxZoom: 19, wms: { layers: String(w.layers).trim(), format: w.format || 'image/png', transparent: !!w.transparent, version: w.version || '1.3.0' } };
+    }
     const hostOf = (url) => { try { return new URL(String(url).replace(/\{[sxyzr-]+\}/g, '0')).host; } catch (_e) { return String(url); } };
+    /** Leaflet's tile layer, or its WMS layer when the options carry WMS parameters (the shape the test factories get). */
+    const defaultFactory = (url, opts) => (opts.layers ? globalThis.L.tileLayer.wms(url, opts) : globalThis.L.tileLayer(url, opts));
+    const tileOptions = (src, extra) => Object.assign({ attribution: src.attribution, maxZoom: src.maxZoom || 19 }, src.wms || {}, extra || {});
     /** The tile layer after consent, or null when there is none or consent was refused (info.basemapDenied is set). */
     async function tileLayer(def, options, info) {
       if (!def || !def.basemap || def.basemap === 'none' || options.noTiles) return null;
@@ -208,8 +241,46 @@
         if (err && err.name === 'ConsentError') { info.basemapDenied = true; return null; }
         throw err;
       }
-      const factory = options.tileFactory || ((url, opts) => globalThis.L.tileLayer(url, opts));
-      return factory(src.url, { attribution: src.attribution, maxZoom: src.maxZoom || 19 });
+      const factory = options.tileFactory || defaultFactory;
+      return factory(src.url, tileOptions(src));
+    }
+    /** The visible WMS overlay layers of a definition as tile layers, after consent for each (refusals set info.basemapDenied). */
+    async function overlayLayers(def, options, info) {
+      const out = [];
+      if (!def || options.noTiles) return out;
+      for (const layer of def.layers || []) {
+        if (layer.kind !== 'wms' || layer.visible === false) continue;
+        const src = wmsSource(layer.wms);
+        if (!src) continue;
+        try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url }); } catch (err) {
+          if (err && err.name === 'ConsentError') { info.basemapDenied = true; continue; }
+          throw err;
+        }
+        const factory = options.tileFactory || defaultFactory;
+        out.push({ layer, tiles: factory(src.url, tileOptions(src, { opacity: layer.style && layer.style.opacity !== undefined ? layer.style.opacity : 0.8 })) });
+      }
+      return out;
+    }
+    /**
+     * The named layers of a WMS service from its capabilities, after consent "basemaps": [{id, name, abstract}].
+     * @param {string} url the service address (a GetCapabilities link works too)
+     */
+    async function wmsLayers(url) {
+      const base = wmsUrl(url);
+      if (!/^(https?|dataspatium-asset):\/\//i.test(base)) throw new Error(D.t('families.err.url', { field: D.t('map.wms.url') }));
+      await consent.require('basemaps', { host: hostOf(base), url: base });
+      const res = await globalThis.fetch(base + (base.includes('?') ? '&' : '?') + 'service=WMS&request=GetCapabilities', { headers: { Accept: 'application/xml, text/xml, */*;q=0.5' } });
+      if (!res.ok) throw new Error(D.t('geodata.err.http', { status: res.status }));
+      const doc = new DOMParser().parseFromString(await res.text(), 'application/xml');
+      if (doc.getElementsByTagName('parsererror').length) throw new Error(D.t('import.err.notxml'));
+      const kid = (el, name) => { const k = Array.from(el.children).find((c) => c.localName === name); return k ? String(k.textContent || '').trim() : ''; };
+      const out = [];
+      for (const el of Array.from(doc.getElementsByTagNameNS('*', 'Layer'))) {
+        const id = kid(el, 'Name');
+        if (id) out.push({ id, name: kid(el, 'Title') || id, abstract: kid(el, 'Abstract') });
+      }
+      if (!out.length) throw new Error(D.t('geodata.err.nolayers'));
+      return out;
     }
 
     // ---- live map -----------------------------------------------------------------------------------------
@@ -229,6 +300,9 @@
       const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false };
       const tiles = await tileLayer(def, options, info);
       if (tiles) tiles.addTo(map);
+      // WMS overlays live in the tile pane: under every feature, whatever their place in the layer list.
+      const overlays = await overlayLayers(def, options, info);
+      for (const o of overlays) o.tiles.addTo(map);
       const groups = [];
       for (const item of prepared.layers) {
         const group = L.geoJSON({ type: 'FeatureCollection', features: item.features }, {
@@ -252,7 +326,7 @@
       fit();
       const legend = prepared.layers.filter((l) => l.layer.visible !== false).map((l) => ({ name: l.layer.name, entries: l.legend }));
       return {
-        kind: 'map', map, groups, legend, info,
+        kind: 'map', map, groups, legend, info, overlays,
         fit, refresh: () => map.invalidateSize(),
         view: () => ({ center: [round(map.getCenter().lat), round(map.getCenter().lng)], zoom: map.getZoom() }),
         svg: async () => drawSvg(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480 }),
@@ -406,15 +480,47 @@
         features: item.features.map((f) => { const s = item.styleOf(f.properties || {}); const label = item.layer.label ? (f.properties || {})[item.layer.label] : null; return { type: 'Feature', geometry: f.geometry, properties: { __style: { color: s.color, fillColor: s.fillColor, weight: s.weight, opacity: s.opacity, fillOpacity: s.fillOpacity, radius: s.radius }, __label: label === null || label === undefined ? '' : String(label) } }; }),
       }));
       const src = def.basemap && def.basemap !== 'none' ? tileSource(def) : null;
+      const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
+      const overlays = (def.layers || []).filter((l) => l.kind === 'wms' && l.visible !== false).map((l) => ({ src: wmsSource(l.wms), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
       const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
       const view = def.view && def.view.center && def.view.zoom ? `m.setView(${json(def.view.center)}, ${json(def.view.zoom)});` : `if (b) m.fitBounds(b, {padding: [16, 16], maxZoom: 14}); else m.setView(${json(DEFAULT_VIEW.center)}, ${DEFAULT_VIEW.zoom});`;
       return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`
-        + `<script>(function(){var m=L.map(${json(id)},{preferCanvas:true});${src ? `L.tileLayer(${json(src.url)},{attribution:${json(src.attribution)},maxZoom:${json(src.maxZoom || 19)}}).addTo(m);` : ''}`
+        + `<script>(function(){var m=L.map(${json(id)},{preferCanvas:true});${src ? tileJs(src) : ''}${overlays.map((o) => tileJs(o.src, { opacity: o.opacity })).join('')}`
         + `var data=${json(data)};var b=null;data.forEach(function(fc){var g=L.geoJSON(fc,{style:function(f){return f.properties.__style},pointToLayer:function(f,ll){return L.circleMarker(ll,f.properties.__style)},onEachFeature:function(f,l){if(f.properties.__label)l.bindTooltip(f.properties.__label,{sticky:true})}}).addTo(m);var bb=g.getBounds();if(bb.isValid())b=b?b.extend(bb):bb});${view}})();</script>`;
     }
     /** CSS for maps in standalone HTML (the library's stylesheet is inlined separately). */
     function htmlCss() {
       return '.dm-map{width:100%;border-radius:6px;overflow:hidden}.dm-map-wrap{position:relative}.dm-map-legend{position:absolute;right:12px;top:12px;z-index:800;background:rgba(255,255,255,.92);padding:6px 10px;border-radius:4px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.2)}.dm-map-legend div{display:flex;align-items:center;gap:6px;line-height:18px}.dm-map-legend span{display:inline-block;width:12px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.2)}';
+    }
+
+    /**
+     * SVG of an in-memory table (rows as arrays, as api/runner returns them) with a geometry or coordinate column, for
+     * previews before the table is saved; null when the table has no geometry. No tiles, no legend.
+     * @param {{columns: string[], rows: any[][], types?: Record<string, string>}} table
+     * @param {{width?: number, height?: number, limit?: number}} [size]
+     */
+    function tableSvg(table, size = {}) {
+      if (!table || !Array.isArray(table.columns) || !Array.isArray(table.rows) || !table.rows.length) return null;
+      const sample = table.rows[0];
+      const columns = table.columns.map((name, i) => ({ name, type: (table.types && table.types[name]) || (typeof sample[i] === 'number' ? 'number' : 'text') }));
+      const geometry = geometryColumn(columns);
+      const coords = geometry ? null : coordinateColumns(columns);
+      if (!geometry && !coords) return null;
+      const gi = geometry ? table.columns.indexOf(geometry) : -1;
+      const li = coords ? table.columns.indexOf(coords.lon) : -1; const ai = coords ? table.columns.indexOf(coords.lat) : -1;
+      const features = [];
+      for (const row of table.rows.slice(0, size.limit || 5000)) {
+        let g = null;
+        if (gi >= 0) g = geo.parseGeometry(row[gi]);
+        else if (typeof row[li] === 'number' && typeof row[ai] === 'number') g = { type: 'Point', coordinates: [row[li], row[ai]] };
+        if (g && g.type) features.push({ type: 'Feature', geometry: g, properties: {} });
+      }
+      if (!features.length) return null;
+      if (geo.isProjected(features.map((f) => f.geometry))) for (const f of features) f.geometry = geo.toWgs84(f.geometry);
+      const layer = { name: '', style: { color: theme.tokens().palette[0], weight: 1, fillOpacity: 0.4, opacity: 0.9, radius: 3 }, colorBy: { mode: 'none' } };
+      const st = styling(layer, features);
+      const prepared = { layers: [{ layer, features, styleOf: st.styleOf, legend: [], truncated: false, total: features.length }], rows: features.length, bounds: geo.bounds(features.map((f) => f.geometry)) };
+      return drawSvg(prepared, { legend: false }, { width: size.width || 640, height: size.height || 300 });
     }
 
     /** True when a table should open as a map by default: a geometry column, or columns clearly named longitude and latitude. */
@@ -424,6 +530,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, layerFor, boundaryLayer, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

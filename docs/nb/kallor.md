@@ -103,6 +103,36 @@ Nøkler og passord blir i økten eller lagres kryptert; konfigurasjonen som oppr
 uten dem. Svarformatene `graphql`, `sparql` og `influx-csv` samt `lift` (løfte et nestet objekt opp til kolonner)
 er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan brukes i egne konfigurasjoner.
 
+## Åpne geodata
+
+Knappen **Legg til geodatakilde** under *Databaser* i Hent inn gjør en vanlig API-kilde av adressen til en geodatatjeneste,
+på samme måte som databasekildene. Appen leser tjenestens lag og legger et endepunkt per lag pluss et allment der du
+oppgir laget selv. Svarene er GeoJSON i WGS 84: datasettet får en geometrikolonne og åpnes som kart i Bearbeid (se
+[kartor.md](kartor.md)). Kilden viser lagene som en liste som kan filtreres; velg et lag, begrens gjerne med et område
+(bbox) og hent. Forhåndsvisningen viser svaret som et lite kart over tabellen, og *Åpne som kart* tar deg til det lagrede
+datasettet.
+
+| Familie | Oppdagelse | Henting | Nøkkel |
+|---|---|---|---|
+| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature med `outputFormat=application/json` og `srsName=EPSG:4326`; område (bbox), CQL-filter, kolonner; sider med `startIndex`/`count` | Bearer (valgfritt) |
+| OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime og filter; next-lenker følges | Bearer (valgfritt; kreves av Lantmäteriets geodataplattform) |
+| ArcGIS REST (FeatureServer, MapServer) | Tjenestens beskrivelse eller hele katalogen | `/{lag}/query` med where, område, `f=geojson` og `outSR=4326`; sider med `resultOffset` | Token (valgfritt) |
+
+Forhåndsinnstilte geodatakilder uten nøkkel (CORS verifisert): SCB åpne geodata, SGU, Havs- och vattenmyndigheten,
+Riksantikvarieämbetets kulturminner, Skogsstyrelsen, Kartverkets administrative enheter og eiendomskart (Norge) samt
+Statistikcentralen og SYKE (Finland). Lagene leses fra tjenesten første gang kilden åpnes og kan leses på nytt med *Les
+lagene på nytt*; listen lagres i din kopi av kilden. Lantmäteriets geodataplattform (reguleringsplaner) finnes som nivå 2
+med Bearer-nøkkel fra en tilknyttet organisasjon.
+
+**Geodataportalen** (geodata.se) er Sveriges nasjonale katalog over etaters, regioners og kommuners geodata. Kilden
+*Geodataportalen (sök geodata)* søker i katalogen og viser en post per treff med tittel, organisasjon, beskrivelse og
+tjenester: en WFS-, OGC API- eller ArcGIS-tjeneste legges til som geodatakilde med ett klikk og åpnes straks, en
+WMS-adresse kopieres for bruk som bakgrunnskart eller WMS-lag i en kartvisning, og nedlastingsfiler og metadata åpnes i
+en ny fane. Trefflisten kan også hentes som tabell under fanen *Endepunkter*.
+
+Geodatatjenester svarer ofte med mange objekter: begrens med et område eller et filter, og hev *Høyeste antall sider*
+under *Flere valg* bare når det trengs. En egen tjeneste må tillate kall fra nettleseren (CORS) på samme måte som
+databasekildene; de fleste etaters GeoServer og ArcGIS Server gjør det.
 ## Lenkede filer
 
 I Chrome og Edge finnes knappen **Lenk en fil på datamaskinen** i Hent inn. Filen velges med datamaskinens

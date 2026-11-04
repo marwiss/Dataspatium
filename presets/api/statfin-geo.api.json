@@ -1,0 +1,51 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "statfin-geo",
+  "name": "Statistikcentralen geodata (WFS)",
+  "publisher": "Statistikcentralen",
+  "description": "Statistikområden från Statistikcentralen som geodata: kommuner, landskap, postnummerområden, rutnät med befolkning med mera. Välj lager och hämta objekten med geometri.",
+  "docs": "https://www.stat.fi/org/avoindata/paikkatietoaineistot_sv.html",
+  "license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "level": 1,
+  "country": "FI",
+  "baseUrl": "https://geo.stat.fi/geoserver/wfs",
+  "auth": {
+    "type": "none"
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "wfs"
+  },
+  "endpoints": [],
+  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
+  "i18n": {
+    "en": {
+      "name": "Statistics Finland geodata (WFS)",
+      "description": "Statistical areas from Statistics Finland as geodata: municipalities, regions, postal code areas, population grids and more. Choose a layer and fetch the features with geometry.",
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
+    },
+    "da": {
+      "name": "Statistikcentralen geodata (WFS)",
+      "description": "Statistiske områder fra Statistikcentralen som geodata: kommuner, landskaber, postnummerområder, befolkningsgitre med mere. Vælg et lag og hent objekterne med geometri.",
+      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort."
+    },
+    "nb": {
+      "name": "Statistikcentralen geodata (WFS)",
+      "description": "Statistiske områder fra Statistikcentralen som geodata: kommuner, landskap, postnummerområder, befolkningsrutenett med mer. Velg lag og hent objektene med geometri.",
+      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart."
+    },
+    "fi": {
+      "name": "Tilastokeskus paikkatieto (WFS)",
+      "description": "Tilastoalueet Tilastokeskukselta paikkatietona: kunnat, maakunnat, postinumeroalueet, väestöruudukot ja muuta. Valitse taso ja nouda kohteet geometrioineen.",
+      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina."
+    },
+    "is": {
+      "name": "Landupplýsingar Hagstofu Finnlands (WFS)",
+      "description": "Hagskýrslusvæði frá Hagstofu Finnlands sem landupplýsingar: sveitarfélög, landshlutar, póstnúmerasvæði, mannfjöldareitir og fleira. Veldu lag og sæktu fitjurnar með rúmfræði.",
+      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort."
+    }
+  }
+}

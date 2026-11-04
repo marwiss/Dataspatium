@@ -162,6 +162,7 @@
     'src/api/families/statbank.js',
     'src/api/families/fhi.js',
     'src/api/families/databases.js',
+    'src/api/families/geodata.js',
     'src/api/runner.js',
     'src/api/bridge.js',
     // Visualisation
@@ -217,6 +218,8 @@
     'src/ui/api/endpoint-form.js',
     'src/ui/api/pxweb-view.js',
     'src/ui/api/sos-view.js',
+    'src/ui/api/geodata-view.js',
+    'src/ui/api/geoportal-view.js',
     'src/ui/api/api-view.js',
     'src/ui/api/bridge-view.js',
     'src/ui/api/family-dialog.js',

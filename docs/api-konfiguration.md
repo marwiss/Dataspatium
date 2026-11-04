@@ -65,6 +65,13 @@ Inte med: Danmarks DMI och Norges Frost (MET) kräver nyckel; Energi Data Servic
 CORS; opingogn.is har inget sök-API längre. Egna konfigurationer för sådana tjänster kan läggas till med en
 proxy eller nyckel enligt nedan.
 
+Geodatakällor (familjen `geodata` med `kind` `wfs`, `ogcapi` eller `arcgis`) levereras utan ändpunkter: lagren läses från
+tjänsten när källan öppnas och sparas i din kopia av konfigurationen. Förinställda: SCB öppna geodata, SGU, Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (administrativa enheter, fastighetskarta),
+Statistikcentralen, SYKE (ArcGIS) och, med nyckel, Lantmäteriets geodataplattform (detaljplaner). Källan *Geodataportalen
+(sök geodata)* (familjen `geoportal`, svarsformatet `geonetwork`) söker i den nationella katalogen. Se
+[kallor.md](kallor.md#öppna-geodata).
+
 ## Så här gör du
 
 1. Öppna läget **Inhämta** och välj en källa under **Öppna API:er** i objektpanelen. Landsknapparna ovanför

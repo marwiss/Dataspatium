@@ -49,6 +49,12 @@ og i Chrome og Edge kan en fil linkes, så datasættet indlæses igen fra disken
 
 QGIS-projekter (.qgs, .qgz) bliver kortvisninger: lagrækkefølge, synlighed og symboler følger med, lagene kobles til datasæt med samme filnavn, og datafiler, der slippes sammen med projektet, importeres først (se [kartor.md](kartor.md)).
 
+Under *Databaser* findes også *Tilføj geodatakilde*: en WFS-, OGC API Features- eller ArcGIS-tjeneste bliver en kilde, hvis
+lag hentes som GeoJSON og åbnes som kort, og kilden *Geodataportalen (sök geodata)* søger i det svenske nationale
+geodatakatalog og tilføjer tjenester med ét klik. Forudindstillede geodatakilder findes for SCB, SGU, Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE samt Lantmäteriets
+geodataplatform for den, der har en nøgle. Se [kallor.md](kallor.md#åbne-geodata).
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;

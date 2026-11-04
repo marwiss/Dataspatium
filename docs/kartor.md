@@ -16,6 +16,10 @@ hämtas från nätet förrän du väljer en bakgrundskarta och ger ditt samtycke
 Datamängder med en geometrikolumn eller kolumner som heter longitud och latitud öppnas som karta direkt; för andra
 koordinatkolumner (till exempel `x` och `y`) väljer du *Visa som karta* i tabellens verktygsrad.
 
+Geodata kan också hämtas direkt från öppna tjänster: *Lägg till geodatakälla* i Inhämta gör en källa av en WFS-, OGC API
+Features- eller ArcGIS-tjänst, och källan *Geodataportalen* söker fram tjänster i den nationella katalogen. Svaren får en
+geometrikolumn och öppnas som karta. Se [kallor.md](kallor.md#öppna-geodata).
+
 ## Kartan i Bearbeta
 
 Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra, och klicka
@@ -32,10 +36,12 @@ inte (gränsen kan höjas per lager i kartvyn).
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:
 
 - **Bakgrundskarta**: ingen (standard), OpenStreetMap, eller en egen kartserver med en adressmall som
-  `https://…/{z}/{x}/{y}.png` och källtext. Bakgrundskartor hämtas från nätet och frågar efter samtycke första
+  `https://…/{z}/{x}/{y}.png` och källtext, eller en **WMS-tjänst** (adress, lager, bildformat och genomskinlighet; *Läs lager* hämtar tjänstens
+  lagerlista). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
   gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst).
 - **Lager**: lägg till fler datamängder eller de medföljande gränserna (län och kommuner i Sverige, Danmark, Norge och
-  Finland). Varje lager har namn, synlighet, ordning, färg, fyllning, linjebredd och punktstorlek, geometri- eller
+  Finland) eller ett **WMS-lager** (bilder från en karttjänst som ritas under objekten med valbar genomskinlighet; det har
+  ingen teckenförklaring och följer inte med i export till SVG, PNG och PDF). Varje lager har namn, synlighet, ordning, färg, fyllning, linjebredd och punktstorlek, geometri- eller
   koordinatkolumner, färg efter kolumn (kategorier med appens palett eller klasser med en sekventiell skala, antal
   klasser), etikett (visas när pekaren vilar på objektet) och högsta antal objekt.
 - **Vy**: *Spara aktuell vy* låser kartans mitt och zoom; annars anpassas kartan till lagren. Teckenförklaring och
@@ -76,6 +82,6 @@ Rasterlager, etiketter, effekter och regelbaserade symboler utöver den första 
 
 - Bakgrundskartor och publicerad HTML med bakgrundskarta kräver nät; appen själv gör inga anrop utan samtycke.
 - Projektioner: WGS 84 och SWEREF 99 TM. Andra referenssystem måste räknas om före import (till exempel i QGIS).
-- Exporten ritar lagren, inte bakgrundskartan.
+- Exporten ritar lagren, inte bakgrundskartan eller WMS-lager.
 - Buffertar och överlagringar är planära beräkningar på WGS 84-koordinater via Turf; för kilometerskala i Norden är
   felet litet, för mycket stora ytor märkbart.

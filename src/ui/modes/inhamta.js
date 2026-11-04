@@ -81,7 +81,9 @@
           h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }),
           h('h4', { text: t('bridge.sources') }),
           h('div', { class: 'dm-list' }, sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint'))),
-          h('div', { class: 'dm-row' }, ui.button({ label: t('families.add.source'), icon: 'plus', size: 'sm', onClick: addFamily })),
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('families.add.source'), icon: 'plus', size: 'sm', onClick: () => addFamily() }),
+            ui.button({ label: t('geodata.add.source'), icon: 'map', size: 'sm', title: t('geodata.add.hint'), onClick: () => addFamily('geodata') })),
           h('p', { class: 'dm-help dm-xs', text: t('families.hint') }));
       }
 
@@ -199,16 +201,22 @@
           apiUi = apiView.create(ctx, connector, {
             onDataset: () => {},
             onRemoved: () => { apiUi = null; apiId = null; source = 'file'; reloadConnectors().then(render); },
+            // A geodata source added from a catalogue search opens in place of the search.
+            onConnector: (c) => openConnector(c),
           });
           apiUi.start();
         }
         replace(slots.center, apiUi.el);
       }
 
-      /** A connector for a database family (PostgREST, OData, ...) from an address and a key; it opens when created. */
-      async function addFamily() {
-        const connector = await familyDialog.open(ctx);
+      /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
+      async function addFamily(group) {
+        const connector = await familyDialog.open(ctx, group ? { group } : {});
         if (!connector) return;
+        await openConnector(connector);
+      }
+      /** Show a connector that was just created or added. */
+      async function openConnector(connector) {
         await reloadConnectors();
         source = 'api:' + connector.id;
         render();

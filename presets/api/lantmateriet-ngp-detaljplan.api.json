@@ -1,0 +1,48 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "lantmateriet-ngp-detaljplan",
+  "name": "Lantmäteriet geodataplattformen: detaljplaner (OGC API Features)",
+  "publisher": "Lantmäteriet",
+  "description": "Digitala detaljplaner från den nationella geodataplattformen (NGP): planområden och planbestämmelser enligt den nationella specifikationen. Kräver API-nyckel från en organisation som är ansluten till plattformen; nyckeln sparas aldrig i klartext.",
+  "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+  "level": 2,
+  "country": "SE",
+  "baseUrl": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/detaljplan/v2",
+  "auth": {
+    "type": "bearer",
+    "help": "API-nyckeln från anslutningen till Nationella geodataplattformen skickas som Bearer-token."
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "ogcapi"
+  },
+  "endpoints": [],
+  "notes": "Samlingarna hämtas från tjänsten när källan öppnas. CORS tillåter anrop från file://; utan nyckel svarar tjänsten 401.",
+  "i18n": {
+    "en": {
+      "name": "Lantmäteriet national geodata platform: detailed plans (OGC API Features)",
+      "description": "Digital detailed development plans from the national geodata platform (NGP): plan areas and provisions according to the national specification. Requires an API key from an organisation connected to the platform; the key is never stored in clear text.",
+      "notes": "The collections are read from the service when the source is opened. CORS allows file://; without a key the service answers 401."
+    },
+    "da": {
+      "name": "Lantmäteriet geodataplatformen: lokalplaner (OGC API Features)",
+      "description": "Digitale lokalplaner fra den nationale geodataplatform (NGP): planområder og planbestemmelser efter den nationale specifikation. Kræver API-nøgle fra en organisation, der er tilsluttet platformen; nøglen gemmes aldrig i klartekst.",
+      "notes": "Samlingerne hentes fra tjenesten, når kilden åbnes. CORS tillader kald fra file://; uden nøgle svarer tjenesten 401."
+    },
+    "nb": {
+      "name": "Lantmäteriet geodataplattformen: reguleringsplaner (OGC API Features)",
+      "description": "Digitale reguleringsplaner fra den nasjonale geodataplattformen (NGP): planområder og planbestemmelser etter den nasjonale spesifikasjonen. Krever API-nøkkel fra en organisasjon som er tilknyttet plattformen; nøkkelen lagres aldri i klartekst.",
+      "notes": "Samlingene hentes fra tjenesten når kilden åpnes. CORS tillater kall fra file://; uten nøkkel svarer tjenesten 401."
+    },
+    "fi": {
+      "name": "Lantmäteriet paikkatietoalusta: asemakaavat (OGC API Features)",
+      "description": "Digitaaliset asemakaavat kansallisesta paikkatietoalustasta (NGP): kaava-alueet ja kaavamääräykset kansallisen määrittelyn mukaan. Vaatii API-avaimen alustaan liittyneeltä organisaatiolta; avainta ei koskaan tallenneta selväkielisenä.",
+      "notes": "Kokoelmat noudetaan palvelusta, kun lähde avataan. CORS sallii kutsut file://-sivuilta; ilman avainta palvelu vastaa 401."
+    },
+    "is": {
+      "name": "Landupplýsingavettvangur Lantmäteriet: deiliskipulag (OGC API Features)",
+      "description": "Stafrænt deiliskipulag af landsvettvangi landupplýsinga (NGP): skipulagssvæði og skipulagsákvæði samkvæmt landsforskriftinni. Krefst API-lykils frá stofnun sem er tengd vettvanginum; lykillinn er aldrei vistaður í hreinum texta.",
+      "notes": "Söfnin eru sótt úr þjónustunni þegar uppsprettan er opnuð. CORS leyfir köll frá file://; án lykils svarar þjónustan 401."
+    }
+  }
+}

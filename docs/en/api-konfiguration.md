@@ -64,6 +64,13 @@ opingogn.is no longer has a search API. Sources without CORS, for example the Ri
 reached directly from the browser; they need your own proxy, see below. The Swedish Civil Defence and Resilience
 Agency (MCF, formerly MSB) has no documented open API; its statistics are imported as files.
 
+Geodata sources (the family `geodata` with `kind` `wfs`, `ogcapi` or `arcgis`) ship without endpoints: the layers are read
+from the service when the source is opened and kept in your copy of the configuration. Presets: SCB open geodata, SGU, the
+Agency for Marine and Water Management, the National Heritage Board, the Forest Agency (ArcGIS), Kartverket (administrative
+units, cadastral map), Statistics Finland, SYKE (ArcGIS) and, with a key, Lantmäteriet's geodata platform (detailed
+plans). The source *Geodataportalen (sök geodata)* (the family `geoportal`, response format `geonetwork`) searches the
+Swedish national catalogue. See [kallor.md](kallor.md#open-geodata).
+
 ## How to do it
 
 1. Open **Import** mode and choose a source under **Open APIs** in the object panel. The country buttons above the

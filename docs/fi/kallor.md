@@ -107,6 +107,36 @@ Avaimet ja salasanat pysyvät istunnossa tai tallentuvat salattuina; luotu mää
 niitä. Vastausmuodot `graphql`, `sparql` ja `influx-csv` sekä `lift` (sisäkkäisen olion nosto sarakkeiksi) on
 kuvattu tiedostossa [api-konfiguration.md](api-konfiguration.md), ja niitä voi käyttää omissa määrityksissä.
 
+## Avoin paikkatieto
+
+Painike **Lisää paikkatietolähde** kohdassa *Tietokannat* Nouda-tilassa tekee tavallisen API-lähteen paikkatietopalvelun
+osoitteesta samalla tavalla kuin tietokantalähteistä. Sovellus lukee palvelun tasot ja tekee päätepisteen tasoa kohden sekä
+yleisen päätepisteen, jossa annat tason itse. Vastaukset ovat GeoJSONia WGS 84:ssä: aineisto saa geometriasarakkeen ja
+avautuu karttana Muokkaa-tilassa (katso [kartor.md](kartor.md)). Lähde näyttää tasot suodatettavana luettelona; valitse
+taso, rajaa mielellään alueella (bbox) ja nouda. Esikatselu näyttää vastauksen pienenä karttana taulukon yläpuolella, ja
+*Avaa karttana* vie tallennettuun aineistoon.
+
+| Perhe | Löytäminen | Nouto | Avain |
+|---|---|---|---|
+| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature parametreilla `outputFormat=application/json` ja `srsName=EPSG:4326`; alue (bbox), CQL-suodatin, sarakkeet; sivut `startIndex`/`count` | Bearer (valinnainen) |
+| OGC API Features | `/collections` | `/collections/{id}/items` parametreilla bbox, datetime ja filter; next-linkit seurataan | Bearer (valinnainen; Lantmäterietin paikkatietoalusta vaatii) |
+| ArcGIS REST (FeatureServer, MapServer) | Palvelun kuvaus tai koko hakemisto | `/{taso}/query` parametreilla where, alue, `f=geojson` ja `outSR=4326`; sivut `resultOffset` | Token (valinnainen) |
+
+Valmiit paikkatietolähteet ilman avainta (CORS tarkistettu): SCB:n avoin paikkatieto, SGU, Havs- och vattenmyndigheten,
+Riksantikvarieämbetetin muinaisjäännökset, Skogsstyrelsen, Kartverketin hallinnolliset yksiköt ja kiinteistökartta (Norja)
+sekä Tilastokeskus ja SYKE (Suomi). Tasot luetaan palvelusta, kun lähde avataan ensimmäisen kerran, ja ne voi lukea
+uudelleen painikkeella *Lue tasot uudelleen*; luettelo tallennetaan omaan kopioosi lähteestä. Lantmäterietin
+paikkatietoalusta (asemakaavat) on tasolla 2 Bearer-avaimella, jonka saa alustaan liittyneeltä organisaatiolta.
+
+**Geodataportalen** (geodata.se) on Ruotsin kansallinen luettelo viranomaisten, alueiden ja kuntien paikkatiedoista. Lähde
+*Geodataportalen (sök geodata)* hakee luettelosta ja näyttää yhden tietueen osumaa kohden: otsikko, organisaatio, kuvaus
+ja palvelut. WFS-, OGC API- tai ArcGIS-palvelu lisätään paikkatietolähteeksi yhdellä napsautuksella ja avataan heti,
+WMS-osoite kopioidaan käytettäväksi taustakarttana tai WMS-tasona karttanäkymässä, ja lataustiedostot ja metatiedot
+avautuvat uuteen välilehteen. Osumaluettelon voi myös noutaa taulukkona välilehdeltä *Päätepisteet*.
+
+Paikkatietopalvelut vastaavat usein suurella kohdemäärällä: rajaa alueella tai suodattimella ja nosta *Sivujen
+enimmäismäärää* kohdassa *Lisää vaihtoehtoja* vain tarvittaessa. Oman palvelun on sallittava kutsut selaimesta (CORS)
+samoin kuin tietokantalähteiden; useimpien viranomaisten GeoServer ja ArcGIS Server sallivat.
 ## Linkitetyt tiedostot
 
 Chromessa ja Edgessä Nouda-tilassa on painike **Linkitä tiedosto tietokoneelta**. Tiedosto valitaan tietokoneen

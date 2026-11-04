@@ -297,7 +297,18 @@ aktuella källa. HTTP-familjerna (`api/families/databases`) bygger vanliga anslu
 `discover` (schemaupptäckt) och `endpoints` per familj, hemligheter till `api/secrets`; de nya svarsformaten
 `graphql`, `sparql` och `influx-csv` samt `lift` finns i `api/parsers`, och `resolvePath` slår upp nycklar med
 punkter hela. `api/websocket` är en generell socket-transport (samtycke, JSON-ramar, svar parade på id) för Neo4j
-i 2.9.
+i Grafer (2.10).
+
+Geodatafamiljerna (`api/families/geodata`: `wfs`, `ogcapi`, `arcgis`) följer samma mönster med `databases.build` och
+`getJson`, men sätter `family: {type: 'geodata', kind}` och id och namn från värd och sökväg (samma tjänst tillagd två
+gånger ersätter sig själv). `discover` läser GetCapabilities, `/collections` respektive tjänstebeskrivningen eller
+katalogen; `endpoints` ger en ändpunkt per lager med svarsformatet `geojson` (WGS 84) och sidor med `startIndex`/`count`,
+`link-rel next` eller `resultOffset`; `refresh(connector)` läser lagren för en sparad källa (förinställningarna levereras
+utan ändpunkter) och sparar användarens kopia. `ui/api/geodata-view` är bläddraren (lagerlista och ett ändpunktsformulär
+per lager; api-view skapar ingen Ändpunkter-flik när `family.type === 'geodata'`), `ui/api/geoportal-view` söker i en
+GeoNetwork-katalog (svarsformatet `geonetwork` i `api/parsers`, POST med `bodyType: 'json'`) och gör träffar till källor
+via `familyForLink` och `createConnector`; `hooks.onConnector` låter Inhämta öppna den nya källan. API-svar med geometri
+förhandsvisas som liten karta med `viz/leaflet.tableSvg`.
 
 ## Visualisering
 
@@ -331,7 +342,9 @@ monteras av läget Visualisera; Exportera återanvänder dialogerna.
 textkopior som inlinas i publicerad HTML). En kartdefinition (`chart.map`) har lager (`kind: 'dataset'` med geometrikolumn
 eller lon/lat, eller `kind: 'boundary'` för de medföljande gränserna), stil, färg efter kolumn (`colorBy` med
 kategorier ur paletten eller klasser ur den sekventiella skalan; QGIS-färger som fasta värden), etikett, filter,
-bakgrundskarta (`none`, `osm`, `custom`) och sparad vy. `prepare()` hämtar objekten via `viz/data.fetchRows`, gör
+bakgrundskarta (`none`, `osm`, `custom`, `wms` med `def.wms`) och sparad vy. WMS-lager (`kind: 'wms'`, `wmsLayer`) är
+rutlager i tilePane under objekten: `prepare()` hoppar över dem, exporten utelämnar dem, `htmlFor()` tar dem med via
+`L.tileLayer.wms`, och `wmsLayers(url)` läser GetCapabilities efter samtycke `basemaps`. `prepare()` hämtar objekten via `viz/data.fetchRows`, gör
 SWEREF 99 TM till WGS 84 och bygger stilfunktion och teckenförklaring; `render()` ritar med canvas-renderaren,
 `toBlob()` ritar lagren själv i Web Mercator till SVG, PNG och PDF (utan rutor) och `htmlFor()` ger inline-GeoJSON med
 färdiga stilar för Publicera. Rutlager skapas bara efter `consent.require('basemaps')`; tester byter ut dem med

@@ -15,8 +15,9 @@
     const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
-    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv'];
-    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi'];
+    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv', 'geonetwork'];
+    // geodata: a geodata service (family.kind wfs, ogcapi or arcgis) whose layers are discovered on demand; geoportal: a catalogue search.
+    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi', 'geodata', 'geoportal'];
     /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
     const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT'];
     const ID = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' };
@@ -109,7 +110,7 @@
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
         // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
         // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.
-        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
+        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, kind: { type: 'string', enum: ['wfs', 'ogcapi', 'arcgis'] }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
         endpoints: { type: 'array', items: endpointSchema },
         notes: { type: 'string' },
       },

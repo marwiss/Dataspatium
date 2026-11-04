@@ -8,23 +8,29 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/databases'], (base, basic, overlays, families) => {
+  D.define('ui/api/family-dialog', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/databases', 'api/families/geodata'], (base, basic, overlays, families, geodata) => {
     const { h, t, replace } = base;
+    /** Both groups of families share the dialog: databases (tables) and geodata services (layers with geometry). */
+    const ALL = () => families.FAMILIES.concat(geodata.FAMILIES);
+    const byId = (id) => families.byId(id) || geodata.byId(id);
+    const createFor = (id, values) => (geodata.byId(id) ? geodata.createConnector(id, values) : families.createConnector(id, values));
 
     /**
      * @param {any} ctx the mode context (shell for the log)
-     * @param {{family?: string, values?: Record<string, string>}} [options]
+     * @param {{family?: string, values?: Record<string, string>, group?: 'databases'|'geodata'}} [options]
      * @returns {Promise<any|null>} the saved connector, or null when cancelled
      */
     function open(ctx, options = {}) {
-      const state = { family: options.family || families.FAMILIES[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '' };
+      const group = options.group || (geodata.byId(options.family || '') ? 'geodata' : 'databases');
+      const list = () => (group === 'geodata' ? geodata.FAMILIES : families.FAMILIES);
+      const state = { family: options.family || list()[0].id, values: Object.assign({}, options.values || {}), busy: false, error: '' };
       const body = h('div', { class: 'dm-stack' });
       let finish = null;
 
       function render() {
-        const fam = families.byId(state.family) || families.FAMILIES[0];
+        const fam = byId(state.family) || list()[0];
         const sel = /** @type {any} */ (h('dm-select', { label: t('families.family') }));
-        sel.options = families.FAMILIES.map((f) => ({ value: f.id, label: f.name }));
+        sel.options = list().map((f) => ({ value: f.id, label: f.name }));
         sel.value = fam.id;
         sel.addEventListener('change', () => { state.family = sel.value; state.values = {}; state.error = ''; render(); });
         const fields = fam.fields.map((f) => {
@@ -47,7 +53,7 @@
         if (state.busy) return;
         state.busy = true; state.error = ''; render();
         try {
-          const res = await families.createConnector(state.family, state.values);
+          const res = await createFor(state.family, state.values);
           const msg = t('families.created', { name: res.connector.name, n: res.entities.length });
           if (ctx && ctx.shell) ctx.shell.log(msg, 'ok');
           overlays.toast.show(msg, { kind: 'ok' });
@@ -60,9 +66,9 @@
         } catch (err) { state.busy = false; state.error = (err && err.message) || String(err); render(); }
       }
       render();
-      return overlays.dialog.open({ title: t('families.title'), help: 'kallor', size: 'lg', body: (done) => { finish = done; return body; }, actions: [{ label: t('common.cancel'), value: null }] })
+      return overlays.dialog.open({ title: t(group === 'geodata' ? 'geodata.add.title' : 'families.title'), help: group === 'geodata' ? 'kallor#oppna-geodata' : 'kallor', size: 'lg', body: (done) => { finish = done; return body; }, actions: [{ label: t('common.cancel'), value: null }] })
         .then((result) => (result && typeof result === 'object' ? result : null));
     }
-    return { open };
+    return { open, ALL, byId };
   });
 })();

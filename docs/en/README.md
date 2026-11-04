@@ -74,6 +74,9 @@ with a backup or a bundle.
 - **Maps**: geodatasets open as maps to zoom in, map views with several layers and a background map after consent
   become dashboards and published HTML, the geo tools compute area, points in areas, nearest, buffers and overlays
   without code, and QGIS projects become map views (see [kartor.md](kartor.md)).
+- **Open geodata**: WFS, OGC API Features and ArcGIS services become sources whose layers are fetched as maps, with
+  presets for SCB, SGU, HaV, RAÄ, the Forest Agency, Kartverket, Statistics Finland and SYKE, search in
+  Geodataportalen, and WMS services as background map or layer (see [kallor.md](kallor.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

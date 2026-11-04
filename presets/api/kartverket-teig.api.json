@@ -1,0 +1,51 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "kartverket-teig",
+  "name": "Kartverket eiendomskart (WFS)",
+  "publisher": "Kartverket",
+  "description": "Fastighetsskiften (teig) ur det norska fastighetsregistret (Kartverket). Begränsa alltid med ett område (bbox): hela landet är för stort att hämta.",
+  "docs": "https://kartkatalog.geonorge.no/metadata/matrikkelen-eiendomskart-teig/74340c24-1c8a-4454-b813-bfe498e80f16",
+  "license": {
+    "name": "NLOD 2.0",
+    "url": "https://data.norge.no/nlod/no/2.0"
+  },
+  "level": 1,
+  "country": "NO",
+  "baseUrl": "https://wfs.geonorge.no/skwms1/wfs.matrikkelen-eiendomskart-teig",
+  "auth": {
+    "type": "none"
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "wfs"
+  },
+  "endpoints": [],
+  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
+  "i18n": {
+    "en": {
+      "name": "Norwegian Mapping Authority cadastral parcels (WFS)",
+      "description": "Cadastral parcels (teig) from the Norwegian cadastre. Always limit by an area (bbox): the whole country is too large to fetch.",
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
+    },
+    "da": {
+      "name": "Kartverket ejendomskort (WFS)",
+      "description": "Ejendomsparceller (teig) fra den norske matrikel (Kartverket). Begræns altid med et område (bbox): hele landet er for stort at hente.",
+      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort."
+    },
+    "nb": {
+      "name": "Kartverket eiendomskart (WFS)",
+      "description": "Eiendomsteiger fra matrikkelen (Kartverket). Begrens alltid med et område (bbox): hele landet er for stort å hente.",
+      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart."
+    },
+    "fi": {
+      "name": "Kartverket kiinteistökartta (WFS)",
+      "description": "Kiinteistöpalstat (teig) Norjan kiinteistörekisteristä (Kartverket). Rajaa aina alueella (bbox): koko maa on liian suuri noudettavaksi.",
+      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina."
+    },
+    "is": {
+      "name": "Fasteignakort Kartverket (WFS)",
+      "description": "Fasteignaskikar (teig) úr norsku fasteignaskránni (Kartverket). Takmarkaðu alltaf við svæði (bbox): allt landið er of stórt til að sækja.",
+      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort."
+    }
+  }
+}

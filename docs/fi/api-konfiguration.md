@@ -45,6 +45,13 @@ Ei mukana: Tanskan DMI ja Norjan Frost (MET) vaativat avaimen; Energi Data Servi
 opingogn.is:llä ei enää ole hakurajapintaa. Lähteitä ilman CORS-tukea ei tavoiteta suoraan selaimesta; ne vaativat oman
 välityspalvelimen, ks. alla.
 
+Paikkatietolähteet (perhe `geodata`, `kind` `wfs`, `ogcapi` tai `arcgis`) toimitetaan ilman päätepisteitä: tasot luetaan
+palvelusta, kun lähde avataan, ja tallennetaan omaan kopioosi määrityksestä. Valmiit: SCB:n avoin paikkatieto, SGU, Havs-
+och vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket (hallinnolliset yksiköt,
+kiinteistökartta), Tilastokeskus, SYKE (ArcGIS) ja avaimella Lantmäterietin paikkatietoalusta (asemakaavat). Lähde
+*Geodataportalen (sök geodata)* (perhe `geoportal`, vastausmuoto `geonetwork`) hakee Ruotsin kansallisesta luettelosta.
+Katso [kallor.md](kallor.md#avoin-paikkatieto).
+
 ## Näin teet
 
 1. Avaa **Nouda**-tila ja valitse lähde kohdepaneelin kohdasta **Avoimet rajapinnat**. Luettelon yläpuolella olevat

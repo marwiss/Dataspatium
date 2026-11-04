@@ -53,6 +53,12 @@ See [kallor.md](kallor.md).
 
 QGIS projects (.qgs, .qgz) become map views: layer order, visibility and symbols come along, the layers are matched to datasets with the same file name and data files dropped with the project are imported first (see [kartor.md](kartor.md)).
 
+Under *Databases* there is also *Add geodata source*: a WFS, OGC API Features or ArcGIS service becomes a source whose
+layers are fetched as GeoJSON and open as maps, and the source *Geodataportalen (sök geodata)* searches the Swedish
+national geodata catalogue and adds services with one click. Preset geodata sources exist for SCB, SGU, the Agency for
+Marine and Water Management, the National Heritage Board, the Forest Agency, Kartverket, Statistics Finland and SYKE,
+plus Lantmäteriet's geodata platform for those with a key. See [kallor.md](kallor.md#open-geodata).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and

@@ -79,6 +79,9 @@ ett paket.
 - **Kartor**: geodatamängder öppnas som kartor att zooma i, kartvyer med flera lager och bakgrundskarta efter samtycke
   blir dashboards och publicerad HTML, geoverktygen räknar area, punkter i områden, närmaste, buffert och överlagring
   utan kod, och QGIS-projekt blir kartvyer (se [docs/kartor.md](docs/kartor.md)).
+- **Öppna geodata**: WFS-, OGC API Features- och ArcGIS-tjänster blir källor vars lager hämtas som kartor, med
+  förinställningar för SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, sökning i
+  Geodataportalen och WMS-tjänster som bakgrundskarta eller lager (se [docs/kallor.md](docs/kallor.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

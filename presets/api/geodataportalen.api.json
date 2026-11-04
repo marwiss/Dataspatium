@@ -1,0 +1,142 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "geodataportalen",
+  "name": "Geodataportalen (sök geodata)",
+  "publisher": "Lantmäteriet (Geodatarådet)",
+  "description": "Sök bland myndigheters, regioners och kommuners geodata i den nationella katalogen. Resultatet är en tabell med titel, organisation och tjänsteadresser (WFS, OGC API Features, ArcGIS, WMS); en tjänst kan läggas till som geodatakälla med ett klick.",
+  "docs": "https://www.geodata.se/geodataportalen/",
+  "license": {
+    "name": "Metadata: öppna data",
+    "url": "https://www.geodata.se/geodataportalen/"
+  },
+  "level": 1,
+  "country": "SE",
+  "baseUrl": "https://www.geodata.se/geodataportalen/srv/api/search/records",
+  "auth": {
+    "type": "none"
+  },
+  "family": {
+    "type": "geoportal"
+  },
+  "endpoints": [
+    {
+      "id": "search",
+      "name": "Sök geodata",
+      "description": "Fritextsökning i katalogen (Elasticsearch). Resultatet listar tjänsterna per post.",
+      "method": "POST",
+      "path": "/_search",
+      "bodyType": "json",
+      "body": {
+        "query": {
+          "query_string": {
+            "query": "{q}",
+            "default_operator": "AND"
+          }
+        },
+        "size": 50,
+        "_source": [
+          "resourceTitleObject",
+          "resourceAbstractObject",
+          "resourceType",
+          "OrgForResourceObject",
+          "OrgForResource",
+          "contact",
+          "link"
+        ]
+      },
+      "params": [
+        {
+          "name": "q",
+          "in": "template",
+          "label": "Sökord",
+          "type": "string",
+          "required": true,
+          "example": "detaljplan"
+        }
+      ],
+      "response": {
+        "format": "geonetwork"
+      },
+      "dataset": {
+        "name": "Geodataportalen: {q}"
+      }
+    }
+  ],
+  "i18n": {
+    "en": {
+      "name": "Geodataportalen (search geodata)",
+      "description": "Search the geodata of Swedish agencies, regions and municipalities in the national catalogue. The result is a table with title, organisation and service addresses (WFS, OGC API Features, ArcGIS, WMS); a service can be added as a geodata source with one click.",
+      "endpoints": {
+        "search": {
+          "name": "Search geodata",
+          "description": "Free-text search in the catalogue (Elasticsearch). The result lists the services per record.",
+          "params": {
+            "q": {
+              "label": "Search words"
+            }
+          }
+        }
+      }
+    },
+    "da": {
+      "name": "Geodataportalen (søg geodata)",
+      "description": "Søg blandt svenske myndigheders, regioners og kommuners geodata i det nationale katalog. Resultatet er en tabel med titel, organisation og tjenesteadresser (WFS, OGC API Features, ArcGIS, WMS); en tjeneste kan tilføjes som geodatakilde med ét klik.",
+      "endpoints": {
+        "search": {
+          "name": "Søg geodata",
+          "description": "Fritekstsøgning i kataloget (Elasticsearch). Resultatet lister tjenesterne pr. post.",
+          "params": {
+            "q": {
+              "label": "Søgeord"
+            }
+          }
+        }
+      }
+    },
+    "nb": {
+      "name": "Geodataportalen (søk geodata)",
+      "description": "Søk blant svenske etaters, regioners og kommuners geodata i den nasjonale katalogen. Resultatet er en tabell med tittel, organisasjon og tjenesteadresser (WFS, OGC API Features, ArcGIS, WMS); en tjeneste kan legges til som geodatakilde med ett klikk.",
+      "endpoints": {
+        "search": {
+          "name": "Søk geodata",
+          "description": "Fritekstsøk i katalogen (Elasticsearch). Resultatet lister tjenestene per post.",
+          "params": {
+            "q": {
+              "label": "Søkeord"
+            }
+          }
+        }
+      }
+    },
+    "fi": {
+      "name": "Geodataportalen (hae paikkatietoa)",
+      "description": "Hae Ruotsin viranomaisten, alueiden ja kuntien paikkatietoja kansallisesta luettelosta. Tulos on taulukko, jossa on otsikko, organisaatio ja palveluosoitteet (WFS, OGC API Features, ArcGIS, WMS); palvelun voi lisätä paikkatietolähteeksi yhdellä napsautuksella.",
+      "endpoints": {
+        "search": {
+          "name": "Hae paikkatietoa",
+          "description": "Vapaatekstihaku luettelosta (Elasticsearch). Tulos luettelee palvelut tietuetta kohden.",
+          "params": {
+            "q": {
+              "label": "Hakusanat"
+            }
+          }
+        }
+      }
+    },
+    "is": {
+      "name": "Geodataportalen (leita í landupplýsingum)",
+      "description": "Leitaðu í landupplýsingum sænskra stofnana, landshluta og sveitarfélaga í landsskránni. Niðurstaðan er tafla með titli, stofnun og þjónustuvistföngum (WFS, OGC API Features, ArcGIS, WMS); þjónustu má bæta við sem landupplýsingauppsprettu með einum smelli.",
+      "endpoints": {
+        "search": {
+          "name": "Leita í landupplýsingum",
+          "description": "Frjáls textaleit í skránni (Elasticsearch). Niðurstaðan telur upp þjónustur hverrar færslu.",
+          "params": {
+            "q": {
+              "label": "Leitarorð"
+            }
+          }
+        }
+      }
+    }
+  }
+}

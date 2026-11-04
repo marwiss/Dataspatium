@@ -1,0 +1,51 @@
+{
+  "format": "dataspatium-api/1",
+  "id": "hav-geodata",
+  "name": "Havs- och vattenmyndigheten geodata (WFS)",
+  "publisher": "Havs- och vattenmyndigheten",
+  "description": "Hav, kust och vatten från HaV: skyddade områden, vattenförekomster, fiske med mera. Välj lager och hämta objekten med geometri.",
+  "docs": "https://www.havochvatten.se/data-kartor-och-rapporter/kartor-och-gis/geodata.html",
+  "license": {
+    "name": "HaV öppna data",
+    "url": "https://www.havochvatten.se/data-kartor-och-rapporter/kartor-och-gis/geodata.html"
+  },
+  "level": 1,
+  "country": "SE",
+  "baseUrl": "https://geodata.havochvatten.se/geoservices/ows",
+  "auth": {
+    "type": "none"
+  },
+  "family": {
+    "type": "geodata",
+    "kind": "wfs"
+  },
+  "endpoints": [],
+  "notes": "Lagren hämtas från tjänsten när källan öppnas (GetCapabilities respektive tjänstekatalogen). Svaren är GeoJSON i WGS 84 och öppnas som kartor.",
+  "i18n": {
+    "en": {
+      "name": "Swedish Agency for Marine and Water Management geodata (WFS)",
+      "description": "Sea, coast and water layers: protected areas, water bodies, fisheries and more. Choose a layer and fetch the features with geometry.",
+      "notes": "The layers are read from the service when the source is opened (GetCapabilities or the service directory). Answers are GeoJSON in WGS 84 and open as maps."
+    },
+    "da": {
+      "name": "Havs- och vattenmyndigheten geodata (WFS)",
+      "description": "Hav, kyst og vand fra HaV: beskyttede områder, vandforekomster, fiskeri med mere. Vælg et lag og hent objekterne med geometri.",
+      "notes": "Lagene hentes fra tjenesten, når kilden åbnes (GetCapabilities henholdsvis tjenestekataloget). Svarene er GeoJSON i WGS 84 og åbnes som kort."
+    },
+    "nb": {
+      "name": "Havs- och vattenmyndigheten geodata (WFS)",
+      "description": "Hav, kyst og vann fra HaV: verneområder, vannforekomster, fiske med mer. Velg et lag og hent objektene med geometri.",
+      "notes": "Lagene hentes fra tjenesten når kilden åpnes (GetCapabilities respektive tjenestekatalogen). Svarene er GeoJSON i WGS 84 og åpnes som kart."
+    },
+    "fi": {
+      "name": "Havs- och vattenmyndigheten paikkatieto (WFS)",
+      "description": "Meri, rannikko ja vedet HaV:lta: suojelualueet, vesimuodostumat, kalastus ja muuta. Valitse taso ja nouda kohteet geometrioineen.",
+      "notes": "Tasot noudetaan palvelusta, kun lähde avataan (GetCapabilities tai palveluhakemisto). Vastaukset ovat GeoJSONia WGS 84:ssä ja avautuvat karttoina."
+    },
+    "is": {
+      "name": "Landupplýsingar Havs- och vattenmyndigheten (WFS)",
+      "description": "Haf, strönd og vatn frá HaV: vernduð svæði, vatnshlot, fiskveiðar og fleira. Veldu lag og sæktu fitjurnar með rúmfræði.",
+      "notes": "Lögin eru sótt úr þjónustunni þegar uppsprettan er opnuð (GetCapabilities eða þjónustuskráin). Svörin eru GeoJSON í WGS 84 og opnast sem kort."
+    }
+  }
+}

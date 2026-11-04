@@ -103,6 +103,36 @@ Nøgler og adgangskoder bliver i sessionen eller gemmes krypteret; den konfigura
 og deles uden dem. Svarformaterne `graphql`, `sparql` og `influx-csv` samt `lift` (løft et indlejret objekt op til
 kolonner) er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan bruges i egne konfigurationer.
 
+## Åbne geodata
+
+Knappen **Tilføj geodatakilde** under *Databaser* i Indsaml gør en almindelig API-kilde af adressen til en geodatatjeneste,
+på samme måde som databasekilderne. Appen læser tjenestens lag og lægger et endepunkt pr. lag plus et alment, hvor du
+angiver laget selv. Svarene er GeoJSON i WGS 84: datasættet får en geometrikolonne og åbnes som kort i Bearbejd (se
+[kartor.md](kartor.md)). Kilden viser lagene som en liste, der kan filtreres; vælg et lag, begræns gerne med et område
+(bbox) og hent. Forhåndsvisningen viser svaret som et lille kort over tabellen, og *Åbn som kort* fører til det gemte
+datasæt.
+
+| Familie | Opdagelse | Hentning | Nøgle |
+|---|---|---|---|
+| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature med `outputFormat=application/json` og `srsName=EPSG:4326`; område (bbox), CQL-filter, kolonner; sider med `startIndex`/`count` | Bearer (valgfrit) |
+| OGC API Features | `/collections` | `/collections/{id}/items` med bbox, datetime og filter; next-links følges | Bearer (valgfrit; kræves af Lantmäteriets geodataplatform) |
+| ArcGIS REST (FeatureServer, MapServer) | Tjenestens beskrivelse eller hele kataloget | `/{lag}/query` med where, område, `f=geojson` og `outSR=4326`; sider med `resultOffset` | Token (valgfrit) |
+
+Forudindstillede geodatakilder uden nøgle (CORS verificeret): SCB åbne geodata, SGU, Havs- och vattenmyndigheten,
+Riksantikvarieämbetets fortidsminder, Skogsstyrelsen, Kartverkets administrative enheder og ejendomskort (Norge) samt
+Statistikcentralen og SYKE (Finland). Lagene læses fra tjenesten, første gang kilden åbnes, og kan genlæses med *Genlæs
+lagene*; listen gemmes i din kopi af kilden. Lantmäteriets geodataplatform (lokalplaner) findes som niveau 2 med
+Bearer-nøgle fra en tilsluttet organisation.
+
+**Geodataportalen** (geodata.se) er Sveriges nationale katalog over myndigheders, regioners og kommuners geodata. Kilden
+*Geodataportalen (sök geodata)* søger i kataloget og viser en post pr. resultat med titel, organisation, beskrivelse og
+tjenester: en WFS-, OGC API- eller ArcGIS-tjeneste tilføjes som geodatakilde med ét klik og åbnes straks, en WMS-adresse
+kopieres til brug som baggrundskort eller WMS-lag i en kortvisning, og downloadfiler og metadata åbnes i en ny fane.
+Resultatlisten kan også hentes som tabel under fanen *Endepunkter*.
+
+Geodatatjenester svarer ofte med mange objekter: begræns med et område eller et filter, og hæv kun *Højeste antal sider*
+under *Flere valg*, når det er nødvendigt. En egen tjeneste skal tillade kald fra browseren (CORS) ligesom databasekilderne;
+de fleste myndigheders GeoServer og ArcGIS Server gør det.
 ## Linkede filer
 
 I Chrome og Edge findes knappen **Link en fil på computeren** i Hent. Filen vælges med computerens filvælger og

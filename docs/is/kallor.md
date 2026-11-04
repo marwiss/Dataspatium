@@ -101,6 +101,36 @@ Lyklar og lykilorð haldast í setunni eða eru vistuð dulkóðuð; stillinguna
 þeirra. Svarsniðunum `graphql`, `sparql` og `influx-csv` ásamt `lift` (lyfta hreiðruðum hlut upp í dálka) er lýst í
 [api-konfiguration.md](api-konfiguration.md) og má nota í eigin stillingum.
 
+## Opin landupplýsingagögn
+
+Hnappurinn **Bæta við landupplýsingauppsprettu** undir *Gagnagrunnar* í Safna gerir venjulega API-uppsprettu úr vistfangi
+landupplýsingaþjónustu, á sama hátt sem gagnagrunnsuppspretturnar. Forritið les lög þjónustunnar og setur einn endapunkt á
+hvert lag auk almenns þar sem þú tilgreinir lagið sjálf. Svörin eru GeoJSON í WGS 84: gagnasafnið fær rúmfræðidálk og
+opnast sem kort í Vinna (sjá [kartor.md](kartor.md)). Uppsprettan sýnir lögin sem lista sem hægt er að sía; veldu lag,
+takmarkaðu gjarnan við svæði (bbox) og sæktu. Forskoðunin sýnir svarið sem lítið kort ofan við töfluna, og *Opna sem kort*
+fer með þig í vistaða gagnasafnið.
+
+| Fjölskylda | Uppgötvun | Sókn | Lykill |
+|---|---|---|---|
+| WFS 2.0 (GeoServer, MapServer, Deegree) | GetCapabilities | GetFeature með `outputFormat=application/json` og `srsName=EPSG:4326`; svæði (bbox), CQL-sía, dálkar; síður með `startIndex`/`count` | Bearer (valfrjálst) |
+| OGC API Features | `/collections` | `/collections/{id}/items` með bbox, datetime og filter; next-tenglum fylgt | Bearer (valfrjálst; krafist af landupplýsingavettvangi Lantmäteriet) |
+| ArcGIS REST (FeatureServer, MapServer) | Lýsing þjónustunnar eða öll skráin | `/{lag}/query` með where, svæði, `f=geojson` og `outSR=4326`; síður með `resultOffset` | Token (valfrjálst) |
+
+Forstilltar landupplýsingauppsprettur án lykils (CORS staðfest): opin landupplýsingagögn SCB, SGU, Havs- och
+vattenmyndigheten, fornminjar Riksantikvarieämbetet, Skogsstyrelsen, stjórnsýslueiningar og fasteignakort Kartverket
+(Noregur) auk Hagstofu Finnlands og SYKE (Finnland). Lögin eru lesin úr þjónustunni þegar uppsprettan er opnuð í fyrsta
+sinn og má lesa aftur með *Lesa lögin aftur*; listinn er vistaður í þínu eintaki af uppsprettunni. Landupplýsingavettvangur
+Lantmäteriet (deiliskipulag) er á stigi 2 með Bearer-lykli frá tengdri stofnun.
+
+**Geodataportalen** (geodata.se) er sænska landsskráin yfir landupplýsingar stofnana, landshluta og sveitarfélaga.
+Uppsprettan *Geodataportalen (sök geodata)* leitar í skránni og sýnir eina færslu á hverja niðurstöðu með titli, stofnun,
+lýsingu og þjónustum: WFS-, OGC API- eða ArcGIS-þjónustu er bætt við sem landupplýsingauppsprettu með einum smelli og
+opnuð strax, WMS-vistfang er afritað til notkunar sem bakgrunnskort eða WMS-lag í kortasýn, og niðurhalsskrár og
+lýsigögn opnast í nýjum flipa. Niðurstöðulistann má einnig sækja sem töflu undir flipanum *Endapunktar*.
+
+Landupplýsingaþjónustur svara oft með mörgum fitjum: takmarkaðu við svæði eða síu og hækkaðu *Hámarksfjölda síðna* undir
+*Fleiri valkostir* aðeins þegar þörf er á. Eigin þjónusta þarf að leyfa köll úr vafranum (CORS) eins og
+gagnagrunnsuppspretturnar; GeoServer og ArcGIS Server flestra stofnana gera það.
 ## Tengdar skrár
 
 Í Chrome og Edge er hnappurinn **Tengja skrá á tölvunni** í Sækja. Skráin er valin með skráaveljara tölvunnar og

@@ -16,6 +16,10 @@ Ingenting hentes fra nettet før du velger et bakgrunnskart og gir ditt samtykke
 Datasett med en geometrikolonne eller kolonner som heter lengde- og breddegrad åpnes som kart direkte; for andre
 koordinatkolonner (for eksempel `x` og `y`) velger du *Vis som kart* i tabellens verktøylinje.
 
+Geodata kan også hentes direkte fra åpne tjenester: *Legg til geodatakilde* i Hent inn gjør en kilde av en WFS-, OGC API
+Features- eller ArcGIS-tjeneste, og kilden *Geodataportalen* finner tjenester i den nasjonale katalogen. Svarene får en
+geometrikolonne og åpnes som kart. Se [kallor.md](kallor.md#åpne-geodata).
+
 ## Kartet i Bearbeid
 
 Kartet viser datasettets objekter i appens farge. Zoom med hjulet eller knappene, panorer ved å dra, og klikk på et
@@ -32,10 +36,12 @@ Store datasett tegnes med canvas; 10 000 polygoner panoreres uten hakk. Flere en
 *Nytt diagram → Kart* lager en kartvisning med det valgte datasettet som første lag. Innstillingene til venstre:
 
 - **Bakgrunnskart**: ingen (standard), OpenStreetMap eller en egen kartserver med en adressemal som
-  `https://…/{z}/{x}/{y}.png` og kildetekst. Bakgrunnskart hentes fra nettet og spør om samtykke første gang (formålet
+  `https://…/{z}/{x}/{y}.png` og kildetekst, eller en **WMS-tjeneste** (adresse, lag, bildeformat og gjennomsiktighet; *Les lag* henter tjenestens
+  lagliste). Bakgrunnskart hentes fra nettet og spør om samtykke første gang (formålet
   *Bakgrunnskart* under Håndter → Internettilgang).
 - **Lag**: legg til flere datasett eller de medfølgende grensene (fylker og kommuner i Sverige, Danmark, Norge og
-  Finland). Hvert lag har navn, synlighet, rekkefølge, farge, fyll, linjebredde og punktstørrelse, geometri- eller
+  Finland) eller et **WMS-lag** (bilder fra en karttjeneste, tegnet under objektene med valgfri gjennomsiktighet; det
+  har ingen tegnforklaring og følger ikke med i eksport til SVG, PNG og PDF). Hvert lag har navn, synlighet, rekkefølge, farge, fyll, linjebredde og punktstørrelse, geometri- eller
   koordinatkolonner, farge etter kolonne (kategorier med appens palett eller klasser med en sekvensiell skala, antall
   klasser), etikett (vises når pekeren hviler på objektet) og høyeste antall objekter.
 - **Visning**: *Lagre gjeldende visning* låser kartets midtpunkt og zoom; ellers tilpasses kartet til lagene.
@@ -76,6 +82,6 @@ etiketter, effekter og regelbaserte symboler utover den første regelen tas ikke
 
 - Bakgrunnskart og publisert HTML med bakgrunnskart krever nett; appen selv gjør ingen kall uten samtykke.
 - Projeksjoner: WGS 84 og SWEREF 99 TM. Andre referansesystemer må regnes om før import (for eksempel i QGIS).
-- Eksporten tegner lagene, ikke bakgrunnskartet.
+- Eksporten tegner lagene, ikke bakgrunnskartet eller WMS-lag.
 - Buffere og overlagringer er plane beregninger på WGS 84-koordinater via Turf; i kilometerskala i Norden er feilen
   liten, for svært store flater merkbar.

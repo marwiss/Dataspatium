@@ -225,11 +225,42 @@
       else if (format === 'sparql') { data = parseJson(); table = sparqlTable(data); }
       else if (format === 'influx-csv') { table = influxTable(text); }
       else if (format === 'entryscape') { data = parseJson(); table = jsonImp.tabulate(entryscapeRecords(data)); table.meta = { total: data.results }; }
+      else if (format === 'geonetwork') { data = parseJson(); table = jsonImp.tabulate(geonetworkRecords(data)); table.meta = { total: data && data.hits && data.hits.total ? (typeof data.hits.total === 'object' ? data.hits.total.value : data.hits.total) : undefined }; }
       else { table = { columns: ['text'], rows: [[text]] }; }
       postProcess(table, spec, data);
       return Object.assign({ data, types: {}, meta: {} }, table);
     }
 
-    return { parse, resolvePath, explode, lift, jsonRecords, geojsonRecords, xmlRecords, entryscapeRecords, postProcess, epochToIso, graphqlPath, sparqlTable, influxTable };
+    /**
+     * GeoNetwork 4 catalogue search (Elasticsearch hits, as Geodataportalen answers): one row per metadata record with
+     * title, abstract, organisation and the service links sorted by protocol (WFS, OGC API Features, ArcGIS, WMS).
+     */
+    function geonetworkRecords(data) {
+      const hits = data && data.hits && Array.isArray(data.hits.hits) ? data.hits.hits : [];
+      const text = (o) => (o && typeof o === 'object' ? (o.default || o.langswe || o.langeng || Object.values(o).find((v) => typeof v === 'string') || null) : (typeof o === 'string' ? o : null));
+      const linkUrl = (l) => (l && (text(l.urlObject) || l.url || null));
+      const pick = (links, re) => { const l = links.find((x) => re.test(String(x.protocol || '')) || re.test(String(linkUrl(x) || ''))); return l ? linkUrl(l) : null; };
+      return hits.map((hit) => {
+        const s = hit._source || {};
+        const links = Array.isArray(s.link) ? s.link : [];
+        const org = text(s.OrgForResourceObject) || (Array.isArray(s.OrgForResource) ? s.OrgForResource[0] : null) || (Array.isArray(s.contact) && s.contact[0] ? text(s.contact[0].organisationObject) || s.contact[0].organisation : null);
+        return {
+          id: hit._id || s.id || null,
+          titel: text(s.resourceTitleObject),
+          beskrivning: text(s.resourceAbstractObject),
+          organisation: org || null,
+          typ: Array.isArray(s.resourceType) ? s.resourceType.join(', ') : (s.resourceType || null),
+          wfs: pick(links, /WFS|service=WFS/i),
+          ogc_api: pick(links, /API-Features|OGC:API|\/collections(\/|$)/i),
+          arcgis: pick(links, /ESRI|ARCGIS|\/(FeatureServer|MapServer)(\/|$|\?)/i),
+          wms: pick(links, /WMS|service=WMS/i),
+          nedladdning: pick(links, /DOWNLOAD|nedladdning|\.zip$|\.gpkg$|\.geojson$/i),
+          lankar: links.length ? JSON.stringify(links.map((l) => ({ protocol: l.protocol || null, url: linkUrl(l), name: text(l.nameObject) || l.name || null }))) : null,
+          metadata: hit._id ? 'https://www.geodata.se/geodataportalen/srv/swe/catalog.search#/metadata/' + hit._id : null,
+        };
+      });
+    }
+
+    return { parse, resolvePath, explode, lift, jsonRecords, geojsonRecords, xmlRecords, entryscapeRecords, geonetworkRecords, postProcess, epochToIso, graphqlPath, sparqlTable, influxTable };
   });
 })();

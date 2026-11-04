@@ -16,6 +16,10 @@ fetched from the net until you choose a background map and give your consent.
 Datasets with a geometry column or columns named longitude and latitude open as a map at once; for other coordinate
 columns (such as `x` and `y`) choose *Show as map* in the table's toolbar.
 
+Geodata can also be fetched straight from open services: *Add geodata source* in Acquire makes a source of a WFS, OGC
+API Features or ArcGIS service, and the source *Geodataportalen* finds services in the national catalogue. The answers
+get a geometry column and open as maps. See [kallor.md](kallor.md#open-geodata).
+
 ## The map in Process
 
 The map shows the dataset's features in the app's colour. Zoom with the wheel or the buttons, pan by dragging, and
@@ -32,10 +36,12 @@ drawn (the limit can be raised per layer in the map view).
 *New chart → Map* creates a map view with the selected dataset as its first layer. The settings on the left:
 
 - **Background map**: none (default), OpenStreetMap, or your own map server with an address template such as
-  `https://…/{z}/{x}/{y}.png` and an attribution. Background maps are fetched from the net and ask for consent the
+  `https://…/{z}/{x}/{y}.png` and an attribution, or a **WMS service** (address, layers, image format and transparency; *Read layers* fetches the
+  service's layer list). Background maps are fetched from the net and ask for consent the
   first time (the purpose *Background maps* under Manage → Internet access).
 - **Layers**: add more datasets or the bundled boundaries (counties and municipalities of Sweden, Denmark, Norway and
-  Finland). Every layer has a name, visibility, order, colour, fill, line width and point size, geometry or coordinate
+  Finland), or a **WMS layer** (images from a map service drawn under the features with a chosen opacity; it has no
+  legend entry and is left out of export to SVG, PNG and PDF). Every layer has a name, visibility, order, colour, fill, line width and point size, geometry or coordinate
   columns, colour by column (categories with the app's palette or classes with a sequential scale, number of classes),
   a label (shown when the pointer rests on a feature) and a maximum number of features.
 - **View**: *Save current view* locks the map's centre and zoom; otherwise the map fits the layers. The legend and the
@@ -79,6 +85,6 @@ Raster layers, labels, effects and rule-based symbols beyond the first rule are 
   consent.
 - Projections: WGS 84 and SWEREF 99 TM. Other reference systems must be converted before import (in QGIS, for
   example).
-- Exports draw the layers, not the background map.
+- Exports draw the layers, not the background map or WMS layers.
 - Buffers and overlays are planar computations on WGS 84 coordinates through Turf; at kilometre scale in the Nordic
   countries the error is small, for very large areas noticeable.

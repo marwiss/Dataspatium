@@ -17,6 +17,10 @@ taustakartan ja annat suostumuksesi.
 Aineistot, joissa on geometriasarake tai sarakkeet nimeltä pituus- ja leveysaste, avautuvat karttana suoraan; muille
 koordinaattisarakkeille (esimerkiksi `x` ja `y`) valitse *Näytä karttana* taulukon työkalupalkista.
 
+Paikkatietoa voi noutaa myös suoraan avoimista palveluista: *Lisää paikkatietolähde* Nouda-tilassa tekee lähteen WFS-,
+OGC API Features- tai ArcGIS-palvelusta, ja lähde *Geodataportalen* hakee palveluja Ruotsin kansallisesta luettelosta.
+Vastaukset saavat geometriasarakkeen ja avautuvat karttoina. Katso [kallor.md](kallor.md#avoin-paikkatieto).
+
 ## Kartta Muokkaa-tilassa
 
 Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä ja
@@ -33,10 +37,12 @@ piirretä (rajaa voi nostaa tasoa kohti karttanäkymässä).
 *Uusi kaavio → Kartta* luo karttanäkymän, jonka ensimmäinen taso on valittu aineisto. Asetukset vasemmalla:
 
 - **Taustakartta**: ei mitään (oletus), OpenStreetMap tai oma karttapalvelin osoitemallilla, kuten
-  `https://…/{z}/{x}/{y}.png`, ja lähdetekstillä. Taustakartat noudetaan verkosta, ja ensimmäisellä kerralla kysytään
+  `https://…/{z}/{x}/{y}.png`, ja lähdetekstillä, tai **WMS-palvelu** (osoite, tasot, kuvamuoto ja läpinäkyvyys; *Lue tasot* hakee palvelun
+  tasoluettelon). Taustakartat noudetaan verkosta, ja ensimmäisellä kerralla kysytään
   suostumus (tarkoitus *Taustakartat* kohdassa Hallitse → Internet-yhteys).
-- **Tasot**: lisää aineistoja tai mukana tulevat rajat (Ruotsin, Tanskan, Norjan ja Suomen maakunnat ja kunnat).
-  Jokaisella tasolla on nimi, näkyvyys, järjestys, väri, täyttö, viivan leveys ja pisteen koko, geometria- tai
+- **Tasot**: lisää aineistoja tai mukana tulevat rajat (Ruotsin, Tanskan, Norjan ja Suomen maakunnat ja kunnat)
+  tai **WMS-taso** (karttapalvelun kuvia, jotka piirretään kohteiden alle valitulla peittävyydellä; sillä ei ole selitettä
+  eikä se tule mukaan SVG-, PNG- ja PDF-vientiin). Jokaisella tasolla on nimi, näkyvyys, järjestys, väri, täyttö, viivan leveys ja pisteen koko, geometria- tai
   koordinaattisarakkeet, väri sarakkeen mukaan (luokat sovelluksen paletilla tai luokkavälit sekventiaalisella
   asteikolla, luokkien määrä), nimiö (näkyy, kun osoitin on kohteen päällä) ja kohteiden enimmäismäärä.
 - **Näkymä**: *Tallenna nykyinen näkymä* lukitsee kartan keskipisteen ja zoomin; muuten kartta sovitetaan tasoihin.
@@ -81,6 +87,6 @@ jälkeen ei oteta mukaan.
 - Taustakartat ja julkaistu HTML taustakartalla vaativat verkon; sovellus itse ei tee pyyntöjä ilman suostumusta.
 - Projektiot: WGS 84 ja SWEREF 99 TM. Muut koordinaattijärjestelmät on muunnettava ennen tuontia (esimerkiksi
   QGIS:ssä).
-- Vienti piirtää tasot, ei taustakarttaa.
+- Vienti piirtää tasot, ei taustakarttaa eikä WMS-tasoja.
 - Puskurit ja päällekkäisyydet ovat tasolaskentaa WGS 84 -koordinaateilla Turfin kautta; kilometrimittakaavassa
   Pohjoismaissa virhe on pieni, hyvin suurilla alueilla huomattava.

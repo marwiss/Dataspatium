@@ -41,6 +41,7 @@
       if (!chart.map) chart.map = leaflet.defaultMap(options.columns, { id: chart.datasetId, name: chart.datasetName, shortName: chart.datasetShort });
       const def = chart.map;
       if (!def.custom) def.custom = { url: '', attribution: '' };
+      if (!def.wms) def.wms = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '' };
       const el = h('div', { class: 'dm-viz-layout' });
       const side = h('div', { class: 'dm-viz-side dm-stack' });
       const preview = h('div', { class: 'dm-chart-preview dm-map-preview' });
@@ -87,6 +88,7 @@
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));
         }
+        if (def.basemap === 'wms') items.push(wmsFields(def.wms, () => changed()));
         items.push(toggle(t('map.legend'), def.legend !== false, (v) => { def.legend = v; changed(); }));
         items.push(input(t('map.height'), def.height || 480, (v) => { def.height = Math.max(200, Number(v) || 480); changed(); }, { type: 'number', min: '200', max: '2000', step: '20' }));
         items.push(h('div', { class: 'dm-row-wrap' },
@@ -94,6 +96,33 @@
           def.view ? basic.button({ label: t('map.view.reset'), icon: 'x', size: 'sm', variant: 'ghost', onClick: () => { def.view = null; changed(); renderSide(); } }) : null,
           basic.button({ label: t('map.fit'), icon: 'scan-line', size: 'sm', variant: 'ghost', onClick: () => { if (handle) handle.fit(); } })));
         return h('div', { class: 'dm-card dm-stack-sm' }, h('strong', { text: t('map.settings') }), items);
+      }
+      /** Fields of a WMS definition (background map or overlay): address, layer (typed or picked from the capabilities), format, transparency, attribution. */
+      function wmsFields(w, onChange) {
+        const picked = h('div');
+        const layersInput = input(t('map.wms.layers'), w.layers, (v) => { w.layers = v.trim(); onChange(); }, { help: t('map.wms.layers.help') });
+        const read = basic.button({ label: t('map.wms.read'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', title: t('map.wms.read.hint'), onClick: async () => {
+          if (!w.url) return;
+          read.setAttribute('loading', '');
+          try {
+            const list = await leaflet.wmsLayers(w.url);
+            const sel = select(t('map.wms.pick'), list.map((l) => ({ value: l.id, label: l.name !== l.id ? `${l.name} (${l.id})` : l.id })), list.some((l) => l.id === w.layers) ? w.layers : list[0].id, (v) => { w.layers = v; layersInput.value = v; onChange(); });
+            replace(picked, sel);
+            if (!w.layers) { w.layers = list[0].id; layersInput.value = w.layers; onChange(); }
+          } catch (err) {
+            replace(picked, h('p', { class: 'dm-error dm-xs', text: String((err && err.message) || err) }));
+            options.log('WMS: ' + ((err && err.message) || err), 'error');
+          }
+          read.removeAttribute('loading');
+        } });
+        return h('div', { class: 'dm-stack-sm dm-map-wms' },
+          input(t('map.wms.url'), w.url, (v) => { w.url = v.trim(); onChange(); }, { placeholder: 'https://…/wms', help: t('map.wms.url.help') }),
+          h('div', { class: 'dm-row-end' }, layersInput, read),
+          picked,
+          h('div', { class: 'dm-row-wrap' },
+            select(t('map.wms.format'), [{ value: 'image/png', label: 'PNG' }, { value: 'image/jpeg', label: 'JPEG' }], w.format || 'image/png', (v) => { w.format = v; onChange(); }),
+            toggle(t('map.wms.transparent'), !!w.transparent, (v) => { w.transparent = v; onChange(); })),
+          input(t('map.custom.attribution'), w.attribution || '', (v) => { w.attribution = v.trim(); onChange(); }));
       }
       function layersCard() {
         const body = h('div', { class: 'dm-stack-sm' });
@@ -116,6 +145,12 @@
           basic.button({ label: t('map.layer.remove'), icon: 'trash-2', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => { def.layers.splice(index, 1); changed(); renderSide(); } })));
         fields.appendChild(input(t('common.name'), layer.name, (v) => { layer.name = v.trim() || layer.datasetName || ''; changed(); renderSide(); }));
         const st = layer.style || (layer.style = {});
+        if (layer.kind === 'wms') {
+          fields.appendChild(input(t('map.style.opacity'), st.opacity === undefined ? 0.8 : st.opacity, (v) => { st.opacity = Math.max(0, Math.min(1, Number(v))); changed(); }, { type: 'number', min: '0', max: '1', step: '0.05' }));
+          fields.appendChild(wmsFields(layer.wms || (layer.wms = { url: '', layers: '', format: 'image/png', transparent: true, attribution: '' }), () => changed()));
+          fields.appendChild(h('p', { class: 'dm-help dm-xs', text: t('map.layer.wms.note') }));
+          return details;
+        }
         const styleRow = h('div', { class: 'dm-row-wrap' },
           input(t('map.style.color'), st.fillColor || st.color || '#2b6cb0', (v) => { st.fillColor = v; st.color = v; changed(); renderSide(); }, { type: 'color' }),
           input(t('map.style.fillopacity'), st.fillOpacity === undefined ? 0.45 : st.fillOpacity, (v) => { st.fillOpacity = Math.max(0, Math.min(1, Number(v))); changed(); }, { type: 'number', min: '0', max: '1', step: '0.05' }),
@@ -156,7 +191,18 @@
         const bSel = /** @type {any} */ (h('dm-select', { label: t('map.add.boundary') }));
         bSel.options = boundaries.BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }));
         bSel.value = boundaries.BASEMAPS[0].id;
+        const wmsInput = /** @type {any} */ (h('dm-input', { label: t('map.add.wms'), placeholder: 'https://…/wms?layers=…', help: t('map.add.wms.help') }));
+        const addWms = () => {
+          const raw = wmsInput.value.trim();
+          if (!raw) return;
+          let layersParam = '';
+          try { layersParam = new URL(raw).searchParams.get('layers') || ''; } catch (_e) { /* not an address; the layer card reports it */ }
+          def.layers.unshift(leaflet.wmsLayer({ url: raw, layers: layersParam, transparent: true }, layersParam || t('map.layer.wms')));
+          changed(); renderSide();
+        };
+        wmsInput.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter') addWms(); });
         return h('div', { class: 'dm-card dm-stack-sm' }, h('strong', { text: t('map.add') }),
+          h('div', { class: 'dm-row-end' }, wmsInput, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: addWms })),
           h('div', { class: 'dm-row-end' }, dsSel, basic.button({ label: t('common.add'), icon: 'plus', size: 'sm', onClick: async () => {
             const ds = allDatasets.find((d) => d.id === dsSel.value);
             if (!ds) return;

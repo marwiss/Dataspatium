@@ -16,6 +16,10 @@ en þú velur bakgrunnskort og gefur samþykki þitt.
 Gagnasöfn með rúmfræðidálki eða dálkum sem heita lengd og breidd opnast beint sem kort; fyrir aðra hnitadálka (til
 dæmis `x` og `y`) velur þú *Sýna sem kort* í tækjastiku töflunnar.
 
+Landupplýsingar má einnig sækja beint úr opnum þjónustum: *Bæta við landupplýsingauppsprettu* í Safna gerir uppsprettu
+úr WFS-, OGC API Features- eða ArcGIS-þjónustu, og uppsprettan *Geodataportalen* finnur þjónustur í sænsku landsskránni.
+Svörin fá rúmfræðidálk og opnast sem kort. Sjá [kallor.md](kallor.md#opin-landupplýsingagögn).
+
 ## Kortið í Vinna
 
 Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga, og
@@ -32,10 +36,12 @@ teiknaðar (mörkin má hækka fyrir hvert lag í kortasýninni).
 *Nýtt myndrit → Kort* býr til kortasýn með valda gagnasafnið sem fyrsta lag. Stillingarnar til vinstri:
 
 - **Bakgrunnskort**: ekkert (sjálfgefið), OpenStreetMap eða eigin kortaþjónn með slóðarmynstri eins og
-  `https://…/{z}/{x}/{y}.png` og heimildartexta. Bakgrunnskort eru sótt af netinu og spurt er um samþykki í fyrsta
+  `https://…/{z}/{x}/{y}.png` og heimildartexta, eða **WMS-þjónusta** (vistfang, lög, myndsnið og gegnsæi; *Lesa lög* sækir lagalista
+  þjónustunnar). Bakgrunnskort eru sótt af netinu og spurt er um samþykki í fyrsta
   sinn (tilgangurinn *Bakgrunnskort* undir Umsjón → Netaðgangur).
 - **Lög**: bættu við fleiri gagnasöfnum eða meðfylgjandi mörkum (lén og sveitarfélög í Svíþjóð, Danmörku, Noregi og
-  Finnlandi). Hvert lag hefur heiti, sýnileika, röð, lit, fyllingu, línubreidd og punktastærð, rúmfræði- eða
+  Finnlandi) eða **WMS-lagi** (myndir úr kortaþjónustu, dregnar undir fitjunum með völdu gegnsæi; það hefur engar
+  skýringar og fylgir ekki með í útflutningi í SVG, PNG og PDF). Hvert lag hefur heiti, sýnileika, röð, lit, fyllingu, línubreidd og punktastærð, rúmfræði- eða
   hnitadálka, lit eftir dálki (flokkar með litaspjaldi forritsins eða bil með raðkvarða, fjöldi bila), merki (sýnt
   þegar bendillinn hvílir á fitju) og hámarksfjölda fitja.
 - **Sýn**: *Vista núverandi sýn* læsir miðju og þysjun kortsins; annars er kortið fellt að lögunum. Skýringum og hæð má
@@ -76,6 +82,6 @@ tákn umfram fyrstu reglu eru ekki tekin með.
 
 - Bakgrunnskort og birt HTML með bakgrunnskorti þurfa net; forritið sjálft sendir engar beiðnir án samþykkis.
 - Vörpun: WGS 84 og SWEREF 99 TM. Önnur hnitakerfi þarf að umreikna fyrir innflutning (til dæmis í QGIS).
-- Útflutningurinn teiknar lögin, ekki bakgrunnskortið.
+- Útflutningurinn teiknar lögin, ekki bakgrunnskortið eða WMS-lög.
 - Jaðarsvæði og yfirlagnir eru flatarreikningar á WGS 84-hnitum með Turf; á kílómetrakvarða á Norðurlöndum er villan
   lítil, fyrir mjög stór svæði merkjanleg.

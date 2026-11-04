@@ -50,6 +50,12 @@ som filer, og i Chrome og Edge kan en fil lenkes slik at datasettet leses inn ig
 
 QGIS-prosjekter (.qgs, .qgz) blir kartvisninger: lagrekkefølge, synlighet og symboler følger med, lagene kobles til datasett med samme filnavn, og datafiler som slippes sammen med prosjektet importeres først (se [kartor.md](kartor.md)).
 
+Under *Databaser* finnes også *Legg til geodatakilde*: en WFS-, OGC API Features- eller ArcGIS-tjeneste blir en kilde der
+lagene hentes som GeoJSON og åpnes som kart, og kilden *Geodataportalen (sök geodata)* søker i den svenske nasjonale
+geodatakatalogen og legger til tjenester med ett klikk. Forhåndsinnstilte geodatakilder finnes for SCB, SGU, Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE samt Lantmäteriets
+geodataplattform for den som har nøkkel. Se [kallor.md](kallor.md#åpne-geodata).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha

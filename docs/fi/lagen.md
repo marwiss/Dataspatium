@@ -51,6 +51,12 @@ aineisto luetaan uudelleen levyltä. Ks. [kallor.md](kallor.md).
 
 QGIS-projekteista (.qgs, .qgz) tulee karttanäkymiä: tasojärjestys, näkyvyys ja symbolit tulevat mukana, tasot yhdistetään samannimisiin aineistoihin ja projektin kanssa pudotetut datatiedostot tuodaan ensin (katso [kartor.md](kartor.md)).
 
+Kohdassa *Tietokannat* on myös *Lisää paikkatietolähde*: WFS-, OGC API Features- tai ArcGIS-palvelusta tulee lähde, jonka
+tasot noudetaan GeoJSONina ja avataan karttoina, ja lähde *Geodataportalen (sök geodata)* hakee Ruotsin kansallisesta
+paikkatietoluettelosta ja lisää palveluja yhdellä napsautuksella. Valmiita paikkatietolähteitä on SCB:lle, SGU:lle,
+Havs- och vattenmyndighetenille, Riksantikvarieämbetetille, Skogsstyrelsenille, Kartverketille, Tilastokeskukselle ja
+SYKElle sekä Lantmäterietin paikkatietoalustalle avaimen haltijoille. Katso [kallor.md](kallor.md#avoin-paikkatieto).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä

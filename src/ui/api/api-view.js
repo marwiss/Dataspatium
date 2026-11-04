@@ -8,14 +8,15 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets'],
-    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, runner, connectors, auth, http, files, datasets) => {
+  D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet'],
+    (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, runner, connectors, auth, http, files, datasets, leaflet) => {
       const { h, t, i18n, replace } = base;
       const PREVIEW_ROWS = 2000;
 
       /**
        * @param {any} ctx shell context @param {any} connector
-       * @param {{onDataset?: Function, onRemoved?: Function}} [hooks]
+       * @param {{onDataset?: Function, onRemoved?: Function, onConnector?: Function}} [hooks] onConnector: a source created from
+       *   this view (a catalogue hit added as a geodata source) that Inhämta should open
        */
       function create(ctx, connector, hooks = {}) {
         const { shell, store } = ctx;
@@ -25,15 +26,19 @@
         const el = h('div', { class: 'dm-stack dm-api-view' });
         const resultEl = h('div', { class: 'dm-stack' });
         const progressEl = h('div');
-        const api = { connector, runFetch, log: (m, k) => shell.log(m, k) };
+        const api = { connector, runFetch, log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); } };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
+        const isGeodata = family === 'geodata';
         // Statistics Denmark (statbank) and FHI browse like PxWeb v1: folders, tables, a variable picker.
         const browser = family === 'pxweb' ? pxwebView.create(api)
           : family === 'statbank' ? pxwebView.create(api, D.require('api/families/statbank'))
             : family === 'fhi' ? pxwebView.create(api, D.require('api/families/fhi'))
-              : (family === 'socialstyrelsen' ? sosView.create(api) : null);
-        const form = connector.endpoints && connector.endpoints.length ? endpointForm.create(api) : null;
+              : family === 'socialstyrelsen' ? sosView.create(api)
+                : isGeodata ? geodataView.create(api)
+                  : (family === 'geoportal' ? geoportalView.create(api) : null);
+        // Geodata sources: the layer browser is the form (it holds the layers' endpoints); no second tab.
+        const form = !isGeodata && connector.endpoints && connector.endpoints.length ? endpointForm.create(api) : null;
         let tab = browser ? 'browse' : 'endpoints';
 
         function render() {
@@ -45,7 +50,7 @@
           }
           replace(el,
             h('div', { class: 'dm-page-head' },
-              h('h1', null, icons.icon('globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null),
+              h('h1', null, icons.icon(isGeodata || family === 'geoportal' ? 'map' : 'globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null, isGeodata ? h('dm-badge', { text: t('geodata.badge.' + connector.family.kind) }) : null),
               h('div', { class: 'dm-row' },
                 connector.docs ? basic.button({ label: t('api.docs'), icon: 'external-link', onClick: () => window.open(connector.docs, '_blank', 'noopener') }) : null,
                 basic.button({ label: t('api.export'), icon: 'download', variant: 'ghost', onClick: () => files.download(new Blob([connectors.exportJson(connector)], { type: 'application/json' }), files.safeName(connector.id, 'api.json')) }))),
@@ -97,15 +102,20 @@
           mode.options = [{ value: 'append', label: t('api.into.mode.append') }, { value: 'replace', label: t('api.into.mode.replace') }];
           const saveBtn = basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: state.saving, onClick: () => save(nameInput.value.trim()) });
           const intoBtn = basic.button({ label: t('api.into.run'), icon: 'rows-3', loading: state.saving, onClick: () => { if (target.value) into(target.value, mode.value); else overlays.toast.show(t('api.into.pick'), { kind: 'warn' }); } });
+          // Geodata answers are shown as a small map above the table (the saved dataset opens as a map).
+          const mapSvg = leaflet.tableSvg(r.table, { width: 640, height: 300, limit: 5000 });
+          const mapEl = mapSvg ? h('div', { class: 'dm-api-map' }, new DOMParser().parseFromString(mapSvg, 'image/svg+xml').documentElement) : null;
           replace(resultEl, h('div', { class: 'dm-card dm-stack' },
             h('div', { class: 'dm-row-wrap' },
               h('strong', { text: t('api.result', { rows: i18n.formatNumber(r.table.rows.length), cols: r.table.columns.length }) }),
               r.table.meta && r.table.meta.pages ? h('dm-badge', { text: t('api.result.pages', { n: r.table.meta.pages }) }) : null,
               r.preview ? h('dm-badge', { kind: 'accent', text: t('api.result.preview') }) : null,
+              mapEl ? h('dm-badge', { kind: 'accent', text: t('api.result.map') }) : null,
               r.table.meta && r.table.meta.truncated ? h('span', { class: 'dm-warn dm-small', text: t('api.result.truncated', { n: r.table.meta.pages }) }) : null,
               r.table.meta && r.table.meta.label ? h('span', { class: 'dm-help', text: r.table.meta.label }) : null),
+            mapEl,
             h('div', { class: 'dm-table-wrap' }, table),
-            state.saved ? h('div', { class: 'dm-success' }, h('span', { text: state.saved.text }), h('div', { class: 'dm-row' }, basic.button({ label: t('import.open.bearbeta'), icon: 'pencil', variant: 'primary', onClick: () => { store.set({ selectedId: state.saved.id }); shell.activate('bearbeta'); } })))
+            state.saved ? h('div', { class: 'dm-success' }, h('span', { text: state.saved.text }), h('div', { class: 'dm-row' }, basic.button({ label: t(mapEl ? 'geodata.open.map' : 'import.open.bearbeta'), icon: mapEl ? 'map' : 'pencil', variant: 'primary', onClick: () => { store.set({ selectedId: state.saved.id }); shell.activate('bearbeta'); } })))
               : h('div', { class: 'dm-stack-sm' },
                 h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, saveBtn),
                 existing.length ? h('details', { class: 'dm-more' }, h('summary', { text: t('api.into') }), h('div', { class: 'dm-row-wrap dm-api-save' }, target, mode, intoBtn)) : null)));

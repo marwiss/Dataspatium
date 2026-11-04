@@ -49,6 +49,13 @@ auk þess lesnar beint sem skrár, og í Chrome og Edge má tengja skrá svo gag
 
 QGIS-verkefni (.qgs, .qgz) verða kortasýnir: lagaröð, sýnileiki og tákn fylgja með, lögin eru pöruð við gagnasöfn með sama skráarheiti og gagnaskrár sem sleppt er með verkefninu eru fluttar inn fyrst (sjá [kartor.md](kartor.md)).
 
+Undir *Gagnagrunnar* er einnig *Bæta við landupplýsingauppsprettu*: WFS-, OGC API Features- eða ArcGIS-þjónusta verður
+uppspretta þar sem lögin eru sótt sem GeoJSON og opnuð sem kort, og uppsprettan *Geodataportalen (sök geodata)* leitar í
+sænsku landsskránni yfir landupplýsingar og bætir þjónustum við með einum smelli. Forstilltar landupplýsingauppsprettur
+eru til fyrir SCB, SGU, Havs- och vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Hagstofu
+Finnlands og SYKE auk landupplýsingavettvangs Lantmäteriet fyrir þá sem hafa lykil. Sjá
+[kallor.md](kallor.md#opin-landupplýsingagögn).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft

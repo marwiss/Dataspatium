@@ -69,6 +69,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Kort**: landupplýsingasöfn opnast sem kort til að þysja, kortasýnir með mörgum lögum og bakgrunnskorti eftir
   samþykki verða stjórnborð og birt HTML, landfræðitólin reikna flatarmál, punkta í svæðum, næsta, jaðarsvæði og
   yfirlögn án kóða, og QGIS-verkefni verða kortasýnir (sjá [kartor.md](kartor.md)).
+- **Opin landupplýsingagögn**: WFS-, OGC API Features- og ArcGIS-þjónustur verða uppsprettur þar sem lögin eru sótt sem
+  kort, með forstillingum fyrir SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Hagstofu Finnlands og SYKE, leit í
+  Geodataportalen og WMS-þjónustum sem bakgrunnskorti eða lagi (sjá [kallor.md](kallor.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

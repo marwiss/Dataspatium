@@ -52,6 +52,12 @@ och i Chrome och Edge kan en fil länkas så att datamängden läses in igen fr�
 
 QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
 
+Under *Databaser* finns också *Lägg till geodatakälla*: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
+lager hämtas som GeoJSON och öppnas som kartor, och källan *Geodataportalen (sök geodata)* söker i den nationella
+geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
+vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, samt Lantmäteriets
+geodataplattform för den som har nyckel. Se [kallor.md](kallor.md#öppna-geodata).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)

@@ -90,6 +90,12 @@ Dataspatium.assets.addEntries({
   "size": 8900,
   "library": "dataspatium"
  },
+ "presets/api/geodataportalen.api.json": {
+  "file": "presets/api/geodataportalen.api.json.js",
+  "encoding": "text",
+  "size": 5183,
+  "library": "dataspatium"
+ },
  "presets/api/hagstofa.api.json": {
   "file": "presets/api/hagstofa.api.json.js",
   "encoding": "text",
@@ -102,10 +108,28 @@ Dataspatium.assets.addEntries({
   "size": 2664,
   "library": "dataspatium"
  },
+ "presets/api/hav-geodata.api.json": {
+  "file": "presets/api/hav-geodata.api.json.js",
+  "encoding": "text",
+  "size": 2964,
+  "library": "dataspatium"
+ },
+ "presets/api/kartverket-adm.api.json": {
+  "file": "presets/api/kartverket-adm.api.json.js",
+  "encoding": "text",
+  "size": 2826,
+  "library": "dataspatium"
+ },
  "presets/api/kartverket-kommuneinfo.api.json": {
   "file": "presets/api/kartverket-kommuneinfo.api.json.js",
   "encoding": "text",
   "size": 5814,
+  "library": "dataspatium"
+ },
+ "presets/api/kartverket-teig.api.json": {
+  "file": "presets/api/kartverket-teig.api.json.js",
+  "encoding": "text",
+  "size": 2910,
   "library": "dataspatium"
  },
  "presets/api/kolada.api.json": {
@@ -130,6 +154,12 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/lantmateriet-geodata.api.json.js",
   "encoding": "text",
   "size": 4590,
+  "library": "dataspatium"
+ },
+ "presets/api/lantmateriet-ngp-detaljplan.api.json": {
+  "file": "presets/api/lantmateriet-ngp-detaljplan.api.json.js",
+  "encoding": "text",
+  "size": 3622,
   "library": "dataspatium"
  },
  "presets/api/luftkvalitet.api.json": {
@@ -174,6 +204,18 @@ Dataspatium.assets.addEntries({
   "size": 7093,
   "library": "dataspatium"
  },
+ "presets/api/raa-arkreg.api.json": {
+  "file": "presets/api/raa-arkreg.api.json.js",
+  "encoding": "text",
+  "size": 2974,
+  "library": "dataspatium"
+ },
+ "presets/api/scb-geodata.api.json": {
+  "file": "presets/api/scb-geodata.api.json.js",
+  "encoding": "text",
+  "size": 3025,
+  "library": "dataspatium"
+ },
  "presets/api/scb-pxweb-v2.api.json": {
   "file": "presets/api/scb-pxweb-v2.api.json.js",
   "encoding": "text",
@@ -184,6 +226,18 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/scb-pxweb.api.json.js",
   "encoding": "text",
   "size": 5437,
+  "library": "dataspatium"
+ },
+ "presets/api/sgu-geodata.api.json": {
+  "file": "presets/api/sgu-geodata.api.json.js",
+  "encoding": "text",
+  "size": 3022,
+  "library": "dataspatium"
+ },
+ "presets/api/skogsstyrelsen-geodata.api.json": {
+  "file": "presets/api/skogsstyrelsen-geodata.api.json.js",
+  "encoding": "text",
+  "size": 3117,
   "library": "dataspatium"
  },
  "presets/api/smhi-metobs.api.json": {
@@ -222,10 +276,22 @@ Dataspatium.assets.addEntries({
   "size": 2825,
   "library": "dataspatium"
  },
+ "presets/api/statfin-geo.api.json": {
+  "file": "presets/api/statfin-geo.api.json.js",
+  "encoding": "text",
+  "size": 3070,
+  "library": "dataspatium"
+ },
  "presets/api/statfin.api.json": {
   "file": "presets/api/statfin.api.json.js",
   "encoding": "text",
   "size": 3261,
+  "library": "dataspatium"
+ },
+ "presets/api/syke-geodata.api.json": {
+  "file": "presets/api/syke-geodata.api.json.js",
+  "encoding": "text",
+  "size": 2937,
   "library": "dataspatium"
  },
  "presets/api/vedur-observations.api.json": {
@@ -297,7 +363,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13350,
+  "size": 13921,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -339,13 +405,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 18062,
+  "size": 18704,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 9122,
+  "size": 11984,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -369,7 +435,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5654,
+  "size": 6322,
   "library": "dataspatium"
  },
  "docs/sv/dokumentmallar.md": {
@@ -417,7 +483,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 13148,
+  "size": 13709,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -459,13 +525,13 @@ Dataspatium.assets.addEntries({
  "docs/da/api-konfiguration.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 10361,
+  "size": 10993,
   "library": "dataspatium"
  },
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 9027,
+  "size": 11718,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -489,7 +555,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5623,
+  "size": 6262,
   "library": "dataspatium"
  },
  "docs/da/dokumentmallar.md": {
@@ -537,7 +603,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 12954,
+  "size": 13519,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -579,13 +645,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/api-konfiguration.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 10226,
+  "size": 10867,
   "library": "dataspatium"
  },
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 8908,
+  "size": 11611,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -609,7 +675,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5534,
+  "size": 6171,
   "library": "dataspatium"
  },
  "docs/nb/dokumentmallar.md": {
@@ -657,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14311,
+  "size": 14919,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -699,13 +765,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/api-konfiguration.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 10818,
+  "size": 11466,
   "library": "dataspatium"
  },
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9677,
+  "size": 12588,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -729,7 +795,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6086,
+  "size": 6745,
   "library": "dataspatium"
  },
  "docs/fi/dokumentmallar.md": {
@@ -777,7 +843,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 13501,
+  "size": 14141,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -819,13 +885,13 @@ Dataspatium.assets.addEntries({
  "docs/is/api-konfiguration.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 11207,
+  "size": 11903,
   "library": "dataspatium"
  },
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9523,
+  "size": 12461,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -849,7 +915,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5669,
+  "size": 6338,
   "library": "dataspatium"
  },
  "docs/is/dokumentmallar.md": {
@@ -897,7 +963,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 13259,
+  "size": 13834,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -939,13 +1005,13 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 18573,
+  "size": 19250,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8965,
+  "size": 11725,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {
@@ -969,7 +1035,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5638,
+  "size": 6259,
   "library": "dataspatium"
  },
  "docs/en/dokumentmallar.md": {

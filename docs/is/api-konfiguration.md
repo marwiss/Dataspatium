@@ -45,6 +45,13 @@ Ekki með: opingogn.is hefur ekki lengur leitarvefþjónustu; DMI í Danmörku o
 Service og data.norge.no hafa ekki CORS. Uppruna án CORS er ekki hægt að ná beint úr vafranum; þeir krefjast eigin milliþjóns,
 sjá hér að neðan.
 
+Landupplýsingauppsprettur (fjölskyldan `geodata` með `kind` `wfs`, `ogcapi` eða `arcgis`) koma án endapunkta: lögin eru
+lesin úr þjónustunni þegar uppsprettan er opnuð og vistuð í þínu eintaki af stillingunni. Forstillt: opin
+landupplýsingagögn SCB, SGU, Havs- och vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen (ArcGIS), Kartverket
+(stjórnsýslueiningar, fasteignakort), Hagstofa Finnlands, SYKE (ArcGIS) og, með lykli, landupplýsingavettvangur
+Lantmäteriet (deiliskipulag). Uppsprettan *Geodataportalen (sök geodata)* (fjölskyldan `geoportal`, svarsniðið
+`geonetwork`) leitar í sænsku landsskránni. Sjá [kallor.md](kallor.md#opin-landupplýsingagögn).
+
 ## Svona gerirðu
 
 1. Opnaðu haminn **Sækja** og veldu uppruna undir **Opnar vefþjónustur** í hlutaspjaldinu. Landahnapparnir fyrir ofan listann

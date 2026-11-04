@@ -199,6 +199,16 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-api-view .dm-api-fields { align-items: start; }
 .dm-api-save { align-items: flex-end; }
 .dm-api-save dm-input, .dm-api-save dm-select { min-width: 220px; flex: 1 1 220px; }
+/* Geodata sources: the layer list, the map preview of an answer and the catalogue cards. */
+.dm-geo-head { align-items: flex-end; }
+.dm-geo-head dm-input { flex: 1 1 240px; min-width: 200px; }
+.dm-geo-layers { max-height: 360px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
+.dm-api-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; max-width: 640px; }
+.dm-api-map svg { display: block; width: 100%; height: auto; }
+.dm-geoportal-search { align-items: flex-end; }
+.dm-geoportal-search dm-input { flex: 1 1 320px; min-width: 200px; }
+.dm-geoportal-list { max-height: 60vh; overflow: auto; }
+.dm-geoportal-links { margin: 0; padding-left: var(--dm-s-4); font-size: var(--dm-text-xs); display: flex; flex-direction: column; gap: var(--dm-s-1); }
 .dm-api-list { max-height: 440px; overflow: auto; }
 .dm-api-requests { display: flex; flex-direction: column; gap: var(--dm-s-2); font-size: var(--dm-text-xs); }
 .dm-api-requests li { display: flex; flex-direction: column; gap: 2px; }
