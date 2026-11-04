@@ -108,6 +108,9 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Fråga (fliken i Söka), villkor, koppling, beräkning | Query, filter (för villkor), join, aggregat (i gränssnittet) |
 | Handbok (hjälpen i appen) | Hjälpcenter, manual, dokumentation (i gränssnittet) |
 | Presentera, presentation (dashboard i hela fönstret) | Bildspel, helskärmsläge, kiosk |
+| Brygga, databasbryggan (det lokala skriptet för databaser) | Proxy, agent, tjänst |
+| Länkad fil (datamängd som kan läsas in igen från disken) | Synkad fil, bevakad fil |
+| Databaskälla (anslutning till PostgREST, OData …) | Connector, koppling (som är join) |
 | Flak (panel som läggs över arbetsytan i smala fönster) | Sheet, drawer, sidopanel |
 | Komponent (del av appen som hämtas vid behov) | Plugin, modul, tillägg |
 | Tips (text som visas när pekaren vilar på en knapp) | Tooltip, verktygstips |

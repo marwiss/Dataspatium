@@ -210,6 +210,12 @@ Ja. Öppna dashboarden i Visualisera och klicka på **Presentera**: dashboarden 
 ett diagram i taget, F ger helskärm och Esc avslutar. De gemensamma filtren finns kvar överst. Se
 [visualisera.md](visualisera.md).
 
+## Kan jag läsa en Access-databas eller en SQL Server-tabell?
+
+Ja. Access-filer (mdb, accdb) släpps på ytan i Inhämta och läses direkt i webbläsaren. SQL Server, ODBC-källor,
+Excel och Access-frågor nås genom databasbryggan, ett litet skript som du startar på datorn; tjänster som PostgREST,
+OData och GraphQL läggs till som källor med en adress. Se [kallor.md](kallor.md).
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

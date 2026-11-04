@@ -195,6 +195,12 @@ Ja. Åbn dashboardet i Visualisér, og klik på **Præsentér**: dashboardet fyl
 ad gangen, F giver fuld skærm, og Esc afslutter. De fælles filtre bliver øverst. Se
 [visualisera.md](visualisera.md).
 
+## Kan jeg læse en Access-database eller en SQL Server-tabel?
+
+Ja. Access-filer (mdb, accdb) slippes på fladen i Hent og læses direkte i browseren. SQL Server, ODBC-kilder, Excel
+og Access-forespørgsler nås gennem databasebroen, et lille script, du starter på computeren; tjenester som
+PostgREST, OData og GraphQL tilføjes som kilder med en adresse. Se [kallor.md](kallor.md).
+
 ## Finder du ikke svaret her?
 
 Læs [anvandarguide.md](anvandarguide.md), eller opret et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

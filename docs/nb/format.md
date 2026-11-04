@@ -23,6 +23,7 @@
 | SQLite | Ja | Ja | Dataspatiums egen fil gjenopprettes med typer, etiketter og historikk; i andre databaser velger du tabell, og typene hentes fra skjemaet |
 | SQL-skript (sql) | Ja | Nei | Et skript med `CREATE TABLE` og `INSERT`, for eksempel en databasedump, kjøres i en tom SQLite-database, og tabellene vises for valg. MySQL-spesifikke linjer (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og tabellvalg som `ENGINE=`) fjernes først; andre dialekter fungerer så langt de følger SQLites syntaks |
 | GeoPackage (gpkg) | Ja | Nei | Lagene (feature- og attributtabeller) velges som tabeller; geometrikolonnen blir GeoJSON som kartdiagrammet tegner, referansesystemet vises |
+| Access (mdb, accdb) | Ja | Nei | Leses rett i nettleseren med mdb-reader; tabellen velges i trinnet Innstillinger, og typene kommer fra Access. Spørringer, lenkede tabeller og passord krever [databasebroen](kallor.md). |
 | SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter blir kolonneetiketter og verdietiketter kolonnemetadata (se nedenfor) |
 | Stata dta | Ja | dta | Via haven. Verdietiketter som for SPSS. Ved eksport forkortes kolonnenavnene etter Statas regler (32 tegn, ASCII) |
 | SAS sas7bdat, xpt | Ja | Nei | Via haven |

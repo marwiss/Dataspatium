@@ -211,6 +211,13 @@ Yes. Open the dashboard in Visualise and click **Present**: the dashboard fills 
 chart at a time, F gives full screen and Esc ends. The shared filters stay at the top. See
 [visualisera.md](visualisera.md).
 
+## Can I read an Access database or a SQL Server table?
+
+Yes. Access files (mdb, accdb) are dropped on the surface in Import and read directly in the browser. SQL Server,
+ODBC sources, Excel and Access queries are reached through the database bridge, a small script you start on the
+computer; services such as PostgREST, OData and GraphQL are added as sources with an address. See
+[kallor.md](kallor.md).
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

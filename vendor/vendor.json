@@ -1006,6 +1006,17 @@
           "wrap": false
         }
       ]
+    },
+    "mdb-reader": {
+      "type": "esm-graph",
+      "version": "3.2.0",
+      "npm": "mdb-reader",
+      "host": "https://esm.sh",
+      "entry": "/mdb-reader@3.2.0/es2022/mdb-reader.mjs",
+      "license": "MIT",
+      "homepage": "https://github.com/andipaetzold/mdb-reader",
+      "licenseUrl": "https://raw.githubusercontent.com/andipaetzold/mdb-reader/main/LICENSE",
+      "notes": "Reads Microsoft Access files (.mdb, .accdb) in the browser (io/importers/access). Fetched as an ES module graph from esm.sh together with its dependencies (Node polyfills by esm.sh, sha.js, browserify-aes, pako, fast-xml-parser, readable-stream and small helpers; MIT, ISC and BSD-2-Clause, see the licences below). tools/fetch_vendor.py inlines re-export barrels and turns the main module's import of its own ColumnTypes into a local alias, so that the graph loads without import maps."
     }
   }
 }

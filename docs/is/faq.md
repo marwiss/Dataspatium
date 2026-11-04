@@ -193,6 +193,12 @@ opnað úr handbókinni eða með Ctrl+K.
 Já. Opnaðu mælaborðið í Myndgera og smelltu á **Kynna**: mælaborðið fyllir gluggann, örvalyklarnir fara eitt myndrit
 í einu, F gefur fullan skjá og Esc lýkur. Sameiginlegu síurnar haldast efst. Sjá [visualisera.md](visualisera.md).
 
+## Get ég lesið Access-gagnagrunn eða SQL Server-töflu?
+
+Já. Access-skrám (mdb, accdb) er sleppt á flötinn í Sækja og þær lesnar beint í vafranum. SQL Server,
+ODBC-uppsprettur, Excel og Access-fyrirspurnir nást um gagnagrunnsbrúna, litla skriftu sem þú ræsir á tölvunni;
+þjónustur eins og PostgREST, OData og GraphQL er bætt við sem uppsprettum með vistfangi. Sjá [kallor.md](kallor.md).
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

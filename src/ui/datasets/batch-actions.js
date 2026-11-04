@@ -113,7 +113,7 @@
           services.files.download(blob, services.files.safeName(t('datasets.batch.export.file'), 'zip'));
           done(ctx, t('datasets.batch.exported', { n: chosen.length }));
         } else if (choice === 'refresh') {
-          const api = chosen.filter((d) => d.source && d.source.kind === 'api');
+          const api = chosen.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
           if (!api.length) { ui.toast.show(t('datasets.batch.refresh.none'), { kind: 'warn' }); return; }
           const runner = D.require('api/runner');
           let ok = 0;

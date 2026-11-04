@@ -71,6 +71,11 @@ sources are shown. Browse or search for a table, choose variables, preview and f
 fetched dataset remembers its query, so it can be fetched again from Manage when the source has been updated, and
 *Saved fetches* in Import updates such datasets with one click and replays their recipes.
 
+Databases: Access files are dropped on the surface like other files; databases on the computer (SQL Server, ODBC,
+Excel, SQLite) are reached through *Database through the bridge* and services over HTTP (PostgREST, OData, GraphQL
+and more) through *Add a database source*. In Chrome and Edge a file can be linked and read again from disk. See
+[kallor.md](kallor.md).
+
 ### 2. Review and correct (Process)
 
 The table shows the dataset row by row even when it has hundreds of thousands of rows. Click a header to sort and

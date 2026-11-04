@@ -15,7 +15,7 @@
     const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
-    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text'];
+    const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv'];
     const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi'];
     /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
     const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT'];
@@ -69,6 +69,7 @@
             format: { type: 'string', enum: FORMATS },
             path: { type: 'string' },
             explode: { type: 'string' },
+            lift: { type: 'string' },
             constants: { type: 'object' },
             rename: { type: 'object' },
             convert: { type: 'object' },

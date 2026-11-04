@@ -41,6 +41,12 @@ vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Í fy
 við netið í einhverjum tilgangi (vefþjónustur, vefslóðir, GitHub, íhlutir) spyr það um leyfi; svarið má vista. Sjá
 [api-konfiguration.md](api-konfiguration.md).
 
+Undir *Gagnagrunnar* eru tvær leiðir inn: *Gagnagrunnur um brúna* (Access, Excel, SQL Server, SQLite og
+ODBC-uppsprettur á tölvunni um litla staðbundna skriftu) og *Bæta við gagnagrunnsuppsprettu* (PostgREST, OData,
+GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable um HTTP). Access-skrár eru
+auk þess lesnar beint sem skrár, og í Chrome og Edge má tengja skrá svo gagnasafnið sé lesið aftur af diski. Sjá
+[kallor.md](kallor.md).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft

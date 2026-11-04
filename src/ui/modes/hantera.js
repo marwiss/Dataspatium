@@ -74,7 +74,8 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('table', 20), ds.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })),
             h('div', { class: 'dm-row' },
-              ds.source && ds.source.kind === 'api' ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
+              ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
+              ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
               ui.button({ label: t('common.rename'), icon: 'pencil', onClick: () => rename(ds) }),
               ui.button({ label: t('datasets.organize'), icon: 'folder', onClick: () => batch.organize(ctx, [ds.id]) }),
@@ -145,10 +146,21 @@
             h('div', null, ui.button({ label: t('comments.add'), icon: 'message-square', variant: 'primary', onClick: add })))));
       }
 
+      /** Read a linked file again (File System Access): the same import options, the recipe replayed. */
+      async function refreshLinked(ds) {
+        try {
+          const res = await D.require('api/runner').refreshDataset(ds.id);
+          const text = t('linked.refresh.done', { name: ds.name, rows: i18n.formatNumber(res.rows), steps: res.steps });
+          shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
+        } catch (err) {
+          const message = (err && err.message) || String(err);
+          shell.log(message, 'error'); ui.toast.show(message, { kind: 'error', timeout: 10000 });
+        }
+      }
       /** Fetch a dataset again from the API it came from (append or replace rows). */
       async function refetch(ds) {
         const choice = await ui.dialog.open({
-          title: t('api.refetch.title', { name: ds.source.connectorName || '' }),
+          title: t('api.refetch.title', { name: ds.source.connectorName || ds.source.label || '' }),
           help: 'api-konfiguration#uppdatera-en-hämtad-datamängd',
           body: h('p', { text: t('api.refetch.text') }),
           actions: [{ label: t('common.cancel'), value: null }, { label: t('api.into.mode.append'), value: 'append' }, { label: t('api.saved.update'), variant: 'primary', value: 'update', primary: true }],
@@ -175,9 +187,10 @@
       /** Human-readable origin of a dataset. */
       function describeSource(src) {
         if (!src) return '';
+        if (src.kind === 'bridge') return [t('bridge.title'), src.label, src.fetchedAt ? t('api.fetched.at', { date: i18n.formatDateTime(src.fetchedAt) }) : ''].filter(Boolean).join(' · ');
         if (src.kind === 'api') return [src.connectorName, src.table && src.table.title ? src.table.title : src.endpointName, src.fetchedAt ? t('api.fetched.at', { date: i18n.formatDateTime(src.fetchedAt) }) : '', src.license ? `(${src.license})` : ''].filter(Boolean).join(' · ');
         if (src.publisher) return [src.publisher, src.table, src.license ? `(${src.license})` : ''].filter(Boolean).join(' · ');
-        if (src.fileName) return `${src.fileName}${src.format ? ` (${src.format})` : ''}`;
+        if (src.fileName) return `${src.fileName}${src.format ? ` (${src.format})` : ''}${src.linked ? ' · ' + t('linked.label') : ''}`;
         if (src.kind === 'paste') return t('import.sources.paste');
         return src.kind || '';
       }
@@ -257,7 +270,7 @@
           await settings.componentsCard(ctx, render));
       }
 
-      function apiDatasets() { return store.get().datasets.filter((d) => d.source && d.source.kind === 'api'); }
+      function apiDatasets() { return store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge')); }
 
       /** Re-fetch every API-sourced dataset (replace mode), one after the other, with progress in a toast. */
       async function refreshAllApi() {

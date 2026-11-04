@@ -1,0 +1,1 @@
+@nodable/entities 3.1.0: the package ships no licence file; package.json declares the licence "MIT".

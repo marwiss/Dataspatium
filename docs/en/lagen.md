@@ -45,6 +45,12 @@ that came from an API and updates them with one click, one at a time or all. The
 contact the internet for a purpose (APIs, web addresses, GitHub, components) it asks for permission; the answer can
 be remembered. See [api-konfiguration.md](api-konfiguration.md).
 
+Under *Databases* there are two ways in: *Database through the bridge* (Access, Excel, SQL Server, SQLite and ODBC
+sources on the computer through a small local script) and *Add a database source* (PostgREST, OData, GraphQL,
+CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable over HTTP). Access files are also
+read directly as files, and in Chrome and Edge a file can be linked so that the dataset is read again from disk.
+See [kallor.md](kallor.md).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and

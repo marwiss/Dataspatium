@@ -70,6 +70,11 @@ uuteen aineistoon tai lisää olemassa olevaan. Noudettu aineisto muistaa kysely
 Hallitse-tilasta, kun lähde on päivittynyt, ja Nouda-tilan *Tallennetut haut* päivittää tällaiset aineistot yhdellä
 napsautuksella ja toistaa niiden reseptit.
 
+Tietokannat: Access-tiedostot pudotetaan alueelle kuten muut tiedostot; tietokoneen tietokannat (SQL Server, ODBC,
+Excel, SQLite) tavoitetaan kohdasta *Tietokanta sillan kautta* ja HTTP-palvelut (PostgREST, OData, GraphQL ja muut)
+kohdasta *Lisää tietokantalähde*. Chromessa ja Edgessä tiedoston voi linkittää ja lukea uudelleen levyltä. Ks.
+[kallor.md](kallor.md).
+
 ### 2. Tarkista ja korjaa (Muokkaa)
 
 Taulukko näyttää aineiston rivi riviltä, vaikka siinä olisi satoja tuhansia rivejä. Napsauta otsikkoa lajitellaksesi ja

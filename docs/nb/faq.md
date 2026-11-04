@@ -196,6 +196,12 @@ Ja. Åpne dashbordet i Visualiser og klikk på **Presenter**: dashbordet fyller 
 gangen, F gir fullskjerm, og Esc avslutter. De felles filtrene blir værende øverst. Se
 [visualisera.md](visualisera.md).
 
+## Kan jeg lese en Access-database eller en SQL Server-tabell?
+
+Ja. Access-filer (mdb, accdb) slippes på flaten i Hent inn og leses rett i nettleseren. SQL Server, ODBC-kilder,
+Excel og Access-spørringer nås gjennom databasebroen, et lite skript du starter på datamaskinen; tjenester som
+PostgREST, OData og GraphQL legges til som kilder med en adresse. Se [kallor.md](kallor.md).
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

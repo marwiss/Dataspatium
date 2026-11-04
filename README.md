@@ -56,6 +56,10 @@ ett paket.
   och Åland, Nordic Statistics, ECB och OECD, med landsfilter och sparade hämtningar som uppdateras med ett klick
   och spelar upp sina recept (se [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och
   kommun- och regiongränser för Sverige, Danmark, Norge och Finland följer med.
+- **Databaser**: Access-filer läses direkt i webbläsaren; databaser på datorn eller i nätverket (SQL Server, ODBC, Excel,
+  SQLite) nås genom en lokal brygga, och PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
+  SPARQL, InfluxDB, Google Sheets och Airtable blir källor med ett klick. Filer kan länkas och läsas in igen från
+  disken (se [docs/kallor.md](docs/kallor.md)).
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, koda om,
   klassindela, rangordna, beräkna andelar, löpande summor och förändringar, pivotera och koppla data,
   kontrollera datakvalitet med profil och regler (bland annat format, nordiska identitetsnummer, referenser till

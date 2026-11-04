@@ -7,8 +7,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, types, datasets) => {
-    const importers = [excel, tables, geo, json, xml, sqliteImp, shapefile, rFormats, fixedWidth, csv];
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, types, datasets) => {
+    const importers = [excel, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv];
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
@@ -31,6 +31,12 @@
       return importer;
     }
 
+    /** Parse a file to a raw table with the importer its options name (a linked file read again keeps its options). */
+    async function parse(file, options = {}) {
+      const importer = await resolveImporter(file, options.format);
+      if (importer.viaR) throw new Error(D.t('linked.err.viar'));
+      return importer.parse(file, options);
+    }
     function baseName(fileName) { return String(fileName || D.t('datasets.default.name')).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim() || D.t('datasets.default.name'); }
 
     /**
@@ -95,7 +101,7 @@
       return datasets.create({
         name: name || baseName(file.name),
         columns, rows,
-        source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: table.meta.format },
+        source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: table.meta.format, linked: !!options.linked },
         importOptions: Object.assign({}, options, table.meta),
       });
     }
@@ -117,7 +123,7 @@
             const first = materialize({ columns: names, rows }, columnSpecs, options);
             handle = await datasets.createEmpty({
               name: name || baseName(file.name), columns: first.columns,
-              source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'csv' },
+              source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'csv', linked: !!options.linked },
               importOptions: Object.assign({}, options),
             });
             await datasets.appendImportRows(handle, first.rows);
@@ -131,7 +137,7 @@
           if (!result.columns.length) throw new Error(D.t('import.err.nocolumns'));
           names = types.cleanColumnNames(result.columns);
           columnSpecs = columnSpecs || names.map((n) => ({ name: n, type: 'text', include: true }));
-          handle = await datasets.createEmpty({ name: name || baseName(file.name), columns: materialize({ columns: names, rows: [] }, columnSpecs, options).columns, source: { kind: 'file', fileName: file.name, size: file.size, format: 'csv' }, importOptions: Object.assign({}, options) });
+          handle = await datasets.createEmpty({ name: name || baseName(file.name), columns: materialize({ columns: names, rows: [] }, columnSpecs, options).columns, source: { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'csv', linked: !!options.linked }, importOptions: Object.assign({}, options) });
         }
         return await datasets.finishImport(handle, { importOptions: Object.assign({}, options, result.meta), streamed: true });
       } catch (err) {
@@ -178,6 +184,6 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, preview, run, runText, runPreset, previewText, materialize, baseName };
+    return { importers, importerFor, preview, parse, run, runText, runPreset, previewText, materialize, baseName };
   });
 })();

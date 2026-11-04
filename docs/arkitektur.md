@@ -217,6 +217,12 @@ eller genom att första värdet tolkas; övriga kolumner blir egenskaper), XML, 
 dta och rds: `toViaR` speglar datamängden till R, kör skrivfunktionen och läser tillbaka filen via
 `r-bridge` (`writeFile`, `readFile`, `mkdir`, `removeFile`).
 
+Access-filer (`io/importers/access.js`) läses med mdb-reader, som levereras som en modulgraf från esm.sh (se
+utveckling.md) och importeras med `Dataspatium.assets.importGraph('mdb-reader')`; Buffer-polyfillen tas ur samma
+graf. Länkade filer (`data/linked`, Chromium) sparar filhandtaget från `showOpenFilePicker` i minnet och i
+inställningslagret (`linked:<id>`); datamängdens `source` får `linked: true`, och `api/runner.refreshDataset` läser
+filen igen via `io/import.parse` med de sparade importinställningarna innan receptet spelas upp.
+
 ## API-modul
 
 `src/api/` hämtar data från öppna API:er direkt i webbläsaren (se [api-konfiguration.md](api-konfiguration.md)):
@@ -249,6 +255,16 @@ tabellen `data` med samma kolumnmetadata (`datasets.rebuild`), spelar upp recept
 ångra- och loggposter och återställer filen om något steg misslyckas. `refreshAll` gör det för alla i tur och
 ordning, med injicerbar hämtfunktion för tester; Inhämta (*Sparade hämtningar*), Hantera och kommandopaletten
 använder dem.
+
+Databasbryggan (`api/bridge`) talar med `tools/db-bridge.ps1` eller `tools/db_bridge.py` på 127.0.0.1: adress och
+token ligger i sessionen via `api/secrets` (id `__bridge`), varje anrop kräver samtycket `databases`, lösenord hålls
+i sessionen per källsignatur och hamnar aldrig i datamängdens `source` (`sanitize`). Datamängder från bryggan har
+`source.kind = 'bridge'` och uppdateras av `api/runner` som API-datamängder; SQL-konsolen kan köra mot bryggans
+aktuella källa. HTTP-familjerna (`api/families/databases`) bygger vanliga anslutningar av en adress: `build`,
+`discover` (schemaupptäckt) och `endpoints` per familj, hemligheter till `api/secrets`; de nya svarsformaten
+`graphql`, `sparql` och `influx-csv` samt `lift` finns i `api/parsers`, och `resolvePath` slår upp nycklar med
+punkter hela. `api/websocket` är en generell socket-transport (samtycke, JSON-ramar, svar parade på id) för Neo4j
+i 2.9.
 
 ## Visualisering
 

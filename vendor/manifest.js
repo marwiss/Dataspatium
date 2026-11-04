@@ -2045,6 +2045,496 @@ Dataspatium.assets.manifest({
    "size": 404,
    "sha256": "ffff66b160a6448913edc2dafb7a1d87cd320bf37c22483e3ed93b1818b26b4a",
    "library": "lucide"
+  },
+  "mdb-reader/graph/index.json": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 21410,
+   "sha256": "2dcdea133b8c3d3e5034564ba57501765a92c734deb70f71b86c5ec39a31f578",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/mdb-reader%403.2.0%2Fes2022%2Fmdb-reader.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 20021,
+   "sha256": "9a57950bd96ba1f68342a6e3ce73b3da57a1f339015a42418f48e76058013869",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/create-hash%40%5E1.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 325,
+   "sha256": "c27492067c7a1ca1362ca1d8d99a2c055b3fa146303f2d2d19318a663bd8e2be",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/create-hash%401.2.0%2Fes2022%2Fcreate-hash.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2004,
+   "sha256": "85893462d4984fbc5cd519cb50d328bea6592ee0d28b8409489ba1648d2c1ced",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/cipher-base%40%5E1.0.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 309,
+   "sha256": "3cccac640728aa6c7318177a1db8f6a75f21f4c5d1feaa44bf8b73b86803aec8",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/cipher-base%401.0.7%2Fes2022%2Fcipher-base.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 3035,
+   "sha256": "f10570367466f7c4ff16a77923b0b7dd52b0a4533c5fdd6677ce63e19ee0af25",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/to-buffer%40%5E1.2.2%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 235,
+   "sha256": "8d038e426f3f278ce82e86bafc72f3338f37729395c2432ea597c03e1bbaf7bb",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/to-buffer%401.2.2%2Fes2022%2Fto-buffer.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2506,
+   "sha256": "8f0c0b0abcc483433f7b3225e01adbae9bc8653e5d789daf23b52155315bb004",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/isarray%402.0.5%2Fes2022%2Fisarray.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 745,
+   "sha256": "99995394a19b90a4f0679cd6c51f188a78da023371ca0b1fc8468cd46bd7b018",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%5E5.2.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "be83399d8967f21a3492f6ab546cb33796c8b6d328b729b83d4424ed526586d5",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%405.2.1%2Fes2022%2Fsafe-buffer.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2385,
+   "sha256": "ed176797ce043512a0dae228ff5454b802dd08705567be31d962217095abf997",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fbuffer.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 28845,
+   "sha256": "64fb61aa5f48644d685f9ceabedba60ea6b5d6ce03dac1943e863d00d9e574f3",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fstring_decoder.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 239,
+   "sha256": "7907f1d6d353c1bfb8aa95974d643c5e21d4eb94110ad84765bb8ec01c292017",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fstream.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 1668,
+   "sha256": "6c2c188766bc7b23c151ad040a18bc660c73e4a87b765e7480715c89a645895a",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fstream%2Fpromises.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 283,
+   "sha256": "047e45ab1d2022d1aa9f984ccdffdb6a453b4add3a093e7a51d6bbeb51dfc2e6",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fchunk-5WQOGPCV.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 3208,
+   "sha256": "5e736f52cd8e59bca724578d8523134235c5e7bad7eeac4e1e3746981eb91a9a",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fevents.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 12122,
+   "sha256": "4c6150b88c1444aa1fe9331013e3f37eda9836206f629f7f3ae8f3743dd90fa8",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fasync_hooks.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2938,
+   "sha256": "b7862dbfba8bbbca956f19e4e08280b529e4b27468779775a9093aef8c92dc1d",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/sha.js%40%5E2.4.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 219,
+   "sha256": "90c5ece08dbbf50871c98a602c7d5d23b95f6977cc8301eb9a0afeda47752d87",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/sha.js%402.4.12%2Fes2022%2Fsha.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 13269,
+   "sha256": "18fac396f4cc133339cb061dfbdaf6591830fe91f10e3ea454c1b9ff6529e2e8",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/to-buffer%40%5E1.2.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 235,
+   "sha256": "8d038e426f3f278ce82e86bafc72f3338f37729395c2432ea597c03e1bbaf7bb",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/ripemd160%40%5E2.0.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 220,
+   "sha256": "a37660b6937332c1b7450da26d564d34847b3b8539bda849c04d412f6fcb3ba6",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/ripemd160%402.0.3%2Fes2022%2Fripemd160.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 4214,
+   "sha256": "f007dcb19206faf299fbaf6082af92dc984ea747b2ae9345890b8f01f7a5d7a6",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/hash-base%40%5E3.1.2%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 285,
+   "sha256": "0c93045fe4cec7488ad3bfca85794a755621564bc045098514d7dfc883960895",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/hash-base%403.1.2%2Fes2022%2Fhash-base.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 3247,
+   "sha256": "3a67bdbab6d76ad46fddca98a1a7f52eb4dfd8f66ec41dc4639543165d5d43c4",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/to-buffer%40%5E1.2.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 235,
+   "sha256": "8d038e426f3f278ce82e86bafc72f3338f37729395c2432ea597c03e1bbaf7bb",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/readable-stream%40%5E2.3.8%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 539,
+   "sha256": "95537dd01a92b8c230b96389fdd81d64a4d00d429f1405a6ed17312e725241df",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/readable-stream%402.3.8%2Fes2022%2Freadable-stream.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 26959,
+   "sha256": "815723e916623fdb33cf273889a1e125239d2ad770bb253be9673e5325c511f1",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/string_decoder%40%7E1.1.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 220,
+   "sha256": "76d0ff5870aa9df2e13ad5dea75599f52a5411936fff5410bcc88f8d8d9f4caf",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/string_decoder%401.1.1%2Fes2022%2Fstring_decoder.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 4811,
+   "sha256": "d34402b8f01519f3d667e758aa62223526acb3a7ef2c56219e3b4214fd817d85",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%7E5.1.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "c15f3719e92eead8098c375f426955401ac6ea90ba0b2721463dcbda4f9a1c8d",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%405.1.2%2Fes2022%2Fsafe-buffer.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2200,
+   "sha256": "0360703b300e5e3e908dcadffdbcd3cc36a0393ffcdf2e0ca98d042c1af4e62e",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Futil.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 4210,
+   "sha256": "0cc72bdadc46cf17685e6d9385e3d1536fdc4d6fa783cb18365574d14b74d5e8",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Futil%2Ftypes.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 3166,
+   "sha256": "3f3e225fbce928e7556c759c2426ecafb05e451430e798d9f14e62c61208f2f0",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/isarray%401.0.0%2Fes2022%2Fisarray.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 745,
+   "sha256": "0f26133cd58fc8580f99bbfd81f6290718328dc2a683c313c36f6b1e8c174edc",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%7E5.1.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "c15f3719e92eead8098c375f426955401ac6ea90ba0b2721463dcbda4f9a1c8d",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/util-deprecate%401.0.2%2Fes2022%2Futil-deprecate.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 1055,
+   "sha256": "8a810d30f77a719363812bb9fe4b1e3f3846a1500bc9449d8855511d887eac6c",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/process-nextick-args%40%7E2.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 234,
+   "sha256": "7b4199aedb905787785b176c77d2d6b142bc8071b1041a8776ab55f750d61fc3",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/process-nextick-args%402.0.1%2Fes2022%2Fprocess-nextick-args.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 1474,
+   "sha256": "30d0e277f488865665f6451a081d9ec0c68ba1c62b99cd820d00059521bd3107",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Fprocess.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 7836,
+   "sha256": "79bdd29eef537eee63ba8ef06a00a9579a6a99efc4ba391807e017049ecfe452",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/node%2Ftty.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 685,
+   "sha256": "c66ff4b406bad449bfb2ced355f15badf16f4d9e035d2d300e33b5aeee64e3be",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/core-util-is%40%7E1.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 193,
+   "sha256": "d21e00bd6bfd81bf36db19adacc77746c4ebc5b25a7daf72fc7e3ba3460e7227",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/core-util-is%401.0.3%2Fes2022%2Fcore-util-is.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2553,
+   "sha256": "83dd25681b91ad383aebede7d625403bf8f32787df8315226a4455bb84b2e6f4",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/md5.js%40%5E1.3.4%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 216,
+   "sha256": "46e06b784f25e45b64d1c779263ab9f686c9774917603ec0146298004093b20a",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/md5.js%401.3.5%2Fes2022%2Fmd5.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 4663,
+   "sha256": "1047eddff69d02a2e688e4447c02f30addd6fa7b8bee0d3084b961934ea85038",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%5E5.1.2%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "be83399d8967f21a3492f6ab546cb33796c8b6d328b729b83d4424ed526586d5",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/hash-base%40%5E3.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 285,
+   "sha256": "0c93045fe4cec7488ad3bfca85794a755621564bc045098514d7dfc883960895",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/pako%402.2.0%2Fes2022%2Fpako.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 47690,
+   "sha256": "d37484edfbb2c2c6e45c32a0093c769f2b98f6a1edfed9e7aa482038aea5b118",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/browserify-aes%40%5E1.0.0%2Fbrowser%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 375,
+   "sha256": "e227877eb2bd049494b6cc365f2f1bcfc007e7759285b5e3f64aeecaf1f39421",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/browserify-aes%401.2.0%2Fes2022%2Fbrowser.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 17075,
+   "sha256": "225f3c29eb531ba2e925aa33ba5532ce39b688f25d495cb1b61d4687c5965f95",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/buffer-xor%40%5E1.0.3%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 183,
+   "sha256": "c40aa5e4188e7da718589c7e3d643f8a8e1e8608f23f08b5217fdabed70d41f4",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/buffer-xor%401.0.3%2Fes2022%2Fbuffer-xor.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 834,
+   "sha256": "b4fd5b840af03308b095beb9a94f53d7a071c85acdb12ecc15281889d2a81633",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/evp_bytestokey%40%5E1.0.3%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 259,
+   "sha256": "5ca4e256bb5c7fcb7ad2bff8e99d2776438193d387f6760d95f4a37a4f8bf957",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/evp_bytestokey%401.0.3%2Fes2022%2Fevp_bytestokey.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 1821,
+   "sha256": "8e941da25f8e5e4fcdea00e645b6373dc2572b11224b501759f175b1f2e13d7a",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%5E5.1.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "be83399d8967f21a3492f6ab546cb33796c8b6d328b729b83d4424ed526586d5",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/cipher-base%40%5E1.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 309,
+   "sha256": "3cccac640728aa6c7318177a1db8f6a75f21f4c5d1feaa44bf8b73b86803aec8",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/safe-buffer%40%5E5.0.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 188,
+   "sha256": "be83399d8967f21a3492f6ab546cb33796c8b6d328b729b83d4424ed526586d5",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/mdb-reader%403.2.0%2Fes2022%2Flib%2Fbrowser%2Fcodec-handler%2Findex.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 9152,
+   "sha256": "b3ccabd70f71e114f99e0d315ac8a5e65368ce1733f2e023b296ffd01e7d41aa",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/fast-xml-parser%40%5E4.0.0%2520%7C%7C%2520%5E5.0.0%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 432,
+   "sha256": "2cf84d8f2077aebe4e8ca2f13db0841e9065939a280d997d31776b40270c4afb",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/fast-xml-parser%405.12.0%2Fes2022%2Ffast-xml-parser.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 28879,
+   "sha256": "d043e651e81efb40ac963bf8fa31bf452a936c579b2fc2c5ed3aae8ceb471e74",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/fast-xml-parser%405.12.0%2Fes2022%2Fsrc%2Fxmlbuilder%2Fjson2xml.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 235,
+   "sha256": "3671f445c8d6963afc855fe73e08e73a4e47b881e2f2786641dd0c0eaab286d6",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/fast-xml-builder%40%5E1.3.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 285,
+   "sha256": "be2ca041b5406e4592e70b292bad622bbc2d587e468c5588bd685eefb6074f53",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/fast-xml-builder%401.3.1%2Fes2022%2Ffast-xml-builder.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 13997,
+   "sha256": "fda72d0384b100ab66ee5cf7944e7f9a00d1eee1f5a6a60d646c4f52c7bcfa4d",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/xml-naming%400.3.0%2Fes2022%2Fxml-naming.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 3114,
+   "sha256": "91db33feae55f111602ebbadfa70786f0ee0f4fcf15fc50420f8d73ef1185792",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/path-expression-matcher%401.6.2%2Fes2022%2Fpath-expression-matcher.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 8802,
+   "sha256": "7289a205c7d2da8866c205b768a164b938c814ced7140dfbf66488b8e222c89a",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/is-unsafe%402.0.3%2Fes2022%2Fis-unsafe.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 18495,
+   "sha256": "32efd39d1316c46a2ffb1fbf571d2d0cd11089e585f6cfb6d3e83fb9bc2aacbb",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/strnum%40%5E2.5.1%3Ftarget%3Des2022": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 175,
+   "sha256": "41965fd546c475c490bf0efd7b095eb55df7b171f7cd3575ed8c5024d1005409",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/strnum%402.5.1%2Fes2022%2Fstrnum.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 2204,
+   "sha256": "3a00727dc0e2c039d4d08097be7d25d28150e31eb4fded8395438c97061089c1",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/anynum%401.0.1%2Fes2022%2Fanynum.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 1540,
+   "sha256": "c5976aa93cbfcc2972ee2254649833b8deae733268c295ef2401f6a16de12b88",
+   "library": "mdb-reader"
+  },
+  "mdb-reader/graph/%40nodable%2Fentities%403.1.0%2Fes2022%2Fentities.mjs": {
+   "file": "vendor/mdb-reader/graph.bundle.js",
+   "encoding": "text",
+   "size": 24433,
+   "sha256": "8100130d7d55d4ce9622b8b03f19650816326fee06e69d57539688256d610028",
+   "library": "mdb-reader"
   }
  },
  "libraries": {
@@ -2244,6 +2734,14 @@ Dataspatium.assets.manifest({
     "qrcode.js"
    ],
    "assets": 0
+  },
+  "mdb-reader": {
+   "version": "3.2.0",
+   "license": "MIT",
+   "homepage": "https://github.com/andipaetzold/mdb-reader",
+   "direct": [],
+   "assets": 70,
+   "notes": "Reads Microsoft Access files (.mdb, .accdb) in the browser (io/importers/access). Fetched as an ES module graph from esm.sh together with its dependencies (Node polyfills by esm.sh, sha.js, browserify-aes, pako, fast-xml-parser, readable-stream and small helpers; MIT, ISC and BSD-2-Clause, see the licences below). tools/fetch_vendor.py inlines re-export barrels and turns the main module's import of its own ColumnTypes into a local alias, so that the graph loads without import maps."
   }
  }
 });

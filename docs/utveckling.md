@@ -22,6 +22,20 @@ när den tar över). R använder då webR:s SharedArrayBuffer-kanal och kan avbr
    filer och LICENSE till `vendor/<lib>/`.
 3. `python tools/wrap_assets.py` skriver inbäddade JavaScript-wrappers, `vendor/manifest.js` och
    `THIRD_PARTY_LICENSES.md`.
+ES-moduler med egna beroenden (mdb-reader) hämtas som en **modulgraf** från esm.sh: posten i `vendor.json` har
+`"type": "esm-graph"` och `entry` (esm.sh-sökvägen till huvudmodulen). `fetch_vendor.py` följer importerna, sparar
+varje modul som textresurs under `vendor-src/<lib>/graph/`, lägger ihop rena vidareexporter (barrels), gör om en
+moduls import av sina egna exporter till lokala alias (instruktioner i `graph/index.json`; texterna lämnas orörda),
+vägrar cykliska grafer och hämtar varje pakets LICENSE från jsDelivr (`LICENSE-<paket>.txt`, med i
+`THIRD_PARTY_LICENSES.md`). `wrap_assets.py` buntar grafen till `vendor/<lib>/graph.bundle.js`, och
+`Dataspatium.assets.importGraph('<lib>')` skapar blob-URL:er i beroendeordning utan import maps, i både Edge och
+Firefox under file://.
+
+Databasbryggan (`tools/db-bridge.ps1`, `tools/db_bridge.py`) ingår inte i testsviten, som kör klienten mot en
+inbyggd låtsasbrygga (`tests/bridge.test.js`). Prova den riktiga bryggan med curl: starta den med fast port och
+token, anropa `/`, `/tables` och `/rows` med `Authorization: Bearer <token>` och `Origin: null`, och kontrollera att
+`/query` med en UPDATE ger 403 utan skrivning tillåten. PowerShell-skriptet sparas med UTF-8 BOM så att PowerShell
+5.1 läser de svenska texterna rätt.
 
 Resurser nås i koden som `dataspatium-asset://<lib>/<sökväg>`, t.ex. `dataspatium-asset://webr/R.wasm`, både på huvudtråden
 och i workers. Se `src/platform/assets.js`, `net-shim.js` och `worker-shim.js`.

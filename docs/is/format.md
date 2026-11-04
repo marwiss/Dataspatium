@@ -23,6 +23,7 @@
 | SQLite | Já | Já | Eigin skrá Dataspatium er endurheimt með gerðum, merkimiðum og sögu; í öðrum gagnagrunnum velurðu töflu og gerðirnar eru teknar úr skemanu |
 | SQL-skrifta (sql) | Já | Nei | Skrifta með `CREATE TABLE` og `INSERT`, til dæmis afrit úr gagnagrunni, er keyrð í tómum SQLite-gagnagrunni og töflurnar boðnar til vals. MySQL-sértækar línur (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og töfluvalkostir eins og `ENGINE=`) eru fjarlægðar fyrst; aðrar mállýskur virka að því marki sem þær fylgja málskipan SQLite |
 | GeoPackage (gpkg) | Já | Nei | Lögin (feature- og eigindatöflur) eru valin sem töflur; rúmfræðidálkurinn verður GeoJSON sem kortamyndritið teiknar, hnitakerfið er sýnt |
+| Access (mdb, accdb) | Já | Nei | Lesið beint í vafranum með mdb-reader; taflan er valin í skrefinu Stillingar og gerðirnar koma úr Access. Fyrirspurnir, tengdar töflur og lykilorð krefjast [gagnagrunnsbrúarinnar](kallor.md). |
 | SPSS sav, zsav, por | Já | sav | Gegnum R-pakkann haven. Breytumerkimiðar verða dálkamerkimiðar og gildismerkimiðar lýsigögn dálksins (sjá neðar) |
 | Stata dta | Já | dta | Gegnum haven. Gildismerkimiðar eins og fyrir SPSS. Við útflutning eru dálkaheitin stytt samkvæmt reglum Stata (32 stafir, ASCII) |
 | SAS sas7bdat, xpt | Já | Nei | Gegnum haven |

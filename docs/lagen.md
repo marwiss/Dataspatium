@@ -45,6 +45,11 @@ från ett API och uppdaterar dem med ett klick, en i taget eller alla. Första g
 för ett ändamål (API:er, webbadresser, GitHub, komponenter) frågar den om lov; svaret kan sparas. Se
 [api-konfiguration.md](api-konfiguration.md).
 
+Under *Databaser* finns två vägar in: *Databas via bryggan* (Access, Excel, SQL Server, SQLite och ODBC-källor på
+datorn genom ett litet lokalt skript) och *Lägg till databaskälla* (PostgREST, OData, GraphQL, CouchDB, ClickHouse,
+Elasticsearch, SPARQL, InfluxDB, Google Sheets och Airtable över HTTP). Access-filer läses dessutom direkt som filer,
+och i Chrome och Edge kan en fil länkas så att datamängden läses in igen från disken. Se [kallor.md](kallor.md).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)

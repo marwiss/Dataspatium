@@ -85,20 +85,28 @@
    * @param {string} name
    * @returns {Promise<{kind: 'text'|'binary', data: any}>}
    */
+  /** @type {Map<string, Promise<{kind: 'text'|'binary', data: any}>>} decodes in flight, shared by concurrent callers */
+  const decoding = new Map();
   async function decode(name) {
     const cached = decoded.get(name);
     if (cached) return cached;
-    await ensureRegistered(name);
-    const raw = /** @type {{encoding: string, payload: string}} */ (registry.get(name));
-    /** @type {{kind: 'text'|'binary', data: any}} */
-    let result;
-    if (raw.encoding === 'text') result = { kind: 'text', data: raw.payload };
-    else if (raw.encoding === 'base64') result = { kind: 'binary', data: decodeBase64(raw.payload).buffer };
-    else if (raw.encoding === 'gzip+base64') result = { kind: 'binary', data: (await gunzip(decodeBase64(raw.payload))).buffer };
-    else throw new Error('Unknown encoding ' + raw.encoding + ' for ' + name);
-    registry.delete(name); // drop the large base64 string
-    decoded.set(name, result);
-    return result;
+    // Two concurrent loads of one asset share the work: the first decode drops the raw payload from the registry.
+    if (decoding.has(name)) return decoding.get(name);
+    const p = (async () => {
+      await ensureRegistered(name);
+      const raw = /** @type {{encoding: string, payload: string}} */ (registry.get(name));
+      /** @type {{kind: 'text'|'binary', data: any}} */
+      let result;
+      if (raw.encoding === 'text') result = { kind: 'text', data: raw.payload };
+      else if (raw.encoding === 'base64') result = { kind: 'binary', data: decodeBase64(raw.payload).buffer };
+      else if (raw.encoding === 'gzip+base64') result = { kind: 'binary', data: (await gunzip(decodeBase64(raw.payload))).buffer };
+      else throw new Error('Unknown encoding ' + raw.encoding + ' for ' + name);
+      registry.delete(name); // drop the large base64 string
+      decoded.set(name, result);
+      return result;
+    })();
+    decoding.set(name, p);
+    try { return await p; } finally { decoding.delete(name); }
   }
 
   /** @returns {Promise<ArrayBuffer|string>} */
@@ -144,9 +152,53 @@
     try { return await import(url); } finally { URL.revokeObjectURL(url); }
   }
 
+  /** @type {Map<string, {index: any, urls: Map<string, string>, pending: Map<string, Promise<string>>, modules: Map<string, Promise<any>>}>} */
+  const graphs = new Map();
+  async function graphUrl(g, lib, spec) {
+    if (g.urls.has(spec)) return g.urls.get(spec);
+    if (g.pending.has(spec)) return g.pending.get(spec);
+    const p = (async () => {
+      const m = g.index.modules[spec];
+      if (!m) throw new Error('Unknown module ' + spec + ' in graph ' + lib);
+      let text = await loadText(lib + '/graph/' + m.file);
+      for (const [from, to] of m.rewrites || []) {
+        if (!text.includes(from)) throw new Error('Rewrite not found in ' + spec);
+        text = text.replace(from, to);
+      }
+      if (m.append) text += '\n' + m.append;
+      for (const [lit, dep] of Object.entries(m.deps || {})) {
+        const url = await graphUrl(g, lib, dep);
+        text = text.split('"' + lit + '"').join('"' + url + '"').split("'" + lit + "'").join("'" + url + "'");
+      }
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
+      g.urls.set(spec, url);
+      return url;
+    })();
+    g.pending.set(spec, p);
+    return p;
+  }
+  /**
+   * Import an ES module graph fetched by tools/fetch_vendor.py (type "esm-graph", e.g. mdb-reader): every module
+   * text becomes a blob: URL in dependency order, its import specifiers rewritten to the URLs of its
+   * dependencies (barrels were inlined and self-imports turned into aliases by the tool, so the graph is
+   * acyclic). Works under file:// in Chromium and Firefox without import maps.
+   * @param {string} lib library name in vendor.json @param {string} [spec] a module of the graph (default: the entry)
+   */
+  async function importGraph(lib, spec) {
+    let g = graphs.get(lib);
+    if (!g) {
+      const index = JSON.parse(await loadText(lib + '/graph/index.json'));
+      g = { index, urls: new Map(), pending: new Map(), modules: new Map() };
+      graphs.set(lib, g);
+    }
+    const target = spec || g.index.entry;
+    if (!g.modules.has(target)) g.modules.set(target, graphUrl(g, lib, target).then((url) => import(url)));
+    return g.modules.get(target);
+  }
+
   /** Load a directly shipped (non-wrapped) vendor script such as vendor/d3/d3.min.js. */
   function loadVendorScript(relativePath) { return loadScript(base() + relativePath); }
 
-  D.assets = { manifest, addEntries, register, decode, load, loadText, loadAll, peek, take, provide, names, info, libraries, importModule, loadScript, loadVendorScript, decodeBase64, gunzip };
+  D.assets = { manifest, addEntries, register, decode, load, loadText, loadAll, peek, take, provide, names, info, libraries, importModule, importGraph, loadScript, loadVendorScript, decodeBase64, gunzip };
   D.define('platform/assets', [], () => D.assets);
 })();

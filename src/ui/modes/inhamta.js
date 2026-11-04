@@ -7,18 +7,18 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files'], (base, csv, encoding, types, connectors, apiView, files) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'shapefile', 'geo', 'r'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'shapefile', 'geo', 'r'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'shapefile', 'r'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'r'];
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.gpkg,.sql,'
-      + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet';
+      + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -30,8 +30,9 @@
       let unsubConnectors = null;
       /** @type {any} */ let apiUi = null;
       let apiId = null;
+      /** @type {any} */ let bridgeUi = null;
 
-      function reset() { return { step: 'file', file: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function reset() { return { step: 'file', file: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
       let unsubStore = null;
@@ -48,6 +49,7 @@
         if (unsubConnectors) unsubConnectors();
         if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
+        if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
       }
       async function reloadConnectors() {
         connectorList = await connectors.list();
@@ -73,7 +75,11 @@
           h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
           visibleConnectors().length ? null : h('p', { class: 'dm-help dm-xs', text: t('api.countries.none') }),
           h('div', { class: 'dm-row' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector })),
-          h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }));
+          h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }),
+          h('h4', { text: t('bridge.sources') }),
+          h('div', { class: 'dm-list' }, sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint'))),
+          h('div', { class: 'dm-row' }, ui.button({ label: t('families.add.source'), icon: 'plus', size: 'sm', onClick: addFamily })),
+          h('p', { class: 'dm-help dm-xs', text: t('families.hint') }));
       }
 
       // ---- country filter for the API sources (remembered per browser) ----
@@ -126,6 +132,7 @@
       function renderCenter() {
         if (source.startsWith('api:')) { renderApi(); return; }
         if (source === 'saved') { renderSaved(); return; }
+        if (source === 'bridge') { renderBridge(); return; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step;
         const body = wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
@@ -133,7 +140,7 @@
       }
 
       // ---- saved fetches: every dataset from an API, updated with one click ----
-      const apiDatasets = () => store.get().datasets.filter((d) => d.source && d.source.kind === 'api');
+      const apiDatasets = () => store.get().datasets.filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
       /** Ids being updated; '*' while everything is. */
       const updating = new Set();
       function renderSaved() {
@@ -144,7 +151,7 @@
           h('h1', null, ui.icon('refresh-cw', 20), t('api.saved.title')),
           h('div', { class: 'dm-row' }, list.length ? ui.button({ label: t('api.saved.update.all', { n: list.length }), icon: 'refresh-cw', variant: 'primary', loading: updating.has('*'), disabled: busy && !updating.has('*'), onClick: updateAll }) : null));
         if (!list.length) { replace(slots.center, head, h('dm-empty-state', { icon: 'globe', heading: t('api.saved.empty'), text: t('api.saved.empty.hint') })); return; }
-        const where = (src) => [src.connectorName, src.table && src.table.title ? src.table.title : src.endpointName].filter(Boolean).join(' · ');
+        const where = (src) => src.kind === 'bridge' ? (src.label || t('bridge.title')) : [src.connectorName, src.table && src.table.title ? src.table.title : src.endpointName].filter(Boolean).join(' · ');
         const rows = list.map((d) => h('tr', null,
           h('td', null, h('div', { text: d.name }), h('code', { class: 'dm-list-code', text: d.shortName || '' })),
           h('td', { text: where(d.source) }),
@@ -195,6 +202,19 @@
         replace(slots.center, apiUi.el);
       }
 
+      /** A connector for a database family (PostgREST, OData, ...) from an address and a key; it opens when created. */
+      async function addFamily() {
+        const connector = await familyDialog.open(ctx);
+        if (!connector) return;
+        await reloadConnectors();
+        source = 'api:' + connector.id;
+        render();
+      }
+      /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
+      function renderBridge() {
+        if (!bridgeUi) { bridgeUi = bridgeView.create(ctx); bridgeUi.start(); }
+        replace(slots.center, bridgeUi.el);
+      }
       /** Fetch a web address: configurations are added directly, data files continue in the wizard. */
       async function fetchUrl(url) {
         wiz.url = url; wiz.busy = true; wiz.error = ''; render();
@@ -238,7 +258,7 @@
           return h('div', { class: 'dm-stack' }, ta, h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', onClick: async () => { wiz.text = ta.value; if (!wiz.text.trim()) return; wiz.file = null; await runPreview(); } })));
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT });
-        dz.addEventListener('dm-files', async (e) => { wiz.file = /** @type {any} */ (e).detail.files[0]; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; await runPreview(); });
+        dz.addEventListener('dm-files', async (e) => { wiz.file = /** @type {any} */ (e).detail.files[0]; wiz.handle = null; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; await runPreview(); });
         // Bundled data: the example table as a button, the boundaries for maps in a list.
         const examples = D.require('presets').examples;
         const tables = examples.filter((p) => p.format !== 'geojson');
@@ -248,11 +268,20 @@
         pick.value = wiz.boundary || boundaries[0].id;
         pick.addEventListener('change', () => { wiz.boundary = pick.value; });
         return h('div', { class: 'dm-stack' }, dz,
+          linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
           h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
           h('div', { class: 'dm-row-end' }, pick, ui.button({ label: t('presets.geo.import'), icon: 'globe', onClick: () => importPreset(boundaries.find((p) => p.id === pick.value) || boundaries[0]) })),
           h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 
+      /** A file chosen with the File System Access picker stays linked: the dataset can be read again from disk. */
+      async function pickLinked() {
+        try {
+          const { handle, file } = await linked.pick();
+          wiz.file = file; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          await runPreview();
+        } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
+      }
       async function importPreset(preset) {
         wiz.busy = true; render();
         try {
@@ -334,6 +363,9 @@
         if (wiz.options.format === 'sqlite' && p) {
           if (p.dataspatium) left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.sqlite.dataspatium') }));
           else if (p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
+        }
+        if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
+          left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }
         if (wiz.options.format === 'tables' && p && p.tables && p.tables.length > 1) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; wiz.options.header = undefined; schedulePreview(); }));
@@ -430,10 +462,12 @@
         const t0 = performance.now();
         try {
           const opts = cleanOptions();
+          if (wiz.handle) opts.linked = true;
           const specs = wiz.specs.map((s) => ({ name: s.name, type: s.type, include: s.include !== false, decimal: s.decimal, label: s.label || s.name }));
           // Large delimited files are streamed; the progress callback shows the rows read so far.
           const onProgress = (p) => { wiz.progress = p; render(); };
           const meta = wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
+          if (wiz.handle) await linked.link(meta.id, wiz.handle);
           wiz.result = meta; wiz.step = 'done';
           shell.log(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
           ui.toast.show(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }), { kind: 'ok' });
@@ -457,6 +491,7 @@
       function renderRight() {
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
+        if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }
         const items = [];
         if (wiz.file) {
           items.push(h('h4', { text: t('import.step.file') }));
@@ -487,7 +522,7 @@
         replace(slots.right, items);
       }
 
-      return { id: 'inhamta', activate, deactivate };
+      return { id: 'inhamta', activate, deactivate, get bridgeView() { return bridgeUi; } };
     }
     return { createMode };
   });

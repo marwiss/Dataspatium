@@ -66,6 +66,10 @@ hent til et nytt datasett eller legg til i et eksisterende. Et hentet datasett h
 nytt fra Håndter når kilden er oppdatert, og *Lagrede hentinger* i Hent oppdaterer slike datasett med ett klikk og
 spiller av oppskriftene deres.
 
+Databaser: Access-filer slippes på flaten som andre filer; databaser på datamaskinen (SQL Server, ODBC, Excel,
+SQLite) nås gjennom *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gjennom *Legg
+til databasekilde*. I Chrome og Edge kan en fil lenkes og leses inn igjen fra disken. Se [kallor.md](kallor.md).
+
 ### 2. Gå gjennom og rett (Bearbeid)
 
 Tabellen viser datasettet rad for rad selv når det har hundretusener av rader. Klikk på en overskrift for å sortere og se

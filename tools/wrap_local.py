@@ -25,7 +25,7 @@ LOCAL_GLOBS = [
 # Swedish lives in docs/, the other languages in docs/<lang>/. Developer documents are not embedded.
 HELP_DOCS = [
     "kom-igang", "anvandarguide", "lagen", "soka", "bearbeta", "visualisera", "anteckningsbok", "regex",
-    "format", "api-konfiguration", "r-guide", "dokumentmallar", "dela", "mobil", "faq", "licenser",
+    "format", "api-konfiguration", "kallor", "r-guide", "dokumentmallar", "dela", "mobil", "faq", "licenser",
 ]
 HELP_LANGS = ["sv", "da", "nb", "fi", "is", "en"]
 MANIFEST = ROOT / "presets" / "local-assets.js"

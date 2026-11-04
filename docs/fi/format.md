@@ -23,6 +23,7 @@
 | SQLite | Kyllä | Kyllä | Dataspatiumin oma tiedosto palautetaan tyyppeineen, selitteineen ja historioineen; muista tietokannoista valitset taulun, ja tyypit otetaan rakenteesta |
 | SQL-skripti (sql) | Kyllä | Ei | Skripti, jossa on `CREATE TABLE`- ja `INSERT`-lauseita, esimerkiksi tietokantavedos, ajetaan tyhjässä SQLite-tietokannassa, ja taulut tarjotaan valittaviksi. MySQL:n omat rivit (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` ja taulujen asetukset kuten `ENGINE=`) poistetaan ensin; muut murteet toimivat siltä osin kuin ne noudattavat SQLiten syntaksia |
 | GeoPackage (gpkg) | Kyllä | Ei | Tasot (feature- ja attribuuttitaulut) valitaan tauluina; geometriasarakkeesta tulee GeoJSON, jonka karttakaavio piirtää, ja koordinaattijärjestelmä näytetään |
+| Access (mdb, accdb) | Kyllä | Ei | Luetaan suoraan selaimessa mdb-readerilla; taulu valitaan Asetukset-vaiheessa ja tyypit tulevat Accessista. Kyselyt, linkitetyt taulut ja salasanat vaativat [tietokantasillan](kallor.md). |
 | SPSS sav, zsav, por | Kyllä | sav | R-paketin haven kautta. Muuttujaselitteistä tulee sarakeselitteitä ja arvoselitteistä sarakkeen metatietoja (ks. alla) |
 | Stata dta | Kyllä | dta | havenin kautta. Arvoselitteet kuten SPSS:ssä. Viennissä sarakkeiden nimet lyhennetään Statan sääntöjen mukaan (32 merkkiä, ASCII) |
 | SAS sas7bdat, xpt | Kyllä | Ei | havenin kautta |

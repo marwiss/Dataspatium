@@ -43,6 +43,12 @@ napsautuksella, yksi kerrallaan tai kaikki. Kun sovelluksen pitää ensimmäisen
 tarkoitusta varten (rajapinnat, verkko-osoitteet, GitHub, komponentit), se kysyy lupaa; vastauksen voi tallentaa.
 Ks. [api-konfiguration.md](api-konfiguration.md).
 
+Kohdassa *Tietokannat* on kaksi reittiä: *Tietokanta sillan kautta* (Access, Excel, SQL Server, SQLite ja
+ODBC-lähteet tietokoneella pienen paikallisen skriptin kautta) ja *Lisää tietokantalähde* (PostgREST, OData,
+GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets ja Airtable HTTP:n yli).
+Access-tiedostot luetaan lisäksi suoraan tiedostoina, ja Chromessa ja Edgessä tiedoston voi linkittää niin, että
+aineisto luetaan uudelleen levyltä. Ks. [kallor.md](kallor.md).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä

@@ -68,6 +68,10 @@ tabel frem, vælg variabler, forhåndsvis, og hent til et nyt datasæt, eller ti
 husker sin forespørgsel, så det kan hentes igen fra Håndter, når kilden er opdateret, og *Gemte hentninger* i Hent
 opdaterer sådanne datasæt med ét klik og afspiller deres opskrifter.
 
+Databaser: Access-filer slippes på fladen som andre filer; databaser på computeren (SQL Server, ODBC, Excel, SQLite)
+nås gennem *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gennem *Tilføj
+databasekilde*. I Chrome og Edge kan en fil linkes og indlæses igen fra disken. Se [kallor.md](kallor.md).
+
 ### 2. Gennemse og ret (Bearbejd)
 
 Tabellen viser datasættet række for række, selv når det har hundredtusinder af rækker. Klik på en overskrift for at

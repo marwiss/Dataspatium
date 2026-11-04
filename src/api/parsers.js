@@ -12,6 +12,8 @@
   D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types'], (jsonImp, csv, jsonstat, sdmx, types) => {
     function resolvePath(data, path) {
       if (!path) return data;
+      // A key that itself contains dots (OData's "@odata.nextLink") is tried whole before the path is split.
+      if (data && typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, path)) return data[path];
       let node = data;
       for (const part of String(path).split('.').filter(Boolean)) {
         if (node === null || node === undefined) return undefined;
@@ -38,6 +40,7 @@
       if (records && !Array.isArray(records) && typeof records === 'object') records = jsonImp.toRecords(records, '');
       if (!Array.isArray(records)) records = records === undefined || records === null ? [] : [records];
       if (spec.explode) records = explode(records, spec.explode);
+      if (spec.lift) records = lift(records, spec.lift);
       return records;
     }
 
@@ -116,6 +119,57 @@
     }
 
     /** Apply constants, rename, convert and drop to a table in place. */
+    /** Records with the fields of a nested object merged into the record (CouchDB doc, Elasticsearch _source, Airtable fields). */
+    function lift(records, key) {
+      return records.map((r) => {
+        const inner = r && typeof r === 'object' ? r[key] : null;
+        return inner && typeof inner === 'object' && !Array.isArray(inner) ? Object.assign(omit(r, key), inner) : omit(r || {}, key);
+      });
+    }
+    /** The first list under `data` in a GraphQL response (directly, or a connection's nodes/edges/items), as a path. */
+    function graphqlPath(data) {
+      const root = data && data.data;
+      if (!root || typeof root !== 'object') return 'data';
+      for (const [k, v] of Object.entries(root)) {
+        if (Array.isArray(v)) return 'data.' + k;
+        if (v && typeof v === 'object') for (const sub of ['nodes', 'edges', 'items']) if (Array.isArray(v[sub])) return 'data.' + k + '.' + sub;
+      }
+      return 'data';
+    }
+    /** SPARQL JSON results: one column per variable, the plain values (URIs and literals as text). */
+    function sparqlTable(data) {
+      const vars = data && data.head && Array.isArray(data.head.vars) ? data.head.vars : [];
+      const bindings = data && data.results && Array.isArray(data.results.bindings) ? data.results.bindings : [];
+      return { columns: vars.slice(), rows: bindings.map((b) => vars.map((v) => (b && b[v] && b[v].value !== undefined ? b[v].value : null))) };
+    }
+    /** One CSV line (RFC 4180 quoting, comma) to cells. */
+    function csvLine(line) {
+      const out = []; let cur = ''; let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (quoted) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else quoted = false; } else cur += ch; }
+        else if (ch === '"') quoted = true;
+        else if (ch === ',') { out.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+    /** InfluxDB annotated CSV: annotation lines (#...) dropped, each table's header read, the leading annotation column removed, all tables stacked. */
+    function influxTable(text) {
+      const records = []; let header = null;
+      for (const raw of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
+        if (!raw.trim()) { header = null; continue; }
+        if (raw.startsWith('#')) continue;
+        const cells = csvLine(raw);
+        if (!header) { header = cells; continue; }
+        const rec = {};
+        header.forEach((name, i) => { if (name !== '') rec[name] = cells[i] === undefined || cells[i] === '' ? null : cells[i]; });
+        records.push(rec);
+      }
+      return jsonImp.tabulate(records);
+    }
+
     function postProcess(table, spec, root) {
       if (spec.constants) {
         const names = Object.keys(spec.constants);
@@ -163,12 +217,19 @@
         table = { columns: parsed.columns, rows: parsed.rows };
       }
       else if (format === 'xml') { table = jsonImp.tabulate(xmlRecords(text, spec)); }
+      else if (format === 'graphql') {
+        data = parseJson();
+        if (data && Array.isArray(data.errors) && data.errors.length) throw new Error(D.t('api.err.graphql', { message: data.errors.map((e) => e && e.message).filter(Boolean).join('; ') }));
+        table = jsonImp.tabulate(jsonRecords(data, Object.assign({}, spec, { path: spec.path || graphqlPath(data) })));
+      }
+      else if (format === 'sparql') { data = parseJson(); table = sparqlTable(data); }
+      else if (format === 'influx-csv') { table = influxTable(text); }
       else if (format === 'entryscape') { data = parseJson(); table = jsonImp.tabulate(entryscapeRecords(data)); table.meta = { total: data.results }; }
       else { table = { columns: ['text'], rows: [[text]] }; }
       postProcess(table, spec, data);
       return Object.assign({ data, types: {}, meta: {} }, table);
     }
 
-    return { parse, resolvePath, explode, jsonRecords, geojsonRecords, xmlRecords, entryscapeRecords, postProcess, epochToIso };
+    return { parse, resolvePath, explode, lift, jsonRecords, geojsonRecords, xmlRecords, entryscapeRecords, postProcess, epochToIso, graphqlPath, sparqlTable, influxTable };
   });
 })();

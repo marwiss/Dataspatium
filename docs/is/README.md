@@ -52,6 +52,10 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   með landasíu og vistuðum sóknum sem uppfærast með einum smelli og keyra uppskriftir sínar aftur (sjá
   [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg
   og Finnland fylgja með.
+- **Gagnagrunnar**: Access-skrár eru lesnar beint í vafranum; gagnagrunnar á tölvunni eða í netinu (SQL Server, ODBC,
+  Excel, SQLite) nást um staðbundna brú, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
+  SPARQL, InfluxDB, Google Sheets og Airtable verða uppsprettur með einum smelli. Skrár má tengja og lesa aftur af
+  diski (sjá [kallor.md](kallor.md)).
 - **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
   gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
   út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).

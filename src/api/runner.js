@@ -90,16 +90,16 @@
       async function refreshDataset(id, options = {}) {
         const meta = await datasets.get(id);
         const source = meta && meta.source;
-        if (!source || source.kind !== 'api') throw new Error(D.t('api.err.nosource'));
+        if (!source || (source.kind !== 'api' && source.kind !== 'bridge' && !(source.kind === 'file' && source.linked))) throw new Error(D.t('api.err.nosource'));
         const recipes = D.require('data/recipes');
         const ops = D.require('data/operations');
         const steps = await recipes.steps(id);
         // Steps with a secret (the salt of a pseudonymisation) cannot be replayed without it.
         const secret = steps.find((s) => ((ops.get(s.op) || {}).params || []).some((p) => p.secret && s.params && s.params[p.name] === '***'));
         if (secret) throw new Error(D.t('api.refresh.secret', { step: secret.description }));
-        const table = await (options.fetch || refetch)(source, options);
+        const table = await (options.fetch || refetch)(source, Object.assign({}, options, { datasetId: id }));
         const { columns, rows } = typedTable(table, (meta.importOptions && meta.importOptions.decimal) || 'point');
-        const before = await datasets.rebuild(id, { columns, rows, source: Object.assign({}, source, { fetchedAt: new Date().toISOString(), rows: rows.length }) });
+        const before = await datasets.rebuild(id, { columns, rows, source: Object.assign({}, source, { fetchedAt: new Date().toISOString(), rows: rows.length }, table.file ? { size: table.file.size, lastModified: table.file.lastModified ? new Date(table.file.lastModified).toISOString() : null } : {}) });
         let done = 0;
         try {
           for (const step of steps) { await recipes.apply(id, step.op, step.params, { noUndo: true, noLog: true }); done++; }
@@ -108,7 +108,7 @@
           throw new Error(D.t('api.refresh.replay.failed', { step: steps[done].description, message: (err && err.message) || String(err) }));
         }
         const handle = await datasets.ensureOpen(id);
-        await datasets.appendLog(handle, 'refresh', { source: { kind: 'api', connectorName: source.connectorName, endpointName: source.endpointName }, rows: handle.meta.rowCount, steps: steps.length });
+        await datasets.appendLog(handle, 'refresh', { source: { kind: source.kind, connectorName: source.connectorName || source.label || source.fileName, endpointName: source.endpointName }, rows: handle.meta.rowCount, steps: steps.length });
         await datasets.save(id);
         return { rows: handle.meta.rowCount, steps: steps.length };
       }
@@ -137,7 +137,7 @@
        * @returns {Promise<Array<{id: string, name: string, ok: boolean, rows?: number, error?: string}>>}
        */
       async function refreshAll(options = {}) {
-        const list = (await datasets.list()).filter((d) => d.source && d.source.kind === 'api');
+        const list = (await datasets.list()).filter((d) => d.source && (d.source.kind === 'api' || d.source.kind === 'bridge'));
         const results = [];
         for (const ds of list) {
           if (options.signal && options.signal.aborted) break;
@@ -151,6 +151,10 @@
       }
 
       async function refetch(source, options = {}) {
+        // Datasets from the local database bridge are fetched again by api/bridge (same table or SQL, secrets from the session).
+        if (source && source.kind === 'bridge') return D.require('api/bridge').refetch(source, options);
+        // A linked file (File System Access) is parsed again by data/linked with the dataset's import options.
+        if (source && source.kind === 'file' && source.linked) return D.require('data/linked').refetch(source, options);
         if (!source || source.kind !== 'api') throw new Error(D.t('api.err.nosource'));
         const connector = await connectors.get(source.connectorId);
         if (!connector) throw new Error(D.t('api.err.connector.gone', { name: source.connectorName || source.connectorId }));

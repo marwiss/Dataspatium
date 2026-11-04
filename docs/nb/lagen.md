@@ -42,6 +42,12 @@ et API, og oppdaterer dem med ett klikk, ett om gangen eller alle. Første gang 
 formål (API-er, nettadresser, GitHub, komponenter) spør den om lov; svaret kan lagres. Se
 [api-konfiguration.md](api-konfiguration.md).
 
+Under *Databaser* finnes to veier inn: *Database via broen* (Access, Excel, SQL Server, SQLite og ODBC-kilder på
+datamaskinen gjennom et lite lokalt skript) og *Legg til databasekilde* (PostgREST, OData, GraphQL, CouchDB,
+ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP). Access-filer leses dessuten rett
+som filer, og i Chrome og Edge kan en fil lenkes slik at datasettet leses inn igjen fra disken. Se
+[kallor.md](kallor.md).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha

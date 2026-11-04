@@ -201,6 +201,12 @@ Kyllä. Avaa kojelauta Visualisoi-tilassa ja napsauta **Esitä**: kojelauta täy
 kaavion kerrallaan, F antaa koko näytön ja Esc lopettaa. Yhteiset suodattimet pysyvät ylhäällä. Ks.
 [visualisera.md](visualisera.md).
 
+## Voinko lukea Access-tietokannan tai SQL Server -taulun?
+
+Kyllä. Access-tiedostot (mdb, accdb) pudotetaan Nouda-tilan alueelle ja luetaan suoraan selaimessa. SQL Server,
+ODBC-lähteet, Excel ja Access-kyselyt tavoitetaan tietokantasillan kautta, pienellä skriptillä, jonka käynnistät
+tietokoneella; palvelut kuten PostgREST, OData ja GraphQL lisätään lähteiksi osoitteella. Ks. [kallor.md](kallor.md).
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

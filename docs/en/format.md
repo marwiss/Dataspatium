@@ -23,6 +23,7 @@
 | SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
 | SQL script (sql) | Yes | No | A script with `CREATE TABLE` and `INSERT`, for example a database dump, is run in an empty SQLite database and the tables are offered for selection. MySQL-specific lines (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` and table options such as `ENGINE=`) are removed first; other dialects work as far as they follow SQLite's syntax |
 | GeoPackage (gpkg) | Yes | No | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
+| Access (mdb, accdb) | Yes | No | Read directly in the browser with mdb-reader; the table is chosen in the Settings step and the types come from Access. Queries, linked tables and passwords need the [database bridge](kallor.md). |
 | SPSS sav, zsav, por | Yes | sav | Through the R package haven. Variable labels become column labels and value labels column metadata (see below) |
 | Stata dta | Yes | dta | Through haven. Value labels as for SPSS. At export the column names are shortened to Stata's rules (32 characters, ASCII) |
 | SAS sas7bdat, xpt | Yes | No | Through haven |

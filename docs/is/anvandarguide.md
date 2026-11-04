@@ -66,6 +66,10 @@ gagnasafn eða bættu við fyrirliggjandi. Sótt gagnasafn man fyrirspurn sína,
 hefur verið uppfærður, og *Vistaðar sóknir* í Sækja uppfærir slík gagnasöfn með einum smelli og keyrir uppskriftir
 þeirra aftur.
 
+Gagnagrunnar: Access-skrám er sleppt á flötinn eins og öðrum skrám; gagnagrunnar á tölvunni (SQL Server, ODBC, Excel,
+SQLite) nást um *Gagnagrunnur um brúna* og þjónustur um HTTP (PostgREST, OData, GraphQL og fleiri) um *Bæta við
+gagnagrunnsuppsprettu*. Í Chrome og Edge má tengja skrá og lesa hana aftur af diski. Sjá [kallor.md](kallor.md).
+
 ### 2. Farðu yfir og leiðréttu (Vinna)
 
 Taflan sýnir gagnasafnið röð fyrir röð jafnvel þegar það hefur hundruð þúsunda raða. Smelltu á fyrirsögn til að raða og sjá

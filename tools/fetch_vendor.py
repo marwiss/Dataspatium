@@ -121,6 +121,199 @@ def download_entry(lib, entry, force):
             "size": len(data), "sha256": sha256_of(data)}
 
 
+ESM_SPEC_RE = re.compile(r"""(?:^|[;\s}])(?:import|export)\s*(?:[^"';]*?\s*from\s*)?["']([^"']+)["']""")
+ESM_DYN_RE = re.compile(r"""import\(\s*["']([^"']+)["']\s*\)""")
+ESM_BARREL_RE = re.compile(r"""^\s*(?:/\*[\s\S]*?\*/\s*)*(?:export\s*(?:\*|\{[^}]*\})\s*from\s*["'][^"']+["']\s*;?\s*)+$""")
+ESM_SELF_IMPORT_RE = re.compile(r"""import\s*\{([^}]*)\}\s*from\s*["']([^"']+)["']\s*;?""")
+
+
+def esm_file_name(spec):
+    """Injective file name for a module spec: every character outside [A-Za-z0-9._-] becomes %XX."""
+    return re.sub(r"[^A-Za-z0-9._-]", lambda m: "%%%02X" % ord(m.group()), spec.strip("/"))
+
+
+def esm_resolve(spec, literal):
+    """Absolute esm.sh path of an import literal found in `spec` (absolute or relative; bare names are errors)."""
+    if literal.startswith("/"):
+        return literal
+    if literal.startswith("./") or literal.startswith("../"):
+        base = spec.split("?")[0].rsplit("/", 1)[0]
+        parts = []
+        for p in (base + "/" + literal).split("/"):
+            if p == "..":
+                parts.pop()
+            elif p not in ("", "."):
+                parts.append(p)
+        return "/" + "/".join(parts)
+    return None  # a bare name: esm.sh resolves real imports to absolute paths, so this is text, not an import
+
+
+def esm_exports(text):
+    """Map exported name -> local name from `export { a as b, c }` lists and exported declarations."""
+    out = {}
+    for body in re.findall(r"export\s*\{([^}]*)\}(?!\s*from)", text):
+        for part in body.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            m = re.match(r"^(\S+)\s+as\s+(\S+)$", part)
+            if m:
+                out[m.group(2)] = m.group(1)
+            else:
+                out[part] = part
+    for m in re.finditer(r"export\s+(?:const|let|var|function\*?|class|async\s+function)\s+([A-Za-z_$][\w$]*)", text):
+        out[m.group(1)] = m.group(1)
+    return out
+
+
+def fetch_esm_graph(lib, cfg, force):
+    """Fetch an ES module graph from esm.sh: the entry and, recursively, everything it imports (type "esm-graph").
+
+    Re-export barrels are inlined and a module's imports of its own exports (through such a barrel) become local
+    aliases, so that the graph is acyclic and Dataspatium.assets.importGraph can create blob: URLs in dependency
+    order without import maps. The texts are kept as fetched; the aliases are rewrite instructions in index.json.
+    Returns the files.json records (the texts are bundled as vendor/<lib>/graph.bundle.js by wrap_assets.py)."""
+    host = cfg.get("host", "https://esm.sh")
+    entry = cfg["entry"]
+    gdir = SRC / lib / "graph"
+    gdir.mkdir(parents=True, exist_ok=True)
+    modules = {}
+    queue = [entry]
+    while queue:
+        spec = queue.pop()
+        if spec in modules:
+            continue
+        dest = gdir / esm_file_name(spec)
+        if dest.exists() and not force:
+            data = dest.read_bytes()
+        else:
+            data = http_get(host + spec)
+            dest.write_bytes(data)
+            print(f"  fetched  {lib}{spec} ({len(data) / 1e3:.1f} kB)")
+        text = data.decode("utf-8")
+        deps = {}
+        for lit in ESM_SPEC_RE.findall(text) + ESM_DYN_RE.findall(text):
+            target = esm_resolve(spec, lit)
+            if target:
+                deps[lit] = target
+        modules[spec] = {"file": esm_file_name(spec), "deps": deps, "text": text, "size": len(data), "sha256": sha256_of(data), "url": host + spec}
+        queue.extend(d for d in set(deps.values()) if d not in modules)
+    # Barrels: modules that only re-export one other module; their importers go straight to the source.
+    barrels = {}
+    for spec, m in modules.items():
+        if ESM_BARREL_RE.match(m["text"]):
+            sources = set(re.findall(r"""from\s*["']([^"']+)["']""", m["text"]))
+            if len(sources) == 1:
+                barrels[spec] = m["deps"].get(next(iter(sources)))
+
+    def resolve(target):
+        seen = set()
+        while target in barrels and target not in seen:
+            seen.add(target)
+            target = barrels[target]
+        return target
+
+    for m in modules.values():
+        m["deps"] = {lit: resolve(t) for lit, t in m["deps"].items()}
+    # Self-imports (a module importing its own exports through a barrel) become local aliases.
+    for spec, m in modules.items():
+        selfs = [lit for lit, t in m["deps"].items() if t == spec]
+        if not selfs:
+            continue
+        exports = esm_exports(m["text"])
+        rewrites = []
+        for lit in selfs:
+            found = False
+            for sm in ESM_SELF_IMPORT_RE.finditer(m["text"]):
+                if sm.group(2) != lit:
+                    continue
+                aliases = []
+                for part in sm.group(1).split(","):
+                    part = part.strip()
+                    if not part:
+                        continue
+                    am = re.match(r"^(\S+)\s+as\s+(\S+)$", part)
+                    imported, local = (am.group(1), am.group(2)) if am else (part, part)
+                    if imported not in exports:
+                        raise ValueError(f"{lib}: {spec} imports {imported} from itself but does not export it")
+                    if exports[imported] != local:
+                        aliases.append(f"const {local}={exports[imported]};")
+                # The import statement goes; the aliases come last, after every declaration of the (minified) module.
+                rewrites.append([sm.group(0), ""])
+                m["append"] = m.get("append", "") + "".join(aliases)
+                found = True
+            if not found:
+                raise ValueError(f"{lib}: cannot rewrite the self-import {lit!r} in {spec}")
+            del m["deps"][lit]
+        m["rewrites"] = rewrites
+        print(f"  self-import in {spec}: {len(rewrites)} statement(s) become local aliases at the end of the module")
+    # Reachable modules from the entry (barrels drop out), then the cycle check.
+    entry_resolved = resolve(entry)
+    reach = {}
+    stack = [entry_resolved]
+    while stack:
+        s = stack.pop()
+        if s in reach:
+            continue
+        reach[s] = modules[s]
+        stack.extend(modules[s]["deps"].values())
+    state = {}
+
+    def dfs(s, path):
+        state[s] = 1
+        for d in set(reach[s]["deps"].values()):
+            if state.get(d) == 1:
+                raise ValueError(f"{lib}: cyclic module graph: {' -> '.join(path + [s, d])}")
+            if d not in state:
+                dfs(d, path + [s])
+        state[s] = 2
+
+    for s in reach:
+        if s not in state:
+            dfs(s, [])
+    packages = {}
+    for s in reach:
+        pm = re.match(r"^/((?:@[^/]+/)?[^/@]+)@(\d[^/]*)/", s)
+        if pm:
+            packages[pm.group(1)] = pm.group(2)
+    index = {"entry": entry_resolved, "host": host, "packages": packages,
+             "modules": {s: dict({"file": m["file"], "deps": m["deps"]}, **({"rewrites": m["rewrites"]} if m.get("rewrites") else {}), **({"append": m["append"]} if m.get("append") else {})) for s, m in reach.items()}}
+    index_text = json.dumps(index, indent=1, ensure_ascii=False)
+    (gdir / "index.json").write_text(index_text, encoding="utf-8", newline="\n")
+    files = [{"as": "graph/index.json", "url": host + entry, "wrap": "text", "bundle": "graph",
+              "size": len(index_text.encode("utf-8")), "sha256": sha256_of(index_text.encode("utf-8"))}]
+    for s, m in reach.items():
+        files.append({"as": "graph/" + m["file"], "url": m["url"], "wrap": "text", "bundle": "graph", "size": m["size"], "sha256": m["sha256"]})
+    print(f"  graph: {len(reach)} modules, {sum(m['size'] for m in reach.values()) / 1e3:.0f} kB, packages: {', '.join(sorted(packages))}")
+    fetch_license(lib, cfg)
+    fetch_graph_licenses(lib, packages)
+    return files
+
+
+def fetch_graph_licenses(lib, packages):
+    """LICENSE of every package in a module graph as vendor/<lib>/LICENSE-<pkg>.txt (jsDelivr serves the npm files)."""
+    for pkg, ver in sorted(packages.items()):
+        target = OUT / lib / ("LICENSE-" + pkg.replace("/", "__") + ".txt")
+        if target.exists():
+            continue
+        for cand in LICENSE_CANDIDATES:
+            try:
+                target.write_bytes(http_get(JSDELIVR_FILE.format(pkg=pkg, ver=ver, path=cand), retries=1, timeout=30))
+                print(f"  license  {pkg}@{ver}")
+                break
+            except Exception:  # noqa: BLE001
+                continue
+        else:
+            # No licence file in the package: record the licence declared in package.json instead.
+            try:
+                meta = json.loads(http_get(JSDELIVR_FILE.format(pkg=pkg, ver=ver, path="package.json"), retries=1, timeout=30))
+                declared = meta.get("license") or meta.get("licenses") or "unknown"
+                target.write_text(f"{pkg} {ver}: the package ships no licence file; package.json declares the licence {json.dumps(declared)}.\n", encoding="utf-8", newline="\n")
+                print(f"  license  {pkg}@{ver} (declared in package.json: {declared})")
+            except Exception:  # noqa: BLE001
+                print(f"  WARNING: no LICENSE found for {pkg}@{ver}", file=sys.stderr)
+
+
 def parse_packages(text):
     """Parse an R PACKAGES file (Debian control format) into {name: fields}."""
     records = {}
@@ -212,6 +405,8 @@ def main():
         print(f"[{lib}]")
         if cfg.get("type") == "r-repo":
             files = fetch_r_repo(lib, cfg, args.force)
+        elif cfg.get("type") == "esm-graph":
+            files = fetch_esm_graph(lib, cfg, args.force)
         else:
             entries = list(expand_entries(lib, cfg))
             with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:

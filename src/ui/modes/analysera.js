@@ -26,7 +26,7 @@
       /** Per-language editor state (scripts, current script, unsaved draft, live elements). */
       const st = {
         r: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null },
-        sql: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null },
+        sql: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null, target: 'local' },
       };
       let outputEl = null; let statusEl = null; let runBtn = null; let stopBtn = null;
       let sqlOut = null; let sqlSaveBtn = null; let sqlResult = null; let sqlRunBtn = null; let sqlBadge = null;
@@ -310,6 +310,14 @@
         sqlRunBtn = ui.button({ label: t('sql.run'), icon: 'play', variant: 'primary', title: t('analysera.run.hint'), onClick: () => runSql() });
         sqlBadge = h('dm-badge', { text: '' });
         sqlSaveBtn = ui.button({ label: t('sql.save.dataset'), icon: 'table', disabled: !(sqlResult && sqlResult.sql), onClick: saveSqlResult });
+        // Where the SQL runs: the datasets here (SQLite) or the source last opened in the database bridge.
+        const bridgeSource = D.require('api/bridge').getCurrent();
+        if (!bridgeSource) v.target = 'local';
+        const sqlTarget = /** @type {any} */ (h('dm-select', { 'aria-label': t('sql.target'), inline: true }));
+        sqlTarget.options = [{ value: 'local', label: t('sql.target.local') }].concat(bridgeSource ? [{ value: 'bridge', label: t('sql.target.bridge', { name: D.require('api/bridge').sourceLabel(bridgeSource) }) }] : []);
+        sqlTarget.value = v.target || 'local';
+        sqlTarget.addEventListener('change', () => { v.target = sqlTarget.value; updateSqlHead(); });
+        sqlTarget.hidden = !bridgeSource;
         updateSqlHead();
         v.nameInput = /** @type {any} */ (h('dm-input', { placeholder: t('analysera.script.untitled'), 'aria-label': t('analysera.script.name'), inline: true }));
         v.nameInput.value = v.current.name;
@@ -322,6 +330,7 @@
           h('h1', null, ui.icon('database', 20), t('sql.title'), ' ', sqlBadge),
           h('div', { class: 'dm-row' },
             sqlRunBtn,
+            sqlTarget,
             ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript('sql') }),
             v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript('sql') }) : null,
             sqlSaveBtn));
@@ -333,21 +342,25 @@
       function updateSqlHead() {
         const ds = selectedDataset();
         if (sqlBadge) { sqlBadge.textContent = ds ? ds.name : t('sql.no.dataset'); if (ds) sqlBadge.removeAttribute('kind'); else sqlBadge.setAttribute('kind', 'warn'); }
-        if (sqlRunBtn) sqlRunBtn.disabled = !ds;
+        if (sqlRunBtn) sqlRunBtn.disabled = !ds && st.sql.target !== 'bridge';
       }
 
       async function runSql(detail) {
         const editor = st.sql.editor;
         if (!editor) return;
         const ds = selectedDataset();
-        if (!ds) { ui.toast.show(t('sql.no.dataset'), { kind: 'warn' }); return; }
+        const bridge = D.require('api/bridge');
+        const viaBridge = st.sql.target === 'bridge' ? bridge.getCurrent() : null;
+        if (!ds && !viaBridge) { ui.toast.show(t('sql.no.dataset'), { kind: 'warn' }); return; }
         const selection = detail && detail.selection && editor.cm && editor.cm.somethingSelected() ? detail.selection : '';
         const code = ((detail && detail.code) || selection || editor.value).trim().replace(/;\s*$/, '');
         if (!code) return;
         st.sql.draft = editor.value;
         const t0 = performance.now();
         try {
-          if (READ_ONLY_SQL.test(code)) {
+          if (viaBridge) {
+            sqlResult = await runBridgeSql(bridge, viaBridge, code, t0);
+          } else if (READ_ONLY_SQL.test(code)) {
             // Other datasets named by their short names are attached for the query (joins across datasets).
             const r = await D.require('data/query').select(ds.id, code, { limit: SQL_LIMIT });
             sqlResult = { sql: code, datasetId: ds.id, columns: r.columns, values: r.values, truncated: r.truncated, ms: performance.now() - t0, sorted: null, others: r.others };
@@ -363,6 +376,27 @@
         renderSqlResult();
       }
 
+      /** SQL against the database bridge's current source: SELECT shows rows; other statements are approved first. */
+      async function runBridgeSql(bridge, source, code, t0) {
+        const shape = (r) => ({ sql: code, datasetId: null, bridge: source, columns: r.columns.map((c) => c.name), values: r.rows, truncated: !!r.truncated, ms: performance.now() - t0, sorted: null });
+        try {
+          const r = await bridge.query(source, code, { limit: SQL_LIMIT });
+          if (r.affected !== undefined) return { message: t('bridge.sql.affected', { n: i18n.formatNumber(r.affected) }) };
+          return shape(r);
+        } catch (err) {
+          if (!err || err.status !== 428) throw err;
+          const ok = await ui.dialog.open({
+            title: t('bridge.approve.title'),
+            body: h('div', { class: 'dm-stack-sm' }, h('p', { text: t('bridge.approve.text', { name: bridge.sourceLabel(source) }) }), h('pre', { class: 'dm-help-code', text: code })),
+            actions: [{ label: t('common.cancel'), value: false }, { label: t('bridge.approve.ok'), variant: 'primary', value: true, primary: true }],
+          });
+          if (ok !== true) return { message: t('bridge.approve.cancelled') };
+          const r = await bridge.query(source, code, { limit: SQL_LIMIT, approved: true });
+          const text = t('bridge.sql.affected', { n: i18n.formatNumber(r.affected || 0) });
+          shell.log(text, 'ok');
+          return { message: text };
+        }
+      }
       function renderSqlResult() {
         if (!sqlOut) return;
         if (sqlSaveBtn) sqlSaveBtn.disabled = !(sqlResult && sqlResult.sql && sqlResult.columns.length);
@@ -417,7 +451,9 @@
         const name = await ui.dialog.prompt(t('sql.dataset.name'), { title: t('sql.save.dataset'), value: t('sql.dataset.default') });
         if (!name || !name.trim()) return;
         try {
-          const meta = await D.require('data/query').createDataset(sqlResult.datasetId, sqlResult.sql, { name: name.trim(), source: { kind: 'sql', from: sqlResult.datasetId, sql: sqlResult.sql } });
+          const meta = sqlResult.bridge
+            ? await D.require('api/bridge').importTable(sqlResult.bridge, { sql: sqlResult.sql, name: name.trim() })
+            : await D.require('data/query').createDataset(sqlResult.datasetId, sqlResult.sql, { name: name.trim(), source: { kind: 'sql', from: sqlResult.datasetId, sql: sqlResult.sql } });
           const text = t('derive.created', { name: meta.name, rows: i18n.formatNumber(meta.rowCount) });
           shell.log(text, 'ok');
           ui.toast.show(text, { kind: 'ok', action: { label: t('analysera.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
@@ -482,7 +518,7 @@
         });
       }
 
-      return { id: 'analysera', activate, deactivate };
+      return { id: 'analysera', activate, deactivate, get sqlTarget() { return st.sql.target; }, setSqlTarget(v) { st.sql.target = v; if (slots && tab === 'sql') render(); } };
     }
     return { createMode };
   });

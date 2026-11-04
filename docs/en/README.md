@@ -56,6 +56,10 @@ with a backup or a bundle.
   Protection Agency, Lantmäteriet and Sweden's data portal as well as the ECB and the OECD, with saved fetches that
   update with one click and replay their recipes (see [api-konfiguration.md](api-konfiguration.md)). Example data
   and municipality and region boundaries for Sweden, Denmark, Norway and Finland are included.
+- **Databases**: Access files are read directly in the browser; databases on the computer or in the network (SQL
+  Server, ODBC, Excel, SQLite) are reached through a local bridge, and PostgREST/Supabase, OData, GraphQL, CouchDB,
+  ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable become sources with one click. Files can be
+  linked and read again from disk (see [kallor.md](kallor.md)).
 - **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
   check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
   municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see

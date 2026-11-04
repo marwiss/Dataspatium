@@ -68,6 +68,10 @@ listan väljer vilka länders källor som visas. Bläddra eller sök fram en tab
 och hämta till en ny datamängd eller lägg till i en befintlig. En hämtad datamängd kommer ihåg sin fråga, så den kan
 hämtas igen från Hantera när källan uppdaterats.
 
+Databaser: Access-filer släpps på ytan som andra filer; databaser på datorn (SQL Server, ODBC, Excel, SQLite) nås
+genom *Databas via bryggan* och tjänster över HTTP (PostgREST, OData, GraphQL med flera) genom *Lägg till
+databaskälla*. I Chrome och Edge kan en fil länkas och läsas in igen från disken. Se [kallor.md](kallor.md).
+
 ### 2. Granska och rätta (Bearbeta)
 
 Tabellen visar datamängden rad för rad även när den har hundratusentals rader. Klicka på en rubrik för att sortera
