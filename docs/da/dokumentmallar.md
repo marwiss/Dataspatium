@@ -61,6 +61,10 @@ Indsætter et gemt diagram fra Visualisér (Vega-Lite eller D3) som billede, gen
 
 ### Sideskift og kodebog
 
+`{{bild "fil.jpg" | bredd: 400}}` indsætter et billede fra en billedsamling (se [dokument.md](dokument.md)): billedet
+søges først i skabelonens datasæt og derefter i alle billedsamlinger, forhåndsvisningen bruges og skaleres til den
+angivne bredde (standard højst 720 px; `hojd` kan også angives). Tagget virker i alle formater og i batchkørsler som
+`{{diagram}}`.
 `{{sidbrytning}}` laver sideskift i Word, PDF og LaTeX. Skabelonen **Kodebog** bruger udvidede kolonneoplysninger:
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` pr. kolonne samt
 `{{dubbletter}}`; de findes, når skabelonen er markeret som kodebog (en kopi af den indbyggede skabelon bevarer det).

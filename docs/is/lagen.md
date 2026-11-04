@@ -87,6 +87,12 @@ SQL-skilyrði) athuga gögnin eftir óskum með skýrslu og röðum sem bregðas
 uppskrift sem má afturkalla, spila á öðru gagnasafni og flytja út sem R- eða SQL-kóða. Útgáfur vista skyndimyndir
 til að hverfa aftur til. Sjá [bearbeta.md](bearbeta.md).
 
+Gagnasöfn af tegundinni **skjöl** (PDF, Word, OpenDocument, Markdown, texti) opnast sem lestrarsýn: veldu skjal,
+flettu síðu fyrir síðu, sýndu PDF-síðuna sem mynd, leitaðu í öllu safninu og sæktu frumritið. Gagnasöfn af tegundinni
+**myndir** opnast sem myndasafn með smámyndum, síu, röðun og EXIF-upplýsingum myndarinnar í skoðaranum, þar sem
+lýsingunni má breyta. *Sýna sem töflu* gefur í báðum tilvikum venjulegu töfluna með öllum aðgerðum. Sjá
+[dokument.md](dokument.md).
+
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;
@@ -101,6 +107,11 @@ Regex prófar reglulegar segðir á dálki með niðurstöðurnar merktar og not
 skipta upp, merkja, telja eða búa til gæðareglu, með mynstursniði og safni norrænna mynstra (sjá [regex.md](regex.md)).
 Minnisbókin blandar texta (Markdown), R og SQL í reitum sem keyra í röð og verða að skýrslu í HTML, Word, PDF,
 Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)). Síðar: tölfræðilíkön.
+
+Þegar skjalasafn er valið er flipinn **Texti** (orðtíðni með stopporðum, leitarorð í samhengi, samtíðni og yfirlit
+fyrir hvert skjal) og þegar myndasafn er valið flipinn **Myndir** (yfirlit eftir tegund, myndavél, ári eða mánuði og
+tvítök með myndahakki). Báðir eru eftir Regex og á undan Minnisbókinni, og hverja niðurstöðu má vista sem nýtt
+gagnasafn. Sjá [dokument.md](dokument.md).
 
 ## Myndgera
 

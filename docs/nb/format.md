@@ -24,6 +24,8 @@
 | SQL-skript (sql) | Ja | Nei | Et skript med `CREATE TABLE` og `INSERT`, for eksempel en databasedump, kjøres i en tom SQLite-database, og tabellene vises for valg. MySQL-spesifikke linjer (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og tabellvalg som `ENGINE=`) fjernes først; andre dialekter fungerer så langt de følger SQLites syntaks |
 | GeoPackage (gpkg) | Ja | Nei | Lagene (feature- og attributtabeller) velges som tabeller; geometrikolonnen blir GeoJSON som kartdiagrammet tegner, referansesystemet vises |
 | Access (mdb, accdb) | Ja | Nei | Leses rett i nettleseren med mdb-reader; tabellen velges i trinnet Innstillinger, og typene kommer fra Access. Spørringer, lenkede tabeller og passord krever [databasebroen](kallor.md). |
+| Dokumenter: PDF, Word (docx), OpenDocument (odt), Markdown (md), tekst (txt) | Ja | Nei | Blir et datasett av slaget *dokumenter* med ett avsnitt per rad (dokument, side, avsnitt, type, tekst, tegn); flere filer på én gang blir én samling, og originalene følger med. Se [dokument.md](dokument.md) |
+| Bilder: JPEG, PNG, WebP, GIF, BMP, AVIF | Ja | Nei | Blir et datasett av slaget *bilder* med én rad per bilde (mål, størrelse, dato, kamera og posisjon fra EXIF); en forhåndsvisning og en miniatyr lagres, ikke originalene. Se [dokument.md](dokument.md) |
 | SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter blir kolonneetiketter og verdietiketter kolonnemetadata (se nedenfor) |
 | Stata dta | Ja | dta | Via haven. Verdietiketter som for SPSS. Ved eksport forkortes kolonnenavnene etter Statas regler (32 tegn, ASCII) |
 | SAS sas7bdat, xpt | Ja | Nei | Via haven |

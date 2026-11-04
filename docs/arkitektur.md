@@ -330,7 +330,7 @@ monteras av läget Visualisera; Exportera återanvänder dialogerna.
 `src/docgen/` gör dokument av mallar (se [dokumentmallar.md](dokumentmallar.md)):
 
 - `template.js`: bygger mallens kontext ur en datamängd (formaterade rader, summor, kolumner, grupp, kodboksprofil
-  via `data/profile`), löser Dataspatiums egna taggar (`{{#tabell}}`, `{{diagram}}`, `{{sidbrytning}}`) till block
+  via `data/profile`), löser Dataspatiums egna taggar (`{{#tabell}}`, `{{diagram}}`, `{{bild}}`, `{{sidbrytning}}`) till block
   innan Mustache körs med HTML-escaping avstängd.
 - `markdown.js`: ett Markdown-urval till en dokumentmodell (rubrik, stycke, lista, tabell, bild, linje,
   sidbrytning med inline-körningar för fet, kursiv, kod och länk).
@@ -448,11 +448,20 @@ Språk laddas vid behov: `boot.js` läser in svenska och det valda språket (all
 gjorts) och `i18n.loadLanguage(kod)` injicerar `src/ui/i18n/<kod>.js` när användaren byter språk. Tester som
 jämför alla språk anropar `loadLanguage` först.
 
-Datamängder har `kind` i `_meta` (`table`, `graph`, `document`, `images`, `model`; `datasets.KINDS`) som
-förberedelse för fler slags datamängder; 2.0 skapar bara `table`. Mapp (`folder`) och taggar (`tags`) ligger också
-i `_meta` och i manifestets lista (`format: 2`). Dexie-schemat är version 7 med indexet `folder` och lagret `lists`
-för sparade sökningar (`data/lists`); `analysis/search` söker med `dm_regex_test` i SQL-workern och räknar fasetter
-för kolumner med få olika värden.
+Datamängder har `kind` i `_meta` (`table`, `graph`, `document`, `images`, `model`; `datasets.KINDS`). Sedan 2.6 finns
+`document` och `images`: `data/dataset-files` lagrar filer i datamängdens SQLite-fil (tabellen `_files` med namn, slag
+`original`/`preview`/`thumb`, typ, storlek och bytes; `createDataset` bygger en datamängd med rader, filer och extra
+`_meta`-nycklar), så att filerna följer med i export, paket, GitHub och enheter. `io/importers/documents` gör PDF
+(`engines/pdf`: pdf.js 3.11 med visningslagret på huvudtråden och worker-bygget importerat i en shimmad Blob-worker
+via `GlobalWorkerOptions.workerPort`; standardtypsnitten är inbäddade resurser), docx och odt (XML via `platform/zip`),
+Markdown och text till en rad per stycke med `documents`-metadata; `io/importers/images` gör bilder till rader med
+EXIF (`data/exif`) och sparar förhandsvisning och miniatyr. Importörer med `collection: true` tar flera filer
+(`io/import.collectionFor/runFiles`). Bearbeta öppnar slagen i `ui/bearbeta/document-view` och `ui/bearbeta/gallery-view`,
+Analysera visar flikarna Text (`ui/analysis/text-panel`, logik i `analysis/text`) och Bilder (`ui/analysis/images-panel`,
+`analysis/images` med 8×8-aHash), och dokumentmallar har taggen `{{bild}}`. Mapp (`folder`) och taggar (`tags`) ligger
+också i `_meta` och i manifestets lista (`format: 2`). Dexie-schemat är version 7 med indexet `folder` och lagret
+`lists` för sparade sökningar (`data/lists`); `analysis/search` söker med `dm_regex_test` i SQL-workern och räknar
+fasetter för kolumner med få olika värden.
 
 `analysis/querybuilder` (fliken Fråga, `ui/soka/query`) gör en frågespecifikation (`from`, `joins`, `columns` med
 beräkningar, `where` i grupper, `orderBy`, `limit`) till SQL över `data t0` med de kopplade datamängderna som

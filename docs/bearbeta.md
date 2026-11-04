@@ -218,6 +218,12 @@ behåller sitt namn. *Förhandsgranska* kör funktionen på de första 200 rader
 Steget loggas i receptet med sin kod, kan ångras och spelas upp på andra datamängder; i SQL-exporten står koden som
 kommentar, i R-exporten körs R-steget som kod och Python-steget står som kommentar. Python hämtas första gången.
 
+## Dokument och bilder
+
+Datamängder av slaget dokument och bilder öppnas i Bearbeta i en egen vy (läsvy respektive galleri) med knappen
+*Visa som tabell* för den vanliga tabellen. Alla åtgärder här gäller tabellen: filtrera stycken, rätta text, ta bort
+rader, lägga till beräknade kolumner. Se [dokument.md](dokument.md).
+
 ## SQL-konsolen
 
 Varje datamängd har ett **kortnamn** (visas under namnet i objektpanelen och under Hantera, där det kan ändras

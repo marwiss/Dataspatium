@@ -60,6 +60,9 @@ with a backup or a bundle.
   Server, ODBC, Excel, SQLite) are reached through a local bridge, and PostgREST/Supabase, OData, GraphQL, CouchDB,
   ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable become sources with one click. Files can be
   linked and read again from disk (see [kallor.md](kallor.md)).
+- **Documents and images**: PDF, Word, OpenDocument, Markdown and text become datasets with one paragraph per row and
+  are read in a document view; pictures become a collection with EXIF details and a gallery. The tools Text (word
+  frequency, keywords in context, co-occurrences) and Images (overview, duplicates) work without code (see [dokument.md](dokument.md)).
 - **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
   check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
   municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
@@ -109,6 +112,7 @@ everywhere.
 - [Search](soka.md) and [Share](dela.md): finding without code, and giving data to others.
 - [Dataspatium Mobile](mobil.md): the phone as courier, receiver and viewer; transfer between devices.
 - [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
+- [Documents and images](dokument.md): PDF, Word, OpenDocument, Markdown and pictures as datasets; the document view, the gallery and the tools Text and Images.
 - [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
 - [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.

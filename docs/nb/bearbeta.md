@@ -216,6 +216,12 @@ viser kolonner og noen rader. Steget logges i oppskriften med koden sin, kan ang
 i SQL-eksporten står koden som kommentar, i R-eksporten kjøres R-steget som kode og Python-steget står som kommentar.
 Python hentes første gang.
 
+## Dokumenter og bilder
+
+Datasett av slaget dokumenter og bilder åpnes i Bearbeid i en egen visning (lesevisning respektive galleri) med
+knappen *Vis som tabell* for den vanlige tabellen. Alle handlinger her gjelder tabellen: filtrere avsnitt, rette
+tekst, slette rader, legge til beregnede kolonner. Se [dokument.md](dokument.md).
+
 ## SQL-konsollen
 
 Hvert datasett har et **kortnavn** (vises under navnet i objektpanelet og under Håndter, der det kan endres sammen med

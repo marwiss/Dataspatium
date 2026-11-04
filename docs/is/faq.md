@@ -207,6 +207,13 @@ Já. Access-skrám (mdb, accdb) er sleppt á flötinn í Sækja og þær lesnar 
 ODBC-uppsprettur, Excel og Access-fyrirspurnir nást um gagnagrunnsbrúna, litla skriftu sem þú ræsir á tölvunni;
 þjónustur eins og PostgREST, OData og GraphQL er bætt við sem uppsprettum með vistfangi. Sjá [kallor.md](kallor.md).
 
+## Get ég lesið inn PDF-skrár, Word-skjöl og myndir?
+
+Já. Slepptu þeim í Sækja: skjöl (PDF, Word, OpenDocument, Markdown, texti) verða gagnasafn með einni málsgrein í hverri
+röð, myndir gagnasafn með einni röð fyrir hverja mynd og EXIF-upplýsingum. Margar skrár í einu verða safn. Í Vinna
+eru þau sýnd sem lestrarsýn eða myndasafn, og í Greina eru tólin Texti og Myndir án kóða. Skannaðar PDF-skrár án
+textalags gefa engan texta. Sjá [dokument.md](dokument.md).
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

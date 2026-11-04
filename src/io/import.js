@@ -7,8 +7,11 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, types, datasets) => {
-    const importers = [excel, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv];
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images,types, datasets) => {
+    // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
+    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv];
+    /** Importers that turn one or several files into one dataset of their own kind (documents, images). */
+    const collections = [documents, images];
 
     /** @param {File} file @param {string} [forced] importer id */
     function importerFor(file, forced) {
@@ -85,8 +88,27 @@
      * @param {Array<any>|null} specs column specs from the wizard, or null to use inferred types
      * @param {string} [name]
      */
+    /** The collection importer that takes every one of the files (all documents, or all images), or null. */
+    function collectionFor(files, forced) {
+      if (!files || !files.length) return null;
+      if (forced) { const found = collections.find((i) => i.id === forced); return found || null; }
+      return collections.find((i) => files.every((f) => i.accepts(f))) || null;
+    }
+
+    /**
+     * Import several files as one dataset of a collection kind (documents or images).
+     * @param {File[]} files @param {any} options @param {string} [name] @param {Function} [progress]
+     */
+    async function runFiles(files, options = {}, name, progress) {
+      const importer = collectionFor(files, options.format);
+      if (!importer) throw new Error(D.t('import.err.collection'));
+      return importer.importFiles(files, options, name, progress);
+    }
+
     async function run(file, options, specs, name, progress) {
       const importer = await resolveImporter(file, options.format);
+      // A document or image keeps its kind and its files; the column step does not apply to it.
+      if (importer.collection) return importer.importFiles([file], options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.
@@ -184,6 +206,6 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, preview, parse, run, runText, runPreset, previewText, materialize, baseName };
+    return { importers, importerFor, preview, parse, run, runText, runFiles, collectionFor, runPreset, previewText, materialize, baseName };
   });
 })();

@@ -220,6 +220,12 @@ ja muutaman rivin. Vaihe kirjataan reseptiin koodeineen, sen voi kumota ja toist
 koodi on kommenttina, R-viennissä R-vaihe suoritetaan koodina ja Python-vaihe on kommenttina. Python haetaan
 ensimmäisellä kerralla.
 
+## Asiakirjat ja kuvat
+
+Asiakirja- ja kuvalajin aineistot avautuvat Muokkaa-tilassa omassa näkymässään (lukunäkymä tai galleria), ja painike
+*Näytä taulukkona* antaa tavallisen taulukon. Kaikki tämän tilan toiminnot koskevat taulukkoa: kappaleiden
+suodatus, tekstin korjaus, rivien poisto, laskettujen sarakkeiden lisäys. Katso [dokument.md](dokument.md).
+
 ## SQL-konsoli
 
 Jokaisella aineistolla on **lyhytnimi** (näkyy nimen alla kohdepaneelissa ja Hallitse-tilassa, jossa sen voi muuttaa nimen

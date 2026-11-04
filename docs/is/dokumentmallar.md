@@ -60,6 +60,9 @@ pixlum. Í hópkeyrslum er myndritið síað á hópinn. R- og Python-myndrit er
 
 ### Síðuskil og kóðabók
 
+`{{bild "skra.jpg" | bredd: 400}}` setur inn mynd úr myndasafni (sjá [dokument.md](dokument.md)): myndin er fyrst
+leituð í gagnasafni sniðmátsins og síðan í öllum myndasöfnum, forskoðunin er notuð og skölud í gefna breidd
+(sjálfgefið mest 720 px; `hojd` má einnig gefa). Merkið virkar í öllum sniðum og í hópkeyrslum eins og `{{diagram}}`.
 `{{sidbrytning}}` brýtur síðu í Word, PDF og LaTeX. Sniðið **Kóðabók** notar útvíkkaðar dálkaupplýsingar: `{{saknade}}`,
 `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` fyrir hvern dálk auk
 `{{dubbletter}}`; þær eru til þegar sniðið er merkt sem kóðabók (afrit af innbyggða sniðinu heldur því).

@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -53,6 +53,20 @@
         }
         return rxPanel;
       }
+      /** Tools per dataset kind (after Regex, before the notebook): Text for documents, Bilder for image collections. */
+      const KIND_TABS = { document: { id: 'text', label: 'analysera.tabs.text', icon: 'text-search' }, images: { id: 'images', label: 'analysera.tabs.images', icon: 'images' } };
+      let txPanel = null; let imPanel = null; let tabsEl = null;
+      function textPanel() { if (!txPanel) txPanel = textPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'text') renderRight(); } }); return txPanel; }
+      function imagesPanel() { if (!imPanel) imPanel = imagesPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'images') renderRight(); } }); return imPanel; }
+      const kindPanel = () => (tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : null);
+      function tabList() {
+        const ds = selectedDataset();
+        const kind = ds && KIND_TABS[ds.kind] ? KIND_TABS[ds.kind] : null;
+        // Fixed order: R, Python, SQL, Regex, then the kind tool; the notebook is always last because it joins pieces from the others.
+        return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }]
+          .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : (tab === 'text' || tab === 'images') ? [{ id: tab, label: t(KIND_TABS[tab === 'text' ? 'document' : 'images'].label), icon: KIND_TABS[tab === 'text' ? 'document' : 'images'].icon }] : [])
+          .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }]);
+      }
 
       function activate(s) {
         slots = s;
@@ -60,9 +74,11 @@
           if (changed.includes('pendingCode')) takePending();
           if (!changed.includes('datasets') && !changed.includes('selectedId')) return;
           renderLeft();
+          if (tabsEl) tabsEl.tabs = tabList();
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
           if (tab === 'notebook' && changed.includes('datasets')) renderRight();
           if (tab === 'regex') { regexPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
+          if (tab === 'text' || tab === 'images') { kindPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
         });
         for (const lang of CODE_LANGS) unsubBridges.push(bridges[lang].on((type, payload) => onBridgeEvent(lang, type, payload)));
         unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
@@ -77,7 +93,9 @@
         for (const lang of CODE_LANGS) { const v = st[lang]; v.outputEl = null; v.statusEl = null; v.runBtn = null; v.stopBtn = null; v.startBtn = null; }
         if (nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
         if (rxPanel) rxPanel.destroy();
-        slots = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
+        if (txPanel) txPanel.destroy();
+        if (imPanel) imPanel.destroy();
+        slots = null; tabsEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
         while (unsubBridges.length) unsubBridges.pop()();
         if (unsubNb) unsubNb();
@@ -152,6 +170,7 @@
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         if (tab === 'notebook') { renderNotebookLeft(); return; }
         if (tab === 'regex') { regexPanel().left(slots.left, renderLeft); return; }
+        if (tab === 'text' || tab === 'images') return;
         const selected = selectedDataset();
         if (CONSOLE[tab]) slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode(tab, CONSOLE[tab].readSnippet(selected.shortName || selected.name)) })));
         slots.left.appendChild(h('hr'));
@@ -207,9 +226,9 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        // Fixed order: R, Python, SQL, Regex; the notebook is always last because it joins pieces from the others.
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
+        tabs.tabs = tabList();
         tabs.active = tab;
+        tabsEl = tabs;
         tabs.addEventListener('dm-change', (e) => {
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
           if (nbView) { notebook = nbView.notebook; }
@@ -218,7 +237,7 @@
           if (AUTOSTART[tab]) startEngine(tab);
         });
         if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
-        const view = CONSOLE[tab] ? renderConsole(tab) : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : renderNotebook();
+        const view = CONSOLE[tab] ? renderConsole(tab) : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : (tab === 'text' || tab === 'images') ? kindPanel().center() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
@@ -502,6 +521,7 @@
         if (!slots) return;
         if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
         if (tab === 'regex') { replace(slots.right, regexPanel().inspector()); return; }
+        if (tab === 'text' || tab === 'images') { replace(slots.right, kindPanel().inspector()); return; }
         if (tab === 'sql') {
           const ds = selectedDataset();
           let cols = [];

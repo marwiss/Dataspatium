@@ -210,6 +210,13 @@ Ja. Access-filer (mdb, accdb) slippes på flaten i Hent inn og leses rett i nett
 Excel og Access-spørringer nås gjennom databasebroen, et lite skript du starter på datamaskinen; tjenester som
 PostgREST, OData og GraphQL legges til som kilder med en adresse. Se [kallor.md](kallor.md).
 
+## Kan jeg lese inn PDF-filer, Word-dokumenter og bilder?
+
+Ja. Slipp dem i Hent: dokumenter (PDF, Word, OpenDocument, Markdown, tekst) blir et datasett med ett avsnitt per rad,
+bilder et datasett med én rad per bilde og EXIF-opplysninger. Flere filer på én gang blir en samling. I Bearbeid vises
+de som lesevisning respektive galleri, og i Analyser finnes verktøyene Tekst og Bilder uten kode. Skannede PDF-filer
+uten tekstlag gir ingen tekst. Se [dokument.md](dokument.md).
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

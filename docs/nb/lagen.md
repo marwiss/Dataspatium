@@ -88,6 +88,11 @@ liste, mønster, lengde, SQL-betingelse) kontrollerer dataene på forespørsel m
 datasett. Alt logges som en oppskrift som kan angres, spilles av på et annet datasett og eksporteres som R- eller
 SQL-kode. Versjoner lagrer øyeblikksbilder å gå tilbake til. Se [bearbeta.md](bearbeta.md).
 
+Datasett av slaget **dokumenter** (PDF, Word, OpenDocument, Markdown, tekst) åpnes som lesevisning: velg dokument, bla
+side for side, vis PDF-siden som bilde, søk i hele samlingen og hent originalen. Datasett av slaget **bilder** åpnes
+som galleri med miniatyrer, filter, sortering og bildets EXIF-opplysninger i inspektøren, der beskrivelsen kan
+endres. *Vis som tabell* gir i begge tilfeller den vanlige tabellen med alle handlinger. Se [dokument.md](dokument.md).
+
 ## Analyser
 
 Kode og statistikk. Verktøyene ligger i fast rekkefølge: R, Python, SQL, Regex og sist notatboken, som føyer sammen deler
@@ -103,6 +108,11 @@ opp, markere, telle eller lage en kvalitetsregel, med en mønsterprofil og et bi
 [regex.md](regex.md)). Notatboken blander tekst (Markdown), R og SQL i celler som kjøres i rekkefølge og blir en
 rapport i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senere: statistiske
 modeller.
+
+Når en dokumentsamling er valgt, finnes fanen **Tekst** (ordfrekvens med stoppord, nøkkelord i kontekst,
+samforekomster og en oversikt per dokument), og når en bildesamling er valgt, fanen **Bilder** (oversikt per type,
+kamera, år eller måned og duplikater via bildehash). Begge ligger etter Regex og før Notatboken, og hvert resultat kan
+lagres som et nytt datasett. Se [dokument.md](dokument.md).
 
 ## Visualiser
 

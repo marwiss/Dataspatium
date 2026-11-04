@@ -58,6 +58,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   Excel, SQLite) nås gjennom en lokal bro, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable blir kilder med ett klikk. Filer kan lenkes og leses inn igjen fra disken
   (se [kallor.md](kallor.md)).
+- **Dokumenter og bilder**: PDF, Word, OpenDocument, Markdown og tekst blir datasett med ett avsnitt per rad og leses i
+  en dokumentvisning; bilder blir en samling med EXIF-opplysninger og galleri. Verktøyene Tekst (ordfrekvens,
+  nøkkelord i kontekst, samforekomster) og Bilder (oversikt, duplikater) fungerer uten kode (se [dokument.md](dokument.md)).
 - **Bearbeide**: bla gjennom, sortere og filtrere store tabeller, redigere celler, rense, sette typer, omkode, dele inn i klasser, rangere, beregne andeler, løpende summer og endringer, pivotere og
   koble data, kontrollere datakvalitet med profil og regler (blant annet formater, nordiske identitetsnumre, referanser til andre datasett og avvikende verdier), pseudonymisere personnumre før deling, med angre, versjoner og
   oppskrifter som kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
@@ -105,6 +108,7 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - [Søk](soka.md) og [Del](dela.md): finn uten kode, og gi data til andre.
 - [Dataspatium Mobil](mobil.md): telefonen som kurer, mottaker og viser; overføring mellom enheter.
 - [Notatbok](anteckningsbok.md): tekst, R og SQL i celler som blir en rapport.
+- [Dokumenter og bilder](dokument.md): PDF, Word, OpenDocument, Markdown og bilder som datasett; dokumentvisning, galleri og verktøyene Tekst og Bilder.
 - [Regulære uttrykk](regex.md): mønstre for å analysere, rette og dele opp tekst i datasett.
 - [Formater og import](format.md): filformater, tegnkoding, desimaltegn, datoer og kolonnetyper.
 - [Åpne API-er](api-konfiguration.md): de forhåndsinnstilte kildene, nøkler og egne konfigurasjoner.

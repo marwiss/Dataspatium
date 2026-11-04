@@ -792,6 +792,67 @@
           "as": "icons/circle-help.svg",
           "wrap": "text",
           "bundle": "icons"
+        },
+        {
+          "path": "icons/image.svg",
+          "as": "icons/image.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/images.svg",
+          "as": "icons/images.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/book-open.svg",
+          "as": "icons/book-open.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        }
+      ]
+    },
+    "pdfjs": {
+      "version": "3.11.174",
+      "npm": "pdfjs-dist",
+      "license": "Apache-2.0",
+      "homepage": "https://mozilla.github.io/pdf.js/",
+      "notes": "pdf.js 3.11 is the last release shipped as classic scripts (4.x is ES modules with a module worker, which Edge blocks under file://). The display layer runs on the main thread; the worker build is imported into Dataspatium's shimmed Blob worker and attached through GlobalWorkerOptions.workerPort (src/engines/pdf). The 14 standard fonts are embedded: Foxit fonts under BSD-3-Clause and Liberation Sans under SIL OFL 1.1 (LICENSE-foxit-fonts.txt, LICENSE-liberation-fonts.txt).",
+      "files": [
+        {
+          "path": "build/pdf.min.js",
+          "as": "pdf.min.js",
+          "wrap": false
+        },
+        {
+          "path": "build/pdf.worker.min.js",
+          "as": "pdf.worker.min.js",
+          "wrap": "text"
+        },
+        { "path": "standard_fonts/FoxitDingbats.pfb", "as": "standard_fonts/FoxitDingbats.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitFixed.pfb", "as": "standard_fonts/FoxitFixed.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitFixedBold.pfb", "as": "standard_fonts/FoxitFixedBold.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitFixedBoldItalic.pfb", "as": "standard_fonts/FoxitFixedBoldItalic.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitFixedItalic.pfb", "as": "standard_fonts/FoxitFixedItalic.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitSerif.pfb", "as": "standard_fonts/FoxitSerif.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitSerifBold.pfb", "as": "standard_fonts/FoxitSerifBold.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitSerifBoldItalic.pfb", "as": "standard_fonts/FoxitSerifBoldItalic.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitSerifItalic.pfb", "as": "standard_fonts/FoxitSerifItalic.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/FoxitSymbol.pfb", "as": "standard_fonts/FoxitSymbol.pfb", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/LiberationSans-Bold.ttf", "as": "standard_fonts/LiberationSans-Bold.ttf", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/LiberationSans-BoldItalic.ttf", "as": "standard_fonts/LiberationSans-BoldItalic.ttf", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/LiberationSans-Italic.ttf", "as": "standard_fonts/LiberationSans-Italic.ttf", "bundle": "standard_fonts" },
+        { "path": "standard_fonts/LiberationSans-Regular.ttf", "as": "standard_fonts/LiberationSans-Regular.ttf", "bundle": "standard_fonts" },
+        {
+          "path": "standard_fonts/LICENSE_FOXIT",
+          "as": "LICENSE-foxit-fonts.txt",
+          "wrap": false
+        },
+        {
+          "path": "standard_fonts/LICENSE_LIBERATION",
+          "as": "LICENSE-liberation-fonts.txt",
+          "wrap": false
         }
       ]
     },

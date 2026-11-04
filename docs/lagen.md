@@ -91,6 +91,11 @@ rader som egen datamängd. Allt loggas som recept som
 kan ångras, spelas upp på en annan datamängd och exporteras som R- eller SQL-kod. Versioner sparar
 ögonblicksbilder att gå tillbaka till. Se [bearbeta.md](bearbeta.md).
 
+Datamängder av slaget **dokument** (PDF, Word, OpenDocument, Markdown, text) öppnas som läsvy: välj dokument, bläddra
+sida för sida, visa PDF-sidan som bild, sök i hela samlingen och hämta originalet. Datamängder av slaget **bilder**
+öppnas som galleri med miniatyrer, filter, sortering och bildens EXIF-uppgifter i inspektören, där beskrivningen kan
+ändras. *Visa som tabell* ger i båda fallen den vanliga tabellen med alla åtgärder. Se [dokument.md](dokument.md).
+
 ## Analysera
 
 Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop
@@ -106,6 +111,11 @@ använder dem för att filtrera, extrahera, ersätta, dela upp, markera, räkna 
 mönsterprofil och ett bibliotek med nordiska mönster (se [regex.md](regex.md)). Anteckningsboken blandar text
 (Markdown), R och SQL i celler som körs i ordning och blir en rapport i HTML, Word, PDF, Markdown eller LaTeX (se
 [anteckningsbok.md](anteckningsbok.md)). Senare: statistiska modeller.
+
+När en dokumentsamling är vald finns fliken **Text** (ordfrekvens med stoppord, nyckelord i kontext, samförekomster
+och en översikt per dokument) och när en bildsamling är vald fliken **Bilder** (översikt per typ, kamera, år eller
+månad och dubbletter via bildhash). Båda ligger efter Regex och före Anteckningsboken, och varje resultat kan sparas
+som en ny datamängd. Se [dokument.md](dokument.md).
 
 ## Visualisera
 

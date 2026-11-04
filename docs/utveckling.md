@@ -49,6 +49,15 @@ plotly.js är pinnat på samma sätt i `src/viz/plotly.js` (version och SHA-256 
 (seaborn, plotly) i `EXTRA` i `src/engines/python/catalog.js` med adress, storlek och SHA-256 från PyPI:s JSON-API.
 `tests/code-steps.test.js` täcker R-steg och R-diagram headless utan nätverk.
 
+pdf.js är pinnat till 3.11.174, den sista versionen som levereras som klassiska skript (senare versioner är enbart
+ES-moduler och kan inte köras från file:// i Edge). Posten i `vendor.json` hämtar visningslagret som vanlig fil,
+worker-bygget som textresurs (`"wrap": "text"`) och de fjorton standardtypsnitten som en bunt
+(`standard_fonts.bundle.js`) tillsammans med deras licenser. `src/engines/pdf/pdf-engine.js` importerar worker-bygget
+i en av appens shimmade Blob-workers efter att resurserna anlänt och kopplar pdf.js till den via
+`GlobalWorkerOptions.workerPort`; att köra hela pdf.js i workern prövades och förkastades (typsnitten löstes inte och
+sidorna blev tomma). Vid uppgradering: kontrollera att worker-bygget fortfarande kopplar sig till `self` som
+meddelandeport och att `tests/documents.test.js` (200-sidig PDF, sidrendering) är grönt i båda webbläsarna.
+
 ## Egna inbäddade filer
 
 R-hjälpfunktionerna i `r/dataspatium.R`, Python-hjälpfunktionerna i `python/dataspatium.py`, exempeldata i `presets/exempeldata/` och gränserna i `presets/geo/`

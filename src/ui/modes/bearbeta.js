@@ -8,8 +8,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes'], (base, dialogs, recipes) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view'], (base, dialogs, recipes, documentViewModule, galleryViewModule) => {
     const { h, t, i18n, replace } = base;
+    /** Datasets of these kinds open in a view of their own (documents, pictures); the table is one click away. */
+    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule };
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
@@ -24,13 +26,15 @@
       /** @type {Map<number, number>} table row index -> SQLite rowid */
       let rowIds = new Map();
       let undoBtn = null; let selectedColumn = null;
+      /** Table or kind view for the current dataset; the kind view is created once per kind. */
+      let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null;
 
       function activate(s) {
         slots = s;
         unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); }
+      function deactivate() { slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); if (kindView) { kindView.destroy(); kindView = null; kindViewFor = null; } }
 
       function current() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
@@ -46,8 +50,21 @@
           replace(slots.right, h('p', { class: 'dm-help', text: t('bearbeta.empty.hint') }));
           return;
         }
-        if (currentId !== ds.id) { search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; renderTable(ds); renderInspector(ds); }
-        else if (table) { refresh(ds); updateUndo(); }
+        if (currentId !== ds.id) { search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; showTable = !KIND_VIEWS[ds.kind]; lastUpdated = ds.updatedAt; renderMain(ds); }
+        else if (showTable) { if (table) { refresh(ds); updateUndo(); } }
+        else if (ds.updatedAt !== lastUpdated) { lastUpdated = ds.updatedAt; renderMain(ds); }
+      }
+
+      /** The table, or the document or gallery view for collections. */
+      function renderMain(ds) {
+        if (showTable || !KIND_VIEWS[ds.kind]) { renderTable(ds); renderInspector(ds); return; }
+        table = null;
+        if (kindView && kindViewFor !== ds.kind) { kindView.destroy(); kindView = null; }
+        if (!kindView) {
+          kindView = KIND_VIEWS[ds.kind].create(ctx, { onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); }, onChanged: () => updateUndo() });
+          kindViewFor = ds.kind;
+        }
+        kindView.render(ds, slots).catch((err) => shell.log(String((err && err.message) || err), 'error'));
       }
 
       function dialogCtx(ds, columns) {
@@ -106,6 +123,7 @@
               searchInput, myLists.length ? listSel : null, countBadge,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
+              KIND_VIEWS[ds.kind] ? ui.button({ label: t('bearbeta.view.' + ds.kind), icon: ui.datasetList.kindIcon(ds.kind), title: t('bearbeta.view.' + ds.kind + '.hint'), onClick: () => { showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => dialogs.versionsDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),

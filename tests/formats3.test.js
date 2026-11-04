@@ -45,13 +45,13 @@
   test('formats3: Markdown pipe tables with headings, alignment rows, escaped pipes and inline markup', async (assert) => {
     const md = '# Rapport\n\nText före.\n\n## Län\n\n| Län | Folkmängd |\n|:----|----:|\n| **Uppsala** | 404 589 |\n| Skåne \\| syd | 1 428 626 |\n\nEn rad med | tecken men ingen tabell.\n\n### Källor\n\nKälla | Länk\n--- | ---\nSCB | [Statistikdatabasen](https://www.statistikdatabasen.scb.se)\n';
     const f = file(md, 'rapport.md', 'text/markdown');
-    const p = await importer.preview(f, {});
+    const p = await importer.preview(f, { format: 'tables' });
     assert.equal(p.importer, 'tables');
     assert.equal(p.tables.length, 2);
     assert.ok(p.tables[0].includes('Län') && p.tables[1].includes('Källor'), p.tables.join(' | '));
     assert.deepEqual(p.columns, ['Län', 'Folkmängd']);
     assert.deepEqual(values(p), [['Uppsala', '404 589'], ['Skåne | syd', '1 428 626']]);
-    const meta = await importer.run(f, { table: p.tables[0] }, null, 'Markdown-test');
+    const meta = await importer.run(f, { format: 'tables', table: p.tables[0] }, null, 'Markdown-test');
     try {
       const handle = await datasets.ensureOpen(meta.id);
       const cols = handle.columns.map((c) => c.name + ':' + c.type);
@@ -59,7 +59,7 @@
       const first = await handle.engine.exec('select "Folkmängd" from data order by rowid limit 1');
       assert.equal(Number(first[0].values[0][0]), 404589);
     } finally { await datasets.remove(meta.id); }
-    const second = await importer.preview(f, { table: p.tables[1] });
+    const second = await importer.preview(f, { format: 'tables', table: p.tables[1] });
     assert.deepEqual(values(second), [['SCB', 'Statistikdatabasen']], 'link text without the URL');
     return 'ok';
   });
@@ -78,7 +78,7 @@
     </w:body></w:document>`;
     const blob = await zip.createZip({ '[Content_Types].xml': '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>', 'word/document.xml': xml });
     const f = file(blob, 'rapport.docx');
-    const pr = await importer.preview(f, {});
+    const pr = await importer.preview(f, { format: 'tables' });
     assert.equal(pr.importer, 'tables');
     assert.equal(pr.tables.length, 2);
     assert.ok(pr.tables[0].includes('Tabell 1. Folkmängd') && pr.tables[1].includes('Kommuner'), pr.tables.join(' | '));

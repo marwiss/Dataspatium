@@ -209,6 +209,13 @@ Ja. Access-filer (mdb, accdb) slippes på fladen i Hent og læses direkte i brow
 og Access-forespørgsler nås gennem databasebroen, et lille script, du starter på computeren; tjenester som
 PostgREST, OData og GraphQL tilføjes som kilder med en adresse. Se [kallor.md](kallor.md).
 
+## Kan jeg indlæse PDF-filer, Word-dokumenter og billeder?
+
+Ja. Slip dem i Hent: dokumenter (PDF, Word, OpenDocument, Markdown, tekst) bliver et datasæt med ét afsnit pr. række,
+billeder et datasæt med én række pr. billede og EXIF-oplysninger. Flere filer på én gang bliver en samling. I Bearbejd
+vises de som læsevisning henholdsvis galleri, og i Analysér findes værktøjerne Tekst og Billeder uden kode. Skannede
+PDF-filer uden tekstlag giver ingen tekst. Se [dokument.md](dokument.md).
+
 ## Finder du ikke svaret her?
 
 Læs [anvandarguide.md](anvandarguide.md), eller opret et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

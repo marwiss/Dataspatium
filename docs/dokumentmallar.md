@@ -61,6 +61,9 @@ dokumentet. I batchkörningar filtreras diagrammet på gruppen. R- och Python-di
 
 ### Sidbrytning och kodbok
 
+`{{bild "fil.jpg" | bredd: 400}}` lägger in en bild ur en bildsamling (se [dokument.md](dokument.md)): bilden söks
+först i mallens datamängd och sedan i alla bildsamlingar, förhandsvisningen används och skalas till angiven bredd
+(standard högst 720 px; `hojd` kan också anges). Taggen fungerar i alla format och i batchkörningar som `{{diagram}}`.
 `{{sidbrytning}}` bryter sida i Word, PDF och LaTeX. Mallen **Kodbok** använder utökade kolumnuppgifter:
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` och `{{ar_unik}}` per
 kolumn samt `{{dubbletter}}`; de finns när mallen är markerad som kodbok (en kopia av den inbyggda mallen behåller

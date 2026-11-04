@@ -87,6 +87,12 @@ unik, interval, liste, mønster, længde, SQL-betingelse) kontrollerer data på 
 rækker som eget datasæt. Alt logges som en opskrift, der kan fortrydes, afspilles på et andet datasæt og eksporteres
 som R- eller SQL-kode. Versioner gemmer øjebliksbilleder at gå tilbage til. Se [bearbeta.md](bearbeta.md).
 
+Datasæt af slagsen **dokumenter** (PDF, Word, OpenDocument, Markdown, tekst) åbnes som læsevisning: vælg dokument,
+bladr side for side, vis PDF-siden som billede, søg i hele samlingen og hent originalen. Datasæt af slagsen
+**billeder** åbnes som galleri med miniaturer, filter, sortering og billedets EXIF-oplysninger i inspektøren, hvor
+beskrivelsen kan ændres. *Vis som tabel* giver i begge tilfælde den almindelige tabel med alle handlinger. Se
+[dokument.md](dokument.md).
+
 ## Analysér
 
 Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, Python, SQL, Regex og til sidst notesbogen, der samler dele fra
@@ -102,6 +108,11 @@ opdele, markere, tælle eller oprette en kvalitetsregel, med en mønsterprofil o
 [regex.md](regex.md)). Notesbogen blander tekst (Markdown), R og SQL i celler, der køres i rækkefølge og bliver til en
 rapport i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)). Senere: statistiske
 modeller.
+
+Når en dokumentsamling er valgt, findes fanen **Tekst** (ordfrekvens med stopord, nøgleord i kontekst,
+samforekomster og et overblik pr. dokument), og når en billedsamling er valgt, fanen **Billeder** (overblik pr. type,
+kamera, år eller måned og dubletter via billedhash). Begge ligger efter Regex og før Notesbogen, og hvert resultat
+kan gemmes som et nyt datasæt. Se [dokument.md](dokument.md).
 
 ## Visualisér
 

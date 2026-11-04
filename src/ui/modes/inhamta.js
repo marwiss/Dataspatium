@@ -11,14 +11,17 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'r'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'r', 'documents', 'images'];
+    /** Formats with fixed columns where one or many files become one dataset (no column step). */
+    const COLLECTIONS = ['documents', 'images'];
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.gpkg,.sql,'
-      + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb';
+      + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
+      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -32,7 +35,7 @@
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
 
-      function reset() { return { step: 'file', file: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function reset() { return { step: 'file', file: null, files: [], progress: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
       let unsubStore = null;
@@ -232,7 +235,7 @@
               return;
             }
           }
-          wiz.file = file; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          wiz.file = file; wiz.files = []; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
           wiz.busy = false;
           await runPreview();
           return;
@@ -257,8 +260,8 @@
           ta.value = wiz.text;
           return h('div', { class: 'dm-stack' }, ta, h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', onClick: async () => { wiz.text = ta.value; if (!wiz.text.trim()) return; wiz.file = null; await runPreview(); } })));
         }
-        const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT });
-        dz.addEventListener('dm-files', async (e) => { wiz.file = /** @type {any} */ (e).detail.files[0]; wiz.handle = null; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; await runPreview(); });
+        const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT, multiple: true });
+        dz.addEventListener('dm-files', (e) => chooseFiles(/** @type {any} */ (e).detail.files));
         // Bundled data: the example table as a button, the boundaries for maps in a list.
         const examples = D.require('presets').examples;
         const tables = examples.filter((p) => p.format !== 'geojson');
@@ -274,11 +277,43 @@
           h('span', { class: 'dm-help', text: t('presets.geo.hint') }));
       }
 
+      /**
+       * Files from the drop zone. Several documents, or several pictures, become one collection with fixed
+       * columns; any other choice of several files takes the first one through the wizard as before.
+       */
+      async function chooseFiles(list) {
+        if (!list || !list.length) return;
+        const collection = services.importer.collectionFor(list);
+        if (list.length > 1 && !collection) ui.toast.show(t('import.multi.first', { name: list[0].name }), { kind: 'info', timeout: 8000 });
+        wiz.files = collection && list.length > 1 ? list : [];
+        wiz.file = list[0]; wiz.handle = null; wiz.text = ''; wiz.name = '';
+        wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+        if (wiz.files.length) wiz.name = t('import.collection.' + collection.id, { n: list.length });
+        await runPreview();
+      }
+      /** The chosen files of a collection, with their sizes. */
+      function fileList() {
+        const shown = wiz.files.slice(0, 40);
+        const total = wiz.files.reduce((n, f) => n + f.size, 0);
+        return h('div', { class: 'dm-stack-sm' },
+          h('p', { class: 'dm-help', text: t('import.files.summary', { n: wiz.files.length, size: i18n.formatBytes(total) }) }),
+          h('ul', { class: 'dm-list dm-import-files' }, shown.map((f) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(wiz.options.format === 'images' ? 'image' : 'file-text', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: f.name }), h('span', { class: 'dm-list-sub', text: i18n.formatBytes(f.size) }))))),
+          wiz.files.length > shown.length ? h('p', { class: 'dm-help dm-xs', text: t('import.files.more', { n: wiz.files.length - shown.length }) }) : null);
+      }
+      /** Progress of a collection import: file by file, and page by page inside a PDF. */
+      function progressNode() {
+        const p = wiz.progress;
+        if (!p || p.total === undefined) return h('dm-progress', { indeterminate: true, label: t('import.running') });
+        const pct = Math.round(((p.index || 0) + (p.pages ? Math.min(1, (p.page || 0) / p.pages) : 0)) / Math.max(1, p.total) * 100);
+        const label = p.pages ? t('import.progress.pages', { file: p.file, page: p.page, pages: p.pages }) : t('import.progress.files', { done: (p.index || 0) + 1, total: p.total, file: p.file });
+        return h('div', { class: 'dm-stack-sm' }, h('dm-progress', { value: String(pct), label }), h('p', { class: 'dm-help dm-small', text: label }));
+      }
+
       /** A file chosen with the File System Access picker stays linked: the dataset can be read again from disk. */
       async function pickLinked() {
         try {
           const { handle, file } = await linked.pick();
-          wiz.file = file; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
+          wiz.file = file; wiz.files = []; wiz.handle = handle; wiz.text = ''; wiz.options.format = ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
           await runPreview();
         } catch (err) { if (!err || err.name !== 'AbortError') { wiz.error = (err && err.message) || String(err); render(); } }
       }
@@ -335,8 +370,11 @@
         const p = wiz.preview;
         const left = h('div', { class: 'dm-stack' });
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
+        const collection = COLLECTIONS.includes(wiz.options.format);
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
-        if (wiz.file) left.appendChild(format);
+        // Several files are always one collection, so the format is fixed then.
+        if (wiz.file && wiz.files.length < 2) left.appendChild(format);
+        if (wiz.files.length > 1) left.appendChild(fileList());
         if (wiz.options.format === 'csv' || wiz.options.format === 'fixed') {
           const encOptions = encoding.ENCODINGS.map((e) => ({ value: e.value, label: e.label + (p && p.encodingDetected && p.encodingDetected.encoding === e.value ? t('import.encoding.detected') : '') }));
           if (wiz.file) left.appendChild(select(t('import.encoding'), encOptions, wiz.options.encoding || 'utf-8', (v) => { wiz.options.encoding = v; schedulePreview(); }));
@@ -390,21 +428,22 @@
           left.appendChild(header);
         }
         if (!TYPED.includes(wiz.options.format)) left.appendChild(select(t('import.decimal'), DECIMALS, wiz.options.decimal, (v) => { wiz.options.decimal = v; schedulePreview(); }));
-        if (viaR) {
-          // No column step: R reads the file and dm_write() sets the types, so only the name is asked for here.
+        if (viaR || collection) {
+          // No column step: R reads the file and dm_write() sets the types; documents and pictures have fixed columns.
           const name = /** @type {any} */ (h('dm-input', { label: t('import.name'), value: wiz.name }));
           name.addEventListener('input', () => { wiz.name = name.value; });
           left.appendChild(name);
           // SPSS, Stata and SAS keep their value labels as column metadata; the column holds labels or codes.
-          if (/^(spss|stata|sas)/.test(p.format || '')) {
+          if (viaR && /^(spss|stata|sas)/.test(p.format || '')) {
             left.appendChild(select(t('import.valuelabels'), [{ value: 'labels', label: t('import.valuelabels.labels') }, { value: 'codes', label: t('import.valuelabels.codes') }], wiz.options.valueLabels || 'labels', (v) => { wiz.options.valueLabels = v; }));
           }
-          if (wiz.busy) left.appendChild(h('dm-progress', { indeterminate: true, label: t('import.r.running') }));
+          if (collection) left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.collection.hint.' + wiz.options.format) }));
+          if (wiz.busy) left.appendChild(viaR ? h('dm-progress', { indeterminate: true, label: t('import.r.running') }) : progressNode());
         }
         if (wiz.error) left.appendChild(h('p', { class: 'dm-error dm-small', text: wiz.error }));
         left.appendChild(h('div', { class: 'dm-row' },
           ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
-          viaR ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
+          (viaR || collection) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
             : ui.button({ label: t('common.next'), icon: 'chevron-right', variant: 'primary', disabled: !p || !p.columns.length || wiz.busy, onClick: () => { wiz.step = 'columns'; render(); } })));
         const right = h('div', { class: 'dm-table-wrap' },
           h('h3', { text: t('import.preview', { n: p ? p.dataRows.length : 0 }) }),
@@ -466,7 +505,8 @@
           const specs = wiz.specs.map((s) => ({ name: s.name, type: s.type, include: s.include !== false, decimal: s.decimal, label: s.label || s.name }));
           // Large delimited files are streamed; the progress callback shows the rows read so far.
           const onProgress = (p) => { wiz.progress = p; render(); };
-          const meta = wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
+          const meta = wiz.files.length > 1 ? await services.importer.runFiles(wiz.files, opts, wiz.name, onProgress)
+            : wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
           if (wiz.handle) await linked.link(meta.id, wiz.handle);
           wiz.result = meta; wiz.step = 'done';
           shell.log(t('import.done', { name: meta.name, rows: i18n.formatNumber(meta.rowCount), cols: meta.columnCount }) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
@@ -493,7 +533,16 @@
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }
         const items = [];
-        if (wiz.file) {
+        if (wiz.files.length > 1) {
+          items.push(h('h4', { text: t('import.step.file') }));
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('import.files.count'), value: i18n.formatNumber(wiz.files.length) },
+            { label: t('common.size'), value: i18n.formatBytes(wiz.files.reduce((n, f) => n + f.size, 0)) },
+            { label: t('import.format'), value: t('import.format.' + wiz.options.format + '.short') },
+          ];
+          items.push(kv);
+        } else if (wiz.file) {
           items.push(h('h4', { text: t('import.step.file') }));
           const kv = /** @type {any} */ (h('dm-kv'));
           kv.items = [
@@ -515,6 +564,11 @@
             p.delimiter ? { label: t('import.delimiter'), value: describeDelimiter(p.delimiter) } : null,
             { label: t('datasets.columns'), value: String(p.columns.length) },
             p.totalRows !== undefined ? { label: t('datasets.rows'), value: i18n.formatNumber(p.totalRows) } : null,
+            // A document: pages, words, title and author of the first file.
+            p.document ? { label: t('document.pages'), value: i18n.formatNumber(p.document.pages || 1) } : null,
+            p.document && p.document.words !== undefined ? { label: t('document.words'), value: i18n.formatNumber(p.document.words) } : null,
+            p.document && p.document.title ? { label: t('document.title'), value: p.document.title } : null,
+            p.document && p.document.author ? { label: t('document.author'), value: p.document.author } : null,
           ].filter(Boolean);
           items.push(kv2);
         }

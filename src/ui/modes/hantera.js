@@ -72,7 +72,7 @@
         const body = h('div', { class: 'dm-center-fill' });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon('table', 20), ds.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })),
+            h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })),
             h('div', { class: 'dm-row' },
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
@@ -95,7 +95,11 @@
             { label: t('datasets.columns'), value: String(ds.columnCount || 0) },
             { label: t('common.size'), value: i18n.formatBytes(ds.byteSize || 0) },
             { label: t('common.source'), value: describeSource(src) },
-          ];
+            // Collections: what the rows stand for and what travels with them (originals, previews).
+            ds.kind && ds.kind !== 'table' ? { label: t('datasets.kind'), value: t('datasets.kind.' + ds.kind) } : null,
+            ds.kind === 'document' && Array.isArray(ds.documents) ? { label: t('document.files'), value: `${i18n.formatNumber(ds.documents.length)} · ${t('document.pages.n', { n: i18n.formatNumber(ds.documents.reduce((n, d) => n + (d.pages || 0), 0)) })}` } : null,
+            ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
+          ].filter(Boolean);
           replace(body, h('div', { class: 'dm-card' }, kv));
         } else if (tab === 'columns') {
           const cols = await services.datasets.columns(ds.id);
@@ -192,6 +196,7 @@
         if (src.publisher) return [src.publisher, src.table, src.license ? `(${src.license})` : ''].filter(Boolean).join(' · ');
         if (src.fileName) return `${src.fileName}${src.format ? ` (${src.format})` : ''}${src.linked ? ' · ' + t('linked.label') : ''}`;
         if (src.kind === 'paste') return t('import.sources.paste');
+        if (src.kind === 'files') return t('import.source.files', { n: Array.isArray(src.files) ? src.files.length : 0, format: src.format === 'images' ? t('import.format.images.short') : t('import.format.documents.short') });
         return src.kind || '';
       }
 

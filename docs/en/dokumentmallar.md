@@ -64,6 +64,10 @@ Inserts a saved chart from Visualise (Vega-Lite or D3) as an image, rendered wit
 
 ### Page break and codebook
 
+`{{bild "file.jpg" | bredd: 400}}` inserts a picture from an image collection (see [dokument.md](dokument.md)): the
+picture is looked for first in the template's dataset and then in every image collection, the preview is used and
+scaled to the given width (default at most 720 px; `hojd` can be given too). The tag works in every format and in
+batch runs like `{{diagram}}`.
 `{{sidbrytning}}` breaks the page in Word, PDF and LaTeX. The **Codebook** template uses extended column details:
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` and `{{ar_unik}}` per column
 and `{{dubbletter}}`; they exist when the template is marked as a codebook (a copy of the built-in template keeps

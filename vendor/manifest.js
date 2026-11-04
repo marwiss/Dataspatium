@@ -2046,6 +2046,132 @@ Dataspatium.assets.manifest({
    "sha256": "ffff66b160a6448913edc2dafb7a1d87cd320bf37c22483e3ed93b1818b26b4a",
    "library": "lucide"
   },
+  "lucide/icons/image.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 434,
+   "sha256": "c4078fd954a98256124c9749b6f9a6a48621e8dcec07ec78236b3ecc26b819c3",
+   "library": "lucide"
+  },
+  "lucide/icons/images.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 522,
+   "sha256": "8a826d146b7fc3a3007bcd5352ac1e1bcd747d57f8061f6360becf0e846ccd83",
+   "library": "lucide"
+  },
+  "lucide/icons/book-open.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 467,
+   "sha256": "0b7ff1dc787aa4b50271fdcc2d50192067fa43189dfa040d903d70f9e5920fc1",
+   "library": "lucide"
+  },
+  "pdfjs/pdf.worker.min.js": {
+   "file": "vendor/pdfjs/pdf.worker.min.js.js",
+   "encoding": "text",
+   "size": 1087212,
+   "sha256": "feabdf309770ed24bba31a5467836cdc8cf639c705af27d52b585b041bb8527b",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitDingbats.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 29513,
+   "sha256": "845c752392b6c914fb989c75a08b7792b88f542d2499042ef2889f8c814a16ed",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitFixed.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 17597,
+   "sha256": "b6c8fe53f134b8b6d4578cd2d544df4cee9624c4efa8d51a560fb40ea296101b",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitFixedBold.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 18055,
+   "sha256": "f1b7159702973f54fc86254ea38bcf3712b2a736eb3a0995751e9f4bb45ad603",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitFixedBoldItalic.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 19151,
+   "sha256": "8a000945843bd31add06aee63bf9fd41b7578b4f3242a4b7cd46349ad9d24d4d",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitFixedItalic.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 18746,
+   "sha256": "5007faf8320fa1fcc08b8894b356ad976f60b992ba29ee5272578bbdebaf3876",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitSerif.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 19469,
+   "sha256": "4f57d2b9d884af8f907bf22df6019b52d86cbf6214fdbd02b1ae05472a543f35",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitSerifBold.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 19395,
+   "sha256": "0bdf4b04e964139818d51eda03d566ba999fc3ba2421b1c6c51f9dc969022e80",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitSerifBoldItalic.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 20733,
+   "sha256": "a406cac82583bf98175cb62c87ed5e95c45fbb34eece63a10b0a13e793cb2e10",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitSerifItalic.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 21227,
+   "sha256": "610ae0687198045c4db5d1a6650fd5e92536631706382eb8b72e38df578d0ae9",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/FoxitSymbol.pfb": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 16729,
+   "sha256": "47967d055530e7357088a08403115425643ec2cdfd6201ba8af0fbd7116c1539",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/LiberationSans-Bold.ttf": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 137052,
+   "sha256": "361c61b82d575c5c35fd9157fda8b0194bcfcd0d88ea8521a4fb5dd53d33dddc",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/LiberationSans-BoldItalic.ttf": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 135124,
+   "sha256": "a224075ac17495ad0a3af3bc0a419ac0704a8b3fd1095456201fb9b095fc281d",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/LiberationSans-Italic.ttf": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 162036,
+   "sha256": "832b4406dbef23628800d3aaad21048534ac84d7e3ad955be83b8172ed8ef512",
+   "library": "pdfjs"
+  },
+  "pdfjs/standard_fonts/LiberationSans-Regular.ttf": {
+   "file": "vendor/pdfjs/standard_fonts.bundle.js",
+   "encoding": "gzip+base64",
+   "size": 139512,
+   "sha256": "f8ace1f892b2bd9dc1792ba7f097fa7588f84fed48321480e04de5390828221f",
+   "library": "pdfjs"
+  },
   "mdb-reader/graph/index.json": {
    "file": "vendor/mdb-reader/graph.bundle.js",
    "encoding": "text",
@@ -2610,7 +2736,19 @@ Dataspatium.assets.manifest({
    "license": "ISC",
    "homepage": "https://lucide.dev/",
    "direct": [],
-   "assets": 103
+   "assets": 106
+  },
+  "pdfjs": {
+   "version": "3.11.174",
+   "license": "Apache-2.0",
+   "homepage": "https://mozilla.github.io/pdf.js/",
+   "direct": [
+    "LICENSE-foxit-fonts.txt",
+    "LICENSE-liberation-fonts.txt",
+    "pdf.min.js"
+   ],
+   "assets": 15,
+   "notes": "pdf.js 3.11 is the last release shipped as classic scripts (4.x is ES modules with a module worker, which Edge blocks under file://). The display layer runs on the main thread; the worker build is imported into Dataspatium's shimmed Blob worker and attached through GlobalWorkerOptions.workerPort (src/engines/pdf). The 14 standard fonts are embedded: Foxit fonts under BSD-3-Clause and Liberation Sans under SIL OFL 1.1 (LICENSE-foxit-fonts.txt, LICENSE-liberation-fonts.txt)."
   },
   "d3": {
    "version": "7.9.0",

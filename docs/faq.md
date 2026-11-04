@@ -224,6 +224,13 @@ Ja. Access-filer (mdb, accdb) släpps på ytan i Inhämta och läses direkt i we
 Excel och Access-frågor nås genom databasbryggan, ett litet skript som du startar på datorn; tjänster som PostgREST,
 OData och GraphQL läggs till som källor med en adress. Se [kallor.md](kallor.md).
 
+## Kan jag läsa in PDF-filer, Word-dokument och bilder?
+
+Ja. Släpp dem i Inhämta: dokument (PDF, Word, OpenDocument, Markdown, text) blir en datamängd med ett stycke per rad,
+bilder en datamängd med en rad per bild och EXIF-uppgifter. Flera filer på en gång blir en samling. I Bearbeta visas
+de som läsvy respektive galleri, och i Analysera finns verktygen Text och Bilder utan kod. Skannade PDF-filer utan
+textlager ger ingen text. Se [dokument.md](dokument.md).
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

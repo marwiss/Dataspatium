@@ -15,6 +15,8 @@
     const TOKEN = '\u0000';
     const RE_TABLE = /\{\{#tabell\}\}([\s\S]*?)\{\{\/tabell\}\}/g;
     const RE_CHART = /\{\{diagram\s+"([^"]+)"([^}]*)\}\}/g;
+    /** {{bild "fil.jpg" | bredd: 400}}: a picture from an image dataset (the context dataset first, then any other). */
+    const RE_IMAGE = /\{\{bild\s+"([^"]+)"([^}]*)\}\}/g;
     const RE_PAGEBREAK = /\{\{sidbrytning\}\}/g;
     const t = i18n.t;
 
@@ -130,6 +132,34 @@
     }
 
     /**
+     * A picture from an image dataset as PNG, scaled to the requested width (default: at most 720 px). The context
+     * dataset is searched first, then every other dataset of kind images; the stored preview is used.
+     */
+    async function resolveImage(spec, ctx) {
+      const dsFiles = D.require('data/dataset-files');
+      const candidates = [];
+      if (ctx && ctx._datasetId) candidates.push(ctx._datasetId);
+      for (const d of await datasets.list()) if (d.kind === 'images' && !candidates.includes(d.id)) candidates.push(d.id);
+      let file = null;
+      for (const id of candidates) {
+        try { file = (await dsFiles.read(id, spec.name, 'preview')) || (await dsFiles.read(id, spec.name, 'original')); } catch (_err) { file = null; }
+        if (file) break;
+      }
+      if (!file) return { error: D.t('doc.err.image.missing', { name: spec.name }), caption: spec.name };
+      try {
+        const bitmap = await createImageBitmap(new Blob([file.bytes], { type: file.type }));
+        try {
+          const width = Math.min(spec.opts.bredd || 720, bitmap.width) || bitmap.width;
+          const height = spec.opts.hojd || Math.round(bitmap.height * width / bitmap.width);
+          const canvas = document.createElement('canvas'); canvas.width = width * 2; canvas.height = height * 2;
+          const g = canvas.getContext('2d'); g.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+          return { png: await blob.arrayBuffer(), width, height, caption: spec.name };
+        } finally { bitmap.close(); }
+      } catch (err) { return { error: D.t('doc.err.image.render', { name: spec.name, message: (err && err.message) || err }), caption: spec.name }; }
+    }
+
+    /**
      * Resolve tags, run Mustache. Returns the rendered text (with block tokens) and the resolved blocks.
      * @returns {Promise<{text: string, tables: any[], images: any[]}>}
      */
@@ -139,14 +169,15 @@
       let text = String(body || '');
       text = text.replace(RE_TABLE, (m, spec) => { tableSpecs.push(spec); return `\n${TOKEN}TABLE:${tableSpecs.length - 1}${TOKEN}\n`; });
       text = text.replace(RE_CHART, (m, name, rest) => { chartSpecs.push({ name, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
+      text = text.replace(RE_IMAGE, (m, name, rest) => { chartSpecs.push({ name, image: true, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
       text = text.replace(RE_PAGEBREAK, `\n${TOKEN}PAGEBREAK${TOKEN}\n`);
       const tables = []; for (const spec of tableSpecs) tables.push(await resolveTable(parseTableSpec(spec), ctx));
-      const images = []; for (const spec of chartSpecs) images.push(await resolveChart(spec, ctx));
+      const images = []; for (const spec of chartSpecs) images.push(spec.image ? await resolveImage(spec, ctx) : await resolveChart(spec, ctx));
       let rendered;
       try { rendered = M.render(text, ctx); } catch (err) { throw new Error(D.t('doc.err.template', { message: (err && err.message) || err })); }
       return { text: rendered, tables, images };
     }
 
-    return { buildContext, codebookContext, renderTemplate, parseTableSpec, parseChartOptions, resolveTable, resolveChart, ensureMustache, TOKEN, fmt };
+    return { buildContext, codebookContext, renderTemplate, parseTableSpec, parseChartOptions, resolveTable, resolveChart, resolveImage, ensureMustache, TOKEN, fmt };
   });
 })();

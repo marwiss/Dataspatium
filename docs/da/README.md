@@ -59,6 +59,9 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   Excel, SQLite) nås gennem en lokal bro, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable bliver kilder med ét klik. Filer kan linkes og indlæses igen fra disken
   (se [kallor.md](kallor.md)).
+- **Dokumenter og billeder**: PDF, Word, OpenDocument, Markdown og tekst bliver datasæt med ét afsnit pr. række og
+  læses i en dokumentvisning; billeder bliver en samling med EXIF-oplysninger og galleri. Værktøjerne Tekst
+  (ordfrekvens, nøgleord i kontekst, samforekomster) og Billeder (overblik, dubletter) fungerer uden kode (se [dokument.md](dokument.md)).
 - **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, omkode, inddele i klasser, rangordne, beregne andele, løbende summer og ændringer, pivotere
   og sammenkoble data, kontrollere datakvalitet med profil og regler (blandt andet formater, nordiske identitetsnumre, referencer til andre datasæt og afvigende værdier), pseudonymisere personnumre før deling, med
   fortryd, versioner og recepter, der kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
@@ -106,6 +109,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Søg](soka.md) og [Del](dela.md): find uden kode, og giv data til andre.
 - [Dataspatium Mobil](mobil.md): telefonen som kurer, modtager og fremviser; overførsel mellem enheder.
 - [Notesbog](anteckningsbok.md): tekst, R og SQL i celler, der bliver til en rapport.
+- [Dokumenter og billeder](dokument.md): PDF, Word, OpenDocument, Markdown og billeder som datasæt; dokumentvisning, galleri og værktøjerne Tekst og Billeder.
 - [Regulære udtryk](regex.md): mønstre til at analysere, rette og opdele tekst i datasæt.
 - [Formater og import](format.md): filformater, tegnkodning, decimaltegn, datoer og kolonnetyper.
 - [Åbne API'er](api-konfiguration.md): de forudindstillede kilder, nøgler og egne konfigurationer.

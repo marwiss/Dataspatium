@@ -226,6 +226,13 @@ ODBC sources, Excel and Access queries are reached through the database bridge, 
 computer; services such as PostgREST, OData and GraphQL are added as sources with an address. See
 [kallor.md](kallor.md).
 
+## Can I read PDF files, Word documents and pictures?
+
+Yes. Drop them in Import: documents (PDF, Word, OpenDocument, Markdown, text) become a dataset with one paragraph per
+row, pictures a dataset with one row per picture and EXIF details. Several files at once become a collection. Process
+shows them as a reading view or a gallery, and Analyse has the tools Text and Images without code. Scanned PDF files
+without a text layer give no text. See [dokument.md](dokument.md).
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

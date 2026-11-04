@@ -63,6 +63,10 @@ Lisää tallennetun Visualisoi-tilan kaavion (Vega-Lite tai D3) kuvana, piirrett
 
 ### Sivunvaihto ja koodikirja
 
+`{{bild "tiedosto.jpg" | bredd: 400}}` lisää kuvan kuvakokoelmasta (katso [dokument.md](dokument.md)): kuvaa etsitään
+ensin mallin aineistosta ja sitten kaikista kuvakokoelmista, esikatselukuvaa käytetään ja se skaalataan annettuun
+leveyteen (oletuksena enintään 720 px; myös `hojd` voidaan antaa). Tunniste toimii kaikissa muodoissa ja eräajoissa
+kuten `{{diagram}}`.
 `{{sidbrytning}}` vaihtaa sivua Wordissa, PDF:ssä ja LaTeXissa. **Koodikirja**-malli käyttää laajennettuja saraketietoja:
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` ja `{{ar_unik}}` sarakkeittain sekä
 `{{dubbletter}}`; ne ovat käytettävissä, kun malli on merkitty koodikirjaksi (valmiin mallin kopio säilyttää merkinnän).

@@ -60,6 +60,9 @@ ett paket.
   SQLite) nås genom en lokal brygga, och PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets och Airtable blir källor med ett klick. Filer kan länkas och läsas in igen från
   disken (se [docs/kallor.md](docs/kallor.md)).
+- **Dokument och bilder**: PDF, Word, OpenDocument, Markdown och text blir datamängder med ett stycke per rad och
+  läses i en dokumentvy; bilder blir en samling med EXIF-uppgifter och galleri. Verktygen Text (ordfrekvens, nyckelord
+  i kontext, samförekomster) och Bilder (översikt, dubbletter) fungerar utan kod (se [docs/dokument.md](docs/dokument.md)).
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, koda om,
   klassindela, rangordna, beräkna andelar, löpande summor och förändringar, pivotera och koppla data,
   kontrollera datakvalitet med profil och regler (bland annat format, nordiska identitetsnummer, referenser till
@@ -112,6 +115,7 @@ ett paket.
 - [Söka](docs/soka.md) och [Dela](docs/dela.md): hitta utan kod, och ge data till andra.
 - [Dataspatium Mobil](docs/mobil.md): telefonen som kurir, mottagare och visare; överföring mellan enheter.
 - [Anteckningsbok](docs/anteckningsbok.md): text, R, Python och SQL i celler som blir en rapport.
+- [Dokument och bilder](docs/dokument.md): PDF, Word, OpenDocument, Markdown och bilder som datamängder; dokumentvy, galleri och verktygen Text och Bilder.
 - [R i Dataspatium](docs/r-guide.md) och [Python i Dataspatium](docs/python.md): konsolerna, `dm_read()`,
   `dm_write()`, paketen och diagrammen.
 - [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.

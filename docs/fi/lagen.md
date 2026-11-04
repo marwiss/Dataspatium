@@ -93,6 +93,12 @@ pyynnöstä raportilla ja virheellisillä riveillä omana aineistonaan. Kaikki k
 toistaa toiselle aineistolle ja viedä R- tai SQL-koodina. Versiot tallentavat tilannekuvia, joihin voi palata. Ks.
 [bearbeta.md](bearbeta.md).
 
+Asiakirjalajin aineistot (PDF, Word, OpenDocument, Markdown, teksti) avautuvat lukunäkymänä: valitse asiakirja, selaa
+sivu kerrallaan, näytä PDF-sivu kuvana, hae koko kokoelmasta ja lataa alkuperäinen. Kuvalajin aineistot avautuvat
+galleriana, jossa on pienoiskuvat, suodatin, järjestys ja kuvan EXIF-tiedot tarkastelupaneelissa, jossa kuvausta voi
+muokata. *Näytä taulukkona* antaa molemmissa tapauksissa tavallisen taulukon kaikilla toiminnoilla. Katso
+[dokument.md](dokument.md).
+
 ## Analysoi
 
 Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia
@@ -109,6 +115,12 @@ luomiseen, kuvioprofiilin ja pohjoismaisten kuvioiden kirjaston kanssa (ks. [reg
 yhdistää tekstiä (Markdown), R:ää ja SQL:ää soluissa, jotka suoritetaan järjestyksessä ja joista syntyy raportti
 HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)). Myöhemmin:
 tilastolliset mallit.
+
+Kun asiakirjakokoelma on valittu, näkyy välilehti **Teksti** (sanafrekvenssi hukkasanoineen, avainsanat
+kontekstissa, yhteisesiintymät ja yleiskatsaus asiakirjaa kohti), ja kun kuvakokoelma on valittu, välilehti **Kuvat**
+(yleiskatsaus tyypin, kameran, vuoden tai kuukauden mukaan sekä kaksoiskappaleet kuvatiivisteen avulla). Molemmat
+ovat Regexin jälkeen ja ennen Muistikirjaa, ja jokaisen tuloksen voi tallentaa uudeksi aineistoksi. Katso
+[dokument.md](dokument.md).
 
 ## Visualisoi
 

@@ -56,6 +56,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   Excel, SQLite) nást um staðbundna brú, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable verða uppsprettur með einum smelli. Skrár má tengja og lesa aftur af
   diski (sjá [kallor.md](kallor.md)).
+- **Skjöl og myndir**: PDF, Word, OpenDocument, Markdown og texti verða gagnasöfn með einni málsgrein í hverri röð og
+  eru lesin í skjalasýn; myndir verða safn með EXIF-upplýsingum og myndasafni. Tólin Texti (orðtíðni, leitarorð í
+  samhengi, samtíðni) og Myndir (yfirlit, tvítök) virka án kóða (sjá [dokument.md](dokument.md)).
 - **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
   gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
   út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).
@@ -102,6 +105,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Leita](soka.md) og [Deila](dela.md): finna án kóða, og gefa öðrum gögn.
 - [Dataspatium Farsími](mobil.md): síminn sem sendill, viðtakandi og skoðari; flutningur milli tækja.
 - [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
+- [Skjöl og myndir](dokument.md): PDF, Word, OpenDocument, Markdown og myndir sem gagnasöfn; skjalasýn, myndasafn og tólin Texti og Myndir.
 - [Reglulegar segðir](regex.md): mynstur til að greina, leiðrétta og skipta upp texta í gagnasöfnum.
 - [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
 - [Opnar vefþjónustur](api-konfiguration.md): forstilltir upprunar, lyklar og eigin uppsetningar.

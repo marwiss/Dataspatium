@@ -91,6 +91,12 @@ list, pattern, length, SQL condition) check the data on request with a report an
 their own. Everything is logged as a recipe that can be undone, replayed on another dataset and exported as R or
 SQL code. Versions save snapshots to go back to. See [bearbeta.md](bearbeta.md).
 
+Datasets of the kind **documents** (PDF, Word, OpenDocument, Markdown, text) open as a reading view: choose a document,
+turn the pages, show the PDF page as an image, search the whole collection and download the original. Datasets of the
+kind **images** open as a gallery with thumbnails, a filter, a sort order and the picture's EXIF details in the
+inspector, where the description can be edited. *Show as table* gives the ordinary table with every action in both
+cases. See [dokument.md](dokument.md).
+
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from
@@ -106,6 +112,11 @@ uses them to filter, extract, replace, split, mark, count or create a quality ru
 library of Nordic patterns (see [regex.md](regex.md)). The notebook mixes text (Markdown), R and SQL in cells that
 run in order and become a report in HTML, Word, PDF, Markdown or LaTeX (see
 [anteckningsbok.md](anteckningsbok.md)). Later: statistical models.
+
+When a document collection is selected there is the tab **Text** (word frequency with stopwords, keywords in context,
+co-occurrences and an overview per document), and when an image collection is selected the tab **Images** (overview
+by type, camera, year or month and duplicates by image hash). Both come after Regex and before the Notebook, and
+every result can be saved as a new dataset. See [dokument.md](dokument.md).
 
 ## Visualise
 

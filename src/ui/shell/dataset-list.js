@@ -14,6 +14,9 @@
   const D = globalThis.Dataspatium;
   D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'platform/storage/idb'], (base, icons, idb) => {
     const { h, t, i18n, replace } = base;
+    /** Icon per dataset kind (data/datasets KINDS); tables and unknown kinds share the table icon. */
+    const KIND_ICONS = { table: 'table', document: 'file-text', images: 'images', graph: 'share-2', model: 'package' };
+    function kindIcon(kind) { return KIND_ICONS[kind] || 'table'; }
     const COLLAPSED_SETTING = 'ui.folders.collapsed';
     const SORTS = ['updated', 'name', 'rows'];
     const DRAG_TYPE = 'text/plain';
@@ -126,7 +129,7 @@
       function datasetRow(ds, depth) {
         const current = ds.id === options.selectedId;
         const btn = item({
-          id: ds.id, icon: 'table', label: ds.name,
+          id: ds.id, icon: kindIcon(ds.kind), label: ds.name,
           // The short name is what SQL, R and chart files use to refer to the dataset.
           sub: `${ds.shortName ? ds.shortName + ' · ' : ''}${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`,
           code: ds.shortName || '', current, onSelect: options.onSelect,
@@ -184,6 +187,6 @@
         h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), subEl));
     }
 
-    return { render, buildTree, sortDatasets, SORTS };
+    return { render, buildTree, sortDatasets, kindIcon, KIND_ICONS, SORTS };
   });
 })();

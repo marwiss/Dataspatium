@@ -219,6 +219,12 @@ and a few rows. The step is logged in the recipe with its code, can be undone an
 SQL export the code is a comment, in the R export the R step runs as code and the Python step is a comment. Python
 is fetched the first time.
 
+## Documents and images
+
+Datasets of the kinds documents and images open in Process in a view of their own (a reading view and a gallery) with
+the button *Show as table* for the ordinary table. Every action here applies to the table: filter paragraphs, correct
+text, remove rows, add computed columns. See [dokument.md](dokument.md).
+
 ## The SQL console
 
 Every dataset has a **short name** (shown below the name in the object panel and under Manage, where it can be changed

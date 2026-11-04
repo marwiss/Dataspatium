@@ -61,6 +61,9 @@ er bredden i piksler. I batchkjøringer filtreres diagrammet på gruppen. R- og 
 
 ### Sideskift og kodebok
 
+`{{bild "fil.jpg" | bredd: 400}}` setter inn et bilde fra en bildesamling (se [dokument.md](dokument.md)): bildet søkes
+først i malens datasett og deretter i alle bildesamlinger, forhåndsvisningen brukes og skaleres til angitt bredde
+(standard høyst 720 px; `hojd` kan også angis). Taggen virker i alle formater og i batchkjøringer som `{{diagram}}`.
 `{{sidbrytning}}` gir sideskift i Word, PDF og LaTeX. Malen **Kodebok** bruker utvidede kolonneopplysninger: `{{saknade}}`,
 `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` per kolonne samt `{{dubbletter}}`;
 de finnes når malen er merket som kodebok (en kopi av den innebygde malen beholder det).
