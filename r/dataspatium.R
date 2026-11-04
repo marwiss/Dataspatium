@@ -517,3 +517,16 @@ dm_read_edges <- function(x) {
 
 #' Nodes of a graph dataset with their properties as columns (id, etikett, namn, ...).
 dm_read_nodes <- function(x) .dm_expand_json(dm_read(x), "egenskaper")
+
+# Properties and quantities of a building model (dataset kind "model"), one row per value.
+.dm_read_model_table <- function(x, table) {
+  id <- dm_find(x)
+  file <- file.path(.dataspatium$data_dir, paste0(id, ".sqlite"))
+  if (!file.exists(file)) stop(.dm_msg("read.notmirrored", x), call. = FALSE)
+  con <- .dm_connect(file)
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  if (!table %in% DBI::dbListTables(con)) stop("not an IFC model", call. = FALSE)
+  DBI::dbGetQuery(con, paste0("select * from ", table))
+}
+dm_read_properties <- function(x) .dm_read_model_table(x, "_properties")
+dm_read_quantities <- function(x) .dm_read_model_table(x, "_quantities")

@@ -72,6 +72,9 @@ get the choice *The whole plan as a plan*. See [planer.md](planer.md).
 **Graphs** (kind graph): GraphML, GEXF, JSON with nodes and edges (D3, networkx, Cytoscape, Neo4j) and Cypher scripts
 (APOC export). Read and written; recognised by their contents. See [grafer.md](grafer.md).
 
+**Building models and drawings** (kind model): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) and DXF. The original file is
+kept; elements, properties and quantities become tables, and the DXF drawing becomes SVG. See [cad-bim.md](cad-bim.md).
+
 ## Character encoding
 
 Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain

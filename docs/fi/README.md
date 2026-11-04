@@ -90,6 +90,9 @@ paketilla.
   ja viennillä kaikissa neljässä muodossa; kahdesta taulukosta tulee verkko (katso [grafer.md](grafer.md)).
   Verkkoa muokataan Muokkaa-tilassa ja kirjoittavalla Cypherillä (reseptiaskeleet), Neo4j on lähde Boltin yli, Verkko-välilehdellä
   on PageRank, yhteisöt, keskeisyys, kuviokyselyt ja asettelu, ja verkoista tulee kaavioita Visualisoi-tilaan, koontinäyttöihin ja Julkaise-tilaan.
+- **CAD ja BIM**: IFC-mallit avautuvat 3D:nä (web-ifc ja three.js) rakennusosien taulukon yläpuolella, ja valinta seuraa molempiin
+  suuntiin. Ominaisuuksista ja määristä tulee taulukoita, Määrät-välilehti laskee tyypeittäin, kerroksittain ja materiaaleittain, ja
+  DXF-piirustukset näkyvät SVG:nä tasoineen (katso [cad-bim.md](cad-bim.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

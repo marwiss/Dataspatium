@@ -71,6 +71,9 @@ saavat valinnan *Koko kaava kaavana*. Katso [planer.md](planer.md).
 **Verkot** (tyyppi verkko): GraphML, GEXF, JSON solmuilla ja särmillä (D3, networkx, Cytoscape, Neo4j) ja Cypher-skriptit
 (APOC-vienti). Luetaan ja kirjoitetaan; tunnistetaan sisällöstä. Katso [grafer.md](grafer.md).
 
+**Rakennusmallit ja piirustukset** (tyyppi malli): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) ja DXF. Alkuperäinen tiedosto
+tallennetaan; rakennusosista, ominaisuuksista ja määristä tulee taulukoita, ja DXF-piirustuksesta SVG. Katso [cad-bim.md](cad-bim.md).
+
 ## Merkistökoodaus
 
 Tekstitiedostot tarkistetaan tässä järjestyksessä: tavujärjestysmerkki (UTF-8, UTF-16), UTF-16 ilman BOM:ia (paljon

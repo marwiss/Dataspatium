@@ -13,7 +13,7 @@
   D.define('ui/help', ['ui/base', 'ui/basic', 'ui/overlays', 'docgen/markdown'], (base, basic, overlays, markdown) => {
     const { h, t, i18n, replace } = base;
     /** Documents in reading order (file names without .md; Swedish in docs/, other languages in docs/<lang>/). */
-    const DOCS = ['kom-igang', 'anvandarguide', 'lagen', 'soka', 'bearbeta', 'visualisera', 'anteckningsbok', 'regex', 'format', 'api-konfiguration', 'kallor', 'r-guide', 'python', 'dokument', 'kartor', 'planer', 'grafer', 'dokumentmallar', 'dela', 'mobil', 'faq', 'licenser'];
+    const DOCS = ['kom-igang', 'anvandarguide', 'lagen', 'soka', 'bearbeta', 'visualisera', 'anteckningsbok', 'regex', 'format', 'api-konfiguration', 'kallor', 'r-guide', 'python', 'dokument', 'kartor', 'planer', 'grafer', 'cad-bim', 'dokumentmallar', 'dela', 'mobil', 'faq', 'licenser'];
     /** Modes with a document of their own; the others open the chapter of docs/lagen.md that carries the mode's name. */
     const MODE_DOCS = { soka: 'soka', bearbeta: 'bearbeta', visualisera: 'visualisera', dela: 'dela' };
     const REPO = 'https://github.com/marwiss/Dataspatium/blob/main/';

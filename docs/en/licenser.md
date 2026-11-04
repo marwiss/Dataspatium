@@ -45,6 +45,8 @@ licence. Each library, its version and licence are listed in
 | Leaflet 1.9 (maps) and Turf 7 (geo tools) | BSD-2-Clause (Leaflet), MIT (Turf) | Free to use and distribute with the licence text and notices |
 | Cytoscape 3.34 with fcose, dagre and expand-collapse, sigma 3 and graphology (graphs) | MIT | Free to use and distribute with the licence text and notices |
 | neo4j-driver-lite 6.3 (Neo4j over Bolt) | Apache-2.0 | Free to use and distribute with the licence text and notices |
+| web-ifc 0.0.78 (geometry from IFC; unchanged files, source at https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Free to use and distribute; changes to the library's own files are shared under the same licence |
+| three.js 0.187 (3D drawing), dxf-parser 1.1 (DXF) | MIT | Free to use and distribute with the licence text and notices |
 | Boverket's Planbestämmelsekatalog (embedded copy, `presets/plan/`) | Open data from Boverket | Free to use and distribute; Boverket and Planbestämmelsekatalogen must be named as the source |
 | plotly.js (fetched on demand for plotly charts), seaborn and plotly (Python wheels from PyPI, fetched on demand) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Fetched unchanged from jsDelivr and PyPI, pinned to version and digest, and kept in the browser |
 

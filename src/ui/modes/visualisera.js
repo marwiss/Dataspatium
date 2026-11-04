@@ -7,13 +7,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/python-panel', 'ui/viz/map-panel', 'ui/viz/graph-chart-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'viz/leaflet', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
-    (base, vegaControls, d3Controls, rPanel, pyPanel, mapPanel, graphChartPanel, galleryMod, exportDialog, charts, vizRender, builder, leaflet, files, uiTheme, dashboardView, dashboards) => {
+  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/python-panel', 'ui/viz/map-panel', 'ui/viz/graph-chart-panel', 'ui/viz/model-chart-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'viz/leaflet', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
+    (base, vegaControls, d3Controls, rPanel, pyPanel, mapPanel, graphChartPanel, modelChartPanel, galleryMod, exportDialog, charts, vizRender, builder, leaflet, files, uiTheme, dashboardView, dashboards) => {
       /** Charts drawn by code (R, Python) have their own panel instead of the controls and the live preview. */
       const isCode = (kind) => kind === 'r' || kind === 'python';
       /** Kinds with a panel of their own (code charts and maps); the others use the builder controls and the preview. */
-      const isPanel = (kind) => isCode(kind) || kind === 'map' || kind === 'graph';
-      const kindIcon = (kind) => (kind === 'r' ? 'terminal' : kind === 'python' ? 'code' : kind === 'd3' ? 'trending-up' : kind === 'map' ? 'map' : kind === 'graph' ? 'share-2' : 'chart-column');
+      const isPanel = (kind) => isCode(kind) || kind === 'map' || kind === 'graph' || kind === 'model';
+      const kindIcon = (kind) => (kind === 'r' ? 'terminal' : kind === 'python' ? 'code' : kind === 'd3' ? 'trending-up' : kind === 'map' ? 'map' : kind === 'graph' ? 'share-2' : kind === 'model' ? 'box' : 'chart-column');
       const { h, t, i18n, replace } = base;
 
       function createMode(ctx) {
@@ -102,7 +102,7 @@
           if (!ds) { ui.toast.show(t('shell.select.dataset'), { kind: 'warn' }); return; }
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
-          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'map', 'graph', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
+          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
           await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
           if (!kind) return;
           const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
@@ -177,6 +177,9 @@
             controlsEl = null;
           } else if (chart.kind === 'map') {
             rpanel = mapPanel.create({ chart, columns, onChange: (def) => { chart.map = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });
+            controlsEl = null;
+          } else if (chart.kind === 'model') {
+            rpanel = modelChartPanel.create({ chart, onChange: (def) => { chart.model = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });
             controlsEl = null;
           } else if (chart.kind === 'graph') {
             rpanel = graphChartPanel.create({ chart, onChange: (def) => { chart.graph = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });

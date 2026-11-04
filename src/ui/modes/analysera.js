@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, leaflet) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -54,11 +54,13 @@
         return rxPanel;
       }
       /** Tools per dataset kind (after Regex, before the notebook): Text for documents, Bilder for image collections. */
-      const KIND_TABS = { document: { id: 'text', label: 'analysera.tabs.text', icon: 'text-search' }, images: { id: 'images', label: 'analysera.tabs.images', icon: 'images' }, plan: { id: 'plan', label: 'analysera.tabs.plan', icon: 'layers' }, graph: { id: 'graph', label: 'analysera.tabs.graph', icon: 'share-2' } };
+      const KIND_TABS = { model: { id: 'model', label: 'analysera.tabs.model', icon: 'ruler' }, document: { id: 'text', label: 'analysera.tabs.text', icon: 'text-search' }, images: { id: 'images', label: 'analysera.tabs.images', icon: 'images' }, plan: { id: 'plan', label: 'analysera.tabs.plan', icon: 'layers' }, graph: { id: 'graph', label: 'analysera.tabs.graph', icon: 'share-2' } };
       let txPanel = null; let imPanel = null; let plPanel = null; let grPanel = null; let cyPanel = null; let tabsEl = null;
       function textPanel() { if (!txPanel) txPanel = textPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'text') renderRight(); } }); return txPanel; }
       function imagesPanel() { if (!imPanel) imPanel = imagesPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'images') renderRight(); } }); return imPanel; }
       function planPanel() { if (!plPanel) plPanel = planPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'plan') renderRight(); } }); return plPanel; }
+      let moPanel = null;
+      function modelPanel() { if (!moPanel) moPanel = modelPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'model') renderRight(); } }); return moPanel; }
       // Graphs get two tabs: Cypher (a query language, placed after SQL) and Graf (the code-free tools, after Regex).
       function graphPanel() { if (!grPanel) grPanel = graphPanelModule.create(ctx, { mode: 'tools', rerenderRight: () => { if (slots && tab === 'graph') renderRight(); } }); return grPanel; }
       function cypherPanel() { if (!cyPanel) cyPanel = graphPanelModule.create(ctx, { mode: 'cypher', rerenderRight: () => { if (slots && tab === 'cypher') renderRight(); } }); return cyPanel; }
@@ -77,8 +79,8 @@
         }
         if (tabsEl) tabsEl.tabs = tabList();
       }
-      const KIND_TAB_IDS = ['text', 'images', 'plan', 'geo', 'graph', 'cypher'];
-      const kindPanel = () => (tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
+      const KIND_TAB_IDS = ['text', 'images', 'plan', 'geo', 'graph', 'cypher', 'model'];
+      const kindPanel = () => (tab === 'model' ? modelPanel() : tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
       function tabList() {
         const ds = selectedDataset();
         const kind = ds && KIND_TABS[ds.kind] ? KIND_TABS[ds.kind] : null;

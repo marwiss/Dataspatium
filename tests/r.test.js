@@ -24,6 +24,10 @@
     assert.equal(stdoutOf(read).trim(), '2|Date|integer|logical|0180|9.37|Folkmängd|Antal invånare|personer|TRUE', JSON.stringify(read.entries));
     const filtered = await bridge.run('cat(nrow(dm_read("bryggtest", columns = "kommun", where = "befolkning > 600000")))');
     assert.equal(stdoutOf(filtered).trim(), '1');
+    const modelMeta = await importer.run(D.require('tests/fixtures/ifc').ifcFile(), { format: 'model' }, null, 'Rmodell');
+    created.push(modelMeta.id);
+    const modelRead = await bridge.run('q <- dm_read_quantities("Rmodell"); p <- dm_read_properties("Rmodell"); cat(nrow(q), sum(q$varde[q$namn == "NetVolume"]), nrow(dm_read("Rmodell")), "FireRating" %in% p$namn)');
+    assert.equal(modelRead.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('').trim(), '12 8 10 TRUE', JSON.stringify(modelRead.entries));
     return `${bridge.version}; startup ${Math.round(bridge.startupMs)} ms`;
   }, 180000);
 

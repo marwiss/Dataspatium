@@ -83,6 +83,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   sniðum; tvær töflur verða net (sjá [grafer.md](grafer.md)).
   Netinu er breytt í Vinna og með skrifandi Cypher (uppskriftarskref), Neo4j er uppspretta yfir Bolt, flipinn Net hefur PageRank,
   samfélög, miðlægni, mynsturfyrirspurnir og uppröðun, og net verða myndir í Myndgera, mælaborðum og Birta.
+- **CAD og BIM**: IFC-líkön opnast í þrívídd (web-ifc og three.js) fyrir ofan töflu yfir byggingarhlutana og valið fylgir í báðar áttir.
+  Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum
+  (sjá [cad-bim.md](cad-bim.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

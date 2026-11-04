@@ -125,6 +125,12 @@
     assert.equal(stdoutOf(listed).trim(), 'True True', JSON.stringify(listed.entries));
     const read = await bridge.run('df = dm_read("Pybrygga")\nprint(len(df), str(df["datum"].dtype)[:8], str(df["befolkning"].dtype), str(df["aktiv"].dtype), df["kod"][0], df["andel"][0], df.attrs["dataspatium"]["labels"]["befolkning"], df.attrs["dataspatium"]["descriptions"]["befolkning"], df.attrs["dataspatium"]["units"]["befolkning"], sep="|")');
     assert.equal(stdoutOf(read).trim(), '2|datetime|int64|boolean|0180|9.37|Folkmängd|Antal invånare|personer', JSON.stringify(read.entries));
+    const helpers = await bridge.run('print(callable(dm_read_nodes), callable(dm_read_edges), callable(dm_read_properties), callable(dm_read_quantities))');
+    assert.equal(stdoutOf(helpers).trim(), 'True True True True', 'from dataspatium import * gives the helpers of graphs and models');
+    const modelMeta = await importer.run(D.require('tests/fixtures/ifc').ifcFile(), { format: 'model' }, null, 'Pymodell');
+    created.push(modelMeta.id);
+    const modelRead = await bridge.run('q = dm_read_quantities("Pymodell"); p = dm_read_properties("Pymodell"); print(len(q), round(q[q["namn"] == "NetVolume"]["varde"].sum(), 3), len(dm_read("Pymodell")), "FireRating" in list(p["namn"]))');
+    assert.equal(stdoutOf(modelRead).trim(), '12 8.0 10 True', JSON.stringify(modelRead.entries));
     const expr = await bridge.run('1 + 1');
     assert.equal(stdoutOf(expr).trim(), '2', 'the last expression is shown like in a REPL');
     const filtered = await bridge.run('print(len(dm_read("pybrygga", columns=["kommun"], where="befolkning > 600000")))');

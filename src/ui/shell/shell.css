@@ -458,3 +458,16 @@ body.dm-presenting { overflow: hidden; }
 
 .dm-graph-preview { min-height: 420px; }
 .dm-graph-edit dm-button { flex: 0 0 auto; }
+
+/* Building models and drawings (ui/bearbeta/model-view): the drawing above a table of its elements */
+.dm-model-layout { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-2); }
+.dm-model-host { position: relative; flex: 2 1 0; min-height: 280px; overflow: hidden; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); background: var(--dm-surface); }
+.dm-model-canvas { position: absolute; inset: 0; display: block; max-width: none; touch-action: none; }
+.dm-model-loading { padding: var(--dm-s-4); }
+.dm-model-table-wrap { flex: 1 1 0; min-height: 180px; }
+.dm-model-preview { min-height: 420px; height: 520px; flex: none; }
+.dm-model-picture { display: block; width: 100%; height: auto; }
+.dm-dxf-host { cursor: grab; touch-action: none; color: var(--dm-text); }
+.dm-dxf-svg { display: block; width: 100%; height: 100%; max-width: none; }
+.dm-dxf-selected, .dm-dxf-selected * { stroke: var(--dm-accent) !important; }
+.dm-dxf-selected text { fill: var(--dm-accent) !important; stroke: none !important; }

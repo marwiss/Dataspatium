@@ -71,6 +71,9 @@ reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Gjenkjennes p�
 **Grafer** (typen graf): GraphML, GEXF, JSON med noder og kanter (D3, networkx, Cytoscape, Neo4j) og Cypher-skript
 (APOC-eksport). Leses og skrives; gjenkjennes på innholdet. Se [grafer.md](grafer.md).
 
+**Bygningsmodeller og tegninger** (typen modell): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) og DXF. Originalfilen lagres;
+bygningsdeler, egenskaper og mengder blir tabeller, og DXF-tegningen blir SVG. Se [cad-bim.md](cad-bim.md).
+
 ## Tegnkoding
 
 Tekstfiler kontrolleres i denne rekkefølgen: byte order mark (UTF-8, UTF-16), UTF-16 uten BOM (mange nullbyte), ren ASCII,

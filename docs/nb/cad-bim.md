@@ -1,0 +1,84 @@
+# CAD og BIM: bygningsmodeller og tegninger
+
+Dataspatium åpner bygningsmodeller i IFC og tegninger i DXF som en egen type datasett. Modellen tegnes i 3D,
+bygningsdelene blir en tabell, og egenskaper og mengder kan søkes i, beregnes og eksporteres. Alt skjer i nettleseren: filen
+forlater aldri datamaskinen. Originalfilen lagres i datasettet og følger med i pakker og sikkerhetskopier.
+
+## Åpne en modell
+
+Slipp en `.ifc`-, `.ifczip`- eller `.dxf`-fil i Hent. Filens opplysninger vises (skjema, prosjekt, program, etasjer og antall
+per type), og *Importer* lager datasettet. IFC2X3, IFC4 og IFC4X3 i STEP-format støttes. En modell på rundt 50 MB tar omtrent
+et kvarter minutt å importere og åpnes deretter på noen sekunder.
+
+## Modellen i Bearbeid
+
+Modellen åpnes som 3D-visning med en tabell over bygningsdelene under. Dra for å dreie, rull for å zoome og dra med høyre
+knapp for å flytte. Knappen med rammen viser hele modellen; enkelte objekter langt fra bygningen regnes ikke med.
+
+- **Marker**: klikk på en bygningsdel i modellen eller en rad i tabellen. Markeringen følger med, og inspektøren viser
+  type, etasje, materiale, klassifikasjon, egenskaper og mengder samt overflate og volum målt på geometrien.
+- **Filtrer**: velg type eller etasje, eller søk på navn, materiale eller egenskap. Tabellen og modellen viser samme utvalg.
+- **Vis som tabell**: alle kolonner som en vanlig tabell med alle verktøyene i Bearbeid.
+- **Lagre som diagram**: visningen med filter og kameravinkel blir et diagram i Visualiser.
+
+Geometrien beregnes fra originalfilen første gang modellen åpnes i en økt, og brukes bare til å tegne og måle. Tabellene
+finnes fortsatt selv om datamaskinen mangler WebGL; da vises en melding i stedet for 3D-visningen.
+
+## Tabellene
+
+| Tabell | Innhold |
+|---|---|
+| `data` | Én rad per bygningsdel, rom og etasje: id, guid, typ (type), kategori (byggdel, rum, struktur), namn (navn), beskrivning, objekttyp, tagg, vaning (etasje), typnamn, material, klassificering, egenskaper og mangder (mengder) som JSON |
+| `_properties` | Én rad per egenskap: id, uppsattning (sett), namn, varde (verdi), tal, enhet, kalla (objekt eller typ) |
+| `_quantities` | Én rad per mengde i SI-enheter: id, uppsattning, namn, varde, slag (langd, area, volym, vikt, tid, antal), enhet |
+| `_entities` | Filens ikke-geometriske entiteter med rå attributter: id, typ, attribut |
+
+Egenskaper som bare finnes på bygningsdelens type, regnes med og er merket `typ`. Mengder regnes om til meter,
+kvadratmeter, kubikkmeter og kilogram med prosjektets enheter. Åpninger og tilkoblingsporter er ikke bygningsdeler og finnes
+bare i `_entities`.
+
+Tabellene kan spørres med SQL i Analyser:
+
+```sql
+SELECT d.vaning, d.typ, count(*) AS antal, sum(q.varde) AS volym
+FROM data d JOIN _quantities q ON q.id = d.id
+WHERE q.namn = 'NetVolume'
+GROUP BY 1, 2 ORDER BY 1, 2
+```
+
+I R og Python gir `dm_read()` bygningsdelene, `dm_read_properties()` egenskapene og `dm_read_quantities()` mengdene.
+
+## Fanen Mengder i Analyser
+
+- **Sammendrag**: filens opplysninger og innhold.
+- **Mengder**: antall, lengde, areal, volum og vekt gruppert etter type, etasje, materiale, typenavn eller klassifikasjon.
+  Kilden *Filens mengder* tar én verdi per bygningsdel og slag: netto før andre og brutto sist, slik at en vegg ikke telles
+  to ganger. Kilden *Målt på geometrien* regner på trekantene og virker også når filen mangler mengder. Overflaten er da
+  hele overflaten rundt bygningsdelen, ikke for eksempel en veggs sideareal.
+- **Mengdeliste**: hvert mengdenavn i filen per type med sum. Her ser du nøyaktig hva filen angir.
+- **Egenskaper**: hvilke verdier en egenskap har, og hos hvor mange bygningsdeler av hver type.
+- **Entiteter**: hvor mange entiteter av hvert slag filen består av.
+
+Hvert resultat kan lagres som datasett.
+
+## DXF-tegninger
+
+En DXF-fil blir en tabell med ett tegningsobjekt per rad (type, lag, farge, lengde, areal, tekst og plassering) og en
+SVG-tegning. Tegningen åpnes i Bearbeid, der du zoomer med hjulet og panorerer ved å dra. Lagene slås av og på i inspektøren,
+og et klikk markerer objektet og raden. Fanen Mengder gir antall, lengde og areal per lag og type.
+
+Linjer, polylinjer med buer, sirkler, buer, ellipser, splines, punkter, tekster, solider, 3D-flater, blokker og
+målsettingers blokker tegnes. Skravering (HATCH) tegnes ikke.
+
+## Eksport
+
+Eksporter gir originalfilen, egenskapene og mengdene som CSV (én rad per verdi) og tegningen som SVG, i tillegg til de
+vanlige tabellformatene for `data`. Diagrammer av modeller eksporteres som PNG, SVG og PDF; en 3D-modell blir da et bilde.
+
+## Begrensninger
+
+- Modellen kan ikke redigeres, og ingen ny IFC-fil skrives. Endringer i tabellene påvirker ikke originalfilen.
+- En modell tegnes på nytt fra originalfilen i hver ny økt. Modellen på 57 MB som appen er prøvd med, tar 4–6 sekunder.
+- Den første tegningen av en svært stor modell kan låse siden et øyeblikk mens grafikkortet tar imot trekantene.
+- Mengdene er ikke en mengdeberegning etter noe regelverk. Kontroller dem mot kilden før de brukes.
+- DXF leses i to dimensjoner. DWG må først lagres som DXF.

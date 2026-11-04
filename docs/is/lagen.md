@@ -65,6 +65,9 @@ Net (hnútar og leggir) eru flutt inn sem net úr GraphML, GEXF, JSON með hnút
 þekkist á innihaldinu, upplýsingar netsins birtast og netið opnast sem netsýn í Vinna (sjá [grafer.md](grafer.md)).
 Tvær töflur verða net með hnappinum *Gera net úr töflum* í Umsjón.
 
+Byggingarlíkön í IFC og teikningar í DXF verða að gagnasöfnum af tegundinni líkan. Upplýsingar um skrána birtast og líkanið opnast í
+þrívídd eða sem teikning í Vinna (sjá [cad-bim.md](cad-bim.md)).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -140,6 +143,9 @@ Fyrir gagnasöfn með rúmfræði er flipinn **Geo** (eftir Regex): mál, punkta
 
 Net fá flipann **Cypher** strax eftir SQL (Cypher-hlutmengi þýtt í SQL, SQL sýnt) og flipann **Net** eftir Regex
 (samantekt, gráða, samhangandi hlutar, stysta leið, hlutnet, hnútar og leggir sem töflur).
+
+Líkön og teikningar fá flipann **Magn** eftir Regex (fjöldi, lengd, flatarmál og rúmmál eftir gerð, hæð og efni, úr skránni eða mælt á
+rúmfræðinni).
 
 ## Myndgera
 

@@ -25,9 +25,43 @@
       { id: 'gexf', key: 'export.format.gexf', ext: 'gexf', kind: 'graph' },
       { id: 'graph-json', key: 'export.format.graph-json', ext: 'json', kind: 'graph' },
       { id: 'cypher', key: 'export.format.cypher', ext: 'cypher', kind: 'graph' },
+      // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file.
+      { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model' },
+      { id: 'model-properties', key: 'export.format.model-properties', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
+      { id: 'model-quantities', key: 'export.format.model-quantities', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
+      { id: 'model-svg', key: 'export.format.model-svg', ext: 'svg', kind: 'model', modelFormat: 'dxf' },
     ];
-    /** The formats offered for a dataset: graph formats only for graphs; tables and the node table for the rest. */
-    function formatsFor(meta) { return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind)); }
+    /** The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. */
+    function formatsFor(meta) {
+      const dxf = !!(meta && meta.model && meta.model.format === 'dxf');
+      return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc'))))
+        .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f));
+    }
+    /** A model dataset: the original file, its long tables as CSV, or a DXF drawing as SVG. */
+    async function toModel(id, format, options = {}) {
+      const model = D.require('data/model');
+      if (format === 'model-original') {
+        const file = await model.original(id);
+        if (!file) throw new Error(D.t('model.err.nofile'));
+        return { blob: new Blob([file.bytes], { type: 'application/octet-stream' }), filename: file.name };
+      }
+      if (format === 'model-svg') {
+        const meta = await datasets.get(id);
+        const blob = await D.require('viz/model-draw').toBlob({ kind: 'model', datasetId: id, name: meta ? meta.name : '' }, 'svg', { width: 1600, height: 1200 });
+        return { blob };
+      }
+      const properties = format === 'model-properties';
+      const sql = properties
+        ? 'select d.id, d.guid, d.typ, d.namn as element, d.vaning, p.uppsattning, p.namn, p.varde, p.enhet, p.kalla from _properties p join data d on d.id = p.id order by d.id, p.uppsattning, p.namn'
+        : 'select d.id, d.guid, d.typ, d.namn as element, d.vaning, q.uppsattning, q.namn, q.varde, q.enhet, q.slag from _quantities q join data d on d.id = q.id order by d.id, q.uppsattning, q.namn';
+      const res = await (await datasets.ensureOpen(id)).engine.exec(sql);
+      const delimiter = options.delimiter || ';';
+      const decimal = options.decimal || 'comma';
+      const cols = res[0] ? res[0].columns : [];
+      const lines = [cols.map((c) => csvEscape(c, delimiter)).join(delimiter)];
+      for (const row of res[0] ? res[0].values : []) lines.push(row.map((v) => (v === null || v === undefined ? '' : csvEscape(typeof v === 'number' && decimal === 'comma' ? String(v).replace('.', ',') : String(v), delimiter))).join(delimiter));
+      return { blob: new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' }) };
+    }
     /** A graph dataset in GraphML, GEXF, node-link JSON or a Cypher script. */
     async function toGraph(id, format) {
       const g = await graph.whole(id);
@@ -157,6 +191,10 @@
       const fmt = FORMATS.find((f) => f.id === format) || FORMATS[0];
       const filename = options.filename || files.safeName(meta ? meta.name : 'dataspatium', fmt.ext);
       let blob;
+      if (fmt.kind === 'model') {
+        const out = await toModel(id, fmt.id, options);
+        return { blob: out.blob, filename: options.filename || out.filename || filename };
+      }
       if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);
       else if (fmt.id === 'csv') blob = await toCsv(id, options);
       else if (fmt.id === 'xlsx') blob = await toXlsx(id, options);
@@ -191,6 +229,6 @@
       return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });
     }
 
-    return { FORMATS, formatsFor, toGraph, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
+    return { FORMATS, formatsFor, toModel, toGraph, toCsv, toJson, toGeoJson, toXlsx, toOds, toXml, toSqlite, toViaR, exportDataset };
   });
 })();

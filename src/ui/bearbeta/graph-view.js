@@ -53,7 +53,7 @@
             h('div', { class: 'dm-toolbar' }, modeSel, layoutSel, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('graph.fit.hint'), onClick: () => handle && handle.fit() }),
               ui.button({ label: t('graph.layout.save'), icon: 'save', title: t('graph.layout.save.hint'), onClick: saveLayout }),
-              ui.button({ label: t('map.save.chart'), icon: 'chart-column', title: t('graph.chart.save.hint'), onClick: saveChart }),
+              ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('graph.chart.save.hint'), onClick: saveChart }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('graph.table.hint'), onClick: options.onTable }))),
           canvasEl);
         renderInspector();

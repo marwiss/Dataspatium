@@ -66,6 +66,9 @@ Verkot (solmujen ja särmien verkostot) tuodaan verkkoina GraphML-, GEXF-, solmu
 tiedosto tunnistetaan sisällöstä, verkon tiedot näytetään ja verkko avautuu verkkonäkymänä Muokkaa-tilassa (katso
 [grafer.md](grafer.md)). Kahdesta taulukosta tulee verkko painikkeella *Tee verkko taulukoista* Hallitse-tilassa.
 
+IFC-rakennusmalleista ja DXF-piirustuksista tulee malli-tyyppisiä aineistoja. Tiedoston tiedot näytetään, ja malli avautuu 3D:nä tai
+piirustuksena Muokkaa-tilassa (katso [cad-bim.md](cad-bim.md)).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -149,6 +152,9 @@ Geometrian sisältäville aineistoille on välilehti **Geo** (Regexin jälkeen):
 
 Verkot saavat välilehden **Cypher** heti SQL:n jälkeen (Cypher-osajoukko käännettynä SQL:ksi, SQL näytetään) ja välilehden
 **Verkko** Regexin jälkeen (yhteenveto, aste, komponentit, lyhin polku, aliverkko, solmut ja särmät taulukkoina).
+
+Mallit ja piirustukset saavat välilehden **Määrät** Regexin jälkeen (lukumäärä, pituus, pinta-ala ja tilavuus tyypeittäin, kerroksittain
+ja materiaaleittain, tiedostosta tai geometriasta mitattuna).
 
 ## Visualisoi
 

@@ -2067,6 +2067,27 @@ Dataspatium.assets.manifest({
    "sha256": "0b7ff1dc787aa4b50271fdcc2d50192067fa43189dfa040d903d70f9e5920fc1",
    "library": "lucide"
   },
+  "lucide/icons/box.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 475,
+   "sha256": "3b37dc309f5e7dec02898c5b4ee065301555eee512757e536b68c80251ebf135",
+   "library": "lucide"
+  },
+  "lucide/icons/ruler.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 537,
+   "sha256": "1d778fc1ceb2f93fa8b19a600472940852c8c80f66a27dcd8e9870f97e126070",
+   "library": "lucide"
+  },
+  "lucide/icons/building-2.svg": {
+   "file": "vendor/lucide/icons.bundle.js",
+   "encoding": "text",
+   "size": 522,
+   "sha256": "1351b6df413b505b589e0e0dcf986f4cf3b996295c92362a92821e90b871b1c7",
+   "library": "lucide"
+  },
   "pdfjs/pdf.worker.min.js": {
    "file": "vendor/pdfjs/pdf.worker.min.js.js",
    "encoding": "text",
@@ -2675,6 +2696,55 @@ Dataspatium.assets.manifest({
    "size": 24433,
    "sha256": "8100130d7d55d4ce9622b8b03f19650816326fee06e69d57539688256d610028",
    "library": "mdb-reader"
+  },
+  "web-ifc/web-ifc-api-iife.js": {
+   "file": "vendor/web-ifc/web-ifc-api-iife.js.js",
+   "encoding": "gzip+base64",
+   "size": 6089952,
+   "sha256": "c6f7ba2b407065eac53a2d47e152f79bc987b120c42a7ea17355f7cc55bfdbf4",
+   "library": "web-ifc"
+  },
+  "web-ifc/web-ifc.wasm": {
+   "file": "vendor/web-ifc/web-ifc.wasm.js",
+   "encoding": "gzip+base64",
+   "size": 1595268,
+   "sha256": "1fbd30bd5515ff6ad15268e87aa26e41d57b29411c8461618b63bee92735d349",
+   "library": "web-ifc"
+  },
+  "three/graph/index.json": {
+   "file": "vendor/three/graph.bundle.js",
+   "encoding": "text",
+   "size": 721,
+   "sha256": "34dcaf266e2b7e8c017d45323cc711368380a26f806e6c138a9f9a77414d85d1",
+   "library": "three"
+  },
+  "three/graph/three%400.187.0%2Fes2022%2Fexamples%2Fjsm%2Fcontrols%2FOrbitControls.mjs": {
+   "file": "vendor/three/graph.bundle.js",
+   "encoding": "text",
+   "size": 20273,
+   "sha256": "5b6c49fa075865d6c28b7323e543a509749742feb3c38d77f6a22a822f97dfe5",
+   "library": "three"
+  },
+  "three/graph/three%400.187.0%2Fes2022%2Fthree.mjs": {
+   "file": "vendor/three/graph.bundle.js",
+   "encoding": "text",
+   "size": 375019,
+   "sha256": "2026591f4cd93413ad090a417554ed2404827eb102950ec9a2a6cbe693cd623c",
+   "library": "three"
+  },
+  "three/graph/three%400.187.0%2Fes2022%2Fbuild%2Fthree.core.mjs": {
+   "file": "vendor/three/graph.bundle.js",
+   "encoding": "text",
+   "size": 393061,
+   "sha256": "e721e22493a4a77a45940c756789a2e9281a98392b04a44f1a1fd82e44234dbe",
+   "library": "three"
+  },
+  "dxf-parser/dxf-parser.js": {
+   "file": "vendor/dxf-parser/dxf-parser.js.js",
+   "encoding": "text",
+   "size": 25384,
+   "sha256": "445dd62529369a4ef32520d8b6232031ea8af01f1029b08b2d876ff6b7807b7b",
+   "library": "dxf-parser"
   }
  },
  "libraries": {
@@ -2750,7 +2820,7 @@ Dataspatium.assets.manifest({
    "license": "ISC",
    "homepage": "https://lucide.dev/",
    "direct": [],
-   "assets": 106
+   "assets": 109
   },
   "pdfjs": {
    "version": "3.11.174",
@@ -3006,6 +3076,30 @@ Dataspatium.assets.manifest({
    ],
    "assets": 0,
    "notes": "Neo4j's lite driver for browsers (UMD, global `neo4j`): Bolt over WebSocket to Neo4j Aura or an own server from the Neo4j source in Inhämta (api/families/neo4j). Loaded on first use with <script>; the connection needs the user's consent (purpose neo4j) and credentials live in api/secrets."
+  },
+  "web-ifc": {
+   "version": "0.0.78",
+   "license": "MPL-2.0",
+   "homepage": "https://github.com/ThatOpen/engine_web-ifc",
+   "direct": [],
+   "assets": 2,
+   "notes": "Unchanged files from the npm package under MPL-2.0: the classic IIFE build of the API and the single-threaded WebAssembly build. They turn an IFC file's geometry into triangle meshes in Dataspatium's shimmed Blob worker (engines/ifc); the source is at the homepage. The tables (entities, properties, quantities) come from the app's own STEP reader (data/ifc-step)."
+  },
+  "three": {
+   "version": "0.187.0",
+   "license": "MIT",
+   "homepage": "https://threejs.org/",
+   "direct": [],
+   "assets": 4,
+   "notes": "3D drawing of IFC models (viz/model-draw). three.js ships only as ES modules, so it is fetched as a module graph from esm.sh with OrbitControls as the entry, and imported through blob: URLs with assets.importGraph on first use."
+  },
+  "dxf-parser": {
+   "version": "1.1.2",
+   "license": "MIT",
+   "homepage": "https://github.com/gdsestimating/dxf-parser",
+   "direct": [],
+   "assets": 1,
+   "notes": "Reads DXF files to JSON (UMD, global DxfParser) in a shimmed Blob worker (engines/dxf); the SVG drawing is the app's own (data/dxf)."
   }
  }
 });

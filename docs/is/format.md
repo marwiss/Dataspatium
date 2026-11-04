@@ -71,6 +71,9 @@ GeoPackage-skrár fá valið *Allt skipulagið sem skipulag*. Sjá [planer.md](p
 **Net** (tegundin net): GraphML, GEXF, JSON með hnútum og leggjum (D3, networkx, Cytoscape, Neo4j) og Cypher-skriftur
 (APOC-útflutningur). Lesið og skrifað; þekkist á innihaldinu. Sjá [grafer.md](grafer.md).
 
+**Byggingarlíkön og teikningar** (tegundin líkan): IFC (`.ifc`, `.ifczip`; IFC2X3, IFC4, IFC4X3) og DXF. Upprunalega skráin er
+vistuð; byggingarhlutar, eiginleikar og magn verða að töflum og DXF-teikningin að SVG. Sjá [cad-bim.md](cad-bim.md).
+
 ## Stafakóðun
 
 Textaskrár eru athugaðar í þessari röð: bætaröðunarmerki (UTF-8, UTF-16), UTF-16 án BOM (mörg núllbæti), hreint ASCII, ströng

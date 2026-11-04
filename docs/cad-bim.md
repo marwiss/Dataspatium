@@ -1,0 +1,84 @@
+# CAD och BIM: byggnadsmodeller och ritningar
+
+Dataspatium öppnar byggnadsmodeller i IFC och ritningar i DXF som ett eget slag av datamängd. Modellen ritas i 3D,
+byggdelarna blir en tabell, och egenskaper och mängder går att söka i, räkna på och exportera. Allt sker i webbläsaren:
+filen lämnar aldrig datorn. Originalfilen sparas i datamängden och följer med i paket och säkerhetskopior.
+
+## Öppna en modell
+
+Släpp en `.ifc`-, `.ifczip`- eller `.dxf`-fil i Inhämta. Filens uppgifter visas (schema, projekt, program, våningar och
+antal per typ), och *Importera* skapar datamängden. Stödet gäller IFC2X3, IFC4 och IFC4X3 i STEP-format. En modell på
+cirka 50 MB tar ungefär en kvart minut att importera och öppnas sedan på några sekunder.
+
+## Modellen i Bearbeta
+
+Modellen öppnas som 3D-vy med en tabell över byggdelarna under. Dra för att vrida, rulla för att zooma och högerdra för
+att flytta. Knappen med ramen visar hela modellen; enstaka objekt långt från byggnaden räknas inte med.
+
+- **Markera**: klicka på en byggdel i modellen eller på en rad i tabellen. Markeringen följer åt, och inspektören visar
+  typ, våning, material, klassificering, egenskaper och mängder, samt yta och volym mätta på geometrin.
+- **Filtrera**: välj typ eller våning, eller sök på namn, material eller egenskap. Tabellen och modellen visar samma urval.
+- **Visa som tabell**: alla kolumner som en vanlig tabell med Bearbetas alla verktyg.
+- **Spara som diagram**: vyn med sitt filter och sin kameravinkel blir ett diagram i Visualisera.
+
+Geometrin räknas fram ur originalfilen första gången modellen öppnas i en session, och den används bara för att rita och
+mäta. Tabellerna finns kvar även om datorn saknar WebGL, och då visas ett meddelande i stället för 3D-vyn.
+
+## Tabellerna
+
+| Tabell | Innehåll |
+|---|---|
+| `data` | En rad per byggdel, rum och våning: id, guid, typ, kategori (byggdel, rum, struktur), namn, beskrivning, objekttyp, tagg, vaning, typnamn, material, klassificering, egenskaper och mängder som JSON |
+| `_properties` | En rad per egenskap: id, uppsattning, namn, varde, tal, enhet, kalla (objekt eller typ) |
+| `_quantities` | En rad per mängd i SI-enheter: id, uppsattning, namn, varde, slag (langd, area, volym, vikt, tid, antal), enhet |
+| `_entities` | Filens icke-geometriska entiteter med råa attribut: id, typ, attribut |
+
+Egenskaper som bara finns på byggdelens typ räknas med och är märkta med `typ`. Mängder räknas om till meter,
+kvadratmeter, kubikmeter och kilogram med hjälp av projektets enheter. Öppningar och anslutningsportar är inte byggdelar
+och finns bara i `_entities`.
+
+Tabellerna går att fråga med SQL i Analysera:
+
+```sql
+SELECT d.vaning, d.typ, count(*) AS antal, sum(q.varde) AS volym
+FROM data d JOIN _quantities q ON q.id = d.id
+WHERE q.namn = 'NetVolume'
+GROUP BY 1, 2 ORDER BY 1, 2
+```
+
+I R och Python ger `dm_read()` byggdelarna, `dm_read_properties()` egenskaperna och `dm_read_quantities()` mängderna.
+
+## Fliken Mängder i Analysera
+
+- **Sammanfattning**: filens uppgifter och innehåll.
+- **Mängder**: antal, längd, area, volym och vikt grupperat på typ, våning, material, typnamn eller klassificering.
+  Källan *Filens mängder* tar ett värde per byggdel och slag: nettomått före andra och bruttomått sist, så att en vägg
+  inte räknas två gånger. Källan *Mätt på geometrin* räknar på trianglarna och fungerar även när filen saknar mängder.
+  Då är ytan hela ytan runt byggdelen, inte till exempel en väggs sidoarea.
+- **Mängdlista**: varje mängdnamn i filen per typ, med summa. Här ser du exakt vad filen anger.
+- **Egenskaper**: vilka värden en egenskap har, och hos hur många byggdelar av varje typ.
+- **Entiteter**: hur många entiteter av varje slag filen består av.
+
+Varje resultat kan sparas som datamängd.
+
+## DXF-ritningar
+
+En DXF-fil blir en tabell med ett ritobjekt per rad (typ, lager, färg, längd, area, text och läge) och en SVG-ritning.
+Ritningen öppnas i Bearbeta, där du zoomar med hjulet och panorerar genom att dra. Lagren tänds och släcks i inspektören,
+och en klickning markerar objektet och dess rad. Fliken Mängder ger antal, längd och area per lager och typ.
+
+Linjer, polylinjer med bågar, cirklar, bågar, ellipser, splines, punkter, texter, solider, 3D-ytor, block och
+måttsättningars block ritas. Skraffering (HATCH) ritas inte.
+
+## Export
+
+Exportera ger originalfilen, egenskaperna och mängderna som CSV (en rad per värde) och ritningen som SVG, utöver de
+vanliga tabellformaten för `data`. Diagram av modeller exporteras som PNG, SVG och PDF; en 3D-modell blir då en bild.
+
+## Begränsningar
+
+- Modellen går inte att redigera, och ingen ny IFC-fil skrivs. Ändringar i tabellerna påverkar inte originalfilen.
+- En modell ritas om ur originalfilen i varje ny session. Modellen på 57 MB som appen provats med tar 4–6 sekunder.
+- Den första ritningen av en mycket stor modell kan låsa sidan en stund medan grafikkortet tar emot trianglarna.
+- Mängderna är inte mängdavtagning enligt något regelverk. Kontrollera mot källan innan de används skarpt.
+- DXF läses i två dimensioner. DWG måste först sparas som DXF.

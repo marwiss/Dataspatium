@@ -68,6 +68,9 @@ Graphs (networks of nodes and edges) are imported as graphs from GraphML, GEXF, 
 scripts; the file is recognised by its contents, the graph's facts are shown and the graph opens as a graph view in
 Process (see [grafer.md](grafer.md)). Two tables become a graph with *Make graph from tables* in Manage.
 
+Building models in IFC and drawings in DXF become datasets of the kind model. The facts of the file are shown and the model
+opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -144,6 +147,9 @@ For datasets with geometry there is the tab **Geo** (after Regex): measures, poi
 
 Graphs get the tab **Cypher** right after SQL (a Cypher subset translated to SQL, with the SQL shown) and the tab
 **Graph** after Regex (summary, degree, components, shortest path, subgraph, nodes and edges as tables).
+
+Models and drawings get the tab **Quantities** after Regex (count, length, area and volume per type, storey and material, from
+the file or measured on the geometry).
 
 ## Visualise
 

@@ -20,7 +20,7 @@ import random
 import sqlite3
 import sys
 
-__all__ = ["dm_list", "dm_read", "dm_write", "dm_find", "dm_index", "dm_value_labels", "dm_palette",
+__all__ = ["dm_list", "dm_read", "dm_read_nodes", "dm_read_edges", "dm_read_properties", "dm_read_quantities", "dm_write", "dm_find", "dm_index", "dm_value_labels", "dm_palette",
            "theme_dataspatium", "dm_setup", "DataspatiumError"]
 
 DATA_DIR = "/data"
@@ -671,6 +671,32 @@ def dm_read_edges(x):
     finally:
         con.close()
     return _expand_json(df, "egenskaper")
+
+
+def _read_model_table(x, table):
+    import pandas as pd
+    did = dm_find(x)
+    file = os.path.join(DATA_DIR, did + ".sqlite")
+    if not os.path.exists(file):
+        raise DataspatiumError(_msg("read.notmirrored", x))
+    con = sqlite3.connect(file)
+    try:
+        names = [r[0] for r in con.execute("select name from sqlite_master where type = 'table'")]
+        if table not in names:
+            raise DataspatiumError("not an IFC model")
+        return pd.read_sql_query("select * from " + table, con)
+    finally:
+        con.close()
+
+
+def dm_read_properties(x):
+    """Properties of a building model (dataset kind "model") as a DataFrame: id, uppsattning, namn, varde, tal, enhet, kalla."""
+    return _read_model_table(x, "_properties")
+
+
+def dm_read_quantities(x):
+    """Quantities of a building model in SI units as a DataFrame: id, uppsattning, namn, varde, slag, enhet."""
+    return _read_model_table(x, "_quantities")
 
 
 def dm_read_nodes(x):

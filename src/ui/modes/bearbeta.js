@@ -8,14 +8,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'viz/leaflet'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, leaflet) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet) => {
     const { h, t, i18n, replace } = base;
     /**
      * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
      * is one click away. Keyed by view id: the dataset kind, or 'map' for a table with geometry or coordinates.
      */
-    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule, map: mapViewModule, plan: planViewModule, graph: graphViewModule };
-    const VIEW_ICONS = { document: 'file-text', images: 'images', map: 'map', plan: 'layers', graph: 'share-2' };
+    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule, map: mapViewModule, plan: planViewModule, graph: graphViewModule, model: modelViewModule };
+    const VIEW_ICONS = { document: 'file-text', images: 'images', map: 'map', plan: 'layers', graph: 'share-2', model: 'box' };
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
@@ -34,7 +34,7 @@
       let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null; let viewId = null;
       /** The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null. */
       async function defaultView(ds) {
-        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph') return ds.kind;
+        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
         if (ds.kind === 'table' || !ds.kind) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols)) return 'map'; }
         return null;
       }
@@ -151,7 +151,7 @@
 
       /** The own view a dataset can switch to from the table (any table with geometry or coordinates gets the map). */
       function viewFor(ds, cols) {
-        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph') return ds.kind;
+        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
         return (ds.kind === 'table' || !ds.kind) && leaflet.mappable(cols) ? 'map' : null;
       }
 

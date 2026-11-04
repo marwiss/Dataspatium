@@ -46,6 +46,8 @@ lisenssitekstien kanssa.
 | Leaflet 1.9 (kartat) ja Turf 7 (paikkatietotyökalut) | BSD-2-Clause (Leaflet), MIT (Turf) | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
 | Cytoscape 3.34 (fcose, dagre, expand-collapse), sigma 3 ja graphology (verkot) | MIT | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
 | neo4j-driver-lite 6.3 (Neo4j Boltin yli) | Apache-2.0 | Vapaasti käytettävä ja levitettävä lisenssitekstin ja ilmoitusten kanssa |
+| web-ifc 0.0.78 (geometria IFC:stä; muuttamattomat tiedostot, lähdekoodi osoitteessa https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Vapaasti käytettävä ja levitettävä; kirjaston omien tiedostojen muutokset jaetaan samalla lisenssillä |
+| three.js 0.187 (3D-piirto), dxf-parser 1.1 (DXF) | MIT | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
 | Boverketin Planbestämmelsekatalog (upotettu kopio, `presets/plan/`) | Boverketin avoin data | Vapaasti käytettävä ja levitettävä; lähteenä on mainittava Boverket ja Planbestämmelsekatalogen |
 | plotly.js (haetaan tarvittaessa plotly-kaavioita varten), seaborn ja plotly (Python-wheelit PyPI:stä, haetaan tarvittaessa) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Haetaan muuttamattomina jsDelivristä ja PyPI:stä, lukittuina versioon ja tarkistesummaan, ja tallennetaan selaimeen |
 

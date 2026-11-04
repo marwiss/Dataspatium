@@ -7,10 +7,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'io/importers/graph', 'data/plan', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, graphImp, plan, types, datasets) => {
+  D.define('io/import', ['io/importers/csv', 'io/importers/excel', 'io/importers/json', 'io/importers/xml', 'io/importers/sqlite', 'io/importers/r-formats', 'io/importers/shapefile', 'io/importers/fixed-width', 'io/importers/tables', 'io/importers/geo', 'io/importers/access', 'io/importers/documents', 'io/importers/images', 'io/importers/detaljplan', 'io/importers/graph', 'io/importers/model', 'data/plan', 'data/types', 'data/datasets'], (csv, excel, json, xml, sqliteImp, rFormats, shapefile, fixedWidth, tables, geo, access, documents, images, detaljplanImp, graphImp, modelImp, plan, types, datasets) => {
     // Documents go before the table-in-document importer: a Word or Markdown file is a document unless "tables" is chosen.
     // The plan importer never detects by extension (resolveImporter sniffs JSON heads for it); it is listed for forced formats.
-    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp];
+    const importers = [excel, documents, images, tables, geo, json, xml, sqliteImp, access, shapefile, rFormats, fixedWidth, csv, detaljplanImp, graphImp, modelImp];
     /** Importers that turn one or several files into one dataset of their own kind (documents, images). */
     const collections = [documents, images];
 
@@ -119,7 +119,7 @@
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
-      if (importer.id === 'detaljplan' || importer.id === 'graph') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model') return importer.importFile(file, options, name, progress);
       if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {

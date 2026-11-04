@@ -85,6 +85,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   formater; to tabeller blir en graf (se [grafer.md](grafer.md)).
   Grafen redigeres i Bearbeid og med skrivende Cypher (reseptsteg), Neo4j er en kilde via Bolt, fanen Graf har PageRank,
   fellesskap, sentralitet, mønsterspørringer og layout, og grafer blir diagrammer i Visualiser, dashboards og Publiser.
+- **CAD og BIM**: IFC-modeller åpnes i 3D (web-ifc og three.js) over en tabell med bygningsdelene, og utvalget følger med begge veier.
+  Egenskaper og mengder blir tabeller, fanen Mengder beregner per type, etasje og materiale, og DXF-tegninger vises som SVG med
+  lag (se [cad-bim.md](cad-bim.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

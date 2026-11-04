@@ -810,6 +810,24 @@
           "as": "icons/book-open.svg",
           "wrap": "text",
           "bundle": "icons"
+        },
+        {
+          "path": "icons/box.svg",
+          "as": "icons/box.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/ruler.svg",
+          "as": "icons/ruler.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/building-2.svg",
+          "as": "icons/building-2.svg",
+          "wrap": "text",
+          "bundle": "icons"
         }
       ]
     },
@@ -1317,6 +1335,52 @@
           "path": "lib/browser/neo4j-lite-web.min.js",
           "as": "neo4j-lite-web.min.js",
           "wrap": false
+        }
+      ]
+    },
+    "web-ifc": {
+      "version": "0.0.78",
+      "npm": "web-ifc",
+      "license": "MPL-2.0",
+      "homepage": "https://github.com/ThatOpen/engine_web-ifc",
+      "licenseUrl": "https://raw.githubusercontent.com/ThatOpen/engine_web-ifc/main/LICENSE.md",
+      "notes": "Unchanged files from the npm package under MPL-2.0: the classic IIFE build of the API and the single-threaded WebAssembly build. They turn an IFC file's geometry into triangle meshes in Dataspatium's shimmed Blob worker (engines/ifc); the source is at the homepage. The tables (entities, properties, quantities) come from the app's own STEP reader (data/ifc-step).",
+      "files": [
+        {
+          "path": "web-ifc-api-iife.js",
+          "as": "web-ifc-api-iife.js",
+          "wrap": "gzip"
+        },
+        {
+          "path": "web-ifc.wasm",
+          "as": "web-ifc.wasm",
+          "wrap": "gzip"
+        }
+      ]
+    },
+    "three": {
+      "type": "esm-graph",
+      "version": "0.187.0",
+      "npm": "three",
+      "host": "https://esm.sh",
+      "entry": "/three@0.187.0/es2022/examples/jsm/controls/OrbitControls.mjs",
+      "license": "MIT",
+      "homepage": "https://threejs.org/",
+      "licenseUrl": "https://raw.githubusercontent.com/mrdoob/three.js/r187/LICENSE",
+      "notes": "3D drawing of IFC models (viz/model-draw). three.js ships only as ES modules, so it is fetched as a module graph from esm.sh with OrbitControls as the entry, and imported through blob: URLs with assets.importGraph on first use."
+    },
+    "dxf-parser": {
+      "version": "1.1.2",
+      "npm": "dxf-parser",
+      "license": "MIT",
+      "homepage": "https://github.com/gdsestimating/dxf-parser",
+      "licenseUrl": "https://raw.githubusercontent.com/gdsestimating/dxf-parser/master/LICENSE",
+      "notes": "Reads DXF files to JSON (UMD, global DxfParser) in a shimmed Blob worker (engines/dxf); the SVG drawing is the app's own (data/dxf).",
+      "files": [
+        {
+          "path": "dist/dxf-parser.js",
+          "as": "dxf-parser.js",
+          "wrap": "text"
         }
       ]
     }

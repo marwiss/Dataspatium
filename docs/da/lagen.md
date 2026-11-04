@@ -64,6 +64,9 @@ Grafer (netværk af knuder og kanter) importeres som grafer fra GraphML, GEXF, J
 Cypher-scripts; filen genkendes på indholdet, grafens oplysninger vises, og grafen åbnes som grafvisning i Bearbejd
 (se [grafer.md](grafer.md)). To tabeller bliver en graf med knappen *Lav graf af tabeller* i Håndter.
 
+Bygningsmodeller i IFC og tegninger i DXF bliver datasæt af typen model. Filens oplysninger vises, og modellen åbnes i 3D eller
+som tegning i Bearbejd (se [cad-bim.md](cad-bim.md)).
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -140,6 +143,9 @@ For datasæt med geometri findes fanen **Geo** (efter Regex): mål, punkter i om
 
 Grafer får fanen **Cypher** lige efter SQL (en Cypher-delmængde oversat til SQL med SQL'en vist) og fanen **Graf** efter
 Regex (oversigt, grad, komponenter, korteste vej, delgraf, knuder og kanter som tabeller).
+
+Modeller og tegninger får fanen **Mængder** efter Regex (antal, længde, areal og volumen pr. type, etage og materiale, fra filen
+eller målt på geometrien).
 
 ## Visualisér
 

@@ -384,6 +384,21 @@ Cypher via drivrutinen över WebSocket efter samtycke och översätter poster ti
 ersätter ändpunktsformuläret. Vid ångra och återställning läser `datasets.replaceBytes` tillbaka slagens metadata
 (graph, plan, documents, images) ur filens `_meta`.
 
+### Byggnadsmodeller och ritningar
+
+Datamängdsslaget `model` lagrar byggdelar eller ritobjekt som rader i `data`, originalfilen i `_files` och fakta i
+`_meta.model`. En IFC-fil läses i två spår. `data/ifc-step` är appens egen STEP-läsare i en worker: ett snabbt pass över
+bytena noterar var varje entitet finns, sedan parsas bara relationer, byggdelar, egenskaper och mängder. Tabellerna
+levereras i omgångar till SQLite (`_properties`, `_quantities`, `_entities`), och mängder räknas om till SI med projektets
+enheter. `engines/ifc` kör web-ifc i en shimmad Blob-worker (IIFE-bygget utvärderas med sitt värde eftersom `var WebIFC` i
+ett strikt skript inte blir global, entrådad wasm) och ger triangelnät: en buffert per ytfärg med elementets id per hörn,
+en tabell över varje elements indexintervall och yta, volym och utbredning per element. `viz/model-draw` ritar med
+three.js (modulgraf från esm.sh): ett ritanrop per färg, plockning genom att rita id:n som färger till en pixel,
+markering genom att rita intervallen igen, och dölja genom att bygga om indexbuffertarna. Geometrin sparas inte utan
+räknas fram ur originalfilen per session och version. DXF går genom `data/dxf`: dxf-parser i en worker ger JSON, och samma
+worker skriver tabellen och en SVG grupperad per lager och objekt, med kurvor som korta segment efter blocktransformerna.
+`analysis/model` och `ui/analysis/model-panel` ger fliken Mängder, `ui/bearbeta/model-view` vyn, och `ui/viz/model-chart-panel`
+diagramslaget `model`.
 ### Kartor
 
 `viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är

@@ -93,6 +93,9 @@ ett paket.
   alla fyra formaten; två tabeller blir en graf (se [docs/grafer.md](docs/grafer.md)).
   Grafen redigeras i Bearbeta och med skrivande Cypher (receptsteg), Neo4j är en källa via Bolt, fliken Graf har PageRank,
   samhällen, centralitet, mönsterfrågor och layout, och grafer blir diagram i Visualisera, dashboards och Publicera.
+- **CAD och BIM**: IFC-modeller öppnas i 3D (web-ifc och three.js) ovanför en tabell över byggdelarna, och urvalet följer åt åt båda
+  håll. Egenskaper och mängder blir tabeller, fliken Mängder räknar per typ, våning och material, och DXF-ritningar visas som
+  SVG med lager (se [docs/cad-bim.md](docs/cad-bim.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

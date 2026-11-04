@@ -11,7 +11,7 @@
   const D = globalThis.Dataspatium;
   D.define('viz/charts', ['platform/storage/idb', 'data/datasets', 'platform/sync'], (idb, datasets, sync) => {
     const FORMAT = 'dataspatium-viz/1';
-    const KINDS = ['vega', 'd3', 'r', 'python', 'map', 'graph'];
+    const KINDS = ['vega', 'd3', 'r', 'python', 'map', 'graph', 'model'];
     const listeners = new Set();
     function notify(type, payload) { for (const fn of listeners) { try { fn(type, payload); } catch (err) { console.error(err); } } }
     function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -44,6 +44,7 @@
       if (kind === 'map') base.map = null;
       // A graph chart keeps its definition (dataset, view, layout, focus); viz/graph-draw.defaultDef fills it when the chart opens.
       if (kind === 'graph') base.graph = null;
+      if (kind === 'model') base.model = null;
       return base;
     }
 
@@ -56,6 +57,7 @@
       if (chart.kind === 'python') out.python = chart.python;
       if (chart.kind === 'map') out.map = chart.map;
       if (chart.kind === 'graph') out.graph = chart.graph;
+      if (chart.kind === 'model') out.model = chart.model;
       out.options = chart.options || {};
       return JSON.stringify(out, null, 2) + '\n';
     }
@@ -74,6 +76,7 @@
       if (obj.kind === 'd3') chart.d3 = obj.d3 || { template: 'lollipop', params: {} };
       if (obj.kind === 'r') chart.r = obj.r || { code: '' };
       if (obj.kind === 'python') chart.python = obj.python || { code: '', plotly: null };
+      if (obj.kind === 'model') { chart.model = obj.model || null; if (chart.model) chart.model.datasetId = chart.datasetId; }
       if (obj.kind === 'graph') { chart.graph = obj.graph || null; if (chart.graph) { chart.graph.datasetId = chart.datasetId; chart.graph.datasetName = chart.datasetName; } }
       if (obj.kind === 'map') {
         chart.map = obj.map || null;

@@ -43,6 +43,8 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | Leaflet 1.9 (kort) og Turf 7 (landfræðitól) | BSD-2-Clause (Leaflet), MIT (Turf) | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | Cytoscape 3.34 með fcose, dagre og expand-collapse, sigma 3 og graphology (net) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | neo4j-driver-lite 6.3 (Neo4j yfir Bolt) | Apache-2.0 | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
+| web-ifc 0.0.78 (rúmfræði úr IFC; óbreyttar skrár, frumkóði á https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Frjálst að nota og dreifa; breytingum á eigin skrám safnsins er deilt með sama leyfi |
+| three.js 0.187 (þrívíddarteikning), dxf-parser 1.1 (DXF) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | Planbestämmelsekatalog Boverket (innbyggt eintak, `presets/plan/`) | Opin gögn frá Boverket | Frjálst að nota og dreifa; tilgreina skal Boverket og Planbestämmelsekatalogen sem heimild |
 | plotly.js (sótt eftir þörfum fyrir plotly-myndrit), seaborn og plotly (Python-hjól frá PyPI, sótt eftir þörfum) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Sótt óbreytt frá jsDelivr og PyPI, fest við útgáfu og prófsummu, og vistað í vafranum |
 

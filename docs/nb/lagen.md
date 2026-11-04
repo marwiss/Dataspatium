@@ -65,6 +65,9 @@ Grafer (nettverk av noder og kanter) importeres som grafer fra GraphML, GEXF, JS
 Cypher-skript; filen gjenkjennes på innholdet, grafens opplysninger vises, og grafen åpnes som grafvisning i Bearbeid
 (se [grafer.md](grafer.md)). To tabeller blir en graf med knappen *Lag graf av tabeller* i Håndter.
 
+Bygningsmodeller i IFC og tegninger i DXF blir datasett av typen modell. Filens opplysninger vises, og modellen åpnes i 3D eller
+som tegning i Bearbeid (se [cad-bim.md](cad-bim.md)).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -141,6 +144,9 @@ For datasett med geometri finnes fanen **Geo** (etter Regex): mål, punkter i om
 
 Grafer får fanen **Cypher** rett etter SQL (en Cypher-delmengde oversatt til SQL med SQL-en vist) og fanen **Graf** etter
 Regex (sammendrag, grad, komponenter, korteste vei, delgraf, noder og kanter som tabeller).
+
+Modeller og tegninger får fanen **Mengder** etter Regex (antall, lengde, areal og volum per type, etasje og materiale, fra filen
+eller målt på geometrien).
 
 ## Visualiser
 

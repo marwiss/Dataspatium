@@ -78,6 +78,7 @@
               ds.kind === 'document' ? ui.button({ label: t('hantera.read'), icon: 'book-open', variant: 'primary', title: t('hantera.read.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'images' ? ui.button({ label: t('hantera.view.images'), icon: 'images', variant: 'primary', title: t('hantera.view.images.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'plan' ? ui.button({ label: t('hantera.view.plan'), icon: 'layers', variant: 'primary', title: t('hantera.view.plan.hint'), onClick: () => openView(ds) }) : null,
+              ds.kind === 'model' ? ui.button({ label: t('hantera.view.model'), icon: 'box', variant: 'primary', title: t('hantera.view.model.hint'), onClick: () => openView(ds) }) : null,
               ds.kind === 'graph' ? ui.button({ label: t('hantera.view.graph'), icon: 'share-2', variant: 'primary', title: t('hantera.view.graph.hint'), onClick: () => openView(ds) }) : null,
               // Two tables (nodes and edges) become a graph dataset.
               !ds.kind || ds.kind === 'table' ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => graphPanel.fromTablesDialog(ctx, ds.id).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }) }) : null,
@@ -92,7 +93,7 @@
         if (tab === 'overview') {
           const kv = /** @type {any} */ (h('dm-kv'));
           const src = ds.source || {};
-          const collection = ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph';
+          const collection = ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model';
           const pl = ds.kind === 'plan' ? ds.plan || {} : null;
           const gr = ds.kind === 'graph' ? ds.graph || {} : null;
           kv.items = [
@@ -101,6 +102,12 @@
             { label: t('common.description'), value: ds.description },
             // Collections are described in their own units; the paragraph or picture table is one view of them.
             collection ? { label: t('datasets.kind'), value: pl ? t('plan.slag.' + (pl.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan')) : t('datasets.kind.' + ds.kind) } : null,
+            ds.kind === 'model' && ds.model && ds.model.format === 'dxf' ? { label: t('model.field.entities'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
+            ds.kind === 'model' && ds.model && ds.model.format === 'dxf' ? { label: t('model.layers'), value: i18n.formatNumber((ds.model.layers || []).length) } : null,
+            ds.kind === 'model' && ds.model && ds.model.format !== 'dxf' ? { label: t('model.field.format'), value: ds.model.schema || 'IFC' } : null,
+            ds.kind === 'model' && ds.model && ds.model.format !== 'dxf' && ds.model.project ? { label: t('model.field.project'), value: ds.model.project } : null,
+            ds.kind === 'model' && ds.model && ds.model.format !== 'dxf' ? { label: t('model.field.elements'), value: i18n.formatNumber(ds.model.elements || 0) } : null,
+            ds.kind === 'model' && ds.model && ds.model.format !== 'dxf' ? { label: t('model.field.storeys'), value: (ds.model.storeys || []).map((x) => x.name).join(', ') } : null,
             gr ? { label: t('graph.nodes'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
             gr ? { label: t('graph.edges'), value: i18n.formatNumber(gr.edges || 0) } : null,
             gr && gr.labels && gr.labels.length ? { label: t('graph.labels'), value: gr.labels.slice(0, 12).map((l) => `${l.name || t('graph.nolabel')} (${i18n.formatNumber(l.count)})`).join(', ') } : null,

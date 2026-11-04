@@ -226,7 +226,7 @@
       shell.activate('bearbeta');
       shell.store.set({ selectedId: meta.id });
       await waitFor(() => root.querySelector('.dm-graph-view canvas'), 20000, 'graph canvas');
-      assert.ok(buttonByText(t('graph.edit.addnode')) && buttonByText(t('map.save.chart')), 'edit and save-chart buttons');
+      assert.ok(buttonByText(t('graph.edit.addnode')) && buttonByText(t('viz.save.as.chart')), 'edit and save-chart buttons');
       // Add a node through the view's operation path (the dialog itself is covered by the op tests).
       const view = root.querySelector('.dm-graph-view');
       assert.ok(view, 'view mounted');

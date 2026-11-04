@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet', 'viz/graph-draw'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet, graphDraw) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet', 'viz/graph-draw', 'viz/model-draw'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet, graphDraw, modelDraw) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
@@ -82,6 +82,16 @@
         const hd = await graphDraw.render(container, chart.graph, { onSelect: options.onSelect });
         return { kind: 'graph', info: hd.info, svg: hd.svg, png: hd.png, finalize: hd.destroy, legend: hd.legend };
       }
+      if (chart.kind === 'model') {
+        // A saved picture of a building model or drawing: the interactive model where WebGL exists; export goes through viz/model-draw.
+        container.replaceChildren();
+        const blob = await modelDraw.toBlob(chart, 'png', { width: options.width || 800, height: options.height || 500 });
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.alt = chart.name || ''; img.src = url; img.className = 'dm-model-picture';
+        container.appendChild(img);
+        return { kind: 'model', info: {}, svg: async () => (await modelDraw.toBlob(chart, 'svg', {})).text(), png: async () => modelDraw.toBlob(chart, 'png', {}), finalize: () => URL.revokeObjectURL(url) };
+      }
       throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
     }
 
@@ -107,6 +117,8 @@
         return leaflet.toBlob(chart, format, Object.assign({}, options, { width, title: chart.name }));
       } else if (chart.kind === 'graph') {
         return graphDraw.toBlob(chart, format, Object.assign({}, options, { width }));
+      } else if (chart.kind === 'model') {
+        return modelDraw.toBlob(chart, format, Object.assign({}, options, { width }));
       } else {
         throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
       }
