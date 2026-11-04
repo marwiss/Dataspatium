@@ -89,8 +89,9 @@ som R- eller SQL-kode. Versioner gemmer øjebliksbilleder at gå tilbage til. Se
 
 ## Analysér
 
-Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, SQL, Regex og til sidst notesbogen, der samler dele fra
-de andre; Python tilføjes efter R i en kommende version. R-konsollen har ggplot2, dplyr, tidyr og andre pakker, gemte
+Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, Python, SQL, Regex og til sidst notesbogen, der samler dele fra
+de andre. Python-konsollen har pandas og matplotlib og hentes som komponent, første gang du starter den (se
+[python.md](python.md)). R-konsollen har ggplot2, dplyr, tidyr og andre pakker, gemte
 scripts, diagrammer med eksport til SVG, PNG og PDF og `dm_read()`/`dm_write()` til at flytte data mellem appen og R
 (se [r-guide.md](r-guide.md)); pakker, der ikke følger med appen, hentes fra webR's pakkearkiv, når koden har brug
 for dem, efter at du har givet lov. SQL-konsollen arbejder mod det valgte datasæt (`data`), hvor andre datasæt nås

@@ -1,0 +1,94 @@
+# Python i Dataspatium
+
+Tilstanden *Analysér* har en Python-konsol ved siden af R-konsollen. Python kører i browseren med Pyodide (Python 3.14),
+helt uden installation. Modsat R følger Python ikke med i appmappen: kørselsmiljøet og pakkerne hentes fra jsDelivr
+første gang, du bruger dem, efter at du har givet lov, og gemmes derefter i browseren som komponenter.
+
+## Kom i gang
+
+1. Åbn *Analysér* og fanen *Python*. Tryk *Start Python* eller *Kør*. Første gang spørger appen om lov til at hente
+   komponenter og downloader Python med numpy og pandas (cirka 22 MB); det tager et halvt minut på en almindelig
+   forbindelse. Næste gang starter Python på et par sekunder uden internet.
+2. Skriv kode i editoren, og tryk Ctrl+Enter (Cmd+Enter på Mac). Hele scriptet køres; er der markeret tekst, køres kun
+   markeringen. Output, fejl og diagrammer vises under editoren, og værdien af den sidste linje udskrives som i en
+   Python-konsol.
+3. Gem scripts med *Gem script*. Gemte scripts ligger i panelet til venstre og følger med i sikkerhedskopier.
+
+## Dataspatiums funktioner
+
+Funktionerne hedder det samme som i R og findes direkte i sessionen (`from dataspatium import *` køres ved start).
+
+| Funktion | Gør |
+|---|---|
+| `dm_list()` | Viser datasættene i sessionen som en `DataFrame` med kolonnerne namn, kortnamn, mapp, rader, kolumner, ändrad, id. |
+| `dm_read("kortnavn")` | Indlæser et datasæt som pandas `DataFrame` med de rigtige typer: datoer og datoer med tid bliver `datetime64`, ja/nej `boolean`, heltal `int64` (eller `Int64`, når værdier mangler), tal `float64`, tekst `str`. Argumentet er helst kortnavnet (det, som knappen *Indsæt dm_read()* skriver), men kan også være id, det præcise navn, navnet uanset store og små bogstaver eller et entydigt præfiks. |
+| `dm_read("Navn", columns=["a", "b"], where="a > 10", n=1000)` | Læser kun visse kolonner, rækker, der opfylder en SQL-betingelse, eller et begrænset antal rækker. |
+| `df.attrs["dataspatium"]` | Kolonnernes etiketter, beskrivelser, enheder, typer og værdietiketter fra appen (`labels`, `descriptions`, `units`, `types`, `value_labels`). `dm_write()` tager dem med tilbage, eller via argumenterne `labels`, `descriptions` og `units`. |
+| `dm_value_labels(df, "kon", {1: "Mand", 2: "Kvinde"}, to="labels")` | Værdietiketter for en kolonne som en dict fra kode til etiket. `to="labels"` erstatter koder med etiketter, `to="codes"` går tilbage, `to=None` sætter kun etiketterne, og `labels=None` fjerner dem. Tabellen ændres på stedet, og `dm_write()` gemmer etiketterne. |
+| `dm_write(df, "Nyt navn", description="…")` | Sender en `DataFrame` til appen som et nyt datasæt. Det dukker op i listen, når kommandoen er færdig. Uden navn bruges variablens navn. |
+| `theme_dataspatium()` | matplotlib-stil med appens udseende og palet. Sættes automatisk første gang, matplotlib bruges i sessionen. |
+| `dm_palette()` | Appens farvepalet (Okabe-Ito, farveblindsikker) som en liste; `dm_palette(n)` giver n farver. |
+
+Eksempel:
+
+```python
+df = dm_read("befolkning_2024")
+per_region = (df.groupby("region", as_index=False)
+    .agg(folketal=("folketal", "sum"), kommuner=("kommune", "count"))
+    .sort_values("folketal", ascending=False))
+per_region
+dm_write(per_region, "Folketal per region 2024")
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+ax.barh(per_region["region"][::-1], per_region["folketal"][::-1] / 1000, color=dm_palette()[0])
+ax.set_title("Folketal per region 2024")
+ax.set_xlabel("Tusinder")
+```
+
+## Diagrammer
+
+matplotlib tegner uden skærm (Agg), og hver åben figur vises i konsollen som SVG, når kommandoen er færdig; figurerne
+lukkes derefter, så en ny kommando begynder med rent bord. Under hvert diagram er der knapper til eksport til SVG
+(vektor, godt til Word og web), PNG og PDF, i størrelsen 7 × 5 tommer og 150 dpi for PNG. I notesbogen gemmes
+diagrammerne som PNG.
+
+## Pakker
+
+Ved starten hentes numpy, pandas og micropip. Pyodide har pakker bygget til browseren, over 350 i alt: matplotlib,
+scipy, statsmodels, scikit-learn, networkx, shapely, geopandas, sympy, pillow, lxml, openpyxl, xlrd, sqlalchemy,
+pyarrow, duckdb, bokeh, altair med flere. Når koden importerer en pakke, der ikke findes i sessionen, henter appen
+hjulet med dets afhængigheder, inden koden køres, kontrollerer det mod kontrolsummen i Pyodides pakkeliste og gemmer
+det i browseren; det ses under *Håndtér → Arbejdsområde → Komponenter*, hvor komponenter også kan fjernes. Rene
+Python-pakker fra PyPI, der ikke indgår i Pyodide, installeres med `import micropip; await micropip.install("pakke")`;
+appen spørger om lov, inden Python går på internettet.
+
+Kontrolsummer: kørselsmiljøets filer er låst til Pyodide 314.0.7 med SHA-256 i appen; pakkerne kontrolleres mod
+`pyodide-lock.json`, som selv er låst med sin sum. En fil med forkert sum bruges ikke.
+
+## Sådan flyttes data mellem appen og Python
+
+Datasættene er SQLite-filer. Når du kører kode, kopierer appen de datasæt, som koden refererer til med `dm_read()`,
+til Pythons virtuelle filsystem under `/data` sammen med et indeks. `dm_read()` læser filen med modulet `sqlite3` og
+`pandas.read_sql_query` og genskaber kolonnetyperne fra tabellen `_columns`. `dm_write()` skriver en ny SQLite-fil i
+`/data/out`, som appen henter og føjer til arbejdsområdet, når kommandoen er færdig. Du kan bruge `sqlite3` direkte:
+`sqlite3.connect("/data/<id>.sqlite")`, hvor id vises af `dm_list()`.
+
+Datasæt større end 50 MB spejles kun, når koden refererer til dem. Data mellem R og Python går via datasæt:
+`dm_write()` i det ene sprog, `dm_read()` i det andet.
+
+## Sprog
+
+Meddelelser fra `dm_list()`, `dm_read()` og `dm_write()` følger appens sprog (svensk, dansk, norsk, finsk, islandsk
+eller engelsk); kolonnenavnene i `dm_list()` er derimod altid de samme, så scripts virker uanset sprog.
+
+## Begrænsninger
+
+- Når appen åbnes fra en mappe (file://), kan Python-kode ikke afbrydes, mens den kører. Hvis noget hænger: *Genstart
+  Python*. Gemte scripts påvirkes ikke, men objekter i sessionen forsvinder. Kører appen fra en webserver (localhost
+  eller https), findes knappen *Afbryd*, der stopper koden og bevarer sessionen (se [faq.md](faq.md)).
+- Hukommelsen begrænses af browseren og WebAssembly; hold datasæt under nogle hundrede megabyte i Python.
+- Input under kørsel (`input()`) virker ikke, og det gør tråde, processer eller filer uden for det virtuelle
+  filsystem heller ikke. Netværkskald fra Python (for eksempel `micropip` og `pyodide.http`) kræver, at du har givet
+  lov til komponenter.
+- Der er ingen interaktive vinduer; matplotlib tegner til SVG og PNG. plotly og seaborn kommer i en senere version.

@@ -62,7 +62,8 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, omkode, inddele i klasser, rangordne, beregne andele, løbende summer og ændringer, pivotere
   og sammenkoble data, kontrollere datakvalitet med profil og regler (blandt andet formater, nordiske identitetsnumre, referencer til andre datasæt og afvigende værdier), pseudonymisere personnumre før deling, med
   fortryd, versioner og recepter, der kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
-- **Analysere**: en indbygget R-konsol med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsol, hvor
+- **Analysere**: en indbygget R-konsol med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en Python-konsol med
+  pandas og matplotlib, der hentes første gang (se [python.md](python.md)), en SQL-konsol, hvor
   datasæt kobles sammen med join via deres kortnavne, og notesbøger med tekst-, R- og SQL-celler, der bliver til
   rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane, hvor regulære udtryk afprøves på en kolonne og bruges til at filtrere, udtrække, erstatte og opdele (se [regex.md](regex.md)), helt i browseren.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
@@ -109,6 +110,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Formater og import](format.md): filformater, tegnkodning, decimaltegn, datoer og kolonnetyper.
 - [Åbne API'er](api-konfiguration.md): de forudindstillede kilder, nøgler og egne konfigurationer.
 - [R i Dataspatium](r-guide.md): R-konsollen, `dm_read()`, `dm_write()` og de medfølgende pakker.
+- [Python i Dataspatium](python.md): Python-konsollen, `dm_read()`, `dm_write()` og pakker, der hentes efter behov.
 - [Visualisér](visualisera.md): diagrambyggeren, D3-skabeloner, R-diagrammer, kort og dashboards.
 - [Dokumenter og skabeloner](dokumentmallar.md): skabelonsproget og outputformaterne.
 - [Licenser](licenser.md): hvad du må med appen, og hvilke licenser tredjepartskomponenterne har.

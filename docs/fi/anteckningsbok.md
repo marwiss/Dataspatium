@@ -1,6 +1,6 @@
 # Muistikirja
 
-Muistikirja yhdistää tekstiä, R-koodia ja SQL:ää soluihin, jotka suoritetaan järjestyksessä, ja jokaisen solun tuloste
+Muistikirja yhdistää tekstiä, R-koodia, Python-koodia ja SQL:ää soluihin, jotka suoritetaan järjestyksessä, ja jokaisen solun tuloste
 tallennetaan sen alle. Se on Analysoi-tilan kolmas välilehti ja tie analyysistä valmiiseen raporttiin sovelluksesta
 poistumatta.
 
@@ -13,13 +13,15 @@ ominaisuuspaneelista.
 
 Jokaisella solulla on tyyppi (Teksti, R tai SQL), jonka voi vaihtaa, painikkeet suorittamiseen, siirtämiseen ylös tai alas ja
 poistamiseen sekä tulosalue. Ctrl+Enter suorittaa solun, jossa olet; *Suorita kaikki* suorittaa muistikirjan ylhäältä alas.
-Soluja lisätään loppuun painikkeilla *Teksti*, *R* ja *SQL*. Kaikki tallennetaan automaattisesti, myös tulosteet.
+Soluja lisätään loppuun painikkeilla *Teksti*, *R*, *Python* ja *SQL*. Kaikki tallennetaan automaattisesti, myös tulosteet.
 
 - **Tekstisolut** kirjoitetaan Markdown-muodossa (otsikot `#`-merkillä, luettelot `-`-merkillä, `**lihavoitu**`,
   `*kursivoitu*`, linkit ja taulukot), ja ne näytetään muotoiltuina muokkauskentän alla.
 - **R-solut** suoritetaan samassa R-istunnossa kuin R-konsoli, joten muuttujat säilyvät solujen ja suorituskertojen välillä,
   kunnes R käynnistetään uudelleen. Tulosteet, virheet, kaaviot ja `dm_write()`-funktiolla luodut aineistot kootaan solun
   alle. Kaaviot tallennetaan PNG-muodossa.
+- **Python-solut** suoritetaan samassa Python-istunnossa kuin Python-konsoli (Python haetaan ensimmäisellä kerralla,
+  ks. [python.md](python.md)). Tulosteet, virheet, matplotlib-kaaviot ja `dm_write()`-funktion aineistot kootaan solun alle.
 - **SQL-solut** suoritetaan muistikirjan aineiston taulua `data` vastaan. SELECT-kyselyt näyttävät enintään 1 000 riviä
   (näkymässä ensimmäiset 50); UPDATE, DELETE ja muut muuttavat lauseet suoritetaan aineiston reseptin vaiheena ja kirjataan
   sinne.

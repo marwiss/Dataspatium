@@ -3,7 +3,7 @@
 Þessi handbók lýsir því hvernig þú vinnur í Dataspatium frá fyrstu skrá að fullbúinni skýrslu. Hún gerir ráð fyrir að þú
 hafir opnað forritið eins og lýst er í [kom-igang.md](kom-igang.md). Nánar um hvern ham er í [lagen.md](lagen.md), um
 skráarsnið í [format.md](format.md), um vefþjónustur í [api-konfiguration.md](api-konfiguration.md), um vinnslu í
-[bearbeta.md](bearbeta.md), um R í [r-guide.md](r-guide.md), um myndrit í [visualisera.md](visualisera.md) og um skjöl í
+[bearbeta.md](bearbeta.md), um R í [r-guide.md](r-guide.md), um Python í [python.md](python.md), um myndrit í [visualisera.md](visualisera.md) og um skjöl í
 [dokumentmallar.md](dokumentmallar.md). Algengum spurningum er svarað í [faq.md](faq.md).
 
 ## Vinnusvæðið

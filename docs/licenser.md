@@ -40,6 +40,7 @@ licenstexterna.
 | webR (JavaScript-delen) | MIT | Som ovan |
 | R (R.wasm med flera) | GPL-2 eller GPL-3 | Fri programvara. Distribueras oförändrad i binär form; källkoden finns hos R-projektet och webR-projektet i de versioner som anges |
 | R-paket i `vendor/webr-repo` | Mest MIT; även LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite med flera) | Distribueras oförändrade; källkoden finns på CRAN i de versioner som anges |
+| Python (Pyodide, CPython och paket som numpy, pandas och matplotlib; hämtas vid behov, ingår inte i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-licensen (PSF-baserad), MIT och liknande för övriga | Hämtas oförändrade från jsDelivr och lagras i webbläsaren; källkoden finns hos Pyodide-projektet och på PyPI i de versioner som anges i appens katalog (Pyodide 314.0.7) |
 
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och
 bilder med appen via meddelanden; det är sådan samdistribution ("mere aggregation") som GPL tillåter, och

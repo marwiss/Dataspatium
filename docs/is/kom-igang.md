@@ -42,7 +42,7 @@ að vinnuflötinum. Alt+1 til Alt+8 skipta um ham með lyklaborðinu.
 | Umsjón | Sérð gagnasöfnin þín í möppum með merkjum, endurnefnir, eyðir, vistar útgáfur, keyrir hópaðgerðir á fleiri gagnasöfn, tekur afrit af og endurheimtir vinnusvæðið |
 | Leita | Leitar í öllum dálkum í einu eða öllum gagnasöfnum, afmarkar með flokkum og vistar leitir sem lista ([soka.md](soka.md)) |
 | Vinna | Breytir reitum, raðar og síar, hreinsar og ákvarðar gerðir, reiknar dálka, snýrð og tengir gagnasöfn; allt með afturköllun, útgáfum og uppskriftum ([bearbeta.md](bearbeta.md)) |
-| Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; SQL-stjórnborð á valda gagnasafnið; reglulegar segðir; minnisbók sem verður að skýrslu |
+| Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; Python-stjórnborð með pandas og matplotlib; SQL-stjórnborð á valda gagnasafnið; reglulegar segðir; minnisbók sem verður að skýrslu |
 | Myndgera | Býrð til myndrit með Vega-Lite, D3-sniðum eða R-skriftum, vistar, flytur út og býrð þau til í hópkeyrslu ([visualisera.md](visualisera.md)) |
 | Flytja út | Hleður niður gögnum sem CSV, Excel, JSON eða SQLite, vistuðum myndritum sem SVG, PNG eða PDF og skjölum úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
 | Deila | Pakkar gagnasöfnum með myndritum og sniðum fyrir samstarfsfólk, sendir þau beint í síma og aðrar tölvur með QR-kóða ([mobil.md](mobil.md)), sendir vinnusvæðið á GitHub, deilir um deilivalmynd tölvunnar og birtir mælaborð sem HTML ([dela.md](dela.md)) |

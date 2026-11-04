@@ -104,8 +104,8 @@
       const key = (k) => /** @type {HTMLElement} */ (document.activeElement).dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
       key('ArrowRight');
       await wait(100);
-      assert.equal(document.activeElement && document.activeElement.textContent.trim(), t('analysera.tabs.sql'), 'focus on the SQL tab');
-      assert.equal(tabs()[1].getAttribute('aria-selected'), 'true', 'SQL tab active');
+      assert.equal(document.activeElement && document.activeElement.textContent.trim(), t('analysera.tabs.python'), 'focus on the Python tab (after R)');
+      assert.equal(tabs()[1].getAttribute('aria-selected'), 'true', 'Python tab active');
       key('End');
       await wait(100);
       assert.equal(document.activeElement && document.activeElement.textContent.trim(), t('analysera.tabs.notebook'), 'End goes to the last tab (the notebook is always last)');

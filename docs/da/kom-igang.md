@@ -42,7 +42,7 @@ kanten mod arbejdsfladen. Alt+1 til Alt+8 skifter tilstand med tastaturet.
 | Håndter | Ser dine datasæt i mapper med tags, omdøber, sletter, gemmer versioner, kører batchhandlinger på flere datasæt, tager backup af og gendanner arbejdsområdet |
 | Søg | Søger i alle kolonner i ét eller alle datasæt, indsnævrer med facetter og gemmer søgninger som lister ([soka.md](soka.md)) |
 | Bearbejd | Redigerer celler, sorterer og filtrerer, renser og sætter typer, beregner kolonner, pivoterer, sammenkobler datasæt; alt med fortryd, versioner og recepter ([bearbeta.md](bearbeta.md)) |
-| Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; SQL-konsol mod det valgte datasæt; regulære udtryk; notesbog, der bliver til rapport |
+| Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; Python-konsol med pandas og matplotlib; SQL-konsol mod det valgte datasæt; regulære udtryk; notesbog, der bliver til rapport |
 | Visualisér | Bygger diagrammer med Vega-Lite, D3-skabeloner eller R-scripts, gemmer, eksporterer og opretter dem i batch ([visualisera.md](visualisera.md)) |
 | Eksportér | Downloader data som CSV, Excel, JSON eller SQLite, gemte diagrammer som SVG, PNG eller PDF og dokumenter fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
 | Del | Pakker datasæt med diagrammer og skabeloner til kolleger, sender dem direkte til telefoner og andre computere med QR-kode ([mobil.md](mobil.md)), sender arbejdsområdet til GitHub, deler via computerens delingsmenu og udgiver dashboards som HTML ([dela.md](dela.md)) |

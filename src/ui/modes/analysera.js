@@ -1,34 +1,45 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Mode "Analysera": code and statistics, in four tabs that share the same layout:
- *   R   (WebR): editor on top, console output with inline plots below, saved R scripts in the object
- *               panel, session info and snippets in the inspector.
- *   SQL (SQLite): editor on top, result table below; SELECT shows rows, other statements change the
- *               selected dataset as a logged recipe step. Saved SQL scripts, dataset columns in the inspector.
- *   Anteckningsbok: notebooks with text, R and SQL cells (ui/analysis/notebook-panel.js).
+ * Mode "Analysera": code and statistics, in five tabs that share the same layout:
+ *   R      (WebR): editor on top, console output with inline plots below, saved R scripts in the object
+ *                  panel, session info and snippets in the inspector.
+ *   Python (Pyodide, a component fetched on first use): the same console for Python (data/python-bridge).
+ *   SQL    (SQLite): editor on top, result table below; SELECT shows rows, other statements change the
+ *                  selected dataset as a logged recipe step. Saved SQL scripts, dataset columns in the inspector.
  *   Regex: regular expressions tried on a column and applied as recipe steps (ui/analysis/regex-panel.js).
+ *   Anteckningsbok: notebooks with text, R, Python and SQL cells (ui/analysis/notebook-panel.js); always last.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel'], (base, rb, recipes, presets, notebooks, notebookPanel, regexPanelModule) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule) => {
     const { h, t, i18n, replace } = base;
-    const bridge = rb.bridge;
+    /** The two code consoles share one implementation; these are their bridges and texts. */
+    const bridges = { r: rb.bridge, python: pb.bridge };
+    const CONSOLE = {
+      r: { icon: 'terminal', title: 'analysera.title', status: 'analysera.status.', restart: 'analysera.restart', restarted: 'analysera.restarted', restartHint: 'analysera.restart.hint', stopHint: 'analysera.stop.hint', stopping: 'analysera.stopping', noSab: 'analysera.no.sab', outputEmpty: 'analysera.output.empty', placeholder: 'analysera.editor.placeholder', session: 'analysera.session', functions: 'analysera.functions', fn: 'analysera.fn.', datasetCreated: 'analysera.dataset.created', snippets: 'rSnippets', readSnippet: (name) => `df <- dm_read(${JSON.stringify(name)})\n`, prefix: 'R' },
+      python: { icon: 'code', title: 'python.title', status: 'python.status.', restart: 'python.restart', restarted: 'python.restarted', restartHint: 'python.restart.hint', stopHint: 'python.stop.hint', stopping: 'python.stopping', noSab: 'python.no.sab', outputEmpty: 'python.output.empty', placeholder: 'python.editor.placeholder', session: 'python.session', functions: 'python.functions', fn: 'python.fn.', datasetCreated: 'python.dataset.created', snippets: 'pythonSnippets', readSnippet: (name) => `df = dm_read(${JSON.stringify(name)})\n`, prefix: 'Python' },
+    };
+    const CODE_LANGS = ['r', 'python'];
+    /** R ships in the folder and starts when its tab opens; Python is fetched on the user's action (Start or Run). */
+    const AUTOSTART = { r: true, python: false };
+    const SCRIPT_LANGS = ['r', 'python', 'sql'];
     const SQL_LIMIT = 5000;
     const SQL_FUNCTIONS = ['regexp', 'regexp_replace', 'dm_parse_number', 'dm_parse_date', 'dm_fix_encoding', 'dm_title', 'dm_squish', 'dm_round', 'dm_pad', 'dm_date_part', 'dm_date_diff', 'dm_valid_id', 'dm_regex_test', 'dm_regex_extract', 'dm_regex_count', 'dm_regex_split'];
     const READ_ONLY_SQL = /^(select|with|values|pragma|explain)\b/i;
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
-      let slots = null; let unsubStore = null; let unsubBridge = null;
+      let slots = null; let unsubStore = null; const unsubBridges = [];
       let tab = 'r';
       /** Per-language editor state (scripts, current script, unsaved draft, live elements). */
+      const consoleState = () => ({ scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null, outputEl: null, statusEl: null, runBtn: null, stopBtn: null, startBtn: null });
       const st = {
-        r: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null },
+        r: consoleState(),
+        python: consoleState(),
         sql: { scripts: [], current: { id: null, name: '', code: '' }, draft: '', editor: null, nameInput: null, target: 'local' },
       };
-      let outputEl = null; let statusEl = null; let runBtn = null; let stopBtn = null;
       let sqlOut = null; let sqlSaveBtn = null; let sqlResult = null; let sqlRunBtn = null; let sqlBadge = null;
       let nbList = []; let nbView = null; let notebook = null; let unsubNb = null;
       /** The Regex tab keeps its pattern and choices while the mode is open in other tabs. */
@@ -53,21 +64,22 @@
           if (tab === 'notebook' && changed.includes('datasets')) renderRight();
           if (tab === 'regex') { regexPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
         });
-        unsubBridge = bridge.on(onBridgeEvent);
+        for (const lang of CODE_LANGS) unsubBridges.push(bridges[lang].on((type, payload) => onBridgeEvent(lang, type, payload)));
         unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
         render();
-        for (const lang of ['r', 'sql']) services.idb.listScripts(lang).then((list) => { st[lang].scripts = list; renderLeft(); });
+        for (const lang of SCRIPT_LANGS) services.idb.listScripts(lang).then((list) => { st[lang].scripts = list; renderLeft(); });
         notebooks.list().then((list) => { nbList = list; renderLeft(); });
-        if (tab === 'r') startR();
+        if (AUTOSTART[tab]) startEngine(tab);
         takePending();
       }
       function deactivate() {
-        for (const lang of ['r', 'sql']) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
+        for (const lang of SCRIPT_LANGS) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
+        for (const lang of CODE_LANGS) { const v = st[lang]; v.outputEl = null; v.statusEl = null; v.runBtn = null; v.stopBtn = null; v.startBtn = null; }
         if (nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
         if (rxPanel) rxPanel.destroy();
-        slots = null; outputEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
+        slots = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
-        if (unsubBridge) unsubBridge();
+        while (unsubBridges.length) unsubBridges.pop()();
         if (unsubNb) unsubNb();
       }
 
@@ -105,8 +117,9 @@
         nbView.start();
         return { head: nbView.headEl, body: nbView.bodyEl };
       }
-      function startR() { bridge.start().catch((err) => shell.log('R: ' + ((err && err.message) || err), 'error')); }
-      /** Code handed over through the store (the beginner's course): added to its tab's editor and optionally run. */
+      /** Start a console's engine when its tab opens; a failure is shown in the log and the badge. */
+      function startEngine(lang) { bridges[lang].start().catch((err) => shell.log(CONSOLE[lang].prefix + ': ' + ((err && err.message) || err), 'error')); }
+      /** Code handed over through the store (the beginner's course, the Regex tab): added to its tab's editor and optionally run. */
       function takePending() {
         const p = store.get().pendingCode;
         if (!p || !st[p.lang] || !slots) return;
@@ -117,15 +130,16 @@
         if (!existing.includes(p.code.trim())) target.draft = existing ? existing + '\n\n' + p.code : p.code;
         tab = p.lang;
         render();
-        if (tab === 'r') startR();
-        if (p.run) { if (tab === 'sql') runSql({ code: p.code }); else run({ code: p.code }); }
+        if (AUTOSTART[tab]) startEngine(tab);
+        if (p.run) { if (tab === 'sql') runSql({ code: p.code }); else run(tab, { code: p.code }); }
       }
       function selectedDataset() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
-      function onBridgeEvent(type, payload) {
-        if (type === 'state') updateStatus();
-        if (type === 'plot' && payload.key === null && outputEl) appendEntries([{ kind: 'plot', canvas: payload.canvas, key: null }]);
-        if (type === 'state' && payload.state === 'ready' && tab === 'r') renderRight();
+      function onBridgeEvent(lang, type, payload) {
+        if (type === 'state' || type === 'progress') updateStatus(lang);
+        // webR's canvas device sends drawing batches while a command runs; show them at once.
+        if (type === 'plot' && payload.key === null && st[lang].outputEl) appendEntries(lang, [{ kind: 'plot', canvas: payload.canvas, key: null }]);
+        if (type === 'state' && payload.state === 'ready' && tab === lang) renderRight();
       }
 
       function render() { if (!slots) return; renderLeft(); renderCenter(); renderRight(); }
@@ -139,7 +153,7 @@
         if (tab === 'notebook') { renderNotebookLeft(); return; }
         if (tab === 'regex') { regexPanel().left(slots.left, renderLeft); return; }
         const selected = selectedDataset();
-        if (tab === 'r') slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode('r', `df <- dm_read(${JSON.stringify(selected.shortName || selected.name)})\n`) })));
+        if (CONSOLE[tab]) slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode(tab, CONSOLE[tab].readSnippet(selected.shortName || selected.name)) })));
         slots.left.appendChild(h('hr'));
         slots.left.appendChild(h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('analysera.scripts.' + tab) }), ui.button({ label: t('analysera.new.script'), icon: 'plus', size: 'sm', 'icon-only': true, variant: 'ghost', onClick: () => newScript(tab) })));
         slots.left.appendChild(h('div', { class: 'dm-list' }, v.scripts.map((sc) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': sc.id === v.current.id ? 'true' : null, onclick: () => openScript(tab, sc) },
@@ -193,85 +207,99 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        // Fixed order: R, (Python later), SQL, Regex; the notebook is always last because it joins pieces from the others.
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
+        // Fixed order: R, Python, SQL, Regex; the notebook is always last because it joins pieces from the others.
+        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => {
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
           if (nbView) { notebook = nbView.notebook; }
           tab = /** @type {any} */ (e).detail.id;
           renderCenter(); renderLeft(); renderRight();
-          if (tab === 'r') startR();
+          if (AUTOSTART[tab]) startEngine(tab);
         });
         if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
-        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : renderNotebook();
+        const view = CONSOLE[tab] ? renderConsole(tab) : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
-      function renderR() {
-        const v = st.r;
-        statusEl = h('dm-badge', { text: '' });
-        runBtn = ui.button({ label: t('analysera.run'), icon: 'play', variant: 'primary', title: t('analysera.run.hint'), onClick: () => run() });
+      /** The R and Python consoles: editor, run/stop/save/clear/restart, output with plots. */
+      function renderConsole(lang) {
+        const v = st[lang];
+        const bridge = bridges[lang];
+        const text = CONSOLE[lang];
+        v.statusEl = h('dm-badge', { text: '' });
+        v.runBtn = ui.button({ label: t('analysera.run'), icon: 'play', variant: 'primary', title: t('analysera.run.hint'), onClick: () => run(lang) });
         // Running code can be stopped when the page is cross-origin isolated (served from a web server); on file://
         // only a restart helps.
-        stopBtn = bridge.canInterrupt ? ui.button({ label: t('analysera.stop'), icon: 'square', title: t('analysera.stop.hint'), onClick: () => { if (bridge.interrupt()) shell.log(t('analysera.stopping')); } }) : null;
+        v.stopBtn = bridge.canInterrupt ? ui.button({ label: t('analysera.stop'), icon: 'square', title: t(text.stopHint), onClick: () => { if (bridge.interrupt()) shell.log(t(text.stopping)); } }) : null;
         v.nameInput = /** @type {any} */ (h('dm-input', { placeholder: t('analysera.script.untitled'), 'aria-label': t('analysera.script.name'), inline: true }));
         v.nameInput.value = v.current.name;
-        v.editor = /** @type {any} */ (h('dm-code', { language: 'r', placeholder: t('analysera.editor.placeholder') }));
+        v.editor = /** @type {any} */ (h('dm-code', { language: lang, placeholder: t(text.placeholder) }));
         v.editor.value = v.draft || v.current.code;
-        v.editor.addEventListener('dm-run', (e) => run(/** @type {any} */ (e).detail));
+        v.editor.addEventListener('dm-run', (e) => run(lang, /** @type {any} */ (e).detail));
         v.editor.addEventListener('dm-change', () => { v.draft = v.editor.value; });
-        outputEl = outputEl || h('div', { class: 'dm-console', role: 'log', 'aria-live': 'polite' }, h('p', { class: 'dm-help dm-console-empty', text: t('analysera.output.empty') }));
+        v.outputEl = v.outputEl || h('div', { class: 'dm-console', role: 'log', 'aria-live': 'polite' }, h('p', { class: 'dm-help dm-console-empty', text: t(text.outputEmpty) }));
+        // An engine that is not started automatically gets a Start button (Run starts it too); hidden once started.
+        v.startBtn = AUTOSTART[lang] ? null : ui.button({ label: t('python.start'), icon: 'download', title: t('python.start.hint'), onClick: () => startEngine(lang) });
         const head = h('div', { class: 'dm-page-head' },
-          h('h1', null, ui.icon('terminal', 20), t('analysera.title'), ' ', statusEl),
+          h('h1', null, ui.icon(text.icon, 20), t(text.title), ' ', v.statusEl),
           h('div', { class: 'dm-row' },
-            runBtn,
-            stopBtn,
-            ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript('r') }),
-            v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript('r') }) : null,
-            ui.button({ label: t('analysera.clear'), icon: 'x', variant: 'ghost', onClick: clearOutput }),
-            ui.button({ label: t('analysera.restart'), icon: 'refresh-cw', variant: 'ghost', title: bridge.canInterrupt ? undefined : t('analysera.restart.hint'), onClick: restart })));
-        updateStatus();
-        return { head, body: [h('div', { class: 'dm-row' }, v.nameInput, h('span', { class: 'dm-help', text: t('analysera.run.hint') })), h('div', { class: 'dm-editor-wrap' }, v.editor), outputEl] };
+            v.runBtn,
+            v.startBtn,
+            v.stopBtn,
+            ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript(lang) }),
+            v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript(lang) }) : null,
+            ui.button({ label: t('analysera.clear'), icon: 'x', variant: 'ghost', onClick: () => clearOutput(lang) }),
+            ui.button({ label: t(text.restart), icon: 'refresh-cw', variant: 'ghost', title: bridge.canInterrupt ? undefined : t(text.restartHint), onClick: () => restart(lang) })));
+        updateStatus(lang);
+        return { head, body: [h('div', { class: 'dm-row' }, v.nameInput, h('span', { class: 'dm-help', text: t('analysera.run.hint') })), h('div', { class: 'dm-editor-wrap' }, v.editor), v.outputEl] };
       }
 
-      function updateStatus() {
-        if (!statusEl) return;
-        const map = { idle: ['analysera.status.idle', ''], starting: ['analysera.status.starting', 'accent'], ready: ['analysera.status.ready', 'ok'], busy: ['analysera.status.busy', 'accent'], error: ['analysera.status.error', 'error'] };
+      function updateStatus(lang) {
+        const v = st[lang];
+        const bridge = bridges[lang];
+        if (!v.statusEl) return;
+        const map = { idle: ['idle', ''], starting: ['starting', 'accent'], ready: ['ready', 'ok'], busy: ['busy', 'accent'], error: ['error', 'error'] };
         const [key, kind] = map[bridge.state] || map.idle;
-        statusEl.textContent = t(key);
-        if (kind) statusEl.setAttribute('kind', kind); else statusEl.removeAttribute('kind');
-        if (runBtn) { runBtn.disabled = bridge.state === 'busy' || bridge.state === 'starting'; runBtn.loading = bridge.state === 'busy'; }
-        if (stopBtn) stopBtn.disabled = bridge.state !== 'busy';
+        let label = t(CONSOLE[lang].status + key);
+        // Python is downloaded the first time: show how far the components have come.
+        if (bridge.state === 'starting' && bridge.progress && bridge.progress.total) label = t('python.status.downloading', { pct: Math.min(99, Math.round(100 * bridge.progress.received / bridge.progress.total)) });
+        v.statusEl.textContent = label;
+        if (kind) v.statusEl.setAttribute('kind', kind); else v.statusEl.removeAttribute('kind');
+        if (v.runBtn) { v.runBtn.disabled = bridge.state === 'busy' || bridge.state === 'starting'; v.runBtn.loading = bridge.state === 'busy'; }
+        if (v.stopBtn) v.stopBtn.disabled = bridge.state !== 'busy';
+        if (v.startBtn) v.startBtn.hidden = !(bridge.state === 'idle' || bridge.state === 'error');
       }
 
-      async function run(detail) {
-        const editor = st.r.editor;
+      async function run(lang, detail) {
+        const v = st[lang];
+        const editor = v.editor;
         if (!editor) return;
         const selection = detail && detail.selection && editor.cm && editor.cm.somethingSelected() ? detail.selection : '';
         const code = ((detail && detail.code) || selection || editor.value).trim();
         if (!code) return;
-        st.r.draft = editor.value;
-        const empty = outputEl.querySelector('.dm-console-empty');
+        v.draft = editor.value;
+        const empty = v.outputEl.querySelector('.dm-console-empty');
         if (empty) empty.remove();
         try {
-          const res = await bridge.run(code);
-          appendEntries(res.entries);
-          appendEntries([{ kind: 'meta', text: t('analysera.took', { ms: i18n.formatNumber(Math.round(res.ms)) }) }]);
-          for (const e of res.entries) if (e.kind === 'dataset') { shell.log(t('analysera.dataset.created', { name: e.meta.name, rows: i18n.formatNumber(e.meta.rowCount) }), 'ok'); }
-          store.set({ lastRun: { lang: 'r', at: Date.now(), ok: !res.entries.some((e) => e.kind === 'error') } });
+          const res = await bridges[lang].run(code);
+          appendEntries(lang, res.entries);
+          appendEntries(lang, [{ kind: 'meta', text: t('analysera.took', { ms: i18n.formatNumber(Math.round(res.ms)) }) }]);
+          for (const e of res.entries) if (e.kind === 'dataset') { shell.log(t(CONSOLE[lang].datasetCreated, { name: e.meta.name, rows: i18n.formatNumber(e.meta.rowCount) }), 'ok'); }
+          store.set({ lastRun: { lang, at: Date.now(), ok: !res.entries.some((e) => e.kind === 'error') } });
         } catch (err) {
-          appendEntries([{ kind: 'error', text: (err && err.message) || String(err) }]);
+          appendEntries(lang, [{ kind: 'error', text: (err && err.message) || String(err) }]);
         }
       }
 
-      function clearOutput() { if (outputEl) replace(outputEl, h('p', { class: 'dm-help dm-console-empty', text: t('analysera.output.empty') })); }
+      function clearOutput(lang) { const v = st[lang]; if (v.outputEl) replace(v.outputEl, h('p', { class: 'dm-help dm-console-empty', text: t(CONSOLE[lang].outputEmpty) })); }
 
-      async function restart() {
-        try { await bridge.restart(); shell.log(t('analysera.restarted'), 'ok'); } catch (err) { shell.log('R: ' + ((err && err.message) || err), 'error'); }
+      async function restart(lang) {
+        try { await bridges[lang].restart(); shell.log(t(CONSOLE[lang].restarted), 'ok'); } catch (err) { shell.log(CONSOLE[lang].prefix + ': ' + ((err && err.message) || err), 'error'); }
       }
 
-      function appendEntries(entries) {
+      function appendEntries(lang, entries) {
+        const outputEl = st[lang].outputEl;
         if (!outputEl) return;
         for (const e of entries) {
           let node;
@@ -281,27 +309,32 @@
           else if (e.kind === 'error') node = h('pre', { class: 'dm-console-error', text: e.text });
           else if (e.kind === 'meta') node = h('div', { class: 'dm-console-meta', text: e.text });
           else if (e.kind === 'packages') node = h('div', { class: 'dm-console-meta', text: t('analysera.packages.installed', { names: e.names.join(', ') }) });
-          else if (e.kind === 'plot') node = plotEntry(e);
-          else if (e.kind === 'dataset') node = h('div', { class: 'dm-console-dataset' }, ui.icon('table', 14), h('span', { text: t('analysera.dataset.created', { name: e.meta.name, rows: i18n.formatNumber(e.meta.rowCount) }) }), ui.button({ label: t('analysera.open.bearbeta'), size: 'sm', onClick: () => { store.set({ selectedId: e.meta.id }); shell.activate('bearbeta'); } }));
+          else if (e.kind === 'plot') node = plotEntry(lang, e);
+          else if (e.kind === 'dataset') node = h('div', { class: 'dm-console-dataset' }, ui.icon('table', 14), h('span', { text: t(CONSOLE[lang].datasetCreated, { name: e.meta.name, rows: i18n.formatNumber(e.meta.rowCount) }) }), ui.button({ label: t('analysera.open.bearbeta'), size: 'sm', onClick: () => { store.set({ selectedId: e.meta.id }); shell.activate('bearbeta'); } }));
           if (node) outputEl.appendChild(node);
         }
         outputEl.scrollTop = outputEl.scrollHeight;
       }
 
-      function plotEntry(e) {
-        const canvas = e.canvas;
-        canvas.classList.add('dm-console-plot');
-        const tools = e.key ? h('div', { class: 'dm-row' }, ['svg', 'png', 'pdf'].map((fmt) => ui.button({ label: t('analysera.plot.export', { format: fmt.toUpperCase() }), size: 'sm', icon: 'download', onClick: () => exportPlot(e.key, fmt) }))) : null;
-        return h('figure', { class: 'dm-console-figure' }, canvas, tools);
+      /** A plot: R gives a canvas, Python an SVG (shown) and a PNG (for notebooks); both export through their bridge. */
+      function plotEntry(lang, e) {
+        let image;
+        if (e.canvas) { image = e.canvas; image.classList.add('dm-console-plot'); }
+        else {
+          image = h('img', { class: 'dm-console-plot', alt: '', width: String(e.width || 672), height: String(e.height || 480) });
+          image.src = e.svg ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(e.svg) : 'data:image/png;base64,' + (e.png || '');
+        }
+        const tools = e.key ? h('div', { class: 'dm-row' }, ['svg', 'png', 'pdf'].map((fmt) => ui.button({ label: t('analysera.plot.export', { format: fmt.toUpperCase() }), size: 'sm', icon: 'download', onClick: () => exportPlot(lang, e.key, fmt) }))) : null;
+        return h('figure', { class: 'dm-console-figure' }, image, tools);
       }
 
-      async function exportPlot(key, format) {
+      async function exportPlot(lang, key, format) {
         try {
-          const blob = await bridge.exportPlot(key, format);
+          const blob = await bridges[lang].exportPlot(key, format);
           const name = services.files.safeName(`dataspatium-diagram-${key}`, format);
           services.files.download(blob, name);
           shell.log(t('analysera.plot.exported', { name }), 'ok');
-        } catch (err) { shell.log('R: ' + ((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        } catch (err) { shell.log(CONSOLE[lang].prefix + ': ' + ((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
       // ---- SQL console ----
@@ -460,7 +493,7 @@
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
-      // ---- right: session info and snippets (R) or schema and functions (SQL) ----
+      // ---- right: session info and snippets (R, Python) or schema and functions (SQL) ----
       async function renderRight() {
         if (!slots) return;
         if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
@@ -486,21 +519,25 @@
             h('h4', { text: t('sql.functions') }), h('ul', { class: 'dm-stack-sm' }, SQL_FUNCTIONS.map((f) => h('li', { class: 'dm-small', text: t('sql.fn.' + f) }))));
           return;
         }
+        const lang = CONSOLE[tab] ? tab : 'r';
+        const bridge = bridges[lang];
+        const text = CONSOLE[lang];
         const kv = /** @type {any} */ (h('dm-kv'));
-        const pkgIndex = D.require('engines/r/packages');
+        const packageCount = lang === 'r' ? D.require('engines/r/packages').all().length : D.require('engines/python/catalog').all().length;
         kv.items = [
           { label: t('analysera.session.version'), value: bridge.version || '–' },
           { label: t('analysera.session.startup'), value: bridge.startupMs ? i18n.formatNumber(Math.round(bridge.startupMs)) + ' ms' : '–' },
           { label: t('analysera.session.mirrored'), value: String(bridge.mirrored.size) },
-          { label: t('analysera.session.packages'), value: String(pkgIndex.all().length) },
+          { label: t(lang === 'r' ? 'analysera.session.packages' : 'python.session.packages'), value: packageCount ? String(packageCount) : '–' },
         ];
-        const fns = ['dm_list', 'dm_read', 'dm_write', 'theme'].map((k) => h('li', { class: 'dm-small', text: t('analysera.fn.' + k) }));
-        const snippets = h('div', { class: 'dm-list' }, (presets.rSnippets || []).map((sn) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode('r', sn.code + '\n') }, ui.icon('braces', 14), h('span', { class: 'dm-list-main' }, h('span', { text: sn.labelKey ? t(sn.labelKey) : sn.label })))));
+        const fns = ['dm_list', 'dm_read', 'dm_write', 'theme'].map((k) => h('li', { class: 'dm-small', text: t(text.fn + k) }));
+        const snippets = h('div', { class: 'dm-list' }, (presets[text.snippets] || []).map((sn) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode(lang, sn.code + '\n') }, ui.icon('braces', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: t(sn.labelKey) })))));
         replace(slots.right,
-          h('h4', { text: t('analysera.session') }), kv,
+          h('h4', { text: t(text.session) }), kv,
           bridge.state === 'error' && bridge.error ? h('p', { class: 'dm-error dm-small', text: bridge.error }) : null,
-          h('p', { class: 'dm-help', text: t('analysera.no.sab') }),
-          h('h4', { text: t('analysera.functions') }), h('ul', { class: 'dm-stack-sm' }, fns),
+          lang === 'python' ? h('p', { class: 'dm-help', text: t('python.components.hint') }) : null,
+          h('p', { class: 'dm-help', text: t(text.noSab) }),
+          h('h4', { text: t(text.functions) }), h('ul', { class: 'dm-stack-sm' }, fns),
           h('h4', { text: t('analysera.snippets') }), snippets);
       }
 
@@ -509,11 +546,12 @@
         ctx.palette.register(async () => {
           const cmds = [
             { id: 'analysera:r', label: t('palette.analyze.r'), group: t('palette.group.modes'), icon: 'terminal', run: () => { tab = 'r'; shell.activate('analysera'); } },
+            { id: 'analysera:python', label: t('palette.analyze.python'), group: t('palette.group.modes'), icon: 'code', run: () => { tab = 'python'; shell.activate('analysera'); } },
             { id: 'analysera:sql', label: t('palette.analyze.sql'), group: t('palette.group.modes'), icon: 'database', run: () => { tab = 'sql'; shell.activate('analysera'); } },
             { id: 'analysera:regex', label: t('palette.analyze.regex'), group: t('palette.group.modes'), icon: 'regex', run: () => { tab = 'regex'; shell.activate('analysera'); } },
             { id: 'nb:new', label: t('nb.new'), group: t('palette.group.notebooks'), icon: 'plus', run: async () => { shell.activate('analysera'); await newNotebook(); } },
           ];
-          for (const n of await notebooks.list()) cmds.push({ id: 'nb:' + n.id, label: t('palette.nb.open', { name: n.name }), hint: n.datasetName || '', group: t('palette.group.notebooks'), icon: 'file-text', run: () => { notebook = n; tab = 'notebook'; shell.activate('analysera'); } });
+          for (const n of await notebooks.list()) cmds.push({ id: 'nb:' + n.id, label: t('palette.nb.open', { name: n.name }), hint: n.datasetName || '', group: t('palette.group.notebooks'), icon: 'file-text', run: () => { notebook = n; tab = 'notebook'; shell.activate('analysera'); if (slots) render(); } });
           return cmds;
         });
       }

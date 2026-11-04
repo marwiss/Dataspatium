@@ -15,6 +15,7 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 LOCAL_FILES = [
     "r/dataspatium.R",
+    "python/dataspatium.py",
     "presets/exempeldata/befolkning-kommuner-2024.csv",
 ]
 LOCAL_GLOBS = [
@@ -25,7 +26,7 @@ LOCAL_GLOBS = [
 # Swedish lives in docs/, the other languages in docs/<lang>/. Developer documents are not embedded.
 HELP_DOCS = [
     "kom-igang", "anvandarguide", "lagen", "soka", "bearbeta", "visualisera", "anteckningsbok", "regex",
-    "format", "api-konfiguration", "kallor", "r-guide", "dokumentmallar", "dela", "mobil", "faq", "licenser",
+    "format", "api-konfiguration", "kallor", "r-guide", "python", "dokumentmallar", "dela", "mobil", "faq", "licenser",
 ]
 HELP_LANGS = ["sv", "da", "nb", "fi", "is", "en"]
 MANIFEST = ROOT / "presets" / "local-assets.js"

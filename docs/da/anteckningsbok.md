@@ -1,6 +1,6 @@
 # Notesbog
 
-En notesbog blander tekst, R-kode og SQL i celler, der køres i rækkefølge, med output gemt under hver celle. Den findes
+En notesbog blander tekst, R-kode, Python-kode og SQL i celler, der køres i rækkefølge, med output gemt under hver celle. Den findes
 som tredje fane i tilstanden Analysér og er vejen fra analyse til færdig rapport uden at forlade appen.
 
 ## Opret og arbejd
@@ -11,13 +11,15 @@ kortnavn, og en SQL-celle. Det datasæt, SQL-cellerne køres mod, vælges i egen
 
 Hver celle har en type (Tekst, R eller SQL), der kan skiftes, knapper til at køre, flytte op eller ned og slette, og et
 resultatfelt. Ctrl+Enter kører den celle, du står i; *Kør alle* kører notesbogen fra top til bund. Celler tilføjes
-nederst med knapperne *Tekst*, *R* og *SQL*. Alt gemmes automatisk, også output.
+nederst med knapperne *Tekst*, *R*, *Python* og *SQL*. Alt gemmes automatisk, også output.
 
 - **Tekstceller** skrives i Markdown (overskrifter med `#`, lister med `-`, `**fed**`, `*kursiv*`, links og tabeller) og
   vises formateret under redigeringsfeltet.
 - **R-celler** køres i samme R-session som R-konsollen, så variabler lever videre mellem celler og kørsler, indtil R
   genstartes. Udskrifter, fejl, diagrammer og datasæt, der oprettes med `dm_write()`, samles under cellen. Diagrammer
   gemmes som PNG.
+- **Python-celler** køres i samme Python-session som Python-konsollen (Python hentes første gang, se
+  [python.md](python.md)). Output, fejl, matplotlib-diagrammer og datasæt fra `dm_write()` samles under cellen.
 - **SQL-celler** køres mod tabellen `data` i notesbogens datasæt. SELECT-forespørgsler viser op til 1 000 rækker (de
   første 50 i visningen); UPDATE, DELETE og andre ændrende sætninger udføres som et trin i datasættets recept og logges
   der.

@@ -28,6 +28,14 @@ an intranet): then the button *Stop* sits next to *Run* in the R tab, and the R 
 the app is opened from a folder (file://) the browser does not allow the mechanism this needs; use *Restart R* in
 Analyse instead. The datasets are not affected.
 
+## How does Python work in the app?
+
+Python (Pyodide) does not ship in the folder. The first time you press *Start Python* or *Run* in the Python tab, the
+app asks for permission to fetch components and downloads Python with numpy and pandas (about 22 MB) from jsDelivr,
+checked against known digests. After that everything is kept in the browser and Python starts without the internet.
+Packages the code imports (matplotlib, scipy, scikit-learn and the others Pyodide offers) are fetched the same way
+when needed. See [python.md](python.md).
+
 ## Why does an API not work?
 
 Most often the API lacks CORS support, that is, the browser is not allowed to read the response. Then Dataspatium

@@ -3,7 +3,7 @@
 Den här guiden beskriver hur du arbetar i Dataspatium från första fil till färdig rapport. Den förutsätter att du
 har öppnat appen enligt [kom-igang.md](kom-igang.md). Detaljer om varje läge finns i [lagen.md](lagen.md), om
 filformat i [format.md](format.md), om API:er i [api-konfiguration.md](api-konfiguration.md), om bearbetning i
-[bearbeta.md](bearbeta.md), om R i [r-guide.md](r-guide.md), om diagram i [visualisera.md](visualisera.md) och om
+[bearbeta.md](bearbeta.md), om R i [r-guide.md](r-guide.md), om Python i [python.md](python.md), om diagram i [visualisera.md](visualisera.md) och om
 dokument i [dokumentmallar.md](dokumentmallar.md). Vanliga frågor besvaras i [faq.md](faq.md).
 
 ## Arbetsytan

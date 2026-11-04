@@ -4,7 +4,7 @@ Tämä opas kuvaa, miten työskentelet Dataspatiumissa ensimmäisestä tiedostos
 avannut sovelluksen tiedoston [kom-igang.md](kom-igang.md) ohjeiden mukaan. Kunkin tilan tiedot ovat tiedostossa
 [lagen.md](lagen.md), tiedostomuodot tiedostossa [format.md](format.md), rajapinnat tiedostossa
 [api-konfiguration.md](api-konfiguration.md), muokkaus tiedostossa [bearbeta.md](bearbeta.md), R tiedostossa
-[r-guide.md](r-guide.md), kaaviot tiedostossa [visualisera.md](visualisera.md) ja asiakirjat tiedostossa
+[r-guide.md](r-guide.md), Python tiedostossa [python.md](python.md), kaaviot tiedostossa [visualisera.md](visualisera.md) ja asiakirjat tiedostossa
 [dokumentmallar.md](dokumentmallar.md). Yleisiin kysymyksiin vastataan tiedostossa [faq.md](faq.md).
 
 ## Työtila

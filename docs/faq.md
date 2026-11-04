@@ -28,6 +28,14 @@ ett intranät): då finns knappen *Avbryt* bredvid *Kör* i R-fliken, och R-sess
 appen öppnas från en mapp (file://) tillåter webbläsaren inte den mekanism som krävs; använd då *Starta om R* i
 Analysera. Datamängderna påverkas inte.
 
+## Hur fungerar Python i appen?
+
+Python (Pyodide) följer inte med i mappen. Första gången du trycker *Starta Python* eller *Kör* i fliken Python frågar
+appen om lov att hämta komponenter och laddar ned Python med numpy och pandas (cirka 22 MB) från jsDelivr, kontrollerat
+mot kända kontrollsummor. Sedan sparas allt i webbläsaren och Python startar utan internet. Paket som koden importerar
+(matplotlib, scipy, scikit-learn och de övriga i Pyodides utbud) hämtas på samma sätt när de behövs. Se
+[python.md](python.md).
+
 ## Varför fungerar inte ett API?
 
 Oftast saknar API:et CORS-stöd, det vill säga webbläsaren får inte läsa svaret. Då kan Dataspatium bara nå det

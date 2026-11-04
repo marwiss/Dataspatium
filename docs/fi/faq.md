@@ -29,6 +29,14 @@ intranetissä): silloin R-välilehdellä on *Suorita*-painikkeen vieressä paini
 säilyy. Kun sovellus avataan kansiosta (file://), selain ei salli tarvittavaa mekanismia; käytä silloin Analysoi-tilassa
 toimintoa *Käynnistä R uudelleen*. Aineistot eivät muutu.
 
+## Miten Python toimii sovelluksessa?
+
+Python (Pyodide) ei tule kansion mukana. Kun painat ensimmäisen kerran *Käynnistä Python* tai *Suorita*
+Python-välilehdellä, sovellus kysyy lupaa hakea komponentteja ja lataa Pythonin sekä numpyn ja pandasin (noin 22 MB)
+jsDelivristä, tarkistettuina tunnettuja tarkistesummia vasten. Sen jälkeen kaikki tallennetaan selaimeen, ja Python
+käynnistyy ilman internetiä. Koodin tuomat paketit (matplotlib, scipy, scikit-learn ja muut Pyodiden valikoimassa)
+haetaan samalla tavalla tarvittaessa. Ks. [python.md](python.md).
+
 ## Miksi jokin rajapinta ei toimi?
 
 Useimmiten rajapinnalta puuttuu CORS-tuki eli selain ei saa lukea vastausta. Silloin Dataspatium tavoittaa sen vain

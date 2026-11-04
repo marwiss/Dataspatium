@@ -1,18 +1,20 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Notebooks: cells of Markdown text, R code and SQL that run in order against the R session and the
- * notebook's dataset. Outputs (text, tables, plots as PNG, created datasets) are stored with the cell, so
+ * Notebooks: cells of Markdown text, R code, Python code and SQL that run in order against the R and Python
+ * sessions and the notebook's dataset. Outputs (text, tables, plots as PNG, created datasets) are stored with the cell, so
  * a notebook reopens with its results. A notebook exports to HTML, Word, PDF, Markdown and LaTeX through
  * the document builders, and travels as a `*.nb.json` file.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('analysis/notebooks', ['platform/storage/idb', 'data/datasets', 'data/recipes', 'data/r-bridge', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'platform/storage/zip', 'platform/files', 'platform/sync'],
-    (idb, datasets, recipes, rb, markdown, builders, office, zip, files, sync) => {
+  D.define('analysis/notebooks', ['platform/storage/idb', 'data/datasets', 'data/recipes', 'data/r-bridge', 'data/python-bridge', 'docgen/markdown', 'docgen/builders', 'docgen/builders-office', 'platform/storage/zip', 'platform/files', 'platform/sync'],
+    (idb, datasets, recipes, rb, pb, markdown, builders, office, zip, files, sync) => {
       const FORMAT = 'dataspatium-notebook/1';
-      const CELL_TYPES = ['markdown', 'r', 'sql'];
+      const CELL_TYPES = ['markdown', 'r', 'python', 'sql'];
+      /** Code cells run through the engine bridges; their console entries become cell outputs. */
+      const CODE_BRIDGES = { r: () => rb.bridge, python: () => pb.bridge };
       const SQL_LIMIT = 1000;
       const READ_ONLY_SQL = /^\s*(select|with|values|pragma|explain)\b/i;
       const EXPORT_FORMATS = [
@@ -78,16 +80,17 @@
               const result = await recipes.apply(nb.datasetId, 'sql', { statement });
               outputs.push({ kind: 'text', text: typeof result.rows === 'number' ? D.t('sql.rows.affected', { n: result.rows }) : D.t('sql.statement.done') });
             }
-          } else if (c.type === 'r') {
+          } else if (CODE_BRIDGES[c.type]) {
             const code = String(c.source || '').trim();
             if (!code) throw new Error(D.t('nb.err.empty'));
-            const res = await rb.bridge.run(code);
+            const res = await CODE_BRIDGES[c.type]().run(code);
             let text = '';
             const flush = () => { if (text) { outputs.push({ kind: 'text', text: text.replace(/\n$/, '') }); text = ''; } };
             for (const e of res.entries) {
               if (e.kind === 'stdout' || e.kind === 'stderr') text += e.text + (e.text.endsWith('\n') ? '' : '\n');
               else if (e.kind === 'error') { flush(); outputs.push({ kind: 'error', text: e.text }); }
-              else if (e.kind === 'plot') { flush(); outputs.push({ kind: 'image', dataUrl: e.canvas.toDataURL('image/png'), width: e.canvas.width, height: e.canvas.height }); }
+              // R draws on a canvas; Python hands over a PNG (and an SVG for the console).
+              else if (e.kind === 'plot') { flush(); outputs.push(e.canvas ? { kind: 'image', dataUrl: e.canvas.toDataURL('image/png'), width: e.canvas.width, height: e.canvas.height } : { kind: 'image', dataUrl: 'data:image/png;base64,' + (e.png || ''), width: e.width, height: e.height }); }
               else if (e.kind === 'dataset') { flush(); outputs.push({ kind: 'dataset', id: e.meta.id, name: e.meta.name, rows: e.meta.rowCount || 0 }); }
               else if (e.kind === 'packages') { flush(); outputs.push({ kind: 'text', text: D.t('nb.packages.installed', { names: e.names.join(', ') }) }); }
             }

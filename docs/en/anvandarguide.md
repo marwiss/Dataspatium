@@ -4,7 +4,7 @@ This guide describes how you work in Dataspatium from the first file to the fini
 have opened the app as described in [kom-igang.md](kom-igang.md). Details about each mode are in
 [lagen.md](lagen.md), about file formats in [format.md](format.md), about APIs in
 [api-konfiguration.md](api-konfiguration.md), about processing in [bearbeta.md](bearbeta.md), about R in
-[r-guide.md](r-guide.md), about charts in [visualisera.md](visualisera.md) and about documents in
+[r-guide.md](r-guide.md), about Python in [python.md](python.md), about charts in [visualisera.md](visualisera.md) and about documents in
 [dokumentmallar.md](dokumentmallar.md). Common questions are answered in [faq.md](faq.md).
 
 ## The workspace

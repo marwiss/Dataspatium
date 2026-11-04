@@ -220,8 +220,8 @@
       await waitFor(() => !document.querySelector('dialog'), 3000, 'dialog closed');
       // SQL console: SELECT shows rows, UPDATE becomes a recipe step.
       shell.activate('analysera');
-      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 4, 5000, 'analysera tabs (R, SQL, Anteckningsbok, Regex)');
-      /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[1]).click();
+      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 5, 5000, 'analysera tabs (R, Python, SQL, Regex, Anteckningsbok)');
+      /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[2]).click();
       await waitFor(() => root.querySelector('dm-code[language="sql"]'), 3000, 'sql editor');
       const sqlEditor = /** @type {any} */ (root.querySelector('dm-code[language="sql"]'));
       await new Promise((resolve, reject) => { if (sqlEditor.cm) return resolve(undefined); sqlEditor.addEventListener('dm-ready', resolve, { once: true }); setTimeout(() => reject(new Error('sql editor did not load')), 10000); });

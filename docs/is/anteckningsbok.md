@@ -1,6 +1,6 @@
 # Minnisbók
 
-Minnisbók blandar saman texta, R-kóða og SQL í reitum sem keyra í röð, og úttak hvers reits er vistað undir honum. Hún er
+Minnisbók blandar saman texta, R-kóða, Python-kóða og SQL í reitum sem keyra í röð, og úttak hvers reits er vistað undir honum. Hún er
 þriðji flipinn í hamnum Greina og leiðin frá greiningu að fullbúinni skýrslu án þess að fara út úr forritinu.
 
 ## Búa til og vinna
@@ -11,12 +11,14 @@ SQL-reit. Gagnasafnið sem SQL-reitirnir keyra á er valið í eiginleikaspjaldi
 
 Hver reitur hefur gerð (Texti, R eða SQL) sem má breyta, hnappa til að keyra, færa upp eða niður og eyða, og niðurstöðusvæði.
 Ctrl+Enter keyrir reitinn sem þú ert í; *Keyra allt* keyrir minnisbókina ofan frá og niður. Reitum er bætt við neðst með
-hnöppunum *Texti*, *R* og *SQL*. Allt er vistað sjálfkrafa, líka úttak.
+hnöppunum *Texti*, *R*, *Python* og *SQL*. Allt er vistað sjálfkrafa, líka úttak.
 
 - **Textareitir** eru skrifaðir í Markdown (fyrirsagnir með `#`, listar með `-`, `**feitletrað**`, `*skáletrað*`, tenglar og
   töflur) og birtast sniðnir undir breytingareitnum.
 - **R-reitir** keyra í sömu R-setu og R-stjórnborðið, svo breytur lifa milli reita og keyrslna þar til R er endurræst.
   Útprentanir, villur, myndrit og gagnasöfn sem búin eru til með `dm_write()` safnast undir reitnum. Myndrit eru vistuð sem PNG.
+- **Python-reitir** keyra í sömu Python-setu og Python-stjórnborðið (Python er sótt í fyrsta sinn, sjá
+  [python.md](python.md)). Úttak, villur, matplotlib-myndrit og gagnasöfn úr `dm_write()` safnast undir reitinn.
 - **SQL-reitir** keyra á töfluna `data` í gagnasafni minnisbókarinnar. SELECT-fyrirspurnir sýna allt að 1 000 raðir (fyrstu 50
   í yfirlitinu); UPDATE, DELETE og aðrar breytandi setningar eru framkvæmdar sem skref í uppskrift gagnasafnsins og skráðar þar.
 

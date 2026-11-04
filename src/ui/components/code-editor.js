@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * <dm-code language="r|sql|json|latex" placeholder="…" label="…"> code editor built on CodeMirror 5, which ships
+ * <dm-code language="r|python|sql|json|latex" placeholder="…" label="…"> code editor built on CodeMirror 5, which ships
  * as classic scripts and therefore works under file://. The library and language modes load lazily
  * the first time an editor is created. Ctrl+Enter / Cmd+Enter emits `dm-run`.
  */
@@ -11,7 +11,7 @@
   D.define('ui/code-editor', ['ui/base'], (base) => {
     const { h, t, DmElement, define } = base;
     const BASE = 'vendor/codemirror5/';
-    const MODES = { r: { file: 'mode/r/r.js', mime: 'text/x-rsrc' }, sql: { file: 'mode/sql/sql.js', mime: 'text/x-sqlite' }, json: { file: 'mode/javascript/javascript.js', mime: 'application/json' }, latex: { file: 'mode/stex/stex.js', mime: 'text/x-stex' } };
+    const MODES = { r: { file: 'mode/r/r.js', mime: 'text/x-rsrc' }, python: { file: 'mode/python/python.js', mime: 'text/x-python' }, sql: { file: 'mode/sql/sql.js', mime: 'text/x-sqlite' }, json: { file: 'mode/javascript/javascript.js', mime: 'application/json' }, latex: { file: 'mode/stex/stex.js', mime: 'text/x-stex' } };
     let corePromise = null;
     const modePromises = new Map();
 

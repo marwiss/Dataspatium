@@ -109,4 +109,24 @@
       D.assets.decode = realDecode;
     }
   }, 30000);
+
+  test('platform: two workers asking for the same binary asset at once each get a copy (no detached transfer)', async (assert) => {
+    // Two SQLite engines opening together share one decode of sql-wasm.wasm; the second send must not transfer the
+    // buffer the first one detached (it used to fail with DataCloneError and the second engine never started).
+    const name = D.assets.names('sqljs/').find((n) => n.endsWith('.wasm'));
+    assert.ok(name, 'sql.js wasm asset');
+    const src = 'self.onmessage = function (ev) { var d = ev.data; if (d && d.type === "assets") self.postMessage(d.entries.map(function (e) { return e.data.byteLength; })); };';
+    const make = () => new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    const w1 = make(); const w2 = make();
+    const reply = (w) => new Promise((resolve, reject) => { w.onmessage = (ev) => resolve(ev.data); w.onerror = (ev) => reject(new Error(ev.message || 'worker error')); });
+    const replies = Promise.all([reply(w1), reply(w2)]);
+    try {
+      await Promise.all([D.workers.sendAssets(w1, [name], true), D.workers.sendAssets(w2, [name], true)]);
+      const [a, b] = await Promise.race([replies, new Promise((_, rej) => setTimeout(() => rej(new Error('no reply from the workers')), 10000))]);
+      assert.ok(a[0] > 100000 && a[0] === b[0], 'both workers received the full buffer: ' + a[0] + ' / ' + b[0]);
+      // A later consumer still gets the asset (the wrapper is injected again after the transfers).
+      assert.ok((await D.assets.load(name)).byteLength === a[0], 'asset available again on the main thread');
+      return a[0] + ' bytes to each worker';
+    } finally { w1.terminate(); w2.terminate(); }
+  }, 30000);
 })();

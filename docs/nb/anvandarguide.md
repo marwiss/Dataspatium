@@ -3,7 +3,7 @@
 Denne veiledningen beskriver hvordan du arbeider i Dataspatium fra første fil til ferdig rapport. Den forutsetter at du har
 åpnet appen som beskrevet i [kom-igang.md](kom-igang.md). Detaljer om hver modus finnes i [lagen.md](lagen.md), om
 filformater i [format.md](format.md), om API-er i [api-konfiguration.md](api-konfiguration.md), om bearbeiding i
-[bearbeta.md](bearbeta.md), om R i [r-guide.md](r-guide.md), om diagrammer i [visualisera.md](visualisera.md) og om
+[bearbeta.md](bearbeta.md), om R i [r-guide.md](r-guide.md), om Python i [python.md](python.md), om diagrammer i [visualisera.md](visualisera.md) og om
 dokumenter i [dokumentmallar.md](dokumentmallar.md). Vanlige spørsmål besvares i [faq.md](faq.md).
 
 ## Arbeidsområdet

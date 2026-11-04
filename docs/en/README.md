@@ -64,7 +64,8 @@ with a backup or a bundle.
   check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
   municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
   [bearbeta.md](bearbeta.md)).
-- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
+- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), a Python console
+  with pandas and matplotlib fetched the first time (see [python.md](python.md)), an SQL console
   where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
   HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
@@ -112,6 +113,7 @@ everywhere.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
 - [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.
 - [R in Dataspatium](r-guide.md): the R console, `dm_read()`, `dm_write()` and the bundled packages.
+- [Python in Dataspatium](python.md): the Python console, `dm_read()`, `dm_write()` and packages fetched on demand.
 - [Visualise](visualisera.md): the chart builder, D3 templates, R charts, maps and dashboards.
 - [Documents and templates](dokumentmallar.md): the template language and the output formats.
 - [Licences](licenser.md): what you may do with the app and which licences the third-party components have.

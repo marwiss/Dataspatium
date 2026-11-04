@@ -26,7 +26,7 @@ SharedArrayBuffer och R kan avbrytas (se R nedan). Under file:// händer inget a
 ```
 UI               src/ui: design (tokens, tema, typsnitt, ikoner), components (dm-*), shell, modes, i18n
 Tjänster         src/data (datamängder, typer, kodning, arbetsyta), src/io (importers, exporters)
-Motorer          src/engines/sqlite (sql.js i worker), src/engines/r (WebR)
+Motorer          src/engines/sqlite (sql.js i worker), src/engines/r (WebR), src/engines/python (Pyodide, komponent)
 Plattform        src/platform: registry, assets, net-shim, workers + worker-shim, capabilities, storage, consent, components
 ```
 
@@ -43,7 +43,10 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
   meddelanden till den inbäddade koden tills resurserna är på plats och implementerar `fetch`, synkron och
   asynkron `XMLHttpRequest` (inklusive HEAD och Range), `importScripts` och `WebAssembly.instantiateStreaming`.
 - `src/platform/workers.js` ersätter den globala `Worker` med en underklass som filtrerar bort shimmets
-  kontrollmeddelanden och besvarar dem med resurser från en "provider" per namnrymd (`webr`, `sqljs`).
+  kontrollmeddelanden och besvarar dem med resurser från en "provider" per namnrymd (`webr`, `sqljs`, `pyodide`).
+  Binära resurser överförs (transfer) till workern och tas ur minnet på huvudtråden (`assets.take`); ber två workers
+  om samma resurs samtidigt (två SQLite-motorer som öppnas i samma ögonblick) avkodas en ny kopia åt den andra,
+  eftersom den första överföringen kopplar loss bufferten. Wrapperfilen injiceras då på nytt.
 
 ## Motorer
 
@@ -63,6 +66,23 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
   (knappen *Avbryt* i Analysera). Med den kanalen väntar webR:s worker på R-anrop och läser inga fler meddelanden,
   så paket som behövs efter starten skrivs med `webR.FS.writeFile` till `/dataspatium-assets/` i R:s filsystem, där
   worker-shimmen letar efter resurser den saknar.
+
+- Python: Pyodide 314.0.7 (Python 3.14) i en egen klassisk Blob-worker med shimmen (`src/engines/python/python-engine.js`).
+  Python följer inte med i ZIP:en: `src/engines/python/catalog.js` pinnar körtidens fem filer med SHA-256 och läser
+  `pyodide-lock.json` (själv pinnad) för hjulens summor, beroenden och importnamn; filerna hämtas som komponenter från
+  jsDelivr efter samtycke (`components`), tillhandahålls som resurser `pyodide/<fil>` och skickas till workern, som
+  laddar dem via `dataspatium-asset://pyodide/`. Pyodides laddare vill `import()`-a sin ES-modullimfil och vägrar
+  klassiska workers; workern byter ut `import()`-anropet mot en shim-funktion, gör limfilen klassisk (tar bort
+  `export default`, ersätter `import.meta.url`) och tar bort spärren, allt i minnet (filerna ändras inte). Protokollet
+  mot workern är meddelanden med id (`init`, `run`, `eval`, `packages`, `fs`); stdout och stderr strömmar som
+  `stream`, och när Python-kod vill nå internet (micropip) frågar workern huvudtråden (`net`), som tillämpar samtycket.
+  `data/python-bridge.js` är R-bryggans motsvarighet: speglar datamängder som SQLite till `/data`, hämtar och skickar
+  de hjul koden importerar (`catalog.referenced`), kör koden, samlar matplotlib-figurer (Agg, SVG + PNG, kvar i Python
+  för export till SVG, PNG och PDF) och läser `dm_write()`-filer från `/data/out`. `python/dataspatium.py` bäddas in av
+  `tools/wrap_local.py` och ger `dm_list`, `dm_read` (pandas, typer ur `_columns`, metadata i `df.attrs`),
+  `dm_write`, `dm_value_labels`, `theme_dataspatium` och `dm_palette`. Avbryt fungerar som för R via SharedArrayBuffer
+  (`setInterruptBuffer`) i serverläget. Python startar bara på användarens åtgärd (Starta Python eller Kör), inte när
+  fliken öppnas, eftersom första starten hämtar cirka 22 MB.
 
 ## Datamodell
 
@@ -311,7 +331,7 @@ UI:t är `src/ui/docs/document-panel.js` i Exporteras flik Dokument. Arbetsytans
 
 Anteckningsböcker (`src/analysis/notebooks.js`, UI i `src/ui/analysis/notebook-panel.js` som tredje flik i
 Analysera) lagras i IndexedDB-tabellen `notebooks` (Dexie version 6) med celler `{type, source, outputs}`.
-`runCell` kör R-celler genom `data/r-bridge` (utdata, fel, diagram som PNG-dataadresser och skapade datamängder)
+`runCell` kör R- och Python-celler genom `data/r-bridge` respektive `data/python-bridge` (utdata, fel, diagram som PNG-dataadresser och skapade datamängder)
 och SQL-celler mot bokens datamängd (SELECT via motorn, ändrande satser som receptsteget `sql`). `toAst`
 översätter boken till dokumentmodellen, som fått blocktypen `code` (kod och textutdata) i alla byggare, så att
 exporten återanvänder HTML-, DOCX-, PDF-, Markdown- och LaTeX-byggarna.
@@ -404,6 +424,12 @@ IndexedDB (`component:<id>`) med metadata i inställningarna och gör den tillg�
 inbyggda urvalet: webR:s paketindex hämtas och cachas i sju dagar, beroendeslutningen räknas ut utan de inbyggda
 paketen, paketens tgz-filer levereras som resurser och ett utökat `PACKAGES`-index skickas till R-workern
 (`engine.shipAssets`); `r-bridge.ensureRemote(names)` körs efter `ensurePackages` innan användarkod körs.
+
+`engines/python/catalog` använder samma komponentväg för Python: körtiden (`pyodide:<fil>`) och hjulen hämtas med
+`components.ensure`, `D.assets.provide` gör dem till resurser och `engine.shipAssets` skickar dem till workern;
+hjul som workern ber om själv (`asset-request`, en import som kodskanningen inte såg) hämtas av `catalog.provideFile`.
+`components.ensure` tar `onProgress` och läser då svaret i delar, så att statusraden kan visa hur långt hämtningen
+kommit.
 
 Språk laddas vid behov: `boot.js` läser in svenska och det valda språket (alla sex vid första start, innan valet
 gjorts) och `i18n.loadLanguage(kod)` injicerar `src/ui/i18n/<kod>.js` när användaren byter språk. Tester som

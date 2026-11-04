@@ -53,6 +53,7 @@
             basic.button({ label: t('nb.run.all'), icon: 'play', variant: 'primary', onClick: runAll }),
             basic.button({ label: t('nb.add.markdown'), icon: 'plus', onClick: () => addCell('markdown') }),
             basic.button({ label: t('nb.add.r'), icon: 'plus', onClick: () => addCell('r') }),
+            basic.button({ label: t('nb.add.python'), icon: 'plus', onClick: () => addCell('python') }),
             basic.button({ label: t('nb.add.sql'), icon: 'plus', onClick: () => addCell('sql') }),
             basic.button({ label: t('nb.export'), icon: 'file-output', onClick: exportDialog }),
             basic.button({ label: t('nb.share'), icon: 'upload', variant: 'ghost', onClick: shareJson }),

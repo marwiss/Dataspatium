@@ -2719,6 +2719,7 @@ Dataspatium.assets.manifest({
     "lib/codemirror.css",
     "lib/codemirror.js",
     "mode/javascript/javascript.js",
+    "mode/python/python.js",
     "mode/r/r.js",
     "mode/sql/sql.js",
     "mode/stex/stex.js"

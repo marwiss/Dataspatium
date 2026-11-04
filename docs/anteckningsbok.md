@@ -1,6 +1,6 @@
 # Anteckningsbok
 
-En anteckningsbok blandar text, R-kod och SQL i celler som körs i ordning, med utdata sparat under varje cell.
+En anteckningsbok blandar text, R-kod, Python-kod och SQL i celler som körs i ordning, med utdata sparat under varje cell.
 Den finns som tredje flik i läget Analysera och är vägen från analys till färdig rapport utan att lämna appen.
 
 ## Skapa och arbeta
@@ -11,13 +11,15 @@ datamängden och en SQL-cell. Datamängden som SQL-cellerna körs mot väljs i e
 
 Varje cell har en typ (Text, R eller SQL) som kan bytas, knappar för att köra, flytta upp eller ned och ta bort,
 och ett resultatfält. Ctrl+Enter kör cellen du står i; *Kör alla* kör boken uppifrån och ned. Celler läggs till
-längst ned med knapparna *Text*, *R* och *SQL*. Allt sparas automatiskt, även utdata.
+längst ned med knapparna *Text*, *R*, *Python* och *SQL*. Allt sparas automatiskt, även utdata.
 
 - **Textceller** skrivs i Markdown (rubriker med `#`, listor med `-`, `**fet**`, `*kursiv*`, länkar och tabeller)
   och visas formaterade under redigeringsfältet.
 - **R-celler** körs i samma R-session som R-konsolen, så variabler lever kvar mellan celler och körningar tills R
   startas om. Utskrifter, fel, diagram och datamängder som skapas med `dm_write()` samlas under cellen. Diagram
   sparas som PNG.
+- **Python-celler** körs i samma Python-session som Python-konsolen (Python hämtas första gången, se
+  [python.md](python.md)). Utskrifter, fel, matplotlib-diagram och datamängder från `dm_write()` samlas under cellen.
 - **SQL-celler** körs mot tabellen `data` i bokens datamängd. SELECT-frågor visar upp till 1 000 rader (de första
   50 i vyn); UPDATE, DELETE och andra ändrande satser utförs som ett receptsteg i datamängden och loggas där.
 

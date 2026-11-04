@@ -94,6 +94,8 @@
     'src/engines/r/package-index.js',
     'src/engines/r/remote-packages.js',
     'src/engines/r/r-engine.js',
+    'src/engines/python/catalog.js',
+    'src/engines/python/python-engine.js',
     // Data
     'src/data/encoding.js',
     'src/data/types.js',
@@ -117,6 +119,7 @@
     'src/data/comments.js',
     'src/data/workspace.js',
     'src/data/r-bridge.js',
+    'src/data/python-bridge.js',
     // Import and export
     'src/io/importers/csv.js',
     'src/io/importers/excel.js',

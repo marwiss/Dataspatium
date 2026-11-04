@@ -125,5 +125,14 @@
       { labelKey: 'snippet.bar', code: 'library(ggplot2)\nlibrary(dplyr)\ndf |>\n  group_by(lan) |>\n  summarise(folkmangd = sum(folkmangd)) |>\n  ggplot(aes(x = reorder(lan, folkmangd), y = folkmangd / 1000)) +\n  geom_col(fill = dm_palette()[1]) +\n  coord_flip() +\n  labs(title = "Folkmängd per län 2024", x = NULL, y = "Tusental")' },
       { labelKey: 'snippet.write', code: 'resultat <- df |> dplyr::filter(folkmangd > 100000)\ndm_write(resultat, "Stora kommuner")' },
     ],
+    /** Snippets offered in the Python console (pandas and matplotlib); same labels as the R snippets. */
+    pythonSnippets: [
+      { labelKey: 'snippet.list', code: 'dm_list()' },
+      { labelKey: 'snippet.read', code: 'df = dm_read("befolkning_2024")\ndf.head()' },
+      { labelKey: 'snippet.summary', code: 'df.describe(include="all")' },
+      { labelKey: 'snippet.group.py', code: 'per_lan = (df.groupby("lan", as_index=False)\n    .agg(folkmangd=("folkmangd", "sum"), kommuner=("kommun", "count"))\n    .sort_values("folkmangd", ascending=False))\nper_lan' },
+      { labelKey: 'snippet.bar.py', code: 'import matplotlib.pyplot as plt\nper_lan = df.groupby("lan")["folkmangd"].sum().sort_values()\nfig, ax = plt.subplots()\nax.barh(per_lan.index, per_lan / 1000, color=dm_palette()[0])\nax.set_title("Folkmängd per län 2024")\nax.set_xlabel("Tusental")' },
+      { labelKey: 'snippet.write', code: 'resultat = df[df["folkmangd"] > 100000]\ndm_write(resultat, "Stora kommuner")' },
+    ],
   }));
 })();

@@ -45,7 +45,7 @@ widths are changed by dragging the edge towards the work area. Alt+1 to Alt+8 sw
 | Manage | See your datasets in folders with tags, rename, delete, save versions, run batch actions on several datasets, back up and restore the workspace |
 | Search | Search every column of one or all datasets, narrow with facets and save searches as lists ([soka.md](soka.md)) |
 | Process | Edit cells, sort and filter, clean and type, calculate columns, pivot, join datasets; all with undo, versions and recipes ([bearbeta.md](bearbeta.md)) |
-| Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; SQL console against the selected dataset; regular expressions; a notebook that becomes a report |
+| Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; Python console with pandas and matplotlib; SQL console against the selected dataset; regular expressions; a notebook that becomes a report |
 | Visualise | Build charts with Vega-Lite, D3 templates or R scripts, save, export and create them in batch ([visualisera.md](visualisera.md)) |
 | Export | Download data as CSV, Excel, JSON or SQLite, saved charts as SVG, PNG or PDF and documents from templates as HTML, Word, PDF, Markdown or LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
 | Share | Bundle datasets with charts and templates for colleagues, send them directly to phones and other computers with a QR code ([mobil.md](mobil.md)), push the workspace to GitHub, share through the computer's share menu and publish dashboards as HTML ([dela.md](dela.md)) |

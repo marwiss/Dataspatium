@@ -44,7 +44,7 @@ att dra i kanten mot arbetsytan. Alt+1 till Alt+8 växlar läge med tangentborde
 | Hantera | Ser dina datamängder i mappar med taggar, byter namn, tar bort, sparar versioner, kör batchåtgärder på flera datamängder, säkerhetskopierar och återställer arbetsytan |
 | Söka | Söker i alla kolumner i en eller alla datamängder, avgränsar med fasetter och sparar sökningar som listor ([soka.md](soka.md)) |
 | Bearbeta | Redigerar celler, sorterar och filtrerar, rensar och typar, beräknar kolumner, pivoterar, kopplar datamängder; allt med ångra, versioner och recept ([bearbeta.md](bearbeta.md)) |
-| Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; SQL-konsol mot den valda datamängden; reguljära uttryck; anteckningsbok som blir rapport |
+| Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; Python-konsol med pandas och matplotlib; SQL-konsol mot den valda datamängden; reguljära uttryck; anteckningsbok som blir rapport |
 | Visualisera | Bygger diagram med Vega-Lite, D3-mallar eller R-skript, sparar, exporterar och skapar dem i batch ([visualisera.md](visualisera.md)) |
 | Exportera | Laddar ned data som CSV, Excel, JSON eller SQLite, sparade diagram som SVG, PNG eller PDF och dokument ur mallar som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
 | Dela | Paketerar datamängder med diagram och mallar för kollegor, skickar dem direkt till telefoner och andra datorer med QR-kod ([mobil.md](mobil.md)), skickar arbetsytan till GitHub, delar via datorns delningsmeny och publicerar dashboards som HTML ([dela.md](dela.md)) |

@@ -50,6 +50,29 @@
     }
 
     /**
+     * The response body; with a progress callback it is read in chunks so that a large download (the Python runtime)
+     * can be shown. `total` is the known uncompressed size, since Content-Length is the compressed one.
+     * @param {Response} res @param {{id: string, size?: number|null}} spec @param {Function} [onProgress]
+     */
+    async function readBody(res, spec, onProgress) {
+      if (!onProgress || !res.body || typeof res.body.getReader !== 'function') return res.arrayBuffer();
+      const reader = res.body.getReader();
+      const chunks = [];
+      let received = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.byteLength;
+        try { onProgress({ id: spec.id, received, total: spec.size || null }); } catch (err) { console.error('[components] progress listener failed', err); }
+      }
+      const out = new Uint8Array(received);
+      let offset = 0;
+      for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
+      return out.buffer;
+    }
+
+    /**
      * The bytes of a component: from the cache when present (and matching the expected digest), otherwise
      * fetched from the first source that answers, after consent, and verified.
      * @param {{id: string, urls: string[], sha256?: string, size?: number, label?: string, purpose?: string, version?: string, maxAgeMs?: number}} spec
@@ -70,7 +93,7 @@
         try {
           const res = await doFetch(url);
           if (!res || !res.ok) throw new Error(D.t('components.err.status', { status: res ? res.status : '?', url }));
-          const bytes = await res.arrayBuffer();
+          const bytes = await readBody(res, spec, options.onProgress);
           const digest = await sha256Hex(bytes);
           if (spec.sha256 && digest !== spec.sha256) throw new Error(D.t('components.err.hash', { label: spec.label || spec.id }));
           await store(spec, bytes, digest, url);

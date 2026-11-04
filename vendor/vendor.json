@@ -952,6 +952,11 @@
           "wrap": false
         },
         {
+          "path": "mode/python/python.js",
+          "as": "mode/python/python.js",
+          "wrap": false
+        },
+        {
           "path": "mode/sql/sql.js",
           "as": "mode/sql/sql.js",
           "wrap": false

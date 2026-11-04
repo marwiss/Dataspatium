@@ -27,6 +27,14 @@ er hnappurinn *Stöðva* við hliðina á *Keyra* í R-flipanum, og R-lotan með
 úr möppu (file://) leyfir vafrinn ekki þann búnað sem þarf; notaðu þá *Endurræsa R* í Greina. Gagnasöfnin verða ekki
 fyrir áhrifum.
 
+## Hvernig virkar Python í forritinu?
+
+Python (Pyodide) fylgir ekki með í möppunni. Í fyrsta sinn sem þú ýtir á *Ræsa Python* eða *Keyra* í flipanum Python
+spyr forritið um leyfi til að sækja einingar og hleður niður Python með numpy og pandas (um 22 MB) frá jsDelivr, borið
+saman við þekktar prófsummur. Síðan er allt vistað í vafranum og Python ræsist án internets. Pakkar sem kóðinn flytur
+inn (matplotlib, scipy, scikit-learn og hinir í úrvali Pyodide) eru sóttir á sama hátt þegar þeirra er þörf. Sjá
+[python.md](python.md).
+
 ## Af hverju virkar vefþjónusta ekki?
 
 Oftast vantar CORS-stuðning, það er vafrinn má ekki lesa svarið. Þá getur Dataspatium aðeins náð til hennar gegnum milliþjón

@@ -29,9 +29,16 @@
     const transfer = [];
     for (const item of items) {
       if (typeof item === 'string') {
-        const e = await D.assets.decode(item);
+        let e = await D.assets.decode(item);
+        if (e.kind === 'binary') {
+          // The buffer is handed over to the worker. Two workers asking for the same asset at once (two SQLite
+          // engines opening together) share one decode; the first send takes the entry and detaches the buffer when
+          // it posts, so the second decodes a fresh copy (the wrapper is injected again) instead of failing with
+          // "ArrayBuffer is already detached".
+          if (!D.assets.take(item)) { e = await D.assets.decode(item); D.assets.take(item); }
+          transfer.push(e.data);
+        }
         entries.push({ name: item, kind: e.kind, data: e.data });
-        if (e.kind === 'binary') { transfer.push(e.data); D.assets.take(item); }
       } else {
         entries.push({ name: item.name, kind: item.kind, data: item.data });
         if (item.kind === 'binary' && item.transfer !== false) transfer.push(item.data);

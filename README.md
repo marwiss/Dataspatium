@@ -67,6 +67,7 @@ ett paket.
   upp kommun och län ur koordinater, med ångra, versioner och recept som kan exporteras som R eller SQL (se
   [docs/bearbeta.md](docs/bearbeta.md)).
 - **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
+  Python-konsol med pandas och matplotlib som hämtas första gången (se [docs/python.md](docs/python.md)), en
   SQL-konsol där datamängder kopplas ihop med join via sina kortnamn, och anteckningsböcker med text-, R- och
   SQL-celler som blir rapporter i HTML, Word, PDF, Markdown eller LaTeX (se
   [docs/anteckningsbok.md](docs/anteckningsbok.md)), och en Regex-flik där reguljära uttryck prövas på en kolumn
@@ -110,7 +111,9 @@ ett paket.
 - [De åtta lägena](docs/lagen.md): vad som finns var och varför.
 - [Söka](docs/soka.md) och [Dela](docs/dela.md): hitta utan kod, och ge data till andra.
 - [Dataspatium Mobil](docs/mobil.md): telefonen som kurir, mottagare och visare; överföring mellan enheter.
-- [Anteckningsbok](docs/anteckningsbok.md): text, R och SQL i celler som blir en rapport.
+- [Anteckningsbok](docs/anteckningsbok.md): text, R, Python och SQL i celler som blir en rapport.
+- [R i Dataspatium](docs/r-guide.md) och [Python i Dataspatium](docs/python.md): konsolerna, `dm_read()`,
+  `dm_write()`, paketen och diagrammen.
 - [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
 - [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.

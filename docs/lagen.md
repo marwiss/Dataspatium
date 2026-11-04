@@ -93,8 +93,9 @@ kan ångras, spelas upp på en annan datamängd och exporteras som R- eller SQL-
 
 ## Analysera
 
-Kod och statistik. Verktygen ligger i fast ordning: R, SQL, Regex och sist Anteckningsboken, som fogar ihop
-delar från de andra; Python läggs till efter R i en kommande version. R-konsolen har ggplot2, dplyr, tidyr och
+Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop
+delar från de andra. Python-konsolen har pandas och matplotlib och hämtas som komponent första gången du startar den
+(se [python.md](python.md)). R-konsolen har ggplot2, dplyr, tidyr och
 andra paket, sparade skript, diagram med export till SVG, PNG och PDF, och `dm_read()`/`dm_write()` för att
 flytta data mellan appen och R (se [r-guide.md](r-guide.md)); paket som inte följer med appen hämtas från webR:s
 paketförråd när koden behöver dem, efter att du gett lov. SQL-konsolen arbetar mot den valda datamängden

@@ -1,6 +1,6 @@
 # Notatbok
 
-En notatbok blander tekst, R-kode og SQL i celler som kjøres i rekkefølge, med utdata lagret under hver celle. Den finnes
+En notatbok blander tekst, R-kode, Python-kode og SQL i celler som kjøres i rekkefølge, med utdata lagret under hver celle. Den finnes
 som tredje fane i modusen Analyser og er veien fra analyse til ferdig rapport uten å forlate appen.
 
 ## Opprett og arbeid
@@ -11,13 +11,15 @@ kortnavnet og en SQL-celle. Datasettet som SQL-cellene kjøres mot, velges i ege
 
 Hver celle har en type (Tekst, R eller SQL) som kan byttes, knapper for å kjøre, flytte opp eller ned og slette, og et
 resultatfelt. Ctrl+Enter kjører cellen du står i; *Kjør alle* kjører notatboken ovenfra og ned. Celler legges til nederst
-med knappene *Tekst*, *R* og *SQL*. Alt lagres automatisk, også utdata.
+med knappene *Tekst*, *R*, *Python* og *SQL*. Alt lagres automatisk, også utdata.
 
 - **Tekstceller** skrives i Markdown (overskrifter med `#`, lister med `-`, `**fet**`, `*kursiv*`, lenker og tabeller) og
   vises formatert under redigeringsfeltet.
 - **R-celler** kjøres i samme R-sesjon som R-konsollen, så variabler lever videre mellom celler og kjøringer til R startes
   på nytt. Utskrifter, feil, diagrammer og datasett som lages med `dm_write()`, samles under cellen. Diagrammer lagres som
   PNG.
+- **Python-celler** kjøres i samme Python-sesjon som Python-konsollen (Python hentes første gang, se
+  [python.md](python.md)). Utdata, feil, matplotlib-diagrammer og datasett fra `dm_write()` samles under cellen.
 - **SQL-celler** kjøres mot tabellen `data` i notatbokens datasett. SELECT-spørringer viser opptil 1 000 rader (de første
   50 i visningen); UPDATE, DELETE og andre endrende setninger utføres som et trinn i datasettets oppskrift og logges der.
 

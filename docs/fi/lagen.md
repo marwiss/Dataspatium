@@ -95,8 +95,9 @@ toistaa toiselle aineistolle ja viedä R- tai SQL-koodina. Versiot tallentavat t
 
 ## Analysoi
 
-Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia
-muista; Python lisätään R:n jälkeen tulevassa versiossa. R-konsolissa on ggplot2, dplyr, tidyr ja muita paketteja,
+Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia
+muista. Python-konsolissa on pandas ja matplotlib, ja se haetaan komponenttina, kun käynnistät sen ensimmäisen kerran
+(ks. [python.md](python.md)). R-konsolissa on ggplot2, dplyr, tidyr ja muita paketteja,
 tallennetut skriptit, kaaviot vienteineen SVG-, PNG- ja PDF-muotoon sekä `dm_read()`/`dm_write()` datan siirtämiseen
 sovelluksen ja R:n välillä (ks. [r-guide.md](r-guide.md)); paketit, jotka eivät tule sovelluksen mukana, noudetaan
 webR:n pakettivarastosta, kun koodi tarvitsee niitä, luvan antamisen jälkeen. SQL-konsoli toimii valittua aineistoa

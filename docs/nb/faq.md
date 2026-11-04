@@ -28,6 +28,14 @@ et intranett): da finnes knappen *Avbryt* ved siden av *Kjør* i R-fanen, og R-�
 åpnes fra en mappe (file://), tillater ikke nettleseren mekanismen som kreves; bruk da *Start R på nytt* i Analyser.
 Datasettene påvirkes ikke.
 
+## Hvordan fungerer Python i appen?
+
+Python (Pyodide) følger ikke med i mappen. Første gang du trykker *Start Python* eller *Kjør* i fanen Python, spør appen
+om lov til å hente komponenter og laster ned Python med numpy og pandas (cirka 22 MB) fra jsDelivr, kontrollert mot
+kjente kontrollsummer. Deretter lagres alt i nettleseren, og Python starter uten internett. Pakker som koden
+importerer (matplotlib, scipy, scikit-learn og de øvrige i Pyodides utvalg), hentes på samme måte når de trengs. Se
+[python.md](python.md).
+
 ## Hvorfor virker ikke et API?
 
 Oftest mangler API-et CORS-støtte, det vil si at nettleseren ikke får lese svaret. Da kan Dataspatium bare nå det via en

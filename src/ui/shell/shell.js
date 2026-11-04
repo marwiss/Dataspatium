@@ -10,8 +10,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge'],
-    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge'],
+    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela'];
       const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
@@ -64,16 +64,21 @@
           this.statusEl = h('span', { class: 'dm-sb', 'data-state': 'saved' }, icons.icon('circle-check', 14), h('span', { text: t('shell.status.saved') }));
           this.storageEl = h('span', { class: 'dm-sb dm-sb-optional', text: '' });
           this.datasetEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-optional', 'aria-label': t('shell.dataset.current'), title: t('shell.dataset.current'), hidden: true, onclick: () => this.activate('hantera') });
-          this.engineEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-optional', 'data-engine': 'idle', title: t('shell.engine.hint'), onclick: () => this.activate('analysera') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: '' }));
+          // One indicator per engine; Python's is shown once it has been started (it is a component fetched on demand).
+          const engineButton = () => h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-optional', 'data-engine': 'idle', title: t('shell.engine.hint'), onclick: () => this.activate('analysera') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: '' }));
+          this.engineEls = { r: engineButton(), python: engineButton() };
+          this.engineEl = this.engineEls.r;
+          this.engineEls.python.hidden = true;
           this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
             this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl,
             h('span', { class: 'dm-sb-grow' }),
-            this.engineEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
+            this.engineEls.r, this.engineEls.python, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
             basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('right') }),
             basic.button({ label: t('shell.log'), icon: 'panel-bottom', size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') }));
           this.setEngine('r', rBridge.bridge.state);
+          this.setEngine('python', pyBridge.bridge.state);
           this.el = h('div', { class: 'dm-shell', 'data-left': 'open', 'data-right': 'open', 'data-drawer': 'closed' },
             h('a', { class: 'dm-skip', href: '#dm-center', text: t('shell.skip'), onclick: (e) => { e.preventDefault(); this.slots.center.focus(); } }),
             h('header', { class: 'dm-topbar' },
@@ -102,15 +107,19 @@
             if (mq.matches) this.el.setAttribute('data-' + side, 'closed');
           }
           rBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('r', payload.state); });
+          pyBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('python', payload.state); });
           if (D.net && D.net.onActivity) D.net.onActivity((active) => this.setNet(active));
           replace(this.root, this.el);
         }
 
         /** Engine indicator in the status bar: a dot coloured by state and the text "R redo". */
         setEngine(engine, state) {
-          if (!this.engineEl) return;
-          this.engineEl.setAttribute('data-engine', state);
-          /** @type {HTMLElement} */ (this.engineEl.lastChild).textContent = `${t('shell.engine.' + engine)} ${t(ENGINE_STATES[state] || ENGINE_STATES.idle)}`;
+          const el = this.engineEls && this.engineEls[engine];
+          if (!el) return;
+          el.setAttribute('data-engine', state);
+          /** @type {HTMLElement} */ (el.lastChild).textContent = `${t('shell.engine.' + engine)} ${t(ENGINE_STATES[state] || ENGINE_STATES.idle)}`;
+          // Python appears in the status bar once it has been started.
+          if (engine === 'python') el.hidden = state === 'idle';
         }
 
         /** Network indicator: lit while real network requests are in flight. */

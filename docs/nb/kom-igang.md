@@ -42,7 +42,7 @@ mot arbeidsflaten. Alt+1 til Alt+8 bytter modus med tastaturet.
 | Håndter | Ser datasettene dine i mapper med tagger, gir nytt navn, sletter, lagrer versjoner, kjører batchhandlinger på flere datasett, sikkerhetskopierer og gjenoppretter arbeidsområdet |
 | Søk | Søker i alle kolonner i ett eller alle datasett, avgrenser med fasetter og lagrer søk som lister ([soka.md](soka.md)) |
 | Bearbeid | Redigerer celler, sorterer og filtrerer, renser og setter typer, beregner kolonner, pivoterer, kobler datasett; alt med angre, versjoner og oppskrifter ([bearbeta.md](bearbeta.md)) |
-| Analyser | R-konsoll med ggplot2 og tidyverse, lagrede skript og diagrameksport; SQL-konsoll mot det valgte datasettet; regulære uttrykk; notatbok som blir rapport |
+| Analyser | R-konsoll med ggplot2 og tidyverse, lagrede skript og diagrameksport; Python-konsoll med pandas og matplotlib; SQL-konsoll mot det valgte datasettet; regulære uttrykk; notatbok som blir rapport |
 | Visualiser | Lager diagrammer med Vega-Lite, D3-maler eller R-skript, lagrer, eksporterer og lager dem i batch ([visualisera.md](visualisera.md)) |
 | Eksporter | Laster ned data som CSV, Excel, JSON eller SQLite, lagrede diagrammer som SVG, PNG eller PDF og dokumenter fra maler som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
 | Del | Pakker datasett med diagrammer og maler for kolleger, sender dem direkte til telefoner og andre datamaskiner med QR-kode ([mobil.md](mobil.md)), sender arbeidsområdet til GitHub, deler via datamaskinens delingsmeny og publiserer dashbord som HTML ([dela.md](dela.md)) |

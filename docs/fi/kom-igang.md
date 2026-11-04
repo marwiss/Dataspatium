@@ -43,7 +43,7 @@ Paneelien leveyttä muutetaan vetämällä reunaa työaluetta kohti. Alt+1 … A
 | Hallitse | Näet aineistosi kansioissa tunnisteineen, nimeät uudelleen, poistat, tallennat versioita, suoritat erätoimintoja usealle aineistolle, varmuuskopioit ja palautat työtilan |
 | Hae | Haet kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaat faseteilla ja tallennat hakuja listoiksi ([soka.md](soka.md)) |
 | Muokkaa | Muokkaat soluja, lajittelet ja suodatat, puhdistat ja tyypität, lasket sarakkeita, pivotoit ja yhdistät aineistoja; kaikessa on kumoaminen, versiot ja reseptit ([bearbeta.md](bearbeta.md)) |
-| Analysoi | R-konsoli, jossa on ggplot2 ja tidyverse, tallennetut skriptit ja kaavioiden vienti; SQL-konsoli valittua aineistoa vastaan; säännölliset lausekkeet; muistikirja, josta syntyy raportti |
+| Analysoi | R-konsoli, jossa on ggplot2 ja tidyverse, tallennetut skriptit ja kaavioiden vienti; Python-konsoli, jossa on pandas ja matplotlib; SQL-konsoli valittua aineistoa vastaan; säännölliset lausekkeet; muistikirja, josta syntyy raportti |
 | Visualisoi | Rakennat kaavioita Vega-Litellä, D3-malleilla tai R-skripteillä, tallennat, viet ja luot niitä eräajona ([visualisera.md](visualisera.md)) |
 | Vie | Lataat dataa CSV-, Excel-, JSON- tai SQLite-muodossa, tallennettuja kaavioita SVG-, PNG- tai PDF-muodossa ja asiakirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa ([dokumentmallar.md](dokumentmallar.md)) |
 | Jaa | Paketoit aineistoja kaavioineen ja malleineen kollegoille, lähetät ne suoraan puhelimiin ja toisiin tietokoneisiin QR-koodilla ([mobil.md](mobil.md)), lähetät työtilan GitHubiin, jaat tietokoneen jakovalikosta ja julkaiset kojelautoja HTML-muodossa ([dela.md](dela.md)) |
