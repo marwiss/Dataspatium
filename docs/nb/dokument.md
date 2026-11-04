@@ -1,12 +1,12 @@
 # Dokumenter og bilder
 
-Dataspatium leser inn dokumenter og bilder som datasett av egne slag. Et dokument blir en tabell med ett avsnitt per
-rad, en bildesamling en tabell med ett bilde per rad, og filene selv følger med datasettet. Alt som gjelder for
-tabeller gjelder også her: filtre, Søk, regler, oppskrifter, SQL, R og Python, eksport, pakker og deling. I tillegg
-kommer en dokumentvisning og et galleri i Bearbeid samt verktøyene **Tekst** og **Bilder** i Analyser, som fungerer
-uten kode.
+Dataspatium leser inn dokumenter som **dokumentsamlinger** og bilder som **bildesamlinger**. En dokumentsamling åpnes
+som en lesevisning og en bildesamling som et galleri. Under overflaten er begge datasett av egne slag, med ett avsnitt
+respektive ett bilde per rad og filene selv i datasettet, slik at alt som gjelder for tabeller også gjelder her:
+filtre, Søk, regler, oppskrifter, SQL, R og Python, eksport, pakker og deling. I tillegg kommer verktøyene **Tekst**
+og **Bilder** i Analyser, som fungerer uten kode.
 
-## Dokumenter som datasett
+## Dokumentsamlinger
 
 | Format | Gjenkjennes på | Avsnitt | Overskrifter | Sider |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ uten kode.
 | Markdown | .md, .markdown | Blokker atskilt av en tom linje; punktlister på én linje | Linjer som begynner med `#` | Alt er side 1 |
 | Tekst | .txt (velg formatet *Dokumenter*) | Blokker atskilt av en tom linje | Ingen | Alt er side 1 |
 
-Hvert datasett av slaget dokumenter har kolonnene `dokument` (filnavn), `sida` (side), `stycke` (løpenummer i
+Hver dokumentsamling har kolonnene `dokument` (filnavn), `sida` (side), `stycke` (løpenummer i
 dokumentet), `typ` (`rubrik`, `stycke` eller `tabell`), `text` og `tecken` (tegn). Rader fra tabeller får cellene
 atskilt med ` | `. Originalfilene lagres i datasettet, slik at PDF-sider kan vises og filene hentes igjen; de regnes
 med i datasettets størrelse under Håndter.
@@ -34,10 +34,12 @@ gitt. Dokumenter kan også hentes fra en nettadresse (Hent > Nettadresse) på sa
 
 ## Dokumentvisningen i Bearbeid
 
-Et datasett av slaget dokumenter åpnes i Bearbeid som lesevisning: velg dokument, bla side for side, og bytt for PDF
-mellom teksten og siden som bilde. Overskrifter vises som overskrifter og tabellrader med fast bredde. Klikk på et
-avsnitt, så viser inspektøren side, nummer, type og antall tegn med en knapp for å kopiere teksten; øverst i
-inspektøren står dokumentets tittel, forfatter, sider, avsnitt og ord med knappen *Hent originalen*.
+En dokumentsamling åpnes i Bearbeid som lesevisning, og fra Håndter med knappen *Les*; oversiktsfanen der lister
+dokumentene, og et klikk på ett av dem åpner nettopp det. Velg dokument og visning: *Side for side*, *Hele
+dokumentet* (løpende tekst med sidemarkeringer, tegnet i omganger slik at selv en lang rapport åpnes straks) eller,
+for PDF, *Siden som bilde*. Overskrifter vises som overskrifter og tabellrader med fast bredde. Klikk på et avsnitt,
+så viser inspektøren side, nummer, type og antall tegn med en knapp for å kopiere teksten; øverst i inspektøren står
+dokumentets tittel, forfatter, sider, avsnitt og ord med knappen *Hent originalen*.
 
 Søkefeltet søker i hele samlingen og lister treffene med sammenheng (nøkkelord i kontekst); klikk på et treff for å
 hoppe til siden. *Vis som tabell* gir den vanlige tabellen med alle handlinger i Bearbeid, og *Vis som dokument* tar
@@ -61,9 +63,9 @@ Ord er følger av bokstaver og tall med bindestreker og apostrofer inni (`e-post
 bokstaver. Stoppordlistene er korte lister med funksjonsord; slå av bryteren for å telle alle ord. De samme tekstene
 kan analyseres videre i R og Python: `dm_read("navn")` gir avsnittstabellen som data.frame respektive DataFrame.
 
-## Bilder som datasett
+## Bildesamlinger
 
-Bilder (JPEG, PNG, WebP, GIF, BMP og AVIF der nettleseren kan lese dem) blir et datasett av slaget bilder med én rad
+Bilder (JPEG, PNG, WebP, GIF, BMP og AVIF der nettleseren kan lese dem) blir en bildesamling med én rad
 per bilde: `fil`, `typ`, `storlek` (byte), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`, `altitud` og
 `beskrivning`. Dato, kamera, posisjon og beskrivelse leses fra EXIF i JPEG-filer; andre formater får bare mål og
 størrelse. En forhåndsvisning (langside høyst 1600 px) og en miniatyr (320 px) lagres i datasettet; originalene
@@ -75,11 +77,12 @@ andre datoer i filtre, Spørring og diagrammer.
 
 ## Galleriet i Bearbeid
 
-En bildesamling åpnes i Bearbeid som galleri med miniatyrer, filter og sortering (filnavn, dato, størrelse). Klikk på
-et bilde, så viser inspektøren en større forhåndsvisning, type, størrelse, mål, dato, kamera, posisjon og høyde samt
-beskrivelsen, som kan endres og lagres: endringen logges som oppskriftssteg som alle andre celleendringer og kan
-angres. Dobbeltklikk for å se bildet stort, eller hent forhåndsvisningen til datamaskinen. *Vis som tabell* gir
-tabellen med alle handlinger.
+En bildesamling åpnes i Bearbeid som galleri med miniatyrer, filter og sortering (filnavn, dato, størrelse), og fra
+Håndter med knappen *Vis bilder*; oversiktsfanen der viser de første miniatyrene, og et klikk på en av dem åpner den i
+galleriet. Klikk på et bilde, så viser inspektøren en større forhåndsvisning, type, størrelse, mål, dato, kamera,
+posisjon og høyde samt beskrivelsen, som kan endres og lagres: endringen logges som oppskriftssteg som alle andre
+celleendringer og kan angres. Dobbeltklikk for å se bildet stort, eller hent forhåndsvisningen til datamaskinen. *Vis
+som tabell* gir tabellen med alle handlinger.
 
 ## Verktøyet Bilder i Analyser
 

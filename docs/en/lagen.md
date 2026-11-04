@@ -69,6 +69,10 @@ a folder you choose, automatically after every change if you like, and can be lo
 app and R packages that are fetched when needed, with size, source and buttons to fetch in advance or remove).
 Bundles and GitHub have moved to the Share mode.
 
+A document or image collection is shown with its number of documents and pages or pictures, with the document list or
+the first thumbnails on the overview tab, and with the button *Read* or *Show pictures* that opens the reading view or
+the gallery in Process (see [dokument.md](dokument.md)).
+
 ## Search
 
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on
@@ -91,9 +95,8 @@ list, pattern, length, SQL condition) check the data on request with a report an
 their own. Everything is logged as a recipe that can be undone, replayed on another dataset and exported as R or
 SQL code. Versions save snapshots to go back to. See [bearbeta.md](bearbeta.md).
 
-Datasets of the kind **documents** (PDF, Word, OpenDocument, Markdown, text) open as a reading view: choose a document,
-turn the pages, show the PDF page as an image, search the whole collection and download the original. Datasets of the
-kind **images** open as a gallery with thumbnails, a filter, a sort order and the picture's EXIF details in the
+**Document collections** (PDF, Word, OpenDocument, Markdown, text) open as a reading view: choose a document,
+turn the pages, show the PDF page as an image, search the whole collection and download the original. **Image collections** open as a gallery with thumbnails, a filter, a sort order and the picture's EXIF details in the
 inspector, where the description can be edited. *Show as table* gives the ordinary table with every action in both
 cases. See [dokument.md](dokument.md).
 

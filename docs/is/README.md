@@ -56,8 +56,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   Excel, SQLite) nást um staðbundna brú, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable verða uppsprettur með einum smelli. Skrár má tengja og lesa aftur af
   diski (sjá [kallor.md](kallor.md)).
-- **Skjöl og myndir**: PDF, Word, OpenDocument, Markdown og texti verða gagnasöfn með einni málsgrein í hverri röð og
-  eru lesin í skjalasýn; myndir verða safn með EXIF-upplýsingum og myndasafni. Tólin Texti (orðtíðni, leitarorð í
+- **Skjöl og myndir**: PDF, Word, OpenDocument, Markdown og texti verða skjalasöfn sem eru lesin í lestrarsýn, síðu fyrir síðu
+  eða í heild; myndir verða myndasafn með EXIF-upplýsingum og myndasafni. Tólin Texti (orðtíðni, leitarorð í
   samhengi, samtíðni) og Myndir (yfirlit, tvítök) virka án kóða (sjá [dokument.md](dokument.md)).
 - **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
   gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja

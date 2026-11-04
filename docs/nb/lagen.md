@@ -66,6 +66,10 @@ filer i en mappe du velger, automatisk etter hver endring om du vil, og kan last
 R-pakker som hentes når de trengs, med størrelse, kilde og knapper for å hente på forhånd eller fjerne). Pakker og
 GitHub har flyttet til modusen Del.
 
+En dokument- eller bildesamling vises med antall dokumenter og sider respektive bilder, med dokumentlisten eller de
+første miniatyrene på oversiktsfanen, og med knappen *Les* eller *Vis bilder* som åpner lesevisningen respektive
+galleriet i Bearbeid (se [dokument.md](dokument.md)).
+
 ## Søk
 
 Finn og list uten kode. Fanen *Søk* søker i alle kolonner i ett eller alle datasett; hvert ord må finnes på raden,
@@ -88,8 +92,8 @@ liste, mønster, lengde, SQL-betingelse) kontrollerer dataene på forespørsel m
 datasett. Alt logges som en oppskrift som kan angres, spilles av på et annet datasett og eksporteres som R- eller
 SQL-kode. Versjoner lagrer øyeblikksbilder å gå tilbake til. Se [bearbeta.md](bearbeta.md).
 
-Datasett av slaget **dokumenter** (PDF, Word, OpenDocument, Markdown, tekst) åpnes som lesevisning: velg dokument, bla
-side for side, vis PDF-siden som bilde, søk i hele samlingen og hent originalen. Datasett av slaget **bilder** åpnes
+**Dokumentsamlinger** (PDF, Word, OpenDocument, Markdown, tekst) åpnes som lesevisning: velg dokument, bla
+side for side, vis PDF-siden som bilde, søk i hele samlingen og hent originalen. **Bildesamlinger** åpnes
 som galleri med miniatyrer, filter, sortering og bildets EXIF-opplysninger i inspektøren, der beskrivelsen kan
 endres. *Vis som tabell* gir i begge tilfeller den vanlige tabellen med alle handlinger. Se [dokument.md](dokument.md).
 

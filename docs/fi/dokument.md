@@ -1,12 +1,12 @@
 # Asiakirjat ja kuvat
 
-Dataspatium lukee asiakirjat ja kuvat omanlajisina aineistoina. Asiakirjasta tulee taulukko, jossa on yksi kappale
-riviä kohti, kuvakokoelmasta taulukko, jossa on yksi kuva riviä kohti, ja tiedostot itse kulkevat aineiston mukana.
-Kaikki, mikä koskee taulukoita, koskee myös näitä: suodattimet, Hae, säännöt, reseptit, SQL, R ja Python, vienti,
-paketit ja jakaminen. Lisäksi Muokkaa-tilassa on asiakirjanäkymä ja galleria sekä Analysoi-tilassa työkalut
-**Teksti** ja **Kuvat**, jotka toimivat ilman koodia.
+Dataspatium lukee asiakirjat **asiakirjakokoelmina** ja kuvat **kuvakokoelmina**. Asiakirjakokoelma avautuu
+lukunäkymänä ja kuvakokoelma galleriana. Pinnan alla molemmat ovat omanlajisiaan aineistoja, joissa on yksi kappale
+tai yksi kuva riviä kohti ja tiedostot itse aineistossa, joten kaikki, mikä koskee taulukoita, koskee myös näitä:
+suodattimet, Hae, säännöt, reseptit, SQL, R ja Python, vienti, paketit ja jakaminen. Lisäksi Analysoi-tilassa ovat
+työkalut **Teksti** ja **Kuvat**, jotka toimivat ilman koodia.
 
-## Asiakirjat aineistoina
+## Asiakirjakokoelmat
 
 | Muoto | Tunnistetaan | Kappaleet | Otsikot | Sivut |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ paketit ja jakaminen. Lisäksi Muokkaa-tilassa on asiakirjanäkymä ja galleria 
 | Markdown | .md, .markdown | Tyhjän rivin erottamat lohkot; luettelot yhdellä rivillä | `#`-merkillä alkavat rivit | Kaikki on sivua 1 |
 | Teksti | .txt (valitse muoto *Asiakirjat*) | Tyhjän rivin erottamat lohkot | Ei | Kaikki on sivua 1 |
 
-Jokaisessa asiakirjalajin aineistossa on sarakkeet `dokument` (tiedostonimi), `sida` (sivu), `stycke` (juokseva
+Jokaisessa asiakirjakokoelmassa on sarakkeet `dokument` (tiedostonimi), `sida` (sivu), `stycke` (juokseva
 numero asiakirjassa), `typ` (`rubrik`, `stycke` tai `tabell`), `text` ja `tecken` (merkkejä). Taulukoista tulevien
 rivien solut erotetaan merkeillä ` | `. Alkuperäiset tiedostot tallennetaan aineistoon, jotta PDF-sivut voidaan
 näyttää ja tiedostot ladata uudelleen; ne lasketaan aineiston kokoon Hallitse-tilassa.
@@ -36,11 +36,12 @@ Sarakevaihe ohitetaan, koska sarakkeet ovat annetut. Asiakirjoja voi noutaa sama
 
 ## Asiakirjanäkymä Muokkaa-tilassa
 
-Asiakirjalajin aineisto avautuu Muokkaa-tilassa lukunäkymänä: valitse asiakirja, selaa sivu kerrallaan ja vaihda
-PDF:ssä tekstin ja kuvana näytettävän sivun välillä. Otsikot näytetään otsikoina ja taulukkorivit tasalevyisellä
-kirjasimella. Napsauta kappaletta, niin tarkastelupaneeli näyttää sivun, numeron, tyypin ja merkkimäärän sekä
-painikkeen tekstin kopiointiin; paneelin yläosassa ovat asiakirjan otsikko, tekijä, sivut, kappaleet ja sanat sekä
-painike *Lataa alkuperäinen*.
+Asiakirjakokoelma avautuu Muokkaa-tilassa lukunäkymänä ja Hallitse-tilasta painikkeella *Lue*; sen yleiskatsausvälilehti
+luettelee asiakirjat, ja napsautus johonkin niistä avaa juuri sen. Valitse asiakirja ja näkymä: *Sivu kerrallaan*,
+*Koko asiakirja* (jatkuva teksti sivumerkeillä, piirretään osissa, jotta pitkäkin raportti avautuu heti) tai PDF:lle
+*Sivu kuvana*. Otsikot näytetään otsikoina ja taulukkorivit tasalevyisellä kirjasimella. Napsauta kappaletta, niin
+tarkastelupaneeli näyttää sivun, numeron, tyypin ja merkkimäärän sekä painikkeen tekstin kopiointiin; paneelin
+yläosassa ovat asiakirjan otsikko, tekijä, sivut, kappaleet ja sanat sekä painike *Lataa alkuperäinen*.
 
 Hakukenttä hakee koko kokoelmasta ja luettelee osumat asiayhteydessään (avainsanat kontekstissa); napsauta osumaa
 siirtyäksesi sivulle. *Näytä taulukkona* antaa tavallisen taulukon kaikilla Muokkaa-tilan toiminnoilla, ja *Näytä
@@ -65,9 +66,9 @@ Sanat ovat kirjainten ja numeroiden jonoja, joiden sisällä voi olla yhdysmerkk
 valinta laskeaksesi kaikki sanat. Samoja tekstejä voi analysoida edelleen R:llä ja Pythonilla: `dm_read("nimi")`
 antaa kappaletaulukon data.framena tai DataFramena.
 
-## Kuvat aineistoina
+## Kuvakokoelmat
 
-Kuvista (JPEG, PNG, WebP, GIF, BMP ja AVIF, kun selain osaa lukea ne) tulee kuvalajin aineisto, jossa on yksi rivi
+Kuvista (JPEG, PNG, WebP, GIF, BMP ja AVIF, kun selain osaa lukea ne) tulee kuvakokoelma, jossa on yksi rivi
 kuvaa kohti: `fil`, `typ`, `storlek` (tavua), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`, `altitud` ja
 `beskrivning`. Päivämäärä, kamera, sijainti ja kuvaus luetaan JPEG-tiedostojen EXIF-tiedoista; muut muodot saavat
 vain mitat ja koon. Esikatselukuva (pitkä sivu enintään 1600 px) ja pienoiskuva (320 px) tallennetaan aineistoon;
@@ -80,10 +81,12 @@ kaikki muut päivämäärät suodattimissa, Kyselyssä ja kaavioissa.
 ## Galleria Muokkaa-tilassa
 
 Kuvakokoelma avautuu Muokkaa-tilassa galleriana, jossa on pienoiskuvat, suodatin ja järjestys (tiedostonimi,
-päivämäärä, koko). Napsauta kuvaa, niin tarkastelupaneeli näyttää suuremman esikatselukuvan, tyypin, koon, mitat,
-päivämäärän, kameran, sijainnin ja korkeuden sekä kuvauksen, jota voi muokata ja tallentaa: muutos kirjataan
-reseptivaiheena kuten muutkin solumuutokset, ja sen voi kumota. Kaksoisnapsauta nähdäksesi kuvan suurena tai lataa
-esikatselukuva tietokoneelle. *Näytä taulukkona* antaa taulukon kaikilla toiminnoilla.
+päivämäärä, koko), ja Hallitse-tilasta painikkeella *Näytä kuvat*; sen yleiskatsausvälilehti näyttää ensimmäiset
+pienoiskuvat, ja napsautus johonkin niistä avaa sen galleriassa. Napsauta kuvaa, niin tarkastelupaneeli näyttää
+suuremman esikatselukuvan, tyypin, koon, mitat, päivämäärän, kameran, sijainnin ja korkeuden sekä kuvauksen, jota voi
+muokata ja tallentaa: muutos kirjataan reseptivaiheena kuten muutkin solumuutokset, ja sen voi kumota.
+Kaksoisnapsauta nähdäksesi kuvan suurena tai lataa esikatselukuva tietokoneelle. *Näytä taulukkona* antaa taulukon
+kaikilla toiminnoilla.
 
 ## Kuvat-työkalu Analysoi-tilassa
 

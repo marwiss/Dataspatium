@@ -218,7 +218,7 @@ Python hentes første gang.
 
 ## Dokumenter og bilder
 
-Datasett av slaget dokumenter og bilder åpnes i Bearbeid i en egen visning (lesevisning respektive galleri) med
+Dokument- og bildesamlinger åpnes i Bearbeid i en egen visning (lesevisning respektive galleri) med
 knappen *Vis som tabell* for den vanlige tabellen. Alle handlinger her gjelder tabellen: filtrere avsnitt, rette
 tekst, slette rader, legge til beregnede kolonner. Se [dokument.md](dokument.md).
 

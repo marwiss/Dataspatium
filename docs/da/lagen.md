@@ -65,6 +65,10 @@ der må kontakte internettet, med log over kald) og *Komponenter* (dele af appen
 brug for dem, med størrelse, kilde og knapper til at hente på forhånd eller fjerne). Pakker og GitHub er flyttet til
 tilstanden Del.
 
+En dokument- eller billedsamling vises med antal dokumenter og sider henholdsvis billeder, med dokumentlisten eller de
+første miniaturer på oversigtsfanen, og med knappen *Læs* eller *Vis billeder*, som åbner læsevisningen henholdsvis
+galleriet i Bearbejd (se [dokument.md](dokument.md)).
+
 ## Søg
 
 Find og list uden kode. Fanen *Søg* søger i alle kolonner i ét eller alle datasæt; hvert ord skal findes på rækken,
@@ -87,9 +91,8 @@ unik, interval, liste, mønster, længde, SQL-betingelse) kontrollerer data på 
 rækker som eget datasæt. Alt logges som en opskrift, der kan fortrydes, afspilles på et andet datasæt og eksporteres
 som R- eller SQL-kode. Versioner gemmer øjebliksbilleder at gå tilbage til. Se [bearbeta.md](bearbeta.md).
 
-Datasæt af slagsen **dokumenter** (PDF, Word, OpenDocument, Markdown, tekst) åbnes som læsevisning: vælg dokument,
-bladr side for side, vis PDF-siden som billede, søg i hele samlingen og hent originalen. Datasæt af slagsen
-**billeder** åbnes som galleri med miniaturer, filter, sortering og billedets EXIF-oplysninger i inspektøren, hvor
+**Dokumentsamlinger** (PDF, Word, OpenDocument, Markdown, tekst) åbnes som læsevisning: vælg dokument,
+bladr side for side, vis PDF-siden som billede, søg i hele samlingen og hent originalen. **Billedsamlinger** åbnes som galleri med miniaturer, filter, sortering og billedets EXIF-oplysninger i inspektøren, hvor
 beskrivelsen kan ændres. *Vis som tabel* giver i begge tilfælde den almindelige tabel med alle handlinger. Se
 [dokument.md](dokument.md).
 

@@ -1,12 +1,12 @@
 # Dokumenter og billeder
 
-Dataspatium læser dokumenter og billeder ind som datasæt af deres egen slags. Et dokument bliver en tabel med ét
-afsnit pr. række, en billedsamling en tabel med ét billede pr. række, og filerne selv følger med datasættet. Alt,
-der gælder for tabeller, gælder også her: filtre, Søg, regler, recepter, SQL, R og Python, eksport, pakker og deling.
-Dertil kommer en dokumentvisning og et galleri i Bearbejd samt værktøjerne **Tekst** og **Billeder** i Analysér, som
-fungerer uden kode.
+Dataspatium læser dokumenter ind som **dokumentsamlinger** og billeder som **billedsamlinger**. En dokumentsamling
+åbnes som en læsevisning og en billedsamling som et galleri. Under overfladen er begge datasæt af deres egen slags,
+med ét afsnit henholdsvis ét billede pr. række og filerne selv i datasættet, så alt, der gælder for tabeller, også
+gælder her: filtre, Søg, regler, recepter, SQL, R og Python, eksport, pakker og deling. Dertil kommer værktøjerne
+**Tekst** og **Billeder** i Analysér, som fungerer uden kode.
 
-## Dokumenter som datasæt
+## Dokumentsamlinger
 
 | Format | Genkendes på | Afsnit | Overskrifter | Sider |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ fungerer uden kode.
 | Markdown | .md, .markdown | Blokke adskilt af en tom linje; punktlister på én linje | Linjer, der begynder med `#` | Alt er side 1 |
 | Tekst | .txt (vælg formatet *Dokumenter*) | Blokke adskilt af en tom linje | Ingen | Alt er side 1 |
 
-Hvert datasæt af slagsen dokumenter har kolonnerne `dokument` (filnavn), `sida` (side), `stycke` (løbenummer i
+Hver dokumentsamling har kolonnerne `dokument` (filnavn), `sida` (side), `stycke` (løbenummer i
 dokumentet), `typ` (`rubrik`, `stycke` eller `tabell`), `text` og `tecken` (tegn). Rækker fra tabeller får cellerne
 adskilt med ` | `. Originalfilerne gemmes i datasættet, så PDF-sider kan vises og filerne hentes igen; de tælles med
 i datasættets størrelse under Håndter.
@@ -34,10 +34,12 @@ fordi kolonnerne er givne. Dokumenter kan også hentes fra en webadresse (Hent >
 
 ## Dokumentvisningen i Bearbejd
 
-Et datasæt af slagsen dokumenter åbnes i Bearbejd som læsevisning: vælg dokument, bladr side for side, og skift for
-PDF mellem teksten og siden som billede. Overskrifter vises som overskrifter og tabelrækker med fast bredde. Klik på
-et afsnit, så viser inspektøren side, nummer, type og antal tegn med en knap til at kopiere teksten; øverst i
-inspektøren står dokumentets titel, forfatter, sider, afsnit og ord med knappen *Hent originalen*.
+En dokumentsamling åbnes i Bearbejd som læsevisning, og fra Håndter med knappen *Læs*; oversigtsfanen dér lister
+dokumenterne, og et klik på et af dem åbner netop det. Vælg dokument og visning: *Side for side*, *Hele dokumentet*
+(løbende tekst med sidemarkeringer, tegnet i omgange, så selv en lang rapport åbnes straks) eller, for PDF, *Siden som
+billede*. Overskrifter vises som overskrifter og tabelrækker med fast bredde. Klik på et afsnit, så viser inspektøren
+side, nummer, type og antal tegn med en knap til at kopiere teksten; øverst i inspektøren står dokumentets titel,
+forfatter, sider, afsnit og ord med knappen *Hent originalen*.
 
 Søgefeltet søger i hele samlingen og lister fundene med sammenhæng (nøgleord i kontekst); klik på et fund for at
 springe til siden. *Vis som tabel* giver den almindelige tabel med alle handlinger i Bearbejd, og *Vis som dokument*
@@ -61,9 +63,9 @@ Ord er følger af bogstaver og tal med bindestreger og apostroffer indeni (`e-ma
 bogstaver. Stopordslisterne er korte lister med formord; slå kontakten fra for at tælle alle ord. De samme tekster
 kan analyseres videre i R og Python: `dm_read("navn")` giver afsnitstabellen som data.frame henholdsvis DataFrame.
 
-## Billeder som datasæt
+## Billedsamlinger
 
-Billeder (JPEG, PNG, WebP, GIF, BMP og AVIF, hvor browseren kan læse dem) bliver et datasæt af slagsen billeder med
+Billeder (JPEG, PNG, WebP, GIF, BMP og AVIF, hvor browseren kan læse dem) bliver en billedsamling med
 én række pr. billede: `fil`, `typ`, `storlek` (byte), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`, `altitud` og
 `beskrivning`. Dato, kamera, position og beskrivelse læses fra EXIF i JPEG-filer; andre formater får kun mål og
 størrelse. En forhåndsvisning (lang side højst 1600 px) og en miniature (320 px) gemmes i datasættet; originalerne
@@ -75,11 +77,12 @@ andre datoer i filtre, Forespørgsel og diagrammer.
 
 ## Galleriet i Bearbejd
 
-En billedsamling åbnes i Bearbejd som galleri med miniaturer, filter og sortering (filnavn, dato, størrelse). Klik på
-et billede, så viser inspektøren en større forhåndsvisning, type, størrelse, mål, dato, kamera, position og højde
-samt beskrivelsen, som kan ændres og gemmes: ændringen logges som receptskridt som alle andre celleændringer og kan
-fortrydes. Dobbeltklik for at se billedet stort, eller hent forhåndsvisningen til computeren. *Vis som tabel* giver
-tabellen med alle handlinger.
+En billedsamling åbnes i Bearbejd som galleri med miniaturer, filter og sortering (filnavn, dato, størrelse), og fra
+Håndter med knappen *Vis billeder*; oversigtsfanen dér viser de første miniaturer, og et klik på en af dem åbner den i
+galleriet. Klik på et billede, så viser inspektøren en større forhåndsvisning, type, størrelse, mål, dato, kamera,
+position og højde samt beskrivelsen, som kan ændres og gemmes: ændringen logges som receptskridt som alle andre
+celleændringer og kan fortrydes. Dobbeltklik for at se billedet stort, eller hent forhåndsvisningen til computeren.
+*Vis som tabel* giver tabellen med alle handlinger.
 
 ## Værktøjet Billeder i Analysér
 

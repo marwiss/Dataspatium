@@ -220,7 +220,7 @@ kommentar, i R-exporten körs R-steget som kod och Python-steget står som komme
 
 ## Dokument och bilder
 
-Datamängder av slaget dokument och bilder öppnas i Bearbeta i en egen vy (läsvy respektive galleri) med knappen
+Dokumentsamlingar och bildsamlingar öppnas i Bearbeta i en egen vy (läsvy respektive galleri) med knappen
 *Visa som tabell* för den vanliga tabellen. Alla åtgärder här gäller tabellen: filtrera stycken, rätta text, ta bort
 rader, lägga till beräknade kolumner. Se [dokument.md](dokument.md).
 

@@ -209,8 +209,8 @@ ODBC-uppsprettur, Excel og Access-fyrirspurnir nást um gagnagrunnsbrúna, litla
 
 ## Get ég lesið inn PDF-skrár, Word-skjöl og myndir?
 
-Já. Slepptu þeim í Sækja: skjöl (PDF, Word, OpenDocument, Markdown, texti) verða gagnasafn með einni málsgrein í hverri
-röð, myndir gagnasafn með einni röð fyrir hverja mynd og EXIF-upplýsingum. Margar skrár í einu verða safn. Í Vinna
+Já. Slepptu þeim í Sækja: skjöl (PDF, Word, OpenDocument, Markdown, texti) verða skjalasafn með einni málsgrein í hverri
+röð, myndir myndasafn með einni röð fyrir hverja mynd og EXIF-upplýsingum. Margar skrár í einu verða safn. Í Vinna
 eru þau sýnd sem lestrarsýn eða myndasafn, og í Greina eru tólin Texti og Myndir án kóða. Skannaðar PDF-skrár án
 textalags gefa engan texta. Sjá [dokument.md](dokument.md).
 

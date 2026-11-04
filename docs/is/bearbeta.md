@@ -216,7 +216,7 @@ keyrir R-skrefið sem kóði og Python-skrefið er athugasemd. Python er sótt �
 
 ## Skjöl og myndir
 
-Gagnasöfn af tegundunum skjöl og myndir opnast í Vinna í eigin sýn (lestrarsýn eða myndasafn) með hnappinum *Sýna sem
+Skjala- og myndasöfn opnast í Vinna í eigin sýn (lestrarsýn eða myndasafn) með hnappinum *Sýna sem
 töflu* fyrir venjulegu töfluna. Allar aðgerðir hér gilda um töfluna: sía málsgreinar, leiðrétta texta, eyða röðum,
 bæta við reiknuðum dálkum. Sjá [dokument.md](dokument.md).
 

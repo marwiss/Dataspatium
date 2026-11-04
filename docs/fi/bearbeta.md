@@ -222,7 +222,7 @@ ensimmäisellä kerralla.
 
 ## Asiakirjat ja kuvat
 
-Asiakirja- ja kuvalajin aineistot avautuvat Muokkaa-tilassa omassa näkymässään (lukunäkymä tai galleria), ja painike
+Asiakirja- ja kuvakokoelmat avautuvat Muokkaa-tilassa omassa näkymässään (lukunäkymä tai galleria), ja painike
 *Näytä taulukkona* antaa tavallisen taulukon. Kaikki tämän tilan toiminnot koskevat taulukkoa: kappaleiden
 suodatus, tekstin korjaus, rivien poisto, laskettujen sarakkeiden lisäys. Katso [dokument.md](dokument.md).
 

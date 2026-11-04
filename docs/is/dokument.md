@@ -1,11 +1,12 @@
 # Skjöl og myndir
 
-Dataspatium les inn skjöl og myndir sem gagnasöfn af eigin tegund. Skjal verður tafla með einni málsgrein í hverri
-röð, myndasafn tafla með einni mynd í hverri röð, og skrárnar sjálfar fylgja gagnasafninu. Allt sem gildir um töflur
-gildir líka hér: síur, Leita, reglur, uppskriftir, SQL, R og Python, útflutningur, pakkar og deiling. Þar við bætast
-skjalasýn og myndasafn í Vinna auk tólanna **Texti** og **Myndir** í Greina, sem virka án kóða.
+Dataspatium les inn skjöl sem **skjalasöfn** og myndir sem **myndasöfn**. Skjalasafn opnast sem lestrarsýn og myndasafn
+sem myndasýn. Undir yfirborðinu eru bæði gagnasöfn af eigin tegund, með einni málsgrein eða einni mynd í hverri röð og
+skrárnar sjálfar í gagnasafninu, svo allt sem gildir um töflur gildir líka hér: síur, Leita, reglur, uppskriftir,
+SQL, R og Python, útflutningur, pakkar og deiling. Þar við bætast tólin **Texti** og **Myndir** í Greina, sem virka án
+kóða.
 
-## Skjöl sem gagnasöfn
+## Skjalasöfn
 
 | Snið | Þekkist á | Málsgreinar | Fyrirsagnir | Síður |
 |---|---|---|---|---|
@@ -15,7 +16,7 @@ skjalasýn og myndasafn í Vinna auk tólanna **Texti** og **Myndir** í Greina,
 | Markdown | .md, .markdown | Blokkir aðskildar með auðri línu; punktalistar á einni línu | Línur sem byrja á `#` | Allt er síða 1 |
 | Texti | .txt (veldu sniðið *Skjöl*) | Blokkir aðskildar með auðri línu | Engar | Allt er síða 1 |
 
-Hvert gagnasafn af tegundinni skjöl hefur dálkana `dokument` (skráarheiti), `sida` (síða), `stycke` (hlaupandi
+Hvert skjalasafn hefur dálkana `dokument` (skráarheiti), `sida` (síða), `stycke` (hlaupandi
 númer í skjalinu), `typ` (`rubrik`, `stycke` eða `tabell`), `text` og `tecken` (stafir). Raðir úr töflum fá
 reitina aðskilda með ` | `. Frumskrárnar eru vistaðar í gagnasafninu svo að hægt sé að sýna PDF-síður og sækja
 skrárnar aftur; þær teljast með í stærð gagnasafnsins undir Umsjón.
@@ -33,10 +34,12 @@ einnig sækja af vefslóð (Sækja > Vefslóð) á sama hátt.
 
 ## Skjalasýnin í Vinna
 
-Gagnasafn af tegundinni skjöl opnast í Vinna sem lestrarsýn: veldu skjal, flettu síðu fyrir síðu, og skiptu fyrir
-PDF milli textans og síðunnar sem myndar. Fyrirsagnir eru sýndar sem fyrirsagnir og töflulínur með jafnbreiðu letri.
-Smelltu á málsgrein og skoðarinn sýnir síðu, númer, tegund og fjölda stafa með hnappi til að afrita textann; efst í
-skoðaranum standa titill skjalsins, höfundur, síður, málsgreinar og orð með hnappinum *Sækja frumritið*.
+Skjalasafn opnast í Vinna sem lestrarsýn, og úr Umsjón með hnappinum *Lesa*; yfirlitsflipinn þar telur upp skjölin og
+smellur á eitt þeirra opnar það. Veldu skjal og sýn: *Síða fyrir síðu*, *Allt skjalið* (samfelldur texti með
+síðumerkjum, teiknaður í áföngum svo að löng skýrsla opnist strax) eða, fyrir PDF, *Síðan sem mynd*. Fyrirsagnir eru
+sýndar sem fyrirsagnir og töflulínur með jafnbreiðu letri. Smelltu á málsgrein og skoðarinn sýnir síðu, númer, tegund
+og fjölda stafa með hnappi til að afrita textann; efst í skoðaranum standa titill skjalsins, höfundur, síður,
+málsgreinar og orð með hnappinum *Sækja frumritið*.
 
 Leitarreiturinn leitar í öllu safninu og telur upp niðurstöðurnar með samhengi (leitarorð í samhengi); smelltu á
 niðurstöðu til að hoppa á síðuna. *Sýna sem töflu* gefur venjulegu töfluna með öllum aðgerðum í Vinna, og *Sýna sem
@@ -61,9 +64,9 @@ eru talin með lágstöfum. Stopporðalistarnir eru stuttir listar af kerfisorð
 orð. Sömu texta má greina áfram í R og Python: `dm_read("heiti")` gefur málsgreinatöfluna sem data.frame eða
 DataFrame.
 
-## Myndir sem gagnasöfn
+## Myndasöfn
 
-Myndir (JPEG, PNG, WebP, GIF, BMP og AVIF þar sem vafrinn getur lesið þær) verða gagnasafn af tegundinni myndir með
+Myndir (JPEG, PNG, WebP, GIF, BMP og AVIF þar sem vafrinn getur lesið þær) verða myndasafn með
 einni röð fyrir hverja mynd: `fil`, `typ`, `storlek` (bæti), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`,
 `altitud` og `beskrivning`. Dagsetning, myndavél, staðsetning og lýsing eru lesin úr EXIF í JPEG-skrám; önnur snið
 fá aðeins stærð og mál. Forskoðun (lengri hlið mest 1600 px) og smámynd (320 px) eru vistaðar í gagnasafninu;
@@ -75,11 +78,12 @@ aðrar dagsetningar í síum, Fyrirspurn og ritum.
 
 ## Myndasafnið í Vinna
 
-Myndasafn opnast í Vinna sem safn smámynda með síu og röðun (skráarheiti, dagsetning, stærð). Smelltu á mynd og
-skoðarinn sýnir stærri forskoðun, tegund, stærð, mál, dagsetningu, myndavél, staðsetningu og hæð auk lýsingarinnar,
-sem má breyta og vista: breytingin er skráð sem uppskriftarskref eins og aðrar reitabreytingar og má afturkalla.
-Tvísmelltu til að sjá myndina stóra eða sæktu forskoðunina á tölvuna. *Sýna sem töflu* gefur töfluna með öllum
-aðgerðum.
+Myndasafn opnast í Vinna sem safn smámynda með síu og röðun (skráarheiti, dagsetning, stærð), og úr Umsjón með
+hnappinum *Sýna myndir*; yfirlitsflipinn þar sýnir fyrstu smámyndirnar og smellur á eina þeirra opnar hana í
+myndasýninni. Smelltu á mynd og skoðarinn sýnir stærri forskoðun, tegund, stærð, mál, dagsetningu, myndavél,
+staðsetningu og hæð auk lýsingarinnar, sem má breyta og vista: breytingin er skráð sem uppskriftarskref eins og aðrar
+reitabreytingar og má afturkalla. Tvísmelltu til að sjá myndina stóra eða sæktu forskoðunina á tölvuna. *Sýna sem
+töflu* gefur töfluna með öllum aðgerðum.
 
 ## Tólið Myndir í Greina
 

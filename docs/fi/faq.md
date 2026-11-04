@@ -217,8 +217,8 @@ tietokoneella; palvelut kuten PostgREST, OData ja GraphQL lisätään lähteiksi
 
 ## Voinko lukea PDF-tiedostoja, Word-asiakirjoja ja kuvia?
 
-Kyllä. Pudota ne Nouda-tilaan: asiakirjoista (PDF, Word, OpenDocument, Markdown, teksti) tulee aineisto, jossa on
-yksi kappale riviä kohti, kuvista aineisto, jossa on yksi rivi kuvaa kohti ja EXIF-tiedot. Useista tiedostoista
+Kyllä. Pudota ne Nouda-tilaan: asiakirjoista (PDF, Word, OpenDocument, Markdown, teksti) tulee asiakirjakokoelma, jossa on
+yksi kappale riviä kohti, kuvista kuvakokoelma, jossa on yksi rivi kuvaa kohti ja EXIF-tiedot. Useista tiedostoista
 kerralla tulee kokoelma. Muokkaa-tila näyttää ne lukunäkymänä tai galleriana, ja Analysoi-tilassa ovat työkalut
 Teksti ja Kuvat ilman koodia. Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna tekstiä. Katso
 [dokument.md](dokument.md).

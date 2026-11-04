@@ -221,7 +221,7 @@ is fetched the first time.
 
 ## Documents and images
 
-Datasets of the kinds documents and images open in Process in a view of their own (a reading view and a gallery) with
+Document and image collections open in Process in a view of their own (a reading view and a gallery) with
 the button *Show as table* for the ordinary table. Every action here applies to the table: filter paragraphs, correct
 text, remove rows, add computed columns. See [dokument.md](dokument.md).
 

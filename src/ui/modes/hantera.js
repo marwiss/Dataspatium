@@ -72,8 +72,11 @@
         const body = h('div', { class: 'dm-center-fill' });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })),
+            h('h1', null, ui.icon(ui.datasetList.kindIcon(ds.kind), 20), ds.name, ' ', ...kindBadges(ds)),
             h('div', { class: 'dm-row' },
+              // Collections open in their own view: the reading view for documents, the gallery for pictures.
+              ds.kind === 'document' ? ui.button({ label: t('hantera.read'), icon: 'book-open', variant: 'primary', title: t('hantera.read.hint'), onClick: () => openView(ds) }) : null,
+              ds.kind === 'images' ? ui.button({ label: t('hantera.view.images'), icon: 'images', variant: 'primary', title: t('hantera.view.images.hint'), onClick: () => openView(ds) }) : null,
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
@@ -85,22 +88,24 @@
         if (tab === 'overview') {
           const kv = /** @type {any} */ (h('dm-kv'));
           const src = ds.source || {};
+          const collection = ds.kind === 'document' || ds.kind === 'images';
           kv.items = [
             { label: t('common.name'), value: ds.name },
             { label: t('datasets.shortname'), value: ds.shortName || '' },
             { label: t('common.description'), value: ds.description },
+            // Collections are described in their own units; the paragraph or picture table is one view of them.
+            collection ? { label: t('datasets.kind'), value: t('datasets.kind.' + ds.kind) } : null,
+            ds.kind === 'document' && Array.isArray(ds.documents) ? { label: t('document.files'), value: `${i18n.formatNumber(ds.documents.length)} · ${t('document.pages.n', { n: i18n.formatNumber(ds.documents.reduce((n, d) => n + (d.pages || 0), 0)) })}` } : null,
+            ds.kind === 'document' ? { label: t('document.paragraphs'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
+            ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
             { label: t('common.created'), value: i18n.formatDateTime(ds.createdAt) },
             { label: t('common.updated'), value: i18n.formatDateTime(ds.updatedAt) },
-            { label: t('datasets.rows'), value: i18n.formatNumber(ds.rowCount || 0) },
-            { label: t('datasets.columns'), value: String(ds.columnCount || 0) },
+            collection ? null : { label: t('datasets.rows'), value: i18n.formatNumber(ds.rowCount || 0) },
+            collection ? null : { label: t('datasets.columns'), value: String(ds.columnCount || 0) },
             { label: t('common.size'), value: i18n.formatBytes(ds.byteSize || 0) },
             { label: t('common.source'), value: describeSource(src) },
-            // Collections: what the rows stand for and what travels with them (originals, previews).
-            ds.kind && ds.kind !== 'table' ? { label: t('datasets.kind'), value: t('datasets.kind.' + ds.kind) } : null,
-            ds.kind === 'document' && Array.isArray(ds.documents) ? { label: t('document.files'), value: `${i18n.formatNumber(ds.documents.length)} · ${t('document.pages.n', { n: i18n.formatNumber(ds.documents.reduce((n, d) => n + (d.pages || 0), 0)) })}` } : null,
-            ds.kind === 'images' && ds.images ? { label: t('images.count'), value: i18n.formatNumber(ds.images.count || 0) + (ds.images.skipped && ds.images.skipped.length ? ` (${t('images.skipped', { n: ds.images.skipped.length })})` : '') } : null,
           ].filter(Boolean);
-          replace(body, h('div', { class: 'dm-card' }, kv));
+          replace(body, h('div', { class: 'dm-card' }, kv), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
         } else if (tab === 'columns') {
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));
@@ -186,6 +191,53 @@
           shell.log(text, 'ok'); ui.toast.show(text, { kind: 'ok' });
           render();
         } catch (err) { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
+      }
+
+      /** Badges in the head: documents and pages, pictures, or rows and columns. */
+      function kindBadges(ds) {
+        if (ds.kind === 'document') {
+          const docs = Array.isArray(ds.documents) ? ds.documents : [];
+          return [h('dm-badge', { text: t('document.files.n', { n: i18n.formatNumber(docs.length) }) }), ' ', h('dm-badge', { text: t('document.pages.n', { n: i18n.formatNumber(docs.reduce((n, d) => n + (Number(d.pages) || 0), 0)) }) })];
+        }
+        if (ds.kind === 'images') return [h('dm-badge', { text: t('gallery.count', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) }) })];
+        return [h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) }) }), ' ', h('dm-badge', { text: t('common.columns', { n: ds.columnCount || 0 }) })];
+      }
+      /** Open a collection in Bearbeta's own view, at a document or picture when given. */
+      function openView(ds, extra) {
+        store.set(Object.assign({ selectedId: ds.id }, extra || {}));
+        shell.activate('bearbeta');
+      }
+      /** The documents of a collection: click one to read it. */
+      function documentList(ds) {
+        const docs = Array.isArray(ds.documents) ? ds.documents : [];
+        if (!docs.length) return null;
+        const fmtDate = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : i18n.formatDateTime(d); };
+        return h('div', { class: 'dm-stack-sm' },
+          h('h3', { text: t('hantera.documents.title') }),
+          h('div', { class: 'dm-list' }, docs.map((d) => h('button', { type: 'button', class: 'dm-list-item', 'data-tip': t('hantera.read.one', { name: d.name }), onclick: () => openView(ds, { openDocument: { datasetId: ds.id, document: d.name } }) },
+            ui.icon('file-text', 16),
+            h('span', { class: 'dm-list-main' },
+              h('span', { class: 'dm-truncate', text: d.title && d.title !== d.name ? `${d.title} (${d.name})` : d.name }),
+              h('span', { class: 'dm-list-sub dm-truncate', text: [d.type ? String(d.type).toUpperCase() : '', d.pages ? t('document.pages.n', { n: i18n.formatNumber(d.pages) }) : '', d.words !== undefined ? t('hantera.documents.words', { n: i18n.formatNumber(d.words) }) : '', d.author || '', fmtDate(d.created || d.modified)].filter(Boolean).join(' · ') }))))));
+      }
+      /** The first pictures of a collection as thumbnails: click one to open it in the gallery. */
+      async function imageGrid(ds) {
+        const dsFiles = D.require('data/dataset-files');
+        const rows = await services.datasets.query(ds.id, { limit: 24 });
+        if (!rows.length) return null;
+        const items = [];
+        for (const r of rows) {
+          const name = String(r[0] || '');
+          const url = await dsFiles.url(ds.id, name, 'thumb').catch(() => null);
+          items.push(h('button', { type: 'button', class: 'dm-photos-item', 'data-tip': name, onclick: () => openView(ds, { openImage: { datasetId: ds.id, name } }) },
+            h('span', { class: 'dm-photos-thumb' }, url ? h('img', { src: url, alt: name, loading: 'lazy' }) : ui.icon('image', 24)),
+            h('span', { class: 'dm-photos-caption' }, h('span', { class: 'dm-truncate', text: name }))));
+        }
+        const total = ds.images && ds.images.count ? ds.images.count : ds.rowCount || rows.length;
+        return h('div', { class: 'dm-stack-sm' },
+          h('h3', { text: t('hantera.images.title') }),
+          h('div', { class: 'dm-photos dm-photos-preview-grid' }, items),
+          total > rows.length ? h('p', { class: 'dm-help', text: t('hantera.images.more', { n: i18n.formatNumber(total - rows.length) }) }) : null);
       }
 
       /** Human-readable origin of a dataset. */

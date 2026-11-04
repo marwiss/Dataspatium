@@ -1,12 +1,12 @@
 # Documents and images
 
-Dataspatium reads documents and images as datasets of their own kinds. A document becomes a table with one paragraph
-per row, an image collection a table with one picture per row, and the files themselves travel with the dataset.
-Everything that applies to tables applies here too: filters, Search, rules, recipes, SQL, R and Python, export,
-bundles and sharing. On top of that come a document view and a gallery in Process, and the tools **Text** and
-**Images** in Analyse, which work without code.
+Dataspatium reads documents as **document collections** and pictures as **image collections**. A document collection
+opens as a reading view and an image collection as a gallery. Underneath, both are datasets of their own kinds, with
+one paragraph or one picture per row and the files themselves in the dataset, so everything that applies to tables
+applies here too: filters, Search, rules, recipes, SQL, R and Python, export, bundles and sharing. On top of that come
+the tools **Text** and **Images** in Analyse, which work without code.
 
-## Documents as datasets
+## Document collections
 
 | Format | Recognised by | Paragraphs | Headings | Pages |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ bundles and sharing. On top of that come a document view and a gallery in Proces
 | Markdown | .md, .markdown | Blocks separated by a blank line; bullet lists on one line | Lines starting with `#` | Everything is page 1 |
 | Text | .txt (choose the format *Documents*) | Blocks separated by a blank line | None | Everything is page 1 |
 
-Every dataset of the kind documents has the columns `dokument` (file name), `sida` (page), `stycke` (running number
+Every document collection has the columns `dokument` (file name), `sida` (page), `stycke` (running number
 in the document), `typ` (`rubrik`, `stycke` or `tabell`), `text` and `tecken` (characters). Rows from tables get
 their cells separated by ` | `. The original files are stored in the dataset, so that PDF pages can be shown and the
 files downloaded again; they count towards the dataset's size under Manage.
@@ -35,11 +35,12 @@ are given. Documents can also be fetched from a web address (Import > Web addres
 
 ## The document view in Process
 
-A dataset of the kind documents opens in Process as a reading view: choose a document, turn the pages, and for PDF
-switch between the text and the page as an image. Headings are shown as headings and table rows in a fixed-width
-font. Click a paragraph and the inspector shows page, number, type and character count with a button to copy the
-text; at the top of the inspector are the document's title, author, pages, paragraphs and words, with the button
-*Download the original*.
+A document collection opens in Process as a reading view, and from Manage with the button *Read*; the overview tab
+there lists the documents, and a click on one opens that document. Choose a document and a view: *Page by page*,
+*Whole document* (continuous text with page markers, drawn in chunks so that even a long report opens at once) or,
+for PDF, *Page as image*. Headings are shown as headings and table rows in a fixed-width font. Click a paragraph and
+the inspector shows page, number, type and character count with a button to copy the text; at the top of the
+inspector are the document's title, author, pages, paragraphs and words, with the button *Download the original*.
 
 The search field searches the whole collection and lists the hits with context (keywords in context); click a hit to
 jump to its page. *Show as table* gives the ordinary table with every action in Process, and *Show as document*
@@ -64,9 +65,9 @@ lower case. The stopword lists are short lists of function words; switch them of
 texts can be analysed further in R and Python: `dm_read("name")` gives the paragraph table as a data.frame or a
 DataFrame.
 
-## Images as datasets
+## Image collections
 
-Pictures (JPEG, PNG, WebP, GIF, BMP and AVIF where the browser can read them) become a dataset of the kind images
+Pictures (JPEG, PNG, WebP, GIF, BMP and AVIF where the browser can read them) become an image collection
 with one row per picture: `fil`, `typ`, `storlek` (bytes), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`,
 `altitud` and `beskrivning`. Date, camera, position and description are read from EXIF in JPEG files; other formats
 only get dimensions and size. A preview (long side at most 1600 px) and a thumbnail (320 px) are stored in the
@@ -78,11 +79,12 @@ other dates in filters, Query and charts.
 
 ## The gallery in Process
 
-An image collection opens in Process as a gallery with thumbnails, a filter and a sort order (file name, date, size).
-Click a picture and the inspector shows a larger preview, type, size, dimensions, date, camera, position and
-altitude, and the description, which can be edited and saved: the change is logged as a recipe step like every other
-cell edit and can be undone. Double-click to see the picture large, or download the preview to your computer.
-*Show as table* gives the table with every action.
+An image collection opens in Process as a gallery with thumbnails, a filter and a sort order (file name, date, size),
+and from Manage with the button *Show pictures*; the overview tab there shows the first thumbnails, and a click on one
+opens it in the gallery. Click a picture and the inspector shows a larger preview, type, size, dimensions, date,
+camera, position and altitude, and the description, which can be edited and saved: the change is logged as a recipe
+step like every other cell edit and can be undone. Double-click to see the picture large, or download the preview to
+your computer. *Show as table* gives the table with every action.
 
 ## The Images tool in Analyse
 

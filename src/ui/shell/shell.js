@@ -130,7 +130,8 @@
 
         updateDatasetSummary(state) {
           const ds = state.datasets.find((d) => d.id === state.selectedId);
-          this.datasetEl.textContent = ds ? `${ds.shortName || ds.name} · ${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })}` : '';
+          // Collections are counted in their own units (documents and pages, pictures), tables in rows.
+          this.datasetEl.textContent = ds ? `${ds.shortName || ds.name} · ${ds.kind === 'document' || ds.kind === 'images' ? datasetList.kindSummary(ds) : t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })}` : '';
           this.datasetEl.hidden = !ds;
         }
 
@@ -392,7 +393,7 @@
           for (const d of state.datasets) {
             cmds.push({
               id: 'dataset:' + d.id, label: d.name, hint: d.shortName || '', group: t('palette.group.datasets'), icon: 'table', keywords: [t('shell.datasets'), d.shortName || ''],
-              hint: t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) }) + ' · ' + t('common.columns', { n: d.columnCount || 0 }),
+              hint: datasetList.kindSummary(d),
               run: () => { this.store.set({ selectedId: d.id }); if (!this.store.get().mode || this.store.get().mode === 'inhamta') this.activate('bearbeta'); },
             });
           }

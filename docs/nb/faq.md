@@ -212,8 +212,8 @@ PostgREST, OData og GraphQL legges til som kilder med en adresse. Se [kallor.md]
 
 ## Kan jeg lese inn PDF-filer, Word-dokumenter og bilder?
 
-Ja. Slipp dem i Hent: dokumenter (PDF, Word, OpenDocument, Markdown, tekst) blir et datasett med ett avsnitt per rad,
-bilder et datasett med én rad per bilde og EXIF-opplysninger. Flere filer på én gang blir en samling. I Bearbeid vises
+Ja. Slipp dem i Hent: dokumenter (PDF, Word, OpenDocument, Markdown, tekst) blir en dokumentsamling med ett avsnitt per rad,
+bilder en bildesamling med én rad per bilde og EXIF-opplysninger. Flere filer på én gang blir en samling. I Bearbeid vises
 de som lesevisning respektive galleri, og i Analyser finnes verktøyene Tekst og Bilder uten kode. Skannede PDF-filer
 uten tekstlag gir ingen tekst. Se [dokument.md](dokument.md).
 

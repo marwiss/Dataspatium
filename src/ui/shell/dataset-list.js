@@ -17,6 +17,15 @@
     /** Icon per dataset kind (data/datasets KINDS); tables and unknown kinds share the table icon. */
     const KIND_ICONS = { table: 'table', document: 'file-text', images: 'images', graph: 'share-2', model: 'package' };
     function kindIcon(kind) { return KIND_ICONS[kind] || 'table'; }
+    /** One line about a dataset's size: documents and pages for a document collection, pictures for an image collection, rows and columns otherwise. */
+    function kindSummary(ds) {
+      if (ds.kind === 'document') {
+        const docs = Array.isArray(ds.documents) ? ds.documents : [];
+        return t('datasets.sub.document', { n: i18n.formatNumber(docs.length), pages: i18n.formatNumber(docs.reduce((s, d) => s + (Number(d.pages) || 0), 0)) });
+      }
+      if (ds.kind === 'images') return t('datasets.sub.images', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) });
+      return `${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`;
+    }
     const COLLAPSED_SETTING = 'ui.folders.collapsed';
     const SORTS = ['updated', 'name', 'rows'];
     const DRAG_TYPE = 'text/plain';
@@ -131,7 +140,7 @@
         const btn = item({
           id: ds.id, icon: kindIcon(ds.kind), label: ds.name,
           // The short name is what SQL, R and chart files use to refer to the dataset.
-          sub: `${ds.shortName ? ds.shortName + ' · ' : ''}${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`,
+          sub: `${ds.shortName ? ds.shortName + ' · ' : ''}${kindSummary(ds)}`,
           code: ds.shortName || '', current, onSelect: options.onSelect,
         });
         if (options.onMove) {
@@ -187,6 +196,6 @@
         h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), subEl));
     }
 
-    return { render, buildTree, sortDatasets, kindIcon, KIND_ICONS, SORTS };
+    return { render, buildTree, sortDatasets, kindIcon, kindSummary, KIND_ICONS, SORTS };
   });
 })();

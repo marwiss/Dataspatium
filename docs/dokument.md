@@ -1,12 +1,12 @@
 # Dokument och bilder
 
-Dataspatium läser in dokument och bilder som datamängder av egna slag. Ett dokument blir en tabell med ett stycke per
-rad, en bildsamling en tabell med en bild per rad, och filerna själva följer med datamängden. Allt som gäller för
-tabeller gäller också här: filter, Söka, regler, recept, SQL, R och Python, export, paket och delning. Därtill
-kommer en dokumentvy och ett galleri i Bearbeta samt verktygen **Text** och **Bilder** i Analysera, som fungerar
-utan kod.
+Dataspatium läser in dokument som **dokumentsamlingar** och bilder som **bildsamlingar**. En dokumentsamling öppnas som
+en läsvy och en bildsamling som ett galleri. Under ytan är båda datamängder av egna slag, med ett stycke respektive en
+bild per rad och filerna själva med i datamängden, så att allt som gäller för tabeller också gäller här: filter, Söka,
+regler, recept, SQL, R och Python, export, paket och delning. Därtill kommer verktygen **Text** och **Bilder** i
+Analysera, som fungerar utan kod.
 
-## Dokument som datamängd
+## Dokumentsamlingar
 
 | Format | Känns igen på | Stycken | Rubriker | Sidor |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ utan kod.
 | Markdown | .md, .markdown | Block åtskilda av tomrad; punktlistor på en rad | Rader som börjar med `#` | Allt är sida 1 |
 | Text | .txt (välj formatet *Dokument*) | Block åtskilda av tomrad | Inga | Allt är sida 1 |
 
-Varje datamängd av slaget dokument har kolumnerna `dokument` (filnamn), `sida`, `stycke` (löpnummer i dokumentet),
+Varje dokumentsamling har kolumnerna `dokument` (filnamn), `sida`, `stycke` (löpnummer i dokumentet),
 `typ` (`rubrik`, `stycke` eller `tabell`), `text` och `tecken`. Rader från tabeller får cellerna åtskilda med ` | `.
 Originalfilerna sparas i datamängden, så att PDF-sidor kan visas och filerna hämtas igen; de räknas in i
 datamängdens storlek under Hantera.
@@ -34,10 +34,12 @@ kolumnerna är givna. Dokument kan också hämtas från en webbadress (Inhämta 
 
 ## Dokumentvyn i Bearbeta
 
-En datamängd av slaget dokument öppnas i Bearbeta som läsvy: välj dokument, bläddra sida för sida, och växla för PDF
-mellan texten och sidan som bild. Rubriker visas som rubriker och tabellrader med fast bredd. Klicka på ett stycke så
-visar inspektören sida, nummer, typ och antal tecken med en knapp för att kopiera texten; längst upp i inspektören
-står dokumentets titel, författare, sidor, stycken och ord, med knappen *Hämta originalet*.
+En dokumentsamling öppnas i Bearbeta som läsvy, och från Hantera med knappen *Läs*; översiktsfliken där listar
+dokumenten, och ett klick på ett av dem öppnar just det. Välj dokument och visning: *Sida för sida*, *Hela dokumentet*
+(löpande text med sidmarkeringar, ritad i omgångar så att även en lång rapport öppnas direkt) eller, för PDF, *Sidan
+som bild*. Rubriker visas som rubriker och tabellrader med fast bredd. Klicka på ett stycke så visar inspektören
+sida, nummer, typ och antal tecken med en knapp för att kopiera texten; längst upp i inspektören står dokumentets
+titel, författare, sidor, stycken och ord, med knappen *Hämta originalet*.
 
 Sökfältet söker i hela samlingen och listar träffarna med sammanhang (nyckelord i kontext); klicka på en träff för
 att hoppa till sidan. *Visa som tabell* ger den vanliga tabellen med alla åtgärder i Bearbeta, och *Visa som
@@ -61,9 +63,9 @@ Ord är följder av bokstäver och siffror, med bindestreck och apostrofer inuti
 gemener. Stoppordslistorna är korta listor med formord; stäng av växeln för att räkna alla ord. Samma texter kan
 analyseras vidare i R och Python: `dm_read("namn")` ger stycketabellen som data.frame respektive DataFrame.
 
-## Bilder som datamängd
+## Bildsamlingar
 
-Bilder (JPEG, PNG, WebP, GIF, BMP och AVIF där webbläsaren kan läsa dem) blir en datamängd av slaget bilder med en
+Bilder (JPEG, PNG, WebP, GIF, BMP och AVIF där webbläsaren kan läsa dem) blir en bildsamling med en
 rad per bild: `fil`, `typ`, `storlek` (byte), `bredd`, `hojd`, `datum`, `kamera`, `lon`, `lat`, `altitud` och
 `beskrivning`. Datum, kamera, position och beskrivning läses ur EXIF i JPEG-filer; andra format får bara mått och
 storlek. En förhandsvisning (långsidan högst 1600 px) och en miniatyr (320 px) sparas i datamängden; originalen
@@ -75,11 +77,12 @@ alla andra datum i filter, Fråga och diagram.
 
 ## Galleriet i Bearbeta
 
-En bildsamling öppnas i Bearbeta som galleri med miniatyrer, filter och sortering (filnamn, datum, storlek). Klicka
-på en bild så visar inspektören en större förhandsvisning, typ, storlek, mått, datum, kamera, position och höjd samt
-beskrivningen, som kan ändras och sparas: ändringen loggas som receptsteg som alla andra celländringar och kan
-ångras. Dubbelklicka för att se bilden stor, eller hämta förhandsvisningen till datorn. *Visa som tabell* ger
-tabellen med alla åtgärder.
+En bildsamling öppnas i Bearbeta som galleri med miniatyrer, filter och sortering (filnamn, datum, storlek), och från
+Hantera med knappen *Visa bilder*; översiktsfliken där visar de första miniatyrerna, och ett klick på en av dem öppnar
+den i galleriet. Klicka på en bild så visar inspektören en större förhandsvisning, typ, storlek, mått, datum, kamera,
+position och höjd samt beskrivningen, som kan ändras och sparas: ändringen loggas som receptsteg som alla andra
+celländringar och kan ångras. Dubbelklicka för att se bilden stor, eller hämta förhandsvisningen till datorn. *Visa som
+tabell* ger tabellen med alla åtgärder.
 
 ## Verktyget Bilder i Analysera
 

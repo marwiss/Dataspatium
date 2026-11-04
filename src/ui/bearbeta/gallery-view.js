@@ -19,8 +19,8 @@
      * @param {{onTable: () => void, onChanged?: () => void}} options
      */
     function create(ctx, options) {
-      const { ui, shell } = ctx;
-      const s = { id: null, search: '', sort: 'name', shown: PAGE, selected: null };
+      const { ui, shell, store } = ctx;
+      const s = { id: null, search: '', sort: 'name', shown: PAGE, selected: null, scrollTo: null };
       let ds = null; let columns = []; let idx = null; let rows = [];
       let gridEl = null; let slots = null; let countEl = null;
       let seq = 0; let searchTimer = 0;
@@ -32,6 +32,13 @@
         idx = imageAnalysis.indexes(columns);
         const sortCol = s.sort === 'date' ? columns[idx.dateIndex] : s.sort === 'size' ? columns[idx.sizeIndex] : columns[idx.fileIndex];
         rows = await datasets.query(dataset.id, { search: s.search || undefined, orderBy: sortCol ? sortCol.name : undefined, dir: s.sort === 'name' ? 'asc' : 'desc', withRowId: true, limit: 20000 });
+        // A picture asked for from Hantera (store key openImage) is selected and scrolled into view.
+        const pending = store.get().openImage;
+        if (pending && pending.datasetId === dataset.id) {
+          store.set({ openImage: null });
+          const r = rows.find((x) => String(x[1 + idx.fileIndex]) === String(pending.name));
+          if (r) { s.selected = { rowid: r[0], row: r.slice(1) }; s.scrollTo = r[0]; const at = rows.indexOf(r); if (at >= s.shown) s.shown = at + PAGE; }
+        }
       }
 
       /**
@@ -77,6 +84,11 @@
         for (const r of rows.slice(0, s.shown)) items.push(await itemNode(r));
         if (my !== seq || !gridEl) return;
         replace(gridEl, items, rows.length > s.shown ? h('div', { class: 'dm-photos-more' }, ui.button({ label: t('gallery.more', { n: i18n.formatNumber(rows.length - s.shown) }), icon: 'chevron-down', onClick: () => { s.shown += PAGE; renderGrid(); } })) : null);
+        if (s.scrollTo !== null && s.scrollTo !== undefined) {
+          const el = gridEl.querySelector(`[data-rowid="${s.scrollTo}"]`);
+          s.scrollTo = null;
+          if (el) { try { el.scrollIntoView({ block: 'center' }); } catch (_e) { /* ignore */ } }
+        }
       }
       async function itemNode(r) {
         const rowid = r[0]; const row = r.slice(1);
@@ -84,7 +96,7 @@
         const url = await dsFiles.url(ds.id, name, 'thumb').catch(() => null);
         const img = url ? h('img', { src: url, alt: name, loading: 'lazy', decoding: 'async' }) : h('div', { class: 'dm-photos-missing' }, ui.icon('image', 24));
         const date = row[idx.dateIndex] ? String(row[idx.dateIndex]).slice(0, 10) : '';
-        const el = h('button', { type: 'button', class: 'dm-photos-item', 'aria-current': s.selected && s.selected.rowid === rowid ? 'true' : null, 'data-tip': [name, date, row[idx.cameraIndex] || ''].filter(Boolean).join(' · ') },
+        const el = h('button', { type: 'button', class: 'dm-photos-item', 'data-rowid': String(rowid), 'aria-current': s.selected && s.selected.rowid === rowid ? 'true' : null, 'data-tip': [name, date, row[idx.cameraIndex] || ''].filter(Boolean).join(' · ') },
           h('span', { class: 'dm-photos-thumb' }, img),
           h('span', { class: 'dm-photos-caption' }, h('span', { class: 'dm-truncate', text: name }), h('span', { class: 'dm-list-sub', text: date || `${row[idx.widthIndex] || '?'} × ${row[idx.heightIndex] || '?'}` })));
         el.addEventListener('click', () => select(rowid, row, el));

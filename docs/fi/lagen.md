@@ -69,6 +69,10 @@ yhteyden internetiin, kutsujen lokin kanssa) ja *Komponentit* (sovelluksen osat 
 tarvittaessa, kokoineen, lähteineen ja painikkeineen etukäteen noutamiseen tai poistamiseen). Paketit ja GitHub ovat
 siirtyneet Jaa-tilaan.
 
+Asiakirja- tai kuvakokoelma näytetään asiakirjojen ja sivujen tai kuvien määrällä, yleiskatsausvälilehdellä
+asiakirjaluettelona tai ensimmäisinä pienoiskuvina, ja painikkeella *Lue* tai *Näytä kuvat*, joka avaa lukunäkymän
+tai gallerian Muokkaa-tilassa (katso [dokument.md](dokument.md)).
+
 ## Hae
 
 Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhdessä tai kaikissa aineistoissa; jokaisen
@@ -93,8 +97,8 @@ pyynnöstä raportilla ja virheellisillä riveillä omana aineistonaan. Kaikki k
 toistaa toiselle aineistolle ja viedä R- tai SQL-koodina. Versiot tallentavat tilannekuvia, joihin voi palata. Ks.
 [bearbeta.md](bearbeta.md).
 
-Asiakirjalajin aineistot (PDF, Word, OpenDocument, Markdown, teksti) avautuvat lukunäkymänä: valitse asiakirja, selaa
-sivu kerrallaan, näytä PDF-sivu kuvana, hae koko kokoelmasta ja lataa alkuperäinen. Kuvalajin aineistot avautuvat
+Asiakirjakokoelmat (PDF, Word, OpenDocument, Markdown, teksti) avautuvat lukunäkymänä: valitse asiakirja, selaa
+sivu kerrallaan, näytä PDF-sivu kuvana, hae koko kokoelmasta ja lataa alkuperäinen. Kuvakokoelmat avautuvat
 galleriana, jossa on pienoiskuvat, suodatin, järjestys ja kuvan EXIF-tiedot tarkastelupaneelissa, jossa kuvausta voi
 muokata. *Näytä taulukkona* antaa molemmissa tapauksissa tavallisen taulukon kaikilla toiminnoilla. Katso
 [dokument.md](dokument.md).

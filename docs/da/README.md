@@ -59,8 +59,8 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   Excel, SQLite) nås gennem en lokal bro, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable bliver kilder med ét klik. Filer kan linkes og indlæses igen fra disken
   (se [kallor.md](kallor.md)).
-- **Dokumenter og billeder**: PDF, Word, OpenDocument, Markdown og tekst bliver datasæt med ét afsnit pr. række og
-  læses i en dokumentvisning; billeder bliver en samling med EXIF-oplysninger og galleri. Værktøjerne Tekst
+- **Dokumenter og billeder**: PDF, Word, OpenDocument, Markdown og tekst bliver dokumentsamlinger, der læses i en læsevisning, side for
+  side eller i deres helhed; billeder bliver en billedsamling med EXIF-oplysninger og galleri. Værktøjerne Tekst
   (ordfrekvens, nøgleord i kontekst, samforekomster) og Billeder (overblik, dubletter) fungerer uden kode (se [dokument.md](dokument.md)).
 - **Bearbejde**: gennemse, sortere og filtrere store tabeller, redigere celler, rense, sætte typer, omkode, inddele i klasser, rangordne, beregne andele, løbende summer og ændringer, pivotere
   og sammenkoble data, kontrollere datakvalitet med profil og regler (blandt andet formater, nordiske identitetsnumre, referencer til andre datasæt og afvigende værdier), pseudonymisere personnumre før deling, med

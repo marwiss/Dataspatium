@@ -60,8 +60,8 @@ with a backup or a bundle.
   Server, ODBC, Excel, SQLite) are reached through a local bridge, and PostgREST/Supabase, OData, GraphQL, CouchDB,
   ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable become sources with one click. Files can be
   linked and read again from disk (see [kallor.md](kallor.md)).
-- **Documents and images**: PDF, Word, OpenDocument, Markdown and text become datasets with one paragraph per row and
-  are read in a document view; pictures become a collection with EXIF details and a gallery. The tools Text (word
+- **Documents and images**: PDF, Word, OpenDocument, Markdown and text become document collections read in a reading view, page by
+  page or as a whole; pictures become an image collection with EXIF details and a gallery. The tools Text (word
   frequency, keywords in context, co-occurrences) and Images (overview, duplicates) work without code (see [dokument.md](dokument.md)).
 - **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
   check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up

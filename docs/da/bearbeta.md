@@ -219,7 +219,7 @@ Python hentes første gang.
 
 ## Dokumenter og billeder
 
-Datasæt af slagsen dokumenter og billeder åbnes i Bearbejd i en egen visning (læsevisning henholdsvis galleri) med
+Dokument- og billedsamlinger åbnes i Bearbejd i en egen visning (læsevisning henholdsvis galleri) med
 knappen *Vis som tabel* for den almindelige tabel. Alle handlinger her gælder tabellen: filtrere afsnit, rette tekst,
 slette rækker, tilføje beregnede kolonner. Se [dokument.md](dokument.md).
 

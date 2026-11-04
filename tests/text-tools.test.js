@@ -195,6 +195,63 @@
     }
   }, 90000);
 
+  test('ui: a collection is counted in documents and pictures, opens from Hantera with Läs and Visa bilder, and reads as a whole document', async (assert) => {
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    let docMeta = null; let imgMeta = null;
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      const JsPdf = await D.require('viz/export').ensurePdfLibs();
+      const pdfDoc = new JsPdf(); pdfDoc.text('Första sidan i rapporten.', 20, 20); pdfDoc.addPage(); pdfDoc.text('Andra sidan i rapporten.', 20, 20);
+      const pdf = new File([pdfDoc.output('arraybuffer')], 'rapport.pdf', { type: 'application/pdf' });
+      const txt = new File(['Sida ett i notisen.\n\nEtt stycke till.\n'], 'notis.txt', { type: 'text/plain' });
+      docMeta = await shell.ctx.services.importer.runFiles([pdf, txt], {}, 'UI-samling');
+      imgMeta = await shell.ctx.services.importer.runFiles([await makeJpeg('x.jpg', 200, 150, gradient, null), await makeJpeg('y.jpg', 200, 150, inverse, null)], {}, 'UI-foton');
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === imgMeta.id) && shell.store.get().datasets.some((d) => d.id === docMeta.id), 3000, 'datasets in store');
+      const buttonByText = (text) => Array.from(root.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === text);
+      // The list, the status bar and Hantera count documents and pages, not rows and columns.
+      shell.activate('hantera');
+      shell.store.set({ selectedId: docMeta.id });
+      const sub = t('datasets.sub.document', { n: '2', pages: '3' });
+      await waitFor(() => { const row = root.querySelector(`.dm-left [data-id="${docMeta.id}"]`); return row && row.textContent.includes(sub); }, 5000, 'list counts documents and pages: ' + sub);
+      assert.ok(shell.datasetEl && shell.datasetEl.textContent.includes(sub), 'status bar: ' + (shell.datasetEl && shell.datasetEl.textContent));
+      await waitFor(() => buttonByText(t('hantera.read')), 5000, 'Läs button');
+      assert.ok(Array.from(root.querySelectorAll('.dm-center dm-badge')).some((b) => b.textContent.trim() === t('document.files.n', { n: '2' })), 'badge with the number of documents');
+      assert.ok(!Array.from(root.querySelectorAll('.dm-center dm-badge')).some((b) => /kolumner|columns/i.test(b.textContent)), 'no column badge for a collection');
+      const entry = await waitFor(() => Array.from(root.querySelectorAll('.dm-center .dm-list-item')).find((b) => b.textContent.includes('notis.txt')), 5000, 'document list on the overview tab');
+      /** @type {any} */ (entry).click();
+      await waitFor(() => root.querySelector('.dm-document-text'), 5000, 'reading view opened from Hantera');
+      assert.equal(shell.store.get().mode, 'bearbeta');
+      const docSel = /** @type {any} */ (root.querySelector(`.dm-center dm-select[aria-label="${t('document.select')}"]`));
+      assert.equal(docSel.value, 'notis.txt', 'the clicked document is open');
+      assert.equal(root.querySelector('.dm-document-text p').textContent, 'Sida ett i notisen.');
+      // Whole document: the PDF's two pages in one flow with page markers.
+      docSel.value = 'rapport.pdf'; docSel.dispatchEvent(new Event('change', { bubbles: true }));
+      await waitFor(() => root.querySelector('.dm-document-text p') && /Första sidan/.test(root.querySelector('.dm-document-text p').textContent), 5000, 'pdf page one');
+      const modeSel = /** @type {any} */ (root.querySelector(`.dm-center dm-select[aria-label="${t('document.mode')}"]`));
+      assert.deepEqual(Array.from(modeSel.options || []).map((o) => o.value), ['page', 'all', 'image'], 'three views for a PDF');
+      modeSel.value = 'all'; modeSel.dispatchEvent(new Event('change', { bubbles: true }));
+      await waitFor(() => root.querySelectorAll('.dm-document-whole .dm-document-page-marker').length === 2, 5000, 'two page markers');
+      assert.equal(root.querySelectorAll('.dm-document-whole p').length, 2, 'both pages in one flow');
+      // Pictures: Visa bilder and the thumbnails on the overview tab; a click opens that picture in the gallery.
+      shell.activate('hantera');
+      shell.store.set({ selectedId: imgMeta.id });
+      await waitFor(() => buttonByText(t('hantera.view.images')), 5000, 'Visa bilder button');
+      await waitFor(() => root.querySelectorAll('.dm-photos-preview-grid .dm-photos-item').length === 2, 8000, 'two thumbnails on the overview');
+      assert.ok(Array.from(root.querySelectorAll('.dm-center dm-badge')).some((b) => b.textContent.trim() === t('gallery.count', { n: '2' })), 'badge with the number of pictures');
+      /** @type {any} */ (root.querySelectorAll('.dm-photos-preview-grid .dm-photos-item')[1]).click();
+      await waitFor(() => root.querySelector('.dm-photos.dm-center-fill .dm-photos-item[aria-current="true"]'), 8000, 'gallery with the clicked picture selected');
+      assert.ok(root.querySelector('.dm-photos-item[aria-current="true"]').textContent.includes('y.jpg'), 'y.jpg is selected');
+      await waitFor(() => root.querySelector('.dm-right .dm-photos-inspector-preview img'), 5000, 'inspector shows the picture');
+      return 'ok';
+    } finally {
+      for (const m of [docMeta, imgMeta]) if (m) await datasets.remove(m.id).catch(() => {});
+      root.remove();
+    }
+  }, 90000);
+
   test('text-tools: cleanup', async (assert) => {
     for (const id of created) await datasets.remove(id).catch(() => {});
     assert.ok(true);

@@ -65,6 +65,10 @@ hafa samband við netið, með dagbók yfir köll) og *Íhlutir* (hlutar forrits
 er þörf, með stærð, uppruna og hnöppum til að sækja fyrirfram eða fjarlægja). Pakkar og GitHub hafa flust í haminn
 Deila.
 
+Skjala- eða myndasafn er sýnt með fjölda skjala og síðna eða mynda, með skjalalistanum eða fyrstu smámyndunum á
+yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrarsýnina eða myndasýnina í Vinna (sjá
+[dokument.md](dokument.md)).
+
 ## Leita
 
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að
@@ -87,9 +91,8 @@ SQL-skilyrði) athuga gögnin eftir óskum með skýrslu og röðum sem bregðas
 uppskrift sem má afturkalla, spila á öðru gagnasafni og flytja út sem R- eða SQL-kóða. Útgáfur vista skyndimyndir
 til að hverfa aftur til. Sjá [bearbeta.md](bearbeta.md).
 
-Gagnasöfn af tegundinni **skjöl** (PDF, Word, OpenDocument, Markdown, texti) opnast sem lestrarsýn: veldu skjal,
-flettu síðu fyrir síðu, sýndu PDF-síðuna sem mynd, leitaðu í öllu safninu og sæktu frumritið. Gagnasöfn af tegundinni
-**myndir** opnast sem myndasafn með smámyndum, síu, röðun og EXIF-upplýsingum myndarinnar í skoðaranum, þar sem
+**Skjalasöfn** (PDF, Word, OpenDocument, Markdown, texti) opnast sem lestrarsýn: veldu skjal,
+flettu síðu fyrir síðu, sýndu PDF-síðuna sem mynd, leitaðu í öllu safninu og sæktu frumritið. **Myndasöfn** opnast sem myndasafn með smámyndum, síu, röðun og EXIF-upplýsingum myndarinnar í skoðaranum, þar sem
 lýsingunni má breyta. *Sýna sem töflu* gefur í báðum tilvikum venjulegu töfluna með öllum aðgerðum. Sjá
 [dokument.md](dokument.md).
 

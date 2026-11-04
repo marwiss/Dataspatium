@@ -68,6 +68,10 @@ dator), *Internetåtkomst* (vilka ändamål som får kontakta internet, med logg
 av appen och R-paket som hämtas när de behövs, med storlek, källa och knappar för att hämta i förväg eller ta
 bort). Paket och GitHub har flyttat till läget Dela.
 
+En dokumentsamling eller bildsamling visas med antal dokument och sidor respektive bilder, med dokumentlistan eller de
+första miniatyrerna på översiktsfliken, och med knappen *Läs* eller *Visa bilder* som öppnar läsvyn respektive
+galleriet i Bearbeta (se [dokument.md](dokument.md)).
+
 ## Söka
 
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas
@@ -91,8 +95,8 @@ rader som egen datamängd. Allt loggas som recept som
 kan ångras, spelas upp på en annan datamängd och exporteras som R- eller SQL-kod. Versioner sparar
 ögonblicksbilder att gå tillbaka till. Se [bearbeta.md](bearbeta.md).
 
-Datamängder av slaget **dokument** (PDF, Word, OpenDocument, Markdown, text) öppnas som läsvy: välj dokument, bläddra
-sida för sida, visa PDF-sidan som bild, sök i hela samlingen och hämta originalet. Datamängder av slaget **bilder**
+**Dokumentsamlingar** (PDF, Word, OpenDocument, Markdown, text) öppnas som läsvy: välj dokument, bläddra
+sida för sida, visa PDF-sidan som bild, sök i hela samlingen och hämta originalet. **Bildsamlingar**
 öppnas som galleri med miniatyrer, filter, sortering och bildens EXIF-uppgifter i inspektören, där beskrivningen kan
 ändras. *Visa som tabell* ger i båda fallen den vanliga tabellen med alla åtgärder. Se [dokument.md](dokument.md).
 
