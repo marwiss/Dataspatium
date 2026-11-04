@@ -134,6 +134,7 @@
       schedulePreview();
       const choice = await overlays.dialog.open({
         title: options.title || t('op.' + op.id),
+        help: 'bearbeta#åtgärder',
         body,
         size: 'lg',
         actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true, primary: true }],

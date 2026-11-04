@@ -19,6 +19,8 @@
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
       let slots = null; let unsubscribe = null; let table = null; let search = ''; let searchTimer = 0; let currentId = null;
+      /** A saved list (Söka) that narrows the table, and its WHERE clause. */
+      let activeList = null; let listWhere = null;
       /** @type {Map<number, number>} table row index -> SQLite rowid */
       let rowIds = new Map();
       let undoBtn = null; let selectedColumn = null;
@@ -28,7 +30,7 @@
         unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; table = null; if (unsubscribe) unsubscribe(); }
+      function deactivate() { slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); }
 
       function current() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
@@ -44,7 +46,7 @@
           replace(slots.right, h('p', { class: 'dm-help', text: t('bearbeta.empty.hint') }));
           return;
         }
-        if (currentId !== ds.id) { search = ''; selectedColumn = null; currentId = ds.id; renderTable(ds); renderInspector(ds); }
+        if (currentId !== ds.id) { search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; renderTable(ds); renderInspector(ds); }
         else if (table) { refresh(ds); updateUndo(); }
       }
 
@@ -82,6 +84,16 @@
         searchInput.value = search;
         searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { search = searchInput.value.trim(); refresh(current()); }, 300); });
         const countBadge = h('dm-badge', { text: '' });
+        // Lists saved in Söka for this dataset narrow the table (search lists; query lists live in Fråga).
+        const myLists = (await D.require('data/lists').list()).filter((l) => l.datasetId === ds.id && (l.kind || 'search') === 'search');
+        const listSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('bearbeta.list'), inline: true }));
+        listSel.options = [{ value: '', label: t('bearbeta.list.none') }].concat(myLists.map((l) => ({ value: l.id, label: t('bearbeta.list.option', { name: l.name }) })));
+        listSel.value = activeList ? activeList.id : '';
+        listSel.addEventListener('change', () => {
+          activeList = myLists.find((l) => l.id === listSel.value) || null;
+          listWhere = activeList ? D.require('analysis/search').where(cols, activeList.text, activeList.filters || []) : null;
+          refresh(current());
+        });
         undoBtn = ui.button({ label: t('common.undo'), icon: 'history', onClick: async () => { try { const label = await recipes.undo(ds.id); shell.log(t('bearbeta.undone', { label }), 'ok'); refresh(current()); if (selectedColumn) showStats(current(), selectedColumn); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'warn' }); } updateUndo(); } });
         table = /** @type {any} */ (h('dm-table'));
         table.editable = true;
@@ -91,7 +103,7 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('wand-sparkles', 20), ds.name),
             h('div', { class: 'dm-toolbar' },
-              searchInput, countBadge,
+              searchInput, myLists.length ? listSel : null, countBadge,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
@@ -118,19 +130,19 @@
         let cols; let total;
         try {
           cols = await services.datasets.columns(ds.id);
-          total = await services.datasets.count(ds.id, { search });
+          total = await services.datasets.count(ds.id, { search, where: listWhere || undefined });
         } catch (err) {
           // The dataset can be removed (here or in another tab) while the table reloads; only report other errors.
           if (await services.datasets.get(ds.id)) shell.log(String((err && err.message) || err), 'error');
           return;
         }
         rowIds = new Map();
-        table.countBadge.textContent = search ? t('table.rows.shown', { shown: i18n.formatNumber(total), total: i18n.formatNumber(ds.rowCount) }) : t('common.rows', { n: i18n.formatNumber(total) });
+        table.countBadge.textContent = (search || listWhere) ? t('table.rows.shown', { shown: i18n.formatNumber(total), total: i18n.formatNumber(ds.rowCount) }) : t('common.rows', { n: i18n.formatNumber(total) });
         const data = {
           columns: cols.map((c) => ({ key: c.name, label: c.label || c.name, type: c.type, description: c.description, unit: c.unit })),
           rowCount: total,
           rowProvider: async (start, count, sort) => {
-            const rows = await services.datasets.query(ds.id, { limit: count, offset: start, search, orderBy: sort ? sort.key : undefined, dir: sort ? sort.dir : undefined, withRowId: true });
+            const rows = await services.datasets.query(ds.id, { limit: count, offset: start, search, where: listWhere || undefined, orderBy: sort ? sort.key : undefined, dir: sort ? sort.dir : undefined, withRowId: true });
             return rows.map((r, i) => { rowIds.set(start + i, r[0]); return r.slice(1); });
           },
         };

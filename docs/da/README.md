@@ -78,6 +78,10 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Finde hurtigt**: tilstanden *Søg* leder i alle kolonner i ét eller alle datasæt, med facetter, der indsnævrer, og
   gemte lister (se [soka.md](soka.md)); kommandopaletten (Ctrl+K) skifter tilstand, åbner datasæt, diagrammer og
   dashboards og kører handlinger fra ét søgefelt.
+- **Forespørg uden kode**: fanen *Forespørgsel* i Søg kobler datasæt, vælger kolonner og beregninger, sætter
+  betingelser og viser den SQL, der laves; gemte lister indsnævrer tabellen i Bearbejd og rækkerne i diagrammer.
+- **Hjælp i appen og præsentation**: hele håndbogen med søgning åbnes med ? eller F1 ved kapitlet for den tilstand,
+  du står i, og **Præsentér** viser et dashboard i hele vinduet ét diagram ad gangen.
 - **Seks sprog**: brugerflade, meddelelser og dokumentation på svensk, dansk, norsk (bokmål), finsk, islandsk og
   engelsk.
 - **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle seks sprog. Det vises første
@@ -87,6 +91,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 
 Filnavnene er de samme på alle sprog (de svenske originaler), så links virker ens overalt.
 
+- **Håndbogen** i appen: den samme dokumentation som her, med søgning; åbn den med ? øverst til højre eller F1.
 - **Grundkurset** i appen: en interaktiv gennemgang af alle tilstande med eksempeldata; åbn det fra hjælpen (?) eller
   med Ctrl+K.
 - [Kom i gang](kom-igang.md): trin for trin med almindelige spørgsmål.

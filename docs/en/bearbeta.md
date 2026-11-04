@@ -15,6 +15,8 @@ logs changes in the same way.
   column statistics (count, missing, distinct, minimum, maximum, mean, sum, most common values) and the actions
   that suit the column's type. Shift-click shows the statistics without changing the sort.
 - The filter field searches all columns. Editing works in a filtered selection too.
+- *List* in the toolbar (shown when the dataset has saved searches from Search) narrows the table to the list's
+  rows; the badge shows the count of the total. Editing and actions work as usual.
 - The table is virtualised: only the visible rows exist in the browser's DOM, the rest stays in SQLite. A million
   rows browse as fast as a hundred.
 

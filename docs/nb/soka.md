@@ -1,8 +1,8 @@
 # Søk
 
 Modusen Søk finner og lister uten kode. Den ligger mellom Håndter og Bearbeid: først finner du det du leter etter,
-så bearbeider du det. To faner finnes fra 2.0, Søk og Lister; fanen Spørring, en visuell spørringsbygger som viser
-SQL-koden den lager, kommer i 2.2.
+så bearbeider du det. Tre faner: *Søk* (fritekst med fasetter), *Spørring* (en visuell spørringsbygger over ett
+eller flere datasett som viser SQL-koden den lager) og *Lister* (lagrede søk og spørringer).
 
 ## Søk
 
@@ -26,11 +26,32 @@ Treffene vises per datasett med antall. Hvert kort har:
 Søket kjøres i SQLite i en worker, så siden låser seg ikke. I et datasett med en million rader tar et søk omtrent
 ett sekund per ord.
 
+## Spørring
+
+Fanen Spørring bygger en spørring uten at du skriver SQL, og viser SQL-koden som lages. Kortet **Datasett** velger
+datasettet det spørres i, og kobler på flere med *Legg til kobling*: velg datasett, om bare rader med treff i begge
+eller alle rader i det første skal være med, og hvilke kolonner som skal matche (flere nøkler kan legges til; koblede
+datasett trenger kortnavn). **Kolonner** velger hva som vises, som verdi eller som beregning (antall, antall unike,
+sum, gjennomsnitt, minste, største) med valgfritt navn i resultatet; finnes det en beregning, grupperes radene
+automatisk etter de øvrige kolonnene. **Betingelser** legges i grupper der alle betingelser må gjelde eller én er
+nok (er, er ikke, er større enn, er minst, er mindre enn, er høyst, inneholder, begynner med, er en av, er mellom,
+er tom, er ikke tom), og **Sortering og antall** avslutter. *Kjør spørringen* viser resultatet som tabell med den
+genererte SQL-koden under; *Åpne i Analyser* legger SQL-koden i SQL-konsollen, der den kan endres videre. I
+SQL-koden heter det første datasettet `t0` og de koblede `t1`, `t2` og så videre.
+
+*Lagre som liste* lagrer spørringen under Lister, der den kjøres igjen på dagens data, og *Lagre som datasett* gjør
+resultatet til et nytt datasett med resultatets kolonner.
+
 ## Lister
 
 En liste er et lagret søk i et datasett: teksten, avgrensningene og antall treff sist den ble kjørt. *Kjør* viser
 dagens treff i fanen Søk (dataene kan ha endret seg siden listen ble lagret), *Lagre som datasett* gjør treffene til
 et nytt datasett, og *Slett* fjerner listen. Lister følger datasettet: slettes datasettet, forsvinner listene dens.
+
+Lister brukes også andre steder. I Bearbeid velger *Liste* i tabellens verktøylinje et lagret søk som avgrenser
+tabellen (merket viser antall rader av totalen), og i diagrambyggeren velger *Liste* under filtrene hvilke rader et
+diagram bygger på; valget følger med diagrammet i dashbord og eksporter og kjøres igjen på dagens data. Spørringer
+lagret fra fanen Spørring vises med SQL-koden sin under Lister og kjøres i Spørring.
 
 ## Kommandopaletten
 

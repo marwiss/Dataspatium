@@ -81,6 +81,21 @@
         return h('div', { class: 'dm-stack-sm' }, h('div', { class: 'dm-row' }, h('strong', { text: t('viz.filters') }), basic.button({ label: t('viz.filters.add'), icon: 'plus', size: 'sm', onClick: () => { state.filters = state.filters || []; state.filters.push({ field: columns[0] ? columns[0].name : '', op: '=', value: '' }); draw(); } })), list);
       }
 
+      /** A saved list (Söka) as the row source: shown when the dataset has search lists or the chart already uses one. */
+      function listEditor() {
+        const none = [{ value: '', label: t('viz.list.none') }];
+        const sel = smallSelect(t('viz.list'), none, state.listId || '', (v) => { state.listId = v || undefined; emit(true); });
+        const row = h('div', { class: 'dm-row-wrap' }, sel, h('span', { class: 'dm-help', text: t('viz.list.help') }));
+        row.hidden = true;
+        D.require('data/lists').list().then((all) => {
+          const mine = all.filter((l) => l.datasetId === options.datasetId && (l.kind || 'search') === 'search');
+          sel.options = none.concat(mine.map((l) => ({ value: l.id, label: l.name })));
+          sel.value = state.listId || '';
+          row.hidden = !mine.length && !state.listId;
+        }).catch(() => {});
+        return row;
+      }
+
       /** Axis limits, scale, zero baseline, label angle, gridlines, a reference line, a trend line and opacity. */
       function axesSection(type) {
         const auto = t('viz.auto');
@@ -141,6 +156,7 @@
             h('div', { class: 'dm-form-grid' }, title, subtitle, yFormat, height, legend, type.points ? basemap : null, state.facet && !type.geo ? facetCols : null, (type.mark === 'bar' || type.mark === 'area') && state.color ? stack : null),
             h('div', { class: 'dm-row-wrap' }, type.mark === 'bar' ? labels : null, type.mark === 'line' ? points : null),
             filtersEditor(),
+            listEditor(),
             !type.geo && type.id !== 'pie' ? axesSection(type) : null,
           ] : h('p', { class: 'dm-help', text: t('viz.custom.help') }),
           h('details', { class: 'dm-more', open: customSpec !== null ? true : null }, h('summary', { text: t('common.more') }), h('div', { class: 'dm-stack-sm' }, h('div', { class: 'dm-form-grid' }, maxRows, scheme), customSwitch, customSpec !== null ? h('div', { class: 'dm-editor-wrap' }, customEditor) : null)));

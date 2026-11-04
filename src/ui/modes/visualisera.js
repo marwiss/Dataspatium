@@ -98,7 +98,7 @@
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
           const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'd3', 'r'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
-          await ui.dialog.open({ title: t('viz.new.title'), body, actions: [{ label: t('common.cancel'), value: false }] });
+          await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
           if (!kind) return;
           const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
           await openChart(record, true);
@@ -161,7 +161,7 @@
           infoEl = h('p', { class: 'dm-help' });
           let controlsEl;
           if (chart.kind === 'vega') {
-            controls = vegaControls.create({ columns, state: chart.vega.state, customSpec: chart.vega.customSpec || null, onChange: (state, customSpec) => { chart.vega.state = state; chart.vega.customSpec = customSpec; dirty = true; schedulePreview(); } });
+            controls = vegaControls.create({ columns, datasetId: chart.datasetId, state: chart.vega.state, customSpec: chart.vega.customSpec || null, onChange: (state, customSpec) => { chart.vega.state = state; chart.vega.customSpec = customSpec; dirty = true; schedulePreview(); } });
             controlsEl = controls.el;
           } else if (chart.kind === 'd3') {
             controls = d3Controls.create({ columns, template: chart.d3.template, params: chart.d3.params, filters: (chart.options && chart.options.filters) || [], onChange: (template, params, filters) => { chart.d3.template = template; chart.d3.params = params; chart.options = Object.assign({}, chart.options, { filters }); dirty = true; schedulePreview(); } });
@@ -240,6 +240,7 @@
             for (const c of await charts.list()) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: c.kind === 'r' ? 'terminal' : 'chart-column', run: async () => { shell.activate('visualisera'); await openChart(c); } });
             cmds.push({ id: 'dash:new', label: t('dash.new'), group: t('palette.group.dashboards'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newDashboard(); } });
             for (const d of await dashboards.list()) cmds.push({ id: 'dash:' + d.id, label: t('palette.dash.open', { name: d.name }), hint: t('viz.count', { n: (d.items || []).length }), group: t('palette.group.dashboards'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openDashboard(d); } });
+            for (const d of await dashboards.list()) cmds.push({ id: 'present:' + d.id, label: t('present.palette', { name: d.name }), group: t('palette.group.dashboards'), icon: 'monitor', run: async () => { const fresh = await dashboards.get(d.id); if (fresh) await D.require('ui/viz/present').open(fresh, { log: (m, k) => shell.log(m, k) }); } });
             return cmds;
           });
         }

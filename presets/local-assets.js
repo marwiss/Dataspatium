@@ -275,5 +275,581 @@ Dataspatium.assets.addEntries({
   "encoding": "text",
   "size": 112022,
   "library": "dataspatium"
+ },
+ "docs/sv/kom-igang.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 9097,
+  "library": "dataspatium"
+ },
+ "docs/sv/anvandarguide.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 18581,
+  "library": "dataspatium"
+ },
+ "docs/sv/lagen.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 10501,
+  "library": "dataspatium"
+ },
+ "docs/sv/soka.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 4282,
+  "library": "dataspatium"
+ },
+ "docs/sv/bearbeta.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 20943,
+  "library": "dataspatium"
+ },
+ "docs/sv/visualisera.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 13400,
+  "library": "dataspatium"
+ },
+ "docs/sv/anteckningsbok.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 2660,
+  "library": "dataspatium"
+ },
+ "docs/sv/regex.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 10616,
+  "library": "dataspatium"
+ },
+ "docs/sv/format.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 11003,
+  "library": "dataspatium"
+ },
+ "docs/sv/api-konfiguration.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 17690,
+  "library": "dataspatium"
+ },
+ "docs/sv/r-guide.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 6169,
+  "library": "dataspatium"
+ },
+ "docs/sv/dokumentmallar.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 5026,
+  "library": "dataspatium"
+ },
+ "docs/sv/dela.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 4787,
+  "library": "dataspatium"
+ },
+ "docs/sv/mobil.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 5308,
+  "library": "dataspatium"
+ },
+ "docs/sv/faq.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 13614,
+  "library": "dataspatium"
+ },
+ "docs/sv/licenser.md": {
+  "file": "docs/help/sv.js",
+  "encoding": "text",
+  "size": 3558,
+  "library": "dataspatium"
+ },
+ "docs/da/kom-igang.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 9005,
+  "library": "dataspatium"
+ },
+ "docs/da/anvandarguide.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 18562,
+  "library": "dataspatium"
+ },
+ "docs/da/lagen.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 10335,
+  "library": "dataspatium"
+ },
+ "docs/da/soka.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 4305,
+  "library": "dataspatium"
+ },
+ "docs/da/bearbeta.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 21062,
+  "library": "dataspatium"
+ },
+ "docs/da/visualisera.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 13178,
+  "library": "dataspatium"
+ },
+ "docs/da/anteckningsbok.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 2710,
+  "library": "dataspatium"
+ },
+ "docs/da/regex.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 10611,
+  "library": "dataspatium"
+ },
+ "docs/da/format.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 11024,
+  "library": "dataspatium"
+ },
+ "docs/da/api-konfiguration.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 10361,
+  "library": "dataspatium"
+ },
+ "docs/da/r-guide.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 6279,
+  "library": "dataspatium"
+ },
+ "docs/da/dokumentmallar.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 5486,
+  "library": "dataspatium"
+ },
+ "docs/da/dela.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 4676,
+  "library": "dataspatium"
+ },
+ "docs/da/mobil.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 5281,
+  "library": "dataspatium"
+ },
+ "docs/da/faq.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 12817,
+  "library": "dataspatium"
+ },
+ "docs/da/licenser.md": {
+  "file": "docs/help/da.js",
+  "encoding": "text",
+  "size": 3713,
+  "library": "dataspatium"
+ },
+ "docs/nb/kom-igang.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 8967,
+  "library": "dataspatium"
+ },
+ "docs/nb/anvandarguide.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 18365,
+  "library": "dataspatium"
+ },
+ "docs/nb/lagen.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 10172,
+  "library": "dataspatium"
+ },
+ "docs/nb/soka.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 4161,
+  "library": "dataspatium"
+ },
+ "docs/nb/bearbeta.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 20613,
+  "library": "dataspatium"
+ },
+ "docs/nb/visualisera.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 12988,
+  "library": "dataspatium"
+ },
+ "docs/nb/anteckningsbok.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 2696,
+  "library": "dataspatium"
+ },
+ "docs/nb/regex.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 10498,
+  "library": "dataspatium"
+ },
+ "docs/nb/format.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 10855,
+  "library": "dataspatium"
+ },
+ "docs/nb/api-konfiguration.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 10226,
+  "library": "dataspatium"
+ },
+ "docs/nb/r-guide.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 6248,
+  "library": "dataspatium"
+ },
+ "docs/nb/dokumentmallar.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 5354,
+  "library": "dataspatium"
+ },
+ "docs/nb/dela.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 4646,
+  "library": "dataspatium"
+ },
+ "docs/nb/mobil.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 5302,
+  "library": "dataspatium"
+ },
+ "docs/nb/faq.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 12804,
+  "library": "dataspatium"
+ },
+ "docs/nb/licenser.md": {
+  "file": "docs/help/nb.js",
+  "encoding": "text",
+  "size": 3718,
+  "library": "dataspatium"
+ },
+ "docs/fi/kom-igang.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 9520,
+  "library": "dataspatium"
+ },
+ "docs/fi/anvandarguide.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 19956,
+  "library": "dataspatium"
+ },
+ "docs/fi/lagen.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 11207,
+  "library": "dataspatium"
+ },
+ "docs/fi/soka.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 4530,
+  "library": "dataspatium"
+ },
+ "docs/fi/bearbeta.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 22162,
+  "library": "dataspatium"
+ },
+ "docs/fi/visualisera.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 13609,
+  "library": "dataspatium"
+ },
+ "docs/fi/anteckningsbok.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 3005,
+  "library": "dataspatium"
+ },
+ "docs/fi/regex.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 10992,
+  "library": "dataspatium"
+ },
+ "docs/fi/format.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 12209,
+  "library": "dataspatium"
+ },
+ "docs/fi/api-konfiguration.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 10818,
+  "library": "dataspatium"
+ },
+ "docs/fi/r-guide.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 6740,
+  "library": "dataspatium"
+ },
+ "docs/fi/dokumentmallar.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 5728,
+  "library": "dataspatium"
+ },
+ "docs/fi/dela.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 5087,
+  "library": "dataspatium"
+ },
+ "docs/fi/mobil.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 5704,
+  "library": "dataspatium"
+ },
+ "docs/fi/faq.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 13783,
+  "library": "dataspatium"
+ },
+ "docs/fi/licenser.md": {
+  "file": "docs/help/fi.js",
+  "encoding": "text",
+  "size": 4005,
+  "library": "dataspatium"
+ },
+ "docs/is/kom-igang.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 9535,
+  "library": "dataspatium"
+ },
+ "docs/is/anvandarguide.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 19230,
+  "library": "dataspatium"
+ },
+ "docs/is/lagen.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 10645,
+  "library": "dataspatium"
+ },
+ "docs/is/soka.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 4569,
+  "library": "dataspatium"
+ },
+ "docs/is/bearbeta.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 21599,
+  "library": "dataspatium"
+ },
+ "docs/is/visualisera.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 13458,
+  "library": "dataspatium"
+ },
+ "docs/is/anteckningsbok.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 2837,
+  "library": "dataspatium"
+ },
+ "docs/is/regex.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 10899,
+  "library": "dataspatium"
+ },
+ "docs/is/format.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 11859,
+  "library": "dataspatium"
+ },
+ "docs/is/api-konfiguration.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 11207,
+  "library": "dataspatium"
+ },
+ "docs/is/r-guide.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 6587,
+  "library": "dataspatium"
+ },
+ "docs/is/dokumentmallar.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 5669,
+  "library": "dataspatium"
+ },
+ "docs/is/dela.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 4953,
+  "library": "dataspatium"
+ },
+ "docs/is/mobil.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 5483,
+  "library": "dataspatium"
+ },
+ "docs/is/faq.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 13563,
+  "library": "dataspatium"
+ },
+ "docs/is/licenser.md": {
+  "file": "docs/help/is.js",
+  "encoding": "text",
+  "size": 3841,
+  "library": "dataspatium"
+ },
+ "docs/en/kom-igang.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 9052,
+  "library": "dataspatium"
+ },
+ "docs/en/anvandarguide.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 18724,
+  "library": "dataspatium"
+ },
+ "docs/en/lagen.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 10385,
+  "library": "dataspatium"
+ },
+ "docs/en/soka.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 4147,
+  "library": "dataspatium"
+ },
+ "docs/en/bearbeta.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 20491,
+  "library": "dataspatium"
+ },
+ "docs/en/visualisera.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 13342,
+  "library": "dataspatium"
+ },
+ "docs/en/anteckningsbok.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 2695,
+  "library": "dataspatium"
+ },
+ "docs/en/regex.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 10561,
+  "library": "dataspatium"
+ },
+ "docs/en/format.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 11315,
+  "library": "dataspatium"
+ },
+ "docs/en/api-konfiguration.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 18192,
+  "library": "dataspatium"
+ },
+ "docs/en/r-guide.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 6388,
+  "library": "dataspatium"
+ },
+ "docs/en/dokumentmallar.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 5457,
+  "library": "dataspatium"
+ },
+ "docs/en/dela.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 4796,
+  "library": "dataspatium"
+ },
+ "docs/en/mobil.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 5348,
+  "library": "dataspatium"
+ },
+ "docs/en/faq.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 13688,
+  "library": "dataspatium"
+ },
+ "docs/en/licenser.md": {
+  "file": "docs/help/en.js",
+  "encoding": "text",
+  "size": 3771,
+  "library": "dataspatium"
  }
 });

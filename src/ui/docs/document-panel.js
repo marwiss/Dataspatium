@@ -135,7 +135,7 @@
         formatSel.options = generate.FORMATS.map((f) => ({ value: f.id, label: f.label })); formatSel.value = state.format;
         const pattern = /** @type {any} */ (h('dm-input', { label: t('viz.batch.pattern'), help: t('doc.batch.pattern.help') })); pattern.value = '{dokument}-{grupp}';
         const limit = /** @type {any} */ (h('dm-input', { type: 'number', label: t('viz.batch.limit'), min: '1', max: '5000' })); limit.value = '200';
-        const ok = await overlays.dialog.open({ title: t('doc.batch.title'), body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('doc.batch.help') }), h('div', { class: 'dm-form-grid' }, column, formatSel, pattern, limit)), size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('viz.batch.run'), variant: 'primary', value: true, primary: true }] });
+        const ok = await overlays.dialog.open({ title: t('doc.batch.title'), help: 'dokumentmallar#så-här-gör-du', body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('doc.batch.help') }), h('div', { class: 'dm-form-grid' }, column, formatSel, pattern, limit)), size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('viz.batch.run'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true || !column.value) return;
         const abort = new AbortController();
         const toast = overlays.toast.show(t('viz.batch.progress', { done: 0, total: '?', value: '' }), { kind: 'info', timeout: 0, action: { label: t('api.cancel'), onClick: () => abort.abort() } });

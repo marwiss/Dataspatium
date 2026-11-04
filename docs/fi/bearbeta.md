@@ -16,6 +16,8 @@ SQL-konsoli käsittelee samaa aineistoa ja kirjaa muutokset samalla tavalla.
   silloin saraketilastot (lukumäärä, puuttuvat, erilliset, pienin, suurin, keskiarvo, summa, yleisimmät arvot) ja sarakkeen
   tyyppiin sopivat toiminnot. Vaihto-napsautus näyttää tilastot muuttamatta lajittelua.
 - Suodatinkenttä hakee kaikista sarakkeista. Muokkaus toimii myös suodatetussa valinnassa.
+- Työkalurivin *Lista* (näkyy, kun aineistolla on Hae-tilassa tallennettuja hakuja) rajaa taulukon listan
+  riveihin; merkki näyttää määrän kokonaismäärästä. Muokkaus ja toiminnot toimivat tavalliseen tapaan.
 - Taulukko on virtualisoitu: vain näkyvät rivit ovat selaimen DOM:ssa, loput SQLitessä. Miljoonaa riviä selaa yhtä nopeasti
   kuin sataa.
 

@@ -68,8 +68,11 @@ bort). Paket och GitHub har flyttat till läget Dela.
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas
 på raden, oavsett skiftläge. Träffarna visas per datamängd med antal, fasetter (de vanligaste värdena i kolumner
 med få olika värden, som avgränsar sökningen med ett klick) och en tabell där en rad öppnar hela posten i
-inspektören. En sökning kan sparas som lista, bli en ny datamängd eller öppnas i Bearbeta. Fliken *Listor* samlar
-sparade sökningar per datamängd och kör dem igen på dagens data. Se [soka.md](soka.md).
+inspektören. En sökning kan sparas som lista, bli en ny datamängd eller öppnas i Bearbeta. Fliken *Fråga* bygger
+en fråga över en eller flera datamängder (kolumner, beräkningar, villkor, sortering) utan kod och visar den SQL som
+skapas; den kan öppnas i Analysera, sparas som lista eller bli en datamängd. Fliken *Listor* samlar sparade
+sökningar och frågor per datamängd och kör dem igen på dagens data; listor avgränsar också tabellen i Bearbeta och
+raderna i diagram. Se [soka.md](soka.md).
 
 ## Bearbeta
 

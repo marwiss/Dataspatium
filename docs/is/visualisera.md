@@ -58,6 +58,10 @@ gefa sjálfvirk gildi.
 Viðmiðunar- og leitnilínur eru ekki teiknaðar í myndritum með smáspjöldum. Stillingarnar eru vistaðar með myndritinu
 og fylgja deildum myndritaskrám og hópkeyrslum.
 
+**Listi** undir síunum velur vistaða leit úr Leita sem raðir myndritsins eru sóttar úr (valið birtist aðeins þegar
+gagnasafnið á lista). Listinn er keyrður aftur í hvert sinn sem myndritið er teiknað, svo myndritið fylgir gögnum
+dagsins, og síurnar bætast ofan á. Valið er vistað með myndritinu og gildir líka í mælaborðum og útflutningi.
+
 ## D3-snið
 
 - **Röðun**: ein röð fyrir hvern flokk, raðað eftir gildi, með punkti og línu. Veldu flokk, gildi, útreikning, fjölda og röð.
@@ -154,6 +158,12 @@ Mælaborðið er flutt út sem sjálfstæð **HTML** (myndritin sem innfelld SVG
 Við innflutning eru myndritin tengd fyrirliggjandi myndritum með sama heiti og gagnasafni; þau sem vantar eru endurgerð úr
 skránni. Afritið og færanlega mappan innihalda öll mælaborð. Mælaborð má líka opna gegnum skipanaspjaldið (Ctrl+K) og flytja út
 úr hamnum Flytja út.
+
+**Kynna** sýnir mælaborðið í öllum glugganum, á stórum skjá eða skjávarpa: hnappurinn er í titilröð mælaborðsins og
+skipunin *Kynna: nafn* í skipanaspjaldinu. Yfirlitið sýnir öll myndrit; hægri og vinstri ör (eða bilslá og Page
+Up/Page Down) fara eitt myndrit í einu í fullri stærð, Home sýnir yfirlitið aftur, F víxlar fullum skjá þar sem
+vafrinn leyfir það og Esc lýkur. Sameiginlegu síurnar haldast í röðinni efst og gilda um öll myndrit. Engu er breytt
+í mælaborðinu meðan á kynningunni stendur.
 
 ## Deila myndritum
 

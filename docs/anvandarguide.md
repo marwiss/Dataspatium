@@ -149,7 +149,9 @@ importeras igen.
 Söka hittar rader utan kod. Skriv ett eller flera ord, välj alla datamängder eller bara den valda och tryck på
 *Sök*. Träffarna visas per datamängd; fasetterna (de vanligaste värdena i kolumner med få olika värden) avgränsar
 med ett klick, och en rad i tabellen visar hela posten i inspektören. Sökningen kan sparas som lista, bli en ny
-datamängd eller öppnas i Bearbeta med datamängden vald. Se [soka.md](soka.md).
+datamängd eller öppnas i Bearbeta med datamängden vald. Fliken *Fråga* bygger en fråga över en eller flera
+datamängder med kolumner, beräkningar, villkor och sortering utan kod och visar den SQL som skapas; sparade listor
+avgränsar tabellen i Bearbeta och raderna i diagram. Se [soka.md](soka.md).
 
 ## Hålla ordning (Hantera)
 
@@ -199,9 +201,17 @@ Allt som ska till andra människor finns i läget *Dela* (se [dela.md](dela.md))
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras
   och läses in som filer. Nycklar följer aldrig med.
 
+## Hjälp i appen
+
+Hela handboken finns i appen: knappen **?** uppe till höger, tangenten **F1** eller kommandot *Hjälp* i
+kommandopaletten öppnar den vid kapitlet för det läge du står i. Till vänster finns innehållet, ovanför ett sökfält
+som söker i alla avsnitt, och länkar mellan dokumenten följs inne i handboken. Dialoger med en **?**-knapp öppnar
+rätt avsnitt direkt. Handboken följer appens språk och behöver inget nätverk; längst ned finns versionen,
+*Sök efter uppdatering* och länken till dokumentationen på GitHub.
+
 ## Tangentbord
 
-Alt+1 till Alt+8 växlar läge och Ctrl+K öppnar kommandopaletten. Kanten mellan en panel och arbetsytan kan få
+Alt+1 till Alt+8 växlar läge, Ctrl+K öppnar kommandopaletten och F1 öppnar handboken. Kanten mellan en panel och arbetsytan kan få
 fokus med Tabb och flyttas med piltangenterna (Skift för större steg, Home och End för minsta och största bredd). Första Tabb-trycket på sidan visar länken
 *Hoppa till innehållet*, som flyttar fokus förbi lägesväxlaren och objektpanelen. Allt nås med Tabb och Enter;
 dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer

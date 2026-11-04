@@ -68,8 +68,11 @@ Bundles and GitHub have moved to the Share mode.
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on
 the row, regardless of case. Hits are shown per dataset with counts, facets (the most common values in columns with
 few distinct values, which narrow the search with one click) and a table where a row opens the whole record in the
-inspector. A search can be saved as a list, become a new dataset or be opened in Process. The *Lists* tab collects
-saved searches per dataset and runs them again on today's data. See [soka.md](soka.md).
+inspector. A search can be saved as a list, become a new dataset or be opened in Process. The *Query* tab builds a
+query over one or several datasets (columns, calculations, conditions, sorting) without code and shows the SQL it
+creates; it can be opened in Analyse, saved as a list or become a dataset. The *Lists* tab collects saved searches
+and queries per dataset and runs them again on today's data; lists also narrow the table in Process and the rows of
+charts. See [soka.md](soka.md).
 
 ## Process
 

@@ -151,7 +151,9 @@ uudelleen.
 Hae löytää rivejä ilman koodia. Kirjoita yksi tai useampi sana, valitse kaikki aineistot tai vain valittu ja paina
 *Hae*. Osumat näytetään aineistoittain; fasetit (yleisimmät arvot sarakkeissa, joissa on vähän eri arvoja) rajaavat
 yhdellä napsautuksella, ja taulukon rivi näyttää koko tietueen tarkastelupaneelissa. Haun voi tallentaa listaksi,
-siitä voi tehdä uuden aineiston tai sen voi avata Muokkaa-tilassa aineisto valittuna. Ks. [soka.md](soka.md).
+siitä voi tehdä uuden aineiston tai sen voi avata Muokkaa-tilassa aineisto valittuna. Välilehti *Kysely* rakentaa
+kyselyn yhdelle tai useammalle aineistolle sarakkeineen, laskentoineen, ehtoineen ja lajitteluineen ilman koodia ja
+näyttää luomansa SQL:n; tallennetut listat rajaavat Muokkaa-tilan taulukon ja kaavioiden rivit. Ks. [soka.md](soka.md).
 
 ## Järjestyksen pitäminen (Hallitse)
 
@@ -204,9 +206,17 @@ Kaikki, mikä on tarkoitettu muille ihmisille, on *Jaa*-tilassa (ks. [dela.md](d
 - API-määritykset (`.api.json`), kaaviot ja asiakirjamallit (JSON) ja reseptit (JSON, R tai SQL) viedään ja ladataan
   tiedostoina. Avaimet eivät koskaan kulje mukana.
 
+## Ohje sovelluksessa
+
+Koko käsikirja on sovelluksessa: oikean yläkulman **?**-painike, **F1**-näppäin tai komentopaletin komento *Ohje*
+avaa sen sen tilan luvusta, jossa olet. Vasemmalla on sisältö, sen yläpuolella hakukenttä, joka hakee kaikista
+osioista, ja dokumenttien väliset linkit avautuvat käsikirjan sisällä. Dialogit, joissa on **?**-painike, avaavat
+oikean osion suoraan. Käsikirja seuraa sovelluksen kieltä eikä tarvitse verkkoa; alareunassa ovat versio,
+*Tarkista päivitykset* ja linkki GitHubin dokumentaatioon.
+
 ## Näppäimistö
 
-Alt+1 … Alt+8 vaihtaa tilaa ja Ctrl+K avaa komentopaletin. Paneelin ja työalueen välinen reuna voi saada kohdistuksen
+Alt+1 … Alt+8 vaihtaa tilaa, Ctrl+K avaa komentopaletin ja F1 avaa käsikirjan. Paneelin ja työalueen välinen reuna voi saada kohdistuksen
 Sarkaimella, ja sitä siirretään nuolinäppäimillä (Vaihto suuremmille askelille, Home ja End pienimmälle ja
 suurimmalle leveydelle). Ensimmäinen Sarkain-painallus sivulla näyttää linkin *Siirry
 sisältöön*, joka siirtää kohdistuksen tilanvalitsimen ja kohdepaneelin ohi. Kaiken voi tavoittaa Sarkaimella ja Enterillä;

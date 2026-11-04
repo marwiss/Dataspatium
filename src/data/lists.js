@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/lists', ['platform/storage/idb', 'data/datasets', 'analysis/search'], (idb, datasets, search) => {
+  D.define('data/lists', ['platform/storage/idb', 'data/datasets', 'analysis/search', 'analysis/querybuilder'], (idb, datasets, search, querybuilder) => {
     const listeners = new Set();
     const notify = (type, payload) => { for (const fn of Array.from(listeners)) { try { fn(type, payload); } catch (err) { console.error('[lists] listener failed', err); } } };
     /** @param {(type: string, payload: any) => void} fn */
@@ -19,7 +19,9 @@
 
     /**
      * Save a list (new or updated).
-     * @param {{id?: string, name: string, datasetId: string, text?: string, filters?: Array<{column: string, value: any}>, hits?: number|null, createdAt?: string}} input
+     * A list is either a search (text and facet filters on one dataset, the default) or a query (kind 'query': a
+     * visual query spec from analysis/querybuilder with its SQL; datasetId is the primary dataset).
+     * @param {{id?: string, name: string, datasetId: string, kind?: 'search'|'query', text?: string, filters?: Array<{column: string, value: any}>, spec?: any, sql?: string, hits?: number|null, createdAt?: string}} input
      */
     async function save(input) {
       const meta = await datasets.get(input.datasetId);
@@ -27,7 +29,9 @@
       const rec = {
         id: input.id || uid(), name: String(input.name || '').trim() || D.t('soka.list.untitled'), datasetId: input.datasetId,
         datasetName: meta ? meta.name : '', datasetShort: meta ? meta.shortName || '' : '',
+        kind: input.kind === 'query' ? 'query' : 'search',
         text: input.text || '', filters: (input.filters || []).map((f) => ({ column: f.column, value: f.value })),
+        spec: input.kind === 'query' ? JSON.parse(JSON.stringify(input.spec || null)) : undefined, sql: input.kind === 'query' ? String(input.sql || '') : undefined,
         hits: input.hits === undefined ? null : input.hits, lastRunAt: null,
         createdAt: input.createdAt || now, updatedAt: now,
       };
@@ -40,6 +44,13 @@
 
     /** Run a list again: the current hits in its dataset (the stored hit count follows). */
     async function run(rec, options = {}) {
+      if (rec.kind === 'query') {
+        const out = await querybuilder.run(rec.spec, options);
+        rec.hits = out.values.length; rec.sql = out.sql; rec.lastRunAt = new Date().toISOString();
+        await idb.putList(rec);
+        notify('run', rec);
+        return out;
+      }
       const res = await search.searchDataset(rec.datasetId, rec.text, rec.filters, options);
       rec.hits = res.count;
       rec.lastRunAt = new Date().toISOString();
@@ -50,6 +61,7 @@
 
     /** The hits as a new dataset (same columns and types as the source). */
     async function toDataset(rec, name) {
+      if (rec.kind === 'query') return querybuilder.toDataset(rec.spec, name || rec.name);
       const cols = await datasets.columns(rec.datasetId);
       const { sql, params } = search.hitsSql(cols, rec.text, rec.filters);
       return datasets.createFromQuery(rec.datasetId, sql, { name: name || rec.name, params, source: { list: { id: rec.id, name: rec.name, text: rec.text, filters: rec.filters } } });
@@ -57,6 +69,7 @@
 
     /** Readable summary of what a list selects. */
     function describe(rec) {
+      if (rec.kind === 'query') return String(rec.sql || '').replace(/\s+/g, ' ').trim().slice(0, 160);
       const parts = [];
       if (rec.text) parts.push('"' + rec.text + '"');
       for (const f of rec.filters || []) parts.push(`${f.column} = ${f.value === null || f.value === undefined ? D.t('common.missing') : f.value}`);

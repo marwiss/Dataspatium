@@ -184,6 +184,18 @@ passerer ingen server. Første gang må telefonen hente mobilsiden fra nettet (e
 intranettet); deretter ligger den i hurtigbufferen. Finnes det ikke noe felles nettverk: slå på internettdeling på
 telefonen og koble datamaskinen til den. Se [mobil.md](mobil.md).
 
+## Hvor er hjelpen?
+
+I appen: knappen **?** øverst til høyre eller F1 åpner håndboken ved kapittelet for modusen du står i, med søk i
+alle avsnitt og lenker mellom dokumentene. De samme tekstene finnes i [docs/](anvandarguide.md) på GitHub.
+Grunnkurset åpnes fra håndboken eller med Ctrl+K.
+
+## Kan jeg vise et dashbord på en stor skjerm?
+
+Ja. Åpne dashbordet i Visualiser og klikk på **Presenter**: dashbordet fyller vinduet, piltastene går ett diagram om
+gangen, F gir fullskjerm, og Esc avslutter. De felles filtrene blir værende øverst. Se
+[visualisera.md](visualisera.md).
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

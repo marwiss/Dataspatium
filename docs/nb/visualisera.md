@@ -60,6 +60,10 @@ felt gir automatiske verdier.
 Referanse- og trendlinjer tegnes ikke i diagrammer med små paneler. Innstillingene lagres med diagrammet og følger
 med i delte diagramfiler og batchkjøringer.
 
+**Liste** under filtrene velger et lagret søk fra Søk som diagrammets rader hentes fra (valget vises bare når
+datasettet har lister). Listen kjøres igjen hver gang diagrammet tegnes, så diagrammet følger dagens data, og
+filtrene legges oppå. Valget lagres med diagrammet og gjelder også i dashbord og eksporter.
+
 ## D3-maler
 
 - **Rangering**: én rad per kategori sortert etter verdi, med prikk og strek. Velg kategori, verdi, beregning, antall og
@@ -159,6 +163,12 @@ Dashbordet eksporteres som frittstående **HTML** (diagrammene som innebygd SVG,
 diagrammenes definisjoner. Ved import kobles diagrammene til eksisterende diagrammer med samme navn og datasett; de som
 mangler, gjenskapes fra filen. Sikkerhetskopien og den portable mappen inneholder alle dashbord. Dashbord kan også åpnes via
 kommandopaletten (Ctrl+K) og eksporteres fra modusen Eksporter.
+
+**Presenter** viser dashbordet i hele vinduet, på en stor skjerm eller en projektor: knappen finnes i dashbordets
+tittelrad og kommandoen *Presenter: navn* i kommandopaletten. Oversikten viser alle diagrammer; høyre- og venstrepil
+(eller mellomrom og Page Up/Page Down) går ett diagram om gangen i stor størrelse, Home viser oversikten igjen, F
+veksler fullskjerm der nettleseren tillater det, og Esc avslutter. De felles filtrene blir værende i raden øverst og
+gjelder alle diagrammer. Ingenting endres i dashbordet under presentasjonen.
 
 ## Del diagrammer
 

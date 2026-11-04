@@ -60,6 +60,10 @@ Tomma fält ger automatiska värden.
 Referens- och trendlinjer ritas inte i diagram med småbilder. Inställningarna sparas med diagrammet och följer med i
 delade diagramfiler och batchkörningar.
 
+**Lista** under filtren väljer en sparad sökning från Söka som raderna i diagrammet hämtas ur (valet visas bara när
+datamängden har listor). Listan körs om varje gång diagrammet ritas, så diagrammet följer dagens data, och filtren
+läggs ovanpå. Valet sparas med diagrammet och gäller även i dashboards och exporter.
+
 ## D3-mallar
 
 - **Rangordning**: en rad per kategori sorterad efter värde, med punkt och linje. Välj kategori, värde,
@@ -166,6 +170,12 @@ Dashboarden exporteras som fristående **HTML** (diagrammen som inbäddad SVG, m
 diagrammens definitioner. Vid import kopplas diagrammen till befintliga diagram med samma namn och datamängd; de
 som saknas återskapas ur filen. Säkerhetskopian och den portabla mappen innehåller alla dashboards. Dashboards kan
 också öppnas via kommandopaletten (Ctrl+K) och exporteras från läget Exportera.
+
+**Presentera** visar dashboarden i hela fönstret, på en stor skärm eller projektor: knappen finns i dashboardens
+rubrikrad och kommandot *Presentera: namn* i kommandopaletten. Översikten visar alla diagram; höger- och vänsterpil
+(eller mellanslag och Page Up/Page Down) går ett diagram i taget i stor storlek, Home visar översikten igen, F
+växlar helskärm där webbläsaren tillåter det och Esc avslutar. De gemensamma filtren finns kvar i raden överst och
+gäller alla diagram. Inget ändras i dashboarden under presentationen.
 
 ## Dela diagram
 

@@ -18,7 +18,7 @@
     /**
      * A body given as a function receives `done(value)`, which closes the dialog with that value (choices made
      * inside the body, such as a list of languages).
-     * @param {{title?: string, body?: Node|string|((done: (value?: any) => void) => Node), actions?: Array<{label: string, variant?: string, value?: any, primary?: boolean, close?: boolean}>, size?: string, closable?: boolean}} options
+     * @param {{title?: string, body?: Node|string|((done: (value?: any) => void) => Node), actions?: Array<{label: string, variant?: string, value?: any, primary?: boolean, close?: boolean}>, size?: string, closable?: boolean, help?: string}} options
      * @returns {Promise<any>} resolves with the chosen action's value (undefined when dismissed)
      */
     function open(options) {
@@ -33,7 +33,10 @@
         dlg.append(
           h('div', { class: 'dm-dialog-head' },
             h('h2', { id: titleId, text: options.title || '' }),
-            options.closable === false ? null : basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, variant: 'ghost', onClick: () => finish(undefined) })),
+            h('div', { class: 'dm-row' },
+              // `help: 'doc#section'` adds a button that opens the handbook (ui/help) at that section.
+              options.help && D.has('ui/help') ? basic.button({ label: t('help.open'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', class: 'dm-dialog-help', onClick: () => { const help = D.require('ui/help'); help.open(help.parseRef(options.help)); } }) : null,
+              options.closable === false ? null : basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, variant: 'ghost', class: 'dm-dialog-close', onClick: () => finish(undefined) }))),
           h('div', { class: 'dm-dialog-body' }, (typeof options.body === 'function' ? options.body(finish) : options.body) || null),
           h('div', { class: 'dm-dialog-actions' }, actionEls),
         );

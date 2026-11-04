@@ -69,8 +69,11 @@ Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhde
 sanan on löydyttävä riviltä kirjainkoosta riippumatta. Osumat näytetään aineistoittain lukumäärineen, fasetteineen
 (yleisimmät arvot sarakkeissa, joissa on vähän eri arvoja ja jotka rajaavat hakua yhdellä napsautuksella) ja
 taulukkona, jossa rivi avaa koko tietueen tarkastelupaneeliin. Haun voi tallentaa listaksi, siitä voi tehdä uuden
-aineiston tai sen voi avata Muokkaa-tilassa. Välilehti *Listat* kokoaa tallennetut haut aineistoittain ja suorittaa
-ne uudelleen tämän päivän datalla. Ks. [soka.md](soka.md).
+aineiston tai sen voi avata Muokkaa-tilassa. Välilehti *Kysely* rakentaa kyselyn yhdelle tai useammalle aineistolle
+(sarakkeet, laskennat, ehdot, lajittelu) ilman koodia ja näyttää luomansa SQL:n; sen voi avata Analysoi-tilassa,
+tallentaa listaksi tai tehdä siitä aineiston. Välilehti *Listat* kokoaa tallennetut haut ja kyselyt aineistoittain ja
+suorittaa ne uudelleen tämän päivän datalla; listat rajaavat myös Muokkaa-tilan taulukon ja kaavioiden rivit. Ks.
+[soka.md](soka.md).
 
 ## Muokkaa
 

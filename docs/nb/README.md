@@ -77,6 +77,10 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Finne raskt**: modusen *Søk* leter i alle kolonner i ett eller alle datasett, med fasetter som avgrenser, og lagrede
   lister (se [soka.md](soka.md)); kommandopaletten (Ctrl+K) bytter modus, åpner datasett, diagrammer og dashbord og
   kjører handlinger fra ett søkefelt.
+- **Spør uten kode**: fanen *Spørring* i Søk kobler datasett, velger kolonner og beregninger, setter betingelser og
+  viser SQL-koden som lages; lagrede lister avgrenser tabellen i Bearbeid og radene i diagrammer.
+- **Hjelp i appen og presentasjon**: hele håndboken med søk åpnes med ? eller F1 ved kapittelet for modusen du står
+  i, og **Presenter** viser et dashbord i hele vinduet ett diagram om gangen.
 - **Seks språk**: brukergrensesnitt, meldinger og dokumentasjon på svensk, dansk, norsk (bokmål), finsk, islandsk og
   engelsk.
 - **Grunnkurs**: en interaktiv gjennomgang av alle åtte moduser med eksempeldata, på alle seks språk. Det vises første
@@ -86,6 +90,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 
 Filnavnene er de samme på alle språk (de svenske originalene), så lenkene virker likt overalt.
 
+- **Håndboken** i appen: den samme dokumentasjonen som her, med søk; åpne den med ? øverst til høyre eller F1.
 - **Grunnkurset** i appen: en interaktiv gjennomgang av alle moduser med eksempeldata; åpne det fra hjelpen (?) eller
   med Ctrl+K.
 - [Kom i gang](kom-igang.md): trinn for trinn med vanlige spørsmål.

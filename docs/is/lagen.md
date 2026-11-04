@@ -64,8 +64,11 @@ Deila.
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að
 finnast í röðinni, óháð há- og lágstöfum. Niðurstöðurnar birtast eftir gagnasafni með fjölda, flokkum (algengustu
 gildin í dálkum með fá ólík gildi, sem afmarka leitina með einum smelli) og töflu þar sem röð opnar alla færsluna í
-eiginleikaspjaldinu. Leit má vista sem lista, gera að nýju gagnasafni eða opna í Vinna. Flipinn *Listar* safnar
-vistuðum leitum eftir gagnasafni og keyrir þær aftur á gögnum dagsins. Sjá [soka.md](soka.md).
+eiginleikaspjaldinu. Leit má vista sem lista, gera að nýju gagnasafni eða opna í Vinna. Flipinn *Fyrirspurn* býr til
+fyrirspurn yfir eitt eða fleiri gagnasöfn (dálkar, útreikningar, skilyrði, röðun) án kóða og sýnir þá SQL sem verður
+til; hana má opna í Greina, vista sem lista eða gera að gagnasafni. Flipinn *Listar* safnar vistuðum leitum og
+fyrirspurnum eftir gagnasafni og keyrir þær aftur á gögnum dagsins; listar afmarka líka töfluna í Vinna og raðir
+myndrita. Sjá [soka.md](soka.md).
 
 ## Vinna
 

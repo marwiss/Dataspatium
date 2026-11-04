@@ -141,7 +141,9 @@ gegnum R: Parquet, SPSS, Stata og RDS. SQLite og Parquet halda gerðunum nákvæ
 Leita finnur raðir án kóða. Skrifaðu eitt eða fleiri orð, veldu öll gagnasöfn eða aðeins það valda og ýttu á *Leita*.
 Niðurstöðurnar birtast eftir gagnasafni; flokkarnir (algengustu gildin í dálkum með fá ólík gildi) afmarka með einum
 smelli, og röð í töflunni sýnir alla færsluna í eiginleikaspjaldinu. Leitina má vista sem lista, gera að nýju
-gagnasafni eða opna í Vinna með gagnasafnið valið. Sjá [soka.md](soka.md).
+gagnasafni eða opna í Vinna með gagnasafnið valið. Flipinn *Fyrirspurn* býr til fyrirspurn yfir eitt eða fleiri
+gagnasöfn með dálkum, útreikningum, skilyrðum og röðun án kóða og sýnir þá SQL sem verður til; vistaðir listar afmarka
+töfluna í Vinna og raðir myndrita. Sjá [soka.md](soka.md).
 
 ## Halda röð og reglu (Umsjón)
 
@@ -190,9 +192,17 @@ Allt sem á að fara til annars fólks er í hamnum *Deila* (sjá [dela.md](dela
 - API-uppsetningar (`.api.json`), myndrit og skjalasnið (JSON) og uppskriftir (JSON, R eða SQL) eru fluttar út og hlaðnar inn
   sem skrár. Lyklar fylgja aldrei með.
 
+## Hjálp í forritinu
+
+Öll handbókin er í forritinu: hnappurinn **?** efst til hægri, lykillinn **F1** eða skipunin *Hjálp* í
+skipanaspjaldinu opnar hana við kaflann fyrir haminn sem þú ert í. Til vinstri er efnisyfirlitið, fyrir ofan það
+leitarreitur sem leitar í öllum köflum, og tenglum milli skjala er fylgt inni í handbókinni. Gluggar með
+**?**-hnappi opna rétta kaflann beint. Handbókin fylgir tungumáli forritsins og þarf ekkert net; neðst eru útgáfan,
+*Leita að uppfærslum* og tengillinn á skjölunina á GitHub.
+
 ## Lyklaborð
 
-Alt+1 til Alt+8 skipta um ham og Ctrl+K opnar skipanaspjaldið. Brúnin milli spjalds og vinnuflatar getur fengið fókus
+Alt+1 til Alt+8 skipta um ham, Ctrl+K opnar skipanaspjaldið og F1 opnar handbókina. Brúnin milli spjalds og vinnuflatar getur fengið fókus
 með Tab og er færð með örvalyklunum (Shift fyrir stærri skref, Home og End fyrir minnstu og mestu breidd). Fyrsta ýting á Tab á síðunni sýnir tengilinn *Fara í efnið*, sem
 færir fókus framhjá hamavalinu og hlutaspjaldinu. Allt næst með Tab og Enter; gluggum er lokað með Esc. Í töflunni færa
 örvalyklarnir milli reita og Enter breytir. Forritið fylgir kerfisstillingunni um minni hreyfingu.

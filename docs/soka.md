@@ -1,8 +1,8 @@
 # Söka
 
 Läget Söka hittar och listar utan kod. Det ligger mellan Hantera och Bearbeta: först hittar du det du letar
-efter, sedan bearbetar du det. Två flikar finns från 2.0, Sök och Listor; fliken Fråga, en visuell frågebyggare
-som visar den SQL den skapar, kommer i 2.2.
+efter, sedan bearbetar du det. Tre flikar: *Sök* (fritext med fasetter), *Fråga* (en visuell frågebyggare över en
+eller flera datamängder som visar den SQL den skapar) och *Listor* (sparade sökningar och frågor).
 
 ## Sök
 
@@ -26,12 +26,33 @@ Träffarna visas per datamängd med antal. Varje kort har:
 Sökningen körs i SQLite i en worker, så sidan låser sig inte. I en datamängd med en miljon rader tar en sökning
 någon sekund per ord.
 
+## Fråga
+
+Fliken Fråga bygger en fråga utan att du skriver SQL och visar den SQL som skapas. Kortet **Datamängder** väljer
+datamängden att fråga i och kopplar på fler med *Lägg till koppling*: välj datamängd, om bara rader med träff i båda
+eller alla rader i den första ska med, och vilka kolumner som ska matcha (fler nycklar går att lägga till; de
+kopplade datamängderna behöver kortnamn). **Kolumner** väljer vad som visas, som värde eller som beräkning (antal,
+antal unika, summa, medelvärde, minsta, största) med valfritt namn i resultatet; finns en beräkning grupperas
+raderna automatiskt på de övriga kolumnerna. **Villkor** läggs i grupper där alla villkor ska gälla eller något
+räcker (är, är inte, är större än, är minst, är mindre än, är högst, innehåller, börjar med, är något av, är mellan,
+är tomt, är inte tomt), och **Sortering och antal** avslutar. *Kör frågan* visar resultatet som tabell med den
+genererade SQL:en under; *Öppna i Analysera* lägger SQL:en i SQL-konsolen, där den kan ändras vidare. I SQL:en heter
+den första datamängden `t0` och de kopplade `t1`, `t2` och så vidare.
+
+*Spara som lista* sparar frågan under Listor, där den körs igen på dagens data, och *Spara som datamängd* gör
+resultatet till en ny datamängd med resultatets kolumner.
+
 ## Listor
 
 En lista är en sparad sökning i en datamängd: texten, avgränsningarna och antalet träffar senast den kördes.
 *Kör* visar dagens träffar i fliken Sök (datan kan ha ändrats sedan listan sparades), *Spara som datamängd* gör
 träffarna till en ny datamängd och *Ta bort* tar bort listan. Listor följer datamängden: tas datamängden bort,
 försvinner dess listor.
+
+Listor används också på andra håll. I Bearbeta väljer *Lista* i tabellens verktygsrad en sparad sökning som
+avgränsar tabellen (märket visar antal rader av totalen), och i diagrambyggaren väljer *Lista* under filtren vilka
+rader ett diagram bygger på; valet följer med diagrammet i dashboards och exporter och körs om på dagens data.
+Frågor som sparats från fliken Fråga visas med sin SQL i Listor och körs i Fråga.
 
 ## Kommandopaletten
 

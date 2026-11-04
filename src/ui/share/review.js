@@ -66,7 +66,7 @@
         }
       }
       const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('review.help') }), h('div', { class: 'dm-stack-sm' }, rows), h('p', { class: 'dm-help dm-small', text: t('review.note') }));
-      const ok = await ctx.ui.dialog.open({ title: t('review.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
+      const ok = await ctx.ui.dialog.open({ title: t('review.title'), help: 'dela#granskning-före-delning', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       const transform = {};
       for (const [key, choice] of choices) {

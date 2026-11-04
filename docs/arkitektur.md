@@ -346,6 +346,19 @@ med lägen, datamängder, arbetsyta, tema och hjälp, och varje läge registrera
 kommando är `{id, label, hint, group, icon, keywords, run}`; träffar poängsätts (prefix, ordstart, delsträng,
 nyckelord) och senast körda kommandon sparas i inställningen `palette:recent`.
 
+Hjälpen i appen (`src/ui/help/help-panel.js`, modulen `ui/help`) visar handboken: dokumenten läses som textresurser
+(`docs/<språk>/<fil>.md` ur `docs/help/<språk>.js`, genererade av `tools/wrap_local.py`), tolkas med
+`docgen/markdown` (kodblock, bildrader och citatmarkeringar hanteras i panelen) och ritas som DOM utan innerHTML.
+Rubrikerna får slugs, sökningen går över avsnittens text, och interna länkar följs i panelen medan andra öppnas på
+GitHub. `help: 'dokument#avsnitt'` på `overlays.dialog.open` ger dialogen en ?-knapp; avsnittet anges med sin
+svenska slug och hittas i andra språk via rubrikens position (översättningarna delar struktur). ?-knappen i skalet,
+F1 och paletten öppnar kapitlet för aktivt läge (`openForMode`); paletten listar dessutom dokumenten.
+
+Presentationsläget (`src/ui/viz/present.js`, modulen `ui/viz/present`) ritar en dashboard i ett fast lager över hela
+fönstret med `viz/render.renderInto`, i stegen översikt och ett diagram i taget, med dashboardens gemensamma filter
+(`dashboards.toExtraFilters`), tangentbord och `requestFullscreen` där webbläsaren tillåter det. Dashboarden ändras
+inte; knappen finns i dashboardvyn och kommandot *Presentera* i paletten.
+
 Grundkursen (`src/ui/shell/course.js`, modulen `ui/course`) är en styrenhet per skal (`shell.course`) som visar
 elva steg i den flytande panelen `overlays.floating`. Varje steg har ett läge, en markerad kontroll (attributet
 `data-course` i läget), en kontroll av om uppgiften är gjord och en åtgärd för *Gör det åt mig*. Kursen arbetar
@@ -385,6 +398,13 @@ förberedelse för fler slags datamängder; 2.0 skapar bara `table`. Mapp (`fold
 i `_meta` och i manifestets lista (`format: 2`). Dexie-schemat är version 7 med indexet `folder` och lagret `lists`
 för sparade sökningar (`data/lists`); `analysis/search` söker med `dm_regex_test` i SQL-workern och räknar fasetter
 för kolumner med få olika värden.
+
+`analysis/querybuilder` (fliken Fråga, `ui/soka/query`) gör en frågespecifikation (`from`, `joins`, `columns` med
+beräkningar, `where` i grupper, `orderBy`, `limit`) till SQL över `data t0` med de kopplade datamängderna som
+`t1`, `t2` … under sina kortnamn (`compile`, `validate`, `run`, `toDataset`, `describe`); sparade frågor är listor av
+slaget `query` och körs via `data/lists.run`. Listor av slaget `search` används också som `where` i Bearbetas
+tabell (`datasets.count/query`) och som `listId` i diagrammens dataförfrågningar (`viz/data.fetchRows`, satt i
+diagrammets Vega-tillstånd och i `viz/render`).
 
 I serverläge (http och https) registrerar `index.html` `sw-coi.js`, som förutom cross-origin isolation cachar
 appens filer (`CACHE = 'dataspatium-<version>'`; cache först för `vendor/`, `presets/`, `src/` och `r/`, nätverk

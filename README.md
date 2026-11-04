@@ -86,6 +86,10 @@ ett paket.
 - **Hitta snabbt**: läget *Söka* letar i alla kolumner i en eller alla datamängder, med fasetter som avgränsar och
   sparade listor (se [docs/soka.md](docs/soka.md)); kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder,
   diagram och dashboards och kör åtgärder från ett enda sökfält.
+- **Fråga utan kod**: fliken *Fråga* i Söka kopplar datamängder, väljer kolumner och beräkningar, sätter villkor och
+  visar den SQL som skapas; sparade listor avgränsar tabellen i Bearbeta och raderna i diagram.
+- **Hjälp i appen och presentation**: hela handboken med sökning öppnas med ? eller F1 vid kapitlet för det läge du
+  står i, och **Presentera** visar en dashboard i hela fönstret med ett diagram i taget.
 - **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,
   isländska och engelska.
 - **Grundkurs**: en interaktiv genomgång av alla åtta lägen med exempeldata, på alla sex språk. Den visas första
@@ -93,6 +97,7 @@ ett paket.
 
 ## Lär dig mer
 
+- **Handboken** i appen: samma dokumentation som här, med sökning; öppna den med ? uppe till höger eller F1.
 - **Grundkursen** i appen: en interaktiv genomgång av alla lägen med exempeldata; öppna den från hjälpen (?)
   eller med Ctrl+K.
 - [Kom igång](docs/kom-igang.md): steg för steg med vanliga frågor.

@@ -80,6 +80,10 @@ with a backup or a bundle.
 - **Find things fast**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
   the hits and saved lists (see [soka.md](soka.md)); the command palette (Ctrl+K) switches mode, opens datasets,
   charts and dashboards and runs actions from a single search field.
+- **Query without code**: the *Query* tab in Search joins datasets, picks columns and calculations, sets conditions
+  and shows the SQL it creates; saved lists narrow the table in Process and the rows of charts.
+- **Help in the app and presentation**: the whole handbook with search opens with ? or F1 at the chapter of the mode
+  you are in, and **Present** shows a dashboard in the whole window one chart at a time.
 - **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
   Norwegian (Bokmål), Finnish, Icelandic and English.
 - **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all six languages. It is
@@ -90,6 +94,7 @@ with a backup or a bundle.
 The file names are the same in every language (they are the Swedish originals), so links work the same way
 everywhere.
 
+- **The handbook** in the app: the same documentation as here, with search; open it with ? at the top right or F1.
 - **The beginner's course** in the app: an interactive walkthrough of all the modes with example data; open it from
   the help (?) or with Ctrl+K.
 - [Getting started](kom-igang.md): step by step with common questions.

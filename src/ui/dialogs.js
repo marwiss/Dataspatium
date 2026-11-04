@@ -28,7 +28,7 @@
           h('h4', { text: t('op.group.' + g.id) }),
           h('div', { class: 'dm-op-grid' }, g.ops.map((id) => h('button', { type: 'button', class: 'dm-op-tile', 'data-op': id, onclick: () => { chosen = id; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },
             h('strong', { text: t('op.' + id) }), h('span', { class: 'dm-help', text: i18n.has('op.' + id + '.help') ? t('op.' + id + '.help') : '' })))))));
-        await overlays.dialog.open({ title: t('bearbeta.actions'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }] });
+        await overlays.dialog.open({ title: t('bearbeta.actions'), help: 'bearbeta#åtgärder', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }] });
         if (!chosen) return null;
         return run(ctx, chosen);
       }
@@ -51,7 +51,7 @@
           basic.button({ label: '↑', size: 'sm', variant: 'ghost', disabled: i === 0, onClick: () => { [order[i - 1], order[i]] = [order[i], order[i - 1]]; render(); } }),
           basic.button({ label: '↓', size: 'sm', variant: 'ghost', disabled: i === order.length - 1, onClick: () => { [order[i + 1], order[i]] = [order[i], order[i + 1]]; render(); } }))));
         render();
-        const ok = await overlays.dialog.open({ title: t('op.reorder_columns'), body: list, actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true }] });
+        const ok = await overlays.dialog.open({ title: t('op.reorder_columns'), help: 'bearbeta#åtgärder', body: list, actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true }] });
         if (ok !== true) return null;
         const result = await recipes.apply(ctx.datasetId, 'reorder_columns', { order });
         if (ctx.onApplied) ctx.onApplied(result, t('op.reorder_columns'));
@@ -60,7 +60,7 @@
 
       async function profileDialog(ctx) {
         const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('common.loading') }));
-        const dlg = overlays.dialog.open({ title: t('bearbeta.profile'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+        const dlg = overlays.dialog.open({ title: t('bearbeta.profile'), help: 'bearbeta#datakvalitet', body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
         try {
           const prof = await profileMod.profile(ctx.datasetId);
           const rows = prof.columns.map((c) => h('tr', null,
@@ -91,7 +91,7 @@
       /** Validation rules: list with results, run, suggestions, failing rows as a dataset, HTML report. */
       async function rulesDialog(ctx) {
         const body = h('div', { class: 'dm-stack' });
-        const dlg = overlays.dialog.open({ title: t('rules.title'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+        const dlg = overlays.dialog.open({ title: t('rules.title'), help: 'bearbeta#regler', body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
         let rules = await rulesMod.list(ctx.datasetId);
         let lastRun = null;
         // Other datasets, for the rule that checks values against another dataset's column.
@@ -217,7 +217,7 @@
               : h('p', { class: 'dm-help', text: t('versions.empty') }));
         };
         await render();
-        return overlays.dialog.open({ title: t('bearbeta.versions'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+        return overlays.dialog.open({ title: t('bearbeta.versions'), help: 'bearbeta#versioner', body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
       }
 
       async function recipeDialog(ctx) {
@@ -234,7 +234,7 @@
             basic.button({ label: t('recipe.download'), icon: 'download', disabled: !steps.length, onClick: async () => { const meta = await datasets.get(ctx.datasetId); files.download(new Blob([recipes.exportJson(steps, meta ? meta.name : '')], { type: 'application/json' }), files.safeName(t('recipe.file', { name: meta ? meta.name : t('recipe.default.name').toLowerCase() }), 'recipe.json')); } })),
           others.length && steps.length ? h('div', { class: 'dm-row' }, target, basic.button({ label: t('recipe.replay'), icon: 'play', onClick: async () => { const res = await recipes.replay(target.value, steps); const failed = res.filter((r) => !r.ok); overlays.toast.show(failed.length ? t('recipe.replay.partial', { done: res.length - failed.length, total: steps.length, error: failed[0].error }) : t('recipe.replay.done', { n: res.length }), { kind: failed.length ? 'warn' : 'ok', timeout: 8000 }); } })) : null,
           h('div', { class: 'dm-row' }, basic.button({ label: t('recipe.import'), icon: 'upload', onClick: async () => { const [file] = await files.pick({ accept: '.json' }); if (!file) return; try { const data = JSON.parse(await file.text()); const res = await recipes.replay(ctx.datasetId, data.steps || []); const failed = res.filter((r) => !r.ok); overlays.toast.show(failed.length ? t('recipe.replay.partial', { done: res.length - failed.length, total: (data.steps || []).length, error: failed[0].error }) : t('recipe.replay.done', { n: res.length }), { kind: failed.length ? 'warn' : 'ok', timeout: 8000 }); if (ctx.onApplied) ctx.onApplied({}, t('recipe.import')); closeDialog(body); } catch (err) { overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); } } })));
-        return overlays.dialog.open({ title: t('bearbeta.recipe'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+        return overlays.dialog.open({ title: t('bearbeta.recipe'), help: 'bearbeta#recept', body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
       }
 
       async function clustersDialog(ctx, presetColumn) {
@@ -263,7 +263,7 @@
         sel.addEventListener('change', load);
         await load();
         const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('clusters.help') }), sel, list);
-        const ok = await overlays.dialog.open({ title: t('op.clusters'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true }] });
+        const ok = await overlays.dialog.open({ title: t('op.clusters'), help: 'bearbeta#åtgärder', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('op.apply'), variant: 'primary', value: true }] });
         if (ok !== true) return null;
         let changed = 0;
         for (const g of groups) {
@@ -295,7 +295,7 @@
           h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: t('aggregate.groupby') }), h('div', { class: 'dm-columns-pick' }, groupBoxes)),
           h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: t('aggregate.aggregations') }), aggList, h('div', null, basic.button({ label: t('aggregate.add'), icon: 'plus', size: 'sm', onClick: addAgg }))),
           name);
-        const ok = await overlays.dialog.open({ title: t('op.aggregate'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
+        const ok = await overlays.dialog.open({ title: t('op.aggregate'), help: 'bearbeta#åtgärder', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
         if (ok !== true) return null;
         try {
           const meta = await derive.aggregate(ctx.datasetId, { groupBy: cols.map((c) => c.name).filter((n) => groupSet.has(n)), aggregations: aggRows.map((e) => ({ column: e.colSel.value || undefined, fn: e.fnSel.value, as: e.alias.value.trim() || undefined })), name: name.value.trim() });
@@ -326,7 +326,7 @@
         otherSel.addEventListener('change', fillRight); leftKey.addEventListener('change', fillRight);
         await fillRight();
         const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('join.help') }), h('div', { class: 'dm-form-grid' }, otherSel, typeSel, leftKey, rightKey, name));
-        const ok = await overlays.dialog.open({ title: t('op.join'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
+        const ok = await overlays.dialog.open({ title: t('op.join'), help: 'bearbeta#åtgärder', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
         if (ok !== true) return null;
         try {
           const meta = await derive.join(ctx.datasetId, otherSel.value, { keys: [[leftKey.value, rightKey.value]], type: typeSel.value, name: name.value.trim() });
@@ -343,7 +343,7 @@
         const boxes = others.map((d) => { const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) })})` })); sw.addEventListener('change', () => { if (sw.checked) chosen.add(d.id); else chosen.delete(d.id); }); return sw; });
         const name = /** @type {any} */ (h('dm-input', { label: t('derive.name'), value: t('append.default.name') }));
         const body = h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('append.help') }), h('div', { class: 'dm-columns-pick' }, boxes), name);
-        const ok = await overlays.dialog.open({ title: t('op.append'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
+        const ok = await overlays.dialog.open({ title: t('op.append'), help: 'bearbeta#åtgärder', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('derive.create'), variant: 'primary', value: true }] });
         if (ok !== true || !chosen.size) return null;
         try {
           const meta = await derive.append([ctx.datasetId].concat(others.map((d) => d.id).filter((id) => chosen.has(id))), name.value.trim());

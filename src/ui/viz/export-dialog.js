@@ -30,7 +30,7 @@
       const body = h('div', { class: 'dm-stack' },
         chart.kind === 'r' ? h('p', { class: 'dm-help', text: t('viz.export.r.note') }) : null,
         h('div', { class: 'dm-form-grid' }, format, width, chart.kind === 'r' ? null : height, scale, filename));
-      const ok = await overlays.dialog.open({ title: t('viz.export.title', { name: chart.name || '' }), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.download'), variant: 'primary', value: true, primary: true }] });
+      const ok = await overlays.dialog.open({ help: 'visualisera#exportera', title: t('viz.export.title', { name: chart.name || '' }), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.download'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       const fmt = format.value;
       const opts = { width: Number(width.value) || 960, height: Number(height.value) || undefined, scale: Number(scale.value) || 2 };
@@ -71,7 +71,7 @@
         h('div', { class: 'dm-form-grid' }, column, pattern, width, limit),
         h('div', { class: 'dm-stack-sm' }, h('span', { class: 'dm-label', text: t('viz.batch.formats') }), h('div', { class: 'dm-row-wrap' }, formatSwitches), h('p', { class: 'dm-help dm-xs', text: t('viz.batch.pptx.help') })),
         progress);
-      const ok = await overlays.dialog.open({ title: t('viz.batch.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('viz.batch.run'), variant: 'primary', value: true, primary: true }] });
+      const ok = await overlays.dialog.open({ title: t('viz.batch.title'), help: 'visualisera#batch-per-grupp', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('viz.batch.run'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       const chosen = Object.keys(formats).filter((f) => formats[f]);
       if (!chosen.length || !column.value) { overlays.toast.show(t('op.missing', { fields: t('viz.batch.formats') }), { kind: 'warn' }); return null; }

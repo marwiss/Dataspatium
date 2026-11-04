@@ -1,8 +1,8 @@
 # Hae
 
 Hae-tila löytää ja listaa ilman koodia. Se sijaitsee Hallitse- ja Muokkaa-tilojen välissä: ensin löydät etsimäsi,
-sitten muokkaat sitä. Versiosta 2.0 alkaen on kaksi välilehteä, Hae ja Listat; välilehti Kysely, visuaalinen
-kyselyrakentaja, joka näyttää luomansa SQL:n, tulee versiossa 2.2.
+sitten muokkaat sitä. Kolme välilehteä: *Hae* (vapaa teksti ja fasetit), *Kysely* (visuaalinen kyselyrakentaja
+yhdelle tai useammalle aineistolle, joka näyttää luomansa SQL:n) ja *Listat* (tallennetut haut ja kyselyt).
 
 ## Hae
 
@@ -26,12 +26,35 @@ Osumat näytetään aineistoittain lukumäärineen. Jokaisessa kortissa on:
 Haku suoritetaan SQLitessä workerissa, joten sivu ei jumitu. Miljoonan rivin aineistossa haku kestää noin sekunnin
 sanaa kohden.
 
+## Kysely
+
+Kysely-välilehti rakentaa kyselyn ilman, että kirjoitat SQL:ää, ja näyttää luomansa SQL:n. Kortti **Aineistot**
+valitsee kyseltävän aineiston ja yhdistää siihen lisää valinnalla *Lisää yhdistäminen*: valitse aineisto, otetaanko
+mukaan vain rivit, joille löytyy vastine molemmista, vai kaikki ensimmäisen rivit, ja mitkä sarakkeet vastaavat
+toisiaan (avaimia voi lisätä; yhdistettävillä aineistoilla on oltava lyhytnimi). **Sarakkeet** valitsee, mitä
+näytetään, arvona tai laskentana (lukumäärä, erillisten lukumäärä, summa, keskiarvo, pienin, suurin) ja
+halutessasi nimen tuloksessa; jos mukana on laskenta, rivit ryhmitellään automaattisesti muiden sarakkeiden mukaan.
+**Ehdot** lisätään ryhmiin, joissa kaikkien ehtojen on täytyttävä tai yksi riittää (on, ei ole, on suurempi kuin,
+on vähintään, on pienempi kuin, on enintään, sisältää, alkaa, on jokin, on välillä, on tyhjä, ei ole tyhjä), ja
+**Lajittelu ja määrä** viimeistelevät. *Suorita kysely* näyttää tuloksen taulukkona ja luodun SQL:n sen alla;
+*Avaa Analysoi-tilassa* vie SQL:n SQL-konsoliin, jossa sitä voi muokata edelleen. SQL:ssä ensimmäinen aineisto on
+`t0` ja yhdistetyt `t1`, `t2` ja niin edelleen.
+
+*Tallenna listaksi* tallentaa kyselyn Listat-välilehdelle, jossa se suoritetaan uudelleen tämän päivän datalla, ja
+*Tallenna aineistoksi* tekee tuloksesta uuden aineiston tuloksen sarakkeilla.
+
 ## Listat
 
 Lista on aineistoon tallennettu haku: teksti, rajaukset ja osumien määrä, kun se viimeksi suoritettiin. *Suorita*
 näyttää tämän päivän osumat Hae-välilehdellä (data voi olla muuttunut listan tallentamisen jälkeen), *Tallenna
 aineistoksi* tekee osumista uuden aineiston ja *Poista* poistaa listan. Listat seuraavat aineistoa: jos aineisto
 poistetaan, sen listat katoavat.
+
+Listoja käytetään muuallakin. Muokkaa-tilassa taulukon työkalurivin *Lista* valitsee tallennetun haun, joka rajaa
+taulukon (merkki näyttää rivien määrän kokonaismäärästä), ja kaaviorakentajassa suodattimien alla oleva *Lista*
+valitsee rivit, joihin kaavio perustuu; valinta kulkee kaavion mukana kojelautoihin ja vienteihin ja suoritetaan
+uudelleen tämän päivän datalla. Kysely-välilehdeltä tallennetut kyselyt näkyvät SQL:nsä kanssa Listat-välilehdellä
+ja suoritetaan Kyselyssä.
 
 ## Komentopaletti
 

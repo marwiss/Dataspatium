@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/data', ['data/datasets', 'data/types'], (datasets, types) => {
+  D.define('viz/data', ['data/datasets', 'data/types', 'data/lists', 'analysis/search'], (datasets, types, lists, search) => {
     const q = datasets.quoteIdent;
     const OPERATORS = [
       { id: '=', label: D.t('viz.op.eq') }, { id: '!=', label: D.t('viz.op.ne') }, { id: '>', label: D.t('viz.op.gt') }, { id: '>=', label: D.t('viz.op.ge') },
@@ -60,6 +60,15 @@
       const handle = await datasets.ensureOpen(datasetId);
       const columns = handle.columns;
       const where = whereClause(request.filters || [], columns);
+      // A saved list from Söka narrows the rows first; only search lists of this very dataset apply.
+      if (request.listId) {
+        const rec = await lists.get(request.listId);
+        if (rec && rec.datasetId === datasetId && (rec.kind || 'search') === 'search') {
+          const lw = search.where(columns, rec.text, rec.filters || []);
+          where.sql = where.sql ? `(${where.sql}) and (${lw.sql})` : lw.sql;
+          where.params = where.params.concat(lw.params);
+        }
+      }
       const whereSql = where.sql ? ' where ' + where.sql : '';
       const limit = Math.max(1, Number(request.limit) || 50000);
       const countRes = await handle.engine.exec(`select count(*) from data${whereSql}`, where.params);

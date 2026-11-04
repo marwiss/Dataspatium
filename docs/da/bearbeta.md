@@ -15,6 +15,8 @@ og kan afspilles igen på et andet datasæt. SQL-konsollen i tilstanden Analysé
   kolonnestatistik (antal, manglende, unikke, mindste, største, gennemsnit, sum, hyppigste værdier) og de handlinger, der
   passer til kolonnens type. Skift-klik viser statistikken uden at ændre sorteringen.
 - Filterfeltet søger i alle kolonner. Redigering fungerer også i et filtreret udvalg.
+- *Liste* i værktøjslinjen (vises, når datasættet har gemte søgninger fra Søg) indsnævrer tabellen til listens
+  rækker; mærket viser antal af det samlede antal. Redigering og handlinger fungerer som sædvanligt.
 - Tabellen er virtualiseret: kun de synlige rækker findes i browserens DOM, resten ligger i SQLite. En million rækker
   gennemses lige så hurtigt som hundrede.
 

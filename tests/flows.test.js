@@ -30,7 +30,7 @@
     const before = openDialogs().length;
     const top = openDialogs().pop();
     if (!top) return;
-    const close = top.querySelector('.dm-dialog-head dm-button button');
+    const close = top.querySelector('.dm-dialog-head .dm-dialog-close button');
     if (close) /** @type {HTMLElement} */ (close).click();
     else top.dispatchEvent(new Event('cancel', { cancelable: true }));
     await waitFor(() => openDialogs().length < before, 3000, 'closing ' + label);

@@ -198,6 +198,18 @@ ingen server. Första gången måste telefonen hämta mobilsidan från webben (e
 intranätet); därefter ligger den i cachen. Finns inget gemensamt nätverk: slå på surfdelning i telefonen och anslut
 datorn till den. Se [mobil.md](mobil.md).
 
+## Var finns hjälpen?
+
+I appen: knappen **?** uppe till höger eller F1 öppnar handboken vid kapitlet för det läge du står i, med sökning
+över alla avsnitt och länkar mellan dokumenten. Samma texter finns i [docs/](anvandarguide.md) på GitHub.
+Grundkursen öppnas från handboken eller med Ctrl+K.
+
+## Kan jag visa en dashboard på en stor skärm?
+
+Ja. Öppna dashboarden i Visualisera och klicka på **Presentera**: dashboarden fyller fönstret, piltangenterna går
+ett diagram i taget, F ger helskärm och Esc avslutar. De gemensamma filtren finns kvar överst. Se
+[visualisera.md](visualisera.md).
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

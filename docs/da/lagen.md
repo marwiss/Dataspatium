@@ -65,8 +65,11 @@ tilstanden Del.
 Find og list uden kode. Fanen *Søg* søger i alle kolonner i ét eller alle datasæt; hvert ord skal findes på rækken,
 uanset store og små bogstaver. Resultaterne vises pr. datasæt med antal, facetter (de hyppigste værdier i kolonner
 med få forskellige værdier, som indsnævrer søgningen med ét klik) og en tabel, hvor en række åbner hele posten i
-inspektøren. En søgning kan gemmes som liste, blive til et nyt datasæt eller åbnes i Bearbejd. Fanen *Lister* samler
-gemte søgninger pr. datasæt og kører dem igen på dagens data. Se [soka.md](soka.md).
+inspektøren. En søgning kan gemmes som liste, blive til et nyt datasæt eller åbnes i Bearbejd. Fanen *Forespørgsel*
+bygger en forespørgsel over et eller flere datasæt (kolonner, beregninger, betingelser, sortering) uden kode og
+viser den SQL, der laves; den kan åbnes i Analysér, gemmes som liste eller blive til et datasæt. Fanen *Lister*
+samler gemte søgninger og forespørgsler pr. datasæt og kører dem igen på dagens data; lister indsnævrer også tabellen
+i Bearbejd og rækkerne i diagrammer. Se [soka.md](soka.md).
 
 ## Bearbejd
 

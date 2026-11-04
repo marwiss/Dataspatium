@@ -17,13 +17,14 @@
       if (v.customSpec) {
         const spec = JSON.parse(v.customSpec);
         const fields = v.state ? undefined : [];
-        const data = await vizData.fetchRows(chart.datasetId, { fields, filters: (v.state && v.state.filters) || [], limit: (v.state && v.state.maxRows) || 50000 });
+        const data = await vizData.fetchRows(chart.datasetId, { fields, filters: (v.state && v.state.filters) || [], listId: v.state && v.state.listId, limit: (v.state && v.state.maxRows) || 50000 });
         spec.data = { values: data.rows };
         if (options.width !== undefined && spec.width === 'container') spec.width = options.width;
         return { spec, data, columns, meta };
       }
       const state = Object.assign({}, v.state || builder.defaultState(v.type || 'bar', columns), options.extraFilters ? { filters: ((v.state && v.state.filters) || []).concat(options.extraFilters) } : {});
       const request = builder.dataRequest(state, columns, meta.rowCount || 0);
+      if (state.listId) request.listId = state.listId;
       const data = await vizData.fetchRows(chart.datasetId, request);
       // Point maps draw over bundled county or municipality boundaries.
       const basemapId = builder.basemapOf(state);

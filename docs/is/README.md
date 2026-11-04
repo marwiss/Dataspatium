@@ -75,6 +75,10 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Finna hratt**: hamurinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum, með flokkum sem afmarka og
   vistuðum listum (sjá [soka.md](soka.md)); skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og
   mælaborð og keyrir aðgerðir úr einum leitarreit.
+- **Fyrirspurn án kóða**: flipinn *Fyrirspurn* í Leita tengir gagnasöfn, velur dálka og útreikninga, setur skilyrði
+  og sýnir þá SQL sem verður til; vistaðir listar afmarka töfluna í Vinna og raðir myndrita.
+- **Hjálp í forritinu og kynning**: öll handbókin með leit opnast með ? eða F1 við kaflann fyrir haminn sem þú ert
+  í, og **Kynna** sýnir mælaborð í öllum glugganum eitt myndrit í einu.
 - **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
@@ -83,6 +87,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 
 Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo tenglar virka eins alls staðar.
 
+- **Handbókin** í forritinu: sömu skjölun og hér, með leit; opnaðu hana með ? efst til hægri eða F1.
 - **Grunnnámskeiðið** í forritinu: gagnvirk yfirferð yfir alla hami með sýnigögnum; opnaðu það úr hjálpinni (?) eða
   með Ctrl+K.
 - [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.

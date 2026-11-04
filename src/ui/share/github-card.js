@@ -36,7 +36,7 @@
       async function push() {
         const message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('github.commit.message'), help: t('github.commit.help') }));
         message.value = t('github.commit.default');
-        const ok = await ui.dialog.open({ title: t('github.push'), body: message, actions: [{ label: t('common.cancel'), value: false }, { label: t('github.push'), variant: 'primary', value: true, primary: true }] });
+        const ok = await ui.dialog.open({ title: t('github.push'), help: 'dela#github', body: message, actions: [{ label: t('common.cancel'), value: false }, { label: t('github.push'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true) return;
         await saveConfig();
         shell.setStatus('saving');

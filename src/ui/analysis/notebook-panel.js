@@ -166,7 +166,7 @@
         format.value = 'html';
         const code = /** @type {any} */ (h('dm-switch', { label: t('nb.export.code') }));
         code.checked = true;
-        const ok = await overlays.dialog.open({ title: t('nb.export.title'), body: h('div', { class: 'dm-stack' }, h('div', { class: 'dm-form-grid' }, format), code), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.download'), variant: 'primary', value: true, primary: true }] });
+        const ok = await overlays.dialog.open({ title: t('nb.export.title'), help: 'anteckningsbok#exportera-och-dela', body: h('div', { class: 'dm-stack' }, h('div', { class: 'dm-form-grid' }, format), code), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.download'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true) return;
         try {
           const res = await notebooks.exportNotebook(nb, format.value, { includeCode: code.checked });

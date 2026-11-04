@@ -60,6 +60,11 @@ give automatic values.
 Reference and trend lines are not drawn in charts with small multiples. The settings are saved with the chart and
 travel with shared chart files and batch runs.
 
+**List** below the filters picks a saved search from Search that the chart's rows are taken from (the choice is
+shown only when the dataset has lists). The list runs again every time the chart is drawn, so the chart follows
+today's data, and the filters apply on top. The choice is saved with the chart and applies in dashboards and
+exports too.
+
 ## D3 templates
 
 - **Ranking**: one row per category sorted by value, with a dot and a line. Choose category, value, calculation,
@@ -163,6 +168,12 @@ The dashboard is exported as standalone **HTML** (the charts as embedded SVG, wi
 definitions. At import the charts are linked to existing charts with the same name and dataset; those missing are
 recreated from the file. The backup and the portable folder contain all dashboards. Dashboards can also be opened
 through the command palette (Ctrl+K) and exported from Export mode.
+
+**Present** shows the dashboard in the whole window, on a large screen or a projector: the button is in the
+dashboard's title row and the command *Present: name* in the command palette. The overview shows all charts; the
+right and left arrows (or space and Page Up/Page Down) go one chart at a time at full size, Home shows the overview
+again, F toggles full screen where the browser allows it and Esc ends. The shared filters stay in the bar at the top
+and apply to every chart. Nothing in the dashboard changes during the presentation.
 
 ## Sharing charts
 

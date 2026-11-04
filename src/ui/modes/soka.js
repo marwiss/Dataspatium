@@ -8,10 +8,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists'], (base, search, lists) => {
+  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists', 'ui/soka/query'], (base, search, lists, queryTabMod) => {
     const { h, t, i18n, replace } = base;
-    const TABS = ['sok', 'listor'];
-    const TAB_ICONS = { sok: 'text-search', listor: 'list-checks' };
+    const TABS = ['sok', 'fraga', 'listor'];
+    const TAB_ICONS = { sok: 'text-search', fraga: 'filter', listor: 'list-checks' };
 
     /** @param {any} ctx */
     function createMode(ctx) {
@@ -32,6 +32,8 @@
       /** @type {{datasetId: string, columns: any[], row: any[]}|null} */
       let hit = null;
       let queryInput = null;
+      /** The Fråga tab keeps its query while the mode is open. */
+      let queryTab = null;
       const fail = (err) => { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error' }); };
       const datasetById = (id) => store.get().datasets.find((d) => d.id === id) || null;
 
@@ -69,8 +71,15 @@
         tabsEl.addEventListener('dm-change', (e) => { tab = /** @type {CustomEvent} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-stack' });
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('text-search', 20), t('soka.title'))), tabsEl, body);
-        if (tab === 'sok') renderSearch(body); else renderLists(body).catch(fail);
+        if (tab === 'sok') renderSearch(body); else if (tab === 'fraga') renderQuery(body).catch(fail); else renderLists(body).catch(fail);
         renderInspector();
+      }
+
+      // ---- Fråga ----
+      async function renderQuery(body) {
+        if (!queryTab) queryTab = queryTabMod.create(ctx);
+        replace(body, queryTab.el);
+        await queryTab.show();
       }
 
       // ---- Sök ----
@@ -188,8 +197,13 @@
         replace(body, ...cards);
       }
 
-      /** Run a list: show its query and hits in the Sök tab. */
+      /** Run a list: a search shows its hits in the Sök tab, a query opens in the Fråga tab. */
       async function runList(rec) {
+        if (rec.kind === 'query') {
+          tab = 'fraga'; render();
+          try { await queryTab.setList(rec); } catch (err) { fail(err); }
+          return;
+        }
         text = rec.text; scope = 'selected'; filters = { [rec.datasetId]: rec.filters.slice() };
         store.set({ selectedId: rec.datasetId });
         tab = 'sok'; searched = true; running = true; hit = null;
@@ -203,6 +217,7 @@
       function renderInspector() {
         if (!slots) return;
         if (tab === 'listor') { replace(slots.right, h('p', { class: 'dm-help', text: t('soka.lists.inspector') })); return; }
+        if (tab === 'fraga') { replace(slots.right, h('h4', { text: t('soka.tabs.fraga') }), h('p', { class: 'dm-help', text: t('fraga.inspector') })); return; }
         if (!hit) { replace(slots.right, h('p', { class: 'dm-help', text: t('soka.inspector.hint') })); return; }
         const ds = datasetById(hit.datasetId);
         const kv = /** @type {any} */ (h('dm-kv'));
@@ -219,7 +234,7 @@
         ctx.palette.register(() => [{ id: 'soka:focus', label: t('soka.palette'), hint: t('mode.soka.desc'), group: t('palette.group.actions'), icon: 'text-search', run: () => { tab = 'sok'; shell.activate('soka'); setTimeout(() => { if (queryInput) queryInput.focus(); }, 0); } }]);
       }
 
-      return { id: 'soka', activate, deactivate };
+      return { id: 'soka', activate, deactivate, get queryTab() { return queryTab; } };
     }
     return { createMode, TABS };
   });

@@ -43,7 +43,7 @@
         h('p', { class: 'dm-help', text: t('bundle.help') }), name, message, authorIn,
         h('h4', { text: t('shell.datasets') }), list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
         h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
-      const ok = await ui.dialog.open({ title: t('bundle.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
+      const ok = await ui.dialog.open({ title: t('bundle.title'), help: 'dela#paket', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       // Personal data in the chosen datasets: keep, pseudonymise or drop in the copy before it leaves the app.
       const reviewed = await D.require('ui/share/review').review(ctx, Array.from(chosen));

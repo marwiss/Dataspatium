@@ -39,6 +39,8 @@
           this.palette = paletteMod.create(this);
           this.ctx.palette = this.palette;
           this.palette.register(() => this.builtinCommands());
+          // The handbook's documents (ui/help), loaded when the palette first opens.
+          this.palette.register(() => (D.has('ui/help') ? D.require('ui/help').commands() : []));
           // Beginner's course (Grundkurs): opened at the first start, from the help dialog and the palette.
           this.course = courseMod.create(this);
           // Internet access is asked for per purpose the first time it is needed (platform/consent).
@@ -148,7 +150,7 @@
           remember.checked = true;
           const details = [info.host ? t('consent.host', { host: info.host }) : '', info.label || '', info.size ? i18n.formatBytes(info.size) : ''].filter(Boolean).join(' · ');
           const choice = await overlays.dialog.open({
-            title: t('consent.title'),
+            title: t('consent.title'), help: 'faq#behöver-jag-internet',
             body: h('div', { class: 'dm-stack' },
               h('p', null, h('strong', { text: t('consent.purpose.' + purpose) + ': ' }), t('consent.purpose.' + purpose + '.body')),
               details ? h('p', { class: 'dm-help', text: details }) : null,
@@ -326,6 +328,7 @@
         onKey(e) {
           if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
           else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); this.palette.open(); }
+          else if (e.key === 'F1' && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); this.showHelp(); }
         }
 
         toggleTheme() {
@@ -417,28 +420,9 @@
         setStatus(status) { this.store.set({ status }); }
 
         showHelp() {
-          // The update check is the only network call the app makes on its own, and only on this click.
-          const result = h('p', { class: 'dm-help dm-small' });
-          const checkBtn = basic.button({ label: t('update.check'), icon: 'refresh-cw', size: 'sm', onClick: async () => {
-            checkBtn.loading = true; result.textContent = t('update.checking');
-            try {
-              const res = await D.require('platform/updates').check();
-              result.textContent = res.newer ? t('update.available', { version: res.latest }) + ' ' : t('update.latest', { version: res.current });
-              if (res.newer) result.appendChild(h('a', { href: res.url, target: '_blank', rel: 'noopener', text: t('update.download') }));
-            } catch (err) { result.textContent = String((err && err.message) || err); }
-            checkBtn.loading = false;
-          } });
-          overlays.dialog.open({
-            actions: [{ label: t('course.open'), value: 'course' }, { label: t('common.ok'), variant: 'primary', value: true }],
-            title: t('shell.help'),
-            body: h('div', { class: 'dm-prose' },
-              h('p', { text: t('app.tagline') }),
-              h('ul', null, MODES.map((id) => h('li', null, h('strong', { text: t('mode.' + id) + ': ' }), t('mode.' + id + '.desc')))),
-              h('p', { class: 'dm-help', text: t('app.version', { version: D.version }) + '. ' + t('shell.shortcuts') }),
-              h('p', { class: 'dm-help' }, t('shell.help.docs') + ' ', h('a', { href: i18n.docsUrl(), target: '_blank', rel: 'noopener', text: t('shell.help.docs.link') })),
-              h('div', { class: 'dm-row' }, checkBtn),
-              result),
-          }).then((choice) => { if (choice === 'course') this.course.open(); });
+          // The handbook (ui/help) opens at the chapter of the active mode; the update check lives in its footer.
+          return D.require('ui/help').openForMode(this.store.get().mode || 'inhamta')
+            .catch((err) => { console.error(err); this.toast(t('help.error'), { kind: 'warn' }); });
         }
       }
 

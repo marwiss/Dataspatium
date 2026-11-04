@@ -14,6 +14,8 @@ nýja dálka, snúa og tengja gagnasöfn. Hver aðgerð er skráð sem skref í 
   (fjöldi, vantar, ólík gildi, lægst, hæst, meðaltal, summa, algengustu gildi) og þær aðgerðir sem henta gerð dálksins.
   Shift-smellur sýnir tölfræðina án þess að breyta röðuninni.
 - Síureiturinn leitar í öllum dálkum. Breytingar virka líka í síuðu úrvali.
+- *Listi* í tækjastikunni (birtist þegar gagnasafnið á vistaðar leitir úr Leita) afmarkar töfluna við raðir
+  listans; merkið sýnir fjölda af heildinni. Breytingar og aðgerðir virka eins og venjulega.
 - Taflan er sýndarvædd: aðeins sýnilegu raðirnar eru í DOM vafrans, afgangurinn er í SQLite. Milljón röðum er flett jafn hratt
   og hundrað.
 

@@ -15,6 +15,8 @@ samma datamängd och loggar ändringar på samma sätt.
   då kolumnstatistik (antal, saknade, unika, minsta, största, medel, summa, vanligaste värden) och de åtgärder
   som passar kolumnens typ. Skift-klick visar statistiken utan att ändra sorteringen.
 - Filterfältet söker i alla kolumner. Redigering fungerar även i ett filtrerat urval.
+- *Lista* i verktygsraden (visas när datamängden har sparade sökningar från Söka) avgränsar tabellen till listans
+  rader; märket visar antal av totalen. Redigering och åtgärder fungerar som vanligt.
 - Tabellen är virtualiserad: bara de synliga raderna finns i webbläsarens DOM, resten ligger i SQLite. En
   miljon rader bläddras lika snabbt som hundra.
 

@@ -199,6 +199,18 @@ and passes no server. The first time, the phone has to fetch the mobile page fro
 your own on the intranet); after that it sits in the cache. If there is no shared network: turn on tethering on the
 phone and connect the computer to it. See [mobil.md](mobil.md).
 
+## Where is the help?
+
+In the app: the **?** button at the top right or F1 opens the handbook at the chapter of the mode you are in, with
+search over every section and links between the documents. The same texts are in [docs/](anvandarguide.md) on
+GitHub. The beginner's course opens from the handbook or with Ctrl+K.
+
+## Can I show a dashboard on a large screen?
+
+Yes. Open the dashboard in Visualise and click **Present**: the dashboard fills the window, the arrow keys go one
+chart at a time, F gives full screen and Esc ends. The shared filters stay at the top. See
+[visualisera.md](visualisera.md).
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

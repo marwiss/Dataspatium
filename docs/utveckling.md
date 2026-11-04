@@ -30,7 +30,11 @@ och i workers. Se `src/platform/assets.js`, `net-shim.js` och `worker-shim.js`.
 
 R-hjälpfunktionerna i `r/dataspatium.R`, exempeldata i `presets/exempeldata/` och gränserna i `presets/geo/`
 måste också bäddas in som JavaScript för att kunna läsas via file://. Kör `python tools/wrap_local.py` efter
-ändringar; den skriver `<fil>.js` bredvid originalet och `presets/local-assets.js`.
+ändringar; den skriver `<fil>.js` bredvid originalet och `presets/local-assets.js`. Samma skript bäddar in handboken
+för hjälpen i appen (`ui/help`): användardokumenten i `HELP_DOCS` (svenska i `docs/`, övriga språk i
+`docs/<språk>/`) skrivs som `docs/help/<språk>.js` och registreras som resurserna `docs/<språk>/<fil>.md`. Ett nytt
+användardokument läggs till i `HELP_DOCS` i `tools/wrap_local.py` och i `DOCS` i `src/ui/help/help-panel.js`, i
+samma ordning, och skrivs på alla sex språk; kör skriptet igen efter varje ändring i docs/.
 
 Kommun- och länsgränserna byggs av `python tools/build_boundaries.py [arkiv.zip]` ur SCB:s *Digitala gränser*
 (shapefiler i SWEREF 99 TM, CC0): skriptet läser shapefilerna med standardbiblioteket, räknar om koordinaterna

@@ -65,8 +65,11 @@ GitHub har flyttet til modusen Del.
 Finn og list uten kode. Fanen *Søk* søker i alle kolonner i ett eller alle datasett; hvert ord må finnes på raden,
 uavhengig av store og små bokstaver. Treffene vises per datasett med antall, fasetter (de vanligste verdiene i
 kolonner med få ulike verdier, som avgrenser søket med ett klikk) og en tabell der en rad åpner hele posten i
-inspektøren. Et søk kan lagres som liste, bli et nytt datasett eller åpnes i Bearbeid. Fanen *Lister* samler lagrede
-søk per datasett og kjører dem igjen på dagens data. Se [soka.md](soka.md).
+inspektøren. Et søk kan lagres som liste, bli et nytt datasett eller åpnes i Bearbeid. Fanen *Spørring* bygger en
+spørring over ett eller flere datasett (kolonner, beregninger, betingelser, sortering) uten kode og viser SQL-koden
+som lages; den kan åpnes i Analyser, lagres som liste eller bli et datasett. Fanen *Lister* samler lagrede søk og
+spørringer per datasett og kjører dem igjen på dagens data; lister avgrenser også tabellen i Bearbeid og radene i
+diagrammer. Se [soka.md](soka.md).
 
 ## Bearbeid
 

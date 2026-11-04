@@ -141,7 +141,9 @@ R: Parquet, SPSS, Stata og RDS. SQLite og Parquet beholder typene nøyaktig; all
 Søk finner rader uten kode. Skriv ett eller flere ord, velg alle datasett eller bare det valgte, og trykk på *Søk*.
 Treffene vises per datasett; fasettene (de vanligste verdiene i kolonner med få ulike verdier) avgrenser med ett
 klikk, og en rad i tabellen viser hele posten i inspektøren. Søket kan lagres som liste, bli et nytt datasett eller
-åpnes i Bearbeid med datasettet valgt. Se [soka.md](soka.md).
+åpnes i Bearbeid med datasettet valgt. Fanen *Spørring* bygger en spørring over ett eller flere datasett med
+kolonner, beregninger, betingelser og sortering uten kode og viser SQL-koden som lages; lagrede lister avgrenser
+tabellen i Bearbeid og radene i diagrammer. Se [soka.md](soka.md).
 
 ## Holde orden (Håndter)
 
@@ -191,9 +193,17 @@ Alt som skal til andre mennesker, finnes i modusen *Del* (se [dela.md](dela.md))
 - API-konfigurasjoner (`.api.json`), diagrammer og dokumentmaler (JSON) og oppskrifter (JSON, R eller SQL) eksporteres og
   lastes inn som filer. Nøkler følger aldri med.
 
+## Hjelp i appen
+
+Hele håndboken finnes i appen: knappen **?** øverst til høyre, tasten **F1** eller kommandoen *Hjelp* i
+kommandopaletten åpner den ved kapittelet for modusen du står i. Til venstre er innholdet, over det et søkefelt som
+søker i alle avsnitt, og lenker mellom dokumentene følges inne i håndboken. Dialoger med en **?**-knapp åpner rett
+avsnitt direkte. Håndboken følger appens språk og trenger ikke nett; nederst finnes versjonen, *Se etter
+oppdateringer* og lenken til dokumentasjonen på GitHub.
+
 ## Tastatur
 
-Alt+1 til Alt+8 bytter modus, og Ctrl+K åpner kommandopaletten. Kanten mellom et panel og arbeidsflaten kan få fokus
+Alt+1 til Alt+8 bytter modus, Ctrl+K åpner kommandopaletten, og F1 åpner håndboken. Kanten mellom et panel og arbeidsflaten kan få fokus
 med Tab og flyttes med piltastene (Skift for større steg, Home og End for minste og største bredde). Første trykk på Tab på siden viser lenken *Gå til innholdet*,
 som flytter fokus forbi modusvelgeren og objektpanelet. Alt nås med Tab og Enter; dialoger lukkes med Esc. I tabellen
 flytter piltastene mellom celler, og Enter redigerer. Appen følger systeminnstillingen for redusert bevegelse.

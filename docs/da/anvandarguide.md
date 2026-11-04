@@ -147,7 +147,9 @@ R: Parquet, SPSS, Stata og RDS. SQLite og Parquet bevarer typerne nøjagtigt; al
 Søg finder rækker uden kode. Skriv et eller flere ord, vælg alle datasæt eller kun det valgte, og tryk på *Søg*.
 Resultaterne vises pr. datasæt; facetterne (de hyppigste værdier i kolonner med få forskellige værdier) indsnævrer
 med et klik, og en række i tabellen viser hele posten i inspektøren. Søgningen kan gemmes som liste, blive til et nyt
-datasæt eller åbnes i Bearbejd med datasættet valgt. Se [soka.md](soka.md).
+datasæt eller åbnes i Bearbejd med datasættet valgt. Fanen *Forespørgsel* bygger en forespørgsel over et eller flere
+datasæt med kolonner, beregninger, betingelser og sortering uden kode og viser den SQL, der laves; gemte lister
+indsnævrer tabellen i Bearbejd og rækkerne i diagrammer. Se [soka.md](soka.md).
 
 ## Hold orden (Håndter)
 
@@ -196,9 +198,17 @@ Alt, hvad der skal til andre mennesker, findes i tilstanden *Del* (se [dela.md](
 - API-konfigurationer (`.api.json`), diagrammer og dokumentskabeloner (JSON) og opskrifter (JSON, R eller SQL)
   eksporteres og indlæses som filer. Nøgler følger aldrig med.
 
+## Hjælp i appen
+
+Hele håndbogen findes i appen: knappen **?** øverst til højre, tasten **F1** eller kommandoen *Hjælp* i
+kommandopaletten åbner den ved kapitlet for den tilstand, du står i. Til venstre er indholdet, ovenover et søgefelt,
+der søger i alle afsnit, og links mellem dokumenterne følges inde i håndbogen. Dialoger med en **?**-knap åbner det
+rette afsnit direkte. Håndbogen følger appens sprog og kræver intet netværk; nederst findes versionen, *Søg efter
+opdateringer* og linket til dokumentationen på GitHub.
+
 ## Tastatur
 
-Alt+1 til Alt+8 skifter tilstand, og Ctrl+K åbner kommandopaletten. Kanten mellem et panel og arbejdsfladen kan få
+Alt+1 til Alt+8 skifter tilstand, Ctrl+K åbner kommandopaletten, og F1 åbner håndbogen. Kanten mellem et panel og arbejdsfladen kan få
 fokus med Tab og flyttes med piletasterne (Skift for større trin, Home og End for mindste og største bredde). Første tryk på Tab på siden viser linket *Spring til
 indhold*, der flytter fokus forbi tilstandsvælgeren og objektpanelet. Alt kan nås med Tab og Enter; dialoger lukkes med
 Esc. I tabellen flytter piletasterne mellem celler, og Enter redigerer. Appen følger systemindstillingen for reduceret

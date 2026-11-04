@@ -60,6 +60,11 @@ kentät antavat automaattiset arvot.
 Vertailu- ja trendiviivoja ei piirretä kaavioihin, joissa on pienet paneelit. Asetukset tallennetaan kaavion mukana,
 ja ne kulkevat mukana jaetuissa kaaviotiedostoissa ja eräajoissa.
 
+**Lista** suodattimien alla valitsee Hae-tilassa tallennetun haun, josta kaavion rivit otetaan (valinta näkyy vain,
+kun aineistolla on listoja). Lista suoritetaan uudelleen aina, kun kaavio piirretään, joten kaavio seuraa tämän
+päivän dataa, ja suodattimet tulevat sen päälle. Valinta tallennetaan kaavion mukana ja pätee myös kojelaudoissa
+ja vienneissä.
+
 ## D3-mallit
 
 - **Järjestys**: yksi rivi luokkaa kohden arvon mukaan lajiteltuna, pisteellä ja viivalla. Valitse luokka, arvo, laskelma,
@@ -162,6 +167,12 @@ Kojelauta viedään itsenäisenä **HTML**-sivuna (kaaviot upotettuina SVG-kuvin
 määritykset. Tuonnissa kaaviot yhdistetään olemassa oleviin samannimisiin kaavioihin samassa aineistossa; puuttuvat luodaan
 tiedostosta. Varmuuskopio ja siirrettävä kansio sisältävät kaikki kojelaudat. Kojelautoja voi avata myös komentopaletista
 (Ctrl+K) ja viedä Vie-tilasta.
+
+**Esitä** näyttää kojelaudan koko ikkunassa, suurella näytöllä tai projektorilla: painike on kojelaudan
+otsikkorivillä ja komento *Esitä: nimi* komentopaletissa. Yleiskuva näyttää kaikki kaaviot; oikea ja vasen
+nuolinäppäin (tai välilyönti ja Page Up/Page Down) näyttävät kaavion kerrallaan suurena, Home palauttaa
+yleiskuvan, F vaihtaa koko näytön, jos selain sen sallii, ja Esc lopettaa. Yhteiset suodattimet pysyvät ylärivillä
+ja koskevat kaikkia kaavioita. Mikään ei muutu kojelaudassa esityksen aikana.
 
 ## Kaavioiden jakaminen
 

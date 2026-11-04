@@ -1,8 +1,8 @@
 # Search
 
 The Search mode finds and lists without code. It sits between Manage and Process: first you find what you are
-looking for, then you process it. Two tabs exist from 2.0, Search and Lists; the Query tab, a visual query builder
-that shows the SQL it creates, comes in 2.2.
+looking for, then you process it. Three tabs: *Search* (free text with facets), *Query* (a visual query builder over
+one or several datasets that shows the SQL it creates) and *Lists* (saved searches and queries).
 
 ## Search
 
@@ -26,12 +26,33 @@ Hits are shown per dataset with counts. Each card has:
 The search runs in SQLite in a worker, so the page does not lock up. In a dataset of a million rows a search takes
 about a second per word.
 
+## Query
+
+The Query tab builds a query without you writing SQL, and shows the SQL it creates. The **Datasets** card chooses the
+dataset to query and joins more with *Add join*: pick the dataset, whether only rows with a match in both or all
+rows of the first should be included, and which columns must match (more keys can be added; joined datasets need
+short names). **Columns** chooses what is shown, as a value or as a calculation (count, distinct count, sum, mean,
+minimum, maximum) with an optional name in the result; when there is a calculation the rows are grouped by the other
+columns automatically. **Conditions** are added in groups where all conditions must hold or one is enough (is, is
+not, greater than, at least, less than, at most, contains, starts with, is one of, is between, is empty, is not
+empty), and **Sorting and count** finish the query. *Run the query* shows the result as a table with the generated
+SQL below; *Open in Analyse* puts the SQL in the SQL console, where it can be changed further. In the SQL the first
+dataset is called `t0` and the joined ones `t1`, `t2` and so on.
+
+*Save as list* saves the query under Lists, where it runs again on today's data, and *Save as dataset* turns the
+result into a new dataset with the result's columns.
+
 ## Lists
 
 A list is a saved search in a dataset: the text, the restrictions and the number of hits the last time it was run.
 *Run* shows today's hits in the Search tab (the data may have changed since the list was saved), *Save as dataset*
 turns the hits into a new dataset and *Delete* removes the list. Lists follow the dataset: if the dataset is
 deleted, its lists disappear.
+
+Lists are used elsewhere too. In Process, *List* in the table's toolbar picks a saved search that narrows the table
+(the badge shows rows of the total), and in the chart builder *List* below the filters picks the rows a chart is
+built on; the choice travels with the chart into dashboards and exports and runs again on today's data. Queries
+saved from the Query tab are shown with their SQL under Lists and run in Query.
 
 ## The command palette
 

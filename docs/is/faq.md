@@ -182,6 +182,17 @@ fyrsta skipti þarf síminn að sækja farsímasíðuna af vefnum (eða af eigin
 skyndiminni. Sé ekkert sameiginlegt net: kveiktu á netdeilingu í símanum og tengdu tölvuna við hana. Sjá
 [mobil.md](mobil.md).
 
+## Hvar er hjálpin?
+
+Í forritinu: hnappurinn **?** efst til hægri eða F1 opnar handbókina við kaflann fyrir haminn sem þú ert í, með leit
+í öllum köflum og tenglum milli skjala. Sömu textar eru í [docs/](anvandarguide.md) á GitHub. Grunnnámskeiðið er
+opnað úr handbókinni eða með Ctrl+K.
+
+## Get ég sýnt mælaborð á stórum skjá?
+
+Já. Opnaðu mælaborðið í Myndgera og smelltu á **Kynna**: mælaborðið fyllir gluggann, örvalyklarnir fara eitt myndrit
+í einu, F gefur fullan skjá og Esc lýkur. Sameiginlegu síurnar haldast efst. Sjá [visualisera.md](visualisera.md).
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

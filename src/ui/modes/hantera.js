@@ -149,6 +149,7 @@
       async function refetch(ds) {
         const choice = await ui.dialog.open({
           title: t('api.refetch.title', { name: ds.source.connectorName || '' }),
+          help: 'api-konfiguration#uppdatera-en-hämtad-datamängd',
           body: h('p', { text: t('api.refetch.text') }),
           actions: [{ label: t('common.cancel'), value: null }, { label: t('api.into.mode.append'), value: 'append' }, { label: t('api.saved.update'), variant: 'primary', value: 'update', primary: true }],
         });

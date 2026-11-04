@@ -14,6 +14,8 @@ igjen på et annet datasett. SQL-konsollen i modusen Analyser arbeider mot samme
   kolonnestatistikk (antall, manglende, unike, minste, største, gjennomsnitt, sum, vanligste verdier) og handlingene som
   passer kolonnens type. Skift-klikk viser statistikken uten å endre sorteringen.
 - Filterfeltet søker i alle kolonner. Redigering fungerer også i et filtrert utvalg.
+- *Liste* i verktøylinjen (vises når datasettet har lagrede søk fra Søk) avgrenser tabellen til listens rader;
+  merket viser antall av totalen. Redigering og handlinger fungerer som vanlig.
 - Tabellen er virtualisert: bare de synlige radene finnes i nettleserens DOM, resten ligger i SQLite. En million rader blas
   like raskt som hundre.
 

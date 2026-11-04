@@ -153,7 +153,9 @@ again.
 Search finds rows without code. Type one or more words, choose all datasets or only the selected one and press
 *Search*. Hits are shown per dataset; the facets (the most common values in columns with few distinct values) narrow
 the search with one click, and a row in the table shows the whole record in the inspector. The search can be saved as
-a list, become a new dataset or be opened in Process with the dataset selected. See [soka.md](soka.md).
+a list, become a new dataset or be opened in Process with the dataset selected. The *Query* tab builds a query over
+one or several datasets with columns, calculations, conditions and sorting, without code, and shows the SQL it
+creates; saved lists narrow the table in Process and the rows of charts. See [soka.md](soka.md).
 
 ## Keeping order (Manage)
 
@@ -203,9 +205,17 @@ Everything meant for other people is in the *Share* mode (see [dela.md](dela.md)
 - API configurations (`.api.json`), charts and document templates (JSON) and recipes (JSON, R or SQL) are exported
   and loaded as files. Keys never come along.
 
+## Help in the app
+
+The whole handbook is in the app: the **?** button at the top right, the **F1** key or the *Help* command in the
+command palette opens it at the chapter of the mode you are in. The contents are on the left, above them a search
+field that searches every section, and links between the documents are followed inside the handbook. Dialogs with a
+**?** button open the right section directly. The handbook follows the app's language and needs no network; at the
+bottom are the version, *Check for updates* and the link to the documentation on GitHub.
+
 ## Keyboard
 
-Alt+1 to Alt+8 switch mode and Ctrl+K opens the command palette. The edge between a panel and the work area can
+Alt+1 to Alt+8 switch mode, Ctrl+K opens the command palette and F1 opens the handbook. The edge between a panel and the work area can
 receive focus with Tab and be moved with the arrow keys (Shift for larger steps, Home and End for the smallest and
 largest width). The first Tab press on the page shows the link
 *Skip to content*, which moves focus past the mode switcher and the object panel. Everything is reachable with

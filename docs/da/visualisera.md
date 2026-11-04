@@ -60,6 +60,10 @@ felter giver automatiske værdier.
 Reference- og trendlinjer tegnes ikke i diagrammer med små paneler. Indstillingerne gemmes med diagrammet og følger
 med i delte diagramfiler og batchkørsler.
 
+**Liste** under filtrene vælger en gemt søgning fra Søg, som diagrammets rækker hentes fra (valget vises kun, når
+datasættet har lister). Listen køres igen, hver gang diagrammet tegnes, så diagrammet følger dagens data, og
+filtrene lægges ovenpå. Valget gemmes med diagrammet og gælder også i dashboards og eksporter.
+
 ## D3-skabeloner
 
 - **Rangering**: én række pr. kategori sorteret efter værdi, med prik og streg. Vælg kategori, værdi, beregning, antal og
@@ -159,6 +163,12 @@ Dashboardet eksporteres som selvstændig **HTML** (diagrammerne som indlejret SV
 definitioner. Ved import kobles diagrammerne til eksisterende diagrammer med samme navn og datasæt; de manglende genskabes
 fra filen. Backuppen og den portable mappe indeholder alle dashboards. Dashboards kan også åbnes via kommandopaletten
 (Ctrl+K) og eksporteres fra tilstanden Eksportér.
+
+**Præsentér** viser dashboardet i hele vinduet, på en stor skærm eller en projektor: knappen findes i dashboardets
+titelrække og kommandoen *Præsentér: navn* i kommandopaletten. Oversigten viser alle diagrammer; højre- og
+venstrepil (eller mellemrum og Page Up/Page Down) går ét diagram ad gangen i stor størrelse, Home viser oversigten
+igen, F skifter fuld skærm, hvor browseren tillader det, og Esc afslutter. De fælles filtre bliver i rækken øverst
+og gælder alle diagrammer. Intet ændres i dashboardet under præsentationen.
 
 ## Del diagrammer
 

@@ -189,6 +189,18 @@ kulje palvelimen kautta. Ensimmäisellä kerralla puhelimen on noudettava mobiil
 verkkopalvelimelta intranetissä); sen jälkeen se on välimuistissa. Jos yhteistä verkkoa ei ole: kytke puhelimen
 yhteyden jakaminen päälle ja yhdistä tietokone siihen. Ks. [mobil.md](mobil.md).
 
+## Missä ohje on?
+
+Sovelluksessa: oikean yläkulman **?**-painike tai F1 avaa käsikirjan sen tilan luvusta, jossa olet, ja siinä on haku
+kaikista osioista sekä linkit dokumenttien välillä. Samat tekstit ovat GitHubissa kansiossa [docs/](anvandarguide.md).
+Peruskurssi avataan käsikirjasta tai näppäimillä Ctrl+K.
+
+## Voinko näyttää kojelaudan suurella näytöllä?
+
+Kyllä. Avaa kojelauta Visualisoi-tilassa ja napsauta **Esitä**: kojelauta täyttää ikkunan, nuolinäppäimet näyttävät
+kaavion kerrallaan, F antaa koko näytön ja Esc lopettaa. Yhteiset suodattimet pysyvät ylhäällä. Ks.
+[visualisera.md](visualisera.md).
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

@@ -66,7 +66,7 @@
           list,
           h('p', { class: 'dm-help', text: t('devices.verify.help') }),
           h('p', { class: 'dm-devices-code', text: session.code || '' }));
-        const ok = await ui.dialog.open({ title: t('devices.incoming.title', { name: (session.peerInfo && session.peerInfo.name) || '' }), body, actions: [{ label: t('devices.incoming.reject'), value: false }, { label: t('devices.incoming.accept'), variant: 'primary', value: true, primary: true }] });
+        const ok = await ui.dialog.open({ help: 'dela#enheter', title: t('devices.incoming.title', { name: (session.peerInfo && session.peerInfo.name) || '' }), body, actions: [{ label: t('devices.incoming.reject'), value: false }, { label: t('devices.incoming.accept'), variant: 'primary', value: true, primary: true }] });
         if (ok === true) offer.accept(); else offer.reject();
       }
       async function onItem(item) {

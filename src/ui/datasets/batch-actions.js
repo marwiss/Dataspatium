@@ -88,6 +88,7 @@
       ];
       const choice = await ui.dialog.open({
         title: t('datasets.batch.title', { n: chosen.length }),
+        help: 'lagen#hantera',
         body: (finish) => h('div', { class: 'dm-stack' },
           h('p', { class: 'dm-help', text: chosen.map((d) => d.name).join(', ') }),
           h('div', { class: 'dm-stack-sm' }, ACTIONS.map((a) => ui.button({ label: t(a.label), icon: a.icon, variant: a.id === 'delete' ? 'danger' : 'default', onClick: () => finish(a.id) })))),
@@ -130,7 +131,7 @@
       const sel = /** @type {any} */ (h('dm-select', { label: t('datasets.batch.recipe.source') }));
       sel.options = sources.map((d) => ({ value: d.id, label: d.name }));
       sel.value = sources[0] ? sources[0].id : '';
-      const ok = await ui.dialog.open({ title: t('datasets.batch.recipe'), body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('datasets.batch.recipe.help') }), sel), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.run'), variant: 'primary', value: true, primary: true }] });
+      const ok = await ui.dialog.open({ title: t('datasets.batch.recipe'), help: 'bearbeta#recept', body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('datasets.batch.recipe.help') }), sel), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.run'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return;
       const steps = await recipes.steps(sel.value);
       if (!steps.length) { ui.toast.show(t('datasets.batch.recipe.none'), { kind: 'warn' }); return; }

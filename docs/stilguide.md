@@ -105,6 +105,9 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Mapp, tagg (ordning bland datamängder) | Katalog, folder, etikett (som är kolumnmetadata) |
 | Paket (delningspaket i Dela) | Bundle, exportpaket |
 | Lista (sparad sökning i Söka) | Urval, filter, sparad sökning |
+| Fråga (fliken i Söka), villkor, koppling, beräkning | Query, filter (för villkor), join, aggregat (i gränssnittet) |
+| Handbok (hjälpen i appen) | Hjälpcenter, manual, dokumentation (i gränssnittet) |
+| Presentera, presentation (dashboard i hela fönstret) | Bildspel, helskärmsläge, kiosk |
 | Flak (panel som läggs över arbetsytan i smala fönster) | Sheet, drawer, sidopanel |
 | Komponent (del av appen som hämtas vid behov) | Plugin, modul, tillägg |
 | Tips (text som visas när pekaren vilar på en knapp) | Tooltip, verktygstips |

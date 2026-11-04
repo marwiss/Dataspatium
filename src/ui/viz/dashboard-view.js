@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/dashboard-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'viz/render', 'viz/dashboards', 'viz/charts', 'viz/data', 'platform/files'], (base, basic, icons, overlays, render, dashboards, charts, vizData, files) => {
+  D.define('ui/viz/dashboard-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/overlays', 'viz/render', 'viz/dashboards', 'viz/charts', 'viz/data', 'platform/files', 'ui/viz/present'], (base, basic, icons, overlays, render, dashboards, charts, vizData, files, present) => {
     const { h, t, i18n, replace } = base;
 
     /**
@@ -60,6 +60,7 @@
           h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('dash.add'), icon: 'plus', onClick: addCharts }),
             basic.button({ label: t('dash.filters'), icon: 'filter', onClick: configureFilters }),
+            basic.button({ label: t('present.open'), icon: 'monitor', title: t('present.keys'), onClick: () => present.open(dash, { log: options.log }).catch((err) => options.log(String((err && err.message) || err), 'error')) }),
             basic.button({ label: t('dash.export.html'), icon: 'file-text', onClick: () => exportAs('html') }),
             basic.button({ label: t('dash.export.pptx'), icon: 'file-output', onClick: () => exportAs('pptx') }),
             basic.button({ label: t('dash.export.json'), icon: 'upload', variant: 'ghost', onClick: shareJson }),
@@ -133,7 +134,7 @@
           sw.addEventListener('change', () => { if (sw.checked) chosen.add(c.id); else chosen.delete(c.id); });
           return sw;
         }));
-        const ok = await overlays.dialog.open({ title: t('dash.add.title'), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('dash.add'), variant: 'primary', value: true, primary: true }] });
+        const ok = await overlays.dialog.open({ title: t('dash.add.title'), help: 'visualisera#dashboards', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('dash.add'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true || !chosen.size) return;
         for (const id of chosen) dash.items.push({ chartId: id, span: 1 });
         await changed(true);
@@ -150,7 +151,7 @@
           sw.addEventListener('change', () => { if (sw.checked) selected.add(c.name); else selected.delete(c.name); });
           return sw;
         }));
-        const ok = await overlays.dialog.open({ title: t('dash.filters.title'), body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.ok'), variant: 'primary', value: true, primary: true }] });
+        const ok = await overlays.dialog.open({ title: t('dash.filters.title'), help: 'visualisera#dashboards', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('common.ok'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true) return;
         dash.filters = shared.filter((c) => selected.has(c.name)).map((c) => ({ column: c.name }));
         values = Object.fromEntries(Object.entries(values).filter(([k]) => selected.has(k)));

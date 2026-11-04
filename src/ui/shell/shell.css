@@ -171,6 +171,14 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-devices-status[data-state="connected"] { color: var(--dm-ok); }
 .dm-devices-status[data-state="failed"] { color: var(--dm-error); }
 
+/* Söka, Fråga: rows of the visual query and the generated SQL */
+.dm-fraga-row { align-items: flex-end; }
+.dm-fraga-ref { font-family: var(--dm-font-mono); font-size: var(--dm-text-sm); align-self: center; }
+.dm-fraga-group { padding: var(--dm-s-2) var(--dm-s-3); border-left: 3px solid var(--dm-border-strong); }
+.dm-fraga-join { padding: var(--dm-s-2) var(--dm-s-3); border-radius: var(--dm-radius-sm); background: var(--dm-surface-2); }
+.dm-error { color: var(--dm-error); margin: 0; }
+.dm-fraga-sql { margin: 0; padding: var(--dm-s-3); border-radius: var(--dm-radius-sm); background: var(--dm-surface-2); font-family: var(--dm-font-mono); font-size: var(--dm-text-sm); white-space: pre-wrap; word-break: break-word; }
+
 /* Söka: results per dataset with facets and a table of hits */
 .dm-search-result { display: flex; flex-direction: column; gap: var(--dm-s-3); }
 .dm-search-head { display: flex; align-items: center; gap: var(--dm-s-2); flex-wrap: wrap; }
@@ -299,3 +307,52 @@ dialog.dm-palette { width: min(640px, calc(100vw - 32px)); margin-top: 10vh; pad
 .dm-skip { position: absolute; left: -9999px; top: var(--dm-s-2); z-index: 100; padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); color: var(--dm-accent); border: 1px solid var(--dm-accent); border-radius: var(--dm-radius-sm); text-decoration: none; }
 .dm-skip:focus { left: var(--dm-s-2); outline: none; }
 @media (prefers-reduced-motion: reduce) { .dm-shell *, .dm-shell *::before, .dm-shell *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+
+/* Handbook (ui/help): search above, table of contents left, document right, version and links below. */
+.dm-help-panel { display: flex; flex-direction: column; gap: var(--dm-s-3); min-height: 0; }
+.dm-help-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--dm-s-4); height: min(56vh, 640px); min-height: 0; }
+.dm-help-nav { overflow: auto; border-right: 1px solid var(--dm-border); padding-right: var(--dm-s-2); }
+.dm-help-content { overflow: auto; max-width: none; padding-right: var(--dm-s-2); }
+.dm-help-content.dm-prose { gap: var(--dm-s-3); }
+.dm-help-content .dm-help-heading { margin: var(--dm-s-2) 0 0; scroll-margin-top: var(--dm-s-2); }
+.dm-help-content h2.dm-help-heading { font-size: var(--dm-text-xl); margin-top: 0; }
+.dm-help-content h3.dm-help-heading { font-size: var(--dm-text-lg); }
+.dm-help-content h4.dm-help-heading, .dm-help-content h5.dm-help-heading { font-size: var(--dm-text-md); }
+.dm-help-content ul, .dm-help-content ol { margin: 0; padding-left: var(--dm-s-5); display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-help-content img { max-width: 100%; height: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); }
+.dm-help-figure { margin: 0; display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-help-figure figcaption { font-size: var(--dm-text-xs); color: var(--dm-text-muted); }
+.dm-help-code { padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); white-space: pre; overflow-x: auto; }
+.dm-help-table { overflow-x: auto; }
+.dm-help-table table { border-collapse: collapse; font-size: var(--dm-text-sm); }
+.dm-help-table th, .dm-help-table td { text-align: left; padding: var(--dm-s-1) var(--dm-s-2); border-bottom: 1px solid var(--dm-border); vertical-align: top; }
+.dm-help-table th { color: var(--dm-text-muted); font-weight: 600; }
+.dm-help-table .dm-num { text-align: right; font-variant-numeric: tabular-nums; }
+.dm-help-hits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-help-hit { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; padding: var(--dm-s-2); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface); color: inherit; font: inherit; cursor: pointer; }
+.dm-help-hit:hover { background: var(--dm-surface-hover); }
+.dm-help-hit span { font-size: var(--dm-text-xs); color: var(--dm-text-muted); }
+.dm-help-foot { font-size: var(--dm-text-xs); }
+@media (max-width: 759px) {
+  .dm-help-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .dm-help-nav { max-height: 120px; border-right: 0; border-bottom: 1px solid var(--dm-border); padding-right: 0; }
+}
+
+/* Presentation mode (ui/viz/present): the dashboard fills the window; a thin bar on top, the charts below. */
+body.dm-presenting { overflow: hidden; }
+.dm-present { position: fixed; inset: 0; z-index: var(--dm-z-dialog); display: flex; flex-direction: column; background: var(--dm-bg); outline: none; }
+.dm-present-bar { display: flex; align-items: center; gap: var(--dm-s-3); padding: var(--dm-s-2) var(--dm-s-4); border-bottom: 1px solid var(--dm-border); background: var(--dm-surface); min-height: 48px; }
+.dm-present-titles { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; }
+.dm-present-step { font-size: var(--dm-text-xs); color: var(--dm-text-muted); }
+.dm-present-filters { flex: 1 1 auto; justify-content: center; }
+.dm-present-filters[hidden] { display: none; }
+.dm-present-fs:empty { display: none; }
+.dm-present-stage { flex: 1 1 auto; min-height: 0; display: grid; gap: var(--dm-s-4); padding: var(--dm-s-4); overflow: auto; align-content: stretch; }
+.dm-present-card { display: flex; flex-direction: column; gap: var(--dm-s-2); min-width: 0; min-height: 0; background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); padding: var(--dm-s-3); }
+.dm-present-card h2 { margin: 0; font-size: var(--dm-text-lg); }
+.dm-present-chart.dm-chart-preview { flex: 1 1 auto; min-height: 0; border: 0; padding: 0; background: transparent; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.dm-present:fullscreen { background: var(--dm-bg); }
+@media (max-width: 759px) {
+  .dm-present-bar { flex-wrap: wrap; }
+  .dm-present-filters { order: 3; flex-basis: 100%; justify-content: flex-start; }
+}

@@ -126,7 +126,7 @@
       assert.deepEqual(dialogs.map((d) => a11y.nameOf(d)), ['Första dialogen', 'Andra dialogen']);
       assert.deepEqual(report(a11y.audit(document.body).filter((p) => p.el.closest('dialog'))), []);
     } finally {
-      for (const d of dialogs.reverse()) /** @type {HTMLElement} */ (d.querySelector('.dm-dialog-head dm-button button')).click();
+      for (const d of dialogs.reverse()) /** @type {HTMLElement} */ (d.querySelector('.dm-dialog-head .dm-dialog-close button')).click();
     }
     await Promise.all([first, second]);
     assert.equal(document.querySelectorAll('dialog.dm-dialog').length, 0, 'both closed');
