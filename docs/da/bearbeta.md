@@ -217,11 +217,12 @@ kolonner og nogle rækker. Trinnet logges i opskriften med sin kode, kan fortryd
 SQL-eksporten står koden som kommentar, i R-eksporten køres R-trinnet som kode, og Python-trinnet står som kommentar.
 Python hentes første gang.
 
-## Dokumenter og billeder
+## Dokumenter, billeder og kort
 
-Dokument- og billedsamlinger åbnes i Bearbejd i en egen visning (læsevisning henholdsvis galleri) med
-knappen *Vis som tabel* for den almindelige tabel. Alle handlinger her gælder tabellen: filtrere afsnit, rette tekst,
-slette rækker, tilføje beregnede kolonner. Se [dokument.md](dokument.md).
+Dokument- og billedsamlinger åbnes i Bearbejd i en egen visning (læsevisning henholdsvis galleri), og datasæt med
+geometri eller koordinater som et kort, der kan zoomes og panoreres; knappen *Vis som tabel* giver den almindelige
+tabel. Alle handlinger her gælder tabellen: filtrere afsnit eller objekter, rette tekst, slette rækker, tilføje
+beregnede kolonner. Se [dokument.md](dokument.md) og [kartor.md](kartor.md).
 
 ## SQL-konsollen
 

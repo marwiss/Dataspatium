@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Ja | Nej | Læses direkte i browseren med mdb-reader; tabellen vælges i trinnet Indstillinger, og typerne kommer fra Access. Forespørgsler, linkede tabeller og adgangskoder kræver [databasebroen](kallor.md). |
 | Dokumenter: PDF, Word (docx), OpenDocument (odt), Markdown (md), tekst (txt) | Ja | Nej | Bliver en dokumentsamling med ét afsnit pr. række (dokument, side, afsnit, type, tekst, tegn); flere filer på én gang bliver én samling, og originalerne følger med. Se [dokument.md](dokument.md) |
 | Billeder: JPEG, PNG, WebP, GIF, BMP, AVIF | Ja | Nej | Bliver en billedsamling med én række pr. billede (mål, størrelse, dato, kamera og position fra EXIF); en forhåndsvisning og en miniature gemmes, ikke originalerne. Se [dokument.md](dokument.md) |
+| QGIS-projekt (qgs, qgz) | Ja | Nej | Bliver en kortvisning i Visualisér med projektets lagrækkefølge, synlighed og symboler (farver, linjebredder, punktstørrelser); lagene kobles til datasæt med samme filnavn, og medfølgende datafiler importeres. Se [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter bliver kolonneetiketter og værdietiketter kolonnemetadata (se nedenfor) |
 | Stata dta | Ja | dta | Via haven. Værdietiketter som for SPSS. Ved eksport forkortes kolonnenavnene efter Statas regler (32 tegn, ASCII) |
 | SAS sas7bdat, xpt | Ja | Nej | Via haven |

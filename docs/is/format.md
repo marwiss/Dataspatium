@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Já | Nei | Lesið beint í vafranum með mdb-reader; taflan er valin í skrefinu Stillingar og gerðirnar koma úr Access. Fyrirspurnir, tengdar töflur og lykilorð krefjast [gagnagrunnsbrúarinnar](kallor.md). |
 | Skjöl: PDF, Word (docx), OpenDocument (odt), Markdown (md), texti (txt) | Já | Nei | Verður skjalasafn með einni málsgrein í hverri röð (skjal, síða, málsgrein, tegund, texti, stafir); margar skrár í einu verða eitt safn og frumritin fylgja með. Sjá [dokument.md](dokument.md) |
 | Myndir: JPEG, PNG, WebP, GIF, BMP, AVIF | Já | Nei | Verður myndasafn með einni röð fyrir hverja mynd (stærð, mál, dagsetning, myndavél og staðsetning úr EXIF); forskoðun og smámynd eru vistaðar, ekki frumritin. Sjá [dokument.md](dokument.md) |
+| QGIS-verkefni (qgs, qgz) | Já | Nei | Verður kortasýn í Myndgera með lagaröð, sýnileika og táknum verkefnisins (litir, línubreiddir, punktastærðir); lögin eru pöruð við gagnasöfn með sama skráarheiti og meðfylgjandi gagnaskrár eru fluttar inn. Sjá [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Já | sav | Gegnum R-pakkann haven. Breytumerkimiðar verða dálkamerkimiðar og gildismerkimiðar lýsigögn dálksins (sjá neðar) |
 | Stata dta | Já | dta | Gegnum haven. Gildismerkimiðar eins og fyrir SPSS. Við útflutning eru dálkaheitin stytt samkvæmt reglum Stata (32 stafir, ASCII) |
 | SAS sas7bdat, xpt | Já | Nei | Gegnum haven |

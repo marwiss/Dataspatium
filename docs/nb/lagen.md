@@ -48,6 +48,8 @@ ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP
 som filer, og i Chrome og Edge kan en fil lenkes slik at datasettet leses inn igjen fra disken. Se
 [kallor.md](kallor.md).
 
+QGIS-prosjekter (.qgs, .qgz) blir kartvisninger: lagrekkefølge, synlighet og symboler følger med, lagene kobles til datasett med samme filnavn, og datafiler som slippes sammen med prosjektet importeres først (se [kartor.md](kartor.md)).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -97,6 +99,8 @@ side for side, vis PDF-siden som bilde, søk i hele samlingen og hent originalen
 som galleri med miniatyrer, filter, sortering og bildets EXIF-opplysninger i inspektøren, der beskrivelsen kan
 endres. *Vis som tabell* gir i begge tilfeller den vanlige tabellen med alle handlinger. Se [dokument.md](dokument.md).
 
+Datasett med geometri eller koordinater åpnes som et **kart** å zoome og panorere i; klikk på et objekt viser attributtene, bakgrunnskart etter samtykke, *Lagre som kartvisning* for Visualiser. *Vis som tabell* gir tabellen (se [kartor.md](kartor.md)).
+
 ## Analyser
 
 Kode og statistikk. Verktøyene ligger i fast rekkefølge: R, Python, SQL, Regex og sist notatboken, som føyer sammen deler
@@ -118,6 +122,8 @@ samforekomster og en oversikt per dokument), og når en bildesamling er valgt, f
 kamera, år eller måned og duplikater via bildehash). Begge ligger etter Regex og før Notatboken, og hvert resultat kan
 lagres som et nytt datasett. Se [dokument.md](dokument.md).
 
+For datasett med geometri finnes fanen **Geo** (etter Regex): mål, punkter i områder, nærmeste, buffer, overlagring, sammenslåing og forenkling med Turf i nettleseren; resultatene blir datasett som åpnes som kart.
+
 ## Visualiser
 
 Diagrammer med tre motorer og ett utseende: diagrambyggeren (Vega-Lite) med stolper, linjer, flater, punkter,
@@ -126,6 +132,8 @@ rangering, helningsdiagram og befolkningspyramide; og R-skript med ggplot2. Lagr
 SVG, PNG, PDF og PowerPoint, deles som viz-filer, vises i et galleri og lages i batch per gruppe. Dashbord samler
 lagrede diagrammer i et rutenett med felles filtre og eksporteres som HTML eller PowerPoint. Se
 [visualisera.md](visualisera.md).
+
+Diagramtypen **Kart** er en kartvisning med flere lag fra datasett med geometri eller koordinater og de medfølgende grensene, farge etter kategori eller klasse, etiketter, lagret visning og bakgrunnskart etter samtykke; interaktiv i dashboards, presentasjoner og publisert HTML, eksportert til SVG, PNG og PDF uten bakgrunnskart (se [kartor.md](kartor.md)).
 
 ## Eksporter
 

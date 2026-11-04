@@ -68,6 +68,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   pandas og matplotlib som hentes første gang (se [python.md](python.md)), en SQL-konsoll der datasett
   kobles med join via kortnavnene sine, og notatbøker med tekst-, R- og SQL-celler som blir rapporter i HTML, Word, PDF,
   Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane der regulære uttrykk prøves på en kolonne og brukes til å filtrere, hente ut, erstatte og dele opp (se [regex.md](regex.md)), helt i nettleseren.
+- **Kart**: geodatasett åpnes som kart å zoome i, kartvisninger med flere lag og bakgrunnskart etter samtykke blir
+  dashboards og publisert HTML, geoverktøyene regner areal, punkter i områder, nærmeste, buffer og overlagring uten
+  kode, og QGIS-prosjekter blir kartvisninger (se [kartor.md](kartor.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).
@@ -109,6 +112,7 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - [Dataspatium Mobil](mobil.md): telefonen som kurer, mottaker og viser; overføring mellom enheter.
 - [Notatbok](anteckningsbok.md): tekst, R og SQL i celler som blir en rapport.
 - [Dokumenter og bilder](dokument.md): PDF, Word, OpenDocument, Markdown og bilder som datasett; dokumentvisning, galleri og verktøyene Tekst og Bilder.
+- [Kart](kartor.md): kartet i Bearbeid, kartvisninger i Visualiser, geoverktøyene og QGIS-prosjekter.
 - [Regulære uttrykk](regex.md): mønstre for å analysere, rette og dele opp tekst i datasett.
 - [Formater og import](format.md): filformater, tegnkoding, desimaltegn, datoer og kolonnetyper.
 - [Åpne API-er](api-konfiguration.md): de forhåndsinnstilte kildene, nøkler og egne konfigurasjoner.

@@ -106,6 +106,7 @@ bregðast eru taldir upp í skráarlistanum. Sniðið PowerPoint gefur í stað 
 (spjald)** til að teikna myndritin lifandi hlið við hlið. Héðan eru myndrit opnuð, flutt út og þeim eytt.
 
 ## Kort
+Auk þemakortsins og punktakortsins hér fyrir neðan er myndritstegundin **Kort**: kortasýn með Leaflet, mörgum lögum, bakgrunnskorti og þysjun. Henni er lýst í [kartor.md](kartor.md).
 
 Tvær myndritagerðir teikna kort, báðar án kortaþjóns: **Kort** (þemakort: svæði lituð eftir gildi) og **Punktakort** (punktar á
 hnitum með stærð og lit eftir gildum). Mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg og Finnland fylgja

@@ -214,11 +214,12 @@ sínu. *Forskoða* keyrir fallið á fyrstu 200 röðunum og sýnir dálka og no
 með kóðanum, má afturkalla og endurspila á öðrum gagnasöfnum; í SQL-útflutningi er kóðinn athugasemd, í R-útflutningi
 keyrir R-skrefið sem kóði og Python-skrefið er athugasemd. Python er sótt í fyrsta sinn.
 
-## Skjöl og myndir
+## Skjöl, myndir og kort
 
-Skjala- og myndasöfn opnast í Vinna í eigin sýn (lestrarsýn eða myndasafn) með hnappinum *Sýna sem
-töflu* fyrir venjulegu töfluna. Allar aðgerðir hér gilda um töfluna: sía málsgreinar, leiðrétta texta, eyða röðum,
-bæta við reiknuðum dálkum. Sjá [dokument.md](dokument.md).
+Skjala- og myndasöfn opnast í Vinna í eigin sýn (lestrarsýn eða myndasafn), og gagnasöfn með rúmfræði eða hnitum sem
+kort til að þysja og færa; hnappurinn *Sýna sem töflu* gefur venjulegu töfluna. Allar aðgerðir hér gilda um töfluna:
+sía málsgreinar eða fitjur, leiðrétta texta, eyða röðum, bæta við reiknuðum dálkum. Sjá [dokument.md](dokument.md) og
+[kartor.md](kartor.md).
 
 ## SQL-stjórnborðið
 

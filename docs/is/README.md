@@ -66,6 +66,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   pandas og matplotlib sem er sótt í fyrsta sinn (sjá [python.md](python.md)), SQL-stjórnborð þar sem
   gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
   HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), og Regex-flipi þar sem reglulegar segðir eru prófaðar á dálki og notaðar til að sía, draga út, skipta út og skipta upp (sjá [regex.md](regex.md)), allt í vafranum.
+- **Kort**: landupplýsingasöfn opnast sem kort til að þysja, kortasýnir með mörgum lögum og bakgrunnskorti eftir
+  samþykki verða stjórnborð og birt HTML, landfræðitólin reikna flatarmál, punkta í svæðum, næsta, jaðarsvæði og
+  yfirlögn án kóða, og QGIS-verkefni verða kortasýnir (sjá [kartor.md](kartor.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).
@@ -106,6 +109,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Dataspatium Farsími](mobil.md): síminn sem sendill, viðtakandi og skoðari; flutningur milli tækja.
 - [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
 - [Skjöl og myndir](dokument.md): PDF, Word, OpenDocument, Markdown og myndir sem gagnasöfn; skjalasýn, myndasafn og tólin Texti og Myndir.
+- [Kort](kartor.md): kortið í Vinna, kortasýnir í Myndgera, landfræðitólin og QGIS-verkefni.
 - [Reglulegar segðir](regex.md): mynstur til að greina, leiðrétta og skipta upp texta í gagnasöfnum.
 - [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
 - [Opnar vefþjónustur](api-konfiguration.md): forstilltir upprunar, lyklar og eigin uppsetningar.

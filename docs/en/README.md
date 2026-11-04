@@ -71,6 +71,9 @@ with a backup or a bundle.
   with pandas and matplotlib fetched the first time (see [python.md](python.md)), an SQL console
   where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
   HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
+- **Maps**: geodatasets open as maps to zoom in, map views with several layers and a background map after consent
+  become dashboards and published HTML, the geo tools compute area, points in areas, nearest, buffers and overlays
+  without code, and QGIS projects become map views (see [kartor.md](kartor.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
@@ -113,6 +116,7 @@ everywhere.
 - [Dataspatium Mobile](mobil.md): the phone as courier, receiver and viewer; transfer between devices.
 - [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
 - [Documents and images](dokument.md): PDF, Word, OpenDocument, Markdown and pictures as datasets; the document view, the gallery and the tools Text and Images.
+- [Maps](kartor.md): the map in Process, map views in Visualise, the geo tools and QGIS projects.
 - [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
 - [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.

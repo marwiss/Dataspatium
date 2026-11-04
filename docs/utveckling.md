@@ -58,6 +58,12 @@ i en av appens shimmade Blob-workers efter att resurserna anlänt och kopplar pd
 sidorna blev tomma). Vid uppgradering: kontrollera att worker-bygget fortfarande kopplar sig till `self` som
 meddelandeport och att `tests/documents.test.js` (200-sidig PDF, sidrendering) är grönt i båda webbläsarna.
 
+Leaflet 1.9.4 (BSD-2-Clause) och Turf 7.4.0 (MIT) vendoras som klassiska skript (`turf.min.js` är npm-paketets
+`browser`-fält, en UMD-bunt med den globala `turf`). Leaflet 2.0 är enbart ES-moduler och används inte. Leaflets CSS
+laddas med `<link>` som CodeMirrors; textkopiorna `leaflet-inline.js/.css` finns för publicerad HTML. Kartrutor hämtas
+bara efter samtycke, och testerna får aldrig hämta rutor: `tests/map.test.js` stubbar `consent.setAsker` och
+`tileFactory`.
+
 ## Egna inbäddade filer
 
 R-hjälpfunktionerna i `r/dataspatium.R`, Python-hjälpfunktionerna i `python/dataspatium.py`, exempeldata i `presets/exempeldata/` och gränserna i `presets/geo/`

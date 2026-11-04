@@ -231,6 +231,13 @@ bilder en bildsamling med en rad per bild och EXIF-uppgifter. Flera filer på en
 de som läsvy respektive galleri, och i Analysera finns verktygen Text och Bilder utan kod. Skannade PDF-filer utan
 textlager ger ingen text. Se [dokument.md](dokument.md).
 
+## Kan jag visa kartor och räkna på geodata?
+
+Ja. En datamängd med geometri (GeoJSON, Shapefile, GeoPackage, KML, GPX) eller longitud och latitud öppnas som en karta
+i Bearbeta. I Visualisera gör diagramslaget *Karta* kartvyer med flera lager och bakgrundskarta för dashboards och
+publicering, och i Analysera räknar fliken *Geo* area, punkter i områden, närmaste, buffert och överlagring utan kod.
+QGIS-projekt kan släppas i Inhämta. Bakgrundskartor hämtas bara efter ditt samtycke. Se [kartor.md](kartor.md).
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

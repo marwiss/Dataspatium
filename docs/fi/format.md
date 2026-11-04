@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Kyllä | Ei | Luetaan suoraan selaimessa mdb-readerilla; taulu valitaan Asetukset-vaiheessa ja tyypit tulevat Accessista. Kyselyt, linkitetyt taulut ja salasanat vaativat [tietokantasillan](kallor.md). |
 | Asiakirjat: PDF, Word (docx), OpenDocument (odt), Markdown (md), teksti (txt) | Kyllä | Ei | Tulee asiakirjakokoelmaksi, jossa on yksi kappale riviä kohti (asiakirja, sivu, kappale, tyyppi, teksti, merkit); useista tiedostoista kerralla tulee yksi kokoelma, ja alkuperäiset kulkevat mukana. Katso [dokument.md](dokument.md) |
 | Kuvat: JPEG, PNG, WebP, GIF, BMP, AVIF | Kyllä | Ei | Tulee kuvakokoelmaksi, jossa on yksi rivi kuvaa kohti (mitat, koko, päivämäärä, kamera ja sijainti EXIF-tiedoista); esikatselukuva ja pienoiskuva tallennetaan, alkuperäisiä ei. Katso [dokument.md](dokument.md) |
+| QGIS-projekti (qgs, qgz) | Kyllä | Ei | Tulee karttanäkymäksi Visualisoi-tilaan projektin tasojärjestyksen, näkyvyyden ja symbolien (värit, viivanleveydet, pistekoot) kanssa; tasot yhdistetään samannimisiin aineistoihin, ja mukana tulevat datatiedostot tuodaan. Katso [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Kyllä | sav | R-paketin haven kautta. Muuttujaselitteistä tulee sarakeselitteitä ja arvoselitteistä sarakkeen metatietoja (ks. alla) |
 | Stata dta | Kyllä | dta | havenin kautta. Arvoselitteet kuten SPSS:ssä. Viennissä sarakkeiden nimet lyhennetään Statan sääntöjen mukaan (32 merkkiä, ASCII) |
 | SAS sas7bdat, xpt | Kyllä | Ei | havenin kautta |

@@ -220,11 +220,12 @@ ja muutaman rivin. Vaihe kirjataan reseptiin koodeineen, sen voi kumota ja toist
 koodi on kommenttina, R-viennissä R-vaihe suoritetaan koodina ja Python-vaihe on kommenttina. Python haetaan
 ensimmäisellä kerralla.
 
-## Asiakirjat ja kuvat
+## Asiakirjat, kuvat ja kartat
 
-Asiakirja- ja kuvakokoelmat avautuvat Muokkaa-tilassa omassa näkymässään (lukunäkymä tai galleria), ja painike
-*Näytä taulukkona* antaa tavallisen taulukon. Kaikki tämän tilan toiminnot koskevat taulukkoa: kappaleiden
-suodatus, tekstin korjaus, rivien poisto, laskettujen sarakkeiden lisäys. Katso [dokument.md](dokument.md).
+Asiakirja- ja kuvakokoelmat avautuvat Muokkaa-tilassa omassa näkymässään (lukunäkymä tai galleria), ja aineistot,
+joissa on geometria tai koordinaatit, karttana, jota voi lähentää ja panoroida; painike *Näytä taulukkona* antaa
+tavallisen taulukon. Kaikki tämän tilan toiminnot koskevat taulukkoa: kappaleiden tai kohteiden suodatus, tekstin
+korjaus, rivien poisto, laskettujen sarakkeiden lisäys. Katso [dokument.md](dokument.md) ja [kartor.md](kartor.md).
 
 ## SQL-konsoli
 

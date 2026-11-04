@@ -219,11 +219,12 @@ and a few rows. The step is logged in the recipe with its code, can be undone an
 SQL export the code is a comment, in the R export the R step runs as code and the Python step is a comment. Python
 is fetched the first time.
 
-## Documents and images
+## Documents, images and maps
 
-Document and image collections open in Process in a view of their own (a reading view and a gallery) with
-the button *Show as table* for the ordinary table. Every action here applies to the table: filter paragraphs, correct
-text, remove rows, add computed columns. See [dokument.md](dokument.md).
+Document and image collections open in Process in a view of their own (a reading view and a gallery), and datasets
+with geometry or coordinates as a map to zoom and pan in; the button *Show as table* gives the ordinary table. Every
+action here applies to the table: filter paragraphs or features, correct text, remove rows, add computed columns.
+See [dokument.md](dokument.md) and [kartor.md](kartor.md).
 
 ## The SQL console
 

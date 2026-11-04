@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, leaflet) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -58,13 +58,30 @@
       let txPanel = null; let imPanel = null; let tabsEl = null;
       function textPanel() { if (!txPanel) txPanel = textPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'text') renderRight(); } }); return txPanel; }
       function imagesPanel() { if (!imPanel) imPanel = imagesPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'images') renderRight(); } }); return imPanel; }
-      const kindPanel = () => (tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : null);
+      /** The Geo tab appears for tables with geometry or coordinates (checked when the selection changes). */
+      let gPanel = null; let geoOk = false; let geoFor = '';
+      function geoPanel() { if (!gPanel) gPanel = geoPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'geo') renderRight(); } }); return gPanel; }
+      async function checkGeo() {
+        const ds = selectedDataset();
+        const key = ds ? ds.id + ':' + ds.updatedAt : '';
+        if (key === geoFor) return;
+        geoFor = key; geoOk = false;
+        if (ds && (ds.kind === 'table' || !ds.kind)) {
+          const cols = await services.datasets.columns(ds.id).catch(() => []);
+          if (geoFor !== key) return;
+          geoOk = leaflet.mappable(cols);
+        }
+        if (tabsEl) tabsEl.tabs = tabList();
+      }
+      const KIND_TAB_IDS = ['text', 'images', 'geo'];
+      const kindPanel = () => (tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'geo' ? geoPanel() : null);
       function tabList() {
         const ds = selectedDataset();
         const kind = ds && KIND_TABS[ds.kind] ? KIND_TABS[ds.kind] : null;
         // Fixed order: R, Python, SQL, Regex, then the kind tool; the notebook is always last because it joins pieces from the others.
         return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }]
           .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : (tab === 'text' || tab === 'images') ? [{ id: tab, label: t(KIND_TABS[tab === 'text' ? 'document' : 'images'].label), icon: KIND_TABS[tab === 'text' ? 'document' : 'images'].icon }] : [])
+          .concat(geoOk || tab === 'geo' ? [{ id: 'geo', label: t('analysera.tabs.geo'), icon: 'map' }] : [])
           .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }]);
       }
 
@@ -74,11 +91,12 @@
           if (changed.includes('pendingCode')) takePending();
           if (!changed.includes('datasets') && !changed.includes('selectedId')) return;
           renderLeft();
+          checkGeo();
           if (tabsEl) tabsEl.tabs = tabList();
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
           if (tab === 'notebook' && changed.includes('datasets')) renderRight();
           if (tab === 'regex') { regexPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
-          if (tab === 'text' || tab === 'images') { kindPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
+          if (KIND_TAB_IDS.includes(tab)) { kindPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
         });
         for (const lang of CODE_LANGS) unsubBridges.push(bridges[lang].on((type, payload) => onBridgeEvent(lang, type, payload)));
         unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
@@ -95,6 +113,7 @@
         if (rxPanel) rxPanel.destroy();
         if (txPanel) txPanel.destroy();
         if (imPanel) imPanel.destroy();
+        if (gPanel) gPanel.destroy();
         slots = null; tabsEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
         while (unsubBridges.length) unsubBridges.pop()();
@@ -160,7 +179,7 @@
         if (type === 'state' && payload.state === 'ready' && tab === lang) renderRight();
       }
 
-      function render() { if (!slots) return; renderLeft(); renderCenter(); renderRight(); }
+      function render() { if (!slots) return; checkGeo(); renderLeft(); renderCenter(); renderRight(); }
 
       // ---- left: datasets and scripts of the active language ----
       function renderLeft() {
@@ -170,7 +189,7 @@
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         if (tab === 'notebook') { renderNotebookLeft(); return; }
         if (tab === 'regex') { regexPanel().left(slots.left, renderLeft); return; }
-        if (tab === 'text' || tab === 'images') return;
+        if (KIND_TAB_IDS.includes(tab)) return;
         const selected = selectedDataset();
         if (CONSOLE[tab]) slots.left.appendChild(h('div', { class: 'dm-row' }, ui.button({ label: t('analysera.insert.read'), icon: 'braces', size: 'sm', disabled: !selected, onClick: () => selected && insertCode(tab, CONSOLE[tab].readSnippet(selected.shortName || selected.name)) })));
         slots.left.appendChild(h('hr'));
@@ -237,7 +256,7 @@
           if (AUTOSTART[tab]) startEngine(tab);
         });
         if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
-        const view = CONSOLE[tab] ? renderConsole(tab) : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : (tab === 'text' || tab === 'images') ? kindPanel().center() : renderNotebook();
+        const view = CONSOLE[tab] ? renderConsole(tab) : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : KIND_TAB_IDS.includes(tab) ? kindPanel().center() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
@@ -521,7 +540,7 @@
         if (!slots) return;
         if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
         if (tab === 'regex') { replace(slots.right, regexPanel().inspector()); return; }
-        if (tab === 'text' || tab === 'images') { replace(slots.right, kindPanel().inspector()); return; }
+        if (KIND_TAB_IDS.includes(tab)) { replace(slots.right, kindPanel().inspector()); return; }
         if (tab === 'sql') {
           const ds = selectedDataset();
           let cols = [];

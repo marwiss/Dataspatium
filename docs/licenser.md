@@ -42,6 +42,7 @@ licenstexterna.
 | R-paket i `vendor/webr-repo` | Mest MIT; även LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite med flera) | Distribueras oförändrade; källkoden finns på CRAN i de versioner som anges |
 | Python (Pyodide, CPython och paket som numpy, pandas och matplotlib; hämtas vid behov, ingår inte i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-licensen (PSF-baserad), MIT och liknande för övriga | Hämtas oförändrade från jsDelivr och lagras i webbläsaren; källkoden finns hos Pyodide-projektet och på PyPI i de versioner som anges i appens katalog (Pyodide 314.0.7) |
 | pdf.js 3.11 (läser PDF-filer) med standardtypsnitt | Apache-2.0 (pdf.js), BSD-3-Clause (Foxits typsnitt), SIL Open Font License 1.1 (Liberation Sans) | Fria att använda och sprida med licenstext och notiser; typsnitten får bäddas in |
+| Leaflet 1.9 (kartor) och Turf 7 (geoverktyg) | BSD-2-Clause (Leaflet), MIT (Turf) | Fria att använda och sprida med licenstext och notiser |
 | plotly.js (hämtas vid behov för plotly-diagram), seaborn och plotly (Python-hjul från PyPI, hämtas vid behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hämtas oförändrade från jsDelivr respektive PyPI, låsta till version och kontrollsumma, och lagras i webbläsaren |
 
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och

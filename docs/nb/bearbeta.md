@@ -216,11 +216,12 @@ viser kolonner og noen rader. Steget logges i oppskriften med koden sin, kan ang
 i SQL-eksporten står koden som kommentar, i R-eksporten kjøres R-steget som kode og Python-steget står som kommentar.
 Python hentes første gang.
 
-## Dokumenter og bilder
+## Dokumenter, bilder og kart
 
-Dokument- og bildesamlinger åpnes i Bearbeid i en egen visning (lesevisning respektive galleri) med
-knappen *Vis som tabell* for den vanlige tabellen. Alle handlinger her gjelder tabellen: filtrere avsnitt, rette
-tekst, slette rader, legge til beregnede kolonner. Se [dokument.md](dokument.md).
+Dokument- og bildesamlinger åpnes i Bearbeid i en egen visning (lesevisning respektive galleri), og datasett med
+geometri eller koordinater som et kart å zoome og panorere i; knappen *Vis som tabell* gir den vanlige tabellen. Alle
+handlinger her gjelder tabellen: filtrere avsnitt eller objekter, rette tekst, slette rader, legge til beregnede
+kolonner. Se [dokument.md](dokument.md) og [kartor.md](kartor.md).
 
 ## SQL-konsollen
 

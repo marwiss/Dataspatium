@@ -47,6 +47,8 @@ GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og 
 auk þess lesnar beint sem skrár, og í Chrome og Edge má tengja skrá svo gagnasafnið sé lesið aftur af diski. Sjá
 [kallor.md](kallor.md).
 
+QGIS-verkefni (.qgs, .qgz) verða kortasýnir: lagaröð, sýnileiki og tákn fylgja með, lögin eru pöruð við gagnasöfn með sama skráarheiti og gagnaskrár sem sleppt er með verkefninu eru fluttar inn fyrst (sjá [kartor.md](kartor.md)).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -96,6 +98,8 @@ flettu síðu fyrir síðu, sýndu PDF-síðuna sem mynd, leitaðu í öllu safn
 lýsingunni má breyta. *Sýna sem töflu* gefur í báðum tilvikum venjulegu töfluna með öllum aðgerðum. Sjá
 [dokument.md](dokument.md).
 
+Gagnasöfn með rúmfræði eða hnitum opnast sem **kort** til að þysja og færa; smellur á fitju sýnir eigindin, bakgrunnskort eftir samþykki, *Vista sem kortasýn* fyrir Myndgera. *Sýna sem töflu* gefur töfluna (sjá [kartor.md](kartor.md)).
+
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;
@@ -116,6 +120,8 @@ fyrir hvert skjal) og þegar myndasafn er valið flipinn **Myndir** (yfirlit eft
 tvítök með myndahakki). Báðir eru eftir Regex og á undan Minnisbókinni, og hverja niðurstöðu má vista sem nýtt
 gagnasafn. Sjá [dokument.md](dokument.md).
 
+Fyrir gagnasöfn með rúmfræði er flipinn **Geo** (eftir Regex): mál, punktar í svæðum, næst, jaðarsvæði, yfirlögn, sameining og einföldun með Turf í vafranum; niðurstöðurnar verða gagnasöfn sem opnast sem kort.
+
 ## Myndgera
 
 Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum,
@@ -123,6 +129,8 @@ stuðlaritum, hitakortum, kassaritum, kökum og kortum (þemakort úr GeoJSON- e
 röðun, hallarit og aldurspýramída; og R-skriftur með ggplot2. Vistuð myndrit má flytja út sem SVG, PNG, PDF og
 PowerPoint, deila sem viz-skrám, sýna í safni og búa til í hópkeyrslu eftir hópum. Mælaborð safna vistuðum myndritum
 í grind með sameiginlegum síum og eru flutt út sem HTML eða PowerPoint. Sjá [visualisera.md](visualisera.md).
+
+Myndritstegundin **Kort** er kortasýn með mörgum lögum úr gagnasöfnum með rúmfræði eða hnitum og meðfylgjandi mörkum, lit eftir flokki eða bili, merkjum, vistaðri sýn og bakgrunnskorti eftir samþykki; gagnvirk í stjórnborðum, kynningum og birtu HTML, flutt út í SVG, PNG og PDF án bakgrunnskorts (sjá [kartor.md](kartor.md)).
 
 ## Flytja út
 

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -21,7 +21,7 @@
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
       + '.html,.htm,.xhtml,.md,.markdown,.docx,.tex,.json,.ndjson,.jsonl,.geojson,.topojson,.kml,.kmz,.gpx,.xml,.sqlite,.sqlite3,.db,.gpkg,.sql,'
       + '.shp,.zip,.sav,.zsav,.por,.dta,.sas7bdat,.xpt,.px,.rds,.rda,.RData,.parquet,.mdb,.accdb,'
-      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif';
+      + '.pdf,.odt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.qgs,.qgz';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
@@ -35,7 +35,7 @@
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
 
-      function reset() { return { step: 'file', file: null, files: [], progress: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function reset() { return { step: 'file', file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
 
       let unsubStore = null;
@@ -138,7 +138,7 @@
         if (source === 'bridge') { renderBridge(); return; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step;
-        const body = wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
+        const body = wiz.project ? stepProject() : wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('download', 20), t('import.title')), stepper), body);
       }
 
@@ -283,6 +283,9 @@
        */
       async function chooseFiles(list) {
         if (!list || !list.length) return;
+        // A QGIS project (with or without its data files) becomes a map view, not a dataset.
+        const projectFile = list.find((f) => qgis.detect(f));
+        if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
         const collection = services.importer.collectionFor(list);
         if (list.length > 1 && !collection) ui.toast.show(t('import.multi.first', { name: list[0].name }), { kind: 'info', timeout: 8000 });
         wiz.files = collection && list.length > 1 ? list : [];
@@ -290,6 +293,91 @@
         wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined;
         if (wiz.files.length) wiz.name = t('import.collection.' + collection.id, { n: list.length });
         await runPreview();
+      }
+      /**
+       * A QGIS project: read the layers, match them to datasets in the workspace or to the files dropped with it, and
+       * offer to create a map view (io/importers/qgis).
+       */
+      async function openProject(file, companions) {
+        wiz.busy = true; wiz.error = ''; render();
+        try {
+          const project = await qgis.parseFile(file);
+          const matches = qgis.matchDatasets(project, store.get().datasets);
+          const lower = (s) => String(s || '').toLowerCase();
+          const plan = project.layers.map((layer) => {
+            if (layer.type !== 'vector') return { layer, status: 'raster' };
+            if (matches.has(layer.id)) return { layer, status: 'matched', dataset: matches.get(layer.id) };
+            const companion = companions.find((f) => lower(f.name) === lower(layer.source.file));
+            return companion ? { layer, status: 'import', file: companion } : { layer, status: 'missing' };
+          });
+          wiz.project = { file, project, matches, plan, name: project.title || services.importer.baseName(file.name), result: null };
+          wiz.step = 'options';
+        } catch (err) {
+          wiz.error = (err && err.message) || String(err);
+          shell.log(t('import.error', { message: wiz.error }), 'error');
+        }
+        wiz.busy = false; render();
+      }
+      /** Import the dropped data files of the project, build the map layers and save the map view. */
+      async function createProjectMap() {
+        const p = wiz.project;
+        if (!p || wiz.busy) return;
+        wiz.busy = true; wiz.error = ''; render();
+        try {
+          for (const item of p.plan) {
+            if (item.status !== 'import') continue;
+            wiz.progress = { file: item.file.name }; render();
+            const opts = item.layer.source.layer ? { table: item.layer.source.layer, layer: item.layer.source.layer } : {};
+            const meta = await services.importer.run(item.file, opts, null, item.layer.name);
+            p.matches.set(item.layer.id, meta); item.status = 'matched'; item.dataset = meta;
+          }
+          const { layers, missing } = await qgis.toMapLayers(p.project, p.matches, (id) => services.datasets.columns(id));
+          if (!layers.length) throw new Error(t('import.project.none'));
+          const charts = D.require('viz/charts'); const leaflet = D.require('viz/leaflet');
+          const first = layers.find((l) => l.kind === 'dataset');
+          const base = first ? { id: first.datasetId, name: first.datasetName, shortName: first.datasetShort } : null;
+          const chart = charts.create('map', base, wiz.name || p.name);
+          chart.map = leaflet.defaultMap([], null);
+          chart.map.layers = layers;
+          chart.thumbnail = await leaflet.thumbnail(chart);
+          const saved = await charts.save(chart);
+          p.result = { chart: saved, layers: layers.length, missing };
+          shell.log(t('import.project.created', { name: saved.name, n: layers.length }), 'ok');
+          ui.toast.show(t('import.project.created', { name: saved.name, n: layers.length }), { kind: 'ok' });
+        } catch (err) {
+          wiz.error = (err && err.message) || String(err);
+          shell.log(t('import.error', { message: wiz.error }), 'error');
+        }
+        wiz.busy = false; wiz.progress = null; render();
+      }
+      function stepProject() {
+        const p = wiz.project;
+        if (p.result) {
+          return h('div', { class: 'dm-success' },
+            h('h2', null, ui.icon('circle-check', 20), ' ', t('import.project.created', { name: p.result.chart.name, n: p.result.layers })),
+            p.result.missing.length ? h('p', { class: 'dm-help', text: t('import.project.skipped', { n: p.result.missing.length, names: p.result.missing.map((m) => m.layer.name).join(', ') }) }) : null,
+            h('div', { class: 'dm-row' },
+              ui.button({ label: t('import.project.open'), variant: 'primary', icon: 'map', onClick: () => { store.set({ openChartId: p.result.chart.id }); shell.activate('visualisera'); } }),
+              ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));
+        }
+        const name = /** @type {any} */ (h('dm-input', { label: t('import.project.name'), value: wiz.name || p.name }));
+        name.addEventListener('input', () => { wiz.name = name.value; });
+        const statusText = (item) => item.status === 'matched' ? t('import.project.layer.matched', { name: item.dataset.name }) : item.status === 'import' ? t('import.project.layer.import', { file: item.file.name }) : item.status === 'raster' ? t('import.project.layer.raster') : t('import.project.layer.missing', { file: item.layer.source.file || item.layer.source.raw });
+        const statusKind = (item) => (item.status === 'matched' || item.status === 'import' ? 'ok' : item.status === 'raster' ? null : 'warn');
+        const usable = p.plan.filter((i) => i.status === 'matched' || i.status === 'import').length;
+        return h('div', { class: 'dm-stack' },
+          h('p', { class: 'dm-help', text: t('import.project.hint') }),
+          h('div', { class: 'dm-form-grid' }, name),
+          h('h3', { text: t('import.project.layers', { n: p.plan.length }) }),
+          h('ul', { class: 'dm-list' }, p.plan.map((item) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(item.status === 'raster' ? 'image' : 'map', 14),
+            h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: item.layer.name + (item.layer.visible ? '' : ' · ' + t('import.project.layer.hidden')) }), h('span', { class: 'dm-list-sub dm-truncate', text: statusText(item) })),
+            h('dm-badge', Object.assign({ text: t('import.project.status.' + item.status) }, statusKind(item) ? { kind: statusKind(item) } : {}))))),
+          wiz.busy ? h('dm-progress', { indeterminate: true, label: wiz.progress && wiz.progress.file ? t('import.project.importing', { file: wiz.progress.file }) : t('import.running') }) : null,
+          wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+          !usable ? h('p', { class: 'dm-help dm-small', text: t('import.project.none') }) : null,
+          h('div', { class: 'dm-row' },
+            ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
+            ui.button({ label: t('import.project.create'), icon: 'map', variant: 'primary', loading: wiz.busy, disabled: !usable, onClick: createProjectMap })));
       }
       /** The chosen files of a collection, with their sizes. */
       function fileList() {
@@ -533,6 +621,21 @@
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }
         const items = [];
+        if (wiz.project) {
+          const p = wiz.project;
+          items.push(h('h4', { text: t('import.project.title') }));
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('common.name'), value: p.file.name },
+            p.project.title ? { label: t('document.title'), value: p.project.title } : null,
+            p.project.version ? { label: t('import.project.version'), value: p.project.version } : null,
+            p.project.crs ? { label: t('import.project.crs'), value: p.project.crs } : null,
+            { label: t('map.layers'), value: `${p.plan.filter((i) => i.status === 'matched' || i.status === 'import').length} / ${p.plan.length}` },
+          ].filter(Boolean);
+          items.push(kv, h('p', { class: 'dm-help', text: t('import.project.help') }));
+          replace(slots.right, items);
+          return;
+        }
         if (wiz.files.length > 1) {
           items.push(h('h4', { text: t('import.step.file') }));
           const kv = /** @type {any} */ (h('dm-kv'));

@@ -49,6 +49,8 @@ GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets ja 
 Access-tiedostot luetaan lisäksi suoraan tiedostoina, ja Chromessa ja Edgessä tiedoston voi linkittää niin, että
 aineisto luetaan uudelleen levyltä. Ks. [kallor.md](kallor.md).
 
+QGIS-projekteista (.qgs, .qgz) tulee karttanäkymiä: tasojärjestys, näkyvyys ja symbolit tulevat mukana, tasot yhdistetään samannimisiin aineistoihin ja projektin kanssa pudotetut datatiedostot tuodaan ensin (katso [kartor.md](kartor.md)).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -103,6 +105,8 @@ galleriana, jossa on pienoiskuvat, suodatin, järjestys ja kuvan EXIF-tiedot tar
 muokata. *Näytä taulukkona* antaa molemmissa tapauksissa tavallisen taulukon kaikilla toiminnoilla. Katso
 [dokument.md](dokument.md).
 
+Aineistot, joissa on geometria tai koordinaatit, avautuvat **karttana**, jota voi lähentää ja panoroida; kohteen napsautus näyttää ominaisuudet, taustakartta suostumuksen jälkeen, *Tallenna karttanäkymänä* Visualisoi-tilaan. *Näytä taulukkona* antaa taulukon (katso [kartor.md](kartor.md)).
+
 ## Analysoi
 
 Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia
@@ -126,6 +130,8 @@ kontekstissa, yhteisesiintymät ja yleiskatsaus asiakirjaa kohti), ja kun kuvako
 ovat Regexin jälkeen ja ennen Muistikirjaa, ja jokaisen tuloksen voi tallentaa uudeksi aineistoksi. Katso
 [dokument.md](dokument.md).
 
+Geometrian sisältäville aineistoille on välilehti **Geo** (Regexin jälkeen): mitat, pisteet alueissa, lähin, puskuri, päällekkäisyys, yhdistäminen ja yksinkertaistus Turfilla selaimessa; tuloksista tulee aineistoja, jotka avautuvat karttoina.
+
 ## Visualisoi
 
 Kaavioita kolmella moottorilla ja yhdellä ilmeellä: kaaviorakentaja (Vega-Lite) pylväillä, viivoilla, alueilla,
@@ -134,6 +140,8 @@ shapefile-datasta); D3-mallit sijoituksille, kaltevuuskaavioille ja väestöpyra
 Tallennetut kaaviot voi viedä SVG-, PNG-, PDF- ja PowerPoint-muotoon, jakaa viz-tiedostoina, näyttää galleriassa ja
 luoda eräajona ryhmittäin. Kojelaudat kokoavat tallennetut kaaviot ruudukkoon yhteisillä suodattimilla, ja ne viedään
 HTML- tai PowerPoint-muotoon. Ks. [visualisera.md](visualisera.md).
+
+Kaaviolaji **Kartta** on karttanäkymä, jossa on useita tasoja aineistoista, joissa on geometria tai koordinaatit, sekä mukana tulevat rajat, väri luokan tai luokkavälin mukaan, nimiöt, tallennettu näkymä ja taustakartta suostumuksen jälkeen; vuorovaikutteinen koontinäytöissä, esityksissä ja julkaistussa HTML:ssä, vietynä SVG-, PNG- ja PDF-muotoon ilman taustakarttaa (katso [kartor.md](kartor.md)).
 
 ## Vie
 

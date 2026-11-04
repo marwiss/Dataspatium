@@ -111,6 +111,7 @@ kan afbrydes. Grupper, der mislykkes, vises i manifestet. Formatet PowerPoint gi
 **Gengiv alle (panel)** for at tegne diagrammerne live side om side. Herfra åbnes, eksporteres og slettes diagrammer.
 
 ## Kort
+Ud over koropletkortet og punktkortet nedenfor findes diagramtypen **Kort**: en kortvisning med Leaflet, flere lag, baggrundskort og zoom. Den beskrives i [kartor.md](kartor.md).
 
 To diagramtyper tegner kort, begge uden kortserver: **Kort** (koropletkort: områder farvet efter en værdi) og **Punktkort**
 (punkter på koordinater med størrelse og farve efter værdier). Kommune- og regionsgrænser for Sverige, Danmark, Norge og

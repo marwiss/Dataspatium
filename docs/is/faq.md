@@ -214,6 +214,13 @@ röð, myndir myndasafn með einni röð fyrir hverja mynd og EXIF-upplýsingum.
 eru þau sýnd sem lestrarsýn eða myndasafn, og í Greina eru tólin Texti og Myndir án kóða. Skannaðar PDF-skrár án
 textalags gefa engan texta. Sjá [dokument.md](dokument.md).
 
+## Get ég sýnt kort og reiknað á landupplýsingum?
+
+Já. Gagnasafn með rúmfræði (GeoJSON, Shapefile, GeoPackage, KML, GPX) eða lengd og breidd opnast sem kort í Vinna. Í
+Myndgera gerir myndritstegundin *Kort* kortasýnir með mörgum lögum og bakgrunnskorti fyrir stjórnborð og birtingu, og í
+Greina reiknar flipinn *Geo* flatarmál, punkta í svæðum, næsta, jaðarsvæði og yfirlögn án kóða. QGIS-verkefnum má
+sleppa í Sækja. Bakgrunnskort eru aðeins sótt eftir samþykki þitt. Sjá [kartor.md](kartor.md).
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

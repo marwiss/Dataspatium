@@ -218,11 +218,12 @@ behåller sitt namn. *Förhandsgranska* kör funktionen på de första 200 rader
 Steget loggas i receptet med sin kod, kan ångras och spelas upp på andra datamängder; i SQL-exporten står koden som
 kommentar, i R-exporten körs R-steget som kod och Python-steget står som kommentar. Python hämtas första gången.
 
-## Dokument och bilder
+## Dokument, bilder och kartor
 
-Dokumentsamlingar och bildsamlingar öppnas i Bearbeta i en egen vy (läsvy respektive galleri) med knappen
-*Visa som tabell* för den vanliga tabellen. Alla åtgärder här gäller tabellen: filtrera stycken, rätta text, ta bort
-rader, lägga till beräknade kolumner. Se [dokument.md](dokument.md).
+Dokumentsamlingar och bildsamlingar öppnas i Bearbeta i en egen vy (läsvy respektive galleri), och datamängder med
+geometri eller koordinater som en karta att zooma och panorera i; knappen *Visa som tabell* ger den vanliga tabellen.
+Alla åtgärder här gäller tabellen: filtrera stycken eller objekt, rätta text, ta bort rader, lägga till beräknade
+kolumner. Se [dokument.md](dokument.md) och [kartor.md](kartor.md).
 
 ## SQL-konsolen
 

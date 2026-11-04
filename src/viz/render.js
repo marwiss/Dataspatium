@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets) => {
+  D.define('viz/render', ['viz/vega-builder', 'viz/vega-render', 'viz/d3-templates', 'viz/data', 'viz/export', 'viz/theme', 'data/boundaries', 'data/datasets', 'viz/leaflet'], (builder, vegaRender, d3t, vizData, vizExport, theme, basemaps, datasets, leaflet) => {
     /** Data for a Vega chart: rows plus the spec built for them. */
     async function prepareVega(chart, options = {}) {
       const meta = await datasets.get(chart.datasetId);
@@ -69,6 +69,12 @@
         const text = () => d3t.svgString(svg);
         return { kind: 'd3', info: { rows: prep.data.rows.length, total: prep.data.total, truncated: prep.data.truncated }, svg: async () => text(), png: async (scale = 2) => vizExport.svgToPng(text(), { scale }), finalize: () => {} };
       }
+      if (chart.kind === 'map') {
+        // An interactive Leaflet map; its export functions draw the layers headless.
+        container.replaceChildren();
+        const hd = await leaflet.render(container, chart, { height: options.height, extraFilters: options.extraFilters, onSelect: options.onSelect });
+        return { kind: 'map', info: hd.info, svg: hd.svg, png: hd.png, finalize: hd.finalize, map: hd.map, legend: hd.legend };
+      }
       throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
     }
 
@@ -90,6 +96,8 @@
       } else if (D.require('viz/code-charts').isCode(chart.kind)) {
         // R and Python charts run their script in the engine and export through it (plotly figures via plotly.js).
         return D.require('viz/code-charts').toBlob(chart, format, Object.assign({}, options, { width }));
+      } else if (chart.kind === 'map') {
+        return leaflet.toBlob(chart, format, Object.assign({}, options, { width, title: chart.name }));
       } else {
         throw new Error(D.t('viz.err.rkind', { kind: chart.kind }));
       }

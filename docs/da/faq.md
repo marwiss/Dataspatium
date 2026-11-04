@@ -216,6 +216,13 @@ billeder en billedsamling med én række pr. billede og EXIF-oplysninger. Flere 
 vises de som læsevisning henholdsvis galleri, og i Analysér findes værktøjerne Tekst og Billeder uden kode. Skannede
 PDF-filer uden tekstlag giver ingen tekst. Se [dokument.md](dokument.md).
 
+## Kan jeg vise kort og regne på geodata?
+
+Ja. Et datasæt med geometri (GeoJSON, Shapefile, GeoPackage, KML, GPX) eller længde- og breddegrad åbnes som et kort
+i Bearbejd. I Visualisér laver diagramtypen *Kort* kortvisninger med flere lag og baggrundskort til dashboards og
+publicering, og i Analysér beregner fanen *Geo* areal, punkter i områder, nærmeste, buffer og overlejring uden kode.
+QGIS-projekter kan slippes i Hent. Baggrundskort hentes kun efter dit samtykke. Se [kartor.md](kartor.md).
+
 ## Finder du ikke svaret her?
 
 Læs [anvandarguide.md](anvandarguide.md), eller opret et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

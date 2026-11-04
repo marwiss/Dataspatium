@@ -51,6 +51,8 @@ CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable
 read directly as files, and in Chrome and Edge a file can be linked so that the dataset is read again from disk.
 See [kallor.md](kallor.md).
 
+QGIS projects (.qgs, .qgz) become map views: layer order, visibility and symbols come along, the layers are matched to datasets with the same file name and data files dropped with the project are imported first (see [kartor.md](kartor.md)).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -100,6 +102,8 @@ turn the pages, show the PDF page as an image, search the whole collection and d
 inspector, where the description can be edited. *Show as table* gives the ordinary table with every action in both
 cases. See [dokument.md](dokument.md).
 
+Datasets with geometry or coordinates open as a **map** to zoom and pan in; a click on a feature shows its attributes, a background map after consent, *Save as map view* for Visualise. *Show as table* gives the table (see [kartor.md](kartor.md)).
+
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from
@@ -121,6 +125,8 @@ co-occurrences and an overview per document), and when an image collection is se
 by type, camera, year or month and duplicates by image hash). Both come after Regex and before the Notebook, and
 every result can be saved as a new dataset. See [dokument.md](dokument.md).
 
+For datasets with geometry there is the tab **Geo** (after Regex): measures, points in areas, nearest, buffer, overlay, dissolve and simplification, with Turf in the browser; the results become datasets that open as maps.
+
 ## Visualise
 
 Charts with three engines and one look: the chart builder (Vega-Lite) with bars, lines, areas, points, histograms,
@@ -128,6 +134,8 @@ heat maps, box plots, pies and maps (choropleth maps from GeoJSON or shapefile d
 charts and population pyramids; and R scripts with ggplot2. Saved charts can be exported as SVG, PNG, PDF and
 PowerPoint, shared as viz files, shown in a gallery and created in batch per group. Dashboards gather saved charts
 in a grid with shared filters and are exported as HTML or PowerPoint. See [visualisera.md](visualisera.md).
+
+The chart kind **Map** is a map view with several layers from datasets with geometry or coordinates and the bundled boundaries, colour by category or class, labels, a saved view and a background map after consent; interactive in dashboards, presentations and published HTML, exported to SVG, PNG and PDF without the background map (see [kartor.md](kartor.md)).
 
 ## Export
 

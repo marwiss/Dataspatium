@@ -69,6 +69,9 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   pandas og matplotlib, der hentes første gang (se [python.md](python.md)), en SQL-konsol, hvor
   datasæt kobles sammen med join via deres kortnavne, og notesbøger med tekst-, R- og SQL-celler, der bliver til
   rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane, hvor regulære udtryk afprøves på en kolonne og bruges til at filtrere, udtrække, erstatte og opdele (se [regex.md](regex.md)), helt i browseren.
+- **Kort**: geodatasæt åbnes som kort, der kan zoomes, kortvisninger med flere lag og baggrundskort efter samtykke
+  bliver dashboards og publiceret HTML, geoværktøjerne beregner areal, punkter i områder, nærmeste, buffer og
+  overlejring uden kode, og QGIS-projekter bliver kortvisninger (se [kartor.md](kartor.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
@@ -110,6 +113,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Dataspatium Mobil](mobil.md): telefonen som kurer, modtager og fremviser; overførsel mellem enheder.
 - [Notesbog](anteckningsbok.md): tekst, R og SQL i celler, der bliver til en rapport.
 - [Dokumenter og billeder](dokument.md): PDF, Word, OpenDocument, Markdown og billeder som datasæt; dokumentvisning, galleri og værktøjerne Tekst og Billeder.
+- [Kort](kartor.md): kortet i Bearbejd, kortvisninger i Visualisér, geoværktøjerne og QGIS-projekter.
 - [Regulære udtryk](regex.md): mønstre til at analysere, rette og opdele tekst i datasæt.
 - [Formater og import](format.md): filformater, tegnkodning, decimaltegn, datoer og kolonnetyper.
 - [Åbne API'er](api-konfiguration.md): de forudindstillede kilder, nøgler og egne konfigurationer.

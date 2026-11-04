@@ -50,6 +50,8 @@ datorn genom ett litet lokalt skript) och *Lägg till databaskälla* (PostgREST,
 Elasticsearch, SPARQL, InfluxDB, Google Sheets och Airtable över HTTP). Access-filer läses dessutom direkt som filer,
 och i Chrome och Edge kan en fil länkas så att datamängden läses in igen från disken. Se [kallor.md](kallor.md).
 
+QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -100,6 +102,8 @@ sida för sida, visa PDF-sidan som bild, sök i hela samlingen och hämta origin
 öppnas som galleri med miniatyrer, filter, sortering och bildens EXIF-uppgifter i inspektören, där beskrivningen kan
 ändras. *Visa som tabell* ger i båda fallen den vanliga tabellen med alla åtgärder. Se [dokument.md](dokument.md).
 
+Datamängder med geometri eller koordinater öppnas som en **karta** att zooma och panorera i; klick på ett objekt visar attributen, bakgrundskarta efter samtycke, *Spara som kartvy* för Visualisera. *Visa som tabell* ger tabellen (se [kartor.md](kartor.md)).
+
 ## Analysera
 
 Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop
@@ -121,6 +125,8 @@ och en översikt per dokument) och när en bildsamling är vald fliken **Bilder*
 månad och dubbletter via bildhash). Båda ligger efter Regex och före Anteckningsboken, och varje resultat kan sparas
 som en ny datamängd. Se [dokument.md](dokument.md).
 
+För datamängder med geometri finns fliken **Geo** (efter Regex): mått, punkter i områden, närmaste, buffert, överlagring, sammanslagning och förenkling, med Turf i webbläsaren; resultaten blir datamängder som öppnas som kartor.
+
 ## Visualisera
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,
@@ -129,6 +135,8 @@ för rangordning, lutningsdiagram och
 befolkningspyramid; och R-skript med ggplot2. Sparade diagram kan exporteras som SVG, PNG, PDF och PowerPoint,
 delas som viz-filer, visas i ett galleri och skapas i batch per grupp. Dashboards samlar sparade diagram i ett
 rutnät med gemensamma filter och exporteras som HTML eller PowerPoint. Se [visualisera.md](visualisera.md).
+
+Diagramslaget **Karta** är en kartvy med flera lager från datamängder med geometri eller koordinater och de medföljande gränserna, färg efter kategori eller klass, etiketter, sparad vy och bakgrundskarta efter samtycke; interaktiv i dashboards, presentationer och publicerad HTML, exporterad till SVG, PNG och PDF utan bakgrundskarta (se [kartor.md](kartor.md)).
 
 ## Exportera
 

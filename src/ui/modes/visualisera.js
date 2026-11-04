@@ -7,11 +7,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/python-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
-    (base, vegaControls, d3Controls, rPanel, pyPanel, galleryMod, exportDialog, charts, vizRender, builder, files, uiTheme, dashboardView, dashboards) => {
+  D.define('ui/modes/visualisera', ['ui/base', 'ui/viz/vega-controls', 'ui/viz/d3-controls', 'ui/viz/r-panel', 'ui/viz/python-panel', 'ui/viz/map-panel', 'ui/viz/gallery', 'ui/viz/export-dialog', 'viz/charts', 'viz/render', 'viz/vega-builder', 'viz/leaflet', 'platform/files', 'ui/theme', 'ui/viz/dashboard-view', 'viz/dashboards'],
+    (base, vegaControls, d3Controls, rPanel, pyPanel, mapPanel, galleryMod, exportDialog, charts, vizRender, builder, leaflet, files, uiTheme, dashboardView, dashboards) => {
       /** Charts drawn by code (R, Python) have their own panel instead of the controls and the live preview. */
       const isCode = (kind) => kind === 'r' || kind === 'python';
-      const kindIcon = (kind) => (kind === 'r' ? 'terminal' : kind === 'python' ? 'code' : kind === 'd3' ? 'trending-up' : 'chart-column');
+      /** Kinds with a panel of their own (code charts and maps); the others use the builder controls and the preview. */
+      const isPanel = (kind) => isCode(kind) || kind === 'map';
+      const kindIcon = (kind) => (kind === 'r' ? 'terminal' : kind === 'python' ? 'code' : kind === 'd3' ? 'trending-up' : kind === 'map' ? 'map' : 'chart-column');
       const { h, t, i18n, replace } = base;
 
       function createMode(ctx) {
@@ -29,12 +31,12 @@
           unsubStore = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) renderLeft(); if (changed.includes('openChartId')) takeOpenChart(); });
           unsubCharts = charts.subscribe(async () => { list = await charts.list(); renderLeft(); if (view === 'gallery' && gallery) gallery.update(list); if (view === 'dashboard' && dashView) dashView.reload(); });
           unsubDash = dashboards.subscribe(async () => { dashList = await dashboards.list(); renderLeft(); });
-          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && !isCode(chart.kind)) schedulePreview(0); if (view === 'dashboard' && dashView) dashView.reload(); });
+          unsubTheme = uiTheme.onChange(() => { if (view === 'chart' && chart && !isPanel(chart.kind)) schedulePreview(0); if (view === 'chart' && rpanel && rpanel.redraw) rpanel.redraw(); if (view === 'dashboard' && dashView) dashView.reload(); });
           list = await charts.list();
           dashList = await dashboards.list();
           render();
           // A chart opened before the lists finished loading (command palette) needs its preview drawn again.
-          if (view === 'chart' && chart && !isCode(chart.kind)) schedulePreview(0);
+          if (view === 'chart' && chart && !isPanel(chart.kind)) schedulePreview(0);
           takeOpenChart();
         }
         /** A chart handed over through the store (the beginner's course) is opened in the builder. */
@@ -100,7 +102,7 @@
           if (!ds) { ui.toast.show(t('shell.select.dataset'), { kind: 'warn' }); return; }
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
-          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
+          const body = h('div', { class: 'dm-stack-sm' }, ['vega', 'map', 'd3', 'r', 'python'].map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } }, h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: t('viz.kind.' + k + '.help') }))));
           await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
           if (!kind) return;
           const record = charts.create(kind, ds, `${ds.name}: ${t('viz.kind.badge.' + kind)}`);
@@ -125,8 +127,9 @@
           disposePreview(); if (rpanel) { rpanel.destroy(); rpanel = null; } controls = null;
           columns = chart.datasetId ? await services.datasets.columns(chart.datasetId).catch(() => []) : [];
           if (chart.kind === 'vega' && !chart.vega.state) chart.vega.state = builder.defaultState(chart.vega.type || 'bar', columns);
+          if (chart.kind === 'map' && !chart.map) chart.map = leaflet.defaultMap(columns, { id: chart.datasetId, name: chart.datasetName, shortName: chart.datasetShort });
           render();
-          if (!isCode(chart.kind)) schedulePreview(0);
+          if (!isPanel(chart.kind)) schedulePreview(0);
         }
 
         // ---- centre ----
@@ -172,17 +175,20 @@
           } else if (chart.kind === 'python') {
             rpanel = pyPanel.create({ chart, columns, onChange: (code, plotly) => { chart.python.code = code; chart.python.plotly = plotly; dirty = true; }, log: (m, k) => shell.log(m, k) });
             controlsEl = null;
+          } else if (chart.kind === 'map') {
+            rpanel = mapPanel.create({ chart, columns, onChange: (def) => { chart.map = def; dirty = true; }, log: (m, k) => shell.log(m, k), onInspect: () => renderRight() });
+            controlsEl = null;
           } else {
             rpanel = rPanel.create({ chart, columns, onChange: (code) => { chart.r.code = code; dirty = true; }, log: (m, k) => shell.log(m, k) });
             controlsEl = null;
           }
           replace(slots.center, head,
-            isCode(chart.kind) ? rpanel.el : h('div', { class: 'dm-viz-layout' }, h('div', { class: 'dm-viz-side' }, controlsEl), h('div', { class: 'dm-viz-main' }, previewEl, infoEl)));
+            isPanel(chart.kind) ? rpanel.el : h('div', { class: 'dm-viz-layout' }, h('div', { class: 'dm-viz-side' }, controlsEl), h('div', { class: 'dm-viz-main' }, previewEl, infoEl)));
         }
 
         function schedulePreview(delay = 300) { clearTimeout(renderTimer); renderTimer = setTimeout(renderPreview, delay); }
         async function renderPreview() {
-          if (!previewEl || !chart || isCode(chart.kind)) return;
+          if (!previewEl || !chart || isPanel(chart.kind)) return;
           const seq = ++renderSeq;
           if (chart.kind === 'vega' && !chart.vega.customSpec) {
             const problems = builder.validate(chart.vega.state);
@@ -207,7 +213,7 @@
           chart.name = nameInput ? nameInput.value.trim() || chart.name : chart.name;
           if (chart.kind === 'vega' && !chart.vega.customSpec) { const problems = builder.validate(chart.vega.state); if (problems.length) { ui.toast.show(problems.join(' '), { kind: 'warn' }); return; } }
           try {
-            chart.thumbnail = isCode(chart.kind) ? (rpanel ? await rpanel.thumbnail() : chart.thumbnail) : await vizRender.thumbnail(chart);
+            chart.thumbnail = isPanel(chart.kind) ? (rpanel ? await rpanel.thumbnail() : chart.thumbnail) : await vizRender.thumbnail(chart);
             const saved = await charts.save(chart);
             chart.id = saved.id; chart.createdAt = saved.createdAt; chart.updatedAt = saved.updatedAt; dirty = false;
             shell.log(t('viz.saved.toast', { name: saved.name }), 'ok'); ui.toast.show(t('viz.saved.toast', { name: saved.name }), { kind: 'ok' });
@@ -233,6 +239,7 @@
           replace(slots.right,
             h('h4', { text: chart.name || t('viz.name') }), kv,
             h('p', { class: 'dm-help', text: t('viz.kind.' + chart.kind + '.help') }),
+            rpanel && rpanel.inspector ? rpanel.inspector() : null,
             spec ? h('details', { class: 'dm-more' }, h('summary', { text: t('viz.spec') }), h('pre', { class: 'dm-viz-spec', text: spec })) : null);
         }
 
@@ -243,7 +250,7 @@
             const cmds = [];
             if (ds) cmds.push({ id: 'viz:new', label: t('viz.new'), hint: ds.name, group: t('palette.group.charts'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newChart(); } });
             cmds.push({ id: 'viz:gallery', label: t('viz.gallery'), group: t('palette.group.charts'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openGallery(); } });
-            for (const c of await charts.list()) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: c.kind === 'r' ? 'terminal' : 'chart-column', run: async () => { shell.activate('visualisera'); await openChart(c); } });
+            for (const c of await charts.list()) cmds.push({ id: 'chart:' + c.id, label: t('palette.chart.open', { name: c.name }), hint: c.datasetName || '', group: t('palette.group.charts'), icon: kindIcon(c.kind), run: async () => { shell.activate('visualisera'); await openChart(c); } });
             cmds.push({ id: 'dash:new', label: t('dash.new'), group: t('palette.group.dashboards'), icon: 'plus', run: async () => { shell.activate('visualisera'); await newDashboard(); } });
             for (const d of await dashboards.list()) cmds.push({ id: 'dash:' + d.id, label: t('palette.dash.open', { name: d.name }), hint: t('viz.count', { n: (d.items || []).length }), group: t('palette.group.dashboards'), icon: 'layout-grid', run: async () => { shell.activate('visualisera'); await openDashboard(d); } });
             for (const d of await dashboards.list()) cmds.push({ id: 'present:' + d.id, label: t('present.palette', { name: d.name }), group: t('palette.group.dashboards'), icon: 'monitor', run: async () => { const fresh = await dashboards.get(d.id); if (fresh) await D.require('ui/viz/present').open(fresh, { log: (m, k) => shell.log(m, k) }); } });

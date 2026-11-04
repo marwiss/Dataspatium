@@ -325,6 +325,21 @@ i 2.9.
 UI:t ligger i `src/ui/viz/` (byggarens kontroller, D3-formulär, R-panel, galleri, export- och batchdialog) och
 monteras av läget Visualisera; Exportera återanvänder dialogerna.
 
+### Kartor
+
+`viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är
+textkopior som inlinas i publicerad HTML). En kartdefinition (`chart.map`) har lager (`kind: 'dataset'` med geometrikolumn
+eller lon/lat, eller `kind: 'boundary'` för de medföljande gränserna), stil, färg efter kolumn (`colorBy` med
+kategorier ur paletten eller klasser ur den sekventiella skalan; QGIS-färger som fasta värden), etikett, filter,
+bakgrundskarta (`none`, `osm`, `custom`) och sparad vy. `prepare()` hämtar objekten via `viz/data.fetchRows`, gör
+SWEREF 99 TM till WGS 84 och bygger stilfunktion och teckenförklaring; `render()` ritar med canvas-renderaren,
+`toBlob()` ritar lagren själv i Web Mercator till SVG, PNG och PDF (utan rutor) och `htmlFor()` ger inline-GeoJSON med
+färdiga stilar för Publicera. Rutlager skapas bara efter `consent.require('basemaps')`; tester byter ut dem med
+`tileFactory`. `ui/bearbeta/map-view` är standardvyn för tabeller där `leaflet.mapDefault(columns)` är sant,
+`ui/viz/map-panel` redigerar kartvyer, `analysis/geo` (Turf 7, vendorat, laddas vid behov) och
+`ui/analysis/geo-panel` ger fliken Geo, och `io/importers/qgis` läser .qgs/.qgz (lagerträd, datakällor, renderer-v2 med
+`<Option>`- och `<prop>`-stilar) till kartlager som Inhämtas projektsteg kopplar till datamängder efter filnamn.
+
 ## Dokument
 
 `src/docgen/` gör dokument av mallar (se [dokumentmallar.md](dokumentmallar.md)):

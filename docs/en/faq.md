@@ -233,6 +233,13 @@ row, pictures an image collection with one row per picture and EXIF details. Sev
 shows them as a reading view or a gallery, and Analyse has the tools Text and Images without code. Scanned PDF files
 without a text layer give no text. See [dokument.md](dokument.md).
 
+## Can I show maps and compute on geodata?
+
+Yes. A dataset with geometry (GeoJSON, Shapefile, GeoPackage, KML, GPX) or longitude and latitude opens as a map in
+Process. In Visualise the chart kind *Map* makes map views with several layers and a background map for dashboards and
+publishing, and in Analyse the tab *Geo* computes area, points in areas, nearest, buffers and overlays without code.
+QGIS projects can be dropped in Import. Background maps are fetched only after your consent. See [kartor.md](kartor.md).
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

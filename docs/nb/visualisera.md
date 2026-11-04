@@ -111,6 +111,7 @@ presentasjon med ett lysbilde per gruppe.
 **Gjengi alle (panel)** for å tegne diagrammene live side ved side. Herfra åpnes, eksporteres og slettes diagrammer.
 
 ## Kart
+I tillegg til koroplettkartet og punktkartet nedenfor finnes diagramtypen **Kart**: en kartvisning med Leaflet, flere lag, bakgrunnskart og zoom. Den beskrives i [kartor.md](kartor.md).
 
 To diagramtyper tegner kart, begge uten kartserver: **Kart** (koroplettkart: områder farget etter en verdi) og **Punktkart**
 (punkter på koordinater med størrelse og farge etter verdier). Kommune- og regiongrenser for Sverige, Danmark, Norge og

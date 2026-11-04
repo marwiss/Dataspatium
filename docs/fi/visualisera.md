@@ -113,6 +113,7 @@ sijaan yhden esityksen, jossa on yksi dia ryhmää kohden.
 määrä ja paina **Piirrä kaikki (paneeli)** piirtääksesi kaaviot rinnakkain. Täältä kaavioita avataan, viedään ja poistetaan.
 
 ## Kartat
+Alla kuvattujen teemakartan ja pistekartan lisäksi on kaaviolaji **Kartta**: Leaflet-karttanäkymä, jossa on useita tasoja, taustakartta ja zoomaus. Se kuvataan tiedostossa [kartor.md](kartor.md).
 
 Kaksi kaaviotyyppiä piirtää karttoja, molemmat ilman karttapalvelinta: **Kartta** (teemakartta: alueet värjättynä arvon
 mukaan) ja **Pistekartta** (pisteet koordinaateissa, koko ja väri arvojen mukaan). Ruotsin, Tanskan, Norjan ja Suomen

@@ -8,10 +8,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view'], (base, dialogs, recipes, documentViewModule, galleryViewModule) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'viz/leaflet'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, leaflet) => {
     const { h, t, i18n, replace } = base;
-    /** Datasets of these kinds open in a view of their own (documents, pictures); the table is one click away. */
-    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule };
+    /**
+     * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
+     * is one click away. Keyed by view id: the dataset kind, or 'map' for a table with geometry or coordinates.
+     */
+    const KIND_VIEWS = { document: documentViewModule, images: galleryViewModule, map: mapViewModule };
+    const VIEW_ICONS = { document: 'file-text', images: 'images', map: 'map' };
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
       { op: 'replace_text', icon: 'search', textOnly: true }, { op: 'change_case', icon: 'file-text', textOnly: true }, { op: 'fix_encoding', icon: 'refresh-cw', textOnly: true },
@@ -26,8 +30,14 @@
       /** @type {Map<number, number>} table row index -> SQLite rowid */
       let rowIds = new Map();
       let undoBtn = null; let selectedColumn = null;
-      /** Table or kind view for the current dataset; the kind view is created once per kind. */
-      let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null;
+      /** Table or kind view for the current dataset; the kind view is created once per view id. */
+      let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null; let viewId = null;
+      /** The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null. */
+      async function defaultView(ds) {
+        if (ds.kind === 'document' || ds.kind === 'images') return ds.kind;
+        if (ds.kind === 'table' || !ds.kind) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols)) return 'map'; }
+        return null;
+      }
 
       function activate(s) {
         slots = s;
@@ -50,19 +60,22 @@
           replace(slots.right, h('p', { class: 'dm-help', text: t('bearbeta.empty.hint') }));
           return;
         }
-        if (currentId !== ds.id) { search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; showTable = !KIND_VIEWS[ds.kind]; lastUpdated = ds.updatedAt; renderMain(ds); }
-        else if (showTable) { if (table) { refresh(ds); updateUndo(); } }
+        if (currentId !== ds.id) {
+          search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; lastUpdated = ds.updatedAt;
+          defaultView(ds).then((id) => { if (currentId !== ds.id || !slots) return; viewId = id; showTable = !id; renderMain(ds); });
+        } else if (showTable) { if (table) { refresh(ds); updateUndo(); } }
         else if (ds.updatedAt !== lastUpdated) { lastUpdated = ds.updatedAt; renderMain(ds); }
       }
 
-      /** The table, or the document or gallery view for collections. */
+      /** The table, or the document, gallery or map view. */
       function renderMain(ds) {
-        if (showTable || !KIND_VIEWS[ds.kind]) { renderTable(ds); renderInspector(ds); return; }
+        const mod = viewId ? KIND_VIEWS[viewId] : null;
+        if (showTable || !mod) { renderTable(ds); renderInspector(ds); return; }
         table = null;
-        if (kindView && kindViewFor !== ds.kind) { kindView.destroy(); kindView = null; }
+        if (kindView && kindViewFor !== viewId) { kindView.destroy(); kindView = null; }
         if (!kindView) {
-          kindView = KIND_VIEWS[ds.kind].create(ctx, { onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); }, onChanged: () => updateUndo() });
-          kindViewFor = ds.kind;
+          kindView = mod.create(ctx, { onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); }, onChanged: () => updateUndo() });
+          kindViewFor = viewId;
         }
         kindView.render(ds, slots).catch((err) => shell.log(String((err && err.message) || err), 'error'));
       }
@@ -123,7 +136,8 @@
               searchInput, myLists.length ? listSel : null, countBadge,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
-              KIND_VIEWS[ds.kind] ? ui.button({ label: t('bearbeta.view.' + ds.kind), icon: ui.datasetList.kindIcon(ds.kind), title: t('bearbeta.view.' + ds.kind + '.hint'), onClick: () => { showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
+              // Back to the dataset's own view: documents, pictures, or the map for a table with geometry or coordinates.
+              viewFor(ds, cols) ? ui.button({ label: t('bearbeta.view.' + viewFor(ds, cols)), icon: VIEW_ICONS[viewFor(ds, cols)], title: t('bearbeta.view.' + viewFor(ds, cols) + '.hint'), onClick: () => { viewId = viewFor(ds, cols); showTable = false; const d = current(); if (d) renderMain(d); } }) : null,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.rules'), icon: 'circle-alert', onClick: async () => dialogs.rulesDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => dialogs.versionsDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
@@ -133,6 +147,12 @@
         table.countBadge = countBadge;
         await refresh(ds);
         updateUndo();
+      }
+
+      /** The own view a dataset can switch to from the table (any table with geometry or coordinates gets the map). */
+      function viewFor(ds, cols) {
+        if (ds.kind === 'document' || ds.kind === 'images') return ds.kind;
+        return (ds.kind === 'table' || !ds.kind) && leaflet.mappable(cols) ? 'map' : null;
       }
 
       function updateUndo() {

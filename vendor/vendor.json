@@ -830,20 +830,76 @@
           "as": "pdf.worker.min.js",
           "wrap": "text"
         },
-        { "path": "standard_fonts/FoxitDingbats.pfb", "as": "standard_fonts/FoxitDingbats.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitFixed.pfb", "as": "standard_fonts/FoxitFixed.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitFixedBold.pfb", "as": "standard_fonts/FoxitFixedBold.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitFixedBoldItalic.pfb", "as": "standard_fonts/FoxitFixedBoldItalic.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitFixedItalic.pfb", "as": "standard_fonts/FoxitFixedItalic.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitSerif.pfb", "as": "standard_fonts/FoxitSerif.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitSerifBold.pfb", "as": "standard_fonts/FoxitSerifBold.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitSerifBoldItalic.pfb", "as": "standard_fonts/FoxitSerifBoldItalic.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitSerifItalic.pfb", "as": "standard_fonts/FoxitSerifItalic.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/FoxitSymbol.pfb", "as": "standard_fonts/FoxitSymbol.pfb", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/LiberationSans-Bold.ttf", "as": "standard_fonts/LiberationSans-Bold.ttf", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/LiberationSans-BoldItalic.ttf", "as": "standard_fonts/LiberationSans-BoldItalic.ttf", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/LiberationSans-Italic.ttf", "as": "standard_fonts/LiberationSans-Italic.ttf", "bundle": "standard_fonts" },
-        { "path": "standard_fonts/LiberationSans-Regular.ttf", "as": "standard_fonts/LiberationSans-Regular.ttf", "bundle": "standard_fonts" },
+        {
+          "path": "standard_fonts/FoxitDingbats.pfb",
+          "as": "standard_fonts/FoxitDingbats.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitFixed.pfb",
+          "as": "standard_fonts/FoxitFixed.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitFixedBold.pfb",
+          "as": "standard_fonts/FoxitFixedBold.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitFixedBoldItalic.pfb",
+          "as": "standard_fonts/FoxitFixedBoldItalic.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitFixedItalic.pfb",
+          "as": "standard_fonts/FoxitFixedItalic.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitSerif.pfb",
+          "as": "standard_fonts/FoxitSerif.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitSerifBold.pfb",
+          "as": "standard_fonts/FoxitSerifBold.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitSerifBoldItalic.pfb",
+          "as": "standard_fonts/FoxitSerifBoldItalic.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitSerifItalic.pfb",
+          "as": "standard_fonts/FoxitSerifItalic.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/FoxitSymbol.pfb",
+          "as": "standard_fonts/FoxitSymbol.pfb",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/LiberationSans-Bold.ttf",
+          "as": "standard_fonts/LiberationSans-Bold.ttf",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/LiberationSans-BoldItalic.ttf",
+          "as": "standard_fonts/LiberationSans-BoldItalic.ttf",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/LiberationSans-Italic.ttf",
+          "as": "standard_fonts/LiberationSans-Italic.ttf",
+          "bundle": "standard_fonts"
+        },
+        {
+          "path": "standard_fonts/LiberationSans-Regular.ttf",
+          "as": "standard_fonts/LiberationSans-Regular.ttf",
+          "bundle": "standard_fonts"
+        },
         {
           "path": "standard_fonts/LICENSE_FOXIT",
           "as": "LICENSE-foxit-fonts.txt",
@@ -1069,6 +1125,51 @@
         {
           "path": "qrcode.js",
           "as": "qrcode.js",
+          "wrap": false
+        }
+      ]
+    },
+    "leaflet": {
+      "version": "1.9.4",
+      "npm": "leaflet",
+      "license": "BSD-2-Clause",
+      "homepage": "https://leafletjs.com/",
+      "licenseUrl": "https://raw.githubusercontent.com/Leaflet/Leaflet/v1.9.4/LICENSE",
+      "notes": "Leaflet 1.9 is the last series shipped as a classic script with the global L (2.0 is ES modules only). The map view (viz/leaflet) loads leaflet.js and leaflet.css as plain files; the text copies (leaflet-inline.*) are inlined into published HTML. Points are drawn as circle markers, so the default marker images are not needed.",
+      "files": [
+        {
+          "path": "dist/leaflet.js",
+          "as": "leaflet.js",
+          "wrap": false
+        },
+        {
+          "path": "dist/leaflet.css",
+          "as": "leaflet.css",
+          "wrap": false
+        },
+        {
+          "path": "dist/leaflet.js",
+          "as": "leaflet-inline.js",
+          "wrap": "text"
+        },
+        {
+          "path": "dist/leaflet.css",
+          "as": "leaflet-inline.css",
+          "wrap": "text"
+        }
+      ]
+    },
+    "turf": {
+      "version": "7.4.0",
+      "npm": "@turf/turf",
+      "license": "MIT",
+      "homepage": "https://turfjs.org/",
+      "licenseUrl": "https://raw.githubusercontent.com/Turfjs/turf/v7.4.0/LICENSE",
+      "notes": "Turf's browser bundle (UMD, global `turf`) does the geometry work of the Geo tools in Analysera (analysis/geo): area, length, centroids, buffers, point-in-polygon, nearest, intersection, difference, union and simplification. Loaded on first use with <script>; not needed for drawing maps.",
+      "files": [
+        {
+          "path": "turf.min.js",
+          "as": "turf.min.js",
           "wrap": false
         }
       ]

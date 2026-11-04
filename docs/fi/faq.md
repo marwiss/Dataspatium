@@ -223,6 +223,14 @@ kerralla tulee kokoelma. Muokkaa-tila näyttää ne lukunäkymänä tai galleria
 Teksti ja Kuvat ilman koodia. Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna tekstiä. Katso
 [dokument.md](dokument.md).
 
+## Voinko näyttää karttoja ja laskea paikkatietoa?
+
+Kyllä. Aineisto, jossa on geometria (GeoJSON, Shapefile, GeoPackage, KML, GPX) tai pituus- ja leveysaste, avautuu
+karttana Muokkaa-tilassa. Visualisoi-tilassa kaaviolaji *Kartta* tekee karttanäkymiä useine tasoineen ja
+taustakarttoineen koontinäyttöihin ja julkaisuun, ja Analysoi-tilassa välilehti *Geo* laskee pinta-alan, pisteet
+alueissa, lähimmän, puskurit ja päällekkäisyydet ilman koodia. QGIS-projekteja voi pudottaa Nouda-tilaan. Taustakartat
+noudetaan vain suostumuksesi jälkeen. Katso [kartor.md](kartor.md).
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

@@ -112,6 +112,7 @@ tryck **Rendera alla (panel)** för att rita diagrammen live sida vid sida. Här
 diagram bort.
 
 ## Kartor
+Utöver koropletkartan och punktkartan nedan finns diagramslaget **Karta**: en kartvy med Leaflet, flera lager, bakgrundskarta och zoom. Den beskrivs i [kartor.md](kartor.md).
 
 Två diagramtyper ritar kartor, båda utan kartserver: **Karta** (koropletkarta: ytor färgade efter ett värde)
 och **Punktkarta** (punkter på koordinater, med storlek och färg efter värden). Kommun- och regiongränser för

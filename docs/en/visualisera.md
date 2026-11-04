@@ -112,6 +112,7 @@ the manifest. The PowerPoint format gives a single presentation with one slide p
 **Render all (panel)** to draw the charts live side by side. From here charts are opened, exported and deleted.
 
 ## Maps
+Besides the choropleth and point maps below there is the chart kind **Map**: a Leaflet map view with several layers, a background map and zoom. It is described in [kartor.md](kartor.md).
 
 Two chart types draw maps, both without a map server: **Map** (choropleth: areas coloured by a value) and **Point
 map** (points at coordinates, with size and colour by values). Municipality and region boundaries for Sweden,

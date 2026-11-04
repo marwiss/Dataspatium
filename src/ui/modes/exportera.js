@@ -75,7 +75,7 @@
           h('div', { class: 'dm-card dm-stack' },
             h('div', { class: 'dm-row' }, h('h3', { class: 'dm-grow', text: t('export.charts.saved') }), exportable.length ? ui.button({ label: t('viz.export.pptx.all'), icon: 'file-output', size: 'sm', onClick: () => allChartsPptx(exportable) }) : null),
             chartList.length ? h('div', { class: 'dm-list' }, chartList.map((c) => h('div', { class: 'dm-list-item dm-list-item-static' },
-              ui.icon(c.kind === 'r' ? 'terminal' : c.kind === 'python' ? 'code' : 'chart-column', 16),
+              ui.icon(c.kind === 'r' ? 'terminal' : c.kind === 'python' ? 'code' : c.kind === 'map' ? 'map' : 'chart-column', 16),
               h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: [t('viz.kind.badge.' + c.kind), c.datasetName].filter(Boolean).join(' · ') })),
               h('span', { class: 'dm-row' },
                 ui.button({ label: t('viz.export'), icon: 'download', size: 'sm', onClick: () => exportDialog.exportChart(c) }),

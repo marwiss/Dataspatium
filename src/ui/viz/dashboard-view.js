@@ -109,6 +109,7 @@
                 basic.button({ label: t('dash.item.remove'), icon: 'x', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => { dash.items.splice(index, 1); changed(); reload().then(renderHead); } }))),
             holder);
           // Code charts show their saved image; a Python chart with a plotly figure is drawn live by plotly.js.
+          if (chart.kind === 'map') holder.style.height = '360px';
           if (chart.kind === 'python' && chart.python && chart.python.plotly) { holder.style.height = '360px'; D.require('viz/plotly').render(holder, chart.python.plotly).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }))); }
           else if (D.require('viz/code-charts').isCode(chart.kind)) replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') }));
           else render.renderInto(chart, holder, { extraFilters: extraFilters() }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));

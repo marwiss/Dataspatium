@@ -47,6 +47,8 @@ computeren gennem et lille lokalt script) og *Tilføj databasekilde* (PostgREST,
 Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP). Access-filer læses desuden direkte som filer,
 og i Chrome og Edge kan en fil linkes, så datasættet indlæses igen fra disken. Se [kallor.md](kallor.md).
 
+QGIS-projekter (.qgs, .qgz) bliver kortvisninger: lagrækkefølge, synlighed og symboler følger med, lagene kobles til datasæt med samme filnavn, og datafiler, der slippes sammen med projektet, importeres først (se [kartor.md](kartor.md)).
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -96,6 +98,8 @@ bladr side for side, vis PDF-siden som billede, søg i hele samlingen og hent or
 beskrivelsen kan ændres. *Vis som tabel* giver i begge tilfælde den almindelige tabel med alle handlinger. Se
 [dokument.md](dokument.md).
 
+Datasæt med geometri eller koordinater åbnes som et **kort**, der kan zoomes og panoreres; klik på et objekt viser attributterne, baggrundskort efter samtykke, *Gem som kortvisning* til Visualisér. *Vis som tabel* giver tabellen (se [kartor.md](kartor.md)).
+
 ## Analysér
 
 Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, Python, SQL, Regex og til sidst notesbogen, der samler dele fra
@@ -117,6 +121,8 @@ samforekomster og et overblik pr. dokument), og når en billedsamling er valgt, 
 kamera, år eller måned og dubletter via billedhash). Begge ligger efter Regex og før Notesbogen, og hvert resultat
 kan gemmes som et nyt datasæt. Se [dokument.md](dokument.md).
 
+For datasæt med geometri findes fanen **Geo** (efter Regex): mål, punkter i områder, nærmeste, buffer, overlejring, sammenlægning og forenkling med Turf i browseren; resultaterne bliver datasæt, der åbnes som kort.
+
 ## Visualisér
 
 Diagrammer med tre motorer og ét udseende: diagrambyggeren (Vega-Lite) med søjler, linjer, arealer, punkter,
@@ -125,6 +131,8 @@ til rangordning, hældningsdiagrammer og befolkningspyramider; og R-scripts med 
 eksporteres som SVG, PNG, PDF og PowerPoint, deles som viz-filer, vises i et galleri og oprettes i batch pr. gruppe.
 Dashboards samler gemte diagrammer i et gitter med fælles filtre og eksporteres som HTML eller PowerPoint. Se
 [visualisera.md](visualisera.md).
+
+Diagramtypen **Kort** er en kortvisning med flere lag fra datasæt med geometri eller koordinater og de medfølgende grænser, farve efter kategori eller klasse, etiketter, gemt visning og baggrundskort efter samtykke; interaktiv i dashboards, præsentationer og publiceret HTML, eksporteret til SVG, PNG og PDF uden baggrundskort (se [kartor.md](kartor.md)).
 
 ## Eksportér
 

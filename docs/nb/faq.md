@@ -217,6 +217,13 @@ bilder en bildesamling med én rad per bilde og EXIF-opplysninger. Flere filer p
 de som lesevisning respektive galleri, og i Analyser finnes verktøyene Tekst og Bilder uten kode. Skannede PDF-filer
 uten tekstlag gir ingen tekst. Se [dokument.md](dokument.md).
 
+## Kan jeg vise kart og regne på geodata?
+
+Ja. Et datasett med geometri (GeoJSON, Shapefile, GeoPackage, KML, GPX) eller lengde- og breddegrad åpnes som et kart i
+Bearbeid. I Visualiser lager diagramtypen *Kart* kartvisninger med flere lag og bakgrunnskart for dashboards og
+publisering, og i Analyser regner fanen *Geo* areal, punkter i områder, nærmeste, buffer og overlagring uten kode.
+QGIS-prosjekter kan slippes i Hent. Bakgrunnskart hentes bare etter ditt samtykke. Se [kartor.md](kartor.md).
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).
