@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis, kinds) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -71,23 +71,44 @@
         replace(slots.left,
           h('h4', { text: t('import.sources') }),
           h('div', { class: 'dm-list' },
-            sourceItem('file', 'folder-open', t('import.sources.files'), null),
+            sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
             sourceItem('field', 'smartphone', t('field.source'), t('field.source.hint')),
             sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length }))),
           h('h4', { text: t('api.sources') }),
           renderCountryChips(),
-          h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
+          h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, connectorIcon(c), c.name, connectorSub(c)))),
           visibleConnectors().length ? null : h('p', { class: 'dm-help dm-xs', text: t('api.countries.none') }),
-          h('div', { class: 'dm-row' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector })),
-          h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }),
           h('h4', { text: t('bridge.sources') }),
           h('div', { class: 'dm-list' }, sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint'))),
-          h('div', { class: 'dm-row-wrap' },
-            ui.button({ label: t('families.add.source'), icon: 'plus', size: 'sm', onClick: () => addFamily() }),
-            ui.button({ label: t('geodata.add.source'), icon: 'map', size: 'sm', title: t('geodata.add.hint'), onClick: () => addFamily('geodata') })),
-          h('p', { class: 'dm-help dm-xs', text: t('families.hint') }));
+          h('div', null, ui.button({ label: t('import.sources.add'), icon: 'plus', size: 'sm', title: t('import.sources.add.hint'), onClick: () => addSource().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
+      }
+      /** The line under a source's name: where it comes from, or at least its address. */
+      function connectorSub(c) {
+        const parts = [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean);
+        if (parts.length) return parts.join(' · ');
+        try { return new URL(c.baseUrl).host || c.baseUrl; } catch (_err) { return c.baseUrl || c.name; }
+      }
+      /** The same mark for the same kind of source, wherever it came from. */
+      function connectorIcon(c) {
+        const type = c.family && c.family.type;
+        if (type === 'geodata' || type === 'geoportal') return 'map';
+        if (type === 'neo4j') return 'share-2';
+        return D.require('api/families/databases').FAMILIES.some((f) => String(c.id).startsWith(f.id + '-')) ? 'database' : 'globe';
+      }
+      /** All the ways to add a source, with what each is for, instead of a button and a note per kind in the list. */
+      async function addSource() {
+        const options = [
+          { id: 'file', label: t('api.add.file'), help: t('import.sources.api.hint'), run: addConnector },
+          { id: 'family', label: t('families.add.source'), help: t('families.hint'), run: () => addFamily() },
+          { id: 'geodata', label: t('geodata.add.source'), help: t('geodata.add.hint'), run: () => addFamily('geodata') },
+        ];
+        let chosen = null;
+        const body = h('div', { class: 'dm-stack-sm' }, options.map((o) => h('button', { type: 'button', class: 'dm-op-tile', 'data-source': o.id, onclick: () => { chosen = o; const dlg = body.closest('dialog'); if (dlg) /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button button')).click(); } },
+          h('strong', { text: o.label }), h('span', { class: 'dm-help', text: o.help }))));
+        await ui.dialog.open({ title: t('import.sources.add'), help: 'kallor', body, actions: [{ label: t('common.cancel'), value: false }] });
+        if (chosen) await chosen.run();
       }
 
       // ---- country filter for the API sources (remembered per browser) ----
@@ -671,14 +692,13 @@
 
       /** What was fetched, in the dataset's own terms: pages, pictures and nodes rather than rows and columns. */
       function doneText(m) {
-        if (!m.kind || m.kind === 'table') return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
-        return t('import.done.kind', { name: m.name, summary: ui.datasetList.kindSummary(m) });
+        if (!kinds.isCollection(m)) return t('import.done', { name: m.name, rows: i18n.formatNumber(m.rowCount), cols: m.columnCount });
+        return t('import.done.kind', { name: m.name, summary: kinds.summary(m) });
       }
       /** The way on from an import: read, look at, or work in the table. */
       function openAfter(m) {
-        const OPEN = { document: ['hantera.read', 'book-open'], images: ['hantera.view.images', 'images'], plan: ['hantera.view.plan', 'layers'], model: ['hantera.view.model', 'box'], graph: ['hantera.view.graph', 'share-2'] };
-        const own = OPEN[m.kind];
-        return own ? { label: t(own[0]), icon: own[1] } : { label: t('import.open.bearbeta'), icon: 'pencil' };
+        const own = kinds.of(m).open;
+        return own ? { label: t(own.label), icon: own.icon } : { label: t('import.open.bearbeta'), icon: 'pencil' };
       }
       async function runImport() {
         if (wiz.busy) return;

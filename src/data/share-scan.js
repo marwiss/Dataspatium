@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/share-scan', ['data/datasets', 'data/rules', 'data/exif'], (datasets, rules, exif) => {
+  D.define('data/share-scan', ['data/datasets', 'data/rules', 'data/exif', 'data/kinds'], (datasets, rules, exif, kinds) => {
     const PHONE_NAME = /telefon|mobil(?!itet)|phone|puhelin|s[ií]mi|^tlf$|\btel\b|^gsm$|farsimi|handy/i;
     const FILES = '_files';
     /** Tables with their own part, or without free text. */
@@ -85,7 +85,7 @@
         const n = number(await engine.exec(`select count(*) from ${q(table)} where ${hit}`));
         if (n) parts.push({ id: 'side:' + table, kind: 'side', table, count: n, choices: ['keep', 'mask', 'remove'], start: 'mask' });
       }
-      if (handle.meta.kind === 'images') {
+      if (kinds.of(handle.meta).files === 'pictures') {
         const names = handle.columns.map((c) => c.name);
         if (names.includes('lon')) {
           const n = number(await engine.exec('select count(*) from data where lon is not null'));
@@ -112,7 +112,7 @@
     /** Whether a set of choices changes anything in the copy. */
     function changes(tr) {
       if (!tr) return false;
-      return !!((tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
+      return !!((tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
     }
 
     async function metaValue(engine, key) {
@@ -136,9 +136,20 @@
       }
     }
 
+    /** Only the given rows, and what belongs to them: a graph's edges between them, the files they name. */
+    async function keepOnly(engine, tables, rowids) {
+      await engine.run(`delete from data where rowid not in (${rowids.map(Number).join(',')})`);
+      const r = await engine.exec('pragma table_info(data)');
+      const names = (r[0] ? r[0].values : []).map((row) => String(row[1]));
+      if (tables.includes('_edges') && names.includes('id')) await engine.run('delete from _edges where kalla not in (select id from data) or mal not in (select id from data)');
+      const fileColumn = names.includes('fil') ? 'fil' : names.includes('dokument') ? 'dokument' : null;
+      if (tables.includes(FILES) && fileColumn) await engine.run(`delete from ${FILES} where name not in (select ${q(fileColumn)} from data)`);
+    }
+
     /** The choices outside the columns of the main table, on the engine of the copy. */
     async function applyParts(engine, tr) {
       const tables = await tablesIn(engine);
+      if (tr.only && tr.only.length) await keepOnly(engine, tables, tr.only);
       for (const name of tr.mask || []) await engine.run(`update data set ${q(name)} = dm_mask_personal(${q(name)}) where dm_has_personal(${q(name)}) = 1`);
       for (const [table, choice] of Object.entries(tr.side || {})) {
         if (!tables.includes(table)) continue;
@@ -176,6 +187,19 @@
       return datasets.exportBytesTransformed(id, Object.assign({}, tr, { after: changes(tr) ? (engine) => applyParts(engine, tr) : null }));
     }
 
-    return { PHONE_NAME, columnFindings, columnChoices, inspect, changes, copy };
+    /**
+     * A dataset in a file format, written from a copy with the given changes. The copy exists only for that moment and never
+     * shows in the list.
+     * @param {any} ds @param {string} format @param {any} tr @param {any} [options] @returns {Promise<{blob: Blob, filename: string}>}
+     */
+    async function exportCopy(ds, format, tr, options = {}) {
+      const exporter = D.require('io/export');
+      const fmt = exporter.FORMATS.find((f) => f.id === format) || {};
+      const temp = await datasets.importBytes(await copy(ds.id, tr), { name: ds.name }, { quiet: true });
+      try { return await exporter.exportDataset(temp.id, format, Object.assign({ filename: D.require('platform/files').safeName(ds.name, fmt.ext) }, options)); }
+      finally { await datasets.remove(temp.id, { quiet: true }); }
+    }
+
+    return { PHONE_NAME, columnFindings, columnChoices, inspect, changes, copy, exportCopy };
   });
 })();

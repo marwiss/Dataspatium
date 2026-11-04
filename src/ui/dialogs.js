@@ -26,7 +26,10 @@
       /** Palette of all operations, grouped. Returns the chosen action id or null. */
       async function palette(ctx) {
         let chosen = null;
-        const body = h('div', { class: 'dm-stack' }, GROUPS.map((g) => h('div', { class: 'dm-stack-sm' },
+        // What the data calls for comes first; the rest keeps its order.
+        const first = await D.require('data/facets').firstGroups(ctx.datasetId).catch(() => []);
+        const groups = first.map((id) => GROUPS.find((g) => g.id === id)).filter(Boolean).concat(GROUPS.filter((g) => !first.includes(g.id)));
+        const body = h('div', { class: 'dm-stack' }, groups.map((g) => h('div', { class: 'dm-stack-sm' },
           h('h4', { text: t('op.group.' + g.id) }),
           h('div', { class: 'dm-op-grid' }, g.ops.map((id) => h('button', { type: 'button', class: 'dm-op-tile', 'data-op': id, onclick: () => { chosen = id; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },
             h('strong', { text: t('op.' + id) }), h('span', { class: 'dm-help', text: i18n.has('op.' + id + '.help') ? t('op.' + id + '.help') : '' })))))));

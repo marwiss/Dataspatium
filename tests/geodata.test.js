@@ -229,7 +229,7 @@
       const portal = await connectors.save({ format: 'dataspatium-api/1', id: 'test-geoportal', name: 'Testkatalog', baseUrl: BASE + '/catalog', auth: { type: 'none' }, family: { type: 'geoportal' }, endpoints: [{ id: 'search', name: 'Sök', method: 'POST', path: '/_search', bodyType: 'json', body: { query: { query_string: { query: '{q}' } } }, params: [{ name: 'q', in: 'template', type: 'string', required: true }], response: { format: 'geonetwork' } }] });
       ids.push(portal.id);
       shell.activate('inhamta');
-      await waitFor(() => buttonByText(t('geodata.add.source')), 5000, 'the button Lägg till geodatakälla');
+      await waitFor(() => buttonByText(t('import.sources.add')), 5000, 'the button Lägg till källa');
       // The WFS source: its layers as a list, one layer's form, the fetch with a map preview, saving.
       await waitFor(() => itemByText(r.connector.name), 5000, 'the WFS source in the list');
       itemByText(r.connector.name).click();

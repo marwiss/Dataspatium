@@ -12,26 +12,12 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'platform/storage/idb'], (base, icons, idb) => {
+  D.define('ui/dataset-list', ['ui/base', 'ui/icons', 'platform/storage/idb', 'data/kinds'], (base, icons, idb, kinds) => {
     const { h, t, i18n, replace } = base;
-    /** Icon per dataset kind (data/datasets KINDS); tables and unknown kinds share the table icon. */
-    const KIND_ICONS = { table: 'table', document: 'file-text', images: 'images', graph: 'share-2', model: 'box', plan: 'layers' };
-    function kindIcon(kind) { return KIND_ICONS[kind] || 'table'; }
-    /** One line about a dataset's size: documents and pages for a document collection, pictures for an image collection, rows and columns otherwise. */
-    function kindSummary(ds) {
-      if (ds.kind === 'document') {
-        const docs = Array.isArray(ds.documents) ? ds.documents : [];
-        return t('datasets.sub.document', { n: i18n.formatNumber(docs.length), pages: i18n.formatNumber(docs.reduce((s, d) => s + (Number(d.pages) || 0), 0)) });
-      }
-      if (ds.kind === 'images') return t('datasets.sub.images', { n: i18n.formatNumber(ds.images && ds.images.count ? ds.images.count : ds.rowCount || 0) });
-      // A plan is counted in plan objects (provisions or contents), under its kind of plan.
-      if (ds.kind === 'plan') return `${t('plan.slag.' + (ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan'))} · ${t('plan.objects.n', { n: i18n.formatNumber(ds.rowCount || 0) })}`;
-      // A building model is counted in building elements, a drawing in entities.
-      if (ds.kind === 'model') return ds.model && ds.model.format === 'dxf' ? t('model.entities.n', { n: i18n.formatNumber(ds.rowCount || 0) }) : t('model.elements.n', { n: i18n.formatNumber(ds.model && ds.model.elements !== undefined ? ds.model.elements : ds.rowCount || 0) });
-      // A graph is counted in nodes and edges.
-      if (ds.kind === 'graph') return `${t('graph.nodes.n', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('graph.edges.n', { n: i18n.formatNumber(ds.graph && ds.graph.edges ? ds.graph.edges : 0) })}`;
-      return `${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`;
-    }
+    /** The mark of a kind; the kinds themselves are described in data/kinds. */
+    function kindIcon(kind) { return kinds.of(kind).icon; }
+    /** One line about a dataset's size, in its own units. */
+    const kindSummary = (ds) => kinds.summary(ds);
     const COLLAPSED_SETTING = 'ui.folders.collapsed';
     const SORTS = ['updated', 'name', 'rows'];
     const DRAG_TYPE = 'text/plain';
@@ -202,6 +188,6 @@
         h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), subEl));
     }
 
-    return { render, buildTree, sortDatasets, kindIcon, kindSummary, KIND_ICONS, SORTS };
+    return { render, buildTree, sortDatasets, kindIcon, kindSummary, SORTS };
   });
 })();

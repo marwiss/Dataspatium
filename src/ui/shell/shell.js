@@ -10,15 +10,14 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge'],
-    (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge) => {
+  D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge', 'data/selection'], (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge, selectionMod) => {
       const { h, t, i18n, replace } = base;
       const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela'];
       const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
       const THEME_ICON = { auto: 'sun', light: 'sun', dark: 'moon' };
       const ENGINE_STATES = { idle: 'shell.engine.state.idle', starting: 'shell.engine.state.starting', ready: 'shell.engine.state.ready', busy: 'shell.engine.state.busy', error: 'shell.engine.state.error' };
       /** Settings keys for the panel widths set with the splitters. */
-      const WIDTH_SETTINGS = { left: 'ui.panel.left', right: 'ui.panel.right' };
+      const WIDTH_SETTINGS = { left: 'ui.panel.left', right: 'ui.panel.right', drawer: 'ui.panel.drawer' };
       /** Below these widths a side panel is a sheet over the workspace instead of a column (shell.css). */
       const SHEET_BREAKPOINT = { right: '(max-width: 1099px)', left: '(max-width: 759px)' };
 
@@ -73,8 +72,10 @@
           // A running flow and the news from the watches: only there when there is something to say.
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
+          this.selectionEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-selection', hidden: true, 'aria-label': t('selection.status.hint'), title: t('selection.status.hint'), onclick: () => this.selectionMenu() }, icons.icon('list-checks', 14), h('span'));
+          selectionMod.subscribe((s) => this.showSelection(s));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.flowEl, this.watchEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.watchEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -96,6 +97,7 @@
             this.slots.center,
             h('aside', { class: 'dm-right', 'aria-label': t('shell.inspector') }, h('dm-splitter', { for: 'right' }), h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
             h('section', { class: 'dm-drawer', 'aria-label': t('shell.drawer') },
+              h('dm-splitter', { for: 'drawer' }),
               h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.drawer') }), basic.button({ label: t('common.close'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') })),
               this.logList),
             this.statusBar);
@@ -173,12 +175,41 @@
           this.datasetEl.hidden = !ds;
         }
 
+        /** The selection in the status bar, in the units of its dataset. */
+        showSelection(sel) {
+          this.selectionEl.hidden = !sel;
+          if (sel) this.selectionEl.lastChild.textContent = t('selection.status', { n: i18n.formatNumber(sel.rowids.length) });
+        }
+        /** What can be done with the selection, wherever the user happens to be. */
+        async selectionMenu() {
+          const sel = selectionMod.get();
+          if (!sel) { this.showSelection(null); return; }
+          let action = null;
+          const pick = (id, label, help, primary) => h('button', { type: 'button', class: 'dm-op-tile', 'data-action': id, 'data-primary': primary ? '' : null, onclick: () => { action = id; const dlg = body.closest('dialog'); if (dlg) /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button button')).click(); } }, h('strong', { text: label }), h('span', { class: 'dm-help', text: help }));
+          const body = h('div', { class: 'dm-stack-sm' },
+            pick('list', t('selection.menu.list'), t('selection.menu.list.hint')),
+            pick('dataset', t('selection.menu.dataset'), t('selection.menu.dataset.hint')),
+            pick('clear', t('selection.menu.clear'), t('selection.menu.clear.hint')));
+          await overlays.dialog.open({ title: t('selection.status', { n: i18n.formatNumber(sel.rowids.length) }), help: 'hantera', body, actions: [{ label: t('common.close'), value: false }] });
+          try {
+            if (action === 'clear') selectionMod.clear();
+            if (action === 'list') {
+              const name = await overlays.dialog.prompt(t('soka.list.name'), { title: t('selection.menu.list'), value: '' });
+              if (name) { const rec = await selectionMod.toList(name); overlays.toast.show(t('soka.list.saved', { name: rec.name }), { kind: 'ok' }); }
+            }
+            if (action === 'dataset') {
+              const name = await overlays.dialog.prompt(t('text.dataset.name'), { title: t('selection.menu.dataset'), value: '' });
+              if (name) { const meta = await selectionMod.toDataset(name); this.store.set({ selectedId: meta.id }); }
+            }
+          } catch (err) { this.log(String((err && err.message) || err), 'error'); overlays.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        }
+
         /** Panel widths from the last session, set through the splitters. */
         async applyWidths() {
           for (const [side, key] of Object.entries(WIDTH_SETTINGS)) {
             try {
               const w = await idb.getSetting(key, null);
-              if (typeof w === 'number' && w > 0) this.el.style.setProperty(side === 'left' ? '--dm-panel-w' : '--dm-inspector-w', w + 'px');
+              if (typeof w === 'number' && w > 0) this.el.style.setProperty(side === 'drawer' ? '--dm-drawer-h' : side === 'left' ? '--dm-panel-w' : '--dm-inspector-w', w + 'px');
             } catch (_err) { /* defaults */ }
           }
         }

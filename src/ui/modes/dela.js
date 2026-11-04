@@ -99,12 +99,7 @@
       /** One dataset in a file format, from the reviewed copy when the review changed anything. */
       async function exportReviewed(ds, formatId, transform) {
         const shareScan = D.require('data/share-scan');
-        if (!shareScan.changes(transform)) return services.exporter.exportDataset(ds.id, formatId);
-        const datasets = services.datasets;
-        // A copy of its own for the moment it takes to write the file; it never shows in the list.
-        const temp = await datasets.importBytes(await shareScan.copy(ds.id, transform), { name: ds.name }, { quiet: true });
-        try { return await services.exporter.exportDataset(temp.id, formatId, { filename: services.files.safeName(ds.name, (services.exporter.FORMATS.find((f) => f.id === formatId) || {}).ext) }); }
-        finally { await datasets.remove(temp.id, { quiet: true }); }
+        return shareScan.changes(transform) ? shareScan.exportCopy(ds, formatId, transform) : services.exporter.exportDataset(ds.id, formatId);
       }
       async function shareNow(what, formatId, btn) {
         const ds = selected();

@@ -62,6 +62,10 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('images', 20), dataset.name),
             h('div', { class: 'dm-toolbar' }, searchInput, sortSel, countEl,
+              ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.hint'), onClick: () => {
+                const made = D.require('data/selection').set({ datasetId: dataset.id, rowids: rows.map((r) => r[0]) });
+                ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+              } }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           h('p', { class: 'dm-help', text: t('gallery.hint') }),
           gridEl);

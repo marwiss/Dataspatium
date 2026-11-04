@@ -97,6 +97,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   posisjon, og radene kommer tilbake som en ny versjon. Bildene blir en bildesamling, og posisjonene havner på kartet (se [insamling.md](insamling.md)).
 - **Gjennomgang av hele filen**: det som deles, gjennomgås i sin helhet, med løpende tekst, originalfiler, bilders posisjoner, grafers kanter og kommentarer. Modusene følger også datasettets type bedre: søketreff
   åpnes der de er, og kart tilbys bare når verdiene virkelig er koordinater (se [dela.md](dela.md)).
+- **Modusene følger datasettet**: appen viser hva et datasett også kan brukes som og sier hvorfor, åpner Analyser i riktig verktøy og viser hva som er verdt å se på. Et utvalg følger med mellom modusene, og eksporten sier hva som følger med (se [lagen.md](lagen.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

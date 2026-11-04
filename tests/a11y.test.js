@@ -79,14 +79,15 @@
       assert.equal(document.activeElement, root.querySelector('main'), 'skip link focuses main');
       const problems = [];
       const check = (where) => { for (const p of a11y.audit(root)) problems.push(`${where}: ${p.rule}: ${p.element}`); };
-      const tabs = () => Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]'));
+      // The mode's own tabs; a tool in a tab may have tabs of its own.
+      const tabs = () => { const own = root.querySelector('.dm-center dm-tabs'); return own ? Array.from(own.querySelectorAll('[role="tab"]')) : []; };
       for (const mode of ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera']) {
         shell.activate(mode);
         await wait(600);
         check(mode);
         if (mode === 'analysera' || mode === 'exportera') {
           const count = tabs().length;
-          for (let i = 1; i < count; i++) {
+          for (let i = 0; i < count; i++) {
             /** @type {HTMLElement} */ (tabs()[i]).click();
             await wait(500);
             check(`${mode} tab ${i + 1}`);

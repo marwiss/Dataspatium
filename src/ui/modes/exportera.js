@@ -131,7 +131,10 @@
         if (!available.some((f) => f.id === form.format && !f.unavailable)) form.format = available[0].id;
         const fmt = available.find((f) => f.id === form.format) || available[0];
         const formatSel = /** @type {any} */ (h('dm-select', { label: t('export.format') }));
-        formatSel.options = available.map((f) => ({ value: f.id, label: f.unavailable ? `${t(f.key)}: ${t(f.unavailable)}` : t(f.key), disabled: !!f.unavailable }));
+        // A dataset that is more than a table says plainly which formats carry all of it.
+        const kindsMod = D.require('data/kinds');
+        const grouped = kindsMod.isCollection(ds);
+        formatSel.options = available.map((f) => ({ value: f.id, label: f.unavailable ? `${t(f.key)}: ${t(f.unavailable)}` : t(f.key), disabled: !!f.unavailable, group: grouped ? t(f.kind ? 'export.group.whole' : 'export.group.table') : undefined }));
         formatSel.value = form.format;
         formatSel.addEventListener('change', () => { form.format = formatSel.value; form.filename = ''; render(); });
         const profileSel = /** @type {any} */ (h('dm-select', { label: t('export.profile') }));
@@ -140,11 +143,17 @@
         profileSel.addEventListener('change', () => { form.profile = profileSel.value; });
         const filename = /** @type {any} */ (h('dm-input', { label: t('export.filename'), value: form.filename || services.files.safeName(ds.name, fmt.ext) }));
         filename.addEventListener('input', () => { form.filename = filename.value; });
+        // The selection, when there is one here: everything or only that.
+        const selectionNow = D.require('data/selection').get();
+        const scopeSel = selectionNow && selectionNow.datasetId === ds.id ? /** @type {any} */ (h('dm-select', { label: t('export.scope') })) : null;
+        if (scopeSel) { scopeSel.options = [{ value: 'selection', label: t('selection.option', { n: i18n.formatNumber(selectionNow.rowids.length) }) }, { value: 'all', label: t('export.scope.all') }]; scopeSel.value = 'selection'; }
         const runBtn = ui.button({ label: t('export.run'), icon: 'download', variant: 'primary', 'data-course': 'export', onClick: async () => {
           runBtn.loading = true;
           try {
             const options = form.format === 'csv' ? (form.profile === 'excel-sv' ? { delimiter: ';', decimal: 'comma', bom: true } : { delimiter: ',', decimal: 'point', bom: false }) : {};
-            const { blob, filename: name } = await services.exporter.exportDataset(ds.id, form.format, Object.assign(options, { filename: filename.value.trim() || undefined }));
+            const onlySelected = scopeSel && scopeSel.value === 'selection' && selectionNow ? { only: selectionNow.rowids } : null;
+            const exportOptions = Object.assign(options, { filename: filename.value.trim() || undefined });
+            const { blob, filename: name } = onlySelected ? await D.require('data/share-scan').exportCopy(ds, form.format, onlySelected, exportOptions) : await services.exporter.exportDataset(ds.id, form.format, exportOptions);
             services.files.download(blob, name);
             store.set({ lastExport: { at: Date.now(), datasetId: ds.id } });
             shell.log(t('export.done', { name }) + ` (${i18n.formatBytes(blob.size)})`, 'ok');
@@ -153,7 +162,8 @@
           runBtn.loading = false;
         } });
         return h('div', { class: 'dm-card dm-stack' },
-          h('div', { class: 'dm-form-grid' }, formatSel, form.format === 'csv' ? profileSel : null, filename),
+          h('div', { class: 'dm-form-grid' }, formatSel, scopeSel, form.format === 'csv' ? profileSel : null, filename),
+          !fmt.kind && kindsMod.of(ds).loses ? h('p', { class: 'dm-help dm-small', 'data-loses': '', text: t(kindsMod.of(ds).loses) }) : null,
           fmt.viaR ? h('p', { class: 'dm-help dm-small', text: t('export.viaR.hint') }) : null,
           h('div', null, runBtn));
       }

@@ -29,6 +29,8 @@ form `index.html#/<mode>/<short name>` (or a chart name in Visualise, a search t
 folder too. Arrow up and down select, Enter runs
 and Esc closes; the most recently run commands are at the top.
 
+You change the height of the log panel by dragging its top edge, or with the arrow keys when the edge has focus. A double click resets the height, and the height is saved.
+
 ## Import
 
 Here data comes in: files dropped on the surface, pasted text, web addresses and open APIs. File import goes in
@@ -74,6 +76,8 @@ opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
 **Field collection** in the list of sources builds a form on a dataset's columns and rules and sends it to the phone. The rows come back as a new version
 (see [insamling.md](insamling.md)).
 
+All sources in the list look the same, with a mark for their type and a line under the name. *Add a source* gathers all ways to add a source: a configuration file, a database or a geodata service.
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -98,6 +102,10 @@ the gallery in Process (see [dokument.md](dokument.md)).
 
 **Flows and watches** are in the object panel: saved chains that run with one click or at start, and sources that say when they have
 new data (see [floden.md](floden.md)).
+
+**What the app sees.** The overview shows what the dataset can also be used as: places on a map, a time series, regions that can be coloured, a network or running text. Each line says why, and you can switch off what is wrong or switch on what the app missed. The choice is saved in the dataset, and the modes follow it. Below it **Worth checking** lists what the kind of data needs: pages without text, pictures without a position, edges pointing at nodes that do not exist, elements without quantities or rows without a place.
+
+**Selection.** The button *Use as selection* is in Search and in the views of Process. What you see then follows between the modes and shows in the status bar. In Process you show it through the list choice, in Export you choose whether only the selection goes along, and in bundles you can send only the selection. From the status bar you save it as a list, make it a dataset or clear it. If the rows of the dataset change the selection goes away, since it would no longer mean the same thing.
 
 ## Search
 
@@ -159,6 +167,8 @@ The tab **Statistics** after Regex does common analyses with forms that write an
 Models and drawings get the tab **Quantities** after Regex (count, length, area and volume per type, storey and material, from
 the file or measured on the geometry).
 
+Analyse opens in the tool that fits the dataset: Text for documents, Pictures for image collections, Graph for graphs, Quantities for models, Plan for plans, Geo for tables with places and otherwise Statistics. When you choose a tab yourself you stay there. R starts only when you open the tab R.
+
 ## Visualise
 
 Charts with three engines and one look: the chart builder (Vega-Lite) with bars, lines, areas, points, histograms,
@@ -176,6 +186,8 @@ SQLite and, via R, Parquet, SPSS, Stata and RDS. **Charts**: saved charts and da
 PowerPoint) as SVG, PNG and PDF, singly or in batch per group to ZIP. **Documents**: reports, codebooks and
 compilations from templates in Markdown with placeholders, as HTML, Word, PDF, Markdown or LaTeX, singly or in batch
 per group (see [dokumentmallar.md](dokumentmallar.md)). What is meant for other people is in Share.
+
+A dataset that is more than a table divides the formats into **The whole dataset** and **Only the table**, and says what does not go along. Documents can be had as original files or plain text, pictures as a ZIP and graphs as two CSV files.
 
 ## Share
 

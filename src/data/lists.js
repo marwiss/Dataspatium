@@ -29,7 +29,8 @@
       const rec = {
         id: input.id || uid(), name: String(input.name || '').trim() || D.t('soka.list.untitled'), datasetId: input.datasetId,
         datasetName: meta ? meta.name : '', datasetShort: meta ? meta.shortName || '' : '',
-        kind: input.kind === 'query' ? 'query' : 'search',
+        kind: input.kind === 'query' || input.kind === 'rows' ? input.kind : 'search',
+        rowids: input.kind === 'rows' ? (input.rowids || []).map(Number) : undefined,
         text: input.text || '', filters: (input.filters || []).map((f) => ({ column: f.column, value: f.value })),
         spec: input.kind === 'query' ? JSON.parse(JSON.stringify(input.spec || null)) : undefined, sql: input.kind === 'query' ? String(input.sql || '') : undefined,
         hits: input.hits === undefined ? null : input.hits, lastRunAt: null,
@@ -51,7 +52,7 @@
         notify('run', rec);
         return out;
       }
-      const res = await search.searchDataset(rec.datasetId, rec.text, rec.filters, options);
+      const res = await search.searchDataset(rec.datasetId, rec.text, rec.filters, rec.kind === 'rows' ? Object.assign({}, options, { rowids: rec.rowids, facets: false }) : options);
       rec.hits = res.count;
       rec.lastRunAt = new Date().toISOString();
       await idb.putList(rec);
@@ -62,13 +63,25 @@
     /** The hits as a new dataset (same columns and types as the source). */
     async function toDataset(rec, name) {
       if (rec.kind === 'query') return querybuilder.toDataset(rec.spec, name || rec.name);
+      if (rec.kind === 'rows') return datasets.createFromQuery(rec.datasetId, `select * from data where rowid in (${rec.rowids.join(',')})`, { name: name || rec.name, source: { list: { id: rec.id, name: rec.name } } });
       const cols = await datasets.columns(rec.datasetId);
       const { sql, params } = search.hitsSql(cols, rec.text, rec.filters);
       return datasets.createFromQuery(rec.datasetId, sql, { name: name || rec.name, params, source: { list: { id: rec.id, name: rec.name, text: rec.text, filters: rec.filters } } });
     }
 
+    /**
+     * The condition a list puts on its dataset's rows, or null for a query, which stands on its own.
+     * @param {any} rec @param {any[]} columns @returns {{sql: string, params: any[]}|null}
+     */
+    function whereOf(rec, columns) {
+      if (rec.kind === 'query') return null;
+      if (rec.kind === 'rows') return { sql: `rowid in (${(rec.rowids || []).join(',')})`, params: [] };
+      return search.where(columns, rec.text, rec.filters || []);
+    }
+
     /** Readable summary of what a list selects. */
     function describe(rec) {
+      if (rec.kind === 'rows') return D.t('selection.list.describe', { n: (rec.rowids || []).length });
       if (rec.kind === 'query') return String(rec.sql || '').replace(/\s+/g, ' ').trim().slice(0, 160);
       const parts = [];
       if (rec.text) parts.push('"' + rec.text + '"');
@@ -76,6 +89,6 @@
       return parts.join(' · ');
     }
 
-    return { list, get, save, remove, run, toDataset, describe, subscribe };
+    return { list, get, save, remove, run, toDataset, describe, whereOf, subscribe };
   });
 })();

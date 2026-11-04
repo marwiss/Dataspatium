@@ -28,6 +28,8 @@ søk i data, lag en pakke, kopier en lenke hit, bytt tema eller se etter oppdate
 mappe. Pil opp og ned velger, Enter kjører og Esc lukker;
 de sist kjørte kommandoene ligger øverst.
 
+Du endrer høyden på loggpanelet ved å dra i overkanten, eller med piltastene når kanten har fokus. Dobbeltklikk tilbakestiller høyden, og høyden lagres.
+
 ## Hent
 
 Her kommer data inn: filer som slippes på flaten, innlimt tekst, nettadresser og åpne API-er. Filimporten går i
@@ -71,6 +73,8 @@ som tegning i Bearbeid (se [cad-bim.md](cad-bim.md)).
 **Innsamling i felt** i kildelisten bygger et skjema på et datasetts kolonner og regler og sender det til telefonen. Radene kommer tilbake som en ny
 versjon (se [insamling.md](insamling.md)).
 
+Alle kilder i listen ser like ut, med et symbol for typen og en linje under navnet. *Legg til kilde* samler alle måter å legge til en kilde på: en konfigurasjonsfil, en database eller en geodatatjeneste.
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -95,6 +99,10 @@ galleriet i Bearbeid (se [dokument.md](dokument.md)).
 
 **Flyter og overvåking** finnes i objektpanelet: lagrede kjeder som kjøres med ett klikk eller ved start, og kilder som sier fra når de
 har nye data (se [floden.md](floden.md)).
+
+**Hva appen ser.** Oversikten viser hva datasettet også kan brukes som: steder på et kart, en tidsserie, regioner som kan farges, et nettverk eller løpende tekst. Hver linje sier hvorfor, og du kan slå av det som ikke stemmer, eller slå på det appen overså. Valget lagres i datasettet, og modusene følger det. Under det står **Verdt å se på** med det datatypen trenger: sider uten tekst, bilder uten posisjon, kanter som peker på noder som ikke finnes, elementer uten mengder eller rader uten sted.
+
+**Utvalg.** Knappen *Bruk som utvalg* finnes i Søk og i Bearbeids visninger. Det du ser, følger deretter med mellom modusene og står i statuslinjen. I Bearbeid viser du det via listevalget, i Eksporter velger du om bare utvalget skal med, og i pakker kan du sende bare utvalget. Fra statuslinjen lagrer du det som en liste, gjør det til et datasett eller rydder det. Endres radene i datasettet, forsvinner utvalget, siden det ikke lenger ville bety det samme.
 
 ## Søk
 
@@ -156,6 +164,8 @@ Fanen **Statistikk** etter Regex gjør vanlige analyser med skjemaer som skriver
 Modeller og tegninger får fanen **Mengder** etter Regex (antall, lengde, areal og volum per type, etasje og materiale, fra filen
 eller målt på geometrien).
 
+Analyser åpner i verktøyet som passer datasettet: Tekst for dokumenter, Bilder for bildesamlinger, Graf for grafer, Mengder for modeller, Plan for planer, Geo for tabeller med steder og ellers Statistikk. Velger du en fane selv, blir du der. R starter først når du åpner fanen R.
+
 ## Visualiser
 
 Diagrammer med tre motorer og ett utseende: diagrambyggeren (Vega-Lite) med stolper, linjer, flater, punkter,
@@ -175,6 +185,8 @@ som én PowerPoint) som SVG, PNG og PDF, enkeltvis eller i batch per gruppe til 
 kodebøker og sammenstillinger fra maler i Markdown med plassholdere, som HTML, Word, PDF, Markdown eller LaTeX,
 enkeltvis eller i batch per gruppe (se [dokumentmallar.md](dokumentmallar.md)). Det som skal til andre mennesker,
 finnes i Del.
+
+Et datasett som er mer enn en tabell, deler formatene inn i **Hele datasettet** og **Bare tabellen** og sier hva som ikke følger med. Dokumenter kan hentes som originalfiler eller ren tekst, bilder som en ZIP og grafer som to CSV-filer.
 
 ## Del
 

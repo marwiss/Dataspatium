@@ -8,24 +8,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/protected-columns', ['viz/leaflet'], (leaflet) => {
-    const BY_KIND = {
-      graph: ['id', 'etikett', 'namn', 'egenskaper'],
-      images: ['fil'],
-      document: ['dokument', 'sida', 'stycke', 'text'],
-      plan: ['objektid', 'objekttyp', 'geometri', 'tema'],
-    };
-    const MODEL = { ifc: ['id', 'guid', 'typ'], dxf: ['id', 'typ', 'lager'] };
-
+  D.define('data/protected-columns', ['viz/leaflet', 'data/kinds'], (leaflet, kinds) => {
     /**
      * The columns of a dataset that its own view needs.
      * @param {any} meta @param {Array<{name: string}>} columns @returns {string[]}
      */
     function list(meta, columns) {
-      const present = (names) => names.filter((n) => columns.some((c) => c.name === n));
-      const kind = meta && meta.kind;
-      if (kind === 'model') return present(MODEL[meta.model && meta.model.format === 'dxf' ? 'dxf' : 'ifc']);
-      if (BY_KIND[kind]) return present(BY_KIND[kind]);
+      if (kinds.isCollection(meta)) return kinds.guarded(meta, columns);
       const geometry = leaflet.geometryColumn(columns);
       if (geometry) return [geometry];
       if (!leaflet.mapDefault(columns)) return [];

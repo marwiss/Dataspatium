@@ -358,7 +358,8 @@
       // Run it: the log gets the steps, and the result can be fetched.
       Array.from(card.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === t('flows.run')).click();
       await waitFor(() => { const c = root.querySelector(`[data-flow="${flow.id}"]`); return c && Array.from(c.querySelectorAll('dm-button')).some((b) => b.textContent.trim() === t('flows.fetch')); }, 8000, 'the fetch button');
-      assert.ok(root.querySelector('.dm-log').textContent.includes(t('flows.finished.ok', { name: 'Sidflöde' })), 'the log says it is done');
+      // The result can be there a moment before the end of the flow is told.
+      await waitFor(() => root.querySelector('.dm-log').textContent.includes(t('flows.finished.ok', { name: 'Sidflöde' })), 3000, 'the log saying it is done');
       await waitFor(() => root.querySelector('.dm-right').textContent.includes(t('flows.step.export')), 3000, 'the run in the inspector');
       // The status bar shows a running flow while it runs.
       const flowBar = root.querySelector('.dm-sb-flow');

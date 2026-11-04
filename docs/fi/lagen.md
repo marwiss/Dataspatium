@@ -28,6 +28,8 @@ paketti, kopioi linkki tähän, vaihda teemaa tai tarkista päivitykset. Linkit 
 kansiosta. Nuoli ylös ja alas valitsee, Enter suorittaa ja Esc sulkee; viimeksi
 suoritetut komennot ovat ylimpänä.
 
+Muutat lokipaneelin korkeutta vetämällä sen yläreunasta tai nuolinäppäimillä, kun reuna on kohdistettu. Kaksoisnapsautus palauttaa korkeuden, ja korkeus tallennetaan.
+
 ## Nouda
 
 Tänne data tulee: alueelle pudotetut tiedostot, liitetty teksti, verkko-osoitteet ja avoimet rajapinnat. Tiedostojen
@@ -72,6 +74,8 @@ piirustuksena Muokkaa-tilassa (katso [cad-bim.md](cad-bim.md)).
 **Keruu maastossa** lähdeluettelossa rakentaa lomakkeen aineiston sarakkeista ja säännöistä ja lähettää sen puhelimeen. Rivit palaavat uutena
 versiona (katso [insamling.md](insamling.md)).
 
+Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen alla. *Lisää lähde* kokoaa kaikki tavat lisätä lähde: määritystiedoston, tietokannan tai paikkatietopalvelun.
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -98,6 +102,10 @@ tai gallerian Muokkaa-tilassa (katso [dokument.md](dokument.md)).
 
 **Työnkulut ja seurannat** ovat objektipaneelissa: tallennetut ketjut, jotka ajetaan yhdellä napsautuksella tai käynnistyksessä, ja
 lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
+
+**Mitä sovellus näkee.** Yleisnäkymä näyttää, miten aineistoa voi käyttää myös: paikkoja kartalla, aikasarjana, väritettävinä alueina, verkostona tai juoksevana tekstinä. Jokainen rivi kertoo syyn, ja voit poistaa käytöstä sen, mikä ei pidä paikkaansa, tai ottaa käyttöön sen, minkä sovellus jätti huomaamatta. Valinta tallennetaan aineistoon, ja tilat seuraavat sitä. Sen alla **Tarkistettavaa** kertoo, mitä aineiston laji tarvitsee: sivuja ilman tekstiä, kuvia ilman sijaintia, särmiä, jotka osoittavat olemattomiin solmuihin, elementtejä ilman määriä tai rivejä ilman paikkaa.
+
+**Valinta.** Painike *Käytä valintana* on Hae-tilassa ja Muokkaa-tilan näkymissä. Näkemäsi seuraa sen jälkeen tilasta toiseen ja näkyy tilarivillä. Muokkaa-tilassa näytät sen listavalinnasta, Vie-tilassa valitset, viedäänkö vain valinta, ja paketeissa voit lähettää vain valinnan. Tilariviltä tallennat sen listana, teet siitä aineiston tai tyhjennät sen. Jos aineiston rivit muuttuvat, valinta häviää, koska se ei enää tarkoittaisi samaa.
 
 ## Hae
 
@@ -164,6 +172,8 @@ Välilehti **Tilastot** Regexin jälkeen tekee tavallisia analyyseja lomakkeilla
 Mallit ja piirustukset saavat välilehden **Määrät** Regexin jälkeen (lukumäärä, pituus, pinta-ala ja tilavuus tyypeittäin, kerroksittain
 ja materiaaleittain, tiedostosta tai geometriasta mitattuna).
 
+Analysoi avautuu aineistoon sopivassa työkalussa: Teksti asiakirjoille, Kuvat kuvakokoelmille, Graafi graafeille, Määrät malleille, Kaava kaavoille, Geo paikkoja sisältäville taulukoille ja muuten Tilastot. Kun valitset välilehden itse, pysyt siinä. R käynnistyy vasta, kun avaat R-välilehden.
+
 ## Visualisoi
 
 Kaavioita kolmella moottorilla ja yhdellä ilmeellä: kaaviorakentaja (Vega-Lite) pylväillä, viivoilla, alueilla,
@@ -183,6 +193,8 @@ kaaviot yhtenä PowerPointina) SVG-, PNG- ja PDF-muodossa, yksittäin tai eräaj
 **Asiakirjat**: raportteja, koodikirjoja ja koosteita Markdown-malleista paikkamerkein, HTML-, Word-, PDF-,
 Markdown- tai LaTeX-muodossa, yksittäin tai eräajona ryhmittäin (ks. [dokumentmallar.md](dokumentmallar.md)). Se,
 mikä on tarkoitettu muille ihmisille, on Jaa-tilassa.
+
+Aineisto, joka on enemmän kuin taulukko, jakaa muodot ryhmiin **Koko aineisto** ja **Vain taulukko** ja kertoo, mikä ei tule mukaan. Asiakirjat saa alkuperäisinä tiedostoina tai pelkkänä tekstinä, kuvat ZIP-tiedostona ja graafit kahtena CSV-tiedostona.
 
 ## Jaa
 

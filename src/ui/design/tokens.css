@@ -105,6 +105,8 @@
   --dm-panel-w: 280px;
   --dm-inspector-w: 320px;
   --dm-drawer-h: 220px;
+  --dm-drawer-min-h: 96px;
+  --dm-drawer-max-h: 560px;
   --dm-floating-w: 400px;
   --dm-statusbar-h: 28px;
   --dm-sheet-w: 360px;

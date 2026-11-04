@@ -513,6 +513,14 @@ förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, r
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
 
+## Slag och egenskaper
+
+`data/kinds` beskriver varje slag av datamängd på ett ställe: symbol, egen vy, första flik, hur det räknar sig, vilka kolumner vyn behöver, sidotabeller och var en sökträff hamnar. Lägena frågar den i stället för att själva testa `ds.kind`, och ett nytt slag är en ny post plus sina vyer.
+
+`data/facets` beskriver det som beror på datan och inte på slaget: platser, tidsserie, regioner, nätverk och löptext. En egenskap hittas på både namn och värden, säger alltid varför, och användarens beslut sparas i `_meta.facets`. `viz/leaflet.drawable` följer det beslutet. `data/kind-health` räknar sådant slaget behöver i SQL, och `ui/kinds/insight-cards` visar båda i Hantera.
+
+`data/selection` håller ett urval av rader i minnet, som rowid. Det försvinner när datamängdens innehåll ändras, eftersom rowid då inte längre betyder samma sak. Listor av slaget `rows` sparar ett urval, och `data/lists.whereOf` ger villkoret för alla slag av listor. Urval i kopior görs med `share-scan.copy(id, {only})`, och `share-scan.exportCopy` skriver en fil från en tillfällig kopia.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

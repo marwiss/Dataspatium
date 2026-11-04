@@ -411,7 +411,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15784,
+  "size": 17724,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -567,7 +567,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 15534,
+  "size": 17460,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -723,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 15334,
+  "size": 17204,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -879,7 +879,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 16931,
+  "size": 18951,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -1035,7 +1035,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 16058,
+  "size": 18053,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1191,7 +1191,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15692,
+  "size": 17629,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {

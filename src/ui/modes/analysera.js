@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/stats-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, statsPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/python-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/stats-panel', 'ui/analysis/text-panel', 'ui/analysis/images-panel', 'ui/analysis/geo-panel', 'ui/analysis/plan-panel', 'ui/analysis/graph-panel', 'ui/analysis/model-panel', 'viz/leaflet', 'data/kinds'], (base, rb, pb, recipes, presets, notebooks, notebookPanel, regexPanelModule, statsPanelModule, textPanelModule, imagesPanelModule, geoPanelModule, planPanelModule, graphPanelModule, modelPanelModule, leaflet, kinds) => {
     const { h, t, i18n, replace } = base;
     /** The two code consoles share one implementation; these are their bridges and texts. */
     const bridges = { r: rb.bridge, python: pb.bridge };
@@ -54,7 +54,8 @@
         return rxPanel;
       }
       /** Tools per dataset kind (after Regex, before the notebook): Text for documents, Bilder for image collections. */
-      const KIND_TABS = { model: { id: 'model', label: 'analysera.tabs.model', icon: 'ruler' }, document: { id: 'text', label: 'analysera.tabs.text', icon: 'text-search' }, images: { id: 'images', label: 'analysera.tabs.images', icon: 'images' }, plan: { id: 'plan', label: 'analysera.tabs.plan', icon: 'layers' }, graph: { id: 'graph', label: 'analysera.tabs.graph', icon: 'share-2' } };
+      /** The tool tab a kind brings with it; which kind has which comes from data/kinds. */
+      const KIND_TABS = { model: { id: 'model', label: 'analysera.tabs.model', icon: 'ruler' }, text: { id: 'text', label: 'analysera.tabs.text', icon: 'text-search' }, images: { id: 'images', label: 'analysera.tabs.images', icon: 'images' }, plan: { id: 'plan', label: 'analysera.tabs.plan', icon: 'layers' }, graph: { id: 'graph', label: 'analysera.tabs.graph', icon: 'share-2' } };
       let txPanel = null; let imPanel = null; let plPanel = null; let grPanel = null; let cyPanel = null; let tabsEl = null;
       function textPanel() { if (!txPanel) txPanel = textPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'text') renderRight(); } }); return txPanel; }
       function imagesPanel() { if (!imPanel) imPanel = imagesPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'images') renderRight(); } }); return imPanel; }
@@ -67,18 +68,25 @@
       function graphPanel() { if (!grPanel) grPanel = graphPanelModule.create(ctx, { mode: 'tools', rerenderRight: () => { if (slots && tab === 'graph') renderRight(); } }); return grPanel; }
       function cypherPanel() { if (!cyPanel) cyPanel = graphPanelModule.create(ctx, { mode: 'cypher', rerenderRight: () => { if (slots && tab === 'cypher') renderRight(); } }); return cyPanel; }
       /** The Geo tab appears for tables with geometry or coordinates (checked when the selection changes). */
-      let gPanel = null; let geoOk = false; let geoFor = '';
+      let gPanel = null; let geoOk = false; let textOk = false; let geoFor = ''; let userChose = false;
       function geoPanel() { if (!gPanel) gPanel = geoPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'geo') renderRight(); } }); return gPanel; }
+      /** What the data is good for decides which tabs are offered and, until the user has chosen, which one opens. */
       async function checkGeo() {
         const ds = selectedDataset();
         const key = ds ? ds.id + ':' + ds.updatedAt : '';
         if (key === geoFor) return;
-        geoFor = key; geoOk = false;
-        if (ds && (ds.kind === 'table' || !ds.kind)) {
-          const cols = await services.datasets.columns(ds.id).catch(() => []);
+        geoFor = key; geoOk = false; textOk = false;
+        if (ds) {
+          const facetsMod = D.require('data/facets');
+          const list = await facetsMod.detect(ds.id).catch(() => []);
           if (geoFor !== key) return;
-          geoOk = leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false);
-          if (geoFor !== key) return;
+          geoOk = list.some((f) => f.id === 'spatial' && f.on);
+          textOk = list.some((f) => f.id === 'text' && f.on);
+          if (!userChose && slots) {
+            const next = await facetsMod.startTab(ds.id).catch(() => null);
+            if (geoFor !== key || !slots) return;
+            if (next && next !== tab) { tab = next; renderCenter(); renderLeft(); renderRight(); return; }
+          }
         }
         if (tabsEl) tabsEl.tabs = tabList();
       }
@@ -86,17 +94,22 @@
       const kindPanel = () => (tab === 'stats' ? statsPanel() : tab === 'model' ? modelPanel() : tab === 'text' ? textPanel() : tab === 'images' ? imagesPanel() : tab === 'plan' ? planPanel() : tab === 'geo' ? geoPanel() : tab === 'graph' ? graphPanel() : tab === 'cypher' ? cypherPanel() : null);
       function tabList() {
         const ds = selectedDataset();
-        const kind = ds && KIND_TABS[ds.kind] ? KIND_TABS[ds.kind] : null;
-        const isGraph = !!(ds && ds.kind === 'graph') || tab === 'cypher';
+        const profile = kinds.of(ds);
+        const kind = ds && KIND_TABS[profile.tab] ? KIND_TABS[profile.tab] : (textOk ? KIND_TABS.text : null);
+        const isGraph = (!!ds && !!profile.cypher) || tab === 'cypher';
         // Fixed order: R, Python, SQL, Regex, then the kind tool; the notebook is always last because it joins pieces from the others.
         return [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'python', label: t('analysera.tabs.python'), icon: 'code' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }].concat(isGraph ? [{ id: 'cypher', label: t('analysera.tabs.cypher'), icon: 'git-branch' }] : []).concat([{ id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }]).concat(!isGraph ? [{ id: 'stats', label: t('analysera.tabs.stats'), icon: 'chart-column' }] : [])
-          .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : (tab === 'text' || tab === 'images' || tab === 'plan' || tab === 'graph') ? [{ id: tab, label: t(KIND_TABS[tab === 'text' ? 'document' : tab].label), icon: KIND_TABS[tab === 'text' ? 'document' : tab].icon }] : [])
+          .concat(kind ? [{ id: kind.id, label: t(kind.label), icon: kind.icon }] : KIND_TABS[tab] ? [{ id: tab, label: t(KIND_TABS[tab].label), icon: KIND_TABS[tab].icon }] : [])
           .concat(geoOk || tab === 'geo' ? [{ id: 'geo', label: t('analysera.tabs.geo'), icon: 'map' }] : [])
           .concat([{ id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }]);
       }
 
       function activate(s) {
         slots = s;
+        // Opens in the dataset's own tool, so R does not start for someone who came to read a document.
+        const opening = selectedDataset();
+        if (!userChose && opening) tab = kinds.of(opening).tab;
+        geoFor = '';
         unsubStore = store.subscribe((state, changed) => {
           if (changed.includes('pendingCode')) takePending();
           if (!changed.includes('datasets') && !changed.includes('selectedId')) return;
@@ -115,6 +128,7 @@
         notebooks.list().then((list) => { nbList = list; renderLeft(); });
         if (AUTOSTART[tab]) startEngine(tab);
         takePending();
+        checkGeo();
       }
       function deactivate() {
         for (const lang of SCRIPT_LANGS) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
@@ -176,6 +190,7 @@
         const existing = (target.draft || target.current.code || '').trim();
         if (!existing.includes(p.code.trim())) target.draft = existing ? existing + '\n\n' + p.code : p.code;
         tab = p.lang;
+        userChose = true;
         render();
         if (AUTOSTART[tab]) startEngine(tab);
         if (p.run) { if (tab === 'sql') runSql({ code: p.code }); else run(tab, { code: p.code }); }
@@ -262,6 +277,7 @@
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
           if (nbView) { notebook = nbView.notebook; }
           tab = /** @type {any} */ (e).detail.id;
+          userChose = true;
           renderCenter(); renderLeft(); renderRight();
           if (AUTOSTART[tab]) startEngine(tab);
         });

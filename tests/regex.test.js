@@ -193,8 +193,8 @@
       await waitFor(() => shell.store.get().datasets.some((d) => d.id === meta.id), 3000, 'dataset in store');
       shell.store.set({ selectedId: meta.id });
       shell.activate('analysera');
-      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 6, 5000, 'six tabs');
-      /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[3]).click(); // R, Python, SQL, Regex, Statistik, Anteckningsbok
+      await waitFor(() => root.querySelector('dm-tabs').querySelectorAll('[role="tab"]').length === 6, 5000, 'six tabs');
+      /** @type {HTMLElement} */ (root.querySelector('dm-tabs').querySelectorAll('[role="tab"]')[3]).click(); // R, Python, SQL, Regex, Statistik, Anteckningsbok
       await waitFor(() => root.querySelector('.dm-regex-preview'), 5000, 'regex preview');
       const selects = () => Array.from(root.querySelectorAll('.dm-center dm-select, dm-select')).filter((s) => s.closest('.dm-page-head') === null);
       await waitFor(() => selects().some((s) => /** @type {any} */ (s).options.some((o) => o.value === 'postnr')), 5000, 'column choices');

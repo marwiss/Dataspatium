@@ -48,6 +48,7 @@
 dm-splitter { position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 2; touch-action: none; }
 dm-splitter[for="left"] { right: 0; }
 dm-splitter[for="right"] { left: 0; }
+dm-splitter[for="drawer"] { top: 0; bottom: auto; left: 0; right: 0; width: auto; height: 6px; cursor: row-resize; }
 dm-splitter:hover, dm-splitter[data-active] { background: var(--dm-accent-soft); }
 dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-accent); }
 .dm-left { grid-area: left; border-right: 1px solid var(--dm-border); }
@@ -58,7 +59,7 @@ dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-
 .dm-center { grid-area: center; min-width: 0; min-height: 0; overflow: auto; padding: var(--dm-s-5); display: flex; flex-direction: column; gap: var(--dm-s-4); }
 .dm-center-fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-3); }
 
-.dm-drawer { grid-area: drawer; display: flex; flex-direction: column; background: var(--dm-surface); border-top: 1px solid var(--dm-border); min-height: 0; }
+.dm-drawer { position: relative; grid-area: drawer; display: flex; flex-direction: column; background: var(--dm-surface); border-top: 1px solid var(--dm-border); min-height: 0; }
 .dm-drawer .dm-log { height: var(--dm-drawer-h); overflow: auto; padding: var(--dm-s-2) var(--dm-s-4); font-family: var(--dm-font-mono); font-size: var(--dm-text-xs); }
 .dm-shell[data-drawer="closed"] .dm-drawer { display: none; }
 .dm-log li { display: flex; gap: var(--dm-s-3); padding: 1px 0; }
@@ -106,6 +107,7 @@ dm-splitter:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--dm-
   .dm-shell .dm-left { display: flex; position: fixed; top: var(--dm-topbar-h); bottom: var(--dm-statusbar-h); left: 0; width: min(var(--dm-sheet-w), 90vw); transform: translateX(-100%); box-shadow: var(--dm-shadow-lg); z-index: var(--dm-z-sheet); transition: transform 0.15s ease; }
   .dm-shell[data-left="sheet"] .dm-left { transform: none; }
   .dm-left dm-splitter { display: none; }
+  .dm-drawer dm-splitter { display: none; }
   .dm-center { padding: var(--dm-s-3); }
   .dm-statusbar .dm-sb-optional { display: none; }
 }
@@ -476,7 +478,7 @@ body.dm-presenting { overflow: hidden; }
 /* Flows and watches (ui/flows/flows-view) and their place in the status bar */
 .dm-flow-add { align-items: flex-end; }
 .dm-flow-log { list-style: none; padding: 0; margin: 0; font-size: var(--dm-text-sm); }
-.dm-sb-flow, .dm-sb-watch { color: var(--dm-accent); }
+.dm-sb-flow, .dm-sb-watch, .dm-sb-selection { color: var(--dm-accent); }
 
 /* The Statistik tab (ui/analysis/stats-panel) */
 .dm-stats-code { height: 180px; }

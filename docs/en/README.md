@@ -101,6 +101,7 @@ with a backup or a bundle.
   position, and the rows come back as a new version. The photos become an image collection and the positions end up on the map (see [insamling.md](insamling.md)).
 - **Review of the whole file**: what is shared is reviewed in full, with running text, original files, the positions of pictures, the edges of graphs and comments. The modes also follow the kind of dataset better: search hits
   open where they are, and maps are offered only when the values really are coordinates (see [dela.md](dela.md)).
+- **The modes follow the dataset**: the app shows what a dataset can also be used as and says why, opens Analyse in the right tool and shows what is worth checking. A selection follows between the modes, and the export says what goes along (see [lagen.md](lagen.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

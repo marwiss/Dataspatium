@@ -86,7 +86,9 @@
       set options(list) {
         if (!this.control) { this.pendingOptions = list; return; }
         const current = this.control.value;
-        this.control.replaceChildren(...list.map((o) => h('option', { value: o.value, text: o.label, disabled: o.disabled ? '' : null })));
+        const option = (o) => h('option', { value: o.value, text: o.label, disabled: o.disabled ? '' : null });
+        const groups = Array.from(new Set(list.map((o) => o.group).filter(Boolean)));
+        this.control.replaceChildren(...list.filter((o) => !o.group).map(option), ...groups.map((g) => h('optgroup', { label: g }, list.filter((o) => o.group === g).map(option))));
         if (list.some((o) => o.value === current)) this.control.value = current;
       }
       get options() { return this.control ? Array.from(this.control.options).map((o) => ({ value: o.value, label: o.textContent || '' })) : (this.pendingOptions || []); }

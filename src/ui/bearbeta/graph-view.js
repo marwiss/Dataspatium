@@ -58,6 +58,11 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('share-2', 20), dataset.name, ' ', h('dm-badge', { text: t('graph.nodes.n', { n: i18n.formatNumber(s.count.nodes) }) }), h('dm-badge', { text: t('graph.edges.n', { n: i18n.formatNumber(s.count.edges) }) }), s.info && s.info.directed === false ? h('dm-badge', { kind: 'accent', text: t('graph.undirected') }) : null),
             h('div', { class: 'dm-toolbar' }, modeSel, layoutSel, labels,
+              ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.graph.hint'), onClick: async () => {
+                const ids = s.def.focus || [];
+                const made = await D.require('data/selection').setFromWhere(dataset.id, `id in (${ids.map(() => '?').join(',') || "''"})`, ids);
+                ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+              } }),
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('graph.fit.hint'), onClick: () => handle && handle.fit() }),
               ui.button({ label: t('graph.layout.save'), icon: 'save', title: t('graph.layout.save.hint'), onClick: saveLayout }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('graph.chart.save.hint'), onClick: saveChart }),

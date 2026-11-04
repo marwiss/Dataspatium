@@ -148,39 +148,52 @@
         if (this.built) return;
         this.built = true;
         this.setAttribute('role', 'separator');
-        this.setAttribute('aria-orientation', 'vertical');
+        this.setAttribute('aria-orientation', this.isDrawer ? 'horizontal' : 'vertical');
         this.setAttribute('tabindex', '0');
-        if (!this.getAttribute('aria-label')) this.setAttribute('aria-label', t('shell.splitter'));
+        if (!this.getAttribute('aria-label')) this.setAttribute('aria-label', t(this.isDrawer ? 'shell.splitter.drawer' : 'shell.splitter'));
         this.addEventListener('pointerdown', (e) => this.onDown(e));
         this.addEventListener('keydown', (e) => this.onKey(e));
         this.addEventListener('dblclick', () => this.apply(null));
       }
-      get side() { return this.getAttribute('for') === 'right' ? 'right' : 'left'; }
-      get varName() { return this.side === 'right' ? '--dm-inspector-w' : '--dm-panel-w'; }
+      get side() { const f = this.getAttribute('for'); return f === 'right' || f === 'drawer' ? f : 'left'; }
+      get isDrawer() { return this.side === 'drawer'; }
+      get varName() { return this.isDrawer ? '--dm-drawer-h' : this.side === 'right' ? '--dm-inspector-w' : '--dm-panel-w'; }
       shell() { return /** @type {HTMLElement|null} */ (this.closest('.dm-shell')); }
       limits() {
         const cs = getComputedStyle(this.shell() || document.documentElement);
+        if (this.isDrawer) {
+          // The drawer never takes more than part of the window, whatever the token says.
+          const max = parseFloat(cs.getPropertyValue('--dm-drawer-max-h')) || 480;
+          return { min: parseFloat(cs.getPropertyValue('--dm-drawer-min-h')) || 96, max: Math.min(max, Math.round(window.innerHeight * 0.6)) };
+        }
         return { min: parseFloat(cs.getPropertyValue('--dm-panel-min-w')) || 200, max: parseFloat(cs.getPropertyValue('--dm-panel-max-w')) || 560 };
       }
-      current() { const shell = this.shell(); return shell ? parseFloat(getComputedStyle(shell).getPropertyValue(this.varName)) || 280 : 280; }
-      clamp(width) { const { min, max } = this.limits(); return Math.round(Math.max(min, Math.min(max, width))); }
-      /** @param {number|null} width null resets to the default */
-      apply(width) {
+      current() { const shell = this.shell(); return shell ? parseFloat(getComputedStyle(shell).getPropertyValue(this.varName)) || (this.isDrawer ? 220 : 280) : (this.isDrawer ? 220 : 280); }
+      clamp(size) { const { min, max } = this.limits(); return Math.round(Math.max(min, Math.min(max, size))); }
+      /** @param {number|null} size null resets to the default */
+      apply(size) {
         const shell = this.shell(); if (!shell) return;
-        if (width === null) shell.style.removeProperty(this.varName); else shell.style.setProperty(this.varName, this.clamp(width) + 'px');
+        if (size === null) shell.style.removeProperty(this.varName); else shell.style.setProperty(this.varName, this.clamp(size) + 'px');
         this.setAttribute('aria-valuenow', String(this.current()));
-        this.emit('dm-resize', { side: this.side, width: width === null ? null : this.current() });
+        this.emit('dm-resize', { side: this.side, width: size === null ? null : this.current() });
+      }
+      /** The size a pointer position asks for: from the far edge of a column, or from the bottom of the log upwards. */
+      sizeAt(ev) {
+        const shell = this.shell();
+        if (!this.isDrawer) { const rect = shell.getBoundingClientRect(); return this.side === 'left' ? ev.clientX - rect.left : rect.right - ev.clientX; }
+        const drawer = this.parentElement.getBoundingClientRect();
+        const log = shell.querySelector('.dm-drawer .dm-log').getBoundingClientRect();
+        return log.bottom - ev.clientY - (log.top - drawer.top);
       }
       onDown(e) {
         if (e.button !== 0) return;
-        const shell = this.shell(); if (!shell) return;
+        if (!this.shell()) return;
         e.preventDefault();
         // Capture keeps the drag alive outside the handle; Firefox throws for a pointer it does not know (synthetic events).
         try { this.setPointerCapture(e.pointerId); } catch (_err) { /* drag still works while the pointer stays on the handle */ }
         this.setAttribute('data-active', '');
-        const rect = shell.getBoundingClientRect();
         let pending = null;
-        const move = (ev) => { pending = this.clamp(this.side === 'left' ? ev.clientX - rect.left : rect.right - ev.clientX); shell.style.setProperty(this.varName, pending + 'px'); };
+        const move = (ev) => { pending = this.clamp(this.sizeAt(ev)); this.shell().style.setProperty(this.varName, pending + 'px'); };
         const up = () => {
           this.removeEventListener('pointermove', move); this.removeEventListener('pointerup', up); this.removeEventListener('pointercancel', up);
           this.removeAttribute('data-active');
@@ -189,10 +202,13 @@
         this.addEventListener('pointermove', move); this.addEventListener('pointerup', up); this.addEventListener('pointercancel', up);
       }
       onKey(e) {
-        const step = e.shiftKey ? 64 : 16; const dir = this.side === 'left' ? 1 : -1;
+        const step = e.shiftKey ? 64 : 16;
+        const dir = this.side === 'right' ? -1 : 1;
         let next;
-        if (e.key === 'ArrowRight') next = this.current() + step * dir;
-        else if (e.key === 'ArrowLeft') next = this.current() - step * dir;
+        if (this.isDrawer && e.key === 'ArrowUp') next = this.current() + step;
+        else if (this.isDrawer && e.key === 'ArrowDown') next = this.current() - step;
+        else if (!this.isDrawer && e.key === 'ArrowRight') next = this.current() + step * dir;
+        else if (!this.isDrawer && e.key === 'ArrowLeft') next = this.current() - step * dir;
         else if (e.key === 'Home') next = this.limits().min;
         else if (e.key === 'End') next = this.limits().max;
         else return;

@@ -74,6 +74,13 @@
      */
     async function drawable(id) {
       const handle = await datasets.ensureOpen(id);
+      const said = handle.meta.facets ? handle.meta.facets.spatial : undefined;
+      if (said === false) return false;
+      if (said === true && mappable(handle.columns)) return true;
+      return drawableByValues(handle);
+    }
+    /** What the values say, whatever the user has decided. @param {any} handle @returns {Promise<boolean>} */
+    async function drawableByValues(handle) {
       const columns = handle.columns;
       const q = (c) => '"' + String(c).replace(/"/g, '""') + '"';
       const named = geometryColumn(columns);
@@ -560,6 +567,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

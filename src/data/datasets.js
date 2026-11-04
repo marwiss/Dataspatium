@@ -18,7 +18,7 @@
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
     /** Metadata of the dataset kinds (set by their importers), restored with the file on undo and version restore. */
-    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field'];
+    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field', 'facets'];
     /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
     const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan'];
 
@@ -144,7 +144,7 @@
     function rowsToMeta(rows) {
       const meta = {};
       for (const [k, v] of rows) {
-        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules' || k === 'tags') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
+        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules' || k === 'tags' || KIND_META_KEYS.includes(k)) { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
         else meta[k] = v;
       }
       return meta;
@@ -244,8 +244,17 @@
       notify('remote', Object.assign({ action: msg.action }, msg.payload || {}));
     });
 
-    async function list() { return idb.listDatasets(); }
-    async function get(id) { return idb.getDataset(id); }
+    /** Earlier versions kept a kind's facts as text in datasets that came from a bundle; they are read as data. */
+    function healRecord(record) {
+      if (!record) return record;
+      for (const key of KIND_META_KEYS) {
+        if (typeof record[key] !== 'string') continue;
+        try { record[key] = JSON.parse(record[key]); } catch (_err) { delete record[key]; }
+      }
+      return record;
+    }
+    async function list() { return (await idb.listDatasets()).map(healRecord); }
+    async function get(id) { return healRecord(await idb.getDataset(id)); }
 
     /** Opens in progress: callers that ask for the same dataset at the same time share one handle. */
     const opening = new Map();
@@ -256,7 +265,7 @@
       return opening.get(id);
     }
     async function openHandle(id) {
-      const record = await idb.getDataset(id);
+      const record = healRecord(await idb.getDataset(id));
       if (!record) throw new Error('Dataset not found: ' + id);
       const bytes = await idb.loadBlob('ds:' + id);
       if (!bytes) throw new Error('Dataset file missing: ' + id);

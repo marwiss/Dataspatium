@@ -39,15 +39,22 @@
         sw.addEventListener('change', () => { inc[k] = sw.checked; });
         return sw;
       });
+      // The selection, if the user has one in a dataset on the list: send all of it or only that.
+      const selected = D.require('data/selection').get();
+      const onlySwitch = selected && list.some((d) => d.id === selected.datasetId) ? /** @type {any} */ (h('dm-switch', { label: t('bundle.only.selection', { n: i18n.formatNumber(selected.rowids.length) }) })) : null;
       const body = h('div', { class: 'dm-stack' },
         h('p', { class: 'dm-help', text: t('bundle.help') }), name, message, authorIn,
-        h('h4', { text: t('shell.datasets') }), list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
+        h('h4', { text: t('shell.datasets') }), onlySwitch, list.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('datasets.empty') }),
         h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
       const ok = await ui.dialog.open({ title: t('bundle.title'), help: 'dela#paket', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       // Personal data in the chosen datasets: keep, pseudonymise or drop in the copy before it leaves the app.
       const reviewed = await D.require('ui/share/review').review(ctx, Array.from(chosen));
       if (!reviewed) return null;
+      if (onlySwitch && onlySwitch.checked) {
+        const tr = reviewed.transform[selected.datasetId] || (reviewed.transform[selected.datasetId] = { drop: [], hash: [], mask: [], side: {} });
+        tr.only = selected.rowids;
+      }
       try {
         shell.setStatus('saving');
         const label = name.value.trim() || t('bundle.default.name');

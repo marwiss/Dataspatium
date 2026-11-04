@@ -69,12 +69,17 @@
         search.value = s.filter.search;
         search.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { s.filter.search = search.value; applyFilter(); }, 300); });
         host = h('div', { class: dxfView ? 'dm-model-host dm-dxf-host' : 'dm-model-host', 'aria-label': t(dxfView ? 'model.view.dxf' : 'model.view.ifc') });
+        // The filtered elements can follow to the other modes.
+        const useBtn = ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.hint'), onClick: async () => {
+          const made = await D.require('data/selection').setFromWhere(ds.id, whereSql().replace(/^\s*where\s*/i, ''));
+          ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+        } });
         table = /** @type {any} */ (h('dm-table', { class: 'dm-model-table' }));
         table.addEventListener('dm-row', (ev) => { const row = ev.detail.row; if (row && Number(row[0]) !== s.selected) selectElement(Number(row[0]), 'table'); });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('box', 20), dataset.name, ' ', h('dm-badge', { text: t(dxfView ? 'model.entities.n' : 'model.elements.n', { n: i18n.formatNumber(dxfView ? (dataset.rowCount || 0) : (facts().elements || 0)) }) })),
-            h('div', { class: 'dm-toolbar' }, selects, search,
+            h('div', { class: 'dm-toolbar' }, useBtn, selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('model.table.hint'), onClick: options.onTable }))),

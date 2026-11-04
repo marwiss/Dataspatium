@@ -28,6 +28,8 @@ i data, opret en pakke, kopiér et link hertil, skift tema eller søg efter opda
 mappe. Pil op og ned vælger, Enter kører og Esc lukker; de
 senest kørte kommandoer ligger øverst.
 
+Du ændrer logpanelets højde ved at trække i dets overkant eller med piletasterne, når kanten har fokus. Dobbeltklik nulstiller højden, og højden gemmes.
+
 ## Hent
 
 Her kommer data ind: filer, der slippes på fladen, indsat tekst, webadresser og åbne API'er. Filimporten går i trin:
@@ -70,6 +72,8 @@ som tegning i Bearbejd (se [cad-bim.md](cad-bim.md)).
 **Indsamling i felten** i kildelisten bygger en formular på et datasæts kolonner og regler og sender den til telefonen. Rækkerne kommer tilbage som en ny
 version (se [insamling.md](insamling.md)).
 
+Alle kilder på listen ser ens ud med et symbol for deres type og en linje under navnet. *Tilføj kilde* samler alle måder at tilføje en kilde på: en konfigurationsfil, en database eller en geodatatjeneste.
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -94,6 +98,10 @@ galleriet i Bearbejd (se [dokument.md](dokument.md)).
 
 **Flows og overvågning** findes i objektpanelet: gemte kæder, der køres med ét klik eller ved start, og kilder, der siger til, når de
 har nye data (se [floden.md](floden.md)).
+
+**Hvad appen ser.** Oversigten viser, hvad datasættet også kan bruges som: steder på et kort, en tidsserie, regioner, der kan farves, et netværk eller løbende tekst. Hver linje siger hvorfor, og du kan slå det fra, der ikke passer, eller slå det til, appen overså. Valget gemmes i datasættet, og tilstandene følger det. Under det står **Værd at se på** med det, datatypen kræver: sider uden tekst, billeder uden position, kanter, der peger på noder, der ikke findes, elementer uden mængder eller rækker uden sted.
+
+**Udvalg.** Knappen *Brug som udvalg* findes i Søg og i Bearbejds visninger. Det, du ser, følger derefter med mellem tilstandene og står i statuslinjen. I Bearbejd viser du det via listevalget, i Eksportér vælger du, om kun udvalget skal med, og i pakker kan du sende kun udvalget. Fra statuslinjen gemmer du det som en liste, gør det til et datasæt eller rydder det. Ændres rækkerne i datasættet, forsvinder udvalget, da det ikke længere ville betyde det samme.
 
 ## Søg
 
@@ -155,6 +163,8 @@ Fanen **Statistik** efter Regex laver almindelige analyser med formularer, der s
 Modeller og tegninger får fanen **Mængder** efter Regex (antal, længde, areal og volumen pr. type, etage og materiale, fra filen
 eller målt på geometrien).
 
+Analysér åbner i det værktøj, der passer til datasættet: Tekst for dokumenter, Billeder for billedsamlinger, Graf for grafer, Mængder for modeller, Plan for planer, Geo for tabeller med steder og ellers Statistik. Vælger du selv en fane, bliver du der. R starter først, når du åbner fanen R.
+
 ## Visualisér
 
 Diagrammer med tre motorer og ét udseende: diagrambyggeren (Vega-Lite) med søjler, linjer, arealer, punkter,
@@ -174,6 +184,8 @@ som én PowerPoint) som SVG, PNG og PDF, enkeltvis eller i batch pr. gruppe til 
 kodebøger og sammenstillinger ud fra skabeloner i Markdown med pladsholdere, som HTML, Word, PDF, Markdown eller
 LaTeX, enkeltvis eller i batch pr. gruppe (se [dokumentmallar.md](dokumentmallar.md)). Det, der skal til andre
 mennesker, findes i Del.
+
+Et datasæt, der er mere end en tabel, deler formaterne op i **Hele datasættet** og **Kun tabellen** og siger, hvad der ikke følger med. Dokumenter kan hentes som originalfiler eller ren tekst, billeder som en ZIP og grafer som to CSV-filer.
 
 ## Del
 

@@ -102,7 +102,7 @@
     const p2 = await importer.preview(jsonFile, {});
     assert.equal(p2.importer, 'graph', 'node-link JSON sniffed'); assert.equal(p2.graphFormat, 'nodelink');
     // Export formats: graph formats only for graphs; every one writes the whole graph.
-    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind).map((f) => f.id), ['graphml', 'gexf', 'graph-json', 'cypher']);
+    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind).map((f) => f.id), ['graphml', 'gexf', 'graph-json', 'cypher', 'graph-csv']);
     assert.ok(!exporter.formatsFor({ kind: 'table' }).some((f) => f.kind), 'tables get no graph formats');
     for (const f of ['graphml', 'gexf', 'graph-json', 'cypher']) {
       const out = await exporter.exportDataset(meta.id, f);

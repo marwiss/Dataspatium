@@ -27,6 +27,8 @@ pakka, afrita tengil hingað, skipta um þema eða leita að uppfærslum. Tengla
 `index.html#/<hamur>/<stuttheiti>` (eða heiti myndrits í Myndgera, leitartexti í Leita) og virka líka úr möppu. Ör upp og niður velja, Enter keyrir og Esc lokar; síðast keyrðu
 skipanirnar eru efst.
 
+Þú breytir hæð skráarspjaldsins með því að draga efri brún þess, eða með örvalyklum þegar brúnin hefur fókus. Tvísmellur endurstillir hæðina og hæðin er vistuð.
+
 ## Sækja
 
 Hér koma gögn inn: skrár sem sleppt er á flötinn, límdur texti, vefslóðir og opnar vefþjónustur. Innflutningur skráa
@@ -71,6 +73,8 @@ Byggingarlíkön í IFC og teikningar í DXF verða að gagnasöfnum af tegundin
 **Söfnun á vettvangi** í lista yfir heimildir byggir eyðublað á dálkum og reglum gagnasafns og sendir það í símann. Raðirnar koma aftur sem ný
 útgáfa (sjá [insamling.md](insamling.md)).
 
+Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu undir heitinu. *Bæta við heimild* safnar saman öllum leiðum til að bæta við heimild: stillingaskrá, gagnagrunni eða landupplýsingaþjónustu.
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -95,6 +99,10 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 
 **Flæði og vöktun** eru í hlutaspjaldinu: vistaðar keðjur sem keyrðar eru með einum smelli eða við ræsingu og heimildir sem láta vita
 þegar ný gögn eru til (sjá [floden.md](floden.md)).
+
+**Það sem forritið sér.** Yfirlitið sýnir hvað einnig má nota gagnasafnið sem: staði á korti, tímaröð, svæði sem má lita, net eða samfelldan texta. Hver lína segir hvers vegna og þú getur slökkt á því sem er rangt eða kveikt á því sem forritið missti af. Valið er vistað í gagnasafninu og hamirnir fylgja því. Þar fyrir neðan sýnir **Vert að athuga** það sem tegund gagnanna þarf: síður án texta, myndir án staðsetningar, leggi sem vísa á hnúta sem eru ekki til, einingar án magns eða raðir án staðar.
+
+**Val.** Hnappurinn *Nota sem val* er í Leita og í sýnum Vinna. Það sem þú sérð fylgir síðan milli hama og birtist á stöðustikunni. Í Vinna sýnir þú það með listavali, í Flytja út velur þú hvort aðeins valið fylgi og í pökkum geturðu sent aðeins valið. Af stöðustikunni vistar þú það sem lista, gerir það að gagnasafni eða hreinsar það. Ef raðir gagnasafnsins breytast hverfur valið, því það myndi ekki lengur merkja það sama.
 
 ## Leita
 
@@ -155,6 +163,8 @@ Flipinn **Tölfræði** á eftir Regex gerir algengar greiningar með eyðublö�
 Líkön og teikningar fá flipann **Magn** eftir Regex (fjöldi, lengd, flatarmál og rúmmál eftir gerð, hæð og efni, úr skránni eða mælt á
 rúmfræðinni).
 
+Greina opnast í því verkfæri sem hentar gagnasafninu: Texti fyrir skjöl, Myndir fyrir myndasöfn, Net fyrir net, Magn fyrir líkön, Skipulag fyrir skipulag, Geo fyrir töflur með staði og annars Tölfræði. Þegar þú velur flipa sjálf(ur) verður þú þar. R ræsist ekki fyrr en þú opnar flipann R.
+
 ## Myndgera
 
 Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum,
@@ -172,6 +182,8 @@ gegnum R: Parquet, SPSS, Stata og RDS. **Myndrit**: vistuð myndrit og mælabor�
 sem SVG, PNG og PDF, eitt og eitt eða í hópkeyrslu eftir hópum í ZIP. **Skjöl**: skýrslur, kóðabækur og samantektir
 úr sniðum í Markdown með staðgenglum, sem HTML, Word, PDF, Markdown eða LaTeX, eitt og eitt eða í hópkeyrslu eftir
 hópum (sjá [dokumentmallar.md](dokumentmallar.md)). Það sem á að fara til annarra er í Deila.
+
+Gagnasafn sem er meira en tafla skiptir sniðum í **Allt gagnasafnið** og **Aðeins taflan** og segir hvað fylgir ekki með. Skjöl má fá sem upprunaskrár eða hreinan texta, myndir sem ZIP og net sem tvær CSV-skrár.
 
 ## Deila
 

@@ -102,6 +102,7 @@ paketilla.
   sijainnin kera, ja rivit palaavat uutena versiona. Kuvista tulee kuvakokoelma, ja sijainnit päätyvät kartalle (katso [insamling.md](insamling.md)).
 - **Koko tiedoston tarkistus**: jaettava tarkistetaan kokonaan, juokseva teksti, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät ja kommentit mukaan lukien. Tilat seuraavat myös aineiston lajia paremmin: hakuosumat
   avautuvat paikallaan, ja karttoja tarjotaan vain, kun arvot todella ovat koordinaatteja (katso [dela.md](dela.md)).
+- **Tilat seuraavat aineistoa**: sovellus näyttää, miten aineistoa voi käyttää myös, ja kertoo syyn, avaa Analysoi-tilan oikeassa työkalussa ja näyttää tarkistettavat asiat. Valinta seuraa tilasta toiseen, ja vienti kertoo, mitä tulee mukaan (katso [lagen.md](lagen.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

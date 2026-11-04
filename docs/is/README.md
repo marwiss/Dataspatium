@@ -95,6 +95,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
 - **Yfirferð allrar skrárinnar**: það sem deilt er er yfirfarið í heild, með samfelldum texta, upprunaskrám, staðsetningu mynda, leggjum neta og athugasemdum. Hamirnir fylgja einnig tegund gagnasafns betur: leitarniðurstöður
   opnast þar sem þær eru og kort eru aðeins boðin þegar gildin eru í raun hnit (sjá [dela.md](dela.md)).
+- **Hamirnir fylgja gagnasafninu**: forritið sýnir hvað einnig má nota gagnasafn sem og segir hvers vegna, opnar Greina í réttu verkfæri og sýnir hvað er vert að athuga. Val fylgir milli hama og útflutningur segir hvað fylgir með (sjá [lagen.md](lagen.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists', 'ui/soka/query'], (base, search, lists, queryTabMod) => {
+  D.define('ui/modes/soka', ['ui/base', 'analysis/search', 'data/lists', 'ui/soka/query', 'data/kinds'], (base, search, lists, queryTabMod, kinds) => {
     const { h, t, i18n, replace } = base;
     const TABS = ['sok', 'fraga', 'listor'];
     const TAB_ICONS = { sok: 'text-search', fraga: 'filter', listor: 'list-checks' };
@@ -142,6 +142,11 @@
         const actions = h('div', { class: 'dm-row-wrap' },
           ui.button({ label: t('soka.save.list'), icon: 'list-checks', size: 'sm', onClick: () => saveList(r) }),
           ui.button({ label: t('soka.save.dataset'), icon: 'table', size: 'sm', onClick: () => saveDataset(r) }),
+          ui.button({ label: t('selection.use'), icon: 'list-checks', size: 'sm', title: t('selection.use.hint'), onClick: async () => {
+            const w = search.where(r.columns, text, filters[r.id] || []);
+            const made = await D.require('data/selection').setFromWhere(r.id, w.sql, w.params);
+            ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+          } }),
           ui.button({ label: t('soka.open.bearbeta'), icon: 'wand-sparkles', size: 'sm', onClick: () => { store.set({ selectedId: r.id }); shell.activate('bearbeta'); } }));
         return h('div', { class: 'dm-card dm-search-result', 'data-dataset': r.id },
           h('div', { class: 'dm-search-head' }, h('h3', { text: name }), h('dm-badge', { kind: 'accent', text: r.truncated ? t('soka.hits.shown', { shown: i18n.formatNumber(r.rows.length), n: i18n.formatNumber(r.count) }) : t('soka.hits', { n: i18n.formatNumber(r.count) }) })),
@@ -234,14 +239,8 @@
         const value = (name) => { const i = found.columns.findIndex((c) => c.name === name); return i < 0 ? undefined : found.row[i + 1]; };
         const id = found.datasetId;
         const rowid = found.row[0];
-        switch (ds && ds.kind) {
-          case 'document': return { label: 'soka.open.document', icon: 'book-open', store: { openDocument: { datasetId: id, document: value('dokument'), page: value('sida') } } };
-          case 'images': return { label: 'soka.open.image', icon: 'images', store: { openImage: { datasetId: id, name: value('fil') } } };
-          case 'graph': return { label: 'soka.open.node', icon: 'share-2', store: { openNode: { datasetId: id, id: value('id'), data: { id: value('id'), etikett: value('etikett'), namn: value('namn'), egenskaper: value('egenskaper') } } } };
-          case 'model': return { label: 'soka.open.element', icon: 'box', store: { openElement: { datasetId: id, id: value('id') } } };
-          case 'plan': return { label: 'soka.open.plan', icon: 'layers', store: { openPlanObject: { datasetId: id, objektid: value('objektid') } } };
-          default: break;
-        }
+        const own = kinds.of(ds).hit;
+        if (own) return own(value, id);
         const leaflet = D.require('viz/leaflet');
         if (leaflet.mapDefault(found.columns)) return { label: 'soka.open.map', icon: 'map', store: { openMapRow: { datasetId: id, rowid } } };
         return { label: 'soka.open.row', icon: 'table', store: { openRow: { datasetId: id, rowid } } };

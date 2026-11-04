@@ -186,7 +186,7 @@
     let id = null;
     try {
       shell.activate('inhamta');
-      const btn = await waitFor(() => Array.from(root.querySelectorAll('.dm-pane-body dm-button')).find((b) => b.getAttribute('label') === t('families.add.source')), 5000, 'add button');
+      const btn = await waitFor(() => Array.from(root.querySelectorAll('.dm-pane-body dm-button')).find((b) => b.getAttribute('label') === t('import.sources.add')), 5000, 'add button');
       assert.ok(btn, 'button in the source list');
       const p = dialog.open(shell.ctx, { family: 'sparql', values: { baseUrl: BASE + '/sparql-ui' } });
       const dlg = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'dialog');

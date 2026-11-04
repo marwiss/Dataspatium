@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/document-view', 'ui/bearbeta/gallery-view', 'ui/bearbeta/map-view', 'ui/bearbeta/plan-view', 'ui/bearbeta/graph-view', 'ui/bearbeta/model-view', 'viz/leaflet', 'data/kinds'], (base, dialogs, recipes, documentViewModule, galleryViewModule, mapViewModule, planViewModule, graphViewModule, modelViewModule, leaflet, kinds) => {
     const { h, t, i18n, replace } = base;
     /**
      * Views of their own: document collections, image collections and (for tables with geometry) the map; the table
@@ -26,7 +26,7 @@
       const { ui, services, store, shell } = ctx;
       let slots = null; let unsubscribe = null; let table = null; let search = ''; let searchTimer = 0; let currentId = null;
       /** A saved list (Söka) that narrows the table, and its WHERE clause. */
-      let activeList = null; let listWhere = null;
+      let activeList = null; let listWhere = null; let usingSelection = false;
       /** @type {Map<number, number>} table row index -> SQLite rowid */
       let rowIds = new Map();
       let undoBtn = null; let selectedColumn = null;
@@ -34,8 +34,8 @@
       let showTable = true; let kindView = null; let kindViewFor = null; let lastUpdated = null; let viewId = null;
       /** The view a dataset opens in by default: its kind's view, the map for tables with geometry or longitude/latitude, else null. */
       async function defaultView(ds) {
-        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
-        if (ds.kind === 'table' || !ds.kind) { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols) && await leaflet.drawable(ds.id).catch(() => false)) return 'map'; }
+        if (kinds.of(ds).view) return kinds.of(ds).view;
+        { const cols = await services.datasets.columns(ds.id).catch(() => []); if (leaflet.mapDefault(cols) && await leaflet.drawable(ds.id).catch(() => false)) return 'map'; }
         return null;
       }
 
@@ -61,7 +61,7 @@
           return;
         }
         if (currentId !== ds.id) {
-          search = ''; selectedColumn = null; activeList = null; listWhere = null; currentId = ds.id; lastUpdated = ds.updatedAt;
+          search = ''; selectedColumn = null; activeList = null; listWhere = null; usingSelection = false; currentId = ds.id; lastUpdated = ds.updatedAt;
           defaultView(ds).then((id) => { if (currentId !== ds.id || !slots) return; viewId = id; showTable = !id; renderMain(ds); });
         } else if (showTable) { if (table) { refresh(ds); updateUndo(); } }
         else if (ds.updatedAt !== lastUpdated) { lastUpdated = ds.updatedAt; renderMain(ds); }
@@ -116,15 +116,29 @@
         searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { search = searchInput.value.trim(); refresh(current()); }, 300); });
         const countBadge = h('dm-badge', { text: '' });
         // Lists saved in Söka for this dataset narrow the table (search lists; query lists live in Fråga).
-        const myLists = (await D.require('data/lists').list()).filter((l) => l.datasetId === ds.id && (l.kind || 'search') === 'search');
+        const listsMod = D.require('data/lists');
+        const selectionMod = D.require('data/selection');
+        const myLists = (await listsMod.list()).filter((l) => l.datasetId === ds.id && (l.kind || 'search') !== 'query');
+        const chosen = selectionMod.whereOf(ds.id);
         const listSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('bearbeta.list'), inline: true }));
-        listSel.options = [{ value: '', label: t('bearbeta.list.none') }].concat(myLists.map((l) => ({ value: l.id, label: t('bearbeta.list.option', { name: l.name }) })));
-        listSel.value = activeList ? activeList.id : '';
+        listSel.options = [{ value: '', label: t('bearbeta.list.none') }].concat(chosen ? [{ value: '__selection', label: t('selection.option', { n: i18n.formatNumber(selectionMod.get().rowids.length) }) }] : [], myLists.map((l) => ({ value: l.id, label: t('bearbeta.list.option', { name: l.name }) })));
+        listSel.value = activeList ? activeList.id : (usingSelection && chosen ? '__selection' : '');
         listSel.addEventListener('change', () => {
+          usingSelection = listSel.value === '__selection';
           activeList = myLists.find((l) => l.id === listSel.value) || null;
-          listWhere = activeList ? D.require('analysis/search').where(cols, activeList.text, activeList.filters || []) : null;
+          listWhere = usingSelection ? selectionMod.whereOf(ds.id) : activeList ? listsMod.whereOf(activeList, cols) : null;
           refresh(current());
         });
+        // What the table now shows can follow to the other modes.
+        const useBtn = ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.hint'), onClick: async () => {
+          const parts = [];
+          const params = [];
+          if (search) { const w = D.require('analysis/search').where(cols, search, []); parts.push(w.sql); params.push(...w.params); }
+          if (listWhere) { parts.push(listWhere.sql); params.push(...listWhere.params); }
+          const made = await selectionMod.setFromWhere(ds.id, parts.map((p) => `(${p})`).join(' and '), params);
+          ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+          renderTable(current());
+        } });
         undoBtn = ui.button({ label: t('common.undo'), icon: 'history', onClick: async () => { try { const label = await recipes.undo(ds.id); shell.log(t('bearbeta.undone', { label }), 'ok'); refresh(current()); if (selectedColumn) showStats(current(), selectedColumn); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'warn' }); } updateUndo(); } });
         table = /** @type {any} */ (h('dm-table'));
         table.editable = true;
@@ -134,7 +148,7 @@
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('wand-sparkles', 20), ds.name),
             h('div', { class: 'dm-toolbar' },
-              searchInput, myLists.length ? listSel : null, countBadge,
+              searchInput, myLists.length || chosen ? listSel : null, countBadge, useBtn,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               // Back to the dataset's own view: documents, pictures, or the map for a table with geometry or coordinates.
@@ -160,8 +174,8 @@
 
       /** The own view a dataset can switch to from the table (any table with geometry or coordinates gets the map). */
       async function viewFor(ds, cols) {
-        if (ds.kind === 'document' || ds.kind === 'images' || ds.kind === 'plan' || ds.kind === 'graph' || ds.kind === 'model') return ds.kind;
-        return (ds.kind === 'table' || !ds.kind) && leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false) ? 'map' : null;
+        if (kinds.of(ds).view) return kinds.of(ds).view;
+        return leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false) ? 'map' : null;
       }
 
       function updateUndo() {

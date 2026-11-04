@@ -472,6 +472,387 @@
     return 'ok';
   }, 60000);
 
+  test('ui: every kind of source in Inhämta looks the same, and all ways to add one are in one place', async (assert) => {
+    const connectors = D.require('api/connectors');
+    const geo = await connectors.save({ format: 'dataspatium-api/1', id: 'test-adapt-geo', name: 'Geotjänst', baseUrl: 'dataspatium-asset://tests/geo', auth: { type: 'none' }, family: { type: 'geodata', kind: 'wfs' }, endpoints: [] });
+    try {
+      await withApp(async (shell, root) => {
+        shell.activate('inhamta');
+        const left = await waitFor(() => { const l = root.querySelector('.dm-left .dm-pane-body'); return l && l.querySelector('.dm-list-item') ? l : null; }, 5000, 'the source list');
+        const items = await waitFor(() => { const all = Array.from(left.querySelectorAll('.dm-list-item')); return all.some((i) => i.textContent.includes('Geotjänst')) ? all : null; }, 5000, 'the sources');
+        for (const item of items) {
+          assert.equal(item.querySelectorAll('svg').length, 1, 'one mark: ' + item.textContent);
+          assert.ok(item.querySelector('.dm-list-main'), 'a name');
+          assert.ok(item.querySelector('.dm-list-sub') && item.querySelector('.dm-list-sub').textContent.trim(), 'and a line under it: ' + item.textContent);
+        }
+        const heights = new Set(items.map((i) => Math.round(i.getBoundingClientRect().height)));
+        assert.equal(heights.size, 1, 'the same height: ' + Array.from(heights).join(', '));
+        assert.equal(left.querySelectorAll('dm-button').length, 1, 'one way to add a source');
+        assert.equal(left.querySelectorAll('.dm-help').length, 0, 'no notes between the sources');
+        const mark = (name) => { const it = items.find((i) => i.textContent.includes(name)); return it ? (it.querySelector('svg') || {}).innerHTML : null; };
+        assert.ok(mark('Geotjänst') !== mark('SCB') || !mark('SCB'), 'a geodata source has its own mark');
+        pressIn(left, t('import.sources.add'));
+        const dlg = await waitFor(() => document.querySelector('dialog[open] .dm-op-tile') && document.querySelector('dialog[open]'), 3000, 'the dialog');
+        assert.deepEqual(Array.from(dlg.querySelectorAll('.dm-op-tile')).map((b) => b.getAttribute('data-source')), ['file', 'family', 'geodata']);
+        assert.ok(dlg.textContent.includes(t('geodata.add.hint')), 'each says what it is for');
+        /** @type {HTMLElement} */ (dlg.querySelector('.dm-op-tile[data-source="geodata"]')).click();
+        const next = await waitFor(() => Array.from(document.querySelectorAll('dialog[open]')).find((d) => !d.querySelector('.dm-op-tile')), 3000, 'the geodata dialog');
+        /** @type {HTMLElement} */ (next.querySelector('.dm-dialog-actions dm-button button')).click();
+      });
+    } finally { await connectors.remove(geo.id).catch(() => {}); }
+    return 'ok';
+  }, 30000);
+
+  test('ui: the log can be dragged up and down within limits, and keeps its height', async (assert) => {
+    const idb = D.require('platform/storage/idb');
+    await idb.deleteSetting('ui.panel.drawer');
+    await withApp(async (shell, root) => {
+      shell.toggle('drawer');
+      const splitter = /** @type {any} */ (await waitFor(() => root.querySelector('dm-splitter[for="drawer"]'), 3000, 'the handle'));
+      const log = root.querySelector('.dm-drawer .dm-log');
+      const height = () => Math.round(log.getBoundingClientRect().height);
+      await waitFor(() => height() > 0, 2000, 'the open log');
+      assert.equal(splitter.getAttribute('aria-orientation'), 'horizontal');
+      assert.ok(splitter.getAttribute('aria-label'), 'it has a name');
+      const start = height();
+      splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      assert.equal(height(), start + 16, 'up makes it taller');
+      splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }));
+      assert.equal(height(), start - 48, 'down makes it lower');
+      splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      assert.equal(height(), 96, 'not lower than the limit');
+      splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      assert.ok(height() <= Math.round(window.innerHeight * 0.6) && height() > 96, 'not taller than part of the window: ' + height());
+      // Dragging: the top edge follows the pointer.
+      splitter.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      const bottom = log.getBoundingClientRect().bottom;
+      const offset = log.getBoundingClientRect().top - splitter.parentElement.getBoundingClientRect().top;
+      const y = bottom - offset - 200;
+      splitter.dispatchEvent(new PointerEvent('pointerdown', { button: 0, pointerId: 1, clientY: bottom - offset - 96, bubbles: true }));
+      splitter.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientY: y, bubbles: true }));
+      splitter.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, clientY: y, bubbles: true }));
+      assert.equal(height(), 200, 'dragged to 200');
+      await waitFor(async () => (await idb.getSetting('ui.panel.drawer', null)) === 200, 2000, 'kept');
+      shell.toggle('drawer');
+      shell.toggle('drawer');
+      assert.equal(height(), 200, 'after closing and opening');
+      splitter.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      assert.equal(height(), start, 'a double click goes back');
+      shell.toggle('drawer');
+    });
+    await idb.deleteSetting('ui.panel.drawer');
+    return 'ok';
+  }, 30000);
+
+  test('kinds: every kind says what it is, and the modes do not need to know', async (assert) => {
+    const kinds = D.require('data/kinds');
+    assert.equal(kinds.of('graph').view, 'graph');
+    assert.equal(kinds.of({ kind: 'document' }).tab, 'text');
+    assert.equal(kinds.of(null), kinds.of('table'), 'nothing means a table');
+    assert.equal(kinds.of('nosuchkind'), kinds.of('table'));
+    for (const name of datasets.KINDS) {
+      const p = kinds.of(name);
+      assert.ok(p.icon, name + ' has a mark');
+      assert.equal(typeof p.summary, 'function', name + ' counts itself');
+      assert.ok(!p.summary({ kind: name, rowCount: 3, columnCount: 2 }).includes('{'), name + ': ' + p.summary({ kind: name, rowCount: 3, columnCount: 2 }));
+      assert.ok(kinds.badges({ kind: name, rowCount: 3, columnCount: 2 }).length > 0);
+      if (name !== 'table') {
+        assert.ok(p.view && p.open && p.hit, name + ' has a view, a way to open it and a place for hits');
+        assert.equal(typeof p.protect, 'function');
+        assert.ok(t(p.open.label) !== p.open.label && t(p.open.hint) !== p.open.hint, name + ' has its texts');
+        assert.ok(t(p.hit(() => 'x', 'id').label) !== p.hit(() => 'x', 'id').label);
+      }
+      if (p.loses) assert.ok(t(p.loses) !== p.loses, name + ' says what a table export loses');
+    }
+    assert.ok(kinds.isDxf({ model: { format: 'dxf' } }));
+    assert.deepEqual(kinds.guarded({ kind: 'model', model: { format: 'dxf' } }, [{ name: 'id' }, { name: 'guid' }, { name: 'lager' }]), ['id', 'lager']);
+    return 'ok';
+  });
+
+  test('facets: a dataset says what it can be used as and why, and the user has the last word', async (assert) => {
+    const facets = D.require('data/facets');
+    const of = async (id) => Object.fromEntries((await facets.detect(id)).map((f) => [f.id, f]));
+    const place = await make('Platsfacett', [['namn', 'text'], ['lon', 'number'], ['lat', 'number']], [['Umeå', 20.26, 63.82], ['Luleå', 22.15, 65.58]]);
+    const p = (await of(place.id)).spatial;
+    assert.ok(p.on && p.auto && !p.forced);
+    assert.equal(t(p.reason, p.params), t('facets.reason.coordinates', { lon: 'lon', lat: 'lat' }));
+    assert.equal(await facets.startTab(place.id), 'geo');
+    assert.deepEqual(await facets.firstGroups(place.id), ['geo']);
+    const series = await make('Tidsfacett', [['tid', 'text'], ['varde', 'number']], [['2024M01', 1], ['2024M02', 2], ['2024M03', 3], ['2024M04', 4]]);
+    assert.ok((await of(series.id)).timeseries.on);
+    assert.deepEqual(await facets.firstGroups(series.id), ['timeseries']);
+    const counts = await make('Inga perioder', [['namn', 'text'], ['tal', 'integer']], [['a', 1], ['b', 2], ['c', 3]]);
+    assert.deepEqual(await facets.detect(counts.id), [], 'a plain table is just a table');
+    assert.equal(await facets.startTab(counts.id), 'stats');
+    const net = await make('Nätfacett', [['kalla', 'text'], ['mal', 'text']], [['a', 'b'], ['b', 'c']]);
+    assert.ok((await of(net.id)).network.on);
+    const prose = 'En lång text om något som behöver sägas med många ord, så att den blir längre än en vanlig cell. ';
+    const notes = await make('Textfacett', [['anteckning', 'text']], [[prose], [prose + prose], [prose]]);
+    assert.ok((await of(notes.id)).text.on);
+    assert.equal(await facets.startTab(notes.id), 'text');
+    const region = await make('Regionfacett', [['kommun', 'text'], ['tal', 'integer']], [['Umeå', 1], ['Luleå', 2], ['Kiruna', 3]]);
+    const r = (await of(region.id)).region;
+    assert.ok(r && r.on, 'names of municipalities: ' + JSON.stringify(r));
+    const coded = await make('Kodfacett', [['kommunkod', 'integer'], ['tal', 'integer']], [[180, 1], [1480, 2], [2480, 3]]);
+    assert.ok((await of(coded.id)).region, 'codes without their leading zero');
+    const wrong = await make('Ingen region', [['kommun', 'text']], [['Atlantis'], ['Narnia'], ['Mordor']]);
+    assert.ok(!(await of(wrong.id)).region, 'a column can be called so without being so');
+    // The user overrules it, and it lasts.
+    const leaflet2 = D.require('viz/leaflet');
+    await facets.set(place.id, 'spatial', false);
+    const off = (await of(place.id)).spatial;
+    assert.ok(!off.on && off.auto && off.forced);
+    assert.equal(await leaflet2.drawable(place.id), false, 'the map follows');
+    await datasets.flushSaves();
+    datasets.close(place.id);
+    assert.equal((await of(place.id)).spatial.on, false, 'after a reload');
+    const bytes = await datasets.exportBytes(place.id);
+    const imported = await datasets.importBytes(bytes, { name: 'Facett kopia' }, { quiet: true });
+    assert.equal((await datasets.ensureOpen(imported.id)).meta.facets.spatial, false, 'and in a copy');
+    await datasets.remove(imported.id, { quiet: true });
+    await facets.set(place.id, 'spatial', null);
+    assert.equal((await of(place.id)).spatial.forced, false, 'handed back');
+    assert.equal(await leaflet2.drawable(place.id), true);
+    // Against what the values say: small numbers in x and y are coordinates if the user says so.
+    const small = await make('Lokala', [['x', 'number'], ['y', 'number']], [[1, 2], [3, 4]]);
+    assert.equal(await leaflet2.drawable(small.id), false);
+    await facets.set(small.id, 'spatial', true);
+    assert.equal(await leaflet2.drawable(small.id), true);
+    return 'ok';
+  }, 45000);
+
+  test('models, the field form and facets all follow a dataset into a bundle and out again', async (assert) => {
+    const meta = await make('Följer med', [['a', 'number'], ['b', 'number']], [[1, 2], [3, 4], [5, 6]]);
+    const handle = await datasets.ensureOpen(meta.id);
+    await D.require('data/models').save(meta.id, { id: 'm1', name: 'Modell', kind: 'linear', target: 'b', predictors: ['a'], intercept: 1, terms: [{ column: 'a', level: null, coefficient: 1 }], metrics: {} });
+    await D.require('data/field-collect').save(meta.id, await D.require('data/field-collect').formFor(meta.id));
+    await D.require('data/facets').set(meta.id, 'text', true);
+    assert.ok(handle.meta.models && handle.meta.field && handle.meta.facets);
+    const back = await datasets.importBytes(await shareScan.copy(meta.id), { name: 'Tillbaka' }, { quiet: true });
+    const again = await datasets.ensureOpen(back.id);
+    assert.equal(again.meta.models[0].name, 'Modell');
+    assert.ok(again.meta.field.form);
+    assert.equal(again.meta.facets.text, true);
+    await datasets.remove(back.id, { quiet: true });
+    // A dataset that came from a file keeps what it knows about itself, not a string of it.
+    const doc = track(await importer.runFiles([new File(['Ett stycke.\n'], 'paket.txt', { type: 'text/plain' })], { format: 'documents' }, 'Paketdokument'));
+    const docBack = await datasets.importBytes(await shareScan.copy(doc.id), { name: 'Dokument tillbaka' }, { quiet: true });
+    assert.ok(Array.isArray((await datasets.ensureOpen(docBack.id)).meta.documents), 'the documents are a list');
+    assert.equal((await datasets.ensureOpen(docBack.id)).meta.documents[0].name, 'paket.txt');
+    await datasets.remove(docBack.id, { quiet: true });
+    const g = { directed: true, nodes: [{ id: 'a', labels: ['X'], name: 'A', properties: {} }], edges: [] };
+    const net = track(await graph.createGraphDataset({ name: 'Paketgraf', graph: g }));
+    const netBack = await datasets.importBytes(await shareScan.copy(net.id), { name: 'Graf tillbaka' }, { quiet: true });
+    // What an earlier version stored as text is read as data.
+    const idb = D.require('platform/storage/idb');
+    const stored = await idb.getDataset(netBack.id);
+    await idb.putDataset(Object.assign({}, stored, { graph: JSON.stringify(stored.graph) }));
+    assert.equal((await datasets.get(netBack.id)).graph.nodes, 1, 'healed when read');
+    assert.equal((await datasets.list()).find((d) => d.id === netBack.id).graph.nodes, 1, 'also in the list');
+    assert.equal((await datasets.ensureOpen(netBack.id)).meta.graph.nodes, 1, 'the graph facts too');
+    await datasets.remove(netBack.id, { quiet: true });
+    return 'ok';
+  }, 20000);
+
+  test('ui: Hantera shows what the app sees with its reason, a switch that sticks, and how the dataset is doing', async (assert) => {
+    const place = await make('Inblick', [['namn', 'text'], ['lon', 'number'], ['lat', 'number']], [['Umeå', 20.26, 63.82], ['Tom', null, null]]);
+    const g = { directed: true, nodes: [{ id: 'a', labels: ['X'], name: 'A', properties: {} }, { id: 'b', labels: ['X'], name: 'B', properties: {} }, { id: 'c', labels: ['X'], name: 'C', properties: {} }], edges: [{ id: 'e', source: 'a', target: 'b', type: 'T', properties: {} }, { id: 'f', source: 'a', target: 'a', type: 'T', properties: {} }] };
+    const net = track(await graph.createGraphDataset({ name: 'Hälsograf', graph: g }));
+    await withApp(async (shell, root) => {
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === net.id), 3000, 'datasets');
+      shell.store.set({ selectedId: place.id });
+      shell.activate('hantera');
+      const card = await waitFor(() => root.querySelector('[data-card="facets"]'), 5000, 'what the app sees');
+      assert.ok(card.textContent.includes(t('facets.reason.coordinates', { lon: 'lon', lat: 'lat' })), 'with its reason');
+      const health = await waitFor(() => root.querySelector('[data-health="health.spatial.empty"]'), 3000, 'the place missing');
+      assert.equal(health.textContent, t('health.spatial.empty', { n: 1 }));
+      const sw = /** @type {any} */ (card.querySelector('dm-switch[data-facet="spatial"]'));
+      sw.checked = false;
+      sw.dispatchEvent(new Event('change', { bubbles: true }));
+      await waitFor(async () => !(await leaflet.drawable(place.id)), 3000, 'the switch counts');
+      await D.require('data/facets').set(place.id, 'spatial', null);
+      shell.store.set({ selectedId: net.id });
+      const dangling = await waitFor(() => root.querySelector('[data-health="health.graph.isolated"]'), 5000, 'the lonely node');
+      assert.equal(dangling.textContent, t('health.graph.isolated', { n: 1 }));
+      assert.ok(root.querySelector('[data-health="health.graph.loops"]'), 'and the loop');
+    });
+    const health = D.require('data/kind-health');
+    const plain = await make('Friskt', [['a', 'text']], [['x']]);
+    assert.deepEqual(await health.check(plain.id), [], 'nothing to say');
+    return 'ok';
+  }, 45000);
+
+  test('ui: Analysera opens in the tool of the dataset, until the user has chosen, and R does not start for it', async (assert) => {
+    const doc = track(await importer.runFiles([new File(['Ett stycke text.\n'], 'flik.txt', { type: 'text/plain' })], { format: 'documents' }, 'Flikdokument'));
+    const place = await make('Flikkarta', [['lon', 'number'], ['lat', 'number']], [[20, 63]]);
+    const plain = await make('Fliktabell2', [['a', 'integer']], [[1], [2]]);
+    const bridge = D.require('data/r-bridge').bridge;
+    await withApp(async (shell, root) => {
+      const active = () => { const el = root.querySelector('dm-tabs').querySelector('[role="tab"][aria-selected="true"]'); return el ? el.textContent.trim() : ''; };
+      await waitFor(() => [doc, place, plain].every((m) => shell.store.get().datasets.some((d) => d.id === m.id)), 3000, 'datasets');
+      const stateBefore = bridge.state;
+      shell.store.set({ selectedId: doc.id });
+      shell.activate('analysera');
+      await waitFor(() => active() === t('analysera.tabs.text'), 5000, 'the text tool');
+      shell.store.set({ selectedId: place.id });
+      await waitFor(() => active() === t('analysera.tabs.geo'), 5000, 'the geo tool');
+      shell.store.set({ selectedId: plain.id });
+      await waitFor(() => active() === t('analysera.tabs.stats'), 5000, 'statistics');
+      assert.equal(bridge.state, stateBefore, 'R was left alone');
+      // The fixed order stays.
+      const names = Array.from(root.querySelector('dm-tabs').querySelectorAll('[role="tab"]')).map((b) => b.textContent.trim());
+      assert.equal(names[0], t('analysera.tabs.r'));
+      assert.equal(names[names.length - 1], t('analysera.tabs.notebook'));
+      // The user's choice stays too.
+      Array.from(root.querySelectorAll('dm-tabs [role="tab"]')).find((b) => b.textContent.trim() === t('analysera.tabs.sql')).click();
+      await waitFor(() => active() === t('analysera.tabs.sql'), 2000, 'SQL');
+      shell.store.set({ selectedId: doc.id });
+      await wait(400);
+      assert.equal(active(), t('analysera.tabs.sql'), 'not moved after the user has chosen');
+    });
+    return 'ok';
+  }, 45000);
+
+  test('selection: made in one place, used in the next, kept as a list, and gone when the rows change', async (assert) => {
+    const selection = D.require('data/selection');
+    const lists = D.require('data/lists');
+    const vizData = D.require('viz/data');
+    const meta = await make('Urvalstest', [['namn', 'text'], ['tal', 'integer']], [['a', 1], ['b', 2], ['c', 3], ['d', 4]]);
+    const seen = [];
+    const stop = selection.subscribe((s) => seen.push(s));
+    const made = await selection.setFromWhere(meta.id, 'tal > ?', [2], 'stora');
+    assert.deepEqual(made.rowids, [3, 4]);
+    assert.equal(seen.length, 1, 'told');
+    assert.equal(selection.whereOf(meta.id).sql, 'rowid in (3,4)');
+    assert.equal(selection.whereOf('annat'), null, 'only for its own dataset');
+    // As a list: Bearbeta and charts use it, and it can be run and turned into a dataset.
+    const rec = await selection.toList('Stora');
+    assert.equal(rec.kind, 'rows');
+    assert.deepEqual(lists.whereOf(rec, []), { sql: 'rowid in (3,4)', params: [] });
+    const rows = await vizData.fetchRows(meta.id, { fields: ['namn'], listId: rec.id });
+    assert.deepEqual(rows.rows.map((r) => r.namn), ['c', 'd'], 'a chart can use it');
+    const run = await lists.run(rec);
+    assert.equal(run.count, 2);
+    assert.equal(lists.describe(rec), t('selection.list.describe', { n: 2 }));
+    const fromList = track(await lists.toDataset(rec, 'Ur listan'));
+    assert.equal(fromList.rowCount, 2);
+    await lists.remove(rec.id);
+    const copy = track(await selection.toDataset('Ur urvalet'));
+    assert.equal(copy.rowCount, 2);
+    // A copy with only these rows, for export and bundles.
+    const only = await reopen(await shareScan.copy(meta.id, { only: [3, 4] }));
+    assert.deepEqual((await rowsOf(only.engine, 'select namn from data')).map((r) => r[0]), ['c', 'd']);
+    // Rows that change make rowids meaningless, so it goes.
+    await recipes.apply(meta.id, 'delete_rows', { where: "namn = 'a'" });
+    assert.equal(selection.get(), null, 'gone when the rows change');
+    selection.set({ datasetId: meta.id, rowids: [] });
+    assert.equal(selection.get(), null, 'no rows, no selection');
+    stop();
+    return 'ok';
+  }, 30000);
+
+  test('ui: the selection shows in the status bar, follows into Bearbeta and Exportera, and can be saved or cleared', async (assert) => {
+    const selection = D.require('data/selection');
+    const meta = await make('Urval i lägen', [['namn', 'text'], ['tal', 'integer']], [['a', 1], ['b', 2], ['c', 3]]);
+    await withApp(async (shell, root) => {
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === meta.id), 3000, 'dataset');
+      shell.store.set({ selectedId: meta.id });
+      shell.activate('bearbeta');
+      await waitFor(() => Array.from(root.querySelectorAll('dm-button')).some((b) => b.textContent.trim() === t('selection.use')), 5000, 'the button');
+      assert.ok(root.querySelector('.dm-sb-selection').hidden, 'nothing to show yet');
+      const search = /** @type {any} */ (root.querySelector('.dm-toolbar dm-input[type="search"]'));
+      search.value = 'b';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(400);
+      pressIn(root.querySelector('.dm-toolbar'), t('selection.use'));
+      await waitFor(() => selection.get(), 3000, 'made');
+      assert.deepEqual(selection.get().rowids, [2], 'what the table showed');
+      const bar = root.querySelector('.dm-sb-selection');
+      await waitFor(() => !bar.hidden, 2000, 'in the status bar');
+      assert.ok(bar.textContent.includes('1'), bar.textContent);
+      const pick = await waitFor(() => { const s = /** @type {any} */ (Array.from(root.querySelectorAll('.dm-toolbar dm-select')).find((x) => /** @type {any} */ (x).options.some((o) => o.value === '__selection'))); return s; }, 3000, 'the selection in the list');
+      pick.value = '__selection';
+      pick.dispatchEvent(new Event('change', { bubbles: true }));
+      // Exportera: only the selection, by default.
+      shell.activate('exportera');
+      const scope = /** @type {any} */ (await waitFor(() => Array.from(root.querySelectorAll('dm-select')).find((s) => /** @type {any} */ (s).options.some((o) => o.value === 'selection')), 5000, 'the choice in Exportera'));
+      assert.equal(scope.value, 'selection');
+      const platformFiles = D.require('platform/files');
+      const realDownload = platformFiles.download;
+      let saved = null;
+      platformFiles.download = (blob, name) => { saved = { blob, name }; };
+      try {
+        pressIn(root, t('export.run'));
+        await waitFor(() => saved, 5000, 'the file');
+        const text = await saved.blob.text();
+        assert.ok(text.includes('b') && !text.includes('\na;') && !text.includes('c;3'), 'only the selected row: ' + text);
+      } finally { platformFiles.download = realDownload; }
+      // Cleared from the status bar.
+      bar.click();
+      const dlg = await waitFor(() => document.querySelector('dialog[open] .dm-op-tile') && document.querySelector('dialog[open]'), 3000, 'the menu');
+      /** @type {HTMLElement} */ (dlg.querySelector('.dm-op-tile[data-action="clear"]')).click();
+      await waitFor(() => !selection.get() && bar.hidden, 3000, 'cleared');
+    });
+    return 'ok';
+  }, 45000);
+
+  test('export: a dataset that is more than a table says what carries all of it, and the files themselves can be had', async (assert) => {
+    const zip = D.require('platform/storage/zip');
+    const doc = track(await importer.runFiles([new File(['Rad ett.\n\nRad två.\n'], 'text.txt', { type: 'text/plain' })], { format: 'documents' }, 'Exportdokument'));
+    const originals = await exporter.exportDataset(doc.id, 'document-originals');
+    assert.ok(originals.filename.endsWith('.zip'));
+    assert.ok((await zip.readZip(originals.blob))['text.txt'], 'the original file');
+    const text = await (await exporter.exportDataset(doc.id, 'document-text')).blob.text();
+    assert.ok(text.includes('# text.txt') && text.includes('Rad ett.') && text.includes('Rad två.'), text);
+    const pictures = track(await importer.runFiles([await photoWithPosition('b.jpg')], { format: 'images' }, 'Exportbilder'));
+    assert.ok((await zip.readZip((await exporter.exportDataset(pictures.id, 'images-zip')).blob))['b.jpg'], 'the picture');
+    const g = { directed: true, nodes: [{ id: 'a', labels: ['X'], name: 'A, B', properties: {} }, { id: 'b', labels: ['X'], name: 'C', properties: {} }], edges: [{ id: 'e', source: 'a', target: 'b', type: 'T', properties: {} }] };
+    const net = track(await graph.createGraphDataset({ name: 'Exportgraf', graph: g }));
+    const parts = await zip.readZip((await exporter.exportDataset(net.id, 'graph-csv')).blob);
+    assert.ok(zip.text(parts['noder.csv']).includes('"A, B"'), 'quoted');
+    assert.ok(zip.text(parts['kanter.csv']).includes('kalla') && zip.text(parts['kanter.csv']).includes('a,b'), zip.text(parts['kanter.csv']));
+    await withApp(async (shell, root) => {
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === net.id), 3000, 'dataset');
+      shell.store.set({ selectedId: net.id });
+      shell.activate('exportera');
+      const whole = await waitFor(() => root.querySelector(`optgroup[label="${t('export.group.whole')}"]`), 5000, 'the group');
+      assert.ok(whole.querySelector('option[value="graphml"]') && root.querySelector(`optgroup[label="${t('export.group.table')}"] option[value="csv"]`), 'each format in its group');
+      const select = whole.closest('dm-select');
+      /** @type {any} */ (select).value = 'csv';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      const note = await waitFor(() => root.querySelector('[data-loses]'), 2000, 'what is lost');
+      assert.equal(note.textContent, t('export.loses.graph'));
+    });
+    return 'ok';
+  }, 45000);
+
+  test('p2p: a hello that gets lost is said again, and only counts once', async (assert) => {
+    const p2p = D.require('platform/p2p');
+    const a = p2p.offer();
+    let b = null;
+    try {
+      await waitFor(() => a.offerPayload, 10000, 'offer');
+      const certB = await RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' });
+      b = p2p.answer(a.offerPayload, { certificate: certB });
+      await waitFor(() => b.answerCode, 10000, 'answer');
+      // The first hello from each side never leaves.
+      for (const session of [a, b]) {
+        const real = session.sendJson.bind(session);
+        let dropped = false;
+        session.sendJson = (obj) => { if (obj.t === 'hello' && !dropped) { dropped = true; return; } real(obj); };
+      }
+      let hellosA = 0; let hellosB = 0;
+      a.on('hello', () => { hellosA++; });
+      b.on('hello', () => { hellosB++; });
+      await a.acceptAnswer(b.answerCode);
+      await waitFor(() => a.peerInfo && b.peerInfo, 8000, 'hello both ways');
+      await wait(1500);
+      assert.equal(hellosA, 1, 'told once');
+      assert.equal(hellosB, 1, 'told once');
+      return 'ok';
+    } finally { a.close(); if (b) b.close(); for (const peer of await p2p.peers()) await p2p.forget(peer.id); }
+  }, 40000);
+
   test('adapt: cleanup', async (assert) => {
     await datasets.flushSaves();
     for (const id of created) await datasets.remove(id).catch(() => {});

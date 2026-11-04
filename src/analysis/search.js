@@ -76,7 +76,7 @@
     async function searchDataset(id, text, filters = [], options = {}) {
       const handle = await datasets.ensureOpen(id);
       const cols = handle.columns;
-      const w = where(cols, text, filters);
+      const w = options.rowids ? { sql: `rowid in (${options.rowids.map(Number).join(',')})`, params: [] } : where(cols, text, filters);
       const limit = Math.max(1, options.limit || ROWS);
       const c = await handle.engine.exec(`select count(*) from data where ${w.sql}`, w.params);
       const count = c[0] ? Number(c[0].values[0][0]) : 0;

@@ -103,11 +103,11 @@
           if (dirty && !(await confirmDiscard())) return;
           let kind = null;
           const all = store.get().datasets;
-          const cols = await services.datasets.columns(ds.id).catch(() => []);
-          const onMap = (!ds.kind || ds.kind === 'table') && leaflet.mappable(cols) && await leaflet.drawable(ds.id).catch(() => false);
+          const facetsMod = D.require('data/facets');
+          const onMap = await facetsMod.has(ds.id, 'spatial').catch(() => false);
           /** A chart of its own kind needs a dataset of that kind; the panel can pick another one than the selected. */
           const stands = (k) => (k === 'graph' || k === 'model') && ds.kind !== k && !all.some((d) => d.kind === k);
-          const fits = (k) => k === ds.kind || (k === 'map' && (onMap || ds.kind === 'plan'));
+          const fits = (k) => k === D.require('data/kinds').of(ds).chart || (k === 'map' && onMap);
           const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].slice().sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
           const body = h('div', { class: 'dm-stack-sm' }, order.map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, disabled: stands(k) ? '' : null, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },
             h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: stands(k) ? t('viz.kind.need.' + k) : t('viz.kind.' + k + '.help') }))));
@@ -116,6 +116,8 @@
           // A graph or model chart starts from a dataset it can draw.
           const source = (kind === 'graph' || kind === 'model') && ds.kind !== kind ? store.get().datasets.find((d) => d.kind === kind) : ds;
           const record = charts.create(kind, source, `${source.name}: ${t('viz.kind.badge.' + kind)}`);
+          // A chart of a time series starts as one.
+          if (kind === 'vega' && await facetsMod.has(source.id, 'timeseries').catch(() => false)) record.vega.type = 'timeseries';
           await openChart(record, true);
         }
         async function importChart() {

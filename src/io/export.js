@@ -25,6 +25,11 @@
       { id: 'gexf', key: 'export.format.gexf', ext: 'gexf', kind: 'graph' },
       { id: 'graph-json', key: 'export.format.graph-json', ext: 'json', kind: 'graph' },
       { id: 'cypher', key: 'export.format.cypher', ext: 'cypher', kind: 'graph' },
+      { id: 'graph-csv', key: 'export.format.graph-csv', ext: 'zip', kind: 'graph' },
+      // Documents and pictures: the files themselves rather than the table about them.
+      { id: 'document-originals', key: 'export.format.document-originals', ext: 'zip', kind: 'document' },
+      { id: 'document-text', key: 'export.format.document-text', ext: 'txt', kind: 'document' },
+      { id: 'images-zip', key: 'export.format.images-zip', ext: 'zip', kind: 'images' },
       // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file.
       { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model' },
       { id: 'model-properties', key: 'export.format.model-properties', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
@@ -38,6 +43,42 @@
         .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
         // A format that cannot work stays visible and says what it needs.
         .map((f) => (f.id === 'geojson' && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
+    }
+    /** A dataset's files of one sort in a ZIP, as they are stored. */
+    async function toFilesZip(id, sort) {
+      const dsFiles = D.require('data/dataset-files');
+      const out = {};
+      for (const f of await dsFiles.list(id, sort)) {
+        const got = await dsFiles.read(id, f.name, sort);
+        if (got) out[f.name] = got.bytes;
+      }
+      if (!Object.keys(out).length) throw new Error(D.t('export.err.nofiles'));
+      return D.require('platform/storage/zip').createZip(out, { level: 0 });
+    }
+    /** The text of a document collection, one heading per document. */
+    async function toDocumentText(id) {
+      const cols = await datasets.columns(id);
+      const at = (name) => cols.findIndex((c) => c.name === name);
+      const parts = [];
+      let current = null;
+      for (const row of await datasets.allRows(id)) {
+        const doc = row[at('dokument')];
+        if (doc !== current) { parts.push(`${current === null ? '' : '\n'}# ${doc}\n`); current = doc; }
+        if (row[at('text')]) parts.push(String(row[at('text')]));
+      }
+      return new Blob([parts.join('\n') + '\n'], { type: 'text/plain;charset=utf-8' });
+    }
+    /** A graph as two tables: nodes and edges, for tools that read node and edge lists. */
+    async function toGraphCsv(id, options = {}) {
+      const handle = await datasets.ensureOpen(id);
+      const delimiter = options.delimiter || ',';
+      const table = async (from) => {
+        const r = await handle.engine.exec(`select * from ${from}`);
+        const head = r[0] ? r[0].columns : [];
+        const rows = r[0] ? r[0].values : [];
+        return [head.map((v) => csvEscape(v, delimiter)).join(delimiter)].concat(rows.map((row) => row.map((v) => csvEscape(v === null || v === undefined ? '' : String(v), delimiter)).join(delimiter))).join('\r\n') + '\r\n';
+      };
+      return D.require('platform/storage/zip').createZip({ 'noder.csv': await table('data'), 'kanter.csv': await table('_edges') }, { level: 6 });
     }
     /** The column GeoJSON can be written from: a geometry, found by name or by its first value, or else coordinates. */
     async function geometrySource(id) {
@@ -214,7 +255,11 @@
         const out = await toModel(id, fmt.id, options);
         return { blob: out.blob, filename: options.filename || out.filename || filename };
       }
-      if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);
+      if (fmt.id === 'graph-csv') blob = await toGraphCsv(id, options);
+      else if (fmt.id === 'document-originals') blob = await toFilesZip(id, 'original');
+      else if (fmt.id === 'images-zip') blob = await toFilesZip(id, 'preview');
+      else if (fmt.id === 'document-text') blob = await toDocumentText(id);
+      else if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);
       else if (fmt.id === 'csv') blob = await toCsv(id, options);
       else if (fmt.id === 'xlsx') blob = await toXlsx(id, options);
       else if (fmt.id === 'ods') blob = await toOds(id, options);

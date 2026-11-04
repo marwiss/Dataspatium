@@ -174,7 +174,7 @@
       await waitFor(() => root.querySelectorAll('dm-table .dm-tr').length === 2, 5000, 'image rows');
       // Analysera: the Bilder tab for the image collection, the Text tab for the documents.
       shell.activate('analysera');
-      const tabs = () => Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).map((e) => e.textContent.trim());
+      const tabs = () => { const own = root.querySelector('.dm-center dm-tabs'); return own ? Array.from(own.querySelectorAll('[role="tab"]')).map((e) => e.textContent.trim()) : []; };
       await waitFor(() => tabs().includes(t('analysera.tabs.images')), 5000, 'Bilder tab');
       assert.deepEqual(tabs().slice(-2), [t('analysera.tabs.images'), t('analysera.tabs.notebook')], 'kind tool before the notebook');
       /** @type {any} */ (Array.from(root.querySelectorAll('.dm-center dm-tabs [role="tab"]')).find((e) => e.textContent.trim() === t('analysera.tabs.images'))).click();

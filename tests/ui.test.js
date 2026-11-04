@@ -110,6 +110,9 @@
       shell.activate('exportera');
       await waitFor(() => root.querySelector('dm-select'), 3000, 'export form');
       shell.activate('analysera');
+      // Opens in the dataset's own tool; the R console is one tab away.
+      await waitFor(() => root.querySelector('dm-tabs [role="tab"]'), 3000, 'the first tab');
+      /** @type {HTMLElement} */ (root.querySelector('dm-tabs [role="tab"]')).click();
       await waitFor(() => root.querySelector('dm-code') && root.querySelector('.dm-console'), 5000, 'R console in Analysera');
       shell.activate('visualisera');
       await waitFor(() => root.querySelector('dm-empty-state, .dm-gallery'), 5000, 'visualisera gallery');
@@ -220,8 +223,8 @@
       await waitFor(() => !document.querySelector('dialog'), 3000, 'dialog closed');
       // SQL console: SELECT shows rows, UPDATE becomes a recipe step.
       shell.activate('analysera');
-      await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 6, 5000, 'analysera tabs (R, Python, SQL, Regex, Statistik, Anteckningsbok)');
-      /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[2]).click();
+      await waitFor(() => root.querySelector('dm-tabs').querySelectorAll('[role="tab"]').length === 6, 5000, 'analysera tabs (R, Python, SQL, Regex, Statistik, Anteckningsbok)');
+      /** @type {HTMLElement} */ (root.querySelector('dm-tabs').querySelectorAll('[role="tab"]')[2]).click();
       await waitFor(() => root.querySelector('dm-code[language="sql"]'), 3000, 'sql editor');
       const sqlEditor = /** @type {any} */ (root.querySelector('dm-code[language="sql"]'));
       await new Promise((resolve, reject) => { if (sqlEditor.cm) return resolve(undefined); sqlEditor.addEventListener('dm-ready', resolve, { once: true }); setTimeout(() => reject(new Error('sql editor did not load')), 10000); });

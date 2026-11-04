@@ -29,6 +29,8 @@ formen `index.html#/<läge>/<kortnamn>` (eller ett diagrams namn i Visualisera, 
 också från en mapp. Pil upp och ned väljer, Enter
 kör och Esc stänger; de senast körda kommandona ligger överst.
 
+Loggpanelens höjd ändrar du genom att dra i dess överkant, eller med piltangenterna när kanten har fokus. Dubbelklick återställer höjden, och höjden sparas.
+
 ## Inhämta
 
 Här kommer data in: filer som släpps på ytan, inklistrad text, webbadresser och öppna API:er. Filimporten går i
@@ -73,6 +75,8 @@ eller som ritning i Bearbeta (se [cad-bim.md](cad-bim.md)).
 **Insamling i fält** i källistan bygger ett formulär på en datamängds kolumner och regler och skickar det till telefonen. Raderna kommer tillbaka som en ny
 version (se [insamling.md](insamling.md)).
 
+Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad under namnet. *Lägg till källa* samlar alla sätt att lägga till en källa: en konfigurationsfil, en databas eller en geodatatjänst.
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -97,6 +101,10 @@ galleriet i Bearbeta (se [dokument.md](dokument.md)).
 
 **Flöden och bevakningar** finns i objektpanelen: sparade kedjor som körs med ett klick eller vid start, och källor som säger till
 när de har nya data (se [floden.md](floden.md)).
+
+**Vad appen ser.** Översikten visar vad datamängden också kan användas som: platser på en karta, en tidsserie, regioner som kan färgas, ett nätverk eller löptext. Varje rad säger varför, och du kan stänga av det som inte stämmer eller slå på det appen missat. Valet sparas i datamängden, och lägena följer det. Under det står **Att se över**, med sådant som datamängdens slag behöver: sidor utan text, bilder utan position, kanter som pekar på noder som inte finns, element utan mängder eller rader utan plats.
+
+**Urval.** Knappen *Använd som urval* finns i Söka och i Bearbetas vyer. Det du ser följer sedan med mellan lägena och står i statusraden. I Bearbeta visar du det via listvalet, i Exportera väljer du om bara urvalet ska med, och i paket kan du skicka bara urvalet. Från statusraden sparar du det som en lista, gör det till en datamängd eller rensar det. Ändras raderna i datamängden försvinner urvalet, eftersom det inte längre skulle betyda samma sak.
 
 ## Söka
 
@@ -159,6 +167,8 @@ Fliken **Statistik** efter Regex gör vanliga analyser med formulär som skriver
 Modeller och ritningar får fliken **Mängder** efter Regex (antal, längd, area och volym per typ, våning och material, ur filen
 eller mätta på geometrin).
 
+Analysera öppnar i det verktyg som passar datamängden: Text för dokument, Bilder för bildsamlingar, Graf för grafer, Mängder för modeller, Plan för planer, Geo för tabeller med platser och annars Statistik. När du själv väljer en flik stannar du där. R startar först när du öppnar fliken R.
+
 ## Visualisera
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,
@@ -178,6 +188,8 @@ som en PowerPoint) som SVG, PNG och PDF, enstaka eller i batch per grupp till ZI
 kodböcker och sammanställningar ur mallar i Markdown med platshållare, som HTML, Word, PDF, Markdown eller LaTeX,
 enstaka eller i batch per grupp (se [dokumentmallar.md](dokumentmallar.md)). Det som ska till andra människor
 finns i Dela.
+
+En datamängd som är mer än en tabell delar upp formaten i **Hela datamängden** och **Bara tabellen**, och säger vad som inte följer med. Dokument kan hämtas som originalfiler eller ren text, bilder som en ZIP och grafer som två CSV-filer.
 
 ## Dela
 

@@ -22,6 +22,8 @@
   const D = globalThis.Dataspatium;
   D.define('platform/p2p', ['platform/storage/idb'], (idb) => {
     const VERSION = 1;
+    const HELLO_RETRY_MS = 1000;
+    const HELLO_TRIES = 15;
     const CHANNEL = 'dm';
     const CHUNK = 16384;
     const HIGH_WATER = 1 << 20;
@@ -372,16 +374,23 @@
         dc.bufferedAmountLowThreshold = LOW_WATER;
         dc.addEventListener('open', () => {
           this.setState('connected');
-          if (this.role === 'offer') {
-            this.secret = this.paired ? this.peer.secret : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-            this.sendJson({ t: 'hello', v: VERSION, app: 'dataspatium', version: D.version, name: this.name, fp: this.fingerprint, secret: this.paired ? undefined : this.secret, paired: this.paired });
-          } else {
-            this.sendJson({ t: 'hello', v: VERSION, app: 'dataspatium', version: D.version, name: this.name, fp: this.fingerprint, paired: this.paired });
-          }
+          if (this.role === 'offer') this.secret = this.paired ? this.peer.secret : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+          this.sayHello();
+          // Everything after the handshake waits for this message, so it is said again until the other side has answered.
+          let tries = 0;
+          const again = setInterval(() => {
+            if (this.peerInfo || !this.dc || this.dc.readyState !== 'open' || ++tries > HELLO_TRIES) { clearInterval(again); return; }
+            D.log('p2p', 'hello not answered yet', { role: this.role, tries, channel: this.dc.readyState, connection: this.pc && this.pc.connectionState });
+            this.sayHello();
+          }, HELLO_RETRY_MS);
         });
         dc.addEventListener('close', () => { if (this.state !== 'failed') this.setState('closed'); this.rejectWaiters(new Error(D.t('p2p.err.connection'))); });
         dc.addEventListener('error', (e) => { this.fail(/** @type {any} */ (e).error || new Error('data channel error')); });
         dc.addEventListener('message', (e) => { this.onMessage(e.data).catch((err) => this.fail(err)); });
+      }
+      sayHello() {
+        const secret = this.role === 'offer' && !this.paired ? this.secret : undefined;
+        this.sendJson({ t: 'hello', v: VERSION, app: 'dataspatium', version: D.version, name: this.name, fp: this.fingerprint, secret, paired: this.paired, seen: !!this.peerInfo });
       }
       sendJson(obj) { if (this.dc && this.dc.readyState === 'open') this.dc.send(JSON.stringify(obj)); }
       waitFor(type, timeoutMs = 0) {
@@ -402,13 +411,17 @@
         if (typeof data === 'string') {
           const msg = JSON.parse(data);
           switch (msg.t) {
-            case 'hello':
+            case 'hello': {
+              const firstTime = !this.peerInfo;
               this.peerInfo = { name: msg.name, fingerprint: msg.fp, version: msg.version, paired: !!msg.paired };
               if (msg.secret && this.role === 'answer') this.secret = msg.secret;
               if (this.remote && msg.fp && msg.fp !== this.remote.fingerprint) { this.fail(new Error(D.t('p2p.err.fingerprint'))); return; }
               if (this.paired && this.peer) touchPeer(this.peer.id, { name: msg.name }).catch(() => {});
-              this.emit('hello', this.peerInfo);
+              // The other side says whether it has heard this side; if not, it hears it now.
+              if (!msg.seen) this.sayHello();
+              if (firstTime) this.emit('hello', this.peerInfo);
               break;
+            }
             case 'paired':
               // The offerer confirmed the verification code and stored us; store the offerer too (both sides keep the secret).
               if (this.role === 'answer' && this.secret && this.peerInfo && !this.paired) { try { await this.pairPeer(); } catch (err) { D.log('p2p', 'pairing failed', err); } }

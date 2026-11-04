@@ -63,8 +63,8 @@
       // A saved list from Söka narrows the rows first; only search lists of this very dataset apply.
       if (request.listId) {
         const rec = await lists.get(request.listId);
-        if (rec && rec.datasetId === datasetId && (rec.kind || 'search') === 'search') {
-          const lw = search.where(columns, rec.text, rec.filters || []);
+        if (rec && rec.datasetId === datasetId && (rec.kind || 'search') !== 'query') {
+          const lw = lists.whereOf(rec, columns);
           where.sql = where.sql ? `(${where.sql}) and (${lw.sql})` : lw.sql;
           where.params = where.params.concat(lw.params);
         }
