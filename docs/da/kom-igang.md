@@ -45,7 +45,7 @@ kanten mod arbejdsfladen. Alt+1 til Alt+8 skifter tilstand med tastaturet.
 | Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; SQL-konsol mod det valgte datasæt; regulære udtryk; notesbog, der bliver til rapport |
 | Visualisér | Bygger diagrammer med Vega-Lite, D3-skabeloner eller R-scripts, gemmer, eksporterer og opretter dem i batch ([visualisera.md](visualisera.md)) |
 | Eksportér | Downloader data som CSV, Excel, JSON eller SQLite, gemte diagrammer som SVG, PNG eller PDF og dokumenter fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
-| Del | Pakker datasæt med diagrammer og skabeloner til kolleger, sender arbejdsområdet til GitHub, deler via computerens delingsmenu og udgiver dashboards som HTML ([dela.md](dela.md)) |
+| Del | Pakker datasæt med diagrammer og skabeloner til kolleger, sender dem direkte til telefoner og andre computere med QR-kode ([mobil.md](mobil.md)), sender arbejdsområdet til GitHub, deler via computerens delingsmenu og udgiver dashboards som HTML ([dela.md](dela.md)) |
 
 ## 4. Importér en fil
 

@@ -392,6 +392,42 @@ först för resten, gamla cachar tas bort vid aktivering) och gör sidan install
 beständig lagring begärs när appen körs fristående. Från file:// finns inga service workers och inget av detta
 används.
 
+## Enheter, mobilsidan, granskning och djuplänkar
+
+`platform/p2p` kopplar ihop två enheter med WebRTC-datakanaler utan signaleringsserver. Den erbjudande sidan
+(datorn) visar en kompakt nyttolast (base64url-JSON): session-id, egna ICE-uppgifter (ufrag och pwd som appen
+själv väljer och mungar in i SDP:n), DTLS-fingeravtryck, värdkandidater (mDNS-namn) och, för en ny enhet, en
+engångshemlighet. Den svarande sidan bygger en fullständig SDP ur en mall (`buildSdp`), härleder sina ICE-uppgifter
+ur hemligheten och session-id (HMAC-SHA-256, `deriveCredentials`) och svarar. Den erbjudande sidan sätter ett
+syntetiskt svar utan kandidater (fingeravtryck + härledda uppgifter) och hittar motparten via peer-reflexiva
+kandidater; för en ny enhet måste bara fingeravtrycket färdas tillbaka (52 tecken base32 eller QR). Parade enheter
+(`p2p.peers`, inställning `p2p.peers`) delar en hemlighet som sänts över den krypterade kanalen; certifikatet
+(`p2p.certificate`, ett år) ligger i IndexedDB. Protokollet över kanalen: `hello`, `offer` med objekt (namn,
+storlek, SHA-256, slag), `accept` med redan mottagna byte per objekt (återupptagning ur `partials`), `begin`,
+binära block om 16 KiB med mottryck (`bufferedamountlow`), `end`, `done` (kontrollsumma), `paired`, `bye`.
+Kontrollkoden är sex siffror ur SHA-256 av båda fingeravtrycken och session-id.
+
+`ui/share/devices` är fliken Enheter i Dela (QR via `ui/qr` på qrcode-generator, kod för en annan dator,
+anslutning med svarskod, kontrollkod, parning, skicka paket eller filer, mottagningsdialog, förlopp) och
+`mobile/app` är Dataspatium Mobil: `m/index.html` sätter `DATASPATIUM_PROFILE = 'mobile'` så att `src/boot.js`
+laddar den korta listan `MOBILE` (plattform, SQLite, komponenter, p2p, qr, mobilappen; 35 skript). Mobilsidan
+lagrar mottagna filer som blobbar (`mbundle:<id>`) med en lista i inställningen `mobile.bundles`, läser paketens
+`manifest.json` med fflate och öppnar datamängder för visning med en egen `SqliteEngine` (`_columns`, `data`,
+sidor om 50 rader). Web Share Target: `m/manifest.webmanifest` anmäler `./share`, `sw-coi.js` tar emot POST:en,
+parkerar filerna i cachen `dataspatium-inbox` och skickar sidan till `m/?inbox=1`, där `drainInbox()` hämtar dem.
+Datorns QR-kod pekar på `p2p.mobileUrl()`: Pages-adressen från file://, annars `m/` på samma värd (inställningen
+`p2p.mobileUrl` kan peka på en intranätkopia).
+
+`ui/share/review` är granskningen före delning: `rules.suggest()` ger identitetsnummer- och e-postkolumner, ett
+namnmönster telefonnummer; dialogen ger per kolumn behåll, pseudonymisera eller ta bort, och
+`datasets.exportBytesTransformed(id, {hash, drop, salt})` tillämpar valen på en kopia av filen (dm_hash i en
+tillfällig motor, `alter table drop column`, `_columns` uppdateras). `workspace.collect()` tar `transform` per
+datamängd och skriver `review` i manifestets datamängdspost.
+
+Djuplänkar: `shell.parseRoute()` läser `#/<läge>/<objekt>`, `openRoute()` väljer datamängd (kortnamn, id eller
+namn), öppnar ett diagram (`openChartId`) eller lämnar en sökning (`pendingSearch`), och `shell.link(mode,
+object)` bygger adressen; paletten har *Kopiera länk hit*.
+
 ## Tester
 
 `tests/index.html` kör enhetstester i webbläsaren och skriver `DATASPATIUM-LOG`-rader; `tools/run-tests.ps1` kör

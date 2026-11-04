@@ -24,7 +24,9 @@ pekskärm genom att hålla fingret på knappen.
 
 Kommandopaletten (Ctrl+K eller förstoringsglaset högst upp) når allt från ett sökfält: växla läge, öppna en
 datamängd, ett diagram eller en dashboard, köra en bearbetningsåtgärd på den valda datamängden, exportera, öppna
-arbetsytan, söka i data, skapa ett paket, byta tema eller söka efter uppdatering. Pil upp och ned väljer, Enter
+arbetsytan, söka i data, skapa ett paket, kopiera en länk hit, byta tema eller söka efter uppdatering. Länkar har
+formen `index.html#/<läge>/<kortnamn>` (eller ett diagrams namn i Visualisera, en söktext i Söka) och fungerar
+också från en mapp. Pil upp och ned väljer, Enter
 kör och Esc stänger; de senast körda kommandona ligger överst.
 
 ## Inhämta
@@ -120,6 +122,7 @@ Ge data till andra. **Paket**: en ZIP med valda datamängder, diagram, dashboard
 skript, ett meddelande och en ändringslogg, som mottagaren öppnar under *Ta emot* och kan ersätta sina versioner
 med. **GitHub**: arbetsytan som en mapp i ett repo, skicka och hämta, med en åtkomstnyckel som sparas krypterad.
 **Delningsmeny**: datorns eller telefonens egen delningsmeny för en fil eller ett paket (e-post, Teams,
-meddelandeappar). **Publicera**: dashboards och dokument som fristående HTML-filer. **Ta emot**: paket från fil
-eller webbadress, med avsändare och ändringar synliga innan något tas in. Direkt överföring mellan enheter
-kommer i en senare version. Se [dela.md](dela.md).
+meddelandeappar). **Publicera**: dashboards och dokument som fristående HTML-filer. **Enheter**: direkt överföring till telefoner och andra datorer på samma nätverk med QR-kod, kontrollkod och
+parning, och Dataspatium Mobil på telefonen (se [mobil.md](mobil.md)). **Ta emot**: paket från fil eller
+webbadress, med avsändare och ändringar synliga innan något tas in. Datamängder som lämnar appen granskas först
+för personuppgifter. Se [dela.md](dela.md).

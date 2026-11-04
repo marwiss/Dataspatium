@@ -47,7 +47,7 @@ att dra i kanten mot arbetsytan. Alt+1 till Alt+8 växlar läge med tangentborde
 | Analysera | R-konsol med ggplot2 och tidyverse, sparade skript och diagramexport; SQL-konsol mot den valda datamängden; reguljära uttryck; anteckningsbok som blir rapport |
 | Visualisera | Bygger diagram med Vega-Lite, D3-mallar eller R-skript, sparar, exporterar och skapar dem i batch ([visualisera.md](visualisera.md)) |
 | Exportera | Laddar ned data som CSV, Excel, JSON eller SQLite, sparade diagram som SVG, PNG eller PDF och dokument ur mallar som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
-| Dela | Paketerar datamängder med diagram och mallar för kollegor, skickar arbetsytan till GitHub, delar via datorns delningsmeny och publicerar dashboards som HTML ([dela.md](dela.md)) |
+| Dela | Paketerar datamängder med diagram och mallar för kollegor, skickar dem direkt till telefoner och andra datorer med QR-kod ([mobil.md](mobil.md)), skickar arbetsytan till GitHub, delar via datorns delningsmeny och publicerar dashboards som HTML ([dela.md](dela.md)) |
 
 ## 4. Importera en fil
 

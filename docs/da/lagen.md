@@ -23,7 +23,9 @@ ved at holde fingeren på knappen.
 
 Kommandopaletten (Ctrl+K eller forstørrelsesglasset øverst) når alt fra ét søgefelt: skift tilstand, åbn et datasæt,
 et diagram eller et dashboard, kør en bearbejdningshandling på det valgte datasæt, eksportér, åbn arbejdsområdet, søg
-i data, opret en pakke, skift tema eller søg efter opdateringer. Pil op og ned vælger, Enter kører og Esc lukker; de
+i data, opret en pakke, kopiér et link hertil, skift tema eller søg efter opdateringer. Links har formen
+`index.html#/<tilstand>/<kortnavn>` (eller et diagrams navn i Visualisér, en søgetekst i Søg) og virker også fra en
+mappe. Pil op og ned vælger, Enter kører og Esc lukker; de
 senest kørte kommandoer ligger øverst.
 
 ## Hent
@@ -116,6 +118,7 @@ Giv data til andre. **Pakke**: en ZIP med valgte datasæt, diagrammer, dashboard
 en besked og en ændringslog, som modtageren åbner under *Modtag* og kan erstatte sine versioner med. **GitHub**:
 arbejdsområdet som en mappe i et repository, send og hent, med et adgangstoken, der gemmes krypteret.
 **Delingsmenu**: computerens eller telefonens egen delingsmenu til en fil eller en pakke (e-mail, Teams,
-beskedapps). **Udgiv**: dashboards og dokumenter som selvstændige HTML-filer. **Modtag**: pakker fra fil eller
-webadresse, med afsender og ændringer synlige, før noget tages ind. Direkte overførsel mellem enheder kommer i en
-senere version. Se [dela.md](dela.md).
+beskedapps). **Udgiv**: dashboards og dokumenter som selvstændige HTML-filer. **Enheder**: direkte overførsel til telefoner og andre computere på samme netværk med QR-kode, kontrolkode og
+parring, og Dataspatium Mobil på telefonen (se [mobil.md](mobil.md)). **Modtag**: pakker fra fil eller webadresse,
+med afsender og ændringer synlige, før noget tages ind. Datasæt, der forlader appen, gennemgås først for
+personoplysninger. Se [dela.md](dela.md).

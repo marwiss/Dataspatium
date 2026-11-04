@@ -139,8 +139,10 @@ einstaklinga, svo farðu yfir allt gagnasafnið áður en þú deilir því. Sj�
 Einfaldast í hamnum *Deila*: undir *Pakki* velurðu gagnasöfn og hvort myndrit, mælaborð, snið, minnisbækur og
 skriftur eigi að fylgja, skrifar skilaboð og sendir ZIP-skrána, til dæmis um flipann *Deilivalmynd* (tölvupóstur,
 Teams og önnur forrit). Samstarfsmaðurinn opnar hana undir *Taka á móti*, sér skilaboð þín og hvað hefur breyst og
-getur skipt út eigin útgáfum. Athugasemdir, möppur og merki fylgja með. Ef þið vinnið í sama vinnusvæði getið þið
-líka notað sameiginlegt GitHub-safn (flipinn *GitHub*). Mælaborð og skjöl má birta sem sjálfstæðar HTML-skrár
+getur skipt út eigin útgáfum. Athugasemdir, möppur og merki fylgja með. Séuð þið á sama neti fer pakkinn beint milli tölvanna eða um símann
+(flipinn *Tæki*, sjá [mobil.md](mobil.md)). Ef þið vinnið í sama vinnusvæði getið þið líka notað sameiginlegt
+GitHub-safn (flipinn *GitHub*). Áður en nokkuð fer úr forritinu eru gagnasöfnin yfirfarin með tilliti til
+persónuupplýsinga, sem má dulnefna eða fjarlægja í afritinu. Mælaborð og skjöl má birta sem sjálfstæðar HTML-skrár
 (flipinn *Birta*). Þú getur líka flutt út eitt gagnasafn sem SQLite (heldur gerðum, merkimiðum, athugasemdum og
 sögu) eða tekið afrit af öllu vinnusvæðinu. Myndrit og skjalasnið má flytja út sem JSON-skrár, API-uppsetningar sem
 `.api.json` og uppskriftir sem JSON, R eða SQL. Sjá [dela.md](dela.md).
@@ -167,9 +169,18 @@ fjarlægt þá.
 
 ## Get ég notað forritið í símanum?
 
-Ekki enn. Farsímasíða fyrir síma og spjaldtölvur, og flutningur beint milli tækja, er áætluð í næstu útgáfu.
-Glugginn aðlagar sig þegar nú: í þröngum gluggum sýnir hamavalið tákn og spjöldin opnast sem yfirlagsspjöld yfir
-vinnuflötinn.
+Allt forritið er gert fyrir tölvur, en síminn getur verið með: Dataspatium Farsími
+(<https://marwiss.github.io/Dataspatium/m/>) tekur á móti pökkum og skrám frá tölvunni yfir staðarnetið, sýnir
+töflurnar, sendir þær áfram og afhendir þær annarri tölvu. Opnaðu *Deila → Tæki* á tölvunni og skannaðu QR-kóðann;
+sjá [mobil.md](mobil.md). Í spjaldtölvum í þjónsham má nota allt forritið: í þröngum gluggum sýnir hamavalið tákn
+og spjöldin opnast sem yfirlagsspjöld yfir vinnuflötinn.
+
+## Hvernig flyt ég gögn í síma án nettengingar?
+
+Tölvan og síminn þurfa aðeins sama staðarnet; flutningurinn fer beint á milli þeirra með WebRTC og um engan þjón. Í
+fyrsta skipti þarf síminn að sækja farsímasíðuna af vefnum (eða af eigin vefþjóni á innraneti); eftir það er hún í
+skyndiminni. Sé ekkert sameiginlegt net: kveiktu á netdeilingu í símanum og tengdu tölvuna við hana. Sjá
+[mobil.md](mobil.md).
 
 ## Finnurðu ekki svarið hér?
 

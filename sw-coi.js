@@ -16,8 +16,10 @@
 'use strict';
 
 /** Changes with every release (tools/release and docs/utveckling.md), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-2.0.0';
+const CACHE = 'dataspatium-2.1.0';
 const CACHE_FIRST = /\/(vendor|presets|src|r)\//;
+/** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
+const INBOX = 'dataspatium-inbox';
 
 self.addEventListener('install', () => { self.skipWaiting(); });
 self.addEventListener('activate', (event) => {
@@ -41,6 +43,23 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') return;
+  // Web Share Target: the system share sheet posts files to m/share; keep them and send the page to m/ to pick them up.
+  if (request.method === 'POST' && /\/m\/share\/?$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      try {
+        const form = await request.formData();
+        const cache = await caches.open(INBOX);
+        const files = form.getAll('files').filter((f) => f && typeof f === 'object' && 'size' in f);
+        let i = 0;
+        for (const file of files) {
+          const key = new URL('inbox/' + Date.now() + '-' + (i++) + '-' + encodeURIComponent(file.name || 'fil'), url.origin + url.pathname.replace(/share\/?$/, '')).href;
+          await cache.put(new Request(key), new Response(file, { headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-Name': encodeURIComponent(file.name || 'fil') } }));
+        }
+      } catch (err) { /* nothing to keep; the page shows an empty inbox */ }
+      return Response.redirect(url.pathname.replace(/share\/?$/, '') + '?inbox=1', 303);
+    })());
+    return;
+  }
   if (request.method !== 'GET') { event.respondWith(fetch(request).then(isolated)); return; }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

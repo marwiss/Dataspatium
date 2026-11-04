@@ -184,8 +184,13 @@ Alt, hvad der skal til andre mennesker, findes i tilstanden *Del* (se [dela.md](
   og skrive indholdet i netop det repository. Tokenet bruges i sessionen eller gemmes krypteret, og intet sendes, før
   du trykker *Send til GitHub* eller *Hent fra GitHub*. Kun ændrede filer sendes, i én commit med din besked; ved
   hentning vælger du, som for pakker, om eksisterende datasæt skal erstattes.
+- Direkte til en telefon eller en anden computer på samme netværk: fanen *Enheder* viser en QR-kode, som telefonen
+  scanner; Dataspatium Mobil modtager, viser og sender videre (se [mobil.md](mobil.md)). Begge enheder viser samme
+  kontrolkode, og efter en parring er én scanning nok.
 - Via computerens eller telefonens delingsmenu: fanen *Delingsmenu* sender et datasæt som CSV, Excel, ODS eller JSON,
   eller alle datasæt som pakke, til e-mail, Teams og andre apps (Edge og Chrome; Firefox gemmer filen).
+- Gennemgang først: når datasæt pakkes eller sendes, søger appen efter identitetsnumre, e-mail og telefonnumre og
+  lader dig pseudonymisere eller fjerne kolonnerne i kopien.
 - Som færdig webside: fanen *Udgiv* gør et dashboard eller et dokument til en selvstændig HTML-fil.
 - Ét datasæt: eksportér som SQLite (alt følger med) eller Parquet under Eksportér.
 - API-konfigurationer (`.api.json`), diagrammer og dokumentskabeloner (JSON) og opskrifter (JSON, R eller SQL)

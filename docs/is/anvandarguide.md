@@ -178,8 +178,13 @@ Allt sem á að fara til annars fólks er í hamnum *Deila* (sjá [dela.md](dela
   innihald einmitt þess safns. Lykillinn er notaður í lotunni eða vistaður dulkóðaður, og ekkert er sent fyrr en þú
   ýtir á *Senda á GitHub* eða *Sækja frá GitHub*. Aðeins breyttar skrár eru sendar, í einni færslu (commit) með
   skilaboðum þínum; þegar sótt er velurðu, eins og fyrir pakka, hvort skipta eigi út gagnasöfnum sem eru til.
+- Beint í síma eða aðra tölvu á sama neti: flipinn *Tæki* sýnir QR-kóða sem síminn skannar; Dataspatium Farsími
+  tekur á móti, sýnir og sendir áfram (sjá [mobil.md](mobil.md)). Bæði tæki sýna sama staðfestingarkóða og eftir
+  pörun nægir ein skönnun.
 - Um deilivalmynd tölvunnar eða símans: flipinn *Deilivalmynd* sendir gagnasafn sem CSV, Excel, ODS eða JSON, eða öll
   gagnasöfn sem pakka, í tölvupóst, Teams og önnur forrit (Edge og Chrome; Firefox vistar skrána).
+- Yfirferð fyrst: þegar gagnasöfnum er pakkað eða þau send leitar forritið að kennitölum, netföngum og símanúmerum og
+  leyfir þér að dulnefna eða fjarlægja dálkana í afritinu.
 - Sem tilbúin vefsíða: flipinn *Birta* gerir mælaborð eða skjal að sjálfstæðri HTML-skrá.
 - Eitt gagnasafn: fluttu út sem SQLite (allt fylgir) eða Parquet undir Flytja út.
 - API-uppsetningar (`.api.json`), myndrit og skjalasnið (JSON) og uppskriftir (JSON, R eða SQL) eru fluttar út og hlaðnar inn

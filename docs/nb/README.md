@@ -68,8 +68,10 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; i modusen
   *Del* pakker med valgte datasett og objekter, en melding og en endringslogg, synkronisering med et GitHub-repository,
   datamaskinens delingsmeny og publisering av dashbord og dokumenter som frittstående HTML (se [dela.md](dela.md));
-  kommentarer til datasett og kolonner, sikkerhetskopi av arbeidsområdet som ZIP og, i Edge og Chrome, en portabel
-  mappe med vanlige filer.
+  direkte overføring til telefoner og andre datamaskiner på samme nettverk med QR-kode og kontrollkode, og
+  *Dataspatium Mobil*, som tar imot, viser og sender videre på telefonen (se [mobil.md](mobil.md)); gjennomgang av
+  personopplysninger før noe deles; kommentarer til datasett og kolonner, sikkerhetskopi av arbeidsområdet som ZIP
+  og, i Edge og Chrome, en portabel mappe med vanlige filer.
 - **Holde orden**: mapper og tagger for datasett, filter og sortering, og batchhandlinger på flere datasett på én gang
   (ordne, pakke, eksportere, hente igjen, kjøre oppskrift, slette).
 - **Finne raskt**: modusen *Søk* leter i alle kolonner i ett eller alle datasett, med fasetter som avgrenser, og lagrede
@@ -91,6 +93,7 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - [Vanlige spørsmål](faq.md): lagring, sikkerhet, R, API-er og oppdateringer.
 - [De åtte modusene](lagen.md): hva som finnes hvor og hvorfor.
 - [Søk](soka.md) og [Del](dela.md): finn uten kode, og gi data til andre.
+- [Dataspatium Mobil](mobil.md): telefonen som kurer, mottaker og viser; overføring mellom enheter.
 - [Notatbok](anteckningsbok.md): tekst, R og SQL i celler som blir en rapport.
 - [Regulære uttrykk](regex.md): mønstre for å analysere, rette og dele opp tekst i datasett.
 - [Formater og import](format.md): filformater, tegnkoding, desimaltegn, datoer og kolonnetyper.
@@ -115,8 +118,9 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
   sist, vinner.
 - Den portable mappen krever Edge eller Chrome; Firefox mangler mappetilgang (File System Access). Sikkerhetskopi som ZIP
   fungerer overalt.
-- Safari og mobile nettlesere støttes ikke ennå; en mobilside for telefoner og nettbrett er planlagt til neste versjon.
-  I smale vinduer åpnes panelene allerede nå som ark over arbeidsflaten.
+- Hele appen er laget for datamaskiner; på telefoner og nettbrett brukes Dataspatium Mobil
+  (<https://marwiss.github.io/Dataspatium/m/>), som tar imot, viser og sender videre. Safari støttes ikke for hele
+  appen. I smale vinduer åpnes panelene som ark over arbeidsflaten.
 - De medfølgende eksempeldataene og kartgrensene er svenske; selve appen fungerer med data fra hvor som helst.
 
 ## Feil og forslag

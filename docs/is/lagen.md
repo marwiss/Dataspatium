@@ -23,7 +23,8 @@ snertiskjá með því að halda fingri á hnappnum.
 
 Skipanaspjaldið (Ctrl+K eða stækkunarglerið efst) nær öllu úr einum leitarreit: skipta um ham, opna gagnasafn,
 myndrit eða mælaborð, keyra vinnsluaðgerð á valda gagnasafnið, flytja út, opna vinnusvæðið, leita í gögnum, búa til
-pakka, skipta um þema eða leita að uppfærslum. Ör upp og niður velja, Enter keyrir og Esc lokar; síðast keyrðu
+pakka, afrita tengil hingað, skipta um þema eða leita að uppfærslum. Tenglar eru á forminu
+`index.html#/<hamur>/<stuttheiti>` (eða heiti myndrits í Myndgera, leitartexti í Leita) og virka líka úr möppu. Ör upp og niður velja, Enter keyrir og Esc lokar; síðast keyrðu
 skipanirnar eru efst.
 
 ## Sækja
@@ -113,6 +114,7 @@ Gefa öðrum gögn. **Pakki**: ZIP með völdum gagnasöfnum, myndritum, mælabo
 skilaboðum og breytingaskrá, sem viðtakandinn opnar undir *Taka á móti* og getur skipt út sínum útgáfum með.
 **GitHub**: vinnusvæðið sem mappa í safni, senda og sækja, með aðgangslykli sem er vistaður dulkóðaður.
 **Deilivalmynd**: eigin deilivalmynd tölvunnar eða símans fyrir skrá eða pakka (tölvupóstur, Teams, skilaboðaforrit).
-**Birta**: mælaborð og skjöl sem sjálfstæðar HTML-skrár. **Taka á móti**: pakkar úr skrá eða af vefslóð, með sendanda
-og breytingar sýnilegar áður en nokkuð er tekið inn. Beinn flutningur milli tækja kemur í síðari útgáfu. Sjá
-[dela.md](dela.md).
+**Birta**: mælaborð og skjöl sem sjálfstæðar HTML-skrár. **Tæki**: beinn flutningur í síma og aðrar tölvur á sama neti með QR-kóða, staðfestingarkóða og pörun, og
+Dataspatium Farsími í símanum (sjá [mobil.md](mobil.md)). **Taka á móti**: pakkar úr skrá eða af vefslóð, með
+sendanda og breytingar sýnilegar áður en nokkuð er tekið inn. Gagnasöfn sem fara úr forritinu eru fyrst yfirfarin
+með tilliti til persónuupplýsinga. Sjá [dela.md](dela.md).

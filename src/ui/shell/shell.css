@@ -162,6 +162,15 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-list-actions { margin-top: auto; padding-top: var(--dm-s-3); display: flex; flex-direction: column; gap: var(--dm-s-2); align-items: flex-start; }
 .dm-chip-static { cursor: default; margin-right: var(--dm-s-1); }
 
+/* Dela, Enheter: the QR code on a white field, the verification code and the device code */
+.dm-devices-qr { display: flex; justify-content: center; padding: var(--dm-s-3); background: #fff; border-radius: var(--dm-radius-md); width: fit-content; }
+.dm-devices-qr svg { display: block; width: 240px; height: 240px; }
+.dm-devices-code { font-family: var(--dm-font-mono); font-size: var(--dm-text-2xl); letter-spacing: 0.2em; font-weight: 600; }
+.dm-devices-identity { font-family: var(--dm-font-mono); font-size: var(--dm-text-sm); word-break: break-all; max-width: 100%; }
+.dm-devices-status { font-weight: 500; }
+.dm-devices-status[data-state="connected"] { color: var(--dm-ok); }
+.dm-devices-status[data-state="failed"] { color: var(--dm-error); }
+
 /* Söka: results per dataset with facets and a table of hits */
 .dm-search-result { display: flex; flex-direction: column; gap: var(--dm-s-3); }
 .dm-search-head { display: flex; align-items: center; gap: var(--dm-s-2); flex-wrap: wrap; }

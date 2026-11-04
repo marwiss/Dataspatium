@@ -141,8 +141,10 @@ deler det. Se [bearbeta.md](bearbeta.md).
 Enklest i modusen *Del*: under *Pakke* velger du datasett og om diagrammer, dashbord, maler, notatbøker og skript skal
 være med, skriver en melding og sender ZIP-filen, for eksempel via fanen *Delingsmeny* (e-post, Teams og andre
 apper). Kollegaen åpner den under *Motta*, ser meldingen din og hva som er endret, og kan erstatte sine egne
-versjoner. Kommentarer, mapper og tagger følger med. Arbeider dere med samme arbeidsområde, kan dere også bruke et
-felles GitHub-repository (fanen *GitHub*). Dashbord og dokumenter kan publiseres som frittstående HTML-filer (fanen
+versjoner. Kommentarer, mapper og tagger følger med. Er dere på samme nettverk, går pakken direkte mellom datamaskinene eller via
+telefonen (fanen *Enheter*, se [mobil.md](mobil.md)). Arbeider dere med samme arbeidsområde, kan dere også bruke et
+felles GitHub-repository (fanen *GitHub*). Før noe forlater appen, gjennomgås datasettene for personopplysninger,
+som kan pseudonymiseres eller fjernes i kopien. Dashbord og dokumenter kan publiseres som frittstående HTML-filer (fanen
 *Publiser*). Du kan også eksportere ett enkelt datasett som SQLite (beholder typer, etiketter, kommentarer og
 historikk) eller ta en sikkerhetskopi av hele arbeidsområdet. Diagrammer og dokumentmaler kan eksporteres som
 JSON-filer, API-konfigurasjoner som `.api.json` og oppskrifter som JSON, R eller SQL. Se [dela.md](dela.md).
@@ -169,9 +171,18 @@ eller fjerne dem.
 
 ## Kan jeg bruke appen på telefonen?
 
-Ikke ennå. En mobilside for telefoner og nettbrett, og overføring direkte mellom enheter, er planlagt til neste
-versjon. Allerede nå tilpasser vinduet seg: i smale vinduer viser modusvelgeren ikoner, og panelene åpnes som ark
-over arbeidsflaten.
+Hele appen er laget for datamaskiner, men telefonen kan være med: Dataspatium Mobil
+(<https://marwiss.github.io/Dataspatium/m/>) tar imot pakker og filer fra datamaskinen over det lokale nettverket,
+viser tabellene, sender dem videre og leverer dem til en annen datamaskin. Åpne *Del → Enheter* på datamaskinen og
+skann QR-koden; se [mobil.md](mobil.md). På nettbrett i servermodus kan hele appen brukes: i smale vinduer viser
+modusvelgeren ikoner, og panelene åpnes som ark over arbeidsflaten.
+
+## Hvordan overfører jeg data til en telefon uten internett?
+
+Datamaskinen og telefonen trenger bare samme lokale nettverk; overføringen går direkte mellom dem med WebRTC og
+passerer ingen server. Første gang må telefonen hente mobilsiden fra nettet (eller fra en egen nettserver på
+intranettet); deretter ligger den i hurtigbufferen. Finnes det ikke noe felles nettverk: slå på internettdeling på
+telefonen og koble datamaskinen til den. Se [mobil.md](mobil.md).
 
 ## Finner du ikke svaret her?
 

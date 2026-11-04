@@ -23,7 +23,9 @@ berøringsskjerm ved å holde fingeren på knappen.
 
 Kommandopaletten (Ctrl+K eller forstørrelsesglasset øverst) når alt fra ett søkefelt: bytt modus, åpne et datasett,
 et diagram eller et dashbord, kjør en bearbeidingshandling på det valgte datasettet, eksporter, åpne arbeidsområdet,
-søk i data, lag en pakke, bytt tema eller se etter oppdateringer. Pil opp og ned velger, Enter kjører og Esc lukker;
+søk i data, lag en pakke, kopier en lenke hit, bytt tema eller se etter oppdateringer. Lenker har formen
+`index.html#/<modus>/<kortnavn>` (eller et diagrams navn i Visualiser, en søketekst i Søk) og virker også fra en
+mappe. Pil opp og ned velger, Enter kjører og Esc lukker;
 de sist kjørte kommandoene ligger øverst.
 
 ## Hent
@@ -116,6 +118,7 @@ Gi data til andre. **Pakke**: en ZIP med valgte datasett, diagrammer, dashbord, 
 melding og en endringslogg, som mottakeren åpner under *Motta* og kan erstatte sine versjoner med. **GitHub**:
 arbeidsområdet som en mappe i et repository, send og hent, med et tilgangstoken som lagres kryptert.
 **Delingsmeny**: datamaskinens eller telefonens egen delingsmeny for en fil eller en pakke (e-post, Teams,
-meldingsapper). **Publiser**: dashbord og dokumenter som frittstående HTML-filer. **Motta**: pakker fra fil eller
-nettadresse, med avsender og endringer synlige før noe tas inn. Direkte overføring mellom enheter kommer i en senere
-versjon. Se [dela.md](dela.md).
+meldingsapper). **Publiser**: dashbord og dokumenter som frittstående HTML-filer. **Enheter**: direkte overføring til telefoner og andre datamaskiner på samme nettverk med QR-kode, kontrollkode
+og paring, og Dataspatium Mobil på telefonen (se [mobil.md](mobil.md)). **Motta**: pakker fra fil eller
+nettadresse, med avsender og endringer synlige før noe tas inn. Datasett som forlater appen, gjennomgås først for
+personopplysninger. Se [dela.md](dela.md).

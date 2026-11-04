@@ -45,7 +45,7 @@ að vinnuflötinum. Alt+1 til Alt+8 skipta um ham með lyklaborðinu.
 | Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; SQL-stjórnborð á valda gagnasafnið; reglulegar segðir; minnisbók sem verður að skýrslu |
 | Myndgera | Býrð til myndrit með Vega-Lite, D3-sniðum eða R-skriftum, vistar, flytur út og býrð þau til í hópkeyrslu ([visualisera.md](visualisera.md)) |
 | Flytja út | Hleður niður gögnum sem CSV, Excel, JSON eða SQLite, vistuðum myndritum sem SVG, PNG eða PDF og skjölum úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
-| Deila | Pakkar gagnasöfnum með myndritum og sniðum fyrir samstarfsfólk, sendir vinnusvæðið á GitHub, deilir um deilivalmynd tölvunnar og birtir mælaborð sem HTML ([dela.md](dela.md)) |
+| Deila | Pakkar gagnasöfnum með myndritum og sniðum fyrir samstarfsfólk, sendir þau beint í síma og aðrar tölvur með QR-kóða ([mobil.md](mobil.md)), sendir vinnusvæðið á GitHub, deilir um deilivalmynd tölvunnar og birtir mælaborð sem HTML ([dela.md](dela.md)) |
 
 ## 4. Flyttu inn skrá
 

@@ -49,6 +49,11 @@ stängs med Esc eller klick i arbetsytan, och pekytor är minst 44 px i de smala
 med `.dm-page-head` (rubrik med ikon till vänster, åtgärder till höger) och använder kort (`.dm-card`) för
 grupperat innehåll.
 
+**Dataspatium Mobil** (`m/index.html`, `src/mobile/`) har ett eget, enklare skelett med samma tokens och
+komponenter: en rubrikrad (tillbaka, titel, inställningar), en kolumn med kort (`.dm-m-card`), knappar i full bredd
+med minst 48 px höjd (`.dm-m-actions`) och tabeller med fast rubrikrad och fast första kolumn (`.dm-m-table`).
+Inga hover-beroenden; allt nås med tryck.
+
 ## Regler
 
 - Högst en primärknapp per vy. Primärknappen är den åtgärd användaren oftast vill göra.
@@ -104,6 +109,10 @@ Samma ord för samma sak i hela appen och dokumentationen.
 | Komponent (del av appen som hämtas vid behov) | Plugin, modul, tillägg |
 | Tips (text som visas när pekaren vilar på en knapp) | Tooltip, verktygstips |
 | Statusrad (raden längst ned) | Fot, footer, statusfält |
+| Enhet (telefon, surfplatta eller dator i Enheter), para, parad | Device, peer, koppla ihop |
+| Kontrollkod (sex siffror som båda enheterna visar) | Verifieringskod, PIN |
+| Mobilsidan, Dataspatium Mobil | Mobilappen, lättversionen |
+| Granskning före delning | Delningsgranskning, PII-kontroll |
 | Språk | Locale, lokalisering (i gränssnittet) |
 | Land (filtret för API-källor) | Region, område |
 | Grundkurs (den interaktiva genomgången), steg, uppgift | Guide, tur, tutorial, lektion |

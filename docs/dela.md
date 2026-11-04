@@ -1,8 +1,8 @@
 # Dela
 
 Läget Dela samlar det som handlar om att ge data till andra människor och enheter. Exportera handlar om filer till
-den egna datorn; Dela om paket, GitHub, delningsmenyn, publicering och mottagning. Fliken Enheter, direkt
-överföring mellan datorer och telefoner, kommer i 2.1.
+den egna datorn; Dela om paket, GitHub, enheter, delningsmenyn, publicering och mottagning. Innan datamängder lämnar
+appen går de genom en granskning av personuppgifter (se nedan).
 
 ## Paket
 
@@ -22,12 +22,33 @@ skickas, i en commit med ditt meddelande. Vid hämtning väljer du, som för pak
 ersättas (den egna versionen sparas under *Versioner*). Första gången frågar appen om tillåtelse att kontakta
 GitHub (se *Internetåtkomst* i [anvandarguide.md](anvandarguide.md)).
 
+## Enheter
+
+Direkt överföring till telefoner, surfplattor och andra datorer över det lokala nätverket, utan server. Datorn
+visar en QR-kod; telefonen skannar den med kameran och öppnar Dataspatium Mobil, som tar emot paket och filer,
+visar tabellerna och kan skicka dem vidare eller lämna dem till en annan dator. Första gången visar telefonen en
+kod som skrivs in på datorn och enheterna paras; sedan räcker en skanning. Båda enheterna visar samma kontrollkod,
+och mottagaren godkänner innan något tas emot. Två datorer ansluter med koder som klistras in. Hela flödet, krav
+och felsökning finns i [mobil.md](mobil.md). Knappen *QR-kod till mobilsidan* visar adressen att skanna för att
+öppna mobilsidan första gången.
+
+## Granskning före delning
+
+När datamängder paketeras, skickas till en enhet eller delas via delningsmenyn söker appen igenom kolumnerna efter
+identitetsnummer (svenska, danska, norska, finska och isländska), e-postadresser och telefonnummer, på
+kolumnnamn och värden. Hittas något visas en dialog där du för varje kolumn väljer *Behåll*, *Pseudonymisera*
+(samma värde ger samma kod, men värdet kan inte läsas ut) eller *Ta bort kolumnen*. Bara kopian som delas ändras;
+datamängden i appen är kvar som den är, och paketets manifest anger vilka kolumner som ändrats. Granskningen ser
+inte allt: namn, adresser och fritext måste du bedöma själv.
+
 ## Delningsmeny
 
 Datorns eller telefonens egen delningsmeny: skicka en fil till e-post, Teams, meddelandeappar eller andra appar.
 Välj om den valda datamängden ska delas som fil (CSV, Excel, ODS eller JSON) eller om alla datamängder ska delas
 som ett paket, och tryck på *Dela*. Delningsmenyn för filer finns i Edge och Chrome på Windows och på mobil; i
-andra webbläsare (Firefox) sparas filen i stället, och knappen heter då *Spara fil*.
+andra webbläsare (Firefox) sparas filen i stället, och knappen heter då *Spara fil*. På en telefon med Dataspatium
+Mobil installerad kan filer också delas *till* Dataspatium från andra appar; de hamnar under *Mottaget* på
+mobilsidan.
 
 ## Publicera
 
@@ -43,7 +64,8 @@ först; datamängder som redan finns kan ersättas med paketets version, annars 
 
 ## Vad som inte går
 
-En webbläsare kan inte vara server, så andra kan inte hämta data direkt från din dator utan att en fil eller ett
-paket passerar: via delningsmenyn, en molnmapp (den portabla mappen under Hantera kan ligga i OneDrive eller
-Dropbox), GitHub eller, från 2.1, direkt mellan enheter med WebRTC. `mailto:`-länkar kan inte bära bilagor; använd
-delningsmenyn eller spara filen och bifoga den.
+En webbläsare kan inte vara server, så andra kan inte hämta data från din dator när den är avstängd eller när de
+inte är på samma nätverk; då passerar en fil eller ett paket via delningsmenyn, en molnmapp (den portabla mappen
+under Hantera kan ligga i OneDrive eller Dropbox) eller GitHub. På samma nätverk går överföringen direkt mellan
+enheterna (fliken Enheter). `mailto:`-länkar kan inte bära bilagor; använd delningsmenyn eller spara filen och
+bifoga den.

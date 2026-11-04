@@ -1,0 +1,38 @@
+/* SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0 */
+/* Dataspatium Mobil: one column, large touch targets, the same tokens and components as the desktop app. */
+
+.dm-m { display: flex; flex-direction: column; min-height: 100dvh; background: var(--dm-bg); color: var(--dm-text); font-family: var(--dm-font-sans); }
+.dm-m-head { display: flex; align-items: center; gap: var(--dm-s-2); min-height: 52px; padding: 0 var(--dm-s-3); padding-top: env(safe-area-inset-top); border-bottom: 1px solid var(--dm-border); position: sticky; top: 0; background: var(--dm-surface); z-index: 2; }
+.dm-m-logo { display: inline-flex; color: var(--dm-accent); }
+.dm-m-title { flex: 1; min-width: 0; margin: 0; font-size: var(--dm-text-lg); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-m-main { flex: 1; width: 100%; max-width: 720px; margin: 0 auto; padding: var(--dm-s-3); padding-bottom: calc(var(--dm-s-6) + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--dm-s-3); box-sizing: border-box; }
+.dm-m-card { background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); padding: var(--dm-s-3); display: flex; flex-direction: column; gap: var(--dm-s-2); }
+.dm-m-card h2 { margin: 0; font-size: var(--dm-text-md); font-weight: 600; }
+.dm-m-actions { display: flex; flex-direction: column; gap: var(--dm-s-2); }
+.dm-m-actions dm-button, .dm-m-actions dm-button > button { width: 100%; }
+.dm-m-actions dm-button > button { min-height: 48px; justify-content: center; font-size: var(--dm-text-md); }
+.dm-m-code { font-family: var(--dm-font-mono); font-size: 2rem; letter-spacing: 0.15em; text-align: center; font-weight: 600; }
+.dm-m-verify { display: flex; flex-direction: column; align-items: center; gap: var(--dm-s-1); padding: var(--dm-s-2) 0; }
+.dm-m-identity { font-family: var(--dm-font-mono); font-size: var(--dm-text-md); word-break: break-all; text-align: center; line-height: 1.6; margin: 0; }
+.dm-m-status { font-weight: 500; margin: 0; }
+.dm-m-status[data-state="connected"] { color: var(--dm-ok); }
+.dm-m-status[data-state="failed"] { color: var(--dm-error); }
+.dm-m-queue { margin: 0; padding: var(--dm-s-2); border-radius: var(--dm-radius-sm); background: var(--dm-surface-2); }
+.dm-m-qr { display: flex; justify-content: center; padding: var(--dm-s-3); background: #fff; border-radius: var(--dm-radius-md); align-self: center; }
+.dm-m-list { display: flex; flex-direction: column; }
+.dm-m-item { display: flex; align-items: center; gap: var(--dm-s-2); width: 100%; min-height: 48px; padding: var(--dm-s-2); border: 0; border-radius: var(--dm-radius-sm); background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.dm-m-item:hover, .dm-m-item:focus-visible { background: var(--dm-surface-hover); }
+.dm-m-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dm-m-item-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-m-item-sub { color: var(--dm-text-muted); font-size: var(--dm-text-sm); }
+.dm-m-video { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--dm-radius-md); background: #000; }
+.dm-m-progress { display: flex; flex-direction: column; gap: var(--dm-s-2); }
+.dm-m-pager { display: flex; align-items: center; justify-content: space-between; gap: var(--dm-s-2); }
+.dm-m-table-wrap { overflow: auto; max-height: 70dvh; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); -webkit-overflow-scrolling: touch; }
+.dm-m-table { border-collapse: separate; border-spacing: 0; font-size: var(--dm-text-sm); min-width: 100%; }
+.dm-m-table th, .dm-m-table td { padding: 6px 10px; border-bottom: 1px solid var(--dm-border); white-space: nowrap; text-align: left; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; }
+.dm-m-table th { position: sticky; top: 0; background: var(--dm-surface-2); z-index: 1; font-weight: 600; }
+/* The first column stays while the table scrolls sideways. */
+.dm-m-table th:first-child, .dm-m-table td:first-child { position: sticky; left: 0; background: var(--dm-surface); z-index: 2; }
+.dm-m-table th:first-child { background: var(--dm-surface-2); z-index: 3; }
+.dm-m-table td.dm-num { text-align: right; font-variant-numeric: tabular-nums; }

@@ -23,7 +23,9 @@ kohdistuksen näppäimistöltä; kosketusnäytöllä pitämällä sormea painikk
 
 Komentopaletti (Ctrl+K tai suurennuslasi ylhäällä) tavoittaa kaiken yhdestä hakukentästä: vaihda tilaa, avaa
 aineisto, kaavio tai kojelauta, suorita muokkaustoiminto valitulle aineistolle, vie, avaa työtila, hae datasta, luo
-paketti, vaihda teemaa tai tarkista päivitykset. Nuoli ylös ja alas valitsee, Enter suorittaa ja Esc sulkee; viimeksi
+paketti, kopioi linkki tähän, vaihda teemaa tai tarkista päivitykset. Linkit ovat muotoa
+`index.html#/<tila>/<lyhytnimi>` (tai kaavion nimi Visualisoi-tilassa, hakuteksti Hae-tilassa) ja toimivat myös
+kansiosta. Nuoli ylös ja alas valitsee, Enter suorittaa ja Esc sulkee; viimeksi
 suoritetut komennot ovat ylimpänä.
 
 ## Nouda
@@ -123,5 +125,7 @@ ja skripteistä, viesti ja muutosloki, jonka vastaanottaja avaa kohdassa *Vastaa
 versionsa. **GitHub**: työtila kansiona repositoriossa, lähetä ja nouda, salattuna tallennetulla
 käyttöoikeustunnuksella. **Jakovalikko**: tietokoneen tai puhelimen oma jakovalikko tiedostolle tai paketille
 (sähköposti, Teams, viestisovellukset). **Julkaise**: kojelaudat ja asiakirjat itsenäisinä HTML-tiedostoina.
-**Vastaanota**: paketit tiedostosta tai verkko-osoitteesta, lähettäjä ja muutokset näkyvissä ennen kuin mitään
-otetaan vastaan. Suora siirto laitteiden välillä tulee myöhemmässä versiossa. Ks. [dela.md](dela.md).
+**Laitteet**: suora siirto puhelimiin ja toisiin tietokoneisiin samassa verkossa QR-koodilla, tarkistuskoodilla
+ja parituksella sekä Dataspatium Mobiili puhelimessa (ks. [mobil.md](mobil.md)). **Vastaanota**: paketit
+tiedostosta tai verkko-osoitteesta, lähettäjä ja muutokset näkyvissä ennen kuin mitään otetaan vastaan.
+Sovelluksesta lähtevät aineistot tarkistetaan ensin henkilötietojen varalta. Ks. [dela.md](dela.md).

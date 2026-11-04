@@ -24,12 +24,52 @@
     if (!chosen || LANGUAGES.indexOf(chosen) < 0) return LANGUAGES.slice();
     return chosen === 'sv' ? ['sv'] : ['sv', chosen];
   }
-  const scripts = [
+  const languageScripts = chosenLanguages().map((code) => 'src/ui/i18n/' + code + '.js');
+  /**
+   * Dataspatium Mobil (m/index.html sets DATASPATIUM_PROFILE = 'mobile') loads only what a phone needs: the
+   * platform, the SQLite engine for viewing, the components, the transfer module and the mobile app. No R, no
+   * importers, no modes.
+   */
+  const MOBILE = [
+    'src/platform/registry.js',
+    'src/platform/capabilities.js',
+  ].concat(languageScripts, [
+    'src/ui/i18n/i18n.js',
+    'src/platform/sync.js',
+    'src/platform/assets.js',
+    'vendor/manifest.js',
+    'src/platform/worker-shim.js',
+    'src/platform/net-shim.js',
+    'src/platform/workers.js',
+    'src/platform/storage/idb-store.js',
+    'src/platform/consent.js',
+    'src/platform/storage/zip-bundle.js',
+    'src/platform/storage/files.js',
+    'src/platform/p2p.js',
+    'src/engines/sqlite/sqlite-worker.js',
+    'src/engines/sqlite/sqlite-engine.js',
+    'src/ui/design/theme.js',
+    'src/ui/design/fonts.js',
+    'src/ui/design/icons.js',
+    'src/ui/components/base.js',
+    'src/ui/components/basic.js',
+    'src/ui/components/fields.js',
+    'src/ui/components/layout.js',
+    'src/ui/components/overlays.js',
+    'src/ui/components/dropzone.js',
+    'src/ui/components/table.js',
+    'src/ui/components/code-editor.js',
+    'src/ui/components/tooltip.js',
+    'src/ui/components/index.js',
+    'src/ui/share/qr.js',
+    'src/mobile/app.js',
+  ]);
+  const full = [
     // Platform
     'src/platform/registry.js',
     'src/platform/capabilities.js',
     // Languages first: every later module may build user-facing text with Dataspatium.t at load time.
-  ].concat(chosenLanguages().map((code) => 'src/ui/i18n/' + code + '.js'), [
+  ].concat(languageScripts, [
     'src/ui/i18n/i18n.js',
     'src/platform/sync.js',
     'src/platform/assets.js',
@@ -47,6 +87,7 @@
     'src/platform/storage/folder-store.js',
     'src/platform/storage/github-store.js',
     'src/platform/updates.js',
+    'src/platform/p2p.js',
     // Engines
     'src/engines/sqlite/sqlite-worker.js',
     'src/engines/sqlite/sqlite-engine.js',
@@ -163,8 +204,11 @@
     'src/ui/docs/document-panel.js',
     'src/ui/analysis/notebook-panel.js',
     'src/ui/analysis/regex-panel.js',
+    'src/ui/share/review.js',
+    'src/ui/share/devices-panel.js',
     'src/ui/share/bundle-dialog.js',
     'src/ui/share/github-card.js',
+    'src/ui/share/qr.js',
     'src/ui/datasets/batch-actions.js',
     'src/ui/settings/network-card.js',
     'src/ui/modes/inhamta.js',
@@ -176,8 +220,10 @@
     'src/ui/modes/exportera.js',
     'src/ui/modes/dela.js',
     'src/app.js',
+    // The mobile app is small and part of the test page; m/index.html loads it through the MOBILE list above.
+    'src/mobile/app.js',
   ]);
-  // The page may live anywhere; resolve paths relative to this script's own src attribute.
+  const scripts = globalThis.DATASPATIUM_PROFILE === 'mobile' ? MOBILE : full;  // The page may live anywhere; resolve paths relative to this script's own src attribute.
   const current = /** @type {HTMLScriptElement|null} */ (document.currentScript);
   const src = (current && current.getAttribute('src')) || 'src/boot.js';
   const base = src.replace(/src\/boot\.js(\?.*)?$/, '');

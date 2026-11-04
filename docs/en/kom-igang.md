@@ -48,7 +48,7 @@ widths are changed by dragging the edge towards the work area. Alt+1 to Alt+8 sw
 | Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; SQL console against the selected dataset; regular expressions; a notebook that becomes a report |
 | Visualise | Build charts with Vega-Lite, D3 templates or R scripts, save, export and create them in batch ([visualisera.md](visualisera.md)) |
 | Export | Download data as CSV, Excel, JSON or SQLite, saved charts as SVG, PNG or PDF and documents from templates as HTML, Word, PDF, Markdown or LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
-| Share | Bundle datasets with charts and templates for colleagues, push the workspace to GitHub, share through the computer's share menu and publish dashboards as HTML ([dela.md](dela.md)) |
+| Share | Bundle datasets with charts and templates for colleagues, send them directly to phones and other computers with a QR code ([mobil.md](mobil.md)), push the workspace to GitHub, share through the computer's share menu and publish dashboards as HTML ([dela.md](dela.md)) |
 
 ## 4. Import a file
 

@@ -155,8 +155,10 @@ dataset before you share it. See [bearbeta.md](bearbeta.md).
 Easiest in the *Share* mode: under *Bundle* you choose datasets and whether charts, dashboards, templates, notebooks
 and scripts should come along, write a message and send the ZIP file, for example through the *Share menu* tab
 (e-mail, Teams and other apps). The colleague opens it under *Receive*, sees your message and what has changed and can
-replace their own versions. Comments, folders and tags come along. If you work on the same workspace, you can also use
-a shared GitHub repository (the *GitHub* tab). Dashboards and documents can be published as standalone HTML files (the
+replace their own versions. Comments, folders and tags come along. On the same network the bundle goes directly between the computers or through the
+phone (the *Devices* tab, see [mobil.md](mobil.md)). If you work on the same workspace, you can also use a shared
+GitHub repository (the *GitHub* tab). Before anything leaves the app, the datasets are reviewed for personal
+data, which can be pseudonymised or dropped in the copy. Dashboards and documents can be published as standalone HTML files (the
 *Publish* tab). You can also export a single dataset as SQLite (keeps types, labels, comments and history) or take a
 backup of the whole workspace. Charts and document templates can be exported as JSON files, API configurations as
 `.api.json`, and recipes as JSON, R or SQL. See [dela.md](dela.md).
@@ -184,9 +186,18 @@ can fetch them in advance or remove them.
 
 ## Can I use the app on my phone?
 
-Not yet. A mobile page for phones and tablets, and transfer directly between devices, is planned for the next
-version. The window already adapts: in narrow windows the mode switcher shows icons and the panels open as sheets
-over the work area.
+The whole app is made for computers, but the phone can take part: Dataspatium Mobile
+(<https://marwiss.github.io/Dataspatium/m/>) receives bundles and files from the computer over the local network,
+shows the tables, forwards them and hands them to another computer. Open *Share → Devices* on the computer and scan
+the QR code; see [mobil.md](mobil.md). On tablets in server mode the whole app can be used: in narrow windows the
+mode switcher shows icons and the panels open as sheets over the work area.
+
+## How do I move data to a phone without the internet?
+
+The computer and the phone only need the same local network; the transfer goes directly between them with WebRTC
+and passes no server. The first time, the phone has to fetch the mobile page from the web (or from a web server of
+your own on the intranet); after that it sits in the cache. If there is no shared network: turn on tethering on the
+phone and connect the computer to it. See [mobil.md](mobil.md).
 
 ## Can't find the answer here?
 

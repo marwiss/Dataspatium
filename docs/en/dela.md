@@ -1,8 +1,8 @@
 # Share
 
 The Share mode gathers everything about giving data to other people and devices. Export is about files to your own
-computer; Share about bundles, GitHub, the share menu, publishing and receiving. The Devices tab, direct transfer
-between computers and phones, comes in 2.1.
+computer; Share about bundles, GitHub, devices, the share menu, publishing and receiving. Before datasets leave
+the app they go through a review of personal data (see below).
 
 ## Bundle
 
@@ -22,12 +22,33 @@ GitHub*. Only changed files are sent, in one commit with your message. When fetc
 whether datasets that already exist are replaced (your own version is kept under *Versions*). The first time, the
 app asks for permission to contact GitHub (see *Internet access* in [anvandarguide.md](anvandarguide.md)).
 
+## Devices
+
+Direct transfer to phones, tablets and other computers over the local network, without a server. The computer
+shows a QR code; the phone scans it with the camera and opens Dataspatium Mobile, which receives bundles and files,
+shows the tables and can forward them or hand them to another computer. The first time, the phone shows a code
+that is typed into the computer and the devices are paired; after that one scan is enough. Both devices show the
+same verification code, and the receiver approves before anything is received. Two computers connect with pasted
+codes. The whole flow, requirements and troubleshooting are in [mobil.md](mobil.md). The button *QR code for the
+mobile page* shows the address to scan for opening the mobile page the first time.
+
+## Review before sharing
+
+When datasets are bundled, sent to a device or shared through the share menu, the app looks through the columns
+for identity numbers (Swedish, Danish, Norwegian, Finnish and Icelandic), e-mail addresses and phone numbers, by
+column names and values. If something is found, a dialog lets you choose *Keep*, *Pseudonymise* (the same value
+gives the same code, but the value cannot be read back) or *Drop the column* for each column. Only the copy that
+is shared changes; the dataset in the app stays as it is, and the bundle's manifest records which columns were
+changed. The review does not see everything: names, addresses and free text you have to judge yourself.
+
 ## Share menu
 
 The computer's or phone's own share menu: send a file to e-mail, Teams, messaging apps or other apps. Choose whether
 the selected dataset is shared as a file (CSV, Excel, ODS or JSON) or whether all datasets are shared as a bundle,
 and press *Share*. The share menu for files exists in Edge and Chrome on Windows and on mobile; in other browsers
-(Firefox) the file is saved instead, and the button is then called *Save file*.
+(Firefox) the file is saved instead, and the button is then called *Save file*. On a phone with Dataspatium Mobile
+installed, files can also be shared *to* Dataspatium from other apps; they end up under *Received* on the mobile
+page.
 
 ## Publish
 
@@ -43,7 +64,8 @@ first; datasets that already exist can be replaced with the bundle's version, ot
 
 ## What is not possible
 
-A browser cannot be a server, so others cannot fetch data directly from your computer without a file or a bundle
-passing between you: through the share menu, a cloud folder (the portable folder under Manage can live in OneDrive or
-Dropbox), GitHub or, from 2.1, directly between devices with WebRTC. `mailto:` links cannot carry attachments; use
-the share menu or save the file and attach it.
+A browser cannot be a server, so others cannot fetch data from your computer when it is off or when they are not on
+the same network; then a file or a bundle passes through the share menu, a cloud folder (the portable folder under
+Manage can live in OneDrive or Dropbox) or GitHub. On the same network the transfer goes directly between the
+devices (the Devices tab). `mailto:` links cannot carry attachments; use the share menu or save the file and attach
+it.

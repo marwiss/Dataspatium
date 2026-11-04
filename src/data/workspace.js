@@ -54,8 +54,11 @@
       const entries = [];
       for (const meta of listed) {
         const path = `datasets/${meta.id}.sqlite`;
-        if (!only || only.has(meta.id)) files[path] = new Uint8Array(await datasets.exportBytes(meta.id));
-        entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: meta.columnCount, updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path });
+        // The review before sharing may pseudonymise or drop columns in the copy (options.transform[id]).
+        const tr = options.transform && options.transform[meta.id] ? options.transform[meta.id] : null;
+        if (!only || only.has(meta.id)) files[path] = new Uint8Array(await (tr ? datasets.exportBytesTransformed(meta.id, tr) : datasets.exportBytes(meta.id)));
+        const dropped = tr ? (tr.drop || []).length : 0;
+        entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
       }
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
       const vizCharts = optional('viz/charts');
@@ -154,7 +157,7 @@
       const changes = await changelog.forDatasets(ids);
       const open = [];
       for (const ds of changes) for (const c of await comments.list(ds.id)) if (!c.resolved) open.push({ dataset: ds.name, author: c.author, column: c.column, text: c.text });
-      const { files, counts } = await collect({ datasetIds: ids, listAll: false, include: options.include, kind: 'bundle', name, extra: { author, message, changes } });
+      const { files, counts } = await collect({ datasetIds: ids, listAll: false, include: options.include, kind: 'bundle', name, extra: { author, message, changes }, transform: options.transform });
       files['CHANGELOG.md'] = changelog.markdown({ name: name || D.t('bundle.default.name'), author, message, created, changes, comments: open });
       const blob = await zip.createZip(files, { level: 6 });
       // The next bundle's change log starts here.

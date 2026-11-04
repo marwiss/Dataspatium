@@ -65,8 +65,10 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
 - **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; í hamnum
   *Deila* pakka með völdum gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, samstillingu við GitHub-safn,
-  deilivalmynd tölvunnar og birtingu mælaborða og skjala sem sjálfstæðra HTML-skráa (sjá [dela.md](dela.md));
-  athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með
+  deilivalmynd tölvunnar og birtingu mælaborða og skjala sem sjálfstæðra HTML-skráa (sjá [dela.md](dela.md)); beinan
+  flutning í síma og aðrar tölvur á sama neti með QR-kóða og staðfestingarkóða, og *Dataspatium Farsíma*, sem tekur á
+  móti, sýnir og sendir áfram í símanum (sjá [mobil.md](mobil.md)); yfirferð persónuupplýsinga áður en nokkru er
+  deilt; athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með
   venjulegum skrám.
 - **Halda röð og reglu**: möppur og merki fyrir gagnasöfn, síun og röðun, og hópaðgerðir á fleiri gagnasöfn í einu
   (raða, pakka, flytja út, sækja aftur, keyra uppskrift, eyða).
@@ -88,6 +90,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
 - [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
 - [Leita](soka.md) og [Deila](dela.md): finna án kóða, og gefa öðrum gögn.
+- [Dataspatium Farsími](mobil.md): síminn sem sendill, viðtakandi og skoðari; flutningur milli tækja.
 - [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
 - [Reglulegar segðir](regex.md): mynstur til að greina, leiðrétta og skipta upp texta í gagnasöfnum.
 - [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
@@ -112,8 +115,9 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
   síðast vinnur.
 - Færanlega mappan krefst Edge eða Chrome; Firefox hefur ekki möppuaðgang (File System Access). Afrit sem ZIP virkar alls
   staðar.
-- Safari og farsímavafrar eru ekki studdir enn; farsímasíða fyrir síma og spjaldtölvur er áætluð í næstu útgáfu. Í
-  þröngum gluggum opnast spjöldin þegar nú sem yfirlagsspjöld yfir vinnuflötinn.
+- Allt forritið er gert fyrir tölvur; í símum og spjaldtölvum er Dataspatium Farsími notaður
+  (<https://marwiss.github.io/Dataspatium/m/>), sem tekur á móti, sýnir og sendir áfram. Safari er ekki stutt fyrir
+  allt forritið. Í þröngum gluggum opnast spjöldin sem yfirlagsspjöld yfir vinnuflötinn.
 - Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
 
 ## Villur og tillögur

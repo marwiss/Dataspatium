@@ -191,9 +191,14 @@ Kaikki, mikä on tarkoitettu muille ihmisille, on *Jaa*-tilassa (ks. [dela.md](d
   istunnon ajan tai se tallennetaan salattuna, eikä mitään lähetetä ennen kuin painat *Lähetä GitHubiin* tai *Nouda
   GitHubista*. Vain muuttuneet tiedostot lähetetään yhtenä committina viestisi kera; noudettaessa valitset, kuten
   paketeille, korvataanko olemassa olevat aineistot.
+- Suoraan puhelimeen tai toiseen tietokoneeseen samassa verkossa: välilehti *Laitteet* näyttää QR-koodin, jonka
+  puhelin skannaa; Dataspatium Mobiili vastaanottaa, näyttää ja jakaa edelleen (ks. [mobil.md](mobil.md)). Molemmat
+  laitteet näyttävät saman tarkistuskoodin, ja parituksen jälkeen yksi skannaus riittää.
 - Tietokoneen tai puhelimen jakovalikon kautta: välilehti *Jakovalikko* lähettää aineiston CSV-, Excel-, ODS- tai
   JSON-muodossa tai kaikki aineistot pakettina sähköpostiin, Teamsiin ja muihin sovelluksiin (Edge ja Chrome; Firefox
   tallentaa tiedoston).
+- Tarkistus ensin: kun aineistoja paketoidaan tai lähetetään, sovellus etsii henkilötunnuksia, sähköposteja ja
+  puhelinnumeroita ja antaa pseudonymisoida tai poistaa sarakkeet kopiosta.
 - Valmiina verkkosivuna: välilehti *Julkaise* tekee kojelaudasta tai asiakirjasta itsenäisen HTML-tiedoston.
 - Yksi aineisto: vie SQLite- (kaikki mukana) tai Parquet-muodossa Vie-tilassa.
 - API-määritykset (`.api.json`), kaaviot ja asiakirjamallit (JSON) ja reseptit (JSON, R tai SQL) viedään ja ladataan

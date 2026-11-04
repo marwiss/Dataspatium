@@ -8,10 +8,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/dela', ['ui/base', 'ui/share/bundle', 'ui/share/github'], (base, share, github) => {
+  D.define('ui/modes/dela', ['ui/base', 'ui/share/bundle', 'ui/share/github', 'ui/share/devices'], (base, share, github, devices) => {
     const { h, t, i18n, replace } = base;
-    const TABS = ['paket', 'github', 'share', 'publish', 'receive'];
-    const TAB_ICONS = { paket: 'package', github: 'git-branch', share: 'share-2', publish: 'globe', receive: 'download' };
+    const TABS = ['paket', 'github', 'devices', 'share', 'publish', 'receive'];
+    const TAB_ICONS = { paket: 'package', github: 'git-branch', devices: 'smartphone', share: 'share-2', publish: 'globe', receive: 'download' };
     /** Formats offered in the share sheet (the ones other apps open directly). */
     const SHARE_FORMATS = ['csv', 'xlsx', 'ods', 'json'];
 
@@ -22,7 +22,9 @@
       let unsubscribe = null;
       let tab = 'paket';
       let githubCard = null;
+      let devicesPanel = null;
       const dropGithub = () => { if (githubCard) { githubCard.destroy(); githubCard = null; } };
+      const dropDevices = () => { if (devicesPanel) { devicesPanel.destroy(); devicesPanel = null; } };
       const selected = () => { const s = store.get(); return s.datasets.find((d) => d.id === s.selectedId) || null; };
       const fail = (err) => { shell.log(String((err && err.message) || err), 'error'); ui.toast.show(String((err && err.message) || err), { kind: 'error' }); };
 
@@ -31,7 +33,7 @@
         unsubscribe = store.subscribe((_state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) { unsubscribe(); unsubscribe = null; } dropGithub(); }
+      function deactivate() { slots = null; if (unsubscribe) { unsubscribe(); unsubscribe = null; } dropGithub(); dropDevices(); }
 
       function render() {
         if (!slots) return;
@@ -44,7 +46,8 @@
         const body = h('div', { class: 'dm-stack' });
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('share-2', 20), t('dela.title'))), tabsEl, body);
         dropGithub();
-        const fill = { paket: renderPaket, github: renderGithub, share: renderShare, publish: renderPublish, receive: renderReceive }[tab];
+        if (tab !== 'devices') dropDevices();
+        const fill = { paket: renderPaket, github: renderGithub, devices: renderDevices, share: renderShare, publish: renderPublish, receive: renderReceive }[tab];
         Promise.resolve(fill(body)).catch(fail);
         renderInspector().catch(fail);
       }
@@ -62,6 +65,13 @@
       async function renderGithub(body) {
         githubCard = await github.create(ctx, { onChanged: () => render() });
         replace(body, githubCard.el);
+      }
+
+      /** Direct transfer between devices; the panel keeps its session while the tab is open. */
+      async function renderDevices(body) {
+        if (!devicesPanel) devicesPanel = await devices.create(ctx, { onChanged: () => renderInspector().catch(fail) });
+        else devicesPanel.render();
+        replace(body, devicesPanel.el);
       }
 
       /** The share sheet of the operating system (Web Share API); browsers without it save the file instead. */
@@ -181,6 +191,12 @@
           ];
           if (!slots || tab !== 'github') return;
           replace(slots.right, h('h4', { text: t('github.title') }), kv, h('p', { class: 'dm-help', text: t('dela.inspector.github') }));
+        } else if (tab === 'devices') {
+          const peers = await D.require('platform/p2p').peers();
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [{ label: t('devices.peers.title'), value: String(peers.length) }];
+          if (!slots || tab !== 'devices') return;
+          replace(slots.right, h('h4', { text: t('dela.tabs.devices') }), kv, h('p', { class: 'dm-help', text: t('dela.inspector.devices') }));
         } else if (tab === 'share') {
           const ok = typeof navigator.share === 'function';
           replace(slots.right, h('p', { class: 'dm-help', text: ok ? t('dela.inspector.share.ok') : t('dela.inspector.share.no') }));
@@ -194,7 +210,7 @@
         ctx.palette.register(() => [{ id: 'bundle', label: t('bundle.title'), hint: t('bundle.create'), group: t('palette.group.actions'), icon: 'package', run: () => share.shareBundle(ctx) }]);
       }
 
-      return { id: 'dela', activate, deactivate };
+      return { id: 'dela', activate, deactivate, get devicesPanel() { return devicesPanel; } };
     }
     return { createMode, TABS };
   });

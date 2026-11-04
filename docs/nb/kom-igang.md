@@ -45,7 +45,7 @@ mot arbeidsflaten. Alt+1 til Alt+8 bytter modus med tastaturet.
 | Analyser | R-konsoll med ggplot2 og tidyverse, lagrede skript og diagrameksport; SQL-konsoll mot det valgte datasettet; regulære uttrykk; notatbok som blir rapport |
 | Visualiser | Lager diagrammer med Vega-Lite, D3-maler eller R-skript, lagrer, eksporterer og lager dem i batch ([visualisera.md](visualisera.md)) |
 | Eksporter | Laster ned data som CSV, Excel, JSON eller SQLite, lagrede diagrammer som SVG, PNG eller PDF og dokumenter fra maler som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
-| Del | Pakker datasett med diagrammer og maler for kolleger, sender arbeidsområdet til GitHub, deler via datamaskinens delingsmeny og publiserer dashbord som HTML ([dela.md](dela.md)) |
+| Del | Pakker datasett med diagrammer og maler for kolleger, sender dem direkte til telefoner og andre datamaskiner med QR-kode ([mobil.md](mobil.md)), sender arbeidsområdet til GitHub, deler via datamaskinens delingsmeny og publiserer dashbord som HTML ([dela.md](dela.md)) |
 
 ## 4. Importer en fil
 

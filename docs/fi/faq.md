@@ -144,8 +144,10 @@ jakamista. Ks. [bearbeta.md](bearbeta.md).
 Helpoimmin *Jaa*-tilassa: kohdassa *Paketti* valitset aineistot ja otetaanko kaaviot, kojelaudat, mallit,
 muistikirjat ja skriptit mukaan, kirjoitat viestin ja lähetät ZIP-tiedoston, esimerkiksi välilehdeltä *Jakovalikko*
 (sähköposti, Teams ja muut sovellukset). Kollega avaa sen kohdassa *Vastaanota*, näkee viestisi ja muutokset ja voi
-korvata omat versionsa. Kommentit, kansiot ja tunnisteet tulevat mukana. Jos työskentelette samassa työtilassa,
-voitte käyttää myös yhteistä GitHub-repositoriota (välilehti *GitHub*). Kojelaudat ja asiakirjat voi julkaista
+korvata omat versionsa. Kommentit, kansiot ja tunnisteet tulevat mukana. Samassa verkossa paketti kulkee suoraan tietokoneiden välillä tai
+puhelimen kautta (välilehti *Laitteet*, ks. [mobil.md](mobil.md)). Jos työskentelette samassa työtilassa, voitte
+käyttää myös yhteistä GitHub-repositoriota (välilehti *GitHub*). Ennen kuin mikään lähtee sovelluksesta, aineistot
+tarkistetaan henkilötietojen varalta; ne voi pseudonymisoida tai poistaa kopiosta. Kojelaudat ja asiakirjat voi julkaista
 itsenäisinä HTML-tiedostoina (välilehti *Julkaise*). Voit myös viedä yksittäisen aineiston SQLite-muodossa
 (säilyttää tyypit, selitteet, kommentit ja historian) tai varmuuskopioida koko työtilan. Kaaviot ja asiakirjamallit
 voi viedä JSON-tiedostoina, API-määritykset `.api.json`-tiedostoina ja reseptit JSON-, R- tai SQL-muodossa. Ks.
@@ -174,9 +176,18 @@ mitä komponentteja on ja kuinka suuria ne ovat, ja voit noutaa ne etukäteen ta
 
 ## Voinko käyttää sovellusta puhelimessa?
 
-Ei vielä. Mobiilisivu puhelimille ja tableteille sekä suora siirto laitteiden välillä on suunniteltu seuraavaan
-versioon. Ikkuna mukautuu jo nyt: kapeissa ikkunoissa tilanvalitsin näyttää kuvakkeet ja paneelit avautuvat
-työalueen päälle.
+Koko sovellus on tehty tietokoneille, mutta puhelin voi olla mukana: Dataspatium Mobiili
+(<https://marwiss.github.io/Dataspatium/m/>) vastaanottaa paketteja ja tiedostoja tietokoneelta paikallisverkon yli,
+näyttää taulukot, jakaa ne edelleen ja vie ne toiselle tietokoneelle. Avaa tietokoneella *Jaa → Laitteet* ja
+skannaa QR-koodi; ks. [mobil.md](mobil.md). Tableteilla palvelintilassa koko sovellusta voi käyttää: kapeissa
+ikkunoissa tilanvalitsin näyttää kuvakkeet ja paneelit avautuvat työalueen päälle.
+
+## Miten siirrän dataa puhelimeen ilman internetiä?
+
+Tietokone ja puhelin tarvitsevat vain saman paikallisverkon; siirto tapahtuu suoraan niiden välillä WebRTC:llä eikä
+kulje palvelimen kautta. Ensimmäisellä kerralla puhelimen on noudettava mobiilisivu verkosta (tai omalta
+verkkopalvelimelta intranetissä); sen jälkeen se on välimuistissa. Jos yhteistä verkkoa ei ole: kytke puhelimen
+yhteyden jakaminen päälle ja yhdistä tietokone siihen. Ks. [mobil.md](mobil.md).
 
 ## Etkö löydä vastausta täältä?
 

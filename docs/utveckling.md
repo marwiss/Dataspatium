@@ -100,6 +100,11 @@ steget som *Gör det åt mig*.
   att samtyckesdialogen inte stoppar tester; `tests/consent.test.js` tar bort nyckeln medan den testar dialogen.
 - Appen laddar bara svenska och det valda språket vid start; tester som läser alla språk anropar
   `i18n.loadLanguage(kod)` först.
+- `tests/p2p.test.js`, `devices.test.js` och `mobile.test.js` kör båda ändarna av en WebRTC-överföring i samma sida
+  (loopback med egna certifikat); de behöver ingen annan enhet. Riktiga telefoner provas manuellt enligt listan i
+  [mobil.md](mobil.md).
+- Mobilsidan startas från mappen med `m/index.html`; `tools/screenshot.ps1 -Url "m/index.html" -Width 412 -Height 915`
+  ger en skärmbild i telefonstorlek.
 - API-testerna kör mot en låtsastjänst (virtuella `dataspatium-asset://`-adresser via `Dataspatium.net.virtual`) och
   behöver inget nätverk. `powershell -File tools/run-tests.ps1 -Browsers edge -Url "tests/index.html?live=1"` kör
   dessutom ett röktest mot SCB, Kolada, SMHI, Eurostat, dataportalen och Socialstyrelsen; det kräver nätverk och

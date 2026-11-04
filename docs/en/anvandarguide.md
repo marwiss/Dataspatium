@@ -191,8 +191,13 @@ Everything meant for other people is in the *Share* mode (see [dela.md](dela.md)
   contents of that repository. The token is used for the session or stored encrypted, and nothing is sent until you
   press *Push to GitHub* or *Fetch from GitHub*. Only changed files are sent, in one commit with your message; when
   fetching you choose, as for bundles, whether existing datasets are replaced.
+- Directly to a phone or another computer on the same network: the *Devices* tab shows a QR code that the phone
+  scans; Dataspatium Mobile receives, shows and forwards (see [mobil.md](mobil.md)). Both devices show the same
+  verification code, and after pairing one scan is enough.
 - Through the computer's or phone's share menu: the *Share menu* tab sends a dataset as CSV, Excel, ODS or JSON, or
   all datasets as a bundle, to e-mail, Teams and other apps (Edge and Chrome; Firefox saves the file).
+- Review first: when datasets are bundled or sent, the app looks for identity numbers, e-mail and phone numbers and
+  lets you pseudonymise or drop the columns in the copy.
 - As a finished web page: the *Publish* tab turns a dashboard or a document into a standalone HTML file.
 - One dataset: export as SQLite (everything comes along) or Parquet under Export.
 - API configurations (`.api.json`), charts and document templates (JSON) and recipes (JSON, R or SQL) are exported

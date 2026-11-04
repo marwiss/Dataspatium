@@ -77,8 +77,10 @@ ett paket.
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
   i läget *Dela* paket med valda datamängder och objekt, ett meddelande och en ändringslogg, synk med ett
   GitHub-repo, datorns delningsmeny och publicering av dashboards och dokument som fristående HTML (se
-  [docs/dela.md](docs/dela.md)); kommentarer på datamängder och kolumner, säkerhetskopia av arbetsytan som ZIP
-  och, i Edge och Chrome, en portabel mapp med vanliga filer.
+  [docs/dela.md](docs/dela.md)); direkt överföring till telefoner och andra datorer på samma nätverk med QR-kod
+  och kontrollkod, och *Dataspatium Mobil* som tar emot, visar och skickar vidare på telefonen (se
+  [docs/mobil.md](docs/mobil.md)); granskning av personuppgifter innan något delas; kommentarer på datamängder
+  och kolumner, säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome, en portabel mapp med vanliga filer.
 - **Hålla ordning**: mappar och taggar för datamängder, filter och sortering, och batchåtgärder på flera
   datamängder på en gång (ordna, paketera, exportera, hämta igen, köra recept, ta bort).
 - **Hitta snabbt**: läget *Söka* letar i alla kolumner i en eller alla datamängder, med fasetter som avgränsar och
@@ -98,6 +100,7 @@ ett paket.
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
 - [De åtta lägena](docs/lagen.md): vad som finns var och varför.
 - [Söka](docs/soka.md) och [Dela](docs/dela.md): hitta utan kod, och ge data till andra.
+- [Dataspatium Mobil](docs/mobil.md): telefonen som kurir, mottagare och visare; överföring mellan enheter.
 - [Anteckningsbok](docs/anteckningsbok.md): text, R och SQL i celler som blir en rapport.
 - [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
@@ -121,8 +124,9 @@ ett paket.
   samtidigt: den som sparar sist vinner.
 - Den portabla mappen kräver Edge eller Chrome; Firefox saknar mappåtkomst (File System Access). Säkerhetskopia
   som ZIP fungerar överallt.
-- Safari och mobila webbläsare stöds inte ännu; en mobilsida för telefoner och surfplattor är planerad till nästa
-  version. I smala fönster öppnas panelerna redan nu som flak över arbetsytan.
+- Hela appen är gjord för datorer; på telefoner och surfplattor används Dataspatium Mobil
+  (<https://marwiss.github.io/Dataspatium/m/>), som tar emot, visar och skickar vidare. Safari stöds inte för
+  hela appen. I smala fönster öppnas panelerna som flak över arbetsytan.
 
 ## Fel och förslag
 

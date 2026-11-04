@@ -1,0 +1,29 @@
+{
+  "name": "Dataspatium Mobil",
+  "short_name": "Dataspatium",
+  "description": "Ta emot, visa och skicka vidare data från Dataspatium på telefonen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#2b6cb0",
+  "lang": "sv",
+  "icons": [
+    { "src": "../src/ui/design/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "../src/ui/design/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "../src/ui/design/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "share_target": {
+    "action": "./share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [
+        { "name": "files", "accept": [".zip", "application/zip", ".csv", "text/csv", ".xlsx", ".ods", ".json", "application/json", ".sqlite", ".parquet", ".sav", ".dta"] }
+      ]
+    }
+  }
+}

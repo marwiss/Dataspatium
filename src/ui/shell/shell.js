@@ -178,10 +178,16 @@
           await this.applyWidths();
           // Land where the user most likely wants to be: an empty workspace starts in Inhämta, one with
           // datasets in Hantera. An explicit #/mode in the URL wins.
-          const fromHash = (location.hash || '').replace(/^#\/?/, '');
+          const route = this.parseRoute();
           const landing = this.store.get().datasets.length ? 'hantera' : 'inhamta';
-          this.activate(MODES.includes(fromHash) ? fromHash : landing);
-          window.addEventListener('hashchange', () => { const id = (location.hash || '').replace(/^#\/?/, ''); if (MODES.includes(id) && id !== this.store.get().mode) this.activate(id); });
+          this.activate(MODES.includes(route.mode) ? route.mode : landing);
+          if (route.object) this.openRoute(route).catch((err) => D.log('shell', 'route', err));
+          window.addEventListener('hashchange', () => {
+            const r = this.parseRoute();
+            if (!MODES.includes(r.mode)) return;
+            if (r.mode !== this.store.get().mode) this.activate(r.mode);
+            if (r.object) this.openRoute(r).catch((err) => D.log('shell', 'route', err));
+          });
           this.course.autoStart();
           this.remindBackup();
           this.versionNotice();
@@ -220,6 +226,38 @@
             this.log(message, 'warn');
             this.toast(message, { kind: 'warn', timeout: 15000, action: { label: t('backup.now'), onClick: () => this.backupNow() } });
           } catch (_err) { /* reminders are best effort */ }
+        }
+
+        /**
+         * Deep links: `#/<mode>` and `#/<mode>/<object>`, where the object is a dataset's short name or id, a chart's
+         * id or name (Visualisera) or a search text (Söka). They work from file:// too and are what QR codes and
+         * published pages point at.
+         */
+        parseRoute() {
+          const parts = (location.hash || '').replace(/^#\/?/, '').split('/');
+          let object = parts.slice(1).join('/');
+          try { object = decodeURIComponent(object); } catch (_err) { /* keep as typed */ }
+          return { mode: parts[0] || '', object };
+        }
+        /** The address of a mode and an object, for copying and QR codes. */
+        link(mode, object) {
+          const base = location.href.replace(/#.*$/, '');
+          return base + '#/' + mode + (object ? '/' + encodeURIComponent(object) : '');
+        }
+        /** Apply the object part of a route in the mode that is already active. */
+        async openRoute(route) {
+          const { mode, object } = route;
+          const state = this.store.get();
+          const byName = (o) => state.datasets.find((d) => d.shortName === o || d.id === o || d.name === o) || null;
+          if (mode === 'soka') { this.store.set({ pendingSearch: { text: object, at: Date.now() } }); }
+          else if (mode === 'visualisera') {
+            const charts = await D.require('viz/charts').list();
+            const chart = charts.find((c) => c.id === object || c.name === object);
+            if (chart) this.store.set({ selectedId: chart.datasetId || state.selectedId, openChartId: chart.id });
+            else { const ds = byName(object); if (ds) this.store.set({ selectedId: ds.id }); }
+          } else { const ds = byName(object); if (ds) this.store.set({ selectedId: ds.id }); }
+          const wanted = '#/' + mode + '/' + encodeURIComponent(object);
+          if (location.hash !== wanted) history.replaceState(null, '', wanted);
         }
 
         /** Switch mode. */
@@ -349,6 +387,16 @@
           // '__workspace' is the workspace entry's id in the Hantera dataset list (WORKSPACE in ui/modes/hantera).
           cmds.push({ id: 'workspace', label: t('datasets.storage.title'), hint: t('datasets.backup'), group: t('palette.group.actions'), icon: 'hard-drive', run: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } });
           cmds.push({ id: 'theme', label: t('shell.theme'), group: t('palette.group.actions'), icon: THEME_ICON[theme.get()], run: () => this.toggleTheme() });
+          // A deep link to the current mode and dataset (#/<mode>/<short name>), for notes, QR codes and e-mails.
+          cmds.push({
+            id: 'link', label: t('shell.link.copy'), hint: t('shell.link.hint'), group: t('palette.group.actions'), icon: 'link',
+            run: () => {
+              const s = this.store.get();
+              const ds = s.datasets.find((d) => d.id === s.selectedId);
+              const url = this.link(s.mode || 'hantera', ds ? (ds.shortName || ds.id) : '');
+              navigator.clipboard.writeText(url).then(() => this.toast(t('shell.link.copied'), { kind: 'ok' })).catch(() => this.toast(url, { kind: 'info', timeout: 15000 }));
+            },
+          });
           cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
           cmds.push({ id: 'lang', label: t('lang.title'), hint: 'Svenska · Dansk · Norsk · Suomi · Íslenska · English', group: t('palette.group.actions'), icon: 'languages', run: () => this.chooseLanguage() });
           cmds.push({ id: 'course', label: t('course.open'), hint: t('course.open.hint'), group: t('palette.group.actions'), icon: 'graduation-cap', keywords: [t('course.title')], run: () => this.course.open() });

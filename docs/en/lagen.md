@@ -24,7 +24,9 @@ screen by holding a finger on the button.
 
 The command palette (Ctrl+K or the magnifying glass at the top) reaches everything from one search field: switch
 mode, open a dataset, a chart or a dashboard, run a processing action on the selected dataset, export, open the
-workspace, search in data, create a bundle, change theme or check for updates. Arrow up and down select, Enter runs
+workspace, search in data, create a bundle, copy a link to here, change theme or check for updates. Links have the
+form `index.html#/<mode>/<short name>` (or a chart name in Visualise, a search text in Search) and work from a
+folder too. Arrow up and down select, Enter runs
 and Esc closes; the most recently run commands are at the top.
 
 ## Import
@@ -117,6 +119,7 @@ Give data to others. **Bundle**: a ZIP with chosen datasets, charts, dashboards,
 message and a change log, which the recipient opens under *Receive* and can replace their own versions with.
 **GitHub**: the workspace as a folder in a repository, push and fetch, with an access token stored encrypted.
 **Share menu**: the computer's or phone's own share menu for a file or a bundle (e-mail, Teams, messaging apps).
-**Publish**: dashboards and documents as standalone HTML files. **Receive**: bundles from a file or a web address,
-with sender and changes visible before anything is taken in. Direct transfer between devices comes in a later
-version. See [dela.md](dela.md).
+**Publish**: dashboards and documents as standalone HTML files. **Devices**: direct transfer to phones and other computers on the same network with a QR code, a
+verification code and pairing, and Dataspatium Mobile on the phone (see [mobil.md](mobil.md)). **Receive**:
+bundles from a file or a web address, with sender and changes visible before anything is taken in. Datasets that
+leave the app are reviewed for personal data first. See [dela.md](dela.md).

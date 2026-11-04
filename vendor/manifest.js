@@ -2235,6 +2235,15 @@ Dataspatium.assets.manifest({
    ],
    "assets": 0,
    "notes": "CodeMirror 5 is used instead of 6 because it ships as classic scripts with ready-made R, SQL and LaTeX modes; CodeMirror 6 would need a bundler to combine its packages."
+  },
+  "qrcode-generator": {
+   "version": "1.4.4",
+   "license": "MIT",
+   "homepage": "https://github.com/kazuhikoarase/qrcode-generator",
+   "direct": [
+    "qrcode.js"
+   ],
+   "assets": 0
   }
  }
 });

@@ -46,7 +46,7 @@ Paneelien leveyttä muutetaan vetämällä reunaa työaluetta kohti. Alt+1 … A
 | Analysoi | R-konsoli, jossa on ggplot2 ja tidyverse, tallennetut skriptit ja kaavioiden vienti; SQL-konsoli valittua aineistoa vastaan; säännölliset lausekkeet; muistikirja, josta syntyy raportti |
 | Visualisoi | Rakennat kaavioita Vega-Litellä, D3-malleilla tai R-skripteillä, tallennat, viet ja luot niitä eräajona ([visualisera.md](visualisera.md)) |
 | Vie | Lataat dataa CSV-, Excel-, JSON- tai SQLite-muodossa, tallennettuja kaavioita SVG-, PNG- tai PDF-muodossa ja asiakirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa ([dokumentmallar.md](dokumentmallar.md)) |
-| Jaa | Paketoit aineistoja kaavioineen ja malleineen kollegoille, lähetät työtilan GitHubiin, jaat tietokoneen jakovalikosta ja julkaiset kojelautoja HTML-muodossa ([dela.md](dela.md)) |
+| Jaa | Paketoit aineistoja kaavioineen ja malleineen kollegoille, lähetät ne suoraan puhelimiin ja toisiin tietokoneisiin QR-koodilla ([mobil.md](mobil.md)), lähetät työtilan GitHubiin, jaat tietokoneen jakovalikosta ja julkaiset kojelautoja HTML-muodossa ([dela.md](dela.md)) |
 
 ## 4. Tuo tiedosto
 

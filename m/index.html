@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Dataspatium Mobil</title>
+  <link rel="icon" type="image/svg+xml" href="../src/ui/design/favicon.svg">
+  <!-- Installable from a web server; the manifest also registers the page as a share target for files. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../src/ui/design/icon-192.png">
+  <meta name="theme-color" content="#2b6cb0">
+  <link rel="stylesheet" href="../src/ui/design/tokens.css">
+  <link rel="stylesheet" href="../src/ui/design/base.css">
+  <link rel="stylesheet" href="../src/ui/design/components.css">
+  <link rel="stylesheet" href="../src/mobile/mobile.css">
+  <!-- The mobile profile of the boot loader: platform, SQLite, components, transfer and the mobile app only. -->
+  <script>window.DATASPATIUM_PROFILE = 'mobile';</script>
+  <script src="../src/boot.js"></script>
+</head>
+<body>
+  <noscript>Dataspatium kräver JavaScript. Dataspatium requires JavaScript.</noscript>
+  <div id="app">
+    <p class="dm-muted" style="padding: 24px">Dataspatium Mobil …</p>
+  </div>
+  <script>
+    document.addEventListener('dataspatium:ready', function () {
+      Dataspatium.require('mobile/app').start(document.getElementById('app')).catch(function (err) {
+        console.error(err);
+        document.getElementById('app').textContent = 'Dataspatium Mobil kunde inte starta: ' + (err && err.message || err);
+      });
+    });
+    document.addEventListener('dataspatium:boot-error', function (ev) {
+      document.getElementById('app').textContent = 'Dataspatium Mobil kunde inte starta: ' + ev.detail;
+    });
+  </script>
+</body>
+</html>

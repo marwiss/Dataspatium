@@ -71,8 +71,10 @@ with a backup or a bundle.
 - **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; in the
   *Share* mode bundles with chosen datasets and objects, a message and a change log, sync with a GitHub repository, the
   computer's share menu and publishing of dashboards and documents as standalone HTML (see [dela.md](dela.md));
-  comments on datasets and columns, a workspace backup as ZIP and, in Edge and Chrome, a portable folder with ordinary
-  files.
+  direct transfer to phones and other computers on the same network with a QR code and a verification code, and
+  *Dataspatium Mobile*, which receives, shows and forwards on the phone (see [mobil.md](mobil.md)); a review of
+  personal data before anything is shared; comments on datasets and columns, a workspace backup as ZIP and, in Edge
+  and Chrome, a portable folder with ordinary files.
 - **Keeping order**: folders and tags for datasets, filter and sorting, and batch actions on several datasets at
   once (organise, bundle, export, re-fetch, run recipe, delete).
 - **Find things fast**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
@@ -95,6 +97,7 @@ everywhere.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
 - [The eight modes](lagen.md): what is where and why.
 - [Search](soka.md) and [Share](dela.md): finding without code, and giving data to others.
+- [Dataspatium Mobile](mobil.md): the phone as courier, receiver and viewer; transfer between devices.
 - [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
 - [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
 - [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
@@ -121,8 +124,9 @@ everywhere.
   the one that saves last wins.
 - The portable folder requires Edge or Chrome; Firefox lacks folder access (File System Access). Backup as ZIP
   works everywhere.
-- Safari and mobile browsers are not supported yet; a mobile page for phones and tablets is planned for the next
-  version. In narrow windows the panels already open as sheets over the work area.
+- The whole app is made for computers; on phones and tablets Dataspatium Mobile
+  (<https://marwiss.github.io/Dataspatium/m/>) receives, shows and forwards. Safari is not supported for the whole
+  app. In narrow windows the panels open as sheets over the work area.
 - The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
   anywhere.
 

@@ -1,8 +1,8 @@
 # Jaa
 
 Jaa-tila kokoaa kaiken, mikä liittyy tiedon antamiseen muille ihmisille ja laitteille. Vie koskee tiedostoja omalle
-tietokoneelle; Jaa paketteja, GitHubia, jakovalikkoa, julkaisemista ja vastaanottamista. Välilehti Laitteet, suora
-siirto tietokoneiden ja puhelinten välillä, tulee versiossa 2.1.
+tietokoneelle; Jaa paketteja, GitHubia, laitteita, jakovalikkoa, julkaisemista ja vastaanottamista. Ennen kuin
+aineistot lähtevät sovelluksesta, ne käyvät läpi henkilötietojen tarkistuksen (ks. alla).
 
 ## Paketti
 
@@ -23,12 +23,34 @@ kuten paketeille, korvataanko jo olemassa olevat aineistot (oma versiosi tallenn
 Ensimmäisellä kerralla sovellus kysyy lupaa ottaa yhteys GitHubiin (ks. *Internetyhteys* tiedostossa
 [anvandarguide.md](anvandarguide.md)).
 
+## Laitteet
+
+Suora siirto puhelimiin, tabletteihin ja toisiin tietokoneisiin paikallisverkon yli ilman palvelinta. Tietokone
+näyttää QR-koodin; puhelin skannaa sen kameralla ja avaa Dataspatium Mobiilin, joka vastaanottaa paketit ja
+tiedostot, näyttää taulukot ja voi jakaa ne edelleen tai viedä ne toiselle tietokoneelle. Ensimmäisellä kerralla
+puhelin näyttää koodin, joka kirjoitetaan tietokoneelle, ja laitteet paritetaan; sen jälkeen yksi skannaus riittää.
+Molemmat laitteet näyttävät saman tarkistuskoodin, ja vastaanottaja hyväksyy ennen kuin mitään otetaan vastaan.
+Kaksi tietokonetta yhdistetään liitettävillä koodeilla. Koko kulku, vaatimukset ja vianetsintä ovat tiedostossa
+[mobil.md](mobil.md). Painike *QR-koodi mobiilisivulle* näyttää osoitteen, joka skannataan mobiilisivun avaamiseksi
+ensimmäisen kerran.
+
+## Tarkistus ennen jakamista
+
+Kun aineistoja paketoidaan, lähetetään laitteelle tai jaetaan jakovalikosta, sovellus käy sarakkeet läpi etsien
+henkilötunnuksia (ruotsalaisia, tanskalaisia, norjalaisia, suomalaisia ja islantilaisia), sähköpostiosoitteita ja
+puhelinnumeroita sarakkeiden nimistä ja arvoista. Jos jotakin löytyy, valintaikkunassa valitaan jokaiselle
+sarakkeelle *Säilytä*, *Pseudonymisoi* (sama arvo antaa saman koodin, mutta arvoa ei voi lukea) tai *Poista
+sarake*. Vain jaettava kopio muuttuu; sovelluksen aineisto säilyy ennallaan, ja paketin manifesti kertoo, mitkä
+sarakkeet muutettiin. Tarkistus ei näe kaikkea: nimet, osoitteet ja vapaa teksti on arvioitava itse.
+
 ## Jakovalikko
 
 Tietokoneen tai puhelimen oma jakovalikko: lähetä tiedosto sähköpostiin, Teamsiin, viestisovelluksiin tai muihin
 sovelluksiin. Valitse, jaetaanko valittu aineisto tiedostona (CSV, Excel, ODS tai JSON) vai kaikki aineistot
 pakettina, ja paina *Jaa*. Tiedostojen jakovalikko on Edgessä ja Chromessa Windowsissa ja mobiilissa; muissa
-selaimissa (Firefox) tiedosto tallennetaan sen sijaan, ja painikkeen nimi on silloin *Tallenna tiedosto*.
+selaimissa (Firefox) tiedosto tallennetaan sen sijaan, ja painikkeen nimi on silloin *Tallenna tiedosto*. Puhelimessa,
+johon Dataspatium Mobiili on asennettu, tiedostoja voi jakaa myös *Dataspatiumiin* muista sovelluksista; ne
+tulevat mobiilisivun kohtaan *Vastaanotettu*.
 
 ## Julkaise
 
@@ -44,7 +66,8 @@ toiminnosta *Varmuuskopioi työtila*) voi avata tässä, mutta sen paikka on Hal
 
 ## Mikä ei onnistu
 
-Selain ei voi olla palvelin, joten muut eivät voi noutaa dataa suoraan tietokoneeltasi ilman, että tiedosto tai
-paketti kulkee välissä: jakovalikon, pilvikansion (Hallitse-tilan siirrettävä kansio voi olla OneDrivessa tai
-Dropboxissa), GitHubin tai, versiosta 2.1 alkaen, suoraan laitteiden välillä WebRTC:llä. `mailto:`-linkit eivät voi
-kantaa liitteitä; käytä jakovalikkoa tai tallenna tiedosto ja liitä se.
+Selain ei voi olla palvelin, joten muut eivät voi noutaa dataa tietokoneeltasi, kun se on sammutettu tai kun he
+eivät ole samassa verkossa; silloin tiedosto tai paketti kulkee jakovalikon, pilvikansion (Hallitse-tilan
+siirrettävä kansio voi olla OneDrivessa tai Dropboxissa) tai GitHubin kautta. Samassa verkossa siirto tapahtuu
+suoraan laitteiden välillä (Laitteet-välilehti). `mailto:`-linkit eivät voi kantaa liitteitä; käytä jakovalikkoa
+tai tallenna tiedosto ja liitä se.

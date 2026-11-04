@@ -187,8 +187,13 @@ Allt som ska till andra människor finns i läget *Dela* (se [dela.md](dela.md))
   och skriva innehållet i just det repot. Nyckeln används under sessionen eller sparas krypterad, och ingenting
   skickas förrän du trycker *Skicka till GitHub* eller *Hämta från GitHub*. Bara ändrade filer skickas, i en commit
   med ditt meddelande; vid hämtning väljer du, som för paket, om befintliga datamängder ska ersättas.
+- Direkt till en telefon eller en annan dator på samma nätverk: fliken *Enheter* visar en QR-kod som telefonen
+  skannar; Dataspatium Mobil tar emot, visar och skickar vidare (se [mobil.md](mobil.md)). Båda enheterna visar
+  samma kontrollkod, och efter en parning räcker en skanning.
 - Via datorns eller telefonens delningsmeny: fliken *Delningsmeny* skickar en datamängd som CSV, Excel, ODS eller
   JSON, eller alla datamängder som paket, till e-post, Teams och andra appar (Edge och Chrome; Firefox sparar filen).
+- Granskning först: när datamängder paketeras eller skickas söker appen efter identitetsnummer, e-post och
+  telefonnummer och låter dig pseudonymisera eller ta bort kolumnerna i kopian.
 - Som färdig webbsida: fliken *Publicera* gör en dashboard eller ett dokument till en fristående HTML-fil.
 - En datamängd: exportera som SQLite (allt följer med) eller Parquet under Exportera.
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras
