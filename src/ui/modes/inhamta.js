@@ -498,13 +498,14 @@
           if (p.dataspatium) left.appendChild(h('p', { class: 'dm-help dm-small', text: t('import.sqlite.dataspatium') }));
           else {
             // A GeoPackage in Boverket's ÖP model: the whole comprehensive plan as one plan dataset, or one table.
-            if (p.oversiktsplan) {
+            if (p.planGpkg) {
               if (wiz.options.plan === undefined) wiz.options.plan = true;
-              const sw = /** @type {any} */ (h('dm-switch', { label: t('plan.import.op') }));
+              const op = p.planGpkg === 'oversiktsplan';
+              const sw = /** @type {any} */ (h('dm-switch', { label: t(op ? 'plan.import.op' : 'plan.import.whole') }));
               sw.checked = !!wiz.options.plan;
               sw.addEventListener('change', () => { wiz.options.plan = sw.checked; render(); });
               left.appendChild(sw);
-              left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.op.hint') }));
+              left.appendChild(h('p', { class: 'dm-help dm-small', text: op ? t('plan.import.op.hint') : t('plan.import.whole.hint', { format: t('plan.gpkg.' + p.planGpkg) }) }));
             }
             if (!wiz.options.plan && p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
           }
@@ -525,7 +526,7 @@
           left.appendChild(h('div', { class: 'dm-card' }, kv));
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.hint') }));
         }
-        const opPlan = !!(wiz.options.format === 'sqlite' && p && p.oversiktsplan && wiz.options.plan);
+        const opPlan = !!(wiz.options.format === 'sqlite' && p && p.planGpkg && wiz.options.plan);
         if (wiz.options.format === 'access' && p && p.tables && p.tables.length) {
           left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
         }

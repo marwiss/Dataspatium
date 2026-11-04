@@ -57,6 +57,23 @@ som kilde i Hent inn (*Boverket Planbestämmelsekatalogen*): slå opp en bestemm
 farger, bruksformer, kategorier og symboler via Boverkets åpne API. Kopien oppdateres med
 `python tools/plan_catalog.py` før en ny utgave.
 
+## Planer fra de andre nordiske landene
+
+Appen leser også nabolandenes digitale planer og tegner dem som planer med hvert lands kartfarger (nyansene er appens;
+kolonnen `farg` bærer fargenavnet). Boverkets katalog gjelder bare svenske planer, så fanen Plan viser sammendrag,
+bestemmelser og arealer for disse.
+
+| Land | Detaljplan / oversiktsplan | Slik får du dem inn |
+|---|---|---|
+| Danmark | lokalplan (delområder, byggefelt) / kommuneplanrammer | Kilden *Plandata.dk (WFS)*: **Hent plan** med planid eller plannummer henter lokalplanen med delområder og byggefelt; et lag (f.eks. kommuneplanrammer) hentes som kart og lagres med *Lagre som plan*. GeoJSON-filer fra Plandata gjenkjennes på innholdet. Farge per generell bruk: bolig gul, næring lilla, sentrum brun, rekreasjon grønn, offentlige formål blå, tekniske anlegg grå, fritidshus oransje, landområde lysegrønn. |
+| Finland | asemakaava / yleiskaava | En plan i den nasjonale plandatamodellen (Ryhti-JSON med `planObjects` og `planRegulationGroups`) importeres som fil: planobjektenes bruksbestemmelser får kartbetegnelsen (AK, VP …) fra kodelisten RY_Kaavamaarayslaji (innebygd kopi) og det finske plankartets farger; øvrige bestemmelser blir egenskapsbestemmelser. Kilden *Ryhti kaavatiedot* gir planindeksen (gjeldende og pågående planer med lenker til dokumentene) som tabell og kart; Helsingfors' avoindata-WFS har byens planindeks og planenheter. |
+| Island | deiliskipulag / aðalskipulag | Kilden *Skipulagsstofnun skipulagsgögn (ArcGIS)*: **Hent plan** med plannummeret henter plangrense, tomter, byggeretter, heftelser og samferdsel (fem lag); `ask:` foran nummeret henter en kommuneplan med arealbruksklasser (ÍB, M, VÞ …). En GeoPackage etter Skipulagsstofnuns mal importeres hel med valget *Hele planen som plan*. |
+| Norge | reguleringsplan / kommuneplan | Vektordata krever Norge digitalt-avtale: last ned planen som GeoPackage fra Geonorge og importer den hel (tabellene RpOmråde, RpArealformålOmråde, RpBestemmelseOmråde, hensynssoner med flere); arealformålskodene får navn fra den innebygde kodelisten og farge per hovedformål (bebyggelse gul, sentrum brun, næring lilla, samferdsel lysegrå, grønnstruktur grønn, LNFR lysegrønn, sjø blå). DiBKs WMS `https://nap.ft.dibk.no/services/wms/reguleringsplaner/` kan legges som bakgrunn i kartvisningen. |
+
+Koordinater i ETRS89 UTM 32–35, ETRS-TM35FIN, de finske GK-sonene og ISN93 regnes om til WGS 84. Begrensninger: Ryhti
+inneholder planer godkjent fra 2024 (landsdekkende 2029); islandske planer før 2025 har bare plangrense; Plandata lagrer
+bestemmelser som koder og tall, ikke som løpende tekst.
+
 ## Begrensninger
 
 - Boverkets farger er oppgitt som navn i forskriftene; nyansene i appen er egne. Symbolbetegnelser (prikkmark,

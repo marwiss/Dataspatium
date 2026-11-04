@@ -64,6 +64,11 @@ municipalities and regions in Finland (Statistics Finland, CC BY 4.0). Sources a
 version (GeoJSON) and Boverket's ÖP model (GeoPackage with `innehall_op_*`). Recognised by their contents and opened
 as a plan map; see [planer.md](planer.md).
 
+**Nordic plans** (kind plan): Plandata.dk GeoJSON (local plans, sub-areas, building fields, municipal plan frames),
+Finland's plan data model (Ryhti JSON), Skipulagsstofnun's stafrænt skipulag (GeoJSON or the GeoPackage template) and
+Norwegian reguleringsplaner/kommuneplaner as GeoPackage (Rp/Kp tables). Recognised by their contents; GeoPackage files
+get the choice *The whole plan as a plan*. See [planer.md](planer.md).
+
 ## Character encoding
 
 Text files are checked in this order: byte order mark (UTF-8, UTF-16), UTF-16 without BOM (many zero bytes), plain

@@ -28,6 +28,8 @@
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
       const usable = (ds) => !!ds && ds.kind === 'plan';
       const slagOf = (ds) => (ds && ds.plan && ds.plan.slag === 'oversiktsplan' ? 'oversiktsplan' : 'detaljplan');
+      // Boverket's catalogue applies to Swedish plans only; plans from the other Nordic countries get the other tools.
+      const toolsFor = (ds) => (ds && ds.plan && ds.plan.land && ds.plan.land !== 'SE' ? TOOLS.filter((id) => id !== 'catalog' && id !== 'search') : TOOLS);
       async function rowsOf(ds) {
         if (cache.id === ds.id && cache.updatedAt === ds.updatedAt) return cache.rows;
         const cols = await datasets.columns(ds.id);
@@ -44,7 +46,9 @@
       function center() {
         const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('layers', 20), t('plan.tool.title')));
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = TOOLS.map((id) => ({ id, label: t('plan.tool.' + id) }));
+        const list = toolsFor(selected());
+        if (!list.includes(s.tool)) s.tool = 'summary';
+        tabs.tabs = list.map((id) => ({ id, label: t('plan.tool.' + id) }));
         tabs.active = s.tool;
         tabs.addEventListener('dm-change', (e) => { s.tool = /** @type {any} */ (e).detail.id; renderFields(); renderResult(); if (options.rerenderRight) options.rerenderRight(); });
         fieldsEl = h('div', { class: 'dm-stack-sm' });

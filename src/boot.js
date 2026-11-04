@@ -104,6 +104,7 @@
     'src/data/geo.js',
     'src/data/boundaries.js',
     'src/data/plan-catalog.js',
+    'src/data/plan-nordic.js',
     'src/data/plan.js',
     'src/data/datasets.js',
     'src/analysis/regex.js',

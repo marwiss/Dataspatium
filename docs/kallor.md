@@ -107,6 +107,10 @@ Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentral
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
 fungera från webbläsaren. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns
+
+Tre källor hämtar planer: *Plandata.dk (WFS)* och *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hämta plan**
+som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planens nummer och sparar den som plan, och
+*Ryhti kaavatiedot (OGC API Features)* ger Finlands planindex. Se [planer.md](planer.md#planer-från-andra-nordiska-länder).
 fälten för en egen tjänst. Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket
 Planbestämmelsekatalogen*), se [planer.md](planer.md).
 

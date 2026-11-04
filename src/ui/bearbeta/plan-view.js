@@ -83,7 +83,7 @@
         const info = s.info || {};
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
-            h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.status ? h('dm-badge', { kind: /laga kraft|antagen/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
+            h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
             h('div', { class: 'dm-toolbar' }, basemapSel, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),

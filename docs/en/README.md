@@ -80,6 +80,9 @@ with a backup or a bundle.
 - **Plans**: Swedish digital detailed plans (the national specification, Lantmäteriet's geodata platform) open as plan
   maps with Boverket's colours and designations, the provisions are looked up in Boverket's catalogue of plan provisions
   (embedded copy), and comprehensive plans (the specification or Boverket's ÖP model) are shown theme by theme (see
+- **Nordic plans**: Denmark's local plans and municipal plan frames (Plandata.dk), Finland's plan data model and plan
+  index (Ryhti), Iceland's digital detailed and master plans (Skipulagsstofnun) and Norway's reguleringsplaner
+  (GeoPackage) open as plans in each country's colours; a whole plan is fetched by its number from Plandata and Skipulagsstofnun.
   [planer.md](planer.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and

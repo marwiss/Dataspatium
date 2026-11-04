@@ -1,0 +1,52 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "skipulagsstofnun",
+ "name": "Skipulagsstofnun skipulagsgögn (ArcGIS)",
+ "publisher": "Skipulagsstofnun / HMS",
+ "description": "Islands digitala planer: stafrænt deiliskipulag (plangräns, tomter, byggrätter, restriktioner, trafik) och stafrænt aðalskipulag (markanvändning och andra bestämmelser) samt plangränser för alla planer. Hämta ett lager som karta, eller en hel plan som plan med dess skipulagsnúmer.",
+ "docs": "https://www.skipulag.is/",
+ "license": {
+  "name": "CC BY 4.0 (Skipulagsstofnun)",
+  "url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ "level": 1,
+ "country": "IS",
+ "baseUrl": "https://luk.skipulag.is/server/rest/services",
+ "auth": {
+  "type": "none"
+ },
+ "family": {
+  "type": "geodata",
+  "kind": "arcgis",
+  "plans": "skipulag"
+ },
+ "endpoints": [],
+ "notes": "Tjänstekatalogen läses när källan öppnas; tjänsterna Stafraent_deiliskipulag (FeatureServer) och Stafraent_adalskipulag (MapServer) bär de digitala planerna. Koordinater i ISN93 omräknas av tjänsten till WGS 84. Planer före 2025 har bara plangräns.",
+ "i18n": {
+  "en": {
+   "name": "Skipulagsstofnun planning data (ArcGIS)",
+   "description": "Iceland's digital plans: stafrænt deiliskipulag (plan boundary, lots, building rights, restrictions, transport) and stafrænt aðalskipulag (land use and other provisions), plus the boundaries of every plan. Fetch a layer as a map, or a whole plan as a plan by its plan number.",
+   "notes": "The service directory is read when the source is opened; Stafraent_deiliskipulag (FeatureServer) and Stafraent_adalskipulag (MapServer) carry the digital plans. Plans before 2025 have only a boundary."
+  },
+  "da": {
+   "name": "Skipulagsstofnun plandata (ArcGIS)",
+   "description": "Islands digitale planer: stafrænt deiliskipulag (plangrænse, grunde, byggeretter, servitutter, trafik) og stafrænt aðalskipulag (arealanvendelse og andre bestemmelser) samt plangrænser for alle planer. Hent et lag som kort, eller en hel plan som plan med dens plannummer.",
+   "notes": "Tjenestekataloget læses, når kilden åbnes; Stafraent_deiliskipulag (FeatureServer) og Stafraent_adalskipulag (MapServer) bærer de digitale planer. Planer før 2025 har kun plangrænse."
+  },
+  "nb": {
+   "name": "Skipulagsstofnun plandata (ArcGIS)",
+   "description": "Islands digitale planer: stafrænt deiliskipulag (plangrense, tomter, byggeretter, heftelser, samferdsel) og stafrænt aðalskipulag (arealbruk og andre bestemmelser) samt plangrenser for alle planer. Hent et lag som kart, eller en hel plan som plan med plannummeret.",
+   "notes": "Tjenestekatalogen leses når kilden åpnes; Stafraent_deiliskipulag (FeatureServer) og Stafraent_adalskipulag (MapServer) bærer de digitale planene. Planer før 2025 har bare plangrense."
+  },
+  "fi": {
+   "name": "Skipulagsstofnun kaavatiedot (ArcGIS)",
+   "description": "Islannin digitaaliset kaavat: stafrænt deiliskipulag (kaavaraja, tontit, rakennusoikeudet, rasitteet, liikenne) ja stafrænt aðalskipulag (maankäyttö ja muut määräykset) sekä kaikkien kaavojen rajat. Nouda taso karttana tai koko kaava kaavana sen kaavanumerolla.",
+   "notes": "Palveluhakemisto luetaan, kun lähde avataan; Stafraent_deiliskipulag (FeatureServer) ja Stafraent_adalskipulag (MapServer) sisältävät digitaaliset kaavat. Ennen vuotta 2025 tehdyissä kaavoissa on vain raja."
+  },
+  "is": {
+   "name": "Skipulagsgögn Skipulagsstofnunar (ArcGIS)",
+   "description": "Stafrænt skipulag Íslands: stafrænt deiliskipulag (skipulagsmörk, lóðir, byggingarreitir, kvaðir, samgöngur) og stafrænt aðalskipulag (landnotkun og önnur ákvæði) auk skipulagsmarka allra áætlana. Sæktu lag sem kort eða heilt skipulag sem skipulag með skipulagsnúmeri þess.",
+   "notes": "Þjónustuskráin er lesin þegar uppsprettan er opnuð; Stafraent_deiliskipulag (FeatureServer) og Stafraent_adalskipulag (MapServer) bera stafrænu áætlanirnar. Skipulag fyrir 2025 hefur aðeins skipulagsmörk."
+  }
+ }
+}

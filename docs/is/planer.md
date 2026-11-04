@@ -58,6 +58,23 @@ uppspretta í Safna (*Boverket Planbestämmelsekatalogen*): flettu upp ákvæði
 notkunarform, flokka og tákn um opið API Boverket. Eintakið er uppfært með `python tools/plan_catalog.py` fyrir nýja
 útgáfu.
 
+## Skipulag frá öðrum Norðurlöndum
+
+Forritið les einnig stafrænt skipulag nágrannalandanna og teiknar það sem skipulag með kortalitum hvers lands (litbrigðin
+eru forritsins; dálkurinn `farg` ber heiti litarins). Skrá Boverket gildir aðeins um sænskt skipulag, svo flipinn
+Skipulag sýnir samantekt, ákvæði og flatarmál fyrir þessi.
+
+| Land | Deiliskipulag / aðalskipulag | Svona nærðu í þau |
+|---|---|---|
+| Danmörk | lokalplan (undirsvæði, byggingarreitir) / kommuneplanrammer | Uppsprettan *Plandata.dk (WFS)*: **Sækja skipulag** með planid eða skipulagsnúmeri sækir staðbundna skipulagið með undirsvæðum og byggingarreitum; lag (t.d. kommuneplanrammer) er sótt sem kort og vistað með *Vista sem skipulag*. GeoJSON-skrár frá Plandata þekkjast á innihaldinu. Litur eftir almennri notkun: íbúðir gult, atvinna fjólublátt, miðbær brúnt, útivist grænt, opinber þjónusta blátt, tæknimannvirki grátt, sumarhús appelsínugult, landsvæði ljósgrænt. |
+| Finnland | asemakaava / yleiskaava | Skipulag í finnska skipulagsgagnalíkaninu (Ryhti-JSON með `planObjects` og `planRegulationGroups`) er flutt inn sem skrá: notkunarákvæði skipulagsfitjanna fá kortamerkinguna (AK, VP …) úr kóðalistanum RY_Kaavamaarayslaji (innbyggt eintak) og liti finnska skipulagskortsins; önnur ákvæði verða eiginleikaákvæði. Uppsprettan *Ryhti kaavatiedot* gefur skipulagsskrána (gildandi og yfirstandandi skipulag með tenglum á skjöl) sem töflu og kort; avoindata-WFS Helsinki hefur skipulagsskrá borgarinnar og skipulagseiningar. |
+| Ísland | deiliskipulag / aðalskipulag | Uppsprettan *Skipulagsgögn Skipulagsstofnunar (ArcGIS)*: **Sækja skipulag** með skipulagsnúmeri sækir skipulagsmörk, lóðir, byggingarreiti, kvaðir og samgöngur (fimm lög); `ask:` framan við númerið sækir aðalskipulag með landnotkunarflokkum (ÍB, M, VÞ …). GeoPackage samkvæmt sniðmáti Skipulagsstofnunar er flutt inn í heild með valinu *Allt skipulagið sem skipulag*. |
+| Noregur | reguleringsplan / kommuneplan | Vektorgögn krefjast Norge digitalt-samnings: sæktu skipulagið sem GeoPackage frá Geonorge og flyttu það inn í heild (töflurnar RpOmråde, RpArealformålOmråde, RpBestemmelseOmråde, tillitssvæði og fleiri); arealformål-kóðarnir fá heiti úr innbyggða kóðalistanum og lit eftir aðalnotkun (byggð gult, miðbær brúnt, atvinna fjólublátt, samgöngur ljósgrátt, græn svæði grænt, LNFR ljósgrænt, sjór blátt). WMS DiBK `https://nap.ft.dibk.no/services/wms/reguleringsplaner/` má setja sem bakgrunn í kortasýn. |
+
+Hnit í ETRS89 UTM 32–35, ETRS-TM35FIN, finnsku GK-beltunum og ISN93 eru umreiknuð í WGS 84. Takmarkanir: Ryhti
+inniheldur skipulag samþykkt frá 2024 (landsþekjandi 2029); íslenskt skipulag fyrir 2025 hefur aðeins skipulagsmörk;
+Plandata geymir ákvæði sem kóða og tölur, ekki sem texta.
+
 ## Takmarkanir
 
 - Litir Boverket eru gefnir upp sem heiti í reglugerðunum; litbrigðin í forritinu eru þess eigin. Táknmerkingar

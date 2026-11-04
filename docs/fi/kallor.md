@@ -115,6 +115,10 @@ Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksanti
 Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands ja muita), kaikki
 tarkistettu toimiviksi selaimesta. Valmis lähde avataan, muut lisätään yhdellä napsautuksella ja tasot luetaan
 palvelusta; suodata nimen, maan tai sisällön mukaan. Luettelo on tiedostossa `presets/geodata/services.json`. Luettelon
+
+Kolme lähdettä noutaa kaavoja: *Plandata.dk (WFS)* ja *Skipulagsstofnun skipulagsgögn (ArcGIS)* -lähteissä on painike
+**Nouda kaava**, joka lukee kokonaisen paikalliskaavan tai deiliskipulag-kaavan (kaikki tasot) kaavanumerolla ja
+tallentaa sen kaavana, ja *Ryhti kaavatiedot (OGC API Features)* antaa Suomen kaavahakemiston. Katso [planer.md](planer.md#muiden-pohjoismaiden-kaavat).
 alla ovat oman palvelun kentät. Boverketin Planbestämmelsekatalog on tavallinen API-lähde (*Boverket
 Planbestämmelsekatalogen*), katso [planer.md](planer.md).
 

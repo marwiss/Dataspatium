@@ -63,6 +63,11 @@ Lähteet ja lisenssit ovat tiedostossa `presets/geo/KALLA.md`. Mitään ei noude
 (GeoJSON) ja Boverketin ÖP-malli (GeoPackage, jossa `innehall_op_*`). Tunnistetaan sisällöstä ja avataan
 kaavakarttana; katso [planer.md](planer.md).
 
+**Pohjoismaiset kaavat** (tyyppi kaava): Plandata.dk-GeoJSON (paikalliskaavat, osa-alueet, rakennusalat, kuntakaavan
+kehykset), kaavatietomalli (Ryhti-JSON), Skipulagsstofnunin stafrænt skipulag (GeoJSON tai GeoPackage-malli) ja
+norjalaiset reguleringsplan/kommuneplan GeoPackage-muodossa (Rp-/Kp-taulut). Tunnistetaan sisällöstä; GeoPackage-tiedostot
+saavat valinnan *Koko kaava kaavana*. Katso [planer.md](planer.md).
+
 ## Merkistökoodaus
 
 Tekstitiedostot tarkistetaan tässä järjestyksessä: tavujärjestysmerkki (UTF-8, UTF-16), UTF-16 ilman BOM:ia (paljon

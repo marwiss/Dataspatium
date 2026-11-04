@@ -82,6 +82,9 @@ paketilla.
 - **Kaavat**: ruotsalaiset digitaaliset asemakaavat (kansallinen määrittely, Lantmäterietin paikkatietoalusta) avautuvat
   kaavakarttoina Boverketin väreillä ja merkinnöillä, määräykset haetaan Boverketin kaavamääräysluettelosta (upotettu
   kopio), ja yleiskaavat (määrittely tai Boverketin ÖP-malli) näytetään teema kerrallaan (katso [planer.md](planer.md)).
+- **Pohjoismaiset kaavat**: Tanskan paikalliskaavat ja kuntakaavan kehykset (Plandata.dk), Suomen kaavatietomalli ja
+  kaavahakemisto (Ryhti), Islannin digitaaliset asema- ja yleiskaavat (Skipulagsstofnun) ja Norjan reguleringsplan-kaavat
+  (GeoPackage) avautuvat kaavoina kunkin maan väreillä; koko kaava noudetaan numerollaan Plandatasta ja Skipulagsstofnunilta.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

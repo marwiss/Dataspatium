@@ -54,7 +54,9 @@
       const importer = await resolveImporter(file, options.format);
       const p = await importer.preview(file, options);
       // A GeoPackage in Boverket's ÖP model can be imported whole as a comprehensive plan.
-      if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) p.oversiktsplan = true;
+      if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) { p.oversiktsplan = true; p.planGpkg = 'oversiktsplan'; }
+      // Nordic plan GeoPackages (Norwegian reguleringsplan/kommuneplan, Icelandic stafrænt deiliskipulag) likewise.
+      else if (importer === sqliteImp && p.gpkg && plan.nordic.gpkgKind(p.tables)) p.planGpkg = plan.nordic.gpkgKind(p.tables);
       const columns = types.cleanColumnNames(p.columns);
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
       // Declared types (SQLite schemas) win over inference for empty or ambiguous columns.
@@ -116,7 +118,7 @@
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
       if (importer.id === 'detaljplan') return importer.importFile(file, options, name, progress);
-      if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importOpGeoPackage(file, options, name, progress);
+      if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.

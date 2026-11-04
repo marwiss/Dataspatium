@@ -64,6 +64,11 @@ referensobjekt från Nationella geodataplattformen, översiktsplaner enligt spec
 Boverkets ÖP-modell (GeoPackage med `innehall_op_*`). Känns igen på innehållet och öppnas som plankarta; se
 [planer.md](planer.md).
 
+**Nordiska planer** (slaget plan): Plandata.dk-GeoJSON (lokalplaner, delområder, byggefelter, kommuneplanrammer), Finlands
+kaavatietomalli (Ryhti-JSON), Skipulagsstofnuns stafrænt skipulag (GeoJSON eller GeoPackage-mallen) och norska
+reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Känns igen på innehållet; GeoPackage-filer får valet
+*Hela planen som plan*. Se [planer.md](planer.md).
+
 ## Teckenkodning
 
 Textfiler kontrolleras i denna ordning: byte order mark (UTF-8, UTF-16), UTF-16 utan BOM (många nollbytes),

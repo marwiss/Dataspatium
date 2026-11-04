@@ -1,0 +1,51 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "ryhti-kaavat",
+ "name": "Ryhti kaavatiedot (OGC API Features)",
+ "publisher": "Suomen ympäristökeskus Syke",
+ "description": "Finlands planindex från Rakennetun ympäristön tietojärjestelmä (Ryhti): gällande och pågående asemakaavor och yleiskaavor med plan-id, typ, godkännandedatum, livscykelstatus och länkar till planhandlingarna. Täcker planer godkända från 2024 och blir rikstäckande 2029.",
+ "docs": "https://ryhti.syke.fi/palvelut/ohjeet-ryhti-jarjestelman-avoimien-rajapintojen-kayttoon/",
+ "license": {
+  "name": "CC BY 4.0 (Syke Ryhti)",
+  "url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ "level": 1,
+ "country": "FI",
+ "baseUrl": "https://paikkatiedot.ymparisto.fi/geoserver/ryhti_plan/ogc/features/v1",
+ "auth": {
+  "type": "none"
+ },
+ "family": {
+  "type": "geodata",
+  "kind": "ogcapi"
+ },
+ "endpoints": [],
+ "notes": "Samlingarna hämtas när källan öppnas: pub_valid_ld_plan_ix_gs (asemakaavor), pub_valid_lm_plan_ix_gs (yleiskaavor) och motsvarande för planer under arbete. Högst 3 000 objekt per sida. Hela planer i kaavatietomallen (JSON) importeras som filer.",
+ "i18n": {
+  "en": {
+   "name": "Ryhti plan data (OGC API Features)",
+   "description": "Finland's plan index from the built environment information system (Ryhti): valid and pending local detailed and master plans with identifier, type, approval date, lifecycle status and links to the plan documents. Covers plans approved from 2024; nationwide from 2029.",
+   "notes": "The collections are read when the source is opened: pub_valid_ld_plan_ix_gs (detailed plans), pub_valid_lm_plan_ix_gs (master plans) and the pending ones. At most 3,000 features per page. Whole plans in the national plan data model (JSON) are imported as files."
+  },
+  "da": {
+   "name": "Ryhti plandata (OGC API Features)",
+   "description": "Finlands planindeks fra Ryhti: gældende og igangværende asemakaava- og yleiskaava-planer med id, type, godkendelsesdato, livscyklusstatus og links til plandokumenterne. Dækker planer godkendt fra 2024; landsdækkende fra 2029.",
+   "notes": "Samlingerne læses, når kilden åbnes: pub_valid_ld_plan_ix_gs (detailplaner), pub_valid_lm_plan_ix_gs (generalplaner) og de igangværende. Højst 3.000 objekter pr. side. Hele planer i den nationale plandatamodel (JSON) importeres som filer."
+  },
+  "nb": {
+   "name": "Ryhti plandata (OGC API Features)",
+   "description": "Finlands planindeks fra Ryhti: gjeldende og pågående asemakaava- og yleiskaava-planer med id, type, godkjenningsdato, livssyklusstatus og lenker til plandokumentene. Dekker planer godkjent fra 2024; landsdekkende fra 2029.",
+   "notes": "Samlingene leses når kilden åpnes: pub_valid_ld_plan_ix_gs (detaljplaner), pub_valid_lm_plan_ix_gs (generalplaner) og de pågående. Høyst 3 000 objekter per side. Hele planer i den nasjonale plandatamodellen (JSON) importeres som filer."
+  },
+  "fi": {
+   "name": "Ryhti kaavatiedot (OGC API Features)",
+   "description": "Suomen kaavahakemisto rakennetun ympäristön tietojärjestelmästä (Ryhti): voimassa olevat ja valmisteilla olevat asemakaavat ja yleiskaavat tunnuksella, tyypillä, hyväksymispäivällä, elinkaaritilalla ja linkeillä kaava-asiakirjoihin. Kattaa vuodesta 2024 hyväksytyt kaavat; valtakunnallinen 2029.",
+   "notes": "Kokoelmat luetaan, kun lähde avataan: pub_valid_ld_plan_ix_gs (asemakaavat), pub_valid_lm_plan_ix_gs (yleiskaavat) ja valmisteilla olevat. Enintään 3 000 kohdetta sivua kohden. Kokonaiset kaavat kaavatietomallissa (JSON) tuodaan tiedostoina."
+  },
+  "is": {
+   "name": "Ryhti skipulagsgögn (OGC API Features)",
+   "description": "Skipulagsskrá Finnlands úr Ryhti: gildandi og yfirstandandi asemakaava- og yleiskaava-áætlanir með auðkenni, tegund, samþykktardegi, stöðu og tenglum á skipulagsskjöl. Nær yfir skipulag samþykkt frá 2024; landsþekjandi frá 2029.",
+   "notes": "Söfnin eru lesin þegar uppsprettan er opnuð: pub_valid_ld_plan_ix_gs (deiliskipulag), pub_valid_lm_plan_ix_gs (aðalskipulag) og yfirstandandi. Mest 3 000 fitjur á síðu. Heil skipulög í finnska skipulagsgagnalíkaninu (JSON) eru flutt inn sem skrár."
+  }
+ }
+}

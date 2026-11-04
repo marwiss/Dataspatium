@@ -185,14 +185,65 @@
     }
 
     /**
+     * Other Nordic transverse Mercator projections on GRS 80 / ETRS89: UTM zones 32–35 (Denmark, Norway, Finland;
+     * EPSG:258xx and 326xx), ETRS-TM35FIN (3067) and the Finnish Gauss-Krüger zones GK19–GK31 (3873–3885; the city of
+     * Helsinki publishes in GK25, 3879). Same series as SWEREF (the ellipsoid is the same), other parameters.
+     */
+    const TM_ZONES = {
+      25832: { lon0: 9, k0: 0.9996, falseE: 500000 }, 25833: { lon0: 15, k0: 0.9996, falseE: 500000 }, 25834: { lon0: 21, k0: 0.9996, falseE: 500000 }, 25835: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      32632: { lon0: 9, k0: 0.9996, falseE: 500000 }, 32633: { lon0: 15, k0: 0.9996, falseE: 500000 }, 32634: { lon0: 21, k0: 0.9996, falseE: 500000 }, 32635: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      3067: { lon0: 27, k0: 0.9996, falseE: 500000 },
+    };
+    for (let z = 19; z <= 31; z++) TM_ZONES[3854 + z] = { lon0: z, k0: 1, falseE: z * 1000000 + 500000 };
+    /** ISN93 / Lambert 1993 (EPSG:3057), the Icelandic national grid: Lambert conformal conic with two standard parallels. */
+    const ISN93 = { lat0: 65, lon0: -19, lat1: 64.25, lat2: 65.75, falseE: 500000, falseN: 500000 };
+    /** EPSG code found in a CRS text ("EPSG:25832", "urn:ogc:def:crs:EPSG::3067", 3057), or null. */
+    function epsgOf(crs) {
+      if (crs === null || crs === undefined || crs === '') return null;
+      if (typeof crs === 'number') return crs;
+      const m = /(\d{4,5})\s*$/.exec(String(crs).trim());
+      return m ? Number(m[1]) : null;
+    }
+    /** Lambert conformal conic (two parallels) metres -> [longitude, latitude]; GRS 80. */
+    function lccToWgs84(x, y, p) {
+      const e = Math.sqrt(F * (2 - F));
+      const m = (phi) => Math.cos(phi) / Math.sqrt(1 - e * e * Math.sin(phi) ** 2);
+      const tf = (phi) => Math.tan(Math.PI / 4 - phi / 2) / ((1 - e * Math.sin(phi)) / (1 + e * Math.sin(phi))) ** (e / 2);
+      const phi1 = p.lat1 * DEG; const phi2 = p.lat2 * DEG; const phi0 = p.lat0 * DEG;
+      const n = Math.log(m(phi1) / m(phi2)) / Math.log(tf(phi1) / tf(phi2));
+      const Fc = m(phi1) / (n * tf(phi1) ** n);
+      const rho0 = A * Fc * tf(phi0) ** n;
+      const dx = x - p.falseE; const dy = rho0 - (y - p.falseN);
+      const rho = Math.sign(n) * Math.sqrt(dx * dx + dy * dy);
+      const theta = Math.atan2(dx, dy);
+      const tP = (rho / (A * Fc)) ** (1 / n);
+      let phi = Math.PI / 2 - 2 * Math.atan(tP);
+      for (let i = 0; i < 8; i++) phi = Math.PI / 2 - 2 * Math.atan(tP * ((1 - e * Math.sin(phi)) / (1 + e * Math.sin(phi))) ** (e / 2));
+      return [p.lon0 + (theta / n) / DEG, phi / DEG];
+    }
+    /** Transverse Mercator metres -> [longitude, latitude] for a zone {lon0, k0, falseE} on GRS 80 (the SWEREF series). */
+    function tmToWgs84(x, y, zone) {
+      const saved = SWEREF_ZONES[0]; SWEREF_ZONES[0] = zone;
+      try { return swerefToWgs84(x, y, 0); } finally { if (saved) SWEREF_ZONES[0] = saved; else delete SWEREF_ZONES[0]; }
+    }
+    /**
      * Projected geometry -> WGS 84; degrees pass through. Without `crs` the geometry is taken as SWEREF 99 TM (the
-     * Swedish standard); a CRS of a local SWEREF 99 zone (EPSG:3007–3018) selects that zone.
+     * Swedish standard); a CRS of a local SWEREF 99 zone (EPSG:3007–3018) selects that zone. Also read: Web Mercator,
+     * the UTM zones 32–35 (ETRS89 and WGS 84), ETRS-TM35FIN, the Finnish GK zones and ISN93 (Iceland).
      */
     function toWgs84(geometry, crs) {
       if (!isProjected([geometry])) return geometry;
       if (/3857|900913|pseudo-?mercator|web ?mercator/i.test(String(crs || ''))) return mapCoordinates(geometry, (c) => mercatorToWgs84(c[0], c[1]));
+      const code = epsgOf(crs);
+      if (code === 3057) return mapCoordinates(geometry, (c) => lccToWgs84(c[0], c[1], ISN93));
+      if (code && TM_ZONES[code]) return mapCoordinates(geometry, (c) => tmToWgs84(c[0], c[1], TM_ZONES[code]));
       const epsg = swerefZone(crs);
       return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], epsg));
+    }
+    /** True when the app can convert a CRS to WGS 84 (SWEREF 99, Web Mercator, Nordic UTM/TM zones, ISN93). */
+    function knownCrs(crs) {
+      const code = epsgOf(crs);
+      return !!(code && (SWEREF_ZONES[code] || TM_ZONES[code] || code === 3057 || code === 3857 || code === 4326 || code === 4258));
     }
     /** Web Mercator (EPSG:3857) metres -> [longitude, latitude]. */
     function mercatorToWgs84(x, y) {
@@ -200,6 +251,6 @@
       return [(x / R) / DEG, Math.atan(Math.sinh(y / R)) / DEG];
     }
 
-    return { SWEREF_ZONES, swerefZone, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, mercatorToWgs84, mapCoordinates, toWgs84 };
+    return { SWEREF_ZONES, TM_ZONES, ISN93, swerefZone, epsgOf, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
   });
 })();

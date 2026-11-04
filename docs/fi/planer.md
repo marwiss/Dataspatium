@@ -59,6 +59,23 @@ on myös lähteenä Nouda-tilassa (*Boverket Planbestämmelsekatalogen*): hae m�
 värit, käyttömuodot, luokat ja symbolit Boverketin avoimen API:n kautta. Kopio päivitetään komennolla
 `python tools/plan_catalog.py` ennen uutta julkaisua.
 
+## Muiden Pohjoismaiden kaavat
+
+Sovellus lukee myös naapurimaiden digitaaliset kaavat ja piirtää ne kaavoina kunkin maan karttaväreillä (sävyt ovat
+sovelluksen; sarake `farg` sisältää värin nimen). Boverketin luettelo koskee vain ruotsalaisia kaavoja, joten
+Kaava-välilehti näyttää näille yhteenvedon, määräykset ja pinta-alat.
+
+| Maa | Asemakaava / yleiskaava | Näin saat ne sisään |
+|---|---|---|
+| Tanska | lokalplan (osa-alueet, rakennusalat) / kommuneplanrammer | Lähde *Plandata.dk (WFS)*: **Nouda kaava** planid-tunnuksella tai kaavanumerolla noutaa paikalliskaavan osa-alueineen ja rakennusaloineen; taso (esim. kommuneplanrammer) noudetaan karttana ja tallennetaan painikkeella *Tallenna kaavana*. Plandatan GeoJSON-tiedostot tunnistetaan sisällöstä. Väri yleisen käyttötarkoituksen mukaan: asuminen keltainen, elinkeino violetti, keskusta ruskea, virkistys vihreä, julkiset palvelut sininen, tekniset laitokset harmaa, loma-asunnot oranssi, maaseutu vaaleanvihreä. |
+| Suomi | asemakaava / yleiskaava | Kaavatietomallin mukainen kaava (Ryhti-JSON, jossa `planObjects` ja `planRegulationGroups`) tuodaan tiedostona: kaavakohteiden käyttömääräykset saavat kaavamerkinnän (AK, VP …) koodistosta RY_Kaavamaarayslaji (upotettu kopio) ja suomalaisen kaavakartan värit; muut määräykset tulevat ominaisuusmääräyksinä. Lähde *Ryhti kaavatiedot* antaa kaavahakemiston (voimassa olevat ja valmisteilla olevat kaavat linkeillä asiakirjoihin) taulukkona ja karttana; Helsingin avoindata-WFS sisältää kaupungin kaavahakemiston ja kaavayksiköt. |
+| Islanti | deiliskipulag / aðalskipulag | Lähde *Skipulagsstofnun skipulagsgögn (ArcGIS)*: **Nouda kaava** kaavanumerolla noutaa rajan, tontit, rakennusoikeudet, rasitteet ja liikenteen (viisi tasoa); `ask:` numeron edessä noutaa yleiskaavan maankäyttöluokkineen (ÍB, M, VÞ …). Skipulagsstofnunin mallin mukainen GeoPackage tuodaan kokonaan valinnalla *Koko kaava kaavana*. |
+| Norja | reguleringsplan / kommuneplan | Vektoriaineisto vaatii Norge digitalt -sopimuksen: lataa kaava GeoPackage-tiedostona Geonorgesta ja tuo se kokonaan (taulut RpOmråde, RpArealformålOmråde, RpBestemmelseOmråde, huomioonotettavat vyöhykkeet ja muut); arealformål-koodit saavat nimet upotetusta koodistosta ja värin pääkäyttötarkoituksen mukaan (rakentaminen keltainen, keskusta ruskea, elinkeino violetti, liikenne vaaleanharmaa, viherrakenne vihreä, LNFR vaaleanvihreä, meri sininen). DiBK:n WMS `https://nap.ft.dibk.no/services/wms/reguleringsplaner/` voidaan asettaa taustaksi karttanäkymään. |
+
+Koordinaatit ETRS89 UTM 32–35:ssä, ETRS-TM35FIN:ssä, suomalaisissa GK-vyöhykkeissä ja ISN93:ssa muunnetaan WGS 84:ään.
+Rajoitukset: Ryhti sisältää vuodesta 2024 hyväksytyt kaavat (valtakunnallinen 2029); islantilaisissa ennen vuotta 2025
+tehdyissä kaavoissa on vain raja; Plandata tallentaa määräykset koodeina ja lukuina, ei tekstinä.
+
 ## Rajoitukset
 
 - Boverketin värit annetaan määräyksissä niminä; sovelluksen sävyt ovat omia. Symbolimerkinnät (pistemaa, ristimaa ja

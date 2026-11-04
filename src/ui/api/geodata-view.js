@@ -9,14 +9,46 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/geodata-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/endpoint-form', 'api/families/geodata'], (base, basic, icons, endpointForm, geodata) => {
+  D.define('ui/api/geodata-view', ['ui/base', 'ui/basic', 'ui/icons', 'ui/api/endpoint-form', 'api/families/geodata', 'api/families/databases', 'data/plan-nordic', 'io/importers/detaljplan'], (base, basic, icons, endpointForm, geodata, databases, nordic, detaljplanImp) => {
     const { h, t, i18n, replace } = base;
     const MAX_LIST = 400;
 
-    /** @param {{connector: any, runFetch: Function, log?: Function}} api */
+    /** @param {{connector: any, runFetch: Function, log?: Function, onDataset?: Function}} api */
     function create(api) {
       const { connector } = api;
-      const state = { filter: '', selected: null, loading: '', error: '', refreshed: false };
+      const state = { filter: '', selected: null, loading: '', error: '', refreshed: false, fetching: false, planMsg: '', planErr: false, planId: '' };
+      /** The plan-fetch kind this source offers (Plandata.dk, Skipulagsstofnun), or ''. */
+      const planKind = () => (connector.family && nordic.FETCH_KINDS.includes(connector.family.plans) ? connector.family.plans : '');
+
+      /** Fetch one whole plan (all its layers) by its number and keep it as a plan dataset. */
+      async function fetchPlan(id) {
+        const kind = planKind();
+        if (!kind || !id || state.fetching) return;
+        state.fetching = true; state.planMsg = ''; state.planErr = false; state.planId = id; render();
+        try {
+          const parsed = await nordic.fetchPlan(kind, connector.baseUrl, id, (url) => databases.getJson(connector, url));
+          const meta = await detaljplanImp.importParsed(parsed, parsed.plan.namn || parsed.plan.beteckning || id, { kind: 'api', connector: connector.id, connectorName: connector.name, planId: id, fetchedAt: new Date().toISOString() });
+          state.planMsg = t('plan.saved', { name: meta.name, n: i18n.formatNumber(meta.rowCount) });
+          if (api.log) api.log(state.planMsg, 'ok');
+          if (api.onDataset) api.onDataset(meta);
+        } catch (err) {
+          state.planMsg = (err && err.message) || String(err); state.planErr = true;
+          if (api.log) api.log(`${connector.name}: ${state.planMsg}`, 'error');
+        }
+        state.fetching = false; render();
+      }
+      function planCard() {
+        const kind = planKind();
+        if (!kind) return null;
+        const input = /** @type {any} */ (h('dm-input', { label: t('plan.fetch.id.' + kind), placeholder: t('plan.fetch.placeholder.' + kind), inline: true }));
+        input.value = state.planId;
+        input.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter') fetchPlan(input.value.trim()); });
+        return h('div', { class: 'dm-card dm-stack-sm dm-geo-plan' },
+          h('strong', { text: t('plan.fetch.title') }),
+          h('p', { class: 'dm-help dm-small', text: t('plan.fetch.hint.' + kind) }),
+          h('div', { class: 'dm-row-wrap' }, input, basic.button({ label: t('plan.fetch'), icon: 'layers', variant: 'primary', loading: state.fetching, title: t('plan.fetch.button.hint'), onClick: () => fetchPlan(input.value.trim()) })),
+          state.planMsg ? h('p', { class: state.planErr ? 'dm-error dm-small' : 'dm-success', text: state.planMsg }) : null);
+      }
       const el = h('div', { class: 'dm-stack' });
       let listEl = null; let formEl = null;
 
@@ -83,6 +115,7 @@
         listEl = h('div', { class: 'dm-stack-sm' });
         formEl = h('div');
         replace(el,
+          planCard(),
           h('div', { class: 'dm-row-wrap dm-geo-head' },
             filter,
             n ? h('dm-badge', { text: t('geodata.layers.count', { n: i18n.formatNumber(n) }) }) : null,
@@ -95,7 +128,7 @@
       }
       /** Presets ship without layers: the first visit reads them from the service. */
       function start() { render(); if (!layers().length && !state.refreshed && !state.error) discover(); }
-      return { el, start, state, discover };
+      return { el, start, state, discover, fetchPlan };
     }
     return { create };
   });

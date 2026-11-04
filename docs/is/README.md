@@ -75,6 +75,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Skipulag**: sænskt stafrænt deiliskipulag (landsforskriftin, landupplýsingavettvangur Lantmäteriet) opnast sem
   skipulagskort með litum og merkingum Boverket, ákvæðin eru flett upp í skrá Boverket yfir skipulagsákvæði (innbyggt
   eintak), og aðalskipulag (forskriftin eða ÖP-líkan Boverket) er sýnt þema fyrir þema (sjá [planer.md](planer.md)).
+- **Norrænt skipulag**: staðbundið skipulag og rammar sveitarfélagsskipulags Danmerkur (Plandata.dk), finnska
+  skipulagsgagnalíkanið og skipulagsskráin (Ryhti), stafrænt deili- og aðalskipulag Íslands (Skipulagsstofnun) og norskt
+  reguleringsplan (GeoPackage) opnast sem skipulag með litum hvers lands; heilt skipulag er sótt með númeri sínu frá Plandata og Skipulagsstofnun.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

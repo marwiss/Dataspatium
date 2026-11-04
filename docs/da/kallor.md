@@ -111,6 +111,10 @@ Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentral
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrolleret til at virke
 fra browseren. En forudindstillet kilde åbnes, de øvrige tilføjes med ét klik, og lagene læses fra tjenesten; filtrér
 på navn, land eller indhold. Listen ligger i `presets/geodata/services.json`. Under listen findes felterne til en egen
+
+Tre kilder henter planer: *Plandata.dk (WFS)* og *Skipulagsstofnun skipulagsgögn (ArcGIS)* har knappen **Hent plan**,
+som læser en hel lokalplan henholdsvis et deiliskipulag (alle lag) med planens nummer og gemmer den som plan, og
+*Ryhti kaavatiedot (OGC API Features)* giver Finlands planindeks. Se [planer.md](planer.md#planer-fra-de-andre-nordiske-lande).
 tjeneste. Boverkets Planbestämmelsekatalog findes som almindelig API-kilde (*Boverket Planbestämmelsekatalogen*), se
 [planer.md](planer.md).
 

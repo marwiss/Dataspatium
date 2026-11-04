@@ -204,6 +204,12 @@ Dataspatium.assets.addEntries({
   "size": 5558,
   "library": "dataspatium"
  },
+ "presets/api/plandata-dk.api.json": {
+  "file": "presets/api/plandata-dk.api.json.js",
+  "encoding": "text",
+  "size": 3298,
+  "library": "dataspatium"
+ },
  "presets/api/prh-ytj.api.json": {
   "file": "presets/api/prh-ytj.api.json.js",
   "encoding": "text",
@@ -214,6 +220,12 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/raa-arkreg.api.json.js",
   "encoding": "text",
   "size": 2974,
+  "library": "dataspatium"
+ },
+ "presets/api/ryhti-kaavat.api.json": {
+  "file": "presets/api/ryhti-kaavat.api.json.js",
+  "encoding": "text",
+  "size": 4197,
   "library": "dataspatium"
  },
  "presets/api/scb-geodata.api.json": {
@@ -238,6 +250,12 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/sgu-geodata.api.json.js",
   "encoding": "text",
   "size": 3022,
+  "library": "dataspatium"
+ },
+ "presets/api/skipulagsstofnun.api.json": {
+  "file": "presets/api/skipulagsstofnun.api.json.js",
+  "encoding": "text",
+  "size": 4034,
   "library": "dataspatium"
  },
  "presets/api/skogsstyrelsen-geodata.api.json": {
@@ -357,7 +375,19 @@ Dataspatium.assets.addEntries({
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
-  "size": 15551,
+  "size": 18509,
+  "library": "dataspatium"
+ },
+ "presets/plan/fi-kaavamaarayslaji.json": {
+  "file": "presets/plan/fi-kaavamaarayslaji.json.js",
+  "encoding": "gzip+base64",
+  "size": 50541,
+  "library": "dataspatium"
+ },
+ "presets/plan/no-arealformal.json": {
+  "file": "presets/plan/no-arealformal.json.js",
+  "encoding": "gzip+base64",
+  "size": 8573,
   "library": "dataspatium"
  },
  "presets/plan/planbestammelsekatalogen.json": {
@@ -417,7 +447,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 12417,
+  "size": 12828,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -429,7 +459,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 12855,
+  "size": 13223,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -459,7 +489,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/planer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5488,
+  "size": 8218,
   "library": "dataspatium"
  },
  "docs/sv/dokumentmallar.md": {
@@ -543,7 +573,7 @@ Dataspatium.assets.addEntries({
  "docs/da/format.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 12468,
+  "size": 12876,
   "library": "dataspatium"
  },
  "docs/da/api-konfiguration.md": {
@@ -555,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 12573,
+  "size": 12935,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -585,7 +615,7 @@ Dataspatium.assets.addEntries({
  "docs/da/planer.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5395,
+  "size": 8076,
   "library": "dataspatium"
  },
  "docs/da/dokumentmallar.md": {
@@ -669,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/format.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 12271,
+  "size": 12675,
   "library": "dataspatium"
  },
  "docs/nb/api-konfiguration.md": {
@@ -681,7 +711,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 12458,
+  "size": 12818,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -711,7 +741,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/planer.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5380,
+  "size": 8050,
   "library": "dataspatium"
  },
  "docs/nb/dokumentmallar.md": {
@@ -795,7 +825,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/format.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 13737,
+  "size": 14162,
   "library": "dataspatium"
  },
  "docs/fi/api-konfiguration.md": {
@@ -807,7 +837,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 13446,
+  "size": 13836,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -837,7 +867,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/planer.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 5691,
+  "size": 8647,
   "library": "dataspatium"
  },
  "docs/fi/dokumentmallar.md": {
@@ -921,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/is/format.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 13348,
+  "size": 13810,
   "library": "dataspatium"
  },
  "docs/is/api-konfiguration.md": {
@@ -933,7 +963,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 13353,
+  "size": 13753,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -963,7 +993,7 @@ Dataspatium.assets.addEntries({
  "docs/is/planer.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5687,
+  "size": 8619,
   "library": "dataspatium"
  },
  "docs/is/dokumentmallar.md": {
@@ -1047,7 +1077,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 12787,
+  "size": 13213,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {
@@ -1059,7 +1089,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 12572,
+  "size": 12941,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {
@@ -1089,7 +1119,7 @@ Dataspatium.assets.addEntries({
  "docs/en/planer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5584,
+  "size": 8362,
   "library": "dataspatium"
  },
  "docs/en/dokumentmallar.md": {

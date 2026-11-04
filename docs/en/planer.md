@@ -58,6 +58,23 @@ Planbestämmelsekatalogen. The catalogue is also a source in Acquire (*Boverket 
 provision by its UUID, list releases, colours, use forms, categories and symbols through Boverket's open API. The copy
 is refreshed with `python tools/plan_catalog.py` before a new release.
 
+## Plans from the other Nordic countries
+
+The app also reads the neighbours' digital plans and draws them as plans in each country's map colours (the shades
+are the app's; the column `farg` carries the colour name). Boverket's catalogue applies to Swedish plans only, so the
+Plan tab shows summary, provisions and areas for these.
+
+| Country | Detailed plan / comprehensive plan | How to get them |
+|---|---|---|
+| Denmark | lokalplan (sub-areas, building fields) / kommuneplanrammer | The source *Plandata.dk (WFS)*: **Fetch plan** with a planid or plan number fetches the local plan with its sub-areas and building fields; a layer (such as kommuneplanrammer) is fetched as a map and kept with *Save as plan*. GeoJSON files from Plandata are recognised by their contents. Colour per general use: housing yellow, business purple, centre brown, recreation green, public purposes blue, technical facilities grey, summer houses orange, rural light green. |
+| Finland | asemakaava / yleiskaava | A plan in the national plan data model (Ryhti JSON with `planObjects` and `planRegulationGroups`) is imported as a file: the plan objects' use regulations get the map letter (AK, VP …) from the code list RY_Kaavamaarayslaji (embedded copy) and the Finnish plan map colours; other regulations become property provisions. The source *Ryhti kaavatiedot* gives the plan index (valid and pending plans with links to the documents) as table and map; Helsinki's avoindata WFS has the city's plan index and plan units. |
+| Iceland | deiliskipulag / aðalskipulag | The source *Skipulagsstofnun skipulagsgögn (ArcGIS)*: **Fetch plan** with the plan number fetches boundary, lots, building rights, restrictions and transport (five layers); `ask:` before the number fetches a master plan with its land-use classes (ÍB, M, VÞ …). A GeoPackage per Skipulagsstofnun's template is imported whole with *The whole plan as a plan*. |
+| Norway | reguleringsplan / kommuneplan | Vector data needs a Norge digitalt agreement: download the plan as GeoPackage from Geonorge and import it whole (the tables RpOmråde, RpArealformålOmråde, RpBestemmelseOmråde, consideration zones and more); the arealformål codes get names from the embedded code list and colours per main purpose (buildings yellow, centre brown, business purple, transport light grey, green structure green, LNFR light green, sea blue). DiBK's WMS `https://nap.ft.dibk.no/services/wms/reguleringsplaner/` can be a background in the map view. |
+
+Coordinates in ETRS89 UTM 32–35, ETRS-TM35FIN, the Finnish GK zones and ISN93 are converted to WGS 84. Limits: Ryhti
+holds plans approved from 2024 (nationwide from 2029); Icelandic plans before 2025 have only a boundary; Plandata stores
+provisions as codes and numbers, not as text.
+
 ## Limitations
 
 - Boverket's colours are named in the regulations; the shades in the app are its own. Symbol designations (dotted

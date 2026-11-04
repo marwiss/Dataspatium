@@ -63,6 +63,11 @@ Kilder og lisenser står i `presets/geo/KALLA.md`. Ingenting hentes fra nettet.
 testversjon (GeoJSON) og Boverkets ÖP-modell (GeoPackage med `innehall_op_*`). Gjenkjennes på innholdet og åpnes som
 plankart; se [planer.md](planer.md).
 
+**Nordiske planer** (typen plan): Plandata.dk-GeoJSON (lokalplaner, delområder, byggefelt, kommuneplanrammer), Finlands
+plandatamodell (Ryhti-JSON), Skipulagsstofnuns stafrænt skipulag (GeoJSON eller GeoPackage-malen) og norske
+reguleringsplaner/kommuneplaner som GeoPackage (Rp-/Kp-tabeller). Gjenkjennes på innholdet; GeoPackage-filer får valget
+*Hele planen som plan*. Se [planer.md](planer.md).
+
 ## Tegnkoding
 
 Tekstfiler kontrolleres i denne rekkefølgen: byte order mark (UTF-8, UTF-16), UTF-16 uten BOM (mange nullbyte), ren ASCII,

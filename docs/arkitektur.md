@@ -350,6 +350,16 @@ Boverkets ÖP-modell (GeoPackage-tabeller `innehall_op_*`), rader med fasta kolu
 känns igen på tabellnamnen och importeras helt när `options.plan` är satt. `data/geo.toWgs84(geometry, crs)` räknar om
 SWEREF 99 TM, de lokala zonerna (EPSG:3007–3018) och Web Mercator.
 
+Planer från de övriga nordiska länderna läses av `data/plan-nordic` till samma rader: Plandata.dk-lager (lokalplan,
+delområder, byggefelter som detaljplan; kommuneplanrammer som översiktsplan), Finlands kaavatietomalli (kaavakohde med
+määräysryhmor; kodlistan RY_Kaavamaarayslaji inbäddad), Islands stafrænt skipulag (fitjutegundir Skipulag, Lodir,
+Byggingarreitir, Kvadir, Samgongur; landnotkun för aðalskipulag) och norska Rp-/Kp-GeoPackage (arealformål-kodlistan
+inbäddad). Färgerna uttrycks som Boverkets färgnamn i kolumnen `farg`, så plan-view och leaflet ritar alla länder lika;
+`_meta.plan.land` styr vilka verktyg Plan-fliken visar. `fetchPlan` bygger de anrop som hämtar en hel plan från Plandata
+(två steg: lokalplan, sedan delområder och byggefelter via lokplan_id) eller Skipulagsstofnun (fem lager via skipnr) och
+geodata-view visar kortet *Hämta plan* för källor med `family.plans`. `data/geo` räknar om UTM 32–35, TM35FIN, GK-zonerna
+och ISN93 (Lambert) utöver SWEREF 99 och Web Mercator.
+
 ### Kartor
 
 `viz/leaflet` ritar diagramslaget `map` med Leaflet 1.9 (vendorat som klassiskt skript och CSS; `leaflet-inline.*` är

@@ -111,6 +111,10 @@ Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finla
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
 browser. A preset source opens, the others are added with one click and their layers read from the service; filter
 by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a
+
+Three sources fetch plans: *Plandata.dk (WFS)* and *Skipulagsstofnun skipulagsgögn (ArcGIS)* have the button **Fetch
+plan**, which reads a whole local plan or deiliskipulag (every layer) by its plan number and keeps it as a plan, and
+*Ryhti kaavatiedot (OGC API Features)* gives Finland's plan index. See [planer.md](planer.md#plans-from-the-other-nordic-countries).
 service of your own. Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*),
 see [planer.md](planer.md).
 

@@ -12,8 +12,11 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('io/importers/detaljplan', ['data/plan', 'data/dataset-files', 'data/encoding', 'io/importers/sqlite'], (plan, dsFiles, encoding, sqliteImp) => {
-    const MARKERS = /"feature:typ"|"feature:mediatyp"|"planbestammelsekatalogreferens"|"stac_version"|"innehallOP"|"innehallstyp"/;
-    const WORDS = /detaljplan|planbestammelse|oversiktsplan|innehallOP|innehallstyp/i;
+    // Swedish markers, then the Nordic ones: Plandata.dk (planid + komnr), Ryhti's kaavatietomalli (planObjects),
+    // Skipulagsstofnun (skipnr with audkenni/skipStig/byggTeg/flokkur).
+    const MARKERS = /"feature:typ"|"feature:mediatyp"|"planbestammelsekatalogreferens"|"stac_version"|"innehallOP"|"innehallstyp"|"planid"|"planObjects"|"skipnr"/;
+    const WORDS = /detaljplan|planbestammelse|oversiktsplan|innehallOP|innehallstyp|"komnr"|planRegulationGroups|geographicalArea|audkenni|skipStig|byggTeg|flokkur/i;
+    const uiLang = () => { try { return D.require('ui/i18n').language(); } catch (_e) { return 'sv'; } };
 
     /** Never by extension; io/import calls sniff() on the file head instead. */
     function detect() { return false; }
@@ -27,8 +30,9 @@
       try { data = JSON.parse(text); } catch (_err) { throw new Error(D.t('plan.err.json')); }
       const format = plan.detect(data);
       if (!format) throw new Error(D.t('plan.err.format'));
-      const parsed = format === 'ngp' ? plan.fromNgp(data, options) : format === 'detaljplan' ? plan.fromDetaljplan(data, options) : plan.fromOversiktsplanGeoJson(data, options);
-      if (parsed.plan.slag === 'detaljplan') await plan.decorate(parsed.rows);
+      const swedish = format === 'ngp' || format === 'detaljplan' || format === 'oversiktsplan';
+      const parsed = format === 'ngp' ? plan.fromNgp(data, options) : format === 'detaljplan' ? plan.fromDetaljplan(data, options) : format === 'oversiktsplan' ? plan.fromOversiktsplanGeoJson(data, options) : await plan.nordic.read(format, data, Object.assign({ lang: uiLang() }, options));
+      if (swedish && parsed.plan.slag === 'detaljplan') await plan.decorate(parsed.rows);
       return Object.assign({ format }, parsed);
     }
     const columnsFor = (info) => (info.slag === 'oversiktsplan' ? plan.OP_COLUMNS : plan.DP_COLUMNS);
@@ -61,25 +65,39 @@
       const original = { name: file.name, kind: 'original', type: file.type || 'application/geo+json', bytes: new Uint8Array(await file.arrayBuffer()) };
       return createPlanDataset(r.plan, r.rows, name || defaultName(r.plan, file), { kind: 'file', fileName: file.name, size: file.size, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null, format: 'detaljplan', planFormat: r.format }, [original]);
     }
-    /** An API answer with NGP reference objects (flattened columns) → one plan dataset. */
+    /** An API answer (flattened columns) with NGP reference objects or a Nordic plan layer → one plan dataset. */
     async function importTable(columns, rows, name, source) {
-      const parsed = plan.fromReferenceTable(columns, rows);
-      await plan.decorate(parsed.rows);
-      return createPlanDataset(parsed.plan, parsed.rows, name || parsed.plan.namn || parsed.plan.beteckning || D.t('plan.name.default'), Object.assign({ planFormat: 'ngp' }, source || {}), []);
+      const format = plan.tableFormat(columns);
+      if (!format) throw new Error(D.t('plan.err.format'));
+      let parsed;
+      if (format === 'ngp') { parsed = plan.fromReferenceTable(columns, rows); await plan.decorate(parsed.rows); }
+      else parsed = await plan.nordic.read(format, plan.nordic.featuresFromTable(columns, rows), { crs: 'EPSG:4326', lang: uiLang() });
+      return importParsed(Object.assign({ format }, parsed), name, source);
+    }
+    /** A parsed plan ({format, plan, rows}, e.g. fetched from a service) → one plan dataset. */
+    async function importParsed(parsed, name, source) {
+      return createPlanDataset(parsed.plan, parsed.rows, name || parsed.plan.namn || parsed.plan.beteckning || D.t('plan.name.default'), Object.assign({ planFormat: parsed.format }, source || {}), []);
     }
 
     const q = (name) => '"' + String(name).replace(/"/g, '""') + '"';
     const cellOf = (v) => (v instanceof Uint8Array || (v && typeof v === 'object' && v.buffer) ? null : v);
-    /** Boverket's ÖP-model GeoPackage (`innehall_op_*` tables) → one plan dataset with every content layer. */
-    async function importOpGeoPackage(file, options = {}, name, progress) {
+    /**
+     * A plan GeoPackage → one plan dataset with every layer: Boverket's ÖP model (`innehall_op_*` tables), a Norwegian
+     * reguleringsplan or kommuneplan (Rp and Kp tables per the SOSI product specifications) or an Icelandic stafrænt
+     * deiliskipulag (the Skipulagsstofnun template).
+     */
+    async function importGeoPackage(file, options = {}, name, progress) {
       const { engine } = await sqliteImp.openFile(file);
       try {
         const all = (await engine.exec("select name from sqlite_master where type in ('table', 'view') and name not like 'sqlite_%' order by name"));
         const names = (all[0] ? all[0].values : []).map((r) => String(r[0]));
-        if (!plan.isOpGeoPackage(names)) throw new Error(D.t('plan.err.notop'));
+        const kind = plan.isOpGeoPackage(names) ? 'oversiktsplan' : plan.nordic.gpkgKind(names);
+        if (!kind) throw new Error(D.t('plan.err.notop'));
         const info = await sqliteImp.describe(engine);
         const tables = [];
-        const wanted = names.filter((n) => /^innehall_op_/i.test(n) || n.toLowerCase() === 'oversiktsplan').filter((n) => !/_lookup$/i.test(n));
+        const wanted = kind === 'oversiktsplan'
+          ? names.filter((n) => /^innehall_op_/i.test(n) || n.toLowerCase() === 'oversiktsplan').filter((n) => !/_lookup$/i.test(n))
+          : names.filter((n) => info.geometryColumns.has(n) || /^(rp|kp|rb)/i.test(n));
         let done = 0;
         for (const t of wanted) {
           const pragma = await engine.exec(`pragma table_info(${q(t)})`);
@@ -91,13 +109,15 @@
           done++;
           if (progress) progress({ step: 'table', done, total: wanted.length, table: t });
         }
-        const parsed = plan.fromOpTables(tables, options);
+        const parsed = kind === 'oversiktsplan' ? plan.fromOpTables(tables, options) : await plan.nordic.readTables(kind, tables, options);
         if (!parsed.rows.length) throw new Error(D.t('plan.err.empty'));
         const original = options.keepOriginal === false ? [] : [{ name: file.name, kind: 'original', type: file.type || 'application/geopackage+sqlite3', bytes: new Uint8Array(await file.arrayBuffer()) }];
-        return createPlanDataset(parsed.plan, parsed.rows, name || parsed.plan.namn || String(file.name).replace(/\.[^.]+$/, ''), { kind: 'file', fileName: file.name, size: file.size, format: 'geopackage', planFormat: 'oversiktsplan-gpkg' }, original);
+        return createPlanDataset(parsed.plan, parsed.rows, name || parsed.plan.namn || String(file.name).replace(/\.[^.]+$/, ''), { kind: 'file', fileName: file.name, size: file.size, format: 'geopackage', planFormat: parsed.plan.format || 'oversiktsplan-gpkg' }, original);
       } finally { engine.terminate(); }
     }
+    /** Kept for callers of the 2.9.0 name. */
+    const importOpGeoPackage = importGeoPackage;
 
-    return { id: 'detaljplan', kind: 'plan', detect, sniff, read, preview, parse, importFile, importTable, importOpGeoPackage, createPlanDataset, defaultName };
+    return { id: 'detaljplan', kind: 'plan', detect, sniff, read, preview, parse, importFile, importTable, importParsed, importGeoPackage, importOpGeoPackage, createPlanDataset, defaultName };
   });
 })();

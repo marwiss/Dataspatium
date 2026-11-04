@@ -110,7 +110,7 @@
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
         // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
         // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.
-        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, kind: { type: 'string', enum: ['wfs', 'ogcapi', 'arcgis'] }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
+        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, kind: { type: 'string', enum: ['wfs', 'ogcapi', 'arcgis'] }, plans: { type: 'string', enum: ['plandata', 'skipulag'] }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
         endpoints: { type: 'array', items: endpointSchema },
         notes: { type: 'string' },
       },

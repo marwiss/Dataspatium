@@ -77,6 +77,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Planer**: svenske digitale reguleringsplaner (den nasjonale spesifikasjonen, Lantmäteriets geodataplattform) åpnes
   som plankart med Boverkets farger og betegnelser, bestemmelsene slås opp i Boverkets Planbestämmelsekatalog (innebygd
   kopi), og kommuneplaner (spesifikasjonen eller Boverkets ÖP-modell) vises tema for tema (se [planer.md](planer.md)).
+- **Nordiske planer**: Danmarks lokalplaner og kommuneplanrammer (Plandata.dk), Finlands plandatamodell og planindeks
+  (Ryhti), Islands digitale regulerings- og kommuneplaner (Skipulagsstofnun) og Norges reguleringsplaner (GeoPackage) åpnes
+  som planer med hvert lands farger; en hel plan hentes med nummeret sitt fra Plandata og Skipulagsstofnun.
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

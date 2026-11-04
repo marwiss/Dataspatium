@@ -63,6 +63,11 @@ Heimildir og leyfi eru í `presets/geo/KALLA.md`. Ekkert er sótt af netinu.
 (GeoJSON) og ÖP-líkan Boverket (GeoPackage með `innehall_op_*`). Þekkist á innihaldinu og opnast sem skipulagskort; sjá
 [planer.md](planer.md).
 
+**Norrænt skipulag** (tegundin skipulag): Plandata.dk-GeoJSON (staðbundið skipulag, undirsvæði, byggingarreitir, rammar
+sveitarfélagsskipulags), finnska skipulagsgagnalíkanið (Ryhti-JSON), stafrænt skipulag Skipulagsstofnunar (GeoJSON eða
+GeoPackage-sniðmátið) og norskt reguleringsplan/kommuneplan sem GeoPackage (Rp-/Kp-töflur). Þekkist á innihaldinu;
+GeoPackage-skrár fá valið *Allt skipulagið sem skipulag*. Sjá [planer.md](planer.md).
+
 ## Stafakóðun
 
 Textaskrár eru athugaðar í þessari röð: bætaröðunarmerki (UTF-8, UTF-16), UTF-16 án BOM (mörg núllbæti), hreint ASCII, ströng

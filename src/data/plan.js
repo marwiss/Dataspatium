@@ -18,7 +18,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/plan', ['data/geo', 'data/plan-catalog'], (geo, catalog) => {
+  D.define('data/plan', ['data/geo', 'data/plan-catalog', 'data/plan-nordic'], (geo, catalog, nordic) => {
     /** Columns of a detaljplan dataset. */
     const DP_COLUMNS = [
       { name: 'objektid', type: 'text' }, { name: 'objekttyp', type: 'text' }, { name: 'beteckning', type: 'text' }, { name: 'formulering', type: 'text' },
@@ -30,7 +30,7 @@
     const OP_COLUMNS = [
       { name: 'objektid', type: 'text' }, { name: 'tema', type: 'text' }, { name: 'innehallstyp', type: 'text' }, { name: 'namn', type: 'text' }, { name: 'precisering', type: 'text' },
       { name: 'anvandningsstatus', type: 'text' }, { name: 'kompletterande', type: 'text' }, { name: 'utbyggnadsordning', type: 'text' }, { name: 'planhandelse', type: 'text' },
-      { name: 'planhandelse_datum', type: 'text' }, { name: 'beslut', type: 'text' }, { name: 'geometrityp', type: 'text' }, { name: 'ordning', type: 'integer' }, { name: 'geometri', type: 'text' },
+      { name: 'planhandelse_datum', type: 'text' }, { name: 'beslut', type: 'text' }, { name: 'geometrityp', type: 'text' }, { name: 'farg', type: 'text' }, { name: 'ordning', type: 'integer' }, { name: 'geometri', type: 'text' },
     ];
     /** Object types of detaljplan rows, in drawing order (the plan area first, uses, then outlines on top). */
     const OBJECT_TYPES = ['planomrade', 'anvandning', 'egenskap', 'administrativ', 'overgang', 'annan'];
@@ -75,7 +75,8 @@
     function detect(data) {
       if (!data || typeof data !== 'object') return null;
       const features = Array.isArray(data.features) ? data.features : (data.type === 'Feature' ? [data] : null);
-      if (!features || !features.length) return null;
+      // Finland's kaavatietomalli is a JSON document, not a FeatureCollection.
+      if (!features || !features.length) return nordic.detect(data) === 'kaavatietomalli' ? 'kaavatietomalli' : null;
       const media = lower(data['feature:mediatyp'] || '');
       if (/detaljplan/.test(media)) return 'detaljplan';
       if (/oversiktsplan/.test(media)) return 'oversiktsplan';
@@ -84,13 +85,16 @@
       if (types.has('oversiktsplan') || types.has('innehallop')) return 'oversiktsplan';
       if (types.has('detaljplan') || types.has('anvandningsbestammelse') || types.has('egenskapsbestammelse') || types.has('administrativbestammelse') || types.has('planbestammelse')) return 'detaljplan';
       if (features.some((f) => f && f.properties && asObject(f.properties.detaljplan))) return 'ngp';
-      return null;
+      return nordic.detect(data);
     }
-    /** True when an API table (columns of a flattened GeoJSON answer) holds NGP reference objects. */
-    function detectTable(columns) {
+    /** The format of an API table (columns of a flattened GeoJSON answer): 'ngp' for NGP reference objects, a Nordic format, or null. */
+    function tableFormat(columns) {
       const names = new Set((columns || []).map((c) => normalizeKey(typeof c === 'string' ? c : c.name)));
-      return (names.has('feature.typ') || names.has('detaljplan.objektidentitet')) && (names.has('detaljplan.status') || names.has('planbestammelse.bestammelseformulering') || names.has('detaljplan.beteckning'));
+      if ((names.has('feature.typ') || names.has('detaljplan.objektidentitet')) && (names.has('detaljplan.status') || names.has('planbestammelse.bestammelseformulering') || names.has('detaljplan.beteckning'))) return 'ngp';
+      return nordic.detectTable(columns);
     }
+    /** True when an API table holds a plan the app can keep as a plan dataset. */
+    function detectTable(columns) { return !!tableFormat(columns); }
     const normalizeKey = (k) => lower(k).replace(/[_:]/g, '.');
 
     // ---- object types and colours -----------------------------------------------------------------------------
@@ -121,6 +125,7 @@
     function strokeOf(row) { return catalog.KIND_STROKES[row.objekttyp] || catalog.KIND_STROKES.annan || '#4a4f57'; }
     /** Fill colour of an översiktsplan row: land and water use by type, other themes by theme. */
     function opFillOf(row) {
+      if (row.farg) { const named = catalog.colorFor(row.farg); if (named) return named; }
       const tema = lower(row.tema);
       if (tema === 'markochvattenanvandning') return OP_USE_COLORS[lower(row.innehallstyp)] || OP_USE_COLORS['annan mark- och vattenanvändning'];
       return OP_THEME_COLORS[tema] || '#7f8c8d';
@@ -455,6 +460,6 @@
       return lines.join('\n');
     }
 
-    return { DP_COLUMNS, OP_COLUMNS, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, detect, detectTable, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, geometryOf, geometryText, crsOf, fromNgp, fromReferenceTable, fromDetaljplan, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
+    return { DP_COLUMNS, OP_COLUMNS, OBJECT_TYPES, USE_LETTERS, OP_THEME_COLORS, OP_USE_COLORS, nordic, detect, detectTable, tableFormat, featureType, objectType, colorNameForDesignation, fillOf, strokeOf, opFillOf, geometryOf, geometryText, crsOf, fromNgp, fromReferenceTable, fromDetaljplan, fromOversiktsplanGeoJson, fromOpTables, isOpGeoPackage, decorate, toRows, fromRows, legend, grouped, areaM2, areasByUse, checkCatalog, templateMatches, provisionsMarkdown, themeKey };
   });
 })();

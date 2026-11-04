@@ -85,6 +85,9 @@ ett paket.
 - **Planer**: digitala detaljplaner (nationella specifikationen, Lantmäteriets geodataplattform) öppnas som plankartor
   med Boverkets färger och beteckningar, bestämmelserna slås upp i Boverkets Planbestämmelsekatalog (inbäddad kopia),
   och översiktsplaner (specifikationen eller Boverkets ÖP-modell) visas tema för tema (se [docs/planer.md](docs/planer.md)).
+- **Nordiska planer**: Danmarks lokalplaner och kommuneplanrammer (Plandata.dk), Finlands kaavatietomalli och planindex
+  (Ryhti), Islands stafrænt deili- och aðalskipulag (Skipulagsstofnun) och Norges reguleringsplaner (GeoPackage) öppnas
+  som planer med respektive lands färger; en hel plan hämtas med sitt nummer från Plandata och Skipulagsstofnun.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

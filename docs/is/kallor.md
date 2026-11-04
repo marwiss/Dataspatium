@@ -109,6 +109,10 @@ Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksanti
 Helsinki, Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands og fleiri), allar
 staðfestar til að virka úr vafranum. Forstillt uppspretta opnast, öðrum er bætt við með einum smelli og lögin lesin úr
 þjónustunni; síaðu eftir heiti, landi eða innihaldi. Listinn er í `presets/geodata/services.json`. Undir listanum eru
+
+Þrjár uppsprettur sækja skipulag: *Plandata.dk (WFS)* og *Skipulagsgögn Skipulagsstofnunar (ArcGIS)* hafa hnappinn
+**Sækja skipulag**, sem les heilt staðbundið skipulag eða deiliskipulag (öll lög) með skipulagsnúmeri og vistar það sem
+skipulag, og *Ryhti kaavatiedot (OGC API Features)* gefur skipulagsskrá Finnlands. Sjá [planer.md](planer.md#skipulag-frá-öðrum-norðurlöndum).
 reitirnir fyrir eigin þjónustu. Planbestämmelsekatalog Boverket er venjuleg API-uppspretta (*Boverket
 Planbestämmelsekatalogen*), sjá [planer.md](planer.md).
 
