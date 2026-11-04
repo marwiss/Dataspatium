@@ -70,6 +70,9 @@ Cypher-skript; filen känns igen på innehållet, grafens uppgifter visas och gr
 Byggnadsmodeller i IFC och ritningar i DXF blir datamängder av slaget modell. Filens uppgifter visas och modellen öppnas i 3D
 eller som ritning i Bearbeta (se [cad-bim.md](cad-bim.md)).
 
+**Insamling i fält** i källistan bygger ett formulär på en datamängds kolumner och regler och skickar det till telefonen. Raderna kommer tillbaka som en ny
+version (se [insamling.md](insamling.md)).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)

@@ -52,6 +52,11 @@ Vælg *Anden computer (indsæt kode)* på den ene computer, og indsæt koden fra
 QR-kode*-visning (knappen *Kopiér* under QR-koden). Den første computer viser så en svarkode, der indsættes på den
 anden under *Kode fra enheden*. Derefter fungerer alt som mellem computer og telefon, inklusive parring.
 
+## Indsaml i felten
+
+En formular fra computeren havner øverst på startsiden. Telefonen udfylder rækker uden net, med foto og position, og kontrollerer dem straks mod
+formularen og datasættets regler. *Send til computeren* fører dem tilbage over samme forbindelse. Se [insamling.md](insamling.md).
+
 ## Krav og begrænsninger
 
 - Enhederne skal kunne nå hinanden på netværket. På hjemmenetværk og de fleste kontornetværk fungerer det;

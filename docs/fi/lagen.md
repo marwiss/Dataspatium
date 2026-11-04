@@ -69,6 +69,9 @@ tiedosto tunnistetaan sisällöstä, verkon tiedot näytetään ja verkko avautu
 IFC-rakennusmalleista ja DXF-piirustuksista tulee malli-tyyppisiä aineistoja. Tiedoston tiedot näytetään, ja malli avautuu 3D:nä tai
 piirustuksena Muokkaa-tilassa (katso [cad-bim.md](cad-bim.md)).
 
+**Keruu maastossa** lähdeluettelossa rakentaa lomakkeen aineiston sarakkeista ja säännöistä ja lähettää sen puhelimeen. Rivit palaavat uutena
+versiona (katso [insamling.md](insamling.md)).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä

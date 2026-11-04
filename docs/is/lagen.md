@@ -68,6 +68,9 @@ Tvær töflur verða net með hnappinum *Gera net úr töflum* í Umsjón.
 Byggingarlíkön í IFC og teikningar í DXF verða að gagnasöfnum af tegundinni líkan. Upplýsingar um skrána birtast og líkanið opnast í
 þrívídd eða sem teikning í Vinna (sjá [cad-bim.md](cad-bim.md)).
 
+**Söfnun á vettvangi** í lista yfir heimildir byggir eyðublað á dálkum og reglum gagnasafns og sendir það í símann. Raðirnar koma aftur sem ný
+útgáfa (sjá [insamling.md](insamling.md)).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft

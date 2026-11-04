@@ -53,6 +53,11 @@ code* view (the *Copy* button below the QR code). The first computer then shows 
 the other under *Code from the device*. From there everything works as between computer and phone, pairing
 included.
 
+## Collecting in the field
+
+A form from the computer lands at the top of the start page. The phone fills in rows without a network, with photo and position, and checks them at once against
+the form and the dataset's rules. *Send to the computer* carries them back over the same connection. See [insamling.md](insamling.md).
+
 ## Requirements and limitations
 
 - The devices must reach each other on the network. On home networks and most office networks it works;

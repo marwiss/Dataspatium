@@ -105,7 +105,10 @@
         btn.loading = true;
         try {
           const items = [];
-          if (what === 'files') {
+          if (what === 'pending') {
+            const p = store.get().devicesPending;
+            if (p) items.push({ name: p.name, type: 'application/zip', data: p.blob, kind: p.kind });
+          } else if (what === 'files') {
             const picked = await services.files.pick({ multiple: true });
             for (const f of picked) items.push({ name: f.name, type: f.type, data: f, kind: 'file' });
           } else {
@@ -122,6 +125,7 @@
           }
           if (!items.length) { btn.loading = false; return; }
           const res = await session.send(items);
+          if (what === 'pending' && res.confirmed.length) store.set({ devicesPending: null });
           if (res.confirmed.length) { shell.log(t('devices.sent', { n: res.confirmed.length }), 'ok'); ui.toast.show(t('devices.sent', { n: res.confirmed.length }), { kind: 'ok' }); }
           else ui.toast.show(t('devices.rejected'), { kind: 'warn' });
         } catch (err) { fail(err); }
@@ -229,6 +233,10 @@
         const nSelected = s.selectedIds && s.selectedIds.length ? s.selectedIds.length : (s.selectedId ? 1 : 0);
         what.options = [{ value: 'selected', label: t('devices.send.what.selected', { n: nSelected }) }, { value: 'all', label: t('devices.send.what.all') }, { value: 'files', label: t('devices.send.what.files') }];
         what.value = 'selected';
+        if (s.devicesPending) {
+          what.options = [{ value: 'pending', label: t('devices.send.pending', { name: s.devicesPending.label }) }].concat(what.options);
+          what.value = 'pending';
+        }
         const sendBtn = ui.button({ label: t('devices.send'), icon: 'upload', variant: connected ? 'primary' : 'default', onClick: () => sendNow(what.value, sendBtn) });
         if (!connected) sendBtn.disabled = true;
         renderTransfers();

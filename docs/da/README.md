@@ -94,6 +94,8 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Statistik uden kode**: fanen Statistik laver beskrivende statistik, krydstabeller, korrelation, hypotesetest, regression og klyngeanalyse
   med formularer, der skriver og viser R- eller Python-koden. Tidsserieoperationer i Bearbejd (perioder, ændring, indeks, glidende gennemsnit,
   sæsonkorrektion), og en regression kan gemmes og bruges som recepttrinnet Prædiktion (se [statistik.md](statistik.md)).
+- **Indsamling i felten**: en formular bygget på et datasæts kolonner og regler sendes til Dataspatium Mobil. Telefonen indsamler rækker uden net, med foto og
+  position, og rækkerne kommer tilbage som en ny version. Fotoene bliver en billedsamling, og positionerne havner på kortet (se [insamling.md](insamling.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

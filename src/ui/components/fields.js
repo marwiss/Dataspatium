@@ -27,6 +27,7 @@
             : h('input', { class: 'dm-field', id, type });
           if (this.hasAttribute('value')) this.control.value = this.attr('value');
           if (this.hasAttribute('name')) this.control.name = this.attr('name');
+          if (this.hasAttribute('inputmode')) this.control.setAttribute('inputmode', this.attr('inputmode'));
           if (this.hasFlag('mono')) this.control.style.fontFamily = 'var(--dm-font-mono)';
           this.helpEl = h('div', { class: 'dm-help' });
           this.errorEl = h('div', { class: 'dm-field-error', role: 'alert' });

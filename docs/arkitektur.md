@@ -513,6 +513,19 @@ förhandsgranskning) och `src/ui/dialogs.js` (palett, datakvalitet, versioner, r
 koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`editable`, händelsen
 `dm-cell-commit`) och `updateData` som laddar om utan att tappa rullningsläge och markering.
 
+## Insamling i fält
+
+`data/field-form` körs på både datorn och telefonen och känner inte till datamängder: formuläret, typtolkningen, regelkontrollen och paketen. `data/field-collect` på
+datorn gör formulär av en datamängds kolumner och regler och lägger till rader som kommer tillbaka. Formuläret ligger i `_meta.field`, som är en av nycklarna i `KIND_META_KEYS`.
+
+Reglerna följer med som samma SQL-villkor som datorn kör (`rules.violation`). Telefonen kör dem i en egen SQLite på en liten tabell, så att funktioner som `dm_valid_id` och
+`regexp` ger samma svar på båda ställena. En regel som inte kan köras där lämnas till datorn, som kör alla regler när raderna kommit.
+
+Rader har ett id som är unikt mellan telefoner, och `falt_id` gör leveransen idempotent. `mobile/field` sparar utkastet från första ändringen och fotona direkt, eftersom telefoner stänger
+sidan när kameran öppnas. `prepareOffline` ber service workern om varje fil sidan använt, så att sidan kan öppnas utan nät; en fil som lästes innan workern tog över finns annars inte i cachen.
+Paket går samma väg som andra paket: `ui/share/bundle.receiveFile` skickar dem till `ui/field/receive`.
+
+
 ## Statistik, tidsserier och modeller
 
 `analysis/stats` översätter ett formulär till vanlig R- eller Python-kod (`code`), som är precis det som visas. `run` kör koden i

@@ -55,6 +55,11 @@ QR-koodi* -näkymästä (painike *Kopioi* QR-koodin alla). Ensimmäinen tietokon
 liitetään toiselle kohtaan *Koodi laitteesta*. Sen jälkeen kaikki toimii kuten tietokoneen ja puhelimen välillä,
 paritus mukaan lukien.
 
+## Keruu maastossa
+
+Tietokoneelta tullut lomake on aloitussivun yläosassa. Puhelin täyttää rivit ilman verkkoa, valokuvan ja sijainnin kera, ja tarkistaa ne heti lomaketta ja
+aineiston sääntöjä vasten. *Lähetä tietokoneelle* vie ne takaisin samaa yhteyttä pitkin. Katso [insamling.md](insamling.md).
+
 ## Vaatimukset ja rajoitukset
 
 - Laitteiden on tavoitettava toisensa verkossa. Kotiverkoissa ja useimmissa toimistoverkoissa se toimii; verkot,

@@ -71,6 +71,9 @@ Process (see [grafer.md](grafer.md)). Two tables become a graph with *Make graph
 Building models in IFC and drawings in DXF become datasets of the kind model. The facts of the file are shown and the model
 opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
 
+**Field collection** in the list of sources builds a form on a dataset's columns and rules and sends it to the phone. The rows come back as a new version
+(see [insamling.md](insamling.md)).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and

@@ -98,6 +98,8 @@ paketilla.
 - **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin
   lomakkeilla, jotka kirjoittavat ja näyttävät R- tai Python-koodin. Aikasarjatoiminnot Muokkaa-tilassa (jaksot, muutos, indeksi, liukuva keskiarvo,
   kausitasoitus), ja regression voi tallentaa ja käyttää reseptivaiheena Ennuste (katso [statistik.md](statistik.md)).
+- **Keruu maastossa**: aineiston sarakkeisiin ja sääntöihin perustuva lomake lähetetään Dataspatium Mobiliin. Puhelin kerää rivit ilman verkkoa, valokuvan ja
+  sijainnin kera, ja rivit palaavat uutena versiona. Kuvista tulee kuvakokoelma, ja sijainnit päätyvät kartalle (katso [insamling.md](insamling.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

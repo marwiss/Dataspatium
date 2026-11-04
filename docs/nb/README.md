@@ -93,6 +93,8 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Statistikk uten kode**: fanen Statistikk gjør beskrivende statistikk, krysstabeller, korrelasjon, hypotesetester, regresjon og klyngeanalyse
   med skjemaer som skriver og viser R- eller Python-koden. Tidsserieoperasjoner i Bearbeid (perioder, endring, indeks, glidende gjennomsnitt,
   sesongjustering), og en regresjon kan lagres og brukes som reseptsteget Prediksjon (se [statistik.md](statistik.md)).
+- **Innsamling i felt**: et skjema bygd på et datasetts kolonner og regler sendes til Dataspatium Mobil. Telefonen samler inn rader uten nett, med bilde og
+  posisjon, og radene kommer tilbake som en ny versjon. Bildene blir en bildesamling, og posisjonene havner på kartet (se [insamling.md](insamling.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

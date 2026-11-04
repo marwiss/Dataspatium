@@ -3,14 +3,15 @@
 /**
  * Dataspatium Mobil: the phone side of direct transfer (m/index.html). Roles: courier (carry a bundle from one
  * computer to another), receiver (keep what a computer sends), viewer (the tables inside a bundle) and forwarder
- * (hand a bundle on through the system share sheet, a download or another computer). It loads through the mobile
+ * (hand a bundle on through the system share sheet, a download or another computer). Collecting in the field is in
+ * mobile/field. It loads through the mobile
  * profile of src/boot.js and keeps received files in IndexedDB (a settings list plus one blob per file).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('mobile/app', ['ui/base', 'ui/components', 'ui/icons', 'ui/overlays', 'ui/basic', 'ui/fonts', 'ui/theme', 'platform/p2p', 'ui/qr', 'platform/storage/idb', 'platform/storage/zip', 'platform/files', 'engines/sqlite'],
-    (base, _components, icons, overlays, basic, fonts, _theme, p2p, qr, idb, zip, files, sqlite) => {
+  D.define('mobile/app', ['ui/base', 'ui/components', 'ui/icons', 'ui/overlays', 'ui/basic', 'ui/fonts', 'ui/theme', 'platform/p2p', 'ui/qr', 'platform/storage/idb', 'platform/storage/zip', 'platform/files', 'engines/sqlite', 'mobile/field'],
+    (base, _components, icons, overlays, basic, fonts, _theme, p2p, qr, idb, zip, files, sqlite, fieldMod) => {
       const { h, t, i18n, replace } = base;
       const { dialog, toast } = overlays;
       const icon = icons.icon;
@@ -34,6 +35,7 @@
             const entries = await zip.readZip(blob);
             if (entries['manifest.json']) {
               const manifest = JSON.parse(zip.text(entries['manifest.json']));
+              if (manifest.kind === 'field-form' && manifest.form) { meta.kind = 'form'; meta.title = manifest.form.title || manifest.name || ''; meta.form = manifest.form; meta.datasets = []; return meta; }
               meta.kind = 'bundle';
               meta.title = manifest.name || '';
               meta.author = manifest.author || '';
@@ -110,6 +112,7 @@
           this.options = options || {};
           this.state = { screen: 'start', bundles: [], session: null, bundle: null, view: null, page: 0, filter: '', identity: null, queue: [], scanning: null, transfers: [] };
           this.qrEl = null; this.qrFor = null; this.filterTimer = 0; this.transferBox = null; this.destroyed = false;
+          this.field = new fieldMod.Field(this, { listBundles, removeBundle });
         }
         async init() {
           document.documentElement.lang = i18n.language();
@@ -117,6 +120,9 @@
           this.state.bundles = await listBundles();
           const inbox = await drainInbox();
           if (inbox.length) { this.state.bundles = await listBundles(); toast.show(t('mobile.inbox.received', { n: inbox.length }), { kind: 'ok' }); }
+          for (const meta of inbox) await this.field.adopt(meta);
+          await this.field.refresh();
+          if (this.field.forms().length) this.field.getReady();
           const hash = this.options.hash !== undefined ? this.options.hash : location.hash;
           const m = /#o=([A-Za-z0-9_-]+)/.exec(hash || '');
           if (m) await this.connectTo(m[1]); else this.render();
@@ -125,6 +131,7 @@
         go(screen) { this.state.screen = screen; this.render(); }
         back() {
           const s = this.state;
+          if (s.screen === 'field' || s.screen === 'fieldrow') { this.field.back(); return; }
           if (s.screen === 'dataset') { if (s.view) { s.view.close(); s.view = null; } this.go('bundle'); return; }
           if (s.screen === 'connect') { this.closeSession(); }
           this.stopScan();
@@ -190,8 +197,9 @@
         async onItem(session, item) {
           const row = this.state.transfers.find((x) => x.id === item.id && x.direction === 'in');
           if (row) { row.done = true; row.received = item.size; }
-          await keep(item.blob, item.name, (session.peerInfo && session.peerInfo.name) || '');
+          const kept = await keep(item.blob, item.name, (session.peerInfo && session.peerInfo.name) || '');
           this.state.bundles = await listBundles();
+          await this.field.adopt(kept);
           toast.show(t('mobile.received', { name: item.name }), { kind: 'ok' });
           this.render();
         }
@@ -210,7 +218,7 @@
         }
         async sendStored() {
           const chosen = new Set();
-          const switches = this.state.bundles.map((b) => { const sw = /** @type {any} */ (h('dm-switch', { label: (b.title || b.name) + ' (' + i18n.formatBytes(b.size) + ')' })); sw.addEventListener('change', () => { if (sw.checked) chosen.add(b.id); else chosen.delete(b.id); }); return sw; });
+          const switches = this.state.bundles.filter((b) => b.kind !== 'form').map((b) => { const sw = /** @type {any} */ (h('dm-switch', { label: (b.title || b.name) + ' (' + i18n.formatBytes(b.size) + ')' })); sw.addEventListener('change', () => { if (sw.checked) chosen.add(b.id); else chosen.delete(b.id); }); return sw; });
           const ok = await dialog.open({ title: t('mobile.send.choose'), body: h('div', { class: 'dm-stack-sm' }, switches), actions: [{ label: t('common.cancel'), value: false }, { label: t('devices.send'), variant: 'primary', value: true, primary: true }] });
           if (ok !== true || !chosen.size) return;
           const items = [];
@@ -221,8 +229,17 @@
           const queue = this.state.queue.slice();
           this.state.queue = [];
           const items = [];
-          for (const b of queue) { const blob = await loadBlob(b.id); if (blob) items.push({ name: b.name, type: b.type, data: blob, kind: b.kind }); }
-          if (items.length) await this.sendItems(items);
+          const after = [];
+          for (const b of queue) {
+            // Rows from the field are packed when the computer is there, and marked as sent when it has them.
+            if (b.build) { const built = await b.build(); items.push(...built.items); after.push(built.done); continue; }
+            const blob = await loadBlob(b.id);
+            if (blob) items.push({ name: b.name, type: b.type, data: blob, kind: b.kind });
+          }
+          if (items.length) {
+            const res = await this.sendItems(items);
+            if (res) for (const done of after) await done(res);
+          }
           this.render();
         }
         queueForComputer(b) { this.state.queue = [b]; toast.show(t('mobile.queue.hint'), { kind: 'info' }); this.go('start'); }
@@ -300,7 +317,7 @@
         header() {
           const s = this.state;
           const back = s.screen !== 'start' ? button({ label: t('mobile.back'), icon: 'chevron-left', 'icon-only': true, variant: 'ghost', onClick: () => this.back() }) : h('span', { class: 'dm-m-logo' }, icon('smartphone', 22));
-          const title = s.screen === 'bundle' && s.bundle ? (s.bundle.title || s.bundle.name) : s.screen === 'dataset' && s.view ? s.view.name : s.screen === 'connect' ? t('mobile.connect.title') : s.screen === 'settings' ? t('mobile.settings') : t('mobile.title');
+          const title = s.screen === 'field' || s.screen === 'fieldrow' ? this.field.title() : s.screen === 'bundle' && s.bundle ? (s.bundle.title || s.bundle.name) : s.screen === 'dataset' && s.view ? s.view.name : s.screen === 'connect' ? t('mobile.connect.title') : s.screen === 'settings' ? t('mobile.settings') : t('mobile.title');
           const settings = s.screen === 'start' ? button({ label: t('mobile.settings'), icon: 'settings', 'icon-only': true, variant: 'ghost', onClick: () => this.go('settings') }) : null;
           return h('header', { class: 'dm-m-head' }, back, h('h1', { class: 'dm-m-title', text: title }), settings);
         }
@@ -329,11 +346,12 @@
             p2p.supported() ? h('div', { class: 'dm-m-actions' },
               canScan ? button({ label: t('mobile.scan'), icon: 'scan-line', variant: 'primary', onClick: () => this.scan() }) : null,
               button({ label: t('mobile.paste'), icon: 'clipboard-paste', variant: canScan ? 'default' : 'primary', onClick: () => this.pasteCode() })) : null);
-          const list = s.bundles.length
-            ? h('div', { class: 'dm-m-list' }, s.bundles.map((b) => this.item(icon(b.kind === 'bundle' ? 'package' : 'file', 20), b.title || b.name, this.subtitle(b), () => this.openBundle(b.id))))
+          const kept = s.bundles.filter((b) => b.kind !== 'form');
+          const list = kept.length
+            ? h('div', { class: 'dm-m-list' }, kept.map((b) => this.item(icon(b.kind === 'bundle' ? 'package' : 'file', 20), b.title || b.name, this.subtitle(b), () => this.openBundle(b.id))))
             : h('p', { class: 'dm-help', text: t('mobile.received.none') });
           const receivedCard = h('section', { class: 'dm-m-card' }, h('h2', { text: t('mobile.received.title') }), list);
-          return [connectCard, receivedCard];
+          return [this.field.startCard(), connectCard, receivedCard].filter(Boolean);
         }
         connectScreen() {
           const s = this.state; const session = s.session;
@@ -349,7 +367,7 @@
             parts.push(h('p', { class: 'dm-help', text: t('mobile.waiting.offer') }));
             parts.push(h('div', { class: 'dm-m-actions' },
               button({ label: t('mobile.send.files'), icon: 'upload', onClick: () => this.sendFiles().catch((err) => this.fail(err)) }),
-              s.bundles.length ? button({ label: t('mobile.send.bundle'), icon: 'package', onClick: () => this.sendStored().catch((err) => this.fail(err)) }) : null,
+              s.bundles.some((b) => b.kind !== 'form') ? button({ label: t('mobile.send.bundle'), icon: 'package', onClick: () => this.sendStored().catch((err) => this.fail(err)) }) : null,
               button({ label: t('mobile.disconnect'), icon: 'x', variant: 'ghost', onClick: () => { this.closeSession(); this.go('start'); } })));
           } else if (session.state === 'failed' || session.state === 'closed' || session.state === 'disconnected') {
             parts.push(h('div', { class: 'dm-m-actions' }, button({ label: t('mobile.back.start'), icon: 'chevron-left', onClick: () => this.go('start') })));
@@ -407,10 +425,10 @@
         render() {
           if (this.destroyed) return;
           const s = this.state;
-          const content = s.screen === 'connect' ? this.connectScreen() : s.screen === 'bundle' ? this.bundleScreen() : s.screen === 'dataset' ? this.datasetScreen() : s.screen === 'settings' ? this.settingsScreen() : this.startScreen();
+          const content = s.screen === 'field' ? this.field.formScreen() : s.screen === 'fieldrow' ? this.field.rowScreen() : s.screen === 'connect' ? this.connectScreen() : s.screen === 'bundle' ? this.bundleScreen() : s.screen === 'dataset' ? this.datasetScreen() : s.screen === 'settings' ? this.settingsScreen() : this.startScreen();
           replace(this.root, h('div', { class: 'dm-m' }, this.header(), h('main', { class: 'dm-m-main' }, content)));
         }
-        destroy() { this.destroyed = true; this.stopScan(); this.closeSession(); if (this.state.view) this.state.view.close(); }
+        destroy() { this.destroyed = true; this.field.destroy(); this.stopScan(); this.closeSession(); if (this.state.view) this.state.view.close(); }
       }
 
       /** @param {HTMLElement} root @param {{hash?: string, certificate?: RTCCertificate}} [options] */

@@ -18,7 +18,7 @@
     const listeners = new Set();
     const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'folder', 'tags', 'kind'];
     /** Metadata of the dataset kinds (set by their importers), restored with the file on undo and version restore. */
-    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models'];
+    const KIND_META_KEYS = ['graph', 'plan', 'documents', 'images', 'model', 'models', 'field'];
     /** Kinds of datasets: what the file holds and which views apply. Only 'table' exists until later 2.x releases. */
     const KINDS = ['table', 'graph', 'document', 'images', 'model', 'plan'];
 

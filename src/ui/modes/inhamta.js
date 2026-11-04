@@ -34,6 +34,7 @@
       /** @type {any} */ let apiUi = null;
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
+      /** @type {any} */ let fieldUi = null;
 
       function reset() { return { step: 'file', file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { Object.assign(wiz, reset()); render(); }
@@ -53,6 +54,7 @@
         if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
         if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
+        if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
       }
       async function reloadConnectors() {
         connectorList = await connectors.list();
@@ -72,6 +74,7 @@
             sourceItem('file', 'folder-open', t('import.sources.files'), null),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
+            sourceItem('field', 'smartphone', t('field.source'), t('field.source.hint')),
             sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length }))),
           h('h4', { text: t('api.sources') }),
           renderCountryChips(),
@@ -138,6 +141,8 @@
         if (source.startsWith('api:')) { renderApi(); return; }
         if (source === 'saved') { renderSaved(); return; }
         if (source === 'bridge') { renderBridge(); return; }
+        if (source === 'field') { renderField(); return; }
+        if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step;
         const body = wiz.project ? stepProject() : wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
@@ -222,6 +227,10 @@
         render();
       }
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
+      function renderField() {
+        if (!fieldUi) fieldUi = D.require('ui/field/field-view').create(ctx);
+        fieldUi.render({ center: slots.center, right: slots.right }).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
+      }
       function renderBridge() {
         if (!bridgeUi) { bridgeUi = bridgeView.create(ctx); bridgeUi.start(); }
         replace(slots.center, bridgeUi.el);
@@ -291,6 +300,8 @@
        */
       async function chooseFiles(list) {
         if (!list || !list.length) return;
+        // A form or rows from the field are not a table to read: they go where bundles go.
+        if (list.length === 1 && /\.(insamling|formular)\.zip$/i.test(list[0].name)) { await D.require('ui/share/bundle').receiveFile(ctx, list[0]); return; }
         // A QGIS project (with or without its data files) becomes a map view, not a dataset.
         const projectFile = list.find((f) => qgis.detect(f));
         if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
@@ -692,6 +703,7 @@
 
       // ---- right ----
       function renderRight() {
+        if (source === 'field') return;
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }

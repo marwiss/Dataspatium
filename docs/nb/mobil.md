@@ -52,6 +52,11 @@ Velg *Annen datamaskin (lim inn kode)* på den ene datamaskinen og lim inn koden
 QR-kode*-visning (knappen *Kopier* under QR-koden). Den første datamaskinen viser da en svarkode som limes inn på den
 andre under *Kode fra enheten*. Deretter fungerer alt som mellom datamaskin og telefon, inkludert paring.
 
+## Samle inn i felt
+
+Et skjema fra datamaskinen havner øverst på startsiden. Telefonen fyller ut rader uten nett, med bilde og posisjon, og kontrollerer dem med en gang mot
+skjemaet og datasettets regler. *Send til datamaskinen* fører dem tilbake over samme tilkobling. Se [insamling.md](insamling.md).
+
 ## Krav og begrensninger
 
 - Enhetene må nå hverandre på nettverket. På hjemmenettverk og de fleste kontornettverk fungerer det; nettverk som

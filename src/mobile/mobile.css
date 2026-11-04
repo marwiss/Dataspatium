@@ -36,3 +36,13 @@
 .dm-m-table th:first-child, .dm-m-table td:first-child { position: sticky; left: 0; background: var(--dm-surface); z-index: 2; }
 .dm-m-table th:first-child { background: var(--dm-surface-2); z-index: 3; }
 .dm-m-table td.dm-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Collecting in the field: fingers need room, and the page has no shell.css of its own. */
+.dm-m .dm-field { min-height: 44px; }
+.dm-m .dm-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--dm-accent); font-size: var(--dm-text-sm); }
+.dm-m-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--dm-s-2); }
+.dm-m-photos:empty { display: none; }
+.dm-m-photo { position: relative; }
+.dm-m-photo img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--dm-radius-sm); }
+.dm-m-photo dm-button { position: absolute; top: 0; right: 0; }
+.dm-m-photo dm-button > button { min-width: 44px; min-height: 44px; }

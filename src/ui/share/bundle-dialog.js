@@ -122,6 +122,9 @@
       const { services, shell, ui } = ctx;
       try {
         const opened = await services.workspace.inspect(file);
+        // Packages from the field come in by the same doors as bundles.
+        const field = D.require('data/field-form').fromEntries(opened.entries, opened.manifest);
+        if (field) return await D.require('ui/field/receive').open(ctx, field);
         let replaceIds = [];
         if (opened.manifest && opened.manifest.kind === 'bundle') {
           const choice = await incomingSummary(ctx, opened, t('bundle.open.title', { name: opened.manifest.name || t('bundle.default.name') }));

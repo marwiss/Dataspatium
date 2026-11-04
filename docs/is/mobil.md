@@ -51,6 +51,11 @@ Veldu *Önnur tölva (líma inn kóða)* á annarri tölvunni og límdu inn kó�
 (hnappurinn *Afrita* undir QR-kóðanum). Fyrri tölvan sýnir þá svarkóða sem er límdur inn á hinni undir *Kóði frá
 tækinu*. Eftir það virkar allt eins og milli tölvu og síma, pörun meðtalin.
 
+## Söfnun á vettvangi
+
+Eyðublað úr tölvunni lendir efst á upphafssíðunni. Síminn fyllir út raðir án nets, með mynd og staðsetningu, og athugar þær strax gagnvart eyðublaðinu og
+reglum gagnasafnsins. *Senda í tölvuna* flytur þær til baka um sömu tengingu. Sjá [insamling.md](insamling.md).
+
 ## Kröfur og takmarkanir
 
 - Tækin verða að ná hvort til annars á netinu. Á heimanetum og flestum skrifstofunetum virkar það; net sem

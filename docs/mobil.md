@@ -52,6 +52,11 @@ Välj *Annan dator (klistra in kod)* på den ena datorn och klistra in koden fr�
 QR-kod*-vy (knappen *Kopiera* under QR-koden). Den första datorn visar då en svarskod som klistras in på den andra
 under *Kod från enheten*. Därefter fungerar allt som mellan dator och telefon, inklusive parning.
 
+## Samla in i fält
+
+Ett formulär från datorn hamnar överst på startsidan. Telefonen fyller i rader utan nät, med foto och position, och kontrollerar dem direkt mot
+formuläret och datamängdens regler. *Skicka till datorn* för dem tillbaka över samma anslutning. Se [insamling.md](insamling.md).
+
 ## Krav och begränsningar
 
 - Enheterna måste nå varandra på nätverket. På hemmanätverk och de flesta kontorsnätverk fungerar det; nätverk

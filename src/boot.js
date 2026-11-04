@@ -62,6 +62,8 @@
     'src/ui/components/tooltip.js',
     'src/ui/components/index.js',
     'src/ui/share/qr.js',
+    'src/data/field-form.js',
+    'src/mobile/field.js',
     'src/mobile/app.js',
   ]);
   const full = [
@@ -232,6 +234,7 @@
     'src/ui/help/help-panel.js',
     'src/ui/shell/course.js',
     'src/data/flows.js',
+    'src/data/field-collect.js',
     'src/data/watches.js',
     'src/ui/shell/shell.js',
     'src/ui/op-dialog.js',
@@ -282,6 +285,8 @@
     'src/ui/share/qr.js',
     'src/ui/datasets/batch-actions.js',
     'src/ui/settings/network-card.js',
+    'src/ui/field/field-view.js',
+    'src/ui/field/receive.js',
     'src/ui/modes/inhamta.js',
     'src/ui/flows/flows-view.js',
     'src/ui/modes/hantera.js',
@@ -294,6 +299,8 @@
     'src/ui/modes/dela.js',
     'src/app.js',
     // The mobile app is small and part of the test page; m/index.html loads it through the MOBILE list above.
+    'src/data/field-form.js',
+    'src/mobile/field.js',
     'src/mobile/app.js',
   ]);
   const scripts = globalThis.DATASPATIUM_PROFILE === 'mobile' ? MOBILE : full;  // The page may live anywhere; resolve paths relative to this script's own src attribute.

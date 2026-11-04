@@ -91,6 +91,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Tölfræði án kóða**: flipinn Tölfræði gerir lýsandi tölfræði, krosstöflur, fylgni, tilgátupróf, aðhvarf og klasagreiningu með eyðublöðum sem
   skrifa og sýna R- eða Python-kóðann. Tímaraðaaðgerðir í Vinna (tímabil, breyting, vísitala, hlaupandi meðaltal, árstíðaleiðrétting), og aðhvarf má
   vista og nota sem uppskriftarskrefið Spá (sjá [statistik.md](statistik.md)).
+- **Söfnun á vettvangi**: eyðublað byggt á dálkum og reglum gagnasafns er sent í Dataspatium Mobil. Síminn safnar röðum án nets, með mynd og staðsetningu, og
+  raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

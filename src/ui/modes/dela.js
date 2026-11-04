@@ -38,6 +38,8 @@
       function render() {
         if (!slots) return;
         const state = store.get();
+        // Another part of the app can open a tab here, as Insamling i fält does with Enheter.
+        if (state.delaTab) { tab = state.delaTab; store.set({ delaTab: null }); }
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         const tabsEl = /** @type {any} */ (h('dm-tabs'));
         tabsEl.tabs = TABS.map((id) => ({ id, label: t('dela.tabs.' + id), icon: TAB_ICONS[id] }));

@@ -68,6 +68,9 @@ Cypher-skript; filen gjenkjennes på innholdet, grafens opplysninger vises, og g
 Bygningsmodeller i IFC og tegninger i DXF blir datasett av typen modell. Filens opplysninger vises, og modellen åpnes i 3D eller
 som tegning i Bearbeid (se [cad-bim.md](cad-bim.md)).
 
+**Innsamling i felt** i kildelisten bygger et skjema på et datasetts kolonner og regler og sender det til telefonen. Radene kommer tilbake som en ny
+versjon (se [insamling.md](insamling.md)).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
