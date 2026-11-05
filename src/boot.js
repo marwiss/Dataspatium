@@ -282,6 +282,7 @@
     'src/ui/bearbeta/map-view.js',
     'src/ui/bearbeta/plan-view.js',
     'src/ui/bearbeta/graph-view.js',
+    'src/ui/bearbeta/model-issues.js',
     'src/ui/bearbeta/model-view.js',
     'src/ui/share/review.js',
     'src/ui/share/devices-panel.js',

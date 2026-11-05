@@ -10,7 +10,7 @@
   const D = globalThis.Dataspatium;
   D.define('data/facets', ['data/datasets', 'data/kinds', 'viz/leaflet', 'data/boundaries'], (datasets, kinds, leaflet, boundaries) => {
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
-    const IDS = ['spatial', 'timeseries', 'region', 'network', 'text'];
+    const IDS = ['spatial', 'timeseries', 'region', 'network', 'text', 'bcf'];
     const PERIOD_NAME = /^(ar|år|aar|year|vuosi|tid|period|time|date|datum|dato|aika|manad|månad|month|kvartal|quarter)/i;
     const REGION_NAME = /kommun|lan$|län|region|fylke|kunta|maakunta|sveitarf/i;
     const TEXT_LENGTH = 80;
@@ -83,6 +83,11 @@
       return null;
     }
 
+    /** A table of BCF topics, as the OpenCDE source saves them: the columns of the BCF API are its signature. */
+    function findBcf(handle) {
+      const names = new Set(handle.columns.map((c) => c.name));
+      return ['guid', 'title', 'topic_status'].every((n) => names.has(n)) ? { reason: 'facets.reason.bcf', params: {}, columns: ['guid', 'topic_status'] } : null;
+    }
     /**
      * What the dataset can be used as, with the reason for each and what the user has decided.
      * @param {string} id
@@ -101,6 +106,7 @@
         region: collection ? null : await findRegion(handle),
         network: collection ? null : findNetwork(handle),
         text: collection ? null : await findText(handle),
+        bcf: collection ? null : findBcf(handle),
       };
       const list = IDS.filter((f) => found[f] || forced[f] !== undefined).map((f) => {
         const auto = !!found[f];

@@ -82,6 +82,8 @@ Alle kilder på listen ser ens ud med et symbol for deres type og en linje under
 
 **Datapakker.** En ZIP-fil med `datapackage.json` (Frictionless Data Package) læses ind med typerne og titlerne fra dens skema, og hver tabel bliver til et datasæt.
 
+**Filer fra et CDE.** En OpenCDE-kilde viser projektets modeller og dokumenter, og *Hent* laver et datasæt af filens egen slags, som husker, hvor det kom fra. Se [kallor.md](kallor.md).
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -125,6 +127,8 @@ har nye data (se [floden.md](floden.md)).
 
 **Bibliotek.** Under Bibliotek findes færdige opskrifter, skabeloner, scripts og notesbøger, hver med sin licens. Du ser, hvad noget gør, før du tilføjer det. Flere biblioteker hentes fra en webadresse, og *Gem egne som biblioteksfil* laver en fil af det, du selv har lavet, til et GitHub-repo eller hvor som helst.
 
+**Fra CDE.** Et datasæt hentet fra en OpenCDE-server viser server, projekt og version, kan spørge efter en nyere version og åbne modellens sager.
+
 ## Søg
 
 Find og list uden kode. Fanen *Søg* søger i alle kolonner i ét eller alle datasæt; hvert ord skal findes på rækken,
@@ -157,6 +161,8 @@ Datasæt med geometri eller koordinater åbnes som et **kort**, der kan zoomes o
 Et udvalg fra Søg markeres i 3D-modellen, og kameraet rettes mod det.
 
 **Læse tekst i billeder.** Sider i en skannet PDF og billeder i et galleri kan læses med tekstgenkendelse, som kører i browseren. Se [dokument.md](dokument.md).
+
+**Sager.** Modelvisningen viser projektets BCF-sager fra et CDE og markerer de bygningsdele, de peger på. Se [cad-bim.md](cad-bim.md).
 
 ## Analysér
 

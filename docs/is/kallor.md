@@ -122,6 +122,13 @@ sóttar og fluttar inn eins og þeim hefði verið sleppt í forritið, svo IFC-
 aðeins í setunni og eru aldrei fluttir út með uppsprettunni. Tengingin krefst samþykkis (tilgangurinn OpenCDE-þjónn) og
 þjóns sem leyfir köll úr vafranum (CORS).
 
+Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
+gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla, og gagnasafnið man frá hvaða þjóni, verkefni og
+útgáfu það kom. Í Umsjón sýnir kortið *Frá CDE* þetta, og *Leita að nýrri útgáfu* spyr þjóninn hvort skjalið hafi nýrri
+útgáfu; hún er þá sótt sem eigið gagnasafn við hlið hins gamla. Gagnalindin segir einnig hvað þú mátt gera í verkefninu,
+til dæmis búa til mál eða hlaða upp skjölum. Þegar gagnalindin er búin til spyr glugginn þjóninn hvar skráð er inn; svari
+þjónninn ekki þá spyr forritið aftur við fyrstu innskráningu.
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

@@ -24,6 +24,15 @@ højre knap for at flytte. Knappen med rammen viser hele modellen; enkelte objek
 Geometrien beregnes ud fra originalfilen, første gang modellen åbnes i en session, og bruges kun til at tegne og måle.
 Tabellerne findes stadig, selv om computeren mangler WebGL; så vises en besked i stedet for 3D-visningen.
 
+## Sager fra et CDE
+
+En model hentet fra en OpenCDE-server, eller en hvilken som helst model, når en sådan server findes som kilde, kan vise
+sine sager: knappen *Sager* i modelvisningen åbner et panel i inspektøren med projektets BCF-sager. De, der peger på
+bygningsdele i denne model, står først, med status og antal bygningsdele. Klik på en sag, så markeres bygningsdelene i
+3D-visningen, og panelet viser beskrivelse, øjebliksbillede og kommentarer. Sagerne hentes, når du beder om det, og gemmes
+ikke i datasættet; for at regne på dem gemmer du dem som en tabel i Hent. Dette er læsning; at oprette og ændre sager
+kommer i næste udgave.
+
 ## Tabellerne
 
 | Tabel | Indhold |

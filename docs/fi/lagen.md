@@ -84,6 +84,8 @@ Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen all
 
 **Datapaketit.** ZIP-tiedosto, jossa on `datapackage.json` (Frictionless Data Package), luetaan skeeman tyypeillä ja otsikoilla, ja jokaisesta taulukosta tulee aineisto.
 
+**Tiedostot CDE:stä.** OpenCDE-lähde luettelee projektin mallit ja asiakirjat, ja *Hae* tekee tiedoston omaa lajia olevan aineiston, joka muistaa alkuperänsä. Katso [kallor.md](kallor.md).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -129,6 +131,8 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 
 **Kirjasto.** Kirjastossa on valmiita reseptejä, malleja, skriptejä ja muistikirjoja, kullakin oma lisenssinsä. Näet, mitä kohde tekee, ennen kuin lisäät sen. Lisää kirjastoja haetaan verkko-osoitteesta, ja *Tallenna omat kirjastotiedostona* tekee tiedoston omista töistäsi GitHub-repoon tai minne tahansa.
 
+**CDE:stä.** OpenCDE-palvelimelta haettu aineisto näyttää palvelimen, projektin ja version, voi kysyä uudempaa versiota ja avata mallin asiat.
+
 ## Hae
 
 Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhdessä tai kaikissa aineistoissa; jokaisen
@@ -164,6 +168,8 @@ Aineistot, joissa on geometria tai koordinaatit, avautuvat **karttana**, jota vo
 Hae-tilasta tehty valinta merkitään 3D-malliin, ja kamera kääntyy sitä kohti.
 
 **Tekstin lukeminen kuvista.** Skannatun PDF:n sivut ja gallerian kuvat voi lukea tekstintunnistuksella, joka toimii selaimessa. Katso [dokument.md](dokument.md).
+
+**Asiat.** Mallinäkymä näyttää projektin BCF-asiat CDE:stä ja merkitsee rakennusosat, joihin ne osoittavat. Katso [cad-bim.md](cad-bim.md).
 
 ## Analysoi
 

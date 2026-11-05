@@ -490,6 +490,9 @@ body.dm-presenting { overflow: hidden; }
 .dm-graph-edit dm-button { flex: 0 0 auto; }
 
 /* Building models and drawings (ui/bearbeta/model-view): the drawing above a table of its elements */
+.dm-model-issues-list { max-height: 40vh; overflow: auto; }
+.dm-model-issue-snapshot { max-width: 100%; border-radius: var(--dm-radius-sm); }
+.dm-opencde-file { align-items: center; gap: var(--dm-s-2); }
 .dm-model-layout { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-2); }
 .dm-model-host { position: relative; flex: 2 1 0; min-height: 280px; overflow: hidden; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); background: var(--dm-surface); }
 .dm-model-canvas { position: absolute; inset: 0; display: block; max-width: none; touch-action: none; }

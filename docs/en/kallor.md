@@ -124,6 +124,14 @@ downloaded and imported as if dropped on the app, so an IFC model becomes a mode
 session only and are never exported with the source. The connection needs consent (purpose OpenCDE server) and a server
 that allows requests from the browser (CORS).
 
+Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
+dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
+server, project and version it came from. In Manage the card *From the CDE* shows this, and *Check for a new version* asks
+the server whether the document has a newer version; that version is then fetched as a dataset of its own beside the old
+one. The source also says what you may do in the project, such as create issues or upload documents. When the source is
+made, the dialog asks the server where to sign in; if the server does not answer then, the app asks again at the first
+sign-in.
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

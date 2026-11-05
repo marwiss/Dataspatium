@@ -86,6 +86,8 @@ All sources in the list look the same, with a mark for their type and a line und
 
 **Data packages.** A ZIP file with `datapackage.json` (Frictionless Data Package) is read with the types and titles from its schema, and each table becomes a dataset.
 
+**Files from a CDE.** An OpenCDE source lists the project's models and documents, and *Fetch* makes a dataset of the file's own kind that remembers where it came from. See [kallor.md](kallor.md).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -129,6 +131,8 @@ new data (see [floden.md](floden.md)).
 
 **Library.** Under Library there are ready-made recipes, templates, scripts and notebooks, each with its licence. You see what something does before you add it. More libraries are fetched from an address, and *Save your own as a library file* makes a file of what you have made, to put in a GitHub repository or anywhere.
 
+**From the CDE.** A dataset fetched from an OpenCDE server shows server, project and version, can ask for a newer version and open the model's issues.
+
 ## Search
 
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on
@@ -161,6 +165,8 @@ Datasets with geometry or coordinates open as a **map** to zoom and pan in; a cl
 A selection from Search is marked in the 3D model, and the camera turns to it.
 
 **Reading text in pictures.** Pages in a scanned PDF and pictures in a gallery can be read with text recognition, which runs in the browser. See [dokument.md](dokument.md).
+
+**Issues.** The model view shows the project's BCF issues from a CDE and marks the elements they point at. See [cad-bim.md](cad-bim.md).
 
 ## Analyse
 

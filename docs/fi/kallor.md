@@ -128,6 +128,13 @@ riviä kohti), tapahtumat ja tiedostot taulukoina. *Hae asiakirjat* avaa palveli
 malliaineistoksi. Käyttöoikeustunnukset ovat vain istunnossa eikä niitä viedä lähteen mukana. Yhteys vaatii
 suostumuksen (tarkoitus OpenCDE-palvelin) ja palvelimen, joka sallii kutsut selaimesta (CORS).
 
+Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
+omaa lajia olevan aineiston, joten IFC-tiedostosta tulee malli ja CSV-tiedostosta taulukko, ja aineisto muistaa, miltä
+palvelimelta, mistä projektista ja mistä versiosta se tuli. Hallitse-tilassa kortti *CDE:stä* näyttää tämän, ja *Etsi uusi
+versio* kysyy palvelimelta, onko asiakirjasta uudempi versio; se haetaan silloin omaksi aineistokseen vanhan viereen. Lähde
+kertoo myös, mitä voit tehdä projektissa, esimerkiksi luoda asioita tai ladata asiakirjoja. Kun lähde luodaan, valintaikkuna
+kysyy palvelimelta, mistä kirjaudutaan; jos palvelin ei silloin vastaa, sovellus kysyy uudelleen ensimmäisessä kirjautumisessa.
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

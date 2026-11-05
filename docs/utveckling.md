@@ -157,6 +157,13 @@ steget som *Gör det åt mig*.
   Python-logiken testas med en låtsasmotor. Kör sviten en gång med `-Url "tests/index.html?python=1"` i varje
   webbläsare inför en release.
 - Nya inspelade API-svar för fixturer hämtas med `curl -H "Origin: null"` och trimmas innan de läggs i
+- `tests/opencde-live.test.js` kör mot en riktig Kontroll-server bara när sidan servas över http och får
+  `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>&cdeproject=<projekt>`; annars hoppas det över. Hjälpservern
+  `tools/cde-helper.py` spelar användaren vid serverns egna sidor (inloggning, dokumentval, uppladdningssidan) och behöver
+  Python med `httpx`; den läser lösenordet ur miljövariabeln `CDE_PASSWORD` och skriver det ingenstans. Servera appen med
+  `python -m http.server 8093 --bind 127.0.0.1`, registrera en publik klient på servern med omdirigeringsadressen
+  `http://127.0.0.1:8093/oauth-callback.html`, och ge användaren rollen manager i ett testprojekt. Kontroll:
+  https://github.com/marwiss/Kontroll.
   `tests/fixtures/api-fixtures.js`.
 - `-Url "index.html?autorun=1" -TimeoutSec 480` kör spiksidan.
 - Nya tester läggs i `tests/*.test.js` och listas i `tests/index.html`.

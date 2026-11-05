@@ -65,6 +65,10 @@
       if (found.some((f) => f.id === 'spatial')) out.push({ key: 'viz.suggest.map', params: {}, chart: await ownChart(ds, 'map') });
       const category = await categoryOf(handle, columns);
       const value = numbers.find((c) => !series || c.name !== series.columns[0]);
+      if (found.some((f) => f.id === 'bcf')) {
+        // Issues from a CDE: the state of things first.
+        for (const name of ['topic_status', 'topic_type', 'assigned_to']) { const c = named(columns, name); if (c) out.push({ key: 'viz.suggest.bcf.' + name, params: {}, chart: bars(ds, `${ds.name}: ${t('viz.suggest.bcf.' + name)}`, columns, c, null) }); }
+      }
       if (category) out.push({ key: value ? 'viz.suggest.sum' : 'viz.suggest.count', params: { value: value ? value.name : '', by: category.name }, chart: bars(ds, `${ds.name}: ${category.name}`, columns, category, value) });
       if (numbers.length >= 2 && !series) out.push({ key: 'viz.suggest.scatter', params: { x: numbers[0].name, y: numbers[1].name }, chart: vegaChart(ds, `${ds.name}: ${numbers[0].name}, ${numbers[1].name}`, 'point', columns, (state) => { state.x = builder.channel(numbers[0]); state.y = builder.channel(numbers[1]); }) });
       if (value && !series) out.push({ key: 'viz.suggest.histogram', params: { value: value.name }, chart: vegaChart(ds, `${ds.name}: ${value.name}`, 'histogram', columns, (state) => { state.x = builder.channel(value, { bin: true }); }) });

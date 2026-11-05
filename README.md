@@ -116,6 +116,7 @@ ett paket.
 - **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/lagen.md)).
 - **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sex språken.
 - **Härkomst, samarbete och bibliotek**: se var en datamängd kommer ifrån och vad den har blivit, arbeta ihop via GitHub utan att något försvinner, hämta recept och mallar med licens, och publicera arbetsytan som en webbplats.
+- **Kontroll som CDE, del 1**: hämta modeller och dokument ur en OpenCDE-servers projekt, se när en nyare version finns, och se ärendena som pekar på byggdelarna i modellen.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

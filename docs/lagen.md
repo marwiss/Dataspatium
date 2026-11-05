@@ -85,6 +85,8 @@ Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad und
 
 **Datapaket.** En ZIP-fil med `datapackage.json` (Frictionless Data Package) läses in med typerna och titlarna från dess schema, och varje tabell blir en datamängd.
 
+**Filer från ett CDE.** En OpenCDE-källa listar projektets modeller och dokument, och *Hämta* gör en datamängd av filens eget slag som minns var den kom från. Se [kallor.md](kallor.md).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -128,6 +130,8 @@ när de har nya data (se [floden.md](floden.md)).
 
 **Bibliotek.** Under Bibliotek finns färdiga recept, mallar, skript och anteckningsböcker, var och en med sin licens. Du ser vad något gör innan du lägger till det. Fler bibliotek hämtas från en webbadress, och *Spara egna som biblioteksfil* gör en fil av det du själv har skapat, att lägga ut i ett GitHub-repo eller var som helst.
 
+**Från CDE.** En datamängd som hämtats från en OpenCDE-server visar server, projekt och version, kan fråga efter en nyare version och öppna modellens ärenden.
+
 ## Söka
 
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas
@@ -161,6 +165,8 @@ Datamängder med geometri eller koordinater öppnas som en **karta** att zooma o
 Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
 
 **Läsa text i bilder.** Sidor i en skannad PDF och bilder i ett galleri kan läsas med textigenkänning, som körs i webbläsaren. Se [dokument.md](dokument.md).
+
+**Ärenden.** Modellvyn visar projektets BCF-ärenden från ett CDE och markerar byggdelarna de pekar på. Se [cad-bim.md](cad-bim.md).
 
 ## Analysera
 

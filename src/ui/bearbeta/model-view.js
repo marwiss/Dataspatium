@@ -22,6 +22,7 @@
       const s = { id: null, filter: { typ: '', vaning: '', lager: '', search: '' }, selected: null, count: 0, hidden: new Set(), error: '', progress: null };
       let ds = null; let slots = null; let handle = null; let host = null; let table = null; let seq = 0; let searchTimer = 0;
       let svgEl = null; let box = null; let removeDrag = null;
+      /** The issues panel, when open. */ let issues = null;
 
       const isDxf = () => model.isDxf(ds);
       const whereSql = () => model.whereOf(s.filter, isDxf());
@@ -33,6 +34,7 @@
         clearTimeout(searchTimer);
         if (handle) { handle.destroy(); handle = null; }
         if (removeDrag) { removeDrag(); removeDrag = null; }
+        if (issues) { issues.destroy(); issues = null; }
         slots = null; host = null; table = null; svgEl = null;
       }
 
@@ -42,8 +44,11 @@
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); if (issues) { issues.destroy(); issues = null; } }
         ds = dataset;
+        // Hantera asks for the issues of the model; the panel opens with the view.
+        const askedIssues = ctx.store.get().openModelIssues;
+        if (askedIssues && askedIssues.datasetId === dataset.id) { ctx.store.set({ openModelIssues: null }); if (!issues && !isDxf()) openIssues(); }
         s.error = '';
         // A search hit: the element chosen, whatever a filter would have hidden.
         const pending = ctx.store.get().openElement;
@@ -80,7 +85,9 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('box', 20), dataset.name, ' ', h('dm-badge', { text: t(dxfView ? 'model.entities.n' : 'model.elements.n', { n: i18n.formatNumber(dxfView ? (dataset.rowCount || 0) : (facts().elements || 0)) }) })),
-            h('div', { class: 'dm-toolbar' }, classify, useBtn, selects, search,
+            h('div', { class: 'dm-toolbar' }, classify, useBtn,
+              isDxf() ? null : ui.button({ label: t('issues.title'), icon: 'message-square', title: t('issues.button.hint'), 'data-model-issues-toggle': '', onClick: toggleIssues }),
+              selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('model.table.hint'), onClick: options.onTable }))),
@@ -90,6 +97,16 @@
         if (dxfView) await drawDxf(my); else await drawIfc(my);
       }
 
+      /** The issues from the CDE, in the inspector; the same panel until the dataset changes. */
+      function openIssues() {
+        if (issues) return;
+        issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, { select: (ids, fit) => { if (handle) handle.select(ids, { fit }); } });
+        issues.start().catch((err) => shell.log(String((err && err.message) || err), 'error'));
+      }
+      function toggleIssues() {
+        if (issues) { issues.destroy(); issues = null; } else openIssues();
+        renderInspector();
+      }
       function fitAll() {
         if (handle) handle.fit();
         else if (svgEl && box) { box = Object.assign({}, svgEl.dmHome); svgEl.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`); }
@@ -270,6 +287,7 @@
         }
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
+        if (issues) parts.unshift(issues.el);
         if (selected) {
           parts.push(...(isDxf() ? dxfSelected(selected) : await ifcSelected(selected)));
           const block = D.require('ui/kinds/comment-block');

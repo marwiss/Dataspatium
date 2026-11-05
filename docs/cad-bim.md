@@ -24,6 +24,15 @@ att flytta. Knappen med ramen visar hela modellen; enstaka objekt långt från b
 Geometrin räknas fram ur originalfilen första gången modellen öppnas i en session, och den används bara för att rita och
 mäta. Tabellerna finns kvar även om datorn saknar WebGL, och då visas ett meddelande i stället för 3D-vyn.
 
+## Ärenden från ett CDE
+
+En modell som hämtats från en OpenCDE-server, eller vilken modell som helst när en sådan server finns som källa, kan visa
+sina ärenden: knappen *Ärenden* i modellvyn öppnar en panel i inspektören med projektets BCF-ärenden. De som pekar på
+byggdelar i den här modellen står först, med status och antal byggdelar. Klicka på ett ärende, så markeras byggdelarna i
+3D-vyn och panelen visar beskrivning, ögonblicksbild och kommentarer. Ärendena hämtas när du ber om det och lagras inte i
+datamängden; för att räkna på dem sparar du dem som en tabell i Inhämta. Det går att läsa; att skapa och ändra ärenden
+kommer i nästa utgåva.
+
 ## Tabellerna
 
 | Tabell | Innehåll |

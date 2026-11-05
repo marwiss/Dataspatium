@@ -183,8 +183,9 @@
       const token = await ensureToken(connector);
       const url = /^[a-z][a-z0-9+.-]*:/i.test(path) ? path : trimUrl(connector.baseUrl) + path;
       const headers = Object.assign({ Authorization: 'Bearer ' + token, Accept: 'application/json' }, options.headers || {});
-      const req = { url, method: options.method || 'GET', headers, signal: options.signal, retries: 1, rateKey: connector.id, responseType: options.responseType };
+      const req = { url, method: options.method || 'GET', headers, signal: options.signal, retries: 1, rateKey: connector.id, responseType: options.responseType, notModifiedOk: !!options.notModifiedOk };
       if (options.json !== undefined) { headers['Content-Type'] = 'application/json'; req.body = JSON.stringify(options.json); }
+      else if (options.body !== undefined) req.body = options.body;
       const res = await http.request(req);
       if (!res.ok) {
         let message = '';
@@ -196,6 +197,14 @@
       return text ? JSON.parse(text) : null;
     }
     const bcf = (connector, path, options) => api(connector, '/bcf/3.0' + path, options);
+    /** A file or picture from the server, with its type. @returns {Promise<{buffer: ArrayBuffer, contentType: string}>} */
+    async function binary(connector, path, accept) {
+      const token = await ensureToken(connector);
+      const url = /^[a-z][a-z0-9+.-]*:/i.test(path) ? path : trimUrl(connector.baseUrl) + path;
+      const res = await http.request({ url, method: 'GET', headers: { Authorization: 'Bearer ' + token, Accept: accept || '*/*' }, retries: 1, rateKey: connector.id, responseType: 'arraybuffer' });
+      if (!res.ok) throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}`, { kind: 'http', status: res.status, url });
+      return { buffer: res.buffer, contentType: (res.contentType || '').split(';')[0].trim() };
+    }
     const encode = encodeURIComponent;
     function odata(params) { const q = new URLSearchParams(); for (const [k, v] of Object.entries(params || {})) if (v !== undefined && v !== null && v !== '') q.set(k, String(v)); const s = q.toString(); return s ? '?' + s : ''; }
 
@@ -261,6 +270,70 @@
       for (const ev of events) for (const a of ev.actions || []) out.push({ topic_guid: ev.topic_guid, date: ev.date, author: ev.author, type: a.type, value: a.value === undefined ? null : a.value });
       return eventsTable(out);
     }
+    /**
+     * The project's files as the server lists them (BCF 3.3.1): BCF documents and Documents API files, with the address to fetch
+     * each from. A Documents API address names the document and the version, which the version check needs later.
+     * @returns {Promise<Array<{filename: string, ifcProject: string|null, date: string|null, reference: string, source: string, documentId: string|null, versionIndex: number|null, model: boolean}>>}
+     */
+    async function filesList(connector, projectId) {
+      const info = await filesInformation(connector, projectId);
+      return info.map((entry) => {
+        const f = entry.file || {};
+        const shown = (name) => { const d = (entry.display_information || []).find((x) => x.field_display_name === name); return d ? String(d.field_value || '') : ''; };
+        // Kontroll names the document and the version in display fields; other servers may only give the address.
+        const m = /\/documents\/([^/]+)\/versions\/(\d+)\/download/.exec(String(f.reference || ''));
+        const fromApi = /documents api/i.test(shown('Source')) || !!m;
+        const documentId = fromApi ? (shown('Document id') || (m ? decodeURIComponent(m[1]) : null) || null) : null;
+        const versionIndex = fromApi ? (Number(shown('Version index')) || (m ? Number(m[2]) : null) || null) : null;
+        return { filename: String(f.filename || shown('File name') || 'document'), ifcProject: f.ifc_project || null, date: f.date || null, reference: String(f.reference || ''), source: shown('Source'), documentId, versionIndex, model: /\.(ifc|ifczip)$/i.test(String(f.filename || '')) };
+      });
+    }
+    /** What the signed-in user may do in a project, from the extensions (BCF 3.1.4). */
+    async function rights(connector, projectId) {
+      const ext = await extensions(connector, projectId);
+      return { project: ext.project_actions || [], topic: ext.topic_actions || [], comment: ext.comment_actions || [] };
+    }
+    /** One of the project's files as a File named as on the server. */
+    async function downloadFile(connector, entry) {
+      if (!entry.reference) throw new Error(t('opencde.err.noreference'));
+      const got = await binary(connector, entry.reference, '*/*');
+      return new File([got.buffer], entry.filename, { type: got.contentType || 'application/octet-stream' });
+    }
+    /**
+     * A file from the project as a dataset of its own kind, which remembers where it came from (`source.cde`), so that Hantera
+     * can tell whether a newer version exists and fetch it beside this one.
+     * @param {any} connector @param {any} project {project_id, name} @param {any} entry from filesList
+     * @param {{name?: string}} [options] @returns {Promise<any>} the dataset
+     */
+    async function importFile(connector, project, entry, options = {}) {
+      const file = await downloadFile(connector, entry);
+      const importer = D.require('io/import');
+      const datasets = D.require('data/datasets');
+      const meta = await importer.run(file, {}, null, options.name || entry.filename.replace(/\.[^.]+$/, ''));
+      const cde = { connectorId: connector.id, connectorName: connector.name, host: hostOf(connector.baseUrl), projectId: project.project_id, projectName: project.name || '', kind: entry.documentId ? 'document' : 'bcf-document', reference: entry.reference, documentId: entry.documentId, versionIndex: entry.versionIndex, ifcProject: entry.ifcProject, fetchedAt: new Date().toISOString() };
+      const source = Object.assign({}, meta.source || { kind: 'file', fileName: entry.filename }, { cde });
+      await datasets.updateMeta(meta.id, { source });
+      return datasets.get(meta.id);
+    }
+    /**
+     * The latest versions the server has of some documents (Documents API `POST document-versions`).
+     * @param {any} connector @param {string[]} documentIds @returns {Promise<any[]>} DocumentVersion objects
+     */
+    async function documentVersions(connector, documentIds) {
+      const out = await api(connector, '/documents/1.0/document-versions', { method: 'POST', json: { document_ids: documentIds } });
+      return (out && out.versions) || [];
+    }
+    /**
+     * Whether the server has a newer version of the document a dataset came from; null when the dataset has no version.
+     * @param {any} connector @param {any} ds @returns {Promise<{newer: boolean, version: any|null, have: number|null}>}
+     */
+    async function newerVersion(connector, ds) {
+      const cde = ds.source && ds.source.cde;
+      if (!cde || !cde.documentId) return { newer: false, version: null, have: null };
+      const versions = await documentVersions(connector, [cde.documentId]);
+      const latest = versions.find((v) => v.document_id === cde.documentId) || versions[0] || null;
+      return { newer: !!(latest && Number(latest.version_index) > Number(cde.versionIndex || 0)), version: latest, have: cde.versionIndex };
+    }
     /** The project's files (BCF documents and Documents API files) as a table. */
     async function fetchFiles(connector, projectId) {
       const info = await filesInformation(connector, projectId);
@@ -299,6 +372,6 @@
       return Object.assign(out, { meta: {} });
     }
 
-    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
+    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
   });
 })();

@@ -25,6 +25,15 @@ the right button to move. The frame button shows the whole model; the odd object
 The geometry is computed from the original file the first time the model opens in a session, and it is used only for
 drawing and measuring. The tables remain even if the computer has no WebGL, and a message then replaces the 3D view.
 
+## Issues from a CDE
+
+A model fetched from an OpenCDE server, or any model when such a server is a source, can show its issues: the button
+*Issues* in the model view opens a panel in the inspector with the project's BCF topics. Those that point at elements in
+this model come first, with their status and the number of elements. Click an issue and the elements are marked in the 3D
+view, and the panel shows the description, the snapshot and the comments. The issues are fetched when you ask and are not
+stored in the dataset; to count on them, save them as a table in Import. This is reading; creating and changing issues
+comes in the next release.
+
 ## The tables
 
 | Table | Contents |

@@ -120,6 +120,13 @@ hämtas och importeras som om du släppt dem i appen, så en IFC-modell blir en 
 sessionen och exporteras aldrig med källan. Anslutningen kräver samtycke (ändamålet OpenCDE-server) och att servern
 tillåter anrop från webbläsaren (CORS).
 
+Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
+filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
+och vilken version den kom från. I Hantera visar kortet *Från CDE* detta, och *Sök ny version* frågar servern om dokumentet
+har en nyare version; den hämtas då som en egen datamängd bredvid den gamla. Källan säger också vad du får göra i projektet,
+till exempel skapa ärenden eller ladda upp dokument. När källan skapas frågar dialogen servern var man loggar in; svarar
+servern inte då, frågar appen igen vid första inloggningen.
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

@@ -83,6 +83,8 @@ Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu und
 
 **Gagnapakkar.** ZIP-skrá með `datapackage.json` (Frictionless Data Package) er lesin með gerðum og titlum úr skema hennar, og hver tafla verður að gagnasafni.
 
+**Skrár frá CDE.** OpenCDE-gagnalind telur upp líkön og skjöl verkefnisins, og *Sækja* býr til gagnasafn af tegund skrárinnar sem man hvaðan það kom. Sjá [kallor.md](kallor.md).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -126,6 +128,8 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 
 **Safn.** Undir Safn eru tilbúnar uppskriftir, sniðmát, skriftur og minnisbækur, hvert með sitt leyfi. Þú sérð hvað eitthvað gerir áður en þú bætir því við. Fleiri söfn eru sótt af vefslóð og *Vista eigin sem safnskrá* býr til skrá úr því sem þú hefur gert, til að setja í GitHub-geymslu eða hvert sem er.
 
+**Frá CDE.** Gagnasafn sótt frá OpenCDE-þjóni sýnir þjón, verkefni og útgáfu, getur spurt um nýrri útgáfu og opnað mál líkansins.
+
 ## Leita
 
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að
@@ -158,6 +162,8 @@ Gagnasöfn með rúmfræði eða hnitum opnast sem **kort** til að þysja og f�
 Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að því.
 
 **Að lesa texta í myndum.** Síður í skannaðri PDF-skrá og myndir í myndasafni má lesa með textagreiningu, sem keyrir í vafranum. Sjá [dokument.md](dokument.md).
+
+**Mál.** Líkansýnin sýnir BCF-mál verkefnisins frá CDE og merkir byggingarhlutana sem þau vísa á. Sjá [cad-bim.md](cad-bim.md).
 
 ## Greina
 

@@ -82,6 +82,16 @@
       if (lang === 'python') return [piece('starter.series', `df = dm_read(${s})\ndf.groupby(${str(period)})[${str(value)}].sum().sort_index()`)];
       return [piece('starter.series', `select ${q(period)}, sum(${q(value)}) as summa from data group by ${q(period)} order by ${q(period)}`)];
     }
+    /** Issues from a CDE: how many stand open, who has them, and when they came. */
+    function bcfPieces(s, lang) {
+      if (lang === 'r') return [piece('starter.bcf.status', `arenden <- dm_read(${s})\ntable(arenden$topic_status, useNA = "ifany")`)];
+      if (lang === 'python') return [piece('starter.bcf.status', `arenden = dm_read(${s})\narenden["topic_status"].value_counts(dropna=False)`)];
+      return [
+        piece('starter.bcf.status', 'select topic_status, count(*) as arenden from data group by topic_status order by arenden desc'),
+        piece('starter.bcf.assigned', "select assigned_to, count(*) as oppna from data where topic_status not in ('Closed', 'Resolved', 'Stängd', 'Löst') group by assigned_to order by oppna desc"),
+        piece('starter.bcf.months', 'select substr(creation_date, 1, 7) as manad, count(*) as arenden from data group by manad order by manad'),
+      ];
+    }
     /**
      * The pieces for a table, following what the data can be used as.
      * @param {any} ds @param {'r'|'python'|'sql'} lang @returns {Promise<Array<{key: string, code: string}>>}
@@ -105,6 +115,7 @@
       }
       const text = found.find((f) => f.id === 'text');
       if (text && lang === 'sql') out.push(piece('starter.search', `select * from data where ${q(text.columns[0])} like '%ord%' limit 50`));
+      if (found.some((f) => f.id === 'bcf')) out.push(...bcfPieces(s, lang));
       return out;
     }
 

@@ -545,6 +545,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `data/library` läser bibliotek i formatet `dataspatium-library/1`: en JSON-fil med poster som var och en har `kind`, `license` och `content` i objektets eget filformat. Det medföljande ligger i `presets/bibliotek/`. Poster utan licens eller av okänt slag lämnas utanför. `docgen/site` sätter ihop Publiceras sidor till en ZIP med relativa länkar.
 
+`api/families/opencde` (2.28) frågar servern var man loggar in redan i dialogen (`FAMILY.discover`) och annars före första inloggningen, listar projektets filer ur BCF 3.3.1 (`filesList`, med dokument och version lästa ur adressen), hämtar och importerar en fil som datamängd med `source.cde` (`importFile`), och frågar Documents API efter nyare versioner (`newerVersion`). `ui/bearbeta/model-issues` är panelen Ärenden i modellvyn: ärendena hämtas från servern, deras viewpoint-komponenter kopplas till byggdelarna på `guid`, och ett klick markerar dem genom 3D-vyns `select`. Ärendetabeller känns igen som facetten `bcf` på kolumnerna guid, title och topic_status, vilket ger startkod och diagramförslag. Det riktiga provet `tests/opencde-live.test.js` kör bara med `?cde=`, se utveckling.md.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

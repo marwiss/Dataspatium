@@ -124,6 +124,13 @@ hentes og importeres som om du hadde sluppet dem i appen, så en IFC-modell blir
 finnes bare i sesjonen og eksporteres aldri med kilden. Tilkoblingen krever samtykke (formålet OpenCDE-server) og at
 serveren tillater kall fra nettleseren (CORS).
 
+Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av
+filens eget slag, så en IFC-fil blir en modell og en CSV-fil en tabell, og datasettet husker hvilken server, hvilket prosjekt
+og hvilken versjon det kom fra. I Håndter viser kortet *Fra CDE* dette, og *Søk ny versjon* spør serveren om dokumentet
+har en nyere versjon; den hentes da som et eget datasett ved siden av det gamle. Kilden sier også hva du får gjøre i
+prosjektet, for eksempel opprette saker eller laste opp dokumenter. Når kilden opprettes, spør dialogen serveren hvor man
+logger inn; svarer ikke serveren da, spør appen igjen ved første innlogging.
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

@@ -24,6 +24,14 @@ oikealla painikkeella. Kehyspainike näyttää koko mallin; yksittäisiä kaukan
 Geometria lasketaan alkuperäisestä tiedostosta, kun malli avataan istunnossa ensimmäisen kerran, ja sitä käytetään vain
 piirtämiseen ja mittaamiseen. Taulukot säilyvät, vaikka tietokoneesta puuttuisi WebGL; silloin 3D-näkymän tilalla näkyy viesti.
 
+## Asiat CDE:stä
+
+OpenCDE-palvelimelta haettu malli, tai mikä tahansa malli kun tällainen palvelin on lähteenä, voi näyttää asiansa: painike
+*Asiat* mallinäkymässä avaa tarkastimeen paneelin, jossa ovat projektin BCF-asiat. Tämän mallin rakennusosiin osoittavat
+asiat ovat ensin, tilan ja rakennusosien määrän kanssa. Napsauta asiaa, niin rakennusosat merkitään 3D-näkymässä ja paneeli
+näyttää kuvauksen, tilannekuvan ja kommentit. Asiat haetaan pyynnöstä eikä niitä tallenneta aineistoon; laskeaksesi niistä
+tallenna ne taulukkona Nouda-tilassa. Tämä on lukemista; asioiden luominen ja muuttaminen tulee seuraavassa versiossa.
+
 ## Taulukot
 
 | Taulukko | Sisältö |

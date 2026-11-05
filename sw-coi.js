@@ -16,7 +16,7 @@
 'use strict';
 
 /** Changes with every release (tools/release and docs/utveckling.md), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-2.27.0';
+const CACHE = 'dataspatium-2.28.0';
 const CACHE_FIRST = /\/(vendor|presets|src|r|python)\//;
 /** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
 const INBOX = 'dataspatium-inbox';

@@ -23,7 +23,7 @@
     /** @param {{connector: any, log?: Function, onDataset?: Function}} api */
     function create(api) {
       const { connector } = api;
-      const s = { busy: '', error: '', user: null, projects: null, projectId: '', result: null, saving: false, saved: '', manual: null, callback: '' };
+      const s = { busy: '', error: '', user: null, projects: null, projectId: '', result: null, saving: false, saved: '', manual: null, callback: '', files: null, rights: null, fetching: '' };
       const el = h('div', { class: 'dm-stack' });
       const unsubscribe = secrets.subscribe(() => render());
       const project = () => (s.projects || []).find((p) => p.project_id === s.projectId) || null;
@@ -54,6 +54,32 @@
       async function loadProjects() {
         s.projects = await opencde.projects(connector);
         if (!s.projectId || !project()) s.projectId = s.projects[0] ? s.projects[0].project_id : '';
+        await loadRights();
+      }
+      /** What the user may do in the chosen project, said in words so that nobody wonders why a button is missing later. */
+      async function loadRights() {
+        s.rights = null; s.files = null;
+        if (!s.projectId) return;
+        try { s.rights = await opencde.rights(connector, s.projectId); } catch (err) { D.log('opencde', 'rights', err); }
+      }
+      /** The project's files, as the server lists them. */
+      async function loadFiles() {
+        if (s.busy || !s.projectId) return;
+        s.busy = 'files'; s.error = ''; render();
+        try { s.files = await opencde.filesList(connector, s.projectId); log(t('opencde.files.loaded', { n: i18n.formatNumber(s.files.length) })); } catch (err) { fail(err); }
+        s.busy = ''; render();
+      }
+      /** One file becomes a dataset of its own kind: a model, a document, a table. */
+      async function fetchFile(entry) {
+        if (s.fetching) return;
+        s.fetching = entry.reference; s.error = ''; render();
+        try {
+          const meta = await opencde.importFile(connector, project() || { project_id: s.projectId, name: '' }, entry);
+          log(t('opencde.file.imported', { name: meta.name }));
+          overlays.toast.show(t('opencde.file.imported', { name: meta.name }), { kind: 'ok' });
+          if (api.onDataset) api.onDataset(meta);
+        } catch (err) { fail(err); }
+        s.fetching = ''; render();
       }
       async function signOut() {
         s.busy = 'logout'; render();
@@ -119,18 +145,37 @@
           const sel = /** @type {any} */ (h('dm-select', { label: t('opencde.project') }));
           sel.options = s.projects.map((p) => ({ value: p.project_id, label: p.name }));
           sel.value = s.projectId;
-          sel.addEventListener('change', () => { s.projectId = sel.value; s.result = null; render(); });
+          sel.addEventListener('change', () => { s.projectId = sel.value; s.result = null; loadRights().then(render); render(); });
           nodes.push(h('div', { class: 'dm-card dm-stack-sm' },
             s.projects.length ? sel : h('p', { class: 'dm-help', text: t('opencde.projects.none') }),
             h('div', { class: 'dm-row-wrap' },
               KINDS.map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
               basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), onClick: fetchDocuments })),
-            h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') })));
+            h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }),
+            s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
+          nodes.push(filesCard());
         }
         const resultEl = h('div');
         nodes.push(resultEl);
         replace(el, nodes);
         renderResult(resultEl);
+      }
+      function rightsText(r) {
+        const can = [];
+        if (r.project.includes('createTopic')) can.push(t('opencde.rights.topics'));
+        if (r.project.includes('createDocument')) can.push(t('opencde.rights.documents'));
+        return can.length ? t('opencde.rights.can', { what: can.join(', ') }) : t('opencde.rights.read');
+      }
+      /** The project's files with a button each; models are marked, since they become model datasets. */
+      function filesCard() {
+        const rows = (s.files || []).map((f) => h('div', { class: 'dm-row dm-opencde-file', 'data-opencde-file': f.filename },
+          h('span', { class: 'dm-grow dm-truncate' }, h('span', { text: f.filename }), h('span', { class: 'dm-help dm-xs', text: ' ' + [f.model ? t('opencde.file.model') : '', f.source, f.versionIndex ? t('opencde.file.version', { n: f.versionIndex }) : '', f.date ? i18n.formatDateTime(f.date) : ''].filter(Boolean).join(' · ') })),
+          basic.button({ label: t('opencde.file.fetch'), icon: 'download', size: 'sm', loading: s.fetching === f.reference, title: t('opencde.file.fetch.hint'), onClick: () => fetchFile(f) })));
+        return h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-files': '' },
+          h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('opencde.files.title') }), basic.button({ label: s.files ? t('opencde.files.again') : t('opencde.files.show'), icon: 'folder-open', size: 'sm', loading: s.busy === 'files', onClick: loadFiles })),
+          h('p', { class: 'dm-help dm-xs', text: t('opencde.files.hint') }),
+          s.files && !s.files.length ? h('p', { class: 'dm-help', text: t('opencde.files.none') }) : null,
+          rows.length ? h('div', { class: 'dm-stack-xs' }, rows) : null);
       }
       function manualBox() {
         const input = /** @type {any} */ (h('dm-input', { label: t('opencde.manual.paste'), placeholder: 'http://127.0.0.1/dataspatium-callback?code=…&state=…' }));
@@ -160,7 +205,7 @@
           Promise.resolve().then(async () => { try { s.user = await opencde.currentUser(connector); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); });
         }
       }
-      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, destroy: unsubscribe, KINDS };
+      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: unsubscribe, KINDS };
     }
     return { create, KINDS };
   });

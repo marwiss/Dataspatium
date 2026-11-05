@@ -24,6 +24,14 @@ dragðu með hægri hnappi til að færa. Ramminn sýnir allt líkanið; stakir 
 Rúmfræðin er reiknuð úr upprunalegu skránni í fyrsta sinn sem líkanið opnast í lotu og er aðeins notuð til að teikna og mæla.
 Töflurnar eru áfram til þótt tölvuna vanti WebGL; þá birtast skilaboð í stað þrívíddarsýnarinnar.
 
+## Mál frá CDE
+
+Líkan sem sótt var frá OpenCDE-þjóni, eða hvaða líkan sem er þegar slíkur þjónn er gagnalind, getur sýnt málin sín:
+hnappurinn *Mál* í líkansýninni opnar spjald í skoðaranum með BCF-málum verkefnisins. Þau sem vísa á byggingarhluta í þessu
+líkani koma fyrst, með stöðu og fjölda byggingarhluta. Smelltu á mál, þá eru byggingarhlutarnir merktir í 3D-sýninni og
+spjaldið sýnir lýsingu, skyndimynd og athugasemdir. Málin eru sótt þegar þú biður um það og eru ekki vistuð í gagnasafninu;
+til að reikna með þeim vistar þú þau sem töflu í Sækja. Þetta er lestur; að búa til og breyta málum kemur í næstu útgáfu.
+
 ## Töflurnar
 
 | Tafla | Innihald |
