@@ -25,10 +25,20 @@ docker compose -f compose.yaml -f compose.dev.yaml exec api opencde seed
 ```
 
 Seinni skipunin býr til sýninotendur og -verkefni og prentar lykilorð þeirra
-einu sinni; geymdu lykilorð `admin` og `editor`. Athugaðu
+einu sinni; geymdu lykilorð `admin` og `inspection_manager`. Athugaðu
 <http://localhost:8000/readyz> (svarar `ready`) og skráðu þig inn á
 <http://localhost:8000/signin> sem `admin`: `/admin` sýnir verkefnin
 *Building permit* og *Demolition permit*.
+
+Ef Compose stöðvast með `dependency failed to start: container
+kontroll-graph-1 is unhealthy`, lestu `docker compose -f compose.yaml -f
+compose.dev.yaml logs graph`. Venjulega orsökin er lykilorð undir 16 stöfum,
+sem Neo4j hafnar (`A password must be at least 16 characters`); hin er
+gagnagrunnsgeymsla frá fyrri uppsetningu með öðru lykilorði, sem
+`docker compose -f compose.yaml -f compose.dev.yaml down -v` fjarlægir ásamt
+gögnunum. Tvö útgáfusöfn á sömu tölvu deila Compose-verkefnisheitinu
+`kontroll`, svo hið síðara þarf `COMPOSE_PROJECT_NAME=kontroll-2` og aðrar
+`OPENCDE_DEV_*`-gáttir í sinni `.env`.
 
 ## 2. Ræstu Dataspatium
 
@@ -53,10 +63,11 @@ einu sinni; geymdu lykilorð `admin` og `editor`. Athugaðu
 ## 3. Tengdu þau saman
 
 Í Dataspatium: hamurinn *Inhämta* (Sækja inn) → hnappurinn *Lägg till källa*
-(Bæta við uppsprettu) → *Typ av tjänst* (Tegund þjónustu): *OpenCDE (BCF,
+(Bæta við uppsprettu) → spjaldið *Lägg till databaskälla* (Bæta við
+gagnagrunnsuppsprettu) → *Typ av tjänst* (Tegund þjónustu): *OpenCDE (BCF,
 Documents)* → *Adress* (Vistfang): `http://localhost:8000` → *Lägg till*
 (Bæta við). Uppsprettan opnast í *Inhämta*: ýttu á *Logga in* (Skrá inn) og
-skráðu þig inn sem `editor` í sprettiglugganum, og veldu svo *Building permit*
+skráðu þig inn sem `inspection_manager` í sprettiglugganum, og veldu svo *Building permit*
 í listanum *Projekt*. Línan undir fyrirsögninni ("Servern: Kontroll OpenCDE
 server 2.0.0. Tillägg: …") kemur úr getuskjali þjónsins og segir hvaða
 viðbætur eru virkar.

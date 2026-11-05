@@ -166,6 +166,8 @@ lähteen valintaikkunan osoite täytettynä. Jos palvelin on jo lähteenä, se a
 (`&project=…&document=…&version=…`): projekti valitaan ja asiakirja haetaan datamääräksi, kun olet kirjautunut. Sivut, jotka Kontroll
 avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyvät sovelluksen kielellä.
 
+**Hallinta.** Jos olet järjestelmänvalvoja Kontroll-palvelimella, lähteen näkymä näyttää kortin *Hallinta* (kun palvelimen kyvykkyysasiakirja sanoo hallintarajapinnan olevan päällä). Painike *Kirjaudu järjestelmänvalvojana* pyytää oikeuden `admin`; sen jälkeen ovat välilehdet Yleiskuva, Käyttäjät (luo, muuta, poista käytöstä, nollaa salasana, poista), Projektit (luo, nimeä uudelleen, jäsenet ja roolit, poista), Asiakkaat (rekisteröi, muuta, vaihda salaisuus, peru tunnukset, poista), Istunnot (lopeta yksi tai käyttäjän kaikki), Tapahtumaloki, Asetukset ja Kunto sekä Graafikysely, kun palvelin sallii lukevan Cypherin IFC-graafiin. Vaaralliset toimet vaativat tuoreen kirjautumisen: palvelin vastaa `reauthentication_required`, sovellus avaa kirjautumisen uudelleen ja toistaa kutsun. Kertakäyttöiset arvot (alkusalasana, asiakassalaisuus) näytetään kerran Kopioi-painikkeen kanssa, eikä niitä kirjoiteta lokiin. Jokainen luettelo voidaan tallentaa datamääränä ja hakea uudelleen Hallitse-tilasta.
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

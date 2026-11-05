@@ -25,10 +25,20 @@ docker compose -f compose.yaml -f compose.dev.yaml exec api opencde seed
 ```
 
 The second command creates demonstration users and projects and prints their
-passwords once; keep the password of `admin` and of `editor`. Check
+passwords once; keep the password of `admin` and of `inspection_manager`. Check
 <http://localhost:8000/readyz> (it answers `ready`) and sign in at
 <http://localhost:8000/signin> as `admin`: `/admin` shows the projects
 *Building permit* and *Demolition permit*.
+
+If Compose stops with `dependency failed to start: container kontroll-graph-1
+is unhealthy`, read `docker compose -f compose.yaml -f compose.dev.yaml logs
+graph`. The usual cause is a password of fewer than 16 characters, which
+Neo4j refuses (`A password must be at least 16 characters`); the other is a
+database volume left by an earlier installation with another password, which
+`docker compose -f compose.yaml -f compose.dev.yaml down -v` removes together
+with its data. Two checkouts on one machine share the Compose project name
+`kontroll`, so the second one needs `COMPOSE_PROJECT_NAME=kontroll-2` and
+other `OPENCDE_DEV_*` ports in its `.env`.
 
 ## 2. Start Dataspatium
 
@@ -54,9 +64,10 @@ passwords once; keep the password of `admin` and of `editor`. Check
 ## 3. Connect the two
 
 In Dataspatium: the mode *Inhämta* (Import) → the button *Lägg till källa*
-(Add source) → *Typ av tjänst* (Kind of service): *OpenCDE (BCF, Documents)*
+(Add source) → the card *Lägg till databaskälla* (Add database source) →
+*Typ av tjänst* (Kind of service): *OpenCDE (BCF, Documents)*
 → *Adress* (Address): `http://localhost:8000` → *Lägg till* (Add). The source
-opens in *Inhämta*: press *Logga in* (Sign in) and sign in as `editor` in the
+opens in *Inhämta*: press *Logga in* (Sign in) and sign in as `inspection_manager` in the
 pop-up window, then choose *Building permit* in the list *Projekt*. The line
 under the heading ("Servern: Kontroll OpenCDE server 2.0.0. Tillägg: …")
 comes from the server's capabilities document and says which extensions are

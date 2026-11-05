@@ -81,20 +81,43 @@
       if (connector.id) { try { await connectors.save(connector); } catch (err) { D.log('opencde', 'could not keep the addresses', err); } }
       return connector;
     }
-    /** Default popup: open the authorization page and wait for the callback page to post its address back. */
+    const CALLBACK_CHANNEL = 'dataspatium-oauth';
+    const CALLBACK_KEY = 'dataspatium.oauth.callback';
+    /**
+     * Default popup: open the page and wait for the callback page (oauth-callback.html) to report its address: through
+     * window.opener when the browser lets the two talk, or through a BroadcastChannel (with a storage event as reserve) when the
+     * app is cross-origin isolated (sw-coi.js on http) and the popup lands in another browsing context group, where `win` looks
+     * closed and the page has no opener. The app acknowledges on the channel so that the page may close itself.
+     */
     function popupFlow(url) {
       return new Promise((resolve, reject) => {
+        try { localStorage.removeItem(CALLBACK_KEY); } catch (_e) { /* storage blocked */ }
         const win = window.open(url, 'dataspatium-opencde-login', 'popup,width=520,height=760');
         if (!win) { reject(new Error(t('opencde.err.popup'))); return; }
-        const timer = setTimeout(() => { cleanup(); reject(new Error(t('opencde.err.timeout'))); }, 300000);
-        const poll = setInterval(() => { if (win.closed) { cleanup(); reject(new Error(t('opencde.err.closed'))); } }, 500);
-        const onMessage = (ev) => {
-          if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'dataspatium-oauth-callback') return;
-          cleanup(); try { win.close(); } catch (_e) { /* the popup may already be gone */ }
-          resolve(String(ev.data.url));
+        const isolated = !!globalThis.crossOriginIsolated;
+        let channel = null;
+        const cleanup = () => {
+          clearTimeout(timer); clearInterval(poll);
+          window.removeEventListener('message', onMessage); window.removeEventListener('storage', onStorage);
+          if (channel) { const c = channel; channel = null; setTimeout(() => c.close(), 2000); }
         };
-        const cleanup = () => { clearTimeout(timer); clearInterval(poll); window.removeEventListener('message', onMessage); };
+        const finish = (href, id) => {
+          if (id && channel) { try { channel.postMessage({ type: 'dataspatium-oauth-ack', id }); } catch (_e) { /* the page closes anyway */ } }
+          cleanup();
+          try { win.close(); } catch (_e) { /* the popup may already be gone */ }
+          resolve(String(href));
+        };
+        const timer = setTimeout(() => { cleanup(); reject(new Error(t('opencde.err.timeout'))); }, 300000);
+        // An isolated opener sees the popup as closed as soon as it leaves our origin, so that signal counts only when not isolated.
+        const poll = setInterval(() => { if (!isolated && win.closed) { cleanup(); reject(new Error(t('opencde.err.closed'))); } }, 500);
+        const onMessage = (ev) => { if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'dataspatium-oauth-callback') return; finish(ev.data.url, ev.data.id); };
+        const onStorage = (ev) => {
+          if (ev.key !== CALLBACK_KEY || !ev.newValue) return;
+          try { const data = JSON.parse(ev.newValue); localStorage.removeItem(CALLBACK_KEY); finish(data.url, data.id); } catch (_e) { /* not ours */ }
+        };
         window.addEventListener('message', onMessage);
+        window.addEventListener('storage', onStorage);
+        try { channel = new BroadcastChannel(CALLBACK_CHANNEL); channel.onmessage = (ev) => { if (ev.data && ev.data.type === 'dataspatium-oauth-callback') finish(ev.data.url, ev.data.id); }; } catch (_e) { channel = null; }
       });
     }
     /**
@@ -525,6 +548,8 @@
     /** Fetch again what a dataset's source recorded (api/runner calls this for family 'opencde'). */
     async function refetch(connector, source) {
       const spec = (source && source.opencde) || {};
+      // Administration lists (api/families/opencde-admin) record kind 'admin' and fetch again through their own module.
+      if (spec.kind === 'admin' && D.has('api/families/opencde-admin')) return D.require('api/families/opencde-admin').refetch(connector, spec);
       const fetcher = FETCHERS[spec.kind];
       if (!fetcher || !spec.projectId) throw new Error(t('api.err.nosource'));
       const out = await fetcher(connector, spec.projectId);
@@ -532,6 +557,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
+    return { FAMILY, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

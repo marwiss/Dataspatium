@@ -162,6 +162,8 @@ med adressen utfylt. Finnes serveren allerede som kilde, åpnes den direkte. Len
 (`&project=…&document=…&version=…`): prosjektet velges, og dokumentet hentes som datasett når du er logget inn. Sider som Kontroll
 åpner i popup (innlogging, opplasting, valg av dokumenter), vises på appens språk.
 
+**Administrasjon.** Er du administrator på en Kontroll-server, viser kildens visning kortet *Administrasjon* (når serverens kapabilitetsdokument sier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om rettigheten `admin`; deretter finnes fanene Oversikt, Brukere (opprett, endre, deaktiver, tilbakestill passord, slett), Prosjekter (opprett, gi nytt navn, medlemmer og roller, slett), Klienter (registrer, endre, roter hemmelighet, tilbakekall tokener, slett), Sesjoner (avslutt én eller alle for en bruker), Revisjon, Innstillinger og Helse, samt Grafspørring når serveren tillater lesende Cypher mot IFC-grafen. Farlige handlinger krever en fersk innlogging: serveren svarer `reauthentication_required`, appen åpner innloggingen igjen og gjentar kallet. Engangsverdier (et første passord, en klienthemmelighet) vises én gang med knappen Kopier og skrives aldri i loggen. Hver liste kan lagres som datasett og hentes igjen fra Håndter.
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

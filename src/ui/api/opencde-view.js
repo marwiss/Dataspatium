@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card'], (base, basic, overlays, opencde, secrets, runner, importer, cdeLogCard) => {
+  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel'], (base, basic, overlays, opencde, secrets, runner, importer, cdeLogCard, adminPanel) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     const KINDS = [
@@ -30,6 +30,8 @@
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
       /** What the app has sent to this server, in a card of its own at the bottom. */
       const logCard = cdeLogCard.create(connector, { log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
+      /** The server's administration (Kontroll's extension), a card of its own that stays hidden for servers without the API. */
+      const adminUi = adminPanel.create({ connector, ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
       let pendingLink = null;
@@ -41,14 +43,21 @@
           if (opencde.redirectUri()) await opencde.login(connector);
           else { s.manual = await opencde.manualStart(connector, 'http://127.0.0.1/dataspatium-callback'); window.open(s.manual.url, '_blank', 'noopener'); s.busy = ''; render(); return; }
           await afterSignIn();
-        } catch (err) { fail(err); }
+        } catch (err) {
+          // The popup could not answer (blocked, closed, or cut off by the server's opener policy): the same sign-in in a new tab,
+          // whose callback address the user pastes here, exactly as the callback page says.
+          if (opencde.redirectUri() && isPopupFailure(err)) {
+            try { s.manual = await opencde.manualStart(connector, opencde.redirectUri()); window.open(s.manual.url, '_blank', 'noopener'); s.note = t('opencde.manual.fallback'); } catch (err2) { fail(err2); }
+          } else fail(err);
+        }
         s.busy = ''; render();
         await followLink();
       }
+      const isPopupFailure = (err) => { const m = String((err && err.message) || ''); return [t('opencde.err.popup'), t('opencde.err.timeout'), t('opencde.err.closed')].includes(m); };
       async function finishManual() {
         if (!s.manual || !s.callback.trim()) return;
         s.busy = 'login'; s.error = ''; render();
-        try { await opencde.manualFinish(connector, s.manual, s.callback.trim()); s.manual = null; s.callback = ''; await afterSignIn(); } catch (err) { fail(err); }
+        try { await opencde.manualFinish(connector, s.manual, s.callback.trim()); s.manual = null; s.callback = ''; s.note = ''; await afterSignIn(); } catch (err) { fail(err); }
         s.busy = ''; render();
         await followLink();
       }
@@ -203,7 +212,7 @@
           nodes.push(filesCard());
         }
         const resultEl = h('div');
-        nodes.push(resultEl, logCard.el);
+        nodes.push(resultEl, adminUi.el, logCard.el);
         replace(el, nodes);
         renderResult(resultEl);
       }
@@ -254,6 +263,7 @@
       function start() {
         s.caps = null;
         opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); }).catch((err) => D.log('opencde', 'capabilities', err));
+        adminUi.start().catch((err) => D.log('opencde', 'admin', err));
         const link = takeDeepLink();
         const signed = opencde.signedIn(connector);
         if (link && !signed) { pendingLink = link; s.note = t('opencde.deeplink.signin'); }
@@ -269,7 +279,7 @@
           Promise.resolve().then(async () => { try { await applyDeepLink(link); } catch (err) { fail(err); } render(); });
         }
       }
-      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: () => { unsubscribe(); logCard.destroy(); }, KINDS };
+      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: () => { unsubscribe(); logCard.destroy(); adminUi.destroy(); }, KINDS };
     }
     return { create, KINDS };
   });

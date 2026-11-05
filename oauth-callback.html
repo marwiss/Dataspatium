@@ -10,19 +10,33 @@
 </head>
 <body>
   <!-- The page an OpenCDE server sends the browser back to after sign-in or document selection (api/families/opencde).
-       It hands its own address to the Dataspatium window that opened it and closes; nothing is stored here. -->
+       It hands its own address to the Dataspatium window that opened it: through window.opener when the browser still lets the
+       two talk, and through a BroadcastChannel (with a storage event as reserve) when the app is cross-origin isolated (sw-coi.js on
+       http) and this page lands in another browsing context group. The app acknowledges on the channel, and the page closes.
+       Without an answer the page asks the user to paste its address into the app. Nothing else is stored here. -->
   <p class="dm-muted" style="padding: 24px" id="message">Dataspatium …</p>
   <script>
     (function () {
-      var opener = window.opener;
       var message = document.getElementById('message');
-      if (opener && !opener.closed) {
-        opener.postMessage({ type: 'dataspatium-oauth-callback', url: location.href }, location.origin);
+      var id = String(Date.now()) + Math.random().toString(36).slice(2);
+      var payload = { type: 'dataspatium-oauth-callback', url: location.href, id: id };
+      var acked = false;
+      function done() {
+        if (acked) return;
+        acked = true;
         message.textContent = 'Klart. Du kan stänga det här fönstret. / Done. You can close this window.';
         setTimeout(function () { window.close(); }, 500);
-      } else {
-        message.textContent = 'Kopiera adressen i adressfältet och klistra in den i Dataspatium. / Copy the address from the address bar and paste it into Dataspatium.';
       }
+      try { if (window.opener && !window.opener.closed) { window.opener.postMessage(payload, location.origin); done(); } } catch (e) { /* an isolated opener */ }
+      try {
+        var channel = new BroadcastChannel('dataspatium-oauth');
+        channel.onmessage = function (ev) { if (ev.data && ev.data.type === 'dataspatium-oauth-ack' && ev.data.id === id) done(); };
+        channel.postMessage(payload);
+      } catch (e) { /* no channel in this browser */ }
+      try { localStorage.setItem('dataspatium.oauth.callback', JSON.stringify({ url: location.href, id: id, at: Date.now() })); } catch (e) { /* storage blocked */ }
+      setTimeout(function () {
+        if (!acked) message.textContent = 'Kopiera adressen i adressfältet och klistra in den i Dataspatium. / Copy the address from the address bar and paste it into Dataspatium.';
+      }, 1500);
     })();
   </script>
 </body>

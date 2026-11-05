@@ -159,6 +159,8 @@ síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…
 (`&project=…&document=…&version=…`): verkefnið er valið og skjalið sótt sem gagnasafn þegar þú ert innskráður. Síður sem Kontroll
 opnar í sprettiglugga (innskráning, upphal, val skjala) birtast á tungumáli forritsins.
 
+**Stjórnun.** Ef þú ert stjórnandi á Kontroll-þjóni sýnir sýn uppsprettunnar spjaldið *Stjórnun* (þegar getuskjal þjónsins segir að stjórnunarforritaskilin séu virk). Hnappurinn *Skrá inn sem stjórnandi* biður um réttindin `admin`; síðan koma fliparnir Yfirlit, Notendur (stofna, breyta, gera óvirkan, endurstilla lykilorð, eyða), Verkefni (stofna, endurnefna, þátttakendur og hlutverk, eyða), Biðlarar (skrá, breyta, skipta um leyndarmál, afturkalla tóka, eyða), Setur (ljúka einni eða öllum setum notanda), Atvikaskrá, Stillingar og Heilsa, auk Graffyrirspurnar þegar þjónninn leyfir lesandi Cypher gegn IFC-grafinu. Hættulegar aðgerðir krefjast nýlegrar innskráningar: þjónninn svarar `reauthentication_required`, forritið opnar innskráninguna aftur og endurtekur kallið. Einnota gildi (fyrsta lykilorð, biðlaraleyndarmál) eru sýnd einu sinni með hnappinum Afrita og aldrei skrifuð í atvikaskrána. Hvern lista má vista sem gagnasafn og sækja aftur úr Hantera.
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

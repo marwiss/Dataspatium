@@ -25,10 +25,20 @@ docker compose -f compose.yaml -f compose.dev.yaml exec api opencde seed
 ```
 
 Den anden kommando opretter demobrugere og projekter og udskriver deres
-kodeord én gang; gem kodeordene til `admin` og `editor`. Kontrollér
+kodeord én gang; gem kodeordene til `admin` og `inspection_manager`. Kontrollér
 <http://localhost:8000/readyz> (svarer `ready`), og log ind på
 <http://localhost:8000/signin> som `admin`: `/admin` viser projekterne
 *Building permit* og *Demolition permit*.
+
+Hvis Compose stopper med `dependency failed to start: container
+kontroll-graph-1 is unhealthy`, så læs `docker compose -f compose.yaml -f
+compose.dev.yaml logs graph`. Den sædvanlige årsag er en adgangskode på under
+16 tegn, som Neo4j afviser (`A password must be at least 16 characters`); den
+anden er en databasevolume fra en tidligere installation med en anden
+adgangskode, som `docker compose -f compose.yaml -f compose.dev.yaml down -v`
+fjerner sammen med dens data. To checkouts på samme maskine deler
+Compose-projektnavnet `kontroll`, så det andet skal have
+`COMPOSE_PROJECT_NAME=kontroll-2` og andre `OPENCDE_DEV_*`-porte i sin `.env`.
 
 ## 2. Start Dataspatium
 
@@ -53,9 +63,10 @@ kodeord én gang; gem kodeordene til `admin` og `editor`. Kontrollér
 ## 3. Forbind de to
 
 I Dataspatium: tilstanden *Inhämta* (Importér) → knappen *Lägg till källa*
-(Tilføj kilde) → *Typ av tjänst* (Tjenestetype): *OpenCDE (BCF, Documents)*
+(Tilføj kilde) → kortet *Lägg till databaskälla* (Tilføj databasekilde) →
+*Typ av tjänst* (Tjenestetype): *OpenCDE (BCF, Documents)*
 → *Adress* (Adresse): `http://localhost:8000` → *Lägg till* (Tilføj). Kilden
-åbnes i *Inhämta*: tryk på *Logga in* (Log ind), og log ind som `editor` i
+åbnes i *Inhämta*: tryk på *Logga in* (Log ind), og log ind som `inspection_manager` i
 popup-vinduet, og vælg derefter *Building permit* i listen *Projekt*. Linjen
 under overskriften ("Servern: Kontroll OpenCDE server 2.0.0. Tillägg: …")
 kommer fra serverens kapabilitetsdokument og siger, hvilke udvidelser der er

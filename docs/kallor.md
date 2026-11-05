@@ -157,6 +157,8 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 (`&project=…&document=…&version=…`): projektet väljs och dokumentet hämtas som datamängd när du är inloggad. Sidor som Kontroll
 öppnar i popup (inloggning, uppladdning, val av dokument) visas på appens språk.
 
+**Administration.** Är du administratör på en Kontroll-server visar källans vy kortet *Administration* (när serverns kapabilitetsdokument säger att administrations-API:t är på). Knappen *Logga in som administratör* begär behörigheten `admin`; sedan finns flikarna Översikt (antal och serverns tillstånd), Användare (skapa, ändra, inaktivera, återställa lösenord, ta bort), Projekt (skapa, byta namn, medlemmar och roller, ta bort), Klienter (registrera, ändra, rotera hemlighet, återkalla token, ta bort), Sessioner (avsluta en eller alla för en användare), Revision, Inställningar och Hälsa, samt Graffråga när servern tillåter läsande Cypher mot IFC-grafen. Farliga handlingar kräver en färsk inloggning: servern svarar `reauthentication_required`, appen öppnar inloggningen igen och upprepar anropet. Engångsvärden (ett första lösenord, en klienthemlighet) visas en gång med knappen Kopiera och skrivs aldrig i loggen. Varje lista kan sparas som datamängd och hämtas igen från Hantera.
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

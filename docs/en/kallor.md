@@ -163,6 +163,8 @@ the dialog for a new source with the address filled in. A server the workspace a
 (`&project=…&document=…&version=…`): the project is chosen and the document fetched as a dataset once you are signed in. Pages that
 Kontroll opens in a popup (sign-in, upload, document selection) appear in the app's language.
 
+**Administration.** If you are an administrator on a Kontroll server, the source's view shows the card *Administration* (when the server's capabilities document says the administration API is on). The button *Sign in as administrator* asks for the scope `admin`; then the tabs Overview, Users (create, change, disable, reset password, delete), Projects (create, rename, members and roles, delete), Clients (register, change, rotate secret, revoke tokens, delete), Sessions (end one or all of a user), Audit, Settings and Health follow, plus Graph query when the server allows reading Cypher against the IFC graph. Dangerous operations need a fresh sign-in: the server answers `reauthentication_required`, the app opens the sign-in again and repeats the call. One-time values (an initial password, a client secret) are shown once with a Copy button and never written to the log. Every list can be saved as a dataset and fetched again from Hantera.
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

@@ -860,5 +860,5 @@
     for (const id of created) await datasets.remove(id).catch(() => {});
     assert.ok(true);
     return 'ok';
-  });
+  }, 90000);
 })();

@@ -146,6 +146,14 @@ steget som *Gör det åt mig*.
   `DATASPATIUM_CDE_GRAPH_USER`, `DATASPATIUM_CDE_GRAPH_PASS` och `DATASPATIUM_CDE_ADMIN_HELPER` blir frågeparametrarna till det
   riktiga provet mot Kontroll (`tests/opencde-live.test.js`), så att parets CI kan köra det mot en server i samma jobb; sidan
   måste då serveras över http.
+- Headless-sviten ser inte webbläsarens fönsterpolicyer (Cross-Origin-Opener-Policy): popup-inloggningen mot en riktig
+  server (snabbstartens steg 3) och dokumentval och uppladdning på serverns sidor provas för hand i Edge eller Firefox före en
+  utgåva som rör inloggningen. Får popup-fönstret inget svar visar källvyn fältet för återhoppsadressen även i http-läge.
+  Eftersom `sw-coi.js` gör appen cross-origin-isolerad på http hamnar popup-fönstret i en annan browsing context group så
+  snart det lämnar vårt origin: `window.opener` saknas på återhoppssidan och appens fönsterreferens ser stängd ut. Därför
+  rapporterar `oauth-callback.html` också via `BroadcastChannel('dataspatium-oauth')` och en storage-händelse, appen svarar
+  med en bekräftelse på kanalen, och en "stängd" popup räknas som fel bara när appen inte är isolerad (`popupFlow` i
+  `api/families/opencde`).
 - `-Width` och `-Height` (standard 1400 × 1000) sätter fönstrets storlek. Kör också sviten i surfplattestorlek,
   `-Width 768 -Height 1024`, när skalet eller ett läges layout ändrats, så att flaken och lägesväxlarens ikonläge
   testas.

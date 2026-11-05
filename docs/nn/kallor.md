@@ -162,6 +162,8 @@ med adressa utfylt. Finst tenaren alt som kjelde, blir han opna direkte. Lenkja 
 (`&project=…&document=…&version=…`): prosjektet blir valt og dokumentet henta som datasett når du er innlogga. Sider som Kontroll
 opnar i popup (innlogging, opplasting, val av dokument), blir viste på språket til appen.
 
+**Administrasjon.** Er du administrator på ein Kontroll-tenar, viser visinga til kjelda kortet *Administrasjon* (når kapabilitetsdokumentet til tenaren seier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om retten `admin`; deretter finst fanene Oversyn, Brukarar (opprett, endre, deaktiver, still passordet tilbake, slett), Prosjekt (opprett, gje nytt namn, medlemmer og roller, slett), Klientar (registrer, endre, roter løyndom, kall tilbake token, slett), Sesjonar (avslutt éin eller alle for ein brukar), Revisjon, Innstillingar og Helse, og dessutan Grafspørjing når tenaren tillèt lesande Cypher mot IFC-grafen. Farlege handlingar krev ei fersk innlogging: tenaren svarar `reauthentication_required`, appen opnar innlogginga igjen og gjer kallet om att. Eingangsverdiar (eit første passord, ein klientløyndom) blir viste éin gong med knappen Kopier og aldri skrivne i loggen. Kvar liste kan lagrast som datasett og hentast igjen frå Handter.
+
 ## Opne geodata
 
 Dialogen *Legg til geodatakjelde* byrjar med ei liste over **ferdige geodatakjelder**: opne WFS-, OGC API Features- og

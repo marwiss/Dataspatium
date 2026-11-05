@@ -25,10 +25,20 @@ docker compose -f compose.yaml -f compose.dev.yaml exec api opencde seed
 ```
 
 Jälkimmäinen komento luo demokäyttäjät ja -projektit ja tulostaa niiden
-salasanat kerran; ota talteen käyttäjien `admin` ja `editor` salasanat.
+salasanat kerran; ota talteen käyttäjien `admin` ja `inspection_manager` salasanat.
 Tarkista <http://localhost:8000/readyz> (vastaa `ready`) ja kirjaudu
 osoitteessa <http://localhost:8000/signin> käyttäjänä `admin`: `/admin`
 näyttää projektit *Building permit* ja *Demolition permit*.
+
+Jos Compose pysähtyy ilmoitukseen `dependency failed to start: container
+kontroll-graph-1 is unhealthy`, lue `docker compose -f compose.yaml -f
+compose.dev.yaml logs graph`. Tavallinen syy on alle 16 merkin salasana, jonka
+Neo4j hylkää (`A password must be at least 16 characters`); toinen on
+aiemmasta asennuksesta jäänyt tietokannan taltio, jossa on eri salasana ja
+jonka `docker compose -f compose.yaml -f compose.dev.yaml down -v` poistaa
+tietoineen. Kaksi lähdekoodikopiota samalla koneella jakavat
+Compose-projektinimen `kontroll`, joten toinen tarvitsee `.env`-tiedostoonsa
+`COMPOSE_PROJECT_NAME=kontroll-2` ja eri `OPENCDE_DEV_*`-portit.
 
 ## 2. Käynnistä Dataspatium
 
@@ -54,10 +64,11 @@ näyttää projektit *Building permit* ja *Demolition permit*.
 ## 3. Yhdistä ne
 
 Dataspatiumissa: tila *Inhämta* (Tuo) → painike *Lägg till källa* (Lisää
-lähde) → *Typ av tjänst* (Palvelun tyyppi): *OpenCDE (BCF, Documents)* →
+lähde) → kortti *Lägg till databaskälla* (Lisää tietokantalähde) →
+*Typ av tjänst* (Palvelun tyyppi): *OpenCDE (BCF, Documents)* →
 *Adress* (Osoite): `http://localhost:8000` → *Lägg till* (Lisää). Lähde
 avautuu *Inhämta*-tilaan: paina *Logga in* (Kirjaudu) ja kirjaudu
-ponnahdusikkunassa käyttäjänä `editor`, ja valitse sitten *Building permit*
+ponnahdusikkunassa käyttäjänä `inspection_manager`, ja valitse sitten *Building permit*
 luettelosta *Projekt*. Otsikon alla oleva rivi ("Servern: Kontroll OpenCDE
 server 2.0.0. Tillägg: …") tulee palvelimen kyvykkyysasiakirjasta ja kertoo,
 mitkä laajennukset ovat päällä.

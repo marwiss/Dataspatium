@@ -537,13 +537,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 19051,
+  "size": 20080,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 4899,
+  "size": 5618,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -699,13 +699,13 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 18743,
+  "size": 19712,
   "library": "dataspatium"
  },
  "docs/da/snabbstart.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5032,
+  "size": 5770,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -861,13 +861,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 18566,
+  "size": 19541,
   "library": "dataspatium"
  },
  "docs/nb/snabbstart.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5029,
+  "size": 5752,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -1023,13 +1023,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/kallor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 18810,
+  "size": 19799,
   "library": "dataspatium"
  },
  "docs/nn/snabbstart.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 5045,
+  "size": 5763,
   "library": "dataspatium"
  },
  "docs/nn/r-guide.md": {
@@ -1185,13 +1185,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 19974,
+  "size": 21019,
   "library": "dataspatium"
  },
  "docs/fi/snabbstart.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 5430,
+  "size": 6172,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -1347,13 +1347,13 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 19848,
+  "size": 20874,
   "library": "dataspatium"
  },
  "docs/is/snabbstart.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5289,
+  "size": 6027,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -1509,13 +1509,13 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 18840,
+  "size": 19788,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5105,
+  "size": 5843,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {

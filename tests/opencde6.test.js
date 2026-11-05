@@ -142,6 +142,61 @@
     return 'ok';
   }, 30000);
 
+  test('opencde VI: a popup that cannot answer the app falls back to a sign-in in a new tab with a field for the callback address', async (assert) => {
+    const view = D.require('ui/api/opencde-view');
+    const realLogin = opencde.login; const realStart = opencde.manualStart; const realRedirect = opencde.redirectUri; const realOpen = window.open;
+    const opened = [];
+    opencde.login = () => Promise.reject(new Error(t('opencde.err.closed')));
+    opencde.manualStart = async (c, redirect) => ({ url: 'https://cde.example.org/auth?redirect_uri=' + encodeURIComponent(redirect), state: 's', verifier: 'v', redirectUri: redirect });
+    opencde.redirectUri = () => 'http://127.0.0.1:8080/oauth-callback.html';
+    window.open = (url) => { opened.push(String(url)); return null; };
+    const ui = view.create({ connector: plain, ctx: {}, log: () => {}, onDataset: () => {} });
+    document.body.appendChild(ui.el);
+    try {
+      await ui.signIn();
+      assert.ok(ui.state.manual && ui.state.manual.state === 's', 'the manual flow started');
+      assert.equal(opened.length, 1, 'the sign-in opened in a new tab: ' + opened.join());
+      assert.ok(opened[0].includes(encodeURIComponent('http://127.0.0.1:8080/oauth-callback.html')), 'with the app\'s own callback address');
+      assert.ok(ui.el.textContent.includes(t('opencde.manual.fallback')), 'the hint says what to do');
+      assert.ok(ui.el.querySelector('dm-input[placeholder*="dataspatium-callback"]'), 'the field for the callback address is shown in http mode too');
+      assert.equal(ui.state.error, '', 'no error line for a popup that was merely cut off');
+    } finally { opencde.login = realLogin; opencde.manualStart = realStart; opencde.redirectUri = realRedirect; window.open = realOpen; ui.destroy(); ui.el.remove(); }
+    return 'ok';
+  }, 20000);
+
+  test('opencde VI: the popup flow hears the callback page through a BroadcastChannel and a storage event, not only through the opener', async (assert) => {
+    const realOpen = window.open;
+    const fake = { closed: false, close() { this.closed = true; } };
+    window.open = () => /** @type {any} */ (fake);
+    const page = new BroadcastChannel(opencde.CALLBACK_CHANNEL);
+    try {
+      // Through the channel, as the callback page does when its opener is gone; the app acknowledges so that the page may close.
+      const acks = [];
+      page.onmessage = (ev) => { if (ev.data && ev.data.type === 'dataspatium-oauth-ack') acks.push(ev.data.id); };
+      const p1 = opencde.popupFlow('https://cde.example.org/auth');
+      await wait(50);
+      page.postMessage({ type: 'dataspatium-oauth-callback', url: REDIRECT + '?code=c1&state=s1', id: 'x1' });
+      assert.equal(await p1, REDIRECT + '?code=c1&state=s1');
+      await waitFor(() => acks.includes('x1'), 3000, 'the acknowledgement');
+      assert.ok(fake.closed, 'the app closes the popup');
+      // Through the storage event, as the browser dispatches it to another document of the same origin.
+      fake.closed = false;
+      const p2 = opencde.popupFlow('https://cde.example.org/auth');
+      await wait(50);
+      window.dispatchEvent(new StorageEvent('storage', { key: opencde.CALLBACK_KEY, newValue: JSON.stringify({ url: REDIRECT + '?code=c2&state=s2', id: 'x2', at: Date.now() }) }));
+      assert.equal(await p2, REDIRECT + '?code=c2&state=s2');
+      // A popup the user closes is an error when the app is not isolated; an isolated app cannot tell and waits for the page.
+      if (!globalThis.crossOriginIsolated) {
+        fake.closed = false;
+        const p3 = opencde.popupFlow('https://cde.example.org/auth');
+        await wait(50); fake.closed = true;
+        const err = await p3.catch((e) => e);
+        assert.ok(err instanceof Error && err.message === t('opencde.err.closed'), 'closed by the user: ' + (err && err.message));
+      }
+    } finally { window.open = realOpen; page.close(); }
+    return 'ok';
+  }, 20000);
+
   test('opencde VI: cleanup', async () => {
     for (const c of [connector, plain]) if (c) { await opencde.logout(c).catch(() => {}); await connectors.remove(c.id); }
     cdeLog.clear();

@@ -85,7 +85,7 @@
     assert.ok(creds.token && creds.refreshToken, 'tokens');
     log(`token lives ${Math.round((Number(creds.expiresAt) - Date.now()) / 1000)} s; scope "${creds.scope}"`);
     const me = await opencde.currentUser(shared.connector);
-    assert.equal(me.name, 'Dataspatium provare', JSON.stringify(me));
+    assert.equal(me.id, 'dm_manager', JSON.stringify(me)); assert.ok(me.name, 'the server names the user: ' + JSON.stringify(me));
     return me.id;
   }, 60000);
 
@@ -415,7 +415,7 @@
     assert.ok(token && token !== before.token, 'new access token');
     assert.ok(after.refreshToken && after.refreshToken !== before.refreshToken, 'the refresh token rotated');
     const me = await opencde.currentUser(shared.connector);
-    assert.equal(me.name, 'Dataspatium provare');
+    assert.equal(me.id, 'dm_manager'); assert.ok(me.name);
     await opencde.logout(shared.connector);
     assert.equal(opencde.signedIn(shared.connector), false);
     const refused = await opencde.projects(shared.connector).catch((e) => e);
@@ -551,6 +551,34 @@
       const matched = mine.filter((id) => ids.has(id));
       log(`server log: ${(page.requests || []).length} rows for the client (retention ${page.retention_hours} h), ${matched.length} of the app's last ${mine.length} ids found`);
       assert.ok(matched.length >= Math.min(5, mine.length), 'the server logged the app ids');
+      // The administration API (client-guide §7), reads only: every list, the settings, the health and, when on, one graph query.
+      const adm = D.require('api/families/opencde-admin');
+      if (await adm.available(admin)) {
+        assert.ok(adm.hasAdminScope(admin), 'the token carries the admin scope');
+        const o = await adm.overview(admin);
+        assert.ok(Number.isFinite(Number(o.users)) && o.version, 'overview: ' + JSON.stringify(o));
+        const users = await adm.users(admin, {});
+        const projects = await adm.projects(admin, {});
+        const clients = await adm.clients(admin);
+        const sessions = await adm.sessions(admin, {});
+        const audit = await adm.audit(admin, { limit: 50 });
+        const settings = await adm.settings(admin);
+        const health = await adm.health(admin);
+        log(`admin: ${o.version}, ${users.total} users, ${projects.total} projects, ${clients.total} clients, ${sessions.total} sessions, ${audit.items.length} audit rows, ${(health.checks || []).length} checks (${health.ok ? 'ok' : 'problems'}), request log ${o.request_log && o.request_log.enabled ? 'on' : 'off'}`);
+        assert.ok(users.items.some((u) => u.is_admin), 'an administrator is listed');
+        assert.ok(projects.items.some((p) => Array.isArray(p.members)), 'projects carry members');
+        assert.ok(clients.items.some((c) => c.client_id === CLIENT), 'the app\'s own client is listed');
+        assert.ok(settings.public_url && settings.raw, 'settings are structured with the raw values beside');
+        assert.ok(adm.tableOf('users', users.items).rows.length === users.items.length, 'the list becomes a table');
+        const caps = await opencde.capabilities(admin, { force: true });
+        if (opencde.hasExtension(caps, 'graph_query')) {
+          const g = await adm.graphQuery(admin, 'MATCH (n) RETURN labels(n) AS etikett, count(*) AS antal ORDER BY antal DESC LIMIT 5');
+          log(`graph query: ${g.rows.length} rows (${g.columns.join(', ')}), truncated ${g.truncated}`);
+          assert.deepEqual(g.columns, ['etikett', 'antal']);
+          const refused = await adm.graphQuery(admin, 'MATCH (n) DETACH DELETE n').catch((e) => e);
+          assert.ok(refused instanceof Error && refused.code === 'validation_error', 'a writing statement is refused: ' + (refused && refused.code));
+        } else log('graph query: the extension is off');
+      } else log('admin: the server has no administration API');
       await opencde.logout(admin).catch(() => {});
     } finally {
       await connectors.remove(admin.id).catch(() => {});
