@@ -531,6 +531,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `viz/suggest` ger diagram som passar en datamängd och ritar dem som riktiga bilder. `ownChart` används också av dokumentmallarnas `{{karta}}`, `{{graf}}`, `{{modell}}` och `{{plan}}`. `render.renderInto` tar `onPick`, som en dashboard använder för korsfilter: en vald stapel läggs som filter på de andra diagrammen, inte på det som klickades.
 
+`io/export-kinds` gör exporter som följer slaget: KML, GPX och GeoPackage för platser (allt i WGS 84), kontaktkarta, plankarta, planbestämmelser, mängder i Excel, glTF och ritning som PDF. `io/export` frågar den först. `viz/plan-map` bygger planens karta för både vyn och exporten. `model-draw` tar `extraFilters`, så att en batch per våning bara ritar den våningen.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

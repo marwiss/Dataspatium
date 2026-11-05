@@ -10,8 +10,8 @@
 | ODS og FODS (LibreOffice) | Ja | ods | Samme typehåndtering som Excel |
 | Eldre regnearkformater: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Ja | Nei | Leses av samme regnearkleser som Excel; velg ark. Excel 2003 XML gjenkjennes på innholdet, også når filen heter .xml |
 | Tabeller i dokumenter: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Ja | Nei | Alle tabeller i filen vises i en liste med overskrift eller bildetekst og antall rader og kolonner. Sammenslåtte celler (colspan og rowspan, Words sammenslåtte celler, `\multicolumn`) fylles ut i alle radene og kolonnene de dekker. Overskriftsraden hentes fra `th`, `thead`, Markdowns skillelinje, Words overskriftsrad eller `booktabs` (`\midrule`) |
-| KML og KMZ (Google Earth) | Ja | Nei | Én rad per sted med navn, beskrivelse, mappesti, tid og utvidede data som kolonner; punkter, linjer, polygoner og sammensatte geometrier blir GeoJSON |
-| GPX (GPS-spor) | Ja | Nei | Velg lag: veipunkter, ruter, spor (med antall punkter og lengde i km) eller sporpunkter (én rad per punkt med tid og høyde) |
+| KML og KMZ (Google Earth) | Ja | Ja | Én rad per sted med navn, beskrivelse, mappesti, tid og utvidede data som kolonner; punkter, linjer, polygoner og sammensatte geometrier blir GeoJSON |
+| GPX (GPS-spor) | Ja | Ja | Velg lag: veipunkter, ruter, spor (med antall punkter og lengde i km) eller sporpunkter (én rad per punkt med tid og høyde) |
 | TopoJSON | Ja | Nei | Hvert objekt i topologien er et lag; buene dekodes til vanlige GeoJSON-geometrier. Gjenkjennes på innholdet, også når filen heter .json |
 | JSON | Ja | Ja | Liste med objekter, et objekt som inneholder en liste (sti kan angis), liste med lister |
 | NDJSON, JSON Lines | Ja | Nei | Ett objekt per linje |
@@ -22,7 +22,7 @@
 | XML | Ja | Ja | Én rad per gjentatt element (velges i importtrinnet); attributter og underelementer blir kolonner, nestede elementer får punktnavn som `lage.lan` |
 | SQLite | Ja | Ja | Dataspatiums egen fil gjenopprettes med typer, etiketter og historikk; i andre databaser velger du tabell, og typene hentes fra skjemaet |
 | SQL-skript (sql) | Ja | Nei | Et skript med `CREATE TABLE` og `INSERT`, for eksempel en databasedump, kjøres i en tom SQLite-database, og tabellene vises for valg. MySQL-spesifikke linjer (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og tabellvalg som `ENGINE=`) fjernes først; andre dialekter fungerer så langt de følger SQLites syntaks |
-| GeoPackage (gpkg) | Ja | Nei | Lagene (feature- og attributtabeller) velges som tabeller; geometrikolonnen blir GeoJSON som kartdiagrammet tegner, referansesystemet vises |
+| GeoPackage (gpkg) | Ja | Ja | Lagene (feature- og attributtabeller) velges som tabeller; geometrikolonnen blir GeoJSON som kartdiagrammet tegner, referansesystemet vises |
 | Access (mdb, accdb) | Ja | Nei | Leses rett i nettleseren med mdb-reader; tabellen velges i trinnet Innstillinger, og typene kommer fra Access. Spørringer, lenkede tabeller og passord krever [databasebroen](kallor.md). |
 | Dokumenter: PDF, Word (docx), OpenDocument (odt), Markdown (md), tekst (txt) | Ja | Nei | Blir en dokumentsamling med ett avsnitt per rad (dokument, side, avsnitt, type, tekst, tegn); flere filer på én gang blir én samling, og originalene følger med. Se [dokument.md](dokument.md) |
 | Bilder: JPEG, PNG, WebP, GIF, BMP, AVIF | Ja | Nei | Blir en bildesamling med én rad per bilde (mål, størrelse, dato, kamera og posisjon fra EXIF); en forhåndsvisning og en miniatyr lagres, ikke originalene. Se [dokument.md](dokument.md) |

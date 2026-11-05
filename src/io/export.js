@@ -13,7 +13,10 @@
       { id: 'xlsx', key: 'export.format.xlsx', ext: 'xlsx' },
       { id: 'ods', key: 'export.format.ods', ext: 'ods' },
       { id: 'json', key: 'export.format.json', ext: 'json' },
-      { id: 'geojson', key: 'export.format.geojson', ext: 'geojson' },
+      { id: 'geojson', key: 'export.format.geojson', ext: 'geojson', places: true },
+      { id: 'kml', key: 'export.format.kml', ext: 'kml', places: true },
+      { id: 'gpx', key: 'export.format.gpx', ext: 'gpx', places: true },
+      { id: 'gpkg', key: 'export.format.gpkg', ext: 'gpkg', places: true },
       { id: 'xml', key: 'export.format.xml', ext: 'xml' },
       { id: 'sqlite', key: 'export.format.sqlite', ext: 'sqlite' },
       { id: 'parquet', key: 'export.format.parquet', ext: 'parquet', viaR: true },
@@ -30,11 +33,18 @@
       { id: 'document-originals', key: 'export.format.document-originals', ext: 'zip', kind: 'document' },
       { id: 'document-text', key: 'export.format.document-text', ext: 'txt', kind: 'document' },
       { id: 'images-zip', key: 'export.format.images-zip', ext: 'zip', kind: 'images' },
+      { id: 'images-sheet', key: 'export.format.images-sheet', ext: 'pdf', kind: 'images' },
+      { id: 'plan-sheet', key: 'export.format.plan-sheet', ext: 'pdf', kind: 'plan' },
+      { id: 'plan-provisions', key: 'export.format.plan-provisions', ext: 'docx', kind: 'plan' },
+      { id: 'plan-original', key: 'export.format.plan-original', ext: 'zip', kind: 'plan' },
       // Model datasets: the original file, the long tables of an IFC model, the drawing of a DXF file.
       { id: 'model-original', key: 'export.format.model-original', ext: 'ifc', kind: 'model' },
       { id: 'model-properties', key: 'export.format.model-properties', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-quantities', key: 'export.format.model-quantities', ext: 'csv', kind: 'model', modelFormat: 'ifc' },
       { id: 'model-svg', key: 'export.format.model-svg', ext: 'svg', kind: 'model', modelFormat: 'dxf' },
+      { id: 'model-pdf', key: 'export.format.model-pdf', ext: 'pdf', kind: 'model', modelFormat: 'dxf' },
+      { id: 'model-quantities-xlsx', key: 'export.format.model-quantities-xlsx', ext: 'xlsx', kind: 'model', modelFormat: 'ifc' },
+      { id: 'model-glb', key: 'export.format.model-glb', ext: 'glb', kind: 'model', modelFormat: 'ifc' },
     ];
     /** The formats offered for a dataset: graph and model formats only for those kinds; tables for every dataset. */
     function formatsFor(meta, facts = {}) {
@@ -42,7 +52,7 @@
       return FORMATS.filter((f) => !f.kind || (meta && meta.kind === f.kind && (!f.modelFormat || f.modelFormat === (dxf ? 'dxf' : 'ifc'))))
         .map((f) => (f.id === 'model-original' && dxf ? Object.assign({}, f, { ext: 'dxf' }) : f))
         // A format that cannot work stays visible and says what it needs.
-        .map((f) => (f.id === 'geojson' && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
+        .map((f) => (f.places && facts.geometry === false ? Object.assign({}, f, { unavailable: 'export.needs.geometry' }) : f));
     }
     /** A dataset's files of one sort in a ZIP, as they are stored. */
     async function toFilesZip(id, sort) {
@@ -251,12 +261,14 @@
       const fmt = FORMATS.find((f) => f.id === format) || FORMATS[0];
       const filename = options.filename || files.safeName(meta ? meta.name : 'dataspatium', fmt.ext);
       let blob;
+      const own = D.require('io/export-kinds');
+      if (own.handles(fmt.id)) return { blob: await own.make(id, fmt.id), filename };
       if (fmt.kind === 'model') {
         const out = await toModel(id, fmt.id, options);
         return { blob: out.blob, filename: options.filename || out.filename || filename };
       }
       if (fmt.id === 'graph-csv') blob = await toGraphCsv(id, options);
-      else if (fmt.id === 'document-originals') blob = await toFilesZip(id, 'original');
+      else if (fmt.id === 'document-originals' || fmt.id === 'plan-original') blob = await toFilesZip(id, 'original');
       else if (fmt.id === 'images-zip') blob = await toFilesZip(id, 'preview');
       else if (fmt.id === 'document-text') blob = await toDocumentText(id);
       else if (fmt.kind === 'graph') blob = await toGraph(id, fmt.id);

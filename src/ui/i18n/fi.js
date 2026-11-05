@@ -4479,5 +4479,17 @@
     'dash.cross.clear': 'Poista valinta',
     'doc.err.dataset.gone': 'Aineistoa "{name}" ei ole.',
     'doc.err.dataset.kind': 'Aineistoa "{name}" ei voi piirtää niin.',
+    'export.format.kml': 'KML (Google Earth)',
+    'export.format.gpx': 'GPX (pisteet ja reitit GPS:lle)',
+    'export.format.gpkg': 'GeoPackage',
+    'export.format.images-sheet': 'Kontaktiarkki (PDF)',
+    'export.format.plan-sheet': 'Kaavakartta (PDF)',
+    'export.format.plan-provisions': 'Kaavamääräykset (Word)',
+    'export.format.plan-original': 'Alkuperäinen tiedosto (ZIP)',
+    'export.format.model-pdf': 'Piirustus PDF-muodossa',
+    'export.format.model-quantities-xlsx': 'Määrät Excelissä',
+    'export.format.model-glb': '3D-malli glTF-muodossa',
+    'export.quantities.sums': 'Summat',
+    'export.quantities.all': 'Kaikki arvot',
   }));
 })();

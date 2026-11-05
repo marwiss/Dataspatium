@@ -10,8 +10,8 @@
 | ODS and FODS (LibreOffice) | Yes | ods | Same type handling as Excel |
 | Older spreadsheet formats: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Yes | No | Read by the same spreadsheet reader as Excel; choose sheet. Excel 2003 XML is recognised by its content even when the file is called .xml |
 | Tables in documents: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Yes | No | All tables in the file are listed with their heading or caption and their number of rows and columns. Merged cells (colspan and rowspan, Word's merged cells, `\multicolumn`) are filled in on every row and column they cover. The header row comes from `th`, `thead`, Markdown's delimiter row, Word's header row or `booktabs` (`\midrule`) |
-| KML and KMZ (Google Earth) | Yes | No | One row per place with name, description, folder path, time and extended data as columns; points, lines, polygons and multi-geometries become GeoJSON |
-| GPX (GPS tracks) | Yes | No | Choose a layer: waypoints, routes, tracks (with number of points and length in km) or track points (one row per point with time and elevation) |
+| KML and KMZ (Google Earth) | Yes | Yes | One row per place with name, description, folder path, time and extended data as columns; points, lines, polygons and multi-geometries become GeoJSON |
+| GPX (GPS tracks) | Yes | Yes | Choose a layer: waypoints, routes, tracks (with number of points and length in km) or track points (one row per point with time and elevation) |
 | TopoJSON | Yes | No | Each object in the topology is a layer; the arcs are decoded into ordinary GeoJSON geometries. Recognised by its content even when the file is called .json |
 | JSON | Yes | Yes | List of objects, an object containing a list (a path can be given), list of lists |
 | NDJSON, JSON Lines | Yes | No | One object per line |
@@ -22,7 +22,7 @@
 | XML | Yes | Yes | One row per repeated element (chosen in the import step); attributes and child elements become columns, nested elements get dotted names such as `lage.lan` |
 | SQLite | Yes | Yes | Dataspatium's own file is restored with types, labels and history; in other databases you choose a table and the types are taken from the schema |
 | SQL script (sql) | Yes | No | A script with `CREATE TABLE` and `INSERT`, for example a database dump, is run in an empty SQLite database and the tables are offered for selection. MySQL-specific lines (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` and table options such as `ENGINE=`) are removed first; other dialects work as far as they follow SQLite's syntax |
-| GeoPackage (gpkg) | Yes | No | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
+| GeoPackage (gpkg) | Yes | Yes | The layers (feature and attribute tables) are chosen as tables; the geometry column becomes GeoJSON that the map chart draws, the reference system is shown |
 | Access (mdb, accdb) | Yes | No | Read directly in the browser with mdb-reader; the table is chosen in the Settings step and the types come from Access. Queries, linked tables and passwords need the [database bridge](kallor.md). |
 | Documents: PDF, Word (docx), OpenDocument (odt), Markdown (md), text (txt) | Yes | No | Becomes a document collection with one paragraph per row (document, page, paragraph, type, text, characters); several files at once become one collection and the originals travel along. See [dokument.md](dokument.md) |
 | Images: JPEG, PNG, WebP, GIF, BMP, AVIF | Yes | No | Becomes an image collection with one row per picture (dimensions, size, date, camera and position from EXIF); a preview and a thumbnail are stored, not the originals. See [dokument.md](dokument.md) |

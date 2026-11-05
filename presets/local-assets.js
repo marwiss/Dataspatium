@@ -411,7 +411,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 20166,
+  "size": 20970,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -447,7 +447,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/format.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13274,
+  "size": 13271,
   "library": "dataspatium"
  },
  "docs/sv/api-konfiguration.md": {
@@ -567,7 +567,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 19954,
+  "size": 20763,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -603,7 +603,7 @@ Dataspatium.assets.addEntries({
  "docs/da/format.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 13319,
+  "size": 13316,
   "library": "dataspatium"
  },
  "docs/da/api-konfiguration.md": {
@@ -723,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 19594,
+  "size": 20380,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -759,7 +759,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/format.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13114,
+  "size": 13111,
   "library": "dataspatium"
  },
  "docs/nb/api-konfiguration.md": {
@@ -879,7 +879,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 21506,
+  "size": 22404,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -915,7 +915,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/format.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14652,
+  "size": 14664,
   "library": "dataspatium"
  },
  "docs/fi/api-konfiguration.md": {
@@ -1035,7 +1035,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 20557,
+  "size": 21415,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1191,7 +1191,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 20096,
+  "size": 20921,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1227,7 +1227,7 @@ Dataspatium.assets.addEntries({
  "docs/en/format.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 13667,
+  "size": 13670,
   "library": "dataspatium"
  },
  "docs/en/api-konfiguration.md": {

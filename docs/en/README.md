@@ -107,6 +107,7 @@ with a backup or a bundle.
 - **Process follows the dataset**: comment on a page, a picture, a node or a place, correct text, give pictures a place, repair geometries, find duplicates in graphs and classify elements (see [bearbeta.md](bearbeta.md)).
 - **Search and Analyse follow the dataset**: ask about a property, a neighbour or a place, start from code written for the dataset, see the trend in a time series and count places per area (see [soka.md](soka.md)).
 - **Visualise follows the dataset**: suggestions with real pictures for each kind, cross filters in dashboards and template words that insert a map, a graph, a model or a plan in a document (see [visualisera.md](visualisera.md)).
+- **Export follows the dataset**: KML, GPX and GeoPackage for places, a contact sheet for pictures, a plan map and provisions for plans, quantities in Excel and glTF for models, PDF for drawings (see [lagen.md](lagen.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

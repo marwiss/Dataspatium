@@ -4479,5 +4479,17 @@
     'dash.cross.clear': 'Fjarlægja valið',
     'doc.err.dataset.gone': 'Gagnasafnið "{name}" er ekki til.',
     'doc.err.dataset.kind': 'Ekki er hægt að teikna gagnasafnið "{name}" þannig.',
+    'export.format.kml': 'KML (Google Earth)',
+    'export.format.gpx': 'GPX (punktar og ferlar fyrir GPS)',
+    'export.format.gpkg': 'GeoPackage',
+    'export.format.images-sheet': 'Yfirlitsblað (PDF)',
+    'export.format.plan-sheet': 'Skipulagskort (PDF)',
+    'export.format.plan-provisions': 'Skipulagsákvæði (Word)',
+    'export.format.plan-original': 'Upprunalega skráin (ZIP)',
+    'export.format.model-pdf': 'Teikningin sem PDF',
+    'export.format.model-quantities-xlsx': 'Magn í Excel',
+    'export.format.model-glb': 'Þrívíddarlíkanið sem glTF',
+    'export.quantities.sums': 'Summur',
+    'export.quantities.all': 'Öll gildi',
   }));
 })();

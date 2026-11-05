@@ -104,6 +104,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Bearbejd følger datasættet**: kommentér en side, et billede, en knude eller et sted, ret tekst, giv billeder et sted, reparér geometrier, find dubletter i grafer, og klassificér elementer (se [bearbeta.md](bearbeta.md)).
 - **Søg og Analysér følger datasættet**: spørg om en egenskab, en nabo eller et sted, start fra kode skrevet til datasættet, se trenden i en tidsserie, og tæl steder pr. område (se [soka.md](soka.md)).
 - **Visualisér følger datasættet**: forslag med rigtige billeder til hver slags, krydsfiltre i dashboards og skabelonord, der indsætter et kort, en graf, en model eller en plan i et dokument (se [visualisera.md](visualisera.md)).
+- **Eksportér følger datasættet**: KML, GPX og GeoPackage til steder, kontaktark til billeder, plankort og planbestemmelser til planer, mængder i Excel og glTF til modeller, PDF til tegninger (se [lagen.md](lagen.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

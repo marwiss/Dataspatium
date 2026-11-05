@@ -101,6 +101,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Vinna fylgir gagnasafninu**: gerðu athugasemd við síðu, mynd, hnút eða stað, leiðréttu texta, gefðu myndum stað, gerðu við rúmfræði, finndu tvítekningar í netum og flokkaðu einingar (sjá [bearbeta.md](bearbeta.md)).
 - **Leita og Greina fylgja gagnasafninu**: spyrðu um eiginleika, nágranna eða stað, byrjaðu á kóða skrifuðum fyrir gagnasafnið, sjáðu þróun í tímaröð og teldu staði eftir svæði (sjá [soka.md](soka.md)).
 - **Myndgera fylgir gagnasafninu**: tillögur með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðmátsorð sem setja kort, net, líkan eða skipulag í skjal (sjá [visualisera.md](visualisera.md)).
+- **Flytja út fylgir gagnasafninu**: KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagskort og ákvæði fyrir skipulög, magn í Excel og glTF fyrir líkön, PDF fyrir teikningar (sjá [lagen.md](lagen.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

@@ -4479,5 +4479,17 @@
     'dash.cross.clear': 'Fjern udvalget',
     'doc.err.dataset.gone': 'Datasættet "{name}" findes ikke.',
     'doc.err.dataset.kind': 'Datasættet "{name}" kan ikke tegnes på den måde.',
+    'export.format.kml': 'KML (Google Earth)',
+    'export.format.gpx': 'GPX (punkter og spor til GPS)',
+    'export.format.gpkg': 'GeoPackage',
+    'export.format.images-sheet': 'Kontaktark (PDF)',
+    'export.format.plan-sheet': 'Plankort (PDF)',
+    'export.format.plan-provisions': 'Planbestemmelser (Word)',
+    'export.format.plan-original': 'Originalfilen (ZIP)',
+    'export.format.model-pdf': 'Tegningen som PDF',
+    'export.format.model-quantities-xlsx': 'Mængder i Excel',
+    'export.format.model-glb': '3D-modellen som glTF',
+    'export.quantities.sums': 'Summer',
+    'export.quantities.all': 'Alle værdier',
   }));
 })();

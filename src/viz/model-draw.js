@@ -295,7 +295,7 @@
         if (format === 'pdf') return vizExport.svgToPdf(text, { title: chart.name });
         return new Blob([text], { type: 'image/svg+xml' });
       }
-      const url = await pictureOf(chart, width, height);
+      const url = await pictureOf(chart, width, height, opts);
       if (format === 'svg') return new Blob([svgAround(url, width, height)], { type: 'image/svg+xml' });
       if (format === 'pdf') return vizExport.svgToPdf(svgAround(url, width, height), { title: chart.name });
       const bytes = Uint8Array.from(atob(url.split(',')[1]), (c) => c.charCodeAt(0));
@@ -322,13 +322,25 @@
       svg.setAttribute('color', '#000000');
       return new XMLSerializer().serializeToString(svg);
     }
-    async function pictureOf(chart, width, height) {
+    /** The elements a batch group or a shared filter leaves, or null when nothing narrows them. */
+    async function visibleFor(chart, def, options) {
+      const filters = options.extraFilters || [];
+      if (!filters.length) return def.visible || null;
+      const handle = await datasets.ensureOpen(def.datasetId || chart.datasetId);
+      const known = filters.filter((f) => handle.columns.some((c) => c.name === f.field) && f.op === '=');
+      if (!known.length) return def.visible || null;
+      const where = known.map((f) => `"${String(f.field).replace(/"/g, '""')}" = ?`).join(' and ');
+      const r = await handle.engine.exec(`select id from data where ${where}`, known.map((f) => f.value));
+      const ids = (r[0] ? r[0].values : []).map((row) => Number(row[0]));
+      return def.visible ? ids.filter((x) => def.visible.includes(x)) : ids;
+    }
+    async function pictureOf(chart, width, height, options = {}) {
       const host = document.createElement('div');
       host.style.cssText = `position:absolute;left:-20000px;top:0;width:${width}px;height:${height}px;`;
       document.body.appendChild(host);
       try {
         const def = chart.model || {};
-        const hd = await render(host, { datasetId: def.datasetId || chart.datasetId, visible: def.visible || null, view: def.view || null }, { preserve: true, width, height });
+        const hd = await render(host, { datasetId: def.datasetId || chart.datasetId, visible: await visibleFor(chart, def, options), view: def.view || null }, { preserve: true, width, height });
         const url = hd.png();
         hd.destroy();
         return url;
@@ -342,7 +354,7 @@
       const width = opts.width || 1000; const height = opts.height || 625;
       const def = chart.model || {};
       if (model.isDxf(await datasets.get(def.datasetId || chart.datasetId))) return drawingSvg(def.datasetId || chart.datasetId, def, width, height);
-      const url = await pictureOf(chart, width, height);
+      const url = await pictureOf(chart, width, height, opts);
       return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">`;
     }
 

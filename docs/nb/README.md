@@ -103,6 +103,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Bearbeid følger datasettet**: kommenter en side, et bilde, en node eller et sted, rett tekst, gi bilder et sted, reparer geometrier, finn duplikater i grafer og klassifiser elementer (se [bearbeta.md](bearbeta.md)).
 - **Søk og Analyser følger datasettet**: spør om en egenskap, en nabo eller et sted, start fra kode skrevet for datasettet, se trenden i en tidsserie og tell steder per område (se [soka.md](soka.md)).
 - **Visualiser følger datasettet**: forslag med ekte bilder for hvert slag, kryssfiltre i dashbord og malord som setter inn et kart, en graf, en modell eller en plan i et dokument (se [visualisera.md](visualisera.md)).
+- **Eksporter følger datasettet**: KML, GPX og GeoPackage for steder, kontaktark for bilder, plankart og planbestemmelser for planer, mengder i Excel og glTF for modeller, PDF for tegninger (se [lagen.md](lagen.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

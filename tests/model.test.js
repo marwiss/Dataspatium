@@ -220,7 +220,7 @@
     const res = await analysis.drawing(meta.id, ['lager', '']);
     assert.equal(res.rows.find((r) => r[0] === 'Rum')[1], 2);
     assert.equal(res.rows.find((r) => r[0] === 'Rum')[3] > 9, true, 'polygon and circle areas');
-    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind === 'model').map((f) => f.id), ['model-original', 'model-svg'], 'a drawing has no property tables');
+    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind === 'model').map((f) => f.id), ['model-original', 'model-svg', 'model-pdf'], 'a drawing has no property tables');
     assert.equal(exporter.formatsFor(meta).find((f) => f.id === 'model-original').ext, 'dxf', 'the export dialog suggests the right extension');
     const original = await exporter.exportDataset(meta.id, 'model-original');
     assert.equal(original.filename, 'testritning.dxf');
@@ -234,7 +234,7 @@
   test('model: export gives the original file and the long tables, and the chart kind draws and exports', async (assert) => {
     const meta = await imports.run(fixtures.ifcFile(), { format: 'model' }, null, 'Exporthus');
     created.push(meta.id);
-    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind === 'model').map((f) => f.id), ['model-original', 'model-properties', 'model-quantities']);
+    assert.deepEqual(exporter.formatsFor(meta).filter((f) => f.kind === 'model').map((f) => f.id), ['model-original', 'model-properties', 'model-quantities', 'model-quantities-xlsx', 'model-glb']);
     assert.ok(exporter.formatsFor({ kind: 'table' }).every((f) => f.kind !== 'model'), 'tables do not get them');
     const original = await exporter.exportDataset(meta.id, 'model-original');
     assert.equal(original.filename, 'testhus.ifc');

@@ -291,6 +291,8 @@
     'src/ui/kinds/sketches.js',
     'src/ui/kinds/dataset-picture.js',
     'src/analysis/starters.js',
+    'src/viz/plan-map.js',
+    'src/io/export-kinds.js',
     'src/viz/suggest.js',
     'src/ui/soka/place-form.js',
     'src/ui/kinds/comment-block.js',

@@ -203,6 +203,10 @@ hópum (sjá [dokumentmallar.md](dokumentmallar.md)). Það sem á að fara til 
 
 Gagnasafn sem er meira en tafla skiptir sniðum í **Allt gagnasafnið** og **Aðeins taflan** og segir hvað fylgir ekki með. Skjöl má fá sem upprunaskrár eða hreinan texta, myndir sem ZIP og net sem tvær CSV-skrár.
 
+**Eftir tegund gagnasafns.** Töflur með stöðum má vista sem KML, GPX og GeoPackage, í gráðum. Í GPX verða punktar að leiðarpunktum, og línur og útlínur flata verða að ferlum. Myndasöfn geta orðið yfirlitsblað í PDF með myndum og nöfnum. Skipulag getur orðið skipulagskort í PDF með skýringum, skipulagsákvæðin í Word og upprunalega skráin ef skipulagið kom úr skrá. IFC-líkan getur gefið magn í Excel, með summum eftir gerð og öllum gildum, og rúmfræðina sem glTF. DXF-teikning getur orðið PDF. Ef þú flytur út mörg gagnasöfn í Umsjón fær hvert sitt eigið form.
+
+**Runuvinnsla eftir hæð eða skjali.** Runuvinnsla eftir hópi virkar með hvaða dálki sem er. Líkani er skipt eftir dálkinum `vaning`, og mynd líkansins sýnir þá aðeins þá hæð. Skjali er skipt eftir dálkinum `dokument`.
+
 ## Deila
 
 Gefa öðrum gögn. **Pakki**: ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum, minnisbókum og skriftum,

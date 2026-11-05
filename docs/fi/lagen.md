@@ -214,6 +214,10 @@ mikä on tarkoitettu muille ihmisille, on Jaa-tilassa.
 
 Aineisto, joka on enemmän kuin taulukko, jakaa muodot ryhmiin **Koko aineisto** ja **Vain taulukko** ja kertoo, mikä ei tule mukaan. Asiakirjat saa alkuperäisinä tiedostoina tai pelkkänä tekstinä, kuvat ZIP-tiedostona ja graafit kahtena CSV-tiedostona.
 
+**Aineiston lajin mukaan.** Paikkoja sisältävät taulukot voi tallentaa KML-, GPX- ja GeoPackage-muodossa, asteina. GPX:ssä pisteistä tulee reittipisteitä, ja viivoista ja alueiden ääriviivoista tulee jälkiä. Kuvakokoelmista voi tehdä kontaktiarkin PDF-muodossa kuvineen ja nimineen. Kaavasta voi tehdä kaavakartan PDF-muodossa selitteineen, kaavamääräykset Wordissa ja alkuperäisen tiedoston, jos kaava tuli tiedostosta. IFC-malli voi antaa määrät Excelissä, summat tyypeittäin ja kaikki arvot, ja geometrian glTF-muodossa. DXF-piirustuksesta voi tehdä PDF:n. Jos viet useita aineistoja Hallitse-tilassa, kukin saa oman muotonsa.
+
+**Eräajo kerroksittain tai asiakirjoittain.** Eräajo ryhmittäin toimii millä tahansa sarakkeella. Malli jaetaan sarakkeen `vaning` mukaan, ja mallin kuva näyttää silloin vain sen kerroksen. Asiakirja jaetaan sarakkeen `dokument` mukaan.
+
 ## Jaa
 
 Anna tietoa muille. **Paketti**: ZIP valituista aineistoista, kaavioista, kojelaudoista, malleista, muistikirjoista

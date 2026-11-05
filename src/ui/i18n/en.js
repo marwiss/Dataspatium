@@ -4479,5 +4479,17 @@
     'dash.cross.clear': 'Remove the selection',
     'doc.err.dataset.gone': 'The dataset "{name}" does not exist.',
     'doc.err.dataset.kind': 'The dataset "{name}" cannot be drawn that way.',
+    'export.format.kml': 'KML (Google Earth)',
+    'export.format.gpx': 'GPX (points and tracks for GPS)',
+    'export.format.gpkg': 'GeoPackage',
+    'export.format.images-sheet': 'Contact sheet (PDF)',
+    'export.format.plan-sheet': 'Plan map (PDF)',
+    'export.format.plan-provisions': 'Plan provisions (Word)',
+    'export.format.plan-original': 'The original file (ZIP)',
+    'export.format.model-pdf': 'The drawing as PDF',
+    'export.format.model-quantities-xlsx': 'Quantities in Excel',
+    'export.format.model-glb': 'The 3D model as glTF',
+    'export.quantities.sums': 'Sums',
+    'export.quantities.all': 'All values',
   }));
 })();

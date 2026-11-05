@@ -205,6 +205,10 @@ mennesker, findes i Del.
 
 Et datasæt, der er mere end en tabel, deler formaterne op i **Hele datasættet** og **Kun tabellen** og siger, hvad der ikke følger med. Dokumenter kan hentes som originalfiler eller ren tekst, billeder som en ZIP og grafer som to CSV-filer.
 
+**Efter datasættets slags.** Tabeller med steder kan gemmes som KML, GPX og GeoPackage, i grader. I GPX bliver punkter til waypoints, og linjer og fladers konturer bliver til spor. Billedsamlinger kan blive til et kontaktark i PDF med billeder og navne. En plan kan blive til et plankort i PDF med signaturforklaring, planbestemmelserne i Word og originalfilen, hvis planen kom fra en fil. En IFC-model kan give mængderne i Excel, med summer pr. type og alle værdier, og geometrien som glTF. En DXF-tegning kan blive til PDF. Eksporterer du flere datasæt i Håndter, får hvert sin egen form.
+
+**Batch pr. etage eller dokument.** Batch pr. gruppe virker med enhver kolonne. En model deles på kolonnen `vaning`, og billedet af modellen viser så kun den etage. Et dokument deles på kolonnen `dokument`.
+
 ## Del
 
 Giv data til andre. **Pakke**: en ZIP med valgte datasæt, diagrammer, dashboards, skabeloner, notesbøger og scripts,

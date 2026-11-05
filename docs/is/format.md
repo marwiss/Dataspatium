@@ -10,8 +10,8 @@
 | ODS og FODS (LibreOffice) | Já | ods | Sama meðferð gerða og í Excel |
 | Eldri töflureiknissnið: Excel 2003 XML, SYLK (slk), DIF, dBase (dbf), Lotus 1-2-3 (wk1, wk3, wk4, wks), Quattro Pro (wq1, wq2, wb1, wb2, wb3, qpw) | Já | Nei | Lesin með sama töflureiknislesara og Excel; veldu blað. Excel 2003 XML þekkist á innihaldinu þótt skráin heiti .xml |
 | Töflur í skjölum: HTML (html, htm, xhtml), Markdown (md), Word (docx), LaTeX (tex) | Já | Nei | Allar töflur skrárinnar birtast í lista með fyrirsögn eða myndatexta og fjölda raða og dálka. Sameinaðir reitir (colspan og rowspan, sameinaðir reitir í Word, `\multicolumn`) eru fylltir út í öllum röðum og dálkum sem þeir ná yfir. Fyrirsagnarlínan er tekin úr `th`, `thead`, aðgreiningarlínu Markdown, fyrirsagnarlínu Word eða `booktabs` (`\midrule`) |
-| KML og KMZ (Google Earth) | Já | Nei | Ein röð fyrir hvern stað með heiti, lýsingu, möppuslóð, tíma og viðbótargögnum sem dálkum; punktar, línur, marghyrningar og samsettar rúmfræðir verða GeoJSON |
-| GPX (GPS-ferlar) | Já | Nei | Veldu lag: leiðarpunkta, leiðir, ferla (með fjölda punkta og lengd í km) eða ferilpunkta (ein röð fyrir hvern punkt með tíma og hæð) |
+| KML og KMZ (Google Earth) | Já | Já | Ein röð fyrir hvern stað með heiti, lýsingu, möppuslóð, tíma og viðbótargögnum sem dálkum; punktar, línur, marghyrningar og samsettar rúmfræðir verða GeoJSON |
+| GPX (GPS-ferlar) | Já | Já | Veldu lag: leiðarpunkta, leiðir, ferla (með fjölda punkta og lengd í km) eða ferilpunkta (ein röð fyrir hvern punkt með tíma og hæð) |
 | TopoJSON | Já | Nei | Hver hlutur í grannfræðinni (topology) er lag; bogarnir eru afkóðaðir í venjulegar GeoJSON-rúmfræðir. Þekkist á innihaldinu þótt skráin heiti .json |
 | JSON | Já | Já | Listi af hlutum, hlutur sem inniheldur lista (gefa má upp slóð), listi af listum |
 | NDJSON, JSON Lines | Já | Nei | Einn hlutur í hverri línu |
@@ -22,7 +22,7 @@
 | XML | Já | Já | Ein röð fyrir hvert endurtekið stak (valið í innflutningsskrefinu); eigindir og undirstök verða dálkar, hreiðruð stök fá punktaheiti eins og `lage.lan` |
 | SQLite | Já | Já | Eigin skrá Dataspatium er endurheimt með gerðum, merkimiðum og sögu; í öðrum gagnagrunnum velurðu töflu og gerðirnar eru teknar úr skemanu |
 | SQL-skrifta (sql) | Já | Nei | Skrifta með `CREATE TABLE` og `INSERT`, til dæmis afrit úr gagnagrunni, er keyrð í tómum SQLite-gagnagrunni og töflurnar boðnar til vals. MySQL-sértækar línur (`SET`, `LOCK TABLES`, `USE`, `/*!…*/` og töfluvalkostir eins og `ENGINE=`) eru fjarlægðar fyrst; aðrar mállýskur virka að því marki sem þær fylgja málskipan SQLite |
-| GeoPackage (gpkg) | Já | Nei | Lögin (feature- og eigindatöflur) eru valin sem töflur; rúmfræðidálkurinn verður GeoJSON sem kortamyndritið teiknar, hnitakerfið er sýnt |
+| GeoPackage (gpkg) | Já | Já | Lögin (feature- og eigindatöflur) eru valin sem töflur; rúmfræðidálkurinn verður GeoJSON sem kortamyndritið teiknar, hnitakerfið er sýnt |
 | Access (mdb, accdb) | Já | Nei | Lesið beint í vafranum með mdb-reader; taflan er valin í skrefinu Stillingar og gerðirnar koma úr Access. Fyrirspurnir, tengdar töflur og lykilorð krefjast [gagnagrunnsbrúarinnar](kallor.md). |
 | Skjöl: PDF, Word (docx), OpenDocument (odt), Markdown (md), texti (txt) | Já | Nei | Verður skjalasafn með einni málsgrein í hverri röð (skjal, síða, málsgrein, tegund, texti, stafir); margar skrár í einu verða eitt safn og frumritin fylgja með. Sjá [dokument.md](dokument.md) |
 | Myndir: JPEG, PNG, WebP, GIF, BMP, AVIF | Já | Nei | Verður myndasafn með einni röð fyrir hverja mynd (stærð, mál, dagsetning, myndavél og staðsetning úr EXIF); forskoðun og smámynd eru vistaðar, ekki frumritin. Sjá [dokument.md](dokument.md) |

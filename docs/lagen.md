@@ -209,6 +209,10 @@ finns i Dela.
 
 En datamängd som är mer än en tabell delar upp formaten i **Hela datamängden** och **Bara tabellen**, och säger vad som inte följer med. Dokument kan hämtas som originalfiler eller ren text, bilder som en ZIP och grafer som två CSV-filer.
 
+**Efter datamängdens slag.** Tabeller med platser kan sparas som KML, GPX och GeoPackage, i grader. I GPX blir punkter waypoints, och linjer och ytors konturer blir spår. Bildsamlingar kan bli en kontaktkarta i PDF med bilder och namn. En plan kan bli en plankarta i PDF med teckenförklaring, planbestämmelserna i Word, och originalfilen om planen kom från en fil. En IFC-modell kan ge mängderna i Excel, med summor per typ och alla värden, och geometrin som glTF. En DXF-ritning kan bli PDF. Exporterar du flera datamängder i Hantera får var och en sin egen form.
+
+**Batch per våning eller dokument.** Batch per grupp fungerar med vilken kolumn som helst. En modell delas på kolumnen `vaning`, och bilden av modellen visar då bara den våningen. Ett dokument delas på kolumnen `dokument`.
+
 ## Dela
 
 Ge data till andra. **Paket**: en ZIP med valda datamängder, diagram, dashboards, mallar, anteckningsböcker och

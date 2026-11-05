@@ -207,6 +207,10 @@ per group (see [dokumentmallar.md](dokumentmallar.md)). What is meant for other 
 
 A dataset that is more than a table divides the formats into **The whole dataset** and **Only the table**, and says what does not go along. Documents can be had as original files or plain text, pictures as a ZIP and graphs as two CSV files.
 
+**By the kind of dataset.** Tables with places can be saved as KML, GPX and GeoPackage, in degrees. In GPX, points become waypoints, and lines and the outlines of areas become tracks. Picture collections can become a contact sheet in PDF with pictures and names. A plan can become a plan map in PDF with a legend, the plan provisions in Word, and the original file if the plan came from a file. An IFC model can give its quantities in Excel, with sums per type and all values, and its geometry as glTF. A DXF drawing can become a PDF. If you export several datasets in Manage, each gets its own form.
+
+**Batch per storey or document.** Batch per group works with any column. A model is divided by the column `vaning`, and the picture of the model then shows only that storey. A document is divided by the column `dokument`.
+
 ## Share
 
 Give data to others. **Bundle**: a ZIP with chosen datasets, charts, dashboards, templates, notebooks and scripts, a

@@ -4501,5 +4501,17 @@
     'dash.cross.clear': 'Ta bort urvalet',
     'doc.err.dataset.gone': 'Datamängden "{name}" finns inte.',
     'doc.err.dataset.kind': 'Datamängden "{name}" kan inte ritas på det sättet.',
+    'export.format.kml': 'KML (Google Earth)',
+    'export.format.gpx': 'GPX (punkter och spår för GPS)',
+    'export.format.gpkg': 'GeoPackage',
+    'export.format.images-sheet': 'Kontaktkarta (PDF)',
+    'export.format.plan-sheet': 'Plankarta (PDF)',
+    'export.format.plan-provisions': 'Planbestämmelser (Word)',
+    'export.format.plan-original': 'Originalfilen (ZIP)',
+    'export.format.model-pdf': 'Ritningen som PDF',
+    'export.format.model-quantities-xlsx': 'Mängder i Excel',
+    'export.format.model-glb': '3D-modellen som glTF',
+    'export.quantities.sums': 'Summor',
+    'export.quantities.all': 'Alla värden',
   }));
 })();
