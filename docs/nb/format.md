@@ -26,6 +26,7 @@
 | Access (mdb, accdb) | Ja | Nei | Leses rett i nettleseren med mdb-reader; tabellen velges i trinnet Innstillinger, og typene kommer fra Access. Spørringer, lenkede tabeller og passord krever [databasebroen](kallor.md). |
 | Dokumenter: PDF, Word (docx), OpenDocument (odt), Markdown (md), tekst (txt) | Ja | Nei | Blir en dokumentsamling med ett avsnitt per rad (dokument, side, avsnitt, type, tekst, tegn); flere filer på én gang blir én samling, og originalene følger med. Se [dokument.md](dokument.md) |
 | Bilder: JPEG, PNG, WebP, GIF, BMP, AVIF | Ja | Nei | Blir en bildesamling med én rad per bilde (mål, størrelse, dato, kamera og posisjon fra EXIF); en forhåndsvisning og en miniatyr lagres, ikke originalene. Se [dokument.md](dokument.md) |
+| BCF (bcf, bcfzip) | Ja | Ja | BCF-XML 3.0. Sakene blir en tabell, kommentarer og viewpoint-komponenter tabeller ved siden av; øyeblikksbilder følger ikke med inn. Eksport av et prosjekts saker fra modellvisningens panel Saker |
 | QGIS-projekt (qgs, qgz) | Ja | Nei | Blir en kartvisning i Visualiser med prosjektets lagrekkefølge, synlighet og symboler (farger, linjebredder, punktstørrelser); lagene kobles til datasett med samme filnavn, og medfølgende datafiler importeres. Se [kartor.md](kartor.md) |
 | SPSS sav, zsav, por | Ja | sav | Via R-pakken haven. Variabeletiketter blir kolonneetiketter og verdietiketter kolonnemetadata (se nedenfor) |
 | Stata dta | Ja | dta | Via haven. Verdietiketter som for SPSS. Ved eksport forkortes kolonnenavnene etter Statas regler (32 tegn, ASCII) |

@@ -148,6 +148,8 @@
         const meta = await datasets.get(rec.datasetId);
         if (!meta || !meta.source) continue;
         if (meta.source.kind === 'bridge' || (meta.source.kind === 'api' && !allowed)) continue;
+        // An OpenCDE source needs the user's sign-in, which start never asks for.
+        if (meta.source.family === 'opencde') { const c = await D.require('api/connectors').get(meta.source.connectorId); if (!c || !D.require('api/families/opencde').signedIn(c)) continue; }
         out.push(await check(rec.datasetId, options));
       }
       return out.filter(Boolean);

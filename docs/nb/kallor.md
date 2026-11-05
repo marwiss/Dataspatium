@@ -131,6 +131,11 @@ har en nyere versjon; den hentes da som et eget datasett ved siden av det gamle.
 prosjektet, for eksempel opprette saker eller laste opp dokumenter. Når kilden opprettes, spør dialogen serveren hvor man
 logger inn; svarer ikke serveren da, spør appen igjen ved første innlogging.
 
+Tillater serveren det, registrerer appen seg selv som klient når du lar klient-id stå tomt, så ingen administrator trenger å
+dele ut noe. Datasett kan også gå tilbake til serveren: fanen *Til CDE* i Del sender et datasett i et valgfritt format, eller
+originalfilen, til et prosjekt, enten gjennom Documents API, der serverens egen side spør om tittel og versjon, eller som
+BCF-dokument. Et datasett hentet fra serveren kan sendes som en ny versjon av dokumentet sitt.
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

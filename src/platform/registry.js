@@ -12,7 +12,7 @@
   /** @type {Map<string, {deps: string[], factory: Function, exports: any, state: 'defined'|'loading'|'ready'}>} */
   const modules = new Map();
   const Dataspatium = globalThis.Dataspatium || (globalThis.Dataspatium = {});
-  Dataspatium.version = '2.28.0';
+  Dataspatium.version = '2.29.0';
 
   /**
    * Register a module.

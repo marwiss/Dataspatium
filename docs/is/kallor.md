@@ -129,6 +129,11 @@ gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla
 til dæmis búa til mál eða hlaða upp skjölum. Þegar gagnalindin er búin til spyr glugginn þjóninn hvar skráð er inn; svari
 þjónninn ekki þá spyr forritið aftur við fyrstu innskráningu.
 
+Leyfi þjónninn það skráir forritið sig sjálft sem biðlara þegar þú lætur biðlaraauðkennið vera autt, svo enginn stjórnandi þarf
+að afhenda neitt. Gagnasöfn geta einnig farið aftur til þjónsins: flipinn *Til CDE* í Deila sendir gagnasafn á hvaða sniði sem er,
+eða upprunalegu skrána, í verkefni, annaðhvort í gegnum Documents API, þar sem eigin síða þjónsins spyr um titil og útgáfu, eða sem
+BCF-skjal. Gagnasafn sem sótt var frá þjóninum má senda sem nýja útgáfu af skjali sínu.
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

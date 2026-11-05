@@ -88,6 +88,8 @@ All sources in the list look the same, with a mark for their type and a line und
 
 **Files from a CDE.** An OpenCDE source lists the project's models and documents, and *Fetch* makes a dataset of the file's own kind that remembers where it came from. See [kallor.md](kallor.md).
 
+**BCF files.** A BCF file (bcf, bcfzip) becomes a table of issues, with comments and components beside it. See [format.md](format.md).
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -168,6 +170,8 @@ A selection from Search is marked in the 3D model, and the camera turns to it.
 
 **Issues.** The model view shows the project's BCF issues from a CDE and marks the elements they point at. See [cad-bim.md](cad-bim.md).
 
+**Writing issues.** The model view creates issues from the selection with the view as viewpoint, comments and changes status, and saves the project's issues as a BCF file. See [cad-bim.md](cad-bim.md).
+
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from
@@ -243,3 +247,5 @@ message and a change log, which the recipient opens under *Receive* and can repl
 verification code and pairing, and Dataspatium Mobile on the phone (see [mobil.md](mobil.md)). **Receive**:
 bundles from a file or a web address, with sender and changes visible before anything is taken in. Datasets that
 leave the app are reviewed for personal data first. See [dela.md](dela.md).
+
+**To the CDE.** A dataset or its original file to a project on an OpenCDE server, through the Documents API or as a BCF document. See [dela.md](dela.md).

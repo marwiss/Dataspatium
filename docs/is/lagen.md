@@ -85,6 +85,8 @@ Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu und
 
 **Skrár frá CDE.** OpenCDE-gagnalind telur upp líkön og skjöl verkefnisins, og *Sækja* býr til gagnasafn af tegund skrárinnar sem man hvaðan það kom. Sjá [kallor.md](kallor.md).
 
+**BCF-skrár.** BCF-skrá (bcf, bcfzip) verður tafla með málum, með athugasemdum og íhlutum við hliðina. Sjá [format.md](format.md).
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -165,6 +167,8 @@ Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að �
 
 **Mál.** Líkansýnin sýnir BCF-mál verkefnisins frá CDE og merkir byggingarhlutana sem þau vísa á. Sjá [cad-bim.md](cad-bim.md).
 
+**Að skrifa mál.** Líkansýnin býr til mál úr merkingunni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, og vistar mál verkefnisins sem BCF-skrá. Sjá [cad-bim.md](cad-bim.md).
+
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;
@@ -239,3 +243,5 @@ skilaboðum og breytingaskrá, sem viðtakandinn opnar undir *Taka á móti* og 
 Dataspatium Farsími í símanum (sjá [mobil.md](mobil.md)). **Taka á móti**: pakkar úr skrá eða af vefslóð, með
 sendanda og breytingar sýnilegar áður en nokkuð er tekið inn. Gagnasöfn sem fara úr forritinu eru fyrst yfirfarin
 með tilliti til persónuupplýsinga. Sjá [dela.md](dela.md).
+
+**Til CDE.** Gagnasafn eða upprunaleg skrá þess í verkefni á OpenCDE-þjóni, í gegnum Documents API eða sem BCF-skjal. Sjá [dela.md](dela.md).

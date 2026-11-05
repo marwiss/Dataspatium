@@ -121,6 +121,14 @@
         if (state.busy) return;
         state.busy = true; state.error = ''; render();
         try {
+          // An OpenCDE server that allows it registers the app itself, so no administrator has to hand out a client id.
+          if (state.family === 'opencde' && !String(state.values.clientId || '').trim()) {
+            const opencde = D.require('api/families/opencde');
+            const redirect = opencde.redirectUri();
+            if (!redirect) throw new Error(t('families.err.required', { field: t('families.field.clientId') }));
+            const reg = await opencde.register(state.values.baseUrl, { redirectUri: redirect });
+            state.values = Object.assign({}, state.values, { clientId: reg.clientId, clientSecret: reg.clientSecret || '' });
+          }
           const res = await createFor(state.family, state.values);
           announce(res);
           if (finish) finish(res.connector);

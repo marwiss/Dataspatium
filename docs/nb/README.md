@@ -109,6 +109,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Tekst fra bilder**: skannede PDF-filer, bilder og bilder av tabeller leses med tekstgjenkjenning i nettleseren, på alle seks språk.
 - **Opprinnelse, samarbeid og bibliotek**: se hvor et datasett kommer fra og hva det har blitt til, samarbeid via GitHub uten at noe forsvinner, hent oppskrifter og maler med lisens, og publiser arbeidsområdet som et nettsted.
 - **Kontroll som CDE, del 1**: hent modeller og dokumenter fra en OpenCDE-servers prosjekt, se når en nyere versjon finnes, og se sakene som peker på bygningsdelene i modellen.
+- **Kontroll som CDE, del 2**: opprett saker fra markeringen i modellen med visningen som viewpoint, kommenter og bytt status, send datasett og filer til serveren, BCF-filer inn og ut, og selvregistrering mot servere som tillater det.
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

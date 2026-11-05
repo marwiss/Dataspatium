@@ -3,30 +3,35 @@
 /**
  * The issues of a model, from the CDE it came from or from any OpenCDE source in the workspace: the BCF topics whose viewpoints
  * point at elements of this model, one list, and a click marks the elements in the 3D view and shows the snapshot and the
- * comments. Reading only; nothing is fetched until the user asks, and nothing is stored.
+ * comments. With the rights for it, the user also writes: a new issue from the marked elements with the view as viewpoint, a
+ * comment, a new status, a viewpoint of the current view. Nothing is fetched until asked, nothing is stored in the dataset, and
+ * everything can be saved as a BCF file for clients without an API.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors'], (base, datasets, opencde, connectors) => {
+  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml'], (base, datasets, opencde, connectors, bcfXml) => {
     const { h, t, i18n, replace } = base;
     const PAGE = 500;
     /** Badge colours follow what a status usually means; unknown statuses are plain. */
     const BADGE = [[/open|öppe|ny|new|active|aktiv/i, 'warn'], [/progress|pågå|under/i, 'accent'], [/resolved|löst|closed|stäng|done|klar/i, 'ok']];
     const badgeKind = (status) => { const hit = BADGE.find(([re]) => re.test(String(status || ''))); return hit ? hit[1] : undefined; };
+    /** Fields the server owns; a PUT sends everything else back. */
+    const SERVER_FIELDS = ['guid', 'server_assigned_id', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'authorization'];
 
     /**
      * @param {any} ctx shell context
      * @param {any} ds the model dataset
-     * @param {{select: (ids: number[], fit: boolean) => void, connectorId?: string, projectId?: string}} hooks
+     * @param {{select: (ids: number[], fit: boolean) => void, view?: () => any, png?: () => string, marked?: () => number[], connectorId?: string, projectId?: string}} hooks
      */
     function create(ctx, ds, hooks) {
-      const { ui, shell } = ctx;
+      const { ui, shell, services } = ctx;
       const cde = (ds.source && ds.source.cde) || {};
-      const s = { connector: null, connectors: [], projects: null, projectId: hooks.projectId || cde.projectId || '', topics: null, parts: new Map(), elements: new Map(), selected: null, comments: [], snapshot: '', busy: '', error: '', missing: 0 };
+      const s = { connector: null, connectors: [], projects: null, projectId: hooks.projectId || cde.projectId || '', ext: null, rights: null, topics: null, parts: new Map(), elements: new Map(), selected: null, comments: [], viewpoints: [], snapshot: '', busy: '', error: '', missing: 0, comment: '' };
       const el = h('div', { class: 'dm-stack-sm dm-model-issues', 'data-model-issues': '' });
       let alive = true;
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
+      const may = (kind, action) => !!(s.rights && s.rights[kind] && s.rights[kind].includes(action));
 
       async function start() {
         s.connectors = (await connectors.list()).filter((c) => opencde.isOpenCde(c));
@@ -52,6 +57,8 @@
           if (!s.projects) s.projects = await opencde.projects(s.connector);
           if (!s.projectId || !s.projects.some((p) => p.project_id === s.projectId)) s.projectId = s.projects[0] ? s.projects[0].project_id : '';
           if (!s.projectId) { s.topics = []; s.busy = ''; render(); return; }
+          s.ext = await opencde.extensions(s.connector, s.projectId);
+          s.rights = { project: s.ext.project_actions || [], topic: s.ext.topic_actions || [], comment: s.ext.comment_actions || [] };
           const topics = [];
           for (let skip = 0; ; skip += PAGE) {
             const page = await opencde.topics(s.connector, s.projectId, { $top: PAGE, $skip: skip });
@@ -92,16 +99,24 @@
         }
         return out;
       }
+      /** The guids of some element ids, for the components of a viewpoint. */
+      async function guidsOf(ids) {
+        if (!ids.length) return [];
+        const engine = (await datasets.ensureOpen(ds.id)).engine;
+        const res = await engine.exec(`select guid from data where id in (${ids.map(() => '?').join(', ')}) and guid is not null`, ids);
+        return (res[0] ? res[0].values : []).map((r) => String(r[0]));
+      }
       const elementIds = (tp) => (s.parts.get(tp.guid) || []).map((c) => s.elements.get(c.guid)).filter((id) => id !== undefined);
+      const current = () => (s.selected && s.topics ? s.topics.find((tp) => tp.guid === s.selected) : null);
 
       async function choose(tp) {
-        s.selected = tp.guid; s.comments = []; s.snapshot = '';
+        s.selected = tp.guid; s.comments = []; s.viewpoints = []; clearSnapshot();
         hooks.select(elementIds(tp), true);
         render();
         try {
           const [comments, viewpoints] = await Promise.all([opencde.comments(s.connector, s.projectId, tp.guid), opencde.viewpoints(s.connector, s.projectId, tp.guid)]);
           if (s.selected !== tp.guid) return;
-          s.comments = comments;
+          s.comments = comments; s.viewpoints = viewpoints;
           const withPicture = viewpoints.find((v) => v.snapshot);
           if (withPicture) {
             const got = await opencde.binary(s.connector, `/bcf/3.0/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(withPicture.guid)}/snapshot`, 'image/*');
@@ -113,6 +128,124 @@
       }
       function clearSnapshot() { if (s.snapshot) { URL.revokeObjectURL(s.snapshot); s.snapshot = ''; } }
 
+      // ---- writing ---------------------------------------------------------------------------------------------
+      /** The current 3D view as a BCF viewpoint: camera, snapshot and the marked elements as the selection. */
+      async function viewpointFromView(ids) {
+        const view = hooks.view ? hooks.view() : null;
+        const picture = hooks.png ? hooks.png() : '';
+        const guids = await guidsOf(ids || []);
+        const vp = {};
+        if (view) vp.perspective_camera = bcfXml.cameraFromView(view);
+        if (picture) vp.snapshot = { snapshot_type: 'png', snapshot_data: picture.split(',')[1] };
+        vp.components = { selection: guids.map((g) => ({ ifc_guid: g, originating_system: 'Dataspatium' })), visibility: { default_visibility: true } };
+        if (!view && !picture && !guids.length) return null;
+        return vp;
+      }
+      /** A new issue from what is marked: the dialog takes the words, the view gives the viewpoint. */
+      async function newTopic() {
+        const marked = hooks.marked ? hooks.marked() : [];
+        const ext = s.ext || {};
+        const title = /** @type {any} */ (h('dm-input', { label: t('issues.new.title') }));
+        const description = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('common.description') }));
+        const selects = {};
+        for (const [name, list] of [['topic_type', ext.topic_type], ['topic_status', ext.topic_status], ['priority', ext.priority], ['labels', ext.topic_label], ['assigned_to', ext.users]]) {
+          if (!Array.isArray(list) || !list.length) continue;
+          const sel = /** @type {any} */ (h('dm-select', { label: t('issues.field.' + name) }));
+          sel.options = (name === 'labels' || name === 'assigned_to' || name === 'priority' ? [{ value: '', label: t('issues.field.none') }] : []).concat(list.map((v) => ({ value: v, label: v })));
+          sel.value = sel.options[0].value;
+          selects[name] = sel;
+        }
+        const ok = await ui.dialog.open({
+          title: t('issues.new'), size: 'md', help: 'cad-bim#ärenden-från-ett-cde',
+          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: marked.length ? t('issues.new.marked', { n: i18n.formatNumber(marked.length) }) : t('issues.new.unmarked') }), title, description, ...Object.values(selects)),
+          actions: [{ label: t('common.cancel'), value: false }, { label: t('issues.new.create'), variant: 'primary', value: true, primary: true }],
+        });
+        if (ok !== true) return;
+        if (!title.value.trim()) { ui.toast.show(t('issues.err.title'), { kind: 'warn' }); return; }
+        s.busy = 'write'; s.error = ''; render();
+        try {
+          const body = { title: title.value.trim() };
+          if (description.value.trim()) body.description = description.value.trim();
+          for (const [name, sel] of Object.entries(selects)) { if (!sel.value) continue; body[name] = name === 'labels' ? [sel.value] : sel.value; }
+          const topic = await opencde.createTopic(s.connector, s.projectId, body);
+          const vp = await viewpointFromView(marked);
+          if (vp) await opencde.createViewpoint(s.connector, s.projectId, topic.guid, vp);
+          shell.log(t('issues.created', { id: topic.server_assigned_id || topic.guid, title: topic.title }), 'ok');
+          ui.toast.show(t('issues.created', { id: topic.server_assigned_id || topic.guid, title: topic.title }), { kind: 'ok' });
+          s.busy = '';
+          await load();
+          const made = (s.topics || []).find((tp) => tp.guid === topic.guid);
+          if (made) await choose(made);
+        } catch (err) { fail(err); s.busy = ''; render(); }
+      }
+      async function sendComment() {
+        const tp = current(); const text = s.comment.trim();
+        if (!tp || !text) return;
+        s.busy = 'write'; render();
+        try {
+          await opencde.createComment(s.connector, s.projectId, tp.guid, { comment: text });
+          s.comment = '';
+          s.comments = await opencde.comments(s.connector, s.projectId, tp.guid);
+          shell.log(t('issues.commented', { id: tp.server_assigned_id || tp.title }), 'ok');
+        } catch (err) { fail(err); }
+        s.busy = ''; render();
+      }
+      async function setStatus(value) {
+        const tp = current();
+        if (!tp || !value || value === tp.topic_status) return;
+        s.busy = 'write'; render();
+        try {
+          const body = Object.assign({}, tp, { topic_status: value });
+          for (const k of SERVER_FIELDS) delete body[k];
+          const changed = await opencde.updateTopic(s.connector, s.projectId, tp.guid, body);
+          s.topics = s.topics.map((x) => (x.guid === tp.guid ? Object.assign({}, x, changed) : x));
+          shell.log(t('issues.status.changed', { id: changed.server_assigned_id || changed.title, status: changed.topic_status }), 'ok');
+        } catch (err) { fail(err); }
+        s.busy = ''; render();
+      }
+      async function addViewpoint() {
+        const tp = current();
+        if (!tp) return;
+        s.busy = 'write'; render();
+        try {
+          const vp = await viewpointFromView(hooks.marked ? hooks.marked() : []);
+          if (!vp) throw new Error(t('issues.err.noview'));
+          await opencde.createViewpoint(s.connector, s.projectId, tp.guid, vp);
+          shell.log(t('issues.viewpoint.added', { id: tp.server_assigned_id || tp.title }), 'ok');
+          s.busy = '';
+          await load();
+          const again = (s.topics || []).find((x) => x.guid === tp.guid);
+          if (again) await choose(again);
+        } catch (err) { fail(err); s.busy = ''; render(); }
+      }
+      /** Everything the project holds, as a BCF file: for colleagues whose tools read files but no API. */
+      async function saveBcf() {
+        if (!s.topics) return;
+        s.busy = 'bcf'; s.error = ''; render();
+        try {
+          const items = [];
+          for (const tp of s.topics) {
+            const [comments, viewpoints] = await Promise.all([opencde.comments(s.connector, s.projectId, tp.guid), opencde.viewpoints(s.connector, s.projectId, tp.guid)]);
+            const vps = [];
+            for (const vp of viewpoints) {
+              const base = `/bcf/3.0/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(vp.guid)}`;
+              const [sel, col, vis] = await Promise.all([opencde.api(s.connector, base + '/selection'), opencde.api(s.connector, base + '/coloring'), opencde.api(s.connector, base + '/visibility')]);
+              const full = Object.assign({}, vp, { components: { selection: (sel && sel.selection) || [], coloring: (col && col.coloring) || [], visibility: (vis && vis.visibility) || { default_visibility: true } } });
+              let snapshot = null;
+              if (vp.snapshot) { try { const got = await opencde.binary(s.connector, base + '/snapshot', 'image/*'); snapshot = { bytes: new Uint8Array(got.buffer), type: got.contentType }; } catch (err) { D.log('issues', 'snapshot', err); } }
+              vps.push({ viewpoint: full, snapshot });
+            }
+            items.push({ topic: tp, comments, viewpoints: vps });
+          }
+          const project = (s.projects || []).find((p) => p.project_id === s.projectId);
+          const blob = await bcfXml.write(items, { projectName: project ? project.name : '', projectId: s.projectId });
+          services.files.download(blob, services.files.safeName(project ? project.name : 'arenden', 'bcfzip'));
+          shell.log(t('issues.bcf.saved', { n: i18n.formatNumber(items.length) }), 'ok');
+        } catch (err) { fail(err); }
+        s.busy = ''; render();
+      }
+
+      // ---- the panel -------------------------------------------------------------------------------------------
       function render() {
         if (!alive) return;
         const parts = [h('h4', { text: t('issues.title') })];
@@ -139,7 +272,10 @@
             sel.addEventListener('change', () => { s.projectId = sel.value; s.topics = null; s.selected = null; clearSnapshot(); load(); });
             parts.push(sel);
           }
-          parts.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: s.topics ? t('issues.fetch.again') : t('issues.fetch'), icon: 'refresh-cw', size: 'sm', loading: s.busy === 'topics', title: t('issues.fetch.hint'), onClick: load })));
+          parts.push(h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: s.topics ? t('issues.fetch.again') : t('issues.fetch'), icon: 'refresh-cw', size: 'sm', loading: s.busy === 'topics', title: t('issues.fetch.hint'), onClick: load }),
+            s.topics && may('project', 'createTopic') ? ui.button({ label: t('issues.new'), icon: 'plus', size: 'sm', variant: 'primary', loading: s.busy === 'write', title: t('issues.new.hint'), 'data-issue-new': '', onClick: () => newTopic().catch(fail) }) : null,
+            s.topics && s.topics.length ? ui.button({ label: t('issues.bcf.save'), icon: 'download', size: 'sm', loading: s.busy === 'bcf', title: t('issues.bcf.save.hint'), 'data-issue-bcf': '', onClick: saveBcf }) : null));
         }
         if (s.error) parts.push(h('p', { class: 'dm-error dm-small', text: s.error }));
         if (s.topics) {
@@ -155,20 +291,38 @@
           })));
           if (s.topics.length > 200) parts.push(h('p', { class: 'dm-help dm-small', text: t('issues.more', { n: i18n.formatNumber(s.topics.length - 200) }) }));
         }
-        const chosen = s.selected && s.topics ? s.topics.find((tp) => tp.guid === s.selected) : null;
-        if (chosen) {
-          parts.push(h('div', { class: 'dm-card dm-stack-xs', 'data-issue-detail': '' },
-            h('strong', { text: chosen.title || '' }),
-            chosen.description ? h('p', { class: 'dm-small', text: chosen.description }) : null,
-            h('p', { class: 'dm-help dm-small', text: [chosen.creation_author, chosen.creation_date ? i18n.formatDateTime(chosen.creation_date) : '', chosen.priority, chosen.due_date ? t('issues.due', { date: String(chosen.due_date).slice(0, 10) }) : ''].filter(Boolean).join(' · ') }),
-            s.snapshot ? h('img', { class: 'dm-model-issue-snapshot', src: s.snapshot, alt: t('issues.snapshot') }) : null,
-            s.comments.length ? h('ul', { class: 'dm-stack-xs' }, s.comments.map((c) => h('li', { class: 'dm-small' }, h('span', { class: 'dm-help', text: `${c.author || ''} · ${c.date ? i18n.formatDateTime(c.date) : ''}: ` }), h('span', { text: c.comment || '' })))) : h('p', { class: 'dm-help dm-small', text: t('issues.comments.none') })));
-        }
+        const chosen = current();
+        if (chosen) parts.push(detail(chosen));
         replace(el, ...parts);
+      }
+      function detail(chosen) {
+        const nodes = [
+          h('strong', { text: chosen.title || '' }),
+          chosen.description ? h('p', { class: 'dm-small', text: chosen.description }) : null,
+          h('p', { class: 'dm-help dm-small', text: [chosen.creation_author, chosen.creation_date ? i18n.formatDateTime(chosen.creation_date) : '', chosen.priority, chosen.due_date ? t('issues.due', { date: String(chosen.due_date).slice(0, 10) }) : ''].filter(Boolean).join(' · ') }),
+          s.snapshot ? h('img', { class: 'dm-model-issue-snapshot', src: s.snapshot, alt: t('issues.snapshot') }) : null,
+          s.comments.length ? h('ul', { class: 'dm-stack-xs' }, s.comments.map((c) => h('li', { class: 'dm-small' }, h('span', { class: 'dm-help', text: `${c.author || ''} · ${c.date ? i18n.formatDateTime(c.date) : ''}: ` }), h('span', { text: c.comment || '' })))) : h('p', { class: 'dm-help dm-small', text: t('issues.comments.none') }),
+        ];
+        if (may('topic', 'createComment')) {
+          const box = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '2', 'aria-label': t('issues.comment.write'), placeholder: t('issues.comment.write') }));
+          box.value = s.comment;
+          box.addEventListener('input', () => { s.comment = box.value; });
+          nodes.push(h('div', { class: 'dm-stack-xs', 'data-issue-comment': '' }, box, h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('issues.comment.send'), icon: 'message-square', size: 'sm', loading: s.busy === 'write', onClick: sendComment }))));
+        }
+        const statuses = (s.ext && s.ext.topic_status) || [];
+        if (may('topic', 'update') && statuses.length) {
+          const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('issues.field.topic_status'), inline: true, 'data-issue-status': '' }));
+          sel.options = statuses.map((v) => ({ value: v, label: v }));
+          sel.value = chosen.topic_status || statuses[0];
+          sel.addEventListener('change', () => setStatus(sel.value));
+          nodes.push(h('div', { class: 'dm-row-wrap' }, h('span', { class: 'dm-help dm-small', text: t('issues.status.change') }), sel));
+        }
+        if (may('topic', 'createViewpoint') && hooks.view) nodes.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('issues.viewpoint.add'), icon: 'scan-line', size: 'sm', loading: s.busy === 'write', title: t('issues.viewpoint.add.hint'), 'data-issue-viewpoint': '', onClick: addViewpoint })));
+        return h('div', { class: 'dm-card dm-stack-xs', 'data-issue-detail': '' }, nodes);
       }
       function destroy() { alive = false; clearSnapshot(); }
 
-      return { el, start, load, choose, destroy, state: s };
+      return { el, start, load, choose, newTopic, sendComment, setStatus, saveBcf, destroy, state: s };
     }
 
     return { create, badgeKind };

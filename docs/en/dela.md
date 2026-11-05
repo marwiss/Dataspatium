@@ -97,6 +97,15 @@ The pages can only be read, hang together with relative links and fetch nothing 
 The datasets go through the review and are shown from copies. Dashboards and documents are drawn from the datasets as they are,
 so there you are told what they hold and choose yourself whether they come along.
 
+## To the CDE
+
+The tab *To the CDE* sends a dataset to a project on an OpenCDE server such as Kontroll. Choose the server, sign in and choose
+the project; then choose whether the dataset is written in a file format or the original file is sent, and whether it goes
+through the Documents API, where the server's own page asks for title, version and project and the file then goes up in parts,
+or as a BCF document, which takes the file only. The dataset is written from a copy that has been through the review, and
+original files get the same warning as in bundles. A dataset fetched from the server can be sent as a new version of its
+document, and the card *From the CDE* in Manage then knows about it. Every send is noted in the dataset's history.
+
 ## Receive
 
 Open a bundle from a file (drop it on the surface) or from a web address. Sender, message and changes are shown

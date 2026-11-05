@@ -32,6 +32,12 @@ líkani koma fyrst, með stöðu og fjölda byggingarhluta. Smelltu á mál, þ�
 spjaldið sýnir lýsingu, skyndimynd og athugasemdir. Málin eru sótt þegar þú biður um það og eru ekki vistuð í gagnasafninu;
 til að reikna með þeim vistar þú þau sem töflu í Sækja. Þetta er lestur; að búa til og breyta málum kemur í næstu útgáfu.
 
+Með réttindum til þess er einnig hægt að skrifa. *Nýtt mál* býr til mál á þjóninum með fyrirsögn, tegund, stöðu og merkjum úr
+listum verkefnisins, og sýnin fylgir með sem viewpoint: myndavélin, skyndimynd og merktu byggingarhlutarnir sem íhlutir. Í völdu
+máli getur þú skrifað athugasemd, breytt stöðu og bætt núverandi sýn við sem nýju viewpoint. *Vista sem BCF* gefur öll mál
+verkefnisins með athugasemdum, viewpoints og skyndimyndum sem BCF-skrá, sem verkfæri án API geta opnað. BCF-skrá má einnig lesa
+inn í Sækja: málin verða tafla, athugasemdir og íhlutir töflur við hliðina.
+
 ## Töflurnar
 
 | Tafla | Innihald |

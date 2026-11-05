@@ -10,8 +10,8 @@
   const D = globalThis.Dataspatium;
   D.define('ui/modes/dela', ['ui/base', 'ui/share/bundle', 'ui/share/github', 'ui/share/devices'], (base, share, github, devices) => {
     const { h, t, i18n, replace } = base;
-    const TABS = ['paket', 'github', 'devices', 'share', 'publish', 'receive'];
-    const TAB_ICONS = { paket: 'package', github: 'git-branch', devices: 'smartphone', share: 'share-2', publish: 'globe', receive: 'download' };
+    const TABS = ['paket', 'github', 'devices', 'share', 'publish', 'cde', 'receive'];
+    const TAB_ICONS = { paket: 'package', github: 'git-branch', devices: 'smartphone', share: 'share-2', publish: 'globe', cde: 'building-2', receive: 'download' };
     /** Formats offered in the share sheet (the ones other apps open directly). */
     const SHARE_FORMATS = ['csv', 'xlsx', 'ods', 'json'];
 
@@ -23,6 +23,7 @@
       let tab = 'paket';
       let githubCard = null;
       let devicesPanel = null;
+      let cdePanel = null;
       const dropGithub = () => { if (githubCard) { githubCard.destroy(); githubCard = null; } };
       const dropDevices = () => { if (devicesPanel) { devicesPanel.destroy(); devicesPanel = null; } };
       const selected = () => { const s = store.get(); return s.datasets.find((d) => d.id === s.selectedId) || null; };
@@ -33,7 +34,8 @@
         unsubscribe = store.subscribe((_state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) { unsubscribe(); unsubscribe = null; } dropGithub(); dropDevices(); }
+      const dropCde = () => { if (cdePanel) { cdePanel.destroy(); cdePanel = null; } };
+      function deactivate() { slots = null; if (unsubscribe) { unsubscribe(); unsubscribe = null; } dropGithub(); dropDevices(); dropCde(); }
 
       function render() {
         if (!slots) return;
@@ -49,7 +51,8 @@
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('share-2', 20), t('dela.title'))), tabsEl, body);
         dropGithub();
         if (tab !== 'devices') dropDevices();
-        const fill = { paket: renderPaket, github: renderGithub, devices: renderDevices, share: renderShare, publish: renderPublish, receive: renderReceive }[tab];
+        if (tab !== 'cde') dropCde();
+        const fill = { paket: renderPaket, github: renderGithub, devices: renderDevices, share: renderShare, publish: renderPublish, cde: renderCde, receive: renderReceive }[tab];
         Promise.resolve(fill(body)).catch(fail);
         renderInspector().catch(fail);
       }
@@ -226,6 +229,14 @@
         }
       }
 
+      /** A dataset or its original to a project on an OpenCDE server; the panel keeps its sign-in while the tab is open. */
+      async function renderCde(body) {
+        if (!cdePanel) {
+          cdePanel = D.require('ui/share/cde-send').create(ctx, { dataset: selected });
+          await cdePanel.start();
+        } else cdePanel.render();
+        replace(body, cdePanel.el);
+      }
       function renderReceive(body) {
         const zone = h('dm-dropzone', { text: t('dela.receive.drop'), hint: t('datasets.restore.hint'), accept: '.zip', icon: 'package' });
         zone.addEventListener('dm-files', (e) => { share.receiveFile(ctx, /** @type {any} */ (e).detail.files[0]); });
@@ -282,7 +293,7 @@
           const ok = typeof navigator.share === 'function';
           replace(slots.right, h('p', { class: 'dm-help', text: ok ? t('dela.inspector.share.ok') : t('dela.inspector.share.no') }));
         } else {
-          replace(slots.right, h('p', { class: 'dm-help', text: t(tab === 'publish' ? 'dela.inspector.publish' : 'dela.inspector.receive') }));
+          replace(slots.right, h('p', { class: 'dm-help', text: t(tab === 'publish' ? 'dela.inspector.publish' : tab === 'cde' ? 'dela.inspector.cde' : 'dela.inspector.receive') }));
         }
       }
 

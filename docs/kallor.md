@@ -127,6 +127,11 @@ har en nyare version; den hämtas då som en egen datamängd bredvid den gamla. 
 till exempel skapa ärenden eller ladda upp dokument. När källan skapas frågar dialogen servern var man loggar in; svarar
 servern inte då, frågar appen igen vid första inloggningen.
 
+Tillåter servern det, registrerar appen sig själv som klient när du lämnar klient-id tomt, så ingen administratör behöver
+dela ut något. Datamängder kan också gå tillbaka till servern: fliken *Till CDE* i Dela skickar en datamängd i valfritt format,
+eller originalfilen, till ett projekt, antingen genom Documents API, där serverns egen sida frågar efter titel och version,
+eller som BCF-dokument. En datamängd som hämtats från servern kan skickas som en ny version av sitt dokument.
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

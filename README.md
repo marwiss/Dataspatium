@@ -117,6 +117,7 @@ ett paket.
 - **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sex språken.
 - **Härkomst, samarbete och bibliotek**: se var en datamängd kommer ifrån och vad den har blivit, arbeta ihop via GitHub utan att något försvinner, hämta recept och mallar med licens, och publicera arbetsytan som en webbplats.
 - **Kontroll som CDE, del 1**: hämta modeller och dokument ur en OpenCDE-servers projekt, se när en nyare version finns, och se ärendena som pekar på byggdelarna i modellen.
+- **Kontroll som CDE, del 2**: skapa ärenden ur markeringen i modellen med vyn som viewpoint, kommentera och byt status, skicka datamängder och filer till servern, BCF-filer in och ut, och självregistrering mot servrar som tillåter det.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

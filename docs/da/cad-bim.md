@@ -33,6 +33,12 @@ bygningsdele i denne model, står først, med status og antal bygningsdele. Klik
 ikke i datasættet; for at regne på dem gemmer du dem som en tabel i Hent. Dette er læsning; at oprette og ændre sager
 kommer i næste udgave.
 
+Med rettighederne til det kan du også skrive. *Ny sag* opretter en sag på serveren med titel, type, status og etiketter fra
+projektets lister, og visningen følger med som viewpoint: kameraet, et øjebliksbillede og de markerede bygningsdele som
+komponenter. I en valgt sag kan du skrive en kommentar, skifte status og tilføje den aktuelle visning som et nyt viewpoint.
+*Gem som BCF* giver alle projektets sager med kommentarer, viewpoints og øjebliksbilleder som en BCF-fil, som værktøjer uden
+API kan åbne. En BCF-fil kan også læses ind i Hent: sagerne bliver en tabel, kommentarer og komponenter tabeller ved siden af.
+
 ## Tabellerne
 
 | Tabel | Indhold |

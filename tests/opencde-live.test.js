@@ -3,7 +3,8 @@
 /**
  * Dataspatium against a real Kontroll OpenCDE server (checklist C in Kontroll's docs/acceptance.md, and more): discovery,
  * sign-in with PKCE, the BCF tables, writing topics, comments, viewpoints and references, both document APIs with upload and
- * download, the model import, the project's files, refresh, revocation and the refused redirect. Runs only when the page is
+ * download, the model import, the project's files, the family's own uploads, a BCF file out and in, registration, refresh,
+ * revocation and the refused redirect. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>]; otherwise it is
  * skipped. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
@@ -90,6 +91,10 @@
     const mine = projects.find((p) => p.name === PROJECT_NAME);
     assert.ok(mine, 'project ' + PROJECT_NAME + ' among ' + projects.map((p) => p.name).join(', '));
     shared.projectId = mine.project_id;
+    // Leftovers from an aborted run would double the counts below: the suite's own topics go first.
+    const stale = (await opencde.topics(shared.connector, shared.projectId, { $top: 500 })).filter((tp) => /^Dataspatium: /.test(String(tp.title || '')));
+    for (const tp of stale) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('stale topic: ' + e.message));
+    if (stale.length) log(`removed ${stale.length} stale topics from an earlier run`);
     const ext = await opencde.extensions(shared.connector, shared.projectId);
     log(`extensions: types ${(ext.topic_type || []).length}, statuses ${(ext.topic_status || []).length}, labels ${(ext.topic_label || []).length}, users ${(ext.users || []).length}`);
     assert.ok(Array.isArray(ext.project_actions) && ext.project_actions.includes('createTopic'), 'project_actions: ' + JSON.stringify(ext.project_actions));
@@ -308,6 +313,71 @@
     }
     return `${files.length} files`;
   }, 90000);
+
+  test('opencde live: the family uploads through the Documents API and as a BCF document, and the project becomes a BCF file', async (assert) => {
+    const csv = new File([new TextEncoder().encode('kommun;antal' + String.fromCharCode(10) + 'Umeå;130' + String.fromCharCode(10))], 'tabell.csv', { type: 'text/csv' });
+    const steps = [];
+    const popupUpload = async (url) => (await helper('/upload', { url, project: shared.projectId, title: 'Familjens tabell', version: '1' })).callback;
+    const version = await timed('uploadDocument', () => opencde.uploadDocument(shared.connector, csv, { redirectUri: REDIRECT, popup: popupUpload, onProgress: (p) => steps.push(p.done) }));
+    assert.ok(version && version.document_id, JSON.stringify(version).slice(0, 200));
+    assert.ok(steps.length >= 1 && steps[steps.length - 1] === csv.size, 'progress reached the end: ' + steps.join(','));
+    const next = await opencde.uploadDocument(shared.connector, csv, { documentId: version.document_id, redirectUri: REDIRECT, popup: popupUpload });
+    assert.equal(next.document_id, version.document_id);
+    assert.ok(Number(next.version_index) > Number(version.version_index), 'a new version');
+    const cancelled = await opencde.uploadDocument(shared.connector, csv, { redirectUri: REDIRECT, popup: async (url) => (await helper('/upload', { url, cancel: '1' })).callback });
+    assert.equal(cancelled, null, 'cancelled on the page is null');
+    const doc = await timed('uploadBcfDocument', () => opencde.uploadBcfDocument(shared.connector, shared.projectId, new File([ifcBytes()], 'familjens-hus.ifc')));
+    assert.equal(doc.filename, 'familjens-hus.ifc', JSON.stringify(doc));
+    const files = await opencde.filesList(shared.connector, shared.projectId);
+    const listed = files.find((f) => f.documentId === version.document_id);
+    assert.ok(listed && Number(listed.versionIndex) === Number(next.version_index), 'the files list knows the document and its latest version: ' + JSON.stringify(listed));
+    // The project's issues as a BCF file, and the file read back.
+    const bcfXml = D.require('data/bcf-xml');
+    const topics = await opencde.topics(shared.connector, shared.projectId, { $top: 100 });
+    const items = [];
+    for (const tp of topics) {
+      const [comments, viewpoints] = await Promise.all([opencde.comments(shared.connector, shared.projectId, tp.guid), opencde.viewpoints(shared.connector, shared.projectId, tp.guid)]);
+      const vps = [];
+      for (const vp of viewpoints) {
+        const base = `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}/viewpoints/${vp.guid}`;
+        const [sel, col] = await Promise.all([opencde.api(shared.connector, base + '/selection'), opencde.api(shared.connector, base + '/coloring')]);
+        const snapshot = vp.snapshot ? await opencde.binary(shared.connector, base + '/snapshot', 'image/*') : null;
+        vps.push({ viewpoint: Object.assign({}, vp, { components: { selection: sel.selection || [], coloring: col.coloring || [], visibility: { default_visibility: true } } }), snapshot: snapshot ? { bytes: new Uint8Array(snapshot.buffer), type: snapshot.contentType } : null });
+      }
+      items.push({ topic: tp, comments, viewpoints: vps });
+    }
+    const blob = await bcfXml.write(items, { projectName: PROJECT_NAME, projectId: shared.projectId });
+    const read = await bcfXml.read(await blob.arrayBuffer());
+    assert.equal(read.topics.length, topics.length, 'every topic in the file');
+    assert.ok(read.snapshots.length >= 1 && read.snapshots[0].bytes.length > 100, 'a snapshot came along');
+    assert.ok(read.components.some((c) => WALLS.includes(c.ifc_guid)), 'the walls are components');
+    const meta = await importer.run(new File([blob], 'projektet.bcfzip'), {}, null, 'Projektets BCF');
+    shared.created.push(meta.id);
+    for (const d of await datasets.list()) if (d.name.startsWith('Projektets BCF') && !shared.created.includes(d.id)) shared.created.push(d.id);
+    assert.equal(meta.rowCount, topics.length);
+    log(`bcf file ${blob.size} bytes, ${read.topics.length} topics, ${read.comments.length} comments, ${read.components.length} components, ${read.snapshots.length} snapshots`);
+    return `${version.document_id} v${next.version_index}`;
+  }, 180000);
+
+  test('opencde live: the app registers itself when the server allows it', async (assert) => {
+    const result = await opencde.register(BASE, { redirectUri: REDIRECT }).catch((e) => e);
+    if (result instanceof Error) { log(`registration: ${result.message}`); return 'skipped: ' + result.message; }
+    assert.ok(result.clientId, 'a client id');
+    assert.equal(result.clientSecret, '', 'a public client needs no secret');
+    log(`registered public client ${result.clientId}`);
+    const fresh = (await families.createConnector('opencde', { baseUrl: BASE, clientId: result.clientId, clientSecret: '' })).connector;
+    try {
+      const creds = await opencde.login(fresh, { popup, redirectUri: REDIRECT });
+      assert.ok(creds.token, 'the registered client signs in');
+      await opencde.logout(fresh);
+    } finally {
+      await connectors.remove(fresh.id);
+      // Two connectors for one server share the record: put the suite's own back and sign in again.
+      await connectors.save(shared.connector);
+      await opencde.login(shared.connector, { popup, redirectUri: REDIRECT });
+    }
+    return result.clientId;
+  }, 60000);
 
   test('opencde live: save a table as a dataset and fetch it again (C4)', async (assert) => {
     const tb = shared.topicsTable;

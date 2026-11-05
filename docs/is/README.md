@@ -107,6 +107,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sex tungumálunum.
 - **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
 - **Kontroll sem CDE, 1. hluti**: sæktu líkön og skjöl úr verkefni OpenCDE-þjóns, sjáðu hvenær nýrri útgáfa er til, og sjáðu málin sem vísa á byggingarhluta líkansins.
+- **Kontroll sem CDE, 2. hluti**: búðu til mál úr merkingunni í líkaninu með sýnina sem viewpoint, skrifaðu athugasemdir og breyttu stöðu, sendu gagnasöfn og skrár til þjónsins, BCF-skrár inn og út, og sjálfskráning gegn þjónum sem leyfa það.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

@@ -99,6 +99,15 @@ koodikirja. Sivuja voi vain lukea, ne on yhdistetty suhteellisilla linkeillä, e
 Aineistot käyvät läpi tarkistuksen ja näytetään kopioista. Koontinäytöt ja asiakirjat piirretään aineistoista sellaisina kuin ne
 ovat, joten niiden sisällöstä kerrotaan ja päätät itse, tulevatko ne mukaan.
 
+## CDE:hen
+
+Välilehti *CDE:hen* lähettää aineiston projektiin OpenCDE-palvelimella, kuten Kontrollissa. Valitse palvelin, kirjaudu ja valitse
+projekti; valitse sitten, kirjoitetaanko aineisto tiedostomuotoon vai lähetetäänkö alkuperäinen tiedosto, ja meneekö se
+Documents API:n kautta, jossa palvelimen oma sivu kysyy otsikon, version ja projektin ja tiedosto lähetetään sitten osissa, vai
+BCF-asiakirjana, joka ottaa vain tiedoston. Aineisto kirjoitetaan tarkistuksen läpikäyneestä kopiosta, ja alkuperäiset tiedostot
+saavat saman varoituksen kuin paketeissa. Palvelimelta haettu aineisto voidaan lähettää asiakirjansa uutena versiona, ja
+Hallitse-tilan kortti *CDE:stä* tietää sen sen jälkeen. Jokainen lähetys merkitään aineiston historiaan.
+
 ## Vastaanota
 
 Avaa paketti tiedostosta (pudota se alueelle) tai verkko-osoitteesta. Lähettäjä, viesti ja muutokset näytetään

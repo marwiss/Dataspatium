@@ -86,6 +86,8 @@ Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen all
 
 **Tiedostot CDE:stä.** OpenCDE-lähde luettelee projektin mallit ja asiakirjat, ja *Hae* tekee tiedoston omaa lajia olevan aineiston, joka muistaa alkuperänsä. Katso [kallor.md](kallor.md).
 
+**BCF-tiedostot.** BCF-tiedostosta (bcf, bcfzip) tulee asiataulukko, ja kommentit ja komponentit sen viereen. Katso [format.md](format.md).
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -171,6 +173,8 @@ Hae-tilasta tehty valinta merkitään 3D-malliin, ja kamera kääntyy sitä koht
 
 **Asiat.** Mallinäkymä näyttää projektin BCF-asiat CDE:stä ja merkitsee rakennusosat, joihin ne osoittavat. Katso [cad-bim.md](cad-bim.md).
 
+**Asioiden kirjoittaminen.** Mallinäkymä luo asioita valinnasta näkymällä viewpointina, kommentoi ja vaihtaa tilan sekä tallentaa projektin asiat BCF-tiedostona. Katso [cad-bim.md](cad-bim.md).
+
 ## Analysoi
 
 Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia
@@ -251,3 +255,5 @@ käyttöoikeustunnuksella. **Jakovalikko**: tietokoneen tai puhelimen oma jakova
 ja parituksella sekä Dataspatium Mobiili puhelimessa (ks. [mobil.md](mobil.md)). **Vastaanota**: paketit
 tiedostosta tai verkko-osoitteesta, lähettäjä ja muutokset näkyvissä ennen kuin mitään otetaan vastaan.
 Sovelluksesta lähtevät aineistot tarkistetaan ensin henkilötietojen varalta. Ks. [dela.md](dela.md).
+
+**CDE:hen.** Aineisto tai sen alkuperäinen tiedosto projektiin OpenCDE-palvelimella, Documents API:n kautta tai BCF-asiakirjana. Katso [dela.md](dela.md).

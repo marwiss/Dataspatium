@@ -95,6 +95,15 @@ Sidene kan bare leses, henger sammen med relative lenker og henter ingenting fra
 Datasettene går gjennom kontrollen og vises fra kopier. Dashboards og dokumenter tegnes ut fra datasettene slik de er, så der får
 du vite hva de inneholder, og velger selv om de skal være med.
 
+## Til CDE
+
+Fanen *Til CDE* sender et datasett til et prosjekt på en OpenCDE-server som Kontroll. Velg server, logg inn og velg prosjekt;
+velg så om datasettet skal skrives i et filformat eller om originalfilen skal sendes, og om det skal gå gjennom Documents API,
+der serverens egen side spør om tittel, versjon og prosjekt og filen deretter lastes opp i deler, eller som BCF-dokument, som
+bare tar filen. Datasettet skrives fra en kopi som har vært gjennom kontrollen, og originalfiler får samme advarsel som i
+pakkene. Et datasett hentet fra serveren kan sendes som en ny versjon av dokumentet sitt, og kortet *Fra CDE* i Håndter vet det
+deretter. Hver sending noteres i datasettets historikk.
+
 ## Motta
 
 Åpne en pakke fra en fil (slipp den på flaten) eller fra en nettadresse. Avsender, melding og endringer vises først;

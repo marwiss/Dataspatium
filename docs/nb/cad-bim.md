@@ -33,6 +33,12 @@ bygningsdeler i denne modellen står først, med status og antall bygningsdeler.
 datasettet; for å regne på dem lagrer du dem som en tabell i Hent. Dette er lesing; å opprette og endre saker kommer i
 neste utgave.
 
+Med rettighetene til det kan du også skrive. *Ny sak* oppretter en sak på serveren med tittel, type, status og etiketter fra
+prosjektets lister, og visningen følger med som viewpoint: kameraet, et øyeblikksbilde og de markerte bygningsdelene som
+komponenter. I en valgt sak kan du skrive en kommentar, bytte status og legge til den aktuelle visningen som et nytt viewpoint.
+*Lagre som BCF* gir alle prosjektets saker med kommentarer, viewpoints og øyeblikksbilder som en BCF-fil, som verktøy uten API
+kan åpne. En BCF-fil kan også leses inn i Hent: sakene blir en tabell, kommentarer og komponenter tabeller ved siden av.
+
 ## Tabellene
 
 | Tabell | Innhold |

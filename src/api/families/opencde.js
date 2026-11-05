@@ -68,7 +68,7 @@
       for (const v of (versions && versions.versions) || []) apis[v.api_id] = v.version_id;
       if (!apis.bcf && !apis.documents) throw new Error(t('opencde.err.not.opencde', { host: hostOf(base) }));
       if (!auth || !auth.oauth2_auth_url || !auth.oauth2_token_url) throw new Error(t('opencde.err.no.oauth'));
-      return { apis, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
+      return { apis, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || null, registrationUrl: auth.oauth2_dynamic_client_reg_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
     }
 
     // ---------------------------------------------------------------------------- signing in
@@ -334,6 +334,76 @@
       const latest = versions.find((v) => v.document_id === cde.documentId) || versions[0] || null;
       return { newer: !!(latest && Number(latest.version_index) > Number(cde.versionIndex || 0)), version: latest, have: cde.versionIndex };
     }
+    // ---------------------------------------------------------------------------- writing (BCF 3.0)
+    const createTopic = (connector, projectId, body) => bcf(connector, `/projects/${encode(projectId)}/topics`, { method: 'POST', json: body });
+    const updateTopic = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'PUT', json: body });
+    const deleteTopic = (connector, projectId, topicGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'DELETE' });
+    const createComment = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/comments`, { method: 'POST', json: body });
+    const updateComment = (connector, projectId, topicGuid, commentGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/comments/${encode(commentGuid)}`, { method: 'PUT', json: body });
+    const createViewpoint = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints`, { method: 'POST', json: body });
+    const deleteViewpoint = (connector, projectId, topicGuid, vpGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints/${encode(vpGuid)}`, { method: 'DELETE' });
+    /** A file as a BCF document of the project (3.8.2): the body is the file, the name travels in Content-Disposition. */
+    async function uploadBcfDocument(connector, projectId, file) {
+      const name = String(file.name || 'document').replace(/["\\\r\n]/g, '_');
+      return bcf(connector, `/projects/${encode(projectId)}/documents`, { method: 'POST', body: await file.arrayBuffer(), headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}` } });
+    }
+
+    // ---------------------------------------------------------------------------- Documents API: upload
+    /**
+     * Upload a file through the Documents API (1.0 upload flow): the server's own page asks the user for title, version and
+     * project in a popup; then the parts go up and the version is completed. `documentId` makes it a new version of that document.
+     * @param {any} connector @param {File} file
+     * @param {{documentId?: string|null, redirectUri?: string, popup?: Function, onProgress?: (p: {done: number, total: number}) => void}} [options]
+     * @returns {Promise<any|null>} the DocumentVersion, or null when the user cancelled on the page
+     */
+    async function uploadDocument(connector, file, options = {}) {
+      const redirect = options.redirectUri || redirectUri();
+      if (!redirect) throw new Error(t('opencde.err.file.documents'));
+      const entry = { file_name: file.name, session_file_id: 'f1' };
+      if (options.documentId) entry.document_id = options.documentId;
+      const started = await api(connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: redirect, expires_in: 600 }, files: [entry] } });
+      if (Number(started.max_size_in_bytes) > 0 && file.size > Number(started.max_size_in_bytes)) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(Number(started.max_size_in_bytes)) }));
+      const callback = await (options.popup || popupFlow)(started.upload_ui_url);
+      const q = new URL(callback).searchParams;
+      if (q.get('user_cancelled_upload') === 'true') return null;
+      const instructionsUrl = q.get('upload_documents_url');
+      if (!instructionsUrl) throw new Error(t('opencde.err.callback'));
+      const plan = await api(connector, instructionsUrl, { method: 'POST', json: { files: [{ session_file_id: 'f1', size_in_bytes: file.size }] } });
+      const todo = (plan.documents_to_upload || [])[0];
+      if (!todo) throw new Error(t('opencde.err.callback'));
+      const bytes = await file.arrayBuffer();
+      let done = 0;
+      const token = await ensureToken(connector);
+      for (const part of todo.upload_file_parts || []) {
+        const start = Number(part.content_range_start) || 0; const end = Number(part.content_range_end);
+        let chunk = bytes.slice(start, end + 1);
+        const form = part.multipart_form_data;
+        if (form) chunk = new Blob([String(form.prefix || ''), chunk, String(form.suffix || '')]);
+        const headers = { 'Content-Type': 'application/octet-stream' };
+        for (const hv of ((part.additional_headers || {}).values || [])) headers[hv.name] = hv.value;
+        if (part.include_authorization !== false) headers.Authorization = 'Bearer ' + token;
+        const res = await http.request({ url: part.url, method: part.http_method || 'PUT', headers, body: chunk, retries: 1, rateKey: connector.id, timeoutMs: 600000 });
+        if (!res.ok) throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}`, { kind: 'http', status: res.status, url: part.url });
+        done += (end - start + 1);
+        if (options.onProgress) options.onProgress({ done: Math.min(done, file.size), total: file.size });
+      }
+      return api(connector, todo.upload_completion.url, { method: 'POST' });
+    }
+    /**
+     * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
+     * and, for a confidential client, the secret, which the caller keeps in api/secrets.
+     * @param {string} baseUrl @param {{redirectUri: string, name?: string}} options
+     */
+    async function register(baseUrl, options) {
+      const found = await discover(baseUrl);
+      if (!found.registrationUrl) throw new Error(t('opencde.err.noregistration'));
+      const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
+      const res = await http.request({ url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
+      if (!res.ok) throw new http.ApiError(t('opencde.err.registration', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 160) }), { kind: 'http', status: res.status });
+      const data = JSON.parse(res.text);
+      return { clientId: data.client_id, clientSecret: data.client_secret || '', found };
+    }
+
     /** The project's files (BCF documents and Documents API files) as a table. */
     async function fetchFiles(connector, projectId) {
       const info = await filesInformation(connector, projectId);
@@ -372,6 +442,7 @@
       return Object.assign(out, { meta: {} });
     }
 
-    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
+    const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
+    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
   });
 })();

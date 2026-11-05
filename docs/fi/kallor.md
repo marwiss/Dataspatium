@@ -135,6 +135,11 @@ versio* kysyy palvelimelta, onko asiakirjasta uudempi versio; se haetaan silloin
 kertoo myös, mitä voit tehdä projektissa, esimerkiksi luoda asioita tai ladata asiakirjoja. Kun lähde luodaan, valintaikkuna
 kysyy palvelimelta, mistä kirjaudutaan; jos palvelin ei silloin vastaa, sovellus kysyy uudelleen ensimmäisessä kirjautumisessa.
 
+Jos palvelin sallii, sovellus rekisteröi itsensä asiakkaaksi, kun jätät asiakastunnuksen tyhjäksi, jolloin järjestelmänvalvojan
+ei tarvitse jakaa mitään. Aineistot voivat myös palata palvelimelle: Jaa-tilan välilehti *CDE:hen* lähettää aineiston missä
+tahansa muodossa, tai alkuperäisen tiedoston, projektiin joko Documents API:n kautta, jossa palvelimen oma sivu kysyy otsikon ja
+version, tai BCF-asiakirjana. Palvelimelta haettu aineisto voidaan lähettää asiakirjansa uutena versiona.
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

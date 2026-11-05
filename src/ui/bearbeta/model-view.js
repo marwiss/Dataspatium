@@ -100,7 +100,12 @@
       /** The issues from the CDE, in the inspector; the same panel until the dataset changes. */
       function openIssues() {
         if (issues) return;
-        issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, { select: (ids, fit) => { if (handle) handle.select(ids, { fit }); } });
+        issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, {
+          select: (ids, fit) => { if (handle) handle.select(ids, { fit }); },
+          view: () => (handle ? Object.assign(handle.view(), { fov: handle.camera ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }) : null),
+          png: () => (handle ? handle.png() : ''),
+          marked: () => (handle ? handle.marked() : (s.selected ? [s.selected] : [])),
+        });
         issues.start().catch((err) => shell.log(String((err && err.message) || err), 'error'));
       }
       function toggleIssues() {

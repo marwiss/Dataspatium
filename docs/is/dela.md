@@ -95,6 +95,15 @@ aðeins til lestrar, tengjast með afstæðum tenglum og sækja ekkert af netinu
 Gagnasöfnin fara í gegnum yfirferðina og eru sýnd úr afritum. Mælaborð og skjöl eru teiknuð úr gagnasöfnunum eins og þau eru, svo
 þar færð þú að vita hvað þau innihalda og velur hvort þau fylgi með.
 
+## Til CDE
+
+Flipinn *Til CDE* sendir gagnasafn í verkefni á OpenCDE-þjóni eins og Kontroll. Veldu þjón, skráðu þig inn og veldu verkefni;
+veldu síðan hvort gagnasafnið skuli skrifað á skráarsniði eða upprunalega skráin send, og hvort það fari í gegnum Documents
+API, þar sem eigin síða þjónsins spyr um titil, útgáfu og verkefni og skránni er síðan hlaðið upp í hlutum, eða sem BCF-skjal,
+sem tekur aðeins skrána. Gagnasafnið er skrifað úr afriti sem farið hefur í gegnum yfirferðina, og upprunalegar skrár fá sömu
+viðvörun sem í pökkunum. Gagnasafn sem sótt var frá þjóninum má senda sem nýja útgáfu af skjali sínu, og kortið *Frá CDE* í
+Umsjón veit það síðan. Hver sending er skráð í ferli gagnasafnsins.
+
 ## Taka á móti
 
 Opnaðu pakka úr skrá (slepptu henni á flötinn) eða af vefslóð. Sendandi, skilaboð og breytingar birtast fyrst;

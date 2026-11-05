@@ -87,6 +87,8 @@ Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad und
 
 **Filer från ett CDE.** En OpenCDE-källa listar projektets modeller och dokument, och *Hämta* gör en datamängd av filens eget slag som minns var den kom från. Se [kallor.md](kallor.md).
 
+**BCF-filer.** En BCF-fil (bcf, bcfzip) blir en tabell med ärenden, med kommentarer och komponenter bredvid. Se [format.md](format.md).
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -168,6 +170,8 @@ Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
 
 **Ärenden.** Modellvyn visar projektets BCF-ärenden från ett CDE och markerar byggdelarna de pekar på. Se [cad-bim.md](cad-bim.md).
 
+**Skriva ärenden.** Modellvyn skapar ärenden ur markeringen med vyn som viewpoint, kommenterar och byter status, och sparar projektets ärenden som BCF-fil. Se [cad-bim.md](cad-bim.md).
+
 ## Analysera
 
 Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop
@@ -245,3 +249,5 @@ meddelandeappar). **Publicera**: dashboards och dokument som fristående HTML-fi
 parning, och Dataspatium Mobil på telefonen (se [mobil.md](mobil.md)). **Ta emot**: paket från fil eller
 webbadress, med avsändare och ändringar synliga innan något tas in. Datamängder som lämnar appen granskas först
 för personuppgifter. Se [dela.md](dela.md).
+
+**Till CDE.** En datamängd eller dess originalfil till ett projekt på en OpenCDE-server, genom Documents API eller som BCF-dokument. Se [dela.md](dela.md).

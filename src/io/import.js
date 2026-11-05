@@ -28,6 +28,7 @@
      */
     async function resolveImporter(file, forced) {
       if (forced === 'datapackage') return D.require('io/datapackage');
+      if (forced === 'bcf' || (!forced && /\.(bcf|bcfzip)$/i.test(file.name || ''))) return D.require('io/importers/bcf');
       if (!forced && /\.zip$/i.test(file.name) && await D.require('io/datapackage').sniff(file)) return D.require('io/datapackage');
       const importer = importerFor(file, forced);
       if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
@@ -186,7 +187,7 @@
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
-      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage' || importer.id === 'bcf') return importer.importFile(file, options, name, progress);
       if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {

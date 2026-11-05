@@ -30,7 +30,8 @@
   /** Every request the family makes, in order (the provider is called after the push, so it can read the last one). */
   const spy = { requests: [] };
   const realRequest = http.request;
-  http.request = (req) => { spy.requests.push(req); return realRequest(req); };
+  const spyRequest = (req) => { spy.requests.push(req); return realRequest(req); };
+  http.request = spyRequest;
   const last = () => spy.requests[spy.requests.length - 1] || { headers: {}, body: '' };
   const lastParams = () => new URLSearchParams(String(last().body || ''));
   const lastAuth = () => String((last().headers || {}).Authorization || '');
@@ -210,7 +211,7 @@
     } finally { ui.destroy(); ui.el.remove(); }
     for (const id of created) await datasets.remove(id);
     for (const id of connIds) await connectors.remove(id);
-    http.request = realRequest;
+    if (http.request === spyRequest) http.request = realRequest;
     return 'ok';
   });
 })();

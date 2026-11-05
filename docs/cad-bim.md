@@ -33,6 +33,12 @@ byggdelar i den här modellen står först, med status och antal byggdelar. Klic
 datamängden; för att räkna på dem sparar du dem som en tabell i Inhämta. Det går att läsa; att skapa och ändra ärenden
 kommer i nästa utgåva.
 
+Med rättigheterna för det går det också att skriva. *Nytt ärende* skapar ett ärende på servern med titel, typ, status och
+etiketter ur projektets listor, och vyn följer med som viewpoint: kameran, en ögonblicksbild och de markerade byggdelarna som
+komponenter. I ett valt ärende kan du skriva en kommentar, byta status och lägga till den aktuella vyn som en ny viewpoint.
+*Spara som BCF* ger alla projektets ärenden med kommentarer, viewpoints och ögonblicksbilder som en BCF-fil, som verktyg utan
+API kan öppna. En BCF-fil går också att läsa in i Inhämta: ärendena blir en tabell, kommentarer och komponenter tabeller bredvid.
+
 ## Tabellerna
 
 | Tabell | Innehåll |

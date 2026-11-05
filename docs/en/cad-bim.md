@@ -34,6 +34,12 @@ view, and the panel shows the description, the snapshot and the comments. The is
 stored in the dataset; to count on them, save them as a table in Import. This is reading; creating and changing issues
 comes in the next release.
 
+With the rights for it, you can also write. *New issue* creates an issue on the server with title, type, status and labels
+from the project's lists, and the view goes along as the viewpoint: the camera, a snapshot and the marked elements as components.
+In a chosen issue you can write a comment, change the status and add the current view as a new viewpoint. *Save as BCF* gives all
+the project's issues with comments, viewpoints and snapshots as a BCF file, which tools without an API can open. A BCF file can
+also be read in Import: the issues become a table, comments and components tables beside it.
+
 ## The tables
 
 | Table | Contents |

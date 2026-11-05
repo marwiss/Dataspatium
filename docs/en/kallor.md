@@ -132,6 +132,11 @@ one. The source also says what you may do in the project, such as create issues 
 made, the dialog asks the server where to sign in; if the server does not answer then, the app asks again at the first
 sign-in.
 
+If the server allows it, the app registers itself as a client when you leave the client id empty, so no administrator has to
+hand anything out. Datasets can also go back to the server: the tab *To the CDE* in Share sends a dataset in any format, or the
+original file, to a project, either through the Documents API, where the server's own page asks for title and version, or as a
+BCF document. A dataset fetched from the server can be sent as a new version of its document.
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

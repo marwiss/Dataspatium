@@ -85,6 +85,8 @@ Alle kilder i listen ser like ut, med et symbol for typen og en linje under navn
 
 **Filer fra et CDE.** En OpenCDE-kilde lister prosjektets modeller og dokumenter, og *Hent* lager et datasett av filens eget slag som husker hvor det kom fra. Se [kallor.md](kallor.md).
 
+**BCF-filer.** En BCF-fil (bcf, bcfzip) blir en tabell med saker, med kommentarer og komponenter ved siden av. Se [format.md](format.md).
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -165,6 +167,8 @@ Et utvalg fra Søk markeres i 3D-modellen, og kameraet rettes mot det.
 
 **Saker.** Modellvisningen viser prosjektets BCF-saker fra et CDE og markerer bygningsdelene de peker på. Se [cad-bim.md](cad-bim.md).
 
+**Skrive saker.** Modellvisningen oppretter saker fra markeringen med visningen som viewpoint, kommenterer og bytter status, og lagrer prosjektets saker som BCF-fil. Se [cad-bim.md](cad-bim.md).
+
 ## Analyser
 
 Kode og statistikk. Verktøyene ligger i fast rekkefølge: R, Python, SQL, Regex og sist notatboken, som føyer sammen deler
@@ -242,3 +246,5 @@ meldingsapper). **Publiser**: dashbord og dokumenter som frittstående HTML-file
 og paring, og Dataspatium Mobil på telefonen (se [mobil.md](mobil.md)). **Motta**: pakker fra fil eller
 nettadresse, med avsender og endringer synlige før noe tas inn. Datasett som forlater appen, gjennomgås først for
 personopplysninger. Se [dela.md](dela.md).
+
+**Til CDE.** Et datasett eller originalfilen til et prosjekt på en OpenCDE-server, gjennom Documents API eller som BCF-dokument. Se [dela.md](dela.md).

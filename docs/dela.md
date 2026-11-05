@@ -97,6 +97,15 @@ datamängd. Sidorna går bara att läsa, hänger ihop med relativa länkar och h
 Datamängderna går genom granskningen och visas ur kopior. Dashboards och dokument ritas ur datamängderna som de är, så där får
 du veta vad de innehåller och väljer själv om de ska med.
 
+## Till CDE
+
+Fliken *Till CDE* skickar en datamängd till ett projekt på en OpenCDE-server som Kontroll. Välj server, logga in och välj
+projekt; välj sedan om datamängden ska skrivas i ett filformat eller om originalfilen ska skickas, och om den ska gå genom
+Documents API, där serverns egen sida frågar efter titel, version och projekt och filen sedan laddas upp i delar, eller som
+BCF-dokument, som bara tar filen. Datamängden skrivs ur en kopia som gått genom granskningen, och originalfiler får samma
+varning som i paketen. En datamängd som hämtats från servern kan skickas som en ny version av sitt dokument, och kortet
+*Från CDE* i Hantera vet sedan om den. Varje skickning noteras i datamängdens historik.
+
 ## Ta emot
 
 Öppna ett paket från en fil (släpp den på ytan) eller från en webbadress. Avsändare, meddelande och ändringar visas
