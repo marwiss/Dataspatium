@@ -230,6 +230,13 @@ Myndgera gerir myndritstegundin *Kort* kortasýnir með mörgum lögum og bakgru
 Greina reiknar flipinn *Geo* flatarmál, punkta í svæðum, næsta, jaðarsvæði og yfirlögn án kóða. QGIS-verkefnum má
 sleppa í Sækja. Bakgrunnskort eru aðeins sótt eftir samþykki þitt. Sjá [kartor.md](kartor.md).
 
+## Hvernig sé ég hvað forritið sendir OpenCDE-þjóni?
+
+Opnaðu uppsprettuna í Sækja og fletta út kortinu *Skrá* neðst. Þar er hvert kall með API, aðgerð, stöðu og tíma, og smellur sýnir
+hausa, skýringu og curl-línu til að afrita. Skráin er aðeins í minni meðan lotan stendur og fer aldrei af tölvunni nema þú vistir
+hana sjálfur sem JSON eða gagnasafn. Sjá [kallor.md](kallor.md).
+
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

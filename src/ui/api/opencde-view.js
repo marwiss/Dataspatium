@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/secrets', 'api/runner', 'io/import'], (base, basic, overlays, opencde, secrets, runner, importer) => {
+  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card'], (base, basic, overlays, opencde, secrets, runner, importer, cdeLogCard) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     const KINDS = [
@@ -28,6 +28,8 @@
       const unsubscribe = secrets.subscribe(() => render());
       const project = () => (s.projects || []).find((p) => p.project_id === s.projectId) || null;
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
+      /** What the app has sent to this server, in a card of its own at the bottom. */
+      const logCard = cdeLogCard.create(connector, { log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
 
       async function signIn() {
@@ -165,7 +167,7 @@
           nodes.push(filesCard());
         }
         const resultEl = h('div');
-        nodes.push(resultEl);
+        nodes.push(resultEl, logCard.el);
         replace(el, nodes);
         renderResult(resultEl);
       }
@@ -214,7 +216,7 @@
           Promise.resolve().then(async () => { try { s.user = await opencde.currentUser(connector); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); });
         }
       }
-      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: unsubscribe, KINDS };
+      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: () => { unsubscribe(); logCard.destroy(); }, KINDS };
     }
     return { create, KINDS };
   });

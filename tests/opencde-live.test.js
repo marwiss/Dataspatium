@@ -5,7 +5,8 @@
  * sign-in with PKCE, the BCF tables, writing topics, comments, viewpoints and references, both document APIs with upload and
  * download, the model import, the project's files, the family's own uploads, a BCF file out and in, registration, refresh,
  * revocation and the refused redirect. Kontroll III: the issues as a table with the model's elements, the board Ärendeläge,
- * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE. Runs only when the page is
+ * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE.
+ * 2.32: the CDE log over the whole run, and with ?cdeadminhelper=<helper signed in as an administrator> the server's request log. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>]; otherwise it is
  * skipped. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
@@ -510,6 +511,54 @@
     log(`bundle ${file.size} bytes up and down, manifest ${opened.manifest.name}`);
     return `${file.size} bytes`;
   }, 120000);
+
+  test('opencde live IV: the CDE log holds the run, and the server echoes X-Request-Id', async (assert) => {
+    const cdeLog = D.require('api/cde-log');
+    const entries = cdeLog.list(shared.connector.id);
+    assert.ok(entries.length >= 20, 'entries: ' + entries.length);
+    const apis = new Set(entries.map((e) => e.api));
+    assert.ok(apis.has('foundation') && apis.has('bcf') && apis.has('documents'), Array.from(apis).join(','));
+    const withId = entries.filter((e) => e.requestId);
+    assert.ok(withId.length >= 10, 'ids sent: ' + withId.length);
+    const echoed = withId.filter((e) => e.responseHeaders && e.responseHeaders['x-request-id'] === e.requestId);
+    const failed = entries.filter((e) => e.ok === false || e.error).length;
+    log(`cde log: ${entries.length} entries, ${withId.length} with X-Request-Id, ${echoed.length} echoed by the server, ${failed} failed, ${Math.round(entries.reduce((a, e) => a + (e.ms || 0), 0) / entries.length)} ms on average`);
+    assert.ok(echoed.length >= 1, 'the server echoes the id');
+    const unknown = Array.from(new Set(entries.filter((e) => e.api === 'other').map((e) => e.path)));
+    log(`unclassified paths: ${unknown.length ? unknown.join(', ') : 'none'}`);
+    const token = secrets.get(shared.connector.id).token;
+    assert.ok(!entries.some((e) => JSON.stringify(e).includes(token)), 'no token in the log');
+    shared.logEntries = entries.length;
+    return `${entries.length} entries, ${echoed.length} echoed`;
+  }, 30000);
+
+  test('opencde live IV: the server log holds the same requests (admin scope through a second helper)', async (assert) => {
+    const params = new URLSearchParams(location.search);
+    const adminHelper = params.get('cdeadminhelper');
+    if (!adminHelper) return 'skipped: no cdeadminhelper';
+    const cdeLog = D.require('api/cde-log');
+    const mine = cdeLog.list(shared.connector.id).filter((e) => e.requestId).slice(-30).map((e) => e.requestId);
+    const admin = (await families.createConnector('opencde', { baseUrl: BASE, clientId: CLIENT, clientSecret: '' })).connector;
+    admin.auth.scope = 'profile bcf documents admin';
+    await connectors.save(admin);
+    const adminPopup = async (url) => { const r = await fetch(adminHelper + '/authorize?url=' + encodeURIComponent(url)); const j = await r.json(); if (!r.ok) throw new Error(j.error || String(r.status)); return j.callback; };
+    try {
+      const creds = await opencde.login(admin, { popup: adminPopup, redirectUri: REDIRECT });
+      assert.ok(/admin/.test(creds.scope || 'admin'), 'scope: ' + creds.scope);
+      const page = await opencde.api(admin, `/admin/api/requests?client_id=${encodeURIComponent(CLIENT)}&limit=1000`);
+      const ids = new Set((page.requests || []).map((r) => r.request_id));
+      const matched = mine.filter((id) => ids.has(id));
+      log(`server log: ${(page.requests || []).length} rows for the client (retention ${page.retention_hours} h), ${matched.length} of the app's last ${mine.length} ids found`);
+      assert.ok(matched.length >= Math.min(5, mine.length), 'the server logged the app ids');
+      await opencde.logout(admin).catch(() => {});
+    } finally {
+      await connectors.remove(admin.id).catch(() => {});
+      // The two connectors share the record: put the suite's own back and sign in again as the ordinary user.
+      await connectors.save(shared.connector);
+      await opencde.login(shared.connector, { popup, redirectUri: REDIRECT });
+    }
+    return 'ok';
+  }, 90000);
 
   test('opencde live: cleanup', async (assert) => {
     for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));

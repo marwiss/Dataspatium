@@ -553,6 +553,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 Granskningen 2.31 samlade kopior till gemensamma hjälpare: `api/families/common` (getJson, postJson med valbar content-type, maxCells) för PxWeb, Statistikbanken, FHI och Socialstyrelsen; `ui/basic.select` för alla paneler; `platform/files.blobToDataUrl`; `platform/text.escapeHtml` för BCF-XML, webbplatsen, visarna och dashboards. `i18n.t` tar singularformen `nyckel.one` när `n` är exakt 1. Tokens: `--dm-qr-bg` för QR-koder.
 
+`api/cde-log` (2.32) är CDE-loggen: en ringbuffert i minnet (500 poster) där `begin(connector, req, extra)` startar en post och returnerar funktionen som avslutar den med svaret; posten klassificeras till API och operation ur sökvägen (`classify`), rubriker maskas (`redactHeaders`), kroppar sparas bara när användaren slagit på det och aldrig för token-anrop, och X-Request-Id sätts på begäran när källan tillåter (`connector.requestId !== false`). `api/families/opencde.send()` är den enda vägen till `http.request` i familjen, med ett omförsök utan rubriken när servern nekar den (nätfel) och `requestId: false` sparat på källan. `ui/api/cde-log-card` visar loggen i källans vy (sammanfattning, tabell, detalj med förklaring `cdelog.op.<api>.<operation>` och specifikationslänk, curl, JSON, datamängd). Inställningen för kroppar ligger i localStorage (`dataspatium.cdelog.bodies`).
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

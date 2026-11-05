@@ -141,6 +141,15 @@ keyrðu. Það krefst þess að sá sem rekur þjóninn hafi gert Bolt aðgengil
 Vinnusvæðispakki getur einnig farið í gegnum þjóninn: flipinn *Til CDE* sendir hann sem skjal, og kortið með skrám verkefnisins sýnir
 hnappinn *Taka á móti* fyrir pakkaskrár, sem tekur á móti pakkanum alveg eins og þegar skránni er sleppt í Sækja.
 
+Kortið *Skrá* neðst í sýn uppsprettunnar sýnir allt sem forritið hefur sent þjóninum í lotunni: tíma, aðferð, API (Foundation,
+BCF eða Documents) og aðgerð samkvæmt forskriftinni, stöðu og tíma. Smellur á línu sýnir hausana (tókar og vefkökur faldar),
+skýringu á því hvað aðgerðin gerir með tengli á forskriftina, og hnappinn *Afrita sem curl*. Kveiktu á *Vista innihald* til að sjá
+einnig innihald beiðni og svars (texti, mest 64 kB; aldrei tókakall). Skráin er aðeins í minni og er aldrei send; hana má vista sem
+JSON eða sem gagnasafn. Forritið setur hausinn X-Request-Id á hvert kall svo að eigin skrá þjónsins megi para við skrá forritsins;
+hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
+
+Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

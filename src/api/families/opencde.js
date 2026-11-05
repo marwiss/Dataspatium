@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors'], (databases, http, secrets, consent, connectors) => {
+  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors', 'api/cde-log'], (databases, http, secrets, consent, connectors, cdeLog) => {
     const t = (k, p) => D.t(k, p);
     const SCOPES = 'profile bcf documents';
     const CALLBACK_PAGE = 'oauth-callback.html';
@@ -55,7 +55,7 @@
 
     // ---------------------------------------------------------------------------- discovery
     async function getJson(url, headers) {
-      const res = await http.request({ url, method: 'GET', headers: Object.assign({ Accept: 'application/json' }, headers || {}), retries: 1 });
+      const res = await send(null, { url, method: 'GET', headers: Object.assign({ Accept: 'application/json' }, headers || {}), retries: 1 });
       if (!res.ok) throw http.httpError(res, hostOf(url));
       try { return JSON.parse(res.text); } catch (_e) { throw new http.ApiError(t('api.err.json', { text: String(res.text || '').slice(0, 120) }), { kind: 'parse', url }); }
     }
@@ -114,7 +114,7 @@
       const params = new URLSearchParams(body);
       if (creds.clientSecret) headers.Authorization = 'Basic ' + btoa(`${auth.clientId}:${creds.clientSecret}`);
       else params.set('client_id', auth.clientId);
-      const res = await http.request({ url: auth.tokenUrl, method: 'POST', headers, body: params.toString(), retries: 0, rateKey: connector.id });
+      const res = await send(connector, { url: auth.tokenUrl, method: 'POST', headers, body: params.toString(), retries: 0, rateKey: connector.id }, { kind: 'token' });
       if (!res.ok) throw new http.ApiError(t('opencde.err.token', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 200) }), { kind: 'auth', status: res.status });
       const data = JSON.parse(res.text);
       const ttl = Number(data.expires_in) > 0 ? Number(data.expires_in) * 1000 : 3600000;
@@ -172,12 +172,32 @@
         const params = new URLSearchParams({ token: creds.refreshToken, token_type_hint: 'refresh_token' });
         const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
         if (creds.clientSecret) headers.Authorization = 'Basic ' + btoa(`${auth.clientId}:${creds.clientSecret}`); else params.set('client_id', auth.clientId);
-        try { await http.request({ url: auth.revocationUrl, method: 'POST', headers, body: params.toString(), retries: 0, rateKey: connector.id }); } catch (_e) { /* best effort */ }
+        try { await send(connector, { url: auth.revocationUrl, method: 'POST', headers, body: params.toString(), retries: 0, rateKey: connector.id }, { kind: 'token' }); } catch (_e) { /* best effort */ }
       }
       secrets.set(connector.id, creds && creds.clientSecret ? { clientSecret: creds.clientSecret } : {});
     }
 
     // ---------------------------------------------------------------------------- API calls
+    /**
+     * Every request to a server goes through here, so the CDE log sees it. A saved connector sends X-Request-Id unless it has been
+     * turned off; a server whose CORS refuses the header makes the request fail before it leaves, so one retry goes without the
+     * header and the connector remembers (`requestId: false`).
+     * @param {any} connector the connector, or null before one exists @param {any} req @param {{kind?: string}} [extra]
+     */
+    async function send(connector, req, extra) {
+      const done = cdeLog.begin(connector, req, extra);
+      try { const res = await http.request(req); done(res); return res; } catch (err) {
+        done(null, err);
+        if (connector && connector.id && req.headers && req.headers['X-Request-Id'] && err && err.kind === 'network') {
+          delete req.headers['X-Request-Id'];
+          connector.requestId = false;
+          try { await connectors.save(connector); } catch (_e) { /* the copy in memory is enough for this session */ }
+          const again = cdeLog.begin(connector, req, extra);
+          try { const res = await http.request(req); again(res); return res; } catch (err2) { again(null, err2); throw err2; }
+        }
+        throw err;
+      }
+    }
     /** GET or POST JSON with the bearer token; absolute addresses (links the server hands out) are used as they are. */
     async function api(connector, path, options = {}) {
       const token = await ensureToken(connector);
@@ -186,7 +206,7 @@
       const req = { url, method: options.method || 'GET', headers, signal: options.signal, retries: 1, rateKey: connector.id, responseType: options.responseType, notModifiedOk: !!options.notModifiedOk };
       if (options.json !== undefined) { headers['Content-Type'] = 'application/json'; req.body = JSON.stringify(options.json); }
       else if (options.body !== undefined) req.body = options.body;
-      const res = await http.request(req);
+      const res = await send(connector, req, { kind: options.responseType === 'arraybuffer' ? 'binary' : 'json' });
       if (!res.ok) {
         let message = '';
         try { message = JSON.parse(res.text).message || ''; } catch (_e) { /* not JSON */ }
@@ -201,7 +221,7 @@
     async function binary(connector, path, accept) {
       const token = await ensureToken(connector);
       const url = /^[a-z][a-z0-9+.-]*:/i.test(path) ? path : trimUrl(connector.baseUrl) + path;
-      const res = await http.request({ url, method: 'GET', headers: { Authorization: 'Bearer ' + token, Accept: accept || '*/*' }, retries: 1, rateKey: connector.id, responseType: 'arraybuffer' });
+      const res = await send(connector, { url, method: 'GET', headers: { Authorization: 'Bearer ' + token, Accept: accept || '*/*' }, retries: 1, rateKey: connector.id, responseType: 'arraybuffer' }, { kind: 'binary' });
       if (!res.ok) throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}`, { kind: 'http', status: res.status, url });
       return { buffer: res.buffer, contentType: (res.contentType || '').split(';')[0].trim() };
     }
@@ -382,7 +402,7 @@
         const headers = { 'Content-Type': 'application/octet-stream' };
         for (const hv of ((part.additional_headers || {}).values || [])) headers[hv.name] = hv.value;
         if (part.include_authorization !== false) headers.Authorization = 'Bearer ' + token;
-        const res = await http.request({ url: part.url, method: part.http_method || 'PUT', headers, body: chunk, retries: 1, rateKey: connector.id, timeoutMs: 600000 });
+        const res = await send(connector, { url: part.url, method: part.http_method || 'PUT', headers, body: chunk, retries: 1, rateKey: connector.id, timeoutMs: 600000 }, { kind: 'part' });
         if (!res.ok) throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}`, { kind: 'http', status: res.status, url: part.url });
         done += (end - start + 1);
         if (options.onProgress) options.onProgress({ done: Math.min(done, file.size), total: file.size });
@@ -398,7 +418,7 @@
       const found = await discover(baseUrl);
       if (!found.registrationUrl) throw new Error(t('opencde.err.noregistration'));
       const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
-      const res = await http.request({ url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
+      const res = await send(null, { url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
       if (!res.ok) throw new http.ApiError(t('opencde.err.registration', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 160) }), { kind: 'http', status: res.status });
       const data = JSON.parse(res.text);
       return { clientId: data.client_id, clientSecret: data.client_secret || '', found };

@@ -140,6 +140,15 @@ gör det sällan.
 Ett arbetsytepaket kan också gå genom servern: fliken *Till CDE* skickar det som dokument, och kortet med projektets filer visar
 knappen *Ta emot* för paketfiler, som tar emot paketet precis som när filen släpps i Inhämta.
 
+Kortet *Logg* längst ned i källans vy visar allt appen skickat till servern under sessionen: tid, metod, API (Foundation,
+BCF eller Documents) och operation enligt specifikationen, status och tid. Ett klick på en rad visar rubrikerna (tokens och kakor
+dolda), en förklaring av vad operationen gör med länk till specifikationen, och knappen *Kopiera som curl*. Slå på *Spara kroppar*
+för att även se begärans och svarets innehåll (text, högst 64 kB; aldrig token-anrop). Loggen finns bara i minnet och skickas
+aldrig; den kan sparas som JSON eller som en datamängd. Appen sätter rubriken X-Request-Id på varje anrop så att serverns egen
+logg kan paras ihop med appens; nekar en server rubriken stängs den av för den källan.
+
+Serverns sida beskrivs i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hur en klient ansluter), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets provkörningar) och [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (utvecklingsstacken och hur appen provas mot den).
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

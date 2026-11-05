@@ -116,6 +116,7 @@ paketilla.
 - **Kontroll CDE:nä, osa 1**: hae malleja ja asiakirjoja OpenCDE-palvelimen projektista, näe milloin uudempi versio on olemassa, ja näe asiat, jotka osoittavat mallin rakennusosiin.
 - **Kontroll CDE:nä, osa 2**: luo asioita mallin valinnasta näkymällä viewpointina, kommentoi ja vaihda tila, lähetä aineistoja ja tiedostoja palvelimelle, BCF-tiedostot sisään ja ulos, ja itserekisteröinti palvelimille, jotka sallivat sen.
 - **Kontroll CDE:nä, osa 3**: väritä malli asian tilan mukaan, tallenna asiat taulukkona rakennusosineen, työkalu Asiat, koontinäyttö Asioiden tila, Cypher-aloituskoodi Kontrollin IFC-graafille ja työtilapaketit palvelimen kautta.
+- **CDE-kutsujen loki**: OpenCDE-lähteen kortti Loki näyttää jokaisen kutsun API:n, toiminnon, tilan ja keston kanssa, selittää toiminnon ja kopioi sen curl-komentona; X-Request-Id yhdistetään palvelimen lokiin.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
@@ -141,6 +142,18 @@ paketilla.
   englanniksi.
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla kuudella kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
+
+## Dataspatium ja Kontroll
+
+Dataspatium (selaimessa toimiva sovellus) ja [Kontroll](https://github.com/marwiss/Kontroll) (palvelin buildingSMARTin OpenCDE-rajapinnoille Foundation, BCF
+ja Documents) on kehitetty toimimaan yhdessä asiakkaana ja palvelimena. Sovellus lisää palvelimen lähteeksi Nouda-tilassa, kirjautuu
+OAuth2:lla ja rekisteröi itsensä asiakkaaksi, kun palvelin sallii sen, noutaa projektin mallit ja asiakirjat, lukee ja kirjoittaa
+asioita viewpointeineen 3D-näkymästä, lähettää aineistoja, tiedostoja ja työtilapaketteja takaisin Documents API:n kautta, kyselee
+palvelimen IFC-graafia Cypherillä ja kirjaa jokaisen kutsun samalla X-Request-Id-tunnisteella, jonka palvelin kirjoittaa omaan
+pyyntölokiinsa. Graafikyselyt ja hallinta ovat määrittelyjen ulkopuolisia lisäyksiä; kaikki muu kulkee kolmen OpenCDE-rajapinnan kautta, joten
+myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin osiin: ilman palvelinta kaikki muu toimii kuten ennen. Kontrollin README ja
+`docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
+[cad-bim.md](cad-bim.md).
 
 ## Lue lisää
 

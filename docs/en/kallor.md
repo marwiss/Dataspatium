@@ -145,6 +145,15 @@ seldom does.
 A workspace bundle can also go through the server: the tab *To the CDE* sends it as a document, and the card with the project's
 files shows the button *Receive* for bundle files, which receives the bundle exactly as when the file is dropped in Import.
 
+The card *Log* at the bottom of the source's view shows everything the app has sent to the server during the session: time,
+method, API (Foundation, BCF or Documents) and operation of the specification, status and duration. A click on a row shows the
+headers (tokens and cookies masked), an explanation of what the operation does with a link to the specification, and the button
+*Copy as curl*. Turn on *Keep bodies* to also see the request and response bodies (text, at most 64 kB; never token requests). The log
+lives in memory only and is never sent; it can be saved as JSON or as a dataset. The app sets the header X-Request-Id on every request
+so that the server's own log can be matched with the app's; if a server refuses the header, it is turned off for that source.
+
+The server's side is described in Kontroll's documentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (how a client connects), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (the pair's test runs) and [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (the development stack and how the app is tested against it).
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

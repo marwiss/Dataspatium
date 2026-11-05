@@ -240,6 +240,13 @@ Process. In Visualise the chart kind *Map* makes map views with several layers a
 publishing, and in Analyse the tab *Geo* computes area, points in areas, nearest, buffers and overlays without code.
 QGIS projects can be dropped in Import. Background maps are fetched only after your consent. See [kartor.md](kartor.md).
 
+## How do I see what the app sends to an OpenCDE server?
+
+Open the source in Import and unfold the card *Log* at the bottom. Every request is there with API, operation, status and duration,
+and a click shows headers, an explanation and a curl line to copy. The log lives in memory during the session and never leaves the
+computer unless you save it as JSON or a dataset yourself. See [kallor.md](kallor.md).
+
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

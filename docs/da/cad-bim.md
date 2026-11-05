@@ -47,6 +47,8 @@ med status, type, ansvarlig, prioritet og måned bag fælles filtre, og knappen 
 eller etage fra en sådan tabel, og SQL-startkoden får forespørgsler til koblingen. *Gem som diagram* gemmer visningen med farverne
 som et modeldiagram, som dashboards, dokumenter og Publicér viser med signaturforklaring.
 
+Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+
 ## Tabellerne
 
 | Tabel | Indhold |

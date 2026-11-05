@@ -147,6 +147,16 @@ muokkaa ja aja. Se edellyttää, että palvelimen ylläpitäjä on avannut Bolti
 Työtilapaketti voi myös kulkea palvelimen kautta: välilehti *CDE:hen* lähettää sen asiakirjana, ja projektin tiedostojen kortti
 näyttää pakettitiedostoille painikkeen *Vastaanota*, joka ottaa paketin vastaan aivan kuin tiedosto pudotettaisiin Nouda-tilaan.
 
+Lähteen näkymän alareunan kortti *Loki* näyttää kaiken, mitä sovellus on lähettänyt palvelimelle istunnon aikana: ajan,
+menetelmän, API:n (Foundation, BCF tai Documents) ja määrittelyn mukaisen toiminnon, tilan ja keston. Rivin napsautus näyttää
+otsakkeet (tunnukset ja evästeet peitettyinä), selityksen siitä, mitä toiminto tekee, linkin määrittelyyn ja painikkeen *Kopioi
+curl-komentona*. Kytke *Tallenna sisällöt* päälle nähdäksesi myös pyynnön ja vastauksen sisällön (teksti, enintään 64 kt; ei
+koskaan tunnuskutsuja). Loki on vain muistissa eikä sitä lähetetä koskaan; sen voi tallentaa JSON-tiedostona tai aineistona.
+Sovellus asettaa jokaiseen kutsuun otsakkeen X-Request-Id, jotta palvelimen oma loki voidaan yhdistää sovelluksen lokiin; jos
+palvelin kieltää otsakkeen, se poistetaan käytöstä kyseiseltä lähteeltä.
+
+Palvelimen puoli kuvataan Kontrollin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (miten asiakas yhdistää), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parin testiajot) ja [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

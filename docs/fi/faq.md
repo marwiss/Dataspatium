@@ -240,6 +240,13 @@ taustakarttoineen koontinäyttöihin ja julkaisuun, ja Analysoi-tilassa välileh
 alueissa, lähimmän, puskurit ja päällekkäisyydet ilman koodia. QGIS-projekteja voi pudottaa Nouda-tilaan. Taustakartat
 noudetaan vain suostumuksesi jälkeen. Katso [kartor.md](kartor.md).
 
+## Miten näen, mitä sovellus lähettää OpenCDE-palvelimelle?
+
+Avaa lähde Nouda-tilassa ja avaa alareunan kortti *Loki*. Siinä on jokainen kutsu API:n, toiminnon, tilan ja keston kanssa, ja
+napsautus näyttää otsakkeet, selityksen ja kopioitavan curl-rivin. Loki on vain muistissa istunnon ajan eikä poistu koneelta,
+ellet itse tallenna sitä JSON-tiedostona tai aineistona. Katso [kallor.md](kallor.md).
+
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

@@ -233,6 +233,13 @@ Bearbeid. I Visualiser lager diagramtypen *Kart* kartvisninger med flere lag og 
 publisering, og i Analyser regner fanen *Geo* areal, punkter i områder, nærmeste, buffer og overlagring uten kode.
 QGIS-prosjekter kan slippes i Hent. Bakgrunnskart hentes bare etter ditt samtykke. Se [kartor.md](kartor.md).
 
+## Hvordan ser jeg hva appen sender til en OpenCDE-server?
+
+Åpne kilden i Hent og fold ut kortet *Logg* nederst. Der står hvert kall med API, operasjon, status og tid, og et klikk viser
+headere, en forklaring og en curl-linje å kopiere. Loggen finnes bare i minnet under sesjonen og forlater aldri datamaskinen med
+mindre du selv lagrer den som JSON eller datasett. Se [kallor.md](kallor.md).
+
+
 ## Finner du ikke svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

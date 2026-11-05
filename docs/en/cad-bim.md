@@ -48,6 +48,8 @@ panel. The tool *Issues* in the Quantities tab of Analyse counts issues, open is
 assignee, element type or storey from such a table, and the SQL starters get queries for the join. *Save as chart* saves the view
 with its colours as a model chart, which dashboards, documents and Publish show with a legend.
 
+The graph's model, relations and the queries from Dataspatium's side are in Kontroll's [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+
 ## The tables
 
 | Table | Contents |

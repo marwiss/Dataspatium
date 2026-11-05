@@ -47,6 +47,8 @@ status, type, ansvarlig, prioritet og måned bak felles filtre, og knappen *Vis 
 eller etasje fra en slik tabell, og SQL-startkoden får spørringer for koblingen. *Lagre som diagram* lagrer visningen med fargene
 som et modelldiagram, som dashbord, dokumenter og Publiser viser med tegnforklaring.
 
+Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+
 ## Tabellene
 
 | Tabell | Innhold |

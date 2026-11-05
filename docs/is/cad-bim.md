@@ -46,6 +46,8 @@ nafn og hæð fylgja með), sem Umsjón þekkir sem mál: kortið *Mál* sýnir 
 byggingarhluta eða hæð úr slíkri töflu, og SQL-upphafskóðinn fær fyrirspurnir fyrir tengingina. *Vista sem rit* vistar sýnina með
 litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
+Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md) hjá Kontroll.
+
 ## Töflurnar
 
 | Tafla | Innihald |

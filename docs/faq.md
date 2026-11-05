@@ -238,6 +238,13 @@ i Bearbeta. I Visualisera gör diagramslaget *Karta* kartvyer med flera lager oc
 publicering, och i Analysera räknar fliken *Geo* area, punkter i områden, närmaste, buffert och överlagring utan kod.
 QGIS-projekt kan släppas i Inhämta. Bakgrundskartor hämtas bara efter ditt samtycke. Se [kartor.md](kartor.md).
 
+## Hur ser jag vad appen skickar till en OpenCDE-server?
+
+Öppna källan i Inhämta och fäll ut kortet *Logg* längst ned. Där står varje anrop med API, operation, status och tid, och ett klick
+visar rubriker, en förklaring och en curl-rad att kopiera. Loggen finns bara i minnet under sessionen och lämnar aldrig datorn om du
+inte själv sparar den som JSON eller datamängd. Se [kallor.md](kallor.md).
+
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

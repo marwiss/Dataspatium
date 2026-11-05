@@ -109,6 +109,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Kontroll sem CDE, 1. hluti**: sæktu líkön og skjöl úr verkefni OpenCDE-þjóns, sjáðu hvenær nýrri útgáfa er til, og sjáðu málin sem vísa á byggingarhluta líkansins.
 - **Kontroll sem CDE, 2. hluti**: búðu til mál úr merkingunni í líkaninu með sýnina sem viewpoint, skrifaðu athugasemdir og breyttu stöðu, sendu gagnasöfn og skrár til þjónsins, BCF-skrár inn og út, og sjálfskráning gegn þjónum sem leyfa það.
 - **Kontroll sem CDE, 3. hluti**: litaðu líkanið eftir stöðu mála, vistaðu málin sem töflu með byggingarhlutunum, verkfærið Mál, mælaborðið Staða mála, upphafskóði fyrir Cypher gegn IFC-grafi Kontroll og vinnusvæðispakkar í gegnum þjóninn.
+- **Skráning CDE-kalla**: kortið Skrá í OpenCDE-uppsprettunni sýnir hvert kall með API, aðgerð, stöðu og tíma, skýrir aðgerðina og afritar hana sem curl; X-Request-Id er parað við skrá þjónsins.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).
@@ -133,6 +134,16 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
+
+## Dataspatium og Kontroll
+
+Dataspatium (forritið í vafranum) og [Kontroll](https://github.com/marwiss/Kontroll) (þjónn fyrir OpenCDE-API buildingSMART: Foundation, BCF og Documents)
+eru þróuð til að vinna saman sem biðlari og þjónn. Forritið bætir þjóninum við sem uppsprettu í Sækja, skráir sig inn með OAuth2 og
+skráir sig sjálft sem biðlara þegar þjónninn leyfir það, sækir líkön og skjöl verkefnisins, les og skrifar mál með viewpoints úr
+3D-sýninni, sendir gagnasöfn, skrár og vinnusvæðispakka aftur í gegnum Documents API, spyr IFC-graf þjónsins með Cypher og skráir
+hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. Fyrirspurnirnar í grafið og stjórnunin eru viðbætur utan forskriftanna; allt annað fer í gegnum þrjú OpenCDE-API, svo aðrir
+OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
+[kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 ## Lærðu meira
 

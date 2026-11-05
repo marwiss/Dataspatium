@@ -144,6 +144,15 @@ produktionsserver gør det sjældent.
 En arbejdsområdepakke kan også gå gennem serveren: fanen *Til CDE* sender den som dokument, og kortet med projektets filer viser
 knappen *Modtag* for pakkefiler, som modtager pakken præcis som når filen slippes i Hent.
 
+Kortet *Log* nederst i kildens visning viser alt, appen har sendt til serveren i sessionen: tid, metode, API (Foundation, BCF
+eller Documents) og operation ifølge specifikationen, status og tid. Et klik på en række viser headerne (tokens og cookies skjult),
+en forklaring af, hvad operationen gør, med link til specifikationen, og knappen *Kopiér som curl*. Slå *Gem indhold* til for også
+at se forespørgslens og svarets indhold (tekst, højst 64 kB; aldrig token-kald). Loggen findes kun i hukommelsen og sendes aldrig;
+den kan gemmes som JSON eller som et datasæt. Appen sætter headeren X-Request-Id på hvert kald, så serverens egen log kan parres
+med appens; afviser en server headeren, slås den fra for den kilde.
+
+Serverens side beskrives i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvordan en klient forbinder), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parrets testkørsler) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (udviklingsstakken og hvordan appen testes mod den).
+
 ## Åbne geodata
 
 Dialogen *Tilføj geodatakilde* begynder med en liste over **færdige geodatakilder**: åbne WFS-, OGC API Features- og

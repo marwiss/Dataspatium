@@ -519,3 +519,9 @@ body.dm-presenting { overflow: hidden; }
 .dm-model-issues-legend { list-style: none; margin: 0; padding: 0; gap: var(--dm-space-3); }
 .dm-model-issues-legend li { display: inline-flex; align-items: center; gap: var(--dm-space-1); }
 .dm-legend-swatch { display: inline-block; width: 0.8em; height: 0.8em; border-radius: var(--dm-radius-sm); border: 1px solid var(--dm-border); }
+
+/* The CDE log card: narrow columns, wrapped bodies with a ceiling. */
+.dm-cde-log-table td.dm-num { text-align: right; font-variant-numeric: tabular-nums; }
+.dm-cde-log-table tr[data-cde-log-row] { cursor: pointer; }
+.dm-cde-log-table tr.dm-selected td { background: var(--dm-accent-soft); }
+.dm-cde-log-pre { white-space: pre-wrap; word-break: break-all; max-height: 16em; overflow: auto; margin: 0; }

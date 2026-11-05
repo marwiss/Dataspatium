@@ -186,6 +186,10 @@ steget som *Gör det åt mig*.
   landmärken, länken *Hoppa till innehållet*, tangentbordsnavigering i flikar och att designtokens klarar WCAG AA:
   4,5:1 för text och 3:1 för kanter på fält och växlar, i både ljust och mörkt tema.
 
+## Prov mot Kontroll
+
+Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).
+
 ## Felsökning
 - Loggar från den senaste testkörningen ligger i `%TEMP%\dm-tests-<kod>\` (`edge.log`, `firefox.log`, `firefox.err`).
 - `index.html?debug=1` slår på `Dataspatium.log(...)`-utskrifter i webbläsarkonsolen.

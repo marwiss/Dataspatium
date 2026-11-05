@@ -112,6 +112,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Kontroll som CDE, del 1**: hent modeller og dokumenter fra en OpenCDE-servers projekt, se, når en nyere version findes, og se de sager, der peger på bygningsdelene i modellen.
 - **Kontroll som CDE, del 2**: opret sager fra markeringen i modellen med visningen som viewpoint, kommentér og skift status, send datasæt og filer til serveren, BCF-filer ind og ud, og selvregistrering mod servere, der tillader det.
 - **Kontroll som CDE, del 3**: farv modellen efter sagsstatus, gem sagerne som tabel med bygningsdelene, værktøjet Sager, dashboardet Sagsstatus, startkode til Cypher mod Kontrolls IFC-graf og arbejdsområdepakker gennem serveren.
+- **Logning af CDE-kald**: kortet Log i OpenCDE-kilden viser hvert kald med API, operation, status og tid, forklarer operationen og kopierer den som curl; X-Request-Id parres med serverens log.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
@@ -137,6 +138,17 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   engelsk.
 - **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle seks sprog. Det vises første
   gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
+
+## Dataspatium og Kontroll
+
+Dataspatium (appen i browseren) og [Kontroll](https://github.com/marwiss/Kontroll) (en server til buildingSMARTs OpenCDE-API'er Foundation, BCF og
+Documents) er udviklet til at fungere sammen som klient og server. Appen tilføjer serveren som kilde i Hent, logger ind med OAuth2 og
+registrerer sig selv som klient, når serveren tillader det, henter projektets modeller og dokumenter, læser og skriver sager med
+viewpoints fra 3D-visningen, sender datasæt, filer og arbejdsområdepakker tilbage gennem Documents API, spørger serverens IFC-graf
+med Cypher og logger hvert kald med samme X-Request-Id, som serveren skriver i sin forespørgselslog. Forespørgslerne mod grafen og administrationen er tilføjelser uden for specifikationerne; alt andet går gennem de tre
+OpenCDE-API'er, så andre OpenCDE-klienter fungerer også. Serveren er ikke nødvendig for resten af appen: uden server fungerer alt
+andet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbejdet fra
+serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 ## Lær mere
 

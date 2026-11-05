@@ -48,6 +48,8 @@ rakennusosat tilan, tyypin, prioriteetin, vastuuhenkilön, rakennusosatyypin tai
 SQL-aloituskoodi saa kyselyt liitokselle. *Tallenna kaaviona* tallentaa näkymän väreineen mallikaaviona, jonka koontinäytöt,
 asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
+Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+
 ## Taulukot
 
 | Taulukko | Sisältö |
