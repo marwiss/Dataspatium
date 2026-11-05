@@ -49,6 +49,8 @@ on vähintään, on pienempi kuin, on enintään, sisältää, alkaa, on jokin, 
 *Tallenna listaksi* tallentaa kyselyn Listat-välilehdelle, jossa se suoritetaan uudelleen tämän päivän datalla, ja
 *Tallenna aineistoksi* tekee tuloksesta uuden aineiston tuloksen sarakkeilla.
 
+**Ehdot lajin mukaan.** Mallilta voi kysyä ominaisuutta, esimerkiksi seiniä, joiden paloluokka on EI60. Graafilta voi kysyä solmun naapureita ja solmuja muutaman askeleen päässä, kun solmu annetaan tunnuksella tai nimellä. Paikkoja sisältävältä aineistolta voi kysyä paikkaa. Ehtoja voi yhdistää tavallisiin ehtoihin, ja kyselyn voi tallentaa listaksi tai muuttaa aineistoksi.
+
 ## Listat
 
 Lista on aineistoon tallennettu haku: teksti, rajaukset ja osumien määrä, kun se viimeksi suoritettiin. *Suorita*

@@ -223,6 +223,25 @@
           ui.icon('file-text', 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: sc.name }), h('span', { class: 'dm-list-sub', text: i18n.formatDateTime(sc.updatedAt) }))))));
       }
 
+      /** Code to start from for the chosen dataset, inserted where the cursor is. */
+      function starterPicker(lang) {
+        const el = /** @type {any} */ (h('dm-select', { 'aria-label': t('starter.title'), inline: true }));
+        const ds = selectedDataset();
+        el.options = [{ value: '', label: t('starter.title') }];
+        if (!ds) return el;
+        let pieces = [];
+        D.require('analysis/starters').forDataset(ds, lang).then((list) => {
+          pieces = list;
+          el.options = [{ value: '', label: t('starter.title') }].concat(list.map((p, i) => ({ value: String(i), label: t(p.key) })));
+          el.value = '';
+        }).catch((err) => D.log('starters', err));
+        el.addEventListener('change', () => {
+          const piece = pieces[Number(el.value)];
+          if (el.value !== '' && piece) insertCode(lang, piece.code);
+          el.value = '';
+        });
+        return el;
+      }
       function insertCode(lang, code) { const v = st[lang]; if (v.editor) v.editor.insert(code); }
 
       function newScript(lang) {
@@ -311,6 +330,7 @@
             v.runBtn,
             v.startBtn,
             v.stopBtn,
+            starterPicker(lang),
             ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript(lang) }),
             v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript(lang) }) : null,
             ui.button({ label: t('analysera.clear'), icon: 'x', variant: 'ghost', onClick: () => clearOutput(lang) }),
@@ -432,6 +452,7 @@
           h('div', { class: 'dm-row' },
             sqlRunBtn,
             sqlTarget,
+            starterPicker('sql'),
             ui.button({ label: t('analysera.save'), icon: 'save', onClick: () => saveScript('sql') }),
             v.current.id ? ui.button({ label: t('common.delete'), icon: 'trash-2', variant: 'ghost', 'icon-only': true, onClick: () => deleteScript('sql') }) : null,
             sqlSaveBtn));
@@ -497,6 +518,21 @@
           shell.log(text, 'ok');
           return { message: text };
         }
+      }
+      /** The tables beside `data`, which a click writes a question about. */
+      async function sideTables(ds) {
+        const names = D.require('data/kinds').of(ds).sideTables || [];
+        if (!names.length) return null;
+        const engine = (await services.datasets.ensureOpen(ds.id)).engine;
+        const rows = [];
+        for (const name of names) {
+          const known = await engine.exec("select count(*) from sqlite_master where type = 'table' and name = ?", [name]);
+          if (!known[0] || !Number(known[0].values[0][0])) continue;
+          const cols = await engine.exec(`pragma table_info(${name})`);
+          rows.push(h('button', { type: 'button', class: 'dm-list-item', title: t('sql.sidetable.hint'), onclick: () => insertCode('sql', `select * from ${name} limit 50`) },
+            ui.icon('table', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: name }), h('span', { class: 'dm-list-sub dm-truncate', text: (cols[0] ? cols[0].values : []).map((r) => r[1]).join(', ') }))));
+        }
+        return rows.length ? h('div', { class: 'dm-stack-sm' }, h('h4', { text: t('sql.sidetables') }), h('div', { class: 'dm-list' }, rows)) : null;
       }
       function renderSqlResult() {
         if (!sqlOut) return;
@@ -581,6 +617,7 @@
             ds ? h('div', { class: 'dm-list' }, cols.map((c) => h('button', { type: 'button', class: 'dm-list-item', onclick: () => insertCode('sql', quote(c.name)) },
               ui.icon('columns-3', 14), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub', text: t('type.' + c.type) })))))
               : h('p', { class: 'dm-help', text: t('sql.no.dataset') }),
+            ds ? await sideTables(ds) : null,
             h('h4', { text: t('sql.shortnames') }),
             h('p', { class: 'dm-help', text: t('sql.shortnames.hint') }),
             h('div', { class: 'dm-list' }, all.map((d) => h('button', { type: 'button', class: 'dm-list-item', 'aria-current': ds && d.id === ds.id ? 'true' : null, title: d.name, onclick: () => insertCode('sql', d.shortName || '') },

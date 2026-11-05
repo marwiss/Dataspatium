@@ -181,6 +181,12 @@ eller mätta på geometrin).
 
 Analysera öppnar i det verktyg som passar datamängden: Text för dokument, Bilder för bildsamlingar, Graf för grafer, Mängder för modeller, Plan för planer, Geo för tabeller med platser och annars Statistik. När du själv väljer en flik stannar du där. R startar först när du öppnar fliken R.
 
+**Kod att börja från.** I R, Python och SQL finns en lista med kod skriven för den valda datamängden: en grafs kanter, en modells mängder, bilder per månad, summa per period eller platserna som punkter. Valet klistrar in koden där markören står. En ny anteckningsbok börjar på samma sätt. I SQL visas sidotabellerna med sina kolumner, och ett klick skriver en fråga om tabellen.
+
+**Trend.** Statistik har verktyget *Trend*, som ger ett värde per period och en rät linje genom dem och säger hur mycket värdet ändras per period. En datamängd som är en tidsserie öppnar där.
+
+**Räkna per område.** Under Geo räknar *Punkter i områden* platser per område, med yta och antal per kvadratkilometer. Platserna kan vara bilder med position, och områdena kan vara en plan, en tabell med ytor eller de kommun- och länsgränser som följer med appen.
+
 ## Visualisera
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,

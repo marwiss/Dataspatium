@@ -181,6 +181,12 @@ the file or measured on the geometry).
 
 Analyse opens in the tool that fits the dataset: Text for documents, Pictures for image collections, Graph for graphs, Quantities for models, Plan for plans, Geo for tables with places and otherwise Statistics. When you choose a tab yourself you stay there. R starts only when you open the tab R.
 
+**Code to start from.** In R, Python and SQL there is a list of code written for the chosen dataset: a graph's edges, a model's quantities, pictures per month, the sum per period or the places as points. The choice pastes the code where the cursor is. A new notebook starts the same way. In SQL the side tables are shown with their columns, and a click writes a question about the table.
+
+**Trend.** Statistics has the tool *Trend*, which gives one value per period and a straight line through them and says how much the value changes per period. A dataset that is a time series opens there.
+
+**Count per area.** Under Geo, *Points in areas* counts places per area, with the area and the number per square kilometre. The places can be pictures with positions, and the areas can be a plan, a table with shapes or the municipal and county boundaries that come with the app.
+
 ## Visualise
 
 Charts with three engines and one look: the chart builder (Vega-Lite) with bars, lines, areas, points, histograms,

@@ -109,6 +109,7 @@ ett paket.
 - **Sök och rita efter datamängdens innehåll**: sök efter plats, hitta noder via sina kanter och element via sina egenskaper, se bilder på kartan och rita diagram från kanter, egenskaper och mängder (se [docs/soka.md](docs/soka.md)).
 - **Inhämta och Hantera följer filen**: appen säger vad en fil är, visar den i sin form och frågar om koordinater, koordinatsystem och kopplingar. Blandade mappar sorteras, och Hantera visar en bild per datamängd (se [docs/lagen.md](docs/lagen.md)).
 - **Bearbeta följer datamängden**: kommentera en sida, en bild, en nod eller en plats, rätta text, sätt plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera element (se [docs/bearbeta.md](docs/bearbeta.md)).
+- **Söka och Analysera följer datamängden**: fråga om en egenskap, en granne eller en plats, börja från kod skriven för datamängden, se trenden i en tidsserie och räkna platser per område (se [docs/soka.md](docs/soka.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

@@ -177,6 +177,12 @@ eller målt på geometrien).
 
 Analysér åbner i det værktøj, der passer til datasættet: Tekst for dokumenter, Billeder for billedsamlinger, Graf for grafer, Mængder for modeller, Plan for planer, Geo for tabeller med steder og ellers Statistik. Vælger du selv en fane, bliver du der. R starter først, når du åbner fanen R.
 
+**Kode at starte fra.** I R, Python og SQL er der en liste med kode skrevet til det valgte datasæt: en grafs kanter, en models mængder, billeder pr. måned, sum pr. periode eller stederne som punkter. Valget indsætter koden, hvor markøren står. En ny notesbog starter på samme måde. I SQL vises sidetabellerne med deres kolonner, og et klik skriver en forespørgsel om tabellen.
+
+**Trend.** Statistik har værktøjet *Trend*, som giver én værdi pr. periode og en ret linje gennem dem og siger, hvor meget værdien ændrer sig pr. periode. Et datasæt, der er en tidsserie, åbner der.
+
+**Tæl pr. område.** Under Geo tæller *Punkter i områder* steder pr. område, med areal og antal pr. kvadratkilometer. Stederne kan være billeder med position, og områderne kan være en plan, en tabel med flader eller de kommune- og regionsgrænser, der følger med appen.
+
 ## Visualisér
 
 Diagrammer med tre motorer og ét udseende: diagrambyggeren (Vega-Lite) med søjler, linjer, arealer, punkter,

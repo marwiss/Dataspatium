@@ -19,7 +19,7 @@
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
       const s = { tool: 'describe', lang: 'r', params: {}, columnsFor: null, columns: [], result: null, running: false, error: '' };
-      let fieldsEl = null; let codeEl = null; let resultEl = null; let seq = 0;
+      let fieldsEl = null; let codeEl = null; let resultEl = null; let tabsEl = null; let seq = 0;
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
       const paramsOf = () => { if (!s.params[s.tool]) s.params[s.tool] = {}; return s.params[s.tool]; };
@@ -29,7 +29,8 @@
         const tabs = /** @type {any} */ (h('dm-tabs'));
         tabs.tabs = TOOLS.map((id) => ({ id, label: t('stats.tool.' + id) }));
         tabs.active = s.tool;
-        tabs.addEventListener('dm-change', (e) => { s.tool = /** @type {any} */ (e).detail.id; s.result = null; s.error = ''; draw(); if (options.rerenderRight) options.rerenderRight(); });
+        tabsEl = tabs;
+        tabs.addEventListener('dm-change', (e) => { s.chosen = true; s.tool = /** @type {any} */ (e).detail.id; s.result = null; s.error = ''; draw(); if (options.rerenderRight) options.rerenderRight(); });
         fieldsEl = h('div', { class: 'dm-stack-sm' });
         codeEl = h('div', { class: 'dm-stack-sm' });
         resultEl = h('div', { class: 'dm-tool-result dm-stack' });
@@ -42,7 +43,14 @@
         const ds = selected();
         if (s.tool === 'models') { replace(fieldsEl); replace(codeEl); await drawModels(); return; }
         if (!ds) { replace(fieldsEl, h('p', { class: 'dm-help', text: t('stats.needs') })); replace(codeEl); replace(resultEl); return; }
-        if (s.columnsFor !== ds.id) { s.columns = await datasets.columns(ds.id); s.columnsFor = ds.id; s.params = {}; }
+        if (s.columnsFor !== ds.id) {
+          const columns = await datasets.columns(ds.id);
+          const series = (await D.require('data/facets').detect(ds.id).catch(() => [])).find((f) => f.id === 'timeseries' && f.on);
+          if (my !== seq || !fieldsEl) return;
+          s.columns = columns; s.columnsFor = ds.id; s.params = {};
+          s.series = series ? series.columns[0] : '';
+          if (!s.chosen) { s.tool = series ? 'trend' : 'describe'; if (tabsEl) tabsEl.active = s.tool; }
+        }
         if (my !== seq || !fieldsEl) return;
         renderFields();
         renderCode();
@@ -100,6 +108,13 @@
           case 'describe':
             parts.push(pick('columns', t('stats.field.columns'), numeric(), true), select('group', t('stats.field.group'), none.concat(all), ''));
             break;
+          case 'trend': {
+            const periods = all;
+            const guess = s.series || (periods[0] && periods[0].value);
+            parts.push(h('div', { class: 'dm-row-wrap' }, select('period', t('stats.field.period'), periods, guess), select('value', t('stats.field.value'), num),
+              select('fn', t('stats.field.fn'), ['mean', 'sum'].map((x) => ({ value: x, label: t('stats.fn.' + x) })), 'mean')));
+            break;
+          }
           case 'crosstab':
             parts.push(h('div', { class: 'dm-row-wrap' }, select('row', t('stats.field.row'), all), select('column', t('stats.field.column'), all, all[1] ? all[1].value : (all[0] && all[0].value)),
               select('percent', t('stats.field.percent'), ['none', 'row', 'column'].map((x) => ({ value: x, label: t('stats.percent.' + x) })), 'none')));
@@ -175,6 +190,7 @@
       function sentence(r) {
         const v = r.values || {};
         const pct = (x) => i18n.formatNumber(Math.round(x * 1000) / 10);
+        if (r.tool === 'trend' && typeof v.lutning === 'number') return t('stats.say.trend', { slope: i18n.formatNumber(v.lutning, { maximumFractionDigits: 3 }), n: i18n.formatNumber(v.n || 0), r2: pct(v.r2) });
         if (r.tool === 'regression' && typeof v.r2 === 'number') return t('stats.say.r2', { r2: pct(v.r2), n: i18n.formatNumber(v.n || 0) });
         if (r.tool === 'regression') return t('stats.say.logistic', { n: i18n.formatNumber(v.n || 0), level: Array.isArray(v.nivaer) ? String(v.nivaer[v.nivaer.length - 1]) : '' });
         if (r.tool === 'cluster' && typeof v.forklarad === 'number') return t('stats.say.cluster', { share: pct(v.forklarad), n: i18n.formatNumber(v.n || 0) });

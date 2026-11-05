@@ -411,13 +411,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 19297,
+  "size": 20166,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5048,
+  "size": 5419,
   "library": "dataspatium"
  },
  "docs/sv/bearbeta.md": {
@@ -567,13 +567,13 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 19080,
+  "size": 19954,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5073,
+  "size": 5474,
   "library": "dataspatium"
  },
  "docs/da/bearbeta.md": {
@@ -723,13 +723,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 18748,
+  "size": 19594,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 4894,
+  "size": 5268,
   "library": "dataspatium"
  },
  "docs/nb/bearbeta.md": {
@@ -879,13 +879,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 20627,
+  "size": 21506,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 5349,
+  "size": 5741,
   "library": "dataspatium"
  },
  "docs/fi/bearbeta.md": {
@@ -1035,13 +1035,13 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 19671,
+  "size": 20557,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5355,
+  "size": 5739,
   "library": "dataspatium"
  },
  "docs/is/bearbeta.md": {
@@ -1191,13 +1191,13 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 19223,
+  "size": 20096,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 4931,
+  "size": 5321,
   "library": "dataspatium"
  },
  "docs/en/bearbeta.md": {

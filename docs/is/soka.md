@@ -49,6 +49,8 @@ svo framvegis.
 *Vista sem lista* vistar fyrirspurnina undir Listar, þar sem hún er keyrð aftur á gögnum dagsins, og *Vista sem
 gagnasafn* gerir niðurstöðuna að nýju gagnasafni með dálkum niðurstöðunnar.
 
+**Skilyrði eftir tegund.** Líkan má spyrja um eiginleika, til dæmis veggi með brunaflokk EI60. Net má spyrja um nágranna hnúts og um hnúta innan nokkurra skrefa, þar sem hnúturinn er gefinn með auðkenni eða nafni. Gagnasafn með stöðum má spyrja um stað. Skilyrðin má blanda við venjuleg skilyrði, og fyrirspurnina má vista sem lista eða gera að gagnasafni.
+
 ## Listar
 
 Listi er vistuð leit í gagnasafni: textinn, afmarkanirnar og fjöldi niðurstaðna þegar hún var síðast keyrð. *Keyra*

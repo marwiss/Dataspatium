@@ -99,6 +99,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Leitað og teiknað eftir innihaldi gagnasafnsins**: leitaðu eftir stað, finndu hnúta í gegnum leggi sína og einingar í gegnum eiginleika sína, sjáðu myndir á kortinu og teiknaðu myndrit út frá leggjum, eiginleikum og magni (sjá [soka.md](soka.md)).
 - **Sækja og Umsjón fylgja skránni**: forritið segir hvað skrá er, sýnir hana á sínu formi og spyr um hnit, hnitakerfi og tengsl. Blandaðar möppur eru flokkaðar, og Umsjón sýnir mynd fyrir hvert gagnasafn (sjá [lagen.md](lagen.md)).
 - **Vinna fylgir gagnasafninu**: gerðu athugasemd við síðu, mynd, hnút eða stað, leiðréttu texta, gefðu myndum stað, gerðu við rúmfræði, finndu tvítekningar í netum og flokkaðu einingar (sjá [bearbeta.md](bearbeta.md)).
+- **Leita og Greina fylgja gagnasafninu**: spyrðu um eiginleika, nágranna eða stað, byrjaðu á kóða skrifuðum fyrir gagnasafnið, sjáðu þróun í tímaröð og teldu staði eftir svæði (sjá [soka.md](soka.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

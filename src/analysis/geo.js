@@ -30,6 +30,16 @@
      * @param {string} id @param {{filters?: any[], listId?: string|null, maxRows?: number}} [options]
      * @returns {Promise<{features: any[], columns: any[], meta: any, geometryColumn: string|null, total: number, truncated: boolean}>}
      */
+    /**
+     * The areas of a boundary set that ships with the app, in the form the tools read.
+     * @param {string} boundary
+     */
+    async function featuresOfBoundary(boundary) {
+      const data = await leaflet.featuresOf({ kind: 'boundary', boundary });
+      const first = data.features[0] ? data.features[0].properties : {};
+      const columns = Object.keys(first).map((name) => ({ name, type: 'text', label: name }));
+      return { features: data.features, columns, meta: null, geometryColumn: null, total: data.total, truncated: false };
+    }
     async function featuresOfDataset(id, options = {}) {
       const meta = await datasets.get(id);
       if (!meta) throw new Error(D.t('err.dataset.gone'));
@@ -117,7 +127,9 @@
       for (let i = 0; i < hits.length; i++) if (hits[i] >= 0) { counts[hits[i]]++; if (vi) { const v = Number((points.features[i].properties || {})[vi]); if (Number.isFinite(v)) sums[hits[i]] += v; } }
       const own = polygons.columns.filter((c) => c.name !== polygons.geometryColumn);
       const cols = own.map((c) => ({ name: c.name, type: c.type, label: c.label || c.name })).concat([{ name: options.countName || 'antal_punkter', type: 'integer' }], vi ? [{ name: 'summa_' + vi, type: 'number' }] : [], [{ name: 'geometry', type: 'text' }]);
-      const rows = polys.map((p, j) => propsRow(p.properties || {}, own).concat([counts[j]], vi ? [round(sums[j], 6)] : [], [JSON.stringify(p.geometry)]));
+      const areas = options.density ? polys.map((p) => turf.area(p) / 1e6) : null;
+      const rows = polys.map((p, j) => propsRow(p.properties || {}, own).concat([counts[j]], vi ? [round(sums[j], 6)] : [], areas ? [round(areas[j], 3), areas[j] ? round(counts[j] / areas[j], 4) : null] : [], [JSON.stringify(p.geometry)]));
+      if (areas) cols.splice(cols.length - 1, 0, { name: 'area_km2', type: 'number', label: 'area_km2' }, { name: 'per_km2', type: 'number', label: 'per_km2' });
       return { columns: cols, rows, matched: hits.filter((h) => h >= 0).length };
     }
 
@@ -229,6 +241,6 @@
       return { columns: cols, rows };
     }
 
-    return { available, ensure, featuresOfDataset, measure, pointsInPolygons, nearest, buffer, overlay, dissolve, simplify, MAX_ROWS };
+    return { available, ensure, featuresOfBoundary, featuresOfDataset, measure, pointsInPolygons, nearest, buffer, overlay, dissolve, simplify, MAX_ROWS };
   });
 })();

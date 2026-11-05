@@ -9,7 +9,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('analysis/stats', ['data/r-bridge', 'data/python-bridge'], (rBridge, pyBridge) => {
-    const TOOLS = ['describe', 'crosstab', 'correlation', 'test', 'regression', 'cluster'];
+    const TOOLS = ['describe', 'trend', 'crosstab', 'correlation', 'test', 'regression', 'cluster'];
     const TESTS = ['t_two', 't_one', 't_paired', 'wilcox', 'anova', 'kruskal'];
     const MARK = '@@DMSTAT@@'; const END = '@@END@@';
     const str = (s) => JSON.stringify(String(s));
@@ -22,6 +22,20 @@
 
     // ---- R ------------------------------------------------------------------------------------------------------
     const R = {
+      trend(p, ds) {
+        return [`df <- dm_read(${str(nameOf(ds))})`,
+          `d <- data.frame(period = dm_period(df[[${str(p.period)}]]), varde = as.numeric(df[[${str(p.value)}]]))`,
+          'd <- d[!is.na(d$period) & !is.na(d$varde), ]',
+          `g <- aggregate(varde ~ period, d, FUN = ${p.fn === 'sum' ? 'sum' : 'mean'})`,
+          'g <- g[order(g$period), ]',
+          'g$t <- seq_len(nrow(g))',
+          'modell <- lm(varde ~ t, g)',
+          'g$trend <- as.numeric(fitted(modell))',
+          'resultat <- g[c("period", "varde", "trend")]',
+          'matt <- list(n = nrow(g), lutning = unname(coef(modell)[2]), r2 = summary(modell)$r.squared)',
+          'library(ggplot2)',
+          `print(ggplot(g, aes(t, varde)) + geom_line(colour = dm_palette()[1]) + geom_line(aes(y = trend), linetype = "dashed") + labs(x = NULL, y = ${str(p.value)}) + theme_dataspatium())`].join('\n');
+      },
       describe(p, ds) {
         const lines = [`df <- dm_read(${str(nameOf(ds))})`, `kolumner <- ${vec(p.columns)}`];
         const row = 'data.frame(kolumn = k, n = sum(!is.na(x)), saknas = sum(is.na(x)), medel = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), min = min(x, na.rm = TRUE), q1 = unname(quantile(x, 0.25, na.rm = TRUE)), median = median(x, na.rm = TRUE), q3 = unname(quantile(x, 0.75, na.rm = TRUE)), max = max(x, na.rm = TRUE))';
@@ -109,6 +123,17 @@
 
     // ---- Python -------------------------------------------------------------------------------------------------
     const Py = {
+      trend(p, ds) {
+        return ['import numpy as np', 'import pandas as pd', `df = dm_read(${str(nameOf(ds))})`,
+          `d = pd.DataFrame({"period": df[${str(p.period)}].astype(str), "varde": pd.to_numeric(df[${str(p.value)}], errors="coerce")}).dropna()`,
+          `g = d.groupby("period", as_index=False)["varde"].${p.fn === 'sum' ? 'sum' : 'mean'}().sort_values("period")`,
+          't = np.arange(1, len(g) + 1)',
+          'lutning, start = np.polyfit(t, g["varde"].astype(float), 1)',
+          'g["trend"] = start + lutning * t',
+          'r = np.corrcoef(t, g["varde"].astype(float))[0, 1]',
+          'resultat = g',
+          'matt = {"n": int(len(g)), "lutning": float(lutning), "r2": float(r * r)}'].join('\n');
+      },
       describe(p, ds) {
         const lines = ['import pandas as pd', `df = dm_read(${str(nameOf(ds))})`, `kolumner = ${pyl(p.columns)}`,
           'def rad(x, k):', '    return {"kolumn": k, "n": int(x.notna().sum()), "saknas": int(x.isna().sum()), "medel": x.mean(), "sd": x.std(), "min": x.min(), "q1": x.quantile(0.25), "median": x.median(), "q3": x.quantile(0.75), "max": x.max()}'];
@@ -169,6 +194,7 @@
 
     const validate = {
       describe: (p) => needs(p, 'columns'),
+      trend: (p) => needs(p, 'period', 'value'),
       crosstab: (p) => needs(p, 'row', 'column'),
       correlation: (p) => { needs(p, 'columns'); if (p.columns.length < 2) throw new Error(D.t('stats.err.two.columns')); },
       test: (p) => { needs(p, 'value'); if (p.test === 't_paired') needs(p, 'value2'); else if (p.test !== 't_one') needs(p, 'group'); },

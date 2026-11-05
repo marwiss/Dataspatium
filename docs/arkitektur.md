@@ -527,6 +527,8 @@ koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`edita
 
 Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nyckel, namn och vägen tillbaka, och `ui/kinds/comment-block` ritar blocket i varje inspektör och raderna i Hantera. Vägen tillbaka tas från slagets `hit` i `data/kinds`. `data/operations-kinds` samlar steg som hör till ett slag: `geo_repair`, `geo_from_system`, `mask_personal` och `set_on_rows`. De två sista står inte i åtgärdspaletten, eftersom de får sitt villkor från en vy.
 
+`analysis/starters` skriver kod för en datamängd efter slag och egenskaper, och testerna kör varje bit på varje slag. `analysis/querybuilder` har villkor efter slag (`special`: property, neighbour, within, place). `prepare` hittar raderna för en plats på en kopia, så att de inte hamnar i en sparad lista. `engines/r/package-index` lägger till paket som våra egna hjälpfunktioner behöver, till exempel jsonlite för `dm_read_edges`.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

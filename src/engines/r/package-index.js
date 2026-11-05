@@ -76,6 +76,8 @@
       return names.filter((n) => index && index.has(n)).map((n) => `${contribPath}${n}_${index.get(n).version}.tgz`);
     }
 
+    /** Our own helpers that need a package the code does not name: a graph's properties are JSON. */
+    const IMPLIED = [[/\bdm_read_(?:edges|nodes)\b/, 'jsonlite']];
     /** Package names referenced in R code: library(x), require(x), requireNamespace("x"), x::f, webr::install("x"). */
     function referenced(code) {
       const found = new Set();
@@ -91,6 +93,7 @@
           for (const name of group.match(/[A-Za-z][\w.]*/g) || []) if (!BASE.has(name)) found.add(name);
         }
       }
+      for (const [re, name] of IMPLIED) if (re.test(code)) found.add(name);
       return Array.from(found);
     }
 

@@ -129,7 +129,7 @@
       /** Dataset names referenced with dm_read("…") in a piece of code. */
       referencedNames(code) {
         const names = [];
-        const re = /dm_read\(\s*(["'])([^"']+)\1/g;
+        const re = /dm_read(?:_edges|_nodes|_properties|_quantities)?\(\s*(["'])([^"']+)\1/g;
         let m;
         while ((m = re.exec(code))) names.push(m[2]);
         return names;

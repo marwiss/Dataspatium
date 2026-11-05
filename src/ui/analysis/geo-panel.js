@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/geo-panel', ['ui/base', 'analysis/geo', 'data/datasets', 'viz/leaflet'], (base, geoAnalysis, datasets, leaflet) => {
+  D.define('ui/analysis/geo-panel', ['ui/base', 'analysis/geo', 'data/datasets', 'viz/leaflet', 'data/boundaries'], (base, geoAnalysis, datasets, leaflet, boundaries) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['measure', 'points', 'nearest', 'buffer', 'overlay', 'dissolve', 'simplify'];
     const PREVIEW_ROWS = 2000;
@@ -39,10 +39,12 @@
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
       async function columnsOf(id) { if (!colsCache.has(id)) colsCache.set(id, await datasets.columns(id).catch(() => [])); return colsCache.get(id); }
-      async function usable(ds) { return !!ds && (ds.kind === 'table' || !ds.kind) && leaflet.mappable(await columnsOf(ds.id)); }
+      /** Tables, picture collections with positions and plans can all be drawn, so they can all be counted. */
+      const readable = (d) => d.kind === 'table' || !d.kind || d.kind === 'images' || d.kind === 'plan';
+      async function usable(ds) { return !!ds && readable(ds) && leaflet.mappable(await columnsOf(ds.id)); }
       /** Every table with geometry, for the "other dataset" choices. */
       async function loadMappable() {
-        const all = store.get().datasets.filter((d) => d.kind === 'table' || !d.kind);
+        const all = store.get().datasets.filter(readable);
         const key = all.map((d) => d.id + ':' + d.updatedAt).join('|');
         if (key === mappableFor) return mappable;
         const out = [];
@@ -77,10 +79,13 @@
         const names = cols.filter((c) => c.name !== geometryName).map((c) => ({ value: c.name, label: c.name }));
         const nums = cols.filter((c) => (c.type === 'integer' || c.type === 'number') && c.name !== geometryName).map((c) => ({ value: c.name, label: c.name }));
         const otherOpts = others.map((d) => ({ value: d.id, label: d.name }));
-        if (!others.some((d) => d.id === s.other)) s.other = others[0] ? others[0].id : '';
+        // Counting per area also works against the boundaries that come with the app, so nothing else is needed.
+        const areaOpts = otherOpts.concat(boundaries.BASEMAPS.map((b) => ({ value: 'boundary:' + b.id, label: t(b.key) })));
+        if (s.tool === 'points' && !areaOpts.some((o) => o.value === s.other)) s.other = 'boundary:' + boundaries.BASEMAPS[0].id;
+        else if (s.tool !== 'points' && !others.some((d) => d.id === s.other)) s.other = others[0] ? others[0].id : '';
         const parts = [];
         if (s.tool === 'points') {
-          parts.push(select(t('geo.points.areas'), otherOpts, s.other, (v) => { s.other = v; }));
+          parts.push(select(t('geo.points.areas'), areaOpts, s.other, (v) => { s.other = v; }));
           parts.push(select(t('geo.points.mode'), [{ value: 'count', label: t('geo.points.count') }, { value: 'attach', label: t('geo.points.attach') }], s.mode, (v) => { s.mode = v; renderFields(); }));
           if (s.mode === 'count') {
             parts.push(select(t('geo.points.value'), [{ value: '', label: t('map.none') }].concat(nums), s.valueColumn, (v) => { s.valueColumn = v; }));
@@ -100,7 +105,7 @@
         }
         const needsOther = ['points', 'nearest', 'overlay'].includes(s.tool);
         parts.push(ui.button({ label: t('geo.run'), icon: 'play', variant: 'primary', loading: running, disabled: running || (needsOther && !s.other), title: t('geo.run.hint'), onClick: () => run() }));
-        replace(fieldsEl, h('p', { class: 'dm-help', text: t('geo.hint.' + s.tool) }), needsOther && !others.length ? h('p', { class: 'dm-help dm-small', text: t('geo.no.other') }) : null, h('div', { class: 'dm-tool-fields' }, parts));
+        replace(fieldsEl, h('p', { class: 'dm-help', text: t('geo.hint.' + s.tool) }), needsOther && s.tool !== 'points' && !others.length ? h('p', { class: 'dm-help dm-small', text: t('geo.no.other') }) : null, h('div', { class: 'dm-tool-fields' }, parts));
       }
 
       async function run() {
@@ -117,7 +122,7 @@
           const src = await geoAnalysis.featuresOfDataset(ds.id);
           let out;
           if (s.tool === 'measure') out = await geoAnalysis.measure(src, { onProgress });
-          else if (s.tool === 'points') { const other = await geoAnalysis.featuresOfDataset(s.other); out = await geoAnalysis.pointsInPolygons(src, other, { mode: s.mode, valueColumn: s.valueColumn || null, countName: s.countName, onProgress }); }
+          else if (s.tool === 'points') { const other = s.other.startsWith('boundary:') ? await geoAnalysis.featuresOfBoundary(s.other.slice('boundary:'.length)) : await geoAnalysis.featuresOfDataset(s.other); out = await geoAnalysis.pointsInPolygons(src, other, { density: true, mode: s.mode, valueColumn: s.valueColumn || null, countName: s.countName, onProgress }); }
           else if (s.tool === 'nearest') { const other = await geoAnalysis.featuresOfDataset(s.other); out = await geoAnalysis.nearest(src, other, { onProgress }); }
           else if (s.tool === 'buffer') out = await geoAnalysis.buffer(src, s.radius, { onProgress });
           else if (s.tool === 'overlay') { const other = await geoAnalysis.featuresOfDataset(s.other); out = await geoAnalysis.overlay(src, other, { op: s.op, onProgress }); }

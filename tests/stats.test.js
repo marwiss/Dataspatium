@@ -42,6 +42,7 @@
     const py = stats.code('regression', { kind: 'logistic', target: 'utfall', predictors: ['a'] }, ds, 'python');
     assert.ok(py.includes('sm.Logit') && py.includes('dm_read("min_tabell")'), py);
     for (const tool of stats.TOOLS) {
+      if (tool === 'trend') { assert.ok(stats.code(tool, { period: 'a', value: 'b', fn: 'mean' }, ds, 'r').length > 20); assert.ok(stats.code(tool, { period: 'a', value: 'b', fn: 'sum' }, ds, 'python').length > 20); continue; }
       const p = { columns: ['a', 'b'], row: 'a', column: 'b', value: 'a', group: 'b', test: 't_two', target: 'a', predictors: ['b'], k: 2 };
       assert.ok(stats.code(tool, p, ds, 'r').length > 20, tool);
       assert.ok(stats.code(tool, p, ds, 'python').length > 20, tool);

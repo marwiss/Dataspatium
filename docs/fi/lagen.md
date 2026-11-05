@@ -186,6 +186,12 @@ ja materiaaleittain, tiedostosta tai geometriasta mitattuna).
 
 Analysoi avautuu aineistoon sopivassa työkalussa: Teksti asiakirjoille, Kuvat kuvakokoelmille, Graafi graafeille, Määrät malleille, Kaava kaavoille, Geo paikkoja sisältäville taulukoille ja muuten Tilastot. Kun valitset välilehden itse, pysyt siinä. R käynnistyy vasta, kun avaat R-välilehden.
 
+**Aloituskoodi.** R:ssä, Pythonissa ja SQL:ssä on lista valitulle aineistolle kirjoitettua koodia: graafin särmät, mallin määrät, kuvat kuukausittain, summa jaksoittain tai paikat pisteinä. Valinta liittää koodin kohdistimen kohdalle. Uusi muistikirja alkaa samalla tavalla. SQL:ssä näytetään sivutaulukot sarakkeineen, ja napsautus kirjoittaa kyselyn taulukosta.
+
+**Trendi.** Tilastoissa on työkalu *Trendi*, joka antaa yhden arvon jaksoa kohden ja suoran niiden läpi ja kertoo, kuinka paljon arvo muuttuu jaksoa kohden. Aikasarjana oleva aineisto avautuu siihen.
+
+**Laske alueittain.** Geo-kohdan *Pisteet alueissa* laskee paikat alueittain, pinta-alan ja neliökilometrikohtaisen määrän kanssa. Paikat voivat olla kuvia, joissa on sijainti, ja alueet voivat olla kaava, muotoja sisältävä taulukko tai sovelluksen mukana tulevat kunta- ja maakuntarajat.
+
 ## Visualisoi
 
 Kaavioita kolmella moottorilla ja yhdellä ilmeellä: kaaviorakentaja (Vega-Lite) pylväillä, viivoilla, alueilla,

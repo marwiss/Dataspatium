@@ -41,8 +41,9 @@
         const title = name || D.t('nb.default.name');
         const cells = [cell('markdown', D.t('nb.first.cell', { title }))];
         if (dataset) {
-          cells.push(cell('r', `df <- dm_read(${JSON.stringify(dataset.shortName || dataset.name)})\nsummary(df)`));
-          cells.push(cell('sql', 'select * from data limit 10'));
+          // What to start from depends on what the dataset is.
+          const starters = D.require('analysis/starters');
+          for (const lang of ['r', 'sql']) for (const piece of starters.forKind(dataset, lang)) cells.push(cell(lang, piece.code));
         } else cells.push(cell('r', 'dm_list()'));
         return { id: null, name: title, datasetId: dataset ? dataset.id : null, datasetName: dataset ? dataset.name : '', datasetShort: dataset ? dataset.shortName || '' : '', cells };
       }

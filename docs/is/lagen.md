@@ -177,6 +177,12 @@ rúmfræðinni).
 
 Greina opnast í því verkfæri sem hentar gagnasafninu: Texti fyrir skjöl, Myndir fyrir myndasöfn, Net fyrir net, Magn fyrir líkön, Skipulag fyrir skipulag, Geo fyrir töflur með staði og annars Tölfræði. Þegar þú velur flipa sjálf(ur) verður þú þar. R ræsist ekki fyrr en þú opnar flipann R.
 
+**Kóði til að byrja á.** Í R, Python og SQL er listi af kóða skrifuðum fyrir valið gagnasafn: leggir nets, magn líkans, myndir á mánuði, summa á tímabil eða staðirnir sem punktar. Valið setur kóðann inn þar sem bendillinn er. Ný minnisbók byrjar á sama hátt. Í SQL eru hliðartöflurnar sýndar með dálkum sínum, og smellur skrifar fyrirspurn um töfluna.
+
+**Þróun.** Tölfræði hefur tólið *Þróun*, sem gefur eitt gildi á tímabil og beina línu í gegnum þau og segir hve mikið gildið breytist á tímabil. Gagnasafn sem er tímaröð opnast þar.
+
+**Telja eftir svæði.** Undir Geo telur *Punktar í svæðum* staði eftir svæði, með flatarmáli og fjölda á ferkílómetra. Staðirnir geta verið myndir með staðsetningu, og svæðin geta verið skipulag, tafla með formum eða sveitarfélaga- og sýslumörkin sem fylgja forritinu.
+
 ## Myndgera
 
 Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum,

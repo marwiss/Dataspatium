@@ -48,6 +48,8 @@ SQL-koden heter det første datasettet `t0` og de koblede `t1`, `t2` og så vide
 *Lagre som liste* lagrer spørringen under Lister, der den kjøres igjen på dagens data, og *Lagre som datasett* gjør
 resultatet til et nytt datasett med resultatets kolonner.
 
+**Betingelser etter slag.** En modell kan spørres om en egenskap, for eksempel vegger med brannklasse EI60. En graf kan spørres om naboer til en node og om noder innen noen steg, der noden angis med id eller navn. Et datasett med steder kan spørres om et sted. Betingelsene kan blandes med vanlige betingelser, og spørringen kan lagres som liste eller bli et datasett.
+
 ## Lister
 
 En liste er et lagret søk i et datasett: teksten, avgrensningene og antall treff sist den ble kjørt. *Kjør* viser

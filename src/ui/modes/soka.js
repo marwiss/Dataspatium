@@ -107,32 +107,8 @@
 
       /** Finding by where things are: in a municipality or county, or near a point. */
       function placeForm() {
-        const kindSel = /** @type {any} */ (h('dm-select', { label: t('soka.place') }));
-        kindSel.options = [{ value: '', label: t('soka.place.any') }, { value: 'region', label: t('soka.place.region') }, { value: 'near', label: t('soka.place.near') }];
-        kindSel.value = place.type || '';
-        const fields = h('div', { class: 'dm-form-grid' });
-        const drawFields = async () => {
-          if (place.type === 'region') {
-            const boundaries = D.require('data/boundaries');
-            const setSel = /** @type {any} */ (h('dm-select', { label: t('soka.place.set') }));
-            setSel.options = boundaries.BASEMAPS.map((b) => ({ value: b.id, label: t(b.key) }));
-            setSel.value = place.boundary || boundaries.BASEMAPS[0].id;
-            place.boundary = setSel.value;
-            const features = await boundaries.features(place.boundary);
-            const areaSel = /** @type {any} */ (h('dm-select', { label: t('soka.place.area') }));
-            areaSel.options = [{ value: '', label: t('field.choose') }].concat(features.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'sv')).map((f) => ({ value: String(f.code), label: String(f.name) })));
-            areaSel.value = place.code || '';
-            setSel.addEventListener('change', () => { place.boundary = setSel.value; place.code = ''; drawFields(); });
-            areaSel.addEventListener('change', () => { place.code = areaSel.value; });
-            replace(fields, setSel, areaSel);
-          } else if (place.type === 'near') {
-            const num = (key, label) => { const el = /** @type {any} */ (h('dm-input', { label, inputmode: 'decimal' })); el.value = place[key] === undefined ? '' : place[key]; el.addEventListener('input', () => { place[key] = el.value.replace(',', '.'); }); return el; };
-            replace(fields, num('lat', t('soka.place.lat')), num('lon', t('soka.place.lon')), num('km', t('soka.place.km')));
-          } else replace(fields);
-        };
-        kindSel.addEventListener('change', () => { place.type = kindSel.value; drawFields(); });
-        drawFields();
-        return h('details', { class: 'dm-more', open: place.type ? '' : null }, h('summary', { text: t('soka.place.more') }), h('div', { class: 'dm-stack-sm' }, kindSel, fields, h('p', { class: 'dm-help dm-small', text: t('soka.place.help') })));
+        const form = D.require('ui/soka/place-form');
+        return h('details', { class: 'dm-more', open: place.type ? '' : null }, h('summary', { text: t('soka.place.more') }), form.create(place, { any: true }), h('p', { class: 'dm-help dm-small', text: t('soka.place.help') }));
       }
 
       async function runSearch() {
@@ -141,7 +117,7 @@
         const state = store.get();
         const ids = scope === 'selected' && state.selectedId && datasetById(state.selectedId) ? [state.selectedId] : state.datasets.map((d) => d.id);
         const hasFilters = Object.values(filters).some((f) => f && f.length);
-        const byPlace = place.type === 'region' ? !!place.code : place.type === 'near' ? !!(place.lat && place.lon && place.km) : false;
+        const byPlace = D.require('ui/soka/place-form').complete(place);
         if (!search.words(text).length && !hasFilters && !byPlace) { ui.toast.show(t('soka.empty.query'), { kind: 'info' }); return; }
         running = true; searched = true; hit = null;
         render();
@@ -149,7 +125,7 @@
         if (byPlace) {
           const spatial = D.require('data/spatial-search');
           for (const id of ids) {
-            const rows = await spatial.rowsWithin(id, place).catch(() => null);
+            const rows = await spatial.rowsWithin(id, D.require('ui/soka/place-form').areaOf(place)).catch(() => null);
             if (rows) placeRows.set(id, rows);
           }
         }

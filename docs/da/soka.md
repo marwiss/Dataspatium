@@ -49,6 +49,8 @@ hedder det første datasæt `t0` og de koblede `t1`, `t2` og så videre.
 *Gem som liste* gemmer forespørgslen under Lister, hvor den køres igen på dagens data, og *Gem som datasæt* gør
 resultatet til et nyt datasæt med resultatets kolonner.
 
+**Betingelser efter slags.** En model kan spørges om en egenskab, for eksempel vægge med brandklasse EI60. En graf kan spørges om naboer til en knude og om knuder inden for nogle skridt, hvor knuden angives med id eller navn. Et datasæt med steder kan spørges om et sted. Betingelserne kan blandes med almindelige betingelser, og forespørgslen kan gemmes som liste eller blive til et datasæt.
+
 ## Lister
 
 En liste er en gemt søgning i et datasæt: teksten, indsnævringerne og antallet af resultater, sidst den blev kørt.

@@ -178,6 +178,12 @@ eller målt på geometrien).
 
 Analyser åpner i verktøyet som passer datasettet: Tekst for dokumenter, Bilder for bildesamlinger, Graf for grafer, Mengder for modeller, Plan for planer, Geo for tabeller med steder og ellers Statistikk. Velger du en fane selv, blir du der. R starter først når du åpner fanen R.
 
+**Kode å starte fra.** I R, Python og SQL finnes en liste med kode skrevet for det valgte datasettet: en grafs kanter, en modells mengder, bilder per måned, sum per periode eller stedene som punkter. Valget limer inn koden der markøren står. En ny notatbok starter på samme måte. I SQL vises sidetabellene med kolonnene sine, og et klikk skriver en spørring om tabellen.
+
+**Trend.** Statistikk har verktøyet *Trend*, som gir én verdi per periode og en rett linje gjennom dem og sier hvor mye verdien endres per periode. Et datasett som er en tidsserie, åpner der.
+
+**Tell per område.** Under Geo teller *Punkter i områder* steder per område, med areal og antall per kvadratkilometer. Stedene kan være bilder med posisjon, og områdene kan være en plan, en tabell med flater eller kommune- og fylkesgrensene som følger med appen.
+
 ## Visualiser
 
 Diagrammer med tre motorer og ett utseende: diagrambyggeren (Vega-Lite) med stolper, linjer, flater, punkter,

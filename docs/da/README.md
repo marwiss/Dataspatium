@@ -102,6 +102,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Søg og tegn efter datasættets indhold**: søg efter sted, find knuder via deres kanter og elementer via deres egenskaber, se billeder på kortet og tegn diagrammer ud fra kanter, egenskaber og mængder (se [soka.md](soka.md)).
 - **Hent og Håndter følger filen**: appen siger, hvad en fil er, viser den i sin form og spørger om koordinater, koordinatsystem og forbindelser. Blandede mapper sorteres, og Håndter viser et billede pr. datasæt (se [lagen.md](lagen.md)).
 - **Bearbejd følger datasættet**: kommentér en side, et billede, en knude eller et sted, ret tekst, giv billeder et sted, reparér geometrier, find dubletter i grafer, og klassificér elementer (se [bearbeta.md](bearbeta.md)).
+- **Søg og Analysér følger datasættet**: spørg om en egenskab, en nabo eller et sted, start fra kode skrevet til datasættet, se trenden i en tidsserie, og tæl steder pr. område (se [soka.md](soka.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

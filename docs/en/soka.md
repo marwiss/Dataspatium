@@ -48,6 +48,8 @@ dataset is called `t0` and the joined ones `t1`, `t2` and so on.
 *Save as list* saves the query under Lists, where it runs again on today's data, and *Save as dataset* turns the
 result into a new dataset with the result's columns.
 
+**Conditions by kind.** A model can be asked about a property, for example walls with fire rating EI60. A graph can be asked about the neighbours of a node and about nodes within some steps, where the node is given by id or name. A dataset with places can be asked about a place. The conditions can be mixed with ordinary ones, and the question can be saved as a list or become a dataset.
+
 ## Lists
 
 A list is a saved search in a dataset: the text, the restrictions and the number of hits the last time it was run.

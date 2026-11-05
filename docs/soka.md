@@ -48,6 +48,8 @@ den första datamängden `t0` och de kopplade `t1`, `t2` och så vidare.
 *Spara som lista* sparar frågan under Listor, där den körs igen på dagens data, och *Spara som datamängd* gör
 resultatet till en ny datamängd med resultatets kolumner.
 
+**Villkor efter slag.** En modell kan frågas om en egenskap, till exempel väggar med brandklass EI60. En graf kan frågas om grannar till en nod och om noder inom några steg, där noden anges med id eller namn. En datamängd med platser kan frågas om en plats. Villkoren går att blanda med vanliga villkor, och frågan kan sparas som lista eller bli en datamängd.
+
 ## Listor
 
 En lista är en sparad sökning i en datamängd: texten, avgränsningarna och antalet träffar senast den kördes.

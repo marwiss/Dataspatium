@@ -100,7 +100,53 @@
         return h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('fraga.columns') }), rows.length ? h('div', { class: 'dm-stack-sm' }, rows) : h('p', { class: 'dm-help', text: t('fraga.columns.none') }), h('div', { class: 'dm-row-wrap' }, add, allBtns));
       }
 
+      /** What the main dataset of the question can be asked for, beyond its columns. */
+      async function specialsOf() {
+        const id = state.spec && state.spec.from && state.spec.from.datasetId;
+        const ds = datasetsNow().find((d) => d.id === id);
+        if (!ds) return [];
+        const kinds = D.require('data/kinds');
+        const profile = kinds.of(ds);
+        const out = [];
+        if (profile.sideSearch && profile.sideSearch.table === '_properties' && !kinds.isDxf(ds)) out.push('property');
+        if (profile.cypher) out.push('neighbour', 'within');
+        if (await D.require('data/facets').has(id, 'spatial').catch(() => false) || ds.kind === 'plan') out.push('place');
+        return out;
+      }
+      function removeButton(parent, idx) {
+        return ui.button({ label: t('fraga.remove'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => { parent.items.splice(idx, 1); render(); } });
+      }
+      const fieldOf = (label, value, onChange, attrs = {}) => {
+        const el = /** @type {any} */ (h('dm-input', Object.assign({ label }, attrs)));
+        el.value = value === undefined || value === null ? '' : String(value);
+        el.addEventListener('change', () => onChange(el.value));
+        return el;
+      };
+      /** A condition that belongs to the kind of dataset. */
+      function specialRow(item, parent, idx) {
+        const title = h('strong', { class: 'dm-small', text: t('fraga.special.' + item.special) });
+        if (item.special === 'neighbour' || item.special === 'within') {
+          const parts = [fieldOf(t('fraga.special.of'), item.of, (v) => { item.of = v; }, { help: t('fraga.special.of.help') })];
+          if (item.special === 'within') parts.push(fieldOf(t('fraga.special.steps'), item.steps || 2, (v) => { item.steps = v; }, { type: 'number', min: '1', max: String(qb.MAX_STEPS) }));
+          return h('div', { class: 'dm-card dm-stack-sm' }, title, h('div', { class: 'dm-row-wrap dm-fraga-row' }, ...parts, removeButton(parent, idx)));
+        }
+        if (item.special === 'place') {
+          item.place = item.place || {};
+          return h('div', { class: 'dm-card dm-stack-sm' }, h('div', { class: 'dm-row-wrap dm-fraga-row' }, title, removeButton(parent, idx)), D.require('ui/soka/place-form').create(item.place), h('p', { class: 'dm-help dm-small', text: t('soka.place.help') }));
+        }
+        const nameSel = /** @type {any} */ (h('dm-select', { label: t('fraga.special.property.name') }));
+        nameSel.options = [{ value: '', label: t('common.loading') }];
+        D.require('analysis/model').propertyNames(state.spec.from.datasetId).then((names) => {
+          nameSel.options = names.map((n) => ({ value: `${n.set}\u0000${n.name}`, label: `${n.set}: ${n.name}` }));
+          if (!item.set && names[0]) { item.set = names[0].set; item.name = names[0].name; }
+          nameSel.value = `${item.set}\u0000${item.name}`;
+        }).catch((err) => D.log('fraga', err));
+        nameSel.addEventListener('change', () => { const [set, name] = nameSel.value.split('\u0000'); item.set = set; item.name = name; });
+        const cmp = select(t('fraga.where.cmp'), ['=', '!=', 'contains', '>', '<'].map((c) => ({ value: c, label: t('fraga.cmp.' + CMP_KEYS[c]) })), item.cmp || '=', (v) => { item.cmp = v; });
+        return h('div', { class: 'dm-card dm-stack-sm' }, title, h('div', { class: 'dm-row-wrap dm-fraga-row' }, nameSel, cmp, fieldOf(t('fraga.where.value'), item.value, (v) => { item.value = v; }), removeButton(parent, idx)));
+      }
       function conditionRow(item, parent, idx) {
+        if (item.special) return specialRow(item, parent, idx);
         const opts = columnOptions();
         const ref = select(t('fraga.where.column'), opts, `${item.source || 0}:${item.column}`, (v) => { const r = parseRef(v); item.source = r.source; item.column = r.column; });
         const cmp = select(t('fraga.where.cmp'), qb.CMP.map((c) => ({ value: c, label: t('fraga.cmp.' + CMP_KEYS[c]) })), item.cmp || '=', (v) => { item.cmp = v; render(); });
@@ -119,6 +165,10 @@
           ui.button({ label: t('fraga.where.add'), icon: 'plus', size: 'sm', disabled: !first, onClick: () => { group.items.push({ source: first.source, column: first.column, cmp: '=', value: '' }); render(); } }),
           depth < 1 ? ui.button({ label: t('fraga.where.group'), icon: 'braces', size: 'sm', disabled: !first, onClick: () => { group.items.push({ op: group.op === 'and' ? 'or' : 'and', items: [{ source: first.source, column: first.column, cmp: '=', value: '' }] }); render(); } }) : null,
           parent ? ui.button({ label: t('fraga.remove'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => { parent.items.splice(idx, 1); render(); } }) : null);
+        // Conditions that belong to the kind come when the dataset is known to have them.
+        specialsOf().then((list) => {
+          for (const id of list) buttons.appendChild(ui.button({ label: t('fraga.special.' + id), icon: 'plus', size: 'sm', title: t('fraga.special.' + id + '.hint'), onClick: () => { group.items.push({ special: id, cmp: '=', steps: 2 }); render(); } }));
+        }).catch((err) => D.log('fraga', err));
         return h('div', { class: depth ? 'dm-fraga-group dm-stack-sm' : 'dm-stack-sm' }, h('div', { class: 'dm-row-wrap' }, opSel), items.length ? h('div', { class: 'dm-stack-xs' }, items) : null, buttons);
       }
       function opts0() { const o = columnOptions()[0]; return o ? parseRef(o.value) : null; }
