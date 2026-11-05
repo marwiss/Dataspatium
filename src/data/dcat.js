@@ -16,7 +16,7 @@
       { value: 'http://creativecommons.org/licenses/by/4.0/', label: 'CC BY 4.0' },
       { value: 'http://creativecommons.org/licenses/by-sa/4.0/', label: 'CC BY-SA 4.0' },
     ];
-    const LANGUAGE_CODES = { sv: 'SWE', en: 'ENG', da: 'DAN', nb: 'NOR', fi: 'FIN', is: 'ISL' };
+    const LANGUAGE_CODES = { sv: 'SWE', en: 'ENG', da: 'DAN', nb: 'NOR', nn: 'NNO', fi: 'FIN', is: 'ISL' };
     const THEME_BASE = 'http://publications.europa.eu/resource/authority/data-theme/';
     const FREQUENCY_BASE = 'http://publications.europa.eu/resource/authority/frequency/';
     const LANGUAGE_BASE = 'http://publications.europa.eu/resource/authority/language/';

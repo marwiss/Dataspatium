@@ -1,4 +1,4 @@
-**Svenska** · [Dansk](docs/da/README.md) · [Norsk bokmål](docs/nb/README.md) · [Suomi](docs/fi/README.md) · [Íslenska](docs/is/README.md) · [English](docs/en/README.md)
+**Svenska** · [Dansk](docs/da/README.md) · [Norsk bokmål](docs/nb/README.md) · [Norsk nynorsk](docs/nn/README.md) · [Suomi](docs/fi/README.md) · [Íslenska](docs/is/README.md) · [English](docs/en/README.md)
 
 <img src="src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
 
@@ -121,11 +121,11 @@ ett paket.
 - **Visualisera, Exportera och Dela följer slaget**: diagramförslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument; KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller och PDF för ritningar; i Dela väljer du om filerna ska följa med i paketet, gör en datamängd till en egen sida att skicka och ser varje slag i sin egen form på telefonen (se [docs/visualisera.md](docs/visualisera.md) och [docs/dela.md](docs/dela.md)).
 - **Granskning före delning**: allt som lämnar appen granskas i sin helhet, med kolumner, löptext, sidotabeller, originalfiler, bilders positioner, grafers kanter, kommentarer och författare; personuppgifter kan behållas, pseudonymiseras eller tas bort i kopian, och datamängden ändras aldrig (se [docs/dela.md](docs/dela.md)).
 - **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/lagen.md)).
-- **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sex språken.
+- **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sju språken.
 - **Härkomst, samarbete och bibliotek**: se var en datamängd kommer ifrån och vad den har blivit, arbeta ihop via GitHub utan att något försvinner, hämta recept och mallar med licens, och publicera arbetsytan som en webbplats.
 - **Kontroll och OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) blir en källa i Inhämta med inloggning via OAuth2 och självregistrering där servern tillåter det. Appen hämtar projektets modeller och dokument och säger till när en nyare version finns, visar ärendena som pekar på byggdelarna, skapar ärenden ur markeringen i 3D-vyn med vyn som viewpoint, kommenterar och byter status, färgar modellen efter ärendestatus, sparar ärendena som tabell med verktyget Ärenden och dashboarden Ärendeläge, läser och skriver BCF-filer, skickar datamängder, filer och arbetsytepaket till servern, frågar serverns IFC-graf med Cypher, läser vad servern erbjuder och förklarar dess felkoder, och loggar varje anrop med ett X-Request-Id som paras med serverns begärandelogg (se avsnittet [Dataspatium och Kontroll](#dataspatium-och-kontroll) nedan).
 - **Lätt start**: stora delar som R och Python laddas först när de används, och statusraden visar vad som laddas under tiden.
-- **Samordning med Kontroll, steg 1**: appen läser serverns kapabilitetsdokument, översätter dess felkoder, bär en gemensam ordlista på sex språk och öppnar en källa från länken Öppna i Dataspatium.
+- **Samordning med Kontroll, steg 1**: appen läser serverns kapabilitetsdokument, översätter dess felkoder, bär en gemensam ordlista på sju språk och öppnar en källa från länken Öppna i Dataspatium.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som
@@ -148,9 +148,9 @@ ett paket.
   visar den SQL som skapas; sparade listor avgränsar tabellen i Bearbeta och raderna i diagram.
 - **Hjälp i appen och presentation**: hela handboken med sökning öppnas med ? eller F1 vid kapitlet för det läge du
   står i, och **Presentera** visar en dashboard i hela fönstret med ett diagram i taget.
-- **Sex språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål), finska,
+- **Sju språk**: gränssnitt, meddelanden och dokumentation på svenska, danska, norska (bokmål och nynorsk), finska,
   isländska och engelska.
-- **Grundkurs**: en interaktiv genomgång av alla åtta lägen med exempeldata, på alla sex språk. Den visas första
+- **Grundkurs**: en interaktiv genomgång av alla åtta lägen med exempeldata, på alla sju språk. Den visas första
   gången appen öppnas och kan öppnas när som helst från hjälpen eller kommandopaletten.
 
 ## Dataspatium och Kontroll
@@ -163,7 +163,8 @@ IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern sk
 andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Kontrolls README och `docs/client-guide.md` beskriver samarbetet från
 serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](docs/cad-bim.md).
 
-Dataspatium 2.0.0 fungerar med Kontroll 2.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop.
+Dataspatium 2.1.0 fungerar med Kontroll 2.1.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
+[snabbstart.md](docs/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
 
 ## Lär dig mer
 
@@ -171,6 +172,7 @@ Dataspatium 2.0.0 fungerar med Kontroll 2.0.0. Båda får samma utgåvenummer, s
 - **Grundkursen** i appen: en interaktiv genomgång av alla lägen med exempeldata; öppna den från hjälpen (?)
   eller med Ctrl+K.
 - [Kom igång](docs/kom-igang.md): steg för steg med vanliga frågor.
+- [Snabbstart med Kontroll](docs/snabbstart.md): tjugo minuter från ingenting till ett ärende skapat i 3D-vyn och synligt på servern.
 - [Användarguide](docs/anvandarguide.md): hela arbetsflödet från fil till rapport.
 - [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
 - [De åtta lägena](docs/lagen.md): vad som finns var och varför.
@@ -220,7 +222,7 @@ hjälpknappen) och vad du gjorde. Se [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - Inget byggsteg, inget node.js. Öppna `index.html` direkt, eller serva mappen med `python -m http.server 8080`.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` följt av `python tools/wrap_assets.py`.
-- Tester: `powershell -File tools/run-tests.ps1` (headless Edge och Firefox). Se [docs/utveckling.md](docs/utveckling.md).
+- Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge och Firefox). Se [docs/utveckling.md](docs/utveckling.md).
 
 ## Licens
 

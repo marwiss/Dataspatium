@@ -92,7 +92,7 @@ klikker.
 ## Kan jeg bytte språk?
 
 Ja. Første gang appen åpnes, velger du språk; deretter åpner språkknappen øverst til høyre (ikonet med bokstaver) eller
-kommandoen *Språk* i paletten det samme valget. Svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk finnes. Appen
+kommandoen *Språk* i paletten det samme valget. Svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk finnes. Appen
 lastes på nytt på det valgte språket når ulagrede endringer er lagret. Valget lagres i nettleseren, så hver datamaskin og
 profil har sitt eget. Dokumentasjonen finnes på de samme språkene i mappen `docs`.
 
@@ -173,7 +173,7 @@ JSON-filer, API-konfigurasjoner som `.api.json` og oppskrifter som JSON, R eller
 ## Hvordan åpner jeg grunnkurset igjen?
 
 Klikk på spørsmålstegnet øverst til høyre og velg *Åpne grunnkurset*, eller trykk Ctrl+K og skriv *grunnkurs*. Kurset
-fortsetter der du slapp; har du fullført det, begynner det på nytt. Det finnes på alle seks språk.
+fortsetter der du slapp; har du fullført det, begynner det på nytt. Det finnes på alle sju språk.
 
 ## Hvordan holder jeg orden på mange datasett?
 

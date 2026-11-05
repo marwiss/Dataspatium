@@ -123,6 +123,43 @@
     return `${files.length} files`;
   }, 60000);
 
+  test('opencde II: a link with project and document chooses the project and fetches the document through the source view', async (assert) => {
+    const view = D.require('ui/api/opencde-view');
+    const state = { pendingCde: { connectorId: connector.id, projectId: PROJECT, documentId: 'doc-1', versionIndex: 1, at: Date.now() } };
+    const ctx = { store: { get: () => state, set: (patch) => Object.assign(state, patch) } };
+    const got = []; const logged = [];
+    const ui = view.create({ connector, ctx, log: (m) => logged.push(String(m)), onDataset: (m) => got.push(m) });
+    document.body.appendChild(ui.el);
+    try {
+      ui.start();
+      const meta = await waitFor(() => got[0], 20000, 'the document from the link');
+      created.push(meta.id);
+      assert.equal(state.pendingCde, null, 'the link is taken once');
+      assert.equal(ui.state.projectId, PROJECT, 'the project from the link is chosen');
+      assert.equal(meta.kind, 'table'); assert.equal(meta.source.cde.documentId, 'doc-1'); assert.equal(meta.source.cde.versionIndex, 1);
+      assert.ok(logged.some((m) => m.includes('Bygglovet')), 'the log names the project: ' + logged.join(' | '));
+      // A document the project does not have is said in words, and nothing is fetched.
+      state.pendingCde = { connectorId: connector.id, projectId: PROJECT, documentId: 'doc-missing', versionIndex: null, at: Date.now() };
+      const ui2 = view.create({ connector, ctx, log: () => {}, onDataset: (m) => got.push(m) });
+      document.body.appendChild(ui2.el);
+      try {
+        ui2.start();
+        await waitFor(() => ui2.state.error, 20000, 'the missing document is reported');
+        assert.equal(ui2.state.error, t('opencde.deeplink.nodocument'));
+        assert.equal(got.length, 1, 'nothing else fetched');
+      } finally { ui2.destroy(); ui2.el.remove(); }
+      // A link for another source is not this view's business.
+      state.pendingCde = { connectorId: 'someone-else', projectId: PROJECT, documentId: 'doc-1', versionIndex: 1, at: Date.now() };
+      const ui3 = view.create({ connector, ctx, log: () => {}, onDataset: (m) => got.push(m) });
+      ui3.start();
+      await wait(200);
+      assert.ok(state.pendingCde && state.pendingCde.connectorId === 'someone-else', 'left for the right view');
+      state.pendingCde = null;
+      ui3.destroy();
+    } finally { ui.destroy(); ui.el.remove(); }
+    return 'ok';
+  }, 60000);
+
   test('opencde II: Hantera says that the server has a newer version, and fetches it beside the old one', async (assert) => {
     const check = await opencde.newerVersion(connector, table);
     assert.ok(check.newer && check.version.version_index === 2, JSON.stringify(check));

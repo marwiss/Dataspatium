@@ -97,6 +97,20 @@
         window.addEventListener('message', onMessage);
       });
     }
+    /**
+     * Kontroll renders the pages it opens in a popup (sign-in, upload, document selection) in the app's language when asked with
+     * `lang=`; the parameter wins over its cookie and an unknown code falls back quietly. Decided from the capabilities the source's
+     * view already read (no request of its own, so the log stays as it was); other servers' addresses are left alone.
+     */
+    function withLang(connector, url) {
+      try {
+        const hit = capsCache.get(trimUrl(connector.baseUrl));
+        if (!hit || !hit.caps || !hit.caps.present) return url;
+        const u = new URL(url);
+        u.searchParams.set('lang', D.require('ui/i18n').language());
+        return u.href;
+      } catch (_e) { return url; }
+    }
     /** The code of a callback address; refuses a wrong state or an error from the server. */
     function parseCallback(url, state) {
       let q;
@@ -137,7 +151,7 @@
       const url = new URL(auth.authUrl);
       const params = { response_type: 'code', client_id: auth.clientId, redirect_uri: redirect, scope: auth.scope || SCOPES, state, code_challenge: await challenge(v), code_challenge_method: 'S256' };
       for (const [k, val] of Object.entries(params)) url.searchParams.set(k, val);
-      const callback = await (options.popup || popupFlow)(url.href);
+      const callback = await (options.popup || popupFlow)(withLang(connector, url.href));
       const code = parseCallback(callback, state);
       return tokenRequest(connector, { grant_type: 'authorization_code', code, code_verifier: v, redirect_uri: redirect });
     }
@@ -438,7 +452,7 @@
       if (options.documentId) entry.document_id = options.documentId;
       const started = await api(connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: redirect, expires_in: 600 }, files: [entry] } });
       if (Number(started.max_size_in_bytes) > 0 && file.size > Number(started.max_size_in_bytes)) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(Number(started.max_size_in_bytes)) }));
-      const callback = await (options.popup || popupFlow)(started.upload_ui_url);
+      const callback = await (options.popup || popupFlow)(withLang(connector, started.upload_ui_url));
       const q = new URL(callback).searchParams;
       if (q.get('user_cancelled_upload') === 'true') return null;
       const instructionsUrl = q.get('upload_documents_url');
@@ -492,7 +506,7 @@
       const redirect = options.redirectUri || redirectUri();
       if (!redirect) throw new Error(t('opencde.err.file'));
       const started = await api(connector, '/documents/1.0/select-documents', { method: 'POST', json: Object.assign({ callback: { url: redirect, expires_in: 600 } }, options.extensions ? { supported_file_extensions: options.extensions } : {}) });
-      const callback = await (options.popup || popupFlow)(started.select_documents_url);
+      const callback = await (options.popup || popupFlow)(withLang(connector, started.select_documents_url));
       const q = new URL(callback).searchParams;
       if (q.get('user_cancelled_selection') === 'true') return null;
       const url = q.get('selected_documents_url');

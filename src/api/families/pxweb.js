@@ -31,7 +31,7 @@
      */
     function lang(connector) {
       const langs = connector.family && connector.family.langs;
-      const ui = i18n.language();
+      const ui = i18n.language() === 'nn' ? 'nb' : i18n.language();
       if (Array.isArray(langs) && langs.includes(ui)) return ui;
       if (langs && typeof langs === 'object' && !Array.isArray(langs) && langs[ui]) return String(langs[ui]);
       return (connector.family && connector.family.lang) || 'sv';

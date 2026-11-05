@@ -7,6 +7,7 @@
   "en",
   "da",
   "nb",
+  "nn",
   "fi",
   "is"
  ],
@@ -16,6 +17,7 @@
    "en": "Sign in",
    "da": "Log ind",
    "nb": "Logg inn",
+   "nn": "Logg inn",
    "fi": "Kirjaudu",
    "is": "Skrá inn"
   },
@@ -24,6 +26,7 @@
    "en": "Sign out",
    "da": "Log ud",
    "nb": "Logg ut",
+   "nn": "Logg ut",
    "fi": "Kirjaudu ulos",
    "is": "Skrá út"
   },
@@ -32,6 +35,7 @@
    "en": "Project",
    "da": "Projekt",
    "nb": "Prosjekt",
+   "nn": "Prosjekt",
    "fi": "Projekti",
    "is": "Verkefni"
   },
@@ -40,6 +44,7 @@
    "en": "You are not a member of any project on the server.",
    "da": "Du er ikke medlem af noget projekt på serveren.",
    "nb": "Du er ikke medlem i noe prosjekt på serveren.",
+   "nn": "Du er ikkje medlem i noko prosjekt på tenaren.",
    "fi": "Et ole jäsenenä missään projektissa palvelimella.",
    "is": "Þú ert ekki þátttakandi í neinu verkefni á þjóninum."
   },
@@ -48,6 +53,7 @@
    "en": "Files in the project",
    "da": "Filer i projektet",
    "nb": "Filer i prosjektet",
+   "nn": "Filer i prosjektet",
    "fi": "Projektin tiedostot",
    "is": "Skrár í verkefninu"
   },
@@ -56,6 +62,7 @@
    "en": "Fetch",
    "da": "Hent",
    "nb": "Hent",
+   "nn": "Hent",
    "fi": "Hae",
    "is": "Sækja"
   },
@@ -64,6 +71,7 @@
    "en": "Receive",
    "da": "Modtag",
    "nb": "Ta imot",
+   "nn": "Ta imot",
    "fi": "Vastaanota",
    "is": "Taka á móti"
   },
@@ -72,6 +80,7 @@
    "en": "Model",
    "da": "Model",
    "nb": "Modell",
+   "nn": "Modell",
    "fi": "Malli",
    "is": "Líkan"
   },
@@ -80,6 +89,7 @@
    "en": "version {n}",
    "da": "version {n}",
    "nb": "versjon {n}",
+   "nn": "versjon {n}",
    "fi": "versio {n}",
    "is": "útgáfa {n}"
   },
@@ -88,6 +98,7 @@
    "en": "Topics",
    "da": "Sager",
    "nb": "Saker",
+   "nn": "Saker",
    "fi": "Asiat",
    "is": "Mál"
   },
@@ -96,6 +107,7 @@
    "en": "Comments",
    "da": "Kommentarer",
    "nb": "Kommentarer",
+   "nn": "Kommentarar",
    "fi": "Kommentit",
    "is": "Athugasemdir"
   },
@@ -104,6 +116,7 @@
    "en": "Viewpoint components",
    "da": "Viewpoint-komponenter",
    "nb": "Viewpoint-komponenter",
+   "nn": "Viewpoint-komponentar",
    "fi": "Näkymien komponentit",
    "is": "Sjónarhornseiningar"
   },
@@ -112,6 +125,7 @@
    "en": "Events",
    "da": "Hændelser",
    "nb": "Hendelser",
+   "nn": "Hendingar",
    "fi": "Tapahtumat",
    "is": "Atburðir"
   },
@@ -120,6 +134,7 @@
    "en": "Files",
    "da": "Filer",
    "nb": "Filer",
+   "nn": "Filer",
    "fi": "Tiedostot",
    "is": "Skrár"
   },
@@ -128,6 +143,7 @@
    "en": "self-registration",
    "da": "selvregistrering",
    "nb": "selvregistrering",
+   "nn": "sjølvregistrering",
    "fi": "itserekisteröinti",
    "is": "sjálfskráning"
   },
@@ -136,6 +152,7 @@
    "en": "request log",
    "da": "forespørgselslog",
    "nb": "forespørselslogg",
+   "nn": "førespurnadslogg",
    "fi": "pyyntöloki",
    "is": "beiðnaskrá"
   },
@@ -144,6 +161,7 @@
    "en": "administration",
    "da": "administration",
    "nb": "administrasjon",
+   "nn": "administrasjon",
    "fi": "hallinta",
    "is": "stjórnun"
   },
@@ -152,6 +170,7 @@
    "en": "IFC graph",
    "da": "IFC-graf",
    "nb": "IFC-graf",
+   "nn": "IFC-graf",
    "fi": "IFC-graafi",
    "is": "IFC-graf"
   },
@@ -160,6 +179,7 @@
    "en": "graph queries",
    "da": "grafforespørgsler",
    "nb": "grafspørringer",
+   "nn": "grafspørjingar",
    "fi": "graafikyselyt",
    "is": "graffyrirspurnir"
   },
@@ -168,6 +188,7 @@
    "en": "Issues",
    "da": "Sager",
    "nb": "Saker",
+   "nn": "Saker",
    "fi": "Asiat",
    "is": "Mál"
   },
@@ -176,6 +197,7 @@
    "en": "New issue",
    "da": "Ny sag",
    "nb": "Ny sak",
+   "nn": "Ny sak",
    "fi": "Uusi asia",
    "is": "Nýtt mál"
   },
@@ -184,6 +206,7 @@
    "en": "Fetch issues",
    "da": "Hent sager",
    "nb": "Hent saker",
+   "nn": "Hent saker",
    "fi": "Hae asiat",
    "is": "Sækja mál"
   },
@@ -192,6 +215,7 @@
    "en": "Type",
    "da": "Type",
    "nb": "Type",
+   "nn": "Type",
    "fi": "Tyyppi",
    "is": "Tegund"
   },
@@ -200,6 +224,7 @@
    "en": "Status",
    "da": "Status",
    "nb": "Status",
+   "nn": "Status",
    "fi": "Tila",
    "is": "Staða"
   },
@@ -208,6 +233,7 @@
    "en": "Priority",
    "da": "Prioritet",
    "nb": "Prioritet",
+   "nn": "Prioritet",
    "fi": "Prioriteetti",
    "is": "Forgangur"
   },
@@ -216,6 +242,7 @@
    "en": "Label",
    "da": "Etiket",
    "nb": "Etikett",
+   "nn": "Etikett",
    "fi": "Nimike",
    "is": "Merki"
   },
@@ -224,6 +251,7 @@
    "en": "Assigned to",
    "da": "Ansvarlig",
    "nb": "Ansvarlig",
+   "nn": "Ansvarleg",
    "fi": "Vastuuhenkilö",
    "is": "Ábyrgðaraðili"
   },
@@ -232,6 +260,7 @@
    "en": "No status",
    "da": "Uden status",
    "nb": "Uten status",
+   "nn": "Utan status",
    "fi": "Ei tilaa",
    "is": "Án stöðu"
   },
@@ -240,6 +269,7 @@
    "en": "Send",
    "da": "Send",
    "nb": "Send",
+   "nn": "Send",
    "fi": "Lähetä",
    "is": "Senda"
   },
@@ -248,6 +278,7 @@
    "en": "Add the view as a viewpoint",
    "da": "Tilføj visningen som viewpoint",
    "nb": "Legg til visningen som viewpoint",
+   "nn": "Legg til visinga som viewpoint",
    "fi": "Lisää näkymä viewpointina",
    "is": "Bæta sýninni við sem viewpoint"
   },
@@ -256,6 +287,7 @@
    "en": "Save as BCF",
    "da": "Gem som BCF",
    "nb": "Lagre som BCF",
+   "nn": "Lagre som BCF",
    "fi": "Tallenna BCF-tiedostona",
    "is": "Vista sem BCF"
   },
@@ -264,6 +296,7 @@
    "en": "From the CDE",
    "da": "Fra CDE",
    "nb": "Fra CDE",
+   "nn": "Frå CDE",
    "fi": "CDE:stä",
    "is": "Frá CDE"
   },
@@ -272,6 +305,7 @@
    "en": "Version",
    "da": "Version",
    "nb": "Versjon",
+   "nn": "Versjon",
    "fi": "Versio",
    "is": "Útgáfa"
   },
@@ -280,6 +314,7 @@
    "en": "Document (Documents API)",
    "da": "Dokument (Documents API)",
    "nb": "Dokument (Documents API)",
+   "nn": "Dokument (Documents API)",
    "fi": "Asiakirja (Documents API)",
    "is": "Skjal (Documents API)"
   },
@@ -288,6 +323,7 @@
    "en": "Document (BCF)",
    "da": "Dokument (BCF)",
    "nb": "Dokument (BCF)",
+   "nn": "Dokument (BCF)",
    "fi": "Asiakirja (BCF)",
    "is": "Skjal (BCF)"
   },
@@ -296,6 +332,7 @@
    "en": "Send to the CDE",
    "da": "Send til CDE",
    "nb": "Send til CDE",
+   "nn": "Send til CDE",
    "fi": "Lähetä CDE:hen",
    "is": "Senda til CDE"
   },
@@ -304,6 +341,7 @@
    "en": "Documents API (with title and version)",
    "da": "Documents API (med titel og version)",
    "nb": "Documents API (med tittel og versjon)",
+   "nn": "Documents API (med tittel og versjon)",
    "fi": "Documents API (otsikko ja versio)",
    "is": "Documents API (með titli og útgáfu)"
   },
@@ -312,6 +350,7 @@
    "en": "BCF document (the file only)",
    "da": "BCF-dokument (kun filen)",
    "nb": "BCF-dokument (bare filen)",
+   "nn": "BCF-dokument (berre fila)",
    "fi": "BCF-asiakirja (vain tiedosto)",
    "is": "BCF-skjal (aðeins skráin)"
   },
@@ -320,6 +359,7 @@
    "en": "Log",
    "da": "Log",
    "nb": "Logg",
+   "nn": "Logg",
    "fi": "Loki",
    "is": "Skrá"
   },
@@ -328,6 +368,7 @@
    "en": "Time",
    "da": "Tid",
    "nb": "Tid",
+   "nn": "Tid",
    "fi": "Aika",
    "is": "Tími"
   },
@@ -336,6 +377,7 @@
    "en": "Method",
    "da": "Metode",
    "nb": "Metode",
+   "nn": "Metode",
    "fi": "Menetelmä",
    "is": "Aðferð"
   },
@@ -344,6 +386,7 @@
    "en": "Operation",
    "da": "Operation",
    "nb": "Operasjon",
+   "nn": "Operasjon",
    "fi": "Toiminto",
    "is": "Aðgerð"
   },
@@ -352,6 +395,7 @@
    "en": "Status",
    "da": "Status",
    "nb": "Status",
+   "nn": "Status",
    "fi": "Tila",
    "is": "Staða"
   },
@@ -360,6 +404,7 @@
    "en": "Request",
    "da": "Forespørgsel",
    "nb": "Forespørsel",
+   "nn": "Førespurnad",
    "fi": "Pyyntö",
    "is": "Beiðni"
   },
@@ -368,6 +413,7 @@
    "en": "Foundation",
    "da": "Foundation",
    "nb": "Foundation",
+   "nn": "Foundation",
    "fi": "Foundation",
    "is": "Foundation"
   },
@@ -376,6 +422,7 @@
    "en": "BCF",
    "da": "BCF",
    "nb": "BCF",
+   "nn": "BCF",
    "fi": "BCF",
    "is": "BCF"
   },
@@ -384,6 +431,7 @@
    "en": "Documents",
    "da": "Documents",
    "nb": "Documents",
+   "nn": "Documents",
    "fi": "Documents",
    "is": "Documents"
   },
@@ -392,6 +440,7 @@
    "en": "Cancel",
    "da": "Afbryd",
    "nb": "Avbryt",
+   "nn": "Avbryt",
    "fi": "Peruuta",
    "is": "Hætta við"
   },
@@ -400,6 +449,7 @@
    "en": "Save",
    "da": "Gem",
    "nb": "Lagre",
+   "nn": "Lagre",
    "fi": "Tallenna",
    "is": "Vista"
   },
@@ -408,6 +458,7 @@
    "en": "Description",
    "da": "Beskrivelse",
    "nb": "Beskrivelse",
+   "nn": "Skildring",
    "fi": "Kuvaus",
    "is": "Lýsing"
   },
@@ -416,6 +467,7 @@
    "en": "Type",
    "da": "Type",
    "nb": "Type",
+   "nn": "Type",
    "fi": "Tyyppi",
    "is": "Gerð"
   },
@@ -424,6 +476,7 @@
    "en": "Copy",
    "da": "Kopiér",
    "nb": "Kopier",
+   "nn": "Kopier",
    "fi": "Kopioi",
    "is": "Afrita"
   },
@@ -432,6 +485,7 @@
    "en": "Run",
    "da": "Kør",
    "nb": "Kjør",
+   "nn": "Køyr",
    "fi": "Suorita",
    "is": "Keyra"
   }

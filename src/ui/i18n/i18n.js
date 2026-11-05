@@ -16,6 +16,7 @@
       { code: 'sv', label: 'Svenska', locale: 'sv-SE' },
       { code: 'da', label: 'Dansk', locale: 'da-DK' },
       { code: 'nb', label: 'Norsk (bokmål)', locale: 'nb-NO' },
+      { code: 'nn', label: 'Norsk (nynorsk)', locale: 'nn-NO' },
       { code: 'fi', label: 'Suomi', locale: 'fi-FI' },
       { code: 'is', label: 'Íslenska', locale: 'is-IS' },
       { code: 'en', label: 'English', locale: 'en-GB' },
@@ -51,7 +52,7 @@
     }
 
     /**
-     * The saved language, else the first browser language among the six, else Swedish. A `?lang=xx`
+     * The saved language, else the first browser language among the seven, else Swedish. A `?lang=xx`
      * query parameter (used by links and tools/screenshot.ps1) wins and is remembered like a choice.
      */
     function detect() {
@@ -63,7 +64,7 @@
       const prefs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'sv']).map((l) => String(l).toLowerCase());
       for (const p of prefs) {
         const base = p.split('-')[0];
-        const code = base === 'no' || base === 'nn' ? 'nb' : base;
+        const code = base === 'no' ? 'nb' : base;
         if (isCode(code)) return code;
       }
       return 'sv';

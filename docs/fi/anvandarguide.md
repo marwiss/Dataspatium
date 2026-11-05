@@ -236,12 +236,12 @@ ruudunlukijoille; R-kaavioiden ja D3-mallien luvut löytyvät Muokkaa-tilan taul
 
 ## Kieli
 
-Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja englanniksi. Kun sovellus
+Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi (bokmål ja nynorsk), suomeksi, islanniksi ja englanniksi. Kun sovellus
 avataan ensimmäisen kerran, valitset kielen; oikean yläkulman kielipainike (tai paletin komento *Kieli*) vaihtaa sen
 myöhemmin. Valinta tallennetaan selaimeen, joten jokaisella tietokoneella ja selainprofiililla on omansa. Käyttöliittymän
 luvut noudattavat kielen käytäntöjä; itse dataa ei koskaan muuteta. R:n viestit seuraavat samaa valintaa, kun taas mallien
 paikkamerkit kuten `{{datamangd}}` ja taulukon avainsanat `kolumner`, `sortera`, `topp`, `filter` ja `rubrik` ovat osa
-mallikieltä ja samat kaikilla kielillä. Dokumentaatio on saatavilla kaikilla kuudella kielellä kansiossa `docs/` (ruotsi
+mallikieltä ja samat kaikilla kielillä. Dokumentaatio on saatavilla kaikilla seitsemällä kielellä kansiossa `docs/` (ruotsi
 kansiossa `docs/`, muut kansioissa `docs/<kieli>/`).
 
 ## Kun jokin menee pieleen

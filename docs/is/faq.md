@@ -90,7 +90,7 @@ opnar `index.html` nýju útgáfunnar á sömu tölvu og í sama vafra. Undir hj
 ## Get ég skipt um tungumál?
 
 Já. Í fyrsta skipti sem forritið er opnað velurðu tungumál; eftir það opnar tungumálahnappurinn efst til hægri (táknið með
-bókstöfum) eða skipunin *Tungumál* í spjaldinu sama val. Sænska, danska, norska (bókmál), finnska, íslenska og enska eru í boði.
+bókstöfum) eða skipunin *Tungumál* í spjaldinu sama val. Sænska, danska, norska (bókmál og nýnorska), finnska, íslenska og enska eru í boði.
 Forritið endurhleðst á valda tungumálinu þegar óvistaðar breytingar hafa verið vistaðar. Valið er vistað í vafranum, svo hver
 tölva og snið hefur sitt eigið. Skjölunin er á sömu tungumálum í möppunni `docs`.
 
@@ -171,7 +171,7 @@ sögu) eða tekið afrit af öllu vinnusvæðinu. Myndrit og skjalasnið má fly
 ## Hvernig opna ég grunnnámskeiðið aftur?
 
 Smelltu á spurningarmerkið efst til hægri og veldu *Opna grunnnámskeiðið*, eða ýttu á Ctrl+K og skrifaðu *námskeið*.
-Námskeiðið heldur áfram þar sem frá var horfið; ef þú hefur lokið því byrjar það upp á nýtt. Það er til á öllum sex
+Námskeiðið heldur áfram þar sem frá var horfið; ef þú hefur lokið því byrjar það upp á nýtt. Það er til á öllum sjö
 tungumálunum.
 
 ## Hvernig held ég röð og reglu á mörgum gagnasöfnum?

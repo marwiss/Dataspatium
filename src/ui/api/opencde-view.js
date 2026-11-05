@@ -23,7 +23,7 @@
     /** @param {{connector: any, log?: Function, onDataset?: Function}} api */
     function create(api) {
       const { connector } = api;
-      const s = { busy: '', error: '', user: null, projects: null, projectId: '', result: null, saving: false, saved: '', manual: null, callback: '', files: null, rights: null, fetching: '' };
+      const s = { busy: '', error: '', user: null, projects: null, projectId: '', result: null, saving: false, saved: '', manual: null, callback: '', files: null, rights: null, fetching: '', note: '' };
       const el = h('div', { class: 'dm-stack' });
       const unsubscribe = secrets.subscribe(() => render());
       const project = () => (s.projects || []).find((p) => p.project_id === s.projectId) || null;
@@ -31,6 +31,8 @@
       /** What the app has sent to this server, in a card of its own at the bottom. */
       const logCard = cdeLogCard.create(connector, { log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
+      /** A link that named a project and a document waits here while the user still has to sign in. */
+      let pendingLink = null;
 
       async function signIn() {
         if (s.busy) return;
@@ -41,12 +43,14 @@
           await afterSignIn();
         } catch (err) { fail(err); }
         s.busy = ''; render();
+        await followLink();
       }
       async function finishManual() {
         if (!s.manual || !s.callback.trim()) return;
         s.busy = 'login'; s.error = ''; render();
         try { await opencde.manualFinish(connector, s.manual, s.callback.trim()); s.manual = null; s.callback = ''; await afterSignIn(); } catch (err) { fail(err); }
         s.busy = ''; render();
+        await followLink();
       }
       async function afterSignIn() {
         s.user = await opencde.currentUser(connector);
@@ -70,6 +74,36 @@
         s.busy = 'files'; s.error = ''; render();
         try { s.files = await opencde.filesList(connector, s.projectId); log(t('opencde.files.loaded', { n: i18n.formatNumber(s.files.length) })); } catch (err) { fail(err); }
         s.busy = ''; render();
+      }
+      /** The link's request waits in the store until this source's view starts; it is taken once. */
+      function takeDeepLink() {
+        const st = api.ctx && api.ctx.store;
+        const p = st && typeof st.get === 'function' ? st.get().pendingCde : null;
+        if (!p || p.connectorId !== connector.id) return null;
+        st.set({ pendingCde: null });
+        return p;
+      }
+      /** A link named a project and maybe a document (#/inhamta/opencde?…&project=…&document=…&version=…): choose and fetch them. */
+      async function applyDeepLink(p) {
+        if (!s.projects) await loadProjects();
+        if (p.projectId) {
+          if (!(s.projects || []).some((x) => x.project_id === p.projectId)) { s.error = t('opencde.deeplink.noproject'); render(); return; }
+          if (s.projectId !== p.projectId) { s.projectId = p.projectId; s.result = null; await loadRights(); }
+          log(t('opencde.deeplink.project', { project: (project() || {}).name || p.projectId }));
+        }
+        render();
+        if (!p.documentId) return;
+        await loadFiles();
+        const entry = (s.files || []).find((f) => f.documentId === p.documentId && (p.versionIndex == null || Number(f.versionIndex) === Number(p.versionIndex)));
+        if (!entry) { s.error = t('opencde.deeplink.nodocument'); render(); return; }
+        await fetchFile(entry);
+      }
+      /** After a sign-in: the link that waited is followed. */
+      async function followLink() {
+        if (!pendingLink || !opencde.signedIn(connector)) return;
+        const p = pendingLink; pendingLink = null; s.note = '';
+        try { await applyDeepLink(p); } catch (err) { fail(err); }
+        render();
       }
       const isBundle = (f) => /\.dataspatium\.zip$/i.test(String(f.filename || ''));
       /** One file becomes a dataset of its own kind: a model, a document, a table; a bundle is received as a whole. */
@@ -151,7 +185,8 @@
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             signed && !s.projects ? basic.button({ label: t('opencde.projects.load'), size: 'sm', onClick: async () => { s.busy = 'projects'; render(); try { s.user = s.user || (await opencde.currentUser(connector)); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); } }) : null),
           s.manual ? manualBox() : null,
-          s.error ? h('p', { class: 'dm-error', text: s.error }) : null);
+          s.error ? h('p', { class: 'dm-error', text: s.error }) : null,
+          s.note ? h('p', { class: 'dm-help', text: s.note }) : null);
         const nodes = [head];
         if (signed && s.projects) {
           const sel = /** @type {any} */ (h('dm-select', { label: t('opencde.project') }));
@@ -219,10 +254,19 @@
       function start() {
         s.caps = null;
         opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); }).catch((err) => D.log('opencde', 'capabilities', err));
+        const link = takeDeepLink();
+        const signed = opencde.signedIn(connector);
+        if (link && !signed) { pendingLink = link; s.note = t('opencde.deeplink.signin'); }
         render();
-        if (opencde.signedIn(connector) && !s.projects) {
+        if (signed && !s.projects) {
           s.busy = 'projects'; render();
-          Promise.resolve().then(async () => { try { s.user = await opencde.currentUser(connector); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); });
+          Promise.resolve().then(async () => {
+            try { s.user = await opencde.currentUser(connector); await loadProjects(); } catch (err) { fail(err); }
+            s.busy = ''; render();
+            if (link) { try { await applyDeepLink(link); } catch (err) { fail(err); } render(); }
+          });
+        } else if (link && signed) {
+          Promise.resolve().then(async () => { try { await applyDeepLink(link); } catch (err) { fail(err); } render(); });
         }
       }
       return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: () => { unsubscribe(); logCard.destroy(); }, KINDS };

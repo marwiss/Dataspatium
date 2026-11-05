@@ -162,7 +162,9 @@ otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itsere
 graafikyselyt). Palvelimella ilman asiakirjaa ei ole lisäyksiä, ja kaikki määrittelyjen mukainen toimii silti. Palvelimen virhekoodit
 (`code` vastauksessa, esimerkiksi `reauthentication_required`) näytetään omalla kielelläsi; tuntemattomat koodit näyttävät palvelimen
 oman tekstin. Linkki *Avaa Dataspatiumissa* palvelimen sivuilla on muotoa `index.html#/inhamta/opencde?server=https://…` ja avaa uuden
-lähteen valintaikkunan osoite täytettynä.
+lähteen valintaikkunan osoite täytettynä. Jos palvelin on jo lähteenä, se avautuu suoraan. Linkki voi myös nimetä projektin ja asiakirjan
+(`&project=…&document=…&version=…`): projekti valitaan ja asiakirja haetaan datamääräksi, kun olet kirjautunut. Sivut, jotka Kontroll
+avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyvät sovelluksen kielellä.
 
 ## Avoin paikkatieto
 

@@ -1,17 +1,17 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-/** Tests for internationalisation: six complete dictionaries, fallback, persistence and locale formatting. */
+/** Tests for internationalisation: seven complete dictionaries, fallback, persistence and locale formatting. */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
   const { test } = D.require('tests/harness');
   const i18n = D.require('ui/i18n');
   const vizLocale = D.require('viz/locale');
-  const CODES = ['sv', 'da', 'nb', 'fi', 'is', 'en'];
+  const CODES = ['sv', 'da', 'nb', 'nn', 'fi', 'is', 'en'];
   const placeholders = (s) => (String(s).match(/\{[a-zA-Z_]+\}/g) || []).sort().join(' ');
   const spaces = (s) => String(s).replace(/[  ]/g, ' ');
 
-  test('i18n: six languages with identical key sets, no empty texts and matching placeholders', async (assert) => {
+  test('i18n: seven languages with identical key sets, no empty texts and matching placeholders', async (assert) => {
     assert.deepEqual(i18n.LANGUAGES.map((l) => l.code), CODES);
     // Only Swedish and the chosen language load at the start (2.0); the others are fetched on demand.
     for (const code of CODES) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);

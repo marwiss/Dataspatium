@@ -13,7 +13,7 @@
     const parts = new Intl.NumberFormat(locale).formatToParts(1234567.5);
     const decimal = (parts.find((p) => p.type === 'decimal') || { value: ',' }).value;
     const group = (parts.find((p) => p.type === 'group') || { value: ' ' }).value;
-    const currencyByLanguage = { sv: ' kr', da: ' kr.', nb: ' kr', fi: ' €', is: ' kr.', en: ' £' };
+    const currencyByLanguage = { sv: ' kr', da: ' kr.', nb: ' kr', nn: ' kr', fi: ' €', is: ' kr.', en: ' £' };
     const numberLocale = { decimal, thousands: group, grouping: [3], currency: ['', currencyByLanguage[i18n.language()] || ''], percent: ' %', minus: '−', nan: '' };
 
     const names = (options, count, mk) => Array.from({ length: count }, (_, i) => new Intl.DateTimeFormat(locale, options).format(mk(i)));

@@ -92,7 +92,7 @@ klikker.
 ## Kan jeg skifte sprog?
 
 Ja. Første gang appen åbnes, vælger du sprog; derefter åbner sprogknappen øverst til højre (ikonet med bogstaver) eller
-kommandoen *Sprog* i paletten det samme valg. Svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk findes. Appen
+kommandoen *Sprog* i paletten det samme valg. Svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk findes. Appen
 genindlæses på det valgte sprog, når ugemte ændringer er gemt. Valget gemmes i browseren, så hver computer og profil har
 sit eget. Dokumentationen findes på de samme sprog i mappen `docs`.
 
@@ -173,7 +173,7 @@ som `.api.json` og opskrifter som JSON, R eller SQL. Se [dela.md](dela.md).
 ## Hvordan åbner jeg grundkurset igen?
 
 Klik på spørgsmålstegnet øverst til højre, og vælg *Åbn grundkurset*, eller tryk Ctrl+K, og skriv *grundkurs*.
-Kurset fortsætter, hvor du slap; har du gennemført det, begynder det forfra. Det findes på alle seks sprog.
+Kurset fortsætter, hvor du slap; har du gennemført det, begynder det forfra. Det findes på alle syv sprog.
 
 ## Hvordan holder jeg orden på mange datasæt?
 

@@ -94,7 +94,7 @@ vertaa versiotasi GitHubin uusimpaan julkaisuun. Tarkistus tehdään vain, kun n
 ## Voinko vaihtaa kieltä?
 
 Voit. Kun sovellus avataan ensimmäisen kerran, valitset kielen; sen jälkeen oikean yläkulman kielipainike (kirjainkuvake) tai
-paletin komento *Kieli* avaa saman valinnan. Saatavilla ovat ruotsi, tanska, norja (bokmål), suomi, islanti ja englanti.
+paletin komento *Kieli* avaa saman valinnan. Saatavilla ovat ruotsi, tanska, norja (bokmål ja nynorsk), suomi, islanti ja englanti.
 Sovellus latautuu uudelleen valitulla kielellä, kun tallentamattomat muutokset on tallennettu. Valinta tallennetaan selaimeen,
 joten jokaisella tietokoneella ja profiililla on omansa. Dokumentaatio on samoilla kielillä kansiossa `docs`.
 
@@ -178,7 +178,7 @@ voi viedä JSON-tiedostoina, API-määritykset `.api.json`-tiedostoina ja resept
 ## Miten avaan peruskurssin uudelleen?
 
 Napsauta oikean yläkulman kysymysmerkkiä ja valitse *Avaa peruskurssi*, tai paina Ctrl+K ja kirjoita *peruskurssi*.
-Kurssi jatkuu siitä, mihin jäit; jos olet käynyt sen loppuun, se alkaa alusta. Kurssi on saatavilla kaikilla kuudella
+Kurssi jatkuu siitä, mihin jäit; jos olet käynyt sen loppuun, se alkaa alusta. Kurssi on saatavilla kaikilla seitsemällä
 kielellä.
 
 ## Miten pidän järjestystä monissa aineistoissa?

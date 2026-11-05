@@ -159,7 +159,9 @@ the heading which server it is and which extensions it has (self-registration, r
 queries). A server without the document has no extensions, and everything in the specifications works anyway. The server's error
 codes (`code` in the answer, for example `reauthentication_required`) are shown in your language; unknown codes show the server's own
 text. The link *Open in Dataspatium* on the server's pages has the form `index.html#/inhamta/opencde?server=https://…` and opens
-the dialog for a new source with the address filled in.
+the dialog for a new source with the address filled in. A server the workspace already has as a source opens directly. The link can also name a project and a document
+(`&project=…&document=…&version=…`): the project is chosen and the document fetched as a dataset once you are signed in. Pages that
+Kontroll opens in a popup (sign-in, upload, document selection) appear in the app's language.
 
 ## Open geodata
 

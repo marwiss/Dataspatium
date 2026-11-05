@@ -1,4 +1,4 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · **Suomi** · [Íslenska](../is/README.md) · [English](../en/README.md)
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Norsk nynorsk](../nn/README.md) · **Suomi** · [Íslenska](../is/README.md) · [English](../en/README.md)
 
 <img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
 
@@ -22,7 +22,7 @@ omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan 
 - [Kehitys](#kehitys)
 - [Lisenssi](#lisenssi)
 
-Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi, suomeksi, islanniksi ja englanniksi. Dokumentaation
+Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi (bokmål ja nynorsk), suomeksi, islanniksi ja englanniksi. Dokumentaation
 kuvakaappaukset näyttävät sovelluksen ruotsiksi.
 
 ## Lataa ja aloita
@@ -118,11 +118,11 @@ paketilla.
 - **Visualisoi, Vie ja Jaa seuraavat lajia**: kaavioehdotukset oikeilla kuvilla jokaiselle lajille, ristisuodattimet koontinäytöissä ja mallisanat, jotka tuovat kartan, graafin, mallin tai kaavan asiakirjaan; KML, GPX ja GeoPackage paikoille, yhteenvetoarkki kuville, kaavakartta ja kaavamääräykset kaavoille, määrät Exceliin ja glTF malleille sekä PDF piirustuksille; Jaa-tilassa valitset, lähtevätkö tiedostot mukaan pakettiin, teet aineistosta oman lähetettävän sivun ja näet jokaisen lajin omassa muodossaan puhelimessa (ks. [visualisera.md](visualisera.md) ja [dela.md](dela.md)).
 - **Tarkistus ennen jakamista**: kaikki, mikä lähtee sovelluksesta, tarkistetaan kokonaisuudessaan: sarakkeet, juokseva teksti, sivutaulukot, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät, kommentit ja tekijät; henkilötiedot voi säilyttää, pseudonymisoida tai poistaa kopiosta, eikä aineisto itse muutu koskaan (ks. [dela.md](dela.md)).
 - **Koodiluettelot, kuvaukset ja oppaat**: nimikkeet luetteloista SNI, SSYK, NACE ja muista yhdellä napsautuksella, datapaketit, DCAT-AP-SE, laatuseloste ja neljä opasta oikealla datalla (ks. [lagen.md](lagen.md)).
-- **Teksti kuvista**: skannatut PDF-tiedostot, kuvat ja kuvat taulukoista luetaan tekstintunnistuksella selaimessa, kaikilla kuudella kielellä.
+- **Teksti kuvista**: skannatut PDF-tiedostot, kuvat ja kuvat taulukoista luetaan tekstintunnistuksella selaimessa, kaikilla seitsemällä kielellä.
 - **Alkuperä, yhteistyö ja kirjasto**: näe, mistä aineisto on peräisin ja mitä siitä on tullut, tee yhteistyötä GitHubin kautta ilman että mitään katoaa, hae reseptejä ja malleja lisensseineen ja julkaise työtila verkkosivustona.
 - **Kontroll ja OpenCDE**: OpenCDE-palvelin kuten [Kontroll](https://github.com/marwiss/Kontroll) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa (ks. kohta [Dataspatium ja Kontroll](#dataspatium-ja-kontroll) alla).
 - **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
-- **Yhteensovitus Kontrollin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston kuudella kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
+- **Yhteensovitus Kontrollin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston seitsemällä kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
@@ -144,9 +144,9 @@ paketilla.
   asettaa ehdot ja näyttää luomansa SQL:n; tallennetut listat rajaavat Muokkaa-tilan taulukon ja kaavioiden rivit.
 - **Ohje sovelluksessa ja esitys**: koko käsikirja hakuineen avautuu ?-painikkeella tai F1:llä sen tilan luvusta,
   jossa olet, ja **Esitä** näyttää kojelaudan koko ikkunassa kaavion kerrallaan.
-- **Kuusi kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja
+- **Seitsemän kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål ja nynorsk), suomeksi, islanniksi ja
   englanniksi.
-- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla kuudella kielellä.
+- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
 ## Dataspatium ja Kontroll
@@ -161,7 +161,8 @@ myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin 
 `docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
 [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.0.0 toimii Kontroll 2.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen.
+Dataspatium 2.1.0 toimii Kontroll 2.1.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
+[snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
 
 ## Lue lisää
 
@@ -172,6 +173,7 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
 - **Peruskurssi** sovelluksessa: vuorovaikutteinen läpikäynti kaikista tiloista esimerkkidatalla; avaa se ohjeesta (?)
   tai näppäimillä Ctrl+K.
 - [Aloitusopas](kom-igang.md): vaihe vaiheelta ja yleiset kysymykset.
+- [Pika-aloitus Kontrollin kanssa](snabbstart.md): kaksikymmentä minuuttia tyhjästä 3D-näkymässä luotuun asiaan, joka näkyy palvelimella.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
 - [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
 - [Kahdeksan tilaa](lagen.md): mitä on missä ja miksi.
@@ -219,7 +221,7 @@ ohjepainikkeen alla) ja mitä teit. Ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 - Ei käännösvaihetta, ei node.js:ää. Avaa `index.html` suoraan tai tarjoile kansio komennolla `python -m http.server 8080`.
 - Kolmannen osapuolen osat: `python tools/fetch_vendor.py` ja sen jälkeen `python tools/wrap_assets.py`.
-- Testit: `powershell -File tools/run-tests.ps1` (headless Edge ja Firefox). Ks. [utveckling.md](../utveckling.md) (ruotsiksi).
+- Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox). Ks. [utveckling.md](../utveckling.md) (ruotsiksi).
 
 ## Lisenssi
 

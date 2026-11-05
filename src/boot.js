@@ -17,7 +17,7 @@
    * first-start chooser can show each language in itself; afterwards other languages load on demand through
    * Dataspatium.require('ui/i18n').loadLanguage(code).
    */
-  const LANGUAGES = ['sv', 'da', 'nb', 'fi', 'is', 'en'];
+  const LANGUAGES = ['sv', 'da', 'nb', 'nn', 'fi', 'is', 'en'];
   function chosenLanguages() {
     let chosen = null;
     try { chosen = new URLSearchParams(location.search).get('lang') || localStorage.getItem('dataspatium.lang'); } catch (_e) { chosen = null; }

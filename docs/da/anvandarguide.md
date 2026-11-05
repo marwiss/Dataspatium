@@ -226,12 +226,12 @@ tallene i tabellen i Bearbejd.
 
 ## Sprog
 
-Brugerfladen findes på svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk. Første gang appen åbnes, vælger du
+Brugerfladen findes på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk. Første gang appen åbnes, vælger du
 sprog; sprogknappen øverst til højre (eller kommandoen *Sprog* i paletten) skifter det senere. Valget gemmes i browseren,
 så hver computer og browserprofil har sit eget. Tal i brugerfladen følger sprogets konventioner; selve data ændres aldrig.
 R's meddelelser følger samme valg, mens skabelonernes pladsholdere som `{{datamangd}}` og tabelnøgleordene `kolumner`,
 `sortera`, `topp`, `filter` og `rubrik` er en del af skabelonsproget og er ens på alle sprog. Dokumentationen findes på
-alle seks sprog under `docs/` (svensk i `docs/`, de øvrige i `docs/<sprog>/`).
+alle syv sprog under `docs/` (svensk i `docs/`, de øvrige i `docs/<sprog>/`).
 
 ## Når noget går galt
 

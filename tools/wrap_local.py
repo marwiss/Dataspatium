@@ -36,9 +36,9 @@ LOCAL_GZIP_GLOBS = [
 # Swedish lives in docs/, the other languages in docs/<lang>/. Developer documents are not embedded.
 HELP_DOCS = [
     "kom-igang", "anvandarguide", "lagen", "soka", "bearbeta", "visualisera", "anteckningsbok", "regex",
-    "format", "api-konfiguration", "kallor", "r-guide", "python", "dokument", "kartor", "planer", "grafer", "cad-bim", "floden", "statistik", "insamling", "dokumentmallar", "dela", "mobil", "faq", "licenser",
+    "format", "api-konfiguration", "kallor", "snabbstart", "r-guide", "python", "dokument", "kartor", "planer", "grafer", "cad-bim", "floden", "statistik", "insamling", "dokumentmallar", "dela", "mobil", "faq", "licenser",
 ]
-HELP_LANGS = ["sv", "da", "nb", "fi", "is", "en"]
+HELP_LANGS = ["sv", "da", "nb", "nn", "fi", "is", "en"]
 MANIFEST = ROOT / "presets" / "local-assets.js"
 
 

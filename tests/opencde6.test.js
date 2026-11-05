@@ -130,6 +130,18 @@
     return 'ok';
   }, 30000);
 
+  test('opencde VI: the popup addresses carry the app\'s language for Kontroll and are left alone for other servers', async (assert) => {
+    const seen = [];
+    const spyPopup = (url) => { seen.push(url); return fakePopup(url); };
+    await opencde.login(connector, { popup: spyPopup, redirectUri: REDIRECT });
+    assert.equal(new URL(seen[0]).searchParams.get('lang'), D.require('ui/i18n').language(), 'Kontroll gets lang: ' + seen[0]);
+    assert.equal(new URL(seen[0]).searchParams.get('response_type'), 'code', 'the OAuth parameters stay');
+    assert.equal(new URL(seen[0]).searchParams.get('code_challenge_method'), 'S256');
+    await opencde.login(plain, { popup: spyPopup, redirectUri: REDIRECT }).catch(() => null);
+    assert.equal(new URL(seen[1]).searchParams.get('lang'), null, 'a server without the capabilities document is left alone: ' + seen[1]);
+    return 'ok';
+  }, 30000);
+
   test('opencde VI: cleanup', async () => {
     for (const c of [connector, plain]) if (c) { await opencde.logout(c).catch(() => {}); await connectors.remove(c.id); }
     cdeLog.clear();

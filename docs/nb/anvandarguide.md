@@ -220,11 +220,11 @@ tallene i tabellen i Bearbeid.
 
 ## Språk
 
-Brukergrensesnittet finnes på svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk. Første gang appen åpnes, velger du
+Brukergrensesnittet finnes på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk. Første gang appen åpnes, velger du
 språk; språkknappen øverst til høyre (eller kommandoen *Språk* i paletten) bytter det senere. Valget lagres i nettleseren,
 så hver datamaskin og nettleserprofil har sitt eget. Tall i grensesnittet følger språkets konvensjoner; selve dataene endres
 aldri. R sine meldinger følger samme valg, mens malenes plassholdere som `{{datamangd}}` og tabellnøkkelordene `kolumner`,
-`sortera`, `topp`, `filter` og `rubrik` er en del av malspråket og er like på alle språk. Dokumentasjonen finnes på alle seks
+`sortera`, `topp`, `filter` og `rubrik` er en del av malspråket og er like på alle språk. Dokumentasjonen finnes på alle sju
 språk under `docs/` (svensk i `docs/`, de øvrige i `docs/<språk>/`).
 
 ## Når noe går galt

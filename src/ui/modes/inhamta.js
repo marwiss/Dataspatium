@@ -253,13 +253,21 @@
         replace(slots.center, apiUi.el);
       }
 
-      /** A server handed over by a deep link (#/inhamta/opencde?server=…): the source dialog opens with it filled in, once. */
+      /**
+       * A server handed over by a deep link (#/inhamta/opencde?server=…&project=…&document=…&version=…): a server the workspace already
+       * has as a source opens directly, a new one goes through the source dialog with the address filled in, once. A named project and
+       * document wait in the store for the source's view (ui/api/opencde-view), which chooses and fetches them.
+       */
       async function consumePendingSource(state) {
         const p = state.pendingSource;
         store.set({ pendingSource: null });
         if (!p || !p.baseUrl) return;
-        const connector = await familyDialog.open(ctx, { family: p.family || 'opencde', values: { baseUrl: p.baseUrl } });
-        if (connector) await openConnector(connector);
+        const same = (u) => String(u || '').trim().replace(/\/+$/, '').toLowerCase();
+        const known = connectorList.find((c) => c.family && c.family.type === (p.family || 'opencde') && same(c.baseUrl) === same(p.baseUrl));
+        const connector = known || (await familyDialog.open(ctx, { family: p.family || 'opencde', values: { baseUrl: p.baseUrl } }));
+        if (!connector) return;
+        if (p.projectId || p.documentId) store.set({ pendingCde: { connectorId: connector.id, projectId: p.projectId || null, documentId: p.documentId || null, versionIndex: p.versionIndex == null ? null : p.versionIndex, at: Date.now() } });
+        await openConnector(connector);
       }
       /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
       async function addFamily(group) {

@@ -72,7 +72,7 @@ måste också bäddas in som JavaScript för att kunna läsas via file://. Kör 
 för hjälpen i appen (`ui/help`): användardokumenten i `HELP_DOCS` (svenska i `docs/`, övriga språk i
 `docs/<språk>/`) skrivs som `docs/help/<språk>.js` och registreras som resurserna `docs/<språk>/<fil>.md`. Ett nytt
 användardokument läggs till i `HELP_DOCS` i `tools/wrap_local.py` och i `DOCS` i `src/ui/help/help-panel.js`, i
-samma ordning, och skrivs på alla sex språk; kör skriptet igen efter varje ändring i docs/.
+samma ordning, och skrivs på alla sju språk; kör skriptet igen efter varje ändring i docs/.
 
 Kommun- och länsgränserna byggs av `python tools/build_boundaries.py [arkiv.zip]` ur SCB:s *Digitala gränser*
 (shapefiler i SWEREF 99 TM, CC0): skriptet läser shapefilerna med standardbiblioteket, räknar om koordinaterna
@@ -92,19 +92,19 @@ Kör sedan `python tools/wrap_local.py`.
 Alla texter i gränssnittet hämtas med `t('nyckel')` (`Dataspatium.t` utanför UI-lagret) ur ordböckerna i
 `src/ui/i18n/`: `sv.js` är grundspråket och `da.js`, `nb.js`, `fi.js`, `is.js` och `en.js` har exakt samma
 nycklar. Saknas en nyckel i det valda språket används den svenska texten; saknas den helt visas nyckeln och en
-rad loggas. Platshållare skrivs `{namn}`. Testet `tests/i18n.test.js` kontrollerar att alla sex ordböcker har
-samma nycklar, att inga texter är tomma och att platshållarna stämmer, så en ny text läggs till i alla sex filer
+rad loggas. Platshållare skrivs `{namn}`. Testet `tests/i18n.test.js` kontrollerar att alla sju ordböcker har
+samma nycklar, att inga texter är tomma och att platshållarna stämmer, så en ny text läggs till i alla sju filer
 på en gång.
 
 - Språkvalet sparas i `localStorage` under `dataspatium.lang`. Första starten (ingen sparad nyckel) visar
   språkvalet innan något annat; `index.html?lang=en` väljer och sparar ett språk, vilket skärmbildsverktyget
   och testerna använder (`tests/index.html` låser svenska eftersom testerna kontrollerar svenska texter).
-- Vid start laddas bara `sv.js` och det valda språket (`chosenLanguages()` i `src/boot.js`; alla sex innan ett
+- Vid start laddas bara `sv.js` och det valda språket (`chosenLanguages()` i `src/boot.js`; alla sju innan ett
   språk valts). Byte av språk laddar ordboken med `i18n.loadLanguage(kod)`, som också tester som jämför alla
   språk anropar först.
 - Tal formateras med `Intl.NumberFormat` i språkets locale (`i18n.formatNumber`); Vega och D3 får samma
   avgränsare via `src/viz/locale.js`. Datum skrivs alltid `ÅÅÅÅ-MM-DD`.
-- R-meddelandena i `r/dataspatium.R` finns i samma sex språk (`.dm_msg`) och väljs med `dm_setup(lang)`.
+- R-meddelandena i `r/dataspatium.R` finns i samma sju språk (`.dm_msg`) och väljs med `dm_setup(lang)`.
 - API-förinställningarna i `presets/api/` har svenska texter och ett `i18n`-block per språk; `connectors.list()`
   returnerar kopior på appens språk, exporten skriver originalet. PxWeb-rötter per språk anges i `family.urls`.
 - Dokumentationen: svenska i `docs/`, övriga språk i `docs/<kod>/` med samma filnamn.
@@ -119,7 +119,7 @@ Lägga till ett språk: skapa `src/ui/i18n/<kod>.js` med alla nycklar, lägg til
 och i förinställningarnas `i18n`-block, översätt `docs/` till `docs/<kod>/` och kör testerna.
 
 **Gemensam ordlista med Kontroll.** `presets/shared-keys.txt` listar de nycklar vars ord finns i båda projekten; `python tools/shared_glossary.py`
-skriver `presets/i18n-shared.json` ur språkfilerna (sex språk), `--check` faller när filen inte stämmer (körs av provet `glossary`).
+skriver `presets/i18n-shared.json` ur språkfilerna (sju språk), `--check` faller när filen inte stämmer (körs av provet `glossary`).
 Kontroll jämför sina språkfiler mot JSON-filen. Lägg till en nyckel i listan när ett nytt gemensamt begrepp får text i appen.
 
 ## Skärmbilder
@@ -139,6 +139,13 @@ steget som *Gör det åt mig*.
 ## Tester
 - `powershell -File tools/run-tests.ps1` kör `tests/index.html` headless i Edge och Firefox och skriver ut varje
   testrad. Exit-kod 0 betyder grönt, 1 fel, 2 timeout eller saknad webbläsare.
+- `tools/run-tests.sh` gör samma sak på Linux och macOS med Chromium (eller Chrome, Edge) och Firefox: `--url`, `--browsers`,
+  `--timeout`, `--width`, `--height` och `--all-console` motsvarar PowerShell-skriptets parametrar, och `CHROME` och `FIREFOX`
+  pekar ut webbläsarna när de inte finns i `PATH`. Miljövariablerna `DATASPATIUM_CDE_URL`, `DATASPATIUM_CDE_HELPER`,
+  `DATASPATIUM_CDE_CLIENT`, `DATASPATIUM_CDE_PROJECT`, `DATASPATIUM_CDE_GRAPH`, `DATASPATIUM_CDE_GRAPH_DB`,
+  `DATASPATIUM_CDE_GRAPH_USER`, `DATASPATIUM_CDE_GRAPH_PASS` och `DATASPATIUM_CDE_ADMIN_HELPER` blir frågeparametrarna till det
+  riktiga provet mot Kontroll (`tests/opencde-live.test.js`), så att parets CI kan köra det mot en server i samma jobb; sidan
+  måste då serveras över http.
 - `-Width` och `-Height` (standard 1400 × 1000) sätter fönstrets storlek. Kör också sviten i surfplattestorlek,
   `-Width 768 -Height 1024`, när skalet eller ett läges layout ändrats, så att flaken och lägesväxlarens ikonläge
   testas.

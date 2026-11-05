@@ -34,7 +34,7 @@
     return { store, toasts, activate(id) { store.set({ mode: id }); }, log() {}, toast(message, options) { toasts.push({ message, options }); } };
   }
 
-  test('course: every step has its texts in all six languages', async (assert) => {
+  test('course: every step has its texts in all seven languages', async (assert) => {
     for (const l of i18n.LANGUAGES) await i18n.loadLanguage(l.code);
     assert.equal(courseMod.STEPS.length, 11);
     assert.deepEqual(courseMod.STEPS.map((s) => s.id), ['welcome', 'import', 'manage', 'search', 'process', 'sql', 'r', 'viz', 'export', 'share', 'finish']);

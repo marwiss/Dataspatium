@@ -219,11 +219,11 @@ töflunni í Vinna.
 
 ## Tungumál
 
-Viðmótið er á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku. Í fyrsta skipti sem forritið er opnað velurðu
+Viðmótið er á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku. Í fyrsta skipti sem forritið er opnað velurðu
 tungumál; tungumálahnappurinn efst til hægri (eða skipunin *Tungumál* í spjaldinu) skiptir síðar. Valið er vistað í vafranum,
 svo hver tölva og vafrasnið hefur sitt eigið. Tölur í viðmótinu fylgja venjum tungumálsins; gögnunum sjálfum er aldrei breytt.
 Skilaboð R fylgja sama vali, en staðgenglar sniðanna eins og `{{datamangd}}` og lykilorð taflnanna `kolumner`, `sortera`,
-`topp`, `filter` og `rubrik` eru hluti af sniðmálinu og eru eins á öllum tungumálum. Skjölunin er á öllum sex tungumálunum undir
+`topp`, `filter` og `rubrik` eru hluti af sniðmálinu og eru eins á öllum tungumálum. Skjölunin er á öllum sjö tungumálunum undir
 `docs/` (sænska í `docs/`, hin í `docs/<tungumál>/`).
 
 ## Þegar eitthvað fer úrskeiðis

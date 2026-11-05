@@ -94,7 +94,7 @@ made only when you click.
 
 Yes. The first time the app is opened you choose a language; afterwards the language button at the top right (the
 icon with letters) or the command *Language* in the palette opens the same chooser. Swedish, Danish, Norwegian
-(Bokmål), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
+(Bokmål and Nynorsk), Finnish, Icelandic and English are available. The app reloads in the chosen language after unsaved
 changes have been saved. The choice is stored in the browser, so each computer and profile has its own.
 
 ## Are there sources from the other Nordic countries?
@@ -179,7 +179,7 @@ backup of the whole workspace. Charts and document templates can be exported as 
 
 Click the question mark at the top right and choose *Open the beginner's course*, or press Ctrl+K and type *course*.
 The course continues where you left off; if you have finished it, it starts again from the beginning. It is
-available in all six languages.
+available in all seven languages.
 
 ## How do I keep order among many datasets?
 

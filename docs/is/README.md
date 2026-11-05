@@ -1,4 +1,4 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · **Íslenska** · [English](../en/README.md)
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Norsk nynorsk](../nn/README.md) · [Suomi](../fi/README.md) · **Íslenska** · [English](../en/README.md)
 
 <img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
 
@@ -22,7 +22,7 @@ Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei
 - [Þróun](#þróun)
 - [Leyfi](#leyfi)
 
-Viðmótið er á sænsku, dönsku, norsku, finnsku, íslensku og ensku. Skjámyndirnar í skjöluninni sýna forritið á sænsku.
+Viðmótið er á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku. Skjámyndirnar í skjöluninni sýna forritið á sænsku.
 
 ## Sækja og hefjast handa
 
@@ -111,11 +111,11 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Myndgera, Flytja út og Deila fylgja tegundinni**: tillögur að gröfum með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðorð sem setja kort, net, líkan eða skipulag inn í skjal; KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagsuppdráttur og skipulagsákvæði fyrir skipulag, magntölur í Excel og glTF fyrir líkön og PDF fyrir teikningar; í Deila velur þú hvort skrárnar fylgi með í pakkanum, gerir gagnasafn að eigin síðu til að senda og sérð hverja tegund í sinni eigin mynd í símanum (sjá [visualisera.md](visualisera.md) og [dela.md](dela.md)).
 - **Yfirferð áður en deilt er**: allt sem fer úr forritinu er yfirfarið í heild, með dálkum, lesmáli, hliðartöflum, upprunaskrám, staðsetningu mynda, leggjum neta, athugasemdum og höfundum; persónuupplýsingar má halda, dulnefna eða fjarlægja í afritinu, og gagnasafnið sjálft breytist aldrei (sjá [dela.md](dela.md)).
 - **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
-- **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sex tungumálunum.
+- **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sjö tungumálunum.
 - **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
 - **Kontroll og OpenCDE**: OpenCDE-þjónn eins og [Kontroll](https://github.com/marwiss/Kontroll) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins (sjá kaflann [Dataspatium og Kontroll](#dataspatium-og-kontroll) hér fyrir neðan).
 - **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
-- **Samræming við Kontroll, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sex tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
+- **Samræming við Kontroll, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sjö tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).
@@ -137,8 +137,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   og sýnir þá SQL sem verður til; vistaðir listar afmarka töfluna í Vinna og raðir myndrita.
 - **Hjálp í forritinu og kynning**: öll handbókin með leit opnast með ? eða F1 við kaflann fyrir haminn sem þú ert
   í, og **Kynna** sýnir mælaborð í öllum glugganum eitt myndrit í einu.
-- **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
-- **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
+- **Sjö tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku.
+- **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
 ## Dataspatium og Kontroll
@@ -151,7 +151,8 @@ hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. 
 OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.0.0 virkar með Kontroll 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman.
+Dataspatium 2.1.0 virkar með Kontroll 2.1.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+[snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira
 
@@ -161,6 +162,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - **Grunnnámskeiðið** í forritinu: gagnvirk yfirferð yfir alla hami með sýnigögnum; opnaðu það úr hjálpinni (?) eða
   með Ctrl+K.
 - [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
+- [Fljótleg byrjun með Kontroll](snabbstart.md): tuttugu mínútur frá engu að máli sem er búið til í þrívíddarsýninni og sést á þjóninum.
 - [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
 - [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
@@ -207,7 +209,7 @@ hvað þú gerðir. Sjá [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 - Ekkert smíðaskref, ekkert node.js. Opnaðu `index.html` beint eða berðu möppuna fram með `python -m http.server 8080`.
 - Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
-- Prófanir: `powershell -File tools/run-tests.ps1` (headless Edge og Firefox). Sjá [utveckling.md](../utveckling.md) (á
+- Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox). Sjá [utveckling.md](../utveckling.md) (á
   sænsku).
 
 ## Leyfi

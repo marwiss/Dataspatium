@@ -235,13 +235,13 @@ D3 templates the figures are in the table in Process.
 
 ## Language
 
-The interface is available in Swedish, Danish, Norwegian (Bokmål), Finnish, Icelandic and English. The first time
+The interface is available in Swedish, Danish, Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English. The first time
 the app is opened you choose a language; the language button at the top right (or the *Language* command in the
 palette) changes it later. The choice is stored in the browser, so each computer and browser profile has its own.
 Numbers in the interface follow the language's conventions; the data itself is never changed. R's messages follow
 the same choice, while template placeholders such as `{{datamangd}}` and the table keywords `kolumner`, `sortera`,
 `topp`, `filter` and `rubrik` are part of the template syntax and stay the same in every language. The
-documentation exists in all six languages under `docs/` (Swedish in `docs/`, the others in `docs/<language>/`).
+documentation exists in all seven languages under `docs/` (Swedish in `docs/`, the others in `docs/<language>/`).
 
 ## When something goes wrong
 

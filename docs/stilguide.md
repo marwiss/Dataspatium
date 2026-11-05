@@ -60,7 +60,7 @@ Inga hover-beroenden; allt nås med tryck.
 - Avancerade val göms under "Fler alternativ".
 - Farliga åtgärder (ta bort) har variant `danger` och kräver bekräftelse i dialog.
 - Tomma tillstånd (`dm-empty-state`) förklarar vad som visas här och erbjuder nästa steg.
-- Alla texter hämtas med `t('nyckel')` och finns på alla sex språk (svenska är grundspråket); inga hårdkodade
+- Alla texter hämtas med `t('nyckel')` och finns på alla sju språk (svenska är grundspråket); inga hårdkodade
   strängar i komponenter eller vyer.
 - Tal visas med det valda språkets format (på svenska mellanslag som tusentalsavgränsare och decimalkomma) och
   högerställda.

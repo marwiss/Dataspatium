@@ -155,7 +155,9 @@ fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskránin
 án skjalsins hefur engar viðbætur, og allt samkvæmt forskriftunum virkar þó. Villukóðar þjónsins (`code` í svarinu, til dæmis
 `reauthentication_required`) birtast á þínu tungumáli; óþekktir kóðar sýna eigin texta þjónsins. Tengillinn *Opna í Dataspatium* á
 síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…` og opnar gluggann fyrir nýja uppsprettu með slóðina
-útfyllta.
+útfyllta. Sé þjónninn þegar uppspretta opnast hann beint. Tengillinn getur einnig bent á verkefni og skjal
+(`&project=…&document=…&version=…`): verkefnið er valið og skjalið sótt sem gagnasafn þegar þú ert innskráður. Síður sem Kontroll
+opnar í sprettiglugga (innskráning, upphal, val skjala) birtast á tungumáli forritsins.
 
 ## Opin landupplýsingagögn
 

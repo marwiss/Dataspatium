@@ -158,7 +158,9 @@ overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistr
 grafforespørgsler). En server uden dokumentet har ingen tilføjelser, og alt ifølge specifikationerne fungerer alligevel. Serverens
 fejlkoder (`code` i svaret, for eksempel `reauthentication_required`) vises på dit sprog; ukendte koder viser serverens egen tekst.
 Linket *Åbn i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åbner dialogen for en ny
-kilde med adressen udfyldt.
+kilde med adressen udfyldt. Findes serveren allerede som kilde, åbnes den direkte. Linket kan også udpege et projekt og et dokument
+(`&project=…&document=…&version=…`): projektet vælges, og dokumentet hentes som datasæt, når du er logget ind. Sider, som Kontroll
+åbner i popup (login, upload, valg af dokumenter), vises på appens sprog.
 
 ## Åbne geodata
 

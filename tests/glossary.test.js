@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for the shared glossary (2.34): presets/i18n-shared.json is embedded, lists six languages, and every value is what the app's own
+ * Tests for the shared glossary (2.34): presets/i18n-shared.json is embedded, lists seven languages, and every value is what the app's own
  * translation says, so Kontroll can compare its files against it. Also the deep link that hands a server to Inhämta.
  */
 (function () {
@@ -10,9 +10,11 @@
   const { test } = D.require('tests/harness');
   const i18n = D.require('ui/i18n');
 
-  test('glossary: the shared glossary is embedded, complete in six languages, and equal to the translations', async (assert) => {
+  test('glossary: the shared glossary is embedded, complete in seven languages, and equal to the translations', async (assert) => {
     const data = JSON.parse(await D.assets.loadText('presets/i18n-shared.json'));
-    assert.deepEqual(data.languages, ['sv', 'en', 'da', 'nb', 'fi', 'is']);
+    assert.deepEqual(data.languages, ['sv', 'en', 'da', 'nb', 'nn', 'fi', 'is']);
+    // The dictionaries are loaded on demand; the comparison needs all seven, whatever ran before this test.
+    for (const code of data.languages) assert.equal(await i18n.loadLanguage(code), true, 'dictionary loaded: ' + code);
     const keys = Object.keys(data.keys);
     assert.ok(keys.length >= 40, 'keys: ' + keys.length);
     assert.ok(keys.includes('issues.title') && keys.includes('opencde.signin') && keys.includes('cdelog.title'));
@@ -48,6 +50,12 @@
       assert.ok(input, 'the server address is filled in');
       assert.equal(shell.store.get().pendingSource, null, 'consumed once');
       /** @type {any} */ (dialog).close();
+      // Project, document and version travel with the link; with Inhämta inactive nothing consumes them, so they can be read.
+      shell.activate('hantera');
+      await shell.openRoute({ mode: 'inhamta', object: 'opencde?server=https://cde.example.org/&project=p1&document=d1&version=2' });
+      const p = shell.store.get().pendingSource;
+      assert.ok(p && p.projectId === 'p1' && p.documentId === 'd1' && p.versionIndex === 2 && p.baseUrl === 'https://cde.example.org/', 'project, document and version travel: ' + JSON.stringify(p));
+      shell.store.set({ pendingSource: null });
     } finally {
       for (const d of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (d).close();
       history.replaceState(null, '', location.pathname + location.search);

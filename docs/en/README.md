@@ -1,4 +1,4 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · **English**
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Norsk nynorsk](../nn/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · **English**
 
 <img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
 
@@ -23,7 +23,7 @@ yourself.
 - [Development](#development)
 - [Licence](#licence)
 
-The interface is available in Swedish, Danish, Norwegian, Finnish, Icelandic and English. The screenshots in the
+The interface is available in Swedish, Danish, Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English. The screenshots in the
 documentation show the app in Swedish.
 
 ## Download and get started
@@ -117,11 +117,11 @@ with a backup or a bundle.
 - **Visualise, Export and Share follow the kind**: chart suggestions with real pictures for every kind, cross-filters in dashboards and template words that put a map, a graph, a model or a plan into a document; KML, GPX and GeoPackage for places, a contact sheet for pictures, plan map and provisions for plans, quantities in Excel and glTF for models and PDF for drawings; in Share you choose whether the files go into the package, turn a dataset into a page of its own to send, and see each kind in its own form on the phone (see [visualisera.md](visualisera.md) and [dela.md](dela.md)).
 - **Review before sharing**: everything that leaves the app is reviewed as a whole, with columns, running text, side tables, original files, picture positions, graph edges, comments and authors; personal data can be kept, pseudonymised or removed in the copy, and the dataset itself never changes (see [dela.md](dela.md)).
 - **Code lists, descriptions and guides**: labels from SNI, SSYK, NACE and other lists with a click, data packages, DCAT-AP-SE, a quality declaration and four guides with real data (see [lagen.md](lagen.md)).
-- **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all six languages.
+- **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all seven languages.
 - **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
 - **Kontroll and OpenCDE**: an OpenCDE server such as [Kontroll](https://github.com/marwiss/Kontroll) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log (see [Dataspatium and Kontroll](#dataspatium-and-kontroll) below).
 - **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
-- **Coordination with Kontroll, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in six languages and opens a source from the link Open in Dataspatium.
+- **Coordination with Kontroll, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in seven languages and opens a source from the link Open in Dataspatium.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
@@ -143,9 +143,9 @@ with a backup or a bundle.
   and shows the SQL it creates; saved lists narrow the table in Process and the rows of charts.
 - **Help in the app and presentation**: the whole handbook with search opens with ? or F1 at the chapter of the mode
   you are in, and **Present** shows a dashboard in the whole window one chart at a time.
-- **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
-  Norwegian (Bokmål), Finnish, Icelandic and English.
-- **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all six languages. It is
+- **Seven languages**: the interface, the messages and the documentation are available in Swedish, Danish,
+  Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English.
+- **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
 ## Dataspatium and Kontroll
@@ -159,7 +159,8 @@ OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for th
 works as before. Kontroll's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.0.0 works with Kontroll 2.0.0. Both carry the same release number, so equal numbers belong together.
+Dataspatium 2.1.0 works with Kontroll 2.1.0. Both carry the same release number, so equal numbers belong together. The quick start
+[snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more
 
@@ -170,6 +171,7 @@ everywhere.
 - **The beginner's course** in the app: an interactive walkthrough of all the modes with example data; open it from
   the help (?) or with Ctrl+K.
 - [Getting started](kom-igang.md): step by step with common questions.
+- [Quick start with Kontroll](snabbstart.md): twenty minutes from nothing to an issue created in the 3D view and visible on the server.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
 - [The eight modes](lagen.md): what is where and why.
@@ -219,7 +221,7 @@ help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 - No build step, no node.js. Open `index.html` directly, or serve the folder with `python -m http.server 8080`.
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
-- Tests: `powershell -File tools/run-tests.ps1` (headless Edge and Firefox). See [utveckling.md](../utveckling.md)
+- Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). See [utveckling.md](../utveckling.md)
   (Swedish).
 
 ## Licence

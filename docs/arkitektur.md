@@ -632,7 +632,7 @@ hjul som workern ber om själv (`asset-request`, en import som kodskanningen int
 `components.ensure` tar `onProgress` och läser då svaret i delar, så att statusraden kan visa hur långt hämtningen
 kommit.
 
-Språk laddas vid behov: `boot.js` läser in svenska och det valda språket (alla sex vid första start, innan valet
+Språk laddas vid behov: `boot.js` läser in svenska och det valda språket (alla sju vid första start, innan valet
 gjorts) och `i18n.loadLanguage(kod)` injicerar `src/ui/i18n/<kod>.js` när användaren byter språk. Tester som
 jämför alla språk anropar `loadLanguage` först.
 

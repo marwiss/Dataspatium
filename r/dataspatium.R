@@ -62,6 +62,21 @@
     step.nofunction = "Koden må være en funksjon: function(df) { ... }.",
     step.notframe = "Funksjonen må returnere en data.frame."
   ),
+  nn = c(
+    list.empty = "Ingen datasett er tilgjengelege i R-sesjonen enno. Importer under Hent.",
+    find.none = "Det finst ingen datasett i R-sesjonen. Køyr dm_list() for å sjå kva som finst.",
+    find.many = "Fleire datasett samsvarar med \"%s\": %s",
+    find.missing = "Finn ikkje noko datasett som heiter \"%s\". Køyr dm_list() for å sjå kva som finst.",
+    read.notmirrored = "Datasettet \"%s\" er ikkje spegla til R enno. Prøv igjen om ei stund.",
+    write.df = "dm_write() krev ein data.frame.",
+    write.nocols = "Datasettet har ingen kolonnar.",
+    write.sent = "Datasettet \"%s\" blir sendt til appen (%d rader, %d kolonnar).",
+    write.log = "Oppretta med dm_write() i R",
+    plot.gone = "Diagrammet finst ikkje lenger i R-sesjonen.",
+    labels.named = "Verdietikettane må vere ein namngjeven vektor, til dømes c(\"Mann\" = 1, \"Kvinne\" = 2).",
+    step.nofunction = "Koden må vere ein funksjon: function(df) { ... }.",
+    step.notframe = "Funksjonen må returnere ein data.frame."
+  ),
   fi = c(
     list.empty = "R-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
     find.none = "R-istunnossa ei ole aineistoja. Aja dm_list() nähdäksesi, mitä on saatavilla.",

@@ -184,7 +184,7 @@
         buttonIn(root, t('ocr.action')).click();
         const dlg = await waitFor(openDialog, 3000, 'dialog');
         const select = dlg.querySelector('dm-select');
-        assert.equal(select.options.length, 6, 'the six languages');
+        assert.equal(select.options.length, 7, 'the seven languages');
         assert.ok(dlg.textContent.includes(i18n.formatBytes(engine.downloadSize(select.value))), 'it says what would be fetched');
         await offline(async () => {
           buttonIn(dlg, t('ocr.read')).click();

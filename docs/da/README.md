@@ -1,4 +1,4 @@
-[Svenska](../../README.md) · **Dansk** · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · [English](../en/README.md)
+[Svenska](../../README.md) · **Dansk** · [Norsk bokmål](../nb/README.md) · [Norsk nynorsk](../nn/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · [English](../en/README.md)
 
 <img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
 
@@ -22,7 +22,7 @@ server, ingen installation, ingen konti. Dine data forlader aldrig computeren, m
 - [Udvikling](#udvikling)
 - [Licens](#licens)
 
-Brugerfladen findes på svensk, dansk, norsk, finsk, islandsk og engelsk. Skærmbillederne i dokumentationen viser
+Brugerfladen findes på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk. Skærmbillederne i dokumentationen viser
 appen på svensk.
 
 ## Download og kom i gang
@@ -114,11 +114,11 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Visualisér, Eksportér og Del følger typen**: diagramforslag med rigtige billeder for hver type, krydsfiltre i dashboards og skabelonord, der lægger et kort, en graf, en model eller en plan ind i et dokument; KML, GPX og GeoPackage for steder, kontaktkort for billeder, plankort og planbestemmelser for planer, mængder i Excel og glTF for modeller og PDF for tegninger; i Del vælger du, om filerne skal med i pakken, gør et datasæt til en egen side at sende og ser hver type i sin egen form på telefonen (se [visualisera.md](visualisera.md) og [dela.md](dela.md)).
 - **Gennemgang før deling**: alt, der forlader appen, gennemgås i sin helhed, med kolonner, løbende tekst, sidetabeller, originalfiler, billeders positioner, grafers kanter, kommentarer og forfattere; personoplysninger kan beholdes, pseudonymiseres eller fjernes i kopien, og datasættet ændres aldrig (se [dela.md](dela.md)).
 - **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klik, datapakker, DCAT-AP-SE, kvalitetsdeklaration og fire guider med rigtige data (se [lagen.md](lagen.md)).
-- **Tekst fra billeder**: skannede PDF-filer, billeder og billeder af tabeller læses med tekstgenkendelse i browseren, på alle seks sprog.
+- **Tekst fra billeder**: skannede PDF-filer, billeder og billeder af tabeller læses med tekstgenkendelse i browseren, på alle syv sprog.
 - **Oprindelse, samarbejde og bibliotek**: se, hvor et datasæt kommer fra, og hvad det er blevet til, arbejd sammen via GitHub, uden at noget forsvinder, hent opskrifter og skabeloner med licens, og publicér arbejdsområdet som et websted.
 - **Kontroll og OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) bliver en kilde i Hent med login via OAuth2 og selvregistrering, hvor serveren tillader det. Appen henter projektets modeller og dokumenter og siger til, når der findes en nyere version, viser sagerne, der peger på bygningsdelene, opretter sager ud fra markeringen i 3D-visningen med visningen som viewpoint, kommenterer og skifter status, farver modellen efter sagsstatus, gemmer sagerne som tabel med værktøjet Sager og dashboardet Sagsstatus, læser og skriver BCF-filer, sender datasæt, filer og arbejdsområdepakker til serveren, spørger serverens IFC-graf med Cypher, læser, hvad serveren tilbyder, og forklarer dens fejlkoder, og logger hvert kald med et X-Request-Id, der parres med serverens forespørgselslog (se afsnittet [Dataspatium og Kontroll](#dataspatium-og-kontroll) nedenfor).
 - **Let start**: store dele som R og Python indlæses først, når de bruges, og statuslinjen viser, hvad der indlæses i mellemtiden.
-- **Samordning med Kontroll, trin 1**: appen læser serverens kapabilitetsdokument, oversætter dens fejlkoder, bærer en fælles ordliste på seks sprog og åbner en kilde fra linket Åbn i Dataspatium.
+- **Samordning med Kontroll, trin 1**: appen læser serverens kapabilitetsdokument, oversætter dens fejlkoder, bærer en fælles ordliste på syv sprog og åbner en kilde fra linket Åbn i Dataspatium.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
@@ -140,9 +140,9 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   betingelser og viser den SQL, der laves; gemte lister indsnævrer tabellen i Bearbejd og rækkerne i diagrammer.
 - **Hjælp i appen og præsentation**: hele håndbogen med søgning åbnes med ? eller F1 ved kapitlet for den tilstand,
   du står i, og **Præsentér** viser et dashboard i hele vinduet ét diagram ad gangen.
-- **Seks sprog**: brugerflade, meddelelser og dokumentation på svensk, dansk, norsk (bokmål), finsk, islandsk og
+- **Syv sprog**: brugerflade, meddelelser og dokumentation på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og
   engelsk.
-- **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle seks sprog. Det vises første
+- **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle syv sprog. Det vises første
   gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
 
 ## Dataspatium og Kontroll
@@ -156,7 +156,8 @@ OpenCDE-API'er, så andre OpenCDE-klienter fungerer også. Serveren er ikke nød
 andet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbejdet fra
 serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.0.0 fungerer med Kontroll 2.0.0. Begge får samme udgavenummer, så samme nummer hører sammen.
+Dataspatium 2.1.0 fungerer med Kontroll 2.1.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
+[snabbstart.md](snabbstart.md) tager parret fra ingenting til en sag på tyve minutter.
 
 ## Lær mere
 
@@ -166,6 +167,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - **Grundkurset** i appen: en interaktiv gennemgang af alle tilstande med eksempeldata; åbn det fra hjælpen (?) eller
   med Ctrl+K.
 - [Kom i gang](kom-igang.md): trin for trin med almindelige spørgsmål.
+- [Hurtig start med Kontroll](snabbstart.md): tyve minutter fra ingenting til en sag oprettet i 3D-visningen og synlig på serveren.
 - [Brugervejledning](anvandarguide.md): hele arbejdsgangen fra fil til rapport.
 - [Ofte stillede spørgsmål](faq.md): lager, sikkerhed, R, API'er og opdateringer.
 - [De otte tilstande](lagen.md): hvad der findes hvor og hvorfor.
@@ -213,7 +215,7 @@ hjælpeknappen), og hvad du gjorde. Se [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 - Intet byggetrin, ingen node.js. Åbn `index.html` direkte, eller servér mappen med `python -m http.server 8080`.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` efterfulgt af `python tools/wrap_assets.py`.
-- Test: `powershell -File tools/run-tests.ps1` (headless Edge og Firefox). Se [utveckling.md](../utveckling.md)
+- Test: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Se [utveckling.md](../utveckling.md)
   (svensk).
 
 ## Licens

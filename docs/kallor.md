@@ -153,7 +153,9 @@ Kontroll beskriver sina tillägg i `GET /.well-known/kontroll`; appen läser dok
 vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC-graf, graffrågor). En server
 utan dokumentet har inga tillägg, och allt enligt specifikationerna fungerar ändå. Serverns felkoder (`code` i svaret, till exempel
 `reauthentication_required`) visas på ditt språk; okända koder visar serverns egen text. Länken *Öppna i Dataspatium* på serverns
-sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar dialogen för en ny källa med adressen ifylld.
+sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar dialogen för en ny källa med adressen ifylld. Finns servern redan som källa öppnas den direkt. Länken kan också peka ut ett projekt och ett dokument
+(`&project=…&document=…&version=…`): projektet väljs och dokumentet hämtas som datamängd när du är inloggad. Sidor som Kontroll
+öppnar i popup (inloggning, uppladdning, val av dokument) visas på appens språk.
 
 ## Öppna geodata
 

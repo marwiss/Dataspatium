@@ -361,10 +361,15 @@
           const { mode, object } = route;
           const state = this.store.get();
           const byName = (o) => state.datasets.find((d) => d.shortName === o || d.id === o || d.name === o) || null;
-          // #/inhamta/opencde?server=https://… : a server (Kontroll's "Open in Dataspatium") lands in the source dialog, filled in.
+          // #/inhamta/opencde?server=https://…[&project=…&document=…&version=…] : a server (Kontroll's "Open in Dataspatium") lands in
+          // the source dialog, filled in, or opens directly when it is a source already; a named project is chosen and a document fetched.
           if (mode === 'inhamta' && /^opencde(\?|$)/.test(object)) {
-            const server = new URLSearchParams(object.split('?')[1] || '').get('server');
-            if (server && /^https?:\/\//i.test(server)) this.store.set({ pendingSource: { family: 'opencde', baseUrl: server, at: Date.now() } });
+            const q = new URLSearchParams(object.split('?')[1] || '');
+            const server = q.get('server');
+            const version = q.get('version');
+            if (server && /^https?:\/\//i.test(server)) {
+              this.store.set({ pendingSource: { family: 'opencde', baseUrl: server, projectId: q.get('project') || null, documentId: q.get('document') || null, versionIndex: version && /^\d+$/.test(version) ? Number(version) : null, at: Date.now() } });
+            }
           } else if (mode === 'soka') { this.store.set({ pendingSearch: { text: object, at: Date.now() } }); }
           else if (mode === 'visualisera') {
             const charts = await D.require('viz/charts').list();

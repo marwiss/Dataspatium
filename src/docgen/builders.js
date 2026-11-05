@@ -115,7 +115,7 @@ pre.lang-output { background: #f7f8fa; border: 1px solid #e1e4e9; } pre.lang-err
         else if (b.type === 'pagebreak') body.push('\\clearpage\n');
         first = false;
       }
-      const babel = ({ sv: 'swedish', da: 'danish', nb: 'norsk', fi: 'finnish', is: 'icelandic', en: 'english' })[D.require('ui/i18n').language()] || 'swedish';
+      const babel = ({ sv: 'swedish', da: 'danish', nb: 'norsk', nn: 'nynorsk', fi: 'finnish', is: 'icelandic', en: 'english' })[D.require('ui/i18n').language()] || 'swedish';
       const text = `% ${D.t('doc.latex.comment', { version: D.version })}\n\\documentclass[a4paper,11pt]{article}\n\\usepackage[T1]{fontenc}\n\\usepackage[utf8]{inputenc}\n\\usepackage[${babel}]{babel}\n\\usepackage{booktabs,longtable,graphicx,hyperref}\n\\usepackage[margin=25mm]{geometry}\n\\setlength{\\parskip}{6pt}\n\\setlength{\\parindent}{0pt}\n\\title{${escTex(title)}}\n\\author{}\n\\date{${escTex(options.date || '')}}\n\\begin{document}\n\\maketitle\n\n${body.join('\n')}\n\\end{document}\n`;
       return { text, figures };
     }

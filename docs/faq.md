@@ -93,14 +93,14 @@ du klickar.
 ## Kan jag byta språk?
 
 Ja. Första gången appen öppnas väljer du språk; därefter öppnar språkknappen uppe till höger (ikonen med
-bokstäver) eller kommandot *Språk* i paletten samma val. Svenska, danska, norska (bokmål), finska, isländska och
+bokstäver) eller kommandot *Språk* i paletten samma val. Svenska, danska, norska (bokmål och nynorsk), finska, isländska och
 engelska finns. Appen laddas om på det valda språket när osparade ändringar har sparats. Valet sparas i
 webbläsaren, så varje dator och profil har sitt eget. Dokumentationen finns på samma språk i mappen `docs`.
 
 ## Hur öppnar jag Grundkursen igen?
 
 Klicka på frågetecknet uppe till höger och välj *Öppna Grundkursen*, eller tryck Ctrl+K och skriv *grundkurs*.
-Kursen fortsätter där du slutade; har du gått igenom den börjar den om från början. Den finns på alla sex språk.
+Kursen fortsätter där du slutade; har du gått igenom den börjar den om från början. Den finns på alla sju språk.
 
 ## Finns det källor från andra nordiska länder?
 

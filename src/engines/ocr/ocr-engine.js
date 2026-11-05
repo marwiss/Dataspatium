@@ -62,6 +62,7 @@
       sv: { code: 'swe', sha256: 'b60d9fea7e570d11d6fdf26c8d0ef1d63b49222313773ce66777ed08fa20dc5a', size: 2503095 },
       da: { code: 'dan', sha256: '6af1a07c22894b728ebc75f0fd0c8519eca002cfab6da903eb4d62e24f163abc', size: 1845116 },
       nb: { code: 'nor', sha256: '6c5d91a5b684da387bfcf16b38bae8d94771812dc9ef706b413c728ca1d37c93', size: 2490241 },
+      nn: { code: 'nor', sha256: '6c5d91a5b684da387bfcf16b38bae8d94771812dc9ef706b413c728ca1d37c93', size: 2490241 },
       fi: { code: 'fin', sha256: '138c59f6a0bef68fd98d8baf565477f5cdb5198bfc4a68e558efd3b6a57acadd', size: 3795323 },
       is: { code: 'isl', sha256: '002a0b366f0e96c06a65896033b0aabb313c6cc4c6d9c9cca0969dee11ff1f56', size: 1696807 },
       en: { code: 'eng', sha256: '45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91', size: 2952873 },

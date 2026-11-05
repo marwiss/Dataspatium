@@ -1,4 +1,4 @@
-"""The shared glossary: the words Dataspatium and Kontroll have in common, in six languages, as presets/i18n-shared.json. The keys
+"""The shared glossary: the words Dataspatium and Kontroll have in common, in seven languages, as presets/i18n-shared.json. The keys
 are listed in presets/shared-keys.txt (one per line, # comments); the values come from src/ui/i18n/<lang>.js, so the app's own
 translations are the source and Kontroll compares its files against the JSON. Run from the repo root; --check fails when the JSON on
 disk differs from what the i18n files give (CI and tests)."""
@@ -9,7 +9,7 @@ import json
 import re
 import sys
 
-LANGS = ['sv', 'en', 'da', 'nb', 'fi', 'is']
+LANGS = ['sv', 'en', 'da', 'nb', 'nn', 'fi', 'is']
 KEYS_FILE = 'presets/shared-keys.txt'
 OUT = 'presets/i18n-shared.json'
 LINE = re.compile(r"^\s*'([^']+)':\s*'((?:[^'\\]|\\.)*)',?\s*$", re.M)
