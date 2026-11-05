@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/bcf-xml', ['platform/storage/zip'], (zip) => {
-    const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  D.define('data/bcf-xml', ['platform/storage/zip', 'platform/text'], (zip, text) => {
+    const esc = text.escapeHtml;
     const tag = (name, value) => (value === null || value === undefined || value === '' ? '' : `<${name}>${esc(value)}</${name}>`);
     const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : '0');
     const point = (name, p) => `<${name}>${tag('X', num(p && p.x))}${tag('Y', num(p && p.y))}${tag('Z', num(p && p.z))}</${name}>`;

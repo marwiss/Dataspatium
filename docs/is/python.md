@@ -117,4 +117,4 @@ Skilaboð frá `dm_list()`, `dm_read()` og `dm_write()` fylgja tungumáli forrit
 - Minni er takmarkað af vafranum og WebAssembly; haltu gagnasöfnum undir nokkur hundruð megabætum í Python.
 - Inntak á meðan keyrt er (`input()`) virkar ekki, og ekki heldur þræðir, ferli eða skrár utan sýndarskráakerfisins.
   Netköll frá Python (til dæmis `micropip` og `pyodide.http`) krefjast þess að þú hafir gefið leyfi fyrir einingum.
-- Engir gagnvirkir gluggar eru til; matplotlib teiknar í SVG og PNG. plotly og seaborn koma í síðari útgáfu.
+- Engir gagnvirkir gluggar eru til; matplotlib teiknar í SVG og PNG. plotly er teiknað með plotly.js í forritinu og seaborn fylgir með sem pakki.

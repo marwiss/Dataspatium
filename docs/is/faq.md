@@ -122,6 +122,15 @@ forritinu. Fyrir önnur lönd, þar á meðal Ísland, flyturðu inn mörk úr G
 við mörkin á kóðanum í Vinna (*Tengja gagnasöfn*) og veldu myndritagerðina *Kort* í Myndgera. Punktar með lengd og breidd (til
 dæmis veðurstöðvar) eru teiknaðir með *Punktakorti*. Sjá [visualisera.md](visualisera.md).
 
+## Hvernig finn ég sveitarfélag eða lén út frá hnitum?
+
+Veldu *Landupplýsingar > Sveitarfélag og lén út frá hnitum* í Vinna (í Aðgerðum eða litaspjaldinu). Aðgerðin leitar upp
+sveitarfélag og lén hvers punkts í meðfylgjandi mörkum SCB og bætir við dálkunum kommunkod, kommun, lanskod og lan; hnit í
+SWEREF 99 TM eru þekkt. Mörkin ná yfir landsvæðið, svo punktar í vatni verða auðir. Sami hópur hefur miðpunkt og flatarmál úr
+rúmfræði og umreikning milli SWEREF 99 TM og WGS 84. Sjá [bearbeta.md](bearbeta.md).
+
+
+
 ## Hvernig sameina ég mörg gagnasöfn í einni SQL-fyrirspurn?
 
 Hvert gagnasafn hefur stuttheiti (birtist undir heitinu í hlutaspjaldinu, breytt undir Umsjón > Endurnefna). Í SQL-flipanum

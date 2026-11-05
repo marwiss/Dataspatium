@@ -10,26 +10,15 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/fhi', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'api/families/pxweb'], (http, auth, jsonstat, secrets, pxweb) => {
+  D.define('api/families/fhi', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'api/families/pxweb', 'api/families/common'], (http, auth, jsonstat, secrets, pxweb, common) => {
     const DEFAULT_MAX_CELLS = 100000;
 
     function base(connector) { return String(connector.baseUrl).replace(/\/+$/, ''); }
     function version() { return 1; }
     function lang() { return 'nb'; }
-    function maxCells(connector) { return (connector.family && connector.family.maxCells) || DEFAULT_MAX_CELLS; }
+    const maxCells = (connector) => common.maxCells(connector, DEFAULT_MAX_CELLS);
 
-    async function getJson(connector, url, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
-    async function postJson(connector, url, body, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
+    const { getJson, postJson } = common;
 
     /** Root: the registers and statistics banks (sources); inside a source: its tables. */
     async function listFolder(connector, path = [], options) {

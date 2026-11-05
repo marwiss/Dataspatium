@@ -214,7 +214,7 @@
       // The list, the status bar and Hantera count documents and pages, not rows and columns.
       shell.activate('hantera');
       shell.store.set({ selectedId: docMeta.id });
-      const sub = t('datasets.sub.document', { n: '2', pages: '3' });
+      const sub = `${t('document.files.n', { n: '2' })} · ${t('document.pages.n', { n: '3' })}`;
       await waitFor(() => { const row = root.querySelector(`.dm-left [data-id="${docMeta.id}"]`); return row && row.textContent.includes(sub); }, 5000, 'list counts documents and pages: ' + sub);
       assert.ok(shell.datasetEl && shell.datasetEl.textContent.includes(sub), 'status bar: ' + (shell.datasetEl && shell.datasetEl.textContent));
       await waitFor(() => buttonByText(t('hantera.read')), 5000, 'Läs button');

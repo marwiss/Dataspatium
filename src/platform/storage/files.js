@@ -42,6 +42,10 @@
       const base = String(name || 'dataspatium').trim().replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').slice(0, 80) || 'dataspatium';
       return ext ? `${base}.${ext}` : base;
     }
-    return { download, pick, safeName };
+    /** A Blob as a data URL (FileReader). @param {Blob} blob @returns {Promise<string>} */
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
+    }
+    return { download, pick, safeName, blobToDataUrl };
   });
 })();

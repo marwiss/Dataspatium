@@ -40,6 +40,8 @@
 
   /* Neutral scale */
   --dm-n-0: #ffffff;
+  /* QR codes stay white on every theme, so that cameras read them. */
+  --dm-qr-bg: #ffffff;
   --dm-n-50: #f7f8fa;
   --dm-n-100: #eef0f3;
   --dm-n-200: #e1e4e9;

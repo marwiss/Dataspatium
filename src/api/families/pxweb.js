@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/pxweb', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'ui/i18n'], (http, auth, jsonstat, secrets, i18n) => {
+  D.define('api/families/pxweb', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'ui/i18n', 'api/families/common'], (http, auth, jsonstat, secrets, i18n, common) => {
     const DEFAULT_MAX_CELLS = 150000;
     const MAX_URL = 6000;
 
@@ -36,22 +36,13 @@
       if (langs && typeof langs === 'object' && !Array.isArray(langs) && langs[ui]) return String(langs[ui]);
       return (connector.family && connector.family.lang) || 'sv';
     }
-    function maxCells(connector) { return (connector.family && connector.family.maxCells) || DEFAULT_MAX_CELLS; }
+    const maxCells = (connector) => common.maxCells(connector, DEFAULT_MAX_CELLS);
 
-    async function getJson(connector, url, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
+    const getJson = common.getJson;
     async function postJson(connector, url, body, options = {}) {
       // PxWeb API v1 answers CORS preflights without Access-Control-Allow-Headers, so a JSON content type
       // is blocked by browsers; the service accepts the same body as text/plain, which needs no preflight.
-      const contentType = version(connector) === 2 ? 'application/json' : 'text/plain;charset=UTF-8';
-      const req = await auth.apply(connector, { url, method: 'POST', headers: { Accept: 'application/json', 'Content-Type': contentType }, body: JSON.stringify(body) });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
+      return common.postJson(connector, url, body, Object.assign({ contentType: version(connector) === 2 ? 'application/json' : 'text/plain;charset=UTF-8' }, options));
     }
 
     // ---- v1 ----

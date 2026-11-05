@@ -94,6 +94,19 @@
       return el;
     }
 
-    return { DmButton, DmBadge, DmProgress, button };
+    /**
+     * A labelled dm-select with options, a value and a change handler; null and undefined select nothing. `attrs` are extra
+     * attributes (inline, aria-label, data-…).
+     * @param {string} label @param {Array<{value: string, label: string}>} opts @param {any} value @param {(value: string) => void} onChange
+     * @param {Record<string, any>} [attrs]
+     */
+    function select(label, opts, value, onChange, attrs = {}) {
+      const el = /** @type {any} */ (h('dm-select', Object.assign({ label }, attrs)));
+      el.options = opts; el.value = value === undefined || value === null ? '' : value;
+      el.addEventListener('change', () => onChange(el.value));
+      return el;
+    }
+
+    return { DmButton, DmBadge, DmProgress, button, select };
   });
 })();

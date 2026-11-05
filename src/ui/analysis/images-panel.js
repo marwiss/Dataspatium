@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/images-panel', ['ui/base', 'analysis/images', 'data/datasets', 'data/dataset-files'], (base, imageAnalysis, datasets, dsFiles) => {
+  D.define('ui/analysis/images-panel', ['ui/base', 'ui/basic', 'analysis/images', 'data/datasets', 'data/dataset-files'], (base, basic, imageAnalysis, datasets, dsFiles) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['overview', 'duplicates'];
     const BREAKDOWNS = ['type', 'camera', 'year', 'month'];
@@ -43,12 +43,7 @@
         if (hashesFor && !hashesFor.startsWith(ds.id + ':')) { hashes = null; hashesFor = null; }
         return ds;
       }
-      function select(label, opts, value, onChange) {
-        const el = /** @type {any} */ (h('dm-select', { label }));
-        el.options = opts; el.value = value;
-        el.addEventListener('change', () => onChange(el.value));
-        return el;
-      }
+      const select = basic.select;
 
       function center() {
         const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('images', 20), t('images.title')));

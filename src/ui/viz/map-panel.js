@@ -13,12 +13,7 @@
     const { h, t, i18n, replace } = base;
     const MODES = ['none', 'category', 'graduated'];
 
-    function select(label, opts, value, onChange, attrs = {}) {
-      const el = /** @type {any} */ (h('dm-select', Object.assign({ label }, attrs)));
-      el.options = opts; el.value = value;
-      el.addEventListener('change', () => onChange(el.value));
-      return el;
-    }
+    const select = basic.select;
     function toggle(label, checked, onChange) {
       const el = /** @type {any} */ (h('dm-switch', { label }));
       el.checked = checked;

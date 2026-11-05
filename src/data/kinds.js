@@ -32,7 +32,7 @@
         versionDiff: [{ label: 'versions.own.documents', table: 'data', column: 'dokument' }],
         open: { label: 'hantera.read', hint: 'hantera.read.hint', icon: 'book-open' },
         protect: () => ['dokument', 'sida', 'stycke', 'text'],
-        summary: (ds) => t('datasets.sub.document', { n: n((ds.documents || []).length), pages: n(pagesOf(ds)) }),
+        summary: (ds) => `${t('document.files.n', { n: n((ds.documents || []).length) })} · ${t('document.pages.n', { n: n(pagesOf(ds)) })}`,
         hit: (value, id) => ({ label: 'soka.open.document', icon: 'book-open', store: { openDocument: { datasetId: id, document: value('dokument'), page: value('sida') } } }),
       },
       images: {

@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/statbank', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'api/families/pxweb', 'ui/i18n'], (http, auth, jsonstat, secrets, pxweb, i18n) => {
+  D.define('api/families/statbank', ['api/http', 'api/auth', 'api/jsonstat', 'api/secrets', 'api/families/pxweb', 'ui/i18n', 'api/families/common'], (http, auth, jsonstat, secrets, pxweb, i18n, common) => {
     const DEFAULT_MAX_CELLS = 100000;
     const MAX_URL = 6000;
 
@@ -25,20 +25,9 @@
       if (langs && typeof langs === 'object' && !Array.isArray(langs) && langs[ui]) return String(langs[ui]);
       return (connector.family && connector.family.lang) || 'da';
     }
-    function maxCells(connector) { return (connector.family && connector.family.maxCells) || DEFAULT_MAX_CELLS; }
+    const maxCells = (connector) => common.maxCells(connector, DEFAULT_MAX_CELLS);
 
-    async function getJson(connector, url, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
-    async function postJson(connector, url, body, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
+    const { getJson, postJson } = common;
 
     /** Subject tree: the root lists the main subjects; a subject lists its sub-subjects and tables. */
     async function listFolder(connector, path = [], options) {

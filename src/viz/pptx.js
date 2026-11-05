@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/pptx', ['viz/render', 'viz/theme'], (render, theme) => {
+  D.define('viz/pptx', ['viz/render', 'viz/theme', 'platform/files'], (render, theme, files) => {
     const LAYOUT = { width: 10, height: 5.625 };
     const MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
@@ -18,9 +18,7 @@
       return P;
     }
     const hex = (css) => String(css || '').trim().replace(/^#/, '').slice(0, 6) || '1F2937';
-    function blobToDataUrl(blob) {
-      return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
-    }
+    const blobToDataUrl = files.blobToDataUrl;
     async function imageSize(blob) {
       try { const bmp = await createImageBitmap(blob); const size = { width: bmp.width, height: bmp.height }; bmp.close(); return size; } catch (_err) { return { width: 16, height: 9 }; }
     }

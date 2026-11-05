@@ -164,6 +164,9 @@ ett paket.
   `dm_write()`, paketen och diagrammen.
 - [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
 - [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
+- [Öppna API:er](docs/api-konfiguration.md): de förinställda källorna, nycklar och hur du skriver en egen konfiguration.
+- [Visualisera](docs/visualisera.md): diagrambyggaren, D3-mallar, R-diagram, kartor och dashboards.
+- [Dokument och mallar](docs/dokumentmallar.md): mallspråket och utdataformaten.
 - [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
 - [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för
   den som vill förstå koden; hur bidrag tas emot står i [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -185,6 +188,7 @@ ett paket.
 - Den portabla mappen kräver Edge eller Chrome; Firefox saknar mappåtkomst (File System Access). Säkerhetskopia
   som ZIP fungerar överallt.
 - Hela appen är gjord för datorer; på telefoner och surfplattor används Dataspatium Mobil
+- Exempeldata, API-förinställningar och kartgränser som följer med är svenska; appen fungerar lika bra med andra länders data, men de får du hämta själv.
   (<https://marwiss.github.io/Dataspatium/m/>), som tar emot, visar och skickar vidare. Safari stöds inte för
   hela appen. I smala fönster öppnas panelerna som flak över arbetsytan.
 

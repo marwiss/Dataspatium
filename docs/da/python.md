@@ -117,4 +117,4 @@ eller engelsk); kolonnenavnene i `dm_list()` er derimod altid de samme, så scri
 - Input under kørsel (`input()`) virker ikke, og det gør tråde, processer eller filer uden for det virtuelle
   filsystem heller ikke. Netværkskald fra Python (for eksempel `micropip` og `pyodide.http`) kræver, at du har givet
   lov til komponenter.
-- Der er ingen interaktive vinduer; matplotlib tegner til SVG og PNG. plotly og seaborn kommer i en senere version.
+- Der er ingen interaktive vinduer; matplotlib tegner til SVG og PNG. plotly tegnes med plotly.js i appen, og seaborn følger med som pakke.

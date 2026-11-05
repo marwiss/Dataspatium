@@ -8,15 +8,10 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/socialstyrelsen', ['api/http', 'api/auth', 'api/secrets', 'data/types'], (http, auth, secrets, types) => {
+  D.define('api/families/socialstyrelsen', ['api/http', 'api/auth', 'api/secrets', 'data/types', 'api/families/common'], (http, auth, secrets, types, common) => {
     function base(connector) { return String(connector.baseUrl).replace(/\/+$/, ''); }
 
-    async function getJson(connector, url, options = {}) {
-      const req = await auth.apply(connector, { url, method: 'GET', headers: { Accept: 'application/json' } });
-      const res = await http.request(Object.assign(req, { rateKey: connector.id, rateLimit: connector.rateLimit, signal: options.signal }));
-      if (!res.ok) throw http.httpError(res, connector.name);
-      try { return JSON.parse(res.text); } catch (_e) { throw new Error(D.t('api.err.notjson', { name: connector.name })); }
-    }
+    const getJson = common.getJson;
 
     /** Subjects (ämnen): [{id, text}]. */
     async function subjects(connector, options) {

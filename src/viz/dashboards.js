@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme', 'platform/sync'], (idb, charts, datasets, render, pptx, theme, sync) => {
+  D.define('viz/dashboards', ['platform/storage/idb', 'viz/charts', 'data/datasets', 'viz/render', 'viz/pptx', 'viz/theme', 'platform/sync', 'platform/text'], (idb, charts, datasets, render, pptx, theme, sync, text) => {
     const FORMAT = 'dataspatium-dash/1';
     const FILTERABLE = ['text', 'integer', 'date', 'boolean'];
     const listeners = new Set();
@@ -100,7 +100,7 @@
       return save({ name: obj.name || D.t('dash.imported.name'), description: obj.description || '', columns: obj.columns || 2, items, filters: obj.filters || [] });
     }
 
-    const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const esc = text.escapeHtml;
     function filtersText(extraFilters) { return (extraFilters || []).map((f) => `${f.field} = ${f.value}`).join(', '); }
 
     /**

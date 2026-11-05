@@ -8,17 +8,12 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/geo-panel', ['ui/base', 'analysis/geo', 'data/datasets', 'viz/leaflet', 'data/boundaries'], (base, geoAnalysis, datasets, leaflet, boundaries) => {
+  D.define('ui/analysis/geo-panel', ['ui/base', 'ui/basic', 'analysis/geo', 'data/datasets', 'viz/leaflet', 'data/boundaries'], (base, basic, geoAnalysis, datasets, leaflet, boundaries) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['measure', 'points', 'nearest', 'buffer', 'overlay', 'dissolve', 'simplify'];
     const PREVIEW_ROWS = 2000;
 
-    function select(label, opts, value, onChange) {
-      const el = /** @type {any} */ (h('dm-select', { label }));
-      el.options = opts; el.value = value;
-      el.addEventListener('change', () => onChange(el.value));
-      return el;
-    }
+    const select = basic.select;
     function input(label, value, onChange, attrs = {}) {
       const el = /** @type {any} */ (h('dm-input', Object.assign({ label }, attrs)));
       el.value = String(value);

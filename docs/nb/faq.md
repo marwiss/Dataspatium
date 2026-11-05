@@ -123,6 +123,15 @@ For andre land importerer du grenser fra GeoJSON, shapefile eller GeoPackage. Ko
 koden i Bearbeid (*Koble datasett*), og velg diagramtypen *Kart* i Visualiser. Punkter med lengde- og breddegrad (for
 eksempel målestasjoner) tegnes med *Punktkart*. Se [visualisera.md](visualisera.md).
 
+## Hvordan finner jeg kommune eller fylke ut fra koordinater?
+
+Velg *Geodata > Kommune og fylke ut fra koordinater* i Bearbeid (via Handlinger eller paletten). Handlingen slår opp hvert punkts
+kommune og fylke i SCB:s medfølgende grenser og legger til kolonnene kommunkod, kommun, lanskod og lan; koordinater i SWEREF 99
+TM gjenkjennes. Grensene dekker landarealet, så punkter i vann blir tomme. Samme gruppe har midtpunkt og areal ut fra geometri
+samt omregning mellom SWEREF 99 TM og WGS 84. Se [bearbeta.md](bearbeta.md).
+
+
+
 ## Hvordan kombinerer jeg flere datasett i én SQL-spørring?
 
 Hvert datasett har et kortnavn (vises under navnet i objektpanelet, endres under Håndter > Gi nytt navn). I SQL-fanen under

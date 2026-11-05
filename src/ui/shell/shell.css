@@ -169,7 +169,7 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-chip-static { cursor: default; margin-right: var(--dm-s-1); }
 
 /* Dela, Enheter: the QR code on a white field, the verification code and the device code */
-.dm-devices-qr { display: flex; justify-content: center; padding: var(--dm-s-3); background: #fff; border-radius: var(--dm-radius-md); width: fit-content; }
+.dm-devices-qr { display: flex; justify-content: center; padding: var(--dm-s-3); background: var(--dm-qr-bg); border-radius: var(--dm-radius-md); width: fit-content; }
 .dm-devices-qr svg { display: block; width: 240px; height: 240px; }
 .dm-devices-code { font-family: var(--dm-font-mono); font-size: var(--dm-text-2xl); letter-spacing: 0.2em; font-weight: 600; }
 .dm-devices-identity { font-family: var(--dm-font-mono); font-size: var(--dm-text-sm); word-break: break-all; max-width: 100%; }

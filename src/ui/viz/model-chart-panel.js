@@ -10,7 +10,7 @@
   const D = globalThis.Dataspatium;
   D.define('ui/viz/model-chart-panel', ['ui/base', 'ui/basic', 'viz/model-draw', 'data/model', 'data/datasets'], (base, basic, draw, model, datasets) => {
     const { h, t, i18n, replace } = base;
-    function select(label, opts, value, onChange) { const el = /** @type {any} */ (h('dm-select', { label })); el.options = opts; el.value = value; el.addEventListener('change', () => onChange(el.value)); return el; }
+    const select = basic.select;
 
     /** @param {{chart: any, onChange: (def: any) => void, log: Function, onInspect?: () => void}} options */
     function create(options) {

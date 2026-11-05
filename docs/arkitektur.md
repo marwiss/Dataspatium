@@ -551,6 +551,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `data/issues` (2.30) är ren logik för ärenden mot byggdelar: `rank` läser statusord, `statusColors` ger färger ur tokens (error, warn, ok, därefter paletten), `colorGroups` ger färggrupper där det mest öppna ärendet vinner byggdelen, `tableOf` ger en rad per ärende och byggdel, `summary` räknar per grupp ur en sparad tabell och `tablesFor` hittar modellens tabeller (`source.cde.kind === 'issues'`, `modelId`). `viz/model-draw` har `setColors(groups)` på handtaget och tar `def.colors` i `render`, `toBlob` och `htmlFor` (med `def.legend` som text), så diagramslaget `model` bär färger; `viz/theme.tokens()` exponerar `ok`, `warn`, `error`. `ui/bearbeta/model-issues` färgar genom hooken `setColors`, sparar tabell (`runner.toDataset` med `source.cde.kind 'issues'`) och diagram (`charts.create('model')` med `colors`, `legend`, `view`); modellvyn lägger tillbaka färgerna när ritningen görs om (`currentColors`). `ui/analysis/model-panel` har verktyget `issues`, `analysis/starters.elementPieces` ger startkod när tabellen har `element_typ`. `viz/suggest.issueBoard` skapar dashboarden med fem diagram och tre filter; `ui/kinds/insight-cards.bcfCard` visar den i Hantera. `api/families/neo4j.EXAMPLES` är Cypher-startkod för Kontrolls IFC-graf (`ui/api/neo4j-view` lägger den i rutan). Paket genom CDE: `ui/share/bundle.shareBundle` tar `options.deliver`, `ui/share/cde-send` skickar paketet som fil, `ui/api/opencde-view` tar emot filer som slutar på `.dataspatium.zip` genom `receiveFile` (api-view ger `ctx`).
 
+Granskningen 2.31 samlade kopior till gemensamma hjälpare: `api/families/common` (getJson, postJson med valbar content-type, maxCells) för PxWeb, Statistikbanken, FHI och Socialstyrelsen; `ui/basic.select` för alla paneler; `platform/files.blobToDataUrl`; `platform/text.escapeHtml` för BCF-XML, webbplatsen, visarna och dashboards. `i18n.t` tar singularformen `nyckel.one` när `n` är exakt 1. Tokens: `--dm-qr-bg` för QR-koder.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via
@@ -695,8 +697,8 @@ object)` bygger adressen; paletten har *Kopiera länk hit*.
 ## Tester
 
 `tests/index.html` kör enhetstester i webbläsaren och skriver `DATASPATIUM-LOG`-rader; `tools/run-tests.ps1` kör
-sidan headless i Edge och Firefox. `spike.html` innehåller den tekniska spiken från fas 0 som också kan köras
-headless (`-Url "spike.html?autorun=1"`). `tests/a11y.js` är en egen tillgänglighetskontroll (tillgängliga namn,
+sidan headless i Edge och Firefox. Den tekniska spiken från fas 0 (`spike.html`, `src/spike`) togs bort i 2.31; resultatet står i
+[fas0-spik.md](fas0-spik.md) och koden finns i git-historiken. `tests/a11y.js` är en egen tillgänglighetskontroll (tillgängliga namn,
 unika id och giltiga ARIA-referenser, roller, dialognamn, kontrast) som `tests/a11y.test.js` kör i alla lägen och
 `tests/flows.test.js` i varje dialog som klicktesterna öppnar. `tests/perf.html` mäter tider och blockering av
 huvudtråden med en miljon rader (se [utveckling.md](utveckling.md)).

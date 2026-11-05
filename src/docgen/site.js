@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('docgen/site', ['data/datasets', 'data/kinds', 'docgen/viewers', 'viz/dashboards', 'platform/storage/zip'], (datasets, kinds, viewers, dashboards, zip) => {
-    const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  D.define('docgen/site', ['data/datasets', 'data/kinds', 'docgen/viewers', 'viz/dashboards', 'platform/storage/zip', 'platform/text'], (datasets, kinds, viewers, dashboards, zip, text) => {
+    const esc = text.escapeHtml;
     const CSS = '<style>.dm-s-back{display:block;padding:8px 16px;font:14px system-ui,sans-serif}.dm-s-list{list-style:none;padding:0;margin:0 0 24px}.dm-s-list li{padding:10px 0;border-bottom:1px solid currentColor}.dm-s-list a{font-weight:600}.dm-s-sub{display:block;font-size:14px;opacity:.75}.dm-s-book{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0 24px}.dm-s-book th,.dm-s-book td{border:1px solid currentColor;padding:4px 8px;text-align:left}</style>';
 
     /** A file name that works in an address and is not taken. */

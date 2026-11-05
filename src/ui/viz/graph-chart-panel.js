@@ -11,7 +11,7 @@
   D.define('ui/viz/graph-chart-panel', ['ui/base', 'ui/basic', 'viz/graph-draw', 'data/graph', 'data/datasets', 'viz/export'], (base, basic, draw, graph, datasets, vizExport) => {
     const { h, t, i18n, replace } = base;
 
-    function select(label, opts, value, onChange) { const el = /** @type {any} */ (h('dm-select', { label })); el.options = opts; el.value = value; el.addEventListener('change', () => onChange(el.value)); return el; }
+    const select = basic.select;
     function toggle(label, checked, onChange) { const el = /** @type {any} */ (h('dm-switch', { label })); el.checked = checked; el.addEventListener('change', () => onChange(el.checked)); return el; }
 
     /**

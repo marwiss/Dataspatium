@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/python-panel', ['ui/base', 'ui/basic', 'data/python-bridge', 'viz/code-charts'], (base, basic, pb, codeCharts) => {
+  D.define('ui/viz/python-panel', ['ui/base', 'ui/basic', 'data/python-bridge', 'viz/code-charts', 'platform/files'], (base, basic, pb, codeCharts, files) => {
     const { h, t, replace } = base;
     const bridge = pb.bridge;
 
@@ -20,9 +20,7 @@
       return `import matplotlib.pyplot as plt\n\n# ${t('python.snippet.comment', { name: datasetName })}\nper = df.groupby(${JSON.stringify(x)})[${JSON.stringify(y)}].sum().sort_values().tail(15)\nfig, ax = plt.subplots()\nax.barh(per.index.astype(str), per.values, color=dm_palette()[0])\nax.set_title(${JSON.stringify(datasetName)})\n`;
     }
 
-    function blobToDataUrl(blob) {
-      return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
-    }
+    const blobToDataUrl = files.blobToDataUrl;
     /** A 480 px wide PNG data URL from a base64 PNG (the thumbnail in lists and dashboards). */
     function shrink(pngBase64) {
       return new Promise((resolve) => {

@@ -126,9 +126,7 @@
         }
         return { kind: 'image', dataUrl: 'data:image/png;base64,' + (e.png || ''), width: e.width, height: e.height };
       }
-      function blobToDataUrl(blob) {
-        return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(r.error); r.readAsDataURL(blob); });
-      }
+      const blobToDataUrl = files.blobToDataUrl;
 
       function dataUrlToBytes(dataUrl) {
         const b64 = String(dataUrl).split(',')[1] || '';

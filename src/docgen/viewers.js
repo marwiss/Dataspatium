@@ -8,8 +8,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('docgen/viewers', ['data/datasets', 'data/kinds', 'data/dataset-files', 'viz/dashboards', 'viz/suggest'], (datasets, kinds, dsFiles, dashboards, suggest) => {
-    const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  D.define('docgen/viewers', ['data/datasets', 'data/kinds', 'data/dataset-files', 'viz/dashboards', 'viz/suggest', 'platform/text'], (datasets, kinds, dsFiles, dashboards, suggest, text) => {
+    const esc = text.escapeHtml;
     const MAX_ROWS = 2000;
     const MAX_PICTURES = 100;
     const MAX_PARAGRAPHS = 20000;

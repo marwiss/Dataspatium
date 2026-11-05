@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/model-panel', ['ui/base', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, datasets, model, analysis, issuesLogic) => {
+  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, basic, datasets, model, analysis, issuesLogic) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
     const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues'];
@@ -41,12 +41,7 @@
         return { head, body: [tabs, fieldsEl, resultEl] };
       }
 
-      function select(label, opts, value, onChange) {
-        const el = /** @type {any} */ (h('dm-select', { label }));
-        el.options = opts; el.value = value;
-        el.addEventListener('change', () => onChange(el.value));
-        return el;
-      }
+      const select = basic.select;
       const groupOptions = (list, none) => (none ? [{ value: '', label: t('map.none') }] : []).concat(list.map((g) => ({ value: g, label: t('model.col.' + g) })));
 
       async function renderFields() {

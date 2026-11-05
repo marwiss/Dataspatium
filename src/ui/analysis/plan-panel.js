@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/plan-panel', ['ui/base', 'data/datasets', 'data/plan', 'data/plan-catalog', 'viz/data', 'platform/files'], (base, datasets, plan, catalog, vizData, files) => {
+  D.define('ui/analysis/plan-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/plan', 'data/plan-catalog', 'viz/data', 'platform/files'], (base, basic, datasets, plan, catalog, vizData, files) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['summary', 'provisions', 'areas', 'catalog', 'search'];
     const PREVIEW_ROWS = 2000;
@@ -193,12 +193,7 @@
           ui.toast.show(msg, { kind: 'ok', action: { label: t('import.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
-      function select(label, opts, value, onChange) {
-        const el = /** @type {any} */ (h('dm-select', { label }));
-        el.options = opts; el.value = value;
-        el.addEventListener('change', () => onChange(el.value));
-        return el;
-      }
+      const select = basic.select;
 
       function inspector() {
         const ds = selected();

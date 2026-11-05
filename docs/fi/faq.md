@@ -125,6 +125,15 @@ mukana. Muista maista tuot rajat GeoJSON-, shapefile- tai GeoPackage-tiedostosta
 perusteella Muokkaa-tilassa (*Yhdistä aineistoja*) ja valitse Visualisoi-tilassa kaaviotyyppi *Kartta*. Pisteet pituus- ja
 leveysasteineen (esimerkiksi mittausasemat) piirretään *Pistekartalla*. Ks. [visualisera.md](visualisera.md).
 
+## Miten saan kunnan tai läänin koordinaateista?
+
+Valitse *Geodata > Kunta ja lääni koordinaateista* Muokkaa-tilassa (Toiminnot-valikosta tai paletista). Toiminto hakee kunkin
+pisteen kunnan ja läänin SCB:n mukana tulevista rajoista ja lisää sarakkeet kommunkod, kommun, lanskod ja lan; SWEREF 99 TM
+-koordinaatit tunnistetaan. Rajat kattavat maa-alueen, joten vedessä olevat pisteet jäävät tyhjiksi. Samassa ryhmässä ovat
+keskipiste ja pinta-ala geometriasta sekä muunnos SWEREF 99 TM:n ja WGS 84:n välillä. Katso [bearbeta.md](bearbeta.md).
+
+
+
 ## Miten yhdistän useita aineistoja yhdessä SQL-kyselyssä?
 
 Jokaisella aineistolla on lyhytnimi (näkyy nimen alla kohdepaneelissa, muutetaan kohdassa Hallitse > Nimeä uudelleen).

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/text-panel', ['ui/base', 'analysis/text', 'data/datasets'], (base, textAnalysis, datasets) => {
+  D.define('ui/analysis/text-panel', ['ui/base', 'ui/basic', 'analysis/text', 'data/datasets'], (base, basic, textAnalysis, datasets) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['summary', 'words', 'kwic', 'pairs'];
     const TOPS = [50, 100, 200, 500, 1000];
@@ -47,12 +47,7 @@
       const stopwords = () => textAnalysis.stopwordsFor(s.lang, s.extra, s.useStop);
 
       // ---- field helpers ----
-      function select(label, opts, value, onChange) {
-        const el = /** @type {any} */ (h('dm-select', { label }));
-        el.options = opts; el.value = value;
-        el.addEventListener('change', () => onChange(el.value));
-        return el;
-      }
+      const select = basic.select;
       function toggle(label, checked, onChange) {
         const el = /** @type {any} */ (h('dm-switch', { label }));
         el.checked = checked;

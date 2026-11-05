@@ -123,5 +123,5 @@ kielestä riippumatta.
 - Syöte suorituksen aikana (`input()`) ei toimi, eivätkä säikeet, prosessit tai tiedostot virtuaalisen
   tiedostojärjestelmän ulkopuolella. Verkkokutsut Pythonista (esimerkiksi `micropip` ja `pyodide.http`) edellyttävät,
   että olet antanut luvan komponenteille.
-- Vuorovaikutteisia ikkunoita ei ole; matplotlib piirtää SVG- ja PNG-muotoon. plotly ja seaborn tulevat myöhemmässä
+- Vuorovaikutteisia ikkunoita ei ole; matplotlib piirtää SVG- ja PNG-muotoon. plotly piirretään sovelluksessa plotly.js:llä ja seaborn tulee mukana pakettina; ei myöhemmässä
   versiossa.

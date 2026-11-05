@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/flows/flows-view', ['ui/base', 'data/flows', 'data/watches', 'data/lists', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'platform/storage/idb', 'platform/files'], (base, flows, watches, lists, charts, dashboards, documents, idb, files) => {
+  D.define('ui/flows/flows-view', ['ui/base', 'ui/basic', 'data/flows', 'data/watches', 'data/lists', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'platform/storage/idb', 'platform/files'], (base, basic, flows, watches, lists, charts, dashboards, documents, idb, files) => {
     const { h, t, i18n, replace } = base;
 
     /** @param {any} ctx shell context */
@@ -105,12 +105,7 @@
         };
         return s.options;
       }
-      function select(label, opts, value, onChange) {
-        const el = /** @type {any} */ (h('dm-select', { label }));
-        el.options = opts; el.value = value === undefined || value === null ? '' : value;
-        el.addEventListener('change', () => onChange(el.value));
-        return el;
-      }
+      const select = basic.select;
       function fieldOf(field, step) {
         const label = t('flows.field.' + (step.type === 'recipe' ? 'recipe.' : '') + field.name);
         const value = step.params[field.name];

@@ -123,6 +123,15 @@ appen. For andre lande importerer du grænser fra GeoJSON, shapefile eller GeoPa
 grænserne på koden i Bearbejd (*Sammenkobl datasæt*), og vælg diagramtypen *Kort* i Visualisér. Punkter med længde- og
 breddegrad (for eksempel målestationer) tegnes med *Punktkort*. Se [visualisera.md](visualisera.md).
 
+## Hvordan finder jeg kommune eller region ud fra koordinater?
+
+Vælg *Geodata > Kommune og region ud fra koordinater* i Bearbejd (via Handlinger eller paletten). Handlingen slår hver punkts
+kommune og region op i SCB's medfølgende grænser og tilføjer kolonnerne kommunkod, kommun, lanskod og lan; koordinater i
+SWEREF 99 TM genkendes. Grænserne dækker landarealet, så punkter i vand bliver tomme. Samme gruppe har midtpunkt og areal ud
+fra geometri samt omregning mellem SWEREF 99 TM og WGS 84. Se [bearbeta.md](bearbeta.md).
+
+
+
 ## Hvordan kombinerer jeg flere datasæt i én SQL-forespørgsel?
 
 Hvert datasæt har et kortnavn (vises under navnet i objektpanelet, ændres under Håndter > Omdøb). I SQL-fanen under

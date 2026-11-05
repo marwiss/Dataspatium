@@ -118,4 +118,4 @@ språk.
 - Inmatning under körning (`input()`) fungerar inte, inte heller trådar, processer eller filer utanför det
   virtuella filsystemet. Nätverksanrop från Python (till exempel `micropip` och `pyodide.http`) kräver att du
   gett lov till komponenter.
-- Interaktiva fönster finns inte; matplotlib ritar till SVG och PNG. plotly och seaborn kommer i en senare version.
+- Interaktiva fönster finns inte; matplotlib ritar till SVG och PNG. plotly ritas med plotly.js i appen och seaborn följer med som paket.

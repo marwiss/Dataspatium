@@ -543,7 +543,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/python.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8682,
+  "size": 8705,
   "library": "dataspatium"
  },
  "docs/sv/dokument.md": {
@@ -699,7 +699,7 @@ Dataspatium.assets.addEntries({
  "docs/da/python.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 8696,
+  "size": 8721,
   "library": "dataspatium"
  },
  "docs/da/dokument.md": {
@@ -771,7 +771,7 @@ Dataspatium.assets.addEntries({
  "docs/da/faq.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 14774,
+  "size": 15311,
   "library": "dataspatium"
  },
  "docs/da/licenser.md": {
@@ -855,7 +855,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/python.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 8646,
+  "size": 8671,
   "library": "dataspatium"
  },
  "docs/nb/dokument.md": {
@@ -927,7 +927,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/faq.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 14735,
+  "size": 15266,
   "library": "dataspatium"
  },
  "docs/nb/licenser.md": {
@@ -1011,7 +1011,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/python.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9247,
+  "size": 9308,
   "library": "dataspatium"
  },
  "docs/fi/dokument.md": {
@@ -1083,7 +1083,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/faq.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 15915,
+  "size": 16478,
   "library": "dataspatium"
  },
  "docs/fi/licenser.md": {
@@ -1167,7 +1167,7 @@ Dataspatium.assets.addEntries({
  "docs/is/python.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9141,
+  "size": 9177,
   "library": "dataspatium"
  },
  "docs/is/dokument.md": {
@@ -1239,7 +1239,7 @@ Dataspatium.assets.addEntries({
  "docs/is/faq.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 15600,
+  "size": 16157,
   "library": "dataspatium"
  },
  "docs/is/licenser.md": {
@@ -1323,7 +1323,7 @@ Dataspatium.assets.addEntries({
  "docs/en/python.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8784,
+  "size": 8820,
   "library": "dataspatium"
  },
  "docs/en/dokument.md": {
