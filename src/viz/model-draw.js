@@ -98,7 +98,7 @@
     /**
      * Draws a model into a container.
      * @param {HTMLElement} container
-     * @param {{datasetId: string, visible?: number[]|null, selected?: number[], view?: any}} def
+     * @param {{datasetId: string, visible?: number[]|null, selected?: number[], view?: any, colors?: Array<{color: string, ids: number[]}>|null}} def
      * @param {{onSelect?: (id: number|null) => void, onProgress?: (elements: number) => void}} [options]
      * @returns {Promise<any>} handle: info, select(ids, {fit}), setVisible(ids), fit(ids), view(), png(scale), resize(), destroy()
      */
@@ -149,6 +149,11 @@
         return { geometry, material, mesh };
       });
       const highlightMaterial = new THREE.MeshLambertMaterial({ color: new THREE.Color(tk.accent), emissive: new THREE.Color(tk.accent), emissiveIntensity: 0.45, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+      // Colour groups: elements drawn again in a colour of their own (an issue's status, a class), under the highlight.
+      const colored = new THREE.Group();
+      scene.add(colored);
+      /** @type {Map<string, any>} */
+      const colorMaterials = new Map();
       const highlight = new THREE.Group();
       scene.add(highlight);
       const pickTarget = new THREE.WebGLRenderTarget(1, 1);
@@ -196,6 +201,34 @@
         }
         if (opts.fit && list.length) fit(list); else schedule();
         return list.length;
+      }
+      /**
+       * Colours groups of elements: [{color: '#rrggbb', ids: [...]}]. An empty list takes the colours away. Returns the
+       * number of meshes drawn in colour.
+       * @param {Array<{color: string, ids: number[]}>} groups
+       */
+      function setColors(groups) {
+        while (colored.children.length) { const c = colored.children.pop(); c.geometry.dispose(); }
+        for (const g of groups || []) {
+          const ids = (g.ids || []).filter((id) => meshes.byElement.has(id));
+          if (!ids.length || !g.color) continue;
+          let material = colorMaterials.get(g.color);
+          if (!material) {
+            material = new THREE.MeshLambertMaterial({ color: new THREE.Color(g.color), side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+            colorMaterials.set(g.color, material);
+          }
+          meshes.batches.forEach((b, no) => {
+            const index = indexFor(meshes, no, ids);
+            if (!index.length) return;
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', parts[no].geometry.getAttribute('position'));
+            geometry.setAttribute('normal', parts[no].geometry.getAttribute('normal'));
+            geometry.setIndex(new THREE.BufferAttribute(index, 1));
+            colored.add(new THREE.Mesh(geometry, material));
+          });
+        }
+        schedule();
+        return colored.children.length;
       }
       /** Shows only these elements (null = all). */
       function setVisible(ids) {
@@ -254,13 +287,14 @@
       } else fit();
       if (Array.isArray(def.visible)) setVisible(def.visible);
       if (Array.isArray(def.selected) && def.selected.length) select(def.selected);
+      if (Array.isArray(def.colors) && def.colors.length) setColors(def.colors);
       draw();
 
       return {
         kind: 'model',
         info: { elements: meshes.elements, triangles: meshes.triangles, colors: meshes.batches.length },
         meshes, renderer, scene, camera,
-        fit, select, setVisible, pickAt, resize, redraw: draw,
+        fit, select, setVisible, setColors, pickAt, resize, redraw: draw,
         marked: () => marked.slice(),
         view: () => ({ position: camera.position.toArray(), target: controls.target.toArray(), near: camera.near, far: camera.far }),
         /** The current picture as a PNG data URL. */
@@ -268,6 +302,8 @@
         destroy() {
           if (destroyed) return;
           destroyed = true;
+          for (const m of colorMaterials.values()) m.dispose();
+          while (colored.children.length) { const c = colored.children.pop(); c.geometry.dispose(); }
           if (observer) observer.disconnect();
           canvas.removeEventListener('pointerdown', onDown);
           canvas.removeEventListener('pointerup', onUp);
@@ -340,12 +376,13 @@
       document.body.appendChild(host);
       try {
         const def = chart.model || {};
-        const hd = await render(host, { datasetId: def.datasetId || chart.datasetId, visible: await visibleFor(chart, def, options), view: def.view || null }, { preserve: true, width, height });
+        const hd = await render(host, { datasetId: def.datasetId || chart.datasetId, visible: await visibleFor(chart, def, options), view: def.view || null, colors: def.colors || null }, { preserve: true, width, height });
         const url = hd.png();
         hd.destroy();
         return url;
       } finally { host.remove(); }
     }
+    const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
     function svgAround(url, width, height) {
       return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><image width="${width}" height="${height}" xlink:href="${url}"/></svg>`;
     }
@@ -355,7 +392,10 @@
       const def = chart.model || {};
       if (model.isDxf(await datasets.get(def.datasetId || chart.datasetId))) return drawingSvg(def.datasetId || chart.datasetId, def, width, height);
       const url = await pictureOf(chart, width, height, opts);
-      return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">`;
+      const legend = Array.isArray(def.legend) && def.legend.length
+        ? `<p style="font-size:0.85em;margin:0.4em 0 0">${def.legend.map((l) => `<span style="display:inline-block;width:0.8em;height:0.8em;border-radius:2px;background:${escapeHtml(l.color)};vertical-align:middle;margin-right:0.3em"></span>${escapeHtml(l.status || '')} (${Number(l.n) || 0})`).join(' &nbsp; ')}</p>`
+        : '';
+      return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">${legend}`;
     }
 
     return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, drawingSvg };

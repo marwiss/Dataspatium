@@ -106,6 +106,9 @@ BCF-dokument, som bara tar filen. Datamängden skrivs ur en kopia som gått geno
 varning som i paketen. En datamängd som hämtats från servern kan skickas som en ny version av sitt dokument, och kortet
 *Från CDE* i Hantera vet sedan om den. Varje skickning noteras i datamängdens historik.
 
+*Arbetsytepaket* skickar ett paket i stället för en datamängd: paketdialogen väljer datamängder och innehåll som vanligt, granskningen
+görs, och filen går upp som dokument. Den som tar emot ser paketet i källans fillista i Inhämta och tar emot det med ett klick.
+
 ## Ta emot
 
 Öppna ett paket från en fil (släpp den på ytan) eller från en webbadress. Avsändare, meddelande och ändringar visas

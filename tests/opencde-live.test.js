@@ -4,7 +4,8 @@
  * Dataspatium against a real Kontroll OpenCDE server (checklist C in Kontroll's docs/acceptance.md, and more): discovery,
  * sign-in with PKCE, the BCF tables, writing topics, comments, viewpoints and references, both document APIs with upload and
  * download, the model import, the project's files, the family's own uploads, a BCF file out and in, registration, refresh,
- * revocation and the refused redirect. Runs only when the page is
+ * revocation and the refused redirect. Kontroll III: the issues as a table with the model's elements, the board Ärendeläge,
+ * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>]; otherwise it is
  * skipped. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
@@ -434,11 +435,93 @@
     return 'ok';
   }, 60000);
 
+  test('opencde live III: the issues as a table with the model elements, the counts, the board and the colours', async (assert) => {
+    const issuesLogic = D.require('data/issues');
+    const model = await importer.run(new File([ifcBytes()], 'testhus.ifc'), {}, null, 'Färgprov');
+    shared.created.push(model.id);
+    const topics = await opencde.topics(shared.connector, shared.projectId, { $top: 500 });
+    const table = await opencde.fetchComponents(shared.connector, shared.projectId, topics);
+    const at = Object.fromEntries(table.columns.map((c, i) => [c, i]));
+    const parts = new Map();
+    for (const r of table.rows) {
+      if (!r[at.ifc_guid]) continue;
+      const list = parts.get(r[at.topic_guid]) || [];
+      list.push({ guid: String(r[at.ifc_guid]) });
+      parts.set(r[at.topic_guid], list);
+    }
+    const engine = (await datasets.ensureOpen(model.id)).engine;
+    const res = await engine.exec('select id, guid, typ, namn, vaning from data where guid is not null');
+    const elements = new Map(); const info = new Map();
+    for (const r of res[0].values) { elements.set(String(r[1]), Number(r[0])); info.set(String(r[1]), { typ: r[2], namn: r[3], vaning: r[4] }); }
+    const colors = issuesLogic.colorGroups(topics, parts, elements);
+    assert.ok(colors.groups.length >= 1 && colors.groups[0].ids.length >= 1, 'a colour group from the walls the viewpoints point at: ' + JSON.stringify(colors.legend));
+    const rows = issuesLogic.tableOf(topics, parts, info);
+    const meta = await runner.toDataset(rows, { name: 'Ärenden: Färgprov', source: { kind: 'file', fileName: '', cde: { connectorId: shared.connector.id, connectorName: shared.connector.name, host: opencde.hostOf(BASE), projectId: shared.projectId, projectName: PROJECT_NAME, kind: 'issues', modelId: model.id, modelName: model.name, fetchedAt: new Date().toISOString() } } });
+    shared.created.push(meta.id);
+    assert.ok(await D.require('data/facets').has(meta.id, 'bcf'), 'the table is a BCF facet');
+    const sum = await issuesLogic.summary(meta.id, ['topic_status', 'element_typ']);
+    assert.ok(sum.rows.length >= 1 && sum.rows.some((r) => Number(r[2]) >= 1), 'counts per status and element type: ' + JSON.stringify(sum.rows.slice(0, 3)));
+    const starters = await D.require('analysis/starters').forDataset(meta, 'sql');
+    const piece = starters.find((p) => p.key === 'starter.bcf.elements');
+    assert.ok(piece, 'the starter that joins issues and elements');
+    const ran = await D.require('data/query').select(meta.id, piece.code, { limit: 50 });
+    assert.ok(ran.values.length >= 1, 'the starter runs on the saved table');
+    const dash = await D.require('viz/suggest').issueBoard(meta);
+    shared.dashboards = [dash.id];
+    assert.ok(dash.items.length >= 4 && dash.filters.length === 3, `board with ${dash.items.length} charts`);
+    log(`issues table ${rows.rows.length} rows, colours ${colors.legend.map((l) => `${l.status}:${l.n}`).join(', ')}, board ${dash.items.length} charts`);
+    return `${rows.rows.length} rows`;
+  }, 60000);
+
+  test('opencde live III: Cypher against the IFC graph through the Neo4j source (Bolt over WebSocket)', async (assert) => {
+    const params = new URLSearchParams(location.search);
+    const bolt = params.get('cdegraph');
+    if (!bolt) return 'skipped: no cdegraph';
+    const neo4j = D.require('api/families/neo4j');
+    const r = await D.require('api/families/databases').createConnector('neo4j', { baseUrl: bolt, database: params.get('cdegraphdb') || 'neo4j', username: params.get('cdegraphuser') || 'neo4j', password: params.get('cdegraphpass') || '' }, { discover: false });
+    shared.graphConnector = r.connector;
+    const example = (id) => neo4j.EXAMPLES.find((x) => x.id === id).cypher;
+    const models = await timed('cypher models', () => neo4j.run(r.connector, example('models')));
+    assert.ok(models.rows.length >= 1, 'models in the graph: ' + JSON.stringify(models.rows.slice(0, 3)));
+    const walls = await neo4j.run(r.connector, 'MATCH (w:IfcWall) RETURN count(w) AS antal');
+    const linked = await neo4j.run(r.connector, example('issue_elements'));
+    const classes = await neo4j.run(r.connector, example('classes'));
+    log(`graph: ${models.rows.length} models (states ${Array.from(new Set(models.rows.map((x) => x[1]))).join(',')}), ${walls.rows[0] ? walls.rows[0][0] : '?'} walls, ${classes.rows.length} classes, ${linked.rows.length} issue-element links`);
+    assert.ok(classes.rows.length >= 1, 'elements in the graph');
+    return `${models.rows.length} models, ${linked.rows.length} links`;
+  }, 60000);
+
+  test('opencde live III: a workspace bundle goes to the CDE as a document and comes back whole', async (assert) => {
+    const workspace = D.require('data/workspace');
+    const model = (await datasets.list()).find((d) => d.name === 'Färgprov');
+    assert.ok(model, 'the model from the previous test');
+    const res = await workspace.bundle({ name: 'Provpaket', datasetIds: [model.id], include: { charts: false, dashboards: false, documents: false, notebooks: false, scripts: false }, author: 'Dataspatium', message: 'Från provet' });
+    const file = new File([res.blob], 'provpaket.dataspatium.zip', { type: 'application/zip' });
+    const popupUpload = async (url) => (await helper('/upload', { url, project: shared.projectId, title: 'Provpaket', version: '1' })).callback;
+    const version = await timed('upload bundle', () => opencde.uploadDocument(shared.connector, file, { redirectUri: REDIRECT, popup: popupUpload }));
+    assert.ok(version && version.document_id, JSON.stringify(version).slice(0, 200));
+    const files = await opencde.filesList(shared.connector, shared.projectId);
+    const entry = files.find((f) => f.documentId === version.document_id);
+    assert.ok(entry && /\.dataspatium\.zip$/i.test(entry.filename), 'the bundle in the files list: ' + JSON.stringify(entry));
+    const back = await opencde.downloadFile(shared.connector, entry);
+    const opened = await workspace.inspect(back);
+    assert.equal(opened.manifest && opened.manifest.kind, 'bundle');
+    assert.ok((opened.manifest.datasets || []).some((d) => d.id === model.id), 'the model travels in the bundle');
+    log(`bundle ${file.size} bytes up and down, manifest ${opened.manifest.name}`);
+    return `${file.size} bytes`;
+  }, 120000);
+
   test('opencde live: cleanup', async (assert) => {
     for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));
     const left = await opencde.fetchTopics(shared.connector, shared.projectId);
     log(`topics left in the project: ${left.rows.length}`);
     await opencde.logout(shared.connector);
+    for (const id of shared.dashboards || []) {
+      const dash = await D.require('viz/dashboards').get(id).catch(() => null);
+      for (const it of (dash && dash.items) || []) await D.require('viz/charts').remove(it.chartId).catch(() => {});
+      await D.require('viz/dashboards').remove(id).catch(() => {});
+    }
+    if (shared.graphConnector) await connectors.remove(shared.graphConnector.id).catch(() => {});
     for (const id of shared.created) await datasets.remove(id).catch(() => {});
     if (shared.connector) await connectors.remove(shared.connector.id);
     assert.ok(true);

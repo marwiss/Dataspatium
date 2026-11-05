@@ -4,7 +4,8 @@
  * Dela: a dataset, or its original file, to a project on an OpenCDE server. The dataset is written in a file format from a copy
  * that has been through the review, or the original is sent after the warning, and the file goes up through the Documents API
  * (the server's own page asks for title and version) or as a BCF document. A dataset that came from the CDE can go back as a new
- * version of the same document.
+ * version of the same document. A workspace bundle (the package dialog, through the review) goes the same way, so that two
+ * Dataspatium users share through the server; the source view's files card receives it on the other side.
  */
 (function () {
   'use strict';
@@ -54,6 +55,12 @@
       }
       /** The file to send: an export of a reviewed copy, or the original after the warning. */
       async function fileToSend(d) {
+        if (s.what === 'bundle') {
+          let picked = null;
+          const res = await D.require('ui/share/bundle').shareBundle(ctx, { datasetIds: d ? [d.id] : undefined, deliver: async (blob, name) => { picked = { blob, name }; } });
+          if (!res || !picked) return null;
+          return new File([picked.blob], picked.name, { type: 'application/zip' });
+        }
         if (s.what === 'original') {
           if (!(await review.warn(ctx, [d.id]))) return null;
           const out = await services.exporter.exportDataset(d.id, kinds.of(d).wholeFormat);
@@ -134,7 +141,7 @@
           else {
             const profile = kinds.of(d);
             const what = /** @type {any} */ (h('dm-select', { label: t('dela.share.what') }));
-            what.options = [{ value: 'dataset', label: t('cde.send.what.export', { name: d.name }) }].concat(profile.files ? [{ value: 'original', label: t('cde.send.what.original') }] : []);
+            what.options = [{ value: 'dataset', label: t('cde.send.what.export', { name: d.name }) }].concat(profile.files ? [{ value: 'original', label: t('cde.send.what.original') }] : []).concat([{ value: 'bundle', label: t('cde.send.what.bundle') }]);
             if (s.what === 'original' && !profile.files) s.what = 'dataset';
             what.value = s.what;
             what.addEventListener('change', () => { s.what = what.value; render(); });
@@ -150,7 +157,7 @@
             how.addEventListener('change', () => { s.how = how.value; render(); });
             const own = d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
             progressEl = h('div', { 'data-cde-progress': '' });
-            nodes.push(what, s.what === 'dataset' ? format : null, how,
+            nodes.push(what, s.what === 'dataset' ? format : null, s.what === 'bundle' ? h('p', { class: 'dm-help dm-small', text: t('cde.send.what.bundle.hint') }) : null, how,
               h('p', { class: 'dm-help dm-small', text: t(s.how === 'bcf' ? 'cde.send.how.bcf.hint' : 'cde.send.how.documents.hint') }),
               h('div', { class: 'dm-row-wrap' },
                 ui.button({ label: t('cde.send.button'), icon: 'upload', variant: 'primary', loading: s.busy === 'send', title: t('cde.send.button.hint'), 'data-cde-send': '', onClick: () => send() }),

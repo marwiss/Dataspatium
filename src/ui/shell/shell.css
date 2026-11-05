@@ -514,3 +514,8 @@ body.dm-presenting { overflow: hidden; }
 .dm-stats-code { height: 180px; }
 .dm-stats-table { min-height: 160px; max-height: 320px; }
 .dm-stats-say { font-weight: var(--dm-weight-semibold); }
+
+/* Issue colours in the model view: a legend of swatches (the colours are the status tokens, set from the panel). */
+.dm-model-issues-legend { list-style: none; margin: 0; padding: 0; gap: var(--dm-space-3); }
+.dm-model-issues-legend li { display: inline-flex; align-items: center; gap: var(--dm-space-1); }
+.dm-legend-swatch { display: inline-block; width: 0.8em; height: 0.8em; border-radius: var(--dm-radius-sm); border: 1px solid var(--dm-border); }

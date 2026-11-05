@@ -104,6 +104,9 @@ bare tar filen. Datasettet skrives fra en kopi som har vært gjennom kontrollen,
 pakkene. Et datasett hentet fra serveren kan sendes som en ny versjon av dokumentet sitt, og kortet *Fra CDE* i Håndter vet det
 deretter. Hver sending noteres i datasettets historikk.
 
+*Arbeidsområdepakke* sender en pakke i stedet for et datasett: pakkedialogen velger datasett og innhold som vanlig, kontrollen
+gjøres, og filen går opp som dokument. Mottakeren ser pakken i kildens filliste i Hent og tar den imot med ett klikk.
+
 ## Motta
 
 Åpne en pakke fra en fil (slipp den på flaten) eller fra en nettadresse. Avsender, melding og endringer vises først;

@@ -134,6 +134,13 @@ að afhenda neitt. Gagnasöfn geta einnig farið aftur til þjónsins: flipinn *
 eða upprunalegu skrána, í verkefni, annaðhvort í gegnum Documents API, þar sem eigin síða þjónsins spyr um titil og útgáfu, eða sem
 BCF-skjal. Gagnasafn sem sótt var frá þjóninum má senda sem nýja útgáfu af skjali sínu.
 
+Fyrir IFC-graf Kontroll er upphafskóði í sýninni: líkönin í grafinu og nýjasta fullgerða á hvert skjal, byggingarhlutar eftir flokki, GTIN veggjanna, mál eftir stöðu,
+mál og byggingarhlutar þeirra, mál sem varða byggingarhluta og graf af málum, viewpoints og íhlutum. Veldu fyrirspurn, breyttu og
+keyrðu. Það krefst þess að sá sem rekur þjóninn hafi gert Bolt aðgengilegt; þróunarstaflinn gerir það, framleiðsluþjónn sjaldan.
+
+Vinnusvæðispakki getur einnig farið í gegnum þjóninn: flipinn *Til CDE* sendir hann sem skjal, og kortið með skrám verkefnisins sýnir
+hnappinn *Taka á móti* fyrir pakkaskrár, sem tekur á móti pakkanum alveg eins og þegar skránni er sleppt í Sækja.
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

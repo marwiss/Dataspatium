@@ -118,7 +118,8 @@
         kv.items = [
           { label: t('cde.server'), value: cde.host || '' },
           cde.projectName ? { label: t('opencde.project'), value: cde.projectName } : null,
-          { label: t('common.type'), value: t(cde.kind === 'document' ? 'cde.kind.document' : 'cde.kind.bcf') },
+          cde.modelName ? { label: t('cde.model'), value: cde.modelName } : null,
+          { label: t('common.type'), value: t(cde.kind === 'document' ? 'cde.kind.document' : cde.kind === 'issues' ? 'cde.kind.issues' : 'cde.kind.bcf') },
           cde.versionIndex ? { label: t('cde.version'), value: String(cde.versionIndex) } : null,
           cde.fetchedAt ? { label: t('cde.fetched'), value: i18n.formatDateTime(cde.fetchedAt) } : null,
         ].filter(Boolean);
@@ -137,6 +138,48 @@
       return el;
     }
 
-    return { facetCard, healthCard, codeListCard, cdeCard };
+    /**
+     * Issues from a CDE: how they stand, the board Ärendeläge, and the model they point at. Shows nothing for other tables.
+     * @param {any} ctx @param {any} ds @returns {HTMLElement|null}
+     */
+    function bcfCard(ctx, ds) {
+      if (!ds || ds.kind !== 'table') return null;
+      const { ui, store, shell } = ctx;
+      const issues = D.require('data/issues');
+      const el = h('div');
+      const state = { busy: false, error: '' };
+      const badge = (status) => { const k = D.require('ui/bearbeta/model-issues').badgeKind(status); return k ? { kind: k } : {}; };
+      async function draw() {
+        if (!(await facets.has(ds.id, 'bcf'))) { replace(el); return; }
+        const datasets = D.require('data/datasets');
+        const res = await (await datasets.ensureOpen(ds.id)).engine.exec('select topic_status, count(distinct guid) from data group by topic_status order by 2 desc');
+        const counts = (res[0] ? res[0].values : []).map((r) => ({ status: r[0], n: Number(r[1]) }));
+        const total = counts.reduce((a, c) => a + c.n, 0);
+        const open = counts.filter((c) => issues.rank(c.status) < 2).reduce((a, c) => a + c.n, 0);
+        const cde = ds.source && ds.source.cde;
+        const modelId = cde && cde.modelId && store.get().datasets.some((d) => d.id === cde.modelId) ? cde.modelId : null;
+        replace(el, h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'bcf' }, h('h3', { text: t('bcf.card.title') }),
+          h('p', { class: 'dm-help', text: t('bcf.card.summary', { n: i18n.formatNumber(total), open: i18n.formatNumber(open) }) }),
+          h('div', { class: 'dm-row-wrap' }, counts.slice(0, 8).map((c) => h('dm-badge', Object.assign({ text: `${c.status || t('issues.status.none')} · ${i18n.formatNumber(c.n)}` }, badge(c.status))))),
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('bcf.card.board'), icon: 'layout-grid', size: 'sm', variant: 'primary', loading: state.busy, title: t('bcf.card.board.hint'), 'data-bcf-board': '', onClick: board }),
+            modelId ? ui.button({ label: t('bcf.card.model'), icon: 'box', size: 'sm', title: t('bcf.card.model.hint'), 'data-bcf-model': '', onClick: () => { store.set({ selectedId: modelId, openModelIssues: { datasetId: modelId } }); shell.activate('bearbeta'); } }) : null),
+          state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null));
+      }
+      async function board() {
+        state.busy = true; state.error = ''; await draw();
+        try {
+          const dash = await D.require('viz/suggest').issueBoard(ds);
+          shell.log(t('bcf.card.board.done', { name: dash.name }), 'ok');
+          store.set({ openDashboardId: dash.id });
+          shell.activate('visualisera');
+        } catch (err) { state.error = String((err && err.message) || err); }
+        state.busy = false; await draw();
+      }
+      draw().catch((err) => D.log('bcf', err));
+      return el;
+    }
+
+    return { facetCard, healthCard, codeListCard, cdeCard, bcfCard };
   });
 })();

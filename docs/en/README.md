@@ -114,6 +114,7 @@ with a backup or a bundle.
 - **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
 - **Kontroll as a CDE, part 1**: fetch models and documents from an OpenCDE server's project, see when a newer version exists, and see the issues that point at the elements of the model.
 - **Kontroll as a CDE, part 2**: create issues from the selection in the model with the view as viewpoint, comment and change status, send datasets and files to the server, BCF files in and out, and self-registration against servers that allow it.
+- **Kontroll as a CDE, part 3**: colour the model by issue status, save the issues as a table with the elements, the tool Issues, the dashboard Issue status, starter Cypher for Kontroll's IFC graph, and workspace bundles through the server.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

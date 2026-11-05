@@ -16,6 +16,11 @@
      * @param {any} ctx the mode context (ui, services, store, shell)
      * @param {{datasetIds?: string[]}} [options] preselected datasets (default: all)
      */
+    /**
+     * The bundle dialog: choose datasets and contents, review, build. Downloads the file unless `options.deliver(blob, name)`
+     * takes it (Dela sends it to a CDE that way). Returns the build result, or null when cancelled.
+     * @param {any} ctx @param {{datasetIds?: string[], deliver?: (blob: Blob, name: string) => Promise<void>}} [options]
+     */
     async function shareBundle(ctx, options = {}) {
       const { ui, services, store, shell } = ctx;
       const list = store.get().datasets;
@@ -85,7 +90,7 @@
         const note = D.require('ui/share/review').summary(reviewed.transform);
         if (note) shell.log(note, 'info');
         const file = services.files.safeName(label, 'dataspatium.zip');
-        services.files.download(res.blob, file);
+        if (options.deliver) await options.deliver(res.blob, file); else services.files.download(res.blob, file);
         shell.log(t('bundle.done', { name: file, n: res.counts.datasets }), 'ok');
         ui.toast.show(t('bundle.done', { name: file, n: res.counts.datasets }), { kind: 'ok' });
         shell.setStatus('saved');

@@ -132,6 +132,8 @@ har nye data (se [floden.md](floden.md)).
 
 **Fra CDE.** Et datasett hentet fra en OpenCDE-server viser server, prosjekt og versjon, kan spørre etter en nyere versjon og åpne modellens saker.
 
+**Saker.** En tabell med saker fra et CDE får kortet Saker: status per status, dashbordet Sakstatus og veien til modellen. Se [cad-bim.md](cad-bim.md).
+
 ## Søk
 
 Finn og list uten kode. Fanen *Søk* søker i alle kolonner i ett eller alle datasett; hvert ord må finnes på raden,
@@ -208,6 +210,8 @@ Analyser åpner i verktøyet som passer datasettet: Tekst for dokumenter, Bilder
 
 **Tell per område.** Under Geo teller *Punkter i områder* steder per område, med areal og antall per kvadratkilometer. Stedene kan være bilder med posisjon, og områdene kan være en plan, en tabell med flater eller kommune- og fylkesgrensene som følger med appen.
 
+**Saker.** Verktøyet Saker i fanen Mengder teller saker og bygningsdeler per status, type, bygningsdelstype eller etasje. Se [cad-bim.md](cad-bim.md).
+
 ## Visualiser
 
 Diagrammer med tre motorer og ett utseende: diagrambyggeren (Vega-Lite) med stolper, linjer, flater, punkter,
@@ -218,6 +222,8 @@ lagrede diagrammer i et rutenett med felles filtre og eksporteres som HTML eller
 [visualisera.md](visualisera.md).
 
 Diagramtypen **Kart** er en kartvisning med flere lag fra datasett med geometri eller koordinater og de medfølgende grensene, farge etter kategori eller klasse, etiketter, lagret visning og bakgrunnskart etter samtykke; interaktiv i dashboards, presentasjoner og publisert HTML, eksportert til SVG, PNG og PDF uten bakgrunnskart (se [kartor.md](kartor.md)).
+
+**Sakstatus.** Dashbordet Sakstatus opprettes fra en sakstabell, og et modelldiagram kan bære farger etter sakstatus. Se [cad-bim.md](cad-bim.md).
 
 ## Eksporter
 
@@ -248,3 +254,5 @@ nettadresse, med avsender og endringer synlige før noe tas inn. Datasett som fo
 personopplysninger. Se [dela.md](dela.md).
 
 **Til CDE.** Et datasett eller originalfilen til et prosjekt på en OpenCDE-server, gjennom Documents API eller som BCF-dokument. Se [dela.md](dela.md).
+
+**Arbeidsområdepakke via CDE.** Fanen Til CDE sender en pakke som dokument; mottakeren tar den imot i kildens filliste. Se [dela.md](dela.md).

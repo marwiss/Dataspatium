@@ -132,6 +132,8 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 
 **Frá CDE.** Gagnasafn sótt frá OpenCDE-þjóni sýnir þjón, verkefni og útgáfu, getur spurt um nýrri útgáfu og opnað mál líkansins.
 
+**Mál.** Tafla með málum frá CDE fær kortið Mál: staðan eftir stöðu, mælaborðið Staða mála og leiðin að líkaninu. Sjá [cad-bim.md](cad-bim.md).
+
 ## Leita
 
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að
@@ -207,6 +209,8 @@ Greina opnast í því verkfæri sem hentar gagnasafninu: Texti fyrir skjöl, My
 
 **Telja eftir svæði.** Undir Geo telur *Punktar í svæðum* staði eftir svæði, með flatarmáli og fjölda á ferkílómetra. Staðirnir geta verið myndir með staðsetningu, og svæðin geta verið skipulag, tafla með formum eða sveitarfélaga- og sýslumörkin sem fylgja forritinu.
 
+**Mál.** Verkfærið Mál í flipanum Magn telur mál og byggingarhluta eftir stöðu, tegund, tegund byggingarhluta eða hæð. Sjá [cad-bim.md](cad-bim.md).
+
 ## Myndgera
 
 Myndrit með þremur vélum og einu útliti: myndritasmiðurinn (Vega-Lite) með súlum, línum, flötum, punktum,
@@ -216,6 +220,8 @@ PowerPoint, deila sem viz-skrám, sýna í safni og búa til í hópkeyrslu efti
 í grind með sameiginlegum síum og eru flutt út sem HTML eða PowerPoint. Sjá [visualisera.md](visualisera.md).
 
 Myndritstegundin **Kort** er kortasýn með mörgum lögum úr gagnasöfnum með rúmfræði eða hnitum og meðfylgjandi mörkum, lit eftir flokki eða bili, merkjum, vistaðri sýn og bakgrunnskorti eftir samþykki; gagnvirk í stjórnborðum, kynningum og birtu HTML, flutt út í SVG, PNG og PDF án bakgrunnskorts (sjá [kartor.md](kartor.md)).
+
+**Staða mála.** Mælaborðið Staða mála er búið til úr málatöflu, og líkansrit getur borið liti eftir stöðu mála. Sjá [cad-bim.md](cad-bim.md).
 
 ## Flytja út
 
@@ -245,3 +251,5 @@ sendanda og breytingar sýnilegar áður en nokkuð er tekið inn. Gagnasöfn se
 með tilliti til persónuupplýsinga. Sjá [dela.md](dela.md).
 
 **Til CDE.** Gagnasafn eða upprunaleg skrá þess í verkefni á OpenCDE-þjóni, í gegnum Documents API eða sem BCF-skjal. Sjá [dela.md](dela.md).
+
+**Vinnusvæðispakki um CDE.** Flipinn Til CDE sendir pakka sem skjal; viðtakandinn tekur á móti honum í skráalista uppsprettunnar. Sjá [dela.md](dela.md).

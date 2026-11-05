@@ -40,6 +40,14 @@ In a chosen issue you can write a comment, change the status and add the current
 the project's issues with comments, viewpoints and snapshots as a BCF file, which tools without an API can open. A BCF file can
 also be read in Import: the issues become a table, comments and components tables beside it.
 
+*Colour by status* gives the elements the colour of their most open issue: red for open, amber for in progress, green for closed,
+with a legend under the list. *Save as table* gives the project's issues as a table with one row per issue and element (type, name
+and storey come along), which Manage recognises as issues: the card *Issues* shows how they stand and creates the dashboard *Issue
+status* with status, type, assignee, priority and month behind shared filters, and the button *Show in the model* goes back to the
+panel. The tool *Issues* in the Quantities tab of Analyse counts issues, open issues and elements per status, type, priority,
+assignee, element type or storey from such a table, and the SQL starters get queries for the join. *Save as chart* saves the view
+with its colours as a model chart, which dashboards, documents and Publish show with a legend.
+
 ## The tables
 
 | Table | Contents |

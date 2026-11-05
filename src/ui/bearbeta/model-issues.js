@@ -5,12 +5,14 @@
  * point at elements of this model, one list, and a click marks the elements in the 3D view and shows the snapshot and the
  * comments. With the rights for it, the user also writes: a new issue from the marked elements with the view as viewpoint, a
  * comment, a new status, a viewpoint of the current view. Nothing is fetched until asked, nothing is stored in the dataset, and
- * everything can be saved as a BCF file for clients without an API.
+ * everything can be saved as a BCF file for clients without an API. The elements can be coloured by the status of their issues,
+ * the issues saved as a table with the elements they point at (the tool Ärenden and the board Ärendeläge start from it), and the
+ * coloured view saved as a chart.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml'], (base, datasets, opencde, connectors, bcfXml) => {
+  D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner) => {
     const { h, t, i18n, replace } = base;
     const PAGE = 500;
     /** Badge colours follow what a status usually means; unknown statuses are plain. */
@@ -22,13 +24,15 @@
     /**
      * @param {any} ctx shell context
      * @param {any} ds the model dataset
-     * @param {{select: (ids: number[], fit: boolean) => void, view?: () => any, png?: () => string, marked?: () => number[], connectorId?: string, projectId?: string}} hooks
+     * @param {{select: (ids: number[], fit: boolean) => void, view?: () => any, png?: () => string, marked?: () => number[], setColors?: (groups: Array<{color: string, ids: number[]}>) => void, connectorId?: string, projectId?: string}} hooks
      */
     function create(ctx, ds, hooks) {
       const { ui, shell, services } = ctx;
       const cde = (ds.source && ds.source.cde) || {};
       const s = { connector: null, connectors: [], projects: null, projectId: hooks.projectId || cde.projectId || '', ext: null, rights: null, topics: null, parts: new Map(), elements: new Map(), selected: null, comments: [], viewpoints: [], snapshot: '', busy: '', error: '', missing: 0, comment: '' };
       const el = h('div', { class: 'dm-stack-sm dm-model-issues', 'data-model-issues': '' });
+      /** Colours by status in the 3D view, and the legend they get. */
+      s.colored = false; s.legend = []; s.groups = [];
       let alive = true;
       const fail = (err) => { s.error = String((err && err.message) || err); shell.log(s.error, 'error'); };
       const may = (kind, action) => !!(s.rights && s.rights[kind] && s.rights[kind].includes(action));
@@ -83,6 +87,7 @@
           topics.sort((a, b) => (touches(b) > 0) - (touches(a) > 0) || String(b.modified_date || b.creation_date || '').localeCompare(String(a.modified_date || a.creation_date || '')));
           s.topics = topics;
           s.missing = topics.filter((tp) => (s.parts.get(tp.guid) || []).length && !touches(tp)).length;
+          applyColors();
           shell.log(t('issues.fetched', { n: i18n.formatNumber(topics.length), model: i18n.formatNumber(topics.filter((tp) => touches(tp) > 0).length) }), 'ok');
         } catch (err) { s.topics = null; fail(err); }
         s.busy = ''; render();
@@ -127,6 +132,66 @@
         render();
       }
       function clearSnapshot() { if (s.snapshot) { URL.revokeObjectURL(s.snapshot); s.snapshot = ''; } }
+
+      // ---- colours, table and chart --------------------------------------------------------------------------------
+      /** The colour groups for the view: empty when colours are off or nothing is fetched. */
+      function computeColors() {
+        if (!s.colored || !s.topics) return { groups: [], legend: [] };
+        return issuesLogic.colorGroups(s.topics, s.parts, s.elements);
+      }
+      function applyColors() {
+        const out = computeColors();
+        s.groups = out.groups; s.legend = out.legend;
+        if (hooks.setColors) hooks.setColors(out.groups);
+      }
+      const currentColors = () => s.groups.slice();
+      /** Type, name and storey of the model's elements the issues point at. */
+      async function elementInfo() {
+        const info = new Map();
+        const guids = Array.from(s.elements.keys());
+        if (!guids.length) return info;
+        const engine = (await datasets.ensureOpen(ds.id)).engine;
+        for (let i = 0; i < guids.length; i += 400) {
+          const chunk = guids.slice(i, i + 400);
+          const res = await engine.exec(`select guid, typ, namn, vaning from data where guid in (${chunk.map(() => '?').join(', ')})`, chunk);
+          for (const r of (res[0] ? res[0].values : [])) info.set(String(r[0]), { typ: r[1], namn: r[2], vaning: r[3] });
+        }
+        return info;
+      }
+      /** The issues as a dataset of their own, one row per issue and element, remembering the model and the project. */
+      async function saveTable() {
+        if (!s.topics || s.busy) return null;
+        s.busy = 'table'; s.error = ''; render();
+        try {
+          const table = issuesLogic.tableOf(s.topics, s.parts, await elementInfo());
+          const project = (s.projects || []).find((p) => p.project_id === s.projectId);
+          const host = opencde.hostOf(s.connector.baseUrl);
+          const meta = await runner.toDataset(table, {
+            name: t('issues.table.name', { model: ds.name }),
+            description: t('issues.table.description', { project: project ? project.name : s.projectId, host, model: ds.name }),
+            source: { kind: 'file', fileName: '', cde: { connectorId: s.connector.id, connectorName: s.connector.name, host, projectId: s.projectId, projectName: project ? project.name : '', kind: 'issues', modelId: ds.id, modelName: ds.name, fetchedAt: new Date().toISOString() } },
+          });
+          const done = t('issues.table.saved', { name: meta.name, n: i18n.formatNumber(table.rows.length) });
+          shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
+          s.busy = ''; render();
+          return meta;
+        } catch (err) { fail(err); s.busy = ''; render(); return null; }
+      }
+      /** The coloured view as a model chart, for dashboards and documents. */
+      async function saveChart() {
+        if (!s.topics || s.busy) return null;
+        s.busy = 'chart'; s.error = ''; render();
+        try {
+          const out = s.colored ? computeColors() : issuesLogic.colorGroups(s.topics, s.parts, s.elements);
+          const chart = charts.create('model', ds, t('issues.chart.name', { model: ds.name }));
+          chart.model = { datasetId: ds.id, visible: null, filter: { typ: '', vaning: '', lager: '', search: '' }, view: hooks.view ? hooks.view() : null, colors: out.groups, legend: out.legend };
+          const saved = await charts.save(chart);
+          const done = t('issues.chart.saved', { name: saved.name });
+          shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
+          s.busy = ''; render();
+          return saved;
+        } catch (err) { fail(err); s.busy = ''; render(); return null; }
+      }
 
       // ---- writing ---------------------------------------------------------------------------------------------
       /** The current 3D view as a BCF viewpoint: camera, snapshot and the marked elements as the selection. */
@@ -275,13 +340,27 @@
           parts.push(h('div', { class: 'dm-row-wrap' },
             ui.button({ label: s.topics ? t('issues.fetch.again') : t('issues.fetch'), icon: 'refresh-cw', size: 'sm', loading: s.busy === 'topics', title: t('issues.fetch.hint'), onClick: load }),
             s.topics && may('project', 'createTopic') ? ui.button({ label: t('issues.new'), icon: 'plus', size: 'sm', variant: 'primary', loading: s.busy === 'write', title: t('issues.new.hint'), 'data-issue-new': '', onClick: () => newTopic().catch(fail) }) : null,
-            s.topics && s.topics.length ? ui.button({ label: t('issues.bcf.save'), icon: 'download', size: 'sm', loading: s.busy === 'bcf', title: t('issues.bcf.save.hint'), 'data-issue-bcf': '', onClick: saveBcf }) : null));
+            s.topics && s.topics.length ? ui.button({ label: t('issues.bcf.save'), icon: 'download', size: 'sm', loading: s.busy === 'bcf', title: t('issues.bcf.save.hint'), 'data-issue-bcf': '', onClick: saveBcf }) : null,
+            s.topics && s.topics.length ? ui.button({ label: t('issues.table.save'), icon: 'table', size: 'sm', loading: s.busy === 'table', title: t('issues.table.save.hint'), 'data-issue-table': '', onClick: saveTable }) : null));
         }
         if (s.error) parts.push(h('p', { class: 'dm-error dm-small', text: s.error }));
         if (s.topics) {
           const inModel = s.topics.filter((tp) => elementIds(tp).length);
           parts.push(h('p', { class: 'dm-help dm-small', text: t('issues.summary', { n: i18n.formatNumber(s.topics.length), model: i18n.formatNumber(inModel.length) }) }));
           if (s.missing) parts.push(h('p', { class: 'dm-help dm-small', text: t('issues.elsewhere', { n: i18n.formatNumber(s.missing) }) }));
+          if (hooks.setColors && inModel.length) {
+            const sw = /** @type {any} */ (h('dm-switch', { label: t('issues.colors'), title: t('issues.colors.hint'), 'data-issue-colors': '' }));
+            sw.checked = s.colored;
+            sw.addEventListener('change', () => { s.colored = sw.checked; applyColors(); render(); });
+            parts.push(h('div', { class: 'dm-row-wrap' }, sw,
+              ui.button({ label: t('issues.chart.save'), icon: 'image', size: 'sm', loading: s.busy === 'chart', title: t('issues.chart.save.hint'), 'data-issue-chart': '', onClick: saveChart })));
+            if (s.colored && s.legend.length) {
+              parts.push(h('ul', { class: 'dm-model-issues-legend dm-row-wrap' }, s.legend.map((l) => {
+                const swatch = h('span', { class: 'dm-legend-swatch' }); swatch.style.background = l.color;
+                return h('li', { class: 'dm-small' }, swatch, h('span', { text: `${l.status || t('issues.status.none')} (${i18n.formatNumber(l.n)})` }));
+              })));
+            }
+          }
           parts.push(h('ul', { class: 'dm-list dm-model-issues-list' }, s.topics.slice(0, 200).map((tp) => {
             const ids = elementIds(tp);
             return h('li', null, h('button', { type: 'button', class: 'dm-list-item', 'data-issue': tp.guid, 'aria-current': s.selected === tp.guid ? 'true' : 'false', onclick: () => choose(tp) },
@@ -320,9 +399,9 @@
         if (may('topic', 'createViewpoint') && hooks.view) nodes.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('issues.viewpoint.add'), icon: 'scan-line', size: 'sm', loading: s.busy === 'write', title: t('issues.viewpoint.add.hint'), 'data-issue-viewpoint': '', onClick: addViewpoint })));
         return h('div', { class: 'dm-card dm-stack-xs', 'data-issue-detail': '' }, nodes);
       }
-      function destroy() { alive = false; clearSnapshot(); }
+      function destroy() { alive = false; clearSnapshot(); if (hooks.setColors) hooks.setColors([]); }
 
-      return { el, start, load, choose, newTopic, sendComment, setStatus, saveBcf, destroy, state: s };
+      return { el, start, load, choose, newTopic, sendComment, setStatus, saveBcf, saveTable, saveChart, currentColors, destroy, state: s };
     }
 
     return { create, badgeKind };

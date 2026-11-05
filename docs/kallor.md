@@ -132,6 +132,14 @@ dela ut något. Datamängder kan också gå tillbaka till servern: fliken *Till 
 eller originalfilen, till ett projekt, antingen genom Documents API, där serverns egen sida frågar efter titel och version,
 eller som BCF-dokument. En datamängd som hämtats från servern kan skickas som en ny version av sitt dokument.
 
+För Kontrolls IFC-graf finns startkod i vyn: modellerna i grafen och den senaste färdiga per dokument, byggdelar per klass, väggarnas GTIN, ärenden per status,
+ärenden och deras byggdelar, ärenden som rör en byggdel och en graf av ärenden, viewpoints och komponenter. Välj en fråga, ändra
+och kör. Det förutsätter att den som driver servern har gjort Bolt åtkomlig; utvecklingsstacken gör det, en produktionsserver
+gör det sällan.
+
+Ett arbetsytepaket kan också gå genom servern: fliken *Till CDE* skickar det som dokument, och kortet med projektets filer visar
+knappen *Ta emot* för paketfiler, som tar emot paketet precis som när filen släpps i Inhämta.
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

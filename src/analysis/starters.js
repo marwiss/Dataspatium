@@ -92,6 +92,15 @@
         piece('starter.bcf.months', 'select substr(creation_date, 1, 7) as manad, count(*) as arenden from data group by manad order by manad'),
       ];
     }
+    /** Issue tables saved from the model view carry the elements: issues per element type, status and storey. */
+    function elementPieces(s, lang) {
+      if (lang === 'r') return [piece('starter.bcf.elements', `arenden <- dm_read(${s})\nmed <- arenden[!is.na(arenden$element_guid), ]\ntable(med$element_typ, med$topic_status)`)];
+      if (lang === 'python') return [piece('starter.bcf.elements', `arenden = dm_read(${s})\narenden.dropna(subset=["element_guid"]).groupby(["element_typ", "topic_status"])["guid"].nunique()`)];
+      return [
+        piece('starter.bcf.elements', 'select element_typ, topic_status, count(distinct guid) as arenden, count(distinct element_guid) as byggdelar from data where element_guid is not null group by 1, 2 order by arenden desc'),
+        piece('starter.bcf.storeys', 'select element_vaning, count(distinct guid) as arenden, count(distinct element_guid) as byggdelar from data where element_guid is not null group by 1 order by arenden desc'),
+      ];
+    }
     /**
      * The pieces for a table, following what the data can be used as.
      * @param {any} ds @param {'r'|'python'|'sql'} lang @returns {Promise<Array<{key: string, code: string}>>}
@@ -115,7 +124,11 @@
       }
       const text = found.find((f) => f.id === 'text');
       if (text && lang === 'sql') out.push(piece('starter.search', `select * from data where ${q(text.columns[0])} like '%ord%' limit 50`));
-      if (found.some((f) => f.id === 'bcf')) out.push(...bcfPieces(s, lang));
+      if (found.some((f) => f.id === 'bcf')) {
+        out.push(...bcfPieces(s, lang));
+        const columns = await D.require('data/datasets').columns(ds.id);
+        if (columns.some((c) => c.name === 'element_typ')) out.push(...elementPieces(s, lang));
+      }
       return out;
     }
 

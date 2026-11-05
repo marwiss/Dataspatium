@@ -46,6 +46,9 @@
         grid: cssVar('--dm-n-100', '#eef0f3'),
         background: cssVar('--dm-surface', '#ffffff'),
         accent: cssVar('--dm-accent', '#2b6cb0'),
+        ok: cssVar('--dm-ok', '#16703f'),
+        warn: cssVar('--dm-warn', '#8f5a0b'),
+        error: cssVar('--dm-error', '#c0392b'),
         dark: uiTheme.effective() === 'dark',
       };
     }

@@ -136,6 +136,14 @@ dele ut noe. Datasett kan også gå tilbake til serveren: fanen *Til CDE* i Del 
 originalfilen, til et prosjekt, enten gjennom Documents API, der serverens egen side spør om tittel og versjon, eller som
 BCF-dokument. Et datasett hentet fra serveren kan sendes som en ny versjon av dokumentet sitt.
 
+For Kontrolls IFC-graf finnes startkode i visningen: modellene i grafen og den siste ferdige per dokument, bygningsdeler per klasse, veggenes GTIN, saker per status,
+saker og deres bygningsdeler, saker som gjelder en bygningsdel, og en graf av saker, viewpoints og komponenter. Velg en spørring,
+endre og kjør. Det forutsetter at den som drifter serveren har gjort Bolt tilgjengelig; utviklingsstakken gjør det, en
+produksjonsserver gjør det sjelden.
+
+En arbeidsområdepakke kan også gå gjennom serveren: fanen *Til CDE* sender den som dokument, og kortet med prosjektets filer viser
+knappen *Ta imot* for pakkefiler, som tar imot pakken akkurat som når filen slippes i Hent.
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

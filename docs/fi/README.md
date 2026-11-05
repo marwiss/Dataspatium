@@ -115,6 +115,7 @@ paketilla.
 - **Alkuperä, yhteistyö ja kirjasto**: näe, mistä aineisto on peräisin ja mitä siitä on tullut, tee yhteistyötä GitHubin kautta ilman että mitään katoaa, hae reseptejä ja malleja lisensseineen ja julkaise työtila verkkosivustona.
 - **Kontroll CDE:nä, osa 1**: hae malleja ja asiakirjoja OpenCDE-palvelimen projektista, näe milloin uudempi versio on olemassa, ja näe asiat, jotka osoittavat mallin rakennusosiin.
 - **Kontroll CDE:nä, osa 2**: luo asioita mallin valinnasta näkymällä viewpointina, kommentoi ja vaihda tila, lähetä aineistoja ja tiedostoja palvelimelle, BCF-tiedostot sisään ja ulos, ja itserekisteröinti palvelimille, jotka sallivat sen.
+- **Kontroll CDE:nä, osa 3**: väritä malli asian tilan mukaan, tallenna asiat taulukkona rakennusosineen, työkalu Asiat, koontinäyttö Asioiden tila, Cypher-aloituskoodi Kontrollin IFC-graafille ja työtilapaketit palvelimen kautta.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

@@ -130,6 +130,33 @@
       return blob.text();
     }
 
-    return { forDataset, ownChart, preview };
+    /**
+     * The board Ärendeläge for a table of issues: status, type, who has them, priority and the month they came, as saved
+     * charts in a dashboard with shared filters on status, type and assignee.
+     * @param {any} ds the issue table @returns {Promise<any>} the saved dashboard
+     */
+    async function issueBoard(ds) {
+      const columns = await datasets.columns(ds.id);
+      const made = [];
+      for (const name of ['topic_status', 'topic_type', 'assigned_to', 'priority']) {
+        const c = named(columns, name);
+        if (c) made.push(bars(ds, `${ds.name}: ${t('viz.suggest.bcf.' + name)}`, columns, c));
+      }
+      const created = named(columns, 'creation_date');
+      if (created) {
+        made.push(vegaChart(ds, `${ds.name}: ${t('viz.suggest.bcf.months')}`, 'bar', columns, (state) => {
+          state.x = Object.assign(builder.channel(created), { type: 'temporal', timeUnit: 'yearmonth' });
+          state.y = { field: null, type: 'quantitative', aggregate: 'count', bin: false, timeUnit: '', sort: '', title: '', format: '' };
+        }));
+      }
+      const dashboards = D.require('viz/dashboards');
+      const dash = dashboards.create(t('viz.board.issues.name', { name: ds.name }));
+      dash.description = t('viz.board.issues.description');
+      for (const chart of made) { const saved = await charts.save(chart); dash.items.push({ chartId: saved.id, span: 1 }); }
+      dash.filters = ['topic_status', 'topic_type', 'assigned_to'].filter((n) => named(columns, n)).map((column) => ({ column }));
+      return dashboards.save(dash);
+    }
+
+    return { forDataset, ownChart, preview, issueBoard };
   });
 })();

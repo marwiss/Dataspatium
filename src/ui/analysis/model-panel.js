@@ -4,21 +4,22 @@
  * The Mängder tab in Analysera for datasets of kind "model": a summary of the model, quantities per type, storey and
  * material (from the file's quantity sets or measured on the geometry), every quantity name, the values of a property
  * and the entity types of the file. For a DXF drawing: count, length and area per layer and type. Every result can be
- * saved as a dataset. The logic lives in analysis/model.
+ * saved as a dataset. The logic lives in analysis/model. The tool Ärenden counts the issues of a saved issue table (from the
+ * model view's panel) per status, type, element type or storey; data/issues does the counting.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/model-panel', ['ui/base', 'data/datasets', 'data/model', 'analysis/model'], (base, datasets, model, analysis) => {
+  D.define('ui/analysis/model-panel', ['ui/base', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, datasets, model, analysis, issuesLogic) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
-      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '' };
+      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ' };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
 
@@ -63,6 +64,19 @@
           parts.push(h('div', { class: 'dm-row-wrap' },
             select(t('model.group.first'), groupOptions(analysis.DXF_GROUPS), s.layer1, (v) => { s.layer1 = v; run(); }),
             select(t('model.group.second'), groupOptions(analysis.DXF_GROUPS, true), s.layer2, (v) => { s.layer2 = v; run(); })));
+        } else if (s.tool === 'issues') {
+          const tables = issuesLogic.tablesFor(store.get().datasets, ds);
+          if (!tables.length) {
+            parts.push(h('p', { class: 'dm-help', text: t('model.issues.none') }),
+              h('div', null, ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('model.issues.open.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); shell.activate('bearbeta'); } })));
+          } else {
+            if (!tables.some((x) => x.id === s.issuesId)) s.issuesId = tables[0].id;
+            const groupOpts = (none) => (none ? [{ value: '', label: t('map.none') }] : []).concat(issuesLogic.SUMMARY_GROUPS.map((g) => ({ value: g, label: t('issues.field.' + g) })));
+            parts.push(h('div', { class: 'dm-row-wrap' },
+              select(t('model.issues.table'), tables.map((x) => ({ value: x.id, label: x.name })), s.issuesId, (v) => { s.issuesId = v; run(); }),
+              select(t('model.group.first'), groupOpts(false), s.igroup1, (v) => { s.igroup1 = v; run(); }),
+              select(t('model.group.second'), groupOpts(true), s.igroup2, (v) => { s.igroup2 = v; run(); })));
+          }
         } else if (s.tool === 'properties') {
           if (!names || names.id !== ds.id) names = { id: ds.id, list: await analysis.propertyNames(ds.id) };
           if (!fieldsEl) return;
@@ -92,6 +106,15 @@
             } else {
               out = await analysis.fromFile(ds.id, { groups, category: s.category });
               out.note = (facts.quantities ? t('model.source.file.note') : t('model.source.file.none'));
+            }
+          } else if (s.tool === 'issues') {
+            const tables = issuesLogic.tablesFor(store.get().datasets, ds);
+            if (!tables.some((x) => x.id === s.issuesId)) s.issuesId = tables[0] ? tables[0].id : '';
+            if (!s.issuesId) out = { columns: [], rows: [], note: t('model.issues.none') };
+            else {
+              out = await issuesLogic.summary(s.issuesId, [s.igroup1, s.igroup2]);
+              out.columns = out.columns.map((c) => Object.assign({}, c, { label: t(issuesLogic.SUMMARY_GROUPS.includes(c.name) ? 'issues.field.' + c.name : 'model.issues.col.' + c.name) }));
+              out.note = t('model.issues.note', { name: (tables.find((x) => x.id === s.issuesId) || {}).name || '' });
             }
           } else if (s.tool === 'list') {
             out = await analysis.quantityList(ds.id);

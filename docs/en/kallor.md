@@ -137,6 +137,14 @@ hand anything out. Datasets can also go back to the server: the tab *To the CDE*
 original file, to a project, either through the Documents API, where the server's own page asks for title and version, or as a
 BCF document. A dataset fetched from the server can be sent as a new version of its document.
 
+For Kontroll's IFC graph the view offers starter code: the models in the graph and the latest finished one per document, elements per class, the walls' GTIN, issues per
+status, issues and their elements, issues that touch an element, and a graph of issues, viewpoints and components. Choose a query,
+edit and run. It requires that whoever runs the server has made Bolt reachable; the development stack does, a production server
+seldom does.
+
+A workspace bundle can also go through the server: the tab *To the CDE* sends it as a document, and the card with the project's
+files shows the button *Receive* for bundle files, which receives the bundle exactly as when the file is dropped in Import.
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

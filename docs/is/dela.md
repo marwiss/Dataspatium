@@ -104,6 +104,9 @@ sem tekur aðeins skrána. Gagnasafnið er skrifað úr afriti sem farið hefur 
 viðvörun sem í pökkunum. Gagnasafn sem sótt var frá þjóninum má senda sem nýja útgáfu af skjali sínu, og kortið *Frá CDE* í
 Umsjón veit það síðan. Hver sending er skráð í ferli gagnasafnsins.
 
+*Vinnusvæðispakki* sendir pakka í stað gagnasafns: pakkaglugginn velur gagnasöfn og innihald eins og venjulega, yfirferðin fer fram,
+og skráin fer upp sem skjal. Viðtakandinn sér pakkann í skráalista uppsprettunnar í Sækja og tekur á móti honum með einum smelli.
+
 ## Taka á móti
 
 Opnaðu pakka úr skrá (slepptu henni á flötinn) eða af vefslóð. Sendandi, skilaboð og breytingar birtast fyrst;

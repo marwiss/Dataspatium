@@ -106,6 +106,9 @@ or as a BCF document, which takes the file only. The dataset is written from a c
 original files get the same warning as in bundles. A dataset fetched from the server can be sent as a new version of its
 document, and the card *From the CDE* in Manage then knows about it. Every send is noted in the dataset's history.
 
+*Workspace bundle* sends a bundle instead of a dataset: the bundle dialog chooses datasets and contents as usual, the review is done,
+and the file goes up as a document. The recipient sees the bundle in the source's file list in Import and receives it with a click.
+
 ## Receive
 
 Open a bundle from a file (drop it on the surface) or from a web address. Sender, message and changes are shown

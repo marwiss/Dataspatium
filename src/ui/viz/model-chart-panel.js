@@ -46,7 +46,7 @@
         }
         replace(preview, h('dm-progress', { indeterminate: true, label: t('model.loading') }));
         try {
-          const hd = await draw.render(preview, { datasetId: def.datasetId, visible: def.visible || null, view: def.view || null }, {});
+          const hd = await draw.render(preview, { datasetId: def.datasetId, visible: def.visible || null, view: def.view || null, colors: def.colors || null }, {});
           if (my !== seq) { hd.destroy(); return; }
           preview.querySelector('dm-progress')?.remove();
           handle = hd;

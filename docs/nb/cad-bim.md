@@ -39,6 +39,14 @@ komponenter. I en valgt sak kan du skrive en kommentar, bytte status og legge ti
 *Lagre som BCF* gir alle prosjektets saker med kommentarer, viewpoints og øyeblikksbilder som en BCF-fil, som verktøy uten API
 kan åpne. En BCF-fil kan også leses inn i Hent: sakene blir en tabell, kommentarer og komponenter tabeller ved siden av.
 
+*Farg etter status* gir bygningsdelene fargen fra sin mest åpne sak: rød for åpne, gul for pågående, grønn for avsluttede, med en
+tegnforklaring under listen. *Lagre som tabell* gir prosjektets saker som en tabell med én rad per sak og bygningsdel (type, navn
+og etasje følger med), som Håndter kjenner igjen som saker: kortet *Saker* viser status og oppretter dashbordet *Sakstatus* med
+status, type, ansvarlig, prioritet og måned bak felles filtre, og knappen *Vis i modellen* går tilbake til panelet. Verktøyet
+*Saker* i Analysers fane Mengder teller saker, åpne saker og bygningsdeler per status, type, prioritet, ansvarlig, bygningsdelstype
+eller etasje fra en slik tabell, og SQL-startkoden får spørringer for koblingen. *Lagre som diagram* lagrer visningen med fargene
+som et modelldiagram, som dashbord, dokumenter og Publiser viser med tegnforklaring.
+
 ## Tabellene
 
 | Tabell | Innhold |

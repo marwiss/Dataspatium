@@ -134,6 +134,8 @@ när de har nya data (se [floden.md](floden.md)).
 
 **Från CDE.** En datamängd som hämtats från en OpenCDE-server visar server, projekt och version, kan fråga efter en nyare version och öppna modellens ärenden.
 
+**Ärenden.** En tabell med ärenden från ett CDE får kortet Ärenden: läget per status, dashboarden Ärendeläge och vägen till modellen. Se [cad-bim.md](cad-bim.md).
+
 ## Söka
 
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas
@@ -211,6 +213,8 @@ Analysera öppnar i det verktyg som passar datamängden: Text för dokument, Bil
 
 **Räkna per område.** Under Geo räknar *Punkter i områden* platser per område, med yta och antal per kvadratkilometer. Platserna kan vara bilder med position, och områdena kan vara en plan, en tabell med ytor eller de kommun- och länsgränser som följer med appen.
 
+**Ärenden.** Verktyget Ärenden i fliken Mängder räknar ärenden och byggdelar per status, typ, byggdelstyp eller våning. Se [cad-bim.md](cad-bim.md).
+
 ## Visualisera
 
 Diagram med tre motorer och ett utseende: diagrambyggaren (Vega-Lite) med staplar, linjer, ytor, punkter,
@@ -221,6 +225,8 @@ delas som viz-filer, visas i ett galleri och skapas i batch per grupp. Dashboard
 rutnät med gemensamma filter och exporteras som HTML eller PowerPoint. Se [visualisera.md](visualisera.md).
 
 Diagramslaget **Karta** är en kartvy med flera lager från datamängder med geometri eller koordinater och de medföljande gränserna, färg efter kategori eller klass, etiketter, sparad vy och bakgrundskarta efter samtycke; interaktiv i dashboards, presentationer och publicerad HTML, exporterad till SVG, PNG och PDF utan bakgrundskarta (se [kartor.md](kartor.md)).
+
+**Ärendeläge.** Dashboarden Ärendeläge skapas ur en ärendetabell, och ett modelldiagram kan bära färger efter ärendestatus. Se [cad-bim.md](cad-bim.md).
 
 ## Exportera
 
@@ -251,3 +257,5 @@ webbadress, med avsändare och ändringar synliga innan något tas in. Datamäng
 för personuppgifter. Se [dela.md](dela.md).
 
 **Till CDE.** En datamängd eller dess originalfil till ett projekt på en OpenCDE-server, genom Documents API eller som BCF-dokument. Se [dela.md](dela.md).
+
+**Arbetsytepaket via CDE.** Fliken Till CDE skickar ett paket som dokument; mottagaren tar emot det i källans fillista. Se [dela.md](dela.md).

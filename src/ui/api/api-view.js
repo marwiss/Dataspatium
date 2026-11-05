@@ -26,7 +26,7 @@
         const el = h('div', { class: 'dm-stack dm-api-view' });
         const resultEl = h('div', { class: 'dm-stack' });
         const progressEl = h('div');
-        const api = { connector, runFetch, log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
+        const api = { ctx, connector, runFetch, log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
         const isGeodata = family === 'geodata';

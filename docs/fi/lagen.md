@@ -135,6 +135,8 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 
 **CDE:stä.** OpenCDE-palvelimelta haettu aineisto näyttää palvelimen, projektin ja version, voi kysyä uudempaa versiota ja avata mallin asiat.
 
+**Asiat.** CDE:stä tulleiden asioiden taulukko saa kortin Asiat: tilanne tilan mukaan, koontinäyttö Asioiden tila ja tie malliin. Katso [cad-bim.md](cad-bim.md).
+
 ## Hae
 
 Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhdessä tai kaikissa aineistoissa; jokaisen
@@ -216,6 +218,8 @@ Analysoi avautuu aineistoon sopivassa työkalussa: Teksti asiakirjoille, Kuvat k
 
 **Laske alueittain.** Geo-kohdan *Pisteet alueissa* laskee paikat alueittain, pinta-alan ja neliökilometrikohtaisen määrän kanssa. Paikat voivat olla kuvia, joissa on sijainti, ja alueet voivat olla kaava, muotoja sisältävä taulukko tai sovelluksen mukana tulevat kunta- ja maakuntarajat.
 
+**Asiat.** Määrät-välilehden työkalu Asiat laskee asiat ja rakennusosat tilan, tyypin, rakennusosatyypin tai kerroksen mukaan. Katso [cad-bim.md](cad-bim.md).
+
 ## Visualisoi
 
 Kaavioita kolmella moottorilla ja yhdellä ilmeellä: kaaviorakentaja (Vega-Lite) pylväillä, viivoilla, alueilla,
@@ -226,6 +230,8 @@ luoda eräajona ryhmittäin. Kojelaudat kokoavat tallennetut kaaviot ruudukkoon 
 HTML- tai PowerPoint-muotoon. Ks. [visualisera.md](visualisera.md).
 
 Kaaviolaji **Kartta** on karttanäkymä, jossa on useita tasoja aineistoista, joissa on geometria tai koordinaatit, sekä mukana tulevat rajat, väri luokan tai luokkavälin mukaan, nimiöt, tallennettu näkymä ja taustakartta suostumuksen jälkeen; vuorovaikutteinen koontinäytöissä, esityksissä ja julkaistussa HTML:ssä, vietynä SVG-, PNG- ja PDF-muotoon ilman taustakarttaa (katso [kartor.md](kartor.md)).
+
+**Asioiden tila.** Koontinäyttö Asioiden tila luodaan asiataulukosta, ja mallikaavio voi kantaa värit asian tilan mukaan. Katso [cad-bim.md](cad-bim.md).
 
 ## Vie
 
@@ -257,3 +263,5 @@ tiedostosta tai verkko-osoitteesta, lähettäjä ja muutokset näkyvissä ennen 
 Sovelluksesta lähtevät aineistot tarkistetaan ensin henkilötietojen varalta. Ks. [dela.md](dela.md).
 
 **CDE:hen.** Aineisto tai sen alkuperäinen tiedosto projektiin OpenCDE-palvelimella, Documents API:n kautta tai BCF-asiakirjana. Katso [dela.md](dela.md).
+
+**Työtilapaketti CDE:n kautta.** Välilehti CDE:hen lähettää paketin asiakirjana; vastaanottaja ottaa sen vastaan lähteen tiedostoluettelosta. Katso [dela.md](dela.md).

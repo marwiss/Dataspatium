@@ -108,6 +108,10 @@ BCF-asiakirjana, joka ottaa vain tiedoston. Aineisto kirjoitetaan tarkistuksen l
 saavat saman varoituksen kuin paketeissa. Palvelimelta haettu aineisto voidaan lähettää asiakirjansa uutena versiona, ja
 Hallitse-tilan kortti *CDE:stä* tietää sen sen jälkeen. Jokainen lähetys merkitään aineiston historiaan.
 
+*Työtilapaketti* lähettää paketin aineiston sijaan: pakettivalintaikkuna valitsee aineistot ja sisällön kuten tavallisesti, tarkistus
+tehdään, ja tiedosto lähtee asiakirjana. Vastaanottaja näkee paketin lähteen tiedostoluettelossa Nouda-tilassa ja ottaa sen
+vastaan yhdellä napsautuksella.
+
 ## Vastaanota
 
 Avaa paketti tiedostosta (pudota se alueelle) tai verkko-osoitteesta. Lähettäjä, viesti ja muutokset näytetään

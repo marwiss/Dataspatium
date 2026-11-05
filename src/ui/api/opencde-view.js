@@ -69,11 +69,20 @@
         try { s.files = await opencde.filesList(connector, s.projectId); log(t('opencde.files.loaded', { n: i18n.formatNumber(s.files.length) })); } catch (err) { fail(err); }
         s.busy = ''; render();
       }
-      /** One file becomes a dataset of its own kind: a model, a document, a table. */
+      const isBundle = (f) => /\.dataspatium\.zip$/i.test(String(f.filename || ''));
+      /** One file becomes a dataset of its own kind: a model, a document, a table; a bundle is received as a whole. */
       async function fetchFile(entry) {
         if (s.fetching) return;
         s.fetching = entry.reference; s.error = ''; render();
         try {
+          if (isBundle(entry)) {
+            // A workspace bundle from a colleague: the same door as a bundle file dropped in Inhämta.
+            const file = await opencde.downloadFile(connector, entry);
+            const res = await D.require('ui/share/bundle').receiveFile(api.ctx, file);
+            if (res) log(t('opencde.file.received', { name: entry.filename }));
+            s.fetching = ''; render();
+            return;
+          }
           const meta = await opencde.importFile(connector, project() || { project_id: s.projectId, name: '' }, entry);
           log(t('opencde.file.imported', { name: meta.name }));
           overlays.toast.show(t('opencde.file.imported', { name: meta.name }), { kind: 'ok' });
@@ -170,7 +179,7 @@
       function filesCard() {
         const rows = (s.files || []).map((f) => h('div', { class: 'dm-row dm-opencde-file', 'data-opencde-file': f.filename },
           h('span', { class: 'dm-grow dm-truncate' }, h('span', { text: f.filename }), h('span', { class: 'dm-help dm-xs', text: ' ' + [f.model ? t('opencde.file.model') : '', f.source, f.versionIndex ? t('opencde.file.version', { n: f.versionIndex }) : '', f.date ? i18n.formatDateTime(f.date) : ''].filter(Boolean).join(' · ') })),
-          basic.button({ label: t('opencde.file.fetch'), icon: 'download', size: 'sm', loading: s.fetching === f.reference, title: t('opencde.file.fetch.hint'), onClick: () => fetchFile(f) })));
+          basic.button({ label: t(isBundle(f) ? 'opencde.file.receive' : 'opencde.file.fetch'), icon: isBundle(f) ? 'package' : 'download', size: 'sm', loading: s.fetching === f.reference, title: t(isBundle(f) ? 'opencde.file.receive.hint' : 'opencde.file.fetch.hint'), onClick: () => fetchFile(f) })));
         return h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-files': '' },
           h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('opencde.files.title') }), basic.button({ label: s.files ? t('opencde.files.again') : t('opencde.files.show'), icon: 'folder-open', size: 'sm', loading: s.busy === 'files', onClick: loadFiles })),
           h('p', { class: 'dm-help dm-xs', text: t('opencde.files.hint') }),

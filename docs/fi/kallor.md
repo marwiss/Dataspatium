@@ -140,6 +140,13 @@ ei tarvitse jakaa mitään. Aineistot voivat myös palata palvelimelle: Jaa-tila
 tahansa muodossa, tai alkuperäisen tiedoston, projektiin joko Documents API:n kautta, jossa palvelimen oma sivu kysyy otsikon ja
 version, tai BCF-asiakirjana. Palvelimelta haettu aineisto voidaan lähettää asiakirjansa uutena versiona.
 
+Kontrollin IFC-graafille näkymä tarjoaa aloituskoodia: graafin mallit ja viimeisin valmis malli asiakirjaa kohti, rakennusosat luokittain, seinien GTIN, asiat tilan mukaan,
+asiat ja niiden rakennusosat, rakennusosaa koskevat asiat sekä graafi asioista, viewpointeista ja komponenteista. Valitse kysely,
+muokkaa ja aja. Se edellyttää, että palvelimen ylläpitäjä on avannut Boltin; kehityspino tekee niin, tuotantopalvelin harvoin.
+
+Työtilapaketti voi myös kulkea palvelimen kautta: välilehti *CDE:hen* lähettää sen asiakirjana, ja projektin tiedostojen kortti
+näyttää pakettitiedostoille painikkeen *Vastaanota*, joka ottaa paketin vastaan aivan kuin tiedosto pudotettaisiin Nouda-tilaan.
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

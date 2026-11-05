@@ -131,6 +131,8 @@ har nye data (se [floden.md](floden.md)).
 
 **Fra CDE.** Et datasæt hentet fra en OpenCDE-server viser server, projekt og version, kan spørge efter en nyere version og åbne modellens sager.
 
+**Sager.** En tabel med sager fra et CDE får kortet Sager: status per status, dashboardet Sagsstatus og vejen til modellen. Se [cad-bim.md](cad-bim.md).
+
 ## Søg
 
 Find og list uden kode. Fanen *Søg* søger i alle kolonner i ét eller alle datasæt; hvert ord skal findes på rækken,
@@ -207,6 +209,8 @@ Analysér åbner i det værktøj, der passer til datasættet: Tekst for dokument
 
 **Tæl pr. område.** Under Geo tæller *Punkter i områder* steder pr. område, med areal og antal pr. kvadratkilometer. Stederne kan være billeder med position, og områderne kan være en plan, en tabel med flader eller de kommune- og regionsgrænser, der følger med appen.
 
+**Sager.** Værktøjet Sager i fanen Mængder tæller sager og bygningsdele per status, type, bygningsdelstype eller etage. Se [cad-bim.md](cad-bim.md).
+
 ## Visualisér
 
 Diagrammer med tre motorer og ét udseende: diagrambyggeren (Vega-Lite) med søjler, linjer, arealer, punkter,
@@ -217,6 +221,8 @@ Dashboards samler gemte diagrammer i et gitter med fælles filtre og eksporteres
 [visualisera.md](visualisera.md).
 
 Diagramtypen **Kort** er en kortvisning med flere lag fra datasæt med geometri eller koordinater og de medfølgende grænser, farve efter kategori eller klasse, etiketter, gemt visning og baggrundskort efter samtykke; interaktiv i dashboards, præsentationer og publiceret HTML, eksporteret til SVG, PNG og PDF uden baggrundskort (se [kartor.md](kartor.md)).
+
+**Sagsstatus.** Dashboardet Sagsstatus oprettes fra en sagstabel, og et modeldiagram kan bære farver efter sagsstatus. Se [cad-bim.md](cad-bim.md).
 
 ## Eksportér
 
@@ -247,3 +253,5 @@ med afsender og ændringer synlige, før noget tages ind. Datasæt, der forlader
 personoplysninger. Se [dela.md](dela.md).
 
 **Til CDE.** Et datasæt eller dets originalfil til et projekt på en OpenCDE-server, gennem Documents API eller som BCF-dokument. Se [dela.md](dela.md).
+
+**Arbejdsområdepakke via CDE.** Fanen Til CDE sender en pakke som dokument; modtageren modtager den i kildens filliste. Se [dela.md](dela.md).

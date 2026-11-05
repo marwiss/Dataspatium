@@ -135,6 +135,8 @@ new data (see [floden.md](floden.md)).
 
 **From the CDE.** A dataset fetched from an OpenCDE server shows server, project and version, can ask for a newer version and open the model's issues.
 
+**Issues.** A table of issues from a CDE gets the card Issues: how they stand per status, the dashboard Issue status and the way to the model. See [cad-bim.md](cad-bim.md).
+
 ## Search
 
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on
@@ -211,6 +213,8 @@ Analyse opens in the tool that fits the dataset: Text for documents, Pictures fo
 
 **Count per area.** Under Geo, *Points in areas* counts places per area, with the area and the number per square kilometre. The places can be pictures with positions, and the areas can be a plan, a table with shapes or the municipal and county boundaries that come with the app.
 
+**Issues.** The tool Issues in the Quantities tab counts issues and elements per status, type, element type or storey. See [cad-bim.md](cad-bim.md).
+
 ## Visualise
 
 Charts with three engines and one look: the chart builder (Vega-Lite) with bars, lines, areas, points, histograms,
@@ -220,6 +224,8 @@ PowerPoint, shared as viz files, shown in a gallery and created in batch per gro
 in a grid with shared filters and are exported as HTML or PowerPoint. See [visualisera.md](visualisera.md).
 
 The chart kind **Map** is a map view with several layers from datasets with geometry or coordinates and the bundled boundaries, colour by category or class, labels, a saved view and a background map after consent; interactive in dashboards, presentations and published HTML, exported to SVG, PNG and PDF without the background map (see [kartor.md](kartor.md)).
+
+**Issue status.** The dashboard Issue status is created from an issue table, and a model chart can carry colours by issue status. See [cad-bim.md](cad-bim.md).
 
 ## Export
 
@@ -249,3 +255,5 @@ bundles from a file or a web address, with sender and changes visible before any
 leave the app are reviewed for personal data first. See [dela.md](dela.md).
 
 **To the CDE.** A dataset or its original file to a project on an OpenCDE server, through the Documents API or as a BCF document. See [dela.md](dela.md).
+
+**Workspace bundle via the CDE.** The tab To the CDE sends a bundle as a document; the recipient receives it in the source's file list. See [dela.md](dela.md).

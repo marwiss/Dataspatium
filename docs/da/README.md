@@ -111,6 +111,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Oprindelse, samarbejde og bibliotek**: se, hvor et datasæt kommer fra, og hvad det er blevet til, arbejd sammen via GitHub, uden at noget forsvinder, hent opskrifter og skabeloner med licens, og publicér arbejdsområdet som et websted.
 - **Kontroll som CDE, del 1**: hent modeller og dokumenter fra en OpenCDE-servers projekt, se, når en nyere version findes, og se de sager, der peger på bygningsdelene i modellen.
 - **Kontroll som CDE, del 2**: opret sager fra markeringen i modellen med visningen som viewpoint, kommentér og skift status, send datasæt og filer til serveren, BCF-filer ind og ud, og selvregistrering mod servere, der tillader det.
+- **Kontroll som CDE, del 3**: farv modellen efter sagsstatus, gem sagerne som tabel med bygningsdelene, værktøjet Sager, dashboardet Sagsstatus, startkode til Cypher mod Kontrolls IFC-graf og arbejdsområdepakker gennem serveren.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

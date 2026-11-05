@@ -105,11 +105,12 @@
           view: () => (handle ? Object.assign(handle.view(), { fov: handle.camera ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }) : null),
           png: () => (handle ? handle.png() : ''),
           marked: () => (handle ? handle.marked() : (s.selected ? [s.selected] : [])),
+          setColors: (groups) => { if (handle) handle.setColors(groups || []); },
         });
         issues.start().catch((err) => shell.log(String((err && err.message) || err), 'error'));
       }
       function toggleIssues() {
-        if (issues) { issues.destroy(); issues = null; } else openIssues();
+        if (issues) { issues.destroy(); issues = null; if (handle) handle.setColors([]); } else openIssues();
         renderInspector();
       }
       function fitAll() {
@@ -177,6 +178,8 @@
           if (my !== seq || !host) { hd.destroy(); return; }
           host.querySelector('.dm-model-loading')?.remove();
           handle = hd;
+          // A new drawing of the same model keeps the issue colours the panel chose.
+          if (issues && issues.currentColors) { const groups = issues.currentColors(); if (groups.length) hd.setColors(groups); }
           s.error = '';
           // A selection made elsewhere shows here: the walls found in Söka, marked in the model.
           const chosen = D.require('data/selection').whereOf(ds.id);

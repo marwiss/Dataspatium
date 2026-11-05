@@ -63,6 +63,19 @@
         overlays.toast.show(t('neo4j.query.kept'), { kind: 'ok' });
         render();
       }
+      /** Starter queries for Kontroll's IFC graph; choosing one puts it in the editor, to edit and run. */
+      function examplesRow() {
+        const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('neo4j.examples'), inline: true, 'data-neo4j-example': '' }));
+        sel.options = [{ value: '', label: t('neo4j.examples') }].concat(neo4j.EXAMPLES.map((x) => ({ value: x.id, label: t('neo4j.example.' + x.id) })));
+        sel.value = '';
+        sel.addEventListener('change', () => {
+          const x = neo4j.EXAMPLES.find((e) => e.id === sel.value);
+          if (!x) return;
+          s.query = x.cypher; if (editor) editor.value = x.cypher;
+          sel.value = '';
+        });
+        return h('div', { class: 'dm-row-wrap' }, sel, h('span', { class: 'dm-help dm-xs', text: t('neo4j.examples.hint') }));
+      }
       function render() {
         editor = /** @type {any} */ (h('dm-code', { language: 'sql', placeholder: 'MATCH (n) RETURN n LIMIT 25' }));
         editor.value = s.query;
@@ -72,6 +85,7 @@
         replace(el,
           h('div', { class: 'dm-card dm-stack-sm' },
             h('p', { class: 'dm-help dm-small', text: t('neo4j.hint', { host: neo4j.hostOf(connector.baseUrl), database: (connector.family && connector.family.database) || 'neo4j' }) }),
+            examplesRow(),
             editor,
             h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('common.run'), icon: 'play', variant: 'primary', loading: s.busy, title: t('neo4j.run.hint'), onClick: run }), basic.button({ label: t('neo4j.query.keep'), icon: 'save', size: 'sm', onClick: keepQuery })),
             kept),
