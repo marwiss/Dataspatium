@@ -525,3 +525,7 @@ body.dm-presenting { overflow: hidden; }
 .dm-cde-log-table tr[data-cde-log-row] { cursor: pointer; }
 .dm-cde-log-table tr.dm-selected td { background: var(--dm-accent-soft); }
 .dm-cde-log-pre { white-space: pre-wrap; word-break: break-all; max-height: 16em; overflow: auto; margin: 0; }
+
+/* Big assets loading: a short indeterminate bar beside the engines in the status bar. */
+.dm-sb-loading { display: inline-flex; align-items: center; gap: var(--dm-space-2); }
+.dm-sb-loading dm-progress { width: 4rem; }

@@ -129,6 +129,7 @@
     const sent = bodyOf(spy.requests.filter((r) => r.url.endsWith('/foundation/oauth2/reg')).pop());
     assert.equal(sent.token_endpoint_auth_method, 'none', 'a public client');
     assert.deepEqual(sent.redirect_uris, [REDIRECT]);
+    assert.equal(sent.software_id, 'dataspatium'); assert.equal(sent.software_version, D.version, 'the app says which version registers');
     connector = (await families.createConnector('opencde', { baseUrl: BASE, clientId: reg.clientId, clientSecret: '' })).connector;
     await opencde.login(connector, { popup: fakePopup, redirectUri: REDIRECT });
     assert.ok(opencde.signedIn(connector));

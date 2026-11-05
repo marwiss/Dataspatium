@@ -5039,5 +5039,8 @@
     'cdelog.op.documents.download': 'Noutaa asiakirjaversion tiedoston.',
     'cdelog.op.documents.versions': 'Asiakirjan versiot.',
     'cdelog.op.documents.version': 'Yksi asiakirjaversio.',
+    'shell.loading': 'Ladataan {name} ({size})',
+    'shell.loading.hint': 'Sovelluksen suuret osat, kuten R ja Python, ladataan vasta kun niitä käytetään; tässä näkyy, mitä ladataan juuri nyt',
+    'analysera.status.loading': 'Käynnistetään R: {name} ({size})',
   }));
 })();

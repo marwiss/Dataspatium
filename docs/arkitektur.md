@@ -555,6 +555,8 @@ Granskningen 2.31 samlade kopior till gemensamma hjälpare: `api/families/common
 
 `api/cde-log` (2.32) är CDE-loggen: en ringbuffert i minnet (500 poster) där `begin(connector, req, extra)` startar en post och returnerar funktionen som avslutar den med svaret; posten klassificeras till API och operation ur sökvägen (`classify`), rubriker maskas (`redactHeaders`), kroppar sparas bara när användaren slagit på det och aldrig för token-anrop, och X-Request-Id sätts på begäran när källan tillåter (`connector.requestId !== false`). `api/families/opencde.send()` är den enda vägen till `http.request` i familjen, med ett omförsök utan rubriken när servern nekar den (nätfel) och `requestId: false` sparat på källan. `ui/api/cde-log-card` visar loggen i källans vy (sammanfattning, tabell, detalj med förklaring `cdelog.op.<api>.<operation>` och specifikationslänk, curl, JSON, datamängd). Inställningen för kroppar ligger i localStorage (`dataspatium.cdelog.bodies`).
 
+`platform/assets` (2.33) rapporterar laddning: `onProgress(fn)` ger varje resurs som injiceras och avkodas (`{name, file, size, phase: load|done|error}`) och listan över det som är i flykt; `loading()` ger listan när som helst. Statusraden (`shell.showLoading`) visar namn och storlek när något över 512 kB laddas, `data/r-bridge` håller `progress` för R:s filer (webr/*, r/dataspatium.R) och Analyseras statusrad för R säger vilken fil som väntas, på samma sätt som Pythons procent. Inget laddas vid start utöver appens egna skript och manifestet.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

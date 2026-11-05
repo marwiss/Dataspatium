@@ -113,6 +113,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Kontroll som CDE, del 2**: opret sager fra markeringen i modellen med visningen som viewpoint, kommentér og skift status, send datasæt og filer til serveren, BCF-filer ind og ud, og selvregistrering mod servere, der tillader det.
 - **Kontroll som CDE, del 3**: farv modellen efter sagsstatus, gem sagerne som tabel med bygningsdelene, værktøjet Sager, dashboardet Sagsstatus, startkode til Cypher mod Kontrolls IFC-graf og arbejdsområdepakker gennem serveren.
 - **Logning af CDE-kald**: kortet Log i OpenCDE-kilden viser hvert kald med API, operation, status og tid, forklarer operationen og kopierer den som curl; X-Request-Id parres med serverens log.
+- **Let start**: store dele som R og Python indlæses først, når de bruges, og statuslinjen viser, hvad der indlæses i mellemtiden.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

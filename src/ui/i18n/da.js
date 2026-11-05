@@ -5039,5 +5039,8 @@
     'cdelog.op.documents.download': 'Henter en dokumentversions fil.',
     'cdelog.op.documents.versions': 'Et dokuments versioner.',
     'cdelog.op.documents.version': 'En dokumentversion.',
+    'shell.loading': 'Henter {name} ({size})',
+    'shell.loading.hint': 'Store dele af appen, som R og Python, indlæses først, når de bruges; her står, hvad der indlæses lige nu',
+    'analysera.status.loading': 'Starter R: {name} ({size})',
   }));
 })();

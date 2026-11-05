@@ -110,6 +110,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Kontroll sem CDE, 2. hluti**: búðu til mál úr merkingunni í líkaninu með sýnina sem viewpoint, skrifaðu athugasemdir og breyttu stöðu, sendu gagnasöfn og skrár til þjónsins, BCF-skrár inn og út, og sjálfskráning gegn þjónum sem leyfa það.
 - **Kontroll sem CDE, 3. hluti**: litaðu líkanið eftir stöðu mála, vistaðu málin sem töflu með byggingarhlutunum, verkfærið Mál, mælaborðið Staða mála, upphafskóði fyrir Cypher gegn IFC-grafi Kontroll og vinnusvæðispakkar í gegnum þjóninn.
 - **Skráning CDE-kalla**: kortið Skrá í OpenCDE-uppsprettunni sýnir hvert kall með API, aðgerð, stöðu og tíma, skýrir aðgerðina og afritar hana sem curl; X-Request-Id er parað við skrá þjónsins.
+- **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

@@ -112,6 +112,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Kontroll som CDE, del 2**: opprett saker fra markeringen i modellen med visningen som viewpoint, kommenter og bytt status, send datasett og filer til serveren, BCF-filer inn og ut, og selvregistrering mot servere som tillater det.
 - **Kontroll som CDE, del 3**: farg modellen etter sakstatus, lagre sakene som tabell med bygningsdelene, verktøyet Saker, dashbordet Sakstatus, startkode for Cypher mot Kontrolls IFC-graf og arbeidsområdepakker gjennom serveren.
 - **Logging av CDE-kall**: kortet Logg i OpenCDE-kilden viser hvert kall med API, operasjon, status og tid, forklarer operasjonen og kopierer den som curl; X-Request-Id pares med serverens logg.
+- **Lett start**: store deler som R og Python lastes først når de brukes, og statuslinjen viser hva som lastes i mellomtiden.
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

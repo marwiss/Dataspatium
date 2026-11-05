@@ -21,6 +21,10 @@ R is loaded as WebAssembly (about 50 MB) and starts in a few seconds. Packages s
 the R session when you use them for the first time, which takes a few more seconds. The R session starts over when
 you reload the page, but your datasets and scripts remain.
 
+None of this loads when the app starts, only when it is used: R ships in the app folder and is unpacked in the browser the first
+time the R tab opens, Python is fetched as components the first time you press Start Python, and 3D models, PDF and maps load the same
+way when needed. Meanwhile the status bar says what is loading, and the R console shows which file it is waiting for.
+
 ## Can I interrupt R code that is stuck?
 
 Yes, when the app runs from a web server (for example `python -m http.server 8080` on your own computer, or https on

@@ -116,6 +116,7 @@ with a backup or a bundle.
 - **Kontroll as a CDE, part 2**: create issues from the selection in the model with the view as viewpoint, comment and change status, send datasets and files to the server, BCF files in and out, and self-registration against servers that allow it.
 - **Kontroll as a CDE, part 3**: colour the model by issue status, save the issues as a table with the elements, the tool Issues, the dashboard Issue status, starter Cypher for Kontroll's IFC graph, and workspace bundles through the server.
 - **Logging of CDE requests**: the card Log in the OpenCDE source shows every request with API, operation, status and duration, explains the operation and copies it as curl; X-Request-Id is matched with the server's log.
+- **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

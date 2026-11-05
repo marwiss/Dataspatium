@@ -21,6 +21,10 @@ R indlæses som WebAssembly (omkring 50 MB) og starter på nogle sekunder. Pakke
 første gang du bruger dem, hvilket tager yderligere nogle sekunder. R-sessionen starter forfra, når du genindlæser siden,
 men dine datasæt og scripts er der stadig.
 
+Intet af dette indlæses, når appen starter, kun når det bruges: R ligger i appens mappe og pakkes ud i browseren, første gang fanen R
+åbnes, Python hentes som komponenter, første gang du trykker Start Python, og 3D-modeller, PDF og kort indlæses på samme måde, når der
+er brug for dem. I mellemtiden står der i statuslinjen, hvad der indlæses, og R-konsollen viser, hvilken fil den venter på.
+
 ## Kan jeg afbryde R-kode, der hænger?
 
 Ja, når appen kører fra en webserver (for eksempel `python -m http.server 8080` på din egen computer eller https på et

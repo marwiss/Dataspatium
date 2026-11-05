@@ -5061,5 +5061,8 @@
     'cdelog.op.documents.download': 'Hämtar en dokumentversions fil.',
     'cdelog.op.documents.versions': 'Ett dokuments versioner.',
     'cdelog.op.documents.version': 'En dokumentversion.',
+    'shell.loading': 'Hämtar {name} ({size})',
+    'shell.loading.hint': 'Stora delar av appen, som R och Python, laddas först när de används; här står vad som laddas just nu',
+    'analysera.status.loading': 'Startar R: {name} ({size})',
   }));
 })();

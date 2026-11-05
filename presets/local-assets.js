@@ -615,7 +615,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15969,
+  "size": 16373,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -771,7 +771,7 @@ Dataspatium.assets.addEntries({
  "docs/da/faq.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 15712,
+  "size": 16119,
   "library": "dataspatium"
  },
  "docs/da/licenser.md": {
@@ -927,7 +927,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/faq.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 15664,
+  "size": 16052,
   "library": "dataspatium"
  },
  "docs/nb/licenser.md": {
@@ -1083,7 +1083,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/faq.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 16893,
+  "size": 17331,
   "library": "dataspatium"
  },
  "docs/fi/licenser.md": {
@@ -1239,7 +1239,7 @@ Dataspatium.assets.addEntries({
  "docs/is/faq.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 16571,
+  "size": 17009,
   "library": "dataspatium"
  },
  "docs/is/licenser.md": {
@@ -1395,7 +1395,7 @@ Dataspatium.assets.addEntries({
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 16085,
+  "size": 16468,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {

@@ -417,7 +417,7 @@
     async function register(baseUrl, options) {
       const found = await discover(baseUrl);
       if (!found.registrationUrl) throw new Error(t('opencde.err.noregistration'));
-      const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
+      const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', software_id: 'dataspatium', software_version: D.version, redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
       const res = await send(null, { url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
       if (!res.ok) throw new http.ApiError(t('opencde.err.registration', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 160) }), { kind: 'http', status: res.status });
       const data = JSON.parse(res.text);

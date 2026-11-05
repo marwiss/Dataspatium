@@ -120,6 +120,7 @@ ett paket.
 - **Kontroll som CDE, del 2**: skapa ärenden ur markeringen i modellen med vyn som viewpoint, kommentera och byt status, skicka datamängder och filer till servern, BCF-filer in och ut, och självregistrering mot servrar som tillåter det.
 - **Kontroll som CDE, del 3**: färga modellen efter ärendestatus, spara ärendena som tabell med byggdelarna, verktyget Ärenden, dashboarden Ärendeläge, startkod för Cypher mot Kontrolls IFC-graf och arbetsytepaket genom servern.
 - **Loggning av CDE-anrop**: kortet Logg i OpenCDE-källan visar varje anrop med API, operation, status och tid, förklarar operationen och kopierar den som curl; X-Request-Id paras med serverns logg.
+- **Lätt start**: stora delar som R och Python laddas först när de används, och statusraden visar vad som laddas under tiden.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

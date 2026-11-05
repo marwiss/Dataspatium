@@ -19,6 +19,13 @@
   const decoded = new Map();
   /** @type {Map<string, Promise<void>>} wrapper file URL -> load promise */
   const loading = new Map();
+  /** Loading progress: listeners get ({name, file, size, phase: 'load'|'done'|'error'}, assets still in flight). */
+  const progressListeners = new Set();
+  const inFlight = new Map();
+  function notifyProgress(info) {
+    const active = Array.from(inFlight.values());
+    for (const fn of Array.from(progressListeners)) { try { fn(info, active); } catch (err) { console.error('[assets] progress listener failed', err); } }
+  }
   /** @type {{assets: Record<string, any>, libraries: Record<string, any>}} */
   let manifestData = { assets: {}, libraries: {} };
   const base = () => globalThis.DATASPATIUM_BASE || '';
@@ -71,13 +78,24 @@
     if (!entry) throw new Error('Unknown asset: ' + name);
     if (entry.provided) throw new Error('Provided asset ' + name + ' is no longer in memory');
     const url = base() + entry.file;
-    await loadScript(url);
-    if (!registry.has(name)) {
-      // The wrapper ran earlier and its payload was consumed; inject it again.
-      loading.delete(url);
+    const info = { name, file: entry.file, size: entry.size || 0, phase: 'load', at: Date.now() };
+    inFlight.set(name, info);
+    notifyProgress(info);
+    try {
       await loadScript(url);
-      if (!registry.has(name)) throw new Error('Asset ' + name + ' was not registered by ' + entry.file);
+      if (!registry.has(name)) {
+        // The wrapper ran earlier and its payload was consumed; inject it again.
+        loading.delete(url);
+        await loadScript(url);
+        if (!registry.has(name)) throw new Error('Asset ' + name + ' was not registered by ' + entry.file);
+      }
+    } catch (err) {
+      inFlight.delete(name);
+      notifyProgress(Object.assign({}, info, { phase: 'error' }));
+      throw err;
     }
+    inFlight.delete(name);
+    notifyProgress(Object.assign({}, info, { phase: 'done' }));
   }
 
   /**
@@ -199,6 +217,6 @@
   /** Load a directly shipped (non-wrapped) vendor script such as vendor/d3/d3.min.js. */
   function loadVendorScript(relativePath) { return loadScript(base() + relativePath); }
 
-  D.assets = { manifest, addEntries, register, decode, load, loadText, loadAll, peek, take, provide, names, info, libraries, importModule, importGraph, loadScript, loadVendorScript, decodeBase64, gunzip };
+  D.assets = { manifest, addEntries, register, decode, load, loadText, onProgress: (fn) => { progressListeners.add(fn); return () => progressListeners.delete(fn); }, loading: () => Array.from(inFlight.values()), loadAll, peek, take, provide, names, info, libraries, importModule, importGraph, loadScript, loadVendorScript, decodeBase64, gunzip };
   D.define('platform/assets', [], () => D.assets);
 })();

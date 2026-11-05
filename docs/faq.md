@@ -21,6 +21,10 @@ R laddas som WebAssembly (ungefär 50 MB) och startar på några sekunder. Paket
 R-sessionen när du använder dem första gången, vilket tar ytterligare några sekunder. R-sessionen börjar om när du
 laddar om sidan, men dina datamängder och skript finns kvar.
 
+Inget av detta laddas när appen startar, bara när det används: R ligger med i appens mapp och packas upp i webbläsaren första
+gången fliken R öppnas, Python hämtas som komponenter första gången du trycker Starta Python, och 3D-modeller, PDF och kartor laddas
+på samma sätt när de behövs. Under tiden står det i statusraden vad som laddas, och R-konsolen visar vilken fil den väntar på.
+
 ## Kan jag avbryta R-kod som fastnat?
 
 Ja, när appen körs från en webbserver (till exempel `python -m http.server 8080` på den egna datorn, eller https på

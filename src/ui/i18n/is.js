@@ -5039,5 +5039,8 @@
     'cdelog.op.documents.download': 'Sækir skrá skjalaútgáfu.',
     'cdelog.op.documents.versions': 'Útgáfur skjals.',
     'cdelog.op.documents.version': 'Ein skjalaútgáfa.',
+    'shell.loading': 'Sækir {name} ({size})',
+    'shell.loading.hint': 'Stórir hlutar forritsins, eins og R og Python, hlaðast fyrst þegar þeir eru notaðir; hér stendur hvað hleðst nú',
+    'analysera.status.loading': 'Ræsir R: {name} ({size})',
   }));
 })();

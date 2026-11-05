@@ -21,6 +21,10 @@ R lastes som WebAssembly (rundt 50 MB) og starter på noen sekunder. Pakker som 
 du bruker dem, noe som tar ytterligere noen sekunder. R-sesjonen starter på nytt når du laster siden på nytt, men datasettene
 og skriptene dine finnes fortsatt.
 
+Ingenting av dette lastes når appen starter, bare når det brukes: R ligger i appens mappe og pakkes ut i nettleseren første gang
+fanen R åpnes, Python hentes som komponenter første gang du trykker Start Python, og 3D-modeller, PDF og kart lastes på samme måte når de
+trengs. I mellomtiden står det i statuslinjen hva som lastes, og R-konsollen viser hvilken fil den venter på.
+
 ## Kan jeg avbryte R-kode som har hengt seg?
 
 Ja, når appen kjører fra en nettserver (for eksempel `python -m http.server 8080` på din egen datamaskin eller https på

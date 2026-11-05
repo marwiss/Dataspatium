@@ -357,6 +357,8 @@
         let label = t(CONSOLE[lang].status + key);
         // Python is downloaded the first time: show how far the components have come.
         if (bridge.state === 'starting' && bridge.progress && bridge.progress.total) label = t('python.status.downloading', { pct: Math.min(99, Math.round(100 * bridge.progress.received / bridge.progress.total)) });
+        // R is decoded from the app folder the first time: say which file, so a long start is not a frozen app.
+        if (lang === 'r' && bridge.state === 'starting' && bridge.progress && bridge.progress.name) label = t('analysera.status.loading', { name: bridge.progress.name.split('/').pop(), size: D.require('ui/i18n').formatBytes(bridge.progress.size || 0) });
         v.statusEl.textContent = label;
         if (kind) v.statusEl.setAttribute('kind', kind); else v.statusEl.removeAttribute('kind');
         if (v.runBtn) { v.runBtn.disabled = bridge.state === 'busy' || bridge.state === 'starting'; v.runBtn.loading = bridge.state === 'busy'; }

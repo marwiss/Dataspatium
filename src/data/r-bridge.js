@@ -22,6 +22,9 @@
         /** @type {any} */ this.engine = null;
         /** @type {Promise<void>|null} */ this.ready = null;
         /** @type {'idle'|'starting'|'ready'|'busy'|'error'} */ this.state = 'idle';
+        /** The big asset loading right now ({name, size, count}) or null; R's first start decodes about 50 MB. */
+        this.progress = null;
+        this.unsubProgress = null;
         this.error = null;
         this.version = '';
         this.startupMs = 0;
@@ -45,6 +48,13 @@
       start() {
         if (this.ready) return this.ready;
         this.setState('starting');
+        if (!this.unsubProgress && D.assets && D.assets.onProgress) {
+          this.unsubProgress = D.assets.onProgress((info, active) => {
+            const big = active.filter((x) => /^webr\//.test(x.name) || x.name === 'r/dataspatium.R');
+            this.progress = big.length ? { name: big[big.length - 1].name, size: big.reduce((a, x) => a + (x.size || 0), 0), count: big.length } : null;
+            this.emit('progress', this.progress);
+          });
+        }
         this.ready = (async () => {
           try {
             const t0 = performance.now();

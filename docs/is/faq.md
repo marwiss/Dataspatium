@@ -20,6 +20,10 @@ R er hlaðið sem WebAssembly (um 50 MB) og ræsist á nokkrum sekúndum. Pakkar
 notar þá í fyrsta skipti, sem tekur nokkrar sekúndur til viðbótar. R-setan byrjar upp á nýtt þegar þú endurhleður síðuna, en
 gagnasöfnin þín og skriftur eru áfram til.
 
+Ekkert af þessu hleðst þegar forritið ræsist, aðeins þegar það er notað: R fylgir í möppu forritsins og er pakkað upp í vafranum þegar
+flipinn R er opnaður fyrst, Python er sótt sem íhlutir þegar þú smellir á Ræsa Python fyrst, og 3D-líkön, PDF og kort hlaðast á sama hátt
+þegar þeirra þarf. Á meðan stendur í stöðustikunni hvað hleðst, og R-stjórnborðið sýnir hvaða skrá það bíður eftir.
+
 ## Get ég rofið R-kóða sem hefur fest?
 
 Já, þegar forritið keyrir af vefþjóni (til dæmis `python -m http.server 8080` á eigin tölvu, eða https á innraneti): þá

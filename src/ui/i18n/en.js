@@ -5039,5 +5039,8 @@
     'cdelog.op.documents.download': 'Fetches a document version\'s file.',
     'cdelog.op.documents.versions': 'A document\'s versions.',
     'cdelog.op.documents.version': 'One document version.',
+    'shell.loading': 'Loading {name} ({size})',
+    'shell.loading.hint': 'Big parts of the app, such as R and Python, load when they are first used; this shows what is loading now',
+    'analysera.status.loading': 'Starting R: {name} ({size})',
   }));
 })();

@@ -70,6 +70,7 @@
           this.engineEls.python.hidden = true;
           this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
           // A running flow and the news from the watches: only there when there is something to say.
+          this.loadingEl = h('span', { class: 'dm-sb dm-sb-optional dm-sb-loading', hidden: true, 'data-loading': '', title: t('shell.loading.hint') }, h('dm-progress', { indeterminate: '' }), h('span', { text: '' }));
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
@@ -78,7 +79,7 @@
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
             this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.watchEl, this.commentsEl,
             h('span', { class: 'dm-sb-grow' }),
-            this.engineEls.r, this.engineEls.python, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
+            this.engineEls.r, this.engineEls.python, this.loadingEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
             basic.button({ label: t('shell.toggle.right'), icon: 'panel-right', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('right') }),
             basic.button({ label: t('shell.log'), icon: 'panel-bottom', size: 'sm', variant: 'ghost', onClick: () => this.toggle('drawer') }));
@@ -115,10 +116,22 @@
           rBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('r', payload.state); });
           pyBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('python', payload.state); });
           if (D.net && D.net.onActivity) D.net.onActivity((active) => this.setNet(active));
+          if (D.assets && D.assets.onProgress) D.assets.onProgress((info, active) => this.showLoading(active));
           replace(this.root, this.el);
         }
 
         /** Engine indicator in the status bar: a dot coloured by state and the text "R redo". */
+        /** Big assets loading (R, Python, three.js, pdf.js…): the status bar names them, so a long first start is not a frozen app. */
+        showLoading(active) {
+          const el = this.loadingEl;
+          if (!el) return;
+          const big = (active || []).filter((x) => (x.size || 0) >= 512 * 1024);
+          if (!big.length) { el.hidden = true; return; }
+          const last = big[big.length - 1];
+          const total = big.reduce((a, x) => a + (x.size || 0), 0);
+          /** @type {HTMLElement} */ (el.lastChild).textContent = t('shell.loading', { name: String(last.name).split('/')[0], size: D.require('ui/i18n').formatBytes(total) });
+          el.hidden = false;
+        }
         setEngine(engine, state) {
           const el = this.engineEls && this.engineEls[engine];
           if (!el) return;

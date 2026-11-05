@@ -22,6 +22,11 @@ R ladataan WebAssemblynä (noin 50 Mt) ja käynnistyy muutamassa sekunnissa. Pak
 ensimmäisellä käyttökerralla, mikä kestää vielä muutaman sekunnin. R-istunto alkaa alusta, kun lataat sivun uudelleen, mutta
 aineistosi ja skriptisi säilyvät.
 
+Mitään tästä ei ladata sovelluksen käynnistyessä, vain käytettäessä: R on mukana sovelluksen kansiossa ja puretaan selaimessa, kun
+R-välilehti avataan ensimmäisen kerran, Python noudetaan komponentteina, kun painat Käynnistä Python ensimmäisen kerran, ja 3D-mallit,
+PDF ja kartat ladataan samalla tavalla tarvittaessa. Sillä välin tilarivillä näkyy, mitä ladataan, ja R-konsoli näyttää, mitä tiedostoa
+se odottaa.
+
 ## Voinko keskeyttää jumittuneen R-koodin?
 
 Voit, kun sovellus ajetaan verkkopalvelimelta (esimerkiksi `python -m http.server 8080` omalla tietokoneella tai https

@@ -117,6 +117,7 @@ paketilla.
 - **Kontroll CDE:nä, osa 2**: luo asioita mallin valinnasta näkymällä viewpointina, kommentoi ja vaihda tila, lähetä aineistoja ja tiedostoja palvelimelle, BCF-tiedostot sisään ja ulos, ja itserekisteröinti palvelimille, jotka sallivat sen.
 - **Kontroll CDE:nä, osa 3**: väritä malli asian tilan mukaan, tallenna asiat taulukkona rakennusosineen, työkalu Asiat, koontinäyttö Asioiden tila, Cypher-aloituskoodi Kontrollin IFC-graafille ja työtilapaketit palvelimen kautta.
 - **CDE-kutsujen loki**: OpenCDE-lähteen kortti Loki näyttää jokaisen kutsun API:n, toiminnon, tilan ja keston kanssa, selittää toiminnon ja kopioi sen curl-komentona; X-Request-Id yhdistetään palvelimen lokiin.
+- **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
