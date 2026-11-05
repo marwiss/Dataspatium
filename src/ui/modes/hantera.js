@@ -145,14 +145,8 @@
             again();
           } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
         }
-        const items = list.map((c) => h('li', { class: 'dm-list-item dm-list-item-static' }, ui.icon(c.resolved ? 'check' : 'message-square', 14),
-          h('span', { class: 'dm-list-main' + (c.resolved ? ' dm-muted' : '') },
-            h('span', { class: 'dm-small', text: [c.author || t('comments.anonymous'), i18n.formatDateTime(c.ts), c.column, c.resolved ? t('comments.resolved') : ''].filter(Boolean).join(' · ') }),
-            h('span', { text: c.text })),
-          ui.button({ label: c.resolved ? t('comments.reopen') : t('comments.resolve'), variant: 'ghost', onClick: async () => { await comments.setResolved(ds.id, c.id, !c.resolved); again(); } }),
-          ui.button({ label: t('common.delete'), icon: 'trash-2', 'icon-only': true, variant: 'ghost', onClick: async () => {
-            if (await ui.dialog.confirm(t('comments.delete.confirm'), { okLabel: t('common.delete'), danger: true })) { await comments.remove(ds.id, c.id); again(); }
-          } })));
+        const block = D.require('ui/kinds/comment-block');
+        const items = list.map((c) => block.line(ctx, ds, c, again, { showTarget: true }));
         replace(body, h('div', { class: 'dm-stack' },
           list.length ? h('ul', { class: 'dm-list' }, items) : h('p', { class: 'dm-help', text: t('comments.empty') }),
           h('div', { class: 'dm-card dm-stack' }, text, h('div', { class: 'dm-form-grid' }, column, name),

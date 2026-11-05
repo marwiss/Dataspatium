@@ -525,6 +525,8 @@ koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`edita
 
 `io/file-sense` läser Inhämtas förhandsgranskning och säger vad filen är och vad som är värt att fråga om. Inget ändras förrän användaren svarat. Ett annat koordinatsystem än SWEREF 99 TM går som `options.reproject` till `io/import.materialize`, som lägger till kolumner i grader också när filen strömmas. `io/import.sortFiles` och `runSorted` tar hand om blandade val. Fältet `picture` i `data/kinds` styr `ui/kinds/dataset-picture`, `wholeFormat` exporten av flera datamängder, `merge` hur samlingar slås ihop och `versionDiff` vad `data/version-diff` jämför.
 
+Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nyckel, namn och vägen tillbaka, och `ui/kinds/comment-block` ritar blocket i varje inspektör och raderna i Hantera. Vägen tillbaka tas från slagets `hit` i `data/kinds`. `data/operations-kinds` samlar steg som hör till ett slag: `geo_repair`, `geo_from_system`, `mask_personal` och `set_on_rows`. De två sista står inte i åtgärdspaletten, eftersom de får sitt villkor från en vy.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

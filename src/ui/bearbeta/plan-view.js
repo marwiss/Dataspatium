@@ -235,10 +235,11 @@
           info.datumLagakraft ? { label: t('plan.field.lagakraft'), value: info.datumLagakraft } : null,
           info.datumPaborjat ? { label: t('plan.field.paborjat'), value: info.datumPaborjat } : null,
           info.anvandbarhet ? { label: t('plan.field.anvandbarhet'), value: info.anvandbarhet } : null,
+          info.anteckning ? { label: t('plan.field.note'), value: info.anteckning } : null,
           { label: t('plan.field.objects'), value: i18n.formatNumber(s.rows.length) },
           info.format ? { label: t('plan.field.format'), value: t('plan.format.' + (info.format || 'detaljplan')) } : null,
         ].filter(Boolean);
-        items.push(h('h4', { text: t('plan.about') }), kv);
+        items.push(h('h4', { text: t('plan.about') }), kv, h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
         // Layers: one switch per object type or theme, with counts.
         const layerList = h('div', { class: 'dm-stack-sm dm-plan-layers' }, groups.map((g) => {
           const sw = /** @type {any} */ (h('dm-switch', { label: `${groupLabel(g.key)} (${i18n.formatNumber(g.count)})` }));
@@ -249,6 +250,9 @@
         items.push(h('h4', { text: t('map.layers') }), layerList);
         if (s.selected) {
           items.push(h('h4', { text: t('plan.selected') }), selectedDetails(s.selected));
+          const block = D.require('ui/kinds/comment-block');
+          const objekt = s.selected.objektid;
+          if (objekt) items.push(block.create(ctx, ds, block.targetOf(ds, `plan:${objekt}`, s.selected.namn || String(objekt), () => objekt)));
         } else if (s.slag === 'detaljplan') {
           const legend = plan.legend(s.rows);
           if (legend.length) items.push(h('h4', { text: t('map.legend') }), h('ul', { class: 'dm-map-legend-list dm-plan-legend' }, legend.map((e) => h('li', null, h('span', { class: 'dm-map-legend-swatch', style: { background: e.color || 'transparent' } }), h('span', { class: 'dm-plan-legend-text' }, h('strong', { text: e.beteckning + ' ' }), h('span', { class: 'dm-truncate', text: e.formulering || '' }))))));
@@ -263,6 +267,25 @@
           items.push(h('p', { class: 'dm-help', text: t('plan.help.op') }));
         }
         replace(slots.right, items);
+      }
+      /** What is known about the plan's standing, kept with the dataset: its status, when it gained legal force, and a note. */
+      async function editStatus() {
+        const info = s.info || {};
+        const field = (label, value) => { const el = /** @type {any} */ (h('dm-input', { label })); el.value = value || ''; return el; };
+        const status = field(t('plan.field.status'), info.status);
+        const date = field(t('plan.field.lagakraft'), info.datumLagakraft);
+        const note = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('plan.field.note') }));
+        note.value = info.anteckning || '';
+        const ok = await ui.dialog.open({ title: t('plan.status.edit'), body: h('div', { class: 'dm-stack' }, status, date, note), actions: [{ label: t('common.cancel'), value: false }, { label: t('common.save'), variant: 'primary', value: true, primary: true }] });
+        if (!ok) return;
+        const next = Object.assign({}, info, { status: status.value.trim(), datumLagakraft: date.value.trim(), anteckning: note.value.trim() });
+        const handle = await datasets.ensureOpen(ds.id);
+        handle.meta.plan = next;
+        await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['plan', JSON.stringify(next)]);
+        await datasets.save(ds.id);
+        datasets.notify('changed', { id: ds.id });
+        s.info = next;
+        renderInspector();
       }
       /** The clicked object: its facts, and the catalogue's facts about the provision it refers to. */
       function selectedDetails(row) {

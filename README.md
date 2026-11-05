@@ -108,6 +108,7 @@ ett paket.
 - **Lägena följer datamängden**: appen visar vad en datamängd också kan användas som och säger varför, öppnar Analysera i rätt verktyg och visar vad som behöver ses över. Ett urval följer med mellan lägena, och exporten säger vad som följer med (se [docs/lagen.md](docs/lagen.md)).
 - **Sök och rita efter datamängdens innehåll**: sök efter plats, hitta noder via sina kanter och element via sina egenskaper, se bilder på kartan och rita diagram från kanter, egenskaper och mängder (se [docs/soka.md](docs/soka.md)).
 - **Inhämta och Hantera följer filen**: appen säger vad en fil är, visar den i sin form och frågar om koordinater, koordinatsystem och kopplingar. Blandade mappar sorteras, och Hantera visar en bild per datamängd (se [docs/lagen.md](docs/lagen.md)).
+- **Bearbeta följer datamängden**: kommentera en sida, en bild, en nod eller en plats, rätta text, sätt plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera element (se [docs/bearbeta.md](docs/bearbeta.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

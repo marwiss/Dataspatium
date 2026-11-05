@@ -320,11 +320,12 @@
       async inverse(ctx, p) {
         const r = await ctx.engine.exec(`select ${q(p.column)} from data where rowid = ?`, [Number(p.rowid)]);
         const old = r[0] && r[0].values[0] ? r[0].values[0][0] : null;
-        return { op: 'edit_cell', params: { rowid: p.rowid, column: p.column, value: old === null || old === undefined ? '' : String(old) } };
+        // A stored number is written with a decimal point, whatever the language.
+        return { op: 'edit_cell', params: { rowid: p.rowid, column: p.column, value: old === null || old === undefined ? '' : String(old), decimal: 'point' } };
       },
       async apply(ctx, p) {
         const col = ctx.column(p.column);
-        const value = p.value === null || p.value === undefined || p.value === '' ? null : types.parseValue(p.value, col ? col.type : 'text');
+        const value = p.value === null || p.value === undefined || p.value === '' ? null : types.parseValue(p.value, col ? col.type : 'text', { decimal: p.decimal || cellDecimal(p.value) });
         if (value === null && p.value !== null && p.value !== undefined && p.value !== '' && col && col.type !== 'text') throw new Error(D.t('op.err.value.type', { value: p.value, type: col.type }));
         return { rows: await ctx.engine.run(`update data set ${q(p.column)} = ? where rowid = ?`, [value, Number(p.rowid)]), value };
       },
@@ -543,6 +544,17 @@
       toSQL(p) { const fields = this.fields(p); const lon = q(p.lonColumn); const lat = q(p.latColumn); return fields.map((f) => `ALTER TABLE data ADD COLUMN ${q(f)} TEXT;`).concat([`UPDATE data SET ${fields.map((f) => `${q(f)} = dm_region(${lon}, ${lat}, ${lit(f)})`).join(', ')};${GEO_SQL_NOTE} ${D.t('code.geo.region.lookup')}`]); },
       toR(p) { const file = `presets/geo/${this.file(p)}.geojson`; return `# ${D.t('code.geo.region.r', { file })}\ngranser <- sf::st_read(${rstr(file)}, quiet = TRUE)\npts <- sf::st_as_sf(df, coords = c(${rstr(p.lonColumn)}, ${rstr(p.latColumn)}), crs = 4326, remove = FALSE)\ndf <- sf::st_drop_geometry(sf::st_join(pts, granser[, c(${this.fields(p).map(rstr).join(', ')})], join = sf::st_within))`; },
     });
+
+    /**
+     * How a number typed in a cell is meant. 3.14 cannot be a thousands separator, whatever the language, while 1.234 is one
+     * thousand two hundred and thirty-four in the Nordic languages and a little over one in English.
+     * @param {any} value @returns {'comma'|'point'}
+     */
+    function cellDecimal(value) {
+      const text = String(value).trim();
+      if (/^[-+]?\d+\.\d+$/.test(text) && !/^[-+]?\d{1,3}\.\d{3}$/.test(text)) return 'point';
+      return D.require('ui/i18n').language() === 'en' ? 'point' : 'comma';
+    }
 
     function get(id) { const op = registry.get(id); if (!op) throw new Error('Unknown operation: ' + id); return op; }
     function list() { return Array.from(registry.values()); }

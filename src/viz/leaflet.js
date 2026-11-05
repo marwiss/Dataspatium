@@ -207,7 +207,7 @@
       const fields = Array.from(new Set([layer.geometry, layer.lon, layer.lat, layer.label, layer.colorBy && layer.colorBy.column].concat(popup).filter((n) => n && names.has(n))));
       // Shared filters (dashboards, batch groups) apply to the layers that have the column.
       const extra = (options.extraFilters || []).filter((f) => f && names.has(f.field));
-      const data = await vizData.fetchRows(layer.datasetId, { fields, filters: (layer.filters || []).concat(extra), listId: layer.listId || undefined, limit: layer.maxRows || MAX_ROWS });
+      const data = await vizData.fetchRows(layer.datasetId, { fields, filters: (layer.filters || []).concat(extra), listId: layer.listId || undefined, limit: layer.maxRows || MAX_ROWS, rowid: !!layer.withRowid });
       const features = [];
       for (const row of data.rows) {
         let geometry = null;

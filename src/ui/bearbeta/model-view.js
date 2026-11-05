@@ -70,6 +70,7 @@
         search.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { s.filter.search = search.value; applyFilter(); }, 300); });
         host = h('div', { class: dxfView ? 'dm-model-host dm-dxf-host' : 'dm-model-host', 'aria-label': t(dxfView ? 'model.view.dxf' : 'model.view.ifc') });
         // The filtered elements can follow to the other modes.
+        const classify = isDxf() ? null : ui.button({ label: t('model.classify'), icon: 'tag', title: t('model.classify.hint'), onClick: () => classifyShown().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) });
         const useBtn = ui.button({ label: t('selection.use'), icon: 'list-checks', title: t('selection.use.hint'), onClick: async () => {
           const made = await D.require('data/selection').setFromWhere(ds.id, whereSql().replace(/^\s*where\s*/i, ''));
           ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
@@ -79,7 +80,7 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('box', 20), dataset.name, ' ', h('dm-badge', { text: t(dxfView ? 'model.entities.n' : 'model.elements.n', { n: i18n.formatNumber(dxfView ? (dataset.rowCount || 0) : (facts().elements || 0)) }) })),
-            h('div', { class: 'dm-toolbar' }, useBtn, selects, search,
+            h('div', { class: 'dm-toolbar' }, classify, useBtn, selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('model.table.hint'), onClick: options.onTable }))),
@@ -269,7 +270,11 @@
         }
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
-        if (selected) parts.push(...(isDxf() ? dxfSelected(selected) : await ifcSelected(selected)));
+        if (selected) {
+          parts.push(...(isDxf() ? dxfSelected(selected) : await ifcSelected(selected)));
+          const block = D.require('ui/kinds/comment-block');
+          parts.push(block.create(ctx, ds, block.targetOf(ds, `element:${s.selected}`, selected.namn || `${selected.typ} ${s.selected}`, () => s.selected)));
+        }
         else parts.push(h('p', { class: 'dm-help', text: t('model.select.hint') }));
         if (my !== seq || !slots) return;
         replace(slots.right, ...parts);
@@ -281,6 +286,19 @@
           e.text ? { label: t('model.col.text'), value: e.text } : null,
           e.x !== null ? { label: t('model.field.position'), value: `${fmt(e.x, 3)}, ${fmt(e.y, 3)}` } : null,
         ])];
+      }
+      /** A classification on the elements that show, for example everything of one type on one storey. */
+      async function classifyShown() {
+        const where = whereSql().replace(/^\s*where\s*/i, '') || '1 = 1';
+        const engine = (await datasets.ensureOpen(ds.id)).engine;
+        const n = Number((await engine.exec(`select count(*) from data where ${where}`))[0].values[0][0]);
+        const value = await ui.dialog.prompt(t('model.classify.prompt', { n: i18n.formatNumber(n) }), { title: t('model.classify'), value: '' });
+        if (value === null || value === undefined) return;
+        const result = await D.require('data/recipes').apply(ds.id, 'set_on_rows', { column: 'klassificering', value: String(value).trim(), where });
+        const text = t('model.classify.done', { n: i18n.formatNumber(result.rows || 0), value: String(value).trim() || '–' });
+        shell.log(text, 'ok');
+        ui.toast.show(text, { kind: 'ok' });
+        if (s.selected) renderInspector();
       }
       async function ifcSelected(e) {
         const out = [h('h4', { text: t('model.selected') }), kv([

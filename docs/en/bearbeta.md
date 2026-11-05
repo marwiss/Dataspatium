@@ -276,3 +276,16 @@ The SQLite dialect applies: `||` for text concatenation, `cast(x as integer)`, `
   above a few hundred MB that takes noticeable time.
 - The recipes' R export covers the built-in actions; free SQL is exported as a comment since it cannot be translated
   to R automatically.
+
+## By the kind of dataset
+
+- **Comments on what you look at.** In the inspector you can comment on a page, a picture, a node, an element, a plan object or a place on the map. Under Comments in Manage you see them all, and *Show* takes you back to what the comment is about.
+- **Pictures.** You set labels, which can be searched, and a place, which makes the picture show on the map.
+- **Documents.** Select a paragraph to correct its text. The correction applies to the text in the dataset, and the original file does not change. A document can have labels, and *Mask personal data* hides what looks like personal data in the text. The original file still holds it, so remove the file from the copy when you share.
+- **Maps.** *Repair geometries* removes repeated points and closes areas. Values that cannot be read as a shape are emptied. *Coordinates from another system* adds columns in degrees. A selection from another mode is marked on the map.
+- **Graphs.** *Find duplicates* shows nodes with the same label and name, where case, accents and punctuation do not count. You choose which ones to merge.
+- **Models.** *Classify* sets a classification on the elements that show, for example everything of one type on one storey.
+- **Plans.** *Change status* keeps track of status, date and a note.
+- **Tables.** A row that names pictures shows them in the inspector.
+
+Changes to the data can be undone.

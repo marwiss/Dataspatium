@@ -81,8 +81,10 @@
           });
         } else if (p.type === 'select') {
           const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
-          sel.options = p.options.map((v) => ({ value: v, label: optionLabel(p, v, op.id) }));
-          sel.value = values[p.name] || p.options[0];
+          // A choice can be a list of its own, with names that need no translation, such as coordinate systems.
+          const choices = typeof p.options === 'function' ? p.options() : p.options;
+          sel.options = choices.map((v) => (v && typeof v === 'object' ? v : { value: v, label: optionLabel(p, v, op.id) }));
+          sel.value = values[p.name] || (choices[0] && typeof choices[0] === 'object' ? choices[0].value : choices[0]);
           values[p.name] = sel.value;
           sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
           fields.push(sel);

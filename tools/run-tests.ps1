@@ -41,6 +41,13 @@ $pageUrl = Resolve-PageUrl $Url
 $work = Join-Path $env:TEMP "dataspatium-tests"
 New-Item -ItemType Directory -Force $work | Out-Null
 $edgeExe = @("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "C:\Program Files\Microsoft\Edge\Application\msedge.exe", "C:\Program Files\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+# A browser that has just closed can hold its files for a moment more.
+function Remove-WithRetry([string]$Path) {
+  for ($i = 0; $i -lt 40; $i++) {
+    try { Remove-Item -Recurse -Force $Path -ErrorAction Stop; return } catch { Start-Sleep -Milliseconds 500 }
+  }
+  Remove-Item -Recurse -Force $Path
+}
 $ffExe = @("C:\Program Files\Mozilla Firefox\firefox.exe", "C:\Program Files (x86)\Mozilla Firefox\firefox.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 $totalFail = 0
 $timedOut = $false
@@ -82,9 +89,9 @@ foreach ($browser in $Browsers) {
   if ($browser -eq "edge") {
     if (-not $edgeExe) { Write-Output "===== edge: browser not found"; $missingBrowser = $true; continue }
     $profileDir = Join-Path $work "edge-profile"
-    if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-Item -Recurse -Force $profileDir }
+    if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-WithRetry $profileDir }
     $log = Join-Path $work "edge.log"
-    if (Test-Path $log) { Remove-Item -Force $log }
+    if (Test-Path $log) { Remove-WithRetry $log }
     $edgeArgs = @('--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', "--window-size=$Width,$Height",
                   '--enable-logging=stderr', '--v=0', "--user-data-dir=$profileDir", $pageUrl)
     $proc = Start-Process -FilePath $edgeExe -ArgumentList $edgeArgs -RedirectStandardError $log -RedirectStandardOutput (Join-Path $work "edge.out") -PassThru
@@ -102,7 +109,7 @@ foreach ($browser in $Browsers) {
   elseif ($browser -eq "firefox") {
     if (-not $ffExe) { Write-Output "===== firefox: browser not found"; $missingBrowser = $true; continue }
     $profileDir = Join-Path $work "firefox-profile"
-    if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-Item -Recurse -Force $profileDir }
+    if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-WithRetry $profileDir }
     New-Item -ItemType Directory -Force $profileDir | Out-Null
     @(
       'user_pref("devtools.console.stdout.content", true);',
@@ -114,7 +121,7 @@ foreach ($browser in $Browsers) {
     ) | Out-File -Encoding ascii (Join-Path $profileDir "user.js")
     $log = Join-Path $work "firefox.log"
     $err = Join-Path $work "firefox.err"
-    foreach ($f in @($log, $err)) { if (Test-Path $f) { Remove-Item -Force $f } }
+    foreach ($f in @($log, $err)) { if (Test-Path $f) { Remove-WithRetry $f } }
     $proc = Start-Process -FilePath $ffExe -ArgumentList @('--headless', '--no-remote', '--width', "$Width", '--height', "$Height", '--profile', "`"$profileDir`"", $pageUrl) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
     $finished = Wait-ForSummary @($log, $err) $TimeoutSec
     Stop-Browser $proc "firefox-profile"

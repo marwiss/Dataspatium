@@ -10,6 +10,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('data/graph-ops', ['data/operations', 'data/datasets'], (ops, datasets) => {
+    const MAX_DUPLICATES = 100;
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
     const str = (v) => (v === null || v === undefined ? '' : String(v));
     const propsText = (o) => { const p = {}; for (const [k, v] of Object.entries(o || {})) if (v !== null && v !== undefined && v !== '') p[k] = v; return Object.keys(p).length ? JSON.stringify(p) : null; };
@@ -148,6 +149,25 @@
       toR: (p) => `# ${D.t('graph.op.sql.merge', { n: list(p.ids).length, into: str(p.into) })}`,
     });
 
+    /**
+     * Nodes that look like the same thing: the same label and the same name once case, accents and punctuation are set aside.
+     * Nothing is merged here; the user decides.
+     * @param {string} id @returns {Promise<Array<{name: string, label: string, ids: string[]}>>}
+     */
+    async function duplicates(id) {
+      const handle = await D.require('data/datasets').ensureOpen(id);
+      const r = await handle.engine.exec('select id, etikett, namn from data');
+      const groups = new Map();
+      for (const [nodeId, label, name] of r[0] ? r[0].values : []) {
+        const plain = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+        if (!plain) continue;
+        const key = `${label || ''}\u0000${plain}`;
+        if (!groups.has(key)) groups.set(key, { name: String(name), label: String(label || ''), ids: [] });
+        groups.get(key).ids.push(String(nodeId));
+      }
+      return Array.from(groups.values()).filter((g) => g.ids.length > 1).sort((a, b) => b.ids.length - a.ids.length || a.name.localeCompare(b.name, 'sv')).slice(0, MAX_DUPLICATES);
+    }
+
     // ---- edges --------------------------------------------------------------------------------------------------
     ops.define({
       id: 'graph_add_edge', group: 'graph', manualPreview: true,
@@ -206,6 +226,6 @@
     });
 
     const OPS = ['graph_add_node', 'graph_set_node', 'graph_delete_nodes', 'graph_merge_nodes', 'graph_add_edge', 'graph_set_edge', 'graph_delete_edges'];
-    return { OPS, linesToProps, refreshMeta };
+    return { duplicates, OPS, linesToProps, refreshMeta };
   });
 })();

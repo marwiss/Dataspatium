@@ -272,3 +272,16 @@ vindusfunksjoner som `row_number() over (partition by …)`.
   datasett over noen hundre MB tar det merkbar tid.
 - Oppskriftenes R-eksport dekker de innebygde handlingene; fri SQL eksporteres som kommentar, fordi den ikke kan oversettes
   til R automatisk.
+
+## Etter datasettets slag
+
+- **Kommentarer på det du ser på.** I inspektøren kan du kommentere en side, et bilde, en node, et element, et planobjekt eller et sted på kartet. Under Kommentarer i Håndter ser du alle, og *Vis* tar deg tilbake til det kommentaren gjelder.
+- **Bilder.** Du setter etiketter, som kan søkes på, og et sted, som gjør at bildet vises på kartet.
+- **Dokumenter.** Merk et avsnitt for å rette teksten. Rettelsen gjelder teksten i datasettet, og originalfilen endres ikke. Et dokument kan få etiketter, og *Masker personopplysninger* skjuler det som ser ut som personopplysninger, i teksten. Originalfilen inneholder dem fortsatt, så fjern den fra kopien når du deler.
+- **Kart.** *Reparer geometrier* fjerner gjentatte punkter og lukker flater. Verdier som ikke kan leses som form, tømmes. *Koordinater fra et annet system* legger til kolonner i grader. Et utvalg fra en annen modus markeres på kartet.
+- **Grafer.** *Finn duplikater* viser noder med samme etikett og navn, der store og små bokstaver, aksenter og tegnsetting ikke teller. Du velger hvilke som slås sammen.
+- **Modeller.** *Klassifiser* setter en klassifisering på elementene som vises, for eksempel alt av én type på én etasje.
+- **Planer.** *Endre status* holder orden på status, dato og et notat.
+- **Tabeller.** En rad som navngir bilder, viser dem i inspektøren.
+
+Endringer i dataene kan angres.

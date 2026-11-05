@@ -277,3 +277,16 @@ SQLite-dialekten gäller: `||` för textkonkatenering, `cast(x as integer)`, `st
   först. På datamängder över några hundra MB tar det märkbar tid.
 - Receptens R-export täcker de inbyggda åtgärderna; fritt SQL exporteras som kommentar eftersom det inte kan
   översättas till R automatiskt.
+
+## Efter datamängdens slag
+
+- **Kommentarer på det du tittar på.** I inspektören kan du kommentera en sida, en bild, en nod, ett element, ett planobjekt eller en plats på kartan. Under Kommentarer i Hantera ser du alla, och *Visa* tar dig tillbaka till det kommentaren gäller.
+- **Bilder.** Du sätter etiketter, som går att söka på, och en plats, som gör att bilden syns på kartan.
+- **Dokument.** Markera ett stycke för att rätta texten. Rättningen gäller texten i datamängden, och originalfilen ändras inte. Ett dokument kan få etiketter, och *Maskera personuppgifter* döljer det som ser ut som personuppgifter i texten. Originalfilen innehåller dem fortfarande, så ta bort den ur kopian när du delar.
+- **Kartor.** *Laga geometrier* tar bort upprepade punkter och stänger ytor. Värden som inte går att läsa som form töms. *Koordinater ur ett annat system* lägger till kolumner i grader. Ett urval från ett annat läge markeras på kartan.
+- **Grafer.** *Hitta dubbletter* visar noder med samma etikett och namn, där stora och små bokstäver, accenter och skiljetecken inte räknas. Du väljer vilka som slås ihop.
+- **Modeller.** *Klassificera* sätter en klassificering på de element som visas, till exempel allt av en typ på ett våningsplan.
+- **Planer.** *Ändra status* håller reda på status, datum och en anteckning.
+- **Tabeller.** En rad som namnger bilder visar dem i inspektören.
+
+Ändringar i datan går att ångra.

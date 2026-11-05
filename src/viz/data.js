@@ -112,10 +112,12 @@
       }
       const fields = (request.fields && request.fields.length ? request.fields : columns.map((c) => c.name)).filter((f) => columns.some((c) => c.name === f));
       const orderBy = request.orderBy && columns.some((c) => c.name === request.orderBy) ? `${q(request.orderBy)} ${request.orderDir === 'desc' ? 'desc' : 'asc'} nulls last, rowid` : 'rowid';
-      const sql = `select ${fields.map(q).join(', ')} from ${from}${whereSql} order by ${orderBy} limit ${limit}`;
+      // The row itself can be asked for, under a name no column can have here.
+      const named = request.rowid ? fields.concat(['_rowid']) : fields;
+      const sql = `select ${fields.map(q).concat(request.rowid ? ['rowid as "_rowid"'] : []).join(', ')} from ${from}${whereSql} order by ${orderBy} limit ${limit}`;
       const res = await handle.engine.exec(sql, where.params);
       const rows = res[0] ? res[0].values : [];
-      return { columns: fields, rows: toObjects(fields, rows), total, truncated: total > rows.length, aggregated: false, sql };
+      return { columns: named, rows: toObjects(named, rows), total, truncated: total > rows.length, aggregated: false, sql };
     }
 
     /** Distinct values of a column (for batch generation and filter suggestions). */

@@ -270,3 +270,16 @@ gluggaföll eins og `row_number() over (partition by …)`.
   gagnasöfnum yfir nokkur hundruð MB tekur það merkjanlegan tíma.
 - R-útflutningur uppskrifta nær yfir innbyggðu aðgerðirnar; frjálst SQL er flutt út sem athugasemd, því ekki er hægt að þýða það
   sjálfkrafa yfir í R.
+
+## Eftir tegund gagnasafns
+
+- **Athugasemdir við það sem þú skoðar.** Í skoðaranum getur þú gert athugasemd við síðu, mynd, hnút, einingu, skipulagshlut eða stað á kortinu. Undir Athugasemdir í Umsjón sérðu þær allar, og *Sýna* fer með þig aftur að því sem athugasemdin varðar.
+- **Myndir.** Þú setur merkingar, sem hægt er að leita eftir, og stað, sem lætur myndina birtast á kortinu.
+- **Skjöl.** Veldu málsgrein til að leiðrétta textann. Leiðréttingin á við textann í gagnasafninu og upprunalega skráin breytist ekki. Skjal getur fengið merkingar, og *Fela persónuupplýsingar* felur það sem lítur út eins og persónuupplýsingar í textanum. Upprunalega skráin inniheldur þær áfram, svo fjarlægðu hana úr afritinu þegar þú deilir.
+- **Kort.** *Gera við rúmfræði* fjarlægir endurtekna punkta og lokar flötum. Gildi sem ekki er hægt að lesa sem form eru tæmd. *Hnit úr öðru kerfi* bætir við dálkum í gráðum. Val úr öðrum ham er merkt á kortinu.
+- **Net.** *Finna tvítekningar* sýnir hnúta með sömu merkingu og nafn, þar sem há- og lágstafir, kommur og greinarmerki teljast ekki með. Þú velur hverjir eru sameinaðir.
+- **Líkön.** *Flokka* setur flokkun á einingarnar sem sjást, til dæmis allt af einni gerð á einni hæð.
+- **Skipulög.** *Breyta stöðu* heldur utan um stöðu, dagsetningu og athugasemd.
+- **Töflur.** Röð sem nefnir myndir sýnir þær í skoðaranum.
+
+Hægt er að afturkalla breytingar á gögnunum.

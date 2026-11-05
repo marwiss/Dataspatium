@@ -9,7 +9,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts'], (base, datasets, leaflet, charts) => {
+  D.define('ui/bearbeta/map-view', ['ui/base', 'data/datasets', 'viz/leaflet', 'viz/charts', 'data/kinds'], (base, datasets, leaflet, charts, kinds) => {
+    /** More marks than this say nothing that the list of rows does not say better. */
+    const MAX_MARKS = 5000;
     const { h, t, i18n, replace } = base;
 
     /**
@@ -32,6 +34,8 @@
           s.chart.datasetName = dataset.name; s.chart.name = dataset.name;
         }
         s.chart.map.basemap = s.basemap;
+        // The places remember their rows, for comments and for marking what is chosen.
+        for (const layer of s.chart.map.layers) if (layer.kind === 'dataset') layer.withRowid = true;
       }
 
       /**
@@ -70,6 +74,7 @@
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          await markSelection();
           await showPending();
           renderInspector();
         } catch (err) {
@@ -84,6 +89,7 @@
         try {
           const record = charts.create('map', ds, name.trim());
           record.map = JSON.parse(JSON.stringify(s.chart.map));
+          for (const layer of record.map.layers) delete layer.withRowid;
           if (handle) record.map.view = handle.view();
           record.thumbnail = await leaflet.thumbnail(record).catch(() => null);
           const saved = await charts.save(record);
@@ -113,10 +119,15 @@
           showPictures(pictures, props).catch((err) => D.log('map', err));
           items.push(pictures);
           const kv2 = /** @type {any} */ (h('dm-kv'));
-          kv2.items = Object.keys(props).slice(0, 40).map((k) => ({ label: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
+          kv2.items = Object.keys(props).filter((k) => k !== '_rowid').slice(0, 40).map((k) => ({ label: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
           items.push(h('h4', { text: t('map.selected') }), kv2,
             h('p', { class: 'dm-help dm-small', text: t('map.selected.geometry', { type: s.selected.geometry ? s.selected.geometry.type : '' }) }),
             h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('map.edit.table'), icon: 'table', size: 'sm', title: t('map.edit.table.hint'), onClick: options.onTable })));
+          if (props._rowid !== undefined && !kinds.isCollection(ds)) {
+            const block = D.require('ui/kinds/comment-block');
+            const label = Object.values(props).find((v) => typeof v === 'string' && v) || String(props._rowid);
+            items.push(block.create(ctx, ds, block.placeTarget(ds, props._rowid, String(label))));
+          }
         } else items.push(h('p', { class: 'dm-help', text: t('map.help') }));
         replace(slots.right, items);
       }
@@ -129,7 +140,31 @@
         const list = ds.kind === 'images' && props.fil
           ? [{ name: props.fil, albumId: ds.id, url: await D.require('data/dataset-files').url(ds.id, props.fil, 'thumb').catch(() => null) }].filter((p) => p.url)
           : await D.require('data/media').picturesOf(ds.id, (column) => props[column]);
-        el.replaceChildren(...list.map((p) => h('button', { type: 'button', class: 'dm-photos-item', title: t('map.picture.open'), onclick: () => openPicture(p.albumId, p.name) }, h('img', { src: p.url, alt: p.name }), h('span', { class: 'dm-truncate dm-small', text: p.name }))));
+        D.require('ui/kinds/row-pictures').fill(el, list, openPicture);
+      }
+      /** What is chosen elsewhere is marked on the map, above the other places. */
+      let marks = null;
+      async function markSelection() {
+        if (marks) { marks.remove(); marks = null; }
+        const chosen = D.require('data/selection').get();
+        if (!handle || !ds || !chosen || chosen.datasetId !== ds.id || !chosen.rowids.length) return;
+        const geoMod = D.require('data/geo');
+        const dsHandle = await D.require('data/datasets').ensureOpen(ds.id);
+        const geometry = leaflet.geometryColumn(dsHandle.columns);
+        const coords = geometry ? null : leaflet.coordinateColumns(dsHandle.columns);
+        if (!geometry && !coords) return;
+        const name = (c) => '"' + String(c).replace(/"/g, '""') + '"';
+        const cols = geometry ? name(geometry) : `${name(coords.lon)}, ${name(coords.lat)}`;
+        const r = await dsHandle.engine.exec(`select ${cols} from data where rowid in (${chosen.rowids.slice(0, MAX_MARKS).map(Number).join(',')})`);
+        const features = [];
+        for (const row of r[0] ? r[0].values : []) {
+          const shape = geometry ? geoMod.parseGeometry(row[0]) : (typeof row[0] === 'number' && typeof row[1] === 'number' ? { type: 'Point', coordinates: [row[0], row[1]] } : null);
+          if (shape) features.push({ type: 'Feature', properties: {}, geometry: geoMod.isProjected([shape]) ? geoMod.toWgs84(shape) : shape });
+        }
+        if (!features.length || !handle) return;
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--dm-accent').trim();
+        const L = /** @type {any} */ (globalThis).L;
+        marks = L.geoJSON({ type: 'FeatureCollection', features }, { interactive: false, style: () => ({ color: accent, weight: 3, fillOpacity: 0.2 }), pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 8, color: accent, weight: 3, fillOpacity: 0.2 }) }).addTo(handle.map);
       }
       /** What the map shows right now becomes the selection, so that it can follow to the other modes. */
       async function useWhatShows() {
@@ -137,6 +172,7 @@
         const box = handle.map.getBounds();
         const rowids = await D.require('data/spatial-search').rowsWithin(ds.id, { type: 'box', west: box.getWest(), east: box.getEast(), south: box.getSouth(), north: box.getNorth() });
         const made = D.require('data/selection').set({ datasetId: ds.id, rowids: rowids || [] });
+        await markSelection();
         ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
       /** A search hit: the map goes to the row's place and marks it. */
@@ -165,7 +201,7 @@
       }
 
       function destroy() { seq++; if (handle) { handle.finalize(); handle = null; } mapEl = null; slots = null; }
-      return { render, destroy, state: s, get handle() { return handle; } };
+      return { render, destroy, state: s, get handle() { return handle; }, get marks() { return marks; } };
     }
     return { create };
   });

@@ -166,6 +166,21 @@
         await applyOp('graph_add_edge', { kalla: s.picked[0], mal: target, typ: v.typ.trim(), egenskaper: v.egenskaper });
         s.picked = [];
       }
+      /** Nodes that look like the same thing, each group merged only when the user says so. */
+      async function findDuplicates() {
+        const groups = await D.require('data/graph-ops').duplicates(ds.id);
+        if (!groups.length) { ui.toast.show(t('graph.dupes.none'), { kind: 'info' }); return; }
+        const body = h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('graph.dupes.help') }), groups.map((g) => {
+          const row = h('div', { class: 'dm-sort-row dm-card' },
+            h('div', { class: 'dm-list-main' }, h('strong', { class: 'dm-truncate', text: g.name }), h('span', { class: 'dm-list-sub dm-truncate', text: g.ids.join(', ') })));
+          row.appendChild(ui.button({ label: t('graph.dupes.merge'), size: 'sm', onClick: async () => {
+            await applyOp('graph_merge_nodes', { ids: g.ids.slice(1), into: g.ids[0] });
+            row.remove();
+          } }));
+          return row;
+        }));
+        await ui.dialog.open({ title: t('graph.dupes'), body, size: 'lg', actions: [{ label: t('common.close'), value: true }] });
+      }
       async function mergePicked() {
         const target = s.selected && s.selected.kind === 'node' ? s.selected.id : null;
         const others = s.picked.filter((id) => id !== target);
@@ -194,6 +209,7 @@
         // Editing: add a node always; change, remove, connect and merge from the selection.
         items.push(h('h4', { text: t('graph.edit.title') }), h('div', { class: 'dm-row-wrap dm-graph-edit' },
           ui.button({ label: t('graph.edit.addnode'), icon: 'plus', size: 'sm', onClick: addNode }),
+          ui.button({ label: t('graph.dupes'), icon: 'copy', size: 'sm', title: t('graph.dupes.hint'), onClick: () => findDuplicates().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }),
           ui.button({ label: t('common.edit'), icon: 'pencil', size: 'sm', disabled: !s.selected, onClick: editSelected }),
           ui.button({ label: t('common.delete'), icon: 'trash-2', size: 'sm', variant: 'danger', disabled: !s.selected, onClick: deleteSelected }),
           ui.button({ label: t('graph.edit.pick'), icon: 'circle-dot', size: 'sm', disabled: !(s.selected && s.selected.kind === 'node'), title: t('graph.edit.pick.hint'), onClick: pick }),
@@ -209,6 +225,11 @@
             : [{ label: t('graph.field.id'), value: s.selected.id }, { label: t('graph.field.type'), value: d.typ || t('graph.notype') }, { label: t('graph.field.source'), value: d.source }, { label: t('graph.field.target'), value: d.target }])
             .concat(Object.entries(props).map(([k, v]) => ({ label: k, value: typeof v === 'object' ? JSON.stringify(v) : String(v) })));
           items.push(h('h4', { text: t(s.selected.kind === 'node' ? 'graph.selected.node' : 'graph.selected.edge') }), kv);
+          if (s.selected.kind === 'node') {
+            const block = D.require('ui/kinds/comment-block');
+            const fields = { id: d.id, etikett: d.etikett, namn: d.namn, egenskaper: d.egenskaper };
+            items.push(block.create(ctx, ds, block.targetOf(ds, `node:${d.id}`, d.namn || d.id, (c) => fields[c])));
+          }
           if (s.selected.kind === 'node') items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('graph.focus.here'), icon: 'circle-dot', size: 'sm', onClick: () => { s.def.focus = [s.selected.id]; s.def.mode = 'focus'; redraw().then(() => expandNeighbours([s.selected.id])); } })));
         }
         if (s.info && s.info.labels) {

@@ -10,6 +10,8 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/bearbeta/gallery-view', ['ui/base', 'data/datasets', 'data/dataset-files', 'data/recipes', 'analysis/images', 'platform/files'], (base, datasets, dsFiles, recipes, imageAnalysis, files) => {
+    /** The column for a picture's labels; it comes when the first label is set. */
+    const LABELS = 'etiketter';
     const { h, t, i18n, replace } = base;
     const PAGE = 120;
     const SORTS = [{ value: 'name', label: 'gallery.sort.name' }, { value: 'date', label: 'gallery.sort.date' }, { value: 'size', label: 'gallery.sort.size' }];
@@ -143,11 +145,16 @@
         ].filter(Boolean);
         const desc = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('gallery.description') }));
         desc.value = row[idx.descIndex] ? String(row[idx.descIndex]) : '';
+        const labelsAt = columns.findIndex((c) => c.name === LABELS);
+        const labels = /** @type {any} */ (h('dm-input', { label: t('gallery.labels'), help: t('gallery.labels.help') }));
+        labels.value = labelsAt >= 0 && row[labelsAt] ? String(row[labelsAt]) : '';
+        const latIn = /** @type {any} */ (h('dm-input', { label: t('soka.place.lat'), inputmode: 'decimal' }));
+        const lonIn = /** @type {any} */ (h('dm-input', { label: t('soka.place.lon'), inputmode: 'decimal' }));
+        latIn.value = typeof lat === 'number' ? String(lat) : '';
+        lonIn.value = typeof lon === 'number' ? String(lon) : '';
         const save = ui.button({ label: t('common.save'), icon: 'save', size: 'sm', onClick: async () => {
           try {
-            const result = await recipes.apply(ds.id, 'edit_cell', { rowid, column: columns[idx.descIndex].name, value: desc.value.trim() || null });
-            row[idx.descIndex] = result.value;
-            shell.log(t('bearbeta.cell.saved', { column: columns[idx.descIndex].name }), 'ok');
+            await savePicture(rowid, row, { description: desc.value, labels: labels.value, lat: latIn.value, lon: lonIn.value });
             if (options.onChanged) options.onChanged();
           } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
         } });
@@ -155,9 +162,41 @@
           h('h4', { text: name }),
           url ? h('button', { type: 'button', class: 'dm-photos-inspector-preview', 'aria-label': t('gallery.open.large'), onclick: () => openPreview(row) }, h('img', { src: url, alt: '' })) : null,
           kv,
-          h('div', { class: 'dm-stack' }, desc, h('div', { class: 'dm-row-wrap' }, save,
+          h('div', { class: 'dm-stack' }, desc, labels, h('div', { class: 'dm-form-grid' }, latIn, lonIn), h('p', { class: 'dm-help dm-small', text: t('gallery.place.help') }), h('div', { class: 'dm-row-wrap' }, save,
             ui.button({ label: t('gallery.open.large'), icon: 'eye', size: 'sm', onClick: () => openPreview(row) }),
-            ui.button({ label: t('gallery.download'), icon: 'download', size: 'sm', title: t('gallery.download.hint'), onClick: () => downloadPreview(name) }))));
+            ui.button({ label: t('gallery.download'), icon: 'download', size: 'sm', title: t('gallery.download.hint'), onClick: () => downloadPreview(name) }))),
+          D.require('ui/kinds/comment-block').create(ctx, ds, D.require('ui/kinds/comment-block').targetOf(ds, `image:${name}`, name, () => name)));
+      }
+      /** A number typed with a comma or a point, or null when the field is empty. */
+      function coordinate(text, limit) {
+        const raw = String(text || '').trim().replace(',', '.');
+        if (!raw) return null;
+        const v = Number(raw);
+        if (!Number.isFinite(v) || Math.abs(v) > limit) throw new Error(t('gallery.place.err'));
+        return v;
+      }
+      /** Saves what changed: the description, the labels (their column comes when first needed) and the place. */
+      async function savePicture(rowid, row, input) {
+        const lat = coordinate(input.lat, 90); const lon = coordinate(input.lon, 180);
+        if ((lat === null) !== (lon === null)) throw new Error(t('gallery.place.err'));
+        const set = async (index, name, value) => {
+          const before = index >= 0 && row[index] !== undefined ? row[index] : null;
+          const empty = value === null || value === '';
+          if (empty ? before === null || before === '' : String(before) === String(value)) return;
+          const result = await recipes.apply(ds.id, 'edit_cell', { rowid, column: name, value: empty ? null : String(value), decimal: 'point' });
+          if (index >= 0) row[index] = result.value;
+          shell.log(t('bearbeta.cell.saved', { column: name }), 'ok');
+        };
+        await set(idx.descIndex, columns[idx.descIndex].name, input.description.trim());
+        const labels = input.labels.split(',').map((x) => x.trim()).filter(Boolean).join(', ');
+        if (labels && !columns.some((c) => c.name === LABELS)) {
+          await recipes.apply(ds.id, 'add_column', { name: LABELS, type: 'text', expression: 'null' });
+          columns = await datasets.columns(ds.id);
+          idx = imageAnalysis.indexes(columns);
+        }
+        if (columns.some((c) => c.name === LABELS)) await set(columns.findIndex((c) => c.name === LABELS), LABELS, labels);
+        await set(idx.latIndex, columns[idx.latIndex].name, lat);
+        await set(idx.lonIndex, columns[idx.lonIndex].name, lon);
       }
       async function downloadPreview(name) {
         try {

@@ -273,3 +273,16 @@ vinduesfunktioner som `row_number() over (partition by …)`.
   På datasæt over nogle hundrede MB tager det mærkbar tid.
 - Recepternes R-eksport dækker de indbyggede handlinger; fri SQL eksporteres som kommentar, da den ikke kan oversættes til
   R automatisk.
+
+## Efter datasættets slags
+
+- **Kommentarer på det, du ser på.** I inspektøren kan du kommentere en side, et billede, en knude, et element, et planobjekt eller et sted på kortet. Under Kommentarer i Håndter ser du dem alle, og *Vis* fører dig tilbage til det, kommentaren handler om.
+- **Billeder.** Du sætter etiketter, som der kan søges på, og et sted, som gør, at billedet vises på kortet.
+- **Dokumenter.** Markér et afsnit for at rette teksten. Rettelsen gælder teksten i datasættet, og originalfilen ændres ikke. Et dokument kan få etiketter, og *Maskér personoplysninger* skjuler det, der ligner personoplysninger, i teksten. Originalfilen indeholder dem stadig, så fjern den fra kopien, når du deler.
+- **Kort.** *Reparér geometrier* fjerner gentagne punkter og lukker flader. Værdier, der ikke kan læses som form, tømmes. *Koordinater fra et andet system* tilføjer kolonner i grader. Et udvalg fra en anden tilstand markeres på kortet.
+- **Grafer.** *Find dubletter* viser knuder med samme etiket og navn, hvor store og små bogstaver, accenter og tegnsætning ikke tæller. Du vælger, hvilke der slås sammen.
+- **Modeller.** *Klassificér* sætter en klassificering på de elementer, der vises, for eksempel alt af én type på én etage.
+- **Planer.** *Ændr status* holder styr på status, dato og en note.
+- **Tabeller.** En række, der navngiver billeder, viser dem i inspektøren.
+
+Ændringer i data kan fortrydes.

@@ -105,6 +105,7 @@ paketilla.
 - **Tilat seuraavat aineistoa**: sovellus näyttää, miten aineistoa voi käyttää myös, ja kertoo syyn, avaa Analysoi-tilan oikeassa työkalussa ja näyttää tarkistettavat asiat. Valinta seuraa tilasta toiseen, ja vienti kertoo, mitä tulee mukaan (katso [lagen.md](lagen.md)).
 - **Hae ja piirrä aineiston sisällön mukaan**: hae paikan mukaan, löydä solmut särmiensä ja elementit ominaisuuksiensa kautta, katso kuvia kartalla ja piirrä kaavioita särmistä, ominaisuuksista ja määristä (ks. [soka.md](soka.md)).
 - **Nouda ja Hallitse seuraavat tiedostoa**: sovellus kertoo, mikä tiedosto on, näyttää sen omassa muodossaan ja kysyy koordinaateista, koordinaatistosta ja yhteyksistä. Sekalaiset kansiot lajitellaan, ja Hallitse näyttää kuvan aineistoa kohden (ks. [lagen.md](lagen.md)).
+- **Muokkaa seuraa aineistoa**: kommentoi sivua, kuvaa, solmua tai paikkaa, korjaa tekstiä, anna kuville paikka, korjaa geometrioita, etsi kaksoiskappaleita graafeista ja luokittele elementtejä (ks. [bearbeta.md](bearbeta.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

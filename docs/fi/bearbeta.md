@@ -277,3 +277,16 @@ ikkunafunktiot kuten `row_number() over (partition by …)`.
   Yli muutaman sadan megatavun aineistoissa se kestää huomattavasti.
 - Reseptien R-vienti kattaa sisäänrakennetut toiminnot; vapaa SQL viedään kommenttina, koska sitä ei voi kääntää R:ksi
   automaattisesti.
+
+## Aineiston lajin mukaan
+
+- **Kommentit siihen, mitä katsot.** Tarkastelijassa voit kommentoida sivua, kuvaa, solmua, elementtiä, kaavakohdetta tai paikkaa kartalla. Hallitse-tilan kohdassa Kommentit näet ne kaikki, ja *Näytä* vie takaisin siihen, mitä kommentti koskee.
+- **Kuvat.** Asetat tunnisteita, joilla voi hakea, ja paikan, joka tuo kuvan kartalle.
+- **Asiakirjat.** Valitse kappale korjataksesi sen tekstin. Korjaus koskee aineiston tekstiä, eikä alkuperäinen tiedosto muutu. Asiakirjalla voi olla tunnisteita, ja *Peitä henkilötiedot* piilottaa tekstistä sen, mikä näyttää henkilötiedoilta. Alkuperäinen tiedosto sisältää ne yhä, joten poista se kopiosta, kun jaat.
+- **Kartat.** *Korjaa geometriat* poistaa toistuvat pisteet ja sulkee alueet. Arvot, joita ei voi lukea muotona, tyhjennetään. *Koordinaatit muusta koordinaatistosta* lisää sarakkeet asteina. Toisesta tilasta tehty valinta merkitään kartalle.
+- **Graafit.** *Etsi kaksoiskappaleet* näyttää solmut, joilla on sama tunniste ja nimi, kun kirjainkokoa, aksentteja ja välimerkkejä ei lasketa. Valitset itse, mitkä yhdistetään.
+- **Mallit.** *Luokittele* asettaa luokituksen näkyville elementeille, esimerkiksi kaikille yhden kerroksen yhden tyypin elementeille.
+- **Kaavat.** *Muuta tilaa* pitää kirjaa tilasta, päivämäärästä ja muistiinpanosta.
+- **Taulukot.** Rivi, joka nimeää kuvia, näyttää ne tarkastelijassa.
+
+Tietoihin tehdyt muutokset voi perua.

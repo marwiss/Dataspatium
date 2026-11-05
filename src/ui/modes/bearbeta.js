@@ -150,6 +150,7 @@
         table.editable = true;
         table.addEventListener('dm-column', (e) => { selectedColumn = /** @type {any} */ (e).detail.column.key; showStats(ds, selectedColumn); });
         table.addEventListener('dm-cell-commit', (e) => commitCell(ds, /** @type {any} */ (e).detail));
+        table.addEventListener('dm-row', (e) => showRowPictures(ds, /** @type {any} */ (e).detail.row).catch((err) => D.log('bearbeta', err)));
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('wand-sparkles', 20), ds.name),
@@ -231,6 +232,15 @@
         updateUndo();
       }
 
+      /** A row that names pictures shows them; other rows leave the inspector as it is. */
+      async function showRowPictures(ds, row) {
+        if (!row) return;
+        const cols = await services.datasets.columns(ds.id);
+        const value = (name) => row[cols.findIndex((c) => c.name === name)];
+        const open = (albumId, name) => store.set({ selectedId: albumId, openImage: { datasetId: albumId, name } });
+        const pictures = await D.require('ui/kinds/row-pictures').create(ds.id, value, open);
+        if (pictures && slots) replace(slots.right, h('h4', { text: t('table.row.pictures') }), pictures);
+      }
       function renderInspector(ds) {
         replace(slots.right, h('p', { class: 'dm-help', text: t('table.select.column') }));
       }

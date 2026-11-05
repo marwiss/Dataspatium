@@ -239,7 +239,10 @@
             d.created ? { label: t('common.created'), value: formatDate(d.created) } : null,
             d.modified ? { label: t('common.updated'), value: formatDate(d.modified) } : null,
           ].filter(Boolean);
-          items.push(h('h4', { text: t('document.inspector') }), kv,
+          const labels = /** @type {any} */ (h('dm-input', { label: t('gallery.labels'), help: t('document.labels.help') }));
+          labels.value = (d.labels || []).join(', ');
+          labels.addEventListener('change', () => saveLabels(d, labels.value).catch(showError));
+          items.push(h('h4', { text: t('document.inspector') }), kv, labels,
             h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('document.download'), icon: 'download', size: 'sm', title: t('document.download.hint'), onClick: () => downloadOriginal(d.name) })));
         }
         if (s.selected) {
@@ -251,11 +254,46 @@
             { label: t('common.type'), value: i18n.has('document.type.' + row[idx.typeIndex]) ? t('document.type.' + row[idx.typeIndex]) : String(row[idx.typeIndex]) },
             { label: t('document.characters'), value: i18n.formatNumber(String(row[idx.textIndex] || '').length) },
           ];
-          items.push(h('h4', { text: t('document.selected') }), kv2,
+          const text = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '6', label: t('document.text') }));
+          text.value = String(row[idx.textIndex] || '');
+          items.push(h('h4', { text: t('document.selected') }), kv2, text,
+            h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('common.save'), icon: 'save', size: 'sm', title: t('document.text.hint'), onClick: () => saveText(s.selected, text.value).catch(showError) })),
+            h('p', { class: 'dm-help dm-small', text: t('document.text.note') }),
             h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('common.copy'), icon: 'copy', size: 'sm', onClick: () => navigator.clipboard.writeText(String(row[idx.textIndex] || '')).then(() => ui.toast.show(t('document.copied'), { kind: 'ok' })).catch(() => {}) })));
+        }
+        if (d) {
+          items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('document.mask'), icon: 'eye-off', size: 'sm', title: t('document.mask.hint'), onClick: () => maskDocument(d).catch(showError) })));
+          const block = D.require('ui/kinds/comment-block');
+          const page = String(s.page || 1);
+          items.push(block.create(ctx, ds, block.targetOf(ds, `page:${d.name}#${page}`, t('document.comment.target', { name: d.name, page }), (c) => (c === 'dokument' ? d.name : page))));
         }
         if (!items.length) items.push(h('p', { class: 'dm-help', text: t('document.help') }));
         replace(slots.right, items);
+      }
+      const showError = (err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' });
+      /** A document's labels live in the list of documents, which follows the dataset. */
+      async function saveLabels(d, text) {
+        d.labels = text.split(',').map((x) => x.trim()).filter(Boolean);
+        const handle = await datasets.ensureOpen(ds.id);
+        handle.meta.documents = documents;
+        await handle.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['documents', JSON.stringify(documents)]);
+        await datasets.save(ds.id);
+        datasets.notify('changed', { id: ds.id });
+      }
+      /** The text is corrected in the dataset. The original file is not touched, and the note says so. */
+      async function saveText(selected, value) {
+        const result = await D.require('data/recipes').apply(ds.id, 'edit_cell', { rowid: selected.rowid, column: 'text', value });
+        selected.row[idx.textIndex] = result.value;
+        shell.log(t('bearbeta.cell.saved', { column: 'text' }), 'ok');
+        renderBody();
+      }
+      async function maskDocument(d) {
+        if (!(await ui.dialog.confirm(t('document.mask.confirm', { name: d.name }), { okLabel: t('document.mask') }))) return;
+        const where = `${'"dokument"'} = '${String(d.name).replace(/'/g, "''")}'`;
+        const result = await D.require('data/recipes').apply(ds.id, 'mask_personal', { column: 'text', where });
+        ui.toast.show(t('document.masked', { n: i18n.formatNumber(result.rows || 0) }), { kind: 'ok', timeout: 8000 });
+        shell.log(t('document.masked', { n: i18n.formatNumber(result.rows || 0) }), 'ok');
+        renderBody();
       }
       function formatDate(v) { try { const d = new Date(v); return isNaN(d.getTime()) ? String(v) : i18n.formatDateTime(d); } catch (_e) { return String(v); } }
       async function downloadOriginal(name) {
