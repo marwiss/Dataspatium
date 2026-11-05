@@ -118,6 +118,10 @@ Lägga till ett språk: skapa `src/ui/i18n/<kod>.js` med alla nycklar, lägg til
 `src/boot.js` och posten i `LANGUAGES` i `src/ui/i18n/i18n.js`, lägg till meddelandena i `r/dataspatium.R`
 och i förinställningarnas `i18n`-block, översätt `docs/` till `docs/<kod>/` och kör testerna.
 
+**Gemensam ordlista med Kontroll.** `presets/shared-keys.txt` listar de nycklar vars ord finns i båda projekten; `python tools/shared_glossary.py`
+skriver `presets/i18n-shared.json` ur språkfilerna (sex språk), `--check` faller när filen inte stämmer (körs av provet `glossary`).
+Kontroll jämför sina språkfiler mot JSON-filen. Lägg till en nyckel i listan när ett nytt gemensamt begrepp får text i appen.
+
 ## Skärmbilder
 
 `powershell -File tools/screenshot.ps1 -Url "index.html#/bearbeta" -Out shots/bearbeta.png -Theme light` tar en

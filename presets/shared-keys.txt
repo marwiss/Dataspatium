@@ -1,0 +1,60 @@
+# Words Dataspatium and Kontroll have in common. One key per line; the values come from src/ui/i18n/<lang>.js.
+# Regenerate presets/i18n-shared.json with: python tools/shared_glossary.py (CI: --check).
+# OpenCDE source and sign-in
+opencde.signin
+opencde.signout
+opencde.project
+opencde.projects.none
+opencde.files.title
+opencde.file.fetch
+opencde.file.receive
+opencde.file.model
+opencde.file.version
+opencde.kind.topics
+opencde.kind.comments
+opencde.kind.components
+opencde.kind.events
+opencde.kind.files
+opencde.ext.dynamic_client_registration
+opencde.ext.request_log
+opencde.ext.admin_api
+opencde.ext.ifcgraph
+opencde.ext.graph_query
+# Issues (BCF)
+issues.title
+issues.new
+issues.fetch
+issues.field.topic_type
+issues.field.topic_status
+issues.field.priority
+issues.field.labels
+issues.field.assigned_to
+issues.status.none
+issues.comment.send
+issues.viewpoint.add
+issues.bcf.save
+# Documents and the CDE
+cde.title
+cde.version
+cde.kind.document
+cde.kind.bcf
+cde.send.title
+cde.send.how.documents
+cde.send.how.bcf
+# The log
+cdelog.title
+cdelog.col.time
+cdelog.col.method
+cdelog.col.operation
+cdelog.col.status
+cdelog.request
+cdelog.api.short.foundation
+cdelog.api.short.bcf
+cdelog.api.short.documents
+# Common words
+common.cancel
+common.save
+common.description
+common.type
+common.copy
+common.run

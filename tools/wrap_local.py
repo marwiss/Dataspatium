@@ -19,6 +19,7 @@ LOCAL_FILES = [
     "r/dataspatium.R",
     "python/dataspatium.py",
     "presets/exempeldata/befolkning-kommuner-2024.csv",
+    "presets/i18n-shared.json",
 ]
 LOCAL_GLOBS = [
     "presets/geo/*.geojson",

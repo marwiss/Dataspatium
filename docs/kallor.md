@@ -149,6 +149,12 @@ logg kan paras ihop med appens; nekar en server rubriken stängs den av för den
 
 Serverns sida beskrivs i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hur en klient ansluter), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets provkörningar) och [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (utvecklingsstacken och hur appen provas mot den).
 
+Kontroll beskriver sina tillägg i `GET /.well-known/kontroll`; appen läser dokumentet när källan öppnas och skriver under rubriken
+vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC-graf, graffrågor). En server
+utan dokumentet har inga tillägg, och allt enligt specifikationerna fungerar ändå. Serverns felkoder (`code` i svaret, till exempel
+`reauthentication_required`) visas på ditt språk; okända koder visar serverns egen text. Länken *Öppna i Dataspatium* på serverns
+sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar dialogen för en ny källa med adressen ifylld.
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/cde-log-card', ['ui/base', 'ui/basic', 'ui/overlays', 'api/cde-log', 'api/runner', 'platform/files', 'api/connectors'], (base, basic, overlays, cdeLog, runner, files, connectors) => {
+  D.define('ui/api/cde-log-card', ['ui/base', 'ui/basic', 'ui/overlays', 'api/cde-log', 'api/runner', 'platform/files', 'api/connectors', 'api/families/opencde'], (base, basic, overlays, cdeLog, runner, files, connectors, opencde) => {
     const { h, t, i18n, replace } = base;
     const SHOWN = 50;
     /** Specification pages per API, for the learning note. */
@@ -25,7 +25,7 @@
      * @returns {{el: HTMLElement, render: () => void, destroy: () => void, state: any}}
      */
     function create(connector, hooks = {}) {
-      const s = { open: false, selected: null, saving: false };
+      const s = { open: false, selected: null, saving: false, caps: undefined };
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-cde-log': '' });
       const unsubscribe = cdeLog.subscribe(() => { if (s.open) render(); else renderHead(); });
       let headEl = null; let bodyEl = null;
@@ -72,6 +72,7 @@
         replace(el, headEl, bodyEl);
         renderHead();
         if (!s.open) { replace(bodyEl); return; }
+        if (s.caps === undefined) { s.caps = null; opencde.capabilities(connector).then((c) => { s.caps = c; if (s.open) render(); }).catch(() => {}); }
         const sw = /** @type {any} */ (h('dm-switch', { label: t('cdelog.bodies'), title: t('cdelog.bodies.hint'), 'data-cde-log-bodies': '' }));
         sw.checked = cdeLog.bodies();
         sw.addEventListener('change', () => cdeLog.setBodies(sw.checked));
@@ -92,6 +93,7 @@
         const chosen = entries.find((e) => e.id === s.selected);
         replace(bodyEl,
           h('p', { class: 'dm-help dm-small', text: t('cdelog.help') }),
+          s.caps && opencde.hasExtension(s.caps, 'request_log') ? h('p', { class: 'dm-help dm-xs', 'data-cde-log-server': '' }, h('span', { text: t('cdelog.server', { hours: String((s.caps.extensions.request_log || {}).retention_hours || '') }) + ' ' }), h('a', { href: String(connector.baseUrl).replace(/\/+$/, '') + '/admin/requests', target: '_blank', rel: 'noopener', text: t('cdelog.server.open') })) : null,
           h('div', { class: 'dm-row-wrap' }, sw, rid,
             basic.button({ label: t('cdelog.save.json'), icon: 'download', size: 'sm', title: t('cdelog.save.json.hint'), 'data-cde-log-json': '', onClick: saveJson }),
             basic.button({ label: t('cdelog.save.dataset'), icon: 'table', size: 'sm', loading: s.saving, title: t('cdelog.save.dataset.hint'), 'data-cde-log-dataset': '', onClick: saveDataset }),

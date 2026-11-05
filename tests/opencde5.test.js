@@ -145,7 +145,8 @@
       root.querySelector('[data-cde-log-toggle]').click();
       const rows = await waitFor(() => { const r = root.querySelectorAll('[data-cde-log-row]'); return r.length ? r : null; }, 3000, 'rows');
       assert.ok(rows.length >= 4, 'rows: ' + rows.length);
-      assert.ok(rows[0].textContent.includes('BCF') || rows[0].textContent.includes('Foundation'), rows[0].textContent);
+      // Since 2.34 the view also reads the capabilities document, so the newest row may be Kontroll's.
+      assert.ok(['BCF', 'Foundation', 'Kontroll'].some((w) => rows[0].textContent.includes(w)), rows[0].textContent);
       // Discovery runs before a connector exists, so the card's first explained row is the current user.
       const userRow = Array.from(rows).find((r) => r.textContent.includes('current_user'));
       assert.ok(userRow, 'a current_user row');

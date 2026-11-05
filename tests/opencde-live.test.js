@@ -6,7 +6,8 @@
  * download, the model import, the project's files, the family's own uploads, a BCF file out and in, registration, refresh,
  * revocation and the refused redirect. Kontroll III: the issues as a table with the model's elements, the board Ärendeläge,
  * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE.
- * 2.32: the CDE log over the whole run, and with ?cdeadminhelper=<helper signed in as an administrator> the server's request log. Runs only when the page is
+ * 2.32: the CDE log over the whole run, and with ?cdeadminhelper=<helper signed in as an administrator> the server's request log.
+ * 2.34: the capabilities document (/.well-known/kontroll) and the server's error codes in the user's words. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>]; otherwise it is
  * skipped. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
@@ -559,6 +560,22 @@
     }
     return 'ok';
   }, 90000);
+
+  test('opencde live V: the capabilities document, when the server has one, and the error codes in the user\'s words', async (assert) => {
+    const caps = await opencde.capabilities(shared.connector, { force: true });
+    if (!caps.present) { log('capabilities: the server has no /.well-known/kontroll yet'); } else {
+      const on = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k));
+      log(`capabilities: ${caps.server ? caps.server.name + ' ' + caps.server.version : '?'}; extensions on: ${on.join(', ')}; scopes ${caps.scopes.join(' ')}; max upload ${caps.limits.max_upload_bytes}`);
+      assert.ok(caps.apis && caps.apis.bcf, 'the document names the BCF API');
+      assert.ok(on.includes('dynamic_client_registration'), 'registration is on in the dev stack');
+    }
+    // A missing topic: the server answers 404 with a code when it has codes, a plain message otherwise.
+    const err = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/00000000-0000-4000-8000-000000000000`).catch((e) => e);
+    assert.ok(err instanceof Error && err.status === 404, 'a 404 for an unknown topic: ' + (err && err.status));
+    log(`error code for an unknown topic: ${err.code || '(none)'}; message shown: ${err.message}`);
+    if (err.code) assert.ok(err.message.includes(t('opencde.err.code.' + err.code)) || err.code === 'not_found', 'translated');
+    return caps.present ? 'with capabilities' : 'without capabilities';
+  }, 30000);
 
   test('opencde live: cleanup', async (assert) => {
     for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));

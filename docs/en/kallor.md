@@ -154,6 +154,13 @@ so that the server's own log can be matched with the app's; if a server refuses 
 
 The server's side is described in Kontroll's documentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (how a client connects), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (the pair's test runs) and [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (the development stack and how the app is tested against it).
 
+Kontroll describes its extensions in `GET /.well-known/kontroll`; the app reads the document when the source opens and writes under
+the heading which server it is and which extensions it has (self-registration, request log, administration, IFC graph, graph
+queries). A server without the document has no extensions, and everything in the specifications works anyway. The server's error
+codes (`code` in the answer, for example `reauthentication_required`) are shown in your language; unknown codes show the server's own
+text. The link *Open in Dataspatium* on the server's pages has the form `index.html#/inhamta/opencde?server=https://…` and opens
+the dialog for a new source with the address filled in.
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

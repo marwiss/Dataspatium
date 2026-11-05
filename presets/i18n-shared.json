@@ -1,0 +1,439 @@
+{
+ "name": "Dataspatium and Kontroll shared glossary",
+ "version": 1,
+ "source": "Dataspatium src/ui/i18n/<lang>.js, chosen by presets/shared-keys.txt; regenerate with python tools/shared_glossary.py",
+ "languages": [
+  "sv",
+  "en",
+  "da",
+  "nb",
+  "fi",
+  "is"
+ ],
+ "keys": {
+  "opencde.signin": {
+   "sv": "Logga in",
+   "en": "Sign in",
+   "da": "Log ind",
+   "nb": "Logg inn",
+   "fi": "Kirjaudu",
+   "is": "Skrá inn"
+  },
+  "opencde.signout": {
+   "sv": "Logga ut",
+   "en": "Sign out",
+   "da": "Log ud",
+   "nb": "Logg ut",
+   "fi": "Kirjaudu ulos",
+   "is": "Skrá út"
+  },
+  "opencde.project": {
+   "sv": "Projekt",
+   "en": "Project",
+   "da": "Projekt",
+   "nb": "Prosjekt",
+   "fi": "Projekti",
+   "is": "Verkefni"
+  },
+  "opencde.projects.none": {
+   "sv": "Du är inte medlem i något projekt på servern.",
+   "en": "You are not a member of any project on the server.",
+   "da": "Du er ikke medlem af noget projekt på serveren.",
+   "nb": "Du er ikke medlem i noe prosjekt på serveren.",
+   "fi": "Et ole jäsenenä missään projektissa palvelimella.",
+   "is": "Þú ert ekki þátttakandi í neinu verkefni á þjóninum."
+  },
+  "opencde.files.title": {
+   "sv": "Filer i projektet",
+   "en": "Files in the project",
+   "da": "Filer i projektet",
+   "nb": "Filer i prosjektet",
+   "fi": "Projektin tiedostot",
+   "is": "Skrár í verkefninu"
+  },
+  "opencde.file.fetch": {
+   "sv": "Hämta",
+   "en": "Fetch",
+   "da": "Hent",
+   "nb": "Hent",
+   "fi": "Hae",
+   "is": "Sækja"
+  },
+  "opencde.file.receive": {
+   "sv": "Ta emot",
+   "en": "Receive",
+   "da": "Modtag",
+   "nb": "Ta imot",
+   "fi": "Vastaanota",
+   "is": "Taka á móti"
+  },
+  "opencde.file.model": {
+   "sv": "Modell",
+   "en": "Model",
+   "da": "Model",
+   "nb": "Modell",
+   "fi": "Malli",
+   "is": "Líkan"
+  },
+  "opencde.file.version": {
+   "sv": "version {n}",
+   "en": "version {n}",
+   "da": "version {n}",
+   "nb": "versjon {n}",
+   "fi": "versio {n}",
+   "is": "útgáfa {n}"
+  },
+  "opencde.kind.topics": {
+   "sv": "Ärenden",
+   "en": "Topics",
+   "da": "Sager",
+   "nb": "Saker",
+   "fi": "Asiat",
+   "is": "Mál"
+  },
+  "opencde.kind.comments": {
+   "sv": "Kommentarer",
+   "en": "Comments",
+   "da": "Kommentarer",
+   "nb": "Kommentarer",
+   "fi": "Kommentit",
+   "is": "Athugasemdir"
+  },
+  "opencde.kind.components": {
+   "sv": "Viewpoint-komponenter",
+   "en": "Viewpoint components",
+   "da": "Viewpoint-komponenter",
+   "nb": "Viewpoint-komponenter",
+   "fi": "Näkymien komponentit",
+   "is": "Sjónarhornseiningar"
+  },
+  "opencde.kind.events": {
+   "sv": "Händelser",
+   "en": "Events",
+   "da": "Hændelser",
+   "nb": "Hendelser",
+   "fi": "Tapahtumat",
+   "is": "Atburðir"
+  },
+  "opencde.kind.files": {
+   "sv": "Filer",
+   "en": "Files",
+   "da": "Filer",
+   "nb": "Filer",
+   "fi": "Tiedostot",
+   "is": "Skrár"
+  },
+  "opencde.ext.dynamic_client_registration": {
+   "sv": "självregistrering",
+   "en": "self-registration",
+   "da": "selvregistrering",
+   "nb": "selvregistrering",
+   "fi": "itserekisteröinti",
+   "is": "sjálfskráning"
+  },
+  "opencde.ext.request_log": {
+   "sv": "begärandelogg",
+   "en": "request log",
+   "da": "forespørgselslog",
+   "nb": "forespørselslogg",
+   "fi": "pyyntöloki",
+   "is": "beiðnaskrá"
+  },
+  "opencde.ext.admin_api": {
+   "sv": "administration",
+   "en": "administration",
+   "da": "administration",
+   "nb": "administrasjon",
+   "fi": "hallinta",
+   "is": "stjórnun"
+  },
+  "opencde.ext.ifcgraph": {
+   "sv": "IFC-graf",
+   "en": "IFC graph",
+   "da": "IFC-graf",
+   "nb": "IFC-graf",
+   "fi": "IFC-graafi",
+   "is": "IFC-graf"
+  },
+  "opencde.ext.graph_query": {
+   "sv": "graffrågor",
+   "en": "graph queries",
+   "da": "grafforespørgsler",
+   "nb": "grafspørringer",
+   "fi": "graafikyselyt",
+   "is": "graffyrirspurnir"
+  },
+  "issues.title": {
+   "sv": "Ärenden",
+   "en": "Issues",
+   "da": "Sager",
+   "nb": "Saker",
+   "fi": "Asiat",
+   "is": "Mál"
+  },
+  "issues.new": {
+   "sv": "Nytt ärende",
+   "en": "New issue",
+   "da": "Ny sag",
+   "nb": "Ny sak",
+   "fi": "Uusi asia",
+   "is": "Nýtt mál"
+  },
+  "issues.fetch": {
+   "sv": "Hämta ärenden",
+   "en": "Fetch issues",
+   "da": "Hent sager",
+   "nb": "Hent saker",
+   "fi": "Hae asiat",
+   "is": "Sækja mál"
+  },
+  "issues.field.topic_type": {
+   "sv": "Typ",
+   "en": "Type",
+   "da": "Type",
+   "nb": "Type",
+   "fi": "Tyyppi",
+   "is": "Tegund"
+  },
+  "issues.field.topic_status": {
+   "sv": "Status",
+   "en": "Status",
+   "da": "Status",
+   "nb": "Status",
+   "fi": "Tila",
+   "is": "Staða"
+  },
+  "issues.field.priority": {
+   "sv": "Prioritet",
+   "en": "Priority",
+   "da": "Prioritet",
+   "nb": "Prioritet",
+   "fi": "Prioriteetti",
+   "is": "Forgangur"
+  },
+  "issues.field.labels": {
+   "sv": "Etikett",
+   "en": "Label",
+   "da": "Etiket",
+   "nb": "Etikett",
+   "fi": "Nimike",
+   "is": "Merki"
+  },
+  "issues.field.assigned_to": {
+   "sv": "Ansvarig",
+   "en": "Assigned to",
+   "da": "Ansvarlig",
+   "nb": "Ansvarlig",
+   "fi": "Vastuuhenkilö",
+   "is": "Ábyrgðaraðili"
+  },
+  "issues.status.none": {
+   "sv": "Utan status",
+   "en": "No status",
+   "da": "Uden status",
+   "nb": "Uten status",
+   "fi": "Ei tilaa",
+   "is": "Án stöðu"
+  },
+  "issues.comment.send": {
+   "sv": "Skicka",
+   "en": "Send",
+   "da": "Send",
+   "nb": "Send",
+   "fi": "Lähetä",
+   "is": "Senda"
+  },
+  "issues.viewpoint.add": {
+   "sv": "Lägg till vyn som viewpoint",
+   "en": "Add the view as a viewpoint",
+   "da": "Tilføj visningen som viewpoint",
+   "nb": "Legg til visningen som viewpoint",
+   "fi": "Lisää näkymä viewpointina",
+   "is": "Bæta sýninni við sem viewpoint"
+  },
+  "issues.bcf.save": {
+   "sv": "Spara som BCF",
+   "en": "Save as BCF",
+   "da": "Gem som BCF",
+   "nb": "Lagre som BCF",
+   "fi": "Tallenna BCF-tiedostona",
+   "is": "Vista sem BCF"
+  },
+  "cde.title": {
+   "sv": "Från CDE",
+   "en": "From the CDE",
+   "da": "Fra CDE",
+   "nb": "Fra CDE",
+   "fi": "CDE:stä",
+   "is": "Frá CDE"
+  },
+  "cde.version": {
+   "sv": "Version",
+   "en": "Version",
+   "da": "Version",
+   "nb": "Versjon",
+   "fi": "Versio",
+   "is": "Útgáfa"
+  },
+  "cde.kind.document": {
+   "sv": "Dokument (Documents API)",
+   "en": "Document (Documents API)",
+   "da": "Dokument (Documents API)",
+   "nb": "Dokument (Documents API)",
+   "fi": "Asiakirja (Documents API)",
+   "is": "Skjal (Documents API)"
+  },
+  "cde.kind.bcf": {
+   "sv": "Dokument (BCF)",
+   "en": "Document (BCF)",
+   "da": "Dokument (BCF)",
+   "nb": "Dokument (BCF)",
+   "fi": "Asiakirja (BCF)",
+   "is": "Skjal (BCF)"
+  },
+  "cde.send.title": {
+   "sv": "Skicka till CDE",
+   "en": "Send to the CDE",
+   "da": "Send til CDE",
+   "nb": "Send til CDE",
+   "fi": "Lähetä CDE:hen",
+   "is": "Senda til CDE"
+  },
+  "cde.send.how.documents": {
+   "sv": "Documents API (med titel och version)",
+   "en": "Documents API (with title and version)",
+   "da": "Documents API (med titel og version)",
+   "nb": "Documents API (med tittel og versjon)",
+   "fi": "Documents API (otsikko ja versio)",
+   "is": "Documents API (með titli og útgáfu)"
+  },
+  "cde.send.how.bcf": {
+   "sv": "BCF-dokument (bara filen)",
+   "en": "BCF document (the file only)",
+   "da": "BCF-dokument (kun filen)",
+   "nb": "BCF-dokument (bare filen)",
+   "fi": "BCF-asiakirja (vain tiedosto)",
+   "is": "BCF-skjal (aðeins skráin)"
+  },
+  "cdelog.title": {
+   "sv": "Logg",
+   "en": "Log",
+   "da": "Log",
+   "nb": "Logg",
+   "fi": "Loki",
+   "is": "Skrá"
+  },
+  "cdelog.col.time": {
+   "sv": "Tid",
+   "en": "Time",
+   "da": "Tid",
+   "nb": "Tid",
+   "fi": "Aika",
+   "is": "Tími"
+  },
+  "cdelog.col.method": {
+   "sv": "Metod",
+   "en": "Method",
+   "da": "Metode",
+   "nb": "Metode",
+   "fi": "Menetelmä",
+   "is": "Aðferð"
+  },
+  "cdelog.col.operation": {
+   "sv": "Operation",
+   "en": "Operation",
+   "da": "Operation",
+   "nb": "Operasjon",
+   "fi": "Toiminto",
+   "is": "Aðgerð"
+  },
+  "cdelog.col.status": {
+   "sv": "Status",
+   "en": "Status",
+   "da": "Status",
+   "nb": "Status",
+   "fi": "Tila",
+   "is": "Staða"
+  },
+  "cdelog.request": {
+   "sv": "Begäran",
+   "en": "Request",
+   "da": "Forespørgsel",
+   "nb": "Forespørsel",
+   "fi": "Pyyntö",
+   "is": "Beiðni"
+  },
+  "cdelog.api.short.foundation": {
+   "sv": "Foundation",
+   "en": "Foundation",
+   "da": "Foundation",
+   "nb": "Foundation",
+   "fi": "Foundation",
+   "is": "Foundation"
+  },
+  "cdelog.api.short.bcf": {
+   "sv": "BCF",
+   "en": "BCF",
+   "da": "BCF",
+   "nb": "BCF",
+   "fi": "BCF",
+   "is": "BCF"
+  },
+  "cdelog.api.short.documents": {
+   "sv": "Documents",
+   "en": "Documents",
+   "da": "Documents",
+   "nb": "Documents",
+   "fi": "Documents",
+   "is": "Documents"
+  },
+  "common.cancel": {
+   "sv": "Avbryt",
+   "en": "Cancel",
+   "da": "Afbryd",
+   "nb": "Avbryt",
+   "fi": "Peruuta",
+   "is": "Hætta við"
+  },
+  "common.save": {
+   "sv": "Spara",
+   "en": "Save",
+   "da": "Gem",
+   "nb": "Lagre",
+   "fi": "Tallenna",
+   "is": "Vista"
+  },
+  "common.description": {
+   "sv": "Beskrivning",
+   "en": "Description",
+   "da": "Beskrivelse",
+   "nb": "Beskrivelse",
+   "fi": "Kuvaus",
+   "is": "Lýsing"
+  },
+  "common.type": {
+   "sv": "Typ",
+   "en": "Type",
+   "da": "Type",
+   "nb": "Type",
+   "fi": "Tyyppi",
+   "is": "Gerð"
+  },
+  "common.copy": {
+   "sv": "Kopiera",
+   "en": "Copy",
+   "da": "Kopiér",
+   "nb": "Kopier",
+   "fi": "Kopioi",
+   "is": "Afrita"
+  },
+  "common.run": {
+   "sv": "Kör",
+   "en": "Run",
+   "da": "Kør",
+   "nb": "Kjør",
+   "fi": "Suorita",
+   "is": "Keyra"
+  }
+ }
+}

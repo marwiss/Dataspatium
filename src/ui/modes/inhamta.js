@@ -52,7 +52,12 @@
         slots = s;
         unsubConnectors = connectors.subscribe(reloadConnectors);
         // The saved fetches follow the datasets (count in the source list, rows and times in the view).
-        unsubStore = store.subscribe((state, changed) => { if (!changed.includes('datasets') || !slots) return; renderLeft(); if (source === 'saved') renderSaved(); });
+        unsubStore = store.subscribe((state, changed) => {
+          if (changed.includes('pendingSource') && state.pendingSource && slots) { consumePendingSource(state); return; }
+          if (!changed.includes('datasets') || !slots) return;
+          renderLeft(); if (source === 'saved') renderSaved();
+        });
+        if (store.get().pendingSource) consumePendingSource(store.get());
         reloadConnectors();
         render();
       }
@@ -248,6 +253,14 @@
         replace(slots.center, apiUi.el);
       }
 
+      /** A server handed over by a deep link (#/inhamta/opencde?server=…): the source dialog opens with it filled in, once. */
+      async function consumePendingSource(state) {
+        const p = state.pendingSource;
+        store.set({ pendingSource: null });
+        if (!p || !p.baseUrl) return;
+        const connector = await familyDialog.open(ctx, { family: p.family || 'opencde', values: { baseUrl: p.baseUrl } });
+        if (connector) await openConnector(connector);
+      }
       /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
       async function addFamily(group) {
         const connector = await familyDialog.open(ctx, group ? { group } : {});

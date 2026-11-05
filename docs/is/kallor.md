@@ -150,6 +150,13 @@ hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
 
 Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
 
+Kontroll lýsir viðbótum sínum í `GET /.well-known/kontroll`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
+fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-graf, graffyrirspurnir). Þjónn
+án skjalsins hefur engar viðbætur, og allt samkvæmt forskriftunum virkar þó. Villukóðar þjónsins (`code` í svarinu, til dæmis
+`reauthentication_required`) birtast á þínu tungumáli; óþekktir kóðar sýna eigin texta þjónsins. Tengillinn *Opna í Dataspatium* á
+síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…` og opnar gluggann fyrir nýja uppsprettu með slóðina
+útfyllta.
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

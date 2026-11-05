@@ -68,7 +68,7 @@
       for (const v of (versions && versions.versions) || []) apis[v.api_id] = v.version_id;
       if (!apis.bcf && !apis.documents) throw new Error(t('opencde.err.not.opencde', { host: hostOf(base) }));
       if (!auth || !auth.oauth2_auth_url || !auth.oauth2_token_url) throw new Error(t('opencde.err.no.oauth'));
-      return { apis, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || null, registrationUrl: auth.oauth2_dynamic_client_reg_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
+      return { apis, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || '', registrationUrl: auth.oauth2_dynamic_client_reg_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
     }
 
     // ---------------------------------------------------------------------------- signing in
@@ -115,7 +115,7 @@
       if (creds.clientSecret) headers.Authorization = 'Basic ' + btoa(`${auth.clientId}:${creds.clientSecret}`);
       else params.set('client_id', auth.clientId);
       const res = await send(connector, { url: auth.tokenUrl, method: 'POST', headers, body: params.toString(), retries: 0, rateKey: connector.id }, { kind: 'token' });
-      if (!res.ok) throw new http.ApiError(t('opencde.err.token', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 200) }), { kind: 'auth', status: res.status });
+      if (!res.ok) { const e = describeOAuthError(res.text); throw new http.ApiError(t('opencde.err.token', { detail: e.text }), { kind: 'auth', status: res.status, code: e.code, detail: e.message }); }
       const data = JSON.parse(res.text);
       const ttl = Number(data.expires_in) > 0 ? Number(data.expires_in) * 1000 : 3600000;
       const stored = Object.assign({}, creds, { token: data.access_token, refreshToken: data.refresh_token || creds.refreshToken || '', expiresAt: String(Date.now() + ttl), scope: data.scope || '' });
@@ -177,6 +177,60 @@
       secrets.set(connector.id, creds && creds.clientSecret ? { clientSecret: creds.clientSecret } : {});
     }
 
+    // ---------------------------------------------------------------------------- what the server offers beyond the specifications
+    /** @type {Map<string, {at: number, caps: any}>} */
+    const capsCache = new Map();
+    const CAPS_TTL = 5 * 60 * 1000;
+    const EMPTY_CAPS = { present: false, server: null, apis: {}, scopes: [], extensions: {}, limits: {}, links: {} };
+    /**
+     * Kontroll describes its extensions in GET /.well-known/kontroll (no sign-in, outside the specifications): the server's version, the
+     * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links. A server
+     * without the document has no extensions; unknown keys count as absent. Cached a few minutes per connector.
+     * @param {any} connector @param {{force?: boolean}} [options]
+     * @returns {Promise<{present: boolean, server: any, apis: any, scopes: string[], extensions: Record<string, any>, limits: any, links: any}>}
+     */
+    async function capabilities(connector, options = {}) {
+      const key = trimUrl(connector.baseUrl);
+      const hit = capsCache.get(key);
+      if (hit && !options.force && Date.now() - hit.at < CAPS_TTL) return hit.caps;
+      let caps = EMPTY_CAPS;
+      try {
+        const res = await send(connector, { url: trimUrl(connector.baseUrl) + '/.well-known/kontroll', method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
+        if (res.ok) {
+          const data = JSON.parse(res.text || '{}') || {};
+          caps = { present: true, server: data.server || null, apis: data.apis || {}, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
+        }
+      } catch (err) { D.log('opencde', 'capabilities', err); }
+      capsCache.set(key, { at: Date.now(), caps });
+      return caps;
+    }
+    /** Whether an extension is enabled in a capabilities answer. @param {any} caps @param {string} name */
+    const hasExtension = (caps, name) => !!(caps && caps.extensions && caps.extensions[name] && caps.extensions[name].enabled);
+    /** The server's error in the user's words: a known `code` is translated, otherwise the server's message is shown. */
+    /** RFC 6749's error at the token endpoint, in the user's words when the error is one of the six the standard names. */
+    function describeOAuthError(text) {
+      let data = null;
+      try { data = JSON.parse(text); } catch (_e) { /* not JSON */ }
+      const error = data && typeof data.error === 'string' ? data.error : '';
+      const description = (data && data.error_description) || String(text || '').replace(/\s+/g, ' ').slice(0, 200);
+      if (error) {
+        const key = 'opencde.err.oauth.' + error;
+        const translated = t(key);
+        if (translated !== key) return { code: error, message: description, text: translated };
+      }
+      return { code: error, message: description, text: description };
+    }
+    function describeError(data) {
+      const code = data && typeof data.code === 'string' ? data.code : '';
+      const message = (data && data.message) || '';
+      if (code) {
+        const key = 'opencde.err.code.' + code;
+        const text = t(key, { detail: message });
+        if (text !== key) return { code, message, text };
+      }
+      return { code, message, text: message };
+    }
+
     // ---------------------------------------------------------------------------- API calls
     /**
      * Every request to a server goes through here, so the CDE log sees it. A saved connector sends X-Request-Id unless it has been
@@ -208,9 +262,10 @@
       else if (options.body !== undefined) req.body = options.body;
       const res = await send(connector, req, { kind: options.responseType === 'arraybuffer' ? 'binary' : 'json' });
       if (!res.ok) {
-        let message = '';
-        try { message = JSON.parse(res.text).message || ''; } catch (_e) { /* not JSON */ }
-        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${message ? ' ' + message : ''}`, { kind: 'http', status: res.status, url, detail: message });
+        let data = null;
+        try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
+        const { code, message, text } = describeError(data);
+        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code });
       }
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
@@ -463,6 +518,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
+    return { FAMILY, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
   });
 })();

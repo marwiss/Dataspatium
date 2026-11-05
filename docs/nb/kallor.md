@@ -153,6 +153,13 @@ pares med appens; avviser en server headeren, slås den av for den kilden.
 
 Serverens side beskrives i Kontrolls dokumentasjon: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvordan en klient kobler seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets testkjøringer) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (utviklingsstakken og hvordan appen testes mot den).
 
+Kontroll beskriver tilleggene sine i `GET /.well-known/kontroll`; appen leser dokumentet når kilden åpnes og skriver under
+overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC-graf,
+grafspørringer). En server uten dokumentet har ingen tillegg, og alt etter spesifikasjonene fungerer likevel. Serverens feilkoder
+(`code` i svaret, for eksempel `reauthentication_required`) vises på ditt språk; ukjente koder viser serverens egen tekst. Lenken
+*Åpne i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åpner dialogen for en ny kilde
+med adressen utfylt.
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

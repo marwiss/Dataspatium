@@ -146,6 +146,7 @@
         const head = h('div', { class: 'dm-card dm-stack-sm' },
           h('div', { class: 'dm-row' }, h('strong', { text: t('opencde.title') }), h('dm-badge', { kind: signed ? 'ok' : 'warn', text: signed ? t('opencde.status.in', { name: s.user ? (s.user.name || s.user.id) : '' }) : t('opencde.status.out') })),
           h('p', { class: 'dm-help dm-small', text: t('opencde.hint', { host: opencde.hostOf(connector.baseUrl) }) }),
+          s.caps && s.caps.present ? h('p', { class: 'dm-help dm-xs', 'data-opencde-capabilities': '', text: capsText(s.caps) }) : null,
           h('div', { class: 'dm-row-wrap' },
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             signed && !s.projects ? basic.button({ label: t('opencde.projects.load'), size: 'sm', onClick: async () => { s.busy = 'projects'; render(); try { s.user = s.user || (await opencde.currentUser(connector)); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); } }) : null),
@@ -209,7 +210,15 @@
           s.saved ? h('p', { class: 'dm-success', text: s.saved }) : h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: s.saving, onClick: () => saveTable(nameInput.value.trim()) }))));
         requestAnimationFrame(() => table.setData({ columns: r.columns.map((c) => ({ key: c, label: c, type: 'text' })), rowCount: rows.length, rowProvider: async (start, count) => rows.slice(start, start + count) }));
       }
+      /** What the server offers beyond the specifications, for the line under the heading. */
+      function capsText(caps) {
+        const server = caps.server ? `${caps.server.name || 'Kontroll'}${caps.server.version ? ' ' + caps.server.version : ''}` : 'Kontroll';
+        const list = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k)).map((k) => { const key = 'opencde.ext.' + k; const x = t(key); return x === key ? k : x; });
+        return t('opencde.caps', { server, list: list.length ? list.join(', ') : t('opencde.caps.none') });
+      }
       function start() {
+        s.caps = null;
+        opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); }).catch((err) => D.log('opencde', 'capabilities', err));
         render();
         if (opencde.signedIn(connector) && !s.projects) {
           s.busy = 'projects'; render();

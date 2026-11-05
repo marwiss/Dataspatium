@@ -22,6 +22,7 @@
 
     /** Path patterns to the API and operation of the specifications, most specific first. */
     const OPERATIONS = [
+      [/\/\.well-known\/kontroll$/, 'kontroll', 'capabilities'],
       [/\/foundation\/versions$/, 'foundation', 'versions'],
       [/\/foundation\/[\d.]+\/auth$/, 'foundation', 'auth'],
       [/\/foundation\/[\d.]+\/current-user$/, 'foundation', 'current_user'],

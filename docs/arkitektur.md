@@ -557,6 +557,8 @@ Granskningen 2.31 samlade kopior till gemensamma hjälpare: `api/families/common
 
 `platform/assets` (2.33) rapporterar laddning: `onProgress(fn)` ger varje resurs som injiceras och avkodas (`{name, file, size, phase: load|done|error}`) och listan över det som är i flykt; `loading()` ger listan när som helst. Statusraden (`shell.showLoading`) visar namn och storlek när något över 512 kB laddas, `data/r-bridge` håller `progress` för R:s filer (webr/*, r/dataspatium.R) och Analyseras statusrad för R säger vilken fil som väntas, på samma sätt som Pythons procent. Inget laddas vid start utöver appens egna skript och manifestet.
 
+`api/families/opencde.capabilities(connector)` (2.34) läser `GET /.well-known/kontroll` (utan inloggning, cache fem minuter per källa, 404 = inga tillägg, okända nycklar räknas som frånvarande) och `hasExtension(caps, name)` styr vad vyerna visar; `describeError(data)` översätter serverns `code` (`opencde.err.code.<code>`) och lämnar `code` på felet. Djuplänken `#/inhamta/opencde?server=…` tolkas i `shell.openRoute` till store-nyckeln `pendingSource`, som Inhämta förbrukar genom att öppna familjedialogen med adressen ifylld. Ordlistan: `tools/shared_glossary.py` → `presets/i18n-shared.json` (inbäddad av wrap_local), provet `glossary` jämför mot `i18n.tIn`.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

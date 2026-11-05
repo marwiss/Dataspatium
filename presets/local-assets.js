@@ -18,6 +18,12 @@ Dataspatium.assets.addEntries({
   "size": 13121,
   "library": "dataspatium"
  },
+ "presets/i18n-shared.json": {
+  "file": "presets/i18n-shared.json.js",
+  "encoding": "text",
+  "size": 9519,
+  "library": "dataspatium"
+ },
  "presets/api/asub-aland.api.json": {
   "file": "presets/api/asub-aland.api.json.js",
   "encoding": "text",
@@ -531,7 +537,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 18051,
+  "size": 18721,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -687,7 +693,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 17726,
+  "size": 18421,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -843,7 +849,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 17562,
+  "size": 18234,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -999,7 +1005,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 18903,
+  "size": 19625,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -1155,7 +1161,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 18795,
+  "size": 19507,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -1311,7 +1317,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17789,
+  "size": 18497,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {

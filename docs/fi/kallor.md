@@ -157,6 +157,13 @@ palvelin kieltää otsakkeen, se poistetaan käytöstä kyseiseltä lähteeltä.
 
 Palvelimen puoli kuvataan Kontrollin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (miten asiakas yhdistää), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parin testiajot) ja [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
 
+Kontroll kuvaa lisäyksensä osoitteessa `GET /.well-known/kontroll`; sovellus lukee asiakirjan, kun lähde avataan, ja kirjoittaa
+otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC-graafi,
+graafikyselyt). Palvelimella ilman asiakirjaa ei ole lisäyksiä, ja kaikki määrittelyjen mukainen toimii silti. Palvelimen virhekoodit
+(`code` vastauksessa, esimerkiksi `reauthentication_required`) näytetään omalla kielelläsi; tuntemattomat koodit näyttävät palvelimen
+oman tekstin. Linkki *Avaa Dataspatiumissa* palvelimen sivuilla on muotoa `index.html#/inhamta/opencde?server=https://…` ja avaa uuden
+lähteen valintaikkunan osoite täytettynä.
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
