@@ -1,12 +1,26 @@
-[Svenska](../../README.md) · **Dansk** · [Norsk](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · [English](../en/README.md)
+[Svenska](../../README.md) · **Dansk** · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · [English](../en/README.md)
 
-# Dataspatium
+<img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
+
+# Dataspatium OpenCDE-klient
 
 Dataspatium er en webapp til data fra kilde til rapport: hent data fra filer og åbne API'er, gem og håndter
 datasæt, gennemgå og ret værdier, analysér med R, visualisér og eksportér. Alt kører i din egen browser. Ingen
 server, ingen installation, ingen konti. Dine data forlader aldrig computeren, medmindre du selv eksporterer dem.
 
 ![Dataspatium i tilstanden Bearbejd med en tabel over svenske kommuner](../images/bearbeta.png)
+
+**Indhold**
+
+- [Download og kom i gang](#download-og-kom-i-gang)
+- [Hvad der kræves](#hvad-der-kræves)
+- [Hvad du kan](#hvad-du-kan)
+- [Dataspatium og Kontroll](#dataspatium-og-kontroll)
+- [Lær mere](#lær-mere)
+- [Begrænsninger i korte træk](#begrænsninger-i-korte-træk)
+- [Fejl og forslag](#fejl-og-forslag)
+- [Udvikling](#udvikling)
+- [Licens](#licens)
 
 Brugerfladen findes på svensk, dansk, norsk, finsk, islandsk og engelsk. Skærmbillederne i dokumentationen viser
 appen på svensk.
@@ -96,23 +110,13 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   sæsonkorrektion), og en regression kan gemmes og bruges som recepttrinnet Prædiktion (se [statistik.md](statistik.md)).
 - **Indsamling i felten**: en formular bygget på et datasæts kolonner og regler sendes til Dataspatium Mobil. Telefonen indsamler rækker uden net, med foto og
   position, og rækkerne kommer tilbage som en ny version. Fotoene bliver en billedsamling, og positionerne havner på kortet (se [insamling.md](insamling.md)).
-- **Gennemgang af hele filen**: det, der deles, gennemgås i sin helhed, med løbende tekst, originalfiler, billeders positioner, grafers kanter og kommentarer. Tilstandene følger også datasættets type bedre: søgefund
-  åbnes, hvor de er, og kort tilbydes kun, når værdierne virkelig er koordinater (se [dela.md](dela.md)).
-- **Tilstandene følger datasættet**: appen viser, hvad et datasæt også kan bruges som, og siger hvorfor, åbner Analysér i det rigtige værktøj og viser, hvad der er værd at se på. Et udvalg følger med mellem tilstandene, og eksporten siger, hvad der følger med (se [lagen.md](lagen.md)).
-- **Søg og tegn efter datasættets indhold**: søg efter sted, find knuder via deres kanter og elementer via deres egenskaber, se billeder på kortet og tegn diagrammer ud fra kanter, egenskaber og mængder (se [soka.md](soka.md)).
-- **Hent og Håndter følger filen**: appen siger, hvad en fil er, viser den i sin form og spørger om koordinater, koordinatsystem og forbindelser. Blandede mapper sorteres, og Håndter viser et billede pr. datasæt (se [lagen.md](lagen.md)).
-- **Bearbejd følger datasættet**: kommentér en side, et billede, en knude eller et sted, ret tekst, giv billeder et sted, reparér geometrier, find dubletter i grafer, og klassificér elementer (se [bearbeta.md](bearbeta.md)).
-- **Søg og Analysér følger datasættet**: spørg om en egenskab, en nabo eller et sted, start fra kode skrevet til datasættet, se trenden i en tidsserie, og tæl steder pr. område (se [soka.md](soka.md)).
-- **Visualisér følger datasættet**: forslag med rigtige billeder til hver slags, krydsfiltre i dashboards og skabelonord, der indsætter et kort, en graf, en model eller en plan i et dokument (se [visualisera.md](visualisera.md)).
-- **Eksportér følger datasættet**: KML, GPX og GeoPackage til steder, kontaktark til billeder, plankort og planbestemmelser til planer, mængder i Excel og glTF til modeller, PDF til tegninger (se [lagen.md](lagen.md)).
-- **Del følger datasættet**: vælg, om filerne skal følge med i en pakke, gør et datasæt til sin egen side at sende, og se hver slags i sin egen form på telefonen (se [dela.md](dela.md)).
+- **Tilstandene følger datasættets type**: appen siger, hvad en fil er, og hvad et datasæt også kan bruges som, spørger om koordinater, koordinatsystem og koblinger ved indlæsning, sorterer blandede mapper og viser et billede pr. datasæt i Håndter. Søgefund åbnes, hvor de findes (side, billede, knude, bygningsdel, planobjekt eller sted), du kan søge efter sted, finde knuder via deres kanter og bygningsdele via deres egenskaber, kommentere en side, et billede, en knude eller et sted, rette tekst, sætte sted på billeder, reparere geometrier, finde dubletter i grafer og klassificere bygningsdele. Analysér åbner i det rette værktøj med startkode skrevet til datasættet, viser tendensen i en tidsserie og tæller steder pr. område, og et udvalg følger med mellem tilstandene (se [lagen.md](lagen.md)).
+- **Visualisér, Eksportér og Del følger typen**: diagramforslag med rigtige billeder for hver type, krydsfiltre i dashboards og skabelonord, der lægger et kort, en graf, en model eller en plan ind i et dokument; KML, GPX og GeoPackage for steder, kontaktkort for billeder, plankort og planbestemmelser for planer, mængder i Excel og glTF for modeller og PDF for tegninger; i Del vælger du, om filerne skal med i pakken, gør et datasæt til en egen side at sende og ser hver type i sin egen form på telefonen (se [visualisera.md](visualisera.md) og [dela.md](dela.md)).
+- **Gennemgang før deling**: alt, der forlader appen, gennemgås i sin helhed, med kolonner, løbende tekst, sidetabeller, originalfiler, billeders positioner, grafers kanter, kommentarer og forfattere; personoplysninger kan beholdes, pseudonymiseres eller fjernes i kopien, og datasættet ændres aldrig (se [dela.md](dela.md)).
 - **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klik, datapakker, DCAT-AP-SE, kvalitetsdeklaration og fire guider med rigtige data (se [lagen.md](lagen.md)).
 - **Tekst fra billeder**: skannede PDF-filer, billeder og billeder af tabeller læses med tekstgenkendelse i browseren, på alle seks sprog.
 - **Oprindelse, samarbejde og bibliotek**: se, hvor et datasæt kommer fra, og hvad det er blevet til, arbejd sammen via GitHub, uden at noget forsvinder, hent opskrifter og skabeloner med licens, og publicér arbejdsområdet som et websted.
-- **Kontroll som CDE, del 1**: hent modeller og dokumenter fra en OpenCDE-servers projekt, se, når en nyere version findes, og se de sager, der peger på bygningsdelene i modellen.
-- **Kontroll som CDE, del 2**: opret sager fra markeringen i modellen med visningen som viewpoint, kommentér og skift status, send datasæt og filer til serveren, BCF-filer ind og ud, og selvregistrering mod servere, der tillader det.
-- **Kontroll som CDE, del 3**: farv modellen efter sagsstatus, gem sagerne som tabel med bygningsdelene, værktøjet Sager, dashboardet Sagsstatus, startkode til Cypher mod Kontrolls IFC-graf og arbejdsområdepakker gennem serveren.
-- **Logning af CDE-kald**: kortet Log i OpenCDE-kilden viser hvert kald med API, operation, status og tid, forklarer operationen og kopierer den som curl; X-Request-Id parres med serverens log.
+- **Kontroll og OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) bliver en kilde i Hent med login via OAuth2 og selvregistrering, hvor serveren tillader det. Appen henter projektets modeller og dokumenter og siger til, når der findes en nyere version, viser sagerne, der peger på bygningsdelene, opretter sager ud fra markeringen i 3D-visningen med visningen som viewpoint, kommenterer og skifter status, farver modellen efter sagsstatus, gemmer sagerne som tabel med værktøjet Sager og dashboardet Sagsstatus, læser og skriver BCF-filer, sender datasæt, filer og arbejdsområdepakker til serveren, spørger serverens IFC-graf med Cypher, læser, hvad serveren tilbyder, og forklarer dens fejlkoder, og logger hvert kald med et X-Request-Id, der parres med serverens forespørgselslog (se afsnittet [Dataspatium og Kontroll](#dataspatium-og-kontroll) nedenfor).
 - **Let start**: store dele som R og Python indlæses først, når de bruges, og statuslinjen viser, hvad der indlæses i mellemtiden.
 - **Samordning med Kontroll, trin 1**: appen læser serverens kapabilitetsdokument, oversætter dens fejlkoder, bærer en fælles ordliste på seks sprog og åbner en kilde fra linket Åbn i Dataspatium.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
@@ -151,6 +155,8 @@ med Cypher og logger hvert kald med samme X-Request-Id, som serveren skriver i s
 OpenCDE-API'er, så andre OpenCDE-klienter fungerer også. Serveren er ikke nødvendig for resten af appen: uden server fungerer alt
 andet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbejdet fra
 serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
+
+Dataspatium 2.0.0 fungerer med Kontroll 2.0.0. Begge får samme udgavenummer, så samme nummer hører sammen.
 
 ## Lær mere
 

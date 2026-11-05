@@ -1,12 +1,26 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk](../nb/README.md) · **Suomi** · [Íslenska](../is/README.md) · [English](../en/README.md)
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · **Suomi** · [Íslenska](../is/README.md) · [English](../en/README.md)
 
-# Dataspatium
+<img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
+
+# Dataspatium OpenCDE-asiakas
 
 Dataspatium on verkkosovellus datan käsittelyyn lähteestä raporttiin: nouda dataa tiedostoista ja avoimista
 rajapinnoista, tallenna ja hallitse aineistoja, tarkista ja korjaa arvoja, analysoi R:llä, visualisoi ja vie. Kaikki toimii
 omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan poistu tietokoneelta, ellet itse vie sitä.
 
 ![Dataspatium Muokkaa-tilassa ja taulukko Ruotsin kunnista](../images/bearbeta.png)
+
+**Sisältö**
+
+- [Lataa ja aloita](#lataa-ja-aloita)
+- [Vaatimukset](#vaatimukset)
+- [Mitä voit tehdä](#mitä-voit-tehdä)
+- [Dataspatium ja Kontroll](#dataspatium-ja-kontroll)
+- [Lue lisää](#lue-lisää)
+- [Rajoitukset lyhyesti](#rajoitukset-lyhyesti)
+- [Virheet ja ehdotukset](#virheet-ja-ehdotukset)
+- [Kehitys](#kehitys)
+- [Lisenssi](#lisenssi)
 
 Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi, suomeksi, islanniksi ja englanniksi. Dokumentaation
 kuvakaappaukset näyttävät sovelluksen ruotsiksi.
@@ -100,23 +114,13 @@ paketilla.
   kausitasoitus), ja regression voi tallentaa ja käyttää reseptivaiheena Ennuste (katso [statistik.md](statistik.md)).
 - **Keruu maastossa**: aineiston sarakkeisiin ja sääntöihin perustuva lomake lähetetään Dataspatium Mobiliin. Puhelin kerää rivit ilman verkkoa, valokuvan ja
   sijainnin kera, ja rivit palaavat uutena versiona. Kuvista tulee kuvakokoelma, ja sijainnit päätyvät kartalle (katso [insamling.md](insamling.md)).
-- **Koko tiedoston tarkistus**: jaettava tarkistetaan kokonaan, juokseva teksti, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät ja kommentit mukaan lukien. Tilat seuraavat myös aineiston lajia paremmin: hakuosumat
-  avautuvat paikallaan, ja karttoja tarjotaan vain, kun arvot todella ovat koordinaatteja (katso [dela.md](dela.md)).
-- **Tilat seuraavat aineistoa**: sovellus näyttää, miten aineistoa voi käyttää myös, ja kertoo syyn, avaa Analysoi-tilan oikeassa työkalussa ja näyttää tarkistettavat asiat. Valinta seuraa tilasta toiseen, ja vienti kertoo, mitä tulee mukaan (katso [lagen.md](lagen.md)).
-- **Hae ja piirrä aineiston sisällön mukaan**: hae paikan mukaan, löydä solmut särmiensä ja elementit ominaisuuksiensa kautta, katso kuvia kartalla ja piirrä kaavioita särmistä, ominaisuuksista ja määristä (ks. [soka.md](soka.md)).
-- **Nouda ja Hallitse seuraavat tiedostoa**: sovellus kertoo, mikä tiedosto on, näyttää sen omassa muodossaan ja kysyy koordinaateista, koordinaatistosta ja yhteyksistä. Sekalaiset kansiot lajitellaan, ja Hallitse näyttää kuvan aineistoa kohden (ks. [lagen.md](lagen.md)).
-- **Muokkaa seuraa aineistoa**: kommentoi sivua, kuvaa, solmua tai paikkaa, korjaa tekstiä, anna kuville paikka, korjaa geometrioita, etsi kaksoiskappaleita graafeista ja luokittele elementtejä (ks. [bearbeta.md](bearbeta.md)).
-- **Hae ja Analysoi seuraavat aineistoa**: kysy ominaisuutta, naapuria tai paikkaa, aloita aineistolle kirjoitetusta koodista, katso aikasarjan trendi ja laske paikat alueittain (ks. [soka.md](soka.md)).
-- **Visualisoi seuraa aineistoa**: ehdotukset oikeina kuvina jokaiselle lajille, ristisuodattimet kojelaudoissa ja mallisanat, jotka lisäävät asiakirjaan kartan, graafin, mallin tai kaavan (ks. [visualisera.md](visualisera.md)).
-- **Vie seuraa aineistoa**: KML, GPX ja GeoPackage paikoille, kontaktiarkki kuville, kaavakartta ja kaavamääräykset kaavoille, määrät Excelissä ja glTF malleille, PDF piirustuksille (ks. [lagen.md](lagen.md)).
-- **Jaa seuraa aineistoa**: valitse, seuraavatko tiedostot pakettiin, tee aineistosta oma lähetettävä sivunsa ja katso jokainen laji omassa muodossaan puhelimessa (ks. [dela.md](dela.md)).
+- **Tilat seuraavat aineiston lajia**: sovellus kertoo, mikä tiedosto on ja mihin aineistoa voi myös käyttää, kysyy koordinaateista, koordinaattijärjestelmästä ja kytkennöistä lukemisen yhteydessä, lajittelee sekalaiset kansiot ja näyttää kuvan jokaisesta aineistosta Hallitse-tilassa. Hakuosumat avautuvat siellä, missä ne ovat (sivu, kuva, solmu, rakennusosa, kaavakohde tai paikka), voit hakea paikan mukaan, löytää solmut särmiensä ja rakennusosat ominaisuuksiensa kautta, kommentoida sivua, kuvaa, solmua tai paikkaa, korjata tekstiä, sijoittaa kuvat kartalle, korjata geometrioita, löytää kaksoiskappaleet graafeista ja luokitella rakennusosia. Analysoi avautuu oikeaan työkaluun aineistolle kirjoitetulla aloituskoodilla, näyttää aikasarjan trendin ja laskee paikat alueittain, ja valinta seuraa mukana tilojen välillä (ks. [lagen.md](lagen.md)).
+- **Visualisoi, Vie ja Jaa seuraavat lajia**: kaavioehdotukset oikeilla kuvilla jokaiselle lajille, ristisuodattimet koontinäytöissä ja mallisanat, jotka tuovat kartan, graafin, mallin tai kaavan asiakirjaan; KML, GPX ja GeoPackage paikoille, yhteenvetoarkki kuville, kaavakartta ja kaavamääräykset kaavoille, määrät Exceliin ja glTF malleille sekä PDF piirustuksille; Jaa-tilassa valitset, lähtevätkö tiedostot mukaan pakettiin, teet aineistosta oman lähetettävän sivun ja näet jokaisen lajin omassa muodossaan puhelimessa (ks. [visualisera.md](visualisera.md) ja [dela.md](dela.md)).
+- **Tarkistus ennen jakamista**: kaikki, mikä lähtee sovelluksesta, tarkistetaan kokonaisuudessaan: sarakkeet, juokseva teksti, sivutaulukot, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät, kommentit ja tekijät; henkilötiedot voi säilyttää, pseudonymisoida tai poistaa kopiosta, eikä aineisto itse muutu koskaan (ks. [dela.md](dela.md)).
 - **Koodiluettelot, kuvaukset ja oppaat**: nimikkeet luetteloista SNI, SSYK, NACE ja muista yhdellä napsautuksella, datapaketit, DCAT-AP-SE, laatuseloste ja neljä opasta oikealla datalla (ks. [lagen.md](lagen.md)).
 - **Teksti kuvista**: skannatut PDF-tiedostot, kuvat ja kuvat taulukoista luetaan tekstintunnistuksella selaimessa, kaikilla kuudella kielellä.
 - **Alkuperä, yhteistyö ja kirjasto**: näe, mistä aineisto on peräisin ja mitä siitä on tullut, tee yhteistyötä GitHubin kautta ilman että mitään katoaa, hae reseptejä ja malleja lisensseineen ja julkaise työtila verkkosivustona.
-- **Kontroll CDE:nä, osa 1**: hae malleja ja asiakirjoja OpenCDE-palvelimen projektista, näe milloin uudempi versio on olemassa, ja näe asiat, jotka osoittavat mallin rakennusosiin.
-- **Kontroll CDE:nä, osa 2**: luo asioita mallin valinnasta näkymällä viewpointina, kommentoi ja vaihda tila, lähetä aineistoja ja tiedostoja palvelimelle, BCF-tiedostot sisään ja ulos, ja itserekisteröinti palvelimille, jotka sallivat sen.
-- **Kontroll CDE:nä, osa 3**: väritä malli asian tilan mukaan, tallenna asiat taulukkona rakennusosineen, työkalu Asiat, koontinäyttö Asioiden tila, Cypher-aloituskoodi Kontrollin IFC-graafille ja työtilapaketit palvelimen kautta.
-- **CDE-kutsujen loki**: OpenCDE-lähteen kortti Loki näyttää jokaisen kutsun API:n, toiminnon, tilan ja keston kanssa, selittää toiminnon ja kopioi sen curl-komentona; X-Request-Id yhdistetään palvelimen lokiin.
+- **Kontroll ja OpenCDE**: OpenCDE-palvelin kuten [Kontroll](https://github.com/marwiss/Kontroll) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa (ks. kohta [Dataspatium ja Kontroll](#dataspatium-ja-kontroll) alla).
 - **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
 - **Yhteensovitus Kontrollin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston kuudella kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
@@ -156,6 +160,8 @@ pyyntölokiinsa. Graafikyselyt ja hallinta ovat määrittelyjen ulkopuolisia lis
 myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin osiin: ilman palvelinta kaikki muu toimii kuten ennen. Kontrollin README ja
 `docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
 [cad-bim.md](cad-bim.md).
+
+Dataspatium 2.0.0 toimii Kontroll 2.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen.
 
 ## Lue lisää
 

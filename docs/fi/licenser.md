@@ -61,3 +61,7 @@ Geodatastyrelsenin (nykyään Klimadatastyrelsen) DAGI 1:500 000 -aineistoa, avo
 mainiten; Norjan rajat ovat Kartverketin N1000 Kartdata -aineistosta ja Suomen rajat Tilastokeskukselta, molemmat
 CC BY 4.0 -lisenssillä (lähdemaininta "© Kartverket" ja "Tilastokeskus"). Ks. `presets/geo/KALLA.md`. Avoimista rajapinnoista noudettuun dataan sovelletaan kunkin julkaisijan lisenssiä, joka näytetään
 lähteen yhteydessä sovelluksessa.
+
+## Kontroll ja Dataspatium
+
+[Kontroll OpenCDE server](https://github.com/marwiss/Kontroll) on erillinen teos AGPL-3.0-lisenssillä eikä osa Dataspatiumia. Sama henkilö omistaa molempien teosten tekijänoikeuden ja on 2026-11-05 sallinut kaksi asiaa niiden välillä: Kontroll toistaa Dataspatiumin ulkoasun (tiedoston `src/ui/design/tokens.css` suunnittelumuuttujat ja komponenttien tyylit on kirjoitettu sinne AGPL:n alaisina, jotta kaksi näyttävät yhdeltä tuotteelta), ja Dataspatium saa käyttää Kontrollin koodia ja resursseja, esimerkiksi testitiedostoja, esimerkkitekstejä ja API-kuvauksia. Kummankin teoksen lisenssit pysyvät muuten muuttumattomina; kaikki muu yhteinen (sanasto, README-rakenne, virhekoodit, kyvykkyysdokumentti) luodaan uudelleen faktoina kumpaankin repositorioon.

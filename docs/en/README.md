@@ -1,6 +1,8 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · **English**
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · [Íslenska](../is/README.md) · **English**
 
-# Dataspatium
+<img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
+
+# Dataspatium OpenCDE client
 
 Dataspatium is a web app for data from source to report: import data from files and open APIs, store and
 manage datasets, review and correct values, analyse with R, visualise and export. Everything runs in your own
@@ -8,6 +10,18 @@ browser. No server, no installation, no accounts. Your data never leaves your co
 yourself.
 
 ![Dataspatium in Process mode with a table of Swedish municipalities](../images/bearbeta.png)
+
+**Contents**
+
+- [Download and get started](#download-and-get-started)
+- [Requirements](#requirements)
+- [What you can do](#what-you-can-do)
+- [Dataspatium and Kontroll](#dataspatium-and-kontroll)
+- [Learn more](#learn-more)
+- [Limitations in brief](#limitations-in-brief)
+- [Bugs and suggestions](#bugs-and-suggestions)
+- [Development](#development)
+- [Licence](#licence)
 
 The interface is available in Swedish, Danish, Norwegian, Finnish, Icelandic and English. The screenshots in the
 documentation show the app in Swedish.
@@ -99,23 +113,13 @@ with a backup or a bundle.
   seasonal adjustment), and a regression can be saved and used as the recipe step Prediction (see [statistik.md](statistik.md)).
 - **Field collection**: a form built on a dataset's columns and rules is sent to Dataspatium Mobil. The phone collects rows without a network, with photo and
   position, and the rows come back as a new version. The photos become an image collection and the positions end up on the map (see [insamling.md](insamling.md)).
-- **Review of the whole file**: what is shared is reviewed in full, with running text, original files, the positions of pictures, the edges of graphs and comments. The modes also follow the kind of dataset better: search hits
-  open where they are, and maps are offered only when the values really are coordinates (see [dela.md](dela.md)).
-- **The modes follow the dataset**: the app shows what a dataset can also be used as and says why, opens Analyse in the right tool and shows what is worth checking. A selection follows between the modes, and the export says what goes along (see [lagen.md](lagen.md)).
-- **Search and draw by what a dataset holds**: search by place, find nodes through their edges and elements through their properties, see pictures on the map and draw charts from edges, properties and quantities (see [soka.md](soka.md)).
-- **Import and Manage follow the file**: the app says what a file is, shows it in its own form and asks about coordinates, coordinate systems and links. Mixed folders are sorted, and Manage shows a picture per dataset (see [lagen.md](lagen.md)).
-- **Process follows the dataset**: comment on a page, a picture, a node or a place, correct text, give pictures a place, repair geometries, find duplicates in graphs and classify elements (see [bearbeta.md](bearbeta.md)).
-- **Search and Analyse follow the dataset**: ask about a property, a neighbour or a place, start from code written for the dataset, see the trend in a time series and count places per area (see [soka.md](soka.md)).
-- **Visualise follows the dataset**: suggestions with real pictures for each kind, cross filters in dashboards and template words that insert a map, a graph, a model or a plan in a document (see [visualisera.md](visualisera.md)).
-- **Export follows the dataset**: KML, GPX and GeoPackage for places, a contact sheet for pictures, a plan map and provisions for plans, quantities in Excel and glTF for models, PDF for drawings (see [lagen.md](lagen.md)).
-- **Share follows the dataset**: choose whether files follow in a bundle, make a dataset a page of its own to send, and see each kind in its own form on the phone (see [dela.md](dela.md)).
+- **The modes follow the dataset's kind**: the app says what a file is and what a dataset can also be used as, asks about coordinates, coordinate systems and links on import, sorts mixed folders and shows a picture per dataset in Manage. Search hits open where they are (page, picture, node, element, plan object or place), you can search by place, find nodes through their edges and elements through their properties, comment on a page, a picture, a node or a place, fix text, set positions on pictures, repair geometries, find duplicates in graphs and classify elements. Analyse opens in the right tool with code written for the dataset, shows the trend of a time series and counts places per area, and a selection travels with you between the modes (see [lagen.md](lagen.md)).
+- **Visualise, Export and Share follow the kind**: chart suggestions with real pictures for every kind, cross-filters in dashboards and template words that put a map, a graph, a model or a plan into a document; KML, GPX and GeoPackage for places, a contact sheet for pictures, plan map and provisions for plans, quantities in Excel and glTF for models and PDF for drawings; in Share you choose whether the files go into the package, turn a dataset into a page of its own to send, and see each kind in its own form on the phone (see [visualisera.md](visualisera.md) and [dela.md](dela.md)).
+- **Review before sharing**: everything that leaves the app is reviewed as a whole, with columns, running text, side tables, original files, picture positions, graph edges, comments and authors; personal data can be kept, pseudonymised or removed in the copy, and the dataset itself never changes (see [dela.md](dela.md)).
 - **Code lists, descriptions and guides**: labels from SNI, SSYK, NACE and other lists with a click, data packages, DCAT-AP-SE, a quality declaration and four guides with real data (see [lagen.md](lagen.md)).
 - **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all six languages.
 - **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
-- **Kontroll as a CDE, part 1**: fetch models and documents from an OpenCDE server's project, see when a newer version exists, and see the issues that point at the elements of the model.
-- **Kontroll as a CDE, part 2**: create issues from the selection in the model with the view as viewpoint, comment and change status, send datasets and files to the server, BCF files in and out, and self-registration against servers that allow it.
-- **Kontroll as a CDE, part 3**: colour the model by issue status, save the issues as a table with the elements, the tool Issues, the dashboard Issue status, starter Cypher for Kontroll's IFC graph, and workspace bundles through the server.
-- **Logging of CDE requests**: the card Log in the OpenCDE source shows every request with API, operation, status and duration, explains the operation and copies it as curl; X-Request-Id is matched with the server's log.
+- **Kontroll and OpenCDE**: an OpenCDE server such as [Kontroll](https://github.com/marwiss/Kontroll) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log (see [Dataspatium and Kontroll](#dataspatium-and-kontroll) below).
 - **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
 - **Coordination with Kontroll, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in six languages and opens a source from the link Open in Dataspatium.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
@@ -154,6 +158,8 @@ graph with Cypher and logs every request with the same X-Request-Id the server w
 OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for the rest of the app: without one, everything else
 works as before. Kontroll's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
+
+Dataspatium 2.0.0 works with Kontroll 2.0.0. Both carry the same release number, so equal numbers belong together.
 
 ## Learn more
 

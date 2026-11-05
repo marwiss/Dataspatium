@@ -57,3 +57,7 @@ umreiknuð í lengd og breidd. Dönsku mörkin eru DAGI 1:500 000 frá Geodatast
 sem nota má og deila með tilvísun í heimild; þau norsku koma úr N1000 Kartdata frá Kartverket og þau finnsku frá Hagstofu
 Finnlands, bæði undir CC BY 4.0 (heimild „© Kartverket“ og „Tilastokeskus / Hagstofa Finnlands“). Sjá `presets/geo/KALLA.md`. Gögn sem sótt eru úr opnu vefþjónustunum falla undir leyfi hvers
 útgefanda, sem birtist með upprunanum í forritinu.
+
+## Kontroll og Dataspatium
+
+[Kontroll OpenCDE server](https://github.com/marwiss/Kontroll) er sjálfstætt verk undir AGPL-3.0 og enginn hluti af Dataspatium. Sama manneskja á höfundarrétt beggja verkanna og heimilaði 2026-11-05 tvennt milli þeirra: Kontroll endurgerir útlit Dataspatium (hönnunarbreyturnar í `src/ui/design/tokens.css` og stílar íhlutanna eru afritaðir þar undir AGPL, svo að þau tvö líti út sem ein vara), og Dataspatium má nota kóða og tilföng úr Kontroll, til dæmis prófunarskrár, sýnitexta og API-lýsingar. Leyfi hvers verks gilda að öðru leyti óbreytt; allt annað sem þau eiga sameiginlegt (orðalisti, README-uppbygging, villukóðar, getuskjal) er endurskapað sem staðreyndir í hverri geymslu.

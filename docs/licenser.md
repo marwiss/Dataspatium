@@ -60,3 +60,7 @@ De danska gränserna är DAGI 1:500 000 från Geodatastyrelsen (nu Klimadatastyr
 och spridas med källangivelse; de norska kommer ur Kartverkets N1000 Kartdata och de finska från Statistikcentralen,
 båda under CC BY 4.0 (källangivelse "© Kartverket" respektive "Tilastokeskus / Statistikcentralen"). Se
 `presets/geo/KALLA.md`.
+
+## Kontroll och Dataspatium
+
+[Kontroll OpenCDE server](https://github.com/marwiss/Kontroll) är ett eget verk under AGPL-3.0 och ingen del av Dataspatium. Samma person äger upphovsrätten till båda verken och har 2026-11-05 tillåtit två saker mellan dem: Kontroll återger Dataspatiums utseende (designvariablerna i `src/ui/design/tokens.css` och komponenternas stilar är avskrivna där under AGPL, så att de två ser ut som en produkt), och Dataspatium får använda kod och resurser ur Kontroll, till exempel testfiler, exempeltexter och API-beskrivningar. Licenserna för respektive verk gäller i övrigt oförändrade; allt annat som är gemensamt (ordlista, README-struktur, felkoder, kapabilitetsdokument) återskapas som fakta i vardera repot.

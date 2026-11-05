@@ -1,6 +1,8 @@
-**Svenska** · [Dansk](docs/da/README.md) · [Norsk](docs/nb/README.md) · [Suomi](docs/fi/README.md) · [Íslenska](docs/is/README.md) · [English](docs/en/README.md)
+**Svenska** · [Dansk](docs/da/README.md) · [Norsk bokmål](docs/nb/README.md) · [Suomi](docs/fi/README.md) · [Íslenska](docs/is/README.md) · [English](docs/en/README.md)
 
-# Dataspatium
+<img src="src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
+
+# Dataspatium OpenCDE-klient
 
 Dataspatium är en webbapp för data från källa till rapport: hämta in data från filer och öppna API:er, lagra och
 hantera datamängder, granska och korrigera värden, analysera med R, visualisera och exportera. Allt körs i din
@@ -8,6 +10,18 @@ egen webbläsare. Ingen server, ingen installation, inga konton. Din data lämna
 exporterar den.
 
 ![Dataspatium i läget Bearbeta med en tabell över Sveriges kommuner](docs/images/bearbeta.png)
+
+**Innehåll**
+
+- [Ladda ned och kom igång](#ladda-ned-och-kom-igång)
+- [Vad som krävs](#vad-som-krävs)
+- [Vad du kan göra](#vad-du-kan-göra)
+- [Dataspatium och Kontroll](#dataspatium-och-kontroll)
+- [Lär dig mer](#lär-dig-mer)
+- [Begränsningar i korthet](#begränsningar-i-korthet)
+- [Fel och förslag](#fel-och-förslag)
+- [Utveckling](#utveckling)
+- [Licens](#licens)
 
 ## Ladda ned och kom igång
 
@@ -103,23 +117,13 @@ ett paket.
   säsongsrensning), och en regression kan sparas och användas som receptsteget Prediktion (se [docs/statistik.md](docs/statistik.md)).
 - **Insamling i fält**: ett formulär byggt på en datamängds kolumner och regler skickas till Dataspatium Mobil. Telefonen samlar in rader utan nät, med
   foto och position, och raderna kommer tillbaka som en ny version. Fotona blir en bildsamling och positionerna hamnar på kartan (se [docs/insamling.md](docs/insamling.md)).
-- **Granskning av hela filen**: det som delas granskas i sin helhet, med löptext, originalfiler, bilders positioner, grafers kanter och kommentarer. Lägena följer dessutom datamängdens slag bättre: sökträffar
-  öppnas där de finns, och kartor erbjuds bara när värdena verkligen är koordinater (se [docs/dela.md](docs/dela.md)).
-- **Lägena följer datamängden**: appen visar vad en datamängd också kan användas som och säger varför, öppnar Analysera i rätt verktyg och visar vad som behöver ses över. Ett urval följer med mellan lägena, och exporten säger vad som följer med (se [docs/lagen.md](docs/lagen.md)).
-- **Sök och rita efter datamängdens innehåll**: sök efter plats, hitta noder via sina kanter och element via sina egenskaper, se bilder på kartan och rita diagram från kanter, egenskaper och mängder (se [docs/soka.md](docs/soka.md)).
-- **Inhämta och Hantera följer filen**: appen säger vad en fil är, visar den i sin form och frågar om koordinater, koordinatsystem och kopplingar. Blandade mappar sorteras, och Hantera visar en bild per datamängd (se [docs/lagen.md](docs/lagen.md)).
-- **Bearbeta följer datamängden**: kommentera en sida, en bild, en nod eller en plats, rätta text, sätt plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera element (se [docs/bearbeta.md](docs/bearbeta.md)).
-- **Söka och Analysera följer datamängden**: fråga om en egenskap, en granne eller en plats, börja från kod skriven för datamängden, se trenden i en tidsserie och räkna platser per område (se [docs/soka.md](docs/soka.md)).
-- **Visualisera följer datamängden**: förslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument (se [docs/visualisera.md](docs/visualisera.md)).
-- **Exportera följer datamängden**: KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller, PDF för ritningar (se [docs/lagen.md](docs/lagen.md)).
-- **Dela följer datamängden**: välj om filerna ska följa med i ett paket, gör en datamängd till en egen sida att skicka, och se varje slag i sin egen form på telefonen (se [docs/dela.md](docs/dela.md)).
+- **Lägena följer datamängdens slag**: appen säger vad en fil är och vad en datamängd också kan användas som, frågar om koordinater, koordinatsystem och kopplingar vid inläsning, sorterar blandade mappar och visar en bild per datamängd i Hantera. Sökträffar öppnas där de finns (sida, bild, nod, byggdel, planobjekt eller plats), du kan söka efter plats, hitta noder via sina kanter och byggdelar via sina egenskaper, kommentera en sida, en bild, en nod eller en plats, rätta text, sätta plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera byggdelar. Analysera öppnar i rätt verktyg med startkod skriven för datamängden, visar trenden i en tidsserie och räknar platser per område, och ett urval följer med mellan lägena (se [docs/lagen.md](docs/lagen.md)).
+- **Visualisera, Exportera och Dela följer slaget**: diagramförslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument; KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller och PDF för ritningar; i Dela väljer du om filerna ska följa med i paketet, gör en datamängd till en egen sida att skicka och ser varje slag i sin egen form på telefonen (se [docs/visualisera.md](docs/visualisera.md) och [docs/dela.md](docs/dela.md)).
+- **Granskning före delning**: allt som lämnar appen granskas i sin helhet, med kolumner, löptext, sidotabeller, originalfiler, bilders positioner, grafers kanter, kommentarer och författare; personuppgifter kan behållas, pseudonymiseras eller tas bort i kopian, och datamängden ändras aldrig (se [docs/dela.md](docs/dela.md)).
 - **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/lagen.md)).
 - **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sex språken.
 - **Härkomst, samarbete och bibliotek**: se var en datamängd kommer ifrån och vad den har blivit, arbeta ihop via GitHub utan att något försvinner, hämta recept och mallar med licens, och publicera arbetsytan som en webbplats.
-- **Kontroll som CDE, del 1**: hämta modeller och dokument ur en OpenCDE-servers projekt, se när en nyare version finns, och se ärendena som pekar på byggdelarna i modellen.
-- **Kontroll som CDE, del 2**: skapa ärenden ur markeringen i modellen med vyn som viewpoint, kommentera och byt status, skicka datamängder och filer till servern, BCF-filer in och ut, och självregistrering mot servrar som tillåter det.
-- **Kontroll som CDE, del 3**: färga modellen efter ärendestatus, spara ärendena som tabell med byggdelarna, verktyget Ärenden, dashboarden Ärendeläge, startkod för Cypher mot Kontrolls IFC-graf och arbetsytepaket genom servern.
-- **Loggning av CDE-anrop**: kortet Logg i OpenCDE-källan visar varje anrop med API, operation, status och tid, förklarar operationen och kopierar den som curl; X-Request-Id paras med serverns logg.
+- **Kontroll och OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) blir en källa i Inhämta med inloggning via OAuth2 och självregistrering där servern tillåter det. Appen hämtar projektets modeller och dokument och säger till när en nyare version finns, visar ärendena som pekar på byggdelarna, skapar ärenden ur markeringen i 3D-vyn med vyn som viewpoint, kommenterar och byter status, färgar modellen efter ärendestatus, sparar ärendena som tabell med verktyget Ärenden och dashboarden Ärendeläge, läser och skriver BCF-filer, skickar datamängder, filer och arbetsytepaket till servern, frågar serverns IFC-graf med Cypher, läser vad servern erbjuder och förklarar dess felkoder, och loggar varje anrop med ett X-Request-Id som paras med serverns begärandelogg (se avsnittet [Dataspatium och Kontroll](#dataspatium-och-kontroll) nedan).
 - **Lätt start**: stora delar som R och Python laddas först när de används, och statusraden visar vad som laddas under tiden.
 - **Samordning med Kontroll, steg 1**: appen läser serverns kapabilitetsdokument, översätter dess felkoder, bär en gemensam ordlista på sex språk och öppnar en källa från länken Öppna i Dataspatium.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
@@ -158,6 +162,8 @@ med OAuth2 och registrerar sig själv som klient när servern tillåter det, hä
 IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern skriver i sin begärandelogg. Frågorna mot grafen och administrationen är tillägg utanför specifikationerna; allt annat går genom de tre OpenCDE-API:erna, så
 andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Kontrolls README och `docs/client-guide.md` beskriver samarbetet från
 serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](docs/cad-bim.md).
+
+Dataspatium 2.0.0 fungerar med Kontroll 2.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop.
 
 ## Lär dig mer
 

@@ -627,7 +627,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/licenser.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5763,
+  "size": 6522,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -783,7 +783,7 @@ Dataspatium.assets.addEntries({
  "docs/da/licenser.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5824,
+  "size": 6570,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -939,7 +939,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/licenser.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5778,
+  "size": 6505,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1095,7 +1095,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/licenser.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6374,
+  "size": 7175,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1251,7 +1251,7 @@ Dataspatium.assets.addEntries({
  "docs/is/licenser.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6037,
+  "size": 6793,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1407,7 +1407,7 @@ Dataspatium.assets.addEntries({
  "docs/en/licenser.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5965,
+  "size": 6717,
   "library": "dataspatium"
  }
 });

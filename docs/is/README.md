@@ -1,12 +1,26 @@
-[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk](../nb/README.md) · [Suomi](../fi/README.md) · **Íslenska** · [English](../en/README.md)
+[Svenska](../../README.md) · [Dansk](../da/README.md) · [Norsk bokmål](../nb/README.md) · [Suomi](../fi/README.md) · **Íslenska** · [English](../en/README.md)
 
-# Dataspatium
+<img src="../../src/ui/design/icon-192.png" alt="" width="64" height="64" align="left">
+
+# Dataspatium OpenCDE-biðlari
 
 Dataspatium er vefforrit fyrir gögn frá uppruna til skýrslu: sæktu gögn úr skrám og opnum vefþjónustum, vistaðu og haltu
 utan um gagnasöfn, farðu yfir og leiðréttu gildi, greindu með R, myndgerðu og fluttu út. Allt keyrir í þínum eigin vafra.
 Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei tölvuna nema þú flytjir þau sjálf(ur) út.
 
 ![Dataspatium í hamnum Vinna með töflu yfir sænsk sveitarfélög](../images/bearbeta.png)
+
+**Efni**
+
+- [Sækja og hefjast handa](#sækja-og-hefjast-handa)
+- [Kröfur](#kröfur)
+- [Hvað þú getur gert](#hvað-þú-getur-gert)
+- [Dataspatium og Kontroll](#dataspatium-og-kontroll)
+- [Lærðu meira](#lærðu-meira)
+- [Takmarkanir í stuttu máli](#takmarkanir-í-stuttu-máli)
+- [Villur og tillögur](#villur-og-tillögur)
+- [Þróun](#þróun)
+- [Leyfi](#leyfi)
 
 Viðmótið er á sænsku, dönsku, norsku, finnsku, íslensku og ensku. Skjámyndirnar í skjöluninni sýna forritið á sænsku.
 
@@ -93,23 +107,13 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   vista og nota sem uppskriftarskrefið Spá (sjá [statistik.md](statistik.md)).
 - **Söfnun á vettvangi**: eyðublað byggt á dálkum og reglum gagnasafns er sent í Dataspatium Mobil. Síminn safnar röðum án nets, með mynd og staðsetningu, og
   raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
-- **Yfirferð allrar skrárinnar**: það sem deilt er er yfirfarið í heild, með samfelldum texta, upprunaskrám, staðsetningu mynda, leggjum neta og athugasemdum. Hamirnir fylgja einnig tegund gagnasafns betur: leitarniðurstöður
-  opnast þar sem þær eru og kort eru aðeins boðin þegar gildin eru í raun hnit (sjá [dela.md](dela.md)).
-- **Hamirnir fylgja gagnasafninu**: forritið sýnir hvað einnig má nota gagnasafn sem og segir hvers vegna, opnar Greina í réttu verkfæri og sýnir hvað er vert að athuga. Val fylgir milli hama og útflutningur segir hvað fylgir með (sjá [lagen.md](lagen.md)).
-- **Leitað og teiknað eftir innihaldi gagnasafnsins**: leitaðu eftir stað, finndu hnúta í gegnum leggi sína og einingar í gegnum eiginleika sína, sjáðu myndir á kortinu og teiknaðu myndrit út frá leggjum, eiginleikum og magni (sjá [soka.md](soka.md)).
-- **Sækja og Umsjón fylgja skránni**: forritið segir hvað skrá er, sýnir hana á sínu formi og spyr um hnit, hnitakerfi og tengsl. Blandaðar möppur eru flokkaðar, og Umsjón sýnir mynd fyrir hvert gagnasafn (sjá [lagen.md](lagen.md)).
-- **Vinna fylgir gagnasafninu**: gerðu athugasemd við síðu, mynd, hnút eða stað, leiðréttu texta, gefðu myndum stað, gerðu við rúmfræði, finndu tvítekningar í netum og flokkaðu einingar (sjá [bearbeta.md](bearbeta.md)).
-- **Leita og Greina fylgja gagnasafninu**: spyrðu um eiginleika, nágranna eða stað, byrjaðu á kóða skrifuðum fyrir gagnasafnið, sjáðu þróun í tímaröð og teldu staði eftir svæði (sjá [soka.md](soka.md)).
-- **Myndgera fylgir gagnasafninu**: tillögur með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðmátsorð sem setja kort, net, líkan eða skipulag í skjal (sjá [visualisera.md](visualisera.md)).
-- **Flytja út fylgir gagnasafninu**: KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagskort og ákvæði fyrir skipulög, magn í Excel og glTF fyrir líkön, PDF fyrir teikningar (sjá [lagen.md](lagen.md)).
-- **Deila fylgir gagnasafninu**: veldu hvort skrárnar fylgi í pakka, gerðu gagnasafn að eigin síðu til að senda, og sjáðu hverja tegund á eigin formi í símanum (sjá [dela.md](dela.md)).
+- **Hamirnir fylgja tegund gagnasafnsins**: forritið segir hvað skrá er og hvað gagnasafn getur líka nýst sem, spyr um hnit, hnitakerfi og tengingar við innlestur, flokkar blandaðar möppur og sýnir mynd fyrir hvert gagnasafn í Umsjón. Leitarniðurstöður opnast þar sem þær eru (síða, mynd, hnútur, byggingarhluti, skipulagshlutur eða staður), þú getur leitað eftir stað, fundið hnúta gegnum leggi sína og byggingarhluta gegnum eiginleika sína, skrifað athugasemd við síðu, mynd, hnút eða stað, lagað texta, sett stað á myndir, gert við rúmfræði, fundið tvítök í netum og flokkað byggingarhluta. Greina opnast í rétta tólinu með upphafskóða skrifuðum fyrir gagnasafnið, sýnir leitni tímaraðar og telur staði eftir svæðum, og val fylgir með milli hamanna (sjá [lagen.md](lagen.md)).
+- **Myndgera, Flytja út og Deila fylgja tegundinni**: tillögur að gröfum með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðorð sem setja kort, net, líkan eða skipulag inn í skjal; KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagsuppdráttur og skipulagsákvæði fyrir skipulag, magntölur í Excel og glTF fyrir líkön og PDF fyrir teikningar; í Deila velur þú hvort skrárnar fylgi með í pakkanum, gerir gagnasafn að eigin síðu til að senda og sérð hverja tegund í sinni eigin mynd í símanum (sjá [visualisera.md](visualisera.md) og [dela.md](dela.md)).
+- **Yfirferð áður en deilt er**: allt sem fer úr forritinu er yfirfarið í heild, með dálkum, lesmáli, hliðartöflum, upprunaskrám, staðsetningu mynda, leggjum neta, athugasemdum og höfundum; persónuupplýsingar má halda, dulnefna eða fjarlægja í afritinu, og gagnasafnið sjálft breytist aldrei (sjá [dela.md](dela.md)).
 - **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
 - **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sex tungumálunum.
 - **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
-- **Kontroll sem CDE, 1. hluti**: sæktu líkön og skjöl úr verkefni OpenCDE-þjóns, sjáðu hvenær nýrri útgáfa er til, og sjáðu málin sem vísa á byggingarhluta líkansins.
-- **Kontroll sem CDE, 2. hluti**: búðu til mál úr merkingunni í líkaninu með sýnina sem viewpoint, skrifaðu athugasemdir og breyttu stöðu, sendu gagnasöfn og skrár til þjónsins, BCF-skrár inn og út, og sjálfskráning gegn þjónum sem leyfa það.
-- **Kontroll sem CDE, 3. hluti**: litaðu líkanið eftir stöðu mála, vistaðu málin sem töflu með byggingarhlutunum, verkfærið Mál, mælaborðið Staða mála, upphafskóði fyrir Cypher gegn IFC-grafi Kontroll og vinnusvæðispakkar í gegnum þjóninn.
-- **Skráning CDE-kalla**: kortið Skrá í OpenCDE-uppsprettunni sýnir hvert kall með API, aðgerð, stöðu og tíma, skýrir aðgerðina og afritar hana sem curl; X-Request-Id er parað við skrá þjónsins.
+- **Kontroll og OpenCDE**: OpenCDE-þjónn eins og [Kontroll](https://github.com/marwiss/Kontroll) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins (sjá kaflann [Dataspatium og Kontroll](#dataspatium-og-kontroll) hér fyrir neðan).
 - **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
 - **Samræming við Kontroll, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sex tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
@@ -146,6 +150,8 @@ skráir sig sjálft sem biðlara þegar þjónninn leyfir það, sækir líkön 
 hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. Fyrirspurnirnar í grafið og stjórnunin eru viðbætur utan forskriftanna; allt annað fer í gegnum þrjú OpenCDE-API, svo aðrir
 OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
+
+Dataspatium 2.0.0 virkar með Kontroll 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman.
 
 ## Lærðu meira
 
