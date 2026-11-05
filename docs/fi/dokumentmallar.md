@@ -71,6 +71,8 @@ kuten `{{diagram}}`.
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` ja `{{ar_unik}}` sarakkeittain sekä
 `{{dubbletter}}`; ne ovat käytettävissä, kun malli on merkitty koodikirjaksi (valmiin mallin kopio säilyttää merkinnän).
 
+`{{karta "aineisto"}}`, `{{graf "aineisto"}}`, `{{modell "aineisto"}}` ja `{{plan "aineisto"}}` lisäävät aineiston oman kuvan ilman tallennettua kaaviota. Aineisto annetaan nimellä tai lyhytnimellä, ja leveys ja korkeus kuten kohdassa `{{diagram}}`. Malli kertoo, jos aineisto puuttuu tai sitä ei voi piirtää niin.
+
 ## Muodot
 
 | Muoto | Mitä saat |

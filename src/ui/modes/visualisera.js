@@ -109,9 +109,27 @@
           const stands = (k) => (k === 'graph' || k === 'model') && ds.kind !== k && !all.some((d) => d.kind === k);
           const fits = (k) => k === D.require('data/kinds').of(ds).chart || (k === 'map' && onMap);
           const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].slice().sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
-          const body = h('div', { class: 'dm-stack-sm' }, order.map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, disabled: stands(k) ? '' : null, onclick: () => { kind = k; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },
+          // What fits this dataset comes first, as real pictures, drawn one at a time while the dialog is open.
+          let suggested = null;
+          let closeDialog = null;
+          const suggestions = h('div', { class: 'dm-suggest-grid' });
+          const suggestHead = h('h4', { text: t('viz.suggest.title'), hidden: '' });
+          const suggest = D.require('viz/suggest');
+          suggest.forDataset(ds).then(async (list) => {
+            if (list.length) suggestHead.hidden = false;
+            for (const item of list) {
+              const picture = h('div', { class: 'dm-suggest-picture' });
+              suggestions.appendChild(h('button', { type: 'button', class: 'dm-suggest', onclick: () => { suggested = item.chart; if (closeDialog) closeDialog(false); } }, picture, h('span', { class: 'dm-small', text: t(item.key, item.params) })));
+              const text = await suggest.preview(item.chart).catch((err) => { D.log('suggest', err); return null; });
+              if (text) picture.appendChild(D.require('ui/kinds/sketches').imageOfSvg(text, t(item.key, item.params)));
+              else picture.appendChild(ui.icon(D.require('data/kinds').of(ds).icon, 32));
+            }
+          }).catch((err) => D.log('suggest', err));
+          const body = (finish) => { closeDialog = finish; return h('div', { class: 'dm-stack' }, suggestHead, suggestions, h('h4', { text: t('viz.suggest.own') }), kindTiles); };
+          const kindTiles = h('div', { class: 'dm-stack-sm' }, order.map((k) => h('button', { type: 'button', class: 'dm-op-tile', 'data-kind': k, disabled: stands(k) ? '' : null, onclick: () => { kind = k; if (closeDialog) closeDialog(false); } },
             h('strong', { text: t('viz.kind.' + k) }), h('span', { class: 'dm-help', text: stands(k) ? t('viz.kind.need.' + k) : t('viz.kind.' + k + '.help') }))));
-          await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, actions: [{ label: t('common.cancel'), value: false }] });
+          await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }] });
+          if (suggested) { await openChart(suggested, true); return; }
           if (!kind) return;
           // A graph or model chart starts from a dataset it can draw.
           const source = (kind === 'graph' || kind === 'model') && ds.kind !== kind ? store.get().datasets.find((d) => d.kind === kind) : ds;

@@ -18,6 +18,8 @@ breytt undir Fleiri valkostir).
 
 Net má teikna út frá leggjum sínum og líkan út frá eiginleikum sínum eða magni. Veldu *Tafla* í haus myndritsins, og smiðurinn skiptir um dálka.
 
+Efst í glugganum eru **tillögur** fyrir valið gagnasafn sýndar sem raunverulegar myndir: lína fyrir tímaröð, kort fyrir staði, súlur fyrir það sem hægt er að telja, netkerfi nets eða magn líkans. Smelltu á tillögu til að opna hana og halda áfram.
+
 ## Myndritasmiðurinn (Vega-Lite)
 
 | Myndritagerð | Notað fyrir |
@@ -177,6 +179,8 @@ skipunin *Kynna: nafn* í skipanaspjaldinu. Yfirlitið sýnir öll myndrit; hæg
 Up/Page Down) fara eitt myndrit í einu í fullri stærð, Home sýnir yfirlitið aftur, F víxlar fullum skjá þar sem
 vafrinn leyfir það og Esc lýkur. Sameiginlegu síurnar haldast í röðinni efst og gilda um öll myndrit. Engu er breytt
 í mælaborðinu meðan á kynningunni stendur.
+
+**Krosssía.** Smelltu á súlu í myndriti og hin myndritin sýna aðeins það gildi, ef þau hafa dálkinn. Myndritið sem þú smelltir á helst heilt, svo þú getir valið aðra súlu. Sían sést fyrir ofan myndritin og er fjarlægð með smelli. Ef þú flytur mælaborðið út fylgir sían með.
 
 ## Deila myndritum
 

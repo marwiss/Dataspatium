@@ -57,6 +57,8 @@
         const prep = await prepareVega(chart, options);
         container.replaceChildren();
         const emb = await vegaRender.embed(container, prep.spec, { renderer: 'canvas', tooltip: true, transparent: false });
+        // A click on a mark says which row it stands for, for filters across the charts of a dashboard.
+        if (options.onPick) emb.view.addEventListener('click', (_event, item) => { if (item && item.datum) options.onPick(item.datum); });
         return {
           kind: 'vega', info: { rows: prep.data.rows.length, total: prep.data.total, truncated: prep.data.truncated, aggregated: prep.data.aggregated, spec: prep.spec },
           svg: async () => { const view = await vegaRender.headless(prep.spec, { width: container.clientWidth ? container.clientWidth - 24 : 640 }); return vegaRender.toSvg(view); },

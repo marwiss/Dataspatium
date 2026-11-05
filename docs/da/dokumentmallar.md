@@ -69,6 +69,8 @@ angivne bredde (standard højst 720 px; `hojd` kan også angives). Tagget virker
 `{{saknade}}`, `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` pr. kolonne samt
 `{{dubbletter}}`; de findes, når skabelonen er markeret som kodebog (en kopi af den indbyggede skabelon bevarer det).
 
+`{{karta "datasæt"}}`, `{{graf "datasæt"}}`, `{{modell "datasæt"}}` og `{{plan "datasæt"}}` indsætter datasættets eget billede uden et gemt diagram. Datasættet angives med navn eller kortnavn, og bredde og højde som for `{{diagram}}`. En skabelon siger til, hvis datasættet mangler eller ikke kan tegnes på den måde.
+
 ## Formater
 
 | Format | Hvad du får |

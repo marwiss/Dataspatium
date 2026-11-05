@@ -69,6 +69,8 @@ först i mallens datamängd och sedan i alla bildsamlingar, förhandsvisningen a
 kolumn samt `{{dubbletter}}`; de finns när mallen är markerad som kodbok (en kopia av den inbyggda mallen behåller
 det).
 
+`{{karta "datamängd"}}`, `{{graf "datamängd"}}`, `{{modell "datamängd"}}` och `{{plan "datamängd"}}` lägger in datamängdens egen bild utan att du behöver spara ett diagram. Datamängden anges med namn eller kortnamn, och bredd och höjd anges som för `{{diagram}}`. En mall säger till om datamängden saknas eller inte kan ritas på det sättet.
+
 ## Format
 
 | Format | Vad du får |

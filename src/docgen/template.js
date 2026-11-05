@@ -5,6 +5,7 @@
  * resolved before Mustache runs:
  *   {{#tabell}}kolumner: a, b; sortera: b fallande; topp: 20; filter: lan = Skåne län; rubrik: …{{/tabell}}
  *   {{diagram "Namn på sparat diagram" | bredd: 600 | hojd: 320}}
+ *   {{karta "Datamängd"}}, {{graf "Datamängd"}}, {{modell "Datamängd"}} and {{plan "Datamängd"}}
  *   {{sidbrytning}}
  * Mustache's HTML escaping is turned off here; every output builder escapes for its own format.
  */
@@ -17,6 +18,9 @@
     const RE_CHART = /\{\{diagram\s+"([^"]+)"([^}]*)\}\}/g;
     /** {{bild "fil.jpg" | bredd: 400}}: a picture from an image dataset (the context dataset first, then any other). */
     const RE_IMAGE = /\{\{bild\s+"([^"]+)"([^}]*)\}\}/g;
+    /** {{karta "datamängd" | bredd: 600}} and the same for graf, modell and plan: a dataset's own picture, without a saved chart. */
+    const RE_OWN = /\{\{(karta|graf|modell|plan)\s+"([^"]+)"([^}]*)\}\}/g;
+    const OWN_KIND = { karta: 'map', plan: 'map', graf: 'graph', modell: 'model' };
     const RE_PAGEBREAK = /\{\{sidbrytning\}\}/g;
     const t = i18n.t;
 
@@ -117,10 +121,21 @@
     function pngSize(buf) {
       try { const v = new DataView(buf); return { width: v.getUint32(16), height: v.getUint32(20) }; } catch (_e) { return { width: 0, height: 0 }; }
     }
+    /** A dataset's own picture, found by its name or short name. */
+    async function resolveOwn(spec, ctx) {
+      const ds = (await datasets.list()).find((d) => d.name === spec.name || d.shortName === spec.name);
+      if (!ds) return { error: D.t('doc.err.dataset.gone', { name: spec.name }), caption: spec.name };
+      const fits = spec.own === 'map' ? await D.require('viz/leaflet').drawable(ds.id) : ds.kind === spec.own;
+      if (!fits) return { error: D.t('doc.err.dataset.kind', { name: spec.name }), caption: spec.name };
+      return drawChart(await D.require('viz/suggest').ownChart(ds, spec.own), spec, ctx);
+    }
     async function resolveChart(spec, ctx) {
       const list = await charts.list();
       const chart = list.find((c) => c.name === spec.name);
       if (!chart) return { error: D.t('doc.err.chart.gone', { name: spec.name }), caption: spec.name };
+      return drawChart(chart, spec, ctx);
+    }
+    async function drawChart(chart, spec, ctx) {
       // R and Python charts render headless through their engines (viz/code-charts) like the other kinds.
       const width = spec.opts.bredd || 720;
       try {
@@ -170,9 +185,10 @@
       text = text.replace(RE_TABLE, (m, spec) => { tableSpecs.push(spec); return `\n${TOKEN}TABLE:${tableSpecs.length - 1}${TOKEN}\n`; });
       text = text.replace(RE_CHART, (m, name, rest) => { chartSpecs.push({ name, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
       text = text.replace(RE_IMAGE, (m, name, rest) => { chartSpecs.push({ name, image: true, opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
+      text = text.replace(RE_OWN, (m, tag, name, rest) => { chartSpecs.push({ name, own: OWN_KIND[tag], opts: parseChartOptions(rest) }); return `\n${TOKEN}IMAGE:${chartSpecs.length - 1}${TOKEN}\n`; });
       text = text.replace(RE_PAGEBREAK, `\n${TOKEN}PAGEBREAK${TOKEN}\n`);
       const tables = []; for (const spec of tableSpecs) tables.push(await resolveTable(parseTableSpec(spec), ctx));
-      const images = []; for (const spec of chartSpecs) images.push(spec.image ? await resolveImage(spec, ctx) : await resolveChart(spec, ctx));
+      const images = []; for (const spec of chartSpecs) images.push(spec.image ? await resolveImage(spec, ctx) : spec.own ? await resolveOwn(spec, ctx) : await resolveChart(spec, ctx));
       let rendered;
       try { rendered = M.render(text, ctx); } catch (err) { throw new Error(D.t('doc.err.template', { message: (err && err.message) || err })); }
       return { text: rendered, tables, images };

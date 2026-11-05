@@ -28,6 +28,25 @@
 
       function destroy() { clearTimeout(saveTimer); for (const hd of handles) { try { hd.finalize(); } catch (_e) { /* ignore */ } } handles.length = 0; }
       const extraFilters = () => dashboards.toExtraFilters(values);
+      /** A click on a bar narrows the other charts, the ones that have the column. @type {{column: string, value: any, chartId: any}|null} */
+      let cross = null;
+      const crossFilter = () => (cross ? [{ field: cross.column, op: '=', value: cross.value }] : []);
+      /** What a chart is narrowed by. The chart that was clicked stays whole, so that another bar can be chosen. */
+      const filtersFor = (chart) => extraFilters().concat(cross && cross.chartId !== chart.id ? crossFilter() : []);
+      /** The column a mark of this chart stands for, when it stands for one value. */
+      function pickedColumn(chart) {
+        const state = chart.vega && chart.vega.state;
+        const x = state && state.x;
+        return x && x.field && !x.bin && (x.type === 'nominal' || x.type === 'ordinal') && !chart.vega.table ? x.field : null;
+      }
+      function pick(chart, datum) {
+        const column = pickedColumn(chart);
+        if (!column || datum[column] === undefined) return;
+        const same = cross && cross.column === column && cross.value === datum[column] && cross.chartId === chart.id;
+        cross = same ? null : { column, value: datum[column], chartId: chart.id };
+        renderFilters().catch((err) => D.log('dashboard', err));
+        renderGrid();
+      }
 
       /** Persist shortly after a change. */
       function changed(immediate = false) {
@@ -81,7 +100,8 @@
           sel.addEventListener('change', () => { values[f.column] = sel.value === '' ? '' : vizData.coerce(sel.value, col.type); renderGrid(); });
           items.push(sel);
         }
-        if (items.length) items.push(basic.button({ label: t('dash.filter.clear'), icon: 'x', size: 'sm', variant: 'ghost', onClick: () => { values = {}; renderFilters().then(renderGrid); } }));
+        if (cross) items.push(h('span', { class: 'dm-cross-filter' }, h('dm-badge', { text: t('dash.cross.active', { column: cross.column, value: String(cross.value) }) }), basic.button({ label: t('dash.cross.clear'), icon: 'x', size: 'sm', variant: 'ghost', 'icon-only': true, onClick: () => { cross = null; renderFilters().catch((err) => D.log('dashboard', err)); renderGrid(); } })));
+        if (items.length) items.push(basic.button({ label: t('dash.filter.clear'), icon: 'x', size: 'sm', variant: 'ghost', onClick: () => { cross = null; values = {}; renderFilters().then(renderGrid); } }));
         replace(filterBar, items);
         filterBar.hidden = !items.length;
       }
@@ -112,7 +132,7 @@
           if (chart.kind === 'map') holder.style.height = '360px';
           if (chart.kind === 'python' && chart.python && chart.python.plotly) { holder.style.height = '360px'; D.require('viz/plotly').render(holder, chart.python.plotly).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }))); }
           else if (D.require('viz/code-charts').isCode(chart.kind)) replace(holder, chart.thumbnail ? h('img', { class: 'dm-gallery-thumb', src: chart.thumbnail, alt: chart.name }) : h('p', { class: 'dm-help', text: t('dash.code.note') }));
-          else render.renderInto(chart, holder, { extraFilters: extraFilters() }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
+          else render.renderInto(chart, holder, { extraFilters: filtersFor(chart), onPick: pickedColumn(chart) ? (datum) => pick(chart, datum) : undefined }).then((hd) => { if (seq === renderSeq) handles.push(hd); else hd.finalize(); }).catch((err) => replace(holder, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })));
           return card;
         }));
       }
@@ -166,7 +186,7 @@
       async function exportAs(kind) {
         const toast = overlays.toast.show(t('common.loading'), { kind: 'info', timeout: 0 });
         try {
-          const opts = { extraFilters: extraFilters(), filtersLabel: t('dash.filters.label'), generatedText: t('dash.html.generated', { date: i18n.formatDateTime(new Date()) }) };
+          const opts = { extraFilters: extraFilters().concat(crossFilter()), filtersLabel: t('dash.filters.label'), generatedText: t('dash.html.generated', { date: i18n.formatDateTime(new Date()) }) };
           if (kind === 'html') {
             const blob = await dashboards.toHtml(dash, opts);
             const name = files.safeName(dash.name || 'dashboard', 'html');

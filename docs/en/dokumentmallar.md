@@ -73,6 +73,8 @@ batch runs like `{{diagram}}`.
 and `{{dubbletter}}`; they exist when the template is marked as a codebook (a copy of the built-in template keeps
 that).
 
+`{{karta "dataset"}}`, `{{graf "dataset"}}`, `{{modell "dataset"}}` and `{{plan "dataset"}}` insert the dataset's own picture without a saved chart. The dataset is given by name or short name, and width and height as for `{{diagram}}`. A template says so if the dataset is missing or cannot be drawn that way.
+
 ## Formats
 
 | Format | What you get |

@@ -67,6 +67,8 @@ leituð í gagnasafni sniðmátsins og síðan í öllum myndasöfnum, forskoðu
 `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` fyrir hvern dálk auk
 `{{dubbletter}}`; þær eru til þegar sniðið er merkt sem kóðabók (afrit af innbyggða sniðinu heldur því).
 
+`{{karta "gagnasafn"}}`, `{{graf "gagnasafn"}}`, `{{modell "gagnasafn"}}` og `{{plan "gagnasafn"}}` setja inn eigin mynd gagnasafnsins án vistaðs myndrits. Gagnasafnið er gefið með nafni eða stuttnafni, og breidd og hæð eins og fyrir `{{diagram}}`. Sniðmát lætur vita ef gagnasafnið vantar eða ekki er hægt að teikna það þannig.
+
 ## Snið skráa
 
 | Snið | Hvað þú færð |

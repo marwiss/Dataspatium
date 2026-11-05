@@ -19,6 +19,8 @@ Det, der passer til datasættet, står først i dialogen. En diagramtype, der ik
 
 En graf kan tegnes ud fra sine kanter og en model ud fra sine egenskaber eller mængder. Vælg *Tabel* i diagrammets overskrift, så skifter byggeren kolonner.
 
+Øverst i dialogen vises **forslag** til det valgte datasæt som rigtige billeder: en linje til en tidsserie, et kort til steder, søjler til det, der kan tælles, en grafs netværk eller en models mængder. Klik på et forslag for at åbne det og arbejde videre.
+
 ## Diagrambyggeren (Vega-Lite)
 
 | Diagramtype | Bruges til |
@@ -182,6 +184,8 @@ titelrække og kommandoen *Præsentér: navn* i kommandopaletten. Oversigten vis
 venstrepil (eller mellemrum og Page Up/Page Down) går ét diagram ad gangen i stor størrelse, Home viser oversigten
 igen, F skifter fuld skærm, hvor browseren tillader det, og Esc afslutter. De fælles filtre bliver i rækken øverst
 og gælder alle diagrammer. Intet ændres i dashboardet under præsentationen.
+
+**Krydsfilter.** Klik på en søjle i et diagram, så viser de andre diagrammer kun den værdi, hvis de har kolonnen. Diagrammet, du klikkede i, bevares helt, så du kan vælge en anden søjle. Filteret står over diagrammerne og fjernes med et klik. Eksporterer du dashboardet, følger filteret med.
 
 ## Del diagrammer
 

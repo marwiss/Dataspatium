@@ -19,6 +19,8 @@ Det som passar datamängden står först i dialogen. Ett diagramslag som inte ka
 
 En graf kan ritas från sina kanter och en modell från sina egenskaper eller mängder. Välj *Tabell* i diagrammets rubrik, så byter byggaren kolumner.
 
+Överst i dialogen visas **förslag** för den valda datamängden som riktiga bilder: en linje för en tidsserie, en karta för platser, staplar för det som går att räkna, en grafs nätverk eller en modells mängder. Klicka på ett förslag för att öppna det och arbeta vidare.
+
 ## Diagrambyggaren (Vega-Lite)
 
 | Diagramtyp | Används för |
@@ -189,6 +191,8 @@ rubrikrad och kommandot *Presentera: namn* i kommandopaletten. Översikten visar
 (eller mellanslag och Page Up/Page Down) går ett diagram i taget i stor storlek, Home visar översikten igen, F
 växlar helskärm där webbläsaren tillåter det och Esc avslutar. De gemensamma filtren finns kvar i raden överst och
 gäller alla diagram. Inget ändras i dashboarden under presentationen.
+
+**Korsfilter.** Klicka på en stapel i ett diagram så visar de andra diagrammen bara det värdet, om de har kolumnen. Diagrammet du klickade i behålls helt, så att du kan välja en annan stapel. Filtret står över diagrammen och tas bort med ett klick. Exporterar du dashboarden följer filtret med.
 
 ## Dela diagram
 

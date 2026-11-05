@@ -19,6 +19,8 @@ Det som passer datasettet, står først i dialogen. En diagramtype som ikke kan 
 
 En graf kan tegnes ut fra kantene og en modell ut fra egenskapene eller mengdene. Velg *Tabell* i diagrammets overskrift, så bytter byggeren kolonner.
 
+Øverst i dialogen vises **forslag** for det valgte datasettet som ekte bilder: en linje for en tidsserie, et kart for steder, stolper for det som kan telles, en grafs nettverk eller en modells mengder. Klikk på et forslag for å åpne det og arbeide videre.
+
 ## Diagrambyggeren (Vega-Lite)
 
 | Diagramtype | Brukes til |
@@ -182,6 +184,8 @@ tittelrad og kommandoen *Presenter: navn* i kommandopaletten. Oversikten viser a
 (eller mellomrom og Page Up/Page Down) går ett diagram om gangen i stor størrelse, Home viser oversikten igjen, F
 veksler fullskjerm der nettleseren tillater det, og Esc avslutter. De felles filtrene blir værende i raden øverst og
 gjelder alle diagrammer. Ingenting endres i dashbordet under presentasjonen.
+
+**Kryssfilter.** Klikk på en stolpe i et diagram, så viser de andre diagrammene bare den verdien, hvis de har kolonnen. Diagrammet du klikket i, beholdes helt, slik at du kan velge en annen stolpe. Filteret står over diagrammene og fjernes med et klikk. Eksporterer du dashbordet, følger filteret med.
 
 ## Del diagrammer
 

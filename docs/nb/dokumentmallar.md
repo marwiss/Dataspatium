@@ -68,6 +68,8 @@ først i malens datasett og deretter i alle bildesamlinger, forhåndsvisningen b
 `{{unika}}`, `{{minsta}}`, `{{storsta}}`, `{{medel}}`, `{{anmarkningar}}` og `{{ar_unik}}` per kolonne samt `{{dubbletter}}`;
 de finnes når malen er merket som kodebok (en kopi av den innebygde malen beholder det).
 
+`{{karta "datasett"}}`, `{{graf "datasett"}}`, `{{modell "datasett"}}` og `{{plan "datasett"}}` setter inn datasettets eget bilde uten et lagret diagram. Datasettet angis med navn eller kortnavn, og bredde og høyde som for `{{diagram}}`. En mal sier fra hvis datasettet mangler eller ikke kan tegnes på den måten.
+
 ## Formater
 
 | Format | Hva du får |

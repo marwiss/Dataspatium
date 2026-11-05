@@ -529,6 +529,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `analysis/starters` skriver kod för en datamängd efter slag och egenskaper, och testerna kör varje bit på varje slag. `analysis/querybuilder` har villkor efter slag (`special`: property, neighbour, within, place). `prepare` hittar raderna för en plats på en kopia, så att de inte hamnar i en sparad lista. `engines/r/package-index` lägger till paket som våra egna hjälpfunktioner behöver, till exempel jsonlite för `dm_read_edges`.
 
+`viz/suggest` ger diagram som passar en datamängd och ritar dem som riktiga bilder. `ownChart` används också av dokumentmallarnas `{{karta}}`, `{{graf}}`, `{{modell}}` och `{{plan}}`. `render.renderInto` tar `onPick`, som en dashboard använder för korsfilter: en vald stapel läggs som filter på de andra diagrammen, inte på det som klickades.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

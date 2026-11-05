@@ -19,6 +19,8 @@ Aineistoon sopiva on valintaikkunassa ensimmäisenä. Kaaviotyyppi, joka ei voi 
 
 Graafin voi piirtää sen särmistä ja mallin sen ominaisuuksista tai määristä. Valitse *Taulukko* kaavion otsikosta, niin rakentaja vaihtaa sarakkeet.
 
+Valintaikkunan yläosassa näytetään **ehdotukset** valitulle aineistolle oikeina kuvina: viiva aikasarjalle, kartta paikoille, pylväät sille, mitä voi laskea, graafin verkko tai mallin määrät. Napsauta ehdotusta avataksesi sen ja jatkaaksesi työtä.
+
 ## Kaaviorakentaja (Vega-Lite)
 
 | Kaaviotyyppi | Käyttö |
@@ -187,6 +189,8 @@ otsikkorivillä ja komento *Esitä: nimi* komentopaletissa. Yleiskuva näyttää
 nuolinäppäin (tai välilyönti ja Page Up/Page Down) näyttävät kaavion kerrallaan suurena, Home palauttaa
 yleiskuvan, F vaihtaa koko näytön, jos selain sen sallii, ja Esc lopettaa. Yhteiset suodattimet pysyvät ylärivillä
 ja koskevat kaikkia kaavioita. Mikään ei muutu kojelaudassa esityksen aikana.
+
+**Ristisuodatin.** Napsauta kaavion pylvästä, niin muut kaaviot näyttävät vain sen arvon, jos niillä on sarake. Napsauttamasi kaavio säilyy kokonaisena, joten voit valita toisen pylvään. Suodatin näkyy kaavioiden yläpuolella ja poistetaan napsautuksella. Jos viet kojelaudan, suodatin seuraa mukana.
 
 ## Kaavioiden jakaminen
 

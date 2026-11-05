@@ -19,6 +19,8 @@ What fits the dataset comes first in the dialog. A chart kind that cannot work i
 
 A graph can be drawn from its edges and a model from its properties or quantities. Choose *Table* in the head of the chart, and the builder changes columns.
 
+At the top of the dialog, **suggestions** for the chosen dataset are shown as real pictures: a line for a time series, a map for places, bars for what can be counted, a graph's network or a model's quantities. Click a suggestion to open it and work on.
+
 ## The chart builder (Vega-Lite)
 
 | Chart type | Used for |
@@ -187,6 +189,8 @@ dashboard's title row and the command *Present: name* in the command palette. Th
 right and left arrows (or space and Page Up/Page Down) go one chart at a time at full size, Home shows the overview
 again, F toggles full screen where the browser allows it and Esc ends. The shared filters stay in the bar at the top
 and apply to every chart. Nothing in the dashboard changes during the presentation.
+
+**Cross filter.** Click a bar in a chart and the other charts show only that value, if they have the column. The chart you clicked stays whole, so that you can choose another bar. The filter is shown above the charts and removed with a click. If you export the dashboard, the filter follows.
 
 ## Sharing charts
 
