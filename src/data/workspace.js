@@ -59,7 +59,7 @@
         // A bundle leaves the app, so it is always a clean copy; a backup and a sync must come back exactly as they were.
         if (!only || only.has(meta.id)) files[path] = new Uint8Array(await (options.kind === 'bundle' || tr ? D.require('data/share-scan').copy(meta.id, tr || {}) : datasets.exportBytes(meta.id)));
         const dropped = tr ? (tr.drop || []).length : 0;
-        entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
+        entries.push({ id: meta.id, kind: meta.kind, name: meta.name, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
       }
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
       const vizCharts = optional('viz/charts');

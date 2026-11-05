@@ -46,6 +46,8 @@ den från de block som redan kommit fram när ni ansluter igen.
   som app; filerna hamnar under *Mottaget*.
 - *Inställningar* har telefonens namn (det datorn visar), dess kod och språk.
 
+En datamängd visas i sin egen form: bilder att bläddra i, dokument att läsa, platser som punkter, en grafs noder med antal kanter, vad en modell består av och en plans bestämmelser. Raderna finns under *Raderna*.
+
 ## Dator till dator
 
 Välj *Annan dator (klistra in kod)* på den ena datorn och klistra in koden från den andra datorns *Visa

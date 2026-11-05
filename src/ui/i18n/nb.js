@@ -4491,5 +4491,11 @@
     'export.format.model-glb': '3D-modellen som glTF',
     'export.quantities.sums': 'Summer',
     'export.quantities.all': 'Alle verdier',
+    'bundle.files.originals': 'Originalfilene',
+    'bundle.files.pictures': 'Bildene',
+    'dela.publish.datasets.help': 'En side som viser datasettet i sin egen form og kan sendes som én fil. Den går gjennom gjennomgangen først.',
+    'viewer.filter': 'Filtrer',
+    'viewer.rows.first': 'Viser de første {n} av {total}.',
+    'mobile.rows': 'Radene',
   }));
 })();

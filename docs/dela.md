@@ -13,6 +13,8 @@ med en datamängd vald finns också *Paketera bara den*. Mottagaren öppnar pake
 och ändringar innan något tas in. Inspektören visar hur mycket som finns att dela. Se också
 [format.md](format.md) om paketets uppbyggnad.
 
+**Filerna.** En datamängd med filer visar hur stora de är, och du kan låta dem stanna hemma för att göra paketet mindre. Raderna följer med. Utan sina filer visar en bildsamling bara uppgifterna om bilderna, och ett dokument sin text.
+
 ## GitHub
 
 Arbetsytan som en mapp i ett GitHub-repo, helst privat. Ange repo (`ägare/namn`), gren och mapp, och en finkornig
@@ -70,6 +72,8 @@ mobilsidan.
 En fristående HTML-fil som fungerar utan Dataspatium och kan läggas på ett intranät eller skickas: dashboards
 (med diagrammen inbäddade) och dokument ur mallar, fyllda med den valda datamängden. Publicerade filer innehåller
 data och diagram i klartext; dela dem bara med dem som får se uppgifterna.
+
+**En datamängd som egen sida.** Under Datamängder blir en datamängd en sida i sin egen form: en text att läsa, bilder att bläddra i, en karta, ett nätverk eller en tabell att filtrera. Sidan hämtar inget från nätet och kan skickas som en enda fil. Den går igenom granskningen först och visar högst 2 000 rader eller 100 bilder.
 
 ## Ta emot
 

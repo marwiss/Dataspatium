@@ -4491,5 +4491,11 @@
     'export.format.model-glb': '3D-malli glTF-muodossa',
     'export.quantities.sums': 'Summat',
     'export.quantities.all': 'Kaikki arvot',
+    'bundle.files.originals': 'Alkuperäiset tiedostot',
+    'bundle.files.pictures': 'Kuvat',
+    'dela.publish.datasets.help': 'Sivu, joka näyttää aineiston omassa muodossaan ja jonka voi lähettää yhtenä tiedostona. Se käy ensin läpi tarkistuksen.',
+    'viewer.filter': 'Suodata',
+    'viewer.rows.first': 'Näytetään ensimmäiset {n}/{total}.',
+    'mobile.rows': 'Rivit',
   }));
 })();

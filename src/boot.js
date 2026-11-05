@@ -63,6 +63,7 @@
     'src/ui/components/index.js',
     'src/ui/share/qr.js',
     'src/data/field-form.js',
+    'src/mobile/kind-views.js',
     'src/mobile/field.js',
     'src/mobile/app.js',
   ]);
@@ -291,6 +292,7 @@
     'src/ui/kinds/sketches.js',
     'src/ui/kinds/dataset-picture.js',
     'src/analysis/starters.js',
+    'src/docgen/viewers.js',
     'src/viz/plan-map.js',
     'src/io/export-kinds.js',
     'src/viz/suggest.js',
@@ -321,6 +323,7 @@
     'src/app.js',
     // The mobile app is small and part of the test page; m/index.html loads it through the MOBILE list above.
     'src/data/field-form.js',
+    'src/mobile/kind-views.js',
     'src/mobile/field.js',
     'src/mobile/app.js',
   ]);

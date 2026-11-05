@@ -12,6 +12,8 @@ skriftum, ásamt skilaboðum, nafni sendanda og breytingaskrá yfir það sem ge
 aðeins því*. Viðtakandinn opnar pakkann undir *Taka á móti* og sér skilaboð og breytingar áður en nokkuð er tekið
 inn. Eiginleikaspjaldið sýnir hversu miklu er að deila. Sjá líka [format.md](format.md) um uppbyggingu pakkans.
 
+**Skrárnar.** Gagnasafn með skrám sýnir hve stórar þær eru, og þú getur skilið þær eftir til að gera pakkann minni. Raðirnar fylgja með. Án skráa sinna sýnir myndasafn aðeins upplýsingarnar um myndirnar, og skjal textann sinn.
+
 ## GitHub
 
 Vinnusvæðið sem mappa í GitHub-safni, helst lokuðu. Gefðu upp safn (`eigandi/heiti`), grein og möppu, og nákvæman
@@ -68,6 +70,8 @@ má líka deila skrám *til* Dataspatium úr öðrum forritum; þær lenda undir
 Sjálfstæð HTML-skrá sem virkar án Dataspatium og má setja á innranet eða senda: mælaborð (með myndritin innbyggð) og
 skjöl úr sniðum, fyllt með valda gagnasafninu. Birtar skrár innihalda gögn og myndrit í læsilegu formi; deildu þeim
 aðeins með þeim sem mega sjá upplýsingarnar.
+
+**Gagnasafn sem eigin síða.** Undir Gagnasöfn verður gagnasafn að síðu á eigin formi: texti til að lesa, myndir til að fletta, kort, netkerfi eða tafla til að sía. Síðan sækir ekkert af netinu og hægt er að senda hana sem eina skrá. Hún fer fyrst í gegnum yfirferð og sýnir í mesta lagi 2.000 raðir eða 100 myndir.
 
 ## Taka á móti
 

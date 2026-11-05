@@ -46,6 +46,8 @@ blokkene som allerede har kommet fram når dere kobler til igjen.
   app; filene havner under *Mottatt*.
 - *Innstillinger* har telefonens navn (det datamaskinen viser), koden dens og språk.
 
+Et datasett vises i sin egen form: bilder å bla i, dokumenter å lese, steder som punkter, en grafs noder med antall kanter, hva en modell består av, og en plans bestemmelser. Radene ligger under *Radene*.
+
 ## Datamaskin til datamaskin
 
 Velg *Annen datamaskin (lim inn kode)* på den ene datamaskinen og lim inn koden fra den andre datamaskinens *Vis

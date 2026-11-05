@@ -12,6 +12,8 @@ det sidst blev delt. *Opret pakke* åbner dialogen med alle datasæt forvalgt; m
 det*. Modtageren åbner pakken under *Modtag* og ser besked og ændringer, før noget tages ind. Inspektøren viser, hvor
 meget der er at dele. Se også [format.md](format.md) om pakkens opbygning.
 
+**Filerne.** Et datasæt med filer viser, hvor store de er, og du kan lade dem blive hjemme for at gøre pakken mindre. Rækkerne følger med. Uden sine filer viser en billedsamling kun oplysningerne om billederne, og et dokument sin tekst.
+
 ## GitHub
 
 Arbejdsområdet som en mappe i et GitHub-repository, helst privat. Angiv repository (`ejer/navn`), gren og mappe og et
@@ -68,6 +70,8 @@ også deles *til* Dataspatium fra andre apps; de havner under *Modtaget* på mob
 En selvstændig HTML-fil, der fungerer uden Dataspatium og kan lægges på et intranet eller sendes: dashboards (med
 diagrammerne indlejret) og dokumenter fra skabeloner, udfyldt med det valgte datasæt. Udgivne filer indeholder data
 og diagrammer i klartekst; del dem kun med dem, der må se oplysningerne.
+
+**Et datasæt som sin egen side.** Under Datasæt bliver et datasæt til en side i sin egen form: en tekst at læse, billeder at bladre i, et kort, et netværk eller en tabel at filtrere. Siden henter intet fra nettet og kan sendes som én fil. Den går gennem gennemgangen først og viser højst 2.000 rækker eller 100 billeder.
 
 ## Modtag
 

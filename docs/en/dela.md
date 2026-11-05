@@ -13,6 +13,8 @@ also *Bundle only this one*. The recipient opens the bundle under *Receive* and 
 before anything is taken in. The inspector shows how much there is to share. See also [format.md](format.md) on how
 the bundle is built.
 
+**The files.** A dataset with files shows how large they are, and you can leave them behind to make the bundle smaller. The rows follow. Without its files a picture collection shows only the facts about the pictures, and a document its text.
+
 ## GitHub
 
 The workspace as a folder in a GitHub repository, preferably private. Enter the repository (`owner/name`), branch
@@ -70,6 +72,8 @@ page.
 A standalone HTML file that works without Dataspatium and can be put on an intranet or sent: dashboards (with the
 charts embedded) and documents from templates, filled with the selected dataset. Published files contain data and
 charts in clear text; share them only with those who may see the information.
+
+**A dataset as a page of its own.** Under Datasets, a dataset becomes a page in its own form: a text to read, pictures to look through, a map, a network or a table to filter. The page fetches nothing from the network and can be sent as one file. It goes through the review first and shows at most 2,000 rows or 100 pictures.
 
 ## Receive
 

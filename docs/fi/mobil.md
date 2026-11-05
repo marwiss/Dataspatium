@@ -48,6 +48,8 @@ se katkeaa, se jatkuu jo perille tulleista lohkoista, kun yhdistätte uudelleen.
   asennettu sovellukseksi; tiedostot tulevat kohtaan *Vastaanotettu*.
 - *Asetuksissa* ovat puhelimen nimi (jonka tietokone näyttää), sen koodi ja kieli.
 
+Aineisto näytetään omassa muodossaan: selattavat kuvat, luettavat asiakirjat, paikat pisteinä, graafin solmut särmien määrineen, mallin osat ja kaavan määräykset. Rivit ovat kohdassa *Rivit*.
+
 ## Tietokoneesta tietokoneeseen
 
 Valitse toisella tietokoneella *Toinen tietokone (liitä koodi)* ja liitä koodi toisen tietokoneen *Näytä

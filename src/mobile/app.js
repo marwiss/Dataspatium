@@ -40,7 +40,7 @@
               meta.title = manifest.name || '';
               meta.author = manifest.author || '';
               meta.message = manifest.message || '';
-              meta.datasets = (manifest.datasets || []).filter((d) => d.file && entries[d.file]).map((d) => ({ id: d.id, name: d.name, rowCount: d.rowCount || 0, columnCount: d.columnCount || 0, file: d.file, folder: d.folder || '' }));
+              meta.datasets = (manifest.datasets || []).filter((d) => d.file && entries[d.file]).map((d) => ({ id: d.id, icon: ICONS[d.kind], name: d.name, rowCount: d.rowCount || 0, columnCount: d.columnCount || 0, file: d.file, folder: d.folder || '' }));
               meta.counts = { charts: (manifest.charts || []).length, dashboards: (manifest.dashboards || []).length, documents: (manifest.documents || []).length, notebooks: (manifest.notebooks || []).length };
             }
           } catch (err) { D.log('mobile', 'not a bundle', name, err); }
@@ -88,8 +88,12 @@
         const totalRes = await engine.exec('select count(*) from data');
         const total = totalRes[0] ? Number(totalRes[0].values[0][0]) : 0;
         const where = (filter) => (filter ? { sql: ' where ' + columns.map((c) => `cast(${q(c.name)} as text) like ?`).join(' or '), params: columns.map(() => '%' + filter + '%') } : { sql: '', params: [] });
+        const kindRes = await engine.exec("select value from _meta where key = 'kind'");
+        const cleanups = [];
         return {
-          columns, total,
+          columns, total, engine, kind: kindRes[0] && kindRes[0].values[0] ? String(kindRes[0].values[0][0]) : 'table',
+          /** @param {() => void} fn runs when the view closes */
+          onClose(fn) { cleanups.push(fn); },
           async rows(offset, limit, filter) {
             const w = where(filter);
             const res = await engine.exec(`select ${columns.map((c) => q(c.name)).join(', ')} from data${w.sql} limit ${Number(limit) || PAGE} offset ${Number(offset) || 0}`, w.params);
@@ -101,10 +105,12 @@
             const res = await engine.exec(`select count(*) from data${w.sql}`, w.params);
             return res[0] ? Number(res[0].values[0][0]) : 0;
           },
-          close() { engine.terminate(); },
+          close() { for (const fn of cleanups) fn(); engine.terminate(); },
         };
       }
 
+      /** Each kind's symbol, as in the app. The phone page does not load the module that describes the kinds. */
+      const ICONS = { document: 'file-text', images: 'images', plan: 'layers', graph: 'share-2', model: 'box' };
       class Mobile {
         /** @param {HTMLElement} root @param {{hash?: string, certificate?: RTCCertificate}} options */
         constructor(root, options) {
@@ -295,6 +301,8 @@
           const maxPage = Math.max(0, Math.ceil(v.shown / PAGE) - 1);
           if (this.state.page > maxPage) this.state.page = maxPage;
           v.data = await v.rows(this.state.page * PAGE, PAGE, filter);
+          // The dataset in its own form; the rows stay one step away.
+          v.own = await D.require('mobile/kind-views').render(v).catch((err) => { D.log('mobile', 'view', err); return null; });
           if (this.state.view === v) this.render();
         }
         async forward(b) {
@@ -387,7 +395,7 @@
               p2p.supported() ? button({ label: t('mobile.send.computer'), icon: 'monitor', onClick: () => this.queueForComputer(b) }) : null,
               button({ label: t('mobile.delete'), icon: 'trash-2', variant: 'danger', onClick: () => this.deleteBundle(b).catch((err) => this.fail(err)) })));
           const ds = b.datasets.length
-            ? h('div', { class: 'dm-m-list' }, b.datasets.map((d) => this.item(icon('table', 20), d.name, t('mobile.dataset.sub', { rows: i18n.formatNumber(d.rowCount || 0), cols: i18n.formatNumber(d.columnCount || 0) }), () => this.openDatasetView(b, d).catch((err) => this.fail(err)))))
+            ? h('div', { class: 'dm-m-list' }, b.datasets.map((d) => this.item(icon(d.icon || 'table', 20), d.name, t('mobile.dataset.sub', { rows: i18n.formatNumber(d.rowCount || 0), cols: i18n.formatNumber(d.columnCount || 0) }), () => this.openDatasetView(b, d).catch((err) => this.fail(err)))))
             : h('p', { class: 'dm-help', text: b.kind === 'bundle' ? t('mobile.datasets.none') : t('mobile.file.plain') });
           return [info, h('section', { class: 'dm-m-card' }, h('h2', { text: t('mobile.datasets') }), ds)];
         }
@@ -408,7 +416,14 @@
           const table = h('table', { class: 'dm-m-table' },
             h('thead', null, h('tr', null, v.columns.map((c) => h('th', { text: c.label || c.name, scope: 'col' })))),
             h('tbody', null, (v.data || []).map((r) => h('tr', null, r.map((cell, i) => h('td', { class: numeric(v.columns[i]) ? 'dm-num' : '', text: cell === null || cell === undefined ? '' : (typeof cell === 'number' ? i18n.formatNumber(cell) : String(cell)) }))))));
-          return [h('section', { class: 'dm-m-card' }, filter, pager, h('div', { class: 'dm-m-table-wrap' }, table))];
+          const rowsPart = h('div', { class: 'dm-m-table-wrap' }, table);
+          // What has a form of its own shows it, with the rows behind a choice.
+          if (v.own) {
+            const more = h('details', { class: 'dm-more', open: this.state.rowsOpen ? '' : null }, h('summary', { text: t('mobile.rows') }), rowsPart);
+            more.addEventListener('toggle', () => { this.state.rowsOpen = more.open; });
+            return [h('section', { class: 'dm-m-card' }, filter, pager, v.own, more)];
+          }
+          return [h('section', { class: 'dm-m-card' }, filter, pager, rowsPart)];
         }
         settingsScreen() {
           const id = this.state.identity;

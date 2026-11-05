@@ -46,6 +46,8 @@ that have already arrived when you connect again.
   installed as an app; the files end up under *Received*.
 - *Settings* holds the phone's name (what the computer shows), its code and the language.
 
+A dataset is shown in its own form: pictures to look through, documents to read, places as points, a graph's nodes with their number of edges, what a model is made of and a plan's provisions. The rows are under *The rows*.
+
 ## Computer to computer
 
 Choose *Another computer (paste a code)* on one computer and paste the code from the other computer's *Show QR

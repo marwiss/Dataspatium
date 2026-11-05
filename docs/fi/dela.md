@@ -13,6 +13,8 @@ valittu, on myös *Paketoi vain tämä*. Vastaanottaja avaa paketin kohdassa *Va
 ennen kuin mitään otetaan vastaan. Tarkastelupaneeli näyttää, kuinka paljon jaettavaa on. Ks. myös
 [format.md](format.md) paketin rakenteesta.
 
+**Tiedostot.** Aineisto, jossa on tiedostoja, näyttää niiden koon, ja voit jättää ne pois paketin pienentämiseksi. Rivit seuraavat mukana. Ilman tiedostojaan kuvakokoelma näyttää vain kuvien tiedot ja asiakirja tekstinsä.
+
 ## GitHub
 
 Työtila kansiona GitHub-repositoriossa, mieluiten yksityisessä. Anna repositorio (`omistaja/nimi`), haara ja kansio
@@ -72,6 +74,8 @@ tulevat mobiilisivun kohtaan *Vastaanotettu*.
 Itsenäinen HTML-tiedosto, joka toimii ilman Dataspatiumia ja jonka voi laittaa intranetiin tai lähettää: kojelaudat
 (kaaviot upotettuina) ja asiakirjat malleista, täytettyinä valitulla aineistolla. Julkaistut tiedostot sisältävät
 datan ja kaaviot selkokielisinä; jaa ne vain niille, jotka saavat nähdä tiedot.
+
+**Aineisto omana sivunaan.** Kohdassa Aineistot aineistosta tulee sivu omassa muodossaan: luettava teksti, selattavat kuvat, kartta, verkko tai suodatettava taulukko. Sivu ei hae mitään verkosta, ja sen voi lähettää yhtenä tiedostona. Se käy ensin läpi tarkistuksen ja näyttää enintään 2 000 riviä tai 100 kuvaa.
 
 ## Vastaanota
 

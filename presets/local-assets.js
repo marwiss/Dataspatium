@@ -531,13 +531,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/dela.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6125,
+  "size": 6708,
   "library": "dataspatium"
  },
  "docs/sv/mobil.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 5613,
+  "size": 5832,
   "library": "dataspatium"
  },
  "docs/sv/faq.md": {
@@ -687,13 +687,13 @@ Dataspatium.assets.addEntries({
  "docs/da/dela.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6010,
+  "size": 6584,
   "library": "dataspatium"
  },
  "docs/da/mobil.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 5584,
+  "size": 5805,
   "library": "dataspatium"
  },
  "docs/da/faq.md": {
@@ -843,13 +843,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/dela.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5958,
+  "size": 6505,
   "library": "dataspatium"
  },
  "docs/nb/mobil.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 5609,
+  "size": 5818,
   "library": "dataspatium"
  },
  "docs/nb/faq.md": {
@@ -999,13 +999,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/dela.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6471,
+  "size": 7033,
   "library": "dataspatium"
  },
  "docs/fi/mobil.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 6016,
+  "size": 6219,
   "library": "dataspatium"
  },
  "docs/fi/faq.md": {
@@ -1155,13 +1155,13 @@ Dataspatium.assets.addEntries({
  "docs/is/dela.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6379,
+  "size": 6969,
   "library": "dataspatium"
  },
  "docs/is/mobil.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 5798,
+  "size": 6011,
   "library": "dataspatium"
  },
  "docs/is/faq.md": {
@@ -1311,13 +1311,13 @@ Dataspatium.assets.addEntries({
  "docs/en/dela.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6084,
+  "size": 6653,
   "library": "dataspatium"
  },
  "docs/en/mobil.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 5673,
+  "size": 5897,
   "library": "dataspatium"
  },
  "docs/en/faq.md": {

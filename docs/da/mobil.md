@@ -46,6 +46,8 @@ fra de blokke, der allerede er nået frem, når I forbinder igen.
   app; filerne havner under *Modtaget*.
 - *Indstillinger* har telefonens navn (det, computeren viser), dens kode og sprog.
 
+Et datasæt vises i sin egen form: billeder at bladre i, dokumenter at læse, steder som punkter, en grafs knuder med antal kanter, hvad en model består af, og en plans bestemmelser. Rækkerne ligger under *Rækkerne*.
+
 ## Computer til computer
 
 Vælg *Anden computer (indsæt kode)* på den ene computer, og indsæt koden fra den anden computers *Vis

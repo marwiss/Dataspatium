@@ -145,6 +145,16 @@
         const dashRows = dashes.map((d) => row(d.name, async () => {
           try { services.files.download(await dashboards.toHtml(d), services.files.safeName(d.name, 'html')); shell.log(t('dela.publish.done', { name: d.name }), 'ok'); } catch (err) { fail(err); }
         }));
+        // A dataset as a page of its own. It leaves the app, so it goes through the review, on a copy.
+        const datasetRows = store.get().datasets.map((d) => row(d.name, async () => {
+          try {
+            const reviewed = await D.require('ui/share/review').review(ctx, [d.id]);
+            if (!reviewed) return;
+            const copy = await services.datasets.importBytes(await D.require('data/share-scan').copy(d.id, reviewed.transform[d.id] || {}), { name: d.name }, { quiet: true });
+            try { services.files.download(await D.require('docgen/viewers').pageFor(copy.id), services.files.safeName(d.name, 'html')); } finally { await services.datasets.remove(copy.id, { quiet: true }); }
+            shell.log(t('dela.publish.done', { name: d.name }), 'ok');
+          } catch (err) { fail(err); }
+        }));
         const docRows = docs.map((doc) => row(doc.name, async () => {
           if (!ds) { ui.toast.show(t('dela.publish.needs.dataset'), { kind: 'warn' }); return; }
           try { const res = await D.require('docgen/generate').generate(doc, ds.id, 'html'); services.files.download(res.blob, res.filename); shell.log(t('dela.publish.done', { name: doc.name }), 'ok'); } catch (err) { fail(err); }
@@ -152,6 +162,9 @@
         replace(body, h('div', { class: 'dm-card dm-stack' },
           h('h3', { text: t('dela.publish.title') }),
           h('p', { class: 'dm-help', text: t('dela.publish.hint') }),
+          h('h4', { text: t('shell.datasets') }),
+          h('p', { class: 'dm-help dm-small', text: t('dela.publish.datasets.help') }),
+          datasetRows.length ? h('div', { class: 'dm-stack-sm' }, datasetRows) : h('p', { class: 'dm-help', text: t('dela.publish.none') }),
           h('h4', { text: t('dela.publish.dashboards') }),
           dashRows.length ? h('div', { class: 'dm-stack-sm' }, dashRows) : h('p', { class: 'dm-help', text: t('dela.publish.none') }),
           h('h4', { text: t('dela.publish.documents') }),

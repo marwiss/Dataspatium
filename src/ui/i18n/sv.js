@@ -4513,5 +4513,11 @@
     'export.format.model-glb': '3D-modellen som glTF',
     'export.quantities.sums': 'Summor',
     'export.quantities.all': 'Alla värden',
+    'bundle.files.originals': 'Originalfilerna',
+    'bundle.files.pictures': 'Bilderna',
+    'dela.publish.datasets.help': 'En sida som visar datamängden i sin egen form och kan skickas som en enda fil. Den går igenom granskningen först.',
+    'viewer.filter': 'Filtrera',
+    'viewer.rows.first': 'Visar de första {n} av {total}.',
+    'mobile.rows': 'Raderna',
   }));
 })();

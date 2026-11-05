@@ -4491,5 +4491,11 @@
     'export.format.model-glb': 'The 3D model as glTF',
     'export.quantities.sums': 'Sums',
     'export.quantities.all': 'All values',
+    'bundle.files.originals': 'The original files',
+    'bundle.files.pictures': 'The pictures',
+    'dela.publish.datasets.help': 'A page that shows the dataset in its own form and can be sent as one file. It goes through the review first.',
+    'viewer.filter': 'Filter',
+    'viewer.rows.first': 'Showing the first {n} of {total}.',
+    'mobile.rows': 'The rows',
   }));
 })();

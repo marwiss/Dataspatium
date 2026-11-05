@@ -26,11 +26,28 @@
       authorIn.value = author;
       const message = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '3', label: t('bundle.message'), help: t('bundle.message.help') }));
       const chosen = new Set(options.datasetIds || list.map((d) => d.id));
+      const kinds = D.require('data/kinds');
+      /** Datasets that go without their files, to make the bundle smaller. */
+      const withoutFiles = new Set();
+      /** A dataset with files says how large they are and can leave them behind. */
+      const filesChoice = (d) => {
+        if (!kinds.of(d).files) return null;
+        const sw = /** @type {any} */ (h('dm-switch', { label: t(kinds.of(d).files === 'pictures' ? 'bundle.files.pictures' : 'bundle.files.originals') }));
+        sw.checked = true;
+        sw.addEventListener('change', () => { if (sw.checked) withoutFiles.delete(d.id); else withoutFiles.add(d.id); });
+        const size = h('span', { class: 'dm-help dm-small' });
+        const line = h('div', { class: 'dm-bundle-files' }, sw, size);
+        D.require('data/dataset-files').list(d.id).then((files) => {
+          if (!files.length) { line.remove(); return; }
+          size.textContent = i18n.formatBytes(files.reduce((n, f) => n + f.size, 0));
+        }).catch((err) => D.log('bundle', err));
+        return line;
+      };
       const switches = list.map((d) => {
-        const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${t('common.rows', { n: i18n.formatNumber(d.rowCount || 0) })})` }));
+        const sw = /** @type {any} */ (h('dm-switch', { label: `${d.name} (${kinds.summary(d)})` }));
         sw.checked = chosen.has(d.id);
         sw.addEventListener('change', () => { if (sw.checked) chosen.add(d.id); else chosen.delete(d.id); });
-        return sw;
+        return h('div', { class: 'dm-stack-xs' }, sw, filesChoice(d));
       });
       const inc = { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true };
       const incSwitches = Object.keys(inc).map((k) => {
@@ -51,6 +68,11 @@
       // Personal data in the chosen datasets: keep, pseudonymise or drop in the copy before it leaves the app.
       const reviewed = await D.require('ui/share/review').review(ctx, Array.from(chosen));
       if (!reviewed) return null;
+      for (const id of withoutFiles) {
+        if (!chosen.has(id)) continue;
+        const tr = reviewed.transform[id] || (reviewed.transform[id] = { drop: [], hash: [], mask: [], side: {} });
+        tr.originals = true;
+      }
       if (onlySwitch && onlySwitch.checked) {
         const tr = reviewed.transform[selected.datasetId] || (reviewed.transform[selected.datasetId] = { drop: [], hash: [], mask: [], side: {} });
         tr.only = selected.rowids;

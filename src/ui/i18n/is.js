@@ -4491,5 +4491,11 @@
     'export.format.model-glb': 'Þrívíddarlíkanið sem glTF',
     'export.quantities.sums': 'Summur',
     'export.quantities.all': 'Öll gildi',
+    'bundle.files.originals': 'Upprunalegu skrárnar',
+    'bundle.files.pictures': 'Myndirnar',
+    'dela.publish.datasets.help': 'Síða sem sýnir gagnasafnið á eigin formi og er hægt að senda sem eina skrá. Hún fer fyrst í gegnum yfirferð.',
+    'viewer.filter': 'Sía',
+    'viewer.rows.first': 'Sýnir fyrstu {n} af {total}.',
+    'mobile.rows': 'Raðirnar',
   }));
 })();

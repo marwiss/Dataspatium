@@ -45,6 +45,8 @@ komnar þegar þið tengist aftur.
   forrit; skrárnar lenda undir *Móttekið*.
 - *Stillingar* hafa heiti símans (það sem tölvan sýnir), kóða hans og tungumál.
 
+Gagnasafn er sýnt á eigin formi: myndir til að fletta, skjöl til að lesa, staðir sem punktar, hnútar nets með fjölda leggja, úr hverju líkan er og ákvæði skipulags. Raðirnar eru undir *Raðirnar*.
+
 ## Tölva til tölvu
 
 Veldu *Önnur tölva (líma inn kóða)* á annarri tölvunni og límdu inn kóðann úr *Sýna QR-kóða*-sýn hinnar tölvunnar

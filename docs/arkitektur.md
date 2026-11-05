@@ -533,6 +533,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `io/export-kinds` gör exporter som följer slaget: KML, GPX och GeoPackage för platser (allt i WGS 84), kontaktkarta, plankarta, planbestämmelser, mängder i Excel, glTF och ritning som PDF. `io/export` frågar den först. `viz/plan-map` bygger planens karta för både vyn och exporten. `model-draw` tar `extraFilters`, så att en batch per våning bara ritar den våningen.
 
+`docgen/viewers` gör en datamängd till en sida i sin egen form. Sidan byggs av `dashboards.toHtml` med `resolved` och `after`, efter granskningen och på en kopia. `mobile/kind-views` visar slagen på telefonen och läser bara filen den får.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

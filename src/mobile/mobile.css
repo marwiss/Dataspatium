@@ -46,3 +46,10 @@
 .dm-m-photo img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--dm-radius-sm); }
 .dm-m-photo dm-button { position: absolute; top: 0; right: 0; }
 .dm-m-photo dm-button > button { min-width: 44px; min-height: 44px; }
+.dm-m-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--dm-s-12) * 2), 1fr)); gap: var(--dm-s-2); margin-block: var(--dm-s-3); }
+.dm-m-picture { margin: 0; min-width: 0; }
+.dm-m-picture img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--dm-radius-sm); }
+.dm-m-reading { margin-block: var(--dm-s-3); }
+.dm-m-plot { display: block; width: 100%; height: auto; margin-block: var(--dm-s-3); background: var(--dm-surface-2); border-radius: var(--dm-radius-sm); }
+.dm-m-plot circle { fill: var(--dm-accent); }
+.dm-m-nodes { list-style: none; margin: var(--dm-s-3) 0; padding: 0; display: flex; flex-direction: column; gap: var(--dm-s-2); }

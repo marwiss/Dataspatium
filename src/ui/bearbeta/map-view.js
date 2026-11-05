@@ -58,7 +58,7 @@
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }),
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
-              options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'arrow-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
+              options.onOwnView ? ui.button({ label: t('bearbeta.view.' + dataset.kind), icon: 'chevron-left', title: t('bearbeta.view.' + dataset.kind + '.hint'), onClick: options.onOwnView }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           mapEl);
         await draw();

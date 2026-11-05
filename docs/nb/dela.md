@@ -12,6 +12,8 @@ sist ble delt. *Lag pakke* åpner dialogen med alle datasett forhåndsvalgt; med
 bare det*. Mottakeren åpner pakken under *Motta* og ser melding og endringer før noe tas inn. Inspektøren viser hvor
 mye som finnes å dele. Se også [format.md](format.md) om pakkens oppbygning.
 
+**Filene.** Et datasett med filer viser hvor store de er, og du kan la dem bli igjen for å gjøre pakken mindre. Radene følger med. Uten filene viser en bildesamling bare opplysningene om bildene, og et dokument teksten sin.
+
 ## GitHub
 
 Arbeidsområdet som en mappe i et GitHub-repository, helst privat. Angi repository (`eier/navn`), gren og mappe, og
@@ -68,6 +70,8 @@ filer også deles *til* Dataspatium fra andre apper; de havner under *Mottatt* p
 En frittstående HTML-fil som fungerer uten Dataspatium og kan legges på et intranett eller sendes: dashbord (med
 diagrammene innebygd) og dokumenter fra maler, fylt med det valgte datasettet. Publiserte filer inneholder data og
 diagrammer i klartekst; del dem bare med dem som får se opplysningene.
+
+**Et datasett som egen side.** Under Datasett blir et datasett en side i sin egen form: en tekst å lese, bilder å bla i, et kart, et nettverk eller en tabell å filtrere. Siden henter ingenting fra nettet og kan sendes som én fil. Den går gjennom gjennomgangen først og viser høyst 2 000 rader eller 100 bilder.
 
 ## Motta
 

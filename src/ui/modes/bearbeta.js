@@ -204,6 +204,8 @@
           if (await services.datasets.get(ds.id)) shell.log(String((err && err.message) || err), 'error');
           return;
         }
+        // The user can have left the mode while the counts were on their way.
+        if (!table) return;
         rowIds = new Map();
         table.countBadge.textContent = (search || listWhere) ? t('table.rows.shown', { shown: i18n.formatNumber(total), total: i18n.formatNumber(ds.rowCount) }) : t('common.rows', { n: i18n.formatNumber(total) });
         const data = {

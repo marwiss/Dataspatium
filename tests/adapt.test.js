@@ -433,6 +433,8 @@
       zone.dispatchEvent(new CustomEvent('dm-files', { detail: { files: [new File(['# Rubrik\n\nEn rad text.\n'], 'anteckning.md', { type: 'text/markdown' })] }, bubbles: true }));
       for (let i = 0; i < 200 && !root.querySelector('.dm-success'); i++) {
         await wait(50);
+        // The result's own primary button opens the dataset, so it must not be clicked here.
+        if (root.querySelector('.dm-success')) break;
         const primary = /** @type {any} */ (Array.from(root.querySelectorAll('.dm-center dm-button[variant="primary"]')).pop());
         if (primary && i % 10 === 5 && !primary.hasAttribute('disabled')) /** @type {HTMLElement} */ (primary.querySelector('button')).click();
       }
