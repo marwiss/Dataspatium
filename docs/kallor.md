@@ -107,6 +107,19 @@ drivrutin över WebSocket (`neo4j+s://…`, databas, användarnamn och lösenord
 relationer; frågor kan sparas på källan. Anslutningen kräver samtycke (ändamålet Neo4j) och omfattas inte av CORS; en
 egen server utan TLS (`bolt://`) nås bara från en sida över http://. Se [grafer.md](grafer.md#neo4j-som-källa).
 
+### OpenCDE-server (BCF och Documents API)
+
+Familjen **OpenCDE (BCF, Documents)** i *Lägg till databaskälla* ansluter till en server som följer buildingSMARTs
+OpenCDE-API:er, till exempel [Kontroll](https://github.com/marwiss/Kontroll). Ange serverns adress och det klient-id som
+serverns administratör har registrerat för Dataspatium (en publik klient med omdirigeringsadressen
+`http://127.0.0.1:8080/oauth-callback.html`, eller motsvarande för den adress appen servas på). Källan öppnar en vy där
+du loggar in på servern (OAuth2 med PKCE i ett popup-fönster; från file:// klistrar du in adressen du hamnar på efter
+inloggningen), väljer projekt och hämtar ärenden, kommentarer, viewpoint-komponenter (ett IFC-element per rad), händelser
+och filer som tabeller. *Hämta dokument* öppnar serverns egen sida för dokumentval (Documents API); de valda filerna
+hämtas och importeras som om du släppt dem i appen, så en IFC-modell blir en modelldatamängd. Åtkomsttoken finns bara i
+sessionen och exporteras aldrig med källan. Anslutningen kräver samtycke (ändamålet OpenCDE-server) och att servern
+tillåter anrop från webbläsaren (CORS).
+
 ## Öppna geodata
 
 Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-

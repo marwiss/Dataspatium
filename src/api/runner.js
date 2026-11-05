@@ -8,9 +8,9 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'api/families/statbank', 'api/families/fhi', 'data/types', 'data/datasets', 'io/import'],
-    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, statbank, fhi, types, datasets, importer) => {
-      const families = { pxweb, socialstyrelsen, statbank, fhi };
+  D.define('api/runner', ['api/connectors', 'api/request', 'api/auth', 'api/http', 'api/parsers', 'api/pagination', 'api/secrets', 'api/families/pxweb', 'api/families/socialstyrelsen', 'api/families/statbank', 'api/families/fhi', 'api/families/opencde', 'data/types', 'data/datasets', 'io/import'],
+    (connectors, request, auth, http, parsers, pagination, secrets, pxweb, socialstyrelsen, statbank, fhi, opencde, types, datasets, importer) => {
+      const families = { pxweb, socialstyrelsen, statbank, fhi, opencde };
 
       /** Union of columns by name; rows padded with null. */
       function mergeTables(acc, table) {

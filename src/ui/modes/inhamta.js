@@ -103,6 +103,7 @@
         const type = c.family && c.family.type;
         if (type === 'geodata' || type === 'geoportal') return 'map';
         if (type === 'neo4j') return 'share-2';
+        if (type === 'opencde') return 'building-2';
         return D.require('api/families/databases').FAMILIES.some((f) => String(c.id).startsWith(f.id + '-')) ? 'database' : 'globe';
       }
       /** All the ways to add a source, with what each is for, instead of a button and a note per kind in the list. */

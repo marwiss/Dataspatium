@@ -115,6 +115,19 @@ Lähde avaa Cypher-editorin: tulos on taulukko tai verkkoaineisto, kun vastaus s
 tallentaa lähteelle. Yhteys vaatii suostumuksen (tarkoitus Neo4j) eikä kuulu CORS:n piiriin; oma palvelin ilman TLS:ää
 (`bolt://`) tavoitetaan vain http://-sivulta. Katso [grafer.md](grafer.md#neo4j-lähteenä).
 
+### OpenCDE-palvelin (BCF ja Documents API)
+
+Perhe **OpenCDE (BCF, Documents)** kohdassa *Lisää tietokantalähde* yhdistää palvelimeen, joka noudattaa buildingSMARTin
+OpenCDE-rajapintoja, esimerkiksi [Kontroll](https://github.com/marwiss/Kontroll). Anna palvelimen osoite ja
+asiakastunnus, jonka palvelimen pääkäyttäjä on rekisteröinyt Dataspatiumille (julkinen asiakas, jonka
+uudelleenohjausosoite on `http://127.0.0.1:8080/oauth-callback.html` tai vastaava sovelluksen osoitteelle). Lähde avaa
+näkymän, jossa kirjaudut palvelimelle (OAuth2 ja PKCE ponnahdusikkunassa; file://-osoitteesta liität osoitteen, johon
+päädyt kirjautumisen jälkeen), valitset projektin ja haet asiat, kommentit, näkymien komponentit (yksi IFC-elementti
+riviä kohti), tapahtumat ja tiedostot taulukoina. *Hae asiakirjat* avaa palvelimen oman asiakirjojen valintasivun
+(Documents API); valitut tiedostot ladataan ja tuodaan kuin ne olisi pudotettu sovellukseen, joten IFC-malli tulee
+malliaineistoksi. Käyttöoikeustunnukset ovat vain istunnossa eikä niitä viedä lähteen mukana. Yhteys vaatii
+suostumuksen (tarkoitus OpenCDE-palvelin) ja palvelimen, joka sallii kutsut selaimesta (CORS).
+
 ## Avoin paikkatieto
 
 Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API

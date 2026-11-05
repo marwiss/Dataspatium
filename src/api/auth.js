@@ -56,7 +56,7 @@
       const auth = connector.auth || { type: 'none' };
       if (auth.type === 'none') return req;
       const values = secrets.get(connector.id);
-      if (!values || !requiredFields(auth).every((f) => values[f.key])) throw new http.ApiError(D.t('api.err.key.first', { name: connector.name }), { kind: 'auth' });
+      if (auth.type !== 'oauth2_pkce' && (!values || !requiredFields(auth).every((f) => values[f.key]))) throw new http.ApiError(D.t('api.err.key.first', { name: connector.name }), { kind: 'auth' });
       const out = Object.assign({}, req, { headers: Object.assign({}, req.headers || {}) });
       switch (auth.type) {
         case 'apiKey': {
@@ -68,6 +68,8 @@
         case 'basic': out.headers.Authorization = 'Basic ' + btoa(`${values.username}:${values.password}`); break;
         case 'bearer': out.headers.Authorization = 'Bearer ' + values.token; break;
         case 'oauth2_client_credentials': out.headers.Authorization = 'Bearer ' + (await token(connector, values, options)); break;
+        // OpenCDE servers: the token comes from the user's own sign-in (api/families/opencde), refreshed there.
+        case 'oauth2_pkce': out.headers.Authorization = 'Bearer ' + (await D.require('api/families/opencde').ensureToken(connector)); break;
         default: break;
       }
       return out;

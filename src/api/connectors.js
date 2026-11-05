@@ -138,6 +138,7 @@
         case 'basic': return D.t('api.auth.summary.basic');
         case 'bearer': return D.t('api.auth.token');
         case 'oauth2_client_credentials': return D.t('api.auth.summary.oauth');
+        case 'oauth2_pkce': return D.t('api.auth.summary.oauth.pkce');
         default: return auth.type;
       }
     }

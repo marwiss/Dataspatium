@@ -111,6 +111,19 @@ a Cypher editor: the result becomes a table, or a graph dataset when the answer 
 can be kept on the source. The connection needs consent (purpose Neo4j) and is not subject to CORS; an own server without
 TLS (`bolt://`) is reached only from a page over http://. See [grafer.md](grafer.md#neo4j-as-a-source).
 
+### OpenCDE server (BCF and Documents API)
+
+The family **OpenCDE (BCF, Documents)** in *Add database source* connects to a server that implements buildingSMART's
+OpenCDE APIs, for example [Kontroll](https://github.com/marwiss/Kontroll). Enter the server's address and the client id
+its administrator registered for Dataspatium (a public client with the redirect URI
+`http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the address the app is served from). The source opens
+a view where you sign in to the server (OAuth2 with PKCE in a pop-up; from file:// you paste the address you end up on
+after signing in), pick a project and fetch topics, comments, viewpoint components (one IFC element per row), events and
+files as tables. *Fetch documents* opens the server's own document selection page (Documents API); the chosen files are
+downloaded and imported as if dropped on the app, so an IFC model becomes a model dataset. Access tokens live in the
+session only and are never exported with the source. The connection needs consent (purpose OpenCDE server) and a server
+that allows requests from the browser (CORS).
+
 ## Open geodata
 
 The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and

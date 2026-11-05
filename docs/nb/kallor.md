@@ -111,6 +111,19 @@ Cypher-redigerer: resultatet blir en tabell, eller et grafdatasett når svaret i
 kan lagres på kilden. Tilkoblingen krever samtykke (formålet Neo4j) og omfattes ikke av CORS; en egen server uten TLS
 (`bolt://`) nås bare fra en side over http://. Se [grafer.md](grafer.md#neo4j-som-kilde).
 
+### OpenCDE-server (BCF og Documents API)
+
+Familien **OpenCDE (BCF, Documents)** i *Legg til databasekilde* kobler til en server som følger buildingSMARTs
+OpenCDE-API-er, for eksempel [Kontroll](https://github.com/marwiss/Kontroll). Oppgi serverens adresse og klient-id-en
+som serverens administrator har registrert for Dataspatium (en offentlig klient med omdirigeringsadressen
+`http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarende for adressen appen serveres fra). Kilden åpner en visning
+der du logger inn på serveren (OAuth2 med PKCE i et popup-vindu; fra file:// limer du inn adressen du ender på etter
+innloggingen), velger prosjekt og henter saker, kommentarer, viewpoint-komponenter (ett IFC-element per rad), hendelser
+og filer som tabeller. *Hent dokumenter* åpner serverens egen side for dokumentvalg (Documents API); de valgte filene
+hentes og importeres som om du hadde sluppet dem i appen, så en IFC-modell blir et modelldatasett. Tilgangstokener
+finnes bare i sesjonen og eksporteres aldri med kilden. Tilkoblingen krever samtykke (formålet OpenCDE-server) og at
+serveren tillater kall fra nettleseren (CORS).
+
 ## Åpne geodata
 
 Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og

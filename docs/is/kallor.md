@@ -109,6 +109,19 @@ Uppsprettan opnar Cypher-ritil: niðurstaðan verður tafla, eða netgagnasafn �
 fyrirspurnir má vista á uppsprettunni. Tengingin krefst samþykkis (tilgangurinn Neo4j) og fellur ekki undir CORS; eigin
 þjónn án TLS (`bolt://`) næst aðeins frá síðu yfir http://. Sjá [grafer.md](grafer.md#neo4j-sem-uppspretta).
 
+### OpenCDE-þjónn (BCF og Documents API)
+
+Fjölskyldan **OpenCDE (BCF, Documents)** í *Bæta við gagnagrunnsuppsprettu* tengist þjóni sem fylgir OpenCDE-skilum
+buildingSMART, til dæmis [Kontroll](https://github.com/marwiss/Kontroll). Sláðu inn vistfang þjónsins og
+biðlaraauðkennið sem stjórnandi þjónsins skráði fyrir Dataspatium (opinber biðlari með endurbeiningarvistfangið
+`http://127.0.0.1:8080/oauth-callback.html` eða samsvarandi fyrir vistfangið sem forritið er þjónað frá). Uppsprettan
+opnar sýn þar sem þú skráir þig inn á þjóninn (OAuth2 með PKCE í sprettiglugga; frá file:// límir þú inn vistfangið sem
+þú lendir á eftir innskráningu), velur verkefni og sækir mál, athugasemdir, sjónarhornseiningar (ein IFC-eining á röð),
+atburði og skrár sem töflur. *Sækja skjöl* opnar skjalavalssíðu þjónsins sjálfs (Documents API); völdu skrárnar eru
+sóttar og fluttar inn eins og þeim hefði verið sleppt í forritið, svo IFC-líkan verður líkansgagnasafn. Aðgangstókar eru
+aðeins í setunni og eru aldrei fluttir út með uppsprettunni. Tengingin krefst samþykkis (tilgangurinn OpenCDE-þjónn) og
+þjóns sem leyfir köll úr vafranum (CORS).
+
 ## Opin landupplýsingagögn
 
 Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,

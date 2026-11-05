@@ -387,7 +387,7 @@ Dataspatium.assets.addEntries({
  "presets/plan/no-arealformal.json": {
   "file": "presets/plan/no-arealformal.json.js",
   "encoding": "gzip+base64",
-  "size": 8573,
+  "size": 8337,
   "library": "dataspatium"
  },
  "presets/plan/planbestammelsekatalogen.json": {
@@ -459,7 +459,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13843,
+  "size": 15009,
   "library": "dataspatium"
  },
  "docs/sv/r-guide.md": {
@@ -615,7 +615,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 13541,
+  "size": 14703,
   "library": "dataspatium"
  },
  "docs/da/r-guide.md": {
@@ -771,7 +771,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13408,
+  "size": 14550,
   "library": "dataspatium"
  },
  "docs/nb/r-guide.md": {
@@ -927,7 +927,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14447,
+  "size": 15636,
   "library": "dataspatium"
  },
  "docs/fi/r-guide.md": {
@@ -1083,7 +1083,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 14384,
+  "size": 15608,
   "library": "dataspatium"
  },
  "docs/is/r-guide.md": {
@@ -1239,7 +1239,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 13550,
+  "size": 14681,
   "library": "dataspatium"
  },
  "docs/en/r-guide.md": {

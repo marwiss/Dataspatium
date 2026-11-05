@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Dataspatium</title>
+  <link rel="stylesheet" href="src/ui/design/tokens.css">
+  <link rel="stylesheet" href="src/ui/design/base.css">
+</head>
+<body>
+  <!-- The page an OpenCDE server sends the browser back to after sign-in or document selection (api/families/opencde).
+       It hands its own address to the Dataspatium window that opened it and closes; nothing is stored here. -->
+  <p class="dm-muted" style="padding: 24px" id="message">Dataspatium …</p>
+  <script>
+    (function () {
+      var opener = window.opener;
+      var message = document.getElementById('message');
+      if (opener && !opener.closed) {
+        opener.postMessage({ type: 'dataspatium-oauth-callback', url: location.href }, location.origin);
+        message.textContent = 'Klart. Du kan stänga det här fönstret. / Done. You can close this window.';
+        setTimeout(function () { window.close(); }, 500);
+      } else {
+        message.textContent = 'Kopiera adressen i adressfältet och klistra in den i Dataspatium. / Copy the address from the address bar and paste it into Dataspatium.';
+      }
+    })();
+  </script>
+</body>
+</html>
