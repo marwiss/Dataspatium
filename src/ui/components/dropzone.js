@@ -8,6 +8,26 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('ui/dropzone', ['ui/base', 'ui/icons'], (base, icons) => {
+    /** Everything in dropped folders. A reader gives its entries in parts, until a part is empty. */
+    async function filesIn(entries) {
+      const out = [];
+      const visit = async (entry, path) => {
+        if (entry.isFile) {
+          const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+          file.dmPath = path + file.name;
+          out.push(file);
+          return;
+        }
+        const reader = entry.createReader();
+        for (;;) {
+          const part = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+          if (!part.length) break;
+          for (const child of part) await visit(child, `${path}${entry.name}/`);
+        }
+      };
+      for (const entry of entries) await visit(entry, '');
+      return out;
+    }
     const { h, DmElement, define } = base;
 
     class DmDropzone extends DmElement {
@@ -29,8 +49,13 @@
         this.addEventListener('dragleave', () => this.setFlag('dragover', false));
         this.addEventListener('drop', (e) => {
           e.preventDefault(); this.setFlag('dragover', false);
-          const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
-          this.deliver(this.hasAttribute('multiple') ? files : files.slice(0, 1));
+          const transfer = e.dataTransfer;
+          const files = Array.from((transfer && transfer.files) || []);
+          if (!this.hasAttribute('multiple')) { this.deliver(files.slice(0, 1)); return; }
+          // The entries have to be taken before the event ends.
+          const entries = Array.from((transfer && transfer.items) || []).map((i) => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null)).filter(Boolean);
+          if (!entries.some((x) => x.isDirectory)) { this.deliver(files); return; }
+          filesIn(entries).then((all) => this.deliver(all)).catch((err) => D.log('dropzone', err));
         });
       }
       deliver(files) { if (files.length) this.emit('dm-files', { files }); }

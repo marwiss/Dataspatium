@@ -35,7 +35,7 @@
     /** Preview for Inhämta: the graph's facts and the nodes as a table. */
     async function preview(file, options = {}) {
       const r = await read(file, options);
-      return { kind: 'graph', format: 'graph', graphFormat: r.format, graph: r.summary, header: true, columns: columns(), declaredTypes: graph.NODE_COLUMNS.map((c) => c.type), dataRows: nodeRows(r.graph).slice(0, options.previewRows || 100), totalRows: r.graph.nodes.length, datasetName: baseName(file) };
+      return { kind: 'graph', format: 'graph', graphFormat: r.format, graph: r.summary, sample: { nodes: r.graph.nodes.slice(0, 60).map((n) => n.id), edges: r.graph.edges.slice(0, 2000).map((e) => [e.source, e.target]) }, header: true, columns: columns(), declaredTypes: graph.NODE_COLUMNS.map((c) => c.type), dataRows: nodeRows(r.graph).slice(0, options.previewRows || 100), totalRows: r.graph.nodes.length, datasetName: baseName(file) };
     }
     /** The nodes as a plain table (when someone insists on a table). */
     async function parse(file, options = {}) {

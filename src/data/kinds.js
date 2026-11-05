@@ -26,6 +26,10 @@
       },
       document: {
         icon: 'file-text', view: 'document', tab: 'text', chart: null, sideTables: [], files: 'originals', loses: 'export.loses.document',
+        picture: 'page', wholeFormat: 'document-originals',
+        // What it takes to make one collection of several: the column that names a file, and the sorts of files kept.
+        merge: { as: 'documents', column: 'dokument', files: ['original'] },
+        versionDiff: [{ label: 'versions.own.documents', table: 'data', column: 'dokument' }],
         open: { label: 'hantera.read', hint: 'hantera.read.hint', icon: 'book-open' },
         protect: () => ['dokument', 'sida', 'stycke', 'text'],
         summary: (ds) => t('datasets.sub.document', { n: n((ds.documents || []).length), pages: n(pagesOf(ds)) }),
@@ -33,13 +37,17 @@
       },
       images: {
         icon: 'images', view: 'images', tab: 'images', chart: null, sideTables: [], files: 'pictures', loses: 'export.loses.images',
+        // The page in Hantera shows the pictures themselves.
+        picture: 'none', wholeFormat: 'images-zip',
+        merge: { as: 'images', column: 'fil', files: ['preview', 'thumb'] },
+        versionDiff: [{ label: 'versions.own.pictures', table: 'data', column: 'fil' }],
         open: { label: 'hantera.view.images', hint: 'hantera.view.images.hint', icon: 'images' },
         protect: () => ['fil'],
         summary: (ds) => t('datasets.sub.images', { n: n(picturesOf(ds)) }),
         hit: (value, id) => ({ label: 'soka.open.image', icon: 'images', store: { openImage: { datasetId: id, name: value('fil') } } }),
       },
       plan: {
-        icon: 'layers', view: 'plan', tab: 'plan', chart: 'map', sideTables: [], files: 'originals',
+        icon: 'layers', view: 'plan', tab: 'plan', chart: 'map', sideTables: [], files: 'originals', picture: 'map', wholeFormat: 'geojson',
         open: { label: 'hantera.view.plan', hint: 'hantera.view.plan.hint', icon: 'layers' },
         protect: () => ['objektid', 'objekttyp', 'geometri', 'tema'],
         summary: (ds) => `${t('plan.slag.' + planKind(ds))} · ${t('plan.objects.n', { n: n(ds.rowCount) })}`,
@@ -47,6 +55,8 @@
       },
       graph: {
         icon: 'share-2', view: 'graph', tab: 'graph', chart: 'graph', sideTables: ['_edges', '_layout'], chartTables: ['_edges'], files: 'originals', cypher: true, noStats: true, loses: 'export.loses.graph',
+        picture: 'network', wholeFormat: 'graphml',
+        versionDiff: [{ label: 'versions.own.nodes', table: 'data', column: 'id' }, { label: 'versions.own.edges', table: '_edges', column: 'id' }],
         // A word on an edge finds the nodes at both ends.
         sideSearch: { table: '_edges', columns: ['typ', 'egenskaper'], keys: ['kalla', 'mal'], on: 'id' },
         open: { label: 'hantera.view.graph', hint: 'hantera.view.graph.hint', icon: 'share-2' },
@@ -56,6 +66,8 @@
       },
       model: {
         icon: 'box', view: 'model', tab: 'model', chart: 'model', sideTables: ['_properties', '_quantities', '_entities'], chartTables: ['_properties', '_quantities'], files: 'originals', loses: 'export.loses.model',
+        picture: 'model', wholeFormat: 'model-original',
+        versionDiff: [{ label: 'versions.own.elements', table: 'data', column: 'id' }],
         // A word in a property set finds the element that has it.
         sideSearch: { table: '_properties', columns: ['uppsattning', 'namn', 'varde'], keys: ['id'], on: 'id' },
         open: { label: 'hantera.view.model', hint: 'hantera.view.model.hint', icon: 'box' },

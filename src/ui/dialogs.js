@@ -207,16 +207,29 @@
         return dlg;
       }
 
+      /** A version in the units of its kind. Versions from before 2.19 only know their rows. */
+      function versionHolds(v) {
+        return v.facts ? D.require('data/kinds').summary(v.facts) : t('common.rows', { n: i18n.formatNumber(v.rowCount || 0) });
+      }
+      /** Which of the kind's own things came and went. */
+      function ownDiff(item) {
+        const list = (names, more) => (names.length ? names.join(', ') + (more ? ' ' + t('versions.own.more', { n: i18n.formatNumber(more) }) : '') : '–');
+        return h('div', null,
+          h('h4', { text: t(item.label) }),
+          h('p', { text: t('versions.own.counts', { then: i18n.formatNumber(item.then), now: i18n.formatNumber(item.now) }) }),
+          h('p', { text: t('versions.own.added', { list: list(item.added, item.moreAdded) }) }),
+          h('p', { text: t('versions.own.removed', { list: list(item.removed, item.moreRemoved) }) }));
+      }
       async function versionsDialog(ctx) {
         const body = h('div', { class: 'dm-stack' });
         const render = async () => {
           const versions = await datasets.listVersions(ctx.datasetId);
           replace(body,
             h('div', { class: 'dm-row' }, basic.button({ label: t('versions.create'), icon: 'plus', variant: 'primary', onClick: async () => { const label = await overlays.dialog.prompt(t('versions.label'), { title: t('versions.create'), value: t('versions.default.label', { n: versions.length + 1 }) }); if (label === null) return; await datasets.snapshot(ctx.datasetId, label); overlays.toast.show(t('versions.created', { label }), { kind: 'ok' }); render(); } })),
-            versions.length ? h('table', { class: 'dm-columns-table' }, h('thead', null, h('tr', null, h('th', { text: t('versions.label') }), h('th', { text: t('common.created') }), h('th', { text: t('datasets.rows') }), h('th', { text: t('common.size') }), h('th'))),
-              h('tbody', null, versions.slice().reverse().map((v) => h('tr', null, h('td', { text: v.label }), h('td', { text: i18n.formatDateTime(v.ts) }), h('td', { class: 'dm-num', text: i18n.formatNumber(v.rowCount || 0) }), h('td', { text: i18n.formatBytes(v.byteSize || 0) }),
+            versions.length ? h('table', { class: 'dm-columns-table' }, h('thead', null, h('tr', null, h('th', { text: t('versions.label') }), h('th', { text: t('common.created') }), h('th', { text: t('versions.holds') }), h('th', { text: t('common.size') }), h('th'))),
+              h('tbody', null, versions.slice().reverse().map((v) => h('tr', null, h('td', { text: v.label }), h('td', { text: i18n.formatDateTime(v.ts) }), h('td', { text: versionHolds(v) }), h('td', { text: i18n.formatBytes(v.byteSize || 0) }),
                 h('td', null, h('div', { class: 'dm-row' },
-                  basic.button({ label: t('versions.compare'), size: 'sm', onClick: async () => { const cmp = await datasets.compareVersion(ctx.datasetId, v.n); overlays.dialog.open({ title: t('versions.compare'), body: h('div', { class: 'dm-prose' }, h('p', { text: t('versions.compare.rows', { then: i18n.formatNumber(cmp.rowsThen), now: i18n.formatNumber(cmp.rowsNow) }) }), h('p', { text: t('versions.compare.added', { list: cmp.added.join(', ') || '–' }) }), h('p', { text: t('versions.compare.removed', { list: cmp.removed.join(', ') || '–' }) }), h('p', { text: t('versions.compare.retyped', { list: cmp.retyped.map((r) => `${r.name}: ${r.from} → ${r.to}`).join(', ') || '–' }) })) }); } }),
+                  basic.button({ label: t('versions.compare'), size: 'sm', onClick: async () => { const cmp = await datasets.compareVersion(ctx.datasetId, v.n); overlays.dialog.open({ title: t('versions.compare'), body: h('div', { class: 'dm-prose' }, cmp.own.map(ownDiff), cmp.own.length ? null : h('p', { text: t('versions.compare.rows', { then: i18n.formatNumber(cmp.rowsThen), now: i18n.formatNumber(cmp.rowsNow) }) }), h('p', { text: t('versions.compare.added', { list: cmp.added.join(', ') || '–' }) }), h('p', { text: t('versions.compare.removed', { list: cmp.removed.join(', ') || '–' }) }), h('p', { text: t('versions.compare.retyped', { list: cmp.retyped.map((r) => `${r.name}: ${r.from} → ${r.to}`).join(', ') || '–' }) })) }); } }),
                   basic.button({ label: t('versions.restore'), size: 'sm', onClick: async () => { if (await overlays.dialog.confirm(t('versions.restore.confirm', { label: v.label }))) { await datasets.restoreVersion(ctx.datasetId, v.n); overlays.toast.show(t('versions.restored', { label: v.label }), { kind: 'ok' }); if (ctx.onApplied) ctx.onApplied({}, t('versions.restored', { label: v.label })); closeDialog(body); } } }),
                   basic.button({ label: t('common.delete'), size: 'sm', variant: 'ghost', icon: 'trash-2', 'icon-only': true, onClick: async () => { await datasets.deleteVersion(ctx.datasetId, v.n); render(); } })))))))
               : h('p', { class: 'dm-help', text: t('versions.empty') }));

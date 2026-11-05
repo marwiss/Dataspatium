@@ -22,6 +22,8 @@ geometrikolonne og åpnes som kart. Se [kallor.md](kallor.md#åpne-geodata).
 
 Navn er ikke nok. Appen kontrollerer også verdiene: en geometrikolonne må inneholde en geometri, og koordinater må ligge i grader eller i et projisert system. Kolonner som bare heter x og y, regnes som koordinater når verdiene er projiserte, siden små tall under de navnene oftest er noe annet. En tabell med koordinater kan eksporteres som GeoJSON med punkter.
 
+Er koordinatene i et annet system enn SWEREF 99 TM, velger du det når du importerer, for eksempel RT 90 eller en UTM-sone. Appen legger da til kolonner i grader og beholder originalene.
+
 ## Kartet i Bearbeid
 
 Kartet viser datasettets objekter i appens farge. Zoom med hjulet eller knappene, panorer ved å dra, og klikk på et

@@ -411,7 +411,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17799,
+  "size": 19297,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -483,7 +483,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 7057,
+  "size": 7251,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -567,7 +567,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 17532,
+  "size": 19080,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -639,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6997,
+  "size": 7188,
   "library": "dataspatium"
  },
  "docs/da/planer.md": {
@@ -723,7 +723,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 17276,
+  "size": 18748,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -795,7 +795,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 6892,
+  "size": 7080,
   "library": "dataspatium"
  },
  "docs/nb/planer.md": {
@@ -879,7 +879,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 19035,
+  "size": 20627,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -951,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 7530,
+  "size": 7746,
   "library": "dataspatium"
  },
  "docs/fi/planer.md": {
@@ -1035,7 +1035,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 18140,
+  "size": 19671,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1107,7 +1107,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 7041,
+  "size": 7238,
   "library": "dataspatium"
  },
  "docs/is/planer.md": {
@@ -1191,7 +1191,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 17709,
+  "size": 19223,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1263,7 +1263,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6982,
+  "size": 7169,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {

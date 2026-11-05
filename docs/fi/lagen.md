@@ -76,6 +76,10 @@ versiona (katso [insamling.md](insamling.md)).
 
 Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen alla. *Lisää lähde* kokoaa kaikki tavat lisätä lähde: määritystiedoston, tietokannan tai paikkatietopalvelun.
 
+**Sovellus kertoo ensin, mikä tiedosto on**, esimerkiksi paikkoja sisältävä taulukko, graafi tai rakennusmalli, ja näyttää sen omassa muodossaan: kartan, kuvat, luonnoksen graafista, piirustuksen tai ensimmäisen sivun. Jos jotakin kannattaa kysyä, se kysyy: koordinaatit, jotka näyttävät vaihtaneen paikkaa, missä koordinaatistossa ne ovat ja luetaanko yhteyksien lista graafina. Mikään ei muutu ennen kuin vastaat, ja kartta näyttää vastauksen vaikutuksen.
+
+**Useat erilaiset tiedostot** lajitellaan sen mukaan, mitä ne ovat: kuvista tulee yksi kokoelma, asiakirjoista toinen ja muista tiedostoista kustakin oma aineisto. Näet listan ensin ja voit jättää jotakin pois. Voit myös pudottaa kokonaisen kansion tai valita sen kohdasta *Valitse kansio*. Tiedosto, jota ei voi lukea, ei estä muita.
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -106,6 +110,12 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 **Mitä sovellus näkee.** Yleisnäkymä näyttää, miten aineistoa voi käyttää myös: paikkoja kartalla, aikasarjana, väritettävinä alueina, verkostona tai juoksevana tekstinä. Jokainen rivi kertoo syyn, ja voit poistaa käytöstä sen, mikä ei pidä paikkaansa, tai ottaa käyttöön sen, minkä sovellus jätti huomaamatta. Valinta tallennetaan aineistoon, ja tilat seuraavat sitä. Sen alla **Tarkistettavaa** kertoo, mitä aineiston laji tarvitsee: sivuja ilman tekstiä, kuvia ilman sijaintia, särmiä, jotka osoittavat olemattomiin solmuihin, elementtejä ilman määriä tai rivejä ilman paikkaa.
 
 **Valinta.** Painike *Käytä valintana* on Hae-tilassa ja Muokkaa-tilan näkymissä. Näkemäsi seuraa sen jälkeen tilasta toiseen ja näkyy tilarivillä. Muokkaa-tilassa näytät sen listavalinnasta, Vie-tilassa valitset, viedäänkö vain valinta, ja paketeissa voit lähettää vain valinnan. Tilariviltä tallennat sen listana, teet siitä aineiston tai tyhjennät sen. Jos aineiston rivit muuttuvat, valinta häviää, koska se ei enää tarkoittaisi samaa.
+
+**Kuva.** Yleiskuva näyttää kuvan aineistosta: ensimmäisen sivun, kartan paikoista, luonnoksen graafista, piirustuksen, mallin osat tai viivan ajan yli. Tavallisella taulukolla ei ole kuvaa.
+
+**Useat aineistot.** Jos olet valinnut useita, kohta *Näitä ne voivat tehdä yhdessä* näyttää, mikä on mahdollista: sama kartta, kun kaikilla on paikkoja, yksi taulukko, kun kaikilla on samat sarakkeet, ja yksi kokoelma, kun kaikki ovat kuvia tai kaikki ovat asiakirjoja. Valitut eivät muutu. Viennissä kukin saa oman muotonsa, esimerkiksi kuvat ZIP-tiedostona ja graafit GraphML-muodossa.
+
+**Versiot** kertovat sisältönsä aineiston omissa yksiköissä, ja vertailu näyttää, mitkä kuvat, asiakirjat, solmut, särmät tai elementit ovat tulleet ja poistuneet.
 
 ## Hae
 

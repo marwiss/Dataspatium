@@ -74,6 +74,10 @@ version (se [insamling.md](insamling.md)).
 
 Alle kilder på listen ser ens ud med et symbol for deres type og en linje under navnet. *Tilføj kilde* samler alle måder at tilføje en kilde på: en konfigurationsfil, en database eller en geodatatjeneste.
 
+**Appen siger først, hvad filen er**, for eksempel en tabel med steder, en graf eller en bygningsmodel, og viser den i sin egen form: et kort, billederne, en skitse af grafen, tegningen eller den første side. Er noget værd at spørge om, spørger den: koordinater, der ser ud til at have byttet plads, hvilket koordinatsystem de er i, og om en liste med forbindelser skal læses som en graf. Intet ændres, før du har svaret, og kortet viser, hvad svaret gør.
+
+**Flere forskellige filer** sorteres efter, hvad de er: billeder bliver til én samling, dokumenter til en anden, og hver anden fil til sit eget datasæt. Du ser listen først og kan fravælge noget. Du kan også slippe en hel mappe eller vælge den med *Vælg en mappe*. En fil, der ikke kan læses, stopper ikke de andre.
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -102,6 +106,12 @@ har nye data (se [floden.md](floden.md)).
 **Hvad appen ser.** Oversigten viser, hvad datasættet også kan bruges som: steder på et kort, en tidsserie, regioner, der kan farves, et netværk eller løbende tekst. Hver linje siger hvorfor, og du kan slå det fra, der ikke passer, eller slå det til, appen overså. Valget gemmes i datasættet, og tilstandene følger det. Under det står **Værd at se på** med det, datatypen kræver: sider uden tekst, billeder uden position, kanter, der peger på noder, der ikke findes, elementer uden mængder eller rækker uden sted.
 
 **Udvalg.** Knappen *Brug som udvalg* findes i Søg og i Bearbejds visninger. Det, du ser, følger derefter med mellem tilstandene og står i statuslinjen. I Bearbejd viser du det via listevalget, i Eksportér vælger du, om kun udvalget skal med, og i pakker kan du sende kun udvalget. Fra statuslinjen gemmer du det som en liste, gør det til et datasæt eller rydder det. Ændres rækkerne i datasættet, forsvinder udvalget, da det ikke længere ville betyde det samme.
+
+**Billede.** Oversigten viser et billede af datasættet: den første side, et kort over stederne, en skitse af grafen, tegningen, hvad modellen består af, eller en linje over tid. En almindelig tabel har intet billede.
+
+**Flere datasæt.** Har du valgt flere, viser *Det kan de gøre sammen*, hvad der er muligt: samme kort, når alle har steder, én tabel, når alle har samme kolonner, og én samling, når alle er billeder eller alle er dokumenter. De valgte ændres ikke. Ved eksport får hver sin egen form, for eksempel billeder som ZIP og grafer som GraphML.
+
+**Versioner** siger, hvad de indeholder i datasættets egne enheder, og sammenligningen viser, hvilke billeder, dokumenter, knuder, kanter eller elementer der er kommet til og forsvundet.
 
 ## Søg
 

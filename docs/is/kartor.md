@@ -22,6 +22,8 @@ Svörin fá rúmfræðidálk og opnast sem kort. Sjá [kallor.md](kallor.md#opin
 
 Heiti duga ekki. Forritið athugar líka gildin: rúmfræðidálkur verður að innihalda rúmfræði og hnit verða að vera í gráðum eða í vörpuðu kerfi. Dálkar sem heita aðeins x og y teljast hnit þegar gildin eru vörpuð, því litlar tölur undir þeim heitum eru oftast eitthvað annað. Töflu með hnitum má flytja út sem GeoJSON með punktum.
 
+Ef hnitin eru í öðru kerfi en SWEREF 99 TM velur þú það við innflutning, til dæmis RT 90 eða UTM-belti. Forritið bætir þá við dálkum í gráðum og varðveitir upprunalegu gildin.
+
 ## Kortið í Vinna
 
 Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga, og

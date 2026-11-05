@@ -30,12 +30,11 @@
     /** Preview for Inhämta: the facts, with the counts per type as the table. */
     async function preview(file) {
       const f = await open(file);
-      let summary;
-      if (f.format === 'dxf') summary = (await dxf.read(new TextDecoder('utf-8').decode(f.bytes))).summary;
-      else summary = await step.summary(f.bytes);
+      let summary; let drawing = null;
+      if (f.format === 'dxf') { const read = await dxf.read(new TextDecoder('utf-8').decode(f.bytes)); summary = read.summary; drawing = read.svg; } else summary = await step.summary(f.bytes);
       const rows = typeRows(f.format === 'dxf' ? summary.types : summary.elementTypes);
       const datasetName = f.format === 'ifc' ? (summary.project && !/^(default|project|projekt)$/i.test(summary.project) ? summary.project : baseName(f.fileName)) : baseName(f.fileName);
-      return { kind: 'model', format: 'model', model: summary, header: true, columns: ['typ', 'antal'], declaredTypes: ['text', 'integer'], dataRows: rows.slice(0, 100), totalRows: rows.length, datasetName };
+      return { kind: 'model', format: 'model', model: summary, drawing, header: true, columns: ['typ', 'antal'], declaredTypes: ['text', 'integer'], dataRows: rows.slice(0, 100), totalRows: rows.length, datasetName };
     }
     /** The counts per type as a plain table (when someone insists on a table). */
     async function parse(file) {

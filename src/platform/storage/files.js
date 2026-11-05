@@ -29,6 +29,7 @@
         input.type = 'file';
         if (options.accept) input.accept = options.accept;
         input.multiple = !!options.multiple;
+        if (options.directory) input.webkitdirectory = true;
         input.style.display = 'none';
         input.addEventListener('change', () => { resolve(Array.from(input.files || [])); input.remove(); });
         input.addEventListener('cancel', () => { resolve([]); input.remove(); });

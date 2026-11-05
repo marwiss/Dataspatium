@@ -75,6 +75,10 @@ Byggingarlíkön í IFC og teikningar í DXF verða að gagnasöfnum af tegundin
 
 Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu undir heitinu. *Bæta við heimild* safnar saman öllum leiðum til að bæta við heimild: stillingaskrá, gagnagrunni eða landupplýsingaþjónustu.
 
+**Forritið segir fyrst hvað skráin er**, til dæmis tafla með stöðum, net eða byggingarlíkan, og sýnir hana á sínu eigin formi: kort, myndirnar, skissu af netinu, teikninguna eða fyrstu síðuna. Ef eitthvað er þess virði að spyrja um spyr það: hnit sem virðast hafa skipt um stað, í hvaða hnitakerfi þau eru og hvort lesa eigi lista af tengslum sem net. Ekkert breytist fyrr en þú svarar, og kortið sýnir hvað svarið gerir.
+
+**Margar ólíkar skrár** eru flokkaðar eftir því hvað þær eru: myndir verða eitt safn, skjöl annað og hver önnur skrá sitt eigið gagnasafn. Þú sérð listann fyrst og getur sleppt einhverju. Þú getur líka sleppt heilli möppu eða valið hana með *Velja möppu*. Skrá sem ekki er hægt að lesa stöðvar ekki hinar.
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -103,6 +107,12 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 **Það sem forritið sér.** Yfirlitið sýnir hvað einnig má nota gagnasafnið sem: staði á korti, tímaröð, svæði sem má lita, net eða samfelldan texta. Hver lína segir hvers vegna og þú getur slökkt á því sem er rangt eða kveikt á því sem forritið missti af. Valið er vistað í gagnasafninu og hamirnir fylgja því. Þar fyrir neðan sýnir **Vert að athuga** það sem tegund gagnanna þarf: síður án texta, myndir án staðsetningar, leggi sem vísa á hnúta sem eru ekki til, einingar án magns eða raðir án staðar.
 
 **Val.** Hnappurinn *Nota sem val* er í Leita og í sýnum Vinna. Það sem þú sérð fylgir síðan milli hama og birtist á stöðustikunni. Í Vinna sýnir þú það með listavali, í Flytja út velur þú hvort aðeins valið fylgi og í pökkum geturðu sent aðeins valið. Af stöðustikunni vistar þú það sem lista, gerir það að gagnasafni eða hreinsar það. Ef raðir gagnasafnsins breytast hverfur valið, því það myndi ekki lengur merkja það sama.
+
+**Mynd.** Yfirlitið sýnir mynd af gagnasafninu: fyrstu síðuna, kort af stöðunum, skissu af netinu, teikninguna, úr hverju líkanið er eða línu yfir tíma. Venjuleg tafla hefur enga mynd.
+
+**Mörg gagnasöfn.** Ef þú hefur valið mörg sýnir *Þetta geta þau gert saman* hvað er hægt: sama kort þegar öll hafa staði, ein tafla þegar öll hafa sömu dálka og eitt safn þegar öll eru myndir eða öll eru skjöl. Þau völdu breytast ekki. Við útflutning fær hvert sitt eigið snið, til dæmis myndir sem ZIP og net sem GraphML.
+
+**Útgáfur** segja hvað þær innihalda í eigin einingum gagnasafnsins, og samanburðurinn sýnir hvaða myndir, skjöl, hnútar, leggir eða einingar hafa bæst við og horfið.
 
 ## Leita
 

@@ -25,6 +25,8 @@
     const FONTS = 'dataspatium-asset://pdfjs/standard_fonts/';
     /** @type {Promise<any>|null} */ let ready = null;
     /** @type {any} */ let worker = null;
+    /** Documents being closed. @type {Promise<any>} */
+    let closing = Promise.resolve();
 
     /** Load the display layer and start the worker (idempotent). Resolves with the pdfjsLib object. */
     function load() {
@@ -48,7 +50,16 @@
     async function open(bytes) {
       const lib = await load();
       const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-      return lib.getDocument({ data, standardFontDataUrl: FONTS, isEvalSupported: false }).promise;
+      // All documents share one worker, and pdf.js refuses a new document while another is being closed.
+      await closing;
+      const doc = await lib.getDocument({ data, standardFontDataUrl: FONTS, isEvalSupported: false }).promise;
+      const destroy = doc.destroy.bind(doc);
+      doc.destroy = () => {
+        const done = destroy();
+        closing = Promise.all([closing, done.catch(() => {})]);
+        return done;
+      };
+      return doc;
     }
 
     /**

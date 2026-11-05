@@ -103,6 +103,7 @@ with a backup or a bundle.
   open where they are, and maps are offered only when the values really are coordinates (see [dela.md](dela.md)).
 - **The modes follow the dataset**: the app shows what a dataset can also be used as and says why, opens Analyse in the right tool and shows what is worth checking. A selection follows between the modes, and the export says what goes along (see [lagen.md](lagen.md)).
 - **Search and draw by what a dataset holds**: search by place, find nodes through their edges and elements through their properties, see pictures on the map and draw charts from edges, properties and quantities (see [soka.md](soka.md)).
+- **Import and Manage follow the file**: the app says what a file is, shows it in its own form and asks about coordinates, coordinate systems and links. Mixed folders are sorted, and Manage shows a picture per dataset (see [lagen.md](lagen.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

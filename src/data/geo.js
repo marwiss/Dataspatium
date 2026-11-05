@@ -135,7 +135,7 @@
     function swerefToWgs84(x, y, epsg) {
       const zone = SWEREF_ZONES[epsg] || SWEREF_ZONES[3006];
       const { e2, n, aHat } = tmConstants();
-      const xi = (y - FALSE_N) / (zone.k0 * aHat);
+      const xi = (y - (zone.falseN || FALSE_N)) / (zone.k0 * aHat);
       const eta = (x - zone.falseE) / (zone.k0 * aHat);
       const d1 = n / 2 - (2 * n ** 2) / 3 + (37 * n ** 3) / 96 - (n ** 4) / 360;
       const d2 = (n ** 2) / 48 + (n ** 3) / 15 - (437 * n ** 4) / 1440;
@@ -193,6 +193,8 @@
       25832: { lon0: 9, k0: 0.9996, falseE: 500000 }, 25833: { lon0: 15, k0: 0.9996, falseE: 500000 }, 25834: { lon0: 21, k0: 0.9996, falseE: 500000 }, 25835: { lon0: 27, k0: 0.9996, falseE: 500000 },
       32632: { lon0: 9, k0: 0.9996, falseE: 500000 }, 32633: { lon0: 15, k0: 0.9996, falseE: 500000 }, 32634: { lon0: 21, k0: 0.9996, falseE: 500000 }, 32635: { lon0: 27, k0: 0.9996, falseE: 500000 },
       3067: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      // RT 90 2,5 gon V, with Lantmäteriet's parameters for direct conversion on GRS 80.
+      3021: { lon0: 15.806284529, k0: 1.00000561024, falseE: 1500064.274, falseN: -667.711 },
     };
     for (let z = 19; z <= 31; z++) TM_ZONES[3854 + z] = { lon0: z, k0: 1, falseE: z * 1000000 + 500000 };
     /** ISN93 / Lambert 1993 (EPSG:3057), the Icelandic national grid: Lambert conformal conic with two standard parallels. */

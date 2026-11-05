@@ -75,6 +75,10 @@ versjon (se [insamling.md](insamling.md)).
 
 Alle kilder i listen ser like ut, med et symbol for typen og en linje under navnet. *Legg til kilde* samler alle måter å legge til en kilde på: en konfigurasjonsfil, en database eller en geodatatjeneste.
 
+**Appen sier først hva filen er**, for eksempel en tabell med steder, en graf eller en bygningsmodell, og viser den i sin egen form: et kart, bildene, en skisse av grafen, tegningen eller første side. Er noe verdt å spørre om, spør den: koordinater som ser ut til å ha byttet plass, hvilket koordinatsystem de er i, og om en liste med koblinger skal leses som en graf. Ingenting endres før du har svart, og kartet viser hva svaret gjør.
+
+**Flere ulike filer** sorteres etter hva de er: bilder blir én samling, dokumenter en annen, og hver annen fil et eget datasett. Du ser listen først og kan velge bort noe. Du kan også slippe en hel mappe eller velge den med *Velg en mappe*. En fil som ikke kan leses, stopper ikke de andre.
+
 ## Håndter
 
 Datasettenes hjem. Objektpanelet er et tre: datasett kan ligge i mapper med undermapper (`Økonomi/2026`) og ha
@@ -103,6 +107,12 @@ har nye data (se [floden.md](floden.md)).
 **Hva appen ser.** Oversikten viser hva datasettet også kan brukes som: steder på et kart, en tidsserie, regioner som kan farges, et nettverk eller løpende tekst. Hver linje sier hvorfor, og du kan slå av det som ikke stemmer, eller slå på det appen overså. Valget lagres i datasettet, og modusene følger det. Under det står **Verdt å se på** med det datatypen trenger: sider uten tekst, bilder uten posisjon, kanter som peker på noder som ikke finnes, elementer uten mengder eller rader uten sted.
 
 **Utvalg.** Knappen *Bruk som utvalg* finnes i Søk og i Bearbeids visninger. Det du ser, følger deretter med mellom modusene og står i statuslinjen. I Bearbeid viser du det via listevalget, i Eksporter velger du om bare utvalget skal med, og i pakker kan du sende bare utvalget. Fra statuslinjen lagrer du det som en liste, gjør det til et datasett eller rydder det. Endres radene i datasettet, forsvinner utvalget, siden det ikke lenger ville bety det samme.
+
+**Bilde.** Oversikten viser et bilde av datasettet: første side, et kart over stedene, en skisse av grafen, tegningen, hva modellen består av, eller en linje over tid. En vanlig tabell har ikke noe bilde.
+
+**Flere datasett.** Har du valgt flere, viser *Dette kan de gjøre sammen* hva som er mulig: samme kart når alle har steder, én tabell når alle har samme kolonner, og én samling når alle er bilder eller alle er dokumenter. De valgte endres ikke. Ved eksport får hvert sin egen form, for eksempel bilder som ZIP og grafer som GraphML.
+
+**Versjoner** sier hva de inneholder i datasettets egne enheter, og sammenligningen viser hvilke bilder, dokumenter, noder, kanter eller elementer som har kommet til og forsvunnet.
 
 ## Søk
 

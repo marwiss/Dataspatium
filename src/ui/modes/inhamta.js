@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis, kinds) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis, kinds, fileSense, leaflet, sketches) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -36,8 +36,15 @@
       /** @type {any} */ let bridgeUi = null;
       /** @type {any} */ let fieldUi = null;
 
-      function reset() { return { step: 'file', file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
-      function restart() { Object.assign(wiz, reset()); render(); }
+      function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
+      function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
+      /** Pictures chosen but not yet read, shown from the files themselves. @type {Map<File, string>} */
+      const thumbs = new Map();
+      function thumbOf(file) {
+        if (!thumbs.has(file)) thumbs.set(file, URL.createObjectURL(file));
+        return thumbs.get(file);
+      }
+      function freeThumbs() { for (const url of thumbs.values()) URL.revokeObjectURL(url); thumbs.clear(); }
 
       let unsubStore = null;
       function activate(s) {
@@ -50,6 +57,7 @@
       }
       function deactivate() {
         slots = null;
+        freeThumbs();
         if (unsubConnectors) unsubConnectors();
         if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
@@ -165,8 +173,8 @@
         if (source === 'field') { renderField(); return; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
-        stepper.steps = STEPS; stepper.active = wiz.step;
-        const body = wiz.project ? stepProject() : wiz.step === 'file' ? stepFile() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
+        stepper.steps = STEPS; stepper.active = wiz.step === 'sort' ? 'options' : wiz.step;
+        const body = wiz.project ? stepProject() : wiz.step === 'file' ? stepFile() : wiz.step === 'sort' ? stepSort() : wiz.step === 'options' ? stepOptions() : wiz.step === 'columns' ? stepColumns() : stepDone();
         replace(slots.center, h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('download', 20), t('import.title')), stepper), body);
       }
 
@@ -309,6 +317,8 @@
         pick.value = wiz.boundary || boundaries[0].id;
         pick.addEventListener('change', () => { wiz.boundary = pick.value; });
         return h('div', { class: 'dm-stack' }, dz,
+          wiz.error ? h('p', { class: 'dm-error dm-small', text: wiz.error }) : null,
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('import.folder'), icon: 'folder', title: t('import.folder.hint'), onClick: async () => chooseFiles(await services.files.pick({ directory: true })) })),
           linked.supported() ? h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('linked.pick'), icon: 'link', onClick: pickLinked }), h('span', { class: 'dm-help', text: t('linked.pick.hint') })) : null,
           h('div', { class: 'dm-row-wrap' }, tables.map((p, i) => ui.button({ label: i === 0 ? t('presets.try') : (p.nameKey ? t(p.nameKey) : p.name), 'data-course': i === 0 ? 'example' : null, icon: 'sparkles', onClick: () => importPreset(p) }))),
           h('div', { class: 'dm-row-end' }, pick, ui.button({ label: t('presets.geo.import'), icon: 'globe', onClick: () => importPreset(boundaries.find((p) => p.id === pick.value) || boundaries[0]) })),
@@ -327,12 +337,59 @@
         const projectFile = list.find((f) => qgis.detect(f));
         if (projectFile) { await openProject(projectFile, list.filter((f) => f !== projectFile)); return; }
         const collection = services.importer.collectionFor(list);
-        if (list.length > 1 && !collection) ui.toast.show(t('import.multi.first', { name: list[0].name }), { kind: 'info', timeout: 8000 });
+        if (list.length > 1 && !collection) { await sortChosen(list); return; }
+        wiz.answers = {}; wiz.sorted = null; wiz.results = null;
         wiz.files = collection && list.length > 1 ? list : [];
         wiz.file = list[0]; wiz.handle = null; wiz.text = ''; wiz.name = '';
         wiz.options.format = wiz.files.length ? collection.id : ''; wiz.options.sheet = ''; wiz.options.recordTag = ''; wiz.options.table = ''; wiz.options.header = undefined; wiz.options.plan = undefined; wiz.nameFromPlan = false;
-        if (wiz.files.length) wiz.name = t('import.collection.' + collection.id, { n: list.length });
+        if (wiz.files.length) wiz.name = services.importer.folderOf(list) || t('import.collection.' + collection.id, { n: list.length });
         await runPreview();
+      }
+      /** A mixed choice: one kind of files goes on as usual; anything else is shown sorted before it is read. */
+      async function sortChosen(list) {
+        wiz.busy = true; wiz.error = ''; render();
+        const sorted = await services.importer.sortFiles(list);
+        wiz.busy = false;
+        const only = sorted.groups.length === 1 && !sorted.skipped.length ? sorted.groups[0] : null;
+        if (only) { await chooseFiles(only.files); return; }
+        if (!sorted.groups.length) { wiz.error = t('import.sort.none'); render(); return; }
+        sorted.groups.forEach((g) => { g.include = true; });
+        wiz.sorted = sorted; wiz.results = null; wiz.step = 'sort';
+        render();
+      }
+      const KIND_OF_IMPORTER = { images: 'images', documents: 'document', detaljplan: 'plan', graph: 'graph', model: 'model' };
+      function stepSort() {
+        const { groups, skipped } = wiz.sorted;
+        const row = (g) => {
+          const sw = /** @type {any} */ (h('dm-switch', { 'aria-label': t('import.sort.include') }));
+          sw.checked = g.include;
+          sw.addEventListener('change', () => { g.include = sw.checked; render(); });
+          const title = g.collection ? g.name : g.files[0].name;
+          const icon = kinds.PROFILES[KIND_OF_IMPORTER[g.importer]] ? kinds.PROFILES[KIND_OF_IMPORTER[g.importer]].icon : 'table';
+          return h('div', { class: 'dm-card dm-sort-row' }, ui.icon(icon, 18),
+            h('div', { class: 'dm-list-main' }, h('strong', { class: 'dm-truncate', text: title }),
+              h('span', { class: 'dm-list-sub dm-truncate', text: g.collection ? g.files.map((f) => f.name).slice(0, 6).join(', ') : t('import.format.' + g.importer) })),
+            sw);
+        };
+        const chosen = groups.filter((g) => g.include);
+        return h('div', { class: 'dm-stack' },
+          h('p', { class: 'dm-help', text: t('import.sort.help', { n: i18n.formatNumber(chosen.reduce((sum, g) => sum + g.files.length, 0)) }) }),
+          groups.map(row),
+          skipped.length ? h('p', { class: 'dm-help dm-small', text: t('import.sort.skipped', { list: skipped.map((f) => f.name).slice(0, 8).join(', ') }) }) : null,
+          wiz.busy ? progressNode() : null,
+          h('div', { class: 'dm-row' },
+            ui.button({ label: t('common.back'), icon: 'chevron-left', disabled: wiz.busy, onClick: restart }),
+            ui.button({ label: t('import.sort.run'), icon: 'check', variant: 'primary', loading: wiz.busy, disabled: !chosen.length, onClick: runSortedChoice })));
+      }
+      async function runSortedChoice() {
+        if (wiz.busy) return;
+        wiz.busy = true; wiz.progress = null; render();
+        const results = await services.importer.runSorted(wiz.sorted.groups.filter((g) => g.include), (p) => { wiz.progress = p; render(); });
+        for (const r of results) {
+          if (r.meta) shell.log(doneText(r.meta), 'ok');
+          else shell.log(t('import.error', { message: `${r.group.files[0].name}: ${r.error}` }), 'error');
+        }
+        wiz.results = results; wiz.step = 'done'; wiz.busy = false; render();
       }
       /**
        * A QGIS project: read the layers, match them to datasets in the workspace or to the files dropped with it, and
@@ -468,6 +525,7 @@
           if (wiz.preview.sheet !== undefined) wiz.options.sheet = wiz.preview.sheet;
           if (wiz.options.header === undefined) wiz.options.header = wiz.preview.header;
           wiz.specs = wiz.preview.inferred.map((c) => Object.assign({}, c));
+          wiz.answers = {};
           if (!wiz.name) wiz.name = wiz.file ? services.importer.baseName(wiz.file.name) : t('import.paste.name');
           wiz.step = wiz.step === 'file' ? 'options' : wiz.step;
         } catch (err) {
@@ -498,6 +556,8 @@
         const p = wiz.preview;
         const left = h('div', { class: 'dm-stack' });
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
+        const sense = p ? senseCard(p) : null;
+        if (sense) left.appendChild(sense);
         const collection = COLLECTIONS.includes(wiz.options.format);
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
         // Several files are always one collection, so the format is fixed then.
@@ -641,9 +701,72 @@
           (viaR || collection || planFile || opPlan || graphFile || modelFile) ? ui.button({ label: t('common.import'), icon: 'check', variant: 'primary', loading: wiz.busy, onClick: runImport })
             : ui.button({ label: t('common.next'), icon: 'chevron-right', variant: 'primary', disabled: !p || !p.columns.length || wiz.busy, onClick: () => { wiz.step = 'columns'; render(); } })));
         const right = h('div', { class: 'dm-table-wrap' },
+          p ? kindPreview(p) : null,
           h('h3', { text: t('import.preview', { n: p ? p.dataRows.length : 0 }) }),
           p && p.columns.length ? previewTable(p) : h('p', { class: 'dm-help', text: wiz.busy ? t('common.loading') : viaR ? t('import.r.nopreview') : t('import.no.rows') }));
         return h('div', { class: 'dm-two-col' }, left, right);
+      }
+
+      /** What the file is, and what is worth asking about it. */
+      function senseCard(p) {
+        const sense = fileSense.describe(p, { files: wiz.files });
+        if (!sense) return null;
+        const answers = wiz.answers;
+        const coords = fileSense.coordinates(p);
+        const parts = fileSense.questions(p).filter((q) => !(q.id === 'graph' && wiz.handle)).map((q) => {
+          if (q.id === 'crs') {
+            const sel = /** @type {any} */ (h('dm-select', { label: t('import.q.crs'), help: t(q.hint) }));
+            sel.options = fileSense.SYSTEMS;
+            sel.value = answers.crs || q.system;
+            sel.addEventListener('change', () => { answers.crs = sel.value; render(); });
+            return sel;
+          }
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('import.q.' + q.id, q.params) }));
+          sw.checked = !!answers[q.id];
+          sw.addEventListener('change', () => {
+            answers[q.id] = sw.checked;
+            if (q.id === 'swap') fileSense.swapNames(wiz.specs, coords.lon, coords.lat);
+            render();
+          });
+          return h('div', { class: 'dm-stack-sm' }, sw, h('p', { class: 'dm-help dm-small', text: t(q.hint, q.params) }));
+        });
+        return h('div', { class: 'dm-card dm-sense dm-stack-sm' },
+          h('div', { class: 'dm-sense-head' }, ui.icon(sense.icon, 18), h('strong', { text: t(sense.key, sense.params) })),
+          parts);
+      }
+      /** The file in its own form, above the rows: a map, pictures, a network, a drawing, a first page. */
+      function kindPreview(p) {
+        if (p.importer === 'images') {
+          const list = wiz.files.length ? wiz.files : (wiz.file ? [wiz.file] : []);
+          return h('div', { class: 'dm-photos dm-import-photos' }, list.slice(0, 12).map((f) => h('img', { src: thumbOf(f), alt: f.name, class: 'dm-import-photo' })));
+        }
+        if (p.sample) return h('div', { class: 'dm-ds-picture' }, sketches.network(sketches.networkOf(p.sample.nodes, p.sample.edges), t('datasets.picture.graph')));
+        if (p.drawing) return h('div', { class: 'dm-ds-picture' }, sketches.imageOfSvg(p.drawing, t('datasets.picture.drawing')));
+        if (p.importer === 'documents' && wiz.file && /\.pdf$/i.test(wiz.file.name)) return firstPage(wiz.file);
+        const table = fileSense.mapTable(p, wiz.answers);
+        const text = table ? leaflet.tableSvg(table, { width: 640, height: 240, limit: 5000 }) : null;
+        if (!text) return null;
+        const note = h('p', { class: 'dm-help dm-small' });
+        if (table.columns[0] === 'lon' && table.columns.length === 2) {
+          fileSense.placeName(table.rows).then((name) => { note.textContent = name ? t('import.sense.where', { name }) : t('import.sense.where.none'); }).catch((err) => D.log('import', err));
+        }
+        return h('div', { class: 'dm-stack-sm' }, h('div', { class: 'dm-api-map' }, new DOMParser().parseFromString(text, 'image/svg+xml').documentElement), note);
+      }
+      function firstPage(file) {
+        const holder = h('div', { class: 'dm-ds-picture' });
+        const cached = wiz.page && wiz.page.file === file ? wiz.page.url : null;
+        if (cached) { holder.appendChild(h('img', { src: cached, alt: t('datasets.picture.page'), class: 'dm-ds-page' })); return holder; }
+        file.arrayBuffer().then(async (buffer) => {
+          const pdf = D.require('engines/pdf');
+          const doc = await pdf.open(new Uint8Array(buffer));
+          try {
+            const canvas = document.createElement('canvas');
+            await pdf.render(doc, 1, canvas, { width: 220 });
+            wiz.page = { file, url: canvas.toDataURL('image/png') };
+            holder.appendChild(h('img', { src: wiz.page.url, alt: t('datasets.picture.page'), class: 'dm-ds-page' }));
+          } finally { await doc.destroy(); }
+        }).catch((err) => { D.log('import', err); holder.remove(); });
+        return holder;
       }
 
       function describeDelimiter(d) { return d === ';' ? t('import.delimiter.semicolon') : d === ',' ? t('import.delimiter.comma') : d === '\t' ? t('import.delimiter.tab') : d === '|' ? t('import.delimiter.pipe') : JSON.stringify(d); }
@@ -707,15 +830,19 @@
         try {
           const opts = cleanOptions();
           if (wiz.handle) opts.linked = true;
+          const reproject = wiz.preview ? fileSense.reprojectOption(wiz.preview, wiz.answers) : null;
+          if (reproject) opts.reproject = reproject;
           const specs = wiz.specs.map((s) => ({ name: s.name, type: s.type, include: s.include !== false, decimal: s.decimal, label: s.label || s.name }));
           // Large delimited files are streamed; the progress callback shows the rows read so far.
           const onProgress = (p) => { wiz.progress = p; render(); };
           const meta = wiz.files.length > 1 ? await services.importer.runFiles(wiz.files, opts, wiz.name, onProgress)
             : wiz.file ? await services.importer.run(wiz.file, opts, specs, wiz.name, onProgress) : await services.importer.runText(wiz.text, opts, specs, wiz.name);
           if (wiz.handle) await linked.link(meta.id, wiz.handle);
-          wiz.result = meta; wiz.step = 'done';
-          shell.log(doneText(meta) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
-          ui.toast.show(doneText(meta), { kind: 'ok' });
+          const network = wiz.answers.graph ? fileSense.questions(wiz.preview).find((q) => q.id === 'graph') : null;
+          const result = network ? await fileSense.toGraph(meta, network.params) : meta;
+          wiz.result = result; wiz.step = 'done';
+          shell.log(doneText(result) + ` (${Math.round(performance.now() - t0)} ms)`, 'ok');
+          ui.toast.show(doneText(result), { kind: 'ok' });
         } catch (err) {
           wiz.error = (err && err.message) || String(err);
           shell.log(t('import.error', { message: wiz.error }), 'error');
@@ -724,6 +851,15 @@
       }
 
       function stepDone() {
+        if (wiz.results) {
+          const open = (m) => { store.set({ selectedId: m.id }); shell.activate('bearbeta'); };
+          return h('div', { class: 'dm-success dm-stack' },
+            h('h2', null, ui.icon('circle-check', 20), ' ', t('import.sort.done', { n: i18n.formatNumber(wiz.results.filter((r) => r.meta).length) })),
+            wiz.results.map((r) => (r.meta
+              ? h('div', { class: 'dm-row' }, h('span', { class: 'dm-list-main dm-truncate', text: doneText(r.meta) }), ui.button(Object.assign(openAfter(r.meta), { size: 'sm', onClick: () => open(r.meta) })))
+              : h('p', { class: 'dm-error dm-small', text: `${r.group.files[0].name}: ${r.error}` }))),
+            h('div', { class: 'dm-row' }, ui.button({ label: t('import.another'), icon: 'plus', onClick: restart })));
+        }
         const m = wiz.result;
         return h('div', { class: 'dm-success' },
           h('h2', null, ui.icon('circle-check', 20), ' ', doneText(m)),
@@ -779,7 +915,7 @@
           const kv2 = /** @type {any} */ (h('dm-kv'));
           const p = wiz.preview;
           kv2.items = [
-            { label: t('import.format'), value: p.importer },
+            { label: t('import.format'), value: FORMATS.includes(p.importer) ? t('import.format.' + p.importer) : p.importer },
             p.reader ? { label: t('import.r.reader'), value: `${p.reader} (${p.pkg})` } : null,
             p.encoding ? { label: t('import.encoding'), value: p.encoding + (p.encodingDetected ? ` (${p.encodingDetected.confidence})` : '') } : null,
             p.delimiter ? { label: t('import.delimiter'), value: describeDelimiter(p.delimiter) } : null,

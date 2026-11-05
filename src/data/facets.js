@@ -61,14 +61,18 @@
       }
       return null;
     }
-    function findNetwork(handle) {
-      const names = handle.columns.map((c) => c.name);
+    /** Two columns named like the ends of a link. @param {string[]} names @returns {{from: string, to: string}|null} */
+    function networkColumns(names) {
       for (const [from, to] of NETWORK_NAMES) {
         const a = names.find((x) => x.toLowerCase() === from);
         const b = names.find((x) => x.toLowerCase() === to);
-        if (a && b) return { reason: 'facets.reason.network', params: { from: a, to: b }, columns: [a, b] };
+        if (a && b) return { from: a, to: b };
       }
       return null;
+    }
+    function findNetwork(handle) {
+      const found = networkColumns(handle.columns.map((c) => c.name));
+      return found ? { reason: 'facets.reason.network', params: found, columns: [found.from, found.to] } : null;
     }
     async function findText(handle) {
       for (const c of textColumns(handle.columns)) {
@@ -142,6 +146,6 @@
       return out;
     }
 
-    return { IDS, detect, has, set, startTab, firstGroups };
+    return { networkColumns, IDS, detect, has, set, startTab, firstGroups };
   });
 })();

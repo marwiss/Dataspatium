@@ -222,6 +222,22 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-geo-layers { max-height: 360px; overflow: auto; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: var(--dm-s-1); }
 .dm-api-map { border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); overflow: hidden; max-width: 640px; }
 .dm-api-map svg { display: block; width: 100%; height: auto; }
+.dm-sense-head { display: flex; align-items: center; gap: var(--dm-s-2); }
+.dm-sort-row { display: flex; align-items: center; gap: var(--dm-s-3); }
+.dm-import-photos { margin-bottom: var(--dm-s-3); }
+.dm-import-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--dm-radius-sm); }
+.dm-ds-picture { display: flex; justify-content: center; align-items: center; padding: var(--dm-s-3); margin-bottom: var(--dm-s-3); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); }
+.dm-ds-figure { margin: 0; width: 100%; max-width: calc(var(--dm-s-12) * 12); }
+.dm-sketch { display: block; width: 100%; max-width: calc(var(--dm-s-12) * 12); height: auto; }
+.dm-sketch-edge { stroke: var(--dm-border); stroke-width: 1; }
+.dm-sketch-node { fill: var(--dm-accent); }
+.dm-sketch-line { fill: none; stroke: var(--dm-accent); stroke-width: 2; }
+.dm-sketch-bars { display: flex; flex-direction: column; gap: var(--dm-s-1); width: 100%; max-width: calc(var(--dm-s-12) * 12); }
+.dm-sketch-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; align-items: center; gap: var(--dm-s-2); }
+.dm-sketch-track { display: block; height: var(--dm-s-2); background: var(--dm-surface-2); border-radius: var(--dm-radius-sm); overflow: hidden; }
+.dm-sketch-fill { display: block; height: 100%; background: var(--dm-accent); }
+.dm-ds-page { display: block; max-width: calc(var(--dm-s-12) * 5); box-shadow: var(--dm-shadow); background: var(--dm-surface); }
+.dm-ds-page-text { padding: var(--dm-s-4); font-size: var(--dm-text-xs); overflow: hidden; max-height: calc(var(--dm-s-12) * 6); }
 .dm-geoportal-search { align-items: flex-end; }
 .dm-geoportal-search dm-input { flex: 1 1 320px; min-width: 200px; }
 .dm-geoportal-list { max-height: 60vh; overflow: auto; }

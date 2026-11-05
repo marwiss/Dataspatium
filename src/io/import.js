@@ -87,7 +87,72 @@
         }
         rows[r] = out;
       }
-      return { columns: included.map((s) => ({ name: s.name, type: s.type, label: s.label || s.name, sourceName: table.columns[s.index] })), rows };
+      const result = { columns: included.map((s) => ({ name: s.name, type: s.type, label: s.label || s.name, sourceName: table.columns[s.index] })), rows };
+      return options.reproject ? withDegrees(result, options.reproject) : result;
+    }
+    /**
+     * Coordinates in another system get columns in degrees. The originals stay, under names that no longer read as coordinates.
+     * @param {{columns: any[], rows: any[][]}} result @param {{east: string, north: string, crs: string}} reproject in the source's names
+     */
+    function withDegrees(result, reproject) {
+      const geo = D.require('data/geo');
+      const east = result.columns.findIndex((c) => c.sourceName === reproject.east);
+      const north = result.columns.findIndex((c) => c.sourceName === reproject.north);
+      if (east < 0 || north < 0) return result;
+      for (const c of [result.columns[east], result.columns[north]]) { c.name += '_original'; c.label = c.name; }
+      const free = (name) => (result.columns.some((c) => c.name === name) ? `${name}_wgs84` : name);
+      result.columns.push({ name: free('lon'), type: 'number', label: 'lon' }, { name: free('lat'), type: 'number', label: 'lat' });
+      for (const row of result.rows) {
+        const x = row[east]; const y = row[north];
+        const point = typeof x === 'number' && typeof y === 'number' ? geo.toWgs84({ type: 'Point', coordinates: [x, y] }, reproject.crs).coordinates : [null, null];
+        row.push(point[0], point[1]);
+      }
+      return result;
+    }
+
+    /** Files that come along with a folder and hold no data. */
+    const JUNK = /^(thumbs\.db|desktop\.ini|\.ds_store)$|^\._/i;
+    /** The top folder of files picked or dropped as a folder. */
+    function folderOf(files) {
+      const path = files[0] && (files[0].webkitRelativePath || files[0].dmPath);
+      return path && path.includes('/') ? path.split('/')[0] : '';
+    }
+    /**
+     * A mixed choice of files, sorted: pictures become one collection, documents another, and every other file a dataset of
+     * its own. What the app cannot read is listed, not guessed at.
+     * @param {File[]} files @returns {Promise<{groups: Array<{importer: string, collection: boolean, files: File[], name?: string}>, skipped: File[]}>}
+     */
+    async function sortFiles(files) {
+      const collected = new Map(); const singles = []; const skipped = [];
+      for (const file of files) {
+        if (JUNK.test(file.name)) continue;
+        if (!importers.some((i) => i.detect(file))) { skipped.push(file); continue; }
+        const importer = await resolveImporter(file);
+        if (importer.collection) {
+          if (!collected.has(importer.id)) collected.set(importer.id, { importer: importer.id, collection: true, files: [] });
+          collected.get(importer.id).files.push(file);
+        } else singles.push({ importer: importer.id, collection: false, files: [file] });
+      }
+      const groups = Array.from(collected.values());
+      const folder = folderOf(files);
+      for (const g of groups) g.name = groups.length === 1 && folder ? folder : D.t('import.collection.' + g.importer, { n: g.files.length });
+      return { groups: groups.concat(singles), skipped };
+    }
+    /**
+     * Read the groups one at a time. A file that fails does not stop the others.
+     * @param {any[]} groups @param {Function} [progress] @returns {Promise<Array<{group: any, meta: any, error: string|null}>>}
+     */
+    async function runSorted(groups, progress) {
+      const out = [];
+      for (let i = 0; i < groups.length; i++) {
+        const group = groups[i];
+        if (progress) progress({ index: i, total: groups.length, file: group.files[0].name });
+        try {
+          const meta = group.collection ? await runFiles(group.files, { format: group.importer }, group.name) : await run(group.files[0], { format: group.importer }, null, group.name);
+          out.push({ group, meta, error: null });
+        } catch (err) { out.push({ group, meta: null, error: String((err && err.message) || err) }); }
+      }
+      return out;
     }
 
     /**
@@ -218,6 +283,6 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, preview, parse, run, runText, runFiles, collectionFor, runPreset, previewText, materialize, baseName };
+    return { importers, importerFor, preview, parse, run, runText, runFiles, collectionFor, sortFiles, runSorted, folderOf, runPreset, previewText, materialize, baseName };
   });
 })();

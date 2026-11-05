@@ -501,6 +501,12 @@
     }
 
     // ---- versions (snapshots kept in IndexedDB) ----
+    /** What a version needs to say what it holds in the kind's own units. */
+    function versionFacts(meta) {
+      const facts = { kind: meta.kind, rowCount: meta.rowCount, columnCount: meta.columnCount };
+      for (const key of ['documents', 'images', 'model', 'graph', 'plan']) if (meta[key]) facts[key] = meta[key];
+      return facts;
+    }
     async function snapshot(id, label) {
       const handle = await ensureOpen(id);
       const record = await idb.getDataset(id);
@@ -508,7 +514,7 @@
       const n = versions.length ? Math.max(...versions.map((v) => v.n)) + 1 : 1;
       const bytes = await handle.engine.export();
       await idb.saveBlob(`ds:${id}:v${n}`, bytes);
-      const version = { n, label: label || `Version ${n}`, ts: new Date().toISOString(), byteSize: bytes.byteLength, rowCount: handle.meta.rowCount, columnCount: handle.columns.length };
+      const version = { n, label: label || `Version ${n}`, ts: new Date().toISOString(), byteSize: bytes.byteLength, rowCount: handle.meta.rowCount, columnCount: handle.columns.length, facts: versionFacts(handle.meta) };
       handle.meta.versions = versions.concat([version]);
       await appendLog(handle, 'snapshot', { n, label: version.label });
       await save(id);
@@ -541,7 +547,8 @@
         const added = now.filter((c) => !oldCols.some((o) => o.name === c.name)).map((c) => c.name);
         const removed = oldCols.filter((o) => !now.some((c) => c.name === o.name)).map((c) => c.name);
         const retyped = now.filter((c) => { const o = oldCols.find((x) => x.name === c.name); return o && o.type !== c.type; }).map((c) => ({ name: c.name, from: oldCols.find((x) => x.name === c.name).type, to: c.type }));
-        return { rowsThen: oldCount, rowsNow: handle.meta.rowCount, added, removed, retyped, bytesThen: bytes.byteLength };
+        const own = await D.require('data/version-diff').compare(handle.meta, handle.engine, other);
+        return { rowsThen: oldCount, rowsNow: handle.meta.rowCount, added, removed, retyped, bytesThen: bytes.byteLength, own };
       } finally { other.terminate(); }
     }
 

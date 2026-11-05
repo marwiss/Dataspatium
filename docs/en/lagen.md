@@ -78,6 +78,10 @@ opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
 
 All sources in the list look the same, with a mark for their type and a line under the name. *Add a source* gathers all ways to add a source: a configuration file, a database or a geodata service.
 
+**The app first says what the file is**, for example a table with places, a graph or a building model, and shows it in its own form: a map, the pictures, a sketch of the graph, the drawing or the first page. If something is worth asking about, it asks: coordinates that seem to have changed places, which coordinate system they are in, and whether a list of links should be read as a graph. Nothing changes until you answer, and the map shows what the answer does.
+
+**Several different files** are sorted by what they are: pictures become one collection, documents another, and every other file a dataset of its own. You see the list first and can leave something out. You can also drop a whole folder or choose it with *Choose a folder*. A file that cannot be read does not stop the others.
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -106,6 +110,12 @@ new data (see [floden.md](floden.md)).
 **What the app sees.** The overview shows what the dataset can also be used as: places on a map, a time series, regions that can be coloured, a network or running text. Each line says why, and you can switch off what is wrong or switch on what the app missed. The choice is saved in the dataset, and the modes follow it. Below it **Worth checking** lists what the kind of data needs: pages without text, pictures without a position, edges pointing at nodes that do not exist, elements without quantities or rows without a place.
 
 **Selection.** The button *Use as selection* is in Search and in the views of Process. What you see then follows between the modes and shows in the status bar. In Process you show it through the list choice, in Export you choose whether only the selection goes along, and in bundles you can send only the selection. From the status bar you save it as a list, make it a dataset or clear it. If the rows of the dataset change the selection goes away, since it would no longer mean the same thing.
+
+**Picture.** The overview shows a picture of the dataset: the first page, a map of its places, a sketch of the graph, the drawing, what the model is made of, or a line over time. A plain table has no picture.
+
+**Several datasets.** When you have chosen several, *What they can do together* shows what is possible: one map when all have places, one table when all have the same columns, and one collection when all are pictures or all are documents. The chosen ones do not change. On export each gets its own form, for example pictures as a ZIP and graphs as GraphML.
+
+**Versions** say what they hold in the dataset's own units, and the comparison shows which pictures, documents, nodes, edges or elements came and went.
 
 ## Search
 

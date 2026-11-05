@@ -523,6 +523,8 @@ koppla, lägg ihop). Tabellkomponenten `dm-table` stöder cellredigering (`edita
 
 `data/spatial-search` hittar rader efter plats. En rad räknas efter sina koordinater eller mitten av geometrins omslutande rektangel, och raderna läses i omgångar. `data/media` hittar vilken kolumn som namnger bilder och i vilken samling, utifrån värdena, så att en tabell från en fotoinventering får sina bilder. I `data/kinds` anger `chartTables` vilka sidotabeller som kan ritas och `sideSearch` vilken sidotabell som söks och hur dess nycklar pekar på noden eller elementet. `viz/data` släpper bara igenom de tabeller slaget erbjuder, så att ett sparat diagram inte kan läsa något annat.
 
+`io/file-sense` läser Inhämtas förhandsgranskning och säger vad filen är och vad som är värt att fråga om. Inget ändras förrän användaren svarat. Ett annat koordinatsystem än SWEREF 99 TM går som `options.reproject` till `io/import.materialize`, som lägger till kolumner i grader också när filen strömmas. `io/import.sortFiles` och `runSorted` tar hand om blandade val. Fältet `picture` i `data/kinds` styr `ui/kinds/dataset-picture`, `wholeFormat` exporten av flera datamängder, `merge` hur samlingar slås ihop och `versionDiff` vad `data/version-diff` jämför.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

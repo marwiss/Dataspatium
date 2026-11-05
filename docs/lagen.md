@@ -77,6 +77,10 @@ version (se [insamling.md](insamling.md)).
 
 Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad under namnet. *Lägg till källa* samlar alla sätt att lägga till en källa: en konfigurationsfil, en databas eller en geodatatjänst.
 
+**Appen säger först vad filen är**, till exempel en tabell med platser, en graf eller en byggnadsmodell, och visar den i sin egen form: en karta, bilderna, en skiss av grafen, ritningen eller första sidan. Är något värt att fråga om frågar den: koordinater som verkar ha bytt plats, vilket koordinatsystem de är i, och om en lista med kopplingar ska läsas som en graf. Inget ändras förrän du svarat, och kartan visar vad svaret gör.
+
+**Flera olika filer** sorteras efter vad de är: bilder blir en samling, dokument en annan, och varje annan fil en egen datamängd. Du ser listan först och kan välja bort något. Du kan också släppa en hel mapp eller välja den med *Välj en mapp*. En fil som inte går att läsa hindrar inte de andra.
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -105,6 +109,12 @@ när de har nya data (se [floden.md](floden.md)).
 **Vad appen ser.** Översikten visar vad datamängden också kan användas som: platser på en karta, en tidsserie, regioner som kan färgas, ett nätverk eller löptext. Varje rad säger varför, och du kan stänga av det som inte stämmer eller slå på det appen missat. Valet sparas i datamängden, och lägena följer det. Under det står **Att se över**, med sådant som datamängdens slag behöver: sidor utan text, bilder utan position, kanter som pekar på noder som inte finns, element utan mängder eller rader utan plats.
 
 **Urval.** Knappen *Använd som urval* finns i Söka och i Bearbetas vyer. Det du ser följer sedan med mellan lägena och står i statusraden. I Bearbeta visar du det via listvalet, i Exportera väljer du om bara urvalet ska med, och i paket kan du skicka bara urvalet. Från statusraden sparar du det som en lista, gör det till en datamängd eller rensar det. Ändras raderna i datamängden försvinner urvalet, eftersom det inte längre skulle betyda samma sak.
+
+**Bild.** Översikten visar en bild av datamängden: första sidan, en karta över platserna, en skiss av grafen, ritningen, vad modellen består av, eller en linje över tid. En vanlig tabell har ingen bild.
+
+**Flera datamängder.** Har du valt flera visar *Det här kan de göra tillsammans* vad som går: samma karta när alla har platser, en tabell när alla har samma kolumner, och en samling när alla är bilder eller alla är dokument. De valda ändras inte. Vid export får var och en sin egen form, till exempel bilder som ZIP och grafer som GraphML.
+
+**Versioner** säger vad de innehåller i datamängdens egna enheter, och jämförelsen visar vilka bilder, dokument, noder, kanter eller element som tillkommit och försvunnit.
 
 ## Söka
 
