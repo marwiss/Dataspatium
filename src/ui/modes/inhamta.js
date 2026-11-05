@@ -11,11 +11,11 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'graph', 'model', 'r', 'documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step). */
     const COLLECTIONS = ['documents', 'images'];
     const ACCEPT = '.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
@@ -35,6 +35,7 @@
       let apiId = null;
       /** @type {any} */ let bridgeUi = null;
       /** @type {any} */ let fieldUi = null;
+      /** @type {any} */ let guidesUi = null;
 
       function reset() { return { step: 'file', answers: {}, sorted: null, results: null, file: null, files: [], progress: null, project: null, handle: null, text: '', url: '', options: { format: '', encoding: '', delimiter: 'auto', header: undefined, sheet: '', path: '', decimal: 'auto', recordTag: '', table: '', layer: '', simplify: 0, breaks: '' }, preview: null, specs: [], name: '', busy: false, result: null, error: '' }; }
       function restart() { freeThumbs(); Object.assign(wiz, reset()); render(); }
@@ -63,6 +64,7 @@
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
         if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
+        if (guidesUi) { guidesUi.destroy(); guidesUi = null; }
       }
       async function reloadConnectors() {
         connectorList = await connectors.list();
@@ -82,6 +84,7 @@
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
             sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
+            sourceItem('guides', 'graduation-cap', t('guides.title'), t('guides.hint')),
             sourceItem('field', 'smartphone', t('field.source'), t('field.source.hint')),
             sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length }))),
           h('h4', { text: t('api.sources') }),
@@ -172,6 +175,7 @@
         if (source === 'saved') { renderSaved(); return; }
         if (source === 'bridge') { renderBridge(); return; }
         if (source === 'field') { renderField(); return; }
+        if (source === 'guides') { renderGuides(); return; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step === 'sort' ? 'options' : wiz.step;
@@ -257,6 +261,10 @@
         render();
       }
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
+      function renderGuides() {
+        if (!guidesUi) guidesUi = D.require('ui/guides/guides-view').create(ctx);
+        guidesUi.render(slots.center);
+      }
       function renderField() {
         if (!fieldUi) fieldUi = D.require('ui/field/field-view').create(ctx);
         fieldUi.render({ center: slots.center, right: slots.right }).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
@@ -637,7 +645,7 @@
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('graph.import.hint') }));
         }
         // A building model or drawing: the file's facts and one Import button; the counts per type are the preview table.
-        const modelFile = !!(p && p.kind === 'model' && wiz.options.format === 'model');
+        const modelFile = !!(p && p.kind === 'model' && wiz.options.format === 'model') || !!(p && p.kind === 'package');
         if (modelFile) {
           const m = p.model || {};
           const kv = /** @type {any} */ (h('dm-kv'));
@@ -872,6 +880,7 @@
       // ---- right ----
       function renderRight() {
         if (source === 'field') return;
+        if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }

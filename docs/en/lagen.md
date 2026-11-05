@@ -82,6 +82,10 @@ All sources in the list look the same, with a mark for their type and a line und
 
 **Several different files** are sorted by what they are: pictures become one collection, documents another, and every other file a dataset of its own. You see the list first and can leave something out. You can also drop a whole folder or choose it with *Choose a folder*. A file that cannot be read does not stop the others.
 
+**Guides.** Under Guides there are four short ways from a question to a result with real data: compare municipalities through Kolada, a population pyramid through Statistics Sweden, weather over a long time through SMHI and price development through the European Central Bank. A guide fetches, cleans and saves a chart. You get the table, the chart and the steps to build on. It fetches from the network only when you press *Run the guide*.
+
+**Data packages.** A ZIP file with `datapackage.json` (Frictionless Data Package) is read with the types and titles from its schema, and each table becomes a dataset.
+
 ## Manage
 
 The datasets' home. The object panel is a tree: datasets can live in folders with subfolders (`Economy/2026`) and
@@ -116,6 +120,10 @@ new data (see [floden.md](floden.md)).
 **Several datasets.** When you have chosen several, *What they can do together* shows what is possible: one map when all have places, one table when all have the same columns, and one collection when all are pictures or all are documents. The chosen ones do not change. On export each gets its own form, for example pictures as a ZIP and graphs as GraphML.
 
 **Versions** say what they hold in the dataset's own units, and the comparison shows which pictures, documents, nodes, edges or elements came and went.
+
+**Code lists.** Columns that hold codes from a known list are shown on the overview: SNI, SSYK, NACE, ISCED, COFOG, NUTS, the Nordic equivalents, countries and municipalities. A click adds the names as value labels, and the values do not change. A short code only counts when the column's name agrees. The lists come with the app, and their sources and licences are in `presets/kodlistor/KALLA.md`.
+
+**Description.** The Description tab holds what a data portal wants to know by DCAT-AP-SE: title, publisher, contact, theme, licence and period. The description follows the dataset, says what is missing and can be saved as RDF/XML or read from such a file. Nothing is sent from here.
 
 ## Search
 
@@ -210,6 +218,8 @@ A dataset that is more than a table divides the formats into **The whole dataset
 **By the kind of dataset.** Tables with places can be saved as KML, GPX and GeoPackage, in degrees. In GPX, points become waypoints, and lines and the outlines of areas become tracks. Picture collections can become a contact sheet in PDF with pictures and names. A plan can become a plan map in PDF with a legend, the plan provisions in Word, and the original file if the plan came from a file. An IFC model can give its quantities in Excel, with sums per type and all values, and its geometry as glTF. A DXF drawing can become a PDF. If you export several datasets in Manage, each gets its own form.
 
 **Batch per storey or document.** Batch per group works with any column. A model is divided by the column `vaning`, and the picture of the model then shows only that storey. A document is divided by the column `dokument`.
+
+**Other tools.** *Data package* gives a ZIP with CSV files and `datapackage.json`, which many tools can read. A graph's edges and a model's properties follow as tables of their own. *Quality declaration* gives a Word document in the form Statistics Sweden uses, filled in from the profile, rules, comments, changes and description, with places to write what only a person can say.
 
 ## Share
 

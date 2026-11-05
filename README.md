@@ -113,6 +113,7 @@ ett paket.
 - **Visualisera följer datamängden**: förslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument (se [docs/visualisera.md](docs/visualisera.md)).
 - **Exportera följer datamängden**: KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller, PDF för ritningar (se [docs/lagen.md](docs/lagen.md)).
 - **Dela följer datamängden**: välj om filerna ska följa med i ett paket, gör en datamängd till en egen sida att skicka, och se varje slag i sin egen form på telefonen (se [docs/dela.md](docs/dela.md)).
+- **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/lagen.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

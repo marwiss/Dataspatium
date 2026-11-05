@@ -78,6 +78,10 @@ Alle kilder på listen ser ens ud med et symbol for deres type og en linje under
 
 **Flere forskellige filer** sorteres efter, hvad de er: billeder bliver til én samling, dokumenter til en anden, og hver anden fil til sit eget datasæt. Du ser listen først og kan fravælge noget. Du kan også slippe en hel mappe eller vælge den med *Vælg en mappe*. En fil, der ikke kan læses, stopper ikke de andre.
 
+**Guider.** Under Guider er der fire korte veje fra spørgsmål til resultat med rigtige data: sammenlign kommuner via Kolada, en befolkningspyramide via SCB, vejr over lang tid via SMHI og prisudvikling via Den Europæiske Centralbank. En guide henter, renser og gemmer et diagram. Du får tabellen, diagrammet og trinnene at bygge videre på. Den henter fra nettet, kun når du trykker på *Kør guiden*.
+
+**Datapakker.** En ZIP-fil med `datapackage.json` (Frictionless Data Package) læses ind med typerne og titlerne fra dens skema, og hver tabel bliver til et datasæt.
+
 ## Håndter
 
 Datasættenes hjem. Objektpanelet er et træ: datasæt kan ligge i mapper med undermapper (`Økonomi/2026`) og have tags;
@@ -112,6 +116,10 @@ har nye data (se [floden.md](floden.md)).
 **Flere datasæt.** Har du valgt flere, viser *Det kan de gøre sammen*, hvad der er muligt: samme kort, når alle har steder, én tabel, når alle har samme kolonner, og én samling, når alle er billeder eller alle er dokumenter. De valgte ændres ikke. Ved eksport får hver sin egen form, for eksempel billeder som ZIP og grafer som GraphML.
 
 **Versioner** siger, hvad de indeholder i datasættets egne enheder, og sammenligningen viser, hvilke billeder, dokumenter, knuder, kanter eller elementer der er kommet til og forsvundet.
+
+**Kodelister.** Kolonner med koder fra en kendt liste vises på oversigten: SNI, SSYK, NACE, ISCED, COFOG, NUTS, de nordiske modstykker, lande og kommuner. Et klik tilføjer navnene som værdietiketter, og værdierne ændres ikke. En kort kode tæller kun, når kolonnens navn passer. Listerne følger med appen, og deres kilder og licenser står i `presets/kodlistor/KALLA.md`.
+
+**Beskrivelse.** Fanen Beskrivelse indeholder det, en dataportal vil vide efter DCAT-AP-SE: titel, udgiver, kontakt, tema, licens og periode. Beskrivelsen følger datasættet, siger, hvad der mangler, og kan gemmes som RDF/XML eller læses ind fra en sådan fil. Intet sendes herfra.
 
 ## Søg
 
@@ -208,6 +216,8 @@ Et datasæt, der er mere end en tabel, deler formaterne op i **Hele datasættet*
 **Efter datasættets slags.** Tabeller med steder kan gemmes som KML, GPX og GeoPackage, i grader. I GPX bliver punkter til waypoints, og linjer og fladers konturer bliver til spor. Billedsamlinger kan blive til et kontaktark i PDF med billeder og navne. En plan kan blive til et plankort i PDF med signaturforklaring, planbestemmelserne i Word og originalfilen, hvis planen kom fra en fil. En IFC-model kan give mængderne i Excel, med summer pr. type og alle værdier, og geometrien som glTF. En DXF-tegning kan blive til PDF. Eksporterer du flere datasæt i Håndter, får hvert sin egen form.
 
 **Batch pr. etage eller dokument.** Batch pr. gruppe virker med enhver kolonne. En model deles på kolonnen `vaning`, og billedet af modellen viser så kun den etage. Et dokument deles på kolonnen `dokument`.
+
+**Andre værktøjer.** *Datapakke* giver en ZIP med CSV-filer og `datapackage.json`, som mange værktøjer kan læse. En grafs kanter og en models egenskaber følger med som egne tabeller. *Kvalitetsdeklaration* giver et Word-dokument i den form, SCB bruger, udfyldt fra profil, regler, kommentarer, ændringer og beskrivelse, med steder at skrive det, kun et menneske kan sige.
 
 ## Del
 

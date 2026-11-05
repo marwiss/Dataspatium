@@ -80,6 +80,10 @@ Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen all
 
 **Useat erilaiset tiedostot** lajitellaan sen mukaan, mitä ne ovat: kuvista tulee yksi kokoelma, asiakirjoista toinen ja muista tiedostoista kustakin oma aineisto. Näet listan ensin ja voit jättää jotakin pois. Voit myös pudottaa kokonaisen kansion tai valita sen kohdasta *Valitse kansio*. Tiedosto, jota ei voi lukea, ei estä muita.
 
+**Oppaat.** Kohdassa Oppaat on neljä lyhyttä tietä kysymyksestä tulokseen oikealla datalla: vertaa kuntia Koladan kautta, väestöpyramidi SCB:n kautta, sää pitkällä aikavälillä SMHI:n kautta ja hintakehitys Euroopan keskuspankin kautta. Opas hakee, siistii ja tallentaa kaavion. Saat taulukon, kaavion ja vaiheet, joiden päälle rakentaa. Se hakee verkosta vain, kun painat *Suorita opas*.
+
+**Datapaketit.** ZIP-tiedosto, jossa on `datapackage.json` (Frictionless Data Package), luetaan skeeman tyypeillä ja otsikoilla, ja jokaisesta taulukosta tulee aineisto.
+
 ## Hallitse
 
 Aineistojen koti. Kohdepaneeli on puu: aineistot voivat olla kansioissa alikansioineen (`Talous/2026`), ja niillä
@@ -116,6 +120,10 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 **Useat aineistot.** Jos olet valinnut useita, kohta *Näitä ne voivat tehdä yhdessä* näyttää, mikä on mahdollista: sama kartta, kun kaikilla on paikkoja, yksi taulukko, kun kaikilla on samat sarakkeet, ja yksi kokoelma, kun kaikki ovat kuvia tai kaikki ovat asiakirjoja. Valitut eivät muutu. Viennissä kukin saa oman muotonsa, esimerkiksi kuvat ZIP-tiedostona ja graafit GraphML-muodossa.
 
 **Versiot** kertovat sisältönsä aineiston omissa yksiköissä, ja vertailu näyttää, mitkä kuvat, asiakirjat, solmut, särmät tai elementit ovat tulleet ja poistuneet.
+
+**Koodiluettelot.** Sarakkeet, joissa on koodeja tunnetusta luettelosta, näytetään yleiskuvassa: SNI, SSYK, NACE, ISCED, COFOG, NUTS, pohjoismaiset vastineet, maat ja kunnat. Napsautus lisää nimet arvonimikkeiksi, eivätkä arvot muutu. Lyhyt koodi lasketaan vain, kun sarakkeen nimi täsmää. Luettelot tulevat sovelluksen mukana, ja niiden lähteet ja lisenssit ovat tiedostossa `presets/kodlistor/KALLA.md`.
+
+**Kuvaus.** Välilehdellä Kuvaus on se, mitä dataportaali haluaa tietää DCAT-AP-SE:n mukaan: otsikko, julkaisija, yhteystieto, teema, lisenssi ja ajanjakso. Kuvaus seuraa aineistoa, kertoo mitä puuttuu, ja sen voi tallentaa RDF/XML-muodossa tai lukea sellaisesta tiedostosta. Täältä ei lähetetä mitään.
 
 ## Hae
 
@@ -217,6 +225,8 @@ Aineisto, joka on enemmän kuin taulukko, jakaa muodot ryhmiin **Koko aineisto**
 **Aineiston lajin mukaan.** Paikkoja sisältävät taulukot voi tallentaa KML-, GPX- ja GeoPackage-muodossa, asteina. GPX:ssä pisteistä tulee reittipisteitä, ja viivoista ja alueiden ääriviivoista tulee jälkiä. Kuvakokoelmista voi tehdä kontaktiarkin PDF-muodossa kuvineen ja nimineen. Kaavasta voi tehdä kaavakartan PDF-muodossa selitteineen, kaavamääräykset Wordissa ja alkuperäisen tiedoston, jos kaava tuli tiedostosta. IFC-malli voi antaa määrät Excelissä, summat tyypeittäin ja kaikki arvot, ja geometrian glTF-muodossa. DXF-piirustuksesta voi tehdä PDF:n. Jos viet useita aineistoja Hallitse-tilassa, kukin saa oman muotonsa.
 
 **Eräajo kerroksittain tai asiakirjoittain.** Eräajo ryhmittäin toimii millä tahansa sarakkeella. Malli jaetaan sarakkeen `vaning` mukaan, ja mallin kuva näyttää silloin vain sen kerroksen. Asiakirja jaetaan sarakkeen `dokument` mukaan.
+
+**Muut työkalut.** *Datapaketti* antaa ZIP-tiedoston, jossa on CSV-tiedostoja ja `datapackage.json`, jonka moni työkalu osaa lukea. Graafin särmät ja mallin ominaisuudet seuraavat omina taulukoinaan. *Laatuseloste* antaa Word-asiakirjan SCB:n käyttämässä muodossa, täytettynä profiilista, säännöistä, kommenteista, muutoksista ja kuvauksesta, ja siinä on paikkoja sille, minkä vain ihminen voi sanoa.
 
 ## Jaa
 

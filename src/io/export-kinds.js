@@ -294,7 +294,10 @@
       return D.require('viz/export').svgToPdf(await svg.text(), { title: meta ? meta.name : '' });
     }
 
-    const MAKERS = { kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
+    const toPackage = (id) => D.require('io/datapackage').toZip(id);
+    const toDescription = async (id) => new Blob([D.require('data/dcat').toRdf(await datasets.get(id))], { type: 'application/rdf+xml' });
+    const toQuality = (id) => D.require('docgen/quality').toDocx(id);
+    const MAKERS = { datapackage: toPackage, dcat: toDescription, quality: toQuality, kml: toKml, gpx: toGpx, gpkg: toGeoPackage, 'images-sheet': toContactSheet, 'plan-provisions': toProvisions, 'plan-sheet': toPlanSheet, 'model-quantities-xlsx': toQuantities, 'model-glb': toGlb, 'model-pdf': toDrawingPdf };
     /** @param {string} format @returns {boolean} */
     const handles = (format) => Object.prototype.hasOwnProperty.call(MAKERS, format);
     /** @param {string} id @param {string} format @returns {Promise<Blob>} */

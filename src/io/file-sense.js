@@ -30,7 +30,7 @@
     const within = (r, low, high) => r.min >= low && r.max <= high;
     const range = (list) => list.reduce((r, v) => ({ min: Math.min(r.min, v), max: Math.max(r.max, v) }), { min: Infinity, max: -Infinity });
     /** A preview that goes through the column step. A plain table's preview has a kind of its own, such as text. */
-    const isTable = (p) => !['graph', 'model', 'plan'].includes(p.kind) && !p.reader && !p.dataspatium && !p.planGpkg && p.importer !== 'images' && p.importer !== 'documents';
+    const isTable = (p) => !['graph', 'model', 'plan', 'package'].includes(p.kind) && !p.reader && !p.dataspatium && !p.planGpkg && p.importer !== 'images' && p.importer !== 'documents';
 
     /** The numbers of a preview column, null where a row has none. */
     function numbers(p, name) {
@@ -98,6 +98,7 @@
       }
       if (p.kind === 'plan' || p.planGpkg) return { icon: kinds.PROFILES.plan.icon, key: 'import.sense.plan', params: {} };
       if (p.dataspatium) return { icon: 'database', key: 'import.sense.dataspatium', params: {} };
+      if (p.kind === 'package') return { icon: 'package', key: 'import.sense.package', params: { n: p.package.resources, name: p.datasetName } };
       if (!isTable(p) || !p.columns.length) return null;
       const shape = shapeColumn(p);
       if (shape) return { icon: 'map', key: 'import.sense.shapes', params: { column: shape } };

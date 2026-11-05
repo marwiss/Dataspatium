@@ -27,6 +27,8 @@
      * @param {File} file @param {string} [forced] importer id
      */
     async function resolveImporter(file, forced) {
+      if (forced === 'datapackage') return D.require('io/datapackage');
+      if (!forced && /\.zip$/i.test(file.name) && await D.require('io/datapackage').sniff(file)) return D.require('io/datapackage');
       const importer = importerFor(file, forced);
       if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
@@ -126,7 +128,7 @@
       const collected = new Map(); const singles = []; const skipped = [];
       for (const file of files) {
         if (JUNK.test(file.name)) continue;
-        if (!importers.some((i) => i.detect(file))) { skipped.push(file); continue; }
+        if (!importers.some((i) => i.detect(file)) && !(await D.require('io/datapackage').sniff(file))) { skipped.push(file); continue; }
         const importer = await resolveImporter(file);
         if (importer.collection) {
           if (!collected.has(importer.id)) collected.set(importer.id, { importer: importer.id, collection: true, files: [] });
@@ -184,7 +186,7 @@
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
-      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage') return importer.importFile(file, options, name, progress);
       if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {

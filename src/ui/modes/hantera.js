@@ -70,7 +70,7 @@
 
       async function renderDataset(ds) {
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'comments', label: t('comments.title'), icon: 'message-square' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
+        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'comments', label: t('comments.title'), icon: 'message-square' }, { id: 'describe', label: t('dcat.tab'), icon: 'tag' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
@@ -109,7 +109,7 @@
             { label: t('common.source'), value: describeSource(src) },
           ].filter(Boolean);
           const insight = D.require('ui/kinds/insight-cards');
-          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.facetCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
+          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.facetCard(ctx, ds), insight.codeListCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
         } else if (tab === 'columns') {
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));
@@ -118,6 +118,8 @@
             rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', services.datasets.valueLabelsText(c.valueLabels), c.sourceName]) });
         } else if (tab === 'comments') {
           await renderComments(ds, body);
+        } else if (tab === 'describe') {
+          renderDescription(ds, body);
         } else {
           const log = await services.datasets.log(ds.id);
           const changelog = D.require('data/changelog');
@@ -127,6 +129,53 @@
       }
 
       /** Comments on the dataset and its columns: the list (resolve, delete) and a form for a new one. */
+      /** The description by DCAT-AP-SE: what a data portal asks of a dataset. */
+      function renderDescription(ds, body) {
+        const dcat = D.require('data/dcat');
+        const d = dcat.of(ds);
+        const input = (key, attrs = {}) => {
+          const el = /** @type {any} */ (h('dm-input', Object.assign({ label: t('dcat.' + key) }, attrs)));
+          el.value = d[key] || '';
+          el.addEventListener('input', () => { d[key] = el.value; });
+          return el;
+        };
+        const choice = (key, options) => {
+          const el = /** @type {any} */ (h('dm-select', { label: t('dcat.' + key) }));
+          el.options = [{ value: '', label: t('field.choose') }].concat(options);
+          el.value = d[key] || '';
+          el.addEventListener('change', () => { d[key] = el.value; });
+          return el;
+        };
+        const keywords = /** @type {any} */ (h('dm-input', { label: t('dcat.keywords'), help: t('gallery.labels.help') }));
+        keywords.value = (d.keywords || []).join(', ');
+        keywords.addEventListener('input', () => { d.keywords = keywords.value.split(',').map((x) => x.trim()).filter(Boolean); });
+        const missing = h('p', { class: 'dm-help dm-small' });
+        const showMissing = () => {
+          const left = dcat.missing(d);
+          missing.textContent = left.length ? t('dcat.missing', { list: left.map((k) => t('dcat.' + k)).join(', ') }) : t('dcat.complete');
+        };
+        showMissing();
+        const save = ui.button({ label: t('common.save'), icon: 'save', variant: 'primary', onClick: async () => {
+          try { await dcat.save(ds.id, d); showMissing(); shell.log(t('dcat.saved'), 'ok'); ui.toast.show(t('dcat.saved'), { kind: 'ok' }); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        } });
+        const read = ui.button({ label: t('dcat.read'), icon: 'upload', title: t('dcat.read.hint'), onClick: async () => {
+          const [file] = await services.files.pick({ accept: '.rdf,.xml' });
+          if (!file) return;
+          try { await dcat.save(ds.id, Object.assign({}, d, dcat.fromRdf(await file.text()))); render(); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+        } });
+        replace(body, h('div', { class: 'dm-card dm-stack' }, h('p', { class: 'dm-help', text: t('dcat.help') }),
+          h('div', { class: 'dm-form-grid' }, input('title'), input('publisher'), input('contactName'), input('contactEmail', { type: 'email' })),
+          input('description', { type: 'textarea', rows: '4' }), keywords,
+          h('div', { class: 'dm-form-grid' },
+            choice('theme', dcat.THEMES.map((x) => ({ value: x, label: t('dcat.theme.' + x) }))),
+            choice('frequency', dcat.FREQUENCIES.map((x) => ({ value: x, label: t('dcat.frequency.' + x) }))),
+            choice('license', dcat.LICENSES),
+            input('temporalFrom', { type: 'date' }), input('temporalTo', { type: 'date' }), input('landingPage', { type: 'url' })),
+          missing, h('div', { class: 'dm-row-wrap' }, save, read,
+            ui.button({ label: t('dcat.export'), icon: 'file-output', title: t('dcat.export.hint'), onClick: async () => {
+              try { const res = await services.exporter.exportDataset(ds.id, 'dcat'); services.files.download(res.blob, res.filename); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+            } }))));
+      }
       async function renderComments(ds, body) {
         const comments = D.require('data/comments');
         const [list, cols, author] = await Promise.all([comments.list(ds.id), services.datasets.columns(ds.id), comments.author()]);

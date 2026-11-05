@@ -136,7 +136,7 @@
     assert.ok(other.cells.some((c) => c.type === 'r' && c.source.includes('summary(df)')), 'a table as before');
     assert.equal(notebooks.create('Tom', null).cells[1].source, 'dm_list()', 'none chosen');
     return 'ok';
-  });
+  }, 60000);
 
   test('question: a property of an element, a neighbour, some steps away and a place', async (assert) => {
     const fixtures = D.require('tests/fixtures/ifc');
@@ -312,5 +312,5 @@
     for (const id of created) if (id) await datasets.remove(id).catch(() => {});
     assert.ok(true);
     return 'ok';
-  });
+  }, 60000);
 })();

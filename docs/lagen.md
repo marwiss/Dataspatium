@@ -81,6 +81,10 @@ Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad und
 
 **Flera olika filer** sorteras efter vad de är: bilder blir en samling, dokument en annan, och varje annan fil en egen datamängd. Du ser listan först och kan välja bort något. Du kan också släppa en hel mapp eller välja den med *Välj en mapp*. En fil som inte går att läsa hindrar inte de andra.
 
+**Guider.** Under Guider finns fyra korta vägar från fråga till resultat med riktiga data: jämför kommuner via Kolada, en befolkningspyramid via SCB, väder över lång tid via SMHI och prisutveckling via Europeiska centralbanken. En guide hämtar, rensar och sparar ett diagram. Du får tabellen, diagrammet och stegen att bygga vidare på. Den hämtar från nätet bara när du trycker på *Kör guiden*.
+
+**Datapaket.** En ZIP-fil med `datapackage.json` (Frictionless Data Package) läses in med typerna och titlarna från dess schema, och varje tabell blir en datamängd.
+
 ## Hantera
 
 Datamängdernas hem. Objektpanelen är ett träd: datamängder kan ligga i mappar med undermappar (`Ekonomi/2026`)
@@ -115,6 +119,10 @@ när de har nya data (se [floden.md](floden.md)).
 **Flera datamängder.** Har du valt flera visar *Det här kan de göra tillsammans* vad som går: samma karta när alla har platser, en tabell när alla har samma kolumner, och en samling när alla är bilder eller alla är dokument. De valda ändras inte. Vid export får var och en sin egen form, till exempel bilder som ZIP och grafer som GraphML.
 
 **Versioner** säger vad de innehåller i datamängdens egna enheter, och jämförelsen visar vilka bilder, dokument, noder, kanter eller element som tillkommit och försvunnit.
+
+**Kodlistor.** Kolumner som håller koder ur en känd lista visas på översikten: SNI, SSYK, NACE, ISCED, COFOG, NUTS, de nordiska motsvarigheterna, länder och kommuner. Ett klick lägger till namnen som värdeetiketter, och värdena ändras inte. En kort kod räknas bara när kolumnens namn stämmer. Listorna följer med appen, och deras källor och licenser står i `presets/kodlistor/KALLA.md`.
+
+**Beskrivning.** Fliken Beskrivning håller det en dataportal vill veta enligt DCAT-AP-SE: titel, utgivare, kontakt, tema, licens och period. Beskrivningen följer datamängden, säger vad som saknas och kan sparas som RDF/XML eller läsas in från en sådan fil. Inget skickas härifrån.
 
 ## Söka
 
@@ -212,6 +220,8 @@ En datamängd som är mer än en tabell delar upp formaten i **Hela datamängden
 **Efter datamängdens slag.** Tabeller med platser kan sparas som KML, GPX och GeoPackage, i grader. I GPX blir punkter waypoints, och linjer och ytors konturer blir spår. Bildsamlingar kan bli en kontaktkarta i PDF med bilder och namn. En plan kan bli en plankarta i PDF med teckenförklaring, planbestämmelserna i Word, och originalfilen om planen kom från en fil. En IFC-modell kan ge mängderna i Excel, med summor per typ och alla värden, och geometrin som glTF. En DXF-ritning kan bli PDF. Exporterar du flera datamängder i Hantera får var och en sin egen form.
 
 **Batch per våning eller dokument.** Batch per grupp fungerar med vilken kolumn som helst. En modell delas på kolumnen `vaning`, och bilden av modellen visar då bara den våningen. Ett dokument delas på kolumnen `dokument`.
+
+**Andra verktyg.** *Datapaket* ger en ZIP med CSV-filer och `datapackage.json`, som många verktyg kan läsa. En grafs kanter och en modells egenskaper följer med som egna tabeller. *Kvalitetsdeklaration* ger ett Word-dokument i den form SCB använder, ifyllt ur profil, regler, kommentarer, ändringar och beskrivning, med platser att skriva det bara en människa kan säga.
 
 ## Dela
 

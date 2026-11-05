@@ -57,7 +57,7 @@
         { "name": "parameter", "in": "path", "label": "Parameter", "type": "string", "required": true, "optionsFrom": { "endpoint": "parameters", "value": "key", "label": "title" } },
         { "name": "station", "in": "path", "label": "Station", "type": "string", "required": true, "optionsFrom": { "endpoint": "stations", "value": "station_id", "label": "station", "params": { "parameter": "{parameter}" } } }
       ],
-      "response": { "format": "csv", "options": { "delimiter": ";", "skipUntil": "Datum;", "decimal": "point" } },
+      "response": { "format": "csv", "options": { "delimiter": ";", "skipUntil": ["Datum;", "Från Datum"], "decimal": "point" } },
       "dataset": { "name": "SMHI arkiv parameter {parameter} station {station}" }
     },
     {

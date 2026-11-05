@@ -212,7 +212,7 @@
       else if (format === 'geojson') { data = parseJson(); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }
       else if (format === 'csv') {
         let body = text;
-        if (options.skipUntil) { const i = body.indexOf(options.skipUntil); if (i > 0) body = body.slice(i); }
+        for (const mark of [].concat(options.skipUntil || [])) { const i = body.indexOf(mark); if (i > 0) { body = body.slice(i); break; } }
         const parsed = await csv.parseText(body, { delimiter: options.delimiter || 'auto', header: options.header === undefined ? true : options.header, decimal: options.decimal });
         table = { columns: parsed.columns, rows: parsed.rows };
       }

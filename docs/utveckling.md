@@ -180,7 +180,7 @@ steget som *Gör det åt mig*.
   4,5:1 för text och 3:1 för kanter på fält och växlar, i både ljust och mörkt tema.
 
 ## Felsökning
-- Loggar från den senaste testkörningen ligger i `%TEMP%\dataspatium-tests\` (`edge.log`, `firefox.log`, `firefox.err`).
+- Loggar från den senaste testkörningen ligger i `%TEMP%\dm-tests-<kod>\` (`edge.log`, `firefox.log`, `firefox.err`).
 - `index.html?debug=1` slår på `Dataspatium.log(...)`-utskrifter i webbläsarkonsolen.
 - Om något fungerar via http men inte via file:// har en av file://-reglerna i [arkitektur.md](arkitektur.md) brutits
   (fetch av lokal fil, ES-modul, modul-worker eller Blob-URL inuti worker).

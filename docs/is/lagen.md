@@ -79,6 +79,10 @@ Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu und
 
 **Margar ólíkar skrár** eru flokkaðar eftir því hvað þær eru: myndir verða eitt safn, skjöl annað og hver önnur skrá sitt eigið gagnasafn. Þú sérð listann fyrst og getur sleppt einhverju. Þú getur líka sleppt heilli möppu eða valið hana með *Velja möppu*. Skrá sem ekki er hægt að lesa stöðvar ekki hinar.
 
+**Leiðbeiningar.** Undir Leiðbeiningar eru fjórar stuttar leiðir frá spurningu til niðurstöðu með raunverulegum gögnum: bera saman sveitarfélög í gegnum Kolada, mannfjöldapýramídi í gegnum SCB, veður yfir langan tíma í gegnum SMHI og verðþróun í gegnum Seðlabanka Evrópu. Leiðbeining sækir, hreinsar og vistar myndrit. Þú færð töfluna, myndritið og skrefin til að byggja á. Hún sækir af netinu aðeins þegar þú ýtir á *Keyra leiðbeininguna*.
+
+**Gagnapakkar.** ZIP-skrá með `datapackage.json` (Frictionless Data Package) er lesin með gerðum og titlum úr skema hennar, og hver tafla verður að gagnasafni.
+
 ## Umsjón
 
 Heimili gagnasafnanna. Hlutaspjaldið er tré: gagnasöfn geta legið í möppum með undirmöppum (`Fjármál/2026`) og haft
@@ -113,6 +117,10 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 **Mörg gagnasöfn.** Ef þú hefur valið mörg sýnir *Þetta geta þau gert saman* hvað er hægt: sama kort þegar öll hafa staði, ein tafla þegar öll hafa sömu dálka og eitt safn þegar öll eru myndir eða öll eru skjöl. Þau völdu breytast ekki. Við útflutning fær hvert sitt eigið snið, til dæmis myndir sem ZIP og net sem GraphML.
 
 **Útgáfur** segja hvað þær innihalda í eigin einingum gagnasafnsins, og samanburðurinn sýnir hvaða myndir, skjöl, hnútar, leggir eða einingar hafa bæst við og horfið.
+
+**Kóðalistar.** Dálkar með kóðum úr þekktum lista eru sýndir á yfirlitinu: SNI, SSYK, NACE, ISCED, COFOG, NUTS, norrænu hliðstæðurnar, lönd og sveitarfélög. Smellur bætir nöfnunum við sem gildamerkingum og gildin breytast ekki. Stuttur kóði telst aðeins þegar nafn dálksins passar. Listarnir fylgja forritinu og heimildir þeirra og leyfi eru í `presets/kodlistor/KALLA.md`.
+
+**Lýsing.** Flipinn Lýsing geymir það sem gagnagátt vill vita samkvæmt DCAT-AP-SE: titil, útgefanda, tengilið, þema, leyfi og tímabil. Lýsingin fylgir gagnasafninu, segir hvað vantar og hægt er að vista hana sem RDF/XML eða lesa úr slíkri skrá. Ekkert er sent héðan.
 
 ## Leita
 
@@ -206,6 +214,8 @@ Gagnasafn sem er meira en tafla skiptir sniðum í **Allt gagnasafnið** og **A�
 **Eftir tegund gagnasafns.** Töflur með stöðum má vista sem KML, GPX og GeoPackage, í gráðum. Í GPX verða punktar að leiðarpunktum, og línur og útlínur flata verða að ferlum. Myndasöfn geta orðið yfirlitsblað í PDF með myndum og nöfnum. Skipulag getur orðið skipulagskort í PDF með skýringum, skipulagsákvæðin í Word og upprunalega skráin ef skipulagið kom úr skrá. IFC-líkan getur gefið magn í Excel, með summum eftir gerð og öllum gildum, og rúmfræðina sem glTF. DXF-teikning getur orðið PDF. Ef þú flytur út mörg gagnasöfn í Umsjón fær hvert sitt eigið form.
 
 **Runuvinnsla eftir hæð eða skjali.** Runuvinnsla eftir hópi virkar með hvaða dálki sem er. Líkani er skipt eftir dálkinum `vaning`, og mynd líkansins sýnir þá aðeins þá hæð. Skjali er skipt eftir dálkinum `dokument`.
+
+**Önnur verkfæri.** *Gagnapakki* gefur ZIP með CSV-skrám og `datapackage.json`, sem mörg verkfæri geta lesið. Leggir nets og eiginleikar líkans fylgja sem eigin töflur. *Gæðayfirlýsing* gefur Word-skjal á því formi sem SCB notar, útfyllt úr prófíl, reglum, athugasemdum, breytingum og lýsingu, með stöðum til að skrifa það sem aðeins manneskja getur sagt.
 
 ## Deila
 

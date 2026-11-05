@@ -52,6 +52,31 @@
       return el;
     }
 
-    return { facetCard, healthCard };
+    /**
+     * Columns that hold a list the app knows, with the labels one click away.
+     * @param {any} ctx @param {any} ds @param {{onChanged?: () => void}} [hooks] @returns {HTMLElement}
+     */
+    function codeListCard(ctx, ds, hooks = {}) {
+      const el = h('div');
+      const codelists = D.require('data/codelists');
+      const draw = async () => {
+        const found = await codelists.suggest(ds.id);
+        if (!found.length) { replace(el); return; }
+        replace(el, h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'codelists' }, h('h3', { text: t('codelists.title') }), h('p', { class: 'dm-help', text: t('codelists.help') }),
+          found.map((f) => h('div', { class: 'dm-row-wrap' }, h('span', { class: 'dm-grow', text: t('codelists.found', { column: f.column, list: f.name, share: i18n.formatNumber(f.coverage, { style: 'percent', maximumFractionDigits: 0 }) }) }),
+            ctx.ui.button({ label: t('codelists.apply'), icon: 'tags', size: 'sm', title: t('codelists.apply.hint'), onClick: async () => {
+              try {
+                await codelists.apply(ds.id, f.column, f.list);
+                ctx.shell.log(t('codelists.applied', { column: f.column, list: f.name }), 'ok');
+                await draw();
+                if (hooks.onChanged) hooks.onChanged();
+              } catch (err) { ctx.ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+            } })))));
+      };
+      draw().catch((err) => D.log('codelists', err));
+      return el;
+    }
+
+    return { facetCard, healthCard, codeListCard };
   });
 })();

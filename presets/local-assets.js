@@ -267,7 +267,7 @@ Dataspatium.assets.addEntries({
  "presets/api/smhi-metobs.api.json": {
   "file": "presets/api/smhi-metobs.api.json.js",
   "encoding": "text",
-  "size": 13799,
+  "size": 13816,
   "library": "dataspatium"
  },
  "presets/api/socialstyrelsen.api.json": {
@@ -378,6 +378,72 @@ Dataspatium.assets.addEntries({
   "size": 18509,
   "library": "dataspatium"
  },
+ "presets/kodlistor/ammatti2010.json": {
+  "file": "presets/kodlistor/ammatti2010.json.js",
+  "encoding": "gzip+base64",
+  "size": 85302,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/cofog.json": {
+  "file": "presets/kodlistor/cofog.json.js",
+  "encoding": "gzip+base64",
+  "size": 3114,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/db07.json": {
+  "file": "presets/kodlistor/db07.json.js",
+  "encoding": "gzip+base64",
+  "size": 70936,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/isced.json": {
+  "file": "presets/kodlistor/isced.json.js",
+  "encoding": "gzip+base64",
+  "size": 10688,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/nace.json": {
+  "file": "presets/kodlistor/nace.json.js",
+  "encoding": "gzip+base64",
+  "size": 85032,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/nuts.json": {
+  "file": "presets/kodlistor/nuts.json.js",
+  "encoding": "gzip+base64",
+  "size": 117911,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/sn2007.json": {
+  "file": "presets/kodlistor/sn2007.json.js",
+  "encoding": "gzip+base64",
+  "size": 182842,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/sni2007.json": {
+  "file": "presets/kodlistor/sni2007.json.js",
+  "encoding": "gzip+base64",
+  "size": 169621,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/ssyk2012.json": {
+  "file": "presets/kodlistor/ssyk2012.json.js",
+  "encoding": "gzip+base64",
+  "size": 33830,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/styrk08.json": {
+  "file": "presets/kodlistor/styrk08.json.js",
+  "encoding": "gzip+base64",
+  "size": 43590,
+  "library": "dataspatium"
+ },
+ "presets/kodlistor/tol2008.json": {
+  "file": "presets/kodlistor/tol2008.json.js",
+  "encoding": "gzip+base64",
+  "size": 247951,
+  "library": "dataspatium"
+ },
  "presets/plan/fi-kaavamaarayslaji.json": {
   "file": "presets/plan/fi-kaavamaarayslaji.json.js",
   "encoding": "gzip+base64",
@@ -387,7 +453,7 @@ Dataspatium.assets.addEntries({
  "presets/plan/no-arealformal.json": {
   "file": "presets/plan/no-arealformal.json.js",
   "encoding": "gzip+base64",
-  "size": 8337,
+  "size": 8573,
   "library": "dataspatium"
  },
  "presets/plan/planbestammelsekatalogen.json": {
@@ -411,7 +477,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 20970,
+  "size": 22624,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -567,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 20763,
+  "size": 22384,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -723,7 +789,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 20380,
+  "size": 21972,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -879,7 +945,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 22404,
+  "size": 24131,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -1035,7 +1101,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 21415,
+  "size": 23144,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1191,7 +1257,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 20921,
+  "size": 22598,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {

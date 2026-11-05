@@ -39,7 +39,9 @@
   }
 
   function lookupAsync(name, url) {
-    const provider = virtual.get(name);
+    let provider = virtual.get(name);
+    // A name ending in a slash answers for everything under it.
+    if (!provider) for (const [key, fn] of virtual) if (key.endsWith('/') && name.startsWith(key)) { provider = fn; break; }
     if (provider) return provider(url);
     return D.assets.decode(name);
   }

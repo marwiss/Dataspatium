@@ -38,7 +38,9 @@ function Resolve-PageUrl([string]$u) {
 }
 
 $pageUrl = Resolve-PageUrl $Url
-$work = Join-Path $env:TEMP "dataspatium-tests"
+# One working folder per copy of the repository: two clones on one machine must not share or stop each other's browsers.
+$repoKey = [BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes((Resolve-Path (Join-Path $PSScriptRoot "..")).Path.ToLowerInvariant()))).Replace("-", "").Substring(0, 8)
+$work = Join-Path $env:TEMP "dm-tests-$repoKey"
 New-Item -ItemType Directory -Force $work | Out-Null
 $edgeExe = @("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", "C:\Program Files\Microsoft\Edge\Application\msedge.exe", "C:\Program Files\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 # A browser that has just closed can hold its files for a moment more.
@@ -88,7 +90,7 @@ function Report([string]$browser, [string[]]$messages, [bool]$finished) {
 foreach ($browser in $Browsers) {
   if ($browser -eq "edge") {
     if (-not $edgeExe) { Write-Output "===== edge: browser not found"; $missingBrowser = $true; continue }
-    $profileDir = Join-Path $work "edge-profile"
+    $profileDir = Join-Path $work "edge"
     if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-WithRetry $profileDir }
     $log = Join-Path $work "edge.log"
     if (Test-Path $log) { Remove-WithRetry $log }
@@ -96,7 +98,7 @@ foreach ($browser in $Browsers) {
                   '--enable-logging=stderr', '--v=0', "--user-data-dir=$profileDir", $pageUrl)
     $proc = Start-Process -FilePath $edgeExe -ArgumentList $edgeArgs -RedirectStandardError $log -RedirectStandardOutput (Join-Path $work "edge.out") -PassThru
     $finished = Wait-ForSummary @($log) $TimeoutSec
-    Stop-Browser $proc "edge-profile"
+    Stop-Browser $proc $profileDir
     $messages = @()
     if (Test-Path $log) {
       foreach ($line in Get-Content $log) {
@@ -108,7 +110,7 @@ foreach ($browser in $Browsers) {
   }
   elseif ($browser -eq "firefox") {
     if (-not $ffExe) { Write-Output "===== firefox: browser not found"; $missingBrowser = $true; continue }
-    $profileDir = Join-Path $work "firefox-profile"
+    $profileDir = Join-Path $work "firefox"
     if (-not $KeepProfile -and (Test-Path $profileDir)) { Remove-WithRetry $profileDir }
     New-Item -ItemType Directory -Force $profileDir | Out-Null
     @(
@@ -124,7 +126,7 @@ foreach ($browser in $Browsers) {
     foreach ($f in @($log, $err)) { if (Test-Path $f) { Remove-WithRetry $f } }
     $proc = Start-Process -FilePath $ffExe -ArgumentList @('--headless', '--no-remote', '--width', "$Width", '--height', "$Height", '--profile', "`"$profileDir`"", $pageUrl) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
     $finished = Wait-ForSummary @($log, $err) $TimeoutSec
-    Stop-Browser $proc "firefox-profile"
+    Stop-Browser $proc $profileDir
     Start-Sleep -Milliseconds 800
     $messages = @()
     foreach ($f in @($log, $err)) {

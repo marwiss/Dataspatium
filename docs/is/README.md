@@ -103,6 +103,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Myndgera fylgir gagnasafninu**: tillögur með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðmátsorð sem setja kort, net, líkan eða skipulag í skjal (sjá [visualisera.md](visualisera.md)).
 - **Flytja út fylgir gagnasafninu**: KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagskort og ákvæði fyrir skipulög, magn í Excel og glTF fyrir líkön, PDF fyrir teikningar (sjá [lagen.md](lagen.md)).
 - **Deila fylgir gagnasafninu**: veldu hvort skrárnar fylgi í pakka, gerðu gagnasafn að eigin síðu til að senda, og sjáðu hverja tegund á eigin formi í símanum (sjá [dela.md](dela.md)).
+- **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

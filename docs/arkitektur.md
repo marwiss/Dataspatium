@@ -535,6 +535,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `docgen/viewers` gör en datamängd till en sida i sin egen form. Sidan byggs av `dashboards.toHtml` med `resolved` och `after`, efter granskningen och på en kopia. `mobile/kind-views` visar slagen på telefonen och läser bara filen den får.
 
+`data/codelists` känner igen kolumner som håller koder ur listor som följer med appen (`presets/kodlistor/`, gzip via `wrap_local`, byggda av `tools/codelists.py`). `io/datapackage` skriver och läser Frictionless Data Package, `data/dcat` håller beskrivningen enligt DCAT-AP-SE i `_meta.dcat` och `docgen/quality` skriver kvalitetsdeklarationen. `data/guides` definierar guiderna som hämtning, rensning med vanliga receptsteg och ett sparat diagram. Testerna kör mot virtuella källor, och `?guides=live` kör mot de riktiga för hand.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

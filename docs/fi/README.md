@@ -110,6 +110,7 @@ paketilla.
 - **Visualisoi seuraa aineistoa**: ehdotukset oikeina kuvina jokaiselle lajille, ristisuodattimet kojelaudoissa ja mallisanat, jotka lisäävät asiakirjaan kartan, graafin, mallin tai kaavan (ks. [visualisera.md](visualisera.md)).
 - **Vie seuraa aineistoa**: KML, GPX ja GeoPackage paikoille, kontaktiarkki kuville, kaavakartta ja kaavamääräykset kaavoille, määrät Excelissä ja glTF malleille, PDF piirustuksille (ks. [lagen.md](lagen.md)).
 - **Jaa seuraa aineistoa**: valitse, seuraavatko tiedostot pakettiin, tee aineistosta oma lähetettävä sivunsa ja katso jokainen laji omassa muodossaan puhelimessa (ks. [dela.md](dela.md)).
+- **Koodiluettelot, kuvaukset ja oppaat**: nimikkeet luetteloista SNI, SSYK, NACE ja muista yhdellä napsautuksella, datapaketit, DCAT-AP-SE, laatuseloste ja neljä opasta oikealla datalla (ks. [lagen.md](lagen.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

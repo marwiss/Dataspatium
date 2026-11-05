@@ -106,6 +106,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Visualisér følger datasættet**: forslag med rigtige billeder til hver slags, krydsfiltre i dashboards og skabelonord, der indsætter et kort, en graf, en model eller en plan i et dokument (se [visualisera.md](visualisera.md)).
 - **Eksportér følger datasættet**: KML, GPX og GeoPackage til steder, kontaktark til billeder, plankort og planbestemmelser til planer, mængder i Excel og glTF til modeller, PDF til tegninger (se [lagen.md](lagen.md)).
 - **Del følger datasættet**: vælg, om filerne skal følge med i en pakke, gør et datasæt til sin egen side at sende, og se hver slags i sin egen form på telefonen (se [dela.md](dela.md)).
+- **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klik, datapakker, DCAT-AP-SE, kvalitetsdeklaration og fire guider med rigtige data (se [lagen.md](lagen.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).
