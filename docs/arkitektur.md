@@ -539,6 +539,12 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `engines/ocr` kör Tesseract som komponent i en egen klassisk Blob-worker: kärnan `tesseract.js-core` utvärderas i workern, utan tesseract.js egen laddare, och språkdata skickas med `postMessage`. `data/ocr` lägger maskinläst text i dokumentets tabell genom åtgärden `ocr_text` i `data/operations-kinds`, som kan ångras, och märker dokumentet med `ocr {pages, language, confidence}` i `_meta.documents`. `ui/kinds/ocr-dialog` är den enda dialogen. Prov ersätter motorn med `setEngine`; den riktiga körs bara med `?ocr=1`.
 
+`data/provenance` bygger grafen kring en datamängd: bakåt ur `source`, framåt ur andras `source` och ur referenser i diagram, dashboards, mallar, anteckningsböcker, listor och flöden. Referenser hittas genom att leta efter id:n i det som lagras, eftersom objekt pekar på datamängder i många former. `ui/kinds/provenance-view` ritar med Cytoscape och dagre och visar samma sak som lista, som är vad tangentbord och skärmläsare använder.
+
+`data/collab` jämför två versioner av en datamängd efter deras historik. Stegen `comment`, `shared` och `received` ändrar inte data och läggs alltid ihop. Stegen som ändrar data avgör om någon sida bara ligger före, eller om båda har gått vidare. `ui/share/github-merge` frågar, och olästa kommentarer räknas i inställningen `collab.unread`.
+
+`data/library` läser bibliotek i formatet `dataspatium-library/1`: en JSON-fil med poster som var och en har `kind`, `license` och `content` i objektets eget filformat. Det medföljande ligger i `presets/bibliotek/`. Poster utan licens eller av okänt slag lämnas utanför. `docgen/site` sätter ihop Publiceras sidor till en ZIP med relativa länkar.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

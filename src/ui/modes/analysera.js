@@ -128,6 +128,7 @@
         notebooks.list().then((list) => { nbList = list; renderLeft(); });
         if (AUTOSTART[tab]) startEngine(tab);
         takePending();
+        takeNotebook();
         checkGeo();
       }
       function deactivate() {
@@ -180,6 +181,14 @@
       }
       /** Start a console's engine when its tab opens; a failure is shown in the log and the badge. */
       function startEngine(lang) { bridges[lang].start().catch((err) => shell.log(CONSOLE[lang].prefix + ': ' + ((err && err.message) || err), 'error')); }
+      /** A notebook handed over through the store (Härkomst). */
+      async function takeNotebook() {
+        const id = store.get().openNotebookId;
+        if (!id || !slots) return;
+        store.set({ openNotebookId: null });
+        const record = await notebooks.get(id);
+        if (record) openNotebook(record);
+      }
       /** Code handed over through the store (the beginner's course, the Regex tab): added to its tab's editor and optionally run. */
       function takePending() {
         const p = store.get().pendingCode;

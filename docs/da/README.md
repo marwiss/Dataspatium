@@ -108,6 +108,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Del følger datasættet**: vælg, om filerne skal følge med i en pakke, gør et datasæt til sin egen side at sende, og se hver slags i sin egen form på telefonen (se [dela.md](dela.md)).
 - **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klik, datapakker, DCAT-AP-SE, kvalitetsdeklaration og fire guider med rigtige data (se [lagen.md](lagen.md)).
 - **Tekst fra billeder**: skannede PDF-filer, billeder og billeder af tabeller læses med tekstgenkendelse i browseren, på alle seks sprog.
+- **Oprindelse, samarbejde og bibliotek**: se, hvor et datasæt kommer fra, og hvad det er blevet til, arbejd sammen via GitHub, uden at noget forsvinder, hent opskrifter og skabeloner med licens, og publicér arbejdsområdet som et websted.
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

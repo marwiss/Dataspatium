@@ -54,9 +54,12 @@
         await saveConfig();
         try {
           const fetched = await services.workspace.fetchFromGitHub({ token: token() });
-          const choice = await share.incomingSummary(ctx, fetched, t('github.pull.title', { repo: repoIn.value.trim() }));
+          // What is here already is compared by its history: comments are always kept, and the user chooses where both changed the data.
+          const merge = D.require('ui/share/github-merge');
+          const choice = await merge.ask(ctx, fetched, t('github.pull.title', { repo: repoIn.value.trim() }));
           if (!choice) return;
-          share.reportRestore(ctx, await services.workspace.restoreFromGitHub(fetched, { replaceIds: choice.replaceIds }));
+          share.reportRestore(ctx, await services.workspace.restoreFromGitHub(fetched, { replaceIds: [] }));
+          merge.report(ctx, await D.require('data/collab').apply(fetched, choice.planned, choice.choices, { from: (fetched.manifest && fetched.manifest.author) || repoIn.value.trim() }));
           onChanged();
         } catch (err) { fail(err); }
       }

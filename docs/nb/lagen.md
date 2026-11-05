@@ -122,6 +122,10 @@ har nye data (se [floden.md](floden.md)).
 
 **Beskrivelse.** Fanen Beskrivelse inneholder det en dataportal vil vite etter DCAT-AP-SE: tittel, utgiver, kontakt, tema, lisens og periode. Beskrivelsen følger datasettet, sier hva som mangler, og kan lagres som RDF/XML eller leses inn fra en slik fil. Ingenting sendes herfra.
 
+**Opprinnelse.** Fanen Opprinnelse viser hvor et datasett kommer fra og hva det har blitt til: kilden, datasettene det ble laget av, oppskriften og versjonene, og datasettene, diagrammene, dashboardene, dokumentene, notatbøkene, listene, flytene og delingene som bygger på det. Et klikk åpner det du klikker på, og *Hent som tekst* gir det samme til en rapport.
+
+**Bibliotek.** Under Bibliotek finnes ferdige oppskrifter, maler, skript og notatbøker, hver med sin lisens. Du ser hva noe gjør før du legger det til. Flere biblioteker hentes fra en nettadresse, og *Lagre egne som biblioteksfil* lager en fil av det du selv har laget, til et GitHub-repo eller hvor som helst.
+
 ## Søk
 
 Finn og list uten kode. Fanen *Søk* søker i alle kolonner i ett eller alle datasett; hvert ord må finnes på raden,

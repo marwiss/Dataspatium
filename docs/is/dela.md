@@ -23,6 +23,19 @@ færslu með skilaboðum þínum. Þegar sótt er velurðu, eins og fyrir pakka,
 eru til (þín útgáfa er vistuð undir *Útgáfur*). Í fyrsta skipti spyr forritið um leyfi til að hafa samband við GitHub
 (sjá *Netaðgangur* í [anvandarguide.md](anvandarguide.md)).
 
+## Samvinna í gegnum GitHub
+
+Þegar þú sækir frá GitHub er það sem hér er borið saman við það sem var sótt, eftir ferli þeirra. Glugginn segir fyrir hvert
+gagnasafn hver hefur breytt hverju, og athugasemdir og minnispunktar frá báðum aðilum haldast alltaf.
+
+- Ef aðeins hinn aðilinn hefur breytt gögnum er sú útgáfa tekin inn og þín vistuð sem útgáfa til að fara aftur í.
+- Ef aðeins þú hefur breytt gögnum helst þín útgáfa.
+- Ef báðir hafa breytt velur þú: halda báðum, með sóttu sem eigin gagnasafni, halda þinni eða taka sóttu. Sjálfgefið er að halda
+  báðum, svo ekkert tapast.
+
+Athugasemdir frá öðrum sem þú hefur ekki lesið sjást í stöðustikunni. Smellur opnar þær og nafn þess sem skrifaði stendur við
+hverja athugasemd. Nafnið er það sem viðkomandi hefur sjálfur gefið upp.
+
 ## Tæki
 
 Beinn flutningur í síma, spjaldtölvur og aðrar tölvur yfir staðarnetið, án þjóns. Tölvan sýnir QR-kóða; síminn
@@ -72,6 +85,15 @@ skjöl úr sniðum, fyllt með valda gagnasafninu. Birtar skrár innihalda gögn
 aðeins með þeim sem mega sjá upplýsingarnar.
 
 **Gagnasafn sem eigin síða.** Undir Gagnasöfn verður gagnasafn að síðu á eigin formi: texti til að lesa, myndir til að fletta, kort, netkerfi eða tafla til að sía. Síðan sækir ekkert af netinu og hægt er að senda hana sem eina skrá. Hún fer fyrst í gegnum yfirferð og sýnir í mesta lagi 2.000 raðir eða 100 myndir.
+
+## Að birta vinnusvæði
+
+*Birta vinnusvæðið* býr til vefsvæði úr öllu vinnusvæðinu eða úrvali, fyrir innra net eða til að senda. Það verður ZIP með
+upphafssíðu og síðu fyrir hvert gagnasafn, mælaborð og skjal, með leit í töflum og kóðabók undir hverju gagnasafni. Síðurnar eru
+aðeins til lestrar, tengjast með afstæðum tenglum og sækja ekkert af netinu.
+
+Gagnasöfnin fara í gegnum yfirferðina og eru sýnd úr afritum. Mælaborð og skjöl eru teiknuð úr gagnasöfnunum eins og þau eru, svo
+þar færð þú að vita hvað þau innihalda og velur hvort þau fylgi með.
 
 ## Taka á móti
 

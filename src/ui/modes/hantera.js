@@ -11,11 +11,12 @@
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
     const FLOWS = '__flows';
+    const LIBRARY = '__library';
 
     function createMode(ctx) {
       const { ui, services, store, shell } = ctx;
       let slots = null; let tab = 'overview'; let unsubscribe = null; let unsubFolder = null;
-      /** @type {any} */ let flowsUi = null;
+      /** @type {any} */ let flowsUi = null; let libraryUi = null;
 
       function activate(s) {
         slots = s;
@@ -24,7 +25,7 @@
         unsubFolder = services.workspace.onFolder((status) => { if (slots && !status.busy && store.get().selectedId === WORKSPACE) render(); });
         render();
       }
-      function deactivate() { slots = null; if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); if (flowsUi) { flowsUi.destroy(); flowsUi = null; } }
+      function deactivate() { slots = null; if (libraryUi) { libraryUi.destroy(); libraryUi = null; } if (unsubscribe) unsubscribe(); if (unsubFolder) unsubFolder(); if (flowsUi) { flowsUi.destroy(); flowsUi = null; } }
 
       function render() {
         if (!slots) return;
@@ -32,7 +33,7 @@
         const selectedIds = state.selectedIds || [];
         ui.datasetList.render(slots.left, {
           datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }),
-          extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }, { id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }],
+          extra: [{ id: WORKSPACE, label: t('datasets.storage.title'), icon: 'hard-drive', sub: t('datasets.backup') }, { id: FLOWS, label: t('flows.title'), icon: 'play', sub: t('flows.sub') }, { id: LIBRARY, label: t('library.title'), icon: 'book-open', sub: t('library.sub') }],
           // Several datasets at once: check boxes, drag and drop into folders, and the batch actions.
           multi: true, selectedIds, onToggle: (ids) => store.set({ selectedIds: ids }),
           onMove: (ids, path) => batch.move(ctx, ids, path),
@@ -43,7 +44,9 @@
         });
         const selected = state.datasets.find((d) => d.id === state.selectedId);
         if (state.selectedId !== FLOWS && flowsUi) { flowsUi.destroy(); flowsUi = null; }
-        if (state.selectedId === FLOWS) { if (!flowsUi) flowsUi = flowsView.create(ctx); flowsUi.render({ center: slots.center, right: slots.right }); }
+        if (state.selectedId !== LIBRARY && libraryUi) { libraryUi.destroy(); libraryUi = null; }
+        if (state.selectedId === LIBRARY) { if (!libraryUi) libraryUi = D.require('ui/library/library-view').create(ctx); libraryUi.render({ center: slots.center, right: slots.right }); }
+        else if (state.selectedId === FLOWS) { if (!flowsUi) flowsUi = flowsView.create(ctx); flowsUi.render({ center: slots.center, right: slots.right }); }
         else if (state.selectedId === WORKSPACE) { renderWorkspace(); renderWorkspaceInspector(); }
         else if (selected) {
           // The dataset can be removed (here or in another tab) while its views load; only report other errors.
@@ -69,8 +72,11 @@
       }
 
       async function renderDataset(ds) {
+        // A tab asked for from elsewhere (the comments behind the status bar).
+        const asked = store.get().datasetTab;
+        if (asked) { tab = asked; store.set({ datasetTab: null }); }
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'comments', label: t('comments.title'), icon: 'message-square' }, { id: 'describe', label: t('dcat.tab'), icon: 'tag' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
+        tabs.tabs = [{ id: 'overview', label: t('datasets.overview'), icon: 'info' }, { id: 'columns', label: t('datasets.columns'), icon: 'columns-3' }, { id: 'comments', label: t('comments.title'), icon: 'message-square' }, { id: 'describe', label: t('dcat.tab'), icon: 'tag' }, { id: 'provenance', label: t('provenance.title'), icon: 'git-branch' }, { id: 'log', label: t('datasets.log'), icon: 'history' }];
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => { tab = /** @type {any} */ (e).detail.id; render(); });
         const body = h('div', { class: 'dm-center-fill' });
@@ -118,8 +124,11 @@
             rowCount: cols.length, rowProvider: async (start, count) => cols.slice(start, start + count).map((c) => [c.position + 1, c.name, t('type.' + c.type), c.label, c.description || '', c.unit || '', services.datasets.valueLabelsText(c.valueLabels), c.sourceName]) });
         } else if (tab === 'comments') {
           await renderComments(ds, body);
+          D.require('data/collab').markRead(ds.id).catch((err) => D.log('collab', err));
         } else if (tab === 'describe') {
           renderDescription(ds, body);
+        } else if (tab === 'provenance') {
+          replace(body, D.require('ui/kinds/provenance-view').create(ctx, ds));
         } else {
           const log = await services.datasets.log(ds.id);
           const changelog = D.require('data/changelog');

@@ -124,6 +124,10 @@ när de har nya data (se [floden.md](floden.md)).
 
 **Beskrivning.** Fliken Beskrivning håller det en dataportal vill veta enligt DCAT-AP-SE: titel, utgivare, kontakt, tema, licens och period. Beskrivningen följer datamängden, säger vad som saknas och kan sparas som RDF/XML eller läsas in från en sådan fil. Inget skickas härifrån.
 
+**Härkomst.** Fliken Härkomst visar var en datamängd kommer ifrån och vad den har blivit: källan, datamängderna den gjordes av, receptet och versionerna, och de datamängder, diagram, dashboards, dokument, anteckningsböcker, listor, flöden och delningar som bygger på den. Ett klick öppnar det du klickar på, och *Hämta som text* ger samma sak att lägga i en rapport.
+
+**Bibliotek.** Under Bibliotek finns färdiga recept, mallar, skript och anteckningsböcker, var och en med sin licens. Du ser vad något gör innan du lägger till det. Fler bibliotek hämtas från en webbadress, och *Spara egna som biblioteksfil* gör en fil av det du själv har skapat, att lägga ut i ett GitHub-repo eller var som helst.
+
 ## Söka
 
 Hitta och lista utan kod. Fliken *Sök* söker i alla kolumner i en eller alla datamängder; varje ord måste finnas

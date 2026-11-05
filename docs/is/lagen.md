@@ -122,6 +122,10 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 
 **Lýsing.** Flipinn Lýsing geymir það sem gagnagátt vill vita samkvæmt DCAT-AP-SE: titil, útgefanda, tengilið, þema, leyfi og tímabil. Lýsingin fylgir gagnasafninu, segir hvað vantar og hægt er að vista hana sem RDF/XML eða lesa úr slíkri skrá. Ekkert er sent héðan.
 
+**Uppruni.** Flipinn Uppruni sýnir hvaðan gagnasafn kemur og hvað það hefur orðið að: gagnalindina, gagnasöfnin sem það var gert úr, uppskriftina og útgáfurnar, og gagnasöfnin, myndritin, mælaborðin, skjölin, minnisbækurnar, listana, flæðin og deilingarnar sem byggja á því. Smellur opnar það sem þú smellir á og *Sækja sem texta* gefur það sama til að setja í skýrslu.
+
+**Safn.** Undir Safn eru tilbúnar uppskriftir, sniðmát, skriftur og minnisbækur, hvert með sitt leyfi. Þú sérð hvað eitthvað gerir áður en þú bætir því við. Fleiri söfn eru sótt af vefslóð og *Vista eigin sem safnskrá* býr til skrá úr því sem þú hefur gert, til að setja í GitHub-geymslu eða hvert sem er.
+
 ## Leita
 
 Finna og lista án kóða. Flipinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum; hvert orð þarf að

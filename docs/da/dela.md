@@ -23,6 +23,19 @@ commit med din besked. Ved hentning vælger du, som for pakker, om datasæt, der
 egen version gemmes under *Versioner*). Første gang spørger appen om lov til at kontakte GitHub (se *Internetadgang* i
 [anvandarguide.md](anvandarguide.md)).
 
+## Arbejde sammen via GitHub
+
+Når du henter fra GitHub, sammenlignes det, der allerede er her, med det hentede efter deres historik. Dialogen siger for hvert
+datasæt, hvem der har ændret hvad, og kommentarer og noter fra begge sider beholdes altid.
+
+- Har kun den anden side ændret data, tages den version ind, og din gemmes som en version at gå tilbage til.
+- Har kun du ændret data, beholdes din version.
+- Har begge ændret, vælger du: behold begge, med den hentede som et eget datasæt, behold din eller tag den hentede. At beholde
+  begge er forvalgt, så intet forsvinder.
+
+Kommentarer fra andre, som du ikke har læst, vises i statuslinjen. Et klik åbner dem, og navnet på den, der har skrevet, står ved
+hver kommentar. Navnet er det, personen selv har angivet.
+
 ## Enheder
 
 Direkte overførsel til telefoner, tablets og andre computere over det lokale netværk, uden server. Computeren
@@ -72,6 +85,15 @@ diagrammerne indlejret) og dokumenter fra skabeloner, udfyldt med det valgte dat
 og diagrammer i klartekst; del dem kun med dem, der må se oplysningerne.
 
 **Et datasæt som sin egen side.** Under Datasæt bliver et datasæt til en side i sin egen form: en tekst at læse, billeder at bladre i, et kort, et netværk eller en tabel at filtrere. Siden henter intet fra nettet og kan sendes som én fil. Den går gennem gennemgangen først og viser højst 2.000 rækker eller 100 billeder.
+
+## Udgive et arbejdsområde
+
+*Publicér arbejdsområdet* laver et websted af hele arbejdsområdet eller et udvalg, til et intranet eller at sende. Det bliver en
+ZIP med en startside og en side for hvert datasæt, dashboard og dokument, med søgning i tabeller og en kodebog under hvert
+datasæt. Siderne kan kun læses, hænger sammen med relative links og henter intet fra nettet.
+
+Datasættene gennemgår kontrollen og vises fra kopier. Dashboards og dokumenter tegnes ud fra datasættene, som de er, så der får
+du at vide, hvad de indeholder, og vælger selv, om de skal med.
 
 ## Modtag
 

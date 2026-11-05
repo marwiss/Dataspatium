@@ -71,11 +71,12 @@
           this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
           // A running flow and the news from the watches: only there when there is something to say.
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
+          this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
           this.selectionEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-selection', hidden: true, 'aria-label': t('selection.status.hint'), title: t('selection.status.hint'), onclick: () => this.selectionMenu() }, icons.icon('list-checks', 14), h('span'));
           selectionMod.subscribe((s) => this.showSelection(s));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.watchEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.watchEl, this.commentsEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -155,6 +156,15 @@
           };
           watches.subscribe(showWatches);
           showWatches();
+          // Comments from others, fetched from a repository and not yet looked at.
+          const collab = D.require('data/collab');
+          const showUnread = async () => {
+            const { total } = await collab.unread();
+            this.commentsEl.hidden = !total;
+            this.commentsEl.lastChild.textContent = t('shell.comments.new', { n: i18n.formatNumber(total) });
+          };
+          collab.onUnread(() => { showUnread().catch((err) => D.log('collab', err)); });
+          showUnread().catch((err) => D.log('collab', err));
           // Work at start waits until the page has settled, and never asks for anything.
           setTimeout(() => {
             flows.runOnStart({ onSkip: (flow, reasons) => this.log(t('flows.start.skipped', { name: flow.name, reason: reasons.join('; ') }), 'info') }).catch((err) => D.log('shell', 'flows at start', err));
@@ -320,6 +330,13 @@
           let object = parts.slice(1).join('/');
           try { object = decodeURIComponent(object); } catch (_err) { /* keep as typed */ }
           return { mode: parts[0] || '', object };
+        }
+        /** The first dataset with comments not yet looked at, on its tab for them. */
+        async openUnread() {
+          const { first } = await D.require('data/collab').unread();
+          if (!first) return;
+          this.store.set({ selectedId: first, datasetTab: 'comments' });
+          this.activate('hantera');
         }
         /** The address of a mode and an object, for copying and QR codes. */
         link(mode, object) {

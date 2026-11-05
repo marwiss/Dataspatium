@@ -125,6 +125,10 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 
 **Kuvaus.** Välilehdellä Kuvaus on se, mitä dataportaali haluaa tietää DCAT-AP-SE:n mukaan: otsikko, julkaisija, yhteystieto, teema, lisenssi ja ajanjakso. Kuvaus seuraa aineistoa, kertoo mitä puuttuu, ja sen voi tallentaa RDF/XML-muodossa tai lukea sellaisesta tiedostosta. Täältä ei lähetetä mitään.
 
+**Alkuperä.** Alkuperä-välilehti näyttää, mistä aineisto on peräisin ja mitä siitä on tullut: lähteen, aineistot, joista se on tehty, reseptin ja versiot sekä aineistot, kaaviot, koontinäytöt, asiakirjat, muistikirjat, luettelot, työnkulut ja jaot, jotka perustuvat siihen. Napsautus avaa kohteen, ja *Lataa tekstinä* antaa saman raporttiin lisättäväksi.
+
+**Kirjasto.** Kirjastossa on valmiita reseptejä, malleja, skriptejä ja muistikirjoja, kullakin oma lisenssinsä. Näet, mitä kohde tekee, ennen kuin lisäät sen. Lisää kirjastoja haetaan verkko-osoitteesta, ja *Tallenna omat kirjastotiedostona* tekee tiedoston omista töistäsi GitHub-repoon tai minne tahansa.
+
 ## Hae
 
 Löydä ja listaa ilman koodia. Välilehti *Hae* hakee kaikista sarakkeista yhdessä tai kaikissa aineistoissa; jokaisen

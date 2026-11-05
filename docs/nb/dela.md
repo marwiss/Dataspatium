@@ -23,6 +23,19 @@ i én commit med meldingen din. Ved henting velger du, som for pakker, om datase
 (din egen versjon lagres under *Versjoner*). Første gang spør appen om lov til å kontakte GitHub (se *Internettilgang*
 i [anvandarguide.md](anvandarguide.md)).
 
+## Samarbeide via GitHub
+
+Når du henter fra GitHub, sammenlignes det som allerede er her, med det hentede etter historikken deres. Dialogen sier for hvert
+datasett hvem som har endret hva, og kommentarer og notater fra begge sider beholdes alltid.
+
+- Har bare den andre siden endret data, tas den versjonen inn, og din lagres som en versjon å gå tilbake til.
+- Har bare du endret data, beholdes din versjon.
+- Har begge endret, velger du: behold begge, med den hentede som et eget datasett, behold din eller ta den hentede. Å beholde
+  begge er forvalgt, så ingenting forsvinner.
+
+Kommentarer fra andre som du ikke har lest, vises i statuslinjen. Et klikk åpner dem, og navnet på den som har skrevet, står ved
+hver kommentar. Navnet er det personen selv har oppgitt.
+
 ## Enheter
 
 Direkte overføring til telefoner, nettbrett og andre datamaskiner over det lokale nettverket, uten server.
@@ -72,6 +85,15 @@ diagrammene innebygd) og dokumenter fra maler, fylt med det valgte datasettet. P
 diagrammer i klartekst; del dem bare med dem som får se opplysningene.
 
 **Et datasett som egen side.** Under Datasett blir et datasett en side i sin egen form: en tekst å lese, bilder å bla i, et kart, et nettverk eller en tabell å filtrere. Siden henter ingenting fra nettet og kan sendes som én fil. Den går gjennom gjennomgangen først og viser høyst 2 000 rader eller 100 bilder.
+
+## Publisere et arbeidsområde
+
+*Publiser arbeidsområdet* lager et nettsted av hele arbeidsområdet eller et utvalg, til et intranett eller å sende. Det blir en
+ZIP med en startside og en side for hvert datasett, dashboard og dokument, med søk i tabeller og en kodebok under hvert datasett.
+Sidene kan bare leses, henger sammen med relative lenker og henter ingenting fra nettet.
+
+Datasettene går gjennom kontrollen og vises fra kopier. Dashboards og dokumenter tegnes ut fra datasettene slik de er, så der får
+du vite hva de inneholder, og velger selv om de skal være med.
 
 ## Motta
 

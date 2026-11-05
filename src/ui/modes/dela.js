@@ -162,6 +162,7 @@
         replace(body, h('div', { class: 'dm-card dm-stack' },
           h('h3', { text: t('dela.publish.title') }),
           h('p', { class: 'dm-help', text: t('dela.publish.hint') }),
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('site.action'), icon: 'globe', title: t('site.action.hint'), onClick: () => publishSite(dashes, docs).catch(fail) })),
           h('h4', { text: t('shell.datasets') }),
           h('p', { class: 'dm-help dm-small', text: t('dela.publish.datasets.help') }),
           datasetRows.length ? h('div', { class: 'dm-stack-sm' }, datasetRows) : h('p', { class: 'dm-help', text: t('dela.publish.none') }),
@@ -169,6 +170,60 @@
           dashRows.length ? h('div', { class: 'dm-stack-sm' }, dashRows) : h('p', { class: 'dm-help', text: t('dela.publish.none') }),
           h('h4', { text: t('dela.publish.documents') }),
           docRows.length ? h('div', { class: 'dm-stack-sm' }, docRows) : h('p', { class: 'dm-help', text: t('dela.publish.none') })));
+      }
+
+      /** The workspace or a selection as a site. Datasets go through the review on copies; what dashboards draw is warned about. */
+      async function publishSite(dashes, docs) {
+        const state = store.get();
+        const pick = (items, kind) => {
+          const on = new Set(items.map((x) => x.id));
+          const switches = items.map((item) => {
+            const sw = /** @type {any} */ (h('dm-switch', { label: item.name, checked: '', 'data-site-item': kind }));
+            sw.addEventListener('change', () => { if (sw.checked) on.add(item.id); else on.delete(item.id); });
+            return sw;
+          });
+          return { on, el: switches.length ? h('div', { class: 'dm-stack-sm' }, switches) : h('p', { class: 'dm-help', text: t('dela.publish.none') }) };
+        };
+        const own = docs.filter((d) => !d.builtin);
+        const sets = pick(state.datasets, 'dataset'); const dashSet = pick(dashes, 'dashboard'); const docSet = pick(own, 'document');
+        const titleIn = /** @type {any} */ (h('dm-input', { label: t('site.title') }));
+        titleIn.value = t('site.default.title');
+        const descIn = /** @type {any} */ (h('dm-input', { label: t('common.description') }));
+        const docData = /** @type {any} */ (h('dm-select', { label: t('site.document.dataset') }));
+        docData.options = state.datasets.map((d) => ({ value: d.id, label: d.name }));
+        if (state.datasets.length) docData.value = (state.datasets.find((d) => d.id === state.selectedId) || state.datasets[0]).id;
+        const ok = await ui.dialog.open({
+          title: t('site.action'), size: 'lg', help: 'dela#publicera-en-arbetsyta',
+          body: h('div', { class: 'dm-stack' }, h('p', { class: 'dm-help', text: t('site.help') }), titleIn, descIn,
+            h('h4', { text: t('shell.datasets') }), sets.el, h('h4', { text: t('dela.publish.dashboards') }), dashSet.el, h('h4', { text: t('dela.publish.documents') }), docSet.el, own.length && state.datasets.length ? docData : null),
+          actions: [{ label: t('common.cancel'), value: false }, { label: t('site.create'), variant: 'primary', value: true, primary: true }],
+        });
+        if (ok !== true) return;
+        const ids = Array.from(sets.on);
+        const chosenDashes = dashes.filter((d) => dashSet.on.has(d.id));
+        const chosenDocs = own.filter((d) => docSet.on.has(d.id));
+        if (!ids.length && !chosenDashes.length && !chosenDocs.length) { ui.toast.show(t('site.none'), { kind: 'warn' }); return; }
+        const review = D.require('ui/share/review');
+        const reviewed = await review.review(ctx, ids);
+        if (!reviewed) return;
+        // Dashboards and documents draw from the datasets as they are, so those are decided on with the facts.
+        const charts = D.require('viz/charts');
+        const behind = new Set(chosenDocs.length && docData.value ? [docData.value] : []);
+        for (const dash of chosenDashes) for (const item of dash.items || []) { const chart = item.chartId ? await charts.get(item.chartId) : null; if (chart && chart.datasetId) behind.add(chart.datasetId); }
+        if (behind.size && !(await review.warn(ctx, Array.from(behind)))) return;
+        const copies = [];
+        try {
+          for (const id of ids) {
+            const d = state.datasets.find((x) => x.id === id);
+            copies.push(await services.datasets.importBytes(await D.require('data/share-scan').copy(id, reviewed.transform[id] || {}), { name: d.name }, { quiet: true }));
+          }
+          const blob = await D.require('docgen/site').build({ title: titleIn.value.trim(), description: descIn.value.trim(), datasets: copies.map((c) => ({ id: c.id, name: c.name })), dashboards: chosenDashes, documents: chosenDocs, documentDataset: docData.value || null });
+          services.files.download(blob, services.files.safeName(titleIn.value.trim() || t('site.default.title'), 'zip'));
+          shell.log(t('site.done', { name: titleIn.value.trim() }), 'ok');
+          ui.toast.show(t('site.done', { name: titleIn.value.trim() }), { kind: 'ok', timeout: 8000 });
+        } finally {
+          for (const copy of copies) await services.datasets.remove(copy.id, { quiet: true });
+        }
       }
 
       function renderReceive(body) {

@@ -17,7 +17,7 @@
     const AUTOSAVE_SETTING = 'folder:autosave';
     const AUTOSAVE_DELAY = 1500;
     const PREFIXES = ['charts/', 'documents/', 'dashboards/', 'notebooks/', 'scripts/'];
-    const SCRIPT_LANGUAGES = ['r', 'sql', 'regex'];
+    const SCRIPT_LANGUAGES = ['r', 'python', 'sql', 'regex'];
     const optional = (name) => (D.has(name) ? D.require(name) : null);
     /** Files of the workspace layout (anything else in a folder or repository is left alone). */
     const isWorkspaceFile = (p) => p === MANIFEST || /^flows\/[^/]+\.flow\.json$/i.test(p) || /^datasets\/[^/]+\.sqlite$/i.test(p) || /^charts\/[^/]+\.viz\.json$/i.test(p) || /^documents\/[^/]+\.doc\.json$/i.test(p) || /^dashboards\/[^/]+\.dash\.json$/i.test(p) || /^notebooks\/[^/]+\.nb\.json$/i.test(p) || /^scripts\/[^/]+\.script\.json$/i.test(p);
@@ -426,6 +426,6 @@
       return res;
     }
 
-    return { backup, bundle, inspect, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, githubConfig, setGithubConfig, pushToGitHub, fetchFromGitHub, restoreFromGitHub, isWorkspaceFile, MANIFEST, AUTOSAVE_SETTING };
+    return { importScript, backup, bundle, inspect, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, githubConfig, setGithubConfig, pushToGitHub, fetchFromGitHub, restoreFromGitHub, isWorkspaceFile, MANIFEST, AUTOSAVE_SETTING };
   });
 })();

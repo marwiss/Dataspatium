@@ -378,6 +378,12 @@ Dataspatium.assets.addEntries({
   "size": 18509,
   "library": "dataspatium"
  },
+ "presets/bibliotek/index.json": {
+  "file": "presets/bibliotek/index.json.js",
+  "encoding": "gzip+base64",
+  "size": 7057,
+  "library": "dataspatium"
+ },
  "presets/kodlistor/ammatti2010.json": {
   "file": "presets/kodlistor/ammatti2010.json.js",
   "encoding": "gzip+base64",
@@ -477,7 +483,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22788,
+  "size": 23514,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -597,7 +603,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/dela.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 6708,
+  "size": 8099,
   "library": "dataspatium"
  },
  "docs/sv/mobil.md": {
@@ -633,7 +639,7 @@ Dataspatium.assets.addEntries({
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 22549,
+  "size": 23236,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -753,7 +759,7 @@ Dataspatium.assets.addEntries({
  "docs/da/dela.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 6584,
+  "size": 7946,
   "library": "dataspatium"
  },
  "docs/da/mobil.md": {
@@ -789,7 +795,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 22135,
+  "size": 22817,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -909,7 +915,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/dela.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 6505,
+  "size": 7863,
   "library": "dataspatium"
  },
  "docs/nb/mobil.md": {
@@ -945,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 24295,
+  "size": 24989,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -1065,7 +1071,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/dela.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 7033,
+  "size": 8457,
   "library": "dataspatium"
  },
  "docs/fi/mobil.md": {
@@ -1101,7 +1107,7 @@ Dataspatium.assets.addEntries({
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 23318,
+  "size": 24065,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1167,7 +1173,7 @@ Dataspatium.assets.addEntries({
  "docs/is/dokument.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 10467,
+  "size": 10466,
   "library": "dataspatium"
  },
  "docs/is/kartor.md": {
@@ -1221,7 +1227,7 @@ Dataspatium.assets.addEntries({
  "docs/is/dela.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 6969,
+  "size": 8444,
   "library": "dataspatium"
  },
  "docs/is/mobil.md": {
@@ -1257,7 +1263,7 @@ Dataspatium.assets.addEntries({
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22772,
+  "size": 23449,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {
@@ -1377,7 +1383,7 @@ Dataspatium.assets.addEntries({
  "docs/en/dela.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 6653,
+  "size": 8012,
   "library": "dataspatium"
  },
  "docs/en/mobil.md": {

@@ -38,6 +38,15 @@
           // A chart opened before the lists finished loading (command palette) needs its preview drawn again.
           if (view === 'chart' && chart && !isPanel(chart.kind)) schedulePreview(0);
           takeOpenChart();
+          takeOpenDashboard();
+        }
+        /** A dashboard handed over through the store (Härkomst). */
+        async function takeOpenDashboard() {
+          const id = store.get().openDashboardId;
+          if (!id || !slots) return;
+          store.set({ openDashboardId: null });
+          const record = (await dashboards.list()).find((d) => d.id === id);
+          if (record) await openDashboard(record);
         }
         /** A chart handed over through the store (the beginner's course) is opened in the builder. */
         async function takeOpenChart() {

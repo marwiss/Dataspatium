@@ -1,0 +1,69 @@
+{
+  "format": "dataspatium-library/1",
+  "name": { "sv": "Dataspatiums bibliotek", "da": "Dataspatiums bibliotek", "nb": "Dataspatiums bibliotek", "fi": "Dataspatiumin kirjasto", "is": "Safn Dataspatium", "en": "The Dataspatium library" },
+  "entries": [
+    {
+      "id": "recipe-tidy",
+      "kind": "recipe",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Städa en inläst tabell", "da": "Ryd op i en indlæst tabel", "nb": "Rydd opp i en innlest tabell", "fi": "Siivoa tuotu taulukko", "is": "Hreinsa innflutta töflu", "en": "Tidy an imported table" },
+      "description": { "sv": "Enkla kolumnnamn, inga tomma rader eller kolumner och inga dubbletter.", "da": "Enkle kolonnenavne, ingen tomme rækker eller kolonner og ingen dubletter.", "nb": "Enkle kolonnenavn, ingen tomme rader eller kolonner og ingen duplikater.", "fi": "Yksinkertaiset sarakenimet, ei tyhjiä rivejä tai sarakkeita eikä kaksoiskappaleita.", "is": "Einföld dálkaheiti, engar auðar línur eða dálkar og engar tvítekningar.", "en": "Simple column names, no empty rows or columns and no duplicates." },
+      "content": { "steps": [ { "op": "clean_names", "params": {} }, { "op": "remove_empty", "params": { "emptyRows": true, "emptyColumns": true } }, { "op": "remove_duplicates", "params": {} } ] }
+    },
+    {
+      "id": "recipe-duplicates",
+      "kind": "recipe",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Ta bort dubbletter", "da": "Fjern dubletter", "nb": "Fjern duplikater", "fi": "Poista kaksoiskappaleet", "is": "Fjarlægja tvítekningar", "en": "Remove duplicates" },
+      "description": { "sv": "Rader som är lika i alla kolumner blir en rad.", "da": "Rækker, der er ens i alle kolonner, bliver til én række.", "nb": "Rader som er like i alle kolonner, blir én rad.", "fi": "Rivit, jotka ovat samat kaikissa sarakkeissa, yhdistyvät yhdeksi riviksi.", "is": "Línur sem eru eins í öllum dálkum verða að einni línu.", "en": "Rows that are the same in every column become one row." },
+      "content": { "steps": [ { "op": "remove_duplicates", "params": {} } ] }
+    },
+    {
+      "id": "document-short",
+      "kind": "document",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Kort rapport", "da": "Kort rapport", "nb": "Kort rapport", "fi": "Lyhyt raportti", "is": "Stutt skýrsla", "en": "Short report" },
+      "description": { "sv": "En sida med vad datamängden är och dess första rader.", "da": "En side med, hvad datasættet er, og dets første rækker.", "nb": "En side med hva datasettet er, og de første radene.", "fi": "Yksi sivu: mikä aineisto on ja sen ensimmäiset rivit.", "is": "Ein síða um hvað gagnasafnið er og fyrstu línur þess.", "en": "One page with what the dataset is and its first rows." },
+      "content": { "format": "dataspatium-doc/1", "name": "Kort rapport", "description": "", "body": "# {{datamangd}}\n\n*{{datum}}*\n\n{{#beskrivning}}{{beskrivning}}\n\n{{/beskrivning}}**{{antal_rader}}** / **{{antal_kolumner}}**{{#kalla}} · {{kalla}}{{/kalla}}\n\n{{#tabell}}topp: 15{{/tabell}}\n" }
+    },
+    {
+      "id": "document-columns",
+      "kind": "document",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Kolumnförteckning", "da": "Kolonneoversigt", "nb": "Kolonneoversikt", "fi": "Sarakeluettelo", "is": "Dálkaskrá", "en": "List of columns" },
+      "description": { "sv": "Kolumnerna i en tabell, att lämna över tillsammans med data.", "da": "Kolonnerne i en tabel, til at give videre sammen med data.", "nb": "Kolonnene i en tabell, til å gi videre sammen med data.", "fi": "Taulukon sarakkeet luovutettavaksi datan mukana.", "is": "Dálkar í töflu, til að afhenda með gögnunum.", "en": "The columns of a table, to hand over along with the data." },
+      "content": { "format": "dataspatium-doc/1", "name": "Kolumnförteckning", "description": "", "body": "# {{datamangd}}\n\n*{{datum}}*\n\n{{#tabell}}kalla: kolumner{{/tabell}}\n" }
+    },
+    {
+      "id": "script-r-summary",
+      "kind": "script",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Sammanfatta i R", "da": "Opsummér i R", "nb": "Oppsummer i R", "fi": "Tiivistä R:ssä", "is": "Taka saman í R", "en": "Summarise in R" },
+      "description": { "sv": "Listar datamängderna och sammanfattar den första.", "da": "Viser datasættene og opsummerer det første.", "nb": "Viser datasettene og oppsummerer det første.", "fi": "Luettelee aineistot ja tiivistää ensimmäisen.", "is": "Sýnir gagnasöfnin og tekur það fyrsta saman.", "en": "Lists the datasets and summarises the first one." },
+      "content": { "kind": "script", "language": "r", "name": "Sammanfatta", "code": "datasets <- dm_list()\nprint(datasets)\nd <- dm_read(datasets$namn[1])\nstr(d)\nsummary(d)\n" }
+    },
+    {
+      "id": "script-python-summary",
+      "kind": "script",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Sammanfatta i Python", "da": "Opsummér i Python", "nb": "Oppsummer i Python", "fi": "Tiivistä Pythonissa", "is": "Taka saman í Python", "en": "Summarise in Python" },
+      "description": { "sv": "Listar datamängderna och beskriver den första med pandas.", "da": "Viser datasættene og beskriver det første med pandas.", "nb": "Viser datasettene og beskriver det første med pandas.", "fi": "Luettelee aineistot ja kuvaa ensimmäisen pandasilla.", "is": "Sýnir gagnasöfnin og lýsir því fyrsta með pandas.", "en": "Lists the datasets and describes the first one with pandas." },
+      "content": { "kind": "script", "language": "python", "name": "Sammanfatta", "code": "datasets = dm_list()\nprint(datasets)\ndf = dm_read(datasets['namn'][0])\nprint(df.describe(include='all'))\n" }
+    },
+    {
+      "id": "notebook-explore",
+      "kind": "notebook",
+      "license": "CC0-1.0",
+      "author": "Dataspatium",
+      "name": { "sv": "Utforska en tabell", "da": "Udforsk en tabel", "nb": "Utforsk en tabell", "fi": "Tutki taulukkoa", "is": "Kanna töflu", "en": "Explore a table" },
+      "description": { "sv": "Anteckningsbok med SQL: antal rader, de första raderna och en fördelning att ändra.", "da": "Notesbog med SQL: antal rækker, de første rækker og en fordeling, du kan ændre.", "nb": "Notatbok med SQL: antall rader, de første radene og en fordeling du kan endre.", "fi": "SQL-muistikirja: rivien määrä, ensimmäiset rivit ja muokattava jakauma.", "is": "Minnisbók með SQL: fjöldi lína, fyrstu línur og dreifing sem má breyta.", "en": "A notebook with SQL: the number of rows, the first rows and a distribution to change." },
+      "content": { "format": "dataspatium-notebook/1", "name": "Utforska en tabell", "cells": [ { "type": "markdown", "source": "# Utforska en tabell\n\nVälj datamängd ovanför och kör cellerna." }, { "type": "sql", "source": "select count(*) as antal from data" }, { "type": "sql", "source": "select * from data limit 20" } ] }
+    }
+  ]
+}

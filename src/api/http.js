@@ -67,7 +67,7 @@
 
     /**
      * Perform a request.
-     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer'}} req
+     * @param {{url: string, method?: string, headers?: Record<string, string>, body?: any, signal?: AbortSignal, timeoutMs?: number, notModifiedOk?: boolean, rateKey?: string, rateLimit?: {requests: number, perSeconds: number}, retries?: number, responseType?: 'text'|'arraybuffer'}} req
      * @returns {Promise<{ok: boolean, status: number, statusText: string, headers: Headers, url: string, text: string, buffer: ArrayBuffer|null, contentType: string, ms: number}>}
      */
     async function request(req) {
@@ -107,7 +107,8 @@
           continue;
         }
         const contentType = res.headers.get('Content-Type') || '';
-        const out = { ok: res.ok, status: res.status, statusText: res.statusText, headers: res.headers, url: res.url || url, text: '', buffer: null, contentType, ms };
+        // 304 means "what you have is still right": a good answer for a caller that asked with If-None-Match.
+        const out = { ok: res.ok || (res.status === 304 && !!req.notModifiedOk), status: res.status, statusText: res.statusText, headers: res.headers, url: res.url || url, text: '', buffer: null, contentType, ms };
         if (req.responseType === 'arraybuffer') out.buffer = await res.arrayBuffer();
         else out.text = await res.text();
         return out;

@@ -28,6 +28,7 @@ LOCAL_GLOBS = [
 # Larger text files travel gzip+base64 (platform/assets gunzips them with DecompressionStream): the plan catalogue.
 LOCAL_GZIP_GLOBS = [
     "presets/plan/*.json",
+    "presets/bibliotek/*.json",
     "presets/kodlistor/*.json",
 ]
 # The handbook shown by ui/help: user documents in reading order (same list as DOCS in src/ui/help/help-panel.js).

@@ -25,6 +25,19 @@ kuten paketeille, korvataanko jo olemassa olevat aineistot (oma versiosi tallenn
 Ensimmäisellä kerralla sovellus kysyy lupaa ottaa yhteys GitHubiin (ks. *Internetyhteys* tiedostossa
 [anvandarguide.md](anvandarguide.md)).
 
+## Yhteistyö GitHubin kautta
+
+Kun haet GitHubista, täällä olevaa verrataan haettuun niiden historian perusteella. Valintaikkuna kertoo jokaisesta aineistosta,
+kuka on muuttanut mitä, ja molempien kommentit ja merkinnät säilyvät aina.
+
+- Jos vain toinen osapuoli on muuttanut dataa, sen versio otetaan käyttöön ja omasi tallennetaan versiona, johon voi palata.
+- Jos vain sinä olet muuttanut dataa, versiosi säilyy.
+- Jos molemmat ovat muuttaneet, sinä valitset: säilytä molemmat, haettu omana aineistonaan, säilytä omasi tai ota haettu.
+  Oletuksena molemmat säilyvät, joten mikään ei katoa.
+
+Muiden kommentit, joita et ole lukenut, näkyvät tilarivillä. Napsautus avaa ne, ja kirjoittajan nimi on jokaisen kommentin
+kohdalla. Nimi on se, jonka henkilö on itse antanut.
+
 ## Laitteet
 
 Suora siirto puhelimiin, tabletteihin ja toisiin tietokoneisiin paikallisverkon yli ilman palvelinta. Tietokone
@@ -76,6 +89,15 @@ Itsenäinen HTML-tiedosto, joka toimii ilman Dataspatiumia ja jonka voi laittaa 
 datan ja kaaviot selkokielisinä; jaa ne vain niille, jotka saavat nähdä tiedot.
 
 **Aineisto omana sivunaan.** Kohdassa Aineistot aineistosta tulee sivu omassa muodossaan: luettava teksti, selattavat kuvat, kartta, verkko tai suodatettava taulukko. Sivu ei hae mitään verkosta, ja sen voi lähettää yhtenä tiedostona. Se käy ensin läpi tarkistuksen ja näyttää enintään 2 000 riviä tai 100 kuvaa.
+
+## Työtilan julkaiseminen
+
+*Julkaise työtila* tekee koko työtilasta tai sen osasta verkkosivuston intranetiin tai lähetettäväksi. Siitä tulee ZIP, jossa on
+aloitussivu ja sivu kullekin aineistolle, koontinäytölle ja asiakirjalle, ja taulukoissa on haku ja jokaisen aineiston alla
+koodikirja. Sivuja voi vain lukea, ne on yhdistetty suhteellisilla linkeillä, eivätkä ne hae mitään verkosta.
+
+Aineistot käyvät läpi tarkistuksen ja näytetään kopioista. Koontinäytöt ja asiakirjat piirretään aineistoista sellaisina kuin ne
+ovat, joten niiden sisällöstä kerrotaan ja päätät itse, tulevatko ne mukaan.
 
 ## Vastaanota
 

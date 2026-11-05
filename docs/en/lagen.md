@@ -125,6 +125,10 @@ new data (see [floden.md](floden.md)).
 
 **Description.** The Description tab holds what a data portal wants to know by DCAT-AP-SE: title, publisher, contact, theme, licence and period. The description follows the dataset, says what is missing and can be saved as RDF/XML or read from such a file. Nothing is sent from here.
 
+**Provenance.** The Provenance tab shows where a dataset comes from and what it has become: the source, the datasets it was made from, the recipe and versions, and the datasets, charts, dashboards, documents, notebooks, lists, flows and shares that build on it. A click opens what you click on, and *Download as text* gives the same to put in a report.
+
+**Library.** Under Library there are ready-made recipes, templates, scripts and notebooks, each with its licence. You see what something does before you add it. More libraries are fetched from an address, and *Save your own as a library file* makes a file of what you have made, to put in a GitHub repository or anywhere.
+
 ## Search
 
 Find and list without code. The *Search* tab searches all columns in one or all datasets; every word must occur on

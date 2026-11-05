@@ -416,6 +416,7 @@ body.dm-presenting { overflow: hidden; }
 .dm-document-nav { align-items: center; gap: var(--dm-s-2); }
 .dm-document-reading { align-items: center; gap: var(--dm-s-2); flex-wrap: wrap; }
 .dm-document-reading:empty { display: none; }
+.dm-provenance-graph { height: 360px; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); background: var(--dm-bg); overflow: hidden; }
 .dm-document-page-input { width: 5em; }
 .dm-document-text { max-width: 72ch; margin: 0 auto; font-size: var(--dm-text-md); line-height: 1.6; }
 .dm-document-text h3 { margin: var(--dm-s-5) 0 var(--dm-s-2); font-size: var(--dm-text-lg); }
@@ -504,7 +505,7 @@ body.dm-presenting { overflow: hidden; }
 /* Flows and watches (ui/flows/flows-view) and their place in the status bar */
 .dm-flow-add { align-items: flex-end; }
 .dm-flow-log { list-style: none; padding: 0; margin: 0; font-size: var(--dm-text-sm); }
-.dm-sb-flow, .dm-sb-watch, .dm-sb-selection { color: var(--dm-accent); }
+.dm-sb-flow, .dm-sb-watch, .dm-sb-comments, .dm-sb-selection { color: var(--dm-accent); }
 
 /* The Statistik tab (ui/analysis/stats-panel) */
 .dm-stats-code { height: 180px; }

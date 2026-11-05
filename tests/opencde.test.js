@@ -86,9 +86,19 @@
     assert.equal(connector.family.type, 'opencde'); assert.equal(connector.auth.type, 'oauth2_pkce'); assert.equal(connector.auth.clientId, 'dataspatium-test');
     assert.deepEqual(schema.validate(connector), []);
     assert.equal(secrets.get(connector.id), null, 'no secret stored for a public client');
-    // The connector learns the server's endpoints from discovery (what the dialog cannot know in advance).
-    Object.assign(connector.auth, { authUrl: disc.authUrl, tokenUrl: disc.tokenUrl, revocationUrl: disc.revocationUrl });
-    await connectors.save(connector);
+    // The dialog asked the server where to sign in, so the connector knows already.
+    assert.equal(connector.auth.authUrl, disc.authUrl, 'authUrl from the dialog');
+    assert.equal(connector.auth.tokenUrl, disc.tokenUrl, 'tokenUrl from the dialog');
+    assert.equal(connector.auth.revocationUrl, disc.revocationUrl);
+    // A connector made while the server was unreachable learns them at the first sign-in, and keeps them.
+    const blind = await connectors.importJson(JSON.stringify(Object.assign(JSON.parse(connectors.exportJson(connector)), { id: 'opencde-blind' })));
+    connIds.push(blind.id);
+    delete blind.auth.authUrl; delete blind.auth.tokenUrl; delete blind.auth.revocationUrl;
+    await connectors.save(blind);
+    assert.equal((await connectors.get(blind.id)).auth.authUrl, undefined, 'blind to begin with');
+    await opencde.login(blind, { popup: fakePopup, redirectUri: REDIRECT });
+    assert.equal((await connectors.get(blind.id)).auth.tokenUrl, disc.tokenUrl, 'learned and kept');
+    await opencde.logout(blind);
     assert.ok(!JSON.stringify(connectors.exportJson(connector)).includes('access-'), 'exports never carry tokens');
     assert.equal(connectors.describeAuth(connector), t('api.auth.summary.oauth.pkce'));
     return connector.id;
@@ -123,8 +133,9 @@
     assert.equal(lastParams().get('refresh_token'), stored.refreshToken, 'the stored refresh token was presented');
     assert.ok(token.startsWith('access-') && secrets.get(connector.id).refreshToken !== stored.refreshToken, 'rotation stored');
 
+    const revokedBefore = server.revoked;
     await opencde.logout(connector);
-    assert.equal(server.revoked, 1, 'refresh token revoked (RFC 7009)');
+    assert.equal(server.revoked, revokedBefore + 1, 'refresh token revoked (RFC 7009)');
     assert.equal(lastParams().get('token_type_hint'), 'refresh_token');
     assert.equal(opencde.signedIn(connector), false);
     const unauthenticated = await opencde.projects(connector).catch((e) => e);

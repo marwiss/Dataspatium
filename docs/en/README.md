@@ -111,6 +111,7 @@ with a backup or a bundle.
 - **Share follows the dataset**: choose whether files follow in a bundle, make a dataset a page of its own to send, and see each kind in its own form on the phone (see [dela.md](dela.md)).
 - **Code lists, descriptions and guides**: labels from SNI, SSYK, NACE and other lists with a click, data packages, DCAT-AP-SE, a quality declaration and four guides with real data (see [lagen.md](lagen.md)).
 - **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all six languages.
+- **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

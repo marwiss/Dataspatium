@@ -24,6 +24,19 @@ skickas, i en commit med ditt meddelande. Vid hämtning väljer du, som för pak
 ersättas (den egna versionen sparas under *Versioner*). Första gången frågar appen om tillåtelse att kontakta
 GitHub (se *Internetåtkomst* i [anvandarguide.md](anvandarguide.md)).
 
+## Samarbeta via GitHub
+
+När du hämtar från GitHub jämförs det som redan finns här med det hämtade, efter deras historik. Dialogen säger för varje
+datamängd vem som har ändrat vad, och kommentarer och anteckningar från båda sidor behålls alltid.
+
+- Har bara den andra sidan ändrat data tas den versionen in, och din sparas som en version att gå tillbaka till.
+- Har bara du ändrat data behålls din version.
+- Har båda ändrat väljer du: behåll båda, med den hämtade som en egen datamängd, behåll din eller ta den hämtade. Att behålla
+  båda är förvalt, så inget försvinner.
+
+Kommentarer från andra som du inte har läst syns i statusraden. Ett klick öppnar dem, och namnet på den som skrivit står vid
+varje kommentar. Namnet är det som personen själv har angett.
+
 ## Enheter
 
 Direkt överföring till telefoner, surfplattor och andra datorer över det lokala nätverket, utan server. Datorn
@@ -74,6 +87,15 @@ En fristående HTML-fil som fungerar utan Dataspatium och kan läggas på ett in
 data och diagram i klartext; dela dem bara med dem som får se uppgifterna.
 
 **En datamängd som egen sida.** Under Datamängder blir en datamängd en sida i sin egen form: en text att läsa, bilder att bläddra i, en karta, ett nätverk eller en tabell att filtrera. Sidan hämtar inget från nätet och kan skickas som en enda fil. Den går igenom granskningen först och visar högst 2 000 rader eller 100 bilder.
+
+## Publicera en arbetsyta
+
+*Publicera arbetsytan* gör en webbplats av hela arbetsytan eller ett urval, att lägga på ett intranät eller skicka. Den blir en
+ZIP med en startsida och en sida för varje datamängd, dashboard och dokument, med sök i tabeller och en kodbok under varje
+datamängd. Sidorna går bara att läsa, hänger ihop med relativa länkar och hämtar inget från nätet.
+
+Datamängderna går genom granskningen och visas ur kopior. Dashboards och dokument ritas ur datamängderna som de är, så där får
+du veta vad de innehåller och väljer själv om de ska med.
 
 ## Ta emot
 

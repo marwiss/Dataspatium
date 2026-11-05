@@ -110,7 +110,9 @@
         if (ctx && ctx.shell) ctx.shell.log(msg, 'ok');
         overlays.toast.show(msg, { kind: 'ok' });
         if (res.discoveryError) {
-          const warn = t('families.discover.failed', { message: res.discoveryError });
+          // Families that discover something other than tables say so in their own words.
+          const key = `families.${res.connector.family && res.connector.family.type}.discover.failed`;
+          const warn = t(D.require('ui/i18n').has(key) ? key : 'families.discover.failed', { message: res.discoveryError });
           if (ctx && ctx.shell) ctx.shell.log(warn, 'warn');
           overlays.toast.show(warn, { kind: 'warn', timeout: 10000 });
         }

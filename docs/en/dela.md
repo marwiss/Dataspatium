@@ -24,6 +24,19 @@ GitHub*. Only changed files are sent, in one commit with your message. When fetc
 whether datasets that already exist are replaced (your own version is kept under *Versions*). The first time, the
 app asks for permission to contact GitHub (see *Internet access* in [anvandarguide.md](anvandarguide.md)).
 
+## Working together through GitHub
+
+When you fetch from GitHub, what is here is compared with what was fetched, by their histories. The dialog says for each
+dataset who has changed what, and comments and notes from both sides are always kept.
+
+- If only the other side has changed the data, that version comes in and yours is kept as a version to go back to.
+- If only you have changed the data, your version stays.
+- If both have, you choose: keep both, with the fetched one as a dataset of its own, keep yours or take the fetched one. Keeping
+  both is the default, so nothing is lost.
+
+Comments from others that you have not read show in the status bar. A click opens them, and the name of the writer stands by
+each comment. The name is what that person has given.
+
 ## Devices
 
 Direct transfer to phones, tablets and other computers over the local network, without a server. The computer
@@ -74,6 +87,15 @@ charts embedded) and documents from templates, filled with the selected dataset.
 charts in clear text; share them only with those who may see the information.
 
 **A dataset as a page of its own.** Under Datasets, a dataset becomes a page in its own form: a text to read, pictures to look through, a map, a network or a table to filter. The page fetches nothing from the network and can be sent as one file. It goes through the review first and shows at most 2,000 rows or 100 pictures.
+
+## Publishing a workspace
+
+*Publish the workspace* makes a site of the whole workspace or a selection, to put on an intranet or send. It becomes a ZIP
+with a start page and a page for each dataset, dashboard and document, with search in tables and a code book under each dataset.
+The pages can only be read, hang together with relative links and fetch nothing from the network.
+
+The datasets go through the review and are shown from copies. Dashboards and documents are drawn from the datasets as they are,
+so there you are told what they hold and choose yourself whether they come along.
 
 ## Receive
 

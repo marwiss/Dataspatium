@@ -116,7 +116,7 @@ fer í reitinn með semíkommu milli dálka. Leiðréttu hann þar, og síðan f
 
 Lesturinn fer alfarið fram í vafranum og ekkert er sent neitt. Lesvélin Tesseract og tungumálagögn fylgja ekki forritinu: þau eru
 sótt í fyrsta sinn, með samþykki þínu, frá föstum slóðum og borin saman við gátsummur. Eftir það eru þau í vafranum og sjást undir
-Íhlutir í Stjórna.
+Íhlutir í Umsjón.
 
 ## Myndir í skjalasniðmátum
 

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent'], (databases, http, secrets, consent) => {
+  D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors'], (databases, http, secrets, consent, connectors) => {
     const t = (k, p) => D.t(k, p);
     const SCOPES = 'profile bcf documents';
     const CALLBACK_PAGE = 'oauth-callback.html';
@@ -28,6 +28,12 @@
       idHint: (v) => hostOf(v.baseUrl),
       endpoints: () => [],
       family: (v) => ({ type: 'opencde', clientId: String(v.clientId || '').trim() }),
+      /** The dialog asks the server where to sign in, so that the connector can do so later; a failure is shown there. */
+      async discover(v, connector) {
+        const found = await discover(v.baseUrl);
+        Object.assign(connector.auth, { authUrl: found.authUrl, tokenUrl: found.tokenUrl, revocationUrl: found.revocationUrl });
+        return [];
+      },
     };
     if (!databases.FAMILIES.some((f) => f.id === 'opencde')) databases.FAMILIES.push(FAMILY);
     /** True when a connector is an OpenCDE source. */
@@ -41,10 +47,10 @@
     async function challenge(v) { return b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v))); }
     function randomState() { return b64url(crypto.getRandomValues(new Uint8Array(24))); }
 
-    /** The redirect URI of this app: its own callback page, when served over http(s); null under file://. */
+    /** The redirect URI of this app: its own callback page at the app's root, when served over http(s); null under file://. */
     function redirectUri() {
       if (!/^https?:$/.test(location.protocol)) return null;
-      return new URL(CALLBACK_PAGE, location.href.split('#')[0].split('?')[0]).href;
+      return new URL(CALLBACK_PAGE, new URL(globalThis.DATASPATIUM_BASE || './', location.href.split('#')[0].split('?')[0])).href;
     }
 
     // ---------------------------------------------------------------------------- discovery
@@ -66,6 +72,15 @@
     }
 
     // ---------------------------------------------------------------------------- signing in
+    /** A connector made while the server did not answer learns the addresses now, and keeps them. */
+    async function ensureAuthUrls(connector) {
+      const auth = connector.auth || (connector.auth = { type: 'oauth2_pkce' });
+      if (auth.authUrl && auth.tokenUrl) return connector;
+      const found = await discover(connector.baseUrl);
+      Object.assign(auth, { authUrl: found.authUrl, tokenUrl: found.tokenUrl, revocationUrl: found.revocationUrl });
+      if (connector.id) { try { await connectors.save(connector); } catch (err) { D.log('opencde', 'could not keep the addresses', err); } }
+      return connector;
+    }
     /** Default popup: open the authorization page and wait for the callback page to post its address back. */
     function popupFlow(url) {
       return new Promise((resolve, reject) => {
@@ -112,9 +127,10 @@
      * (the default opens a popup and listens for the callback page); `options.redirectUri` overrides the app's own.
      */
     async function login(connector, options = {}) {
+      await consent.require('opencde', { host: hostOf(connector.baseUrl) });
+      await ensureAuthUrls(connector);
       const auth = connector.auth || {};
       if (!auth.authUrl || !auth.tokenUrl) throw new Error(t('opencde.err.no.oauth'));
-      await consent.require('opencde', { host: hostOf(connector.baseUrl) });
       const redirect = options.redirectUri || redirectUri();
       if (!redirect) throw new Error(t('opencde.err.file'));
       const v = verifier(); const state = randomState();
@@ -127,6 +143,7 @@
     }
     /** The authorization address and state for the manual flow (file://): the user opens it and pastes the result. */
     async function manualStart(connector, redirect) {
+      await ensureAuthUrls(connector);
       const auth = connector.auth || {};
       const v = verifier(); const state = randomState();
       const url = new URL(auth.authUrl);
@@ -282,6 +299,6 @@
       return Object.assign(out, { meta: {} });
     }
 
-    return { FAMILY, isOpenCde, discover, redirectUri, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
+    return { FAMILY, isOpenCde, discover, ensureAuthUrls, redirectUri, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE };
   });
 })();
