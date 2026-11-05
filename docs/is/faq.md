@@ -212,7 +212,7 @@ ODBC-uppsprettur, Excel og Access-fyrirspurnir nást um gagnagrunnsbrúna, litla
 Já. Slepptu þeim í Sækja: skjöl (PDF, Word, OpenDocument, Markdown, texti) verða skjalasafn með einni málsgrein í hverri
 röð, myndir myndasafn með einni röð fyrir hverja mynd og EXIF-upplýsingum. Margar skrár í einu verða safn. Í Vinna
 eru þau sýnd sem lestrarsýn eða myndasafn, og í Greina eru tólin Texti og Myndir án kóða. Skannaðar PDF-skrár án
-textalags gefa engan texta. Sjá [dokument.md](dokument.md).
+textalags má lesa með textagreiningu. Sjá [dokument.md](dokument.md).
 
 ## Get ég sýnt kort og reiknað á landupplýsingum?
 

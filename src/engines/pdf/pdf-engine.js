@@ -51,7 +51,8 @@
       const lib = await load();
       const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
       // All documents share one worker, and pdf.js refuses a new document while another is being closed.
-      await closing;
+      // Another document can start closing while this one waits, so look again until nothing is closing.
+      for (let seen = null; seen !== closing;) { seen = closing; await seen; }
       const doc = await lib.getDocument({ data, standardFontDataUrl: FONTS, isEvalSupported: false }).promise;
       const destroy = doc.destroy.bind(doc);
       doc.destroy = () => {

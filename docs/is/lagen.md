@@ -153,6 +153,8 @@ Gagnasöfn með rúmfræði eða hnitum opnast sem **kort** til að þysja og f�
 
 Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að því.
 
+**Að lesa texta í myndum.** Síður í skannaðri PDF-skrá og myndir í myndasafni má lesa með textagreiningu, sem keyrir í vafranum. Sjá [dokument.md](dokument.md).
+
 ## Greina
 
 Kóði og tölfræði. Verkfærin eru í fastri röð: R, Python, SQL, Regex og síðast minnisbókin, sem fléttar saman hluta úr hinum;

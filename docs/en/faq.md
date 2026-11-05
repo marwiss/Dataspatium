@@ -231,7 +231,7 @@ computer; services such as PostgREST, OData and GraphQL are added as sources wit
 Yes. Drop them in Import: documents (PDF, Word, OpenDocument, Markdown, text) become a document collection with one paragraph per
 row, pictures an image collection with one row per picture and EXIF details. Several files at once become a collection. Process
 shows them as a reading view or a gallery, and Analyse has the tools Text and Images without code. Scanned PDF files
-without a text layer give no text. See [dokument.md](dokument.md).
+without a text layer can be read with text recognition. See [dokument.md](dokument.md).
 
 ## Can I show maps and compute on geodata?
 

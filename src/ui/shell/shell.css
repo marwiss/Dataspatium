@@ -414,6 +414,8 @@ body.dm-presenting { overflow: hidden; }
 /* Document view (Bearbeta): one page of a document as text, or the rendered PDF page */
 .dm-document { overflow: auto; padding: var(--dm-s-4); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); }
 .dm-document-nav { align-items: center; gap: var(--dm-s-2); }
+.dm-document-reading { align-items: center; gap: var(--dm-s-2); flex-wrap: wrap; }
+.dm-document-reading:empty { display: none; }
 .dm-document-page-input { width: 5em; }
 .dm-document-text { max-width: 72ch; margin: 0 auto; font-size: var(--dm-text-md); line-height: 1.6; }
 .dm-document-text h3 { margin: var(--dm-s-5) 0 var(--dm-s-2); font-size: var(--dm-text-lg); }

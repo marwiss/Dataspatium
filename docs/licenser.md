@@ -48,6 +48,7 @@ licenstexterna.
 | web-ifc 0.0.78 (geometri ur IFC; oförändrade filer, källkod på https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Fri att använda och sprida; ändringar i bibliotekets egna filer ska delas under samma licens |
 | three.js 0.187 (3D-ritning), dxf-parser 1.1 (DXF) | MIT | Fria att använda och sprida med licenstext och notiser |
 | Boverkets Planbestämmelsekatalog (inbäddad kopia, `presets/plan/`) | Öppna data från Boverket | Fri att använda och sprida; Boverket och Planbestämmelsekatalogen ska anges som källa |
+| Tesseract och tesseract.js-core (läser text i bilder; hämtas vid behov, ingår inte i mappen), språkdata från tessdata_best | Apache-2.0 (Tesseract, tesseract.js-core, språkdata) | Hämtas oförändrade från jsDelivr, låsta till version och kontrollsumma, och lagras i webbläsaren |
 | plotly.js (hämtas vid behov för plotly-diagram), seaborn och plotly (Python-hjul från PyPI, hämtas vid behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hämtas oförändrade från jsDelivr respektive PyPI, låsta till version och kontrollsumma, och lagras i webbläsaren |
 
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och

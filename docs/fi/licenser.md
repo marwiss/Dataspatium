@@ -49,6 +49,7 @@ lisenssitekstien kanssa.
 | web-ifc 0.0.78 (geometria IFC:stä; muuttamattomat tiedostot, lähdekoodi osoitteessa https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Vapaasti käytettävä ja levitettävä; kirjaston omien tiedostojen muutokset jaetaan samalla lisenssillä |
 | three.js 0.187 (3D-piirto), dxf-parser 1.1 (DXF) | MIT | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
 | Boverketin Planbestämmelsekatalog (upotettu kopio, `presets/plan/`) | Boverketin avoin data | Vapaasti käytettävä ja levitettävä; lähteenä on mainittava Boverket ja Planbestämmelsekatalogen |
+| Tesseract ja tesseract.js-core (lukee tekstin kuvista; haetaan tarvittaessa, ei ole kansiossa), kielitiedot tessdata_best-aineistosta | Apache-2.0 (Tesseract, tesseract.js-core, kielitiedot) | Haetaan muuttamattomina jsDelivristä, lukittuina versioon ja tarkistussummaan, ja tallennetaan selaimeen |
 | plotly.js (haetaan tarvittaessa plotly-kaavioita varten), seaborn ja plotly (Python-wheelit PyPI:stä, haetaan tarvittaessa) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Haetaan muuttamattomina jsDelivristä ja PyPI:stä, lukittuina versioon ja tarkistesummaan, ja tallennetaan selaimeen |
 
 Dataspatiumin koodi ei linkity R:ään. R toimii erillisenä tulkkina workerissa ja vaihtaa R-koodia, SQLite-tiedostoja ja kuvia

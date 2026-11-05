@@ -214,7 +214,7 @@ PostgREST, OData og GraphQL tilføjes som kilder med en adresse. Se [kallor.md](
 Ja. Slip dem i Hent: dokumenter (PDF, Word, OpenDocument, Markdown, tekst) bliver en dokumentsamling med ét afsnit pr. række,
 billeder en billedsamling med én række pr. billede og EXIF-oplysninger. Flere filer på én gang bliver en samling. I Bearbejd
 vises de som læsevisning henholdsvis galleri, og i Analysér findes værktøjerne Tekst og Billeder uden kode. Skannede
-PDF-filer uden tekstlag giver ingen tekst. Se [dokument.md](dokument.md).
+PDF-filer uden tekstlag kan læses med tekstgenkendelse. Se [dokument.md](dokument.md).
 
 ## Kan jeg vise kort og regne på geodata?
 

@@ -152,6 +152,8 @@ Datasæt med geometri eller koordinater åbnes som et **kort**, der kan zoomes o
 
 Et udvalg fra Søg markeres i 3D-modellen, og kameraet rettes mod det.
 
+**Læse tekst i billeder.** Sider i en skannet PDF og billeder i et galleri kan læses med tekstgenkendelse, som kører i browseren. Se [dokument.md](dokument.md).
+
 ## Analysér
 
 Kode og statistik. Værktøjerne ligger i fast rækkefølge: R, Python, SQL, Regex og til sidst notesbogen, der samler dele fra

@@ -313,7 +313,20 @@
         if (source === 'paste') {
           const ta = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '12', label: t('import.paste.label'), mono: true }));
           ta.value = wiz.text;
-          return h('div', { class: 'dm-stack' }, ta, h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', onClick: async () => { wiz.text = ta.value; if (!wiz.text.trim()) return; wiz.file = null; await runPreview(); } })));
+          // A picture of a table becomes text in the box first, so that it can be corrected before the import reads it.
+          const fromPicture = async (file) => {
+            const res = await D.require('ui/kinds/ocr-dialog').open(ctx, { title: t('import.paste.picture'), lead: t('ocr.lead.table'), pick: !file, file, progress: () => t('ocr.running'), run: (o, f) => D.require('data/ocr').readTable(f, { language: o.language }) });
+            if (!res) return;
+            ta.value = res.text; wiz.text = res.text;
+            ui.toast.show(t('ocr.table.done', { confidence: i18n.formatNumber(res.confidence) }), { kind: 'ok', timeout: 8000 });
+          };
+          ta.addEventListener('paste', (e) => {
+            const item = Array.from(/** @type {any} */ (e).clipboardData ? /** @type {any} */ (e).clipboardData.items : []).find((/** @type {any} */ x) => x.type.startsWith('image/'));
+            if (!item) return;
+            e.preventDefault();
+            fromPicture(/** @type {any} */ (item).getAsFile());
+          });
+          return h('div', { class: 'dm-stack' }, ta, h('div', { class: 'dm-row' }, ui.button({ label: t('import.paste.picture'), icon: 'scan-line', title: t('import.paste.picture.hint'), onClick: () => fromPicture(null) }), ui.button({ label: t('import.paste.use'), variant: 'primary', icon: 'check', onClick: async () => { wiz.text = ta.value; if (!wiz.text.trim()) return; wiz.file = null; await runPreview(); } })));
         }
         const dz = h('dm-dropzone', { text: t('import.drop'), hint: t('import.drop.hint'), accept: ACCEPT, multiple: true });
         dz.addEventListener('dm-files', (e) => chooseFiles(/** @type {any} */ (e).detail.files));

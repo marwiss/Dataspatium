@@ -537,6 +537,8 @@ Kommentarer kan gälla ett objekt. `data/comments` sparar då ett mål med nycke
 
 `data/codelists` känner igen kolumner som håller koder ur listor som följer med appen (`presets/kodlistor/`, gzip via `wrap_local`, byggda av `tools/codelists.py`). `io/datapackage` skriver och läser Frictionless Data Package, `data/dcat` håller beskrivningen enligt DCAT-AP-SE i `_meta.dcat` och `docgen/quality` skriver kvalitetsdeklarationen. `data/guides` definierar guiderna som hämtning, rensning med vanliga receptsteg och ett sparat diagram. Testerna kör mot virtuella källor, och `?guides=live` kör mot de riktiga för hand.
 
+`engines/ocr` kör Tesseract som komponent i en egen klassisk Blob-worker: kärnan `tesseract.js-core` utvärderas i workern, utan tesseract.js egen laddare, och språkdata skickas med `postMessage`. `data/ocr` lägger maskinläst text i dokumentets tabell genom åtgärden `ocr_text` i `data/operations-kinds`, som kan ångras, och märker dokumentet med `ocr {pages, language, confidence}` i `_meta.documents`. `ui/kinds/ocr-dialog` är den enda dialogen. Prov ersätter motorn med `setEngine`; den riktiga körs bara med `?ocr=1`.
+
 ## Granskning av det som lämnar appen
 
 `data/share-scan` listar allt i en datamängd som kan följa med: kolumner, löptext, sidotabeller, originalfiler, bilder med position, kommentarer och författare. `copy` tillämpar valen på en kopia via

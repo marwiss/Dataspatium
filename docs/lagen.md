@@ -156,6 +156,8 @@ Datamängder med geometri eller koordinater öppnas som en **karta** att zooma o
 
 Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
 
+**Läsa text i bilder.** Sidor i en skannad PDF och bilder i ett galleri kan läsas med textigenkänning, som körs i webbläsaren. Se [dokument.md](dokument.md).
+
 ## Analysera
 
 Kod och statistik. Verktygen ligger i fast ordning: R, Python, SQL, Regex och sist Anteckningsboken, som fogar ihop

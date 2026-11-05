@@ -71,10 +71,24 @@
                 const made = D.require('data/selection').set({ datasetId: dataset.id, rowids: rows.map((r) => r[0]) });
                 ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
               } }),
+              ui.button({ label: t('ocr.action'), icon: 'scan-line', title: t('ocr.gallery.hint'), onClick: readAll }),
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
           h('p', { class: 'dm-help', text: t('gallery.hint') }),
           gridEl);
         renderGrid(); renderInspector();
+      }
+      /** The pictures on show become a document collection of their own. */
+      async function readAll() {
+        const names = rows.map((r) => String(r[1 + idx.fileIndex]));
+        if (!names.length) return;
+        const made = await D.require('ui/kinds/ocr-dialog').open(ctx, {
+          title: t('ocr.action'), lead: t('ocr.lead.pictures', { n: i18n.formatNumber(names.length) }),
+          progress: (done, total) => t('ocr.progress.pictures', { done: i18n.formatNumber(done), total: i18n.formatNumber(total) }),
+          run: (o) => D.require('data/ocr').picturesToDocuments(ds.id, names, Object.assign(o, { name: t('ocr.collection.name', { name: ds.name }) })),
+        });
+        if (!made) return;
+        ui.toast.show(t('ocr.done.pictures', { name: made.name }), { kind: 'ok', timeout: 8000 });
+        store.set({ selectedId: made.id });
       }
       async function refresh() {
         if (!ds) return;
@@ -152,6 +166,13 @@
         const lonIn = /** @type {any} */ (h('dm-input', { label: t('soka.place.lon'), inputmode: 'decimal' }));
         latIn.value = typeof lat === 'number' ? String(lat) : '';
         lonIn.value = typeof lon === 'number' ? String(lon) : '';
+        const readOne = ui.button({ label: t('ocr.picture'), icon: 'scan-line', size: 'sm', title: t('ocr.picture.hint'), onClick: async () => {
+          const res = await D.require('ui/kinds/ocr-dialog').open(ctx, { title: t('ocr.picture'), lead: t('ocr.lead.picture', { name }), progress: () => t('ocr.running'), run: (o) => D.require('data/ocr').readPicture(ds.id, name, o) });
+          if (!res) return;
+          const text = D.require('data/ocr').paragraphsOf(res.text).join('\n\n');
+          desc.value = desc.value ? `${desc.value}\n\n${text}` : text;
+          ui.toast.show(t('ocr.picture.done', { confidence: i18n.formatNumber(res.confidence) }), { kind: 'ok', timeout: 8000 });
+        } });
         const save = ui.button({ label: t('common.save'), icon: 'save', size: 'sm', onClick: async () => {
           try {
             await savePicture(rowid, row, { description: desc.value, labels: labels.value, lat: latIn.value, lon: lonIn.value });
@@ -164,7 +185,8 @@
           kv,
           h('div', { class: 'dm-stack' }, desc, labels, h('div', { class: 'dm-form-grid' }, latIn, lonIn), h('p', { class: 'dm-help dm-small', text: t('gallery.place.help') }), h('div', { class: 'dm-row-wrap' }, save,
             ui.button({ label: t('gallery.open.large'), icon: 'eye', size: 'sm', onClick: () => openPreview(row) }),
-            ui.button({ label: t('gallery.download'), icon: 'download', size: 'sm', title: t('gallery.download.hint'), onClick: () => downloadPreview(name) }))),
+            ui.button({ label: t('gallery.download'), icon: 'download', size: 'sm', title: t('gallery.download.hint'), onClick: () => downloadPreview(name) }),
+            readOne)),
           D.require('ui/kinds/comment-block').create(ctx, ds, D.require('ui/kinds/comment-block').targetOf(ds, `image:${name}`, name, () => name)));
       }
       /** A number typed with a comma or a point, or null when the field is empty. */

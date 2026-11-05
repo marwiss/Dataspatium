@@ -27,7 +27,7 @@
       /** Per-dataset state: the open document, page, mode (page, all or image) and the selected paragraph. */
       const s = { id: null, doc: '', page: 1, mode: 'page', search: '', selected: null, scrollTo: null };
       let full = null; let columns = []; let idx = null; let documents = [];
-      let bodyEl = null; let navEl = null; let slots = null; let ds = null;
+      let bodyEl = null; let navEl = null; let readingEl = null; let slots = null; let ds = null;
       /** Open pdf.js documents by file name, destroyed when the dataset changes. */
       const pdfDocs = new Map();
       let seq = 0; let searchTimer = 0; let chunkTimer = 0;
@@ -85,6 +85,7 @@
         searchInput.value = s.search;
         searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { s.search = searchInput.value.trim(); renderBody(); }, 300); });
         navEl = h('div', { class: 'dm-row dm-document-nav' });
+        readingEl = h('div', { class: 'dm-row dm-document-reading' });
         bodyEl = h('div', { class: 'dm-document dm-center-fill', tabindex: '0', 'aria-label': t('document.view') });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
@@ -92,7 +93,7 @@
             h('div', { class: 'dm-toolbar' },
               documents.length > 1 ? docSel : null, searchInput,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('bearbeta.view.table.hint'), onClick: options.onTable }))),
-          navEl, bodyEl);
+          navEl, readingEl, bodyEl);
         renderNav(); renderBody(); renderInspector();
       }
 
@@ -116,6 +117,31 @@
           paged ? pageInput : null,
           h('span', { class: 'dm-help', text: paged ? t('document.page.of', { page: s.page, pages }) : (s.mode === 'all' && pages > 1 ? t('document.pages.n', { n: pages }) : '') }),
           paged ? ui.button({ label: t('document.next'), icon: 'chevron-right', 'icon-only': true, size: 'sm', disabled: s.page >= pages, onClick: () => go(s.page + 1) }) : null);
+        renderReading();
+      }
+      /** Pages without text can be read from here. A page read by machine says so, with its picture one click away. */
+      async function renderReading() {
+        if (!readingEl || !ds) return;
+        const ocr = D.require('data/ocr');
+        const d = docInfo(s.doc); const el = readingEl; const page = s.page; const name = s.doc;
+        const missing = await ocr.pagesWithoutText(ds.id, d).catch(() => []);
+        if (el !== readingEl || page !== s.page || name !== s.doc) return;
+        const reading = s.mode === 'all' ? null : ocr.readingOf(d, s.page);
+        replace(readingEl,
+          reading ? h('span', { class: 'dm-help', 'data-ocr-note': '', text: t('ocr.machine', { confidence: i18n.formatNumber(reading.confidence) }) }) : null,
+          reading && s.mode === 'page' && isPdf(s.doc) ? ui.button({ label: t('ocr.show.page'), icon: 'image', size: 'sm', title: t('ocr.show.page.hint'), onClick: () => { s.mode = 'image'; renderNav(); renderBody(); } }) : null,
+          missing.length ? h('span', { class: 'dm-help', 'data-ocr-missing': '', text: t('ocr.missing', { n: i18n.formatNumber(missing.length) }) }) : null,
+          missing.length ? ui.button({ label: t('ocr.action'), icon: 'scan-line', size: 'sm', title: t('ocr.action.hint'), onClick: () => readPages(d, missing.length) }) : null);
+      }
+      async function readPages(d, n) {
+        const result = await D.require('ui/kinds/ocr-dialog').open(ctx, {
+          title: t('ocr.action'), lead: t('ocr.lead.document', { name: d.name, n: i18n.formatNumber(n) }),
+          progress: (done, total) => t('ocr.progress.pages', { done: i18n.formatNumber(done), total: i18n.formatNumber(total) }),
+          run: (o) => D.require('data/ocr').readDocument(ds.id, d, o),
+        });
+        if (!result || !result.pages) return;
+        ui.toast.show(t('ocr.done.pages', { n: i18n.formatNumber(result.pages), words: i18n.formatNumber(result.words), confidence: i18n.formatNumber(result.confidence) }), { kind: 'ok', timeout: 8000 });
+        if (ds && slots) await render(ds, slots);
       }
 
       async function renderBody() {
@@ -139,7 +165,7 @@
       async function renderWhole(my) {
         let rows;
         try {
-          rows = await datasets.query(ds.id, { where: { sql: `${q(idx.docIndex)} = ?`, params: [s.doc] }, limit: ALL_LIMIT, withRowId: true });
+          rows = await datasets.query(ds.id, { where: { sql: `${q(idx.docIndex)} = ?`, params: [s.doc] }, orderBy: columns[idx.pageIndex].name, limit: ALL_LIMIT, withRowId: true });
         } catch (err) { replace(bodyEl, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) })); return; }
         if (my !== seq || !bodyEl) return;
         const article = h('article', { class: 'dm-document-text dm-document-whole' });

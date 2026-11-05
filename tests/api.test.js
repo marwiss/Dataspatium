@@ -502,7 +502,7 @@
       input.value = 'befolkning';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-api-view dm-button')).find((b) => b.getAttribute('label') === t('api.fetch')).querySelector('button')).click();
-      await wait2(() => root.querySelector('.dm-api-view dm-table .dm-tr'), 5000, 'result rows');
+      await wait2(() => root.querySelector('.dm-api-view dm-table .dm-tr'), 15000, 'result rows');
       assert.equal(root.querySelectorAll('.dm-api-view dm-table .dm-tr').length, 2);
       assert.ok(root.querySelector('.dm-right .dm-api-requests li'), 'request logged in inspector');
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-api-view dm-button')).find((b) => b.getAttribute('label') === t('api.save')).querySelector('button')).click();

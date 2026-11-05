@@ -47,6 +47,7 @@ versjon og lisens finnes i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.
 | web-ifc 0.0.78 (geometri fra IFC; uendrede filer, kildekode på https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Fri å bruke og spre; endringer i bibliotekets egne filer deles under samme lisens |
 | three.js 0.187 (3D-tegning), dxf-parser 1.1 (DXF) | MIT | Frie å bruke og spre med lisenstekst og notiser |
 | Boverkets Planbestämmelsekatalog (innebygd kopi, `presets/plan/`) | Åpne data fra Boverket | Fri å bruke og spre; Boverket og Planbestämmelsekatalogen skal oppgis som kilde |
+| Tesseract og tesseract.js-core (leser tekst i bilder; hentes ved behov, er ikke i mappen), språkdata fra tessdata_best | Apache-2.0 (Tesseract, tesseract.js-core, språkdata) | Hentes uendret fra jsDelivr, låst til versjon og kontrollsum, og lagres i nettleseren |
 | plotly.js (hentes ved behov for plotly-diagrammer), seaborn og plotly (Python-hjul fra PyPI, hentes ved behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hentes uendret fra jsDelivr og PyPI, låst til versjon og kontrollsum, og lagres i nettleseren |
 
 Dataspatiums kode lenker ikke mot R. R kjører som en separat tolk i en worker og utveksler R-kode, SQLite-filer og bilder

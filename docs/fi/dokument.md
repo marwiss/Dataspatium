@@ -22,8 +22,8 @@ rivien solut erotetaan merkeillä ` | `. Alkuperäiset tiedostot tallennetaan ai
 näyttää ja tiedostot ladata uudelleen; ne lasketaan aineiston kokoon Hallitse-tilassa.
 
 PDF-tiedostot luetaan pdf.js-kirjastolla taustasäikeessä, joten sovellus vastaa, kun pitkää raporttia luetaan;
-200 sivua kestää noin sekunnin. Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna kappaleita (tekstintunnistus
-tulee myöhemmässä versiossa).
+200 sivua kestää noin sekunnin. Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna kappaleita ennen kuin luet ne,
+ks. *Tekstin lukeminen kuvista* jäljempänä.
 
 ### Tuonti
 
@@ -100,6 +100,27 @@ Kun kuvakokoelma on valittu, Analysoi saa välilehden **Kuvat**, jossa on kaksi 
   pakkaus), 12 bittiä myös rajatut tai värikorjatut versiot ja enemmän vääriä osumia. Ryhmät näytetään
   pienoiskuvina, ja ne voi tallentaa aineistoksi, jossa on tiedosto, ryhmä, etäisyys ja tiiviste.
 
+## Tekstin lukeminen kuvista
+
+Skannatussa PDF:ssä ei ole tekstiä, joten siitä ei tule kappaleita. Asiakirjanäkymä kertoo, montako sivua asia koskee, ja
+painike *Lue teksti kuvista* lukee ne tekstintunnistuksella. Valitse kuvien kieli; englanti luetaan aina mukana, koska nimet ja
+ammattisanat ovat usein englanniksi. Tekstistä tulee tavallisia kappaleita asiakirjan taulukkoon, joten sitä voi hakea, laskea
+ja viedä, ja toiminnon voi kumota. Jos keskeytät, jo luetut sivut säilyvät.
+
+Koneellisesti luetussa tekstissä voi olla virheitä. Siksi sivulla lukee *Koneellisesti luettu teksti* ja lukemisen varmuus, ja
+painike näyttää sivun kuvana.
+
+Galleriassa *Lue teksti kuvista* tekee näkyvistä kuvista uuden asiakirjakokoelman, yhden asiakirjan kuvaa kohden. Kuvakokoelma
+ei muutu. *Lue teksti kuvasta* tarkastimessa lisää tekstin kuvan kuvaukseen, jossa voit korjata sen ennen tallennusta.
+
+Myös kuvan taulukosta voi tuoda tiedot. Valitse *Liitä* Nouda-tilassa ja sitten *Lue taulukko kuvasta*, tai liitä kuva suoraan
+kenttään. Teksti tulee kenttään puolipisteet sarakkeiden välissä. Korjaa se siellä, niin se kulkee sitten tavallisen tuonnin
+läpi.
+
+Lukeminen tapahtuu kokonaan selaimessa, eikä mitään lähetetä minnekään. Lukumoottori Tesseract ja kielitiedot eivät tule
+sovelluksen mukana: ne haetaan ensimmäisellä kerralla suostumuksellasi kiinteistä osoitteista ja tarkistetaan tarkistussummia
+vasten. Sen jälkeen ne ovat selaimessa ja näkyvät kohdassa Komponentit Hallitse-tilassa.
+
 ## Kuvat asiakirjamalleissa
 
 Asiakirjamalleissa (Vie > Asiakirjat) tunniste `{{bild "tiedosto.jpg" | bredd: 400}}` lisää kuvan kuvakokoelmasta.
@@ -116,7 +137,7 @@ kuvataulukon ilman tiedostoja; Dataspatiumin SQLite-tiedosto ja paketit vievät 
 
 ## Rajoitukset
 
-- Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna kappaleita.
+- Koneellisesti luetussa tekstissä voi olla virheitä, varsinkin taulukoissa, käsialassa ja huonoissa skannauksissa.
 - Wordin ja OpenDocumentin sivunumerot seuraavat tiedoston sivunvaihtoja ja voivat poiketa siitä, mitä
   tekstinkäsittelyohjelma näyttää.
 - EXIF luetaan vain JPEG-tiedostoista. Puhelinten HEIC-kuvat on muunnettava ensin, koska selain ei osaa purkaa niitä.

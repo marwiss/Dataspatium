@@ -22,7 +22,7 @@ reitina aðskilda með ` | `. Frumskrárnar eru vistaðar í gagnasafninu svo a�
 skrárnar aftur; þær teljast með í stærð gagnasafnsins undir Umsjón.
 
 PDF-skrár eru lesnar með pdf.js í bakgrunnsþræði, svo forritið svarar meðan löng skýrsla er lesin inn; 200 síður taka
-um eina sekúndu. Skannaðar PDF-skrár án textalags gefa engar málsgreinar (textagreining kemur í síðari útgáfu).
+um eina sekúndu. Skannaðar PDF-skrár án textalags gefa engar málsgreinar fyrr en þú lest þær, sjá *Að lesa texta í myndum* hér á eftir.
 
 ### Innflutningur
 
@@ -97,6 +97,27 @@ töflu* gefur töfluna með öllum aðgerðum.
   með fleiri röngum niðurstöðum. Hóparnir eru sýndir með smámyndum og má vista sem gagnasafn með skrá, hópi, fjarlægð
   og hakki.
 
+## Að lesa texta í myndum
+
+Skönnuð PDF-skrá hefur engan texta og gefur því engar málsgreinar. Skjalasýnin segir hve margar síður það á við, og hnappurinn
+*Lesa texta í myndunum* les þær með textagreiningu. Veldu tungumálið í myndunum; enska er alltaf lesin með, því nöfn og fagorð
+eru oft á ensku. Textinn verður að venjulegum málsgreinum í töflu skjalsins, svo hægt er að leita í honum, telja og flytja hann
+út, og aðgerðina má afturkalla. Ef þú hættir við halda þær síður sem þegar eru lesnar sér.
+
+Vélrænt lesinn texti getur innihaldið villur. Þess vegna stendur *Vélrænt lesinn texti* og öryggi lestursins á síðunni, með hnappi
+sem sýnir síðuna sem mynd.
+
+Í myndasafninu býr *Lesa texta í myndunum* til nýtt skjalasafn úr myndunum sem sýndar eru, eitt skjal fyrir hverja mynd.
+Myndasafnið breytist ekki. *Lesa texta í myndinni* í skoðaranum setur textann í lýsingu myndarinnar, þar sem þú getur leiðrétt
+hann áður en þú vistar.
+
+Mynd af töflu má líka flytja inn. Veldu *Líma* í Sækja og síðan *Lesa töflu úr mynd*, eða límdu myndina beint í reitinn. Textinn
+fer í reitinn með semíkommu milli dálka. Leiðréttu hann þar, og síðan fer hann í gegnum venjulegan innflutning.
+
+Lesturinn fer alfarið fram í vafranum og ekkert er sent neitt. Lesvélin Tesseract og tungumálagögn fylgja ekki forritinu: þau eru
+sótt í fyrsta sinn, með samþykki þínu, frá föstum slóðum og borin saman við gátsummur. Eftir það eru þau í vafranum og sjást undir
+Íhlutir í Stjórna.
+
 ## Myndir í skjalasniðmátum
 
 Í skjalasniðmátum (Flytja út > Skjöl) setur merkið `{{bild "skra.jpg" | bredd: 400}}` inn mynd úr myndasafni. Myndin
@@ -113,7 +134,7 @@ Dataspatiums og pakkarnir taka skrárnar með.
 
 ## Takmarkanir
 
-- Skannaðar PDF-skrár án textalags gefa engar málsgreinar.
+- Vélrænt lesinn texti getur innihaldið villur, einkum í töflum, handskrift og lélegum skönnunum.
 - Síðunúmer í Word og OpenDocument fylgja síðuskilunum í skránni og geta vikið frá því sem ritvinnsluforrit sýnir.
 - EXIF er aðeins lesið úr JPEG. HEIC-myndum úr símum þarf að umbreyta fyrst, því vafrinn getur ekki afkóðað þær.
 - Mjög stór söfn (þúsundir mynda eða tugþúsundir síðna) taka tíma að lesa inn og pláss í geymslu vafrans; skiptu þeim

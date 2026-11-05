@@ -46,6 +46,7 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | web-ifc 0.0.78 (rúmfræði úr IFC; óbreyttar skrár, frumkóði á https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Frjálst að nota og dreifa; breytingum á eigin skrám safnsins er deilt með sama leyfi |
 | three.js 0.187 (þrívíddarteikning), dxf-parser 1.1 (DXF) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | Planbestämmelsekatalog Boverket (innbyggt eintak, `presets/plan/`) | Opin gögn frá Boverket | Frjálst að nota og dreifa; tilgreina skal Boverket og Planbestämmelsekatalogen sem heimild |
+| Tesseract og tesseract.js-core (les texta í myndum; sótt eftir þörfum, ekki í möppunni), tungumálagögn úr tessdata_best | Apache-2.0 (Tesseract, tesseract.js-core, tungumálagögn) | Sótt óbreytt frá jsDelivr, fest við útgáfu og gátsummu, og vistað í vafranum |
 | plotly.js (sótt eftir þörfum fyrir plotly-myndrit), seaborn og plotly (Python-hjól frá PyPI, sótt eftir þörfum) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Sótt óbreytt frá jsDelivr og PyPI, fest við útgáfu og prófsummu, og vistað í vafranum |
 
 Kóði Dataspatium tengist ekki R. R keyrir sem sérstakur túlkur í worker og skiptist á R-kóða, SQLite-skrám og myndum við

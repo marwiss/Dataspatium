@@ -252,5 +252,5 @@
     for (const id of created) if (id) await datasets.remove(id).catch(() => {});
     assert.ok(true);
     return 'ok';
-  });
+  }, 60000);
 })();

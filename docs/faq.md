@@ -229,7 +229,7 @@ OData och GraphQL läggs till som källor med en adress. Se [kallor.md](kallor.m
 Ja. Släpp dem i Inhämta: dokument (PDF, Word, OpenDocument, Markdown, text) blir en dokumentsamling med ett stycke per rad,
 bilder en bildsamling med en rad per bild och EXIF-uppgifter. Flera filer på en gång blir en samling. I Bearbeta visas
 de som läsvy respektive galleri, och i Analysera finns verktygen Text och Bilder utan kod. Skannade PDF-filer utan
-textlager ger ingen text. Se [dokument.md](dokument.md).
+textlager kan läsas med textigenkänning. Se [dokument.md](dokument.md).
 
 ## Kan jag visa kartor och räkna på geodata?
 

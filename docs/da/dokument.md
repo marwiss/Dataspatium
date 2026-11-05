@@ -22,7 +22,7 @@ adskilt med ` | `. Originalfilerne gemmes i datasættet, så PDF-sider kan vises
 i datasættets størrelse under Håndter.
 
 PDF-filer læses med pdf.js i en baggrundstråd, så appen svarer, mens en lang rapport læses ind; 200 sider tager cirka
-et sekund. Skannede PDF-filer uden tekstlag giver ingen afsnit (tekstgenkendelse kommer i en senere version).
+et sekund. Skannede PDF-filer uden tekstlag giver ingen afsnit, før du læser dem, se *Læse tekst i billeder* nedenfor.
 
 ### Importere
 
@@ -96,6 +96,28 @@ Når en billedsamling er valgt, får Analysér fanen **Billeder** med to værkt�
   beskårne eller farvejusterede varianter med flere falske fund. Grupperne vises med miniaturer og kan gemmes som et
   datasæt med fil, gruppe, afstand og hash.
 
+## Læse tekst i billeder
+
+En skannet PDF har ingen tekst og giver derfor ingen afsnit. Dokumentvisningen siger, hvor mange sider det gælder, og
+knappen *Læs tekst i billederne* læser dem med tekstgenkendelse. Vælg sproget i billederne; engelsk læses altid med, fordi
+navne og fagord ofte er på engelsk. Teksten bliver almindelige afsnit i dokumentets tabel, så den kan søges i, tælles og
+eksporteres, og handlingen kan fortrydes. Afbryder du, beholdes de sider, der allerede er læst.
+
+Maskinlæst tekst kan indeholde fejl. Derfor står der *Maskinlæst tekst* og læsningens sikkerhed på siden, med en knap, der
+viser siden som billede.
+
+I galleriet laver *Læs tekst i billederne* en ny dokumentsamling af de viste billeder, ét dokument pr. billede.
+Billedsamlingen ændres ikke. *Læs tekst i billedet* i inspektøren lægger teksten i billedets beskrivelse, hvor du kan rette
+den, før du gemmer.
+
+Et billede af en tabel kan også importeres. Vælg *Indsæt* i Hent og derefter *Læs tabel fra billede*, eller indsæt billedet
+direkte i feltet. Teksten havner i feltet med semikolon mellem kolonnerne. Ret den der, så går den derefter gennem den
+almindelige import.
+
+Læsningen sker helt i browseren, og intet sendes af sted. Læsemotoren Tesseract og sprogdata følger ikke med appen: de hentes
+første gang, efter dit samtykke, fra faste adresser og kontrolleres mod kontrolsummer. Derefter ligger de i browseren og vises
+under Komponenter i Håndter.
+
 ## Billeder i dokumentskabeloner
 
 I dokumentskabeloner (Eksportér > Dokumenter) indsætter tagget `{{bild "fil.jpg" | bredd: 400}}` et billede fra en
@@ -112,7 +134,7 @@ Dataspatiums SQLite-fil og pakkerne tager filerne med.
 
 ## Begrænsninger
 
-- Skannede PDF-filer uden tekstlag giver ingen afsnit.
+- Maskinlæst tekst kan indeholde fejl, især i tabeller, håndskrift og dårlige skanninger.
 - Sidetallene i Word og OpenDocument følger sideskiftene i filen og kan afvige fra, hvad et tekstbehandlingsprogram
   viser.
 - EXIF læses kun fra JPEG. HEIC-billeder fra telefoner skal konverteres først, fordi browseren ikke kan afkode dem.

@@ -159,6 +159,8 @@ Aineistot, joissa on geometria tai koordinaatit, avautuvat **karttana**, jota vo
 
 Hae-tilasta tehty valinta merkitään 3D-malliin, ja kamera kääntyy sitä kohti.
 
+**Tekstin lukeminen kuvista.** Skannatun PDF:n sivut ja gallerian kuvat voi lukea tekstintunnistuksella, joka toimii selaimessa. Katso [dokument.md](dokument.md).
+
 ## Analysoi
 
 Koodi ja tilastot. Työkalut ovat kiinteässä järjestyksessä: R, Python, SQL, Regex ja viimeisenä muistikirja, joka kokoaa osia

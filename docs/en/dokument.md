@@ -22,8 +22,8 @@ their cells separated by ` | `. The original files are stored in the dataset, so
 files downloaded again; they count towards the dataset's size under Manage.
 
 PDF files are read with pdf.js in a background thread, so the app stays responsive while a long report is read;
-200 pages take about a second. Scanned PDF files without a text layer give no paragraphs (text recognition comes in a
-later version).
+200 pages take about a second. Scanned PDF files without a text layer give no paragraphs until you read them, see
+*Reading text in pictures* below.
 
 ### Importing
 
@@ -98,6 +98,29 @@ When an image collection is selected, Analyse gets the tab **Images** with two t
   or colour-adjusted variants with more false hits. The groups are shown with thumbnails and can be saved as a dataset
   with file, group, distance and hash.
 
+## Reading text in pictures
+
+A scanned PDF has no text, so it gives no paragraphs. The document view says how many pages this concerns, and the button
+*Read text in the pictures* reads them with text recognition. Choose the language in the pictures; English is always read
+alongside, since names and technical terms are often in English. The text becomes ordinary paragraphs in the document's
+table, so it can be searched, counted and exported, and the action can be undone. If you cancel, the pages already read
+stay.
+
+Machine-read text can contain errors. So the page says *Machine-read text* and how confident the reading was, with a button
+that shows the page as a picture.
+
+In the gallery, *Read text in the pictures* makes a new document collection of the pictures on show, one document per
+picture. The image collection does not change. *Read text in the picture* in the inspector puts the text in the picture's
+description, where you can correct it before you save.
+
+A picture of a table can also be imported. Choose *Paste* in Import and then *Read a table from a picture*, or paste the
+picture directly in the box. The text ends up in the box with semicolons between the columns. Correct it there, and it then
+goes through the normal import.
+
+The reading happens entirely in the browser, and nothing is sent anywhere. The Tesseract reading engine and the language
+data do not come with the app: they are fetched the first time, after your consent, from fixed addresses and checked against
+checksums. After that they stay in the browser and are listed under Components in Manage.
+
 ## Pictures in document templates
 
 In document templates (Export > Documents) the tag `{{bild "file.jpg" | bredd: 400}}` inserts a picture from an
@@ -114,7 +137,7 @@ table without the files; Dataspatium's SQLite file and the bundles carry the fil
 
 ## Limitations
 
-- Scanned PDF files without a text layer give no paragraphs.
+- Machine-read text can contain errors, especially in tables, handwriting and poor scans.
 - Page numbers in Word and OpenDocument follow the page breaks in the file and can differ from what a word processor
   shows.
 - EXIF is read only from JPEG. HEIC pictures from phones must be converted first, since the browser cannot decode

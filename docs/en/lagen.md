@@ -156,6 +156,8 @@ Datasets with geometry or coordinates open as a **map** to zoom and pan in; a cl
 
 A selection from Search is marked in the 3D model, and the camera turns to it.
 
+**Reading text in pictures.** Pages in a scanned PDF and pictures in a gallery can be read with text recognition, which runs in the browser. See [dokument.md](dokument.md).
+
 ## Analyse
 
 Code and statistics. The tools come in a fixed order: R, Python, SQL, Regex and last the Notebook, which joins pieces from

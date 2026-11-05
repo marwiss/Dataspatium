@@ -137,6 +137,37 @@
       toR: (p) => `# ${D.t('code.sql.expr', { expression: p.where })}`,
     });
 
+    // The text goes in like any other change: it can be undone, and it is in the dataset's log. The list of documents is in the
+    // file, so undoing brings that back too.
+    ops.define({
+      id: 'ocr_text', group: 'values', manualPreview: true,
+      params: [{ name: 'document', type: 'text', required: true }, { name: 'pages', type: 'text', required: true }, { name: 'language', type: 'text' }, { name: 'confidence', type: 'text' }],
+      async apply(ctx, p) {
+        const pages = JSON.parse(p.pages);
+        const top = await ctx.engine.exec('select coalesce(max(stycke), 0) from data where dokument = ?', [p.document]);
+        let paragraph = Number(top[0].values[0][0]);
+        let rows = 0;
+        for (const { page, paragraphs } of pages) {
+          for (const text of paragraphs) {
+            paragraph++;
+            rows += await ctx.engine.run('insert into data (dokument, sida, stycke, typ, text, tecken) values (?, ?, ?, ?, ?, ?)', [p.document, page, paragraph, 'stycke', text, text.length]);
+          }
+        }
+        const handle = await D.require('data/datasets').ensureOpen(ctx.datasetId);
+        const added = pages.reduce((n, x) => n + x.paragraphs.reduce((m, s) => m + (String(s).match(/[\p{L}\p{N}]+/gu) || []).length, 0), 0);
+        const count = pages.reduce((n, x) => n + x.paragraphs.length, 0);
+        handle.meta.documents = (handle.meta.documents || []).map((d) => (d.name !== p.document ? d : Object.assign({}, d, {
+          paragraphs: (Number(d.paragraphs) || 0) + count,
+          words: (Number(d.words) || 0) + added,
+          ocr: { pages: ((d.ocr && d.ocr.pages) || []).concat(pages.map((x) => x.page)), language: p.language || 'sv', confidence: Number(p.confidence) || 0 },
+        })));
+        await ctx.engine.run('insert or replace into _meta (key, value) values (?, ?)', ['documents', JSON.stringify(handle.meta.documents)]);
+        return { rows };
+      },
+      toSQL: (p) => [`-- ${D.t('op.ocr_text.code', { document: p.document })}`],
+      toR: (p) => `# ${D.t('op.ocr_text.code', { document: p.document })}`,
+    });
+
     return { repairGeometry };
   });
 })();

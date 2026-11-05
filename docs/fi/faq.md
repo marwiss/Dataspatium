@@ -220,7 +220,7 @@ tietokoneella; palvelut kuten PostgREST, OData ja GraphQL lisätään lähteiksi
 Kyllä. Pudota ne Nouda-tilaan: asiakirjoista (PDF, Word, OpenDocument, Markdown, teksti) tulee asiakirjakokoelma, jossa on
 yksi kappale riviä kohti, kuvista kuvakokoelma, jossa on yksi rivi kuvaa kohti ja EXIF-tiedot. Useista tiedostoista
 kerralla tulee kokoelma. Muokkaa-tila näyttää ne lukunäkymänä tai galleriana, ja Analysoi-tilassa ovat työkalut
-Teksti ja Kuvat ilman koodia. Skannatut PDF-tiedostot ilman tekstikerrosta eivät anna tekstiä. Katso
+Teksti ja Kuvat ilman koodia. Skannatut PDF-tiedostot ilman tekstikerrosta voi lukea tekstintunnistuksella. Katso
 [dokument.md](dokument.md).
 
 ## Voinko näyttää karttoja ja laskea paikkatietoa?

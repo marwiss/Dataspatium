@@ -22,7 +22,7 @@ Originalfilerna sparas i datamängden, så att PDF-sidor kan visas och filerna h
 datamängdens storlek under Hantera.
 
 PDF-filer läses med pdf.js i en bakgrundstråd, så appen svarar medan en lång rapport läses in; 200 sidor tar ungefär
-en sekund. Skannade PDF-filer utan textlager ger inga stycken (textigenkänning kommer i en senare version).
+en sekund. Skannade PDF-filer utan textlager ger inga stycken förrän du läser dem, se *Läsa text i bilder* nedan.
 
 ### Importera
 
@@ -96,6 +96,27 @@ När en bildsamling är vald får Analysera fliken **Bilder** med två verktyg:
   färgjusterade varianter med fler falska träffar. Grupperna visas med miniatyrer och kan sparas som en datamängd med
   fil, grupp, avstånd och hash.
 
+## Läsa text i bilder
+
+En skannad PDF saknar text, så den ger inga stycken. Dokumentvyn säger hur många sidor det gäller, och knappen *Läs text
+i bilderna* läser dem med textigenkänning. Välj språket i bilderna; engelska läses alltid med, eftersom namn och fackord
+ofta är på engelska. Texten blir vanliga stycken i dokumentets tabell, så den går att söka i, räkna på och exportera, och
+åtgärden kan ångras. Avbryter du behålls sidorna som redan lästs.
+
+Maskinläst text kan innehålla fel. Därför står det *Maskinläst text* och läsningens säkerhet på sidan, med en knapp som
+visar sidan som bild.
+
+I galleriet gör *Läs text i bilderna* en ny dokumentsamling av bilderna som visas, ett dokument per bild. Bildsamlingen
+ändras inte. *Läs text i bilden* i inspektören lägger texten i bildens beskrivning, där du kan rätta den innan du sparar.
+
+En bild av en tabell går också att importera. Välj *Klistra in* i Inhämta och sedan *Läs tabell ur bild*, eller klistra
+in bilden direkt i rutan. Texten hamnar i rutan med semikolon mellan kolumnerna. Rätta den där, så går den sedan genom
+den vanliga importen.
+
+Läsningen sker helt i webbläsaren, och inget skickas iväg. Läsmotorn Tesseract och språkdata följer inte med appen: de
+hämtas första gången, efter att du samtyckt, från fasta adresser och kontrolleras mot kontrollsummor. Sedan ligger de i
+webbläsaren och syns under Komponenter i Hantera.
+
 ## Bilder i dokumentmallar
 
 I dokumentmallar (Exportera > Dokument) lägger taggen `{{bild "fil.jpg" | bredd: 400}}` in en bild ur en bildsamling.
@@ -112,7 +133,7 @@ Dataspatiums SQLite-fil och paketen tar filerna med.
 
 ## Begränsningar
 
-- Skannade PDF-filer utan textlager ger inga stycken.
+- Maskinläst text kan innehålla fel, särskilt i tabeller, handskrift och dåliga skanningar.
 - Sidnumren i Word och OpenDocument följer sidbrytningarna i filen och kan avvika från vad ett ordbehandlingsprogram
   visar.
 - EXIF läses bara ur JPEG. HEIC-bilder från telefoner måste konverteras först, eftersom webbläsaren inte kan avkoda

@@ -22,7 +22,7 @@ atskilt med ` | `. Originalfilene lagres i datasettet, slik at PDF-sider kan vis
 med i datasettets størrelse under Håndter.
 
 PDF-filer leses med pdf.js i en bakgrunnstråd, så appen svarer mens en lang rapport leses inn; 200 sider tar omtrent
-ett sekund. Skannede PDF-filer uten tekstlag gir ingen avsnitt (tekstgjenkjenning kommer i en senere versjon).
+ett sekund. Skannede PDF-filer uten tekstlag gir ingen avsnitt før du leser dem, se *Lese tekst i bilder* nedenfor.
 
 ### Importere
 
@@ -96,6 +96,27 @@ Når en bildesamling er valgt, får Analyser fanen **Bilder** med to verktøy:
   beskårne eller fargejusterte varianter med flere falske treff. Gruppene vises med miniatyrer og kan lagres som et
   datasett med fil, gruppe, avstand og hash.
 
+## Lese tekst i bilder
+
+En skannet PDF har ingen tekst og gir derfor ingen avsnitt. Dokumentvisningen sier hvor mange sider det gjelder, og knappen
+*Les tekst i bildene* leser dem med tekstgjenkjenning. Velg språket i bildene; engelsk leses alltid med, fordi navn og fagord
+ofte er på engelsk. Teksten blir vanlige avsnitt i dokumentets tabell, så den kan søkes i, telles og eksporteres, og
+handlingen kan angres. Avbryter du, beholdes sidene som allerede er lest.
+
+Maskinlest tekst kan inneholde feil. Derfor står det *Maskinlest tekst* og lesingens sikkerhet på siden, med en knapp som
+viser siden som bilde.
+
+I galleriet lager *Les tekst i bildene* en ny dokumentsamling av bildene som vises, ett dokument per bilde. Bildesamlingen
+endres ikke. *Les tekst i bildet* i inspektøren legger teksten i bildets beskrivelse, der du kan rette den før du lagrer.
+
+Et bilde av en tabell kan også importeres. Velg *Lim inn* i Hent og deretter *Les tabell fra bilde*, eller lim inn bildet
+direkte i feltet. Teksten havner i feltet med semikolon mellom kolonnene. Rett den der, så går den deretter gjennom den vanlige
+importen.
+
+Lesingen skjer helt i nettleseren, og ingenting sendes av gårde. Lesemotoren Tesseract og språkdata følger ikke med appen: de
+hentes første gang, etter ditt samtykke, fra faste adresser og kontrolleres mot kontrollsummer. Deretter ligger de i nettleseren
+og vises under Komponenter i Håndter.
+
 ## Bilder i dokumentmaler
 
 I dokumentmaler (Eksporter > Dokumenter) setter taggen `{{bild "fil.jpg" | bredd: 400}}` inn et bilde fra en
@@ -112,7 +133,7 @@ Dataspatiums SQLite-fil og pakkene tar filene med.
 
 ## Begrensninger
 
-- Skannede PDF-filer uten tekstlag gir ingen avsnitt.
+- Maskinlest tekst kan inneholde feil, særlig i tabeller, håndskrift og dårlige skanninger.
 - Sidetallene i Word og OpenDocument følger sideskiftene i filen og kan avvike fra det et tekstbehandlingsprogram
   viser.
 - EXIF leses bare fra JPEG. HEIC-bilder fra telefoner må konverteres først, siden nettleseren ikke kan dekode dem.

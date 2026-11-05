@@ -48,6 +48,7 @@ licence. Each library, its version and licence are listed in
 | web-ifc 0.0.78 (geometry from IFC; unchanged files, source at https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Free to use and distribute; changes to the library's own files are shared under the same licence |
 | three.js 0.187 (3D drawing), dxf-parser 1.1 (DXF) | MIT | Free to use and distribute with the licence text and notices |
 | Boverket's Planbestämmelsekatalog (embedded copy, `presets/plan/`) | Open data from Boverket | Free to use and distribute; Boverket and Planbestämmelsekatalogen must be named as the source |
+| Tesseract and tesseract.js-core (reads text in pictures; fetched on demand, not in the folder), language data from tessdata_best | Apache-2.0 (Tesseract, tesseract.js-core, language data) | Fetched unchanged from jsDelivr, pinned to version and digest, and stored in the browser |
 | plotly.js (fetched on demand for plotly charts), seaborn and plotly (Python wheels from PyPI, fetched on demand) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Fetched unchanged from jsDelivr and PyPI, pinned to version and digest, and kept in the browser |
 
 Dataspatium's code does not link against R. R runs as a separate interpreter in a worker and exchanges R code, SQLite
