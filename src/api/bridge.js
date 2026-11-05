@@ -89,6 +89,21 @@
       notify();
     }
     async function rememberedUrl() { return (await idb.getSetting(URL_KEY, '')) || ''; }
+    // ---- databases opened through the bridge, kept without secrets so that Inhämta can list them among the added sources ----
+    const SOURCES_KEY = 'bridge.sources';
+    /** @returns {Promise<Array<{source: any, label: string}>>} newest first */
+    async function remembered() { const list = await idb.getSetting(SOURCES_KEY, []); return Array.isArray(list) ? list : []; }
+    /** Keep a database the user opened (its connection details without passwords, and the label the app shows). */
+    async function remember(source) {
+      const entry = { source: sanitize(source), label: sourceLabel(source) };
+      if (!entry.label) return;
+      const list = (await remembered()).filter((x) => x.label !== entry.label);
+      list.unshift(entry);
+      await idb.setSetting(SOURCES_KEY, list.slice(0, 50));
+      notify();
+    }
+    /** Forget a remembered database (the datasets fetched from it stay). */
+    async function forget(label) { await idb.setSetting(SOURCES_KEY, (await remembered()).filter((x) => x.label !== label)); notify(); }
     async function info(force) { if (!infoCache || force) infoCache = await call('/'); return infoCache; }
     function sources() { return call('/sources'); }
     function tables(source) { return call('/tables', { source: withSecrets(source) }).then((r) => r.tables || []); }
@@ -182,6 +197,6 @@
     /** Tests replace the network with a function (url, init) => Response-like {ok, status, json()}. */
     function setTransport(fn) { transport = fn || null; infoCache = null; }
 
-    return { ID, TYPES, BridgeError, connect, disconnect, persist, rememberedUrl, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
+    return { ID, TYPES, BridgeError, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
   });
 })();

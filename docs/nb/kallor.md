@@ -76,7 +76,7 @@ appen deg åpne kilden igjen før den oppdateres. Fanen SQL i Analyser kan kjør
 
 ## Databasekilder over HTTP
 
-Knappen **Legg til databasekilde** under *Databaser* i Hent inn lager en vanlig API-kilde av en adresse og en
+Valget **Databasekilde** under *Legg til kilder* i Hent inn lager en vanlig API-kilde av en adresse og en
 nøkkel. Appen spør tjenesten etter tabellene (skjemaoppdagelse) og legger til ett endepunkt per tabell pluss et
 generelt der du oppgir tabellen selv. Kilden fungerer deretter som de forhåndsinnstilte API-ene: parametere,
 forhåndsvisning, sider som følges automatisk og lagrede hentinger som oppdateres med ett klikk.
@@ -105,7 +105,7 @@ er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan brukes i egne
 
 ### Neo4j over Bolt
 
-Familien **Neo4j (Bolt)** i *Legg til databasekilde* kobler til Neo4j Aura eller en egen server med Neo4js driver over
+Valget **Neo4j** under *Legg til kilder* (familien **Neo4j (Bolt)**, som også finnes i *Databasekilde*) kobler til Neo4j Aura eller en egen server med Neo4js driver over
 WebSocket (`neo4j+s://…`, database, brukernavn og passord; passordet lagres aldri i klartekst). Kilden åpner en
 Cypher-redigerer: resultatet blir en tabell, eller et grafdatasett når svaret inneholder noder og relasjoner; spørringer
 kan lagres på kilden. Tilkoblingen krever samtykke (formålet Neo4j) og omfattes ikke av CORS; en egen server uten TLS
@@ -113,7 +113,7 @@ kan lagres på kilden. Tilkoblingen krever samtykke (formålet Neo4j) og omfatte
 
 ### OpenCDE-server (BCF og Documents API)
 
-Familien **OpenCDE (BCF, Documents)** i *Legg til databasekilde* kobler til en server som følger buildingSMARTs
+Valget **OpenCDE** under *Legg til kilder* (familien **OpenCDE (BCF, Documents)**, som også finnes i *Databasekilde*) kobler til en server som følger buildingSMARTs
 OpenCDE-API-er, for eksempel [Kontroll](https://github.com/marwiss/Kontroll). Oppgi serverens adresse og klient-id-en
 som serverens administrator har registrert for Dataspatium (en offentlig klient med omdirigeringsadressen
 `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarende for adressen appen serveres fra). Kilden åpner en visning
@@ -166,7 +166,7 @@ med adressen utfylt. Finnes serveren allerede som kilde, åpnes den direkte. Len
 
 ## Åpne geodata
 
-Dialogen *Legg til geodatakilde* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og
+Dialogen for *Geodatakilde* under *Legg til kilder* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og
 ArcGIS-tjenester fra nordiske etater og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
 Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
 Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrollert å virke fra
@@ -179,7 +179,7 @@ som leser en hel lokalplan respektive et deiliskipulag (alle lag) med planens nu
 egen tjeneste. Boverkets Planbestämmelsekatalog finnes som vanlig API-kilde (*Boverket Planbestämmelsekatalogen*), se
 [planer.md](planer.md).
 
-Knappen **Legg til geodatakilde** under *Databaser* i Hent inn gjør en vanlig API-kilde av adressen til en geodatatjeneste,
+Valget **Geodatakilde** under *Legg til kilder* i Hent inn gjør en vanlig API-kilde av adressen til en geodatatjeneste,
 på samme måte som databasekildene. Appen leser tjenestens lag og legger et endepunkt per lag pluss et allment der du
 oppgir laget selv. Svarene er GeoJSON i WGS 84: datasettet får en geometrikolonne og åpnes som kart i Bearbeid (se
 [kartor.md](kartor.md)). Kilden viser lagene som en liste som kan filtreres; velg et lag, begrens gjerne med et område

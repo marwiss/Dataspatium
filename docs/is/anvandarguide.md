@@ -59,7 +59,7 @@ gagnasafninu heiti og fluttu inn. Undir fletinum eru gögn sem fylgja forritinu:
 eftir sveitarfélögum 2024 (Svíþjóð)* og listinn *Mörk fyrir kort* með mörkum sveitarfélaga og svæða fyrir Svíþjóð,
 Danmörku, Noreg og Finnland.
 
-Undir *Opnar vefþjónustur* eru forstillingar fyrir hagstofur og fleiri stofnanir á Íslandi, í Danmörku, Noregi, Finnlandi og
+Undir *Bæta við uppsprettum* → *Opnar vefþjónustur* er skráin yfir forstillingar (þær sem þú bætir við koma undir *Viðbættar uppsprettur*; SCB og Boverket eru þar frá byrjun) fyrir hagstofur og fleiri stofnanir á Íslandi, í Danmörku, Noregi, Finnlandi og
 Svíþjóð, sjálfstjórnarsvæðin, Nordic Statistics og Eurostat (á Íslandi Hagstofa Íslands og Veðurstofa Íslands). Landahnapparnir
 fyrir ofan listann velja hvaða landa upprunar birtast. Flettu eða leitaðu að töflu, veldu breytur, forskoðaðu og sæktu í nýtt
 gagnasafn eða bættu við fyrirliggjandi. Sótt gagnasafn man fyrirspurn sína, svo sækja má það aftur úr Umsjón þegar uppruninn
@@ -67,8 +67,7 @@ hefur verið uppfærður, og *Vistaðar sóknir* í Sækja uppfærir slík gagna
 þeirra aftur.
 
 Gagnagrunnar: Access-skrám er sleppt á flötinn eins og öðrum skrám; gagnagrunnar á tölvunni (SQL Server, ODBC, Excel,
-SQLite) nást um *Gagnagrunnur um brúna* og þjónustur um HTTP (PostgREST, OData, GraphQL og fleiri) um *Bæta við
-gagnagrunnsuppsprettu*. Í Chrome og Edge má tengja skrá og lesa hana aftur af diski. Sjá [kallor.md](kallor.md).
+SQLite) nást um *Gagnagrunnur um brúna* og þjónustur um HTTP (PostgREST, OData, GraphQL og fleiri) um *Gagnagrunnsuppspretta*; OpenCDE og Neo4j eiga sín eigin val undir Bæta við uppsprettum. Í Chrome og Edge má tengja skrá og lesa hana aftur af diski. Sjá [kallor.md](kallor.md).
 
 ### 2. Farðu yfir og leiðréttu (Vinna)
 

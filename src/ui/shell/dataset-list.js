@@ -86,7 +86,7 @@
         });
       }
 
-      const header = h('div', { class: 'dm-list-head' }, h('h4', { text: t('shell.datasets') }),
+      const header = h('div', { class: 'dm-list-head' },
         multi && selectedIds.size ? h('span', { class: 'dm-help', text: t('datasets.selected.count', { n: selectedIds.size }) }) : null);
       dropTarget(header, '');
       const items = [header];

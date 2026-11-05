@@ -1,0 +1,74 @@
+# Öryggi
+
+Öryggi er fyrsta krafa forritsins. Dataspatium geymir gagnasöfnin þín, API-lykla og tóka í vafranum og talar við þjóna (opin
+forritaskil, OpenCDE-þjóna eins og Kontroll) aðeins þegar þú biður um það. Stefnan er sú sama sem Kontroll hefur, því að
+verkefnin tvö eru þróuð sem par og gefin út með sömu númerum; helmingur Kontroll er í [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/security)
+í því safni. Hvernig veikleiki er tilkynntur stendur í [SECURITY.md](../../SECURITY.md).
+
+## Ógnarlíkan
+
+**Eignir**: gagnasöfnin þín (sem geta innihaldið persónuupplýsingar), API-lyklar og tókar fyrir þjóna, lykilsetningin sem
+verndar þau, það sem þú deilir með öðrum (pakkar, skrár til þjóns, birtar síður) og heilleiki vinnusvæðisins.
+
+**Gerendur**: þú sjálf(ur); önnur forrit á sömu tölvu; vefsíður sem þú heimsækir í sama vafra; þjónarnir sem þú sækir frá og
+sendir til; sá sem fær skrá sem þú deildir; sá sem getur lesið netið milli þín og þjóns.
+
+**Trúnaðarmörk**: forritið keyrir í sandkassa vafrans og nær aðeins því sem þú sleppir á flötinn eða velur í glugga. Opnað úr
+möppu (file://) deilir það geymsluuppruna með öðrum HTML-skrám sem opnaðar eru á sama hátt í Chromium, og því eru leyndarmál
+dulrituð. Þjónar eru framandi: allt sem þeir senda er meðhöndlað sem gögn og sleppt út (escaped); allt sem forritið sendir
+þeim fer um aðgerð þína og samþykki í hverjum tilgangi. R, Python og web-ifc keyra í WebAssembly-sandkössum í workerum án
+aðgangs að tölvunni.
+
+## Stýringar og prófanirnar sem sanna þær
+
+Hver stýring hefur sjálfvirka prófun í `tests/` eða bendir á kóðann sem ber hana.
+
+| Stýring | Staðall | Prófun |
+|---|---|---|
+| Engin netköll án aðgerðar þinnar og samþykkis í hverjum tilgangi (api, url, github, íhlutir, grunnkort, gagnagrunnar, neo4j, stun, opencde); hafnað samþykki stöðvar kallið | OWASP ASVS 8.3 | `consent.test.js`: *a purpose is asked once, the answer is remembered when wanted, and a denial raises ConsentError* |
+| Leyndarmál (API-lyklar, tókar) eru aldrei geymd í hreinum texta: aðeins í setunni eða dulrituð með lykilsetningu (AES-GCM um WebCrypto), með læsingu og aflæsingu | OWASP ASVS 2.10, 6.2 | `api.test.js`: *secrets in session, encrypted persistence, lock and unlock* |
+| Uppskrift með leyndu skrefi er ekki keyrð aftur án þín | Lágmörkun gagna | `refresh`: *a recipe with a secret step is refused before anything is fetched* |
+| Íhlutir og R-pakkar eru sóttir frá fastsettum vistföngum eftir samþykki, staðfestir með SHA-256 áður en þeir eru notaðir og geymdir í IndexedDB-skyndiminni | OWASP ASVS 14.2 | `components`: *fetched once with consent, verified against SHA-256, served from the cache afterwards, and removable* |
+| Kóði þriðja aðila er fluttur inn með fastsettri útgáfu og leyfi og aldrei breyttur í höndunum | OWASP ASVS 14.2 | `tools/fetch_vendor.py`, `THIRD_PARTY_LICENSES.md`, yfirferð |
+| Allt sem fer úr forritinu er yfirfarið í heild: kennitölur, netföng og símanúmer í dálkum, samfelldur texti, hliðartöflur, upprunaskrár, staðsetningar mynda, brúnir grafa, athugasemdir og höfundar; halda, dulnefna eða fjarlægja í afritinu; gagnasafnið breytist aldrei | Lágmörkun gagna (GDPR 5. gr.) | `review`: *identity numbers, e-mail and phone columns are found; the shared copy is hashed or stripped while the dataset stays*, *running text in a document is found and masked*, *graph edges and node properties are scanned and masked*; `exif`: *strip leaves the picture and removes the text* |
+| OAuth2 gegn OpenCDE: authorization code með PKCE S256, `state` og nákvæmu afturhvarfsvistfangi; rangt `state` og hafnað samþykki er neitað; tókar eru endurnýjaðir og afturkallaðir | RFC 6749, 7636, 9700 | `opencde`: *sign in with a popup, refuse a wrong state, refresh an expiring token, sign out*; raunprófunin C2, C7–C9 |
+| Afturhvarfið úr innskráningarglugganum: um opnarann eða BroadcastChannel með staðfestingu; lokaður gluggi telst villa aðeins þegar forritið er ekki einangrað | — | `opencde VI`: *the popup flow hears the callback page through a BroadcastChannel and a storage event* |
+| Beiðnaskráin hylur hausa (meðal annars Authorization) og geymir meginmál aðeins sé þess óskað, aldrei fyrir tókaköll | OWASP ASVS 7.1 | `cde-log`: *paths become APIs and operations, headers are masked, bodies only when asked and never for tokens* |
+| Öll gögn sem eru sýnd eru sloppin út; ekkert `innerHTML` með notandagögnum; skjöl og birtar síður sleppa út | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; kóðaregla |
+| Service worker og PWA aðeins í þjónsham; frá file:// er ekkert háð þeim | — | localhost-skref prófunarfylkisins |
+| Engin leyndarmál, persónuupplýsingar eða auðkenni höfundar í safninu eða sögu þess | — | auðkennisathugun útgáfuskriftanna fyrir hverja færslu, `CONTRIBUTING.md` |
+
+## Persónuupplýsingar og geymsla
+
+Hvað forritið geymir, hvar og hve lengi. Allt er á tölvunni þinni; ekkert er sent til höfundar forritsins, og engin
+uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Kontroll (hvað þjónninn geymir um þig) er í
+[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/security/personal-data.md).
+
+| Gögn | Hvar | Innihald | Geymt |
+|---|---|---|---|
+| Gagnasöfn | IndexedDB (ein SQLite-skrá fyrir hvert gagnasafn) | það sem þú fluttir inn, með dálkum, athugasemdum og sögu; getur innihaldið persónuupplýsingar | þar til þú eyðir þeim; öryggisafrit og pakkar eru ZIP-skrár þar sem þú setur þær |
+| Stillingar | IndexedDB | tungumál, breidd spjalda, viðbættar uppsprettur, samþykki, vistaðar fyrirspurnir | þar til þú hreinsar vefsvæðisgögn |
+| Leyndarmál | minni, eða IndexedDB dulritað með lykilsetningu þinni | API-lyklar, tókar; lykilsetningin er aldrei geymd | setan, eða þar til þú fjarlægir uppsprettuna |
+| Atvikaskráin | minni | aðgerðir, villur og köll með huldum hausum | þar til síðan er endurhlaðin |
+| Nöfn á athugasemdum | skrá gagnasafnsins | nafnið sem þú gafst upp sjálf(ur) | fylgir pökkum, öryggisafritum og GitHub |
+| Það sem þú sendir | hjá viðtakanda | gagnasöfn, skrár, mál, athugasemdir og notandanafn þitt hjá þjóninum | samkvæmt skilmálum viðtakanda |
+
+## Þekktar gloppur
+
+- Engin Content-Security-Policy enn: forritið keyrir hefðbundin skriftur, blob-workera og WebAssembly, og web-ifc-pakkinn
+  krefst `eval`. Meta-CSP án `'unsafe-eval'` verður bætt við þegar web-ifc getur hlaðist án hennar.
+- Frá file:// í Chromium deila allar HTML-skrár sem opnaðar eru á tölvunni geymslu. Leyndarmál eru dulrituð, en viðkvæmt
+  vinnusvæði ætti að keyra frá staðbundnum þjóni (`python -m http.server`) eða speglast í færanlega möppu.
+- Chromium beitir `form-action` þjónsins einnig á áframsendinguna eftir innskráningu; þjónninn þarf að leyfa afturhvarfsvistfang
+  forritsins (Kontroll gerir það frá 2.2.0).
+
+## Að tilkynna veikleika
+
+Opnaðu ekki opinbert issue. Notaðu hnappinn *Report a vulnerability* undir Security → Advisories í safninu á GitHub, eins og
+[SECURITY.md](../../SECURITY.md) lýsir: útgáfa (undir hjálparhnappnum), vafri, hvað þú sást og hvernig það er endurtekið. Þú
+fær staðfestingu innan nokkurra daga og lagfæringu eða áætlun um leið og vandinn er skilinn.
+
+## Útgáfur sem fá lagfæringar
+
+Einni útgáfu á hvert aðalnúmer er haldið: aðeins nýjasta útgáfan í 2-röðinni fær lagfæringar. 1.0.0 er haldið til viðmiðunar án
+lagfæringa.

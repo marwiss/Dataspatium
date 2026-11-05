@@ -60,7 +60,7 @@ decimaltegn gættes, men kan ændres. I kolonnetrinnet får hver kolonne en type
 der følger med appen: knappen til eksempeldataene *Befolkning pr. kommune 2024 (Sverige)* og listen *Grænser til kort*
 med kommune- og regionsgrænser for Sverige, Danmark, Norge og Finland.
 
-Under *Åbne API'er* findes forudindstillinger for statistikbureauerne og flere andre myndigheder i Danmark, Norge,
+Under *Tilføj kilder* → *Åbne API'er* findes fortegnelsen over forudindstillinger (de, du tilføjer, kommer under *Tilføjede kilder*; SCB og Boverket ligger der fra start) for statistikbureauerne og flere andre myndigheder i Danmark, Norge,
 Finland og Island, de selvstyrende områder, Nordic Statistics, Eurostat og de svenske myndigheder (SCB,
 Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriet, Sveriges dataportal samt Boverket
 for dem, der har nøgler). Landeknapperne over listen vælger, hvilke landes kilder der vises. Gennemse eller søg en
@@ -69,8 +69,7 @@ husker sin forespørgsel, så det kan hentes igen fra Håndter, når kilden er o
 opdaterer sådanne datasæt med ét klik og afspiller deres opskrifter.
 
 Databaser: Access-filer slippes på fladen som andre filer; databaser på computeren (SQL Server, ODBC, Excel, SQLite)
-nås gennem *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gennem *Tilføj
-databasekilde*. I Chrome og Edge kan en fil linkes og indlæses igen fra disken. Se [kallor.md](kallor.md).
+nås gennem *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gennem *Databasekilde*; OpenCDE og Neo4j har egne valg under Tilføj kilder. I Chrome og Edge kan en fil linkes og indlæses igen fra disken. Se [kallor.md](kallor.md).
 
 ### 2. Gennemse og ret (Bearbejd)
 

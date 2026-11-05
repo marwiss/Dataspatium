@@ -64,9 +64,13 @@ Compose-projektnamnet `kontroll`, så den andra behöver
 
 ## 3. Koppla ihop dem
 
-I Dataspatium: läget *Inhämta* → knappen *Lägg till källa* → kortet *Lägg
-till databaskälla* → *Typ av tjänst*: *OpenCDE (BCF, Documents)* → *Adress*: `http://localhost:8000` →
-*Lägg till*. Källan öppnas i *Inhämta*: tryck *Logga in* och logga in som
+Appen måste vara öppnad via `http://localhost:8080` (steg 2). Öppnad från
+mappen kan den inte registrera sig själv, utan då måste ett klient-id från
+`/admin/clients` fyllas i.
+
+I Dataspatium: läget *Inhämta* → under *Lägg till källor* valet *OpenCDE* → *Adress*: `http://localhost:8000` →
+*Lägg till* (lämna *Klient-id* tomt, så registrerar appen sig själv). Källan öppnas i *Inhämta* och hamnar under
+*Tillagda källor*: tryck *Logga in* och logga in som
 `inspection_manager` i popup-fönstret, och välj sedan *Building permit* i listan
 *Projekt*. Raden under rubriken ("Servern: Kontroll OpenCDE server 2.0.0.
 Tillägg: …") kommer ur serverns kapabilitetsdokument och säger vilka tillägg

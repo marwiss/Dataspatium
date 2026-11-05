@@ -2,7 +2,7 @@
 
 Dataspatium er delt op i otte tilstande, der følger arbejdets gang, i samme ånd som statistikproduktionens indsaml,
 bearbejd, analysér og formidl: Hent, Håndter, Søg, Bearbejd, Analysér, Visualisér, Eksportér, Del. Alle tilstande
-har samme skelet: tilstandsvælgeren øverst, objektpanelet til venstre, arbejdsfladen i midten, inspektøren til højre
+har samme skelet: tilstandsvælgeren øverst, objektpanelet til venstre (med tilstandens egen overskrift i panelhovedet: Kilder i Hent, Datasæt i de øvrige), arbejdsfladen i midten, inspektøren til højre
 og statuslinjen nederst, med loggen foldet ind over den. Panelerne skifter aldrig plads. Alt+1 til Alt+8 skifter
 tilstand. Et tomt arbejdsområde åbnes i Hent, et arbejdsområde med datasæt i Håndter. Knapperne øverst til højre
 åbner kommandopaletten, skifter sprog, skifter tema (lyst, mørkt, følg systemet) og åbner hjælpen.
@@ -36,22 +36,21 @@ Her kommer data ind: filer, der slippes på fladen, indsat tekst, webadresser og
 fil, indstillinger med forhåndsvisning, kolonner med typer, færdig. Formater: CSV og anden afgrænset tekst, tekst
 med faste kolonnebredder, Excel, ODS, JSON (også JSON-stat og GeoJSON), XML, SQLite, GeoPackage, shapefile samt via R:
 SPSS, Stata, SAS, PX, Parquet, RDS og RData (se [format.md](format.md)); R-formaterne importeres i ét trin uden
-forhåndsvisning. Under Åbne API'er findes forudindstillinger for Danmarks Statistik, Open Data DK og de øvrige
+forhåndsvisning. Venstre kolonne, med overskriften *Kilder* i panelhovedet, har fire grupper. *Almindelige kilder*: Filer, Indsæt og Fra webadresse. *Tilføj kilder*: Database via broen, Åbne API'er, API fra fil, Databasekilde, OpenCDE, Neo4j og Geodatakilde. *Tilføjede kilder*: det, du har tilføjet, hver række med en fjern-knap; fra start ligger SCB's og Boverkets åbne API'er der. *Øvrige kilder*: Gemte hentninger, Indsamling i felten og Guider. *Åbne API'er* viser fortegnelsen over forudindstillinger for Danmarks Statistik, Open Data DK og de øvrige
 nordiske landes statistikbureauer og myndigheder, SCB (gennemse emnetræet eller søg efter en tabel), Eurostat,
-Nordic Statistics med flere, samt kilder, der kræver nøgler; landeknapperne over listen vælger, hvilke landes kilder
-der vises. Egne konfigurationer tilføjes fra fil og kan deles. *Gemte hentninger* viser de datasæt, der er kommet
+Nordic Statistics med flere, samt kilder, der kræver nøgler i arbejdsfladen, med landeknapper og søgning. *Tilføj* flytter en forudindstilling til Tilføjede kilder og åbner den; fjerner du den der, går den tilbage til fortegnelsen og kan tilføjes igen. Egne konfigurationer tilføjes med *API fra fil* og kan deles; en egen kilde, der fjernes, slettes med sine gemte nøgler. *Gemte hentninger* viser de datasæt, der er kommet
 fra et API, og opdaterer dem med ét klik, ét ad gangen eller alle. Første gang appen skal kontakte internettet til
 et formål (API'er, webadresser, GitHub, komponenter) spørger den om lov; svaret kan gemmes. Se
 [api-konfiguration.md](api-konfiguration.md).
 
-Under *Databaser* er der to veje ind: *Database via broen* (Access, Excel, SQL Server, SQLite og ODBC-kilder på
-computeren gennem et lille lokalt script) og *Tilføj databasekilde* (PostgREST, OData, GraphQL, CouchDB, ClickHouse,
-Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP). Access-filer læses desuden direkte som filer,
+*Database via broen* åbner brovisningen (Access, Excel, SQL Server, SQLite og ODBC-kilder på
+computeren gennem et lille lokalt script); hver database, du forbinder, dukker op under Tilføjede kilder og åbner brovisningen igen med den database valgt. *Databasekilde* laver en kilde af en adresse og en nøgle (PostgREST, OData, GraphQL, CouchDB, ClickHouse,
+Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP; også OpenCDE og Neo4j, som desuden har egne valg på listen). Access-filer læses desuden direkte som filer,
 og i Chrome og Edge kan en fil linkes, så datasættet indlæses igen fra disken. Se [kallor.md](kallor.md).
 
 QGIS-projekter (.qgs, .qgz) bliver kortvisninger: lagrækkefølge, synlighed og symboler følger med, lagene kobles til datasæt med samme filnavn, og datafiler, der slippes sammen med projektet, importeres først (se [kartor.md](kartor.md)).
 
-Under *Databaser* findes også *Tilføj geodatakilde*: en WFS-, OGC API Features- eller ArcGIS-tjeneste bliver en kilde, hvis
+*Geodatakilde* under Tilføj kilder: en WFS-, OGC API Features- eller ArcGIS-tjeneste bliver en kilde, hvis
 lag hentes som GeoJSON og åbnes som kort, og kilden *Geodataportalen (sök geodata)* søger i det svenske nationale
 geodatakatalog og tilføjer tjenester med ét klik. Forudindstillede geodatakilder findes for SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE samt Lantmäteriets
@@ -72,7 +71,7 @@ som tegning i Bearbejd (se [cad-bim.md](cad-bim.md)).
 **Indsamling i felten** i kildelisten bygger en formular på et datasæts kolonner og regler og sender den til telefonen. Rækkerne kommer tilbage som en ny
 version (se [insamling.md](insamling.md)).
 
-Alle kilder på listen ser ens ud med et symbol for deres type og en linje under navnet. *Tilføj kilde* samler alle måder at tilføje en kilde på: en konfigurationsfil, en database eller en geodatatjeneste.
+Alle kilder på listen ser ens ud med et symbol for deres type og en linje under navnet.
 
 **Appen siger først, hvad filen er**, for eksempel en tabel med steder, en graf eller en bygningsmodel, og viser den i sin egen form: et kort, billederne, en skitse af grafen, tegningen eller den første side. Er noget værd at spørge om, spørger den: koordinater, der ser ud til at have byttet plads, hvilket koordinatsystem de er i, og om en liste med forbindelser skal læses som en graf. Intet ændres, før du har svaret, og kortet viser, hvad svaret gør.
 

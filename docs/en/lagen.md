@@ -2,7 +2,7 @@
 
 Dataspatium is divided into eight modes that follow the flow of the work, in the spirit of statistics production's
 collect, process, analyse and disseminate: Import, Manage, Search, Process, Analyse, Visualise, Export, Share. All
-modes share the same skeleton: the mode switcher at the top, the object panel on the left, the work area in the
+modes share the same skeleton: the mode switcher at the top, the object panel on the left (headed with the mode's own title: Sources in Import, Datasets elsewhere), the work area in the
 middle, the inspector on the right and the status bar at the bottom, with the log folded in above it. The panels
 never change places. Alt+1 to Alt+8 switch mode. An empty workspace opens in Import, a workspace with datasets in
 Manage. The buttons at the top right open the command palette, change language, change theme (light, dark, follow
@@ -37,25 +37,24 @@ Here data comes in: files dropped on the surface, pasted text, web addresses and
 steps: file, settings with preview, columns with types, done. Formats: CSV and other delimited text, fixed-width
 text, Excel, ODS, JSON (including JSON-stat and GeoJSON), XML, SQLite, GeoPackage, shapefile and, via R, SPSS,
 Stata, SAS, PX, Parquet, RDS and RData (see [format.md](format.md)); the R formats are imported in one step without
-preview. Under Open APIs there are presets for Statistics Sweden (browse the subject tree or search for a table), the
+preview. The left column, headed *Sources* in the pane head, has four groups. *Common sources*: Files, Paste and From web address. *Add sources*: Database through the bridge, Open APIs, API from file, Database source, OpenCDE, Neo4j and Geodata source. *Added sources*: what you have added, each row with a remove button; from the start SCB's and Boverket's open APIs are there. *Other sources*: Saved fetches, Field collection and Guides. *Open APIs* shows the catalogue of presets for Statistics Sweden (browse the subject tree or search for a table), the
 Public Health Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, air quality data,
 the nature conservation register, Lantmäteriet's geodata catalogue and Sweden's data portal, as well as Boverket and
 Lantmäteriet Direkt for those who have keys, and in addition sources in Denmark, Norway, Finland, Iceland, Greenland,
-the Faroe Islands and Åland and Nordic Statistics; the country buttons above the list choose which countries'
-sources are shown. Your own configurations are added from file and can be shared. *Saved fetches* lists the datasets
+the Faroe Islands and Åland and Nordic Statistics in the workspace, with country buttons and a search. *Add* moves a preset to Added sources and opens it; remove it there and it goes back to the catalogue and can be added again. Your own configurations are added with *API from file* and can be shared; a source of your own that is removed is deleted with its saved keys. *Saved fetches* lists the datasets
 that came from an API and updates them with one click, one at a time or all. The first time the app needs to
 contact the internet for a purpose (APIs, web addresses, GitHub, components) it asks for permission; the answer can
 be remembered. See [api-konfiguration.md](api-konfiguration.md).
 
-Under *Databases* there are two ways in: *Database through the bridge* (Access, Excel, SQL Server, SQLite and ODBC
-sources on the computer through a small local script) and *Add a database source* (PostgREST, OData, GraphQL,
-CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable over HTTP). Access files are also
+*Database through the bridge* opens the bridge view (Access, Excel, SQL Server, SQLite and ODBC
+sources on the computer through a small local script); every database you connect appears under Added sources and opens the bridge view again with that database chosen. *Database source* makes a source of an address and a key (PostgREST, OData, GraphQL,
+CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable over HTTP; OpenCDE and Neo4j too, which also have ways of their own in the list). Access files are also
 read directly as files, and in Chrome and Edge a file can be linked so that the dataset is read again from disk.
 See [kallor.md](kallor.md).
 
 QGIS projects (.qgs, .qgz) become map views: layer order, visibility and symbols come along, the layers are matched to datasets with the same file name and data files dropped with the project are imported first (see [kartor.md](kartor.md)).
 
-Under *Databases* there is also *Add geodata source*: a WFS, OGC API Features or ArcGIS service becomes a source whose
+*Geodata source* under Add sources: a WFS, OGC API Features or ArcGIS service becomes a source whose
 layers are fetched as GeoJSON and open as maps, and the source *Geodataportalen (sök geodata)* searches the Swedish
 national geodata catalogue and adds services with one click. Preset geodata sources exist for SCB, SGU, the Agency for
 Marine and Water Management, the National Heritage Board, the Forest Agency, Kartverket, Statistics Finland and SYKE,
@@ -76,7 +75,7 @@ opens in 3D or as a drawing in Process (see [cad-bim.md](cad-bim.md)).
 **Field collection** in the list of sources builds a form on a dataset's columns and rules and sends it to the phone. The rows come back as a new version
 (see [insamling.md](insamling.md)).
 
-All sources in the list look the same, with a mark for their type and a line under the name. *Add a source* gathers all ways to add a source: a configuration file, a database or a geodata service.
+All sources in the list look the same, with a mark for their type and a line under the name.
 
 **The app first says what the file is**, for example a table with places, a graph or a building model, and shows it in its own form: a map, the pictures, a sketch of the graph, the drawing or the first page. If something is worth asking about, it asks: coordinates that seem to have changed places, which coordinate system they are in, and whether a list of links should be read as a graph. Nothing changes until you answer, and the map shows what the answer does.
 

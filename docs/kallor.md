@@ -72,7 +72,7 @@ dig öppna källan igen innan den uppdateras. Fliken SQL i Analysera kan köra d
 
 ## Databaskällor över HTTP
 
-Knappen **Lägg till databaskälla** under *Databaser* i Inhämta skapar en vanlig API-källa av en adress och en
+Valet **Databaskälla** under *Lägg till källor* i Inhämta skapar en vanlig API-källa av en adress och en
 nyckel. Appen frågar tjänsten efter dess tabeller (schemaupptäckt) och lägger en ändpunkt per tabell plus en allmän
 där du anger tabellen själv. Källan fungerar sedan som de förinställda API:erna: parametrar, förhandsgranskning,
 sidor som följs automatiskt och sparade hämtningar som uppdateras med ett klick.
@@ -101,7 +101,7 @@ kolumner) beskrivs i [api-konfiguration.md](api-konfiguration.md) och kan använ
 
 ### Neo4j över Bolt
 
-Familjen **Neo4j (Bolt)** i *Lägg till databaskälla* ansluter till Neo4j Aura eller en egen server med Neo4j:s
+Valet **Neo4j** under *Lägg till källor* (familjen **Neo4j (Bolt)**, som också finns i *Databaskälla*) ansluter till Neo4j Aura eller en egen server med Neo4j:s
 drivrutin över WebSocket (`neo4j+s://…`, databas, användarnamn och lösenord; lösenordet sparas aldrig i klartext). Källan
 öppnar en Cypher-redigerare: resultatet blir en tabell, eller en grafdatamängd när svaret innehåller noder och
 relationer; frågor kan sparas på källan. Anslutningen kräver samtycke (ändamålet Neo4j) och omfattas inte av CORS; en
@@ -109,7 +109,7 @@ egen server utan TLS (`bolt://`) nås bara från en sida över http://. Se [graf
 
 ### OpenCDE-server (BCF och Documents API)
 
-Familjen **OpenCDE (BCF, Documents)** i *Lägg till databaskälla* ansluter till en server som följer buildingSMARTs
+Valet **OpenCDE** under *Lägg till källor* (familjen **OpenCDE (BCF, Documents)**, som också finns i *Databaskälla*) ansluter till en server som följer buildingSMARTs
 OpenCDE-API:er, till exempel [Kontroll](https://github.com/marwiss/Kontroll). Ange serverns adress och det klient-id som
 serverns administratör har registrerat för Dataspatium (en publik klient med omdirigeringsadressen
 `http://127.0.0.1:8080/oauth-callback.html`, eller motsvarande för den adress appen servas på). Källan öppnar en vy där
@@ -161,7 +161,7 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 
 ## Öppna geodata
 
-Dialogen *Lägg till geodatakälla* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
+Dialogen för *Geodatakälla* under *Lägg till källor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
 Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
@@ -174,7 +174,7 @@ som läser en hel lokalplan respektive ett deiliskipulag (alla lager) med planen
 fälten för en egen tjänst. Boverkets Planbestämmelsekatalog finns som vanlig API-källa (*Boverket
 Planbestämmelsekatalogen*), se [planer.md](planer.md).
 
-Knappen **Lägg till geodatakälla** under *Databaser* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
+Valet **Geodatakälla** under *Lägg till källor* i Inhämta gör en vanlig API-källa av adressen till en geodatatjänst,
 på samma sätt som databaskällorna. Appen läser tjänstens lager och lägger en ändpunkt per lager plus en allmän där du
 anger lagret själv. Svaren är GeoJSON i WGS 84: datamängden får en geometrikolumn och öppnas som karta i Bearbeta (se
 [kartor.md](kartor.md)). Källan visar lagren som en lista att filtrera i; välj ett lager, begränsa gärna med ett område

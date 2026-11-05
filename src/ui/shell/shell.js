@@ -95,7 +95,7 @@
                 this.langBtn,
                 this.themeBtn,
                 basic.button({ label: t('shell.help'), icon: 'circle-help', 'icon-only': true, variant: 'ghost', onClick: () => this.showHelp() }))),
-            h('aside', { class: 'dm-left', 'aria-label': t('shell.objects') }, h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.objects') })), this.slots.left, h('dm-splitter', { for: 'left' })),
+            (this.leftAside = h('aside', { class: 'dm-left', 'aria-label': t('shell.datasets') }, h('div', { class: 'dm-pane-head' }, (this.leftTitle = h('span', { text: t('shell.datasets') }))), this.slots.left, h('dm-splitter', { for: 'left' }))),
             this.slots.center,
             h('aside', { class: 'dm-right', 'aria-label': t('shell.inspector') }, h('dm-splitter', { for: 'right' }), h('div', { class: 'dm-pane-head' }, h('span', { text: t('shell.inspector') })), this.slots.right),
             h('section', { class: 'dm-drawer', 'aria-label': t('shell.drawer') },
@@ -388,6 +388,10 @@
           if (this.active && this.active.deactivate) this.active.deactivate();
           for (const slot of Object.values(this.slots)) slot.replaceChildren();
           this.active = mode;
+          // The object panel is named after what the mode keeps there: the sources in Inhämta, the datasets elsewhere.
+          const leftTitle = t(mode.leftTitle || 'shell.datasets');
+          if (this.leftTitle) this.leftTitle.textContent = leftTitle;
+          if (this.leftAside) this.leftAside.setAttribute('aria-label', leftTitle);
           this.store.set({ mode: id });
           for (const btn of this.modeNav.children) btn.setAttribute('aria-current', btn.getAttribute('data-mode') === id ? 'page' : 'false');
           if (location.hash !== '#/' + id) history.replaceState(null, '', '#/' + id);

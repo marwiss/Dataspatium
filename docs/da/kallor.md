@@ -76,7 +76,7 @@ blev åbnet i broen (*Kør mod*).
 
 ## Databasekilder over HTTP
 
-Knappen **Tilføj databasekilde** under *Databaser* i Hent laver en almindelig API-kilde af en adresse og en nøgle.
+Valget **Databasekilde** under *Tilføj kilder* i Hent laver en almindelig API-kilde af en adresse og en nøgle.
 Appen spørger tjenesten om dens tabeller (skemaopdagelse) og tilføjer et endepunkt pr. tabel plus et generelt,
 hvor du selv angiver tabellen. Kilden fungerer derefter som de forudindstillede API'er: parametre,
 forhåndsvisning, sider, der følges automatisk, og gemte hentninger, der opdateres med ét klik.
@@ -105,7 +105,7 @@ kolonner) er beskrevet i [api-konfiguration.md](api-konfiguration.md) og kan bru
 
 ### Neo4j over Bolt
 
-Familien **Neo4j (Bolt)** i *Tilføj databasekilde* forbinder til Neo4j Aura eller en egen server med Neo4j's driver over
+Valget **Neo4j** under *Tilføj kilder* (familien **Neo4j (Bolt)**, som også findes i *Databasekilde*) forbinder til Neo4j Aura eller en egen server med Neo4j's driver over
 WebSocket (`neo4j+s://…`, database, brugernavn og adgangskode; adgangskoden gemmes aldrig i klartekst). Kilden åbner en
 Cypher-editor: resultatet bliver en tabel, eller et grafdatasæt når svaret indeholder knuder og relationer; forespørgsler
 kan gemmes på kilden. Forbindelsen kræver samtykke (formålet Neo4j) og er ikke omfattet af CORS; en egen server uden TLS
@@ -113,7 +113,7 @@ kan gemmes på kilden. Forbindelsen kræver samtykke (formålet Neo4j) og er ikk
 
 ### OpenCDE-server (BCF og Documents API)
 
-Familien **OpenCDE (BCF, Documents)** i *Tilføj databasekilde* forbinder til en server, der følger buildingSMARTs
+Valget **OpenCDE** under *Tilføj kilder* (familien **OpenCDE (BCF, Documents)**, som også findes i *Databasekilde*) forbinder til en server, der følger buildingSMARTs
 OpenCDE-API'er, for eksempel [Kontroll](https://github.com/marwiss/Kontroll). Angiv serverens adresse og det klient-id,
 som serverens administrator har registreret til Dataspatium (en offentlig klient med omdirigeringsadressen
 `http://127.0.0.1:8080/oauth-callback.html` eller det tilsvarende for den adresse, appen serveres fra). Kilden åbner en
@@ -166,7 +166,7 @@ kilde med adressen udfyldt. Findes serveren allerede som kilde, åbnes den direk
 
 ## Åbne geodata
 
-Dialogen *Tilføj geodatakilde* begynder med en liste over **færdige geodatakilder**: åbne WFS-, OGC API Features- og
+Dialogen for *Geodatakilde* under *Tilføj kilder* begynder med en liste over **færdige geodatakilder**: åbne WFS-, OGC API Features- og
 ArcGIS-tjenester fra nordiske myndigheder og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
 Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrolleret til at virke
@@ -179,7 +179,7 @@ som læser en hel lokalplan henholdsvis et deiliskipulag (alle lag) med planens 
 tjeneste. Boverkets Planbestämmelsekatalog findes som almindelig API-kilde (*Boverket Planbestämmelsekatalogen*), se
 [planer.md](planer.md).
 
-Knappen **Tilføj geodatakilde** under *Databaser* i Indsaml gør en almindelig API-kilde af adressen til en geodatatjeneste,
+Valget **Geodatakilde** under *Tilføj kilder* i Indsaml gør en almindelig API-kilde af adressen til en geodatatjeneste,
 på samme måde som databasekilderne. Appen læser tjenestens lag og lægger et endepunkt pr. lag plus et alment, hvor du
 angiver laget selv. Svarene er GeoJSON i WGS 84: datasættet får en geometrikolonne og åbnes som kort i Bearbejd (se
 [kartor.md](kartor.md)). Kilden viser lagene som en liste, der kan filtreres; vælg et lag, begræns gerne med et område

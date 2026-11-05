@@ -2,7 +2,7 @@
 
 Dataspatium on jaettu kahdeksaan tilaan, jotka seuraavat työn kulkua tilastotuotannon hengessä: kerää, käsittele,
 analysoi ja julkaise: Nouda, Hallitse, Hae, Muokkaa, Analysoi, Visualisoi, Vie, Jaa. Kaikilla tiloilla on sama
-runko: tilanvalitsin ylhäällä, kohdepaneeli vasemmalla, työalue keskellä, tarkastelupaneeli oikealla ja tilarivi
+runko: tilanvalitsin ylhäällä, kohdepaneeli vasemmalla (paneeliotsikkona tilan oma nimi: Lähteet Nouda-tilassa, Aineistot muissa), työalue keskellä, tarkastelupaneeli oikealla ja tilarivi
 alhaalla, loki sen yläpuolelle taitettuna. Paneelit eivät koskaan vaihda paikkaa. Alt+1 … Alt+8 vaihtaa tilaa. Tyhjä
 työtila avautuu Nouda-tilaan, aineistoja sisältävä työtila Hallitse-tilaan. Oikean yläkulman painikkeet avaavat
 komentopaletin, vaihtavat kieltä, vaihtavat teemaa (vaalea, tumma, järjestelmän mukaan) ja avaavat ohjeen.
@@ -36,24 +36,22 @@ Tänne data tulee: alueelle pudotetut tiedostot, liitetty teksti, verkko-osoitte
 tuonti etenee vaiheittain: tiedosto, asetukset esikatselulla, sarakkeet tyyppeineen, valmis. Muodot: CSV ja muu
 erotinmerkein jaettu teksti, kiinteälevyinen teksti, Excel, ODS, JSON (myös JSON-stat ja GeoJSON), XML, SQLite,
 GeoPackage, shapefile sekä R:n kautta SPSS, Stata, SAS, PX, Parquet, RDS ja RData (ks. [format.md](format.md));
-R-muodot tuodaan yhdessä vaiheessa ilman esikatselua. Kohdassa Avoimet rajapinnat on valmiit asetukset
+R-muodot tuodaan yhdessä vaiheessa ilman esikatselua. Vasemmassa sarakkeessa, jonka paneeliotsikko on *Lähteet*, on neljä ryhmää. *Tavalliset lähteet*: Tiedostot, Liitä ja Verkko-osoitteesta. *Lisää lähteitä*: Tietokanta sillan kautta, Avoimet rajapinnat, API tiedostosta, Tietokantalähde, OpenCDE, Neo4j ja Paikkatietolähde. *Lisätyt lähteet*: se, mitä olet lisännyt, jokaisella rivillä poistopainike; alusta alkaen siellä ovat SCB:n ja Boverketin avoimet rajapinnat. *Muut lähteet*: Tallennetut haut, Keruu maastossa ja Oppaat. *Avoimet rajapinnat* näyttää työtilassa luettelon, jossa ovat valmiit asetukset
 Tilastokeskukselle, THL:lle ja muille Pohjoismaiden tilastovirastoille ja viranomaisille, SCB:lle (selaa aihepuuta
-tai hae taulukkoa), Eurostatille, Nordic Statisticsille ja muille, sekä avaimia vaativille lähteille; luettelon
-yläpuolella olevat maapainikkeet valitsevat, minkä maiden lähteet näytetään. Omat määritykset lisätään tiedostosta,
-ja niitä voi jakaa. *Tallennetut haut* luettelee rajapinnasta tulleet aineistot ja päivittää ne yhdellä
+tai hae taulukkoa), Eurostatille, Nordic Statisticsille ja muille, sekä avaimia vaativille lähteille, maapainikkeilla ja haulla. *Lisää* siirtää esiasetuksen kohtaan Lisätyt lähteet ja avaa sen; jos poistat sen sieltä, se palaa luetteloon ja voidaan lisätä uudelleen. Omat määritykset lisätään kohdasta *API tiedostosta*, ja niitä voi jakaa; poistettu oma lähde poistetaan tallennettujen avaintensa kanssa. *Tallennetut haut* luettelee rajapinnasta tulleet aineistot ja päivittää ne yhdellä
 napsautuksella, yksi kerrallaan tai kaikki. Kun sovelluksen pitää ensimmäisen kerran ottaa yhteys internetiin jotakin
 tarkoitusta varten (rajapinnat, verkko-osoitteet, GitHub, komponentit), se kysyy lupaa; vastauksen voi tallentaa.
 Ks. [api-konfiguration.md](api-konfiguration.md).
 
-Kohdassa *Tietokannat* on kaksi reittiä: *Tietokanta sillan kautta* (Access, Excel, SQL Server, SQLite ja
-ODBC-lähteet tietokoneella pienen paikallisen skriptin kautta) ja *Lisää tietokantalähde* (PostgREST, OData,
-GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets ja Airtable HTTP:n yli).
+*Tietokanta sillan kautta* avaa siltanäkymän (Access, Excel, SQL Server, SQLite ja
+ODBC-lähteet tietokoneella pienen paikallisen skriptin kautta); jokainen yhdistämäsi tietokanta ilmestyy kohtaan Lisätyt lähteet ja avaa siltanäkymän uudelleen kyseinen tietokanta valittuna. *Tietokantalähde* tekee lähteen osoitteesta ja avaimesta (PostgREST, OData,
+GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets ja Airtable HTTP:n yli; myös OpenCDE ja Neo4j, joilla on lisäksi omat valintansa luettelossa).
 Access-tiedostot luetaan lisäksi suoraan tiedostoina, ja Chromessa ja Edgessä tiedoston voi linkittää niin, että
 aineisto luetaan uudelleen levyltä. Ks. [kallor.md](kallor.md).
 
 QGIS-projekteista (.qgs, .qgz) tulee karttanäkymiä: tasojärjestys, näkyvyys ja symbolit tulevat mukana, tasot yhdistetään samannimisiin aineistoihin ja projektin kanssa pudotetut datatiedostot tuodaan ensin (katso [kartor.md](kartor.md)).
 
-Kohdassa *Tietokannat* on myös *Lisää paikkatietolähde*: WFS-, OGC API Features- tai ArcGIS-palvelusta tulee lähde, jonka
+*Paikkatietolähde* kohdassa Lisää lähteitä: WFS-, OGC API Features- tai ArcGIS-palvelusta tulee lähde, jonka
 tasot noudetaan GeoJSONina ja avataan karttoina, ja lähde *Geodataportalen (sök geodata)* hakee Ruotsin kansallisesta
 paikkatietoluettelosta ja lisää palveluja yhdellä napsautuksella. Valmiita paikkatietolähteitä on SCB:lle, SGU:lle,
 Havs- och vattenmyndighetenille, Riksantikvarieämbetetille, Skogsstyrelsenille, Kartverketille, Tilastokeskukselle ja
@@ -74,7 +72,7 @@ piirustuksena Muokkaa-tilassa (katso [cad-bim.md](cad-bim.md)).
 **Keruu maastossa** lähdeluettelossa rakentaa lomakkeen aineiston sarakkeista ja säännöistä ja lähettää sen puhelimeen. Rivit palaavat uutena
 versiona (katso [insamling.md](insamling.md)).
 
-Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen alla. *Lisää lähde* kokoaa kaikki tavat lisätä lähde: määritystiedoston, tietokannan tai paikkatietopalvelun.
+Kaikki luettelon lähteet näyttävät samalta: tyypin symboli ja rivi nimen alla.
 
 **Sovellus kertoo ensin, mikä tiedosto on**, esimerkiksi paikkoja sisältävä taulukko, graafi tai rakennusmalli, ja näyttää sen omassa muodossaan: kartan, kuvat, luonnoksen graafista, piirustuksen tai ensimmäisen sivun. Jos jotakin kannattaa kysyä, se kysyy: koordinaatit, jotka näyttävät vaihtaneen paikkaa, missä koordinaatistossa ne ovat ja luetaanko yhteyksien lista graafina. Mikään ei muutu ennen kuin vastaat, ja kartta näyttää vastauksen vaikutuksen.
 

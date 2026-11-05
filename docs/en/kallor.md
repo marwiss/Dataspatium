@@ -75,7 +75,7 @@ in the bridge (*Run against*).
 
 ## Database sources over HTTP
 
-The button **Add a database source** under *Databases* in Import makes an ordinary API source out of an address
+The way **Database source** under *Add sources* in Import makes an ordinary API source out of an address
 and a key. The app asks the service for its tables (schema discovery) and adds one endpoint per table plus a
 generic one where you name the table yourself. The source then works like the preset APIs: parameters, preview,
 pages followed automatically and saved fetches updated with one click.
@@ -105,7 +105,7 @@ configurations.
 
 ### Neo4j over Bolt
 
-The family **Neo4j (Bolt)** in *Add database source* connects to Neo4j Aura or an own server with Neo4j's driver over
+The way **Neo4j** under *Add sources* (the family **Neo4j (Bolt)**, also in *Database source*) connects to Neo4j Aura or an own server with Neo4j's driver over
 WebSocket (`neo4j+s://…`, database, user name and password; the password is never stored in clear text). The source opens
 a Cypher editor: the result becomes a table, or a graph dataset when the answer holds nodes and relationships; queries
 can be kept on the source. The connection needs consent (purpose Neo4j) and is not subject to CORS; an own server without
@@ -113,7 +113,7 @@ TLS (`bolt://`) is reached only from a page over http://. See [grafer.md](grafer
 
 ### OpenCDE server (BCF and Documents API)
 
-The family **OpenCDE (BCF, Documents)** in *Add database source* connects to a server that implements buildingSMART's
+The way **OpenCDE** under *Add sources* (the family **OpenCDE (BCF, Documents)**, also in *Database source*) connects to a server that implements buildingSMART's
 OpenCDE APIs, for example [Kontroll](https://github.com/marwiss/Kontroll). Enter the server's address and the client id
 its administrator registered for Dataspatium (a public client with the redirect URI
 `http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the address the app is served from). The source opens
@@ -167,7 +167,7 @@ Kontroll opens in a popup (sign-in, upload, document selection) appear in the ap
 
 ## Open geodata
 
-The dialog *Add geodata source* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
+The dialog for *Geodata source* under *Add sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
 Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
@@ -180,7 +180,7 @@ plan**, which reads a whole local plan or deiliskipulag (every layer) by its pla
 service of your own. Boverket's Planbestämmelsekatalog is an ordinary API source (*Boverket Planbestämmelsekatalogen*),
 see [planer.md](planer.md).
 
-The button **Add geodata source** under *Databases* in Acquire makes an ordinary API source of the address of a geodata
+The way **Geodata source** under *Add sources* in Acquire makes an ordinary API source of the address of a geodata
 service, just like the database sources. The app reads the service's layers and adds one endpoint per layer plus a
 generic one where you name the layer yourself. The answers are GeoJSON in WGS 84: the dataset gets a geometry column
 and opens as a map in Process (see [kartor.md](kartor.md)). The source shows the layers as a filterable list; choose a

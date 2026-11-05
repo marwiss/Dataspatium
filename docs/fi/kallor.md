@@ -80,7 +80,7 @@ sillassa viimeksi avattua lähdettä vastaan (*Suorita kohteessa*).
 
 ## Tietokantalähteet HTTP:n yli
 
-Painike **Lisää tietokantalähde** kohdassa *Tietokannat* Nouda-tilassa tekee osoitteesta ja avaimesta tavallisen
+Valinta **Tietokantalähde** kohdassa *Lisää lähteitä* Nouda-tilassa tekee osoitteesta ja avaimesta tavallisen
 API-lähteen. Sovellus kysyy palvelulta sen taulut (skeeman tunnistus) ja lisää päätepisteen taulua kohden sekä
 yleisen päätepisteen, johon annat taulun itse. Lähde toimii sen jälkeen kuten esiasetetut rajapinnat: parametrit,
 esikatselu, automaattisesti seurattavat sivut ja yhdellä napsautuksella päivittyvät tallennetut haut.
@@ -109,7 +109,7 @@ kuvattu tiedostossa [api-konfiguration.md](api-konfiguration.md), ja niitä voi 
 
 ### Neo4j Boltin yli
 
-Perhe **Neo4j (Bolt)** kohdassa *Lisää tietokantalähde* yhdistää Neo4j Auraan tai omaan palvelimeen Neo4j:n ajurilla
+Valinta **Neo4j** kohdassa *Lisää lähteitä* (perhe **Neo4j (Bolt)**, joka on myös kohdassa *Tietokantalähde*) yhdistää Neo4j Auraan tai omaan palvelimeen Neo4j:n ajurilla
 WebSocketin yli (`neo4j+s://…`, tietokanta, käyttäjätunnus ja salasana; salasanaa ei koskaan tallenneta selkotekstinä).
 Lähde avaa Cypher-editorin: tulos on taulukko tai verkkoaineisto, kun vastaus sisältää solmuja ja suhteita; kyselyt voi
 tallentaa lähteelle. Yhteys vaatii suostumuksen (tarkoitus Neo4j) eikä kuulu CORS:n piiriin; oma palvelin ilman TLS:ää
@@ -117,7 +117,7 @@ tallentaa lähteelle. Yhteys vaatii suostumuksen (tarkoitus Neo4j) eikä kuulu C
 
 ### OpenCDE-palvelin (BCF ja Documents API)
 
-Perhe **OpenCDE (BCF, Documents)** kohdassa *Lisää tietokantalähde* yhdistää palvelimeen, joka noudattaa buildingSMARTin
+Valinta **OpenCDE** kohdassa *Lisää lähteitä* (perhe **OpenCDE (BCF, Documents)**, joka on myös kohdassa *Tietokantalähde*) yhdistää palvelimeen, joka noudattaa buildingSMARTin
 OpenCDE-rajapintoja, esimerkiksi [Kontroll](https://github.com/marwiss/Kontroll). Anna palvelimen osoite ja
 asiakastunnus, jonka palvelimen pääkäyttäjä on rekisteröinyt Dataspatiumille (julkinen asiakas, jonka
 uudelleenohjausosoite on `http://127.0.0.1:8080/oauth-callback.html` tai vastaava sovelluksen osoitteelle). Lähde avaa
@@ -170,7 +170,7 @@ avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyv�
 
 ## Avoin paikkatieto
 
-Valintaikkuna *Lisää paikkatietolähde* alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
+Kohdan *Paikkatietolähde* (Lisää lähteitä) valintaikkuna alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
 Features- ja ArcGIS-palveluja pohjoismaisilta viranomaisilta ja kunnilta (SCB, SGU, Naturvårdsverket,
 Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
 Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands ja muita), kaikki
@@ -183,7 +183,7 @@ tallentaa sen kaavana, ja *Ryhti kaavatiedot (OGC API Features)* antaa Suomen ka
 alla ovat oman palvelun kentät. Boverketin Planbestämmelsekatalog on tavallinen API-lähde (*Boverket
 Planbestämmelsekatalogen*), katso [planer.md](planer.md).
 
-Painike **Lisää paikkatietolähde** kohdassa *Tietokannat* Nouda-tilassa tekee tavallisen API-lähteen paikkatietopalvelun
+Valinta **Paikkatietolähde** kohdassa *Lisää lähteitä* Nouda-tilassa tekee tavallisen API-lähteen paikkatietopalvelun
 osoitteesta samalla tavalla kuin tietokantalähteistä. Sovellus lukee palvelun tasot ja tekee päätepisteen tasoa kohden sekä
 yleisen päätepisteen, jossa annat tason itse. Vastaukset ovat GeoJSONia WGS 84:ssä: aineisto saa geometriasarakkeen ja
 avautuu karttana Muokkaa-tilassa (katso [kartor.md](kartor.md)). Lähde näyttää tasot suodatettavana luettelona; valitse

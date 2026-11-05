@@ -7,7 +7,7 @@
 Dataspatium är en webbapp för data från källa till rapport: hämta in data från filer och öppna API:er, lagra och
 hantera datamängder, granska och korrigera värden, analysera med R, visualisera och exportera. Allt körs i din
 egen webbläsare. Ingen server, ingen installation, inga konton. Din data lämnar aldrig datorn om du inte själv
-exporterar den.
+exporterar den. Säkerheten är det första kravet: inga nätverksanrop utan din åtgärd och ditt samtycke, hemligheter bara krypterade, komponenter pinnade och kontrollerade, och allt som delas granskas först.
 
 ![Dataspatium i läget Bearbeta med en tabell över Sveriges kommuner](docs/images/bearbeta.png)
 
@@ -163,7 +163,7 @@ IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern sk
 andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Kontrolls README och `docs/client-guide.md` beskriver samarbetet från
 serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](docs/cad-bim.md).
 
-Dataspatium 2.2.0 fungerar med Kontroll 2.2.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
+Dataspatium 2.3.0 fungerar med Kontroll 2.3.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
 [snabbstart.md](docs/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
 
 ## Lär dig mer
@@ -188,6 +188,7 @@ Dataspatium 2.2.0 fungerar med Kontroll 2.2.0. Båda får samma utgåvenummer, s
 - [Öppna API:er](docs/api-konfiguration.md): de förinställda källorna, nycklar och hur du skriver en egen konfiguration.
 - [Visualisera](docs/visualisera.md): diagrambyggaren, D3-mallar, R-diagram, kartor och dashboards.
 - [Dokument och mallar](docs/dokumentmallar.md): mallspråket och utdataformaten.
+- [Säkerhet](docs/sakerhet.md): hotmodell, kontrollerna och proven som visar dem, personuppgifter och lagring, och hur en sårbarhet rapporteras.
 - [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
 - [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för
   den som vill förstå koden; hur bidrag tas emot står i [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -216,13 +217,15 @@ Dataspatium 2.2.0 fungerar med Kontroll 2.2.0. Båda får samma utgåvenummer, s
 ## Fel och förslag
 
 Rapportera fel eller önskemål som *Issues* här på GitHub. Beskriv webbläsare, version av Dataspatium (visas under
-hjälpknappen) och vad du gjorde. Se [CONTRIBUTING.md](CONTRIBUTING.md).
+hjälpknappen) och vad du gjorde. Se [CONTRIBUTING.md](CONTRIBUTING.md). Bifoga inga personuppgifter och inga hemligheter. För en
+säkerhetssårbarhet, följ [SECURITY.md](SECURITY.md) i stället för att öppna ett ärende.
 
 ## Utveckling
 
 - Inget byggsteg, inget node.js. Öppna `index.html` direkt, eller serva mappen med `python -m http.server 8080`.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` följt av `python tools/wrap_assets.py`.
 - Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge och Firefox). Se [docs/utveckling.md](docs/utveckling.md).
+- Säkerhet: proven för samtycke, hemligheter, granskning före delning, OAuth2 (PKCE, state, återhopp) och loggens maskering ingår i sviten; se [docs/sakerhet.md](docs/sakerhet.md).
 
 ## Licens
 
@@ -236,4 +239,5 @@ förklaras i [docs/licenser.md](docs/licenser.md).
 Tredjepartskomponenter i `vendor/` har sina egna licenser (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL och GPL), se
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). R och de GPL-licensierade R-paketen distribueras oförändrade;
 källkoden finns hos [R-projektet](https://cran.r-project.org/sources.html), [webR](https://github.com/r-wasm/webr)
-och [CRAN](https://cran.r-project.org/) i de versioner som anges där.
+och [CRAN](https://cran.r-project.org/) i de versioner som anges där. Se [SECURITY.md](SECURITY.md) för hur en sårbarhet rapporteras och
+vad projektet gör för att förbli säkert.

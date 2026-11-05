@@ -45,6 +45,28 @@
     }
     async function saveUsers() { await idb.setSetting(USER_KEY, users.map((c) => strip(c))); notify(); }
 
+    // ---- which presets the user has added to Inhämta's list of added sources; the rest wait in the catalogue of open APIs ----
+    const ADDED_KEY = 'api:added';
+    /** SCB's and Boverket's open APIs are added from the start; the choice is kept once the user changes it. */
+    const DEFAULT_ADDED = ['scb-pxweb', 'scb-pxweb-v2', 'scb-geodata', 'boverket-planbestammelsekatalogen', 'boverket-energideklarationer'];
+    /** @type {Set<string>|null} */
+    let addedIds = null;
+    async function loadAdded() {
+      if (!addedIds) { const stored = await idb.getSetting(ADDED_KEY, null); addedIds = new Set(Array.isArray(stored) ? stored : DEFAULT_ADDED); }
+      return addedIds;
+    }
+    /** Ids of the presets the user has added (a copy). */
+    async function added() { return new Set(await loadAdded()); }
+    /** Add a preset to the added sources, or take it out again; a preset taken out waits in the catalogue and is never deleted. */
+    async function setAdded(id, on) {
+      const set = await loadAdded();
+      if (on) set.add(id); else set.delete(id);
+      await idb.setSetting(ADDED_KEY, Array.from(set));
+      notify();
+    }
+    /** Whether a connector belongs among the added sources: every connector of the user's own, and the presets the user has added. */
+    async function isAdded(connector) { return !connector.preset || (await loadAdded()).has(connector.id); }
+
     /** Order of the country filter and of the source list. */
     function countryRank(connector) {
       const i = COUNTRIES.indexOf(connector.country);
@@ -98,7 +120,7 @@
       const all = p.filter((c) => !ids.has(c.id)).concat(u);
       rawById.clear();
       for (const c of all) rawById.set(c.id, c);
-      return all.map((c) => localize(c)).sort(compare);
+      return all.map((c) => Object.assign({}, localize(c), { preset: !!c.preset })).sort(compare);
     }
     async function get(id) { return (await list()).find((c) => c.id === id) || null; }
 
@@ -143,6 +165,6 @@
       }
     }
 
-    return { list, get, importJson, save, remove, exportJson, describeAuth, localize, loadPresets, subscribe, PRESET_PREFIX, COUNTRIES };
+    return { list, get, importJson, save, remove, exportJson, describeAuth, localize, loadPresets, subscribe, added, setAdded, isAdded, DEFAULT_ADDED, PRESET_PREFIX, COUNTRIES };
   });
 })();

@@ -7,7 +7,7 @@
 Dataspatium is a web app for data from source to report: import data from files and open APIs, store and
 manage datasets, review and correct values, analyse with R, visualise and export. Everything runs in your own
 browser. No server, no installation, no accounts. Your data never leaves your computer unless you export it
-yourself.
+yourself. Security is the first requirement: no network call without your action and your consent, secrets only encrypted, components pinned and verified, and everything shared is reviewed first.
 
 ![Dataspatium in Process mode with a table of Swedish municipalities](../images/bearbeta.png)
 
@@ -159,7 +159,7 @@ OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for th
 works as before. Kontroll's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.2.0 works with Kontroll 2.2.0. Both carry the same release number, so equal numbers belong together. The quick start
+Dataspatium 2.3.0 works with Kontroll 2.3.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more
@@ -187,6 +187,7 @@ everywhere.
 - [Python in Dataspatium](python.md): the Python console, `dm_read()`, `dm_write()` and packages fetched on demand.
 - [Visualise](visualisera.md): the chart builder, D3 templates, R charts, maps and dashboards.
 - [Documents and templates](dokumentmallar.md): the template language and the output formats.
+- [Security](sakerhet.md): threat model, the controls and the tests that prove them, personal data and retention, and how to report a vulnerability.
 - [Licences](licenser.md): what you may do with the app and which licences the third-party components have.
 - [Development](../utveckling.md), [Architecture](../arkitektur.md) and [Style guide](../stilguide.md) for those
   who want to understand the code (in Swedish); how contributions are received is in
@@ -215,7 +216,8 @@ everywhere.
 ## Bugs and suggestions
 
 Report bugs or requests as *Issues* here on GitHub. Describe the browser, the Dataspatium version (shown under the
-help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md). Attach no personal data and no secrets. For a security
+vulnerability follow [SECURITY.md](../../SECURITY.md) instead of opening an issue.
 
 ## Development
 
@@ -223,6 +225,7 @@ help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
 - Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). See [utveckling.md](../utveckling.md)
   (Swedish).
+- Security: the tests for consent, secrets, review before sharing, OAuth2 (PKCE, state, callback) and log masking are part of the suite; see [sakerhet.md](sakerhet.md).
 
 ## Licence
 
@@ -236,4 +239,5 @@ explained in [licenser.md](licenser.md).
 Third-party components in `vendor/` have their own licences (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL and GPL), see
 [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R and the GPL-licensed R packages are distributed
 unchanged; the source code is available from the [R project](https://cran.r-project.org/sources.html),
-[webR](https://github.com/r-wasm/webr) and [CRAN](https://cran.r-project.org/) in the versions stated there.
+[webR](https://github.com/r-wasm/webr) and [CRAN](https://cran.r-project.org/) in the versions stated there. See [SECURITY.md](../../SECURITY.md) for how to report a vulnerability
+and what the project does to stay secure.

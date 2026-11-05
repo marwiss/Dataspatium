@@ -62,7 +62,7 @@ area below the surface has data that ships with the app: the button for the exam
 municipality 2024 (Sweden)* and the list *Boundaries for maps* with municipality and region boundaries for Sweden,
 Denmark, Norway and Finland.
 
-Under *Open APIs* there are presets for SCB, the Public Health Agency of Sweden, the National Board of Health and
+Under *Add sources* → *Open APIs* there is the catalogue of presets (the ones you add come under *Added sources*; SCB and Boverket are there from the start) for SCB, the Public Health Agency of Sweden, the National Board of Health and
 Welfare, Kolada, Eurostat, SMHI, air quality data, the Nature Conservation Register, Lantmäteriet's geodata
 catalogue and Sweden's data portal, as well as Boverket and Lantmäteriet Direkt for those who have their own keys.
 In addition there are the statistics offices and several other agencies in Denmark, Norway, Finland and Iceland,
@@ -73,7 +73,7 @@ fetched dataset remembers its query, so it can be fetched again from Manage when
 
 Databases: Access files are dropped on the surface like other files; databases on the computer (SQL Server, ODBC,
 Excel, SQLite) are reached through *Database through the bridge* and services over HTTP (PostgREST, OData, GraphQL
-and more) through *Add a database source*. In Chrome and Edge a file can be linked and read again from disk. See
+and more) through *Database source*; OpenCDE and Neo4j have ways of their own under Add sources. In Chrome and Edge a file can be linked and read again from disk. See
 [kallor.md](kallor.md).
 
 ### 2. Review and correct (Process)

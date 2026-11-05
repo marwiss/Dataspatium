@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, apiView, files, bridgeView, familyDialog, linked, qgis, kinds, fileSense, leaflet, sketches) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, bridge, apiView, files, bridgeView, familyDialog, linked, qgis, kinds, fileSense, leaflet, sketches) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -30,6 +30,7 @@
       const wiz = reset();
       let previewTimer = 0;
       let connectorList = [];
+      /** @type {(() => void)|null} */ let unsubBridge = null;
       let unsubConnectors = null;
       /** @type {any} */ let apiUi = null;
       let apiId = null;
@@ -51,6 +52,7 @@
       function activate(s) {
         slots = s;
         unsubConnectors = connectors.subscribe(reloadConnectors);
+        unsubBridge = bridge.subscribe(() => { reloadConnectors(); });
         // The saved fetches follow the datasets (count in the source list, rows and times in the view).
         unsubStore = store.subscribe((state, changed) => {
           if (changed.includes('pendingSource') && state.pendingSource && slots) { consumePendingSource(state); return; }
@@ -65,16 +67,26 @@
         slots = null;
         freeThumbs();
         if (unsubConnectors) unsubConnectors();
+        if (unsubBridge) { unsubBridge(); unsubBridge = null; }
         if (unsubStore) { unsubStore(); unsubStore = null; }
         if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; }
         if (bridgeUi) { bridgeUi.destroy(); bridgeUi = null; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         if (guidesUi) { guidesUi.destroy(); guidesUi = null; }
       }
+      /** The presets the user has added; the other presets wait in the catalogue of open APIs. */
+      let addedPresets = new Set();
+      /** Databases opened through the bridge, remembered without secrets. */
+      let bridgeSources = [];
       async function reloadConnectors() {
         connectorList = await connectors.list();
+        addedPresets = await connectors.added();
+        try { bridgeSources = await bridge.remembered(); } catch (_e) { bridgeSources = []; }
         if (slots) renderLeft();
       }
+      const isAddedConnector = (c) => !c.preset || addedPresets.has(c.id);
+      const addedConnectors = () => connectorList.filter(isAddedConnector);
+      const catalogueConnectors = () => connectorList.filter((c) => c.preset && !addedPresets.has(c.id));
 
       function render() {
         if (!slots) return;
@@ -83,22 +95,89 @@
 
       // ---- left: sources ----
       function renderLeft() {
+        const group = (key, items, attrs) => [h('h4', { text: t(key) }), h('div', Object.assign({ class: 'dm-list' }, attrs || {}), items)];
+        const added = addedConnectors().map((c) => addedItem('api:' + c.id, connectorIcon(c), c.name, connectorSub(c), () => removeConnector(c)));
+        const bridges = bridgeSources.map((b, i) => addedItem('bridge:' + i, 'database', b.label, t('bridge.added.sub'), () => forgetBridge(b)));
         replace(slots.left,
-          h('h4', { text: t('import.sources') }),
-          h('div', { class: 'dm-list' },
+          group('import.sources.common', [
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
-            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
-            sourceItem('guides', 'graduation-cap', t('guides.title'), t('guides.hint')),
+            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint'))]),
+          group('import.sources.addgroup', [
+            sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
+            sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
+            actionItem('file', 'file-json', t('api.add.file.short'), t('import.sources.api.hint'), addConnector),
+            actionItem('family', 'database', t('families.add.short'), t('families.hint'), () => addFamily()),
+            actionItem('opencde', 'building-2', t('families.opencde.add'), t('families.opencde.add.hint'), () => addFamily(null, 'opencde')),
+            actionItem('neo4j', 'share-2', t('families.neo4j.add'), t('families.neo4j.add.hint'), () => addFamily(null, 'neo4j')),
+            actionItem('geodata', 'map', t('geodata.add.short'), t('geodata.add.hint'), () => addFamily('geodata'))], { 'data-add-sources': '' }),
+          h('h4', { text: t('import.sources.added') }),
+          added.length || bridges.length
+            ? h('div', { class: 'dm-list', 'data-added-sources': '' }, bridges, added)
+            : h('p', { class: 'dm-help dm-xs', 'data-added-sources': 'empty', text: t('import.sources.added.empty') }),
+          group('import.sources.other', [
+            sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length })),
             sourceItem('field', 'smartphone', t('field.source'), t('field.source.hint')),
-            sourceItem('saved', 'refresh-cw', t('api.saved.title'), t('api.saved.hint', { n: apiDatasets().length }))),
-          h('h4', { text: t('api.sources') }),
-          renderCountryChips(),
-          h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, connectorIcon(c), c.name, connectorSub(c)))),
-          visibleConnectors().length ? null : h('p', { class: 'dm-help dm-xs', text: t('api.countries.none') }),
-          h('h4', { text: t('bridge.sources') }),
-          h('div', { class: 'dm-list' }, sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint'))),
-          h('div', null, ui.button({ label: t('import.sources.add'), icon: 'plus', size: 'sm', title: t('import.sources.add.hint'), onClick: () => addSource().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
+            sourceItem('guides', 'graduation-cap', t('guides.title'), t('guides.hint'))]));
+      }
+      /** A list item that runs an action (adds a source) instead of opening a view. */
+      function actionItem(id, icon, label, sub, run) {
+        return h('button', { type: 'button', class: 'dm-list-item', 'data-add-source': id, onclick: () => Promise.resolve().then(run).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 })) },
+          ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
+      }
+      /** An added source: the item, and a button that takes it out of the list. */
+      function addedItem(id, icon, label, sub, onRemove) {
+        return h('div', { class: 'dm-list-row', 'data-added': id },
+          sourceItem(id, icon, label, sub),
+          ui.button({ label: t('common.delete'), icon: 'x', size: 'sm', 'icon-only': true, variant: 'ghost', title: t('import.sources.remove.hint'), 'data-remove-source': id, onClick: onRemove }));
+      }
+      /** A preset goes back to the catalogue; a source of the user's own is deleted with its keys. */
+      async function removeConnector(c) {
+        const preset = !!c.preset;
+        const ok = await ui.dialog.confirm(t(preset ? 'import.sources.remove.preset.confirm' : 'import.sources.remove.confirm', { name: c.name }), { okLabel: t('common.delete'), danger: !preset });
+        if (!ok) return;
+        if (preset) await connectors.setAdded(c.id, false);
+        else { await connectors.remove(c.id); await D.require('api/secrets').forget(c.id); }
+        if (source === 'api:' + c.id) { if (apiUi) { apiUi.destroy(); apiUi = null; apiId = null; } source = preset ? 'catalog' : 'file'; }
+        shell.log(t('import.sources.removed', { name: c.name }), 'ok');
+        await reloadConnectors(); render();
+      }
+      /** A remembered bridge database is forgotten; the datasets fetched from it stay. */
+      async function forgetBridge(b) {
+        if (!(await ui.dialog.confirm(t('bridge.forget.confirm', { name: b.label }), { okLabel: t('common.delete') }))) return;
+        await bridge.forget(b.label);
+        if (source.startsWith('bridge:')) source = 'bridge';
+        shell.log(t('import.sources.removed', { name: b.label }), 'ok');
+        await reloadConnectors(); render();
+      }
+      /** A preset from the catalogue of open APIs becomes an added source and opens. */
+      async function addPreset(c) {
+        await connectors.setAdded(c.id, true);
+        shell.log(t('api.added', { name: c.name }), 'ok');
+        await reloadConnectors();
+        source = 'api:' + c.id; render();
+      }
+
+      // ---- the catalogue of open APIs, in the workspace: country chips, a search, and Lägg till per preset ----
+      let catalogFilter = '';
+      function renderCatalog() {
+        const listEl = h('div', { class: 'dm-list dm-catalog', 'data-api-catalog': '' });
+        const draw = () => {
+          const q = catalogFilter.trim().toLowerCase();
+          const list = catalogueConnectors().filter((c) => !countryFilter || !c.country || countryFilter.has(c.country)).filter((c) => !q || [c.name, c.publisher, c.description].join(' ').toLowerCase().includes(q));
+          replace(listEl, list.length ? list.map((c) => h('div', { class: 'dm-list-row', 'data-catalog': c.id },
+            h('div', { class: 'dm-list-item dm-list-item-static' }, ui.icon(connectorIcon(c), 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: c.name }), h('span', { class: 'dm-list-sub dm-truncate', text: connectorSub(c) }))),
+            ui.button({ label: t('api.catalog.add'), icon: 'plus', size: 'sm', 'data-catalog-add': c.id, onClick: () => addPreset(c) }))) : h('p', { class: 'dm-help', text: t('api.catalog.none') }));
+        };
+        const search = /** @type {any} */ (h('dm-input', { type: 'search', placeholder: t('api.catalog.search'), 'aria-label': t('api.catalog.search'), inline: true }));
+        search.value = catalogFilter;
+        search.addEventListener('input', () => { catalogFilter = search.value; draw(); });
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('globe', 20), t('api.sources'))),
+          h('p', { class: 'dm-help', text: t('api.catalog.hint') }),
+          h('div', { class: 'dm-row-wrap' }, search, renderCountryChips()),
+          listEl);
+        draw();
       }
       /** The line under a source's name: where it comes from, or at least its address. */
       function connectorSub(c) {
@@ -113,19 +192,6 @@
         if (type === 'neo4j') return 'share-2';
         if (type === 'opencde') return 'building-2';
         return D.require('api/families/databases').FAMILIES.some((f) => String(c.id).startsWith(f.id + '-')) ? 'database' : 'globe';
-      }
-      /** All the ways to add a source, with what each is for, instead of a button and a note per kind in the list. */
-      async function addSource() {
-        const options = [
-          { id: 'file', label: t('api.add.file'), help: t('import.sources.api.hint'), run: addConnector },
-          { id: 'family', label: t('families.add.source'), help: t('families.hint'), run: () => addFamily() },
-          { id: 'geodata', label: t('geodata.add.source'), help: t('geodata.add.hint'), run: () => addFamily('geodata') },
-        ];
-        let chosen = null;
-        const body = h('div', { class: 'dm-stack-sm' }, options.map((o) => h('button', { type: 'button', class: 'dm-op-tile', 'data-source': o.id, onclick: () => { chosen = o; const dlg = body.closest('dialog'); if (dlg) /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button button')).click(); } },
-          h('strong', { text: o.label }), h('span', { class: 'dm-help', text: o.help }))));
-        await ui.dialog.open({ title: t('import.sources.add'), help: 'kallor', body, actions: [{ label: t('common.cancel'), value: false }] });
-        if (chosen) await chosen.run();
       }
 
       // ---- country filter for the API sources (remembered per browser) ----
@@ -147,14 +213,14 @@
         else countryFilter.add(code);
         if (all.every((c) => countryFilter.has(c))) countryFilter = null;
         saveCountryFilter();
-        renderLeft();
+        renderCenter();
       }
       function renderCountryChips() {
         const all = availableCountries();
         if (all.length < 2) return null;
         const chip = (label, pressed, onclick) => h('button', { type: 'button', class: 'dm-chip', 'aria-pressed': pressed ? 'true' : 'false', onclick }, label);
         return h('div', { class: 'dm-chips', role: 'group', 'aria-label': t('api.countries'), title: t('api.countries.hint') },
-          chip(t('api.countries.all'), !countryFilter, () => { countryFilter = null; saveCountryFilter(); renderLeft(); }),
+          chip(t('api.countries.all'), !countryFilter, () => { countryFilter = null; saveCountryFilter(); renderCenter(); }),
           all.map((code) => chip(t('country.' + code), !countryFilter || countryFilter.has(code), () => toggleCountry(code))));
       }
       function sourceItem(id, icon, label, sub) {
@@ -176,6 +242,8 @@
 
       // ---- centre ----
       function renderCenter() {
+        if (source === 'catalog') { renderCatalog(); return; }
+        if (source.startsWith('bridge:')) { renderBridge(bridgeSources[Number(source.slice(7))]); return; }
         if (source.startsWith('api:')) { renderApi(); return; }
         if (source === 'saved') { renderSaved(); return; }
         if (source === 'bridge') { renderBridge(); return; }
@@ -270,8 +338,8 @@
         await openConnector(connector);
       }
       /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
-      async function addFamily(group) {
-        const connector = await familyDialog.open(ctx, group ? { group } : {});
+      async function addFamily(group, family) {
+        const connector = await familyDialog.open(ctx, Object.assign({}, group ? { group } : {}, family ? { family } : {}));
         if (!connector) return;
         await openConnector(connector);
       }
@@ -290,8 +358,9 @@
         if (!fieldUi) fieldUi = D.require('ui/field/field-view').create(ctx);
         fieldUi.render({ center: slots.center, right: slots.right }).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
       }
-      function renderBridge() {
-        if (!bridgeUi) { bridgeUi = bridgeView.create(ctx); bridgeUi.start(); }
+      function renderBridge(remembered) {
+        if (!bridgeUi) { bridgeUi = bridgeView.create(ctx, remembered ? { source: remembered.source } : {}); bridgeUi.start(); }
+        else if (remembered) bridgeUi.select(remembered.source).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
         replace(slots.center, bridgeUi.el);
       }
       /** Fetch a web address: configurations are added directly, data files continue in the wizard. */
@@ -917,7 +986,8 @@
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
-        if (source === 'bridge') { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }
+        if (source === 'catalog') { replace(slots.right, h('h4', { text: t('api.sources') }), h('p', { class: 'dm-help', text: t('api.catalog.hint') })); return; }
+        if (source === 'bridge' || source.startsWith('bridge:')) { replace(slots.right, h('h4', { text: t('bridge.title') }), h('p', { class: 'dm-help', text: t('bridge.help') })); return; }
         const items = [];
         if (wiz.project) {
           const p = wiz.project;
@@ -977,7 +1047,7 @@
         replace(slots.right, items);
       }
 
-      return { id: 'inhamta', activate, deactivate, get bridgeView() { return bridgeUi; } };
+      return { id: 'inhamta', leftTitle: 'import.sources', activate, deactivate, get bridgeView() { return bridgeUi; } };
     }
     return { createMode };
   });

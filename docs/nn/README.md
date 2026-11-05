@@ -6,7 +6,7 @@
 
 Dataspatium er ein nettapp for data frå kjelde til rapport: hent data frå filer og opne API-ar, lagre og handter datasett,
 gå gjennom og rett verdiar, analyser med R, visualiser og eksporter. Alt køyrer i din eigen nettlesar. Ingen tenar, ingen
-installasjon, ingen kontoar. Dataa dine forlèt aldri datamaskina med mindre du sjølv eksporterer dei.
+installasjon, ingen kontoar. Dataa dine forlèt aldri datamaskina med mindre du sjølv eksporterer dei. Tryggleiken er det første kravet: ingen nettverkskall utan di handling og ditt samtykke, løyndomar berre krypterte, komponentar låste og kontrollerte, og alt som blir delt, blir gått gjennom først.
 
 ![Dataspatium i modusen Bearbeid med ein tabell over svenske kommunar](../images/bearbeta.png)
 
@@ -154,7 +154,7 @@ Cypher og loggar kvart kall med same X-Request-Id som tenaren skriv i førespurn
 andre OpenCDE-klientar fungerer òg. Tenaren trengst ikkje for resten av appen: utan tenar fungerer alt anna som før. Kontrolls README og `docs/client-guide.md` skildrar samarbeidet frå tenaren si side;
 her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.2.0 fungerer med Kontroll 2.2.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
+Dataspatium 2.3.0 fungerer med Kontroll 2.3.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
 [snabbstart.md](snabbstart.md) tek paret frå ingenting til ei sak på tjue minutt.
 
 ## Lær meir
@@ -181,6 +181,7 @@ Filnamna er dei same på alle språk (dei svenske originalane), så lenkjene ver
 - [Python i Dataspatium](python.md): Python-konsollen, `dm_read()`, `dm_write()` og pakkar som blir henta ved behov.
 - [Visualiser](visualisera.md): diagrambyggjaren, D3-malar, R-diagram, kart og dashbord.
 - [Dokument og malar](dokumentmallar.md): malspråket og utdataformata.
+- [Tryggleik](sakerhet.md): trugsmålsmodell, kontrollane og prova som viser dei, personopplysningar og lagring, og korleis ein sårbarheit blir rapportert.
 - [Lisensar](licenser.md): kva du kan gjere med appen, og kva lisensar tredjepartskomponentane har.
 - [Utvikling](../utveckling.md), [Arkitektur](../arkitektur.md) og [Stilguide](../stilguide.md) for dei som vil forstå
   koden (på svensk); korleis bidrag blir tekne imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
@@ -206,13 +207,15 @@ Filnamna er dei same på alle språk (dei svenske originalane), så lenkjene ver
 ## Feil og framlegg
 
 Rapporter feil eller ønske som *Issues* her på GitHub. Skildre nettlesar, versjon av Dataspatium (blir vist under
-hjelpeknappen) og kva du gjorde. Sjå [CONTRIBUTING.md](../../CONTRIBUTING.md).
+hjelpeknappen) og kva du gjorde. Sjå [CONTRIBUTING.md](../../CONTRIBUTING.md). Legg ikkje ved personopplysningar eller løyndomar. For ei
+tryggleikssårbarheit, følg [SECURITY.md](../../SECURITY.md) i staden for å opne eit issue.
 
 ## Utvikling
 
 - Ingen byggjesteg, ingen node.js. Opne `index.html` direkte, eller server mappa med `python -m http.server 8080`.
 - Tredjepartskomponentar: `python tools/fetch_vendor.py` følgt av `python tools/wrap_assets.py`.
 - Testar: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Sjå [utveckling.md](../utveckling.md) (svensk).
+- Tryggleik: prova for samtykke, løyndomar, gjennomgang før deling, OAuth2 (PKCE, state, tilbakekall) og maskeringa i loggen er med i suiten; sjå [sakerhet.md](sakerhet.md).
 
 ## Lisens
 
@@ -225,4 +228,5 @@ eit issue for andre vilkår. Kva lisensen tyder i praksis, blir forklart i [lice
 Tredjepartskomponentar i `vendor/` har eigne lisensar (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL og GPL), sjå
 [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R og dei GPL-lisensierte R-pakkane blir distribuerte uendra; kjeldekoden
 finst hos [R-prosjektet](https://cran.r-project.org/sources.html), [webR](https://github.com/r-wasm/webr) og
-[CRAN](https://cran.r-project.org/) i versjonane som er oppgjevne der.
+[CRAN](https://cran.r-project.org/) i versjonane som er oppgjevne der. Sjå [SECURITY.md](../../SECURITY.md) for korleis ei sårbarheit blir rapportert,
+og kva prosjektet gjer for å halde seg trygt.

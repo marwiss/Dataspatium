@@ -112,7 +112,7 @@ skrivende del bliver trin; værdier er literaler.
 
 ## Neo4j som kilde
 
-*Tilføj databasekilde* i Indsaml har familien **Neo4j (Bolt)**: adresse (`neo4j+s://…databases.neo4j.io` for Aura eller
+*Neo4j* under *Tilføj kilder* i Indsaml (familien **Neo4j (Bolt)**, som også findes i *Databasekilde*): adresse (`neo4j+s://…databases.neo4j.io` for Aura eller
 en egen server), database, brugernavn og adgangskode (gemmes aldrig i klartekst). Kilden åbner en Cypher-editor; *Kør*
 forbinder med Neo4j's driver over WebSocket efter dit samtykke (formålet Neo4j) og viser resultatet som tabel, hvor
 knuder og relationer fladgøres til deres egenskaber. Indeholder svaret knuder og relationer, gemmer **Gem som graf** dem

@@ -58,7 +58,7 @@ personnumre) beholdes som tekst. Gi datasettet et navn, og importer. Under flate
 appen: knappen for eksempeldataene *Befolkning per kommune 2024 (Sverige)* og listen *Grenser for kart* med kommune- og
 regiongrenser for Sverige, Danmark, Norge og Finland.
 
-Under *Åpne API-er* finnes forhåndsinnstillinger for statistikkbyråene og flere andre etater i Norge, Danmark, Finland og
+Under *Legg til kilder* → *Åpne API-er* finnes fortegnelsen over forhåndsinnstillinger (de du legger til, kommer under *Tillagte kilder*; SCB og Boverket ligger der fra start) for statistikkbyråene og flere andre etater i Norge, Danmark, Finland og
 Island, de selvstyrte områdene, Nordic Statistics, Eurostat og de svenske etatene (SCB, Folkhälsomyndigheten,
 Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriet, Sveriges dataportal samt Boverket for dem som har nøkler).
 Landknappene over listen velger hvilke lands kilder som vises. Bla eller søk fram en tabell, velg variabler, forhåndsvis, og
@@ -67,8 +67,7 @@ nytt fra Håndter når kilden er oppdatert, og *Lagrede hentinger* i Hent oppdat
 spiller av oppskriftene deres.
 
 Databaser: Access-filer slippes på flaten som andre filer; databaser på datamaskinen (SQL Server, ODBC, Excel,
-SQLite) nås gjennom *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gjennom *Legg
-til databasekilde*. I Chrome og Edge kan en fil lenkes og leses inn igjen fra disken. Se [kallor.md](kallor.md).
+SQLite) nås gjennom *Database via broen* og tjenester over HTTP (PostgREST, OData, GraphQL med flere) gjennom *Databasekilde*; OpenCDE og Neo4j har egne valg under Legg til kilder. I Chrome og Edge kan en fil lenkes og leses inn igjen fra disken. Se [kallor.md](kallor.md).
 
 ### 2. Gå gjennom og rett (Bearbeid)
 

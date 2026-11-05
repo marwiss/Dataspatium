@@ -74,7 +74,7 @@ uppsprettuna sem síðast var opnuð í brúnni (*Keyra á*).
 
 ## Gagnagrunnsuppsprettur um HTTP
 
-Hnappurinn **Bæta við gagnagrunnsuppsprettu** undir *Gagnagrunnar* í Sækja býr til venjulega API-uppsprettu úr
+Valið **Gagnagrunnsuppspretta** undir *Bæta við uppsprettum* í Sækja býr til venjulega API-uppsprettu úr
 vistfangi og lykli. Forritið spyr þjónustuna um töflur hennar (skemauppgötvun) og bætir við einum endapunkti fyrir
 hverja töflu auk almenns endapunkts þar sem þú gefur upp töfluna sjálf. Uppsprettan virkar síðan eins og forstilltu
 vefþjónusturnar: stikur, forskoðun, síður sem er fylgt sjálfkrafa og vistaðar sóknir sem eru uppfærðar með einum smelli.
@@ -103,7 +103,7 @@ Lyklar og lykilorð haldast í setunni eða eru vistuð dulkóðuð; stillinguna
 
 ### Neo4j yfir Bolt
 
-Fjölskyldan **Neo4j (Bolt)** í *Bæta við gagnagrunnsuppsprettu* tengist Neo4j Aura eða eigin þjóni með rekli Neo4j yfir
+Valið **Neo4j** undir *Bæta við uppsprettum* (fjölskyldan **Neo4j (Bolt)**, sem er einnig í *Gagnagrunnsuppspretta*) tengist Neo4j Aura eða eigin þjóni með rekli Neo4j yfir
 WebSocket (`neo4j+s://…`, gagnagrunnur, notandanafn og lykilorð; lykilorðið er aldrei vistað í hreinum texta).
 Uppsprettan opnar Cypher-ritil: niðurstaðan verður tafla, eða netgagnasafn þegar svarið inniheldur hnúta og vensl;
 fyrirspurnir má vista á uppsprettunni. Tengingin krefst samþykkis (tilgangurinn Neo4j) og fellur ekki undir CORS; eigin
@@ -111,7 +111,7 @@ fyrirspurnir má vista á uppsprettunni. Tengingin krefst samþykkis (tilganguri
 
 ### OpenCDE-þjónn (BCF og Documents API)
 
-Fjölskyldan **OpenCDE (BCF, Documents)** í *Bæta við gagnagrunnsuppsprettu* tengist þjóni sem fylgir OpenCDE-skilum
+Valið **OpenCDE** undir *Bæta við uppsprettum* (fjölskyldan **OpenCDE (BCF, Documents)**, sem er einnig í *Gagnagrunnsuppspretta*) tengist þjóni sem fylgir OpenCDE-skilum
 buildingSMART, til dæmis [Kontroll](https://github.com/marwiss/Kontroll). Sláðu inn vistfang þjónsins og
 biðlaraauðkennið sem stjórnandi þjónsins skráði fyrir Dataspatium (opinber biðlari með endurbeiningarvistfangið
 `http://127.0.0.1:8080/oauth-callback.html` eða samsvarandi fyrir vistfangið sem forritið er þjónað frá). Uppsprettan
@@ -163,7 +163,7 @@ opnar í sprettiglugga (innskráning, upphal, val skjala) birtast á tungumáli 
 
 ## Opin landupplýsingagögn
 
-Glugginn *Bæta við landupplýsingauppsprettu* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,
+Glugginn fyrir *Landupplýsingauppsprettu* undir *Bæta við uppsprettum* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,
 OGC API Features- og ArcGIS-þjónustur frá norrænum stofnunum og sveitarfélögum (SCB, SGU, Naturvårdsverket,
 Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Hagstofa Finnlands, SYKE,
 Helsinki, Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands og fleiri), allar
@@ -176,7 +176,7 @@ skipulag, og *Ryhti kaavatiedot (OGC API Features)* gefur skipulagsskrá Finnlan
 reitirnir fyrir eigin þjónustu. Planbestämmelsekatalog Boverket er venjuleg API-uppspretta (*Boverket
 Planbestämmelsekatalogen*), sjá [planer.md](planer.md).
 
-Hnappurinn **Bæta við landupplýsingauppsprettu** undir *Gagnagrunnar* í Safna gerir venjulega API-uppsprettu úr vistfangi
+Valið **Landupplýsingauppspretta** undir *Bæta við uppsprettum* í Safna gerir venjulega API-uppsprettu úr vistfangi
 landupplýsingaþjónustu, á sama hátt sem gagnagrunnsuppspretturnar. Forritið les lög þjónustunnar og setur einn endapunkt á
 hvert lag auk almenns þar sem þú tilgreinir lagið sjálf. Svörin eru GeoJSON í WGS 84: gagnasafnið fær rúmfræðidálk og
 opnast sem kort í Vinna (sjá [kartor.md](kartor.md)). Uppsprettan sýnir lögin sem lista sem hægt er að sía; veldu lag,

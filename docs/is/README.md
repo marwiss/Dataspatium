@@ -6,7 +6,7 @@
 
 Dataspatium er vefforrit fyrir gögn frá uppruna til skýrslu: sæktu gögn úr skrám og opnum vefþjónustum, vistaðu og haltu
 utan um gagnasöfn, farðu yfir og leiðréttu gildi, greindu með R, myndgerðu og fluttu út. Allt keyrir í þínum eigin vafra.
-Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei tölvuna nema þú flytjir þau sjálf(ur) út.
+Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei tölvuna nema þú flytjir þau sjálf(ur) út. Öryggi er fyrsta krafan: engin netköll án aðgerðar þinnar og samþykkis, leyndarmál aðeins dulrituð, íhlutir fastsettir og staðfestir, og allt sem er deilt er fyrst yfirfarið.
 
 ![Dataspatium í hamnum Vinna með töflu yfir sænsk sveitarfélög](../images/bearbeta.png)
 
@@ -151,7 +151,7 @@ hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. 
 OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.2.0 virkar með Kontroll 2.2.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+Dataspatium 2.3.0 virkar með Kontroll 2.3.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira
@@ -178,6 +178,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Python í Dataspatium](python.md): Python-stjórnborðið, `dm_read()`, `dm_write()` og pakkar sem eru sóttir eftir þörfum.
 - [Myndgera](visualisera.md): myndritasmiðurinn, D3-snið, R-myndrit, kort og mælaborð.
 - [Skjöl og snið](dokumentmallar.md): sniðmálið og úttakssniðin.
+- [Öryggi](sakerhet.md): ógnarlíkan, stýringarnar og prófanirnar sem sanna þær, persónuupplýsingar og geymsla, og hvernig veikleiki er tilkynntur.
 - [Leyfi](licenser.md): hvað þú mátt gera með forritið og hvaða leyfi íhlutir þriðja aðila hafa.
 - [Þróun](../utveckling.md), [Högun](../arkitektur.md) og [Stílleiðbeiningar](../stilguide.md) fyrir þau sem vilja skilja
   kóðann (á sænsku); hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
@@ -203,7 +204,8 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 ## Villur og tillögur
 
 Tilkynntu villur eða óskir sem *Issues* hér á GitHub. Lýstu vafranum, útgáfu Dataspatium (birtist undir hjálparhnappnum) og
-hvað þú gerðir. Sjá [CONTRIBUTING.md](../../CONTRIBUTING.md).
+hvað þú gerðir. Sjá [CONTRIBUTING.md](../../CONTRIBUTING.md). Hengdu engar persónuupplýsingar og engin leyndarmál við. Fyrir öryggisveikleika,
+fylgdu [SECURITY.md](../../SECURITY.md) í stað þess að opna issue.
 
 ## Þróun
 
@@ -211,6 +213,7 @@ hvað þú gerðir. Sjá [CONTRIBUTING.md](../../CONTRIBUTING.md).
 - Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
 - Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox). Sjá [utveckling.md](../utveckling.md) (á
   sænsku).
+- Öryggi: prófanirnar fyrir samþykki, leyndarmál, yfirferð áður en deilt er, OAuth2 (PKCE, state, afturhvarf) og hulun atvikaskrár eru hluti af prófunasafninu; sjá [sakerhet.md](sakerhet.md).
 
 ## Leyfi
 
@@ -223,4 +226,5 @@ Hvað leyfið þýðir í reynd er útskýrt í [licenser.md](licenser.md).
 Íhlutir þriðja aðila í `vendor/` hafa sín eigin leyfi (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL og GPL), sjá
 [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R og GPL-leyfðir R-pakkar eru dreifðir óbreyttir; frumkóðinn fæst hjá
 [R-verkefninu](https://cran.r-project.org/sources.html), [webR](https://github.com/r-wasm/webr) og
-[CRAN](https://cran.r-project.org/) í þeim útgáfum sem þar eru tilgreindar.
+[CRAN](https://cran.r-project.org/) í þeim útgáfum sem þar eru tilgreindar. Sjá [SECURITY.md](../../SECURITY.md) um hvernig veikleiki er tilkynntur og hvað
+verkefnið gerir til að vera áfram öruggt.

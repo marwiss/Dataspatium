@@ -114,7 +114,7 @@ writing part becomes steps; values are literals.
 
 ## Neo4j as a source
 
-*Add database source* in Acquire has the family **Neo4j (Bolt)**: address (`neo4j+s://…databases.neo4j.io` for Aura or an
+*Neo4j* under *Add sources* in Acquire (the family **Neo4j (Bolt)**, also in *Database source*): address (`neo4j+s://…databases.neo4j.io` for Aura or an
 own server), database, user name and password (never stored in clear text). The source opens a Cypher editor; *Run*
 connects with Neo4j's driver over WebSocket after your consent (purpose Neo4j) and shows the result as a table where
 nodes and relationships are flattened to their properties. When the answer holds nodes and relationships, **Save as

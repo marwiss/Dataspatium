@@ -98,7 +98,7 @@ profil har sitt eige. Dokumentasjonen finst på dei same språka i mappa `docs`.
 
 ## Finst det kjelder frå andre nordiske land?
 
-Ja. Under *Opne API-ar* i Hent finst statistikkbyråa i Noreg, Danmark, Finland, Island, Grønland, Færøyane og Åland,
+Ja. Under *Legg til kjelder* → *Opne API-ar* i Hent finst statistikkbyråa i Noreg, Danmark, Finland, Island, Grønland, Færøyane og Åland,
 Nordic Statistics, Folkehelseinstituttet, Brønnøysundregistera, Kartverket, MET Norway, Sotkanet frå THL, føretaksregisteret
 frå PRH, Digitraffic, Meteorologisk institutt i Finland, Veðurstofa Íslands og dei danske og finske dataportalane.
 Landknappane over lista vel kva lands kjelder som blir viste; valet blir lagra i nettlesaren. Alle kjeldene er kontrollerte for

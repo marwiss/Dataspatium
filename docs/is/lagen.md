@@ -2,7 +2,7 @@
 
 Dataspatium er skipt í átta hami sem fylgja gangi vinnunnar, í sama anda og hagskýrslugerðin safna, vinna, greina
 og miðla: Sækja, Umsjón, Leita, Vinna, Greina, Myndgera, Flytja út, Deila. Allir hamir hafa sömu beinagrind:
-hamavalið efst, hlutaspjaldið til vinstri, vinnuflötinn í miðjunni, eiginleikaspjaldið til hægri og stöðustikuna
+hamavalið efst, hlutaspjaldið til vinstri (með eigin fyrirsögn hamsins í spjaldhausnum: Upprunar í Sækja, Gagnasöfn í hinum), vinnuflötinn í miðjunni, eiginleikaspjaldið til hægri og stöðustikuna
 neðst, með dagbókina fellda inn fyrir ofan hana. Spjöldin skipta aldrei um stað. Alt+1 til Alt+8 skipta um ham. Tómt
 vinnusvæði opnast í Sækja, vinnusvæði með gagnasöfnum í Umsjón. Hnapparnir efst til hægri opna skipanaspjaldið,
 skipta um tungumál, skipta um þema (ljóst, dökkt, fylgja kerfinu) og opna hjálpina.
@@ -35,23 +35,22 @@ Hér koma gögn inn: skrár sem sleppt er á flötinn, límdur texti, vefslóði
 fer í skrefum: skrá, stillingar með forskoðun, dálkar með gerðum, lokið. Snið: CSV og annar aðgreindur texti, texti
 með fastri dálkbreidd, Excel, ODS, JSON (líka JSON-stat og GeoJSON), XML, SQLite, GeoPackage, shapefile og gegnum R:
 SPSS, Stata, SAS, PX, Parquet, RDS og RData (sjá [format.md](format.md)); R-sniðin eru flutt inn í einu skrefi án
-forskoðunar. Undir Opnar vefþjónustur eru forstillingar fyrir Hagstofu Íslands, Veðurstofu Íslands og hagstofur og
+forskoðunar. Vinstri dálkurinn, með fyrirsögninni *Upprunar* í spjaldhausnum, hefur fjóra hópa. *Algengar uppsprettur*: Skrár, Líma og Af vefslóð. *Bæta við uppsprettum*: Gagnagrunnur um brúna, Opnar vefþjónustur, API úr skrá, Gagnagrunnsuppspretta, OpenCDE, Neo4j og Landupplýsingauppspretta. *Viðbættar uppsprettur*: það sem þú hefur bætt við, hver röð með hnappi til að fjarlægja; frá byrjun eru opin forritaskil SCB og Boverket þar. *Aðrar uppsprettur*: Vistaðar sóknir, Söfnun á vettvangi og Leiðbeiningar. *Opnar vefþjónustur* sýnir skrána yfir forstillingar fyrir Hagstofu Íslands, Veðurstofu Íslands og hagstofur og
 stofnanir hinna Norðurlandanna, SCB (flettu í efnistrénu eða leitaðu að töflu), Eurostat, Nordic Statistics og
-fleiri, auk uppruna sem krefjast lykla; landahnapparnir ofan við listann velja hvaða landa upprunar birtast. Eigin
-uppsetningum er bætt við úr skrá og þeim má deila. *Vistaðar sóknir* telur upp gagnasöfnin sem komið hafa úr
+fleiri, auk uppruna sem krefjast lykla á vinnuflötinum, með landahnöppum og leit. *Bæta við* flytur forstillingu í Viðbættar uppsprettur og opnar hana; fjarlægir þú hana þar fer hún aftur í skrána og má bæta við aftur. Eigin uppsetningum er bætt við með *API úr skrá* og þeim má deila; eigin uppspretta sem er fjarlægð er eytt með vistuðum lyklum sínum. *Vistaðar sóknir* telur upp gagnasöfnin sem komið hafa úr
 vefþjónustu og uppfærir þau með einum smelli, eitt í einu eða öll. Í fyrsta skipti sem forritið þarf að hafa samband
 við netið í einhverjum tilgangi (vefþjónustur, vefslóðir, GitHub, íhlutir) spyr það um leyfi; svarið má vista. Sjá
 [api-konfiguration.md](api-konfiguration.md).
 
-Undir *Gagnagrunnar* eru tvær leiðir inn: *Gagnagrunnur um brúna* (Access, Excel, SQL Server, SQLite og
-ODBC-uppsprettur á tölvunni um litla staðbundna skriftu) og *Bæta við gagnagrunnsuppsprettu* (PostgREST, OData,
-GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable um HTTP). Access-skrár eru
+*Gagnagrunnur um brúna* opnar brúarsýnina (Access, Excel, SQL Server, SQLite og
+ODBC-uppsprettur á tölvunni um litla staðbundna skriftu); hver gagnagrunnur sem þú tengist birtist undir Viðbættar uppsprettur og opnar brúarsýnina aftur með þann gagnagrunn valinn. *Gagnagrunnsuppspretta* býr til uppsprettu úr vistfangi og lykli (PostgREST, OData,
+GraphQL, CouchDB, ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable um HTTP; einnig OpenCDE og Neo4j, sem auk þess eiga sín eigin val á listanum). Access-skrár eru
 auk þess lesnar beint sem skrár, og í Chrome og Edge má tengja skrá svo gagnasafnið sé lesið aftur af diski. Sjá
 [kallor.md](kallor.md).
 
 QGIS-verkefni (.qgs, .qgz) verða kortasýnir: lagaröð, sýnileiki og tákn fylgja með, lögin eru pöruð við gagnasöfn með sama skráarheiti og gagnaskrár sem sleppt er með verkefninu eru fluttar inn fyrst (sjá [kartor.md](kartor.md)).
 
-Undir *Gagnagrunnar* er einnig *Bæta við landupplýsingauppsprettu*: WFS-, OGC API Features- eða ArcGIS-þjónusta verður
+*Landupplýsingauppspretta* undir Bæta við uppsprettum: WFS-, OGC API Features- eða ArcGIS-þjónusta verður
 uppspretta þar sem lögin eru sótt sem GeoJSON og opnuð sem kort, og uppsprettan *Geodataportalen (sök geodata)* leitar í
 sænsku landsskránni yfir landupplýsingar og bætir þjónustum við með einum smelli. Forstilltar landupplýsingauppsprettur
 eru til fyrir SCB, SGU, Havs- och vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Hagstofu
@@ -73,7 +72,7 @@ Byggingarlíkön í IFC og teikningar í DXF verða að gagnasöfnum af tegundin
 **Söfnun á vettvangi** í lista yfir heimildir byggir eyðublað á dálkum og reglum gagnasafns og sendir það í símann. Raðirnar koma aftur sem ný
 útgáfa (sjá [insamling.md](insamling.md)).
 
-Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu undir heitinu. *Bæta við heimild* safnar saman öllum leiðum til að bæta við heimild: stillingaskrá, gagnagrunni eða landupplýsingaþjónustu.
+Allar heimildir á listanum líta eins út, með tákni fyrir gerð og línu undir heitinu.
 
 **Forritið segir fyrst hvað skráin er**, til dæmis tafla með stöðum, net eða byggingarlíkan, og sýnir hana á sínu eigin formi: kort, myndirnar, skissu af netinu, teikninguna eða fyrstu síðuna. Ef eitthvað er þess virði að spyrja um spyr það: hnit sem virðast hafa skipt um stað, í hvaða hnitakerfi þau eru og hvort lesa eigi lista af tengslum sem net. Ekkert breytist fyrr en þú svarar, og kortið sýnir hvað svarið gerir.
 

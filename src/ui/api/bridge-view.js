@@ -28,7 +28,7 @@
      * @param {any} ctx the mode context
      * @returns {{el: HTMLElement, state: any, start: () => Promise<void>, destroy: () => void, render: () => void, connect: (url: string, token: string) => Promise<void>, loadTables: () => Promise<void>, selectTable: (name: string) => Promise<void>, importSelected: (name?: string) => Promise<any>, runSql: (sql: string) => Promise<void>, importSql: (name?: string) => Promise<any>}}
      */
-    function create(ctx) {
+    function create(ctx, options = {}) {
       const { shell, store } = ctx;
       const state = { url: '', info: null, error: '', busy: '', sources: null, source: { kind: 'access' }, tables: null, table: null, preview: null, sql: '', sqlResult: null, name: '', persisted: false };
       const el = h('div', { class: 'dm-stack dm-bridge' });
@@ -36,12 +36,22 @@
       const fail = (err) => { state.error = (err && err.message) || String(err); state.busy = ''; shell.log(state.error, 'error'); render(); };
       const kinds = () => (state.info && Array.isArray(state.info.kinds) ? state.info.kinds : Object.keys(FIELDS)).filter((k) => FIELDS[k]);
 
-      async function start() {
+      /** @type {Promise<void>|null} the start in flight, so that a database chosen from the left column waits for it */
+      let ready = null;
+      function start() { ready = startNow(); return ready; }
+      async function startNow() {
         unsub = bridge.subscribe(() => { if (!destroyed) render(); });
         try { state.persisted = await secrets.isPersisted(bridge.ID); } catch (_e) { state.persisted = false; }
         state.url = await bridge.rememberedUrl();
         if (bridge.isConnected()) { try { state.info = await bridge.info(); } catch (err) { state.error = (err && err.message) || String(err); } }
+        if (options.source) { state.source = Object.assign({}, options.source); if (bridge.isConnected()) { await loadTables(false); return; } }
         render();
+      }
+      /** A remembered database from Inhämta's list of added sources: shown, and its tables listed when the bridge is connected. */
+      async function select(source) {
+        if (ready) await ready;
+        state.source = Object.assign({}, source);
+        if (bridge.isConnected()) await loadTables(false); else render();
       }
       function destroy() { destroyed = true; if (unsub) unsub(); }
 
@@ -74,11 +84,12 @@
         state.busy = 'sources'; render();
         try { state.sources = await bridge.sources(); state.busy = ''; render(); } catch (err) { fail(err); }
       }
-      async function loadTables() {
+      async function loadTables(rememberIt = true) {
         state.busy = 'tables'; state.error = ''; state.tables = null; state.table = null; state.preview = null; render();
         try {
           state.tables = await bridge.tables(state.source);
           bridge.setCurrent(state.source);
+          if (rememberIt) bridge.remember(state.source).catch((err) => D.log('bridge', 'could not remember the database', err));
           state.busy = '';
           render();
         } catch (err) { fail(err); }
@@ -258,7 +269,7 @@
           connected ? sqlCard() : null);
       }
 
-      return { el, state, start, destroy, render, connect, loadTables, selectTable, importSelected, runSql, importSql };
+      return { el, state, start, select, destroy, render, connect, loadTables, selectTable, importSelected, runSql, importSql };
     }
     return { create, FIELDS };
   });

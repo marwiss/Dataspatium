@@ -60,17 +60,20 @@ nollor (kommunkoder, personnummer) behålls som text. Ge datamängden ett namn o
 som följer med appen: knappen för exempeldatan *Befolkning per kommun 2024* och listan *Gränser för kartor* med
 kommun- och regiongränser för Sverige, Danmark, Norge och Finland.
 
-Under *Öppna API:er* finns förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat,
-SMHI, luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket
-och Lantmäteriet Direkt för den som har egna nycklar. Därtill statistikbyråerna och flera andra myndigheter i
-Danmark, Norge, Finland och Island, de självstyrande områdena och Nordic Statistics; landsknapparna ovanför
-listan väljer vilka länders källor som visas. Bläddra eller sök fram en tabell, välj variabler, förhandsgranska
+Vänsterkolumnen har fyra grupper: *Vanliga källor* (Filer, Klistra in, Från webbadress), *Lägg till källor*, *Tillagda
+källor* och *Övriga källor* (Sparade hämtningar, Insamling i fält, Guider). *Öppna API:er* under Lägg till källor visar
+förteckningen över förinställningar för SCB, Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
+luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
+Lantmäteriet Direkt för den som har egna nycklar. Därtill statistikbyråerna och flera andra myndigheter i Danmark, Norge,
+Finland och Island, de självstyrande områdena och Nordic Statistics; landsknapparna och sökfältet ovanför listan väljer vad som
+visas. *Lägg till* lägger förinställningen under Tillagda källor och öppnar den; SCB och Boverket ligger där från start,
+och det du tar bort går tillbaka till förteckningen. Bläddra eller sök fram en tabell, välj variabler, förhandsgranska
 och hämta till en ny datamängd eller lägg till i en befintlig. En hämtad datamängd kommer ihåg sin fråga, så den kan
 hämtas igen från Hantera när källan uppdaterats.
 
 Databaser: Access-filer släpps på ytan som andra filer; databaser på datorn (SQL Server, ODBC, Excel, SQLite) nås
-genom *Databas via bryggan* och tjänster över HTTP (PostgREST, OData, GraphQL med flera) genom *Lägg till
-databaskälla*. I Chrome och Edge kan en fil länkas och läsas in igen från disken. Se [kallor.md](kallor.md).
+genom *Databas via bryggan* (varje ansluten databas hamnar under Tillagda källor) och tjänster över HTTP (PostgREST, OData,
+GraphQL med flera) genom *Databaskälla*; OpenCDE och Neo4j har egna val under Lägg till källor. I Chrome och Edge kan en fil länkas och läsas in igen från disken. Se [kallor.md](kallor.md).
 
 ### 2. Granska och rätta (Bearbeta)
 

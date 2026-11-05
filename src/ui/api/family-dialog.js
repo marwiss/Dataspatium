@@ -125,7 +125,7 @@
           if (state.family === 'opencde' && !String(state.values.clientId || '').trim()) {
             const opencde = D.require('api/families/opencde');
             const redirect = opencde.redirectUri();
-            if (!redirect) throw new Error(t('families.err.required', { field: t('families.field.clientId') }));
+            if (!redirect) throw new Error(t('families.err.register.file'));
             const reg = await opencde.register(state.values.baseUrl, { redirectUri: redirect });
             state.values = Object.assign({}, state.values, { clientId: reg.clientId, clientSecret: reg.clientSecret || '' });
           }

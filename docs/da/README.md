@@ -6,7 +6,7 @@
 
 Dataspatium er en webapp til data fra kilde til rapport: hent data fra filer og åbne API'er, gem og håndter
 datasæt, gennemgå og ret værdier, analysér med R, visualisér og eksportér. Alt kører i din egen browser. Ingen
-server, ingen installation, ingen konti. Dine data forlader aldrig computeren, medmindre du selv eksporterer dem.
+server, ingen installation, ingen konti. Dine data forlader aldrig computeren, medmindre du selv eksporterer dem. Sikkerheden er det første krav: ingen netværkskald uden din handling og dit samtykke, hemmeligheder kun krypteret, komponenter fastlåst og kontrolleret, og alt, der deles, gennemgås først.
 
 ![Dataspatium i tilstanden Bearbejd med en tabel over svenske kommuner](../images/bearbeta.png)
 
@@ -156,7 +156,7 @@ OpenCDE-API'er, så andre OpenCDE-klienter fungerer også. Serveren er ikke nød
 andet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbejdet fra
 serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.2.0 fungerer med Kontroll 2.2.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
+Dataspatium 2.3.0 fungerer med Kontroll 2.3.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
 [snabbstart.md](snabbstart.md) tager parret fra ingenting til en sag på tyve minutter.
 
 ## Lær mere
@@ -183,6 +183,7 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 - [Python i Dataspatium](python.md): Python-konsollen, `dm_read()`, `dm_write()` og pakker, der hentes efter behov.
 - [Visualisér](visualisera.md): diagrambyggeren, D3-skabeloner, R-diagrammer, kort og dashboards.
 - [Dokumenter og skabeloner](dokumentmallar.md): skabelonsproget og outputformaterne.
+- [Sikkerhed](sakerhet.md): trusselsmodel, kontrollerne og de test, der viser dem, personoplysninger og opbevaring, og hvordan en sårbarhed rapporteres.
 - [Licenser](licenser.md): hvad du må med appen, og hvilke licenser tredjepartskomponenterne har.
 - [Udvikling](../utveckling.md), [Arkitektur](../arkitektur.md) og [Stilguide](../stilguide.md) for dem, der vil
   forstå koden (på svensk); hvordan bidrag modtages, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
@@ -209,7 +210,8 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
 ## Fejl og forslag
 
 Rapportér fejl eller ønsker som *Issues* her på GitHub. Beskriv browser, version af Dataspatium (vises under
-hjælpeknappen), og hvad du gjorde. Se [CONTRIBUTING.md](../../CONTRIBUTING.md).
+hjælpeknappen), og hvad du gjorde. Se [CONTRIBUTING.md](../../CONTRIBUTING.md). Vedlæg ingen personoplysninger og ingen hemmeligheder. For en
+sikkerhedssårbarhed, følg [SECURITY.md](../../SECURITY.md) i stedet for at åbne et issue.
 
 ## Udvikling
 
@@ -217,6 +219,7 @@ hjælpeknappen), og hvad du gjorde. Se [CONTRIBUTING.md](../../CONTRIBUTING.md).
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` efterfulgt af `python tools/wrap_assets.py`.
 - Test: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Se [utveckling.md](../utveckling.md)
   (svensk).
+- Sikkerhed: testene for samtykke, hemmeligheder, gennemgang før deling, OAuth2 (PKCE, state, tilbagekald) og loggens maskering indgår i suiten; se [sakerhet.md](sakerhet.md).
 
 ## Licens
 
@@ -230,4 +233,5 @@ tilladelse. Licensgiver er Dataspatiums ophavsperson, der kan kontaktes via GitH
 Tredjepartskomponenter i `vendor/` har deres egne licenser (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL og GPL), se
 [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md). R og de GPL-licenserede R-pakker distribueres uændret;
 kildekoden findes hos [R-projektet](https://cran.r-project.org/sources.html), [webR](https://github.com/r-wasm/webr)
-og [CRAN](https://cran.r-project.org/) i de versioner, der angives der.
+og [CRAN](https://cran.r-project.org/) i de versioner, der angives der. Se [SECURITY.md](../../SECURITY.md) for, hvordan en sårbarhed rapporteres,
+og hvad projektet gør for at forblive sikkert.

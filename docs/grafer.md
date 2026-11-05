@@ -112,7 +112,7 @@ skrivande delen blir steg; värden är literaler.
 
 ## Neo4j som källa
 
-*Lägg till databaskälla* i Inhämta har familjen **Neo4j (Bolt)**: adress (`neo4j+s://…databases.neo4j.io` för Aura
+*Neo4j* under *Lägg till källor* i Inhämta (familjen **Neo4j (Bolt)**, som också finns i *Databaskälla*): adress (`neo4j+s://…databases.neo4j.io` för Aura
 eller en egen server), databas, användarnamn och lösenord (sparas aldrig i klartext). Källan öppnar en Cypher-redigerare;
 *Kör* ansluter med Neo4j:s drivrutin över WebSocket efter ditt samtycke (ändamålet Neo4j) och visar resultatet som
 tabell där noder och relationer plattas ut till sina egenskaper. Innehåller svaret noder och relationer sparar **Spara som

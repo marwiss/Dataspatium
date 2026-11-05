@@ -76,7 +76,7 @@ opna i brua (*Køyr mot*).
 
 ## Databasekjelder over HTTP
 
-Knappen **Legg til databasekjelde** under *Databasar* i Hent lagar ei vanleg API-kjelde av ei adresse og ein
+Valet **Databasekjelde** under *Legg til kjelder* i Hent lagar ei vanleg API-kjelde av ei adresse og ein
 nøkkel. Appen spør tenesta etter tabellane (skjemaoppdaging) og legg til eitt endepunkt per tabell pluss eit
 generelt der du oppgjev tabellen sjølv. Kjelda fungerer deretter som dei førehandsinnstilte API-a: parametrar,
 førehandsvising, sider som blir følgde automatisk og lagra hentingar som blir oppdaterte med eitt klikk.
@@ -105,7 +105,7 @@ er skildra i [api-konfiguration.md](api-konfiguration.md) og kan brukast i eigne
 
 ### Neo4j over Bolt
 
-Familien **Neo4j (Bolt)** i *Legg til databasekjelde* koplar til Neo4j Aura eller ein eigen tenar med drivaren frå Neo4j over
+Valet **Neo4j** under *Legg til kjelder* (familien **Neo4j (Bolt)**, som òg finst i *Databasekjelde*) koplar til Neo4j Aura eller ein eigen tenar med drivaren frå Neo4j over
 WebSocket (`neo4j+s://…`, database, brukarnamn og passord; passordet blir aldri lagra i klartekst). Kjelda opnar ein
 Cypher-editor: resultatet blir ein tabell, eller eit grafdatasett når svaret inneheld nodar og relasjonar; spørjingar
 kan lagrast på kjelda. Tilkoplinga krev samtykke (føremålet Neo4j) og er ikkje omfatta av CORS; ein eigen tenar utan TLS
@@ -113,7 +113,7 @@ kan lagrast på kjelda. Tilkoplinga krev samtykke (føremålet Neo4j) og er ikkj
 
 ### OpenCDE-tenar (BCF og Documents API)
 
-Familien **OpenCDE (BCF, Documents)** i *Legg til databasekjelde* koplar til ein tenar som følgjer OpenCDE-API-a frå
+Valet **OpenCDE** under *Legg til kjelder* (familien **OpenCDE (BCF, Documents)**, som òg finst i *Databasekjelde*) koplar til ein tenar som følgjer OpenCDE-API-a frå
 buildingSMART, til dømes [Kontroll](https://github.com/marwiss/Kontroll). Oppgje adressa til tenaren og klient-id-en
 som administratoren av tenaren har registrert for Dataspatium (ein offentleg klient med omdirigeringsadressa
 `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarande for adressa appen blir servert frå). Kjelda opnar ei vising
@@ -166,7 +166,7 @@ opnar i popup (innlogging, opplasting, val av dokument), blir viste på språket
 
 ## Opne geodata
 
-Dialogen *Legg til geodatakjelde* byrjar med ei liste over **ferdige geodatakjelder**: opne WFS-, OGC API Features- og
+Dialogen for *Geodatakjelde* under *Legg til kjelder* byrjar med ei liste over **ferdige geodatakjelder**: opne WFS-, OGC API Features- og
 ArcGIS-tenester frå nordiske etatar og kommunar (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
 Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
 Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med fleire), alle kontrollerte å verke frå
@@ -179,7 +179,7 @@ Tre kjelder hentar planar: *Plandata.dk (WFS)* og *Skipulagsstofnun skipulagsgö
 som les ein heil lokalplan og eit deiliskipulag (alle lag) med nummeret til planen og lagrar han som plan, og
 *Ryhti kaavatiedot (OGC API Features)* gjev planindeksen i Finland. Sjå [planer.md](planer.md#planar-frå-dei-andre-nordiske-landa).
 
-Knappen **Legg til geodatakjelde** under *Databasar* i Hent gjer ei vanleg API-kjelde av adressa til ei geodatateneste,
+Valet **Geodatakjelde** under *Legg til kjelder* i Hent gjer ei vanleg API-kjelde av adressa til ei geodatateneste,
 på same måte som databasekjeldene. Appen les laga til tenesta og legg eit endepunkt per lag pluss eit allment der du
 oppgjev laget sjølv. Svara er GeoJSON i WGS 84: datasettet får ein geometrikolonne og blir opna som kart i Bearbeid (sjå
 [kartor.md](kartor.md)). Kjelda viser laga som ei liste som kan filtrerast; vel eit lag, avgrens gjerne med eit område

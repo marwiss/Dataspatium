@@ -72,7 +72,7 @@ napsautuksella ja toistaa niiden reseptit.
 
 Tietokannat: Access-tiedostot pudotetaan alueelle kuten muut tiedostot; tietokoneen tietokannat (SQL Server, ODBC,
 Excel, SQLite) tavoitetaan kohdasta *Tietokanta sillan kautta* ja HTTP-palvelut (PostgREST, OData, GraphQL ja muut)
-kohdasta *Lisää tietokantalähde*. Chromessa ja Edgessä tiedoston voi linkittää ja lukea uudelleen levyltä. Ks.
+kohdasta *Tietokantalähde*; OpenCDE:llä ja Neo4j:llä on omat valintansa kohdassa Lisää lähteitä. Chromessa ja Edgessä tiedoston voi linkittää ja lukea uudelleen levyltä. Ks.
 [kallor.md](kallor.md).
 
 ### 2. Tarkista ja korjaa (Muokkaa)

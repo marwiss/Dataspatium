@@ -112,7 +112,7 @@ skrivande delen blir steg; verdiar er literalar.
 
 ## Neo4j som kjelde
 
-*Legg til databasekjelde* i Hent har familien **Neo4j (Bolt)**: adresse (`neo4j+s://…databases.neo4j.io` for Aura
+*Neo4j* under *Legg til kjelder* i Hent (familien **Neo4j (Bolt)**, som òg finst i *Databasekjelde*): adresse (`neo4j+s://…databases.neo4j.io` for Aura
 eller ein eigen tenar), database, brukarnamn og passord (blir aldri lagra i klartekst). Kjelda opnar ein Cypher-editor;
 *Køyr* koplar til med drivaren frå Neo4j over WebSocket etter samtykket ditt (føremålet Neo4j) og viser resultatet som tabell
 der nodar og relasjonar blir flata ut til eigenskapane sine. Inneheld svaret nodar og relasjonar, lagrar **Lagre som graf**

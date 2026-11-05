@@ -115,7 +115,7 @@ kirjoittava osa muuttuu askeliksi; arvot ovat literaaleja.
 
 ## Neo4j lähteenä
 
-*Lisää tietokantalähde* Nouda-tilassa sisältää perheen **Neo4j (Bolt)**: osoite (`neo4j+s://…databases.neo4j.io`
+*Neo4j* kohdassa *Lisää lähteitä* Nouda-tilassa (perhe **Neo4j (Bolt)**, joka on myös kohdassa *Tietokantalähde*): osoite (`neo4j+s://…databases.neo4j.io`
 Auralle tai oma palvelin), tietokanta, käyttäjätunnus ja salasana (ei koskaan selkotekstinä). Lähde avaa Cypher-editorin;
 *Aja* yhdistää Neo4j:n ajurilla WebSocketin yli suostumuksesi jälkeen (tarkoitus Neo4j) ja näyttää tuloksen taulukkona,
 jossa solmut ja suhteet on litistetty ominaisuuksiinsa. Jos vastaus sisältää solmuja ja suhteita, **Tallenna verkkona**

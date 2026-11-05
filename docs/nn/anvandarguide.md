@@ -58,7 +58,7 @@ personnummer) blir haldne som tekst. Gje datasettet eit namn, og importer. Under
 appen: knappen for dømedataa *Folketal per kommune 2024 (Sverige)* og lista *Grenser for kart* med kommune- og
 regiongrenser for Sverige, Danmark, Noreg og Finland.
 
-Under *Opne API-ar* finst førehandsinnstillingar for statistikkbyråa og fleire andre etatar i Noreg, Danmark, Finland og
+Under *Legg til kjelder* → *Opne API-ar* finst oversynet over førehandsinnstillingar (dei du legg til, kjem under *Tillagde kjelder*; SCB og Boverket ligg der frå start) for statistikkbyråa og fleire andre etatar i Noreg, Danmark, Finland og
 Island, dei sjølvstyrte områda, Nordic Statistics, Eurostat og dei svenske etatane (SCB, Folkhälsomyndigheten,
 Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriet, Sveriges dataportal og dessutan Boverket for dei som har nøklar).
 Landknappane over lista vel kva lands kjelder som blir viste. Bla eller søk fram ein tabell, vel variablar, førehandsvis, og
@@ -67,8 +67,7 @@ nytt frå Handter når kjelda er oppdatert, og *Lagra hentingar* i Hent oppdater
 spelar av oppskriftene deira.
 
 Databasar: Access-filer blir sleppte på flata som andre filer; databasar på datamaskina (SQL Server, ODBC, Excel,
-SQLite) blir nådde gjennom *Database via brua* og tenester over HTTP (PostgREST, OData, GraphQL med fleire) gjennom *Legg
-til databasekjelde*. I Chrome og Edge kan ei fil lenkjast og lesast inn igjen frå disken. Sjå [kallor.md](kallor.md).
+SQLite) blir nådde gjennom *Database via brua* og tenester over HTTP (PostgREST, OData, GraphQL med fleire) gjennom *Databasekjelde*; OpenCDE og Neo4j har eigne val under Legg til kjelder. I Chrome og Edge kan ei fil lenkjast og lesast inn igjen frå disken. Sjå [kallor.md](kallor.md).
 
 ### 2. Gå gjennom og rett (Bearbeid)
 

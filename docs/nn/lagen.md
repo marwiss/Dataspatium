@@ -2,7 +2,7 @@
 
 Dataspatium er delt inn i åtte modusar som følgjer gangen i arbeidet, i same ånd som samle inn, bearbeide,
 analysere og formidle i statistikkproduksjonen: Hent, Handter, Søk, Bearbeid, Analyser, Visualiser, Eksporter, Del. Alle
-modusar har same skjelett: modusveljaren øvst, objektpanelet til venstre, arbeidsflata i midten, inspektøren til
+modusar har same skjelett: modusveljaren øvst, objektpanelet til venstre (med den eigne overskrifta til modusen i panelhovudet: Kjelder i Hent, Datasett i dei andre), arbeidsflata i midten, inspektøren til
 høgre og statuslinja nedst, med loggen falda inn over henne. Panela byter aldri plass. Alt+1 til Alt+8 byter
 modus. Eit tomt arbeidsområde blir opna i Hent, eit arbeidsområde med datasett i Handter. Knappane øvst til høgre opnar
 kommandopaletten, byter språk, byter tema (lyst, mørkt, følg systemet) og opnar hjelpa.
@@ -36,23 +36,22 @@ Her kjem data inn: filer som blir sleppte på flata, innlimt tekst, nettadresser
 steg: fil, innstillingar med førehandsvising, kolonnar med typar, ferdig. Format: CSV og annan avgrensa tekst,
 tekst med faste kolonnebreidder, Excel, ODS, JSON (òg JSON-stat og GeoJSON), XML, SQLite, GeoPackage, shapefile og dessutan
 via R: SPSS, Stata, SAS, PX, Parquet, RDS og RData (sjå [format.md](format.md)); R-formata blir importerte i eitt steg
-utan førehandsvising. Under Opne API-ar finst førehandsinnstillingar for SSB, Folkehelseinstituttet, Kartverket og
+utan førehandsvising. Venstre kolonne, med overskrifta *Kjelder* i panelhovudet, har fire grupper. *Vanlege kjelder*: Filer, Lim inn og Frå nettadresse. *Legg til kjelder*: Database via brua, Opne API-ar, API frå fil, Databasekjelde, OpenCDE, Neo4j og Geodatakjelde. *Tillagde kjelder*: det du har lagt til, kvar rad med ein fjern-knapp; frå start ligg SCBs og Boverkets opne API-ar der. *Andre kjelder*: Lagra hentingar, Innsamling i felt og Guidar. *Opne API-ar* viser oversynet over førehandsinnstillingar for SSB, Folkehelseinstituttet, Kartverket og
 statistikkbyråa og etatane i dei andre nordiske landa, SCB (bla i emnetreet eller søk etter ein tabell), Eurostat,
-Nordic Statistics med fleire, og dessutan kjelder som krev nøklar; landknappane over lista vel kva lands kjelder som
-blir viste. Eigne konfigurasjonar blir lagde til frå fil og kan delast. *Lagra hentingar* viser datasetta som har kome frå
+Nordic Statistics med fleire, og dessutan kjelder som krev nøklar i arbeidsflata, med landknappar og søk. *Legg til* flyttar ei førehandsinnstilling til Tillagde kjelder og opnar henne; fjernar du henne der, går ho tilbake til oversynet og kan leggjast til igjen. Eigne konfigurasjonar blir lagde til med *API frå fil* og kan delast; ei eiga kjelde som blir fjerna, blir sletta med dei lagra nøklane sine. *Lagra hentingar* viser datasetta som har kome frå
 eit API, og oppdaterer dei med eitt klikk, eitt om gongen eller alle. Første gongen appen skal kontakte internett for eit
 føremål (API-ar, nettadresser, GitHub, komponentar) spør han om løyve; svaret kan lagrast. Sjå
 [api-konfiguration.md](api-konfiguration.md).
 
-Under *Databasar* finst to vegar inn: *Database via brua* (Access, Excel, SQL Server, SQLite og ODBC-kjelder på
-datamaskina gjennom eit lite lokalt skript) og *Legg til databasekjelde* (PostgREST, OData, GraphQL, CouchDB,
-ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP). Access-filer blir dessutan lesne rett
+*Database via brua* opnar bruvisinga (Access, Excel, SQL Server, SQLite og ODBC-kjelder på
+datamaskina gjennom eit lite lokalt skript); kvar database du koplar til, dukkar opp under Tillagde kjelder og opnar bruvisinga igjen med den databasen vald. *Databasekjelde* lagar ei kjelde av ei adresse og ein nøkkel (PostgREST, OData, GraphQL, CouchDB,
+ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets og Airtable over HTTP; òg OpenCDE og Neo4j, som dessutan har eigne val i lista). Access-filer blir dessutan lesne rett
 som filer, og i Chrome og Edge kan ei fil lenkjast slik at datasettet blir lese inn igjen frå disken. Sjå
 [kallor.md](kallor.md).
 
 QGIS-prosjekt (.qgs, .qgz) blir kartvisingar: lagrekkjefølgje, synlegheit og symbol følgjer med, laga blir kopla til datasett med same filnamn, og datafiler som blir sleppte saman med prosjektet blir importerte først (sjå [kartor.md](kartor.md)).
 
-Under *Databasar* finst òg *Legg til geodatakjelde*: ei WFS-, OGC API Features- eller ArcGIS-teneste blir ei kjelde der
+*Geodatakjelde* under Legg til kjelder: ei WFS-, OGC API Features- eller ArcGIS-teneste blir ei kjelde der
 laga blir henta som GeoJSON og opna som kart, og kjelda *Geodataportalen (sök geodata)* søkjer i den svenske nasjonale
 geodatakatalogen og legg til tenester med eitt klikk. Førehandsinnstilte geodatakjelder finst for SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE og dessutan geodataplattforma
@@ -73,7 +72,7 @@ som teikning i Bearbeid (sjå [cad-bim.md](cad-bim.md)).
 **Innsamling i felt** i kjeldelista byggjer eit skjema på kolonnane og reglane i eit datasett og sender det til telefonen. Radene kjem tilbake som ein ny
 versjon (sjå [insamling.md](insamling.md)).
 
-Alle kjelder i lista ser like ut, med eit symbol for typen og ei linje under namnet. *Legg til kjelde* samlar alle måtar å leggje til ei kjelde på: ei konfigurasjonsfil, ein database eller ei geodatateneste.
+Alle kjelder i lista ser like ut, med eit symbol for typen og ei linje under namnet.
 
 **Appen seier først kva fila er**, til dømes ein tabell med stader, ein graf eller ein bygningsmodell, og viser henne i si eiga form: eit kart, bileta, ei skisse av grafen, teikninga eller første side. Er noko verdt å spørje om, spør han: koordinatar som ser ut til å ha bytt plass, kva koordinatsystem dei er i, og om ei liste med koplingar skal lesast som ein graf. Ingenting blir endra før du har svara, og kartet viser kva svaret gjer.
 

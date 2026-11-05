@@ -99,7 +99,7 @@ changes have been saved. The choice is stored in the browser, so each computer a
 
 ## Are there sources from the other Nordic countries?
 
-Yes. Under *Open APIs* in Import there are the statistics offices of Denmark, Norway, Finland, Iceland,
+Yes. Under *Add sources* → *Open APIs* in Import there are the statistics offices of Denmark, Norway, Finland, Iceland,
 Greenland, the Faroe Islands and Åland, Nordic Statistics, the Norwegian Institute of Public Health, the
 Brønnøysund register, the Norwegian Mapping Authority, MET Norway, THL's Sotkanet, PRH's company register,
 Digitraffic, the Finnish Meteorological Institute, the Icelandic Met Office and the Danish and Finnish data

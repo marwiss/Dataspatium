@@ -38,7 +38,7 @@ kapat, så att de tillsammans bildar ett D. I accentfärgen är det också favic
 
 ## Layout
 
-Samma skelett i alla åtta lägen: lägesväxlare högst upp, objektpanel till vänster (280 px som standard, 200 till
+Samma skelett i alla åtta lägen: lägesväxlare högst upp, objektpanel till vänster med lägets egen rubrik i panelhuvudet (Källor i Inhämta, Datamängder i de övriga; 280 px som standard, 200 till
 560 px med avdelaren `dm-splitter`), arbetsyta i mitten, inspektör till höger (320 px som standard), logglåda
 ovanför statusraden längst ned (`--dm-statusbar-h`). Statusraden visar sparstatus, lagring, vald datamängd,
 R-motorn, nätverksaktivitet och knapparna som fäller in panelerna och loggen; överst till höger finns bara

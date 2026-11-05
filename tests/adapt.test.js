@@ -489,16 +489,13 @@
         }
         const heights = new Set(items.map((i) => Math.round(i.getBoundingClientRect().height)));
         assert.equal(heights.size, 1, 'the same height: ' + Array.from(heights).join(', '));
-        assert.equal(left.querySelectorAll('dm-button').length, 1, 'one way to add a source');
-        assert.equal(left.querySelectorAll('.dm-help').length, 0, 'no notes between the sources');
+        assert.equal(left.querySelectorAll('[data-add-sources] .dm-list-item').length, 7, 'seven ways to add a source, as list items');
+        assert.ok(!Array.from(left.querySelectorAll('dm-button')).some((b) => !b.closest('[data-added]')), 'no separate add button: the only buttons in the column take an added source out');
         const mark = (name) => { const it = items.find((i) => i.textContent.includes(name)); return it ? (it.querySelector('svg') || {}).innerHTML : null; };
         assert.ok(mark('Geotjänst') !== mark('SCB') || !mark('SCB'), 'a geodata source has its own mark');
-        pressIn(left, t('import.sources.add'));
-        const dlg = await waitFor(() => document.querySelector('dialog[open] .dm-op-tile') && document.querySelector('dialog[open]'), 3000, 'the dialog');
-        assert.deepEqual(Array.from(dlg.querySelectorAll('.dm-op-tile')).map((b) => b.getAttribute('data-source')), ['file', 'family', 'geodata']);
-        assert.ok(dlg.textContent.includes(t('geodata.add.hint')), 'each says what it is for');
-        /** @type {HTMLElement} */ (dlg.querySelector('.dm-op-tile[data-source="geodata"]')).click();
-        const next = await waitFor(() => Array.from(document.querySelectorAll('dialog[open]')).find((d) => !d.querySelector('.dm-op-tile')), 3000, 'the geodata dialog');
+        assert.ok(left.textContent.includes(t('geodata.add.hint')), 'each way to add says what it is for');
+        /** @type {HTMLElement} */ (left.querySelector('[data-add-source="geodata"]')).click();
+        const next = await waitFor(() => document.querySelector('dialog[open]'), 3000, 'the geodata dialog');
         /** @type {HTMLElement} */ (next.querySelector('.dm-dialog-actions dm-button button')).click();
       });
     } finally { await connectors.remove(geo.id).catch(() => {}); }

@@ -112,7 +112,7 @@ hlutinn verður skref; gildi eru fastar.
 
 ## Neo4j sem uppspretta
 
-*Bæta við gagnagrunnsuppsprettu* í Safna hefur fjölskylduna **Neo4j (Bolt)**: vistfang (`neo4j+s://…databases.neo4j.io`
+*Neo4j* undir *Bæta við uppsprettum* í Safna (fjölskyldan **Neo4j (Bolt)**, sem er einnig í *Gagnagrunnsuppspretta*): vistfang (`neo4j+s://…databases.neo4j.io`
 fyrir Aura eða eigin þjónn), gagnagrunnur, notandanafn og lykilorð (aldrei vistað í hreinum texta). Uppsprettan opnar
 Cypher-ritil; *Keyra* tengist með rekli Neo4j yfir WebSocket eftir samþykki þitt (tilgangurinn Neo4j) og sýnir
 niðurstöðuna sem töflu þar sem hnútar og vensl eru flött niður í eiginleika sína. Innihaldi svarið hnúta og vensl vistar

@@ -104,7 +104,7 @@ Kursen fortsätter där du slutade; har du gått igenom den börjar den om från
 
 ## Finns det källor från andra nordiska länder?
 
-Ja. Under *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,
+Ja. Under *Lägg till källor* → *Öppna API:er* i Inhämta finns statistikbyråerna i Danmark, Norge, Finland, Island, Grönland,
 Färöarna och Åland, Nordic Statistics, Folkehelseinstituttet, Enhetsregisteret, Kartverket, MET Norway, THL:s
 Sotkanet, PRH:s företagsregister, Digitraffic, Meteorologiska institutet, Veðurstofa Íslands och de danska och
 finländska dataportalerna. Landsknapparna ovanför listan väljer vilka länders källor som visas; valet sparas i

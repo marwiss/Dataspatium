@@ -2,7 +2,7 @@
 
 Dataspatium är uppdelat i åtta lägen som följer arbetets gång, i samma anda som statistikproduktionens
 samla in, bearbeta, analysera och sprida: Inhämta, Hantera, Söka, Bearbeta, Analysera, Visualisera, Exportera,
-Dela. Alla lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänster, arbetsytan i mitten,
+Dela. Alla lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänster (med lägets egen rubrik i panelhuvudet: Källor i Inhämta, Datamängder i de övriga), arbetsytan i mitten,
 inspektören till höger och statusraden längst ned, med loggen infälld ovanför den. Panelerna byter aldrig plats.
 Alt+1 till Alt+8 växlar läge. En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera.
 Knapparna uppe till höger öppnar kommandopaletten, byter språk, byter tema (ljust, mörkt, följ systemet) och
@@ -37,24 +37,34 @@ Här kommer data in: filer som släpps på ytan, inklistrad text, webbadresser o
 steg: fil, inställningar med förhandsgranskning, kolumner med typer, klart. Format: CSV och annan avgränsad text,
 text med fasta kolumnbredder, Excel, ODS, JSON (även JSON-stat och GeoJSON), XML, SQLite, GeoPackage, shapefile
 samt via R: SPSS, Stata, SAS, PX, Parquet, RDS och RData (se
-[format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning. Under Öppna API:er finns förinställningar för
-SCB (bläddra i ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI,
-luftkvalitetsdata, Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och
-Lantmäteriet Direkt för den som har nycklar, och därtill källor i Danmark, Norge, Finland, Island, Grönland,
-Färöarna och Åland samt Nordic Statistics; landsknapparna ovanför listan väljer vilka länders källor som visas.
-Egna konfigurationer läggs till från fil och kan delas. *Sparade hämtningar* listar datamängderna som kommit
+[format.md](format.md)); R-formaten importeras i ett steg utan förhandsgranskning.
+
+Vänsterkolumnen, med rubriken *Källor* i panelhuvudet, har fyra grupper. *Vanliga källor*: Filer, Klistra in och Från
+webbadress. *Lägg till källor*: Databas via bryggan, Öppna API:er, API från fil, Databaskälla, OpenCDE, Neo4j och
+Geodatakälla. *Tillagda källor*: det du lagt till, varje rad med en ta bort-knapp; från start ligger SCB:s och Boverkets
+öppna API:er där. *Övriga källor*: Sparade hämtningar, Insamling i fält och Guider.
+
+*Öppna API:er* visar förteckningen över förinställningar i arbetsytan, med landsknappar och sök: SCB (bläddra i
+ämnesträdet eller sök tabell), Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, luftkvalitetsdata,
+Naturvårdsregistret, Lantmäteriets geodatakatalog och Sveriges dataportal, samt Boverket och Lantmäteriet Direkt för den
+som har nycklar, och därtill källor i Danmark, Norge, Finland, Island, Grönland, Färöarna och Åland samt Nordic
+Statistics. *Lägg till* flyttar en förinställning till Tillagda källor och öppnar den; tar du bort den där går den tillbaka
+till förteckningen och kan läggas till igen. Egna konfigurationer läggs till med *API från fil* och kan delas; en egen källa
+som tas bort raderas med sina sparade nycklar. *Sparade hämtningar* listar datamängderna som kommit
 från ett API och uppdaterar dem med ett klick, en i taget eller alla. Första gången appen ska kontakta internet
 för ett ändamål (API:er, webbadresser, GitHub, komponenter) frågar den om lov; svaret kan sparas. Se
 [api-konfiguration.md](api-konfiguration.md).
 
-Under *Databaser* finns två vägar in: *Databas via bryggan* (Access, Excel, SQL Server, SQLite och ODBC-källor på
-datorn genom ett litet lokalt skript) och *Lägg till databaskälla* (PostgREST, OData, GraphQL, CouchDB, ClickHouse,
-Elasticsearch, SPARQL, InfluxDB, Google Sheets och Airtable över HTTP). Access-filer läses dessutom direkt som filer,
+*Databas via bryggan* öppnar bryggvyn (Access, Excel, SQL Server, SQLite och ODBC-källor på datorn genom ett litet
+lokalt skript); varje databas du ansluter dyker upp under Tillagda källor och öppnar bryggvyn igen med den databasen vald.
+*Databaskälla* gör en källa av en adress och en nyckel (PostgREST, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
+SPARQL, InfluxDB, Google Sheets och Airtable över HTTP; även OpenCDE och Neo4j, som dessutom har egna val i listan).
+Access-filer läses dessutom direkt som filer,
 och i Chrome och Edge kan en fil länkas så att datamängden läses in igen från disken. Se [kallor.md](kallor.md).
 
 QGIS-projekt (.qgs, .qgz) blir kartvyer: lagerordning, synlighet och symboler följer med, lagren kopplas till datamängder med samma filnamn och datafiler som släpps tillsammans med projektet importeras först (se [kartor.md](kartor.md)).
 
-Under *Databaser* finns också *Lägg till geodatakälla*: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
+*Geodatakälla* under Lägg till källor: en WFS-, OGC API Features- eller ArcGIS-tjänst blir en källa vars
 lager hämtas som GeoJSON och öppnas som kartor, och källan *Geodataportalen (sök geodata)* söker i den nationella
 geodatakatalogen och lägger till tjänster med ett klick. Förinställda geodatakällor finns för SCB, SGU, Havs- och
 vattenmyndigheten, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, samt Lantmäteriets
@@ -75,7 +85,7 @@ eller som ritning i Bearbeta (se [cad-bim.md](cad-bim.md)).
 **Insamling i fält** i källistan bygger ett formulär på en datamängds kolumner och regler och skickar det till telefonen. Raderna kommer tillbaka som en ny
 version (se [insamling.md](insamling.md)).
 
-Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad under namnet. *Lägg till källa* samlar alla sätt att lägga till en källa: en konfigurationsfil, en databas eller en geodatatjänst.
+Alla källor i listan ser likadana ut, med en symbol för sin typ och en rad under namnet.
 
 **Appen säger först vad filen är**, till exempel en tabell med platser, en graf eller en byggnadsmodell, och visar den i sin egen form: en karta, bilderna, en skiss av grafen, ritningen eller första sidan. Är något värt att fråga om frågar den: koordinater som verkar ha bytt plats, vilket koordinatsystem de är i, och om en lista med kopplingar ska läsas som en graf. Inget ändras förrän du svarat, och kartan visar vad svaret gör.
 

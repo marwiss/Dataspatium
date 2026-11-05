@@ -163,6 +163,9 @@ dm-table .dm-cell-editor { width: 100%; height: 28px; margin: 0; padding: 0 var(
 .dm-tree-row { display: flex; align-items: center; gap: var(--dm-s-1); border-radius: var(--dm-radius-sm); }
 .dm-tree-row > input[type="checkbox"] { margin: 0 0 0 var(--dm-s-1); flex: 0 0 auto; accent-color: var(--dm-accent); }
 .dm-tree-row > .dm-list-item { flex: 1 1 auto; min-width: 0; padding-left: var(--dm-s-2); }
+/* A source with a button beside it (Inhämta: added sources with Ta bort, the catalogue with Lägg till). */
+.dm-list-row { display: flex; align-items: center; gap: var(--dm-s-1); }
+.dm-list-row > .dm-list-item { flex: 1 1 auto; min-width: 0; }
 .dm-tree-folder { font-weight: var(--dm-weight-medium); }
 .dm-tree-folder .dm-tree-count { margin-left: auto; color: var(--dm-text-faint); font-size: var(--dm-text-xs); font-variant-numeric: tabular-nums; }
 .dm-list-actions { margin-top: auto; padding-top: var(--dm-s-3); display: flex; flex-direction: column; gap: var(--dm-s-2); align-items: flex-start; }

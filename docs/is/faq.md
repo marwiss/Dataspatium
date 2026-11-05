@@ -96,7 +96,7 @@ tölva og snið hefur sitt eigið. Skjölunin er á sömu tungumálum í möppun
 
 ## Eru til upprunar frá öðrum norrænum löndum?
 
-Já. Undir *Opnar vefþjónustur* í Sækja eru hagstofur Íslands, Danmerkur, Noregs, Finnlands, Svíþjóðar, Grænlands, Færeyja og
+Já. Undir *Bæta við uppsprettum* → *Opnar vefþjónustur* í Sækja eru hagstofur Íslands, Danmerkur, Noregs, Finnlands, Svíþjóðar, Grænlands, Færeyja og
 Álandseyja, Nordic Statistics, Veðurstofa Íslands, Lýðheilsustofnun Noregs, fyrirtækjaskrár Noregs og Finnlands, Kartverket,
 MET Norway, Sotkanet, Digitraffic, Veðurstofa Finnlands og dönsku og finnsku gagnagáttirnar. Landahnapparnir fyrir ofan listann
 velja hvaða landa upprunar birtast; valið er vistað í vafranum. Allir upprunar hafa verið athugaðir með tilliti til CORS og

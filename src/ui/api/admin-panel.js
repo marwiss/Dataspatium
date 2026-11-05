@@ -211,7 +211,7 @@
             }, { inline: true });
             return h('div', { class: 'dm-row dm-admin-row', 'data-admin-member': m.username || m.user_id },
               h('span', { class: 'dm-grow dm-truncate', text: m.username || m.user_id }), sel,
-              iconButton(t('common.remove'), 'x', async () => {
+              iconButton(t('common.delete'), 'x', async () => {
                 try { await admin.removeMember(connector, p.project_id, m.user_id); members = members.filter((x) => x !== m); log(t('admin.log.project.member.removed', { user: m.username || m.user_id, name: p.name })); } catch (err) { fail(err); }
                 draw();
               }));
