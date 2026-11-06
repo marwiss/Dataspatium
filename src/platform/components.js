@@ -54,8 +54,8 @@
      * can be shown. `total` is the known uncompressed size, since Content-Length is the compressed one.
      * @param {Response} res @param {{id: string, size?: number|null}} spec @param {Function} [onProgress]
      */
-    async function readBody(res, spec, onProgress) {
-      if (!onProgress || !res.body || typeof res.body.getReader !== 'function') return res.arrayBuffer();
+    async function readBody(res, spec, onProgress, dl) {
+      if (!res.body || typeof res.body.getReader !== 'function') { const buf = await res.arrayBuffer(); if (dl) dl.update(buf.byteLength); return buf; }
       const reader = res.body.getReader();
       const chunks = [];
       let received = 0;
@@ -64,7 +64,8 @@
         if (done) break;
         chunks.push(value);
         received += value.byteLength;
-        try { onProgress({ id: spec.id, received, total: spec.size || null }); } catch (err) { console.error('[components] progress listener failed', err); }
+        if (dl) dl.update(received);
+        if (onProgress) { try { onProgress({ id: spec.id, received, total: spec.size || null }); } catch (err) { console.error('[components] progress listener failed', err); } }
       }
       const out = new Uint8Array(received);
       let offset = 0;
@@ -90,15 +91,27 @@
       const doFetch = options.fetch || globalThis.fetch.bind(globalThis);
       let lastErr = null;
       for (const url of spec.urls) {
+        // Listed in platform/downloads with its bytes and speed; the status bar's abort stops the fetch here.
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const dl = D.downloads ? D.downloads.begin({ id: spec.id, name: spec.id, label: spec.label || spec.id, total: spec.size || null, abort: () => { if (controller) controller.abort(); } }) : null;
         try {
-          const res = await doFetch(url);
+          const res = await doFetch(url, controller ? { signal: controller.signal } : undefined);
           if (!res || !res.ok) throw new Error(D.t('components.err.status', { status: res ? res.status : '?', url }));
-          const bytes = await readBody(res, spec, options.onProgress);
+          const bytes = await readBody(res, spec, options.onProgress, dl);
           const digest = await sha256Hex(bytes);
           if (spec.sha256 && digest !== spec.sha256) throw new Error(D.t('components.err.hash', { label: spec.label || spec.id }));
           await store(spec, bytes, digest, url);
+          if (dl) dl.done();
           return bytes;
-        } catch (err) { lastErr = err; D.log('components', 'source failed', url, err); }
+        } catch (err) {
+          if (dl && dl.aborted) {
+            const e = /** @type {any} */ (new Error(D.t('components.err.aborted', { label: spec.label || spec.id })));
+            e.aborted = true;
+            throw e;
+          }
+          if (dl) dl.fail(err);
+          lastErr = err; D.log('components', 'source failed', url, err);
+        }
       }
       throw lastErr || new Error(D.t('components.err.status', { status: '?', url: first }));
     }

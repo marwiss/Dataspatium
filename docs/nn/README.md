@@ -154,7 +154,7 @@ Cypher og loggar kvart kall med same X-Request-Id som tenaren skriv i førespurn
 andre OpenCDE-klientar fungerer òg. Tenaren trengst ikkje for resten av appen: utan tenar fungerer alt anna som før. Kontrolls README og `docs/client-guide.md` skildrar samarbeidet frå tenaren si side;
 her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.5.0 fungerer med Kontroll 2.5.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
+Dataspatium 2.6.0 fungerer med Kontroll 2.6.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
 [snabbstart.md](snabbstart.md) tek paret frå ingenting til ei sak på tjue minutt.
 
 ## Lær meir

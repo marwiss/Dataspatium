@@ -25,6 +25,11 @@ None of this loads when the app starts, only when it is used: R ships in the app
 time the R tab opens, Python is fetched as components the first time you press Start Python, and 3D models, PDF and maps load the same
 way when needed. Meanwhile the status bar says what is loading, and the R console shows which file it is waiting for.
 
+When something is fetched over the network, that is the app's own files when it runs from a web server and components such as
+Python, IfcOpenShell and OCR, the status bar shows how much of the whole has arrived, the speed and roughly how long is left at that
+rate, with a button to cancel. Whatever was waiting for the download then gets a message that it was cancelled and can be started again
+later. From the folder (file://) nothing is fetched; the files are on disk.
+
 ## Can I interrupt R code that is stuck?
 
 Yes, when the app runs from a web server (for example `python -m http.server 8080` on your own computer, or https on

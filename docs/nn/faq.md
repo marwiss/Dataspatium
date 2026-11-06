@@ -25,6 +25,11 @@ Ingenting av dette blir lasta når appen startar, berre når det blir brukt: R l
 fana R blir opna, Python blir henta som komponentar første gongen du trykkjer Start Python, og 3D-modellar, PDF og kart blir lasta på same måte når dei
 trengst. I mellomtida står det i statuslinja kva som blir lasta, og R-konsollen viser kva fil han ventar på.
 
+Når noko blir henta over nettet, det vil seie appen sine eigne filer når han køyrer frå ein webserver, og komponentar som Python,
+IfcOpenShell og OCR, viser statuslinja kor mykje som er henta av det heile, farten og om lag kor lang tid som er att i det tempoet, med
+ein knapp for å avbryte. Det som venta på hentinga får då ei melding om at ho vart avbroten, og kan startast att seinare. Frå mappa
+(file://) blir ingenting henta; filene ligg på disken.
+
 ## Kan eg avbryte R-kode som har hengt seg?
 
 Ja, når appen køyrer frå ein webtenar (til dømes `python -m http.server 8080` på di eiga datamaskin eller https på

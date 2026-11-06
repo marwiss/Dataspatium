@@ -25,6 +25,11 @@ Inget av detta laddas när appen startar, bara när det används: R ligger med i
 gången fliken R öppnas, Python hämtas som komponenter första gången du trycker Starta Python, och 3D-modeller, PDF och kartor laddas
 på samma sätt när de behövs. Under tiden står det i statusraden vad som laddas, och R-konsolen visar vilken fil den väntar på.
 
+När något hämtas över nätet, det vill säga appens egna filer när den körs från en webbserver och komponenter som Python, IfcOpenShell
+och OCR, visar statusraden hur mycket som hämtats av det hela, hastigheten och ungefär hur lång tid som är kvar i den takten, med en
+knapp för att avbryta. Det som väntade på hämtningen får då ett meddelande om att den avbröts och kan startas om senare. Från mappen
+(file://) hämtas ingenting; filerna ligger på disken.
+
 ## Kan jag avbryta R-kod som fastnat?
 
 Ja, när appen körs från en webbserver (till exempel `python -m http.server 8080` på den egna datorn, eller https på

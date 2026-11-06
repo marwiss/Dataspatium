@@ -217,6 +217,11 @@ steget som *Gör det åt mig*.
   landmärken, länken *Hoppa till innehållet*, tangentbordsnavigering i flikar och att designtokens klarar WCAG AA:
   4,5:1 för text och 3:1 för kanter på fält och växlar, i både ljust och mörkt tema.
 
+Tidsgränsen för ett prov räknas från start, men flyttas fram så länge en nedladdning rapporterar nya byte (`platform/downloads`):
+förlängningen är den tid resten bör ta i uppmätt hastighet med hälften till, minst 30 s och högst 20 minuter, och syns i felraden som
+"+N s while downloading" när gränsen ändå nås. Så faller inte R- och Python-proven från Pages när GitHubs CDN är långsam, utan först när
+inget mer kommer.
+
 ## Prov mot Kontroll
 
 Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeuser=<användar-id>][&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).

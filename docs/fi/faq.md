@@ -27,6 +27,11 @@ R-välilehti avataan ensimmäisen kerran, Python noudetaan komponentteina, kun p
 PDF ja kartat ladataan samalla tavalla tarvittaessa. Sillä välin tilarivillä näkyy, mitä ladataan, ja R-konsoli näyttää, mitä tiedostoa
 se odottaa.
 
+Kun jotakin haetaan verkosta, eli sovelluksen omia tiedostoja, kun se ajetaan verkkopalvelimelta, ja komponentteja kuten Python,
+IfcOpenShell ja OCR, tilarivi näyttää, paljonko kokonaisuudesta on haettu, nopeuden ja suunnilleen kuinka paljon aikaa on jäljellä sillä
+vauhdilla, sekä painikkeen keskeyttämiseen. Latausta odottanut toiminto saa silloin ilmoituksen keskeytyksestä ja voidaan käynnistää
+myöhemmin uudelleen. Kansiosta (file://) ei haeta mitään; tiedostot ovat levyllä.
+
 ## Voinko keskeyttää jumittuneen R-koodin?
 
 Voit, kun sovellus ajetaan verkkopalvelimelta (esimerkiksi `python -m http.server 8080` omalla tietokoneella tai https

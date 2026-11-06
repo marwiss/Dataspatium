@@ -25,6 +25,11 @@ Intet af dette indlæses, når appen starter, kun når det bruges: R ligger i ap
 åbnes, Python hentes som komponenter, første gang du trykker Start Python, og 3D-modeller, PDF og kort indlæses på samme måde, når der
 er brug for dem. I mellemtiden står der i statuslinjen, hvad der indlæses, og R-konsollen viser, hvilken fil den venter på.
 
+Når noget hentes over nettet, det vil sige appens egne filer, når den kører fra en webserver, og komponenter som Python, IfcOpenShell
+og OCR, viser statuslinjen, hvor meget der er hentet af det hele, hastigheden og omtrent hvor lang tid der er tilbage i det tempo, med
+en knap til at afbryde. Det, der ventede på hentningen, får så en besked om, at den blev afbrudt, og kan startes igen senere. Fra
+mappen (file://) hentes intet; filerne ligger på disken.
+
 ## Kan jeg afbryde R-kode, der hænger?
 
 Ja, når appen kører fra en webserver (for eksempel `python -m http.server 8080` på din egen computer eller https på et

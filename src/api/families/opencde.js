@@ -511,7 +511,13 @@
       if (!found.registrationUrl) throw new Error(t('opencde.err.noregistration'));
       const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', software_id: 'dataspatium', software_version: D.version, redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
       const res = await send(null, { url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
-      if (!res.ok) throw new http.ApiError(t('opencde.err.registration', { detail: String(res.text || '').replace(/\s+/g, ' ').slice(0, 160) }), { kind: 'http', status: res.status });
+      if (!res.ok) {
+        // The server's error in the app's language when it has a code, its message otherwise, and the raw text only as a last resort.
+        let refusal = null;
+        try { refusal = JSON.parse(res.text); } catch (_err) { refusal = null; }
+        const detail = describeError(refusal).text || String(res.text || '').replace(/\s+/g, ' ').slice(0, 160);
+        throw new http.ApiError(t('opencde.err.registration', { detail }), { kind: 'http', status: res.status });
+      }
       const data = JSON.parse(res.text);
       return { clientId: data.client_id, clientSecret: data.client_secret || '', found };
     }

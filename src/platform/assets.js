@@ -72,21 +72,76 @@
     return p;
   }
 
+  /** Whether the wrapper files come over the network (served by a web server) rather than from the disk (file://). */
+  const overNetwork = () => { try { return typeof location !== 'undefined' && location.protocol !== 'file:'; } catch (_e) { return false; } };
+  // The browser's own fetch, taken before net-shim wraps it: loading the app's files is not API traffic to count or log, and a test
+  // that spies on fetch to prove a tool stays offline must not see them either.
+  const nativeFetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null;
+
+  /**
+   * Over http(s): fetch a wrapper file in chunks, so that the download shows its bytes, speed and time left and can be
+   * aborted (platform/downloads), then run it as the classic script it is, from a blob: URL. Under file:// the file is on disk
+   * and a script tag is used directly (fetch is blocked there).
+   * @param {string} url @param {{name: string, size: number}} info @param {{fetch?: Function}} [options] a fetch for tests
+   */
+  async function fetchScript(url, info, options = {}) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const downloads = D.downloads;
+    const dl = downloads ? downloads.begin({ name: info.name, label: String(info.name).split('/')[0], total: info.size || null, abort: () => { if (controller) controller.abort(); } }) : null;
+    const doFetch = options.fetch || nativeFetch || globalThis.fetch.bind(globalThis);
+    let lastNotify = 0;
+    try {
+      const res = await doFetch(url, controller ? { signal: controller.signal } : undefined);
+      if (!res || !res.ok) throw new Error('Could not load script ' + url + (res ? ' (' + res.status + ')' : ''));
+      let blob;
+      if (res.body && typeof res.body.getReader === 'function') {
+        const reader = res.body.getReader();
+        const chunks = [];
+        let received = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.byteLength;
+          if (dl) dl.update(received);
+          info.received = received;
+          // The listeners (status bar, R console) redraw on each notice: a few times a second is plenty.
+          if (Date.now() - lastNotify > 250) { lastNotify = Date.now(); notifyProgress(info); }
+        }
+        blob = new Blob(chunks, { type: 'text/javascript;charset=utf-8' });
+      } else blob = new Blob([await res.arrayBuffer()], { type: 'text/javascript;charset=utf-8' });
+      // A classic script from a blob: URL, not eval: the file runs just as from a script tag, with no new case for the
+      // Content-Security-Policy that docs/sakerhet.md promises.
+      const blobUrl = URL.createObjectURL(blob);
+      try { await loadScript(blobUrl); } finally { URL.revokeObjectURL(blobUrl); loading.delete(blobUrl); }
+      if (dl) dl.done();
+    } catch (err) {
+      if (dl && !dl.aborted) dl.fail(err);
+      if ((dl && dl.aborted) || (err && err.name === 'AbortError')) {
+        const e = /** @type {any} */ (new Error(D.t ? D.t('assets.err.aborted', { name: info.name }) : 'The download of ' + info.name + ' was cancelled'));
+        e.aborted = true;
+        throw e;
+      }
+      throw err;
+    }
+  }
+
   async function ensureRegistered(name) {
     if (registry.has(name)) return;
     const entry = manifestData.assets[name];
     if (!entry) throw new Error('Unknown asset: ' + name);
     if (entry.provided) throw new Error('Provided asset ' + name + ' is no longer in memory');
     const url = base() + entry.file;
-    const info = { name, file: entry.file, size: entry.size || 0, phase: 'load', at: Date.now() };
+    const info = { name, file: entry.file, size: entry.size || 0, received: 0, phase: 'load', at: Date.now() };
     inFlight.set(name, info);
     notifyProgress(info);
     try {
-      await loadScript(url);
+      if (overNetwork()) await fetchScript(url, info);
+      else await loadScript(url);
       if (!registry.has(name)) {
-        // The wrapper ran earlier and its payload was consumed; inject it again.
+        // The wrapper ran earlier and its payload was consumed; load it again.
         loading.delete(url);
-        await loadScript(url);
+        if (overNetwork()) await fetchScript(url, info); else await loadScript(url);
         if (!registry.has(name)) throw new Error('Asset ' + name + ' was not registered by ' + entry.file);
       }
     } catch (err) {
@@ -217,6 +272,6 @@
   /** Load a directly shipped (non-wrapped) vendor script such as vendor/d3/d3.min.js. */
   function loadVendorScript(relativePath) { return loadScript(base() + relativePath); }
 
-  D.assets = { manifest, addEntries, register, decode, load, loadText, onProgress: (fn) => { progressListeners.add(fn); return () => progressListeners.delete(fn); }, loading: () => Array.from(inFlight.values()), loadAll, peek, take, provide, names, info, libraries, importModule, importGraph, loadScript, loadVendorScript, decodeBase64, gunzip };
+  D.assets = { manifest, addEntries, register, decode, load, loadText, fetchScript, onProgress: (fn) => { progressListeners.add(fn); return () => progressListeners.delete(fn); }, loading: () => Array.from(inFlight.values()), loadAll, peek, take, provide, names, info, libraries, importModule, importGraph, loadScript, loadVendorScript, decodeBase64, gunzip };
   D.define('platform/assets', [], () => D.assets);
 })();

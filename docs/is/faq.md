@@ -24,6 +24,11 @@ Ekkert af þessu hleðst þegar forritið ræsist, aðeins þegar það er nota�
 flipinn R er opnaður fyrst, Python er sótt sem íhlutir þegar þú smellir á Ræsa Python fyrst, og 3D-líkön, PDF og kort hlaðast á sama hátt
 þegar þeirra þarf. Á meðan stendur í stöðustikunni hvað hleðst, og R-stjórnborðið sýnir hvaða skrá það bíður eftir.
 
+Þegar eitthvað er sótt yfir netið, það er eigin skrár forritsins þegar það keyrir frá vefþjóni og íhlutir eins og Python, IfcOpenShell og
+OCR, sýnir stöðustikan hve mikið af heildinni er komið, hraðann og um það bil hve langur tími er eftir á þeim hraða, með hnappi til að hætta
+við. Það sem beið eftir niðurhalinu fær þá skilaboð um að hætt hafi verið við og má ræsa aftur síðar. Úr möppunni (file://) er ekkert sótt;
+skrárnar eru á disknum.
+
 ## Get ég rofið R-kóða sem hefur fest?
 
 Já, þegar forritið keyrir af vefþjóni (til dæmis `python -m http.server 8080` á eigin tölvu, eða https á innraneti): þá

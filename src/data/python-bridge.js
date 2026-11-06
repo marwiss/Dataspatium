@@ -124,6 +124,12 @@
         return this.mirror(list.filter((m) => (m.byteSize || 0) <= MIRROR_LIMIT).map((m) => m.id));
       }
 
+      /** Packages a piece of code imports, with the package index loaded first (the scan needs the lock's import names). */
+      async referencedPackages(code) {
+        try { await catalog.load(); } catch (err) { D.log('python-bridge', 'package index not available', err); }
+        return catalog.referenced(code);
+      }
+
       /** Dataset names referenced with dm_read("…") in a piece of code. */
       referencedNames(code) {
         const names = [];
@@ -208,7 +214,7 @@
         try {
           await this.engine.mkdir('/data/step');
           await this.engine.writeFile('/data/step/in.sqlite', bytes);
-          await this.ensurePackages(catalog.referenced(code));
+          await this.ensurePackages((await this.referencedPackages(code)));
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._run_step(${JSON.stringify(String(code))}, "/data/step/in.sqlite", "/data/step/out.sqlite", ${options.limit ? Number(options.limit) : 'None'}, ${JSON.stringify(String(options.name || ''))})`);
           const out = await this.engine.readFile('/data/step/out.sqlite');
@@ -238,7 +244,7 @@
           const list = await datasets.list();
           const ids = this.resolveIds(this.referencedNames(code), list);
           await this.mirror(ids);
-          installed = await this.ensurePackages(catalog.referenced(code));
+          installed = await this.ensurePackages((await this.referencedPackages(code)));
           this.streams = [];
           const res = await this.engine.run(code);
           for (const s of this.streams) entries.push({ kind: s.kind, text: s.text });
@@ -337,7 +343,7 @@
       async runIfcStep(code, bytes, options = {}) {
         return this.ifcJob(async () => {
           await this.engine.writeFile('/data/step/model.sqlite', bytes);
-          await this.ensurePackages(catalog.referenced(code).concat(['ifcopenshell']));
+          await this.ensurePackages((await this.referencedPackages(code)).concat(['ifcopenshell']));
           this.streams = [];
           const info = await this.engine.evalJson(`_dataspatium._ifc_step(${JSON.stringify(String(code))}, "/data/step/model.sqlite", "/data/step/model-out.ifc", ${JSON.stringify(String(options.name || ''))})`);
           return this.takeIfc('/data/step/model-out.ifc', info, ['/data/step/model.sqlite', '/data/step/step-in.ifc']);

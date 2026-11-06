@@ -33,6 +33,7 @@
   const MOBILE = [
     'src/platform/registry.js',
     'src/platform/capabilities.js',
+    'src/platform/downloads.js',
   ].concat(languageScripts, [
     'src/ui/i18n/i18n.js',
     'src/platform/sync.js',
@@ -72,6 +73,7 @@
     // Platform
     'src/platform/registry.js',
     'src/platform/capabilities.js',
+    'src/platform/downloads.js',
     // Languages first: every later module may build user-facing text with Dataspatium.t at load time.
   ].concat(languageScripts, [
     'src/ui/i18n/i18n.js',

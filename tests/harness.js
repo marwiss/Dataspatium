@@ -39,16 +39,51 @@
       return only.length ? tests.filter((t) => only.some((w) => t.name.includes(w))) : tests;
     }
 
+    /**
+     * How far a test's deadline moves on when a download reports progress: the time the rest should take at the measured
+     * speed with a margin, at least 30 s and at most 20 minutes. A stalled download stops extending.
+     * @param {{remaining: number|null, received: number}} summary from D.downloads.summary()
+     */
+    function extensionFor(summary) {
+      if (!summary || !summary.received) return 0;
+      const rest = summary.remaining === null ? 60 : summary.remaining;
+      return Math.min(20 * 60000, Math.max(30000, rest * 1500));
+    }
+
+    /** Rejects at the deadline; downloads in flight (D.downloads) push the deadline on, so a slow network is not a failure. */
+    function deadlineFor(t) {
+      let deadline = Date.now() + t.timeoutMs;
+      let extended = 0;
+      let lastReceived = -1;
+      const dl = D.downloads;
+      const unsub = dl && dl.onChange ? dl.onChange((items) => {
+        if (!items.length) return;
+        const summary = dl.summary();
+        if (summary.received === lastReceived) return;
+        lastReceived = summary.received;
+        const next = Date.now() + extensionFor(summary);
+        if (next > deadline) { extended += next - deadline; deadline = next; }
+      }) : null;
+      let timer = null;
+      const promise = /** @type {any} */ (new Promise((_, rej) => {
+        const tick = () => {
+          if (Date.now() >= deadline) rej(new Error('timeout after ' + t.timeoutMs + ' ms' + (extended ? ' (+' + Math.round(extended / 1000) + ' s while downloading)' : '')));
+          else timer = setTimeout(tick, 250);
+        };
+        timer = setTimeout(tick, 250);
+      }));
+      promise.stop = () => { clearTimeout(timer); if (unsub) unsub(); };
+      return promise;
+    }
+
     async function run(listEl, summaryEl) {
       let pass = 0; let fail = 0;
       for (const t of selected()) {
         const t0 = performance.now();
         let line;
+        const deadline = deadlineFor(t);
         try {
-          const detail = await Promise.race([
-            t.fn(assert),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout after ' + t.timeoutMs + ' ms')), t.timeoutMs)),
-          ]);
+          const detail = await Promise.race([t.fn(assert), deadline]).finally(() => { if (deadline.stop) deadline.stop(); });
           pass++;
           line = `OK | ${t.name} :: ${detail === undefined ? 'ok' : String(detail)} (${Math.round(performance.now() - t0)} ms)`;
         } catch (err) {
@@ -67,6 +102,6 @@
       return { pass, fail };
     }
 
-    return { test, run, assert };
+    return { test, run, assert, extensionFor };
   });
 })();

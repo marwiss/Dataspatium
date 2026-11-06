@@ -28,7 +28,7 @@
       assert.ok(bar.querySelector('[data-net="idle"]'), 'network indicator idle');
       assert.equal(root.querySelectorAll('.dm-topbar .dm-sb').length, 0, 'no status in the top bar');
       assert.equal(root.querySelectorAll('.dm-topbar dm-button').length, 4, 'palette, language, theme and help in the top bar');
-      assert.equal(root.querySelectorAll('.dm-statusbar dm-button').length, 3, 'two panel toggles and the log button in the status bar');
+      assert.equal(root.querySelectorAll('.dm-statusbar dm-button:not([data-loading-abort])').length, 3, 'two panel toggles and the log button in the status bar');
       shell.setEngine('r', 'ready');
       assert.equal(bar.querySelector('[data-engine]').getAttribute('data-engine'), 'ready');
       assert.ok(bar.querySelector('[data-engine]').textContent.includes(t('shell.engine.state.ready')));

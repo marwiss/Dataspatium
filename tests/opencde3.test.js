@@ -74,6 +74,7 @@
     let r;
     if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
     if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token', oauth2_revocation_url: BASE + '/foundation/oauth2/revoke', oauth2_dynamic_client_reg_url: BASE + '/foundation/oauth2/reg', oauth2_pkce_required: true }));
+    if (path === '/foundation/oauth2/reg' && world.refuse) return Promise.resolve({ kind: 'text', data: JSON.stringify(world.refuse), status: 400 });
     if (path === '/foundation/oauth2/reg') { world.registrations++; return Promise.resolve(json({ client_id: 'registered-' + world.registrations, client_name: body.client_name, redirect_uris: body.redirect_uris })); }
     if (path === '/foundation/oauth2/token') { world.tokens++; return Promise.resolve(json({ access_token: 'a' + world.tokens, refresh_token: 'r' + world.tokens, expires_in: 3600 })); }
     if (path === '/foundation/oauth2/revoke') return Promise.resolve(text(''));
@@ -135,6 +136,15 @@
     assert.ok(opencde.signedIn(connector));
     const without = await opencde.register('dataspatium-asset://tests/opencde2', { redirectUri: REDIRECT }).catch((e) => e);
     assert.ok(without instanceof Error && without.message === t('opencde.err.noregistration'), String(without && without.message));
+    // A refusal is told in the app's language when it has a code, with the server's message otherwise, never as raw JSON.
+    world.refuse = { message: 'A redirect to localhost is not allowed here', code: 'localhost_redirect' };
+    const coded = await opencde.register(BASE, { redirectUri: 'http://localhost:8080/oauth-callback.html' }).catch((e) => e);
+    assert.equal(coded.message, t('opencde.err.registration', { detail: t('opencde.err.code.localhost_redirect') }));
+    assert.ok(t('opencde.err.code.localhost_redirect').includes('127.0.0.1'), 'it says what to do instead');
+    world.refuse = { message: 'Registrations are closed' };
+    const plain = await opencde.register(BASE, { redirectUri: REDIRECT }).catch((e) => e);
+    assert.equal(plain.message, t('opencde.err.registration', { detail: 'Registrations are closed' }));
+    world.refuse = null;
     return reg.clientId;
   }, 30000);
 

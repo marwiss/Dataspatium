@@ -70,7 +70,8 @@
           this.engineEls.python.hidden = true;
           this.netEl = h('span', { class: 'dm-sb dm-sb-optional', 'data-net': 'idle', title: t('shell.net.idle') }, h('span', { class: 'dm-sb-dot', 'aria-hidden': 'true' }), h('span', { text: t('shell.net') }));
           // A running flow and the news from the watches: only there when there is something to say.
-          this.loadingEl = h('span', { class: 'dm-sb dm-sb-optional dm-sb-loading', hidden: true, 'data-loading': '', title: t('shell.loading.hint') }, h('dm-progress', { indeterminate: '' }), h('span', { text: '' }));
+          this.loadingEl = h('span', { class: 'dm-sb dm-sb-optional dm-sb-loading', hidden: true, 'data-loading': '', title: t('shell.loading.hint') }, h('dm-progress', { indeterminate: '' }), h('span', { text: '' }),
+            basic.button({ label: t('shell.loading.abort'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', 'data-loading-abort': '', onClick: () => { if (D.downloads) D.downloads.abortAll(); } }));
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
@@ -117,6 +118,8 @@
           pyBridge.bridge.on((type, payload) => { if (type === 'state') this.setEngine('python', payload.state); });
           if (D.net && D.net.onActivity) D.net.onActivity((active) => this.setNet(active));
           if (D.assets && D.assets.onProgress) D.assets.onProgress((info, active) => this.showLoading(active));
+          // Downloads over the network (components, and the app's files when served by a web server) redraw the same indicator.
+          if (D.downloads && D.downloads.onChange) D.downloads.onChange(() => this.showLoading(D.assets && D.assets.loading ? D.assets.loading() : []));
           replace(this.root, this.el);
         }
 
@@ -125,11 +128,32 @@
         showLoading(active) {
           const el = this.loadingEl;
           if (!el) return;
+          const bar = /** @type {any} */ (el.firstChild);
+          const text = /** @type {HTMLElement} */ (el.children[1]);
+          const abortBtn = /** @type {HTMLElement} */ (el.children[2]);
+          const fmt = D.require('ui/i18n').formatBytes;
+          const dl = D.downloads ? D.downloads.summary() : { count: 0 };
+          if (dl.count) {
+            // Over the network: what is being fetched, bytes of the total, the speed, and the time left at that speed.
+            const last = dl.items[dl.items.length - 1];
+            const known = dl.total > 0;
+            let line = known
+              ? t('shell.loading.progress', { name: last.label, received: fmt(dl.received), total: fmt(dl.total), speed: fmt(dl.speed) })
+              : t('shell.loading', { name: last.label, size: fmt(dl.received) });
+            if (dl.remaining !== null) line += ' · ' + t('shell.loading.eta', { time: D.downloads.formatSeconds(dl.remaining) });
+            text.textContent = line;
+            if (known) { bar.removeAttribute('indeterminate'); bar.setAttribute('value', String(Math.round((dl.received / dl.total) * 100))); } else bar.setAttribute('indeterminate', '');
+            abortBtn.hidden = false;
+            el.hidden = false;
+            return;
+          }
           const big = (active || []).filter((x) => (x.size || 0) >= 512 * 1024);
           if (!big.length) { el.hidden = true; return; }
           const last = big[big.length - 1];
           const total = big.reduce((a, x) => a + (x.size || 0), 0);
-          /** @type {HTMLElement} */ (el.lastChild).textContent = t('shell.loading', { name: String(last.name).split('/')[0], size: D.require('ui/i18n').formatBytes(total) });
+          bar.setAttribute('indeterminate', '');
+          text.textContent = t('shell.loading', { name: String(last.name).split('/')[0], size: fmt(total) });
+          abortBtn.hidden = true;
           el.hidden = false;
         }
         setEngine(engine, state) {
