@@ -102,6 +102,11 @@
       interrupt() {}, async close() {},
     };
     const b = new PythonBridge({ createEngine: () => fake });
+    // No network in this test: the catalog's package fetching is stubbed for the whole run (the real catalog would download the
+    // Pyodide lock and the wheels when the component cache is empty, as on a fresh origin such as Pages).
+    const realEnsure = catalog.ensurePackages;
+    catalog.ensurePackages = async () => ({ packages: [], assets: [] });
+    try {
     await b.start();
     assert.deepEqual(b.referencedNames('m = dm_ifc("Ifcbrygga"); x = dm_read(\'y\')'), ['Ifcbrygga', 'y'], 'dm_ifc names a dataset to mirror');
     const res = await b.run('m = dm_ifc("Ifcbrygga")\ndm_ifc_write(m, "Kopia av huset")');
@@ -116,9 +121,7 @@
     assert.ok(!fs.has('/data/out/ds_ifc1.ifc') && !fs.has('/data/out/ds_ifc1.ifc.json'), 'the output and its sidecar are removed');
     // The wheels: dependencies from the distribution first, then the IfcOpenShell set one wheel at a time in order.
     catalog.reset(); catalog.parse(FAKE_LOCK);
-    const realEnsure = catalog.ensurePackages;
-    catalog.ensurePackages = async () => ({ packages: [], assets: [] });
-    try {
+    {
       loads.length = 0;
       await b.ensurePackages(['ifcopenshell']);
       assert.ok(loads.length === catalog.IFC_WHEELS.length + 3, 'one call for the distribution packages, one per extra wheel: ' + loads.length);
@@ -130,7 +133,7 @@
       await b.ensurePackages(['ifctester']);
       const tail = loads.slice(-3).map((l) => l[0].slice(catalog.INDEX_URL.length).split('-')[0]);
       assert.deepEqual(tail, ['elementpath', 'xmlschema', 'ifctester'], 'the vendored wheels install after the IfcOpenShell set, in order: ' + JSON.stringify(loads.map((l) => l[0])));
-    } finally { catalog.ensurePackages = realEnsure; catalog.reset(); }
+    }
     // The tools and the steps reach Python with the dataset mirrored and come back as tables and files.
     const table = await b.ifcTool(meta.id, 'structure', {});
     assert.equal(table.total, 1); assert.deepEqual(table.columns.map((c) => c.name), ['guid', 'niva']);
@@ -141,6 +144,7 @@
     const applied = await b.runIfcApply(await datasets.exportBytes(meta.id), await datasets.exportBytes(meta.id), 'guid');
     assert.equal(applied.info.changed, 2);
     assert.equal(b.state, 'ready');
+    } finally { catalog.ensurePackages = realEnsure; catalog.reset(); }
     return 'ok';
   }, 30000);
 
