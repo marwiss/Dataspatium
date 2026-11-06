@@ -170,10 +170,10 @@
         const closure = catalog.closure(names);
         // Wheels outside Pyodide's distribution (seaborn, plotly) are installed by their asset address, after their
         // dependencies from the distribution: a wheel given as an address does not pull those in by itself.
-        const extras = closure.map((n) => catalog.info(n)).filter((e) => e && e.url).sort((a, b) => (a.order || 0) - (b.order || 0));
+        const extras = closure.map((n) => catalog.info(n)).filter((e) => e && (e.url || e.asset)).sort((a, b) => (a.order || 0) - (b.order || 0));
         if (extras.length) {
           try {
-            const deps = closure.filter((n) => { const e = catalog.info(n); return e && !e.url; });
+            const deps = closure.filter((n) => { const e = catalog.info(n); return e && !e.url && !e.asset; });
             if (deps.length) await this.engine.loadPackages(deps);
             // One at a time, in order: IfcOpenShell's plug-ins link against the wheels installed before them.
             for (const e of extras) await this.engine.loadPackages([catalog.INDEX_URL + e.file]);
@@ -306,7 +306,7 @@
       /**
        * One of the model tools of Analysera on a model dataset (python/dataspatium.py `_ifc_tool`): the dataset is mirrored,
        * IfcOpenShell fetched after consent, and the result comes back as a table.
-       * @param {string} datasetId @param {string} tool validate | structure | psets | select | elements | geometry
+       * @param {string} datasetId @param {string} tool validate | ids | structure | psets | select | elements | geometry
        * @param {Record<string, any>} [params]
        * @returns {Promise<{columns: Array<{name: string, type: string}>, rows: any[][], total: number}>}
        */
@@ -318,7 +318,7 @@
         this.setState('busy');
         try {
           await this.mirror([datasetId]);
-          await this.ensurePackages(['ifcopenshell'].concat(params.express ? ['pytest'] : []));
+          await this.ensurePackages(['ifcopenshell'].concat(tool === 'ids' ? ['ifctester'] : []).concat(params.express ? ['pytest'] : []));
           this.streams = [];
           const res = await this.engine.evalJson(`_dataspatium._ifc_tool(${JSON.stringify(datasetId)}, ${JSON.stringify(String(tool))}, ${JSON.stringify(JSON.stringify(params))})`);
           return res || { columns: [], rows: [], total: 0 };

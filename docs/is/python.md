@@ -57,6 +57,7 @@ ax.set_xlabel("Þúsundir")
 | `dm_ifc_validate(model, express=True)` | Niðurstöður skemaprófunar: stig, tegund, id, guid, eigindi, skilaboð. `express=True` keyrir einnig reglur skemans. |
 | `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Einingar samkvæmt valmáli IfcOpenShell, eins og `dm_ifc_elements()` listar þær. |
 | `dm_ifc_geometry(model, "IfcWall")` | Rúmmál, yfirborð og umlykjandi kassi á einingu, mælt á rúmfræðinni (metrar). |
+| `dm_ifc_ids(model, "krav.ids")` | Prófar líkanið gegn IDS-skrá (slóð í skráakerfi Python, XML-texti eða bæti) með ifctester: specifikation, krav, status, guid, typ, namn, orsak; samantektin í `df.attrs["ids"]`. |
 | `dm_ifc_set(model, df, key="guid")` | Skrifar gildi töflunnar inn í líkanið (eigindi og `Safn.Eiginleiki`-dálka) og skilar fjölda breyttra eininga. |
 | `dm_ifc_write(model, "Nýtt heiti")` | Sendir líkanið til forritsins sem nýtt líkansgagnasafn. Upprunalega gagnasafnið breytist ekki. |
 

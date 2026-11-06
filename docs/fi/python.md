@@ -59,6 +59,7 @@ ax.set_xlabel("Tuhatta")
 | `dm_ifc_validate(model, express=True)` | Skeematarkistuksen löydökset: taso, tyyppi, id, guid, attribuutti, viesti. `express=True` suorittaa myös skeeman säännöt. |
 | `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Elementit IfcOpenShellin valintakielen mukaan, kuten `dm_ifc_elements()` ne luettelee. |
 | `dm_ifc_geometry(model, "IfcWall")` | Tilavuus, pinta-ala ja rajauslaatikko elementtiä kohti, mitattu geometriasta (metreinä). |
+| `dm_ifc_ids(model, "krav.ids")` | Tarkistaa mallin IDS-tiedostoa vasten (polku Pythonin tiedostojärjestelmässä, XML-teksti tai tavut) ifctesterillä: specifikation, krav, status, guid, typ, namn, orsak; yhteenveto `df.attrs["ids"]`-kentässä. |
 | `dm_ifc_set(model, df, key="guid")` | Kirjoittaa taulukon arvot malliin (attribuutit ja `Joukko.Ominaisuus`-sarakkeet) ja palauttaa muutettujen elementtien määrän. |
 | `dm_ifc_write(model, "Uusi nimi")` | Lähettää mallin sovellukseen uutena mallitietoaineistona. Alkuperäinen tietoaineisto ei muutu. |
 

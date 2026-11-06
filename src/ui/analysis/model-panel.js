@@ -13,13 +13,13 @@
   D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, basic, datasets, model, analysis, issuesLogic) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'structure', 'psets', 'select', 'geometry'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'ids', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
-      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '' };
+      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
 
@@ -77,6 +77,20 @@
           sw.checked = s.express;
           sw.addEventListener('change', () => { s.express = sw.checked; run(); });
           parts.push(h('div', { class: 'dm-row-wrap' }, sw, h('span', { class: 'dm-help', text: t('model.ifc.python.note') })));
+        } else if (s.tool === 'ids') {
+          // The IDS file stays in the browser: it is written into Python's file system when the check runs.
+          const input = /** @type {any} */ (h('input', { type: 'file', accept: '.ids,.xml', hidden: '', 'data-ifc-ids-input': '' }));
+          input.addEventListener('change', async () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            s.ids = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+            renderFields(); run();
+          });
+          parts.push(h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('model.ids.pick'), icon: 'folder-open', size: 'sm', 'data-ifc-ids-pick': '', onClick: () => input.click() }),
+            h('span', { class: 'dm-help', text: s.ids ? t('model.ids.file', { name: s.ids.name }) : t('model.ids.none') }),
+            s.ids ? ui.button({ label: t('model.ids.run'), icon: 'circle-check', size: 'sm', 'data-ifc-ids-run': '', onClick: () => run() }) : null,
+            h('span', { class: 'dm-help', text: t('model.ifc.python.note') }), input));
         } else if (s.tool === 'psets' || s.tool === 'geometry') {
           const classes = ['IfcElement', 'IfcProduct'].concat(((ds.model && ds.model.elementTypes) || []).map((x) => String(x.name))).filter((v, i, a) => a.indexOf(v) === i);
           if (!classes.includes(s.ifcClass)) s.ifcClass = 'IfcElement';
@@ -139,12 +153,21 @@
           } else if (analysis.IFC_TOOLS.includes(s.tool)) {
             // In Python with IfcOpenShell: the first time Python starts and the wheels are fetched after consent.
             if (s.tool === 'select' && !s.query.trim()) out = { columns: [], rows: [], note: t('model.select.empty') };
+            else if (s.tool === 'ids' && !s.ids) out = { columns: [], rows: [], note: t('model.ids.empty') };
             else {
               const catalog = D.require('engines/python/catalog');
               replace(resultEl, h('dm-progress', { indeterminate: true, label: t('model.ifc.loading', { mb: Math.round((catalog.RUNTIME_SIZE + catalog.IFC_SIZE) / 1048576) }) }));
-              const params = s.tool === 'validate' ? { express: s.express } : s.tool === 'psets' ? { ifc_class: s.ifcClass, qtos: s.qtos } : s.tool === 'geometry' ? { ifc_class: s.ifcClass } : s.tool === 'select' ? { query: s.query } : {};
+              let params = s.tool === 'validate' ? { express: s.express } : s.tool === 'psets' ? { ifc_class: s.ifcClass, qtos: s.qtos } : s.tool === 'geometry' ? { ifc_class: s.ifcClass } : s.tool === 'select' ? { query: s.query } : {};
+              if (s.tool === 'ids') {
+                const path = '/data/ids/' + s.ids.name.replace(/[^\w.-]+/g, '_');
+                await D.require('data/python-bridge').bridge.writeFile(path, s.ids.bytes.slice());
+                params = { ids: path };
+              }
               out = await analysis.ifcTool(ds.id, s.tool, params);
-              out.note = t('model.ifc.note.' + s.tool, { n: i18n.formatNumber(out.total) });
+              const sum = out.summary;
+              out.note = s.tool === 'ids' && sum
+                ? t('model.ids.note', { specs: i18n.formatNumber(sum.specifications || 0), checks: i18n.formatNumber(sum.checks || 0), pass: i18n.formatNumber(sum.checks_pass || 0), fail: i18n.formatNumber(sum.checks_fail || 0) })
+                : t('model.ifc.note.' + s.tool, { n: i18n.formatNumber(out.total) });
             }
           }
           if (my !== seq || !resultEl) return;

@@ -2745,6 +2745,27 @@ Dataspatium.assets.manifest({
    "size": 25384,
    "sha256": "445dd62529369a4ef32520d8b6232031ea8af01f1029b08b2d876ff6b7807b7b",
    "library": "dxf-parser"
+  },
+  "elementpath/elementpath-5.1.4-py3-none-any.whl": {
+   "file": "vendor/elementpath/elementpath-5.1.4-py3-none-any.whl.js",
+   "encoding": "base64",
+   "size": 261881,
+   "sha256": "5ec8d7bb44b16c98414a6a95e20cb150f3cbfc3cac65edc14773288c7a937376",
+   "library": "elementpath"
+  },
+  "xmlschema/xmlschema-4.3.2-py3-none-any.whl": {
+   "file": "vendor/xmlschema/xmlschema-4.3.2-py3-none-any.whl.js",
+   "encoding": "base64",
+   "size": 504613,
+   "sha256": "cf5c970a30f6ebcb3da35260e694704cc0b6794d8ace46125bb2a95e38ed9307",
+   "library": "xmlschema"
+  },
+  "ifctester/ifctester-0.9.0-py3-none-any.whl": {
+   "file": "vendor/ifctester/ifctester-0.9.0-py3-none-any.whl.js",
+   "encoding": "base64",
+   "size": 30942,
+   "sha256": "06ddff30b5e3fb92be0326f208946c835214e17f2d6a55247904964587371293",
+   "library": "ifctester"
   }
  },
  "libraries": {
@@ -3100,6 +3121,32 @@ Dataspatium.assets.manifest({
    "direct": [],
    "assets": 1,
    "notes": "Reads DXF files to JSON (UMD, global DxfParser) in a shimmed Blob worker (engines/dxf); the SVG drawing is the app's own (data/dxf)."
+  },
+  "elementpath": {
+   "version": "5.1.4",
+   "license": "MIT",
+   "homepage": "https://github.com/sissaschool/elementpath",
+   "direct": [],
+   "assets": 1,
+   "notes": "XPath for xmlschema (a dependency of ifctester). A pure-Python wheel from PyPI, unchanged, loaded into Pyodide when the IDS tool is used."
+  },
+  "xmlschema": {
+   "version": "4.3.2",
+   "license": "MIT",
+   "homepage": "https://github.com/sissaschool/xmlschema",
+   "direct": [],
+   "assets": 1,
+   "notes": "XML Schema validation and decoding, used by ifctester to read IDS files. A pure-Python wheel from PyPI, unchanged, loaded into Pyodide when the IDS tool is used."
+  },
+  "ifctester": {
+   "version": "0.9.0",
+   "license": "LGPL-3.0",
+   "homepage": "https://ifcopenshell.org",
+   "direct": [
+    "LICENSE-GPL-3.0.txt"
+   ],
+   "assets": 1,
+   "notes": "IfcOpenShell's checker for IDS (buildingSMART Information Delivery Specification), loaded into Pyodide when the IDS tool in Analysera is used. The wheel from PyPI (25 MB) carries IfcOpenShell's own IDS web app with a bundled Pyodide and wheels under ifctester/webapp; tools/fetch_vendor.py removes that directory and rewrites RECORD (strip), leaving the checker itself (31 kB). This is a modification of an LGPL-3.0 work, made by Dataspatium on 2026-11-06: the licence texts follow (LICENSE = COPYING.LESSER, LICENSE-GPL-3.0.txt = COPYING), the change is stated here and in docs/licenser.md, and the source is the Python files in the wheel and https://github.com/IfcOpenShell/IfcOpenShell/tree/v0.9.0/src/ifctester. The original wheel's SHA-256 is recorded as sourceSha256 in vendor-src/ifctester/files.json."
   }
  }
 });

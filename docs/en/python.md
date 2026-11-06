@@ -58,6 +58,7 @@ ax.set_xlabel("Thousands")
 | `dm_ifc_validate(model, express=True)` | Findings of the schema check: level, type, id, guid, attribute, message. `express=True` runs the schema's rules too. |
 | `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Elements by IfcOpenShell's selector language, as `dm_ifc_elements()` lists them. |
 | `dm_ifc_geometry(model, "IfcWall")` | Volume, surface and bounding box per element, measured on the geometry (metres). |
+| `dm_ifc_ids(model, "krav.ids")` | Checks the model against an IDS file (a path in Python's file system, XML text or bytes) with ifctester: specifikation, krav, status, guid, typ, namn, orsak; the tally in `df.attrs["ids"]`. |
 | `dm_ifc_set(model, df, key="guid")` | Writes the table's values into the model (attributes and `Set.Property` columns) and returns the number of elements changed. |
 | `dm_ifc_write(model, "New name")` | Sends the model to the app as a new model dataset. The original dataset is not changed. |
 

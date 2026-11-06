@@ -104,6 +104,10 @@ tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei pois
   `IfcElement, material=Betoni`.
 - **Geometriamitat** mittaa tilavuuden, pinta-alan ja rajauslaatikon elementtiä kohti geometriasta (OpenCASCADE). Hidas
   suurille malleille.
+- **IDS-tarkistus** (2.5.0) tarkistaa mallin IDS-tiedostoa (buildingSMART Information Delivery Specification) vasten
+  ifctesterillä, IfcOpenShellin omalla tarkistimella: valitse .ids-tiedosto, niin saat rivin vaatimusta ja elementtiä kohti,
+  tilana hyväksytty, hylätty tai ei sovellettavissa, sekä syyn ja yhteenvedon. Tiedosto pysyy selaimessa. ifctester kulkee
+  sovelluksen mukana ilman verkkosovellustaan, joten mitään ei haeta Pythonin itsensä lisäksi.
 
 **Muokkaa-tilassa** mallilla on kaksi toimintoa kohdassa *Toiminnot* (painike on sekä mallinäkymässä että taulukkonäkymässä),
 ryhmässä *Malli*:

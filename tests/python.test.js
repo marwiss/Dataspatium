@@ -42,7 +42,7 @@
     assert.ok(catalog.has('seaborn') && catalog.info('seaborn').url.startsWith('https://files.pythonhosted.org/') && /^[0-9a-f]{64}$/.test(catalog.info('seaborn').sha256), 'seaborn pinned');
     assert.deepEqual(catalog.referenced('import seaborn as sns\nimport plotly.express as px'), ['seaborn', 'plotly']);
     assert.deepEqual(catalog.closure(['seaborn']).sort(), ['matplotlib', 'numpy', 'pandas', 'pytz', 'seaborn']);
-    assert.ok(catalog.EXTRA.every((e) => e.url && e.sha256 && e.size > 0 && (e.imports.length || e.order)), 'every extra wheel is pinned (IfcOpenShell plug-ins have no import names of their own)');
+    assert.ok(catalog.EXTRA.every((e) => (e.url || e.asset) && e.sha256 && e.size > 0 && (e.imports.length || e.order)), 'every extra wheel is pinned (IfcOpenShell plug-ins have no import names of their own)');
     assert.ok(catalog.RUNTIME.length === 5 && catalog.RUNTIME.every((f) => /^[0-9a-f]{64}$/.test(f.sha256) && f.size > 0), 'pinned runtime digests');
     assert.ok(catalog.BASE.startsWith('https://cdn.jsdelivr.net/pyodide/v' + catalog.VERSION + '/'), catalog.BASE);
     assert.deepEqual(catalog.STARTUP, ['numpy', 'pandas', 'micropip', 'sqlite3']);

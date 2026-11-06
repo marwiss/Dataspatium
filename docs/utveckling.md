@@ -56,6 +56,11 @@ installeras ett i taget i uppströms ordning (kärnan, schematolk och geometrima
 OpenCASCADE), eftersom insticken länkar mot varandra. Appens Pyodide följer den linje hjulen är byggda för. Proven i
 `tests/ifcopenshell.test.js` kör mot riktig Pyodide med `?python=1` (hämtar cirka 13 MB till) och annars med en låtsasmotor.
 
+Rena Python-hjul kan också ligga i mappen: `vendor/vendor.json` tar en post med `url` till PyPI, pinnad `sha256` (kontrolleras vid
+hämtningen) och valfritt `strip` (sökvägsprefix som tas bort ur hjulet, med RECORD omskriven; `sourceSha256` i vendor-src/files.json
+bevarar originalets summa). Så levereras ifctester utan sin webbapp, med xmlschema och elementpath; `VENDORED` i `catalog.js` gör dem
+till Pyodide-paket som installeras från resursadress utan nätverk.
+
 pdf.js är pinnat till 3.11.174, den sista versionen som levereras som klassiska skript (senare versioner är enbart
 ES-moduler och kan inte köras från file:// i Edge). Posten i `vendor.json` hämtar visningslagret som vanlig fil,
 worker-bygget som textresurs (`"wrap": "text"`) och de fjorton standardtypsnitten som en bunt

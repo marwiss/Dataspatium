@@ -103,6 +103,10 @@ deretter i nettleseren. Ingenting sendes noe sted; modellen forlater ikke datama
   `IfcElement, material=Betong`.
 - **Geometrimål** måler volum, overflate og omsluttende boks per element på geometrien (OpenCASCADE). Langsomt for store
   modeller.
+- **IDS-kontroll** (2.5.0) kontrollerer modellen mot en IDS-fil (buildingSMART Information Delivery Specification) med
+  ifctester, IfcOpenShells egen kontrollør: velg .ids-filen, så får du en rad per krav og element med godkjent, ikke godkjent
+  eller ikke relevant og årsaken, samt en opptelling. Filen blir i nettleseren. ifctester følger med appen uten webappen sin, så
+  ingenting hentes utover Python selv.
 
 **I Bearbeid** har modellen to handlinger under *Handlinger* (knappen finnes i modellvisningen og i tabellvisningen), i gruppen
 *Modell*:

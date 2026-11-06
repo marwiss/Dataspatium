@@ -103,6 +103,10 @@ browseren. Intet sendes nogen steder; modellen forlader ikke computeren.
   `IfcElement, material=Beton`.
 - **Geometrimål** måler volumen, overflade og omsluttende kasse pr. element på geometrien (OpenCASCADE). Langsomt for store
   modeller.
+- **IDS-kontrol** (2.5.0) kontrollerer modellen mod en IDS-fil (buildingSMART Information Delivery Specification) med
+  ifctester, IfcOpenShells egen kontrollant: vælg .ids-filen, så får du en række pr. krav og element med godkendt, ikke godkendt
+  eller ikke relevant og årsagen, samt en optælling. Filen bliver i browseren. ifctester følger med appen uden sin webapp, så intet
+  hentes ud over Python selv.
 
 **I Bearbejd** har modellen to handlinger under *Handlinger* (knappen findes i modelvisningen og i tabelvisningen), i gruppen
 *Model*:

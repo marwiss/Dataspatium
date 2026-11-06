@@ -102,6 +102,10 @@ sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
 - **IFC-urval** hämtar element med IfcOpenShells urvalsspråk, till exempel `IfcWall, Pset_WallCommon.FireRating=EI60` eller
   `IfcElement, material=Betong`.
 - **Geometrimått** mäter volym, yta och omslutande låda per element på geometrin (OpenCASCADE). Långsamt för stora modeller.
+- **IDS-kontroll** (2.5.0) kontrollerar modellen mot en IDS-fil (buildingSMART Information Delivery Specification) med
+  ifctester, IfcOpenShells egen kontrollant: välj .ids-filen, så får du en rad per krav och element med godkänd, underkänd eller
+  ej tillämpligt och orsaken, samt en sammanräkning. Filen stannar i webbläsaren. ifctester följer med appen utan sin webbapp,
+  så inget hämtas utöver Python självt.
 
 **I Bearbeta** har modellen två åtgärder under *Åtgärder* (knappen finns i modellvyn och i tabellvyn), i gruppen *Modell*:
 

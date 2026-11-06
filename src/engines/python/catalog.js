@@ -47,6 +47,17 @@
       { name: 'isodate', version: '0.7.2', file: 'isodate-0.7.2-py3-none-any.whl', url: 'https://files.pythonhosted.org/packages/15/aa/0aca39a37d3c7eb941ba736ede56d689e7be91cab5d9ca846bde3999eba6/isodate-0.7.2-py3-none-any.whl', sha256: '28009937d8031054830160fce6d409ed342816b543597cece116d966c6d99e15', size: 22320, depends: [], imports: ['isodate'] },
     ];
     /**
+     * Pure wheels that travel in the ZIP as assets (vendor/<lib>/, pinned in vendor/vendor.json): the IDS checker ifctester
+     * (LGPL-3.0, stripped of its bundled web app by tools/fetch_vendor.py) with xmlschema and elementpath (MIT). They are
+     * installed by their asset address like the wheels from PyPI, so nothing is fetched when the IDS tool is used.
+     */
+    const VENDORED = [
+      { name: 'elementpath', version: '5.1.4', file: 'elementpath-5.1.4-py3-none-any.whl', asset: 'elementpath/elementpath-5.1.4-py3-none-any.whl', sha256: '5ec8d7bb44b16c98414a6a95e20cb150f3cbfc3cac65edc14773288c7a937376', size: 261881, depends: [], imports: ['elementpath'], order: 10 },
+      { name: 'xmlschema', version: '4.3.2', file: 'xmlschema-4.3.2-py3-none-any.whl', asset: 'xmlschema/xmlschema-4.3.2-py3-none-any.whl', sha256: 'cf5c970a30f6ebcb3da35260e694704cc0b6794d8ace46125bb2a95e38ed9307', size: 504613, depends: ['elementpath'], imports: ['xmlschema'], order: 11 },
+      { name: 'ifctester', version: '0.9.0', file: 'ifctester-0.9.0-py3-none-any.whl', asset: 'ifctester/ifctester-0.9.0-py3-none-any.whl', sha256: '06ddff30b5e3fb92be0326f208946c835214e17f2d6a55247904964587371293', size: 30942, depends: ['ifcopenshell', 'xmlschema', 'numpy', 'python-dateutil'], imports: ['ifctester'], order: 20 },
+    ];
+    for (const v of VENDORED) EXTRA.push(v);
+    /**
      * IfcOpenShell (LGPL-3.0; https://github.com/IfcOpenShell/IfcOpenShell) as the modular WebAssembly wheels upstream publishes
      * for this Pyodide line at https://ifcopenshell.github.io/wasm-wheels/ (GitHub Pages, CORS; PyPI has no WebAssembly wheels
      * until PEP 783). The plug-ins link against each other, so they are installed one at a time in this order after the
@@ -80,7 +91,7 @@
     }
     const IFC_SIZE = IFC_WHEELS.reduce((n, w) => n + w.size, 0);
     /** Helpers in python/dataspatium.py that import a package the code itself does not name. */
-    const IMPLIED = [{ pattern: /\bdm_ifc\w*\s*\(/, pkg: 'ifcopenshell' }];
+    const IMPLIED = [{ pattern: /\bdm_ifc\w*\s*\(/, pkg: 'ifcopenshell' }, { pattern: /\bdm_ifc_ids\s*\(/, pkg: 'ifctester' }];
     const RUNTIME_SIZE = RUNTIME.reduce((n, f) => n + f.size, 0);
 
     /** @type {Map<string, {name: string, version: string, file: string, sha256: string, depends: string[], imports: string[]}>|null} */
@@ -190,6 +201,14 @@
     }
     /** Whether an asset is in memory right now (not consumed by a worker transfer). */
     const inMemory = (assetName) => !!D.assets.peek(assetName);
+    /** A wheel that travels in the ZIP: decoded from its wrapper file and provided under Pyodide's asset name. */
+    async function provideVendored(entry, assetName) {
+      if (D.assets.peek(assetName)) { provided.add(assetName); return assetName; }
+      const bytes = await D.assets.load(entry.asset);
+      D.assets.provide(assetName, 'binary', bytes);
+      provided.add(assetName);
+      return assetName;
+    }
 
     /**
      * The runtime files, as asset names, fetched after consent on first use.
@@ -222,7 +241,7 @@
       for (const name of all) {
         const entry = index.get(name);
         const asset = PREFIX + entry.file;
-        if (!inMemory(asset)) await provideSpec(wheelSpec(entry), asset, 'binary', options);
+        if (!inMemory(asset)) { if (entry.asset) await provideVendored(entry, asset); else await provideSpec(wheelSpec(entry), asset, 'binary', options); }
         assets.push(asset);
       }
       return { packages: fresh, assets };
@@ -242,7 +261,7 @@
       await load(options);
       const entry = Array.from(index.values()).find((e) => e.file === file);
       if (!entry) return false;
-      await provideSpec(wheelSpec(entry), assetName, 'binary', options);
+      if (entry.asset) await provideVendored(entry, assetName); else await provideSpec(wheelSpec(entry), assetName, 'binary', options);
       return true;
     }
 
@@ -254,6 +273,6 @@
 
     function reset() { index = null; importMap = new Map(); provided.clear(); }
 
-    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
+    return { VERSION, BASE, PREFIX, INDEX_URL, RUNTIME, RUNTIME_SIZE, STARTUP, EXTRA, VENDORED, IFC_VERSION, IFC_WHEELS, IFC_SIZE, parse, load, has, info, all, referenced, closure, ensureRuntime, ensurePackages, provideFile, cachedRuntime, provided: () => Array.from(provided), reset };
   });
 })();

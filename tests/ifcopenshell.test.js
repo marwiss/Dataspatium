@@ -56,6 +56,16 @@
       assert.deepEqual(catalog.referenced('import ifcopenshell.util.element as el\nimport pytest'), ['ifcopenshell', 'pytest']);
       assert.deepEqual(catalog.referenced('print("dm_ifc")'), [], 'a bare mention without a call is not a reference');
       assert.ok(catalog.IFC_SIZE > 12 * 1024 * 1024 && catalog.IFC_SIZE < 13.5 * 1024 * 1024, 'about 12.7 MB in all: ' + catalog.IFC_SIZE);
+      // The IDS checker and its XML schema library travel in the ZIP as vendored wheels, installed like the others.
+      for (const name of ['elementpath', 'xmlschema', 'ifctester']) {
+        const e = catalog.info(name);
+        assert.ok(e && e.asset && e.asset.startsWith(name + '/') && /^[0-9a-f]{64}$/.test(e.sha256) && e.size > 0 && !e.url, 'vendored wheel ' + name);
+        const info = D.assets.info ? D.assets.info(e.asset) : null;
+        assert.ok(!D.assets.info || (info && info.sha256 === e.sha256 && info.size === e.size), name + ' in vendor/manifest.js with the same digest');
+      }
+      assert.ok(catalog.info('ifctester').size < 60000, 'ifctester without its web app is small: ' + catalog.info('ifctester').size);
+      assert.deepEqual(catalog.closure(['ifctester']).filter((n) => ['ifctester', 'xmlschema', 'elementpath', 'ifcopenshell'].includes(n)).sort(), ['elementpath', 'ifcopenshell', 'ifctester', 'xmlschema']);
+      assert.deepEqual(catalog.referenced('r = dm_ifc_ids(m, "krav.ids")'), ['ifcopenshell', 'ifctester'], 'dm_ifc_ids implies both packages');
     } finally { catalog.reset(); }
     return 'IfcOpenShell ' + catalog.IFC_VERSION;
   });
@@ -116,6 +126,10 @@
       assert.ok(urls.slice(2).every((u) => u.startsWith(catalog.INDEX_URL)) && urls.filter((u) => u.includes('ifcopenshell')).length === catalog.IFC_WHEELS.length, JSON.stringify(urls));
       const names = urls.filter((u) => u.includes('ifcopenshell')).map((u) => u.slice(catalog.INDEX_URL.length).split('-')[0].replace(/_/g, '-'));
       assert.deepEqual(names, catalog.IFC_WHEELS.map((w) => w.name), 'in upstream\'s order');
+      loads.length = 0;
+      await b.ensurePackages(['ifctester']);
+      const tail = loads.slice(-3).map((l) => l[0].slice(catalog.INDEX_URL.length).split('-')[0]);
+      assert.deepEqual(tail, ['elementpath', 'xmlschema', 'ifctester'], 'the vendored wheels install after the IfcOpenShell set, in order: ' + JSON.stringify(loads.map((l) => l[0])));
     } finally { catalog.ensurePackages = realEnsure; catalog.reset(); }
     // The tools and the steps reach Python with the dataset mirrored and come back as tables and files.
     const table = await b.ifcTool(meta.id, 'structure', {});
@@ -178,7 +192,7 @@
       shell.activate('analysera');
       const tabs = await waitFor(() => Array.from(root.querySelectorAll('dm-tabs')).find((el) => /** @type {any} */ (el).tabs && /** @type {any} */ (el).tabs.some((x) => x.id === 'validate')), 8000, 'the Mängder tab with the new tools');
       const ids = /** @type {any} */ (tabs).tabs.map((x) => x.id);
-      assert.deepEqual(ids.slice(-5), ['validate', 'structure', 'psets', 'select', 'geometry'], ids.join(','));
+      assert.deepEqual(ids.slice(-6), ['validate', 'ids', 'structure', 'psets', 'select', 'geometry'], ids.join(','));
       assert.ok(ids.indexOf('issues') < ids.indexOf('validate'), 'after Ärenden');
       tabs.dispatchEvent(new CustomEvent('dm-change', { detail: { id: 'select' } }));
       await waitFor(() => root.querySelector('[data-ifc-query]'), 5000, 'the selection field');
@@ -225,6 +239,17 @@
     assert.ok(recipes.canUndo(meta.id));
     const geometry = await bridge.ifcTool(meta.id, 'geometry', { ifc_class: 'IfcWall' });
     assert.ok(geometry.rows.some((r) => Number(r[3]) > 0), 'a wall has a volume: ' + JSON.stringify(geometry.rows[0]));
+    // An IDS file: the walls have a FireRating but no AcousticRating, so one requirement passes and one fails.
+    const idsXml = '<?xml version="1.0" encoding="UTF-8"?>\n<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd"><info><title>Provkrav</title></info><specifications><specification name="V\u00e4ggar har brandklass och ljudklass" ifcVersion="IFC4" identifier="S1"><applicability minOccurs="1" maxOccurs="unbounded"><entity><name><simpleValue>IFCWALL</simpleValue></name></entity></applicability><requirements><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>FireRating</simpleValue></baseName></property><property dataType="IFCLABEL" cardinality="required"><propertySet><simpleValue>Pset_WallCommon</simpleValue></propertySet><baseName><simpleValue>AcousticRating</simpleValue></baseName></property></requirements></specification></specifications></ids>';
+    await bridge.writeFile('/data/ids/prov.ids', new TextEncoder().encode(idsXml));
+    const checked = await bridge.ifcTool(meta.id, 'ids', { ids: '/data/ids/prov.ids' });
+    assert.deepEqual(checked.columns.map((c) => c.name), ['specifikation', 'krav', 'status', 'guid', 'typ', 'namn', 'orsak']);
+    assert.ok(checked.summary && checked.summary.specifications === 1 && checked.summary.checks > 0 && checked.summary.checks_fail > 0 && checked.summary.checks_pass > 0, JSON.stringify(checked.summary));
+    const statuses = new Set(checked.rows.map((r) => r[2]));
+    assert.ok(statuses.has('godkänd') && statuses.has('underkänd'), 'FireRating passes and AcousticRating fails: ' + JSON.stringify(checked.rows.slice(0, 4)));
+    assert.ok(checked.rows.filter((r) => r[2] === 'underkänd').every((r) => r[4] === 'IfcWall' && r[6]), 'the failed rows name the wall and a reason');
+    const viaPython = await bridge.run('r = dm_ifc_ids(dm_ifc("Ifcriktig"), "/data/ids/prov.ids")\nprint(len(r) > 0, r.attrs["ids"]["checks_fail"] > 0, sorted(set(r["status"])))');
+    assert.equal(stdoutOf(viaPython).trim(), "True True ['godkänd', 'underkänd']", JSON.stringify(viaPython.entries.map((e) => (e.text || '').slice(0, 300))));
     const copied = await bridge.run('m = dm_ifc("Ifcriktig")\ndm_ifc_write(m, "Ifckopia")');
     const ds = copied.entries.find((e) => e.kind === 'dataset');
     assert.ok(ds && ds.meta.name === 'Ifckopia' && ds.meta.kind === 'model', JSON.stringify(copied.entries.map((e) => e.kind + ':' + (e.text || '').slice(0, 200))));

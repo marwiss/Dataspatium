@@ -104,6 +104,10 @@ browser. Nothing is sent anywhere; the model does not leave the computer.
   or `IfcElement, material=Concrete`.
 - **Geometry measures** measures volume, surface and bounding box per element on the geometry (OpenCASCADE). Slow for big
   models.
+- **IDS check** (2.5.0) checks the model against an IDS file (buildingSMART Information Delivery Specification) with
+  ifctester, IfcOpenShell's own checker: choose the .ids file and you get a row per requirement and element with passed, failed
+  or not applicable and the reason, plus a tally. The file stays in the browser. ifctester travels with the app without its web
+  app, so nothing is fetched beyond Python itself.
 
 **In Process** the model has two actions under *Actions* (the button is in the model view and in the table view), in the group
 *Model*:

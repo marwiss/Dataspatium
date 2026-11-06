@@ -100,6 +100,10 @@ vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
 - **IFC-val** sækir einingar með valmáli IfcOpenShell, til dæmis `IfcWall, Pset_WallCommon.FireRating=EI60` eða
   `IfcElement, material=Steypa`.
 - **Rúmfræðimál** mælir rúmmál, yfirborð og umlykjandi kassa á einingu á rúmfræðinni (OpenCASCADE). Hægt fyrir stór líkön.
+- **IDS-prófun** (2.5.0) prófar líkanið gegn IDS-skrá (buildingSMART Information Delivery Specification) með ifctester,
+  eigin prófara IfcOpenShell: veldu .ids-skrána og þú færð eina röð á kröfu og einingu með stóðst, féll eða á ekki við og
+  ástæðunni, auk samantektar. Skráin verður í vafranum. ifctester fylgir forritinu án vefforrits síns, svo ekkert er sótt umfram
+  Python sjálft.
 
 **Í Vinna** hefur líkanið tvær aðgerðir undir *Aðgerðir* (hnappurinn er bæði í líkansýn og töflusýn), í hópnum *Líkan*:
 

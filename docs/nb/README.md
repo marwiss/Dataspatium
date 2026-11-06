@@ -154,7 +154,7 @@ Cypher og logger hvert kall med samme X-Request-Id som serveren skriver i sin fo
 andre OpenCDE-klienter fungerer også. Serveren trengs ikke for resten av appen: uten server fungerer alt annet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbeidet fra serverens side;
 her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.4.0 fungerer med Kontroll 2.4.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
+Dataspatium 2.5.0 fungerer med Kontroll 2.5.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
 [snabbstart.md](snabbstart.md) tar paret fra ingenting til en sak på tjue minutter.
 
 ## Lær mer

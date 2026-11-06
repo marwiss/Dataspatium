@@ -57,6 +57,7 @@ ax.set_xlabel("Tusen")
 | `dm_ifc_validate(model, express=True)` | Funn fra skjemakontrollen: nivå, type, id, guid, attributt, melding. `express=True` kjører også skjemaets regler. |
 | `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Elementer etter IfcOpenShells utvalgsspråk, som `dm_ifc_elements()` lister dem. |
 | `dm_ifc_geometry(model, "IfcWall")` | Volum, overflate og omsluttende boks per element, målt på geometrien (meter). |
+| `dm_ifc_ids(model, "krav.ids")` | Kontrollerer modellen mot en IDS-fil (sti i Pythons filsystem, XML-tekst eller bytes) med ifctester: specifikation, krav, status, guid, typ, namn, orsak; opptellingen i `df.attrs["ids"]`. |
 | `dm_ifc_set(model, df, key="guid")` | Skriver tabellens verdier inn i modellen (attributter og `Sett.Egenskap`-kolonner) og returnerer antall endrede elementer. |
 | `dm_ifc_write(model, "Nytt navn")` | Sender modellen til appen som et nytt modelldatasett. Det opprinnelige datasettet endres ikke. |
 

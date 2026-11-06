@@ -159,7 +159,7 @@ OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for th
 works as before. Kontroll's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.4.0 works with Kontroll 2.4.0. Both carry the same release number, so equal numbers belong together. The quick start
+Dataspatium 2.5.0 works with Kontroll 2.5.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more

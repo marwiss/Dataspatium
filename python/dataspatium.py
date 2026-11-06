@@ -22,7 +22,7 @@ import sys
 
 __all__ = ["dm_list", "dm_read", "dm_read_nodes", "dm_read_edges", "dm_read_properties", "dm_read_quantities", "dm_write", "dm_find", "dm_index", "dm_value_labels", "dm_palette",
            "theme_dataspatium", "dm_setup", "DataspatiumError", "dm_ifc", "dm_ifc_write", "dm_ifc_elements", "dm_ifc_psets", "dm_ifc_tree", "dm_ifc_validate",
-           "dm_ifc_select", "dm_ifc_set", "dm_ifc_geometry"]
+           "dm_ifc_select", "dm_ifc_set", "dm_ifc_geometry", "dm_ifc_ids"]
 
 DATA_DIR = "/data"
 OUT_DIR = "/data/out"
@@ -63,6 +63,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Koden måste definiera en funktion step(model).",
         "ifc.step.notmodel": "step(model) måste returnera modellen (eller None).",
         "ifc.key.missing": "Tabellen saknar nyckelkolumnen \"%s\".",
+        "ids.invalid": "IDS-filen kunde inte läsas: %s",
+        "ids.missing": "IDS-filen hittades inte: %s",
     },
     "da": {
         "list.empty": "Ingen datasæt er tilgængelige i Python-sessionen endnu. Importér under Hent.",
@@ -90,6 +92,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Koden skal definere en funktion step(model).",
         "ifc.step.notmodel": "step(model) skal returnere modellen (eller None).",
         "ifc.key.missing": "Tabellen mangler nøglekolonnen \"%s\".",
+        "ids.invalid": "IDS-filen kunne ikke læses: %s",
+        "ids.missing": "IDS-filen blev ikke fundet: %s",
     },
     "nb": {
         "list.empty": "Ingen datasett er tilgjengelige i Python-sesjonen ennå. Importer under Hent.",
@@ -117,6 +121,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Koden må definere en funksjon step(model).",
         "ifc.step.notmodel": "step(model) må returnere modellen (eller None).",
         "ifc.key.missing": "Tabellen mangler nøkkelkolonnen \"%s\".",
+        "ids.invalid": "IDS-filen kunne ikke leses: %s",
+        "ids.missing": "IDS-filen ble ikke funnet: %s",
     },
     "nn": {
         "list.empty": "Ingen datasett er tilgjengelege i Python-sesjonen enno. Importer under Hent.",
@@ -144,6 +150,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Koden må definere ein funksjon step(model).",
         "ifc.step.notmodel": "step(model) må returnere modellen (eller None).",
         "ifc.key.missing": "Tabellen manglar nøkkelkolonnen \"%s\".",
+        "ids.invalid": "IDS-fila kunne ikkje lesast: %s",
+        "ids.missing": "IDS-fila vart ikkje funnen: %s",
     },
     "fi": {
         "list.empty": "Python-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
@@ -171,6 +179,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Koodin on määriteltävä funktio step(model).",
         "ifc.step.notmodel": "step(model)-funktion on palautettava malli (tai None).",
         "ifc.key.missing": "Taulukosta puuttuu avainsarake \"%s\".",
+        "ids.invalid": "IDS-tiedostoa ei voitu lukea: %s",
+        "ids.missing": "IDS-tiedostoa ei löytynyt: %s",
     },
     "is": {
         "list.empty": "Engin gagnasöfn eru tiltæk í Python-setunni enn. Flyttu inn undir Sækja.",
@@ -198,6 +208,8 @@ MESSAGES = {
         "ifc.step.nofunction": "Kóðinn þarf að skilgreina fallið step(model).",
         "ifc.step.notmodel": "step(model) þarf að skila líkaninu (eða None).",
         "ifc.key.missing": "Töfluna vantar lykildálkinn \"%s\".",
+        "ids.invalid": "Ekki tókst að lesa IDS-skrána: %s",
+        "ids.missing": "IDS-skráin fannst ekki: %s",
     },
     "en": {
         "list.empty": "No datasets are available in the Python session yet. Import one in Import.",
@@ -225,6 +237,8 @@ MESSAGES = {
         "ifc.step.nofunction": "The code must define a function step(model).",
         "ifc.step.notmodel": "step(model) must return the model (or None).",
         "ifc.key.missing": "The table has no key column \"%s\".",
+        "ids.invalid": "The IDS file could not be read: %s",
+        "ids.missing": "The IDS file was not found: %s",
     },
 }
 
@@ -1107,8 +1121,71 @@ def dm_ifc_geometry(model, ifc_class="IfcElement", elements=None):
     return pd.DataFrame(rows, columns=["guid", "typ", "namn", "volym_m3", "yta_m2", "bredd_m", "djup_m", "hojd_m", "hornpunkter"])
 
 
-def _frame_json(df, limit=None):
-    """A DataFrame as the JSON table the app's tools show: columns with Dataspatium types, rows as plain values."""
+IDS_DIR = "/data/ids"
+
+
+def _ids_path(source, name=None):
+    """The IDS file as a path in Python's file system: a path given, or XML text or bytes written under /data/ids."""
+    if isinstance(source, str) and os.path.exists(source):
+        return source
+    if isinstance(source, str) and "<" not in source:
+        raise DataspatiumError(_msg("ids.missing", source))
+    os.makedirs(IDS_DIR, exist_ok=True)
+    path = os.path.join(IDS_DIR, str(name or "krav") if str(name or "").endswith(".ids") else (str(name or "krav") + ".ids"))
+    data = source.encode("utf-8") if isinstance(source, str) else bytes(source)
+    with open(path, "wb") as fh:
+        fh.write(data)
+    return path
+
+
+def dm_ifc_ids(model, source, name=None):
+    """Check the model against an IDS file (buildingSMART Information Delivery Specification) with ifctester.
+
+    source: a path in Python's file system, the IDS as XML text, or bytes. Returns a table with one row per requirement and
+    element: specifikation, krav, status (godkänd, underkänd or ej tillämpligt), guid, typ, namn, orsak. The summary of the
+    check (specifications, requirements, checks, passed and failed) is in df.attrs["ids"]. ifctester is LGPL-3.0 and travels
+    with the app without its web app; see docs/licenser.md.
+    """
+    import pandas as pd
+    import ifctester.ids
+    import ifctester.reporter
+    m = _ifc_of(model)
+    path = _ids_path(source, name)
+    try:
+        ids = ifctester.ids.open(path)
+    except Exception as e:
+        raise DataspatiumError(_msg("ids.invalid", str(e)[:200]))
+    ids.validate(m)
+    res = ifctester.reporter.Json(ids).report()
+    rows = []
+    for spec in res.get("specifications", []):
+        spec_name = spec.get("name") or ""
+        requirements = spec.get("requirements") or []
+        if not requirements:
+            rows.append([spec_name, None, "ej tillämpligt", None, None, None, spec.get("description") or None])
+        for req in requirements:
+            label = (str(req.get("label") or "") + ": " if req.get("label") else "") + str(req.get("value") or "")
+            label = label or str(req.get("facet_type") or "")
+            failed = req.get("failed_entities") or []
+            passed = req.get("passed_entities") or []
+            for e in failed:
+                rows.append([spec_name, label, "underkänd", e.get("global_id"), e.get("class"), e.get("name"), e.get("reason")])
+            for e in passed:
+                rows.append([spec_name, label, "godkänd", e.get("global_id"), e.get("class"), e.get("name"), None])
+            if not failed and not passed:
+                rows.append([spec_name, label, "ej tillämpligt", None, None, None, req.get("description") or None])
+    df = pd.DataFrame(rows, columns=["specifikation", "krav", "status", "guid", "typ", "namn", "orsak"])
+    df.attrs["ids"] = {
+        "title": res.get("title"), "status": bool(res.get("status")), "specifications": int(res.get("total_specifications") or 0),
+        "specifications_pass": int(res.get("total_specifications_pass") or 0), "requirements": int(res.get("total_requirements") or 0),
+        "requirements_pass": int(res.get("total_requirements_pass") or 0), "checks": int(res.get("total_checks") or 0),
+        "checks_pass": int(res.get("total_checks_pass") or 0), "checks_fail": int(res.get("total_checks_fail") or 0),
+    }
+    return df
+
+
+def _frame_json(df, limit=None, extra=None):
+    """A DataFrame as the JSON table the app's tools show: columns with Dataspatium types, rows as plain values, and any extra facts."""
     import pandas as pd
     total = int(len(df))
     if limit:
@@ -1123,7 +1200,10 @@ def _frame_json(df, limit=None):
         types[str(c)] = t
         columns.append({"name": str(c), "type": t})
     rows = [[_cell(v, types[str(c)]) for c, v in zip(df.columns, rec)] for rec in df.itertuples(index=False, name=None)]
-    return json.dumps({"columns": columns, "rows": rows, "total": total}, ensure_ascii=False, default=str)
+    out = {"columns": columns, "rows": rows, "total": total}
+    if extra:
+        out["summary"] = extra
+    return json.dumps(out, ensure_ascii=False, default=str)
 
 
 def _ifc_tool(x, tool, params_json="{}"):
@@ -1133,6 +1213,9 @@ def _ifc_tool(x, tool, params_json="{}"):
     ifc_class = p.get("ifc_class") or "IfcElement"
     if tool == "validate":
         df = dm_ifc_validate(model, express=bool(p.get("express")))
+    elif tool == "ids":
+        df = dm_ifc_ids(model, p.get("ids") or "")
+        return _frame_json(df, limit=p.get("limit"), extra=df.attrs.get("ids"))
     elif tool == "structure":
         df = dm_ifc_tree(model)
     elif tool == "psets":

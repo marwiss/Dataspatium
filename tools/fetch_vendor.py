@@ -14,6 +14,7 @@ import argparse
 import concurrent.futures
 import gzip
 import hashlib
+import io
 import json
 import pathlib
 import re
@@ -74,7 +75,8 @@ def expand_entries(lib, cfg):
                     as_name = name[len(strip):] if name.startswith(strip) else name
                     yield {"url": JSDELIVR_FILE.format(pkg=pkg, ver=ver, path=name), "as": as_name, "wrap": wrap, "bundle": bundle}
         elif "url" in entry:
-            yield {"url": entry["url"], "as": entry["as"], "wrap": wrap, "bundle": bundle}
+            # A file by address (PyPI wheels, licence texts): optionally pinned with `sha256` and slimmed with `strip`.
+            yield {"url": entry["url"], "as": entry["as"], "wrap": wrap, "bundle": bundle, "sha256": entry.get("sha256"), "strip": entry.get("strip")}
         else:
             as_name = entry.get("as", entry["path"].rsplit("/", 1)[-1])
             yield {"url": JSDELIVR_FILE.format(pkg=pkg, ver=ver, path=entry["path"]), "as": as_name, "wrap": wrap, "bundle": bundle}
@@ -101,24 +103,62 @@ def fetch_license(lib, cfg):
     print(f"  WARNING: no LICENSE found for {lib}; add licenseUrl to vendor.json", file=sys.stderr)
 
 
+def slim_zip(data, prefixes):
+    """A ZIP (a wheel) without the entries under `prefixes`; a dist-info RECORD loses their lines too. Timestamps and
+    compression are kept, so the result is the same for the same input."""
+    import zipfile
+    src = zipfile.ZipFile(io.BytesIO(data))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w") as dst:
+        for info in src.infolist():
+            if any(info.filename.startswith(p) for p in prefixes):
+                continue
+            payload = src.read(info)
+            if info.filename.endswith(".dist-info/RECORD"):
+                # RECORD is CSV: a path that contains a comma is quoted, so the first column is read as CSV, not split on commas.
+                import csv
+                rows = [r for r in csv.reader(io.StringIO(payload.decode("utf-8"))) if r and not any(r[0].startswith(p) for p in prefixes)]
+                buf = io.StringIO()
+                csv.writer(buf, lineterminator="\n").writerows(rows)
+                payload = buf.getvalue().encode("utf-8")
+            copy = zipfile.ZipInfo(info.filename, date_time=info.date_time)
+            copy.compress_type = info.compress_type
+            copy.external_attr = info.external_attr
+            dst.writestr(copy, payload)
+    return out.getvalue()
+
+
 def download_entry(lib, entry, force):
-    """Download one file into vendor-src/<lib>/<as> and return its record."""
+    """Download one file into vendor-src/<lib>/<as> and return its record. A pinned `sha256` is checked against the download;
+    `strip` keeps the original beside the slimmed copy (<as>.source) and records both digests."""
     dest = SRC / lib / entry["as"]
     dest.parent.mkdir(parents=True, exist_ok=True)
-    if not dest.exists() or force:
+    strip = entry.get("strip")
+    source_path = dest.with_name(dest.name + ".source") if strip else dest
+    if not source_path.exists() or force:
         data = http_get(entry["url"])
-        dest.write_bytes(data)
+        source_path.write_bytes(data)
         status = "fetched "
     else:
-        data = dest.read_bytes()
+        data = source_path.read_bytes()
         status = "cached  "
+    if entry.get("sha256") and sha256_of(data) != entry["sha256"]:
+        raise SystemExit(f"{lib}/{entry['as']}: the download's SHA-256 {sha256_of(data)} is not the pinned {entry['sha256']}")
+    record = {"as": entry["as"], "url": entry["url"], "wrap": entry["wrap"], "bundle": entry.get("bundle")}
+    if strip:
+        record["sourceSha256"] = sha256_of(data)
+        record["sourceSize"] = len(data)
+        record["stripped"] = list(strip)
+        data = slim_zip(data, strip)
+        dest.write_bytes(data)
+        status += f"(stripped {', '.join(strip)}) "
     print(f"  {status} {lib}/{entry['as']} ({len(data) / 1e6:.2f} MB)")
     if entry["wrap"] is False:
         out = OUT / lib / entry["as"]
         out.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(dest, out)
-    return {"as": entry["as"], "url": entry["url"], "wrap": entry["wrap"], "bundle": entry.get("bundle"),
-            "size": len(data), "sha256": sha256_of(data)}
+    record.update({"size": len(data), "sha256": sha256_of(data)})
+    return record
 
 
 ESM_SPEC_RE = re.compile(r"""(?:^|[;\s}])(?:import|export)\s*(?:[^"';]*?\s*from\s*)?["']([^"']+)["']""")
