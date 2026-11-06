@@ -139,11 +139,18 @@ Innlogga som `admin` opnar du <http://127.0.0.1:8000/admin>:
   `X-Request-ID`-verdiane som kortet *Logg* nedst i visinga av kjelda i *Hent*, slik at
   eit mislukka kall kan finnast på begge sider.
 
-Trykk deretter *Logg ut* øvst på sida til serveren, fordi opplastinga nedanfor blir
-gjord som ein annan brukar.
+Eksempelmodellen er allereie ein graf, fordi `OPENCDE_IFCGRAPH_ENABLED=true` stod i
+`.env` då du køyrde `opencde seed`. Neo4j Browser på <http://127.0.0.1:7484> (kople til
+`bolt://127.0.0.1:7697` som `neo4j` med passordet frå `.env`) svarar på denne
+spørjinga med veggen kopla til komponenten i viewpointen:
 
-Grafen blir bygd av opplasta modellar, ikkje av den frå `opencde seed`. For å sjå han
-sender du modellen til serveren:
+```cypher
+MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
+```
+
+Ein modell du sender frå Dataspatium, blir ein graf på same måte. For å prøve det,
+trykk *Logg ut* øvst på sida til serveren, fordi opplastinga blir gjord som ein annan
+brukar:
 
 1. I Dataspatium vel du modusen *Del* og fana *Til CDE*. Under *Kva* vel du
    *Originalfila* og trykkjer *Send*.
@@ -151,13 +158,7 @@ sender du modellen til serveren:
 3. Opplastingssida til serveren blir opna i eit popup-vindauge. Logg inn som
    `inspection_manager`, og trykk *Lagre og hald fram*. Vindauget lukkar seg sjølv.
 
-I løpet av nokre sekund svarar Neo4j Browser på <http://127.0.0.1:7484> (kople til
-`bolt://127.0.0.1:7697` som `neo4j` med passordet frå `.env`) på denne spørjinga med
-veggen kopla til komponenten i viewpointen:
-
-```cypher
-MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
-```
+I løpet av nokre sekund finn same spørjinga òg veggen i den nye modellen.
 
 ## Feilsøking
 
@@ -176,18 +177,19 @@ Kvar rad siterer skjermen slik han ser ut med dei nynorske namna.
 | *Appen kan registrere seg sjølv hos tenaren berre når han køyrer frå ein webserver …* | Appen vart opna frå mappa | Opne `http://127.0.0.1:8080/` |
 | *Kunne ikkje nå 127.0.0.1:8000 …* | Kontroll køyrer ikkje, eller adressa er feilskriven | <http://127.0.0.1:8000/readyz> må svare. Adressa er `http://127.0.0.1:8000` utan noko etter |
 | *Tenaren tillèt ikkje at appen registrerer seg sjølv …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` er ikkje `true` | Endre `.env`, køyr `up`-kommandoen på nytt, og trykk *Legg til kjelde* igjen |
-| *Registreringa mislukkast:* … `http redirect URIs are only allowed for the loopback address` | Appen vart opna på `localhost`, som serveren ikkje godtek som veg tilbake | Opne `http://127.0.0.1:8080/`, og legg til kjelda der |
-| *Registreringa mislukkast:* … `rate_limited` | Fleire enn fem registreringar innan ein time; kvar *Legg til kjelde* med tom *Klient-id* er éi | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nullstiller teljaren |
+| *Registreringa mislukkast:* … `Redirect URIs to http://localhost are not allowed here` | Appen vart opna på `localhost`, som serveren ikkje godtek som veg tilbake | Opne `http://127.0.0.1:8080/`, og legg til kjelda der |
+| *Registreringa mislukkast:* … `rate_limited` | Fleire enn 60 registreringar innan ein time; kvar *Legg til kjelde* med tom *Klient-id* er éi | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nullstiller teljaren |
 | *Internettilgang for … er ikkje tillaten.* | Det vart trykt *Avslå* | Tillat det under *Handter*, *Arbeidsområde*, *Internettilgang*, og prøv igjen |
 | *Nettlesaren blokkerte innloggingsvindauget …* | Blokkeringa av popup-vindauge i nettlesaren | Tillat popup-vindauge for `http://127.0.0.1:8080`, og trykk *Logg inn* igjen |
 | I popup-vindauget: *Kan ikkje halde fram* og *Ukjend klient.* | Serveren har gløymt registreringa av appen, som regel etter `down -v` | Lukk vindauget, og last appen på nytt, fordi *Logg inn* elles spinn i fem minutt. Slett kjelda med krysset ved sida av ho under *Tillagde kjelder*, og legg ho til igjen |
 | I popup-vindauget: *Kan ikkje halde fram* og *Redirect-URI-en er ikkje registrert for denne klienten.* | *Klient-id* vart fylt ut, til dømes frå utskrifta av `opencde seed` | Lukk vindauget, og last appen på nytt. Slett kjelda med krysset ved sida av ho under *Tillagde kjelder*, og legg ho til igjen med tom *Klient-id* |
 | I popup-vindauget: *Brukarnamnet eller passordet er ikkje rett.* | Kvar brukar har sitt eige passord frå `opencde seed` | Bruk det rette, eller få eit nytt som ovanfor |
+| *For mange mislukka forsøk for dette brukarnamnet …* | Fem feil passord på rad får serveren til å vente, høgst 15 minutt | Vent så lenge det står, og bruk passordet frå `opencde seed` |
 | *Skjemaet har gått ut. Prøv igjen.* på `/signin`, eller i popup-vindauget *Kan ikkje halde fram* og *Innloggingsskjemaet har gått ut eller er endra. Start på nytt.*, sjølv om du nettopp opna sida. `docker compose -f compose.yaml -f compose.dev.yaml logs api` viser `GET /sw.js` med 404 | Ein service worker i nettlesaren din frå ein annan webapp som ein gong har køyrt på `http://127.0.0.1:8000`, til dømes starta med `python -m http.server` utan port. Han svarar med gamle kopiar av sidene til Kontroll | Last sida på nytt, og prøv igjen, fordi sidene til Kontroll sjølve fjernar ein slik worker. Om meldinga blir ståande, fjern han for hand: `about:debugging#/runtime/this-firefox` i Firefox, `edge://serviceworker-internals` i Edge, `chrome://serviceworker-internals` i Chrome; finn `127.0.0.1:8000`, og vel *Unregister*. Kvar nettlesar har sin eigen, også ein som er innebygd i ein editor. Eit privat vindauge har ingen, noko som raskt viser om dette er årsaka. Hald andre appar borte frå port 8000 |
 | *Du er ikkje medlem i noko prosjekt på tenaren.* | Du logga inn som `admin`, som ikkje er med i noko prosjekt | Trykk *Logg ut* og deretter *Logg inn* som `inspection_manager` |
 | *Logg inn* held fram med å spinne | Vindauget vart lukka før innlogginga var ferdig | Last sida på nytt |
 | Vindauget seier *Kopiera adressen … / Copy the address …* | Det kunne ikkje nå vindauget til appen, som kanskje vart lukka eller lasta på nytt i mellomtida | Lukk vindauget, og trykk *Logg inn* igjen |
-| *Ein annan konto* på opplastingssida | Nettlesaren er logga inn på serveren som `admin`, som ikkje starta opplastinga | Trykk *Logg ut* på den sida, og lukk vindauget. Last appen på nytt, fordi *Send* elles blir verande oppteken, trykk *Logg inn* i visinga av kjelda, vel modellen i venstre kolonne i *Del*, og send på nytt |
+| *Ein annan konto* på opplastingssida | Nettlesaren er logga inn på serveren som `admin`, som ikkje starta opplastinga | Trykk *Logg ut* på den sida, og logg inn som `inspection_manager`; opplastinga held så fram i same vindauge |
 
 ## Start på nytt
 

@@ -143,11 +143,19 @@ Käyttäjänä `admin` kirjautuneena avaa <http://127.0.0.1:8000/admin>:
   `X-Request-ID`-arvoilla kuin kortti *Loki* lähteen näkymän alareunassa tilassa *Nouda*,
   joten epäonnistunut kutsu löytyy molemmilta puolilta.
 
-Paina sitten *Kirjaudu ulos* palvelimen sivun yläreunassa, koska alla oleva lataus tehdään
-toisena käyttäjänä.
+Esimerkkimalli on jo graafi, koska `OPENCDE_IFCGRAPH_ENABLED=true` oli tiedostossa
+`.env`, kun ajoit komennon `opencde seed`. Neo4j Browser osoitteessa
+<http://127.0.0.1:7484> (yhdistä osoitteeseen `bolt://127.0.0.1:7697` käyttäjänä `neo4j`
+ja tiedoston `.env` salasanalla) vastaa tähän kyselyyn seinällä, joka on linkitetty
+viewpointin komponenttiin:
 
-Graafi rakennetaan ladatuista malleista, ei `opencde seed` -komennon luomasta. Nähdäksesi
-sen lähetä malli palvelimelle:
+```cypher
+MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
+```
+
+Dataspatiumista lähettämästäsi mallista tulee graafi samalla tavalla. Kokeillaksesi
+paina *Kirjaudu ulos* palvelimen sivun yläreunassa, koska lataus tehdään toisena
+käyttäjänä:
 
 1. Valitse Dataspatiumissa tila *Jaa* ja välilehti *CDE:hen*. Valitse kohdassa *Mitä*
    *Alkuperäinen tiedosto* ja paina *Lähetä*.
@@ -155,13 +163,7 @@ sen lähetä malli palvelimelle:
 3. Palvelimen lataussivu avautuu ponnahdusikkunassa. Kirjaudu käyttäjänä
    `inspection_manager` ja paina *Tallenna ja jatka*. Ikkuna sulkeutuu itsestään.
 
-Muutaman sekunnin kuluttua Neo4j Browser osoitteessa <http://127.0.0.1:7484> (yhdistä
-osoitteeseen `bolt://127.0.0.1:7697` käyttäjänä `neo4j` ja tiedoston `.env` salasanalla)
-vastaa tähän kyselyyn seinällä, joka on linkitetty viewpointin komponenttiin:
-
-```cypher
-MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
-```
+Muutaman sekunnin kuluttua sama kysely löytää seinän myös uudesta mallista.
 
 ## Vianmääritys
 
@@ -180,18 +182,19 @@ Jokainen rivi lainaa näyttöä sellaisena kuin se on suomenkielisillä nimillä
 | *Sovellus voi rekisteröityä palvelimelle itse vain, kun se toimii web-palvelimelta …* | Sovellus avattiin kansiosta | Avaa `http://127.0.0.1:8080/` |
 | *Palveluun 127.0.0.1:8000 ei saatu yhteyttä …* | Kontroll ei ole käynnissä, tai osoite on kirjoitettu väärin | Osoitteen <http://127.0.0.1:8000/readyz> on vastattava. Osoite on `http://127.0.0.1:8000` ilman mitään perässä |
 | *Palvelin ei salli sovelluksen rekisteröidä itseään …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` ei ole `true` | Muuta tiedostoa `.env`, suorita `up`-komento uudelleen ja paina *Lisää lähde* uudelleen |
-| *Rekisteröinti epäonnistui:* … `http redirect URIs are only allowed for the loopback address` | Sovellus avattiin osoitteessa `localhost`, jota palvelin ei hyväksy paluureitiksi | Avaa `http://127.0.0.1:8080/` ja lisää lähde siellä |
-| *Rekisteröinti epäonnistui:* … `rate_limited` | Yli viisi rekisteröintiä tunnin sisällä; jokainen *Lisää lähde* tyhjällä kentällä *Asiakastunnus (client id)* on yksi | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nollaa laskurin |
+| *Rekisteröinti epäonnistui:* … `Redirect URIs to http://localhost are not allowed here` | Sovellus avattiin osoitteessa `localhost`, jota palvelin ei hyväksy paluureitiksi | Avaa `http://127.0.0.1:8080/` ja lisää lähde siellä |
+| *Rekisteröinti epäonnistui:* … `rate_limited` | Yli 60 rekisteröintiä tunnin sisällä; jokainen *Lisää lähde* tyhjällä kentällä *Asiakastunnus (client id)* on yksi | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nollaa laskurin |
 | *Internetyhteyttä tarkoitukseen … ei ole sallittu.* | Painettiin *Kiellä* | Salli se kohdassa *Hallitse*, *Työtila*, *Internetyhteys* ja yritä uudelleen |
 | *Selain esti kirjautumisikkunan …* | Selaimen ponnahdusikkunoiden esto | Salli ponnahdusikkunat osoitteelle `http://127.0.0.1:8080` ja paina *Kirjaudu* uudelleen |
 | Ponnahdusikkunassa: *Ei voi jatkaa* ja *Tuntematon asiakas.* | Palvelin on unohtanut sovelluksen rekisteröinnin, yleensä komennon `down -v` jälkeen | Sulje ikkuna ja lataa sovellus uudelleen, koska *Kirjaudu* muuten pyörii viisi minuuttia. Poista lähde sen vieressä olevalla ristillä kohdassa *Lisätyt lähteet* ja lisää se uudelleen |
 | Ponnahdusikkunassa: *Ei voi jatkaa* ja *Redirect-URI:a ei ole rekisteröity tälle asiakkaalle.* | Kenttä *Asiakastunnus (client id)* täytettiin, esimerkiksi komennon `opencde seed` tulosteesta | Sulje ikkuna ja lataa sovellus uudelleen. Poista lähde sen vieressä olevalla ristillä kohdassa *Lisätyt lähteet* ja lisää se uudelleen kenttä tyhjänä |
 | Ponnahdusikkunassa: *Käyttäjätunnus tai salasana ei ole oikein.* | Jokaisella käyttäjällä on oma salasanansa komennosta `opencde seed` | Käytä oikeaa tai hanki uusi kuten edellä |
+| *Liian monta epäonnistunutta yritystä tällä käyttäjätunnuksella …* | Viisi väärää salasanaa peräkkäin saa palvelimen odottamaan, enintään 15 minuuttia | Odota ilmoitettu aika ja käytä komennon `opencde seed` antamaa salasanaa |
 | *Lomake on vanhentunut. Yritä uudelleen.* sivulla `/signin`, tai ponnahdusikkunassa *Ei voi jatkaa* ja *Kirjautumislomake on vanhentunut tai sitä on muokattu. Aloita alusta.*, vaikka avasit sivun juuri. `docker compose -f compose.yaml -f compose.dev.yaml logs api` näyttää `GET /sw.js` ja 404 | Selaimessasi on service worker toisesta web-sovelluksesta, joka on joskus toiminut osoitteessa `http://127.0.0.1:8000`, esimerkiksi käynnistetty komennolla `python -m http.server` ilman porttia. Se vastaa Kontrollin sivujen vanhoilla kopioilla | Lataa sivu uudelleen ja yritä vielä kerran, koska Kontrollin sivut poistavat tällaisen workerin itse. Jos viesti ei katoa, poista se käsin: `about:debugging#/runtime/this-firefox` Firefoxissa, `edge://serviceworker-internals` Edgessä, `chrome://serviceworker-internals` Chromessa; etsi `127.0.0.1:8000` ja valitse *Unregister*. Jokaisella selaimella on omansa, myös editoriin sisäänrakennetulla. Yksityisessä ikkunassa sitä ei ole, mikä näyttää nopeasti, onko tämä syy. Pidä muut sovellukset poissa portista 8000 |
 | *Et ole jäsenenä missään projektissa palvelimella.* | Kirjauduit käyttäjänä `admin`, joka ei kuulu mihinkään projektiin | Paina *Kirjaudu ulos* ja sitten *Kirjaudu* käyttäjänä `inspection_manager` |
 | *Kirjaudu* pyörii pyörimistään | Ikkuna suljettiin ennen kuin kirjautuminen oli valmis | Lataa sivu uudelleen |
 | Ikkunassa lukee *Kopiera adressen … / Copy the address …* | Se ei saanut yhteyttä sovelluksen ikkunaan, joka ehkä suljettiin tai ladattiin uudelleen sillä välin | Sulje ikkuna ja paina *Kirjaudu* uudelleen |
-| *Toinen tili* lataussivulla | Selain on kirjautunut palvelimelle käyttäjänä `admin`, joka ei aloittanut latausta | Paina sillä sivulla *Kirjaudu ulos* ja sulje ikkuna. Lataa sovellus uudelleen, koska *Lähetä* muuten pysyy varattuna, paina *Kirjaudu* lähteen näkymässä, valitse malli tilan *Jaa* vasemmasta sarakkeesta ja lähetä uudelleen |
+| *Toinen tili* lataussivulla | Selain on kirjautunut palvelimelle käyttäjänä `admin`, joka ei aloittanut latausta | Paina sillä sivulla *Kirjaudu ulos* ja kirjaudu käyttäjänä `inspection_manager`; lataus jatkuu sitten samassa ikkunassa |
 
 ## Aloita alusta
 

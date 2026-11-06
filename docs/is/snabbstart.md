@@ -136,11 +136,18 @@ Innskráð(ur) sem `admin` opnar þú <http://127.0.0.1:8000/admin>:
   spjaldið *Skrá* neðst í sýn uppsprettunnar í *Sækja*, svo að misheppnað kall finnist á
   báðum hliðum.
 
-Ýttu síðan á *Skrá út* efst á síðu þjónsins, þar sem upphleðslan hér á eftir er gerð sem
-annar notandi.
+Sýnilíkanið er þegar orðið graf, því að `OPENCDE_IFCGRAPH_ENABLED=true` var í `.env`
+þegar þú keyrðir `opencde seed`. Neo4j Browser á <http://127.0.0.1:7484> (tengdu við
+`bolt://127.0.0.1:7697` sem `neo4j` með lykilorðinu úr `.env`) svarar þessari fyrirspurn
+með veggnum tengdum við íhlut viewpointsins:
 
-Grafið er byggt úr upphlöðnum líkönum, ekki úr því frá `opencde seed`. Til að sjá það sendir
-þú líkanið til þjónsins:
+```cypher
+MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
+```
+
+Líkan sem þú sendir úr Dataspatium verður að grafi á sama hátt. Til að prófa það
+skaltu ýta á *Skrá út* efst á síðu þjónsins, þar sem upphleðslan er gerð sem annar
+notandi:
 
 1. Í Dataspatium velur þú haminn *Deila* og flipann *Til CDE*. Undir *Hvað* velur þú
    *Upprunalega skráin* og ýtir á *Senda*.
@@ -148,13 +155,7 @@ Grafið er byggt úr upphlöðnum líkönum, ekki úr því frá `opencde seed`.
 3. Upphleðslusíða þjónsins opnast í sprettiglugga. Skráðu þig inn sem `inspection_manager`
    og ýttu á *Vista og halda áfram*. Glugginn lokast sjálfur.
 
-Innan fárra sekúndna svarar Neo4j Browser á <http://127.0.0.1:7484> (tengdu við
-`bolt://127.0.0.1:7697` sem `neo4j` með lykilorðinu úr `.env`) þessari fyrirspurn með
-veggnum tengdum við íhlut viewpointsins:
-
-```cypher
-MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
-```
+Innan fárra sekúndna finnur sama fyrirspurn einnig vegginn í nýja líkaninu.
 
 ## Bilanaleit
 
@@ -173,18 +174,19 @@ Hver lína vitnar í skjáinn eins og hann lítur út með íslensku heitunum.
 | *Forritið getur aðeins skráð sig sjálft hjá þjóninum þegar það keyrir frá vefþjóni …* | Forritið var opnað úr möppunni | Opnaðu `http://127.0.0.1:8080/` |
 | *Náðist ekki í 127.0.0.1:8000 …* | Kontroll er ekki í gangi, eða vistfangið er rangt skrifað | <http://127.0.0.1:8000/readyz> verður að svara. Vistfangið er `http://127.0.0.1:8000` án nokkurs á eftir |
 | *Þjónninn leyfir ekki að forritið skrái sig sjálft …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` er ekki `true` | Breyttu `.env`, keyrðu `up`-skipunina aftur og ýttu aftur á *Bæta við uppsprettu* |
-| *Skráning mistókst:* … `http redirect URIs are only allowed for the loopback address` | Forritið var opnað á `localhost`, sem þjónninn samþykkir ekki sem leið til baka | Opnaðu `http://127.0.0.1:8080/` og bættu uppsprettunni við þar |
-| *Skráning mistókst:* … `rate_limited` | Fleiri en fimm skráningar innan klukkustundar; hvert *Bæta við uppsprettu* með tómt *Biðlaraauðkenni (client id)* er ein | `docker compose -f compose.yaml -f compose.dev.yaml restart api` núllstillir teljarann |
+| *Skráning mistókst:* … `Redirect URIs to http://localhost are not allowed here` | Forritið var opnað á `localhost`, sem þjónninn samþykkir ekki sem leið til baka | Opnaðu `http://127.0.0.1:8080/` og bættu uppsprettunni við þar |
+| *Skráning mistókst:* … `rate_limited` | Fleiri en 60 skráningar innan klukkustundar; hvert *Bæta við uppsprettu* með tómt *Biðlaraauðkenni (client id)* er ein | `docker compose -f compose.yaml -f compose.dev.yaml restart api` núllstillir teljarann |
 | *Netaðgangur fyrir … er ekki leyfður.* | Ýtt var á *Hafna* | Leyfðu það undir *Umsjón*, *Vinnusvæði*, *Netaðgangur* og reyndu aftur |
 | *Vafrinn lokaði á innskráningargluggann …* | Sprettigluggavörn vafrans | Leyfðu sprettiglugga fyrir `http://127.0.0.1:8080` og ýttu aftur á *Skrá inn* |
 | Í sprettiglugganum: *Ekki er hægt að halda áfram* og *Óþekktur biðlari.* | Þjónninn hefur gleymt skráningu forritsins, oftast eftir `down -v` | Lokaðu glugganum og endurhladdu forritið, því annars snýst *Skrá inn* í fimm mínútur. Eyddu uppsprettunni með krossinum við hliðina á henni undir *Viðbættar uppsprettur* og bættu henni við aftur |
 | Í sprettiglugganum: *Ekki er hægt að halda áfram* og *Þetta redirect-URI er ekki skráð fyrir þennan biðlara.* | *Biðlaraauðkenni (client id)* var fyllt út, til dæmis úr úttaki `opencde seed` | Lokaðu glugganum og endurhladdu forritið. Eyddu uppsprettunni með krossinum við hliðina á henni undir *Viðbættar uppsprettur* og bættu henni við aftur með tómt auðkenni |
 | Í sprettiglugganum: *Notandanafnið eða lykilorðið er ekki rétt.* | Hver notandi hefur eigið lykilorð frá `opencde seed` | Notaðu rétt lykilorð, eða fáðu nýtt eins og að ofan |
+| *Of margar misheppnaðar tilraunir fyrir þetta notandanafn …* | Fimm röng lykilorð í röð láta þjóninn bíða, í mesta lagi 15 mínútur | Bíddu eins lengi og stendur og notaðu lykilorðið frá `opencde seed` |
 | *Eyðublaðið er útrunnið. Reyndu aftur.* á `/signin`, eða í sprettiglugganum *Ekki er hægt að halda áfram* og *Innskráningareyðublaðið er útrunnið eða hefur verið átt við það. Byrjaðu aftur.*, þótt þú hafir rétt opnað síðuna. `docker compose -f compose.yaml -f compose.dev.yaml logs api` sýnir `GET /sw.js` með 404 | Service worker í vafranum þínum frá öðru vefforriti sem einhvern tíma hefur keyrt á `http://127.0.0.1:8000`, til dæmis ræst með `python -m http.server` án gáttar. Hann svarar með gömlum afritum af síðum Kontroll | Endurhladdu síðuna og reyndu aftur, því síður Kontroll fjarlægja slíkan worker sjálfar. Ef skilaboðin hverfa ekki skaltu fjarlægja hann handvirkt: `about:debugging#/runtime/this-firefox` í Firefox, `edge://serviceworker-internals` í Edge, `chrome://serviceworker-internals` í Chrome; finndu `127.0.0.1:8000` og veldu *Unregister*. Hver vafri hefur sinn eigin, líka sá sem er innbyggður í ritil. Einkagluggi hefur engan, sem sýnir fljótt hvort þetta er orsökin. Haltu öðrum forritum frá gátt 8000 |
 | *Þú ert ekki þátttakandi í neinu verkefni á þjóninum.* | Þú skráðir þig inn sem `admin`, sem er ekki í neinu verkefni | Ýttu á *Skrá út* og svo á *Skrá inn* sem `inspection_manager` |
 | *Skrá inn* heldur áfram að snúast | Glugganum var lokað áður en innskráningu var lokið | Endurhladdu síðuna |
 | Glugginn segir *Kopiera adressen … / Copy the address …* | Hann náði ekki í glugga forritsins, sem var kannski lokað eða endurhlaðið á meðan | Lokaðu glugganum og ýttu aftur á *Skrá inn* |
-| *Annar reikningur* á upphleðslusíðunni | Vafrinn er skráður inn á þjóninn sem `admin`, sem hóf ekki upphleðsluna | Ýttu á *Skrá út* á þeirri síðu og lokaðu glugganum. Endurhladdu forritið, því annars er *Senda* áfram upptekið, ýttu á *Skrá inn* í sýn uppsprettunnar, veldu líkanið í vinstri dálki í *Deila* og sendu aftur |
+| *Annar reikningur* á upphleðslusíðunni | Vafrinn er skráður inn á þjóninn sem `admin`, sem hóf ekki upphleðsluna | Ýttu á *Skrá út* á þeirri síðu og skráðu þig inn sem `inspection_manager`; upphleðslan heldur þá áfram í sama glugga |
 
 ## Byrjaðu aftur
 

@@ -143,11 +143,17 @@ Signed in as `admin`, open <http://127.0.0.1:8000/admin>:
   as the card *Log* at the bottom of the source's view in *Import*, so a failing
   call can be found on both sides.
 
-Then press *Sign out* at the top of the server's page, since the upload below is
-done as another user.
+The sample model is a graph already, since `OPENCDE_IFCGRAPH_ENABLED=true` was in
+`.env` when you ran `opencde seed`. Neo4j Browser at <http://127.0.0.1:7484> (connect
+to `bolt://127.0.0.1:7697` as `neo4j` with the password from `.env`) answers this
+query with the wall linked to the viewpoint's component:
 
-The graph is built from uploaded models, not from the one from `opencde seed`. To
-see it, send the model to the server:
+```cypher
+MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
+```
+
+A model you send from Dataspatium becomes a graph the same way. To try it, press
+*Sign out* at the top of the server's page, since the upload is done as another user:
 
 1. In Dataspatium, choose the mode *Share* and the tab *To the CDE*. Under *What*,
    choose *The original file*, and press *Send*.
@@ -155,13 +161,7 @@ see it, send the model to the server:
 3. The server's upload page opens in a pop-up. Sign in as `inspection_manager` and
    press *Save and continue*. The pop-up closes by itself.
 
-Within seconds, Neo4j Browser at <http://127.0.0.1:7484> (connect to
-`bolt://127.0.0.1:7697` as `neo4j` with the password from `.env`) answers this
-query with the wall linked to the viewpoint's component:
-
-```cypher
-MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
-```
+Within seconds the same query finds the wall in the new model too.
 
 ## Troubleshooting
 
@@ -180,18 +180,19 @@ Each row quotes the screen as it reads with the English names.
 | *The app can register itself with the server only when it runs from a web server …* | The app was opened from the folder | Open `http://127.0.0.1:8080/` |
 | *Could not reach 127.0.0.1:8000 …* | Kontroll is not running, or the address is mistyped | <http://127.0.0.1:8000/readyz> must answer. The address is `http://127.0.0.1:8000` with nothing after it |
 | *The server does not let the app register itself …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` is not `true` | Change `.env`, run the `up` command again, and press *Add source* again |
-| *The registration failed:* … `http redirect URIs are only allowed for the loopback address` | The app was opened on `localhost`, which the server does not accept as the way back | Open `http://127.0.0.1:8080/` and add the source there |
-| *The registration failed:* … `rate_limited` | More than five registrations within an hour; every *Add source* with an empty *Client id* is one | `docker compose -f compose.yaml -f compose.dev.yaml restart api` empties the counter |
+| *The registration failed:* … `Redirect URIs to http://localhost are not allowed here` | The app was opened on `localhost`, which the server does not accept as the way back | Open `http://127.0.0.1:8080/` and add the source there |
+| *The registration failed:* … `rate_limited` | More than 60 registrations within an hour; every *Add source* with an empty *Client id* is one | `docker compose -f compose.yaml -f compose.dev.yaml restart api` empties the counter |
 | *Internet access for … is not allowed.* | *Deny* was pressed | Allow it under *Manage*, *Workspace*, *Internet access*, and try again |
 | *The browser blocked the sign-in window …* | The browser's pop-up blocker | Allow pop-ups for `http://127.0.0.1:8080` and press *Sign in* again |
 | In the pop-up: *Cannot continue* and *Unknown client.* | The server has forgotten the app's registration, usually after `down -v` | Close the pop-up and reload the app, since *Sign in* otherwise keeps spinning for five minutes. Delete the source with the cross beside it under *Added sources* and add it again |
 | In the pop-up: *Cannot continue* and *The redirect URI is not registered for this client.* | *Client id* was filled in, for instance from the output of `opencde seed` | Close the pop-up and reload the app. Delete the source with the cross beside it under *Added sources* and add it again with *Client id* empty |
 | In the pop-up: *The user name or password is not correct.* | Every user has their own password from `opencde seed` | Use the right one, or get a new one as above |
+| *Too many failed attempts for this user name …* | Five wrong passwords in a row make the server wait, at most 15 minutes | Wait for as long as it says, and use the password from `opencde seed` |
 | *The form has expired. Please try again.* on `/signin`, or in the pop-up *Cannot continue* and *The sign-in form has expired or was tampered with. Start again.*, although you just opened the page. `docker compose -f compose.yaml -f compose.dev.yaml logs api` shows `GET /sw.js` with 404 | A service worker in your browser from another web app that once ran on `http://127.0.0.1:8000`, for instance one started with `python -m http.server` without a port. It answers with old copies of Kontroll's pages | Reload the page and try again, since Kontroll's pages remove such a worker by themselves. If the message stays, remove it by hand: `about:debugging#/runtime/this-firefox` in Firefox, `edge://serviceworker-internals` in Edge, `chrome://serviceworker-internals` in Chrome; find `127.0.0.1:8000` and choose *Unregister*. Every browser has its own, also one built into an editor. A private window has none, which shows quickly whether this is the cause. Keep other apps off port 8000 |
 | *You are not a member of any project on the server.* | You signed in as `admin`, who is in no project | Press *Sign out* and then *Sign in* as `inspection_manager` |
 | *Sign in* keeps spinning | The pop-up was closed before the sign-in was finished | Reload the page |
 | The pop-up says *Kopiera adressen … / Copy the address …* | It could not reach the app's window, which was perhaps closed or reloaded meanwhile | Close the pop-up and press *Sign in* again |
-| *Another account* on the upload page | The browser is signed in to the server as `admin`, who did not start the upload | Press *Sign out* on that page and close the pop-up. Reload the app, since *Send* otherwise stays busy, press *Sign in* in the source's view, choose the model in the left column of *Share*, and send again |
+| *Another account* on the upload page | The browser is signed in to the server as `admin`, who did not start the upload | Press *Sign out* on that page and sign in as `inspection_manager`; the upload then continues in the same window |
 
 ## Start over
 

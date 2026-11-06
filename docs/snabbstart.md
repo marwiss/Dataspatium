@@ -142,11 +142,18 @@ Inloggad som `admin`, öppna <http://127.0.0.1:8000/admin>:
   som kortet *Logg* längst ned i källans vy i *Inhämta*, så att ett misslyckat anrop
   kan hittas på båda sidor.
 
-Tryck sedan *Logga ut* högst upp på serverns sida, eftersom uppladdningen nedan görs
-som en annan användare.
+Exempelmodellen är redan en graf, eftersom `OPENCDE_IFCGRAPH_ENABLED=true` fanns i
+`.env` när du körde `opencde seed`. Neo4j Browser på <http://127.0.0.1:7484> (anslut
+till `bolt://127.0.0.1:7697` som `neo4j` med lösenordet från `.env`) svarar på den här
+frågan med väggen kopplad till viewpointens komponent:
 
-Grafen byggs av uppladdade modeller, inte av den från `opencde seed`. För att se den
-skickar du modellen till servern:
+```cypher
+MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
+```
+
+En modell som du skickar från Dataspatium blir en graf på samma sätt. För att prova,
+tryck *Logga ut* högst upp på serverns sida, eftersom uppladdningen görs som en annan
+användare:
 
 1. I Dataspatium, välj läget *Dela* och fliken *Till CDE*. Under *Vad* väljer du
    *Originalfilen*, och trycker *Skicka*.
@@ -154,13 +161,7 @@ skickar du modellen till servern:
 3. Serverns uppladdningssida öppnas i ett popup-fönster. Logga in som
    `inspection_manager` och tryck *Spara och fortsätt*. Fönstret stänger sig självt.
 
-Inom några sekunder svarar Neo4j Browser på <http://127.0.0.1:7484> (anslut till
-`bolt://127.0.0.1:7697` som `neo4j` med lösenordet från `.env`) på den här frågan
-med väggen kopplad till viewpointens komponent:
-
-```cypher
-MATCH (c:Component)-[:SAME_AS]->(w:IfcWall) RETURN c, w
-```
+Inom några sekunder hittar samma fråga väggen i den nya modellen också.
 
 ## Felsökning
 
@@ -179,18 +180,19 @@ Varje rad citerar skärmen som den ser ut med de svenska namnen.
 | *Appen kan registrera sig själv hos servern bara när den körs från en webbserver …* | Appen öppnades från mappen | Öppna `http://127.0.0.1:8080/` |
 | *Kunde inte nå 127.0.0.1:8000 …* | Kontroll kör inte, eller adressen är felskriven | <http://127.0.0.1:8000/readyz> måste svara. Adressen är `http://127.0.0.1:8000` utan något efter |
 | *Servern tillåter inte att appen registrerar sig själv …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` är inte `true` | Ändra `.env`, kör `up`-kommandot igen och tryck *Lägg till källa* igen |
-| *Registreringen misslyckades:* … `http redirect URIs are only allowed for the loopback address` | Appen öppnades på `localhost`, som servern inte godtar som väg tillbaka | Öppna `http://127.0.0.1:8080/` och lägg till källan där |
-| *Registreringen misslyckades:* … `rate_limited` | Fler än fem registreringar inom en timme; varje *Lägg till källa* med tomt *Klient-id* är en | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nollställer räknaren |
+| *Registreringen misslyckades:* … `Redirect URIs to http://localhost are not allowed here` | Appen öppnades på `localhost`, som servern inte godtar som väg tillbaka | Öppna `http://127.0.0.1:8080/` och lägg till källan där |
+| *Registreringen misslyckades:* … `rate_limited` | Fler än 60 registreringar inom en timme; varje *Lägg till källa* med tomt *Klient-id* är en | `docker compose -f compose.yaml -f compose.dev.yaml restart api` nollställer räknaren |
 | *Internetåtkomst för … är inte tillåten.* | *Neka* trycktes | Tillåt det under *Hantera*, *Arbetsyta*, *Internetåtkomst*, och försök igen |
 | *Webbläsaren blockerade inloggningsfönstret …* | Webbläsarens popup-blockering | Tillåt popup-fönster för `http://127.0.0.1:8080` och tryck *Logga in* igen |
 | I popup-fönstret: *Kan inte fortsätta* och *Okänd klient.* | Servern har glömt appens registrering, oftast efter `down -v` | Stäng fönstret och ladda om appen, eftersom *Logga in* annars snurrar i fem minuter. Ta bort källan med krysset bredvid den under *Tillagda källor* och lägg till den igen |
 | I popup-fönstret: *Kan inte fortsätta* och *Redirect-URI:n är inte registrerad för den här klienten.* | *Klient-id* fylldes i, till exempel från utskriften av `opencde seed` | Stäng fönstret och ladda om appen. Ta bort källan med krysset bredvid den under *Tillagda källor* och lägg till den igen med tomt *Klient-id* |
 | I popup-fönstret: *Användarnamnet eller lösenordet är inte korrekt.* | Varje användare har sitt eget lösenord från `opencde seed` | Använd rätt lösenord, eller hämta ett nytt enligt ovan |
+| *För många misslyckade försök för det här användarnamnet …* | Fem felaktiga lösenord i rad får servern att vänta, högst 15 minuter | Vänta så länge det står, och använd lösenordet från `opencde seed` |
 | *Formuläret har gått ut. Försök igen.* på `/signin`, eller i popup-fönstret *Kan inte fortsätta* och *Inloggningsformuläret har gått ut eller manipulerats. Börja om.*, trots att du nyss öppnade sidan. `docker compose -f compose.yaml -f compose.dev.yaml logs api` visar `GET /sw.js` med 404 | En service worker i din webbläsare från en annan webbapp som en gång kört på `http://127.0.0.1:8000`, till exempel startad med `python -m http.server` utan port. Den svarar med gamla kopior av Kontrolls sidor | Ladda om sidan och försök igen, eftersom Kontrolls sidor själva tar bort en sådan worker. Om meddelandet finns kvar, ta bort den för hand: `about:debugging#/runtime/this-firefox` i Firefox, `edge://serviceworker-internals` i Edge, `chrome://serviceworker-internals` i Chrome; leta upp `127.0.0.1:8000` och välj *Unregister*. Varje webbläsare har sin egen, även en som är inbyggd i en editor. Ett privat fönster har ingen, vilket snabbt visar om det här är orsaken. Håll andra appar borta från port 8000 |
 | *Du är inte medlem i något projekt på servern.* | Du loggade in som `admin`, som inte är med i något projekt | Tryck *Logga ut* och sedan *Logga in* som `inspection_manager` |
 | *Logga in* snurrar och snurrar | Fönstret stängdes innan inloggningen var klar | Ladda om sidan |
 | Fönstret säger *Kopiera adressen … / Copy the address …* | Det kunde inte nå appens fönster, som kanske stängdes eller laddades om under tiden | Stäng fönstret och tryck *Logga in* igen |
-| *Ett annat konto* på uppladdningssidan | Webbläsaren är inloggad på servern som `admin`, som inte startade uppladdningen | Tryck *Logga ut* på den sidan och stäng fönstret. Ladda om appen, eftersom *Skicka* annars förblir upptagen, tryck *Logga in* i källans vy, välj modellen i vänsterkolumnen i *Dela* och skicka igen |
+| *Ett annat konto* på uppladdningssidan | Webbläsaren är inloggad på servern som `admin`, som inte startade uppladdningen | Tryck *Logga ut* på den sidan och logga in som `inspection_manager`; uppladdningen fortsätter sedan i samma fönster |
 
 ## Börja om
 
