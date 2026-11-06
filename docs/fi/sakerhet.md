@@ -3,7 +3,7 @@
 Turvallisuus on sovelluksen ensimmäinen vaatimus. Dataspatium pitää datamääräsi, API-avaimesi ja tunnuksesi selaimessa ja
 puhuu palvelimille (avoimet rajapinnat, OpenCDE-palvelimet kuten Kontroll) vain, kun pyydät sitä. Politiikka on sama kuin
 Kontrollin, koska kahta kehitetään parina ja julkaistaan samoilla numeroilla; Kontrollin puolisko on sen repossa kansiossa
-[docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/security). Haavoittuvuuden ilmoittaminen kuvataan
+[docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/fi/security). Haavoittuvuuden ilmoittaminen kuvataan
 tiedostossa [SECURITY.md](../../SECURITY.md).
 
 ## Uhkamalli
@@ -43,7 +43,7 @@ Jokaisella kontrollilla on automaattinen testi kansiossa `tests/` tai osoitin si
 
 Mitä sovellus tallentaa, minne ja kuinka pitkäksi aikaa. Kaikki pysyy tietokoneellasi; sovelluksen tekijälle ei lähetetä
 mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Kontrollin puolisko (mitä palvelin tallentaa sinusta) on tiedostossa
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/security/personal-data.md).
+[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/security/personal-data.md).
 
 | Tieto | Missä | Sisältö | Säilytys |
 |---|---|---|---|

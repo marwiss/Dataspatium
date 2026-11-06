@@ -151,7 +151,7 @@ for òg å sjå innhaldet i førespurnaden og svaret (tekst, høgst 64 kB; aldri
 aldri send; han kan lagrast som JSON eller som eit datasett. Appen set hovudet X-Request-Id på kvart kall, så den eigne loggen til tenaren kan
 parast med loggen i appen; avviser ein tenar hovudet, blir det slått av for den kjelda.
 
-Tenarsida er skildra i dokumentasjonen til Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (korleis ein klient koplar seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (testkøyringane til paret) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (utviklingsstakken og korleis appen blir testa mot han).
+Tenarsida er skildra i dokumentasjonen til Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/client-guide.md) (korleis ein klient koplar seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (testkøyringane til paret) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/deploy/local.md) (utviklingsstakken og korleis appen blir testa mot han).
 
 Kontroll skildrar tillegga sine i `GET /.well-known/kontroll`; appen les dokumentet når kjelda blir opna og skriv under
 overskrifta kva tenar det er og kva tillegg han har (sjølvregistrering, førespurnadslogg, administrasjon, IFC-graf,

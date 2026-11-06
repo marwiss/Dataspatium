@@ -148,7 +148,7 @@ einnig innihald beiðni og svars (texti, mest 64 kB; aldrei tókakall). Skráin 
 JSON eða sem gagnasafn. Forritið setur hausinn X-Request-Id á hvert kall svo að eigin skrá þjónsins megi para við skrá forritsins;
 hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
 
-Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
+Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
 
 Kontroll lýsir viðbótum sínum í `GET /.well-known/kontroll`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
 fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-graf, graffyrirspurnir). Þjónn

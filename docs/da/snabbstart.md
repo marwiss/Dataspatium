@@ -108,9 +108,9 @@ slået til.
 
 ## Næste skridt
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) om API'erne,
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/client-guide.md) om API'erne,
   kapabilitetsdokumentet og fejlkoderne.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) om tjeklisterne, parret testes med,
   og [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md) om,
   hvad de to projekter samordner.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy), når serveren skal køre for andre.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/da/deploy), når serveren skal køre for andre.

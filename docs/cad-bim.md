@@ -47,7 +47,7 @@ till panelen. Verktyget *Ärenden* i Analyseras flik Mängder räknar ärenden, 
 prioritet, ansvarig, byggdelstyp eller våning ur en sådan tabell, och SQL-startkoden får frågor för kopplingen. *Spara som
 diagram* sparar vyn med färgerna som ett modelldiagram, som dashboards, dokument och Publicera visar med teckenförklaring.
 
-Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/ifcgraph.md).
 
 ## Tabellerna
 
@@ -85,6 +85,43 @@ I R och Python ger `dm_read()` byggdelarna, `dm_read_properties()` egenskaperna 
 - **Entiteter**: hur många entiteter av varje slag filen består av.
 
 Varje resultat kan sparas som datamängd.
+
+## IfcOpenShell i appen
+
+Sedan 2.4.0 kan appen läsa, kontrollera och ändra IFC-modeller med IfcOpenShell, samma bibliotek som Kontroll bygger på. Det
+körs i Python i webbläsaren, hämtas första gången det används (cirka 13 MB, efter ditt samtycke för komponenter) och sparas
+sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
+
+**I Analysera, fliken Mängder**, har en IFC-modell fem verktyg till:
+
+- **Validering** kontrollerar modellen mot sitt IFC-schema: attribut, typer och referenser, valfritt även schemats regler.
+  Fynden kan sparas som datamängd.
+- **Rumslig struktur** visar projekt, tomt, byggnad, våningar och rum som ett träd med antal element per del.
+- **Egenskapsmängder** ger alla egenskapsmängder för en elementtyp som en bred tabell: en rad per element, en kolumn per
+  egenskap (`Uppsättning.Egenskap`), valfritt även mängdsatserna.
+- **IFC-urval** hämtar element med IfcOpenShells urvalsspråk, till exempel `IfcWall, Pset_WallCommon.FireRating=EI60` eller
+  `IfcElement, material=Betong`.
+- **Geometrimått** mäter volym, yta och omslutande låda per element på geometrin (OpenCASCADE). Långsamt för stora modeller.
+
+**I Bearbeta** har modellen två åtgärder under *Åtgärder* (knappen finns i modellvyn och i tabellvyn), i gruppen *Modell*:
+
+- **Skriv tabell till modellen** skriver en tabells värden in i modellen. Raderna matchas på GUID; kolumnerna `Name`,
+  `Description`, `ObjectType` och `Tag` (eller `namn`, `beskrivning`, `objekttyp`, `tagg`) blir attribut, och kolumner som
+  `Pset_WallCommon.FireRating` blir egenskaper (uppsättningen skapas om den saknas). Arbetssättet: spara *Egenskapsmängder*
+  som datamängd, redigera den i Bearbeta och skriv tillbaka.
+- **Python på modellen** kör en funktion `step(model)` med IfcOpenShells API på hela modellen.
+
+Båda är steg i receptet: den ändrade modellen blir datamängdens nya innehåll (originalfilen byts och tabellerna byggs om),
+steget loggas och kan ångras, och originalfilen är alltid den aktuella versionen när du exporterar modellen eller skickar den
+till ett CDE.
+
+**I Python** (fliken Python i Analysera och kodceller i anteckningsboken) öppnar `dm_ifc("namn")` modellen som en
+`ifcopenshell.file`. Hjälparna `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` och
+`dm_ifc_geometry` ger tabeller, `dm_ifc_set(model, df)` skriver en tabell in i modellen och `dm_ifc_write(model, "namn")`
+skickar modellen till appen som en ny datamängd; se [Python i Dataspatium](python.md). Verktygen i Analysera och Python ändrar
+aldrig datamängden; bara åtgärderna i Bearbeta ger en ny version.
+
+IfcOpenShell är LGPL-3.0 och hämtas oförändrat som pinnade hjul från IfcOpenShells egen förteckning, se [Licenser](licenser.md).
 
 ## DXF-ritningar
 

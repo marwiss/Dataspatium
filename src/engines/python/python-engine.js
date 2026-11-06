@@ -39,11 +39,14 @@
         });
     };
 
-    // pyodide.js imports its ES-module glue with import(); the shim serves the text and it becomes a classic script
-    // (only `export default` and import.meta.url need rewriting).
+    // When pyodide.js reaches for its glue with import() (Pyodide 314 ships an ES module, pyodide.asm.mjs; the 0.29 line loads
+    // the classic pyodide.asm.js with importScripts through the shim and only falls back to import()), the shim serves the text
+    // and it becomes a classic script: only `export default` and import.meta.url need rewriting.
     self.__dmImportAsm = function (url) {
       return fetch(url).then(function (r) { return r.text(); }).then(function (text) {
-        var classic = text.replace(/import\.meta\.url/g, JSON.stringify(String(url))).replace(/export\s+default\s+_createPyodideModule;?\s*$/, '');
+        var classic = /export\s+default\s+_createPyodideModule/.test(text)
+          ? text.replace(/import\.meta\.url/g, JSON.stringify(String(url))).replace(/export\s+default\s+_createPyodideModule;?\s*$/, '')
+          : text;
         (0, eval)(classic + '\n//# sourceURL=' + url);
         return { default: self._createPyodideModule };
       });
@@ -52,8 +55,8 @@
       return fetch(INDEX_URL + 'pyodide.js').then(function (r) { return r.text(); }).then(function (src) {
         var patched = src.split('await import(/* webpackIgnore */e)').join('await self.__dmImportAsm(e)');
         if (patched === src) throw new Error('Pyodide loader: the import() call site was not found (pyodide.js changed?)');
+        // Pyodide 314 refuses classic workers outright; the 0.29 line has no such check.
         var guarded = patched.replace(/if\((\w+)&&(\w+)\(\)\)throw new Error\("Classic web workers are not supported"\);/, '');
-        if (guarded === patched) throw new Error('Pyodide loader: the classic worker check was not found (pyodide.js changed?)');
         (0, eval)(guarded + '\n//# sourceURL=' + INDEX_URL + 'pyodide.js');
       });
     }

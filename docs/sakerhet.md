@@ -2,7 +2,7 @@
 
 Säkerheten är appens första krav. Dataspatium håller dina datamängder, API-nycklar och token i webbläsaren och talar med
 servrar (öppna API:er, OpenCDE-servrar som Kontroll) bara när du ber om det. Policyn är densamma som Kontrolls, eftersom
-de två utvecklas som ett par och släpps med samma nummer; Kontrolls halva finns i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/security)
+de två utvecklas som ett par och släpps med samma nummer; Kontrolls halva finns i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/sv/security)
 i det repot. Hur en sårbarhet rapporteras står i [SECURITY.md](../SECURITY.md).
 
 ## Hotmodell
@@ -41,7 +41,7 @@ Varje kontroll har ett automatiskt prov i `tests/` eller en pekare till koden so
 
 Vad appen lagrar, var, och hur länge. Allt ligger på din dator; ingenting skickas till appens upphovsperson, och ingen
 uppdateringskontroll görs utan din åtgärd. Kontrolls halva (vad servern lagrar om dig) står i
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/security/personal-data.md).
+[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/security/personal-data.md).
 
 | Data | Var | Innehåll | Sparas |
 |---|---|---|---|

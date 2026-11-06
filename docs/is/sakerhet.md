@@ -2,7 +2,7 @@
 
 Öryggi er fyrsta krafa forritsins. Dataspatium geymir gagnasöfnin þín, API-lykla og tóka í vafranum og talar við þjóna (opin
 forritaskil, OpenCDE-þjóna eins og Kontroll) aðeins þegar þú biður um það. Stefnan er sú sama sem Kontroll hefur, því að
-verkefnin tvö eru þróuð sem par og gefin út með sömu númerum; helmingur Kontroll er í [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/security)
+verkefnin tvö eru þróuð sem par og gefin út með sömu númerum; helmingur Kontroll er í [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/is/security)
 í því safni. Hvernig veikleiki er tilkynntur stendur í [SECURITY.md](../../SECURITY.md).
 
 ## Ógnarlíkan
@@ -42,7 +42,7 @@ Hver stýring hefur sjálfvirka prófun í `tests/` eða bendir á kóðann sem 
 
 Hvað forritið geymir, hvar og hve lengi. Allt er á tölvunni þinni; ekkert er sent til höfundar forritsins, og engin
 uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Kontroll (hvað þjónninn geymir um þig) er í
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/security/personal-data.md).
+[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/security/personal-data.md).
 
 | Gögn | Hvar | Innihald | Geymt |
 |---|---|---|---|

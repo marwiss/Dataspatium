@@ -43,11 +43,18 @@ och i workers. Se `src/platform/assets.js`, `net-shim.js` och `worker-shim.js`.
 Python levereras inte i ZIP:en. `src/engines/python/catalog.js` pinnar Pyodide-versionen och SHA-256 för körtidens
 fem filer; hjulen kontrolleras mot `pyodide-lock.json`. Vid uppgradering: kör `python tools/pyodide_catalog.py
 <version>` (hämtar filerna från jsDelivr och skriver RUNTIME-blocket), klistra in blocket i `catalog.js`, kontrollera
-att laddarens tre textändringar i `src/engines/python/python-engine.js` fortfarande hittar sina ställen i
-`pyodide.js` och `pyodide.asm.mjs` (workern kastar annars ett tydligt fel), och kör testsviten med `?python=1`.
+att laddarens textändringar i `src/engines/python/python-engine.js` fortfarande hittar sina ställen i `pyodide.js`
+(workern kastar annars ett tydligt fel; limfilen är `pyodide.asm.js` i 0.29-linjen och `pyodide.asm.mjs` från Pyodide 314), och
+kör testsviten med `?python=1`. Pyodide hålls på den linje IfcOpenShells WebAssembly-hjul är byggda för (0.29.5, Python 3.13.2 i 2.4.0).
 plotly.js är pinnat på samma sätt i `src/viz/plotly.js` (version och SHA-256 från jsDelivr), och de rena PyPI-hjulen
 (seaborn, plotly) i `EXTRA` i `src/engines/python/catalog.js` med adress, storlek och SHA-256 från PyPI:s JSON-API.
 `tests/code-steps.test.js` täcker R-steg och R-diagram headless utan nätverk.
+
+IfcOpenShell levereras på samma sätt: `IFC_WHEELS` i `catalog.js` pinnar nio hjul ur den modulära 0.9.1-serien på
+ifcopenshell.github.io/wasm-wheels med SHA-256 (`python tools/ifcopenshell_catalog.py` hämtar dem och skriver blocket). Hjulen
+installeras ett i taget i uppströms ordning (kärnan, schematolk och geometrimappning per schema, den rena Python-delen, kärnan
+OpenCASCADE), eftersom insticken länkar mot varandra. Appens Pyodide följer den linje hjulen är byggda för. Proven i
+`tests/ifcopenshell.test.js` kör mot riktig Pyodide med `?python=1` (hämtar cirka 13 MB till) och annars med en låtsasmotor.
 
 pdf.js är pinnat till 3.11.174, den sista versionen som levereras som klassiska skript (senare versioner är enbart
 ES-moduler och kan inte köras från file:// i Edge). Posten i `vendor.json` hämtar visningslagret som vanlig fil,
@@ -207,7 +214,7 @@ steget som *Gör det åt mig*.
 
 ## Prov mot Kontroll
 
-Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).
+Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeuser=<användar-id>][&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).
 
 ## Felsökning
 - Loggar från den senaste testkörningen ligger i `%TEMP%\dm-tests-<kod>\` (`edge.log`, `firefox.log`, `firefox.err`).

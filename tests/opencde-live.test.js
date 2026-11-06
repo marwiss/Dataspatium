@@ -28,6 +28,8 @@
   const params = new URLSearchParams(location.search);
   const BASE = (params.get('cde') || '').replace(/\/+$/, '');
   const HELPER = (params.get('cdehelper') || '').replace(/\/+$/, '');
+  /** The id of the user the helper signs in as (Kontroll's seed has dm_manager; a CI job may create another). */
+  const CDE_USER = params.get('cdeuser') || 'dm_manager';
   const CLIENT = params.get('cdeclient') || '';
   const PROJECT_NAME = params.get('cdeproject') || 'Dataspatium-prov';
   const REDIRECT = location.origin + '/oauth-callback.html';
@@ -85,7 +87,7 @@
     assert.ok(creds.token && creds.refreshToken, 'tokens');
     log(`token lives ${Math.round((Number(creds.expiresAt) - Date.now()) / 1000)} s; scope "${creds.scope}"`);
     const me = await opencde.currentUser(shared.connector);
-    assert.equal(me.id, 'dm_manager', JSON.stringify(me)); assert.ok(me.name, 'the server names the user: ' + JSON.stringify(me));
+    assert.equal(me.id, CDE_USER, JSON.stringify(me)); assert.ok(me.name, 'the server names the user: ' + JSON.stringify(me));
     return me.id;
   }, 60000);
 
@@ -415,7 +417,7 @@
     assert.ok(token && token !== before.token, 'new access token');
     assert.ok(after.refreshToken && after.refreshToken !== before.refreshToken, 'the refresh token rotated');
     const me = await opencde.currentUser(shared.connector);
-    assert.equal(me.id, 'dm_manager'); assert.ok(me.name);
+    assert.equal(me.id, CDE_USER); assert.ok(me.name);
     await opencde.logout(shared.connector);
     assert.equal(opencde.signedIn(shared.connector), false);
     const refused = await opencde.projects(shared.connector).catch((e) => e);

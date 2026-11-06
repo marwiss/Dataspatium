@@ -1,6 +1,6 @@
 # Python in Dataspatium
 
-The *Analyse* mode has a Python console next to the R console. Python runs in the browser with Pyodide (Python 3.14),
+The *Analyse* mode has a Python console next to the R console. Python runs in the browser with Pyodide (Python 3.13),
 with nothing to install. Unlike R, Python does not ship in the app folder: the runtime and the packages are fetched
 from jsDelivr the first time you use them, after you allow it, and are then kept in the browser as components.
 
@@ -47,6 +47,22 @@ ax.set_title("Population per county 2024")
 ax.set_xlabel("Thousands")
 ```
 
+### Building models (IFC) with IfcOpenShell
+
+| Function | Does |
+|---|---|
+| `dm_ifc("model")` | Opens an IFC model (a dataset of kind model) with IfcOpenShell and returns an `ifcopenshell.file`. The wheels are fetched the first time (about 13 MB, after consent). |
+| `dm_ifc_elements(model, "IfcWall")` | The elements as a `DataFrame`: guid, typ, namn, beskrivning, objekttyp, tagg, vaning, typnamn, material, id. |
+| `dm_ifc_psets(model, "IfcWall", qtos=True)` | The property sets as one wide table, a column per `Set.Property`; `qtos=True` includes the quantity sets. |
+| `dm_ifc_tree(model)` | The spatial structure: level, guid, type, name, parent, number of elements. |
+| `dm_ifc_validate(model, express=True)` | Findings of the schema check: level, type, id, guid, attribute, message. `express=True` runs the schema's rules too. |
+| `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Elements by IfcOpenShell's selector language, as `dm_ifc_elements()` lists them. |
+| `dm_ifc_geometry(model, "IfcWall")` | Volume, surface and bounding box per element, measured on the geometry (metres). |
+| `dm_ifc_set(model, df, key="guid")` | Writes the table's values into the model (attributes and `Set.Property` columns) and returns the number of elements changed. |
+| `dm_ifc_write(model, "New name")` | Sends the model to the app as a new model dataset. The original dataset is not changed. |
+
+The whole IfcOpenShell API is available: `model.by_type("IfcWall")`, `ifcopenshell.util.element.get_psets(e)`, `ifcopenshell.api` and more. The step *Python on the model* in Process runs the same kind of code as a function `step(model)` and makes the result a new version of the dataset; see [CAD and BIM](cad-bim.md).
+
 ## Charts
 
 matplotlib draws without a screen (Agg) and every open figure is shown in the console as SVG when the command has
@@ -64,7 +80,7 @@ list and keeps it in the browser; it is listed under *Manage → Workspace → C
 removed. Pure Python packages from PyPI that are not part of Pyodide are installed with
 `import micropip; await micropip.install("package")`; the app asks for permission before Python reaches the internet.
 
-Digests: the runtime files are pinned to Pyodide 314.0.7 with SHA-256 in the app; the packages are checked against
+Digests: the runtime files are pinned to Pyodide 0.29.5 with SHA-256 in the app; the packages are checked against
 `pyodide-lock.json`, which is in turn pinned by its digest. A file with the wrong digest is not used.
 
 ## Code steps in recipes

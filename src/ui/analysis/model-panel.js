@@ -13,13 +13,13 @@
   D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, basic, datasets, model, analysis, issuesLogic) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
-      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ' };
+      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '' };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
 
@@ -72,6 +72,25 @@
               select(t('model.group.first'), groupOpts(false), s.igroup1, (v) => { s.igroup1 = v; run(); }),
               select(t('model.group.second'), groupOpts(true), s.igroup2, (v) => { s.igroup2 = v; run(); })));
           }
+        } else if (s.tool === 'validate') {
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('model.validate.express'), 'data-ifc-express': '' }));
+          sw.checked = s.express;
+          sw.addEventListener('change', () => { s.express = sw.checked; run(); });
+          parts.push(h('div', { class: 'dm-row-wrap' }, sw, h('span', { class: 'dm-help', text: t('model.ifc.python.note') })));
+        } else if (s.tool === 'psets' || s.tool === 'geometry') {
+          const classes = ['IfcElement', 'IfcProduct'].concat(((ds.model && ds.model.elementTypes) || []).map((x) => String(x.name))).filter((v, i, a) => a.indexOf(v) === i);
+          if (!classes.includes(s.ifcClass)) s.ifcClass = 'IfcElement';
+          const qtos = /** @type {any} */ (h('dm-switch', { label: t('model.psets.qtos') }));
+          qtos.checked = s.qtos;
+          qtos.addEventListener('change', () => { s.qtos = qtos.checked; run(); });
+          parts.push(h('div', { class: 'dm-row-wrap' },
+            select(t('model.psets.class'), classes.map((c) => ({ value: c, label: c })), s.ifcClass, (v) => { s.ifcClass = v; run(); }, { 'data-ifc-class': '' }),
+            s.tool === 'psets' ? qtos : null, h('span', { class: 'dm-help', text: t('model.ifc.python.note') })));
+        } else if (s.tool === 'select') {
+          const input = /** @type {any} */ (h('dm-input', { label: t('model.select.query'), placeholder: t('model.select.placeholder'), mono: true, help: t('model.select.help'), 'data-ifc-query': '' }));
+          input.value = s.query;
+          input.addEventListener('keydown', (e) => { if (/** @type {any} */ (e).key === 'Enter') { s.query = input.value; run(); } });
+          parts.push(h('div', { class: 'dm-row-wrap' }, input, ui.button({ label: t('model.select.run'), icon: 'search', size: 'sm', 'data-ifc-select': '', onClick: () => { s.query = input.value; run(); } })));
         } else if (s.tool === 'properties') {
           if (!names || names.id !== ds.id) names = { id: ds.id, list: await analysis.propertyNames(ds.id) };
           if (!fieldsEl) return;
@@ -117,14 +136,26 @@
           } else if (s.tool === 'properties') {
             if (!s.property) out = { columns: [], rows: [], note: t('model.properties.none') };
             else { const [set, name] = JSON.parse(s.property); out = await analysis.propertyValues(ds.id, set, name); out.note = `${set} · ${name}`; }
+          } else if (analysis.IFC_TOOLS.includes(s.tool)) {
+            // In Python with IfcOpenShell: the first time Python starts and the wheels are fetched after consent.
+            if (s.tool === 'select' && !s.query.trim()) out = { columns: [], rows: [], note: t('model.select.empty') };
+            else {
+              const catalog = D.require('engines/python/catalog');
+              replace(resultEl, h('dm-progress', { indeterminate: true, label: t('model.ifc.loading', { mb: Math.round((catalog.RUNTIME_SIZE + catalog.IFC_SIZE) / 1048576) }) }));
+              const params = s.tool === 'validate' ? { express: s.express } : s.tool === 'psets' ? { ifc_class: s.ifcClass, qtos: s.qtos } : s.tool === 'geometry' ? { ifc_class: s.ifcClass } : s.tool === 'select' ? { query: s.query } : {};
+              out = await analysis.ifcTool(ds.id, s.tool, params);
+              out.note = t('model.ifc.note.' + s.tool, { n: i18n.formatNumber(out.total) });
+            }
           }
           if (my !== seq || !resultEl) return;
           out.name = `${ds.name}: ${t('model.tool.' + s.tool)}`;
           showTable(out);
         } catch (err) {
           if (my !== seq || !resultEl) return;
-          replace(resultEl, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }));
-          shell.log(String((err && err.message) || err), 'error');
+          // A Python traceback ends with the line that matters; the whole text goes to the log.
+          const text = String((err && err.message) || err).trim();
+          replace(resultEl, h('p', { class: 'dm-error dm-small', text: text.split('\n').pop() || text }));
+          shell.log(text, 'error');
         }
       }
       function summary(ds) {
@@ -143,14 +174,15 @@
           h('div', { class: 'dm-table-wrap' }, table));
         requestAnimationFrame(() => {
           if (!table.isConnected) return;
-          table.setData({ columns: out.columns.map((c) => ({ key: c.name, label: c.label && c.label !== c.name ? c.label : t('model.col.' + c.name), type: c.type })), rowCount: Math.min(out.rows.length, PREVIEW_ROWS), rowProvider: async (start, count) => out.rows.slice(start, start + count) });
+          table.setData({ columns: out.columns.map((c) => ({ key: c.name, label: c.label && c.label !== c.name ? c.label : (i18n.has('model.col.' + c.name) ? t('model.col.' + c.name) : c.name), type: c.type })), rowCount: Math.min(out.rows.length, PREVIEW_ROWS), rowProvider: async (start, count) => out.rows.slice(start, start + count) });
         });
       }
       async function createDataset(out) {
         const name = await ui.dialog.prompt(t('text.dataset.name'), { title: t('text.create.dataset'), value: out.name });
         if (!name) return;
         try {
-          const meta = await datasets.create({ name, columns: out.columns.map((c) => ({ name: c.name, type: c.type, label: c.label || c.name })), rows: out.rows, description: out.note || '', source: { kind: 'derived' } });
+          const label = (c) => (c.label && c.label !== c.name ? c.label : (i18n.has('model.col.' + c.name) ? t('model.col.' + c.name) : c.name));
+          const meta = await datasets.create({ name, columns: out.columns.map((c) => ({ name: c.name, type: c.type, label: label(c) })), rows: out.rows, description: out.note || '', source: { kind: 'derived' } });
           const msg = t('text.dataset.created', { name: meta.name, rows: i18n.formatNumber(meta.rowCount) });
           shell.log(msg, 'ok');
           ui.toast.show(msg, { kind: 'ok', action: { label: t('import.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });

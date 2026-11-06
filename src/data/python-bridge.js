@@ -127,7 +127,7 @@
       /** Dataset names referenced with dm_read("…") in a piece of code. */
       referencedNames(code) {
         const names = [];
-        const re = /dm_read(?:_edges|_nodes|_properties|_quantities)?\(\s*(["'])([^"']+)\1/g;
+        const re = /dm_(?:read(?:_edges|_nodes|_properties|_quantities)?|ifc)\(\s*(["'])([^"']+)\1/g;
         let m;
         while ((m = re.exec(code))) names.push(m[2]);
         return names;
@@ -170,12 +170,13 @@
         const closure = catalog.closure(names);
         // Wheels outside Pyodide's distribution (seaborn, plotly) are installed by their asset address, after their
         // dependencies from the distribution: a wheel given as an address does not pull those in by itself.
-        const extras = closure.map((n) => catalog.info(n)).filter((e) => e && e.url);
+        const extras = closure.map((n) => catalog.info(n)).filter((e) => e && e.url).sort((a, b) => (a.order || 0) - (b.order || 0));
         if (extras.length) {
           try {
             const deps = closure.filter((n) => { const e = catalog.info(n); return e && !e.url; });
             if (deps.length) await this.engine.loadPackages(deps);
-            await this.engine.loadPackages(extras.map((e) => catalog.INDEX_URL + e.file));
+            // One at a time, in order: IfcOpenShell's plug-ins link against the wheels installed before them.
+            for (const e of extras) await this.engine.loadPackages([catalog.INDEX_URL + e.file]);
           } catch (err) { D.log('python', 'extra wheels failed', err); }
         }
         if (!this.mplReady && closure.includes('matplotlib')) {
@@ -274,21 +275,109 @@
         return (await this.engine.evalJson('_dataspatium._plot_collect()')) || [];
       }
 
-      /** Import SQLite files written by dm_write() and remove them from the virtual filesystem. */
+      /**
+       * Import what the command left in /data/out and remove it from the virtual filesystem: SQLite files written by dm_write()
+       * become datasets, IFC files written by dm_ifc_write() (with their .json sidecar: name, description, file) become model datasets.
+       */
       async collectOutputs() {
         if (!this.engine) return [];
-        const names = (await this.engine.listdir(OUT_DIR)).filter((n) => n.endsWith('.sqlite'));
+        const names = (await this.engine.listdir(OUT_DIR)).filter((n) => n.endsWith('.sqlite') || n.endsWith('.ifc'));
         const created = [];
         for (const name of names) {
           const path = `${OUT_DIR}/${name}`;
           try {
             const bytes = await this.engine.readFile(path);
-            const meta = await datasets.importBytes(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
-            created.push(meta);
+            if (name.endsWith('.ifc')) {
+              let info = {};
+              try { info = JSON.parse(new TextDecoder().decode(await this.engine.readFile(path + '.json'))) || {}; } catch (_err) { info = {}; }
+              const meta = await D.require('data/model').createIfcDataset({ name: String(info.name || name.replace(/\.ifc$/, '')), fileName: String(info.file || name), bytes, description: String(info.description || ''), source: { kind: 'python', from: info.from || null } });
+              created.push(meta);
+              try { await this.engine.unlink(path + '.json'); } catch (_err) { /* ignore */ }
+            } else {
+              const meta = await datasets.importBytes(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+              created.push(meta);
+            }
           } catch (err) { D.log('python', 'import from Python failed', err); }
           try { await this.engine.unlink(path); } catch (_err) { /* ignore */ }
         }
         return created;
+      }
+
+      /**
+       * One of the model tools of Analysera on a model dataset (python/dataspatium.py `_ifc_tool`): the dataset is mirrored,
+       * IfcOpenShell fetched after consent, and the result comes back as a table.
+       * @param {string} datasetId @param {string} tool validate | structure | psets | select | elements | geometry
+       * @param {Record<string, any>} [params]
+       * @returns {Promise<{columns: Array<{name: string, type: string}>, rows: any[][], total: number}>}
+       */
+      async ifcTool(datasetId, tool, params = {}) {
+        await this.start();
+        if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
+        const meta = await datasets.get(datasetId);
+        if (meta && (meta.byteSize || 0) > MIRROR_LIMIT) throw new Error(D.t('python.err.toobig', { mb: Math.round(MIRROR_LIMIT / 1048576) }));
+        this.setState('busy');
+        try {
+          await this.mirror([datasetId]);
+          await this.ensurePackages(['ifcopenshell'].concat(params.express ? ['pytest'] : []));
+          this.streams = [];
+          const res = await this.engine.evalJson(`_dataspatium._ifc_tool(${JSON.stringify(datasetId)}, ${JSON.stringify(String(tool))}, ${JSON.stringify(JSON.stringify(params))})`);
+          return res || { columns: [], rows: [], total: 0 };
+        } finally {
+          this.streams = [];
+          if (this.state === 'busy') this.setState('ready');
+        }
+      }
+
+      /**
+       * The recipe step "Python på modellen": `def step(model): ...` on the model kept in a dataset file; the changed model
+       * comes back as IFC bytes with counts for the log (data/ifc-ops).
+       * @param {string} code @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file @param {{name?: string}} [options]
+       * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
+       */
+      async runIfcStep(code, bytes, options = {}) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          await this.ensurePackages(catalog.referenced(code).concat(['ifcopenshell']));
+          this.streams = [];
+          const info = await this.engine.evalJson(`_dataspatium._ifc_step(${JSON.stringify(String(code))}, "/data/step/model.sqlite", "/data/step/model-out.ifc", ${JSON.stringify(String(options.name || ''))})`);
+          return this.takeIfc('/data/step/model-out.ifc', info, ['/data/step/model.sqlite', '/data/step/step-in.ifc']);
+        });
+      }
+
+      /**
+       * The recipe step "Skriv tabell till modellen": a table dataset's values into the model (dm_ifc_set).
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file @param {ArrayBuffer|Uint8Array} tableBytes @param {string} key
+       */
+      async runIfcApply(bytes, tableBytes, key) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          await this.engine.writeFile('/data/step/table.sqlite', tableBytes);
+          await this.ensurePackages(['ifcopenshell']);
+          this.streams = [];
+          const info = await this.engine.evalJson(`_dataspatium._ifc_apply("/data/step/model.sqlite", "/data/step/table.sqlite", ${JSON.stringify(String(key || 'guid'))}, "/data/step/model-out.ifc")`);
+          return this.takeIfc('/data/step/model-out.ifc', info, ['/data/step/model.sqlite', '/data/step/table.sqlite', '/data/step/apply-in.ifc']);
+        });
+      }
+
+      async ifcJob(fn) {
+        await this.start();
+        if (this.state === 'busy') throw new Error(D.t('python.err.busy'));
+        this.setState('busy');
+        try {
+          await this.engine.mkdir('/data/step');
+          this.streams = [];
+          return await fn();
+        } finally {
+          this.streams = [];
+          if (this.state === 'busy') this.setState('ready');
+        }
+      }
+
+      async takeIfc(path, info, cleanup) {
+        const out = await this.engine.readFile(path);
+        const log = this.streams.slice();
+        for (const p of [path].concat(cleanup)) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+        return { bytes: out, info: info || {}, log };
       }
 
       /**

@@ -90,6 +90,7 @@
               selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
+              options.onActions && !isDxf() ? ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', title: t('model.actions.hint'), 'data-model-actions': '', onClick: () => options.onActions() }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('model.table.hint'), onClick: options.onTable }))),
           h('div', { class: 'dm-model-layout dm-center-fill' }, host, h('div', { class: 'dm-table-wrap dm-model-table-wrap' }, table)));
         renderInspector();

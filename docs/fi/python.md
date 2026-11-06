@@ -1,6 +1,6 @@
 # Python Dataspatiumissa
 
-*Analysoi*-tilassa on Python-konsoli R-konsolin vierellä. Python toimii selaimessa Pyodiden avulla (Python 3.14) ilman
+*Analysoi*-tilassa on Python-konsoli R-konsolin vierellä. Python toimii selaimessa Pyodiden avulla (Python 3.13) ilman
 mitään asennusta. Toisin kuin R, Python ei tule sovelluskansion mukana: ajoympäristö ja paketit haetaan jsDelivristä,
 kun käytät niitä ensimmäisen kerran ja olet antanut luvan, ja ne tallennetaan sen jälkeen selaimeen komponentteina.
 
@@ -48,6 +48,22 @@ ax.set_title("Väestö maakunnittain 2024")
 ax.set_xlabel("Tuhatta")
 ```
 
+### Rakennusmallit (IFC) IfcOpenShellillä
+
+| Funktio | Tekee |
+|---|---|
+| `dm_ifc("malli")` | Avaa IFC-mallin (mallityypin tietoaineisto) IfcOpenShellillä ja palauttaa `ifcopenshell.file`-olion. Wheel-paketit haetaan ensimmäisellä kerralla (noin 13 Mt, luvan jälkeen). |
+| `dm_ifc_elements(model, "IfcWall")` | Elementit `DataFrame`-taulukkona: guid, typ, namn, beskrivning, objekttyp, tagg, vaning, typnamn, material, id. |
+| `dm_ifc_psets(model, "IfcWall", qtos=True)` | Ominaisuusjoukot leveänä taulukkona, sarake kutakin `Joukko.Ominaisuus`-paria kohti; `qtos=True` ottaa mukaan määräjoukot. |
+| `dm_ifc_tree(model)` | Tilarakenne: taso, guid, tyyppi, nimi, yläosa, elementtien määrä. |
+| `dm_ifc_validate(model, express=True)` | Skeematarkistuksen löydökset: taso, tyyppi, id, guid, attribuutti, viesti. `express=True` suorittaa myös skeeman säännöt. |
+| `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Elementit IfcOpenShellin valintakielen mukaan, kuten `dm_ifc_elements()` ne luettelee. |
+| `dm_ifc_geometry(model, "IfcWall")` | Tilavuus, pinta-ala ja rajauslaatikko elementtiä kohti, mitattu geometriasta (metreinä). |
+| `dm_ifc_set(model, df, key="guid")` | Kirjoittaa taulukon arvot malliin (attribuutit ja `Joukko.Ominaisuus`-sarakkeet) ja palauttaa muutettujen elementtien määrän. |
+| `dm_ifc_write(model, "Uusi nimi")` | Lähettää mallin sovellukseen uutena mallitietoaineistona. Alkuperäinen tietoaineisto ei muutu. |
+
+Koko IfcOpenShellin API on käytettävissä: `model.by_type("IfcWall")`, `ifcopenshell.util.element.get_psets(e)`, `ifcopenshell.api` ja muut. Muokkaa-tilan vaihe *Python mallille* suorittaa samanlaisen koodin funktiona `step(model)` ja tekee tuloksesta tietoaineiston uuden version; katso [CAD ja BIM](cad-bim.md).
+
 ## Kaaviot
 
 matplotlib piirtää ilman näyttöä (Agg), ja jokainen avoin kuva näytetään konsolissa SVG-muodossa, kun komento on
@@ -65,7 +81,7 @@ vasten ja tallentaa sen selaimeen; se näkyy kohdassa *Hallitse → Työtila →
 myös poistaa. Puhtaat Python-paketit PyPI:stä, jotka eivät kuulu Pyodideen, asennetaan komennolla
 `import micropip; await micropip.install("paketti")`; sovellus kysyy lupaa, ennen kuin Python käyttää internetiä.
 
-Tarkistesummat: ajoympäristön tiedostot on lukittu Pyodide-versioon 314.0.7 SHA-256-summilla sovelluksessa; paketit
+Tarkistesummat: ajoympäristön tiedostot on lukittu Pyodide-versioon 0.29.5 SHA-256-summilla sovelluksessa; paketit
 tarkistetaan `pyodide-lock.json`-tiedostoa vasten, joka on itse lukittu summallaan. Tiedostoa, jonka summa on väärä,
 ei käytetä.
 

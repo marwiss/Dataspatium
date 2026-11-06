@@ -76,6 +76,7 @@
         if (!kindView) {
           kindView = mod.create(ctx, {
             onTable: () => { showTable = true; const d = current(); if (d) renderMain(d); },
+            onActions: async () => { const d = current(); if (d) await dialogs.palette(dialogCtx(d, await services.datasets.columns(d.id))); },
             onChanged: () => updateUndo(),
             // A collection with places can also be seen on a map, and go back to its own view from there.
             onMap: () => { viewId = 'map'; const d = current(); if (d) renderMain(d); },
@@ -101,6 +102,7 @@
           if (!ds) return [];
           const cmds = [];
           for (const g of dialogs.GROUPS) {
+            if (g.kinds && !g.kinds.includes(ds.kind || 'table')) continue;
             for (const id of g.ops) {
               cmds.push({
                 id: 'op:' + id, label: t('op.' + id), hint: t('palette.op.hint', { name: ds.name }), group: t('palette.group.ops'), icon: 'wand-sparkles', keywords: [t('op.group.' + g.id)],

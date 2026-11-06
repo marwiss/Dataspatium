@@ -107,9 +107,9 @@ frå kapabilitetsdokumentet til serveren og seier kva tillegg som er slått på.
 
 ## Neste steg
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) om API-ane,
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/client-guide.md) om API-ane,
   kapabilitetsdokumentet og feilkodane.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) om sjekklistene paret blir testa
   med, og [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md)
   om kva dei to prosjekta samordnar.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy) når serveren skal køyre for andre.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/nn/deploy) når serveren skal køyre for andre.

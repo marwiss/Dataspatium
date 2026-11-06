@@ -10,7 +10,7 @@ tools/pyodide_patches.md in docs/utveckling.md).
 Usage:
     python tools/pyodide_catalog.py <version> [<download dir>] [package ...]
 Example:
-    python tools/pyodide_catalog.py 314.0.7 %TEMP%/pyodide numpy pandas matplotlib micropip
+    python tools/pyodide_catalog.py 0.29.5 %TEMP%/pyodide numpy pandas matplotlib micropip
 """
 import hashlib
 import json
@@ -18,7 +18,8 @@ import os
 import sys
 import urllib.request
 
-RUNTIME_FILES = ["pyodide.js", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
+# The glue file is pyodide.asm.js (a classic script) up to the 0.29 line and pyodide.asm.mjs (an ES module) from Pyodide 314.
+RUNTIME_FILES = ["pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"]
 
 
 def main():

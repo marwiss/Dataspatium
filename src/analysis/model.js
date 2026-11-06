@@ -101,11 +101,22 @@
         rows: rows.map((r) => r.slice(0, by.length + 1).concat(r.slice(by.length + 1).map((v) => round(v)))),
       };
     }
+    /** Tools that run in Python with IfcOpenShell (python/dataspatium.py `_ifc_tool`), in the order of the tab. */
+    const IFC_TOOLS = ['validate', 'structure', 'psets', 'select', 'geometry'];
+    /**
+     * One of IfcOpenShell's tools on the model: validate {express}, structure, psets {ifc_class, qtos}, select {query},
+     * elements {ifc_class}, geometry {ifc_class}. Python starts and the wheels are fetched (after consent) the first time.
+     * @returns {Promise<{columns: any[], rows: any[][], total: number}>}
+     */
+    async function ifcTool(id, tool, params = {}) {
+      const res = await D.require('data/python-bridge').bridge.ifcTool(id, tool, params);
+      return { columns: (res.columns || []).map((c) => col(String(c.name), String(c.type || 'text'))), rows: res.rows || [], total: Number(res.total) || 0 };
+    }
     /** Counts per entity type in the file (geometry too). */
     function entityTypes(meta) {
       const list = (meta && meta.model && meta.model.types) || [];
       return { columns: [col('typ', 'text'), col('antal', 'integer')], rows: list.map((x) => [x.name, x.count]) };
     }
-    return { IFC_GROUPS, DXF_GROUPS, fromFile, fromGeometry, quantityList, propertyNames, propertyValues, drawing, entityTypes };
+    return { IFC_GROUPS, DXF_GROUPS, IFC_TOOLS, fromFile, fromGeometry, quantityList, propertyNames, propertyValues, drawing, entityTypes, ifcTool };
   });
 })();

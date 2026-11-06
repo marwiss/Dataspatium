@@ -108,9 +108,9 @@ som är påslagna.
 
 ## Nästa steg
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) för API:erna,
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/client-guide.md) för API:erna,
   kapabilitetsdokumentet och felkoderna.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) för checklistorna paret testas med,
   och [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md) för
   vad de två projekten samordnar.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy) när servern ska köras för andra.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/sv/deploy) när servern ska köras för andra.

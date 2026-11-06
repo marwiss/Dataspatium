@@ -57,7 +57,9 @@
       },
       model: {
         r: (s, ds) => (kinds.isDxf(ds) ? [piece('starter.model.layers', `ritning <- dm_read(${s})\ntable(ritning$lager, ritning$typ)`)] : [piece('starter.model.quantities', `mangder <- dm_read_quantities(${s})\naggregate(varde ~ namn + enhet, mangder, sum)`)]),
-        python: (s, ds) => (kinds.isDxf(ds) ? [piece('starter.model.layers', `ritning = dm_read(${s})\nritning.groupby(["lager", "typ"]).size()`)] : [piece('starter.model.quantities', `mangder = dm_read_quantities(${s})\nmangder.groupby(["namn", "enhet"])["varde"].sum()`)]),
+        python: (s, ds) => (kinds.isDxf(ds) ? [piece('starter.model.layers', `ritning = dm_read(${s})\nritning.groupby(["lager", "typ"]).size()`)] : [
+          piece('starter.model.quantities', `mangder = dm_read_quantities(${s})\nmangder.groupby(["namn", "enhet"])["varde"].sum()`),
+          piece('starter.model.ifc', `modell = dm_ifc(${s})\nprint(modell.schema, len(modell.by_type("IfcElement")))\ndm_ifc_psets(modell, "IfcWall").head()`)]),
         sql: (s, ds) => (kinds.isDxf(ds) ? [piece('starter.model.layers', 'select lager, typ, count(*) as objekt from data group by lager, typ order by lager, objekt desc')] : [
           piece('starter.model.types', 'select typ, count(*) as element from data group by typ order by element desc'),
           piece('starter.model.quantities', 'select namn, enhet, sum(varde) as summa from _quantities group by namn, enhet order by namn'),

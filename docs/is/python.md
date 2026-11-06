@@ -1,6 +1,6 @@
 # Python í Dataspatium
 
-Hamurinn *Greina* hefur Python-stjórnborð við hlið R-stjórnborðsins. Python keyrir í vafranum með Pyodide (Python 3.14),
+Hamurinn *Greina* hefur Python-stjórnborð við hlið R-stjórnborðsins. Python keyrir í vafranum með Pyodide (Python 3.13),
 alveg án uppsetningar. Ólíkt R fylgir Python ekki með í forritsmöppunni: keyrsluumhverfið og pakkarnir eru sóttir frá
 jsDelivr í fyrsta sinn sem þú notar þau, eftir að þú hefur gefið leyfi, og síðan vistuð í vafranum sem einingar.
 
@@ -46,6 +46,22 @@ ax.set_title("Íbúafjöldi eftir landshlutum 2024")
 ax.set_xlabel("Þúsundir")
 ```
 
+### Byggingarlíkön (IFC) með IfcOpenShell
+
+| Fall | Gerir |
+|---|---|
+| `dm_ifc("líkan")` | Opnar IFC-líkan (gagnasafn af tegundinni líkan) með IfcOpenShell og skilar `ifcopenshell.file`. Wheel-skjölin eru sótt í fyrsta sinn (um 13 MB, eftir samþykki). |
+| `dm_ifc_elements(model, "IfcWall")` | Einingarnar sem `DataFrame`: guid, typ, namn, beskrivning, objekttyp, tagg, vaning, typnamn, material, id. |
+| `dm_ifc_psets(model, "IfcWall", qtos=True)` | Eiginleikasöfnin sem breið tafla, einn dálkur á hvert `Safn.Eiginleiki`; `qtos=True` tekur magnsöfnin með. |
+| `dm_ifc_tree(model)` | Rýmisskipanin: stig, guid, tegund, heiti, yfirhluti, fjöldi eininga. |
+| `dm_ifc_validate(model, express=True)` | Niðurstöður skemaprófunar: stig, tegund, id, guid, eigindi, skilaboð. `express=True` keyrir einnig reglur skemans. |
+| `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Einingar samkvæmt valmáli IfcOpenShell, eins og `dm_ifc_elements()` listar þær. |
+| `dm_ifc_geometry(model, "IfcWall")` | Rúmmál, yfirborð og umlykjandi kassi á einingu, mælt á rúmfræðinni (metrar). |
+| `dm_ifc_set(model, df, key="guid")` | Skrifar gildi töflunnar inn í líkanið (eigindi og `Safn.Eiginleiki`-dálka) og skilar fjölda breyttra eininga. |
+| `dm_ifc_write(model, "Nýtt heiti")` | Sendir líkanið til forritsins sem nýtt líkansgagnasafn. Upprunalega gagnasafnið breytist ekki. |
+
+Allt API IfcOpenShell er tiltækt: `model.by_type("IfcWall")`, `ifcopenshell.util.element.get_psets(e)`, `ifcopenshell.api` og fleira. Skrefið *Python á líkanið* í Vinna keyrir sams konar kóða sem fallið `step(model)` og gerir niðurstöðuna að nýrri útgáfu gagnasafnsins; sjá [CAD og BIM](cad-bim.md).
+
 ## Myndrit
 
 matplotlib teiknar án skjás (Agg) og hver opin mynd birtist í stjórnborðinu sem SVG þegar skipunin er búin; myndunum
@@ -63,7 +79,7 @@ og vistar það í vafranum; það sést undir *Sýsla → Vinnusvæði → Eini
 Python-pakkar af PyPI sem eru ekki hluti af Pyodide eru settir upp með `import micropip; await micropip.install("pakki")`;
 forritið spyr um leyfi áður en Python nær í internetið.
 
-Prófsummur: skrár keyrsluumhverfisins eru læstar við Pyodide 314.0.7 með SHA-256 í forritinu; pakkarnir eru bornir
+Prófsummur: skrár keyrsluumhverfisins eru læstar við Pyodide 0.29.5 með SHA-256 í forritinu; pakkarnir eru bornir
 saman við `pyodide-lock.json`, sem er sjálf læst með sinni summu. Skrá með rangri summu er ekki notuð.
 
 ## Kóðaskref í uppskriftum

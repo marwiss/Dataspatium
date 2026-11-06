@@ -46,7 +46,7 @@ nafn og hæð fylgja með), sem Umsjón þekkir sem mál: kortið *Mál* sýnir 
 byggingarhluta eða hæð úr slíkri töflu, og SQL-upphafskóðinn fær fyrirspurnir fyrir tengingina. *Vista sem rit* vistar sýnina með
 litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
-Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md) hjá Kontroll.
+Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/ifcgraph.md) hjá Kontroll.
 
 ## Töflurnar
 
@@ -83,6 +83,43 @@ GROUP BY 1, 2 ORDER BY 1, 2
 - **Einingar**: úr hve mörgum einingum af hverri tegund skráin samanstendur.
 
 Hægt er að vista hverja niðurstöðu sem gagnasafn.
+
+## IfcOpenShell í forritinu
+
+Frá og með 2.4.0 getur forritið lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Kontroll byggir á. Það
+keyrir í Python í vafranum, er sótt í fyrsta sinn sem það er notað (um 13 MB, eftir samþykki þitt fyrir íhluti) og síðan vistað í
+vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
+
+**Í Greina, flipanum Magn**, hefur IFC-líkan fimm verkfæri til viðbótar:
+
+- **Sannprófun** sannprófar líkanið gegn IFC-skema sínu: eigindi, tegundir og tilvísanir, valfrjálst einnig reglur skemans.
+  Niðurstöðurnar má vista sem gagnasafn.
+- **Rýmisskipan** sýnir verkefni, lóð, byggingu, hæðir og rými sem tré með fjölda eininga í hverjum hluta.
+- **Eiginleikasöfn** gefur öll eiginleikasöfn einingartegundar sem breiða töflu: eina röð á einingu, einn dálk á eiginleika
+  (`Safn.Eiginleiki`), valfrjálst einnig magnsöfnin.
+- **IFC-val** sækir einingar með valmáli IfcOpenShell, til dæmis `IfcWall, Pset_WallCommon.FireRating=EI60` eða
+  `IfcElement, material=Steypa`.
+- **Rúmfræðimál** mælir rúmmál, yfirborð og umlykjandi kassa á einingu á rúmfræðinni (OpenCASCADE). Hægt fyrir stór líkön.
+
+**Í Vinna** hefur líkanið tvær aðgerðir undir *Aðgerðir* (hnappurinn er bæði í líkansýn og töflusýn), í hópnum *Líkan*:
+
+- **Skrifa töflu í líkanið** skrifar gildi töflu inn í líkanið. Raðir eru paraðar á GUID; dálkarnir `Name`, `Description`,
+  `ObjectType` og `Tag` (eða `namn`, `beskrivning`, `objekttyp`, `tagg`) verða eigindi, og dálkar eins og
+  `Pset_WallCommon.FireRating` verða eiginleikar (safnið er búið til ef það vantar). Vinnulagið: vista *Eiginleikasöfn* sem
+  gagnasafn, breyta því í Vinna og skrifa til baka.
+- **Python á líkanið** keyrir fallið `step(model)` með API IfcOpenShell á allt líkanið.
+
+Bæði eru skref í uppskriftinni: breytta líkanið verður nýtt innihald gagnasafnsins (upprunalegu skránni er skipt út og töflurnar
+byggðar upp á nýtt), skrefið er skráð og hægt að afturkalla, og upprunalega skráin er alltaf núverandi útgáfa þegar þú flytur
+líkanið út eða sendir það til CDE.
+
+**Í Python** (Python-flipinn í Greina og kóðareitir í glósubókinni) opnar `dm_ifc("heiti")` líkanið sem `ifcopenshell.file`.
+Hjálparföllin `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` og `dm_ifc_geometry` gefa
+töflur, `dm_ifc_set(model, df)` skrifar töflu inn í líkanið og `dm_ifc_write(model, "heiti")` sendir líkanið til forritsins sem
+nýtt gagnasafn; sjá [Python í Dataspatium](python.md). Verkfærin í Greina og Python breyta gagnasafninu aldrei; aðeins
+aðgerðirnar í Vinna gefa nýja útgáfu.
+
+IfcOpenShell er LGPL-3.0 og er sótt óbreytt sem fest wheel-skjöl úr skrá IfcOpenShell sjálfs, sjá [Leyfi](licenser.md).
 
 ## DXF-teikningar
 

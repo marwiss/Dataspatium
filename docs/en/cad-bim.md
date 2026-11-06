@@ -87,6 +87,45 @@ In R and Python `dm_read()` gives the elements, `dm_read_properties()` the prope
 
 Every result can be saved as a dataset.
 
+## IfcOpenShell in the app
+
+Since 2.4.0 the app reads, checks and changes IFC models with IfcOpenShell, the library Kontroll is built on. It runs in Python
+in the browser, is fetched the first time it is used (about 13 MB, after your consent for components) and is then kept in the
+browser. Nothing is sent anywhere; the model does not leave the computer.
+
+**In Analyse, the Quantities tab**, an IFC model has five more tools:
+
+- **Validation** checks the model against its IFC schema: attributes, types and references, optionally the schema's rules too.
+  The findings can be saved as a dataset.
+- **Spatial structure** shows project, site, building, storeys and spaces as a tree with the number of elements per part.
+- **Property sets** gives every property set of an element type as one wide table: a row per element, a column per property
+  (`Set.Property`), optionally the quantity sets too.
+- **IFC selection** fetches elements with IfcOpenShell's selector language, for example `IfcWall, Pset_WallCommon.FireRating=EI60`
+  or `IfcElement, material=Concrete`.
+- **Geometry measures** measures volume, surface and bounding box per element on the geometry (OpenCASCADE). Slow for big
+  models.
+
+**In Process** the model has two actions under *Actions* (the button is in the model view and in the table view), in the group
+*Model*:
+
+- **Write a table into the model** writes a table's values into the model. Rows are matched on GUID; the columns `Name`,
+  `Description`, `ObjectType` and `Tag` (or `namn`, `beskrivning`, `objekttyp`, `tagg`) become attributes, and columns like
+  `Pset_WallCommon.FireRating` become properties (the set is created when missing). The workflow: save *Property sets* as a
+  dataset, edit it in Process and write it back.
+- **Python on the model** runs a function `step(model)` with IfcOpenShell's API on the whole model.
+
+Both are steps in the recipe: the changed model becomes the dataset's new content (the original file is replaced and the tables
+rebuilt), the step is logged and can be undone, and the original file is always the current version when you export the model
+or send it to a CDE.
+
+**In Python** (the Python tab in Analyse and code cells in the notebook) `dm_ifc("name")` opens the model as an
+`ifcopenshell.file`. The helpers `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` and
+`dm_ifc_geometry` give tables, `dm_ifc_set(model, df)` writes a table into the model and `dm_ifc_write(model, "name")` sends the
+model to the app as a new dataset; see [Python in Dataspatium](python.md). The tools in Analyse and Python never change the
+dataset; only the actions in Process make a new version.
+
+IfcOpenShell is LGPL-3.0 and is fetched unchanged as pinned wheels from IfcOpenShell's own index, see [Licences](licenser.md).
+
 ## DXF drawings
 
 A DXF file becomes a table with one drawing object per row (type, layer, colour, length, area, text and position) and an

@@ -1,6 +1,6 @@
 # Python i Dataspatium
 
-Läget *Analysera* har en Python-konsol bredvid R-konsolen. Python körs i webbläsaren med Pyodide (Python 3.14),
+Läget *Analysera* har en Python-konsol bredvid R-konsolen. Python körs i webbläsaren med Pyodide (Python 3.13),
 helt utan installation. Till skillnad från R följer Python inte med i appmappen: körtiden och paketen hämtas från
 jsDelivr första gången du använder dem, efter att du gett lov, och sparas sedan i webbläsaren som komponenter.
 
@@ -46,6 +46,22 @@ ax.set_title("Folkmängd per län 2024")
 ax.set_xlabel("Tusental")
 ```
 
+### Byggnadsmodeller (IFC) med IfcOpenShell
+
+| Funktion | Gör |
+|---|---|
+| `dm_ifc("modell")` | Öppnar en IFC-modell (datamängd av slaget modell) med IfcOpenShell och returnerar en `ifcopenshell.file`. Hjulen hämtas första gången (cirka 13 MB, efter samtycke). |
+| `dm_ifc_elements(model, "IfcWall")` | Elementen som `DataFrame`: guid, typ, namn, beskrivning, objekttyp, tagg, vaning, typnamn, material, id. |
+| `dm_ifc_psets(model, "IfcWall", qtos=True)` | Egenskapsmängderna som en bred tabell, en kolumn per `Uppsättning.Egenskap`; `qtos=True` tar med mängdsatserna. |
+| `dm_ifc_tree(model)` | Den rumsliga strukturen: nivå, guid, typ, namn, förälder, antal element. |
+| `dm_ifc_validate(model, express=True)` | Fynd från schemakontrollen: nivå, typ, id, guid, attribut, meddelande. `express=True` kör även schemats regler. |
+| `dm_ifc_select(model, "IfcWall, Pset_WallCommon.FireRating=EI60")` | Element enligt IfcOpenShells urvalsspråk, som `dm_ifc_elements()` listar dem. |
+| `dm_ifc_geometry(model, "IfcWall")` | Volym, yta och omslutande låda per element, mätt på geometrin (meter). |
+| `dm_ifc_set(model, df, key="guid")` | Skriver tabellens värden in i modellen (attribut och `Uppsättning.Egenskap`-kolumner) och returnerar antalet ändrade element. |
+| `dm_ifc_write(model, "Nytt namn")` | Skickar modellen till appen som en ny modell-datamängd. Den ursprungliga datamängden ändras inte. |
+
+Hela IfcOpenShells API finns att använda: `model.by_type("IfcWall")`, `ifcopenshell.util.element.get_psets(e)`, `ifcopenshell.api` med flera. Steget *Python på modellen* i Bearbeta kör samma slags kod som en funktion `step(model)` och gör resultatet till en ny version av datamängden; se [CAD och BIM](cad-bim.md).
+
 ## Diagram
 
 matplotlib ritar utan skärm (Agg) och varje öppen figur visas i konsolen som SVG när kommandot är klart; figurerna
@@ -63,7 +79,7 @@ och sparar det i webbläsaren; det syns under *Hantera → Arbetsyta → Kompone
 Rena Python-paket från PyPI som inte ingår i Pyodide installeras med `import micropip; await micropip.install("paket")`;
 appen frågar om lov innan Python når internet.
 
-Kontrollsummor: körtidens filer är låsta till Pyodide 314.0.7 med SHA-256 i appen; paketen kontrolleras mot
+Kontrollsummor: körtidens filer är låsta till Pyodide 0.29.5 med SHA-256 i appen; paketen kontrolleras mot
 `pyodide-lock.json`, som i sin tur är låst med sin summa. En fil med fel summa används inte.
 
 ## Kodsteg i recept

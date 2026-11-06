@@ -163,7 +163,7 @@ IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern sk
 andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Kontrolls README och `docs/client-guide.md` beskriver samarbetet från
 serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](docs/cad-bim.md).
 
-Dataspatium 2.3.0 fungerar med Kontroll 2.3.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
+Dataspatium 2.4.0 fungerar med Kontroll 2.4.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
 [snabbstart.md](docs/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
 
 ## Lär dig mer

@@ -79,6 +79,16 @@
             sel.value = values[p.name] ? values[p.name].id : '';
             sel.addEventListener('change', () => { const m = all.find((x) => x.id === sel.value); if (m) { const copy = Object.assign({}, m); delete copy.datasetId; delete copy.datasetName; values[p.name] = copy; } else values[p.name] = null; schedulePreview(); });
           });
+        } else if (p.type === 'dataset') {
+          // Another dataset, by id (a table to read from); `kinds` limits the dataset kinds offered.
+          const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
+          fields.push(sel);
+          D.require('data/datasets').list().then((all) => {
+            const list = all.filter((d) => d.id !== options.datasetId && (!p.kinds || p.kinds.includes(d.kind || 'table')));
+            sel.options = [{ value: '', label: t('op.dataset.pick') }].concat(list.map((d) => ({ value: d.id, label: d.folder ? `${d.folder}/${d.name}` : d.name })));
+            sel.value = values[p.name] || '';
+            sel.addEventListener('change', () => { values[p.name] = sel.value; schedulePreview(); });
+          });
         } else if (p.type === 'select') {
           const sel = /** @type {any} */ (h('dm-select', { label: paramLabel(op.id, p) }));
           // A choice can be a list of its own, with names that need no translation, such as coordinate systems.
@@ -126,7 +136,8 @@
           fields.push(input);
         } else {
           const input = /** @type {any} */ (h('dm-input', { type: p.type === 'number' ? 'number' : 'text', label: paramLabel(op.id, p), placeholder: i18n.has(`op.${op.id}.${p.name}.placeholder`) ? t(`op.${op.id}.${p.name}.placeholder`) : '' }));
-          input.value = values[p.name] === undefined || values[p.name] === null ? '' : values[p.name];
+          input.value = values[p.name] === undefined || values[p.name] === null ? (p.default !== undefined ? String(p.default) : '') : values[p.name];
+          if (p.default !== undefined && (values[p.name] === undefined || values[p.name] === null)) values[p.name] = p.type === 'number' ? Number(p.default) : String(p.default);
           input.addEventListener('input', () => { values[p.name] = p.type === 'number' ? Number(input.value) : input.value; schedulePreview(); });
           fields.push(input);
         }
@@ -136,6 +147,7 @@
         return op.params.filter((p) => p.required && (values[p.name] === undefined || values[p.name] === null || values[p.name] === '' || (Array.isArray(values[p.name]) && !values[p.name].length))).map((p) => paramLabel(op.id, p));
       }
 
+      const lastLine = (text) => { const lines = String(text).trim().split('\n'); return lines[lines.length - 1] || String(text); };
       async function runPreview() {
         if (!op.preview) { previewEl.textContent = ''; return; }
         if (missing().length) { previewEl.textContent = t('op.preview.incomplete'); return; }
@@ -152,8 +164,10 @@
               h('thead', null, h('tr', null, res.columns.map((c) => h('th', { text: String(c) })))),
               h('tbody', null, res.sample.map((r) => h('tr', null, r.map((v) => h('td', { text: v === null || v === undefined ? '' : typeof v === 'number' ? i18n.formatNumber(v) : String(v) }))))))));
           }
+          // A step on a model says what came out in a sentence of its own.
+          if (res.note) parts.push(h('p', { class: 'dm-help', text: String(res.note) }));
           replace(previewEl, parts);
-        } catch (err) { previewEl.textContent = t('op.preview.error', { message: (err && err.message) || String(err) }); }
+        } catch (err) { previewEl.textContent = t('op.preview.error', { message: lastLine((err && err.message) || String(err)) }); }
       }
       // Operations that run code preview on request only (the engines are slow and the code is being typed).
       function schedulePreview() { if (op.manualPreview) return; clearTimeout(previewTimer); previewTimer = setTimeout(runPreview, 300); }
@@ -161,7 +175,7 @@
       const body = h('div', { class: 'dm-stack' },
         i18n.has(`op.${op.id}.help`) ? h('p', { class: 'dm-help', text: t(`op.${op.id}.help`) }) : null,
         h('div', { class: 'dm-stack' }, fields),
-        op.manualPreview && op.preview ? h('div', { class: 'dm-row' }, basic.button({ label: t('op.preview.run', { n: i18n.formatNumber(D.require('data/code-steps').PREVIEW_ROWS) }), icon: 'eye', onClick: runPreview })) : null,
+        op.manualPreview && op.preview ? h('div', { class: 'dm-row' }, basic.button({ label: i18n.has(`op.${op.id}.preview.run`) ? t(`op.${op.id}.preview.run`) : t('op.preview.run', { n: i18n.formatNumber(D.require('data/code-steps').PREVIEW_ROWS) }), icon: 'eye', onClick: runPreview })) : null,
         previewEl);
       applyDefaults();
       schedulePreview();

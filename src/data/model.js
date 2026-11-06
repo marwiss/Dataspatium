@@ -75,6 +75,39 @@
       } catch (err) { datasets.abortImport(handle); throw err; }
     }
 
+    /**
+     * A changed IFC file becomes the dataset's content, inside an operation's savepoint (data/ifc-ops): the element, property,
+     * quantity and entity tables are rebuilt from it, the original in `_files` is replaced and the facts in `_meta.model`
+     * renewed. The element ids follow the file, so a selection in memory is dropped by the content change as usual.
+     * @param {{engine: any, datasetId?: string}} ctx @param {Uint8Array} bytes @param {string} fileName
+     * @returns {Promise<any>} the new facts
+     */
+    async function replaceOriginal(ctx, bytes, fileName) {
+      const e = ctx.engine;
+      for (const table of ['data', '_properties', '_quantities', '_entities']) await e.run(`delete from ${table}`);
+      const names = IFC_COLUMNS.map((c) => c.name);
+      const summary = await step.tables(bytes, {
+        onRows: async (table, rows) => {
+          if (table === 'elements') await e.insertRows('data', names, rows);
+          else if (table === 'properties') await e.insertRows('_properties', PROPERTY_FIELDS, rows);
+          else if (table === 'quantities') await e.insertRows('_quantities', QUANTITY_FIELDS, rows);
+          else await e.insertRows('_entities', ENTITY_FIELDS, rows);
+        },
+      });
+      if (!summary.rows) throw new Error(D.t('model.err.noelements'));
+      await files.ensureTable(e);
+      await e.run(`delete from ${files.TABLE} where kind = 'original'`);
+      await e.insertRows(files.TABLE, ['name', 'kind', 'type', 'size', 'bytes'], [[fileName, 'original', 'application/x-step', bytes.byteLength, bytes]], 1);
+      summary.file = fileName;
+      await e.run('insert or replace into _meta (key, value) values (?, ?)', ['model', JSON.stringify(summary)]);
+      if (ctx.datasetId) {
+        files.clearUrls(ctx.datasetId);
+        // The open handle's record is what gets saved and listed: keep its facts current too.
+        try { (await datasets.ensureOpen(ctx.datasetId)).meta.model = summary; } catch (_err) { /* not open */ }
+      }
+      return summary;
+    }
+
     /** The original file of a model. @returns {Promise<{name: string, bytes: Uint8Array}|null>} */
     async function original(id) {
       const list = await files.list(id, 'original');
@@ -118,6 +151,6 @@
       return parts.length ? ' where ' + parts.join(' and ') : '';
     }
 
-    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, original, drawing, element, properties, quantities, whereOf, rowsOf };
+    return { IFC_COLUMNS, DXF_COLUMNS, PROPERTY_FIELDS, QUANTITY_FIELDS, ENTITY_FIELDS, isModel, isDxf, createIfcDataset, createDxfDataset, replaceOriginal, original, drawing, element, properties, quantities, whereOf, rowsOf };
   });
 })();

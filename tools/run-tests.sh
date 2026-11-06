@@ -10,7 +10,7 @@
 #     tools/run-tests.sh --url "http://localhost:8080/tests/index.html" --browsers chromium
 #
 # The DATASPATIUM_CDE_* variables become the query parameters of the live test against Kontroll (tests/opencde-live.test.js):
-# URL -> cde, HELPER -> cdehelper, CLIENT -> cdeclient, PROJECT -> cdeproject, GRAPH -> cdegraph, GRAPH_DB -> cdegraphdb,
+# URL -> cde, HELPER -> cdehelper, CLIENT -> cdeclient, USER -> cdeuser (the signed-in user's id, dm_manager by default), PROJECT -> cdeproject, GRAPH -> cdegraph, GRAPH_DB -> cdegraphdb,
 # GRAPH_USER -> cdegraphuser, GRAPH_PASS -> cdegraphpass, ADMIN_HELPER -> cdeadminhelper. The page must then be served over http.
 # CHROME and FIREFOX name the browser binaries when they are not on PATH; DATASPATIUM_CHROME_FLAGS adds flags (root gets
 # --no-sandbox by itself, as containers need).
@@ -56,7 +56,7 @@ urlencode() {
 # The live test's parameters from the environment, so that a CI job needs no URL building of its own.
 cde_params() {
   local out="" name value
-  for pair in URL:cde HELPER:cdehelper CLIENT:cdeclient PROJECT:cdeproject GRAPH:cdegraph GRAPH_DB:cdegraphdb GRAPH_USER:cdegraphuser GRAPH_PASS:cdegraphpass ADMIN_HELPER:cdeadminhelper; do
+  for pair in URL:cde HELPER:cdehelper CLIENT:cdeclient USER:cdeuser PROJECT:cdeproject GRAPH:cdegraph GRAPH_DB:cdegraphdb GRAPH_USER:cdegraphuser GRAPH_PASS:cdegraphpass ADMIN_HELPER:cdeadminhelper; do
     name="DATASPATIUM_CDE_${pair%%:*}"
     value="${!name:-}"
     [ -n "$value" ] && out="$out&${pair#*:}=$(urlencode "$value")"
@@ -87,13 +87,21 @@ find_browser() {
   return 1
 }
 
+# Waits for the summary line in the log files (after the browser's pid). Returns 0 when it is there, 1 at the timeout and 2 when
+# the browser exited without writing it (a crash at start, such as a sandbox refusal, is then reported at once).
 wait_for_summary() {
-  local deadline=$(( $(date +%s) + TIMEOUT ))
+  local pid="$1" deadline=$(( $(date +%s) + TIMEOUT ))
+  shift
   while [ "$(date +%s)" -lt "$deadline" ]; do
     sleep 0.7
     for f in "$@"; do
       if [ -f "$f" ] && grep -q 'DATASPATIUM-TESTS:' "$f"; then sleep 0.5; return 0; fi
     done
+    if ! kill -0 "$pid" > /dev/null 2>&1; then
+      sleep 0.5
+      for f in "$@"; do [ -f "$f" ] && grep -q 'DATASPATIUM-TESTS:' "$f" && return 0; done
+      return 2
+    fi
   done
   return 1
 }
@@ -109,7 +117,8 @@ report() {
       *) if [ "$ALL_CONSOLE" = 1 ] || printf '%s' "$line" | grep -q -E 'Uncaught|Error|error|failed|Failed'; then echo "  [console] $line"; fi;;
     esac
   done
-  if [ "$finished" != 0 ]; then echo "  TIMEOUT: no DATASPATIUM-TESTS summary within $TIMEOUT s"; TIMED_OUT=1
+  if [ "$finished" = 2 ]; then echo "  ERROR: the browser exited before the DATASPATIUM-TESTS summary (see $WORK)"; TIMED_OUT=1
+  elif [ "$finished" != 0 ]; then echo "  TIMEOUT: no DATASPATIUM-TESTS summary within $TIMEOUT s"; TIMED_OUT=1
   elif [ "$saw" = 0 ]; then echo "  ERROR: the summary line was seen in the log but could not be parsed"; TIMED_OUT=1
   fi
   TOTAL_FAIL=$(( TOTAL_FAIL + ${fail:-0} ))
@@ -127,10 +136,11 @@ run_chromium() {
   # shellcheck disable=SC2086
   "$exe" $flags "$PAGE" > "$WORK/chromium.out" 2> "$log" &
   pid=$!
-  if wait_for_summary "$log"; then finished=0; else finished=1; fi
+  wait_for_summary "$pid" "$log"; finished=$?
   kill "$pid" > /dev/null 2>&1; sleep 0.3; kill -9 "$pid" > /dev/null 2>&1
-  # Chromium logs console messages as `INFO:CONSOLE:50] "text", source: ...` (older builds: `CONSOLE(50)]`).
-  sed -n -E 's/.*CONSOLE[:(][0-9]+\)?\] "(.*)", source: .*/\1/p' "$log" | report "chromium ($exe)" "$finished"
+  # Chromium logs console messages as `INFO:CONSOLE:50] "text", source: ...` (older builds: `CONSOLE(50)]`). The report reads a
+  # process substitution, not a pipeline: a pipeline would run it in a subshell and lose TIMED_OUT and TOTAL_FAIL.
+  report "chromium ($exe)" "$finished" < <(sed -n -E 's/.*CONSOLE[:(][0-9]+\)?\] "(.*)", source: .*/\1/p' "$log")
 }
 
 run_firefox() {
@@ -149,10 +159,10 @@ user_pref("browser.aboutwelcome.enabled", false);
 PREFS
   "$exe" --headless --no-remote --width "$WIDTH" --height "$HEIGHT" --profile "$profile" "$PAGE" > "$log" 2> "$err" &
   pid=$!
-  if wait_for_summary "$log" "$err"; then finished=0; else finished=1; fi
+  wait_for_summary "$pid" "$log" "$err"; finished=$?
   kill "$pid" > /dev/null 2>&1; sleep 0.8; kill -9 "$pid" > /dev/null 2>&1
   # Firefox prints `console.log: "text"` (quoted) for strings.
-  cat "$log" "$err" 2> /dev/null | sed -n -E 's/^console\.(log|error|warn|info): "?(.*[^"])"?$/\2/p; /JavaScript error|Error:/p' | report "firefox ($exe)" "$finished"
+  report "firefox ($exe)" "$finished" < <(cat "$log" "$err" 2> /dev/null | sed -n -E 's/^console\.(log|error|warn|info): "?(.*[^"])"?$/\2/p; /JavaScript error|Error:/p')
 }
 
 for b in $BROWSERS; do

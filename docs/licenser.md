@@ -50,6 +50,7 @@ licenstexterna.
 | Boverkets Planbestämmelsekatalog (inbäddad kopia, `presets/plan/`) | Öppna data från Boverket | Fri att använda och sprida; Boverket och Planbestämmelsekatalogen ska anges som källa |
 | Tesseract och tesseract.js-core (läser text i bilder; hämtas vid behov, ingår inte i mappen), språkdata från tessdata_best | Apache-2.0 (Tesseract, tesseract.js-core, språkdata) | Hämtas oförändrade från jsDelivr, låsta till version och kontrollsumma, och lagras i webbläsaren |
 | plotly.js (hämtas vid behov för plotly-diagram), seaborn och plotly (Python-hjul från PyPI, hämtas vid behov) | MIT (plotly.js, plotly), BSD-3-Clause (seaborn) | Hämtas oförändrade från jsDelivr respektive PyPI, låsta till version och kontrollsumma, och lagras i webbläsaren |
+| IfcOpenShell 0.9.1 (läser, kontrollerar och ändrar IFC-modeller i Python; hämtas vid behov som WebAssembly-hjul från IfcOpenShells egen förteckning, ingår inte i mappen) med OpenCASCADE-kärnan samt lark och isodate | LGPL-3.0 (IfcOpenShell; källkod på https://github.com/IfcOpenShell/IfcOpenShell), LGPL-2.1 med undantag (OpenCASCADE), MIT (lark), BSD-3-Clause (isodate) | Hämtas oförändrade, låsta till version och kontrollsumma, och lagras i webbläsaren. IfcOpenShell körs som ett fristående Python-paket i en worker och kan bytas mot en annan version; appens kod länkar inte mot det |
 
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och
 bilder med appen via meddelanden; det är sådan samdistribution ("mere aggregation") som GPL tillåter, och

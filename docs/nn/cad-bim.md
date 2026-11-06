@@ -47,7 +47,7 @@ status, type, ansvarleg, prioritet og månad bak felles filter, og knappen *Vis 
 eller etasje frå ein slik tabell, og SQL-startkoden får spørjingar for koplinga. *Lagre som diagram* lagrar visinga med fargane
 som eit modelldiagram, som dashbord, dokument og Publiser viser med teiknforklaring.
 
-Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md) hos Kontroll.
+Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/ifcgraph.md) hos Kontroll.
 
 ## Tabellane
 
@@ -85,6 +85,45 @@ I R og Python gjev `dm_read()` bygningsdelane, `dm_read_properties()` eigenskapa
 - **Entitetar**: kor mange entitetar av kvart slag fila består av.
 
 Kvart resultat kan lagrast som datasett.
+
+## IfcOpenShell i appen
+
+Sidan 2.4.0 kan appen lese, kontrollere og endre IFC-modellar med IfcOpenShell, det same biblioteket som Kontroll byggjer på. Det
+køyrer i Python i nettlesaren, blir henta første gongen det blir brukt (om lag 13 MB, etter samtykket ditt til komponentar) og
+lagra i nettlesaren. Ingenting blir sendt nokon stad; modellen forlèt ikkje datamaskina.
+
+**I Analyser, fana Mengder**, har ein IFC-modell fem verktøy til:
+
+- **Validering** kontrollerer modellen mot IFC-skjemaet sitt: attributt, typar og referansar, valfritt òg reglane i skjemaet.
+  Funna kan lagrast som datasett.
+- **Romleg struktur** viser prosjekt, tomt, bygning, etasjar og rom som eit tre med talet på element per del.
+- **Eigenskapssett** gir alle eigenskapssett for ein elementtype som ein brei tabell: ei rad per element, ein kolonne per
+  eigenskap (`Sett.Eigenskap`), valfritt òg mengdesetta.
+- **IFC-utval** hentar element med utvalsspråket i IfcOpenShell, til dømes `IfcWall, Pset_WallCommon.FireRating=EI60` eller
+  `IfcElement, material=Betong`.
+- **Geometrimål** måler volum, overflate og omsluttande boks per element på geometrien (OpenCASCADE). Seint for store
+  modellar.
+
+**I Bearbeid** har modellen to handlingar under *Handlingar* (knappen finst i modellvisinga og i tabellvisinga), i gruppa
+*Modell*:
+
+- **Skriv tabell til modellen** skriv verdiane i ein tabell inn i modellen. Radene blir kopla på GUID; kolonnane `Name`,
+  `Description`, `ObjectType` og `Tag` (eller `namn`, `beskrivning`, `objekttyp`, `tagg`) blir attributt, og kolonnar som
+  `Pset_WallCommon.FireRating` blir eigenskapar (settet blir oppretta om det manglar). Arbeidsmåten: lagre *Eigenskapssett* som
+  datasett, rediger det i Bearbeid og skriv tilbake.
+- **Python på modellen** køyrer ein funksjon `step(model)` med API-et i IfcOpenShell på heile modellen.
+
+Begge er steg i oppskrifta: den endra modellen blir det nye innhaldet i datasettet (originalfila blir bytt og tabellane bygde
+om), steget blir logga og kan angrast, og originalfila er alltid den gjeldande versjonen når du eksporterer modellen eller
+sender han til eit CDE.
+
+**I Python** (fana Python i Analyser og kodeceller i notatboka) opnar `dm_ifc("namn")` modellen som ei `ifcopenshell.file`.
+Hjelparane `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` og `dm_ifc_geometry` gir
+tabellar, `dm_ifc_set(model, df)` skriv ein tabell inn i modellen, og `dm_ifc_write(model, "namn")` sender modellen til appen som
+eit nytt datasett; sjå [Python i Dataspatium](python.md). Verktøya i Analyser og Python endrar aldri datasettet; berre
+handlingane i Bearbeid gir ein ny versjon.
+
+IfcOpenShell er LGPL-3.0 og blir henta uendra som fastlåste wheels frå IfcOpenShell si eiga oversikt, sjå [Lisensar](licenser.md).
 
 ## DXF-teikningar
 

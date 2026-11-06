@@ -151,7 +151,7 @@ at se forespørgslens og svarets indhold (tekst, højst 64 kB; aldrig token-kald
 den kan gemmes som JSON eller som et datasæt. Appen sætter headeren X-Request-Id på hvert kald, så serverens egen log kan parres
 med appens; afviser en server headeren, slås den fra for den kilde.
 
-Serverens side beskrives i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (hvordan en klient forbinder), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parrets testkørsler) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (udviklingsstakken og hvordan appen testes mod den).
+Serverens side beskrives i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/client-guide.md) (hvordan en klient forbinder), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parrets testkørsler) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/deploy/local.md) (udviklingsstakken og hvordan appen testes mod den).
 
 Kontroll beskriver sine tilføjelser i `GET /.well-known/kontroll`; appen læser dokumentet, når kilden åbnes, og skriver under
 overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistrering, forespørgselslog, administration, IFC-graf,

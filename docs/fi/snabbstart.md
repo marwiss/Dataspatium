@@ -111,9 +111,9 @@ mitkä laajennukset ovat päällä.
 
 ## Seuraavaksi
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md): rajapinnat, kyvykkyysasiakirja
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/client-guide.md): rajapinnat, kyvykkyysasiakirja
   ja virhekoodit.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md): tarkistuslistat, joilla paria
   testataan, ja [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md):
   mitä kaksi projektia sovittavat yhteen.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy), kun palvelimen on määrä palvella muita.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/fi/deploy), kun palvelimen on määrä palvella muita.

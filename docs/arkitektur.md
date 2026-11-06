@@ -67,7 +67,7 @@ Plattform        src/platform: registry, assets, net-shim, workers + worker-shim
   så paket som behövs efter starten skrivs med `webR.FS.writeFile` till `/dataspatium-assets/` i R:s filsystem, där
   worker-shimmen letar efter resurser den saknar.
 
-- Python: Pyodide 314.0.7 (Python 3.14) i en egen klassisk Blob-worker med shimmen (`src/engines/python/python-engine.js`).
+- Python: Pyodide 0.29.5 (Python 3.13) i en egen klassisk Blob-worker med shimmen (`src/engines/python/python-engine.js`).
   Python följer inte med i ZIP:en: `src/engines/python/catalog.js` pinnar körtidens fem filer med SHA-256 och läser
   `pyodide-lock.json` (själv pinnad) för hjulens summor, beroenden och importnamn; filerna hämtas som komponenter från
   jsDelivr efter samtycke (`components`), tillhandahålls som resurser `pyodide/<fil>` och skickas till workern, som

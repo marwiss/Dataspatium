@@ -110,9 +110,9 @@ på.
 
 ## Neste steg
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) om API-ene,
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/client-guide.md) om API-ene,
   kapabilitetsdokumentet og feilkodene.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) om sjekklistene paret testes med, og
   [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md) om hva de
   to prosjektene samordner.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy) når serveren skal kjøre for andre.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/nb/deploy) når serveren skal kjøre for andre.

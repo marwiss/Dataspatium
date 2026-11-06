@@ -83,7 +83,8 @@
     try {
       shell.activate('bearbeta');
       await waitFor(() => toolbar(root, t('bearbeta.actions')), 5000, 'actions button');
-      for (const id of GROUPS.flatMap((g) => g.ops)) {
+      // The groups for one kind of data (Modell) are opened below, on a model; the table shows the general ones.
+      for (const id of GROUPS.filter((g) => !g.kinds).flatMap((g) => g.ops)) {
         press(toolbar(root, t('bearbeta.actions')));
         await waitFor(() => document.querySelector(`dialog .dm-op-tile[data-op="${id}"]`), 3000, 'palette for ' + id);
         /** @type {HTMLElement} */ (document.querySelector(`dialog .dm-op-tile[data-op="${id}"]`)).click();
@@ -97,6 +98,29 @@
         if (preview && errorPrefix && preview.textContent.trim().startsWith(errorPrefix)) previewErrors.push(`${id}: ${preview.textContent.trim()}`);
         while (openDialogs().length) await closeTop(id);
       }
+      // The actions on a model, from the Åtgärder button of the model view (they run in Python only when applied).
+      const modelMeta = await shell.ctx.services.importer.run(D.require('tests/fixtures/ifc').ifcFile(), { format: 'model' }, null, 'Klicktest hus');
+      try {
+        shell.store.set({ selectedId: modelMeta.id });
+        await waitFor(() => root.querySelector('[data-model-actions]'), 8000, 'the model view with its actions button');
+        for (const id of GROUPS.filter((g) => g.kinds && g.kinds.includes('model')).flatMap((g) => g.ops)) {
+          press(/** @type {HTMLElement} */ (root.querySelector('[data-model-actions]')));
+          await waitFor(() => document.querySelector(`dialog .dm-op-tile[data-op="${id}"]`), 3000, 'palette for ' + id);
+          /** @type {HTMLElement} */ (document.querySelector(`dialog .dm-op-tile[data-op="${id}"]`)).click();
+          const dlg = await waitFor(() => openDialogs().find((d) => !d.querySelector('.dm-op-tile')), 5000, 'dialog of ' + id);
+          opened++;
+          await wait(400);
+          for (const p of a11y.audit(dlg)) problems.push(`${id}: ${p.rule}: ${p.element}`);
+          while (openDialogs().length) await closeTop(id);
+        }
+        // A table never offers the model group.
+        shell.store.set({ selectedId: meta.id });
+        await waitFor(() => toolbar(root, t('bearbeta.actions')), 5000, 'actions button');
+        press(toolbar(root, t('bearbeta.actions')));
+        await waitFor(() => document.querySelector('dialog .dm-op-tile[data-op="trim"]'), 3000, 'palette for the table');
+        assert.ok(!document.querySelector('dialog .dm-op-tile[data-op="ifc_python"]'), 'no model actions for a table');
+        while (openDialogs().length) await closeTop('palette');
+      } finally { try { await D.require('data/datasets').remove(modelMeta.id); } catch (_e) { /* already gone */ } }
       assert.deepEqual(problems, [], 'accessibility of the action dialogs');
       assert.deepEqual(previewErrors, [], 'previews without errors');
       assert.deepEqual(capture.errors, [], 'no errors');

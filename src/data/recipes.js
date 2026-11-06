@@ -8,7 +8,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   // data/operations-extra registers more operations in data/operations; it is required here so that they exist.
-  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps', 'data/operations-timeseries', 'data/operations-kinds', 'data/models'], (datasets, ops) => {
+  D.define('data/recipes', ['data/datasets', 'data/operations', 'data/operations-extra', 'data/operations-regex', 'data/code-steps', 'data/operations-timeseries', 'data/operations-kinds', 'data/ifc-ops', 'data/models'], (datasets, ops) => {
     const UNDO_LIMIT = 10;
     const UNDO_MAX_BYTES = 80 * 1024 * 1024;
     /**
@@ -153,7 +153,10 @@
       const op = ops.get(opId);
       if (!op.preview) return null;
       const handle = await datasets.ensureOpen(id);
-      return op.preview(ops.makeContext(handle.engine, handle.columns), params);
+      // The preview's context names the dataset too, as apply's does: steps on models look the dataset up.
+      const ctx = ops.makeContext(handle.engine, handle.columns);
+      ctx.datasetId = id;
+      return op.preview(ctx, params);
     }
 
     function canUndo(id) { const s = undoStacks.get(id); return !!(s && s.length); }

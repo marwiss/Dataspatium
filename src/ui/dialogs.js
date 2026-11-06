@@ -21,6 +21,8 @@
         { id: 'regex', ops: ['regex_filter', 'regex_extract', 'regex_flag', 'regex_count', 'regex_split'] },
         { id: 'geo', ops: ['geo_centroid', 'geo_area', 'geo_reproject', 'geo_region', 'geo_repair', 'geo_from_system'] },
         { id: 'derive', ops: ['aggregate', 'join', 'append', 'clusters'] },
+        // Groups for one kind of data (`kinds`) show only for that kind, and first.
+        { id: 'model', ops: ['ifc_apply_table', 'ifc_python'], kinds: ['model'] },
       ];
 
       /** Palette of all operations, grouped. Returns the chosen action id or null. */
@@ -28,7 +30,11 @@
         let chosen = null;
         // What the data calls for comes first; the rest keeps its order.
         const first = await D.require('data/facets').firstGroups(ctx.datasetId).catch(() => []);
-        const groups = first.map((id) => GROUPS.find((g) => g.id === id)).filter(Boolean).concat(GROUPS.filter((g) => !first.includes(g.id)));
+        const meta = ctx.datasetId ? await D.require('data/datasets').get(ctx.datasetId).catch(() => null) : null;
+        const kind = (meta && meta.kind) || 'table';
+        const general = GROUPS.filter((g) => !g.kinds);
+        const groups = GROUPS.filter((g) => g.kinds && g.kinds.includes(kind))
+          .concat(first.map((id) => general.find((g) => g.id === id)).filter(Boolean), general.filter((g) => !first.includes(g.id)));
         const body = h('div', { class: 'dm-stack' }, groups.map((g) => h('div', { class: 'dm-stack-sm' },
           h('h4', { text: t('op.group.' + g.id) }),
           h('div', { class: 'dm-op-grid' }, g.ops.map((id) => h('button', { type: 'button', class: 'dm-op-tile', 'data-op': id, onclick: () => { chosen = id; const dlg = body.closest('dialog'); if (dlg) dlg.querySelector('.dm-dialog-actions dm-button button').click(); } },

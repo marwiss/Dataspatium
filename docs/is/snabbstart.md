@@ -108,9 +108,9 @@ viðbætur eru virkar.
 
 ## Næstu skref
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) um forritaskilin, getuskjalið og
+- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/client-guide.md) um forritaskilin, getuskjalið og
   villukóðana.
 - [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) um gátlistana sem parið er prófað
   með, og [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md)
   um það sem verkefnin tvö samræma.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy) þegar þjónninn á að keyra fyrir aðra.
+- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/is/deploy) þegar þjónninn á að keyra fyrir aðra.

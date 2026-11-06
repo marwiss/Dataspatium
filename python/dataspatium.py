@@ -21,7 +21,8 @@ import sqlite3
 import sys
 
 __all__ = ["dm_list", "dm_read", "dm_read_nodes", "dm_read_edges", "dm_read_properties", "dm_read_quantities", "dm_write", "dm_find", "dm_index", "dm_value_labels", "dm_palette",
-           "theme_dataspatium", "dm_setup", "DataspatiumError"]
+           "theme_dataspatium", "dm_setup", "DataspatiumError", "dm_ifc", "dm_ifc_write", "dm_ifc_elements", "dm_ifc_psets", "dm_ifc_tree", "dm_ifc_validate",
+           "dm_ifc_select", "dm_ifc_set", "dm_ifc_geometry"]
 
 DATA_DIR = "/data"
 OUT_DIR = "/data/out"
@@ -33,7 +34,7 @@ class DataspatiumError(Exception):
     """An error with a message in the app's language."""
 
 
-# ---- user-facing messages in the six UI languages (sv is the fallback) -------------------------
+# ---- user-facing messages in the seven UI languages (sv is the fallback) -------------------------
 
 MESSAGES = {
     "sv": {
@@ -53,6 +54,15 @@ MESSAGES = {
         "step.nofunction": "Koden måste definiera en funktion step(df).",
         "step.notframe": "step(df) måste returnera en pandas DataFrame.",
         "plot.plotly": "Ett plotly-diagram exporteras av appen, inte av Python.",
+        "ifc.notmodel": "Datamängden är ingen IFC-modell (saknar originalfil).",
+        "ifc.nofile": "Modellens originalfil saknas i datamängden.",
+        "ifc.needs": "Hjälparen behöver en modell från dm_ifc().",
+        "ifc.written": "Modellen \"%s\" skickas till appen som ny datamängd.",
+        "ifc.changed": "ändrad",
+        "ifc.default": "Modell",
+        "ifc.step.nofunction": "Koden måste definiera en funktion step(model).",
+        "ifc.step.notmodel": "step(model) måste returnera modellen (eller None).",
+        "ifc.key.missing": "Tabellen saknar nyckelkolumnen \"%s\".",
     },
     "da": {
         "list.empty": "Ingen datasæt er tilgængelige i Python-sessionen endnu. Importér under Hent.",
@@ -71,6 +81,15 @@ MESSAGES = {
         "step.nofunction": "Koden skal definere en funktion step(df).",
         "step.notframe": "step(df) skal returnere en pandas DataFrame.",
         "plot.plotly": "Et plotly-diagram eksporteres af appen, ikke af Python.",
+        "ifc.notmodel": "Datasættet er ingen IFC-model (mangler originalfil).",
+        "ifc.nofile": "Modellens originalfil mangler i datasættet.",
+        "ifc.needs": "Hjælperen skal have en model fra dm_ifc().",
+        "ifc.written": "Modellen \"%s\" sendes til appen som nyt datasæt.",
+        "ifc.changed": "ændret",
+        "ifc.default": "Model",
+        "ifc.step.nofunction": "Koden skal definere en funktion step(model).",
+        "ifc.step.notmodel": "step(model) skal returnere modellen (eller None).",
+        "ifc.key.missing": "Tabellen mangler nøglekolonnen \"%s\".",
     },
     "nb": {
         "list.empty": "Ingen datasett er tilgjengelige i Python-sesjonen ennå. Importer under Hent.",
@@ -89,6 +108,15 @@ MESSAGES = {
         "step.nofunction": "Koden må definere en funksjon step(df).",
         "step.notframe": "step(df) må returnere en pandas DataFrame.",
         "plot.plotly": "Et plotly-diagram eksporteres av appen, ikke av Python.",
+        "ifc.notmodel": "Datasettet er ingen IFC-modell (mangler originalfil).",
+        "ifc.nofile": "Modellens originalfil mangler i datasettet.",
+        "ifc.needs": "Hjelperen trenger en modell fra dm_ifc().",
+        "ifc.written": "Modellen \"%s\" sendes til appen som nytt datasett.",
+        "ifc.changed": "endret",
+        "ifc.default": "Modell",
+        "ifc.step.nofunction": "Koden må definere en funksjon step(model).",
+        "ifc.step.notmodel": "step(model) må returnere modellen (eller None).",
+        "ifc.key.missing": "Tabellen mangler nøkkelkolonnen \"%s\".",
     },
     "nn": {
         "list.empty": "Ingen datasett er tilgjengelege i Python-sesjonen enno. Importer under Hent.",
@@ -107,6 +135,15 @@ MESSAGES = {
         "step.nofunction": "Koden må definere ein funksjon step(df).",
         "step.notframe": "step(df) må returnere ein pandas DataFrame.",
         "plot.plotly": "Eit plotly-diagram blir eksportert av appen, ikkje av Python.",
+        "ifc.notmodel": "Datasettet er ingen IFC-modell (manglar originalfil).",
+        "ifc.nofile": "Originalfila til modellen manglar i datasettet.",
+        "ifc.needs": "Hjelparen treng ein modell frå dm_ifc().",
+        "ifc.written": "Modellen \"%s\" blir send til appen som nytt datasett.",
+        "ifc.changed": "endra",
+        "ifc.default": "Modell",
+        "ifc.step.nofunction": "Koden må definere ein funksjon step(model).",
+        "ifc.step.notmodel": "step(model) må returnere modellen (eller None).",
+        "ifc.key.missing": "Tabellen manglar nøkkelkolonnen \"%s\".",
     },
     "fi": {
         "list.empty": "Python-istunnossa ei ole vielä aineistoja. Tuo aineisto Nouda-tilassa.",
@@ -125,6 +162,15 @@ MESSAGES = {
         "step.nofunction": "Koodin on määriteltävä funktio step(df).",
         "step.notframe": "step(df):n on palautettava pandas DataFrame.",
         "plot.plotly": "Sovellus vie plotly-kaavion, ei Python.",
+        "ifc.notmodel": "Tietoaineisto ei ole IFC-malli (alkuperäinen tiedosto puuttuu).",
+        "ifc.nofile": "Mallin alkuperäinen tiedosto puuttuu tietoaineistosta.",
+        "ifc.needs": "Apufunktio tarvitsee mallin dm_ifc()-kutsusta.",
+        "ifc.written": "Malli \"%s\" lähetetään sovellukseen uutena tietoaineistona.",
+        "ifc.changed": "muutettu",
+        "ifc.default": "Malli",
+        "ifc.step.nofunction": "Koodin on määriteltävä funktio step(model).",
+        "ifc.step.notmodel": "step(model)-funktion on palautettava malli (tai None).",
+        "ifc.key.missing": "Taulukosta puuttuu avainsarake \"%s\".",
     },
     "is": {
         "list.empty": "Engin gagnasöfn eru tiltæk í Python-setunni enn. Flyttu inn undir Sækja.",
@@ -143,6 +189,15 @@ MESSAGES = {
         "step.nofunction": "Kóðinn verður að skilgreina fall step(df).",
         "step.notframe": "step(df) verður að skila pandas DataFrame.",
         "plot.plotly": "Forritið flytur út plotly-myndrit, ekki Python.",
+        "ifc.notmodel": "Gagnasafnið er ekki IFC-líkan (upprunalegu skrána vantar).",
+        "ifc.nofile": "Upprunalegu skrá líkansins vantar í gagnasafnið.",
+        "ifc.needs": "Hjálparfallið þarf líkan frá dm_ifc().",
+        "ifc.written": "Líkanið \"%s\" er sent til forritsins sem nýtt gagnasafn.",
+        "ifc.changed": "breytt",
+        "ifc.default": "Líkan",
+        "ifc.step.nofunction": "Kóðinn þarf að skilgreina fallið step(model).",
+        "ifc.step.notmodel": "step(model) þarf að skila líkaninu (eða None).",
+        "ifc.key.missing": "Töfluna vantar lykildálkinn \"%s\".",
     },
     "en": {
         "list.empty": "No datasets are available in the Python session yet. Import one in Import.",
@@ -161,6 +216,15 @@ MESSAGES = {
         "step.nofunction": "The code must define a function step(df).",
         "step.notframe": "step(df) must return a pandas DataFrame.",
         "plot.plotly": "A plotly chart is exported by the app, not by Python.",
+        "ifc.notmodel": "The dataset is not an IFC model (no original file).",
+        "ifc.nofile": "The model's original file is missing from the dataset.",
+        "ifc.needs": "The helper needs a model from dm_ifc().",
+        "ifc.written": "The model \"%s\" is sent to the app as a new dataset.",
+        "ifc.changed": "changed",
+        "ifc.default": "Model",
+        "ifc.step.nofunction": "The code must define a function step(model).",
+        "ifc.step.notmodel": "step(model) must return the model (or None).",
+        "ifc.key.missing": "The table has no key column \"%s\".",
     },
 }
 
@@ -720,3 +784,408 @@ def dm_read_quantities(x):
 def dm_read_nodes(x):
     """Nodes of a graph dataset with their properties as columns (id, etikett, namn, ...)."""
     return _expand_json(dm_read(x), "egenskaper")
+
+
+# ---- building models with IfcOpenShell (dataset kind "model", 2.4.0) ------------------------------
+#
+# IfcOpenShell (LGPL-3.0) comes as pinned WebAssembly wheels fetched by the app on the first `import ifcopenshell`
+# or dm_ifc() (see src/engines/python/catalog.js). The original IFC file travels inside the mirrored dataset
+# (table _files, kind original), so a model opens straight from the mirror.
+
+IFC_DIR = "/data/ifc"
+_ifc_info = {}  # id(model) -> {"id": dataset id, "name": dataset name, "file": original file name, "path": copy in IFC_DIR}
+_IFC_ATTRIBUTES = {"namn": "Name", "name": "Name", "beskrivning": "Description", "description": "Description",
+                   "objekttyp": "ObjectType", "objecttype": "ObjectType", "tagg": "Tag", "tag": "Tag"}
+
+
+def _ifc_original_from(file):
+    """The original IFC file kept in a Dataspatium SQLite file (table _files, kind original): (name, bytes)."""
+    con = sqlite3.connect(file)
+    try:
+        names = [r[0] for r in con.execute("select name from sqlite_master where type = 'table'")]
+        if "_files" not in names:
+            raise DataspatiumError(_msg("ifc.notmodel"))
+        row = con.execute("select name, bytes from _files where kind = 'original' order by name limit 1").fetchone()
+    finally:
+        con.close()
+    if not row or not row[1]:
+        raise DataspatiumError(_msg("ifc.nofile"))
+    return str(row[0]), bytes(row[1])
+
+
+def _ifc_open_bytes(path, data):
+    import ifcopenshell
+    with open(path, "wb") as fh:
+        fh.write(data)
+    return ifcopenshell.open(path)
+
+
+def dm_ifc(x):
+    """Open a building model (dataset kind "model", an IFC file) with IfcOpenShell.
+
+    Returns an ifcopenshell.file; keep it in a variable and use the IfcOpenShell API (by_type, by_guid, the api module)
+    or the helpers dm_ifc_elements(), dm_ifc_psets(), dm_ifc_tree(), dm_ifc_validate(), dm_ifc_select(), dm_ifc_set(),
+    dm_ifc_geometry() and dm_ifc_write(). The dataset itself is never changed by this; dm_ifc_write() hands a copy to the app.
+    """
+    did = dm_find(x)
+    file = os.path.join(DATA_DIR, did + ".sqlite")
+    if not os.path.exists(file):
+        raise DataspatiumError(_msg("read.notmirrored", x))
+    info = next((r for r in dm_index() if r["id"] == did), {})
+    name, data = _ifc_original_from(file)
+    os.makedirs(IFC_DIR, exist_ok=True)
+    stamp = "".join(ch for ch in str(info.get("updatedAt", "")) if ch.isalnum()) or "0"
+    path = os.path.join(IFC_DIR, "%s-%s.ifc" % (did, stamp))
+    if not os.path.exists(path) or os.path.getsize(path) != len(data):
+        for old in os.listdir(IFC_DIR):
+            if old.startswith(did + "-"):
+                os.remove(os.path.join(IFC_DIR, old))
+        model = _ifc_open_bytes(path, data)
+    else:
+        import ifcopenshell
+        model = ifcopenshell.open(path)
+    _ifc_info[id(model)] = {"id": did, "name": info.get("name") or str(x), "file": name, "path": path}
+    return model
+
+
+def _ifc_of(model):
+    import ifcopenshell
+    if not isinstance(model, ifcopenshell.file):
+        raise DataspatiumError(_msg("ifc.needs"))
+    return model
+
+
+def dm_ifc_write(model, name=None, description=""):
+    """Hand a model to the app as a new model dataset (the original file is kept, the tables are built from it).
+
+    The dataset the model came from is not changed; use the recipe step "Python på modellen" in Bearbeta for a new version.
+    """
+    _ifc_of(model)
+    info = _ifc_info.get(id(model), {})
+    if name is None:
+        name = "%s (%s)" % (info.get("name") or _msg("ifc.default"), _msg("ifc.changed"))
+    os.makedirs(OUT_DIR, exist_ok=True)
+    did = "ds_ifc%s%d" % (_dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%d%H%M%S"), random.randint(1000, 9999))
+    path = os.path.join(OUT_DIR, did + ".ifc")
+    model.write(path)
+    with open(path + ".json", "w", encoding="utf-8") as fh:
+        json.dump({"name": str(name), "description": str(description or ""), "file": info.get("file") or (str(name) + ".ifc"),
+                   "from": info.get("id") or ""}, fh, ensure_ascii=False)
+    print("[dataspatium:write] %s" % path)
+    print(_msg("ifc.written", name), file=sys.stderr)
+    return did
+
+
+def _ifc_text(v):
+    return None if v is None else str(v)
+
+
+def _ifc_material_name(mat):
+    if mat is None:
+        return None
+    for attr in ("Name", "LayerSetName", "ForProfileSet", "ForLayerSet"):
+        v = getattr(mat, attr, None)
+        if isinstance(v, str) and v:
+            return v
+        if v is not None and not isinstance(v, str):
+            return _ifc_material_name(v)
+    return mat.is_a()
+
+
+def _ifc_items(model, ifc_class, elements):
+    if elements is not None:
+        return list(elements)
+    return list(model.by_type(str(ifc_class or "IfcElement")))
+
+
+def dm_ifc_elements(model, ifc_class="IfcElement", elements=None):
+    """Elements straight from the model as a DataFrame with the dataset's column names: guid, typ, namn, beskrivning,
+    objekttyp, tagg, vaning (the storey), typnamn, material and id (the file's #id)."""
+    import pandas as pd
+    import ifcopenshell.util.element as el
+    m = _ifc_of(model)
+    rows = []
+    for e in _ifc_items(m, ifc_class, elements):
+        try:
+            container = el.get_container(e)
+        except Exception:
+            container = None
+        try:
+            typ = el.get_type(e)
+        except Exception:
+            typ = None
+        try:
+            material = _ifc_material_name(el.get_material(e, should_skip_usage=True))
+        except Exception:
+            material = None
+        rows.append([e.GlobalId if hasattr(e, "GlobalId") else None, e.is_a(), _ifc_text(getattr(e, "Name", None)),
+                     _ifc_text(getattr(e, "Description", None)), _ifc_text(getattr(e, "ObjectType", None)), _ifc_text(getattr(e, "Tag", None)),
+                     _ifc_text(getattr(container, "Name", None)) if container is not None else None,
+                     _ifc_text(getattr(typ, "Name", None)) if typ is not None else None, material, e.id()])
+    return pd.DataFrame(rows, columns=["guid", "typ", "namn", "beskrivning", "objekttyp", "tagg", "vaning", "typnamn", "material", "id"])
+
+
+def dm_ifc_psets(model, ifc_class="IfcElement", psets=None, qtos=False, elements=None):
+    """Property sets as one wide table: guid, typ, namn and one column per "Set.Property" (qtos=True: the quantity sets too).
+
+    psets: optional list of set names to keep. Nested values become JSON text.
+    """
+    import pandas as pd
+    import ifcopenshell.util.element as el
+    m = _ifc_of(model)
+    wanted = set(psets) if psets else None
+    rows = []
+    keys = []
+    seen = set()
+    for e in _ifc_items(m, ifc_class, elements):
+        rec = {"guid": getattr(e, "GlobalId", None), "typ": e.is_a(), "namn": _ifc_text(getattr(e, "Name", None))}
+        try:
+            data = el.get_psets(e, psets_only=not qtos)
+        except Exception:
+            data = {}
+        for set_name, props in data.items():
+            if wanted is not None and set_name not in wanted:
+                continue
+            for k, v in props.items():
+                if k == "id":
+                    continue
+                key = "%s.%s" % (set_name, k)
+                if isinstance(v, (list, tuple, dict)):
+                    v = json.dumps(v, ensure_ascii=False, default=str)
+                rec[key] = v
+                if key not in seen:
+                    seen.add(key)
+                    keys.append(key)
+        rows.append(rec)
+    return pd.DataFrame(rows, columns=["guid", "typ", "namn"] + keys)
+
+
+def dm_ifc_tree(model):
+    """The spatial structure as a table: niva (depth), guid, typ, namn, foralder (the parent's guid), element (elements contained)."""
+    import pandas as pd
+    import ifcopenshell.util.element as el
+    m = _ifc_of(model)
+    rows = []
+
+    def walk(obj, depth, parent):
+        try:
+            contained = el.get_contained(obj)
+        except Exception:
+            contained = set()
+        rows.append([depth, getattr(obj, "GlobalId", None), obj.is_a(), _ifc_text(getattr(obj, "Name", None)), parent, len(contained)])
+        try:
+            parts = el.get_parts(obj)
+        except Exception:
+            parts = []
+        for part in sorted(parts, key=lambda p: (str(getattr(p, "Name", "") or ""), p.id())):
+            if part.is_a("IfcSpatialElement") or part.is_a("IfcSpatialStructureElement") or part.is_a("IfcProject"):
+                walk(part, depth + 1, getattr(obj, "GlobalId", None))
+
+    for project in m.by_type("IfcProject"):
+        walk(project, 0, None)
+    return pd.DataFrame(rows, columns=["niva", "guid", "typ", "namn", "foralder", "element"])
+
+
+def dm_ifc_validate(model, express=False):
+    """Check the model against its schema; a table of findings: niva (level), typ, id, guid, attribut, meddelande.
+
+    express=True also runs the schema's rules (slower; the app fetches pytest the first time).
+    """
+    import pandas as pd
+    import ifcopenshell.validate
+    m = _ifc_of(model)
+    logger = ifcopenshell.validate.json_logger()
+    ifcopenshell.validate.validate(m, logger, express_rules=bool(express))
+    rows = []
+    for s in logger.statements:
+        inst = s.get("instance") if isinstance(s, dict) else None
+        rows.append([str(s.get("level", "")) if isinstance(s, dict) else "", inst.is_a() if inst is not None else None,
+                     inst.id() if inst is not None else None, getattr(inst, "GlobalId", None) if inst is not None else None,
+                     _ifc_text(s.get("attribute")) if isinstance(s, dict) else None, str(s.get("message", s)) if isinstance(s, dict) else str(s)])
+    return pd.DataFrame(rows, columns=["niva", "typ", "id", "guid", "attribut", "meddelande"])
+
+
+def dm_ifc_select(model, query):
+    """Elements matched by IfcOpenShell's selector syntax, as dm_ifc_elements() lists them.
+
+    Examples: "IfcWall", "IfcWall, Pset_WallCommon.FireRating=EI60", "IfcElement, material=Betong", "IfcSlab, Name=/Bjälklag.*/".
+    """
+    import ifcopenshell.util.selector as sel
+    m = _ifc_of(model)
+    return dm_ifc_elements(m, elements=sel.filter_elements(m, str(query)))
+
+
+def _ifc_value(v):
+    if _is_na(v):
+        return None
+    if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+        try:
+            v = v.item()
+        except Exception:
+            pass
+    if isinstance(v, bool) or v is None:
+        return v
+    if isinstance(v, int):
+        return int(v)
+    if isinstance(v, float):
+        return float(v)
+    return str(v)
+
+
+def dm_ifc_set(model, df, key="guid"):
+    """Write a table's values into the model and return the number of elements changed.
+
+    Rows are matched on `key` (GlobalId). Columns Name, Description, ObjectType, Tag (or namn, beskrivning, objekttyp,
+    tagg) set the element's attributes; columns named "Set.Property" set properties (the set is created when missing).
+    Empty cells leave the model as it is. Other columns are ignored.
+    """
+    import pandas as pd
+    import ifcopenshell.api.attribute
+    import ifcopenshell.api.pset
+    import ifcopenshell.util.element as el
+    m = _ifc_of(model)
+    if not isinstance(df, pd.DataFrame):
+        raise DataspatiumError(_msg("write.df"))
+    if key not in df.columns:
+        raise DataspatiumError(_msg("ifc.key.missing", key))
+    changed = 0
+    for _, row in df.iterrows():
+        guid = row[key]
+        if not isinstance(guid, str) or not guid:
+            continue
+        try:
+            e = m.by_guid(guid)
+        except Exception:
+            continue
+        attributes = {}
+        sets = {}
+        for c in df.columns:
+            if c == key:
+                continue
+            v = _ifc_value(row[c])
+            if v is None or v == "":
+                continue
+            low = str(c).lower()
+            if low in _IFC_ATTRIBUTES:
+                attributes[_IFC_ATTRIBUTES[low]] = str(v)
+            elif "." in str(c):
+                set_name, prop = str(c).split(".", 1)
+                sets.setdefault(set_name, {})[prop] = v
+        if attributes:
+            ifcopenshell.api.attribute.edit_attributes(m, product=e, attributes=attributes)
+        for set_name, props in sets.items():
+            existing = el.get_psets(e, psets_only=True).get(set_name)
+            pset = m.by_id(existing["id"]) if existing and existing.get("id") else ifcopenshell.api.pset.add_pset(m, product=e, name=set_name)
+            ifcopenshell.api.pset.edit_pset(m, pset=pset, properties=props)
+        if attributes or sets:
+            changed += 1
+    return changed
+
+
+def dm_ifc_geometry(model, ifc_class="IfcElement", elements=None):
+    """Measured on the geometry (OpenCASCADE, metres): guid, typ, namn, volym_m3, yta_m2 (surface), bredd_m, djup_m, hojd_m
+    (the bounding box), hornpunkter; elements without a shape get empty measures. Slow for big models."""
+    import pandas as pd
+    import ifcopenshell.geom
+    import ifcopenshell.util.shape as shape_util
+    m = _ifc_of(model)
+    settings = ifcopenshell.geom.settings()
+    rows = []
+    for e in _ifc_items(m, ifc_class, elements):
+        base = [getattr(e, "GlobalId", None), e.is_a(), _ifc_text(getattr(e, "Name", None))]
+        if getattr(e, "Representation", None) is None:
+            rows.append(base + [None, None, None, None, None, 0])
+            continue
+        try:
+            geometry = ifcopenshell.geom.create_shape(settings, e).geometry
+            verts = shape_util.get_vertices(geometry)
+            lo, hi = shape_util.get_bbox(verts)
+            rows.append(base + [round(float(shape_util.get_volume(geometry)), 4), round(float(shape_util.get_area(geometry)), 4),
+                                round(float(hi[0] - lo[0]), 4), round(float(hi[1] - lo[1]), 4), round(float(hi[2] - lo[2]), 4), int(len(verts))])
+        except Exception:
+            rows.append(base + [None, None, None, None, None, 0])
+    return pd.DataFrame(rows, columns=["guid", "typ", "namn", "volym_m3", "yta_m2", "bredd_m", "djup_m", "hojd_m", "hornpunkter"])
+
+
+def _frame_json(df, limit=None):
+    """A DataFrame as the JSON table the app's tools show: columns with Dataspatium types, rows as plain values."""
+    import pandas as pd
+    total = int(len(df))
+    if limit:
+        df = df.head(int(limit))
+    columns = []
+    types = {}
+    for c in df.columns:
+        s = df[c]
+        if isinstance(s.dtype, pd.CategoricalDtype):
+            s = s.astype(object)
+        t = _type_of(s)
+        types[str(c)] = t
+        columns.append({"name": str(c), "type": t})
+    rows = [[_cell(v, types[str(c)]) for c, v in zip(df.columns, rec)] for rec in df.itertuples(index=False, name=None)]
+    return json.dumps({"columns": columns, "rows": rows, "total": total}, ensure_ascii=False, default=str)
+
+
+def _ifc_tool(x, tool, params_json="{}"):
+    """The model tools of Analysera (JSON in, JSON table out): validate, structure, psets, select, elements, geometry."""
+    p = json.loads(params_json or "{}")
+    model = dm_ifc(x)
+    ifc_class = p.get("ifc_class") or "IfcElement"
+    if tool == "validate":
+        df = dm_ifc_validate(model, express=bool(p.get("express")))
+    elif tool == "structure":
+        df = dm_ifc_tree(model)
+    elif tool == "psets":
+        df = dm_ifc_psets(model, ifc_class, psets=p.get("psets") or None, qtos=bool(p.get("qtos")))
+    elif tool == "select":
+        df = dm_ifc_select(model, p.get("query") or "IfcElement")
+    elif tool == "elements":
+        df = dm_ifc_elements(model, ifc_class)
+    elif tool == "geometry":
+        df = dm_ifc_geometry(model, ifc_class)
+    else:
+        raise DataspatiumError("unknown tool: %s" % tool)
+    return _frame_json(df, limit=p.get("limit"))
+
+
+def _ifc_step_namespace(model):
+    import pandas as pd
+    import ifcopenshell
+    import ifcopenshell.util.element
+    return {"__name__": "__dataspatium_ifc_step__", "pd": pd, "ifcopenshell": ifcopenshell, "model": model,
+            "dm_ifc_elements": dm_ifc_elements, "dm_ifc_psets": dm_ifc_psets, "dm_ifc_tree": dm_ifc_tree, "dm_ifc_validate": dm_ifc_validate,
+            "dm_ifc_select": dm_ifc_select, "dm_ifc_set": dm_ifc_set, "dm_ifc_geometry": dm_ifc_geometry, "dm_read": dm_read, "dm_palette": dm_palette}
+
+
+def _ifc_step(code, in_file, out_file, name=""):
+    """The recipe step "Python på modellen": the code defines step(model) and may change the model; the result is written as IFC.
+
+    Called by the app with the dataset as a SQLite file. Returns counts for the log.
+    """
+    import ifcopenshell
+    file_name, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "step-in.ifc"), data)
+    ns = _ifc_step_namespace(model)
+    exec(compile(str(code), "<steg>", "exec"), ns)
+    fn = ns.get("step")
+    if not callable(fn):
+        raise DataspatiumError(_msg("ifc.step.nofunction"))
+    out = fn(model)
+    if out is None:
+        out = model
+    if not isinstance(out, ifcopenshell.file):
+        raise DataspatiumError(_msg("ifc.step.notmodel"))
+    out.write(out_file)
+    return json.dumps({"elements": len(out.by_type("IfcElement")), "entities": len(list(out)), "file": file_name, "name": name})
+
+
+def _ifc_apply(in_file, table_file, key, out_file):
+    """The recipe step "Skriv tabell till modellen": a table's values into the model with dm_ifc_set(), written as IFC."""
+    file_name, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "apply-in.ifc"), data)
+    df = _read_file(table_file)
+    changed = dm_ifc_set(model, df, key=key or "guid")
+    model.write(out_file)
+    return json.dumps({"changed": changed, "rows": int(len(df)), "file": file_name})

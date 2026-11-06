@@ -48,7 +48,7 @@ rakennusosat tilan, tyypin, prioriteetin, vastuuhenkilön, rakennusosatyypin tai
 SQL-aloituskoodi saa kyselyt liitokselle. *Tallenna kaaviona* tallentaa näkymän väreineen mallikaaviona, jonka koontinäytöt,
 asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
-Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifcgraph.md).
+Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/ifcgraph.md).
 
 ## Taulukot
 
@@ -86,6 +86,46 @@ R:ssä ja Pythonissa `dm_read()` antaa rakennusosat, `dm_read_properties()` omin
 - **Entiteetit**: kuinka monesta kunkin lajin entiteetistä tiedosto koostuu.
 
 Jokaisen tuloksen voi tallentaa aineistona.
+
+## IfcOpenShell sovelluksessa
+
+Versiosta 2.4.0 alkaen sovellus voi lukea, tarkistaa ja muokata IFC-malleja IfcOpenShellillä, samalla kirjastolla, johon Kontroll
+perustuu. Se toimii Pythonissa selaimessa, haetaan ensimmäisellä käyttökerralla (noin 13 Mt, komponenttien käyttöluvan jälkeen) ja
+tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei poistu koneelta.
+
+**Analysoi-tilassa, Määrät-välilehdellä**, IFC-mallilla on viisi työkalua lisää:
+
+- **Validointi** tarkistaa mallin IFC-skeemaansa vasten: attribuutit, tyypit ja viittaukset, valinnaisesti myös skeeman
+  säännöt. Löydökset voidaan tallentaa tietoaineistona.
+- **Tilarakenne** näyttää projektin, tontin, rakennuksen, kerrokset ja tilat puuna, jossa on elementtien määrä osaa kohti.
+- **Ominaisuusjoukot** antaa elementtityypin kaikki ominaisuusjoukot leveänä taulukkona: rivi elementtiä kohti, sarake
+  ominaisuutta kohti (`Joukko.Ominaisuus`), valinnaisesti myös määräjoukot.
+- **IFC-valinta** hakee elementtejä IfcOpenShellin valintakielellä, esimerkiksi `IfcWall, Pset_WallCommon.FireRating=EI60` tai
+  `IfcElement, material=Betoni`.
+- **Geometriamitat** mittaa tilavuuden, pinta-alan ja rajauslaatikon elementtiä kohti geometriasta (OpenCASCADE). Hidas
+  suurille malleille.
+
+**Muokkaa-tilassa** mallilla on kaksi toimintoa kohdassa *Toiminnot* (painike on sekä mallinäkymässä että taulukkonäkymässä),
+ryhmässä *Malli*:
+
+- **Kirjoita taulukko malliin** kirjoittaa taulukon arvot malliin. Rivit yhdistetään GUID:n perusteella; sarakkeet `Name`,
+  `Description`, `ObjectType` ja `Tag` (tai `namn`, `beskrivning`, `objekttyp`, `tagg`) ovat attribuutteja, ja sarakkeet kuten
+  `Pset_WallCommon.FireRating` ovat ominaisuuksia (joukko luodaan, jos se puuttuu). Työtapa: tallenna *Ominaisuusjoukot*
+  tietoaineistona, muokkaa sitä Muokkaa-tilassa ja kirjoita takaisin.
+- **Python mallille** suorittaa funktion `step(model)` IfcOpenShellin API:lla koko mallille.
+
+Molemmat ovat reseptin vaiheita: muutettu malli tulee tietoaineiston uudeksi sisällöksi (alkuperäinen tiedosto vaihdetaan ja
+taulukot rakennetaan uudelleen), vaihe kirjataan lokiin ja voidaan kumota, ja alkuperäinen tiedosto on aina nykyinen versio,
+kun viet mallin tai lähetät sen CDE:hen.
+
+**Pythonissa** (Analysoi-tilan Python-välilehti ja muistikirjan koodisolut) `dm_ifc("nimi")` avaa mallin `ifcopenshell.file`-oliona.
+Apufunktiot `dm_ifc_elements`, `dm_ifc_psets`, `dm_ifc_tree`, `dm_ifc_validate`, `dm_ifc_select` ja `dm_ifc_geometry` antavat
+taulukoita, `dm_ifc_set(model, df)` kirjoittaa taulukon malliin ja `dm_ifc_write(model, "nimi")` lähettää mallin sovellukseen
+uutena tietoaineistona; katso [Python Dataspatiumissa](python.md). Analysoi-tilan ja Pythonin työkalut eivät koskaan muuta
+tietoaineistoa; vain Muokkaa-tilan toiminnot tekevät uuden version.
+
+IfcOpenShell on LGPL-3.0-lisensoitu ja haetaan muuttamattomana kiinnitettyinä wheel-paketteina IfcOpenShellin omasta
+luettelosta, katso [Lisenssit](licenser.md).
 
 ## DXF-piirustukset
 
