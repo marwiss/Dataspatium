@@ -129,8 +129,7 @@ are removed. The folder can be loaded on another computer in the same way as a b
 The manifest has `format: 2` since version 2.0: every dataset in the list has, besides `id`, `name` and `shortName`,
 also `folder` (the folder, such as `Economy/2026`, or empty) and `tags` (a list). Older bundles and backups (without
 `format`) are read as before. Folder and tags are also in the dataset's own file (`_meta`), so they come along
-wherever the file goes, as does `kind` (`table`, `graph`, `document`, `images`, `model`); in 2.0 all datasets are
-tables.
+wherever the file goes, as does `kind` (`table`, `graph`, `document`, `images`, `model`).
 
 The rows in `_log` have a timestamp, action type and details as JSON. The action types are among others `import`, `op`
 (a recipe step with `op`, `params`, `result` and `description`; these rows make up the recipe), `undo`, `snapshot`,

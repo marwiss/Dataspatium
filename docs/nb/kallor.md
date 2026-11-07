@@ -226,9 +226,7 @@ ikke lenkes.
 
 ## WebSocket
 
-Appen har en tilkoblingsmåte for WebSocket (samtykke per formål, JSON-rammer, spørring og svar paret på id). Den
-brukes av kommende kilder som Neo4j (Bolt over WebSocket, planlagt til 2.9) og strømmende API-er; ingen
-forhåndsinnstillinger bruker den ennå.
+Appen har en tilkoblingsmåte for WebSocket (samtykke per formål, JSON-rammer, spørring og svar paret på id). Den er tenkt for strømmende API-er; ingen forhåndsinnstillinger bruker den ennå. Neo4j går over Bolt med sin egen driver.
 
 ## Begrensninger
 

@@ -90,7 +90,7 @@ Varje resultat kan sparas som datamängd.
 
 ## IfcOpenShell i appen
 
-Sedan 2.4.0 kan appen läsa, kontrollera och ändra IFC-modeller med IfcOpenShell, samma bibliotek som Kontroll bygger på. Det
+Appen kan läsa, kontrollera och ändra IFC-modeller med IfcOpenShell, samma bibliotek som Kontroll bygger på. Det
 körs i Python i webbläsaren, hämtas första gången det används (cirka 13 MB, efter ditt samtycke för komponenter) och sparas
 sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
 
@@ -104,7 +104,7 @@ sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
 - **IFC-urval** hämtar element med IfcOpenShells urvalsspråk, till exempel `IfcWall, Pset_WallCommon.FireRating=EI60` eller
   `IfcElement, material=Betong`.
 - **Geometrimått** mäter volym, yta och omslutande låda per element på geometrin (OpenCASCADE). Långsamt för stora modeller.
-- **IDS-kontroll** (2.5.0) kontrollerar modellen mot en IDS-fil (buildingSMART Information Delivery Specification) med
+- **IDS-kontroll** kontrollerar modellen mot en IDS-fil (buildingSMART Information Delivery Specification) med
   ifctester, IfcOpenShells egen kontrollant: välj .ids-filen, så får du en rad per krav och element med godkänd, underkänd eller
   ej tillämpligt och orsaken, samt en sammanräkning. Filen stannar i webbläsaren. ifctester följer med appen utan sin webbapp,
   så inget hämtas utöver Python självt.

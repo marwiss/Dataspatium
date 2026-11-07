@@ -223,8 +223,7 @@ er ekki hægt að tengja.
 ## WebSocket
 
 Forritið hefur tengiaðferð fyrir WebSocket (samþykki eftir tilgangi, JSON-rammar, fyrirspurn og svar pöruð á
-auðkenni). Hana nota komandi uppsprettur eins og Neo4j (Bolt um WebSocket, áætlað í 2.9) og streymandi
-vefþjónustur; engar forstillingar nota hana enn.
+auðkenni). Hún er ætluð fyrir streymandi vefþjónustur; engar forstillingar nota hana enn. Neo4j fer um Bolt með eigin rekli.
 
 ## Takmarkanir
 

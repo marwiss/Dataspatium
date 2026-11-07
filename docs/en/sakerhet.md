@@ -61,7 +61,7 @@ no update check is made without your action. Kontroll's half (what the server st
 - From file:// in Chromium every locally opened HTML file shares storage. Secrets are encrypted, but a sensitive workspace
   should run from a local server (`python -m http.server`) or be mirrored to a portable folder.
 - Chromium applies the server's `form-action` to the redirect after the sign-in too; the server must allow the app's
-  callback address (Kontroll does from 2.2.0).
+  callback address (Kontroll does).
 
 ## Reporting a vulnerability
 

@@ -227,8 +227,7 @@ feature; there you import the file anew. Formats read through R (SPSS, Stata, SA
 ## WebSocket
 
 The app has a connection method for WebSocket (consent per purpose, JSON frames, requests and replies paired by
-id). It is used by coming sources such as Neo4j (Bolt over WebSocket, planned for 2.9) and streaming APIs; no
-presets use it yet.
+id). It is meant for streaming APIs; no presets use it yet. Neo4j goes over Bolt with its own driver.
 
 ## Limitations
 

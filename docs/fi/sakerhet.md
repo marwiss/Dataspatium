@@ -62,7 +62,7 @@ mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Kontrollin puolis
 - Chromiumissa file://-alkuperästä kaikki paikallisesti avatut HTML-tiedostot jakavat tallennustilan. Salaisuudet on salattu,
   mutta arkaluonteinen työtila kannattaa ajaa paikalliselta palvelimelta (`python -m http.server`) tai peilata siirrettävään kansioon.
 - Chromium soveltaa palvelimen `form-action`-sääntöä myös kirjautumisen jälkeiseen uudelleenohjaukseen; palvelimen on sallittava
-  sovelluksen paluuosoite (Kontroll sallii versiosta 2.2.0).
+  sovelluksen paluuosoite (Kontroll sallii sen).
 
 ## Haavoittuvuuden ilmoittaminen
 

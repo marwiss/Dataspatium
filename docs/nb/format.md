@@ -127,7 +127,7 @@ måte som en pakke.
 Manifestet har `format: 2` siden versjon 2.0: hvert datasett i listen har i tillegg til `id`, `name` og `shortName`
 også `folder` (mappen, som `Økonomi/2026`, eller tom) og `tags` (en liste). Eldre pakker og sikkerhetskopier (uten
 `format`) leses som før. Mappe og tagger ligger også i datasettets egen fil (`_meta`), så de følger med uansett hvor
-filen havner, i likhet med `kind` (`table`, `graph`, `document`, `images`, `model`); i 2.0 er alle datasett tabeller.
+filen havner, i likhet med `kind` (`table`, `graph`, `document`, `images`, `model`).
 
 Radene i `_log` har tidsstempel, handlingstype og detaljer som JSON. Handlingstypene er blant andre `import`, `op` (et trinn
 i oppskriften med `op`, `params`, `result` og `description`; det er disse radene som utgjør oppskriften), `undo`,

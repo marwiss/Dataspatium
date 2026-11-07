@@ -91,7 +91,7 @@ Every result can be saved as a dataset.
 
 ## IfcOpenShell in the app
 
-Since 2.4.0 the app reads, checks and changes IFC models with IfcOpenShell, the library Kontroll is built on. It runs in Python
+The app reads, checks and changes IFC models with IfcOpenShell, the library Kontroll is built on. It runs in Python
 in the browser, is fetched the first time it is used (about 13 MB, after your consent for components) and is then kept in the
 browser. Nothing is sent anywhere; the model does not leave the computer.
 
@@ -106,7 +106,7 @@ browser. Nothing is sent anywhere; the model does not leave the computer.
   or `IfcElement, material=Concrete`.
 - **Geometry measures** measures volume, surface and bounding box per element on the geometry (OpenCASCADE). Slow for big
   models.
-- **IDS check** (2.5.0) checks the model against an IDS file (buildingSMART Information Delivery Specification) with
+- **IDS check** checks the model against an IDS file (buildingSMART Information Delivery Specification) with
   ifctester, IfcOpenShell's own checker: choose the .ids file and you get a row per requirement and element with passed, failed
   or not applicable and the reason, plus a tally. The file stays in the browser. ifctester travels with the app without its web
   app, so nothing is fetched beyond Python itself.

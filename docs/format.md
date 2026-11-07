@@ -128,8 +128,7 @@ för borttagna datamängder tas bort. Mappen kan läsas in på en annan dator p�
 Manifestet har `format: 2` sedan version 2.0: varje datamängd i listan har förutom `id`, `name` och `shortName`
 även `folder` (mappen, som `Ekonomi/2026`, eller tom) och `tags` (en lista). Äldre paket och säkerhetskopior (utan
 `format`) läses som förut. Mapp och taggar ligger också i datamängdens egen fil (`_meta`), så de följer med var
-filen än hamnar, liksom `kind` (`table`, `graph`, `document`, `images`, `model`); i 2.0 är alla datamängder
-tabeller.
+filen än hamnar, liksom `kind` (`table`, `graph`, `document`, `images`, `model`).
 
 Raderna i `_log` har tidsstämpel, åtgärdstyp och detaljer som JSON. Åtgärdstyperna är bland andra `import`, `op`
 (ett receptsteg med `op`, `params`, `result` och `description`; det är dessa rader som utgör receptet), `undo`,

@@ -61,7 +61,7 @@ uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Kontroll (hvað þj
 - Frá file:// í Chromium deila allar HTML-skrár sem opnaðar eru á tölvunni geymslu. Leyndarmál eru dulrituð, en viðkvæmt
   vinnusvæði ætti að keyra frá staðbundnum þjóni (`python -m http.server`) eða speglast í færanlega möppu.
 - Chromium beitir `form-action` þjónsins einnig á áframsendinguna eftir innskráningu; þjónninn þarf að leyfa afturhvarfsvistfang
-  forritsins (Kontroll gerir það frá 2.2.0).
+  forritsins (Kontroll gerir það).
 
 ## Að tilkynna veikleika
 

@@ -60,7 +60,7 @@ uppdateringskontroll görs utan din åtgärd. Kontrolls halva (vad servern lagra
 - Från file:// i Chromium delar alla lokalt öppnade HTML-filer lagring. Hemligheter är krypterade, men en känslig arbetsyta
   bör köras från en lokal server (`python -m http.server`) eller speglas till en portabel mapp.
 - Chromium tillämpar serverns `form-action` även på omdirigeringen efter inloggningen; servern måste tillåta appens
-  återhoppsadress (Kontroll gör det från 2.2.0).
+  återhoppsadress (Kontroll gör det).
 
 ## Rapportera en sårbarhet
 

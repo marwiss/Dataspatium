@@ -231,8 +231,7 @@ muotoja (SPSS, Stata, SAS, PX, RDS, Parquet) ei voi linkittää.
 ## WebSocket
 
 Sovelluksessa on WebSocket-yhteystapa (suostumus käyttötarkoituksittain, JSON-kehykset, kysely ja vastaus
-pareittain id:n mukaan). Sitä käyttävät tulevat lähteet kuten Neo4j (Bolt WebSocketin yli, suunniteltu versioon
-2.9) ja suoratoistorajapinnat; mikään esiasetus ei käytä sitä vielä.
+pareittain id:n mukaan). Se on tarkoitettu suoratoistorajapinnoille; mikään esiasetus ei käytä sitä vielä. Neo4j kulkee Boltin yli omalla ajurillaan.
 
 ## Rajoitukset
 

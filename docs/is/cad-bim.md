@@ -88,7 +88,7 @@ Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
 ## IfcOpenShell í forritinu
 
-Frá og með 2.4.0 getur forritið lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Kontroll byggir á. Það
+Forritið getur lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Kontroll byggir á. Það
 keyrir í Python í vafranum, er sótt í fyrsta sinn sem það er notað (um 13 MB, eftir samþykki þitt fyrir íhluti) og síðan vistað í
 vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
 
@@ -102,7 +102,7 @@ vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
 - **IFC-val** sækir einingar með valmáli IfcOpenShell, til dæmis `IfcWall, Pset_WallCommon.FireRating=EI60` eða
   `IfcElement, material=Steypa`.
 - **Rúmfræðimál** mælir rúmmál, yfirborð og umlykjandi kassa á einingu á rúmfræðinni (OpenCASCADE). Hægt fyrir stór líkön.
-- **IDS-prófun** (2.5.0) prófar líkanið gegn IDS-skrá (buildingSMART Information Delivery Specification) með ifctester,
+- **IDS-prófun** prófar líkanið gegn IDS-skrá (buildingSMART Information Delivery Specification) með ifctester,
   eigin prófara IfcOpenShell: veldu .ids-skrána og þú færð eina röð á kröfu og einingu með stóðst, féll eða á ekki við og
   ástæðunni, auk samantektar. Skráin verður í vafranum. ifctester fylgir forritinu án vefforrits síns, svo ekkert er sótt umfram
   Python sjálft.

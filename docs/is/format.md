@@ -127,7 +127,7 @@ gagnasafna fjarlægðar. Möppunni má hlaða inn á annarri tölvu á sama hát
 Skráarlistinn hefur `format: 2` síðan útgáfu 2.0: hvert gagnasafn í listanum hefur auk `id`, `name` og `shortName`
 einnig `folder` (möppuna, eins og `Fjármál/2026`, eða tómt) og `tags` (lista). Eldri pakkar og afrit (án `format`)
 eru lesin eins og áður. Mappa og merki eru líka í eigin skrá gagnasafnsins (`_meta`), svo þau fylgja hvert sem skráin
-fer, eins og `kind` (`table`, `graph`, `document`, `images`, `model`); í 2.0 eru öll gagnasöfn töflur.
+fer, eins og `kind` (`table`, `graph`, `document`, `images`, `model`).
 
 Raðirnar í `_log` hafa tímastimpil, gerð aðgerðar og nánari upplýsingar sem JSON. Aðgerðagerðirnar eru meðal annars
 `import`, `op` (skref í uppskrift með `op`, `params`, `result` og `description`; það eru þessar raðir sem mynda

@@ -91,7 +91,7 @@ Jokaisen tuloksen voi tallentaa aineistona.
 
 ## IfcOpenShell sovelluksessa
 
-Versiosta 2.4.0 alkaen sovellus voi lukea, tarkistaa ja muokata IFC-malleja IfcOpenShellillä, samalla kirjastolla, johon Kontroll
+Sovellus voi lukea, tarkistaa ja muokata IFC-malleja IfcOpenShellillä, samalla kirjastolla, johon Kontroll
 perustuu. Se toimii Pythonissa selaimessa, haetaan ensimmäisellä käyttökerralla (noin 13 Mt, komponenttien käyttöluvan jälkeen) ja
 tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei poistu koneelta.
 
@@ -106,7 +106,7 @@ tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei pois
   `IfcElement, material=Betoni`.
 - **Geometriamitat** mittaa tilavuuden, pinta-alan ja rajauslaatikon elementtiä kohti geometriasta (OpenCASCADE). Hidas
   suurille malleille.
-- **IDS-tarkistus** (2.5.0) tarkistaa mallin IDS-tiedostoa (buildingSMART Information Delivery Specification) vasten
+- **IDS-tarkistus** tarkistaa mallin IDS-tiedostoa (buildingSMART Information Delivery Specification) vasten
   ifctesterillä, IfcOpenShellin omalla tarkistimella: valitse .ids-tiedosto, niin saat rivin vaatimusta ja elementtiä kohti,
   tilana hyväksytty, hylätty tai ei sovellettavissa, sekä syyn ja yhteenvedon. Tiedosto pysyy selaimessa. ifctester kulkee
   sovelluksen mukana ilman verkkosovellustaan, joten mitään ei haeta Pythonin itsensä lisäksi.

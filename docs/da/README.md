@@ -158,7 +158,7 @@ serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-b
 
 Appen taler BCF API 3.0 og 2.1, så den også forbinder til servere, der kun har 2.1, og den tegner og forespørger serverens IFC-graf direkte fra Hent.
 
-Dataspatium 2.7.0 fungerer med Kontroll 2.7.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
+Dataspatium 2.0.0 fungerer med Kontroll 2.0.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
 [snabbstart.md](snabbstart.md) tager parret fra ingenting til en sag på tyve minutter.
 
 ## Lær mere

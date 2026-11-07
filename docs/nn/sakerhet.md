@@ -60,7 +60,7 @@ oppdateringskontroll blir gjord utan di handling. Kontrolls halvdel (kva tenaren
 - Frå file:// i Chromium deler alle lokalt opna HTML-filer lagring. Løyndomar er krypterte, men eit sensitivt arbeidsområde bør
   køyrast frå ein lokal tenar (`python -m http.server`) eller speglast til ei portabel mappe.
 - Chromium bruker `form-action` frå tenaren òg på omdirigeringa etter innlogginga; tenaren må tillate tilbakekallsadressa til
-  appen (Kontroll gjer det frå 2.2.0).
+  appen (Kontroll gjer det).
 
 ## Rapporter ei sårbarheit
 

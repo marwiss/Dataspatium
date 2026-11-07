@@ -220,9 +220,7 @@ där importerar du filen på nytt. Format som läses via R (SPSS, Stata, SAS, PX
 
 ## WebSocket
 
-Appen har ett anslutningssätt för WebSocket (samtycke per ändamål, JSON-ramar, fråga och svar parade på id). Det
-används av kommande källor som Neo4j (Bolt över WebSocket, planerat till 2.9) och strömmande API:er; inga
-förinställningar använder det ännu.
+Appen har ett anslutningssätt för WebSocket (samtycke per ändamål, JSON-ramar, fråga och svar parade på id). Det är tänkt för strömmande API:er; inga förinställningar använder det ännu. Neo4j går över Bolt med sin egen drivrutin.
 
 ## Begränsningar
 

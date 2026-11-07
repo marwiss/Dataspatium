@@ -60,7 +60,7 @@ oppdateringskontroll gjøres uten din handling. Kontrolls halvdel (hva serveren 
 - Fra file:// i Chromium deler alle lokalt åpnede HTML-filer lagring. Hemmeligheter er kryptert, men et sensitivt arbeidsområde
   bør kjøres fra en lokal server (`python -m http.server`) eller speiles til en portabel mappe.
 - Chromium anvender serverens `form-action` også på omdirigeringen etter innloggingen; serveren må tillate appens
-  tilbakekallsadresse (Kontroll gjør det fra 2.2.0).
+  tilbakekallsadresse (Kontroll gjør det).
 
 ## Rapporter en sårbarhet
 

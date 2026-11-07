@@ -163,7 +163,7 @@ myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin 
 
 Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös palvelimiin, joilla on vain 2.1, ja se piirtää palvelimen IFC-verkon ja tekee siihen kyselyjä suoraan kohdasta Nouda.
 
-Dataspatium 2.7.0 toimii Kontroll 2.7.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
+Dataspatium 2.0.0 toimii Kontroll 2.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
 [snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
 
 ## Lue lisää

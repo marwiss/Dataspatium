@@ -165,7 +165,7 @@ serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](
 
 Appen talar BCF API 3.0 och 2.1, så den ansluter också till servrar som bara har 2.1, och den ritar och frågar serverns IFC-graf direkt från Inhämta.
 
-Dataspatium 2.7.0 fungerar med Kontroll 2.7.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
+Dataspatium 2.0.0 fungerar med Kontroll 2.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
 [snabbstart.md](docs/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
 
 ## Lär dig mer
