@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * OpenCDE servers as a source: buildingSMART's Foundation API 1.0 (discovery, OAuth2 authorization code with PKCE),
- * BCF API 3.0 (projects, topics, comments, viewpoints with their components, events) and Documents API 1.0 (the
- * user picks documents on the server's own page; the files are then downloaded and imported). The connector
+ * BCF API 3.0 or 2.1 (projects, topics, comments, viewpoints with their components, events) and Documents API 1.0 (the
+ * user picks documents on the server's own page; the files are then downloaded and imported). A connector speaks the BCF version in
+ * family.bcfVersion, the newest the server offers unless the user chose; a server of 2.1 alone has neither the Foundation API nor the
+ * Documents API, so discovery does without them and the views leave out what needs them. The connector
  * (family {type: 'opencde'}) keeps the server address and the OAuth2 client id the server's administrator issued;
  * tokens live in api/secrets for the session. The family joins the "Lägg till databaskälla" dialog and gets its own
  * browser in Inhämta (ui/api/opencde-view). Signing in happens in a popup when the app is served over http(s);
@@ -16,28 +18,65 @@
     const t = (k, p) => D.t(k, p);
     const SCOPES = 'profile bcf documents';
     const CALLBACK_PAGE = 'oauth-callback.html';
+    /** The versions of the BCF API this source speaks, the newest first. */
+    const BCF_VERSIONS = ['3.0', '2.1'];
     const trimUrl = (u) => String(u || '').trim().replace(/\/+$/, '');
     const hostOf = (url) => { try { return new URL(url).host || String(url); } catch (_e) { return String(url); } };
 
     /** The family entry for the dialog: address and client id; the token comes from signing in. */
     const FAMILY = {
       id: 'opencde', name: 'OpenCDE (BCF, Documents)', docs: 'https://github.com/buildingSMART/foundation-API',
-      fields: [{ name: 'baseUrl', type: 'url', required: true, placeholder: 'https://cde.example.org' }, { name: 'clientId', type: 'text', required: true }, { name: 'clientSecret', type: 'secret' }],
+      fields: [{ name: 'baseUrl', type: 'url', required: true, placeholder: 'https://cde.example.org' }, { name: 'clientId', type: 'text', required: true }, { name: 'clientSecret', type: 'secret' },
+        { name: 'bcfVersion', type: 'select', advanced: true, options: [{ value: 'auto', labelKey: 'families.bcfVersion.auto' }].concat(BCF_VERSIONS.map((v) => ({ value: v, label: 'BCF API ' + v }))) }],
       auth: (v) => ({ type: 'oauth2_pkce', clientId: String(v.clientId || '').trim(), scope: SCOPES }),
       secrets: (v) => (v.clientSecret ? { clientSecret: v.clientSecret } : null),
       idHint: (v) => hostOf(v.baseUrl),
       endpoints: () => [],
-      family: (v) => ({ type: 'opencde', clientId: String(v.clientId || '').trim() }),
+      family: (v) => ({ type: 'opencde', clientId: String(v.clientId || '').trim(), bcfVersion: BCF_VERSIONS.includes(v.bcfVersion) ? v.bcfVersion : '' }),
       /** The dialog asks the server where to sign in, so that the connector can do so later; a failure is shown there. */
       async discover(v, connector) {
-        const found = await discover(v.baseUrl);
-        Object.assign(connector.auth, { authUrl: found.authUrl, tokenUrl: found.tokenUrl, revocationUrl: found.revocationUrl });
+        learn(connector, await discover(v.baseUrl, { bcfVersion: v.bcfVersion }));
         return [];
       },
     };
     if (!databases.FAMILIES.some((f) => f.id === 'opencde')) databases.FAMILIES.push(FAMILY);
     /** True when a connector is an OpenCDE source. */
     const isOpenCde = (connector) => !!(connector && connector.family && connector.family.type === 'opencde');
+    /** The version of the BCF API a connector speaks. One saved before there was a choice speaks 3.0, as does one still to learn what the server offers. @param {any} connector */
+    function bcfVersion(connector) {
+      const chosen = connector && connector.family && connector.family.bcfVersion;
+      return BCF_VERSIONS.includes(chosen) ? chosen : '3.0';
+    }
+    /** Where a connector's version of the BCF API lives: the server's own address for it when it named one. @param {any} connector */
+    function bcfBase(connector) {
+      const version = bcfVersion(connector);
+      const bases = (connector && connector.family && connector.family.bcfBases) || {};
+      return bases[version] || `/bcf/${version}`;
+    }
+    /** Whether the server has the Documents API. A connector that has not been told otherwise is assumed to. @param {any} connector */
+    const hasDocuments = (connector) => !(connector && connector.family && connector.family.documents === false);
+    /**
+     * The versions of the BCF API to choose between on a connector: what discovery found, or what the capabilities say for a source saved
+     * before there was a choice. @param {any} connector @param {any} [caps]
+     */
+    function bcfVersionsOf(connector, caps) {
+      const known = (connector && connector.family && connector.family.bcfVersions) || (caps && caps.present && caps.bcfVersions) || [bcfVersion(connector)];
+      return BCF_VERSIONS.filter((v) => known.includes(v));
+    }
+    /** Keep what discovery found on the connector. @param {any} connector @param {any} found the answer of `discover` */
+    function learn(connector, found) {
+      Object.assign(connector.auth, { authUrl: found.authUrl, tokenUrl: found.tokenUrl, revocationUrl: found.revocationUrl });
+      Object.assign(connector.family, { bcfVersion: found.bcfVersion || '', bcfVersions: found.bcfVersions, bcfBases: found.bcfBases, documents: !!found.apis.documents });
+      // OAuth2 makes an unknown scope an error and no scope no error. The names are the Foundation API's, so a server without it gets none.
+      if (!found.foundation) connector.auth.scope = '';
+    }
+    /** Speak another version of the BCF API on this connector. @param {any} connector @param {string} version */
+    async function setBcfVersion(connector, version) {
+      if (!BCF_VERSIONS.includes(version)) throw new Error(t('opencde.err.bcf.version', { host: hostOf(connector.baseUrl), version, offered: BCF_VERSIONS.join(', ') }));
+      connector.family.bcfVersion = version;
+      if (connector.id) await connectors.save(connector);
+      return connector;
+    }
 
     // ---------------------------------------------------------------------------- PKCE helpers
     const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -59,16 +98,60 @@
       if (!res.ok) throw http.httpError(res, hostOf(url));
       try { return JSON.parse(res.text); } catch (_e) { throw new http.ApiError(t('api.err.json', { text: String(res.text || '').slice(0, 120) }), { kind: 'parse', url }); }
     }
-    /** Foundation API: the APIs the server offers and where to sign in. */
-    async function discover(baseUrl) {
+    /**
+     * The path of an API under a connector's address, from the `api_base_url` the server names; null when that is where it would be anyway.
+     * The same machine keeps the address the user gave, since a server behind a proxy or a test stack knows itself by another name; another
+     * machine is taken at its word, as the specification says. @param {any} entry @param {string} base @param {string} usual
+     */
+    function basePath(entry, base, usual) {
+      if (!entry || !entry.api_base_url) return null;
+      const machine = (host) => (host === '127.0.0.1' || host === '[::1]' ? 'localhost' : host);
+      try {
+        const given = new URL(entry.api_base_url, base + '/');
+        const mine = new URL(base);
+        const path = given.pathname.replace(/\/+$/, '');
+        if (machine(given.hostname) !== machine(mine.hostname)) return given.href.replace(/\/+$/, '');
+        const prefix = mine.pathname.replace(/\/+$/, '');
+        if (prefix && !path.startsWith(prefix + '/')) return mine.origin + path;
+        const own = path.slice(prefix.length);
+        return own === usual ? null : own;
+      } catch (_e) { return null; }
+    }
+    /**
+     * The APIs the server offers and where to sign in: from the Foundation API, or on a server of BCF API 2.1 alone from what that version
+     * has in its place. `apis` has the newest version of each API, `bcfVersions` the versions of the BCF API both sides speak, `bcfVersion`
+     * the one to speak (`options.bcfVersion` if it names one, otherwise the newest), and `bcfBases` where a version lives when the server
+     * says it is somewhere else than usual.
+     * @param {string} baseUrl @param {{bcfVersion?: string}} [options]
+     */
+    async function discover(baseUrl, options = {}) {
       const base = trimUrl(baseUrl);
       await consent.require('opencde', { host: hostOf(base) });
-      const [versions, auth] = await Promise.all([getJson(base + '/foundation/versions'), getJson(base + '/foundation/1.0/auth')]);
+      let foundation = true;
+      let versions = null;
+      try { versions = await getJson(base + '/foundation/versions'); } catch (first) {
+        // A server of 2.1 alone answers 404, or nothing the browser may read if only its APIs have CORS headers. The first error says more.
+        foundation = false;
+        try { versions = await getJson(base + '/bcf/versions'); } catch (_second) { throw first; }
+      }
+      const entries = (Array.isArray(versions) ? versions : (versions && versions.versions) || []).map((v) => Object.assign({ api_id: 'bcf' }, v));
       const apis = {};
-      for (const v of (versions && versions.versions) || []) apis[v.api_id] = v.version_id;
+      for (const v of entries) if (!(v.api_id in apis)) apis[v.api_id] = v.version_id;
       if (!apis.bcf && !apis.documents) throw new Error(t('opencde.err.not.opencde', { host: hostOf(base) }));
+      const bcfEntries = entries.filter((v) => v.api_id === 'bcf');
+      const bcfVersions = BCF_VERSIONS.filter((id) => bcfEntries.some((v) => v.version_id === id));
+      if (bcfEntries.length && !bcfVersions.length) throw new Error(t('opencde.err.bcf.unsupported', { host: hostOf(base), offered: bcfEntries.map((v) => v.version_id).join(', '), ours: BCF_VERSIONS.join(', ') }));
+      if (bcfVersions.length) apis.bcf = bcfVersions[0];
+      const wanted = options.bcfVersion && options.bcfVersion !== 'auto' ? options.bcfVersion : '';
+      if (wanted && !bcfVersions.includes(wanted)) throw new Error(t('opencde.err.bcf.version', { host: hostOf(base), version: wanted, offered: bcfVersions.join(', ') || '–' }));
+      const chosen = wanted || bcfVersions[0] || null;
+      const bcfBases = {};
+      for (const id of bcfVersions) { const path = basePath(bcfEntries.find((v) => v.version_id === id), base, `/bcf/${id}`); if (path) bcfBases[id] = path; }
+      // A client of 2.1 reads what 2.1 says about signing in: its registration address is another, and it promises nothing about PKCE.
+      const authBase = bcfBases['2.1'] && !/^[a-z][a-z0-9+.-]*:/i.test(bcfBases['2.1']) ? base + bcfBases['2.1'] : (bcfBases['2.1'] || `${base}/bcf/2.1`);
+      const auth = await getJson(chosen === '2.1' || !foundation ? authBase + '/auth' : base + '/foundation/1.0/auth');
       if (!auth || !auth.oauth2_auth_url || !auth.oauth2_token_url) throw new Error(t('opencde.err.no.oauth'));
-      return { apis, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || '', registrationUrl: auth.oauth2_dynamic_client_reg_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
+      return { apis, foundation, bcfVersions, bcfVersion: chosen, bcfBases, authUrl: auth.oauth2_auth_url, tokenUrl: auth.oauth2_token_url, revocationUrl: auth.oauth2_revocation_url || '', registrationUrl: auth.oauth2_dynamic_client_reg_url || null, pkceRequired: auth.oauth2_pkce_required !== false };
     }
 
     // ---------------------------------------------------------------------------- signing in
@@ -76,8 +159,7 @@
     async function ensureAuthUrls(connector) {
       const auth = connector.auth || (connector.auth = { type: 'oauth2_pkce' });
       if (auth.authUrl && auth.tokenUrl) return connector;
-      const found = await discover(connector.baseUrl);
-      Object.assign(auth, { authUrl: found.authUrl, tokenUrl: found.tokenUrl, revocationUrl: found.revocationUrl });
+      learn(connector, await discover(connector.baseUrl, { bcfVersion: connector.family && connector.family.bcfVersion }));
       if (connector.id) { try { await connectors.save(connector); } catch (err) { D.log('opencde', 'could not keep the addresses', err); } }
       return connector;
     }
@@ -172,8 +254,8 @@
       if (!redirect) throw new Error(t('opencde.err.file'));
       const v = verifier(); const state = randomState();
       const url = new URL(auth.authUrl);
-      const params = { response_type: 'code', client_id: auth.clientId, redirect_uri: redirect, scope: auth.scope || SCOPES, state, code_challenge: await challenge(v), code_challenge_method: 'S256' };
-      for (const [k, val] of Object.entries(params)) url.searchParams.set(k, val);
+      const params = { response_type: 'code', client_id: auth.clientId, redirect_uri: redirect, scope: auth.scope === '' ? '' : (auth.scope || SCOPES), state, code_challenge: await challenge(v), code_challenge_method: 'S256' };
+      for (const [k, val] of Object.entries(params)) if (val) url.searchParams.set(k, val);
       const callback = await (options.popup || popupFlow)(withLang(connector, url.href));
       const code = parseCallback(callback, state);
       return tokenRequest(connector, { grant_type: 'authorization_code', code, code_verifier: v, redirect_uri: redirect });
@@ -184,8 +266,8 @@
       const auth = connector.auth || {};
       const v = verifier(); const state = randomState();
       const url = new URL(auth.authUrl);
-      const params = { response_type: 'code', client_id: auth.clientId, redirect_uri: redirect, scope: auth.scope || SCOPES, state, code_challenge: await challenge(v), code_challenge_method: 'S256' };
-      for (const [k, val] of Object.entries(params)) url.searchParams.set(k, val);
+      const params = { response_type: 'code', client_id: auth.clientId, redirect_uri: redirect, scope: auth.scope === '' ? '' : (auth.scope || SCOPES), state, code_challenge: await challenge(v), code_challenge_method: 'S256' };
+      for (const [k, val] of Object.entries(params)) if (val) url.searchParams.set(k, val);
       return { url: url.href, state, verifier: v, redirect };
     }
     async function manualFinish(connector, started, callbackUrl) {
@@ -235,7 +317,7 @@
         const res = await send(connector, { url: trimUrl(connector.baseUrl) + '/.well-known/kontroll', method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
         if (res.ok) {
           const data = JSON.parse(res.text || '{}') || {};
-          caps = { present: true, server: data.server || null, apis: data.apis || {}, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
+          caps = { present: true, server: data.server || null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
         }
       } catch (err) { D.log('opencde', 'capabilities', err); }
       capsCache.set(key, { at: Date.now(), caps });
@@ -308,7 +390,7 @@
       const text = (res.text || '').trim();
       return text ? JSON.parse(text) : null;
     }
-    const bcf = (connector, path, options) => api(connector, '/bcf/3.0' + path, options);
+    const bcf = (connector, path, options) => api(connector, bcfBase(connector) + path, options);
     /** A file or picture from the server, with its type. @returns {Promise<{buffer: ArrayBuffer, contentType: string}>} */
     async function binary(connector, path, accept) {
       const token = await ensureToken(connector);
@@ -320,10 +402,26 @@
     const encode = encodeURIComponent;
     function odata(params) { const q = new URLSearchParams(); for (const [k, v] of Object.entries(params || {})) if (v !== undefined && v !== null && v !== '') q.set(k, String(v)); const s = q.toString(); return s ? '?' + s : ''; }
 
-    const currentUser = (connector) => api(connector, '/foundation/1.0/current-user');
+    /** 3.0 leaves the signed-in user to the Foundation API; 2.1 has a service of its own. */
+    const currentUser = (connector) => (bcfVersion(connector) === '2.1' ? bcf(connector, '/current-user') : api(connector, '/foundation/1.0/current-user'));
     const projects = (connector) => bcf(connector, '/projects');
-    const extensions = (connector, projectId) => bcf(connector, `/projects/${encode(projectId)}/extensions`);
+    /** The project's allowed values. 2.1 calls the list of users `user_id_type`, and the rest of the app reads `users`. */
+    async function extensions(connector, projectId) {
+      const ext = await bcf(connector, `/projects/${encode(projectId)}/extensions`);
+      return ext && ext.user_id_type && !ext.users ? Object.assign({}, ext, { users: ext.user_id_type }) : ext;
+    }
     const topics = (connector, projectId, params) => bcf(connector, `/projects/${encode(projectId)}/topics${odata(params)}`);
+    /** Every topic of a project, page by page. Paging is optional in 2.1, so a page that starts over ends the reading. */
+    async function allTopics(connector, projectId, options = {}) {
+      const all = [];
+      for (let skip = 0; ; skip += 500) {
+        const page = await topics(connector, projectId, Object.assign({ $top: 500, $skip: skip }, options.filter ? { $filter: options.filter } : {}));
+        if (page.length && all.length && page[0].guid === all[0].guid) break;
+        all.push(...page);
+        if (page.length < 500 || all.length >= 20000) break;
+      }
+      return all;
+    }
     const comments = (connector, projectId, topicGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/comments`);
     const viewpoints = (connector, projectId, topicGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints`);
     const selection = (connector, projectId, topicGuid, vpGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints/${encode(vpGuid)}/selection`);
@@ -337,7 +435,7 @@
     function table(columns, items, pick) { return { columns, rows: items.map((it) => columns.map((c) => cell(pick(it)[c]))) }; }
     const TOPIC_COLUMNS = ['server_assigned_id', 'guid', 'title', 'topic_type', 'topic_status', 'priority', 'stage', 'labels', 'assigned_to', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'due_date', 'description'];
     function topicsTable(list) { return table(TOPIC_COLUMNS, list, (tp) => Object.assign({}, tp, { labels: Array.isArray(tp.labels) ? tp.labels.join(', ') : tp.labels })); }
-    const COMMENT_COLUMNS = ['topic_guid', 'topic', 'guid', 'date', 'author', 'comment', 'viewpoint_guid', 'modified_date', 'modified_author'];
+    const COMMENT_COLUMNS = ['topic_guid', 'topic', 'guid', 'date', 'author', 'comment', 'viewpoint_guid', 'modified_date', 'modified_author', 'reply_to_comment_guid'];
     function commentsTable(list) { return table(COMMENT_COLUMNS, list, (c) => c); }
     const COMPONENT_COLUMNS = ['topic', 'topic_guid', 'viewpoint_guid', 'role', 'ifc_guid', 'color', 'originating_system', 'authoring_tool_id', 'snapshot'];
     function componentsTable(list) { return table(COMPONENT_COLUMNS, list, (c) => c); }
@@ -347,12 +445,7 @@
 
     /** Every topic of a project (all pages of 500) as a table. */
     async function fetchTopics(connector, projectId, options = {}) {
-      const all = []; let skip = 0;
-      for (;;) {
-        const page = await topics(connector, projectId, Object.assign({ $top: 500, $skip: skip }, options.filter ? { $filter: options.filter } : {}));
-        all.push(...page); if (page.length < 500 || all.length >= 20000) break; skip += 500;
-      }
-      return topicsTable(all);
+      return topicsTable(await allTopics(connector, projectId, options));
     }
     /** All comments of all topics (or of the given topics) as one table. */
     async function fetchComments(connector, projectId, topicList) {
@@ -388,6 +481,11 @@
      * @returns {Promise<Array<{filename: string, ifcProject: string|null, date: string|null, reference: string, source: string, documentId: string|null, versionIndex: number|null, model: boolean}>>}
      */
     async function filesList(connector, projectId) {
+      if (bcfVersion(connector) === '2.1') {
+        // 2.1 has no files information. Its documents are the files it can name, and a server may have none.
+        const documents = await bcfDocuments(connector, projectId).catch((err) => { if (err && err.status === 404) return []; throw err; });
+        return documents.map((d) => { const name = String(d.filename || d.file_name || 'document'); return { filename: name, ifcProject: null, date: null, reference: `${bcfBase(connector)}/projects/${encode(projectId)}/documents/${encode(d.guid)}`, source: 'BCF', documentId: null, versionIndex: null, model: /\.(ifc|ifczip)$/i.test(name) }; });
+      }
       const info = await filesInformation(connector, projectId);
       return info.map((entry) => {
         const f = entry.file || {};
@@ -446,14 +544,25 @@
       const latest = versions.find((v) => v.document_id === cde.documentId) || versions[0] || null;
       return { newer: !!(latest && Number(latest.version_index) > Number(cde.versionIndex || 0)), version: latest, have: cde.versionIndex };
     }
-    // ---------------------------------------------------------------------------- writing (BCF 3.0)
+    // ---------------------------------------------------------------------------- writing
     const createTopic = (connector, projectId, body) => bcf(connector, `/projects/${encode(projectId)}/topics`, { method: 'POST', json: body });
     const updateTopic = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'PUT', json: body });
     const deleteTopic = (connector, projectId, topicGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'DELETE' });
     const createComment = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/comments`, { method: 'POST', json: body });
     const updateComment = (connector, projectId, topicGuid, commentGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/comments/${encode(commentGuid)}`, { method: 'PUT', json: body });
-    const createViewpoint = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints`, { method: 'POST', json: body });
-    const deleteViewpoint = (connector, projectId, topicGuid, vpGuid) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints/${encode(vpGuid)}`, { method: 'DELETE' });
+    /** A viewpoint as the version wants it: a camera's aspect ratio came with 3.0, and a server of 2.1 may refuse what it does not know. */
+    function viewpointFor(connector, body) {
+      if (bcfVersion(connector) !== '2.1') return body;
+      const out = Object.assign({}, body);
+      for (const key of ['perspective_camera', 'orthogonal_camera']) if (out[key]) { out[key] = Object.assign({}, out[key]); delete out[key].aspect_ratio; }
+      return out;
+    }
+    const createViewpoint = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints`, { method: 'POST', json: viewpointFor(connector, body) });
+    /** Deleting a viewpoint came with 3.0, so a connector of 2.1 says so instead of getting a 405 from the server. */
+    async function deleteViewpoint(connector, projectId, topicGuid, vpGuid) {
+      if (bcfVersion(connector) === '2.1') throw new Error(t('opencde.err.bcf21.deleteviewpoint'));
+      return bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints/${encode(vpGuid)}`, { method: 'DELETE' });
+    }
     /** A file as a BCF document of the project (3.8.2): the body is the file, the name travels in Content-Disposition. */
     async function uploadBcfDocument(connector, projectId, file) {
       const name = String(file.name || 'document').replace(/["\\\r\n]/g, '_');
@@ -504,10 +613,10 @@
     /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
      * and, for a confidential client, the secret, which the caller keeps in api/secrets.
-     * @param {string} baseUrl @param {{redirectUri: string, name?: string}} options
+     * @param {string} baseUrl @param {{redirectUri: string, name?: string, bcfVersion?: string}} options
      */
     async function register(baseUrl, options) {
-      const found = await discover(baseUrl);
+      const found = await discover(baseUrl, { bcfVersion: options.bcfVersion });
       if (!found.registrationUrl) throw new Error(t('opencde.err.noregistration'));
       const body = { client_name: options.name || 'Dataspatium', client_url: 'https://github.com/marwiss/Dataspatium', software_id: 'dataspatium', software_version: D.version, redirect_uris: [options.redirectUri], token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'] };
       const res = await send(null, { url: found.registrationUrl, method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body), retries: 0 });
@@ -524,6 +633,10 @@
 
     /** The project's files (BCF documents and Documents API files) as a table. */
     async function fetchFiles(connector, projectId) {
+      if (bcfVersion(connector) === '2.1') {
+        const files = await filesList(connector, projectId);
+        return table(FILE_COLUMNS, files.map((f) => ({ filename: f.filename, ifc_project: f.ifcProject, date: f.date, reference: f.reference, source: f.source })), (r) => r);
+      }
       const info = await filesInformation(connector, projectId);
       const rows = info.map((entry) => { const f = entry.file || {}; const source = (entry.display_information || []).find((d) => d.field_display_name === 'Source'); return { filename: f.filename, ifc_project: f.ifc_project, date: f.date, reference: f.reference, source: source ? source.field_value : null }; });
       return table(FILE_COLUMNS, rows, (r) => r);
@@ -563,6 +676,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

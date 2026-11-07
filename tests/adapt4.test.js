@@ -68,6 +68,9 @@
     const handle = await datasets.ensureOpen(meta.id);
     await handle.engine.run('create table _comments (id text primary key, ts text, author text, text text, column_name text, resolved integer default 0)');
     await handle.engine.run("insert into _comments (id, ts, author, text) values ('old', '2020-01-01', 'A', 'Äldre')");
+    // The status bar and a view can ask at the same moment; both would add the missing column, and the second would fail.
+    const together = await Promise.all([comments.list(meta.id), comments.list(meta.id), comments.list(meta.id)]);
+    assert.equal(together[2][0].text, 'Äldre', 'several at once on a file from before');
     const before = await comments.list(meta.id);
     assert.equal(before[0].text, 'Äldre', 'a file from before can be read');
     assert.equal(before[0].target, null);

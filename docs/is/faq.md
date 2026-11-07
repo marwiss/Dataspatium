@@ -246,6 +246,15 @@ hausa, skýringu og curl-línu til að afrita. Skráin er aðeins í minni meða
 hana sjálfur sem JSON eða gagnasafn. Sjá [kallor.md](kallor.md).
 
 
+## Get ég séð IFC-net líkans og spurt það með Cypher?
+
+Já, ef líkanið er á Kontroll-þjóni. Opnaðu uppsprettuna í Sækja, spjaldið *IFC-net* eða Neo4j-uppsprettu, og veldu líkan og sýn.
+Hnútar og vensl eru teiknuð, þú sækir nágranna með tvísmelli og skrifar eigið Cypher í reitinn. Sjá [grafer.md](grafer.md).
+
+## Virkar forritið með þjóni sem hefur aðeins BCF API 2.1?
+
+Já. Forritið velur nýjustu útgáfuna sem þjónninn býður og kemst af án Foundation API, svo þú bætir þjóninum við eins og venjulega. Sjá [kallor.md](kallor.md).
+
 ## Finnurðu ekki svarið hér?
 
 Lestu [anvandarguide.md](anvandarguide.md) eða stofnaðu issue á GitHub (sjá [CONTRIBUTING.md](../../CONTRIBUTING.md)).

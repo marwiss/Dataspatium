@@ -120,7 +120,56 @@ connects with Neo4j's driver over WebSocket after your consent (purpose Neo4j) a
 nodes and relationships are flattened to their properties. When the answer holds nodes and relationships, **Save as
 graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query** stores the query on the source so it
 runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
-only from a page over http://.
+only from a page over http://. When the answer holds nodes, they are drawn as a graph as well.
+
+## The IFC graph on a Kontroll server
+
+Kontroll turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
+the IFC attributes as properties, and relationships named after the attributes (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
+`HAS_PROPERTIES`). The graph lives on the server and can be far larger than is reasonable to fetch. So it is drawn and queried
+directly from *Import*, and nothing is saved until you ask for it.
+
+There are two ways to the graph, and both give the same view:
+
+- **The card IFC graph in the OpenCDE source.** The queries go through the server's read-only graph query, which needs you to
+  sign in as an administrator and the server to have `OPENCDE_GRAPH_QUERY_ENABLED=true`. This is the way in production: no
+  database port has to be open, the server limits rows and time, removes stored hashes and logs every query.
+- **A Neo4j source.** Bolt with the database's address, user name and password, for example `bolt://127.0.0.1:7697` on a
+  development stack. Bolt gives access to the whole database, so the app always reads in a read session and removes stored
+  hashes from the answers. In production Bolt is closed unless whoever runs the server has opened it; the card then shows the address.
+
+**Show models** lists the models in the graph, the newest version of each document first. Choose a model and a view:
+
+| View | Shows |
+|---|---|
+| Spatial structure | Project, site, building and storeys, with the relationships between them |
+| Elements per storey | Which elements each storey contains |
+| Elements and types | The elements and their types |
+| Elements and materials | The elements and their materials |
+| Properties and quantities | The elements' property sets and quantities |
+| Issues and elements | BCF issues, their viewpoints and components, and the elements they point at |
+| The whole model | Up to 1,000 relationships in the model |
+| Count per class | A table of the number of entities per class |
+
+The answer is drawn with Cytoscape, with the table under it. Nodes are coloured by what they are: spatial structure, element,
+relationship, type, property or quantity, material and other. Layout and labels change without asking the server.
+
+Click a node and the inspector shows its attributes. **Neighbours**, or a double click on the node, fetches its neighbours from
+the server and adds them to the picture. An element also has **Properties**, **Issues** and **Show in the model**, which opens
+the element in 3D if the model is in the workspace.
+
+In the box you write your own Cypher, all the server understands, but only reading. If you ask only for nodes (`RETURN c, w`), the
+app also fetches the relationships between them, as Neo4j Browser does. The app says when an answer has reached the query's
+`LIMIT` or was cut, and reading stops at 20,000 rows. Answers with more than 1,500 nodes are not drawn here, but can be saved and
+opened as an overview in Process.
+
+**Save as graph** makes what you see an ordinary graph dataset: the graph view in Process, the tabs Cypher and Graph in Analyse and
+graph charts in Visualise. The class becomes the node's label and all labels stay, so `MATCH (w:IfcWall)` also finds an
+`IfcWallStandardCase` in the copy. In the Cypher tab you can turn on **Run on the server** for a graph saved from here, and the
+server then answers with all of Cypher against the whole graph, instead of the subset against the copy.
+
+An IFC model fetched from Kontroll has the button **IFC graph** in Manage, and for a chosen element in Process. It opens the model's
+graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
 ## More tools in the Graph tab
 
@@ -141,6 +190,7 @@ templates like other charts.
 
 ## Limitations
 
-- Cypher lacks `WITH`, `UNWIND` and `shortestPath`; the Neo4j source is read-only (writing happens in the app's own graphs).- The overview with expandable groups applies to graphs up to 5,000 elements; larger graphs are shown as groups with
+- Cypher lacks `WITH`, `UNWIND` and `shortestPath` in the local subset (*Run on the server* has them for a graph from a server); the Neo4j source is read-only (writing happens in the app's own graphs).
+- The overview with expandable groups applies to graphs up to 5,000 elements; larger graphs are shown as groups with
   counts and in the focus and whole-graph views.
 - Properties are stored as JSON text; numbers compare as numbers in Cypher but sort as text in the node table.

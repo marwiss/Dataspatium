@@ -159,7 +159,9 @@ OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for th
 works as before. Kontroll's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.6.0 works with Kontroll 2.6.0. Both carry the same release number, so equal numbers belong together. The quick start
+The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
+
+Dataspatium 2.7.0 works with Kontroll 2.7.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more

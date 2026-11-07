@@ -4,12 +4,13 @@
  * Browser for an OpenCDE source in Inhämta: sign in with the server's OAuth2 flow (popup, or paste the callback
  * address under file://), choose a project, and fetch its topics, comments, viewpoint components, events or files
  * as tables with "Spara som datamängd". "Hämta dokument" opens the server's own selection page (Documents API);
- * the chosen files are downloaded and imported like files dropped on the app (IFC models become model datasets).
+ * the chosen files are downloaded and imported like files dropped on the app (IFC models become model datasets). The card IFC-graf shows
+ * the server's graph through its read-only graph query (ui/api/graph-workbench), or says how to reach it when that is off.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel'], (base, basic, overlays, opencde, secrets, runner, importer, cdeLogCard, adminPanel) => {
+  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/graph-source', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel', 'ui/api/graph-workbench'], (base, basic, overlays, opencde, admin, graphSource, secrets, runner, importer, cdeLogCard, adminPanel, workbench) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     const KINDS = [
@@ -35,6 +36,55 @@
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
       let pendingLink = null;
+      /** The card IFC-graf, which appears when the server says it has a graph. */
+      const graphEl = h('div', { class: 'dm-card dm-stack-sm', 'data-ifcgraph-card': '' });
+      graphEl.hidden = true;
+      /** The workbench, made once the session may use the graph query, and a model's request that waits for that sign-in. */
+      let graphBench = null; let graphLink = null;
+      function benchOnce() {
+        if (!graphBench) {
+          graphBench = workbench.create({
+            connector, via: 'admin', ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); }, onInspector: () => { if (api.refreshRight) api.refreshRight(); },
+            run: graphSource.adminRunner(connector),
+            hint: t('ifcgraph.card.hint', { host: opencde.hostOf(connector.baseUrl) }),
+          });
+          graphBench.start();
+        }
+        return graphBench;
+      }
+      /** A model's page asked for its graph and the session may now read it. */
+      function followGraphLink() {
+        if (!graphLink || !s.caps || !opencde.hasExtension(s.caps, 'graph_query') || !admin.hasAdminScope(connector)) return;
+        const link = graphLink; graphLink = null;
+        benchOnce().follow(link).catch((err) => D.log('opencde-view', err));
+      }
+      async function graphSignIn() {
+        await adminUi.signIn();
+        if (opencde.signedIn(connector) && !s.projects) { try { await afterSignIn(); } catch (err) { fail(err); } }
+        render();
+        followGraphLink();
+      }
+      /** The Neo4j source dialog, with the address the server announces. @param {string} [address] */
+      async function addBoltSource(address) {
+        const created = await D.require('ui/api/family-dialog').open(api.ctx, { family: 'neo4j', values: { baseUrl: address || '' } });
+        if (created && api.onConnector) api.onConnector(created);
+      }
+      function renderGraphCard() {
+        const caps = s.caps;
+        graphEl.hidden = !caps || !opencde.hasExtension(caps, 'ifcgraph');
+        if (graphEl.hidden) { replace(graphEl); return; }
+        const viaQuery = opencde.hasExtension(caps, 'graph_query');
+        const bolt = caps.extensions.ifcgraph.bolt || '';
+        const head = h('strong', { text: t('ifcgraph.title') });
+        if (viaQuery && admin.hasAdminScope(connector)) { replace(graphEl, head, benchOnce().el); return; }
+        replace(graphEl, head,
+          viaQuery ? h('p', { class: 'dm-help dm-small', text: t(graphLink ? 'ifcgraph.card.signin.link' : 'ifcgraph.card.signin') }) : null,
+          bolt ? h('p', { class: 'dm-help dm-small', text: t('ifcgraph.card.bolt', { url: bolt }) }) : null,
+          !viaQuery && !bolt ? h('p', { class: 'dm-help dm-small', text: t('ifcgraph.card.closed') }) : null,
+          h('div', { class: 'dm-row-wrap' },
+            viaQuery ? basic.button({ label: t('admin.signin'), icon: 'lock', size: 'sm', 'data-ifcgraph-signin': '', onClick: graphSignIn }) : null,
+            basic.button({ label: t('ifcgraph.card.add'), icon: 'database', size: 'sm', title: t('ifcgraph.card.add.hint'), 'data-ifcgraph-bolt': '', onClick: () => addBoltSource(bolt) })));
+      }
 
       async function signIn() {
         if (s.busy) return;
@@ -190,6 +240,7 @@
           h('div', { class: 'dm-row' }, h('strong', { text: t('opencde.title') }), h('dm-badge', { kind: signed ? 'ok' : 'warn', text: signed ? t('opencde.status.in', { name: s.user ? (s.user.name || s.user.id) : '' }) : t('opencde.status.out') })),
           h('p', { class: 'dm-help dm-small', text: t('opencde.hint', { host: opencde.hostOf(connector.baseUrl) }) }),
           s.caps && s.caps.present ? h('p', { class: 'dm-help dm-xs', 'data-opencde-capabilities': '', text: capsText(s.caps) }) : null,
+          versionRow(),
           h('div', { class: 'dm-row-wrap' },
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
             signed && !s.projects ? basic.button({ label: t('opencde.projects.load'), size: 'sm', onClick: async () => { s.busy = 'projects'; render(); try { s.user = s.user || (await opencde.currentUser(connector)); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); } }) : null),
@@ -206,13 +257,14 @@
             s.projects.length ? sel : h('p', { class: 'dm-help', text: t('opencde.projects.none') }),
             h('div', { class: 'dm-row-wrap' },
               KINDS.map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
-              basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), onClick: fetchDocuments })),
+              opencde.hasDocuments(connector) ? basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }) : null),
             h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }),
             s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
           nodes.push(filesCard());
         }
         const resultEl = h('div');
-        nodes.push(resultEl, adminUi.el, logCard.el);
+        nodes.push(resultEl, graphEl, adminUi.el, logCard.el);
+        renderGraphCard();
         replace(el, nodes);
         renderResult(resultEl);
       }
@@ -230,6 +282,7 @@
         return h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-files': '' },
           h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('opencde.files.title') }), basic.button({ label: s.files ? t('opencde.files.again') : t('opencde.files.show'), icon: 'folder-open', size: 'sm', loading: s.busy === 'files', onClick: loadFiles })),
           h('p', { class: 'dm-help dm-xs', text: t('opencde.files.hint') }),
+          opencde.bcfVersion(connector) === '2.1' ? h('p', { class: 'dm-help dm-xs', 'data-opencde-files-bcf21': '', text: t(opencde.hasDocuments(connector) ? 'opencde.files.bcf21.documents' : 'opencde.files.bcf21') }) : null,
           s.files && !s.files.length ? h('p', { class: 'dm-help', text: t('opencde.files.none') }) : null,
           rows.length ? h('div', { class: 'dm-stack-xs' }, rows) : null);
       }
@@ -254,6 +307,28 @@
           s.saved ? h('p', { class: 'dm-success', text: s.saved }) : h('div', { class: 'dm-row-wrap dm-api-save' }, nameInput, basic.button({ label: t('api.save'), icon: 'save', variant: 'primary', loading: s.saving, onClick: () => saveTable(nameInput.value.trim()) }))));
         requestAnimationFrame(() => table.setData({ columns: r.columns.map((c) => ({ key: c, label: c, type: 'text' })), rowCount: rows.length, rowProvider: async (start, count) => rows.slice(start, start + count) }));
       }
+      /** Which version of the BCF API this source speaks, with a choice when the server offers more than one. */
+      function versionRow() {
+        const list = opencde.bcfVersionsOf(connector, s.caps);
+        const current = opencde.bcfVersion(connector);
+        if (list.length < 2) return h('p', { class: 'dm-help dm-xs', 'data-opencde-bcf': current, text: t('opencde.bcf.speaks', { version: current }) });
+        const sel = /** @type {any} */ (h('dm-select', { label: t('families.field.bcfVersion'), inline: true, title: t('opencde.bcf.choose.hint'), 'data-opencde-bcf-select': '' }));
+        sel.options = list.map((v) => ({ value: v, label: 'BCF API ' + v }));
+        sel.value = current;
+        sel.addEventListener('change', () => changeVersion(sel.value));
+        return h('div', { class: 'dm-row-wrap', 'data-opencde-bcf': current }, sel);
+      }
+      /** The same server through another version: what was read through the old one goes, and the projects are read again. */
+      async function changeVersion(version) {
+        if (version === opencde.bcfVersion(connector)) return;
+        s.busy = 'projects'; s.error = ''; s.result = null; s.files = null; s.rights = null; render();
+        try {
+          await opencde.setBcfVersion(connector, version);
+          log(t('opencde.bcf.changed', { version }));
+          if (opencde.signedIn(connector)) { s.user = await opencde.currentUser(connector); await loadProjects(); }
+        } catch (err) { fail(err); }
+        s.busy = ''; render();
+      }
       /** What the server offers beyond the specifications, for the line under the heading. */
       function capsText(caps) {
         const server = caps.server ? `${caps.server.name || 'Kontroll'}${caps.server.version ? ' ' + caps.server.version : ''}` : 'Kontroll';
@@ -262,7 +337,8 @@
       }
       function start() {
         s.caps = null;
-        opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); }).catch((err) => D.log('opencde', 'capabilities', err));
+        graphLink = graphSource.takeLink(api.ctx, connector);
+        opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); followGraphLink(); }).catch((err) => D.log('opencde', 'capabilities', err));
         adminUi.start().catch((err) => D.log('opencde', 'admin', err));
         const link = takeDeepLink();
         const signed = opencde.signedIn(connector);
@@ -279,7 +355,7 @@
           Promise.resolve().then(async () => { try { await applyDeepLink(link); } catch (err) { fail(err); } render(); });
         }
       }
-      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, destroy: () => { unsubscribe(); logCard.destroy(); adminUi.destroy(); }, KINDS };
+      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, changeVersion, graphSignIn, graph: () => graphBench, inspector: () => (graphBench ? graphBench.inspector() : null), destroy: () => { unsubscribe(); logCard.destroy(); adminUi.destroy(); if (graphBench) graphBench.destroy(); }, KINDS };
     }
     return { create, KINDS };
   });

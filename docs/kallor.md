@@ -120,6 +120,14 @@ hämtas och importeras som om du släppt dem i appen, så en IFC-modell blir en 
 sessionen och exporteras aldrig med källan. Anslutningen kräver samtycke (ändamålet OpenCDE-server) och att servern
 tillåter anrop från webbläsaren (CORS).
 
+Appen talar BCF API 3.0 och 2.1. Den väljer den nyaste version som servern erbjuder, och en server med bara 2.1 fungerar också: en sådan
+saknar ofta Foundation API och Documents API, så appen läser versionen ur `/bcf/versions` och inloggningsadresserna ur `/bcf/2.1/auth`, och
+lämnar bort *Hämta dokument*. Under *Fler alternativ* i dialogen kan du välja version själv, och erbjuder servern flera kan du byta i källans vy.
+I 2.1 listar *Filer i projektet* bara BCF-dokumenten, ärenden saknar serverns löpnummer och en viewpoint går inte att ta bort. I gengäld kan en
+kommentar vara ett svar på en annan: knappen *Svara* i panelen *Ärenden*.
+
+Kortet *IFC-graf* visas när servern har en graf, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
 filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
 och vilken version den kom från. I Hantera visar kortet *Från CDE* detta, och *Sök ny version* frågar servern om dokumentet

@@ -124,6 +124,14 @@ blir henta og importerte som om du hadde sleppt dei i appen, så ein IFC-modell 
 finst berre i sesjonen og blir aldri eksporterte med kjelda. Tilkoplinga krev samtykke (føremålet OpenCDE-tenar) og at
 tenaren tillèt kall frå nettlesaren (CORS).
 
+Appen snakkar BCF API 3.0 og 2.1. Han vel den nyaste versjonen tenaren tilbyr, og ein tenar med berre 2.1 verkar òg: ein slik tenar manglar ofte
+Foundation API og Documents API, så appen les versjonen frå `/bcf/versions` og innloggingsadressene frå `/bcf/2.1/auth` og utelèt *Hent dokument*.
+Under *Fleire alternativ* i dialogen kan du velje versjon sjølv, og tilbyr tenaren fleire, kan du byte i visinga til kjelda. I 2.1 viser *Filer i prosjektet*
+berre BCF-dokumenta, saker har ikkje løpenummeret til tenaren, og eit viewpoint kan ikkje slettast. Til gjengjeld kan ein kommentar vere svar på ein annan:
+knappen *Svar* i panelet *Saker*.
+
+Kortet *IFC-graf* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-grafen-på-ein-kontroll-tenar).
+
 Under *Filer i prosjektet* listar kjelda modellane og dokumenta tenaren har for prosjektet. *Hent* lagar eit datasett av
 det eige slaget til fila, så ei IFC-fil blir ein modell og ei CSV-fil ein tabell, og datasettet hugsar kva tenar, kva prosjekt
 og kva versjon det kom frå. I Handter viser kortet *Frå CDE* dette, og *Søk ny versjon* spør tenaren om dokumentet

@@ -128,6 +128,14 @@ riviä kohti), tapahtumat ja tiedostot taulukoina. *Hae asiakirjat* avaa palveli
 malliaineistoksi. Käyttöoikeustunnukset ovat vain istunnossa eikä niitä viedä lähteen mukana. Yhteys vaatii
 suostumuksen (tarkoitus OpenCDE-palvelin) ja palvelimen, joka sallii kutsut selaimesta (CORS).
 
+Sovellus puhuu BCF API -versioita 3.0 ja 2.1. Se valitsee uusimman version, jota palvelin tarjoaa, ja myös pelkän 2.1:n palvelin toimii: sellaisesta
+puuttuvat usein Foundation API ja Documents API, joten sovellus lukee version osoitteesta `/bcf/versions` ja kirjautumisosoitteet osoitteesta `/bcf/2.1/auth` ja
+jättää pois kohdan *Hae asiakirjat*. Valintaikkunan kohdassa *Lisää asetuksia* voit valita version itse, ja jos palvelin tarjoaa useita, voit vaihtaa lähteen
+näkymässä. Versiossa 2.1 *Projektin tiedostot* luettelee vain BCF-asiakirjat, asioilla ei ole palvelimen juoksevaa numeroa eikä viewpointia voi poistaa. Vastineeksi
+kommentti voi olla vastaus toiseen: painike *Vastaa* paneelissa *Asiat*.
+
+Kortti *IFC-verkko* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-verkko-kontroll-palvelimella).
+
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
 omaa lajia olevan aineiston, joten IFC-tiedostosta tulee malli ja CSV-tiedostosta taulukko, ja aineisto muistaa, miltä
 palvelimelta, mistä projektista ja mistä versiosta se tuli. Hallitse-tilassa kortti *CDE:stä* näyttää tämän, ja *Etsi uusi

@@ -10,9 +10,13 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/families/neo4j', ['api/families/databases', 'api/secrets', 'platform/consent', 'data/graph'], (databases, secrets, consent, graph) => {
+  D.define('api/families/neo4j', ['api/families/databases', 'api/secrets', 'platform/consent', 'data/graph', 'data/ifc-graph'], (databases, secrets, consent, graph, ifcGraph) => {
     const t = (k, p) => D.t(k, p);
     const VENDOR = 'vendor/neo4j-driver-lite/neo4j-lite-web.min.js';
+    /** The most rows the browser keeps from one answer; the rest of the stream is cancelled. */
+    const MAX_ROWS = 20000;
+    /** How long the server may work on one statement, so that a runaway pattern does not keep the database busy. */
+    const TX_TIMEOUT_MS = 60000;
     let loading = null;
     /** Load the driver (global `neo4j`). */
     function ensureDriver() {
@@ -38,8 +42,10 @@
     const isNeo4j = (connector) => !!(connector && connector.family && connector.family.type === 'neo4j');
 
     /**
-     * Run a Cypher query against a connector's database: {columns, rows, graph: {nodes, edges}|null, summary}.
-     * @param {any} connector @param {string} text @param {{params?: any, limit?: number, timeoutMs?: number}} [options]
+     * Run a Cypher query against a connector's database, always in a read session: {columns, rows, graph: {nodes, edges}|null, truncated,
+     * summary}. The answer is read as a stream and cancelled at `maxRows`, so that a query without a limit cannot fill the browser.
+     * @param {any} connector @param {string} text
+     * @param {{params?: any, maxRows?: number, timeoutMs?: number, txTimeoutMs?: number}} [options]
      */
     async function run(connector, text, options = {}) {
       const creds = secrets.get(connector.id);
@@ -49,20 +55,39 @@
       const driver = neo4j.driver(connector.baseUrl, neo4j.auth.basic(creds.username, creds.password || ''), { connectionTimeout: options.timeoutMs || 20000 });
       const database = (connector.family && connector.family.database) || undefined;
       const session = driver.session(Object.assign({ defaultAccessMode: neo4j.session.READ }, database ? { database } : {}));
+      const limit = options.maxRows || MAX_ROWS;
       try {
-        const res = await session.run(text, options.params || {});
-        return Object.assign(recordsToTable(res.records, neo4j), { summary: summaryOf(res.summary) });
+        const result = session.run(text, options.params || {}, { timeout: options.txTimeoutMs || TX_TIMEOUT_MS });
+        const records = []; let truncated = false;
+        for await (const record of result) {
+          if (records.length >= limit) { truncated = true; break; } // leaving the loop cancels the rest of the stream
+          records.push(record);
+        }
+        const out = recordsToTable(records, neo4j);
+        if (!records.length) out.columns = await result.keys().catch(() => []);
+        return Object.assign(out, { truncated, summary: summaryOf(await result.summary().catch(() => null)) });
+      } catch (err) {
+        throw explain(err, connector);
       } finally {
         await session.close().catch(() => {});
         await driver.close().catch(() => {});
       }
+    }
+    /** The driver's errors that the user can act on, in the user's words; the original goes to the console. */
+    function explain(err, connector) {
+      const code = String((err && err.code) || '');
+      const key = code === 'ServiceUnavailable' || code === 'SessionExpired' ? 'neo4j.err.unavailable' : /Security\.(Unauthorized|AuthenticationRateLimit)/.test(code) ? 'neo4j.err.unauthorized' : '';
+      if (!key) return err;
+      D.log('neo4j', code, err);
+      return new Error(t(key, { host: hostOf(connector.baseUrl) }));
     }
     function summaryOf(summary) {
       try { const c = summary && summary.counters ? summary.counters.updates() : {}; return { updates: c, database: summary && summary.database ? summary.database.name : '' }; } catch (_e) { return {}; }
     }
     const isNode = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isNode ? neo4j.isNode(v) : (v.labels !== undefined && v.properties !== undefined && v.identity !== undefined)));
     const isRel = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isRelationship ? neo4j.isRelationship(v) : (v.type !== undefined && v.start !== undefined && v.end !== undefined && v.properties !== undefined)));
-    const isPath = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isPath ? neo4j.isPath(v) : (Array.isArray(v.segments) && v.start)));
+    // A driver's path has segments; the JSON of Kontroll's graph query has {nodes, relationships, length}.
+    const isPath = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isPath ? neo4j.isPath(v) : ((Array.isArray(v.segments) && v.start) || (Array.isArray(v.nodes) && Array.isArray(v.relationships)))));
     const idOf = (ent) => String(ent.elementId !== undefined ? ent.elementId : (ent.identity && typeof ent.identity.toNumber === 'function' ? ent.identity.toNumber() : ent.identity));
     /** Driver values → plain JSON: integers to numbers, temporal values to strings. */
     function plain(v, neo4j) {
@@ -79,30 +104,57 @@
     }
     /**
      * Records → table {columns, rows} and a graph of every node and relationship found (also inside paths and lists).
-     * Node and relationship columns become their id; their properties are flattened into `<column>.<key>` columns.
+     * Node and relationship columns become their id; their properties are flattened into `<column>.<key>` columns. A node shows its class
+     * and name by data/ifc-graph and keeps all its labels in the property `etiketter` when it has several, so that the local Cypher finds
+     * an IfcWallStandardCase as IfcWall too. Stored hashes of secrets are removed everywhere.
      */
     function recordsToTable(records, neo4j) {
       const nodes = new Map(); const edges = new Map();
-      const addNode = (n) => { const id = idOf(n); if (!nodes.has(id)) nodes.set(id, { id, label: (n.labels || [])[0] || '', properties: plain(n.properties, neo4j) || {} }); return id; };
-      const addRel = (r) => { const id = idOf(r); if (!edges.has(id)) edges.set(id, { id, source: String(r.startNodeElementId !== undefined ? r.startNodeElementId : plain(r.start, neo4j)), target: String(r.endNodeElementId !== undefined ? r.endNodeElementId : plain(r.end, neo4j)), type: r.type || '', properties: plain(r.properties, neo4j) || {} }); return id; };
+      const propsOf = (ent) => ifcGraph.redact(plain(ent.properties, neo4j) || {});
+      const addNode = (n) => {
+        const id = idOf(n);
+        if (!nodes.has(id)) {
+          const labels = n.labels || []; const props = propsOf(n);
+          nodes.set(id, { id, label: ifcGraph.classOf(labels, props), name: ifcGraph.nameOf(props), properties: labels.length > 1 ? Object.assign({}, props, { etiketter: labels.slice() }) : props });
+        }
+        return id;
+      };
+      const addRel = (r) => { const id = idOf(r); if (!edges.has(id)) edges.set(id, { id, source: String(r.startNodeElementId !== undefined ? r.startNodeElementId : plain(r.start, neo4j)), target: String(r.endNodeElementId !== undefined ? r.endNodeElementId : plain(r.end, neo4j)), type: r.type || '', properties: propsOf(r) }); return id; };
       const cell = (v) => {
-        if (isPath(v, neo4j)) { for (const seg of v.segments) { addNode(seg.start); addNode(seg.end); addRel(seg.relationship); } return t('neo4j.path', { n: v.length !== undefined ? v.length : v.segments.length }); }
+        if (isPath(v, neo4j)) {
+          if (Array.isArray(v.segments)) for (const seg of v.segments) { addNode(seg.start); addNode(seg.end); addRel(seg.relationship); }
+          else { for (const n of v.nodes) addNode(n); for (const r of v.relationships) addRel(r); }
+          return t('neo4j.path', { n: v.length !== undefined ? plain(v.length, neo4j) : v.segments.length });
+        }
         if (isNode(v, neo4j)) return addNode(v);
         if (isRel(v, neo4j)) return addRel(v);
         if (Array.isArray(v)) { const out = v.map(cell); return JSON.stringify(out); }
-        const p = plain(v, neo4j);
+        const p = ifcGraph.redact(plain(v, neo4j));
         return p !== null && typeof p === 'object' ? JSON.stringify(p) : p;
       };
       const keys = records.length ? records[0].keys : [];
       const extra = new Map(); // column → set of property keys for node/rel columns
-      const rows = records.map((rec) => keys.map((k) => { const v = rec.get(k); if (isNode(v, neo4j) || isRel(v, neo4j)) { const props = plain(v.properties, neo4j) || {}; if (!extra.has(k)) extra.set(k, new Set()); for (const pk of Object.keys(props)) extra.get(k).add(pk); } return cell(v); }));
+      const rows = records.map((rec) => keys.map((k) => { const v = rec.get(k); if (ifcGraph.isProtected(k)) return null; if (isNode(v, neo4j) || isRel(v, neo4j)) { if (!extra.has(k)) extra.set(k, new Set()); for (const pk of Object.keys(propsOf(v))) extra.get(k).add(pk); } return cell(v); }));
       const columns = keys.slice();
       for (const [k, set] of extra) for (const pk of set) columns.push(`${k}.${pk}`);
       if (extra.size) {
-        records.forEach((rec, i) => { for (const [k, set] of extra) { const v = rec.get(k); const props = (isNode(v, neo4j) || isRel(v, neo4j)) ? plain(v.properties, neo4j) || {} : {}; for (const pk of set) { const val = props[pk]; rows[i].push(val !== null && typeof val === 'object' ? JSON.stringify(val) : (val === undefined ? null : val)); } } });
+        records.forEach((rec, i) => { for (const [k, set] of extra) { const v = rec.get(k); const props = (isNode(v, neo4j) || isRel(v, neo4j)) ? propsOf(v) : {}; for (const pk of set) { const val = props[pk]; rows[i].push(val !== null && typeof val === 'object' ? JSON.stringify(val) : (val === undefined ? null : val)); } } });
       }
       const g = nodes.size ? graph.normalise({ nodes: Array.from(nodes.values()), edges: Array.from(edges.values()).filter((e) => nodes.has(e.source) && nodes.has(e.target)), directed: true }) : null;
       return { columns, rows, graph: g };
+    }
+    /**
+     * The JSON answer of Kontroll's graph query (/admin/api/graph/query: nodes as {identity, labels, properties}, relationships as
+     * {identity, type, start, end, properties}, paths as {nodes, relationships, length}) in the same shape as `run`.
+     * @param {{columns?: string[], rows?: any[], truncated?: boolean}} answer
+     */
+    function answerToTable(answer) {
+      const columns = Array.isArray(answer && answer.columns) ? answer.columns.map(String) : [];
+      const rows = Array.isArray(answer && answer.rows) ? answer.rows : [];
+      const records = rows.map((row) => ({ keys: columns, get: (k) => (Array.isArray(row) ? row[columns.indexOf(k)] : (row ? row[k] : null)) }));
+      const out = recordsToTable(records, null);
+      if (!records.length) out.columns = columns;
+      return Object.assign(out, { truncated: !!(answer && answer.truncated) });
     }
     /** A readable description of what a query touched (for the dataset's source). */
     /**
@@ -122,6 +174,6 @@
     ];
     function describe(connector, text) { return t('neo4j.source', { host: hostOf(connector.baseUrl), text: String(text).trim().slice(0, 120) }); }
 
-    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, plain, hostOf, describe, EXAMPLES, VENDOR };
+    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, answerToTable, plain, hostOf, describe, EXAMPLES, VENDOR, MAX_ROWS };
   });
 })();

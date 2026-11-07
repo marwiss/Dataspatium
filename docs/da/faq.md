@@ -248,6 +248,15 @@ en forklaring og en curl-linje at kopiere. Loggen findes kun i hukommelsen under
 du selv gemmer den som JSON eller datasæt. Se [kallor.md](kallor.md).
 
 
+## Kan jeg se en models IFC-graf og forespørge den med Cypher?
+
+Ja, hvis modellen findes på en Kontroll-server. Åbn kilden i Hent, kortet *IFC-graf* eller en Neo4j-kilde, og vælg model og visning.
+Knuder og relationer tegnes, du henter naboer med et dobbeltklik og skriver din egen Cypher i feltet. Se [grafer.md](grafer.md).
+
+## Virker appen mod en server, der kun har BCF API 2.1?
+
+Ja. Appen vælger den nyeste version, serveren tilbyder, og klarer sig uden Foundation API, så du tilføjer serveren som sædvanlig. Se [kallor.md](kallor.md).
+
 ## Finder du ikke svaret her?
 
 Læs [anvandarguide.md](anvandarguide.md), eller opret et issue på GitHub (se [CONTRIBUTING.md](../../CONTRIBUTING.md)).

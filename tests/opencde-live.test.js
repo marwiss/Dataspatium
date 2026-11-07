@@ -8,8 +8,8 @@
  * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE.
  * 2.32: the CDE log over the whole run, and with ?cdeadminhelper=<helper signed in as an administrator> the server's request log.
  * 2.34: the capabilities document (/.well-known/kontroll) and the server's error codes in the user's words. Runs only when the page is
- * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>]; otherwise it is
- * skipped. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
+ * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>][&cdebcf=2.1]; otherwise it is
+ * skipped. With cdebcf=2.1 the suite speaks BCF API 2.1, and checks that each version's answers hold what its specification says. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
 (function () {
   'use strict';
@@ -32,6 +32,10 @@
   const CDE_USER = params.get('cdeuser') || 'dm_manager';
   const CLIENT = params.get('cdeclient') || '';
   const PROJECT_NAME = params.get('cdeproject') || 'Dataspatium-prov';
+  /** Which version of the BCF API the run speaks. */
+  const VERSION = params.get('cdebcf') || '3.0';
+  const V21 = VERSION === '2.1';
+  const BCF = '/bcf/' + VERSION;
   const REDIRECT = location.origin + '/oauth-callback.html';
   const IFC_TEXT = fixtures.ifcText({ walls: 3, name: 'testhus.ifc' });
   const WALLS = Array.from(IFC_TEXT.matchAll(/IFCWALL\('([^']+)'/g)).map((m) => m[1]).slice(0, 3);
@@ -66,12 +70,15 @@
   }
 
   test('opencde live: discovery and a connector from the family dialog', async (assert) => {
-    const disc = await timed('discover', () => opencde.discover(BASE));
+    const disc = await timed('discover', () => opencde.discover(BASE, { bcfVersion: VERSION }));
+    assert.deepEqual(disc.bcfVersions, ['3.0', '2.1'], 'the server has both, newest first');
+    assert.equal(disc.bcfVersion, VERSION);
     assert.deepEqual(Object.keys(disc.apis).sort(), ['bcf', 'documents', 'foundation'], JSON.stringify(disc.apis));
     assert.ok(disc.pkceRequired, 'PKCE required');
-    const res = await families.createConnector('opencde', { baseUrl: BASE, clientId: CLIENT, clientSecret: '' });
+    const res = await families.createConnector('opencde', { baseUrl: BASE, clientId: CLIENT, clientSecret: '', bcfVersion: VERSION });
     shared.connector = res.connector;
     assert.equal(shared.connector.family.type, 'opencde');
+    assert.equal(opencde.bcfVersion(shared.connector), VERSION, 'the source speaks the version asked for');
     // What the dialog leaves behind: a connector that does not know where to sign in.
     if (!shared.connector.auth.authUrl) {
       const err = await opencde.login(shared.connector, { popup, redirectUri: REDIRECT }).catch((e) => e);
@@ -98,12 +105,12 @@
     shared.projectId = mine.project_id;
     // Leftovers from an aborted run would double the counts below: the suite's own topics go first.
     const stale = (await opencde.topics(shared.connector, shared.projectId, { $top: 500 })).filter((tp) => /^Dataspatium: /.test(String(tp.title || '')));
-    for (const tp of stale) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('stale topic: ' + e.message));
+    for (const tp of stale) await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('stale topic: ' + e.message));
     if (stale.length) log(`removed ${stale.length} stale topics from an earlier run`);
     const ext = await opencde.extensions(shared.connector, shared.projectId);
     log(`extensions: types ${(ext.topic_type || []).length}, statuses ${(ext.topic_status || []).length}, labels ${(ext.topic_label || []).length}, users ${(ext.users || []).length}`);
     assert.ok(Array.isArray(ext.project_actions) && ext.project_actions.includes('createTopic'), 'project_actions: ' + JSON.stringify(ext.project_actions));
-    const withAuth = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}?includeAuthorization=true`);
+    const withAuth = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}?includeAuthorization=true`);
     assert.ok(withAuth.authorization && withAuth.authorization.project_actions.includes('createDocument'), JSON.stringify(withAuth.authorization));
     shared.ext = ext;
     return mine.project_id;
@@ -115,27 +122,39 @@
     if (ext.topic_type && ext.topic_type.length) body.topic_type = ext.topic_type[0];
     if (ext.topic_status && ext.topic_status.length) body.topic_status = ext.topic_status[0];
     if (ext.topic_label && ext.topic_label.length) body.labels = ext.topic_label.slice(0, 1);
-    const topic = await timed('create topic', () => opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics`, { method: 'POST', json: body }));
-    assert.ok(topic.guid && topic.server_assigned_id, JSON.stringify(topic).slice(0, 200));
+    const topic = await timed('create topic', () => opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics`, { method: 'POST', json: body }));
+    assert.ok(topic.guid && (V21 ? !('server_assigned_id' in topic) : topic.server_assigned_id), JSON.stringify(topic).slice(0, 200));
     shared.topic = topic;
-    const other = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics`, { method: 'POST', json: Object.assign({}, body, { title: 'Dataspatium: relaterat ärende' }) });
+    const other = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics`, { method: 'POST', json: Object.assign({}, body, { title: 'Dataspatium: relaterat ärende' }) });
     shared.other = other;
-    const vp = await timed('create viewpoint', () => opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/viewpoints`, { method: 'POST', json: {
+    const vp = await timed('create viewpoint', () => opencde.createViewpoint(shared.connector, shared.projectId, topic.guid, {
       perspective_camera: { camera_view_point: { x: 12, y: -8, z: 4 }, camera_direction: { x: -0.6, y: 0.7, z: -0.3 }, camera_up_vector: { x: 0, y: 0, z: 1 }, field_of_view: 60, aspect_ratio: 1.6 },
       snapshot: { snapshot_type: 'png', snapshot_data: pngDataUrl() },
       components: { selection: WALLS.map((g) => ({ ifc_guid: g, originating_system: 'Dataspatium' })), coloring: [{ color: 'FF0000', components: [{ ifc_guid: WALLS[0] }] }], visibility: { default_visibility: true } },
-    } }));
+    }));
     assert.ok(vp.guid, 'viewpoint');
+    if (V21) assert.ok(!('aspect_ratio' in vp.perspective_camera) && !('authorization' in vp), 'a viewpoint of 2.1 has neither: ' + JSON.stringify(vp).slice(0, 200));
     shared.viewpoint = vp;
-    const comment = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/comments`, { method: 'POST', json: { comment: 'Se de markerade väggarna.', viewpoint_guid: vp.guid } });
+    const comment = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${topic.guid}/comments`, { method: 'POST', json: { comment: 'Se de markerade väggarna.', viewpoint_guid: vp.guid } });
     assert.equal(comment.viewpoint_guid, vp.guid, JSON.stringify(comment));
-    const ref = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/document_references`, { method: 'POST', json: { url: 'https://example.org/ritningar/A-40-1-100.pdf', description: 'Planritning' } });
+    if (V21) {
+      // What 2.1 has and 3.0 does not.
+      const answer = await opencde.createComment(shared.connector, shared.projectId, topic.guid, { comment: 'Håller med.', reply_to_comment_guid: comment.guid });
+      assert.equal(answer.reply_to_comment_guid, comment.guid, JSON.stringify(answer));
+      const wrong = await opencde.createComment(shared.connector, shared.projectId, topic.guid, { comment: 'Fel', reply_to_comment_guid: '00000000-0000-4000-8000-000000000000' }).catch((e) => e);
+      assert.ok(wrong instanceof Error && wrong.status === 400, 'a reply to a comment that is not there: ' + (wrong && wrong.status));
+      const table = await opencde.fetchComments(shared.connector, shared.projectId, [topic]);
+      assert.ok(table.rows.some((r) => r[table.columns.indexOf('reply_to_comment_guid')] === comment.guid), 'the table holds the reply');
+      const ext21 = await opencde.extensions(shared.connector, shared.projectId);
+      assert.ok(Array.isArray(ext21.users) && ext21.users.length && Array.isArray(ext21.user_id_type), 'user_id_type is read as users: ' + JSON.stringify(ext21).slice(0, 160));
+    }
+    const ref = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${topic.guid}/document_references`, { method: 'POST', json: { url: 'https://example.org/ritningar/A-40-1-100.pdf', description: 'Planritning' } });
     assert.ok(ref.guid, 'document reference');
-    const related = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/related_topics`, { method: 'PUT', json: [{ related_topic_guid: other.guid }] });
+    const related = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${topic.guid}/related_topics`, { method: 'PUT', json: [{ related_topic_guid: other.guid }] });
     assert.equal(related.length, 1, JSON.stringify(related));
-    const snapshot = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/viewpoints/${vp.guid}/snapshot`, { headers: { Accept: 'image/png' }, responseType: 'arraybuffer' });
+    const snapshot = await raw('GET', `${BCF}/projects/${shared.projectId}/topics/${topic.guid}/viewpoints/${vp.guid}/snapshot`, { headers: { Accept: 'image/png' }, responseType: 'arraybuffer' });
     assert.ok(snapshot.ok && snapshot.buffer && snapshot.buffer.byteLength > 100, 'snapshot back: ' + snapshot.status);
-    const events = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${topic.guid}/events`);
+    const events = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${topic.guid}/events`);
     log(`topic events: ${events.map((e) => (e.actions || []).map((a) => a.type).join('+')).join(', ')}`);
     assert.ok(events.length >= 1);
     return topic.server_assigned_id;
@@ -156,14 +175,14 @@
     const events = await timed('fetchEvents', () => opencde.fetchEvents(shared.connector, shared.projectId));
     assert.ok(events.rows.length >= 2, 'events: ' + events.rows.length);
     const files = await timed('fetchFiles', () => opencde.fetchFiles(shared.connector, shared.projectId));
-    log(`files_information rows before uploads: ${files.rows.length}`);
+    log(`files before uploads: ${files.rows.length}`);
     shared.topicsTable = topics;
     return `${topics.rows.length} topics, ${components.rows.length} components`;
   }, 90000);
 
   test('opencde live: probes of what the browser lets through to the server', async (assert) => {
     const token = await opencde.ensureToken(shared.connector);
-    const url = `${BASE}/bcf/3.0/projects/${shared.projectId}/documents`;
+    const url = `${BASE}${BCF}/projects/${shared.projectId}/documents`;
     const bytes = new TextEncoder().encode(['ISO-10303-21;', 'HEADER;', 'ENDSEC;', 'DATA;', 'ENDSEC;', 'END-ISO-10303-21;', ''].join(String.fromCharCode(10)));
     const variants = [
       ['text/plain string body', { 'Content-Type': 'text/plain' }, 'hej'],
@@ -186,7 +205,7 @@
 
   test('opencde live: a BCF document (binary POST) and the topic header files', async (assert) => {
     const bytes = ifcBytes();
-    const res = await timed('POST bcf document', () => raw('POST', `/bcf/3.0/projects/${shared.projectId}/documents`, { body: bytes, headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="testhus.ifc"' } })).catch((e) => e);
+    const res = await timed('POST bcf document', () => raw('POST', `${BCF}/projects/${shared.projectId}/documents`, { body: bytes, headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="testhus.ifc"' } })).catch((e) => e);
     if (res instanceof Error) throw res;
     assert.ok(res.ok, `document: ${res.status} ${res.text.slice(0, 200)}`);
     assert.ok((res.headers.get('X-RateLimit-Limit') || '') !== '' || true, 'rate limit headers may show');
@@ -195,13 +214,22 @@
     shared.bcfDocument = doc;
     const list = await opencde.bcfDocuments(shared.connector, shared.projectId);
     assert.ok(list.some((d) => d.guid === doc.guid), 'listed');
-    const info = await opencde.filesInformation(shared.connector, shared.projectId);
-    const entry = info.find((e) => e.file && e.file.filename === 'testhus.ifc');
-    assert.ok(entry, 'in files_information: ' + JSON.stringify(info).slice(0, 300));
-    log(`files_information ifc_project for the model: ${entry && entry.file.ifc_project}`);
-    const header = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${shared.topic.guid}/files`, { method: 'PUT', json: [{ filename: 'testhus.ifc', ifc_project: entry.file.ifc_project || undefined, reference: entry.file.reference }] });
-    assert.equal(header.length, 1, JSON.stringify(header));
-    const back = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/documents/${doc.guid}`, { headers: { Accept: '*/*' }, responseType: 'arraybuffer' });
+    if (V21) {
+      const gone = await opencde.filesInformation(shared.connector, shared.projectId).catch((e) => e);
+      assert.ok(gone instanceof Error && gone.status === 404, 'no files information in 2.1: ' + (gone && gone.status));
+      const entry = (await opencde.filesList(shared.connector, shared.projectId)).find((f) => f.filename === 'testhus.ifc');
+      assert.ok(entry && entry.model, 'the document is what 2.1 can name');
+      const header = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${shared.topic.guid}/files`, { method: 'PUT', json: [{ file_name: 'testhus.ifc', reference: entry.reference }] });
+      assert.equal(header[0].file_name, 'testhus.ifc', 'file_name for filename: ' + JSON.stringify(header));
+    } else {
+      const info = await opencde.filesInformation(shared.connector, shared.projectId);
+      const entry = info.find((e) => e.file && e.file.filename === 'testhus.ifc');
+      assert.ok(entry, 'in files_information: ' + JSON.stringify(info).slice(0, 300));
+      log(`files_information ifc_project for the model: ${entry && entry.file.ifc_project}`);
+      const header = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${shared.topic.guid}/files`, { method: 'PUT', json: [{ filename: 'testhus.ifc', ifc_project: entry.file.ifc_project || undefined, reference: entry.file.reference }] });
+      assert.equal(header.length, 1, JSON.stringify(header));
+    }
+    const back = await raw('GET', `${BCF}/projects/${shared.projectId}/documents/${doc.guid}`, { headers: { Accept: '*/*' }, responseType: 'arraybuffer' });
     assert.equal(back.buffer.byteLength, bytes.byteLength, 'the same bytes back');
     return doc.guid;
   }, 90000);
@@ -238,25 +266,32 @@
 
   test('opencde live: change a topic and a comment, delete a viewpoint, and a new version of a document', async (assert) => {
     const p = shared.projectId; const tp = shared.topic;
-    const current = await opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}`);
+    const current = await opencde.api(shared.connector, `${BCF}/projects/${p}/topics/${tp.guid}`);
     const statuses = shared.ext.topic_status || [];
     const next = statuses.find((x) => x !== current.topic_status) || current.topic_status;
     const put = Object.assign({}, current, { topic_status: next, title: current.title + ' (ändrat)' });
     for (const k of ['guid', 'server_assigned_id', 'creation_author', 'creation_date', 'modified_author', 'modified_date', 'authorization']) delete put[k];
-    const changed = await timed('PUT topic', () => opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}`, { method: 'PUT', json: put }));
+    const changed = await timed('PUT topic', () => opencde.api(shared.connector, `${BCF}/projects/${p}/topics/${tp.guid}`, { method: 'PUT', json: put }));
     assert.equal(changed.topic_status, next, JSON.stringify(changed).slice(0, 200));
     assert.ok(changed.title.endsWith('(ändrat)'));
     shared.topic = changed;
     const comments = await opencde.comments(shared.connector, p, tp.guid);
     const c = comments[0];
-    const edited = await opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}/comments/${c.guid}`, { method: 'PUT', json: { comment: c.comment + ' Rättat.', viewpoint_guid: c.viewpoint_guid } });
+    const edited = await opencde.api(shared.connector, `${BCF}/projects/${p}/topics/${tp.guid}/comments/${c.guid}`, { method: 'PUT', json: { comment: c.comment + ' Rättat.', viewpoint_guid: c.viewpoint_guid } });
     assert.ok(edited.comment.endsWith('Rättat.'), JSON.stringify(edited).slice(0, 200));
-    const cEvents = await opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}/comments/${c.guid}/events`);
+    const cEvents = await opencde.api(shared.connector, `${BCF}/projects/${p}/topics/${tp.guid}/comments/${c.guid}/events`);
     log(`comment events: ${cEvents.map((e) => (e.actions || []).map((a) => a.type).join('+')).join(', ')}`);
-    const extra = await opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}/viewpoints`, { method: 'POST', json: { perspective_camera: { camera_view_point: { x: 1, y: 1, z: 1 }, camera_direction: { x: -1, y: -1, z: -1 }, camera_up_vector: { x: 0, y: 0, z: 1 }, field_of_view: 50, aspect_ratio: 1 } } });
-    await opencde.api(shared.connector, `/bcf/3.0/projects/${p}/topics/${tp.guid}/viewpoints/${extra.guid}`, { method: 'DELETE' });
-    const vps = await opencde.viewpoints(shared.connector, p, tp.guid);
-    assert.ok(!vps.some((v) => v.guid === extra.guid) && vps.some((v) => v.guid === shared.viewpoint.guid), 'one viewpoint gone, one left');
+    const extra = await opencde.createViewpoint(shared.connector, p, tp.guid, { perspective_camera: { camera_view_point: { x: 1, y: 1, z: 1 }, camera_direction: { x: -1, y: -1, z: -1 }, camera_up_vector: { x: 0, y: 0, z: 1 }, field_of_view: 50, aspect_ratio: 1 } });
+    if (V21) {
+      const told = await opencde.deleteViewpoint(shared.connector, p, tp.guid, extra.guid).catch((e) => e);
+      assert.equal(told.message, t('opencde.err.bcf21.deleteviewpoint'), 'the app says so');
+      const refused = await raw('DELETE', `${BCF}/projects/${p}/topics/${tp.guid}/viewpoints/${extra.guid}`);
+      assert.equal(refused.status, 405, 'and so does the server');
+    } else {
+      await opencde.deleteViewpoint(shared.connector, p, tp.guid, extra.guid);
+      const vps = await opencde.viewpoints(shared.connector, p, tp.guid);
+      assert.ok(!vps.some((v) => v.guid === extra.guid) && vps.some((v) => v.guid === shared.viewpoint.guid), 'one viewpoint gone, one left');
+    }
     if (shared.documentId) {
       const bytes = ifcBytes();
       const started = await opencde.api(shared.connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: REDIRECT, expires_in: 600 }, files: [{ file_name: 'testhus.ifc', session_file_id: 'f1', document_id: shared.documentId }] } });
@@ -303,7 +338,7 @@
   test('opencde live: the project files, a model fetched from the CDE, and the version check', async (assert) => {
     const files = await timed('filesList', () => opencde.filesList(shared.connector, shared.projectId));
     log(`files: ${files.map((f) => `${f.filename} [${f.source}${f.versionIndex ? ' v' + f.versionIndex : ''}]`).join(', ')}`);
-    const ifc = files.find((f) => f.model && f.documentId) || files.find((f) => f.model);
+    const ifc = files.find((f) => f.model && f.documentId) || files.find((f) => f.model && f.filename === 'testhus.ifc') || files.find((f) => f.model);
     assert.ok(ifc, 'a model among the files');
     const rights = await opencde.rights(shared.connector, shared.projectId);
     assert.ok(rights.project.includes('createTopic'), JSON.stringify(rights));
@@ -335,7 +370,8 @@
     assert.equal(doc.filename, 'familjens-hus.ifc', JSON.stringify(doc));
     const files = await opencde.filesList(shared.connector, shared.projectId);
     const listed = files.find((f) => f.documentId === version.document_id);
-    assert.ok(listed && Number(listed.versionIndex) === Number(next.version_index), 'the files list knows the document and its latest version: ' + JSON.stringify(listed));
+    if (V21) assert.ok(!listed && files.some((f) => f.filename === 'familjens-hus.ifc'), 'in 2.1 the list is the BCF documents: ' + JSON.stringify(files).slice(0, 200));
+    else assert.ok(listed && Number(listed.versionIndex) === Number(next.version_index), 'the files list knows the document and its latest version: ' + JSON.stringify(listed));
     // The project's issues as a BCF file, and the file read back.
     const bcfXml = D.require('data/bcf-xml');
     const topics = await opencde.topics(shared.connector, shared.projectId, { $top: 100 });
@@ -344,7 +380,7 @@
       const [comments, viewpoints] = await Promise.all([opencde.comments(shared.connector, shared.projectId, tp.guid), opencde.viewpoints(shared.connector, shared.projectId, tp.guid)]);
       const vps = [];
       for (const vp of viewpoints) {
-        const base = `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}/viewpoints/${vp.guid}`;
+        const base = `${BCF}/projects/${shared.projectId}/topics/${tp.guid}/viewpoints/${vp.guid}`;
         const [sel, col] = await Promise.all([opencde.api(shared.connector, base + '/selection'), opencde.api(shared.connector, base + '/coloring')]);
         const snapshot = vp.snapshot ? await opencde.binary(shared.connector, base + '/snapshot', 'image/*') : null;
         vps.push({ viewpoint: Object.assign({}, vp, { components: { selection: sel.selection || [], coloring: col.coloring || [], visibility: { default_visibility: true } } }), snapshot: snapshot ? { bytes: new Uint8Array(snapshot.buffer), type: snapshot.contentType } : null });
@@ -365,12 +401,12 @@
   }, 180000);
 
   test('opencde live: the app registers itself when the server allows it', async (assert) => {
-    const result = await opencde.register(BASE, { redirectUri: REDIRECT }).catch((e) => e);
+    const result = await opencde.register(BASE, { redirectUri: REDIRECT, bcfVersion: VERSION }).catch((e) => e);
     if (result instanceof Error) { log(`registration: ${result.message}`); return 'skipped: ' + result.message; }
     assert.ok(result.clientId, 'a client id');
     assert.equal(result.clientSecret, '', 'a public client needs no secret');
     log(`registered public client ${result.clientId}`);
-    const fresh = (await families.createConnector('opencde', { baseUrl: BASE, clientId: result.clientId, clientSecret: '' })).connector;
+    const fresh = (await families.createConnector('opencde', { baseUrl: BASE, clientId: result.clientId, clientSecret: '', bcfVersion: VERSION })).connector;
     try {
       const creds = await opencde.login(fresh, { popup, redirectUri: REDIRECT });
       assert.ok(creds.token, 'the registered client signs in');
@@ -394,17 +430,17 @@
   }, 60000);
 
   test('opencde live: ETag, If-None-Match and how the app takes a 304', async (assert) => {
-    const first = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/topics`);
+    const first = await raw('GET', `${BCF}/projects/${shared.projectId}/topics`);
     const etag = first.headers.get('ETag');
     assert.ok(first.ok && etag, 'ETag: ' + etag);
-    const second = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics`, { headers: { 'If-None-Match': etag }, notModifiedOk: true }).then(() => 'answered', (e) => e);
-    const probe304 = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/topics`, { headers: { 'If-None-Match': etag } });
+    const second = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics`, { headers: { 'If-None-Match': etag }, notModifiedOk: true }).then(() => 'answered', (e) => e);
+    const probe304 = await raw('GET', `${BCF}/projects/${shared.projectId}/topics`, { headers: { 'If-None-Match': etag } });
     log(`conditional GET answered ${probe304.status}; api() with notModifiedOk ${second instanceof Error ? 'failed: ' + second.message : 'took it'}`);
     assert.equal(probe304.status, 304);
     assert.ok(!(second instanceof Error), 'a 304 is a good answer when asked for');
-    const limited = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/topics?$top=1&$orderby=creation_date desc`);
+    const limited = await raw('GET', `${BCF}/projects/${shared.projectId}/topics?$top=1&$orderby=creation_date desc`);
     assert.ok(limited.ok && JSON.parse(limited.text).length === 1, 'OData $top and $orderby');
-    const filtered = await raw('GET', `/bcf/3.0/projects/${shared.projectId}/topics?$filter=${encodeURIComponent(`title eq '${shared.topic.title}'`)}`);
+    const filtered = await raw('GET', `${BCF}/projects/${shared.projectId}/topics?$filter=${encodeURIComponent(`title eq '${shared.topic.title}'`)}`);
     assert.ok(filtered.ok && JSON.parse(filtered.text).length === 1, 'OData $filter: ' + filtered.status);
     return etag;
   }, 60000);
@@ -492,6 +528,47 @@
     const classes = await neo4j.run(r.connector, example('classes'));
     log(`graph: ${models.rows.length} models (states ${Array.from(new Set(models.rows.map((x) => x[1]))).join(',')}), ${walls.rows[0] ? walls.rows[0][0] : '?'} walls, ${classes.rows.length} classes, ${linked.rows.length} issue-element links`);
     assert.ok(classes.rows.length >= 1, 'elements in the graph');
+    // The model list, a view and a step from a node, as the workbench asks them.
+    const ifcGraph = D.require('data/ifc-graph');
+    const list = ifcGraph.modelsOf(await neo4j.run(r.connector, ifcGraph.MODELS));
+    assert.ok(list.models.length >= 1, 'finished models: ' + JSON.stringify(list).slice(0, 200));
+    const model = ifcGraph.pickModel(list.models, shared.documentId ? { documentId: shared.documentId } : null);
+    shared.graphModel = model;
+    const spatial = await timed('spatial view', () => neo4j.run(r.connector, ifcGraph.viewOf('spatial', model.id).cypher));
+    assert.ok(spatial.graph && spatial.graph.nodes.some((n) => n.label === 'IfcProject'), 'the project at the top: ' + JSON.stringify(spatial.graph && spatial.graph.nodes.map((n) => n.label)));
+    assert.ok(spatial.graph.nodes.every((n) => n.name), 'every node has a name to show');
+    assert.ok(!spatial.graph.nodes.some((n) => n.label === 'IfcEntity' || n.label === 'IfcRoot'), 'the class, not a supertype');
+    assert.ok(spatial.graph.edges.length >= 1, 'with its relationships');
+    shared.spatialIds = spatial.graph.nodes.map((n) => n.id).sort();
+    const wall = await neo4j.run(r.connector, `MATCH (w:IfcWall {model_id: ${ifcGraph.quote(model.id)}}) RETURN w LIMIT 1`);
+    const wallNode = wall.graph.nodes[0];
+    assert.ok(wallNode.properties.etiketter.includes('IfcWall') && wallNode.properties.etiketter.includes('IfcProduct'), 'all the labels stay: ' + JSON.stringify(wallNode.properties.etiketter));
+    assert.equal(ifcGraph.familyOf(wallNode), 'element');
+    const around = await neo4j.run(r.connector, ifcGraph.stepFrom('neighbours', wallNode.id));
+    assert.ok(around.graph.nodes.length >= 2, 'a step from the wall: ' + around.graph.nodes.length);
+    const props = await neo4j.run(r.connector, ifcGraph.stepFrom('properties', wallNode.id));
+    log(`from the wall: ${around.graph.nodes.length} neighbours, ${props.rows.length} property rows`);
+    // A real stream, cut in the browser.
+    const cut = await neo4j.run(r.connector, 'MATCH (n) RETURN n', { maxRows: 5 });
+    assert.equal(cut.rows.length, 5); assert.equal(cut.truncated, true);
+    // The accounts are in the same database: their hashes stay behind.
+    const accounts = await neo4j.run(r.connector, 'MATCH (u:User) RETURN u, u.password_hash AS password_hash, properties(u) AS alla LIMIT 5');
+    assert.ok(accounts.rows.length >= 1, 'users to look at');
+    assert.ok(!/argon2|password_hash":/.test(JSON.stringify(accounts.graph)) && !JSON.stringify(accounts.rows).includes('argon2'), 'no hash in the answer: ' + JSON.stringify(accounts.rows[0]).slice(0, 200));
+    // Nodes without relationships in the answer are joined by the second question.
+    const pair = await neo4j.run(r.connector, ifcGraph.CONNECTING, { params: { ids: spatial.graph.nodes.map((n) => n.id) } });
+    assert.ok(pair.graph.edges.length >= spatial.graph.edges.length, 'the second question finds the lines');
+    // The real drawing, from the real answer.
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute; left:-10000px; top:0; width:1000px; height:560px;';
+    document.body.appendChild(host);
+    try {
+      const drawing = await D.require('viz/graph-draw').renderLive(host, spatial.graph, { layout: 'dagre', colorKey: ifcGraph.colorKey });
+      assert.equal(drawing.cy.nodes().length, spatial.graph.nodes.length);
+      assert.ok(drawing.legend().some((l) => l.key === 'ifc:spatial'), 'the families in the legend: ' + JSON.stringify(drawing.legend()));
+      assert.ok(drawing.merge(around.graph, spatial.graph.nodes[0].id) > 0, 'grows');
+      drawing.destroy();
+    } finally { host.remove(); }
     return `${models.rows.length} models, ${linked.rows.length} links`;
   }, 60000);
 
@@ -504,10 +581,14 @@
     const popupUpload = async (url) => (await helper('/upload', { url, project: shared.projectId, title: 'Provpaket', version: '1' })).callback;
     const version = await timed('upload bundle', () => opencde.uploadDocument(shared.connector, file, { redirectUri: REDIRECT, popup: popupUpload }));
     assert.ok(version && version.document_id, JSON.stringify(version).slice(0, 200));
-    const files = await opencde.filesList(shared.connector, shared.projectId);
-    const entry = files.find((f) => f.documentId === version.document_id);
-    assert.ok(entry && /\.dataspatium\.zip$/i.test(entry.filename), 'the bundle in the files list: ' + JSON.stringify(entry));
-    const back = await opencde.downloadFile(shared.connector, entry);
+    let back = null;
+    if (V21) back = await opencde.downloadVersion(shared.connector, version); // 2.1 lists only BCF documents; the Documents API works as ever
+    else {
+      const files = await opencde.filesList(shared.connector, shared.projectId);
+      const entry = files.find((f) => f.documentId === version.document_id);
+      assert.ok(entry && /\.dataspatium\.zip$/i.test(entry.filename), 'the bundle in the files list: ' + JSON.stringify(entry));
+      back = await opencde.downloadFile(shared.connector, entry);
+    }
     const opened = await workspace.inspect(back);
     assert.equal(opened.manifest && opened.manifest.kind, 'bundle');
     assert.ok((opened.manifest.datasets || []).some((d) => d.id === model.id), 'the model travels in the bundle');
@@ -541,7 +622,7 @@
     if (!adminHelper) return 'skipped: no cdeadminhelper';
     const cdeLog = D.require('api/cde-log');
     const mine = cdeLog.list(shared.connector.id).filter((e) => e.requestId).slice(-30).map((e) => e.requestId);
-    const admin = (await families.createConnector('opencde', { baseUrl: BASE, clientId: CLIENT, clientSecret: '' })).connector;
+    const admin = (await families.createConnector('opencde', { baseUrl: BASE, clientId: CLIENT, clientSecret: '', bcfVersion: VERSION })).connector;
     admin.auth.scope = 'profile bcf documents admin';
     await connectors.save(admin);
     const adminPopup = async (url) => { const r = await fetch(adminHelper + '/authorize?url=' + encodeURIComponent(url)); const j = await r.json(); if (!r.ok) throw new Error(j.error || String(r.status)); return j.callback; };
@@ -579,6 +660,23 @@
           assert.deepEqual(g.columns, ['etikett', 'antal']);
           const refused = await adm.graphQuery(admin, 'MATCH (n) DETACH DELETE n').catch((e) => e);
           assert.ok(refused instanceof Error && refused.code === 'validation_error', 'a writing statement is refused: ' + (refused && refused.code));
+          // The IFC graph through the server: the same answer as over Bolt, drawn from JSON, with what the server promises kept.
+          const graphSource = D.require('api/graph-source');
+          const ifcGraph = D.require('data/ifc-graph');
+          const run = graphSource.adminRunner(admin);
+          const models = ifcGraph.modelsOf(await run(ifcGraph.MODELS));
+          assert.ok(models.models.length >= 1, 'models through the server');
+          const model = shared.graphModel || ifcGraph.pickModel(models.models, null);
+          const spatial = await timed('spatial view through the server', () => run(ifcGraph.viewOf('spatial', model.id).cypher));
+          assert.ok(spatial.graph && spatial.graph.nodes.some((n) => n.label === 'IfcProject'), 'the project at the top: ' + JSON.stringify(spatial.graph && spatial.graph.nodes.map((n) => n.label)));
+          if (shared.spatialIds) assert.deepEqual(spatial.graph.nodes.map((n) => n.id).sort(), shared.spatialIds, 'the same nodes as over Bolt');
+          const around = await run(ifcGraph.stepFrom('neighbours', spatial.graph.nodes[0].id));
+          assert.ok(around.graph && around.graph.nodes.length >= 2, 'a step from a node through the server');
+          const joined = await run(ifcGraph.CONNECTING, { params: { ids: spatial.graph.nodes.map((n) => n.id) } });
+          assert.ok(joined.graph && joined.graph.edges.length >= 1, 'parameters reach the server');
+          const accounts = await run('MATCH (u:User) RETURN u LIMIT 5');
+          assert.ok(accounts.rows.length >= 1 && !JSON.stringify(accounts).includes('argon2'), 'the accounts without their hashes');
+          log(`graph through the server: ${models.models.length} models, ${spatial.graph.nodes.length} nodes in the spatial view`);
         } else log('graph query: the extension is off');
       } else log('admin: the server has no administration API');
       await opencde.logout(admin).catch(() => {});
@@ -597,10 +695,11 @@
       const on = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k));
       log(`capabilities: ${caps.server ? caps.server.name + ' ' + caps.server.version : '?'}; extensions on: ${on.join(', ')}; scopes ${caps.scopes.join(' ')}; max upload ${caps.limits.max_upload_bytes}`);
       assert.ok(caps.apis && caps.apis.bcf, 'the document names the BCF API');
+      if (caps.bcfVersions) assert.deepEqual(opencde.bcfVersionsOf({ family: {} }, caps), ['3.0', '2.1'], 'and which versions');
       assert.ok(on.includes('dynamic_client_registration'), 'registration is on in the dev stack');
     }
     // A missing topic: the server answers 404 with a code when it has codes, a plain message otherwise.
-    const err = await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/00000000-0000-4000-8000-000000000000`).catch((e) => e);
+    const err = await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/00000000-0000-4000-8000-000000000000`).catch((e) => e);
     assert.ok(err instanceof Error && err.status === 404, 'a 404 for an unknown topic: ' + (err && err.status));
     log(`error code for an unknown topic: ${err.code || '(none)'}; message shown: ${err.message}`);
     if (err.code) assert.ok(err.message.includes(t('opencde.err.code.' + err.code)) || err.code === 'not_found', 'translated');
@@ -608,7 +707,7 @@
   }, 30000);
 
   test('opencde live: cleanup', async (assert) => {
-    for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `/bcf/3.0/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));
+    for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));
     const left = await opencde.fetchTopics(shared.connector, shared.projectId);
     log(`topics left in the project: ${left.rows.length}`);
     await opencde.logout(shared.connector);

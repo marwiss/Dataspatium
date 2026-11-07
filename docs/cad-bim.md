@@ -47,6 +47,8 @@ till panelen. Verktyget *Ärenden* i Analyseras flik Mängder räknar ärenden, 
 prioritet, ansvarig, byggdelstyp eller våning ur en sådan tabell, och SQL-startkoden får frågor för kopplingen. *Spara som
 diagram* sparar vyn med färgerna som ett modelldiagram, som dashboards, dokument och Publicera visar med teckenförklaring.
 
+Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-graf* tar dig dit, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+
 Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/ifcgraph.md).
 
 ## Tabellerna

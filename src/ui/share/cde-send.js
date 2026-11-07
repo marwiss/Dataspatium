@@ -151,11 +151,14 @@
             if (!formats.some((f) => f.id === s.format)) s.format = formats[0] ? formats[0].id : '';
             format.value = s.format;
             format.addEventListener('change', () => { s.format = format.value; });
+            // A server of BCF API 2.1 alone has no Documents API, so a file goes as a BCF document or not at all.
+            const documents = opencde.hasDocuments(s.connector);
+            if (!documents) s.how = 'bcf';
             const how = /** @type {any} */ (h('dm-select', { label: t('cde.send.how') }));
-            how.options = [{ value: 'documents', label: t('cde.send.how.documents') }, { value: 'bcf', label: t('cde.send.how.bcf') }];
+            how.options = (documents ? [{ value: 'documents', label: t('cde.send.how.documents') }] : []).concat([{ value: 'bcf', label: t('cde.send.how.bcf') }]);
             how.value = s.how;
             how.addEventListener('change', () => { s.how = how.value; render(); });
-            const own = d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
+            const own = documents && d.source && d.source.cde && d.source.cde.documentId && d.source.cde.connectorId === s.connector.id ? d.source.cde : null;
             progressEl = h('div', { 'data-cde-progress': '' });
             nodes.push(what, s.what === 'dataset' ? format : null, s.what === 'bundle' ? h('p', { class: 'dm-help dm-small', text: t('cde.send.what.bundle.hint') }) : null, how,
               h('p', { class: 'dm-help dm-small', text: t(s.how === 'bcf' ? 'cde.send.how.bcf.hint' : 'cde.send.how.documents.hint') }),

@@ -26,7 +26,7 @@
         const el = h('div', { class: 'dm-stack dm-api-view' });
         const resultEl = h('div', { class: 'dm-stack' });
         const progressEl = h('div');
-        const api = { ctx, connector, runFetch, log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
+        const api = { ctx, connector, runFetch, refreshRight: () => renderRight(), log: (m, k) => shell.log(m, k), onConnector: (c) => { if (hooks.onConnector) hooks.onConnector(c); }, onDataset: (m) => { if (hooks.onDataset) hooks.onDataset(m); } };
         const authUi = auth.needsCredentials(connector) ? authPanel.create(connector) : null;
         const family = connector.family && connector.family.type;
         const isGeodata = family === 'geodata';
@@ -193,6 +193,7 @@
           http.getProxy().then((p) => { proxyInput.value = p; });
           proxyInput.addEventListener('change', async () => { await http.setProxy(proxyInput.value); overlays.toast.show(t('api.proxy.saved'), { kind: 'ok' }); });
           replace(rightEl,
+            browser && typeof browser.inspector === 'function' ? browser.inspector() : null,
             h('h4', { text: t('api.info') }), kv,
             connector.notes ? h('p', { class: 'dm-help', text: connector.notes }) : null,
             h('h4', { text: t('api.requests') }), reqs,
@@ -201,7 +202,7 @@
         }
 
         function start() { render(); if (browser) browser.start(); }
-        function destroy() { if (abort) abort.abort(); if (authUi) authUi.destroy(); }
+        function destroy() { if (abort) abort.abort(); if (authUi) authUi.destroy(); if (browser && typeof browser.destroy === 'function') browser.destroy(); }
         return { el, start, destroy, renderRight, state };
       }
       return { create };

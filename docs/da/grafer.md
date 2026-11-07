@@ -117,7 +117,56 @@ en egen server), database, brugernavn og adgangskode (gemmes aldrig i klartekst)
 forbinder med Neo4j's driver over WebSocket efter dit samtykke (formålet Neo4j) og viser resultatet som tabel, hvor
 knuder og relationer fladgøres til deres egenskaber. Indeholder svaret knuder og relationer, gemmer **Gem som graf** dem
 som et grafdatasæt; ellers *Gem som datasæt*. **Gem forespørgslen** lægger forespørgslen på kilden, så den kan køres igen
-med ét klik. Bolt over WebSocket er ikke omfattet af CORS; en egen server uden TLS (`bolt://`) nås kun fra en side over http://.
+med ét klik. Bolt over WebSocket er ikke omfattet af CORS; en egen server uden TLS (`bolt://`) nås kun fra en side over http://. Indeholder svaret knuder, tegnes de også som en graf.
+
+## IFC-grafen på en Kontroll-server
+
+Kontroll gør hver uploadet IFC-fil til en graf: én knude per entitet, med klassen og alle dens overklasser som etiketter og
+IFC-attributterne som egenskaber, og relationer, der hedder som attributterne (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
+`HAS_PROPERTIES`). Grafen ligger på serveren og kan være langt større, end det er rimeligt at hente hjem. Derfor tegnes og
+forespørges den direkte fra *Hent*, og intet gemmes, før du beder om det.
+
+Der er to veje til grafen, og begge giver samme visning:
+
+- **Kortet IFC-graf i OpenCDE-kilden.** Forespørgslerne går gennem serverens læsende grafforespørgsel, som kræver, at du logger
+  ind som administrator, og at serveren har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det er vejen i drift: ingen databaseport behøver
+  at være åben, serveren sætter grænser for rækker og tid, fjerner lagrede hashværdier og logger hver forespørgsel.
+- **En Neo4j-kilde.** Bolt med databasens adresse, brugernavn og adgangskode, for eksempel `bolt://127.0.0.1:7697` på en
+  udviklingsstak. Bolt giver adgang til hele databasen, så appen læser altid i en læsesession og fjerner lagrede hashværdier fra
+  svarene. I drift er Bolt lukket, medmindre den, der driver serveren, har åbnet det; så viser kortet adressen.
+
+**Vis modeller** viser modellerne i grafen, den nyeste version af hvert dokument først. Vælg en model og en visning:
+
+| Visning | Viser |
+|---|---|
+| Rumlig struktur | Projekt, grund, bygning og etager, med relationerne mellem dem |
+| Bygningsdele per etage | Hvilke bygningsdele hver etage indeholder |
+| Bygningsdele og typer | Bygningsdelene og deres typer |
+| Bygningsdele og materialer | Bygningsdelene og deres materialer |
+| Egenskaber og mængder | Bygningsdelenes egenskabssæt og mængder |
+| Sager og bygningsdele | BCF-sager, deres viewpoints og komponenter, og de bygningsdele, de peger på |
+| Hele modellen | Op til 1.000 relationer i modellen |
+| Antal per klasse | En tabel med antallet af entiteter per klasse |
+
+Svaret tegnes med Cytoscape, med tabellen nedenunder. Knuderne farves efter, hvad de er: rumlig struktur, bygningsdel, relation,
+type, egenskab eller mængde, materiale og øvrigt. Layout og etiketter ændres uden at spørge serveren.
+
+Klik på en knude, så viser inspektøren dens attributter. **Naboer**, eller et dobbeltklik på knuden, henter naboerne fra serveren
+og føjer dem til billedet. En bygningsdel har også **Egenskaber**, **Sager** og **Vis i modellen**, som åbner bygningsdelen i 3D,
+hvis modellen findes i arbejdsområdet.
+
+I feltet skriver du din egen Cypher, alt hvad serveren forstår, men kun læsende. Spørger du kun efter knuder (`RETURN c, w`), henter
+appen også relationerne mellem dem, som Neo4j Browser gør. Appen siger til, når et svar har nået forespørgslens `LIMIT` eller er
+klippet, og læsningen stopper ved 20.000 rækker. Svar med mere end 1.500 knuder tegnes ikke her, men kan gemmes og åbnes som oversigt
+i Bearbejd.
+
+**Gem som graf** gør det, du ser, til et almindeligt grafdatasæt: grafvisningen i Bearbejd, fanerne Cypher og Graf i Analysér og
+grafdiagrammer i Visualisér. Klassen bliver knudens etiket, og alle etiketter følger med, så `MATCH (w:IfcWall)` også finder en
+`IfcWallStandardCase` i kopien. I fanen Cypher kan du slå **Kør på serveren** til for en graf, der er gemt herfra, og så svarer serveren
+med al Cypher mod hele grafen i stedet for delmængden mod kopien.
+
+En IFC-model hentet fra Kontroll har knappen **IFC-graf** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
+Hent, i en Neo4j-kilde på samme computer, hvis der er en, ellers i OpenCDE-kilden.
 
 ## Flere værktøjer i fanen Graf
 
@@ -138,6 +187,7 @@ batchkørsler og dokumentskabeloner som andre diagrammer.
 
 ## Begrænsninger
 
-- Cypher mangler `WITH`, `UNWIND` og `shortestPath`; Neo4j-kilden er læsende (skrivning sker i appens egne grafer).- Oversigten med udfoldelige grupper gælder grafer op til 5.000 elementer; større grafer vises som grupper med antal og
+- Cypher mangler `WITH`, `UNWIND` og `shortestPath` i den lokale delmængde (*Kør på serveren* har dem for en graf fra en server); Neo4j-kilden er læsende (skrivning sker i appens egne grafer).
+- Oversigten med udfoldelige grupper gælder grafer op til 5.000 elementer; større grafer vises som grupper med antal og
   i fokus- og helgrafvisningen.
 - Egenskaber gemmes som JSON-tekst; tal sammenlignes som tal i Cypher, men sorteres som tekst i knudetabellen.

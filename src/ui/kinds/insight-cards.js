@@ -129,7 +129,8 @@
           kv,
           h('div', { class: 'dm-row-wrap' },
             cde.documentId ? ui.button({ label: t('cde.check'), icon: 'refresh-cw', size: 'sm', loading: state.checking, title: t('cde.check.hint'), 'data-cde-check': '', onClick: check }) : null,
-            ds.kind === 'model' ? ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('cde.issues.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); ctx.shell.activate('bearbeta'); } }) : null),
+            ds.kind === 'model' ? ui.button({ label: t('issues.title'), icon: 'message-square', size: 'sm', title: t('cde.issues.hint'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); ctx.shell.activate('bearbeta'); } }) : null,
+            ds.kind === 'model' && !D.require('data/model').isDxf(ds) ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
           r && r.newer ? h('div', { class: 'dm-row-wrap', 'data-cde-newer': '' }, h('span', { class: 'dm-warn', text: t('cde.newer', { have: String(r.have), latest: String(r.version.version_index) }) }), ui.button({ label: t('cde.fetch.version', { n: String(r.version.version_number || r.version.version_index) }), icon: 'download', size: 'sm', variant: 'primary', loading: state.fetching, onClick: fetchNew })) : null,
           r && !r.newer && r.version ? h('p', { class: 'dm-help dm-small', 'data-cde-current': '', text: t('cde.current') }) : null,
           state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null);

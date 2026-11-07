@@ -124,6 +124,14 @@ filer hentes og importeres, som om du havde sluppet dem i appen, så en IFC-mode
 findes kun i sessionen og eksporteres aldrig med kilden. Forbindelsen kræver samtykke (formålet OpenCDE-server), og
 serveren skal tillade kald fra browseren (CORS).
 
+Appen taler BCF API 3.0 og 2.1. Den vælger den nyeste version, serveren tilbyder, og en server med kun 2.1 virker også: sådan en mangler ofte
+Foundation API og Documents API, så appen læser versionen fra `/bcf/versions` og loginadresserne fra `/bcf/2.1/auth` og udelader *Hent dokumenter*.
+Under *Flere indstillinger* i dialogen kan du selv vælge version, og tilbyder serveren flere, kan du skifte i kildens visning. I 2.1 viser *Filer i projektet*
+kun BCF-dokumenterne, sager har ikke serverens løbenummer, og et viewpoint kan ikke slettes. Til gengæld kan en kommentar være svar på en anden: knappen
+*Svar* i panelet *Sager*.
+
+Kortet *IFC-graf* vises, når serveren har en graf, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+
 Under *Filer i projektet* viser kilden de modeller og dokumenter, serveren har for projektet. *Hent* laver et datasæt af
 filens egen slags, så en IFC-fil bliver en model og en CSV-fil en tabel, og datasættet husker, hvilken server, hvilket
 projekt og hvilken version det kom fra. I Håndter viser kortet *Fra CDE* dette, og *Søg ny version* spørger serveren, om

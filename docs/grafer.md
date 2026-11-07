@@ -118,7 +118,55 @@ eller en egen server), databas, användarnamn och lösenord (sparas aldrig i kla
 tabell där noder och relationer plattas ut till sina egenskaper. Innehåller svaret noder och relationer sparar **Spara som
 graf** dem som en grafdatamängd; annars *Spara som datamängd*. **Spara frågan** lägger frågan på källan så att den kan
 köras igen med ett klick. Bolt över WebSocket omfattas inte av CORS; en egen server utan TLS (`bolt://`) nås bara från
-en sida över http://.
+en sida över http://. Innehåller svaret noder ritas de också som en graf.
+
+## IFC-grafen på en Kontroll-server
+
+Kontroll gör varje uppladdad IFC-fil till en graf: en nod per entitet, med klassen och alla dess överklasser som etiketter och
+IFC-attributen som egenskaper, och relationer som heter som attributen (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
+Grafen finns på servern och kan vara mycket större än vad som är rimligt att hämta hem. Därför ritas och frågas den direkt från
+*Inhämta*, och inget sparas förrän du ber om det.
+
+Det finns två vägar till grafen, och båda ger samma vy:
+
+- **Kortet IFC-graf i OpenCDE-källan.** Frågorna går genom serverns läsande graffråga, som kräver att du loggar in som
+  administratör och att servern har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det är vägen i drift: ingen databasport behöver vara
+  öppen, servern sätter tak för rader och tid, tar bort lagrade hashvärden och loggar varje fråga.
+- **En Neo4j-källa.** Bolt med databasens adress, användarnamn och lösenord, till exempel `bolt://127.0.0.1:7697` på en
+  utvecklingsstack. Bolt ger tillgång till hela databasen, så appen läser alltid i en lässession och tar bort lagrade hashvärden
+  ur svaren. I drift är Bolt stängt om inte den som driver servern har öppnat det; då visar kortet adressen.
+
+**Visa modeller** listar modellerna i grafen, den senaste versionen av varje dokument först. Välj en modell och en vy:
+
+| Vy | Visar |
+|---|---|
+| Rumslig struktur | Projekt, tomt, byggnad och våningar, med relationerna mellan dem |
+| Byggdelar per våning | Vilka byggdelar varje våning innehåller |
+| Byggdelar och typer | Byggdelarna och deras typer |
+| Byggdelar och material | Byggdelarna och deras material |
+| Egenskaper och mängder | Byggdelarnas egenskapsuppsättningar och mängder |
+| Ärenden och byggdelar | BCF-ärenden, deras viewpoints och komponenter, och de byggdelar de pekar på |
+| Hela modellen | Upp till 1 000 relationer i modellen |
+| Antal per klass | En tabell med antalet entiteter per klass |
+
+Svaret ritas med Cytoscape, med tabellen under. Noderna färgas efter vad de är: rumslig struktur, byggdel, relation, typ,
+egenskap eller mängd, material och övrigt. Layout och etiketter ändras utan att servern tillfrågas.
+
+Klicka på en nod så visar inspektören dess attribut. **Grannar**, eller ett dubbelklick på noden, hämtar grannarna från servern
+och lägger till dem i bilden. På en byggdel finns också **Egenskaper**, **Ärenden** och **Visa i modellen**, som öppnar byggdelen
+i 3D om modellen finns i arbetsytan.
+
+I rutan skriver du egen Cypher, allt som servern förstår, men bara läsande. Frågar du bara efter noder (`RETURN c, w`) hämtar
+appen också relationerna mellan dem, som Neo4j Browser gör. Appen säger till när ett svar nått frågans `LIMIT` eller klippts, och
+läsningen avbryts vid 20 000 rader. Svar med mer än 1 500 noder ritas inte här, men kan sparas och öppnas som översikt i Bearbeta.
+
+**Spara som graf** gör det du ser till en vanlig grafdatamängd: grafvyn i Bearbeta, flikarna Cypher och Graf i Analysera och
+grafdiagram i Visualisera. Klassen blir nodens etikett och alla etiketter följer med, så `MATCH (w:IfcWall)` hittar också en
+`IfcWallStandardCase` i kopian. I fliken Cypher kan du slå på **Kör på servern** för en graf som sparats härifrån, och då svarar
+servern med all Cypher mot hela grafen i stället för delmängden mot kopian.
+
+En IFC-modell som hämtats från Kontroll har knappen **IFC-graf** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
+modellens graf i Inhämta, i en Neo4j-källa på samma dator om det finns någon, annars i OpenCDE-källan.
 
 ## Fler verktyg i fliken Graf
 
@@ -139,6 +187,7 @@ batchkörningar och dokumentmallar som andra diagram.
 
 ## Begränsningar
 
-- Cypher saknar `WITH`, `UNWIND` och `shortestPath`; Neo4j-källan är läsande (skrivning sker i appens egna grafer).- Översikten med utfällbara grupper gäller grafer upp till 5 000 element; större grafer visas som grupper med antal och
+- Cypher saknar `WITH`, `UNWIND` och `shortestPath` i den egna delmängden (*Kör på servern* har dem för en graf från en server); Neo4j-källan är läsande (skrivning sker i appens egna grafer).
+- Översikten med utfällbara grupper gäller grafer upp till 5 000 element; större grafer visas som grupper med antal och
   i fokus- och helgrafsvisningen.
 - Egenskaper lagras som JSON-text; tal jämförs som tal i Cypher, men sorteras som text i nodtabellen.

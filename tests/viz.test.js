@@ -256,7 +256,7 @@
       assert.equal(saved.kind, 'vega'); assert.equal(saved.vega.state.type, 'line'); assert.ok(saved.thumbnail, 'thumbnail stored');
       /** @type {HTMLElement} */ (Array.from(root.querySelectorAll('.dm-left .dm-list-item')).find((b) => b.textContent.includes(t('viz.gallery')))).click();
       await waitFor(() => root.querySelector('.dm-gallery-card'), 5000, 'gallery cards');
-      assert.ok(Array.from(root.querySelectorAll('.dm-gallery-card')).some((c) => c.textContent.includes('UI-diagram')), 'chart in gallery');
+      await waitFor(() => Array.from(root.querySelectorAll('.dm-gallery-card')).some((c) => c.textContent.includes('UI-diagram')), 5000, 'chart in gallery');
       shell.activate('exportera');
       await waitFor(() => root.querySelectorAll('dm-tabs [role="tab"]').length === 3, 5000, 'export tabs');
       /** @type {HTMLElement} */ (root.querySelectorAll('dm-tabs [role="tab"]')[1]).click();

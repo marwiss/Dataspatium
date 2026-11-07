@@ -118,7 +118,55 @@ eller ein eigen tenar), database, brukarnamn og passord (blir aldri lagra i klar
 der nodar og relasjonar blir flata ut til eigenskapane sine. Inneheld svaret nodar og relasjonar, lagrar **Lagre som graf**
 dei som eit grafdatasett; elles *Lagre som datasett*. **Lagre spørjinga** legg spørjinga på kjelda slik at ho kan
 køyrast igjen med eitt klikk. Bolt over WebSocket er ikkje omfatta av CORS; ein eigen tenar utan TLS (`bolt://`) blir berre nådd frå
-ei side over http://.
+ei side over http://. Inneheld svaret nodar, blir dei òg teikna som ein graf.
+
+## IFC-grafen på ein Kontroll-tenar
+
+Kontroll gjer kvar opplasta IFC-fil til ein graf: éin node per entitet, med klassen og alle overklassene hennar som etikettar og
+IFC-attributta som eigenskapar, og relasjonar som heiter som attributta (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
+Grafen ligg på tenaren og kan vere langt større enn det er rimeleg å hente heim. Difor blir han teikna og spurd direkte frå *Hent*,
+og ingenting blir lagra før du ber om det.
+
+Det finst to vegar til grafen, og begge gir same vising:
+
+- **Kortet IFC-graf i OpenCDE-kjelda.** Spørjingane går gjennom den lesande grafspørjinga til tenaren, som krev at du loggar inn
+  som administrator, og at tenaren har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det er vegen i drift: ingen databaseport må vere open,
+  tenaren set grenser for rader og tid, fjernar lagra hashverdiar og loggar kvar spørjing.
+- **Ei Neo4j-kjelde.** Bolt med adressa, brukarnamnet og passordet til databasen, til dømes `bolt://127.0.0.1:7697` på ein
+  utviklingsstabel. Bolt gir tilgang til heile databasen, så appen les alltid i ei lesesesjon og fjernar lagra hashverdiar frå
+  svara. I drift er Bolt stengd med mindre den som driv tenaren, har opna det; då viser kortet adressa.
+
+**Vis modellar** viser modellane i grafen, den nyaste versjonen av kvart dokument først. Vel ein modell og ei vising:
+
+| Vising | Viser |
+|---|---|
+| Romleg struktur | Prosjekt, tomt, bygning og etasjar, med relasjonane mellom dei |
+| Bygningsdelar per etasje | Kva bygningsdelar kvar etasje inneheld |
+| Bygningsdelar og typar | Bygningsdelane og typane deira |
+| Bygningsdelar og material | Bygningsdelane og materiala deira |
+| Eigenskapar og mengder | Eigenskapssetta og mengdene til bygningsdelane |
+| Saker og bygningsdelar | BCF-saker, viewpointa og komponentane deira, og bygningsdelane dei peikar på |
+| Heile modellen | Opptil 1 000 relasjonar i modellen |
+| Tal per klasse | Ein tabell med talet på entitetar per klasse |
+
+Svaret blir teikna med Cytoscape, med tabellen under. Nodane blir farga etter kva dei er: romleg struktur, bygningsdel, relasjon,
+type, eigenskap eller mengd, materiale og anna. Layout og etikettar blir endra utan å spørje tenaren.
+
+Klikk på ein node, så viser inspektøren attributta. **Naboar**, eller eit dobbeltklikk på noden, hentar naboane frå tenaren og legg
+dei til i biletet. Ein bygningsdel har òg **Eigenskapar**, **Saker** og **Vis i modellen**, som opnar bygningsdelen i 3D viss modellen
+finst i arbeidsområdet.
+
+I feltet skriv du din eigen Cypher, alt tenaren forstår, men berre lesande. Spør du berre etter nodar (`RETURN c, w`), hentar appen òg
+relasjonane mellom dei, slik Neo4j Browser gjer. Appen seier frå når eit svar har nådd `LIMIT` i spørjinga eller er klipt, og lesinga
+stoppar ved 20 000 rader. Svar med meir enn 1 500 nodar blir ikkje teikna her, men kan lagrast og opnast som oversikt i Bearbeid.
+
+**Lagre som graf** gjer det du ser, til eit vanleg grafdatasett: grafvisinga i Bearbeid, fanene Cypher og Graf i Analyser og grafdiagram
+i Visualiser. Klassen blir etiketten til noden og alle etikettar følgjer med, så `MATCH (w:IfcWall)` òg finn ein `IfcWallStandardCase`
+i kopien. I fana Cypher kan du slå på **Køyr på tenaren** for ein graf som er lagra herfrå, og då svarer tenaren med all Cypher mot heile
+grafen i staden for delmengda mot kopien.
+
+Ein IFC-modell henta frå Kontroll har knappen **IFC-graf** i Handter, og for ein vald bygningsdel i Bearbeid. Han opnar grafen til
+modellen i Hent, i ei Neo4j-kjelde på same datamaskin viss det finst ei, elles i OpenCDE-kjelda.
 
 ## Fleire verktøy i fana Graf
 
@@ -139,7 +187,7 @@ og dokumentmalar som andre diagram.
 
 ## Avgrensingar
 
-- Cypher manglar `WITH`, `UNWIND` og `shortestPath`; Neo4j-kjelda er lesande (skriving skjer i dei eigne grafane til appen).
+- Cypher manglar `WITH`, `UNWIND` og `shortestPath` i den lokale delmengda (*Køyr på tenaren* har dei for ein graf frå ein tenar); Neo4j-kjelda er lesande (skriving skjer i dei eigne grafane til appen).
 - Oversynet med utfaldbare grupper gjeld grafar opptil 5 000 element; større grafar blir viste som grupper med tal og
   i fokus- og heilgrafvisinga.
 - Eigenskapar blir lagra som JSON-tekst; tal blir samanlikna som tal i Cypher, men sorterte som tekst i nodetabellen.

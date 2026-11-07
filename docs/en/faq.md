@@ -256,6 +256,15 @@ and a click shows headers, an explanation and a curl line to copy. The log lives
 computer unless you save it as JSON or a dataset yourself. See [kallor.md](kallor.md).
 
 
+## Can I see a model's IFC graph and query it with Cypher?
+
+Yes, if the model is on a Kontroll server. Open the source in Import, the card *IFC graph* or a Neo4j source, and choose a model and a view.
+Nodes and relationships are drawn, you fetch neighbours with a double click and write your own Cypher in the box. See [grafer.md](grafer.md).
+
+## Does the app work with a server that has only BCF API 2.1?
+
+Yes. The app chooses the newest version the server offers and does without the Foundation API, so you add the server as usual. See [kallor.md](kallor.md).
+
 ## Can't find the answer here?
 
 Read [anvandarguide.md](anvandarguide.md) or open an issue on GitHub (see

@@ -121,7 +121,54 @@ Auralle tai oma palvelin), tietokanta, käyttäjätunnus ja salasana (ei koskaan
 jossa solmut ja suhteet on litistetty ominaisuuksiinsa. Jos vastaus sisältää solmuja ja suhteita, **Tallenna verkkona**
 tallentaa ne verkkoaineistona; muuten *Tallenna aineistona*. **Tallenna kysely** vie kyselyn lähteelle, jotta sen voi ajaa
 uudelleen yhdellä napsautuksella. Bolt WebSocketin yli ei kuulu CORS:n piiriin; oma palvelin ilman TLS:ää (`bolt://`)
-tavoitetaan vain http://-sivulta.
+tavoitetaan vain http://-sivulta. Jos vastaus sisältää solmuja, ne piirretään myös verkkona.
+
+## IFC-verkko Kontroll-palvelimella
+
+Kontroll tekee jokaisesta ladatusta IFC-tiedostosta verkon: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
+IFC-attribuutit ominaisuuksina, ja suhteet on nimetty attribuuttien mukaan (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
+Verkko on palvelimella ja voi olla paljon suurempi kuin on järkevää hakea. Siksi se piirretään ja siihen tehdään kyselyjä suoraan
+kohdasta *Nouda*, eikä mitään tallenneta ennen kuin pyydät.
+
+Verkkoon on kaksi tietä, ja molemmat antavat saman näkymän:
+
+- **Kortti IFC-verkko OpenCDE-lähteessä.** Kyselyt kulkevat palvelimen lukevan verkkokyselyn kautta, mikä edellyttää, että kirjaudut
+  järjestelmänvalvojana ja että palvelimella on `OPENCDE_GRAPH_QUERY_ENABLED=true`. Tämä on tuotannon tie: tietokantaporttia ei tarvitse
+  avata, palvelin rajaa rivit ja ajan, poistaa tallennetut tiivisteet ja kirjaa jokaisen kyselyn.
+- **Neo4j-lähde.** Bolt tietokannan osoitteella, käyttäjätunnuksella ja salasanalla, esimerkiksi `bolt://127.0.0.1:7697` kehitysympäristössä.
+  Bolt antaa pääsyn koko tietokantaan, joten sovellus lukee aina lukuistunnossa ja poistaa tallennetut tiivisteet vastauksista. Tuotannossa
+  Bolt on suljettu, ellei palvelimen ylläpitäjä ole avannut sitä; silloin kortti näyttää osoitteen.
+
+**Näytä mallit** luettelee verkon mallit, kunkin asiakirjan uusin versio ensin. Valitse malli ja näkymä:
+
+| Näkymä | Näyttää |
+|---|---|
+| Tilarakenne | Projektin, tontin, rakennuksen ja kerrokset sekä niiden väliset suhteet |
+| Rakennusosat kerroksittain | Mitä rakennusosia kukin kerros sisältää |
+| Rakennusosat ja tyypit | Rakennusosat ja niiden tyypit |
+| Rakennusosat ja materiaalit | Rakennusosat ja niiden materiaalit |
+| Ominaisuudet ja määrät | Rakennusosien ominaisuusjoukot ja määrät |
+| Asiat ja rakennusosat | BCF-asiat, niiden viewpointit ja komponentit sekä rakennusosat, joihin ne viittaavat |
+| Koko malli | Enintään 1 000 suhdetta mallissa |
+| Määrä luokittain | Taulukko entiteettien määrästä luokittain |
+
+Vastaus piirretään Cytoscapella, ja taulukko on sen alla. Solmut väritetään sen mukaan, mitä ne ovat: tilarakenne, rakennusosa, suhde,
+tyyppi, ominaisuus tai määrä, materiaali ja muu. Asettelu ja tunnisteet muuttuvat kysymättä palvelimelta.
+
+Napsauta solmua, niin tarkastin näyttää sen attribuutit. **Naapurit** tai solmun kaksoisnapsautus hakee naapurit palvelimelta ja lisää ne
+kuvaan. Rakennusosalla on myös **Ominaisuudet**, **Asiat** ja **Näytä mallissa**, joka avaa rakennusosan 3D:ssä, jos malli on työtilassa.
+
+Kenttään kirjoitat oman Cypherin, kaiken mitä palvelin ymmärtää, mutta vain lukevana. Jos kysyt vain solmuja (`RETURN c, w`), sovellus hakee
+myös niiden väliset suhteet, kuten Neo4j Browser. Sovellus kertoo, kun vastaus on saavuttanut kyselyn `LIMIT`-rajan tai katkaistu, ja lukeminen
+pysähtyy 20 000 riviin. Yli 1 500 solmun vastauksia ei piirretä tässä, mutta ne voi tallentaa ja avata yleiskuvana kohdassa Muokkaa.
+
+**Tallenna verkkona** tekee näkemästäsi tavallisen verkkodatamäärän: verkkonäkymä kohdassa Muokkaa, välilehdet Cypher ja Verkko kohdassa
+Analysoi ja verkkokaaviot kohdassa Visualisoi. Luokasta tulee solmun tunniste ja kaikki tunnisteet säilyvät, joten `MATCH (w:IfcWall)` löytää
+kopiosta myös `IfcWallStandardCase`-solmun. Cypher-välilehdellä voit kytkeä päälle **Aja palvelimella** täältä tallennetulle verkolle, ja silloin
+palvelin vastaa kaikella Cypherillä koko verkkoon eikä osajoukolla kopioon.
+
+Kontrollista haetulla IFC-mallilla on painike **IFC-verkko** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
+kohdassa Nouda, saman koneen Neo4j-lähteessä, jos sellainen on, muuten OpenCDE-lähteessä.
 
 ## Lisää työkaluja Verkko-välilehdellä
 
@@ -142,6 +189,7 @@ upotettuna SVG:nä sekä eräajoissa ja asiakirjamalleissa kuten muut kaaviot.
 
 ## Rajoitukset
 
-- Cypheristä puuttuvat `WITH`, `UNWIND` ja `shortestPath`; Neo4j-lähde on vain lukeva (kirjoitus tapahtuu sovelluksen omissa verkoissa).- Avattavien ryhmien yleiskuva koskee enintään 5 000 elementin verkkoja; suuremmat verkot näytetään ryhminä lukumäärineen
+- Cypheristä puuttuvat `WITH`, `UNWIND` ja `shortestPath` paikallisessa osajoukossa (*Aja palvelimella* sisältää ne palvelimelta tulleelle verkolle); Neo4j-lähde on vain lukeva (kirjoitus tapahtuu sovelluksen omissa verkoissa).
+- Avattavien ryhmien yleiskuva koskee enintään 5 000 elementin verkkoja; suuremmat verkot näytetään ryhminä lukumäärineen
   sekä keskitys- ja koko verkko -näkymissä.
 - Ominaisuudet tallennetaan JSON-tekstinä; luvut vertaillaan lukuina Cypherissä mutta lajitellaan tekstinä solmutaulukossa.

@@ -154,7 +154,9 @@ Cypher og loggar kvart kall med same X-Request-Id som tenaren skriv i førespurn
 andre OpenCDE-klientar fungerer òg. Tenaren trengst ikkje for resten av appen: utan tenar fungerer alt anna som før. Kontrolls README og `docs/client-guide.md` skildrar samarbeidet frå tenaren si side;
 her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.6.0 fungerer med Kontroll 2.6.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
+Appen snakkar BCF API 3.0 og 2.1, så han også koplar seg til tenarar som berre har 2.1, og han teiknar og spør IFC-grafen til tenaren direkte frå Hent.
+
+Dataspatium 2.7.0 fungerer med Kontroll 2.7.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
 [snabbstart.md](snabbstart.md) tek paret frå ingenting til ei sak på tjue minutt.
 
 ## Lær meir

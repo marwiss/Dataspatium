@@ -46,19 +46,29 @@
         sel.options = list().map((f) => ({ value: f.id, label: f.name }));
         sel.value = fam.id;
         sel.addEventListener('change', () => { state.family = sel.value; state.values = {}; state.error = ''; render(); });
-        const fields = fam.fields.map((f) => {
+        const fieldEl = (f) => {
+          if (f.type === 'select') {
+            const choice = /** @type {any} */ (h('dm-select', { label: t('families.field.' + f.name), 'data-family-field': f.name }));
+            choice.options = f.options.map((o) => ({ value: o.value, label: o.labelKey ? t(o.labelKey) : o.label }));
+            choice.value = state.values[f.name] || f.options[0].value;
+            choice.addEventListener('change', () => { state.values[f.name] = choice.value; });
+            return choice;
+          }
           const inp = /** @type {any} */ (h('dm-input', { label: t('families.field.' + f.name), type: f.type === 'secret' ? 'password' : 'text', placeholder: f.placeholder || '' }));
           inp.value = state.values[f.name] || '';
           inp.addEventListener('input', () => { state.values[f.name] = inp.value; });
           inp.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter') create(); });
           return inp;
-        });
+        };
+        const fields = fam.fields.filter((f) => !f.advanced).map(fieldEl);
+        const advanced = fam.fields.filter((f) => f.advanced).map(fieldEl);
         replace(body,
           group === 'geodata' ? readyServices() : null,
           group === 'geodata' ? h('h3', { class: 'dm-small', text: t('geodata.own.title') }) : null,
           sel,
           h('p', { class: 'dm-help', text: t('families.' + fam.id + '.desc') }),
           h('div', { class: 'dm-form-grid' }, fields),
+          advanced.length ? h('details', { class: 'dm-more' }, h('summary', { text: t('common.more') }), h('div', { class: 'dm-form-grid' }, advanced)) : null,
           h('p', { class: 'dm-help' }, h('strong', { text: t('families.cors.title') + ' ' }), t('families.' + fam.id + '.cors'), fam.docs ? [' ', h('a', { href: fam.docs, target: '_blank', rel: 'noopener', text: t('families.docs') })] : null),
           h('p', { class: 'dm-help', text: t('families.secrets.hint') }),
           state.error ? h('p', { class: 'dm-error', text: state.error }) : null,
@@ -106,7 +116,7 @@
         } catch (err) { state.adding = ''; state.error = (err && err.message) || String(err); render(); }
       }
       function announce(res) {
-        const msg = t('families.created', { name: res.connector.name, n: res.entities.length });
+        const msg = res.entities.length ? t('families.created', { name: res.connector.name, n: res.entities.length }) : t('families.created.plain', { name: res.connector.name });
         if (ctx && ctx.shell) ctx.shell.log(msg, 'ok');
         overlays.toast.show(msg, { kind: 'ok' });
         if (res.discoveryError) {
@@ -126,7 +136,7 @@
             const opencde = D.require('api/families/opencde');
             const redirect = opencde.redirectUri();
             if (!redirect) throw new Error(t('families.err.register.file'));
-            const reg = await opencde.register(state.values.baseUrl, { redirectUri: redirect });
+            const reg = await opencde.register(state.values.baseUrl, { redirectUri: redirect, bcfVersion: state.values.bcfVersion });
             state.values = Object.assign({}, state.values, { clientId: reg.clientId, clientSecret: reg.clientSecret || '' });
           }
           const res = await createFor(state.family, state.values);

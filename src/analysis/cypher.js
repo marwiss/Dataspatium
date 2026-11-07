@@ -205,6 +205,8 @@
         return `json_extract(${alias}.egenskaper, ${sqlString('$.' + name)})`;
       };
       const literalSql = (v) => (v === null ? 'null' : typeof v === 'boolean' ? (v ? '1' : '0') : addParam(v));
+      /** A node from a server keeps all its labels in the property `etiketter`: an IfcWallStandardCase is found as IfcWall too. */
+      const labelCond = (v, label) => (options.multiLabel ? `(${v.col('etikett')} = ${addParam(label)} or ${addParam(label)} in (select value from json_each(${v.props || `${v.alias}.egenskaper`}, '$.etiketter')))` : `${v.col('etikett')} = ${addParam(label)}`);
 
       // Pattern → table references and conditions. Variables already bound are reused; others get an alias.
       function bindNode(node, target) {
@@ -214,7 +216,7 @@
         if (!v) { const alias = newAlias('n'); v = { kind: 'node', alias, optional: !!target.optional, col: col(alias, 'node'), fromSql: `data as ${alias}` }; if (key) vars.set(key, v); target.items.push(v); fresh = true; }
         else if (v.kind !== 'node') throw error('cypher.err.kind', { name: key });
         if (fresh || node.labels.length || node.props) {
-          for (const l of node.labels) target.conds.push(`${v.col('etikett')} = ${addParam(l)}`);
+          for (const l of node.labels) target.conds.push(labelCond(v, l));
           for (const e of node.props || []) target.conds.push(`${v.col(e.key)} = ${exprSql(e.value, target)}`);
         }
         return v;
@@ -280,6 +282,7 @@
           joins.push(`left join (${sub}) as ${opt} on ${keys.length ? keys.map((k) => `${k.inner} = ${k.outer}`).join(' and ') : '1 = 1'}`);
           for (const it of target.items) {
             const prefix = `${opt}.${q(it.alias + '__')}`.slice(0, -1); // reuse below
+            if (it.kind === 'node') it.props = `${opt}.${q(it.alias + '__egenskaper')}`;
             it.col = (name) => {
               if (it.kind === 'node') { if (name === 'id' || name === 'etikett' || name === 'namn' || name === 'labels') return `${opt}.${q(it.alias + '__' + (name === 'labels' ? 'etikett' : name))}`; if (name === 'name') return `coalesce(json_extract(${opt}.${q(it.alias + '__egenskaper')}, '$.name'), ${opt}.${q(it.alias + '__namn')})`; return `json_extract(${opt}.${q(it.alias + '__egenskaper')}, ${sqlString('$.' + name)})`; }
               if (it.kind === 'rel') { if (['id', 'kalla', 'mal', 'typ'].includes(name) || name === 'type') return `${opt}.${q(it.alias + '__' + (name === 'type' ? 'typ' : name))}`; return `json_extract(${opt}.${q(it.alias + '__egenskaper')}, ${sqlString('$.' + name)})`; }
@@ -399,10 +402,12 @@
      * @param {string} datasetId @param {string} text @param {{params?: any, limit?: number}} [options]
      */
     async function run(datasetId, text, options = {}) {
-      const tr = translate(text, options);
+      translate(text, options); // a query that does not parse fails before the dataset is opened
       const handle = await datasets.ensureOpen(datasetId);
       if (!graph.isGraph(handle.meta)) throw error('graph.err.notgraph');
       await graph.nodes(datasetId, { limit: 1 }); // makes sure _edges exists
+      const several = await handle.engine.exec(`select 1 from data where egenskaper like '%"etiketter"%' limit 1`);
+      const tr = translate(text, Object.assign({}, options, { multiLabel: !!(several[0] && several[0].values.length) }));
       const res = await handle.engine.exec(tr.sql, tr.params);
       return { columns: res[0] ? res[0].columns : tr.columns, rows: res[0] ? res[0].values : [], sql: tr.sql, params: tr.params, info: tr.info };
     }

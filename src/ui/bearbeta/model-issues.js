@@ -14,7 +14,6 @@
   const D = globalThis.Dataspatium;
   D.define('ui/bearbeta/model-issues', ['ui/base', 'data/datasets', 'api/families/opencde', 'api/connectors', 'data/bcf-xml', 'data/issues', 'viz/charts', 'api/runner'], (base, datasets, opencde, connectors, bcfXml, issuesLogic, charts, runner) => {
     const { h, t, i18n, replace } = base;
-    const PAGE = 500;
     /** Badge colours follow what a status usually means; unknown statuses are plain. */
     const BADGE = [[/open|öppe|ny|new|active|aktiv/i, 'warn'], [/progress|pågå|under/i, 'accent'], [/resolved|löst|closed|stäng|done|klar/i, 'ok']];
     const badgeKind = (status) => { const hit = BADGE.find(([re]) => re.test(String(status || ''))); return hit ? hit[1] : undefined; };
@@ -29,7 +28,7 @@
     function create(ctx, ds, hooks) {
       const { ui, shell, services } = ctx;
       const cde = (ds.source && ds.source.cde) || {};
-      const s = { connector: null, connectors: [], projects: null, projectId: hooks.projectId || cde.projectId || '', ext: null, rights: null, topics: null, parts: new Map(), elements: new Map(), selected: null, comments: [], viewpoints: [], snapshot: '', busy: '', error: '', missing: 0, comment: '' };
+      const s = { connector: null, connectors: [], projects: null, projectId: hooks.projectId || cde.projectId || '', ext: null, rights: null, topics: null, parts: new Map(), elements: new Map(), selected: null, comments: [], viewpoints: [], snapshot: '', busy: '', error: '', missing: 0, comment: '', replyTo: '' };
       const el = h('div', { class: 'dm-stack-sm dm-model-issues', 'data-model-issues': '' });
       /** Colours by status in the 3D view, and the legend they get. */
       s.colored = false; s.legend = []; s.groups = [];
@@ -63,12 +62,7 @@
           if (!s.projectId) { s.topics = []; s.busy = ''; render(); return; }
           s.ext = await opencde.extensions(s.connector, s.projectId);
           s.rights = { project: s.ext.project_actions || [], topic: s.ext.topic_actions || [], comment: s.ext.comment_actions || [] };
-          const topics = [];
-          for (let skip = 0; ; skip += PAGE) {
-            const page = await opencde.topics(s.connector, s.projectId, { $top: PAGE, $skip: skip });
-            topics.push(...page);
-            if (page.length < PAGE || topics.length >= 20000) break;
-          }
+          const topics = await opencde.allTopics(s.connector, s.projectId);
           const table = await opencde.fetchComponents(s.connector, s.projectId, topics);
           const at = Object.fromEntries(table.columns.map((c, i) => [c, i]));
           s.parts = new Map();
@@ -115,7 +109,7 @@
       const current = () => (s.selected && s.topics ? s.topics.find((tp) => tp.guid === s.selected) : null);
 
       async function choose(tp) {
-        s.selected = tp.guid; s.comments = []; s.viewpoints = []; clearSnapshot();
+        s.selected = tp.guid; s.comments = []; s.viewpoints = []; s.replyTo = ''; clearSnapshot();
         hooks.select(elementIds(tp), true);
         render();
         try {
@@ -124,7 +118,7 @@
           s.comments = comments; s.viewpoints = viewpoints;
           const withPicture = viewpoints.find((v) => v.snapshot);
           if (withPicture) {
-            const got = await opencde.binary(s.connector, `/bcf/3.0/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(withPicture.guid)}/snapshot`, 'image/*');
+            const got = await opencde.binary(s.connector, `${opencde.bcfBase(s.connector)}/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(withPicture.guid)}/snapshot`, 'image/*');
             if (s.selected !== tp.guid || !alive) return;
             s.snapshot = URL.createObjectURL(new Blob([got.buffer], { type: got.contentType || 'image/png' }));
           }
@@ -248,8 +242,8 @@
         if (!tp || !text) return;
         s.busy = 'write'; render();
         try {
-          await opencde.createComment(s.connector, s.projectId, tp.guid, { comment: text });
-          s.comment = '';
+          await opencde.createComment(s.connector, s.projectId, tp.guid, Object.assign({ comment: text }, s.replyTo ? { reply_to_comment_guid: s.replyTo } : {}));
+          s.comment = ''; s.replyTo = '';
           s.comments = await opencde.comments(s.connector, s.projectId, tp.guid);
           shell.log(t('issues.commented', { id: tp.server_assigned_id || tp.title }), 'ok');
         } catch (err) { fail(err); }
@@ -293,7 +287,7 @@
             const [comments, viewpoints] = await Promise.all([opencde.comments(s.connector, s.projectId, tp.guid), opencde.viewpoints(s.connector, s.projectId, tp.guid)]);
             const vps = [];
             for (const vp of viewpoints) {
-              const base = `/bcf/3.0/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(vp.guid)}`;
+              const base = `${opencde.bcfBase(s.connector)}/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(vp.guid)}`;
               const [sel, col, vis] = await Promise.all([opencde.api(s.connector, base + '/selection'), opencde.api(s.connector, base + '/coloring'), opencde.api(s.connector, base + '/visibility')]);
               const full = Object.assign({}, vp, { components: { selection: (sel && sel.selection) || [], coloring: (col && col.coloring) || [], visibility: (vis && vis.visibility) || { default_visibility: true } } });
               let snapshot = null;
@@ -374,19 +368,30 @@
         if (chosen) parts.push(detail(chosen));
         replace(el, ...parts);
       }
+      /** One comment: who and when, whom it answers, the text, and in BCF API 2.1 the way to answer it. */
+      function commentItem(c, canAnswer) {
+        const answered = c.reply_to_comment_guid ? s.comments.find((x) => x.guid === c.reply_to_comment_guid) : null;
+        return h('li', { class: 'dm-small', 'data-issue-comment-item': c.guid || '' },
+          h('span', { class: 'dm-help', text: `${c.author || ''} · ${c.date ? i18n.formatDateTime(c.date) : ''}: ` }),
+          answered ? h('span', { class: 'dm-help', 'data-issue-reply-to': '', text: t('issues.comment.reply.to', { author: answered.author || '' }) + ' ' }) : null,
+          h('span', { text: c.comment || '' }),
+          canAnswer ? [' ', h('button', { type: 'button', class: 'dm-link', title: t('issues.comment.reply.hint'), 'data-issue-reply': c.guid || '', text: t('issues.comment.reply'), onclick: () => { s.replyTo = c.guid; render(); } })] : null);
+      }
       function detail(chosen) {
+        const canAnswer = opencde.bcfVersion(s.connector) === '2.1' && may('topic', 'createComment');
+        const answering = s.replyTo ? s.comments.find((x) => x.guid === s.replyTo) : null;
         const nodes = [
           h('strong', { text: chosen.title || '' }),
           chosen.description ? h('p', { class: 'dm-small', text: chosen.description }) : null,
           h('p', { class: 'dm-help dm-small', text: [chosen.creation_author, chosen.creation_date ? i18n.formatDateTime(chosen.creation_date) : '', chosen.priority, chosen.due_date ? t('issues.due', { date: String(chosen.due_date).slice(0, 10) }) : ''].filter(Boolean).join(' · ') }),
           s.snapshot ? h('img', { class: 'dm-model-issue-snapshot', src: s.snapshot, alt: t('issues.snapshot') }) : null,
-          s.comments.length ? h('ul', { class: 'dm-stack-xs' }, s.comments.map((c) => h('li', { class: 'dm-small' }, h('span', { class: 'dm-help', text: `${c.author || ''} · ${c.date ? i18n.formatDateTime(c.date) : ''}: ` }), h('span', { text: c.comment || '' })))) : h('p', { class: 'dm-help dm-small', text: t('issues.comments.none') }),
+          s.comments.length ? h('ul', { class: 'dm-stack-xs' }, s.comments.map((c) => commentItem(c, canAnswer))) : h('p', { class: 'dm-help dm-small', text: t('issues.comments.none') }),
         ];
         if (may('topic', 'createComment')) {
           const box = /** @type {any} */ (h('dm-input', { type: 'textarea', rows: '2', 'aria-label': t('issues.comment.write'), placeholder: t('issues.comment.write') }));
           box.value = s.comment;
           box.addEventListener('input', () => { s.comment = box.value; });
-          nodes.push(h('div', { class: 'dm-stack-xs', 'data-issue-comment': '' }, box, h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('issues.comment.send'), icon: 'message-square', size: 'sm', loading: s.busy === 'write', onClick: sendComment }))));
+          nodes.push(h('div', { class: 'dm-stack-xs', 'data-issue-comment': '' }, answering ? h('p', { class: 'dm-help dm-small', 'data-issue-answering': '' }, t('issues.comment.reply.to', { author: answering.author || '' }), ' ', h('button', { type: 'button', class: 'dm-link', text: t('common.cancel'), onclick: () => { s.replyTo = ''; render(); } })) : null, box, h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('issues.comment.send'), icon: 'message-square', size: 'sm', loading: s.busy === 'write', onClick: sendComment }))));
         }
         const statuses = (s.ext && s.ext.topic_status) || [];
         if (may('topic', 'update') && statuses.length) {

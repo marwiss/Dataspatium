@@ -490,6 +490,8 @@ body.dm-presenting { overflow: hidden; }
 .dm-graph-path { display: flex; flex-wrap: wrap; gap: var(--dm-s-1); align-items: center; }
 
 .dm-graph-preview { min-height: 420px; }
+/* A server's graph in Inhämta, in a card that scrolls with the page. */
+.dm-graph-live { flex: none; height: min(560px, 75vh); }
 .dm-graph-edit dm-button { flex: 0 0 auto; }
 
 /* Building models and drawings (ui/bearbeta/model-view): the drawing above a table of its elements */

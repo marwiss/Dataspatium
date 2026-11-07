@@ -257,6 +257,15 @@ napsautus näyttää otsakkeet, selityksen ja kopioitavan curl-rivin. Loki on va
 ellet itse tallenna sitä JSON-tiedostona tai aineistona. Katso [kallor.md](kallor.md).
 
 
+## Voinko nähdä mallin IFC-verkon ja tehdä siihen kyselyjä Cypherillä?
+
+Kyllä, jos malli on Kontroll-palvelimella. Avaa lähde kohdassa Nouda, kortti *IFC-verkko* tai Neo4j-lähde, ja valitse malli ja näkymä.
+Solmut ja suhteet piirretään, haet naapurit kaksoisnapsautuksella ja kirjoitat oman Cypherin kenttään. Katso [grafer.md](grafer.md).
+
+## Toimiiko sovellus palvelimella, jolla on vain BCF API 2.1?
+
+Kyllä. Sovellus valitsee uusimman version, jota palvelin tarjoaa, ja pärjää ilman Foundation API:a, joten lisäät palvelimen tavalliseen tapaan. Katso [kallor.md](kallor.md).
+
 ## Etkö löydä vastausta täältä?
 
 Lue [anvandarguide.md](anvandarguide.md) tai avaa issue GitHubissa (ks. [CONTRIBUTING.md](../../CONTRIBUTING.md)).

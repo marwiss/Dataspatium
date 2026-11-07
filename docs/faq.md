@@ -254,6 +254,15 @@ visar rubriker, en förklaring och en curl-rad att kopiera. Loggen finns bara i 
 inte själv sparar den som JSON eller datamängd. Se [kallor.md](kallor.md).
 
 
+## Kan jag se en modells IFC-graf och fråga den med Cypher?
+
+Ja, om modellen finns på en Kontroll-server. Öppna källan i Inhämta, kortet *IFC-graf* eller en Neo4j-källa, och välj modell och vy.
+Noder och relationer ritas, du hämtar grannar med ett dubbelklick och skriver egen Cypher i rutan. Se [grafer.md](grafer.md).
+
+## Fungerar appen mot en server som bara har BCF API 2.1?
+
+Ja. Appen väljer den nyaste version som servern erbjuder och klarar sig utan Foundation API, så du lägger till servern som vanligt. Se [kallor.md](kallor.md).
+
 ## Hittar jag inte svaret här?
 
 Läs [anvandarguide.md](anvandarguide.md) eller öppna ett ärende på GitHub (se [CONTRIBUTING.md](../CONTRIBUTING.md)).

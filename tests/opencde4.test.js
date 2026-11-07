@@ -284,7 +284,7 @@
     const rec = (obj) => ({ keys: Object.keys(obj), get: (k) => obj[k] });
     const records = [rec({ fil: 'testhus.ifc', tillstand: 'done', entiteter: int(248), ifc_project: '0Dataspatium0000000001' })];
     const prev = globalThis.neo4j;
-    globalThis.neo4j = Object.assign({ driver: () => ({ session: () => ({ run: async () => ({ records, summary: { counters: {} } }), close: async () => {} }), close: async () => {} }), auth: { basic: (u, p) => ({ u, p }) }, session: { READ: 'READ', WRITE: 'WRITE' }, int: (n) => ({ low: Number(n), high: 0, toNumber: () => Number(n), inSafeRange: () => true }) }, { isNode: () => false, isRelationship: () => false, isPath: () => false, isInt: (v) => !!(v && v.low !== undefined && typeof v.toNumber === 'function') });
+    globalThis.neo4j = Object.assign({ driver: () => ({ session: () => ({ run: () => ({ [Symbol.asyncIterator]() { let i = 0; return { next: async () => (i < records.length ? { value: records[i++], done: false } : { value: undefined, done: true }), return: async () => ({ value: undefined, done: true }) }; }, keys: async () => [], summary: async () => ({ counters: {} }) }), close: async () => {} }), close: async () => {} }), auth: { basic: (u, p) => ({ u, p }) }, session: { READ: 'READ', WRITE: 'WRITE' }, int: (n) => ({ low: Number(n), high: 0, toNumber: () => Number(n), inSafeRange: () => true }) }, { isNode: () => false, isRelationship: () => false, isPath: () => false, isInt: (v) => !!(v && v.low !== undefined && typeof v.toNumber === 'function') });
     try {
       const view = D.require('ui/api/neo4j-view').create({ connector: r.connector, log() {}, onDataset() {} });
       view.start();

@@ -11,7 +11,8 @@
 #
 # The DATASPATIUM_CDE_* variables become the query parameters of the live test against Kontroll (tests/opencde-live.test.js):
 # URL -> cde, HELPER -> cdehelper, CLIENT -> cdeclient, USER -> cdeuser (the signed-in user's id, dm_manager by default), PROJECT -> cdeproject, GRAPH -> cdegraph, GRAPH_DB -> cdegraphdb,
-# GRAPH_USER -> cdegraphuser, GRAPH_PASS -> cdegraphpass, ADMIN_HELPER -> cdeadminhelper. The page must then be served over http.
+# GRAPH_USER -> cdegraphuser, GRAPH_PASS -> cdegraphpass, ADMIN_HELPER -> cdeadminhelper, BCF -> cdebcf (2.1 runs the suite through BCF API 2.1). The page must
+# then be served over http.
 # CHROME and FIREFOX name the browser binaries when they are not on PATH; DATASPATIUM_CHROME_FLAGS adds flags (root gets
 # --no-sandbox by itself, as containers need).
 set -u
@@ -56,7 +57,7 @@ urlencode() {
 # The live test's parameters from the environment, so that a CI job needs no URL building of its own.
 cde_params() {
   local out="" name value
-  for pair in URL:cde HELPER:cdehelper CLIENT:cdeclient USER:cdeuser PROJECT:cdeproject GRAPH:cdegraph GRAPH_DB:cdegraphdb GRAPH_USER:cdegraphuser GRAPH_PASS:cdegraphpass ADMIN_HELPER:cdeadminhelper; do
+  for pair in URL:cde HELPER:cdehelper CLIENT:cdeclient USER:cdeuser PROJECT:cdeproject GRAPH:cdegraph GRAPH_DB:cdegraphdb GRAPH_USER:cdegraphuser GRAPH_PASS:cdegraphpass ADMIN_HELPER:cdeadminhelper BCF:cdebcf; do
     name="DATASPATIUM_CDE_${pair%%:*}"
     value="${!name:-}"
     [ -n "$value" ] && out="$out&${pair#*:}=$(urlencode "$value")"

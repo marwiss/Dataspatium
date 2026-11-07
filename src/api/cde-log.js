@@ -24,6 +24,9 @@
     const OPERATIONS = [
       [/\/\.well-known\/kontroll$/, 'kontroll', 'capabilities'],
       [/\/foundation\/versions$/, 'foundation', 'versions'],
+      [/\/bcf\/versions$/, 'bcf', 'versions'],
+      [/\/bcf\/[\d.]+\/auth$/, 'bcf', 'auth'],
+      [/\/bcf\/[\d.]+\/current-user$/, 'bcf', 'current_user'],
       [/\/foundation\/[\d.]+\/auth$/, 'foundation', 'auth'],
       [/\/foundation\/[\d.]+\/current-user$/, 'foundation', 'current_user'],
       [/\/oauth2\/reg$/, 'foundation', 'register'],

@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/graph-panel', ['ui/base', 'ui/overlays', 'data/datasets', 'data/graph', 'analysis/cypher', 'analysis/graph', 'platform/files', 'analysis/cypher-write'], (base, overlays, datasets, graph, cypher, measures, files, cypherWrite) => {
+  D.define('ui/analysis/graph-panel', ['ui/base', 'ui/overlays', 'data/datasets', 'data/graph', 'analysis/cypher', 'analysis/graph', 'platform/files', 'analysis/cypher-write', 'api/graph-source'], (base, overlays, datasets, graph, cypher, measures, files, cypherWrite, graphSource) => {
     const { h, t, i18n, replace } = base;
     const TOOLS = ['summary', 'degrees', 'components', 'pagerank', 'communities', 'centrality', 'path', 'pattern', 'subgraph', 'layout', 'tables'];
     const PREVIEW_ROWS = 2000;
@@ -22,7 +22,7 @@
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
       const mode = options.mode === 'cypher' ? 'cypher' : 'tools';
-      const s = { tool: 'summary', query: '', showSql: true, result: null, error: '', busy: false, from: '', to: '', undirected: false, labels: new Set(), types: new Set(), info: null, infoFor: '', pattern: { a: '', type: '', b: '', direction: 'out', key: '', op: '=', value: '', limit: 200 }, iterations: 60 };
+      const s = { tool: 'summary', query: '', showSql: true, onServer: false, server: null, result: null, error: '', busy: false, from: '', to: '', undirected: false, labels: new Set(), types: new Set(), info: null, infoFor: '', pattern: { a: '', type: '', b: '', direction: 'out', key: '', op: '=', value: '', limit: 200 }, iterations: 60 };
       let editor = null; let fieldsEl = null; let resultEl = null; let seq = 0;
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
@@ -61,11 +61,21 @@
         const sqlSwitch = /** @type {any} */ (h('dm-switch', { label: t('graph.cypher.showsql') }));
         sqlSwitch.checked = s.showSql;
         sqlSwitch.addEventListener('change', () => { s.showSql = sqlSwitch.checked; renderResult(); });
+        // A graph saved from a server can ask the server too: all of Cypher against all of the graph, not the subset against the copy.
+        const serverBox = h('span', { class: 'dm-row-wrap' });
+        graphSource.forDataset(ds).then((way) => {
+          s.server = way;
+          if (!way) { s.onServer = false; return; }
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('graph.cypher.server', { host: way.host }), title: t('graph.cypher.server.hint'), 'data-cypher-server': '' }));
+          sw.checked = s.onServer;
+          sw.addEventListener('change', () => { s.onServer = sw.checked; });
+          replace(serverBox, sw);
+        }).catch((err) => D.log('graph-panel', err));
         replace(fieldsEl,
           h('div', { class: 'dm-card dm-stack-sm' }, editor,
             h('div', { class: 'dm-row-wrap' },
               ui.button({ label: t('common.run'), icon: 'play', variant: 'primary', loading: s.busy, title: t('graph.cypher.run.hint'), onClick: runCypher }),
-              exampleSel, sqlSwitch,
+              exampleSel, sqlSwitch, serverBox,
               h('span', { class: 'dm-help dm-xs', text: t('graph.cypher.hint') }))));
         renderResult();
       }
@@ -76,7 +86,13 @@
         s.query = text; s.busy = true; s.error = ''; renderCypher();
         const my = ++seq;
         try {
-          if (cypherWrite.isWrite(text)) {
+          if (s.onServer && s.server) {
+            const out = await s.server.run(text, {});
+            if (my !== seq) return;
+            s.result = { columns: out.columns, rows: out.rows, sql: '', params: [], name: t('graph.cypher.dataset', { name: ds.name }), note: t('graph.cypher.server.note', { n: i18n.formatNumber(out.rows.length), host: s.server.host }) };
+            s.resultKey = contentKey();
+            shell.log(t('graph.cypher.ran', { n: i18n.formatNumber(out.rows.length) }), 'ok');
+          } else if (cypherWrite.isWrite(text)) {
             // CREATE, MERGE, SET, REMOVE and DELETE become recipe steps on the dataset (logged, undoable).
             const w = await cypherWrite.execute(ds.id, text);
             if (my !== seq) return;

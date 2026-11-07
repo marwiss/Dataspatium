@@ -65,7 +65,7 @@
     const edgeEl = (e) => ({ data: { id: 'e:' + e.id, source: e.source, target: e.target, typ: e.type || '', egenskaper: e.properties, kind: 'edge' } });
     function styleSheet(colors, labels, directed) {
       const text = token('--dm-text', '#222'); const border = token('--dm-border', '#999'); const surface = token('--dm-surface', '#fff'); const accent = token('--dm-accent', '#0072b2');
-      const groupStyle = { 'shape': 'round-rectangle', 'width': 'label', 'height': 34, 'padding': '10px', 'background-color': (ele) => colors.of(ele.data('etikett')), 'background-opacity': 0.9, 'color': surface, 'label': 'data(namn)', 'text-valign': 'center', 'font-size': 12, 'font-weight': 600, 'border-width': 0 };
+      const groupStyle = { 'shape': 'round-rectangle', 'width': 'label', 'height': 34, 'padding': '10px', 'background-color': (ele) => colors.of(ele.data('etikett')), 'background-opacity': 0.9, 'color': surface, 'label': 'data(namn)', 'text-valign': 'center', 'font-size': 12, 'font-weight': 600, 'border-width': 0, 'min-zoomed-font-size': 0 };
       return [
         { selector: 'node', style: { 'background-color': (ele) => colors.of(ele.data('etikett')), 'label': labels ? 'data(namn)' : '', 'font-size': 10, 'color': text, 'text-wrap': 'ellipsis', 'text-max-width': '120px', 'text-valign': 'bottom', 'text-margin-y': 4, 'width': 22, 'height': 22, 'border-width': 1, 'border-color': border, 'min-zoomed-font-size': 8 } },
         { selector: 'node:parent', style: { 'background-opacity': 0.08, 'background-color': (ele) => colors.of(ele.data('etikett')), 'border-color': (ele) => colors.of(ele.data('etikett')), 'border-width': 1.5, 'label': 'data(namn)', 'text-valign': 'top', 'font-weight': 600, 'font-size': 12 } },
@@ -206,6 +206,56 @@
       return h;
     }
 
+    /**
+     * Draw a graph held in memory, such as a query's answer from a server, with nothing stored. The nodes are coloured by `colorKey` and the
+     * drawing can grow without moving what is already placed more than the layout needs.
+     * @param {HTMLElement} container @param {{nodes: any[], edges: any[], directed?: boolean}} g
+     * @param {{layout?: string, labels?: boolean, colorKey?: (node: any) => string, onSelect?: (sel: any) => void, onExpand?: (id: string) => void}} [options]
+     * @returns {Promise<any>} handle with cy, legend(), merge(g, anchor), fit(), setLabels(on), runLayout(name), destroy()
+     */
+    async function renderLive(container, g, options = {}) {
+      await ensureCytoscape();
+      const keyOf = options.colorKey || ((n) => n.label || '');
+      const count = new Map();
+      const tally = (nodes) => { for (const n of nodes) { const k = keyOf(n); count.set(k, (count.get(k) || 0) + 1); } };
+      tally(g.nodes);
+      const colors = colorMap({ labels: Array.from(count.entries()).sort((a, b) => b[1] - a[1]).map(([name]) => ({ name })) });
+      const liveNode = (n) => { const el = nodeEl(n); el.data.klass = n.label || ''; el.data.etikett = keyOf(n); return el; };
+      container.replaceChildren();
+      const h = { cy: null, layout: options.layout || 'fcose', destroyed: false };
+      h.cy = globalThis.cytoscape({ container, elements: g.nodes.map(liveNode).concat(g.edges.map(edgeEl)), style: styleSheet(colors, options.labels !== false, g.directed !== false), wheelSensitivity: 0.3, minZoom: 0.05, maxZoom: 6 });
+      const picked = (d) => (d.kind === 'edge' ? { kind: 'edge', id: String(d.id).slice(2), data: d } : { kind: 'node', id: d.id, data: Object.assign({}, d, { etikett: d.klass }) });
+      h.cy.on('tap', 'node, edge', (ev) => { if (options.onSelect) options.onSelect(picked(ev.target.data())); });
+      h.cy.on('tap', (ev) => { if (ev.target === h.cy && options.onSelect) options.onSelect(null); });
+      h.cy.on('dbltap', 'node', (ev) => { if (options.onExpand) options.onExpand(ev.target.id()); });
+      /** Run a layout; a force layout that continues from where the nodes stand keeps the picture recognisable when it grows. */
+      h.runLayout = (name, keepPlaces) => {
+        if (name) h.layout = name;
+        const opts = layoutOptions(h.layout);
+        if (keepPlaces && h.layout === 'fcose') opts.randomize = false;
+        try { h.cy.layout(opts).run(); } catch (_e) { h.cy.layout({ name: 'grid', animate: false }).run(); }
+        h.cy.fit(undefined, 30);
+      };
+      /** Add what is new in a graph; new nodes start beside the node they were asked from. Returns how many elements were added. */
+      h.merge = (more, anchor) => {
+        const start = anchor && h.cy.getElementById(anchor).nonempty() ? h.cy.getElementById(anchor).position() : { x: 0, y: 0 };
+        const nodes = more.nodes.filter((n) => h.cy.getElementById(n.id).empty());
+        const fresh = nodes.map((n, i) => Object.assign(liveNode(n), { position: { x: start.x + 40 * Math.cos(i * 2.399963), y: start.y + 40 * Math.sin(i * 2.399963) } }));
+        tally(nodes);
+        const links = more.edges.filter((e) => h.cy.getElementById('e:' + e.id).empty()).map(edgeEl);
+        if (!fresh.length && !links.length) return 0;
+        h.cy.add(fresh.concat(links));
+        h.runLayout(null, true);
+        return fresh.length + links.length;
+      };
+      h.legend = () => Array.from(count.entries()).sort((a, b) => b[1] - a[1]).map(([key, n]) => ({ key, color: colors.of(key), count: n }));
+      h.fit = () => h.cy.fit(undefined, 30);
+      h.setLabels = (on) => { h.cy.style().selector('node').style('label', on ? 'data(namn)' : '').update(); h.cy.style().selector('edge').style('label', on ? 'data(typ)' : '').update(); };
+      h.destroy = () => { h.destroyed = true; if (h.cy) { try { h.cy.destroy(); } catch (_e) { /* ignore */ } h.cy = null; } };
+      h.runLayout();
+      return h;
+    }
+
     // ---- SVG from positions (own writer) ---------------------------------------------------------------------------
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     /**
@@ -288,6 +338,6 @@
       return `<div id="${esc(id)}" class="dm-graph-html">${svg}</div>`;
     }
 
-    return { LAYOUTS, MODES, FOCUS_LIMIT, ensureCytoscape, ensureSigma, palette, colorMap, defaultDef, render, svgFor, toSvg, toBlob, htmlFor, layoutOptions };
+    return { LAYOUTS, MODES, FOCUS_LIMIT, ensureCytoscape, ensureSigma, palette, colorMap, defaultDef, render, renderLive, svgFor, toSvg, toBlob, htmlFor, layoutOptions };
   });
 })();

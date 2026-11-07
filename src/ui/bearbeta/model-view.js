@@ -335,6 +335,8 @@
           e.material ? { label: t('model.col.material'), value: e.material } : null, e.klassificering ? { label: t('model.field.classification'), value: e.klassificering } : null,
           e.tagg ? { label: t('model.col.tagg'), value: e.tagg } : null, { label: t('model.field.guid'), value: e.guid },
         ])];
+        // A model from a CDE has a graph on the server: the element's neighbours there are one click away.
+        if (ds.source && ds.source.cde && e.guid) out.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.element.hint'), 'data-model-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds, { guid: e.guid }))) ui.toast.show(t('cde.err.noconnector', { host: ds.source.cde.host }), { kind: 'warn' }); } })));
         const st = handle && handle.meshes.stats.get(Number(e.id));
         if (st) out.push(h('h4', { text: t('model.measured') }), kv([{ label: t('model.measured.area'), value: fmt(st.area) + ' m²' }, { label: t('model.measured.volume'), value: fmt(st.volume, 3) + ' m³' }]));
         const group = (rows, valueOf) => {

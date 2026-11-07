@@ -246,6 +246,15 @@ Opne kjelda i Hent og fald ut kortet *Logg* nedst. Der står kvart kall med API,
 hovud, ei forklaring og ei curl-linje å kopiere. Loggen finst berre i minnet under sesjonen og forlèt aldri datamaskina med
 mindre du sjølv lagrar han som JSON eller datasett. Sjå [kallor.md](kallor.md).
 
+## Kan eg sjå IFC-grafen til ein modell og spørje han med Cypher?
+
+Ja, viss modellen finst på ein Kontroll-tenar. Opne kjelda i Hent, kortet *IFC-graf* eller ei Neo4j-kjelde, og vel modell og vising.
+Nodar og relasjonar blir teikna, du hentar naboar med eit dobbeltklikk og skriv din eigen Cypher i feltet. Sjå [grafer.md](grafer.md).
+
+## Verkar appen mot ein tenar som berre har BCF API 2.1?
+
+Ja. Appen vel den nyaste versjonen tenaren tilbyr, og klarer seg utan Foundation API, så du legg til tenaren som vanleg. Sjå [kallor.md](kallor.md).
+
 ## Finn du ikkje svaret her?
 
 Les [anvandarguide.md](anvandarguide.md), eller opprett eit issue på GitHub (sjå [CONTRIBUTING.md](../../CONTRIBUTING.md)).

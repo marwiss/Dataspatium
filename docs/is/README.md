@@ -151,7 +151,9 @@ hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. 
 OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.6.0 virkar með Kontroll 2.6.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
+
+Dataspatium 2.7.0 virkar með Kontroll 2.7.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira

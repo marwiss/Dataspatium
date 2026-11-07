@@ -191,7 +191,7 @@
     // The browser with a fake driver: consent (granted in the test page), a query, a saved graph.
     const sessions = [];
     const prev = globalThis.neo4j;
-    globalThis.neo4j = Object.assign({ driver: (url, auth, opts) => ({ session: (o) => { sessions.push({ url, auth, o }); return { run: async (text) => ({ records: /LIMIT 1/.test(text) ? records.slice(0, 1) : records, summary: { counters: { updates: () => ({}) }, database: { name: o.database } } }), close: async () => {} }; }, close: async () => {} }), auth: { basic: (u, p) => ({ u, p }) }, session: { READ: 'READ' } }, fake);
+    globalThis.neo4j = Object.assign({ driver: (url, auth, opts) => ({ session: (o) => { sessions.push({ url, auth, o }); return { run: (text) => { const list = /LIMIT 1/.test(text) ? records.slice(0, 1) : records; return { [Symbol.asyncIterator]() { let i = 0; return { next: async () => (i < list.length ? { value: list[i++], done: false } : { value: undefined, done: true }), return: async () => ({ value: undefined, done: true }) }; }, keys: async () => [], summary: async () => ({ counters: { updates: () => ({}) }, database: { name: o.database } }) }; }, close: async () => {} }; }, close: async () => {} }), auth: { basic: (u, p) => ({ u, p }) }, session: { READ: 'READ' } }, fake);
     try {
       const out = await neo4j.run(r.connector, 'MATCH (n)-[r]->(m) RETURN n, r, m, 3 AS antal');
       assert.equal(out.rows.length, 2); assert.equal(sessions[0].url, 'neo4j+s://demo.databases.neo4j.io'); assert.equal(sessions[0].auth.u, 'neo4j'); assert.equal(sessions[0].o.database, 'neo4j');

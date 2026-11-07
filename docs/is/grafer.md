@@ -118,7 +118,52 @@ Cypher-ritil; *Keyra* tengist með rekli Neo4j yfir WebSocket eftir samþykki þ
 niðurstöðuna sem töflu þar sem hnútar og vensl eru flött niður í eiginleika sína. Innihaldi svarið hnúta og vensl vistar
 **Vista sem net** þau sem netgagnasafn; annars *Vista sem gagnasafn*. **Vista fyrirspurn** setur fyrirspurnina á
 uppsprettuna svo hana megi keyra aftur með einum smelli. Bolt yfir WebSocket fellur ekki undir CORS; eigin þjónn án TLS
-(`bolt://`) næst aðeins frá síðu yfir http://.
+(`bolt://`) næst aðeins frá síðu yfir http://. Innihaldi svarið hnúta eru þeir líka teiknaðir sem net.
+
+## IFC-netið á Kontroll-þjóni
+
+Kontroll gerir hverja upphlaðna IFC-skrá að neti: einn hnút fyrir hverja einingu, með flokkinn og alla yfirflokka hans sem merkimiða og
+IFC-eigindin sem eiginleika, og vensl sem heita eftir eigindunum (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`). Netið er á þjóninum og
+getur verið miklu stærra en sanngjarnt er að sækja. Þess vegna er það teiknað og spurt beint úr *Sækja*, og ekkert er vistað fyrr en þú biður um það.
+
+Tvær leiðir liggja að netinu og báðar gefa sömu sýn:
+
+- **Spjaldið IFC-net í OpenCDE-uppsprettunni.** Fyrirspurnirnar fara í gegnum lesandi netfyrirspurn þjónsins, sem krefst þess að þú skráir þig
+  inn sem stjórnandi og að þjónninn hafi `OPENCDE_GRAPH_QUERY_ENABLED=true`. Þetta er leiðin í rekstri: engin gagnagrunnsgátt þarf að vera opin,
+  þjónninn setur mörk á raðir og tíma, fjarlægir vistuð tætigildi og skráir hverja fyrirspurn.
+- **Neo4j-uppspretta.** Bolt með vistfangi, notandanafni og lykilorði gagnagrunnsins, til dæmis `bolt://127.0.0.1:7697` á þróunarumhverfi. Bolt veitir
+  aðgang að öllum gagnagrunninum, svo forritið les alltaf í lesfundi og fjarlægir vistuð tætigildi úr svörunum. Í rekstri er Bolt lokað nema sá sem
+  rekur þjóninn hafi opnað það; þá sýnir spjaldið vistfangið.
+
+**Sýna líkön** listar líkönin í netinu, nýjustu útgáfu hvers skjals fyrst. Veldu líkan og sýn:
+
+| Sýn | Sýnir |
+|---|---|
+| Rýmisuppbygging | Verkefni, lóð, byggingu og hæðir, með venslunum á milli þeirra |
+| Byggingarhlutar eftir hæð | Hvaða byggingarhluta hver hæð inniheldur |
+| Byggingarhlutar og gerðir | Byggingarhlutana og gerðir þeirra |
+| Byggingarhlutar og efni | Byggingarhlutana og efni þeirra |
+| Eiginleikar og magn | Eiginleikasöfn og magn byggingarhlutanna |
+| Mál og byggingarhlutar | BCF-mál, sjónarhorn þeirra og íhluti, og byggingarhlutana sem þau vísa á |
+| Allt líkanið | Allt að 1.000 vensl í líkaninu |
+| Fjöldi eftir flokki | Tafla með fjölda eininga eftir flokki |
+
+Svarið er teiknað með Cytoscape, með töflunni undir. Hnútarnir eru litaðir eftir því hvað þeir eru: rýmisuppbygging, byggingarhluti, vensl, gerð,
+eiginleiki eða magn, efni og annað. Uppröðun og merkimiðum er breytt án þess að spyrja þjóninn.
+
+Smelltu á hnút og skoðarinn sýnir eigindi hans. **Nágrannar**, eða tvísmellur á hnútinn, sækir nágrannana af þjóninum og bætir þeim við myndina.
+Byggingarhluti hefur líka **Eiginleikar**, **Mál** og **Sýna í líkaninu**, sem opnar byggingarhlutann í þrívídd ef líkanið er á vinnusvæðinu.
+
+Í reitinn skrifarðu eigið Cypher, allt sem þjónninn skilur, en aðeins lesandi. Ef þú spyrð aðeins um hnúta (`RETURN c, w`) sækir forritið líka venslin á
+milli þeirra, eins og Neo4j Browser gerir. Forritið segir frá þegar svar hefur náð `LIMIT` fyrirspurnarinnar eða verið klippt, og lestur stöðvast við
+20.000 raðir. Svör með fleiri en 1.500 hnúta eru ekki teiknuð hér, en má vista og opna sem yfirlit í Vinna.
+
+**Vista sem net** gerir það sem þú sérð að venjulegu netgagnasafni: netsýnin í Vinna, fliparnir Cypher og Net í Greina og netmyndir í Myndgera. Flokkurinn
+verður merkimiði hnútsins og allir merkimiðar fylgja með, svo `MATCH (w:IfcWall)` finnur líka `IfcWallStandardCase` í afritinu. Í flipanum Cypher geturðu
+kveikt á **Keyra á þjóninum** fyrir net sem var vistað héðan, og þá svarar þjónninn með öllu Cypher gegn öllu netinu í stað hlutmengisins gegn afritinu.
+
+IFC-líkan sótt úr Kontroll hefur hnappinn **IFC-net** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
+á sömu tölvu ef hún er til, annars í OpenCDE-uppsprettunni.
 
 ## Fleiri tól í flipanum Net
 
@@ -139,6 +184,7 @@ aðrar myndir.
 
 ## Takmarkanir
 
-- Cypher vantar `WITH`, `UNWIND` og `shortestPath`; Neo4j-uppsprettan er aðeins lesandi (skrifað er í eigin net forritsins).- Yfirlitið með opnanlegum hópum gildir fyrir net með allt að 5 000 fitjum; stærri net eru sýnd sem hópar með fjölda og í
+- Cypher vantar `WITH`, `UNWIND` og `shortestPath` í staðbundna hlutmenginu (*Keyra á þjóninum* hefur þau fyrir net af þjóni); Neo4j-uppsprettan er aðeins lesandi (skrifað er í eigin net forritsins).
+- Yfirlitið með opnanlegum hópum gildir fyrir net með allt að 5 000 fitjum; stærri net eru sýnd sem hópar með fjölda og í
   fókus- og heildarsýn.
 - Eiginleikar eru vistaðir sem JSON-texti; tölur eru bornar saman sem tölur í Cypher en raðað sem texta í hnútatöflunni.

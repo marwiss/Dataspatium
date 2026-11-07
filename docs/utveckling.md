@@ -155,7 +155,7 @@ steget som *Gör det åt mig*.
   `--timeout`, `--width`, `--height` och `--all-console` motsvarar PowerShell-skriptets parametrar, och `CHROME` och `FIREFOX`
   pekar ut webbläsarna när de inte finns i `PATH`. Miljövariablerna `DATASPATIUM_CDE_URL`, `DATASPATIUM_CDE_HELPER`,
   `DATASPATIUM_CDE_CLIENT`, `DATASPATIUM_CDE_PROJECT`, `DATASPATIUM_CDE_GRAPH`, `DATASPATIUM_CDE_GRAPH_DB`,
-  `DATASPATIUM_CDE_GRAPH_USER`, `DATASPATIUM_CDE_GRAPH_PASS` och `DATASPATIUM_CDE_ADMIN_HELPER` blir frågeparametrarna till det
+  `DATASPATIUM_CDE_GRAPH_USER`, `DATASPATIUM_CDE_GRAPH_PASS`, `DATASPATIUM_CDE_ADMIN_HELPER` och `DATASPATIUM_CDE_BCF` blir frågeparametrarna till det
   riktiga provet mot Kontroll (`tests/opencde-live.test.js`), så att parets CI kan köra det mot en server i samma jobb; sidan
   måste då serveras över http.
 - Headless-sviten ser inte webbläsarens fönsterpolicyer (Cross-Origin-Opener-Policy): popup-inloggningen mot en riktig
@@ -224,7 +224,11 @@ inget mer kommer.
 
 ## Prov mot Kontroll
 
-Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeuser=<användar-id>][&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).
+Livesviten `tests/opencde-live.test.js` kör mot en riktig Kontroll-server när testsidan serveras över http och får `?cde=<server>&cdehelper=<hjälpserver>&cdeclient=<klient-id>[&cdeuser=<användar-id>][&cdeproject=<namn>][&cdegraph=bolt://…&cdegraphuser=…&cdegraphpass=…][&cdeadminhelper=<hjälpserver som administratör>][&cdebcf=2.1]`. Starta utvecklingsstacken enligt Kontrolls [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/deploy/local.md), servera appen med `python -m http.server 8093 --bind 127.0.0.1`, och kör `tools/cde-helper.py` (miljövariablerna CDE_BASE, CDE_USER, CDE_PASSWORD, CDE_HELPER_PORT) som spelar användaren vid serverns sidor. Utan parametrarna hoppas sviten över. Resultaten av parets körningar står i Kontrolls [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md).
+
+Sviten talar BCF API 3.0 som standard och 2.1 med `cdebcf=2.1`, och kontrollerar då att svaren innehåller det som den versionens specifikation säger. Kör båda: en server med bara 2.1 finns inte i parets stack, så det fallet provas mot en låtsasserver i `tests/bcf21.test.js`. Med `cdegraph` och `cdeadminhelper` provas också IFC-grafen över båda vägarna, med vyerna, ett steg från en nod, att hashvärden inte följer med och att en ström utan gräns klipps. Vyns egna knappar provas i `tests/ifc-graph.test.js` med en låtsasdrivrutin och riktig Cytoscape.
+
+Servern tillåter tio inloggningar i minuten från samma adress (`OPENCDE_RATE_LIMIT_SIGN_IN`) och en körning använder nästan alla, så vänta en minut mellan två körningar. Windows låter flera processer lyssna på samma port: en gammal `cde-helper.py` kan svara i stället för den nya, och med en annan `CDE_BASE` hamnar kakan på fel värd och serverns sidor svarar 302. Stoppa gamla hjälpservrar före en körning.
 
 ## Felsökning
 - Loggar från den senaste testkörningen ligger i `%TEMP%\dm-tests-<kod>\` (`edge.log`, `firefox.log`, `firefox.err`).

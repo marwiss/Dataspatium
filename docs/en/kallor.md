@@ -124,6 +124,14 @@ downloaded and imported as if dropped on the app, so an IFC model becomes a mode
 session only and are never exported with the source. The connection needs consent (purpose OpenCDE server) and a server
 that allows requests from the browser (CORS).
 
+The app speaks BCF API 3.0 and 2.1. It chooses the newest version the server offers, and a server of 2.1 alone works too: such a server often
+has neither the Foundation API nor the Documents API, so the app reads the version from `/bcf/versions` and the sign-in addresses from
+`/bcf/2.1/auth`, and leaves out *Fetch documents*. Under *More options* in the dialog you can choose the version yourself, and when the server offers
+several you can change in the source's view. In 2.1 *Files in the project* lists only the BCF documents, issues have no number from the server and a
+viewpoint cannot be deleted. In return a comment can answer another: the button *Reply* in the panel *Issues*.
+
+The card *IFC graph* appears when the server has a graph, see [grafer.md](grafer.md#the-ifc-graph-on-a-kontroll-server).
+
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
 server, project and version it came from. In Manage the card *From the CDE* shows this, and *Check for a new version* asks

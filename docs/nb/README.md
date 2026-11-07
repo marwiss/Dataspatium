@@ -154,7 +154,9 @@ Cypher og logger hvert kall med samme X-Request-Id som serveren skriver i sin fo
 andre OpenCDE-klienter fungerer også. Serveren trengs ikke for resten av appen: uten server fungerer alt annet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbeidet fra serverens side;
 her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
-Dataspatium 2.6.0 fungerer med Kontroll 2.6.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
+Appen snakker BCF API 3.0 og 2.1, så den også kobler seg til servere som bare har 2.1, og den tegner og spør serverens IFC-graf direkte fra Hent.
+
+Dataspatium 2.7.0 fungerer med Kontroll 2.7.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
 [snabbstart.md](snabbstart.md) tar paret fra ingenting til en sak på tjue minutter.
 
 ## Lær mer

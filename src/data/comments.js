@@ -18,12 +18,22 @@
     /** @param {string} name */
     async function setAuthor(name) { await idb.setSetting(AUTHOR, String(name || '').trim().slice(0, 80)); }
 
-    async function open(id) {
-      const handle = await datasets.ensureOpen(id);
+    /** The table of an open dataset, made ready. Files from before comments could be about an object lack the column `target`. */
+    async function prepare(handle) {
       await handle.engine.run(SCHEMA);
-      // Files from before comments could be about an object.
       const known = await handle.engine.exec('pragma table_info(_comments)');
       if (!known[0].values.some((r) => r[1] === 'target')) await handle.engine.run('alter table _comments add column target text');
+    }
+    /** The step in flight per dataset: two callers at once (the status bar and a view) would both find the column missing, and the second ALTER would fail. */
+    const preparing = new WeakMap();
+    async function open(id) {
+      const handle = await datasets.ensureOpen(id);
+      let step = preparing.get(handle);
+      if (!step) {
+        step = prepare(handle).finally(() => preparing.delete(handle));
+        preparing.set(handle, step);
+      }
+      await step;
       return handle;
     }
 

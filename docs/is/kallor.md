@@ -122,6 +122,13 @@ sóttar og fluttar inn eins og þeim hefði verið sleppt í forritið, svo IFC-
 aðeins í setunni og eru aldrei fluttir út með uppsprettunni. Tengingin krefst samþykkis (tilgangurinn OpenCDE-þjónn) og
 þjóns sem leyfir köll úr vafranum (CORS).
 
+Forritið talar BCF API 3.0 og 2.1. Það velur nýjustu útgáfuna sem þjónninn býður, og þjónn með aðeins 2.1 virkar líka: slíkan þjón vantar oft Foundation API og
+Documents API, svo forritið les útgáfuna úr `/bcf/versions` og innskráningarvistföngin úr `/bcf/2.1/auth` og sleppir *Sækja skjöl*. Undir *Fleiri valkostir* í glugganum
+geturðu valið útgáfu sjálfur, og ef þjónninn býður fleiri geturðu skipt í sýn uppsprettunnar. Í 2.1 listar *Skrár í verkefninu* aðeins BCF-skjölin, mál hafa ekki
+raðnúmer þjónsins og ekki er hægt að eyða sjónarhorni. Á móti getur athugasemd verið svar við annarri: hnappurinn *Svara* í spjaldinu *Mál*.
+
+Spjaldið *IFC-net* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-netið-á-kontroll-þjóni).
+
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
 gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla, og gagnasafnið man frá hvaða þjóni, verkefni og
 útgáfu það kom. Í Umsjón sýnir kortið *Frá CDE* þetta, og *Leita að nýrri útgáfu* spyr þjóninn hvort skjalið hafi nýrri
