@@ -156,7 +156,7 @@ her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 Appen snakkar BCF API 3.0 og 2.1, så han også koplar seg til tenarar som berre har 2.1, og han teiknar og spør IFC-grafen til tenaren direkte frå Hent.
 
-Dataspatium 2.0.0 fungerer med Kontroll 2.0.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
+Dataspatium 2.0.1 fungerer med Kontroll 2.0.1. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
 [snabbstart.md](snabbstart.md) tek paret frå ingenting til ei sak på tjue minutt.
 
 ## Lær meir
