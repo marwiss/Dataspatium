@@ -256,7 +256,7 @@ inte själv sparar den som JSON eller datamängd. Se [kallor.md](kallor.md).
 
 ## Kan jag se en modells IFC-graf och fråga den med Cypher?
 
-Ja, om modellen finns på en Kontroll-server. Öppna källan i Inhämta, kortet *IFC-graf* eller en Neo4j-källa, och välj modell och vy.
+Ja, om modellen finns på en Kontroll-server. Öppna källan i Inhämta, kortet *IFC-LPG* eller en Neo4j-källa, och välj modell och vy.
 Noder och relationer ritas, du hämtar grannar med ett dubbelklick och skriver egen Cypher i rutan. Se [grafer.md](grafer.md).
 
 ## Fungerar appen mot en server som bara har BCF API 2.1?

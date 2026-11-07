@@ -123,7 +123,7 @@ tallentaa ne verkkoaineistona; muuten *Tallenna aineistona*. **Tallenna kysely**
 uudelleen yhdellä napsautuksella. Bolt WebSocketin yli ei kuulu CORS:n piiriin; oma palvelin ilman TLS:ää (`bolt://`)
 tavoitetaan vain http://-sivulta. Jos vastaus sisältää solmuja, ne piirretään myös verkkona.
 
-## IFC-verkko Kontroll-palvelimella
+## IFC-LPG Kontroll-palvelimella
 
 Kontroll tekee jokaisesta ladatusta IFC-tiedostosta verkon: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
 IFC-attribuutit ominaisuuksina, ja suhteet on nimetty attribuuttien mukaan (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
@@ -132,7 +132,7 @@ kohdasta *Nouda*, eikä mitään tallenneta ennen kuin pyydät.
 
 Verkkoon on kaksi tietä, ja molemmat antavat saman näkymän:
 
-- **Kortti IFC-verkko OpenCDE-lähteessä.** Kyselyt kulkevat palvelimen lukevan verkkokyselyn kautta, mikä edellyttää, että kirjaudut
+- **Kortti IFC-LPG OpenCDE-lähteessä.** Kyselyt kulkevat palvelimen lukevan verkkokyselyn kautta, mikä edellyttää, että kirjaudut
   järjestelmänvalvojana ja että palvelimella on `OPENCDE_GRAPH_QUERY_ENABLED=true`. Tämä on tuotannon tie: tietokantaporttia ei tarvitse
   avata, palvelin rajaa rivit ja ajan, poistaa tallennetut tiivisteet ja kirjaa jokaisen kyselyn.
 - **Neo4j-lähde.** Bolt tietokannan osoitteella, käyttäjätunnuksella ja salasanalla, esimerkiksi `bolt://127.0.0.1:7697` kehitysympäristössä.
@@ -167,7 +167,7 @@ Analysoi ja verkkokaaviot kohdassa Visualisoi. Luokasta tulee solmun tunniste ja
 kopiosta myös `IfcWallStandardCase`-solmun. Cypher-välilehdellä voit kytkeä päälle **Aja palvelimella** täältä tallennetulle verkolle, ja silloin
 palvelin vastaa kaikella Cypherillä koko verkkoon eikä osajoukolla kopioon.
 
-Kontrollista haetulla IFC-mallilla on painike **IFC-verkko** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
+Kontrollista haetulla IFC-mallilla on painike **IFC-LPG** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
 kohdassa Nouda, saman koneen Neo4j-lähteessä, jos sellainen on, muuten OpenCDE-lähteessä.
 
 ## Lisää työkaluja Verkko-välilehdellä

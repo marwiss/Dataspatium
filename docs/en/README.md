@@ -161,7 +161,7 @@ cooperation from the server's side; here it is described in [kallor.md](kallor.m
 
 The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
 
-Dataspatium 2.0.1 works with Kontroll 2.0.1. Both carry the same release number, so equal numbers belong together. The quick start
+Dataspatium 2.0.2 works with Kontroll 2.0.2. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more

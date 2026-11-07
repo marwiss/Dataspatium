@@ -130,7 +130,7 @@ Under *Flere alternativer* i dialogen kan du velge versjon selv, og tilbyr serve
 bare BCF-dokumentene, saker har ikke serverens løpenummer, og et viewpoint kan ikke slettes. Til gjengjeld kan en kommentar være svar på en annen: knappen
 *Svar* i panelet *Saker*.
 
-Kortet *IFC-graf* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
 
 Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av
 filens eget slag, så en IFC-fil blir en modell og en CSV-fil en tabell, og datasettet husker hvilken server, hvilket prosjekt
@@ -162,7 +162,7 @@ pares med appens; avviser en server headeren, slås den av for den kilden.
 Serverens side beskrives i Kontrolls dokumentasjon: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/client-guide.md) (hvordan en klient kobler seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets testkjøringer) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/deploy/local.md) (utviklingsstakken og hvordan appen testes mot den).
 
 Kontroll beskriver tilleggene sine i `GET /.well-known/kontroll`; appen leser dokumentet når kilden åpnes og skriver under
-overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC-graf,
+overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC-LPG,
 grafspørringer). En server uten dokumentet har ingen tillegg, og alt etter spesifikasjonene fungerer likevel. Serverens feilkoder
 (`code` i svaret, for eksempel `reauthentication_required`) vises på ditt språk; ukjente koder viser serverens egen tekst. Lenken
 *Åpne i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åpner dialogen for en ny kilde

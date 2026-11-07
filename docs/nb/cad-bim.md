@@ -47,9 +47,9 @@ status, type, ansvarlig, prioritet og måned bak felles filtre, og knappen *Vis 
 eller etasje fra en slik tabell, og SQL-startkoden får spørringer for koblingen. *Lagre som diagram* lagrer visningen med fargene
 som et modelldiagram, som dashbord, dokumenter og Publiser viser med tegnforklaring.
 
-Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC-graf* tar deg dit, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC-LPG* tar deg dit, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
 
-Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/ifcgraph.md).
+Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Kontrolls [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/ifc-lpg.md).
 
 ## Tabellene
 

@@ -127,7 +127,7 @@ Documents API, svo forritið les útgáfuna úr `/bcf/versions` og innskráninga
 geturðu valið útgáfu sjálfur, og ef þjónninn býður fleiri geturðu skipt í sýn uppsprettunnar. Í 2.1 listar *Skrár í verkefninu* aðeins BCF-skjölin, mál hafa ekki
 raðnúmer þjónsins og ekki er hægt að eyða sjónarhorni. Á móti getur athugasemd verið svar við annarri: hnappurinn *Svara* í spjaldinu *Mál*.
 
-Spjaldið *IFC-net* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-netið-á-kontroll-þjóni).
+Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-kontroll-þjóni).
 
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
 gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla, og gagnasafnið man frá hvaða þjóni, verkefni og
@@ -158,7 +158,7 @@ hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
 Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
 
 Kontroll lýsir viðbótum sínum í `GET /.well-known/kontroll`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
-fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-graf, graffyrirspurnir). Þjónn
+fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-LPG, graffyrirspurnir). Þjónn
 án skjalsins hefur engar viðbætur, og allt samkvæmt forskriftunum virkar þó. Villukóðar þjónsins (`code` í svarinu, til dæmis
 `reauthentication_required`) birtast á þínu tungumáli; óþekktir kóðar sýna eigin texta þjónsins. Tengillinn *Opna í Dataspatium* á
 síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…` og opnar gluggann fyrir nýja uppsprettu með slóðina

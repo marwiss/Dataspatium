@@ -126,7 +126,7 @@ lämnar bort *Hämta dokument*. Under *Fler alternativ* i dialogen kan du välja
 I 2.1 listar *Filer i projektet* bara BCF-dokumenten, ärenden saknar serverns löpnummer och en viewpoint går inte att ta bort. I gengäld kan en
 kommentar vara ett svar på en annan: knappen *Svara* i panelen *Ärenden*.
 
-Kortet *IFC-graf* visas när servern har en graf, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+Kortet *IFC-LPG* visas när servern har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
 
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
 filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
@@ -158,7 +158,7 @@ logg kan paras ihop med appens; nekar en server rubriken stängs den av för den
 Serverns sida beskrivs i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/client-guide.md) (hur en klient ansluter), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets provkörningar) och [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/deploy/local.md) (utvecklingsstacken och hur appen provas mot den).
 
 Kontroll beskriver sina tillägg i `GET /.well-known/kontroll`; appen läser dokumentet när källan öppnas och skriver under rubriken
-vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC-graf, graffrågor). En server
+vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC-LPG, graffrågor). En server
 utan dokumentet har inga tillägg, och allt enligt specifikationerna fungerar ändå. Serverns felkoder (`code` i svaret, till exempel
 `reauthentication_required`) visas på ditt språk; okända koder visar serverns egen text. Länken *Öppna i Dataspatium* på serverns
 sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar dialogen för en ny källa med adressen ifylld. Finns servern redan som källa öppnas den direkt. Länken kan också peka ut ett projekt och ett dokument

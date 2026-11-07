@@ -120,7 +120,7 @@ dem som et grafdatasett; ellers *Lagre som datasett*. **Lagre spørringen** legg
 kjøres igjen med ett klikk. Bolt over WebSocket omfattes ikke av CORS; en egen server uten TLS (`bolt://`) nås bare fra
 en side over http://. Inneholder svaret noder, tegnes de også som en graf.
 
-## IFC-grafen på en Kontroll-server
+## IFC-LPG på en Kontroll-server
 
 Kontroll gjør hver opplastet IFC-fil til en graf: én node per entitet, med klassen og alle dens overklasser som etiketter og
 IFC-attributtene som egenskaper, og relasjoner som heter som attributtene (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
@@ -129,7 +129,7 @@ Grafen ligger på serveren og kan være langt større enn det er rimelig å hent
 
 Det finnes to veier til grafen, og begge gir samme visning:
 
-- **Kortet IFC-graf i OpenCDE-kilden.** Spørringene går gjennom serverens lesende grafspørring, som krever at du logger inn som
+- **Kortet IFC-LPG i OpenCDE-kilden.** Spørringene går gjennom serverens lesende grafspørring, som krever at du logger inn som
   administrator, og at serveren har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det er veien i drift: ingen databaseport må være åpen,
   serveren setter grenser for rader og tid, fjerner lagrede hashverdier og logger hver spørring.
 - **En Neo4j-kilde.** Bolt med databasens adresse, brukernavn og passord, for eksempel `bolt://127.0.0.1:7697` på en
@@ -165,7 +165,7 @@ grafdiagrammer i Visualiser. Klassen blir nodens etikett og alle etiketter følg
 `IfcWallStandardCase` i kopien. I fanen Cypher kan du slå på **Kjør på serveren** for en graf som er lagret herfra, og da svarer
 serveren med all Cypher mot hele grafen i stedet for delmengden mot kopien.
 
-En IFC-modell hentet fra Kontroll har knappen **IFC-graf** i Håndter, og for en valgt bygningsdel i Bearbeid. Den åpner modellens
+En IFC-modell hentet fra Kontroll har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbeid. Den åpner modellens
 graf i Hent, i en Neo4j-kilde på samme datamaskin hvis det finnes en, ellers i OpenCDE-kilden.
 
 ## Flere verktøy i fanen Graf

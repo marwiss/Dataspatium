@@ -130,7 +130,7 @@ Under *Flere indstillinger* i dialogen kan du selv vælge version, og tilbyder s
 kun BCF-dokumenterne, sager har ikke serverens løbenummer, og et viewpoint kan ikke slettes. Til gengæld kan en kommentar være svar på en anden: knappen
 *Svar* i panelet *Sager*.
 
-Kortet *IFC-graf* vises, når serveren har en graf, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+Kortet *IFC-LPG* vises, når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
 
 Under *Filer i projektet* viser kilden de modeller og dokumenter, serveren har for projektet. *Hent* laver et datasæt af
 filens egen slags, så en IFC-fil bliver en model og en CSV-fil en tabel, og datasættet husker, hvilken server, hvilket
@@ -162,7 +162,7 @@ med appens; afviser en server headeren, slås den fra for den kilde.
 Serverens side beskrives i Kontrolls dokumentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/client-guide.md) (hvordan en klient forbinder), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parrets testkørsler) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/deploy/local.md) (udviklingsstakken og hvordan appen testes mod den).
 
 Kontroll beskriver sine tilføjelser i `GET /.well-known/kontroll`; appen læser dokumentet, når kilden åbnes, og skriver under
-overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistrering, forespørgselslog, administration, IFC-graf,
+overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistrering, forespørgselslog, administration, IFC-LPG,
 grafforespørgsler). En server uden dokumentet har ingen tilføjelser, og alt ifølge specifikationerne fungerer alligevel. Serverens
 fejlkoder (`code` i svaret, for eksempel `reauthentication_required`) vises på dit sprog; ukendte koder viser serverens egen tekst.
 Linket *Åbn i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åbner dialogen for en ny

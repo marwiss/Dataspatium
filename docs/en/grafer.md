@@ -122,7 +122,7 @@ graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query
 runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
 only from a page over http://. When the answer holds nodes, they are drawn as a graph as well.
 
-## The IFC graph on a Kontroll server
+## IFC-LPG on a Kontroll server
 
 Kontroll turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
 the IFC attributes as properties, and relationships named after the attributes (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
@@ -131,7 +131,7 @@ directly from *Import*, and nothing is saved until you ask for it.
 
 There are two ways to the graph, and both give the same view:
 
-- **The card IFC graph in the OpenCDE source.** The queries go through the server's read-only graph query, which needs you to
+- **The card IFC-LPG in the OpenCDE source.** The queries go through the server's read-only graph query, which needs you to
   sign in as an administrator and the server to have `OPENCDE_GRAPH_QUERY_ENABLED=true`. This is the way in production: no
   database port has to be open, the server limits rows and time, removes stored hashes and logs every query.
 - **A Neo4j source.** Bolt with the database's address, user name and password, for example `bolt://127.0.0.1:7697` on a
@@ -168,7 +168,7 @@ graph charts in Visualise. The class becomes the node's label and all labels sta
 `IfcWallStandardCase` in the copy. In the Cypher tab you can turn on **Run on the server** for a graph saved from here, and the
 server then answers with all of Cypher against the whole graph, instead of the subset against the copy.
 
-An IFC model fetched from Kontroll has the button **IFC graph** in Manage, and for a chosen element in Process. It opens the model's
+An IFC model fetched from Kontroll has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
 graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
 ## More tools in the Graph tab

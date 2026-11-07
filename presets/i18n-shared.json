@@ -166,13 +166,13 @@
    "is": "stjórnun"
   },
   "opencde.ext.ifcgraph": {
-   "sv": "IFC-graf",
-   "en": "IFC graph",
-   "da": "IFC-graf",
-   "nb": "IFC-graf",
-   "nn": "IFC-graf",
-   "fi": "IFC-graafi",
-   "is": "IFC-graf"
+   "sv": "IFC-LPG",
+   "en": "IFC-LPG",
+   "da": "IFC-LPG",
+   "nb": "IFC-LPG",
+   "nn": "IFC-LPG",
+   "fi": "IFC-LPG",
+   "is": "IFC-LPG"
   },
   "opencde.ext.graph_query": {
    "sv": "graffrågor",

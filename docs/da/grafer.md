@@ -119,7 +119,7 @@ knuder og relationer fladgøres til deres egenskaber. Indeholder svaret knuder o
 som et grafdatasæt; ellers *Gem som datasæt*. **Gem forespørgslen** lægger forespørgslen på kilden, så den kan køres igen
 med ét klik. Bolt over WebSocket er ikke omfattet af CORS; en egen server uden TLS (`bolt://`) nås kun fra en side over http://. Indeholder svaret knuder, tegnes de også som en graf.
 
-## IFC-grafen på en Kontroll-server
+## IFC-LPG på en Kontroll-server
 
 Kontroll gør hver uploadet IFC-fil til en graf: én knude per entitet, med klassen og alle dens overklasser som etiketter og
 IFC-attributterne som egenskaber, og relationer, der hedder som attributterne (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
@@ -128,7 +128,7 @@ forespørges den direkte fra *Hent*, og intet gemmes, før du beder om det.
 
 Der er to veje til grafen, og begge giver samme visning:
 
-- **Kortet IFC-graf i OpenCDE-kilden.** Forespørgslerne går gennem serverens læsende grafforespørgsel, som kræver, at du logger
+- **Kortet IFC-LPG i OpenCDE-kilden.** Forespørgslerne går gennem serverens læsende grafforespørgsel, som kræver, at du logger
   ind som administrator, og at serveren har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det er vejen i drift: ingen databaseport behøver
   at være åben, serveren sætter grænser for rækker og tid, fjerner lagrede hashværdier og logger hver forespørgsel.
 - **En Neo4j-kilde.** Bolt med databasens adresse, brugernavn og adgangskode, for eksempel `bolt://127.0.0.1:7697` på en
@@ -165,7 +165,7 @@ grafdiagrammer i Visualisér. Klassen bliver knudens etiket, og alle etiketter f
 `IfcWallStandardCase` i kopien. I fanen Cypher kan du slå **Kør på serveren** til for en graf, der er gemt herfra, og så svarer serveren
 med al Cypher mod hele grafen i stedet for delmængden mod kopien.
 
-En IFC-model hentet fra Kontroll har knappen **IFC-graf** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
+En IFC-model hentet fra Kontroll har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
 Hent, i en Neo4j-kilde på samme computer, hvis der er en, ellers i OpenCDE-kilden.
 
 ## Flere værktøjer i fanen Graf

@@ -47,9 +47,9 @@ med status, type, ansvarlig, prioritet og måned bag fælles filtre, og knappen 
 eller etage fra en sådan tabel, og SQL-startkoden får forespørgsler til koblingen. *Gem som diagram* gemmer visningen med farverne
 som et modeldiagram, som dashboards, dokumenter og Publicér viser med signaturforklaring.
 
-Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC-graf* fører dig dertil, se [grafer.md](grafer.md#ifc-grafen-på-en-kontroll-server).
+Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC-LPG* fører dig dertil, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
 
-Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Kontrolls [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/ifcgraph.md).
+Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Kontrolls [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/ifc-lpg.md).
 
 ## Tabellerne
 

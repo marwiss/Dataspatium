@@ -250,7 +250,7 @@ du selv gemmer den som JSON eller datasæt. Se [kallor.md](kallor.md).
 
 ## Kan jeg se en models IFC-graf og forespørge den med Cypher?
 
-Ja, hvis modellen findes på en Kontroll-server. Åbn kilden i Hent, kortet *IFC-graf* eller en Neo4j-kilde, og vælg model og visning.
+Ja, hvis modellen findes på en Kontroll-server. Åbn kilden i Hent, kortet *IFC-LPG* eller en Neo4j-kilde, og vælg model og visning.
 Knuder og relationer tegnes, du henter naboer med et dobbeltklik og skriver din egen Cypher i feltet. Se [grafer.md](grafer.md).
 
 ## Virker appen mod en server, der kun har BCF API 2.1?

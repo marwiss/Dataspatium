@@ -134,7 +134,7 @@ jättää pois kohdan *Hae asiakirjat*. Valintaikkunan kohdassa *Lisää asetuks
 näkymässä. Versiossa 2.1 *Projektin tiedostot* luettelee vain BCF-asiakirjat, asioilla ei ole palvelimen juoksevaa numeroa eikä viewpointia voi poistaa. Vastineeksi
 kommentti voi olla vastaus toiseen: painike *Vastaa* paneelissa *Asiat*.
 
-Kortti *IFC-verkko* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-verkko-kontroll-palvelimella).
+Kortti *IFC-LPG* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-lpg-kontroll-palvelimella).
 
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
 omaa lajia olevan aineiston, joten IFC-tiedostosta tulee malli ja CSV-tiedostosta taulukko, ja aineisto muistaa, miltä
@@ -166,7 +166,7 @@ palvelin kieltää otsakkeen, se poistetaan käytöstä kyseiseltä lähteeltä.
 Palvelimen puoli kuvataan Kontrollin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/client-guide.md) (miten asiakas yhdistää), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parin testiajot) ja [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
 
 Kontroll kuvaa lisäyksensä osoitteessa `GET /.well-known/kontroll`; sovellus lukee asiakirjan, kun lähde avataan, ja kirjoittaa
-otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC-graafi,
+otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC-LPG,
 graafikyselyt). Palvelimella ilman asiakirjaa ei ole lisäyksiä, ja kaikki määrittelyjen mukainen toimii silti. Palvelimen virhekoodit
 (`code` vastauksessa, esimerkiksi `reauthentication_required`) näytetään omalla kielelläsi; tuntemattomat koodit näyttävät palvelimen
 oman tekstin. Linkki *Avaa Dataspatiumissa* palvelimen sivuilla on muotoa `index.html#/inhamta/opencde?server=https://…` ja avaa uuden

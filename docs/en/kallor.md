@@ -130,7 +130,7 @@ has neither the Foundation API nor the Documents API, so the app reads the versi
 several you can change in the source's view. In 2.1 *Files in the project* lists only the BCF documents, issues have no number from the server and a
 viewpoint cannot be deleted. In return a comment can answer another: the button *Reply* in the panel *Issues*.
 
-The card *IFC graph* appears when the server has a graph, see [grafer.md](grafer.md#the-ifc-graph-on-a-kontroll-server).
+The card *IFC-LPG* appears when the server has a graph, see [grafer.md](grafer.md#ifc-lpg-on-a-kontroll-server).
 
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
@@ -163,7 +163,7 @@ so that the server's own log can be matched with the app's; if a server refuses 
 The server's side is described in Kontroll's documentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (how a client connects), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (the pair's test runs) and [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (the development stack and how the app is tested against it).
 
 Kontroll describes its extensions in `GET /.well-known/kontroll`; the app reads the document when the source opens and writes under
-the heading which server it is and which extensions it has (self-registration, request log, administration, IFC graph, graph
+the heading which server it is and which extensions it has (self-registration, request log, administration, IFC-LPG, graph
 queries). A server without the document has no extensions, and everything in the specifications works anyway. The server's error
 codes (`code` in the answer, for example `reauthentication_required`) are shown in your language; unknown codes show the server's own
 text. The link *Open in Dataspatium* on the server's pages has the form `index.html#/inhamta/opencde?server=https://…` and opens

@@ -48,9 +48,9 @@ rakennusosat tilan, tyypin, prioriteetin, vastuuhenkilön, rakennusosatyypin tai
 SQL-aloituskoodi saa kyselyt liitokselle. *Tallenna kaaviona* tallentaa näkymän väreineen mallikaaviona, jonka koontinäytöt,
 asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
-Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-verkko* vie sinut sinne, katso [grafer.md](grafer.md#ifc-verkko-kontroll-palvelimella).
+Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-LPG* vie sinut sinne, katso [grafer.md](grafer.md#ifc-lpg-kontroll-palvelimella).
 
-Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifcgraph.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/ifcgraph.md).
+Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/ifc-lpg.md).
 
 ## Taulukot
 

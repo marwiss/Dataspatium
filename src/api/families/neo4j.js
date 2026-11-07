@@ -158,7 +158,7 @@
     }
     /** A readable description of what a query touched (for the dataset's source). */
     /**
-     * Starter queries for Kontroll's IFC graph (its docs/ifcgraph.md and graph-schema.md): the models, the latest finished model per
+     * Starter queries for Kontroll's IFC graph (its docs/ifc-lpg.md and graph-schema.md): the models, the latest finished model per
      * document (Documents API versions share document_id; a BCF document is one of its own), the elements, the issues and what
      * joins them. Entities hang on the model by model_id. Other graphs have their own words; the user edits.
      */

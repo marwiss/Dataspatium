@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Kontroll's IFC graph as the app reads it (the server's docs/ifcgraph.md and graph-schema.md). Every IFC entity is a node labelled
+ * Kontroll's IFC graph as the app reads it (the server's docs/ifc-lpg.md and graph-schema.md). Every IFC entity is a node labelled
  * IfcEntity, its class and all its supertypes, in no particular order, with `ifc_class`, `step_id`, `model_id` and the literal attributes
  * by their IFC names; relationships are named after the attributes, forward and inverse. Pure logic: which class and name a node shows,
  * which family colours it, the models on the server, the ready-made views of one model, the steps from one element, and the properties

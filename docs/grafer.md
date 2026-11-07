@@ -120,7 +120,7 @@ graf** dem som en grafdatamängd; annars *Spara som datamängd*. **Spara frågan
 köras igen med ett klick. Bolt över WebSocket omfattas inte av CORS; en egen server utan TLS (`bolt://`) nås bara från
 en sida över http://. Innehåller svaret noder ritas de också som en graf.
 
-## IFC-grafen på en Kontroll-server
+## IFC-LPG på en Kontroll-server
 
 Kontroll gör varje uppladdad IFC-fil till en graf: en nod per entitet, med klassen och alla dess överklasser som etiketter och
 IFC-attributen som egenskaper, och relationer som heter som attributen (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
@@ -129,7 +129,7 @@ Grafen finns på servern och kan vara mycket större än vad som är rimligt att
 
 Det finns två vägar till grafen, och båda ger samma vy:
 
-- **Kortet IFC-graf i OpenCDE-källan.** Frågorna går genom serverns läsande graffråga, som kräver att du loggar in som
+- **Kortet IFC-LPG i OpenCDE-källan.** Frågorna går genom serverns läsande graffråga, som kräver att du loggar in som
   administratör och att servern har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det är vägen i drift: ingen databasport behöver vara
   öppen, servern sätter tak för rader och tid, tar bort lagrade hashvärden och loggar varje fråga.
 - **En Neo4j-källa.** Bolt med databasens adress, användarnamn och lösenord, till exempel `bolt://127.0.0.1:7697` på en
@@ -165,7 +165,7 @@ grafdiagram i Visualisera. Klassen blir nodens etikett och alla etiketter följe
 `IfcWallStandardCase` i kopian. I fliken Cypher kan du slå på **Kör på servern** för en graf som sparats härifrån, och då svarar
 servern med all Cypher mot hela grafen i stället för delmängden mot kopian.
 
-En IFC-modell som hämtats från Kontroll har knappen **IFC-graf** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
+En IFC-modell som hämtats från Kontroll har knappen **IFC-LPG** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
 modellens graf i Inhämta, i en Neo4j-källa på samma dator om det finns någon, annars i OpenCDE-källan.
 
 ## Fler verktyg i fliken Graf
