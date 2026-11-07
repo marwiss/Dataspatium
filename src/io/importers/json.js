@@ -44,6 +44,19 @@
       return [];
     }
 
+    /**
+     * The coordinate system a GeoJSON file names in its `crs` member (the 2008 form: {type: 'name', properties: {name:
+     * 'urn:ogc:def:crs:EPSG::3006'}} or {type: 'EPSG', properties: {code: 3006}}), or ''. RFC 7946 GeoJSON has no member and is WGS 84.
+     */
+    function crsOf(data, path) {
+      const node = path ? resolvePath(data, path) : data;
+      const c = node && typeof node === 'object' && node.type === 'FeatureCollection' ? node.crs : null;
+      const p = c && typeof c === 'object' ? c.properties || {} : {};
+      if (p.name) return String(p.name);
+      if (p.code !== undefined && p.code !== null && p.code !== '') return 'EPSG:' + String(p.code);
+      return '';
+    }
+
     function flatten(obj, prefix, out) {
       for (const [k, v] of Object.entries(obj)) {
         const key = prefix ? prefix + '.' + k : k;
@@ -89,7 +102,7 @@
       const stat = kind !== 'json';
       const { columns, rows } = stat ? jsonStatTable(data, kind) : tabulate(toRecords(data, options.path));
       const suggestions = !Array.isArray(data) && data && typeof data === 'object' && !stat ? Object.entries(data).filter(([, v]) => Array.isArray(v)).map(([k]) => k) : [];
-      return { kind: 'json', columns, dataRows: rows.slice(0, options.previewRows || 100), totalRows: rows.length, header: true, encoding: read.encoding, pathSuggestions: suggestions, jsonStat: stat, statFormat: stat ? kind : null };
+      return { kind: 'json', columns, dataRows: rows.slice(0, options.previewRows || 100), totalRows: rows.length, header: true, encoding: read.encoding, pathSuggestions: suggestions, jsonStat: stat, statFormat: stat ? kind : null, crs: stat ? '' : crsOf(data, options.path) };
     }
 
     /** @param {File} file @param {{encoding?: string, path?: string}} options */
@@ -98,9 +111,10 @@
       const data = parseJsonText(read.text);
       const kind = kindOf(data, options.path);
       const { columns, rows } = kind !== 'json' ? jsonStatTable(data, kind) : tabulate(toRecords(data, options.path));
-      return { columns, rows, meta: { format: kind, path: options.path || '', encoding: read.encoding } };
+      const crs = kind === 'json' ? crsOf(data, options.path) : '';
+      return { columns, rows, meta: Object.assign({ format: kind, path: options.path || '', encoding: read.encoding }, crs ? { crs } : {}) };
     }
 
-    return { id: 'json', detect, preview, parse, tabulate, toRecords, parseJsonText, isJsonStat };
+    return { id: 'json', detect, preview, parse, tabulate, toRecords, parseJsonText, isJsonStat, crsOf };
   });
 })();

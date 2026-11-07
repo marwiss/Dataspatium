@@ -34,6 +34,7 @@ toisella tietokoneella. *Jaa paketti* luo ZIP-tiedoston valituista aineistoista,
 muistikirjoista sekä viestin ja muutoslokin kollegalle, joka lataa sen kohdassa *Palauta ZIP-tiedostosta* ja voi korvata
 omat versionsa aineistoista. *GitHub* lähettää työtilan repositorioon ja noutaa sen sieltä käyttöoikeustunnuksella, joka
 tallennetaan salattuna.
+*Internetyhteys* näyttää, saako sovellus hakea taustakarttoja internetistä; sovellus kysyy ensimmäisellä kerralla, ja täällä muutat vastausta.
 
 ## Muokkaa
 

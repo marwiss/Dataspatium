@@ -38,6 +38,7 @@ vanliga filer i en mapp du väljer, automatiskt efter varje ändring om du vill,
 och en ändringslogg för en kollega, som läser in den under *Återställ från ZIP* och kan ersätta sina versioner av
 datamängderna. *GitHub* skickar arbetsytan till ett repo och hämtar den därifrån, med en åtkomstnyckel som sparas
 krypterad.
+*Internetåtkomst* visar om appen får hämta bakgrundskartor från internet; appen frågar första gången, och här ändrar du svaret.
 
 ## Bearbeta
 

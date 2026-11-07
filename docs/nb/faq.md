@@ -9,7 +9,7 @@ ligger som vanlige filer på disken (se [kom-igang.md](kom-igang.md)).
 
 ## Trenger jeg internett?
 
-Nei. Internett trengs bare når du henter data fra et API, synkroniserer med GitHub eller klikker på *Se etter oppdateringer*. Alt annet, også R,
+Nei. Internett trengs bare når du henter data fra et API, synkroniserer med GitHub, viser bakgrunnskart i plankartet (etter at du har sagt ja) eller klikker på *Se etter oppdateringer*. Alt annet, også R,
 fungerer uten nettverk.
 
 ## Hvorfor tar det tid første gang jeg bruker R?

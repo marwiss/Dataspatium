@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes'], (base, dialogs, recipes) => {
+  D.define('ui/modes/bearbeta', ['ui/base', 'ui/dialogs', 'data/recipes', 'ui/bearbeta/plan-view'], (base, dialogs, recipes, planViewModule) => {
     const { h, t, i18n, replace } = base;
     const QUICK = [
       { op: 'rename_column', icon: 'pencil' }, { op: 'set_label', icon: 'info' }, { op: 'set_value_labels', icon: 'list-ordered' }, { op: 'apply_value_labels', icon: 'arrow-up-down', labelled: true }, { op: 'set_type', icon: 'braces' }, { op: 'trim', icon: 'wand-sparkles', textOnly: true },
@@ -22,13 +22,18 @@
       /** @type {Map<number, number>} table row index -> SQLite rowid */
       let rowIds = new Map();
       let undoBtn = null; let selectedColumn = null;
+      // A digital plan (kind "plan") opens as a plan map; the table is one button away, and back.
+      const asTable = new Set();
+      let planShown = false;
+      const planView = planViewModule.create(ctx, { onTable: () => { if (currentId) asTable.add(currentId); currentId = null; render(); } });
+      function closePlan() { if (planShown) { planView.destroy(); planShown = false; } }
 
       function activate(s) {
         slots = s;
         unsubscribe = store.subscribe((state, changed) => { if (changed.includes('datasets') || changed.includes('selectedId')) render(); });
         render();
       }
-      function deactivate() { slots = null; table = null; if (unsubscribe) unsubscribe(); }
+      function deactivate() { closePlan(); slots = null; table = null; currentId = null; if (unsubscribe) unsubscribe(); }
 
       function current() { const state = store.get(); return state.datasets.find((d) => d.id === state.selectedId) || null; }
 
@@ -37,6 +42,11 @@
         const state = store.get();
         ui.datasetList.render(slots.left, { datasets: state.datasets, selectedId: state.selectedId, onSelect: (id) => store.set({ selectedId: id }) });
         const ds = current();
+        if (ds && ds.kind === 'plan' && !asTable.has(ds.id)) {
+          if (currentId !== ds.id || !planShown) { closePlan(); currentId = ds.id; table = null; planShown = true; planView.render(ds, { center: slots.center, right: slots.right }); }
+          return;
+        }
+        closePlan();
         if (!ds) {
           currentId = null;
           replace(slots.center, h('dm-empty-state', { icon: 'wand-sparkles', heading: t('bearbeta.empty'), text: state.datasets.length ? t('shell.select.dataset') : t('shell.no.datasets.hint') },
@@ -92,6 +102,7 @@
             h('h1', null, ui.icon('wand-sparkles', 20), ds.name),
             h('div', { class: 'dm-toolbar' },
               searchInput, countBadge,
+              ds.kind === 'plan' ? ui.button({ label: t('bearbeta.view.plan'), icon: 'layers', title: t('bearbeta.view.plan.hint'), 'data-plan-view': '', onClick: () => { asTable.delete(ds.id); currentId = null; render(); } }) : null,
               ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', variant: 'primary', 'data-course': 'actions', onClick: async () => dialogs.palette(dialogCtx(current(), await services.datasets.columns(ds.id))) }),
               undoBtn,
               ui.button({ label: t('bearbeta.profile'), icon: 'circle-check', onClick: async () => dialogs.profileDialog(dialogCtx(current(), await services.datasets.columns(ds.id))) }),

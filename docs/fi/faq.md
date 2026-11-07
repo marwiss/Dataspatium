@@ -9,7 +9,7 @@ tiedostoina levyllä (ks. [kom-igang.md](kom-igang.md)).
 
 ## Tarvitsenko internetiä?
 
-En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta, synkronoit GitHubin kanssa tai napsautat *Tarkista päivitykset*. Kaikki muu, myös R, toimii
+En. Internetiä tarvitaan vain, kun noudat dataa rajapinnasta, synkronoit GitHubin kanssa, näytät taustakartan kaavakartassa (kun olet sallinut sen) tai napsautat *Tarkista päivitykset*. Kaikki muu, myös R, toimii
 ilman verkkoa.
 
 ## Miksi R:n ensimmäinen käyttökerta kestää?

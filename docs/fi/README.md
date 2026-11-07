@@ -38,7 +38,7 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - Microsoft Edge tai Google Chrome (versio 120 tai uudempi) tai Firefox (versio 128 tai uudempi). Safaria ei tueta.
 - Noin 300 Mt vapaata tilaa sovelluskansiolle ja vähintään 4 Gt muistia (8 Gt suositellaan suurille aineistoille).
   Järjestelmänvalvojan oikeuksia ei tarvita.
-- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, synkronoit GitHubin kanssa tai tarkistat päivitykset.
+- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, synkronoit GitHubin kanssa, näytät taustakartan kaavakartassa tai tarkistat päivitykset.
 
 ## Mitä voit tehdä
 
@@ -58,6 +58,10 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
   SQL-soluista syntyy raportteja HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)),
   sekä Regex-välilehti, jossa säännöllisiä lausekkeita kokeillaan sarakkeeseen ja käytetään suodattamiseen,
   poimimiseen, korvaamiseen ja jakamiseen (ks. [regex.md](regex.md)), kaikki selaimessa.
+- **Kaavat**: ruotsalaiset digitaaliset asemakaavat ja yleiskaavat luetaan ja näytetään, teki ne mikä työkalu tahansa: toimitustiedostot
+  Lantmäterietin Detaljplan 4.1:n ja Översiktsplan 2.0:n mukaan, GeoPackage-muotoiset asemakaavat, Boverketin ÖP-malli ja arkistopaketit
+  (kansio tai ZIP, jossa PREMIS.xml). Asemakaava piirretään kaavakarttana Boverketin värein ja merkinnöin, ja Analysoi-tilan välilehti Kaava kokoaa
+  määräykset ja pinta-alat (katso [planer.md](planer.md)).
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).

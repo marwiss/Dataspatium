@@ -36,7 +36,7 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri) eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt.
 - Um 300 MB laust pláss fyrir forritsmöppuna og minnst 4 GB vinnsluminni (8 GB mælt með fyrir stór gagnasöfn). Engin
   stjórnandaréttindi þarf.
-- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, samstillir við GitHub eða leitar að uppfærslum.
+- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, samstillir við GitHub, sýnir bakgrunnskort á skipulagskortinu eða leitar að uppfærslum.
 
 ## Hvað þú getur gert
 
@@ -53,6 +53,10 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - **Greina**: innbyggt R-stjórnborð með ggplot2 og tidyverse (sjá [r-guide.md](r-guide.md)), SQL-stjórnborð þar sem
   gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
   HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), og Regex-flipi þar sem reglulegar segðir eru prófaðar á dálki og notaðar til að sía, draga út, skipta út og skipta upp (sjá [regex.md](regex.md)), allt í vafranum.
+- **Skipulag**: sænskt stafrænt deiliskipulag og aðalskipulag er lesið og sýnt, sama hvaða verkfæri bjó það til: afhendingarskrár samkvæmt
+  Detaljplan 4.1 og Översiktsplan 2.0 frá Lantmäteriet, deiliskipulag í GeoPackage, ÖP-líkan Boverket og skjalasafnspakkar (mappa eða ZIP með
+  PREMIS.xml). Deiliskipulag er teiknað sem skipulagsuppdráttur með litum og auðkennum Boverket, og flipinn Skipulag í Greina dregur saman
+  ákvæði og flatarmál (sjá [planer.md](planer.md)).
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).

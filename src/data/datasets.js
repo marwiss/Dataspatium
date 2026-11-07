@@ -16,7 +16,10 @@
     /** @type {Map<string, {engine: any, meta: any, columns: any[]}>} */
     const openHandles = new Map();
     const listeners = new Set();
-    const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules'];
+    // `kind` ('plan' for a digital plan; absent for a table) and `plan` (the plan's facts, JSON) come with the plan part.
+    const META_KEYS = ['id', 'name', 'shortName', 'description', 'createdAt', 'updatedAt', 'rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'kind', 'plan'];
+    /** The _meta keys whose values are JSON. */
+    const JSON_META = new Set(['rowCount', 'columnCount', 'source', 'importOptions', 'rules', 'plan']);
 
     // ---- short names: an identifier per dataset for SQL across datasets, dm_read() in R and chart files ----
     /** Hard limit for a short name (user-typed) and the target length for derived ones. */
@@ -115,7 +118,7 @@
     function rowsToMeta(rows) {
       const meta = {};
       for (const [k, v] of rows) {
-        if (k === 'rowCount' || k === 'columnCount' || k === 'source' || k === 'importOptions' || k === 'rules') { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
+        if (JSON_META.has(k)) { try { meta[k] = JSON.parse(v); } catch (_e) { meta[k] = v; } }
         else meta[k] = v;
       }
       return meta;
@@ -153,6 +156,7 @@
         id, name: input.name || D.t('datasets.untitled'), shortName, description: input.description || '', createdAt: now, updatedAt: now,
         rowCount: 0, columnCount: columns.length, source: input.source || null, importOptions: input.importOptions || null,
       };
+      if (input.kind && input.kind !== 'table') meta.kind = input.kind;
       await engine.insertRows('_meta', ['key', 'value'], metaToRows(meta));
       const handle = { engine, meta, columns, importing: true };
       openHandles.set(id, handle);

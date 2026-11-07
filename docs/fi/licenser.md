@@ -41,6 +41,9 @@ lisenssitekstien kanssa.
 | webR (JavaScript-osa) | MIT | Kuten yllä |
 | R (R.wasm ja muut) | GPL-2 tai GPL-3 | Vapaa ohjelmisto. Levitetään muuttamattomana binäärimuodossa; lähdekoodi on saatavilla R-projektilta ja webR-projektilta mainituissa versioissa |
 | R-paketit kansiossa `vendor/webr-repo` | Enimmäkseen MIT; myös LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite ja muut) | Levitetään muuttamattomina; lähdekoodi on saatavilla CRANista mainituissa versioissa |
+| Leaflet 1.9 (kartat) | BSD-2-Clause | Vapaasti käytettävä ja levitettävä lisenssitekstin ja ilmoitusten kanssa |
+| proj4js 2.22 ja Proj4Leaflet 1.0 (kaavakartta kaavan omassa koordinaattijärjestelmässä) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Vapaasti käytettäviä ja levitettäviä lisenssitekstin ja ilmoitusten kanssa |
+| Boverketin Planbestämmelsekatalog (upotettu kopio, `presets/plan/`) | Boverketin avoin data | Vapaasti käytettävä ja levitettävä; lähteenä on mainittava Boverket ja Planbestämmelsekatalogen |
 
 Dataspatiumin koodi ei linkity R:ään. R toimii erillisenä tulkkina workerissa ja vaihtaa R-koodia, SQLite-tiedostoja ja kuvia
 sovelluksen kanssa viestien välityksellä; tällaisen yhteisjakelun ("mere aggregation") GPL sallii, ja R:n osat säilyttävät

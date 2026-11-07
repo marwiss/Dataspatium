@@ -23,9 +23,13 @@
      * @param {File} file @param {string} [forced] importer id
      */
     async function resolveImporter(file, forced) {
+      // Digital plans: an archive package (a ZIP with metadata/PREMIS.xml), and plan files recognised by their contents.
+      if (forced === 'planarchive' || (!forced && /\.zip$/i.test(file.name || '') && await D.require('io/importers/plan-archive').sniff(file))) return D.require('io/importers/plan-archive');
+      if (forced === 'detaljplan') return D.require('io/importers/detaljplan');
       const importer = importerFor(file, forced);
-      if (forced || (importer !== json && importer !== xml)) return importer;
+      if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
+      if ((importer === json || importer === geo) && D.require('io/importers/detaljplan').sniff(head)) return D.require('io/importers/detaljplan');
       if (importer === json && /"type"\s*:\s*"Topology"/.test(head)) return geo;
       if (importer === xml && /urn:schemas-microsoft-com:office:spreadsheet/.test(head)) return excel;
       return importer;
@@ -41,6 +45,11 @@
     async function preview(file, options = {}) {
       const importer = await resolveImporter(file, options.format);
       const p = await importer.preview(file, options);
+      // A plan GeoPackage (Boverket's ÖP model, a detaljplan with the specification's fields, Nordic plans) can be imported whole as a plan.
+      if (importer === sqliteImp && p.gpkg) { const kind = D.require('io/importers/detaljplan').gpkgKind(p.tables || []); if (kind) { p.planGpkg = kind; if (kind === 'oversiktsplan') p.oversiktsplan = true; } }
+      // A coordinate system the app cannot convert: the places are kept as they are, but not drawn (Inhämta says so).
+      const named = p.crs || (p.plan && p.plan.crs) || '';
+      if (named && D.require('data/geo').crsUnknown(named)) p.crsUnknown = String(named);
       const columns = types.cleanColumnNames(p.columns);
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
       // Declared types (SQLite schemas) win over inference for empty or ambiguous columns.
@@ -81,6 +90,9 @@
      */
     async function run(file, options, specs, name, progress) {
       const importer = await resolveImporter(file, options.format);
+      // A digital plan becomes a plan dataset (rows per object, the original kept); so does a plan GeoPackage when asked.
+      if (importer.id === 'detaljplan' || importer.id === 'planarchive') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'sqlite' && options.plan) return D.require('io/importers/detaljplan').importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
         // A Dataspatium file is restored with its metadata, log and versions intact.
@@ -178,6 +190,20 @@
       return { kind: 'text', columns, dataRows: table.rows.slice(0, 100), header: table.meta.header, delimiter: table.meta.delimiter, totalRows: table.rows.length, importer: 'csv', inferred: inferred.map((c, i) => Object.assign({ include: true, label: columns[i], sourceName: table.columns[i] }, c)) };
     }
 
-    return { importers, importerFor, preview, run, runText, runPreset, previewText, materialize, baseName };
+    /**
+     * True when dropped files hold an archive package (a folder with `metadata/PREMIS.xml`).
+     * @param {File[]} files
+     */
+    function isPackage(files) { return D.require('io/importers/plan-archive').isPackage(files); }
+
+    /**
+     * An archive package dropped as a folder → one plan dataset with the package's files and the check of them.
+     * @param {File[]} files @param {Record<string, any>} [options] @param {string} [name] @param {Function} [progress]
+     */
+    async function runPackage(files, options = {}, name, progress) {
+      return D.require('io/importers/plan-archive').importFiles(files, options, name, progress);
+    }
+
+    return { importers, importerFor, preview, run, runText, runPreset, previewText, materialize, baseName, isPackage, runPackage };
   });
 })();

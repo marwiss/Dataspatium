@@ -275,5 +275,23 @@ Dataspatium.assets.addEntries({
   "encoding": "text",
   "size": 112022,
   "library": "dataspatium"
+ },
+ "presets/plan/fi-kaavamaarayslaji.json": {
+  "file": "presets/plan/fi-kaavamaarayslaji.json.js",
+  "encoding": "gzip+base64",
+  "size": 50541,
+  "library": "dataspatium"
+ },
+ "presets/plan/no-arealformal.json": {
+  "file": "presets/plan/no-arealformal.json.js",
+  "encoding": "gzip+base64",
+  "size": 8573,
+  "library": "dataspatium"
+ },
+ "presets/plan/planbestammelsekatalogen.json": {
+  "file": "presets/plan/planbestammelsekatalogen.json.js",
+  "encoding": "gzip+base64",
+  "size": 1016330,
+  "library": "dataspatium"
  }
 });

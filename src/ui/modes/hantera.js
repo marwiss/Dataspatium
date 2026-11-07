@@ -245,7 +245,30 @@
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('datasets.restore') }), restoreZone),
             h('div', { class: 'dm-card dm-stack' }, h('h3', { text: t('bundle.title') }), h('p', { class: 'dm-help', text: t('bundle.card.hint') }),
               h('div', null, ui.button({ label: t('bundle.create'), icon: 'package', onClick: shareBundle })))),
-          folderEl, await githubCard());
+          folderEl, await githubCard(), await networkCard());
+      }
+
+      /** The network purposes 1.0.0 asks consent for: the background map of the plan map. */
+      const ASKED = ['basemaps'];
+      /** Internetåtkomst: the answer for each purpose the app asks about, to be changed here (ask, allowed, denied). */
+      async function networkCard() {
+        const consent = D.require('platform/consent');
+        const states = await consent.all();
+        const rows = ASKED.map((p) => {
+          const sel = /** @type {any} */ (h('dm-select', { label: t('consent.purpose.' + p), help: t('consent.purpose.' + p + '.body'), disabled: consent.override() ? true : null, 'data-consent': p }));
+          sel.options = ['ask', 'granted', 'denied'].map((s) => ({ value: s, label: t('consent.state.' + s) }));
+          sel.value = states[p] || 'ask';
+          sel.addEventListener('change', async () => {
+            try { await consent.set(p, sel.value === 'ask' ? null : sel.value); shell.log(t('consent.changed', { purpose: t('consent.purpose.' + p), state: t('consent.state.' + sel.value) }), 'ok'); }
+            catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+          });
+          return sel;
+        });
+        return h('div', { class: 'dm-card dm-stack', 'data-settings': 'network' },
+          h('h3', null, ui.icon('globe', 18), ' ', t('consent.settings.title')),
+          h('p', { class: 'dm-help', text: t('consent.settings.hint') }),
+          consent.override() ? h('p', { class: 'dm-warn dm-small', text: t('consent.override') }) : null,
+          h('div', { class: 'dm-form-grid' }, rows));
       }
 
       /** Log and announce what a restore brought in. */

@@ -21,7 +21,7 @@
         items.push(h('p', { class: 'dm-help', text: options.emptyHint || t('shell.no.datasets.hint') }));
       }
       items.push(h('div', { class: 'dm-list' }, options.datasets.map((ds) => item({
-        id: ds.id, icon: 'table', label: ds.name,
+        id: ds.id, icon: ds.kind === 'plan' ? 'layers' : 'table', label: ds.name,
         // The short name is what SQL, R and chart files use to refer to the dataset.
         sub: `${ds.shortName ? ds.shortName + ' · ' : ''}${t('common.rows', { n: i18n.formatNumber(ds.rowCount || 0) })} · ${t('common.columns', { n: ds.columnCount || 0 })}`,
         code: ds.shortName || '',

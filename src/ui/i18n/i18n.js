@@ -56,6 +56,8 @@
      * @param {Record<string, any>} [params]
      */
     function t(key, params) {
+      // A key with a `.one` sibling takes the singular when n is exactly one ("1 fil stämmer", not "1 filer stämmer").
+      if (params && params.n !== undefined && String(params.n) === '1' && key + '.one' in sv) key += '.one';
       let text = (languages[current] || {})[key];
       if (text === undefined) text = sv[key];
       if (text === undefined) { D.log('i18n', 'missing key', key); text = key; }

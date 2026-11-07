@@ -39,7 +39,7 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
   supported.
 - About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large
   datasets). No administrator rights are needed.
-- Internet is needed only when you fetch data from open APIs, sync with GitHub or check for updates.
+- Internet is needed only when you fetch data from open APIs, sync with GitHub, show a background map in the plan map or check for updates.
 
 ## What you can do
 
@@ -57,6 +57,10 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
 - **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
   where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
   HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
+- **Plans**: Swedish digital detailed development plans and comprehensive plans are read and shown, whichever tool made them: delivery
+  files per Lantmäteriet's Detaljplan 4.1 and Översiktsplan 2.0, detailed development plans in GeoPackage, Boverket's ÖP model and archive
+  packages (folder or ZIP with PREMIS.xml). A detailed plan is drawn as a plan map with Boverket's colours and designations, and the Plan tab in
+  Analyse sums up provisions and areas (see [planer.md](planer.md)).
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).

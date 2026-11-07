@@ -37,6 +37,7 @@ choose, automatically after every change if you want, and can be loaded on anoth
 creates a ZIP with chosen datasets, charts, dashboards, templates and notebooks, a message and a change log for a
 colleague, who loads it under *Restore from ZIP* and can replace their versions of the datasets. *GitHub* pushes the
 workspace to a repository and fetches it from there, with an access token that is stored encrypted.
+*Internet access* shows whether the app may fetch background maps from the internet; the app asks the first time, and here you change the answer.
 
 ## Process
 

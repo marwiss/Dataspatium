@@ -167,11 +167,14 @@
       const found = named || textCols.find((x) => firstGeometry(x.i));
       if (!found) throw new Error(D.t('export.err.nogeometry'));
       const skip = new Set([found.i, cols.findIndex((c) => c.name === 'geometry_type')]);
+      // GeoJSON is in WGS 84 (RFC 7946): metres are converted from the dataset's own system (SWEREF 99 TM when the file named
+      // none); a system the app cannot convert gives a feature without geometry rather than one in the wrong place.
+      const crs = geo.crsOfMeta(await datasets.get(id)) || undefined;
       const features = rows.map((r) => {
         const properties = {};
         cols.forEach((c, i) => { if (!skip.has(i)) properties[c.name] = r[i] === undefined ? null : (c.type === 'boolean' && r[i] !== null ? !!r[i] : r[i]); });
         const g = geo.parseGeometry(r[found.i]);
-        return { type: 'Feature', properties, geometry: g && g.type ? g : null };
+        return { type: 'Feature', properties, geometry: g && g.type ? (geo.isProjected([g]) ? geo.toWgs84(g, crs) : g) : null };
       });
       return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });
     }

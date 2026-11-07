@@ -37,7 +37,7 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
 - Microsoft Edge eller Google Chrome (versjon 120 eller nyere) eller Firefox (versjon 128 eller nyere). Safari støttes ikke.
 - Rundt 300 MB ledig plass til appmappen og minst 4 GB minne (8 GB anbefales for store datasett). Det kreves ingen
   administratorrettigheter.
-- Internett trengs bare når du henter data fra åpne API-er, synkroniserer med GitHub eller ser etter oppdateringer.
+- Internett trengs bare når du henter data fra åpne API-er, synkroniserer med GitHub, viser bakgrunnskart i plankartet eller ser etter oppdateringer.
 
 ## Hva du kan gjøre
 
@@ -55,6 +55,10 @@ for trinn med flere detaljer: [kom-igang.md](kom-igang.md).
 - **Analysere**: en innebygd R-konsoll med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsoll der datasett
   kobles med join via kortnavnene sine, og notatbøker med tekst-, R- og SQL-celler som blir rapporter i HTML, Word, PDF,
   Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane der regulære uttrykk prøves på en kolonne og brukes til å filtrere, hente ut, erstatte og dele opp (se [regex.md](regex.md)), helt i nettleseren.
+- **Planer**: svenske digitale detaljplaner og översiktsplaner leses og vises, uansett hvilket verktøy som har laget dem: leveransefiler
+  etter Lantmäteriets Detaljplan 4.1 og Översiktsplan 2.0, detaljplaner i GeoPackage, Boverkets ÖP-modell og arkivpakker (mappe eller ZIP med
+  PREMIS.xml). En detaljplan tegnes som plankart med Boverkets farger og betegnelser, og fanen Plan i Analyser oppsummerer bestemmelser og
+  arealer (se [planer.md](planer.md)).
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).

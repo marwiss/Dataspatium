@@ -40,6 +40,9 @@ licenstexterna.
 | webR (JavaScript-delen) | MIT | Som ovan |
 | R (R.wasm med flera) | GPL-2 eller GPL-3 | Fri programvara. Distribueras oförändrad i binär form; källkoden finns hos R-projektet och webR-projektet i de versioner som anges |
 | R-paket i `vendor/webr-repo` | Mest MIT; även LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite med flera) | Distribueras oförändrade; källkoden finns på CRAN i de versioner som anges |
+| Leaflet 1.9 (kartor) | BSD-2-Clause | Fri att använda och sprida med licenstext och notiser |
+| proj4js 2.22 och Proj4Leaflet 1.0 (plankartan i planens eget koordinatsystem) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Fria att använda och sprida med licenstext och notiser |
+| Boverkets Planbestämmelsekatalog (inbäddad kopia, `presets/plan/`) | Öppna data från Boverket | Fri att använda och sprida; Boverket och Planbestämmelsekatalogen ska anges som källa |
 
 Dataspatiums kod länkar inte mot R. R körs som en separat tolk i en worker och utbyter R-kod, SQLite-filer och
 bilder med appen via meddelanden; det är sådan samdistribution ("mere aggregation") som GPL tillåter, och

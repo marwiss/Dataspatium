@@ -38,6 +38,9 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | webR (JavaScript-hlutinn) | MIT | Eins og að ofan |
 | R (R.wasm og fleira) | GPL-2 eða GPL-3 | Frjáls hugbúnaður. Dreift óbreyttu á tvíundarformi; frumkóðinn fæst hjá R-verkefninu og webR-verkefninu í tilgreindum útgáfum |
 | R-pakkar í `vendor/webr-repo` | Aðallega MIT; líka LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite og fleiri) | Dreift óbreyttum; frumkóðinn fæst á CRAN í tilgreindum útgáfum |
+| Leaflet 1.9 (kort) | BSD-2-Clause | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
+| proj4js 2.22 og Proj4Leaflet 1.0 (skipulagskortið í eigin hnitakerfi skipulagsins) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
+| Planbestämmelsekatalog Boverket (innbyggt eintak, `presets/plan/`) | Opin gögn frá Boverket | Frjálst að nota og dreifa; tilgreina skal Boverket og Planbestämmelsekatalogen sem heimild |
 
 Kóði Dataspatium tengist ekki R. R keyrir sem sérstakur túlkur í worker og skiptist á R-kóða, SQLite-skrám og myndum við
 forritið gegnum skilaboð; það er sú tegund samdreifingar („mere aggregation“) sem GPL leyfir, og R-hlutarnir halda öllum

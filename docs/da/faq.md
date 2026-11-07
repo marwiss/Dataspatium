@@ -9,7 +9,7 @@ disken (se [kom-igang.md](kom-igang.md)).
 
 ## Har jeg brug for internet?
 
-Nej. Internet kræves kun, når du henter data fra et API, synkroniserer med GitHub eller klikker på *Søg efter opdateringer*. Alt andet, også R,
+Nej. Internet kræves kun, når du henter data fra et API, synkroniserer med GitHub, viser baggrundskort i plankortet (efter at du har sagt ja) eller klikker på *Søg efter opdateringer*. Alt andet, også R,
 fungerer uden netværk.
 
 ## Hvorfor tager det tid første gang, jeg bruger R?

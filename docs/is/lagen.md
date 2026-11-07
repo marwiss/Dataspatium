@@ -31,6 +31,7 @@ Chrome, færanleg mappa: vinnusvæðið er vistað sem venjulegar skrár í möp
 minnisbókum, skilaboðum og breytingaskrá handa samstarfsmanni, sem hleður henni inn undir *Endurheimta úr ZIP* og getur
 skipt út sínum útgáfum gagnasafnanna. *GitHub* sendir vinnusvæðið í safn og sækir það þaðan, með aðgangslykli sem er
 vistaður dulkóðaður.
+*Netaðgangur* sýnir hvort forritið má sækja bakgrunnskort af netinu; forritið spyr í fyrsta sinn, og hér breytir þú svarinu.
 
 ## Vinna
 

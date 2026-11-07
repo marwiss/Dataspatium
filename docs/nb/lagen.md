@@ -32,6 +32,7 @@ endring om du vil, og kan lastes inn på en annen datamaskin. *Del pakke* lager 
 dashbord, maler og notatbøker, en melding og en endringslogg til en kollega, som laster den inn under *Gjenopprett fra
 ZIP* og kan erstatte sine versjoner av datasettene. *GitHub* sender arbeidsområdet til et repository og henter det
 derfra, med et tilgangstoken som lagres kryptert.
+*Internettilgang* viser om appen får hente bakgrunnskart fra internett; appen spør første gang, og her endrer du svaret.
 
 ## Bearbeid
 

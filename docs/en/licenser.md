@@ -40,6 +40,9 @@ licence. Each library, its version and licence are listed in
 | webR (the JavaScript part) | MIT | As above |
 | R (R.wasm and others) | GPL-2 or GPL-3 | Free software. Distributed unchanged in binary form; the source code is available from the R project and the webR project in the stated versions |
 | R packages in `vendor/webr-repo` | Mostly MIT; also LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite and others) | Distributed unchanged; the source code is available on CRAN in the stated versions |
+| Leaflet 1.9 (maps) | BSD-2-Clause | Free to use and distribute with the licence text and notices |
+| proj4js 2.22 and Proj4Leaflet 1.0 (the plan map in the plan's own coordinate system) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Free to use and distribute with the licence text and notices |
+| Boverket's Planbestämmelsekatalog (embedded copy, `presets/plan/`) | Open data from Boverket | Free to use and distribute; Boverket and Planbestämmelsekatalogen must be named as the source |
 
 Dataspatium's code does not link against R. R runs as a separate interpreter in a worker and exchanges R code, SQLite
 files and images with the app through messages; that is the kind of co-distribution ("mere aggregation") the GPL

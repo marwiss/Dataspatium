@@ -25,7 +25,7 @@
         const last = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '');
         if (last && /\.[A-Za-z0-9]+$/.test(last)) return last;
         const ct = String(contentType || '').toLowerCase();
-        const ext = /json/.test(ct) ? 'json' : /csv/.test(ct) ? 'csv' : /xml/.test(ct) ? 'xml' : /zip/.test(ct) ? 'zip' : /excel|spreadsheet/.test(ct) ? 'xlsx' : 'txt';
+        const ext = /json/.test(ct) ? 'json' : /csv/.test(ct) ? 'csv' : /xml/.test(ct) ? 'xml' : /zip/.test(ct) ? 'zip' : /excel|spreadsheet/.test(ct) ? 'xlsx' : /geopackage|sqlite/.test(ct) ? 'gpkg' : 'txt';
         return `${last || u.hostname || D.t('url.file.name')}.${ext}`;
       } catch (_err) { return D.t('url.file.name') + '.txt'; }
     }

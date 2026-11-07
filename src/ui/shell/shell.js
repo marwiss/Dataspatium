@@ -79,6 +79,8 @@
         registerMode(mode) { this.modes.set(mode.id, mode); }
 
         async init() {
+          // Internet access is asked for per purpose the first time it is needed (platform/consent; the plan map's background map).
+          D.require('platform/consent').setAsker((purpose, info) => this.askConsent(purpose, info));
           // The very first start: let the user pick the language before anything else is shown.
           if (!i18n.hasChoice()) await this.chooseLanguage({ required: true });
           // Datasets from versions before short names get one, derived from their name.
@@ -244,6 +246,28 @@
           this.logList.appendChild(h('li', { 'data-kind': kind }, h('time', { text: time }), h('span', { text: message })));
           this.logList.scrollTop = this.logList.scrollHeight;
           (kind === 'error' ? console.error : console.log)('[dataspatium] ' + message);
+        }
+
+        /**
+         * The consent question for a network purpose: what it is for, which host, and whether to remember.
+         * @returns {Promise<{allow: boolean, remember: boolean}>}
+         */
+        async askConsent(purpose, info = {}) {
+          const remember = /** @type {any} */ (h('dm-switch', { label: t('consent.remember') }));
+          remember.checked = true;
+          const details = [info.host ? t('consent.host', { host: info.host }) : '', info.label || ''].filter(Boolean).join(' · ');
+          const choice = await overlays.dialog.open({
+            title: t('consent.title'),
+            body: h('div', { class: 'dm-stack', 'data-consent-dialog': purpose },
+              h('p', null, h('strong', { text: t('consent.purpose.' + purpose) + ': ' }), t('consent.purpose.' + purpose + '.body')),
+              details ? h('p', { class: 'dm-help', text: details }) : null,
+              h('p', { class: 'dm-help', text: t('consent.change.hint') }),
+              remember),
+            actions: [{ label: t('consent.deny'), value: false }, { label: t('consent.allow'), variant: 'primary', value: true, primary: true }],
+          });
+          const allow = choice === true;
+          this.log(t(allow ? 'consent.logged.allow' : 'consent.logged.deny', { purpose: t('consent.purpose.' + purpose) }), allow ? 'info' : 'warn');
+          return { allow, remember: choice === undefined ? false : !!remember.checked };
         }
 
         toast(message, opts) { return overlays.toast.show(message, opts); }

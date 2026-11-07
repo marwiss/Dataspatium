@@ -33,6 +33,7 @@ automatisk efter hver ændring, hvis du vil, og kan indlæses på en anden compu
 valgte datasæt, diagrammer, dashboards, skabeloner og notesbøger, en besked og en ændringslog til en kollega, der
 indlæser den under *Gendan fra ZIP* og kan erstatte sine versioner af datasættene. *GitHub* sender arbejdsområdet til et
 repository og henter det derfra, med et adgangstoken, der gemmes krypteret.
+*Internetadgang* viser, om appen må hente baggrundskort fra internettet; appen spørger første gang, og her ændrer du svaret.
 
 ## Bearbejd
 

@@ -107,6 +107,23 @@
     const FALSE_E = 500000;
     const FALSE_N = 0;
     const DEG = Math.PI / 180;
+    /** The SWEREF 99 projections: TM and the twelve local zones (central meridian, scale, false easting), by EPSG code. */
+    const SWEREF_ZONES = {
+      3006: { lon0: 15, k0: 0.9996, falseE: 500000 },
+      3007: { lon0: 12, k0: 1, falseE: 150000 }, 3008: { lon0: 13.5, k0: 1, falseE: 150000 }, 3009: { lon0: 15, k0: 1, falseE: 150000 },
+      3010: { lon0: 16.5, k0: 1, falseE: 150000 }, 3011: { lon0: 18, k0: 1, falseE: 150000 }, 3012: { lon0: 14.25, k0: 1, falseE: 150000 },
+      3013: { lon0: 15.75, k0: 1, falseE: 150000 }, 3014: { lon0: 17.25, k0: 1, falseE: 150000 }, 3015: { lon0: 18.75, k0: 1, falseE: 150000 },
+      3016: { lon0: 20.25, k0: 1, falseE: 150000 }, 3017: { lon0: 21.75, k0: 1, falseE: 150000 }, 3018: { lon0: 23.25, k0: 1, falseE: 150000 },
+    };
+    /** EPSG code of a CRS given as a number, "EPSG:3007", "urn:ogc:def:crs:EPSG::3007" or "SWEREF99 13 30"; 3006 for anything else. */
+    function swerefZone(crs) {
+      if (crs === null || crs === undefined || crs === '') return 3006;
+      const m = /(\d{4})\s*$/.exec(String(crs).trim());
+      if (m && SWEREF_ZONES[Number(m[1])]) return Number(m[1]);
+      const z = /sweref\s*99\s*(\d{2})\s*(\d{2})/i.exec(String(crs));
+      if (z) { const lon0 = Number(z[1]) + Number(z[2]) / 60; const hit = Object.keys(SWEREF_ZONES).find((k) => Number(k) !== 3006 && SWEREF_ZONES[k].lon0 === lon0); if (hit) return Number(hit); }
+      return 3006;
+    }
     function tmConstants() {
       const e2 = F * (2 - F);
       const n = F / (2 - F);
@@ -114,11 +131,12 @@
       return { e2, n, aHat };
     }
 
-    /** SWEREF 99 TM easting/northing in metres -> [longitude, latitude] in degrees. */
-    function swerefToWgs84(x, y) {
+    /** SWEREF 99 easting/northing in metres -> [longitude, latitude] in degrees; `epsg` picks the zone (default TM). */
+    function swerefToWgs84(x, y, epsg) {
+      const zone = SWEREF_ZONES[epsg] || SWEREF_ZONES[3006];
       const { e2, n, aHat } = tmConstants();
-      const xi = (y - FALSE_N) / (K0 * aHat);
-      const eta = (x - FALSE_E) / (K0 * aHat);
+      const xi = (y - (zone.falseN || FALSE_N)) / (zone.k0 * aHat);
+      const eta = (x - zone.falseE) / (zone.k0 * aHat);
       const d1 = n / 2 - (2 * n ** 2) / 3 + (37 * n ** 3) / 96 - (n ** 4) / 360;
       const d2 = (n ** 2) / 48 + (n ** 3) / 15 - (437 * n ** 4) / 1440;
       const d3 = (17 * n ** 3) / 480 - (37 * n ** 4) / 840;
@@ -133,7 +151,7 @@
       const dS = -(4279 * e2 ** 4) / 1260;
       const s = Math.sin(phiStar);
       const phi = phiStar + s * Math.cos(phiStar) * (aS + bS * s ** 2 + cS * s ** 4 + dS * s ** 6);
-      return [LON0 + dLon / DEG, phi / DEG];
+      return [zone.lon0 + dLon / DEG, phi / DEG];
     }
 
     /** [longitude, latitude] in degrees -> SWEREF 99 TM [easting, northing] in metres. */
@@ -166,11 +184,167 @@
       return Object.assign({}, geometry, { coordinates: walk(geometry.coordinates || []) });
     }
 
-    /** Projected geometry (assumed SWEREF 99 TM, the Swedish standard) -> WGS 84; degrees pass through. */
-    function toWgs84(geometry) {
-      return isProjected([geometry]) ? mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1])) : geometry;
+    /**
+     * Other Nordic transverse Mercator projections on GRS 80 / ETRS89: UTM zones 32–35 (Denmark, Norway, Finland;
+     * EPSG:258xx and 326xx), ETRS-TM35FIN (3067) and the Finnish Gauss-Krüger zones GK19–GK31 (3873–3885; the city of
+     * Helsinki publishes in GK25, 3879). Same series as SWEREF (the ellipsoid is the same), other parameters.
+     */
+    const TM_ZONES = {
+      25832: { lon0: 9, k0: 0.9996, falseE: 500000 }, 25833: { lon0: 15, k0: 0.9996, falseE: 500000 }, 25834: { lon0: 21, k0: 0.9996, falseE: 500000 }, 25835: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      32632: { lon0: 9, k0: 0.9996, falseE: 500000 }, 32633: { lon0: 15, k0: 0.9996, falseE: 500000 }, 32634: { lon0: 21, k0: 0.9996, falseE: 500000 }, 32635: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      3067: { lon0: 27, k0: 0.9996, falseE: 500000 },
+      // RT 90 2,5 gon V, with Lantmäteriet's parameters for direct conversion on GRS 80.
+      3021: { lon0: 15.806284529, k0: 1.00000561024, falseE: 1500064.274, falseN: -667.711 },
+    };
+    for (let z = 19; z <= 31; z++) TM_ZONES[3854 + z] = { lon0: z, k0: 1, falseE: z * 1000000 + 500000 };
+    /** ISN93 / Lambert 1993 (EPSG:3057), the Icelandic national grid: Lambert conformal conic with two standard parallels. */
+    const ISN93 = { lat0: 65, lon0: -19, lat1: 64.25, lat2: 65.75, falseE: 500000, falseN: 500000 };
+    /** EPSG code found in a CRS text ("EPSG:25832", "urn:ogc:def:crs:EPSG::3067", 3057), or null. */
+    function epsgOf(crs) {
+      if (crs === null || crs === undefined || crs === '') return null;
+      if (typeof crs === 'number') return crs;
+      const m = /(\d{4,5})\s*$/.exec(String(crs).trim());
+      return m ? Number(m[1]) : null;
+    }
+    /** True when a CRS text names nothing: empty, or GeoPackage's undefined systems ("Undefined Cartesian SRS"). */
+    const unnamed = (crs) => crs === null || crs === undefined || /^\s*(undefined\b.*)?$/i.test(String(crs));
+    /**
+     * EPSG code of a coordinate system given as a number, an EPSG text or URN ("EPSG:3007", "urn:ogc:def:crs:EPSG::3007",
+     * "http://www.opengis.net/def/crs/EPSG/0/3007"), OGC's CRS84, or a name as GeoPackage files, .prj files and GIS programs
+     * write it ("SWEREF99 TM", "SWEREF99_15_00", "RT90 2.5 gon V", "ETRS_1989_UTM_Zone_33N", "ETRS89 / TM35FIN(E,N)",
+     * "ISN93 / Lambert 1993", "WGS 84"); null when it names nothing the app recognises.
+     * @param {any} crs
+     * @returns {number|null}
+     */
+    function crsCode(crs) {
+      if (unnamed(crs)) return null;
+      if (typeof crs === 'number') return crs;
+      const s = String(crs).trim();
+      const coded = /(?:^|epsg\D{0,4}|\/epsg\/\d+\/)(\d{4,5})\s*$/i.exec(s);
+      if (coded) return Number(coded[1]);
+      const n = s.toLowerCase().replace(/[_\s]+/g, ' ');
+      if (/crs ?84/.test(n)) return 4326;
+      if (/pseudo.?mercator|web ?mercator|900913/.test(n)) return 3857;
+      if (/sweref ?99 ?tm/.test(n)) return 3006;
+      const z = /sweref ?99 ?(\d{1,2}) ?(\d{2})/.exec(n);
+      if (z) { const lon0 = Number(z[1]) + Number(z[2]) / 60; const hit = Object.keys(SWEREF_ZONES).find((k) => Number(k) !== 3006 && SWEREF_ZONES[k].lon0 === lon0); return hit ? Number(hit) : null; }
+      if (/rt ?90/.test(n)) return /2[.,]?5 ?gon ?[vw]/.test(n) ? 3021 : null;
+      const utm = /(etrs ?(?:19)?89|wgs ?(?:19)?84).*utm.*zone ?(\d{2}) ?n/.exec(n);
+      if (utm) { const code = (/etrs/.test(utm[1]) ? 25800 : 32600) + Number(utm[2]); return TM_ZONES[code] ? code : null; }
+      if (/tm ?35 ?fin/.test(n)) return 3067;
+      const gk = /gk ?(\d{2}) ?fin/.exec(n);
+      if (gk) { const code = 3854 + Number(gk[1]); return TM_ZONES[code] ? code : null; }
+      if (/isn ?93|lambert ?1993/.test(n)) return 3057;
+      if (/^(gcs )?(wgs ?(19)?84)$/.test(n)) return 4326;
+      if (/^(gcs )?etrs ?(19)?89$/.test(n)) return 4258;
+      return null;
+    }
+    /** True when the app can convert coordinates in this system (SWEREF 99, Web Mercator, the Nordic grids it reads, degrees). */
+    const supported = (code) => !!(code && (SWEREF_ZONES[code] || TM_ZONES[code] || code === 3057 || code === 3857 || code === 4326 || code === 4258));
+    /**
+     * True when a file names a coordinate system the app cannot convert: its coordinates would land in the wrong place, so they
+     * are not drawn. A file that names no system is not unknown (projected coordinates are then taken as SWEREF 99 TM).
+     * @param {any} crs
+     */
+    function crsUnknown(crs) { return !unnamed(crs) && !supported(crsCode(crs)); }
+    /** The usual name of a coordinate system the app reads ("SWEREF 99 TM", "SWEREF 99 15 00", "ETRS89 / UTM 33N"), or ''. */
+    function crsLabel(crs) {
+      const code = crsCode(crs);
+      if (code === 3006) return 'SWEREF 99 TM';
+      if (code && SWEREF_ZONES[code]) { const lon0 = SWEREF_ZONES[code].lon0; return `SWEREF 99 ${String(Math.floor(lon0)).padStart(2, '0')} ${String(Math.round((lon0 % 1) * 60)).padStart(2, '0')}`; }
+      if (code === 3021) return 'RT 90 2,5 gon V';
+      if (code && code >= 25832 && code <= 25835) return `ETRS89 / UTM ${code - 25800}N`;
+      if (code && code >= 32632 && code <= 32635) return `WGS 84 / UTM ${code - 32600}N`;
+      if (code === 3067) return 'ETRS-TM35FIN';
+      if (code && code >= 3873 && code <= 3885) return `ETRS-GK${code - 3854}FIN`;
+      if (code === 3057) return 'ISN93 / Lambert 1993';
+      if (code === 3857) return 'Web Mercator';
+      if (code === 4326) return 'WGS 84';
+      if (code === 4258) return 'ETRS89';
+      return '';
+    }
+    /** A system for people: its name with the EPSG code ("SWEREF 99 15 00 (EPSG:3009)"), or the text as the file gave it; '' for nothing. */
+    function crsText(crs) {
+      if (unnamed(crs)) return '';
+      const label = crsLabel(crs);
+      return label ? `${label} (EPSG:${crsCode(crs)})` : String(crs).trim();
+    }
+    /**
+     * The proj4 definition of a projected system the app reads, from the same parameters as its own conversion (so that a map
+     * drawn in the plan's grid puts every object where the conversion does); null for degrees, Web Mercator and unknown systems.
+     * RT 90 2,5 gon V uses Lantmäteriet's direct projection on GRS 80, as the conversion does.
+     * @param {any} crs
+     * @returns {string|null}
+     */
+    function proj4Def(crs) {
+      const code = crsCode(crs);
+      const zone = code ? (SWEREF_ZONES[code] || TM_ZONES[code]) : null;
+      const tail = '+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+      if (zone) return `+proj=tmerc +lat_0=0 +lon_0=${zone.lon0} +k=${zone.k0} +x_0=${zone.falseE} +y_0=${zone.falseN || 0} ${tail}`;
+      if (code === 3057) return `+proj=lcc +lat_0=${ISN93.lat0} +lon_0=${ISN93.lon0} +lat_1=${ISN93.lat1} +lat_2=${ISN93.lat2} +x_0=${ISN93.falseE} +y_0=${ISN93.falseN} ${tail}`;
+      return null;
+    }
+    /** Height systems by EPSG code (the Nordic national ones). */
+    const HEIGHT_SYSTEMS = { 5613: 'RH 2000', 5718: 'RH 70', 5799: 'DVR90', 5941: 'NN2000', 3900: 'N2000', 8089: 'ISH2004' };
+    /** The name of a height system given as "EPSG:5613", a URN or a name; the text itself when the code is not one of the Nordic systems; '' for nothing. */
+    function heightLabel(system) {
+      if (unnamed(system)) return '';
+      const code = epsgOf(system);
+      return (code && HEIGHT_SYSTEMS[code]) || String(system).trim();
+    }
+    /** Lambert conformal conic (two parallels) metres -> [longitude, latitude]; GRS 80. */
+    function lccToWgs84(x, y, p) {
+      const e = Math.sqrt(F * (2 - F));
+      const m = (phi) => Math.cos(phi) / Math.sqrt(1 - e * e * Math.sin(phi) ** 2);
+      const tf = (phi) => Math.tan(Math.PI / 4 - phi / 2) / ((1 - e * Math.sin(phi)) / (1 + e * Math.sin(phi))) ** (e / 2);
+      const phi1 = p.lat1 * DEG; const phi2 = p.lat2 * DEG; const phi0 = p.lat0 * DEG;
+      const n = Math.log(m(phi1) / m(phi2)) / Math.log(tf(phi1) / tf(phi2));
+      const Fc = m(phi1) / (n * tf(phi1) ** n);
+      const rho0 = A * Fc * tf(phi0) ** n;
+      const dx = x - p.falseE; const dy = rho0 - (y - p.falseN);
+      const rho = Math.sign(n) * Math.sqrt(dx * dx + dy * dy);
+      const theta = Math.atan2(dx, dy);
+      const tP = (rho / (A * Fc)) ** (1 / n);
+      let phi = Math.PI / 2 - 2 * Math.atan(tP);
+      for (let i = 0; i < 8; i++) phi = Math.PI / 2 - 2 * Math.atan(tP * ((1 - e * Math.sin(phi)) / (1 + e * Math.sin(phi))) ** (e / 2));
+      return [p.lon0 + (theta / n) / DEG, phi / DEG];
+    }
+    /** Transverse Mercator metres -> [longitude, latitude] for a zone {lon0, k0, falseE} on GRS 80 (the SWEREF series). */
+    function tmToWgs84(x, y, zone) {
+      const saved = SWEREF_ZONES[0]; SWEREF_ZONES[0] = zone;
+      try { return swerefToWgs84(x, y, 0); } finally { if (saved) SWEREF_ZONES[0] = saved; else delete SWEREF_ZONES[0]; }
+    }
+    /**
+     * Projected geometry -> WGS 84; degrees pass through. Without `crs` the geometry is taken as SWEREF 99 TM (the
+     * Swedish standard); a CRS of a local SWEREF 99 zone (EPSG:3007–3018) selects that zone. Also read: Web Mercator,
+     * RT 90 2,5 gon V, the UTM zones 32–35 (ETRS89 and WGS 84), ETRS-TM35FIN, the Finnish GK zones and ISN93 (Iceland).
+     * A system the app cannot convert gives null: no place rather than a wrong one (see `crsUnknown`).
+     */
+    function toWgs84(geometry, crs) {
+      if (!isProjected([geometry])) return geometry;
+      if (unnamed(crs)) return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], 3006));
+      const code = crsCode(crs);
+      if (code === 3857) return mapCoordinates(geometry, (c) => mercatorToWgs84(c[0], c[1]));
+      if (code === 3057) return mapCoordinates(geometry, (c) => lccToWgs84(c[0], c[1], ISN93));
+      if (code && TM_ZONES[code]) return mapCoordinates(geometry, (c) => tmToWgs84(c[0], c[1], TM_ZONES[code]));
+      if (code && SWEREF_ZONES[code]) return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], code));
+      // Unknown, or degrees declared for coordinates that are not degrees.
+      return null;
+    }
+    /** True when the app can convert a CRS to WGS 84 (SWEREF 99, Web Mercator, RT 90 2,5 gon V, Nordic UTM/TM zones, ISN93, degrees). */
+    function knownCrs(crs) { return supported(crsCode(crs)); }
+    /** The coordinate system kept with a dataset (the file's, as the importer read it), or ''. */
+    function crsOfMeta(meta) {
+      if (!meta) return '';
+      const o = meta.importOptions || {};
+      return String(o.crs || meta.crs || '');
+    }
+    /** Web Mercator (EPSG:3857) metres -> [longitude, latitude]. */
+    function mercatorToWgs84(x, y) {
+      const R = 6378137;
+      return [(x / R) / DEG, Math.atan(Math.sinh(y / R)) / DEG];
     }
 
-    return { parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, mapCoordinates, toWgs84 };
+    return { SWEREF_ZONES, TM_ZONES, ISN93, HEIGHT_SYSTEMS, swerefZone, epsgOf, crsCode, crsUnknown, crsLabel, crsText, crsOfMeta, proj4Def, heightLabel, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
   });
 })();

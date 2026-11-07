@@ -9,7 +9,7 @@ säkerhetskopior under *Hantera → Arbetsyta*, eller använd en portabel mapp i
 
 ## Behöver jag internet?
 
-Nej. Internet behövs bara när du hämtar data från ett API, synkar med GitHub eller klickar på *Sök efter uppdatering*. Allt annat,
+Nej. Internet behövs bara när du hämtar data från ett API, synkar med GitHub, visar bakgrundskarta i plankartan (efter att du sagt ja) eller klickar på *Sök efter uppdatering*. Allt annat,
 även R, fungerar utan nätverk.
 
 ## Varför tar det tid första gången jag använder R?

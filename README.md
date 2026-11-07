@@ -36,7 +36,7 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   Safari stöds inte.
 - Ungefär 300 MB ledigt utrymme för appmappen och minst 4 GB arbetsminne (8 GB rekommenderas för stora
   datamängder). Inga administratörsrättigheter behövs.
-- Internet behövs bara när du hämtar data från öppna API:er, synkar med GitHub eller söker efter uppdatering.
+- Internet behövs bara när du hämtar data från öppna API:er, synkar med GitHub, visar bakgrundskarta i plankartan eller söker efter uppdatering.
 
 ## Vad du kan göra
 
@@ -62,6 +62,10 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
   [docs/anteckningsbok.md](docs/anteckningsbok.md)), och en Regex-flik där reguljära uttryck prövas på en kolumn
   och används för att filtrera, extrahera, ersätta och dela upp (se [docs/regex.md](docs/regex.md)), helt i
   webbläsaren.
+- **Planer**: digitala detaljplaner och översiktsplaner läses och visas, vilket verktyg som än har gjort dem: leveransfiler enligt
+  Lantmäteriets Detaljplan 4.1 och Översiktsplan 2.0, detaljplaner i GeoPackage, Boverkets ÖP-modell och arkivpaket (mapp eller ZIP med PREMIS.xml).
+  En detaljplan ritas som plankarta med Boverkets färger och beteckningar, och fliken Plan i Analysera sammanfattar bestämmelser och
+  areor (se [docs/planer.md](docs/planer.md)).
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som

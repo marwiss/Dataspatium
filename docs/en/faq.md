@@ -9,7 +9,7 @@ ordinary files on disk (see [kom-igang.md](kom-igang.md)).
 
 ## Do I need internet?
 
-No. Internet is needed only when you fetch data from an API, sync with GitHub or click *Check for updates*. Everything else, R
+No. Internet is needed only when you fetch data from an API, sync with GitHub, show a background map in the plan map (after you have said yes) or click *Check for updates*. Everything else, R
 included, works without a network.
 
 ## Why does it take time the first time I use R?

@@ -1891,6 +1891,20 @@ Dataspatium.assets.manifest({
    "size": 404,
    "sha256": "ffff66b160a6448913edc2dafb7a1d87cd320bf37c22483e3ed93b1818b26b4a",
    "library": "lucide"
+  },
+  "leaflet/leaflet-inline.js": {
+   "file": "vendor/leaflet/leaflet-inline.js.js",
+   "encoding": "text",
+   "size": 147552,
+   "sha256": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a",
+   "library": "leaflet"
+  },
+  "leaflet/leaflet-inline.css": {
+   "file": "vendor/leaflet/leaflet-inline.css.js",
+   "encoding": "text",
+   "size": 14806,
+   "sha256": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6",
+   "library": "leaflet"
   }
  },
  "libraries": {
@@ -2081,6 +2095,37 @@ Dataspatium.assets.manifest({
    ],
    "assets": 0,
    "notes": "CodeMirror 5 is used instead of 6 because it ships as classic scripts with ready-made R, SQL and LaTeX modes; CodeMirror 6 would need a bundler to combine its packages."
+  },
+  "leaflet": {
+   "version": "1.9.4",
+   "license": "BSD-2-Clause",
+   "homepage": "https://leafletjs.com/",
+   "direct": [
+    "leaflet.css",
+    "leaflet.js"
+   ],
+   "assets": 2,
+   "notes": "Leaflet 1.9 is the last series shipped as a classic script with the global L (2.0 is ES modules only). The map view (viz/leaflet) loads leaflet.js and leaflet.css as plain files; the text copies (leaflet-inline.*) are inlined into published HTML. Points are drawn as circle markers, so the default marker images are not needed."
+  },
+  "proj4": {
+   "version": "2.22.0",
+   "license": "MIT",
+   "homepage": "https://github.com/proj4js/proj4js",
+   "direct": [
+    "proj4.js"
+   ],
+   "assets": 0,
+   "notes": "Coordinate projections for maps drawn in the plan's own grid (viz/leaflet with Proj4Leaflet): SWEREF 99 TM, the local SWEREF 99 zones and the other Nordic grids the app reads. The browser build is UMD with the global proj4; loaded on first use with <script>."
+  },
+  "proj4leaflet": {
+   "version": "1.0.2",
+   "license": "BSD-2-Clause",
+   "homepage": "https://github.com/kartena/Proj4Leaflet",
+   "direct": [
+    "proj4leaflet.js"
+   ],
+   "assets": 0,
+   "notes": "Leaflet coordinate reference systems from proj4 definitions (L.Proj.CRS): a map in SWEREF 99 with WMS backgrounds requested in the same system. Classic script that needs the globals L and proj4; loaded after both on first use."
   }
  }
 });

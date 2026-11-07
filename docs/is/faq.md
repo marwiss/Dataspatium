@@ -8,7 +8,7 @@ möppu í Edge og Chrome svo vinnusvæðið sé líka til sem venjulegar skrár 
 
 ## Þarf ég net?
 
-Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu, samstillir við GitHub eða smellir á *Leita að uppfærslum*. Allt annað, líka R, virkar án
+Nei. Net þarf aðeins þegar þú sækir gögn úr vefþjónustu, samstillir við GitHub, sýnir bakgrunnskort á skipulagskortinu (eftir að þú hefur leyft það) eða smellir á *Leita að uppfærslum*. Allt annað, líka R, virkar án
 nettengingar.
 
 ## Af hverju tekur það tíma í fyrsta skipti sem ég nota R?

@@ -38,7 +38,7 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
   understøttes ikke.
 - Omkring 300 MB ledig plads til appmappen og mindst 4 GB hukommelse (8 GB anbefales til store datasæt). Der kræves
   ingen administratorrettigheder.
-- Internet kræves kun, når du henter data fra åbne API'er, synkroniserer med GitHub eller søger efter opdateringer.
+- Internet kræves kun, når du henter data fra åbne API'er, synkroniserer med GitHub, viser baggrundskort i plankortet eller søger efter opdateringer.
 
 ## Hvad du kan
 
@@ -56,6 +56,10 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
 - **Analysere**: en indbygget R-konsol med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsol, hvor
   datasæt kobles sammen med join via deres kortnavne, og notesbøger med tekst-, R- og SQL-celler, der bliver til
   rapporter i HTML, Word, PDF, Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane, hvor regulære udtryk afprøves på en kolonne og bruges til at filtrere, udtrække, erstatte og opdele (se [regex.md](regex.md)), helt i browseren.
+- **Planer**: svenske digitale detaljplaner og översiktsplaner læses og vises, uanset hvilket værktøj der har lavet dem: leverancefiler
+  efter Lantmäteriets Detaljplan 4.1 og Översiktsplan 2.0, detaljplaner i GeoPackage, Boverkets ÖP-model og arkivpakker (mappe eller ZIP med
+  PREMIS.xml). En detaljplan tegnes som plankort med Boverkets farver og betegnelser, og fanen Plan i Analysér opsummerer bestemmelser og
+  arealer (se [planer.md](planer.md)).
 - **Visualisere**: diagrammer med Vega-Lite (herunder koropletkort og punktkort, faste aksegrænser, logaritmisk skala, referencelinjer og trendlinjer), D3-skabeloner eller R, eksporteret
   som SVG, PNG, PDF og PowerPoint, også i batch pr. gruppe, og dashboards med fælles filtre, der bliver til HTML eller
   PowerPoint (se [visualisera.md](visualisera.md)).

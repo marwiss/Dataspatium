@@ -39,6 +39,9 @@ versjon og lisens finnes i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.
 | webR (JavaScript-delen) | MIT | Som over |
 | R (R.wasm med flere) | GPL-2 eller GPL-3 | Fri programvare. Distribueres uendret i binær form; kildekoden finnes hos R-prosjektet og webR-prosjektet i de oppgitte versjonene |
 | R-pakker i `vendor/webr-repo` | Mest MIT; også LGPL (DBI, RSQLite), MPL-2.0 (data.table), GPL (Rcpp, pxR, knitr, svglite med flere) | Distribueres uendret; kildekoden finnes på CRAN i de oppgitte versjonene |
+| Leaflet 1.9 (kart) | BSD-2-Clause | Fri å bruke og spre med lisenstekst og notiser |
+| proj4js 2.22 og Proj4Leaflet 1.0 (plankartet i planens eget koordinatsystem) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Frie å bruke og spre med lisenstekst og notiser |
+| Boverkets Planbestämmelsekatalog (innebygd kopi, `presets/plan/`) | Åpne data fra Boverket | Fri å bruke og spre; Boverket og Planbestämmelsekatalogen skal oppgis som kilde |
 
 Dataspatiums kode lenker ikke mot R. R kjører som en separat tolk i en worker og utveksler R-kode, SQLite-filer og bilder
 med appen via meldinger; det er den typen samdistribusjon («mere aggregation») som GPL tillater, og R-delene beholder alle

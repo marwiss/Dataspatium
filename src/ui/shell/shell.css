@@ -234,3 +234,24 @@ dialog.dm-palette { width: min(640px, calc(100vw - 32px)); margin-top: 10vh; pad
 .dm-skip { position: absolute; left: -9999px; top: var(--dm-s-2); z-index: 100; padding: var(--dm-s-2) var(--dm-s-3); background: var(--dm-surface); color: var(--dm-accent); border: 1px solid var(--dm-accent); border-radius: var(--dm-radius-sm); text-decoration: none; }
 .dm-skip:focus { left: var(--dm-s-2); outline: none; }
 @media (prefers-reduced-motion: reduce) { .dm-shell *, .dm-shell *::before, .dm-shell *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+
+/* Plans and the map view (the plan part, from the 2 series). */
+/* Plans: designation labels on the plan map, the legend and the provision lists in the inspector. */
+.dm-plan-label-wrap { background: transparent; border: 0; }
+.dm-plan-label { display: inline-block; transform: translate(-50%, -50%); font: 600 var(--dm-text-xs) var(--dm-font-sans); color: var(--dm-text); background: var(--dm-surface); border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); padding: 0 var(--dm-s-1); white-space: nowrap; pointer-events: none; opacity: 0.92; }
+.dm-plan-label-use { font-size: var(--dm-text-sm); background: transparent; border-color: transparent; text-shadow: 0 0 3px var(--dm-surface), 0 0 3px var(--dm-surface); }
+.dm-plan-legend .dm-plan-legend-text { display: flex; gap: var(--dm-s-1); min-width: 0; align-items: baseline; }
+.dm-plan-provisions { margin: 0; padding-left: var(--dm-s-4); font-size: var(--dm-text-sm); display: flex; flex-direction: column; gap: var(--dm-s-1); }
+.dm-plan-provisions li { cursor: pointer; }
+.dm-plan-provisions li:hover { color: var(--dm-accent); }
+.dm-plan-layers dm-switch { display: block; }
+.dm-map .leaflet-container { font-family: var(--dm-font-sans); font-size: var(--dm-text-sm); background: var(--dm-surface-2); }
+.dm-map .leaflet-control-attribution { font-size: var(--dm-text-xs); color: var(--dm-text-muted); background: var(--dm-surface); }
+.dm-map .leaflet-tooltip { font-family: var(--dm-font-sans); border-color: var(--dm-border); color: var(--dm-text); background: var(--dm-surface); }
+/* base.css caps every canvas at the width of its parent, and Leaflet's panes have no width: the vector layer would be 0 px wide. */
+.leaflet-pane > canvas { max-width: none; }
+.dm-map-view { flex: 1 1 auto; min-height: 320px; }
+.dm-map-layer-swatch, .dm-map-legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--dm-border); flex: 0 0 auto; }
+.dm-map-legend-block { margin: 0 0 var(--dm-s-3); }
+.dm-map-legend-list { list-style: none; margin: var(--dm-s-1) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--dm-text-sm); }
+.dm-map-legend-list li { display: flex; align-items: center; gap: var(--dm-s-2); min-width: 0; }

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel'], (base, rb, recipes, presets, notebooks, notebookPanel, regexPanelModule) => {
+  D.define('ui/modes/analysera', ['ui/base', 'data/r-bridge', 'data/recipes', 'presets', 'analysis/notebooks', 'ui/analysis/notebook-panel', 'ui/analysis/regex-panel', 'ui/analysis/plan-panel'], (base, rb, recipes, presets, notebooks, notebookPanel, regexPanelModule, planPanelModule) => {
     const { h, t, i18n, replace } = base;
     const bridge = rb.bridge;
     const SQL_LIMIT = 5000;
@@ -42,6 +42,11 @@
         }
         return rxPanel;
       }
+      /** The Plan tab, for a dataset of kind plan: summary, provisions, areas and the catalogue. */
+      let plPanel = null;
+      function planPanel() { if (!plPanel) plPanel = planPanelModule.create(ctx, { rerenderRight: () => { if (slots && tab === 'plan') renderRight(); } }); return plPanel; }
+      const planSelected = () => { const d = selectedDataset(); return !!(d && d.kind === 'plan'); };
+      let planTabShown = false;
 
       function activate(s) {
         slots = s;
@@ -52,6 +57,8 @@
           if (tab === 'sql') { updateSqlHead(); if (changed.includes('selectedId')) renderRight(); }
           if (tab === 'notebook' && changed.includes('datasets')) renderRight();
           if (tab === 'regex') { regexPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); } }
+          if (tab === 'plan') { if (!planSelected()) tab = 'r'; else planPanel().datasetChanged(); if (changed.includes('selectedId')) { renderCenter(); renderRight(); if (tab === 'r') startR(); } }
+          else if (changed.includes('selectedId') && planSelected() !== planTabShown) { const v = st[tab]; if (v && v.editor) v.draft = v.editor.value; renderCenter(); }
         });
         unsubBridge = bridge.on(onBridgeEvent);
         unsubNb = notebooks.subscribe(async () => { nbList = await notebooks.list(); if (tab === 'notebook') renderLeft(); });
@@ -65,6 +72,7 @@
         for (const lang of ['r', 'sql']) { const v = st[lang]; if (v.editor) v.draft = v.editor.value; v.editor = null; v.nameInput = null; }
         if (nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
         if (rxPanel) rxPanel.destroy();
+        if (plPanel) { plPanel.destroy(); plPanel = null; }
         slots = null; outputEl = null; sqlOut = null; sqlSaveBtn = null; sqlRunBtn = null; sqlBadge = null;
         if (unsubStore) unsubStore();
         if (unsubBridge) unsubBridge();
@@ -193,7 +201,7 @@
       function renderCenter() {
         if (!slots) return;
         const tabs = /** @type {any} */ (h('dm-tabs'));
-        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }];
+        tabs.tabs = [{ id: 'r', label: t('analysera.tabs.r'), icon: 'terminal' }, { id: 'sql', label: t('analysera.tabs.sql'), icon: 'database' }, { id: 'notebook', label: t('analysera.tabs.notebook'), icon: 'file-text' }, { id: 'regex', label: t('analysera.tabs.regex'), icon: 'regex' }].concat((planTabShown = planSelected()) ? [{ id: 'plan', label: t('analysera.tabs.plan'), icon: 'layers' }] : []);
         tabs.active = tab;
         tabs.addEventListener('dm-change', (e) => {
           const v = st[tab]; if (v && v.editor) v.draft = v.editor.value;
@@ -203,7 +211,7 @@
           if (tab === 'r') startR();
         });
         if (tab !== 'notebook' && nbView) { notebook = nbView.notebook; nbView.destroy(); nbView = null; }
-        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : renderNotebook();
+        const view = tab === 'r' ? renderR() : tab === 'sql' ? renderSql() : tab === 'regex' ? regexPanel().center() : tab === 'plan' ? planPanel().center() : renderNotebook();
         replace(slots.center, view.head, tabs, view.body);
       }
 
@@ -428,6 +436,7 @@
         if (!slots) return;
         if (tab === 'notebook') { replace(slots.right, nbView ? nbView.inspector() : h('p', { class: 'dm-help', text: t('nb.help') })); return; }
         if (tab === 'regex') { replace(slots.right, regexPanel().inspector()); return; }
+        if (tab === 'plan') { replace(slots.right, planPanel().inspector()); return; }
         if (tab === 'sql') {
           const ds = selectedDataset();
           let cols = [];
