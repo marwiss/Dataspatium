@@ -42,6 +42,7 @@ versjon og lisens finnes i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.
 | Python (Pyodide, CPython og pakker som numpy, pandas og matplotlib; hentes ved behov, ikke i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-lisensen (PSF-basert), MIT og lignende for de øvrige | Hentes uendret fra jsDelivr og lagres i nettleseren; kildekoden finnes hos Pyodide-prosjektet og på PyPI i de versjonene appens katalog angir (Pyodide 314.0.7) |
 | pdf.js 3.11 (leser PDF-filer) med standardskrifter | Apache-2.0 (pdf.js), BSD-3-Clause (Foxits skrifter), SIL Open Font License 1.1 (Liberation Sans) | Frie å bruke og spre med lisenstekst og notiser; skriftene kan bygges inn |
 | Leaflet 1.9 (kart) og Turf 7 (geoverktøy) | BSD-2-Clause (Leaflet), MIT (Turf) | Frie å bruke og spre med lisenstekst og notiser |
+| proj4js 2.22 og Proj4Leaflet 1.0 (plankartet i planens eget koordinatsystem) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Frie å bruke og spre med lisenstekst og notiser |
 | Cytoscape 3.34 med fcose, dagre og expand-collapse, sigma 3 og graphology (grafer) | MIT | Frie å bruke og spre med lisenstekst og notiser |
 | neo4j-driver-lite 6.3 (Neo4j over Bolt) | Apache-2.0 | Fri å bruke og spre med lisenstekst og notiser |
 | web-ifc 0.0.78 (geometri fra IFC; uendrede filer, kildekode på https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Fri å bruke og spre; endringer i bibliotekets egne filer deles under samme lisens |

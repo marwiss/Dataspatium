@@ -46,6 +46,34 @@
       }
       return loading;
     }
+    /** @type {Promise<any>|null} */ let projLoading = null;
+    /** Load proj4 and Proj4Leaflet (vendored classic scripts) for a map in a grid of its own, on first use. */
+    function ensureProj() {
+      const g = /** @type {any} */ (globalThis);
+      if (g.L && g.L.Proj && g.proj4) return Promise.resolve(g.L);
+      if (!projLoading) {
+        projLoading = ensure()
+          .then(() => (g.proj4 ? null : D.assets.loadVendorScript('vendor/proj4/proj4.js')))
+          .then(() => (g.L.Proj ? null : D.assets.loadVendorScript('vendor/proj4leaflet/proj4leaflet.js')))
+          .then(() => { if (!g.L.Proj || !g.proj4) throw new Error(D.t('map.err.load')); return g.L; })
+          .catch((err) => { projLoading = null; throw err; });
+      }
+      return projLoading;
+    }
+    /** Zoom levels of a map in a projected grid: 8192 metres per pixel down to an eighth of a metre, one level per halving. */
+    const GRID_RESOLUTIONS = Array.from({ length: 17 }, (_, i) => 8192 / 2 ** i);
+    /** The grid's origin (top left), west and north of every coordinate in the Nordic grids the app reads. */
+    const GRID_ORIGIN = [-5000000, 10000000];
+    /**
+     * A Leaflet CRS (L.Proj.CRS) for a projected system the app reads (SWEREF 99 TM and its zones, RT 90 2,5 gon V, the Nordic
+     * grids), built from the same parameters as the app's own conversion; null for Web Mercator, degrees and unknown systems.
+     * Needs `ensureProj()` first.
+     */
+    function gridCrs(crs) {
+      const def = geo.proj4Def(crs);
+      if (!def) return null;
+      return new (/** @type {any} */ (globalThis)).L.Proj.CRS('EPSG:' + geo.crsCode(crs), def, { resolutions: GRID_RESOLUTIONS, origin: GRID_ORIGIN });
+    }
     /** The library's script and stylesheet as text, for standalone HTML (Publicera). */
     async function source() {
       return { js: await D.assets.loadText('leaflet/leaflet-inline.js'), css: await D.assets.loadText('leaflet/leaflet-inline.css') };
@@ -218,9 +246,13 @@
         for (const k of Object.keys(row)) if (k !== layer.geometry) properties[k] = row[k];
         features.push({ type: 'Feature', geometry, properties });
       }
-      // Metres (SWEREF 99 TM) become degrees so that every layer shares one projection.
-      if (features.length && geo.isProjected(features.map((f) => f.geometry))) for (const f of features) f.geometry = geo.toWgs84(f.geometry);
-      return { features, total: data.total, truncated: data.truncated, columns: fields };
+      // Metres become degrees in the dataset's own system (SWEREF 99 TM when the file named none), so that every layer shares
+      // one projection. A system the app cannot convert leaves the layer without features and is named in `crsUnknown`.
+      const crs = geo.crsOfMeta(meta);
+      const projected = features.length && geo.isProjected(features.map((f) => f.geometry));
+      if (projected) for (const f of features) f.geometry = geo.toWgs84(f.geometry, crs || undefined);
+      const placed = projected ? features.filter((f) => f.geometry) : features;
+      return { features: placed, total: data.total, truncated: data.truncated, columns: fields, crsUnknown: projected && geo.crsUnknown(crs) ? crs : '' };
     }
     /**
      * Everything needed to draw or export a map: per visible layer its features, style function and legend.
@@ -233,7 +265,7 @@
         if (layer.visible === false || layer.kind === 'wms') continue;
         const data = await featuresOf(layer, options);
         const st = styling(layer, data.features);
-        out.push({ layer, features: data.features, styleOf: st.styleOf, legend: st.legend, truncated: data.truncated, total: data.total });
+        out.push({ layer, features: data.features, styleOf: st.styleOf, legend: st.legend, truncated: data.truncated, total: data.total, crsUnknown: data.crsUnknown || '' });
         rows += data.features.length;
       }
       return { layers: out, rows, bounds: geo.bounds(out.flatMap((l) => l.features.map((f) => f.geometry))) };
@@ -269,20 +301,25 @@
     /** Leaflet's tile layer, or its WMS layer when the options carry WMS parameters (the shape the test factories get). */
     const defaultFactory = (url, opts) => (opts.layers ? globalThis.L.tileLayer.wms(url, opts) : globalThis.L.tileLayer(url, opts));
     const tileOptions = (src, extra) => Object.assign({ attribution: src.attribution, maxZoom: src.maxZoom || 19 }, src.wms || {}, extra || {});
-    /** The tile layer after consent, or null when there is none or consent was refused (info.basemapDenied is set). */
-    async function tileLayer(def, options, info) {
+    /**
+     * The tile layer after consent, or null when there is none or consent was refused (info.basemapDenied is set). On a map in a
+     * grid of its own only a WMS can be the background, requested in that grid with WMS 1.1.1 (x before y, whatever the system's
+     * axis order); OpenStreetMap and XYZ templates exist in Web Mercator only (info.basemapProjection is set).
+     */
+    async function tileLayer(def, options, info, grid) {
       if (!def || !def.basemap || def.basemap === 'none' || options.noTiles) return null;
       const src = tileSource(def);
       if (!src) return null;
+      if (grid && !src.wms) { info.basemapProjection = true; return null; }
       try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url }); } catch (err) {
         if (err && err.name === 'ConsentError') { info.basemapDenied = true; return null; }
         throw err;
       }
       const factory = options.tileFactory || defaultFactory;
-      return factory(src.url, tileOptions(src));
+      return factory(src.url, tileOptions(src, grid ? { version: '1.1.1' } : null));
     }
     /** The visible WMS overlay layers of a definition as tile layers, after consent for each (refusals set info.basemapDenied). */
-    async function overlayLayers(def, options, info) {
+    async function overlayLayers(def, options, info, grid) {
       const out = [];
       if (!def || options.noTiles) return out;
       for (const layer of def.layers || []) {
@@ -294,7 +331,7 @@
           throw err;
         }
         const factory = options.tileFactory || defaultFactory;
-        out.push({ layer, tiles: factory(src.url, tileOptions(src, { opacity: layer.style && layer.style.opacity !== undefined ? layer.style.opacity : 0.8 })) });
+        out.push({ layer, tiles: factory(src.url, tileOptions(src, Object.assign({ opacity: layer.style && layer.style.opacity !== undefined ? layer.style.opacity : 0.8 }, grid ? { version: '1.1.1' } : {}))) });
       }
       return out;
     }
@@ -311,10 +348,18 @@
       const doc = new DOMParser().parseFromString(await res.text(), 'application/xml');
       if (doc.getElementsByTagName('parsererror').length) throw new Error(D.t('import.err.notxml'));
       const kid = (el, name) => { const k = Array.from(el.children).find((c) => c.localName === name); return k ? String(k.textContent || '').trim() : ''; };
+      // The systems a layer can be drawn in: its own CRS (1.3.0) or SRS (1.1.1) and those of the layers around it.
+      const systemsOf = (el) => {
+        const out = new Set();
+        for (let at = el; at && at.localName === 'Layer'; at = at.parentElement) {
+          for (const c of Array.from(at.children)) if (c.localName === 'CRS' || c.localName === 'SRS') String(c.textContent || '').split(/\s+/).filter(Boolean).forEach((x) => out.add(x.toUpperCase()));
+        }
+        return Array.from(out);
+      };
       const out = [];
       for (const el of Array.from(doc.getElementsByTagNameNS('*', 'Layer'))) {
         const id = kid(el, 'Name');
-        if (id) out.push({ id, name: kid(el, 'Title') || id, abstract: kid(el, 'Abstract') });
+        if (id) out.push({ id, name: kid(el, 'Title') || id, abstract: kid(el, 'Abstract'), crs: systemsOf(el) });
       }
       if (!out.length) throw new Error(D.t('geodata.err.nolayers'));
       return out;
@@ -323,22 +368,28 @@
     // ---- live map -----------------------------------------------------------------------------------------
     /**
      * Draw a map chart into an element. Options: interactive (default true), height, extraFilters, onSelect(feature),
-     * tileFactory (tests), noTiles. Returns a handle with the Leaflet map, legend, info, export functions and finalize().
+     * tileFactory (tests), noTiles. `def.crs` (an EPSG code or name of a projected system the app reads) draws the map in
+     * that grid instead of Web Mercator, with a WMS background in the same grid. Returns a handle with the Leaflet map,
+     * legend, info, the map's EPSG code, export functions and finalize().
      */
     async function render(el, chart, options = {}) {
-      const L = await ensure();
       const def = chart.map || {};
+      const L = def.crs && geo.proj4Def(def.crs) ? await ensureProj() : await ensure();
+      const grid = def.crs ? gridCrs(def.crs) : null;
       const prepared = await prepare(chart, options);
       el.classList.add('dm-map');
       if (options.height) el.style.height = options.height + 'px';
       else if (def.height && !el.style.height) el.style.height = def.height + 'px';
       const interactive = options.interactive !== false;
-      const map = L.map(el, { preferCanvas: true, zoomControl: interactive, dragging: interactive, scrollWheelZoom: interactive, doubleClickZoom: interactive, boxZoom: interactive, keyboard: interactive, touchZoom: interactive, attributionControl: true });
-      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false };
-      const tiles = await tileLayer(def, options, info);
+      const map = L.map(el, Object.assign({ preferCanvas: true, zoomControl: interactive, dragging: interactive, scrollWheelZoom: interactive, doubleClickZoom: interactive, boxZoom: interactive, keyboard: interactive, touchZoom: interactive, attributionControl: true },
+        grid ? { crs: grid, minZoom: 0, maxZoom: GRID_RESOLUTIONS.length - 1 } : {}));
+      // The map on its element, for the tests (as Cytoscape's graphs carry theirs).
+      /** @type {any} */ (el)._dmMap = map;
+      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
+      const tiles = await tileLayer(def, options, info, !!grid);
       if (tiles) tiles.addTo(map);
       // WMS overlays live in the tile pane: under every feature, whatever their place in the layer list.
-      const overlays = await overlayLayers(def, options, info);
+      const overlays = await overlayLayers(def, options, info, !!grid);
       for (const o of overlays) o.tiles.addTo(map);
       const groups = [];
       for (const item of prepared.layers) {
@@ -355,15 +406,16 @@
         groups.push({ layer: item.layer, group, legend: item.legend });
       }
       const fit = () => {
-        if (def.view && def.view.center && def.view.zoom) { map.setView(def.view.center, def.view.zoom); return; }
+        // A saved view is in Web Mercator's zoom levels; a map in a grid of its own fits its features instead.
+        if (!grid && def.view && def.view.center && def.view.zoom) { map.setView(def.view.center, def.view.zoom); return; }
         const b = prepared.bounds;
-        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom: 14 });
-        else map.setView(DEFAULT_VIEW.center, DEFAULT_VIEW.zoom);
+        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom: grid ? 12 : 14 });
+        else map.setView(DEFAULT_VIEW.center, grid ? 2 : DEFAULT_VIEW.zoom);
       };
       fit();
       const legend = prepared.layers.filter((l) => l.layer.visible !== false).map((l) => ({ name: l.layer.name, entries: l.legend }));
       return {
-        kind: 'map', map, groups, legend, info, overlays,
+        kind: 'map', map, groups, legend, info, overlays, crs: grid ? geo.crsCode(def.crs) : 3857,
         fit, refresh: () => map.invalidateSize(),
         view: () => ({ center: [round(map.getCenter().lat), round(map.getCenter().lng)], zoom: map.getZoom() }),
         svg: async () => drawSvg(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480 }),
@@ -567,6 +619,6 @@
       return nums.some((c) => /^(lon|long|lng|longitude|longitud|lon_wgs84|longitude_wgs84)$/i.test(c.name)) && nums.some((c) => /^(lat|latitude|latitud|lat_wgs84|latitude_wgs84)$/i.test(c.name));
     }
 
-    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, available, ensure, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
+    return { BASEMAPS, OSM, VENDOR, MAX_ROWS, GRID_RESOLUTIONS, available, ensure, ensureProj, gridCrs, source, geometryColumn, coordinateColumns, mappable, mapDefault, drawable, drawableByValues, layerFor, boundaryLayer, wmsLayer, wmsSource, wmsLayers, defaultMap, styling, featuresOf, prepare, tileSource, render, toBlob, thumbnail, drawSvg, tableSvg, htmlFor, htmlCss, project };
   });
 })();

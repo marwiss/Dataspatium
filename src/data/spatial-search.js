@@ -93,7 +93,9 @@
           let shape = null;
           if (geometry) { try { shape = geo.parseGeometry(row[1]); } catch (_err) { shape = null; } } else if (typeof row[1] === 'number' && typeof row[2] === 'number') shape = { type: 'Point', coordinates: [row[1], row[2]] };
           if (!shape) continue;
-          const point = centreOf(geo.isProjected([shape]) ? geo.toWgs84(shape) : shape);
+          // Metres in the dataset's own system (SWEREF 99 TM when the file named none); a system the app cannot convert has no place.
+          const place = geo.isProjected([shape]) ? geo.toWgs84(shape, geo.crsOfMeta(handle.meta) || undefined) : shape;
+          const point = place ? centreOf(place) : null;
           if (point && test(point)) out.push(Number(row[0]));
         }
         await breathe();

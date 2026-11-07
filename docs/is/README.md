@@ -153,7 +153,7 @@ OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í
 
 Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
 
-Dataspatium 2.0.2 virkar með Kontroll 2.0.2. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+Dataspatium 2.0.0 virkar með Kontroll 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira

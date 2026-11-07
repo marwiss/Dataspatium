@@ -11,7 +11,7 @@ fetched from the net until you choose a background map and give your consent.
 |---|---|
 | Geometry column | A text column with GeoJSON or WKT, usually `geometry` (the importers for GeoJSON, Shapefile, GeoPackage, KML, GPX and TopoJSON produce it) |
 | Coordinate columns | Two numeric columns for longitude and latitude (`lon`/`lat`, `longitude`/`latitude`, `x`/`y` and others) |
-| SWEREF 99 TM | Recognised by the values and converted to WGS 84 when drawn |
+| Projected coordinates | Converted to WGS 84 by the file's coordinate system, or as SWEREF 99 TM when the file names none (see [Coordinate systems](#coordinate-systems)) |
 
 Datasets with a geometry column or columns named longitude and latitude open as a map at once; for other coordinate
 columns (such as `x` and `y`) choose *Show as map* in the table's toolbar.
@@ -85,12 +85,35 @@ with their colours, line widths and point sizes) and matches every layer to a da
 layer name for GeoPackage); bundled files that are missing are imported first. The result is a map view in Visualise.
 Raster layers, labels, effects and rule-based symbols beyond the first rule are left out.
 
+## Coordinate systems
+
+A GeoPackage file, a shapefile (with `.prj`) and a GeoJSON file with `crs` name their coordinate system. The app uses it
+when the map is drawn, when spatial search looks for places and when the dataset is exported with geometry; the
+coordinates in the table stay as the file has them. When a file names no system, projected coordinates are taken as
+SWEREF 99 TM. The app converts these systems:
+
+| System | EPSG |
+|---|---|
+| SWEREF 99 TM and its twelve local zones (SWEREF 99 12 00 to 23 15) | 3006, 3007–3018 |
+| RT 90 2.5 gon V, by Lantmäteriet's direct projection | 3021 |
+| ETRS89 and WGS 84 / UTM 32–35 (Denmark, Norway, Finland) | 25832–25835, 32632–32635 |
+| ETRS-TM35FIN and the Finnish GK zones | 3067, 3873–3885 |
+| ISN93 / Lambert 1993 (Iceland) | 3057 |
+| Web Mercator | 3857 |
+| WGS 84 and ETRS89 in degrees | 4326, 4258 |
+
+The conversion agrees with PROJ (which QGIS uses) within a millimetre; RT 90 2.5 gon V within two decimetres, since the
+direct projection is a simplification. When a file names another system, for example RT 90 in another zone or an old
+local municipal system, Import says so and the map does not draw the places rather than drawing them in the wrong place;
+convert the file to SWEREF 99 first, for example in QGIS. The maps here are drawn in Web Mercator with north up; a plan can
+also be shown in its own system (see [planer.md](planer.md#coordinate-and-height-systems)).
+
 ## Limitations
 
 - Background maps and published HTML with a background map need the net; the app itself makes no requests without
   consent.
-- Projections: WGS 84 and SWEREF 99 TM. Other reference systems must be converted before import (in QGIS, for
-  example).
+- Coordinate systems: those listed under [Coordinate systems](#coordinate-systems). Others must be converted before import (in QGIS, for
+  example); the app says so and does not draw them.
 - Exports draw the layers, not the background map or WMS layers.
 - Buffers and overlays are planar computations on WGS 84 coordinates through Turf; at kilometre scale in the Nordic
   countries the error is small, for very large areas noticeable.

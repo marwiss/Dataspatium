@@ -11,11 +11,11 @@
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
-    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
+    const FORMATS = ['csv', 'fixed', 'excel', 'tables', 'json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'bcf', 'datapackage', 'r', 'documents', 'images'];
     /** Formats without a header-row switch (structure carries the names). */
-    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const NO_HEADER = ['json', 'xml', 'sqlite', 'access', 'shapefile', 'geo', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats whose values are already typed (no decimal-separator choice). */
-    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
+    const TYPED = ['sqlite', 'access', 'shapefile', 'detaljplan', 'planarchive', 'graph', 'model', 'datapackage', 'r', 'documents', 'images'];
     /** Formats with fixed columns where one or many files become one dataset (no column step). */
     const COLLECTIONS = ['documents', 'images'];
     const ACCEPT = '.bcf,.bcfzip,.csv,.tsv,.txt,.tab,.dat,.fwf,.prn,.xlsx,.xlsm,.xls,.xlsb,.ods,.fods,.dbf,.slk,.sylk,.dif,.wk1,.wk3,.wk4,.wks,.wq1,.wq2,.wb1,.wb2,.wb3,.qpw,'
@@ -670,6 +670,8 @@
         if (wiz.file) left.appendChild(h('p', { class: 'dm-help', text: t('import.file', { name: wiz.file.name, size: i18n.formatBytes(wiz.file.size) }) }));
         const sense = p ? senseCard(p) : null;
         if (sense) left.appendChild(sense);
+        // A coordinate system the app cannot convert: said before the import (the places would otherwise land in the wrong place).
+        if (p && p.crsUnknown) left.appendChild(h('p', { class: 'dm-error dm-small', 'data-import-crs-unknown': '', text: t('import.crs.unknown', { crs: p.crsUnknown }) }));
         const collection = COLLECTIONS.includes(wiz.options.format);
         const format = select(t('import.format'), FORMATS.map((f) => ({ value: f, label: t('import.format.' + f) })), wiz.options.format, (v) => { wiz.options.format = v; wiz.options.header = undefined; wiz.options.recordTag = ''; wiz.options.table = ''; schedulePreview(); });
         // Several files are always one collection, so the format is fixed then.
@@ -714,7 +716,8 @@
             if (!wiz.options.plan && p.tables && p.tables.length) left.appendChild(select(t('import.table'), p.tables.map((s) => ({ value: s, label: s })), wiz.options.table || p.table, (v) => { wiz.options.table = v; schedulePreview(); }));
           }
         }
-        const planFile = !!(p && p.kind === 'plan' && wiz.options.format === 'detaljplan');
+        // A plan file or an archive package (a ZIP with metadata/PREMIS.xml): the plan's facts and Import without the column step.
+        const planFile = !!(p && p.kind === 'plan' && (wiz.options.format === 'detaljplan' || wiz.options.format === 'planarchive'));
         if (planFile) {
           const info = p.plan || {};
           const kv = /** @type {any} */ (h('dm-kv'));
@@ -726,8 +729,10 @@
             info.status ? { label: t('plan.field.status'), value: info.status } : null,
             { label: t('plan.field.objects'), value: i18n.formatNumber(p.totalRows || 0) },
             { label: t('plan.field.format'), value: t('plan.format.' + (p.planFormat || 'detaljplan')) },
+            info.crs ? { label: t('plan.field.crs'), value: D.require('data/geo').crsText(info.crs) } : null,
+            info.arkivpaket ? { label: t('plan.archive.title'), value: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length ? t('plan.archive.bad', { n: info.arkivpaket.andrade.length + info.arkivpaket.saknas.length }) : t('plan.archive.ok', { n: info.arkivpaket.stammer }) } : null,
           ].filter(Boolean);
-          left.appendChild(h('div', { class: 'dm-card' }, kv));
+          left.appendChild(h('div', { class: 'dm-card', 'data-plan-preview': '' }, kv));
           left.appendChild(h('p', { class: 'dm-help dm-small', text: t('plan.import.hint') }));
         }
         const opPlan = !!(wiz.options.format === 'sqlite' && p && p.planGpkg && wiz.options.plan);

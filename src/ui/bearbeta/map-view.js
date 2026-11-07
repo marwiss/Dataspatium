@@ -74,6 +74,7 @@
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          if (hd.info.crsUnknown.length) ui.toast.show(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }), { kind: 'warn', timeout: 9000 });
           await markSelection();
           await showPending();
           renderInspector();
@@ -98,6 +99,12 @@
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
       }
 
+      /** The coordinate system the dataset's file named, when it named one. */
+      function crsItem() {
+        const geoMod = D.require('data/geo');
+        const crs = geoMod.crsOfMeta(ds);
+        return crs ? { label: t('map.crs'), value: geoMod.crsText(crs) } : null;
+      }
       function renderInspector() {
         if (!slots) return;
         const items = [];
@@ -109,8 +116,10 @@
             { label: t('map.features'), value: i18n.formatNumber(info.rows) + (info.truncated ? ` ${t('map.truncated', { n: i18n.formatNumber(layer.maxRows || 0) })}` : '') },
             layer.geometry ? { label: t('viz.channel.geometry'), value: layer.geometry } : { label: t('map.coordinates'), value: `${layer.lon}, ${layer.lat}` },
             { label: t('map.basemap'), value: t('map.basemap.' + (s.basemap || 'none')) },
-          ];
+            crsItem(),
+          ].filter(Boolean);
           items.push(h('h4', { text: t('map.layer') }), kv);
+          if (info.crsUnknown && info.crsUnknown.length) items.push(h('p', { class: 'dm-error dm-small', 'data-map-crs-unknown': '', text: t('map.crs.unknown', { crs: info.crsUnknown.join(', ') }) }));
         }
         if (s.selected) {
           const props = s.selected.properties || {};
@@ -159,7 +168,8 @@
         const features = [];
         for (const row of r[0] ? r[0].values : []) {
           const shape = geometry ? geoMod.parseGeometry(row[0]) : (typeof row[0] === 'number' && typeof row[1] === 'number' ? { type: 'Point', coordinates: [row[0], row[1]] } : null);
-          if (shape) features.push({ type: 'Feature', properties: {}, geometry: geoMod.isProjected([shape]) ? geoMod.toWgs84(shape) : shape });
+          const place = shape && geoMod.isProjected([shape]) ? geoMod.toWgs84(shape, geoMod.crsOfMeta(ds) || undefined) : shape;
+          if (place) features.push({ type: 'Feature', properties: {}, geometry: place });
         }
         if (!features.length || !handle) return;
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--dm-accent').trim();
@@ -193,7 +203,8 @@
         const shape = geometry ? geoMod.parseGeometry(row[0]) : (typeof row[0] === 'number' && typeof row[1] === 'number' ? { type: 'Point', coordinates: [row[0], row[1]] } : null);
         if (!shape) return;
         const L = globalThis.L;
-        const place = geoMod.isProjected([shape]) ? geoMod.toWgs84(shape) : shape;
+        const place = geoMod.isProjected([shape]) ? geoMod.toWgs84(shape, geoMod.crsOfMeta(ds) || undefined) : shape;
+        if (!place) return;
         const color = D.require('viz/theme').tokens().accent;
         const marked = L.geoJSON(place, { style: { color, weight: 4, fillOpacity: 0.1 }, pointToLayer: (_f, at) => L.circleMarker(at, { radius: 9, color, weight: 4, fillOpacity: 0.2 }) }).addTo(handle.map);
         const bounds = marked.getBounds();

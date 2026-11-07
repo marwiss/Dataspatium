@@ -34,7 +34,10 @@
         if (source.column) shape = geo.parseGeometry(row[at(source.column)]);
         else if (typeof row[at(source.lon)] === 'number' && typeof row[at(source.lat)] === 'number') shape = { type: 'Point', coordinates: [row[at(source.lon)], row[at(source.lat)]] };
         if (!shape || !shape.type) { without++; continue; }
-        features.push({ geometry: geo.isProjected([shape]) ? geo.toWgs84(shape) : shape, values: columns.map((c) => row[at(c.name)]) });
+        // Degrees for the export, from the dataset's own system; a system the app cannot convert counts as without a place.
+        const place = geo.isProjected([shape]) ? geo.toWgs84(shape, geo.crsOfMeta(meta) || undefined) : shape;
+        if (!place) { without++; continue; }
+        features.push({ geometry: place, values: columns.map((c) => row[at(c.name)]) });
       }
       if (!features.length) throw new Error(D.t('export.err.nogeometry'));
       return { name: meta ? meta.name : 'dataspatium', columns, features, without };

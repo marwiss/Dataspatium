@@ -160,6 +160,7 @@
     'src/io/importers/documents.js',
     'src/io/importers/images.js',
     'src/io/importers/detaljplan.js',
+    'src/io/importers/plan-archive.js',
     'src/io/importers/graph.js',
     'src/io/importers/model.js',
     'src/io/importers/bcf.js',

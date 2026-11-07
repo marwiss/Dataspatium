@@ -10,15 +10,16 @@ opplysningane om planen i metadata og originalfila lagra i datasettet. Tabellen 
 
 | Format | Blir kjent att på | Innhald |
 |---|---|---|
-| Nasjonal spesifikasjon Detaljplan (Lantmäteriet, versjon 4) | GeoJSON med `feature:typ` (detaljplan, anvandningsbestammelse, egenskapsbestammelse, administrativBestammelse, beslutsinformation, planbestammelsebeskrivning) eller `feature:mediatyp application/vnd.lm.detaljplan.v4+json` | Planområde, føresegner med katalogreferanse, formulering og verdi, vedtaksopplysningar (påbyrja, vedteken, rettskraft, gjennomføringstid), grunngjevingar |
+| Nasjonal spesifikasjon Detaljplan (Lantmäteriet, versjon 4.1) | GeoJSON med `feature:mediatyp application/vnd.lm.detaljplan.v4+json` eller `feature:typ` (detaljplan, användningsbestämmelse, egenskapsbestämmelse, administrativ bestämmelse; òg skrivne utan å, ä og ö) | Planområde, føresegner med katalogreferanse, formulering, verdiar og motiv, geometriar som flater, linjer, punkt og lekamar (med høgd i RH 2000), vedtaksinformasjon (påbyrja, vedteken, rettskraft, gjennomføringstid, saksnummer) og namnet på planskildringa |
 | Referanseobjekt frå den nasjonale geodataplattforma | STAC-objekt med `properties.detaljplan` og `properties.planbestammelse` (svaret frå reguleringsplan-API-et til Lantmäteriet) | Opplysningane om planen, formuleringa, katalogreferansen, kategorien og verdien til føresegnene |
-| Nasjonal spesifikasjon Översiktsplan (testversjon 1.0) | GeoJSON med `feature:typ` oversiktsplan, innehallOP, beslutOP | Opplysningane om planen og innhaldsobjekt med innhaldstype, namn, presisering og planhending |
-| ÖP-modellen frå Boverket (GeoPackage) | Tabellar `innehall_op_<tema>_<geometritype>` og `oversiktsplan` | Alle innhaldslag som éin plan med tema per lag |
+| Nasjonal spesifikasjon Översiktsplan (Lantmäteriet, versjon 2.0, testversjon 4) | GeoJSON med `feature:mediatyp application/vnd.lm.oversiktsplan.v2+json` eller `feature:typ` oversiktsplan, innehallOP, beslutOP | Opplysningane og vedtaket til planen (gjort, rettskraft), innhaldsobjekt med innhaldstype, tema etter kategorien i ÖP-katalogen, namn, presisering, planhending, samanhengsnivå og koplingar, òg innhald som berre er skildra i tekst |
+| ÖP-modellen til Boverket (GeoPackage, databasemodell 0.4) | Tabellar `innehall_op_<tema>_<geometritype>` og `oversiktsplan` | Alle innhaldslag som éin plan med tema per lag, vedtaket til planen (`beslut_op`), koplingar mellom innhald og avsnitta i plandokumentet (bokmerke) |
+| Detaljplan i GeoPackage | Tabellane `detaljplan`, `bestammelse` og `anvandning_yta`, `egenskap_yta`, `egenskap_linje`, `egenskap_punkt` med feltnamna i den nasjonale spesifikasjonen | Planen slik planleggingsverktøyet lagrar han: planområde, flater, linjer og punkt med føresegnene, nemningane, fargane, motiva og høgdene sine, vedtaksinformasjon og dokument; flater som enno manglar ei føresegn, blir viste slik dei er teikna |
 
 Koordinatar i SWEREF 99 TM og dei lokale SWEREF 99-sonene (EPSG:3006–3018, lesne frå `koordinatsystemPlan`) og dessutan Web
 Mercator blir rekna om til WGS 84. Ei GeoJSON-fil blir kjend att på innhaldet, ikkje på filendinga: slepp henne i Hent,
 så blir opplysningane om planen viste saman med knappen *Importer*. Ei GeoPackage-fil i ÖP-modellen får valet *Heile kommuneplanen
-som plan*; avslått blir éin tabell importert om gongen som før.
+som plan*; avslått blir éin tabell importert om gongen som før. Ein detaljplan i GeoPackage får valet *Heile planen som plan*. Koordinatsystemet i ei GeoPackage-fil blir lese frå fila, òg når det berre står med namn (til dømes *SWEREF99 15 00*).
 
 Frå reguleringsplan-API-et til Lantmäteriet (kjelda *Lantmäteriet geodataplattformen: detaljplaner*, krev nøkkel frå ein
 tilknytt organisasjon) blir eit svar lagra som plan med knappen *Lagre som plan* i staden for som tabell.
@@ -35,6 +36,39 @@ etter samtykke, og knappane gjev *Lagre som kartvising* (for Visualiser, dashbor
 
 Ein kommuneplan blir teikna per tema: areal- og vassbruken fylt per innhaldstype, andre tema med éin farge per tema og
 valbar synlegheit. Inspektøren viser arealet per areal- og vassbruk.
+
+Linjer (avkøyrsleforbod, gjerde, utviklingsretningar) og punkt (til dømes høgda på terrenget) blir teikna slik dei er. Ei føresegn som er avgrensa i høgda, blir teikna med fotavtrykket sitt, og inspektøren viser høgda i høgdesystemet til planen (RH 2000 i planar til NGP): underkant, overkant eller begge. Inspektøren viser òg vedtaket til planen (vedteken, rettskraft, påklaga, gjennomføringstid, saksnummer, vedtakstype), namnet på planskildringa og dokumenta, og for det valde objektet andre opplysningar som gyldigheitstid, sekundær eigenskapsgrense, kva bruksføresegner ein eigenskap regulerer, samanhengsnivå, kva innhaldet rører ved, og kvar i plandokumentet det er skildra. Innhald som berre er skildra i tekst, utan plassering i kartet, blir lista under *objekt utan plassering i kartet* og kan veljast der.
+
+## Koordinatsystem og høgder
+
+Detaljplanar til NGP blir laga i SWEREF 99 TM eller i den lokale SWEREF 99-sona til kommunen med høgder i RH 2000, og fila
+oppgir begge (`koordinatsystemPlan` og `hojdsystem`). Oversiktsplanar er oftast i SWEREF 99 TM. Inspektøren viser
+koordinatsystemet til planen og, for ein plan med høgder, høgdesystemet; ei GeoPackage-fil oppgir ikkje noko høgdesystem,
+og då står det det.
+
+Plankartet blir teikna som nettkart (Web Mercator med nord opp, der OpenStreetMap kan vere bakgrunn) eller i det eigne
+systemet til planen: vel det i verktøylinja, til dømes *SWEREF 99 16 30*. Då er nord i rutenettet opp som på plankartet, og
+kvart objekt ligg på koordinatane sine. Bakgrunnen kan då kome frå ei WMS-teneste som tilbyr same system: vel
+*WMS-teneste* som bakgrunnskart og oppgi adresse og lag (*Les lag* hentar laglista til tenesta og seier frå om laget
+manglar systemet). OpenStreetMap finst berre som nettkart. Bakgrunnen blir henta etter samtykke, som andre bakgrunnskart, og *Lagre som kartvising* lagrar eit nettkart.
+
+Ein plan i eit koordinatsystem som appen ikkje kan rekne om, blir lesen med alle objekta sine, men objekta blir ikkje
+teikna, fordi dei ville hamna feil: Hent og inspektøren seier kva system fila oppgir, og objekta står under *objekt utan
+plassering i kartet*. Kva system appen reknar om, står i [kartor.md](kartor.md#koordinatsystem).
+
+## Planar frå planleggingsverktøy
+
+Planar som blir teikna i eit planleggingsverktøy, blir lesne som alle planar av same slag, same kva verktøy som har laga dei. Eit døme er [Rita Detaljplan og Rita Översiktsplan](https://github.com/ritaplan), programtillegg til QGIS. Det dei lagrar og leverer, blir opna slik:
+
+| Fil | Blir opna som |
+|---|---|
+| Leveransefila til detaljplanen til NGP (JSON, Detaljplan 4.1) | Plankart med nemningar og fargar frå Planbestämmelsekatalogen |
+| Detaljplan i GeoPackage med feltnamna i den nasjonale spesifikasjonen | Plankart med dei eigne nemningane og fargane til planen, motiva og høgdene |
+| Leveransefila til översiktsplanen til NGP (JSON, Översiktsplan 2.0) | Översiktsplan per tema med vedtak |
+| Översiktsplan i GeoPackage (databasemodell 0.4 frå Boverket) | Översiktsplan per tema med vedtak, koplingar og avsnitta i plandokumentet |
+| Arkivpakke (mappe eller ZIP-fil med `metadata/PREMIS.xml`) | Planen frå mappa `content` med dokumenta, og kontrollen av filene |
+
+Slepp fila i Hent, eller hent ho med *Frå nettadresse* når ho ligg på nettet (til dømes ein plan som kommunen publiserer); ei fil utan filending blir kjend att på innhaldstypen. Ei arkivpakke blir sleppt som mappe eller som ZIP-fil: appen les planen frå mappa `content` (GeoPackage-fila først, elles leveransefila), lagrar filene i pakken med planen og samanliknar kvar fil med kontrollsummen (SHA-256) i `PREMIS.xml`. Inspektøren viser under *Arkivpakke* om filene stemmer, kva for nokre som er endra eller manglar, og opnar dokumenta (plankart og planskildring) i ei ny fane. Ein stad som peikar utanfor pakken, blir ikkje kontrollert og aldri lesen. Dei eigne dokumenta til planen i ei vanleg mappe blir opna for seg, som dokument.
 
 ## Fana Plan i Analyser
 

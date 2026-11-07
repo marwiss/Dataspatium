@@ -11,7 +11,7 @@ Ingenting hentes fra nettet før du velger et bakgrunnskart og gir ditt samtykke
 |---|---|
 | Geometrikolonne | En tekstkolonne med GeoJSON eller WKT, oftest `geometry` (import av GeoJSON, Shapefile, GeoPackage, KML, GPX og TopoJSON gir den) |
 | Koordinatkolonner | To tallkolonner for lengde- og breddegrad (`lon`/`lat`, `longitude`/`latitude`, `x`/`y` med flere) |
-| SWEREF 99 TM | Gjenkjennes på verdiene og regnes om til WGS 84 ved tegningen |
+| Projiserte koordinater | Regnes om til WGS 84 med filens koordinatsystem, eller som SWEREF 99 TM når filen ikke oppgir noe (se [Koordinatsystemer](#koordinatsystemer)) |
 
 Datasett med en geometrikolonne eller kolonner som heter lengde- og breddegrad åpnes som kart direkte; for andre
 koordinatkolonner (for eksempel `x` og `y`) velger du *Vis som kart* i tabellens verktøylinje.
@@ -84,10 +84,34 @@ linjebreddene og punktstørrelsene) og matcher hvert lag mot et datasett med sam
 GeoPackage); medfølgende filer som mangler importeres først. Resultatet er en kartvisning i Visualiser. Rasterlag,
 etiketter, effekter og regelbaserte symboler utover den første regelen tas ikke med.
 
+## Koordinatsystemer
+
+En GeoPackage-fil, en shapefil (med `.prj`) og en GeoJSON-fil med `crs` oppgir koordinatsystemet sitt. Appen bruker det
+når kartet tegnes, når romlig søk leter etter steder, og når datasettet eksporteres med geometri; koordinatene i tabellen
+beholdes slik de står i filen. Oppgir filen ikke noe system, tas projiserte koordinater som SWEREF 99 TM. Appen regner om
+disse systemene:
+
+| System | EPSG |
+|---|---|
+| SWEREF 99 TM og de tolv lokale sonene (SWEREF 99 12 00 til 23 15) | 3006, 3007–3018 |
+| RT 90 2,5 gon V, med Lantmäteriets direkte projeksjon | 3021 |
+| ETRS89 og WGS 84 / UTM 32–35 (Danmark, Norge, Finland) | 25832–25835, 32632–32635 |
+| ETRS-TM35FIN og de finske GK-sonene | 3067, 3873–3885 |
+| ISN93 / Lambert 1993 (Island) | 3057 |
+| Web Mercator | 3857 |
+| WGS 84 og ETRS89 i grader | 4326, 4258 |
+
+Omregningen stemmer med PROJ (som QGIS bruker) innenfor en millimeter; RT 90 2,5 gon V innenfor to desimeter, fordi den
+direkte projeksjonen er en forenkling. Oppgir en fil et annet system, for eksempel RT 90 i en annen sone eller et eldre
+lokalt kommunesystem, sier Hent fra, og kartet tegner ikke stedene i stedet for å tegne dem feil; regn filen om til
+SWEREF 99 først, for eksempel i QGIS. Kartene her tegnes i Web Mercator med nord opp; en plan kan også vises i sitt eget
+system (se [planer.md](planer.md#koordinatsystemer-og-høyder)).
+
 ## Begrensninger
 
 - Bakgrunnskart og publisert HTML med bakgrunnskart krever nett; appen selv gjør ingen kall uten samtykke.
-- Projeksjoner: WGS 84 og SWEREF 99 TM. Andre referansesystemer må regnes om før import (for eksempel i QGIS).
+- Koordinatsystemer: de som står under [Koordinatsystemer](#koordinatsystemer). Andre må regnes om før import (for eksempel i
+  QGIS); appen sier fra og tegner dem ikke.
 - Eksporten tegner lagene, ikke bakgrunnskartet eller WMS-lag.
 - Buffere og overlagringer er plane beregninger på WGS 84-koordinater via Turf; i kilometerskala i Norden er feilen
   liten, for svært store flater merkbar.

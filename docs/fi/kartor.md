@@ -12,7 +12,7 @@ taustakartan ja annat suostumuksesi.
 |---|---|
 | Geometriasarake | Tekstisarake, jossa on GeoJSON tai WKT, yleensä `geometry` (GeoJSON-, Shapefile-, GeoPackage-, KML-, GPX- ja TopoJSON-tuonnit tuottavat sen) |
 | Koordinaattisarakkeet | Kaksi lukusaraketta pituus- ja leveysasteelle (`lon`/`lat`, `longitude`/`latitude`, `x`/`y` ja muut) |
-| SWEREF 99 TM | Tunnistetaan arvoista ja muunnetaan WGS 84:ksi piirrettäessä |
+| Projisoidut koordinaatit | Muunnetaan WGS 84:ksi tiedoston koordinaattijärjestelmällä tai SWEREF 99 TM:nä, jos tiedosto ei ilmoita järjestelmää (katso [Koordinaattijärjestelmät](#koordinaattijärjestelmät)) |
 
 Aineistot, joissa on geometriasarake tai sarakkeet nimeltä pituus- ja leveysaste, avautuvat karttana suoraan; muille
 koordinaattisarakkeille (esimerkiksi `x` ja `y`) valitse *Näytä karttana* taulukon työkalupalkista.
@@ -88,11 +88,34 @@ tiedostonimi (ja GeoPackagessa tason nimi); puuttuvat mukana tulevat tiedostot t
 karttanäkymä Visualisoi-tilassa. Rasteritasoja, nimiöitä, tehosteita ja sääntöpohjaisia symboleja ensimmäisen säännön
 jälkeen ei oteta mukaan.
 
+## Koordinaattijärjestelmät
+
+GeoPackage-tiedosto, shapefile (jossa on `.prj`) ja GeoJSON-tiedosto, jossa on `crs`, ilmoittavat koordinaattijärjestelmänsä.
+Sovellus käyttää sitä piirtäessään kartan, etsiessään paikkoja paikkahaussa ja viedessään aineiston geometrioineen;
+taulukon koordinaatit säilyvät sellaisina kuin ne ovat tiedostossa. Jos tiedosto ei ilmoita järjestelmää, projisoidut
+koordinaatit tulkitaan SWEREF 99 TM:ksi. Sovellus muuntaa nämä järjestelmät:
+
+| Järjestelmä | EPSG |
+|---|---|
+| SWEREF 99 TM ja sen kaksitoista paikallista vyöhykettä (SWEREF 99 12 00–23 15) | 3006, 3007–3018 |
+| RT 90 2,5 gon V Lantmäterietin suoralla projektiolla | 3021 |
+| ETRS89 ja WGS 84 / UTM 32–35 (Tanska, Norja, Suomi) | 25832–25835, 32632–32635 |
+| ETRS-TM35FIN ja Suomen GK-kaistat | 3067, 3873–3885 |
+| ISN93 / Lambert 1993 (Islanti) | 3057 |
+| Web Mercator | 3857 |
+| WGS 84 ja ETRS89 asteina | 4326, 4258 |
+
+Muunnos vastaa PROJia (jota QGIS käyttää) millimetrin tarkkuudella; RT 90 2,5 gon V kahden desimetrin tarkkuudella, koska
+suora projektio on yksinkertaistus. Jos tiedosto ilmoittaa muun järjestelmän, esimerkiksi RT 90:n muussa kaistassa tai
+vanhan paikallisen kunnan järjestelmän, Nouda kertoo siitä, eikä kartta piirrä paikkoja väärin vaan jättää ne
+piirtämättä; muunna tiedosto ensin SWEREF 99:ään, esimerkiksi QGIS:ssä. Nämä kartat piirretään Web Mercatorissa pohjoinen
+ylöspäin; kaavan voi näyttää myös sen omassa järjestelmässä (katso [planer.md](planer.md#koordinaatti--ja-korkeusjärjestelmät)).
+
 ## Rajoitukset
 
 - Taustakartat ja julkaistu HTML taustakartalla vaativat verkon; sovellus itse ei tee pyyntöjä ilman suostumusta.
-- Projektiot: WGS 84 ja SWEREF 99 TM. Muut koordinaattijärjestelmät on muunnettava ennen tuontia (esimerkiksi
-  QGIS:ssä).
+- Koordinaattijärjestelmät: kohdassa [Koordinaattijärjestelmät](#koordinaattijärjestelmät) luetellut. Muut on muunnettava ennen
+  tuontia (esimerkiksi QGIS:ssä); sovellus kertoo siitä eikä piirrä niitä.
 - Vienti piirtää tasot, ei taustakarttaa eikä WMS-tasoja.
 - Puskurit ja päällekkäisyydet ovat tasolaskentaa WGS 84 -koordinaateilla Turfin kautta; kilometrimittakaavassa
   Pohjoismaissa virhe on pieni, hyvin suurilla alueilla huomattava.

@@ -76,7 +76,7 @@ Ved starten hentes numpy, pandas og micropip. Pyodide har pakker bygget til brow
 scipy, statsmodels, scikit-learn, networkx, shapely, geopandas, sympy, pillow, lxml, openpyxl, xlrd, sqlalchemy,
 pyarrow, duckdb, bokeh, altair med flere. Når koden importerer en pakke, der ikke findes i sessionen, henter appen
 hjulet med dets afhængigheder, inden koden køres, kontrollerer det mod kontrolsummen i Pyodides pakkeliste og gemmer
-det i browseren; det ses under *Håndtér → Arbejdsområde → Komponenter*, hvor komponenter også kan fjernes. Rene
+det i browseren; det ses under *Håndter → Arbejdsområde → Komponenter*, hvor komponenter også kan fjernes. Rene
 Python-pakker fra PyPI, der ikke indgår i Pyodide, installeres med `import micropip; await micropip.install("pakke")`;
 appen spørger om lov, inden Python går på internettet.
 

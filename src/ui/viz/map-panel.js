@@ -64,6 +64,7 @@
           const parts = [t('viz.rows.used', { rows: i18n.formatNumber(hd.info.rows), total: i18n.formatNumber(hd.info.total) })];
           if (hd.info.truncated) parts.push(t('map.truncated', { n: i18n.formatNumber(Math.max(...def.layers.map((l) => l.maxRows || leaflet.MAX_ROWS))) }));
           if (hd.info.basemapDenied) parts.push(t('map.basemap.denied'));
+          if (hd.info.crsUnknown && hd.info.crsUnknown.length) parts.push(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }));
           info.textContent = parts.join(' · ');
           if (options.onInspect) options.onInspect();
         } catch (err) {

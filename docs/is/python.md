@@ -76,7 +76,7 @@ Við ræsingu eru numpy, pandas og micropip sótt. Pyodide hefur pakka sem eru b
 matplotlib, scipy, statsmodels, scikit-learn, networkx, shapely, geopandas, sympy, pillow, lxml, openpyxl, xlrd,
 sqlalchemy, pyarrow, duckdb, bokeh, altair og fleiri. Þegar kóðinn flytur inn pakka sem er ekki í setunni sækir
 forritið hjólið með ósjálfstæðum pökkum þess áður en kóðinn keyrir, ber það saman við prófsummuna í pakkalista Pyodide
-og vistar það í vafranum; það sést undir *Sýsla → Vinnusvæði → Einingar*, þar sem einingar má einnig fjarlægja. Hreinir
+og vistar það í vafranum; það sést undir *Umsjón → Vinnusvæði → Einingar*, þar sem einingar má einnig fjarlægja. Hreinir
 Python-pakkar af PyPI sem eru ekki hluti af Pyodide eru settir upp með `import micropip; await micropip.install("pakki")`;
 forritið spyr um leyfi áður en Python nær í internetið.
 

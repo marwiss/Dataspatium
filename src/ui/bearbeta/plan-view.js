@@ -27,7 +27,7 @@
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
-      const s = { id: null, basemap: 'none', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
+      const s = { id: null, basemap: 'none', wms: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
 
       /** Read the plan's rows (objects) and facts. */
@@ -41,6 +41,12 @@
         const data = await vizData.fetchRows(dataset.id, { fields: columns.map((c) => c.name), limit: MAX_ROWS });
         s.rows = data.rows.map((r, i) => Object.assign({ _i: i }, r));
         s.updatedAt = dataset.updatedAt;
+      }
+      /** The grid the plan map can be drawn in: the plan's own system when the app reads it, else the country's usual one. */
+      function planGrid() {
+        const own = geo.crsCode((s.info || {}).crs);
+        if (own && geo.proj4Def(own)) return own;
+        return { DK: 25832, NO: 25833, FI: 3067, IS: 3057 }[(s.info || {}).land] || 3006;
       }
       /** Grouping key of a row: object type for a detailed plan, theme for a comprehensive plan. */
       const keyOf = (row) => (s.slag === 'oversiktsplan' ? (row.tema || 'omrade') : (row.objekttyp || 'annan'));
@@ -72,10 +78,30 @@
         const my = ++seq;
         try { await load(dataset); } catch (err) { replace(target.center, h('p', { class: 'dm-error', text: String((err && err.message) || err) })); return; }
         if (my !== seq || !slots) return;
-        const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true }));
-        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }, { value: 'osm', label: t('map.basemap.osm') }];
+        // The map in Web Mercator (as web maps are) or in the plan's own grid (SWEREF 99 TM or its zone), with north up as on the plan map.
+        const grid = planGrid();
+        const projectionSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.projection'), inline: true, 'data-plan-projection': '' }));
+        projectionSel.options = [{ value: 'web', label: t('map.projection.web') }, { value: 'plan', label: geo.crsLabel(grid) }];
+        projectionSel.value = s.projection;
+        projectionSel.addEventListener('change', () => {
+          s.projection = projectionSel.value;
+          if (s.projection === 'plan' && s.basemap === 'osm') { s.basemap = 'none'; ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(grid) }), { kind: 'info', timeout: 9000 }); }
+          render(dataset, target);
+        });
+        // OpenStreetMap exists in Web Mercator only; a WMS can be asked for in either system.
+        const basemapSel = /** @type {any} */ (h('dm-select', { 'aria-label': t('map.basemap'), inline: true, 'data-plan-basemap': '' }));
+        basemapSel.options = [{ value: 'none', label: t('map.basemap.none') }].concat(s.projection === 'web' ? [{ value: 'osm', label: t('map.basemap.osm') }] : [], [{ value: 'wms', label: t('map.basemap.wms') }]);
         basemapSel.value = s.basemap;
-        basemapSel.addEventListener('change', () => { s.basemap = basemapSel.value; draw(); });
+        basemapSel.addEventListener('change', async () => {
+          if (basemapSel.value === 'wms' && !(s.wms && s.wms.url && s.wms.layers)) {
+            const w = await wmsDialog();
+            if (!w) { basemapSel.value = s.basemap; return; }
+            s.wms = w;
+          }
+          s.basemap = basemapSel.value;
+          render(dataset, target);
+        });
+        const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; draw(); } } }) : null;
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
         labels.addEventListener('change', () => { s.labels = labels.checked; updateLabels(); });
@@ -84,7 +110,7 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            h('div', { class: 'dm-toolbar' }, basemapSel, labels,
+            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
@@ -102,11 +128,15 @@
         mapEl.replaceChildren();
         try {
           L = await leaflet.ensure();
-          // The shared map setup (consent-gated background map) with no dataset layers; the plan objects are drawn here.
-          const hd = await leaflet.render(mapEl, { kind: 'map', name: ds.name, map: { layers: [], basemap: s.basemap, custom: { url: '', attribution: '' }, legend: false } }, {});
+          // The shared map setup (consent-gated background map, the grid) with no dataset layers; the plan objects are drawn here.
+          const def = { layers: [], basemap: s.basemap, wms: s.wms || undefined, custom: { url: '', attribution: '' }, legend: false };
+          if (s.projection === 'plan') def.crs = planGrid();
+          const hd = await leaflet.render(mapEl, { kind: 'map', name: ds.name, map: def }, { tileFactory: options.tileFactory });
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
+          L = /** @type {any} */ (globalThis).L;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
+          if (hd.info.basemapProjection) ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(planGrid()) }), { kind: 'info', timeout: 9000 });
           for (const key of groupKeys()) {
             const rows = s.rows.filter((r) => keyOf(r) === key && r.geometri);
             if (!rows.length) continue;
@@ -194,13 +224,61 @@
           const record = charts.create('map', ds, name.trim());
           const def = D.require('viz/plan-map').defOf(Object.assign({}, ds, { plan: Object.assign({}, ds.plan, { slag: s.slag }) }), cols);
           def.basemap = s.basemap;
+          if (s.basemap === 'wms' && s.wms) def.wms = Object.assign({}, s.wms);
           record.map = def;
-          if (handle) record.map.view = handle.view();
+          // The chart is a web map; a view in the plan's grid has other zoom levels, so the chart fits the plan instead.
+          if (handle && s.projection !== 'plan') record.map.view = handle.view();
           record.thumbnail = await leaflet.thumbnail(record).catch(() => null);
           const saved = await charts.save(record);
           shell.log(t('viz.saved.toast', { name: saved.name }), 'ok');
           ui.toast.show(t('viz.saved.toast', { name: saved.name }), { kind: 'ok', action: { label: t('map.open.visualisera'), onClick: () => { store.set({ openChartId: saved.id }); shell.activate('visualisera'); } } });
         } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+      }
+      /**
+       * A WMS background: the service's address, the layer (typed, or picked from the service's capabilities after consent), and
+       * the attribution. In the plan's grid a layer the service does not offer in that system is pointed out. Null when cancelled.
+       */
+      async function wmsDialog() {
+        const w = Object.assign({ url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' }, s.wms || {});
+        const field = (label, value, attrs) => { const el = /** @type {any} */ (h('dm-input', Object.assign({ label }, attrs || {}))); el.value = value || ''; return el; };
+        const url = field(t('map.wms.url'), w.url, { placeholder: 'https://…/wms', help: t('map.wms.url.help'), 'data-plan-wms-url': '' });
+        const layers = field(t('map.wms.layers'), w.layers, { help: t('map.wms.layers.help'), 'data-plan-wms-layers': '' });
+        const attribution = field(t('map.custom.attribution'), w.attribution);
+        const transparent = /** @type {any} */ (h('dm-switch', { label: t('map.wms.transparent') }));
+        transparent.checked = !!w.transparent;
+        const picked = h('div');
+        const note = h('p', { class: 'dm-help dm-small', 'data-plan-wms-note': '' });
+        const read = /** @type {any} */ (ui.button({ label: t('map.wms.read'), icon: 'refresh-cw', size: 'sm', title: t('map.wms.read.hint'), onClick: async () => {
+          if (!url.value.trim()) return;
+          read.setAttribute('loading', '');
+          try {
+            const list = await leaflet.wmsLayers(url.value.trim());
+            const sel = /** @type {any} */ (h('dm-select', { label: t('map.wms.pick') }));
+            sel.options = list.map((l) => ({ value: l.id, label: l.name !== l.id ? `${l.name} (${l.id})` : l.id }));
+            sel.value = list.some((l) => l.id === layers.value) ? layers.value : list[0].id;
+            const check = () => {
+              layers.value = sel.value;
+              const l = list.find((x) => x.id === sel.value);
+              const code = 'EPSG:' + planGrid();
+              note.textContent = l && s.projection === 'plan' && l.crs && l.crs.length && !l.crs.includes(code) ? t('map.wms.crs.missing', { crs: geo.crsText(planGrid()) }) : '';
+            };
+            sel.addEventListener('change', check);
+            replace(picked, sel);
+            check();
+          } catch (err) {
+            replace(picked, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }));
+          }
+          read.removeAttribute('loading');
+        } }));
+        const ok = await ui.dialog.open({
+          title: t('map.basemap.wms'),
+          body: h('div', { class: 'dm-stack', 'data-plan-wms-dialog': '' }, h('p', { class: 'dm-help', text: t('map.wms.dialog.hint', { crs: s.projection === 'plan' ? geo.crsText(planGrid()) : 'Web Mercator (EPSG:3857)' }) }), url, h('div', { class: 'dm-row-end' }, layers, read), picked, note, transparent, attribution),
+          actions: [{ label: t('common.cancel'), value: false }, { label: t('common.ok'), variant: 'primary', value: true, primary: true }],
+        });
+        if (!ok) return null;
+        const out = { url: String(url.value || '').trim(), layers: String(layers.value || '').trim(), format: w.format || 'image/png', transparent: !!transparent.checked, attribution: String(attribution.value || '').trim(), version: w.version || '1.3.0' };
+        if (!leaflet.wmsSource(out)) { ui.toast.show(t('map.wms.incomplete'), { kind: 'warn' }); return null; }
+        return out;
       }
       /** The provisions as a Markdown file (the list on a plan map). */
       function exportProvisions() {
@@ -222,13 +300,28 @@
           info.typ ? { label: t('plan.field.typ'), value: info.typ } : null,
           info.status ? { label: t('plan.field.status'), value: info.status } : null,
           info.datumLagakraft ? { label: t('plan.field.lagakraft'), value: info.datumLagakraft } : null,
+          info.datumAntagande ? { label: t('plan.field.antagande'), value: info.datumAntagande } : null,
+          info.datumOverklagat ? { label: t('plan.field.overklagat'), value: info.datumOverklagat } : null,
           info.datumPaborjat ? { label: t('plan.field.paborjat'), value: info.datumPaborjat } : null,
+          info.genomforandetid ? { label: t('plan.field.genomforandetid'), value: info.genomforandetid } : null,
+          info.diarienummer ? { label: t('plan.field.diarienummer'), value: info.diarienummer } : null,
+          info.beslutstyp ? { label: t('plan.field.beslutstyp'), value: info.beslutstyp } : null,
+          info.planbeskrivning ? { label: t('plan.field.planbeskrivning'), value: info.planbeskrivning } : null,
+          Array.isArray(info.handlingar) && info.handlingar.length ? { label: t('plan.field.handlingar'), value: info.handlingar.map((d) => d.namn).join('; ') } : null,
+          typeof info.digitaltUrsprung === 'boolean' ? { label: t('plan.field.digitalt'), value: t(info.digitaltUrsprung ? 'common.yes' : 'common.no') } : null,
           info.anvandbarhet ? { label: t('plan.field.anvandbarhet'), value: info.anvandbarhet } : null,
           info.anteckning ? { label: t('plan.field.note'), value: info.anteckning } : null,
           { label: t('plan.field.objects'), value: i18n.formatNumber(s.rows.length) },
           info.format ? { label: t('plan.field.format'), value: t('plan.format.' + (info.format || 'detaljplan')) } : null,
+          info.crs ? { label: t('plan.field.crs'), value: geo.crsText(info.crs) } : null,
+          s.rows.some((r) => known(r.underkant) || known(r.overkant)) ? { label: t('plan.field.hojdsystem'), value: geo.heightLabel(info.hojdsystem) || t('plan.hojdsystem.none') } : null,
         ].filter(Boolean);
-        items.push(h('h4', { text: t('plan.about') }), kv, h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
+        items.push(h('h4', { text: t('plan.about') }), kv);
+        // A system the app cannot convert: the objects are read, but not drawn in the wrong place.
+        if (geo.crsUnknown(info.crs)) items.push(h('p', { class: 'dm-error dm-small', 'data-plan-crs-unknown': '', text: t('plan.crs.unknown', { crs: String(info.crs) }) }));
+        items.push(h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('plan.status.edit'), icon: 'pencil', size: 'sm', title: t('plan.status.edit.hint'), onClick: () => editStatus().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) })));
+        const archive = archiveBlock(info);
+        if (archive) items.push(archive);
         // Layers: one switch per object type or theme, with counts.
         const layerList = h('div', { class: 'dm-stack-sm dm-plan-layers' }, groups.map((g) => {
           const sw = /** @type {any} */ (h('dm-switch', { label: `${groupLabel(g.key)} (${i18n.formatNumber(g.count)})` }));
@@ -255,6 +348,7 @@
           if (areas.length) items.push(h('h4', { text: t('plan.theme.markochvattenanvandning') }), h('ul', { class: 'dm-map-legend-list dm-plan-legend' }, areas.map((e) => h('li', null, h('span', { class: 'dm-map-legend-swatch', style: { background: e.color } }), h('span', { class: 'dm-truncate', text: `${e.label} · ${i18n.formatNumber(Math.round(e.area / 10000))} ha` })))));
           items.push(h('p', { class: 'dm-help', text: t('plan.help.op') }));
         }
+        if (!s.selected) { const unplaced = withoutPlace(); if (unplaced) items.push(unplaced); }
         replace(slots.right, items);
       }
       /** What is known about the plan's standing, kept with the dataset: its status, when it gained legal force, and a note. */
@@ -276,6 +370,73 @@
         s.info = next;
         renderInspector();
       }
+      /**
+       * The archive package the plan came from: how its files stood against PREMIS when it was read, and the package's
+       * documents (plan map, plan description …) to open from the dataset.
+       */
+      function archiveBlock(info) {
+        const a = info && info.arkivpaket;
+        if (!a) return null;
+        const bad = (a.andrade || []).length + (a.saknas || []).length;
+        const line = (key, list) => (list && list.length ? h('p', { class: 'dm-small', text: t(key, { files: list.join(', ') }) }) : null);
+        const docs = h('ul', { class: 'dm-plan-provisions', 'data-plan-archive-docs': '' });
+        D.require('data/dataset-files').list(ds.id, 'original').then((files) => {
+          for (const f of files) {
+            if (!/^content\//i.test(f.name) || f.name === a.planfil || /\.(gpkg|json|geojson)$/i.test(f.name)) continue;
+            docs.appendChild(h('li', null, h('span', { class: 'dm-truncate', text: f.name.replace(/^content\//i, '') + ' ' }),
+              ui.button({ label: t('plan.archive.open'), icon: 'external-link', size: 'sm', title: t('plan.archive.open.hint'), 'data-plan-archive-open': f.name, onClick: async () => {
+                const u = await D.require('data/dataset-files').url(ds.id, f.name);
+                if (u) window.open(u, '_blank', 'noopener');
+              } })));
+          }
+        }).catch(() => {});
+        return h('details', { class: 'dm-more', open: true, 'data-plan-archive': bad ? 'changed' : 'ok' },
+          h('summary', { text: t('plan.archive.title') }),
+          h('p', { class: bad ? 'dm-error dm-small' : 'dm-help dm-small', text: bad ? t('plan.archive.bad', { n: bad }) : t('plan.archive.ok', { n: a.stammer || 0 }) }),
+          line('plan.archive.changed', a.andrade), line('plan.archive.missing', a.saknas), line('plan.archive.unchecked', a.okontrollerade), line('plan.archive.extra', a.ovriga),
+          h('p', { class: 'dm-help dm-small', text: t('plan.archive.checked', { date: String(a.kontrollerat || '').slice(0, 10), name: a.namn || '' }) }), docs);
+      }
+      const known = (v) => v !== null && v !== undefined && v !== '';
+      const metres = (v) => `${i18n.formatNumber(Number(v))} m`;
+      /** A provision's height limits in metres, in the height system the file names (RH 2000 for plans to NGP), when it is limited in height. */
+      function heightItem(row) {
+        const lo = known(row.underkant);
+        const hi = known(row.overkant);
+        if (!lo && !hi) return null;
+        const value = lo && hi ? t('plan.height.range', { lower: metres(row.underkant), upper: metres(row.overkant) }) : lo ? t('plan.height.lower', { h: metres(row.underkant) }) : t('plan.height.upper', { h: metres(row.overkant) });
+        const system = geo.heightLabel((s.info || {}).hojdsystem);
+        return { label: system ? t('plan.field.hojd.in', { system }) : t('plan.field.hojd'), value };
+      }
+      /** Facts the dataset keeps without a column of their own (`egenskaper`), with other objects named by their text. */
+      const HIDDEN_EXTRAS = new Set(['objektversion', 'versionGiltigFran']);
+      function extraItems(row) {
+        let extras = null;
+        try { extras = row.egenskaper ? JSON.parse(row.egenskaper) : null; } catch (_e) { extras = null; }
+        if (!extras || typeof extras !== 'object' || Array.isArray(extras)) return [];
+        const byId = new Map(s.rows.map((r) => [String(r.objektid || '').toLowerCase(), r]));
+        const nameOf = (id) => {
+          const r = byId.get(String(id).toLowerCase());
+          if (!r) return String(id);
+          return (s.slag === 'oversiktsplan' ? [r.innehallstyp, r.namn] : [r.beteckning, r.formulering]).filter(Boolean).join(' ') || String(id);
+        };
+        const show = (key, v) => {
+          if (typeof v === 'boolean') return t(v ? 'common.yes' : 'common.no');
+          if (typeof v === 'number') return i18n.formatNumber(v);
+          if (Array.isArray(v)) return (/^(berorAnnatInnehall|reglerarAnvandningsbestammelse)$/.test(key) ? v.map(nameOf) : v.map((x) => show('', x))).join('; ');
+          if (v && typeof v === 'object') return Object.entries(v).map(([k, x]) => `${k}: ${show(k, x)}`).join(', ');
+          return String(v);
+        };
+        return Object.entries(extras).filter(([key]) => !HIDDEN_EXTRAS.has(key) && !(key === 'utanBestammelse' && extras.utanBestammelse !== true))
+          .map(([key, v]) => (key === 'utanBestammelse' ? { label: t('plan.prop.utanBestammelse'), value: t('plan.prop.utanBestammelse.value') } : { label: i18n.has('plan.prop.' + key) ? t('plan.prop.' + key) : key, value: show(key, v) }));
+      }
+      /** The objects without a place on the map (content described only in text), to be read in the inspector. */
+      function withoutPlace() {
+        const rows = s.rows.filter((r) => !r.geometri && r.objekttyp !== 'planomrade');
+        if (!rows.length) return null;
+        const text = (r) => (s.slag === 'oversiktsplan' ? [r.innehallstyp, r.namn].filter(Boolean).join(' – ') : [r.beteckning, r.formulering].filter(Boolean).join(' ')) || r.objektid || '–';
+        return h('details', { class: 'dm-more', 'data-plan-unplaced': '' }, h('summary', { text: t('plan.unplaced', { n: rows.length }) }),
+          h('ul', { class: 'dm-plan-provisions' }, rows.slice(0, 200).map((r) => h('li', { onclick: () => { s.selected = r; renderInspector(); } }, h('span', { text: text(r) })))));
+      }
       /** The clicked object: its facts, and the catalogue's facts about the provision it refers to. */
       function selectedDetails(row) {
         const kv = /** @type {any} */ (h('dm-kv'));
@@ -284,11 +445,14 @@
           { label: t('plan.field.tema'), value: groupLabel(row.tema) }, { label: t('plan.field.innehallstyp'), value: row.innehallstyp }, row.namn ? { label: t('common.name'), value: row.namn } : null,
           row.precisering ? { label: t('plan.field.precisering'), value: row.precisering } : null, row.kompletterande ? { label: t('plan.field.kompletterande'), value: row.kompletterande } : null,
           row.anvandningsstatus ? { label: t('plan.field.anvandningsstatus'), value: row.anvandningsstatus } : null, row.planhandelse ? { label: t('plan.field.planhandelse'), value: `${row.planhandelse} ${row.planhandelse_datum || ''}`.trim() } : null,
+          row.utbyggnadsordning ? { label: t('plan.prop.utbyggnadsordning'), value: row.utbyggnadsordning } : null,
+          ...extraItems(row),
         ] : [
           { label: t('plan.field.objekttyp'), value: t('plan.type.' + (row.objekttyp || 'annan')) }, row.beteckning ? { label: t('plan.field.beteckning'), value: row.beteckning } : null,
           row.formulering ? { label: t('plan.field.formulering'), value: row.formulering } : null, row.kategori ? { label: t('plan.field.kategori'), value: row.underkategori ? `${row.kategori} / ${row.underkategori}` : row.kategori } : null,
           row.anvandningsform ? { label: t('plan.field.anvandningsform'), value: row.anvandningsform } : null, row.varde ? { label: t('plan.field.varde'), value: `${row.vardetyp ? row.vardetyp + ' ' : ''}${row.varde}${row.enhet ? ' ' + row.enhet : ''}` } : null,
-          row.farg ? { label: t('plan.field.farg'), value: row.farg } : null, row.kod ? { label: t('plan.field.kod'), value: row.kod } : null, row.etikett && row.objekttyp !== 'planomrade' ? { label: t('plan.field.motiv'), value: row.etikett } : null,
+          row.farg ? { label: t('plan.field.farg'), value: row.farg } : null, row.kod ? { label: t('plan.field.kod'), value: row.kod } : null, heightItem(row), row.etikett && row.objekttyp !== 'planomrade' ? { label: t('plan.field.motiv'), value: row.etikett } : null,
+          ...extraItems(row),
         ]).filter(Boolean);
         const box = h('div', { class: 'dm-stack-sm' }, kv);
         if (!isOp && row.katalogreferens) {

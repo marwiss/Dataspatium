@@ -25,7 +25,8 @@
     /** Table and column names without diacritics, case and separators: "RpArealformålOmråde" → "rparealformalomrade". */
     const plain = (s) => lower(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/[^a-z0-9]/g, '');
     const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-    const geomText = (geometry, crs) => (isGeometry(geometry) ? JSON.stringify(geo.toWgs84(geometry, crs || undefined)) : null);
+    /** GeoJSON text in WGS 84, or null (also for a system the app cannot convert: no place rather than a wrong one). */
+    const geomText = (geometry, crs) => { if (!isGeometry(geometry)) return null; const g = geo.toWgs84(geometry, crs || undefined); return g ? JSON.stringify(g) : null; };
     const crsOfCollection = (data) => { const c = data && data.crs && data.crs.properties && data.crs.properties.name; return c ? String(c) : null; };
 
     // ---- Denmark: Plandata.dk ---------------------------------------------------------------------------------
@@ -357,6 +358,8 @@
       const plan = kp
         ? { slag: 'oversiktsplan', land: 'NO', format: 'kommuneplan-gpkg', objektid: pi.planid || '', namn: pi.plannavn || 'Kommuneplan', kommunkod: pi.kommune || '', status: pi.planstatus || '', datumPlanhandelse: pi.ikraft || '' }
         : { slag: 'detaljplan', land: 'NO', format: 'reguleringsplan-gpkg', objektid: pi.planid || '', beteckning: pi.planid || '', namn: pi.plannavn || 'Reguleringsplan', kommunkod: pi.kommune || '', status: pi.planstatus || '', typ: pi.plantype || '', datumLagakraft: pi.ikraft || '' };
+      // The file's coordinate system, so that the plan view can say when it is one the app cannot convert.
+      plan.crs = String(options.crs || (tables.find((t) => t && t.crs) || {}).crs || '');
       return finish(plan, rows);
     }
     const NO_MAIN = { 1: 'Bebyggelse og anlegg', 2: 'Samferdselsanlegg og teknisk infrastruktur', 3: 'Grønnstruktur', 4: 'Forsvaret', 5: 'Landbruks-, natur- og friluftsformål samt reindrift', 6: 'Bruk og vern av sjø og vassdrag' };

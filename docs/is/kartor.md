@@ -11,7 +11,7 @@ en þú velur bakgrunnskort og gefur samþykki þitt.
 |---|---|
 | Rúmfræðidálkur | Textadálkur með GeoJSON eða WKT, oftast `geometry` (innflutningur á GeoJSON, Shapefile, GeoPackage, KML, GPX og TopoJSON gefur hann) |
 | Hnitadálkar | Tveir töludálkar fyrir lengd og breidd (`lon`/`lat`, `longitude`/`latitude`, `x`/`y` og fleiri) |
-| SWEREF 99 TM | Þekkist á gildunum og er umreiknað í WGS 84 við teikningu |
+| Vörpuð hnit | Umreiknuð í WGS 84 með hnitakerfi skrárinnar, eða sem SWEREF 99 TM þegar skráin gefur ekkert upp (sjá [Hnitakerfi](#hnitakerfi)) |
 
 Gagnasöfn með rúmfræðidálki eða dálkum sem heita lengd og breidd opnast beint sem kort; fyrir aðra hnitadálka (til
 dæmis `x` og `y`) velur þú *Sýna sem kort* í tækjastiku töflunnar.
@@ -84,10 +84,34 @@ punktastærðum) og parar hvert lag við gagnasafn með sama skráarheiti (og la
 skrár sem vantar eru fluttar inn fyrst. Niðurstaðan er kortasýn í Myndgera. Rastalög, merkingar, áhrif og reglubundin
 tákn umfram fyrstu reglu eru ekki tekin með.
 
+## Hnitakerfi
+
+GeoPackage-skrá, shape-skrá (með `.prj`) og GeoJSON-skrá með `crs` gefa upp hnitakerfi sitt. Forritið notar það þegar
+kortið er teiknað, þegar staðbundin leit leitar að stöðum og þegar gagnasafnið er flutt út með rúmfræði; hnitin í
+töflunni haldast eins og þau standa í skránni. Gefi skráin ekkert kerfi upp eru vörpuð hnit tekin sem SWEREF 99 TM.
+Forritið umreiknar þessi kerfi:
+
+| Kerfi | EPSG |
+|---|---|
+| SWEREF 99 TM og tólf staðbeltin (SWEREF 99 12 00 til 23 15) | 3006, 3007–3018 |
+| RT 90 2,5 gon V, með beinni vörpun Lantmäteriet | 3021 |
+| ETRS89 og WGS 84 / UTM 32–35 (Danmörk, Noregur, Finnland) | 25832–25835, 32632–32635 |
+| ETRS-TM35FIN og finnsku GK-beltin | 3067, 3873–3885 |
+| ISN93 / Lambert 1993 (Ísland) | 3057 |
+| Web Mercator | 3857 |
+| WGS 84 og ETRS89 í gráðum | 4326, 4258 |
+
+Umreikningurinn stemmir við PROJ (sem QGIS notar) innan millimetra; RT 90 2,5 gon V innan tveggja desímetra, því bein
+vörpun er einföldun. Gefi skrá upp annað kerfi, til dæmis RT 90 í öðru belti eða eldra staðbundið kerfi sveitarfélags,
+segir Sækja frá og kortið teiknar ekki staðina í stað þess að teikna þá vitlaust; umreiknaðu skrána fyrst í SWEREF 99,
+til dæmis í QGIS. Kortin hér eru teiknuð í Web Mercator með norður upp; skipulag má einnig sýna í eigin kerfi (sjá
+[planer.md](planer.md#hnitakerfi-og-hæðir)).
+
 ## Takmarkanir
 
 - Bakgrunnskort og birt HTML með bakgrunnskorti þurfa net; forritið sjálft sendir engar beiðnir án samþykkis.
-- Vörpun: WGS 84 og SWEREF 99 TM. Önnur hnitakerfi þarf að umreikna fyrir innflutning (til dæmis í QGIS).
+- Hnitakerfi: þau sem eru talin upp undir [Hnitakerfi](#hnitakerfi). Önnur þarf að umreikna fyrir innflutning (til dæmis í QGIS);
+  forritið segir frá og teiknar þau ekki.
 - Útflutningurinn teiknar lögin, ekki bakgrunnskortið eða WMS-lög.
 - Jaðarsvæði og yfirlagnir eru flatarreikningar á WGS 84-hnitum með Turf; á kílómetrakvarða á Norðurlöndum er villan
   lítil, fyrir mjög stór svæði merkjanleg.

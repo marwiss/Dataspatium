@@ -43,6 +43,7 @@ licenstexterna.
 | Python (Pyodide, CPython och paket som numpy, pandas och matplotlib; hämtas vid behov, ingår inte i mappen) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-licensen (PSF-baserad), MIT och liknande för övriga | Hämtas oförändrade från jsDelivr och lagras i webbläsaren; källkoden finns hos Pyodide-projektet och på PyPI i de versioner som anges i appens katalog (Pyodide 314.0.7) |
 | pdf.js 3.11 (läser PDF-filer) med standardtypsnitt | Apache-2.0 (pdf.js), BSD-3-Clause (Foxits typsnitt), SIL Open Font License 1.1 (Liberation Sans) | Fria att använda och sprida med licenstext och notiser; typsnitten får bäddas in |
 | Leaflet 1.9 (kartor) och Turf 7 (geoverktyg) | BSD-2-Clause (Leaflet), MIT (Turf) | Fria att använda och sprida med licenstext och notiser |
+| proj4js 2.22 och Proj4Leaflet 1.0 (plankartan i planens eget koordinatsystem) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Fria att använda och sprida med licenstext och notiser |
 | Cytoscape 3.34 med fcose, dagre och expand-collapse, sigma 3 och graphology (grafer) | MIT | Fria att använda och sprida med licenstext och notiser |
 | neo4j-driver-lite 6.3 (Neo4j över Bolt) | Apache-2.0 | Fri att använda och sprida med licenstext och notiser |
 | web-ifc 0.0.78 (geometri ur IFC; oförändrade filer, källkod på https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Fri att använda och sprida; ändringar i bibliotekets egna filer ska delas under samma licens |

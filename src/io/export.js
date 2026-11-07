@@ -297,12 +297,16 @@
       if (!source) throw new Error(D.t('export.err.nogeometry'));
       const at = (name) => cols.findIndex((c) => c.name === name);
       const skip = new Set(source.column ? [at(source.column), at('geometry_type')] : [at('geometry_type')]);
+      // GeoJSON is in WGS 84 (RFC 7946): metres are converted from the dataset's own system (SWEREF 99 TM when the file named
+      // none); a system the app cannot convert gives a feature without geometry rather than one in the wrong place.
+      const crs = geo.crsOfMeta(await datasets.get(id)) || undefined;
+      const degrees = (g) => (g && g.type ? (geo.isProjected([g]) ? geo.toWgs84(g, crs) : g) : null);
       const features = rows.map((r) => {
         const properties = {};
         cols.forEach((c, i) => { if (!skip.has(i)) properties[c.name] = r[i] === undefined ? null : (c.type === 'boolean' && r[i] !== null ? !!r[i] : r[i]); });
         let geometry = null;
-        if (source.column) { const g = geo.parseGeometry(r[at(source.column)]); geometry = g && g.type ? g : null; }
-        else if (typeof r[at(source.lon)] === 'number' && typeof r[at(source.lat)] === 'number') { const point = { type: 'Point', coordinates: [r[at(source.lon)], r[at(source.lat)]] }; geometry = geo.toWgs84(point); }
+        if (source.column) geometry = degrees(geo.parseGeometry(r[at(source.column)]));
+        else if (typeof r[at(source.lon)] === 'number' && typeof r[at(source.lat)] === 'number') geometry = degrees({ type: 'Point', coordinates: [r[at(source.lon)], r[at(source.lat)]] });
         return { type: 'Feature', properties, geometry };
       });
       return new Blob([JSON.stringify({ type: 'FeatureCollection', features })], { type: 'application/geo+json' });

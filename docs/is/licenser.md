@@ -41,6 +41,7 @@ leyfi eru í [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md) ásamt ley
 | Python (Pyodide, CPython og pakkar eins og numpy, pandas og matplotlib; sótt eftir þörfum, ekki í möppunni) | MPL-2.0 (Pyodide, micropip), PSF-2.0 (CPython), BSD-3-Clause (numpy, pandas), matplotlib-leyfið (byggt á PSF), MIT og sambærilegt fyrir hitt | Sótt óbreytt frá jsDelivr og vistað í vafranum; frumkóðinn er hjá Pyodide-verkefninu og á PyPI í þeim útgáfum sem skrá forritsins tilgreinir (Pyodide 314.0.7) |
 | pdf.js 3.11 (les PDF-skrár) með staðalletri | Apache-2.0 (pdf.js), BSD-3-Clause (letur Foxit), SIL Open Font License 1.1 (Liberation Sans) | Frjálst að nota og dreifa með leyfistexta og tilkynningum; letrið má fella inn |
 | Leaflet 1.9 (kort) og Turf 7 (landfræðitól) | BSD-2-Clause (Leaflet), MIT (Turf) | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
+| proj4js 2.22 og Proj4Leaflet 1.0 (skipulagskortið í eigin hnitakerfi skipulagsins) | MIT (proj4js), BSD-2-Clause (Proj4Leaflet) | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | Cytoscape 3.34 með fcose, dagre og expand-collapse, sigma 3 og graphology (net) | MIT | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | neo4j-driver-lite 6.3 (Neo4j yfir Bolt) | Apache-2.0 | Frjálst að nota og dreifa með leyfistexta og tilkynningum |
 | web-ifc 0.0.78 (rúmfræði úr IFC; óbreyttar skrár, frumkóði á https://github.com/ThatOpen/engine_web-ifc) | MPL-2.0 | Frjálst að nota og dreifa; breytingum á eigin skrám safnsins er deilt með sama leyfi |

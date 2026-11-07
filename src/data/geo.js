@@ -206,6 +206,92 @@
       const m = /(\d{4,5})\s*$/.exec(String(crs).trim());
       return m ? Number(m[1]) : null;
     }
+    /** True when a CRS text names nothing: empty, or GeoPackage's undefined systems ("Undefined Cartesian SRS"). */
+    const unnamed = (crs) => crs === null || crs === undefined || /^\s*(undefined\b.*)?$/i.test(String(crs));
+    /**
+     * EPSG code of a coordinate system given as a number, an EPSG text or URN ("EPSG:3007", "urn:ogc:def:crs:EPSG::3007",
+     * "http://www.opengis.net/def/crs/EPSG/0/3007"), OGC's CRS84, or a name as GeoPackage files, .prj files and GIS programs
+     * write it ("SWEREF99 TM", "SWEREF99_15_00", "RT90 2.5 gon V", "ETRS_1989_UTM_Zone_33N", "ETRS89 / TM35FIN(E,N)",
+     * "ISN93 / Lambert 1993", "WGS 84"); null when it names nothing the app recognises.
+     * @param {any} crs
+     * @returns {number|null}
+     */
+    function crsCode(crs) {
+      if (unnamed(crs)) return null;
+      if (typeof crs === 'number') return crs;
+      const s = String(crs).trim();
+      const coded = /(?:^|epsg\D{0,4}|\/epsg\/\d+\/)(\d{4,5})\s*$/i.exec(s);
+      if (coded) return Number(coded[1]);
+      const n = s.toLowerCase().replace(/[_\s]+/g, ' ');
+      if (/crs ?84/.test(n)) return 4326;
+      if (/pseudo.?mercator|web ?mercator|900913/.test(n)) return 3857;
+      if (/sweref ?99 ?tm/.test(n)) return 3006;
+      const z = /sweref ?99 ?(\d{1,2}) ?(\d{2})/.exec(n);
+      if (z) { const lon0 = Number(z[1]) + Number(z[2]) / 60; const hit = Object.keys(SWEREF_ZONES).find((k) => Number(k) !== 3006 && SWEREF_ZONES[k].lon0 === lon0); return hit ? Number(hit) : null; }
+      if (/rt ?90/.test(n)) return /2[.,]?5 ?gon ?[vw]/.test(n) ? 3021 : null;
+      const utm = /(etrs ?(?:19)?89|wgs ?(?:19)?84).*utm.*zone ?(\d{2}) ?n/.exec(n);
+      if (utm) { const code = (/etrs/.test(utm[1]) ? 25800 : 32600) + Number(utm[2]); return TM_ZONES[code] ? code : null; }
+      if (/tm ?35 ?fin/.test(n)) return 3067;
+      const gk = /gk ?(\d{2}) ?fin/.exec(n);
+      if (gk) { const code = 3854 + Number(gk[1]); return TM_ZONES[code] ? code : null; }
+      if (/isn ?93|lambert ?1993/.test(n)) return 3057;
+      if (/^(gcs )?(wgs ?(19)?84)$/.test(n)) return 4326;
+      if (/^(gcs )?etrs ?(19)?89$/.test(n)) return 4258;
+      return null;
+    }
+    /** True when the app can convert coordinates in this system (SWEREF 99, Web Mercator, the Nordic grids it reads, degrees). */
+    const supported = (code) => !!(code && (SWEREF_ZONES[code] || TM_ZONES[code] || code === 3057 || code === 3857 || code === 4326 || code === 4258));
+    /**
+     * True when a file names a coordinate system the app cannot convert: its coordinates would land in the wrong place, so they
+     * are not drawn. A file that names no system is not unknown (projected coordinates are then taken as SWEREF 99 TM).
+     * @param {any} crs
+     */
+    function crsUnknown(crs) { return !unnamed(crs) && !supported(crsCode(crs)); }
+    /** The usual name of a coordinate system the app reads ("SWEREF 99 TM", "SWEREF 99 15 00", "ETRS89 / UTM 33N"), or ''. */
+    function crsLabel(crs) {
+      const code = crsCode(crs);
+      if (code === 3006) return 'SWEREF 99 TM';
+      if (code && SWEREF_ZONES[code]) { const lon0 = SWEREF_ZONES[code].lon0; return `SWEREF 99 ${String(Math.floor(lon0)).padStart(2, '0')} ${String(Math.round((lon0 % 1) * 60)).padStart(2, '0')}`; }
+      if (code === 3021) return 'RT 90 2,5 gon V';
+      if (code && code >= 25832 && code <= 25835) return `ETRS89 / UTM ${code - 25800}N`;
+      if (code && code >= 32632 && code <= 32635) return `WGS 84 / UTM ${code - 32600}N`;
+      if (code === 3067) return 'ETRS-TM35FIN';
+      if (code && code >= 3873 && code <= 3885) return `ETRS-GK${code - 3854}FIN`;
+      if (code === 3057) return 'ISN93 / Lambert 1993';
+      if (code === 3857) return 'Web Mercator';
+      if (code === 4326) return 'WGS 84';
+      if (code === 4258) return 'ETRS89';
+      return '';
+    }
+    /** A system for people: its name with the EPSG code ("SWEREF 99 15 00 (EPSG:3009)"), or the text as the file gave it; '' for nothing. */
+    function crsText(crs) {
+      if (unnamed(crs)) return '';
+      const label = crsLabel(crs);
+      return label ? `${label} (EPSG:${crsCode(crs)})` : String(crs).trim();
+    }
+    /**
+     * The proj4 definition of a projected system the app reads, from the same parameters as its own conversion (so that a map
+     * drawn in the plan's grid puts every object where the conversion does); null for degrees, Web Mercator and unknown systems.
+     * RT 90 2,5 gon V uses Lantmäteriet's direct projection on GRS 80, as the conversion does.
+     * @param {any} crs
+     * @returns {string|null}
+     */
+    function proj4Def(crs) {
+      const code = crsCode(crs);
+      const zone = code ? (SWEREF_ZONES[code] || TM_ZONES[code]) : null;
+      const tail = '+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+      if (zone) return `+proj=tmerc +lat_0=0 +lon_0=${zone.lon0} +k=${zone.k0} +x_0=${zone.falseE} +y_0=${zone.falseN || 0} ${tail}`;
+      if (code === 3057) return `+proj=lcc +lat_0=${ISN93.lat0} +lon_0=${ISN93.lon0} +lat_1=${ISN93.lat1} +lat_2=${ISN93.lat2} +x_0=${ISN93.falseE} +y_0=${ISN93.falseN} ${tail}`;
+      return null;
+    }
+    /** Height systems by EPSG code (the Nordic national ones). */
+    const HEIGHT_SYSTEMS = { 5613: 'RH 2000', 5718: 'RH 70', 5799: 'DVR90', 5941: 'NN2000', 3900: 'N2000', 8089: 'ISH2004' };
+    /** The name of a height system given as "EPSG:5613", a URN or a name; the text itself when the code is not one of the Nordic systems; '' for nothing. */
+    function heightLabel(system) {
+      if (unnamed(system)) return '';
+      const code = epsgOf(system);
+      return (code && HEIGHT_SYSTEMS[code]) || String(system).trim();
+    }
     /** Lambert conformal conic (two parallels) metres -> [longitude, latitude]; GRS 80. */
     function lccToWgs84(x, y, p) {
       const e = Math.sqrt(F * (2 - F));
@@ -231,21 +317,27 @@
     /**
      * Projected geometry -> WGS 84; degrees pass through. Without `crs` the geometry is taken as SWEREF 99 TM (the
      * Swedish standard); a CRS of a local SWEREF 99 zone (EPSG:3007–3018) selects that zone. Also read: Web Mercator,
-     * the UTM zones 32–35 (ETRS89 and WGS 84), ETRS-TM35FIN, the Finnish GK zones and ISN93 (Iceland).
+     * RT 90 2,5 gon V, the UTM zones 32–35 (ETRS89 and WGS 84), ETRS-TM35FIN, the Finnish GK zones and ISN93 (Iceland).
+     * A system the app cannot convert gives null: no place rather than a wrong one (see `crsUnknown`).
      */
     function toWgs84(geometry, crs) {
       if (!isProjected([geometry])) return geometry;
-      if (/3857|900913|pseudo-?mercator|web ?mercator/i.test(String(crs || ''))) return mapCoordinates(geometry, (c) => mercatorToWgs84(c[0], c[1]));
-      const code = epsgOf(crs);
+      if (unnamed(crs)) return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], 3006));
+      const code = crsCode(crs);
+      if (code === 3857) return mapCoordinates(geometry, (c) => mercatorToWgs84(c[0], c[1]));
       if (code === 3057) return mapCoordinates(geometry, (c) => lccToWgs84(c[0], c[1], ISN93));
       if (code && TM_ZONES[code]) return mapCoordinates(geometry, (c) => tmToWgs84(c[0], c[1], TM_ZONES[code]));
-      const epsg = swerefZone(crs);
-      return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], epsg));
+      if (code && SWEREF_ZONES[code]) return mapCoordinates(geometry, (c) => swerefToWgs84(c[0], c[1], code));
+      // Unknown, or degrees declared for coordinates that are not degrees.
+      return null;
     }
-    /** True when the app can convert a CRS to WGS 84 (SWEREF 99, Web Mercator, Nordic UTM/TM zones, ISN93). */
-    function knownCrs(crs) {
-      const code = epsgOf(crs);
-      return !!(code && (SWEREF_ZONES[code] || TM_ZONES[code] || code === 3057 || code === 3857 || code === 4326 || code === 4258));
+    /** True when the app can convert a CRS to WGS 84 (SWEREF 99, Web Mercator, RT 90 2,5 gon V, Nordic UTM/TM zones, ISN93, degrees). */
+    function knownCrs(crs) { return supported(crsCode(crs)); }
+    /** The coordinate system kept with a dataset (the file's, as the importer read it), or ''. */
+    function crsOfMeta(meta) {
+      if (!meta) return '';
+      const o = meta.importOptions || {};
+      return String(o.crs || meta.crs || '');
     }
     /** Web Mercator (EPSG:3857) metres -> [longitude, latitude]. */
     function mercatorToWgs84(x, y) {
@@ -253,6 +345,6 @@
       return [(x / R) / DEG, Math.atan(Math.sinh(y / R)) / DEG];
     }
 
-    return { SWEREF_ZONES, TM_ZONES, ISN93, swerefZone, epsgOf, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
+    return { SWEREF_ZONES, TM_ZONES, ISN93, HEIGHT_SYSTEMS, swerefZone, epsgOf, crsCode, crsUnknown, crsLabel, crsText, crsOfMeta, proj4Def, heightLabel, knownCrs, parseGeometry, wktToGeoJson, firstCoordinate, isProjected, bounds, swerefToWgs84, wgs84ToSweref, tmToWgs84, lccToWgs84, mercatorToWgs84, mapCoordinates, toWgs84 };
   });
 })();

@@ -11,7 +11,7 @@ hämtas från nätet förrän du väljer en bakgrundskarta och ger ditt samtycke
 |---|---|
 | Geometrikolumn | En textkolumn med GeoJSON eller WKT, oftast `geometry` (importer av GeoJSON, Shapefile, GeoPackage, KML, GPX och TopoJSON ger den) |
 | Koordinatkolumner | Två talkolumner för longitud och latitud (`lon`/`lat`, `longitud`/`latitud`, `x`/`y` med flera) |
-| SWEREF 99 TM | Känns igen på värdena och räknas om till WGS 84 vid ritningen |
+| Projicerade koordinater | Räknas om till WGS 84 med filens koordinatsystem, eller som SWEREF 99 TM när filen inte anger något (se [Koordinatsystem](#koordinatsystem)) |
 
 Datamängder med en geometrikolumn eller kolumner som heter longitud och latitud öppnas som karta direkt; för andra
 koordinatkolumner (till exempel `x` och `y`) väljer du *Visa som karta* i tabellens verktygsrad.
@@ -84,10 +84,34 @@ med deras färger, linjebredder och punktstorlekar) och matchar varje lager mot 
 lagernamn för GeoPackage); medföljande filer som saknas importeras först. Resultatet är en kartvy i Visualisera.
 Rasterlager, etiketter, effekter och regelbaserade symboler utöver den första regeln tas inte med.
 
+## Koordinatsystem
+
+En GeoPackage-fil, en shapefil (med `.prj`) och en GeoJSON-fil med `crs` anger sitt koordinatsystem. Appen använder det
+när kartan ritas, när rumslig sökning letar efter platser och när datamängden exporteras med geometri; koordinaterna i
+tabellen behålls som de står i filen. Anger filen inget system tas projicerade koordinater som SWEREF 99 TM. Appen räknar
+om dessa system:
+
+| System | EPSG |
+|---|---|
+| SWEREF 99 TM och de tolv lokala zonerna (SWEREF 99 12 00 till 23 15) | 3006, 3007–3018 |
+| RT 90 2,5 gon V, med Lantmäteriets direktprojektion | 3021 |
+| ETRS89 och WGS 84 / UTM 32–35 (Danmark, Norge, Finland) | 25832–25835, 32632–32635 |
+| ETRS-TM35FIN och de finska GK-zonerna | 3067, 3873–3885 |
+| ISN93 / Lambert 1993 (Island) | 3057 |
+| Web Mercator | 3857 |
+| WGS 84 och ETRS89 i grader | 4326, 4258 |
+
+Omräkningen stämmer med PROJ (som QGIS använder) inom en millimeter; RT 90 2,5 gon V inom två decimeter, eftersom
+direktprojektionen är en förenkling. Anger en fil ett annat system, till exempel RT 90 i en annan zon eller ett äldre
+lokalt kommunsystem, säger Inhämta till och kartan ritar inte platserna, i stället för att rita dem fel; räkna om filen
+till SWEREF 99 först, till exempel i QGIS. Kartorna här ritas i Web Mercator med norr uppåt; en plan kan också visas i sitt
+eget system (se [planer.md](planer.md#koordinatsystem-och-höjder)).
+
 ## Begränsningar
 
 - Bakgrundskartor och publicerad HTML med bakgrundskarta kräver nät; appen själv gör inga anrop utan samtycke.
-- Projektioner: WGS 84 och SWEREF 99 TM. Andra referenssystem måste räknas om före import (till exempel i QGIS).
+- Koordinatsystem: de som står under [Koordinatsystem](#koordinatsystem). Andra måste räknas om före import (till exempel i QGIS);
+  appen säger till och ritar dem inte.
 - Exporten ritar lagren, inte bakgrundskartan eller WMS-lager.
 - Buffertar och överlagringar är planära beräkningar på WGS 84-koordinater via Turf; för kilometerskala i Norden är
   felet litet, för mycket stora ytor märkbart.

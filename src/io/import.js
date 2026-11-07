@@ -30,6 +30,8 @@
       if (forced === 'datapackage') return D.require('io/datapackage');
       if (forced === 'bcf' || (!forced && /\.(bcf|bcfzip)$/i.test(file.name || ''))) return D.require('io/importers/bcf');
       if (!forced && /\.zip$/i.test(file.name) && await D.require('io/datapackage').sniff(file)) return D.require('io/datapackage');
+      // An archive package of a plan (metadata/PREMIS.xml with the plan in content/), zipped as a whole.
+      if (forced === 'planarchive' || (!forced && /\.zip$/i.test(file.name) && await D.require('io/importers/plan-archive').sniff(file))) return D.require('io/importers/plan-archive');
       const importer = importerFor(file, forced);
       if (forced || (importer !== json && importer !== xml && importer !== geo)) return importer;
       const head = await file.slice(0, 65536).text();
@@ -60,8 +62,13 @@
       const p = await importer.preview(file, options);
       // A GeoPackage in Boverket's ÖP model can be imported whole as a comprehensive plan.
       if (importer === sqliteImp && p.gpkg && plan.isOpGeoPackage(p.tables)) { p.oversiktsplan = true; p.planGpkg = 'oversiktsplan'; }
-      // Nordic plan GeoPackages (Norwegian reguleringsplan/kommuneplan, Icelandic stafrænt deiliskipulag) likewise.
+      // A detaljplan in Rita Detaljplan's GeoPackage, and the Nordic plan GeoPackages (Norwegian reguleringsplan/kommuneplan,
+      // Icelandic stafrænt deiliskipulag) likewise.
+      else if (importer === sqliteImp && p.gpkg && plan.isDpGeoPackage(p.tables)) p.planGpkg = 'detaljplan';
       else if (importer === sqliteImp && p.gpkg && plan.nordic.gpkgKind(p.tables)) p.planGpkg = plan.nordic.gpkgKind(p.tables);
+      // A coordinate system the app cannot convert: the places are kept as they are, but not drawn (Inhämta says so).
+      const named = p.crs || (p.plan && p.plan.crs) || '';
+      if (named && D.require('data/geo').crsUnknown(named)) p.crsUnknown = String(named);
       const columns = types.cleanColumnNames(p.columns);
       const inferred = types.inferColumns(columns, p.dataRows, { decimal: options.decimal });
       // Declared types (SQLite schemas) win over inference for empty or ambiguous columns.
@@ -127,6 +134,15 @@
      */
     async function sortFiles(files) {
       const collected = new Map(); const singles = []; const skipped = [];
+      // An archive package of a plan (a folder with metadata/PREMIS.xml) is read whole: its files are one plan, not a mix.
+      const packages = [];
+      const archive = D.require('io/importers/plan-archive');
+      while (archive.isPackage(files)) {
+        const { map, root } = archive.byPath(files);
+        const inPackage = new Set(map.values());
+        packages.push({ importer: 'planarchive', collection: false, files: Array.from(inPackage), name: root });
+        files = files.filter((f) => !inPackage.has(f));
+      }
       for (const file of files) {
         if (JUNK.test(file.name)) continue;
         if (!importers.some((i) => i.detect(file)) && !(await D.require('io/datapackage').sniff(file))) { skipped.push(file); continue; }
@@ -139,7 +155,7 @@
       const groups = Array.from(collected.values());
       const folder = folderOf(files);
       for (const g of groups) g.name = groups.length === 1 && folder ? folder : D.t('import.collection.' + g.importer, { n: g.files.length });
-      return { groups: groups.concat(singles), skipped };
+      return { groups: packages.concat(groups, singles), skipped };
     }
     /**
      * Read the groups one at a time. A file that fails does not stop the others.
@@ -151,7 +167,8 @@
         const group = groups[i];
         if (progress) progress({ index: i, total: groups.length, file: group.files[0].name });
         try {
-          const meta = group.collection ? await runFiles(group.files, { format: group.importer }, group.name) : await run(group.files[0], { format: group.importer }, null, group.name);
+          const meta = group.importer === 'planarchive' ? await D.require('io/importers/plan-archive').importFiles(group.files, {})
+            : group.collection ? await runFiles(group.files, { format: group.importer }, group.name) : await run(group.files[0], { format: group.importer }, null, group.name);
           out.push({ group, meta, error: null });
         } catch (err) { out.push({ group, meta: null, error: String((err && err.message) || err) }); }
       }
@@ -187,7 +204,7 @@
       // A document or image keeps its kind and its files; the column step does not apply to it.
       if (importer.collection) return importer.importFiles([file], options, name, progress);
       // A digital plan becomes a plan dataset (rows per provision, the original kept); so does an ÖP-model GeoPackage when asked.
-      if (importer.id === 'detaljplan' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage' || importer.id === 'bcf') return importer.importFile(file, options, name, progress);
+      if (importer.id === 'detaljplan' || importer.id === 'planarchive' || importer.id === 'graph' || importer.id === 'model' || importer.id === 'datapackage' || importer.id === 'bcf') return importer.importFile(file, options, name, progress);
       if (importer.id === 'sqlite' && options.plan) return detaljplanImp.importGeoPackage(file, options, name, progress);
       if (importer.viaR) return importer.importViaR(file, name || baseName(file.name), options);
       if (importer.id === 'sqlite') {
