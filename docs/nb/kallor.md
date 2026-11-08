@@ -175,7 +175,7 @@ med adressen utfylt. Finnes serveren allerede som kilde, åpnes den direkte. Len
 ## Åpne geodata
 
 Dialogen for *Geodatakilde* under *Legg til kilder* begynner med en liste over **ferdige geodatakilder**: åpne WFS-, OGC API Features- og
-ArcGIS-tjenester fra nordiske etater og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
+ArcGIS-tjenester fra nordiske etater og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen, Sundsvalls kommun,
 Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
 Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrollert å virke fra
 nettleseren. En forhåndsinnstilt kilde åpnes, de øvrige legges til med ett klikk, og lagene leses fra tjenesten;

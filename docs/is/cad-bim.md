@@ -127,6 +127,54 @@ aðgerðirnar í Vinna gefa nýja útgáfu.
 
 IfcOpenShell er LGPL-3.0 og er sótt óbreytt sem fest wheel-skjöl úr skrá IfcOpenShell sjálfs, sjá [Leyfi](licenser.md).
 
+## Sannprófa líkanið
+
+Spjaldið **Sannprófa líkanið** í Umsjón safnar saman prófunum á IFC-líkani, með nýjustu niðurstöðu hverrar.
+
+- **Prófun þjónsins** er til fyrir líkan sem sótt var sem skjalaútgáfa úr CDE. Kontroll (frá 3.0.0) prófar hverja IFC-skrá sem er
+  hlaðið upp gagnvart IFC-skemanu og, þegar þjónninn hefur þær uppsettar, gagnvart reglum buildingSMART (ifc-gherkin-rules), og setur
+  niðurstöðuna í lýsigögn útgáfunnar. *Sækja prófun þjónsins* les hana: ekkert fannst, aðeins viðvaranir, niðurstöður með villum, bíður
+  eftir prófun eða ekki tókst að prófa, og hvenær og með hvaða reglum. Forritið spyr þjóninn ekki fyrr en þú ýtir á hnappinn. Séu
+  niðurstöður sýnir *Sýna niðurstöðurnar* skýrslu þjónsins: fjölda niðurstaðna og villna, hvaða prófanir voru gerðar og hvaða reglur
+  ekki tókst að keyra, og hverja niðurstöðu með reglu sinni, tilviki sínu (`#123`) og GlobalId einingarinnar. *Merkja í líkaninu*
+  merkir síðan einingarnar í líkanasýninni í Vinna, og *Vista sem töflu* vistar niðurstöðurnar sem töflu með dálkunum `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` og
+  `attribute`. Skýrslan er sótt með sömu innskráningu frá vistfangi sem forritið býr sjálft til á sama þjóni; vistfangi úr lýsigögnum
+  er aldrei fylgt.
+- **IDS-skrár verkefnisins**: athugi þjónninn skrána einnig gagnvart IDS-skjölum verkefnisins (nýjustu útgáfu hvers skjals sem endar á
+  `.ids`), sýnir skýrslan hve margar forskriftir voru samþykktar, ekki samþykktar eða áttu ekki við skrána, og hverjar voru ekki samþykktar,
+  með heiti skjalsins og fjölda niðurstaðna. IDS-skjal sem ekki var hægt að lesa er meðal reglnanna sem ekki var hægt að keyra.
+- **Prófanir hér** sýnir nýjustu *Sannprófun*, *IDS-prófun* og árekstraprófun sem keyrðar voru í forritinu, og hnapparnir opna þær í
+  Greina. Niðurstöðurnar eru vistaðar í stillingum forritsins, ekki í gagnasafninu.
+
+Niðurstöðurnar eiga við skrána eins og henni var hlaðið upp, og þjónninn stöðvar aldrei skrá vegna þeirra. Skrá þar sem allar
+niðurstöður eru viðvaranir telst gild hjá sannprófunarþjónustu buildingSMART. Hafi þjónninn enga slíka prófun segir spjaldið að
+þjónninn hafi ekki prófað útgáfuna.
+
+## Árekstraprófun
+
+Verkfærið **Árekstrar** í Greina (flipinn Magn) finnur byggingarhluta sem ganga hver inn í annan eða koma of nálægt hver öðrum. Það
+vinnur á sömu þríhyrningum og þrívíddarsýnin sýnir, í eigin þræði, og þarf hvorki Python né net.
+
+- **Mengi A og mengi B** eru allir byggingarhlutar eða ein tegund, til dæmis loftstokkar gagnvart bitum. B getur verið í sama líkani
+  eða í öðru líkani í sama verkefni, og þá þurfa líkönin að deila hnitakerfi. Op teljast ekki.
+- **Skurður** telur pör þar sem önnur einingin nær dýpra inn í hina en vikmörkin (2 mm nema annað sé gefið). Dýptin er mæld sem hve
+  langt horn og brúnir ná inn í hina eininguna, svo fletir sem aðeins snertast teljast ekki. *Innilokun* er eining sem liggur öll inni
+  í annarri.
+- **Laus fjarlægð** telur pör sem eru nær hvort öðru en fjarlægðin (50 mm nema annað sé gefið), skurðir meðtaldir.
+
+Niðurstaðan er tafla með auðkenni, GlobalId, tegund og heiti beggja eininga, tegund árekstrar, dýpt eða fjarlægð í millimetrum og punkt
+í eigin hnitum líkansins. Þaðan:
+
+- *Merkja í líkaninu* merkir einingarnar í líkanasýninni í Vinna.
+- *Vista sem BCF* vistar eitt mál fyrir hvern árekstur í BCF-skrá, með sýn sem horfir á punktinn og báðar einingarnar merktar og
+  litaðar. Myndavél og punktur eru í hnitum líkansins með Z upp, svo önnur BCF-verkfæri sýna sama stað.
+- *Senda sem mál* býr til málin beint í verkefninu á þjóninum með BCF API, fyrir líkan sem sótt var úr CDE. Þar sjá allir biðlarar
+  þau, til dæmis Bonsai.
+- *Búa til gagnasafn* vistar töfluna.
+
+Nýjasta niðurstaðan stendur á spjaldinu Sannprófa líkanið í Umsjón. Mælingin gerir ráð fyrir lokuðum flötum: eining með opna eða
+gallaða fleti getur gefið óvissa dýpt. Bognir fletir eru skipt í þríhyrninga, svo vikmörk undir millimetra verða óviss. Einingar sem þrívíddarsýnin getur ekki teiknað eru ekki með, og niðurstaðan segir hve margar þær eru; í sýnilíkani frá Tekla átti það við um allt bendistál.
+
 ## DXF-teikningar
 
 DXF-skrá verður að töflu með einum teikningarhlut í hverri röð (gerð, lag, litur, lengd, flatarmál, texti og staðsetning) og

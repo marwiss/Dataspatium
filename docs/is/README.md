@@ -98,8 +98,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   Netinu er breytt í Vinna og með skrifandi Cypher (uppskriftarskref), Neo4j er uppspretta yfir Bolt, flipinn Net hefur PageRank,
   samfélög, miðlægni, mynsturfyrirspurnir og uppröðun, og net verða myndir í Myndgera, mælaborðum og Birta.
 - **CAD og BIM**: IFC-líkön opnast í þrívídd (web-ifc og three.js) fyrir ofan töflu yfir byggingarhlutana og valið fylgir í báðar áttir.
-  Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum
-  (sjá [cad-bim.md](cad-bim.md)).
+  Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum. Spjaldið *Sannprófa líkanið* safnar saman athugun þjónsins (IFC-skemanu, reglum buildingSMART og IDS-skrám verkefnisins) og athugunum
+  forritsins, og *Árekstraprófun* finnur byggingarhluta sem ganga hver inn í annan eða liggja of þétt og getur sent þá sem BCF-mál (sjá [cad-bim.md](cad-bim.md)).
 - **Flæði og vöktun**: vistuð keðja (sókn, uppskriftir, skriftur, listar, gröf, mælaborð, skjöl, útflutningur) er keyrð með einum smelli
   eða við ræsingu og vaktaðar heimildir láta vita á stöðustikunni þegar ný gögn eru til (sjá [floden.md](floden.md)).
 - **Tölfræði án kóða**: flipinn Tölfræði gerir lýsandi tölfræði, krosstöflur, fylgni, tilgátupróf, aðhvarf og klasagreiningu með eyðublöðum sem
@@ -153,7 +153,7 @@ OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í
 
 Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
 
-Dataspatium 2.0.0 virkar með Kontroll 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+Dataspatium 3.0.0 virkar með Kontroll 3.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira

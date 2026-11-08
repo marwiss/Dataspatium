@@ -1,6 +1,6 @@
 {
  "format": "dataspatium-geodata-services/1",
- "note": "Open geodata services verified to allow requests from the browser (CORS with Origin null) on 2026-11-04. `preset` names the connector shipped with the app; the others are added with one click in the dialog Lägg till geodatakälla.",
+ "note": "Open geodata services verified to allow requests from the browser (CORS with Origin null) on 2026-11-04 (Sundsvall on 2026-11-08). `preset` names the connector shipped with the app; the others are added with one click in the dialog Lägg till geodatakälla.",
  "services": [
   {
    "id": "scb-geodata",
@@ -152,6 +152,24 @@
     "nb": "Søk flere tjenester i den nasjonale katalogen.",
     "fi": "Hae lisää palveluja kansallisesta luettelosta.",
     "is": "Leita að fleiri þjónustum í landsskránni."
+   }
+  },
+  {
+   "id": "sundsvall-wfs",
+   "name": "Sundsvalls kommun geodata",
+   "publisher": "Sundsvalls kommun",
+   "country": "SE",
+   "kind": "wfs",
+   "url": "https://karta.sundsvall.se/geoserver/wfs",
+   "docs": "https://karta.sundsvall.se/",
+   "license": "Villkor anges inte av tjänsten",
+   "about": {
+    "sv": "Detaljplaner och planbestämmelser i NGP-form (även grannkommuners, under RIGES), översiktsplanens områden och andra kommunala lager.",
+    "en": "Detailed development plans and plan provisions in NGP form (neighbouring municipalities' too, under RIGES), the comprehensive plan's areas and other municipal layers.",
+    "da": "Detaljplaner og planbestemmelser i NGP-form (også nabokommuners, under RIGES), oversigtsplanens områder og andre kommunale lag.",
+    "nb": "Detaljplaner og planbestemmelser i NGP-form (også nabokommuners, under RIGES), oversiktsplanens områder og andre kommunale lag.",
+    "fi": "Asemakaavat ja kaavamääräykset NGP-muodossa (myös naapurikuntien, nimiavaruudessa RIGES), yleiskaavan alueet ja muita kunnan tasoja.",
+    "is": "Deiliskipulag og skipulagsákvæði á NGP-formi (einnig nágrannasveitarfélaga, undir RIGES), svæði aðalskipulagsins og önnur lög sveitarfélagsins."
    }
   },
   {

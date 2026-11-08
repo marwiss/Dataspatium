@@ -109,6 +109,9 @@
         // Opens in the dataset's own tool, so R does not start for someone who came to read a document.
         const opening = selectedDataset();
         if (!userChose && opening) tab = kinds.of(opening).tab;
+        // A check asked for in Hantera (the card Validera modellen) opens the model tools, as a tab the user chose.
+        const askedTool = store.get().openModelTool;
+        if (askedTool && opening && askedTool.datasetId === opening.id) { tab = 'model'; userChose = true; }
         geoFor = '';
         unsubStore = store.subscribe((state, changed) => {
           if (changed.includes('pendingCode')) takePending();

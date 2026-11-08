@@ -57,9 +57,43 @@
       for (const b of m.batches) triangles += b.index.length / 3;
       const box = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
       for (const s of statsById.values()) for (let k = 0; k < 3; k++) { if (s.min[k] < box.min[k]) box.min[k] = s.min[k]; if (s.max[k] > box.max[k]) box.max[k] = s.max[k]; }
-      return { batches: m.batches, byElement, stats: statsById, elements: m.elements, triangles, box, focus: focusBox(statsById, box) };
+      return { batches: m.batches, byElement, stats: statsById, elements: m.elements, triangles, box, focus: focusBox(statsById, box), coordination: m.coordination || null };
     }
     /** What the camera aims at: the elements without the odd one far away (a site marker can be hundreds of metres off). */
+    /** The inverse of a column-major 4×4 matrix, or null when it has none. @param {number[]} m @returns {number[]|null} */
+    function invert4(m) {
+      const inv = new Array(16);
+      inv[0] = m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+      inv[4] = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] - m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+      inv[8] = m[4] * m[9] * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] + m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+      inv[12] = -m[4] * m[9] * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14] - m[8] * m[6] * m[13] - m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+      inv[1] = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15] - m[9] * m[3] * m[14] - m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+      inv[5] = m[0] * m[10] * m[15] - m[0] * m[11] * m[14] - m[8] * m[2] * m[15] + m[8] * m[3] * m[14] + m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+      inv[9] = -m[0] * m[9] * m[15] + m[0] * m[11] * m[13] + m[8] * m[1] * m[15] - m[8] * m[3] * m[13] - m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+      inv[13] = m[0] * m[9] * m[14] - m[0] * m[10] * m[13] - m[8] * m[1] * m[14] + m[8] * m[2] * m[13] + m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+      inv[2] = m[1] * m[6] * m[15] - m[1] * m[7] * m[14] - m[5] * m[2] * m[15] + m[5] * m[3] * m[14] + m[13] * m[2] * m[7] - m[13] * m[3] * m[6];
+      inv[6] = -m[0] * m[6] * m[15] + m[0] * m[7] * m[14] + m[4] * m[2] * m[15] - m[4] * m[3] * m[14] - m[12] * m[2] * m[7] + m[12] * m[3] * m[6];
+      inv[10] = m[0] * m[5] * m[15] - m[0] * m[7] * m[13] - m[4] * m[1] * m[15] + m[4] * m[3] * m[13] + m[12] * m[1] * m[7] - m[12] * m[3] * m[5];
+      inv[14] = -m[0] * m[5] * m[14] + m[0] * m[6] * m[13] + m[4] * m[1] * m[14] - m[4] * m[2] * m[13] - m[12] * m[1] * m[6] + m[12] * m[2] * m[5];
+      inv[3] = -m[1] * m[6] * m[11] + m[1] * m[7] * m[10] + m[5] * m[2] * m[11] - m[5] * m[3] * m[10] - m[9] * m[2] * m[7] + m[9] * m[3] * m[6];
+      inv[7] = m[0] * m[6] * m[11] - m[0] * m[7] * m[10] - m[4] * m[2] * m[11] + m[4] * m[3] * m[10] + m[8] * m[2] * m[7] - m[8] * m[3] * m[6];
+      inv[11] = -m[0] * m[5] * m[11] + m[0] * m[7] * m[9] + m[4] * m[1] * m[11] - m[4] * m[3] * m[9] - m[8] * m[1] * m[7] + m[8] * m[3] * m[5];
+      inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
+      const det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+      if (!det) return null;
+      return inv.map((v) => v / det);
+    }
+    /**
+     * A point of the 3D view in the model's own coordinates. web-ifc moved the model near the origin with its coordination matrix
+     * (column-major 4×4) and gives Y up, while IFC and BCF have Z up: the matrix is undone, then (x, y, z) becomes (x, -z, y).
+     * @param {number[]|null} m the coordination matrix @param {number[]} p @returns {number[]}
+     */
+    function toIfc(m, p) {
+      let w = p;
+      const inv = m && m.length === 16 ? invert4(m) : null;
+      if (inv) w = [inv[0] * p[0] + inv[4] * p[1] + inv[8] * p[2] + inv[12], inv[1] * p[0] + inv[5] * p[1] + inv[9] * p[2] + inv[13], inv[2] * p[0] + inv[6] * p[1] + inv[10] * p[2] + inv[14]];
+      return [w[0], -w[2], w[1]];
+    }
     function focusBox(stats, whole) {
       const list = Array.from(stats.values()).filter((s) => Number.isFinite(s.min[0]));
       if (list.length < 20) return whole;
@@ -297,6 +331,8 @@
         fit, select, setVisible, setColors, pickAt, resize, redraw: draw,
         marked: () => marked.slice(),
         view: () => ({ position: camera.position.toArray(), target: controls.target.toArray(), near: camera.near, far: camera.far }),
+        /** A point of the view in the model's own coordinates (Z up, not moved to the origin), as BCF and other tools use them. */
+        toIfc: (p) => toIfc(meshes.coordination, p),
         /** The current picture as a PNG data URL. */
         png: () => { draw(); return canvas.toDataURL('image/png'); },
         destroy() {
@@ -398,6 +434,6 @@
       return `<img src="${url}" alt="" width="${width}" height="${height}" style="max-width:100%;height:auto">${legend}`;
     }
 
-    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, drawingSvg };
+    return { ensureThree, meshesOf, clearCache, render, toBlob, htmlFor, drawingSvg, toIfc };
   });
 })();

@@ -101,7 +101,8 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   fellesskap, sentralitet, mønsterspørringer og layout, og grafer blir diagrammer i Visualiser, dashboards og Publiser.
 - **CAD og BIM**: IFC-modeller åpnes i 3D (web-ifc og three.js) over en tabell med bygningsdelene, og utvalget følger med begge veier.
   Egenskaper og mengder blir tabeller, fanen Mengder beregner per type, etasje og materiale, og DXF-tegninger vises som SVG med
-  lag (se [cad-bim.md](cad-bim.md)).
+  lag. Kortet *Valider modellen* samler serverens kontroll (IFC-skjemaet, buildingSMARTs regler og prosjektets IDS-filer) og kontrollene i appen, og
+  *Kollisjonskontroll* finner bygningsdeler som går inn i hverandre eller ligger for tett, og kan sende dem som BCF-saker (se [cad-bim.md](cad-bim.md)).
 - **Flyter og overvåking**: en lagret kjede (hent, resepter, skript, lister, diagrammer, dashboards, dokumenter, eksport) kjøres med ett
   klikk eller ved start, og overvåkede kilder sier fra i statuslinjen når de har nye data (se [floden.md](floden.md)).
 - **Statistikk uten kode**: fanen Statistikk gjør beskrivende statistikk, krysstabeller, korrelasjon, hypotesetester, regresjon og klyngeanalyse
@@ -156,7 +157,7 @@ her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 Appen snakker BCF API 3.0 og 2.1, så den også kobler seg til servere som bare har 2.1, og den tegner og spør serverens IFC-graf direkte fra Hent.
 
-Dataspatium 2.0.0 fungerer med Kontroll 2.0.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
+Dataspatium 3.0.0 fungerer med Kontroll 3.0.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
 [snabbstart.md](snabbstart.md) tar paret fra ingenting til en sak på tjue minutter.
 
 ## Lær mer

@@ -158,7 +158,7 @@ hvis modellen findes i arbejdsområdet.
 I feltet skriver du din egen Cypher, alt hvad serveren forstår, men kun læsende. Spørger du kun efter knuder (`RETURN c, w`), henter
 appen også relationerne mellem dem, som Neo4j Browser gør. Appen siger til, når et svar har nået forespørgslens `LIMIT` eller er
 klippet, og læsningen stopper ved 20.000 rækker. Svar med mere end 1.500 knuder tegnes ikke her, men kan gemmes og åbnes som oversigt
-i Bearbejd.
+i Bearbejd. Grafen fra Kontroll 3.0.0 bærer også det, der skal til for at skrive filen tilbage (`<attribut>__type`, `<attribut>__step` og `StepBlock`-knuder med deres tekst). Det udelades, når en knude vises eller gemmes, men kan forespørges med navn.
 
 **Gem som graf** gør det, du ser, til et almindeligt grafdatasæt: grafvisningen i Bearbejd, fanerne Cypher og Graf i Analysér og
 grafdiagrammer i Visualisér. Klassen bliver knudens etiket, og alle etiketter følger med, så `MATCH (w:IfcWall)` også finder en

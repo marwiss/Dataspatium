@@ -158,7 +158,7 @@ modellen finnes i arbeidsområdet.
 
 I feltet skriver du din egen Cypher, alt serveren forstår, men bare lesende. Spør du bare etter noder (`RETURN c, w`), henter appen
 også relasjonene mellom dem, slik Neo4j Browser gjør. Appen sier fra når et svar har nådd spørringens `LIMIT` eller er klippet, og
-lesingen stopper ved 20 000 rader. Svar med mer enn 1 500 noder tegnes ikke her, men kan lagres og åpnes som oversikt i Bearbeid.
+lesingen stopper ved 20 000 rader. Svar med mer enn 1 500 noder tegnes ikke her, men kan lagres og åpnes som oversikt i Bearbeid. Grafen fra Kontroll 3.0.0 bærer også det som trengs for å skrive filen tilbake (`<attributt>__type`, `<attributt>__step` og `StepBlock`-noder med teksten sin). Det utelates når en node vises eller lagres, men kan spørres etter med navn.
 
 **Lagre som graf** gjør det du ser, til et vanlig grafdatasett: grafvisningen i Bearbeid, fanene Cypher og Graf i Analyser og
 grafdiagrammer i Visualiser. Klassen blir nodens etikett og alle etiketter følger med, så `MATCH (w:IfcWall)` også finner en

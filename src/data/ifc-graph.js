@@ -84,6 +84,17 @@
       }
       return value;
     }
+    /**
+     * The properties a person reads. Kontroll's graph from 3.0.0 also holds what it takes to write the file back: `<attribute>__type`, `<attribute>__step` and, on a StepBlock node,
+     * up to about 100 kB of compressed text. A query that names them still gets them; a node returned whole does not bring them along.
+     * @param {string[]} labels @param {Record<string, any>} properties @returns {Record<string, any>}
+     */
+    function readable(labels, properties) {
+      const out = {};
+      const block = (labels || []).includes('StepBlock');
+      for (const [k, v] of Object.entries(properties || {})) if (!/__(type|step)$/.test(k) && !(block && k === 'text')) out[k] = v;
+      return out;
+    }
     /** Whether a result column holds a protected property (`u.password_hash`, or an alias with the same name). @param {string} column */
     const isProtected = (column) => PROTECTED.test(String(column).split('.').pop());
 
@@ -142,7 +153,7 @@
     }
     /** What can be fetched from one node. `issues` and `properties` only mean something on a product. */
     const STEPS = {
-      neighbours: (n) => `MATCH (n)-[r]-(m)\nWHERE elementId(n) = ${n}\nRETURN n, r, m\nLIMIT 200`,
+      neighbours: (n) => `MATCH (n)-[r]-(m)\nWHERE elementId(n) = ${n} AND NOT m:StepBlock\nRETURN n, r, m\nLIMIT 200`,
       properties: (n) => `MATCH (n)-[a:IS_DEFINED_BY]->(r:IfcRelDefinesByProperties)-[b:RELATING_PROPERTY_DEFINITION]->(s)-[c:HAS_PROPERTIES|QUANTITIES]->(p)\nWHERE elementId(n) = ${n}\nRETURN n, a, r, b, s, c, p\nLIMIT 500`,
       issues: (n) => `MATCH (t:Topic)-[a:HAS_VIEWPOINT]->(v:Viewpoint)-[b:HAS_COMPONENT]->(c:Component)-[d:SAME_AS]->(n)\nWHERE elementId(n) = ${n}\nRETURN t, a, v, b, c, d, n\nLIMIT 200`,
     };
@@ -158,6 +169,6 @@
       return m ? Number(m[1]) : null;
     }
 
-    return { classOf, nameOf, familyOf, colorKey, redact, isProtected, quote, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, limitOf };
+    return { classOf, nameOf, familyOf, colorKey, redact, readable, isProtected, quote, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, limitOf };
   });
 })();

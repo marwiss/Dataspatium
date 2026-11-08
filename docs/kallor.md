@@ -171,7 +171,7 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 
 Dialogen för *Geodatakälla* under *Lägg till källor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
 och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
-Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
+Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
 fungera från webbläsaren. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
 tjänsten; filtrera på namn, land eller innehåll. Listan ligger i `presets/geodata/services.json`. Under listan finns

@@ -129,6 +129,53 @@ aldrig datamängden; bara åtgärderna i Bearbeta ger en ny version.
 
 IfcOpenShell är LGPL-3.0 och hämtas oförändrat som pinnade hjul från IfcOpenShells egen förteckning, se [Licenser](licenser.md).
 
+## Validera modellen
+
+Kortet **Validera modellen** i Hantera samlar kontrollerna av en IFC-modell, med det senaste resultatet av varje.
+
+- **Serverns kontroll** finns för en modell som hämtats som dokumentversion från ett CDE. Kontroll (från 3.0.0) kontrollerar
+  varje uppladdad IFC-fil mot IFC-schemat och, när servern har dem installerade, mot buildingSMART:s regler (ifc-gherkin-rules), och
+  lägger resultatet i versionens metadata. *Hämta serverns kontroll* läser det: inga fynd, fynd som bara är varningar, fynd med fel,
+  väntar på kontroll eller kunde inte kontrolleras, och när och med vilka regler. Appen frågar servern först när du trycker på
+  knappen. Finns det fynd visar *Visa fynden* serverns rapport: antal fynd och fel, vilka kontroller som gjordes och vilka regler som
+  inte kunde köras, och varje fynd med sin regel, sin instans (`#123`) och elementets GlobalId. *Markera i modellen* markerar sedan
+  elementen i modellvyn i Bearbeta, och *Spara som tabell* sparar fynden som en tabell med kolumnerna `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` och `attribute`.
+  Rapporten hämtas med samma inloggning från en adress som appen själv bygger på samma server; en adress ur metadata följs aldrig.
+- **Projektets IDS-filer**: kontrollerar servern också filen mot projektets IDS-dokument (den senaste versionen av varje dokument vars
+  namn slutar på `.ids`), visar rapporten hur många specifikationer som godkändes, inte godkändes eller inte gällde filen, och vilka som
+  inte godkändes, med dokumentets namn och antal fynd. Ett IDS-dokument som inte kunde läsas står bland reglerna som inte kunde köras.
+- **Kontroller här** visar den senaste *Validering*, *IDS-kontroll* och kollisionskontroll som körts i appen, och knapparna öppnar
+  dem i Analysera. Resultaten sparas i appens inställningar, inte i datamängden.
+
+Fynden gäller filen som den laddades upp, och servern stoppar aldrig en fil för dem. En fil vars fynd bara är varningar räknas som
+giltig av buildingSMART:s valideringstjänst. Har servern ingen sådan kontroll säger kortet att servern inte har kontrollerat
+versionen.
+
+## Kollisionskontroll
+
+Verktyget **Kollisioner** i Analysera (fliken Mängder) hittar byggdelar som går in i varandra eller kommer för nära varandra. Det
+arbetar på samma trianglar som 3D-vyn visar, i en egen tråd, och behöver varken Python eller nät.
+
+- **Mängd A och mängd B** är alla byggdelar eller en typ, till exempel kanaler mot balkar. B kan ligga i samma modell eller i en annan
+  modell i samma projekt, och modellerna måste då dela koordinatsystem. Öppningar räknas inte.
+- **Skärning** räknar par där det ena elementet når in i det andra djupare än toleransen (2 mm om inget annat anges). Djupet mäts som
+  hur långt in i det andra elementet hörn och kanter når, så ytor som bara möts räknas inte. *Inneslutning* är ett element som ligger
+  helt inne i ett annat.
+- **Fritt avstånd** räknar par som är närmare varandra än avståndet (50 mm om inget annat anges), skärningar inräknade.
+
+Resultatet är en tabell med båda elementens id, GlobalId, typ och namn, slaget, djupet eller avståndet i millimeter och en punkt i
+modellens egna koordinater. Därifrån:
+
+- *Markera i modellen* markerar elementen i modellvyn i Bearbeta.
+- *Spara som BCF* sparar ett ärende per kollision i en BCF-fil, med en vy som tittar på punkten och båda elementen markerade och
+  färgade. Kamera och punkt står i modellens koordinater med Z uppåt, så andra BCF-verktyg visar samma plats.
+- *Skicka som ärenden* skapar ärendena direkt i projektet på servern genom BCF API, för en modell som hämtats från ett CDE. Där ser
+  alla klienter dem, till exempel Bonsai.
+- *Skapa datamängd* sparar tabellen.
+
+Det senaste resultatet står på kortet Validera modellen i Hantera. Mätningen förutsätter slutna ytor: ett element med öppna eller
+trasiga ytor kan ge osäkra djup. Böjda ytor är uppdelade i trianglar, så en tolerans under någon millimeter blir osäker. Element som 3D-vyn inte kan rita är inte med, och resultatet säger hur många de är; i en provmodell från Tekla gällde det alla armeringsjärn.
+
 ## DXF-ritningar
 
 En DXF-fil blir en tabell med ett ritobjekt per rad (typ, lager, färg, längd, area, text och läge) och en SVG-ritning.

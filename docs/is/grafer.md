@@ -156,7 +156,7 @@ Byggingarhluti hefur líka **Eiginleikar**, **Mál** og **Sýna í líkaninu**, 
 
 Í reitinn skrifarðu eigið Cypher, allt sem þjónninn skilur, en aðeins lesandi. Ef þú spyrð aðeins um hnúta (`RETURN c, w`) sækir forritið líka venslin á
 milli þeirra, eins og Neo4j Browser gerir. Forritið segir frá þegar svar hefur náð `LIMIT` fyrirspurnarinnar eða verið klippt, og lestur stöðvast við
-20.000 raðir. Svör með fleiri en 1.500 hnúta eru ekki teiknuð hér, en má vista og opna sem yfirlit í Vinna.
+20.000 raðir. Svör með fleiri en 1.500 hnúta eru ekki teiknuð hér, en má vista og opna sem yfirlit í Vinna. Netið úr Kontroll 3.0.0 ber líka það sem þarf til að skrifa skrána til baka (`<eigindi>__type`, `<eigindi>__step` og `StepBlock`-hnúta með texta sínum). Því er sleppt þegar hnútur er sýndur eða vistaður, en það má spyrja um það með nafni.
 
 **Vista sem net** gerir það sem þú sérð að venjulegu netgagnasafni: netsýnin í Vinna, fliparnir Cypher og Net í Greina og netmyndir í Myndgera. Flokkurinn
 verður merkimiði hnútsins og allir merkimiðar fylgja með, svo `MATCH (w:IfcWall)` finnur líka `IfcWallStandardCase` í afritinu. Í flipanum Cypher geturðu

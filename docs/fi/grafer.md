@@ -160,7 +160,7 @@ kuvaan. Rakennusosalla on myös **Ominaisuudet**, **Asiat** ja **Näytä malliss
 
 Kenttään kirjoitat oman Cypherin, kaiken mitä palvelin ymmärtää, mutta vain lukevana. Jos kysyt vain solmuja (`RETURN c, w`), sovellus hakee
 myös niiden väliset suhteet, kuten Neo4j Browser. Sovellus kertoo, kun vastaus on saavuttanut kyselyn `LIMIT`-rajan tai katkaistu, ja lukeminen
-pysähtyy 20 000 riviin. Yli 1 500 solmun vastauksia ei piirretä tässä, mutta ne voi tallentaa ja avata yleiskuvana kohdassa Muokkaa.
+pysähtyy 20 000 riviin. Yli 1 500 solmun vastauksia ei piirretä tässä, mutta ne voi tallentaa ja avata yleiskuvana kohdassa Muokkaa. Kontroll 3.0.0:n verkossa on myös se, mitä tiedoston takaisinkirjoitus vaatii (`<attribuutti>__type`, `<attribuutti>__step` ja `StepBlock`-solmut teksteineen). Ne jätetään pois, kun solmu näytetään tai tallennetaan, mutta niitä voi kysyä nimellä.
 
 **Tallenna verkkona** tekee näkemästäsi tavallisen verkkodatamäärän: verkkonäkymä kohdassa Muokkaa, välilehdet Cypher ja Verkko kohdassa
 Analysoi ja verkkokaaviot kohdassa Visualisoi. Luokasta tulee solmun tunniste ja kaikki tunnisteet säilyvät, joten `MATCH (w:IfcWall)` löytää

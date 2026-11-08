@@ -133,6 +133,54 @@ tietoaineistoa; vain Muokkaa-tilan toiminnot tekevät uuden version.
 IfcOpenShell on LGPL-3.0-lisensoitu ja haetaan muuttamattomana kiinnitettyinä wheel-paketteina IfcOpenShellin omasta
 luettelosta, katso [Lisenssit](licenser.md).
 
+## Validoi malli
+
+Hallitse-tilan kortti **Validoi malli** kokoaa IFC-mallin tarkistukset ja kunkin viimeisimmän tuloksen.
+
+- **Palvelimen tarkistus** on mallilla, joka on haettu asiakirjaversiona CDE:stä. Kontroll (3.0.0:sta alkaen) tarkistaa jokaisen
+  ladatun IFC-tiedoston IFC-skeemaa vasten ja, kun palvelimelle on asennettu ne, buildingSMARTin sääntöjä (ifc-gherkin-rules)
+  vasten, ja tallentaa tuloksen version metatietoihin. *Hae palvelimen tarkistus* lukee sen: ei löydöksiä, vain varoituksia, löydöksiä
+  myös virheineen, odottaa tarkistusta tai ei voitu tarkistaa, sekä milloin ja millä säännöillä. Sovellus kysyy palvelimelta vasta,
+  kun painat painiketta. Jos löydöksiä on, *Näytä löydökset* näyttää palvelimen raportin: löydösten ja virheiden määrän, tehdyt
+  tarkistukset ja säännöt, joita ei voitu ajaa, sekä jokaisen löydöksen sääntöineen, instansseineen (`#123`) ja elementin GlobalId:n.
+  *Merkitse malliin* merkitsee sitten elementit mallinäkymään Muokkaa-tilassa, ja *Tallenna taulukkona* tallentaa löydökset
+  taulukkona, jonka sarakkeet ovat `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` ja `attribute`. Raportti haetaan samalla kirjautumisella osoitteesta, jonka sovellus
+  muodostaa itse samalle palvelimelle; metatietojen osoitetta ei koskaan seurata.
+- **Projektin IDS-tiedostot**: jos palvelin tarkistaa tiedoston myös projektin IDS-asiakirjoja vasten (jokaisen `.ids`-päätteisen
+  asiakirjan uusin versio), raportti näyttää, montako määrittelyä hyväksyttiin, hylättiin tai ei koskenut tiedostoa, ja mitkä hylättiin,
+  asiakirjan nimen ja löydösten määrän kanssa. IDS-asiakirja, jota ei voitu lukea, on niiden sääntöjen joukossa, joita ei voitu suorittaa.
+- **Tarkistukset täällä** näyttää sovelluksessa viimeksi ajetun *Validointi*-, *IDS-tarkistus*- ja törmäystarkistustuloksen, ja
+  painikkeet avaavat ne Analysoi-tilassa. Tulokset tallennetaan sovelluksen asetuksiin, ei tietoaineistoon.
+
+Löydökset koskevat tiedostoa sellaisena kuin se ladattiin, eikä palvelin koskaan pysäytä tiedostoa niiden vuoksi. Tiedostoa, jonka
+löydökset ovat pelkkiä varoituksia, buildingSMARTin validointipalvelu pitää kelvollisena. Jos palvelimella ei ole tällaista
+tarkistusta, kortti kertoo, ettei palvelin ole tarkistanut versiota.
+
+## Törmäystarkistus
+
+Analysoi-tilan (välilehti Määrät) työkalu **Törmäykset** etsii rakennusosat, jotka menevät toistensa sisään tai tulevat liian lähelle
+toisiaan. Se toimii samoilla kolmioilla, jotka 3D-näkymä näyttää, omassa säikeessään, eikä tarvitse Pythonia eikä verkkoa.
+
+- **Joukko A ja joukko B** ovat kaikki rakennusosat tai yksi tyyppi, esimerkiksi kanavat palkkeja vastaan. B voi olla samassa mallissa
+  tai toisessa saman projektin mallissa, ja silloin mallien on käytettävä samaa koordinaatistoa. Aukkoja ei lasketa.
+- **Leikkaus** laskee parit, joissa toinen elementti ulottuu toiseen toleranssia syvemmälle (2 mm, ellei muuta anneta). Syvyys mitataan
+  sen mukaan, kuinka syvälle kulmat ja särmät ulottuvat toiseen elementtiin, joten vain kohtaavia pintoja ei lasketa. *Sisältyminen*
+  on elementti, joka on kokonaan toisen sisällä.
+- **Vapaa etäisyys** laskee parit, jotka ovat etäisyyttä lähempänä toisiaan (50 mm, ellei muuta anneta), leikkaukset mukaan lukien.
+
+Tulos on taulukko, jossa ovat molempien elementtien id, GlobalId, tyyppi ja nimi, laji, syvyys tai etäisyys millimetreinä ja piste
+mallin omissa koordinaateissa. Siitä:
+
+- *Merkitse malliin* merkitsee elementit mallinäkymään Muokkaa-tilassa.
+- *Tallenna BCF:nä* tallentaa yhden asian törmäystä kohden BCF-tiedostoon, näkymä pisteeseen ja molemmat elementit merkittyinä ja
+  värjättyinä. Kamera ja piste ovat mallin koordinaateissa Z ylöspäin, joten muut BCF-työkalut näyttävät saman paikan.
+- *Lähetä asioina* luo asiat suoraan palvelimen projektiin BCF API:n kautta, kun malli on haettu CDE:stä. Siellä kaikki asiakkaat
+  näkevät ne, esimerkiksi Bonsai.
+- *Luo aineisto* tallentaa taulukon.
+
+Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
+tai rikki, voi antaa epävarmoja syvyyksiä. Kaarevat pinnat on jaettu kolmioihin, joten alle millimetrin toleranssi on epävarma. Elementit, joita 3D-näkymä ei pysty piirtämään, eivät ole mukana, ja tulos kertoo, kuinka monta niitä on; Teklan esimerkkimallissa se koski kaikkia raudoitustankoja.
+
 ## DXF-piirustukset
 
 DXF-tiedostosta tulee taulukko, jossa on yksi piirustusobjekti riviä kohti (tyyppi, taso, väri, pituus, pinta-ala, teksti ja

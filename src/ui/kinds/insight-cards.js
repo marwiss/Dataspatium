@@ -181,6 +181,141 @@
       return el;
     }
 
-    return { facetCard, healthCard, codeListCard, cdeCard, bcfCard };
+    /**
+     * Validera modellen: the server's check of the file (for a version from a CDE) and the checks run here, each with its
+     * latest result. The server is asked only when the user presses the button, and the report on a second press.
+     * @param {any} ctx @param {any} ds @returns {HTMLElement|null} null for anything but an IFC model
+     */
+    function validationCard(ctx, ds) {
+      if (!ds || ds.kind !== 'model' || D.require('data/model').isDxf(ds)) return null;
+      const { ui, store, shell } = ctx;
+      const validation = D.require('data/ifc-validation');
+      const cde = ds.source && ds.source.cde;
+      const onServer = !!(cde && cde.documentId && cde.versionIndex);
+      const SHOWN = 5;
+      const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'validation' });
+      const state = { results: /** @type {any} */ ({}), busy: '', error: '', report: null };
+      const when = (iso) => (iso ? i18n.formatDateTime(iso) : '');
+      async function signedIn() {
+        const connector = (await D.require('api/connectors').get(cde.connectorId)) || null;
+        if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+        const opencde = D.require('api/families/opencde');
+        if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+        return connector;
+      }
+      async function step(name, fn) {
+        state.busy = name; state.error = ''; draw();
+        try { await fn(); } catch (err) { state.error = String((err && err.message) || err); }
+        state.busy = ''; draw();
+      }
+      const fetchServer = () => step('fetch', async () => {
+        state.report = null;
+        const entries = await D.require('api/families/opencde').versionMetadata(await signedIn(), cde.documentId, cde.versionIndex);
+        state.results = await validation.record(ds.id, 'server', validation.fromMetadata(entries) || { status: null });
+      });
+      const fetchReport = () => step('report', async () => {
+        state.report = await D.require('api/families/opencde').validationReport(await signedIn(), cde.documentId, cde.versionIndex);
+        if (!state.report) throw new Error(t('validation.status.none'));
+      });
+      async function mark() {
+        const where = validation.whereOf(state.report);
+        const made = where ? await D.require('data/selection').setFromWhere(ds.id, where, [], t('validation.title')) : null;
+        if (!made || !made.rowids.length) { ui.toast.show(t('validation.mark.none'), { kind: 'info' }); return; }
+        ui.toast.show(t('selection.made', { n: i18n.formatNumber(made.rowids.length) }), { kind: 'ok' });
+        store.set({ selectedId: ds.id });
+        shell.activate('bearbeta');
+      }
+      const saveTable = () => step('table', async () => {
+        const table = validation.tableOf(state.report);
+        const ruleset = (state.report && state.report.ruleset) || (state.results.server && state.results.server.ruleset) || '';
+        const meta = await D.require('data/datasets').create({
+          name: t('validation.table.name', { model: ds.name }),
+          description: t('validation.table.description', { model: ds.name, host: cde.host, ruleset }),
+          columns: table.columns.map((c) => Object.assign({ label: t('validation.col.' + c.name) }, c)),
+          rows: table.rows,
+          source: { kind: 'derived', cde: Object.assign({}, cde, { kind: 'validation', modelId: ds.id, fetchedAt: new Date().toISOString() }) },
+        });
+        const done = t('validation.table.saved', { n: i18n.formatNumber(table.rows.length), name: meta.name });
+        shell.log(done, 'ok');
+        ui.toast.show(done, { kind: 'ok', action: { label: t('import.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
+      });
+      const openTool = (tool) => { store.set({ selectedId: ds.id, openModelTool: { datasetId: ds.id, tool } }); shell.activate('analysera'); };
+
+      function serverPart() {
+        const server = state.results.server;
+        const status = server ? server.status : undefined;
+        const said = !server ? t('validation.server.never') : !status ? t('validation.status.none')
+          : status === 'issues' || status === 'warnings' ? t('validation.status.' + status, { n: i18n.formatNumber(server.issues || 0) }) : t('validation.status.' + status);
+        const kind = status ? validation.badgeKind(status) : '';
+        const report = state.report;
+        const issues = report && Array.isArray(report.issues) ? report.issues : [];
+        const counted = report ? validation.counts(report) : null;
+        const checks = report ? validation.checksOf(report) : [];
+        const checkLabel = (name) => (i18n.has('validation.check.' + name) ? t('validation.check.' + name) : name);
+        const checkLine = (c) => `${checkLabel(c.name)}: ${c.state === 'failed' ? t('validation.check.failed', { ruleset: c.ruleset || c.name }) : t('validation.check.result', { n: i18n.formatNumber(c.findings) })}`
+          + (c.notRun.length ? ' ' + t('validation.not_run', { rules: c.notRun.join(', ') }) : '');
+        // The check against the project's IDS documents: the verdicts counted, and the specifications that failed by name.
+        const specsOf = (c) => {
+          if (!c.specifications) return null;
+          const s = validation.specsSummary(c);
+          const failed = c.specifications.filter((x) => x.status === 'failed');
+          return h('div', { class: 'dm-stack-xs', 'data-validation-ids-specs': '' },
+            h('span', { class: 'dm-help dm-small', text: t('validation.ids.summary', { n: i18n.formatNumber(s.total), docs: i18n.formatNumber(s.documents), passed: i18n.formatNumber(s.passed), failed: i18n.formatNumber(s.failed), na: i18n.formatNumber(s.notApplicable) }) }),
+            failed.length ? h('ul', { class: 'dm-stack-xs' }, failed.map((x) => h('li', { class: 'dm-small', 'data-validation-spec': x.identifier || x.name, text: t('validation.ids.spec', { name: x.identifier ? `${x.identifier} ${x.name}` : x.name, document: x.document, n: i18n.formatNumber(x.issues) }) }))) : null);
+        };
+        return [
+          h('h4', { text: t('validation.server') }),
+          h('div', { class: 'dm-row-wrap' }, h('dm-badge', Object.assign({ text: said, 'data-validation-status': status || '' }, kind ? { kind } : {})),
+            server && server.at ? h('span', { class: 'dm-help dm-small', text: t('validation.fetched', { date: when(server.at) }) }) : null),
+          server && server.checkedAt ? h('p', { class: 'dm-help dm-small', text: t('validation.checked', { date: when(server.checkedAt), ruleset: server.ruleset || '' }) }) : null,
+          status === 'pending' ? h('p', { class: 'dm-help dm-small', text: t('validation.pending.hint') }) : null,
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('validation.fetch'), icon: 'refresh-cw', size: 'sm', loading: state.busy === 'fetch', title: t('validation.fetch.hint'), 'data-validation-fetch': '', onClick: fetchServer }),
+            status === 'issues' ? ui.button({ label: t('validation.report'), icon: 'file-text', size: 'sm', loading: state.busy === 'report', title: t('validation.report.hint'), 'data-validation-report': '', onClick: fetchReport }) : null),
+          report ? h('div', { class: 'dm-stack-xs', 'data-validation-issues': '' },
+            h('p', { class: 'dm-help dm-small', 'data-validation-counts': '', text: t('validation.report.counts', { n: i18n.formatNumber(counted.findings), errors: i18n.formatNumber(counted.errors) }) }),
+            checks.length ? h('ul', { class: 'dm-stack-xs', 'data-validation-checks': '' }, checks.map((c) => h('li', { class: 'dm-small' }, h('span', { text: checkLine(c) }), specsOf(c)))) : null,
+            h('div', { class: 'dm-row-wrap' }, validation.byKind(report).map((k) => h('dm-badge', { text: `${i18n.has('validation.kind.' + k.kind) ? t('validation.kind.' + k.kind) : k.kind} · ${i18n.formatNumber(k.n)}` }))),
+            h('ul', { class: 'dm-stack-xs' }, issues.slice(0, SHOWN).map((i) => {
+              const line = validation.lineOf(i);
+              return h('li', { class: 'dm-small', 'data-validation-issue': '' }, h('span', { class: 'dm-mono', text: [line.instance, line.cls, i.rule, i.global_id].filter(Boolean).join(' · ') }), h('br'), h('span', { text: line.text }));
+            })),
+            report.truncated || Number(report.issue_count) > issues.length ? h('p', { class: 'dm-help dm-small', text: t('validation.report.truncated', { listed: i18n.formatNumber(issues.length), n: i18n.formatNumber(Number(report.issue_count) || issues.length) }) })
+              : issues.length > SHOWN ? h('p', { class: 'dm-help dm-small', text: t('validation.report.shown', { shown: i18n.formatNumber(SHOWN), n: i18n.formatNumber(issues.length) }) }) : null,
+            h('div', { class: 'dm-row-wrap' },
+              ui.button({ label: t('validation.mark'), icon: 'scan-line', size: 'sm', title: t('validation.mark.hint'), 'data-validation-mark': '', disabled: !issues.length, onClick: () => mark().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }),
+              ui.button({ label: t('validation.table'), icon: 'table', size: 'sm', loading: state.busy === 'table', title: t('validation.table.hint'), 'data-validation-table': '', disabled: !issues.length, onClick: saveTable }))) : null,
+        ];
+      }
+      function localPart() {
+        const schema = state.results.schema; const ids = state.results.ids; const clash = state.results.clash;
+        const kv = /** @type {any} */ (h('dm-kv'));
+        kv.items = [
+          { label: t('validation.local.schema'), value: schema ? t('validation.local.schema.result', { n: i18n.formatNumber(schema.findings || 0), date: when(schema.at) }) : t('validation.local.never') },
+          { label: t('validation.local.ids'), value: ids ? t('validation.local.ids.result', { file: ids.file || 'IDS', pass: i18n.formatNumber(ids.pass || 0), checks: i18n.formatNumber(ids.checks || 0), date: when(ids.at) }) : t('validation.local.never') },
+          { label: t('validation.local.clash'), value: clash ? t('validation.local.clash.result', { n: i18n.formatNumber(clash.count || 0), mode: t('clash.mode.' + (clash.mode || 'intersection')), date: when(clash.at) }) : t('validation.local.never') },
+        ];
+        return [
+          h('h4', { text: t('validation.local') }), kv,
+          h('div', { class: 'dm-row-wrap' },
+            ui.button({ label: t('validation.local.schema.run'), icon: 'circle-check', size: 'sm', title: t('validation.local.schema.run.hint'), 'data-validation-local': '', onClick: () => openTool('validate') }),
+            ui.button({ label: t('validation.local.ids.run'), icon: 'list-checks', size: 'sm', title: t('validation.local.ids.run.hint'), 'data-validation-ids': '', onClick: () => openTool('ids') }),
+            ui.button({ label: t('validation.local.clash.run'), icon: 'scan-line', size: 'sm', title: t('validation.local.clash.run.hint'), 'data-validation-clash': '', onClick: () => openTool('clash') })),
+        ];
+      }
+      function draw() {
+        replace(el,
+          h('h3', { text: t('validation.title') }),
+          h('p', { class: 'dm-help', text: t('validation.help') }),
+          onServer ? serverPart() : null,
+          localPart(),
+          state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null);
+      }
+      draw();
+      validation.results(ds.id).then((r) => { state.results = r; draw(); }).catch((err) => D.log('validation', err));
+      return el;
+    }
+
+    return { facetCard, healthCard, codeListCard, cdeCard, bcfCard, validationCard };
   });
 })();

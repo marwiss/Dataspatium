@@ -180,7 +180,7 @@ avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyv�
 
 Kohdan *Paikkatietolähde* (Lisää lähteitä) valintaikkuna alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
 Features- ja ArcGIS-palveluja pohjoismaisilta viranomaisilta ja kunnilta (SCB, SGU, Naturvårdsverket,
-Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
+Riksantikvarieämbetet, Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
 Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands ja muita), kaikki
 tarkistettu toimiviksi selaimesta. Valmis lähde avataan, muut lisätään yhdellä napsautuksella ja tasot luetaan
 palvelusta; suodata nimen, maan tai sisällön mukaan. Luettelo on tiedostossa `presets/geodata/services.json`. Luettelon

@@ -103,7 +103,12 @@
         if (issues) return;
         issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, {
           select: (ids, fit) => { if (handle) handle.select(ids, { fit }); },
-          view: () => (handle ? Object.assign(handle.view(), { fov: handle.camera ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }) : null),
+          view: () => {
+            if (!handle) return null;
+            const v = handle.view();
+            // The camera also in the model's own coordinates, for BCF: other clients put it where the view had it.
+            return Object.assign(v, { fov: handle.camera ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }, handle.toIfc ? { ifc: { position: handle.toIfc(v.position), target: handle.toIfc(v.target) } } : {});
+          },
           png: () => (handle ? handle.png() : ''),
           marked: () => (handle ? handle.marked() : (s.selected ? [s.selected] : [])),
           setColors: (groups) => { if (handle) handle.setColors(groups || []); },

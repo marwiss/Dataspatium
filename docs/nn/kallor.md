@@ -175,7 +175,7 @@ opnar i popup (innlogging, opplasting, val av dokument), blir viste på språket
 ## Opne geodata
 
 Dialogen for *Geodatakjelde* under *Legg til kjelder* byrjar med ei liste over **ferdige geodatakjelder**: opne WFS-, OGC API Features- og
-ArcGIS-tenester frå nordiske etatar og kommunar (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
+ArcGIS-tenester frå nordiske etatar og kommunar (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen, Sundsvalls kommun,
 Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
 Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med fleire), alle kontrollerte å verke frå
 nettlesaren. Ei førehandsinnstilt kjelde blir opna, dei andre blir lagde til med eitt klikk, og laga blir lesne frå tenesta;

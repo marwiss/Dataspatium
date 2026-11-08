@@ -548,6 +548,20 @@
     assert.ok(around.graph.nodes.length >= 2, 'a step from the wall: ' + around.graph.nodes.length);
     const props = await neo4j.run(r.connector, ifcGraph.stepFrom('properties', wallNode.id));
     log(`from the wall: ${around.graph.nodes.length} neighbours, ${props.rows.length} property rows`);
+    // The form from Kontroll 3.0.0: what only writes the file back stays out of what is shown and saved. A server with the earlier form has no blocks.
+    const blocks = await neo4j.run(r.connector, 'MATCH (:IfcModel)-[:HAS_STEP_BLOCK]->(b:StepBlock) RETURN b LIMIT 3');
+    log(`blocks in the graph: ${blocks.rows.length}`);
+    if (blocks.rows.length) {
+      assert.ok(blocks.graph.nodes.every((n) => n.label === 'StepBlock' && !('text' in n.properties)), 'no block text: ' + JSON.stringify(blocks.graph.nodes[0]).slice(0, 200));
+      assert.ok(JSON.stringify(blocks).length < 20000, 'the answer stays small: ' + JSON.stringify(blocks).length);
+      const stepped = await neo4j.run(r.connector, `MATCH (w:IfcWall {model_id: ${ifcGraph.quote(model.id)}}) RETURN w.Representation__step AS steg, w LIMIT 1`);
+      assert.ok(!stepped.columns.some((c) => c.startsWith('w.') && /__(type|step)$/.test(c)), 'no helper columns: ' + stepped.columns.join(','));
+      assert.ok(Number.isFinite(Number(stepped.rows[0][stepped.columns.indexOf('steg')])), 'but it can be asked for by name');
+      assert.ok(!around.graph.nodes.some((n) => n.label === 'StepBlock'), 'a step from a node leaves the blocks out');
+      const fromModel = await neo4j.run(r.connector, `MATCH (m:IfcModel {id: ${ifcGraph.quote(model.id)}}) RETURN m`);
+      const steps = await neo4j.run(r.connector, ifcGraph.stepFrom('neighbours', fromModel.graph.nodes[0].id));
+      assert.ok(!steps.graph.nodes.some((n) => n.label === 'StepBlock'), 'also from the model itself');
+    }
     // A real stream, cut in the browser.
     const cut = await neo4j.run(r.connector, 'MATCH (n) RETURN n', { maxRows: 5 });
     assert.equal(cut.rows.length, 5); assert.equal(cut.truncated, true);
@@ -705,6 +719,67 @@
     if (err.code) assert.ok(err.message.includes(t('opencde.err.code.' + err.code)) || err.code === 'not_found', 'translated');
     return caps.present ? 'with capabilities' : 'without capabilities';
   }, 30000);
+
+  test('opencde live VI: Validera modellen reads the server\'s check of a model, its IDS check included (only with ?cdevaldoc=)', async (assert) => {
+    const docId = params.get('cdevaldoc') || '';
+    if (!docId) return 'skipped: give ?cdevaldoc=<document id of an IFC version the server has checked>[&cdevalver=<version>]';
+    const version = Number(params.get('cdevalver') || 1);
+    const validation = D.require('data/ifc-validation');
+    const summary = validation.fromMetadata(await opencde.versionMetadata(shared.connector, docId, version));
+    assert.ok(summary, 'the server checked the version');
+    log(`validation: ${summary.status}, ${summary.issues} findings, rulesets ${summary.ruleset}`);
+    const report = await opencde.validationReport(shared.connector, docId, version);
+    assert.ok(report && Array.isArray(report.issues), 'the report from the app\'s own address');
+    const checks = validation.checksOf(report);
+    log('checks: ' + checks.map((c) => `${c.name} ${c.state} ${c.findings}${c.notRun.length ? ' not run: ' + c.notRun.join(', ') : ''}`).join('; '));
+    const ids = checks.find((c) => c.name === 'ids');
+    let s = null;
+    if (ids) {
+      assert.ok(Array.isArray(ids.specifications) && ids.specifications.length, 'the specifications of the IDS check');
+      s = validation.specsSummary(ids);
+      log(`ids: ${s.total} specifications in ${s.documents} documents, ${s.passed} passed, ${s.failed} failed, ${s.notApplicable} not applicable`);
+      for (const x of ids.specifications) log(`  spec ${x.identifier || '-'} "${x.name}" in "${x.document}": ${x.status}, ${x.usage}, applies to ${x.applicable}, ${x.issues} issues${x.forThisSchema ? '' : ', not for this schema'}`);
+      assert.equal(s.passed + s.failed + s.notApplicable, s.total, 'every verdict is one the app knows');
+      const idsIssues = report.issues.filter((i) => i.kind === 'ids');
+      if (!report.truncated) assert.equal(idsIssues.length, ids.findings, 'the IDS findings listed are the ones the check counted');
+      if (idsIssues.some((i) => !i.document_id)) finding('an IDS finding without document_id');
+    } else finding('the server\'s report has no IDS check');
+    // The card in Hantera, on the model fetched from the server.
+    const name = params.get('cdevalname') || 'modell.ifc';
+    const model = await opencde.importFile(shared.connector, { project_id: shared.projectId, name: PROJECT_NAME }, { filename: name, reference: `${BASE}/documents/1.0/documents/${docId}/versions/${version}/download`, documentId: docId, versionIndex: version, ifcProject: null, source: 'Documents API' });
+    shared.created.push(model.id);
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const waitFor = async (fn, ms, label) => { const t0 = performance.now(); for (;;) { const v = fn(); if (v) return v; if (performance.now() - t0 > ms) throw new Error('timeout waiting for ' + label); await wait(50); } };
+    const root = document.createElement('div');
+    root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
+    document.body.appendChild(root);
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+      const shell = await D.require('app').start(root);
+      await waitFor(() => shell.store.get().datasets.some((d) => d.id === model.id), 5000, 'the model in store');
+      shell.activate('hantera');
+      shell.store.set({ selectedId: model.id });
+      const card = await waitFor(() => root.querySelector('[data-card="validation"]'), 8000, 'the card');
+      /** @type {any} */ (card.querySelector('[data-validation-fetch]')).click();
+      await waitFor(() => card.querySelector(`[data-validation-status="${summary.status}"]`), 15000, 'the status on the card');
+      const reportButton = card.querySelector('[data-validation-report]');
+      if (reportButton) {
+        /** @type {any} */ (reportButton).click();
+        await waitFor(() => card.querySelector('[data-validation-issues]'), 15000, 'the findings on the card');
+        assert.equal(card.querySelectorAll('[data-validation-checks] > li').length, checks.length, 'one line per check');
+        if (ids && s) {
+          const specs = await waitFor(() => card.querySelector('[data-validation-ids-specs]'), 5000, 'the IDS specifications on the card');
+          assert.ok(specs.textContent.includes(t('validation.ids.summary', { n: String(s.total), docs: String(s.documents), passed: String(s.passed), failed: String(s.failed), na: String(s.notApplicable) })), specs.textContent);
+          assert.equal(specs.querySelectorAll('[data-validation-spec]').length, s.failed, 'the failed specifications by name');
+          log('card: ' + specs.textContent);
+        }
+      }
+    } finally {
+      for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
+      root.remove();
+    }
+    return `${summary.status}, ${checks.length} checks` + (s ? `, IDS ${s.passed}/${s.total} passed` : '');
+  }, 120000);
 
   test('opencde live: cleanup', async (assert) => {
     for (const tp of [shared.topic, shared.other]) if (tp) await opencde.api(shared.connector, `${BCF}/projects/${shared.projectId}/topics/${tp.guid}`, { method: 'DELETE' }).catch((e) => log('delete topic: ' + e.message));

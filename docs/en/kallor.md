@@ -177,7 +177,7 @@ Kontroll opens in a popup (sign-in, upload, document selection) appear in the ap
 
 The dialog for *Geodata source* under *Add sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
 ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
-Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
+Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
 browser. A preset source opens, the others are added with one click and their layers read from the service; filter
 by name, country or contents. The list lives in `presets/geodata/services.json`. Below the list are the fields for a

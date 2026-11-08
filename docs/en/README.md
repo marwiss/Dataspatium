@@ -105,7 +105,8 @@ with a backup or a bundle.
   [planer.md](planer.md)).
 - **CAD and BIM**: IFC models open in 3D (web-ifc and three.js) above a table of the building elements, and the selection follows
   both ways. Properties and quantities become tables, the Quantities tab counts per type, storey and material, and DXF drawings
-  show as SVG with layers (see [cad-bim.md](cad-bim.md)).
+  show as SVG with layers. The card *Validate the model* gathers the server's check (the IFC schema, buildingSMART's rules and the project's IDS files) and the
+  checks in the app, and *Clash check* finds building parts that run into each other or lie too close and can send them as BCF topics (see [cad-bim.md](cad-bim.md)).
 - **Flows and watches**: a saved chain (fetch, recipes, scripts, lists, charts, dashboards, documents, export) runs with one click or at
   start, and watched sources say so in the status bar when they have new data (see [floden.md](floden.md)).
 - **Statistics without code**: the Statistics tab does descriptive statistics, crosstabs, correlation, hypothesis tests, regression and
@@ -161,7 +162,7 @@ cooperation from the server's side; here it is described in [kallor.md](kallor.m
 
 The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
 
-Dataspatium 2.0.0 works with Kontroll 2.0.0. Both carry the same release number, so equal numbers belong together. The quick start
+Dataspatium 3.0.0 works with Kontroll 3.0.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more

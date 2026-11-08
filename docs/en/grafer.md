@@ -161,7 +161,7 @@ the element in 3D if the model is in the workspace.
 In the box you write your own Cypher, all the server understands, but only reading. If you ask only for nodes (`RETURN c, w`), the
 app also fetches the relationships between them, as Neo4j Browser does. The app says when an answer has reached the query's
 `LIMIT` or was cut, and reading stops at 20,000 rows. Answers with more than 1,500 nodes are not drawn here, but can be saved and
-opened as an overview in Process.
+opened as an overview in Process. The graph from Kontroll 3.0.0 also holds what it takes to write the file back (`<attribute>__type`, `<attribute>__step` and `StepBlock` nodes with their text). It stays out when a node is shown or saved, and can be asked for by name.
 
 **Save as graph** makes what you see an ordinary graph dataset: the graph view in Process, the tabs Cypher and Graph in Analyse and
 graph charts in Visualise. The class becomes the node's label and all labels stay, so `MATCH (w:IfcWall)` also finds an

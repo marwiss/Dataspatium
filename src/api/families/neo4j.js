@@ -106,11 +106,11 @@
      * Records → table {columns, rows} and a graph of every node and relationship found (also inside paths and lists).
      * Node and relationship columns become their id; their properties are flattened into `<column>.<key>` columns. A node shows its class
      * and name by data/ifc-graph and keeps all its labels in the property `etiketter` when it has several, so that the local Cypher finds
-     * an IfcWallStandardCase as IfcWall too. Stored hashes of secrets are removed everywhere.
+     * an IfcWallStandardCase as IfcWall too. Stored hashes of secrets are removed everywhere, and what only writes a file back stays out of a node returned whole.
      */
     function recordsToTable(records, neo4j) {
       const nodes = new Map(); const edges = new Map();
-      const propsOf = (ent) => ifcGraph.redact(plain(ent.properties, neo4j) || {});
+      const propsOf = (ent) => ifcGraph.readable(ent.labels, ifcGraph.redact(plain(ent.properties, neo4j) || {}));
       const addNode = (n) => {
         const id = idOf(n);
         if (!nodes.has(id)) {

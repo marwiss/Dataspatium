@@ -544,6 +544,25 @@
       const latest = versions.find((v) => v.document_id === cde.documentId) || versions[0] || null;
       return { newer: !!(latest && Number(latest.version_index) > Number(cde.versionIndex || 0)), version: latest, have: cde.versionIndex };
     }
+    const versionPath = (documentId, versionIndex) => `/documents/1.0/documents/${encode(documentId)}/versions/${encode(String(versionIndex))}`;
+    /**
+     * A document version's metadata (Documents API): the entries given at upload and, on Kontroll from 3.0.0, the server's
+     * check of an IFC file (`ifc_validation_*`).
+     * @param {any} connector @param {string} documentId @param {number} versionIndex @returns {Promise<any[]>} DocumentMetadataEntry objects
+     */
+    async function versionMetadata(connector, documentId, versionIndex) {
+      const out = await api(connector, versionPath(documentId, versionIndex) + '/metadata');
+      return (out && Array.isArray(out.metadata)) ? out.metadata : [];
+    }
+    /**
+     * The server's report of its check of an IFC version, an extension of Kontroll's; null when the version was never checked.
+     * The address is built here and never taken from the metadata, so the token goes to the source's own server only.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex @returns {Promise<any|null>}
+     */
+    async function validationReport(connector, documentId, versionIndex) {
+      try { return await api(connector, versionPath(documentId, versionIndex) + '/ifc-validation'); }
+      catch (err) { if (err && err.status === 404) return null; throw err; }
+    }
     // ---------------------------------------------------------------------------- writing
     const createTopic = (connector, projectId, body) => bcf(connector, `/projects/${encode(projectId)}/topics`, { method: 'POST', json: body });
     const updateTopic = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'PUT', json: body });
@@ -676,6 +695,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

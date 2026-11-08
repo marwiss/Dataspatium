@@ -196,7 +196,7 @@
       shell.activate('analysera');
       const tabs = await waitFor(() => Array.from(root.querySelectorAll('dm-tabs')).find((el) => /** @type {any} */ (el).tabs && /** @type {any} */ (el).tabs.some((x) => x.id === 'validate')), 8000, 'the Mängder tab with the new tools');
       const ids = /** @type {any} */ (tabs).tabs.map((x) => x.id);
-      assert.deepEqual(ids.slice(-6), ['validate', 'ids', 'structure', 'psets', 'select', 'geometry'], ids.join(','));
+      assert.deepEqual(ids.slice(-7), ['validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'], ids.join(','));
       assert.ok(ids.indexOf('issues') < ids.indexOf('validate'), 'after Ärenden');
       tabs.dispatchEvent(new CustomEvent('dm-change', { detail: { id: 'select' } }));
       await waitFor(() => root.querySelector('[data-ifc-query]'), 5000, 'the selection field');

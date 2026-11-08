@@ -37,6 +37,8 @@
       [/\/documents\/[\d.]+\/select-documents$/, 'documents', 'select_documents'],
       [/\/documents\/[\d.]+\/document-versions$/, 'documents', 'document_versions'],
       [/\/documents\/[\d.]+\/documents\/[^/]+\/versions\/[^/]+\/download$/, 'documents', 'download'],
+      [/\/documents\/[\d.]+\/documents\/[^/]+\/versions\/[^/]+\/metadata$/, 'documents', 'metadata'],
+      [/\/documents\/[\d.]+\/documents\/[^/]+\/versions\/[^/]+\/ifc-validation$/, 'documents', 'ifc_validation'],
       [/\/documents\/[\d.]+\/documents\/[^/]+\/versions$/, 'documents', 'versions'],
       [/\/documents\/[\d.]+\/documents\/[^/]+\/versions\/[^/]+$/, 'documents', 'version'],
       [/\/upload-sessions\/[^/]+\/instructions$/, 'documents', 'upload_instructions'],

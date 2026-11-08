@@ -115,7 +115,7 @@
             { label: t('common.source'), value: describeSource(src) },
           ].filter(Boolean);
           const insight = D.require('ui/kinds/insight-cards');
-          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.cdeCard(ctx, ds), insight.bcfCard(ctx, ds), insight.facetCard(ctx, ds), insight.codeListCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
+          replace(body, D.require('ui/kinds/dataset-picture').create(ds), h('div', { class: 'dm-card' }, kv), insight.cdeCard(ctx, ds), insight.validationCard(ctx, ds), insight.bcfCard(ctx, ds), insight.facetCard(ctx, ds), insight.codeListCard(ctx, ds), insight.healthCard(ds), ds.kind === 'document' ? documentList(ds) : null, ds.kind === 'images' ? await imageGrid(ds) : null);
         } else if (tab === 'columns') {
           const cols = await services.datasets.columns(ds.id);
           const table = /** @type {any} */ (h('dm-table'));

@@ -131,6 +131,53 @@ handlingerne i Bearbejd giver en ny version.
 
 IfcOpenShell er LGPL-3.0 og hentes uændret som fastlåste wheels fra IfcOpenShells egen fortegnelse, se [Licenser](licenser.md).
 
+## Valider modellen
+
+Kortet **Valider modellen** i Håndter samler kontrollerne af en IFC-model, med det seneste resultat af hver.
+
+- **Serverens kontrol** findes for en model, der er hentet som dokumentversion fra et CDE. Kontroll (fra 3.0.0) kontrollerer hver
+  uploadet IFC-fil mod IFC-skemaet og, når serveren har dem installeret, mod buildingSMARTs regler (ifc-gherkin-rules) og lægger
+  resultatet i versionens metadata. *Hent serverens kontrol* læser det: ingen fund, fund der kun er advarsler, fund med fejl, venter på
+  kontrol eller kunne ikke kontrolleres, og hvornår og med hvilke regler. Appen spørger først serveren, når du trykker på knappen.
+  Er der fund, viser *Vis fundene* serverens rapport: antal fund og fejl, hvilke kontroller der blev lavet, og hvilke regler der ikke
+  kunne køres, og hvert fund med sin regel, sin instans (`#123`) og elementets GlobalId. *Markér i modellen* markerer derefter
+  elementerne i modelvisningen i Bearbejd, og *Gem som tabel* gemmer fundene som en tabel med kolonnerne `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` og `attribute`.
+  Rapporten hentes med samme login fra en adresse, som appen selv bygger på samme server; en adresse fra metadata følges aldrig.
+- **Projektets IDS-filer**: kontrollerer serveren også filen mod projektets IDS-dokumenter (den seneste version af hvert dokument, hvis
+  navn ender på `.ids`), viser rapporten, hvor mange specifikationer der blev godkendt, ikke godkendt eller ikke gjaldt filen, og hvilke der
+  ikke blev godkendt, med dokumentets navn og antal fund. Et IDS-dokument, der ikke kunne læses, står blandt reglerne, der ikke kunne køres.
+- **Kontroller her** viser den seneste *Validering*, *IDS-kontrol* og kollisionskontrol, der er kørt i appen, og knapperne åbner dem
+  i Analysér. Resultaterne gemmes i appens indstillinger, ikke i datasættet.
+
+Fundene gælder filen, som den blev uploadet, og serveren stopper aldrig en fil på grund af dem. En fil, hvis fund kun er advarsler,
+regnes for gyldig af buildingSMARTs valideringstjeneste. Har serveren ingen sådan kontrol, siger kortet, at serveren ikke har
+kontrolleret versionen.
+
+## Kollisionskontrol
+
+Værktøjet **Kollisioner** i Analysér (fanen Mængder) finder bygningsdele, der går ind i hinanden eller kommer for tæt på hinanden. Det
+arbejder på de samme trekanter, som 3D-visningen viser, i en egen tråd og kræver hverken Python eller net.
+
+- **Mængde A og mængde B** er alle bygningsdele eller en type, for eksempel kanaler mod bjælker. B kan ligge i samme model eller i en
+  anden model i samme projekt, og modellerne skal så dele koordinatsystem. Åbninger tæller ikke.
+- **Skæring** tæller par, hvor det ene element når dybere ind i det andet end tolerancen (2 mm, medmindre andet er angivet). Dybden
+  måles som, hvor langt hjørner og kanter når ind i det andet element, så flader, der kun mødes, tæller ikke. *Indeslutning* er et
+  element, der ligger helt inde i et andet.
+- **Fri afstand** tæller par, der er tættere på hinanden end afstanden (50 mm, medmindre andet er angivet), skæringer medregnet.
+
+Resultatet er en tabel med begge elementers id, GlobalId, type og navn, slags, dybde eller afstand i millimeter og et punkt i
+modellens egne koordinater. Derfra:
+
+- *Markér i modellen* markerer elementerne i modelvisningen i Bearbejd.
+- *Gem som BCF* gemmer en sag pr. kollision i en BCF-fil med en visning, der ser på punktet, og begge elementer markeret og farvet.
+  Kamera og punkt står i modellens koordinater med Z opad, så andre BCF-værktøjer viser samme sted.
+- *Send som sager* opretter sagerne direkte i projektet på serveren gennem BCF API for en model, der er hentet fra et CDE. Der ser alle
+  klienter dem, for eksempel Bonsai.
+- *Opret datasæt* gemmer tabellen.
+
+Det seneste resultat står på kortet Valider modellen i Håndter. Målingen forudsætter lukkede flader: et element med åbne eller
+ødelagte flader kan give usikre dybder. Krumme flader er delt op i trekanter, så en tolerance under en millimeter bliver usikker. Elementer, som 3D-visningen ikke kan tegne, er ikke med, og resultatet siger, hvor mange de er; i en prøvemodel fra Tekla gjaldt det alle armeringsjern.
+
 ## DXF-tegninger
 
 En DXF-fil bliver en tabel med ét tegningsobjekt pr. række (type, lag, farve, længde, areal, tekst og placering) og en

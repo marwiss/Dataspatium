@@ -103,6 +103,9 @@
         seen++;
         if (seen % 200 === 0) report(seen);
       });
+      // What web-ifc did to move the model near the origin, so that points in the view can be given back in the model's own
+      // coordinates (a BCF camera, for example).
+      var coordination = Array.from(api.GetCoordinationMatrix(model));
       api.CloseModel(model);
       var transfer = []; var out = [];
       for (var k = 0; k < batches.length; k++) {
@@ -116,10 +119,88 @@
       stats.forEach(function (st, id) { statRows.push([id, st.area, st.volume, st.min, st.max]); });
       var rangeArray = new Uint32Array(ranges);
       transfer.push(rangeArray.buffer);
-      return { result: { batches: out, ranges: rangeArray, stats: statRows, elements: seen }, transfer: transfer };
+      return { result: { batches: out, ranges: rangeArray, stats: statRows, elements: seen, coordination: coordination }, transfer: transfer };
+    }
+    /**
+     * The triangles of chosen elements for clash detection: in IFC's own axes (Z up) and metres, not moved to the origin, so
+     * that two models from one project line up and the points mean the same to other BCF clients. web-ifc gives Y up, so
+     * (x, y, z) becomes (x, -z, y). One part per placed geometry.
+     */
+    function elementsOf(bytes, wanted, report) {
+      var model = api.OpenModel(bytes, { COORDINATE_TO_ORIGIN: false });
+      if (model < 0) throw new Error('web-ifc could not open the file');
+      var byId = new Map(); var seen = 0;
+      api.StreamAllMeshes(model, function (mesh) {
+        var id = mesh.expressID;
+        if (wanted && !wanted.has(id)) return;
+        var parts = byId.get(id) || [];
+        var count = mesh.geometries.size();
+        for (var g = 0; g < count; g++) {
+          var placed = mesh.geometries.get(g);
+          var geom = api.GetGeometry(model, placed.geometryExpressID);
+          var v = api.GetVertexArray(geom.GetVertexData(), geom.GetVertexDataSize());
+          var ix = api.GetIndexArray(geom.GetIndexData(), geom.GetIndexDataSize());
+          var m = placed.flatTransformation;
+          var n = v.length / 6;
+          var pos = new Float64Array(n * 3);
+          for (var i = 0; i < n; i++) {
+            var x = v[i * 6]; var y = v[i * 6 + 1]; var z = v[i * 6 + 2];
+            pos[i * 3] = m[0] * x + m[4] * y + m[8] * z + m[12];
+            pos[i * 3 + 1] = -(m[2] * x + m[6] * y + m[10] * z + m[14]);
+            pos[i * 3 + 2] = m[1] * x + m[5] * y + m[9] * z + m[13];
+          }
+          if (n && ix.length) parts.push({ pos: pos, idx: new Uint32Array(ix) });
+          geom.delete();
+        }
+        if (parts.length) byId.set(id, parts);
+        seen++;
+        if (seen % 200 === 0) report({ phase: 'geometry', done: seen });
+      });
+      api.CloseModel(model);
+      return byId;
+    }
+    /** Set A against set B over one or two files, with the core from analysis/clash-core (its source comes first). */
+    function clashes(msg, report) {
+      var core = dataspatiumClashCore();
+      var setA = []; var setB = []; var origin = null; var drawn = [];
+      for (var f = 0; f < msg.files.length; f++) {
+        var file = msg.files[f];
+        var inA = file.a === null ? null : new Set(file.a || []);
+        var inB = file.b === null ? null : new Set(file.b || []);
+        var wanted = inA === null || inB === null ? null : new Set(Array.from(inA).concat(Array.from(inB)));
+        var byId = elementsOf(new Uint8Array(file.bytes), wanted, report);
+        byId.forEach(function (parts, id) {
+          if (!origin) origin = [parts[0].pos[0], parts[0].pos[1], parts[0].pos[2]];
+          var built = [];
+          for (var p = 0; p < parts.length; p++) {
+            var pos = parts[p].pos;
+            for (var k = 0; k < pos.length; k += 3) { pos[k] -= origin[0]; pos[k + 1] -= origin[1]; pos[k + 2] -= origin[2]; }
+            built.push(core.part(pos, parts[p].idx));
+          }
+          var el = core.element(id, built);
+          el.key = f + ':' + id; el.model = f;
+          drawn.push(el.key);
+          if (inA === null || inA.has(id)) setA.push(el);
+          if (inB === null || inB.has(id)) setB.push(el);
+        });
+      }
+      report({ phase: 'clash', done: 0, total: 0 });
+      var res = core.clash(setA, setB, msg.options || {}, function (done, total) { report({ phase: 'clash', done: done, total: total }); });
+      for (var c = 0; c < res.clashes.length; c++) {
+        var pt = res.clashes[c].point;
+        res.clashes[c].point = [pt[0] + origin[0], pt[1] + origin[1], pt[2] + origin[2]];
+      }
+      return { pairs: res.pairs, clashes: res.clashes, a: setA.length, b: setB.length, drawn: drawn };
     }
     self.onmessage = function (ev) {
       var msg = ev.data || {};
+      var report = function (p) { self.postMessage({ id: msg.id, progress: p }); };
+      if (msg.type === 'clash') {
+        start().then(function () {
+          self.postMessage({ id: msg.id, ok: true, result: clashes(msg, report) });
+        }).catch(function (err) { self.postMessage({ id: msg.id, ok: false, error: String((err && err.message) || err) }); });
+        return;
+      }
       if (msg.type !== 'meshes') return;
       start().then(function () {
         var done = meshes(new Uint8Array(msg.bytes), function (n) { self.postMessage({ id: msg.id, progress: n }); });
@@ -129,14 +210,15 @@
     self.postMessage({ ready: true });
   }
 
-  D.define('engines/ifc', [], () => {
+  D.define('engines/ifc', ['analysis/clash-core'], (clashCore) => {
     let worker = null; let ready = null; let seq = 0;
     /** @type {Map<number, {resolve: Function, reject: Function, onProgress?: Function}>} */
     const pending = new Map();
     function ensureWorker() {
       if (worker) return ready;
       D.workers.provider('web-ifc', { initial: async () => ['web-ifc/web-ifc-api-iife.js', 'web-ifc/web-ifc.wasm'] });
-      worker = D.workers.create({ namespace: 'web-ifc', source: D.workers.functionSource(dataspatiumIfcWorker), name: 'ifc' });
+      // The clash core is a named function without outer references; its source comes first, so the worker can call it.
+      worker = D.workers.create({ namespace: 'web-ifc', source: clashCore.source + '\n' + D.workers.functionSource(dataspatiumIfcWorker), name: 'ifc' });
       ready = new Promise((resolve) => {
         worker.onmessage = (ev) => {
           const msg = ev.data || {};
@@ -172,6 +254,23 @@
         worker.postMessage({ type: 'meshes', id, bytes: copy }, [copy]);
       });
     }
-    return { meshes, terminate, release };
+    /**
+     * Clash detection in the worker: set A against set B, in one file or across two (analysis/clash-core).
+     * @param {Array<{bytes: Uint8Array, a: number[]|null|undefined, b: number[]|null|undefined}>} files a and b list the element ids of
+     *   each set in that file; null means every element with geometry, a missing list means none
+     * @param {{mode?: string, tolerance?: number, clearance?: number}} options metres
+     * @param {{onProgress?: (p: {phase: string, done: number, total?: number}) => void}} [hooks]
+     * @returns {Promise<{pairs: number, clashes: any[], a: number, b: number}>} points in the model's coordinates, Z up, metres
+     */
+    async function clash(files, options, hooks = {}) {
+      await ensureWorker();
+      const sent = files.map((f) => ({ bytes: f.bytes.slice().buffer, a: f.a === undefined ? [] : f.a, b: f.b === undefined ? [] : f.b }));
+      return new Promise((resolve, reject) => {
+        const id = ++seq;
+        pending.set(id, { resolve, reject, onProgress: hooks.onProgress });
+        worker.postMessage({ type: 'clash', id, files: sent, options: options || {} }, sent.map((f) => f.bytes));
+      });
+    }
+    return { meshes, clash, terminate, release };
   });
 })();

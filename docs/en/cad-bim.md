@@ -132,6 +132,55 @@ dataset; only the actions in Process make a new version.
 
 IfcOpenShell is LGPL-3.0 and is fetched unchanged as pinned wheels from IfcOpenShell's own index, see [Licences](licenser.md).
 
+## Validate the model
+
+The card **Validate the model** in Manage gathers the checks of an IFC model, with the latest result of each.
+
+- **The server's check** is there for a model fetched as a document version from a CDE. Kontroll (from 3.0.0) checks every
+  uploaded IFC file against the IFC schema and, when the server has them installed, against buildingSMART's rules
+  (ifc-gherkin-rules), and puts the result in the version's metadata. *Fetch the server's check* reads it: no findings, findings that
+  are only warnings, findings with errors, waiting to be checked or could not be checked, and when and with which rules. The app asks
+  the server only when you press the button. When there are findings, *Show the findings* shows the server's report: the number of
+  findings and errors, which checks were made and which rules could not run, and every finding with its rule, its instance (`#123`)
+  and the element's GlobalId. *Mark in the model* then marks the elements in the model view in Process, and *Save as table* saves the
+  findings as a table with the columns `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` and `attribute`. The report is fetched with the same sign-in from an address the app
+  builds itself on the same server; an address from the metadata is never followed.
+- **The project's IDS files**: when the server also checks the file against the project's IDS documents (the latest version of every
+  document whose name ends in `.ids`), the report shows how many specifications passed, failed or did not apply to the file, and which
+  failed, with the document's name and the number of findings. An IDS document that could not be read is among the rules that could not
+  run.
+- **Checks here** shows the latest *Validation*, *IDS check* and clash check run in the app, and the buttons open them in Analyse.
+  The results are kept in the app's settings, not in the dataset.
+
+The findings concern the file as it was uploaded, and the server never stops a file for them. A file whose findings are all warnings
+counts as valid with buildingSMART's validation service. When the server has no such check, the card says that the server has not
+checked the version.
+
+## Clash check
+
+The tool **Clashes** in Analyse (the tab Quantities) finds building parts that run into each other or come too close to each other. It
+works on the same triangles the 3D view shows, in a thread of its own, and needs neither Python nor the network.
+
+- **Set A and set B** are all building parts or one type, for example ducts against beams. B can be in the same model or in another
+  model of the same project, and the models must then share a coordinate system. Openings do not count.
+- **Intersection** counts pairs where one element reaches into the other deeper than the tolerance (2 mm unless set otherwise). The
+  depth is how far corners and edges reach into the other element, so faces that only meet do not count. *Containment* is an element
+  that lies wholly inside another.
+- **Clearance** counts pairs closer to each other than the distance (50 mm unless set otherwise), intersections included.
+
+The result is a table with the id, GlobalId, type and name of both elements, the kind, the depth or distance in millimetres and a
+point in the model's own coordinates. From there:
+
+- *Mark in the model* marks the elements in the model view in Process.
+- *Save as BCF* saves one issue per clash in a BCF file, with a view that looks at the point and both elements selected and coloured.
+  Camera and point are in the model's coordinates with Z up, so other BCF tools show the same place.
+- *Send as issues* creates the issues directly in the project on the server through the BCF API, for a model fetched from a CDE. There
+  every client sees them, Bonsai for example.
+- *Create dataset* saves the table.
+
+The latest result shows on the card Validate the model in Manage. The measuring assumes closed surfaces: an element with open or
+broken surfaces can give uncertain depths. Curved surfaces are split into triangles, so a tolerance below a millimetre is uncertain. Elements the 3D view cannot draw take no part, and the result says how many there are; in a sample model from Tekla that was every reinforcing bar.
+
 ## DXF drawings
 
 A DXF file becomes a table with one drawing object per row (type, layer, colour, length, area, text and position) and an

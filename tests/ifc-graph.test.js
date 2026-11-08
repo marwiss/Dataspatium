@@ -211,6 +211,27 @@
     return 'ok';
   });
 
+  test('ifc graph: what only writes the file back stays out of what is shown and saved, and can still be asked for by name', async (assert) => {
+    assert.deepEqual(ifcGraph.readable(['IfcEntity', 'IfcWall'], { Name: 'A', NominalValue: '3', NominalValue__type: 'IFCLABEL', Representation__step: 1234, text: 'stays on an entity' }), { Name: 'A', NominalValue: '3', text: 'stays on an entity' });
+    assert.deepEqual(ifcGraph.readable(['StepBlock'], { id: 'm:1', first_step: 1, instances: 40, text: 'x'.repeat(1000) }), { id: 'm:1', first_step: 1, instances: 40 });
+    const wall = { identity: '4:db:1', labels: WALL_LABELS, properties: { ifc_class: 'IfcWallStandardCase', Name: 'YVT-A', GlobalId: 'G', Representation__step: 1234, ObjectPlacement__step: 77 } };
+    const prop = { identity: '4:db:2', labels: NODES.gtin.labels, properties: { ifc_class: 'IfcPropertySingleValue', Name: 'GTIN', NominalValue: '7350', NominalValue__type: 'IFCLABEL' } };
+    const block = { identity: '4:db:3', labels: ['StepBlock'], properties: { id: 'm:1', first_step: 1, instances: 40, text: 'x'.repeat(100000) } };
+    const rel = { identity: '5:db:9', type: 'HAS_PROPERTIES', start: '4:db:1', end: '4:db:2', properties: { position: 0 } };
+    const out = neo4j.answerToTable({ columns: ['w', 'r', 'p', 'b', 'namngiven'], rows: [[wall, rel, prop, block, 'IFCLABEL']] });
+    assert.ok(!JSON.stringify(out.graph).includes('__step') && !JSON.stringify(out.graph).includes('__type'), 'not in a saved graph');
+    assert.ok(!out.columns.some((c) => /__(type|step)$/.test(c)), 'nor among the columns: ' + out.columns.join(','));
+    assert.ok(JSON.stringify(out).length < 5000, 'and the block\'s text does not come along: ' + JSON.stringify(out).length);
+    assert.equal(out.graph.nodes.find((n) => n.label === 'StepBlock').properties.instances, 40, 'the block itself can still be seen');
+    assert.equal(out.graph.edges[0].properties.position, 0, 'the order of a list is worth seeing');
+    assert.equal(out.graph.nodes.find((n) => n.id === '4:db:2').name, 'GTIN: 7350', 'a typed value still shows its value');
+    assert.equal(out.rows[0][out.columns.indexOf('namngiven')], 'IFCLABEL', 'what a query names by itself it gets');
+    const named = neo4j.answerToTable({ columns: ['p.NominalValue__type', 'b.text'], rows: [['IFCLABEL', 'STEP']] });
+    assert.deepEqual(named.rows[0], ['IFCLABEL', 'STEP'], 'also by those very names');
+    assert.ok(ifcGraph.stepFrom('neighbours', 'x').includes('NOT m:StepBlock'), 'a step from a model does not walk into its blocks');
+    return 'ok';
+  });
+
   test('ifc graph: a query without a limit is cut in the browser and the rest of the stream is cancelled', async (assert) => {
     const many = { columns: ['n'], rows: Array.from({ length: 50 }, (_, i) => [i]) };
     const fake = fakeLib(() => many);

@@ -13,13 +13,14 @@
   D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues'], (base, basic, datasets, model, analysis, issuesLogic) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'ids', 'structure', 'psets', 'select', 'geometry'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
-      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null };
+      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null,
+        clash: { typeA: '', other: '', typeB: '', mode: 'intersection', tolerance: 2, clearance: 50, busy: false, progress: '', error: '', result: null, resultFor: '' } };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
 
@@ -31,6 +32,11 @@
         const head = h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('ruler', 20), t('model.tool.title')));
         const tabs = /** @type {any} */ (h('dm-tabs'));
         const list = toolsFor(selected());
+        const asked = store.get().openModelTool;
+        if (asked) {
+          store.set({ openModelTool: null });
+          if (selected() && asked.datasetId === selected().id && list.includes(asked.tool)) s.tool = asked.tool;
+        }
         if (!list.includes(s.tool)) s.tool = 'summary';
         tabs.tabs = list.map((id) => ({ id, label: t('model.tool.' + id) }));
         tabs.active = s.tool;
@@ -91,6 +97,8 @@
             h('span', { class: 'dm-help', text: s.ids ? t('model.ids.file', { name: s.ids.name }) : t('model.ids.none') }),
             s.ids ? ui.button({ label: t('model.ids.run'), icon: 'circle-check', size: 'sm', 'data-ifc-ids-run': '', onClick: () => run() }) : null,
             h('span', { class: 'dm-help', text: t('model.ifc.python.note') }), input));
+        } else if (s.tool === 'clash') {
+          parts.push(...clashFields(ds));
         } else if (s.tool === 'psets' || s.tool === 'geometry') {
           const classes = ['IfcElement', 'IfcProduct'].concat(((ds.model && ds.model.elementTypes) || []).map((x) => String(x.name))).filter((v, i, a) => a.indexOf(v) === i);
           if (!classes.includes(s.ifcClass)) s.ifcClass = 'IfcElement';
@@ -119,6 +127,8 @@
         const ds = selected();
         const my = ++seq;
         if (!usable(ds)) { replace(resultEl, h('p', { class: 'dm-help', text: t('model.tool.needs') })); return; }
+        // Clash detection is heavy, so it runs on the button, not on choosing the tool.
+        if (s.tool === 'clash') { renderClash(ds); return; }
         const facts = ds.model || {};
         try {
           let out;
@@ -164,6 +174,11 @@
                 params = { ids: path };
               }
               out = await analysis.ifcTool(ds.id, s.tool, params);
+              // The latest result shows on the card Validera modellen in Hantera; keeping it changes nothing in the dataset.
+              if (s.tool === 'validate' || s.tool === 'ids') {
+                const validation = D.require('data/ifc-validation');
+                validation.record(ds.id, s.tool === 'ids' ? 'ids' : 'schema', validation.localResult(s.tool, out, { file: s.ids ? s.ids.name : '', express: s.express })).catch((err) => D.log('validation', err));
+              }
               const sum = out.summary;
               out.note = s.tool === 'ids' && sum
                 ? t('model.ids.note', { specs: i18n.formatNumber(sum.specifications || 0), checks: i18n.formatNumber(sum.checks || 0), pass: i18n.formatNumber(sum.checks_pass || 0), fail: i18n.formatNumber(sum.checks_fail || 0) })
@@ -179,6 +194,139 @@
           const text = String((err && err.message) || err).trim();
           replace(resultEl, h('p', { class: 'dm-error dm-small', text: text.split('\n').pop() || text }));
           shell.log(text, 'error');
+        }
+      }
+      // ---- clash detection ------------------------------------------------------------------------------------
+      const typeOptions = (d) => [{ value: '', label: t('clash.set.all') }].concat(((d && d.model && d.model.elementTypes) || []).map((x) => ({ value: String(x.name), label: `${x.name} (${i18n.formatNumber(x.count || 0)})` })));
+      function clashFields(ds) {
+        const c = s.clash;
+        const models = store.get().datasets.filter((d) => d.kind === 'model' && !model.isDxf(d) && d.id !== ds.id);
+        if (c.other && !models.some((d) => d.id === c.other)) { c.other = ''; c.typeB = ''; }
+        const other = c.other ? models.find((d) => d.id === c.other) : ds;
+        const clearance = c.mode === 'clearance';
+        const amount = /** @type {any} */ (h('dm-input', { type: 'number', min: '0', step: '1', label: t(clearance ? 'clash.clearance' : 'clash.tolerance'), help: t(clearance ? 'clash.clearance.help' : 'clash.tolerance.help'), 'data-clash-amount': '' }));
+        amount.value = String(clearance ? c.clearance : c.tolerance);
+        amount.addEventListener('change', () => { const v = Math.max(0, Number(amount.value) || 0); if (clearance) c.clearance = v; else c.tolerance = v; });
+        return [
+          h('div', { class: 'dm-row-wrap' },
+            select(t('clash.set.a'), typeOptions(ds), c.typeA, (v) => { c.typeA = v; }, { 'data-clash-a': '' }),
+            select(t('clash.against'), [{ value: '', label: t('clash.same') }].concat(models.map((d) => ({ value: d.id, label: d.name }))), c.other, (v) => { c.other = v; c.typeB = ''; renderFields(); }, { 'data-clash-model': '' }),
+            select(t('clash.set.b'), typeOptions(other), c.typeB, (v) => { c.typeB = v; }, { 'data-clash-b': '' })),
+          h('div', { class: 'dm-row-wrap' },
+            select(t('clash.mode'), ['intersection', 'clearance'].map((m) => ({ value: m, label: t('clash.mode.' + m) })), c.mode, (v) => { c.mode = v; renderFields(); }, { 'data-clash-mode': '' }),
+            amount,
+            ui.button({ label: t('clash.run'), icon: 'scan-line', size: 'sm', loading: c.busy, title: t('clash.run.hint'), 'data-clash-run': '', onClick: () => runClash() })),
+        ];
+      }
+      async function runClash() {
+        const ds = selected();
+        const c = s.clash;
+        if (!usable(ds) || c.busy) return;
+        const clash = D.require('analysis/clash');
+        c.busy = true; c.error = ''; c.progress = t('clash.progress.start');
+        renderFields(); renderClash(ds);
+        try {
+          const result = await clash.run({
+            a: { datasetId: ds.id, types: c.typeA ? [c.typeA] : null }, b: { datasetId: c.other || ds.id, types: c.typeB ? [c.typeB] : null },
+            mode: c.mode, tolerance: c.tolerance / 1000, clearance: c.clearance / 1000,
+          }, { onProgress: (p) => {
+            c.progress = p.phase === 'geometry' ? t('clash.progress.geometry', { n: i18n.formatNumber(p.done) })
+              : p.total ? t('clash.progress.pairs', { done: i18n.formatNumber(p.done), total: i18n.formatNumber(p.total) }) : t('clash.progress.start');
+            const bar = resultEl && resultEl.querySelector('[data-clash-progress]');
+            if (bar) bar.setAttribute('label', c.progress);
+          } });
+          c.result = result; c.resultFor = ds.id;
+          D.require('data/ifc-validation').record(ds.id, 'clash', clash.summaryOf(result)).catch((err) => D.log('validation', err));
+          shell.log(t('clash.done', { n: i18n.formatNumber(result.clashes.length), pairs: i18n.formatNumber(result.pairs), s: i18n.formatNumber(result.seconds) }), 'ok');
+        } catch (err) {
+          c.error = String((err && err.message) || err);
+          shell.log(c.error, 'error');
+        }
+        c.busy = false;
+        if (selected() && selected().id === ds.id) { renderFields(); renderClash(ds); }
+      }
+      function clashColors() {
+        const tk = D.require('viz/theme').tokens();
+        const hex = (v) => String(v || '').replace(/^#/, '').toUpperCase();
+        return { a: hex(tk.error), b: hex(tk.warn) };
+      }
+      function renderClash(ds) {
+        if (!resultEl) return;
+        const c = s.clash;
+        if (c.busy) { replace(resultEl, h('dm-progress', { indeterminate: true, label: c.progress, 'data-clash-progress': '' })); return; }
+        if (c.error) { replace(resultEl, h('p', { class: 'dm-error dm-small', text: c.error })); return; }
+        const r = c.result && c.resultFor === ds.id ? c.result : null;
+        if (!r) { replace(resultEl, h('p', { class: 'dm-help', text: t('clash.hint') })); return; }
+        const clash = D.require('analysis/clash');
+        const out = clash.tableOf(r);
+        out.columns = out.columns.map((col) => Object.assign(col, { label: t('clash.col.' + col.name) }));
+        out.rows = out.rows.map((row) => { const copy = row.slice(); copy[8] = t('clash.kind.' + row[8]); return copy; });
+        out.name = `${ds.name}: ${t('model.tool.clash')}`;
+        out.note = t('clash.note', { n: i18n.formatNumber(r.clashes.length), pairs: i18n.formatNumber(r.pairs), a: i18n.formatNumber(r.setA), b: i18n.formatNumber(r.setB), s: i18n.formatNumber(r.seconds) })
+          + (r.missing ? ' ' + t('clash.missing', { n: i18n.formatNumber(r.missing) }) : '');
+        const cde = ds.source && ds.source.cde;
+        const none = !r.clashes.length;
+        replace(resultEl,
+          h('div', { class: 'dm-row-wrap', 'data-clash-result': '' }, h('span', { class: 'dm-help dm-grow', text: out.note }),
+            ui.button({ label: t('clash.mark'), icon: 'scan-line', size: 'sm', title: t('clash.mark.hint'), disabled: none, 'data-clash-mark': '', onClick: () => markClashes(ds, r) }),
+            ui.button({ label: t('clash.bcf'), icon: 'download', size: 'sm', title: t('clash.bcf.hint'), disabled: none, 'data-clash-bcf': '', onClick: () => saveBcf(ds, r) }),
+            cde && cde.connectorId && cde.projectId ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('clash.send.hint'), disabled: none, 'data-clash-send': '', onClick: () => sendTopics(ds, r) }) : null,
+            ui.button({ label: t('text.create.dataset'), icon: 'table', size: 'sm', disabled: none, onClick: () => createDataset(out) })),
+          h('div', { class: 'dm-table-wrap' }, (() => {
+            const table = /** @type {any} */ (h('dm-table'));
+            requestAnimationFrame(() => {
+              if (!table.isConnected) return;
+              table.setData({ columns: out.columns.map((col) => ({ key: col.name, label: col.label, type: col.type })), rowCount: Math.min(out.rows.length, PREVIEW_ROWS), rowProvider: async (start, count) => out.rows.slice(start, start + count) });
+            });
+            return table;
+          })()));
+      }
+      async function markClashes(ds, r) {
+        const where = D.require('analysis/clash').whereOf(r, ds.id);
+        const made = where ? await D.require('data/selection').setFromWhere(ds.id, where, [], t('model.tool.clash')) : null;
+        if (!made) { ui.toast.show(t('selection.none'), { kind: 'info' }); return; }
+        ui.toast.show(t('selection.made', { n: i18n.formatNumber(made.rowids.length) }), { kind: 'ok' });
+        store.set({ selectedId: ds.id });
+        shell.activate('bearbeta');
+      }
+      async function saveBcf(ds, r) {
+        try {
+          const blob = await D.require('analysis/clash').bcfFile(r, { t, projectName: ds.name, colors: clashColors() });
+          const name = `${ds.name.replace(/[\\/:*?"<>|]+/g, '_')} ${t('model.tool.clash').toLowerCase()}.bcfzip`;
+          D.require('platform/files').download(blob, name);
+          shell.log(t('clash.bcf.saved', { n: i18n.formatNumber(r.clashes.length), name }), 'ok');
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+      }
+      async function sendTopics(ds, r) {
+        const cde = ds.source.cde;
+        const opencde = D.require('api/families/opencde');
+        const clash = D.require('analysis/clash');
+        try {
+          const connector = await D.require('api/connectors').get(cde.connectorId);
+          if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+          const ok = await ui.dialog.confirm(t('clash.send.confirm', { n: i18n.formatNumber(r.clashes.length), project: cde.projectName || cde.projectId, host: cde.host }), { okLabel: t('clash.send') });
+          if (!ok) return;
+          if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+          const ext = (await opencde.extensions(connector, cde.projectId).catch(() => null)) || {};
+          const pick = (list, wanted) => { const l = Array.isArray(list) ? list : []; return l.find((x) => wanted.test(String(x))) || l[0] || null; };
+          const type = pick(ext.topic_type, /clash|kollision/i); const status = pick(ext.topic_status, /open|öppen/i);
+          const colors = clashColors();
+          let sent = 0;
+          for (const c of r.clashes) {
+            const text = clash.topicText(c, t);
+            const body = { title: text.title, description: text.description };
+            if (type) body.topic_type = type;
+            if (status) body.topic_status = status;
+            const topic = await opencde.createTopic(connector, cde.projectId, body);
+            await opencde.createViewpoint(connector, cde.projectId, topic.guid, clash.viewpointOf(c, colors));
+            sent++;
+            if (sent % 5 === 0) shell.log(t('clash.send.progress', { done: i18n.formatNumber(sent), total: i18n.formatNumber(r.clashes.length) }), 'info');
+          }
+          const done = t('clash.send.done', { n: i18n.formatNumber(sent), project: cde.projectName || cde.projectId });
+          shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
+        } catch (err) {
+          const msg = String((err && err.message) || err);
+          shell.log(msg, 'error'); ui.toast.show(msg, { kind: 'error' });
         }
       }
       function summary(ds) {

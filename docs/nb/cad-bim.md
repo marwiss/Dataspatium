@@ -131,6 +131,53 @@ handlingene i Bearbeid gir en ny versjon.
 
 IfcOpenShell er LGPL-3.0 og hentes uendret som fastlåste wheels fra IfcOpenShells egen fortegnelse, se [Lisenser](licenser.md).
 
+## Valider modellen
+
+Kortet **Valider modellen** i Håndter samler kontrollene av en IFC-modell, med det siste resultatet av hver.
+
+- **Serverens kontroll** finnes for en modell som er hentet som dokumentversjon fra et CDE. Kontroll (fra 3.0.0) kontrollerer hver
+  opplastet IFC-fil mot IFC-skjemaet og, når serveren har dem installert, mot buildingSMARTs regler (ifc-gherkin-rules), og legger
+  resultatet i versjonens metadata. *Hent serverens kontroll* leser det: ingen funn, funn som bare er advarsler, funn med feil, venter
+  på kontroll eller kunne ikke kontrolleres, og når og med hvilke regler. Appen spør serveren først når du trykker på knappen. Finnes
+  det funn, viser *Vis funnene* serverens rapport: antall funn og feil, hvilke kontroller som ble gjort og hvilke regler som ikke
+  kunne kjøres, og hvert funn med regelen, instansen (`#123`) og elementets GlobalId. *Marker i modellen* markerer deretter elementene
+  i modellvisningen i Bearbeid, og *Lagre som tabell* lagrer funnene som en tabell med kolonnene `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` og `attribute`. Rapporten
+  hentes med samme innlogging fra en adresse appen selv bygger på samme server; en adresse fra metadata følges aldri.
+- **Prosjektets IDS-filer**: kontrollerer serveren også filen mot prosjektets IDS-dokumenter (den nyeste versjonen av hvert dokument der
+  navnet slutter på `.ids`), viser rapporten hvor mange spesifikasjoner som ble godkjent, ikke godkjent eller ikke gjaldt filen, og hvilke
+  som ikke ble godkjent, med dokumentets navn og antall funn. Et IDS-dokument som ikke kunne leses, står blant reglene som ikke kunne kjøres.
+- **Kontroller her** viser den siste *Validering*, *IDS-kontroll* og kollisjonskontroll som er kjørt i appen, og knappene åpner dem i
+  Analyser. Resultatene lagres i appens innstillinger, ikke i datasettet.
+
+Funnene gjelder filen slik den ble lastet opp, og serveren stopper aldri en fil på grunn av dem. En fil der alle funn er advarsler,
+regnes som gyldig av buildingSMARTs valideringstjeneste. Har serveren ingen slik kontroll, sier kortet at serveren ikke har
+kontrollert versjonen.
+
+## Kollisjonskontroll
+
+Verktøyet **Kollisjoner** i Analyser (fanen Mengder) finner bygningsdeler som går inn i hverandre eller kommer for nær hverandre. Det
+arbeider på de samme trekantene som 3D-visningen viser, i en egen tråd, og trenger verken Python eller nett.
+
+- **Mengde A og mengde B** er alle bygningsdeler eller en type, for eksempel kanaler mot bjelker. B kan ligge i samme modell eller i en
+  annen modell i samme prosjekt, og modellene må da dele koordinatsystem. Åpninger teller ikke.
+- **Skjæring** teller par der det ene elementet når dypere inn i det andre enn toleransen (2 mm hvis ikke annet er angitt). Dybden
+  måles som hvor langt hjørner og kanter når inn i det andre elementet, så flater som bare møtes, teller ikke. *Innelukking* er et
+  element som ligger helt inne i et annet.
+- **Fri avstand** teller par som er nærmere hverandre enn avstanden (50 mm hvis ikke annet er angitt), skjæringer medregnet.
+
+Resultatet er en tabell med begge elementenes id, GlobalId, type og navn, slaget, dybden eller avstanden i millimeter og et punkt i
+modellens egne koordinater. Derfra:
+
+- *Marker i modellen* markerer elementene i modellvisningen i Bearbeid.
+- *Lagre som BCF* lagrer én sak per kollisjon i en BCF-fil, med en visning som ser på punktet og begge elementene markert og farget.
+  Kamera og punkt står i modellens koordinater med Z opp, så andre BCF-verktøy viser samme sted.
+- *Send som saker* oppretter sakene direkte i prosjektet på serveren gjennom BCF API, for en modell som er hentet fra et CDE. Der ser
+  alle klienter dem, for eksempel Bonsai.
+- *Opprett datasett* lagrer tabellen.
+
+Det siste resultatet står på kortet Valider modellen i Håndter. Målingen forutsetter lukkede flater: et element med åpne eller
+ødelagte flater kan gi usikre dybder. Buede flater er delt opp i trekanter, så en toleranse under en millimeter blir usikker. Elementer som 3D-visningen ikke kan tegne, er ikke med, og resultatet sier hvor mange de er; i en prøvemodell fra Tekla gjaldt det alle armeringsjernene.
+
 ## DXF-tegninger
 
 En DXF-fil blir en tabell med ett tegningsobjekt per rad (type, lag, farge, lengde, areal, tekst og plassering) og en

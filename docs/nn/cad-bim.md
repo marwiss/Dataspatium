@@ -131,6 +131,55 @@ handlingane i Bearbeid gir ein ny versjon.
 
 IfcOpenShell er LGPL-3.0 og blir henta uendra som fastlåste wheels frå IfcOpenShell si eiga oversikt, sjå [Lisensar](licenser.md).
 
+## Valider modellen
+
+Kortet **Valider modellen** i Handter samlar kontrollane av ein IFC-modell, med det siste resultatet av kvar.
+
+- **Kontrollen til tenaren** finst for ein modell som er henta som dokumentversjon frå eit CDE. Kontroll (frå 3.0.0) kontrollerer
+  kvar opplasta IFC-fil mot IFC-skjemaet og, når tenaren har dei installerte, mot reglane til buildingSMART (ifc-gherkin-rules), og
+  legg resultatet i metadataa til versjonen. *Hent kontrollen til tenaren* les det: ingen funn, funn som berre er åtvaringar, funn
+  med feil, ventar på kontroll eller kunne ikkje kontrollerast, og når og med kva reglar. Appen spør tenaren først når du trykkjer på
+  knappen. Finst det funn, viser *Vis funna* rapporten til tenaren: talet på funn og feil, kva kontrollar som vart gjorde og kva
+  reglar som ikkje kunne køyrast, og kvart funn med regelen, instansen (`#123`) og GlobalId-en til elementet. *Merk i modellen*
+  merkjer deretter elementa i modellvisinga i Bearbeid, og *Lagre som tabell* lagrar funna som ein tabell med kolonnane `kind`, `rule`, `severity`, `message`, `step_id`, `global_id` og
+  `attribute`. Rapporten blir henta med same innlogging frå ei adresse som appen sjølv byggjer på same tenar; ei adresse frå
+  metadataa blir aldri følgd.
+- **IDS-filene til prosjektet**: kontrollerer tenaren også fila mot IDS-dokumenta til prosjektet (den nyaste versjonen av kvart dokument
+  der namnet sluttar på `.ids`), viser rapporten kor mange spesifikasjonar som vart godkjende, ikkje godkjende eller ikkje galdt fila, og
+  kva for nokre som ikkje vart godkjende, med namnet på dokumentet og talet på funn. Eit IDS-dokument som ikkje kunne lesast, står blant
+  reglane som ikkje kunne køyrast.
+- **Kontrollar her** viser den siste *Validering*, *IDS-kontroll* og kollisjonskontroll som er køyrd i appen, og knappane opnar dei i
+  Analyser. Resultata blir lagra i innstillingane til appen, ikkje i datasettet.
+
+Funna gjeld fila slik ho vart lasta opp, og tenaren stoppar aldri ei fil på grunn av dei. Ei fil der alle funn er åtvaringar, blir
+rekna som gyldig av valideringstenesta til buildingSMART. Har tenaren ingen slik kontroll, seier kortet at tenaren ikkje har
+kontrollert versjonen.
+
+## Kollisjonskontroll
+
+Verktøyet **Kollisjonar** i Analyser (fana Mengder) finn bygningsdelar som går inn i kvarandre eller kjem for nær kvarandre. Det
+arbeider på dei same trekantane som 3D-visinga viser, i ein eigen tråd, og treng verken Python eller nett.
+
+- **Mengd A og mengd B** er alle bygningsdelar eller ein type, til dømes kanalar mot bjelkar. B kan liggje i same modell eller i ein
+  annan modell i same prosjekt, og modellane må då dele koordinatsystem. Opningar tel ikkje.
+- **Skjering** tel par der det eine elementet når djupare inn i det andre enn toleransen (2 mm om ikkje anna er oppgitt). Djupna blir
+  målt som kor langt hjørne og kantar når inn i det andre elementet, så flater som berre møtest, tel ikkje. *Innelukking* er eit
+  element som ligg heilt inne i eit anna.
+- **Fri avstand** tel par som er nærare kvarandre enn avstanden (50 mm om ikkje anna er oppgitt), skjeringar medrekna.
+
+Resultatet er ein tabell med id, GlobalId, type og namn for begge elementa, slaget, djupna eller avstanden i millimeter og eit punkt
+i dei eigne koordinatane til modellen. Derifrå:
+
+- *Merk i modellen* merkjer elementa i modellvisinga i Bearbeid.
+- *Lagre som BCF* lagrar éi sak per kollisjon i ei BCF-fil, med ei vising som ser på punktet og begge elementa merkte og farga.
+  Kamera og punkt står i koordinatane til modellen med Z opp, så andre BCF-verktøy viser same staden.
+- *Send som saker* opprettar sakene direkte i prosjektet på tenaren gjennom BCF API, for ein modell som er henta frå eit CDE. Der ser
+  alle klientar dei, til dømes Bonsai.
+- *Opprett datasett* lagrar tabellen.
+
+Det siste resultatet står på kortet Valider modellen i Handter. Målinga føreset lukka flater: eit element med opne eller øydelagde
+flater kan gi usikre djupner. Bøygde flater er delte opp i trekantar, så ein toleranse under ein millimeter blir usikker. Element som 3D-visinga ikkje kan teikne, er ikkje med, og resultatet seier kor mange dei er; i ein prøvemodell frå Tekla gjaldt det alle armeringsjerna.
+
 ## DXF-teikningar
 
 Ei DXF-fil blir ein tabell med eitt teikningsobjekt per rad (type, lag, farge, lengd, areal, tekst og plassering) og ei

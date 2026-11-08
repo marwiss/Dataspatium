@@ -106,7 +106,8 @@ paketilla.
   on PageRank, yhteisöt, keskeisyys, kuviokyselyt ja asettelu, ja verkoista tulee kaavioita Visualisoi-tilaan, koontinäyttöihin ja Julkaise-tilaan.
 - **CAD ja BIM**: IFC-mallit avautuvat 3D:nä (web-ifc ja three.js) rakennusosien taulukon yläpuolella, ja valinta seuraa molempiin
   suuntiin. Ominaisuuksista ja määristä tulee taulukoita, Määrät-välilehti laskee tyypeittäin, kerroksittain ja materiaaleittain, ja
-  DXF-piirustukset näkyvät SVG:nä tasoineen (katso [cad-bim.md](cad-bim.md)).
+  DXF-piirustukset näkyvät SVG:nä tasoineen. Kortti *Validoi malli* kokoaa palvelimen tarkistuksen (IFC-skeema, buildingSMARTin säännöt ja projektin IDS-tiedostot) ja sovelluksen
+  tarkistukset, ja *Törmäystarkistus* löytää rakennusosat, jotka menevät toistensa sisään tai ovat liian lähellä, ja voi lähettää ne BCF-tehtävinä (katso [cad-bim.md](cad-bim.md)).
 - **Työnkulut ja seurannat**: tallennettu ketju (nouto, reseptit, skriptit, luettelot, kaaviot, koontinäytöt, asiakirjat, vienti) ajetaan
   yhdellä napsautuksella tai käynnistyksessä, ja seuratut lähteet kertovat tilarivillä uusista tiedoista (katso [floden.md](floden.md)).
 - **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin
@@ -163,7 +164,7 @@ myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin 
 
 Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös palvelimiin, joilla on vain 2.1, ja se piirtää palvelimen IFC-verkon ja tekee siihen kyselyjä suoraan kohdasta Nouda.
 
-Dataspatium 2.0.0 toimii Kontroll 2.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
+Dataspatium 3.0.0 toimii Kontroll 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
 [snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
 
 ## Lue lisää

@@ -194,7 +194,8 @@
         const picture = hooks.png ? hooks.png() : '';
         const guids = await guidsOf(ids || []);
         const vp = {};
-        if (view) vp.perspective_camera = bcfXml.cameraFromView(view);
+        // BCF cameras are in the model's own coordinates with Z up, so that Bonsai and other clients show the same place.
+        if (view) vp.perspective_camera = view.ifc ? bcfXml.cameraFromView(Object.assign({}, view, view.ifc), { worldUp: [0, 0, 1] }) : bcfXml.cameraFromView(view);
         if (picture) vp.snapshot = { snapshot_type: 'png', snapshot_data: picture.split(',')[1] };
         vp.components = { selection: guids.map((g) => ({ ifc_guid: g, originating_system: 'Dataspatium' })), visibility: { default_visibility: true } };
         if (!view && !picture && !guids.length) return null;
