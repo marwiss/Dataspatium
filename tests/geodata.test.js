@@ -275,6 +275,54 @@
     }
   }, 120000);
 
+  test('geodata: the shipped list has SLU species observations and four more datasets of the geodata platform', async (assert) => {
+    const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;
+    const byId = new Map(list.map((s) => [s.id, s]));
+    const slu = byId.get('slu-artdata-wfs');
+    assert.ok(slu && slu.kind === 'wfs' && slu.url === 'https://sosgeo.artdata.slu.se/geoserver/SOS/ows' && !slu.key, 'the species WFS, without a key');
+    const langs = ['sv', 'en', 'da', 'nb', 'nn', 'fi', 'is'];
+    const ngp = ['byggnad', 'strandskydd', 'kulturhistorisklamning', 'gransforfjallnaraskog'].map((d) => byId.get('lantmateriet-ngp-' + d));
+    for (const s of [slu].concat(ngp)) {
+      assert.ok(s, 'present');
+      assert.ok(langs.every((l) => s.about && s.about[l]), s.id + ': a description in all seven languages');
+    }
+    for (const s of ngp) {
+      assert.equal(s.preset, 'lantmateriet-ngp-detaljplan', s.id + ' uses the platform key');
+      assert.ok(s.key && s.kind === 'ogcapi' && /\/sokning\/v1\/[a-z]+\/v1$/.test(s.url), s.id + ': ' + s.url);
+    }
+    assert.equal(new Set(list.map((s) => s.id)).size, list.length, 'the ids are unique');
+    const stac = JSON.parse(await D.assets.loadText('presets/api/lantmateriet-geodata.api.json'));
+    assert.equal(stac.license.name, 'CC BY 4.0', 'the licence the STAC catalogue states');
+    return list.length + ' services';
+  });
+
+  test('geodata: a source that cannot be reached where the app runs says why', async (assert) => {
+    const reach = D.require('api/reach');
+    assert.equal(reach.mode(), location.protocol === 'file:' ? 'file' : 'web');
+    assert.equal(reach.blocked({}), null, 'no measurement: it works');
+    assert.equal(reach.blocked({ cors: { file: true, web: true } }), null);
+    assert.equal(reach.blocked({ cors: { file: false } }, 'file'), 'web', 'only from the web version');
+    assert.equal(reach.blocked({ cors: { file: false } }, 'web'), null);
+    assert.equal(reach.blocked({ cors: { web: false } }, 'web'), 'file', 'only from a folder');
+    assert.equal(reach.blocked({ cors: { file: false, web: false } }, 'file'), 'bridge', 'from neither');
+    for (const r of ['web', 'file', 'bridge']) assert.ok(reach.label(r) !== 'reach.' + r && reach.hint(r) !== 'reach.' + r + '.hint', 'texts for ' + r);
+    const familyDialog = D.require('ui/api/family-dialog');
+    const dialogs = () => Array.from(document.querySelectorAll('dialog.dm-dialog'));
+    const here = reach.mode();
+    familyDialog.setServices([{ id: 'test-far', name: 'Avlägsen tjänst', publisher: 'Testverket', country: 'NO', kind: 'wfs', url: 'https://example.invalid/wfs', cors: { [here]: false }, about: { sv: 'Nås inte här.' } }]);
+    const promise = familyDialog.open({ shell: { log: () => {} } }, { group: 'geodata' });
+    try {
+      const dialog = await waitFor(() => { const d = dialogs().pop(); return d && d.querySelector('.dm-geodata-ready-item') ? d : null; }, 5000, 'the dialog');
+      const item = dialog.querySelector('.dm-geodata-ready-item');
+      assert.ok(item.textContent.includes(reach.label(here === 'file' ? 'web' : 'file')), 'the reason in the list: ' + item.textContent);
+    } finally {
+      for (const d of dialogs()) /** @type {any} */ (d).close();
+      await promise.catch(() => {});
+      familyDialog.setServices(null);
+    }
+    return 'ok';
+  });
+
   test('geodata: the dialog lists the ready-made services, filters them, adds one with one click and opens a preset', async (assert) => {
     const familyDialog = D.require('ui/api/family-dialog');
     const ids = [];

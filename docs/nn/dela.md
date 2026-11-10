@@ -64,8 +64,9 @@ heile kolonnar og inne i løpande tekst, og viser det som elles følgjer med uta
 Berre kopien som blir delt, blir endra, og datasettet i appen blir som det er. Endrar du noko, følgjer verken endringsloggen eller oppskrifta med, sidan dei kan innehalde dei opphavlege verdiane. Pakkar
 blir òg reinsa for restar av fjerna verdiar i sjølve fila.
 
-Gjennomgangen ser ikkje alt. Namn, adresser og innhaldet i originalfiler og bilete må du vurdere sjølv. Diagram, notatbøker og dokument i ein pakke kan vise dei opphavlege verdiane, så vel dei
-bort om nødvendig. Filnamn følgjer med.
+Gjennomgangen ser ikkje alt. Namn, adresser og innhaldet i originalfiler og bilete må du vurdere sjølv. Ein pakke tek berre med diagram, dashbord og notatbøker for dei valde datasetta.
+Personopplysningar i dei, i malar og skript, i dei lagra utdata i notatbøkene og i namn og filnamn på datasetta blir viste under *Det som
+følgjer med pakken* og maskerte i kopien om du ikkje vel å behalde dei, fjerne utdata eller utelate fila.
 
 Ei synkronisering til **GitHub** må kunne hentast tilbake slik ho var, så der kan ingenting pseudonymiserast. Appen viser i staden kva som kan vere personopplysningar før du sender. **Publiser** lagar ei
 HTML-side med verdiane diagramma viser, så kontroller dei før du legg ut sida.

@@ -29,7 +29,9 @@
       const pc = vp.perspective_camera; const oc = vp.orthogonal_camera;
       const camera = pc ? `<PerspectiveCamera>${point('CameraViewPoint', pc.camera_view_point)}${point('CameraDirection', pc.camera_direction)}${point('CameraUpVector', pc.camera_up_vector)}${tag('FieldOfView', num(pc.field_of_view))}${tag('AspectRatio', num(pc.aspect_ratio || 1))}</PerspectiveCamera>`
         : oc ? `<OrthogonalCamera>${point('CameraViewPoint', oc.camera_view_point)}${point('CameraDirection', oc.camera_direction)}${point('CameraUpVector', oc.camera_up_vector)}${tag('ViewToWorldScale', num(oc.view_to_world_scale))}${tag('AspectRatio', num(oc.aspect_ratio || 1))}</OrthogonalCamera>` : '';
-      return `<?xml version="1.0" encoding="UTF-8"?>\n<VisualizationInfo Guid="${esc(vp.guid)}">${components}${camera}</VisualizationInfo>\n`;
+      const planes = Array.isArray(vp.clipping_planes) && vp.clipping_planes.length
+        ? `<ClippingPlanes>${vp.clipping_planes.map((c) => `<ClippingPlane>${point('Location', c.location)}${point('Direction', c.direction)}</ClippingPlane>`).join('')}</ClippingPlanes>` : '';
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<VisualizationInfo Guid="${esc(vp.guid)}">${components}${camera}${planes}</VisualizationInfo>\n`;
     }
     /**
      * The markup of one topic with its comments and the names of its viewpoint files.
@@ -102,9 +104,12 @@
     function cameraOf(root) {
       const pc = children(root, 'PerspectiveCamera')[0]; const oc = children(root, 'OrthogonalCamera')[0];
       const base = (el) => ({ camera_view_point: pointOf(children(el, 'CameraViewPoint')[0]), camera_direction: pointOf(children(el, 'CameraDirection')[0]), camera_up_vector: pointOf(children(el, 'CameraUpVector')[0]), aspect_ratio: Number(textOf(el, 'AspectRatio')) || 1 });
-      if (pc) return { perspective_camera: Object.assign(base(pc), { field_of_view: Number(textOf(pc, 'FieldOfView')) || 60 }) };
-      if (oc) return { orthogonal_camera: Object.assign(base(oc), { view_to_world_scale: Number(textOf(oc, 'ViewToWorldScale')) || 1 }) };
-      return {};
+      // The clipping planes: a location and a direction towards the side cut away.
+      const planes = children(children(root, 'ClippingPlanes')[0], 'ClippingPlane').map((c) => ({ location: pointOf(children(c, 'Location')[0]), direction: pointOf(children(c, 'Direction')[0]) }));
+      const clip = planes.length ? { clipping_planes: planes } : {};
+      if (pc) return Object.assign({ perspective_camera: Object.assign(base(pc), { field_of_view: Number(textOf(pc, 'FieldOfView')) || 60 }) }, clip);
+      if (oc) return Object.assign({ orthogonal_camera: Object.assign(base(oc), { view_to_world_scale: Number(textOf(oc, 'ViewToWorldScale')) || 1 }) }, clip);
+      return clip;
     }
     /**
      * The contents of a .bcfzip in the API's shape.
@@ -195,6 +200,19 @@
       };
     }
 
-    return { write, read, sniff, viewpointXml, markupXml, newGuid, cameraFromView };
+    /**
+     * The 3D view's camera as BCF: `{perspective_camera}`, or `{orthogonal_camera}` with `view_to_world_scale` as the height of the
+     * view in metres when the view is orthographic.
+     * @param {{position: number[], target: number[], fov?: number, aspect?: number, projection?: string, height?: number}} view
+     * @param {{worldUp?: number[]}} [options] @returns {any}
+     */
+    function cameraOfView(view, options = {}) {
+      const camera = cameraFromView(view, options);
+      if (view.projection !== 'orthographic') return { perspective_camera: camera };
+      delete camera.field_of_view;
+      return { orthogonal_camera: Object.assign(camera, { view_to_world_scale: Math.round((Number(view.height) || 1) * 1000) / 1000 }) };
+    }
+
+    return { write, read, sniff, viewpointXml, markupXml, newGuid, cameraFromView, cameraOfView };
   });
 })();

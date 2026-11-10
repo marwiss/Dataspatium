@@ -12,6 +12,8 @@
   const D = globalThis.Dataspatium;
   D.define('data/share-scan', ['data/datasets', 'data/rules', 'data/exif', 'data/kinds'], (datasets, rules, exif, kinds) => {
     const PHONE_NAME = /telefon|mobil(?!itet)|phone|puhelin|s[ií]mi|^tlf$|\btel\b|^gsm$|farsimi|handy/i;
+    /** Columns that by their name hold who someone is: observers in species data, authors, first and last names. */
+    const PERSON_NAME = /^(recordedby|reportedby|observer|observerade|observatoer|observator|rapportor|reporter|inventerare|insamlare|fotograf|photographer|author|forfattare|personnamn|firstname|lastname|fornamn|efternamn|fullname|etunimi|sukunimi|fornavn|etternavn|efternavn)$/;
     const FILES = '_files';
     /** Tables with their own part, or without free text. */
     const NOT_SCANNED = new Set(['data', '_columns', '_meta', '_log', FILES, '_layout', '_comments']);
@@ -42,6 +44,7 @@
       }
       for (const c of columns) {
         if (c.type === 'text' && PHONE_NAME.test(c.name) && !seen(c.name)) out.push({ column: c.name, kind: 'phone' });
+        else if (c.type === 'text' && PERSON_NAME.test(String(c.name).toLowerCase().normalize('NFKD').replace(/[^a-z]/g, '')) && !seen(c.name)) out.push({ column: c.name, kind: 'person' });
       }
       const handle = await datasets.ensureOpen(id);
       if (handle.meta.field) {
@@ -57,7 +60,7 @@
     /** The choices a column finding offers, and the one to start from. */
     function columnChoices(finding) {
       if (finding.kind === 'position') return { choices: ['keep', 'drop'], start: 'keep' };
-      return { choices: ['keep', 'hash', 'drop'], start: finding.kind === 'identifier' || finding.kind === 'collector' ? 'hash' : 'keep' };
+      return { choices: ['keep', 'hash', 'drop'], start: finding.kind === 'identifier' || finding.kind === 'collector' || finding.kind === 'person' ? 'hash' : 'keep' };
     }
 
     /**
@@ -106,13 +109,18 @@
       }
       const authors = Array.from(new Set((handle.meta.documents || []).map((d) => d.author).filter(Boolean)));
       if (authors.length) parts.push({ id: 'authors', kind: 'authors', count: authors.length, names: authors.slice(0, 5), choices: ['keep', 'remove'], start: 'remove' });
+      // The name of the file it came from, and the dataset's own name, follow in the package's list.
+      const source = handle.meta.source || {};
+      const labels = [handle.meta.name, source.fileName, source.name].filter((x) => typeof x === 'string' && x);
+      const named = labels.length ? await engine.exec(`select ${labels.map(() => 'dm_has_personal(?)').join(' + ')}`, labels) : null;
+      if (named && number(named)) parts.push({ id: 'filename', kind: 'filename', count: 1, names: labels.slice(0, 2), choices: ['mask', 'keep'], start: 'mask' });
       return { columns, parts };
     }
 
     /** Whether a set of choices changes anything in the copy. */
     function changes(tr) {
       if (!tr) return false;
-      return !!((tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
+      return !!(tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
     }
 
     async function metaValue(engine, key) {
@@ -165,6 +173,14 @@
         if (tables.includes(FILES) && !tr.pictures) await stripPictures(engine);
       }
       if (tr.comments && tables.includes('_comments')) await engine.run('delete from _comments');
+      if (tr.filename) {
+        const source = await metaValue(engine, 'source');
+        if (source && typeof source === 'object') {
+          const out = Object.assign({}, source);
+          for (const k of ['fileName', 'name', 'url']) if (typeof out[k] === 'string') out[k] = await maskText(out[k], engine);
+          await setMeta(engine, 'source', out);
+        }
+      }
       if (tr.authors) {
         const documents = await metaValue(engine, 'documents');
         if (Array.isArray(documents)) await setMeta(engine, 'documents', documents.map((d) => Object.assign({}, d, { author: null })));
@@ -176,6 +192,77 @@
       if (Array.isArray(list)) await setMeta(engine, 'rules', list.filter((rule) => ![rule.column, rule.column2].concat(rule.columns || []).some((c) => changed.includes(c))));
       const field = await metaValue(engine, 'field');
       if (field && field.imports) await setMeta(engine, 'field', Object.assign({}, field, { imports: [] }));
+    }
+
+    /** A scratch database with the same functions for personal data as the datasets, for text that lives outside them. */
+    let scratch = null;
+    function scratchEngine() {
+      if (!scratch) {
+        scratch = (async () => { const e = new (D.require('engines/sqlite').SqliteEngine)(); await e.start(); await e.open(null); return e; })();
+        scratch.catch(() => { scratch = null; });
+      }
+      return scratch;
+    }
+    /** Personal data in a text masked as [***], on a given engine or the scratch one. */
+    async function maskText(text, engine) {
+      const e = engine || await scratchEngine();
+      const r = await e.exec('select dm_mask_personal(?)', [String(text)]);
+      return r[0] && r[0].values[0] ? String(r[0].values[0][0]) : String(text);
+    }
+    /** Every string in a JSON value, in the order a walk meets them. */
+    function stringsOf(value, out = []) {
+      if (typeof value === 'string') out.push(value);
+      else if (Array.isArray(value)) for (const v of value) stringsOf(v, out);
+      else if (value && typeof value === 'object') for (const v of Object.values(value)) stringsOf(v, out);
+      return out;
+    }
+    /** The same value with each string replaced by the next from `next()`. */
+    function replaceStrings(value, next) {
+      if (typeof value === 'string') return next();
+      if (Array.isArray(value)) return value.map((v) => replaceStrings(v, next));
+      if (value && typeof value === 'object') { const out = {}; for (const [k, v] of Object.entries(value)) out[k] = replaceStrings(v, next); return out; }
+      return value;
+    }
+    /** How many strings of a JSON text hold personal data. */
+    async function personalCount(text) {
+      let data;
+      try { data = JSON.parse(String(text)); } catch (_err) { return 0; }
+      const list = stringsOf(data);
+      if (!list.length) return 0;
+      const e = await scratchEngine();
+      const r = await e.exec('select coalesce(sum(dm_has_personal(value)), 0) from json_each(?)', [JSON.stringify(list)]);
+      return number(r);
+    }
+    /**
+     * A JSON text with the review's choice applied: `mask` puts [***] where personal data was, `strip` also empties a notebook's
+     * saved outputs. Returns the new text.
+     * @param {string} text @param {string} choice
+     */
+    async function cleanJson(text, choice) {
+      let data = JSON.parse(String(text));
+      if (choice === 'strip' && Array.isArray(data.cells)) data = Object.assign({}, data, { cells: data.cells.map((c) => Object.assign({}, c, { outputs: [] })) });
+      const list = stringsOf(data);
+      if (!list.length) return JSON.stringify(data, null, 2) + '\n';
+      const e = await scratchEngine();
+      const r = await e.exec('select dm_mask_personal(value) from json_each(?)', [JSON.stringify(list)]);
+      const masked = (r[0] ? r[0].values : []).map((row) => (row[0] === null ? '' : String(row[0])));
+      let i = 0;
+      return JSON.stringify(replaceStrings(data, () => (i < masked.length ? masked[i++] : '')), null, 2) + '\n';
+    }
+    /**
+     * What a bundle of these datasets carries besides them (charts, dashboards, notebooks, templates, scripts) and holds personal
+     * data: one entry per file with the choices for it. Notebooks can also leave their saved outputs behind.
+     * @param {string[]} ids @param {any} [include] @returns {Promise<Array<{path: string, kind: string, name: string, count: number, choices: string[], start: string}>>}
+     */
+    async function extras(ids, include) {
+      const out = [];
+      for (const item of await D.require('data/workspace').bundleExtras(ids, include)) {
+        const count = await personalCount(item.text);
+        if (!count) continue;
+        const choices = item.kind === 'notebook' ? ['mask', 'strip', 'omit', 'keep'] : ['mask', 'omit', 'keep'];
+        out.push({ path: item.path, kind: item.kind, name: item.name, count, choices, start: 'mask' });
+      }
+      return out;
     }
 
     /**
@@ -200,6 +287,6 @@
       finally { await datasets.remove(temp.id, { quiet: true }); }
     }
 
-    return { PHONE_NAME, columnFindings, columnChoices, inspect, changes, copy, exportCopy };
+    return { PHONE_NAME, columnFindings, columnChoices, inspect, changes, copy, exportCopy, extras, cleanJson, personalCount, maskText };
   });
 })();

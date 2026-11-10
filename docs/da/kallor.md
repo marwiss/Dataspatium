@@ -183,7 +183,7 @@ kilde med adressen udfyldt. Findes serveren allerede som kilde, åbnes den direk
 ## Åbne geodata
 
 Dialogen for *Geodatakilde* under *Tilføj kilder* begynder med en liste over **færdige geodatakilder**: åbne WFS-, OGC API Features- og
-ArcGIS-tjenester fra nordiske myndigheder og kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+ArcGIS-tjenester fra nordiske myndigheder og kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flere), alle kontrolleret til at virke
 fra browseren. En forudindstillet kilde åbnes, de øvrige tilføjes med ét klik, og lagene læses fra tjenesten; filtrér
@@ -211,7 +211,7 @@ datasæt.
 Forudindstillede geodatakilder uden nøgle (CORS verificeret): SCB åbne geodata, SGU, Havs- och vattenmyndigheten,
 Riksantikvarieämbetets fortidsminder, Skogsstyrelsen, Kartverkets administrative enheder og ejendomskort (Norge) samt
 Statistikcentralen og SYKE (Finland). Lagene læses fra tjenesten, første gang kilden åbnes, og kan genlæses med *Genlæs
-lagene*; listen gemmes i din kopi af kilden. Lantmäteriets geodataplatform (lokalplaner) findes som niveau 2 med
+lagene*; listen gemmes i din kopi af kilden. Lantmäteriets geodataplatform (lokalplaner, bygninger, strandbeskyttelse, kulturhistoriske levn og grænsen for fjeldnær skov) findes som niveau 2 med
 Bearer-nøgle fra en tilsluttet organisation.
 
 **Geodataportalen** (geodata.se) er Sveriges nationale katalog over myndigheders, regioners og kommuners geodata. Kilden

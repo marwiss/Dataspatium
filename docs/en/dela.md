@@ -65,8 +65,9 @@ phone numbers, both in whole columns and inside running text, and lists what oth
 Only the copy that is shared changes, and the dataset in the app stays as it is. If you change anything, neither the change log nor the recipe comes along, since they can hold the original values.
 Bundles are also cleaned of traces of removed values in the file itself.
 
-The review does not see everything. Names, addresses and the contents of original files and pictures you have to judge yourself. Charts, notebooks and documents in a bundle can show the original
-values, so leave them out if needed. File names come along.
+The review does not see everything. Names, addresses and the contents of original files and pictures you have to judge yourself. A bundle carries charts, dashboards and notebooks only for the chosen
+datasets. Personal data in them, in templates and scripts, in the notebooks' saved outputs and in the datasets' names and file names is listed
+under *What else the package carries* and masked in the copy, unless you choose to keep it, remove the outputs or leave the file out.
 
 A sync to **GitHub** must be able to come back as it was, so nothing can be pseudonymised there. Instead the app shows what may be personal data before you send. **Publish** creates an HTML page with
 the values the charts show, so check them before you put the page out.

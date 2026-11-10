@@ -26,7 +26,7 @@ Namnen räcker inte. Appen kontrollerar också värdena: en geometrikolumn måst
 
 ## Kartan i Bearbeta
 
-Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra, och klicka
+Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra (skalstocken nere till vänster visar avståndet i meter), och klicka
 på ett objekt så visar inspektören dess attribut; *Redigera i tabellen* tar dig till raden i tabellen. Verktygsraden
 har bakgrundskarta (ingen eller OpenStreetMap), *Zooma till allt*, *Spara som kartvy* (sparar kartan med lager och
 aktuell vy som ett diagram i Visualisera) och *Visa som tabell*. Allt du gör i tabellen (filtrera, rätta, ta bort

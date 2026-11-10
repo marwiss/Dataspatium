@@ -103,6 +103,9 @@
         seen++;
         if (seen % 200 === 0) report(seen);
       });
+      // What web-ifc did to move the model near the origin, so that points in the view can be given back in the model's own
+      // coordinates (a BCF camera, for example).
+      var coordination = Array.from(api.GetCoordinationMatrix(model));
       api.CloseModel(model);
       var transfer = []; var out = [];
       for (var k = 0; k < batches.length; k++) {
@@ -116,7 +119,7 @@
       stats.forEach(function (st, id) { statRows.push([id, st.area, st.volume, st.min, st.max]); });
       var rangeArray = new Uint32Array(ranges);
       transfer.push(rangeArray.buffer);
-      return { result: { batches: out, ranges: rangeArray, stats: statRows, elements: seen }, transfer: transfer };
+      return { result: { batches: out, ranges: rangeArray, stats: statRows, elements: seen, coordination: coordination }, transfer: transfer };
     }
     self.onmessage = function (ev) {
       var msg = ev.data || {};

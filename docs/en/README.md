@@ -156,6 +156,12 @@ What works in one version also works in the next. Each version goes with the sam
 - **Building models**: IFC models in 3D with tables, properties and quantities, checks against the schema and against IDS, and DXF
   drawings (see [CAD and BIM](cad-bim.md)). *Technically:* web-ifc and three.js for the view, IfcOpenShell and ifctester in the app's
   Python.
+- **Navigate the model**: a view cube and standard views, an orthographic view, a section box and a section at a storey, a pivot
+  by double click and the keyboard; the camera and the section travel with the issues' viewpoints, and maps and plans have a scale
+  bar (see [CAD and BIM](cad-bim.md#views-and-the-keyboard)).
+- **More geodata sources**: species observations from SLU Artdatabanken and buildings, shore protection, cultural heritage remains
+  and the boundary of forest near the mountains from the national geodata platform; the source list says when a source cannot be
+  reached where the app runs, and bundles carry charts and notebooks only for the chosen datasets (see [Sources](kallor.md)).
 - **Python and statistics without code**: a Python console and forms for statistics and time series that write and show the code (see
   [Statistics](statistik.md) and [Python](python.md)).
 - **Order and flows**: folders, tags and actions on many datasets, saved flows that run with one click and sources that tell you when
@@ -250,7 +256,7 @@ There is one release per major number, and Dataspatium and Dataregium with the s
 | Dataspatium | What it has | Goes with |
 |---|---|---|
 | 1.0.0 | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium 1.0.0 (Documents API only) |
-| 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members* | Dataregium 2.0.0 |
+| 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members*, navigation with a view cube and sections, more geodata sources | Dataregium 2.0.0 |
 | 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
 
 A new release in the same major number replaces the previous one; only the latest in each series is corrected. The app's update check

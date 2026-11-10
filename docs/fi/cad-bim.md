@@ -12,8 +12,10 @@ kestää noin neljännesminuutin, minkä jälkeen se avautuu muutamassa sekunnis
 
 ## Malli Muokkaa-tilassa
 
-Malli avautuu 3D-näkymänä, jonka alla on rakennusosien taulukko. Kierrä vetämällä, zoomaa vierittämällä ja siirrä vetämällä
-oikealla painikkeella. Kehyspainike näyttää koko mallin; yksittäisiä kaukana rakennuksesta olevia kohteita ei lasketa mukaan.
+Malli avautuu 3D-näkymänä, jonka alla on rakennusosien taulukko. Kierrä vetämällä, zoomaa osoitinta kohti vierittämällä ja
+siirrä vetämällä oikealla painikkeella tai vaihtonäppäin pohjassa; kosketusnäytöllä yksi sormi kiertää ja kaksi nipistää ja
+siirtää. Kaksoisnapsauta rakennusosaa kiertääksesi juuri sen pisteen ympäri. Kehyspainike näyttää kaiken näytetyn; yksittäisiä
+kaukana rakennuksesta olevia kohteita ei lasketa mukaan. Lisää tapoja katsoa mallia on kohdassa [Näkymät ja näppäimistö](#näkymät-ja-näppäimistö).
 
 - **Valitse**: napsauta rakennusosaa mallissa tai riviä taulukossa. Valinta seuraa, ja tarkastelija näyttää tyypin, kerroksen,
   materiaalin, luokituksen, ominaisuudet ja määrät sekä geometriasta mitatun pinnan ja tilavuuden.
@@ -24,16 +26,42 @@ oikealla painikkeella. Kehyspainike näyttää koko mallin; yksittäisiä kaukan
 Geometria lasketaan alkuperäisestä tiedostosta, kun malli avataan istunnossa ensimmäisen kerran, ja sitä käytetään vain
 piirtämiseen ja mittaamiseen. Taulukot säilyvät, vaikka tietokoneesta puuttuisi WebGL; silloin 3D-näkymän tilalla näkyy viesti.
 
+### Näkymät ja näppäimistö
+
+- **Näkymäkuutio** kulmassa kääntyy mallin mukana. Napsauta sivua nähdäksesi mallin ylhäältä, edestä, oikealta, takaa,
+  vasemmalta tai alhaalta, ja kuution alla olevaa painiketta nähdäksesi sen viistosti ylhäältä. Edestä katsotaan mallin
+  Y-akselin suuntaan eli pohjoiseen, kun malli on piirretty pohjoinen ylöspäin. Näkymät näyttävät sen, minkä suodatin näyttää.
+- **Ortografinen näkymä**: neliöpainike vaihtaa perspektiivin ja ortografisen näkymän välillä; ortografisessa näkymässä
+  rakennusosat eivät pienene etäisyyden mukana. Ylhäältä katsottuna saadaan pohjapiirros ja edestä julkisivu. Kaavio ja
+  viewpoint muistavat, mikä näkymä oli käytössä.
+- **Leikkaus**: tasopainike avaa leikkauksen tarkastimeen. Vedä itä–länsi-, etelä–pohjoinen- ja korkeussäätimiä leikataksesi pois
+  laatikon ulkopuolelle jäävän, tai valitse kerros kohdassa *Leikkaus kerroksen kohdalta* nähdäksesi sen lattiasta 1,2 metrin
+  korkeuteen pohjapiirroksena. *Poista leikkaus* näyttää taas kaiken. Leikkaus seuraa kaaviota ja viewpointia, ja toisen ohjelman
+  viewpoint näyttää oman leikkauksensa.
+- **Sovita merkittyihin** näyttää merkityt rakennusosat, ja **Näytä vain merkityt** piilottaa kaiken muun, jotta voit kiertää
+  niiden ympäri; napsauta uudelleen näyttääksesi kaiken.
+- **Näppäimistö** toimii, kun 3D-näkymä on aktiivinen: napsauta sitä tai siirry siihen sarkaimella.
+
+| Näppäin | Toiminto |
+|---|---|
+| Nuolet | siirtävät näkymää |
+| Ctrl tai vaihto ja nuolet | kiertävät |
+| + ja − | zoomaavat |
+| F | sovittaa merkittyihin |
+| Home | näyttää kaiken |
+| 1–7 | ylhäältä, edestä, oikealta, takaa, vasemmalta, alhaalta, viistosti ylhäältä |
+| O | vaihtaa ortografisen näkymän |
+
 ## Asiat CDE:stä
 
 OpenCDE-palvelimelta haettu malli, tai mikä tahansa malli kun tällainen palvelin on lähteenä, voi näyttää asiansa: painike
 *Asiat* mallinäkymässä avaa tarkastimeen paneelin, jossa ovat projektin BCF-asiat. Tämän mallin rakennusosiin osoittavat
 asiat ovat ensin, tilan ja rakennusosien määrän kanssa. Napsauta asiaa, niin rakennusosat merkitään 3D-näkymässä ja paneeli
 näyttää kuvauksen, tilannekuvan ja kommentit. Asiat haetaan pyynnöstä eikä niitä tallenneta aineistoon; laskeaksesi niistä
-tallenna ne taulukkona Nouda-tilassa. Tämä on lukemista; asioiden luominen ja muuttaminen tulee seuraavassa versiossa.
+tallenna ne taulukkona Nouda-tilassa. Kun asialla on viewpoint, jossa on kamera, näkymä siirtyy sinne perspektiivisenä tai ortografisena ja leikkauksineen.
 
 Oikeuksien salliessa voit myös kirjoittaa. *Uusi asia* luo palvelimelle asian, jolla on otsikko, tyyppi, tila ja nimikkeet projektin
-luetteloista, ja näkymä liitetään viewpointina: kamera, tilannekuva ja merkityt rakennusosat komponentteina. Valitussa asiassa
+luetteloista, ja näkymä liitetään viewpointina: kamera (perspektiivinen tai ortografinen) leikkauksineen, tilannekuva ja merkityt rakennusosat komponentteina. Valitussa asiassa
 voit kirjoittaa kommentin, vaihtaa tilan ja lisätä nykyisen näkymän uutena viewpointina. *Tallenna BCF-tiedostona* antaa kaikki
 projektin asiat kommentteineen, viewpointeineen ja tilannekuvineen BCF-tiedostona, jonka rajapintaa vailla olevat työkalut
 voivat avata. BCF-tiedoston voi myös lukea Nouda-tilassa: asioista tulee taulukko, kommenteista ja komponenteista taulukot sen
@@ -136,7 +164,7 @@ luettelosta, katso [Lisenssit](licenser.md).
 ## DXF-piirustukset
 
 DXF-tiedostosta tulee taulukko, jossa on yksi piirustusobjekti riviä kohti (tyyppi, taso, väri, pituus, pinta-ala, teksti ja
-sijainti), ja SVG-piirustus. Piirustus avautuu Muokkaa-tilassa, jossa zoomataan rullalla ja panoroidaan vetämällä. Tasot
+sijainti), ja SVG-piirustus. Piirustus avautuu Muokkaa-tilassa, jossa zoomataan rullalla tai nipistämällä ja panoroidaan vetämällä; kun piirustus on aktiivinen, nuolet siirtävät, + ja − zoomaavat, Home näyttää kaiken ja F sovittaa merkittyyn objektiin. Taulukon rivi zoomaa objektiinsa. Tasot
 kytketään päälle ja pois tarkastelijassa, ja napsautus valitsee objektin ja sen rivin. Määrät-välilehti antaa lukumäärän,
 pituuden ja pinta-alan tasoittain ja tyypeittäin.
 

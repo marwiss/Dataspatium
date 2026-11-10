@@ -12,8 +12,10 @@ cirka 50 MB tar ungefär en kvart minut att importera och öppnas sedan på någ
 
 ## Modellen i Bearbeta
 
-Modellen öppnas som 3D-vy med en tabell över byggdelarna under. Dra för att vrida, rulla för att zooma och högerdra för
-att flytta. Knappen med ramen visar hela modellen; enstaka objekt långt från byggnaden räknas inte med.
+Modellen öppnas som 3D-vy med en tabell över byggdelarna under. Dra för att vrida, rulla för att zooma mot muspekaren och
+högerdra eller Skift-dra för att flytta; på en pekskärm vrider ett finger, och två nyper och flyttar. Dubbelklicka på en byggdel
+för att vrida runt just den punkten. Knappen med ramen visar allt som visas; enstaka objekt långt från byggnaden räknas inte med.
+Fler sätt att se modellen står under [Vyer och tangentbordet](#vyer-och-tangentbordet).
 
 - **Markera**: klicka på en byggdel i modellen eller på en rad i tabellen. Markeringen följer åt, och inspektören visar
   typ, våning, material, klassificering, egenskaper och mängder, samt yta och volym mätta på geometrin.
@@ -24,17 +26,41 @@ att flytta. Knappen med ramen visar hela modellen; enstaka objekt långt från b
 Geometrin räknas fram ur originalfilen första gången modellen öppnas i en session, och den används bara för att rita och
 mäta. Tabellerna finns kvar även om datorn saknar WebGL, och då visas ett meddelande i stället för 3D-vyn.
 
+### Vyer och tangentbordet
+
+- **Vy-kuben** i hörnet vrider sig med modellen. Klicka på en sida för att se modellen ovanifrån, framifrån, från höger, bakifrån,
+  från vänster eller underifrån, och på knappen under kuben för att se den snett ovanifrån. Framifrån tittar längs modellens
+  Y-axel, det vill säga mot norr när modellen är ritad med norr uppåt. Vyerna visar det som filtret visar.
+- **Ortografisk vy**: knappen med kvadraten växlar mellan perspektiv och ortografisk vy, där byggdelarna inte krymper med
+  avståndet. Ovanifrån blir då en planritning och framifrån en fasad. Ett diagram och en viewpoint minns vilken vy det var.
+- **Snitt**: knappen med lagren öppnar snittet i inspektören. Dra reglagen för öst–väst, syd–nord och höjd för att skära bort det
+  som ligger utanför en låda, eller välj en våning under *Snitt vid våning* för att se den från golvet upp till 1,2 m som en
+  planritning. *Ta bort snittet* visar allt igen. Snittet följer med ett diagram och en viewpoint, och en viewpoint från ett annat
+  program visar sitt snitt.
+- **Zooma till markerade** visar de markerade byggdelarna, och **Visa bara markerade** döljer allt annat så att du kan vrida runt
+  dem; klicka igen för att visa allt.
+- **Tangentbordet** fungerar när 3D-vyn har fokus: klicka i den eller gå dit med Tabb.
+
+| Tangent | Gör |
+|---|---|
+| Pilarna | flyttar vyn |
+| Ctrl eller Skift och pilarna | vrider |
+| + och − | zoomar |
+| F | zoomar till de markerade |
+| Home | visar allt |
+| 1–7 | ovanifrån, framifrån, från höger, bakifrån, från vänster, underifrån, snett ovanifrån |
+| O | växlar ortografisk vy |
+
 ## Ärenden från ett CDE
 
 En modell som hämtats från en OpenCDE-server, eller vilken modell som helst när en sådan server finns som källa, kan visa
 sina ärenden: knappen *Ärenden* i modellvyn öppnar en panel i inspektören med projektets BCF-ärenden. De som pekar på
 byggdelar i den här modellen står först, med status och antal byggdelar. Klicka på ett ärende, så markeras byggdelarna i
 3D-vyn och panelen visar beskrivning, ögonblicksbild och kommentarer. Ärendena hämtas när du ber om det och lagras inte i
-datamängden; för att räkna på dem sparar du dem som en tabell i Inhämta. Det går att läsa; att skapa och ändra ärenden
-kommer i nästa utgåva.
+datamängden; för att räkna på dem sparar du dem som en tabell i Inhämta. Har ärendet en viewpoint med kamera går vyn dit, i perspektiv eller ortografiskt och med sitt snitt.
 
 Med rättigheterna för det går det också att skriva. *Nytt ärende* skapar ett ärende på servern med titel, typ, status och
-etiketter ur projektets listor, och vyn följer med som viewpoint: kameran, en ögonblicksbild och de markerade byggdelarna som
+etiketter ur projektets listor, och vyn följer med som viewpoint: kameran (perspektiv eller ortografisk) med snittet, en ögonblicksbild och de markerade byggdelarna som
 komponenter. I ett valt ärende kan du skriva en kommentar, byta status och lägga till den aktuella vyn som en ny viewpoint.
 *Spara som BCF* ger alla projektets ärenden med kommentarer, viewpoints och ögonblicksbilder som en BCF-fil, som verktyg utan
 API kan öppna. En BCF-fil går också att läsa in i Inhämta: ärendena blir en tabell, kommentarer och komponenter tabeller bredvid.
@@ -132,7 +158,7 @@ IfcOpenShell är LGPL-3.0 och hämtas oförändrat som pinnade hjul från IfcOpe
 ## DXF-ritningar
 
 En DXF-fil blir en tabell med ett ritobjekt per rad (typ, lager, färg, längd, area, text och läge) och en SVG-ritning.
-Ritningen öppnas i Bearbeta, där du zoomar med hjulet och panorerar genom att dra. Lagren tänds och släcks i inspektören,
+Ritningen öppnas i Bearbeta, där du zoomar med hjulet eller genom att nypa och panorerar genom att dra; när ritningen har fokus flyttar pilarna, + och − zoomar, Home visar allt och F zoomar till det markerade objektet. En rad i tabellen zoomar till sitt objekt. Lagren tänds och släcks i inspektören,
 och en klickning markerar objektet och dess rad. Fliken Mängder ger antal, längd och area per lager och typ.
 
 Linjer, polylinjer med bågar, cirklar, bågar, ellipser, splines, punkter, texter, solider, 3D-ytor, block och

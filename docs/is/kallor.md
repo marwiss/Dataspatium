@@ -179,8 +179,7 @@ opnar í sprettiglugga (innskráning, upphal, val skjala) birtast á tungumáli 
 ## Opin landupplýsingagögn
 
 Glugginn fyrir *Landupplýsingauppsprettu* undir *Bæta við uppsprettum* hefst á lista yfir **tilbúnar landupplýsingauppsprettur**: opnar WFS-,
-OGC API Features- og ArcGIS-þjónustur frá norrænum stofnunum og sveitarfélögum (SCB, SGU, Naturvårdsverket,
-Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Hagstofa Finnlands, SYKE,
+OGC API Features- og ArcGIS-þjónustur frá norrænum stofnunum og sveitarfélögum (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Hagstofa Finnlands, SYKE,
 Helsinki, Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands og fleiri), allar
 staðfestar til að virka úr vafranum. Forstillt uppspretta opnast, öðrum er bætt við með einum smelli og lögin lesin úr
 þjónustunni; síaðu eftir heiti, landi eða innihaldi. Listinn er í `presets/geodata/services.json`. Undir listanum eru
@@ -208,7 +207,7 @@ Forstilltar landupplýsingauppsprettur án lykils (CORS staðfest): opin landupp
 vattenmyndigheten, fornminjar Riksantikvarieämbetet, Skogsstyrelsen, stjórnsýslueiningar og fasteignakort Kartverket
 (Noregur) auk Hagstofu Finnlands og SYKE (Finnland). Lögin eru lesin úr þjónustunni þegar uppsprettan er opnuð í fyrsta
 sinn og má lesa aftur með *Lesa lögin aftur*; listinn er vistaður í þínu eintaki af uppsprettunni. Landupplýsingavettvangur
-Lantmäteriet (deiliskipulag) er á stigi 2 með Bearer-lykli frá tengdri stofnun.
+Lantmäteriet (deiliskipulag, byggingar, strandvernd, menningarsögulegar minjar og mörk fjallaskóga) er á stigi 2 með Bearer-lykli frá tengdri stofnun.
 
 **Geodataportalen** (geodata.se) er sænska landsskráin yfir landupplýsingar stofnana, landshluta og sveitarfélaga.
 Uppsprettan *Geodataportalen (sök geodata)* leitar í skránni og sýnir eina færslu á hverja niðurstöðu með titli, stofnun,

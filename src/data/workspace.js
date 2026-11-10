@@ -53,21 +53,40 @@
       const files = {};
       const entries = [];
       for (const meta of listed) {
+        // The review asks only what the other files hold; the datasets are not copied for that.
+        if (options.extrasOnly) break;
         const path = `datasets/${meta.id}.sqlite`;
         // The review before sharing may pseudonymise or drop columns in the copy (options.transform[id]).
         const tr = options.transform && options.transform[meta.id] ? options.transform[meta.id] : null;
         // A bundle leaves the app, so it is always a clean copy; a backup and a sync must come back exactly as they were.
         if (!only || only.has(meta.id)) files[path] = new Uint8Array(await (options.kind === 'bundle' || tr ? D.require('data/share-scan').copy(meta.id, tr || {}) : datasets.exportBytes(meta.id)));
         const dropped = tr ? (tr.drop || []).length : 0;
-        entries.push({ id: meta.id, kind: meta.kind, name: meta.name, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
+        // A name with personal data in it is masked in the list too, when the review chose so.
+        const shownName = tr && tr.filename && meta.name ? await D.require('data/share-scan').maskText(meta.name) : meta.name;
+        entries.push({ id: meta.id, kind: meta.kind, name: shownName, rowCount: meta.rowCount, columnCount: Math.max(0, (meta.columnCount || 0) - dropped), updatedAt: meta.updatedAt, folder: meta.folder || '', tags: meta.tags || [], file: path, review: tr ? { hash: tr.hash || [], drop: tr.drop || [] } : undefined });
       }
+      // A bundle leaves the app: charts, dashboards and notebooks follow only for the chosen datasets, and the review's choices
+      // for what they hold (options.extras: path -> keep, mask, strip or drop) are applied to the copies.
+      const bundling = options.kind === 'bundle' && !!only;
+      const choiceOf = (path) => (options.extras && options.extras[path]) || 'keep';
+      const shareScan = () => D.require('data/share-scan');
+      /** The text of one file as it leaves, or null when it stays behind. */
+      const leaving = async (path, text) => {
+        const choice = choiceOf(path);
+        if (choice === 'omit') return null;
+        return choice === 'keep' ? text : shareScan().cleanJson(text, choice);
+      };
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
       const vizCharts = optional('viz/charts');
-      const charts = inc.charts ? (vizCharts ? await vizCharts.list() : await idb.listCharts()) : [];
+      const allCharts = inc.charts || inc.dashboards ? (vizCharts ? await vizCharts.list() : await idb.listCharts()) : [];
+      const datasetOfChart = new Map(allCharts.map((c) => [c.id, c.datasetId]));
+      const charts = !inc.charts ? [] : bundling ? allCharts.filter((c) => only.has(c.datasetId)) : allCharts;
       const chartEntries = [];
       for (const chart of charts) {
         const path = `charts/${chart.id}.viz.json`;
-        files[path] = vizCharts ? vizCharts.exportJson(chart) : JSON.stringify(chart);
+        const text = await leaving(path, vizCharts ? vizCharts.exportJson(chart) : JSON.stringify(chart));
+        if (text === null) continue;
+        files[path] = text;
         chartEntries.push({ id: chart.id, name: chart.name, kind: chart.kind, datasetName: chart.datasetName, file: path });
       }
       // Document templates (the user's own, not the built-in ones) travel as doc files.
@@ -76,25 +95,33 @@
       const docEntries = [];
       for (const doc of docs) {
         const path = `documents/${doc.id}.doc.json`;
-        files[path] = docMod.exportJson(doc);
+        const text = await leaving(path, docMod.exportJson(doc));
+        if (text === null) continue;
+        files[path] = text;
         docEntries.push({ id: doc.id, name: doc.name, file: path });
       }
       // Dashboards travel as self-contained dash files (chart definitions embedded).
       const dashMod = optional('viz/dashboards');
-      const dashes = inc.dashboards && dashMod ? await dashMod.list() : [];
+      const dashList = inc.dashboards && dashMod ? await dashMod.list() : [];
+      const dashes = bundling ? dashList.filter((d) => (d.items || []).every((it) => only.has(datasetOfChart.get(it.chartId)))) : dashList;
       const dashEntries = [];
       for (const dash of dashes) {
         const path = `dashboards/${dash.id}.dash.json`;
-        files[path] = await dashMod.exportJson(dash);
+        const text = await leaving(path, await dashMod.exportJson(dash));
+        if (text === null) continue;
+        files[path] = text;
         dashEntries.push({ id: dash.id, name: dash.name, file: path });
       }
       // Notebooks travel with their cells and saved outputs.
       const nbMod = optional('analysis/notebooks');
-      const notebooks = inc.notebooks && nbMod ? await nbMod.list() : [];
+      const nbList = inc.notebooks && nbMod ? await nbMod.list() : [];
+      const notebooks = bundling ? nbList.filter((nb) => !nb.datasetId || only.has(nb.datasetId)) : nbList;
       const nbEntries = [];
       for (const nb of notebooks) {
         const path = `notebooks/${nb.id}.nb.json`;
-        files[path] = nbMod.exportJson(nb);
+        const text = await leaving(path, nbMod.exportJson(nb));
+        if (text === null) continue;
+        files[path] = text;
         nbEntries.push({ id: nb.id, name: nb.name, file: path });
       }
       // Saved R and SQL scripts and regex patterns.
@@ -103,7 +130,9 @@
       for (const sc of scripts) {
         if (!SCRIPT_LANGUAGES.includes(sc.language)) continue;
         const path = `scripts/${sc.id}.script.json`;
-        files[path] = scriptJson(sc);
+        const text = await leaving(path, scriptJson(sc));
+        if (text === null) continue;
+        files[path] = text;
         scriptEntries.push({ id: sc.id, name: sc.name, language: sc.language, file: path });
       }
       // Flows point at this workspace's datasets and scripts: they follow backups, never bundles to other people.
@@ -113,6 +142,20 @@
       // format 2 (2.0): dataset entries carry folder and tags; readers of format 1 ignore them, and 1.x files open as before.
       files[MANIFEST] = JSON.stringify(Object.assign({ app: 'Dataspatium', kind: options.kind || 'workspace-backup', format: 2, name: options.name || '', version: D.version, created: new Date().toISOString(), datasets: entries, charts: chartEntries, documents: docEntries, dashboards: dashEntries, notebooks: nbEntries, scripts: scriptEntries }, options.extra || {}), null, 2);
       return { files, counts: { datasets: listed.length, charts: charts.length, documents: docs.length, dashboards: dashes.length, notebooks: notebooks.length, scripts: scriptEntries.length } };
+    }
+
+    /**
+     * The files besides the datasets that a bundle of these datasets would carry, with their text: charts and notebooks of the
+     * chosen datasets, dashboards whose charts all belong to them, and the user's document templates and scripts.
+     * @param {string[]} ids @param {any} [include] @returns {Promise<Array<{path: string, kind: string, name: string, text: string}>>}
+     */
+    async function bundleExtras(ids, include) {
+      const res = await collect({ kind: 'bundle', datasetIds: ids, listAll: false, include, extrasOnly: true });
+      const manifest = JSON.parse(String(res.files[MANIFEST]));
+      const kindOf = { charts: 'chart', documents: 'document', dashboards: 'dashboard', notebooks: 'notebook', scripts: 'script' };
+      const names = new Map();
+      for (const list of [manifest.charts, manifest.documents, manifest.dashboards, manifest.notebooks, manifest.scripts]) for (const e of list || []) names.set(e.file, e.name);
+      return Object.entries(res.files).filter(([path]) => kindOf[path.split('/')[0]] && typeof res.files[path] === 'string').map(([path, text]) => ({ path, kind: kindOf[path.split('/')[0]], name: names.get(path) || path, text: String(text) }));
     }
 
     /** @returns {Promise<{blob: Blob, count: number, charts: number, documents: number}>} */
@@ -162,7 +205,7 @@
       const changes = await changelog.forDatasets(ids);
       const open = [];
       for (const ds of changes) for (const c of await comments.list(ds.id)) if (!c.resolved) open.push({ dataset: ds.name, author: c.author, column: c.column, text: c.text });
-      const { files, counts } = await collect({ datasetIds: ids, listAll: false, include: options.include, kind: 'bundle', name, extra: { author, message, changes }, transform: options.transform });
+      const { files, counts } = await collect({ datasetIds: ids, listAll: false, include: options.include, kind: 'bundle', name, extra: { author, message, changes }, transform: options.transform, extras: options.extras });
       files['CHANGELOG.md'] = changelog.markdown({ name: name || D.t('bundle.default.name'), author, message, created, changes, comments: open });
       const blob = await zip.createZip(files, { level: 6 });
       // The next bundle's change log starts here.
@@ -426,6 +469,6 @@
       return res;
     }
 
-    return { importScript, backup, bundle, inspect, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, githubConfig, setGithubConfig, pushToGitHub, fetchFromGitHub, restoreFromGitHub, isWorkspaceFile, MANIFEST, AUTOSAVE_SETTING };
+    return { importScript, backup, bundle, bundleExtras, inspect, restore, restoreEntries, collect, saveToFolder, loadFromFolder, setAutoSave, setAutoSaveSetting, autoSaveSetting, initFolder, folderStatus, onFolder, markBackedUp, isBackupDue, backupStatus, setRemindDays, githubConfig, setGithubConfig, pushToGitHub, fetchFromGitHub, restoreFromGitHub, isWorkspaceFile, MANIFEST, AUTOSAVE_SETTING };
   });
 })();

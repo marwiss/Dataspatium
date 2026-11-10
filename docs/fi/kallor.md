@@ -187,8 +187,7 @@ avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyv�
 ## Avoin paikkatieto
 
 Kohdan *Paikkatietolähde* (Lisää lähteitä) valintaikkuna alkaa luettelolla **valmiista paikkatietolähteistä**: avoimia WFS-, OGC API
-Features- ja ArcGIS-palveluja pohjoismaisilta viranomaisilta ja kunnilta (SCB, SGU, Naturvårdsverket,
-Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
+Features- ja ArcGIS-palveluja pohjoismaisilta viranomaisilta ja kunnilta (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet, Skogsstyrelsen, Kartverket, Miljødirektoratet, Riksantikvaren, Tilastokeskus, SYKE, Helsinki,
 Väylävirasto, Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands ja muita), kaikki
 tarkistettu toimiviksi selaimesta. Valmis lähde avataan, muut lisätään yhdellä napsautuksella ja tasot luetaan
 palvelusta; suodata nimen, maan tai sisällön mukaan. Luettelo on tiedostossa `presets/geodata/services.json`. Luettelon
@@ -216,7 +215,7 @@ Valmiit paikkatietolähteet ilman avainta (CORS tarkistettu): SCB:n avoin paikka
 Riksantikvarieämbetetin muinaisjäännökset, Skogsstyrelsen, Kartverketin hallinnolliset yksiköt ja kiinteistökartta (Norja)
 sekä Tilastokeskus ja SYKE (Suomi). Tasot luetaan palvelusta, kun lähde avataan ensimmäisen kerran, ja ne voi lukea
 uudelleen painikkeella *Lue tasot uudelleen*; luettelo tallennetaan omaan kopioosi lähteestä. Lantmäterietin
-paikkatietoalusta (asemakaavat) on tasolla 2 Bearer-avaimella, jonka saa alustaan liittyneeltä organisaatiolta.
+paikkatietoalusta (asemakaavat, rakennukset, rantojensuojelu, kulttuurihistorialliset jäännökset ja tunturien läheisen metsän raja) on tasolla 2 Bearer-avaimella, jonka saa alustaan liittyneeltä organisaatiolta.
 
 **Geodataportalen** (geodata.se) on Ruotsin kansallinen luettelo viranomaisten, alueiden ja kuntien paikkatiedoista. Lähde
 *Geodataportalen (sök geodata)* hakee luettelosta ja näyttää yhden tietueen osumaa kohden: otsikko, organisaatio, kuvaus

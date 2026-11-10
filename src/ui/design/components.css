@@ -234,3 +234,15 @@ dm-code .cm-s-default .cm-comment { color: var(--dm-text-faint); font-style: ita
 dm-code .cm-s-default .cm-variable, dm-code .cm-s-default .cm-variable-2, dm-code .cm-s-default .cm-variable-3, dm-code .cm-s-default .cm-property { color: var(--dm-text); }
 dm-code .cm-s-default .cm-def, dm-code .cm-s-default .cm-builtin { color: var(--dm-cat-6); }
 dm-code .cm-s-default .cm-operator, dm-code .cm-s-default .cm-semicolon { color: var(--dm-text-muted); }
+
+/* dm-viewcube: the cube in a corner of the 3D view that turns with the camera and takes it to a standard view */
+dm-viewcube { position: absolute; top: var(--dm-s-2); right: var(--dm-s-2); z-index: 1; display: flex; flex-direction: column; align-items: center; gap: var(--dm-s-2); --dm-viewcube-size: var(--dm-s-12); --dm-viewcube-half: calc(var(--dm-s-12) / 2); }
+.dm-viewcube-stage { width: var(--dm-viewcube-size); height: var(--dm-viewcube-size); perspective: calc(var(--dm-viewcube-size) * 5); }
+.dm-viewcube-cube { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.dm-viewcube-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0; border: 1px solid var(--dm-border-strong); background: var(--dm-surface-2); color: var(--dm-text); font-family: var(--dm-font-sans); font-size: var(--dm-text-xs); font-weight: var(--dm-weight-medium); backface-visibility: hidden; cursor: pointer; }
+.dm-viewcube-face:hover { background: var(--dm-surface-hover); color: var(--dm-accent); }
+.dm-viewcube-face:focus-visible, .dm-viewcube-iso:focus-visible { outline: 2px solid var(--dm-focus); outline-offset: 1px; }
+.dm-viewcube-iso { display: inline-flex; align-items: center; justify-content: center; width: var(--dm-s-8); height: var(--dm-s-8); padding: 0; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); background: var(--dm-surface); color: var(--dm-text-muted); cursor: pointer; }
+.dm-viewcube-iso:hover { background: var(--dm-surface-hover); color: var(--dm-text); }
+@media (max-width: 759px) { .dm-viewcube-iso { width: 44px; height: 44px; } }
+dm-input input[type="range"].dm-field { padding: 0; border: none; background: none; box-shadow: none; accent-color: var(--dm-accent); min-height: var(--dm-s-6); }

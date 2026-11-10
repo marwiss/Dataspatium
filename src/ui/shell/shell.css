@@ -457,6 +457,7 @@ body.dm-presenting { overflow: hidden; }
 .dm-map { width: 100%; min-height: 240px; border-radius: var(--dm-radius-md); background: var(--dm-surface-2); font-family: var(--dm-font-sans); }
 .dm-map .leaflet-container { font-family: var(--dm-font-sans); font-size: var(--dm-text-sm); background: var(--dm-surface-2); }
 .dm-map .leaflet-control-attribution { font-size: var(--dm-text-xs); color: var(--dm-text-muted); background: var(--dm-surface); }
+.dm-map .leaflet-control-scale-line { font-size: var(--dm-text-xs); color: var(--dm-text); background: var(--dm-surface); border-color: var(--dm-text-muted); }
 .dm-map .leaflet-tooltip { font-family: var(--dm-font-sans); border-color: var(--dm-border); color: var(--dm-text); background: var(--dm-surface); }
 /* base.css caps every canvas at the width of its parent, and Leaflet's panes have no width: the vector layer would be 0 px wide. */
 .leaflet-pane > canvas { max-width: none; }
@@ -501,6 +502,7 @@ body.dm-presenting { overflow: hidden; }
 .dm-model-layout { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--dm-s-2); }
 .dm-model-host { position: relative; flex: 2 1 0; min-height: 280px; overflow: hidden; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-md); background: var(--dm-surface); }
 .dm-model-canvas { position: absolute; inset: 0; display: block; max-width: none; touch-action: none; }
+.dm-model-canvas:focus-visible { outline: 2px solid var(--dm-focus); outline-offset: -2px; }
 .dm-model-loading { padding: var(--dm-s-4); }
 .dm-model-table-wrap { flex: 1 1 0; min-height: 180px; }
 .dm-model-preview { min-height: 420px; height: 520px; flex: none; }

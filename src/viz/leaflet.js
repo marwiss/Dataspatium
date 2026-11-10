@@ -31,6 +31,21 @@
 
     // ---- library ------------------------------------------------------------------------------------------
     function available() { return !!globalThis.L; }
+    /**
+     * Leaflet's canvas renderer can be asked to draw after its map is gone (a layer removed after the renderer, a move that ends
+     * late) and then throws on the deleted context. The vendored file stays as it is; the renderer's prototype skips drawing
+     * without a context.
+     */
+    function guardCanvas(L) {
+      const proto = L && L.Canvas && L.Canvas.prototype;
+      if (!proto || proto._dmGuarded) return;
+      for (const name of ['_redraw', '_update', '_updatePaths', '_draw', '_clear']) {
+        const original = proto[name];
+        if (typeof original !== 'function') continue;
+        proto[name] = function (...args) { if (!this._ctx) { if (name === '_redraw') this._redrawRequest = null; return undefined; } return original.apply(this, args); };
+      }
+      proto._dmGuarded = true;
+    }
     /** Load leaflet.js and leaflet.css from the vendored files (classic script and stylesheet). */
     function ensure() {
       if (!cssLinked && typeof document !== 'undefined') {
@@ -41,6 +56,7 @@
       if (!loading) {
         loading = D.assets.loadVendorScript(VENDOR + 'leaflet.js').then(() => {
           if (!globalThis.L) throw new Error(D.t('map.err.load'));
+          guardCanvas(globalThis.L);
           return globalThis.L;
         }).catch((err) => { loading = null; throw err; });
       }
@@ -385,6 +401,8 @@
         grid ? { crs: grid, minZoom: 0, maxZoom: GRID_RESOLUTIONS.length - 1 } : {}));
       // The map on its element, for the tests (as Cytoscape's graphs carry theirs).
       /** @type {any} */ (el)._dmMap = map;
+      // A scale bar in metres on every interactive map: plans and maps are read to scale.
+      if (interactive) L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
       const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
       const tiles = await tileLayer(def, options, info, !!grid);
       if (tiles) tiles.addTo(map);
@@ -420,7 +438,16 @@
         view: () => ({ center: [round(map.getCenter().lat), round(map.getCenter().lng)], zoom: map.getZoom() }),
         svg: async () => drawSvg(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480 }),
         png: async (scale = 2) => drawPng(prepared, def, { width: el.clientWidth || 800, height: el.clientHeight || 480, scale }),
-        finalize: () => { try { map.remove(); } catch (_err) { /* already gone */ } },
+        // The layers go first, while the canvas renderer is still there: a layer removed after it would ask for a redraw on a
+        // context that is gone (Leaflet's clearRect error when a map is closed right after a pan).
+        finalize: () => {
+          try {
+            map.stop();
+            const layers = []; map.eachLayer((l) => layers.push(l));
+            for (const l of layers) map.removeLayer(l);
+            map.remove();
+          } catch (_err) { /* already gone */ }
+        },
       };
     }
     const round = (v) => Math.round(v * 1e5) / 1e5;

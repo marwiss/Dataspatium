@@ -183,7 +183,7 @@ opnar i popup (innlogging, opplasting, val av dokument), blir viste på språket
 ## Opne geodata
 
 Dialogen for *Geodatakjelde* under *Legg til kjelder* byrjar med ei liste over **ferdige geodatakjelder**: opne WFS-, OGC API Features- og
-ArcGIS-tenester frå nordiske etatar og kommunar (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet, Skogsstyrelsen,
+ArcGIS-tenester frå nordiske etatar og kommunar (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet, Skogsstyrelsen,
 Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto, Danmarks
 Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med fleire), alle kontrollerte å verke frå
 nettlesaren. Ei førehandsinnstilt kjelde blir opna, dei andre blir lagde til med eitt klikk, og laga blir lesne frå tenesta;
@@ -211,7 +211,7 @@ datasettet.
 Førehandsinnstilte geodatakjelder utan nøkkel (CORS verifisert): SCB opne geodata, SGU, Havs- och vattenmyndigheten,
 kulturminna til Riksantikvarieämbetet, Skogsstyrelsen, dei administrative einingane og eigedomskartet frå Kartverket (Noreg) og dessutan
 Statistikcentralen og SYKE (Finland). Laga blir lesne frå tenesta første gongen kjelda blir opna og kan lesast på nytt med *Les
-laga på nytt*; lista blir lagra i din kopi av kjelda. Geodataplattforma til Lantmäteriet (reguleringsplanar) finst som nivå 2
+laga på nytt*; lista blir lagra i din kopi av kjelda. Geodataplattforma til Lantmäteriet (reguleringsplanar, bygningar, strandvern, kulturhistoriske leivningar og grensa for fjellnær skog) finst som nivå 2
 med Bearer-nøkkel frå ein tilknytt organisasjon.
 
 **Geodataportalen** (geodata.se) er den nasjonale katalogen i Sverige over geodata frå etatar, regionar og kommunar. Kjelda

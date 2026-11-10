@@ -150,6 +150,12 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
   [Kort](kartor.md) og [Grafer](grafer.md)).
 - **Bygningsmodeller**: IFC-modeller i 3D med tabeller, egenskaber og mængder, kontrol mod skemaet og mod IDS, og DXF-tegninger (se
   [CAD og BIM](cad-bim.md)). *Teknisk:* web-ifc og three.js til visningen, IfcOpenShell og ifctester i appens Python.
+- **Navigér i modellen**: visningskube og standardvisninger, ortografisk visning, snitkasse og snit ved etage, drejepunkt med
+  dobbeltklik og tastaturet; kameraet og snittet følger med sagernes viewpoints, og kort og planer har målestok (se [CAD og
+  BIM](cad-bim.md#visninger-og-tastaturet)).
+- **Flere geodatakilder**: artsfund fra SLU Artdatabanken og bygninger, strandbeskyttelse, kulturhistoriske levn og grænsen for
+  fjeldnær skov fra den nationale geodataplatform; kildelisten viser, når en kilde ikke kan nås der, hvor appen kører, og pakker
+  tager kun diagrammer og notesbøger med for de valgte datasæt (se [Kilder](kallor.md)).
 - **Python og statistik uden kode**: en Python-konsol og formularer til statistik og tidsserier, der skriver og viser koden (se
   [Statistik](statistik.md) og [Python](python.md)).
 - **Orden og flows**: mapper, tags og handlinger på mange datasæt, gemte flows, der kører med ét klik, og kilder, der siger til, når de
@@ -240,7 +246,7 @@ Der er én udgivelse pr. hovednummer, og Dataspatium og Dataregium med samme num
 | Dataspatium | Hvad den har | Hører sammen med |
 |---|---|---|
 | 1.0.0 | Data fra filer og åbne API'er, bearbejdning, R, SQL og regulære udtryk, svenske planer, diagrammer og kort i diagrammer, dashboards, dokumenter, eksport og deling. Mod en server kun Documents API: hent dokumenter som datasæt og send datasæt og filer tilbage. Ingen sager, ingen modeller og ingen Python | Dataregium 1.0.0 (kun Documents API) |
-| 2.0.0 | Alt i 1.0.0 og desuden tilstandene Søg og Del, Python og statistik uden kode, flere kilder, kortvisninger, nordiske planer, grafer, IFC-modeller i 3D med kontrol mod IDS, flows, Dataspatium Mobil, sager med viewpoints (BCF API 3.0 og 2.1), serverens IFC-graf, kortet *Administration* og kortet *Projektets medlemmer* | Dataregium 2.0.0 |
+| 2.0.0 | Alt i 1.0.0 og desuden tilstandene Søg og Del, Python og statistik uden kode, flere kilder, kortvisninger, nordiske planer, grafer, IFC-modeller i 3D med kontrol mod IDS, flows, Dataspatium Mobil, sager med viewpoints (BCF API 3.0 og 2.1), serverens IFC-graf, kortet *Administration* og kortet *Projektets medlemmer*, navigation med visningskube og snit, flere geodatakilder | Dataregium 2.0.0 |
 | 3.0.0 | Alt i 2.0.0 og desuden kortet *Valider modellen*, kollisionskontrol, Spørg AI og Ændr med AI, nye tomme modeller i valgfrit skema, Sammenlign versioner, publicering med basisversion og forhåndskontrol, ændringsforslag, der afprøves og godkendes på serveren med valg ved konflikter, og grafen i en lettere form | Dataregium 3.0.0 |
 
 En ny udgivelse med samme hovednummer erstatter den forrige; kun den seneste i hver serie rettes. Appens opdateringskontrol tilbyder

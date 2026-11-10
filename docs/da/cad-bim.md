@@ -12,8 +12,10 @@ tager cirka et kvarter minut at importere og åbnes derefter på få sekunder.
 
 ## Modellen i Bearbejd
 
-Modellen åbnes som 3D-visning med en tabel over bygningsdelene nedenunder. Træk for at dreje, rul for at zoome og træk med
-højre knap for at flytte. Knappen med rammen viser hele modellen; enkelte objekter langt fra bygningen tælles ikke med.
+Modellen åbnes som 3D-visning med en tabel over bygningsdelene nedenunder. Træk for at dreje, rul for at zoome mod
+markøren, og træk med højre knap eller med Skift for at flytte; på en berøringsskærm drejer én finger, og to kniber og
+flytter. Dobbeltklik på en bygningsdel for at dreje om netop det punkt. Knappen med rammen viser alt det viste; enkelte
+objekter langt fra bygningen tælles ikke med. Flere måder at se modellen på står under [Visninger og tastaturet](#visninger-og-tastaturet).
 
 - **Markér**: klik på en bygningsdel i modellen eller en række i tabellen. Markeringen følger med, og inspektøren viser
   type, etage, materiale, klassifikation, egenskaber og mængder samt overflade og volumen målt på geometrien.
@@ -24,17 +26,42 @@ højre knap for at flytte. Knappen med rammen viser hele modellen; enkelte objek
 Geometrien beregnes ud fra originalfilen, første gang modellen åbnes i en session, og bruges kun til at tegne og måle.
 Tabellerne findes stadig, selv om computeren mangler WebGL; så vises en besked i stedet for 3D-visningen.
 
+### Visninger og tastaturet
+
+- **Visningskuben** i hjørnet drejer med modellen. Klik på en side for at se modellen ovenfra, forfra, fra højre, bagfra, fra
+  venstre eller nedefra, og på knappen under kuben for at se den skråt ovenfra. Forfra ser langs modellens Y-akse, det vil sige
+  mod nord, når modellen er tegnet med nord opad. Visningerne viser det, filteret viser.
+- **Ortografisk visning**: knappen med kvadratet skifter mellem perspektiv og ortografisk visning, hvor bygningsdelene ikke bliver
+  mindre med afstanden. Ovenfra bliver så en plantegning og forfra en facade. Et diagram og et viewpoint husker, hvilken visning
+  det var.
+- **Snit**: knappen med lagene åbner snittet i inspektøren. Træk i skyderne for øst–vest, syd–nord og højde for at skære det væk,
+  der ligger uden for en kasse, eller vælg en etage under *Snit ved etage* for at se den fra gulvet op til 1,2 m som en
+  plantegning. *Fjern snittet* viser alt igen. Snittet følger med et diagram og et viewpoint, og et viewpoint fra et andet program
+  viser sit snit.
+- **Zoom til markerede** viser de markerede bygningsdele, og **Vis kun markerede** skjuler alt andet, så du kan dreje rundt om
+  dem; klik igen for at vise alt.
+- **Tastaturet** virker, når 3D-visningen har fokus: klik i den, eller gå dertil med Tab.
+
+| Tast | Gør |
+|---|---|
+| Pilene | flytter visningen |
+| Ctrl eller Skift og pilene | drejer |
+| + og − | zoomer |
+| F | zoomer til de markerede |
+| Home | viser alt |
+| 1–7 | ovenfra, forfra, fra højre, bagfra, fra venstre, nedefra, skråt ovenfra |
+| O | skifter ortografisk visning |
+
 ## Sager fra et CDE
 
 En model hentet fra en OpenCDE-server, eller en hvilken som helst model, når en sådan server findes som kilde, kan vise
 sine sager: knappen *Sager* i modelvisningen åbner et panel i inspektøren med projektets BCF-sager. De, der peger på
 bygningsdele i denne model, står først, med status og antal bygningsdele. Klik på en sag, så markeres bygningsdelene i
 3D-visningen, og panelet viser beskrivelse, øjebliksbillede og kommentarer. Sagerne hentes, når du beder om det, og gemmes
-ikke i datasættet; for at regne på dem gemmer du dem som en tabel i Hent. Dette er læsning; at oprette og ændre sager
-kommer i næste udgave.
+ikke i datasættet; for at regne på dem gemmer du dem som en tabel i Hent. Har sagen et viewpoint med kamera, går visningen derhen, i perspektiv eller ortografisk og med sit snit.
 
 Med rettighederne til det kan du også skrive. *Ny sag* opretter en sag på serveren med titel, type, status og etiketter fra
-projektets lister, og visningen følger med som viewpoint: kameraet, et øjebliksbillede og de markerede bygningsdele som
+projektets lister, og visningen følger med som viewpoint: kameraet (perspektiv eller ortografisk) med snittet, et øjebliksbillede og de markerede bygningsdele som
 komponenter. I en valgt sag kan du skrive en kommentar, skifte status og tilføje den aktuelle visning som et nyt viewpoint.
 *Gem som BCF* giver alle projektets sager med kommentarer, viewpoints og øjebliksbilleder som en BCF-fil, som værktøjer uden
 API kan åbne. En BCF-fil kan også læses ind i Hent: sagerne bliver en tabel, kommentarer og komponenter tabeller ved siden af.
@@ -134,7 +161,7 @@ IfcOpenShell er LGPL-3.0 og hentes uændret som fastlåste wheels fra IfcOpenShe
 ## DXF-tegninger
 
 En DXF-fil bliver en tabel med ét tegningsobjekt pr. række (type, lag, farve, længde, areal, tekst og placering) og en
-SVG-tegning. Tegningen åbnes i Bearbejd, hvor du zoomer med hjulet og panorerer ved at trække. Lagene tændes og slukkes i
+SVG-tegning. Tegningen åbnes i Bearbejd, hvor du zoomer med hjulet eller ved at knibe og panorerer ved at trække; når tegningen har fokus, flytter pilene, + og − zoomer, Home viser alt, og F zoomer til det markerede objekt. En række i tabellen zoomer til sit objekt. Lagene tændes og slukkes i
 inspektøren, og et klik markerer objektet og dets række. Fanen Mængder giver antal, længde og areal pr. lag og type.
 
 Linjer, polylinjer med buer, cirkler, buer, ellipser, splines, punkter, tekster, solider, 3D-flader, blokke og

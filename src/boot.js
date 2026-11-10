@@ -62,6 +62,7 @@
     'src/ui/components/table.js',
     'src/ui/components/code-editor.js',
     'src/ui/components/tooltip.js',
+    'src/ui/components/viewcube.js',
     'src/ui/components/index.js',
     'src/ui/share/qr.js',
     'src/data/field-form.js',
@@ -180,6 +181,7 @@
     'src/api/parsers.js',
     'src/api/request.js',
     'src/api/pagination.js',
+    'src/api/reach.js',
     'src/api/connectors.js',
     'src/api/families/common.js',
     'src/api/families/pxweb.js',
@@ -243,6 +245,7 @@
     'src/ui/components/table.js',
     'src/ui/components/code-editor.js',
     'src/ui/components/tooltip.js',
+    'src/ui/components/viewcube.js',
     'src/ui/components/index.js',
     // UI: shell and modes
     'src/ui/shell/state.js',
