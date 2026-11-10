@@ -4,12 +4,14 @@
  * The panel "Jämför versioner" in Bearbeta's model view (the inspector): compare the open IFC model with a saved version of the same
  * dataset or with another model in the workspace (a newer version fetched from a CDE), see what is only here, only there and changed
  * (attribute by attribute, property by property), colour the 3D view (green only here, yellow changed), draw the other version instead
- * (red only there), and mark the elements. Pure reading: nothing is changed; the diff comes from data/model-diff.
+ * (red only there), and mark the elements. For a model fetched from Dataregium the panel also shows the server's change set of the
+ * fetched version (the topic it was approved from, who proposed and approved it, and every change), a third source beside the
+ * snapshots and the other models. Pure reading: nothing is changed; the diff comes from data/model-diff.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/model-compare', ['ui/base', 'ui/basic', 'ui/overlays', 'data/model-diff', 'data/selection'], (base, basic, overlays, modelDiff, selection) => {
+  D.define('ui/bearbeta/model-compare', ['ui/base', 'ui/basic', 'ui/overlays', 'data/model-diff', 'data/selection', 'api/connectors', 'api/families/opencde'], (base, basic, overlays, modelDiff, selection, connectors, opencde) => {
     const { h, t, i18n, replace } = base;
     const SHOW = 50;
     const SHOW_FIELDS = 6;
@@ -20,7 +22,8 @@
      * @param {{preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any}} options
      */
     function create(ctx, ds, options) {
-      const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '' };
+      const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '', server: null, serverBusy: false, serverError: '' };
+      const cde = ds && ds.source && ds.source.cde && ds.source.cde.connectorId && ds.source.cde.documentId && ds.source.cde.versionIndex ? ds.source.cde : null;
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-compare-panel': '' });
       const keyOf = (c) => (c.snapshot ? `v${c.snapshot}` : c.datasetId);
       async function load() {
@@ -62,6 +65,53 @@
         const made = await selection.setFromWhere(ds.id, `id in (${ids.join(', ')})`, [], t('compare.selection.label'));
         overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
+      /** The server's change set of the fetched version: a third source, read from Dataregium; a whole-file version has none. */
+      async function loadServer() {
+        if (!cde || s.serverBusy) return;
+        s.serverBusy = true; s.serverError = ''; render();
+        try {
+          const connector = await connectors.get(cde.connectorId);
+          if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+          if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+          const set = await opencde.versionChanges(connector, cde.documentId, Number(cde.versionIndex));
+          s.server = { version: Number(cde.versionIndex), set: set || null, changes: set && Array.isArray(set.changes) ? set.changes : [] };
+        } catch (err) { s.serverError = String((err && err.message) || err); }
+        s.serverBusy = false; render();
+      }
+      /** The instances the server's changes name by STEP id, into the shared selection. */
+      async function markServer() {
+        const ids = s.server ? Array.from(new Set(s.server.changes.map((c) => Number(c.step_id)).filter((n) => Number.isFinite(n) && n > 0))) : [];
+        if (!ids.length) return;
+        const made = await selection.setFromWhere(ds.id, `id in (${ids.join(', ')})`, [], t('compare.selection.label'));
+        overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+      }
+      /** A value of the change set's form in words: a reference, a typed value, an enumeration, a list or a scalar. */
+      function serverValue(v) {
+        if (v === null || v === undefined || v === '') return '–';
+        if (Array.isArray(v)) return v.map(serverValue).join(', ');
+        if (typeof v === 'object') {
+          if (v.step_id !== undefined) return '#' + v.step_id;
+          if (v.guid !== undefined) return String(v.guid) + (v.path ? '/' + v.path : '');
+          if (v.enum !== undefined) return '.' + v.enum + '.';
+          if (v.type !== undefined) return `${serverValue(v.value)} (${v.type})`;
+        }
+        return String(v);
+      }
+      const serverKey = (c) => (c.step_id !== undefined && c.step_id !== null ? '#' + c.step_id : String(c.guid || '') + (c.path ? '/' + c.path : ''));
+      function renderServer() {
+        if (!cde) return null;
+        const sv = s.server;
+        return h('div', { class: 'dm-stack-sm', 'data-compare-server': '' },
+          h('h4', { text: t('compare.server.title') }),
+          h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('compare.server.load', { n: String(cde.versionIndex) }), icon: 'download', size: 'sm', loading: s.serverBusy, title: t('compare.server.hint'), 'data-compare-server-load': '', onClick: loadServer }),
+            sv && sv.changes.length ? basic.button({ label: t('compare.server.mark', { n: i18n.formatNumber(sv.changes.length) }), icon: 'list-checks', size: 'sm', 'data-compare-server-mark': '', onClick: markServer }) : null),
+          s.serverError ? h('p', { class: 'dm-error', text: s.serverError }) : null,
+          sv && !sv.set ? h('p', { class: 'dm-help dm-small', 'data-compare-server-none': '', text: t('compare.server.none', { n: String(sv.version) }) }) : null,
+          sv && sv.set ? h('div', { class: 'dm-stack-sm', 'data-compare-server-result': String(sv.changes.length) },
+            h('p', { class: 'dm-small', text: t('compare.server.meta', { id: String(sv.set.change_set_id || '–'), proposed: String(sv.set.proposed_by || '–'), approved: String(sv.set.approved_by || '–'), base: String((sv.set.base && sv.set.base.version_index) || '–'), n: i18n.formatNumber(sv.changes.length) }) }),
+            h('ul', { class: 'dm-list dm-xs' }, sv.changes.slice(0, SHOW).map((c) => h('li', { class: 'dm-small', text: t('compare.server.change', { key: serverKey(c), attribute: String(c.attribute || ''), op: String(c.op || 'set'), old: serverValue(c.old), new: serverValue(c.new) }) + (c.copy ? ' (copy)' : '') }))),
+            sv.changes.length > SHOW ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(sv.changes.length - SHOW) }) }) : null) : null);
+      }
       const value = (v) => (v === null || v === undefined || v === '' ? '–' : String(v));
       const line = (e) => `${e.typ}${e.namn ? ' ' + e.namn : ''}${e.vaning ? ' · ' + e.vaning : ''} (#${e.id})`;
       function section(key, label, list, total, fields) {
@@ -92,11 +142,12 @@
               r.counts.onlyHere + r.counts.changed ? basic.button({ label: t('compare.mark', { n: i18n.formatNumber(r.counts.onlyHere + r.counts.changed) }), icon: 'list-checks', size: 'sm', 'data-compare-mark': '', onClick: mark }) : null),
             section('only-here', 'compare.only.here', r.onlyHere, r.counts.onlyHere, false),
             section('changed', 'compare.changed', r.changed, r.counts.changed, true),
-            section('only-there', 'compare.only.there', r.onlyThere, r.counts.onlyThere, false)) : null);
+            section('only-there', 'compare.only.there', r.onlyThere, r.counts.onlyThere, false)) : null,
+          renderServer());
       }
       function destroy() { if (s.result && options.preview) { s.result = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
       load().then(render);
-      return { el, destroy, state: s, load, run, toggleOther, mark };
+      return { el, destroy, state: s, load, run, toggleOther, mark, loadServer, markServer };
     }
     return { create };
   });

@@ -263,3 +263,8 @@ another IFC model in the workspace, for example a newer version fetched from a C
 what is only here, only in the other and what changed, attribute by attribute and property by property. In 3D what is only here is
 green and what changed yellow; *Show the other version* draws the other file instead, with what is only there red. *Mark* puts the
 differences in the selection. Nothing is changed; the same comparison will later take Dataregium's diff API as a source.
+
+For a model fetched from Dataregium the panel also shows *The server's change set*: the changes that gave the fetched version on the
+server, when it was approved from a change proposal, with the topic, who proposed and approved it, the base version (the version the
+proposal was tried against) and every change with instance, attribute, old and new value. *Mark* marks the instances in the model. A
+version uploaded as a whole file has no change set. It is a third source beside the snapshots and the other models.

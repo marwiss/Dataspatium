@@ -3,7 +3,7 @@
 /**
  * Tests for Jämför versioner: two versions of a model differ by element (GlobalId) and property, answered in the ids of each file;
  * a snapshot of the same dataset is identical; the panel lists the differences, colours the model, draws the other version and
- * marks the elements.
+ * marks the elements; for a model fetched from Dataregium the panel shows the server's change set of the fetched version.
  */
 (function () {
   'use strict';
@@ -76,6 +76,52 @@
       panel.destroy();
       assert.equal(previews[previews.length - 1], null, 'the preview ends with the panel');
     } finally { panel.el.remove(); }
+    return 'ok';
+  }, 20000);
+
+  test('model compare: the server\'s change set of the fetched version is a third source, and a whole-file version has none', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const families = D.require('api/families/databases');
+    const connectors = D.require('api/connectors');
+    const CDE = 'dataspatium-asset://tests/compare-cde';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const json = (data, status) => ({ kind: 'text', data: JSON.stringify(data), status });
+    const set = { change_set_id: 't-9', base: { document_id: 'doc-1', version_index: 1 }, proposed_by: 'anna', approved_by: 'bo', changes: [{ step_id: 170, attribute: 'NominalValue', op: 'set', old: { type: 'IfcLabel', value: 'EI60' }, new: { type: 'IfcLabel', value: 'EI90' } }, { guid: '1Xezbq735AdBO_4DerG66G', path: 'ObjectPlacement.RelativePlacement.Location', attribute: 'Coordinates', op: 'set', old: [0, 0, 0], new: [0, 0, 100], copy: true }] };
+    D.net.virtual('tests/compare-cde/', (url) => {
+      const path = (url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname).split('?')[0];
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', documents: '1.0' }, extensions: {} }));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-changes') return Promise.resolve(json(set));
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const source = (versionIndex) => ({ kind: 'file', cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', documentId: 'doc-1', versionIndex } });
+    let panel = null;
+    try {
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      panel = D.require('ui/bearbeta/model-compare').create({ shell: { log: () => {} } }, Object.assign({}, a, { source: source(2) }), { preview: () => {} });
+      document.body.appendChild(panel.el);
+      await waitFor(() => panel.el.querySelector('[data-compare-server-load]'), 3000, 'the server block');
+      await panel.loadServer();
+      const result = panel.el.querySelector('[data-compare-server-result]');
+      assert.ok(result && result.getAttribute('data-compare-server-result') === '2', 'two changes');
+      assert.ok(result.textContent.includes('anna') && result.textContent.includes('bo') && result.textContent.includes('t-9'), 'who proposed and approved, and the topic: ' + result.textContent);
+      const items = result.querySelectorAll('li');
+      assert.ok(items[0].textContent.includes('#170 NominalValue') && items[0].textContent.includes('EI60 (IfcLabel)') && items[0].textContent.includes('EI90'), 'a typed value by step id: ' + items[0].textContent);
+      assert.ok(items[1].textContent.includes('1Xezbq735AdBO_4DerG66G/ObjectPlacement.RelativePlacement.Location Coordinates') && items[1].textContent.includes('0, 0, 100') && items[1].textContent.includes('(copy)'), 'a copy by guid and path: ' + items[1].textContent);
+      assert.ok(panel.el.querySelector('[data-compare-server-mark]'), 'the mark button');
+      panel.destroy(); panel.el.remove();
+      panel = D.require('ui/bearbeta/model-compare').create({ shell: { log: () => {} } }, Object.assign({}, a, { source: source(3) }), { preview: () => {} });
+      document.body.appendChild(panel.el);
+      await panel.loadServer();
+      assert.ok(panel.el.querySelector('[data-compare-server-none]') && !panel.el.querySelector('[data-compare-server-result]'), 'a whole-file version has no change set');
+      assert.equal(panel.state.serverError, '', 'and that is not an error');
+    } finally {
+      if (panel) { panel.destroy(); panel.el.remove(); }
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
     return 'ok';
   }, 20000);
 

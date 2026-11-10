@@ -258,3 +258,8 @@ eller med en annen IFC-modell i arbeidsområdet, for eksempel en nyere versjon h
 lister hva som bare finnes her, bare i den andre og hva som er endret, attributt for attributt og egenskap for egenskap. I 3D farges det
 som bare finnes her grønt og det endrede gult; *Vis den andre versjonen* tegner i stedet den andre filen med det som bare finnes der
 rødt. *Marker* legger forskjellene i utvalget. Ingenting endres; samme sammenligning får senere Dataregiums diff-API som kilde.
+
+For en modell hentet fra Dataregium viser panelet også *Serverens endringssett*: endringene som ga den hentede versjonen på serveren,
+når den ble godkjent fra et endringsforslag, med saken, hvem som foreslo og godkjente, basisversjonen (den versjonen forslaget ble
+prøvd mot) og hver endring med instans, attributt, gammel og ny verdi. *Marker* markerer instansene i modellen. En versjon lastet opp
+som hel fil har ingen endringssett. Det er en tredje kilde ved siden av øyeblikksbildene og de andre modellene.

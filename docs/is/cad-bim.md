@@ -256,3 +256,8 @@ IFC-líkan í vinnusvæðinu, til dæmis nýrri útgáfu sem sótt var frá CDE.
 aðeins hér, aðeins í hinni og hvað breyttist, eigind fyrir eigind og eiginleika fyrir eiginleika. Í þrívídd er það sem er aðeins hér
 grænt og það sem breyttist gult; *Sýna hina útgáfuna* teiknar hina skrána í staðinn með það sem er aðeins þar rautt. *Merkja* setur
 muninn í valið. Engu er breytt; sami samanburður fær síðar diff-API Dataregium sem uppsprettu.
+
+Fyrir líkan sem sótt var frá Dataregium sýnir spjaldið líka *Breytingasett þjónsins*: breytingarnar sem gáfu sóttu útgáfuna á
+þjóninum, þegar hún var samþykkt úr breytingatillögu, með málinu, hver lagði til og samþykkti, grunnútgáfunni (útgáfunni sem tillagan
+var reynd á) og hverri breytingu með tilviki, eigindi, gömlu og nýju gildi. *Merkja* merkir tilvikin í líkaninu. Útgáfa sem hlaðið var
+upp sem heilli skrá hefur ekkert breytingasett. Það er þriðja uppsprettan við hlið svipmyndanna og hinna líkananna.

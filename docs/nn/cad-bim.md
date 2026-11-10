@@ -261,3 +261,8 @@ med ein annan IFC-modell i arbeidsområdet, til dømes ein nyare versjon henta f
 kva som berre finst her, berre i den andre og kva som er endra, attributt for attributt og eigenskap for eigenskap. I 3D vert det som
 berre finst her grønt og det endra gult; *Vis den andre versjonen* teiknar i staden den andre fila med det som berre finst der raudt.
 *Marker* legg skilnadene i utvalet. Ingenting vert endra; same samanlikning får seinare diff-API-et til Dataregium som kjelde.
+
+For ein modell henta frå Dataregium viser panelet også *Endringssettet til tenaren*: endringane som gav den henta versjonen på
+tenaren, når han vart godkjend frå eit endringsframlegg, med saka, kven som føreslo og godkjende, basisversjonen (den versjonen
+framlegget vart prøvd mot) og kvar endring med instans, attributt, gammal og ny verdi. *Marker* markerer instansane i modellen. Ein
+versjon lasta opp som heil fil har ingen endringssett. Det er ei tredje kjelde ved sida av augneblinksbileta og dei andre modellane.

@@ -264,3 +264,8 @@ työtilan IFC-malliin, esimerkiksi CDE:stä haettuun uudempaan versioon. Element
 mitä on vain täällä, vain toisessa ja mikä on muuttunut, attribuutti attribuutilta ja ominaisuus ominaisuudelta. 3D:ssä vain täällä
 oleva värjätään vihreäksi ja muuttunut keltaiseksi; *Näytä toinen versio* piirtää sen sijaan toisen tiedoston, jossa vain siellä oleva on
 punaista. *Merkitse* lisää erot valintaan. Mitään ei muuteta; sama vertailu saa myöhemmin lähteekseen Dataregiumin diff-rajapinnan.
+
+Dataregiumista haetulle mallille paneeli näyttää myös *Palvelimen muutosjoukon*: muutokset, jotka tuottivat haetun version
+palvelimella, kun se hyväksyttiin muutosehdotuksesta, asian, kuka ehdotti ja hyväksyi, perusversion (version, jota vasten ehdotusta
+kokeiltiin) ja jokaisen muutoksen instansseineen, attribuutteineen sekä vanhoine ja uusine arvoineen. *Merkitse* merkitsee instanssit
+malliin. Kokonaisena tiedostona ladatulla versiolla ei ole muutosjoukkoa. Se on kolmas lähde tilannekuvien ja muiden mallien rinnalla.
