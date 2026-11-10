@@ -130,6 +130,12 @@ Under *Flere alternativer* i dialogen kan du velge versjon selv, og tilbyr serve
 bare BCF-dokumentene, saker har ikke serverens løpenummer, og et viewpoint kan ikke slettes. Til gjengjeld kan en kommentar være svar på en annen: knappen
 *Svar* i panelet *Saker*.
 
+Kortet *Prosjektets medlemmer* vises når serveren har prosjektadministrasjon (en Dataregium-utvidelse). Prosjektets ansvarlige
+(manager), som ikke trenger å være serveradministrator, logger inn med *Logg inn som prosjektansvarlig* og ser prosjektene sine og
+medlemmene med rolle: leser, bidragsyter, redaktør eller prosjektansvarlig. Du legger til en person med det nøyaktige brukernavnet på
+serveren, endrer en rolle, fjerner et medlem og gir prosjektet nytt navn; hver endring bekreftes først. Serveren lar ikke prosjektet stå
+uten prosjektansvarlig og sier fra; prosjekter slettes ikke herfra, og nye kontoer opprettes av en administrator.
+
 Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av

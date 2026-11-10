@@ -126,6 +126,12 @@ lämnar bort *Hämta dokument*. Under *Fler alternativ* i dialogen kan du välja
 I 2.1 listar *Filer i projektet* bara BCF-dokumenten, ärenden saknar serverns löpnummer och en viewpoint går inte att ta bort. I gengäld kan en
 kommentar vara ett svar på en annan: knappen *Svara* i panelen *Ärenden*.
 
+Kortet *Projektets medlemmar* visas när servern har projektadministration (Dataregiums tillägg). Den som är projektansvarig
+(manager) i ett projekt, utan att vara serveradministratör, loggar in med *Logga in som projektansvarig* och ser sina projekt och
+deras medlemmar med roll: läsare, bidragsgivare, redaktör eller projektansvarig. Du lägger till en person med det exakta
+användarnamnet på servern, ändrar en roll, tar bort en medlem och byter projektets namn; varje ändring bekräftas först. Servern låter
+inte projektet bli utan projektansvarig och säger till; projekt tas inte bort härifrån, och nya konton skapar en administratör.
+
 Kortet *IFC-LPG* visas när servern har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av

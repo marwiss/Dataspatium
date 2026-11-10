@@ -130,6 +130,12 @@ has neither the Foundation API nor the Documents API, so the app reads the versi
 several you can change in the source's view. In 2.1 *Files in the project* lists only the BCF documents, issues have no number from the server and a
 viewpoint cannot be deleted. In return a comment can answer another: the button *Reply* in the panel *Issues*.
 
+The card *The project's members* appears when the server has project administration (a Dataregium extension). A project's manager,
+who need not be a server administrator, signs in with *Sign in as project manager* and sees the projects they manage and their members
+with roles: viewer, contributor, editor or manager. You add a person by their exact user name on the server, change a role, remove a
+member and rename the project; every change is confirmed first. The server does not let the project be left without a manager and
+says so; projects are not deleted from here, and an administrator creates new accounts.
+
 The card *IFC-LPG* appears when the server has a graph, see [grafer.md](grafer.md#ifc-lpg-on-a-dataregium-server).
 
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a

@@ -130,6 +130,12 @@ Under *Fleire alternativ* i dialogen kan du velje versjon sjølv, og tilbyr tena
 berre BCF-dokumenta, saker har ikkje løpenummeret til tenaren, og eit viewpoint kan ikkje slettast. Til gjengjeld kan ein kommentar vere svar på ein annan:
 knappen *Svar* i panelet *Saker*.
 
+Kortet *Medlemmene i prosjektet* vert vist når tenaren har prosjektadministrasjon (ei Dataregium-utviding). Den ansvarlege i
+prosjektet (manager), som ikkje treng å vere tenaradministrator, loggar inn med *Logg inn som prosjektansvarleg* og ser prosjekta sine
+og medlemmene med rolle: lesar, bidragsytar, redaktør eller prosjektansvarleg. Du legg til ein person med det nøyaktige brukarnamnet på
+tenaren, endrar ei rolle, fjernar eit medlem og gjev prosjektet nytt namn; kvar endring vert stadfesta først. Tenaren lèt ikkje
+prosjektet stå utan prosjektansvarleg og seier frå; prosjekt vert ikkje sletta herifrå, og nye kontoar opprettar ein administrator.
+
 Kortet *IFC-LPG* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
 
 Under *Filer i prosjektet* listar kjelda modellane og dokumenta tenaren har for prosjektet. *Hent* lagar eit datasett av
