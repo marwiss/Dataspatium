@@ -226,6 +226,15 @@ adressen. Ange området i WGS 84 som för de andra källorna; appen räknar om d
 landet. Svaren läses i sidor om 5 000 objekt, och geometrin räknas om till WGS 84 så att datamängden öppnas som karta. Data
 är CC0.
 
+**Lantmäteriets STAC med nyckel** (*Lantmäteriet geodata med nyckel (STAC)*) söker i Lantmäteriets fyra kataloger: vektordata
+(byggnader, marktäcke, ortnamn, fastighetsindelning och adresser), ortofoton, höjddata (markhöjdmodellen och laserdata) och
+kartor. Välj samling och ange ett område; resultatet är filernas ytor som karta med adresserna till filerna. Kortet **Filer i
+källan** i Hantera hämtar sedan filerna med nyckeln: vektorfilerna läses in som datamängder (en ZIP packas upp och en
+GeoPackage ger en datamängd per lager), och raster, punktmoln och andra filer som appen inte läser sparas på datorn, högst 20
+åt gången. Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt konto i
+[Geotorget](https://geotorget.lantmateriet.se/); appen hämtar en åtkomsttoken med dem, och den skickas bara till
+Lantmäteriets API och filservern dl1.lantmateriet.se.
+
 **Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Källan
 *Geodataportalen (sök geodata)* söker i katalogen och visar en post per träff med titel, organisation, beskrivning och
 tjänster: en WFS-, OGC API- eller ArcGIS-tjänst läggs till som geodatakälla med ett klick och öppnas direkt, en

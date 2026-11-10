@@ -158,8 +158,9 @@ færðu gögn á milli þeirra með afriti eða pakka.
 - **Ferðast um líkanið**: sýnarkubbur og staðlaðar sýnir, hornrétt sýn, sniðkassi og snið við hæð, snúningspunktur með tvísmelli
   og lyklaborðið; myndavélin og sniðið fylgja viewpoints málanna, og kort og skipulag hafa kvarða (sjá [CAD og
   BIM](cad-bim.md#sýnir-og-lyklaborðið)).
-- **Fleiri landupplýsingauppsprettur**: vegagögn úr NVDB hjá Trafikverket (hámarkshraði, vegnúmer, burðarþol og 42 hlutategundir
-  til viðbótar, með lykli), tegundafundir frá SLU Artdatabanken og byggingar, strandvernd, menningarsögulegar minjar og mörk
+- **Fleiri landupplýsingauppsprettur**: vigurgögn, réttmyndir, hæðargögn og kort Lantmäteriet sem skrár með lykli, þar sem
+  vigurskrárnar eru lesnar inn beint, vegagögn úr NVDB hjá Trafikverket (hámarkshraði, vegnúmer, burðarþol og 42 hlutategundir til
+  viðbótar, með lykli), tegundafundir frá SLU Artdatabanken og byggingar, strandvernd, menningarsögulegar minjar og mörk
   fjallaskóga úr landsgagnagátt landupplýsinga; listinn yfir uppsprettur segir til þegar uppspretta næst ekki þar sem forritið
   keyrir, og pakkar taka aðeins með myndrit og minnisbækur valinna gagnasafna (sjá [Uppsprettur](kallor.md)).
 - **Python og tölfræði án kóða**: Python-skel og eyðublöð fyrir tölfræði og tímaraðir sem skrifa og sýna kóðann (sjá

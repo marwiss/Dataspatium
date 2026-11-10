@@ -21,7 +21,7 @@ to siste svenske krev nøkkel.
 | Internasjonalt | OECD | Arbeidsløyse, BNP-vekst og den andre statistikken til OECD (SDMX) | Vel land, eller oppgje dataflyt og serienøkkel |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, vel verdiar |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, geodatakatalogen til Lantmäteriet, Sveriges dataportal | Folkehelse, helse, nøkkeltal for kommunar, vêr, luftkvalitet, verneområde, geodata | Sjå den svenske rettleiinga |
-| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Stadnamn, energiattestar, vegdata | Krev nøkkel |
+| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stadnamn, energiattestar, vegdata, geodatafiler | Krev nøkkel |
 
 ### Resten av Norden
 

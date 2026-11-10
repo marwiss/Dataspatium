@@ -21,7 +21,7 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 | Internationalt | OECD | Arbejdsløshed, BNP-vækst og OECD's øvrige statistik (SDMX) | Vælg lande, eller angiv dataflow og serienøgle |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Officiel statistik | Gennemse eller søg, vælg værdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkesundhed, sundhed, nøgletal for kommuner, vejr, luftkvalitet, beskyttede områder, geodata | Se den svenske vejledning |
-| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Stednavne, energimærker, vejdata | Kræver nøgle |
+| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stednavne, energimærker, vejdata, geodatafiler | Kræver nøgle |
 
 ### Øvrige Norden
 

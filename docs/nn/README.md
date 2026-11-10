@@ -159,7 +159,8 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 - **Naviger i modellen**: visingskube og standardvisingar, ortografisk vising, snittboks og snitt ved etasje, dreiepunkt med
   dobbeltklikk og tastaturet; kameraet og snittet følgjer med viewpointane til sakene, og kart og planar har målestokk (sjå [CAD
   og BIM](cad-bim.md#visingar-og-tastaturet)).
-- **Fleire geodatakjelder**: vegdata frå Trafikverkets NVDB (fartsgrenser, vegnummer, bereevne og 42 objekttypar til, med nøkkel),
+- **Fleire geodatakjelder**: vektordata, ortofoto, høgdedata og kart frå Lantmäteriet som filer med nøkkel, der vektorfilene blir
+  lesne inn direkte, vegdata frå Trafikverkets NVDB (fartsgrenser, vegnummer, bereevne og 42 objekttypar til, med nøkkel),
   artsfunn frå SLU Artdatabanken og bygningar, strandvern, kulturhistoriske leivningar og grensa for fjellnær skog frå den
   nasjonale geodataplattforma; kjeldelista viser når ei kjelde ikkje kan nåast der appen køyrer, og pakkar tek berre med diagram
   og notatbøker for dei valde datasetta (sjå [Kjelder](kallor.md)).

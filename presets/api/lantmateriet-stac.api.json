@@ -1,0 +1,752 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "lantmateriet-stac",
+ "name": "Lantmäteriet geodata med nyckel (STAC)",
+ "publisher": "Lantmäteriet",
+ "description": "Lantmäteriets fyra STAC-kataloger: vektordata (byggnader, marktäcke, ortnamn, fastighetsindelning, adresser), ortofoton, höjddata (markhöjdmodellen och laserdata) och kartor. Sök filer inom ett område och hämta dem med nyckeln från Geotorget; vektorfilerna läses in som datamängder, övriga sparas på datorn. Nyckeln sparas aldrig i klartext.",
+ "docs": "https://www.lantmateriet.se/sv/geodata/vara-produkter/oppna-data/",
+ "level": 2,
+ "country": "SE",
+ "baseUrl": "https://api.lantmateriet.se",
+ "license": {
+  "name": "CC BY 4.0",
+  "url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ "auth": {
+  "type": "oauth2_client_credentials",
+  "tokenUrl": "https://apimanager.lantmateriet.se/oauth2/token",
+  "help": "Konsumentnyckel (consumer key) och konsumenthemlighet (consumer secret) från Geotorget.",
+  "signupUrl": "https://geotorget.lantmateriet.se/"
+ },
+ "files": {
+  "column": "asset_data",
+  "hosts": [
+   "dl1.lantmateriet.se"
+  ]
+ },
+ "endpoints": [
+  {
+   "id": "vektor-samlingar",
+   "name": "Vektordata: samlingar",
+   "method": "GET",
+   "path": "/stac-vektor/v1/collections",
+   "response": {
+    "format": "json",
+    "path": "collections",
+    "drop": [
+     "links",
+     "stac_version",
+     "stac_extensions",
+     "type",
+     "summaries",
+     "item_assets"
+    ]
+   },
+   "dataset": {
+    "name": "Lantmäteriet vektordata: samlingar"
+   }
+  },
+  {
+   "id": "vektor",
+   "name": "Vektordata: sök filer",
+   "description": "Filerna i en samling inom ett område, med sina ytor som karta och adresserna till filerna. Kortet Filer i källan i Hantera hämtar dem med nyckeln.",
+   "method": "GET",
+   "path": "/stac-vektor/v1/search",
+   "params": [
+    {
+     "name": "collections",
+     "in": "query",
+     "label": "Samling",
+     "type": "string",
+     "required": true,
+     "optionsFrom": {
+      "endpoint": "vektor-samlingar",
+      "value": "id",
+      "label": "title"
+     }
+    },
+    {
+     "name": "bbox",
+     "in": "query",
+     "type": "string",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "type": "number",
+     "default": 100,
+     "hidden": true
+    }
+   ],
+   "pagination": {
+    "type": "link-rel",
+    "path": "links",
+    "rel": "next",
+    "maxPages": 50
+   },
+   "response": {
+    "format": "geojson"
+   },
+   "dataset": {
+    "name": "Lantmäteriet {collections}"
+   }
+  },
+  {
+   "id": "bild-samlingar",
+   "name": "Ortofoton: samlingar",
+   "method": "GET",
+   "path": "/stac-bild/v1/collections",
+   "response": {
+    "format": "json",
+    "path": "collections",
+    "drop": [
+     "links",
+     "stac_version",
+     "stac_extensions",
+     "type",
+     "summaries",
+     "item_assets"
+    ]
+   },
+   "dataset": {
+    "name": "Lantmäteriet ortofoton: samlingar"
+   }
+  },
+  {
+   "id": "bild",
+   "name": "Ortofoton: sök filer",
+   "description": "Filerna i en samling inom ett område, med sina ytor som karta och adresserna till filerna. Kortet Filer i källan i Hantera hämtar dem med nyckeln.",
+   "method": "GET",
+   "path": "/stac-bild/v1/search",
+   "params": [
+    {
+     "name": "collections",
+     "in": "query",
+     "label": "Samling",
+     "type": "string",
+     "required": true,
+     "optionsFrom": {
+      "endpoint": "bild-samlingar",
+      "value": "id",
+      "label": "title"
+     }
+    },
+    {
+     "name": "bbox",
+     "in": "query",
+     "type": "string",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "type": "number",
+     "default": 100,
+     "hidden": true
+    }
+   ],
+   "pagination": {
+    "type": "link-rel",
+    "path": "links",
+    "rel": "next",
+    "maxPages": 50
+   },
+   "response": {
+    "format": "geojson"
+   },
+   "dataset": {
+    "name": "Lantmäteriet {collections}"
+   }
+  },
+  {
+   "id": "hojd-samlingar",
+   "name": "Höjddata: samlingar",
+   "method": "GET",
+   "path": "/stac-hojd/v1/collections",
+   "response": {
+    "format": "json",
+    "path": "collections",
+    "drop": [
+     "links",
+     "stac_version",
+     "stac_extensions",
+     "type",
+     "summaries",
+     "item_assets"
+    ]
+   },
+   "dataset": {
+    "name": "Lantmäteriet höjddata: samlingar"
+   }
+  },
+  {
+   "id": "hojd",
+   "name": "Höjddata: sök filer",
+   "description": "Filerna i en samling inom ett område, med sina ytor som karta och adresserna till filerna. Kortet Filer i källan i Hantera hämtar dem med nyckeln.",
+   "method": "GET",
+   "path": "/stac-hojd/v1/search",
+   "params": [
+    {
+     "name": "collections",
+     "in": "query",
+     "label": "Samling",
+     "type": "string",
+     "required": true,
+     "optionsFrom": {
+      "endpoint": "hojd-samlingar",
+      "value": "id",
+      "label": "title"
+     }
+    },
+    {
+     "name": "bbox",
+     "in": "query",
+     "type": "string",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "type": "number",
+     "default": 100,
+     "hidden": true
+    }
+   ],
+   "pagination": {
+    "type": "link-rel",
+    "path": "links",
+    "rel": "next",
+    "maxPages": 50
+   },
+   "response": {
+    "format": "geojson"
+   },
+   "dataset": {
+    "name": "Lantmäteriet {collections}"
+   }
+  },
+  {
+   "id": "karta-samlingar",
+   "name": "Kartor: samlingar",
+   "method": "GET",
+   "path": "/stac-karta/v1/collections",
+   "response": {
+    "format": "json",
+    "path": "collections",
+    "drop": [
+     "links",
+     "stac_version",
+     "stac_extensions",
+     "type",
+     "summaries",
+     "item_assets"
+    ]
+   },
+   "dataset": {
+    "name": "Lantmäteriet kartor: samlingar"
+   }
+  },
+  {
+   "id": "karta",
+   "name": "Kartor: sök filer",
+   "description": "Filerna i en samling inom ett område, med sina ytor som karta och adresserna till filerna. Kortet Filer i källan i Hantera hämtar dem med nyckeln.",
+   "method": "GET",
+   "path": "/stac-karta/v1/search",
+   "params": [
+    {
+     "name": "collections",
+     "in": "query",
+     "label": "Samling",
+     "type": "string",
+     "required": true,
+     "optionsFrom": {
+      "endpoint": "karta-samlingar",
+      "value": "id",
+      "label": "title"
+     }
+    },
+    {
+     "name": "bbox",
+     "in": "query",
+     "type": "string",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "limit",
+     "in": "query",
+     "type": "number",
+     "default": 100,
+     "hidden": true
+    }
+   ],
+   "pagination": {
+    "type": "link-rel",
+    "path": "links",
+    "rel": "next",
+    "maxPages": 50
+   },
+   "response": {
+    "format": "geojson"
+   },
+   "dataset": {
+    "name": "Lantmäteriet {collections}"
+   }
+  }
+ ],
+ "notes": "Kräver en konsumentnyckel och konsumenthemlighet från ett kostnadsfritt konto i Geotorget; appen hämtar en åtkomsttoken med dem. Sökningen svarar i sidor om 100 filer med ytorna i WGS 84. Filerna hämtas från dl1.lantmateriet.se, den enda värd som får nyckeln. CC BY 4.0 enligt katalogen.",
+ "i18n": {
+  "en": {
+   "name": "Lantmäteriet geodata with a key (STAC)",
+   "description": "Lantmäteriet’s four STAC catalogues: vector data (buildings, land cover, place names, property division, addresses), orthophotos, elevation data (the terrain model and laser data) and maps. Search files within an area and fetch them with the key from Geotorget; the vector files are read in as datasets, the others are saved on the computer. The key is never stored in clear text.",
+   "notes": "Requires a consumer key and consumer secret from a free account in Geotorget; the app fetches an access token with them. The search answers in pages of 100 files with their footprints in WGS 84. The files are fetched from dl1.lantmateriet.se, the only host that gets the key. CC BY 4.0 according to the catalogue.",
+   "auth": {
+    "help": "Consumer key and consumer secret from Geotorget."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vector data: collections"
+    },
+    "vektor": {
+     "name": "Vector data: search files",
+     "description": "The files of a collection within an area, with their footprints as a map and the addresses of the files. The card Files in the source in Manage fetches them with the key.",
+     "params": {
+      "collections": {
+       "label": "Collection"
+      },
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Orthophotos: collections"
+    },
+    "bild": {
+     "name": "Orthophotos: search files",
+     "description": "The files of a collection within an area, with their footprints as a map and the addresses of the files. The card Files in the source in Manage fetches them with the key.",
+     "params": {
+      "collections": {
+       "label": "Collection"
+      },
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Elevation data: collections"
+    },
+    "hojd": {
+     "name": "Elevation data: search files",
+     "description": "The files of a collection within an area, with their footprints as a map and the addresses of the files. The card Files in the source in Manage fetches them with the key.",
+     "params": {
+      "collections": {
+       "label": "Collection"
+      },
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Maps: collections"
+    },
+    "karta": {
+     "name": "Maps: search files",
+     "description": "The files of a collection within an area, with their footprints as a map and the addresses of the files. The card Files in the source in Manage fetches them with the key.",
+     "params": {
+      "collections": {
+       "label": "Collection"
+      },
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    }
+   }
+  },
+  "da": {
+   "name": "Lantmäteriet geodata med nøgle (STAC)",
+   "description": "Lantmäteriets fire STAC-kataloger: vektordata (bygninger, arealdække, stednavne, matrikelinddeling, adresser), ortofotos, højdedata (terrænmodellen og laserdata) og kort. Søg filer inden for et område, og hent dem med nøglen fra Geotorget; vektorfilerne indlæses som datasæt, de øvrige gemmes på computeren. Nøglen gemmes aldrig i klartekst.",
+   "notes": "Kræver en forbrugernøgle og forbrugerhemmelighed fra en gratis konto i Geotorget; appen henter et adgangstoken med dem. Søgningen svarer i sider på 100 filer med fladerne i WGS 84. Filerne hentes fra dl1.lantmateriet.se, den eneste vært, der får nøglen. CC BY 4.0 ifølge kataloget.",
+   "auth": {
+    "help": "Forbrugernøgle (consumer key) og forbrugerhemmelighed (consumer secret) fra Geotorget."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vektordata: samlinger"
+    },
+    "vektor": {
+     "name": "Vektordata: søg filer",
+     "description": "Filerne i en samling inden for et område, med deres flader som kort og adresserne til filerne. Kortet Filer i kilden i Håndter henter dem med nøglen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Ortofotos: samlinger"
+    },
+    "bild": {
+     "name": "Ortofotos: søg filer",
+     "description": "Filerne i en samling inden for et område, med deres flader som kort og adresserne til filerne. Kortet Filer i kilden i Håndter henter dem med nøglen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Højdedata: samlinger"
+    },
+    "hojd": {
+     "name": "Højdedata: søg filer",
+     "description": "Filerne i en samling inden for et område, med deres flader som kort og adresserne til filerne. Kortet Filer i kilden i Håndter henter dem med nøglen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Kort: samlinger"
+    },
+    "karta": {
+     "name": "Kort: søg filer",
+     "description": "Filerne i en samling inden for et område, med deres flader som kort og adresserne til filerne. Kortet Filer i kilden i Håndter henter dem med nøglen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    }
+   }
+  },
+  "nb": {
+   "name": "Lantmäteriet geodata med nøkkel (STAC)",
+   "description": "Lantmäteriets fire STAC-kataloger: vektordata (bygninger, arealdekke, stedsnavn, eiendomsinndeling, adresser), ortofoto, høydedata (terrengmodellen og laserdata) og kart. Søk filer innenfor et område og hent dem med nøkkelen fra Geotorget; vektorfilene leses inn som datasett, de øvrige lagres på datamaskinen. Nøkkelen lagres aldri i klartekst.",
+   "notes": "Krever en forbrukernøkkel og forbrukerhemmelighet fra en gratis konto i Geotorget; appen henter et tilgangstoken med dem. Søket svarer i sider på 100 filer med flatene i WGS 84. Filene hentes fra dl1.lantmateriet.se, den eneste verten som får nøkkelen. CC BY 4.0 ifølge katalogen.",
+   "auth": {
+    "help": "Forbrukernøkkel (consumer key) og forbrukerhemmelighet (consumer secret) fra Geotorget."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vektordata: samlinger"
+    },
+    "vektor": {
+     "name": "Vektordata: søk filer",
+     "description": "Filene i en samling innenfor et område, med flatene som kart og adressene til filene. Kortet Filer i kilden i Håndter henter dem med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Ortofoto: samlinger"
+    },
+    "bild": {
+     "name": "Ortofoto: søk filer",
+     "description": "Filene i en samling innenfor et område, med flatene som kart og adressene til filene. Kortet Filer i kilden i Håndter henter dem med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Høydedata: samlinger"
+    },
+    "hojd": {
+     "name": "Høydedata: søk filer",
+     "description": "Filene i en samling innenfor et område, med flatene som kart og adressene til filene. Kortet Filer i kilden i Håndter henter dem med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Kart: samlinger"
+    },
+    "karta": {
+     "name": "Kart: søk filer",
+     "description": "Filene i en samling innenfor et område, med flatene som kart og adressene til filene. Kortet Filer i kilden i Håndter henter dem med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    }
+   }
+  },
+  "nn": {
+   "name": "Lantmäteriet geodata med nøkkel (STAC)",
+   "description": "Dei fire STAC-katalogane til Lantmäteriet: vektordata (bygningar, arealdekke, stadnamn, eigedomsinndeling, adresser), ortofoto, høgdedata (terrengmodellen og laserdata) og kart. Søk filer innanfor eit område og hent dei med nøkkelen frå Geotorget; vektorfilene blir lesne inn som datasett, dei andre blir lagra på datamaskina. Nøkkelen blir aldri lagra i klartekst.",
+   "notes": "Krev ein forbrukarnøkkel og forbrukarløyndom frå ein gratis konto i Geotorget; appen hentar eit tilgangstoken med dei. Søket svarar i sider på 100 filer med flatene i WGS 84. Filene blir henta frå dl1.lantmateriet.se, den einaste verten som får nøkkelen. CC BY 4.0 ifølgje katalogen.",
+   "auth": {
+    "help": "Forbrukarnøkkel (consumer key) og forbrukarløyndom (consumer secret) frå Geotorget."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vektordata: samlingar"
+    },
+    "vektor": {
+     "name": "Vektordata: søk filer",
+     "description": "Filene i ei samling innanfor eit område, med flatene som kart og adressene til filene. Kortet Filer i kjelda i Handter hentar dei med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Ortofoto: samlingar"
+    },
+    "bild": {
+     "name": "Ortofoto: søk filer",
+     "description": "Filene i ei samling innanfor eit område, med flatene som kart og adressene til filene. Kortet Filer i kjelda i Handter hentar dei med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Høgdedata: samlingar"
+    },
+    "hojd": {
+     "name": "Høgdedata: søk filer",
+     "description": "Filene i ei samling innanfor eit område, med flatene som kart og adressene til filene. Kortet Filer i kjelda i Handter hentar dei med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Kart: samlingar"
+    },
+    "karta": {
+     "name": "Kart: søk filer",
+     "description": "Filene i ei samling innanfor eit område, med flatene som kart og adressene til filene. Kortet Filer i kjelda i Handter hentar dei med nøkkelen.",
+     "params": {
+      "collections": {
+       "label": "Samling"
+      },
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    }
+   }
+  },
+  "fi": {
+   "name": "Lantmäteriet paikkatiedot avaimella (STAC)",
+   "description": "Lantmäterietin neljä STAC-luetteloa: vektoriaineistot (rakennukset, maanpeite, paikannimet, kiinteistöjaotus, osoitteet), ortoilmakuvat, korkeusaineistot (maastomalli ja laseraineisto) ja kartat. Hae tiedostoja alueelta ja nouda ne Geotorgetin avaimella; vektoritiedostot luetaan aineistoiksi, muut tallennetaan tietokoneelle. Avainta ei koskaan tallenneta selväkielisenä.",
+   "notes": "Vaatii kuluttaja-avaimen ja kuluttajasalaisuuden maksuttomalta Geotorget-tililtä; sovellus hakee niillä käyttötunnisteen. Haku vastaa 100 tiedoston sivuina, alueet WGS 84 -järjestelmässä. Tiedostot haetaan osoitteesta dl1.lantmateriet.se, joka on ainoa avaimen saava palvelin. CC BY 4.0 luettelon mukaan.",
+   "auth": {
+    "help": "Kuluttaja-avain (consumer key) ja kuluttajasalaisuus (consumer secret) Geotorgetista."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vektoriaineistot: kokoelmat"
+    },
+    "vektor": {
+     "name": "Vektoriaineistot: hae tiedostoja",
+     "description": "Kokoelman tiedostot alueella, niiden alueet karttana ja tiedostojen osoitteet. Hallitse-tilan kortti Lähteen tiedostot hakee ne avaimella.",
+     "params": {
+      "collections": {
+       "label": "Kokoelma"
+      },
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Ortoilmakuvat: kokoelmat"
+    },
+    "bild": {
+     "name": "Ortoilmakuvat: hae tiedostoja",
+     "description": "Kokoelman tiedostot alueella, niiden alueet karttana ja tiedostojen osoitteet. Hallitse-tilan kortti Lähteen tiedostot hakee ne avaimella.",
+     "params": {
+      "collections": {
+       "label": "Kokoelma"
+      },
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Korkeusaineistot: kokoelmat"
+    },
+    "hojd": {
+     "name": "Korkeusaineistot: hae tiedostoja",
+     "description": "Kokoelman tiedostot alueella, niiden alueet karttana ja tiedostojen osoitteet. Hallitse-tilan kortti Lähteen tiedostot hakee ne avaimella.",
+     "params": {
+      "collections": {
+       "label": "Kokoelma"
+      },
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Kartat: kokoelmat"
+    },
+    "karta": {
+     "name": "Kartat: hae tiedostoja",
+     "description": "Kokoelman tiedostot alueella, niiden alueet karttana ja tiedostojen osoitteet. Hallitse-tilan kortti Lähteen tiedostot hakee ne avaimella.",
+     "params": {
+      "collections": {
+       "label": "Kokoelma"
+      },
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    }
+   }
+  },
+  "is": {
+   "name": "Landupplýsingar Lantmäteriet með lykli (STAC)",
+   "description": "Fjórar STAC-skrár Lantmäteriet: vigurgögn (byggingar, landþekja, örnefni, fasteignaskipting, heimilisföng), réttmyndir, hæðargögn (landlíkanið og leysigögn) og kort. Leitaðu að skrám innan svæðis og sæktu þær með lyklinum frá Geotorget; vigurskrárnar eru lesnar inn sem gagnasöfn, hinar vistaðar á tölvunni. Lykillinn er aldrei vistaður í hreinum texta.",
+   "notes": "Krefst neytendalykils og neytendaleyndarmáls af ókeypis aðgangi í Geotorget; forritið sækir aðgangstákn með þeim. Leitin svarar í síðum með 100 skrám með fleti í WGS 84. Skrárnar eru sóttar frá dl1.lantmateriet.se, eina hýsilinum sem fær lykilinn. CC BY 4.0 samkvæmt skránni.",
+   "auth": {
+    "help": "Neytendalykill (consumer key) og neytendaleyndarmál (consumer secret) frá Geotorget."
+   },
+   "endpoints": {
+    "vektor-samlingar": {
+     "name": "Vigurgögn: söfn"
+    },
+    "vektor": {
+     "name": "Vigurgögn: leita að skrám",
+     "description": "Skrár safns innan svæðis, með fleti sína sem kort og vistföng skránna. Spjaldið Skrár í uppsprettunni í Umsjón sækir þær með lyklinum.",
+     "params": {
+      "collections": {
+       "label": "Safn"
+      },
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "bild-samlingar": {
+     "name": "Réttmyndir: söfn"
+    },
+    "bild": {
+     "name": "Réttmyndir: leita að skrám",
+     "description": "Skrár safns innan svæðis, með fleti sína sem kort og vistföng skránna. Spjaldið Skrár í uppsprettunni í Umsjón sækir þær með lyklinum.",
+     "params": {
+      "collections": {
+       "label": "Safn"
+      },
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "hojd-samlingar": {
+     "name": "Hæðargögn: söfn"
+    },
+    "hojd": {
+     "name": "Hæðargögn: leita að skrám",
+     "description": "Skrár safns innan svæðis, með fleti sína sem kort og vistföng skránna. Spjaldið Skrár í uppsprettunni í Umsjón sækir þær með lyklinum.",
+     "params": {
+      "collections": {
+       "label": "Safn"
+      },
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "karta-samlingar": {
+     "name": "Kort: söfn"
+    },
+    "karta": {
+     "name": "Kort: leita að skrám",
+     "description": "Skrár safns innan svæðis, með fleti sína sem kort og vistföng skránna. Spjaldið Skrár í uppsprettunni í Umsjón sækir þær með lyklinum.",
+     "params": {
+      "collections": {
+       "label": "Safn"
+      },
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    }
+   }
+  }
+ }
+}

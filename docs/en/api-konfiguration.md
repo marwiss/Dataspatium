@@ -32,6 +32,7 @@ browsed in the app's language when the service has it.
 | Lantmäteriet Direkt (place names) | Place name search | Yes, account in Geotorget (OAuth2) | Give client id and client secret, search |
 | Boverket energy performance certificates | Energy performance certificates for buildings | Yes, key from Boverket's API portal | Give the key, call according to the portal's documentation |
 | Trafikverket NVDB | Road data: speed limits, road numbers, bearing capacity and 42 more object types, as a map | Yes, free key from data.trafikverket.se | Choose an object type, give an area, Fetch |
+| Lantmäteriet geodata with a key (STAC) | Vector data, orthophotos, elevation data and maps as files | Yes, account in Geotorget (OAuth2) | Choose a collection, give an area, Fetch; the files are fetched in Manage with *Files in the source* |
 
 ### The other Nordic countries
 
@@ -186,6 +187,7 @@ app folder and are good starting points.
 | `headers` | Default headers for all requests |
 | `auth` | `none`, `apiKey` (`in`: `header`, `query` or `body`, where the placeholder `{name}` in the body is filled with the key only when the request is sent; `name`, optional `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, optional `scope`); `help` and `signupUrl` are shown by the key field |
 | `rateLimit` | `requests` per `perSeconds`; requests are queued so that the limit holds, and 429 responses are waited out |
+| `files` | File addresses in the result: `{ "column": "asset_data", "hosts": ["dl1.lantmateriet.se"] }` gives the card *Files in the source* in Manage, and the key goes along only to the hosts in `hosts` |
 | `cors` | What was measured for the service's CORS: `{ "file": false }` means that it cannot be reached from a folder, `{ "web": false }` that it cannot be reached from the web version; the source list then says where it works, or that it requires the bridge |
 | `family` | Special browser: `{ "type": "pxweb", "version": 1 or 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Statistics Denmark), `{ "type": "fhi" }` (Norwegian Institute of Public Health) or `{ "type": "socialstyrelsen" }`. `urls` gives one root per app language for PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` states which app languages the service's `lang` parameter understands, as a list or as a map from the app's code to the service's (`{ "nb": "no" }`) |
 | `endpoints` | List of requests (see below) |
