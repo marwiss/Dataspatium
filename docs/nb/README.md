@@ -110,6 +110,8 @@ Det som virker i én versjon, virker også i den neste. Hver versjon hører samm
   godkjenner, og *Sammenlign versjoner* markert i 3D.
 - **Mer**: serverens IFC-graf i skjelettform, en lokal Dataregium på din egen datamaskin og Sundsvalls WFS blant geodatakildene.
 
+![Dataspatium i modusen Bearbeid: en IFC-modell i 3D med Sammenlign versjoner, der en ny vegg er grønn og en endret brannklasse vises](../images/jamfor.png)
+
 ## OpenCDE-API-ene og klientene deres
 
 OpenCDE er buildingSMART Internationals familie av åpne web-API-er for et felles datamiljø, stedet der et prosjekt deler modellene,

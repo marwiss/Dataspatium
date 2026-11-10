@@ -110,6 +110,8 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   *Bera saman útgáfur* merkt í þrívídd.
 - **Meira**: IFC-graf þjónsins á beinagrindarformi, staðbundinn Dataregium á eigin tölvu og WFS Sundsvall meðal landupplýsingauppsprettna.
 
+![Dataspatium í hamnum Vinna: IFC-líkan í þrívídd með Bera saman útgáfur, þar sem nýr veggur er grænn og breyttur brunaflokkur er sýndur](../images/jamfor.png)
+
 ## OpenCDE-forritaskilin og biðlarar þeirra
 
 OpenCDE er fjölskylda opinna vefforritaskila frá buildingSMART International fyrir sameiginlegt gagnaumhverfi, staðinn þar sem

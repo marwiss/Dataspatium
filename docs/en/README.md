@@ -114,6 +114,8 @@ What works in one version also works in the next. Each version belongs with the 
 - **More**: the server's IFC graph in its skeleton form, a local Dataregium on your own computer and Sundsvall's WFS among the geodata
   sources.
 
+![Dataspatium in Process mode: an IFC model in 3D with Compare versions, where a new wall is green and a changed fire rating is listed](../images/jamfor.png)
+
 ## The OpenCDE APIs and their clients
 
 OpenCDE is buildingSMART International's family of open web APIs for a common data environment, the place where a project shares

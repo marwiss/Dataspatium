@@ -114,6 +114,8 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Kukin versio kuuluu y
 - **Lisäksi**: palvelimen IFC-graafi runkomuodossa, paikallinen Dataregium omalla tietokoneella ja Sundsvallin WFS paikkatietolähteiden
   joukossa.
 
+![Dataspatium Muokkaa-tilassa: IFC-malli 3D:nä ja Vertaa versioita, jossa uusi seinä on vihreä ja muuttunut paloluokka näkyy](../images/jamfor.png)
+
 ## OpenCDE-rajapinnat ja niiden asiakasohjelmat
 
 OpenCDE on buildingSMART Internationalin avointen web-rajapintojen perhe yhteiselle dataympäristölle, paikalle, jossa projekti jakaa
