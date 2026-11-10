@@ -140,6 +140,49 @@
     }
 
     /**
+     * The files a search result points at (Lantmäteriet's STAC with a key): fetch the vector files and read them in as datasets,
+     * or save the others on the computer. Shows nothing for datasets from other sources.
+     * @param {any} ctx @param {any} ds @returns {HTMLElement}
+     */
+    function filesCard(ctx, ds) {
+      const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'files', hidden: true });
+      const files = D.require('api/files');
+      const state = { found: null, busy: '', progress: '', message: '', error: '' };
+      async function run(save) {
+        const found = state.found;
+        const list = found.files.filter((f) => (save ? !f.importable : f.importable));
+        state.busy = save ? 'save' : 'import'; state.message = ''; state.error = ''; draw();
+        try {
+          const res = await files.fetchAll(found.connector, list, { save, onProgress: (p) => { state.progress = t('files.progress', { i: p.i, n: p.n, name: p.name }); draw(); } });
+          state.message = save ? t('files.saved', { n: res.saved }) : t('files.done', { n: res.datasets.length });
+          if (res.errors.length) state.error = t('files.err.some', { n: res.errors.length, message: res.errors[0] });
+          ctx.shell.log(state.message, res.errors.length ? 'warn' : 'ok');
+          if (res.datasets.length) ctx.store.set({ selectedId: res.datasets[res.datasets.length - 1].id });
+        } catch (err) { state.error = String((err && err.message) || err); }
+        state.busy = ''; state.progress = ''; draw();
+      }
+      function draw() {
+        const found = state.found;
+        if (!found || !found.files.length) { el.hidden = true; return; }
+        el.hidden = false;
+        const importable = found.files.filter((f) => f.importable).length;
+        const others = found.files.length - importable;
+        replace(el,
+          h('h3', { text: t('files.title') }),
+          h('p', { class: 'dm-help dm-small', text: t('files.count', { n: found.files.length, importable }) }),
+          found.files.length > files.MAX_FILES ? h('p', { class: 'dm-help dm-small', text: t('files.more', { max: files.MAX_FILES }) }) : null,
+          h('div', { class: 'dm-row-wrap' },
+            importable ? ctx.ui.button({ label: t('files.import', { n: Math.min(importable, files.MAX_FILES) }), icon: 'download', size: 'sm', title: t('files.import.hint'), loading: state.busy === 'import', disabled: !!state.busy, 'data-files-import': '', onClick: () => run(false) }) : null,
+            others ? ctx.ui.button({ label: t('files.save', { n: Math.min(others, files.MAX_FILES) }), icon: 'save', size: 'sm', title: t('files.save.hint'), loading: state.busy === 'save', disabled: !!state.busy, 'data-files-save': '', onClick: () => run(true) }) : null),
+          state.progress ? h('p', { class: 'dm-help dm-small', text: state.progress }) : null,
+          state.message ? h('p', { class: 'dm-help dm-small', 'data-files-message': '', text: state.message }) : null,
+          state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null);
+      }
+      files.of(ds).then((found) => { state.found = found; draw(); }, (err) => D.log('files', 'could not list the files', err));
+      return el;
+    }
+
+    /**
      * Issues from a CDE: how they stand, the board Ärendeläge, and the model they point at. Shows nothing for other tables.
      * @param {any} ctx @param {any} ds @returns {HTMLElement|null}
      */
@@ -181,6 +224,6 @@
       return el;
     }
 
-    return { facetCard, healthCard, codeListCard, cdeCard, bcfCard };
+    return { facetCard, healthCard, codeListCard, cdeCard, bcfCard, filesCard };
   });
 })();

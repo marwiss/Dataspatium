@@ -39,7 +39,7 @@ hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðe
 | Alþjóðlegt | OECD | Atvinnuleysi, hagvöxtur og aðrar hagtölur OECD (SDMX) | Veldu lönd, eða gefðu upp gagnaflæði og raðlykil |
 | Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
 | Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
-| Svíþjóð | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Örnefni, orkuvottorð, vegagögn | Krefjast lykils |
+| Svíþjóð | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Örnefni, orkuvottorð, vegagögn, landupplýsingaskrár | Krefjast lykils |
 
 Ekki með: opingogn.is hefur ekki lengur leitarvefþjónustu; DMI í Danmörku og Frost (MET) í Noregi krefjast lykils; Energi Data
 Service og data.norge.no hafa ekki CORS. Uppruna án CORS er ekki hægt að ná beint úr vafranum; þeir krefjast eigin milliþjóns,

@@ -219,6 +219,15 @@ beiðninnar og aldrei í vistfanginu. Tilgreindu svæðið í WGS 84 eins og fyr
 SWEREF 99 TM, og án svæðis er allt landið sótt. Svörin eru lesin í síðum með 5.000 hlutum, og rúmfræðin er umreiknuð í WGS 84
 svo að gagnasafnið opnast sem kort. Gögnin eru CC0.
 
+**STAC hjá Lantmäteriet með lykli** (*Landupplýsingar Lantmäteriet með lykli (STAC)*) leitar í fjórum skrám Lantmäteriet:
+vigurgögn (byggingar, landþekja, örnefni, fasteignaskipting og heimilisföng), réttmyndir, hæðargögn (landlíkanið og
+leysigögn) og kort. Veldu safn og tilgreindu svæði; niðurstaðan er fletir skránna sem kort með vistföngum skránna. Spjaldið
+**Skrár í uppsprettunni** í Umsjón sækir síðan skrárnar með lyklinum: vigurskrárnar eru lesnar inn sem gagnasöfn (ZIP er
+afþjappað og GeoPackage gefur eitt gagnasafn fyrir hvert lag), og rastagögn, punktský og aðrar skrár sem forritið les ekki
+eru vistaðar á tölvunni, mest 20 í einu. Lykillinn er neytendalykillinn og neytendaleyndarmálið af ókeypis aðgangi í
+[Geotorget](https://geotorget.lantmateriet.se/); forritið sækir aðgangstákn með þeim, og það er aðeins sent til API
+Lantmäteriet og skráaþjónsins dl1.lantmateriet.se.
+
 **Geodataportalen** (geodata.se) er sænska landsskráin yfir landupplýsingar stofnana, landshluta og sveitarfélaga.
 Uppsprettan *Geodataportalen (sök geodata)* leitar í skránni og sýnir eina færslu á hverja niðurstöðu með titli, stofnun,
 lýsingu og þjónustum: WFS-, OGC API- eða ArcGIS-þjónustu er bætt við sem landupplýsingauppsprettu með einum smelli og

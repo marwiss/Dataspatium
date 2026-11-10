@@ -153,10 +153,11 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
 - **Navigér i modellen**: visningskube og standardvisninger, ortografisk visning, snitkasse og snit ved etage, drejepunkt med
   dobbeltklik og tastaturet; kameraet og snittet følger med sagernes viewpoints, og kort og planer har målestok (se [CAD og
   BIM](cad-bim.md#visninger-og-tastaturet)).
-- **Flere geodatakilder**: vejdata fra Trafikverkets NVDB (hastighedsgrænser, vejnumre, bæreevne og 42 objekttyper mere, med
-  nøgle), artsfund fra SLU Artdatabanken og bygninger, strandbeskyttelse, kulturhistoriske levn og grænsen for fjeldnær skov fra
-  den nationale geodataplatform; kildelisten viser, når en kilde ikke kan nås der, hvor appen kører, og pakker tager kun
-  diagrammer og notesbøger med for de valgte datasæt (se [Kilder](kallor.md)).
+- **Flere geodatakilder**: Lantmäteriets vektordata, ortofotos, højdedata og kort som filer med nøgle, hvor vektorfilerne indlæses
+  direkte, vejdata fra Trafikverkets NVDB (hastighedsgrænser, vejnumre, bæreevne og 42 objekttyper mere, med nøgle), artsfund fra
+  SLU Artdatabanken og bygninger, strandbeskyttelse, kulturhistoriske levn og grænsen for fjeldnær skov fra den nationale
+  geodataplatform; kildelisten viser, når en kilde ikke kan nås der, hvor appen kører, og pakker tager kun diagrammer og
+  notesbøger med for de valgte datasæt (se [Kilder](kallor.md)).
 - **Python og statistik uden kode**: en Python-konsol og formularer til statistik og tidsserier, der skriver og viser koden (se
   [Statistik](statistik.md) og [Python](python.md)).
 - **Orden og flows**: mapper, tags og handlinger på mange datasæt, gemte flows, der kører med ét klik, og kilder, der siger til, når de

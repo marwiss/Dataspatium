@@ -182,6 +182,7 @@
     'src/api/request.js',
     'src/api/pagination.js',
     'src/api/reach.js',
+    'src/api/files.js',
     'src/api/connectors.js',
     'src/api/families/common.js',
     'src/api/families/pxweb.js',

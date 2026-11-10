@@ -434,6 +434,83 @@
     } finally { await restore(); }
   });
 
+  test('geodata: Lantmäteriet STAC searches an area with the key, and Filer i källan reads the vector files in, with the key only for the file host', async (assert) => {
+    const http = D.require('api/http');
+    const files = D.require('api/files');
+    const zip = D.require('platform/storage/zip');
+    const insight = D.require('ui/kinds/insight-cards');
+    const preset = await connectors.get('lantmateriet-stac');
+    assert.ok(preset && preset.endpoints.length === 8 && preset.files && preset.files.hosts[0] === 'dl1.lantmateriet.se', 'the preset with four catalogues and its file host');
+    assert.equal(D.require('api/schema').validate(preset).length, 0, 'the preset validates');
+    // A copy against a simulated Lantmäteriet; the host of the simulated files is "tests".
+    const copy = JSON.parse(JSON.stringify(preset));
+    Object.assign(copy, { id: 'test-stac', baseUrl: BASE + '/lm', preset: undefined });
+    copy.auth.tokenUrl = BASE + '/lm/token';
+    copy.files.hosts = ['tests'];
+    const connector = await connectors.save(copy);
+    secrets.set(connector.id, { clientId: 'nyckel', clientSecret: 'hemlighet' });
+    const square = [[[18.0, 59.3], [18.05, 59.3], [18.05, 59.33], [18.0, 59.33], [18.0, 59.3]]];
+    serve('tests/geo/lm/token', () => ({ access_token: 'stac-token', expires_in: 3600 }));
+    serve('tests/geo/lm/stac-vektor/v1/search', () => ({ type: 'FeatureCollection', links: [], features: [
+      { type: 'Feature', id: '0180', properties: { title: 'Byggnader för Stockholms kommun' }, geometry: { type: 'Polygon', coordinates: square }, assets: { data: { href: BASE + '/lm-files/byggnad.zip', type: 'application/zip' } } },
+      { type: 'Feature', id: 'm1', properties: { title: 'Höjdmodell' }, geometry: { type: 'Polygon', coordinates: square }, assets: { data: { href: 'https://elsewhere.invalid/hojd/m1.tif', type: 'image/tiff' } } },
+    ] }));
+    const inner = new TextEncoder().encode(JSON.stringify({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: { objektidentitet: 'b1', andamal: 'Bostad' }, geometry: { type: 'Polygon', coordinates: square } }] }));
+    const zipped = await (await zip.createZip({ 'byggnad/byggnad.geojson': inner, '__MACOSX/byggnad/._byggnad.geojson': new Uint8Array([1, 2]) })).arrayBuffer();
+    D.net.virtual('tests/geo/lm-files/byggnad.zip', () => Promise.resolve({ kind: 'binary', data: zipped }));
+    names.push('tests/geo/lm-files/byggnad.zip');
+    const sent = []; const real = http.request;
+    http.request = (req) => {
+      sent.push({ url: String(req.url), auth: String((req.headers || {}).Authorization || '') });
+      // The file on another host is answered here: the test never goes to the network.
+      if (/elsewhere\.invalid/.test(String(req.url))) return Promise.resolve({ ok: true, status: 200, statusText: 'OK', headers: new Headers(), url: req.url, text: '', buffer: new Uint8Array([73, 73, 42, 0]).buffer, contentType: 'image/tiff', ms: 1 });
+      return real(req);
+    };
+    const created = [];
+    try {
+      const endpoint = connector.endpoints.find((e) => e.id === 'vektor');
+      const table = await runner.fetchTable(connector, endpoint, { collections: 'byggnad', bbox: '17.9,59.3,18.1,59.4' });
+      assert.equal(table.rows.length, 2);
+      const search = sent.find((s) => /\/stac-vektor\/v1\/search/.test(s.url));
+      assert.ok(search && /collections=byggnad/.test(search.url) && /bbox=17\.9%2C59\.3%2C18\.1%2C59\.4|bbox=17\.9,59\.3,18\.1,59\.4/.test(search.url), 'collection and area in the search: ' + (search && search.url));
+      assert.equal(search.auth, 'Bearer stac-token', 'the token from the key');
+      const meta = await runner.toDataset(table, { name: 'STAC-test', source: runner.describeSource(connector, endpoint, { collections: 'byggnad' }, table) });
+      created.push(meta.id);
+      const found = await files.of(meta);
+      assert.deepEqual(found.files.map((f) => [f.name, f.importable]), [['byggnad.zip', true], ['m1.tif', false]], 'the files and which can be read in');
+      // The card: two buttons; reading in gives the dataset from inside the ZIP.
+      let selected = null;
+      const ctx = { store: { get: () => ({}), set: (patch) => { selected = patch.selectedId || selected; } }, shell: { log() {} }, ui: { button: D.require('ui/basic').button } };
+      const card = insight.filesCard(ctx, meta);
+      document.body.appendChild(card);
+      try {
+        const button = await waitFor(() => card.querySelector('[data-files-import]'), 5000, 'the import button');
+        assert.ok(card.querySelector('[data-files-save]'), 'and the one that saves the other files');
+        sent.length = 0;
+        /** @type {any} */ (button).click();
+        await waitFor(() => card.querySelector('[data-files-message]'), 20000, 'the files read in');
+        assert.ok(selected, 'the new dataset is selected');
+        created.push(selected);
+        const ds = await datasets.get(selected);
+        assert.equal(ds.rowCount, 1, 'the layer inside the ZIP');
+        assert.ok((await datasets.columns(selected)).some((c) => /geometri|geometry/.test(c.name)), 'with its geometry');
+        assert.equal(ds.source.url, BASE + '/lm-files/byggnad.zip', 'the dataset remembers the file');
+        const fileReq = sent.find((s) => /lm-files\/byggnad\.zip/.test(s.url));
+        assert.equal(fileReq && fileReq.auth, 'Bearer stac-token', 'the key goes to the file host');
+      } finally { card.remove(); }
+      sent.length = 0;
+      await files.fetchFile(connector, 'https://elsewhere.invalid/hojd/m1.tif');
+      assert.equal(sent[0].auth, '', 'never to another host');
+      return created.length + ' datasets';
+    } finally {
+      http.request = real;
+      for (const id of created) await datasets.remove(id).catch(() => {});
+      await connectors.remove(connector.id).catch(() => {});
+      await secrets.forget(connector.id);
+      D.require('api/auth').clearToken(connector.id);
+    }
+  }, 60000);
+
   test('geodata: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);
     assert.ok(true);

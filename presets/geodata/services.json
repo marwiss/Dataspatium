@@ -260,6 +260,27 @@
    }
   },
   {
+   "id": "lantmateriet-stac",
+   "preset": "lantmateriet-stac",
+   "name": "Vektordata, ortofoton, höjddata och kartor (Lantmäteriet STAC)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "api",
+   "key": true,
+   "url": "https://api.lantmateriet.se/stac-vektor/v1",
+   "docs": "https://www.lantmateriet.se/sv/geodata/vara-produkter/oppna-data/",
+   "license": "CC BY 4.0",
+   "about": {
+    "sv": "Byggnader, marktäcke, ortnamn, fastighetsindelning och adresser som filer, ortofoton, markhöjdmodellen, laserdata och kartor inom ett område du anger; filerna hämtas med en kostnadsfri nyckel från Geotorget.",
+    "en": "Buildings, land cover, place names, property division and addresses as files, orthophotos, the terrain model, laser data and maps within an area you give; the files are fetched with a free key from Geotorget.",
+    "da": "Bygninger, arealdække, stednavne, matrikelinddeling og adresser som filer, ortofotos, terrænmodellen, laserdata og kort inden for et område, du angiver; filerne hentes med en gratis nøgle fra Geotorget.",
+    "nb": "Bygninger, arealdekke, stedsnavn, eiendomsinndeling og adresser som filer, ortofoto, terrengmodellen, laserdata og kart innenfor et område du angir; filene hentes med en gratis nøkkel fra Geotorget.",
+    "nn": "Bygningar, arealdekke, stadnamn, eigedomsinndeling og adresser som filer, ortofoto, terrengmodellen, laserdata og kart innanfor eit område du gjev; filene blir henta med ein gratis nøkkel frå Geotorget.",
+    "fi": "Rakennukset, maanpeite, paikannimet, kiinteistöjaotus ja osoitteet tiedostoina, ortoilmakuvat, maastomalli, laseraineisto ja kartat antamallasi alueella; tiedostot haetaan maksuttomalla Geotorget-avaimella.",
+    "is": "Byggingar, landþekja, örnefni, fasteignaskipting og heimilisföng sem skrár, réttmyndir, landlíkanið, leysigögn og kort innan svæðis sem þú tilgreinir; skrárnar eru sóttar með ókeypis lykli frá Geotorget."
+   }
+  },
+  {
    "id": "geodataportalen",
    "preset": "geodataportalen",
    "name": "Geodataportalen (sök)",

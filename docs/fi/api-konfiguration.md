@@ -24,7 +24,7 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 | Ahvenanmaa | ÅSUB | Virallinen tilasto ruotsiksi ja englanniksi | Selaa, valitse arvot |
 | Ruotsi | SCB Statistikdatabasen (API v1 ja v2) | Virallinen tilasto | Selaa tai hae, valitse arvot |
 | Ruotsi | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäterietin geodatakatalogi, Ruotsin dataportaali | Kansanterveys, terveys, kuntien tunnusluvut, sää, ilmanlaatu, suojelualueet, paikkatieto | Ks. ruotsinkielinen opas |
-| Ruotsi | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Paikannimet, energiatodistukset, tietiedot | Vaativat avaimen |
+| Ruotsi | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Paikannimet, energiatodistukset, tietiedot, paikkatietotiedostot | Vaativat avaimen |
 | Norja | SSB Statistikkbanken (API v1 ja v2) | Virallinen tilasto norjaksi ja englanniksi | Selaa aihepuuta tai hae taulukko, valitse arvot; 800 000 solua per kutsu |
 | Norja | FHI Statistikk | Kansanterveystilastot Norjan kansanterveyslaitoksen rekistereistä ja tilastopankeista | Valitse lähde, taulukko ja arvot ulottuvuuksittain (mittarit MEASURE_TYPE-ulottuvuudessa) |
 | Norja | Enhetsregisteret (Brønnøysundregistrene) | Yritykset ja organisaatiot | Hae nimellä, kunnalla, yhtiömuodolla tai toimialakoodilla |

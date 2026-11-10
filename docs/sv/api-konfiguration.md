@@ -24,6 +24,7 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Lantmäteriet Direkt (Ortnamn) | Ortnamnssökning | Ja, konto i Geotorget (OAuth2) | Ange klient-id och klienthemlighet, sök |
 | Boverket energideklarationer | Energideklarationer för byggnader | Ja, nyckel från Boverkets API-portal | Ange nyckel, anropa enligt portalens dokumentation |
 | Trafikverket NVDB | Vägdata: hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, som karta | Ja, kostnadsfri nyckel från data.trafikverket.se | Välj objekttyp, ange område, Hämta |
+| Lantmäteriet geodata med nyckel (STAC) | Vektordata, ortofoton, höjddata och kartor som filer | Ja, konto i Geotorget (OAuth2) | Välj samling, ange område, Hämta; filerna hämtas i Hantera med *Filer i källan* |
 
 Källor utan CORS, till exempel Riksbanken och Världsbanken, kan inte nås direkt från webbläsaren. För dem
 behövs en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
@@ -182,7 +183,8 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `headers` | Standardheaders för alla anrop |
 | `auth` | `none`, `apiKey` (`in`: `header`, `query` eller `body`, där platshållaren `{name}` i kroppen fylls med nyckeln först när begäran skickas; `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |
 | `rateLimit` | `requests` per `perSeconds`; anrop köas så att gränsen hålls, och 429-svar väntas ut |
-| `family` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Danmarks Statistik), `{ "type": "fhi" }` (Folkehelseinstituttet) eller `{ "type": "socialstyrelsen" }`. `urls` ger en rot per appspråk för PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` anger vilka appspråk tjänstens `lang`-parameter förstår, som lista eller som karta från appens kod till tjänstens (`{ "nb": "no" }`) |
+| `files` | Filadresser i resultatet: `{ "column": "asset_data", "hosts": ["dl1.lantmateriet.se"] }` ger kortet *Filer i källan* i Hantera, och nyckeln följer bara med till värdarna i `hosts` |
+| `cors` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Danmarks Statistik), `{ "type": "fhi" }` (Folkehelseinstituttet) eller `{ "type": "socialstyrelsen" }`. `urls` ger en rot per appspråk för PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` anger vilka appspråk tjänstens `lang`-parameter förstår, som lista eller som karta från appens kod till tjänstens (`{ "nb": "no" }`) |
 | `endpoints` | Lista över anrop (se nedan) |
 
 ### Endpoint

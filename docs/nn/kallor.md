@@ -224,6 +224,15 @@ aldri i adressa. Gje området i WGS 84 som for dei andre kjeldene; appen reknar 
 heile landet henta. Svara blir lesne i sider på 5 000 objekt, og geometrien blir rekna om til WGS 84 slik at datasettet blir
 opna som kart. Dataa er CC0.
 
+**Lantmäteriets STAC med nøkkel** (*Lantmäteriet geodata med nøkkel (STAC)*) søkjer i dei fire katalogane til Lantmäteriet:
+vektordata (bygningar, arealdekke, stadnamn, eigedomsinndeling og adresser), ortofoto, høgdedata (terrengmodellen og
+laserdata) og kart. Vel samling og gje eit område; resultatet er flatene til filene som kart med adressene til filene. Kortet
+**Filer i kjelda** i Handter hentar så filene med nøkkelen: vektorfilene blir lesne inn som datasett (ein ZIP blir pakka ut,
+og ein GeoPackage gjev eitt datasett per lag), og raster, punktskyer og andre filer appen ikkje les, blir lagra på
+datamaskina, høgst 20 om gongen. Nøkkelen er forbrukarnøkkelen og forbrukarløyndomen frå ein gratis konto i
+[Geotorget](https://geotorget.lantmateriet.se/); appen hentar eit tilgangstoken med dei, og det blir berre sendt til API-et
+til Lantmäteriet og filtenaren dl1.lantmateriet.se.
+
 **Geodataportalen** (geodata.se) er den nasjonale katalogen i Sverige over geodata frå etatar, regionar og kommunar. Kjelda
 *Geodataportalen (sök geodata)* søkjer i katalogen og viser ein post per treff med tittel, organisasjon, skildring og
 tenester: ei WFS-, OGC API- eller ArcGIS-teneste blir lagd til som geodatakjelde med eitt klikk og opna straks, ei

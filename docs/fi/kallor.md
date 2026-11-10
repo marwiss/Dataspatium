@@ -228,6 +228,15 @@ lähetetään pyynnön rungossa eikä koskaan osoitteessa. Anna alue WGS 84 -jä
 muuntaa sen SWEREF 99 TM -järjestelmään, ja ilman aluetta haetaan koko maa. Vastaukset luetaan 5 000 kohteen sivuina, ja
 geometria muunnetaan WGS 84 -järjestelmään, joten aineisto avautuu karttana. Aineisto on CC0.
 
+**Lantmäterietin STAC avaimella** (*Lantmäteriet paikkatiedot avaimella (STAC)*) hakee Lantmäterietin neljästä luettelosta:
+vektoriaineistot (rakennukset, maanpeite, paikannimet, kiinteistöjaotus ja osoitteet), ortoilmakuvat, korkeusaineistot
+(maastomalli ja laseraineisto) ja kartat. Valitse kokoelma ja anna alue; tuloksena ovat tiedostojen alueet karttana ja
+tiedostojen osoitteet. Hallitse-tilan kortti **Lähteen tiedostot** hakee sitten tiedostot avaimella: vektoritiedostot luetaan
+aineistoiksi (ZIP puretaan, ja GeoPackagesta tulee yksi aineisto tasoa kohden), ja rasterit, pistepilvet ja muut tiedostot,
+joita sovellus ei lue, tallennetaan tietokoneelle, enintään 20 kerrallaan. Avain on kuluttaja-avain ja kuluttajasalaisuus
+maksuttomalta [Geotorget](https://geotorget.lantmateriet.se/)-tililtä; sovellus hakee niillä käyttötunnisteen, ja se
+lähetetään vain Lantmäterietin rajapintaan ja tiedostopalvelimelle dl1.lantmateriet.se.
+
 **Geodataportalen** (geodata.se) on Ruotsin kansallinen luettelo viranomaisten, alueiden ja kuntien paikkatiedoista. Lähde
 *Geodataportalen (sök geodata)* hakee luettelosta ja näyttää yhden tietueen osumaa kohden: otsikko, organisaatio, kuvaus
 ja palvelut. WFS-, OGC API- tai ArcGIS-palvelu lisätään paikkatietolähteeksi yhdellä napsautuksella ja avataan heti,
