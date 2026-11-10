@@ -141,6 +141,9 @@ with roles: viewer, contributor, editor or manager. You add a person by their ex
 member and rename the project; every change is confirmed first. The server does not let the project be left without a manager and
 says so; projects are not deleted from here, and an administrator creates new accounts.
 
+Topics are fetched in pages of 500. A list the server has capped (Dataregium caps at 1,000 items) is read to the end through
+the server’s Link header with rel="next", but only on the same server, so that your token never goes anywhere else.
+
 The card *IFC-LPG* appears when the server has a graph, see [grafer.md](grafer.md#ifc-lpg-on-a-dataregium-server).
 
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
@@ -221,6 +224,13 @@ Management, the National Heritage Board's ancient remains, the Swedish Forest Ag
 and cadastral map (Norway), Statistics Finland and SYKE (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
 geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a Bearer key from a connected organisation.
+
+**Trafikverket’s NVDB** (*Trafikverket NVDB: road data*) gives 45 object types from the Swedish national road database, such
+as speed limits, road numbers, bearing capacity, number of lanes, street names, junctions and rest areas, with one endpoint
+per object type. It needs a free key from [data.trafikverket.se](https://data.trafikverket.se/), which is sent in the request
+body and never in the address. Give the area in WGS 84 as for the other sources; the app converts it to SWEREF 99 TM, and
+without an area the whole country is fetched. The answers are read in pages of 5,000 objects, and the geometry is converted
+to WGS 84 so that the dataset opens as a map. The data are CC0.
 
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
 The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,

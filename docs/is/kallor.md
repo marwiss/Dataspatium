@@ -138,6 +138,9 @@ meðlimi þeirra með hlutverkum: lesandi, þátttakandi, ritstjóri eða ábyrg
 hennar á þjóninum, breytir hlutverki, fjarlægir meðlim og endurnefnir verkefnið; hver breyting er staðfest fyrst. Þjónninn leyfir ekki
 að verkefnið sé án ábyrgðarmanns og segir frá því; verkefnum er ekki eytt héðan, og stjórnandi stofnar nýja aðganga.
 
+Mál eru sótt í síðum með 500. Listi sem þjónninn hefur stytt (Dataregium styttir við 1.000 færslur) er lesinn til enda með
+Link-haus þjónsins með rel="next", en aðeins á sama þjóni, svo að táknið þitt fer aldrei annað.
+
 Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
 
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
@@ -213,6 +216,13 @@ vattenmyndigheten, fornminjar Riksantikvarieämbetet, Skogsstyrelsen, stjórnsý
 (Noregur) auk Hagstofu Finnlands og SYKE (Finnland). Lögin eru lesin úr þjónustunni þegar uppsprettan er opnuð í fyrsta
 sinn og má lesa aftur með *Lesa lögin aftur*; listinn er vistaður í þínu eintaki af uppsprettunni. Landupplýsingavettvangur
 Lantmäteriet (deiliskipulag, byggingar, strandvernd, menningarsögulegar minjar og mörk fjallaskóga) er á stigi 2 með Bearer-lykli frá tengdri stofnun.
+
+**NVDB hjá Trafikverket** (*Trafikverket NVDB: vegagögn*) gefur 45 hlutategundir úr sænska landsvegagagnagrunninum, eins og
+hámarkshraða, vegnúmer, burðarþol, fjölda akreina, götuheiti, gatnamót og áningarstaði, með einum endapunkti fyrir hverja
+hlutategund. Hann krefst ókeypis lykils frá [data.trafikverket.se](https://data.trafikverket.se/), sem er sendur í meginmáli
+beiðninnar og aldrei í vistfanginu. Tilgreindu svæðið í WGS 84 eins og fyrir hinar uppspretturnar; forritið umreiknar það í
+SWEREF 99 TM, og án svæðis er allt landið sótt. Svörin eru lesin í síðum með 5.000 hlutum, og rúmfræðin er umreiknuð í WGS 84
+svo að gagnasafnið opnast sem kort. Gögnin eru CC0.
 
 **Geodataportalen** (geodata.se) er sænska landsskráin yfir landupplýsingar stofnana, landshluta og sveitarfélaga.
 Uppsprettan *Geodataportalen (sök geodata)* leitar í skránni og sýnir eina færslu á hverja niðurstöðu með titli, stofnun,

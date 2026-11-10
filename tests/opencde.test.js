@@ -172,6 +172,29 @@
     return meta.name;
   });
 
+  test('opencde: a list the server has capped is read to the end through Link rel="next", and only on the same server', async (assert) => {
+    const path = `tests/opencde/bcf/3.0/projects/${PROJECT}/topics/${TOPIC}/comments`;
+    const comment = (n) => ({ guid: 'c' + n, topic_guid: TOPIC, date: '2026-11-05T12:00:00.000Z', author: 'contributor', comment: 'Kommentar ' + n });
+    const answer = (list, headers) => Promise.resolve({ kind: 'text', data: JSON.stringify(list), headers });
+    D.net.virtual(path, (url) => {
+      const page = new URL(url).searchParams.get('page') || '1';
+      // As Dataregium answers a list it has capped: the count and where the rest is; the last part points to another server.
+      if (page === '1') return answer([comment(1), comment(2)], { Link: `<${BASE}/bcf/3.0/projects/${PROJECT}/topics/${TOPIC}/comments?page=2>; rel="next"`, 'X-Total-Count': '3' });
+      return answer([comment(3)], { Link: '<https://elsewhere.invalid/comments?page=3>; rel="next"' });
+    });
+    const before = spy.requests.length;
+    try {
+      const table = await opencde.fetchComments(connector, PROJECT, [{ guid: TOPIC, title: 'Dörr saknar dörrstängare' }]);
+      assert.deepEqual(table.rows.map((r) => r[table.columns.indexOf('guid')]), ['c1', 'c2', 'c3'], 'both parts of the list');
+      const urls = spy.requests.slice(before).map((r) => r.url);
+      assert.equal(urls.filter((u) => /\/comments/.test(u)).length, 2, 'one request per part');
+      assert.ok(!urls.some((u) => /elsewhere/.test(u)), 'a link to another server is not followed, so the token stays');
+      return urls.length + ' requests';
+    } finally {
+      serve(path, () => [{ guid: 'c1', topic_guid: TOPIC, date: '2026-11-05T12:00:00.000Z', author: 'contributor', comment: 'Kolla dörrschemat.', viewpoint_guid: VIEWPOINT }]);
+    }
+  });
+
   test('opencde: Documents API selection in a popup and import of the chosen files', async (assert) => {
     const popup = (url) => { assert.ok(url.endsWith('/select-ui/token-1'), 'the server page opens'); return Promise.resolve(`${REDIRECT}?selected_documents_url=${encodeURIComponent(BASE + '/documents/1.0/selection-sessions/s1/documents')}`); };
     const selected = await opencde.selectDocuments(connector, { popup, redirectUri: REDIRECT, extensions: ['.csv', '.ifc'] });

@@ -397,15 +397,41 @@
       if (options.json !== undefined) { headers['Content-Type'] = 'application/json'; req.body = JSON.stringify(options.json); }
       else if (options.body !== undefined) req.body = options.body;
       const res = await send(connector, req, { kind: options.responseType === 'arraybuffer' ? 'binary' : 'json' });
-      if (!res.ok) {
-        let data = null;
-        try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
-        const { code, message, text } = describeError(data);
-        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
-      }
+      if (!res.ok) throw failure(connector, res, url);
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
-      return text ? JSON.parse(text) : null;
+      const data = text ? JSON.parse(text) : null;
+      return req.method === 'GET' && Array.isArray(data) ? rest(connector, req, res, data) : data;
+    }
+    /** The error of an answer that is not OK, with the server's code, report and conflicts when it gives them. */
+    function failure(connector, res, url) {
+      let data = null;
+      try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
+      const { code, message, text } = describeError(data);
+      return new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
+    }
+    const MAX_LINK_PAGES = 200;
+    /**
+     * The rest of a list the server has capped (Dataregium at 1000 items): its answer says where the next part is with
+     * Link rel="next" until the last. Only addresses on the same server are followed, so the token never goes elsewhere.
+     */
+    async function rest(connector, req, res, first) {
+      const origin = new URL(req.url).origin;
+      const seen = new Set([req.url]);
+      let all = first; let last = res;
+      for (let n = 0; n < MAX_LINK_PAGES; n++) {
+        const link = http.linkHeader(last.headers && last.headers.get ? last.headers.get('Link') : null, 'next');
+        if (!link) break;
+        const next = new URL(link, req.url);
+        if (next.origin !== origin || seen.has(next.href)) break;
+        seen.add(next.href);
+        last = await send(connector, Object.assign({}, req, { url: next.href }), { kind: 'json' });
+        if (!last.ok) throw failure(connector, last, next.href);
+        const page = JSON.parse((last.text || '').trim() || '[]');
+        if (!Array.isArray(page)) break;
+        all = all.concat(page);
+      }
+      return all;
     }
     const bcf = (connector, path, options) => api(connector, bcfBase(connector) + path, options);
     /** A file or picture from the server, with its type. @returns {Promise<{buffer: ArrayBuffer, contentType: string}>} */
@@ -466,14 +492,14 @@
     }
     /** All comments of all topics (or of the given topics) as one table. */
     async function fetchComments(connector, projectId, topicList) {
-      const list = topicList || (await topics(connector, projectId, { $top: 1000 }));
+      const list = topicList || (await allTopics(connector, projectId));
       const out = [];
       for (const tp of list) for (const c of await comments(connector, projectId, tp.guid)) out.push(Object.assign({ topic: tp.title }, c));
       return commentsTable(out);
     }
     /** The components of every viewpoint (selection and coloring) as one table: one row per component. */
     async function fetchComponents(connector, projectId, topicList) {
-      const list = topicList || (await topics(connector, projectId, { $top: 1000 }));
+      const list = topicList || (await allTopics(connector, projectId));
       const out = [];
       for (const tp of list) {
         for (const vp of await viewpoints(connector, projectId, tp.guid)) {

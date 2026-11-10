@@ -77,7 +77,8 @@
       const buf = entry.kind === 'text' ? new TextEncoder().encode(entry.data).buffer : entry.data.slice(0);
       // A virtual provider may answer with another status (the tests use it for server errors).
       const status = typeof entry.status === 'number' ? entry.status : 200;
-      return new Response(buf, { status, statusText: status === 200 ? 'OK' : 'Error', headers: { 'Content-Type': mimeFor(name), 'Content-Length': String(buf.byteLength) } });
+      // ... and with headers of its own (a Link to the next page of a list).
+      return new Response(buf, { status, statusText: status === 200 ? 'OK' : 'Error', headers: Object.assign({ 'Content-Type': mimeFor(name), 'Content-Length': String(buf.byteLength) }, entry.headers || {}) });
     }, (err) => new Response(String((err && err.message) || err), { status: 404, statusText: 'Not Found' }));
   };
 

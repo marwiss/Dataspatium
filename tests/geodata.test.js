@@ -362,6 +362,78 @@
     return 'ok';
   }, 30000);
 
+  /** A copy of the NVDB preset against a simulated Trafikverket, two objects per page, and every request it sends. */
+  async function nvdbCopy(path) {
+    const http = D.require('api/http');
+    const preset = await connectors.get('trafikverket-nvdb');
+    const connector = JSON.parse(JSON.stringify(preset));
+    connector.id = 'test-nvdb-' + path; connector.baseUrl = BASE + '/' + path;
+    const endpoint = connector.endpoints.find((e) => e.id === 'hastighetsgrans');
+    endpoint.pagination.size = 2;
+    const sent = []; const real = http.request;
+    http.request = (req) => { sent.push({ url: String(req.url), body: String(req.body || ''), type: String((req.headers || {})['Content-Type'] || '') }); return real(req); };
+    return { preset, connector, endpoint, sent, restore: () => { http.request = real; return secrets.forget(connector.id); } };
+  }
+
+  test('geodata: NVDB sends its key in the XML body and a box in SWEREF 99 TM, pages with skip and opens as a map in WGS 84', async (assert) => {
+    const { preset, connector, endpoint, sent, restore } = await nvdbCopy('nvdb');
+    assert.equal(preset.endpoints.length, 45, 'the preset has 45 object types');
+    assert.equal(D.require('api/schema').validate(preset).length, 0, 'the preset validates');
+    assert.equal(preset.auth.in, 'body');
+    const key = 'ab<c>&"d';
+    secrets.set(connector.id, { apiKey: key });
+    const line = (i) => ({ Id: 'h' + i, Hogsta_tillatna_hastighet: 30 + i * 10, Geometry: { 'WKT-SWEREF99TM-3D': `LINESTRING Z (${674000 + i * 100} 6580000 12.5, ${674050 + i * 100} 6580040 13)` } });
+    const objects = [1, 2, 3].map(line);
+    serve('tests/geo/nvdb/data.json', () => {
+      const skip = Number((/skip="(\d+)"/.exec(sent[sent.length - 1].body) || [])[1]);
+      return { RESPONSE: { RESULT: [{ Hastighetsgräns: objects.slice(skip, skip + 2) }] } };
+    });
+    try {
+      const table = await runner.fetchTable(connector, endpoint, { bbox: '17.95,59.30,18.10,59.36' });
+      assert.equal(table.rows.length, 3, 'both pages');
+      assert.equal(sent.length, 2, 'one request per page');
+      assert.ok(/skip="0"/.test(sent[0].body) && /skip="2"/.test(sent[1].body) && /limit="2"/.test(sent[1].body), 'skip and limit in the body');
+      assert.ok(sent[0].body.includes('authenticationkey="ab&lt;c&gt;&amp;&quot;d"'), 'the key, escaped for XML, in the body: ' + sent[0].body.slice(0, 80));
+      assert.ok(sent.every((s) => !s.url.includes('authenticationkey') && !s.url.includes(encodeURIComponent(key))), 'never in the address');
+      assert.ok(/text\/xml/.test(sent[0].type), 'sent as XML');
+      assert.ok(sent[0].body.includes('objecttype="Hastighetsgräns" namespace="vägdata.nvdb_dk_o" schemaversion="1.2"'), 'object type and namespace');
+      const box = /<INTERSECTS name="Geometry\.WKT-SWEREF99TM-3D" shape="box" value="(\d+) (\d+), (\d+) (\d+)"\/>/.exec(sent[0].body);
+      assert.ok(box, 'a box in the filter: ' + sent[0].body);
+      const [x1, y1, x2, y2] = box.slice(1).map(Number);
+      // Central Stockholm lies around E 670 000–680 000, N 6 575 000–6 585 000 in SWEREF 99 TM.
+      assert.ok(x1 > 660000 && x2 < 690000 && y1 > 6570000 && y2 < 6590000 && x1 < x2 && y1 < y2, 'the box in SWEREF 99 TM: ' + box[0]);
+      const col = (n) => table.columns.indexOf(n);
+      assert.ok(col('geometri') >= 0 && col('geometri_typ') >= 0, 'the GeoJSON columns: ' + table.columns.join(', '));
+      assert.ok(!table.columns.some((c) => /^Geometry/.test(c)), 'the text in SWEREF 99 TM is not kept');
+      const g = JSON.parse(table.rows[0][col('geometri')]);
+      assert.equal(g.type, 'LineString');
+      assert.ok(Math.abs(g.coordinates[0][0] - 18.05) < 0.1 && Math.abs(g.coordinates[0][1] - 59.33) < 0.05, 'in WGS 84: ' + JSON.stringify(g.coordinates[0]));
+      // Without a box no filter is sent, and no placeholder is left in the request.
+      sent.length = 0;
+      await runner.fetchTable(connector, endpoint, {}, { firstPageOnly: true });
+      assert.ok(!/<FILTER>/.test(sent[0].body) && !/\{[a-z]+\}/.test(sent[0].body), 'no filter: ' + sent[0].body);
+      return table.rows.length + ' rows';
+    } finally { await restore(); }
+  });
+
+  test('geodata: NVDB reports the service\'s own error, refuses a box in metres before sending and is among the ready sources', async (assert) => {
+    const { connector, endpoint, sent, restore } = await nvdbCopy('nvdb2');
+    secrets.set(connector.id, { apiKey: 'nyckel' });
+    serve('tests/geo/nvdb2/data.json', () => ({ RESPONSE: { RESULT: [{ ERROR: { SOURCE: 'Request', MESSAGE: 'Okänd objekttyp' } }] } }));
+    try {
+      await assert.throws(() => runner.fetchTable(connector, endpoint, {}), /Okänd objekttyp/);
+      sent.length = 0;
+      await assert.throws(() => runner.fetchTable(connector, endpoint, { bbox: '674000,6580000,675000,6581000' }), /WGS 84/);
+      assert.equal(sent.length, 0, 'nothing sent for a box in metres');
+      const list = JSON.parse(await D.assets.loadText('presets/geodata/services.json')).services;
+      const nvdb = list.find((s) => s.id === 'trafikverket-nvdb');
+      assert.ok(nvdb && nvdb.preset === 'trafikverket-nvdb' && nvdb.key && nvdb.kind === 'api', 'the ready list opens the preset');
+      assert.equal(D.require('api/reach').blocked(nvdb), null, 'reached from file:// and the web alike');
+      assert.ok(/body|kropp/.test(connectors.describeAuth(connector)), 'the key is said to go in the body: ' + connectors.describeAuth(connector));
+      return 'ok';
+    } finally { await restore(); }
+  });
+
   test('geodata: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);
     assert.ok(true);

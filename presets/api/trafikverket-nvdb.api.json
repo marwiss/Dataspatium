@@ -1,0 +1,5233 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "trafikverket-nvdb",
+ "name": "Trafikverket NVDB: vägdata (Öppet API)",
+ "publisher": "Trafikverket",
+ "description": "Nationella vägdatabasen (NVDB) genom Trafikverkets öppna API: 45 objekttyper som hastighetsgränser, vägnummer, bärighet, antal körfält, gatunamn och korsningar, med geometrin som karta. Kräver en kostnadsfri nyckel från data.trafikverket.se; nyckeln skickas i begärans kropp och sparas aldrig i klartext.",
+ "docs": "https://data.trafikverket.se/",
+ "level": 2,
+ "country": "SE",
+ "baseUrl": "https://api.trafikinfo.trafikverket.se/v2",
+ "license": {
+  "name": "CC0 1.0",
+  "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ "auth": {
+  "type": "apiKey",
+  "in": "body",
+  "name": "authenticationkey",
+  "help": "Nyckeln från ett kostnadsfritt konto på data.trafikverket.se. Den skickas i begärans kropp, aldrig i adressen.",
+  "signupUrl": "https://data.trafikverket.se/"
+ },
+ "rateLimit": {
+  "requests": 2,
+  "perSeconds": 1
+ },
+ "endpoints": [
+  {
+   "id": "antalkorfalt2",
+   "name": "Antal körfält",
+   "description": "NVDB-objekttypen AntalKörfält2, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"AntalKörfält2\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.AntalKörfält2",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Antal körfält"
+   }
+  },
+  {
+   "id": "begransadbruttovikt",
+   "name": "Begränsad bruttovikt",
+   "description": "NVDB-objekttypen BegränsadBruttovikt, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"BegränsadBruttovikt\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.BegränsadBruttovikt",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Begränsad bruttovikt"
+   }
+  },
+  {
+   "id": "begransadfordonsbredd",
+   "name": "Begränsad fordonsbredd",
+   "description": "NVDB-objekttypen BegränsadFordonsbredd, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"BegränsadFordonsbredd\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.BegränsadFordonsbredd",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Begränsad fordonsbredd"
+   }
+  },
+  {
+   "id": "begransadfordonslangd",
+   "name": "Begränsad fordonslängd",
+   "description": "NVDB-objekttypen BegränsadFordonslängd, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"BegränsadFordonslängd\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.BegränsadFordonslängd",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Begränsad fordonslängd"
+   }
+  },
+  {
+   "id": "begransataxelboggitryck",
+   "name": "Begränsat axel- och boggitryck",
+   "description": "NVDB-objekttypen BegränsatAxelBoggitryck, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"BegränsatAxelBoggitryck\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.BegränsatAxelBoggitryck",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Begränsat axel- och boggitryck"
+   }
+  },
+  {
+   "id": "betalstation",
+   "name": "Betalstation",
+   "description": "NVDB-objekttypen Betalstation, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Betalstation\" namespace=\"Vägdata.VIS_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Betalstation",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Betalstation"
+   }
+  },
+  {
+   "id": "barighet",
+   "name": "Bärighet",
+   "description": "NVDB-objekttypen Bärighet, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Bärighet\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Bärighet",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Bärighet"
+   }
+  },
+  {
+   "id": "cirkulationsplats",
+   "name": "Cirkulationsplats",
+   "description": "NVDB-objekttypen Cirkulationsplats, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Cirkulationsplats\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Cirkulationsplats",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Cirkulationsplats"
+   }
+  },
+  {
+   "id": "cykelgata",
+   "name": "Cykelgata",
+   "description": "NVDB-objekttypen Cykelgata, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Cykelgata\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Cykelgata",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Cykelgata"
+   }
+  },
+  {
+   "id": "farthinder",
+   "name": "Farthinder",
+   "description": "NVDB-objekttypen Farthinder, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Farthinder\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Farthinder",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Farthinder"
+   }
+  },
+  {
+   "id": "fordonstag-upp-till-34-5-m",
+   "name": "Fordonståg upp till 34,5 m",
+   "description": "NVDB-objekttypen Fordonståg_upp_till_34_5_m, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Fordonståg_upp_till_34_5_m\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Fordonståg_upp_till_34_5_m",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Fordonståg upp till 34,5 m"
+   }
+  },
+  {
+   "id": "funktionellvagklass",
+   "name": "Funktionell vägklass",
+   "description": "NVDB-objekttypen FunktionellVägklass, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"FunktionellVägklass\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.FunktionellVägklass",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Funktionell vägklass"
+   }
+  },
+  {
+   "id": "farjeled",
+   "name": "Färjeled",
+   "description": "NVDB-objekttypen Färjeled, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Färjeled\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Färjeled",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Färjeled"
+   }
+  },
+  {
+   "id": "forbjudenfardriktning",
+   "name": "Förbjuden färdriktning",
+   "description": "NVDB-objekttypen FörbjudenFärdriktning, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"FörbjudenFärdriktning\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.FörbjudenFärdriktning",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Förbjuden färdriktning"
+   }
+  },
+  {
+   "id": "forbud-mot-omkorning",
+   "name": "Förbud mot omkörning",
+   "description": "NVDB-objekttypen Förbud_Mot_Omkörning, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Förbud_Mot_Omkörning\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Förbud_Mot_Omkörning",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Förbud mot omkörning"
+   }
+  },
+  {
+   "id": "gatunamn",
+   "name": "Gatunamn",
+   "description": "NVDB-objekttypen Gatunamn, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Gatunamn\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Gatunamn",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Gatunamn"
+   }
+  },
+  {
+   "id": "gatutyp",
+   "name": "Gatutyp",
+   "description": "NVDB-objekttypen Gatutyp, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Gatutyp\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Gatutyp",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Gatutyp"
+   }
+  },
+  {
+   "id": "gcmvagtyp",
+   "name": "Gång-, cykel- och mopedväg",
+   "description": "NVDB-objekttypen GCMVägtyp, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"GCMVägtyp\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.GCMVägtyp",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Gång-, cykel- och mopedväg"
+   }
+  },
+  {
+   "id": "gagata",
+   "name": "Gågata",
+   "description": "NVDB-objekttypen Gågata, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Gågata\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Gågata",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Gågata"
+   }
+  },
+  {
+   "id": "gangfartsomrade",
+   "name": "Gångfartsområde",
+   "description": "NVDB-objekttypen Gångfartsområde, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Gångfartsområde\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Gångfartsområde",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Gångfartsområde"
+   }
+  },
+  {
+   "id": "hastighetsgrans",
+   "name": "Hastighetsgräns",
+   "description": "NVDB-objekttypen Hastighetsgräns, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Hastighetsgräns\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Hastighetsgräns",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Hastighetsgräns"
+   }
+  },
+  {
+   "id": "huvudled",
+   "name": "Huvudled",
+   "description": "NVDB-objekttypen Huvudled, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Huvudled\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Huvudled",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Huvudled"
+   }
+  },
+  {
+   "id": "hojdhinder-upp-till-45-dm",
+   "name": "Höjdhinder upp till 4,5 m",
+   "description": "NVDB-objekttypen Höjdhinder_upp_till_45_dm, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Höjdhinder_upp_till_45_dm\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Höjdhinder_upp_till_45_dm",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Höjdhinder upp till 4,5 m"
+   }
+  },
+  {
+   "id": "katastrofoverfart",
+   "name": "Katastroföverfart",
+   "description": "NVDB-objekttypen Katastroföverfart, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Katastroföverfart\" namespace=\"Vägdata.VIS_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Katastroföverfart",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Katastroföverfart"
+   }
+  },
+  {
+   "id": "kontrollplats",
+   "name": "Kontrollplats",
+   "description": "NVDB-objekttypen Kontrollplats, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Kontrollplats\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Kontrollplats",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Kontrollplats"
+   }
+  },
+  {
+   "id": "korsning",
+   "name": "Korsning",
+   "description": "NVDB-objekttypen Korsning, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Korsning\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Korsning",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Korsning"
+   }
+  },
+  {
+   "id": "miljozon",
+   "name": "Miljözon",
+   "description": "NVDB-objekttypen Miljözon, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Miljözon\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Miljözon",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Miljözon"
+   }
+  },
+  {
+   "id": "motortrafikled",
+   "name": "Motortrafikled",
+   "description": "NVDB-objekttypen Motortrafikled, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Motortrafikled\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Motortrafikled",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Motortrafikled"
+   }
+  },
+  {
+   "id": "motorvag",
+   "name": "Motorväg",
+   "description": "NVDB-objekttypen Motorväg, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Motorväg\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Motorväg",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Motorväg"
+   }
+  },
+  {
+   "id": "plankorsningvagjarnvag",
+   "name": "Plankorsning väg–järnväg",
+   "description": "NVDB-objekttypen PlankorsningVägJärnväg, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"PlankorsningVägJärnväg\" namespace=\"Vägdata.AGGREGAT_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.PlankorsningVägJärnväg",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Plankorsning väg–järnväg"
+   }
+  },
+  {
+   "id": "rastplatser",
+   "name": "Rastplatser",
+   "description": "NVDB-objekttypen Rastplatser, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Rastplatser\" namespace=\"Vägdata.VIS_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Rastplatser",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Rastplatser"
+   }
+  },
+  {
+   "id": "sidoanlaggningsvag",
+   "name": "Sidoanläggningsväg",
+   "description": "NVDB-objekttypen Sidoanläggningsväg, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Sidoanläggningsväg\" namespace=\"Vägdata.VIS_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Sidoanläggningsväg",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Sidoanläggningsväg"
+   }
+  },
+  {
+   "id": "slitlager",
+   "name": "Slitlager",
+   "description": "NVDB-objekttypen Slitlager, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Slitlager\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Slitlager",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Slitlager"
+   }
+  },
+  {
+   "id": "stopplikt",
+   "name": "Stopplikt",
+   "description": "NVDB-objekttypen Stopplikt, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Stopplikt\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Stopplikt",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Stopplikt"
+   }
+  },
+  {
+   "id": "trafik",
+   "name": "Trafikflöde",
+   "description": "NVDB-objekttypen Trafik, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Trafik\" namespace=\"Vägdata.TRAFIK_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Trafik",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Trafikflöde"
+   }
+  },
+  {
+   "id": "tattbebyggtomrade",
+   "name": "Tättbebyggt område",
+   "description": "NVDB-objekttypen TättbebyggtOmråde, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"TättbebyggtOmråde\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.TättbebyggtOmråde",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Tättbebyggt område"
+   }
+  },
+  {
+   "id": "vagbredd",
+   "name": "Vägbredd",
+   "description": "NVDB-objekttypen Vägbredd, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Vägbredd\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Vägbredd",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Vägbredd"
+   }
+  },
+  {
+   "id": "vaghinder",
+   "name": "Väghinder",
+   "description": "NVDB-objekttypen Väghinder, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Väghinder\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Väghinder",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Väghinder"
+   }
+  },
+  {
+   "id": "vaghallare",
+   "name": "Väghållare",
+   "description": "NVDB-objekttypen Väghållare, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Väghållare\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Väghållare",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Väghållare"
+   }
+  },
+  {
+   "id": "vagklasser-for-trafik-och-skyddsanordningar",
+   "name": "Vägklasser för trafik och skyddsanordningar",
+   "description": "NVDB-objekttypen Vägklasser_För_Trafik_Och_Skyddsanordningar, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Vägklasser_För_Trafik_Och_Skyddsanordningar\" namespace=\"Vägdata.VIS_DK_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Vägklasser_För_Trafik_Och_Skyddsanordningar",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Vägklasser för trafik och skyddsanordningar"
+   }
+  },
+  {
+   "id": "vagnummer",
+   "name": "Vägnummer",
+   "description": "NVDB-objekttypen Vägnummer, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Vägnummer\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Vägnummer",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Vägnummer"
+   }
+  },
+  {
+   "id": "vagslag",
+   "name": "Vägslag",
+   "description": "NVDB-objekttypen Vägslag, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Vägslag\" namespace=\"Vägdata.AGGREGAT_O\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Vägslag",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Vägslag"
+   }
+  },
+  {
+   "id": "vagtrafiknat",
+   "name": "Vägtrafiknät",
+   "description": "NVDB-objekttypen Vägtrafiknät, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Vägtrafiknät\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Vägtrafiknät",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Vägtrafiknät"
+   }
+  },
+  {
+   "id": "vajningsplikt",
+   "name": "Väjningsplikt",
+   "description": "NVDB-objekttypen Väjningsplikt, som punkter.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"Väjningsplikt\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.Väjningsplikt",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Väjningsplikt"
+   }
+  },
+  {
+   "id": "ovrigtvagnamn",
+   "name": "Övrigt vägnamn",
+   "description": "NVDB-objekttypen ÖvrigtVägnamn, som linjer längs vägen.",
+   "method": "POST",
+   "path": "/data.json",
+   "bodyType": "xml",
+   "body": "<REQUEST><LOGIN authenticationkey=\"{authenticationkey}\"/><QUERY objecttype=\"ÖvrigtVägnamn\" namespace=\"vägdata.nvdb_dk_o\" schemaversion=\"1.2\" limit=\"{limit}\" skip=\"{skip}\">{filter}</QUERY></REQUEST>",
+   "params": [
+    {
+     "name": "bbox",
+     "in": "template",
+     "type": "bbox",
+     "crs": "EPSG:3006",
+     "bboxFormat": "pairs",
+     "label": "Område (bbox)",
+     "help": "Västlig longitud, sydlig latitud, östlig longitud, nordlig latitud i WGS 84, avdelade med komma. Tomt = hela tjänsten.",
+     "example": "17.95,59.30,18.10,59.36"
+    },
+    {
+     "name": "filter",
+     "in": "body",
+     "hidden": true,
+     "raw": true,
+     "template": "<FILTER><INTERSECTS name=\"Geometry.WKT-SWEREF99TM-3D\" shape=\"box\" value=\"{bbox}\"/></FILTER>"
+    }
+   ],
+   "pagination": {
+    "type": "offset",
+    "in": "body",
+    "param": "skip",
+    "sizeParam": "limit",
+    "size": 5000,
+    "maxPages": 100
+   },
+   "response": {
+    "format": "json",
+    "path": "RESPONSE.RESULT.0.ÖvrigtVägnamn",
+    "errorPath": "RESPONSE.RESULT.0.ERROR.MESSAGE",
+    "geometry": {
+     "path": "Geometry.WKT-SWEREF99TM-3D",
+     "crs": "EPSG:3006"
+    }
+   },
+   "dataset": {
+    "name": "NVDB Övrigt vägnamn"
+   }
+  }
+ ],
+ "notes": "Ange ett område; utan område hämtas hela landet, vilket för linjeobjekt som hastighetsgränser blir hundratusentals rader. Svaret läses i sidor om 5 000 objekt, och geometrin kommer i SWEREF 99 TM och visas på kartan i WGS 84. CORS tillåter anrop från file:// och från webben.",
+ "i18n": {
+  "en": {
+   "name": "Trafikverket NVDB: road data (Open API)",
+   "description": "The national road database (NVDB) through the Swedish Transport Administration’s open API: 45 object types such as speed limits, road numbers, bearing capacity, number of lanes, street names and junctions, with the geometry as a map. Requires a free key from data.trafikverket.se; the key is sent in the request body and never stored in clear text.",
+   "notes": "Give an area; without one the whole country is fetched, which for line objects such as speed limits means hundreds of thousands of rows. The answer is read in pages of 5,000 objects, and the geometry arrives in SWEREF 99 TM and is shown on the map in WGS 84. CORS allows requests from file:// and from the web.",
+   "auth": {
+    "help": "The key from a free account at data.trafikverket.se. It is sent in the request body, never in the address."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Number of lanes",
+     "description": "The NVDB object type AntalKörfält2, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Gross weight limit",
+     "description": "The NVDB object type BegränsadBruttovikt, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Vehicle width limit",
+     "description": "The NVDB object type BegränsadFordonsbredd, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Vehicle length limit",
+     "description": "The NVDB object type BegränsadFordonslängd, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Axle and bogie load limit",
+     "description": "The NVDB object type BegränsatAxelBoggitryck, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Toll station",
+     "description": "The NVDB object type Betalstation, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Bearing capacity",
+     "description": "The NVDB object type Bärighet, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Roundabout",
+     "description": "The NVDB object type Cirkulationsplats, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Cycle street",
+     "description": "The NVDB object type Cykelgata, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Speed bump",
+     "description": "The NVDB object type Farthinder, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Vehicle combinations up to 34.5 m",
+     "description": "The NVDB object type Fordonståg_upp_till_34_5_m, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Functional road class",
+     "description": "The NVDB object type FunktionellVägklass, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Ferry route",
+     "description": "The NVDB object type Färjeled, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Prohibited direction of travel",
+     "description": "The NVDB object type FörbjudenFärdriktning, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "No overtaking",
+     "description": "The NVDB object type Förbud_Mot_Omkörning, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Street name",
+     "description": "The NVDB object type Gatunamn, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Street type",
+     "description": "The NVDB object type Gatutyp, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Pedestrian, cycle and moped path",
+     "description": "The NVDB object type GCMVägtyp, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Pedestrian street",
+     "description": "The NVDB object type Gågata, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Walking-speed zone",
+     "description": "The NVDB object type Gångfartsområde, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Speed limit",
+     "description": "The NVDB object type Hastighetsgräns, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Priority road",
+     "description": "The NVDB object type Huvudled, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Height restrictions up to 4.5 m",
+     "description": "The NVDB object type Höjdhinder_upp_till_45_dm, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Emergency crossover",
+     "description": "The NVDB object type Katastroföverfart, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Inspection site",
+     "description": "The NVDB object type Kontrollplats, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Junction",
+     "description": "The NVDB object type Korsning, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Low-emission zone",
+     "description": "The NVDB object type Miljözon, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Expressway",
+     "description": "The NVDB object type Motortrafikled, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Motorway",
+     "description": "The NVDB object type Motorväg, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Level crossing",
+     "description": "The NVDB object type PlankorsningVägJärnväg, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Rest areas",
+     "description": "The NVDB object type Rastplatser, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Roadside facility road",
+     "description": "The NVDB object type Sidoanläggningsväg, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Wearing course",
+     "description": "The NVDB object type Slitlager, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Stop",
+     "description": "The NVDB object type Stopplikt, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Traffic flow",
+     "description": "The NVDB object type Trafik, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Built-up area",
+     "description": "The NVDB object type TättbebyggtOmråde, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Road width",
+     "description": "The NVDB object type Vägbredd, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Road obstacle",
+     "description": "The NVDB object type Väghinder, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Road authority",
+     "description": "The NVDB object type Väghållare, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Road classes for traffic and safety barriers",
+     "description": "The NVDB object type Vägklasser_För_Trafik_Och_Skyddsanordningar, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Road number",
+     "description": "The NVDB object type Vägnummer, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Road category",
+     "description": "The NVDB object type Vägslag, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Road network",
+     "description": "The NVDB object type Vägtrafiknät, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Give way",
+     "description": "The NVDB object type Väjningsplikt, as points.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Other road name",
+     "description": "The NVDB object type ÖvrigtVägnamn, as lines along the road.",
+     "params": {
+      "bbox": {
+       "label": "Area (bbox)",
+       "help": "West longitude, south latitude, east longitude, north latitude in WGS 84, separated by commas. Empty = the whole service."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Number of lanes",
+    "begransadbruttovikt": "NVDB Gross weight limit",
+    "begransadfordonsbredd": "NVDB Vehicle width limit",
+    "begransadfordonslangd": "NVDB Vehicle length limit",
+    "begransataxelboggitryck": "NVDB Axle and bogie load limit",
+    "betalstation": "NVDB Toll station",
+    "barighet": "NVDB Bearing capacity",
+    "cirkulationsplats": "NVDB Roundabout",
+    "cykelgata": "NVDB Cycle street",
+    "farthinder": "NVDB Speed bump",
+    "fordonstag-upp-till-34-5-m": "NVDB Vehicle combinations up to 34.5 m",
+    "funktionellvagklass": "NVDB Functional road class",
+    "farjeled": "NVDB Ferry route",
+    "forbjudenfardriktning": "NVDB Prohibited direction of travel",
+    "forbud-mot-omkorning": "NVDB No overtaking",
+    "gatunamn": "NVDB Street name",
+    "gatutyp": "NVDB Street type",
+    "gcmvagtyp": "NVDB Pedestrian, cycle and moped path",
+    "gagata": "NVDB Pedestrian street",
+    "gangfartsomrade": "NVDB Walking-speed zone",
+    "hastighetsgrans": "NVDB Speed limit",
+    "huvudled": "NVDB Priority road",
+    "hojdhinder-upp-till-45-dm": "NVDB Height restrictions up to 4.5 m",
+    "katastrofoverfart": "NVDB Emergency crossover",
+    "kontrollplats": "NVDB Inspection site",
+    "korsning": "NVDB Junction",
+    "miljozon": "NVDB Low-emission zone",
+    "motortrafikled": "NVDB Expressway",
+    "motorvag": "NVDB Motorway",
+    "plankorsningvagjarnvag": "NVDB Level crossing",
+    "rastplatser": "NVDB Rest areas",
+    "sidoanlaggningsvag": "NVDB Roadside facility road",
+    "slitlager": "NVDB Wearing course",
+    "stopplikt": "NVDB Stop",
+    "trafik": "NVDB Traffic flow",
+    "tattbebyggtomrade": "NVDB Built-up area",
+    "vagbredd": "NVDB Road width",
+    "vaghinder": "NVDB Road obstacle",
+    "vaghallare": "NVDB Road authority",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Road classes for traffic and safety barriers",
+    "vagnummer": "NVDB Road number",
+    "vagslag": "NVDB Road category",
+    "vagtrafiknat": "NVDB Road network",
+    "vajningsplikt": "NVDB Give way",
+    "ovrigtvagnamn": "NVDB Other road name"
+   }
+  },
+  "da": {
+   "name": "Trafikverket NVDB: vejdata (åbent API)",
+   "description": "Den nationale vejdatabase (NVDB) gennem det svenske Trafikverkets åbne API: 45 objekttyper som hastighedsgrænser, vejnumre, bæreevne, antal kørespor, gadenavne og kryds, med geometrien som kort. Kræver en gratis nøgle fra data.trafikverket.se; nøglen sendes i forespørgslens krop og gemmes aldrig i klartekst.",
+   "notes": "Angiv et område; uden område hentes hele landet, hvilket for linjeobjekter som hastighedsgrænser bliver hundredtusinder af rækker. Svaret læses i sider på 5.000 objekter, og geometrien kommer i SWEREF 99 TM og vises på kortet i WGS 84. CORS tillader kald fra file:// og fra nettet.",
+   "auth": {
+    "help": "Nøglen fra en gratis konto på data.trafikverket.se. Den sendes i forespørgslens krop, aldrig i adressen."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Antal kørespor",
+     "description": "NVDB-objekttypen AntalKörfält2 som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Begrænset totalvægt",
+     "description": "NVDB-objekttypen BegränsadBruttovikt som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Begrænset køretøjsbredde",
+     "description": "NVDB-objekttypen BegränsadFordonsbredd som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Begrænset køretøjslængde",
+     "description": "NVDB-objekttypen BegränsadFordonslängd som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Begrænset aksel- og bogietryk",
+     "description": "NVDB-objekttypen BegränsatAxelBoggitryck som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Betalingsstation",
+     "description": "NVDB-objekttypen Betalstation som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Bæreevne",
+     "description": "NVDB-objekttypen Bärighet som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Rundkørsel",
+     "description": "NVDB-objekttypen Cirkulationsplats som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Cykelgade",
+     "description": "NVDB-objekttypen Cykelgata som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Vejbump",
+     "description": "NVDB-objekttypen Farthinder som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Vogntog op til 34,5 m",
+     "description": "NVDB-objekttypen Fordonståg_upp_till_34_5_m som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Funktionel vejklasse",
+     "description": "NVDB-objekttypen FunktionellVägklass som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Færgerute",
+     "description": "NVDB-objekttypen Färjeled som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Forbudt kørselsretning",
+     "description": "NVDB-objekttypen FörbjudenFärdriktning som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "Overhalingsforbud",
+     "description": "NVDB-objekttypen Förbud_Mot_Omkörning som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Gadenavn",
+     "description": "NVDB-objekttypen Gatunamn som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Gadetype",
+     "description": "NVDB-objekttypen Gatutyp som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Gang-, cykel- og knallertsti",
+     "description": "NVDB-objekttypen GCMVägtyp som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Gågade",
+     "description": "NVDB-objekttypen Gågata som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Opholds- og legeområde",
+     "description": "NVDB-objekttypen Gångfartsområde som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Hastighedsgrænse",
+     "description": "NVDB-objekttypen Hastighetsgräns som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Forkørselsvej",
+     "description": "NVDB-objekttypen Huvudled som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Højdebegrænsning op til 4,5 m",
+     "description": "NVDB-objekttypen Höjdhinder_upp_till_45_dm som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Nødoverkørsel",
+     "description": "NVDB-objekttypen Katastroföverfart som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Kontrolplads",
+     "description": "NVDB-objekttypen Kontrollplats som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Kryds",
+     "description": "NVDB-objekttypen Korsning som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Miljøzone",
+     "description": "NVDB-objekttypen Miljözon som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Motortrafikvej",
+     "description": "NVDB-objekttypen Motortrafikled som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Motorvej",
+     "description": "NVDB-objekttypen Motorväg som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Jernbaneoverkørsel",
+     "description": "NVDB-objekttypen PlankorsningVägJärnväg som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Rastepladser",
+     "description": "NVDB-objekttypen Rastplatser som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Vej til vejsideanlæg",
+     "description": "NVDB-objekttypen Sidoanläggningsväg som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Slidlag",
+     "description": "NVDB-objekttypen Slitlager som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Stoppligt",
+     "description": "NVDB-objekttypen Stopplikt som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Trafikmængde",
+     "description": "NVDB-objekttypen Trafik som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Byzone",
+     "description": "NVDB-objekttypen TättbebyggtOmråde som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Vejbredde",
+     "description": "NVDB-objekttypen Vägbredd som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Vejspærring",
+     "description": "NVDB-objekttypen Väghinder som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Vejmyndighed",
+     "description": "NVDB-objekttypen Väghållare som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Vejklasser for trafik og autoværn",
+     "description": "NVDB-objekttypen Vägklasser_För_Trafik_Och_Skyddsanordningar som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Vejnummer",
+     "description": "NVDB-objekttypen Vägnummer som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Vejtype",
+     "description": "NVDB-objekttypen Vägslag som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Vejnet",
+     "description": "NVDB-objekttypen Vägtrafiknät som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Vigepligt",
+     "description": "NVDB-objekttypen Väjningsplikt som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Andet vejnavn",
+     "description": "NVDB-objekttypen ÖvrigtVägnamn som linjer langs vejen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig længdegrad, sydlig breddegrad, østlig længdegrad, nordlig breddegrad i WGS 84, adskilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Antal kørespor",
+    "begransadbruttovikt": "NVDB Begrænset totalvægt",
+    "begransadfordonsbredd": "NVDB Begrænset køretøjsbredde",
+    "begransadfordonslangd": "NVDB Begrænset køretøjslængde",
+    "begransataxelboggitryck": "NVDB Begrænset aksel- og bogietryk",
+    "betalstation": "NVDB Betalingsstation",
+    "barighet": "NVDB Bæreevne",
+    "cirkulationsplats": "NVDB Rundkørsel",
+    "cykelgata": "NVDB Cykelgade",
+    "farthinder": "NVDB Vejbump",
+    "fordonstag-upp-till-34-5-m": "NVDB Vogntog op til 34,5 m",
+    "funktionellvagklass": "NVDB Funktionel vejklasse",
+    "farjeled": "NVDB Færgerute",
+    "forbjudenfardriktning": "NVDB Forbudt kørselsretning",
+    "forbud-mot-omkorning": "NVDB Overhalingsforbud",
+    "gatunamn": "NVDB Gadenavn",
+    "gatutyp": "NVDB Gadetype",
+    "gcmvagtyp": "NVDB Gang-, cykel- og knallertsti",
+    "gagata": "NVDB Gågade",
+    "gangfartsomrade": "NVDB Opholds- og legeområde",
+    "hastighetsgrans": "NVDB Hastighedsgrænse",
+    "huvudled": "NVDB Forkørselsvej",
+    "hojdhinder-upp-till-45-dm": "NVDB Højdebegrænsning op til 4,5 m",
+    "katastrofoverfart": "NVDB Nødoverkørsel",
+    "kontrollplats": "NVDB Kontrolplads",
+    "korsning": "NVDB Kryds",
+    "miljozon": "NVDB Miljøzone",
+    "motortrafikled": "NVDB Motortrafikvej",
+    "motorvag": "NVDB Motorvej",
+    "plankorsningvagjarnvag": "NVDB Jernbaneoverkørsel",
+    "rastplatser": "NVDB Rastepladser",
+    "sidoanlaggningsvag": "NVDB Vej til vejsideanlæg",
+    "slitlager": "NVDB Slidlag",
+    "stopplikt": "NVDB Stoppligt",
+    "trafik": "NVDB Trafikmængde",
+    "tattbebyggtomrade": "NVDB Byzone",
+    "vagbredd": "NVDB Vejbredde",
+    "vaghinder": "NVDB Vejspærring",
+    "vaghallare": "NVDB Vejmyndighed",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Vejklasser for trafik og autoværn",
+    "vagnummer": "NVDB Vejnummer",
+    "vagslag": "NVDB Vejtype",
+    "vagtrafiknat": "NVDB Vejnet",
+    "vajningsplikt": "NVDB Vigepligt",
+    "ovrigtvagnamn": "NVDB Andet vejnavn"
+   }
+  },
+  "nb": {
+   "name": "Trafikverket NVDB: vegdata (åpent API)",
+   "description": "Den nasjonale vegdatabasen (NVDB) gjennom svenske Trafikverkets åpne API: 45 objekttyper som fartsgrenser, vegnummer, bæreevne, antall kjørefelt, gatenavn og kryss, med geometrien som kart. Krever en gratis nøkkel fra data.trafikverket.se; nøkkelen sendes i forespørselens kropp og lagres aldri i klartekst.",
+   "notes": "Angi et område; uten område hentes hele landet, noe som for linjeobjekter som fartsgrenser blir hundretusener av rader. Svaret leses i sider på 5 000 objekter, og geometrien kommer i SWEREF 99 TM og vises på kartet i WGS 84. CORS tillater kall fra file:// og fra nettet.",
+   "auth": {
+    "help": "Nøkkelen fra en gratis konto på data.trafikverket.se. Den sendes i forespørselens kropp, aldri i adressen."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Antall kjørefelt",
+     "description": "NVDB-objekttypen AntalKörfält2 som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Begrenset totalvekt",
+     "description": "NVDB-objekttypen BegränsadBruttovikt som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Begrenset kjøretøybredde",
+     "description": "NVDB-objekttypen BegränsadFordonsbredd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Begrenset kjøretøylengde",
+     "description": "NVDB-objekttypen BegränsadFordonslängd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Begrenset aksel- og boggitrykk",
+     "description": "NVDB-objekttypen BegränsatAxelBoggitryck som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Bomstasjon",
+     "description": "NVDB-objekttypen Betalstation som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Bæreevne",
+     "description": "NVDB-objekttypen Bärighet som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Rundkjøring",
+     "description": "NVDB-objekttypen Cirkulationsplats som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Sykkelgate",
+     "description": "NVDB-objekttypen Cykelgata som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Fartsdump",
+     "description": "NVDB-objekttypen Farthinder som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Vogntog opptil 34,5 m",
+     "description": "NVDB-objekttypen Fordonståg_upp_till_34_5_m som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Funksjonell vegklasse",
+     "description": "NVDB-objekttypen FunktionellVägklass som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Ferjestrekning",
+     "description": "NVDB-objekttypen Färjeled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Forbudt kjøreretning",
+     "description": "NVDB-objekttypen FörbjudenFärdriktning som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "Forbikjøring forbudt",
+     "description": "NVDB-objekttypen Förbud_Mot_Omkörning som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Gatenavn",
+     "description": "NVDB-objekttypen Gatunamn som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Gatetype",
+     "description": "NVDB-objekttypen Gatutyp som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Gang-, sykkel- og mopedveg",
+     "description": "NVDB-objekttypen GCMVägtyp som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Gågate",
+     "description": "NVDB-objekttypen Gågata som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Gangfartsområde",
+     "description": "NVDB-objekttypen Gångfartsområde som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Fartsgrense",
+     "description": "NVDB-objekttypen Hastighetsgräns som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Forkjørsveg",
+     "description": "NVDB-objekttypen Huvudled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Høydehinder opptil 4,5 m",
+     "description": "NVDB-objekttypen Höjdhinder_upp_till_45_dm som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Nødoverkjøring",
+     "description": "NVDB-objekttypen Katastroföverfart som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Kontrollplass",
+     "description": "NVDB-objekttypen Kontrollplats som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Kryss",
+     "description": "NVDB-objekttypen Korsning som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Miljøsone",
+     "description": "NVDB-objekttypen Miljözon som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Motortrafikkveg",
+     "description": "NVDB-objekttypen Motortrafikled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Motorveg",
+     "description": "NVDB-objekttypen Motorväg som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Planovergang",
+     "description": "NVDB-objekttypen PlankorsningVägJärnväg som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Rasteplasser",
+     "description": "NVDB-objekttypen Rastplatser som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Veg til sideanlegg",
+     "description": "NVDB-objekttypen Sidoanläggningsväg som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Slitelag",
+     "description": "NVDB-objekttypen Slitlager som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Stopplikt",
+     "description": "NVDB-objekttypen Stopplikt som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Trafikkmengde",
+     "description": "NVDB-objekttypen Trafik som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Tettbebygd strøk",
+     "description": "NVDB-objekttypen TättbebyggtOmråde som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Vegbredde",
+     "description": "NVDB-objekttypen Vägbredd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Veghinder",
+     "description": "NVDB-objekttypen Väghinder som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Vegeier",
+     "description": "NVDB-objekttypen Väghållare som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Vegklasser for trafikk og sikringsanlegg",
+     "description": "NVDB-objekttypen Vägklasser_För_Trafik_Och_Skyddsanordningar som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Vegnummer",
+     "description": "NVDB-objekttypen Vägnummer som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Vegkategori",
+     "description": "NVDB-objekttypen Vägslag som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Vegnett",
+     "description": "NVDB-objekttypen Vägtrafiknät som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Vikeplikt",
+     "description": "NVDB-objekttypen Väjningsplikt som punkter.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Annet vegnavn",
+     "description": "NVDB-objekttypen ÖvrigtVägnamn som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestlig lengdegrad, sørlig breddegrad, østlig lengdegrad, nordlig breddegrad i WGS 84, skilt med komma. Tomt = hele tjenesten."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Antall kjørefelt",
+    "begransadbruttovikt": "NVDB Begrenset totalvekt",
+    "begransadfordonsbredd": "NVDB Begrenset kjøretøybredde",
+    "begransadfordonslangd": "NVDB Begrenset kjøretøylengde",
+    "begransataxelboggitryck": "NVDB Begrenset aksel- og boggitrykk",
+    "betalstation": "NVDB Bomstasjon",
+    "barighet": "NVDB Bæreevne",
+    "cirkulationsplats": "NVDB Rundkjøring",
+    "cykelgata": "NVDB Sykkelgate",
+    "farthinder": "NVDB Fartsdump",
+    "fordonstag-upp-till-34-5-m": "NVDB Vogntog opptil 34,5 m",
+    "funktionellvagklass": "NVDB Funksjonell vegklasse",
+    "farjeled": "NVDB Ferjestrekning",
+    "forbjudenfardriktning": "NVDB Forbudt kjøreretning",
+    "forbud-mot-omkorning": "NVDB Forbikjøring forbudt",
+    "gatunamn": "NVDB Gatenavn",
+    "gatutyp": "NVDB Gatetype",
+    "gcmvagtyp": "NVDB Gang-, sykkel- og mopedveg",
+    "gagata": "NVDB Gågate",
+    "gangfartsomrade": "NVDB Gangfartsområde",
+    "hastighetsgrans": "NVDB Fartsgrense",
+    "huvudled": "NVDB Forkjørsveg",
+    "hojdhinder-upp-till-45-dm": "NVDB Høydehinder opptil 4,5 m",
+    "katastrofoverfart": "NVDB Nødoverkjøring",
+    "kontrollplats": "NVDB Kontrollplass",
+    "korsning": "NVDB Kryss",
+    "miljozon": "NVDB Miljøsone",
+    "motortrafikled": "NVDB Motortrafikkveg",
+    "motorvag": "NVDB Motorveg",
+    "plankorsningvagjarnvag": "NVDB Planovergang",
+    "rastplatser": "NVDB Rasteplasser",
+    "sidoanlaggningsvag": "NVDB Veg til sideanlegg",
+    "slitlager": "NVDB Slitelag",
+    "stopplikt": "NVDB Stopplikt",
+    "trafik": "NVDB Trafikkmengde",
+    "tattbebyggtomrade": "NVDB Tettbebygd strøk",
+    "vagbredd": "NVDB Vegbredde",
+    "vaghinder": "NVDB Veghinder",
+    "vaghallare": "NVDB Vegeier",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Vegklasser for trafikk og sikringsanlegg",
+    "vagnummer": "NVDB Vegnummer",
+    "vagslag": "NVDB Vegkategori",
+    "vagtrafiknat": "NVDB Vegnett",
+    "vajningsplikt": "NVDB Vikeplikt",
+    "ovrigtvagnamn": "NVDB Annet vegnavn"
+   }
+  },
+  "nn": {
+   "name": "Trafikverket NVDB: vegdata (ope API)",
+   "description": "Den nasjonale vegdatabasen (NVDB) gjennom svenske Trafikverkets opne API: 45 objekttypar som fartsgrenser, vegnummer, bereevne, tal på køyrefelt, gatenamn og kryss, med geometrien som kart. Krev ein gratis nøkkel frå data.trafikverket.se; nøkkelen blir send i kroppen i førespurnaden og blir aldri lagra i klartekst.",
+   "notes": "Gje eit område; utan område blir heile landet henta, noko som for linjeobjekt som fartsgrenser blir hundretusenvis av rader. Svaret blir lese i sider på 5 000 objekt, og geometrien kjem i SWEREF 99 TM og blir vist på kartet i WGS 84. CORS tillèt kall frå file:// og frå nettet.",
+   "auth": {
+    "help": "Nøkkelen frå ein gratis konto på data.trafikverket.se. Han blir send i kroppen i førespurnaden, aldri i adressa."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Tal på køyrefelt",
+     "description": "NVDB-objekttypen AntalKörfält2 som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Avgrensa totalvekt",
+     "description": "NVDB-objekttypen BegränsadBruttovikt som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Avgrensa køyretøybreidd",
+     "description": "NVDB-objekttypen BegränsadFordonsbredd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Avgrensa køyretøylengd",
+     "description": "NVDB-objekttypen BegränsadFordonslängd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Avgrensa aksel- og boggitrykk",
+     "description": "NVDB-objekttypen BegränsatAxelBoggitryck som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Bomstasjon",
+     "description": "NVDB-objekttypen Betalstation som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Bereevne",
+     "description": "NVDB-objekttypen Bärighet som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Rundkøyring",
+     "description": "NVDB-objekttypen Cirkulationsplats som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Sykkelgate",
+     "description": "NVDB-objekttypen Cykelgata som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Fartshump",
+     "description": "NVDB-objekttypen Farthinder som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Vogntog opp til 34,5 m",
+     "description": "NVDB-objekttypen Fordonståg_upp_till_34_5_m som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Funksjonell vegklasse",
+     "description": "NVDB-objekttypen FunktionellVägklass som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Ferjestrekning",
+     "description": "NVDB-objekttypen Färjeled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Forbode køyreretning",
+     "description": "NVDB-objekttypen FörbjudenFärdriktning som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "Forbikøyring forbode",
+     "description": "NVDB-objekttypen Förbud_Mot_Omkörning som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Gatenamn",
+     "description": "NVDB-objekttypen Gatunamn som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Gatetype",
+     "description": "NVDB-objekttypen Gatutyp som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Gang-, sykkel- og mopedveg",
+     "description": "NVDB-objekttypen GCMVägtyp som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Gågate",
+     "description": "NVDB-objekttypen Gågata som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Gangfartsområde",
+     "description": "NVDB-objekttypen Gångfartsområde som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Fartsgrense",
+     "description": "NVDB-objekttypen Hastighetsgräns som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Forkøyrsveg",
+     "description": "NVDB-objekttypen Huvudled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Høgdehinder opp til 4,5 m",
+     "description": "NVDB-objekttypen Höjdhinder_upp_till_45_dm som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Naudoverkøyring",
+     "description": "NVDB-objekttypen Katastroföverfart som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Kontrollplass",
+     "description": "NVDB-objekttypen Kontrollplats som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Kryss",
+     "description": "NVDB-objekttypen Korsning som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Miljøsone",
+     "description": "NVDB-objekttypen Miljözon som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Motortrafikkveg",
+     "description": "NVDB-objekttypen Motortrafikled som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Motorveg",
+     "description": "NVDB-objekttypen Motorväg som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Planovergang",
+     "description": "NVDB-objekttypen PlankorsningVägJärnväg som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Rasteplassar",
+     "description": "NVDB-objekttypen Rastplatser som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Veg til sideanlegg",
+     "description": "NVDB-objekttypen Sidoanläggningsväg som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Slitelag",
+     "description": "NVDB-objekttypen Slitlager som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Stopplikt",
+     "description": "NVDB-objekttypen Stopplikt som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Trafikkmengd",
+     "description": "NVDB-objekttypen Trafik som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Tettbygd strøk",
+     "description": "NVDB-objekttypen TättbebyggtOmråde som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Vegbreidd",
+     "description": "NVDB-objekttypen Vägbredd som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Veghinder",
+     "description": "NVDB-objekttypen Väghinder som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Vegeigar",
+     "description": "NVDB-objekttypen Väghållare som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Vegklassar for trafikk og sikringsanlegg",
+     "description": "NVDB-objekttypen Vägklasser_För_Trafik_Och_Skyddsanordningar som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Vegnummer",
+     "description": "NVDB-objekttypen Vägnummer som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Vegkategori",
+     "description": "NVDB-objekttypen Vägslag som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Vegnett",
+     "description": "NVDB-objekttypen Vägtrafiknät som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Vikeplikt",
+     "description": "NVDB-objekttypen Väjningsplikt som punkt.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Anna vegnamn",
+     "description": "NVDB-objekttypen ÖvrigtVägnamn som linjer langs vegen.",
+     "params": {
+      "bbox": {
+       "label": "Område (bbox)",
+       "help": "Vestleg lengdegrad, sørleg breiddegrad, austleg lengdegrad, nordleg breiddegrad i WGS 84, skilde med komma. Tomt = heile tenesta."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Tal på køyrefelt",
+    "begransadbruttovikt": "NVDB Avgrensa totalvekt",
+    "begransadfordonsbredd": "NVDB Avgrensa køyretøybreidd",
+    "begransadfordonslangd": "NVDB Avgrensa køyretøylengd",
+    "begransataxelboggitryck": "NVDB Avgrensa aksel- og boggitrykk",
+    "betalstation": "NVDB Bomstasjon",
+    "barighet": "NVDB Bereevne",
+    "cirkulationsplats": "NVDB Rundkøyring",
+    "cykelgata": "NVDB Sykkelgate",
+    "farthinder": "NVDB Fartshump",
+    "fordonstag-upp-till-34-5-m": "NVDB Vogntog opp til 34,5 m",
+    "funktionellvagklass": "NVDB Funksjonell vegklasse",
+    "farjeled": "NVDB Ferjestrekning",
+    "forbjudenfardriktning": "NVDB Forbode køyreretning",
+    "forbud-mot-omkorning": "NVDB Forbikøyring forbode",
+    "gatunamn": "NVDB Gatenamn",
+    "gatutyp": "NVDB Gatetype",
+    "gcmvagtyp": "NVDB Gang-, sykkel- og mopedveg",
+    "gagata": "NVDB Gågate",
+    "gangfartsomrade": "NVDB Gangfartsområde",
+    "hastighetsgrans": "NVDB Fartsgrense",
+    "huvudled": "NVDB Forkøyrsveg",
+    "hojdhinder-upp-till-45-dm": "NVDB Høgdehinder opp til 4,5 m",
+    "katastrofoverfart": "NVDB Naudoverkøyring",
+    "kontrollplats": "NVDB Kontrollplass",
+    "korsning": "NVDB Kryss",
+    "miljozon": "NVDB Miljøsone",
+    "motortrafikled": "NVDB Motortrafikkveg",
+    "motorvag": "NVDB Motorveg",
+    "plankorsningvagjarnvag": "NVDB Planovergang",
+    "rastplatser": "NVDB Rasteplassar",
+    "sidoanlaggningsvag": "NVDB Veg til sideanlegg",
+    "slitlager": "NVDB Slitelag",
+    "stopplikt": "NVDB Stopplikt",
+    "trafik": "NVDB Trafikkmengd",
+    "tattbebyggtomrade": "NVDB Tettbygd strøk",
+    "vagbredd": "NVDB Vegbreidd",
+    "vaghinder": "NVDB Veghinder",
+    "vaghallare": "NVDB Vegeigar",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Vegklassar for trafikk og sikringsanlegg",
+    "vagnummer": "NVDB Vegnummer",
+    "vagslag": "NVDB Vegkategori",
+    "vagtrafiknat": "NVDB Vegnett",
+    "vajningsplikt": "NVDB Vikeplikt",
+    "ovrigtvagnamn": "NVDB Anna vegnamn"
+   }
+  },
+  "fi": {
+   "name": "Trafikverket NVDB: tietiedot (avoin rajapinta)",
+   "description": "Ruotsin kansallinen tietietokanta (NVDB) Trafikverketin avoimen rajapinnan kautta: 45 kohdetyyppiä, kuten nopeusrajoitukset, tienumerot, kantavuus, kaistojen määrä, kadunnimet ja liittymät, geometria karttana. Vaatii maksuttoman avaimen osoitteesta data.trafikverket.se; avain lähetetään pyynnön rungossa eikä sitä koskaan tallenneta selväkielisenä.",
+   "notes": "Anna alue; ilman aluetta haetaan koko maa, mikä viivakohteille kuten nopeusrajoituksille tarkoittaa satojatuhansia rivejä. Vastaus luetaan 5 000 kohteen sivuina, ja geometria tulee SWEREF 99 TM -järjestelmässä ja näytetään kartalla WGS 84 -järjestelmässä. CORS sallii kutsut file://-sivuilta ja verkosta.",
+   "auth": {
+    "help": "Avain maksuttomalta tililtä osoitteessa data.trafikverket.se. Se lähetetään pyynnön rungossa, ei koskaan osoitteessa."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Kaistojen määrä",
+     "description": "NVDB-kohdetyyppi AntalKörfält2 viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Kokonaispainorajoitus",
+     "description": "NVDB-kohdetyyppi BegränsadBruttovikt viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Ajoneuvon leveysrajoitus",
+     "description": "NVDB-kohdetyyppi BegränsadFordonsbredd viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Ajoneuvon pituusrajoitus",
+     "description": "NVDB-kohdetyyppi BegränsadFordonslängd viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Akseli- ja telipainorajoitus",
+     "description": "NVDB-kohdetyyppi BegränsatAxelBoggitryck viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Maksuasema",
+     "description": "NVDB-kohdetyyppi Betalstation pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Kantavuus",
+     "description": "NVDB-kohdetyyppi Bärighet viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Liikenneympyrä",
+     "description": "NVDB-kohdetyyppi Cirkulationsplats viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Pyöräkatu",
+     "description": "NVDB-kohdetyyppi Cykelgata viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Hidaste",
+     "description": "NVDB-kohdetyyppi Farthinder pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Ajoneuvoyhdistelmät enintään 34,5 m",
+     "description": "NVDB-kohdetyyppi Fordonståg_upp_till_34_5_m viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Toiminnallinen tieluokka",
+     "description": "NVDB-kohdetyyppi FunktionellVägklass viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Lauttaväylä",
+     "description": "NVDB-kohdetyyppi Färjeled viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Kielletty ajosuunta",
+     "description": "NVDB-kohdetyyppi FörbjudenFärdriktning viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "Ohituskielto",
+     "description": "NVDB-kohdetyyppi Förbud_Mot_Omkörning viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Kadunnimi",
+     "description": "NVDB-kohdetyyppi Gatunamn viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Katutyyppi",
+     "description": "NVDB-kohdetyyppi Gatutyp viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Jalankulku-, pyörä- ja mopoväylä",
+     "description": "NVDB-kohdetyyppi GCMVägtyp viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Kävelykatu",
+     "description": "NVDB-kohdetyyppi Gågata viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Pihakatu",
+     "description": "NVDB-kohdetyyppi Gångfartsområde viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Nopeusrajoitus",
+     "description": "NVDB-kohdetyyppi Hastighetsgräns viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Etuajo-oikeutettu tie",
+     "description": "NVDB-kohdetyyppi Huvudled viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Korkeusesteet enintään 4,5 m",
+     "description": "NVDB-kohdetyyppi Höjdhinder_upp_till_45_dm pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Hätäylityspaikka",
+     "description": "NVDB-kohdetyyppi Katastroföverfart pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Tarkastuspaikka",
+     "description": "NVDB-kohdetyyppi Kontrollplats pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Liittymä",
+     "description": "NVDB-kohdetyyppi Korsning pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Ympäristövyöhyke",
+     "description": "NVDB-kohdetyyppi Miljözon viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Moottoriliikennetie",
+     "description": "NVDB-kohdetyyppi Motortrafikled viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Moottoritie",
+     "description": "NVDB-kohdetyyppi Motorväg viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Tasoristeys",
+     "description": "NVDB-kohdetyyppi PlankorsningVägJärnväg pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Levähdysalueet",
+     "description": "NVDB-kohdetyyppi Rastplatser pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Sivulaitoksen tie",
+     "description": "NVDB-kohdetyyppi Sidoanläggningsväg viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Kulutuskerros",
+     "description": "NVDB-kohdetyyppi Slitlager viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Pysähtymisvelvollisuus",
+     "description": "NVDB-kohdetyyppi Stopplikt pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Liikennemäärä",
+     "description": "NVDB-kohdetyyppi Trafik viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Taajama",
+     "description": "NVDB-kohdetyyppi TättbebyggtOmråde viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Tien leveys",
+     "description": "NVDB-kohdetyyppi Vägbredd viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Tie-este",
+     "description": "NVDB-kohdetyyppi Väghinder pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Tienpitäjä",
+     "description": "NVDB-kohdetyyppi Väghållare viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Tieluokat liikenteelle ja suojalaitteille",
+     "description": "NVDB-kohdetyyppi Vägklasser_För_Trafik_Och_Skyddsanordningar viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Tienumero",
+     "description": "NVDB-kohdetyyppi Vägnummer viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Tieluokka",
+     "description": "NVDB-kohdetyyppi Vägslag viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Tieverkko",
+     "description": "NVDB-kohdetyyppi Vägtrafiknät viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Väistämisvelvollisuus",
+     "description": "NVDB-kohdetyyppi Väjningsplikt pisteinä.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Muu tien nimi",
+     "description": "NVDB-kohdetyyppi ÖvrigtVägnamn viivoina tien suuntaisesti.",
+     "params": {
+      "bbox": {
+       "label": "Alue (bbox)",
+       "help": "Läntinen pituusaste, eteläinen leveysaste, itäinen pituusaste, pohjoinen leveysaste WGS 84:ssä pilkuilla erotettuina. Tyhjä = koko palvelu."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Kaistojen määrä",
+    "begransadbruttovikt": "NVDB Kokonaispainorajoitus",
+    "begransadfordonsbredd": "NVDB Ajoneuvon leveysrajoitus",
+    "begransadfordonslangd": "NVDB Ajoneuvon pituusrajoitus",
+    "begransataxelboggitryck": "NVDB Akseli- ja telipainorajoitus",
+    "betalstation": "NVDB Maksuasema",
+    "barighet": "NVDB Kantavuus",
+    "cirkulationsplats": "NVDB Liikenneympyrä",
+    "cykelgata": "NVDB Pyöräkatu",
+    "farthinder": "NVDB Hidaste",
+    "fordonstag-upp-till-34-5-m": "NVDB Ajoneuvoyhdistelmät enintään 34,5 m",
+    "funktionellvagklass": "NVDB Toiminnallinen tieluokka",
+    "farjeled": "NVDB Lauttaväylä",
+    "forbjudenfardriktning": "NVDB Kielletty ajosuunta",
+    "forbud-mot-omkorning": "NVDB Ohituskielto",
+    "gatunamn": "NVDB Kadunnimi",
+    "gatutyp": "NVDB Katutyyppi",
+    "gcmvagtyp": "NVDB Jalankulku-, pyörä- ja mopoväylä",
+    "gagata": "NVDB Kävelykatu",
+    "gangfartsomrade": "NVDB Pihakatu",
+    "hastighetsgrans": "NVDB Nopeusrajoitus",
+    "huvudled": "NVDB Etuajo-oikeutettu tie",
+    "hojdhinder-upp-till-45-dm": "NVDB Korkeusesteet enintään 4,5 m",
+    "katastrofoverfart": "NVDB Hätäylityspaikka",
+    "kontrollplats": "NVDB Tarkastuspaikka",
+    "korsning": "NVDB Liittymä",
+    "miljozon": "NVDB Ympäristövyöhyke",
+    "motortrafikled": "NVDB Moottoriliikennetie",
+    "motorvag": "NVDB Moottoritie",
+    "plankorsningvagjarnvag": "NVDB Tasoristeys",
+    "rastplatser": "NVDB Levähdysalueet",
+    "sidoanlaggningsvag": "NVDB Sivulaitoksen tie",
+    "slitlager": "NVDB Kulutuskerros",
+    "stopplikt": "NVDB Pysähtymisvelvollisuus",
+    "trafik": "NVDB Liikennemäärä",
+    "tattbebyggtomrade": "NVDB Taajama",
+    "vagbredd": "NVDB Tien leveys",
+    "vaghinder": "NVDB Tie-este",
+    "vaghallare": "NVDB Tienpitäjä",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Tieluokat liikenteelle ja suojalaitteille",
+    "vagnummer": "NVDB Tienumero",
+    "vagslag": "NVDB Tieluokka",
+    "vagtrafiknat": "NVDB Tieverkko",
+    "vajningsplikt": "NVDB Väistämisvelvollisuus",
+    "ovrigtvagnamn": "NVDB Muu tien nimi"
+   }
+  },
+  "is": {
+   "name": "Trafikverket NVDB: vegagögn (opið API)",
+   "description": "Sænski landsvegagagnagrunnurinn (NVDB) í gegnum opið API Trafikverket: 45 hlutategundir eins og hámarkshraði, vegnúmer, burðarþol, fjöldi akreina, götuheiti og gatnamót, með rúmfræðina sem kort. Krefst ókeypis lykils frá data.trafikverket.se; lykillinn er sendur í meginmáli beiðninnar og aldrei vistaður í hreinum texta.",
+   "notes": "Tilgreindu svæði; án svæðis er allt landið sótt, sem fyrir línuhluti eins og hámarkshraða verða hundruð þúsunda raða. Svarið er lesið í síðum með 5.000 hlutum, og rúmfræðin kemur í SWEREF 99 TM og er sýnd á kortinu í WGS 84. CORS leyfir köll frá file:// og af vefnum.",
+   "auth": {
+    "help": "Lykillinn af ókeypis aðgangi á data.trafikverket.se. Hann er sendur í meginmáli beiðninnar, aldrei í slóðinni."
+   },
+   "endpoints": {
+    "antalkorfalt2": {
+     "name": "Fjöldi akreina",
+     "description": "NVDB-hlutategundin AntalKörfält2 sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "begransadbruttovikt": {
+     "name": "Takmörkuð heildarþyngd",
+     "description": "NVDB-hlutategundin BegränsadBruttovikt sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "begransadfordonsbredd": {
+     "name": "Takmörkuð breidd ökutækja",
+     "description": "NVDB-hlutategundin BegränsadFordonsbredd sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "begransadfordonslangd": {
+     "name": "Takmörkuð lengd ökutækja",
+     "description": "NVDB-hlutategundin BegränsadFordonslängd sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "begransataxelboggitryck": {
+     "name": "Takmarkaður öxul- og vagnþungi",
+     "description": "NVDB-hlutategundin BegränsatAxelBoggitryck sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "betalstation": {
+     "name": "Gjaldstöð",
+     "description": "NVDB-hlutategundin Betalstation sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "barighet": {
+     "name": "Burðarþol",
+     "description": "NVDB-hlutategundin Bärighet sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "cirkulationsplats": {
+     "name": "Hringtorg",
+     "description": "NVDB-hlutategundin Cirkulationsplats sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "cykelgata": {
+     "name": "Hjólagata",
+     "description": "NVDB-hlutategundin Cykelgata sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "farthinder": {
+     "name": "Hraðahindrun",
+     "description": "NVDB-hlutategundin Farthinder sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "fordonstag-upp-till-34-5-m": {
+     "name": "Vagnlestir allt að 34,5 m",
+     "description": "NVDB-hlutategundin Fordonståg_upp_till_34_5_m sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "funktionellvagklass": {
+     "name": "Virkniflokkur vega",
+     "description": "NVDB-hlutategundin FunktionellVägklass sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "farjeled": {
+     "name": "Ferjuleið",
+     "description": "NVDB-hlutategundin Färjeled sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "forbjudenfardriktning": {
+     "name": "Bönnuð akstursstefna",
+     "description": "NVDB-hlutategundin FörbjudenFärdriktning sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "forbud-mot-omkorning": {
+     "name": "Framúrakstur bannaður",
+     "description": "NVDB-hlutategundin Förbud_Mot_Omkörning sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "gatunamn": {
+     "name": "Götuheiti",
+     "description": "NVDB-hlutategundin Gatunamn sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "gatutyp": {
+     "name": "Gerð götu",
+     "description": "NVDB-hlutategundin Gatutyp sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "gcmvagtyp": {
+     "name": "Göngu-, hjóla- og vespustígur",
+     "description": "NVDB-hlutategundin GCMVägtyp sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "gagata": {
+     "name": "Göngugata",
+     "description": "NVDB-hlutategundin Gågata sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "gangfartsomrade": {
+     "name": "Vistgata",
+     "description": "NVDB-hlutategundin Gångfartsområde sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "hastighetsgrans": {
+     "name": "Hámarkshraði",
+     "description": "NVDB-hlutategundin Hastighetsgräns sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "huvudled": {
+     "name": "Aðalbraut",
+     "description": "NVDB-hlutategundin Huvudled sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "hojdhinder-upp-till-45-dm": {
+     "name": "Hæðartakmarkanir allt að 4,5 m",
+     "description": "NVDB-hlutategundin Höjdhinder_upp_till_45_dm sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "katastrofoverfart": {
+     "name": "Neyðarþverun",
+     "description": "NVDB-hlutategundin Katastroföverfart sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "kontrollplats": {
+     "name": "Eftirlitsstaður",
+     "description": "NVDB-hlutategundin Kontrollplats sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "korsning": {
+     "name": "Gatnamót",
+     "description": "NVDB-hlutategundin Korsning sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "miljozon": {
+     "name": "Umhverfissvæði",
+     "description": "NVDB-hlutategundin Miljözon sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "motortrafikled": {
+     "name": "Vegur fyrir vélknúin ökutæki",
+     "description": "NVDB-hlutategundin Motortrafikled sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "motorvag": {
+     "name": "Hraðbraut",
+     "description": "NVDB-hlutategundin Motorväg sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "plankorsningvagjarnvag": {
+     "name": "Vegþverun við járnbraut",
+     "description": "NVDB-hlutategundin PlankorsningVägJärnväg sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "rastplatser": {
+     "name": "Áningarstaðir",
+     "description": "NVDB-hlutategundin Rastplatser sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "sidoanlaggningsvag": {
+     "name": "Vegur að þjónustusvæði",
+     "description": "NVDB-hlutategundin Sidoanläggningsväg sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "slitlager": {
+     "name": "Slitlag",
+     "description": "NVDB-hlutategundin Slitlager sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "stopplikt": {
+     "name": "Stöðvunarskylda",
+     "description": "NVDB-hlutategundin Stopplikt sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "trafik": {
+     "name": "Umferðarmagn",
+     "description": "NVDB-hlutategundin Trafik sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "tattbebyggtomrade": {
+     "name": "Þéttbýli",
+     "description": "NVDB-hlutategundin TättbebyggtOmråde sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vagbredd": {
+     "name": "Vegbreidd",
+     "description": "NVDB-hlutategundin Vägbredd sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vaghinder": {
+     "name": "Vegtálmi",
+     "description": "NVDB-hlutategundin Väghinder sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vaghallare": {
+     "name": "Veghaldari",
+     "description": "NVDB-hlutategundin Väghållare sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vagklasser-for-trafik-och-skyddsanordningar": {
+     "name": "Vegflokkar fyrir umferð og öryggisbúnað",
+     "description": "NVDB-hlutategundin Vägklasser_För_Trafik_Och_Skyddsanordningar sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vagnummer": {
+     "name": "Vegnúmer",
+     "description": "NVDB-hlutategundin Vägnummer sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vagslag": {
+     "name": "Vegtegund",
+     "description": "NVDB-hlutategundin Vägslag sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vagtrafiknat": {
+     "name": "Vegakerfi",
+     "description": "NVDB-hlutategundin Vägtrafiknät sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "vajningsplikt": {
+     "name": "Biðskylda",
+     "description": "NVDB-hlutategundin Väjningsplikt sem punktar.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    },
+    "ovrigtvagnamn": {
+     "name": "Annað vegaheiti",
+     "description": "NVDB-hlutategundin ÖvrigtVägnamn sem línur eftir veginum.",
+     "params": {
+      "bbox": {
+       "label": "Svæði (bbox)",
+       "help": "Vestlæg lengd, suðlæg breidd, austlæg lengd, norðlæg breidd í WGS 84, aðskilin með kommu. Tómt = öll þjónustan."
+      }
+     }
+    }
+   },
+   "dataset": {
+    "antalkorfalt2": "NVDB Fjöldi akreina",
+    "begransadbruttovikt": "NVDB Takmörkuð heildarþyngd",
+    "begransadfordonsbredd": "NVDB Takmörkuð breidd ökutækja",
+    "begransadfordonslangd": "NVDB Takmörkuð lengd ökutækja",
+    "begransataxelboggitryck": "NVDB Takmarkaður öxul- og vagnþungi",
+    "betalstation": "NVDB Gjaldstöð",
+    "barighet": "NVDB Burðarþol",
+    "cirkulationsplats": "NVDB Hringtorg",
+    "cykelgata": "NVDB Hjólagata",
+    "farthinder": "NVDB Hraðahindrun",
+    "fordonstag-upp-till-34-5-m": "NVDB Vagnlestir allt að 34,5 m",
+    "funktionellvagklass": "NVDB Virkniflokkur vega",
+    "farjeled": "NVDB Ferjuleið",
+    "forbjudenfardriktning": "NVDB Bönnuð akstursstefna",
+    "forbud-mot-omkorning": "NVDB Framúrakstur bannaður",
+    "gatunamn": "NVDB Götuheiti",
+    "gatutyp": "NVDB Gerð götu",
+    "gcmvagtyp": "NVDB Göngu-, hjóla- og vespustígur",
+    "gagata": "NVDB Göngugata",
+    "gangfartsomrade": "NVDB Vistgata",
+    "hastighetsgrans": "NVDB Hámarkshraði",
+    "huvudled": "NVDB Aðalbraut",
+    "hojdhinder-upp-till-45-dm": "NVDB Hæðartakmarkanir allt að 4,5 m",
+    "katastrofoverfart": "NVDB Neyðarþverun",
+    "kontrollplats": "NVDB Eftirlitsstaður",
+    "korsning": "NVDB Gatnamót",
+    "miljozon": "NVDB Umhverfissvæði",
+    "motortrafikled": "NVDB Vegur fyrir vélknúin ökutæki",
+    "motorvag": "NVDB Hraðbraut",
+    "plankorsningvagjarnvag": "NVDB Vegþverun við járnbraut",
+    "rastplatser": "NVDB Áningarstaðir",
+    "sidoanlaggningsvag": "NVDB Vegur að þjónustusvæði",
+    "slitlager": "NVDB Slitlag",
+    "stopplikt": "NVDB Stöðvunarskylda",
+    "trafik": "NVDB Umferðarmagn",
+    "tattbebyggtomrade": "NVDB Þéttbýli",
+    "vagbredd": "NVDB Vegbreidd",
+    "vaghinder": "NVDB Vegtálmi",
+    "vaghallare": "NVDB Veghaldari",
+    "vagklasser-for-trafik-och-skyddsanordningar": "NVDB Vegflokkar fyrir umferð og öryggisbúnað",
+    "vagnummer": "NVDB Vegnúmer",
+    "vagslag": "NVDB Vegtegund",
+    "vagtrafiknat": "NVDB Vegakerfi",
+    "vajningsplikt": "NVDB Biðskylda",
+    "ovrigtvagnamn": "NVDB Annað vegaheiti"
+   }
+  }
+ }
+}

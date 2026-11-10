@@ -25,6 +25,7 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Sveriges dataportal | Sök datamängder hos alla myndigheter | Nej | Sök, läs tabellen, ladda ned och importera som fil |
 | Lantmäteriet Direkt (Ortnamn) | Ortnamnssökning | Ja, konto i Geotorget (OAuth2) | Ange klient-id och klienthemlighet, sök |
 | Boverket energideklarationer | Energideklarationer för byggnader | Ja, nyckel från Boverkets API-portal | Ange nyckel, anropa enligt portalens dokumentation |
+| Trafikverket NVDB | Vägdata: hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, som karta | Ja, kostnadsfri nyckel från data.trafikverket.se | Välj objekttyp, ange område, Hämta |
 
 Källor utan CORS, till exempel Riksbanken och Världsbanken, kan inte nås direkt från webbläsaren. För dem
 behövs en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
@@ -120,6 +121,8 @@ hemlighet (till exempel en nyckel för pseudonymisering) kan inte spelas upp aut
   produkten Ortnamn Direkt (öppna data, kostnadsfritt) och skapa API-nycklar. Ange klient-id (consumer key) och
   klienthemlighet (consumer secret); Dataspatium hämtar en åtkomsttoken från `https://api.lantmateriet.se/token`
   och förnyar den när den går ut.
+- **Trafikverket**: skapa ett kostnadsfritt konto på [data.trafikverket.se](https://data.trafikverket.se/) och kopiera
+  nyckeln. Dataspatium skickar den i XML-kroppen (`<LOGIN authenticationkey="…"/>`), aldrig i adressen.
 
 ## Proxy för tjänster utan CORS
 
@@ -179,7 +182,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `i18n` | Översättningar per språk (`sv` är grundspråket i filen): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<namn>": { "label", "help", "example", "options": { "<värde>": "etikett" } } } } }, "dataset": { "<id>": "namnmall" } } }`. Appen visar texterna för sitt språk; exporten innehåller alla |
 | `baseUrl` | Adress som endpointernas sökvägar läggs till efter |
 | `headers` | Standardheaders för alla anrop |
-| `auth` | `none`, `apiKey` (`in`: `header` eller `query`, `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |
+| `auth` | `none`, `apiKey` (`in`: `header`, `query` eller `body`, där platshållaren `{name}` i kroppen fylls med nyckeln först när begäran skickas; `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |
 | `rateLimit` | `requests` per `perSeconds`; anrop köas så att gränsen hålls, och 429-svar väntas ut |
 | `cors` | Vad som har uppmätts för tjänstens CORS: `{ "file": false }` betyder att den inte nås från en mapp, `{ "web": false }` att den inte nås från webbversionen; källistan visar då var den fungerar, eller att den kräver bryggan |
 | `family` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Danmarks Statistik), `{ "type": "fhi" }` (Folkehelseinstituttet) eller `{ "type": "socialstyrelsen" }`. `urls` ger en rot per appspråk för PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` anger vilka appspråk tjänstens `lang`-parameter förstår, som lista eller som karta från appens kod till tjänstens (`{ "nb": "no" }`) |
@@ -194,9 +197,9 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `path` | Sökväg efter `baseUrl`; `{namn}` ersätts med parametervärden. Tomma valfria platshållare tas bort |
 | `headers` | Extra headers |
 | `params` | Parametrar, se nedan |
-| `body`, `bodyType` | Kropp för POST: JSON-mall där `"{namn}"` byts mot värdet (`json`, standard), `form` eller `text` |
-| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`), `next-url` (`path` till nästa adress i svaret), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` till en länklista, `rel`); `maxPages` begränsar antalet anrop |
-| `response` | `format`: `json` (`path` till posterna, `explode` för nästlad lista), `jsonstat`, `sdmx` (SDMX-JSON 1.0 och 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (första listan under `data` blir tabellen; fel i svaret rapporteras), `sparql` (frågans variabler blir kolumner), `influx-csv` (kommenterad CSV från InfluxDB). `lift` lyfter upp ett nästlat objekts fält till kolumner (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), och en `path` som är en nyckel med punkter (`@odata.nextLink`) slås upp hel. Gemensamt: `constants` (kolumn: sökväg i rotdokumentet), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
+| `body`, `bodyType` | Kropp för POST: JSON-mall där `"{namn}"` byts mot värdet (`json`, standard), `form`, `text` eller `xml` (textmall där värdena escapas, utom för parametrar med `raw`, och tomma platshållare tas bort) |
+| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` lägger förskjutningen och storleken i kroppen), `next-url` (`path` till nästa adress i svaret), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` till en länklista, `rel`); `maxPages` begränsar antalet anrop |
+| `response` | `format`: `json` (`path` till posterna, `explode` för nästlad lista), `jsonstat`, `sdmx` (SDMX-JSON 1.0 och 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (första listan under `data` blir tabellen; fel i svaret rapporteras), `sparql` (frågans variabler blir kolumner), `influx-csv` (kommenterad CSV från InfluxDB). `lift` lyfter upp ett nästlat objekts fält till kolumner (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), och en `path` som är en nyckel med punkter (`@odata.nextLink`) slås upp hel. `geometry` (`path` till geometrin som WKT och `crs`) ger kolumnerna `geometri_typ` och `geometri` i WGS 84, och `errorPath` pekar på tjänstens felmeddelande i ett svar som annars är data. Gemensamt: `constants` (kolumn: sökväg i rotdokumentet), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` med platshållare, `keys` för dubblettkontroll vid Lägg till rader |
 
 ### Parameter
@@ -205,7 +208,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 |---|---|
 | `name` | Namn i sökväg, fråga eller header |
 | `in` | `path`, `query`, `header`, `body`, `template` (används bara av andra parametrars mallar), `option` (skickas till tolken, t.ex. geometri av eller på) |
-| `type` | `string`, `number`, `boolean`, `date`, `enum` (`options`), `multi` (flera värden, `join` eller `style: "repeat"`), `text`, `querylines` (rader `namn=värde` som blir frågeparametrar) |
+| `type` | `string`, `number`, `boolean`, `date`, `enum` (`options`), `multi` (flera värden, `join` eller `style: "repeat"`), `text`, `querylines` (rader `namn=värde` som blir frågeparametrar), `bbox` (område i WGS 84; med `crs: "EPSG:3006"` skickas det i SWEREF 99 TM och med `bboxFormat: "pairs"` som `x1 y1, x2 y2`) |
 | `label`, `help`, `example`, `required`, `default`, `hidden` | Formulär och standardvärden |
 | `raw` | Koda inte värdet i sökvägen (för kommaseparerade listor) |
 | `template` | Värdet byggs av andra parametrar, till exempel `"title:\"{q}\""` |

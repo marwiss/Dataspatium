@@ -18,7 +18,7 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 |---|---|---|---|
 | Ruotsi | SCB Statistikdatabasen (API v1 ja v2) | Virallinen tilasto | Selaa tai hae, valitse arvot |
 | Ruotsi | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäterietin geodatakatalogi, Ruotsin dataportaali | Kansanterveys, terveys, kuntien tunnusluvut, sää, ilmanlaatu, suojelualueet, paikkatieto | Ks. ruotsinkielinen opas |
-| Ruotsi | Lantmäteriet Direkt, Boverket | Paikannimet, energiatodistukset | Vaativat avaimen |
+| Ruotsi | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Paikannimet, energiatodistukset, tietiedot | Vaativat avaimen |
 | EU | Eurostat | EU-tilastot | Anna aineiston koodi ja suodattimet |
 | EU | Euroopan keskuspankki (EKP) | Valuuttakurssit ja EKP:n tilastot (SDMX) | Valitse valuutat ja tiheys valuuttakursseille tai anna tietovirta ja sarja-avain |
 | Kansainvälinen | OECD | Työttömyys, BKT:n kasvu ja OECD:n muut tilastot (SDMX) | Valitse maat tai anna tietovirta ja sarja-avain |
@@ -105,6 +105,8 @@ tai uusien rivien lisäämisen loppuun reseptiä suorittamatta.
 - **Lantmäteriet Direkt**: luo tili [Geotorgetiin](https://geotorget.lantmateriet.se/), lisää tuote Ortnamn Direkt (avoin data,
   maksuton) ja luo API-avaimet. Anna asiakastunnus (consumer key) ja asiakassalaisuus (consumer secret); Dataspatium hakee
   käyttötunnisteen osoitteesta `https://api.lantmateriet.se/token` ja uusii sen, kun se vanhenee.
+- **Trafikverket**: luo maksuton tili osoitteessa [data.trafikverket.se](https://data.trafikverket.se/) ja kopioi avain.
+  Dataspatium lähettää sen XML-rungossa (`<LOGIN authenticationkey="…"/>`), ei koskaan osoitteessa.
 
 ## Välityspalvelin palveluille ilman CORS-tukea
 

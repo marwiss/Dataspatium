@@ -137,6 +137,9 @@ deras medlemmar med roll: läsare, bidragsgivare, redaktör eller projektansvari
 användarnamnet på servern, ändrar en roll, tar bort en medlem och byter projektets namn; varje ändring bekräftas först. Servern låter
 inte projektet bli utan projektansvarig och säger till; projekt tas inte bort härifrån, och nya konton skapar en administratör.
 
+Ärenden hämtas i sidor om 500. En lista som servern har kapat (Dataregium kapar vid 1 000 poster) läses till slut genom
+serverns rubrik Link med rel="next", men bara på samma server, så att din token aldrig går någon annanstans.
+
 Kortet *IFC-LPG* visas när servern har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
@@ -215,6 +218,13 @@ Riksantikvarieämbetets fornlämningar, Skogsstyrelsen, Kartverkets administrati
 samt Statistikcentralen och SYKE (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
 *Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
 Bearer-nyckel från en ansluten organisation. Boverkets digitala planer får egna funktioner i en kommande version.
+
+**Trafikverkets NVDB** (*Trafikverket NVDB: vägdata*) ger 45 objekttyper ur Nationella vägdatabasen, som hastighetsgränser,
+vägnummer, bärighet, antal körfält, gatunamn, korsningar och rastplatser, med en ändpunkt per objekttyp. Den kräver en
+kostnadsfri nyckel från [data.trafikverket.se](https://data.trafikverket.se/), som skickas i begärans kropp och aldrig i
+adressen. Ange området i WGS 84 som för de andra källorna; appen räknar om det till SWEREF 99 TM, och utan område hämtas hela
+landet. Svaren läses i sidor om 5 000 objekt, och geometrin räknas om till WGS 84 så att datamängden öppnas som karta. Data
+är CC0.
 
 **Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Källan
 *Geodataportalen (sök geodata)* söker i katalogen och visar en post per träff med titel, organisation, beskrivning och

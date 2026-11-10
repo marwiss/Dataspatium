@@ -21,7 +21,7 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 | Internationalt | OECD | Arbejdsløshed, BNP-vækst og OECD's øvrige statistik (SDMX) | Vælg lande, eller angiv dataflow og serienøgle |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Officiel statistik | Gennemse eller søg, vælg værdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkesundhed, sundhed, nøgletal for kommuner, vejr, luftkvalitet, beskyttede områder, geodata | Se den svenske vejledning |
-| Sverige | Lantmäteriet Direkt, Boverket | Stednavne, energimærker | Kræver nøgle |
+| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Stednavne, energimærker, vejdata | Kræver nøgle |
 
 ### Øvrige Norden
 
@@ -102,6 +102,8 @@ opdatere og at lægge de nye rækker sidst uden at køre opskriften.
 - **Lantmäteriet Direkt**: opret en konto i [Geotorget](https://geotorget.lantmateriet.se/), tilføj produktet Ortnamn Direkt
   (åbne data, gratis) og opret API-nøgler. Angiv klient-id (consumer key) og klienthemmelighed (consumer secret); Dataspatium
   henter en adgangstoken fra `https://api.lantmateriet.se/token` og fornyer den, når den udløber.
+- **Trafikverket**: opret en gratis konto på [data.trafikverket.se](https://data.trafikverket.se/), og kopiér nøglen.
+  Dataspatium sender den i XML-kroppen (`<LOGIN authenticationkey="…"/>`), aldrig i adressen.
 
 ## Proxy til tjenester uden CORS
 

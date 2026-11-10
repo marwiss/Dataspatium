@@ -21,7 +21,7 @@ hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðe
 | Alþjóðlegt | OECD | Atvinnuleysi, hagvöxtur og aðrar hagtölur OECD (SDMX) | Veldu lönd, eða gefðu upp gagnaflæði og raðlykil |
 | Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
 | Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
-| Svíþjóð | Lantmäteriet Direkt, Boverket | Örnefni, orkuvottorð | Krefjast lykils |
+| Svíþjóð | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Örnefni, orkuvottorð, vegagögn | Krefjast lykils |
 
 ### Önnur Norðurlönd
 
@@ -104,6 +104,8 @@ uppskriftina.
 - **Lantmäteriet Direkt**: stofnaðu aðgang í [Geotorget](https://geotorget.lantmateriet.se/), bættu við vörunni Ortnamn Direkt
   (opin gögn, ókeypis) og búðu til lykla að forritaskilunum. Gefðu upp auðkenni biðlara (consumer key) og leyndarmál biðlara
   (consumer secret); Dataspatium sækir aðgangstákn á `https://api.lantmateriet.se/token` og endurnýjar það þegar það rennur út.
+- **Trafikverket**: stofnaðu ókeypis aðgang á [data.trafikverket.se](https://data.trafikverket.se/) og afritaðu lykilinn.
+  Dataspatium sendir hann í XML-meginmálinu (`<LOGIN authenticationkey="…"/>`), aldrei í vistfanginu.
 
 ## Milliþjónn fyrir þjónustur án CORS
 

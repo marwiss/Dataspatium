@@ -141,6 +141,9 @@ og medlemmene med rolle: lesar, bidragsytar, redaktør eller prosjektansvarleg. 
 tenaren, endrar ei rolle, fjernar eit medlem og gjev prosjektet nytt namn; kvar endring vert stadfesta først. Tenaren lèt ikkje
 prosjektet stå utan prosjektansvarleg og seier frå; prosjekt vert ikkje sletta herifrå, og nye kontoar opprettar ein administrator.
 
+Saker blir henta i sider på 500. Ei liste som tenaren har korta av (Dataregium kortar av ved 1 000 postar), blir lesen til
+endes gjennom Link-headeren til tenaren med rel="next", men berre på same tenar, slik at tokenet ditt aldri går andre stader.
+
 Kortet *IFC-LPG* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
 
 Under *Filer i prosjektet* listar kjelda modellane og dokumenta tenaren har for prosjektet. *Hent* lagar eit datasett av
@@ -218,6 +221,13 @@ kulturminna til Riksantikvarieämbetet, Skogsstyrelsen, dei administrative einin
 Statistikcentralen og SYKE (Finland). Laga blir lesne frå tenesta første gongen kjelda blir opna og kan lesast på nytt med *Les
 laga på nytt*; lista blir lagra i din kopi av kjelda. Geodataplattforma til Lantmäteriet (reguleringsplanar, bygningar, strandvern, kulturhistoriske leivningar og grensa for fjellnær skog) finst som nivå 2
 med Bearer-nøkkel frå ein tilknytt organisasjon.
+
+**Trafikverkets NVDB** (*Trafikverket NVDB: vegdata*) gjev 45 objekttypar frå den svenske nasjonale vegdatabasen, som
+fartsgrenser, vegnummer, bereevne, tal på køyrefelt, gatenamn, kryss og rasteplassar, med eitt endepunkt per objekttype. Han
+krev ein gratis nøkkel frå [data.trafikverket.se](https://data.trafikverket.se/), som blir send i kroppen i førespurnaden og
+aldri i adressa. Gje området i WGS 84 som for dei andre kjeldene; appen reknar det om til SWEREF 99 TM, og utan område blir
+heile landet henta. Svara blir lesne i sider på 5 000 objekt, og geometrien blir rekna om til WGS 84 slik at datasettet blir
+opna som kart. Dataa er CC0.
 
 **Geodataportalen** (geodata.se) er den nasjonale katalogen i Sverige over geodata frå etatar, regionar og kommunar. Kjelda
 *Geodataportalen (sök geodata)* søkjer i katalogen og viser ein post per treff med tittel, organisasjon, skildring og

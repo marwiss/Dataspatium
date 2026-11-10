@@ -31,6 +31,7 @@ browsed in the app's language when the service has it.
 | Sweden's data portal | Search the datasets of all agencies | No | Search, read the table, download and import as a file |
 | Lantmäteriet Direkt (place names) | Place name search | Yes, account in Geotorget (OAuth2) | Give client id and client secret, search |
 | Boverket energy performance certificates | Energy performance certificates for buildings | Yes, key from Boverket's API portal | Give the key, call according to the portal's documentation |
+| Trafikverket NVDB | Road data: speed limits, road numbers, bearing capacity and 42 more object types, as a map | Yes, free key from data.trafikverket.se | Choose an object type, give an area, Fetch |
 
 ### The other Nordic countries
 
@@ -118,6 +119,8 @@ between updating and putting the new rows last without running the recipe.
   Ortnamn Direkt (open data, free of charge) and create API keys. Give the client id (consumer key) and client secret
   (consumer secret); Dataspatium fetches an access token from `https://api.lantmateriet.se/token` and renews it when
   it expires.
+- **Trafikverket**: create a free account at [data.trafikverket.se](https://data.trafikverket.se/) and copy the key.
+  Dataspatium sends it in the XML body (`<LOGIN authenticationkey="…"/>`), never in the address.
 
 ## Proxy for services without CORS
 
@@ -181,7 +184,7 @@ app folder and are good starting points.
 | `i18n` | Translations per language (Swedish is the file's base language): `{ "en": { "name", "publisher", "description", "notes", "auth": { "help" }, "endpoints": { "<id>": { "name", "description", "params": { "<name>": { "label", "help", "example", "options": { "<value>": "label" } } } } }, "dataset": { "<id>": "name template" } } }`. The app shows the texts of its language; the export contains all of them |
 | `baseUrl` | Address that the endpoints' paths are appended to |
 | `headers` | Default headers for all requests |
-| `auth` | `none`, `apiKey` (`in`: `header` or `query`, `name`, optional `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, optional `scope`); `help` and `signupUrl` are shown by the key field |
+| `auth` | `none`, `apiKey` (`in`: `header`, `query` or `body`, where the placeholder `{name}` in the body is filled with the key only when the request is sent; `name`, optional `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, optional `scope`); `help` and `signupUrl` are shown by the key field |
 | `rateLimit` | `requests` per `perSeconds`; requests are queued so that the limit holds, and 429 responses are waited out |
 | `cors` | What was measured for the service's CORS: `{ "file": false }` means that it cannot be reached from a folder, `{ "web": false }` that it cannot be reached from the web version; the source list then says where it works, or that it requires the bridge |
 | `family` | Special browser: `{ "type": "pxweb", "version": 1 or 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Statistics Denmark), `{ "type": "fhi" }` (Norwegian Institute of Public Health) or `{ "type": "socialstyrelsen" }`. `urls` gives one root per app language for PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` states which app languages the service's `lang` parameter understands, as a list or as a map from the app's code to the service's (`{ "nb": "no" }`) |
@@ -196,9 +199,9 @@ app folder and are good starting points.
 | `path` | Path after `baseUrl`; `{name}` is replaced by parameter values. Empty optional placeholders are removed |
 | `headers` | Extra headers |
 | `params` | Parameters, see below |
-| `body`, `bodyType` | Body for POST: a JSON template where `"{name}"` is replaced by the value (`json`, default), `form` or `text` |
-| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`), `next-url` (`path` to the next address in the response), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` to a list of links, `rel`); `maxPages` limits the number of requests |
-| `response` | `format`: `json` (`path` to the records, `explode` for a nested list), `jsonstat`, `sdmx` (SDMX-JSON 1.0 and 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (the first list under `data` becomes the table; errors in the response are reported), `sparql` (the query variables become columns), `influx-csv` (annotated CSV from InfluxDB). `lift` lifts the fields of a nested object into columns (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), and a `path` that is a key with dots (`@odata.nextLink`) is looked up whole. Common: `constants` (column: path in the root document), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
+| `body`, `bodyType` | Body for POST: a JSON template where `"{name}"` is replaced by the value (`json`, default), `form`, `text` or `xml` (a text template whose values are escaped, except for parameters with `raw`, and whose empty placeholders are removed) |
+| `pagination` | `none`, `page` (`param`, `start`, `sizeParam`, `size`, `totalPagesPath`), `offset` (`param`, `sizeParam`, `size`, `totalPath`; `in: "body"` puts the offset and the size in the body), `next-url` (`path` to the next address in the response), `cursor` (`path`, `param`), `link-header` (`rel`), `link-rel` (`path` to a list of links, `rel`); `maxPages` limits the number of requests |
+| `response` | `format`: `json` (`path` to the records, `explode` for a nested list), `jsonstat`, `sdmx` (SDMX-JSON 1.0 and 2.0), `csv` (`options.delimiter`, `options.skipUntil`, `options.decimal`), `geojson` (`options.geometry`), `xml` (`recordTag`), `entryscape`, `text`, `graphql` (the first list under `data` becomes the table; errors in the response are reported), `sparql` (the query variables become columns), `influx-csv` (annotated CSV from InfluxDB). `lift` lifts the fields of a nested object into columns (CouchDB `doc`, Elasticsearch `_source`, Airtable `fields`), and a `path` that is a key with dots (`@odata.nextLink`) is looked up whole. `geometry` (`path` to the geometry as WKT and `crs`) gives the columns `geometri_typ` and `geometri` in WGS 84, and `errorPath` points to the service's error message in an answer that is otherwise data. Common: `constants` (column: path in the root document), `convert` (`epoch-ms`, `epoch-s`, `number`), `rename`, `drop` |
 | `dataset` | `name` with placeholders, `keys` for the duplicate check when appending rows |
 
 ### Parameter
@@ -207,7 +210,7 @@ app folder and are good starting points.
 |---|---|
 | `name` | Name in path, query or header |
 | `in` | `path`, `query`, `header`, `body`, `template` (used only by other parameters' templates), `option` (sent to the parser, e.g. geometry on or off) |
-| `type` | `string`, `number`, `boolean`, `date`, `enum` (`options`), `multi` (several values, `join` or `style: "repeat"`), `text`, `querylines` (lines `name=value` that become query parameters) |
+| `type` | `string`, `number`, `boolean`, `date`, `enum` (`options`), `multi` (several values, `join` or `style: "repeat"`), `text`, `querylines` (lines `name=value` that become query parameters), `bbox` (an area in WGS 84; with `crs: "EPSG:3006"` it is sent in SWEREF 99 TM and with `bboxFormat: "pairs"` as `x1 y1, x2 y2`) |
 | `label`, `help`, `example`, `required`, `default`, `hidden` | Form and default values |
 | `raw` | Do not encode the value in the path (for comma-separated lists) |
 | `template` | The value is built from other parameters, for example `"title:\"{q}\""` |

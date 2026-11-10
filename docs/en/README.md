@@ -165,8 +165,9 @@ What works in one version also works in the next. Each version goes with the sam
 - **Navigate the model**: a view cube and standard views, an orthographic view, a section box and a section at a storey, a pivot
   by double click and the keyboard; the camera and the section travel with the issues' viewpoints, and maps and plans have a scale
   bar (see [CAD and BIM](cad-bim.md#views-and-the-keyboard)).
-- **More geodata sources**: species observations from SLU Artdatabanken and buildings, shore protection, cultural heritage remains
-  and the boundary of forest near the mountains from the national geodata platform; the source list says when a source cannot be
+- **More geodata sources**: road data from Trafikverket’s NVDB (speed limits, road numbers, bearing capacity and 42 more object
+  types, with a key), species observations from SLU Artdatabanken and buildings, shore protection, cultural heritage remains and
+  the boundary of forest near the mountains from the national geodata platform; the source list says when a source cannot be
   reached where the app runs, and bundles carry charts and notebooks only for the chosen datasets (see [Sources](kallor.md)).
 - **Python and statistics without code**: a Python console and forms for statistics and time series that write and show the code (see
   [Statistics](statistik.md) and [Python](python.md)).

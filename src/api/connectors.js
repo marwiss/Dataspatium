@@ -156,7 +156,7 @@
       const auth = connector.auth || { type: 'none' };
       switch (auth.type) {
         case 'none': return D.t('api.auth.summary.none');
-        case 'apiKey': return D.t('api.auth.summary.apikey', { where: auth.in === 'query' ? D.t('api.auth.summary.query') : D.t('api.auth.summary.header'), name: auth.name });
+        case 'apiKey': return D.t('api.auth.summary.apikey', { where: D.t('api.auth.summary.' + (auth.in === 'query' || auth.in === 'body' ? auth.in : 'header')), name: auth.name });
         case 'basic': return D.t('api.auth.summary.basic');
         case 'bearer': return D.t('api.auth.token');
         case 'oauth2_client_credentials': return D.t('api.auth.summary.oauth');

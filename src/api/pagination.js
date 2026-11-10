@@ -12,8 +12,20 @@
     function setParam(url, name, value) { const u = new URL(url); u.searchParams.set(name, String(value)); return u.toString(); }
 
     /** @returns {{page: number, offset: number, seen: Set<string>, size: number}} */
-    function start(spec, req) {
-      const state = { page: spec.start === undefined ? 1 : spec.start, offset: spec.start || 0, size: spec.size || 0, seen: new Set([req.url]) };
+    /** The offset and page size as values for a request body (`in: "body"`). */
+    const bodyPage = (spec, state) => Object.assign({ [spec.param]: state.offset }, spec.sizeParam && spec.size ? { [spec.sizeParam]: spec.size } : {});
+    /**
+     * @param {any} spec @param {any} req the first request, changed in place
+     * @param {(extra: Record<string, any>) => any} [rebuild] builds the request again with extra values: an offset in the body
+     *   (`in: "body"`, as Trafikverket's skip and limit) cannot be set in the address
+     */
+    function start(spec, req, rebuild) {
+      const state = { page: spec.start === undefined ? 1 : spec.start, offset: spec.start || 0, size: spec.size || 0, seen: new Set([req.url]), rebuild: rebuild || null };
+      if (spec.type === 'offset' && spec.in === 'body') {
+        if (!rebuild) throw new Error('pagination: an offset in the body needs rebuild');
+        Object.assign(req, rebuild(bodyPage(spec, state)));
+        return state;
+      }
       if (spec.type === 'page') {
         req.url = setParam(req.url, spec.param, state.page);
         if (spec.sizeParam && spec.size) req.url = setParam(req.url, spec.sizeParam, spec.size);
@@ -50,6 +62,7 @@
         const total = spec.totalPath ? Number(parsers.resolvePath(last.data, spec.totalPath)) : NaN;
         state.offset += state.size || rows;
         if (rows === 0 || (state.size && rows < state.size) || (Number.isFinite(total) && state.offset >= total)) return null;
+        if (spec.in === 'body') return state.rebuild(bodyPage(spec, state));
         url = setParam(last.request.url, spec.param, state.offset);
       } else if (type === 'next-url') {
         const v = parsers.resolvePath(last.data, spec.path);

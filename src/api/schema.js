@@ -13,7 +13,7 @@
     const FORMAT_ID = 'dataspatium-api/1';
     // oauth2_pkce: the user signs in through the server's authorization code flow (OpenCDE); the app holds a client id only.
     const AUTH_TYPES = ['none', 'apiKey', 'basic', 'bearer', 'oauth2_client_credentials', 'oauth2_pkce'];
-    const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines'];
+    const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines', 'bbox'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
     const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text', 'graphql', 'sparql', 'influx-csv', 'geonetwork'];
@@ -46,6 +46,8 @@
         style: { type: 'string', enum: ['join', 'repeat'] },
         min: { type: 'number' },
         max: { type: 'number' },
+        crs: { type: 'string' },
+        bboxFormat: { type: 'string', enum: ['comma', 'pairs'] },
       },
     };
 
@@ -61,10 +63,10 @@
         headers: { type: 'object' },
         params: { type: 'array', items: paramSchema },
         body: {},
-        bodyType: { type: 'string', enum: ['json', 'form', 'text'] },
+        bodyType: { type: 'string', enum: ['json', 'form', 'text', 'xml'] },
         pagination: {
           type: 'object', required: ['type'],
-          properties: { type: { type: 'string', enum: PAGINATION_TYPES }, param: { type: 'string' }, sizeParam: { type: 'string' }, size: { type: 'number' }, start: { type: 'number' }, path: { type: 'string' }, totalPath: { type: 'string' }, totalPagesPath: { type: 'string' }, rel: { type: 'string' }, maxPages: { type: 'number' } },
+          properties: { type: { type: 'string', enum: PAGINATION_TYPES }, in: { type: 'string', enum: ['query', 'body'] }, param: { type: 'string' }, sizeParam: { type: 'string' }, size: { type: 'number' }, start: { type: 'number' }, path: { type: 'string' }, totalPath: { type: 'string' }, totalPagesPath: { type: 'string' }, rel: { type: 'string' }, maxPages: { type: 'number' } },
         },
         response: {
           type: 'object',
@@ -78,6 +80,8 @@
             convert: { type: 'object' },
             drop: { type: 'array', items: { type: 'string' } },
             recordTag: { type: 'string' },
+            geometry: { type: 'object', required: ['path'], properties: { path: { type: 'string' }, crs: { type: 'string' } } },
+            errorPath: { type: 'string' },
             options: { type: 'object' },
           },
         },
@@ -107,7 +111,7 @@
         headers: { type: 'object' },
         auth: {
           type: 'object', required: ['type'],
-          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, authUrl: { type: 'string' }, revocationUrl: { type: 'string' }, clientId: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
+          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query', 'body'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, authUrl: { type: 'string' }, revocationUrl: { type: 'string' }, clientId: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
         },
         // What was measured for the service's CORS from a folder (file://, origin null) and from the web version (api/reach).
         cors: { type: 'object', properties: { file: { type: 'boolean' }, web: { type: 'boolean' } } },

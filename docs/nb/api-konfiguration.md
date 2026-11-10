@@ -21,7 +21,7 @@ to siste svenske krever nøkkel.
 | Internasjonalt | OECD | Arbeidsledighet, BNP-vekst og OECDs øvrige statistikk (SDMX) | Velg land, eller angi dataflyt og serienøkkel |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, velg verdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkehelse, helse, nøkkeltall for kommuner, vær, luftkvalitet, verneområder, geodata | Se den svenske veiledningen |
-| Sverige | Lantmäteriet Direkt, Boverket | Stedsnavn, energiattester | Krever nøkkel |
+| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Stedsnavn, energiattester, vegdata | Krever nøkkel |
 
 ### Resten av Norden
 
@@ -102,6 +102,8 @@ oppdatere og å legge de nye radene sist uten å kjøre oppskriften.
 - **Lantmäteriet Direkt**: opprett en konto i [Geotorget](https://geotorget.lantmateriet.se/), legg til produktet Ortnamn
   Direkt (åpne data, gratis) og opprett API-nøkler. Oppgi klient-id (consumer key) og klienthemmelighet (consumer secret);
   Dataspatium henter et tilgangstoken fra `https://api.lantmateriet.se/token` og fornyer det når det utløper.
+- **Trafikverket**: opprett en gratis konto på [data.trafikverket.se](https://data.trafikverket.se/) og kopier nøkkelen.
+  Dataspatium sender den i XML-kroppen (`<LOGIN authenticationkey="…"/>`), aldri i adressen.
 
 ## Proxy for tjenester uten CORS
 

@@ -141,6 +141,9 @@ medlemmene med rolle: leser, bidragsyter, redaktør eller prosjektansvarlig. Du 
 serveren, endrer en rolle, fjerner et medlem og gir prosjektet nytt navn; hver endring bekreftes først. Serveren lar ikke prosjektet stå
 uten prosjektansvarlig og sier fra; prosjekter slettes ikke herfra, og nye kontoer opprettes av en administrator.
 
+Saker hentes i sider på 500. En liste som serveren har kuttet (Dataregium kutter ved 1 000 poster), leses til ende gjennom
+serverens Link-header med rel="next", men bare på samme server, slik at tokenet ditt aldri går andre steder.
+
 Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av
@@ -218,6 +221,13 @@ Riksantikvarieämbetets kulturminner, Skogsstyrelsen, Kartverkets administrative
 Statistikcentralen og SYKE (Finland). Lagene leses fra tjenesten første gang kilden åpnes og kan leses på nytt med *Les
 lagene på nytt*; listen lagres i din kopi av kilden. Lantmäteriets geodataplattform (reguleringsplaner, bygninger, strandvern, kulturhistoriske levninger og grensen for fjellnær skog) finnes som nivå 2
 med Bearer-nøkkel fra en tilknyttet organisasjon.
+
+**Trafikverkets NVDB** (*Trafikverket NVDB: vegdata*) gir 45 objekttyper fra den svenske nasjonale vegdatabasen, som
+fartsgrenser, vegnummer, bæreevne, antall kjørefelt, gatenavn, kryss og rasteplasser, med ett endepunkt per objekttype. Den
+krever en gratis nøkkel fra [data.trafikverket.se](https://data.trafikverket.se/), som sendes i forespørselens kropp og aldri
+i adressen. Angi området i WGS 84 som for de andre kildene; appen regner det om til SWEREF 99 TM, og uten område hentes hele
+landet. Svarene leses i sider på 5 000 objekter, og geometrien regnes om til WGS 84 slik at datasettet åpnes som kart.
+Dataene er CC0.
 
 **Geodataportalen** (geodata.se) er Sveriges nasjonale katalog over etaters, regioners og kommuners geodata. Kilden
 *Geodataportalen (sök geodata)* søker i katalogen og viser en post per treff med tittel, organisasjon, beskrivelse og
