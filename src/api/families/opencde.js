@@ -401,7 +401,7 @@
         let data = null;
         try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
         const { code, message, text } = describeError(data);
-        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined });
+        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined, conflictDetails: data && Array.isArray(data.conflict_details) ? data.conflict_details : undefined });
       }
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
@@ -700,7 +700,7 @@
       if (options.topicType) body.topic_type = options.topicType;
       const topic = await createTopic(connector, projectId, body);
       try {
-        await bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topic.guid)}/snippet`, { method: 'PUT', body: JSON.stringify(Object.assign({ schema: schemaUrl }, options.changeSet)), headers: { 'Content-Type': 'application/json' } });
+        await putChangeSet(connector, projectId, topic.guid, schemaUrl, options.changeSet);
       } catch (err) {
         await deleteTopic(connector, projectId, topic.guid).catch(() => {});
         throw err;
@@ -710,12 +710,19 @@
       return { topic, schemaUrl, snippetType, tried: !!ext.tried && !!proposalUrl, proposalUrl, approveUrl: fill(ext.approve_url) };
     }
     /**
+     * The change set of a proposal's topic, uploaded as its snippet; a new one replaces the server's trial (Dataregium's OB-26).
+     * @param {any} connector @param {string} projectId @param {string} topicGuid @param {string} schemaUrl
+     * @param {{base: any, provenance: any, changes: any[]}} changeSet
+     */
+    const putChangeSet = (connector, projectId, topicGuid, schemaUrl, changeSet) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/snippet`, { method: 'PUT', body: JSON.stringify(Object.assign({ schema: schemaUrl }, changeSet)), headers: { 'Content-Type': 'application/json' } });
+    /**
      * A manager makes a clean proposal the document's next version (Dataregium's OB-27): POST at the capability's approve_url. The
      * answer is the new version in the Documents API's form, with base_version_index, change_set_id, proposed_by and approved_by in its
      * metadata. 403 for other roles, 409 when the trial is not clean or was approved already. Against a stale base (OB-17 there) the
      * server tries the changes again on the latest version in the same call and approves against it when clean; when they collide with
      * what came between it answers 412 version_conflict with `conflicts`, keys like "#123.Name" or "<guid>/<path>.Name", or ["*"] when a
-     * whole file was uploaded in between; the error carries them.
+     * whole file was uploaded in between; the error carries them, and `conflictDetails` with the value in the base (`base`), in the
+     * latest version (`theirs`) and in the proposal (`ours`) for each key the person decides (OB-19 d).
      * @param {any} connector @param {string} approveUrl from proposeChanges
      */
     const approveProposal = (connector, approveUrl) => api(connector, approveUrl, { method: 'POST' });
@@ -833,6 +840,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

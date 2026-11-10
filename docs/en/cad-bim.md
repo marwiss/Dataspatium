@@ -256,6 +256,11 @@ the latest in the same step and approves against it when the trial is clean; whe
 server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
 whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
 
+When the server gives the values per collision, the panel shows for each the value in the base, what came between and your proposal,
+and you choose per collision to keep your proposal or take what came between. *Propose again with my choices* sends the proposal
+against the latest version, with the kept changes and without the dropped ones, and the server tries it again before it can be
+approved. The merge happens on the server; the browser handles only the collisions themselves.
+
 ## Compare versions
 
 The button *Compare* in the model view compares the open model with a saved version of the same dataset (Versions in Process) or with

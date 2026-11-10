@@ -254,6 +254,11 @@ kolliderer endringane med det som har kome imellom, avviser tenaren (412), og pa
 attributt) eller seier at alt kan ha endra seg når ei heil fil er lasta opp imellom. Hent då den nyaste versjonen, gjer endringane på
 nytt og foreslå igjen.
 
+Gjev tenaren verdiane per kollisjon, viser panelet for kvar kollisjon verdien i basen, det som kom imellom, og framlegget ditt, og du
+vel per kollisjon å halde på framlegget ditt eller ta det som kom imellom. *Foreslå igjen med vala mine* sender framlegget mot den
+nyaste versjonen med dei haldne endringane og utan dei strokne, og tenaren prøver det på nytt før det kan godkjennast.
+Samanflettinga skjer på tenaren; nettlesaren handterer berre sjølve kollisjonane.
+
 ## Samanlikn versjonar
 
 Knappen *Samanlikn* i modellvisinga samanliknar den opne modellen med ein lagra versjon av same datasett (Versjonar i Arbeid) eller

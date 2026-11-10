@@ -250,6 +250,11 @@ krockar ändringarna med det som kommit emellan vägrar servern (412) och panele
 eller säger att allt kan ha ändrats när en hel fil laddats upp emellan. Hämta då den nyaste versionen, gör om ändringarna och föreslå
 igen.
 
+Anger servern värdena per krock visar panelen för varje krock värdet i basen, det som kom emellan och ditt förslag, och du väljer
+per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå igen med mina val* skickar förslaget mot den senaste
+versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Sammanfogningen
+sker på servern; webbläsaren hanterar bara själva krockarna.
+
 ## Jämför versioner
 
 Knappen *Jämför* i modellvyn jämför den öppna modellen med en sparad version av samma datamängd (Versioner i Bearbeta) eller med en

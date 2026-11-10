@@ -257,6 +257,11 @@ muutokset ovat ristiriidassa välissä tulleen kanssa, palvelin kieltäytyy (412
 ja attribuutti) tai sanoo, että mikä tahansa on voinut muuttua, kun välissä on ladattu kokonainen tiedosto. Hae silloin uusin versio,
 tee muutokset uudelleen ja ehdota uudelleen.
 
+Kun palvelin antaa arvot ristiriitaa kohden, paneeli näyttää kunkin ristiriidan arvon perusversiossa, välissä tulleen arvon ja
+ehdotuksesi, ja valitset ristiriita kerrallaan, pidätkö ehdotuksesi vai otatko välissä tulleen. *Ehdota uudelleen valinnoillani*
+lähettää ehdotuksen uusinta versiota vasten pidetyin muutoksin ja ilman poistettuja, ja palvelin kokeilee sen uudelleen ennen kuin
+sen voi hyväksyä. Yhdistäminen tapahtuu palvelimella; selain käsittelee vain itse ristiriidat.
+
 ## Vertaa versioita
 
 Mallinäkymän painike *Vertaa* vertaa avointa mallia saman aineiston tallennettuun versioon (Versiot Käsittele-tilassa) tai toiseen

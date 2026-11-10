@@ -585,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 22231,
+  "size": 22700,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -753,7 +753,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 22209,
+  "size": 22681,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -921,7 +921,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 21986,
+  "size": 22464,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1089,7 +1089,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 22309,
+  "size": 22784,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1257,7 +1257,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 23710,
+  "size": 24209,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1425,7 +1425,7 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 23553,
+  "size": 24114,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 22359,
+  "size": 22844,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {

@@ -251,6 +251,11 @@ basen, prøver serveren forslaget på nytt mot den nyeste i samme steg og godkje
 med det som har kommet imellom, avviser serveren (412), og panelet viser de kolliderende nøklene (instans og attributt) eller sier at
 alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste versjonen, gjør endringene på nytt og foreslå igjen.
 
+Oppgir serveren verdiene per kollisjon, viser panelet for hver kollisjon verdien i basen, det som kom imellom, og forslaget ditt, og
+du velger per kollisjon å beholde forslaget ditt eller ta det som kom imellom. *Foreslå igjen med mine valg* sender forslaget mot den
+nyeste versjonen med de beholdte endringene og uten de strøkne, og serveren prøver det på nytt før det kan godkjennes.
+Sammenflettingen skjer på serveren; nettleseren håndterer bare selve kollisjonene.
+
 ## Sammenlign versjoner
 
 Knappen *Sammenlign* i modellvisningen sammenligner den åpne modellen med en lagret versjon av samme datasett (Versjoner i Bearbeid)

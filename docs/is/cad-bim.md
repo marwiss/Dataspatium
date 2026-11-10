@@ -249,6 +249,11 @@ prófunin er hrein; rekist breytingarnar á það sem kom á milli hafnar þjón
 (tilvik og eigindi), eða segir að allt geti hafa breyst þegar heil skrá var hlaðin upp á milli. Sæktu þá nýjustu útgáfuna, gerðu
 breytingarnar aftur og leggðu til á ný.
 
+Gefi þjónninn gildin fyrir hvern árekstur sýnir spjaldið fyrir hvern þeirra gildið í grunninum, það sem kom á milli og tillögu þína,
+og þú velur fyrir hvern árekstur hvort þú heldur tillögu þinni eða tekur það sem kom á milli. *Leggja til aftur með mínu vali* sendir
+tillöguna gagnvart nýjustu útgáfunni með þeim breytingum sem haldið er og án þeirra sem strikaðar eru, og þjónninn reynir hana aftur
+áður en hægt er að samþykkja hana. Sameiningin fer fram á þjóninum; vafrinn sér aðeins um sjálfa árekstrana.
+
 ## Bera saman útgáfur
 
 Hnappurinn *Bera saman* í líkansýninni ber opna líkanið saman við vistaða útgáfu sama gagnasafns (Útgáfur í Vinna) eða við annað

@@ -11,7 +11,8 @@
  * server's form (DataregiumIfcChangeSet), with the base version, the signed-in user and the AI model as its provenance; the server's
  * trial of the proposal against the base version (state, applied changes, findings) is shown under the topic, and a manager can make
  * a clean proposal the document's next version from here (OB-27 on the server's side); against a stale base the server retries the
- * trial on the latest version, and its 412 with the colliding keys is told under the topic. The
+ * trial on the latest version and merges what does not collide, and the person decides each collision here (base, what came between,
+ * the proposal) before the proposal goes again (OB-19 d). The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers).
  */
@@ -170,7 +171,8 @@
             };
             const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet });
             if (!out) throw new Error(t('ai.change.propose.unsupported'));
-            s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null };
+            s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null,
+              proposalUrl: out.proposalUrl || null, schemaUrl: out.schemaUrl, changeSet, details: null, picks: [] };
             const msg = t('ai.change.propose.done', { title: s.proposed.title, project });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
             if (out.tried) trialOf(connector, out.proposalUrl, s.proposed);
@@ -211,7 +213,12 @@
             if (s.proposed === mine && err && err.status === 412 && Array.isArray(err.conflicts)) {
               // The document moved on and the changes collide with what came between: the keys, or everything after a whole file.
               mine.conflicts = err.conflicts;
-              s.error = err.conflicts.includes('*') ? t('ai.change.approve.server.conflict.all') : t('ai.change.approve.server.conflict', { k: i18n.formatNumber(err.conflicts.length), keys: err.conflicts.slice(0, 10).join(', ') + (err.conflicts.length > 10 ? ' …' : '') });
+              // With the three values per key the person decides each collision here; the merge itself stays on the server (OB-19 d).
+              mine.details = !err.conflicts.includes('*') && Array.isArray(err.conflictDetails) && err.conflictDetails.length ? err.conflictDetails : null;
+              mine.picks = (mine.details || []).map(() => 'ours');
+              s.error = err.conflicts.includes('*') ? t('ai.change.approve.server.conflict.all')
+                : mine.details ? t('ai.change.approve.server.conflict.choose', { k: i18n.formatNumber(mine.details.length) })
+                  : t('ai.change.approve.server.conflict', { k: i18n.formatNumber(err.conflicts.length), keys: err.conflicts.slice(0, 10).join(', ') + (err.conflicts.length > 10 ? ' …' : '') });
             } else if (s.proposed === mine && err && err.status === 409 && mine.approveUrl && mine.trial) {
               // The trial on the latest version was not clean: the server's findings replace the old verdict.
               mine.trial = { state: 'queued' };
@@ -219,6 +226,67 @@
             }
           }
           s.approvingServer = false; render();
+        }
+        /**
+         * The collisions decided: a change kept takes the latest version's value as its old one, a change given up leaves the proposal;
+         * the proposal goes again against the latest version and the server tries it anew before it can be approved.
+         * @param {string[]} [choices] 'ours' or 'theirs' per collision, in the server's order; the panel's picks otherwise
+         */
+        async function resolveNow(choices) {
+          const mine = s.proposed;
+          const cde = s.cde;
+          if (!mine || !cde || !mine.details || !mine.changeSet || s.approvingServer || s.busy) return;
+          const picks = mine.details.map((d, i) => ((choices && choices[i]) || mine.picks[i] || 'ours'));
+          s.approvingServer = true; s.error = ''; render();
+          try {
+            const connector = await connectors.get(cde.connectorId);
+            if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+            const versions = await opencde.documentVersions(connector, [cde.documentId]);
+            const latest = versions.filter((v) => !v.document_id || v.document_id === cde.documentId).reduce((n, v) => Math.max(n, Number(v.version_index) || 0), 0);
+            const same = (c, d) => (c.guid || null) === (d.guid || null) && (c.path || null) === (d.path || null) && (c.step_id || null) === (d.step_id || null) && c.attribute === d.attribute && (!d.op || c.op === d.op);
+            let kept = 0; let dropped = 0;
+            const changes = [];
+            for (const c of mine.changeSet.changes) {
+              const i = mine.details.findIndex((d) => same(c, d));
+              if (i < 0) { changes.push(c); continue; }
+              if (picks[i] === 'theirs') { dropped++; continue; }
+              kept++;
+              changes.push(c.op === 'set' ? Object.assign({}, c, { old: mine.details[i].theirs === undefined ? null : mine.details[i].theirs }) : c);
+            }
+            if (!changes.length) throw new Error(t('ai.change.conflict.empty'));
+            const changeSet = Object.assign({}, mine.changeSet, { base: Object.assign({}, mine.changeSet.base, { version_index: latest || mine.changeSet.base.version_index }), changes });
+            await opencde.putChangeSet(connector, cde.projectId, mine.guid, mine.schemaUrl, changeSet);
+            mine.changeSet = changeSet; mine.details = null; mine.picks = []; mine.conflicts = null;
+            log(t('ai.change.conflict.resent', { n: String(changeSet.base.version_index), kept: i18n.formatNumber(kept), dropped: i18n.formatNumber(dropped) }), 'ok');
+            if (mine.proposalUrl) { mine.trial = { state: 'queued' }; trialOf(connector, mine.proposalUrl, mine); }
+          } catch (err) { fail(err); }
+          s.approvingServer = false; render();
+        }
+        /** A value of the change set's form in words, for the collisions. */
+        function conflictValue(v) {
+          if (v === null || v === undefined) return '–';
+          if (Array.isArray(v)) { const text = v.map(conflictValue).join(', '); return text.length > 60 ? text.slice(0, 57) + '…' : text; }
+          if (typeof v === 'object') {
+            if (v.value !== undefined) return String(v.value);
+            if (v.enum !== undefined) return '.' + v.enum + '.';
+            if (v.guid !== undefined) return String(v.guid) + (v.path ? '/' + v.path : '');
+            if (v.step_id !== undefined) return '#' + v.step_id;
+            return JSON.stringify(v).slice(0, 60);
+          }
+          return String(v);
+        }
+        function renderConflicts(mine) {
+          return h('div', { class: 'dm-stack-sm', 'data-ai-conflicts': String(mine.details.length) },
+            h('strong', { class: 'dm-small', text: t('ai.change.conflict.title') }),
+            mine.details.slice(0, 100).map((d, i) => {
+              const pick = /** @type {any} */ (h('dm-select', { label: t('ai.change.conflict.choice'), 'data-ai-conflict-pick': String(i) }));
+              pick.options = [{ value: 'ours', label: t('ai.change.conflict.ours') }, { value: 'theirs', label: t('ai.change.conflict.theirs') }];
+              pick.value = mine.picks[i] || 'ours';
+              pick.addEventListener('change', () => { mine.picks[i] = pick.value === 'theirs' ? 'theirs' : 'ours'; });
+              return h('div', { class: 'dm-row-wrap', 'data-ai-conflict': String(i) },
+                h('span', { class: 'dm-small dm-grow', text: t('ai.change.conflict.line', { key: String(d.key || ''), base: conflictValue(d.base), theirs: conflictValue(d.theirs), ours: conflictValue(d.ours), n: String(d.version_index || '–') }) }), pick);
+            }),
+            h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.conflict.resend'), icon: 'refresh-cw', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.conflict.resend.hint'), 'data-ai-conflict-resend': '', onClick: () => resolveNow() })));
         }
         const trialText = (trial) => t('ai.change.trial.' + (trial.state === 'running' ? 'queued' : trial.state), { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
         const deletions = () => s.changeset.ops.filter((op) => op.tool === 'delete_elements').reduce((n, op) => n + op.ids.length, 0);
@@ -280,7 +348,8 @@
               s.proposed && s.proposed.trial && (s.proposed.trial.list || []).length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-trial-issues': '' }, s.proposed.trial.list.slice(0, 10).map((f) => h('li', { class: 'dm-xs', text: `${f.kind || ''}${f.rule ? ' ' + f.rule : ''}${f.step_id ? ' #' + f.step_id : ''}: ${f.message || ''}` }))) : null,
               s.proposed && s.proposed.trial && s.proposed.trial.state === 'clean' && s.proposed.approveUrl && !s.proposed.approved ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.approve.server'), icon: 'circle-check', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.approve.server.hint'), 'data-ai-approve-server': '', onClick: () => approveOnServer() })) : null,
               s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null,
-              s.proposed && s.proposed.conflicts ? h('ul', { class: 'dm-list dm-xs', 'data-ai-approve-conflicts': String(s.proposed.conflicts.length) }, s.proposed.conflicts.slice(0, 10).map((k) => h('li', { class: 'dm-xs', text: k }))) : null) : null,
+              s.proposed && s.proposed.details ? renderConflicts(s.proposed)
+                : s.proposed && s.proposed.conflicts ? h('ul', { class: 'dm-list dm-xs', 'data-ai-approve-conflicts': String(s.proposed.conflicts.length) }, s.proposed.conflicts.slice(0, 10).map((k) => h('li', { class: 'dm-xs', text: k }))) : null) : null,
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
@@ -327,7 +396,7 @@
         }
         function destroy() { unsubscribe(); cancel(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */

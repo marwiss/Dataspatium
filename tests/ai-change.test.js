@@ -258,10 +258,12 @@
       if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Change proposal'], topic_status: ['Open'] }));
       if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-1', title: 'x' }, 201));
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/snippet') return Promise.resolve({ kind: 'text', data: '' });
+      if (path === '/documents/1.0/document-versions') return Promise.resolve(json({ versions: [{ document_id: 'doc-1', version_index: 2, version_number: '2' }, { document_id: 'doc-1', version_index: 4, version_number: '4' }] }));
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal') { trials++; return Promise.resolve(json(trials < 2 ? { state: 'queued', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2 } : cleanTrial ? { state: 'clean', base: { document_id: 'doc-1', version_index: 2 }, change_count: 1, applied: 1, issue_count: 0, error_count: 0, issues: [] } : { state: 'issues', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2, applied: 1, issue_count: 1, error_count: 1, issues: [{ kind: 'proposal', severity: 'error', message: 'change 1: RelatedElements has no member #99' }] })); }
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve') {
         if (approveAnswer === 'conflict') return Promise.resolve(json({ message: 'The document has 2 newer versions and 1 of its changes collide with what came between', code: 'version_conflict', conflicts: ['#170.NominalValue'] }, 412));
         if (approveAnswer === 'stale') { cleanTrial = false; trials = 0; return Promise.resolve(json({ message: 'On version 4 the trial is issues; see the trial' }, 409)); }
+        if (approveAnswer === 'details') return Promise.resolve(json({ message: 'The document has 2 newer versions and 1 of its changes collide with what came between', code: 'version_conflict', conflicts: ['#170.NominalValue'], conflict_details: [{ key: '#170.NominalValue', step_id: 170, attribute: 'NominalValue', op: 'set', base: { type: 'IfcLabel', value: 'EI60' }, theirs: { type: 'IfcLabel', value: 'EI120' }, ours: { type: 'IfcLabel', value: 'EI90' }, version_index: 4 }] }, 412));
         return Promise.resolve(json({ version_index: 3, version_number: '3', title: 'Hus', file_name: 'hus.ifc', metadata: { base_version_index: 2, change_set_id: 't-1', proposed_by: 'anna', approved_by: 'anna' } }, 201));
       }
       return Promise.resolve(json({ message: 'Not Found' }, 404));
@@ -329,7 +331,7 @@
       assert.ok(approved && approved.getAttribute('data-ai-approved-server') === '3' && approved.textContent.includes('3'), 'the new version shown: ' + (approved && approved.textContent));
       assert.ok(!panel.el.querySelector('[data-ai-approve-server]'), 'approved once');
       // A stale base: the changes collide with what came between (412 with the keys), told with the keys under the topic.
-      for (const answer of ['conflict', 'stale']) {
+      for (const answer of ['conflict', 'stale', 'details']) {
         approveAnswer = answer; cleanTrial = true; trials = 0;
         await panel.reject();
         world.calls = 0;
@@ -338,7 +340,23 @@
         await panel.propose({ title: 'Brandklass EI90 igen', description: '' });
         await waitFor(() => panel.state.proposed && panel.state.proposed.trial && panel.state.proposed.trial.state === 'clean', 8000, 'the clean trial');
         await panel.approveOnServer({ confirmed: true });
-        if (answer === 'conflict') {
+        if (answer === 'details') {
+          // OB-19 d: the three values per collision, the person keeps the proposal, and it goes again against the latest version.
+          assert.equal(panel.state.error, t('ai.change.approve.server.conflict.choose', { k: '1' }), 'told to choose');
+          const row = panel.el.querySelector('[data-ai-conflict="0"]');
+          assert.ok(row && row.textContent.includes('EI60') && row.textContent.includes('EI120') && row.textContent.includes('EI90') && row.textContent.includes('4'), 'base, what came between and the proposal: ' + (row && row.textContent));
+          assert.ok(panel.el.querySelector('[data-ai-conflict-pick="0"]') && panel.el.querySelector('[data-ai-conflict-resend]'), 'a choice and the button');
+          await panel.resolveConflicts(['ours']);
+          assert.equal(panel.state.error, '', 'sent again without error');
+          const again = JSON.parse(bodies['/bcf/3.0/projects/p-1/topics/t-1/snippet'].body);
+          assert.equal(again.base.version_index, 4, 'against the latest version');
+          assert.deepEqual(again.changes.map((c) => [c.step_id, c.old, c.new]), [[170, { type: 'IfcLabel', value: 'EI120' }, { type: 'IfcLabel', value: 'EI90' }]], 'the kept change with what came between as its old value');
+          assert.ok(!panel.el.querySelector('[data-ai-conflicts]'), 'the collisions are decided');
+          await waitFor(() => panel.state.proposed && panel.state.proposed.trial && panel.state.proposed.trial.state === 'clean', 8000, 'the new trial');
+          approveAnswer = 'ok';
+          await panel.approveOnServer({ confirmed: true });
+          assert.ok(panel.el.querySelector('[data-ai-approved-server]'), 'approved after the choice');
+        } else if (answer === 'conflict') {
           assert.ok(panel.state.error.includes('#170.NominalValue') && panel.state.error === t('ai.change.approve.server.conflict', { k: '1', keys: '#170.NominalValue' }), 'the colliding keys in the person\'s words: ' + panel.state.error);
           const list = panel.el.querySelector('[data-ai-approve-conflicts]');
           assert.ok(list && list.getAttribute('data-ai-approve-conflicts') === '1' && list.textContent.includes('#170.NominalValue'), 'the keys listed');

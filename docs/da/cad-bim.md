@@ -252,6 +252,11 @@ kolliderer ændringerne med det, der er kommet imellem, afviser serveren (412), 
 attribut) eller siger, at alt kan være ændret, når en hel fil er uploadet imellem. Hent da den nyeste version, gentag ændringerne og
 foreslå igen.
 
+Angiver serveren værdierne pr. kollision, viser panelet for hver kollision værdien i basen, det der kom imellem, og dit forslag, og
+du vælger pr. kollision at beholde dit forslag eller tage det, der kom imellem. *Foreslå igen med mine valg* sender forslaget mod den
+nyeste version med de beholdte ændringer og uden de strøgne, og serveren afprøver det igen, før det kan godkendes. Sammenfletningen
+sker på serveren; browseren håndterer kun selve kollisionerne.
+
 ## Sammenlign versioner
 
 Knappen *Sammenlign* i modelvisningen sammenligner den åbne model med en gemt version af samme datasæt (Versioner i Bearbejd) eller med
