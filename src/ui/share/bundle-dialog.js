@@ -71,7 +71,7 @@
       const ok = await ui.dialog.open({ title: t('bundle.title'), help: 'dela#paket', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
       if (ok !== true) return null;
       // Personal data in the chosen datasets: keep, pseudonymise or drop in the copy before it leaves the app.
-      const reviewed = await D.require('ui/share/review').review(ctx, Array.from(chosen));
+      const reviewed = await D.require('ui/share/review').review(ctx, Array.from(chosen), { include: inc });
       if (!reviewed) return null;
       for (const id of withoutFiles) {
         if (!chosen.has(id)) continue;
@@ -86,7 +86,7 @@
         shell.setStatus('saving');
         const label = name.value.trim() || t('bundle.default.name');
         if (authorIn.value.trim() !== author) await comments.setAuthor(authorIn.value);
-        const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc, author: authorIn.value.trim(), message: message.value, transform: reviewed.transform });
+        const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc, author: authorIn.value.trim(), message: message.value, transform: reviewed.transform, extras: reviewed.extras || {} });
         const note = D.require('ui/share/review').summary(reviewed.transform);
         if (note) shell.log(note, 'info');
         const file = services.files.safeName(label, 'dataspatium.zip');

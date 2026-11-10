@@ -212,6 +212,20 @@
     } finally { if (meta) await datasets.remove(meta.id).catch(() => {}); }
   }, 60000);
 
+  test('plan files: a Rita Detaljplan GeoPackage with its tables but no rows says that QGIS may have had it open', async (assert) => {
+    const t = D.require('ui/i18n').t;
+    const bytes = await geoPackage({ name: 'SWEREF99 12 00', id: 3007 }, [
+      { name: 'detaljplan', geometry: 'MULTIPOLYGON', columns: ['objektidentitet', 'namn'], rows: [] },
+      { name: 'anvandning_yta', geometry: 'MULTIPOLYGON', columns: ['objektidentitet', 'detaljplan', 'beteckning'], rows: [] },
+      { name: 'bestammelse', geometry: null, columns: ['objektidentitet', 'detaljplan', 'tabell', 'yta'], rows: [] },
+    ]);
+    const file = new File([bytes], 'kopierad-medan-oppen.gpkg', { type: 'application/geopackage+sqlite3' });
+    const p = await importer.preview(file, {});
+    assert.equal(p.planGpkg, 'detaljplan', 'still recognised as a plan');
+    await assert.throws(() => importer.run(file, { plan: true }, null, null), new RegExp(t('plan.err.empty.gpkg').slice(0, 30).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    return 'ok';
+  });
+
   test('plan files: an ÖP GeoPackage in Boverket\'s model 0.4 reads its decision, links and the planhandling\'s sections, and no link table as content', async (assert) => {
     const X = 380000; const Y = 6480000;
     const content = ['objektidentitet', 'versiongiltigfran', 'oversiktsplan', 'vertikal_avgransning', 'kompletterandeInnehallstyp', 'namn', 'innehallstyp_varde', 'precisering', 'beslut', 'planhandelse_varde', 'under_ersattning', 'datum_paborjat', 'illustrativa_granser', 'presentationsskala', 'planhandelse_datum'];

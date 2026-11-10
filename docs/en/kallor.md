@@ -191,7 +191,7 @@ Dataregium opens in a popup (sign-in, upload, document selection) appear in the 
 ## Open geodata
 
 The dialog for *Geodata source* under *Add sources* starts with a list of **ready-made geodata sources**: open WFS, OGC API Features and
-ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+ArcGIS services of Nordic agencies and municipalities (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistics Finland, SYKE, Helsinki, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands and others), all verified to work from the
 browser. A preset source opens, the others are added with one click and their layers read from the service; filter
@@ -220,7 +220,7 @@ Preset geodata sources without a key (CORS verified): SCB open geodata, SGU, the
 Management, the National Heritage Board's ancient remains, the Swedish Forest Agency, Kartverket's administrative units
 and cadastral map (Norway), Statistics Finland and SYKE (Finland). The layers are read from the service the first time
 the source is opened and can be reread with *Reread layers*; the list is kept in your copy of the source. Lantmäteriet's
-geodata platform (detailed plans) is a level 2 source with a Bearer key from a connected organisation.
+geodata platform (detailed plans, buildings, shore protection, cultural heritage remains and the boundary of forest near the mountains) is a level 2 source with a Bearer key from a connected organisation.
 
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
 The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,

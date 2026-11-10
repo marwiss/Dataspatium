@@ -64,8 +64,9 @@ dálkum og inni í samfelldum texta, og sýnir það sem annars fylgir með án 
 Aðeins afritið sem deilt er breytist og gagnasafnið í forritinu helst eins og það er. Ef þú breytir einhverju fylgja hvorki breytingaskrá né uppskrift með, því þau geta innihaldið upprunalegu gildin.
 Pakkar eru einnig hreinsaðir af leifum fjarlægðra gilda í skránni sjálfri.
 
-Yfirferðin sér ekki allt. Nöfn, heimilisföng og innihald upprunaskráa og mynda þarft þú að meta sjálf(ur). Gröf, minnisbækur og skjöl í pakka geta sýnt upprunalegu gildin, svo slepptu þeim ef þörf
-krefur. Skráarheiti fylgja með.
+Yfirferðin sér ekki allt. Nöfn, heimilisföng og innihald upprunaskráa og mynda þarft þú að meta sjálf(ur). Pakki tekur aðeins með myndrit, mælaborð og minnisbækur valinna gagnasafna.
+Persónuupplýsingar í þeim, í sniðmátum og skriftum, í vistuðum niðurstöðum minnisbókanna og í heitum og skráarheitum gagnasafnanna eru sýndar
+undir *Það sem fylgir pakkanum* og huldar í afritinu nema þú veljir að halda þeim, fjarlægja niðurstöðurnar eða sleppa skránni.
 
 Samstillingu við **GitHub** þarf að vera hægt að sækja aftur eins og hún var, svo þar er ekkert hægt að dulnefna. Forritið sýnir þess í stað hvað geta verið persónuupplýsingar áður en þú sendir.
 **Birta** býr til HTML-síðu með þeim gildum sem gröfin sýna, svo athugaðu þau áður en þú setur síðuna út.

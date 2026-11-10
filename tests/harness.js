@@ -76,9 +76,27 @@
       return promise;
     }
 
+    /** Browser noise that is no error in the app: ResizeObserver reports a loop it already resolved. */
+    const BENIGN = /ResizeObserver loop/;
+
     async function run(listEl, summaryEl) {
       let pass = 0; let fail = 0;
+      // An error or a rejection that nobody handles is a fault even when the test passes (F18 a): each one is reported with the
+      // test that was running when it came, and counts as a failure.
+      /** @type {Array<{test: string, text: string}>} */
+      const stray = [];
+      let current = '(before the first test)';
+      const textOf = (x) => String((x && (x.stack || x.message)) || x);
+      const onError = (ev) => { const text = textOf(ev.error || ev.message); if (!BENIGN.test(text)) stray.push({ test: current, text }); };
+      const onRejection = (ev) => { const text = textOf(ev.reason); if (!BENIGN.test(text)) stray.push({ test: current, text }); };
+      globalThis.addEventListener('error', onError);
+      globalThis.addEventListener('unhandledrejection', onRejection);
+      const report = (line) => {
+        console.log('DATASPATIUM-LOG: ' + line);
+        if (listEl) { const li = document.createElement('li'); li.className = line.startsWith('OK') ? 'ok' : 'fail'; li.textContent = line; listEl.appendChild(li); }
+      };
       for (const t of selected()) {
+        current = t.name;
         const t0 = performance.now();
         let line;
         const deadline = deadlineFor(t);
@@ -93,9 +111,14 @@
           const stack = err && err.stack ? String(err.stack) : '';
           line = `FAIL | ${t.name} :: ${(stack.includes(message) ? stack : message + ' | ' + stack).replace(/\s*\n\s*/g, ' | ')}`;
         }
-        console.log('DATASPATIUM-LOG: ' + line);
-        if (listEl) { const li = document.createElement('li'); li.className = line.startsWith('OK') ? 'ok' : 'fail'; li.textContent = line; listEl.appendChild(li); }
+        report(line);
       }
+      // Late errors from the last tests (a timer, a frame) still count.
+      current = '(after the last test)';
+      await new Promise((r) => setTimeout(r, 500));
+      globalThis.removeEventListener('error', onError);
+      globalThis.removeEventListener('unhandledrejection', onRejection);
+      for (const s of stray) { fail++; report(`FAIL | uncaught during "${s.test}" :: ${s.text.replace(/\s*\n\s*/g, ' | ')}`); }
       const summary = `DATASPATIUM-TESTS: pass=${pass} fail=${fail}`;
       console.log(summary);
       if (summaryEl) { summaryEl.textContent = summary; summaryEl.className = fail ? 'fail' : 'ok'; }

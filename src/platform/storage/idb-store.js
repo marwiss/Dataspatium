@@ -78,7 +78,8 @@
       if (!keys.length) return null;
       // One chunk at a time, so that reading a large file never holds the page for long.
       const chunks = [];
-      for (const key of keys) chunks.push(await d.blobs.get(key));
+      // A chunk that is gone by the time it is read means the file was removed or replaced meanwhile: there is no whole file.
+      for (const key of keys) { const c = await d.blobs.get(key); if (!c) return null; chunks.push(c); }
       chunks.sort((a, b) => a.index - b.index);
       if (chunks.length === 1) return chunks[0].data;
       const total = chunks.reduce((s, c) => s + c.data.byteLength, 0);

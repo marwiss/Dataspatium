@@ -12,6 +12,19 @@ beskrivelser følger appens sprog, og PxWeb-tjenester, der findes på flere spro
 Grønlands Statistik, ÅSUB), gennemses på appens sprog, når tjenesten har det. Alle nedenstående kilder er kontrolleret for
 CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 
+### Sverige og EU
+
+| Land | Kilde | Hvad | Sådan henter du |
+|---|---|---|---|
+| EU | Eurostat | EU-statistik | Angiv datasættets kode og filtre |
+| EU | Den Europæiske Centralbank (ECB) | Valutakurser og ECB's statistik (SDMX) | Vælg valutaer og frekvens for valutakurserne, eller angiv dataflow og serienøgle |
+| Internationalt | OECD | Arbejdsløshed, BNP-vækst og OECD's øvrige statistik (SDMX) | Vælg lande, eller angiv dataflow og serienøgle |
+| Sverige | SCB Statistikdatabasen (API v1 og v2) | Officiel statistik | Gennemse eller søg, vælg værdier |
+| Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkesundhed, sundhed, nøgletal for kommuner, vejr, luftkvalitet, beskyttede områder, geodata | Se den svenske vejledning |
+| Sverige | Lantmäteriet Direkt, Boverket | Stednavne, energimærker | Kræver nøgle |
+
+### Øvrige Norden
+
 | Land | Kilde | Hvad | Sådan henter du |
 |---|---|---|---|
 | Danmark | Danmarks Statistik Statistikbanken | Officiel statistik (api.statbank.dk) | Gennemse emnetræet, vælg tabel og værdier pr. variabel; variabler, der ikke vælges, summeres væk |
@@ -34,12 +47,6 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 | Færøerne | Hagstova Føroya | Officiel statistik, engelsk | Gennemse, vælg værdier |
 | Åland | ÅSUB | Officiel statistik, svensk og engelsk | Gennemse, vælg værdier |
 | Norden | Nordic Statistics database | Sammenlignelig nordisk statistik, engelsk | Gennemse, vælg værdier |
-| EU | Eurostat | EU-statistik | Angiv datasættets kode og filtre |
-| EU | Den Europæiske Centralbank (ECB) | Valutakurser og ECB's statistik (SDMX) | Vælg valutaer og frekvens for valutakurserne, eller angiv dataflow og serienøgle |
-| Internationalt | OECD | Arbejdsløshed, BNP-vækst og OECD's øvrige statistik (SDMX) | Vælg lande, eller angiv dataflow og serienøgle |
-| Sverige | SCB Statistikdatabasen (API v1 og v2) | Officiel statistik | Gennemse eller søg, vælg værdier |
-| Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkesundhed, sundhed, nøgletal for kommuner, vejr, luftkvalitet, beskyttede områder, geodata | Se den svenske vejledning |
-| Sverige | Lantmäteriet Direkt, Boverket | Stednavne, energimærker | Kræver nøgle |
 
 Ikke med: Danmarks DMI og Norges Frost (MET) kræver nøgle; Energi Data Service og data.norge.no mangler CORS; opingogn.is
 har ikke længere et søge-API. Kilder uden CORS kan ikke nås direkte fra browseren; de kræver en egen proxy, se nedenfor.
@@ -87,6 +94,15 @@ opdatere og at lægge de nye rækker sidst uden at køre opskriften.
   der tages backup af arbejdsområdet.
 - Under file:// deler alle lokalt åbnede HTML-sider lager i Chromium. Derfor er kryptering standard for gemte nøgler.
 
+### Skaf nøgler
+
+- **Boverket**: registrér dig i [Boverkets API-portal](https://api-portal.boverket.se/), abonnér på API'et for energimærker
+  og kopiér abonnementsnøglen. Dataspatium sender den i headeren `Ocp-Apim-Subscription-Key`. Boverket tillader 10 kald pr.
+  2 sekunder og 1 500 pr. døgn.
+- **Lantmäteriet Direkt**: opret en konto i [Geotorget](https://geotorget.lantmateriet.se/), tilføj produktet Ortnamn Direkt
+  (åbne data, gratis) og opret API-nøgler. Angiv klient-id (consumer key) og klienthemmelighed (consumer secret); Dataspatium
+  henter en adgangstoken fra `https://api.lantmateriet.se/token` og fornyer den, når den udløber.
+
 ## Proxy til tjenester uden CORS
 
 Under **Flere indstillinger** i egenskabspanelet kan du angive adressen på en proxy, du selv driver, for eksempel
@@ -100,15 +116,27 @@ En kilde beskrives af en JSON-fil med endelsen `.api.json`. Egne konfigurationer
 eksporteres med **Eksportér konfiguration** for at blive delt. Forudindstillingerne ligger i `presets/api/` i appmappen og
 er gode at tage udgangspunkt i. Filens grundsprog er svensk; oversættelser lægges i feltet `i18n` pr. sprog, og appen viser
 teksterne på sit eget sprog. Formatet er beskrevet fuldt ud i den [engelske vejledning](../en/api-konfiguration.md) og den
-[svenske](../sv/api-konfiguration.md); felterne er:
+[svenske](../sv/api-konfiguration.md).
 
-- topniveau: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ingen nøgle,
-  2 = nøgle), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`,
-  `auth`, `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`;
-- endpoint: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
-  `dataset`;
-- parameter: `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`,
-  `optionsFrom`.
+### Felter på topniveau
+
+Felterne på topniveau er `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ingen nøgle, 2 = nøgle), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`, `rateLimit`, `cors`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`.
+
+### Endpoint
+
+Et endpoint har `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`, `dataset`.
+
+### Parameter
+
+En parameter har `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`, `optionsFrom`.
+
+### Tabellen, der oprettes
+
+JSON-poster fladgøres (indlejrede objekter bliver kolonner med punktum i navnet, lister bliver JSON-tekst). JSON-stat giver
+én række pr. celle med en kode- og en tekstkolonne pr. dimension, en tidskolonne og én værdikolonne pr. mål. SDMX-JSON giver
+én række pr. observation: for hver dimension en kodekolonne (`<navn>_kod`) og en tekstkolonne, når koderne har tekster,
+tidsperioden, værdien (`varde`) og de serie- og observationsattributter, der har værdier. Kolonnenavne renses som ved
+filimport (å, ä, ö bliver a, a, o), og typer udledes med decimalpunktum; koder med foranstillede nuller forbliver tekst.
 
 ## Skriv en egen konfiguration
 

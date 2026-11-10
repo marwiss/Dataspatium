@@ -46,13 +46,16 @@
     }
 
     /**
-     * The dialog. Resolves with { transform, findings } (transform may be empty) or null when the user cancelled.
-     * Nothing is shown when no dataset holds anything to decide on.
-     * @param {any} ctx @param {string[]} ids
+     * The dialog. Resolves with { transform, extras, findings } (transform may be empty) or null when the user cancelled.
+     * Nothing is shown when no dataset holds anything to decide on. With `options.include` (a bundle) the charts, dashboards,
+     * notebooks, templates and scripts that would follow are scanned too, and `extras` maps their paths to the choices.
+     * @param {any} ctx @param {string[]} ids @param {{include?: any}} [options]
      */
-    async function review(ctx, ids) {
+    async function review(ctx, ids, options = {}) {
       const found = await scan(ids);
-      if (!found.size) return { transform: {}, findings: found };
+      let others = [];
+      if (options.include) { try { others = await shareScan.extras(ids, options.include); } catch (err) { D.log('review', 'extras failed', err); } }
+      if (!found.size && !others.length) return { transform: {}, extras: {}, findings: found };
       const names = new Map(ctx.store.get().datasets.map((d) => [d.id, d.name]));
       /** @type {Map<string, string>} */
       const choices = new Map();
@@ -69,6 +72,15 @@
           const key = id + SEP + 'part' + SEP + p.id;
           choices.set(key, p.start);
           rows.push(picker(partLabel(p), p.choices, p.start, (v) => choices.set(key, v)));
+        }
+      }
+      /** @type {Record<string, string>} */
+      const extras = {};
+      if (others.length) {
+        rows.push(h('h4', { text: t('review.extras') }));
+        for (const x of others) {
+          extras[x.path] = x.start;
+          rows.push(picker(t('review.extra.' + x.kind, { name: x.name, n: i18n.formatNumber(x.count) }), x.choices, x.start, (v) => { extras[x.path] = v; }));
         }
       }
       const body = h('div', { class: 'dm-stack' },
@@ -92,7 +104,7 @@
         else if (group === 'side') tr.side[name] = choice;
         else tr[group] = true;
       }
-      return { transform, findings: found };
+      return { transform, extras, findings: found };
     }
 
     /**

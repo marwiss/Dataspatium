@@ -123,7 +123,8 @@
           if (progress) progress({ step: 'table', done, total: wanted.length, table: t });
         }
         const parsed = kind === 'oversiktsplan' ? plan.fromOpTables(tables, options) : kind === 'detaljplan' ? plan.fromDpTables(tables, options) : await plan.nordic.readTables(kind, tables, options);
-        if (!parsed.rows.length) throw new Error(D.t('plan.err.empty'));
+        // Tables without a single row: most often a copy made while QGIS had the project open, with the edits still in the -wal file.
+        if (!parsed.rows.length) throw new Error(D.t(tables.length && tables.every((x) => !x.rows.length) ? 'plan.err.empty.gpkg' : 'plan.err.empty'));
         if (kind === 'detaljplan') await plan.decorate(parsed.rows);
         return { kind, parsed };
       } finally { engine.terminate(); }

@@ -6,6 +6,8 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 
 ## Förinställda källor
 
+### Sverige och EU
+
 | Källa | Vad | Nyckel | Så hämtar du |
 |---|---|---|---|
 | SCB Statistikdatabasen | Officiell statistik, hela ämnesträdet | Nej | Bläddra till en tabell, välj värden per variabel, Hämta |
@@ -179,6 +181,7 @@ från fil** och kan exporteras med **Exportera konfiguration** för att delas. F
 | `headers` | Standardheaders för alla anrop |
 | `auth` | `none`, `apiKey` (`in`: `header` eller `query`, `name`, valfritt `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, valfritt `scope`); `help` och `signupUrl` visas vid nyckelfältet |
 | `rateLimit` | `requests` per `perSeconds`; anrop köas så att gränsen hålls, och 429-svar väntas ut |
+| `cors` | Vad som har uppmätts för tjänstens CORS: `{ "file": false }` betyder att den inte nås från en mapp, `{ "web": false }` att den inte nås från webbversionen; källistan visar då var den fungerar, eller att den kräver bryggan |
 | `family` | Särskild bläddrare: `{ "type": "pxweb", "version": 1 eller 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Danmarks Statistik), `{ "type": "fhi" }` (Folkehelseinstituttet) eller `{ "type": "socialstyrelsen" }`. `urls` ger en rot per appspråk för PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` anger vilka appspråk tjänstens `lang`-parameter förstår, som lista eller som karta från appens kod till tjänstens (`{ "nb": "no" }`) |
 | `endpoints` | Lista över anrop (se nedan) |
 

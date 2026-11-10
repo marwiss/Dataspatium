@@ -115,10 +115,11 @@
             const s = store.get();
             const ids = what === 'all' ? s.datasets.map((d) => d.id) : (s.selectedIds && s.selectedIds.length ? s.selectedIds.slice() : (s.selectedId ? [s.selectedId] : []));
             if (!ids.length) { ui.toast.show(t('dela.share.nodataset'), { kind: 'warn' }); btn.loading = false; return; }
-            const reviewed = await review.review(ctx, ids);
+            const include = { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true };
+            const reviewed = await review.review(ctx, ids, { include });
             if (!reviewed) { btn.loading = false; return; }
             const name = t('bundle.default.name');
-            const res = await services.workspace.bundle({ name, datasetIds: ids, include: { charts: true, dashboards: true, documents: true, notebooks: true, scripts: true }, author: await D.require('data/comments').author(), message: '', transform: reviewed.transform });
+            const res = await services.workspace.bundle({ name, datasetIds: ids, include, author: await D.require('data/comments').author(), message: '', transform: reviewed.transform, extras: reviewed.extras || {} });
             const note = review.summary(reviewed.transform);
             if (note) shell.log(note, 'info');
             items.push({ name: services.files.safeName(name, 'dataspatium.zip'), type: 'application/zip', data: res.blob, kind: 'bundle', meta: { datasets: ids.length } });

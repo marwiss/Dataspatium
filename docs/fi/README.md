@@ -162,6 +162,13 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 - **Rakennusmallit**: IFC-mallit 3D:nä taulukoineen, ominaisuuksineen ja määrineen, tarkistus skeemaa ja IDS:ää vasten sekä
   DXF-piirustukset (ks. [CAD ja BIM](cad-bim.md)). *Teknisesti:* web-ifc ja three.js näkymään, IfcOpenShell ja ifctester sovelluksen
   Pythonissa.
+- **Liiku mallissa**: näkymäkuutio ja vakionäkymät, ortografinen näkymä, leikkauslaatikko ja leikkaus kerroksen kohdalta,
+  kiertopiste kaksoisnapsautuksella ja näppäimistö; kamera ja leikkaus seuraavat asioiden viewpointeja, ja kartoissa ja kaavoissa
+  on mittakaavajana (ks. [CAD ja BIM](cad-bim.md#näkymät-ja-näppäimistö)).
+- **Lisää paikkatietolähteitä**: lajihavainnot SLU Artdatabankenilta sekä rakennukset, rantojensuojelu, kulttuurihistorialliset
+  jäännökset ja tunturien läheisen metsän raja kansallisesta paikkatietoalustasta; lähdeluettelo kertoo, kun lähdettä ei tavoiteta
+  siellä, missä sovellus toimii, ja paketit ottavat kaaviot ja muistikirjat mukaan vain valituista aineistoista (ks.
+  [Lähteet](kallor.md)).
 - **Python ja tilastot ilman koodia**: Python-konsoli sekä lomakkeet tilastoille ja aikasarjoille, jotka kirjoittavat ja näyttävät
   koodin (ks. [Tilastot](statistik.md) ja [Python](python.md)).
 - **Järjestys ja työnkulut**: kansiot, tunnisteet ja toiminnot monelle aineistolle, tallennetut työnkulut, jotka ajetaan yhdellä
@@ -186,9 +193,6 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 - **Versiot Dataregiumin kanssa**: lähetä muutos ehdotuksena, jonka palvelin kokeilee ja hankkeen vastuuhenkilö hyväksyy; palvelin
   yhdistää useiden muutokset, ja ristiriidassa valitset, mikä on voimassa. *Teknisesti:* julkaisu perusversion kanssa (412 uudemman
   version kohdalla), snippet, jonka avaimena on GlobalId ja polku.
-- **Liiku mallissa**: näkymäkuutio ja vakionäkymät, ortografinen näkymä, leikkauslaatikko ja leikkaus kerroksen kohdalta,
-  kiertopiste kaksoisnapsautuksella ja näppäimistö; kamera ja leikkaus seuraavat asioiden viewpointeja, ja kartoissa ja kaavoissa
-  on mittakaavajana (ks. [CAD ja BIM](cad-bim.md#näkymät-ja-näppäimistö)).
 - **Vertaa versioita**: näe, mitä on lisätty, poistettu ja muutettu mallin kahden version välillä, väritettynä 3D:ssä, myös palvelimen
   versioita vasten.
 - **Lisää**: palvelimen IFC-graafi kevyemmässä muodossa ja kysely *rakennusosat lähellä rakennusosaa*, oma Dataregium omalla koneella
@@ -282,8 +286,8 @@ Kullakin päänumerolla on yksi julkaisu, ja samanumeroiset Dataspatium ja Datar
 | Dataspatium | Mitä siinä on | Kuuluu yhteen |
 |---|---|---|
 | 1.0.0 | Data tiedostoista ja avoimista rajapinnoista, käsittely, R, SQL ja säännölliset lausekkeet, Ruotsin kaavat, kaaviot ja kartat kaavioissa, koontinäytöt, asiakirjat, vienti ja jakaminen. Palvelinta vasten vain Documents API: asiakirjojen noutaminen aineistoiksi sekä aineistojen ja tiedostojen lähettäminen takaisin. Ei asioita, ei malleja eikä Pythonia | Dataregium 1.0.0 (vain Documents API) |
-| 2.0.0 | Kaikki 1.0.0:n sisältö sekä tilat Hae ja Jaa, Python ja tilastot ilman koodia, lisää lähteitä, karttanäkymät, Pohjoismaiden kaavat, graafit, IFC-mallit 3D:nä ja tarkistus IDS:ää vasten, työnkulut, Dataspatium Mobiili, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi, kortti *Hallinta* ja kortti *Projektin jäsenet* | Dataregium 2.0.0 |
-| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, navigointi näkymäkuutiolla ja leikkauksilla, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa | Dataregium 3.0.0 |
+| 2.0.0 | Kaikki 1.0.0:n sisältö sekä tilat Hae ja Jaa, Python ja tilastot ilman koodia, lisää lähteitä, karttanäkymät, Pohjoismaiden kaavat, graafit, IFC-mallit 3D:nä ja tarkistus IDS:ää vasten, työnkulut, Dataspatium Mobiili, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi, kortti *Hallinta* ja kortti *Projektin jäsenet*, navigointi näkymäkuutiolla ja leikkauksilla, lisää paikkatietolähteitä | Dataregium 2.0.0 |
+| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa | Dataregium 3.0.0 |
 
 Uusi julkaisu samalla päänumerolla korvaa edellisen; vain kunkin sarjan uusinta korjataan. Sovelluksen päivitystarkistus tarjoaa
 seuraavaa päänumeroa, ja aineistot, listat, kaaviot, mallipohjat ja skriptit tulevat mukaan, kun avaat uuden version `index.html`-tiedoston.

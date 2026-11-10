@@ -155,6 +155,12 @@ færðu gögn á milli þeirra með afriti eða pakka.
   breytt (sjá [Kort](kartor.md) og [Gröf](grafer.md)).
 - **Byggingarlíkön**: IFC-líkön í þrívídd með töflum, eiginleikum og magntölum, prófun gegn skemanu og gegn IDS, og DXF-teikningar (sjá
   [CAD og BIM](cad-bim.md)). *Tæknilega:* web-ifc og three.js fyrir sýnina, IfcOpenShell og ifctester í Python forritsins.
+- **Ferðast um líkanið**: sýnarkubbur og staðlaðar sýnir, hornrétt sýn, sniðkassi og snið við hæð, snúningspunktur með tvísmelli
+  og lyklaborðið; myndavélin og sniðið fylgja viewpoints málanna, og kort og skipulag hafa kvarða (sjá [CAD og
+  BIM](cad-bim.md#sýnir-og-lyklaborðið)).
+- **Fleiri landupplýsingauppsprettur**: tegundafundir frá SLU Artdatabanken og byggingar, strandvernd, menningarsögulegar minjar
+  og mörk fjallaskóga úr landsgagnagátt landupplýsinga; listinn yfir uppsprettur segir til þegar uppspretta næst ekki þar sem
+  forritið keyrir, og pakkar taka aðeins með myndrit og minnisbækur valinna gagnasafna (sjá [Uppsprettur](kallor.md)).
 - **Python og tölfræði án kóða**: Python-skel og eyðublöð fyrir tölfræði og tímaraðir sem skrifa og sýna kóðann (sjá
   [Tölfræði](statistik.md) og [Python](python.md)).
 - **Röð og reglur og flæði**: möppur, merki og aðgerðir á mörg gagnasöfn, vistuð flæði sem keyra með einum smelli, og uppsprettur sem
@@ -178,9 +184,6 @@ færðu gögn á milli þeirra með afriti eða pakka.
 - **Útgáfur með Dataregium**: sendu breytingu sem tillögu sem þjónninn prófar og verkefnisstjóri samþykkir; þjónninn sameinar breytingar
   frá mörgum, og við árekstur velurðu hvað gildir. *Tæknilega:* birting með grunnútgáfu (412 við nýrri útgáfu), snippet með GlobalId og
   slóð sem lykil.
-- **Ferðast um líkanið**: sýnarkubbur og staðlaðar sýnir, hornrétt sýn, sniðkassi og snið við hæð, snúningspunktur með tvísmelli
-  og lyklaborðið; myndavélin og sniðið fylgja viewpoints málanna, og kort og skipulag hafa kvarða (sjá [CAD og
-  BIM](cad-bim.md#sýnir-og-lyklaborðið)).
 - **Bera saman útgáfur**: sjáðu hvað hefur bæst við, verið fjarlægt og breyst milli tveggja útgáfna líkans, litað í þrívídd, líka gagnvart
   útgáfum þjónsins.
 - **Meira**: IFC-graf þjónsins í léttara formi með fyrirspurninni *byggingarhlutar nálægt byggingarhluta*, Dataregium í þinni eigin
@@ -272,8 +275,8 @@ engu í mál á tuttugu mínútum.
 | Dataspatium | Hvað hún hefur | Á saman við |
 |---|---|---|
 | 1.0.0 | Gögn úr skrám og opnum forritaskilum, vinnsla, R, SQL og reglulegar segðir, sænskt skipulag, myndrit og kort í myndritum, mælaborð, skjöl, útflutningur og deiling. Gagnvart þjóni aðeins Documents API: sækja skjöl sem gagnasöfn og senda gagnasöfn og skrár til baka. Engin mál, engin líkön og ekkert Python | Dataregium 1.0.0 (aðeins Documents API) |
-| 2.0.0 | Allt í 1.0.0 og auk þess hamirnir Leita og Deila, Python og tölfræði án kóða, fleiri uppsprettur, kortasýnir, norrænt skipulag, gröf, IFC-líkön í þrívídd með prófun gegn IDS, flæði, Dataspatium Farsími, mál með viewpoints (BCF API 3.0 og 2.1), IFC-graf þjónsins, kortið *Stjórnun* og kortið *Meðlimir verkefnisins* | Dataregium 2.0.0 |
-| 3.0.0 | Allt í 2.0.0 og auk þess kortið *Sannprófa líkanið*, árekstrarprófun, leiðsögn með sýnarkubbi og sniðum, Spyrja gervigreind og Breyta með gervigreind, ný auð líkön á völdu skema, Bera saman útgáfur, birting með grunnútgáfu og forprófun, breytingatillögur sem eru prófaðar og samþykktar á þjóninum með vali við árekstra, og grafið í léttara formi | Dataregium 3.0.0 |
+| 2.0.0 | Allt í 1.0.0 og auk þess hamirnir Leita og Deila, Python og tölfræði án kóða, fleiri uppsprettur, kortasýnir, norrænt skipulag, gröf, IFC-líkön í þrívídd með prófun gegn IDS, flæði, Dataspatium Farsími, mál með viewpoints (BCF API 3.0 og 2.1), IFC-graf þjónsins, kortið *Stjórnun* og kortið *Meðlimir verkefnisins*, leiðsögn með sýnarkubbi og sniðum, fleiri landupplýsingauppsprettur | Dataregium 2.0.0 |
+| 3.0.0 | Allt í 2.0.0 og auk þess kortið *Sannprófa líkanið*, árekstrarprófun, Spyrja gervigreind og Breyta með gervigreind, ný auð líkön á völdu skema, Bera saman útgáfur, birting með grunnútgáfu og forprófun, breytingatillögur sem eru prófaðar og samþykktar á þjóninum með vali við árekstra, og grafið í léttara formi | Dataregium 3.0.0 |
 
 Ný útgáfa með sama aðalnúmeri kemur í stað þeirrar fyrri; aðeins sú nýjasta í hverri röð er leiðrétt. Uppfærsluathugun forritsins býður
 næsta aðalnúmer, og gagnasöfn, listar, myndrit, sniðmát og skriftur fylgja með þegar þú opnar `index.html` nýju útgáfunnar.

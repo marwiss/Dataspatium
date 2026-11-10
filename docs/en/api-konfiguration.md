@@ -183,6 +183,7 @@ app folder and are good starting points.
 | `headers` | Default headers for all requests |
 | `auth` | `none`, `apiKey` (`in`: `header` or `query`, `name`, optional `prefix`), `basic`, `bearer`, `oauth2_client_credentials` (`tokenUrl`, optional `scope`); `help` and `signupUrl` are shown by the key field |
 | `rateLimit` | `requests` per `perSeconds`; requests are queued so that the limit holds, and 429 responses are waited out |
+| `cors` | What was measured for the service's CORS: `{ "file": false }` means that it cannot be reached from a folder, `{ "web": false }` that it cannot be reached from the web version; the source list then says where it works, or that it requires the bridge |
 | `family` | Special browser: `{ "type": "pxweb", "version": 1 or 2, "lang", "maxCells", "urls", "langs" }`, `{ "type": "statbank" }` (Statistics Denmark), `{ "type": "fhi" }` (Norwegian Institute of Public Health) or `{ "type": "socialstyrelsen" }`. `urls` gives one root per app language for PxWeb v1 (`{ "sv": "...", "en": "..." }`); `langs` states which app languages the service's `lang` parameter understands, as a list or as a map from the app's code to the service's (`{ "nb": "no" }`) |
 | `endpoints` | List of requests (see below) |
 

@@ -185,7 +185,7 @@ sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar di
 ## Öppna geodata
 
 Dialogen för *Geodatakälla* under *Lägg till källor* börjar med en lista över **färdiga geodatakällor**: öppna WFS-, OGC API Features-
-och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, Riksantikvarieämbetet,
+och ArcGIS-tjänster från nordiska myndigheter och kommuner (SCB, SGU, Naturvårdsverket, SLU Artdatabanken, Riksantikvarieämbetet,
 Skogsstyrelsen, Sundsvalls kommun, Kartverket, Miljødirektoratet, Riksantikvaren, Statistikcentralen, SYKE, Helsingfors, Väylävirasto,
 Danmarks Miljøportal, Københavns Kommune, Plandata.dk, Landmælingar Íslands med flera), alla kontrollerade att
 fungera från webbläsaren. En förinställd källa öppnas, övriga läggs till med ett klick och lagren läses från
@@ -213,7 +213,7 @@ till den sparade datamängden.
 Förinställda geodatakällor utan nyckel (CORS verifierat): SCB öppna geodata, SGU, Havs- och vattenmyndigheten,
 Riksantikvarieämbetets fornlämningar, Skogsstyrelsen, Kartverkets administrativa enheter och fastighetskarta (Norge)
 samt Statistikcentralen och SYKE (Finland). Lagren läses från tjänsten första gången källan öppnas och kan läsas om med
-*Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner) finns som nivå 2 med
+*Läs om lagren*; listan sparas i din kopia av källan. Lantmäteriets geodataplattform (detaljplaner, byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog) finns som nivå 2 med
 Bearer-nyckel från en ansluten organisation. Boverkets digitala planer får egna funktioner i en kommande version.
 
 **Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Källan

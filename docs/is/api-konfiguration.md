@@ -12,6 +12,19 @@ lýsingar upprunanna fylgja tungumáli forritsins, og PxWeb-þjónustur sem eru 
 Hagstofa Finnlands, Hagstofa Grænlands, ÅSUB) eru skoðaðar á tungumáli forritsins þegar þjónustan býður upp á það. Allir upprunar
 hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðeins tveir síðustu sænsku krefjast lykils.
 
+### Svíþjóð og ESB
+
+| Land | Uppruni | Hvað | Svona sækirðu |
+|---|---|---|---|
+| ESB | Eurostat | Hagtölur ESB | Gefðu upp kóða gagnasafnsins og síur |
+| ESB | Seðlabanki Evrópu (ECB) | Gengi gjaldmiðla og hagtölur ECB (SDMX) | Veldu gjaldmiðla og tíðni fyrir gengið, eða gefðu upp gagnaflæði og raðlykil |
+| Alþjóðlegt | OECD | Atvinnuleysi, hagvöxtur og aðrar hagtölur OECD (SDMX) | Veldu lönd, eða gefðu upp gagnaflæði og raðlykil |
+| Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
+| Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
+| Svíþjóð | Lantmäteriet Direkt, Boverket | Örnefni, orkuvottorð | Krefjast lykils |
+
+### Önnur Norðurlönd
+
 | Land | Uppruni | Hvað | Svona sækirðu |
 |---|---|---|---|
 | Ísland | Hagstofa Íslands | Opinberar hagtölur, á íslensku og ensku | Flettu í gagnasöfnunum, veldu gildi; 10 000 reitir í hverju kalli |
@@ -34,12 +47,6 @@ hér að neðan voru athugaðir með tilliti til CORS í nóvember 2026, og aðe
 | Færeyjar | Hagstova Føroya | Opinberar hagtölur, á ensku | Flettu, veldu gildi |
 | Álandseyjar | ÅSUB | Opinberar hagtölur, á sænsku og ensku | Flettu, veldu gildi |
 | Norðurlönd | Nordic Statistics database | Samanburðarhæfar norrænar hagtölur, á ensku | Flettu, veldu gildi |
-| ESB | Eurostat | Hagtölur ESB | Gefðu upp kóða gagnasafnsins og síur |
-| ESB | Seðlabanki Evrópu (ECB) | Gengi gjaldmiðla og hagtölur ECB (SDMX) | Veldu gjaldmiðla og tíðni fyrir gengið, eða gefðu upp gagnaflæði og raðlykil |
-| Alþjóðlegt | OECD | Atvinnuleysi, hagvöxtur og aðrar hagtölur OECD (SDMX) | Veldu lönd, eða gefðu upp gagnaflæði og raðlykil |
-| Svíþjóð | SCB Statistikdatabasen (API v1 og v2) | Opinberar hagtölur | Flettu eða leitaðu, veldu gildi |
-| Svíþjóð | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, landupplýsingaskrá Lantmäteriet, gagnagátt Svíþjóðar | Lýðheilsa, heilbrigði, lykiltölur sveitarfélaga, veður, loftgæði, verndarsvæði, landupplýsingar | Sjá sænsku leiðbeiningarnar |
-| Svíþjóð | Lantmäteriet Direkt, Boverket | Örnefni, orkuvottorð | Krefjast lykils |
 
 Ekki með: opingogn.is hefur ekki lengur leitarvefþjónustu; DMI í Danmörku og Frost (MET) í Noregi krefjast lykils; Energi Data
 Service og data.norge.no hafa ekki CORS. Uppruna án CORS er ekki hægt að ná beint úr vafranum; þeir krefjast eigin milliþjóns,
@@ -89,6 +96,15 @@ uppskriftina.
 - Undir file:// deila allar staðbundið opnaðar HTML-síður geymslu í Chromium. Þess vegna er dulkóðun sjálfgefin fyrir vistaða
   lykla.
 
+### Að fá lykla
+
+- **Boverket**: skráðu þig í [forritaskilagátt Boverket](https://api-portal.boverket.se/), gerstu áskrifandi að forritaskilunum
+  fyrir orkuvottorð og afritaðu áskriftarlykilinn. Dataspatium sendir hann í hausnum `Ocp-Apim-Subscription-Key`. Boverket leyfir
+  10 köll á hverjum 2 sekúndum og 1.500 á sólarhring.
+- **Lantmäteriet Direkt**: stofnaðu aðgang í [Geotorget](https://geotorget.lantmateriet.se/), bættu við vörunni Ortnamn Direkt
+  (opin gögn, ókeypis) og búðu til lykla að forritaskilunum. Gefðu upp auðkenni biðlara (consumer key) og leyndarmál biðlara
+  (consumer secret); Dataspatium sækir aðgangstákn á `https://api.lantmateriet.se/token` og endurnýjar það þegar það rennur út.
+
 ## Milliþjónn fyrir þjónustur án CORS
 
 Undir **Fleiri valkostir** í eiginleikaspjaldinu geturðu gefið upp vistfang milliþjóns sem þú rekur sjálf(ur), til dæmis
@@ -101,14 +117,27 @@ Uppruna er lýst með JSON-skrá með endingunni `.api.json`. Eigin uppsetningum
 flytja út með **Flytja út uppsetningu** til að deila þeim. Forstillingarnar eru í `presets/api/` í forritsmöppunni og eru góður
 upphafspunktur. Grunntungumál skrárinnar er sænska; þýðingum er bætt í reitinn `i18n` fyrir hvert tungumál, og forritið sýnir
 textana á sínu eigin tungumáli. Sniðinu er lýst að fullu í [ensku leiðbeiningunum](../en/api-konfiguration.md) og
-[þeim sænsku](../sv/api-konfiguration.md); reitirnir eru:
+[þeim sænsku](../sv/api-konfiguration.md).
 
-- efsta stig: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = enginn lykill,
-  2 = lykill), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,
-  `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`;
-- endapunktur: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
-  `dataset`;
-- breyta: `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`, `optionsFrom`.
+### Reitir á efsta stigi
+
+Reitirnir á efsta stigi eru `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = enginn lykill, 2 = lykill), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`, `rateLimit`, `cors`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) og `endpoints`.
+
+### Endpoint
+
+Endapunktur hefur `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`, `dataset`.
+
+### Færibreyta
+
+Færibreyta hefur `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`, `optionsFrom`.
+
+### Taflan sem verður til
+
+JSON-færslur eru flattar út (hreiðraðir hlutir verða dálkar með punkti í heitinu, listar verða JSON-texti). JSON-stat gefur eina
+röð fyrir hvert hólf með kóða- og textadálk fyrir hverja vídd, tímadálk og einn gildisdálk fyrir hvern mælikvarða. SDMX-JSON gefur
+eina röð fyrir hverja athugun: fyrir hverja vídd kóðadálk (`<heiti>_kod`) og textadálk þegar kóðarnir hafa texta, tímabilið,
+gildið (`varde`) og þá eiginleika raða og athugana sem hafa gildi. Dálkaheiti eru hreinsuð eins og við innflutning skráa (å, ä,
+ö verða a, a, o) og gerðir eru leiddar út með tugabrotspunkti; kóðar með núllum fremst eru áfram texti.
 
 ## Skrifa eigin uppsetningu
 

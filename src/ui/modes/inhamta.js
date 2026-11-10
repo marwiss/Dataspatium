@@ -182,7 +182,8 @@
       }
       /** The line under a source's name: where it comes from, or at least its address. */
       function connectorSub(c) {
-        const parts = [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean);
+        const reason = D.require('api/reach').blocked(c);
+        const parts = [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : '', reason ? D.require('api/reach').label(reason) : ''].filter(Boolean);
         if (parts.length) return parts.join(' · ');
         try { return new URL(c.baseUrl).host || c.baseUrl; } catch (_err) { return c.baseUrl || c.name; }
       }

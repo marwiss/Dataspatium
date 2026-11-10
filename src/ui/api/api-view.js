@@ -11,6 +11,8 @@
   D.define('ui/api/api-view', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ui/api/auth-panel', 'ui/api/endpoint-form', 'ui/api/pxweb-view', 'ui/api/sos-view', 'ui/api/geodata-view', 'ui/api/geoportal-view', 'ui/api/neo4j-view', 'ui/api/opencde-view', 'api/runner', 'api/connectors', 'api/auth', 'api/http', 'platform/files', 'data/datasets', 'viz/leaflet', 'data/plan', 'io/importers/detaljplan'],
     (base, basic, overlays, icons, authPanel, endpointForm, pxwebView, sosView, geodataView, geoportalView, neo4jView, opencdeView, runner, connectors, auth, http, files, datasets, leaflet, plan, detaljplanImp) => {
       const { h, t, i18n, replace } = base;
+    /** A badge when the source does not work where the app runs (api/reach), with the reason as its tip. */
+    const reachBadge = (c) => { const reach = D.require('api/reach'); const why = reach.blocked(c); return why ? h('dm-badge', { kind: 'warn', text: reach.label(why), 'data-tip': reach.hint(why), 'data-reach': why }) : null; };
       const PREVIEW_ROWS = 2000;
 
       /**
@@ -54,7 +56,7 @@
           }
           replace(el,
             h('div', { class: 'dm-page-head' },
-              h('h1', null, icons.icon(isGeodata || family === 'geoportal' ? 'map' : isNeo4j ? 'database' : isOpenCde ? 'building-2' : 'globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null, isGeodata ? h('dm-badge', { text: t('geodata.badge.' + connector.family.kind) }) : null),
+              h('h1', null, icons.icon(isGeodata || family === 'geoportal' ? 'map' : isNeo4j ? 'database' : isOpenCde ? 'building-2' : 'globe', 20), connector.name, ' ', connector.level === 2 ? h('dm-badge', { kind: 'warn', text: t('api.level2') }) : null, reachBadge(connector), isGeodata ? h('dm-badge', { text: t('geodata.badge.' + connector.family.kind) }) : null),
               h('div', { class: 'dm-row' },
                 connector.docs ? basic.button({ label: t('api.docs'), icon: 'external-link', onClick: () => window.open(connector.docs, '_blank', 'noopener') }) : null,
                 basic.button({ label: t('api.export'), icon: 'download', variant: 'ghost', onClick: () => files.download(new Blob([connectors.exportJson(connector)], { type: 'application/json' }), files.safeName(connector.id, 'api.json')) }))),

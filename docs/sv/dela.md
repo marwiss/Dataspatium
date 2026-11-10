@@ -65,8 +65,9 @@ telefonnummer, både i hela kolumner och inne i löptext, och listar det som ann
 Bara kopian som delas ändras, och datamängden i appen är kvar som den är. Ändrar du något följer varken ändringsloggen eller receptet med, eftersom de kan innehålla de ursprungliga
 värdena. Paket rensas också från rester av borttagna värden i själva filen.
 
-Granskningen ser inte allt. Namn, adresser och innehållet i originalfiler och bilder måste du bedöma själv. Diagram, anteckningsböcker och dokument i ett paket kan visa de ursprungliga
-värdena, så välj bort dem om det behövs. Filnamn följer med.
+Granskningen ser inte allt. Namn, adresser och innehållet i originalfiler och bilder måste du bedöma själv. Ett paket tar med diagram, dashboards och anteckningsböcker bara för de
+valda datamängderna. Personuppgifter i dem, i mallar och skript, i anteckningsböckernas sparade utdata och i datamängdernas namn och filnamn
+listas under *Det som följer med paketet* och maskeras i kopian, om du inte väljer att behålla dem, ta bort utdata eller lämna filen utanför.
 
 En synkning till **GitHub** måste kunna hämtas tillbaka som den var, så där kan inget pseudonymiseras. Appen visar i stället vad som kan vara personuppgifter innan du skickar. **Publicera** skapar
 en HTML-sida med de värden som diagrammen visar, så kontrollera dem innan du lägger ut sidan.

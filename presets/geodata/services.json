@@ -78,6 +78,25 @@
    }
   },
   {
+   "id": "slu-artdata-wfs",
+   "name": "Artfynd (SLU Artdatabanken)",
+   "publisher": "SLU Artdatabanken",
+   "country": "SE",
+   "kind": "wfs",
+   "url": "https://sosgeo.artdata.slu.se/geoserver/SOS/ows",
+   "docs": "https://www.slu.se/artdatabanken/rapportering-och-fynd/oppna-data-och-apier/",
+   "license": "Villkor hos SLU Artdatabanken (per dataleverantör)",
+   "about": {
+    "sv": "Artfynd ur Artportalen och andra källor: alla fynd, invasiva arter, rödlistade arter och värdefulla träd. Skyddade fynd ingår inte. Observatörernas namn följer med; granskningen före delning föreslår att de pseudonymiseras.",
+    "en": "Species observations from Artportalen and other sources: all observations, invasive species, red-listed species and valuable trees. Protected observations are not included. Observers' names come along; the review before sharing proposes to pseudonymise them.",
+    "da": "Artsfund fra Artportalen og andre kilder: alle fund, invasive arter, rødlistede arter og værdifulde træer. Beskyttede fund er ikke med. Observatørernes navne følger med; gennemgangen før deling foreslår at pseudonymisere dem.",
+    "nb": "Artsfunn fra Artportalen og andre kilder: alle funn, invaderende arter, rødlistede arter og verdifulle trær. Beskyttede funn er ikke med. Observatørenes navn følger med; gjennomgangen før deling foreslår å pseudonymisere dem.",
+    "nn": "Artsfunn frå Artportalen og andre kjelder: alle funn, invaderande artar, raudlista artar og verdfulle tre. Verna funn er ikkje med. Namna til observatørane følgjer med; gjennomgangen før deling føreslår å pseudonymisere dei.",
+    "fi": "Lajihavainnot Artportalenista ja muista lähteistä: kaikki havainnot, vieraslajit, uhanalaiset lajit ja arvokkaat puut. Suojattuja havaintoja ei ole mukana. Havaitsijoiden nimet tulevat mukaan; tarkistus ennen jakamista ehdottaa niiden pseudonymisointia.",
+    "is": "Tegundafundir úr Artportalen og öðrum heimildum: allir fundir, ágengar tegundir, tegundir á válista og verðmæt tré. Verndaðir fundir eru ekki með. Nöfn athugenda fylgja með; yfirferðin fyrir deilingu leggur til að þau séu dulnefnd."
+   }
+  },
+  {
    "id": "raa-arkreg",
    "preset": "raa-arkreg",
    "name": "Fornlämningar (Fornsök)",
@@ -133,6 +152,90 @@
     "nb": "Digitale reguleringsplaner; krever API-nøkkel fra en tilknyttet organisasjon.",
     "fi": "Digitaaliset asemakaavat; vaatii API-avaimen liittyneeltä organisaatiolta.",
     "is": "Stafrænt deiliskipulag; krefst API-lykils frá tengdri stofnun."
+   }
+  },
+  {
+   "id": "lantmateriet-ngp-byggnad",
+   "preset": "lantmateriet-ngp-detaljplan",
+   "name": "Byggnader (geodataplattformen)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "ogcapi",
+   "key": true,
+   "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/byggnad/v1",
+   "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+   "license": "Kräver nyckel",
+   "about": {
+    "sv": "Byggnader ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
+    "en": "Buildings from the national geodata platform; requires an API key from a connected organisation.",
+    "da": "Bygninger fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
+    "nb": "Bygninger fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
+    "nn": "Bygningar frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
+    "fi": "Rakennukset kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
+    "is": "Byggingar úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+   }
+  },
+  {
+   "id": "lantmateriet-ngp-strandskydd",
+   "preset": "lantmateriet-ngp-detaljplan",
+   "name": "Strandskydd (geodataplattformen)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "ogcapi",
+   "key": true,
+   "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/strandskydd/v1",
+   "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+   "license": "Kräver nyckel",
+   "about": {
+    "sv": "Strandskyddsområden ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
+    "en": "Shore protection areas from the national geodata platform; requires an API key from a connected organisation.",
+    "da": "Strandbeskyttelsesområder fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
+    "nb": "Strandvernområder fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
+    "nn": "Strandvernområde frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
+    "fi": "Rantojensuojelualueet kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
+    "is": "Strandverndarsvæði úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+   }
+  },
+  {
+   "id": "lantmateriet-ngp-kulturhistorisklamning",
+   "preset": "lantmateriet-ngp-detaljplan",
+   "name": "Kulturhistoriska lämningar (geodataplattformen)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "ogcapi",
+   "key": true,
+   "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/kulturhistorisklamning/v1",
+   "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+   "license": "Kräver nyckel",
+   "about": {
+    "sv": "Kulturhistoriska lämningar ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
+    "en": "Cultural heritage remains from the national geodata platform; requires an API key from a connected organisation.",
+    "da": "Kulturhistoriske levn fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
+    "nb": "Kulturhistoriske levninger fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
+    "nn": "Kulturhistoriske leivningar frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
+    "fi": "Kulttuurihistorialliset jäännökset kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
+    "is": "Menningarsögulegar minjar úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
+   }
+  },
+  {
+   "id": "lantmateriet-ngp-gransforfjallnaraskog",
+   "preset": "lantmateriet-ngp-detaljplan",
+   "name": "Gräns för fjällnära skog (geodataplattformen)",
+   "publisher": "Lantmäteriet",
+   "country": "SE",
+   "kind": "ogcapi",
+   "key": true,
+   "url": "https://api.lantmateriet.se/distribution/geodatakatalog/sokning/v1/gransforfjallnaraskog/v1",
+   "docs": "https://www.lantmateriet.se/sv/nationella-geodataplattformen/",
+   "license": "Kräver nyckel",
+   "about": {
+    "sv": "Gränsen för fjällnära skog ur den nationella geodataplattformen; kräver API-nyckel från en ansluten organisation.",
+    "en": "The boundary of forest near the mountains from the national geodata platform; requires an API key from a connected organisation.",
+    "da": "Grænsen for fjeldnær skov fra den nationale geodataplatform; kræver API-nøgle fra en tilsluttet organisation.",
+    "nb": "Grensen for fjellnær skog fra den nasjonale geodataplattformen; krever API-nøkkel fra en tilknyttet organisasjon.",
+    "nn": "Grensa for fjellnær skog frå den nasjonale geodataplattforma; krev API-nøkkel frå ein tilknytt organisasjon.",
+    "fi": "Tunturien läheisen metsän raja kansallisesta paikkatietoalustasta; vaatii API-avaimen liittyneeltä organisaatiolta.",
+    "is": "Mörk fjallaskóga úr landsgagnagátt landupplýsinga; krefst API-lykils frá tengdri stofnun."
    }
   },
   {

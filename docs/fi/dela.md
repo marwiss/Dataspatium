@@ -67,8 +67,9 @@ puhelinnumeroita sekä kokonaisista sarakkeista että juoksevan tekstin sisält�
 Vain jaettava kopio muuttuu, ja sovelluksen aineisto säilyy ennallaan. Jos muutat jotain, muutosloki ja resepti eivät tule mukaan, koska ne voivat sisältää alkuperäiset arvot. Paketeista poistetaan
 myös poistettujen arvojen jäänteet itse tiedostossa.
 
-Tarkistus ei näe kaikkea. Nimet, osoitteet ja alkuperäisten tiedostojen ja kuvien sisältö on arvioitava itse. Paketin kaaviot, muistikirjat ja asiakirjat voivat näyttää alkuperäiset arvot, joten jätä
-ne tarvittaessa pois. Tiedostonimet kulkevat mukana.
+Tarkistus ei näe kaikkea. Nimet, osoitteet ja alkuperäisten tiedostojen ja kuvien sisältö on arvioitava itse. Paketti ottaa mukaan kaaviot, koontinäytöt ja muistikirjat vain valituista aineistoista.
+Niiden, mallipohjien ja skriptien, muistikirjojen tallennettujen tulosteiden sekä aineistojen nimien ja tiedostonimien henkilötiedot näytetään
+kohdassa *Mitä muuta paketti sisältää* ja peitetään kopiossa, ellet valitse säilyttämistä, tulosteiden poistoa tai tiedoston jättämistä pois.
 
 **GitHub**-synkronointi on voitava noutaa takaisin sellaisena kuin se oli, joten siinä mitään ei voi pseudonymisoida. Sovellus näyttää sen sijaan ennen lähetystä, mikä voi olla henkilötietoja.
 **Julkaise** luo HTML-sivun kaavioiden näyttämistä arvoista, joten tarkista ne ennen sivun julkaisemista.

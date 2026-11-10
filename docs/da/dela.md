@@ -64,8 +64,9 @@ hele kolonner og inde i løbende tekst, og viser det, der ellers følger med ude
 Kun kopien, der deles, ændres, og datasættet i appen forbliver, som det er. Ændrer du noget, følger hverken ændringsloggen eller recepten med, da de kan indeholde de oprindelige værdier. Pakker
 renses også for rester af fjernede værdier i selve filen.
 
-Gennemgangen ser ikke alt. Navne, adresser og indholdet af originalfiler og billeder må du selv vurdere. Diagrammer, notesbøger og dokumenter i en pakke kan vise de oprindelige værdier, så fravælg
-dem, hvis det er nødvendigt. Filnavne følger med.
+Gennemgangen ser ikke alt. Navne, adresser og indholdet af originalfiler og billeder må du selv vurdere. En pakke tager kun diagrammer, dashboards og notesbøger med for de valgte datasæt.
+Personoplysninger i dem, i skabeloner og scripts, i notesbøgernes gemte output og i datasættenes navne og filnavne vises under *Det, der følger
+med pakken* og maskeres i kopien, medmindre du vælger at beholde dem, fjerne output eller udelade filen.
 
 En synkronisering til **GitHub** skal kunne hentes tilbage, som den var, så der kan intet pseudonymiseres. Appen viser i stedet, hvad der kan være personoplysninger, før du sender. **Publicér** laver en
 HTML-side med de værdier, diagrammerne viser, så kontrollér dem, før du lægger siden ud.

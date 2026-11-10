@@ -25,7 +25,7 @@
 .dm-m-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .dm-m-item-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dm-m-item-sub { color: var(--dm-text-muted); font-size: var(--dm-text-sm); }
-.dm-m-video { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--dm-radius-md); background: #000; }
+.dm-m-video { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--dm-radius-md); background: var(--dm-n-900); }
 .dm-m-progress { display: flex; flex-direction: column; gap: var(--dm-s-2); }
 .dm-m-pager { display: flex; align-items: center; justify-content: space-between; gap: var(--dm-s-2); }
 .dm-m-table-wrap { overflow: auto; max-height: 70dvh; border: 1px solid var(--dm-border); border-radius: var(--dm-radius-sm); -webkit-overflow-scrolling: touch; }

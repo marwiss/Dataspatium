@@ -12,6 +12,19 @@ selaimeen. Lähteiden nimet ja kuvaukset noudattavat sovelluksen kieltä, ja use
 Tilastokeskus, Hagstofa, Grönlannin tilastovirasto, ÅSUB) selataan sovelluksen kielellä, kun palvelussa on se. Kaikki alla
 olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi viimeistä ruotsalaista vaativat avaimen.
 
+### Ruotsi ja EU
+
+| Maa | Lähde | Mitä | Näin noudat |
+|---|---|---|---|
+| Ruotsi | SCB Statistikdatabasen (API v1 ja v2) | Virallinen tilasto | Selaa tai hae, valitse arvot |
+| Ruotsi | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäterietin geodatakatalogi, Ruotsin dataportaali | Kansanterveys, terveys, kuntien tunnusluvut, sää, ilmanlaatu, suojelualueet, paikkatieto | Ks. ruotsinkielinen opas |
+| Ruotsi | Lantmäteriet Direkt, Boverket | Paikannimet, energiatodistukset | Vaativat avaimen |
+| EU | Eurostat | EU-tilastot | Anna aineiston koodi ja suodattimet |
+| EU | Euroopan keskuspankki (EKP) | Valuuttakurssit ja EKP:n tilastot (SDMX) | Valitse valuutat ja tiheys valuuttakursseille tai anna tietovirta ja sarja-avain |
+| Kansainvälinen | OECD | Työttömyys, BKT:n kasvu ja OECD:n muut tilastot (SDMX) | Valitse maat tai anna tietovirta ja sarja-avain |
+
+### Muut Pohjoismaat
+
 | Maa | Lähde | Mitä | Näin noudat |
 |---|---|---|---|
 | Suomi | Tilastokeskus StatFin | Virallinen tilasto suomeksi, ruotsiksi ja englanniksi | Selaa aihepuuta, valitse arvot; 100 000 solua per kutsu |
@@ -22,9 +35,6 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 | Suomi | Ilmatieteen laitos | Säähavainnot paikkakunnittain tai asemittain | Anna paikkakunta tai aseman tunnus, parametrit ja jakso |
 | Suomi | Avoindata.fi | Suomen dataportaali | Hae aineistoja, yksi rivi per tiedosto |
 | Ahvenanmaa | ÅSUB | Virallinen tilasto ruotsiksi ja englanniksi | Selaa, valitse arvot |
-| Ruotsi | SCB Statistikdatabasen (API v1 ja v2) | Virallinen tilasto | Selaa tai hae, valitse arvot |
-| Ruotsi | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäterietin geodatakatalogi, Ruotsin dataportaali | Kansanterveys, terveys, kuntien tunnusluvut, sää, ilmanlaatu, suojelualueet, paikkatieto | Ks. ruotsinkielinen opas |
-| Ruotsi | Lantmäteriet Direkt, Boverket | Paikannimet, energiatodistukset | Vaativat avaimen |
 | Norja | SSB Statistikkbanken (API v1 ja v2) | Virallinen tilasto norjaksi ja englanniksi | Selaa aihepuuta tai hae taulukko, valitse arvot; 800 000 solua per kutsu |
 | Norja | FHI Statistikk | Kansanterveystilastot Norjan kansanterveyslaitoksen rekistereistä ja tilastopankeista | Valitse lähde, taulukko ja arvot ulottuvuuksittain (mittarit MEASURE_TYPE-ulottuvuudessa) |
 | Norja | Enhetsregisteret (Brønnøysundregistrene) | Yritykset ja organisaatiot | Hae nimellä, kunnalla, yhtiömuodolla tai toimialakoodilla |
@@ -37,9 +47,6 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 | Grönlanti | Grønlands Statistik | Virallinen tilasto tanskaksi ja englanniksi | Selaa, valitse arvot |
 | Färsaaret | Hagstova Føroya | Virallinen tilasto englanniksi | Selaa, valitse arvot |
 | Pohjoismaat | Nordic Statistics database | Vertailukelpoinen pohjoismainen tilasto englanniksi | Selaa, valitse arvot |
-| EU | Eurostat | EU-tilastot | Anna aineiston koodi ja suodattimet |
-| EU | Euroopan keskuspankki (EKP) | Valuuttakurssit ja EKP:n tilastot (SDMX) | Valitse valuutat ja tiheys valuuttakursseille tai anna tietovirta ja sarja-avain |
-| Kansainvälinen | OECD | Työttömyys, BKT:n kasvu ja OECD:n muut tilastot (SDMX) | Valitse maat tai anna tietovirta ja sarja-avain |
 
 Ei mukana: Tanskan DMI ja Norjan Frost (MET) vaativat avaimen; Energi Data Servicestä ja data.norge.no:sta puuttuu CORS;
 opingogn.is:llä ei enää ole hakurajapintaa. Lähteitä ilman CORS-tukea ei tavoiteta suoraan selaimesta; ne vaativat oman
@@ -90,6 +97,15 @@ tai uusien rivien lisäämisen loppuun reseptiä suorittamatta.
 - file://-tilassa kaikki paikallisesti avatut HTML-sivut jakavat tallennustilan Chromiumissa. Siksi salaus on oletus
   tallennetuille avaimille.
 
+### Avainten hankkiminen
+
+- **Boverket**: rekisteröidy [Boverketin API-portaaliin](https://api-portal.boverket.se/), tilaa energiatodistusten API ja
+  kopioi tilausavain. Dataspatium lähettää sen otsakkeessa `Ocp-Apim-Subscription-Key`. Boverket sallii 10 kutsua kahdessa
+  sekunnissa ja 1 500 vuorokaudessa.
+- **Lantmäteriet Direkt**: luo tili [Geotorgetiin](https://geotorget.lantmateriet.se/), lisää tuote Ortnamn Direkt (avoin data,
+  maksuton) ja luo API-avaimet. Anna asiakastunnus (consumer key) ja asiakassalaisuus (consumer secret); Dataspatium hakee
+  käyttötunnisteen osoitteesta `https://api.lantmateriet.se/token` ja uusii sen, kun se vanhenee.
+
 ## Välityspalvelin palveluille ilman CORS-tukea
 
 Ominaisuuspaneelin kohdassa **Lisää asetuksia** voit antaa itse ylläpitämäsi välityspalvelimen osoitteen, esimerkiksi
@@ -103,14 +119,28 @@ Lähde kuvataan JSON-tiedostolla, jonka pääte on `.api.json`. Omat määrityks
 ja ne voi viedä toiminnolla **Vie määritys** jaettaviksi. Valmisasetukset ovat sovelluskansion kansiossa `presets/api/`, ja ne
 ovat hyviä lähtökohtia. Tiedoston peruskieli on ruotsi; käännökset lisätään kenttään `i18n` kielittäin, ja sovellus näyttää
 tekstit omalla kielellään. Muoto on kuvattu kokonaisuudessaan [englanninkielisessä oppaassa](../en/api-konfiguration.md) ja
-[ruotsinkielisessä](../sv/api-konfiguration.md); kentät ovat:
+[ruotsinkielisessä](../sv/api-konfiguration.md).
 
-- ylin taso: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ei avainta,
-  2 = avain), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,
-  `rateLimit`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) ja `endpoints`;
-- päätepiste: `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`,
-  `dataset`;
-- parametri: `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`, `optionsFrom`.
+### Ylätason kentät
+
+Ylätason kentät ovat `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ei avainta, 2 = avain), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`, `rateLimit`, `cors`, `family` (`pxweb`, `statbank`, `fhi`, `socialstyrelsen`) ja `endpoints`.
+
+### Endpoint
+
+Päätepisteellä on `id`, `name`, `description`, `method`, `path`, `headers`, `params`, `body`, `bodyType`, `pagination`, `response`, `dataset`.
+
+### Parametri
+
+Parametrilla on `name`, `in`, `type`, `label`, `help`, `example`, `required`, `default`, `hidden`, `raw`, `template`, `optionsFrom`.
+
+### Syntyvä taulukko
+
+JSON-tietueet litistetään (sisäkkäisistä objekteista tulee sarakkeita, joiden nimessä on piste, listoista tulee JSON-tekstiä).
+JSON-stat antaa yhden rivin solua kohti, ja jokaisella ulottuvuudella on koodi- ja tekstisarake, lisäksi aikasarake ja yksi
+arvosarake mittaria kohti. SDMX-JSON antaa yhden rivin havaintoa kohti: jokaisesta ulottuvuudesta koodisarake (`<nimi>_kod`) ja
+tekstisarake, kun koodeilla on tekstit, sekä aikajakso, arvo (`varde`) ja ne sarja- ja havaintoattribuutit, joilla on arvo.
+Sarakkeiden nimet siistitään kuten tiedostoja tuotaessa (å, ä, ö muuttuvat a:ksi, a:ksi ja o:ksi), ja tyypit päätellään
+desimaalipisteellä; etunollalliset koodit jäävät tekstiksi.
 
 ## Oman määrityksen kirjoittaminen
 

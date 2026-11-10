@@ -94,7 +94,9 @@
       }
       function serviceItem(svc) {
         const busy = state.adding === svc.id;
-        const sub = [t('country.' + svc.country), svc.publisher, t('geodata.badge.' + svc.kind) || svc.kind, svc.key ? t('api.level2') : null].filter(Boolean).join(' · ');
+        const reach = D.require('api/reach');
+        const why = reach.blocked(svc);
+        const sub = [t('country.' + svc.country), svc.publisher, t('geodata.badge.' + svc.kind) || svc.kind, svc.key ? t('api.level2') : null, why ? reach.label(why) : null].filter(Boolean).join(' · ');
         return h('div', { class: 'dm-list-item dm-list-item-static dm-geodata-ready-item' },
           icons.icon(svc.kind === 'geoportal' ? 'search' : svc.kind === 'arcgis' ? 'layers' : 'map', 16),
           h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: svc.name }), h('span', { class: 'dm-list-sub dm-truncate', text: sub }), aboutOf(svc) ? h('span', { class: 'dm-list-sub', text: aboutOf(svc) }) : null),
