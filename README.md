@@ -83,6 +83,15 @@ annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igan
 - **Grundkurs**: en interaktiv genomgång av alla sex lägen med exempeldata, på alla sex språk. Den visas första
   gången appen öppnas och kan öppnas när som helst från hjälpen eller kommandopaletten.
 
+## Dataspatium och Dataregium
+
+*Dataregium hette Kontroll fram till den 8 november 2026.*
+
+Dataspatium 1.0.0 fungerar med Dataregium 1.0.0, en server för buildingSMARTs OpenCDE-API:er Foundation och Documents. Appen lägger
+till servern som källa i Inhämta, loggar in med OAuth2 och registrerar sig själv som klient när servern tillåter det, hämtar dokument som
+datamängder och skickar datamängder och filer tillbaka genom Documents API (se [docs/api-konfiguration.md](docs/api-konfiguration.md)).
+Ärenden (BCF) och modeller kom i 2-serien. Servern behövs inte för resten av appen.
+
 ## Lär dig mer
 
 - **Grundkursen** i appen: en interaktiv genomgång av alla lägen med exempeldata; öppna den från hjälpen (?)

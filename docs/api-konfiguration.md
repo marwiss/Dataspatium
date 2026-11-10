@@ -65,6 +65,18 @@ Inte med: Danmarks DMI och Norges Frost (MET) kräver nyckel; Energi Data Servic
 CORS; opingogn.is har inget sök-API längre. Egna konfigurationer för sådana tjänster kan läggas till med en
 proxy eller nyckel enligt nedan.
 
+## OpenCDE-server (Dataregium)
+
+Knappen *Lägg till OpenCDE-server* under *Öppna API:er* i Inhämta lägger till en server som följer buildingSMARTs OpenCDE-API:er, till
+exempel [Dataregium](https://github.com/marwiss/Dataregium). Ange serverns adress. Lämna klient-id tomt när servern låter appen
+registrera sig själv (RFC 7591); annars anger du det klient-id som administratören registrerat för Dataspatium. Källan öppnar en vy där du
+loggar in på servern (OAuth2 med PKCE i ett popup-fönster; från file:// klistrar du in adressen du hamnar på efter inloggningen).
+*Hämta dokument* öppnar serverns sida för att välja dokument, och varje vald version blir en datamängd som minns sitt dokument och sin
+version. *Skicka till servern* laddar upp en datamängd i valt format, eller en fil från datorn, som nytt dokument eller ny version genom
+serverns uppladdningssida. Medan en sida är öppen i ett popup-fönster visar appen knappen *Avbryt*. Appen läser serverns
+kapabilitetsdokument (`/.well-known/dataregium`) och skickar `X-Request-Id` med varje anrop. I 1-serien finns inga ärenden (BCF);
+de kom i 2-serien. Token hålls i sessionen eller krypterade, aldrig i klartext.
+
 ## Så här gör du
 
 1. Öppna läget **Inhämta** och välj en källa under **Öppna API:er** i objektpanelen. Landsknapparna ovanför

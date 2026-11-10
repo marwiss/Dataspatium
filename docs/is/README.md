@@ -71,6 +71,15 @@ Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri t
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla sex hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
+## Dataspatium og Dataregium
+
+*Dataregium hét Kontroll til 8. nóvember 2026.*
+
+Dataspatium 1.0.0 virkar með Dataregium 1.0.0, þjóni fyrir OpenCDE-forritaskil buildingSMART, Foundation og Documents. Forritið bætir
+þjóninum við sem uppsprettu í Sækja, skráir sig inn með OAuth2 og skráir sig sjálft sem biðlara þegar þjónninn leyfir það, sækir skjöl sem
+gagnasöfn og sendir gagnasöfn og skrár til baka um Documents API (sjá [api-konfiguration.md](api-konfiguration.md)). Mál (BCF) og líkön komu
+í 2-seríunni. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu.
+
 ## Lærðu meira
 
 Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo tenglar virka eins alls staðar.

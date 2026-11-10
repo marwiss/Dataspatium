@@ -38,8 +38,15 @@
     }
   }
 
+  /** A provider registered for an exact name, or for a prefix ending in '/' (a mocked server in the tests). */
+  function providerFor(name) {
+    const exact = virtual.get(name);
+    if (exact) return exact;
+    for (const [key, fn] of virtual) if (key.endsWith('/') && name.startsWith(key)) return fn;
+    return null;
+  }
   function lookupAsync(name, url) {
-    const provider = virtual.get(name);
+    const provider = providerFor(name);
     if (provider) return provider(url);
     return D.assets.decode(name);
   }

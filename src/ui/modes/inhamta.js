@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files'], (base, csv, encoding, types, connectors, apiView, files) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'ui/api/api-view', 'platform/files', 'api/families/opencde', 'ui/api/opencde-view'], (base, csv, encoding, types, connectors, apiView, files, opencde, opencdeView) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -72,7 +72,8 @@
           renderCountryChips(),
           h('div', { class: 'dm-list' }, visibleConnectors().map((c) => sourceItem('api:' + c.id, 'globe', c.name, [c.country ? t('country.' + c.country) : '', c.publisher, c.level === 2 ? t('api.level2') : ''].filter(Boolean).join(' · ')))),
           visibleConnectors().length ? null : h('p', { class: 'dm-help dm-xs', text: t('api.countries.none') }),
-          h('div', { class: 'dm-row' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector })),
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('api.add.file'), icon: 'upload', size: 'sm', onClick: addConnector }),
+            ui.button({ label: t('opencde.add'), icon: 'globe', size: 'sm', title: t('opencde.add.hint'), 'data-opencde-add': '', onClick: addOpenCde })),
           h('p', { class: 'dm-help dm-xs', text: t('import.sources.api.hint') }));
       }
 
@@ -108,6 +109,17 @@
       function sourceItem(id, icon, label, sub) {
         return h('button', { type: 'button', class: 'dm-list-item', 'aria-current': source === id ? 'true' : null, onclick: () => { source = id; wiz.error = ''; if (!id.startsWith('api:') && wiz.step !== 'file') restart(); else render(); } },
           ui.icon(icon, 16), h('span', { class: 'dm-list-main' }, h('span', { class: 'dm-truncate', text: label }), sub ? h('span', { class: 'dm-list-sub dm-truncate', text: sub }) : null));
+      }
+      /** An OpenCDE server (Dataregium) as a source: the dialog asks the server where to sign in and registers the app when it may. */
+      async function addOpenCde() {
+        try {
+          const c = await opencdeView.openAdd(ctx);
+          if (!c) return;
+          shell.log(t('api.added', { name: c.name }), 'ok');
+          await reloadConnectors();
+          source = 'api:' + c.id;
+          render();
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error', timeout: 12000 }); }
       }
       async function addConnector() {
         const [file] = await files.pick({ accept: '.json,application/json' });
@@ -186,10 +198,11 @@
         if (!apiUi || apiId !== id) {
           if (apiUi) apiUi.destroy();
           apiId = id;
-          apiUi = apiView.create(ctx, connector, {
+          const hooks = {
             onDataset: () => {},
             onRemoved: () => { apiUi = null; apiId = null; source = 'file'; reloadConnectors().then(render); },
-          });
+          };
+          apiUi = opencde.isOpenCde(connector) ? opencdeView.create(ctx, connector, hooks) : apiView.create(ctx, connector, hooks);
           apiUi.start();
         }
         replace(slots.center, apiUi.el);

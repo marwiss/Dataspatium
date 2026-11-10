@@ -45,6 +45,18 @@ Ekki með: opingogn.is hefur ekki lengur leitarvefþjónustu; DMI í Danmörku o
 Service og data.norge.no hafa ekki CORS. Uppruna án CORS er ekki hægt að ná beint úr vafranum; þeir krefjast eigin milliþjóns,
 sjá hér að neðan.
 
+## OpenCDE-þjónn (Dataregium)
+
+Hnappurinn *Bæta við OpenCDE-þjóni* undir *Opin forritaskil* í Sækja bætir við þjóni sem fylgir OpenCDE-forritaskilum buildingSMART, til
+dæmis [Dataregium](https://github.com/marwiss/Dataregium). Sláðu inn vistfang þjónsins. Skildu biðlaraauðkennið eftir autt þegar þjónninn
+leyfir forritinu að skrá sig sjálft (RFC 7591); annars slærðu inn biðlaraauðkennið sem stjórnandinn skráði fyrir Dataspatium. Uppsprettan
+opnar sýn þar sem þú skráir þig inn á þjóninn (OAuth2 með PKCE í sprettiglugga; frá file:// límir þú inn vistfangið sem þú lendir á eftir
+innskráningu). *Sækja skjöl* opnar síðu þjónsins til að velja skjöl, og hver valin útgáfa verður gagnasafn sem man skjalið sitt og útgáfu.
+*Senda á þjóninn* hleður upp gagnasafni á völdu sniði, eða skrá úr tölvunni, sem nýju skjali eða nýrri útgáfu um upphleðslusíðu þjónsins.
+Meðan síða er opin í sprettiglugga sýnir forritið hnappinn *Hætta við*. Forritið les getuskjal þjónsins (`/.well-known/dataregium`) og sendir
+`X-Request-Id` með hverju kalli. Í 1-seríunni eru engin mál (BCF); þau komu í 2-seríunni. Tókar eru geymdir í setunni eða dulritaðir,
+aldrei í hreinum texta.
+
 ## Svona gerirðu
 
 1. Opnaðu haminn **Sækja** og veldu uppruna undir **Opnar vefþjónustur** í hlutaspjaldinu. Landahnapparnir fyrir ofan listann

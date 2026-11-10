@@ -78,6 +78,15 @@ tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kuudesta tilasta esimerkkidatalla kaikilla kuudella kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
+## Dataspatium ja Dataregium
+
+*Dataregiumin nimi oli Kontroll 8. marraskuuta 2026 asti.*
+
+Dataspatium 1.0.0 toimii Dataregium 1.0.0:n kanssa, joka on palvelin buildingSMARTin OpenCDE-rajapinnoille Foundation ja Documents. Sovellus
+lisää palvelimen lähteeksi Nouda-tilassa, kirjautuu OAuth2:lla ja rekisteröityy itse asiakkaaksi, kun palvelin sallii sen, noutaa asiakirjat
+aineistoina ja lähettää aineistoja ja tiedostoja takaisin Documents API:n kautta (ks. [api-konfiguration.md](api-konfiguration.md)). Asiat
+(BCF) ja mallit tulivat 2-sarjassa. Palvelinta ei tarvita sovelluksen muihin osiin.
+
 ## Lue lisää
 
 Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), joten linkit toimivat samoin kaikkialla.

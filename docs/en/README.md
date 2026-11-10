@@ -76,6 +76,15 @@ with more detail: [kom-igang.md](kom-igang.md) (Getting started).
 - **Beginner's course**: an interactive walkthrough of all six modes with example data, in all six languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
+## Dataspatium and Dataregium
+
+*Dataregium was called Kontroll until 8 November 2026.*
+
+Dataspatium 1.0.0 works with Dataregium 1.0.0, a server for buildingSMART's OpenCDE APIs Foundation and Documents. The app adds the
+server as a source in Import, signs in with OAuth2 and registers itself as a client when the server allows it, fetches documents as
+datasets and sends datasets and files back through the Documents API (see [api-konfiguration.md](api-konfiguration.md)). Issues (BCF)
+and models came with the 2 series. The server is not needed for the rest of the app.
+
 ## Learn more
 
 The file names are the same in every language (they are the Swedish originals), so links work the same way

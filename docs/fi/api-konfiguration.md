@@ -45,6 +45,18 @@ Ei mukana: Tanskan DMI ja Norjan Frost (MET) vaativat avaimen; Energi Data Servi
 opingogn.is:llä ei enää ole hakurajapintaa. Lähteitä ilman CORS-tukea ei tavoiteta suoraan selaimesta; ne vaativat oman
 välityspalvelimen, ks. alla.
 
+## OpenCDE-palvelin (Dataregium)
+
+Painike *Lisää OpenCDE-palvelin* kohdassa *Avoimet rajapinnat* Nouda-tilassa lisää palvelimen, joka noudattaa buildingSMARTin
+OpenCDE-rajapintoja, esimerkiksi [Dataregium](https://github.com/marwiss/Dataregium). Anna palvelimen osoite. Jätä asiakastunnus tyhjäksi,
+kun palvelin sallii sovelluksen rekisteröityä itse (RFC 7591); muuten anna asiakastunnus, jonka pääkäyttäjä on rekisteröinyt Dataspatiumille.
+Lähde avaa näkymän, jossa kirjaudut palvelimelle (OAuth2 ja PKCE ponnahdusikkunassa; file://-osoitteesta liität osoitteen, johon päädyt
+kirjautumisen jälkeen). *Nouda asiakirjoja* avaa palvelimen sivun asiakirjojen valintaan, ja jokaisesta valitusta versiosta tulee aineisto,
+joka muistaa asiakirjansa ja versionsa. *Lähetä palvelimelle* lataa aineiston valitussa muodossa tai tiedoston tietokoneelta uutena
+asiakirjana tai versiona palvelimen lataussivun kautta. Kun sivu on auki ponnahdusikkunassa, sovellus näyttää painikkeen *Peruuta*. Sovellus
+lukee palvelimen kyvykkyysasiakirjan (`/.well-known/dataregium`) ja lähettää `X-Request-Id`:n jokaisen kutsun mukana. 1-sarjassa ei ole
+asioita (BCF); ne tulivat 2-sarjassa. Tunnisteet säilytetään istunnossa tai salattuina, ei koskaan selväkielisinä.
+
 ## Näin teet
 
 1. Avaa **Nouda**-tila ja valitse lähde kohdepaneelin kohdasta **Avoimet rajapinnat**. Luettelon yläpuolella olevat

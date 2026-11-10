@@ -11,12 +11,14 @@
   const D = globalThis.Dataspatium;
   D.define('api/schema', [], () => {
     const FORMAT_ID = 'dataspatium-api/1';
-    const AUTH_TYPES = ['none', 'apiKey', 'basic', 'bearer', 'oauth2_client_credentials'];
+    // oauth2_pkce: the user signs in through the server's authorization code flow (OpenCDE); the app holds a client id only.
+    const AUTH_TYPES = ['none', 'apiKey', 'basic', 'bearer', 'oauth2_client_credentials', 'oauth2_pkce'];
     const PARAM_TYPES = ['string', 'number', 'boolean', 'enum', 'multi', 'date', 'text', 'querylines'];
     const PARAM_IN = ['path', 'query', 'header', 'body', 'template', 'option'];
     const PAGINATION_TYPES = ['none', 'page', 'offset', 'next-url', 'cursor', 'link-header', 'link-rel'];
     const FORMATS = ['json', 'jsonstat', 'sdmx', 'csv', 'geojson', 'xml', 'entryscape', 'text'];
-    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi'];
+    // opencde: a buildingSMART OpenCDE server (Foundation API, Documents API) used after an OAuth2 sign-in.
+    const FAMILIES = ['pxweb', 'socialstyrelsen', 'statbank', 'fhi', 'opencde'];
     /** Countries and regions a connector can belong to (the filter in Inhämta); labels are i18n keys country.<code>. */
     const COUNTRIES = ['SE', 'DK', 'NO', 'FI', 'IS', 'FO', 'GL', 'AX', 'NORDIC', 'EU', 'INT'];
     const ID = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]*$' };
@@ -103,12 +105,12 @@
         headers: { type: 'object' },
         auth: {
           type: 'object', required: ['type'],
-          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
+          properties: { type: { type: 'string', enum: AUTH_TYPES }, in: { type: 'string', enum: ['header', 'query'] }, name: { type: 'string' }, prefix: { type: 'string' }, tokenUrl: { type: 'string' }, authUrl: { type: 'string' }, revocationUrl: { type: 'string' }, clientId: { type: 'string' }, scope: { type: 'string' }, help: { type: 'string' }, signupUrl: { type: 'string' } },
         },
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
         // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
         // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.
-        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {} } },
+        family: { type: 'object', required: ['type'], properties: { type: { type: 'string', enum: FAMILIES }, version: { type: 'number' }, lang: { type: 'string' }, maxCells: { type: 'number' }, urls: { type: 'object' }, langs: {}, clientId: { type: 'string' }, documents: { type: 'boolean' } } },
         endpoints: { type: 'array', items: endpointSchema },
         notes: { type: 'string' },
       },

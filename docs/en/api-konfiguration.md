@@ -64,6 +64,18 @@ opingogn.is no longer has a search API. Sources without CORS, for example the Ri
 reached directly from the browser; they need your own proxy, see below. The Swedish Civil Defence and Resilience
 Agency (MCF, formerly MSB) has no documented open API; its statistics are imported as files.
 
+## OpenCDE server (Dataregium)
+
+The button *Add OpenCDE server* under *Open APIs* in Import adds a server that follows buildingSMART's OpenCDE APIs, such as
+[Dataregium](https://github.com/marwiss/Dataregium). Enter the server's address. Leave the client id empty when the server lets the app
+register itself (RFC 7591); otherwise enter the client id the administrator registered for Dataspatium. The source opens a view where you
+sign in to the server (OAuth2 with PKCE in a pop-up; from file:// you paste the address you end up on after signing in). *Fetch documents*
+opens the server's page for choosing documents, and every chosen version becomes a dataset that remembers its document and version.
+*Send to the server* uploads a dataset in the chosen format, or a file from the computer, as a new document or version through the
+server's upload page. While a page is open in a pop-up the app shows the button *Cancel*. The app reads the server's capabilities
+document (`/.well-known/dataregium`) and sends `X-Request-Id` with every call. The 1 series has no issues (BCF); they came with the 2
+series. Tokens are kept in the session or encrypted, never in clear text.
+
 ## How to do it
 
 1. Open **Import** mode and choose a source under **Open APIs** in the object panel. The country buttons above the

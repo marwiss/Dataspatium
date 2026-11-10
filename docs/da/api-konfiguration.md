@@ -44,6 +44,18 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 Ikke med: Danmarks DMI og Norges Frost (MET) kræver nøgle; Energi Data Service og data.norge.no mangler CORS; opingogn.is
 har ikke længere et søge-API. Kilder uden CORS kan ikke nås direkte fra browseren; de kræver en egen proxy, se nedenfor.
 
+## OpenCDE-server (Dataregium)
+
+Knappen *Tilføj OpenCDE-server* under *Åbne API'er* i Hent tilføjer en server, der følger buildingSMARTs OpenCDE-API'er, for eksempel
+[Dataregium](https://github.com/marwiss/Dataregium). Angiv serverens adresse. Lad klient-id stå tomt, når serveren lader appen registrere
+sig selv (RFC 7591); ellers angiver du det klient-id, som administratoren har registreret til Dataspatium. Kilden åbner en visning, hvor du
+logger ind på serveren (OAuth2 med PKCE i et pop op-vindue; fra file:// indsætter du den adresse, du havner på efter login). *Hent
+dokumenter* åbner serverens side til at vælge dokumenter, og hver valgt version bliver et datasæt, der husker sit dokument og sin version.
+*Send til serveren* uploader et datasæt i det valgte format, eller en fil fra computeren, som nyt dokument eller ny version gennem
+serverens uploadside. Mens en side er åben i et pop op-vindue, viser appen knappen *Annuller*. Appen læser serverens kapabilitetsdokument
+(`/.well-known/dataregium`) og sender `X-Request-Id` med hvert kald. 1-serien har ingen sager (BCF); de kom i 2-serien. Tokens holdes i
+sessionen eller krypteret, aldrig i klartekst.
+
 ## Sådan gør du
 
 1. Åbn tilstanden **Hent**, og vælg en kilde under **Åbne API'er** i objektpanelet. Landeknapperne over listen begrænser

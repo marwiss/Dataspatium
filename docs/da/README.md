@@ -76,6 +76,15 @@ med flere detaljer: [kom-igang.md](kom-igang.md).
 - **Grundkursus**: en interaktiv gennemgang af alle seks tilstande med eksempeldata på alle seks sprog. Det vises første
   gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
 
+## Dataspatium og Dataregium
+
+*Dataregium hed Kontroll indtil 8. november 2026.*
+
+Dataspatium 1.0.0 fungerer med Dataregium 1.0.0, en server til buildingSMARTs OpenCDE-API'er Foundation og Documents. Appen tilføjer
+serveren som kilde i Hent, logger ind med OAuth2 og registrerer sig selv som klient, når serveren tillader det, henter dokumenter som
+datasæt og sender datasæt og filer tilbage gennem Documents API (se [api-konfiguration.md](api-konfiguration.md)). Sager (BCF) og modeller
+kom i 2-serien. Serveren er ikke nødvendig for resten af appen.
+
 ## Lær mere
 
 Filnavnene er de samme på alle sprog (de svenske originaler), så links virker ens overalt.
