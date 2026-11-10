@@ -241,7 +241,12 @@ i prosjektet med endringene vedlagt i serverens form (snippet-typen DataregiumIf
 Formen angir endringer av eksisterende instanser, én per attributt: egenskapsverdier, plasseringer, tilhørighet til etasje og lignende,
 med dokumentets basisversjon, navnet ditt på serveren og AI-modellen som proveniens. Nye elementer, slettinger og nye relasjoner kan
 ennå ikke angis i formen; panelet teller dem, og de står i sakens beskrivelse. Knappen finnes for en modell hentet fra Dataregium når
-serveren angir kapabiliteten `ifc_changes`, og modellen endres ikke av forslaget.
+serveren angir kapabiliteten `ifc_changes`, og modellen endres ikke av forslaget. Prøver serveren forslag (Dataregium med
+IFC-LPG-modulen på), viser panelet utfallet av prøvingen under saken: hvor mange endringer som kunne brukes på basisversjonen, nye
+funn mot basen, og hver endring som ikke kunne brukes, med årsaken (et funn av slaget proposal), for eksempel at en verdi ikke lenger
+er den forslaget gikk ut fra. Er prøvingen ren, kan en *manager* i prosjektet trykke *Godkjenn på serveren*: serveren gjør forslaget
+til dokumentets neste versjon (med basisversjon, forslagsstiller og godkjenner i versjonens metadata) og lukker saken. Modellen i appen
+endres ikke av det; hent den nye versjonen fra Dataregium for å arbeide videre på den.
 
 ## Sammenlign versjoner
 

@@ -245,7 +245,13 @@ the project with the changes attached in the server's form (the snippet type Dat
 schema). The form names changes of existing instances, one per attribute: property values, placements, the storey an element belongs
 to and the like, with the document's base version, your name on the server and the AI model as provenance. New elements, deletions and
 new relationships cannot be said in the form yet; the panel counts them and they go into the topic's description. The button appears
-for a model fetched from Dataregium when the server announces the capability `ifc_changes`, and the proposal does not change the model.
+for a model fetched from Dataregium when the server announces the capability `ifc_changes`, and the proposal does not change the model. When the server tries proposals
+(Dataregium with the IFC-LPG module on) the panel shows the trial's outcome under the topic: how many changes could be applied to
+the base version, new findings against the base, and every change that could not be applied with its reason (a finding of the kind
+proposal), for instance that a value is no longer the one the proposal started from. When the trial is clean a *manager* of the project can
+press *Approve on the server*: the server makes the proposal the document's next version (with the base version, the proposer and
+the approver in the version's metadata) and closes the topic. The model in the app is not changed by that; fetch the new version from
+Dataregium to go on working on it.
 
 ## Compare versions
 

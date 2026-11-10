@@ -239,7 +239,12 @@ BCF-ärende i projektet med ändringarna som bilaga i serverns form (snippet-typ
 schema). Formen anger ändringar av befintliga instanser, en per attribut: egenskapsvärden, placeringar, tillhörighet till våning och
 liknande, med dokumentets basversion, ditt namn på servern och AI-modellen som proveniens. Nya element, raderingar och nya samband
 kan inte anges i formen än; panelen räknar dem och de står i ärendets beskrivning. Knappen finns för en modell hämtad från Dataregium
-när servern anger kapabiliteten `ifc_changes`, och modellen ändras inte av förslaget.
+när servern anger kapabiliteten `ifc_changes`, och modellen ändras inte av förslaget. Prövar servern förslag (Dataregium med
+IFC-LPG-modulen på) visar panelen prövningens utfall under ärendet: hur många ändringar som gick att tillämpa på basversionen, nya
+fynd mot basen, och varje ändring som inte gick att tillämpa med orsaken (ett fynd av slaget proposal), till exempel att ett värde
+inte längre är det förslaget utgick från. Är prövningen ren kan en *manager* i projektet trycka *Godkänn på servern*: servern gör
+förslaget till dokumentets nästa version (med basversion, förslagsställare och godkännare i versionens metadata) och stänger ärendet.
+Modellen i appen ändras inte av det; hämta den nya versionen från Dataregium för att arbeta vidare på den.
 
 ## Jämför versioner
 

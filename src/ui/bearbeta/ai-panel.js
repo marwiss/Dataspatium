@@ -8,7 +8,9 @@
  * change set becomes the recipe step ifc_changeset, with undo and a new version of the model; deletions are confirmed once more. For a
  * model fetched from Dataregium the preview also asks the server's precheck (OB-28) of the candidate, when the source is signed in, and the
  * change set can go to the server as a change proposal: a BCF topic whose snippet holds the changes of existing instances in the
- * server's form (DataregiumIfcChangeSet), with the base version, the signed-in user and the AI model as its provenance. The
+ * server's form (DataregiumIfcChangeSet), with the base version, the signed-in user and the AI model as its provenance; the server's
+ * trial of the proposal against the base version (state, applied changes, findings) is shown under the topic, and a manager can make
+ * a clean proposal the document's next version from here (OB-27 on the server's side). The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers).
  */
@@ -29,7 +31,7 @@
       function create(ctx, options) {
         const { shell } = ctx;
         const s = { providers: [], providerId: '', policy: 'ask', mode: 'ask', question: '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
-          changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null };
+          changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
@@ -167,12 +169,45 @@
             };
             const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet });
             if (!out) throw new Error(t('ai.change.propose.unsupported'));
-            s.proposed = { guid: out.topic.guid, title: values.title || defaults.title };
+            s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null };
             const msg = t('ai.change.propose.done', { title: s.proposed.title, project });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
+            if (out.tried) trialOf(connector, out.proposalUrl, s.proposed);
           } catch (err) { fail(err); }
           s.proposing = false; render();
         }
+        /** The server's trial of the proposal, polled until it is final; its failure is a line under the topic, not an error. */
+        async function trialOf(connector, proposalUrl, mine) {
+          try {
+            const report = await opencde.proposalTrial(connector, proposalUrl, { onStatus: (state) => { if (s.proposed === mine) { mine.trial = { state }; render(); } } });
+            if (s.proposed !== mine) return;
+            const state = report && ['queued', 'running', 'clean', 'issues', 'failed'].includes(report.state) ? report.state : 'failed';
+            mine.trial = { state, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [] };
+            log(trialText(mine.trial), state === 'clean' ? 'ok' : 'warn');
+          } catch (err) { if (s.proposed === mine) mine.trial = { state: 'failed', error: String((err && err.message) || err), list: [] }; }
+          render();
+        }
+        /** A manager makes a clean proposal the document's next version on the server; the local model is not touched. */
+        async function approveOnServer(options = {}) {
+          const mine = s.proposed;
+          const cde = s.cde;
+          if (!mine || !cde || !mine.approveUrl || !mine.trial || mine.trial.state !== 'clean' || mine.approved || s.approvingServer || s.busy) return;
+          const connector = await connectors.get(cde.connectorId);
+          if (!connector) return;
+          const project = cde.projectName || cde.projectId;
+          if (!options.confirmed && !(await overlays.dialog.confirm(t('ai.change.approve.server.confirm', { title: mine.title, project })))) return;
+          s.approvingServer = true; s.error = ''; render();
+          try {
+            const version = await opencde.approveProposal(connector, mine.approveUrl);
+            if (s.proposed === mine) {
+              mine.approved = { index: Number(version && version.version_index) || 0, number: String((version && (version.version_number || version.version_index)) || ''), title: String((version && version.title) || '') };
+              const msg = t('ai.change.approve.server.done', { n: mine.approved.number, title: mine.approved.title || mine.title, project });
+              log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
+            }
+          } catch (err) { fail(err); }
+          s.approvingServer = false; render();
+        }
+        const trialText = (trial) => t('ai.change.trial.' + (trial.state === 'running' ? 'queued' : trial.state), { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
         const deletions = () => s.changeset.ops.filter((op) => op.tool === 'delete_elements').reduce((n, op) => n + op.ids.length, 0);
         /** The previewed change set as a recipe step: undoable, logged with its provenance, a new version of the model. */
         async function approveNow() {
@@ -227,11 +262,15 @@
               s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,
                 text: t('ai.change.precheck.' + s.preview.server.status, { n: i18n.formatNumber((s.preview.server.counts || {}).findings || 0), errors: i18n.formatNumber((s.preview.server.counts || {}).errors || 0), error: s.preview.server.error || '' }) }) : null,
               s.cde && proposal ? h('p', { class: 'dm-help dm-xs', 'data-ai-proposal': String(proposal.changes.length), text: proposalText(proposal) }) : null,
-              s.proposed ? h('p', { class: 'dm-small', 'data-ai-proposed': s.proposed.guid, text: t('ai.change.proposed', { title: s.proposed.title }) }) : null) : null,
+              s.proposed ? h('p', { class: 'dm-small', 'data-ai-proposed': s.proposed.guid, text: t('ai.change.proposed', { title: s.proposed.title }) }) : null,
+              s.proposed && s.proposed.trial ? h('p', { class: s.proposed.trial.state === 'issues' || s.proposed.trial.state === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-trial': s.proposed.trial.state, text: trialText(s.proposed.trial) }) : null,
+              s.proposed && s.proposed.trial && (s.proposed.trial.list || []).length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-trial-issues': '' }, s.proposed.trial.list.slice(0, 10).map((f) => h('li', { class: 'dm-xs', text: `${f.kind || ''}${f.rule ? ' ' + f.rule : ''}${f.step_id ? ' #' + f.step_id : ''}: ${f.message || ''}` }))) : null,
+              s.proposed && s.proposed.trial && s.proposed.trial.state === 'clean' && s.proposed.approveUrl && !s.proposed.approved ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.approve.server'), icon: 'circle-check', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.approve.server.hint'), 'data-ai-approve-server': '', onClick: () => approveOnServer() })) : null,
+              s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null) : null,
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
-              s.cde && proposal ? basic.button({ label: t('ai.change.propose'), icon: 'send', size: 'sm', loading: s.proposing, disabled: !proposal.changes.length || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
+              s.cde && proposal ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !proposal.changes.length || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.ops.length || s.busy, title: t('ai.change.reject.hint'), 'data-ai-reject': '', onClick: rejectNow })),
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }
@@ -274,7 +313,7 @@
         }
         function destroy() { unsubscribe(); cancel(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */

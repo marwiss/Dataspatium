@@ -243,7 +243,12 @@ BCF-sak i prosjektet med endringane vedlagde i forma til tenaren (snippet-typen 
 sitt). Forma gjev endringar av eksisterande instansar, éin per attributt: eigenskapsverdiar, plasseringar, tilhøyrsle til etasje og
 liknande, med basisversjonen til dokumentet, namnet ditt på tenaren og AI-modellen som proveniens. Nye element, slettingar og nye
 relasjonar kan enno ikkje gjevast i forma; panelet tel dei, og dei står i skildringa av saka. Knappen finst for ein modell henta frå
-Dataregium når tenaren gjev kapabiliteten `ifc_changes`, og modellen vert ikkje endra av framlegget.
+Dataregium når tenaren gjev kapabiliteten `ifc_changes`, og modellen vert ikkje endra av framlegget. Prøver tenaren framlegg
+(Dataregium med IFC-LPG-modulen på), viser panelet utfallet av prøvinga under saka: kor mange endringar som kunne brukast på
+basisversjonen, nye funn mot basen, og kvar endring som ikkje kunne brukast, med årsaka (eit funn av slaget proposal), til dømes at ein
+verdi ikkje lenger er den framlegget gjekk ut frå. Er prøvinga rein, kan ein *manager* i prosjektet trykkje *Godkjenn på tenaren*:
+tenaren gjer framlegget til neste versjon av dokumentet (med basisversjon, framleggsstillar og godkjennar i metadataa til versjonen) og
+lukkar saka. Modellen i appen vert ikkje endra av det; hent den nye versjonen frå Dataregium for å arbeide vidare på han.
 
 ## Samanlikn versjonar
 

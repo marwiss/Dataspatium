@@ -241,7 +241,12 @@ i projektet med ændringerne vedhæftet i serverens form (snippet-typen Dataregi
 Formen angiver ændringer af eksisterende instanser, én pr. attribut: egenskabsværdier, placeringer, tilhørsforhold til etage og lignende,
 med dokumentets basisversion, dit navn på serveren og AI-modellen som proveniens. Nye elementer, sletninger og nye relationer kan endnu
 ikke angives i formen; panelet tæller dem, og de står i sagens beskrivelse. Knappen findes for en model hentet fra Dataregium, når
-serveren angiver kapabiliteten `ifc_changes`, og modellen ændres ikke af forslaget.
+serveren angiver kapabiliteten `ifc_changes`, og modellen ændres ikke af forslaget. Afprøver serveren forslag (Dataregium med
+IFC-LPG-modulet slået til), viser panelet afprøvningens udfald under sagen: hvor mange ændringer der kunne anvendes på basisversionen,
+nye fund mod basen, og hver ændring, der ikke kunne anvendes, med årsagen (et fund af arten proposal), for eksempel at en værdi ikke
+længere er den, forslaget gik ud fra. Er afprøvningen ren, kan en *manager* i projektet trykke *Godkend på serveren*: serveren gør
+forslaget til dokumentets næste version (med basisversion, forslagsstiller og godkender i versionens metadata) og lukker sagen.
+Modellen i appen ændres ikke af det; hent den nye version fra Dataregium for at arbejde videre på den.
 
 ## Sammenlign versioner
 

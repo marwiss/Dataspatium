@@ -238,7 +238,12 @@ með breytingunum í viðhengi á formi þjónsins (snippet-gerðin DataregiumIf
 tilgreinir breytingar á fyrirliggjandi tilvikum, eina á hvert eigindi: eiginleikagildi, staðsetningar, hvaða hæð stak tilheyrir og
 þess háttar, með grunnútgáfu skjalsins, nafni þínu á þjóninum og gervigreindarlíkaninu sem uppruna. Ný stök, eyðingar og ný vensl er
 ekki enn hægt að tilgreina á forminu; spjaldið telur þau og þau standa í lýsingu málsins. Hnappurinn er til fyrir líkan sem sótt var frá
-Dataregium þegar þjónninn tilgreinir getuna `ifc_changes`, og tillagan breytir ekki líkaninu.
+Dataregium þegar þjónninn tilgreinir getuna `ifc_changes`, og tillagan breytir ekki líkaninu. Reyni þjónninn tillögur (Dataregium
+með IFC-LPG-eininguna á) sýnir spjaldið niðurstöðu prófunarinnar undir málinu: hve mörgum breytingum var hægt að beita á
+grunnútgáfuna, ný atriði miðað við grunninn, og hverja breytingu sem ekki var hægt að beita ásamt ástæðu (atriði af gerðinni proposal),
+til dæmis að gildi sé ekki lengur það sem tillagan gekk út frá. Sé prófunin hrein getur *manager* í verkefninu ýtt á *Samþykkja á
+þjóninum*: þjónninn gerir tillöguna að næstu útgáfu skjalsins (með grunnútgáfu, tillöguhöfundi og samþykkjanda í lýsigögnum
+útgáfunnar) og lokar málinu. Líkaninu í forritinu er ekki breytt við það; sæktu nýju útgáfuna frá Dataregium til að vinna áfram með hana.
 
 ## Bera saman útgáfur
 

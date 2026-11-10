@@ -705,7 +705,37 @@
         await deleteTopic(connector, projectId, topic.guid).catch(() => {});
         throw err;
       }
-      return { topic, schemaUrl, snippetType };
+      const fill = (template) => (template ? String(template).replace('{project_id}', encode(projectId)).replace('{topic_guid}', encode(topic.guid)) : null);
+      const proposalUrl = fill(ext.proposal_url);
+      return { topic, schemaUrl, snippetType, tried: !!ext.tried && !!proposalUrl, proposalUrl, approveUrl: fill(ext.approve_url) };
+    }
+    /**
+     * A manager makes a clean proposal the document's next version (Dataregium's OB-27): POST at the capability's approve_url. The
+     * answer is the new version in the Documents API's form, with base_version_index, change_set_id, proposed_by and approved_by in its
+     * metadata. 403 for other roles, 409 when the trial is not clean or was approved already, 412 version_conflict when the document
+     * has got a newer version than the base.
+     * @param {any} connector @param {string} approveUrl from proposeChanges
+     */
+    const approveProposal = (connector, approveUrl) => api(connector, approveUrl, { method: 'POST' });
+    /**
+     * The server's trial of a change proposal (Dataregium's OB-26): after the snippet is uploaded the server applies the changes to
+     * the base version's file and checks the result. The report has state queued, running, clean, issues or failed, `applied` of
+     * `change_count`, and `issues` in the form of the validation report (kind "proposal" for a change that could not be applied,
+     * with the reason); this polls until the state is final. Null when the server does not try proposals.
+     * @param {any} connector @param {string|null} proposalUrl from proposeChanges
+     * @param {{signal?: AbortSignal, pollMs?: number, timeoutMs?: number, onStatus?: (state: string) => void}} [options]
+     */
+    async function proposalTrial(connector, proposalUrl, options = {}) {
+      if (!proposalUrl) return null;
+      const t0 = Date.now();
+      let report = await api(connector, proposalUrl, { signal: options.signal });
+      while (report && (report.state === 'queued' || report.state === 'running') && Date.now() - t0 < (options.timeoutMs || 180000)) {
+        if (options.onStatus) options.onStatus(report.state);
+        await new Promise((resolve) => setTimeout(resolve, options.pollMs || 2000));
+        if (options.signal && options.signal.aborted) break;
+        report = await api(connector, proposalUrl, { signal: options.signal });
+      }
+      return report;
     }
     /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
@@ -773,6 +803,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, proposalTrial, approveProposal, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

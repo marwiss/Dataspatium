@@ -246,7 +246,12 @@ jonka liitteenä muutokset ovat palvelimen muodossa (snippet-tyyppi DataregiumIf
 Muoto ilmaisee olemassa olevien instanssien muutokset, yhden attribuuttia kohden: ominaisuusarvot, sijoittelut, kerrokseen kuulumisen
 ja vastaavat, ja kantaa asiakirjan perusversion, nimesi palvelimella ja tekoälymallin alkuperätietoina. Uusia elementtejä, poistoja ja
 uusia suhteita ei voi vielä ilmaista muodossa; paneeli laskee ne, ja ne ovat asian kuvauksessa. Painike näkyy Dataregiumista haetulle
-mallille, kun palvelin ilmoittaa kyvykkyyden `ifc_changes`, eikä ehdotus muuta mallia.
+mallille, kun palvelin ilmoittaa kyvykkyyden `ifc_changes`, eikä ehdotus muuta mallia. Jos palvelin kokeilee ehdotuksia (Dataregium,
+jossa IFC-LPG-moduuli on päällä), paneeli näyttää kokeilun tuloksen asian alla: kuinka monta muutosta voitiin soveltaa perusversioon,
+uudet löydökset perusversioon nähden ja jokainen muutos, jota ei voitu soveltaa, syineen (löydös lajia proposal), esimerkiksi että
+arvo ei enää ole se, josta ehdotus lähti. Jos kokeilu on puhdas, projektin *manager* voi painaa *Hyväksy palvelimella*: palvelin tekee
+ehdotuksesta asiakirjan seuraavan version (perusversio, ehdottaja ja hyväksyjä version metatiedoissa) ja sulkee asian. Sovelluksen
+mallia se ei muuta; hae uusi versio Dataregiumista jatkaaksesi työtä sen parissa.
 
 ## Vertaa versioita
 
