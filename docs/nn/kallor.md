@@ -54,6 +54,23 @@ eller spørjinga på nytt og spelar av oppskrifta. Passord blir aldri lagra med 
 appen deg opne kjelda igjen før ho blir oppdatert. Fana SQL i Analyser kan køyre direkte mot kjelda som sist vart
 opna i brua (*Køyr mot*).
 
+### Hent via brua
+
+Ei teneste som ikkje lèt nettlesaren lese svaret (ingen CORS), kan ikkje nåast frå appen, verken frå ei mappe eller frå
+nettet. Brua kan hente for appen i staden. Det er ditt val og av som standard: slå på **Hent via brua** under
+*Internettilgang* i Handter, og start brua med vertane ho får hente frå:
+
+```
+python tools/db_bridge.py --allow-host api.eksempel.no
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.eksempel.no
+```
+
+Når ei henting mislukkast som ein nettverksfeil og ei bru er kopla til, sender appen den same førespurnaden til brua (`POST
+/fetch`), som hentar han og gjev svaret tilbake. Brua hentar berre over https og berre frå vertane du har gjeve; sida kan
+aldri leggje til nokon. Ho avviser adresser på denne datamaskina eller det lokale nettet, sender berre nokre få headerar og
+ingen informasjonskapslar, følgjer høgst tre omdirigeringar til tillatne vertar og stoppar ved `--max-fetch-mb` (50 MB som
+standard). Loggen til brua viser verten og stien, aldri spørjinga, headerane eller kroppen. Samtykket for føremålet gjeld som
+før.
 ### Tryggleik
 
 - Brua svarar berre på 127.0.0.1, krev token i kvart kall og tillèt CORS berre for dei eigne adressene til appen.

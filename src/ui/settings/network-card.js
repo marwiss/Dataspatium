@@ -38,11 +38,20 @@
             h('td', { class: 'dm-num', text: e.ms === null ? '' : i18n.formatNumber(e.ms) }))))));
       };
       fillLog();
+      // The bridge as a go-between (F14.1): off until the user turns it on; the bridge decides which hosts it reaches.
+      const bridge = D.require('api/bridge');
+      const relay = /** @type {any} */ (h('dm-switch', { label: t('bridge.relay'), title: t('bridge.relay.hint'), 'data-bridge-relay': '' }));
+      relay.checked = await bridge.relayEnabled();
+      relay.addEventListener('change', async () => {
+        await bridge.setRelay(!!relay.checked);
+        shell.log(t(relay.checked ? 'bridge.relay.on' : 'bridge.relay.off'), 'ok');
+      });
       return h('div', { class: 'dm-card dm-stack', 'data-settings': 'network' },
         h('h3', null, ui.icon('wifi', 18), ' ', t('consent.settings.title')),
         h('p', { class: 'dm-help', text: t('consent.settings.hint') }),
         consent.override() ? h('p', { class: 'dm-warn dm-small', text: t('consent.override') }) : null,
         h('div', { class: 'dm-form-grid' }, rows),
+        h('div', { class: 'dm-stack-sm' }, relay, h('p', { class: 'dm-help dm-small', text: t('bridge.relay.help') })),
         h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('consent.log.title') }), ui.button({ label: t('consent.log.refresh'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', onClick: fillLog })),
         logEl);
     }

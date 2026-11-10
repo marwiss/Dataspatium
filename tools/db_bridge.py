@@ -9,17 +9,25 @@ Nothing leaves the computer: it listens on 127.0.0.1 only, requires the token pr
 for the app's origins (a page opened from a folder sends Origin "null") and is read-only unless --allow-write is
 given; even then every write needs the user's approval in the app (approved: true). Ctrl+C or POST /stop stops it.
 
+As a go-between (POST /fetch) it fetches an https address for the app when the service does not let the browser read
+its answer (no CORS), but only from the hosts the user names with --allow-host; the page can never add one. It refuses
+addresses that resolve to this computer or the local network, connects to the address it checked, sends only a few
+headers (no cookies), follows at most three redirects to allowed hosts and stops at --max-fetch-mb.
+
 Usage:
   python tools/db_bridge.py
   python tools/db_bridge.py --port 8731 --allow-write
 Options: --port N (0 = random), --token T (default random), --allow-write, --max-rows N (default 100000),
-  --allow-origin O (repeatable; default "null" and https://marwiss.github.io; localhost origins are always allowed).
+  --allow-origin O (repeatable; default "null" and https://marwiss.github.io; localhost origins are always allowed),
+  --allow-host H (repeatable; the hosts /fetch may reach, none by default), --max-fetch-mb N (default 50).
 
 Protocol (JSON): GET / (info), GET /sources, POST /tables {source}, POST /columns {source, table},
-  POST /rows {source, table, limit}, POST /query {source, sql, limit, approved}, GET /log, GET or POST /stop.
+  POST /rows {source, table, limit}, POST /query {source, sql, limit, approved}, GET /log, GET or POST /stop,
+  POST /fetch {url, method, headers, body (base64)} -> {status, statusText, headers, body (base64)}.
 A source is {kind: sqlite|dsn|odbc|access|excel, ...} with path, dsn, user, password or connectionString.
 """
 import argparse
+import base64
 import datetime
 import decimal
 import json
@@ -27,8 +35,12 @@ import re
 import secrets
 import socket
 import sqlite3
+import ssl
 import sys
 import threading
+import http.client
+import ipaddress
+import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 try:
@@ -36,7 +48,7 @@ try:
 except ImportError:  # pragma: no cover - optional
     pyodbc = None
 
-VERSION = "2.3.0"
+VERSION = "2.4.0"
 KINDS = ["sqlite"] + (["dsn", "odbc", "access", "excel"] if pyodbc else [])
 
 
@@ -47,7 +59,103 @@ def parse_args():
     p.add_argument("--allow-write", action="store_true")
     p.add_argument("--max-rows", type=int, default=100000)
     p.add_argument("--allow-origin", action="append", default=None)
+    p.add_argument("--allow-host", action="append", default=None)
+    p.add_argument("--max-fetch-mb", type=int, default=50)
     return p.parse_args()
+
+
+# ---- the go-between (POST /fetch) ----
+# Headers the app may pass on; a key header of a preset (Ocp-Apim-Subscription-Key, X-Api-Key ...) is allowed by its name.
+FETCH_HEADERS = {"accept", "accept-language", "authorization", "content-type", "range", "if-none-match", "if-modified-since"}
+NEVER_HEADERS = {"cookie", "cookie2", "host", "origin", "referer", "connection", "content-length", "transfer-encoding", "te", "upgrade", "expect", "keep-alive", "via", "forwarded"}
+KEY_HEADER = re.compile(r"^[A-Za-z0-9-]{1,64}$")
+RETURN_HEADERS = ("content-type", "content-range", "etag", "last-modified", "link", "x-total-count", "retry-after")
+MAX_REDIRECTS = 3
+
+
+class RelayError(Exception):
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+
+
+def header_allowed(name):
+    n = str(name).lower()
+    if n in NEVER_HEADERS or n.startswith("proxy-") or n.startswith("sec-") or not KEY_HEADER.match(str(name)):
+        return False
+    return n in FETCH_HEADERS or bool(re.search(r"key|token|subscription", n))
+
+
+def public_address(host, port):
+    """The address to connect to, after checking that every address of the name is on the internet."""
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except socket.gaierror as err:
+        raise RelayError(502, "Kunde inte slå upp %s: %s" % (host, err))
+    first = None
+    for _fam, _t, _p, _c, sa in infos:
+        ip = ipaddress.ip_address(sa[0].split("%")[0])
+        if ip.version == 6 and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        if not ip.is_global or ip.is_multicast:
+            raise RelayError(403, "%s pekar på den egna datorn eller det lokala nätet; bryggan hämtar inte därifrån" % host)
+        first = first or sa[0]
+    if not first:
+        raise RelayError(502, "Ingen adress för %s" % host)
+    return first
+
+
+class PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS to the address that was checked, with the host name for SNI and the certificate, so a second lookup cannot
+    lead somewhere else."""
+
+    def __init__(self, host, address, port, timeout):
+        super().__init__(host, port, timeout=timeout, context=ssl.create_default_context())
+        self._address = address
+
+    def connect(self):
+        sock = socket.create_connection((self._address, self.port), self.timeout)
+        self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+
+
+def relay(allow_hosts, max_bytes, request, timeout=60):
+    """Fetch one address for the app. Returns the answer as {status, statusText, headers, body (base64)}."""
+    url = str(request.get("url") or "")
+    method = str(request.get("method") or "GET").upper()
+    if method not in ("GET", "POST"):
+        raise RelayError(400, "Bara GET och POST")
+    headers = {str(k): str(v) for k, v in (request.get("headers") or {}).items() if header_allowed(k)}
+    body = base64.b64decode(request["body"]) if request.get("body") else None
+    if body is not None and len(body) > 10 * 1024 * 1024:
+        raise RelayError(413, "Begärans kropp är större än 10 MB")
+    for _hop in range(MAX_REDIRECTS + 1):
+        u = urllib.parse.urlsplit(url)
+        host = (u.hostname or "").lower()
+        if u.scheme != "https" or not host:
+            raise RelayError(400, "Bryggan hämtar bara https-adresser")
+        if host not in allow_hosts:
+            raise RelayError(403, "Värden %s är inte tillåten. Starta bryggan med --allow-host %s om du vill hämta från den." % (host, host))
+        port = u.port or 443
+        conn = PinnedHTTPSConnection(host, public_address(host, port), port, timeout)
+        try:
+            conn.request(method, (u.path or "/") + ("?" + u.query if u.query else ""), body=body, headers=headers)
+            res = conn.getresponse()
+            location = res.getheader("location")
+            if res.status in (301, 302, 303, 307, 308) and location:
+                url = urllib.parse.urljoin(url, location)
+                if res.status == 303 or (res.status in (301, 302) and method == "POST"):
+                    method, body = "GET", None
+                continue
+            data = res.read(max_bytes + 1)
+            if len(data) > max_bytes:
+                raise RelayError(413, "Svaret är större än %d MB (--max-fetch-mb)" % (max_bytes // (1024 * 1024)))
+            out = {k: res.getheader(k) for k in RETURN_HEADERS if res.getheader(k)}
+            return {"status": res.status, "statusText": res.reason, "headers": out, "body": base64.b64encode(data).decode("ascii"), "host": host, "path": u.path}
+        except (OSError, http.client.HTTPException) as err:
+            raise RelayError(502, "Kunde inte hämta från %s: %s" % (host, err))
+        finally:
+            conn.close()
+    raise RelayError(508, "För många omdirigeringar")
 
 
 def read_only(sql):
@@ -95,6 +203,8 @@ class Bridge:
     def __init__(self, args):
         self.allow_write = args.allow_write
         self.max_rows = args.max_rows
+        self.allow_hosts = sorted({h.strip().lower() for h in (getattr(args, "allow_host", None) or []) if h.strip()})
+        self.max_fetch = max(1, int(getattr(args, "max_fetch_mb", 50) or 50)) * 1024 * 1024
         self.log = []
         self.lock = threading.Lock()
 
@@ -142,7 +252,27 @@ class Bridge:
 
     # ---- endpoints ----
     def info(self):
-        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": KINDS, "maxRows": self.max_rows, "pyodbc": bool(pyodbc)}
+        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": KINDS, "maxRows": self.max_rows, "pyodbc": bool(pyodbc), "fetch": True, "allowHosts": self.allow_hosts}
+
+    def fetch(self, request):
+        """POST /fetch: the go-between. The log has the host and the path, never the query, headers or body."""
+        try:
+            result = relay(set(self.allow_hosts), self.max_fetch, request)
+            status = result["status"]
+        except RelayError as err:
+            result, status = None, err.status
+            self.note_fetch(request, status)
+            return status, {"error": str(err)}
+        self.note_fetch(request, status, result.pop("host"), result.pop("path"))
+        return 200, result
+
+    def note_fetch(self, request, status, host=None, path=None):
+        if host is None:
+            u = urllib.parse.urlsplit(str(request.get("url") or ""))
+            host, path = (u.hostname or ""), u.path
+        with self.lock:
+            self.log.append({"at": datetime.datetime.now().isoformat(timespec="seconds"), "kind": "fetch", "host": host, "path": (path or "")[:120], "status": status})
+            del self.log[:-200]
 
     def sources(self):
         out = {"dsns": [], "drivers": [], "providers": []}
@@ -347,6 +477,9 @@ def make_handler(bridge, token, allow_origins, server_box):
                         return
                     status, result = bridge.query(b.get("source"), sql, limit, bool(b.get("approved")))
                     self.send_json(status, result)
+                elif self.path == "/fetch":
+                    status, result = bridge.fetch(b)
+                    self.send_json(status, result)
                 elif self.path == "/stop":
                     self.send_json(200, {"stopping": True})
                     threading.Thread(target=server_box[0].shutdown, daemon=True).start()
@@ -376,6 +509,8 @@ def main():
     print("Token: " + token)
     print("Klistra in adressen och token i appen under Inhämta -> Databas via bryggan. Ctrl+C stoppar.")
     print("Skrivning TILLÅTEN (--allow-write); varje skrivning kräver ändå godkännande i appen." if args.allow_write else "Skrivskyddad: bara SELECT.")
+    if bridge.allow_hosts:
+        print("Hämtar via bryggan från: " + ", ".join(bridge.allow_hosts))
     if not pyodbc:
         print("pyodbc saknas: bara SQLite-filer kan öppnas (pip install pyodbc för ODBC-källor).")
     sys.stdout.flush()

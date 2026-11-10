@@ -54,6 +54,23 @@ eller spørringen på nytt og spiller av oppskriften. Passord lagres aldri med d
 appen deg åpne kilden igjen før den oppdateres. Fanen SQL i Analyser kan kjøre direkte mot kilden som sist ble
 åpnet i broen (*Kjør mot*).
 
+### Hent via broen
+
+En tjeneste som ikke lar nettleseren lese svaret (ingen CORS), kan ikke nås fra appen, verken fra en mappe eller fra nettet.
+Broen kan hente for appen i stedet. Det er ditt valg og av som standard: slå på **Hent via broen** under *Internettilgang* i
+Håndter, og start broen med vertene den får hente fra:
+
+```
+python tools/db_bridge.py --allow-host api.eksempel.no
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.eksempel.no
+```
+
+Når en henting mislykkes som en nettverksfeil og en bro er koblet til, sender appen den samme forespørselen til broen (`POST
+/fetch`), som henter den og gir svaret tilbake. Broen henter bare over https og bare fra vertene du har angitt; siden kan
+aldri legge til noen. Den avviser adresser på denne datamaskinen eller det lokale nettet, sender bare noen få headere og
+ingen informasjonskapsler, følger høyst tre omdirigeringer til tillatte verter og stopper ved `--max-fetch-mb` (50 MB som
+standard). Broens logg viser verten og stien, aldri spørringen, headerne eller kroppen. Samtykket for formålet gjelder som
+før.
 ### Sikkerhet
 
 - Broen svarer bare på 127.0.0.1, krever token i hvert kall og tillater CORS bare for appens egne adresser.

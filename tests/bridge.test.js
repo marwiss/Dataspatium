@@ -132,6 +132,55 @@
     }
   }, 30000);
 
+  test('bridge: with the switch on, a service that refuses the browser is fetched through the bridge, and only then', async (assert) => {
+    const http = D.require('api/http');
+    const srv = fakeBridge();
+    const inner = srv.transport;
+    const relayed = [];
+    const answer = (status, obj) => ({ ok: status >= 200 && status < 300, status, json: async () => obj });
+    srv.transport = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/') { const res = await inner(url, init); const info = await res.json(); return answer(res.status, Object.assign({}, info, { fetch: true, allowHosts: ['nocors.example'] })); }
+      if (path !== '/fetch') return inner(url, init);
+      if ((init.headers || {}).Authorization !== 'Bearer ' + srv.token) return answer(401, { error: 'Fel eller saknad token' });
+      const b = JSON.parse(init.body);
+      relayed.push(b);
+      if (new URL(b.url).host !== 'nocors.example') return answer(403, { error: 'Värden ' + new URL(b.url).host + ' är inte tillåten. Starta bryggan med --allow-host ' + new URL(b.url).host + ' om du vill hämta från den.' });
+      return answer(200, { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json', link: '<https://nocors.example/data.json?page=2>; rel="next"' }, body: btoa('{"rader":[{"a":1}]}') });
+    };
+    // A service without CORS: the browser's fetch fails as it does for a missing CORS header, without any network.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (input, init) => (/^https:\/\/(nocors|refused)\.example\//.test(String(input)) ? Promise.reject(new TypeError('Failed to fetch')) : realFetch(input, init));
+    bridge.setTransport(srv.transport);
+    try {
+      await bridge.connect('127.0.0.1:8731', 'hemlig-token');
+      await bridge.setRelay(false);
+      await assert.throws(() => http.request({ url: 'https://nocors.example/data.json', retries: 0 }), /nocors\.example/);
+      assert.equal(relayed.length, 0, 'off by default: nothing goes through the bridge');
+      await bridge.setRelay(true);
+      assert.ok(await bridge.canRelay(), 'on, with a bridge that can fetch');
+      const res = await http.request({ url: 'https://nocors.example/data.json', method: 'POST', headers: { Authorization: 'Bearer nyckel', 'Content-Type': 'text/xml' }, body: '<FRAGA/>', retries: 0 });
+      assert.ok(res.ok && res.status === 200, 'answered through the bridge');
+      assert.equal(res.text, '{"rader":[{"a":1}]}');
+      assert.ok(String(res.headers.get('Link')).includes('page=2'), 'the headers the app needs come along');
+      assert.equal(relayed[0].url, 'https://nocors.example/data.json');
+      assert.equal(relayed[0].method, 'POST');
+      assert.equal(relayed[0].headers.Authorization, 'Bearer nyckel', 'the key goes to the bridge on this computer');
+      assert.equal(atob(relayed[0].body), '<FRAGA/>', 'the body as base64');
+      await assert.throws(() => http.request({ url: 'https://refused.example/x', retries: 0 }), /refused\.example.*--allow-host/);
+      // The switch in Internetåtkomst shows the choice.
+      const card = await D.require('ui/settings/network').networkCard({ ui: { icon: D.require('ui/icons').icon, button: D.require('ui/basic').button, toast: { show() {} } }, shell: { log() {} } }, () => {});
+      const sw = /** @type {any} */ (card.querySelector('[data-bridge-relay]'));
+      assert.ok(sw && sw.checked === true, 'the switch is on');
+      return relayed.length + ' relayed';
+    } finally {
+      await bridge.setRelay(false);
+      await bridge.disconnect();
+      globalThis.fetch = realFetch;
+      bridge.setTransport(null);
+    }
+  });
+
   test('bridge: the Inhämta view connects, lists tables, previews and imports; the SQL console runs against the bridge', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
