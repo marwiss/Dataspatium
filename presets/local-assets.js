@@ -579,7 +579,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/grafer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 13561,
+  "size": 14252,
   "library": "dataspatium"
  },
  "docs/sv/cad-bim.md": {
@@ -747,7 +747,7 @@ Dataspatium.assets.addEntries({
  "docs/da/grafer.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 13601,
+  "size": 14290,
   "library": "dataspatium"
  },
  "docs/da/cad-bim.md": {
@@ -915,7 +915,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/grafer.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 13382,
+  "size": 14086,
   "library": "dataspatium"
  },
  "docs/nb/cad-bim.md": {
@@ -1083,7 +1083,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/grafer.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 13579,
+  "size": 14286,
   "library": "dataspatium"
  },
  "docs/nn/cad-bim.md": {
@@ -1251,7 +1251,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/grafer.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 14383,
+  "size": 15106,
   "library": "dataspatium"
  },
  "docs/fi/cad-bim.md": {
@@ -1419,7 +1419,7 @@ Dataspatium.assets.addEntries({
  "docs/is/grafer.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 14079,
+  "size": 14826,
   "library": "dataspatium"
  },
  "docs/is/cad-bim.md": {
@@ -1587,7 +1587,7 @@ Dataspatium.assets.addEntries({
  "docs/en/grafer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 13590,
+  "size": 14291,
   "library": "dataspatium"
  },
  "docs/en/cad-bim.md": {

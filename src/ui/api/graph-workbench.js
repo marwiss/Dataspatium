@@ -197,7 +197,7 @@
         else if (!s.models.length) nodes.push(h('p', { class: 'dm-help dm-small', text: t('ifcgraph.models.none') }));
         else {
           const modelSel = /** @type {any} */ (h('dm-select', { label: t('ifcgraph.model'), inline: true, 'data-ifcgraph-model': '' }));
-          modelSel.options = s.models.map((m) => ({ value: m.id, label: t('ifcgraph.model.label', { file: m.file, version: m.version == null ? '–' : String(m.version), entities: fmt(m.entities) }) + (m.project ? ` · ${m.project}` : '') }));
+          modelSel.options = s.models.map((m) => ({ value: m.id, label: t('ifcgraph.model.label', { file: m.file, version: m.version == null ? '–' : String(m.version), entities: fmt(m.entities) }) + (m.geometry ? ` · ${t('ifcgraph.geometry.' + m.geometry)}` : '') + (m.project ? ` · ${m.project}` : '') }));
           modelSel.value = s.modelId;
           modelSel.addEventListener('change', () => { s.modelId = modelSel.value; if (s.viewId) showView(s.viewId); });
           viewSel = /** @type {any} */ (h('dm-select', { label: t('ifcgraph.view'), inline: true, 'data-ifcgraph-view': '' }));

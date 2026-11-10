@@ -97,6 +97,8 @@
       if (Array.isArray(v)) return v.map((x) => plain(x, neo4j));
       if (typeof v === 'object') {
         if (isNode(v, neo4j) || isRel(v, neo4j)) return v;
+        // A spatial point (IFC-LPG's point lists in the nodes form) reads as its coordinates, `x y` or `x y z`.
+        if (typeof v.x === 'number' && typeof v.y === 'number' && v.srid !== undefined) return [v.x, v.y, v.z].filter((n) => typeof n === 'number').join(' ');
         if (typeof v.toString === 'function' && v.constructor && /Date|Time|Duration|Point/.test(v.constructor.name)) return v.toString();
         const out = {}; for (const [k, x] of Object.entries(v)) out[k] = plain(x, neo4j); return out;
       }

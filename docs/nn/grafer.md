@@ -148,6 +148,13 @@ Det finst to vegar til grafen, og begge gir same vising:
 | Saker og bygningsdelar | BCF-saker, viewpointa og komponentane deira, og bygningsdelane dei peikar på |
 | Heile modellen | Opptil 1 000 relasjonar i modellen |
 | Tal per klasse | Ein tabell med talet på entitetar per klasse |
+| Geometri per klasse | Ein tabell med talet på geometrinodar per klasse: representasjonar, solidar, profilar, plasseringar, stilar og lag |
+
+Frå Dataregium 3.0.0 vert geometrien lagra som eit skjelett: representasjonar, solidar, profilar, plasseringar, kontekstar, stilar,
+fargar og lag er nodar, medan punkt, meshar og kurver ligg som STEP-tekst i blokker. Visingane Heile modellen og Tal per klasse
+utelèt nodane i skjelettet, slik at bygningsdelane vert synlege; Geometri per klasse tel dei, og Naboar på ein bygningsdel
+viser forma og plasseringa. Modellista seier kva form modellen har (skjelett, blokker eller nodar). Ei punktliste, når all
+geometri er nodar, vert vist som koordinatar `x y z`.
 
 Svaret blir teikna med Cytoscape, med tabellen under. Nodane blir farga etter kva dei er: romleg struktur, bygningsdel, relasjon,
 type, eigenskap eller mengd, materiale og anna. Layout og etikettar blir endra utan å spørje tenaren.

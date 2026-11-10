@@ -100,9 +100,24 @@
 
     /** A string as a Cypher literal. @param {any} value */
     const quote = (value) => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+    /**
+     * The labels of the geometry skeleton that the graph keeps as nodes from IFC-LPG 1.0.0 (Dataregium 3.0.0 locks it): representations,
+     * solids, mapped items, profiles, placements, contexts, styles, colours and layers. Points, meshes and curves stay STEP text in
+     * StepBlock nodes. `IfcModel.geometry` says which form a model has: skeleton (the default), blocks or nodes. The views of what a
+     * model holds leave the skeleton out, so that a thousand relationships show elements and not solids; the view `geometry` counts it.
+     * A model converted before Dataregium wrote `geometry` has the blocks form when `lossless` is true.
+     */
+    const GEOMETRY_LABELS = ['IfcRepresentationItem', 'IfcRepresentation', 'IfcProductRepresentation', 'IfcRepresentationMap', 'IfcObjectPlacement', 'IfcProfileDef', 'IfcRepresentationContext', 'IfcPresentationStyle', 'IfcPresentationStyleAssignment', 'IfcPresentationLayerAssignment', 'IfcPresentationItem', 'IfcColourSpecification', 'IfcSurfaceStyleShading', 'IfcSurfaceStyleLighting', 'IfcSurfaceStyleRefraction', 'IfcSurfaceStyleWithTextures', 'IfcSurfaceTexture', 'IfcCurveStyleFont', 'IfcCurveStyleFontPattern', 'IfcTextStyleTextModel', 'IfcTextStyleWithBoxCharacteristics', 'IfcPreDefinedItem', 'IfcGeometricRepresentationContext', 'StepBlock'];
+    const GEOMETRY_LIST = '[' + GEOMETRY_LABELS.map(quote).join(', ') + ']';
+    /** Cypher: the node `alias` is no geometry node (works in Neo4j and Memgraph alike). @param {string} alias */
+    const notGeometry = (alias) => `none(l IN labels(${alias}) WHERE l IN ${GEOMETRY_LIST})`;
+    /** Whether a node's labels put it in the geometry skeleton. @param {string[]} labels */
+    const isGeometry = (labels) => (labels || []).some((l) => GEOMETRY_LABELS.includes(l));
+    /** The forms a model's geometry can have in the graph, as `IfcModel.geometry` names them. */
+    const GEOMETRY_FORMS = ['skeleton', 'blocks', 'nodes'];
 
     /** Every model the graph knows, with what the app shows of it. Read by the columns' names in `modelsOf`. */
-    const MODELS = "MATCH (m:IfcModel)\nOPTIONAL MATCH (p:Project)-[:HAS_MODEL]->(m)\nRETURN m.id AS id, m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.relationships AS relationer, m.schema AS schema, m.error AS fel, coalesce(m.document_id, m.bcf_document_guid) AS dokument, p.name AS projekt, coalesce(m.done_at, m.created_at) AS klar\nORDER BY projekt, fil, version DESC, klar DESC";
+    const MODELS = "MATCH (m:IfcModel)\nOPTIONAL MATCH (p:Project)-[:HAS_MODEL]->(m)\nRETURN m.id AS id, m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.relationships AS relationer, m.schema AS schema, m.error AS fel, coalesce(m.document_id, m.bcf_document_guid) AS dokument, p.name AS projekt, coalesce(m.done_at, m.created_at) AS klar, m.geometry AS geometri, m.lossless AS forlustfri\nORDER BY projekt, fil, version DESC, klar DESC";
     /**
      * The answer to MODELS as lists: finished models, the newest version of each document first and marked `latest` (older versions stay
      * in the graph until pruned), and how many wait or failed.
@@ -111,7 +126,7 @@
      */
     function modelsOf(table) {
       const at = (row, name) => row[table.columns.indexOf(name)];
-      const all = table.rows.map((row) => ({ id: String(at(row, 'id')), file: String(at(row, 'fil') || ''), state: String(at(row, 'tillstand') || ''), version: at(row, 'version'), entities: at(row, 'entiteter'), relationships: at(row, 'relationer'), schema: at(row, 'schema') || '', error: at(row, 'fel') || '', document: at(row, 'dokument') || '', project: at(row, 'projekt') || '', doneAt: String(at(row, 'klar') || ''), latest: false }));
+      const all = table.rows.map((row) => ({ id: String(at(row, 'id')), file: String(at(row, 'fil') || ''), state: String(at(row, 'tillstand') || ''), version: at(row, 'version'), entities: at(row, 'entiteter'), relationships: at(row, 'relationer'), schema: at(row, 'schema') || '', error: at(row, 'fel') || '', document: at(row, 'dokument') || '', project: at(row, 'projekt') || '', doneAt: String(at(row, 'klar') || ''), geometry: GEOMETRY_FORMS.includes(String(at(row, 'geometri'))) ? String(at(row, 'geometri')) : at(row, 'forlustfri') === true ? 'blocks' : '', latest: false }));
       const models = all.filter((m) => m.state === 'done').sort((a, b) => String(a.project).localeCompare(String(b.project)) || a.file.localeCompare(b.file) || (Number(b.version) || 0) - (Number(a.version) || 0) || b.doneAt.localeCompare(a.doneAt));
       const seen = new Set();
       for (const m of models) { const key = m.document || m.id; m.latest = !seen.has(key); seen.add(key); }
@@ -141,8 +156,9 @@
       { id: 'materials', layout: 'fcose', cypher: (m) => `MATCH (e:IfcProduct {model_id: ${m}})-[a:HAS_ASSOCIATIONS]->(r:IfcRelAssociatesMaterial)-[b:RELATING_MATERIAL]->(x)\nRETURN e, a, r, b, x\nLIMIT 1000` },
       { id: 'properties', layout: 'fcose', cypher: (m) => `MATCH (e:IfcProduct {model_id: ${m}})-[a:IS_DEFINED_BY]->(r:IfcRelDefinesByProperties)-[b:RELATING_PROPERTY_DEFINITION]->(s)-[c:HAS_PROPERTIES|QUANTITIES]->(p)\nRETURN e, a, r, b, s, c, p\nLIMIT 1000` },
       { id: 'issues', layout: 'dagre', cypher: (m) => `MATCH (t:Topic)-[a:HAS_VIEWPOINT]->(v:Viewpoint)-[b:HAS_COMPONENT]->(c:Component)-[d:SAME_AS]->(e:IfcEntity {model_id: ${m}})\nRETURN t, a, v, b, c, d, e\nLIMIT 1000` },
-      { id: 'whole', layout: 'fcose', cypher: (m) => `MATCH (a:IfcEntity {model_id: ${m}})-[r]->(b:IfcEntity)\nRETURN a, r, b\nLIMIT 1000` },
-      { id: 'classes', layout: 'fcose', graph: false, cypher: (m) => `MATCH (e:IfcEntity {model_id: ${m}})\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC` },
+      { id: 'whole', layout: 'fcose', cypher: (m) => `MATCH (a:IfcEntity {model_id: ${m}})-[r]->(b:IfcEntity)\nWHERE ${notGeometry('a')} AND ${notGeometry('b')}\nRETURN a, r, b\nLIMIT 1000` },
+      { id: 'classes', layout: 'fcose', graph: false, cypher: (m) => `MATCH (e:IfcEntity {model_id: ${m}})\nWHERE ${notGeometry('e')}\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC` },
+      { id: 'geometry', layout: 'fcose', graph: false, cypher: (m) => `MATCH (e:IfcEntity {model_id: ${m}})\nWHERE any(l IN labels(e) WHERE l IN ${GEOMETRY_LIST})\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC` },
     ];
     /**
      * The Cypher of a view of a model. @param {string} viewId @param {string} modelId @returns {{cypher: string, layout: string, graph: boolean}|null}
@@ -169,6 +185,6 @@
       return m ? Number(m[1]) : null;
     }
 
-    return { classOf, nameOf, familyOf, colorKey, redact, readable, isProtected, quote, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, limitOf };
+    return { classOf, nameOf, familyOf, colorKey, redact, readable, isProtected, quote, GEOMETRY_LABELS, GEOMETRY_FORMS, notGeometry, isGeometry, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, limitOf };
   });
 })();

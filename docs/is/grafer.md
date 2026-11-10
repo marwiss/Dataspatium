@@ -147,6 +147,13 @@ Tvær leiðir liggja að netinu og báðar gefa sömu sýn:
 | Mál og byggingarhlutar | BCF-mál, sjónarhorn þeirra og íhluti, og byggingarhlutana sem þau vísa á |
 | Allt líkanið | Allt að 1.000 vensl í líkaninu |
 | Fjöldi eftir flokki | Tafla með fjölda eininga eftir flokki |
+| Rúmfræði eftir flokki | Tafla með fjölda rúmfræðihnúta eftir flokki: framsetningar, rúmhlutir, snið, staðsetningar, stílar og lög |
+
+Frá Dataregium 3.0.0 er rúmfræðin geymd sem beinagrind: framsetningar, rúmhlutir, snið, staðsetningar, samhengi, stílar, litir
+og lög eru hnútar, en punktar, möskvar og ferlar liggja sem STEP-texti í blokkum. Sýnin Allt líkanið og Fjöldi eftir flokki
+sleppa hnútum beinagrindarinnar svo byggingarhlutarnir sjáist; Rúmfræði eftir flokki telur þá, og Nágrannar á byggingarhluta
+sýnir lögun hans og staðsetningu. Líkanalistinn segir hvaða form líkanið hefur (beinagrind, blokkir eða hnútar). Punktalisti,
+þegar öll rúmfræði er hnútar, birtist sem hnit `x y z`.
 
 Svarið er teiknað með Cytoscape, með töflunni undir. Hnútarnir eru litaðir eftir því hvað þeir eru: rýmisuppbygging, byggingarhluti, vensl, gerð,
 eiginleiki eða magn, efni og annað. Uppröðun og merkimiðum er breytt án þess að spyrja þjóninn.

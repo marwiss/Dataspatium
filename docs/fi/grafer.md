@@ -151,6 +151,13 @@ Verkkoon on kaksi tietä, ja molemmat antavat saman näkymän:
 | Asiat ja rakennusosat | BCF-asiat, niiden viewpointit ja komponentit sekä rakennusosat, joihin ne viittaavat |
 | Koko malli | Enintään 1 000 suhdetta mallissa |
 | Määrä luokittain | Taulukko entiteettien määrästä luokittain |
+| Geometria luokittain | Taulukko geometriasolmujen määrästä luokittain: esitykset, kappaleet, profiilit, sijoitukset, tyylit ja tasot |
+
+Dataregium 3.0.0:sta alkaen geometria tallennetaan runkona: esitykset, kappaleet, profiilit, sijoitukset, kontekstit, tyylit,
+värit ja tasot ovat solmuja, kun taas pisteet, verkot ja käyrät ovat STEP-tekstinä lohkoissa. Näkymät Koko malli ja Määrä
+luokittain jättävät rungon solmut pois, jotta rakennusosat näkyvät; Geometria luokittain laskee ne, ja Naapurit rakennusosalla
+näyttää sen muodon ja sijoituksen. Malliluettelo kertoo, mikä muoto mallilla on (runko, lohkot tai solmut). Pisteluettelo,
+kun kaikki geometria on solmuja, näkyy koordinaatteina `x y z`.
 
 Vastaus piirretään Cytoscapella, ja taulukko on sen alla. Solmut väritetään sen mukaan, mitä ne ovat: tilarakenne, rakennusosa, suhde,
 tyyppi, ominaisuus tai määrä, materiaali ja muu. Asettelu ja tunnisteet muuttuvat kysymättä palvelimelta.

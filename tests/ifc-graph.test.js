@@ -58,12 +58,12 @@
   /** An answer per query, by what the query asks for, as the columns and rows of the graph query. */
   function answerFor(text) {
     if (/m:IfcModel/.test(text)) {
-      const columns = ['id', 'fil', 'tillstand', 'version', 'entiteter', 'relationer', 'schema', 'fel', 'dokument', 'projekt', 'klar'];
+      const columns = ['id', 'fil', 'tillstand', 'version', 'entiteter', 'relationer', 'schema', 'fel', 'dokument', 'projekt', 'klar', 'geometri', 'forlustfri'];
       return { columns, rows: [
-        ['model-0', 'three_walls_gtin.ifc', 'done', 1, 140, 190, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-05T10:00:00.000Z'],
-        [MODEL, 'three_walls_gtin.ifc', 'done', 2, 150, 206, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-06T10:00:00.000Z'],
-        ['model-2', 'other.ifc', 'running', 1, null, null, null, null, 'doc-2', 'Building permit', '2026-11-06T11:00:00.000Z'],
-        ['model-3', 'broken.ifc', 'failed', 1, null, null, null, 'parse error', 'doc-3', 'Building permit', '2026-11-06T11:00:00.000Z'],
+        ['model-0', 'three_walls_gtin.ifc', 'done', 1, 140, 190, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-05T10:00:00.000Z', null, true],
+        [MODEL, 'three_walls_gtin.ifc', 'done', 2, 150, 206, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-06T10:00:00.000Z', 'skeleton', true],
+        ['model-2', 'other.ifc', 'running', 1, null, null, null, null, 'doc-2', 'Building permit', '2026-11-06T11:00:00.000Z', null, null],
+        ['model-3', 'broken.ifc', 'failed', 1, null, null, null, 'parse error', 'doc-3', 'Building permit', '2026-11-06T11:00:00.000Z', 'odd', false],
       ] };
     }
     if (/IS_DECOMPOSED_BY\|RELATED_OBJECTS/.test(text)) return { columns: ['x', 'r', 'y'], rows: [['project', 'r1', 'agg'], ['agg', 'r2', 'storey'], ['storey', null, null]].map(([x, r, y]) => [jsonNode(x), r ? jsonRel(relBy(r)) : null, y ? jsonNode(y) : null]) };
@@ -160,6 +160,11 @@
       assert.ok(v.graph === false || ifcGraph.limitOf(view.cypher), v.id + ' has a limit');
     }
     assert.equal(ifcGraph.viewOf('nothing', MODEL), null);
+    assert.deepEqual(list.models.map((m) => m.geometry), ['skeleton', 'blocks'], 'the form the geometry has, by IfcModel.geometry, or blocks when an older lossless model lacks it');
+    assert.ok(ifcGraph.viewOf('whole', MODEL).cypher.includes("WHERE none(l IN labels(a) WHERE l IN ['IfcRepresentationItem'"), 'the whole model leaves the geometry skeleton out');
+    assert.ok(ifcGraph.viewOf('classes', MODEL).cypher.includes('WHERE none(l IN labels(e)'), 'so does the count per class');
+    assert.ok(ifcGraph.viewOf('geometry', MODEL).cypher.includes('WHERE any(l IN labels(e)') && ifcGraph.viewOf('geometry', MODEL).graph === false, 'and the geometry view counts it, as a table');
+    assert.ok(ifcGraph.isGeometry(['IfcEntity', 'IfcGeometricRepresentationItem', 'IfcRepresentationItem', 'IfcExtrudedAreaSolid']) && ifcGraph.isGeometry(['StepBlock']) && !ifcGraph.isGeometry(WALL_LABELS), 'what counts as geometry');
     assert.equal(ifcGraph.quote("a'b\\c"), "'a\\'b\\\\c'");
     assert.ok(ifcGraph.stepFrom('neighbours', "x' OR 1=1").includes("'x\\' OR 1=1'"), 'an id is a literal');
     assert.ok(ifcGraph.element("g'1", MODEL).includes("GlobalId: 'g\\'1'"), 'a guid is a literal');
@@ -208,6 +213,9 @@
     assert.deepEqual(empty.columns, ['a', 'b'], 'an empty answer keeps its columns'); assert.equal(empty.graph, null);
     const none = await withDriver(fakeLib(() => ({ columns: ['a'], rows: [] })), () => neo4j.run(source, 'MATCH (n) RETURN n.a AS a'));
     assert.deepEqual(none.columns, ['a'], 'also over Bolt');
+    const point = (x, y, z) => ({ srid: int(z === undefined ? 7203 : 9157), x, y, z });
+    const points = await withDriver(fakeLib(() => ({ columns: ['c', 'p'], rows: [[[point(0, 0, 0), point(1, 0, 0.5)], point(2, 3)]] })), () => neo4j.run(source, 'MATCH (n) RETURN n.CoordList AS c, n.Location AS p'));
+    assert.equal(points.rows[0][0], '["0 0 0","1 0 0.5"]', 'a point list reads as coordinates'); assert.equal(points.rows[0][1], '2 3', 'a 2D point as two');
     return 'ok';
   });
 

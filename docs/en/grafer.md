@@ -150,6 +150,13 @@ There are two ways to the graph, and both give the same view:
 | Issues and elements | BCF issues, their viewpoints and components, and the elements they point at |
 | The whole model | Up to 1,000 relationships in the model |
 | Count per class | A table of the number of entities per class |
+| Geometry per class | A table of the number of geometry nodes per class: representations, solids, profiles, placements, styles and layers |
+
+From Dataregium 3.0.0 the geometry is stored as a skeleton: representations, solids, profiles, placements, contexts, styles,
+colours and layers are nodes, while points, meshes and curves lie as STEP text in blocks. The views The whole model and
+Count per class leave the skeleton's nodes out so that the elements show; Geometry per class counts them, and Neighbours on
+an element shows its shape and placement. The list of models says which form a model has (skeleton, blocks or nodes). A
+point list, when all geometry is nodes, shows as coordinates `x y z`.
 
 The answer is drawn with Cytoscape, with the table under it. Nodes are coloured by what they are: spatial structure, element,
 relationship, type, property or quantity, material and other. Layout and labels change without asking the server.

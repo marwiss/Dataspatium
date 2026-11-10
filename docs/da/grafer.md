@@ -147,6 +147,13 @@ Der er to veje til grafen, og begge giver samme visning:
 | Sager og bygningsdele | BCF-sager, deres viewpoints og komponenter, og de bygningsdele, de peger på |
 | Hele modellen | Op til 1.000 relationer i modellen |
 | Antal per klasse | En tabel med antallet af entiteter per klasse |
+| Geometri per klasse | En tabel med antallet af geometrinoder per klasse: repræsentationer, solider, profiler, placeringer, stile og lag |
+
+Fra Dataregium 3.0.0 gemmes geometrien som et skelet: repræsentationer, solider, profiler, placeringer, kontekster, stile, farver
+og lag er noder, mens punkter, mesh og kurver ligger som STEP-tekst i blokke. Visningerne Hele modellen og Antal per klasse
+udelader skelettets noder, så bygningsdelene ses; Geometri per klasse tæller dem, og Naboer på en bygningsdel viser dens form
+og placering. Modellisten angiver hvilken form modellen har (skelet, blokke eller noder). En punktliste, når al geometri er
+noder, vises som koordinater `x y z`.
 
 Svaret tegnes med Cytoscape, med tabellen nedenunder. Knuderne farves efter, hvad de er: rumlig struktur, bygningsdel, relation,
 type, egenskab eller mængde, materiale og øvrigt. Layout og etiketter ændres uden at spørge serveren.
