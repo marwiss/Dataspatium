@@ -184,8 +184,7 @@ Dataspatium ja Dataregium kuuluvat yhteen.
   haettu malli julkaistaan perusversiollaan, jolloin palvelin kieltäytyy, jos joku on ehtinyt ensin.
 - **Dataregium 3**: Dataregiumista haettu malli julkaistaan perusversiollaan, ja palvelin kieltäytyy (412), jos joku on ehtinyt ensin,
   ja (422), jos projekti ei ota vastaan tiedostoja validointivirheineen; palvelimen esitarkistus kokeilee ehdokasta tallentamatta sitä;
-  palvelimen IFC-graafi piirretään runkomuodossa mallin alkuperän ja muotoversion kanssa, ja aloituskysely löytää rakennusosan lähellä
-  olevat rakennusosat; paikallinen Dataregium omalla tietokoneella toimii lähteenä myös file://-osoitteesta; BCF-kamerat kirjoitetaan
+  palvelimen IFC-graafi piirretään runkomuodossa mallin alkuperän ja muotoversion kanssa; paikallinen Dataregium omalla tietokoneella toimii lähteenä myös file://-osoitteesta; BCF-kamerat kirjoitetaan
   mallin koordinaatteihin.
 - **Avoin paikkatieto**: Sundsvallin kunnan WFS valmiiden paikkatietolähteiden joukossa, muun muassa asemakaavoineen.
 

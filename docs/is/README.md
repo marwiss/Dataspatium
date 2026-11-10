@@ -173,7 +173,7 @@ Dataregium með sama aðalnúmer eiga saman.
   þegar einhver var á undan.
 - **Dataregium 3**: líkan frá Dataregium er birt með grunnútgáfu sinni, og þjónninn hafnar (412) þegar einhver var á undan og (422)
   þegar verkefnið tekur ekki við skrám með villum; forathugun þjónsins reynir tillögu án þess að vista hana; IFC-graf þjónsins er
-  teiknað á beinagrindarformi með uppruna og formútgáfu líkansins, og upphafsfyrirspurn finnur byggingarhluta nálægt byggingarhluta;
+  teiknað á beinagrindarformi með uppruna og formútgáfu líkansins;
   staðbundinn Dataregium á eigin tölvu virkar sem uppspretta einnig frá file://; BCF-myndavélar eru skrifaðar í hnitum líkansins.
 - **Opin landupplýsingagögn**: WFS Sundsvall-sveitarfélagsins meðal tilbúnu landupplýsingauppsprettnanna, meðal annars með deiliskipulagi.
 

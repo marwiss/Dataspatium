@@ -179,8 +179,7 @@ Dataregium med same hovudnummer høyrer saman.
   frå Dataregium vert publisert med basisversjonen sin, slik at tenaren avviser når nokon har kome fyrst.
 - **Dataregium 3**: ein modell frå Dataregium blir publisert med basisversjonen sin, og tenaren avviser (412) når nokon har kome først,
   og (422) når prosjektet ikkje tek imot filer med valideringsfeil; førehandskontrollen til tenaren prøver ein kandidat utan å lagre han;
-  IFC-grafen til tenaren blir teikna i skjelettform med opphavet og formversjonen til modellen, og ei startspørjing finn bygningsdelar
-  nær ein bygningsdel; ein lokal Dataregium på di eiga datamaskin verkar som kjelde også frå file://; BCF-kamera blir skrivne i
+  IFC-grafen til tenaren blir teikna i skjelettform med opphavet og formversjonen til modellen; ein lokal Dataregium på di eiga datamaskin verkar som kjelde også frå file://; BCF-kamera blir skrivne i
   koordinatane til modellen.
 - **Opne geodata**: WFS-en til Sundsvall kommune blant dei ferdige geodatakjeldene, mellom anna med detaljplanar.
 

@@ -182,8 +182,7 @@ with the same major number belong together.
   when someone got there first.
 - **Dataregium 3**: a model from Dataregium is published with its base version, and the server refuses (412) when someone got there
   first and (422) when the project does not take files with validation errors; the server's precheck tries a candidate without storing
-  it; the server's IFC graph is drawn in its skeleton form with the model's origin and form version, and a starter query finds the
-  products near a product; a local Dataregium on your own computer works as a source also from file://; BCF cameras are written in
+  it; the server's IFC graph is drawn in its skeleton form with the model's origin and form version; a local Dataregium on your own computer works as a source also from file://; BCF cameras are written in
   the model's coordinates.
 - **Open geodata**: Sundsvall municipality's WFS among the ready geodata sources, with detailed development plans among others.
 

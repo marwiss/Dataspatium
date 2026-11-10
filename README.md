@@ -188,7 +188,7 @@ huvudnummer hör ihop.
   vägrar när någon hunnit före.
 - **Dataregium 3**: en modell från Dataregium publiceras med sin basversion, och servern vägrar (412) när någon hunnit före och (422)
   när projektet inte tar emot filer med valideringsfel; serverns förhandskontroll prövar en kandidat utan att spara den; serverns IFC-graf
-  ritas i skelettform med modellens ursprung och formversion, och en startfråga hittar byggdelar nära en byggdel; en lokal Dataregium på
+  ritas i skelettform med modellens ursprung och formversion; en lokal Dataregium på
   den egna datorn fungerar som källa också från file://; BCF-kameror skrivs i modellens koordinater.
 - **Öppna geodata**: Sundsvalls kommuns WFS bland de färdiga geodatakällorna, bland annat med detaljplaner.
 

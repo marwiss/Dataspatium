@@ -180,8 +180,7 @@ Dataregium med samme hovednummer hører sammen.
   serveren afviser, når nogen er kommet først.
 - **Dataregium 3**: en model fra Dataregium publiceres med sin basisversion, og serveren afviser (412), når nogen er kommet først, og
   (422), når projektet ikke tager imod filer med valideringsfejl; serverens forhåndskontrol afprøver en kandidat uden at gemme den;
-  serverens IFC-graf tegnes i skeletform med modellens oprindelse og formversion, og en startforespørgsel finder bygningsdele nær en
-  bygningsdel; en lokal Dataregium på din egen computer virker som kilde også fra file://; BCF-kameraer skrives i modellens koordinater.
+  serverens IFC-graf tegnes i skeletform med modellens oprindelse og formversion; en lokal Dataregium på din egen computer virker som kilde også fra file://; BCF-kameraer skrives i modellens koordinater.
 - **Åbne geodata**: Sundsvall kommunes WFS blandt de færdige geodatakilder, blandt andet med detaljplaner.
 
 ## OpenCDE-API'erne og deres klienter
