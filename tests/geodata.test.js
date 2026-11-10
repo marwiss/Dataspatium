@@ -535,7 +535,7 @@
     http.request = (req) => { sent.push({ url: String(req.url), auth: String((req.headers || {}).Authorization || '') }); return real(req); };
     const realFetch = globalThis.fetch; const fetched = [];
     globalThis.fetch = (input, init) => { fetched.push({ url: String(input), auth: String(((init && init.headers) || {}).Authorization || '') }); return realFetch(input, init); };
-    let id = null;
+    let id = null; let id2 = null;
     try {
       const middle = D.require('data/geo').swerefToWgs84(674015, 6580025, 3006);
       const csv = `namn;x;y\nhörnet;674005;6580035\nmotsatt;674035;6580005\nmitten;${middle[0].toFixed(7)};${middle[1].toFixed(7)}\nutanför;690000;6600000\n`;
@@ -550,10 +550,21 @@
       assert.ok(sent.some((s) => /stac-hojd\/v1\/search/.test(s.url) && /collections=dtm-cog/.test(s.url) && s.auth === 'Bearer hojd-token'), 'the terrain model searched with the key');
       const tile = fetched.find((f) => /lmh-files\/dtm\.tif/.test(f.url));
       assert.ok(tile && tile.auth === 'Bearer hojd-token', 'the tile read with the key from the file host');
+      // Along a line of 30 m in the top row of the tile: a point every 10 m reads 10, 11, 12 and 13.
+      const lineCsv = ['namn;geometri', 'linjen;LINESTRING (674005 6580035, 674035 6580035)', 'utanför;LINESTRING (690000 6600000, 690100 6600000)', ''].join(String.fromCharCode(10));
+      const lines = await D.require('io/import').run(new File([lineCsv], 'linjer.csv'), {}, null, 'Höjdlinjer');
+      id2 = lines.id;
+      const res2 = await recipes.apply(id2, 'geo_height_along', { column: 'geometri', step: 10, prefix: 'hojd' });
+      const cols2 = (await datasets.columns(id2)).map((c) => c.name);
+      const rows2 = await datasets.query(id2);
+      const pick = (r) => ['hojd_min', 'hojd_max', 'hojd_medel'].map((n) => r[cols2.indexOf(n)]);
+      assert.deepEqual(rows2.map(pick), [[10, 13, 11.5], [null, null, null]], 'lowest, highest and mean along the line');
+      assert.ok(res2 && res2.matched === 1, JSON.stringify(res2));
       return h.join(', ');
     } finally {
       http.request = real; globalThis.fetch = realFetch;
       if (id) await datasets.remove(id).catch(() => {});
+      if (id2) await datasets.remove(id2).catch(() => {});
       await connectors.remove('lantmateriet-stac');
       await secrets.forget('lantmateriet-stac');
       D.require('api/auth').clearToken('lantmateriet-stac');

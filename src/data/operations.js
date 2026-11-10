@@ -570,6 +570,32 @@
       toR(p) { return `# ${D.t('code.geo.height')}\ndf$${q(p.name || 'hojd')} <- NA_real_`; },
     });
 
+    define({
+      id: 'geo_height_along', group: 'geo',
+      params: [GEOMETRY_PARAM, { name: 'step', type: 'number', default: 10 }, { name: 'prefix', type: 'text', default: 'hojd' }],
+      names(p) { const s = String(p.prefix || 'hojd').trim() || 'hojd'; return [s + '_min', s + '_max', s + '_medel']; },
+      // Heights along lines and polygons (api/heights.along): the lowest, highest and mean height every `step` metres.
+      async apply(ctx, p) {
+        const res = await ctx.engine.exec(`select rowid, ${q(p.column)} from data`);
+        const rows = res[0] ? res[0].values : [];
+        const stats = await D.require('api/heights').along(rows.map((r) => r[1]), { step: p.step });
+        const names = this.names(p);
+        for (const n of names) await addColumnOf(ctx, n, 'number');
+        await ctx.engine.run('create temp table if not exists _heights3 (id integer primary key, lo real, hi real, av real)');
+        await ctx.engine.run('delete from _heights3');
+        const found = rows.map((r, i) => [r[0], stats[i]]).filter((x) => x[1]);
+        for (let k = 0; k < found.length; k += 200) {
+          const part = found.slice(k, k + 200);
+          await ctx.engine.run(`insert into _heights3 (id, lo, hi, av) values ${part.map(() => '(?, ?, ?, ?)').join(', ')}`, [].concat(...part.map(([id, s]) => [id, s.min, s.max, s.mean])));
+        }
+        await ctx.engine.run(`update data set ${q(names[0])} = (select lo from _heights3 where id = data.rowid), ${q(names[1])} = (select hi from _heights3 where id = data.rowid), ${q(names[2])} = (select av from _heights3 where id = data.rowid)`);
+        await ctx.engine.run('drop table _heights3');
+        return { rows: rows.length, matched: found.length };
+      },
+      toSQL(p) { return this.names(p).map((n) => `ALTER TABLE data ADD COLUMN ${q(n)} REAL;`).concat([`-- ${D.t('code.geo.height')}`]); },
+      toR(p) { return `# ${D.t('code.geo.height')}\n` + this.names(p).map((n) => `df$${q(n)} <- NA_real_`).join('\n'); },
+    });
+
     /**
      * How a number typed in a cell is meant. 3.14 cannot be a thousands separator, whatever the language, while 1.234 is one
      * thousand two hundred and thirty-four in the Nordic languages and a little over one in English.

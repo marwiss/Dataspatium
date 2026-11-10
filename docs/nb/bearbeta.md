@@ -183,6 +183,8 @@ og koordinatkolonner:
 - **Høyde fra terrengmodellen** legger til høyden i meter (RH 2000) for hvert punkt fra Lantmäteriets terrengmodell med
   nøkkelen til *Lantmäteriet geodata med nøkkel (STAC)*. Koordinatene kan være i WGS 84 eller SWEREF 99 TM; høyst 5 000
   punkter om gangen, og et punkt utenfor modellen får ingen høyde.
+- **Høyder langs geometrien** legger til laveste, høyeste og gjennomsnittlig høyde langs hver linje og polygonkant, med
+  et punkt hver tiende meter som standard (høyst 200 per geometri), i kolonnene `hojd_min`, `hojd_max` og `hojd_medel`.
 
 Alle fire er trinn i oppskriften som kan angres og spilles av igjen. I SQL-eksporten vises de som kall til Dataspatiums
 funksjoner (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` med flere); R-eksporten gir tilsvarende kode med pakken sf.

@@ -91,6 +91,63 @@
       return { heights, tiles: byTile.size };
     }
 
-    return { at, tiles, CONNECTOR, MAX_POINTS };
+    /**
+     * Points every `step` metres along a geometry (GeoJSON in WGS 84 or SWEREF 99 TM, or WKT), in SWEREF 99 TM: the vertices of
+     * lines and rings and the points between them, at most `max` per geometry; a point is itself.
+     * @param {any} geometry @param {number} step @param {number} max @returns {number[][]}
+     */
+    function samples(geometry, step, max) {
+      const g = geo.parseGeometry(geometry);
+      if (!g) return [];
+      const projected = geo.isProjected([g]);
+      const toXY = (c) => (projected ? [c[0], c[1]] : geo.wgs84ToSweref(c[0], c[1]));
+      const lines = [];
+      const walk = (type, coords) => {
+        if (type === 'Point') lines.push([coords]);
+        else if (type === 'MultiPoint') coords.forEach((c) => lines.push([c]));
+        else if (type === 'LineString') lines.push(coords);
+        else if (type === 'MultiLineString' || type === 'Polygon') coords.forEach((l) => lines.push(l));
+        else if (type === 'MultiPolygon') coords.forEach((poly) => poly.forEach((l) => lines.push(l)));
+      };
+      if (g.type === 'GeometryCollection') (g.geometries || []).forEach((x) => walk(x.type, x.coordinates || []));
+      else walk(g.type, g.coordinates || []);
+      const out = [];
+      for (const line of lines) {
+        const pts = line.map(toXY);
+        if (pts.length) out.push(pts[0]);
+        for (let i = 1; i < pts.length; i++) {
+          const [x0, y0] = pts[i - 1]; const [x1, y1] = pts[i];
+          const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
+          for (let k = 1; k <= n; k++) out.push([x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n]);
+        }
+      }
+      if (out.length <= max) return out;
+      // Too many: an even selection keeps the first and the last.
+      return Array.from({ length: max }, (_, i) => out[Math.round((i * (out.length - 1)) / (max - 1))]);
+    }
+
+    /**
+     * The lowest, highest and mean height along each geometry, sampled every `step` metres (at most MAX_POINTS samples in all).
+     * @param {Array<any>} geometries @param {{step?: number, connector?: any}} [options]
+     * @returns {Promise<Array<{min: number, max: number, mean: number}|null>>}
+     */
+    async function along(geometries, options = {}) {
+      const step = Math.max(1, Number(options.step) || 10);
+      const perGeometry = Math.max(2, Math.floor(MAX_POINTS / Math.max(1, geometries.length)));
+      const lists = geometries.map((g) => samples(g, step, Math.min(200, perGeometry)));
+      const flat = [].concat(...lists);
+      if (flat.length > MAX_POINTS) throw new Error(D.t('heights.err.many', { max: MAX_POINTS }));
+      const { heights } = await at(flat, options);
+      let k = 0;
+      return lists.map((list) => {
+        const hs = heights.slice(k, k + list.length).filter((v) => v !== null);
+        k += list.length;
+        if (!hs.length) return null;
+        const r = (v) => Math.round(v * 100) / 100;
+        return { min: r(Math.min(...hs)), max: r(Math.max(...hs)), mean: r(hs.reduce((a, b) => a + b, 0) / hs.length) };
+      });
+    }
+
+    return { at, along, samples, tiles, CONNECTOR, MAX_POINTS };
   });
 })();

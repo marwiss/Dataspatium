@@ -187,6 +187,9 @@ Toimintoryhmä *Paikkatieto* käsittelee geometriasarakkeita (GeoJSON tai WKT te
 - **Korkeus maastomallista** lisää jokaisen pisteen korkeuden metreinä (RH 2000) Lantmäterietin maastomallista lähteen
   *Lantmäteriet paikkatiedot avaimella (STAC)* avaimella. Koordinaatit voivat olla WGS 84- tai SWEREF 99 TM
   -järjestelmässä; enintään 5 000 pistettä kerrallaan, ja mallin ulkopuolinen piste ei saa korkeutta.
+- **Korkeudet geometrian varrella** lisää alimman, ylimmän ja keskimääräisen korkeuden jokaisen viivan ja monikulmion
+  reunan varrelta, oletuksena piste kymmenen metrin välein (enintään 200 geometriaa kohden), sarakkeisiin `hojd_min`,
+  `hojd_max` ja `hojd_medel`.
 
 Kaikki neljä ovat reseptin vaiheita, jotka voi kumota ja ajaa uudelleen. SQL-viennissä ne näkyvät Dataspatiumin funktioiden
 kutsuina (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` ja muut); R-vienti tuottaa vastaavan koodin paketilla sf.

@@ -181,6 +181,8 @@ hnitadálka:
 - **Hæð úr landlíkaninu** bætir við hæð í metrum (RH 2000) fyrir hvern punkt úr landlíkani Lantmäteriet með lyklinum að
   *Landupplýsingar Lantmäteriet með lykli (STAC)*. Hnitin mega vera í WGS 84 eða SWEREF 99 TM; mest 5.000 punktar í
   einu, og punktur utan líkansins fær enga hæð.
+- **Hæðir eftir rúmfræðinni** bætir við lægstu, hæstu og meðalhæð eftir hverri línu og marghyrningsbrún, með punkti á
+  tíu metra fresti sjálfgefið (mest 200 á hverja rúmfræði), í dálkana `hojd_min`, `hojd_max` og `hojd_medel`.
 
 Allar fjórar eru skref í uppskriftinni sem má afturkalla og keyra aftur. Í SQL-útflutningnum birtast þær sem köll á föll
 Dataspatium (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` og fleiri); R-útflutningurinn gefur samsvarandi kóða með
