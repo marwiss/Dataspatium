@@ -132,6 +132,12 @@ Documents API, svo forritið les útgáfuna úr `/bcf/versions` og innskráninga
 geturðu valið útgáfu sjálfur, og ef þjónninn býður fleiri geturðu skipt í sýn uppsprettunnar. Í 2.1 listar *Skrár í verkefninu* aðeins BCF-skjölin, mál hafa ekki
 raðnúmer þjónsins og ekki er hægt að eyða sjónarhorni. Á móti getur athugasemd verið svar við annarri: hnappurinn *Svara* í spjaldinu *Mál*.
 
+Spjaldið *Meðlimir verkefnisins* birtist þegar þjónninn hefur verkefnastjórnun (viðbót Dataregium). Ábyrgðarmaður verkefnis
+(manager), sem þarf ekki að vera stjórnandi þjónsins, skráir sig inn með *Skrá inn sem ábyrgðarmaður verkefnis* og sér verkefni sín og
+meðlimi þeirra með hlutverkum: lesandi, þátttakandi, ritstjóri eða ábyrgðarmaður. Þú bætir við manneskju með nákvæmu notandanafni
+hennar á þjóninum, breytir hlutverki, fjarlægir meðlim og endurnefnir verkefnið; hver breyting er staðfest fyrst. Þjónninn leyfir ekki
+að verkefnið sé án ábyrgðarmanns og segir frá því; verkefnum er ekki eytt héðan, og stjórnandi stofnar nýja aðganga.
+
 Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
 
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til

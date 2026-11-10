@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/graph-source', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel', 'ui/api/graph-workbench'], (base, basic, overlays, opencde, admin, graphSource, secrets, runner, importer, cdeLogCard, adminPanel, workbench) => {
+  D.define('ui/api/opencde-view', ['ui/base', 'ui/basic', 'ui/overlays', 'api/families/opencde', 'api/families/opencde-admin', 'api/graph-source', 'api/secrets', 'api/runner', 'io/import', 'ui/api/cde-log-card', 'ui/api/admin-panel', 'ui/api/graph-workbench', 'ui/api/manage-panel'], (base, basic, overlays, opencde, admin, graphSource, secrets, runner, importer, cdeLogCard, adminPanel, workbench, managePanel) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 500;
     const KINDS = [
@@ -33,6 +33,8 @@
       const logCard = cdeLogCard.create(connector, { log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       /** The server's administration (Dataregium's extension), a card of its own that stays hidden for servers without the API. */
       const adminUi = adminPanel.create({ connector, ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
+      /** The project's members for a manager (Dataregium's project administration), hidden for servers without it. */
+      const manageUi = managePanel.create({ connector, log });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
       let pendingLink = null;
@@ -268,7 +270,7 @@
           nodes.push(filesCard());
         }
         const resultEl = h('div');
-        nodes.push(resultEl, graphEl, adminUi.el, logCard.el);
+        nodes.push(resultEl, graphEl, manageUi.el, adminUi.el, logCard.el);
         renderGraphCard();
         replace(el, nodes);
         renderResult(resultEl);
@@ -345,6 +347,7 @@
         graphLink = graphSource.takeLink(api.ctx, connector);
         opencde.capabilities(connector).then((caps) => { s.caps = caps; render(); followGraphLink(); }).catch((err) => D.log('opencde', 'capabilities', err));
         adminUi.start().catch((err) => D.log('opencde', 'admin', err));
+        manageUi.start().catch((err) => D.log('opencde', 'manage', err));
         const link = takeDeepLink();
         const signed = opencde.signedIn(connector);
         if (link && !signed) { pendingLink = link; s.note = t('opencde.deeplink.signin'); }
@@ -360,7 +363,7 @@
           Promise.resolve().then(async () => { try { await applyDeepLink(link); } catch (err) { fail(err); } render(); });
         }
       }
-      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, changeVersion, graphSignIn, graph: () => graphBench, inspector: () => (graphBench ? graphBench.inspector() : null), destroy: () => { unsubscribe(); logCard.destroy(); adminUi.destroy(); if (graphBench) graphBench.destroy(); }, KINDS };
+      return { el, start, state: s, signIn, signOut, fetchKind, saveTable, fetchDocuments, loadFiles, fetchFile, changeVersion, graphSignIn, graph: () => graphBench, manage: () => manageUi, inspector: () => (graphBench ? graphBench.inspector() : null), destroy: () => { unsubscribe(); logCard.destroy(); adminUi.destroy(); if (graphBench) graphBench.destroy(); }, KINDS };
     }
     return { create, KINDS };
   });

@@ -140,6 +140,12 @@ jättää pois kohdan *Hae asiakirjat*. Valintaikkunan kohdassa *Lisää asetuks
 näkymässä. Versiossa 2.1 *Projektin tiedostot* luettelee vain BCF-asiakirjat, asioilla ei ole palvelimen juoksevaa numeroa eikä viewpointia voi poistaa. Vastineeksi
 kommentti voi olla vastaus toiseen: painike *Vastaa* paneelissa *Asiat*.
 
+Kortti *Projektin jäsenet* näkyy, kun palvelimella on projektin hallinta (Dataregiumin laajennus). Projektin vastuuhenkilö
+(manager), jonka ei tarvitse olla palvelimen ylläpitäjä, kirjautuu painikkeella *Kirjaudu projektin vastuuhenkilönä* ja näkee
+projektinsa ja niiden jäsenet rooleineen: lukija, osallistuja, toimittaja tai vastuuhenkilö. Lisäät henkilön hänen täsmällisellä
+käyttäjätunnuksellaan, muutat roolin, poistat jäsenen ja nimeät projektin uudelleen; jokainen muutos vahvistetaan ensin. Palvelin ei
+salli projektin jäädä ilman vastuuhenkilöä ja kertoo siitä; projekteja ei poisteta täältä, ja uudet tilit luo ylläpitäjä.
+
 Kortti *IFC-LPG* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-lpg-dataregium-palvelimella).
 
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
