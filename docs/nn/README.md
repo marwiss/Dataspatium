@@ -155,6 +155,34 @@ Cypher og loggar kvart kall med same X-Request-Id som tenaren skriv i førespurn
 andre OpenCDE-klientar fungerer òg. Tenaren trengst ikkje for resten av appen: utan tenar fungerer alt anna som før. Dataregiums README og `docs/client-guide.md` skildrar samarbeidet frå tenaren si side;
 her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
+Slik heng dei saman:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, i nettlesaren"]
+        source["Kjelde og innlogging"]
+        issues["Saker i 3D-visinga"]
+        files["Modellar og dokument"]
+        queries["Spørjingar mot IFC-grafen"]
+        log["Loggen i appen"]
+        admin["Kortet Administrasjon"]
+    end
+    subgraph server ["Dataregium, serveren"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graf")]
+        requests["Førespurnadslogg"]
+        adminapi["Administrasjons-API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 Appen snakkar BCF API 3.0 og 2.1, så han også koplar seg til tenarar som berre har 2.1, og han teiknar og spør IFC-grafen til tenaren direkte frå Hent.
 
 Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten

@@ -154,6 +154,34 @@ hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. 
 OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Dataregium og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
+Svona tengjast þau:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, í vafranum"]
+        source["Uppspretta og innskráning"]
+        issues["Mál í þrívíddarsýn"]
+        files["Líkön og skjöl"]
+        queries["Fyrirspurnir á IFC-grafið"]
+        log["Skráin í forritinu"]
+        admin["Spjaldið Stjórnun"]
+    end
+    subgraph server ["Dataregium, þjónninn"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graf")]
+        requests["Beiðnaskrá"]
+        adminapi["Stjórnunar-API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
 
 Dataspatium 3.0.0 virkar með Dataregium 3.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin

@@ -161,6 +161,34 @@ myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin 
 `docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
 [cad-bim.md](cad-bim.md).
 
+Näin ne liittyvät toisiinsa:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, selaimessa"]
+        source["Lähde ja kirjautuminen"]
+        issues["Asiat 3D-näkymässä"]
+        files["Mallit ja asiakirjat"]
+        queries["Kyselyt IFC-graafiin"]
+        log["Sovelluksen loki"]
+        admin["Kortti Hallinta"]
+    end
+    subgraph server ["Dataregium, palvelin"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graafi")]
+        requests["Pyyntöloki"]
+        adminapi["Hallinta-API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös palvelimiin, joilla on vain 2.1, ja se piirtää palvelimen IFC-verkon ja tekee siihen kyselyjä suoraan kohdasta Nouda.
 
 Dataspatium 3.0.0 toimii Dataregium 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus

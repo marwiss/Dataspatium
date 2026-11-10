@@ -154,6 +154,34 @@ IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern sk
 andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Dataregiums README och `docs/client-guide.md` beskriver samarbetet från
 serverns sida; här beskrivs det i [kallor.md](docs/sv/kallor.md) och [cad-bim.md](docs/sv/cad-bim.md).
 
+Så här hänger de ihop:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, i webbläsaren"]
+        source["Källa och inloggning"]
+        issues["Ärenden i 3D-vyn"]
+        files["Modeller och dokument"]
+        queries["Frågor mot IFC-grafen"]
+        log["Loggen i appen"]
+        admin["Kortet Administration"]
+    end
+    subgraph server ["Dataregium, servern"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graf")]
+        requests["Begärandelogg"]
+        adminapi["Administrations-API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 Appen talar BCF API 3.0 och 2.1, så den ansluter också till servrar som bara har 2.1, och den ritar och frågar serverns IFC-graf direkt från Inhämta.
 
 Dataspatium 3.0.0 fungerar med Dataregium 3.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten

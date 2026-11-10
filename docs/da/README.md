@@ -156,6 +156,34 @@ OpenCDE-API'er, så andre OpenCDE-klienter fungerer også. Serveren er ikke nød
 andet som før. Dataregiums README og `docs/client-guide.md` beskriver samarbejdet fra
 serverens side; her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
+Sådan hænger de sammen:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, i browseren"]
+        source["Kilde og login"]
+        issues["Sager i 3D-visningen"]
+        files["Modeller og dokumenter"]
+        queries["Forespørgsler mod IFC-grafen"]
+        log["Loggen i appen"]
+        admin["Kortet Administration"]
+    end
+    subgraph server ["Dataregium, serveren"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graf")]
+        requests["Forespørgselslog"]
+        adminapi["Administrations-API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 Appen taler BCF API 3.0 og 2.1, så den også forbinder til servere, der kun har 2.1, og den tegner og forespørger serverens IFC-graf direkte fra Hent.
 
 Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start

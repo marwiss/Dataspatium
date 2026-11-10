@@ -160,6 +160,34 @@ OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for th
 works as before. Dataregium's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
+This is how they fit together:
+
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, in the browser"]
+        source["Source and sign-in"]
+        issues["Issues in the 3D view"]
+        files["Models and documents"]
+        queries["Queries on the IFC graph"]
+        log["The log in the app"]
+        admin["The card Administration"]
+    end
+    subgraph server ["Dataregium, the server"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC graph")]
+        requests["Request log"]
+        adminapi["Administration API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
+
 The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
 
 Dataspatium 3.0.0 works with Dataregium 3.0.0. Both carry the same release number, so equal numbers belong together. The quick start
