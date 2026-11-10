@@ -7,7 +7,9 @@
  * imported. The address and token live in the session (api/secrets; persisted encrypted on request), every call
  * needs the 'databases' consent, and passwords never reach a dataset's metadata: they are kept for the session
  * only, keyed by the rest of the source. Datasets imported here carry source.kind 'bridge' and are refreshed
- * through api/runner like API datasets.
+ * through api/runner like API datasets. As a go-between (F14.1, off until the user turns it on in Internetåtkomst) the
+ * bridge fetches an https address for api/http when the service does not let the browser read its answer; the bridge
+ * itself decides which hosts it reaches (--allow-host / -AllowHosts).
  */
 (function () {
   'use strict';
@@ -15,6 +17,8 @@
   D.define('api/bridge', ['api/secrets', 'api/runner', 'platform/storage/idb', 'platform/consent'], (secrets, runner, idb, consent) => {
     const ID = '__bridge';
     const URL_KEY = 'bridge.url';
+    const RELAY_KEY = 'bridge.relay';
+    let relayOn = null;
     /** Type names reported by the bridge (.NET and the Python bridge's names) -> dataset types; others are inferred. */
     const TYPES = {
       Int16: 'integer', Int32: 'integer', Int64: 'integer', Byte: 'integer', SByte: 'integer', UInt16: 'integer', UInt32: 'integer', UInt64: 'integer',
@@ -191,12 +195,48 @@
       return toTable(result);
     }
 
+    /** Whether the user lets the app fetch through the bridge when a service does not allow the browser; off by default. */
+    async function relayEnabled() { if (relayOn === null) relayOn = !!(await idb.getSetting(RELAY_KEY, false)); return relayOn; }
+    /** @param {boolean} on */
+    async function setRelay(on) { relayOn = !!on; await idb.setSetting(RELAY_KEY, relayOn); notify(); }
+    /** True when a request may go through the bridge: the user has chosen it, a bridge is connected, and it can fetch. */
+    async function canRelay() {
+      if (!(await relayEnabled()) || !connection()) return false;
+      try { return !!(await info()).fetch; } catch (_e) { return false; }
+    }
+    function toBase64(bytes) {
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 0x8000)));
+      return btoa(s);
+    }
+    function fromBase64(text) {
+      const s = atob(String(text || ''));
+      const out = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+      return out;
+    }
+    /**
+     * Fetch an address through the bridge (POST /fetch): the bridge fetches it and hands back the status, a few headers and the
+     * body. A host the bridge was not started with is refused by the bridge, with the reason.
+     * @param {string} url @param {{method?: string, headers?: Record<string, string>, body?: any}} [init] @returns {Promise<Response>}
+     */
+    async function relay(url, init = {}) {
+      let body;
+      if (init.body !== undefined && init.body !== null) {
+        const b = init.body;
+        body = toBase64(typeof b === 'string' ? new TextEncoder().encode(b) : b instanceof ArrayBuffer ? new Uint8Array(b) : ArrayBuffer.isView(b) ? new Uint8Array(b.buffer, b.byteOffset, b.byteLength) : new TextEncoder().encode(String(b)));
+      }
+      const out = await call('/fetch', { url, method: init.method || 'GET', headers: init.headers || {}, body });
+      const empty = [101, 204, 205, 304].includes(Number(out.status));
+      return new Response(empty ? null : fromBase64(out.body), { status: Number(out.status), statusText: String(out.statusText || ''), headers: out.headers || {} });
+    }
+
     /** The source last opened in the bridge view: the SQL console in Analysera can run against it. */
     function setCurrent(source) { current = source ? Object.assign({}, source) : null; notify(); }
     function getCurrent() { return current; }
     /** Tests replace the network with a function (url, init) => Response-like {ok, status, json()}. */
     function setTransport(fn) { transport = fn || null; infoCache = null; }
 
-    return { ID, TYPES, BridgeError, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
+    return { ID, TYPES, BridgeError, relayEnabled, setRelay, canRelay, relay, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
   });
 })();

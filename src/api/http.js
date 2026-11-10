@@ -92,7 +92,8 @@
           clearTimeout(timer);
           if (req.signal && req.signal.aborted) throw new ApiError('Avbrutet.', { kind: 'aborted' });
           if (controller.signal.aborted) throw new ApiError(D.t('api.err.timeout', { host: hostOf(req.url) }), { kind: 'timeout', url: req.url });
-          throw new ApiError(D.t('api.err.network', { host: hostOf(req.url) }), { kind: 'network', url: req.url, cause: err });
+          res = url === req.url ? await viaBridge(req) : null;
+          if (!res) throw new ApiError(D.t('api.err.network', { host: hostOf(req.url) }), { kind: 'network', url: req.url, cause: err });
         } finally {
           if (req.signal) req.signal.removeEventListener('abort', onAbort);
         }
@@ -113,6 +114,19 @@
         else out.text = await res.text();
         return out;
       }
+    }
+
+    /**
+     * A service that does not let the browser read its answer (no CORS) fails like a network error. When the user has chosen
+     * it in Internetåtkomst and a bridge that can fetch is connected, the request goes through the bridge on this computer
+     * instead (F14.1); otherwise null, and the network error stands. Only https addresses go this way.
+     */
+    async function viaBridge(req) {
+      if (!/^https:/i.test(String(req.url))) return null;
+      const bridge = D.require('api/bridge');
+      if (!(await bridge.canRelay())) return null;
+      try { return await bridge.relay(String(req.url), { method: req.method || 'GET', headers: req.headers || {}, body: req.body }); }
+      catch (err) { throw new ApiError(D.t('api.err.bridge', { host: hostOf(req.url), message: (err && err.message) || String(err) }), { kind: 'network', url: req.url, cause: err }); }
     }
 
     /** Build an ApiError from a non-OK response. */

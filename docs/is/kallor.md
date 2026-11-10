@@ -52,6 +52,22 @@ fyrirspurnina aftur og endurspilar uppskriftina. Lykilorð eru aldrei vistuð me
 biður forritið þig um að opna uppsprettuna aftur áður en uppfært er. SQL-flipinn í Greina getur keyrt beint á
 uppsprettuna sem síðast var opnuð í brúnni (*Keyra á*).
 
+### Sækja um brúna
+
+Þjónustu sem leyfir vafranum ekki að lesa svarið (ekkert CORS) er ekki hægt að ná úr forritinu, hvorki úr möppu né af vefnum.
+Brúin getur sótt fyrir forritið í staðinn. Það er þitt val og slökkt sjálfgefið: kveiktu á **Sækja um brúna** undir
+*Netaðgangur* í Umsjón, og ræstu brúna með þeim hýslum sem hún má sækja frá:
+
+```
+python tools/db_bridge.py --allow-host api.daemi.is
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.daemi.is
+```
+
+Þegar sókn mistekst eins og netvilla og brú er tengd sendir forritið sömu beiðni til brúarinnar (`POST /fetch`), sem sækir
+hana og skilar svarinu. Brúin sækir aðeins yfir https og aðeins frá hýslunum sem þú tilgreindir; síðan getur aldrei bætt
+neinum við. Hún hafnar vistföngum á þessari tölvu eða staðarnetinu, sendir aðeins fáa hausa og engar vafrakökur, fylgir í
+mesta lagi þremur tilvísunum til leyfðra hýsla og stöðvast við `--max-fetch-mb` (50 MB sjálfgefið). Skrá brúarinnar sýnir
+hýsilinn og slóðina, aldrei fyrirspurnina, hausana eða meginmálið. Samþykkið fyrir tilganginn gildir eins og áður.
 ### Öryggi
 
 - Brúin svarar aðeins á 127.0.0.1, krefst tákns í hverju kalli og leyfir CORS aðeins fyrir eigin vistföng forritsins.

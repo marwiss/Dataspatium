@@ -56,6 +56,23 @@ tai kyselyn uudelleen ja toistaa reseptin. Salasanoja ei koskaan tallenneta aine
 jälkeen sovellus pyytää avaamaan lähteen uudelleen ennen päivitystä. Analysoi-tilan SQL-välilehti voi ajaa suoraan
 sillassa viimeksi avattua lähdettä vastaan (*Suorita kohteessa*).
 
+### Haku sillan kautta
+
+Palvelua, joka ei anna selaimen lukea vastaustaan (ei CORSia), ei tavoiteta sovelluksesta, ei kansiosta eikä verkosta. Silta
+voi hakea sovelluksen puolesta. Valinta on sinun ja oletuksena pois päältä: kytke **Hae sillan kautta** päälle Hallitse-tilan
+kohdassa *Internetyhteys* ja käynnistä silta niillä palvelimilla, joilta se saa hakea:
+
+```
+python tools/db_bridge.py --allow-host api.esimerkki.fi
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.esimerkki.fi
+```
+
+Kun haku epäonnistuu verkkovirheen tavoin ja silta on yhdistetty, sovellus lähettää saman pyynnön sillalle (`POST /fetch`),
+joka hakee sen ja palauttaa vastauksen. Silta hakee vain https-yhteydellä ja vain antamiltasi palvelimilta; sivu ei voi
+koskaan lisätä niitä. Se hylkää tämän tietokoneen ja lähiverkon osoitteet, lähettää vain muutaman otsakkeen eikä evästeitä,
+seuraa enintään kolmea uudelleenohjausta sallituille palvelimille ja pysähtyy rajaan `--max-fetch-mb` (oletuksena 50 Mt).
+Sillan loki näyttää palvelimen ja polun, ei koskaan kyselyä, otsakkeita tai runkoa. Käyttötarkoituksen suostumus pätee kuten
+ennenkin.
 ### Turvallisuus
 
 - Silta vastaa vain osoitteessa 127.0.0.1, vaatii tunnisteen jokaisessa kutsussa ja sallii CORSin vain

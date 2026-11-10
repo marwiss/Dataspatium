@@ -53,6 +53,22 @@ query again and replays the recipe. Passwords are never stored with the dataset;
 to open the source again before updating. The SQL tab in Analyse can run directly against the source last opened
 in the bridge (*Run against*).
 
+### Fetching through the bridge
+
+A service that does not let the browser read its answer (no CORS) cannot be reached from the app, neither from a folder nor
+from the web. The bridge can fetch for the app instead. It is your choice and off by default: turn on **Fetch through the
+bridge** under *Internet access* in Manage, and start the bridge with the hosts it may fetch from:
+
+```
+python tools/db_bridge.py --allow-host api.example.com
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.example.com
+```
+
+When a fetch fails like a network error and a bridge is connected, the app sends the same request to the bridge (`POST
+/fetch`), which fetches it and hands the answer back. The bridge fetches only over https and only from the hosts you named;
+the page can never add one. It refuses addresses on this computer or the local network, sends only a few headers and no
+cookies, follows at most three redirects to allowed hosts and stops at `--max-fetch-mb` (50 MB by default). The bridge’s log
+shows the host and the path, never the query, the headers or the body. The consent for the purpose applies as before.
 ### Security
 
 - The bridge answers on 127.0.0.1 only, requires the token in every call and allows CORS only for the app's own addresses.

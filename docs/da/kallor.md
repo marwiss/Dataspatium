@@ -54,6 +54,22 @@ forespørgslen igen og afspiller opskriften. Adgangskoder gemmes aldrig med data
 appen dig åbne kilden igen, før den opdateres. Fanen SQL i Analysér kan køre direkte mod den kilde, der senest
 blev åbnet i broen (*Kør mod*).
 
+### Hent via broen
+
+En tjeneste, der ikke lader browseren læse sit svar (ingen CORS), kan ikke nås fra appen, hverken fra en mappe eller fra
+nettet. Broen kan hente for appen i stedet. Det er dit valg og slået fra som standard: slå **Hent via broen** til under
+*Internetadgang* i Håndter, og start broen med de værter, den må hente fra:
+
+```
+python tools/db_bridge.py --allow-host api.eksempel.dk
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.eksempel.dk
+```
+
+Når en hentning mislykkes som en netværksfejl, og en bro er forbundet, sender appen den samme forespørgsel til broen (`POST
+/fetch`), som henter den og giver svaret tilbage. Broen henter kun over https og kun fra de værter, du har angivet; siden kan
+aldrig tilføje nogen. Den afviser adresser på denne computer eller det lokale net, sender kun få headere og ingen cookies,
+følger højst tre omdirigeringer til tilladte værter og stopper ved `--max-fetch-mb` (50 MB som standard). Broens log viser
+værten og stien, aldrig forespørgslen, headerne eller kroppen. Samtykket for formålet gælder som før.
 ### Sikkerhed
 
 - Broen svarer kun på 127.0.0.1, kræver token i hvert kald og tillader kun CORS for appens egne adresser.

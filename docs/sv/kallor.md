@@ -51,6 +51,23 @@ tabellen eller frågan och spelar upp receptet. Lösenord sparas aldrig med data
 dig öppna källan igen innan den uppdateras. Fliken SQL i Analysera kan köra direkt mot den källa som senast
 öppnades i bryggan (*Kör mot*).
 
+### Hämta via bryggan
+
+En tjänst som inte låter webbläsaren läsa sitt svar (ingen CORS) går inte att nå från appen, varken från en mapp eller från
+webben. Bryggan kan hämta åt appen i stället. Det är ditt val och av som förval: slå på **Hämta via bryggan** under
+*Internetåtkomst* i Hantera, och starta bryggan med de värdar den får hämta från:
+
+```
+python tools/db_bridge.py --allow-host api.exempel.se
+powershell -ExecutionPolicy Bypass -File tools\db-bridge.ps1 -AllowHosts api.exempel.se
+```
+
+När en hämtning misslyckas som ett nätverksfel och en brygga är ansluten skickar appen samma begäran till bryggan (`POST
+/fetch`), som hämtar den och lämnar tillbaka svaret. Bryggan hämtar bara över https och bara från de värdar du angett; sidan
+kan aldrig lägga till någon. Den vägrar adresser som pekar på den egna datorn eller det lokala nätet, skickar bara några få
+rubriker och inga kakor, följer högst tre omdirigeringar till tillåtna värdar och stannar vid `--max-fetch-mb` (50 MB som
+förval). Bryggans logg visar värden och sökvägen, aldrig frågan, rubrikerna eller kroppen. Samtycket för ändamålet gäller som
+förut.
 ### Säkerhet
 
 - Bryggan svarar bara på 127.0.0.1, kräver token i varje anrop och tillåter CORS bara för appens egna adresser.
