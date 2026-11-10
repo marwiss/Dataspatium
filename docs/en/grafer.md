@@ -122,9 +122,9 @@ graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query
 runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
 only from a page over http://. When the answer holds nodes, they are drawn as a graph as well.
 
-## IFC-LPG on a Kontroll server
+## IFC-LPG on a Dataregium server
 
-Kontroll turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
+Dataregium turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
 the IFC attributes as properties, and relationships named after the attributes (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
 `HAS_PROPERTIES`). The graph lives on the server and can be far larger than is reasonable to fetch. So it is drawn and queried
 directly from *Import*, and nothing is saved until you ask for it.
@@ -168,7 +168,7 @@ graph charts in Visualise. The class becomes the node's label and all labels sta
 `IfcWallStandardCase` in the copy. In the Cypher tab you can turn on **Run on the server** for a graph saved from here, and the
 server then answers with all of Cypher against the whole graph, instead of the subset against the copy.
 
-An IFC model fetched from Kontroll has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
+An IFC model fetched from Dataregium has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
 graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
 ## More tools in the Graph tab

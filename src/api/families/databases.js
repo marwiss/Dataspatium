@@ -6,7 +6,7 @@
  * its authentication, how to discover tables or collections, and how to write the endpoints of an ordinary
  * connector (dataspatium-api/1) for them, so that "Lägg till databaskälla" in Inhämta turns an address into a
  * connector with one endpoint per table plus a generic one. Keys go to api/secrets, never into the connector.
- * The service must allow CORS; the note per family lives in the UI texts and in docs/kallor.md.
+ * The service must allow CORS; the note per family lives in the UI texts and in docs/sv/kallor.md.
  */
 (function () {
   'use strict';

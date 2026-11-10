@@ -99,7 +99,7 @@ du veta vad de innehåller och väljer själv om de ska med.
 
 ## Till CDE
 
-Fliken *Till CDE* skickar en datamängd till ett projekt på en OpenCDE-server som Kontroll. Välj server, logga in och välj
+Fliken *Till CDE* skickar en datamängd till ett projekt på en OpenCDE-server som Dataregium. Välj server, logga in och välj
 projekt; välj sedan om datamängden ska skrivas i ett filformat eller om originalfilen ska skickas, och om den ska gå genom
 Documents API, där serverns egen sida frågar efter titel, version och projekt och filen sedan laddas upp i delar, eller som
 BCF-dokument, som bara tar filen. Datamängden skrivs ur en kopia som gått genom granskningen, och originalfiler får samma

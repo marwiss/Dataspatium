@@ -1,8 +1,8 @@
 # Security
 
 Security is the app's first requirement. Dataspatium holds your datasets, API keys and tokens in the browser and talks to
-servers (open APIs, OpenCDE servers such as Kontroll) only when you ask it to. The policy is the same as Kontroll's, since
-the two are developed as a pair and released with the same numbers; Kontroll's half is in [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/security)
+servers (open APIs, OpenCDE servers such as Dataregium) only when you ask it to. The policy is the same as Dataregium's, since
+the two are developed as a pair and released with the same numbers; Dataregium's half is in [README](https://github.com/marwiss/Dataregium/blob/main/docs/en/README.md#personal-data)
 of that repository. How to report a vulnerability is in [SECURITY.md](../../SECURITY.md).
 
 ## Threat model
@@ -43,8 +43,8 @@ Every control has an automated test in `tests/` or a pointer to the code that ca
 ## Personal data and retention
 
 What the app stores, where, and for how long. Everything stays on your computer; nothing is sent to the app's author, and
-no update check is made without your action. Kontroll's half (what the server stores about you) is in
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/security/personal-data.md).
+no update check is made without your action. Dataregium's half (what the server stores about you) is in
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/en/README.md#personal-data).
 
 | Data | Where | Contains | Kept |
 |---|---|---|---|
@@ -62,7 +62,7 @@ no update check is made without your action. Kontroll's half (what the server st
 - From file:// in Chromium every locally opened HTML file shares storage. Secrets are encrypted, but a sensitive workspace
   should run from a local server (`python -m http.server`) or be mirrored to a portable folder.
 - Chromium applies the server's `form-action` to the redirect after the sign-in too; the server must allow the app's
-  callback address (Kontroll does).
+  callback address (Dataregium does).
 
 ## Reporting a vulnerability
 

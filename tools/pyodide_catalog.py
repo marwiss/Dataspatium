@@ -5,7 +5,7 @@ Python is not shipped in the ZIP: the app fetches Pyodide's runtime files and wh
 (platform/components) and checks every file against a SHA-256. The runtime files are pinned here; the wheels are
 verified with the digests in pyodide-lock.json, which is itself pinned. Run this when upgrading Pyodide and paste
 the printed RUNTIME block into catalog.js (check that the three loader patch sites still exist, see
-tools/pyodide_patches.md in docs/utveckling.md).
+tools/pyodide_patches.md in the development notes, .claude/plans/underlag/utveckling.md).
 
 Usage:
     python tools/pyodide_catalog.py <version> [<download dir>] [package ...]

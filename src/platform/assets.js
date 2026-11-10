@@ -111,7 +111,7 @@
         blob = new Blob(chunks, { type: 'text/javascript;charset=utf-8' });
       } else blob = new Blob([await res.arrayBuffer()], { type: 'text/javascript;charset=utf-8' });
       // A classic script from a blob: URL, not eval: the file runs just as from a script tag, with no new case for the
-      // Content-Security-Policy that docs/sakerhet.md promises.
+      // Content-Security-Policy that docs/sv/sakerhet.md promises.
       const blobUrl = URL.createObjectURL(blob);
       try { await loadScript(blobUrl); } finally { URL.revokeObjectURL(blobUrl); loading.delete(blobUrl); }
       if (dl) dl.done();

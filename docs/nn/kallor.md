@@ -114,7 +114,7 @@ kan lagrast på kjelda. Tilkoplinga krev samtykke (føremålet Neo4j) og er ikkj
 ### OpenCDE-tenar (BCF og Documents API)
 
 Valet **OpenCDE** under *Legg til kjelder* (familien **OpenCDE (BCF, Documents)**, som òg finst i *Databasekjelde*) koplar til ein tenar som følgjer OpenCDE-API-a frå
-buildingSMART, til dømes [Kontroll](https://github.com/marwiss/Kontroll). Oppgje adressa til tenaren og klient-id-en
+buildingSMART, til dømes [Dataregium](https://github.com/marwiss/Dataregium). Oppgje adressa til tenaren og klient-id-en
 som administratoren av tenaren har registrert for Dataspatium (ein offentleg klient med omdirigeringsadressa
 `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarande for adressa appen blir servert frå). Kjelda opnar ei vising
 der du loggar inn på tenaren (OAuth2 med PKCE i eit popup-vindauge; frå file:// limer du inn adressa du endar på etter
@@ -130,7 +130,7 @@ Under *Fleire alternativ* i dialogen kan du velje versjon sjølv, og tilbyr tena
 berre BCF-dokumenta, saker har ikkje løpenummeret til tenaren, og eit viewpoint kan ikkje slettast. Til gjengjeld kan ein kommentar vere svar på ein annan:
 knappen *Svar* i panelet *Saker*.
 
-Kortet *IFC-LPG* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-kontroll-tenar).
+Kortet *IFC-LPG* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
 
 Under *Filer i prosjektet* listar kjelda modellane og dokumenta tenaren har for prosjektet. *Hent* lagar eit datasett av
 det eige slaget til fila, så ei IFC-fil blir ein modell og ei CSV-fil ein tabell, og datasettet hugsar kva tenar, kva prosjekt
@@ -139,12 +139,14 @@ har ein nyare versjon; han blir då henta som eit eige datasett ved sida av det 
 prosjektet, til dømes opprette saker eller laste opp dokument. Når kjelda blir oppretta, spør dialogen tenaren kvar ein
 loggar inn; svarar ikkje tenaren då, spør appen igjen ved første innlogging.
 
+Medan tenaren si eiga side er open i eit popup-vindauge (innlogging, val av dokument, opplasting), viser appen knappen *Avbryt*, så du kan slutte å vente om vindauget vart lukka eller kom bort.
+
 Tillèt tenaren det, registrerer appen seg sjølv som klient når du lèt klient-id stå tom, så ingen administrator treng å
 dele ut noko. Datasett kan òg gå tilbake til tenaren: fana *Til CDE* i Del sender eit datasett i eit valfritt format, eller
 originalfila, til eit prosjekt, anten gjennom Documents API, der den eigne sida til tenaren spør om tittel og versjon, eller som
 BCF-dokument. Eit datasett henta frå tenaren kan sendast som ein ny versjon av dokumentet sitt.
 
-For IFC-grafen i Kontroll finst startkode i visinga: modellane i grafen og den siste ferdige per dokument, bygningsdelar per klasse, GTIN for veggene, saker per status,
+For IFC-grafen i Dataregium finst startkode i visinga: modellane i grafen og den siste ferdige per dokument, bygningsdelar per klasse, GTIN for veggene, saker per status,
 saker og bygningsdelane deira, saker som gjeld ein bygningsdel, og ein graf av saker, viewpoints og komponentar. Vel ei spørjing,
 endre og køyr. Det føreset at den som driftar tenaren har gjort Bolt tilgjengeleg; utviklingsstakken gjer det, ein
 produksjonstenar gjer det sjeldan.
@@ -159,18 +161,18 @@ for òg å sjå innhaldet i førespurnaden og svaret (tekst, høgst 64 kB; aldri
 aldri send; han kan lagrast som JSON eller som eit datasett. Appen set hovudet X-Request-Id på kvart kall, så den eigne loggen til tenaren kan
 parast med loggen i appen; avviser ein tenar hovudet, blir det slått av for den kjelda.
 
-Tenarsida er skildra i dokumentasjonen til Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/client-guide.md) (korleis ein klient koplar seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (testkøyringane til paret) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/deploy/local.md) (utviklingsstakken og korleis appen blir testa mot han).
+Tenarsida er skildra i dokumentasjonen til Dataregium: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/client-guide.md) (korleis ein klient koplar seg til) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/deploy/local.md) (utviklingsstakken og korleis appen blir testa mot han).
 
-Kontroll skildrar tillegga sine i `GET /.well-known/kontroll`; appen les dokumentet når kjelda blir opna og skriv under
+Dataregium skildrar tillegga sine i `GET /.well-known/dataregium`; appen les dokumentet når kjelda blir opna og skriv under
 overskrifta kva tenar det er og kva tillegg han har (sjølvregistrering, førespurnadslogg, administrasjon, IFC-LPG,
 grafspørjingar). Ein tenar utan dokumentet har ingen tillegg, og alt etter spesifikasjonane fungerer likevel. Feilkodane til tenaren
 (`code` i svaret, til dømes `reauthentication_required`) blir viste på ditt språk; ukjende kodar viser den eigne teksten til tenaren. Lenkja
 *Opne i Dataspatium* på sidene til tenaren har forma `index.html#/inhamta/opencde?server=https://…` og opnar dialogen for ei ny kjelde
 med adressa utfylt. Finst tenaren alt som kjelde, blir han opna direkte. Lenkja kan òg peike ut eit prosjekt og eit dokument
-(`&project=…&document=…&version=…`): prosjektet blir valt og dokumentet henta som datasett når du er innlogga. Sider som Kontroll
+(`&project=…&document=…&version=…`): prosjektet blir valt og dokumentet henta som datasett når du er innlogga. Sider som Dataregium
 opnar i popup (innlogging, opplasting, val av dokument), blir viste på språket til appen.
 
-**Administrasjon.** Er du administrator på ein Kontroll-tenar, viser visinga til kjelda kortet *Administrasjon* (når kapabilitetsdokumentet til tenaren seier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om retten `admin`; deretter finst fanene Oversyn, Brukarar (opprett, endre, deaktiver, still passordet tilbake, slett), Prosjekt (opprett, gje nytt namn, medlemmer og roller, slett), Klientar (registrer, endre, roter løyndom, kall tilbake token, slett), Sesjonar (avslutt éin eller alle for ein brukar), Revisjon, Innstillingar og Helse, og dessutan Grafspørjing når tenaren tillèt lesande Cypher mot IFC-grafen. Farlege handlingar krev ei fersk innlogging: tenaren svarar `reauthentication_required`, appen opnar innlogginga igjen og gjer kallet om att. Eingangsverdiar (eit første passord, ein klientløyndom) blir viste éin gong med knappen Kopier og aldri skrivne i loggen. Kvar liste kan lagrast som datasett og hentast igjen frå Handter.
+**Administrasjon.** Er du administrator på ein Dataregium-tenar, viser visinga til kjelda kortet *Administrasjon* (når kapabilitetsdokumentet til tenaren seier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om retten `admin`; deretter finst fanene Oversyn, Brukarar (opprett, endre, deaktiver, still passordet tilbake, slett), Prosjekt (opprett, gje nytt namn, medlemmer og roller, slett), Klientar (registrer, endre, roter løyndom, kall tilbake token, slett), Sesjonar (avslutt éin eller alle for ein brukar), Revisjon, Innstillingar og Helse, og dessutan Grafspørjing når tenaren tillèt lesande Cypher mot IFC-grafen. Farlege handlingar krev ei fersk innlogging: tenaren svarar `reauthentication_required`, appen opnar innlogginga igjen og gjer kallet om att. Eingangsverdiar (eit første passord, ein klientløyndom) blir viste éin gong med knappen Kopier og aldri skrivne i loggen. Kvar liste kan lagrast som datasett og hentast igjen frå Handter.
 
 ## Opne geodata
 

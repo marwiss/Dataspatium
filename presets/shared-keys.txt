@@ -1,4 +1,4 @@
-# Words Dataspatium and Kontroll have in common. One key per line; the values come from src/ui/i18n/<lang>.js.
+# Words Dataspatium and Dataregium have in common. One key per line; the values come from src/ui/i18n/<lang>.js.
 # Regenerate presets/i18n-shared.json with: python tools/shared_glossary.py (CI: --check).
 # OpenCDE source and sign-in
 opencde.signin

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Tests for BCF API 2.1 next to 3.0, against mocked servers: one of 2.1 alone (no Foundation API, no Documents API, no capabilities, and
- * strict about what 2.1 does not know) and one with both versions, like Kontroll. Discovery, signing in, the tables, the writes, the source
+ * strict about what 2.1 does not know) and one with both versions, like Dataregium. Discovery, signing in, the tables, the writes, the source
  * view, the issues panel, sending to a CDE, the log, and the choice of version. A real server in both versions is in opencde-live.test.js.
  */
 (function () {
@@ -49,7 +49,7 @@
     };
   }
   let world = freshWorld();
-  /** BCF API 2.1 as its specification has it. A property that came with 3.0 is refused, which is stricter than Kontroll. */
+  /** BCF API 2.1 as its specification has it. A property that came with 3.0 is refused, which is stricter than Dataregium. */
   function bcf21(path, req, url) {
     const method = String(req.method || 'GET').toUpperCase();
     const body = (() => { try { return typeof req.body === 'string' ? JSON.parse(req.body) : {}; } catch (_e) { return {}; } })();
@@ -122,7 +122,7 @@
     const answer = oauth(path);
     if (answer) return answer;
     const r = (x) => Promise.resolve(x);
-    if (path === '/.well-known/kontroll') return r(json({ server: { name: 'Kontroll', version: '2.6.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, bcf_versions: ['3.0', '2.1'], scopes: ['profile', 'bcf', 'documents'], extensions: {}, limits: {}, links: {} }));
+    if (path === '/.well-known/dataregium') return r(json({ server: { name: 'Dataregium', version: '2.6.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, bcf_versions: ['3.0', '2.1'], scopes: ['profile', 'bcf', 'documents'], extensions: {}, limits: {}, links: {} }));
     if (path === '/foundation/versions') return r(json({ versions: [{ api_id: 'foundation', version_id: '1.0', api_base_url: BOTH + '/foundation/1.0' }, { api_id: 'bcf', version_id: '3.0', api_base_url: BOTH + '/bcf/3.0' }, { api_id: 'bcf', version_id: '2.1', api_base_url: BOTH + '/v2/bcf/2.1' }, { api_id: 'documents', version_id: '1.0', api_base_url: BOTH + '/documents/1.0' }] }));
     if (path === '/foundation/1.0/auth') return r(json({ oauth2_auth_url: BOTH + '/oauth2/auth', oauth2_token_url: BOTH + '/oauth2/token', oauth2_revocation_url: BOTH + '/oauth2/revoke', oauth2_dynamic_client_reg_url: BOTH + '/foundation/oauth2/reg', oauth2_pkce_required: true }));
     if (path === '/foundation/1.0/current-user') return r(json({ id: 'admin30', name: 'Tretton' }));

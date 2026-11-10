@@ -46,9 +46,9 @@ nafn og hæð fylgja með), sem Umsjón þekkir sem mál: kortið *Mál* sýnir 
 byggingarhluta eða hæð úr slíkri töflu, og SQL-upphafskóðinn fær fyrirspurnir fyrir tengingina. *Vista sem rit* vistar sýnina með
 litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
-Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-LPG* fer með þig þangað, sjá [grafer.md](grafer.md#ifc-lpg-á-kontroll-þjóni).
+Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-LPG* fer með þig þangað, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
 
-Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/ifc-lpg.md) hjá Kontroll.
+Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-lpg.md) hjá Dataregium.
 
 ## Töflurnar
 
@@ -88,7 +88,7 @@ Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
 ## IfcOpenShell í forritinu
 
-Forritið getur lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Kontroll byggir á. Það
+Forritið getur lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Dataregium byggir á. Það
 keyrir í Python í vafranum, er sótt í fyrsta sinn sem það er notað (um 13 MB, eftir samþykki þitt fyrir íhluti) og síðan vistað í
 vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
 

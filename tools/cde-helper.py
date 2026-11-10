@@ -1,9 +1,9 @@
-"""A stand-in for the user at the browser pages of a Kontroll server, for the live test of Dataspatium's OpenCDE source.
+"""A stand-in for the user at the browser pages of a Dataregium server, for the live test of Dataspatium's OpenCDE source.
 
 The live test tests/opencde-live.test.js asks this helper to do what a person would do in the popup: sign in and consent on the
 authorization page, pick documents on the selection page, fill in the upload page. The helper answers with the address the
 server redirected to, which the test hands to the family as the popup's result. It runs on 127.0.0.1 only, reads the test
-user's password from the environment and never writes it anywhere. Needs Python 3 with httpx. See docs/utveckling.md.
+user's password from the environment and never writes it anywhere. Needs Python 3 with httpx. See the development notes kept outside the repo (.claude/plans/underlag/utveckling.md).
 """
 from __future__ import annotations
 

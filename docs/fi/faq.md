@@ -60,8 +60,7 @@ kulje mukana, kun jaat määrityksen.
 
 ## Kuinka suuria aineistoja sovellus kestää?
 
-Pari miljoonaa riviä Edgessä ja Chromessa, hieman vähemmän Firefoxissa; selaimen muisti asettaa rajan. Mitatut ajat miljoonalle
-riville ovat tiedostossa [utveckling.md](../utveckling.md) (ruotsiksi). Vähintään 64 Mt:n tekstitiedostot luetaan osissa,
+Pari miljoonaa riviä Edgessä ja Chromessa, hieman vähemmän Firefoxissa; selaimen muisti asettaa rajan. Vähintään 64 Mt:n tekstitiedostot luetaan osissa,
 joten itse lukeminen ei vaadi koko tiedoston mahtumista muistiin tekstinä.
 
 ## Mitä eroa on Firefoxilla ja Edgellä tai Chromella?
@@ -259,7 +258,7 @@ ellet itse tallenna sitä JSON-tiedostona tai aineistona. Katso [kallor.md](kall
 
 ## Voinko nähdä mallin IFC-verkon ja tehdä siihen kyselyjä Cypherillä?
 
-Kyllä, jos malli on Kontroll-palvelimella. Avaa lähde kohdassa Nouda, kortti *IFC-LPG* tai Neo4j-lähde, ja valitse malli ja näkymä.
+Kyllä, jos malli on Dataregium-palvelimella. Avaa lähde kohdassa Nouda, kortti *IFC-LPG* tai Neo4j-lähde, ja valitse malli ja näkymä.
 Solmut ja suhteet piirretään, haet naapurit kaksoisnapsautuksella ja kirjoitat oman Cypherin kenttään. Katso [grafer.md](grafer.md).
 
 ## Toimiiko sovellus palvelimella, jolla on vain BCF API 2.1?

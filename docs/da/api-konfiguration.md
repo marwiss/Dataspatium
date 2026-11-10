@@ -100,7 +100,7 @@ En kilde beskrives af en JSON-fil med endelsen `.api.json`. Egne konfigurationer
 eksporteres med **Eksportér konfiguration** for at blive delt. Forudindstillingerne ligger i `presets/api/` i appmappen og
 er gode at tage udgangspunkt i. Filens grundsprog er svensk; oversættelser lægges i feltet `i18n` pr. sprog, og appen viser
 teksterne på sit eget sprog. Formatet er beskrevet fuldt ud i den [engelske vejledning](../en/api-konfiguration.md) og den
-[svenske](../api-konfiguration.md); felterne er:
+[svenske](../sv/api-konfiguration.md); felterne er:
 
 - topniveau: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ingen nøgle,
   2 = nøgle), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`,

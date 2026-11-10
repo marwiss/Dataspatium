@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for the administration of a Kontroll server from the app (2.2.0) against a mocked server: the admin scope asked for at
+ * Tests for the administration of a Dataregium server from the app (2.2.0) against a mocked server: the admin scope asked for at
  * sign-in, the reads, the writes with one-time values, the fresh sign-in that dangerous operations need, the lists as datasets,
  * the graph query, and the card Administration in the source view.
  */
@@ -45,7 +45,7 @@
     audit: [{ at: '2026-11-05T09:00:00Z', type: 'auth.sign_in', actor: 'u1', client_id: 'c1', ip: '127.0.0.1', request_id: 'r1', details: { ok: true } }],
     writes: [],
   };
-  const CAPS = { server: { name: 'Kontroll OpenCDE server', version: '2.1.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'],
+  const CAPS = { server: { name: 'Dataregium OpenCDE server', version: '2.1.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'],
     extensions: { admin_api: { enabled: true, version: '1', url: '/admin/api' }, graph_query: { enabled: true, url: '/admin/api/graph/query', max_rows: 1000, timeout_seconds: 10 } }, limits: {}, links: {} };
   const fakePopup = (url) => { const u = new URL(url); world.popups++; world.scopeAsked = u.searchParams.get('scope') || ''; return Promise.resolve(`${u.searchParams.get('redirect_uri')}?code=abc&state=${u.searchParams.get('state')}`); };
   function dangerous(fn) {
@@ -61,7 +61,7 @@
     const method = ((init && init.method) || 'GET').toUpperCase();
     const body = bodyOf(init);
     const r = (x) => Promise.resolve(x);
-    if (path === '/.well-known/kontroll') return r(json(CAPS));
+    if (path === '/.well-known/dataregium') return r(json(CAPS));
     if (path === '/foundation/versions') return r(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
     if (path === '/foundation/1.0/auth') return r(json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token', oauth2_revocation_url: BASE + '/foundation/oauth2/revoke', http_basic_supported: false, supported_oauth2_flows: ['authorization_code_grant'] }));
     if (path === '/foundation/oauth2/token') { world.tokens++; world.fresh = true; return r(json({ access_token: 'tok' + world.tokens, refresh_token: 'r' + world.tokens, expires_in: 3600, scope: world.scopeAsked })); }

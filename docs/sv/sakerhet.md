@@ -1,9 +1,9 @@
 # Säkerhet
 
 Säkerheten är appens första krav. Dataspatium håller dina datamängder, API-nycklar och token i webbläsaren och talar med
-servrar (öppna API:er, OpenCDE-servrar som Kontroll) bara när du ber om det. Policyn är densamma som Kontrolls, eftersom
-de två utvecklas som ett par och släpps med samma nummer; Kontrolls halva finns i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/sv/security)
-i det repot. Hur en sårbarhet rapporteras står i [SECURITY.md](../SECURITY.md).
+servrar (öppna API:er, OpenCDE-servrar som Dataregium) bara när du ber om det. Policyn är densamma som Dataregiums, eftersom
+de två utvecklas som ett par och släpps med samma nummer; Dataregiums halva finns i [README](https://github.com/marwiss/Dataregium/blob/main/README.md#personuppgifter)
+i det repot. Hur en sårbarhet rapporteras står i [SECURITY.md](../../SECURITY.md).
 
 ## Hotmodell
 
@@ -42,8 +42,8 @@ Varje kontroll har ett automatiskt prov i `tests/` eller en pekare till koden so
 ## Personuppgifter och lagring
 
 Vad appen lagrar, var, och hur länge. Allt ligger på din dator; ingenting skickas till appens upphovsperson, och ingen
-uppdateringskontroll görs utan din åtgärd. Kontrolls halva (vad servern lagrar om dig) står i
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/security/personal-data.md).
+uppdateringskontroll görs utan din åtgärd. Dataregiums halva (vad servern lagrar om dig) står i
+[README](https://github.com/marwiss/Dataregium/blob/main/README.md#personuppgifter).
 
 | Data | Var | Innehåll | Sparas |
 |---|---|---|---|
@@ -61,12 +61,12 @@ uppdateringskontroll görs utan din åtgärd. Kontrolls halva (vad servern lagra
 - Från file:// i Chromium delar alla lokalt öppnade HTML-filer lagring. Hemligheter är krypterade, men en känslig arbetsyta
   bör köras från en lokal server (`python -m http.server`) eller speglas till en portabel mapp.
 - Chromium tillämpar serverns `form-action` även på omdirigeringen efter inloggningen; servern måste tillåta appens
-  återhoppsadress (Kontroll gör det).
+  återhoppsadress (Dataregium gör det).
 
 ## Rapportera en sårbarhet
 
 Öppna inget publikt ärende. Använd knappen *Report a vulnerability* under Security → Advisories i repot på GitHub, enligt
-[SECURITY.md](../SECURITY.md): version (under hjälpknappen), webbläsare, vad du såg och hur det återskapas. Du får en
+[SECURITY.md](../../SECURITY.md): version (under hjälpknappen), webbläsare, vad du såg och hur det återskapas. Du får en
 bekräftelse inom några dagar och en rättning eller en plan så snart problemet är förstått.
 
 ## Versioner som får rättningar

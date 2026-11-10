@@ -106,9 +106,12 @@
             // Sharing is part of the dataset's history, as with bundles.
             try { await datasets.appendLog(await datasets.ensureOpen(d.id), 'shared', { name: t('cde.send.log', { host: opencde.hostOf(s.connector.baseUrl) }) }); datasets.scheduleSave(d.id); } catch (err) { D.log('cde', err); }
           }
-        } catch (err) { fail(err); }
+        } catch (err) { if (isCancelled(err)) s.done = t('cde.send.cancelled'); else fail(err); }
         s.busy = ''; s.progress = null; render();
       }
+      const isCancelled = (err) => String((err && err.message) || '') === t('opencde.err.cancelled');
+      /** While the server's page is open in a popup (sign-in, upload): stop waiting instead of sitting out the five minutes. */
+      const cancelButton = () => ui.button({ label: t('common.cancel'), size: 'sm', title: t('opencde.cancel.hint'), 'data-cde-cancel': '', onClick: () => opencde.cancelPopup() });
       let progressEl = null;
       function renderProgress() {
         if (!progressEl || !s.progress) return;
@@ -128,7 +131,9 @@
         }
         const signed = s.connector && opencde.signedIn(s.connector);
         if (!signed) {
-          nodes.push(h('p', { class: 'dm-help dm-small', text: t('issues.signin.hint', { name: s.connector ? s.connector.name : '' }) }), h('div', { class: 'dm-row' }, ui.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn })));
+          nodes.push(h('p', { class: 'dm-help dm-small', text: t('issues.signin.hint', { name: s.connector ? s.connector.name : '' }) }), h('div', { class: 'dm-row' },
+            ui.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
+            s.busy === 'login' ? cancelButton() : null));
         } else {
           if (s.projects) {
             const sel = /** @type {any} */ (h('dm-select', { label: t('opencde.project') }));
@@ -164,7 +169,8 @@
               h('p', { class: 'dm-help dm-small', text: t(s.how === 'bcf' ? 'cde.send.how.bcf.hint' : 'cde.send.how.documents.hint') }),
               h('div', { class: 'dm-row-wrap' },
                 ui.button({ label: t('cde.send.button'), icon: 'upload', variant: 'primary', loading: s.busy === 'send', title: t('cde.send.button.hint'), 'data-cde-send': '', onClick: () => send() }),
-                own ? ui.button({ label: t('cde.send.version', { n: String((Number(own.versionIndex) || 0) + 1) }), icon: 'upload', loading: s.busy === 'send', title: t('cde.send.version.hint'), 'data-cde-send-version': '', onClick: () => send({ asVersionOf: own.documentId }) }) : null),
+                own ? ui.button({ label: t('cde.send.version', { n: String((Number(own.versionIndex) || 0) + 1) }), icon: 'upload', loading: s.busy === 'send', title: t('cde.send.version.hint'), 'data-cde-send-version': '', onClick: () => send({ asVersionOf: own.documentId }) }) : null,
+                s.busy === 'send' ? cancelButton() : null),
               progressEl);
           }
         }

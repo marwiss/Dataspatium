@@ -1,8 +1,8 @@
 # Öryggi
 
 Öryggi er fyrsta krafa forritsins. Dataspatium geymir gagnasöfnin þín, API-lykla og tóka í vafranum og talar við þjóna (opin
-forritaskil, OpenCDE-þjóna eins og Kontroll) aðeins þegar þú biður um það. Stefnan er sú sama sem Kontroll hefur, því að
-verkefnin tvö eru þróuð sem par og gefin út með sömu númerum; helmingur Kontroll er í [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/is/security)
+forritaskil, OpenCDE-þjóna eins og Dataregium) aðeins þegar þú biður um það. Stefnan er sú sama sem Dataregium hefur, því að
+verkefnin tvö eru þróuð sem par og gefin út með sömu númerum; helmingur Dataregium er í [README](https://github.com/marwiss/Dataregium/blob/main/docs/is/README.md#persónuupplýsingar)
 í því safni. Hvernig veikleiki er tilkynntur stendur í [SECURITY.md](../../SECURITY.md).
 
 ## Ógnarlíkan
@@ -43,8 +43,8 @@ Hver stýring hefur sjálfvirka prófun í `tests/` eða bendir á kóðann sem 
 ## Persónuupplýsingar og geymsla
 
 Hvað forritið geymir, hvar og hve lengi. Allt er á tölvunni þinni; ekkert er sent til höfundar forritsins, og engin
-uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Kontroll (hvað þjónninn geymir um þig) er í
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/security/personal-data.md).
+uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Dataregium (hvað þjónninn geymir um þig) er í
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/is/README.md#persónuupplýsingar).
 
 | Gögn | Hvar | Innihald | Geymt |
 |---|---|---|---|
@@ -62,7 +62,7 @@ uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Kontroll (hvað þj
 - Frá file:// í Chromium deila allar HTML-skrár sem opnaðar eru á tölvunni geymslu. Leyndarmál eru dulrituð, en viðkvæmt
   vinnusvæði ætti að keyra frá staðbundnum þjóni (`python -m http.server`) eða speglast í færanlega möppu.
 - Chromium beitir `form-action` þjónsins einnig á áframsendinguna eftir innskráningu; þjónninn þarf að leyfa afturhvarfsvistfang
-  forritsins (Kontroll gerir það).
+  forritsins (Dataregium gerir það).
 
 ## Að tilkynna veikleika
 

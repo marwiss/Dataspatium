@@ -58,8 +58,7 @@ når du deler en konfigurasjon.
 
 ## Hvor store datasett klarer appen?
 
-Et par millioner rader i Edge og Chrome, noe færre i Firefox; nettleserens minne setter grensen. Målte tider for en million
-rader finnes i [utveckling.md](../utveckling.md) (svensk). Tekstfiler på 64 MB eller mer leses i biter, så selve innlastingen
+Et par millioner rader i Edge og Chrome, noe færre i Firefox; nettleserens minne setter grensen. Tekstfiler på 64 MB eller mer leses i biter, så selve innlastingen
 ikke krever at hele filen får plass i minnet som tekst.
 
 ## Hva skiller Firefox fra Edge og Chrome?
@@ -251,7 +250,7 @@ mindre du selv lagrer den som JSON eller datasett. Se [kallor.md](kallor.md).
 
 ## Kan jeg se en modells IFC-graf og spørre den med Cypher?
 
-Ja, hvis modellen finnes på en Kontroll-server. Åpne kilden i Hent, kortet *IFC-LPG* eller en Neo4j-kilde, og velg modell og visning.
+Ja, hvis modellen finnes på en Dataregium-server. Åpne kilden i Hent, kortet *IFC-LPG* eller en Neo4j-kilde, og velg modell og visning.
 Noder og relasjoner tegnes, du henter naboer med et dobbeltklikk og skriver din egen Cypher i feltet. Se [grafer.md](grafer.md).
 
 ## Virker appen mot en server som bare har BCF API 2.1?

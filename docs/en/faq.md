@@ -59,8 +59,7 @@ never come along when you share a configuration.
 
 ## How large datasets can the app handle?
 
-A couple of million rows in Edge and Chrome, somewhat fewer in Firefox; the browser's memory sets the limit.
-Measured times for one million rows are in [utveckling.md](../utveckling.md) (Swedish). Text files of 64 MB or more are read
+A couple of million rows in Edge and Chrome, somewhat fewer in Firefox; the browser's memory sets the limit. Text files of 64 MB or more are read
 in chunks, so the import itself does not require the whole file to fit in memory as text.
 
 ## What is the difference between Firefox and Edge or Chrome?
@@ -258,7 +257,7 @@ computer unless you save it as JSON or a dataset yourself. See [kallor.md](kallo
 
 ## Can I see a model's IFC graph and query it with Cypher?
 
-Yes, if the model is on a Kontroll server. Open the source in Import, the card *IFC-LPG* or a Neo4j source, and choose a model and a view.
+Yes, if the model is on a Dataregium server. Open the source in Import, the card *IFC-LPG* or a Neo4j source, and choose a model and a view.
 Nodes and relationships are drawn, you fetch neighbours with a double click and write your own Cypher in the box. See [grafer.md](grafer.md).
 
 ## Does the app work with a server that has only BCF API 2.1?

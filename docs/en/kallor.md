@@ -114,7 +114,7 @@ TLS (`bolt://`) is reached only from a page over http://. See [grafer.md](grafer
 ### OpenCDE server (BCF and Documents API)
 
 The way **OpenCDE** under *Add sources* (the family **OpenCDE (BCF, Documents)**, also in *Database source*) connects to a server that implements buildingSMART's
-OpenCDE APIs, for example [Kontroll](https://github.com/marwiss/Kontroll). Enter the server's address and the client id
+OpenCDE APIs, for example [Dataregium](https://github.com/marwiss/Dataregium). Enter the server's address. Leave the client id empty when the server lets the app register itself (see below), otherwise the client id
 its administrator registered for Dataspatium (a public client with the redirect URI
 `http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the address the app is served from). The source opens
 a view where you sign in to the server (OAuth2 with PKCE in a pop-up; from file:// you paste the address you end up on
@@ -130,7 +130,7 @@ has neither the Foundation API nor the Documents API, so the app reads the versi
 several you can change in the source's view. In 2.1 *Files in the project* lists only the BCF documents, issues have no number from the server and a
 viewpoint cannot be deleted. In return a comment can answer another: the button *Reply* in the panel *Issues*.
 
-The card *IFC-LPG* appears when the server has a graph, see [grafer.md](grafer.md#ifc-lpg-on-a-kontroll-server).
+The card *IFC-LPG* appears when the server has a graph, see [grafer.md](grafer.md#ifc-lpg-on-a-dataregium-server).
 
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
@@ -140,12 +140,14 @@ one. The source also says what you may do in the project, such as create issues 
 made, the dialog asks the server where to sign in; if the server does not answer then, the app asks again at the first
 sign-in.
 
+While the server's own page is open in a pop-up (sign-in, document selection, upload), the app shows the button *Cancel*, so that you can stop waiting if the window was closed or lost.
+
 If the server allows it, the app registers itself as a client when you leave the client id empty, so no administrator has to
 hand anything out. Datasets can also go back to the server: the tab *To the CDE* in Share sends a dataset in any format, or the
 original file, to a project, either through the Documents API, where the server's own page asks for title and version, or as a
 BCF document. A dataset fetched from the server can be sent as a new version of its document.
 
-For Kontroll's IFC graph the view offers starter code: the models in the graph and the latest finished one per document, elements per class, the walls' GTIN, issues per
+For Dataregium's IFC graph the view offers starter code: the models in the graph and the latest finished one per document, elements per class, the walls' GTIN, issues per
 status, issues and their elements, issues that touch an element, and a graph of issues, viewpoints and components. Choose a query,
 edit and run. It requires that whoever runs the server has made Bolt reachable; the development stack does, a production server
 seldom does.
@@ -160,18 +162,18 @@ headers (tokens and cookies masked), an explanation of what the operation does w
 lives in memory only and is never sent; it can be saved as JSON or as a dataset. The app sets the header X-Request-Id on every request
 so that the server's own log can be matched with the app's; if a server refuses the header, it is turned off for that source.
 
-The server's side is described in Kontroll's documentation: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) (how a client connects), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (the pair's test runs) and [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/deploy/local.md) (the development stack and how the app is tested against it).
+The server's side is described in Dataregium's documentation: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/client-guide.md) (how a client connects) and [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/deploy/local.md) (the development stack and how the app is tested against it).
 
-Kontroll describes its extensions in `GET /.well-known/kontroll`; the app reads the document when the source opens and writes under
+Dataregium describes its extensions in `GET /.well-known/dataregium`; the app reads the document when the source opens and writes under
 the heading which server it is and which extensions it has (self-registration, request log, administration, IFC-LPG, graph
 queries). A server without the document has no extensions, and everything in the specifications works anyway. The server's error
 codes (`code` in the answer, for example `reauthentication_required`) are shown in your language; unknown codes show the server's own
 text. The link *Open in Dataspatium* on the server's pages has the form `index.html#/inhamta/opencde?server=https://…` and opens
 the dialog for a new source with the address filled in. A server the workspace already has as a source opens directly. The link can also name a project and a document
 (`&project=…&document=…&version=…`): the project is chosen and the document fetched as a dataset once you are signed in. Pages that
-Kontroll opens in a popup (sign-in, upload, document selection) appear in the app's language.
+Dataregium opens in a popup (sign-in, upload, document selection) appear in the app's language.
 
-**Administration.** If you are an administrator on a Kontroll server, the source's view shows the card *Administration* (when the server's capabilities document says the administration API is on). The button *Sign in as administrator* asks for the scope `admin`; then the tabs Overview, Users (create, change, disable, reset password, delete), Projects (create, rename, members and roles, delete), Clients (register, change, rotate secret, revoke tokens, delete), Sessions (end one or all of a user), Audit, Settings and Health follow, plus Graph query when the server allows reading Cypher against the IFC graph. Dangerous operations need a fresh sign-in: the server answers `reauthentication_required`, the app opens the sign-in again and repeats the call. One-time values (an initial password, a client secret) are shown once with a Copy button and never written to the log. Every list can be saved as a dataset and fetched again from Hantera.
+**Administration.** If you are an administrator on a Dataregium server, the source's view shows the card *Administration* (when the server's capabilities document says the administration API is on). The button *Sign in as administrator* asks for the scope `admin`; then the tabs Overview, Users (create, change, disable, reset password, delete), Projects (create, rename, members and roles, delete), Clients (register, change, rotate secret, revoke tokens, delete), Sessions (end one or all of a user), Audit, Settings and Health follow, plus Graph query when the server allows reading Cypher against the IFC graph. Dangerous operations need a fresh sign-in: the server answers `reauthentication_required`, the app opens the sign-in again and repeats the call. One-time values (an initial password, a client secret) are shown once with a Copy button and never written to the log. Every list can be saved as a dataset and fetched again from Hantera.
 
 ## Open geodata
 

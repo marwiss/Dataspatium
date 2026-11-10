@@ -31,7 +31,7 @@
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
       /** What the app has sent to this server, in a card of its own at the bottom. */
       const logCard = cdeLogCard.create(connector, { log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
-      /** The server's administration (Kontroll's extension), a card of its own that stays hidden for servers without the API. */
+      /** The server's administration (Dataregium's extension), a card of its own that stays hidden for servers without the API. */
       const adminUi = adminPanel.create({ connector, ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
@@ -95,8 +95,8 @@
           await afterSignIn();
         } catch (err) {
           // The popup could not answer (blocked, closed, or cut off by the server's opener policy): the same sign-in in a new tab,
-          // whose callback address the user pastes here, exactly as the callback page says.
-          if (opencde.redirectUri() && isPopupFailure(err)) {
+          // whose callback address the user pastes here, exactly as the callback page says. A wait the user stopped is no error.
+          if (isCancelled(err)) { /* the user pressed Avbryt */ } else if (opencde.redirectUri() && isPopupFailure(err)) {
             try { s.manual = await opencde.manualStart(connector, opencde.redirectUri()); window.open(s.manual.url, '_blank', 'noopener'); s.note = t('opencde.manual.fallback'); } catch (err2) { fail(err2); }
           } else fail(err);
         }
@@ -104,6 +104,9 @@
         await followLink();
       }
       const isPopupFailure = (err) => { const m = String((err && err.message) || ''); return [t('opencde.err.popup'), t('opencde.err.timeout'), t('opencde.err.closed')].includes(m); };
+      const isCancelled = (err) => String((err && err.message) || '') === t('opencde.err.cancelled');
+      /** Shown while a popup is waiting for the user, who may otherwise sit for five minutes if the window was closed unseen. */
+      const cancelButton = () => basic.button({ label: t('common.cancel'), size: 'sm', title: t('opencde.cancel.hint'), 'data-opencde-cancel': '', onClick: () => opencde.cancelPopup() });
       async function finishManual() {
         if (!s.manual || !s.callback.trim()) return;
         s.busy = 'login'; s.error = ''; render();
@@ -243,6 +246,7 @@
           versionRow(),
           h('div', { class: 'dm-row-wrap' },
             signed ? basic.button({ label: t('opencde.signout'), icon: 'lock', size: 'sm', loading: s.busy === 'logout', onClick: signOut }) : basic.button({ label: t('opencde.signin'), icon: 'chevron-right', variant: 'primary', loading: s.busy === 'login', onClick: signIn }),
+            !signed && s.busy === 'login' && !s.manual && opencde.redirectUri() ? cancelButton() : null,
             signed && !s.projects ? basic.button({ label: t('opencde.projects.load'), size: 'sm', onClick: async () => { s.busy = 'projects'; render(); try { s.user = s.user || (await opencde.currentUser(connector)); await loadProjects(); } catch (err) { fail(err); } s.busy = ''; render(); } }) : null),
           s.manual ? manualBox() : null,
           s.error ? h('p', { class: 'dm-error', text: s.error }) : null,
@@ -257,7 +261,8 @@
             s.projects.length ? sel : h('p', { class: 'dm-help', text: t('opencde.projects.none') }),
             h('div', { class: 'dm-row-wrap' },
               KINDS.map((k) => basic.button({ label: t('opencde.kind.' + k.id), icon: k.id === 'topics' ? 'list' : k.id === 'components' ? 'box' : k.id === 'events' ? 'history' : k.id === 'files' ? 'file' : 'message-square', size: 'sm', loading: s.busy === k.id, variant: k.id === 'topics' ? 'primary' : undefined, onClick: () => fetchKind(k) })),
-              opencde.hasDocuments(connector) ? basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }) : null),
+              opencde.hasDocuments(connector) ? basic.button({ label: t('opencde.documents.fetch'), icon: 'download', size: 'sm', loading: s.busy === 'documents', title: t('opencde.documents.hint'), 'data-opencde-documents': '', onClick: fetchDocuments }) : null,
+              s.busy === 'documents' ? cancelButton() : null),
             h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }),
             s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
           nodes.push(filesCard());
@@ -331,7 +336,7 @@
       }
       /** What the server offers beyond the specifications, for the line under the heading. */
       function capsText(caps) {
-        const server = caps.server ? `${caps.server.name || 'Kontroll'}${caps.server.version ? ' ' + caps.server.version : ''}` : 'Kontroll';
+        const server = caps.server ? `${caps.server.name || 'Dataregium'}${caps.server.version ? ' ' + caps.server.version : ''}` : 'Dataregium';
         const list = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k)).map((k) => { const key = 'opencde.ext.' + k; const x = t(key); return x === key ? k : x; });
         return t('opencde.caps', { server, list: list.length ? list.join(', ') : t('opencde.caps.none') });
       }

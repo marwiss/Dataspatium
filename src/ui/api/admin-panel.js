@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The card Administration in an OpenCDE source's view (ui/api/opencde-view): Kontroll's administration API from the app, shown when
+ * The card Administration in an OpenCDE source's view (ui/api/opencde-view): Dataregium's administration API from the app, shown when
  * the server's capabilities document says the API is on. It needs a token with the scope admin that belongs to an administrator; the
  * button "Logga in som administratör" asks for the scope. Sections: overview, users, projects, clients, sessions, audit, settings and
  * health. Every change is confirmed in a dialog and written to the log; one-time values (an initial password, a client secret) are

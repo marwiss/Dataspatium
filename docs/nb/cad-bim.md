@@ -47,9 +47,9 @@ status, type, ansvarlig, prioritet og måned bak felles filtre, og knappen *Vis 
 eller etasje fra en slik tabell, og SQL-startkoden får spørringer for koblingen. *Lagre som diagram* lagrer visningen med fargene
 som et modelldiagram, som dashbord, dokumenter og Publiser viser med tegnforklaring.
 
-Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC-LPG* tar deg dit, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
+Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC-LPG* tar deg dit, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
-Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Kontrolls [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/ifc-lpg.md).
+Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/ifc-lpg.md).
 
 ## Tabellene
 
@@ -90,7 +90,7 @@ Hvert resultat kan lagres som datasett.
 
 ## IfcOpenShell i appen
 
-Appen kan lese, kontrollere og endre IFC-modeller med IfcOpenShell, det samme biblioteket som Kontroll bygger på. Det
+Appen kan lese, kontrollere og endre IFC-modeller med IfcOpenShell, det samme biblioteket som Dataregium bygger på. Det
 kjører i Python i nettleseren, hentes første gang det brukes (cirka 13 MB, etter ditt samtykke til komponenter) og lagres
 deretter i nettleseren. Ingenting sendes noe sted; modellen forlater ikke datamaskinen.
 

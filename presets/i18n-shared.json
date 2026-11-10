@@ -1,5 +1,5 @@
 {
- "name": "Dataspatium and Kontroll shared glossary",
+ "name": "Dataspatium and Dataregium shared glossary",
  "version": 1,
  "source": "Dataspatium src/ui/i18n/<lang>.js, chosen by presets/shared-keys.txt; regenerate with python tools/shared_glossary.py",
  "languages": [

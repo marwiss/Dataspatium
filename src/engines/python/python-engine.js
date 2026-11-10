@@ -5,7 +5,7 @@
  * R engine's pattern. The runtime and the wheels are components fetched on demand (engines/python/catalog);
  * the worker loads them through `dataspatium-asset://pyodide/...`. Pyodide's loader wants to `import()` its
  * ES-module glue and refuses classic workers; the worker rewrites those three spots of the loader text at run
- * time (proven in docs/fas0-2.md, spike 5), the files themselves stay as published.
+ * time (proven in the spike notes kept outside the repo, .claude/plans/underlag/spik-fas0-2.md, spike 5), the files themselves stay as published.
  *
  * Messages: main -> worker {id, type: init|run|eval|packages|fs|net-reply}; worker -> main {type: 'result', id,
  * ok, value|error}, {type: 'stream', kind, text} for stdout/stderr lines and {type: 'net', id, url} when Python code

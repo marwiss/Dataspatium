@@ -97,7 +97,7 @@ du at vide, hvad de indeholder, og vælger selv, om de skal med.
 
 ## Til CDE
 
-Fanen *Til CDE* sender et datasæt til et projekt på en OpenCDE-server som Kontroll. Vælg server, log ind og vælg projekt; vælg
+Fanen *Til CDE* sender et datasæt til et projekt på en OpenCDE-server som Dataregium. Vælg server, log ind og vælg projekt; vælg
 derefter, om datasættet skal skrives i et filformat, eller om originalfilen skal sendes, og om det skal gå gennem Documents API,
 hvor serverens egen side spørger om titel, version og projekt, og filen derefter uploades i dele, eller som BCF-dokument, som kun
 tager filen. Datasættet skrives fra en kopi, der har været gennem kontrollen, og originalfiler får samme advarsel som i pakkerne.

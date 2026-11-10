@@ -101,7 +101,7 @@ Uppruna er lýst með JSON-skrá með endingunni `.api.json`. Eigin uppsetningum
 flytja út með **Flytja út uppsetningu** til að deila þeim. Forstillingarnar eru í `presets/api/` í forritsmöppunni og eru góður
 upphafspunktur. Grunntungumál skrárinnar er sænska; þýðingum er bætt í reitinn `i18n` fyrir hvert tungumál, og forritið sýnir
 textana á sínu eigin tungumáli. Sniðinu er lýst að fullu í [ensku leiðbeiningunum](../en/api-konfiguration.md) og
-[þeim sænsku](../api-konfiguration.md); reitirnir eru:
+[þeim sænsku](../sv/api-konfiguration.md); reitirnir eru:
 
 - efsta stig: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = enginn lykill,
   2 = lykill), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,

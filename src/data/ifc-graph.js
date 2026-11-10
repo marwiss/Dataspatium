@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Kontroll's IFC graph as the app reads it (the server's docs/ifc-lpg.md and graph-schema.md). Every IFC entity is a node labelled
+ * Dataregium's IFC graph as the app reads it (the server's docs/ifc-lpg.md and graph-schema.md). Every IFC entity is a node labelled
  * IfcEntity, its class and all its supertypes, in no particular order, with `ifc_class`, `step_id`, `model_id` and the literal attributes
  * by their IFC names; relationships are named after the attributes, forward and inverse. Pure logic: which class and name a node shows,
  * which family colours it, the models on the server, the ready-made views of one model, the steps from one element, and the properties
@@ -11,7 +11,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('data/ifc-graph', [], () => {
-    /** Stored hashes of secrets (Kontroll's password_hash, secret_hash, token_hash, code_hash and their like). */
+    /** Stored hashes of secrets (Dataregium's password_hash, secret_hash, token_hash, code_hash and their like). */
     const PROTECTED = /(^|_)(password|secret|token|code)_hash$/i;
     const HASHED_VALUE = /^\$argon2/;
     const NAME_KEYS = ['name', 'Name', 'namn', 'title', 'titel', 'file_name', 'filename', 'username', 'label', 'ifc_guid', 'comment', 'guid', 'id', 'project_id', 'document_id', 'client_id'];

@@ -1,8 +1,8 @@
 # Sikkerhet
 
 Sikkerheten er appens første krav. Dataspatium holder datasettene, API-nøklene og tokenene dine i nettleseren og snakker med
-servere (åpne API-er, OpenCDE-servere som Kontroll) bare når du ber om det. Policyen er den samme som Kontrolls, siden de to
-utvikles som et par og slippes med samme numre; Kontrolls halvdel ligger i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/nb/security)
+servere (åpne API-er, OpenCDE-servere som Dataregium) bare når du ber om det. Policyen er den samme som Dataregiums, siden de to
+utvikles som et par og slippes med samme numre; Dataregiums halvdel ligger i [README](https://github.com/marwiss/Dataregium/blob/main/docs/nb/README.md#personopplysninger)
 i det repoet. Hvordan en sårbarhet rapporteres, står i [SECURITY.md](../../SECURITY.md).
 
 ## Trusselmodell
@@ -42,8 +42,8 @@ Hver kontroll har en automatisk test i `tests/` eller en peker til koden som bæ
 ## Personopplysninger og lagring
 
 Hva appen lagrer, hvor, og hvor lenge. Alt ligger på datamaskinen din; ingenting sendes til appens opphavsperson, og ingen
-oppdateringskontroll gjøres uten din handling. Kontrolls halvdel (hva serveren lagrer om deg) står i
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/security/personal-data.md).
+oppdateringskontroll gjøres uten din handling. Dataregiums halvdel (hva serveren lagrer om deg) står i
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/nb/README.md#personopplysninger).
 
 | Data | Hvor | Innhold | Lagres |
 |---|---|---|---|
@@ -61,7 +61,7 @@ oppdateringskontroll gjøres uten din handling. Kontrolls halvdel (hva serveren 
 - Fra file:// i Chromium deler alle lokalt åpnede HTML-filer lagring. Hemmeligheter er kryptert, men et sensitivt arbeidsområde
   bør kjøres fra en lokal server (`python -m http.server`) eller speiles til en portabel mappe.
 - Chromium anvender serverens `form-action` også på omdirigeringen etter innloggingen; serveren må tillate appens
-  tilbakekallsadresse (Kontroll gjør det).
+  tilbakekallsadresse (Dataregium gjør det).
 
 ## Rapporter en sårbarhet
 

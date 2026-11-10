@@ -145,8 +145,8 @@
       root.querySelector('[data-cde-log-toggle]').click();
       const rows = await waitFor(() => { const r = root.querySelectorAll('[data-cde-log-row]'); return r.length ? r : null; }, 3000, 'rows');
       assert.ok(rows.length >= 4, 'rows: ' + rows.length);
-      // Since 2.34 the view also reads the capabilities document, so the newest row may be Kontroll's.
-      assert.ok(['BCF', 'Foundation', 'Kontroll'].some((w) => rows[0].textContent.includes(w)), rows[0].textContent);
+      // Since 2.34 the view also reads the capabilities document, so the newest row may be Dataregium's.
+      assert.ok(['BCF', 'Foundation', 'Dataregium'].some((w) => rows[0].textContent.includes(w)), rows[0].textContent);
       // Discovery runs before a connector exists, so the card's first explained row is the current user.
       const userRow = Array.from(rows).find((r) => r.textContent.includes('current_user'));
       assert.ok(userRow, 'a current_user row');
@@ -160,7 +160,9 @@
       /** @type {any} */ (sw).checked = true; sw.dispatchEvent(new Event('change', { bubbles: true }));
       assert.equal(cdeLog.bodies(), true);
       await opencde.topics(connector, PROJECT, {});
-      assert.ok(cdeLog.list(connector.id).slice(-1)[0].responseBody.includes('Ett ärende'), 'the body is kept now');
+      // The card's own capabilities reads (two addresses, asked in turn) may finish after this call, so look at the topics entry itself.
+      const topicsEntry = cdeLog.list(connector.id).filter((e) => e.operation === 'topics').slice(-1)[0];
+      assert.ok(topicsEntry && topicsEntry.responseBody && topicsEntry.responseBody.includes('Ett ärende'), 'the body is kept now');
       /** @type {any} */ (sw).checked = false; sw.dispatchEvent(new Event('change', { bubbles: true }));
       assert.equal(cdeLog.bodies(), false);
       root.querySelector('[data-cde-log-dataset]').click();

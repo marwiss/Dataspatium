@@ -125,7 +125,7 @@ def main():
               "Dataspatium levereras med följande komponenter från tredje part, oförändrade och under sina egna licenser.\n"
               "Binärer och ESM-moduler är inbäddade som JavaScript-filer i `vendor/` (se `vendor/manifest.js`); det ändrar\n"
               "inte licensvillkoren. Filen genereras av `tools/wrap_assets.py` från `vendor/vendor.json`.\n"
-              "Dataspatiums egen kod är licensierad under PolyForm Strict 1.0.0 (se `LICENSE` och `docs/licenser.md`);\n"
+              "Dataspatiums egen kod är licensierad under PolyForm Strict 1.0.0 (se `LICENSE` och `docs/sv/licenser.md`);\n"
               "det påverkar inte komponenterna nedan.\n\n")
     (ROOT / "THIRD_PARTY_LICENSES.md").write_text(header + "\n\n".join(license_sections) + "\n", encoding="utf-8", newline="\n")
     print(f"manifest: {len(manifest['assets'])} assets, {len(manifest['libraries'])} libraries")

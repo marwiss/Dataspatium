@@ -16,7 +16,7 @@ exporterar den. Säkerheten är det första kravet: inga nätverksanrop utan din
 - [Ladda ned och kom igång](#ladda-ned-och-kom-igång)
 - [Vad som krävs](#vad-som-krävs)
 - [Vad du kan göra](#vad-du-kan-göra)
-- [Dataspatium och Kontroll](#dataspatium-och-kontroll)
+- [Dataspatium och Dataregium](#dataspatium-och-dataregium)
 - [Lär dig mer](#lär-dig-mer)
 - [Begränsningar i korthet](#begränsningar-i-korthet)
 - [Fel och förslag](#fel-och-förslag)
@@ -41,7 +41,7 @@ exporterar den. Säkerheten är det första kravet: inga nätverksanrop utan din
 
 Data sparas i webbläsarens egen databas. Rensar du webbplatsdata försvinner den, så ta regelbundet en
 säkerhetskopia under *Hantera > Arbetsyta*. Säkerhetskopian är en ZIP-fil som kan återställas på samma eller en
-annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/kom-igang.md).
+annan dator. Steg för steg med fler detaljer: [docs/kom-igang.md](docs/sv/kom-igang.md).
 
 Appen finns också direkt på webben, utan nedladdning: <https://marwiss.github.io/Dataspatium/>. Från en webbserver
 kan den installeras som egen app (Edge och Chrome: *Installera* i adressfältet) och fungerar sedan även utan
@@ -68,81 +68,81 @@ ett paket.
   Folkhälsomyndigheten, Socialstyrelsen, Kolada, Eurostat, SMHI, Naturvårdsverket, Lantmäteriet och Sveriges
   dataportal samt statistikbyråerna och andra myndigheter i Danmark, Norge, Finland, Island, Grönland, Färöarna
   och Åland, Nordic Statistics, ECB och OECD, med landsfilter och sparade hämtningar som uppdateras med ett klick
-  och spelar upp sina recept (se [docs/api-konfiguration.md](docs/api-konfiguration.md)). Exempeldata och
+  och spelar upp sina recept (se [docs/api-konfiguration.md](docs/sv/api-konfiguration.md)). Exempeldata och
   kommun- och regiongränser för Sverige, Danmark, Norge och Finland följer med.
 - **Databaser**: Access-filer läses direkt i webbläsaren; databaser på datorn eller i nätverket (SQL Server, ODBC, Excel,
   SQLite) nås genom en lokal brygga, och PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets och Airtable blir källor med ett klick. Filer kan länkas och läsas in igen från
-  disken (se [docs/kallor.md](docs/kallor.md)).
+  disken (se [docs/kallor.md](docs/sv/kallor.md)).
 - **Dokument och bilder**: PDF, Word, OpenDocument, Markdown och text blir dokumentsamlingar som läses i en läsvy, sida för sida
   eller i sin helhet; bilder blir en bildsamling med EXIF-uppgifter och galleri. Verktygen Text (ordfrekvens, nyckelord
-  i kontext, samförekomster) och Bilder (översikt, dubbletter) fungerar utan kod (se [docs/dokument.md](docs/dokument.md)).
+  i kontext, samförekomster) och Bilder (översikt, dubbletter) fungerar utan kod (se [docs/dokument.md](docs/sv/dokument.md)).
 - **Bearbeta**: bläddra, sortera och filtrera i stora tabeller, redigera celler, rensa, typa, koda om,
   klassindela, rangordna, beräkna andelar, löpande summor och förändringar, pivotera och koppla data,
   kontrollera datakvalitet med profil och regler (bland annat format, nordiska identitetsnummer, referenser till
   andra datamängder och avvikande värden), pseudonymisera personnummer inför delning, slå
   upp kommun och län ur koordinater, med ångra, versioner och recept som kan exporteras som R eller SQL (se
-  [docs/bearbeta.md](docs/bearbeta.md)).
-- **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/r-guide.md)), en
-  Python-konsol med pandas och matplotlib som hämtas första gången (se [docs/python.md](docs/python.md)), en
+  [docs/bearbeta.md](docs/sv/bearbeta.md)).
+- **Analysera**: en inbyggd R-konsol med ggplot2 och tidyverse (se [docs/r-guide.md](docs/sv/r-guide.md)), en
+  Python-konsol med pandas och matplotlib som hämtas första gången (se [docs/python.md](docs/sv/python.md)), en
   SQL-konsol där datamängder kopplas ihop med join via sina kortnamn, och anteckningsböcker med text-, R- och
   SQL-celler som blir rapporter i HTML, Word, PDF, Markdown eller LaTeX (se
-  [docs/anteckningsbok.md](docs/anteckningsbok.md)), och en Regex-flik där reguljära uttryck prövas på en kolumn
-  och används för att filtrera, extrahera, ersätta och dela upp (se [docs/regex.md](docs/regex.md)), helt i
+  [docs/anteckningsbok.md](docs/sv/anteckningsbok.md)), och en Regex-flik där reguljära uttryck prövas på en kolumn
+  och används för att filtrera, extrahera, ersätta och dela upp (se [docs/regex.md](docs/sv/regex.md)), helt i
   webbläsaren.
 - **Kartor**: geodatamängder öppnas som kartor att zooma i, kartvyer med flera lager och bakgrundskarta efter samtycke
   blir dashboards och publicerad HTML, geoverktygen räknar area, punkter i områden, närmaste, buffert och överlagring
-  utan kod, och QGIS-projekt blir kartvyer (se [docs/kartor.md](docs/kartor.md)).
+  utan kod, och QGIS-projekt blir kartvyer (se [docs/kartor.md](docs/sv/kartor.md)).
 - **Öppna geodata**: WFS-, OGC API Features- och ArcGIS-tjänster blir källor vars lager hämtas som kartor, med
   förinställningar för SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen och SYKE, sökning i
-  Geodataportalen och WMS-tjänster som bakgrundskarta eller lager (se [docs/kallor.md](docs/kallor.md)).
+  Geodataportalen och WMS-tjänster som bakgrundskarta eller lager (se [docs/kallor.md](docs/sv/kallor.md)).
 - **Planer**: digitala detaljplaner (nationella specifikationen, Lantmäteriets geodataplattform) öppnas som plankartor
   med Boverkets färger och beteckningar, bestämmelserna slås upp i Boverkets Planbestämmelsekatalog (inbäddad kopia),
-  och översiktsplaner (specifikationen eller Boverkets ÖP-modell) visas tema för tema (se [docs/planer.md](docs/planer.md)).
+  och översiktsplaner (specifikationen eller Boverkets ÖP-modell) visas tema för tema (se [docs/planer.md](docs/sv/planer.md)).
 - **Nordiska planer**: Danmarks lokalplaner och kommuneplanrammer (Plandata.dk), Finlands kaavatietomalli och planindex
   (Ryhti), Islands stafrænt deili- och aðalskipulag (Skipulagsstofnun) och Norges reguleringsplaner (GeoPackage) öppnas
   som planer med respektive lands färger; en hel plan hämtas med sitt nummer från Plandata och Skipulagsstofnun.
 - **Grafer**: GraphML, GEXF, JSON med noder och kanter och Cypher-skript öppnas som grafer med översikt per etikett, fokus
   och helgrafsvisning (Cytoscape och sigma), en Cypher-delmängd översatt till SQL, grafmått i bakgrunden och export i
-  alla fyra formaten; två tabeller blir en graf (se [docs/grafer.md](docs/grafer.md)).
+  alla fyra formaten; två tabeller blir en graf (se [docs/grafer.md](docs/sv/grafer.md)).
   Grafen redigeras i Bearbeta och med skrivande Cypher (receptsteg), Neo4j är en källa via Bolt, fliken Graf har PageRank,
   samhällen, centralitet, mönsterfrågor och layout, och grafer blir diagram i Visualisera, dashboards och Publicera.
 - **CAD och BIM**: IFC-modeller öppnas i 3D (web-ifc och three.js) ovanför en tabell över byggdelarna, och urvalet följer åt åt båda
   håll. Egenskaper och mängder blir tabeller, fliken Mängder räknar per typ, våning och material, och DXF-ritningar visas som
-  SVG med lager (se [docs/cad-bim.md](docs/cad-bim.md)).
+  SVG med lager (se [docs/cad-bim.md](docs/sv/cad-bim.md)).
 - **Flöden och bevakningar**: en sparad kedja (hämta, recept, skript, listor, diagram, dashboards, dokument, export) körs med ett klick
-  eller vid start, och bevakade källor säger till i statusraden när de har nya data (se [docs/floden.md](docs/floden.md)).
+  eller vid start, och bevakade källor säger till i statusraden när de har nya data (se [docs/floden.md](docs/sv/floden.md)).
 - **Statistik utan kod**: fliken Statistik gör beskrivande statistik, korstabeller, korrelation, hypotestester, regression och klustring med
   formulär som skriver och visar R- eller Python-koden. Tidsserieåtgärder i Bearbeta (perioder, förändring, index, glidande medelvärde,
-  säsongsrensning), och en regression kan sparas och användas som receptsteget Prediktion (se [docs/statistik.md](docs/statistik.md)).
+  säsongsrensning), och en regression kan sparas och användas som receptsteget Prediktion (se [docs/statistik.md](docs/sv/statistik.md)).
 - **Insamling i fält**: ett formulär byggt på en datamängds kolumner och regler skickas till Dataspatium Mobil. Telefonen samlar in rader utan nät, med
-  foto och position, och raderna kommer tillbaka som en ny version. Fotona blir en bildsamling och positionerna hamnar på kartan (se [docs/insamling.md](docs/insamling.md)).
-- **Lägena följer datamängdens slag**: appen säger vad en fil är och vad en datamängd också kan användas som, frågar om koordinater, koordinatsystem och kopplingar vid inläsning, sorterar blandade mappar och visar en bild per datamängd i Hantera. Sökträffar öppnas där de finns (sida, bild, nod, byggdel, planobjekt eller plats), du kan söka efter plats, hitta noder via sina kanter och byggdelar via sina egenskaper, kommentera en sida, en bild, en nod eller en plats, rätta text, sätta plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera byggdelar. Analysera öppnar i rätt verktyg med startkod skriven för datamängden, visar trenden i en tidsserie och räknar platser per område, och ett urval följer med mellan lägena (se [docs/lagen.md](docs/lagen.md)).
-- **Visualisera, Exportera och Dela följer slaget**: diagramförslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument; KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller och PDF för ritningar; i Dela väljer du om filerna ska följa med i paketet, gör en datamängd till en egen sida att skicka och ser varje slag i sin egen form på telefonen (se [docs/visualisera.md](docs/visualisera.md) och [docs/dela.md](docs/dela.md)).
-- **Granskning före delning**: allt som lämnar appen granskas i sin helhet, med kolumner, löptext, sidotabeller, originalfiler, bilders positioner, grafers kanter, kommentarer och författare; personuppgifter kan behållas, pseudonymiseras eller tas bort i kopian, och datamängden ändras aldrig (se [docs/dela.md](docs/dela.md)).
-- **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/lagen.md)).
+  foto och position, och raderna kommer tillbaka som en ny version. Fotona blir en bildsamling och positionerna hamnar på kartan (se [docs/insamling.md](docs/sv/insamling.md)).
+- **Lägena följer datamängdens slag**: appen säger vad en fil är och vad en datamängd också kan användas som, frågar om koordinater, koordinatsystem och kopplingar vid inläsning, sorterar blandade mappar och visar en bild per datamängd i Hantera. Sökträffar öppnas där de finns (sida, bild, nod, byggdel, planobjekt eller plats), du kan söka efter plats, hitta noder via sina kanter och byggdelar via sina egenskaper, kommentera en sida, en bild, en nod eller en plats, rätta text, sätta plats på bilder, laga geometrier, hitta dubbletter i grafer och klassificera byggdelar. Analysera öppnar i rätt verktyg med startkod skriven för datamängden, visar trenden i en tidsserie och räknar platser per område, och ett urval följer med mellan lägena (se [docs/lagen.md](docs/sv/lagen.md)).
+- **Visualisera, Exportera och Dela följer slaget**: diagramförslag med riktiga bilder för varje slag, korsfilter i dashboards och mallord som lägger in en karta, en graf, en modell eller en plan i ett dokument; KML, GPX och GeoPackage för platser, kontaktkarta för bilder, plankarta och planbestämmelser för planer, mängder i Excel och glTF för modeller och PDF för ritningar; i Dela väljer du om filerna ska följa med i paketet, gör en datamängd till en egen sida att skicka och ser varje slag i sin egen form på telefonen (se [docs/visualisera.md](docs/sv/visualisera.md) och [docs/dela.md](docs/sv/dela.md)).
+- **Granskning före delning**: allt som lämnar appen granskas i sin helhet, med kolumner, löptext, sidotabeller, originalfiler, bilders positioner, grafers kanter, kommentarer och författare; personuppgifter kan behållas, pseudonymiseras eller tas bort i kopian, och datamängden ändras aldrig (se [docs/dela.md](docs/sv/dela.md)).
+- **Kodlistor, beskrivningar och guider**: etiketter ur SNI, SSYK, NACE och andra listor med ett klick, datapaket, DCAT-AP-SE, kvalitetsdeklaration och fyra guider med riktiga data (se [docs/lagen.md](docs/sv/lagen.md)).
 - **Text ur bilder**: skannade PDF-filer, bilder och bilder av tabeller läses med textigenkänning i webbläsaren, på alla sju språken.
 - **Härkomst, samarbete och bibliotek**: se var en datamängd kommer ifrån och vad den har blivit, arbeta ihop via GitHub utan att något försvinner, hämta recept och mallar med licens, och publicera arbetsytan som en webbplats.
-- **Kontroll och OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) blir en källa i Inhämta med inloggning via OAuth2 och självregistrering där servern tillåter det. Appen hämtar projektets modeller och dokument och säger till när en nyare version finns, visar ärendena som pekar på byggdelarna, skapar ärenden ur markeringen i 3D-vyn med vyn som viewpoint, kommenterar och byter status, färgar modellen efter ärendestatus, sparar ärendena som tabell med verktyget Ärenden och dashboarden Ärendeläge, läser och skriver BCF-filer, skickar datamängder, filer och arbetsytepaket till servern, frågar serverns IFC-graf med Cypher, läser vad servern erbjuder och förklarar dess felkoder, och loggar varje anrop med ett X-Request-Id som paras med serverns begärandelogg, och administrerar servern (användare, projekt, klienter, sessioner, revision, inställningar, hälsa och graffrågor) från kortet Administration när du är administratör (se avsnittet [Dataspatium och Kontroll](#dataspatium-och-kontroll) nedan).
+- **Dataregium och OpenCDE**: en OpenCDE-server som [Dataregium](https://github.com/marwiss/Dataregium) blir en källa i Inhämta med inloggning via OAuth2 och självregistrering där servern tillåter det. Appen hämtar projektets modeller och dokument och säger till när en nyare version finns, visar ärendena som pekar på byggdelarna, skapar ärenden ur markeringen i 3D-vyn med vyn som viewpoint, kommenterar och byter status, färgar modellen efter ärendestatus, sparar ärendena som tabell med verktyget Ärenden och dashboarden Ärendeläge, läser och skriver BCF-filer, skickar datamängder, filer och arbetsytepaket till servern, frågar serverns IFC-graf med Cypher, läser vad servern erbjuder och förklarar dess felkoder, och loggar varje anrop med ett X-Request-Id som paras med serverns begärandelogg, och administrerar servern (användare, projekt, klienter, sessioner, revision, inställningar, hälsa och graffrågor) från kortet Administration när du är administratör (se avsnittet [Dataspatium och Dataregium](#dataspatium-och-dataregium) nedan).
 - **Lätt start**: stora delar som R och Python laddas först när de används, och statusraden visar vad som laddas under tiden.
-- **Samordning med Kontroll, steg 1**: appen läser serverns kapabilitetsdokument, översätter dess felkoder, bär en gemensam ordlista på sju språk och öppnar en källa från länken Öppna i Dataspatium.
+- **Samordning med Dataregium, steg 1**: appen läser serverns kapabilitetsdokument, översätter dess felkoder, bär en gemensam ordlista på sju språk och öppnar en källa från länken Öppna i Dataspatium.
 - **Visualisera**: diagram med Vega-Lite (inklusive koropletkartor och punktkartor med medföljande kommun- och
   länsgränser, fasta axelgränser, logaritmisk skala, referenslinjer och trendlinjer), D3-mallar eller R,
   exporterade som SVG, PNG, PDF och PowerPoint, även i batch per grupp, och dashboards med gemensamma filter som
-  blir HTML eller PowerPoint (se [docs/visualisera.md](docs/visualisera.md)).
+  blir HTML eller PowerPoint (se [docs/visualisera.md](docs/sv/visualisera.md)).
 - **Dokumentera**: rapporter och kodböcker ur mallar som HTML, Word, PDF, Markdown eller LaTeX, även ett dokument
-  per kommun eller år (se [docs/dokumentmallar.md](docs/dokumentmallar.md)).
+  per kommun eller år (se [docs/dokumentmallar.md](docs/sv/dokumentmallar.md)).
 - **Exportera och dela**: data till CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata och RDS;
   i läget *Dela* paket med valda datamängder och objekt, ett meddelande och en ändringslogg, synk med ett
   GitHub-repo, datorns delningsmeny och publicering av dashboards och dokument som fristående HTML (se
-  [docs/dela.md](docs/dela.md)); direkt överföring till telefoner och andra datorer på samma nätverk med QR-kod
+  [docs/dela.md](docs/sv/dela.md)); direkt överföring till telefoner och andra datorer på samma nätverk med QR-kod
   och kontrollkod, och *Dataspatium Mobil* som tar emot, visar och skickar vidare på telefonen (se
-  [docs/mobil.md](docs/mobil.md)); granskning av personuppgifter innan något delas; kommentarer på datamängder
+  [docs/mobil.md](docs/sv/mobil.md)); granskning av personuppgifter innan något delas; kommentarer på datamängder
   och kolumner, säkerhetskopia av arbetsytan som ZIP och, i Edge och Chrome, en portabel mapp med vanliga filer.
 - **Hålla ordning**: mappar och taggar för datamängder, filter och sortering, och batchåtgärder på flera
   datamängder på en gång (ordna, paketera, exportera, hämta igen, köra recept, ta bort).
 - **Hitta snabbt**: läget *Söka* letar i alla kolumner i en eller alla datamängder, med fasetter som avgränsar och
-  sparade listor (se [docs/soka.md](docs/soka.md)); kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder,
+  sparade listor (se [docs/soka.md](docs/sv/soka.md)); kommandopaletten (Ctrl+K) växlar läge, öppnar datamängder,
   diagram och dashboards och kör åtgärder från ett enda sökfält.
 - **Fråga utan kod**: fliken *Fråga* i Söka kopplar datamängder, väljer kolumner och beräkningar, sätter villkor och
   visar den SQL som skapas; sparade listor avgränsar tabellen i Bearbeta och raderna i diagram.
@@ -153,49 +153,58 @@ ett paket.
 - **Grundkurs**: en interaktiv genomgång av alla åtta lägen med exempeldata, på alla sju språk. Den visas första
   gången appen öppnas och kan öppnas när som helst från hjälpen eller kommandopaletten.
 
-## Dataspatium och Kontroll
+## Dataspatium och Dataregium
 
-Dataspatium (appen i webbläsaren) och [Kontroll](https://github.com/marwiss/Kontroll) (en server för buildingSMARTs OpenCDE-API:er Foundation, BCF och
+*Dataregium hette Kontroll fram till den 8 november 2026.*
+
+*Dataregium hette Dataregium fram till den 8 november 2026.*
+
+*Dataregium hette Dataregium fram till den 8 november 2026.*
+
+*Dataregium hette Dataregium fram till den 8 november 2026.*
+
+*Dataregium hette Dataregium fram till den 8 november 2026.*
+
+*Dataregium hette Dataregium fram till den 8 november 2026.*
+
+Dataspatium (appen i webbläsaren) och [Dataregium](https://github.com/marwiss/Dataregium) (en server för buildingSMARTs OpenCDE-API:er Foundation, BCF och
 Documents) är utvecklade för att fungera tillsammans som klient och server. Appen lägger till servern som källa i Inhämta, loggar in
 med OAuth2 och registrerar sig själv som klient när servern tillåter det, hämtar projektets modeller och dokument, läser och skriver
 ärenden med viewpoints ur 3D-vyn, skickar datamängder, filer och arbetsytepaket tillbaka genom Documents API, frågar serverns
 IFC-graf med Cypher och loggar varje anrop med samma X-Request-Id som servern skriver i sin begärandelogg. Frågorna mot grafen och administrationen är tillägg utanför specifikationerna; allt annat går genom de tre OpenCDE-API:erna, så
-andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Kontrolls README och `docs/client-guide.md` beskriver samarbetet från
-serverns sida; här beskrivs det i [kallor.md](docs/kallor.md) och [cad-bim.md](docs/cad-bim.md).
+andra OpenCDE-klienter fungerar också. Servern behövs inte för resten av appen: utan server fungerar allt annat som förut. Dataregiums README och `docs/client-guide.md` beskriver samarbetet från
+serverns sida; här beskrivs det i [kallor.md](docs/sv/kallor.md) och [cad-bim.md](docs/sv/cad-bim.md).
 
 Appen talar BCF API 3.0 och 2.1, så den ansluter också till servrar som bara har 2.1, och den ritar och frågar serverns IFC-graf direkt från Inhämta.
 
-Dataspatium 2.0.0 fungerar med Kontroll 2.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
-[snabbstart.md](docs/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
+Dataspatium 2.0.0 fungerar med Dataregium 2.0.0. Båda får samma utgåvenummer, så samma nummer hör ihop. Snabbstarten
+[snabbstart.md](docs/sv/snabbstart.md) tar paret från ingenting till ett ärende på tjugo minuter.
 
 ## Lär dig mer
 
 - **Handboken** i appen: samma dokumentation som här, med sökning; öppna den med ? uppe till höger eller F1.
 - **Grundkursen** i appen: en interaktiv genomgång av alla lägen med exempeldata; öppna den från hjälpen (?)
   eller med Ctrl+K.
-- [Kom igång](docs/kom-igang.md): steg för steg med vanliga frågor.
-- [Snabbstart med Kontroll](docs/snabbstart.md): tjugo minuter från ingenting till ett ärende skapat i 3D-vyn och synligt på servern.
-- [Användarguide](docs/anvandarguide.md): hela arbetsflödet från fil till rapport.
-- [Vanliga frågor](docs/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
-- [De åtta lägena](docs/lagen.md): vad som finns var och varför.
-- [Söka](docs/soka.md) och [Dela](docs/dela.md): hitta utan kod, och ge data till andra.
-- [Dataspatium Mobil](docs/mobil.md): telefonen som kurir, mottagare och visare; överföring mellan enheter.
-- [Anteckningsbok](docs/anteckningsbok.md): text, R, Python och SQL i celler som blir en rapport.
-- [Dokument och bilder](docs/dokument.md): PDF, Word, OpenDocument, Markdown och bilder som datamängder; dokumentvy, galleri och verktygen Text och Bilder.
-- [Kartor](docs/kartor.md): kartan i Bearbeta, kartvyer i Visualisera, geoverktygen och QGIS-projekt.
-- [R i Dataspatium](docs/r-guide.md) och [Python i Dataspatium](docs/python.md): konsolerna, `dm_read()`,
+- [Kom igång](docs/sv/kom-igang.md): steg för steg med vanliga frågor.
+- [Snabbstart med Dataregium](docs/sv/snabbstart.md): tjugo minuter från ingenting till ett ärende skapat i 3D-vyn och synligt på servern.
+- [Användarguide](docs/sv/anvandarguide.md): hela arbetsflödet från fil till rapport.
+- [Vanliga frågor](docs/sv/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
+- [De åtta lägena](docs/sv/lagen.md): vad som finns var och varför.
+- [Söka](docs/sv/soka.md) och [Dela](docs/sv/dela.md): hitta utan kod, och ge data till andra.
+- [Dataspatium Mobil](docs/sv/mobil.md): telefonen som kurir, mottagare och visare; överföring mellan enheter.
+- [Anteckningsbok](docs/sv/anteckningsbok.md): text, R, Python och SQL i celler som blir en rapport.
+- [Dokument och bilder](docs/sv/dokument.md): PDF, Word, OpenDocument, Markdown och bilder som datamängder; dokumentvy, galleri och verktygen Text och Bilder.
+- [Kartor](docs/sv/kartor.md): kartan i Bearbeta, kartvyer i Visualisera, geoverktygen och QGIS-projekt.
+- [R i Dataspatium](docs/sv/r-guide.md) och [Python i Dataspatium](docs/sv/python.md): konsolerna, `dm_read()`,
   `dm_write()`, paketen och diagrammen.
-- [Reguljära uttryck](docs/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
-- [Format och import](docs/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
-- [Öppna API:er](docs/api-konfiguration.md): de förinställda källorna, nycklar och hur du skriver en egen konfiguration.
-- [Visualisera](docs/visualisera.md): diagrambyggaren, D3-mallar, R-diagram, kartor och dashboards.
-- [Dokument och mallar](docs/dokumentmallar.md): mallspråket och utdataformaten.
-- [Säkerhet](docs/sakerhet.md): hotmodell, kontrollerna och proven som visar dem, personuppgifter och lagring, och hur en sårbarhet rapporteras.
-- [Licenser](docs/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
-- [Utveckling](docs/utveckling.md), [Arkitektur](docs/arkitektur.md) och [Stilguide](docs/stilguide.md) för
-  den som vill förstå koden; hur bidrag tas emot står i [CONTRIBUTING.md](CONTRIBUTING.md).
-- [Teknisk spik, fas 0](docs/fas0-spik.md): hur det bevisades att allt fungerar utan server.
-- [Teknisk spik inför 2.0](docs/fas0-2.md): WebRTC, Python, IFC, grafer och databaser prövade från file://.
+- [Reguljära uttryck](docs/sv/regex.md): mönster för att analysera, rätta och dela upp text i datamängder.
+- [Format och import](docs/sv/format.md): filformat, teckenkodning, decimaltecken, datum och kolumntyper.
+- [Öppna API:er](docs/sv/api-konfiguration.md): de förinställda källorna, nycklar och hur du skriver en egen konfiguration.
+- [Visualisera](docs/sv/visualisera.md): diagrambyggaren, D3-mallar, R-diagram, kartor och dashboards.
+- [Dokument och mallar](docs/sv/dokumentmallar.md): mallspråket och utdataformaten.
+- [Säkerhet](docs/sv/sakerhet.md): hotmodell, kontrollerna och proven som visar dem, personuppgifter och lagring, och hur en sårbarhet rapporteras.
+- [Licenser](docs/sv/licenser.md): vad du får göra med appen och vilka licenser tredjepartskomponenterna har.
+- Hur bidrag tas emot står i [CONTRIBUTING.md](CONTRIBUTING.md).
 - Externa resurser: [WebR](https://docs.r-wasm.org/webr/latest/), [R för nybörjare](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [SCB:s API](https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/).
 
@@ -225,9 +234,10 @@ säkerhetssårbarhet, följ [SECURITY.md](SECURITY.md) i stället för att öppn
 ## Utveckling
 
 - Inget byggsteg, inget node.js. Öppna `index.html` direkt, eller serva mappen med `python -m http.server 8080`.
+- Arkitektur i korthet: all egen kod är klassiska skript som registreras med `Dataspatium.define` i ordningen i `src/boot.js`; `src/platform` bär allt som är file://-specifikt (resurser, shims, workers, lagring, samtycke); motorerna SQLite, R (WebR) och Python (Pyodide) kör i workers; `src/ui` har designvariablerna, komponenterna (`dm-*`), skalet och ett läge per fil. Allt som renderas escapas, och inget hämtas från nätet utan din åtgärd och ditt samtycke.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` följt av `python tools/wrap_assets.py`.
-- Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge och Firefox). Se [docs/utveckling.md](docs/utveckling.md).
-- Säkerhet: proven för samtycke, hemligheter, granskning före delning, OAuth2 (PKCE, state, återhopp) och loggens maskering ingår i sviten; se [docs/sakerhet.md](docs/sakerhet.md).
+- Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge och Firefox).
+- Säkerhet: proven för samtycke, hemligheter, granskning före delning, OAuth2 (PKCE, state, återhopp) och loggens maskering ingår i sviten; se [docs/sakerhet.md](docs/sv/sakerhet.md).
 
 ## Licens
 
@@ -236,7 +246,7 @@ Dataspatiums egen kod, dokumentation och förinställningar (allt utom `vendor/`
 myndigheter och andra offentliga institutioner, men inte att ändra, bygga vidare på eller sprida vidare utan
 skriftligt tillstånd. Licensgivare är Dataspatiums upphovsperson, som nås via GitHub-kontot
 [marwiss](https://github.com/marwiss); öppna ett ärende för andra villkor. Vad licensen betyder i praktiken
-förklaras i [docs/licenser.md](docs/licenser.md).
+förklaras i [docs/licenser.md](docs/sv/licenser.md).
 
 Tredjepartskomponenter i `vendor/` har sina egna licenser (MIT, BSD, Apache-2.0, ISC, OFL, MPL, LGPL och GPL), se
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). R och de GPL-licensierade R-paketen distribueras oförändrade;

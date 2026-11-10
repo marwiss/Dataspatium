@@ -120,9 +120,9 @@ graf** dem som en grafdatamängd; annars *Spara som datamängd*. **Spara frågan
 köras igen med ett klick. Bolt över WebSocket omfattas inte av CORS; en egen server utan TLS (`bolt://`) nås bara från
 en sida över http://. Innehåller svaret noder ritas de också som en graf.
 
-## IFC-LPG på en Kontroll-server
+## IFC-LPG på en Dataregium-server
 
-Kontroll gör varje uppladdad IFC-fil till en graf: en nod per entitet, med klassen och alla dess överklasser som etiketter och
+Dataregium gör varje uppladdad IFC-fil till en graf: en nod per entitet, med klassen och alla dess överklasser som etiketter och
 IFC-attributen som egenskaper, och relationer som heter som attributen (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Grafen finns på servern och kan vara mycket större än vad som är rimligt att hämta hem. Därför ritas och frågas den direkt från
 *Inhämta*, och inget sparas förrän du ber om det.
@@ -165,7 +165,7 @@ grafdiagram i Visualisera. Klassen blir nodens etikett och alla etiketter följe
 `IfcWallStandardCase` i kopian. I fliken Cypher kan du slå på **Kör på servern** för en graf som sparats härifrån, och då svarar
 servern med all Cypher mot hela grafen i stället för delmängden mot kopian.
 
-En IFC-modell som hämtats från Kontroll har knappen **IFC-LPG** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
+En IFC-modell som hämtats från Dataregium har knappen **IFC-LPG** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
 modellens graf i Inhämta, i en Neo4j-källa på samma dator om det finns någon, annars i OpenCDE-källan.
 
 ## Fler verktyg i fliken Graf

@@ -1,8 +1,8 @@
 # Sikkerhed
 
 Sikkerheden er appens første krav. Dataspatium holder dine datasæt, API-nøgler og tokens i browseren og taler med servere
-(åbne API'er, OpenCDE-servere som Kontroll) kun, når du beder om det. Politikken er den samme som Kontrolls, fordi de to
-udvikles som et par og udgives med samme numre; Kontrolls halvdel findes i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/da/security)
+(åbne API'er, OpenCDE-servere som Dataregium) kun, når du beder om det. Politikken er den samme som Dataregiums, fordi de to
+udvikles som et par og udgives med samme numre; Dataregiums halvdel findes i [README](https://github.com/marwiss/Dataregium/blob/main/docs/da/README.md#personoplysninger)
 i det repo. Hvordan en sårbarhed rapporteres, står i [SECURITY.md](../../SECURITY.md).
 
 ## Trusselsmodel
@@ -42,8 +42,8 @@ Hver kontrol har en automatisk test i `tests/` eller en henvisning til den kode,
 ## Personoplysninger og opbevaring
 
 Hvad appen gemmer, hvor, og hvor længe. Alt ligger på din computer; intet sendes til appens ophavsperson, og ingen
-opdateringskontrol sker uden din handling. Kontrolls halvdel (hvad serveren gemmer om dig) står i
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/da/security/personal-data.md).
+opdateringskontrol sker uden din handling. Dataregiums halvdel (hvad serveren gemmer om dig) står i
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/da/README.md#personoplysninger).
 
 | Data | Hvor | Indhold | Gemmes |
 |---|---|---|---|
@@ -61,7 +61,7 @@ opdateringskontrol sker uden din handling. Kontrolls halvdel (hvad serveren gemm
 - Fra file:// i Chromium deler alle lokalt åbnede HTML-filer lagring. Hemmeligheder er krypteret, men et følsomt arbejdsområde
   bør køres fra en lokal server (`python -m http.server`) eller spejles til en portabel mappe.
 - Chromium anvender serverens `form-action` også på omdirigeringen efter login; serveren skal tillade appens tilbagekaldsadresse
-  (Kontroll gør det).
+  (Dataregium gør det).
 
 ## Rapportér en sårbarhed
 

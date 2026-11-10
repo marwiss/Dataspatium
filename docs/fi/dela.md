@@ -101,7 +101,7 @@ ovat, joten niiden sisällöstä kerrotaan ja päätät itse, tulevatko ne mukaa
 
 ## CDE:hen
 
-Välilehti *CDE:hen* lähettää aineiston projektiin OpenCDE-palvelimella, kuten Kontrollissa. Valitse palvelin, kirjaudu ja valitse
+Välilehti *CDE:hen* lähettää aineiston projektiin OpenCDE-palvelimella, kuten Dataregiumissa. Valitse palvelin, kirjaudu ja valitse
 projekti; valitse sitten, kirjoitetaanko aineisto tiedostomuotoon vai lähetetäänkö alkuperäinen tiedosto, ja meneekö se
 Documents API:n kautta, jossa palvelimen oma sivu kysyy otsikon, version ja projektin ja tiedosto lähetetään sitten osissa, vai
 BCF-asiakirjana, joka ottaa vain tiedoston. Aineisto kirjoitetaan tarkistuksen läpikäyneestä kopiosta, ja alkuperäiset tiedostot

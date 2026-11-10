@@ -9,7 +9,7 @@
 #   DATASPATIUM_CDE_URL=http://localhost:8000 DATASPATIUM_CDE_HELPER=http://127.0.0.1:8094 DATASPATIUM_CDE_CLIENT=dataspatium \
 #     tools/run-tests.sh --url "http://localhost:8080/tests/index.html" --browsers chromium
 #
-# The DATASPATIUM_CDE_* variables become the query parameters of the live test against Kontroll (tests/opencde-live.test.js):
+# The DATASPATIUM_CDE_* variables become the query parameters of the live test against Dataregium (tests/opencde-live.test.js):
 # URL -> cde, HELPER -> cdehelper, CLIENT -> cdeclient, USER -> cdeuser (the signed-in user's id, dm_manager by default), PROJECT -> cdeproject, GRAPH -> cdegraph, GRAPH_DB -> cdegraphdb,
 # GRAPH_USER -> cdegraphuser, GRAPH_PASS -> cdegraphpass, ADMIN_HELPER -> cdeadminhelper, BCF -> cdebcf (2.1 runs the suite through BCF API 2.1). The page must
 # then be served over http.

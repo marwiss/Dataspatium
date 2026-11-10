@@ -16,7 +16,7 @@ yourself. Security is the first requirement: no network call without your action
 - [Download and get started](#download-and-get-started)
 - [Requirements](#requirements)
 - [What you can do](#what-you-can-do)
-- [Dataspatium and Kontroll](#dataspatium-and-kontroll)
+- [Dataspatium and Dataregium](#dataspatium-and-dataregium)
 - [Learn more](#learn-more)
 - [Limitations in brief](#limitations-in-brief)
 - [Bugs and suggestions](#bugs-and-suggestions)
@@ -119,9 +119,9 @@ with a backup or a bundle.
 - **Code lists, descriptions and guides**: labels from SNI, SSYK, NACE and other lists with a click, data packages, DCAT-AP-SE, a quality declaration and four guides with real data (see [lagen.md](lagen.md)).
 - **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all seven languages.
 - **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
-- **Kontroll and OpenCDE**: an OpenCDE server such as [Kontroll](https://github.com/marwiss/Kontroll) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log, and administers the server (users, projects, clients, sessions, audit, settings, health and graph queries) from the card Administration when you are an administrator (see [Dataspatium and Kontroll](#dataspatium-and-kontroll) below).
+- **Dataregium and OpenCDE**: an OpenCDE server such as [Dataregium](https://github.com/marwiss/Dataregium) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log, and administers the server (users, projects, clients, sessions, audit, settings, health and graph queries) from the card Administration when you are an administrator (see [Dataspatium and Dataregium](#dataspatium-and-dataregium) below).
 - **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
-- **Coordination with Kontroll, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in seven languages and opens a source from the link Open in Dataspatium.
+- **Coordination with Dataregium, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in seven languages and opens a source from the link Open in Dataspatium.
 - **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
   county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
   dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
@@ -148,20 +148,32 @@ with a backup or a bundle.
 - **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
-## Dataspatium and Kontroll
+## Dataspatium and Dataregium
 
-Dataspatium (the app in the browser) and [Kontroll](https://github.com/marwiss/Kontroll) (a server for buildingSMART's OpenCDE APIs Foundation, BCF and
+*Dataregium was called Kontroll until 8 November 2026.*
+
+*Dataregium was called Dataregium until 8 November 2026.*
+
+*Dataregium was called Dataregium until 8 November 2026.*
+
+*Dataregium was called Dataregium until 8 November 2026.*
+
+*Dataregium was called Dataregium until 8 November 2026.*
+
+*Dataregium was called Dataregium until 8 November 2026.*
+
+Dataspatium (the app in the browser) and [Dataregium](https://github.com/marwiss/Dataregium) (a server for buildingSMART's OpenCDE APIs Foundation, BCF and
 Documents) are developed to work together as client and server. The app adds the server as a source in Import, signs in with OAuth2
 and registers itself as a client when the server allows it, fetches the project's models and documents, reads and writes issues with
 viewpoints from the 3D view, sends datasets, files and workspace bundles back through the Documents API, queries the server's IFC
 graph with Cypher and logs every request with the same X-Request-Id the server writes in its request log. The graph queries and the administration are extensions outside the specifications; everything else goes through the three
 OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for the rest of the app: without one, everything else
-works as before. Kontroll's README and `docs/client-guide.md` describe the
+works as before. Dataregium's README and `docs/client-guide.md` describe the
 cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
 
 The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
 
-Dataspatium 2.0.0 works with Kontroll 2.0.0. Both carry the same release number, so equal numbers belong together. The quick start
+Dataspatium 2.0.0 works with Dataregium 2.0.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
 ## Learn more
@@ -173,7 +185,7 @@ everywhere.
 - **The beginner's course** in the app: an interactive walkthrough of all the modes with example data; open it from
   the help (?) or with Ctrl+K.
 - [Getting started](kom-igang.md): step by step with common questions.
-- [Quick start with Kontroll](snabbstart.md): twenty minutes from nothing to an issue created in the 3D view and visible on the server.
+- [Quick start with Dataregium](snabbstart.md): twenty minutes from nothing to an issue created in the 3D view and visible on the server.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
 - [The eight modes](lagen.md): what is where and why.
@@ -191,8 +203,7 @@ everywhere.
 - [Documents and templates](dokumentmallar.md): the template language and the output formats.
 - [Security](sakerhet.md): threat model, the controls and the tests that prove them, personal data and retention, and how to report a vulnerability.
 - [Licences](licenser.md): what you may do with the app and which licences the third-party components have.
-- [Development](../utveckling.md), [Architecture](../arkitektur.md) and [Style guide](../stilguide.md) for those
-  who want to understand the code (in Swedish); how contributions are received is in
+- How contributions are received is in
   [CONTRIBUTING.md](../../CONTRIBUTING.md) (Swedish).
 - External resources: [WebR](https://docs.r-wasm.org/webr/latest/), [R for beginners](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [Statistics Sweden's API](https://www.scb.se/en/services/open-data-api/).
@@ -224,8 +235,9 @@ vulnerability follow [SECURITY.md](../../SECURITY.md) instead of opening an issu
 ## Development
 
 - No build step, no node.js. Open `index.html` directly, or serve the folder with `python -m http.server 8080`.
+- Architecture in brief: all of the app's own code is classic scripts registered with `Dataspatium.define` in the order of `src/boot.js`; `src/platform` carries everything specific to file:// (assets, shims, workers, storage, consent); the engines SQLite, R (WebR) and Python (Pyodide) run in workers; `src/ui` holds the design tokens, the components (`dm-*`), the shell and one mode per file. Everything rendered is escaped, and nothing is fetched from the network without your action and consent.
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
-- Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). See [utveckling.md](../utveckling.md)
+- Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox).
   (Swedish).
 - Security: the tests for consent, secrets, review before sharing, OAuth2 (PKCE, state, callback) and log masking are part of the suite; see [sakerhet.md](sakerhet.md).
 

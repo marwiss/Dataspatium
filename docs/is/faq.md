@@ -57,8 +57,7 @@ fylgja aldrei með þegar þú deilir uppsetningu.
 
 ## Hversu stór gagnasöfn ræður forritið við?
 
-Nokkrar milljónir raða í Edge og Chrome, heldur færri í Firefox; minni vafrans setur mörkin. Mældir tímar fyrir milljón raðir
-eru í [utveckling.md](../utveckling.md) (á sænsku). Textaskrár sem eru 64 MB eða stærri eru lesnar í bútum, svo lesturinn sjálfur
+Nokkrar milljónir raða í Edge og Chrome, heldur færri í Firefox; minni vafrans setur mörkin. Textaskrár sem eru 64 MB eða stærri eru lesnar í bútum, svo lesturinn sjálfur
 krefst þess ekki að öll skráin rúmist í minni sem texti.
 
 ## Hvað greinir Firefox frá Edge og Chrome?
@@ -248,7 +247,7 @@ hana sjálfur sem JSON eða gagnasafn. Sjá [kallor.md](kallor.md).
 
 ## Get ég séð IFC-net líkans og spurt það með Cypher?
 
-Já, ef líkanið er á Kontroll-þjóni. Opnaðu uppsprettuna í Sækja, spjaldið *IFC-LPG* eða Neo4j-uppsprettu, og veldu líkan og sýn.
+Já, ef líkanið er á Dataregium-þjóni. Opnaðu uppsprettuna í Sækja, spjaldið *IFC-LPG* eða Neo4j-uppsprettu, og veldu líkan og sýn.
 Hnútar og vensl eru teiknuð, þú sækir nágranna með tvísmelli og skrifar eigið Cypher í reitinn. Sjá [grafer.md](grafer.md).
 
 ## Virkar forritið með þjóni sem hefur aðeins BCF API 2.1?

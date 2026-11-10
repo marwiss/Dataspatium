@@ -118,7 +118,7 @@ tallentaa lähteelle. Yhteys vaatii suostumuksen (tarkoitus Neo4j) eikä kuulu C
 ### OpenCDE-palvelin (BCF ja Documents API)
 
 Valinta **OpenCDE** kohdassa *Lisää lähteitä* (perhe **OpenCDE (BCF, Documents)**, joka on myös kohdassa *Tietokantalähde*) yhdistää palvelimeen, joka noudattaa buildingSMARTin
-OpenCDE-rajapintoja, esimerkiksi [Kontroll](https://github.com/marwiss/Kontroll). Anna palvelimen osoite ja
+OpenCDE-rajapintoja, esimerkiksi [Dataregium](https://github.com/marwiss/Dataregium). Anna palvelimen osoite. Jätä asiakastunnus tyhjäksi, kun palvelin sallii sovelluksen rekisteröityä itse (ks. alla), muuten
 asiakastunnus, jonka palvelimen pääkäyttäjä on rekisteröinyt Dataspatiumille (julkinen asiakas, jonka
 uudelleenohjausosoite on `http://127.0.0.1:8080/oauth-callback.html` tai vastaava sovelluksen osoitteelle). Lähde avaa
 näkymän, jossa kirjaudut palvelimelle (OAuth2 ja PKCE ponnahdusikkunassa; file://-osoitteesta liität osoitteen, johon
@@ -134,7 +134,7 @@ jättää pois kohdan *Hae asiakirjat*. Valintaikkunan kohdassa *Lisää asetuks
 näkymässä. Versiossa 2.1 *Projektin tiedostot* luettelee vain BCF-asiakirjat, asioilla ei ole palvelimen juoksevaa numeroa eikä viewpointia voi poistaa. Vastineeksi
 kommentti voi olla vastaus toiseen: painike *Vastaa* paneelissa *Asiat*.
 
-Kortti *IFC-LPG* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-lpg-kontroll-palvelimella).
+Kortti *IFC-LPG* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-lpg-dataregium-palvelimella).
 
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
 omaa lajia olevan aineiston, joten IFC-tiedostosta tulee malli ja CSV-tiedostosta taulukko, ja aineisto muistaa, miltä
@@ -143,12 +143,14 @@ versio* kysyy palvelimelta, onko asiakirjasta uudempi versio; se haetaan silloin
 kertoo myös, mitä voit tehdä projektissa, esimerkiksi luoda asioita tai ladata asiakirjoja. Kun lähde luodaan, valintaikkuna
 kysyy palvelimelta, mistä kirjaudutaan; jos palvelin ei silloin vastaa, sovellus kysyy uudelleen ensimmäisessä kirjautumisessa.
 
+Kun palvelimen oma sivu on auki ponnahdusikkunassa (kirjautuminen, asiakirjojen valinta, lähetys), sovellus näyttää painikkeen *Peruuta*, jotta voit lopettaa odottamisen, jos ikkuna suljettiin tai katosi.
+
 Jos palvelin sallii, sovellus rekisteröi itsensä asiakkaaksi, kun jätät asiakastunnuksen tyhjäksi, jolloin järjestelmänvalvojan
 ei tarvitse jakaa mitään. Aineistot voivat myös palata palvelimelle: Jaa-tilan välilehti *CDE:hen* lähettää aineiston missä
 tahansa muodossa, tai alkuperäisen tiedoston, projektiin joko Documents API:n kautta, jossa palvelimen oma sivu kysyy otsikon ja
 version, tai BCF-asiakirjana. Palvelimelta haettu aineisto voidaan lähettää asiakirjansa uutena versiona.
 
-Kontrollin IFC-graafille näkymä tarjoaa aloituskoodia: graafin mallit ja viimeisin valmis malli asiakirjaa kohti, rakennusosat luokittain, seinien GTIN, asiat tilan mukaan,
+Dataregiumin IFC-graafille näkymä tarjoaa aloituskoodia: graafin mallit ja viimeisin valmis malli asiakirjaa kohti, rakennusosat luokittain, seinien GTIN, asiat tilan mukaan,
 asiat ja niiden rakennusosat, rakennusosaa koskevat asiat sekä graafi asioista, viewpointeista ja komponenteista. Valitse kysely,
 muokkaa ja aja. Se edellyttää, että palvelimen ylläpitäjä on avannut Boltin; kehityspino tekee niin, tuotantopalvelin harvoin.
 
@@ -163,18 +165,18 @@ koskaan tunnuskutsuja). Loki on vain muistissa eikä sitä lähetetä koskaan; s
 Sovellus asettaa jokaiseen kutsuun otsakkeen X-Request-Id, jotta palvelimen oma loki voidaan yhdistää sovelluksen lokiin; jos
 palvelin kieltää otsakkeen, se poistetaan käytöstä kyseiseltä lähteeltä.
 
-Palvelimen puoli kuvataan Kontrollin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/client-guide.md) (miten asiakas yhdistää), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parin testiajot) ja [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
+Palvelimen puoli kuvataan Dataregiumin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/client-guide.md) (miten asiakas yhdistää) ja [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
 
-Kontroll kuvaa lisäyksensä osoitteessa `GET /.well-known/kontroll`; sovellus lukee asiakirjan, kun lähde avataan, ja kirjoittaa
+Dataregium kuvaa lisäyksensä osoitteessa `GET /.well-known/dataregium`; sovellus lukee asiakirjan, kun lähde avataan, ja kirjoittaa
 otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC-LPG,
 graafikyselyt). Palvelimella ilman asiakirjaa ei ole lisäyksiä, ja kaikki määrittelyjen mukainen toimii silti. Palvelimen virhekoodit
 (`code` vastauksessa, esimerkiksi `reauthentication_required`) näytetään omalla kielelläsi; tuntemattomat koodit näyttävät palvelimen
 oman tekstin. Linkki *Avaa Dataspatiumissa* palvelimen sivuilla on muotoa `index.html#/inhamta/opencde?server=https://…` ja avaa uuden
 lähteen valintaikkunan osoite täytettynä. Jos palvelin on jo lähteenä, se avautuu suoraan. Linkki voi myös nimetä projektin ja asiakirjan
-(`&project=…&document=…&version=…`): projekti valitaan ja asiakirja haetaan datamääräksi, kun olet kirjautunut. Sivut, jotka Kontroll
+(`&project=…&document=…&version=…`): projekti valitaan ja asiakirja haetaan datamääräksi, kun olet kirjautunut. Sivut, jotka Dataregium
 avaa ponnahdusikkunassa (kirjautuminen, lähetys, asiakirjojen valinta), näkyvät sovelluksen kielellä.
 
-**Hallinta.** Jos olet järjestelmänvalvoja Kontroll-palvelimella, lähteen näkymä näyttää kortin *Hallinta* (kun palvelimen kyvykkyysasiakirja sanoo hallintarajapinnan olevan päällä). Painike *Kirjaudu järjestelmänvalvojana* pyytää oikeuden `admin`; sen jälkeen ovat välilehdet Yleiskuva, Käyttäjät (luo, muuta, poista käytöstä, nollaa salasana, poista), Projektit (luo, nimeä uudelleen, jäsenet ja roolit, poista), Asiakkaat (rekisteröi, muuta, vaihda salaisuus, peru tunnukset, poista), Istunnot (lopeta yksi tai käyttäjän kaikki), Tapahtumaloki, Asetukset ja Kunto sekä Graafikysely, kun palvelin sallii lukevan Cypherin IFC-graafiin. Vaaralliset toimet vaativat tuoreen kirjautumisen: palvelin vastaa `reauthentication_required`, sovellus avaa kirjautumisen uudelleen ja toistaa kutsun. Kertakäyttöiset arvot (alkusalasana, asiakassalaisuus) näytetään kerran Kopioi-painikkeen kanssa, eikä niitä kirjoiteta lokiin. Jokainen luettelo voidaan tallentaa datamääränä ja hakea uudelleen Hallitse-tilasta.
+**Hallinta.** Jos olet järjestelmänvalvoja Dataregium-palvelimella, lähteen näkymä näyttää kortin *Hallinta* (kun palvelimen kyvykkyysasiakirja sanoo hallintarajapinnan olevan päällä). Painike *Kirjaudu järjestelmänvalvojana* pyytää oikeuden `admin`; sen jälkeen ovat välilehdet Yleiskuva, Käyttäjät (luo, muuta, poista käytöstä, nollaa salasana, poista), Projektit (luo, nimeä uudelleen, jäsenet ja roolit, poista), Asiakkaat (rekisteröi, muuta, vaihda salaisuus, peru tunnukset, poista), Istunnot (lopeta yksi tai käyttäjän kaikki), Tapahtumaloki, Asetukset ja Kunto sekä Graafikysely, kun palvelin sallii lukevan Cypherin IFC-graafiin. Vaaralliset toimet vaativat tuoreen kirjautumisen: palvelin vastaa `reauthentication_required`, sovellus avaa kirjautumisen uudelleen ja toistaa kutsun. Kertakäyttöiset arvot (alkusalasana, asiakassalaisuus) näytetään kerran Kopioi-painikkeen kanssa, eikä niitä kirjoiteta lokiin. Jokainen luettelo voidaan tallentaa datamääränä ja hakea uudelleen Hallitse-tilasta.
 
 ## Avoin paikkatieto
 

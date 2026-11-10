@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Kontroll's administration API (an extension outside the OpenCDE specifications, client-guide §7) from the app: what the pages
+ * Dataregium's administration API (an extension outside the OpenCDE specifications, client-guide §7) from the app: what the pages
  * under /admin show, as JSON under /admin/api/, with a token that holds the scope `admin` and belongs to an administrator. Lists
  * answer {items, total}; writes take the bodies the pages use. Dangerous operations (deleting, resetting a password, rotating a
  * secret, giving or taking the administrator flag) need a fresh sign-in: the server answers 403 with the code

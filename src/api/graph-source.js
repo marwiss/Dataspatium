@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The ways to a server's graph. Two transports give the same answer {columns, rows, graph, truncated}: Bolt through a Neo4j source, and
- * the read-only graph query of Kontroll's administration API (decided as the first choice in production: no database port, the server's
+ * the read-only graph query of Dataregium's administration API (decided as the first choice in production: no database port, the server's
  * row and time limits, hashes removed, every statement audited). Also how a saved graph finds its server again, and how a model fetched
  * from a CDE opens its graph in Inhämta.
  */

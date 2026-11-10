@@ -120,9 +120,9 @@ niðurstöðuna sem töflu þar sem hnútar og vensl eru flött niður í eiginl
 uppsprettuna svo hana megi keyra aftur með einum smelli. Bolt yfir WebSocket fellur ekki undir CORS; eigin þjónn án TLS
 (`bolt://`) næst aðeins frá síðu yfir http://. Innihaldi svarið hnúta eru þeir líka teiknaðir sem net.
 
-## IFC-LPG á Kontroll-þjóni
+## IFC-LPG á Dataregium-þjóni
 
-Kontroll gerir hverja upphlaðna IFC-skrá að neti: einn hnút fyrir hverja einingu, með flokkinn og alla yfirflokka hans sem merkimiða og
+Dataregium gerir hverja upphlaðna IFC-skrá að neti: einn hnút fyrir hverja einingu, með flokkinn og alla yfirflokka hans sem merkimiða og
 IFC-eigindin sem eiginleika, og vensl sem heita eftir eigindunum (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`). Netið er á þjóninum og
 getur verið miklu stærra en sanngjarnt er að sækja. Þess vegna er það teiknað og spurt beint úr *Sækja*, og ekkert er vistað fyrr en þú biður um það.
 
@@ -162,7 +162,7 @@ milli þeirra, eins og Neo4j Browser gerir. Forritið segir frá þegar svar hef
 verður merkimiði hnútsins og allir merkimiðar fylgja með, svo `MATCH (w:IfcWall)` finnur líka `IfcWallStandardCase` í afritinu. Í flipanum Cypher geturðu
 kveikt á **Keyra á þjóninum** fyrir net sem var vistað héðan, og þá svarar þjónninn með öllu Cypher gegn öllu netinu í stað hlutmengisins gegn afritinu.
 
-IFC-líkan sótt úr Kontroll hefur hnappinn **IFC-LPG** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
+IFC-líkan sótt úr Dataregium hefur hnappinn **IFC-LPG** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
 á sömu tölvu ef hún er til, annars í OpenCDE-uppsprettunni.
 
 ## Fleiri tól í flipanum Net

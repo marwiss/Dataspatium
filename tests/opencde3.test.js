@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for Kontroll II against a mocked OpenCDE server (virtual providers and a spy on api/http, no network): the app registers
+ * Tests for Dataregium II against a mocked OpenCDE server (virtual providers and a spy on api/http, no network): the app registers
  * itself when the server allows it, a new issue from the marked elements with the view as viewpoint, a comment and a new status
  * from the panel, the project as a BCF file and the file back as tables, and Dela sending a dataset through the Documents API
  * and as a BCF document.

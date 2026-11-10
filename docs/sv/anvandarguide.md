@@ -243,4 +243,4 @@ mallspråket och är desamma på alla språk. Dokumentationen finns på alla sju
 
 Läs loggen längst ned: fel som du kan åtgärda beskrivs på ditt språk med förslag. Om R hänger sig, använd *Starta om
 R*; datamängderna påverkas inte. Ta säkerhetskopia innan du rensar webbläsardata. Buggar rapporteras som ärenden på
-GitHub, se [CONTRIBUTING.md](../CONTRIBUTING.md).
+GitHub, se [CONTRIBUTING.md](../../CONTRIBUTING.md).

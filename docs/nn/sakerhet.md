@@ -1,8 +1,8 @@
 # Tryggleik
 
 Tryggleiken er det første kravet til appen. Dataspatium held datasetta, API-nøklane og tokena dine i nettlesaren og snakkar med
-tenarar (opne API-ar, OpenCDE-tenarar som Kontroll) berre når du ber om det. Policyen er den same som Kontrolls, sidan dei to
-blir utvikla som eit par og sleppte med same nummer; Kontrolls halvdel ligg i [docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/nn/security)
+tenarar (opne API-ar, OpenCDE-tenarar som Dataregium) berre når du ber om det. Policyen er den same som Dataregiums, sidan dei to
+blir utvikla som eit par og sleppte med same nummer; Dataregiums halvdel ligg i [README](https://github.com/marwiss/Dataregium/blob/main/docs/nn/README.md#personopplysningar)
 i det repoet. Korleis ei sårbarheit blir rapportert, står i [SECURITY.md](../../SECURITY.md).
 
 ## Trugsmålsmodell
@@ -42,8 +42,8 @@ Kvar kontroll har eit automatisk prov i `tests/` eller ein peikar til koden som 
 ## Personopplysningar og lagring
 
 Kva appen lagrar, kvar, og kor lenge. Alt ligg på datamaskina di; ingenting blir sendt til opphavspersonen til appen, og ingen
-oppdateringskontroll blir gjord utan di handling. Kontrolls halvdel (kva tenaren lagrar om deg) står i
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/security/personal-data.md).
+oppdateringskontroll blir gjord utan di handling. Dataregiums halvdel (kva tenaren lagrar om deg) står i
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/nn/README.md#personopplysningar).
 
 | Data | Kvar | Innhald | Blir lagra |
 |---|---|---|---|
@@ -61,7 +61,7 @@ oppdateringskontroll blir gjord utan di handling. Kontrolls halvdel (kva tenaren
 - Frå file:// i Chromium deler alle lokalt opna HTML-filer lagring. Løyndomar er krypterte, men eit sensitivt arbeidsområde bør
   køyrast frå ein lokal tenar (`python -m http.server`) eller speglast til ei portabel mappe.
 - Chromium bruker `form-action` frå tenaren òg på omdirigeringa etter innlogginga; tenaren må tillate tilbakekallsadressa til
-  appen (Kontroll gjer det).
+  appen (Dataregium gjer det).
 
 ## Rapporter ei sårbarheit
 

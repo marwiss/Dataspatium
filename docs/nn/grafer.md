@@ -120,9 +120,9 @@ dei som eit grafdatasett; elles *Lagre som datasett*. **Lagre spørjinga** legg 
 køyrast igjen med eitt klikk. Bolt over WebSocket er ikkje omfatta av CORS; ein eigen tenar utan TLS (`bolt://`) blir berre nådd frå
 ei side over http://. Inneheld svaret nodar, blir dei òg teikna som ein graf.
 
-## IFC-LPG på ein Kontroll-tenar
+## IFC-LPG på ein Dataregium-tenar
 
-Kontroll gjer kvar opplasta IFC-fil til ein graf: éin node per entitet, med klassen og alle overklassene hennar som etikettar og
+Dataregium gjer kvar opplasta IFC-fil til ein graf: éin node per entitet, med klassen og alle overklassene hennar som etikettar og
 IFC-attributta som eigenskapar, og relasjonar som heiter som attributta (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Grafen ligg på tenaren og kan vere langt større enn det er rimeleg å hente heim. Difor blir han teikna og spurd direkte frå *Hent*,
 og ingenting blir lagra før du ber om det.
@@ -165,7 +165,7 @@ i Visualiser. Klassen blir etiketten til noden og alle etikettar følgjer med, s
 i kopien. I fana Cypher kan du slå på **Køyr på tenaren** for ein graf som er lagra herfrå, og då svarer tenaren med all Cypher mot heile
 grafen i staden for delmengda mot kopien.
 
-Ein IFC-modell henta frå Kontroll har knappen **IFC-LPG** i Handter, og for ein vald bygningsdel i Bearbeid. Han opnar grafen til
+Ein IFC-modell henta frå Dataregium har knappen **IFC-LPG** i Handter, og for ein vald bygningsdel i Bearbeid. Han opnar grafen til
 modellen i Hent, i ei Neo4j-kjelde på same datamaskin viss det finst ei, elles i OpenCDE-kjelda.
 
 ## Fleire verktøy i fana Graf

@@ -1,9 +1,9 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for Kontroll III against a mocked OpenCDE server (virtual providers and a spy on api/http, no network): issues against
+ * Tests for Dataregium III against a mocked OpenCDE server (virtual providers and a spy on api/http, no network): issues against
  * the model's elements as plain logic, colours in the 3D view, the panel's colours, table and chart, the tool Ärenden and its
- * starters, the board Ärendeläge from Hantera's card, Cypher starters for Kontroll's IFC graph, and a workspace bundle that goes
+ * starters, the board Ärendeläge from Hantera's card, Cypher starters for Dataregium's IFC graph, and a workspace bundle that goes
  * to the CDE from Dela and comes back through the source view's file list.
  */
 (function () {
@@ -275,7 +275,7 @@
     return 'ok';
   }, 60000);
 
-  test('opencde IV: Cypher starters for Kontroll\'s IFC graph in the Neo4j view', async (assert) => {
+  test('opencde IV: Cypher starters for Dataregium\'s IFC graph in the Neo4j view', async (assert) => {
     const neo4j = D.require('api/families/neo4j');
     assert.equal(neo4j.EXAMPLES.length, 8);
     for (const x of neo4j.EXAMPLES) assert.ok(/^MATCH /.test(x.cypher) && t('neo4j.example.' + x.id) !== 'neo4j.example.' + x.id, x.id);

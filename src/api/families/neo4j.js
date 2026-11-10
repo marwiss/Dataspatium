@@ -86,7 +86,7 @@
     }
     const isNode = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isNode ? neo4j.isNode(v) : (v.labels !== undefined && v.properties !== undefined && v.identity !== undefined)));
     const isRel = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isRelationship ? neo4j.isRelationship(v) : (v.type !== undefined && v.start !== undefined && v.end !== undefined && v.properties !== undefined)));
-    // A driver's path has segments; the JSON of Kontroll's graph query has {nodes, relationships, length}.
+    // A driver's path has segments; the JSON of Dataregium's graph query has {nodes, relationships, length}.
     const isPath = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isPath ? neo4j.isPath(v) : ((Array.isArray(v.segments) && v.start) || (Array.isArray(v.nodes) && Array.isArray(v.relationships)))));
     const idOf = (ent) => String(ent.elementId !== undefined ? ent.elementId : (ent.identity && typeof ent.identity.toNumber === 'function' ? ent.identity.toNumber() : ent.identity));
     /** Driver values → plain JSON: integers to numbers, temporal values to strings. */
@@ -144,7 +144,7 @@
       return { columns, rows, graph: g };
     }
     /**
-     * The JSON answer of Kontroll's graph query (/admin/api/graph/query: nodes as {identity, labels, properties}, relationships as
+     * The JSON answer of Dataregium's graph query (/admin/api/graph/query: nodes as {identity, labels, properties}, relationships as
      * {identity, type, start, end, properties}, paths as {nodes, relationships, length}) in the same shape as `run`.
      * @param {{columns?: string[], rows?: any[], truncated?: boolean}} answer
      */
@@ -158,7 +158,7 @@
     }
     /** A readable description of what a query touched (for the dataset's source). */
     /**
-     * Starter queries for Kontroll's IFC graph (its docs/ifc-lpg.md and graph-schema.md): the models, the latest finished model per
+     * Starter queries for Dataregium's IFC graph (its docs/ifc-lpg.md and graph-schema.md): the models, the latest finished model per
      * document (Documents API versions share document_id; a BCF document is one of its own), the elements, the issues and what
      * joins them. Entities hang on the model by model_id. Other graphs have their own words; the user edits.
      */

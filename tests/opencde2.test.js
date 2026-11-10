@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for Kontroll I against a mocked OpenCDE server (virtual providers, no network): the project's files and what the user
+ * Tests for Dataregium I against a mocked OpenCDE server (virtual providers, no network): the project's files and what the user
  * may do, a model fetched from the CDE that remembers its origin, the version check in Hantera, the issues panel in the model
  * view, and a table of issues as a facet with code and charts to start from.
  */

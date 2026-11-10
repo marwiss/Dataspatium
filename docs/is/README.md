@@ -15,7 +15,7 @@ Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei
 - [Sækja og hefjast handa](#sækja-og-hefjast-handa)
 - [Kröfur](#kröfur)
 - [Hvað þú getur gert](#hvað-þú-getur-gert)
-- [Dataspatium og Kontroll](#dataspatium-og-kontroll)
+- [Dataspatium og Dataregium](#dataspatium-og-dataregium)
 - [Lærðu meira](#lærðu-meira)
 - [Takmarkanir í stuttu máli](#takmarkanir-í-stuttu-máli)
 - [Villur og tillögur](#villur-og-tillögur)
@@ -113,9 +113,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
 - **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sjö tungumálunum.
 - **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
-- **Kontroll og OpenCDE**: OpenCDE-þjónn eins og [Kontroll](https://github.com/marwiss/Kontroll) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins, og stjórnar þjóninum (notendur, verkefni, biðlarar, setur, atvikaskrá, stillingar, heilsa og graffyrirspurnir) úr spjaldinu Stjórnun þegar þú ert stjórnandi (sjá kaflann [Dataspatium og Kontroll](#dataspatium-og-kontroll) hér fyrir neðan).
+- **Dataregium og OpenCDE**: OpenCDE-þjónn eins og [Dataregium](https://github.com/marwiss/Dataregium) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins, og stjórnar þjóninum (notendur, verkefni, biðlarar, setur, atvikaskrá, stillingar, heilsa og graffyrirspurnir) úr spjaldinu Stjórnun þegar þú ert stjórnandi (sjá kaflann [Dataspatium og Dataregium](#dataspatium-og-dataregium) hér fyrir neðan).
 - **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
-- **Samræming við Kontroll, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sjö tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
+- **Samræming við Dataregium, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sjö tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
 - **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
   PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
   [visualisera.md](visualisera.md)).
@@ -141,19 +141,31 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
-## Dataspatium og Kontroll
+## Dataspatium og Dataregium
 
-Dataspatium (forritið í vafranum) og [Kontroll](https://github.com/marwiss/Kontroll) (þjónn fyrir OpenCDE-API buildingSMART: Foundation, BCF og Documents)
+*Dataregium hét Kontroll til 8. nóvember 2026.*
+
+*Dataregium hét Dataregium til 8. nóvember 2026.*
+
+*Dataregium hét Dataregium til 8. nóvember 2026.*
+
+*Dataregium hét Dataregium til 8. nóvember 2026.*
+
+*Dataregium hét Dataregium til 8. nóvember 2026.*
+
+*Dataregium hét Dataregium til 8. nóvember 2026.*
+
+Dataspatium (forritið í vafranum) og [Dataregium](https://github.com/marwiss/Dataregium) (þjónn fyrir OpenCDE-API buildingSMART: Foundation, BCF og Documents)
 eru þróuð til að vinna saman sem biðlari og þjónn. Forritið bætir þjóninum við sem uppsprettu í Sækja, skráir sig inn með OAuth2 og
 skráir sig sjálft sem biðlara þegar þjónninn leyfir það, sækir líkön og skjöl verkefnisins, les og skrifar mál með viewpoints úr
 3D-sýninni, sendir gagnasöfn, skrár og vinnusvæðispakka aftur í gegnum Documents API, spyr IFC-graf þjónsins með Cypher og skráir
 hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. Fyrirspurnirnar í grafið og stjórnunin eru viðbætur utan forskriftanna; allt annað fer í gegnum þrjú OpenCDE-API, svo aðrir
-OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Kontroll og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
+OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Dataregium og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
 [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
 
-Dataspatium 2.0.0 virkar með Kontroll 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
+Dataspatium 2.0.0 virkar með Dataregium 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
 ## Lærðu meira
@@ -164,7 +176,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - **Grunnnámskeiðið** í forritinu: gagnvirk yfirferð yfir alla hami með sýnigögnum; opnaðu það úr hjálpinni (?) eða
   með Ctrl+K.
 - [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
-- [Fljótleg byrjun með Kontroll](snabbstart.md): tuttugu mínútur frá engu að máli sem er búið til í þrívíddarsýninni og sést á þjóninum.
+- [Fljótleg byrjun með Dataregium](snabbstart.md): tuttugu mínútur frá engu að máli sem er búið til í þrívíddarsýninni og sést á þjóninum.
 - [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
 - [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
@@ -182,8 +194,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Skjöl og snið](dokumentmallar.md): sniðmálið og úttakssniðin.
 - [Öryggi](sakerhet.md): ógnarlíkan, stýringarnar og prófanirnar sem sanna þær, persónuupplýsingar og geymsla, og hvernig veikleiki er tilkynntur.
 - [Leyfi](licenser.md): hvað þú mátt gera með forritið og hvaða leyfi íhlutir þriðja aðila hafa.
-- [Þróun](../utveckling.md), [Högun](../arkitektur.md) og [Stílleiðbeiningar](../stilguide.md) fyrir þau sem vilja skilja
-  kóðann (á sænsku); hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
+- Hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
 - Ytri upprunar: [WebR](https://docs.r-wasm.org/webr/latest/), [R fyrir byrjendur](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [opin gögn Hagstofu Íslands](https://hagstofa.is/).
 
@@ -212,9 +223,9 @@ fylgdu [SECURITY.md](../../SECURITY.md) í stað þess að opna issue.
 ## Þróun
 
 - Ekkert smíðaskref, ekkert node.js. Opnaðu `index.html` beint eða berðu möppuna fram með `python -m http.server 8080`.
+- Högun í stuttu máli: allur eigin kóði er hefðbundnar skriftur sem eru skráðar með `Dataspatium.define` í röðinni í `src/boot.js`; `src/platform` ber allt sem er sértækt fyrir file:// (tilföng, shim, workers, geymslu, samþykki); vélarnar SQLite, R (WebR) og Python (Pyodide) keyra í workers; `src/ui` hefur hönnunarbreyturnar, einingarnar (`dm-*`), skelina og einn ham á hverja skrá. Allt sem er birt er escape-að og ekkert er sótt af netinu án aðgerðar þinnar og samþykkis.
 - Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
-- Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox). Sjá [utveckling.md](../utveckling.md) (á
-  sænsku).
+- Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox).
 - Öryggi: prófanirnar fyrir samþykki, leyndarmál, yfirferð áður en deilt er, OAuth2 (PKCE, state, afturhvarf) og hulun atvikaskrár eru hluti af prófunasafninu; sjá [sakerhet.md](sakerhet.md).
 
 ## Leyfi

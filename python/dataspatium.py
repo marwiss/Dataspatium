@@ -1,7 +1,7 @@
 # Dataspatium Python helpers, imported into every Python session (``from dataspatium import *``).
-# User documentation (Swedish): docs/python.md.
+# User documentation (Swedish): docs/sv/python.md.
 #
-# Datasets are exchanged with the app as SQLite files in /data (see docs/format.md for the schema):
+# Datasets are exchanged with the app as SQLite files in /data (see docs/sv/format.md for the schema):
 #   dm_list()                 datasets available in this session (a pandas DataFrame)
 #   dm_read("Namn")           read a dataset as a pandas DataFrame with restored types
 #   dm_write(df, "Namn")      hand a DataFrame back to the app as a new dataset
@@ -1144,7 +1144,7 @@ def dm_ifc_ids(model, source, name=None):
     source: a path in Python's file system, the IDS as XML text, or bytes. Returns a table with one row per requirement and
     element: specifikation, krav, status (godkänd, underkänd or ej tillämpligt), guid, typ, namn, orsak. The summary of the
     check (specifications, requirements, checks, passed and failed) is in df.attrs["ids"]. ifctester is LGPL-3.0 and travels
-    with the app without its web app; see docs/licenser.md.
+    with the app without its web app; see docs/sv/licenser.md.
     """
     import pandas as pd
     import ifctester.ids

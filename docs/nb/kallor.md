@@ -114,7 +114,7 @@ kan lagres på kilden. Tilkoblingen krever samtykke (formålet Neo4j) og omfatte
 ### OpenCDE-server (BCF og Documents API)
 
 Valget **OpenCDE** under *Legg til kilder* (familien **OpenCDE (BCF, Documents)**, som også finnes i *Databasekilde*) kobler til en server som følger buildingSMARTs
-OpenCDE-API-er, for eksempel [Kontroll](https://github.com/marwiss/Kontroll). Oppgi serverens adresse og klient-id-en
+OpenCDE-API-er, for eksempel [Dataregium](https://github.com/marwiss/Dataregium). Oppgi serverens adresse. La klient-id stå tom når serveren lar appen registrere seg selv (se nedenfor), ellers klient-id-en
 som serverens administrator har registrert for Dataspatium (en offentlig klient med omdirigeringsadressen
 `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarende for adressen appen serveres fra). Kilden åpner en visning
 der du logger inn på serveren (OAuth2 med PKCE i et popup-vindu; fra file:// limer du inn adressen du ender på etter
@@ -130,7 +130,7 @@ Under *Flere alternativer* i dialogen kan du velge versjon selv, og tilbyr serve
 bare BCF-dokumentene, saker har ikke serverens løpenummer, og et viewpoint kan ikke slettes. Til gjengjeld kan en kommentar være svar på en annen: knappen
 *Svar* i panelet *Saker*.
 
-Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
+Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av
 filens eget slag, så en IFC-fil blir en modell og en CSV-fil en tabell, og datasettet husker hvilken server, hvilket prosjekt
@@ -139,12 +139,14 @@ har en nyere versjon; den hentes da som et eget datasett ved siden av det gamle.
 prosjektet, for eksempel opprette saker eller laste opp dokumenter. Når kilden opprettes, spør dialogen serveren hvor man
 logger inn; svarer ikke serveren da, spør appen igjen ved første innlogging.
 
+Mens serverens egen side er åpen i et popup-vindu (innlogging, valg av dokumenter, opplasting), viser appen knappen *Avbryt*, så du kan slutte å vente hvis vinduet ble lukket eller kom bort.
+
 Tillater serveren det, registrerer appen seg selv som klient når du lar klient-id stå tomt, så ingen administrator trenger å
 dele ut noe. Datasett kan også gå tilbake til serveren: fanen *Til CDE* i Del sender et datasett i et valgfritt format, eller
 originalfilen, til et prosjekt, enten gjennom Documents API, der serverens egen side spør om tittel og versjon, eller som
 BCF-dokument. Et datasett hentet fra serveren kan sendes som en ny versjon av dokumentet sitt.
 
-For Kontrolls IFC-graf finnes startkode i visningen: modellene i grafen og den siste ferdige per dokument, bygningsdeler per klasse, veggenes GTIN, saker per status,
+For Dataregiums IFC-graf finnes startkode i visningen: modellene i grafen og den siste ferdige per dokument, bygningsdeler per klasse, veggenes GTIN, saker per status,
 saker og deres bygningsdeler, saker som gjelder en bygningsdel, og en graf av saker, viewpoints og komponenter. Velg en spørring,
 endre og kjør. Det forutsetter at den som drifter serveren har gjort Bolt tilgjengelig; utviklingsstakken gjør det, en
 produksjonsserver gjør det sjelden.
@@ -159,18 +161,18 @@ for også å se forespørselens og svarets innhold (tekst, høyst 64 kB; aldri t
 aldri; den kan lagres som JSON eller som et datasett. Appen setter headeren X-Request-Id på hvert kall, så serverens egen logg kan
 pares med appens; avviser en server headeren, slås den av for den kilden.
 
-Serverens side beskrives i Kontrolls dokumentasjon: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/client-guide.md) (hvordan en klient kobler seg til), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (parets testkjøringer) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/nb/deploy/local.md) (utviklingsstakken og hvordan appen testes mot den).
+Serverens side beskrives i Dataregiums dokumentasjon: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/client-guide.md) (hvordan en klient kobler seg til) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/deploy/local.md) (utviklingsstakken og hvordan appen testes mot den).
 
-Kontroll beskriver tilleggene sine i `GET /.well-known/kontroll`; appen leser dokumentet når kilden åpnes og skriver under
+Dataregium beskriver tilleggene sine i `GET /.well-known/dataregium`; appen leser dokumentet når kilden åpnes og skriver under
 overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC-LPG,
 grafspørringer). En server uten dokumentet har ingen tillegg, og alt etter spesifikasjonene fungerer likevel. Serverens feilkoder
 (`code` i svaret, for eksempel `reauthentication_required`) vises på ditt språk; ukjente koder viser serverens egen tekst. Lenken
 *Åpne i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åpner dialogen for en ny kilde
 med adressen utfylt. Finnes serveren allerede som kilde, åpnes den direkte. Lenken kan også peke ut et prosjekt og et dokument
-(`&project=…&document=…&version=…`): prosjektet velges, og dokumentet hentes som datasett når du er logget inn. Sider som Kontroll
+(`&project=…&document=…&version=…`): prosjektet velges, og dokumentet hentes som datasett når du er logget inn. Sider som Dataregium
 åpner i popup (innlogging, opplasting, valg av dokumenter), vises på appens språk.
 
-**Administrasjon.** Er du administrator på en Kontroll-server, viser kildens visning kortet *Administrasjon* (når serverens kapabilitetsdokument sier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om rettigheten `admin`; deretter finnes fanene Oversikt, Brukere (opprett, endre, deaktiver, tilbakestill passord, slett), Prosjekter (opprett, gi nytt navn, medlemmer og roller, slett), Klienter (registrer, endre, roter hemmelighet, tilbakekall tokener, slett), Sesjoner (avslutt én eller alle for en bruker), Revisjon, Innstillinger og Helse, samt Grafspørring når serveren tillater lesende Cypher mot IFC-grafen. Farlige handlinger krever en fersk innlogging: serveren svarer `reauthentication_required`, appen åpner innloggingen igjen og gjentar kallet. Engangsverdier (et første passord, en klienthemmelighet) vises én gang med knappen Kopier og skrives aldri i loggen. Hver liste kan lagres som datasett og hentes igjen fra Håndter.
+**Administrasjon.** Er du administrator på en Dataregium-server, viser kildens visning kortet *Administrasjon* (når serverens kapabilitetsdokument sier at administrasjons-API-et er på). Knappen *Logg inn som administrator* ber om rettigheten `admin`; deretter finnes fanene Oversikt, Brukere (opprett, endre, deaktiver, tilbakestill passord, slett), Prosjekter (opprett, gi nytt navn, medlemmer og roller, slett), Klienter (registrer, endre, roter hemmelighet, tilbakekall tokener, slett), Sesjoner (avslutt én eller alle for en bruker), Revisjon, Innstillinger og Helse, samt Grafspørring når serveren tillater lesende Cypher mot IFC-grafen. Farlige handlinger krever en fersk innlogging: serveren svarer `reauthentication_required`, appen åpner innloggingen igjen og gjentar kallet. Engangsverdier (et første passord, en klienthemmelighet) vises én gang med knappen Kopier og skrives aldri i loggen. Hver liste kan lagres som datasett og hentes igjen fra Håndter.
 
 ## Åpne geodata
 

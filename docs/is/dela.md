@@ -97,7 +97,7 @@ Gagnasöfnin fara í gegnum yfirferðina og eru sýnd úr afritum. Mælaborð og
 
 ## Til CDE
 
-Flipinn *Til CDE* sendir gagnasafn í verkefni á OpenCDE-þjóni eins og Kontroll. Veldu þjón, skráðu þig inn og veldu verkefni;
+Flipinn *Til CDE* sendir gagnasafn í verkefni á OpenCDE-þjóni eins og Dataregium. Veldu þjón, skráðu þig inn og veldu verkefni;
 veldu síðan hvort gagnasafnið skuli skrifað á skráarsniði eða upprunalega skráin send, og hvort það fari í gegnum Documents
 API, þar sem eigin síða þjónsins spyr um titil, útgáfu og verkefni og skránni er síðan hlaðið upp í hlutum, eða sem BCF-skjal,
 sem tekur aðeins skrána. Gagnasafnið er skrifað úr afriti sem farið hefur í gegnum yfirferðina, og upprunalegar skrár fá sömu
