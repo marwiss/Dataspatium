@@ -218,3 +218,22 @@ llama.cpp and others), with address, model and API key. The key is kept in the s
 text and never in the question. *Policy* decides what may be called: *Ask* asks for consent per provider the first time, *Cloud* allows
 cloud services, and *Local only* allows only models on your own computer. What is sent is your question and the tool answers the model
 asks for; the tool answers are data from the model, never instructions, and are cut when large.
+
+## Change with AI
+
+The mode *Change* in the same panel lets the AI propose changes to the model, for example "create two storeys and a 6×4 m grid,
+external walls along the grid, one slab per storey and a door in every wall on storey 1". The AI reads the model with the same tools
+as in Ask and writes with tools for storeys and a grid, walls, slabs, openings with a door or a window, properties, materials, moves and
+deletions. The tools change nothing: they fill a change set that the panel lists step by step (lengths in metres; new elements get the
+refs new-1, new-2 … until the file has given them ids).
+
+*Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
+first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted
+together with the schema check's findings. *Approve* makes the changes the recipe step *AI change*: the model gets a new version in the
+workspace, the tables are rebuilt, and the step can be undone exactly. The step carries the provenance (provider, model and the
+questions). A change set with schema errors cannot be approved, deletions are confirmed once more, and *Reject* drops the change set
+without touching the model. The AI can never save or publish: you do that with the buttons.
+
+A model fetched from Dataregium is published as a new version in Share with the document's base version, the version you fetched. If
+the document has got a newer version meanwhile, the server refuses the publish (412 version_conflict); fetch the newest version, redo
+the changes and publish again.

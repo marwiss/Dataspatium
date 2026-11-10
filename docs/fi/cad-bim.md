@@ -219,3 +219,22 @@ llama.cpp ja muut) osoitteineen, malleineen ja API-avaimineen. Avain säilytetä
 selväkielisenä eikä koskaan kysymyksessä. *Käytäntö* ratkaisee, mitä saa kutsua: *Kysy* pyytää suostumuksen palvelua kohden ensimmäisellä
 kerralla, *Pilvi* sallii pilvipalvelut ja *Vain paikallinen* sallii vain omalla tietokoneella olevat mallit. Lähetettävää ovat kysymyksesi ja
 mallin pyytämät työkaluvastaukset; työkaluvastaukset ovat mallin dataa, eivät koskaan ohjeita, ja ne katkaistaan, kun ne ovat suuria.
+
+## Muuta tekoälyllä
+
+Saman paneelin tila *Muuta* antaa tekoälyn ehdottaa muutoksia malliin, esimerkiksi "luo kaksi kerrosta ja 6×4 m moduuliverkko,
+ulkoseinät verkon mukaan, yksi laatta kerrosta kohti ja ovi jokaiseen seinään kerroksessa 1". Tekoäly lukee mallia samoilla työkaluilla
+kuin Kysy-tilassa ja kirjoittaa työkaluilla, jotka tekevät kerroksia ja moduuliverkon, seiniä, laattoja, aukkoja ovella tai ikkunalla,
+ominaisuuksia, materiaaleja, siirtoja ja poistoja. Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe
+vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1, new-2 …, kunnes tiedosto on antanut niille tunnisteet).
+
+*Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
+ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
+sekä skeematarkistuksen löydökset. *Hyväksy* tekee muutoksista reseptivaiheen *Tekoälymuutos*: malli saa uuden version työtilaan,
+taulukot rakennetaan uudelleen ja vaihe voidaan kumota tarkasti. Vaihe kantaa alkuperätiedot (palvelu, malli ja kysymykset).
+Muutosjoukkoa, jossa on skeemavirheitä, ei voi hyväksyä, poistot vahvistetaan vielä kerran, ja *Hylkää* heittää muutosjoukon pois
+koskematta malliin. Tekoäly ei voi koskaan tallentaa tai julkaista: sen teet sinä painikkeilla.
+
+Dataregiumista haettu malli julkaistaan uutena versiona Jaa-tilassa asiakirjan perusversiolla, sillä versiolla, jonka hait. Jos
+asiakirja on saanut sillä välin uudemman version, palvelin hylkää julkaisun (412 version_conflict); hae silloin uusin versio, tee
+muutokset uudelleen ja julkaise uudelleen.

@@ -89,7 +89,7 @@
           } else {
             const redirect = redirectOverride || opencde.redirectUri();
             if (!redirect) throw new Error(t('opencde.err.file.documents'));
-            const version = await opencde.uploadDocument(s.connector, file, { documentId: options.asVersionOf || null, redirectUri: redirect, popup: popup || undefined, onProgress: (p) => { s.progress = p; renderProgress(); } });
+            const version = await opencde.uploadDocument(s.connector, file, { documentId: options.asVersionOf || null, baseVersionIndex: options.asVersionOf && d.source && d.source.cde && d.source.cde.documentId === options.asVersionOf && d.source.cde.versionIndex != null ? Number(d.source.cde.versionIndex) : null, redirectUri: redirect, popup: popup || undefined, onProgress: (p) => { s.progress = p; renderProgress(); } });
             if (!version) { s.done = t('cde.send.cancelled'); }
             else {
               result = version;

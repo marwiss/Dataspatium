@@ -6,7 +6,8 @@
  * into it. Python does the work in `prepare`, before the operation's savepoint (data/python-bridge, with IfcOpenShell
  * fetched as a component after consent); `apply` makes the written IFC the dataset's content (data/model.replaceOriginal),
  * so the step is logged, undoable and replayable like any other, and the original file in `_files` is always the
- * current version of the model. The dataset is never changed by Python directly.
+ * current version of the model. The dataset is never changed by Python directly. `ifc_changeset` is the approved change set of
+ * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
  */
 (function () {
   'use strict';
@@ -75,6 +76,32 @@
       toR: (p) => '# ' + D.t('op.ifc_apply_table.code', { table: p.table, key: p.key || 'guid' }),
     });
 
-    return { python, applyTable, IDS: ['ifc_apply_table', 'ifc_python'] };
+    const parseChanges = (text) => { const ops = typeof text === 'string' ? JSON.parse(text) : text; if (!Array.isArray(ops)) throw new Error(D.t('op.err.step.noresult')); return ops; };
+    /** The approved change set of Ändra med AI: the wheel applies it, the written IFC becomes the model's new version (undoable). */
+    const changeset = ops.define({
+      id: 'ifc_changeset', group: 'model', manualPreview: true,
+      params: [{ name: 'changes', type: 'text', required: true }, { name: 'provenance', type: 'text' }],
+      async prepare(ctx, p) {
+        const meta = await modelOf(ctx);
+        const res = await bridge().runIfcChangeset(parseChanges(p.changes), await ctx.engine.export(), { name: meta.name });
+        ctx._ifc = { bytes: res.bytes, info: res.info, fileName: fileNameOf(meta, res.info) };
+      },
+      async apply(ctx) { const info = (ctx._ifc && ctx._ifc.info) || {}; const out = await take(ctx); return Object.assign(out, { report: info, created: (info.created || []).length, deleted: (info.deleted || []).length }); },
+      toSQL: (p) => ['-- ' + D.t('op.ifc_changeset.note')].concat(lines('-- ', p.changes)),
+      toR: (p) => ['# ' + D.t('op.ifc_changeset.note')].concat(lines('# ', p.changes)).join('\n'),
+    });
+    /**
+     * A change set applied to a copy of the model, for the preview: the candidate IFC and the wheel's report (created, changed,
+     * deleted, findings, errors). The dataset is untouched.
+     * @param {string} datasetId @param {any[]} changes @returns {Promise<{bytes: Uint8Array, report: any, log: any[]}>}
+     */
+    async function previewChangeset(datasetId, changes) {
+      const meta = await datasets.get(datasetId);
+      if (!meta || !model.isModel(meta) || model.isDxf(meta)) throw new Error(D.t('op.err.ifc.notmodel'));
+      const handle = await datasets.ensureOpen(datasetId);
+      const res = await bridge().runIfcChangeset(parseChanges(changes), await handle.engine.export(), { name: meta.name });
+      return { bytes: res.bytes, report: res.info || {}, log: res.log || [] };
+    }
+    return { python, applyTable, changeset, previewChangeset, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();

@@ -19,7 +19,7 @@
      */
     function create(ctx, options) {
       const { ui, shell, store } = ctx;
-      const s = { id: null, filter: { typ: '', vaning: '', lager: '', search: '' }, selected: null, count: 0, hidden: new Set(), error: '', progress: null };
+      const s = { id: null, filter: { typ: '', vaning: '', lager: '', search: '' }, selected: null, count: 0, hidden: new Set(), error: '', progress: null, preview: null };
       let ds = null; let slots = null; let handle = null; let host = null; let table = null; let seq = 0; let searchTimer = 0;
       let svgEl = null; let box = null; let removeDrag = null;
       /** The issues panel, when open. */ let issues = null;
@@ -45,7 +45,7 @@
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } }
         ds = dataset;
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
@@ -121,9 +121,22 @@
         if (issues) { issues.destroy(); issues = null; if (handle) handle.setColors([]); } else openIssues();
         renderInspector();
       }
+      /**
+       * The change set's preview from the AI panel: the candidate file drawn instead of the model with its colours, or only colours on
+       * the model (no redraw), or nothing. The dataset is untouched; an approved change set reaches the view as a new version.
+       * @param {{bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null} preview
+       */
+      async function setPreview(preview) {
+        const hadBytes = !!(s.preview && s.preview.bytes);
+        s.preview = preview || null;
+        if (isDxf() || !host) return;
+        if (!hadBytes && !(preview && preview.bytes)) { if (handle) handle.setColors(preview && preview.colors ? preview.colors : []); return; }
+        if (handle) { handle.destroy(); handle = null; }
+        await drawIfc(++seq);
+      }
       /** The panel Fråga AI om modellen, in the inspector; the elements of an answer are marked through data/selection. */
       function toggleAi() {
-        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id });
+        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview });
         renderInspector();
       }
       function fitAll() {
@@ -183,8 +196,10 @@
         try {
           const where = whereSql();
           let visible = null;
-          if (where) { const res = await (await datasets.ensureOpen(ds.id)).engine.exec(`select id from data${where}`); visible = res[0] ? res[0].values.map((r) => Number(r[0])) : []; }
-          const hd = await draw.render(host, { datasetId: ds.id, visible, selected: s.selected ? [s.selected] : [] }, {
+          const candidate = s.preview && s.preview.bytes ? s.preview.bytes : null;
+          // A candidate holds elements the table does not know yet, so a filter cannot narrow it.
+          if (where && !candidate) { const res = await (await datasets.ensureOpen(ds.id)).engine.exec(`select id from data${where}`); visible = res[0] ? res[0].values.map((r) => Number(r[0])) : []; }
+          const hd = await draw.render(host, { datasetId: ds.id, visible, selected: s.selected ? [s.selected] : [], bytes: candidate, colors: s.preview && s.preview.colors ? s.preview.colors : null }, {
             onSelect: (id) => selectElement(id, 'draw'),
             onProgress: (n) => { if (my === seq) note.textContent = t('model.loading.n', { n: i18n.formatNumber(n) }); },
           });

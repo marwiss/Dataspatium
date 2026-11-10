@@ -1272,3 +1272,488 @@ def _ifc_apply(in_file, table_file, key, out_file):
     changed = dm_ifc_set(model, df, key=key or "guid")
     model.write(out_file)
     return json.dumps({"changed": changed, "rows": int(len(df)), "file": file_name})
+
+
+# ---- the change set of "Ändra med AI" ---------------------------------------------------------
+# The AI's write tools never touch the model themselves: they fill a change set (a JSON list of operations) that the person
+# previews and approves in the app; only then does _ifc_changeset() apply it, as a recipe step with undo. Lengths are metres and
+# are scaled to the file's unit. A created element gets a ref ("new-1", "new-2", ...) in the order of the operations
+# create_wall, create_slab and create_opening, so that a later operation can name it before the file has given it an id.
+
+
+def _cs_num(op, key, default=None, positive=False):
+    v = op.get(key)
+    if v is None:
+        if default is None:
+            raise DataspatiumError("%s is required" % key)
+        v = default
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        raise DataspatiumError("%s must be a number (metres)" % key)
+    if positive and v <= 0:
+        raise DataspatiumError("%s must be greater than zero" % key)
+    return v
+
+
+def _cs_xy(value, key):
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise DataspatiumError("%s must be [x, y] in metres" % key)
+    try:
+        return float(value[0]), float(value[1])
+    except (TypeError, ValueError):
+        raise DataspatiumError("%s must be [x, y] in metres" % key)
+
+
+def _cs_label(i):
+    """A, B, ..., Z, AA, AB, ... for the grid's axes along X."""
+    out = ""
+    i += 1
+    while i > 0:
+        i, r = divmod(i - 1, 26)
+        out = chr(65 + r) + out
+    return out
+
+
+class _ChangeSet:
+    """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted."""
+
+    CREATES = ("create_wall", "create_slab", "create_opening")
+
+    def __init__(self, model):
+        import ifcopenshell.util.unit
+        self.m = model
+        try:
+            self.scale = float(ifcopenshell.util.unit.calculate_unit_scale(model) or 1.0)  # metres per file unit
+        except Exception:
+            self.scale = 1.0
+        self.refs = {}
+        self.created = []
+        self.changed = {}
+        self.deleted = []
+        self.n_created = 0
+        owners = model.by_type("IfcOwnerHistory")
+        self.owner = owners[0] if owners else None
+        self._body = None
+
+    # -- units, lookups and bookkeeping
+    def u(self, metres):
+        return float(metres) / self.scale
+
+    def entity(self, ref):
+        """An element by its STEP id, or by a ref of this change set."""
+        if isinstance(ref, str) and ref in self.refs:
+            return self.refs[ref]
+        try:
+            e = self.m.by_id(int(ref))
+        except Exception:
+            raise DataspatiumError("no element with id %r" % (ref,))
+        if e is None:
+            raise DataspatiumError("no element with id %r" % (ref,))
+        return e
+
+    def elements(self, op):
+        ids = op.get("ids")
+        if not isinstance(ids, (list, tuple)) or not ids:
+            raise DataspatiumError("ids must be a list of element ids or refs")
+        return [self.entity(x) for x in ids]
+
+    def storey(self, name):
+        storeys = self.m.by_type("IfcBuildingStorey")
+        if not storeys:
+            raise DataspatiumError("the model has no storey; create one with create_storeys_and_grid first")
+        if name is None or str(name).strip() == "":
+            return sorted(storeys, key=lambda s: float(s.Elevation or 0))[0]
+        for exact in (True, False):
+            for s in storeys:
+                a, b = str(s.Name or ""), str(name)
+                if (a == b) if exact else (a.lower() == b.lower()):
+                    return s
+        raise DataspatiumError("no storey named %r; the storeys are %s" % (name, ", ".join(str(s.Name) for s in storeys)))
+
+    def container(self, e):
+        import ifcopenshell.util.element as el
+        try:
+            return el.get_container(e)
+        except Exception:
+            return None
+
+    def record(self, e, storey=None):
+        return {"id": e.id(), "guid": getattr(e, "GlobalId", None), "ifc_class": e.is_a(), "name": _ifc_text(getattr(e, "Name", None)),
+                "storey": _ifc_text(getattr(storey, "Name", None)) if storey is not None else None}
+
+    def register(self, e, storey=None, ref=True):
+        rec = self.record(e, storey)
+        if ref:
+            self.n_created += 1
+            rec["ref"] = "new-%d" % self.n_created
+            self.refs[rec["ref"]] = e
+        self.created.append(rec)
+        return rec
+
+    def touch(self, e):
+        if any(c["id"] == e.id() for c in self.created):
+            return
+        self.changed[e.id()] = self.record(e, self.container(e))
+
+    # -- the file's structure
+    def root(self, ifc_class, name):
+        import ifcopenshell.guid
+        e = self.m.create_entity(ifc_class, GlobalId=ifcopenshell.guid.new(), Name=str(name))
+        if self.owner is not None:
+            e.OwnerHistory = self.owner
+        return e
+
+    def owner_settings(self):
+        """IFC2X3 needs an owner history on every IfcRoot, also on the relationships the API makes: lend it the file's."""
+        import ifcopenshell.api.owner.settings as settings
+        if self.m.schema != "IFC2X3" or self.owner is None:
+            return None
+        previous = (settings.get_user, settings.get_application)
+        owner = self.owner
+        settings.get_user = lambda _file: owner.OwningUser
+        settings.get_application = lambda _file: owner.OwningApplication
+        return previous
+
+    @staticmethod
+    def restore_owner_settings(previous):
+        if previous is None:
+            return
+        import ifcopenshell.api.owner.settings as settings
+        settings.get_user, settings.get_application = previous
+
+    @staticmethod
+    def predefined(e, value):
+        try:
+            e.PredefinedType = value
+        except Exception:
+            pass
+
+    def building(self):
+        import ifcopenshell.api.aggregate
+        buildings = self.m.by_type("IfcBuilding")
+        if buildings:
+            return buildings[0]
+        projects = self.m.by_type("IfcProject")
+        if not projects:
+            raise DataspatiumError("the model has no IfcProject")
+        sites = self.m.by_type("IfcSite")
+        if sites:
+            site = sites[0]
+        else:
+            site = self.root("IfcSite", "Site")
+            site.CompositionType = "ELEMENT"
+            site.ObjectPlacement = self.placement(None, 0, 0, 0)
+            ifcopenshell.api.aggregate.assign_object(self.m, products=[site], relating_object=projects[0])
+        building = self.root("IfcBuilding", "Building")
+        building.CompositionType = "ELEMENT"
+        building.ObjectPlacement = self.placement(site.ObjectPlacement, 0, 0, 0)
+        ifcopenshell.api.aggregate.assign_object(self.m, products=[building], relating_object=site)
+        self.register(building, ref=False)
+        return building
+
+    def body(self):
+        if self._body is not None:
+            return self._body
+        subs = [c for c in self.m.by_type("IfcGeometricRepresentationSubContext") if (c.ContextIdentifier or "") == "Body"]
+        if subs:
+            self._body = subs[0]
+            return subs[0]
+        import ifcopenshell.api.context
+        parents = [c for c in self.m.by_type("IfcGeometricRepresentationContext") if not c.is_a("IfcGeometricRepresentationSubContext") and (c.ContextType or "Model") == "Model"]
+        parent = parents[0] if parents else ifcopenshell.api.context.add_context(self.m, context_type="Model")
+        self._body = ifcopenshell.api.context.add_context(self.m, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=parent)
+        return self._body
+
+    def contain(self, e, storey):
+        import ifcopenshell.api.spatial
+        ifcopenshell.api.spatial.assign_container(self.m, products=[e], relating_structure=storey)
+
+    # -- geometry, in file units
+    def point(self, x, y, z=None):
+        return self.m.createIfcCartesianPoint([float(x), float(y)] if z is None else [float(x), float(y), float(z)])
+
+    def direction(self, x, y, z=None):
+        return self.m.createIfcDirection([float(x), float(y)] if z is None else [float(x), float(y), float(z)])
+
+    def axis3(self, x, y, z, dx=1.0, dy=0.0):
+        return self.m.createIfcAxis2Placement3D(self.point(x, y, z), self.direction(0, 0, 1), self.direction(dx, dy, 0))
+
+    def placement(self, parent, x, y, z, dx=1.0, dy=0.0):
+        return self.m.createIfcLocalPlacement(parent, self.axis3(x, y, z, dx, dy))
+
+    def shape(self, solid):
+        rep = self.m.createIfcShapeRepresentation(self.body(), "Body", "SweptSolid", [solid])
+        return self.m.createIfcProductDefinitionShape(None, None, [rep])
+
+    def box(self, length, width, height, x0=0.0, y0=0.0, z0=0.0):
+        """A rectangle of length (X) by width (Y) with its corner at (x0, y0), extruded height along Z from z0."""
+        position = self.m.createIfcAxis2Placement2D(self.point(x0 + length / 2.0, y0 + width / 2.0), None)
+        profile = self.m.createIfcRectangleProfileDef("AREA", None, position, float(length), float(width))
+        return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
+
+    def prism(self, outline, height, z0=0.0):
+        """A closed outline of (x, y) points extruded height along Z from z0."""
+        pts = [self.point(x, y) for x, y in outline]
+        if outline[0] != outline[-1]:
+            pts.append(pts[0])
+        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline(pts))
+        return self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, z0), self.direction(0, 0, 1), float(height)))
+
+    def wall_thickness(self, wall):
+        """The YDim of the wall's rectangle profile, in file units; 0.2 m when the wall has another shape."""
+        rep = getattr(wall, "Representation", None)
+        for r in (rep.Representations if rep is not None else []):
+            for item in (r.Items or []):
+                if item.is_a("IfcExtrudedAreaSolid") and item.SweptArea.is_a("IfcRectangleProfileDef"):
+                    return float(item.SweptArea.YDim)
+        return self.u(0.2)
+
+    def grid_outline(self):
+        pts = []
+        for g in self.m.by_type("IfcGrid"):
+            for axis in list(g.UAxes or []) + list(g.VAxes or []):
+                curve = axis.AxisCurve
+                for p in (curve.Points if curve.is_a("IfcPolyline") else []):
+                    c = list(p.Coordinates)
+                    pts.append((c[0] * self.scale, c[1] * self.scale))
+        if not pts:
+            raise DataspatiumError("give an outline, or create a grid first so that the slab can follow it")
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        return [(min(xs), min(ys)), (max(xs), min(ys)), (max(xs), max(ys)), (min(xs), max(ys))]
+
+    # -- the operations
+    def op_create_storeys_and_grid(self, op):
+        import ifcopenshell.api.aggregate
+        storeys = op.get("storeys") or []
+        grid = op.get("grid")
+        if not storeys and not grid:
+            raise DataspatiumError("give storeys, a grid or both")
+        building = self.building()
+        made = []
+        for s in storeys:
+            if not isinstance(s, dict) or not str(s.get("name") or "").strip():
+                raise DataspatiumError("every storey needs a name")
+            existing = [x for x in self.m.by_type("IfcBuildingStorey") if str(x.Name or "") == str(s["name"])]
+            if existing:
+                made.append(existing[0])
+                continue
+            elevation = _cs_num(s, "elevation", 0.0)
+            storey = self.root("IfcBuildingStorey", s["name"])
+            storey.CompositionType = "ELEMENT"
+            storey.Elevation = self.u(elevation)
+            storey.ObjectPlacement = self.placement(building.ObjectPlacement, 0, 0, self.u(elevation))
+            ifcopenshell.api.aggregate.assign_object(self.m, products=[storey], relating_object=building)
+            self.register(storey, ref=False)
+            made.append(storey)
+        if grid:
+            if not isinstance(grid, dict):
+                raise DataspatiumError("grid must be an object with x_spacing, x_count, y_spacing and y_count")
+            self.make_grid(grid, made[0] if made else self.storey(None))
+
+    def make_grid(self, grid, storey):
+        xs = _cs_num(grid, "x_spacing", positive=True)
+        ys = _cs_num(grid, "y_spacing", positive=True)
+        xn = int(_cs_num(grid, "x_count", 1.0, positive=True))
+        yn = int(_cs_num(grid, "y_count", 1.0, positive=True))
+        if xn > 100 or yn > 100:
+            raise DataspatiumError("at most 100 bays per direction")
+        width, depth = xs * xn, ys * yn
+        u_axes = [self.m.createIfcGridAxis(_cs_label(i), self.m.createIfcPolyline([self.point(self.u(i * xs), 0), self.point(self.u(i * xs), self.u(depth))]), True) for i in range(xn + 1)]
+        v_axes = [self.m.createIfcGridAxis(str(j + 1), self.m.createIfcPolyline([self.point(0, self.u(j * ys)), self.point(self.u(width), self.u(j * ys))]), True) for j in range(yn + 1)]
+        g = self.root("IfcGrid", "Grid")
+        g.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
+        g.UAxes = u_axes
+        g.VAxes = v_axes
+        self.contain(g, storey)
+        self.register(g, storey, ref=False)
+
+    def op_create_wall(self, op):
+        storey = self.storey(op.get("storey"))
+        x1, y1 = _cs_xy(op.get("start"), "start")
+        x2, y2 = _cs_xy(op.get("end"), "end")
+        length = math.hypot(x2 - x1, y2 - y1)
+        if length <= 0:
+            raise DataspatiumError("start and end are the same point")
+        thickness = _cs_num(op, "thickness", 0.2, positive=True)
+        height = _cs_num(op, "height", 3.0, positive=True)
+        wall = self.root("IfcWall", op.get("name") or "Wall")
+        wall.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x1), self.u(y1), 0, (x2 - x1) / length, (y2 - y1) / length)
+        wall.Representation = self.box(self.u(length), self.u(thickness), self.u(height), 0, -self.u(thickness) / 2.0, 0)
+        self.predefined(wall, "STANDARD")
+        self.contain(wall, storey)
+        self.register(wall, storey)
+
+    def op_create_slab(self, op):
+        storey = self.storey(op.get("storey"))
+        thickness = _cs_num(op, "thickness", 0.25, positive=True)
+        outline = op.get("outline") or self.grid_outline()
+        if not isinstance(outline, (list, tuple)) or len(outline) < 3:
+            raise DataspatiumError("outline must be at least three [x, y] points")
+        pts = [_cs_xy(p, "outline") for p in outline]
+        slab = self.root("IfcSlab", op.get("name") or "Slab")
+        slab.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
+        slab.Representation = self.prism([(self.u(x), self.u(y)) for x, y in pts], self.u(thickness), -self.u(thickness))
+        self.predefined(slab, "FLOOR")
+        self.contain(slab, storey)
+        self.register(slab, storey)
+
+    def op_create_opening(self, op):
+        import ifcopenshell.api.feature
+        wall = self.entity(op.get("wall_id"))
+        if not wall.is_a("IfcWall"):
+            raise DataspatiumError("wall_id must name a wall, not %s" % wall.is_a())
+        fill = op.get("fill")
+        if fill not in (None, "", "door", "window"):
+            raise DataspatiumError("fill must be door, window or null")
+        offset = _cs_num(op, "offset", 0.0)
+        width = _cs_num(op, "width", 0.9, positive=True)
+        height = _cs_num(op, "height", 2.1, positive=True)
+        sill = _cs_num(op, "sill", 0.0)
+        thickness = self.wall_thickness(wall)
+        storey = self.container(wall)
+        opening = self.root("IfcOpeningElement", op.get("name") or "Opening")
+        opening.ObjectPlacement = self.placement(wall.ObjectPlacement, self.u(offset), 0, self.u(sill))
+        margin = self.u(0.02)
+        opening.Representation = self.box(self.u(width), thickness + 2 * margin, self.u(height), 0, -thickness / 2.0 - margin, 0)
+        self.predefined(opening, "OPENING")
+        ifcopenshell.api.feature.add_feature(self.m, feature=opening, element=wall)
+        self.touch(wall)
+        if not fill:
+            self.register(opening, storey)
+            return
+        self.register(opening, storey, ref=False)
+        e = self.root("IfcDoor" if fill == "door" else "IfcWindow", op.get("name") or ("Door" if fill == "door" else "Window"))
+        e.ObjectPlacement = self.placement(opening.ObjectPlacement, 0, 0, 0)
+        leaf = self.u(0.05)
+        e.Representation = self.box(self.u(width), leaf, self.u(height), 0, -leaf / 2.0, 0)
+        e.OverallHeight = self.u(height)
+        e.OverallWidth = self.u(width)
+        self.predefined(e, "DOOR" if fill == "door" else "WINDOW")
+        ifcopenshell.api.feature.add_filling(self.m, opening=opening, element=e)
+        if storey is not None:
+            self.contain(e, storey)
+        self.register(e, storey)
+
+    def op_set_properties(self, op):
+        import ifcopenshell.api.pset
+        import ifcopenshell.util.element as el
+        name = op.get("pset")
+        props = op.get("properties")
+        if not name or not isinstance(props, dict) or not props:
+            raise DataspatiumError("pset and properties (an object of name: value) are required")
+        values = {str(k): _ifc_value(v) for k, v in props.items()}
+        for e in self.elements(op):
+            existing = el.get_psets(e, psets_only=True).get(str(name))
+            pset = self.m.by_id(existing["id"]) if existing and existing.get("id") else ifcopenshell.api.pset.add_pset(self.m, product=e, name=str(name))
+            ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties=values)
+            self.touch(e)
+
+    def op_assign(self, op):
+        import ifcopenshell.api.material
+        storey = self.storey(op["storey"]) if op.get("storey") else None
+        material = op.get("material")
+        if storey is None and not material:
+            raise DataspatiumError("give a storey, a material or both")
+        for e in self.elements(op):
+            if storey is not None:
+                self.contain(e, storey)
+            if material:
+                found = [x for x in self.m.by_type("IfcMaterial") if str(x.Name or "") == str(material)]
+                mat = found[0] if found else ifcopenshell.api.material.add_material(self.m, name=str(material))
+                try:
+                    ifcopenshell.api.material.unassign_material(self.m, products=[e])
+                except Exception:
+                    pass
+                ifcopenshell.api.material.assign_material(self.m, products=[e], type="IfcMaterial", material=mat)
+            self.touch(e)
+
+    def op_transform_elements(self, op):
+        dx, dy, dz = _cs_num(op, "dx", 0.0), _cs_num(op, "dy", 0.0), _cs_num(op, "dz", 0.0)
+        for e in self.elements(op):
+            pl = getattr(e, "ObjectPlacement", None)
+            if pl is None or not pl.is_a("IfcLocalPlacement") or not pl.RelativePlacement.is_a("IfcAxis2Placement3D"):
+                raise DataspatiumError("element %d has no local placement to move" % e.id())
+            c = list(pl.RelativePlacement.Location.Coordinates) + [0.0, 0.0, 0.0]
+            pl.RelativePlacement.Location = self.point(c[0] + self.u(dx), c[1] + self.u(dy), c[2] + self.u(dz))
+            self.touch(e)
+
+    def op_delete_elements(self, op):
+        import ifcopenshell.api.root
+        if op.get("confirm") is not True:
+            raise DataspatiumError("deleting needs confirm: true, which the person gives")
+        for e in self.elements(op):
+            self.deleted.append(self.record(e, self.container(e)))
+            self.changed.pop(e.id(), None)
+            ifcopenshell.api.root.remove_product(self.m, product=e)
+
+    def apply(self, ops):
+        if not isinstance(ops, list):
+            raise DataspatiumError("the change set must be a list of operations")
+        if self.m.schema == "IFC2X3" and self.owner is None:
+            raise DataspatiumError("the IFC2X3 file has no owner history to give new entities")
+        previous = self.owner_settings()
+        try:
+            self.apply_all(ops)
+        finally:
+            self.restore_owner_settings(previous)
+        if self.owner is not None:
+            # The API makes some relationships without an owner history; IFC2X3 requires one on every IfcRoot.
+            for e in self.m.by_type("IfcRoot"):
+                if e.OwnerHistory is None:
+                    e.OwnerHistory = self.owner
+
+    def apply_all(self, ops):
+        for i, op in enumerate(ops):
+            name = op.get("tool") if isinstance(op, dict) else None
+            fn = getattr(self, "op_" + str(name), None) if name else None
+            if fn is None:
+                raise DataspatiumError("step %d: unknown operation %r" % (i + 1, name))
+            try:
+                fn(op)
+            except DataspatiumError as exc:
+                raise DataspatiumError("step %d (%s): %s" % (i + 1, name, exc))
+            except Exception as exc:
+                raise DataspatiumError("step %d (%s): %s: %s" % (i + 1, name, type(exc).__name__, exc))
+
+    def findings(self, limit=50):
+        """The schema check of the whole model: (findings, number of errors)."""
+        import ifcopenshell.validate
+        logger = ifcopenshell.validate.json_logger()
+        try:
+            ifcopenshell.validate.validate(self.m, logger, express_rules=False)
+        except Exception as exc:
+            return [{"level": "error", "ifc_class": None, "id": None, "attribute": None, "message": "validation failed: %s" % exc}], 1
+        out = []
+        errors = 0
+        for s in logger.statements:
+            if not isinstance(s, dict):
+                continue
+            level = str(s.get("level", "")).lower()
+            inst = s.get("instance")
+            if level == "error":
+                errors += 1
+            if len(out) < limit:
+                out.append({"level": level, "ifc_class": inst.is_a() if inst is not None else None, "id": inst.id() if inst is not None else None,
+                            "attribute": _ifc_text(s.get("attribute")), "message": str(s.get("message", ""))})
+        return out, errors
+
+
+def _ifc_changeset(in_file, changeset_json, out_file):
+    """The recipe step "AI-ändring": a change set's operations on the model, checked against the schema and written as IFC.
+
+    Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
+    report: what was created (with refs), changed and deleted, the schema findings and counts for the log.
+    """
+    file_name, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-in.ifc"), data)
+    ops = json.loads(changeset_json or "[]")
+    cs = _ChangeSet(model)
+    cs.apply(ops)
+    findings, errors = cs.findings()
+    model.write(out_file)
+    return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
+                       "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors},
+                      ensure_ascii=False, default=str)

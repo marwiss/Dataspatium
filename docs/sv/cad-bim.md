@@ -212,3 +212,22 @@ Ollama, vLLM, llama.cpp med flera), med adress, modell och API-nyckel. Nyckeln h
 i klartext och aldrig i frågan. *Policy* avgör vad som får anropas: *Fråga* ber om samtycke per leverantör första gången, *Moln* tillåter
 molntjänster, och *Endast lokal* tillåter bara modeller på den egna datorn. Det som skickas är din fråga och de verktygssvar modellen
 begär; verktygssvaren är data ur modellen, aldrig instruktioner, och kapas när de är stora.
+
+## Ändra med AI
+
+Läget *Ändra* i samma panel låter AI:n föreslå ändringar i modellen, till exempel "skapa två våningar och ett rutnät 6×4 m,
+ytterväggar längs rutnätet, ett bjälklag per våning och en dörr i varje vägg på plan 1". AI:n läser modellen med samma verktyg som i
+Fråga och skriver med verktyg för våningar och rutnät, väggar, bjälklag, öppningar med dörr eller fönster, egenskaper, material, flytt
+och radering. Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element får
+referenserna new-1, new-2 … tills filen har gett dem id).
+
+*Förhandsvisa* kör ändringssetet på en kopia av modellen med IfcOpenShell i appens Python (komponenterna hämtas efter samtycke första
+gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad som skapas, ändras och raderas samt schemakontrollens fynd.
+*Godkänn* gör ändringarna till receptsteget *AI-ändring*: modellen får en ny version i arbetsytan, tabellerna byggs om, och steget kan
+ångras exakt. Steget bär proveniensen (leverantör, modell och frågorna). Ett ändringsset med schemafel kan inte godkännas, raderingar
+bekräftas en gång till, och *Avvisa* kastar ändringssetet utan att röra modellen. AI:n kan aldrig spara eller publicera: det gör du med
+knapparna.
+
+En modell hämtad från Dataregium publiceras som ny version i Dela med dokumentets basversion, den version du hämtade. Har dokumentet
+fått en nyare version under tiden avvisar servern publiceringen (412 version_conflict); hämta då den nyaste versionen, gör om
+ändringarna och publicera igen.

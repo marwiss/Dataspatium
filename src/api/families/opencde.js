@@ -618,6 +618,8 @@
       if (!redirect) throw new Error(t('opencde.err.file.documents'));
       const entry = { file_name: file.name, session_file_id: 'f1' };
       if (options.documentId) entry.document_id = options.documentId;
+      // Dataregium's extension: the version this upload builds on; the completion answers 412 version_conflict when a newer one exists.
+      if (options.documentId && options.baseVersionIndex !== undefined && options.baseVersionIndex !== null) entry.base_version_index = Number(options.baseVersionIndex);
       const started = await api(connector, '/documents/1.0/upload-documents', { method: 'POST', json: { callback: { url: redirect, expires_in: 600 }, files: [entry] } });
       if (Number(started.max_size_in_bytes) > 0 && file.size > Number(started.max_size_in_bytes)) throw new Error(t('cde.err.toolarge', { max: D.require('ui/i18n').formatBytes(Number(started.max_size_in_bytes)) }));
       const callback = await (options.popup || popupFlow)(withLang(connector, started.upload_ui_url));

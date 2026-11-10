@@ -365,6 +365,22 @@
         });
       }
 
+      /**
+       * The recipe step "AI-ändring" and its preview: a change set (the operations of ai/write-tools, JSON) on the model kept in a
+       * dataset file; the written IFC comes back with the wheel's report (created with refs, changed, deleted, findings, errors).
+       * @param {any[]} changes @param {ArrayBuffer|Uint8Array} bytes the dataset's SQLite file @param {{name?: string}} [options]
+       * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
+       */
+      async runIfcChangeset(changes, bytes, options = {}) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          await this.ensurePackages(['ifcopenshell']);
+          this.streams = [];
+          const info = await this.engine.evalJson(`_dataspatium._ifc_changeset("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(changes))}, "/data/step/model-out.ifc")`);
+          return this.takeIfc('/data/step/model-out.ifc', Object.assign({ name: options.name || '' }, info || {}), ['/data/step/model.sqlite', '/data/step/changeset-in.ifc']);
+        });
+      }
+
       async ifcJob(fn) {
         await this.start();
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));

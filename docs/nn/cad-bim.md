@@ -216,3 +216,22 @@ vLLM, llama.cpp med fleire), med adresse, modell og API-nøkkel. Nøkkelen blir 
 klartekst og aldri i spørsmålet. *Policy* avgjer kva som får kallast: *Spør* ber om samtykke per leverandør første gongen, *Sky* tillèt
 skytenester, og *Berre lokal* tillèt berre modellar på di eiga datamaskin. Det som blir sendt, er spørsmålet ditt og verktøysvara modellen
 ber om; verktøysvara er data frå modellen, aldri instruksjonar, og blir kappa når dei er store.
+
+## Endre med AI
+
+Modusen *Endre* i same panel lèt AI-en føreslå endringar i modellen, til dømes "lag to etasjar og eit rutenett på 6×4 m, ytterveggar
+langs rutenettet, eitt dekke per etasje og ei dør i kvar vegg i etasje 1". AI-en les modellen med dei same verktøya som i Spør og skriv
+med verktøy for etasjar og rutenett, veggar, dekke, opningar med dør eller vindauge, eigenskapar, material, flytting og sletting.
+Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får referansane new-1,
+new-2 … til fila har gjeve dei id).
+
+*Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
+første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna
+frå skjemakontrollen. *Godkjenn* gjer endringane til oppskriftssteget *AI-endring*: modellen får ein ny versjon i arbeidsområdet,
+tabellane vert bygde om, og steget kan angrast nøyaktig. Steget ber proveniensen (leverandør, modell og spørsmåla). Eit endringssett med
+skjemafeil kan ikkje godkjennast, slettingar vert stadfesta ein gong til, og *Avvis* kastar endringssettet utan å røre modellen. AI-en
+kan aldri lagre eller publisere: det gjer du med knappane.
+
+Ein modell henta frå Dataregium vert publisert som ny versjon i Del med basisversjonen til dokumentet, den versjonen du henta. Har
+dokumentet fått ein nyare versjon i mellomtida, avviser tenaren publiseringa (412 version_conflict); hent då den nyaste versjonen, gjer
+endringane på nytt og publiser igjen.

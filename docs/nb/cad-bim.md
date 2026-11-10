@@ -214,3 +214,22 @@ Ollama, vLLM, llama.cpp med flere), med adresse, modell og API-nøkkel. Nøkkele
 klartekst og aldri i spørsmålet. *Policy* avgjør hva som får kalles: *Spør* ber om samtykke per leverandør første gang, *Sky* tillater
 skytjenester, og *Bare lokal* tillater bare modeller på din egen datamaskin. Det som sendes, er spørsmålet ditt og verktøysvarene modellen
 ber om; verktøysvarene er data fra modellen, aldri instruksjoner, og kappes når de er store.
+
+## Endre med AI
+
+Modusen *Endre* i samme panel lar AI-en foreslå endringer i modellen, for eksempel "lag to etasjer og et rutenett på 6×4 m,
+yttervegger langs rutenettet, ett dekke per etasje og en dør i hver vegg i etasje 1". AI-en leser modellen med de samme verktøyene som i
+Spør og skriver med verktøy for etasjer og rutenett, vegger, dekker, åpninger med dør eller vindu, egenskaper, materialer, flytting og
+sletting. Verktøyene endrer ingenting: de fyller et endringssett som panelet lister trinn for trinn (mål i meter; nye elementer får
+referansene new-1, new-2 … til filen har gitt dem id).
+
+*Forhåndsvis* kjører endringssettet på en kopi av modellen med IfcOpenShell i appens Python (komponentene hentes etter samtykke første
+gang), tegner resultatet i 3D med nytt grønt og endret gult, og viser hva som opprettes, endres og slettes samt skjemakontrollens funn.
+*Godkjenn* gjør endringene til oppskriftstrinnet *AI-endring*: modellen får en ny versjon i arbeidsområdet, tabellene bygges om, og
+trinnet kan angres nøyaktig. Trinnet bærer proveniensen (leverandør, modell og spørsmålene). Et endringssett med skjemafeil kan ikke
+godkjennes, slettinger bekreftes en gang til, og *Avvis* kaster endringssettet uten å røre modellen. AI-en kan aldri lagre eller
+publisere: det gjør du med knappene.
+
+En modell hentet fra Dataregium publiseres som ny versjon i Del med dokumentets basisversjon, den versjonen du hentet. Har dokumentet
+fått en nyere versjon i mellomtiden, avviser serveren publiseringen (412 version_conflict); hent da den nyeste versjonen, gjør
+endringene på nytt og publiser igjen.

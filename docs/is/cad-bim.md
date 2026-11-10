@@ -211,3 +211,22 @@ vLLM, llama.cpp og fleiri), með vistfangi, líkani og API-lykli. Lykillinn er g
 aldrei í hreinum texta og aldrei í spurningunni. *Stefna* ræður hvað má kalla: *Spyrja* biður um samþykki fyrir hverja þjónustu í fyrsta
 sinn, *Ský* leyfir skýjaþjónustur, og *Aðeins staðbundið* leyfir aðeins líkön á þinni eigin tölvu. Það sem er sent er spurningin þín og þau
 tólasvör sem líkanið biður um; tólasvörin eru gögn úr líkaninu, aldrei fyrirmæli, og eru stytt þegar þau eru stór.
+
+## Breyta með gervigreind
+
+Hamurinn *Breyta* í sama spjaldi lætur gervigreindina leggja til breytingar á líkaninu, til dæmis "búðu til tvær hæðir og 6×4 m
+hnitanet, útveggi eftir netinu, eina plötu á hæð og hurð í hverjum vegg á hæð 1". Gervigreindin les líkanið með sömu tólum og í Spyrja og
+skrifar með tólum fyrir hæðir og hnitanet, veggi, plötur, op með hurð eða glugga, eiginleika, efni, færslur og eyðingar. Tólin breyta
+engu: þau fylla breytingasett sem spjaldið telur upp skref fyrir skref (mál í metrum; nýjar einingar fá tilvísanirnar new-1, new-2 …
+þar til skráin hefur gefið þeim auðkenni).
+
+*Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
+fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
+skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í
+vinnusvæðinu, töflurnar eru endurbyggðar og skrefið má afturkalla nákvæmlega. Skrefið ber upprunann (þjónusta, líkan og spurningarnar).
+Breytingasett með skemavillum er ekki hægt að samþykkja, eyðingar eru staðfestar einu sinni enn, og *Hafna* fleygir breytingasettinu án
+þess að snerta líkanið. Gervigreindin getur aldrei vistað eða birt: það gerir þú með hnöppunum.
+
+Líkan sem sótt var frá Dataregium er birt sem ný útgáfa í Deila með grunnútgáfu skjalsins, þeirri útgáfu sem þú sóttir. Hafi skjalið
+fengið nýrri útgáfu á meðan hafnar þjónninn birtingunni (412 version_conflict); sæktu þá nýjustu útgáfuna, gerðu breytingarnar aftur
+og birtu á ný.

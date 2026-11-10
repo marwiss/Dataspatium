@@ -214,3 +214,22 @@ vLLM, llama.cpp med flere), med adresse, model og API-nøgle. Nøglen holdes i s
 klartekst og aldrig i spørgsmålet. *Politik* afgør, hvad der må kaldes: *Spørg* beder om samtykke pr. udbyder første gang, *Cloud* tillader
 cloudtjenester, og *Kun lokal* tillader kun modeller på din egen computer. Det, der sendes, er dit spørgsmål og de værktøjssvar, modellen
 beder om; værktøjssvarene er data fra modellen, aldrig instruktioner, og kappes, når de er store.
+
+## Ændr med AI
+
+Tilstanden *Ændr* i samme panel lader AI'en foreslå ændringer i modellen, for eksempel "opret to etager og et net på 6×4 m, ydervægge
+langs nettet, et dæk per etage og en dør i hver væg på etage 1". AI'en læser modellen med de samme værktøjer som i Spørg og skriver med
+værktøjer til etager og net, vægge, dæk, åbninger med dør eller vindue, egenskaber, materialer, flytning og sletning. Værktøjerne ændrer
+ingenting: de fylder et ændringssæt, som panelet lister trin for trin (mål i meter; nye elementer får referencerne new-1, new-2 …, indtil
+filen har givet dem id).
+
+*Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
+gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.
+*Godkend* gør ændringerne til opskriftstrinnet *AI-ændring*: modellen får en ny version i arbejdsområdet, tabellerne bygges om, og trinnet
+kan fortrydes præcist. Trinnet bærer proveniensen (udbyder, model og spørgsmålene). Et ændringssæt med skemafejl kan ikke godkendes,
+sletninger bekræftes en gang til, og *Afvis* kasserer ændringssættet uden at røre modellen. AI'en kan aldrig gemme eller publicere: det
+gør du med knapperne.
+
+En model hentet fra Dataregium publiceres som ny version i Del med dokumentets basisversion, den version du hentede. Har dokumentet
+fået en nyere version i mellemtiden, afviser serveren publiceringen (412 version_conflict); hent da den nyeste version, gentag
+ændringerne og publicer igen.

@@ -25,10 +25,12 @@
     }
 
     /**
-     * The meshes of a model dataset, computed once per version of the dataset.
-     * @param {string} datasetId @param {{onProgress?: (elements: number) => void}} [options]
+     * The meshes of a model dataset, computed once per version of the dataset; a candidate file (`bytes`, the preview of a change set)
+     * is meshed every time and never kept.
+     * @param {string} datasetId @param {{onProgress?: (elements: number) => void, bytes?: Uint8Array|ArrayBuffer|null}} [options]
      */
     async function meshesOf(datasetId, options = {}) {
+      if (options.bytes) return ifc.meshes(options.bytes, { onProgress: options.onProgress }).then((m) => { ifc.release(); return indexed(m); });
       const meta = await datasets.get(datasetId);
       if (!meta) throw new Error(D.t('err.dataset.gone'));
       const key = datasetId + '|' + meta.updatedAt;
@@ -132,13 +134,13 @@
     /**
      * Draws a model into a container.
      * @param {HTMLElement} container
-     * @param {{datasetId: string, visible?: number[]|null, selected?: number[], view?: any, colors?: Array<{color: string, ids: number[]}>|null}} def
+     * @param {{datasetId: string, visible?: number[]|null, selected?: number[], view?: any, colors?: Array<{color: string, ids: number[]}>|null, bytes?: Uint8Array|ArrayBuffer|null}} def
      * @param {{onSelect?: (id: number|null) => void, onProgress?: (elements: number) => void}} [options]
      * @returns {Promise<any>} handle: info, select(ids, {fit}), setVisible(ids), fit(ids), view(), png(scale), resize(), destroy()
      */
     async function render(container, def, options = {}) {
       const THREE = await ensureThree();
-      const meshes = await meshesOf(def.datasetId, { onProgress: options.onProgress });
+      const meshes = await meshesOf(def.datasetId, { onProgress: options.onProgress, bytes: def.bytes || null });
       let renderer;
       try {
         renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: !!options.preserve });
