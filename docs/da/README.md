@@ -146,6 +146,36 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 - **Grundkursus**: en interaktiv gennemgang af alle otte tilstande med eksempeldata på alle syv sprog. Det vises første
   gang, appen åbnes, og kan åbnes når som helst fra hjælpen eller kommandopaletten.
 
+## OpenCDE-API'erne og deres servere
+
+OpenCDE er buildingSMART Internationals familie af åbne web-API'er for et fælles datamiljø, det sted, hvor et projekt deler sine
+modeller, dokumenter og sager. En klient og en server, der følger de samme specifikationer, kan arbejde sammen, uanset hvem der har
+bygget dem. Dataspatium bruger alle tre:
+
+| API | Hvad appen gør med det | Specifikation |
+|---|---|---|
+| Foundation API 1.0 | Læser, hvilke API'er serveren tilbyder, hvor man logger ind, og hvem brugeren er; registrerer appen som klient, når serveren tillader det | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 og 2.1 | Læser og skriver sager om en model, med kommentarer og viewpoints (kamera, komponenter og billeder) fra 3D-visningen; vælger den nyeste version, serveren tilbyder | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Vælger og henter dokumenter og versioner via serverens egne sider, så en IFC-model bliver et datasæt, og uploader nye versioner, datasæt og pakker | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium er én server, ikke den eneste.** Appen skal kunne forbinde til enhver server, der følger specifikationerne: intet i
+appen afhænger af Dataregium, og Dataregiums udvidelser uden for specifikationerne (kapabilitetsdokumentet, de navngivne
+grafforespørgsler, forhåndskontrollen, basisversionen, ændringsforslagene og diffen mellem versioner) vises kun, når serveren selv
+angiver dem. Appen behøver tre ting af en server:
+
+- at serveren tillader kald fra browseren (CORS) fra appens adresse: `null`, når appen åbnes fra file://, `http://127.0.0.1:8080`
+  fra en lokal webserver og `https://marwiss.github.io` fra nettet, med headerne Authorization, Content-Type og X-Request-ID;
+- en klientregistrering, lavet af serverens administrator (en offentlig klient med omdirigeringsadressen
+  `http://127.0.0.1:8080/oauth-callback.html` eller det tilsvarende for den adresse, appen serveres fra) eller af appen selv, når
+  serveren tillader det, og login med OAuth2 authorization code med PKCE `S256`; fra file:// indsætter du den adresse, du lander på
+  efter login;
+- BCF API 3.0 eller 2.1; Documents API er valgfrit, men uden det kan appen ikke hente eller publicere dokumenter.
+
+Indtil videre er det vist mod Dataregium: live-suiten køres mod serveren i begge versioner af BCF API, og en server med kun 2.1
+virker. Andre servere er ikke afprøvet; fortæl, hvordan det gik, under [Fejl og forslag](#fejl-og-forslag). Når appen og en
+specifikation ikke stemmer overens, afgør specifikationen. Serverens side beskrives i Dataregiums README og klientguide; appens i
+[kallor.md](kallor.md).
+
 ## Dataspatium og Dataregium
 
 *Dataregium hed Kontroll indtil 8. november 2026.*
@@ -163,6 +193,19 @@ Appen taler BCF API 3.0 og 2.1, så den også forbinder til servere, der kun har
 
 Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får samme udgavenummer, så samme nummer hører sammen. Den hurtige start
 [snabbstart.md](snabbstart.md) tager parret fra ingenting til en sag på tyve minutter.
+
+### Udgivelserne 1.0.0, 2.0.0 og 3.0.0
+
+Der er én udgivelse pr. hovednummer, og Dataspatium og Dataregium med samme nummer hører sammen:
+
+| Dataspatium | Hvad den har | Hører sammen med |
+|---|---|---|
+| 1.0.0 | Hele 1-serien: dataindhentning, bearbejdning, R, Python, kort, diagrammer, dokumenter og deling samt planer. Mod en server kun Documents API: hent dokumenter som datasæt, og send datasæt og filer tilbage. Ingen sager og ingen modeller | Dataregium 1.0.0 (kun Documents API) |
+| 2.0.0 | Hele 2-serien: IFC-modeller i 3D med tabeller, egenskaber og mængder, sager med viewpoints (BCF API 3.0 og 2.1), serverens IFC-graf (IFC-LPG) tegnet og forespurgt, og planer fra planlægningsværktøjer fuldt ud | Dataregium 2.0.0 |
+| 3.0.0 | 3-serien: kortet *Validér modellen*, kollisionskontrol i browseren, BCF-kameraer i modellens koordinater, grafen i skeletform, Spørg AI og Ændr med AI, Sammenlign versioner, publicering med basisversion og forhåndskontrol, ændringsforslag, der afprøves og godkendes på serveren | Dataregium 3.0.0 |
+
+En ny udgivelse i samme hovednummer erstatter den forrige; kun den nyeste i hver serie rettes. Appens opdateringskontrol tilbyder
+næste hovednummer, og datasæt, lister, diagrammer, skabeloner og scripts følger med, når du åbner den nye versions `index.html`.
 
 ## Lær mere
 
@@ -210,6 +253,40 @@ Filnavnene er de samme på alle sprog (de svenske originaler), så links virker 
   (<https://marwiss.github.io/Dataspatium/m/>), der modtager, viser og sender videre. Safari understøttes ikke for
   hele appen. I smalle vinduer åbnes panelerne som ark over arbejdsfladen.
 - De medfølgende eksempeldata og kortgrænser er svenske; selve appen fungerer med data fra hvor som helst.
+
+## Næste i 3-serien
+
+3.0.0 er 3-seriens første udgivelse, lavet sammen med Dataregium 3.0.0: kontrollen af modeller, kollisionskontrollen, AI-trinnene og
+versionssammenligningen, som [Hvad du kan](#hvad-du-kan) beskriver. Som hvert hovednummer har serien én udgivelse, der
+udgives igen, når den vokser. Det, der følger, gør appen til den klient, der redigerer serverens model og viser dens versioner: AI'en
+foreslår, mennesket gennemgår og godkender, serveren afprøver og sammenfletter. Dette afsnit siger, hvad der er besluttet, for den,
+menneske eller AI-agent, der fører en del af det videre; serverens side står i Dataregiums README under samme overskrift.
+
+### Besluttet
+
+- **Modelleringen sker i appen, ikke på serveren.** Modelleringshjulet (skriveværktøjerne og IfcOpenShell i appens Python) er
+  Dataspatiums eget, under Dataspatiums licens, og bærer ingen kode fra IFC-LPG; serveren når det kun gennem API'erne.
+- **AI'en foreslår, mennesket godkender.** Et ændringssæt forhåndsvises i 3D, kontrolleres lokalt og af serverens forhåndskontrol og
+  anvendes først, når du godkender; sletning bekræftes endnu en gang; publicering og forslag til serveren er knapper, aldrig
+  værktøjer, AI'en kan kalde. Bygget i 3.0.0.
+- **Versionsmodellen.** Et ændringssæt sendes til serveren som en BCF-sag med en snippet i serverens form (GlobalId og sti som
+  nøgle), serveren afprøver det mod basisversionen, og en *manager* godkender det til næste version; en publicering med forældet
+  basis afvises (412), og kollisionerne vises. Bygget i 3.0.0. Dernæst: trevejssammenfletning i appen ved kollision,
+  versionshistorikken pr. dokument og en BCF-sag pr. godkendt ændringssæt.
+- **Sammenlign versioner** fra tre kilder: øjebliksbilleder og andre modeller i appen, serverens ændringssæt pr. version og serverens
+  diff mellem versioner. Bygget i 3.0.0.
+- **Projektets forvalter** får en side i appen, når Dataregiums API for medlemmer og roller findes.
+- **Trin 4 og 5, efter trin 3:** repo-tilstand pr. projekt med en lokal Dataregium på egen computer og hent og publicer mellem den
+  lokale og den fjerne; store modeller tegnet fra serverens geometri-API, når browseren ikke rækker; projektprofiler med IDS og bSDD,
+  IDS skrevet af AI'en og buildingSMART-regler knyttet til elementer.
+- **Åbne formater** gælder udvekslingsformater og lagrede data, ikke AI-API'er; AI-leverandør vælges af brugeren med egen nøgle,
+  gemt krypteret, og projektets politik kan begrænse til lokale modeller.
+
+### Foreslået, ikke besluttet
+
+- Et eget repo til kollisionskernen, med samme rapportform som serverens IfcClash.
+- IFC5-læseren (IFCX) i appen, når Dataregium låser ved den IFC-LPG-version, der har den.
+- Modelleringsværktøjerne som MCP-endepunkt i den lokale motor, så andre AI-klienter kan bruge dem.
 
 ## Fejl og forslag
 

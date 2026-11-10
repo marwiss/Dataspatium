@@ -141,6 +141,36 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
+## OpenCDE-forritaskilin og þjónar þeirra
+
+OpenCDE er fjölskylda opinna vefforritaskila frá buildingSMART International fyrir sameiginlegt gagnaumhverfi, staðinn þar sem
+verkefni deilir líkönum sínum, skjölum og málum. Biðlari og þjónn sem fylgja sömu forskriftum geta unnið saman, hver sem smíðaði þá.
+Dataspatium notar öll þrjú:
+
+| Forritaskil | Hvað forritið gerir með þeim | Forskrift |
+|---|---|---|
+| Foundation API 1.0 | Les hvaða forritaskil þjónninn býður, hvar er skráð inn og hver notandinn er; skráir forritið sem biðlara þegar þjónninn leyfir það | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 og 2.1 | Les og skrifar mál um líkan, með athugasemdum og sjónarhornum (myndavél, hlutum og myndum) úr þrívíddarsýn; velur nýjustu útgáfuna sem þjónninn býður | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Velur og sækir skjöl og útgáfur gegnum eigin síður þjónsins, svo að IFC-líkan verður gagnasafn, og hleður upp nýjum útgáfum, gagnasöfnum og pökkum | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium er einn þjónn, ekki sá eini.** Forritið á að geta tengst hverjum þjóni sem fylgir forskriftunum: ekkert í forritinu er
+háð Dataregium, og viðbætur Dataregium utan forskriftanna (getuskjalið, nefndu graffyrirspurnirnar, forathugunin, grunnútgáfan,
+breytingatillögurnar og mismunurinn milli útgáfa) birtast aðeins þegar þjónninn sjálfur tilgreinir þær. Forritið þarf þrennt frá
+þjóni:
+
+- að þjónninn leyfi köll úr vafranum (CORS) frá vistfangi forritsins: `null` þegar forritið er opnað frá file://,
+  `http://127.0.0.1:8080` frá staðbundnum vefþjóni og `https://marwiss.github.io` af vefnum, með hausunum Authorization, Content-Type
+  og X-Request-ID;
+- biðlaraskráningu, gerða af stjórnanda þjónsins (opinber biðlari með endurbeiningarvistfangið `http://127.0.0.1:8080/oauth-callback.html`
+  eða samsvarandi fyrir vistfangið sem forritið er þjónað frá) eða af forritinu sjálfu þegar þjónninn leyfir það, og innskráningu með
+  OAuth2 authorization code með PKCE `S256`; frá file:// límir þú inn vistfangið sem þú lendir á eftir innskráningu;
+- BCF API 3.0 eða 2.1; Documents API er valfrjálst, en án þess getur forritið hvorki sótt né birt skjöl.
+
+Hingað til er þetta sýnt gagnvart Dataregium: lifandi prófunarsvítan keyrir gegn þjóninum í báðum útgáfum BCF API, og þjónn með
+aðeins 2.1 virkar. Aðrir þjónar eru óprófaðir; segðu frá hvernig gekk undir [Villur og tillögur](#villur-og-tillögur). Þegar forritið
+og forskrift stangast á ræður forskriftin. Hlið þjónsins er lýst í README og biðlaraleiðbeiningum Dataregium; hlið forritsins í
+[kallor.md](kallor.md).
+
 ## Dataspatium og Dataregium
 
 *Dataregium hét Kontroll til 8. nóvember 2026.*
@@ -157,6 +187,19 @@ Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa a�
 
 Dataspatium 3.0.0 virkar með Dataregium 3.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
+
+### Útgáfurnar 1.0.0, 2.0.0 og 3.0.0
+
+Ein útgáfa er fyrir hvert aðalnúmer, og Dataspatium og Dataregium með sama númeri eiga saman:
+
+| Dataspatium | Hvað hún hefur | Á saman við |
+|---|---|---|
+| 1.0.0 | Öll 1-röðin: gagnaöflun, úrvinnsla, R, Python, kort, gröf, skjöl og deiling, auk skipulagsáætlana. Gagnvart þjóni aðeins Documents API: sækja skjöl sem gagnasöfn og senda gagnasöfn og skrár til baka. Engin mál og engin líkön | Dataregium 1.0.0 (aðeins Documents API) |
+| 2.0.0 | Öll 2-röðin: IFC-líkön í þrívídd með töflum, eiginleikum og magni, mál með sjónarhornum (BCF API 3.0 og 2.1), IFC-graf þjónsins (IFC-LPG) teiknað og spurt, og skipulagsáætlanir úr skipulagsverkfærum að fullu | Dataregium 2.0.0 |
+| 3.0.0 | 3-röðin: spjaldið *Prófa líkanið*, árekstrarprófun í vafranum, BCF-myndavélar í hnitum líkansins, grafið á beinagrindarformi, Spyrja gervigreind og Breyta með gervigreind, Bera saman útgáfur, birting með grunnútgáfu og forathugun, breytingatillögur sem eru reyndar og samþykktar á þjóninum | Dataregium 3.0.0 |
+
+Ný útgáfa í sama aðalnúmeri kemur í stað þeirrar fyrri; aðeins sú nýjasta í hverri röð fær lagfæringar. Uppfærsluathugun forritsins
+býður næsta aðalnúmer, og gagnasöfn, listar, gröf, sniðmát og skriftur fylgja með þegar þú opnar `index.html` nýju útgáfunnar.
 
 ## Lærðu meira
 
@@ -203,6 +246,40 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
   (<https://marwiss.github.io/Dataspatium/m/>), sem tekur á móti, sýnir og sendir áfram. Safari er ekki stutt fyrir
   allt forritið. Í þröngum gluggum opnast spjöldin sem yfirlagsspjöld yfir vinnuflötinn.
 - Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
+
+## Næst í 3-röðinni
+
+3.0.0 er fyrsta útgáfa 3-raðarinnar, gerð ásamt Dataregium 3.0.0: prófun líkana, árekstrarprófunin, gervigreindarskrefin og
+útgáfusamanburðurinn, sem [Hvað þú getur gert](#hvað-þú-getur-gert) lýsir. Eins og hvert aðalnúmer hefur röðin eina útgáfu, sem er
+gefin út aftur þegar hún vex. Það sem fylgir gerir forritið að biðlaranum sem breytir líkani þjónsins og sýnir útgáfur þess:
+gervigreindin leggur til, manneskjan fer yfir og samþykkir, þjónninn reynir og sameinar. Þessi kafli segir hvað er ákveðið, fyrir
+þann, manneskju eða gervigreindarumboðsmann, sem heldur hluta þess áfram; hlið þjónsins er í README Dataregium undir sömu fyrirsögn.
+
+### Ákveðið
+
+- **Líkanagerðin fer fram í forritinu, ekki á þjóninum.** Líkanahjólið (skriftólin og IfcOpenShell í Python forritsins) er Dataspatiums
+  eigið, undir leyfi Dataspatium, og ber engan kóða úr IFC-LPG; þjónninn nær því aðeins gegnum forritaskilin.
+- **Gervigreindin leggur til, manneskjan samþykkir.** Breytingasett er forskoðað í þrívídd, athugað staðbundið og með forathugun
+  þjónsins, og beitt fyrst þegar þú samþykkir; eyðing er staðfest einu sinni enn; birting og tillögur til þjónsins eru hnappar, aldrei
+  tól sem gervigreindin getur kallað. Smíðað í 3.0.0.
+- **Útgáfulíkanið.** Breytingasett er sent til þjónsins sem BCF-mál með snippet á formi þjónsins (GlobalId og slóð sem lykill),
+  þjónninn reynir það á grunnútgáfunni og *manager* samþykkir það sem næstu útgáfu; birting með úreltum grunni er hafnað (412) og
+  árekstrarnir sýndir. Smíðað í 3.0.0. Næst: þríhliða sameining í forritinu við árekstur, útgáfusaga hvers skjals og BCF-mál fyrir
+  hvert samþykkt breytingasett.
+- **Bera saman útgáfur** úr þremur uppsprettum: svipmyndum og öðrum líkönum í forritinu, breytingasetti þjónsins fyrir hverja útgáfu
+  og mismun þjónsins milli útgáfa. Smíðað í 3.0.0.
+- **Umsjónarmaður verkefnisins** fær síðu í forritinu þegar forritaskil Dataregium fyrir meðlimi og hlutverk eru til.
+- **Skref 4 og 5, eftir skref 3:** geymsluhamur fyrir hvert verkefni með staðbundnum Dataregium á eigin tölvu og sækja og birta milli
+  staðbundna og fjarlæga þjónsins; stór líkön teiknuð úr rúmfræðiforritaskilum þjónsins þegar vafrinn dugar ekki; verkefnissnið með
+  IDS og bSDD, IDS sem gervigreindin skrifar og buildingSMART-reglur tengdar stökum.
+- **Opin snið** eiga við skiptisnið og vistuð gögn, ekki gervigreindarforritaskil; notandinn velur gervigreindarveitu með eigin lykli,
+  vistuðum dulkóðuðum, og stefna verkefnisins getur takmarkað við staðbundin líkön.
+
+### Lagt til, ekki ákveðið
+
+- Eigin geymsla fyrir árekstrarkjarnann, með sama skýrsluformi og IfcClash þjónsins.
+- IFC5-lesarinn (IFCX) í forritinu, þegar Dataregium læsir við þá IFC-LPG-útgáfu sem hefur hann.
+- Líkanatólin sem MCP-endapunktur í staðbundnu vélinni, svo að aðrir gervigreindarbiðlarar geti notað þau.
 
 ## Villur og tillögur
 

@@ -150,6 +150,37 @@ paketilla.
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
+## OpenCDE-rajapinnat ja niiden palvelimet
+
+OpenCDE on buildingSMART Internationalin avointen web-rajapintojen perhe yhteiselle dataympäristölle, paikalle, jossa projekti jakaa
+mallinsa, asiakirjansa ja asiansa. Asiakasohjelma ja palvelin, jotka noudattavat samoja määrittelyjä, voivat toimia yhdessä riippumatta
+siitä, kuka ne on rakentanut. Dataspatium käyttää kaikkia kolmea:
+
+| Rajapinta | Mitä sovellus tekee sillä | Määrittely |
+|---|---|---|
+| Foundation API 1.0 | Lukee, mitä rajapintoja palvelin tarjoaa, missä kirjaudutaan ja kuka käyttäjä on; rekisteröi sovelluksen asiakkaaksi, kun palvelin sallii sen | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 ja 2.1 | Lukee ja kirjoittaa mallia koskevia asioita kommentteineen ja viewpointeineen (kamera, komponentit ja kuvat) 3D-näkymästä; valitsee uusimman version, jota palvelin tarjoaa | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Valitsee ja hakee asiakirjoja ja versioita palvelimen omien sivujen kautta, jolloin IFC-mallista tulee aineisto, ja lataa uusia versioita, aineistoja ja paketteja | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium on yksi palvelin, ei ainoa.** Sovelluksen pitää voida yhdistyä jokaiseen määrittelyjä noudattavaan palvelimeen: mikään
+sovelluksessa ei riipu Dataregiumista, ja Dataregiumin määrittelyjen ulkopuoliset laajennukset (kyvykkyysasiakirja, nimetyt
+graafikyselyt, esitarkistus, perusversio, muutosehdotukset ja versioiden välinen diff) näkyvät vain, kun palvelin itse ilmoittaa
+niistä. Sovellus tarvitsee palvelimelta kolme asiaa:
+
+- että palvelin sallii kutsut selaimesta (CORS) sovelluksen osoitteesta: `null`, kun sovellus avataan file://-osoitteesta,
+  `http://127.0.0.1:8080` paikalliselta web-palvelimelta ja `https://marwiss.github.io` verkosta, otsakkeineen Authorization,
+  Content-Type ja X-Request-ID;
+- asiakasrekisteröinnin, jonka tekee palvelimen ylläpitäjä (julkinen asiakas, jonka uudelleenohjausosoite on
+  `http://127.0.0.1:8080/oauth-callback.html` tai vastaava sovelluksen tarjoiluosoitteelle) tai sovellus itse, kun palvelin sallii
+  sen, sekä kirjautumisen OAuth2 authorization code -kululla ja PKCE `S256`:lla; file://-osoitteesta liität osoitteen, johon päädyt
+  kirjautumisen jälkeen;
+- BCF API 3.0:n tai 2.1:n; Documents API on valinnainen, mutta ilman sitä sovellus ei voi hakea tai julkaista asiakirjoja.
+
+Toistaiseksi tämä on osoitettu Dataregiumia vasten: live-testit ajetaan palvelinta vasten BCF API:n molemmilla versioilla, ja
+pelkän 2.1:n palvelin toimii. Muita palvelimia ei ole kokeiltu; kerro, miten kävi, kohdassa [Virheet ja ehdotukset](#virheet-ja-ehdotukset).
+Kun sovellus ja määrittely ovat ristiriidassa, määrittely ratkaisee. Palvelimen puoli kuvataan Dataregiumin README:ssä ja
+asiakasoppaassa; sovelluksen puoli tiedostossa [kallor.md](kallor.md).
+
 ## Dataspatium ja Dataregium
 
 *Dataregiumin nimi oli Kontroll 8. marraskuuta 2026 asti.*
@@ -168,6 +199,19 @@ Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös 
 
 Dataspatium 3.0.0 toimii Dataregium 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
 [snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
+
+### Julkaisut 1.0.0, 2.0.0 ja 3.0.0
+
+Jokaista päänumeroa kohden on yksi julkaisu, ja samannumeroiset Dataspatium ja Dataregium kuuluvat yhteen:
+
+| Dataspatium | Mitä siinä on | Kuuluu yhteen |
+|---|---|---|
+| 1.0.0 | Koko 1-sarja: tiedonhaku, käsittely, R, Python, kartat, kaaviot, asiakirjat ja jakaminen sekä kaavat. Palvelinta vasten vain Documents API: hae asiakirjoja aineistoiksi ja lähetä aineistoja ja tiedostoja takaisin. Ei asioita eikä malleja | Dataregium 1.0.0 (vain Documents API) |
+| 2.0.0 | Koko 2-sarja: IFC-mallit 3D:nä taulukoineen, ominaisuuksineen ja määrineen, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi (IFC-LPG) piirrettynä ja kyseltynä sekä kaavat suunnittelutyökaluista täysin | Dataregium 2.0.0 |
+| 3.0.0 | 3-sarja: kortti *Validoi malli*, törmäystarkastus selaimessa, BCF-kamerat mallin koordinaateissa, graafi runkomuodossa, Kysy tekoälyltä ja Muuta tekoälyllä, Vertaa versioita, julkaisu perusversiolla ja esitarkistus, muutosehdotukset, jotka kokeillaan ja hyväksytään palvelimella | Dataregium 3.0.0 |
+
+Uusi julkaisu samassa päänumerossa korvaa edellisen; vain kunkin sarjan uusin korjataan. Sovelluksen päivitystarkistus tarjoaa
+seuraavan päänumeron, ja aineistot, luettelot, kaaviot, mallipohjat ja skriptit seuraavat mukana, kun avaat uuden version `index.html`-tiedoston.
 
 ## Lue lisää
 
@@ -216,6 +260,40 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
   (<https://marwiss.github.io/Dataspatium/m/>), joka vastaanottaa, näyttää ja jakaa edelleen. Safaria ei tueta koko
   sovelluksen osalta. Kapeissa ikkunoissa paneelit avautuvat työalueen päälle.
 - Mukana tulevat esimerkkidata ja karttarajat ovat ruotsalaisia; itse sovellus toimii datan kanssa mistä tahansa.
+
+## Seuraavaksi 3-sarjassa
+
+3.0.0 on 3-sarjan ensimmäinen julkaisu, tehty yhdessä Dataregium 3.0.0:n kanssa: mallien tarkistus, törmäystarkastus, tekoälyvaiheet
+ja versiovertailu, jotka [Mitä voit tehdä](#mitä-voit-tehdä) kuvaa. Kuten jokaisella päänumerolla, sarjalla on yksi julkaisu, joka
+julkaistaan uudelleen sen kasvaessa. Seuraava tekee sovelluksesta asiakasohjelman, joka muokkaa palvelimen mallia ja näyttää sen
+versiot: tekoäly ehdottaa, ihminen tarkastaa ja hyväksyy, palvelin kokeilee ja yhdistää. Tämä osio kertoo, mitä on päätetty, sille,
+ihmiselle tai tekoälyagentille, joka vie osan siitä eteenpäin; palvelimen puoli on Dataregiumin README:ssä saman otsikon alla.
+
+### Päätetty
+
+- **Mallinnus tapahtuu sovelluksessa, ei palvelimella.** Mallinnuspyörä (kirjoitustyökalut ja IfcOpenShell sovelluksen Pythonissa) on
+  Dataspatiumin oma, Dataspatiumin lisenssillä, eikä sisällä koodia IFC-LPG:stä; palvelin tavoittaa sen vain rajapintojen kautta.
+- **Tekoäly ehdottaa, ihminen hyväksyy.** Muutosjoukko esikatsellaan 3D:nä, tarkistetaan paikallisesti ja palvelimen esitarkistuksella
+  ja sovelletaan vasta, kun hyväksyt; poisto vahvistetaan vielä kerran; julkaisu ja ehdotus palvelimelle ovat painikkeita, eivät
+  koskaan työkaluja, joita tekoäly voi kutsua. Rakennettu 3.0.0:ssa.
+- **Versiomalli.** Muutosjoukko lähetetään palvelimelle BCF-asiana, jonka snippet on palvelimen muodossa (GlobalId ja polku
+  avaimena), palvelin kokeilee sitä perusversiota vasten ja *manager* hyväksyy sen seuraavaksi versioksi; vanhentuneella perusversiolla
+  tehty julkaisu hylätään (412) ja ristiriidat näytetään. Rakennettu 3.0.0:ssa. Seuraavaksi: kolmisuuntainen yhdistäminen sovelluksessa
+  ristiriidassa, versiohistoria asiakirjaa kohden ja BCF-asia jokaista hyväksyttyä muutosjoukkoa kohden.
+- **Vertaa versioita** kolmesta lähteestä: tilannekuvat ja muut mallit sovelluksessa, palvelimen muutosjoukko versiota kohden ja
+  palvelimen diff versioiden välillä. Rakennettu 3.0.0:ssa.
+- **Projektin hallinnoija** saa sivun sovellukseen, kun Dataregiumin rajapinta jäsenille ja rooleille on olemassa.
+- **Vaiheet 4 ja 5, vaiheen 3 jälkeen:** repositoriotila projektia kohden paikallisella Dataregiumilla omalla tietokoneella sekä haku
+  ja julkaisu paikallisen ja etäpalvelimen välillä; suuret mallit piirrettynä palvelimen geometriarajapinnasta, kun selain ei riitä;
+  projektiprofiilit IDS:llä ja bSDD:llä, tekoälyn kirjoittamat IDS:t ja elementteihin sidotut buildingSMART-säännöt.
+- **Avoimet formaatit** koskevat vaihtoformaatteja ja tallennettua dataa, eivät tekoälyrajapintoja; käyttäjä valitsee
+  tekoälytoimittajan omalla avaimellaan, joka tallennetaan salattuna, ja projektin käytäntö voi rajata paikallisiin malleihin.
+
+### Ehdotettu, ei päätetty
+
+- Oma repositorio törmäysytimelle, samalla raporttimuodolla kuin palvelimen IfcClash.
+- IFC5-lukija (IFCX) sovellukseen, kun Dataregium lukitsee sen sisältävään IFC-LPG-versioon.
+- Mallinnustyökalut MCP-päätepisteenä paikallisessa moottorissa, jotta muut tekoälyasiakkaat voivat käyttää niitä.
 
 ## Virheet ja ehdotukset
 

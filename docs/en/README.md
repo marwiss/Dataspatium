@@ -149,6 +149,37 @@ with a backup or a bundle.
 - **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
+## The OpenCDE APIs and their servers
+
+OpenCDE is buildingSMART International's family of open web APIs for a common data environment, the place where a project shares
+its models, documents and issues. A client and a server that follow the same specifications can work together, whoever built them.
+Dataspatium uses all three:
+
+| API | What the app does with it | Specification |
+|---|---|---|
+| Foundation API 1.0 | Reads which APIs the server offers, where to sign in and who the user is; registers the app as a client when the server allows it | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 and 2.1 | Reads and writes topics about a model, with comments and viewpoints (camera, components and snapshots) from the 3D view; picks the newest version the server offers | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Picks and fetches documents and versions through the server's own pages, so that an IFC model becomes a dataset, and uploads new versions, datasets and bundles | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium is one server, not the only one.** The app should connect to any server that follows the specifications: nothing in the
+app depends on Dataregium, and Dataregium's extensions beyond the specifications (the capabilities document, the named graph queries,
+the precheck, the base version, change proposals and the diff between versions) appear only when the server itself announces them.
+The app needs three things from a server:
+
+- that the server allows calls from the browser (CORS) from the app's origin: `null` when the app is opened from file://,
+  `http://127.0.0.1:8080` from a local web server and `https://marwiss.github.io` from the web, with the headers Authorization,
+  Content-Type and X-Request-ID;
+- a client registration, made by the server's administrator (a public client with the redirect address
+  `http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the address the app is served from) or by the app itself when the
+  server allows it, and sign-in with OAuth2 authorization code with PKCE `S256`; from file:// you paste the address you land on after
+  signing in;
+- BCF API 3.0 or 2.1; the Documents API is optional, but without it the app cannot fetch or publish documents.
+
+So far this is shown against Dataregium: the live suite runs against the server in both versions of the BCF API, and a server with
+only 2.1 works. Other servers are untested; tell us how it went under [Bugs and suggestions](#bugs-and-suggestions). When the app and
+a specification disagree, the specification decides. The server's side is described in Dataregium's README and client guide; the
+app's in [kallor.md](kallor.md).
+
 ## Dataspatium and Dataregium
 
 *Dataregium was called Kontroll until 8 November 2026.*
@@ -166,6 +197,19 @@ The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have onl
 
 Dataspatium 3.0.0 works with Dataregium 3.0.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
+
+### The releases 1.0.0, 2.0.0 and 3.0.0
+
+There is one release per major number, and Dataspatium and Dataregium with the same number belong together:
+
+| Dataspatium | What it has | Belongs with |
+|---|---|---|
+| 1.0.0 | The whole 1 series: data import, processing, R, Python, maps, charts, documents and sharing, and plans. Against a server only the Documents API: fetch documents as datasets and send datasets and files back. No issues and no models | Dataregium 1.0.0 (Documents API only) |
+| 2.0.0 | The whole 2 series: IFC models in 3D with tables, properties and quantities, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph (IFC-LPG) drawn and queried, and plans from planning tools in full | Dataregium 2.0.0 |
+| 3.0.0 | The 3 series: the card *Validate the model*, the clash check in the browser, BCF cameras in the model's coordinates, the graph in its skeleton form, Ask AI and Change with AI, Compare versions, publishing with a base version and a precheck, change proposals tried and approved on the server | Dataregium 3.0.0 |
+
+A new release in the same major number replaces the previous one; only the newest in each series gets fixes. The app's update check
+offers the next major number, and datasets, lists, charts, templates and scripts come along when you open the new version's `index.html`.
 
 ## Learn more
 
@@ -216,6 +260,40 @@ everywhere.
   app. In narrow windows the panels open as sheets over the work area.
 - The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
   anywhere.
+
+## Next in the 3 series
+
+3.0.0 is the first release of the 3 series, made together with Dataregium 3.0.0: the checking of models, the clash check, the AI
+steps and the version comparison, which [What you can do](#what-you-can-do) describes. Like every major number the series has a
+single release, released again as it grows. What follows makes the app the client that edits the server's model and shows its
+versions: the AI proposes, the person reviews and approves, the server tries and merges. This section says what is decided, for
+whoever, person or AI agent, carries a part of it on; the server's side is in Dataregium's README under the same heading.
+
+### Decided
+
+- **Modelling happens in the app, not on the server.** The modelling wheel (the write tools and IfcOpenShell in the app's Python) is
+  Dataspatium's own, under Dataspatium's licence, and carries no code from IFC-LPG; the server reaches it only through the APIs.
+- **The AI proposes, the person approves.** A change set is previewed in 3D, checked locally and by the server's precheck, and
+  applied only when you approve; deleting is confirmed once more; publishing and proposing to the server are buttons, never tools
+  the AI can call. Built in 3.0.0.
+- **The version model.** A change set goes to the server as a BCF topic with a snippet in the server's form (GlobalId and path as
+  the key), the server tries it against the base version and a *manager* approves it into the next version; a publish with a stale
+  base is refused (412) and the collisions are shown. Built in 3.0.0. Next: a three-way merge in the app at a collision, the version
+  history per document and a BCF topic per approved change set.
+- **Compare versions** from three sources: snapshots and other models in the app, the server's change set per version and the
+  server's diff between versions. Built in 3.0.0.
+- **The project's manager** gets a page in the app when Dataregium's API for members and roles exists.
+- **Steps 4 and 5, after step 3:** a repository mode per project with a local Dataregium on your own computer and fetch and publish
+  between the local and the remote one; large models drawn from the server's geometry API when the browser is not enough; project
+  profiles with IDS and bSDD, IDS written by the AI and buildingSMART rules tied to elements.
+- **Open formats** apply to exchange formats and stored data, not to AI APIs; the AI provider is chosen by the user with their own
+  key, stored encrypted, and the project's policy can restrict to local models.
+
+### Proposed, not decided
+
+- A repository of its own for the clash core, with the same report form as the server's IfcClash.
+- The IFC5 reader (IFCX) in the app, when Dataregium locks at the IFC-LPG version that has it.
+- The modelling tools as an MCP endpoint in the local engine, so that other AI clients can use them.
 
 ## Bugs and suggestions
 
