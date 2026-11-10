@@ -405,7 +405,7 @@
     'palette.group.notebooks': 'Notesbøger',
     'bundle.title': 'Del pakke',
     'bundle.card.hint': 'En pakke er en ZIP med valgte datasæt, diagrammer, dashboards, skabeloner og notesbøger, en besked og en ændringslog. Modtageren indlæser den under Gendan fra ZIP; alt, der allerede findes, springes over, medmindre modtageren vælger at erstatte det.',
-    'bundle.help': 'Vælg, hvad der skal med. Nøgler og hemmeligheder medtages aldrig.',
+    'bundle.help': 'Vælg, hvad der skal med. Diagrammer, dashboards og notesbøger følger kun med for de valgte datasæt. Version 1 gennemgår ikke personoplysninger før deling; brug 2.0.0 eller senere til det, eller kontrollér selv. Nøgler og hemmeligheder følger aldrig med.',
     'bundle.name': 'Pakkens navn',
     'bundle.include': 'Medtag',
     'bundle.include.charts': 'Diagrammer',

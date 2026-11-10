@@ -412,7 +412,7 @@
     'palette.group.notebooks': 'Anteckningsböcker',
     'bundle.title': 'Dela paket',
     'bundle.card.hint': 'Ett paket är en ZIP med valda datamängder, diagram, dashboards, mallar och anteckningsböcker, ett meddelande och en ändringslogg. Mottagaren läser in det under Återställ från ZIP; det som redan finns hoppas över om mottagaren inte väljer att ersätta det.',
-    'bundle.help': 'Välj vad som ska följa med. Nycklar och hemligheter följer aldrig med.',
+    'bundle.help': 'Välj vad som ska följa med. Diagram, dashboards och anteckningsböcker följer med bara för de valda datamängderna. Version 1 granskar inte personuppgifter före delning; använd 2.0.0 eller senare för det, eller kontrollera själv. Nycklar och hemligheter följer aldrig med.',
     'bundle.name': 'Paketets namn',
     'bundle.include': 'Ta med',
     'bundle.include.charts': 'Diagram',

@@ -405,7 +405,7 @@
     'palette.group.notebooks': 'Muistikirjat',
     'bundle.title': 'Jaa paketti',
     'bundle.card.hint': 'Paketti on ZIP, joka sisältää valitut aineistot, kaaviot, kojelaudat, mallit ja muistikirjat sekä viestin ja muutoslokin. Vastaanottaja lataa sen kohdassa Palauta ZIP-tiedostosta; kaikki jo olemassa oleva ohitetaan, ellei vastaanottaja valitse korvata sitä.',
-    'bundle.help': 'Valitse, mitä sisällytetään. Avaimia ja salaisuuksia ei koskaan sisällytetä.',
+    'bundle.help': 'Valitse, mitä otetaan mukaan. Kaaviot, koontinäytöt ja muistikirjat tulevat mukaan vain valituille aineistoille. Versio 1 ei tarkista henkilötietoja ennen jakamista; käytä siihen versiota 2.0.0 tai uudempaa tai tarkista itse. Avaimet ja salaisuudet eivät koskaan tule mukaan.',
     'bundle.name': 'Paketin nimi',
     'bundle.include': 'Sisällytä',
     'bundle.include.charts': 'Kaaviot',

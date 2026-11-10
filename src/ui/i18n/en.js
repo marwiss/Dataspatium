@@ -405,7 +405,7 @@
     'palette.group.notebooks': 'Notebooks',
     'bundle.title': 'Share bundle',
     'bundle.card.hint': 'A bundle is a ZIP with chosen datasets, charts, dashboards, templates and notebooks, a message and a change log. The recipient loads it under Restore from ZIP; anything that already exists is skipped unless the recipient chooses to replace it.',
-    'bundle.help': 'Choose what to include. Keys and secrets are never included.',
+    'bundle.help': 'Choose what goes along. Charts, dashboards and notebooks come along only for the chosen datasets. Version 1 does not review personal data before sharing; use 2.0.0 or later for that, or check yourself. Keys and secrets never come along.',
     'bundle.name': 'Bundle name',
     'bundle.include': 'Include',
     'bundle.include.charts': 'Charts',

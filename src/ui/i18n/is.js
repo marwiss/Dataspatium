@@ -405,7 +405,7 @@
     'palette.group.notebooks': 'Minnisbækur',
     'bundle.title': 'Deila pakka',
     'bundle.card.hint': 'Pakki er ZIP með völdum gagnasöfnum, myndritum, mælaborðum, sniðum og minnisbókum, skilaboðum og breytingaskrá. Viðtakandinn hleður honum inn undir Endurheimta úr ZIP; því sem er þegar til er sleppt nema viðtakandinn velji að skipta því út.',
-    'bundle.help': 'Veldu hvað skal hafa með. Lyklar og leyndarmál eru aldrei tekin með.',
+    'bundle.help': 'Veldu hvað á að fylgja með. Myndrit, mælaborð og minnisbækur fylgja aðeins völdum gagnasöfnum. Útgáfa 1 fer ekki yfir persónuupplýsingar fyrir deilingu; notaðu 2.0.0 eða nýrri til þess, eða athugaðu sjálf(ur). Lyklar og leyndarmál fylgja aldrei með.',
     'bundle.name': 'Heiti pakka',
     'bundle.include': 'Hafa með',
     'bundle.include.charts': 'Myndrit',

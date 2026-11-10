@@ -146,6 +146,8 @@ möppu á diski, sjálfkrafa við hverja breytingu.
   athugasemdum. Viðtakandinn hleður henni inn undir *Endurheimta úr ZIP*, sér skilaboðin og breytingarnar og velur fyrir
   gagnasöfn sem þegar eru til hvort skipta eigi þeim út fyrir útgáfu pakkans (eigin útgáfa er vistuð undir *Útgáfur*);
   öðru er sleppt.
+- Myndrit, mælaborð og minnisbækur fylgja aðeins völdum gagnasöfnum. Útgáfa 1 fer ekki yfir persónuupplýsingar fyrir
+  deilingu, svo athugaðu sjálf(ur) hvað pakkinn inniheldur, eða notaðu 2.0.0 eða nýrri, sem fer yfir hann.
 - Athugasemdir: hvert gagnasafn hefur flipann *Athugasemdir* í Umsjón, og í Vinna gerirðu athugasemd við dálk úr
   eiginleikaspjaldinu. Athugasemdirnar eru í skrá gagnasafnsins og fylgja í pökkum, afritum, færanlegu möppunni og
   GitHub. Nafnið sem birtist velur þú; það er aðeins vistað í vafranum.

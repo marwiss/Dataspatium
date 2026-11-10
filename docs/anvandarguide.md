@@ -155,6 +155,9 @@ disk, automatiskt vid varje ändring.
   och de kommentarer som inte är lösta. Mottagaren läser in den under *Återställ från ZIP*, ser meddelandet och
   ändringarna och väljer för datamängder som redan finns om de ska ersättas med paketets version (den egna sparas
   under *Versioner*); resten hoppas över.
+- Diagram, dashboards och anteckningsböcker följer bara med för de valda datamängderna. Version 1 granskar inte
+  personuppgifter före delning, så kontrollera själv vad paketet innehåller, eller använd 2.0.0 eller senare, som
+  granskar det.
 - Kommentarer: varje datamängd har fliken *Kommentarer* i Hantera, och i Bearbeta kommenterar du en kolumn från
   inspektören. Kommentarerna ligger i datamängdens fil och följer med i paket, säkerhetskopior, den portabla mappen och
   GitHub. Namnet som visas anger du själv; det sparas bara i webbläsaren.

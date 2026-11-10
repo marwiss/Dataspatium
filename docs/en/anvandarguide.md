@@ -158,6 +158,8 @@ In Edge and Chrome the workspace can also be mirrored to a portable folder on di
   that are not resolved. The recipient loads it under *Restore from ZIP*, sees the message and the changes and chooses,
   for datasets that already exist, whether to replace them with the bundle's version (their own is kept under
   *Versions*); the rest is skipped.
+- Charts, dashboards and notebooks come along only for the chosen datasets. Version 1 does not review personal data
+  before sharing, so check what the bundle holds yourself, or use 2.0.0 or later, which reviews it.
 - Comments: every dataset has the tab *Comments* in Manage, and in Process you comment on a column from the inspector.
   The comments live in the dataset's file and travel in bundles, backups, the portable folder and GitHub. You give the
   name shown yourself; it is stored only in the browser.

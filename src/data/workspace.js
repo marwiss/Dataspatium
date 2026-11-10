@@ -57,9 +57,14 @@
         if (!only || only.has(meta.id)) files[path] = new Uint8Array(await datasets.exportBytes(meta.id));
         entries.push({ id: meta.id, name: meta.name, rowCount: meta.rowCount, columnCount: meta.columnCount, updatedAt: meta.updatedAt, file: path });
       }
+      // A bundle leaves the app: charts, dashboards and notebooks follow only for the chosen datasets, so that what other datasets
+      // show never goes along with it.
+      const bundling = options.kind === 'bundle' && !!only;
       // Saved charts travel as viz files (see viz/charts.js); they are matched to datasets by name on restore.
       const vizCharts = optional('viz/charts');
-      const charts = inc.charts ? (vizCharts ? await vizCharts.list() : await idb.listCharts()) : [];
+      const allCharts = inc.charts || inc.dashboards ? (vizCharts ? await vizCharts.list() : await idb.listCharts()) : [];
+      const datasetOfChart = new Map(allCharts.map((c) => [c.id, c.datasetId]));
+      const charts = !inc.charts ? [] : bundling ? allCharts.filter((c) => only.has(c.datasetId)) : allCharts;
       const chartEntries = [];
       for (const chart of charts) {
         const path = `charts/${chart.id}.viz.json`;
@@ -77,7 +82,8 @@
       }
       // Dashboards travel as self-contained dash files (chart definitions embedded).
       const dashMod = optional('viz/dashboards');
-      const dashes = inc.dashboards && dashMod ? await dashMod.list() : [];
+      const dashList = inc.dashboards && dashMod ? await dashMod.list() : [];
+      const dashes = bundling ? dashList.filter((d) => (d.items || []).every((it) => only.has(datasetOfChart.get(it.chartId)))) : dashList;
       const dashEntries = [];
       for (const dash of dashes) {
         const path = `dashboards/${dash.id}.dash.json`;
@@ -86,7 +92,8 @@
       }
       // Notebooks travel with their cells and saved outputs.
       const nbMod = optional('analysis/notebooks');
-      const notebooks = inc.notebooks && nbMod ? await nbMod.list() : [];
+      const nbList = inc.notebooks && nbMod ? await nbMod.list() : [];
+      const notebooks = bundling ? nbList.filter((nb) => !nb.datasetId || only.has(nb.datasetId)) : nbList;
       const nbEntries = [];
       for (const nb of notebooks) {
         const path = `notebooks/${nb.id}.nb.json`;

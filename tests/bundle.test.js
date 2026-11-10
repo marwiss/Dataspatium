@@ -51,6 +51,25 @@
     return paths.join(', ');
   }, 60000);
 
+  test('bundle: charts and notebooks of datasets that are not chosen stay behind', async (assert) => {
+    const notebooks = D.require('analysis/notebooks');
+    const a = await importer.run(new File(['ort;antal\nUmeå;3\n'], 'valt.csv'), {}, null, 'Valt paket');
+    const b = await importer.run(new File(['ort;antal\nLuleå;4\n'], 'annat.csv'), {}, null, 'Annat paket');
+    created.push(a.id, b.id);
+    const mine = await charts.save(Object.assign(charts.create('vega', a, 'Valt diagram'), {}));
+    const theirs = await charts.save(Object.assign(charts.create('vega', b, 'Annat diagram'), {}));
+    chartIds.push(mine.id, theirs.id);
+    const book = await notebooks.save(notebooks.create('Annan bok', await datasets.get(b.id)));
+    try {
+      const res = await workspace.bundle({ name: 'Avgränsat', datasetIds: [a.id], include: { charts: true, dashboards: true, documents: false, notebooks: true, scripts: false } });
+      const paths = Object.keys(await zip.readZip(res.blob));
+      assert.ok(paths.includes(`charts/${mine.id}.viz.json`), 'the chart of the chosen dataset');
+      assert.ok(!paths.includes(`charts/${theirs.id}.viz.json`), 'not the chart of the other one');
+      assert.ok(!paths.includes(`notebooks/${book.id}.nb.json`), 'not the notebook of the other one');
+      return 'ok';
+    } finally { await notebooks.remove(book.id).catch(() => {}); }
+  });
+
   test('bundle: cleanup', async (assert) => {
     for (const id of chartIds) { try { await charts.remove(id); } catch (_err) { /* ignore */ } }
     for (const id of created) { try { await datasets.remove(id); } catch (_err) { /* ignore */ } }

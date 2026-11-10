@@ -405,7 +405,7 @@
     'palette.group.notebooks': 'Notatbøker',
     'bundle.title': 'Del pakke',
     'bundle.card.hint': 'En pakke er en ZIP med valgte datasett, diagrammer, dashbord, maler og notatbøker, en melding og en endringslogg. Mottakeren laster den inn under Gjenopprett fra ZIP; alt som allerede finnes, hoppes over med mindre mottakeren velger å erstatte det.',
-    'bundle.help': 'Velg hva som skal være med. Nøkler og hemmeligheter tas aldri med.',
+    'bundle.help': 'Velg hva som skal følge med. Diagrammer, dashbord og notatbøker følger bare med for de valgte datasettene. Versjon 1 gjennomgår ikke personopplysninger før deling; bruk 2.0.0 eller senere til det, eller kontroller selv. Nøkler og hemmeligheter følger aldri med.',
     'bundle.name': 'Navn på pakken',
     'bundle.include': 'Ta med',
     'bundle.include.charts': 'Diagrammer',
