@@ -233,3 +233,11 @@ publisere: det gjør du med knappene.
 En modell hentet fra Dataregium publiseres som ny versjon i Del med dokumentets basisversjon, den versjonen du hentet. Har dokumentet
 fått en nyere versjon i mellomtiden, avviser serveren publiseringen (412 version_conflict); hent da den nyeste versjonen, gjør
 endringene på nytt og publiser igjen.
+
+## Sammenlign versjoner
+
+Knappen *Sammenlign* i modellvisningen sammenligner den åpne modellen med en lagret versjon av samme datasett (Versjoner i Bearbeid)
+eller med en annen IFC-modell i arbeidsområdet, for eksempel en nyere versjon hentet fra et CDE. Elementene matches på GlobalId; panelet
+lister hva som bare finnes her, bare i den andre og hva som er endret, attributt for attributt og egenskap for egenskap. I 3D farges det
+som bare finnes her grønt og det endrede gult; *Vis den andre versjonen* tegner i stedet den andre filen med det som bare finnes der
+rødt. *Marker* legger forskjellene i utvalget. Ingenting endres; samme sammenligning får senere Dataregiums diff-API som kilde.

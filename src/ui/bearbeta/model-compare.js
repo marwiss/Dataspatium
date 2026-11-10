@@ -1,0 +1,103 @@
+// @ts-check
+// SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+/**
+ * The panel "Jämför versioner" in Bearbeta's model view (the inspector): compare the open IFC model with a saved version of the same
+ * dataset or with another model in the workspace (a newer version fetched from a CDE), see what is only here, only there and changed
+ * (attribute by attribute, property by property), colour the 3D view (green only here, yellow changed), draw the other version instead
+ * (red only there), and mark the elements. Pure reading: nothing is changed; the diff comes from data/model-diff.
+ */
+(function () {
+  'use strict';
+  const D = globalThis.Dataspatium;
+  D.define('ui/bearbeta/model-compare', ['ui/base', 'ui/basic', 'ui/overlays', 'data/model-diff', 'data/selection'], (base, basic, overlays, modelDiff, selection) => {
+    const { h, t, i18n, replace } = base;
+    const SHOW = 50;
+    const SHOW_FIELDS = 6;
+    const cssColor = (name) => ((globalThis.getComputedStyle ? getComputedStyle(document.documentElement).getPropertyValue(name) : '') || '').trim() || '#888888';
+
+    /**
+     * @param {any} ctx shell context @param {any} ds the model dataset
+     * @param {{preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any}} options
+     */
+    function create(ctx, ds, options) {
+      const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '' };
+      const el = h('div', { class: 'dm-card dm-stack-sm', 'data-compare-panel': '' });
+      const keyOf = (c) => (c.snapshot ? `v${c.snapshot}` : c.datasetId);
+      async function load() {
+        s.choices = await modelDiff.choices(ds.id);
+        if (!s.choices.some((c) => keyOf(c) === s.choice)) s.choice = s.choices[0] ? keyOf(s.choices[0]) : '';
+      }
+      /** The colours: on this version green for only here and yellow for changed; on the other red for only there and yellow for changed. */
+      function colors(other) {
+        const r = s.result;
+        if (!r) return [];
+        const groups = other
+          ? [{ color: cssColor('--dm-error'), ids: r.onlyThere.map((e) => e.id) }, { color: cssColor('--dm-warn'), ids: r.changed.map((e) => e.idThere) }]
+          : [{ color: cssColor('--dm-ok'), ids: r.onlyHere.map((e) => e.id) }, { color: cssColor('--dm-warn'), ids: r.changed.map((e) => e.id) }];
+        return groups.filter((g) => g.ids.length);
+      }
+      async function run() {
+        const c = s.choices.find((x) => keyOf(x) === s.choice);
+        if (!c || s.busy) return;
+        s.busy = true; s.error = ''; s.result = null; s.showOther = false; render();
+        try {
+          s.result = await modelDiff.diff(ds.id, c);
+          if (options.preview) await options.preview({ colors: colors(false) });
+        } catch (err) { s.error = String((err && err.message) || err); }
+        s.busy = false; render();
+      }
+      /** The other version drawn in 3D instead of this one, and back. */
+      async function toggleOther() {
+        if (!s.result) return;
+        s.showOther = !s.showOther && !!s.result.other.bytes;
+        if (options.preview) await options.preview(s.showOther ? { bytes: s.result.other.bytes, colors: colors(true) } : { colors: colors(false) });
+        render();
+      }
+      /** What is only here and what changed, into the shared selection (ids of this version). */
+      async function mark() {
+        const r = s.result;
+        if (!r) return;
+        const ids = r.onlyHere.map((e) => e.id).concat(r.changed.map((e) => e.id)).filter(Number.isFinite);
+        if (!ids.length) return;
+        const made = await selection.setFromWhere(ds.id, `id in (${ids.join(', ')})`, [], t('compare.selection.label'));
+        overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
+      }
+      const value = (v) => (v === null || v === undefined || v === '' ? '–' : String(v));
+      const line = (e) => `${e.typ}${e.namn ? ' ' + e.namn : ''}${e.vaning ? ' · ' + e.vaning : ''} (#${e.id})`;
+      function section(key, label, list, total, fields) {
+        if (!total) return null;
+        return h('div', { class: 'dm-stack-sm', ['data-compare-' + key]: '' },
+          h('h4', { text: `${t(label)} (${i18n.formatNumber(total)})` }),
+          h('ul', { class: 'dm-list dm-xs' }, list.slice(0, SHOW).map((e) => h('li', { class: 'dm-small' }, h('span', { text: line(e) }),
+            fields && e.fields ? h('ul', { class: 'dm-list dm-xs' }, e.fields.slice(0, SHOW_FIELDS).map((f) => h('li', { text: t('compare.field', { name: f.name, there: value(f.there), here: value(f.here) }) })).concat(e.fields.length > SHOW_FIELDS || e.moreFields ? [h('li', { class: 'dm-help', text: t('compare.more', { n: i18n.formatNumber(e.fields.length - SHOW_FIELDS + (e.moreFields || 0)) }) })] : [])) : null))),
+          total > SHOW ? h('p', { class: 'dm-help dm-xs', text: t('compare.more', { n: i18n.formatNumber(total - SHOW) }) }) : null);
+      }
+      function render() {
+        const sel = /** @type {any} */ (h('dm-select', { label: t('compare.with'), 'data-compare-with': '' }));
+        sel.options = s.choices.map((c) => ({ value: keyOf(c), label: c.label }));
+        sel.value = s.choice;
+        sel.addEventListener('change', () => { s.choice = sel.value; });
+        const r = s.result;
+        const nothing = r && !r.counts.onlyHere && !r.counts.onlyThere && !r.counts.changed;
+        replace(el,
+          h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('compare.title') })),
+          s.choices.length ? h('div', { class: 'dm-row-wrap' }, sel, basic.button({ label: t('compare.run'), icon: 'history', size: 'sm', loading: s.busy, 'data-compare-run': '', onClick: run })) : h('p', { class: 'dm-help', 'data-compare-none': '', text: t('compare.none') }),
+          s.error ? h('p', { class: 'dm-error', text: s.error }) : null,
+          r ? h('div', { class: 'dm-stack-sm', 'data-compare-result': '' },
+            h('p', { class: 'dm-small', 'data-compare-counts': '', text: t('compare.counts', { other: r.other.label, here: i18n.formatNumber(r.counts.here), there: i18n.formatNumber(r.counts.there), added: i18n.formatNumber(r.counts.onlyHere), removed: i18n.formatNumber(r.counts.onlyThere), changed: i18n.formatNumber(r.counts.changed) }) }),
+            nothing ? h('p', { class: 'dm-help dm-small', text: t('compare.same') }) : h('p', { class: 'dm-help dm-xs', text: t('compare.hint') }),
+            r.truncated ? h('p', { class: 'dm-help dm-xs', text: t('compare.truncated', { n: i18n.formatNumber(modelDiff.MAX_LIST) }) }) : null,
+            nothing ? null : h('div', { class: 'dm-row-wrap' },
+              basic.button({ label: t(s.showOther ? 'compare.show.here' : 'compare.show.other'), icon: 'layers', size: 'sm', disabled: !r.other.bytes, title: t('compare.show.other.hint'), 'data-compare-other': '', onClick: toggleOther }),
+              r.counts.onlyHere + r.counts.changed ? basic.button({ label: t('compare.mark', { n: i18n.formatNumber(r.counts.onlyHere + r.counts.changed) }), icon: 'list-checks', size: 'sm', 'data-compare-mark': '', onClick: mark }) : null),
+            section('only-here', 'compare.only.here', r.onlyHere, r.counts.onlyHere, false),
+            section('changed', 'compare.changed', r.changed, r.counts.changed, true),
+            section('only-there', 'compare.only.there', r.onlyThere, r.counts.onlyThere, false)) : null);
+      }
+      function destroy() { if (s.result && options.preview) { s.result = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
+      load().then(render);
+      return { el, destroy, state: s, load, run, toggleOther, mark };
+    }
+    return { create };
+  });
+})();

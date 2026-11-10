@@ -24,6 +24,7 @@
       let svgEl = null; let box = null; let removeDrag = null;
       /** The issues panel, when open. */ let issues = null;
       /** The panel Fråga AI, when open. */ let ai = null;
+      /** The panel Jämför versioner, when open. */ let compare = null;
 
       const isDxf = () => model.isDxf(ds);
       const whereSql = () => model.whereOf(s.filter, isDxf());
@@ -35,7 +36,7 @@
         clearTimeout(searchTimer);
         if (handle) { handle.destroy(); handle = null; }
         if (removeDrag) { removeDrag(); removeDrag = null; }
-        if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; }
+        if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; }
         slots = null; host = null; table = null; svgEl = null;
       }
 
@@ -45,7 +46,7 @@
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; } }
         ds = dataset;
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
@@ -89,6 +90,7 @@
             h('div', { class: 'dm-toolbar' }, classify, useBtn,
               isDxf() ? null : ui.button({ label: t('issues.title'), icon: 'message-square', title: t('issues.button.hint'), 'data-model-issues-toggle': '', onClick: toggleIssues }),
               isDxf() ? null : ui.button({ label: t('ai.button'), icon: 'cpu', title: t('ai.button.hint'), 'data-model-ai-toggle': '', onClick: toggleAi }),
+              isDxf() ? null : ui.button({ label: t('compare.button'), icon: 'history', title: t('compare.button.hint'), 'data-model-compare-toggle': '', onClick: toggleCompare }),
               selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
@@ -137,6 +139,11 @@
       /** The panel Fråga AI om modellen, in the inspector; the elements of an answer are marked through data/selection. */
       function toggleAi() {
         if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview });
+        renderInspector();
+      }
+      /** The panel Jämför versioner, in the inspector; it colours the model or draws the other version through setPreview. */
+      function toggleCompare() {
+        if (compare) { compare.destroy(); compare = null; } else compare = D.require('ui/bearbeta/model-compare').create(ctx, ds, { preview: setPreview });
         renderInspector();
       }
       function fitAll() {
@@ -324,6 +331,7 @@
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
         if (ai) parts.unshift(ai.el);
+        if (compare) parts.unshift(compare.el);
         if (issues) parts.unshift(issues.el);
         if (selected) {
           parts.push(...(isDxf() ? dxfSelected(selected) : await ifcSelected(selected)));

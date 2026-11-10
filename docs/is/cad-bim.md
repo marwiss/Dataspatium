@@ -230,3 +230,11 @@ Breytingasett með skemavillum er ekki hægt að samþykkja, eyðingar eru stað
 Líkan sem sótt var frá Dataregium er birt sem ný útgáfa í Deila með grunnútgáfu skjalsins, þeirri útgáfu sem þú sóttir. Hafi skjalið
 fengið nýrri útgáfu á meðan hafnar þjónninn birtingunni (412 version_conflict); sæktu þá nýjustu útgáfuna, gerðu breytingarnar aftur
 og birtu á ný.
+
+## Bera saman útgáfur
+
+Hnappurinn *Bera saman* í líkansýninni ber opna líkanið saman við vistaða útgáfu sama gagnasafns (Útgáfur í Vinna) eða við annað
+IFC-líkan í vinnusvæðinu, til dæmis nýrri útgáfu sem sótt var frá CDE. Einingar eru paraðar á GlobalId; spjaldið telur upp hvað er
+aðeins hér, aðeins í hinni og hvað breyttist, eigind fyrir eigind og eiginleika fyrir eiginleika. Í þrívídd er það sem er aðeins hér
+grænt og það sem breyttist gult; *Sýna hina útgáfuna* teiknar hina skrána í staðinn með það sem er aðeins þar rautt. *Merkja* setur
+muninn í valið. Engu er breytt; sami samanburður fær síðar diff-API Dataregium sem uppsprettu.

@@ -235,3 +235,11 @@ kan aldri lagre eller publisere: det gjer du med knappane.
 Ein modell henta frå Dataregium vert publisert som ny versjon i Del med basisversjonen til dokumentet, den versjonen du henta. Har
 dokumentet fått ein nyare versjon i mellomtida, avviser tenaren publiseringa (412 version_conflict); hent då den nyaste versjonen, gjer
 endringane på nytt og publiser igjen.
+
+## Samanlikn versjonar
+
+Knappen *Samanlikn* i modellvisinga samanliknar den opne modellen med ein lagra versjon av same datasett (Versjonar i Arbeid) eller
+med ein annan IFC-modell i arbeidsområdet, til dømes ein nyare versjon henta frå eit CDE. Elementa vert kopla på GlobalId; panelet listar
+kva som berre finst her, berre i den andre og kva som er endra, attributt for attributt og eigenskap for eigenskap. I 3D vert det som
+berre finst her grønt og det endra gult; *Vis den andre versjonen* teiknar i staden den andre fila med det som berre finst der raudt.
+*Marker* legg skilnadene i utvalet. Ingenting vert endra; same samanlikning får seinare diff-API-et til Dataregium som kjelde.

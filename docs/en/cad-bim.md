@@ -237,3 +237,11 @@ without touching the model. The AI can never save or publish: you do that with t
 A model fetched from Dataregium is published as a new version in Share with the document's base version, the version you fetched. If
 the document has got a newer version meanwhile, the server refuses the publish (412 version_conflict); fetch the newest version, redo
 the changes and publish again.
+
+## Compare versions
+
+The button *Compare* in the model view compares the open model with a saved version of the same dataset (Versions in Process) or with
+another IFC model in the workspace, for example a newer version fetched from a CDE. Elements are matched on GlobalId; the panel lists
+what is only here, only in the other and what changed, attribute by attribute and property by property. In 3D what is only here is
+green and what changed yellow; *Show the other version* draws the other file instead, with what is only there red. *Mark* puts the
+differences in the selection. Nothing is changed; the same comparison will later take Dataregium's diff API as a source.

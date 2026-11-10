@@ -238,3 +238,11 @@ koskematta malliin. Tekoäly ei voi koskaan tallentaa tai julkaista: sen teet si
 Dataregiumista haettu malli julkaistaan uutena versiona Jaa-tilassa asiakirjan perusversiolla, sillä versiolla, jonka hait. Jos
 asiakirja on saanut sillä välin uudemman version, palvelin hylkää julkaisun (412 version_conflict); hae silloin uusin versio, tee
 muutokset uudelleen ja julkaise uudelleen.
+
+## Vertaa versioita
+
+Mallinäkymän painike *Vertaa* vertaa avointa mallia saman aineiston tallennettuun versioon (Versiot Käsittele-tilassa) tai toiseen
+työtilan IFC-malliin, esimerkiksi CDE:stä haettuun uudempaan versioon. Elementit yhdistetään GlobalId:n perusteella; paneeli luettelee,
+mitä on vain täällä, vain toisessa ja mikä on muuttunut, attribuutti attribuutilta ja ominaisuus ominaisuudelta. 3D:ssä vain täällä
+oleva värjätään vihreäksi ja muuttunut keltaiseksi; *Näytä toinen versio* piirtää sen sijaan toisen tiedoston, jossa vain siellä oleva on
+punaista. *Merkitse* lisää erot valintaan. Mitään ei muuteta; sama vertailu saa myöhemmin lähteekseen Dataregiumin diff-rajapinnan.
