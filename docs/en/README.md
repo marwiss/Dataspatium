@@ -66,8 +66,7 @@ with a backup or a bundle.
 
 ## What you can do
 
-What works in version 1 also works in version 2, and what works in version 2 also works in version 3. Dataspatium and Dataregium
-with the same major number belong together.
+What works in one version also works in the next. Each version belongs with the same version of Dataregium.
 
 ### Version 1 (with Dataregium 1)
 

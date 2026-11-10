@@ -63,8 +63,7 @@ ett paket.
 
 ## Vad du kan göra
 
-Det som går i version 1 går också i version 2, och det som går i version 2 går också i version 3. Dataspatium och Dataregium med samma
-huvudnummer hör ihop.
+Det som går i en version går också i nästa. Varje version hör ihop med samma version av Dataregium.
 
 ### Version 1 (med Dataregium 1)
 

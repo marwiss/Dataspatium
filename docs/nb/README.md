@@ -63,8 +63,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 
 ## Hva du kan gjøre
 
-Det som virker i versjon 1, virker også i versjon 2, og det som virker i versjon 2, virker også i versjon 3. Dataspatium og
-Dataregium med samme hovednummer hører sammen.
+Det som virker i én versjon, virker også i den neste. Hver versjon hører sammen med samme versjon av Dataregium.
 
 ### Versjon 1 (med Dataregium 1)
 

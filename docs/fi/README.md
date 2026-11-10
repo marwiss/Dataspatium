@@ -65,8 +65,7 @@ paketilla.
 
 ## Mitä voit tehdä
 
-Mikä toimii versiossa 1, toimii myös versiossa 2, ja mikä toimii versiossa 2, toimii myös versiossa 3. Samannumeroiset
-Dataspatium ja Dataregium kuuluvat yhteen.
+Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Kukin versio kuuluu yhteen saman Dataregium-version kanssa.
 
 ### Versio 1 (Dataregium 1:n kanssa)
 

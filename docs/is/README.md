@@ -62,8 +62,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 
 ## Hvað þú getur gert
 
-Það sem virkar í útgáfu 1 virkar einnig í útgáfu 2, og það sem virkar í útgáfu 2 virkar einnig í útgáfu 3. Dataspatium og
-Dataregium með sama aðalnúmer eiga saman.
+Það sem virkar í einni útgáfu virkar einnig í þeirri næstu. Hver útgáfa á saman við sömu útgáfu Dataregium.
 
 ### Útgáfa 1 (með Dataregium 1)
 

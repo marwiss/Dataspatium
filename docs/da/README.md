@@ -64,8 +64,7 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
 
 ## Hvad du kan
 
-Det, der virker i version 1, virker også i version 2, og det, der virker i version 2, virker også i version 3. Dataspatium og
-Dataregium med samme hovednummer hører sammen.
+Det, der virker i én version, virker også i den næste. Hver version hører sammen med samme version af Dataregium.
 
 ### Version 1 (med Dataregium 1)
 
