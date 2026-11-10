@@ -103,6 +103,15 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
   Eigenskapar og mengder blir tabellar, fana Mengder reknar per type, etasje og materiale, og DXF-teikningar blir viste som SVG med
   lag. Kortet *Valider modellen* samlar kontrollen til tenaren (IFC-skjemaet, reglane til buildingSMART og IDS-filene til prosjektet) og kontrollane i appen,
   og *Kollisjonskontroll* finn bygningsdelar som går inn i kvarandre eller ligg for tett, og kan sende dei som BCF-saker (sjå [cad-bim.md](cad-bim.md)).
+- **AI-modellering og versjonar**: panelet *Spør AI om modellen* lèt ein språkmodell (Anthropic eller eit OpenAI-kompatibelt API, med din
+  eigen nøkkel lagra kryptert) svare på spørsmål om ein IFC-modell gjennom verktøy som les tabellane til modellen og, for ein modell
+  frå Dataregium, dei namngjevne spørjingane til tenaren. I modusen *Endre* føreslår AI-en eit endringssett (etasjar, rutenett, veggar,
+  dekke, opningar, eigenskapar, flyttingar) som vert førehandsvist i 3D, kontrollert lokalt og av førehandskontrollen til tenaren og
+  brukt som eit oppskriftssteg fyrst når du godkjenner; AI-en kan aldri lagre eller publisere. Eit endringssett kan sendast til
+  Dataregium som endringsframlegg, prøvast der mot basisversjonen og godkjennast av ein *manager* til neste versjon av dokumentet, med
+  kollisjonar lista når dokumentet har gått vidare. *Samanlikn versjonar* viser kva som er nytt, borte og endra mellom ein modell og
+  eit augneblinksbilete, ein annan modell, endringssettet til tenaren per versjon eller diffen til tenaren, markert i 3D. Ein modell
+  frå Dataregium vert publisert med basisversjonen sin, slik at tenaren avviser når nokon har kome fyrst.
 - **Flytar og overvaking**: ei lagra kjede (hent, oppskrifter, skript, lister, diagram, dashbord, dokument, eksport) blir køyrd med eitt
   klikk eller ved start, og overvaka kjelder seier frå i statuslinja når dei har nye data (sjå [floden.md](floden.md)).
 - **Statistikk utan kode**: fana Statistikk gjer skildrande statistikk, krysstabellar, korrelasjon, hypotesetestar, regresjon og klyngeanalyse

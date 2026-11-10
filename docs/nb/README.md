@@ -103,6 +103,15 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
   Egenskaper og mengder blir tabeller, fanen Mengder beregner per type, etasje og materiale, og DXF-tegninger vises som SVG med
   lag. Kortet *Valider modellen* samler serverens kontroll (IFC-skjemaet, buildingSMARTs regler og prosjektets IDS-filer) og kontrollene i appen, og
   *Kollisjonskontroll* finner bygningsdeler som går inn i hverandre eller ligger for tett, og kan sende dem som BCF-saker (se [cad-bim.md](cad-bim.md)).
+- **AI-modellering og versjoner**: panelet *Spør AI om modellen* lar en språkmodell (Anthropic eller et OpenAI-kompatibelt API, med din
+  egen nøkkel lagret kryptert) svare på spørsmål om en IFC-modell gjennom verktøy som leser modellens tabeller og, for en modell fra
+  Dataregium, serverens navngitte spørringer. I modusen *Endre* foreslår AI-en et endringssett (etasjer, rutenett, vegger, dekker,
+  åpninger, egenskaper, flyttinger) som forhåndsvises i 3D, kontrolleres lokalt og av serverens forhåndskontroll og brukes som et
+  oppskriftssteg først når du godkjenner; AI-en kan aldri lagre eller publisere. Et endringssett kan sendes til Dataregium som
+  endringsforslag, prøves der mot basisversjonen og godkjennes av en *manager* til dokumentets neste versjon, med kollisjoner listet
+  når dokumentet har gått videre. *Sammenlign versjoner* viser hva som er nytt, borte og endret mellom en modell og et øyeblikksbilde,
+  en annen modell, serverens endringssett per versjon eller serverens diff, markert i 3D. En modell fra Dataregium publiseres med
+  basisversjonen sin, slik at serveren avviser når noen har kommet først.
 - **Flyter og overvåking**: en lagret kjede (hent, resepter, skript, lister, diagrammer, dashboards, dokumenter, eksport) kjøres med ett
   klikk eller ved start, og overvåkede kilder sier fra i statuslinjen når de har nye data (se [floden.md](floden.md)).
 - **Statistikk uten kode**: fanen Statistikk gjør beskrivende statistikk, krysstabeller, korrelasjon, hypotesetester, regresjon og klyngeanalyse

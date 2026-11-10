@@ -107,6 +107,15 @@ with a backup or a bundle.
   both ways. Properties and quantities become tables, the Quantities tab counts per type, storey and material, and DXF drawings
   show as SVG with layers. The card *Validate the model* gathers the server's check (the IFC schema, buildingSMART's rules and the project's IDS files) and the
   checks in the app, and *Clash check* finds building parts that run into each other or lie too close and can send them as BCF topics (see [cad-bim.md](cad-bim.md)).
+- **AI modelling and versions**: the panel *Ask AI about the model* lets a language model (Anthropic or an OpenAI-compatible API, with
+  your own key stored encrypted) answer questions about an IFC model through tools that read the model's tables and, for a model from
+  Dataregium, the server's named queries. In the mode *Change* the AI proposes a change set (storeys, grids, walls, slabs, openings,
+  properties, moves) that is previewed in 3D, checked locally and by the server's precheck, and applied as a recipe step only when you
+  approve; the AI can never save or publish. A change set can be sent to Dataregium as a change proposal, tried there against the base
+  version and approved by a *manager* into the document's next version, with collisions listed when the document has moved on.
+  *Compare versions* shows what is new, gone and changed between a model and a snapshot, another model, the server's change set per
+  version or the server's diff, marked in 3D. A model from Dataregium is published with its base version, so that the server refuses
+  when someone got there first.
 - **Flows and watches**: a saved chain (fetch, recipes, scripts, lists, charts, dashboards, documents, export) runs with one click or at
   start, and watched sources say so in the status bar when they have new data (see [floden.md](floden.md)).
 - **Statistics without code**: the Statistics tab does descriptive statistics, crosstabs, correlation, hypothesis tests, regression and

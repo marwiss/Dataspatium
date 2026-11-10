@@ -111,6 +111,15 @@ ett paket.
   håll. Egenskaper och mängder blir tabeller, fliken Mängder räknar per typ, våning och material, och DXF-ritningar visas som
   SVG med lager. Kortet *Validera modellen* samlar serverns kontroll (IFC-schemat, buildingSMART:s regler och projektets IDS-filer) och kontrollerna i appen, och
   *Kollisionskontroll* hittar byggdelar som går in i varandra eller ligger för tätt och kan skicka dem som BCF-ärenden (se [docs/sv/cad-bim.md](docs/sv/cad-bim.md)).
+- **AI-modellering och versioner**: panelen *Fråga AI om modellen* låter en språkmodell (Anthropic eller ett OpenAI-kompatibelt API, med din
+  egen nyckel lagrad krypterad) svara på frågor om en IFC-modell genom verktyg som läser modellens tabeller och, för en modell från
+  Dataregium, serverns namngivna frågor. I läget *Ändra* föreslår AI:n ett ändringsset (våningar, rutnät, väggar, bjälklag, öppningar,
+  egenskaper, flyttar) som förhandsvisas i 3D, kontrolleras lokalt och av serverns förkontroll och tillämpas som ett receptsteg först när
+  du godkänner; AI:n kan aldrig spara eller publicera. Ett ändringsset kan skickas till Dataregium som ändringsförslag, prövas där mot
+  basversionen och godkännas av en *manager* till dokumentets nästa version, med krockar listade när dokumentet hunnit ändras.
+  *Jämför versioner* visar vad som är nytt, borta och ändrat mellan en modell och en ögonblicksbild, en annan modell, serverns
+  ändringsset per version eller serverns diff, markerat i 3D. En modell från Dataregium publiceras med sin basversion, så att servern
+  vägrar när någon hunnit före.
 - **Flöden och bevakningar**: en sparad kedja (hämta, recept, skript, listor, diagram, dashboards, dokument, export) körs med ett klick
   eller vid start, och bevakade källor säger till i statusraden när de har nya data (se [docs/sv/floden.md](docs/sv/floden.md)).
 - **Statistik utan kod**: fliken Statistik gör beskrivande statistik, korstabeller, korrelation, hypotestester, regression och klustring med

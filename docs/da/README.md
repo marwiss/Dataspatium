@@ -104,6 +104,15 @@ netværk. Webversionen og mappeversionen har adskilte arbejdsområder; flyt data
   Egenskaber og mængder bliver tabeller, fanen Mængder beregner pr. type, etage og materiale, og DXF-tegninger vises som SVG med
   lag. Kortet *Valider modellen* samler serverens kontrol (IFC-skemaet, buildingSMARTs regler og projektets IDS-filer) og kontrollerne i appen, og
   *Kollisionskontrol* finder bygningsdele, der går ind i hinanden eller ligger for tæt, og kan sende dem som BCF-sager (se [cad-bim.md](cad-bim.md)).
+- **AI-modellering og versioner**: panelet *Spørg AI om modellen* lader en sprogmodel (Anthropic eller et OpenAI-kompatibelt API, med din
+  egen nøgle gemt krypteret) besvare spørgsmål om en IFC-model gennem værktøjer, der læser modellens tabeller og, for en model fra
+  Dataregium, serverens navngivne forespørgsler. I tilstanden *Ændr* foreslår AI'en et ændringssæt (etager, net, vægge, dæk, åbninger,
+  egenskaber, flytninger), som forhåndsvises i 3D, kontrolleres lokalt og af serverens forhåndskontrol og anvendes som et opskriftstrin,
+  først når du godkender; AI'en kan aldrig gemme eller publicere. Et ændringssæt kan sendes til Dataregium som ændringsforslag,
+  afprøves der mod basisversionen og godkendes af en *manager* til dokumentets næste version, med kollisioner listet, når dokumentet er
+  nået videre. *Sammenlign versioner* viser, hvad der er nyt, væk og ændret mellem en model og et øjebliksbillede, en anden model,
+  serverens ændringssæt pr. version eller serverens diff, markeret i 3D. En model fra Dataregium publiceres med sin basisversion, så
+  serveren afviser, når nogen er kommet først.
 - **Flows og overvågning**: en gemt kæde (hent, recepter, scripts, lister, diagrammer, dashboards, dokumenter, eksport) køres med ét klik
   eller ved start, og overvågede kilder siger til i statuslinjen, når de har nye data (se [floden.md](floden.md)).
 - **Statistik uden kode**: fanen Statistik laver beskrivende statistik, krydstabeller, korrelation, hypotesetest, regression og klyngeanalyse

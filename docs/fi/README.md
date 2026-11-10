@@ -108,6 +108,15 @@ paketilla.
   suuntiin. Ominaisuuksista ja määristä tulee taulukoita, Määrät-välilehti laskee tyypeittäin, kerroksittain ja materiaaleittain, ja
   DXF-piirustukset näkyvät SVG:nä tasoineen. Kortti *Validoi malli* kokoaa palvelimen tarkistuksen (IFC-skeema, buildingSMARTin säännöt ja projektin IDS-tiedostot) ja sovelluksen
   tarkistukset, ja *Törmäystarkistus* löytää rakennusosat, jotka menevät toistensa sisään tai ovat liian lähellä, ja voi lähettää ne BCF-tehtävinä (katso [cad-bim.md](cad-bim.md)).
+- **Tekoälymallinnus ja versiot**: paneeli *Kysy tekoälyltä mallista* antaa kielimallin (Anthropic tai OpenAI-yhteensopiva rajapinta,
+  omalla salattuna tallennetulla avaimellasi) vastata kysymyksiin IFC-mallista työkaluilla, jotka lukevat mallin taulukoita ja,
+  Dataregiumista haetulle mallille, palvelimen nimettyjä kyselyjä. Tilassa *Muuta* tekoäly ehdottaa muutosjoukon (kerrokset, ruudukot,
+  seinät, laatat, aukot, ominaisuudet, siirrot), joka esikatsellaan 3D:nä, tarkistetaan paikallisesti ja palvelimen esitarkistuksella ja
+  sovelletaan reseptivaiheena vasta, kun hyväksyt; tekoäly ei koskaan voi tallentaa tai julkaista. Muutosjoukon voi lähettää
+  Dataregiumiin muutosehdotuksena, kokeilla siellä perusversiota vasten ja *manager* voi hyväksyä sen asiakirjan seuraavaksi versioksi,
+  ristiriidat lueteltuina, kun asiakirja on ehtinyt muuttua. *Vertaa versioita* näyttää, mikä on uutta, poistunut ja muuttunut mallin ja
+  tilannekuvan, toisen mallin, palvelimen versiokohtaisen muutosjoukon tai palvelimen diffin välillä, merkittynä 3D:nä. Dataregiumista
+  haettu malli julkaistaan perusversiollaan, jolloin palvelin kieltäytyy, jos joku on ehtinyt ensin.
 - **Työnkulut ja seurannat**: tallennettu ketju (nouto, reseptit, skriptit, luettelot, kaaviot, koontinäytöt, asiakirjat, vienti) ajetaan
   yhdellä napsautuksella tai käynnistyksessä, ja seuratut lähteet kertovat tilarivillä uusista tiedoista (katso [floden.md](floden.md)).
 - **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin

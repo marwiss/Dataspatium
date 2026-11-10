@@ -100,6 +100,15 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **CAD og BIM**: IFC-líkön opnast í þrívídd (web-ifc og three.js) fyrir ofan töflu yfir byggingarhlutana og valið fylgir í báðar áttir.
   Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum. Spjaldið *Sannprófa líkanið* safnar saman athugun þjónsins (IFC-skemanu, reglum buildingSMART og IDS-skrám verkefnisins) og athugunum
   forritsins, og *Árekstraprófun* finnur byggingarhluta sem ganga hver inn í annan eða liggja of þétt og getur sent þá sem BCF-mál (sjá [cad-bim.md](cad-bim.md)).
+- **Gervigreindarlíkanagerð og útgáfur**: spjaldið *Spyrja gervigreind um líkanið* lætur mállíkan (Anthropic eða OpenAI-samhæf
+  forritaskil, með eigin lykli vistuðum dulkóðuðum) svara spurningum um IFC-líkan gegnum tól sem lesa töflur líkansins og, fyrir líkan
+  frá Dataregium, nefndar fyrirspurnir þjónsins. Í hamnum *Breyta* leggur gervigreindin til breytingasett (hæðir, möskva, veggi, plötur,
+  op, eiginleika, færslur) sem er forskoðað í þrívídd, athugað staðbundið og með forathugun þjónsins og beitt sem uppskriftarskrefi fyrst
+  þegar þú samþykkir; gervigreindin getur aldrei vistað eða birt. Breytingasett má senda til Dataregium sem breytingatillögu, reyna þar
+  á grunnútgáfunni og *manager* getur samþykkt það sem næstu útgáfu skjalsins, með árekstra talda upp þegar skjalið hefur breyst á
+  meðan. *Bera saman útgáfur* sýnir hvað er nýtt, horfið og breytt milli líkans og svipmyndar, annars líkans, breytingasetts þjónsins
+  fyrir hverja útgáfu eða mismunar þjónsins, merkt í þrívídd. Líkan frá Dataregium er birt með grunnútgáfu sinni, svo að þjónninn hafnar
+  þegar einhver var á undan.
 - **Flæði og vöktun**: vistuð keðja (sókn, uppskriftir, skriftur, listar, gröf, mælaborð, skjöl, útflutningur) er keyrð með einum smelli
   eða við ræsingu og vaktaðar heimildir láta vita á stöðustikunni þegar ný gögn eru til (sjá [floden.md](floden.md)).
 - **Tölfræði án kóða**: flipinn Tölfræði gerir lýsandi tölfræði, krosstöflur, fylgni, tilgátupróf, aðhvarf og klasagreiningu með eyðublöðum sem
