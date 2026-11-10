@@ -4,9 +4,22 @@
 
 # Dataspatium OpenCDE-asiakas
 
-Dataspatium on verkkosovellus datan käsittelyyn lähteestä raporttiin: nouda dataa tiedostoista ja avoimista
-rajapinnoista, tallenna ja hallitse aineistoja, tarkista ja korjaa arvoja, analysoi R:llä, visualisoi ja vie. Kaikki toimii
-omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan poistu tietokoneelta, ellet itse vie sitä. Turvallisuus on ensimmäinen vaatimus: ei verkkokutsuja ilman toimintaasi ja suostumustasi, salaisuudet vain salattuina, komponentit kiinnitettyinä ja tarkistettuina, ja kaikki jaettava tarkistetaan ensin.
+*Tämä on Dataspatium 2.0.0:n README. Uusin julkaisu, 3.0.0, on kuvattu [main-haaran READMEssä](https://github.com/marwiss/Dataspatium/blob/main/docs/fi/README.md).*
+
+Dataspatium on ohjelma datan käsittelyyn, ja se avataan tavallisessa selaimessasi. Tuot siihen taulukon, kartan, kaavan,
+rakennusmallin tai viranomaisen tilastoja, korjaat ja lasket niitä, teet kaavioita ja raportteja ja lähetät tuloksen eteenpäin. Kaikki
+tapahtuu omalla tietokoneellasi: ei asennusta, ei tiliä eikä palvelinta. Mitään ei lähde tietokoneelta, ellet itse vie tai jaa sitä,
+ja sovellus kysyy aina ennen kuin se käyttää internetiä.
+
+Dataspatium voi toimia myös [Dataregiumin](https://github.com/marwiss/Dataregium) kanssa. Dataregium on palvelin, jossa
+rakennushanke jakaa mallinsa, asiakirjansa ja asiansa. Silloin voit noutaa hankkeen rakennusmallit, osoittaa ongelmia 3D:ssä asioina
+ja kysyä palvelimen mallien graafilta. Ilman Dataregiumia kaikki muu toimii täsmälleen samoin.
+
+**Teknisesti osaavalle:** staattinen verkkosovellus ilman käännösvaihetta, joka toimii `file://`-osoitteesta Edgessä, Chromessa ja
+Firefoxissa tai miltä tahansa staattiselta verkkopalvelimelta. Jokainen aineisto on SQLite-tiedosto (sql.js) IndexedDB:ssä; R toimii
+WebR 0.5.9:ssä ja Python Pyodide 0.29.5:ssä, molemmat workereissa; IFC luetaan web-ifc:llä ja IfcOpenShellillä (wasm). Palvelinta
+vasten sovellus on OpenCDE-asiakas: Foundation API 1.0 OAuth2 authorization coden ja PKCE:n kanssa, BCF API 3.0 ja 2.1 sekä Documents
+API 1.0. Verkkokutsuja ei tehdä ilman käyttötarkoituskohtaista suostumusta, ja salaisuudet tallennetaan vain salattuina (AES-GCM).
 
 ![Dataspatium Muokkaa-tilassa ja taulukko Ruotsin kunnista](../images/bearbeta.png)
 
@@ -14,217 +27,303 @@ omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan 
 
 - [Lataa ja aloita](#lataa-ja-aloita)
 - [Vaatimukset](#vaatimukset)
+- [Sanoja, jotka on hyvä tuntea](#sanoja-jotka-on-hyvä-tuntea)
 - [Mitä voit tehdä](#mitä-voit-tehdä)
+- [OpenCDE-rajapinnat ja niiden asiakasohjelmat](#opencde-rajapinnat-ja-niiden-asiakasohjelmat)
 - [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)
 - [Lue lisää](#lue-lisää)
 - [Rajoitukset lyhyesti](#rajoitukset-lyhyesti)
+- [Henkilötiedot](#henkilötiedot)
+- [Uudemmat julkaisut](#uudemmat-julkaisut)
 - [Virheet ja ehdotukset](#virheet-ja-ehdotukset)
 - [Kehitys](#kehitys)
 - [Lisenssi](#lisenssi)
 
-Käyttöliittymä on saatavilla ruotsiksi, tanskaksi, norjaksi (bokmål ja nynorsk), suomeksi, islanniksi ja englanniksi. Dokumentaation
-kuvakaappaukset näyttävät sovelluksen ruotsiksi.
-
 ## Lataa ja aloita
 
-1. **Lataa.** Siirry [uusimpaan julkaisuun](https://github.com/marwiss/Dataspatium/releases/latest) ja lataa ZIP-tiedosto
-   kohdasta *Assets* (`dataspatium-<versio>.zip`, noin 100 Mt; R ja kaikki R-paketit ovat mukana).
-2. **Pura.** Napsauta ZIP-tiedostoa hiiren kakkospainikkeella ja valitse *Pura kaikki* (Windows) tai kaksoisnapsauta sitä
-   (macOS). Sijoita kansio haluamaasi paikkaan, esimerkiksi Tiedostot-kansioon. Sovellus ei toimi suoraan ZIP-tiedoston
-   sisältä.
-3. **Avaa.** Kaksoisnapsauta kansion `index.html`-tiedostoa tai vedä se selainikkunaan. Jos Windows kysyy, millä sovelluksella
-   tiedosto avataan, valitse Edge, Chrome tai Firefox. Ensimmäisellä kerralla sovellus kysyy, mitä kieltä haluat käyttää
-   (sen voi vaihtaa oikean yläkulman kielipainikkeella), ja aloittaa sitten **peruskurssin**, noin kymmenen minuutin
-   vuorovaikutteisen läpikäynnin kaikista tiloista esimerkkidatalla. Avaa se uudelleen ohjeesta (?).
-4. **Tuo.** Pudota *Nouda*-tilassa tiedosto alueelle (tai napsauta *Kokeile esimerkkidatalla*), tarkista saraketyypit ja
-   napsauta *Tuo*. Aineisto tallennetaan tietokoneesi selaimeen.
-5. **Jatka.** Vaihda tilaa yläreunasta: *Hallitse* näyttää aineistosi ja työtilan, *Hae* löytää niistä rivejä,
-   *Muokkaa* näyttää taulukon lajittelun, suodattimien ja toimintojen kanssa, *Analysoi* avaa R- ja SQL-konsolin,
-   *Visualisoi* rakentaa kaavioita, *Vie* lataa dataa, kaavioita ja asiakirjoja ja *Jaa* antaa ne muille.
+1. **Lataa.** Mene [julkaisuun 2.0.0](https://github.com/marwiss/Dataspatium/releases/tag/v2.0.0) ja nouda ZIP-tiedosto kohdasta
+   *Assets* (`dataspatium-<version>.zip`, noin 100 Mt; R ja yleisimmät R-paketit sisältyvät).
+2. **Pura.** Napsauta ZIP-tiedostoa hiiren oikealla painikkeella ja valitse *Pura kaikki* (Windows) tai kaksoisnapsauta sitä (macOS).
+   Siirrä kansio haluamaasi paikkaan, esimerkiksi Tiedostot-kansioon. Sovellus ei toimi suoraan ZIP-tiedoston sisältä.
+3. **Avaa.** Kaksoisnapsauta kansiossa olevaa `index.html`-tiedostoa tai vedä tiedosto selainikkunaan. Jos Windows kysyy, millä
+   sovelluksella tiedosto avataan, valitse Edge, Chrome tai Firefox. Ensimmäisellä kerralla valitset kielen, ja sitten tarjotaan
+   **Peruskurssia**: kaikkien tilojen läpikäyntiä esimerkkidatalla, joka kestää noin kymmenen minuuttia ja jonka voi avata uudelleen
+   ohjeesta (?).
+4. **Tuo dataa.** *Nouda*-tilassa pudotat tiedoston pinnalle tai napsautat *Kokeile esimerkkidatalla*. Sovellus näyttää, mitä tiedosto
+   sisältää; napsauta *Tuo*. Aineisto tallentuu selaimeen omalle tietokoneellesi.
+5. **Jatka.** Ylhäällä olevat tilat ovat työn vaiheet: *Hallitse* pitää aineistosi järjestyksessä, *Hae* löytää rivejä ilman koodia,
+   *Muokkaa* näyttää taulukon, kartan tai mallin painikkeineen korjaamista ja laskemista varten, *Analysoi* sisältää tilastot ja koodin
+   (R, Python ja SQL), *Visualisoi* tekee kaavioita ja karttoja, *Vie* tallentaa tiedostoja tietokoneelle ja *Jaa* lähettää muille.
 
-Data tallennetaan selaimen omaan tietokantaan. Jos tyhjennät sivustotiedot, data katoaa, joten tee varmuuskopio
-säännöllisesti kohdassa *Hallitse > Työtila*. Varmuuskopio on ZIP-tiedosto, jonka voi palauttaa samalle tai toiselle
-tietokoneelle. Vaihe vaiheelta ja tarkemmin: [kom-igang.md](kom-igang.md).
+Tallentamasi tiedot ovat selaimen omassa tietokannassa tietokoneella. Jos tyhjennät selaimen sivustotiedot, ne katoavat, joten ota
+säännöllisesti varmuuskopio kohdassa *Hallitse > Työtila*. Varmuuskopio on ZIP-tiedosto, jonka voi palauttaa samalle tai toiselle
+tietokoneelle. Vaihe vaiheelta tarkemmin: [kom-igang.md](kom-igang.md).
 
-Sovellus on myös suoraan verkossa ilman latausta: <https://marwiss.github.io/Dataspatium/>. Verkkopalvelimelta sen
-voi asentaa omaksi sovellukseksi (Edge ja Chrome: *Asenna* osoiterivillä), ja se toimii sen jälkeen myös ilman
-verkkoa. Verkkoversiolla ja kansioversiolla on erilliset työtilat; siirrä dataa niiden välillä varmuuskopiolla tai
-paketilla.
+Verkkoversio osoitteessa <https://marwiss.github.io/Dataspatium/> on aina uusin julkaisu, nyt 3.0.0.
+
+### Teknisesti osaavalle
+
+- **Aja:** pura ZIP-tiedosto ja avaa `index.html` (file://), tai tarjoile kansio: `python -m http.server 8080 --bind 127.0.0.1` ja avaa
+  <http://127.0.0.1:8080/>. Verkkopalvelimelta käytössä ovat service worker, asennettava sovellus sekä keskeytettävät R ja Python.
+- **Tarkista ZIP-tiedosto:** vertaa sen SHA-256-tiivistettä julkaisun tekstissä olevaan (`Get-FileHash` PowerShellissä,
+  `shasum -a 256` macOS:ssä ja Linuxissa).
+- **Palvelimen kanssa:** käynnistä Dataregium Dockerilla tai Podmanilla (`docker compose up -d --build --wait` ja
+  `docker compose exec api opencde seed` Dataregiumin repossa), tarjoile Dataspatium portissa 8080 ja lisää palvelin kohdassa *Nouda >
+  Lisää lähteitä > OpenCDE*. Asiakastunnuksen voi jättää tyhjäksi, kun palvelin sallii itserekisteröinnin. Koko matka kahdessakymmenessä
+  minuutissa: [snabbstart.md](snabbstart.md).
+- **Graafi:** palvelimen IFC-graafia (Neo4j tai Memgraph) kysytään Cypherillä *Nouda*-tilasta, palvelimen graafikyselyn kautta tai
+  suoraan Boltin yli.
+- **Testit:** `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` ajaa koko testisarjan headless-Edgessä ja -Firefoxissa.
 
 ## Vaatimukset
 
 - Windows, macOS tai Linux.
-- Microsoft Edge tai Google Chrome (versio 120 tai uudempi) tai Firefox (versio 128 tai uudempi). Safaria ei tueta.
-- Noin 300 Mt vapaata tilaa sovelluskansiolle ja vähintään 4 Gt muistia (8 Gt suositellaan suurille aineistoille).
+- Microsoft Edge tai Google Chrome (versio 120 tai uudempi) tai Firefox (versio 128 tai uudempi). Safaria ei tueta koko sovellukselle.
+- Noin 300 Mt vapaata tilaa sovelluskansiolle ja vähintään 4 Gt muistia (8 Gt suositellaan suurille aineistoille ja malleille).
   Järjestelmänvalvojan oikeuksia ei tarvita.
-- Internetiä tarvitaan vain, kun noudat dataa avoimista rajapinnoista, lähetät GitHubiin, tarkistat päivitykset tai
-  noudat komponentin tai R-paketin, joka ei tule kansion mukana; sovellus kysyy ensin lupaa.
+- Internetiä tarvitaan vain, kun itse valitset jotakin, mikä sitä vaatii, ja sovellus kysyy luvan ensin jokaiseen käyttötarkoitukseen:
+  datan noutaminen avoimista rajapinnoista ja kartoista, yhteys Dataregium-palvelimeen tai GitHubiin, päivitysten haku tai sellaisen osan noutaminen, joka ei sisälly kansioon (Python, IfcOpenShell ja muut kuin
+  yleisimmät R-paketit).
+- Dataregium tarvitsee palvelimen. Oman ajaminen vaatii Dockerin tai Podmanin; sen kuvaa Dataregiumin README.
+
+## Sanoja, jotka on hyvä tuntea
+
+Sinun ei tarvitse tuntea alla olevia sanoja käyttääksesi sovellusta, mutta ne esiintyvät tekstissä.
+
+- **Rajapinta (API)**: tapa, jolla ohjelmat noutavat dataa toisiltaan verkon yli. Sovellus noutaa tilastoja viranomaisten rajapinnoista
+  ja keskustelee Dataregiumin kanssa sen rajapintojen kautta.
+- **Aineisto**: se, minkä sovellus tallentaa, kun tuot jotakin: taulukko, kartta, kaava, graafi, malli tai asiakirja- tai
+  kuvakokoelma.
+- **Resepti**: luettelo kaikesta, mitä olet tehnyt aineistolle, vaihe vaiheelta, jotta sen voi perua tai toistaa uudelle datalle.
+- **R, Python ja SQL**: kieliä datan analysointiin. Sovelluksessa ne ovat valmiina, mutta useimmat asiat tehdään painikkeilla ja
+  lomakkeilla, jotka kirjoittavat koodin puolestasi.
+- **BIM**: rakennuksen kuvaaminen digitaalisena mallina, jossa jokaisella seinällä, ovella ja huoneella on tietoja, eikä vain viivoina
+  piirustuksessa.
+- **IFC**: rakennusmallien avoin tiedostomuoto, jota kaikki suuret rakennussuunnitteluohjelmat osaavat lukea ja kirjoittaa.
+- **CAD**: piirto-ohjelmalla tehdyt piirustukset; sovellus lukee niitä avoimessa DXF-muodossa.
+- **IDS**: avoin tiedosto, joka kertoo, mitä tietoja mallissa on oltava, jotta malli voidaan tarkastaa automaattisesti.
+- **BCF**: avoin muoto mallia koskeville asioille, esimerkiksi ”ilmanvaihto kulkee palkin läpi”, kuvan ja paikan näyttävän näkymän
+  kanssa.
+- **OpenCDE**: buildingSMARTin avoimet säännöt sille, miten ohjelmat jakavat rakennushankkeen mallit, asiakirjat ja asiat, jotta eri
+  valmistajien ohjelmat toimivat yhdessä.
+- **Palvelin**: ohjelma, johon muut ottavat yhteyden verkon yli. Dataregium on palvelin; Dataspatium ei tarvitse sellaista.
+- **Graafi ja graafitietokanta**: data asioina ja niiden välisinä yhteyksinä, esimerkiksi että ovi on seinässä jossakin kerroksessa.
+  Dataregium voi tallentaa jokaisen mallin graafiksi Neo4j- tai Memgraph-tietokantaan IFC-LPG-moduulin avulla.
+- **Kontti**: valmiiksi paketoitu ohjelma, joka käynnistetään Dockerilla tai Podmanilla ilman että sen osia asennetaan erikseen.
+  Dataregium toimii näin; Dataspatium ei tarvitse kontteja.
+- **OAuth2-kirjautuminen**: tavallinen tapa kirjautua palveluun toisesta sovelluksesta ilman, että sovellus näkee salasanaasi.
+- **file:// ja CORS**: file:// tarkoittaa, että sovellus avataan suoraan kansiosta. CORS on selaimen sääntö siitä, mistä verkkopalveluista
+  verkkosovellus saa noutaa dataa; palveluun ilman CORS-tukea ei pääse suoraan.
 
 ## Mitä voit tehdä
 
-- **Noutaa**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- ja shapefile-tiedostoja, taulukoita HTML-, Markdown-, Word- ja LaTeX-asiakirjoista, KML-, KMZ-, GPX- ja TopoJSON-karttatiedostoja, SQL-skriptejä, vanhempia taulukkolaskentamuotoja (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF),
-  kiinteälevyistä tekstiä, tilastotiedostoja SPSS:stä, Statasta ja SAS:sta (arvoselitteineen) ja PX-muodosta sekä Parquet- ja RDS-tiedostoja (R:n
-  kautta), liitettyä tekstiä, tiedostoja verkko-osoitteista ja dataa suoraan avoimista rajapinnoista: Tilastokeskus,
-  THL:n Sotkanet, PRH:n YTJ, Fintrafficin Digitraffic, Ilmatieteen laitos, avoindata.fi, Ruotsin, Norjan, Tanskan, Islannin,
-  Grönlannin ja Färsaarten tilastovirastot, ÅSUB, Nordic Statistics, Eurostat, EKP, OECD ja muita viranomaisia,
-  maasuodattimella ja tallennetuilla hauilla, jotka päivittyvät yhdellä napsautuksella ja toistavat reseptinsä (ks.
-  [api-konfiguration.md](api-konfiguration.md)). Esimerkkidata sekä Ruotsin, Tanskan, Norjan ja Suomen kuntien ja
-  alueiden rajat ovat mukana.
-- **Tietokannat**: Access-tiedostot luetaan suoraan selaimessa; tietokoneen tai verkon tietokannat (SQL Server, ODBC,
-  Excel, SQLite) tavoitetaan paikallisen sillan kautta, ja PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse,
-  Elasticsearch, SPARQL, InfluxDB, Google Sheets ja Airtable muuttuvat lähteiksi yhdellä napsautuksella. Tiedostoja voi
-  linkittää ja lukea uudelleen levyltä (ks. [kallor.md](kallor.md)).
-- **Asiakirjat ja kuvat**: PDF, Word, OpenDocument, Markdown ja teksti muuttuvat asiakirjakokoelmiksi, joita luetaan
-  lukunäkymässä sivu kerrallaan tai kokonaan; kuvista tulee kuvakokoelma EXIF-tietoineen ja gallerioineen. Työkalut
-  Teksti (sanafrekvenssi, avainsanat kontekstissa, yhteisesiintymät) ja Kuvat (yleiskatsaus, kaksoiskappaleet) toimivat ilman koodia (katso [dokument.md](dokument.md)).
-- **Muokata**: selata, lajitella ja suodattaa suuria taulukoita, muokata soluja, puhdistaa, tyypittää, koodata arvoja uudelleen, luokitella, järjestää sijoille, laskea osuuksia, kumulatiivisia summia ja muutoksia, pivotoida ja
-  yhdistää dataa, tarkistaa datan laadun profiililla ja säännöillä (muun muassa muodot, pohjoismaiset tunnukset, viittaukset muihin aineistoihin ja poikkeavat arvot), pseudonymisoida henkilötunnukset ennen jakamista, ja
-  kaikessa on kumoaminen, versiot ja reseptit, jotka voi viedä R- tai SQL-koodina (ks. [bearbeta.md](bearbeta.md)).
-- **Analysoida**: sisäänrakennettu R-konsoli, jossa on ggplot2 ja tidyverse (ks. [r-guide.md](r-guide.md)), Python-konsoli,
-  jossa on pandas ja matplotlib ja joka haetaan ensimmäisellä kerralla (ks. [python.md](python.md)), SQL-konsoli,
-  jossa aineistoja yhdistetään join-liitoksilla niiden lyhytnimien avulla, ja muistikirjat, joiden teksti-, R- ja
-  SQL-soluista syntyy raportteja HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)),
-  sekä Regex-välilehti, jossa säännöllisiä lausekkeita kokeillaan sarakkeeseen ja käytetään suodattamiseen,
-  poimimiseen, korvaamiseen ja jakamiseen (ks. [regex.md](regex.md)), kaikki selaimessa.
-- **Kartat**: paikkatietoaineistot avautuvat lähennettävinä karttoina, karttanäkymistä useine tasoineen ja
-  suostumuksen jälkeen taustakarttoineen tulee koontinäyttöjä ja julkaistua HTML:ää, paikkatietotyökalut laskevat
-  pinta-alan, pisteet alueissa, lähimmän, puskurit ja päällekkäisyydet ilman koodia, ja QGIS-projekteista tulee
-  karttanäkymiä (katso [kartor.md](kartor.md)).
-- **Avoin paikkatieto**: WFS-, OGC API Features- ja ArcGIS-palveluista tulee lähteitä, joiden tasot noudetaan karttoina,
-  valmiina SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Tilastokeskus ja SYKE, haku Geodataportalenista sekä
-  WMS-palvelut taustakarttana tai tasona (katso [kallor.md](kallor.md)).
-- **Kaavat**: ruotsalaiset digitaaliset asemakaavat (kansallinen määrittely, Lantmäterietin paikkatietoalusta) avautuvat
-  kaavakarttoina Boverketin väreillä ja merkinnöillä, määräykset haetaan Boverketin kaavamääräysluettelosta (upotettu
-  kopio), ja yleiskaavat (määrittely tai Boverketin ÖP-malli) näytetään teema kerrallaan (katso [planer.md](planer.md)).
-- **Pohjoismaiset kaavat**: Tanskan paikalliskaavat ja kuntakaavan kehykset (Plandata.dk), Suomen kaavatietomalli ja
-  kaavahakemisto (Ryhti), Islannin digitaaliset asema- ja yleiskaavat (Skipulagsstofnun) ja Norjan reguleringsplan-kaavat
-  (GeoPackage) avautuvat kaavoina kunkin maan väreillä; koko kaava noudetaan numerollaan Plandatasta ja Skipulagsstofnunilta.
-- **Verkot**: GraphML, GEXF, solmu-särmä-JSON ja Cypher-skriptit avautuvat verkkoina yleiskuvalla tunnisteittain, keskitys-
-  ja koko verkko -näkymillä (Cytoscape ja sigma), SQL:ksi käännetyllä Cypher-osajoukolla, taustalla lasketuilla verkkomitoilla
-  ja viennillä kaikissa neljässä muodossa; kahdesta taulukosta tulee verkko (katso [grafer.md](grafer.md)).
-  Verkkoa muokataan Muokkaa-tilassa ja kirjoittavalla Cypherillä (reseptiaskeleet), Neo4j on lähde Boltin yli, Verkko-välilehdellä
-  on PageRank, yhteisöt, keskeisyys, kuviokyselyt ja asettelu, ja verkoista tulee kaavioita Visualisoi-tilaan, koontinäyttöihin ja Julkaise-tilaan.
-- **CAD ja BIM**: IFC-mallit avautuvat 3D:nä (web-ifc ja three.js) rakennusosien taulukon yläpuolella, ja valinta seuraa molempiin
-  suuntiin. Ominaisuuksista ja määristä tulee taulukoita, Määrät-välilehti laskee tyypeittäin, kerroksittain ja materiaaleittain, ja
-  DXF-piirustukset näkyvät SVG:nä tasoineen (katso [cad-bim.md](cad-bim.md)).
-- **Työnkulut ja seurannat**: tallennettu ketju (nouto, reseptit, skriptit, luettelot, kaaviot, koontinäytöt, asiakirjat, vienti) ajetaan
-  yhdellä napsautuksella tai käynnistyksessä, ja seuratut lähteet kertovat tilarivillä uusista tiedoista (katso [floden.md](floden.md)).
-- **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin
-  lomakkeilla, jotka kirjoittavat ja näyttävät R- tai Python-koodin. Aikasarjatoiminnot Muokkaa-tilassa (jaksot, muutos, indeksi, liukuva keskiarvo,
-  kausitasoitus), ja regression voi tallentaa ja käyttää reseptivaiheena Ennuste (katso [statistik.md](statistik.md)).
-- **Keruu maastossa**: aineiston sarakkeisiin ja sääntöihin perustuva lomake lähetetään Dataspatium Mobiliin. Puhelin kerää rivit ilman verkkoa, valokuvan ja
-  sijainnin kera, ja rivit palaavat uutena versiona. Kuvista tulee kuvakokoelma, ja sijainnit päätyvät kartalle (katso [insamling.md](insamling.md)).
-- **Tilat seuraavat aineiston lajia**: sovellus kertoo, mikä tiedosto on ja mihin aineistoa voi myös käyttää, kysyy koordinaateista, koordinaattijärjestelmästä ja kytkennöistä lukemisen yhteydessä, lajittelee sekalaiset kansiot ja näyttää kuvan jokaisesta aineistosta Hallitse-tilassa. Hakuosumat avautuvat siellä, missä ne ovat (sivu, kuva, solmu, rakennusosa, kaavakohde tai paikka), voit hakea paikan mukaan, löytää solmut särmiensä ja rakennusosat ominaisuuksiensa kautta, kommentoida sivua, kuvaa, solmua tai paikkaa, korjata tekstiä, sijoittaa kuvat kartalle, korjata geometrioita, löytää kaksoiskappaleet graafeista ja luokitella rakennusosia. Analysoi avautuu oikeaan työkaluun aineistolle kirjoitetulla aloituskoodilla, näyttää aikasarjan trendin ja laskee paikat alueittain, ja valinta seuraa mukana tilojen välillä (ks. [lagen.md](lagen.md)).
-- **Visualisoi, Vie ja Jaa seuraavat lajia**: kaavioehdotukset oikeilla kuvilla jokaiselle lajille, ristisuodattimet koontinäytöissä ja mallisanat, jotka tuovat kartan, graafin, mallin tai kaavan asiakirjaan; KML, GPX ja GeoPackage paikoille, yhteenvetoarkki kuville, kaavakartta ja kaavamääräykset kaavoille, määrät Exceliin ja glTF malleille sekä PDF piirustuksille; Jaa-tilassa valitset, lähtevätkö tiedostot mukaan pakettiin, teet aineistosta oman lähetettävän sivun ja näet jokaisen lajin omassa muodossaan puhelimessa (ks. [visualisera.md](visualisera.md) ja [dela.md](dela.md)).
-- **Tarkistus ennen jakamista**: kaikki, mikä lähtee sovelluksesta, tarkistetaan kokonaisuudessaan: sarakkeet, juokseva teksti, sivutaulukot, alkuperäiset tiedostot, kuvien sijainnit, graafien särmät, kommentit ja tekijät; henkilötiedot voi säilyttää, pseudonymisoida tai poistaa kopiosta, eikä aineisto itse muutu koskaan (ks. [dela.md](dela.md)).
-- **Koodiluettelot, kuvaukset ja oppaat**: nimikkeet luetteloista SNI, SSYK, NACE ja muista yhdellä napsautuksella, datapaketit, DCAT-AP-SE, laatuseloste ja neljä opasta oikealla datalla (ks. [lagen.md](lagen.md)).
-- **Teksti kuvista**: skannatut PDF-tiedostot, kuvat ja kuvat taulukoista luetaan tekstintunnistuksella selaimessa, kaikilla seitsemällä kielellä.
-- **Alkuperä, yhteistyö ja kirjasto**: näe, mistä aineisto on peräisin ja mitä siitä on tullut, tee yhteistyötä GitHubin kautta ilman että mitään katoaa, hae reseptejä ja malleja lisensseineen ja julkaise työtila verkkosivustona.
-- **Dataregium ja OpenCDE**: OpenCDE-palvelin kuten [Dataregium](https://github.com/marwiss/Dataregium) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa, sekä hallinnoi palvelinta (käyttäjät, projektit, asiakkaat, istunnot, tapahtumaloki, asetukset, kunto ja graafikyselyt) kortista Hallinta, kun olet järjestelmänvalvoja (ks. kohta [Dataspatium ja Dataregium](#dataspatium-ja-dataregium) alla).
-- **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
-- **Yhteensovitus Dataregiumin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston seitsemällä kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
-- **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
-  PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
-  PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
-- **Dokumentoida**: raportteja ja koodikirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa, myös yksi
-  asiakirja kuntaa tai vuotta kohden (ks. [dokumentmallar.md](dokumentmallar.md)).
-- **Viedä ja jakaa**: dataa CSV-, Excel-, ODS-, JSON-, GeoJSON-, XML-, SQLite-, Parquet-, SPSS-, Stata- ja RDS-muotoon;
-  *Jaa*-tilassa paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, synkronointi
-  GitHub-repositorioon, tietokoneen jakovalikko ja kojelautojen ja asiakirjojen julkaiseminen itsenäisenä HTML:nä
-  (ks. [dela.md](dela.md)); suora siirto puhelimiin ja toisiin tietokoneisiin samassa verkossa QR-koodilla ja
-  tarkistuskoodilla sekä *Dataspatium Mobiili*, joka vastaanottaa, näyttää ja jakaa edelleen puhelimessa (ks.
-  [mobil.md](mobil.md)); henkilötietojen tarkistus ennen jakamista; kommentit aineistoihin ja sarakkeisiin, työtilan
-  varmuuskopio ZIP-tiedostona ja Edgessä ja Chromessa siirrettävä kansio tavallisina tiedostoina.
-- **Pitää järjestystä**: kansiot ja tunnisteet aineistoille, suodatus ja lajittelu sekä erätoiminnot usealle
-  aineistolle kerralla (järjestä, paketoi, vie, nouda uudelleen, suorita resepti, poista).
-- **Löytää nopeasti**: *Hae*-tila etsii kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaavilla faseteilla
-  ja tallennetuilla listoilla (ks. [soka.md](soka.md)); komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja,
-  kaavioita ja kojelautoja ja suorittaa toimintoja yhdestä hakukentästä.
-- **Kysely ilman koodia**: Hae-tilan *Kysely*-välilehti yhdistää aineistoja, valitsee sarakkeet ja laskennat,
-  asettaa ehdot ja näyttää luomansa SQL:n; tallennetut listat rajaavat Muokkaa-tilan taulukon ja kaavioiden rivit.
-- **Ohje sovelluksessa ja esitys**: koko käsikirja hakuineen avautuu ?-painikkeella tai F1:llä sen tilan luvusta,
-  jossa olet, ja **Esitä** näyttää kojelaudan koko ikkunassa kaavion kerrallaan.
-- **Seitsemän kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål ja nynorsk), suomeksi, islanniksi ja
-  englanniksi.
-- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
-  Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
+Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuuluu yhteen Dataregiumin saman version kanssa.
+
+### Versio 1 (Dataregium 1:n kanssa)
+
+- **Tuo dataa**: tiedostoja noin neljässäkymmenessä muodossa Excelistä ja CSV:stä tilastotiedostoihin, paikkatietoon ja Wordin ja
+  verkkosivujen taulukoihin, sekä Ruotsin, Pohjoismaiden ja Euroopan viranomaisten tilastoja yhdellä napsautuksella (ks.
+  [Avoimet rajapinnat](api-konfiguration.md)). *Teknisesti:* merkistö ja sarakkeiden tyypit tunnistetaan; SPSS, Stata, SAS, PX, Parquet
+  ja RDS R:n kautta; omat lähteet `*.api.json`-tiedostoina.
+- **Korjaa ja laske**: noin viisikymmentä toimintoa painikkeilla, kuten siivous, tyypin vaihto, uudelleenkoodaus, osuuksien laskeminen,
+  pivotointi ja taulukoiden yhdistäminen, sekä laatusäännöt, henkilötunnusten pseudonymisointi, kumoaminen ja versiot (ks.
+  [Muokkaa](bearbeta.md)). *Teknisesti:* jokainen vaihe tallentuu reseptiin, jonka voi viedä R- tai SQL-koodina.
+- **Analysoi**: R ggplot2:n ja tidyversen kanssa, SQL useiden aineistojen yli, säännölliset lausekkeet ja muistikirjat, joista tulee
+  raportteja, kokonaan selaimessa (ks. [R](r-guide.md) ja [Säännölliset lausekkeet](regex.md)).
+- **Kaavat**: Ruotsin asema- ja yleiskaavat kaavakarttoina Boverketin väreillä ja merkinnöillä kaavan omassa koordinaatistossa (ks.
+  [Kaavat](planer.md)).
+- **Kaaviot, kartat ja asiakirjat**: kaaviot ja kartat Vega-Litellä, D3:lla tai R:llä, koontinäytöt ja raportit malleista HTML-, Word-,
+  PDF-, PowerPoint-, Markdown- tai LaTeX-muodossa (ks. [Visualisoi](visualisera.md)).
+- **Tallenna ja jaa**: data noin kymmenessä muodossa, jakopaketit, kommentit, varmuuskopio, synkronointi GitHubin kanssa ja siirrettävä
+  kansio.
+- **Dataregium asiakirja-arkistona**: nouda asiakirjoja palvelimelta aineistoiksi ja lähetä aineistoja ja tiedostoja takaisin uusina
+  versioina. *Teknisesti:* Foundation API ja Documents API.
+- **Kuusi kieltä ja peruskurssi**: ruotsi, tanska, norja (bokmål), suomi, islanti ja englanti sekä komentopaletti (Ctrl+K), joka löytää
+  kaiken.
+
+### Myös versiossa 2 (Dataregium 2:n kanssa)
+
+- **Hae ja Jaa**: kaksi uutta tilaa. *Hae* löytää ja listaa rivejä ilman koodia; *Jaa* lähettää paketteja, julkaisee koontinäyttöjä ja
+  asiakirjoja verkkosivuina ja siirtää puhelimiin QR-koodilla henkilötietojen tarkistuksen jälkeen (ks. [Hae](soka.md) ja
+  [Jaa](dela.md)).
+- **Lisää lähteitä**: Access-tiedostot, tietokannat, avoin paikkatieto, taustakartat, asiakirjat ja kuvat kokoelmina sekä teksti
+  skannatuilta sivuilta (ks. [Lähteet](kallor.md)). *Teknisesti:* paikallinen silta SQL Serveriin ja ODBC:hen, PostgREST, OData, GraphQL,
+  SPARQL ja muita HTTP:n yli, WFS, OGC API Features, ArcGIS ja Neo4j Boltin yli.
+- **Kartat, kaavat ja graafit**: kartat tasoineen ja paikkatietotyökaluineen, kaavat kaikista Pohjoismaista sekä graafit, joita
+  piirretään, kysytään ja muokataan (ks. [Kartat](kartor.md) ja [Graafit](grafer.md)).
+- **Rakennusmallit**: IFC-mallit 3D:nä taulukoineen, ominaisuuksineen ja määrineen, tarkistus skeemaa ja IDS:ää vasten sekä
+  DXF-piirustukset (ks. [CAD ja BIM](cad-bim.md)). *Teknisesti:* web-ifc ja three.js näkymään, IfcOpenShell ja ifctester sovelluksen
+  Pythonissa.
+- **Python ja tilastot ilman koodia**: Python-konsoli sekä lomakkeet tilastoille ja aikasarjoille, jotka kirjoittavat ja näyttävät
+  koodin (ks. [Tilastot](statistik.md) ja [Python](python.md)).
+- **Järjestys ja työnkulut**: kansiot, tunnisteet ja toiminnot monelle aineistolle, tallennetut työnkulut, jotka ajetaan yhdellä
+  napsautuksella, ja lähteet, jotka ilmoittavat uudesta datasta (ks. [Tilat](lagen.md)).
+- **Dataspatium Mobiili**: puhelin vastaanottaa ja näyttää dataa ja kerää rivejä maastossa, myös ilman verkkoa (ks.
+  [Mobiili](mobil.md)).
+- **Dataregium ja asiat**: hankkeen mallit ja asiat, uudet asiat, jotka osoittavat paikan 3D:ssä, BCF-tiedostot, palvelimen IFC-graafi,
+  kortti *Hallinta* ylläpitäjälle ja kortti *Projektin jäsenet* hankkeen vastuuhenkilölle (ks.
+  [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)). *Teknisesti:* BCF API 3.0 ja 2.1 viewpointeineen.
+- **Seitsemän kieltä**: myös nynorsk, käsikirja sovelluksessa ja peruskurssi kaikkien kahdeksan tilan läpi.
+
+## OpenCDE-rajapinnat ja niiden asiakasohjelmat
+
+OpenCDE on buildingSMART Internationalin avoimet säännöt sille, miten ohjelmat jakavat rakennushankkeen mallit, asiakirjat ja asiat.
+Sääntöjä noudattava ohjelma voi toimia jokaisen samoja sääntöjä noudattavan palvelimen kanssa, rakensi ne kuka tahansa. Dataspatium on
+tällainen ohjelma, asiakas, ja käyttää kaikkia kolmea rajapintaa:
+
+| Rajapinta | Mitä sovellus tekee sillä | Määrittely |
+|---|---|---|
+| Foundation API 1.0 | Lukee, mitä rajapintoja palvelin tarjoaa, mihin kirjaudutaan ja kuka käyttäjä on; rekisteröi sovelluksen asiakkaaksi, kun palvelin sallii sen | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 ja 2.1 | Lukee ja kirjoittaa mallia koskevia asioita kommentteineen ja viewpointeineen (kamera, komponentit ja kuvat) 3D-näkymästä; valitsee uusimman version, jonka palvelin tarjoaa | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Valitsee ja noutaa asiakirjoja ja versioita palvelimen omien sivujen kautta, jotta IFC-mallista tulee aineisto, ja lataa uusia versioita, aineistoja ja paketteja | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium on yksi palvelin, ei ainoa.** Mikään sovelluksessa ei riipu Dataregiumista. Dataregiumin määrittelyjen
+ulkopuoliset laajennukset (kyvykkyysdokumentti, graafikyselyt ja hankkeen hallinta) näytetään vain, kun palvelin itse ilmoittaa ne.
+
+**Teknisesti osaavalle:** palvelimelta sovellus tarvitsee kolme asiaa:
+
+- CORS sovelluksen alkuperästä: `null` file://-osoitteesta, `http://127.0.0.1:8080` paikalliselta verkkopalvelimelta ja
+  `https://marwiss.github.io` verkosta, otsakkeilla Authorization, Content-Type ja X-Request-ID;
+- asiakasrekisteröinti, jonka tekee palvelimen ylläpitäjä (julkinen asiakas uudelleenohjausosoitteella
+  `http://127.0.0.1:8080/oauth-callback.html` tai vastaava sovelluksen osoitteelle) tai sovellus itse (RFC 7591), kun palvelin sallii
+  sen, sekä OAuth2 authorization code ja PKCE `S256`; file://-osoitteesta liität osoitteen, johon päädyt kirjautumisen jälkeen;
+- BCF API 3.0 tai 2.1; Documents API on vapaaehtoinen, mutta ilman sitä sovellus ei voi noutaa eikä julkaista asiakirjoja.
+
+Toistaiseksi tämä on osoitettu Dataregiumia vasten: live-testisarja ajetaan palvelinta vasten BCF API:n molemmilla versioilla, ja pelkkää
+2.1:tä tukeva palvelin toimii. Muita palvelimia ei ole kokeiltu; kerro, miten kävi, kohdassa
+[Virheet ja ehdotukset](#virheet-ja-ehdotukset). Kun sovellus ja määrittely ovat eri mieltä, määrittely ratkaisee. Sovelluksen puoli
+kuvataan tiedostossa [kallor.md](kallor.md), palvelimen puoli Dataregiumin READMEssä.
 
 ## Dataspatium ja Dataregium
 
 *Dataregiumin nimi oli Kontroll 8. marraskuuta 2026 asti.*
 
-*Dataregiumin nimi oli Dataregium 8. marraskuuta 2026 asti.*
+Dataspatium on sovellus, jossa työskentelet, ja [Dataregium](https://github.com/marwiss/Dataregium) on palvelin, johon hanke kokoaa
+mallinsa, asiakirjansa ja asiansa. Ne on rakennettu toisilleen mutta noudattavat avoimia sääntöjä, joten muutkin ohjelmat toimivat.
+Lisäät palvelimen lähteeksi *Nouda*-tilassa ja kirjaudut; sen jälkeen noudat hankkeen mallit ja asiakirjat, osoitat ongelmia 3D:ssä
+asioina, lähetät aineistoja ja tiedostoja takaisin ja kysyt palvelimen mallien graafilta. Ilman palvelinta sovelluksen muu osa toimii tavalliseen tapaan.
 
-*Dataregiumin nimi oli Dataregium 8. marraskuuta 2026 asti.*
+**Teknisesti osaavalle:** kaikki paitsi graafikyselyt ja hallinta kulkee kolmen OpenCDE-rajapinnan kautta. Jokainen kutsu kantaa
+`X-Request-Id`-tunnisteen, jonka palvelin kirjoittaa pyyntölokiinsa, jotta sovelluksen loki ja palvelimen loki voidaan yhdistää.
+Yhteistyö kuvataan sovelluksen puolelta tiedostoissa [kallor.md](kallor.md) ja [cad-bim.md](cad-bim.md) ja palvelimen puolelta
+Dataregiumin READMEssä ja tiedostossa `docs/client-guide.md`.
 
-*Dataregiumin nimi oli Dataregium 8. marraskuuta 2026 asti.*
+Näin ne liittyvät toisiinsa:
 
-*Dataregiumin nimi oli Dataregium 8. marraskuuta 2026 asti.*
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, selaimessa"]
+        source["Lähde ja kirjautuminen"]
+        issues["Asiat 3D-näkymässä"]
+        files["Mallit ja asiakirjat"]
+        queries["Kyselyt IFC-graafiin"]
+        log["Sovelluksen loki"]
+        admin["Hallinta ja jäsenet"]
+    end
+    subgraph server ["Dataregium, palvelin"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graafi")]
+        requests["Pyyntöloki"]
+        adminapi["Hallintarajapinta"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
 
-*Dataregiumin nimi oli Dataregium 8. marraskuuta 2026 asti.*
+Dataspatium 2.0.0 toimii Dataregium 2.0.0:n kanssa. Sama numero kuuluu yhteen. Pikaopas [snabbstart.md](snabbstart.md) vie parin
+tyhjästä asiaan kahdessakymmenessä minuutissa.
 
-Dataspatium (selaimessa toimiva sovellus) ja [Dataregium](https://github.com/marwiss/Dataregium) (palvelin buildingSMARTin OpenCDE-rajapinnoille Foundation, BCF
-ja Documents) on kehitetty toimimaan yhdessä asiakkaana ja palvelimena. Sovellus lisää palvelimen lähteeksi Nouda-tilassa, kirjautuu
-OAuth2:lla ja rekisteröi itsensä asiakkaaksi, kun palvelin sallii sen, noutaa projektin mallit ja asiakirjat, lukee ja kirjoittaa
-asioita viewpointeineen 3D-näkymästä, lähettää aineistoja, tiedostoja ja työtilapaketteja takaisin Documents API:n kautta, kyselee
-palvelimen IFC-graafia Cypherillä ja kirjaa jokaisen kutsun samalla X-Request-Id-tunnisteella, jonka palvelin kirjoittaa omaan
-pyyntölokiinsa. Graafikyselyt ja hallinta ovat määrittelyjen ulkopuolisia lisäyksiä; kaikki muu kulkee kolmen OpenCDE-rajapinnan kautta, joten
-myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin osiin: ilman palvelinta kaikki muu toimii kuten ennen. Dataregiumin README ja
-`docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
-[cad-bim.md](cad-bim.md).
+### Julkaisut 1, 2 ja 3
 
-Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös palvelimiin, joilla on vain 2.1, ja se piirtää palvelimen IFC-verkon ja tekee siihen kyselyjä suoraan kohdasta Nouda.
+Kullakin päänumerolla on yksi julkaisu, ja samanumeroiset Dataspatium ja Dataregium kuuluvat yhteen:
 
-Dataspatium 2.0.0 toimii Dataregium 2.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
-[snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
+| Dataspatium | Mitä siinä on | Kuuluu yhteen |
+|---|---|---|
+| 1.0.0 | Data tiedostoista ja avoimista rajapinnoista, käsittely, R, SQL ja säännölliset lausekkeet, Ruotsin kaavat, kaaviot ja kartat kaavioissa, koontinäytöt, asiakirjat, vienti ja jakaminen. Palvelinta vasten vain Documents API: asiakirjojen noutaminen aineistoiksi sekä aineistojen ja tiedostojen lähettäminen takaisin. Ei asioita, ei malleja eikä Pythonia | Dataregium 1.0.0 (vain Documents API) |
+| 2.0.0 | Kaikki 1.0.0:n sisältö sekä tilat Hae ja Jaa, Python ja tilastot ilman koodia, lisää lähteitä, karttanäkymät, Pohjoismaiden kaavat, graafit, IFC-mallit 3D:nä ja tarkistus IDS:ää vasten, työnkulut, Dataspatium Mobiili, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi, kortti *Hallinta* ja kortti *Projektin jäsenet* | Dataregium 2.0.0 |
+| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa | Dataregium 3.0.0 |
+
+Uusi julkaisu samalla päänumerolla korvaa edellisen; vain kunkin sarjan uusinta korjataan. Sovelluksen päivitystarkistus tarjoaa
+seuraavaa päänumeroa, ja aineistot, listat, kaaviot, mallipohjat ja skriptit tulevat mukaan, kun avaat uuden version `index.html`-tiedoston.
 
 ## Lue lisää
 
-Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), joten linkit toimivat samoin kaikkialla.
+Tiedostonimet ovat samat kaikilla kielillä (ne ovat ruotsinkielisiä alkuperäisiä), joten linkit toimivat kaikkialla samoin.
 
-- **Käsikirja** sovelluksessa: sama dokumentaatio kuin täällä, haulla varustettuna; avaa se oikean yläkulman
-  ?-painikkeella tai F1:llä.
-- **Peruskurssi** sovelluksessa: vuorovaikutteinen läpikäynti kaikista tiloista esimerkkidatalla; avaa se ohjeesta (?)
-  tai näppäimillä Ctrl+K.
-- [Aloitusopas](kom-igang.md): vaihe vaiheelta ja yleiset kysymykset.
-- [Pika-aloitus Dataregiumin kanssa](snabbstart.md): kaksikymmentä minuuttia tyhjästä 3D-näkymässä luotuun asiaan, joka näkyy palvelimella.
+**Aloita tästä**
+
+- **Peruskurssi** sovelluksessa: kaikkien tilojen läpikäynti esimerkkidatalla; avaa se ohjeesta (?) tai näppäimillä Ctrl+K.
+- **Käsikirja** sovelluksessa: sama dokumentaatio kuin täällä, haun kanssa; avaa se oikean yläkulman ?-painikkeesta tai F1:llä.
+- [Aloitus](kom-igang.md): vaihe vaiheelta tavallisine kysymyksineen.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
-- [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
 - [Kahdeksan tilaa](lagen.md): mitä on missä ja miksi.
-- [Hae](soka.md) ja [Jaa](dela.md): löydä ilman koodia ja anna tietoa muille.
-- [Dataspatium Mobiili](mobil.md): puhelin kuriirina, vastaanottajana ja katselimena; siirto laitteiden välillä.
-- [Muistikirja](anteckningsbok.md): tekstiä, R:ää ja SQL:ää soluissa, joista syntyy raportti.
-- [Asiakirjat ja kuvat](dokument.md): PDF, Word, OpenDocument, Markdown ja kuvat aineistoina; asiakirjanäkymä, galleria ja työkalut Teksti ja Kuvat.
-- [Kartat](kartor.md): kartta Muokkaa-tilassa, karttanäkymät Visualisoi-tilassa, paikkatietotyökalut ja QGIS-projektit.
-- [Säännölliset lausekkeet](regex.md): kuviot tekstin analysointiin, korjaamiseen ja jakamiseen aineistoissa.
-- [Tiedostomuodot ja tuonti](format.md): tiedostomuodot, merkistökoodaus, desimaalierotin, päivämäärät ja saraketyypit.
-- [Avoimet rajapinnat](api-konfiguration.md): valmiit lähteet, avaimet ja omat määritykset.
-- [R Dataspatiumissa](r-guide.md): R-konsoli, `dm_read()`, `dm_write()` ja mukana tulevat paketit.
-- [Python Dataspatiumissa](python.md): Python-konsoli, `dm_read()`, `dm_write()` ja tarvittaessa haettavat paketit.
-- [Visualisoi](visualisera.md): kaaviorakentaja, D3-mallit, R-kaaviot, kartat ja kojelaudat.
-- [Asiakirjat ja mallit](dokumentmallar.md): mallikieli ja tulostusmuodot.
-- [Turvallisuus](sakerhet.md): uhkamalli, kontrollit ja niitä todistavat testit, henkilötiedot ja säilytys sekä miten haavoittuvuudesta ilmoitetaan.
-- [Lisenssit](licenser.md): mitä sovelluksella saa tehdä ja mitkä lisenssit kolmannen osapuolen osilla on.
-- Miten osallistumiset otetaan vastaan, kerrotaan tiedostossa [CONTRIBUTING.md](../../CONTRIBUTING.md) (ruotsiksi).
-- Ulkoiset lähteet: [WebR](https://docs.r-wasm.org/webr/latest/), [R aloittelijoille](https://www.r-project.org/),
-  [Vega-Lite](https://vega.github.io/vega-lite/), [Tilastokeskuksen rajapinnat](https://stat.fi/fi/palvelut/tilastodatapalvelut/avoin-data-ja-rajapinnat).
+- [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
+
+**Aiheittain**
+
+- [Muodot ja tuonti](format.md) ja [Avoimet rajapinnat](api-konfiguration.md): tiedostomuodot, merkistöt, valmiit lähteet, avaimet ja
+  omat määritykset.
+- [Lähteet](kallor.md): tietokannat, silta, avoin paikkatieto, linkitetyt tiedostot ja OpenCDE-palvelimet.
+- [Muokkaa](bearbeta.md), [Hae](soka.md) ja [Säännölliset lausekkeet](regex.md): korjaa, laske ja löydä.
+- [Tilastot](statistik.md), [R Dataspatiumissa](r-guide.md), [Python Dataspatiumissa](python.md) ja [Muistikirja](anteckningsbok.md):
+  analyysi koodin kanssa ja ilman.
+- [Visualisoi](visualisera.md), [Kartat](kartor.md) ja [Asiakirjat ja mallipohjat](dokumentmallar.md): kaaviot, kartat, koontinäytöt ja
+  raportit.
+- [Kaavat](planer.md), [Graafit](grafer.md) ja [CAD ja BIM](cad-bim.md): kaavat, graafit, rakennusmallit ja tarkastukset.
+- [Asiakirjat ja kuvat](dokument.md): PDF, Word, OpenDocument, Markdown ja kuvat aineistoina.
+- [Työnkulut](floden.md), [Jaa](dela.md), [Dataspatium Mobiili](mobil.md) ja [Keruu](insamling.md): automatisoi, jaa ja kerää.
+- [Pikaopas Dataregiumin kanssa](snabbstart.md): kaksikymmentä minuuttia tyhjästä 3D-näkymässä luotuun ja palvelimella näkyvään asiaan.
+- [Tietoturva](sakerhet.md) ja [Lisenssit](licenser.md): uhkamalli, tarkastukset ja testit sekä se, mitä saat tehdä sovelluksella.
+- Miten kehitysehdotuksia otetaan vastaan, kerrotaan tiedostossa [CONTRIBUTING.md](../../CONTRIBUTING.md) (ruotsiksi).
+
+### Lisälukemista
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) ja [Documents API](https://github.com/buildingSMART/documents-API): määrittelyt, joita sovellus noudattaa palvelinta vasten.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): rakennusmallien tiedostomuoto, ja [IDS](https://github.com/buildingSMART/IDS): vaatimusmäärittelyt, joita vasten malleja tarkastetaan.
+- Ulkoiset resurssit: [WebR](https://docs.r-wasm.org/webr/latest/), [Pyodide](https://pyodide.org/), [IfcOpenShell](https://ifcopenshell.org/),
+  [Vega-Lite](https://vega.github.io/vega-lite/), [Ruotsin tilastokeskuksen rajapinta](https://www.scb.se/en/services/open-data-api/).
 
 ## Rajoitukset lyhyesti
 
-- Sovellus on avattava puretusta kansiosta (file://) tai tavalliselta verkkopalvelimelta; se ei toimi suoraan ZIP-tiedoston
-  sisältä.
-- Rajapintoja, joilla ei ole CORS-tukea, ei voi kutsua suoraan selaimesta.
-- Aineiston kannattaa pysyä alle parin miljoonan rivin; selaimen muisti asettaa rajan.
-- Kun sovellus avataan kansiosta, R-koodia ei voi keskeyttää kesken laskennan; käytä toimintoa *Käynnistä R
-  uudelleen*. Verkkopalvelimelta (localhost tai https) ajettaessa käytössä on painike *Keskeytä*.
-- Useat välilehdet toimivat ja pitävät toisensa ajan tasalla, mutta älä muokkaa samaa aineistoa kahdessa välilehdessä
-  yhtä aikaa: viimeksi tallentava voittaa.
-- Siirrettävä kansio vaatii Edgen tai Chromen; Firefoxista puuttuu kansioiden käyttö (File System Access). ZIP-varmuuskopio
-  toimii kaikkialla.
-- Koko sovellus on tehty tietokoneille; puhelimissa ja tableteissa käytetään Dataspatium Mobiilia
-  (<https://marwiss.github.io/Dataspatium/m/>), joka vastaanottaa, näyttää ja jakaa edelleen. Safaria ei tueta koko
-  sovelluksen osalta. Kapeissa ikkunoissa paneelit avautuvat työalueen päälle.
-- Mukana tulevat esimerkkidata ja karttarajat ovat ruotsalaisia; itse sovellus toimii datan kanssa mistä tahansa.
+- Sovellus on avattava puretusta kansiosta tai tavalliselta verkkopalvelimelta; se ei toimi suoraan ZIP-tiedoston sisältä.
+- Verkkopalveluihin, jotka eivät salli kutsuja selaimista (ei CORS-tukea, esimerkiksi Ruotsin keskuspankki), ei päästä suoraan; oman
+  välityspalvelimen voi määrittää.
+- Aineiston kannattaa pysyä alle parin miljoonan rivin, ja hyvin suuret rakennusmallit voivat olla selaimelle liian raskaita; muisti
+  asettaa rajan.
+- Kun sovellus avataan kansiosta, R- ja Python-koodia ei voi keskeyttää kesken laskennan; käytä painiketta *Käynnistä R uudelleen* tai
+  *Käynnistä Python uudelleen*. Verkkopalvelimelta käytössä on *Keskeytä*-painike.
+- Python ja IfcOpenShell eivät sisälly ZIP-tiedostoon; ne noudetaan ensimmäisellä tarvitsemiskerralla suostumuksen jälkeen ja
+  tallennetaan sitten selaimeen.
+- Useat välilehdet toimivat ja pitävät toisensa ajan tasalla, mutta älä muokkaa samaa aineistoa kahdessa välilehdessä yhtä aikaa: viimeksi
+  tallentava voittaa.
+- Siirrettävä kansio vaatii Edgen tai Chromen; Firefoxista puuttuu kansiokäyttö. Varmuuskopio ZIP-tiedostona toimii kaikkialla.
+- Koko sovellus on tehty tietokoneille. Puhelimissa ja tableteissa käytetään Dataspatium Mobiilia (<https://marwiss.github.io/Dataspatium/m/>),
+  joka vastaanottaa, näyttää, kerää ja välittää eteenpäin. Kapeissa ikkunoissa paneelit avautuvat lehtinä työalueen päälle.
+- Mukana tulevat esimerkkidata ja karttarajat kattavat Ruotsin, Tanskan, Norjan ja Suomen, ja valmiit lähteet ovat pohjoismaisia ja
+  eurooppalaisia; muiden maiden datan voi tuoda itse yhtä helposti.
+
+## Henkilötiedot
+
+Dataspatium toimii selaimessasi, ja vastaat itse syöttämistäsi tiedoista. Kaikki, mitä sovellus tallentaa (aineistot versioineen,
+luettelot, kaaviot, asiakirjat, muistikirjat, kommentit ja asetukset), on selaimen tallennustilassa tietokoneellasi ja lähtee sieltä
+vain, kun viet, jaat tai julkaiset; silloin kaikki tarkastetaan ensin kokonaisuudessaan, ja henkilötiedot voidaan säilyttää,
+pseudonymisoida tai poistaa kopiosta. Dataregium-palvelimelle lähetetään kirjautumisesi (tunnukset pidetään istunnossa tai salattuina
+salalauseellasi, ei koskaan selväkielisinä), nimelläsi palvelimelle luomasi asiat, kommentit ja tiedostot sekä
+X-Request-ID jokaista kutsua kohden; palvelimen oma käsittely on kuvattu Dataregiumin README:ssä. Kommentit ja paketit kantavat itse
+antamaasi nimeä. Kontrollit ja ne osoittavat testit ovat tiedostossa [sakerhet.md](sakerhet.md).
+
+## Uudemmat julkaisut
+
+Dataspatium 3.0.0, tehty yhdessä Dataregium 3.0.0:n kanssa, tuo mallien tarkastuksen, törmäystarkastuksen, toiminnot Kysy
+tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit, Vertaa versioita -toiminnon ja muutosehdotukset, joita palvelin kokeilee ja
+hyväksyy. Sen saa [uusimmasta julkaisusta](https://github.com/marwiss/Dataspatium/releases/latest), ja se on kuvattu [main-haaran READMEssä](https://github.com/marwiss/Dataspatium/blob/main/docs/fi/README.md). Aineistot, luettelot, kaaviot,
+mallipohjat ja skriptit tulevat mukaan, kun avaat uuden version `index.html`-tiedoston.
 
 ## Virheet ja ehdotukset
 
@@ -235,10 +334,15 @@ ilmoita [SECURITY.md](../../SECURITY.md):n mukaan sen sijaan, että avaisit issu
 ## Kehitys
 
 - Ei käännösvaihetta, ei node.js:ää. Avaa `index.html` suoraan tai tarjoile kansio komennolla `python -m http.server 8080`.
-- Arkkitehtuuri lyhyesti: kaikki sovelluksen oma koodi on perinteisiä skriptejä, jotka rekisteröidään `Dataspatium.define`-kutsulla tiedoston `src/boot.js` järjestyksessä; `src/platform` sisältää kaiken file://-kohtaisen (resurssit, shimit, workerit, tallennus, suostumus); moottorit SQLite, R (WebR) ja Python (Pyodide) toimivat workereissa; `src/ui` sisältää suunnittelumuuttujat, komponentit (`dm-*`), kuoren ja yhden tilan tiedostoa kohti. Kaikki näytettävä escapetaan, eikä mitään haeta verkosta ilman toimintaasi ja suostumustasi.
-- Kolmannen osapuolen osat: `python tools/fetch_vendor.py` ja sen jälkeen `python tools/wrap_assets.py`.
-- Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox).
-- Turvallisuus: suostumuksen, salaisuuksien, jakamista edeltävän tarkistuksen, OAuth2:n (PKCE, state, paluu) ja lokin peittämisen testit kuuluvat testisarjaan; ks. [sakerhet.md](sakerhet.md).
+- Arkkitehtuuri lyhyesti: kaikki oma koodi on klassisia skriptejä, jotka rekisteröidään `Dataspatium.define`-kutsulla `src/boot.js`:n
+  järjestyksessä; `src/platform` sisältää kaiken file://-kohtaisen (resurssit, shimit, workerit, tallennus, suostumus); moottorit SQLite,
+  R (WebR) ja Python (Pyodide) toimivat workereissa; `src/ui` sisältää suunnittelumuuttujat, komponentit (`dm-*`), kuoren ja yhden tilan
+  tiedostoa kohden. Kaikki näytettävä escapoidaan, eikä mitään noudeta verkosta ilman toimintaasi ja suostumustasi.
+- Kolmannen osapuolen komponentit: `python tools/fetch_vendor.py` ja sen jälkeen `python tools/wrap_assets.py`.
+- Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox). Testit eivät koskaan käytä
+  verkkoa; oikeita palveluja kokeillaan vain omilla parametreilla (`?cde=` Dataregiumia vasten, `?python=1` Pyodiden kanssa).
+- Tietoturva: suostumuksen, salaisuuksien, jakamista edeltävän tarkistuksen, OAuth2:n (PKCE, state, paluu) ja lokin peittämisen testit
+  kuuluvat testisarjaan; ks. [sakerhet.md](sakerhet.md).
 
 ## Lisenssi
 

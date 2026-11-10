@@ -4,215 +4,314 @@
 
 # Dataspatium OpenCDE-biðlari
 
-Dataspatium er vefforrit fyrir gögn frá uppruna til skýrslu: sæktu gögn úr skrám og opnum vefþjónustum, vistaðu og haltu
-utan um gagnasöfn, farðu yfir og leiðréttu gildi, greindu með R, myndgerðu og fluttu út. Allt keyrir í þínum eigin vafra.
-Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei tölvuna nema þú flytjir þau sjálf(ur) út. Öryggi er fyrsta krafan: engin netköll án aðgerðar þinnar og samþykkis, leyndarmál aðeins dulrituð, íhlutir fastsettir og staðfestir, og allt sem er deilt er fyrst yfirfarið.
+*Þetta er README fyrir Dataspatium 2.0.0. Nýjasta útgáfan, 3.0.0, er lýst í [README á main](https://github.com/marwiss/Dataspatium/blob/main/docs/is/README.md).*
 
-![Dataspatium í hamnum Vinna með töflu yfir sænsk sveitarfélög](../images/bearbeta.png)
+Dataspatium er forrit til að vinna með gögn sem þú opnar í venjulega vafranum þínum. Þú sækir töflu, kort, skipulag, byggingarlíkan eða
+tölfræði frá stofnun, leiðréttir hana og reiknar, gerir myndrit og skýrslur og sendir niðurstöðuna áfram. Allt gerist í þinni eigin
+tölvu: engin uppsetning, enginn aðgangur og enginn þjónn. Ekkert fer úr tölvunni nema þú flytjir það út eða deilir því sjálf(ur), og
+forritið spyr alltaf áður en það notar internetið.
+
+Dataspatium getur líka unnið með [Dataregium](https://github.com/marwiss/Dataregium), þjóni þar sem byggingarverkefni deilir líkönum,
+skjölum og málum. Þá geturðu sótt byggingarlíkön verkefnisins, bent á vandamál í þrívídd sem mál og spurt graf þjónsins um líkönin.
+Án Dataregium virkar allt annað nákvæmlega eins.
+
+**Fyrir þau sem kunna tæknina:** kyrrstætt vefforrit án smíðaskrefs sem keyrir frá `file://` í Edge, Chrome og Firefox eða frá hvaða
+kyrrstæða vefþjóni sem er. Hvert gagnasafn er SQLite-skrá (sql.js) í IndexedDB; R keyrir í WebR 0.5.9 og Python í Pyodide 0.29.5, bæði
+í workerum; IFC er lesið með web-ifc og IfcOpenShell (wasm). Gagnvart þjóni er forritið OpenCDE-biðlari: Foundation API 1.0 með OAuth2
+authorization code og PKCE, BCF API 3.0 og 2.1 og Documents API 1.0. Engin netköll eru gerð án samþykkis fyrir hvern tilgang, og
+leyndarmál eru aðeins geymd dulkóðuð (AES-GCM).
+
+![Dataspatium í hamnum Vinna með töflu yfir sveitarfélög Svíþjóðar](../images/bearbeta.png)
 
 **Efni**
 
 - [Sækja og hefjast handa](#sækja-og-hefjast-handa)
 - [Kröfur](#kröfur)
+- [Orð sem gott er að þekkja](#orð-sem-gott-er-að-þekkja)
 - [Hvað þú getur gert](#hvað-þú-getur-gert)
+- [OpenCDE-forritaskilin og biðlarar þeirra](#opencde-forritaskilin-og-biðlarar-þeirra)
 - [Dataspatium og Dataregium](#dataspatium-og-dataregium)
 - [Lærðu meira](#lærðu-meira)
 - [Takmarkanir í stuttu máli](#takmarkanir-í-stuttu-máli)
+- [Persónuupplýsingar](#persónuupplýsingar)
+- [Nýrri útgáfur](#nýrri-útgáfur)
 - [Villur og tillögur](#villur-og-tillögur)
 - [Þróun](#þróun)
 - [Leyfi](#leyfi)
 
-Viðmótið er á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku. Skjámyndirnar í skjöluninni sýna forritið á sænsku.
-
 ## Sækja og hefjast handa
 
-1. **Sæktu.** Farðu í [nýjustu útgáfuna](https://github.com/marwiss/Dataspatium/releases/latest) og sæktu ZIP-skrána undir
-   *Assets* (`dataspatium-<útgáfa>.zip`, um 100 MB; R og allir R-pakkar fylgja með).
-2. **Afþjappaðu.** Hægrismelltu á ZIP-skrána og veldu *Extract all* (Windows) eða tvísmelltu á hana (macOS). Settu möppuna
-   þar sem þú vilt hafa hana, til dæmis í Skjöl. Forritið virkar ekki beint inni í ZIP-skránni.
-3. **Opnaðu.** Tvísmelltu á `index.html` í möppunni eða dragðu skrána í vafraglugga. Ef Windows spyr hvaða forrit eigi að
-   nota velurðu Edge, Chrome eða Firefox. Í fyrsta skipti spyr forritið hvaða tungumál þú vilt (því má breyta með
-   tungumálahnappnum efst til hægri) og hefur síðan **grunnnámskeiðið**, gagnvirka yfirferð yfir alla hami með
-   sýnigögnum sem tekur um tíu mínútur. Opnaðu það aftur úr hjálpinni (?).
-4. **Flyttu inn.** Í hamnum *Sækja* sleppirðu skrá á flötinn (eða smellir á *Prófa með sýnigögnum*), athugar gerðir dálkanna
-   og smellir á *Flytja inn*. Gagnasafnið er vistað í vafranum á tölvunni þinni.
-5. **Haltu áfram.** Skiptu um ham efst: *Umsjón* sýnir gagnasöfnin þín og vinnusvæðið, *Leita* finnur raðir í þeim, *Vinna*
-   sýnir töfluna með röðun, síum og aðgerðum, *Greina* opnar R- og SQL-stjórnborðið, *Myndgera* býr til myndrit, *Flytja út*
-   hleður niður gögnum, myndritum og skjölum og *Deila* gefur þau öðrum.
+1. **Sæktu.** Farðu í [útgáfu 2.0.0](https://github.com/marwiss/Dataspatium/releases/tag/v2.0.0) og sæktu ZIP-skrána undir *Assets*
+   (`dataspatium-<version>.zip`, um 100 MB; R og algengustu R-pakkarnir fylgja með).
+2. **Afþjappaðu.** Hægrismelltu á ZIP-skrána og veldu *Extract all* (Windows) eða tvísmelltu á hana (macOS). Settu möppuna þar sem þú
+   vilt hafa hana, til dæmis í Skjöl. Forritið virkar ekki beint inni í ZIP-skránni.
+3. **Opnaðu.** Tvísmelltu á `index.html` í möppunni, eða dragðu skrána inn í vafraglugga. Ef Windows spyr hvaða forrit eigi að nota
+   velurðu Edge, Chrome eða Firefox. Í fyrsta sinn velurðu tungumál, og síðan er **Grunnnámskeiðið** í boði: yfirferð um alla hamina með
+   sýnigögnum sem tekur um tíu mínútur og má opna aftur úr hjálpinni (?).
+4. **Sæktu gögn.** Í hamnum *Sækja* sleppirðu skrá á flötinn, eða smellir á *Prófa með sýnigögnum*. Forritið sýnir hvað skráin
+   inniheldur; smelltu á *Flytja inn*. Gagnasafnið er geymt í vafranum í tölvunni þinni.
+5. **Haltu áfram.** Hamirnir efst eru skref vinnunnar: *Umsjón* heldur gagnasöfnunum þínum í röð og reglu, *Leita* finnur raðir án
+   kóða, *Vinna* sýnir töfluna, kortið eða líkanið með hnöppum til að leiðrétta og reikna, *Greina* hefur tölfræði og kóða (R, Python og
+   SQL), *Myndgera* gerir myndrit og kort, *Flytja út* vistar skrár í tölvunni og *Deila* sendir til annarra.
 
-Gögn eru vistuð í eigin gagnagrunni vafrans. Ef þú hreinsar vefgögn hverfa þau, svo taktu afrit reglulega undir *Umsjón >
-Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta á sömu eða annarri tölvu. Skref fyrir skref með nánari upplýsingum:
-[kom-igang.md](kom-igang.md).
+Það sem þú vistar er geymt í eigin gagnagrunni vafrans í tölvunni. Ef þú hreinsar vefsvæðisgögn vafrans hverfur það, svo taktu reglulega
+afrit undir *Umsjón > Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta í sömu eða annarri tölvu. Skref fyrir skref með fleiri
+smáatriðum: [kom-igang.md](kom-igang.md).
 
-Forritið er líka beint á vefnum, án niðurhals: <https://marwiss.github.io/Dataspatium/>. Af vefþjóni má setja það upp
-sem sjálfstætt forrit (Edge og Chrome: *Setja upp* í veffangastikunni) og það virkar síðan líka án nets. Vefútgáfan og
-möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með afriti eða pakka.
+Vefútgáfan á <https://marwiss.github.io/Dataspatium/> er alltaf nýjasta útgáfan, nú 3.0.0.
+
+### Fyrir þau sem kunna tæknina
+
+- **Keyrðu:** afþjappaðu ZIP-skrána og opnaðu `index.html` (file://), eða þjónaðu möppunni: `python -m http.server 8080 --bind
+  127.0.0.1` og opnaðu <http://127.0.0.1:8080/>. Frá vefþjóni er service worker, forrit sem má setja upp, og R og Python sem má stöðva.
+- **Prófaðu ZIP-skrána:** berðu SHA-256 hennar saman við það sem stendur í texta útgáfunnar (`Get-FileHash` í PowerShell,
+  `shasum -a 256` á macOS og Linux).
+- **Með þjóni:** ræstu Dataregium með Docker eða Podman (`docker compose up -d --build --wait` og `docker compose exec api opencde seed`
+  í geymslu Dataregium), þjónaðu Dataspatium á porti 8080 og bættu þjóninum við undir *Sækja > Bæta við uppsprettum > OpenCDE*. Auðkenni
+  biðlara má vera autt þegar þjónninn leyfir sjálfskráningu. Öll leiðin á tuttugu mínútum: [snabbstart.md](snabbstart.md).
+- **Grafið:** IFC-graf þjónsins (Neo4j eða Memgraph) er spurt með Cypher úr *Sækja*, með grafafyrirspurn þjónsins eða beint yfir Bolt.
+- **Prófanir:** `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` keyrir allar prófanirnar í headless Edge og Firefox.
 
 ## Kröfur
 
 - Windows, macOS eða Linux.
-- Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri) eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt.
-- Um 300 MB laust pláss fyrir forritsmöppuna og minnst 4 GB vinnsluminni (8 GB mælt með fyrir stór gagnasöfn). Engin
-  stjórnandaréttindi þarf.
-- Net þarf aðeins þegar þú sækir gögn úr opnum vefþjónustum, sendir á GitHub, leitar að uppfærslum eða sækir íhlut eða
-  R-pakka sem fylgir ekki í möppunni; forritið spyr fyrst um leyfi.
+- Microsoft Edge eða Google Chrome (útgáfa 120 eða nýrri), eða Firefox (útgáfa 128 eða nýrri). Safari er ekki stutt fyrir allt
+  forritið.
+- Um 300 MB laust pláss fyrir forritsmöppuna og að minnsta kosti 4 GB vinnsluminni (mælt er með 8 GB fyrir stór gagnasöfn og líkön).
+  Engin stjórnandaréttindi þarf.
+- Internet þarf aðeins þegar þú velur sjálf(ur) eitthvað sem krefst þess, og forritið biður um leyfi fyrst fyrir hvern tilgang: sækja
+  gögn úr opnum forritaskilum og kortum, tengjast Dataregium-þjóni eða GitHub, leita að uppfærslu
+  eða sækja hluta sem fylgir ekki möppunni (Python, IfcOpenShell og R-pakka umfram þá algengustu).
+- Dataregium þarf þjón. Til að keyra eigin þjón þarf Docker eða Podman; því er lýst í README Dataregium.
+
+## Orð sem gott er að þekkja
+
+Þú þarft ekki að kunna orðin hér að neðan til að nota forritið, en þau koma fyrir í textanum.
+
+- **API (forritaskil)**: leið fyrir forrit til að sækja gögn hvert frá öðru yfir netið. Forritið sækir tölfræði úr forritaskilum stofnana
+  og talar við Dataregium gegnum forritaskil þess.
+- **Gagnasafn**: það sem forritið geymir þegar þú sækir eitthvað: tafla, kort, skipulag, graf, líkan eða safn skjala eða mynda.
+- **Uppskrift**: listinn yfir allt sem þú hefur gert við gagnasafn, skref fyrir skref, svo að það megi afturkalla eða endurtaka á nýjum
+  gögnum.
+- **R, Python og SQL**: tungumál til að greina gögn. Forritið hefur þau innbyggð, en flest er gert með hnöppum og eyðublöðum sem skrifa
+  kóðann fyrir þig.
+- **BIM**: að lýsa byggingu sem stafrænu líkani þar sem hver veggur, hurð og hvert herbergi ber upplýsingar, ekki aðeins sem línur á
+  teikningu.
+- **IFC**: opna skráarsniðið fyrir byggingarlíkön, sem öll helstu hönnunarforrit bygginga geta lesið og skrifað.
+- **CAD**: teikningar gerðar í teikniforriti; forritið les þær á opna sniðinu DXF.
+- **IDS**: opin skrá sem segir hvaða upplýsingar líkan verður að hafa, svo að prófa megi líkanið sjálfvirkt.
+- **BCF**: opið snið fyrir mál um líkan, til dæmis „loftræstingin fer í gegnum bitann“, með mynd og þeirri sýn sem sýnir staðinn.
+- **OpenCDE**: opnar reglur buildingSMART um hvernig forrit deila líkönum, skjölum og málum byggingarverkefnis, svo að forrit frá ólíkum
+  framleiðendum vinni saman.
+- **Þjónn**: forrit sem aðrir tengjast yfir netið. Dataregium er þjónn; Dataspatium þarf engan.
+- **Graf og grafagagnagrunnur**: gögn sem hlutir og tengslin milli þeirra, til dæmis að hurð sé í vegg á hæð. Dataregium getur geymt hvert
+  líkan sem graf í Neo4j eða Memgraph með hjálp einingarinnar IFC-LPG.
+- **Gámur (container)**: tilbúið forrit sem er ræst með Docker eða Podman án þess að hlutar þess séu settir upp hver fyrir sig.
+  Dataregium keyrir þannig; Dataspatium þarf enga gáma.
+- **OAuth2-innskráning**: venjulega leiðin til að skrá sig inn í þjónustu úr öðru forriti án þess að forritið sjái lykilorðið þitt.
+- **file:// og CORS**: file:// merkir að forritið er opnað beint úr möppu. CORS er regla vafrans um hvaða vefþjónustur vefforrit má sækja
+  gögn til; þjónustu án CORS er ekki hægt að ná beint.
 
 ## Hvað þú getur gert
 
-- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, töflur í HTML-, Markdown-, Word- og LaTeX-skjölum, kortaskrár á KML-, KMZ-, GPX- og TopoJSON-sniði, SQL-skriftur, eldri töflureiknissnið (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), texta með fastri
-  dálkbreidd, tölfræðiskrár úr SPSS, Stata og SAS (með gildismerkimiðum) og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
-  og gögn beint úr opnum vefþjónustum hjá Hagstofu Íslands, Veðurstofu Íslands, hagstofum Danmerkur, Noregs, Finnlands,
-  Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat, Seðlabanka Evrópu, OECD og fleiri stofnunum,
-  með landasíu og vistuðum sóknum sem uppfærast með einum smelli og keyra uppskriftir sínar aftur (sjá
-  [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg
-  og Finnland fylgja með.
-- **Gagnagrunnar**: Access-skrár eru lesnar beint í vafranum; gagnagrunnar á tölvunni eða í netinu (SQL Server, ODBC,
-  Excel, SQLite) nást um staðbundna brú, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
-  SPARQL, InfluxDB, Google Sheets og Airtable verða uppsprettur með einum smelli. Skrár má tengja og lesa aftur af
-  diski (sjá [kallor.md](kallor.md)).
-- **Skjöl og myndir**: PDF, Word, OpenDocument, Markdown og texti verða skjalasöfn sem eru lesin í lestrarsýn, síðu fyrir síðu
-  eða í heild; myndir verða myndasafn með EXIF-upplýsingum og myndasafni. Tólin Texti (orðtíðni, leitarorð í
-  samhengi, samtíðni) og Myndir (yfirlit, tvítök) virka án kóða (sjá [dokument.md](dokument.md)).
-- **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
-  gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
-  út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).
-- **Greina**: innbyggt R-stjórnborð með ggplot2 og tidyverse (sjá [r-guide.md](r-guide.md)), Python-stjórnborð með
-  pandas og matplotlib sem er sótt í fyrsta sinn (sjá [python.md](python.md)), SQL-stjórnborð þar sem
-  gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
-  HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), og Regex-flipi þar sem reglulegar segðir eru prófaðar á dálki og notaðar til að sía, draga út, skipta út og skipta upp (sjá [regex.md](regex.md)), allt í vafranum.
-- **Kort**: landupplýsingasöfn opnast sem kort til að þysja, kortasýnir með mörgum lögum og bakgrunnskorti eftir
-  samþykki verða stjórnborð og birt HTML, landfræðitólin reikna flatarmál, punkta í svæðum, næsta, jaðarsvæði og
-  yfirlögn án kóða, og QGIS-verkefni verða kortasýnir (sjá [kartor.md](kartor.md)).
-- **Opin landupplýsingagögn**: WFS-, OGC API Features- og ArcGIS-þjónustur verða uppsprettur þar sem lögin eru sótt sem
-  kort, með forstillingum fyrir SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Hagstofu Finnlands og SYKE, leit í
-  Geodataportalen og WMS-þjónustum sem bakgrunnskorti eða lagi (sjá [kallor.md](kallor.md)).
-- **Skipulag**: sænskt stafrænt deiliskipulag (landsforskriftin, landupplýsingavettvangur Lantmäteriet) opnast sem
-  skipulagskort með litum og merkingum Boverket, ákvæðin eru flett upp í skrá Boverket yfir skipulagsákvæði (innbyggt
-  eintak), og aðalskipulag (forskriftin eða ÖP-líkan Boverket) er sýnt þema fyrir þema (sjá [planer.md](planer.md)).
-- **Norrænt skipulag**: staðbundið skipulag og rammar sveitarfélagsskipulags Danmerkur (Plandata.dk), finnska
-  skipulagsgagnalíkanið og skipulagsskráin (Ryhti), stafrænt deili- og aðalskipulag Íslands (Skipulagsstofnun) og norskt
-  reguleringsplan (GeoPackage) opnast sem skipulag með litum hvers lands; heilt skipulag er sótt með númeri sínu frá Plandata og Skipulagsstofnun.
-- **Net**: GraphML, GEXF, JSON með hnútum og leggjum og Cypher-skriftur opnast sem net með yfirliti eftir merkimiða, fókus-
-  og heildarsýn (Cytoscape og sigma), Cypher-hlutmengi þýddu í SQL, netmælingum í bakgrunni og útflutningi í öllum fjórum
-  sniðum; tvær töflur verða net (sjá [grafer.md](grafer.md)).
-  Netinu er breytt í Vinna og með skrifandi Cypher (uppskriftarskref), Neo4j er uppspretta yfir Bolt, flipinn Net hefur PageRank,
-  samfélög, miðlægni, mynsturfyrirspurnir og uppröðun, og net verða myndir í Myndgera, mælaborðum og Birta.
-- **CAD og BIM**: IFC-líkön opnast í þrívídd (web-ifc og three.js) fyrir ofan töflu yfir byggingarhlutana og valið fylgir í báðar áttir.
-  Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum
-  (sjá [cad-bim.md](cad-bim.md)).
-- **Flæði og vöktun**: vistuð keðja (sókn, uppskriftir, skriftur, listar, gröf, mælaborð, skjöl, útflutningur) er keyrð með einum smelli
-  eða við ræsingu og vaktaðar heimildir láta vita á stöðustikunni þegar ný gögn eru til (sjá [floden.md](floden.md)).
-- **Tölfræði án kóða**: flipinn Tölfræði gerir lýsandi tölfræði, krosstöflur, fylgni, tilgátupróf, aðhvarf og klasagreiningu með eyðublöðum sem
-  skrifa og sýna R- eða Python-kóðann. Tímaraðaaðgerðir í Vinna (tímabil, breyting, vísitala, hlaupandi meðaltal, árstíðaleiðrétting), og aðhvarf má
-  vista og nota sem uppskriftarskrefið Spá (sjá [statistik.md](statistik.md)).
-- **Söfnun á vettvangi**: eyðublað byggt á dálkum og reglum gagnasafns er sent í Dataspatium Mobil. Síminn safnar röðum án nets, með mynd og staðsetningu, og
-  raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
-- **Hamirnir fylgja tegund gagnasafnsins**: forritið segir hvað skrá er og hvað gagnasafn getur líka nýst sem, spyr um hnit, hnitakerfi og tengingar við innlestur, flokkar blandaðar möppur og sýnir mynd fyrir hvert gagnasafn í Umsjón. Leitarniðurstöður opnast þar sem þær eru (síða, mynd, hnútur, byggingarhluti, skipulagshlutur eða staður), þú getur leitað eftir stað, fundið hnúta gegnum leggi sína og byggingarhluta gegnum eiginleika sína, skrifað athugasemd við síðu, mynd, hnút eða stað, lagað texta, sett stað á myndir, gert við rúmfræði, fundið tvítök í netum og flokkað byggingarhluta. Greina opnast í rétta tólinu með upphafskóða skrifuðum fyrir gagnasafnið, sýnir leitni tímaraðar og telur staði eftir svæðum, og val fylgir með milli hamanna (sjá [lagen.md](lagen.md)).
-- **Myndgera, Flytja út og Deila fylgja tegundinni**: tillögur að gröfum með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðorð sem setja kort, net, líkan eða skipulag inn í skjal; KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagsuppdráttur og skipulagsákvæði fyrir skipulag, magntölur í Excel og glTF fyrir líkön og PDF fyrir teikningar; í Deila velur þú hvort skrárnar fylgi með í pakkanum, gerir gagnasafn að eigin síðu til að senda og sérð hverja tegund í sinni eigin mynd í símanum (sjá [visualisera.md](visualisera.md) og [dela.md](dela.md)).
-- **Yfirferð áður en deilt er**: allt sem fer úr forritinu er yfirfarið í heild, með dálkum, lesmáli, hliðartöflum, upprunaskrám, staðsetningu mynda, leggjum neta, athugasemdum og höfundum; persónuupplýsingar má halda, dulnefna eða fjarlægja í afritinu, og gagnasafnið sjálft breytist aldrei (sjá [dela.md](dela.md)).
-- **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
-- **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sjö tungumálunum.
-- **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
-- **Dataregium og OpenCDE**: OpenCDE-þjónn eins og [Dataregium](https://github.com/marwiss/Dataregium) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins, og stjórnar þjóninum (notendur, verkefni, biðlarar, setur, atvikaskrá, stillingar, heilsa og graffyrirspurnir) úr spjaldinu Stjórnun þegar þú ert stjórnandi (sjá kaflann [Dataspatium og Dataregium](#dataspatium-og-dataregium) hér fyrir neðan).
-- **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
-- **Samræming við Dataregium, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sjö tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
-- **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
-  PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
-  [visualisera.md](visualisera.md)).
-- **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert
-  sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
-- **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; í hamnum
-  *Deila* pakka með völdum gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, samstillingu við GitHub-safn,
-  deilivalmynd tölvunnar og birtingu mælaborða og skjala sem sjálfstæðra HTML-skráa (sjá [dela.md](dela.md)); beinan
-  flutning í síma og aðrar tölvur á sama neti með QR-kóða og staðfestingarkóða, og *Dataspatium Farsíma*, sem tekur á
-  móti, sýnir og sendir áfram í símanum (sjá [mobil.md](mobil.md)); yfirferð persónuupplýsinga áður en nokkru er
-  deilt; athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu sem ZIP og, í Edge og Chrome, færanlega möppu með
-  venjulegum skrám.
-- **Halda röð og reglu**: möppur og merki fyrir gagnasöfn, síun og röðun, og hópaðgerðir á fleiri gagnasöfn í einu
-  (raða, pakka, flytja út, sækja aftur, keyra uppskrift, eyða).
-- **Finna hratt**: hamurinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum, með flokkum sem afmarka og
-  vistuðum listum (sjá [soka.md](soka.md)); skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og
-  mælaborð og keyrir aðgerðir úr einum leitarreit.
-- **Fyrirspurn án kóða**: flipinn *Fyrirspurn* í Leita tengir gagnasöfn, velur dálka og útreikninga, setur skilyrði
-  og sýnir þá SQL sem verður til; vistaðir listar afmarka töfluna í Vinna og raðir myndrita.
-- **Hjálp í forritinu og kynning**: öll handbókin með leit opnast með ? eða F1 við kaflann fyrir haminn sem þú ert
-  í, og **Kynna** sýnir mælaborð í öllum glugganum eitt myndrit í einu.
-- **Sjö tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku.
-- **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
-  fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
+Það sem virkar í einni útgáfu virkar líka í þeirri næstu. Hver útgáfa á saman við sömu útgáfu af Dataregium.
+
+### Útgáfa 1 (með Dataregium 1)
+
+- **Sæktu gögn**: skrár á um fjörutíu sniðum, frá Excel og CSV til tölfræðiskráa, landupplýsinga og taflna í Word og á vefsíðum, og
+  tölfræði frá stofnunum í Svíþjóð, á Norðurlöndum og í Evrópu með einum smelli (sjá [Opin forritaskil](api-konfiguration.md)).
+  *Tæknilega:* stafakóðun og dálkagerðir eru greindar; SPSS, Stata, SAS, PX, Parquet og RDS gegnum R; eigin uppsprettur sem `*.api.json`.
+- **Leiðréttu og reiknaðu**: um fimmtíu aðgerðir með hnöppum, eins og að hreinsa, skipta um gerð, endurkóða, reikna hlutföll, snúa og
+  tengja töflur, með gæðareglum, dulnefnun kennitalna, afturköllun og útgáfum (sjá [Vinna](bearbeta.md)). *Tæknilega:* hvert skref er
+  geymt í uppskrift sem má flytja út sem R- eða SQL-kóða.
+- **Greindu**: R með ggplot2 og tidyverse, SQL þvert á gagnasöfn, reglulegar segðir og minnisbækur sem verða að skýrslum, alveg í
+  vafranum (sjá [R](r-guide.md) og [Reglulegar segðir](regex.md)).
+- **Skipulag**: sænsk deiliskipulög og aðalskipulög sem skipulagskort með litum og táknum Boverket, í eigin hnitakerfi skipulagsins (sjá
+  [Skipulag](planer.md)).
+- **Myndrit, kort og skjöl**: myndrit og kort með Vega-Lite, D3 eða R, mælaborð og skýrslur úr sniðmátum sem HTML, Word, PDF, PowerPoint,
+  Markdown eða LaTeX (sjá [Myndgera](visualisera.md)).
+- **Vistaðu og deildu**: gögn á um tíu sniðum, deilipakkar, athugasemdir, afrit, samstilling við GitHub og ferðamappa.
+- **Dataregium sem skjalasafn**: sæktu skjöl af þjóninum sem gagnasöfn og sendu gagnasöfn og skrár til baka sem nýjar útgáfur.
+  *Tæknilega:* Foundation API og Documents API.
+- **Sex tungumál og grunnnámskeið**: sænska, danska, norska (bókmál), finnska, íslenska og enska, og skipanaspjaldið (Ctrl+K) sem finnur
+  allt.
+
+### Einnig í útgáfu 2 (með Dataregium 2)
+
+- **Leita og Deila**: tveir nýir hamir. *Leita* finnur og listar raðir án kóða; *Deila* sendir pakka, birtir mælaborð og skjöl sem
+  vefsíður og flytur í síma með QR-kóða, eftir yfirferð persónuupplýsinga (sjá [Leita](soka.md) og [Deila](dela.md)).
+- **Fleiri uppsprettur**: Access-skrár, gagnagrunnar, opnar landupplýsingar, bakgrunnskort, skjöl og myndir sem söfn og texti úr skönnuðum
+  síðum (sjá [Uppsprettur](kallor.md)). *Tæknilega:* staðbundin brú í SQL Server og ODBC, PostgREST, OData, GraphQL, SPARQL og fleira yfir
+  HTTP, WFS, OGC API Features, ArcGIS og Neo4j yfir Bolt.
+- **Kort, skipulag og gröf**: kort með lögum og landupplýsingatólum, skipulag frá öllum Norðurlöndum og gröf sem eru teiknuð, spurð og
+  breytt (sjá [Kort](kartor.md) og [Gröf](grafer.md)).
+- **Byggingarlíkön**: IFC-líkön í þrívídd með töflum, eiginleikum og magntölum, prófun gegn skemanu og gegn IDS, og DXF-teikningar (sjá
+  [CAD og BIM](cad-bim.md)). *Tæknilega:* web-ifc og three.js fyrir sýnina, IfcOpenShell og ifctester í Python forritsins.
+- **Python og tölfræði án kóða**: Python-skel og eyðublöð fyrir tölfræði og tímaraðir sem skrifa og sýna kóðann (sjá
+  [Tölfræði](statistik.md) og [Python](python.md)).
+- **Röð og reglur og flæði**: möppur, merki og aðgerðir á mörg gagnasöfn, vistuð flæði sem keyra með einum smelli, og uppsprettur sem
+  láta vita þegar ný gögn eru komin (sjá [Hamir](lagen.md)).
+- **Dataspatium Farsími**: síminn tekur við og sýnir gögn og safnar röðum á vettvangi, líka án nets (sjá [Farsími](mobil.md)).
+- **Dataregium með málum**: líkön og mál verkefnisins, ný mál sem benda á staðinn í þrívídd, BCF-skrár, IFC-graf þjónsins, kortið
+  *Stjórnun* fyrir stjórnandann og kortið *Meðlimir verkefnisins* fyrir verkefnisstjórann (sjá
+  [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Tæknilega:* BCF API 3.0 og 2.1 með viewpoints.
+- **Sjö tungumál**: líka nýnorska, með handbókinni í forritinu og grunnnámskeiðinu um alla átta hamina.
+
+## OpenCDE-forritaskilin og biðlarar þeirra
+
+OpenCDE eru opnar reglur buildingSMART International um hvernig forrit deila líkönum, skjölum og málum byggingarverkefnis. Forrit sem
+fylgir reglunum getur unnið með hverjum þeim þjóni sem gerir það líka, sama hver smíðaði þá. Dataspatium er slíkt forrit, biðlari, og
+notar öll þrjú forritaskilin:
+
+| Forritaskil | Hvað forritið gerir með þeim | Forskrift |
+|---|---|---|
+| Foundation API 1.0 | Les hvaða forritaskil þjónninn býður, hvar á að skrá sig inn og hver notandinn er; skráir forritið sem biðlara þegar þjónninn leyfir það | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 og 2.1 | Les og skrifar mál um líkan, með athugasemdum og viewpoints (myndavél, íhlutir og myndir) úr þrívíddarsýninni; velur nýjustu útgáfu sem þjónninn býður | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Velur og sækir skjöl og útgáfur gegnum eigin síður þjónsins, svo að IFC-líkan verði gagnasafn, og hleður upp nýjum útgáfum, gagnasöfnum og pökkum | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium er einn þjónn, ekki sá eini.** Ekkert í forritinu er háð Dataregium. Viðbætur Dataregium utan forskriftanna
+(getuskjalið, grafafyrirspurnirnar og verkefnisstjórnunin) birtast aðeins þegar þjónninn sjálfur gefur þær upp.
+
+**Fyrir þau sem kunna tæknina:** af þjóni þarf forritið þrennt:
+
+- CORS frá uppruna forritsins: `null` frá file://, `http://127.0.0.1:8080` frá staðbundnum vefþjóni og `https://marwiss.github.io` af
+  vefnum, með hausunum Authorization, Content-Type og X-Request-ID;
+- skráningu biðlara, gerða af stjórnanda þjónsins (opinber biðlari með framvísunarslóðinni `http://127.0.0.1:8080/oauth-callback.html`,
+  eða samsvarandi fyrir slóð forritsins) eða af forritinu sjálfu (RFC 7591) þegar þjónninn leyfir það, og OAuth2 authorization code með
+  PKCE `S256`; frá file:// límirðu inn slóðina sem þú lendir á eftir innskráningu;
+- BCF API 3.0 eða 2.1; Documents API er valkvætt, en án þess getur forritið ekki sótt eða birt skjöl.
+
+Hingað til hefur þetta verið sýnt gagnvart Dataregium: lifandi prófanirnar keyra gegn þjóninum í báðum útgáfum BCF API, og þjónn með
+aðeins 2.1 virkar. Aðrir þjónar hafa ekki verið prófaðir; segðu frá hvernig gekk undir [Villur og tillögur](#villur-og-tillögur). Þegar
+forritið og forskrift eru ósammála ræður forskriftin. Hlið forritsins er lýst í [kallor.md](kallor.md), hlið þjónsins í README Dataregium.
 
 ## Dataspatium og Dataregium
 
 *Dataregium hét Kontroll til 8. nóvember 2026.*
 
-*Dataregium hét Dataregium til 8. nóvember 2026.*
+Dataspatium er forritið sem þú vinnur í, og [Dataregium](https://github.com/marwiss/Dataregium) er þjónninn þar sem verkefni safnar
+líkönum sínum, skjölum og málum. Þau eru smíðuð hvort fyrir annað en fylgja opnum reglum, svo að önnur forrit virka líka. Þú bætir
+þjóninum við sem uppsprettu í *Sækja* og skráir þig inn; síðan sækirðu líkön og skjöl verkefnisins, bendir á vandamál í þrívídd sem mál,
+sendir gagnasöfn og skrár til baka og spyrð graf þjónsins um líkönin. Án þjóns
+virkar restin af forritinu eins og venjulega.
 
-*Dataregium hét Dataregium til 8. nóvember 2026.*
+**Fyrir þau sem kunna tæknina:** allt nema grafafyrirspurnirnar og stjórnunin fer gegnum OpenCDE-forritaskilin þrjú. Hvert kall ber
+`X-Request-Id` sem þjónninn skrifar í beiðnaskrá sína, svo að para megi skrá forritsins og skrá þjónsins. Samstarfinu er lýst frá hlið
+forritsins í [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md) og frá hlið þjónsins í README Dataregium og `docs/client-guide.md`.
 
-*Dataregium hét Dataregium til 8. nóvember 2026.*
+Svona tengjast þau:
 
-*Dataregium hét Dataregium til 8. nóvember 2026.*
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, í vafranum"]
+        source["Uppspretta og innskráning"]
+        issues["Mál í þrívíddarsýninni"]
+        files["Líkön og skjöl"]
+        queries["Fyrirspurnir á IFC-grafið"]
+        log["Skrá forritsins"]
+        admin["Stjórnun og meðlimir"]
+    end
+    subgraph server ["Dataregium, þjónninn"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC-graf")]
+        requests["Beiðnaskrá"]
+        adminapi["Stjórnunarforritaskil"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
 
-*Dataregium hét Dataregium til 8. nóvember 2026.*
+Dataspatium 2.0.0 virkar með Dataregium 2.0.0. Sama númer á saman. Flýtileiðarvísirinn [snabbstart.md](snabbstart.md) fer með parið úr
+engu í mál á tuttugu mínútum.
 
-Dataspatium (forritið í vafranum) og [Dataregium](https://github.com/marwiss/Dataregium) (þjónn fyrir OpenCDE-API buildingSMART: Foundation, BCF og Documents)
-eru þróuð til að vinna saman sem biðlari og þjónn. Forritið bætir þjóninum við sem uppsprettu í Sækja, skráir sig inn með OAuth2 og
-skráir sig sjálft sem biðlara þegar þjónninn leyfir það, sækir líkön og skjöl verkefnisins, les og skrifar mál með viewpoints úr
-3D-sýninni, sendir gagnasöfn, skrár og vinnusvæðispakka aftur í gegnum Documents API, spyr IFC-graf þjónsins með Cypher og skráir
-hvert kall með sama X-Request-Id sem þjónninn skrifar í eigin beiðnaskrá. Fyrirspurnirnar í grafið og stjórnunin eru viðbætur utan forskriftanna; allt annað fer í gegnum þrjú OpenCDE-API, svo aðrir
-OpenCDE-biðlarar virka einnig. Þjónninn er ekki nauðsynlegur fyrir annað í forritinu: án þjóns virkar allt annað eins og áður. README Dataregium og `docs/client-guide.md` lýsa samstarfinu frá hlið þjónsins; hér er því lýst í
-[kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
+### Útgáfurnar 1, 2 og 3
 
-Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa aðeins 2.1, og það teiknar og spyr IFC-net þjónsins beint úr Sækja.
+Það er ein útgáfa fyrir hvert aðalnúmer, og Dataspatium og Dataregium með sama númer eiga saman:
 
-Dataspatium 2.0.0 virkar með Dataregium 2.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
-[snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
+| Dataspatium | Hvað hún hefur | Á saman við |
+|---|---|---|
+| 1.0.0 | Gögn úr skrám og opnum forritaskilum, vinnsla, R, SQL og reglulegar segðir, sænskt skipulag, myndrit og kort í myndritum, mælaborð, skjöl, útflutningur og deiling. Gagnvart þjóni aðeins Documents API: sækja skjöl sem gagnasöfn og senda gagnasöfn og skrár til baka. Engin mál, engin líkön og ekkert Python | Dataregium 1.0.0 (aðeins Documents API) |
+| 2.0.0 | Allt í 1.0.0 og auk þess hamirnir Leita og Deila, Python og tölfræði án kóða, fleiri uppsprettur, kortasýnir, norrænt skipulag, gröf, IFC-líkön í þrívídd með prófun gegn IDS, flæði, Dataspatium Farsími, mál með viewpoints (BCF API 3.0 og 2.1), IFC-graf þjónsins, kortið *Stjórnun* og kortið *Meðlimir verkefnisins* | Dataregium 2.0.0 |
+| 3.0.0 | Allt í 2.0.0 og auk þess kortið *Sannprófa líkanið*, árekstrarprófun, Spyrja gervigreind og Breyta með gervigreind, ný auð líkön á völdu skema, Bera saman útgáfur, birting með grunnútgáfu og forprófun, breytingatillögur sem eru prófaðar og samþykktar á þjóninum með vali við árekstra, og grafið í léttara formi | Dataregium 3.0.0 |
+
+Ný útgáfa með sama aðalnúmeri kemur í stað þeirrar fyrri; aðeins sú nýjasta í hverri röð er leiðrétt. Uppfærsluathugun forritsins býður
+næsta aðalnúmer, og gagnasöfn, listar, myndrit, sniðmát og skriftur fylgja með þegar þú opnar `index.html` nýju útgáfunnar.
 
 ## Lærðu meira
 
-Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo tenglar virka eins alls staðar.
+Skráarheitin eru þau sömu á öllum tungumálum (þau eru sænsku frumritin), svo að tenglar virka eins alls staðar.
 
-- **Handbókin** í forritinu: sömu skjölun og hér, með leit; opnaðu hana með ? efst til hægri eða F1.
-- **Grunnnámskeiðið** í forritinu: gagnvirk yfirferð yfir alla hami með sýnigögnum; opnaðu það úr hjálpinni (?) eða
-  með Ctrl+K.
-- [Hafist handa](kom-igang.md): skref fyrir skref með algengum spurningum.
-- [Fljótleg byrjun með Dataregium](snabbstart.md): tuttugu mínútur frá engu að máli sem er búið til í þrívíddarsýninni og sést á þjóninum.
-- [Notendahandbók](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
-- [Algengar spurningar](faq.md): geymsla, öryggi, R, vefþjónustur og uppfærslur.
+**Byrjaðu hér**
+
+- **Grunnnámskeiðið** í forritinu: yfirferð um alla hamina með sýnigögnum; opnaðu það úr hjálpinni (?) eða með Ctrl+K.
+- **Handbókin** í forritinu: sömu skjöl og hér, með leit; opnaðu hana með ? efst til hægri eða F1.
+- [Að hefjast handa](kom-igang.md): skref fyrir skref með algengum spurningum.
+- [Notendaleiðbeiningar](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
 - [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
-- [Leita](soka.md) og [Deila](dela.md): finna án kóða, og gefa öðrum gögn.
-- [Dataspatium Farsími](mobil.md): síminn sem sendill, viðtakandi og skoðari; flutningur milli tækja.
-- [Minnisbók](anteckningsbok.md): texti, R og SQL í reitum sem verða að skýrslu.
-- [Skjöl og myndir](dokument.md): PDF, Word, OpenDocument, Markdown og myndir sem gagnasöfn; skjalasýn, myndasafn og tólin Texti og Myndir.
-- [Kort](kartor.md): kortið í Vinna, kortasýnir í Myndgera, landfræðitólin og QGIS-verkefni.
-- [Reglulegar segðir](regex.md): mynstur til að greina, leiðrétta og skipta upp texta í gagnasöfnum.
-- [Snið og innflutningur](format.md): skráarsnið, stafakóðun, tugabrotstákn, dagsetningar og dálkgerðir.
-- [Opnar vefþjónustur](api-konfiguration.md): forstilltir upprunar, lyklar og eigin uppsetningar.
-- [R í Dataspatium](r-guide.md): R-stjórnborðið, `dm_read()`, `dm_write()` og meðfylgjandi pakkar.
-- [Python í Dataspatium](python.md): Python-stjórnborðið, `dm_read()`, `dm_write()` og pakkar sem eru sóttir eftir þörfum.
-- [Myndgera](visualisera.md): myndritasmiðurinn, D3-snið, R-myndrit, kort og mælaborð.
-- [Skjöl og snið](dokumentmallar.md): sniðmálið og úttakssniðin.
-- [Öryggi](sakerhet.md): ógnarlíkan, stýringarnar og prófanirnar sem sanna þær, persónuupplýsingar og geymsla, og hvernig veikleiki er tilkynntur.
-- [Leyfi](licenser.md): hvað þú mátt gera með forritið og hvaða leyfi íhlutir þriðja aðila hafa.
-- Hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
-- Ytri upprunar: [WebR](https://docs.r-wasm.org/webr/latest/), [R fyrir byrjendur](https://www.r-project.org/),
-  [Vega-Lite](https://vega.github.io/vega-lite/), [opin gögn Hagstofu Íslands](https://hagstofa.is/).
+- [Algengar spurningar](faq.md): geymsla, öryggi, R, forritaskil og uppfærslur.
+
+**Eftir sviðum**
+
+- [Snið og innflutningur](format.md) og [Opin forritaskil](api-konfiguration.md): skráarsnið, stafakóðun, forstilltu uppspretturnar,
+  lyklar og eigin stillingar.
+- [Uppsprettur](kallor.md): gagnagrunnar, brúin, opnar landupplýsingar, tengdar skrár og OpenCDE-þjónar.
+- [Vinna](bearbeta.md), [Leita](soka.md) og [Reglulegar segðir](regex.md): leiðrétta, reikna og finna.
+- [Tölfræði](statistik.md), [R í Dataspatium](r-guide.md), [Python í Dataspatium](python.md) og [Minnisbók](anteckningsbok.md):
+  greining með og án kóða.
+- [Myndgera](visualisera.md), [Kort](kartor.md) og [Skjöl og sniðmát](dokumentmallar.md): myndrit, kort, mælaborð og skýrslur.
+- [Skipulag](planer.md), [Gröf](grafer.md) og [CAD og BIM](cad-bim.md): skipulag, gröf, byggingarlíkön og prófanir.
+- [Skjöl og myndir](dokument.md): PDF, Word, OpenDocument, Markdown og myndir sem gagnasöfn.
+- [Flæði](floden.md), [Deila](dela.md), [Dataspatium Farsími](mobil.md) og [Gagnaöflun](insamling.md): sjálfvirkni, deiling og söfnun.
+- [Flýtileiðarvísir með Dataregium](snabbstart.md): tuttugu mínútur úr engu í mál sem búið er til í þrívíddarsýninni og sést á þjóninum.
+- [Öryggi](sakerhet.md) og [Leyfi](licenser.md): ógnalíkan, varnir og prófanir, og hvað þú mátt gera með forritið.
+- Hvernig framlögum er tekið er lýst í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
+
+### Frekari lesning
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) og [Documents API](https://github.com/buildingSMART/documents-API): forskriftirnar sem forritið fylgir gagnvart þjóni.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): skráarsniðið fyrir byggingarlíkön, og [IDS](https://github.com/buildingSMART/IDS): kröfuforskriftir sem líkön eru prófuð gegn.
+- Ytri tilföng: [WebR](https://docs.r-wasm.org/webr/latest/), [Pyodide](https://pyodide.org/), [IfcOpenShell](https://ifcopenshell.org/),
+  [Vega-Lite](https://vega.github.io/vega-lite/), [forritaskil sænsku hagstofunnar](https://www.scb.se/en/services/open-data-api/).
 
 ## Takmarkanir í stuttu máli
 
-- Opna þarf forritið úr afþjappaðri möppu (file://) eða venjulegum vefþjóni; það virkar ekki beint inni í ZIP-skrá.
-- Vefþjónustur án CORS-stuðnings er ekki hægt að kalla beint úr vafranum.
-- Gagnasafn ætti að vera undir nokkrum milljónum raða; minni vafrans setur mörkin.
-- Þegar forritið er opnað úr möppu er ekki hægt að stöðva R-kóða í miðjum útreikningi; notaðu *Endurræsa R*. Af
-  vefþjóni (localhost eða https) er hnappurinn *Stöðva* til staðar.
-- Fleiri flipar virka og halda hver öðrum upplýstum, en breyttu ekki sama gagnasafni í tveimur flipum samtímis: sá sem vistar
-  síðast vinnur.
-- Færanlega mappan krefst Edge eða Chrome; Firefox hefur ekki möppuaðgang (File System Access). Afrit sem ZIP virkar alls
-  staðar.
-- Allt forritið er gert fyrir tölvur; í símum og spjaldtölvum er Dataspatium Farsími notaður
-  (<https://marwiss.github.io/Dataspatium/m/>), sem tekur á móti, sýnir og sendir áfram. Safari er ekki stutt fyrir
-  allt forritið. Í þröngum gluggum opnast spjöldin sem yfirlagsspjöld yfir vinnuflötinn.
-- Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
+- Forritið verður að opna úr afþjappaðri möppu eða venjulegum vefþjóni; það virkar ekki beint inni í ZIP-skránni.
+- Vefþjónustum sem leyfa ekki köll úr vöfrum (skortir CORS, til dæmis sænska seðlabankanum) er ekki hægt að ná beint; tilgreina má eigin
+  milliþjón.
+- Gagnasafn ætti að vera undir nokkrum milljónum raða, og mjög stór byggingarlíkön geta verið of þung fyrir vafrann; minnið setur mörkin.
+- Þegar forritið er opnað úr möppu er ekki hægt að stöðva R- og Python-kóða í miðjum útreikningi; notaðu *Endurræsa R* eða *Endurræsa
+  Python*. Frá vefþjóni er hnappurinn *Stöðva*.
+- Python og IfcOpenShell fylgja ekki ZIP-skránni; þau eru sótt í fyrsta sinn sem þeirra er þörf, eftir samþykki, og síðan geymd í
+  vafranum.
+- Margir flipar virka og halda hver öðrum upplýstum, en breyttu ekki sama gagnasafni í tveimur flipum í einu: sá sem vistar síðast vinnur.
+- Ferðamappan krefst Edge eða Chrome; Firefox skortir möppuaðgang. Afrit sem ZIP virkar alls staðar.
+- Allt forritið er gert fyrir tölvur. Í símum og spjaldtölvum er Dataspatium Farsími (<https://marwiss.github.io/Dataspatium/m/>) notaður,
+  sem tekur við, sýnir, safnar og sendir áfram. Í þröngum gluggum opnast spjöldin sem blöð yfir vinnusvæðinu.
+- Sýnigögn og kortamörk sem fylgja ná yfir Svíþjóð, Danmörku, Noreg og Finnland, og forstilltu uppspretturnar eru norrænar og evrópskar;
+  gögn frá öðrum löndum geturðu sótt sjálf(ur) jafn auðveldlega.
+
+## Persónuupplýsingar
+
+Dataspatium keyrir í vafranum þínum og þú berð sjálf(ur) ábyrgð á gögnunum sem þú setur inn. Allt sem forritið vistar (gagnasöfn og
+útgáfur þeirra, listar, gröf, skjöl, minnisbækur, athugasemdir og stillingar) liggur í geymslu vafrans á tölvunni þinni og fer þaðan
+aðeins þegar þú flytur út, deilir eða birtir; þá er allt fyrst yfirfarið í heild og persónuupplýsingar má halda, dulnefna eða fjarlægja
+í afritinu. Til Dataregium-þjóns er innskráning þín send (tákn eru geymd í setunni eða dulkóðuð með lykilsetningu þinni, aldrei í
+hreinum texta), málin, athugasemdirnar og skrárnar sem þú stofnar undir nafni þínu á þjóninum, og X-Request-ID fyrir
+hvert kall; vinnsla þjónsins sjálfs er lýst í README Dataregium. Athugasemdir og pakkar bera nafnið sem þú gefur sjálf(ur) upp. Eftirlitið og prófin sem sýna það eru í
+[sakerhet.md](sakerhet.md).
+
+## Nýrri útgáfur
+
+Dataspatium 3.0.0, gerð með Dataregium 3.0.0, bætir við prófun líkana, árekstrarprófun, Spyrja gervigreind og Breyta með
+gervigreind, nýjum auðum líkönum, Bera saman útgáfur og breytingatillögum sem þjónninn prófar og samþykkir. Hún er sótt úr
+[nýjustu útgáfunni](https://github.com/marwiss/Dataspatium/releases/latest) og lýst í [README á main](https://github.com/marwiss/Dataspatium/blob/main/docs/is/README.md). Gagnasöfn, listar, myndrit, sniðmát og skriftur fylgja með þegar þú
+opnar `index.html` nýju útgáfunnar.
 
 ## Villur og tillögur
 
@@ -222,11 +321,16 @@ fylgdu [SECURITY.md](../../SECURITY.md) í stað þess að opna issue.
 
 ## Þróun
 
-- Ekkert smíðaskref, ekkert node.js. Opnaðu `index.html` beint eða berðu möppuna fram með `python -m http.server 8080`.
-- Högun í stuttu máli: allur eigin kóði er hefðbundnar skriftur sem eru skráðar með `Dataspatium.define` í röðinni í `src/boot.js`; `src/platform` ber allt sem er sértækt fyrir file:// (tilföng, shim, workers, geymslu, samþykki); vélarnar SQLite, R (WebR) og Python (Pyodide) keyra í workers; `src/ui` hefur hönnunarbreyturnar, einingarnar (`dm-*`), skelina og einn ham á hverja skrá. Allt sem er birt er escape-að og ekkert er sótt af netinu án aðgerðar þinnar og samþykkis.
+- Ekkert smíðaskref, ekkert node.js. Opnaðu `index.html` beint, eða þjónaðu möppunni með `python -m http.server 8080`.
+- Arkitektúr í stuttu máli: allur eigin kóði er klassískar skriftur sem eru skráðar með `Dataspatium.define` í röðinni í `src/boot.js`;
+  `src/platform` ber allt sem er sérstakt fyrir file:// (tilföng, shims, workerar, geymsla, samþykki); vélarnar SQLite, R (WebR) og Python
+  (Pyodide) keyra í workerum; `src/ui` hefur hönnunarbreyturnar, íhlutina (`dm-*`), skelina og einn ham í hverri skrá. Allt sem birtist er
+  escapað, og ekkert er sótt af netinu án aðgerðar þinnar og samþykkis.
 - Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
-- Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox).
-- Öryggi: prófanirnar fyrir samþykki, leyndarmál, yfirferð áður en deilt er, OAuth2 (PKCE, state, afturhvarf) og hulun atvikaskrár eru hluti af prófunasafninu; sjá [sakerhet.md](sakerhet.md).
+- Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox). Prófanirnar fara aldrei á netið;
+  raunverulegar þjónustur eru aðeins prófaðar með eigin breytum (`?cde=` gegn Dataregium, `?python=1` með Pyodide).
+- Öryggi: prófanirnar fyrir samþykki, leyndarmál, yfirferð fyrir deilingu, OAuth2 (PKCE, state, endurkomu) og huldun skrárinnar eru hluti
+  af prófunum; sjá [sakerhet.md](sakerhet.md).
 
 ## Leyfi
 

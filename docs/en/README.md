@@ -4,10 +4,22 @@
 
 # Dataspatium OpenCDE client
 
-Dataspatium is a web app for data from source to report: import data from files and open APIs, store and
-manage datasets, review and correct values, analyse with R, visualise and export. Everything runs in your own
-browser. No server, no installation, no accounts. Your data never leaves your computer unless you export it
-yourself. Security is the first requirement: no network call without your action and your consent, secrets only encrypted, components pinned and verified, and everything shared is reviewed first.
+*This is the README of Dataspatium 2.0.0. The latest release, 3.0.0, is described in the [README on main](https://github.com/marwiss/Dataspatium/blob/main/docs/en/README.md).*
+
+Dataspatium is a program for working with data that you open in your ordinary web browser. You bring in a table, a map, a plan, a
+building model or statistics from a public authority, correct it and calculate with it, make charts and reports and pass the result
+on. Everything happens on your own computer: no installation, no account and no server. Nothing leaves the computer unless you export
+or share it yourself, and the app always asks before it uses the internet.
+
+Dataspatium can also work with [Dataregium](https://github.com/marwiss/Dataregium), a server where a building project shares its
+models, documents and issues. You can then fetch the project's building models, point out problems in 3D as issues and ask questions
+of the server's graph of the models. Without Dataregium everything else works exactly the same.
+
+**For the technically skilled:** a static web app with no build step that runs from `file://` in Edge, Chrome and Firefox or from any
+static web server. Each dataset is an SQLite file (sql.js) in IndexedDB; R runs in WebR 0.5.9 and Python in Pyodide 0.29.5, both in
+workers; IFC is read with web-ifc and IfcOpenShell (wasm). Against a server the app is an OpenCDE client: Foundation API 1.0 with OAuth2
+authorization code and PKCE, BCF API 3.0 and 2.1 and Documents API 1.0. No network call is made without consent per purpose, and
+secrets are stored only encrypted (AES-GCM).
 
 ![Dataspatium in Process mode with a table of Swedish municipalities](../images/bearbeta.png)
 
@@ -15,10 +27,14 @@ yourself. Security is the first requirement: no network call without your action
 
 - [Download and get started](#download-and-get-started)
 - [Requirements](#requirements)
+- [Words to know](#words-to-know)
 - [What you can do](#what-you-can-do)
+- [The OpenCDE APIs and their clients](#the-opencde-apis-and-their-clients)
 - [Dataspatium and Dataregium](#dataspatium-and-dataregium)
 - [Learn more](#learn-more)
 - [Limitations in brief](#limitations-in-brief)
+- [Personal data](#personal-data)
+- [Newer releases](#newer-releases)
 - [Bugs and suggestions](#bugs-and-suggestions)
 - [Development](#development)
 - [Licence](#licence)
@@ -28,218 +44,309 @@ documentation show the app in Swedish.
 
 ## Download and get started
 
-1. **Download.** Go to the [latest release](https://github.com/marwiss/Dataspatium/releases/latest) and fetch
-   the ZIP file under *Assets* (`dataspatium-<version>.zip`, about 100 MB; R and all R packages are included).
+1. **Download.** Go to the [release 2.0.0](https://github.com/marwiss/Dataspatium/releases/tag/v2.0.0) and fetch
+   the ZIP file under *Assets* (`dataspatium-<version>.zip`, about 100 MB; R and the most common R packages are included).
 2. **Unpack.** Right-click the ZIP file and choose *Extract all* (Windows) or double-click it (macOS). Put the
    folder where you want it, for example in Documents. The app does not work directly inside the ZIP file.
 3. **Open.** Double-click `index.html` in the folder, or drag the file into a browser window. If Windows asks which
-   app to use, choose Edge, Chrome or Firefox. The first time, the app asks which language you want (it can be
-   changed with the language button at the top right) and then starts the **beginner's course**, an interactive
-   walkthrough of all the modes with example data that takes about ten minutes. Reopen it from the help (?).
-4. **Import.** In *Import* mode, drop a file on the surface (or click *Try with example data*), check the column
-   types and click *Import*. The dataset is stored in the browser on your computer.
-5. **Carry on.** Switch mode at the top: *Manage* shows your datasets and the workspace, *Search* finds rows in
-   them, *Process* shows the table with sorting, filters and actions, *Analyse* opens the R and SQL consoles,
-   *Visualise* builds charts, *Export* downloads data, charts and documents and *Share* gives them to others.
+   app to use, choose Edge, Chrome or Firefox. The first time you choose a language, and then the **beginner's course** is offered:
+   a walkthrough of all the modes with example data that takes about ten minutes and can be reopened from the help (?).
+4. **Bring in data.** In *Import* mode, drop a file on the surface, or click *Try with example data*. The app shows what the file
+   contains; click *Import*. The dataset is stored in the browser on your computer.
+5. **Carry on.** The modes at the top are the steps of the work: *Manage* keeps your datasets in order, *Search* finds rows without
+   code, *Process* shows the table, the map or the model with buttons to correct and calculate, *Analyse* has statistics and code (R,
+   Python and SQL), *Visualise* makes charts and maps, *Export* saves files on the computer and *Share* sends to others.
 
-Data is stored in the browser's own database. If you clear site data it disappears, so back up regularly under
-*Manage > Workspace*. The backup is a ZIP file that can be restored on the same or another computer. Step by step
-with more detail: [kom-igang.md](kom-igang.md) (Getting started).
+What you save is kept in the browser's own database on the computer. If you clear the browser's site data it disappears, so back up
+regularly under *Manage > Workspace*. The backup is a ZIP file that can be restored on the same or another computer. Step by step with
+more detail: [kom-igang.md](kom-igang.md) (Getting started).
 
-The app is also available directly on the web, with nothing to download: <https://marwiss.github.io/Dataspatium/>.
-From a web server it can be installed as an app of its own (Edge and Chrome: *Install* in the address bar) and then
-works without a network too. The web version and the folder version have separate workspaces; move data between them
-with a backup or a bundle.
+The web version at <https://marwiss.github.io/Dataspatium/> is always the latest release, now 3.0.0.
+
+### For the technically skilled
+
+- **Run:** unpack the ZIP file and open `index.html` (file://), or serve the folder: `python -m http.server 8080 --bind 127.0.0.1`
+  and open <http://127.0.0.1:8080/>. From a web server there is a service worker, an installable app and interruptible R and Python.
+- **Check the ZIP file:** compare its SHA-256 with the one in the release text (`Get-FileHash` in PowerShell, `shasum -a 256` on macOS
+  and Linux).
+- **With a server:** start Dataregium with Docker or Podman (`docker compose up -d --build --wait` and
+  `docker compose exec api opencde seed` in Dataregium's repository), serve Dataspatium on port 8080 and add the server under *Import >
+  Add sources > OpenCDE*. The client id can be left empty when the server allows self-registration. The whole way in twenty minutes:
+  [snabbstart.md](snabbstart.md) (Quick start).
+- **The graph:** the server's IFC graph (Neo4j or Memgraph) is queried with Cypher from *Import*, through the server's graph query or
+  directly over Bolt.
+- **Tests:** `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` runs the whole suite in headless Edge and Firefox.
 
 ## Requirements
 
 - Windows, macOS or Linux.
-- Microsoft Edge or Google Chrome (version 120 or later), or Firefox (version 128 or later). Safari is not
-  supported.
-- About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large
-  datasets). No administrator rights are needed.
-- Internet is needed only when you fetch data from open APIs, push to GitHub, check for updates or fetch a
-  component or an R package that does not ship in the folder; the app asks for permission first.
+- Microsoft Edge or Google Chrome (version 120 or later), or Firefox (version 128 or later). Safari is not supported for the whole
+  app.
+- About 300 MB of free space for the app folder and at least 4 GB of memory (8 GB recommended for large datasets and models). No
+  administrator rights are needed.
+- Internet is needed only when you choose something that requires it, and the app asks for permission first for each purpose: fetching
+  data from open APIs and maps, connecting to a Dataregium server or GitHub, checking for updates or
+  fetching a part that does not ship in the folder (Python, IfcOpenShell and R packages beyond the most common ones).
+- Dataregium needs a server. Running your own requires Docker or Podman; Dataregium's README describes it.
+
+## Words to know
+
+You do not need to know the words below to use the app, but they appear in the text.
+
+- **API**: a way for programs to fetch data from each other over the network. The app fetches statistics from public authorities'
+  APIs and talks to Dataregium through its APIs.
+- **Dataset**: what the app stores when you bring something in: a table, a map, a plan, a graph, a model or a collection of documents
+  or pictures.
+- **Recipe**: the list of everything you have done with a dataset, step by step, so that it can be undone or repeated on new data.
+- **R, Python and SQL**: languages for analysing data. The app has them built in, but most things are done with buttons and forms that
+  write the code for you.
+- **BIM**: describing a building as a digital model where every wall, door and room carries information, not only as lines on a
+  drawing.
+- **IFC**: the open file format for building models, which all the major programs for building design can read and write.
+- **CAD**: drawings made in a drawing program; the app reads them in the open format DXF.
+- **IDS**: an open file that says which information a model must have, so that the model can be checked automatically.
+- **BCF**: an open format for issues about a model, for example "the ventilation runs through the beam", with a picture and the view
+  that shows the place.
+- **OpenCDE**: buildingSMART's open rules for how programs share a building project's models, documents and issues, so that programs
+  from different makers work together.
+- **Server**: a program that others connect to over the network. Dataregium is a server; Dataspatium needs none.
+- **Graph and graph database**: data as things and the connections between them, for example that a door sits in a wall on a storey.
+  Dataregium can store each model as a graph in Neo4j or Memgraph, with the help of the module IFC-LPG.
+- **Container**: a ready-packaged program started with Docker or Podman without installing its parts one by one. Dataregium runs that
+  way; Dataspatium needs no containers.
+- **OAuth2 sign-in**: the usual way to sign in to a service from another app without the app seeing your password.
+- **file:// and CORS**: file:// means that the app is opened directly from a folder. CORS is the browser's rule for which web services
+  a web app may fetch data from; a service without CORS cannot be reached directly.
 
 ## What you can do
 
-- **Import**: CSV, Excel, ODS, JSON, JSON-stat, SDMX-JSON, GeoJSON, XML, SQLite, GeoPackage and shapefile files, tables in HTML, Markdown, Word and LaTeX documents, KML, KMZ, GPX and TopoJSON map files, SQL scripts, older spreadsheet formats (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), fixed-width
-  text, statistical files from SPSS, Stata and SAS (with value labels) and Statistics Sweden's PX format, Parquet and RDS (via R), pasted
-  text, files from web addresses, and data straight from open APIs at Statistics Sweden (SCB), the Public Health
-  Agency of Sweden, the National Board of Health and Welfare, Kolada, Eurostat, SMHI, the Swedish Environmental
-  Protection Agency, Lantmäteriet and Sweden's data portal as well as the ECB and the OECD, with saved fetches that
-  update with one click and replay their recipes (see [api-konfiguration.md](api-konfiguration.md)). Example data
-  and municipality and region boundaries for Sweden, Denmark, Norway and Finland are included.
-- **Databases**: Access files are read directly in the browser; databases on the computer or in the network (SQL
-  Server, ODBC, Excel, SQLite) are reached through a local bridge, and PostgREST/Supabase, OData, GraphQL, CouchDB,
-  ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable become sources with one click. Files can be
-  linked and read again from disk (see [kallor.md](kallor.md)).
-- **Documents and images**: PDF, Word, OpenDocument, Markdown and text become document collections read in a reading view, page by
-  page or as a whole; pictures become an image collection with EXIF details and a gallery. The tools Text (word
-  frequency, keywords in context, co-occurrences) and Images (overview, duplicates) work without code (see [dokument.md](dokument.md)).
-- **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
-  check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
-  municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
-  [bearbeta.md](bearbeta.md)).
-- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), a Python console
-  with pandas and matplotlib fetched the first time (see [python.md](python.md)), an SQL console
-  where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
-  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
-- **Maps**: geodatasets open as maps to zoom in, map views with several layers and a background map after consent
-  become dashboards and published HTML, the geo tools compute area, points in areas, nearest, buffers and overlays
-  without code, and QGIS projects become map views (see [kartor.md](kartor.md)).
-- **Open geodata**: WFS, OGC API Features and ArcGIS services become sources whose layers are fetched as maps, with
-  presets for SCB, SGU, HaV, RAÄ, the Forest Agency, Kartverket, Statistics Finland and SYKE, search in
-  Geodataportalen, and WMS services as background map or layer (see [kallor.md](kallor.md)).
-- **Plans**: Swedish digital detailed plans (the national specification, Lantmäteriet's geodata platform) open as plan
-  maps with Boverket's colours and designations, the provisions are looked up in Boverket's catalogue of plan provisions
-  (embedded copy), and comprehensive plans (the specification or Boverket's ÖP model) are shown theme by theme (see
-- **Nordic plans**: Denmark's local plans and municipal plan frames (Plandata.dk), Finland's plan data model and plan
-  index (Ryhti), Iceland's digital detailed and master plans (Skipulagsstofnun) and Norway's reguleringsplaner
-  (GeoPackage) open as plans in each country's colours; a whole plan is fetched by its number from Plandata and Skipulagsstofnun.
-- **Graphs**: GraphML, GEXF, JSON with nodes and edges and Cypher scripts open as graphs with an overview per label, focus
-  and whole-graph views (Cytoscape and sigma), a Cypher subset translated to SQL, graph measures in the background and
-  export in all four formats; two tables become a graph (see [grafer.md](grafer.md)).
-  The graph is edited in Process and with writing Cypher (recipe steps), Neo4j is a source over Bolt, the Graph tab has
-  PageRank, communities, centrality, pattern queries and layout, and graphs become charts in Visualise, dashboards and Publish.
-  [planer.md](planer.md)).
-- **CAD and BIM**: IFC models open in 3D (web-ifc and three.js) above a table of the building elements, and the selection follows
-  both ways. Properties and quantities become tables, the Quantities tab counts per type, storey and material, and DXF drawings
-  show as SVG with layers (see [cad-bim.md](cad-bim.md)).
-- **Flows and watches**: a saved chain (fetch, recipes, scripts, lists, charts, dashboards, documents, export) runs with one click or at
-  start, and watched sources say so in the status bar when they have new data (see [floden.md](floden.md)).
-- **Statistics without code**: the Statistics tab does descriptive statistics, crosstabs, correlation, hypothesis tests, regression and
-  clustering with forms that write and show the R or Python code. Time series operations in Process (periods, change, index, moving average,
-  seasonal adjustment), and a regression can be saved and used as the recipe step Prediction (see [statistik.md](statistik.md)).
-- **Field collection**: a form built on a dataset's columns and rules is sent to Dataspatium Mobil. The phone collects rows without a network, with photo and
-  position, and the rows come back as a new version. The photos become an image collection and the positions end up on the map (see [insamling.md](insamling.md)).
-- **The modes follow the dataset's kind**: the app says what a file is and what a dataset can also be used as, asks about coordinates, coordinate systems and links on import, sorts mixed folders and shows a picture per dataset in Manage. Search hits open where they are (page, picture, node, element, plan object or place), you can search by place, find nodes through their edges and elements through their properties, comment on a page, a picture, a node or a place, fix text, set positions on pictures, repair geometries, find duplicates in graphs and classify elements. Analyse opens in the right tool with code written for the dataset, shows the trend of a time series and counts places per area, and a selection travels with you between the modes (see [lagen.md](lagen.md)).
-- **Visualise, Export and Share follow the kind**: chart suggestions with real pictures for every kind, cross-filters in dashboards and template words that put a map, a graph, a model or a plan into a document; KML, GPX and GeoPackage for places, a contact sheet for pictures, plan map and provisions for plans, quantities in Excel and glTF for models and PDF for drawings; in Share you choose whether the files go into the package, turn a dataset into a page of its own to send, and see each kind in its own form on the phone (see [visualisera.md](visualisera.md) and [dela.md](dela.md)).
-- **Review before sharing**: everything that leaves the app is reviewed as a whole, with columns, running text, side tables, original files, picture positions, graph edges, comments and authors; personal data can be kept, pseudonymised or removed in the copy, and the dataset itself never changes (see [dela.md](dela.md)).
-- **Code lists, descriptions and guides**: labels from SNI, SSYK, NACE and other lists with a click, data packages, DCAT-AP-SE, a quality declaration and four guides with real data (see [lagen.md](lagen.md)).
-- **Text from pictures**: scanned PDF files, pictures and pictures of tables are read with text recognition in the browser, in all seven languages.
-- **Provenance, working together and a library**: see where a dataset comes from and what it has become, work together through GitHub without losing anything, fetch recipes and templates with licences, and publish the workspace as a site.
-- **Dataregium and OpenCDE**: an OpenCDE server such as [Dataregium](https://github.com/marwiss/Dataregium) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log, and administers the server (users, projects, clients, sessions, audit, settings, health and graph queries) from the card Administration when you are an administrator (see [Dataspatium and Dataregium](#dataspatium-and-dataregium) below).
-- **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
-- **Coordination with Dataregium, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in seven languages and opens a source from the link Open in Dataspatium.
-- **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
-  county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
-  dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
-- **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
-  municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
-- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; in the
-  *Share* mode bundles with chosen datasets and objects, a message and a change log, sync with a GitHub repository, the
-  computer's share menu and publishing of dashboards and documents as standalone HTML (see [dela.md](dela.md));
-  direct transfer to phones and other computers on the same network with a QR code and a verification code, and
-  *Dataspatium Mobile*, which receives, shows and forwards on the phone (see [mobil.md](mobil.md)); a review of
-  personal data before anything is shared; comments on datasets and columns, a workspace backup as ZIP and, in Edge
-  and Chrome, a portable folder with ordinary files.
-- **Keeping order**: folders and tags for datasets, filter and sorting, and batch actions on several datasets at
-  once (organise, bundle, export, re-fetch, run recipe, delete).
-- **Find things fast**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
-  the hits and saved lists (see [soka.md](soka.md)); the command palette (Ctrl+K) switches mode, opens datasets,
-  charts and dashboards and runs actions from a single search field.
-- **Query without code**: the *Query* tab in Search joins datasets, picks columns and calculations, sets conditions
-  and shows the SQL it creates; saved lists narrow the table in Process and the rows of charts.
-- **Help in the app and presentation**: the whole handbook with search opens with ? or F1 at the chapter of the mode
-  you are in, and **Present** shows a dashboard in the whole window one chart at a time.
-- **Seven languages**: the interface, the messages and the documentation are available in Swedish, Danish,
-  Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English.
-- **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
-  shown the first time the app is opened and can be opened at any time from the help or the command palette.
+What works in one version also works in the next. Each version goes with the same version of Dataregium.
+
+### Version 1 (with Dataregium 1)
+
+- **Bring in data**: files in some forty formats, from Excel and CSV to statistics files, geodata and tables in Word and web pages, and
+  statistics from authorities in Sweden, the Nordic countries and Europe with one click (see [Open APIs](api-konfiguration.md)).
+  *Technically:* character encoding and column types are detected; SPSS, Stata, SAS, PX, Parquet and RDS through R; your own sources
+  as `*.api.json`.
+- **Correct and calculate**: some fifty actions with buttons, such as cleaning, changing types, recoding, computing shares, pivoting and
+  joining tables, with quality rules, pseudonymisation of personal identity numbers, undo and versions (see [Process](bearbeta.md)).
+  *Technically:* every step is kept in a recipe that can be exported as R or SQL code.
+- **Analyse**: R with ggplot2 and the tidyverse, SQL across datasets, regular expressions and notebooks that become reports, all in the
+  browser (see [R](r-guide.md) and [Regular expressions](regex.md)).
+- **Plans**: Swedish detailed and comprehensive plans as plan maps with the National Board of Housing's colours and symbols, in the
+  plan's own coordinate system (see [Plans](planer.md)).
+- **Charts, maps and documents**: charts and maps with Vega-Lite, D3 or R, dashboards and reports from templates as HTML, Word, PDF,
+  PowerPoint, Markdown or LaTeX (see [Visualise](visualisera.md)).
+- **Save and share**: data in some ten formats, sharing bundles, comments, backup, sync with GitHub and a portable folder.
+- **Dataregium as a document archive**: fetch documents from the server as datasets and send datasets and files back as new versions.
+  *Technically:* Foundation API and Documents API.
+- **Six languages and a beginner's course**: Swedish, Danish, Norwegian (Bokmål), Finnish, Icelandic and English, and the command
+  palette (Ctrl+K) that finds everything.
+
+### Also in version 2 (with Dataregium 2)
+
+- **Search and Share**: two new modes. *Search* finds and lists rows without code; *Share* sends bundles, publishes dashboards and
+  documents as web pages and transfers to phones with a QR code, after a review of personal data (see [Search](soka.md) and
+  [Share](dela.md)).
+- **More sources**: Access files, databases, open geodata, background maps, documents and pictures as collections and text from scanned
+  pages (see [Sources](kallor.md)). *Technically:* a local bridge to SQL Server and ODBC, PostgREST, OData, GraphQL, SPARQL and more over
+  HTTP, WFS, OGC API Features, ArcGIS and Neo4j over Bolt.
+- **Maps, plans and graphs**: maps with layers and geo tools, plans from all the Nordic countries and graphs that are drawn, queried and
+  edited (see [Maps](kartor.md) and [Graphs](grafer.md)).
+- **Building models**: IFC models in 3D with tables, properties and quantities, checks against the schema and against IDS, and DXF
+  drawings (see [CAD and BIM](cad-bim.md)). *Technically:* web-ifc and three.js for the view, IfcOpenShell and ifctester in the app's
+  Python.
+- **Python and statistics without code**: a Python console and forms for statistics and time series that write and show the code (see
+  [Statistics](statistik.md) and [Python](python.md)).
+- **Order and flows**: folders, tags and actions on many datasets, saved flows that run with one click and sources that tell you when
+  they have new data (see [Modes](lagen.md)).
+- **Dataspatium Mobile**: the phone receives and shows data and collects rows in the field, also without a network (see
+  [Mobile](mobil.md)).
+- **Dataregium with issues**: the project's models and issues, new issues that point out the place in 3D, BCF files, the server's IFC
+  graph, the card *Administration* for the administrator and the card *The project's members* for the project manager (see
+  [Dataspatium and Dataregium](#dataspatium-and-dataregium)). *Technically:* BCF API 3.0 and 2.1 with viewpoints.
+- **Seven languages**: also Nynorsk, with the handbook in the app and the beginner's course through all eight modes.
+
+## The OpenCDE APIs and their clients
+
+OpenCDE is buildingSMART International's open rules for how programs share a building project's models, documents and issues. A program
+that follows the rules can work with every server that does too, whoever built them. Dataspatium is such a program, a client, and uses
+all three APIs:
+
+| API | What the app does with it | Specification |
+|---|---|---|
+| Foundation API 1.0 | Reads which APIs the server offers, where to sign in and who the user is; registers the app as a client when the server allows it | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| BCF API 3.0 and 2.1 | Reads and writes issues about a model, with comments and viewpoints (camera, components and pictures) from the 3D view; picks the newest version the server offers | [BCF-API](https://github.com/buildingSMART/BCF-API) |
+| Documents API 1.0 | Picks and fetches documents and versions through the server's own pages, so that an IFC model becomes a dataset, and uploads new versions, datasets and bundles | [documents-API](https://github.com/buildingSMART/documents-API) |
+
+**Dataregium is one server, not the only one.** Nothing in the app depends on Dataregium. Dataregium's extensions beyond the
+specifications (the capabilities document, the graph queries and the project administration) appear only when the server itself
+announces them.
+
+**For the technically skilled:** from a server the app needs three things:
+
+- CORS from the app's origin: `null` from file://, `http://127.0.0.1:8080` from a local web server and `https://marwiss.github.io` from
+  the web, with the headers Authorization, Content-Type and X-Request-ID;
+- a client registration, made by the server's administrator (a public client with the redirect address
+  `http://127.0.0.1:8080/oauth-callback.html`, or the equivalent for the app's address) or by the app itself (RFC 7591) when the server
+  allows it, and OAuth2 authorization code with PKCE `S256`; from file:// you paste the address you land on after signing in;
+- BCF API 3.0 or 2.1; Documents API is optional, but without it the app cannot fetch or publish documents.
+
+So far this is shown against Dataregium: the live suite runs against the server in both versions of BCF API, and a server with only 2.1
+works. Other servers have not been tried; tell us how it went under [Bugs and suggestions](#bugs-and-suggestions). When the app and a
+specification disagree, the specification decides. The app's side is described in [kallor.md](kallor.md), the server's in Dataregium's
+README.
 
 ## Dataspatium and Dataregium
 
 *Dataregium was called Kontroll until 8 November 2026.*
 
-*Dataregium was called Dataregium until 8 November 2026.*
+Dataspatium is the app you work in, and [Dataregium](https://github.com/marwiss/Dataregium) is the server where a project gathers its
+models, documents and issues. They are built for each other but follow open rules, so other programs work too. You add the server as a
+source in *Import* and sign in; then you fetch the project's models and documents, point out problems in 3D as issues, send datasets and
+files back and ask questions of the server's graph of the models. Without a
+server the rest of the app works as usual.
 
-*Dataregium was called Dataregium until 8 November 2026.*
+**For the technically skilled:** everything except the graph queries and the administration goes through the three OpenCDE APIs. Every
+call carries an `X-Request-Id` that the server writes in its request log, so that the log in the app and the server's log can be paired.
+The collaboration is described from the app's side in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md), and from the server's side in
+Dataregium's README and `docs/client-guide.md`.
 
-*Dataregium was called Dataregium until 8 November 2026.*
+This is how they fit together:
 
-*Dataregium was called Dataregium until 8 November 2026.*
+```mermaid
+flowchart LR
+    subgraph app ["Dataspatium, in the browser"]
+        source["Source and sign-in"]
+        issues["Issues in the 3D view"]
+        files["Models and documents"]
+        queries["Queries on the IFC graph"]
+        log["The log in the app"]
+        admin["Administration and members"]
+    end
+    subgraph server ["Dataregium, the server"]
+        foundation["Foundation API, OAuth2"]
+        bcf["BCF API"]
+        documents["Documents API"]
+        ifcgraph[("IFC graph")]
+        requests["Request log"]
+        adminapi["Administration API"]
+    end
+    source <--> foundation
+    issues <--> bcf
+    files <--> documents
+    queries --> ifcgraph
+    log <-- "X-Request-ID" --> requests
+    admin --> adminapi
+```
 
-*Dataregium was called Dataregium until 8 November 2026.*
+Dataspatium 2.0.0 works with Dataregium 2.0.0. The same number goes together. The quick start [snabbstart.md](snabbstart.md) takes the
+pair from nothing to an issue in twenty minutes.
 
-Dataspatium (the app in the browser) and [Dataregium](https://github.com/marwiss/Dataregium) (a server for buildingSMART's OpenCDE APIs Foundation, BCF and
-Documents) are developed to work together as client and server. The app adds the server as a source in Import, signs in with OAuth2
-and registers itself as a client when the server allows it, fetches the project's models and documents, reads and writes issues with
-viewpoints from the 3D view, sends datasets, files and workspace bundles back through the Documents API, queries the server's IFC
-graph with Cypher and logs every request with the same X-Request-Id the server writes in its request log. The graph queries and the administration are extensions outside the specifications; everything else goes through the three
-OpenCDE APIs, so other OpenCDE clients work too. The server is not needed for the rest of the app: without one, everything else
-works as before. Dataregium's README and `docs/client-guide.md` describe the
-cooperation from the server's side; here it is described in [kallor.md](kallor.md) and [cad-bim.md](cad-bim.md).
+### The releases 1, 2 and 3
 
-The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have only 2.1, and it draws and queries the server's IFC graph directly from Import.
+There is one release per major number, and Dataspatium and Dataregium with the same number go together:
 
-Dataspatium 2.0.0 works with Dataregium 2.0.0. Both carry the same release number, so equal numbers belong together. The quick start
-[snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
+| Dataspatium | What it has | Goes with |
+|---|---|---|
+| 1.0.0 | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium 1.0.0 (Documents API only) |
+| 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members* | Dataregium 2.0.0 |
+| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
+
+A new release in the same major number replaces the previous one; only the latest in each series is corrected. The app's update check
+offers the next major number, and datasets, lists, charts, templates and scripts come along when you open the new version's
+`index.html`.
 
 ## Learn more
 
-The file names are the same in every language (they are the Swedish originals), so links work the same way
-everywhere.
+The file names are the same in every language (they are the Swedish originals), so links work the same way everywhere.
 
+**Start here**
+
+- **The beginner's course** in the app: a walkthrough of all the modes with example data; open it from the help (?) or with Ctrl+K.
 - **The handbook** in the app: the same documentation as here, with search; open it with ? at the top right or F1.
-- **The beginner's course** in the app: an interactive walkthrough of all the modes with example data; open it from
-  the help (?) or with Ctrl+K.
 - [Getting started](kom-igang.md): step by step with common questions.
-- [Quick start with Dataregium](snabbstart.md): twenty minutes from nothing to an issue created in the 3D view and visible on the server.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
-- [FAQ](faq.md): storage, security, R, APIs and updates.
 - [The eight modes](lagen.md): what is where and why.
-- [Search](soka.md) and [Share](dela.md): finding without code, and giving data to others.
-- [Dataspatium Mobile](mobil.md): the phone as courier, receiver and viewer; transfer between devices.
-- [Notebook](anteckningsbok.md): text, R and SQL in cells that become a report.
-- [Documents and images](dokument.md): PDF, Word, OpenDocument, Markdown and pictures as datasets; the document view, the gallery and the tools Text and Images.
-- [Maps](kartor.md): the map in Process, map views in Visualise, the geo tools and QGIS projects.
-- [Regular expressions](regex.md): patterns for analysing, correcting and splitting text in datasets.
-- [Formats and import](format.md): file formats, character encoding, decimal separators, dates and column types.
-- [Open APIs](api-konfiguration.md): the preset sources, keys and how to write your own configuration.
-- [R in Dataspatium](r-guide.md): the R console, `dm_read()`, `dm_write()` and the bundled packages.
-- [Python in Dataspatium](python.md): the Python console, `dm_read()`, `dm_write()` and packages fetched on demand.
-- [Visualise](visualisera.md): the chart builder, D3 templates, R charts, maps and dashboards.
-- [Documents and templates](dokumentmallar.md): the template language and the output formats.
-- [Security](sakerhet.md): threat model, the controls and the tests that prove them, personal data and retention, and how to report a vulnerability.
-- [Licences](licenser.md): what you may do with the app and which licences the third-party components have.
-- How contributions are received is in
-  [CONTRIBUTING.md](../../CONTRIBUTING.md) (Swedish).
-- External resources: [WebR](https://docs.r-wasm.org/webr/latest/), [R for beginners](https://www.r-project.org/),
+- [FAQ](faq.md): storage, security, R, APIs and updates.
+
+**By area**
+
+- [Formats and import](format.md) and [Open APIs](api-konfiguration.md): file formats, character encoding, the preset sources, keys and
+  your own configurations.
+- [Sources](kallor.md): databases, the bridge, open geodata, linked files and OpenCDE servers.
+- [Process](bearbeta.md), [Search](soka.md) and [Regular expressions](regex.md): correct, calculate and find.
+- [Statistics](statistik.md), [R in Dataspatium](r-guide.md), [Python in Dataspatium](python.md) and [Notebook](anteckningsbok.md):
+  analysis with and without code.
+- [Visualise](visualisera.md), [Maps](kartor.md) and [Documents and templates](dokumentmallar.md): charts, maps, dashboards and reports.
+- [Plans](planer.md), [Graphs](grafer.md) and [CAD and BIM](cad-bim.md): plans, graphs, building models and checks.
+- [Documents and images](dokument.md): PDF, Word, OpenDocument, Markdown and pictures as datasets.
+- [Flows](floden.md), [Share](dela.md), [Dataspatium Mobile](mobil.md) and [Field collection](insamling.md): automate, share and
+  collect.
+- [Quick start with Dataregium](snabbstart.md): twenty minutes from nothing to an issue created in the 3D view and visible on the server.
+- [Security](sakerhet.md) and [Licences](licenser.md): threat model, controls and tests, and what you may do with the app.
+- How contributions are received is in [CONTRIBUTING.md](../../CONTRIBUTING.md) (Swedish).
+
+### Further reading
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) and [Documents API](https://github.com/buildingSMART/documents-API): the specifications the app follows against a server.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): the file format for building models, and [IDS](https://github.com/buildingSMART/IDS): requirement specifications that models are checked against.
+- External resources: [WebR](https://docs.r-wasm.org/webr/latest/), [Pyodide](https://pyodide.org/), [IfcOpenShell](https://ifcopenshell.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [Statistics Sweden's API](https://www.scb.se/en/services/open-data-api/).
 
 ## Limitations in brief
 
-- The app must be opened from an unpacked folder (file://) or an ordinary web server; it does not work directly
-  inside a ZIP file.
-- APIs without CORS support (for example the Riksbank's) cannot be called directly from the browser.
-- A dataset should stay below a couple of million rows; the browser's memory sets the limit.
-- When the app is opened from a folder, R code cannot be stopped in the middle of a calculation; use *Restart R*.
-  From a web server (localhost or https) there is the button *Stop*.
-- Several tabs work and keep each other informed, but do not edit the same dataset in two tabs at the same time:
-  the one that saves last wins.
-- The portable folder requires Edge or Chrome; Firefox lacks folder access (File System Access). Backup as ZIP
-  works everywhere.
-- The whole app is made for computers; on phones and tablets Dataspatium Mobile
-  (<https://marwiss.github.io/Dataspatium/m/>) receives, shows and forwards. Safari is not supported for the whole
-  app. In narrow windows the panels open as sheets over the work area.
-- The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
-  anywhere.
+- The app must be opened from an unpacked folder or an ordinary web server; it does not work directly inside the ZIP file.
+- Web services that do not allow calls from browsers (lack CORS, for example the Swedish central bank's) cannot be reached directly; a
+  proxy of your own can be given.
+- A dataset should stay below a couple of million rows, and very large building models can be too heavy for the browser; memory sets
+  the limit.
+- When the app is opened from a folder, R and Python code cannot be interrupted in the middle of a calculation; use *Restart R* or
+  *Restart Python*. From a web server there is a *Stop* button.
+- Python and IfcOpenShell are not in the ZIP file; they are fetched the first time they are needed, after consent, and then kept in the
+  browser.
+- Several tabs work and keep each other informed, but do not edit the same dataset in two tabs at once: whoever saves last wins.
+- The portable folder needs Edge or Chrome; Firefox lacks folder access. A backup as ZIP works everywhere.
+- The full app is made for computers. On phones and tablets, Dataspatium Mobile (<https://marwiss.github.io/Dataspatium/m/>) is used; it
+  receives, shows, collects and passes on. In narrow windows the panels open as sheets over the work area.
+- The example data and map boundaries that ship cover Sweden, Denmark, Norway and Finland, and the preset sources are Nordic and
+  European; data from other countries is just as easy to bring in yourself.
+
+## Personal data
+
+Dataspatium runs in your browser, and you are responsible for the information you put in. Everything the app stores (datasets and their
+versions, lists, charts, documents, notebooks, comments and settings) is kept in the browser's storage on your computer and leaves it only
+when you export, share or publish; then everything is reviewed in full first, and personal data can be kept, pseudonymised or removed in
+the copy. Towards a Dataregium server, your sign-in is sent (tokens are kept in the session or encrypted with your passphrase, never in
+clear text), along with the issues, comments and files you create under your name on the server, and one X-Request-ID per
+call; the server's own processing is described in Dataregium's README. Comments and bundles carry the name you give yourself. The controls and the tests that prove them are in
+[sakerhet.md](sakerhet.md) (Security).
+
+## Newer releases
+
+Dataspatium 3.0.0, made together with Dataregium 3.0.0, adds the model checks, clash detection, Ask AI and Change with AI, new
+empty models, Compare versions and change proposals that the server tries and approves. It is fetched from the
+[latest release](https://github.com/marwiss/Dataspatium/releases/latest) and described in the [README on main](https://github.com/marwiss/Dataspatium/blob/main/docs/en/README.md). Datasets, lists, charts, templates and scripts come along
+when you open the new version's `index.html`.
 
 ## Bugs and suggestions
 
-Report bugs or requests as *Issues* here on GitHub. Describe the browser, the Dataspatium version (shown under the
-help button) and what you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md). Attach no personal data and no secrets. For a security
-vulnerability follow [SECURITY.md](../../SECURITY.md) instead of opening an issue.
+Report bugs or wishes as *Issues* here on GitHub. Describe the browser, the version of Dataspatium (shown under the help button) and what
+you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md). Attach no personal data and no secrets. For a security vulnerability, follow
+[SECURITY.md](../../SECURITY.md) instead of opening an issue.
 
 ## Development
 
 - No build step, no node.js. Open `index.html` directly, or serve the folder with `python -m http.server 8080`.
-- Architecture in brief: all of the app's own code is classic scripts registered with `Dataspatium.define` in the order of `src/boot.js`; `src/platform` carries everything specific to file:// (assets, shims, workers, storage, consent); the engines SQLite, R (WebR) and Python (Pyodide) run in workers; `src/ui` holds the design tokens, the components (`dm-*`), the shell and one mode per file. Everything rendered is escaped, and nothing is fetched from the network without your action and consent.
+- Architecture in brief: all own code is classic scripts registered with `Dataspatium.define` in the order of `src/boot.js`;
+  `src/platform` carries everything specific to file:// (resources, shims, workers, storage, consent); the engines SQLite, R (WebR) and
+  Python (Pyodide) run in workers; `src/ui` has the design variables, the components (`dm-*`), the shell and one mode per file. Everything
+  rendered is escaped, and nothing is fetched from the network without your action and your consent.
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
-- Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox).
-  (Swedish).
-- Security: the tests for consent, secrets, review before sharing, OAuth2 (PKCE, state, callback) and log masking are part of the suite; see [sakerhet.md](sakerhet.md).
+- Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). The tests never go to the network;
+  real services are tried only with their own parameters (`?cde=` against a Dataregium, `?python=1` with Pyodide).
+- Security: the tests for consent, secrets, review before sharing, OAuth2 (PKCE, state, return) and the log's masking are part of the
+  suite; see [sakerhet.md](sakerhet.md).
 
 ## Licence
 
