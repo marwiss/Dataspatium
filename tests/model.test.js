@@ -287,6 +287,8 @@
       const view = shell.store.get();
       assert.equal(view.selectedId, meta.id);
       let picked = null;
+      // A made-up pointer has no capture to take: Firefox throws in OrbitControls when it asks for one, a real pointer never does.
+      /** @type {any} */ (canvas).setPointerCapture = () => {}; /** @type {any} */ (canvas).releasePointerCapture = () => {};
       for (const [fx, fy] of [[0.5, 0.5], [0.4, 0.5], [0.6, 0.5], [0.5, 0.45], [0.5, 0.55], [0.3, 0.5], [0.7, 0.5]]) {
         const x = box.left + box.width * fx; const y = box.top + box.height * fy;
         const opts = { bubbles: true, clientX: x, clientY: y, pointerId: 1, button: 0 };
