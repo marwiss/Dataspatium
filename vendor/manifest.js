@@ -2819,6 +2819,16 @@ Dataspatium.assets.manifest({
    "assets": 0,
    "notes": "SheetJS Community Edition, distributed from cdn.sheetjs.com."
   },
+  "geotiff": {
+   "version": "2.1.3",
+   "license": "MIT",
+   "homepage": "https://github.com/geotiffjs/geotiff.js",
+   "direct": [
+    "geotiff.js"
+   ],
+   "assets": 0,
+   "notes": "Reads heights from Lantmäteriet's terrain model (cloud-optimised GeoTIFF) with range requests. The browser build is a classic script with the global GeoTIFF; its worker pool (a Blob worker) is never used, so decoding runs on the page in small windows."
+  },
   "fflate": {
    "version": "0.8.3",
    "license": "MIT",

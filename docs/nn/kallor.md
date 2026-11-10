@@ -251,7 +251,8 @@ vektordata (bygningar, arealdekke, stadnamn, eigedomsinndeling og adresser), ort
 laserdata) og kart. Vel samling og gje eit område; resultatet er flatene til filene som kart med adressene til filene. Kortet
 **Filer i kjelda** i Handter hentar så filene med nøkkelen: vektorfilene blir lesne inn som datasett (ein ZIP blir pakka ut,
 og ein GeoPackage gjev eitt datasett per lag), og raster, punktskyer og andre filer appen ikkje les, blir lagra på
-datamaskina, høgst 20 om gongen. Nøkkelen er forbrukarnøkkelen og forbrukarløyndomen frå ein gratis konto i
+datamaskina, høgst 20 om gongen. Høgder i punkt gjev handlinga *Høgd frå terrengmodellen* i Bearbeid, som les rutene i
+terrengmodellen direkte. Nøkkelen er forbrukarnøkkelen og forbrukarløyndomen frå ein gratis konto i
 [Geotorget](https://geotorget.lantmateriet.se/); appen hentar eit tilgangstoken med dei, og det blir berre sendt til API-et
 til Lantmäteriet og filtenaren dl1.lantmateriet.se.
 

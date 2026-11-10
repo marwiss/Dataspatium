@@ -182,6 +182,9 @@ SWEREF 99 TM) and coordinate columns:
   Coordinates in SWEREF 99 TM are recognised. The boundaries are SCB's simplified land boundaries for thematic maps:
   points in lakes, the sea or outside Sweden become empty, and points very close to a boundary may end up in the
   neighbouring municipality.
+- **Height from the terrain model** adds the height in metres (RH 2000) of every point from Lantmäteriet’s terrain
+  model, with the key to *Lantmäteriet geodata with a key (STAC)*. The coordinates may be in WGS 84 or SWEREF 99 TM; at
+  most 5,000 points at a time, and a point outside the model gets no height.
 
 All four are recipe steps that can be undone and replayed. In the SQL export they appear as calls to Dataspatium's
 functions (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` and others); the R export gives corresponding code

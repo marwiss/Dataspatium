@@ -132,6 +132,17 @@
         }
       ]
     },
+    "geotiff": {
+      "version": "2.1.3",
+      "npm": "geotiff",
+      "license": "MIT",
+      "homepage": "https://github.com/geotiffjs/geotiff.js",
+      "licenseUrl": "https://raw.githubusercontent.com/geotiffjs/geotiff.js/v2.1.3/LICENSE",
+      "notes": "Reads heights from Lantmäteriet's terrain model (cloud-optimised GeoTIFF) with range requests. The browser build is a classic script with the global GeoTIFF; its worker pool (a Blob worker) is never used, so decoding runs on the page in small windows.",
+      "files": [
+        { "path": "dist-browser/geotiff.js", "as": "geotiff.js", "wrap": false }
+      ]
+    },
     "fflate": {
       "version": "0.8.3",
       "npm": "fflate",

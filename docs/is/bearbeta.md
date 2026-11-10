@@ -178,6 +178,9 @@ hnitadálka:
   og bætir við `kommunkod`, `kommun`, `lanskod` og `lan` (eða aðeins léni). Hnit í SWEREF 99 TM eru greind. Mörkin eru
   einfölduð landmörk SCB fyrir þemakort: punktar í vötnum, sjó eða utan Svíþjóðar verða tómir og punktar mjög nálægt mörkum
   geta lent í nágrannasveitarfélaginu.
+- **Hæð úr landlíkaninu** bætir við hæð í metrum (RH 2000) fyrir hvern punkt úr landlíkani Lantmäteriet með lyklinum að
+  *Landupplýsingar Lantmäteriet með lykli (STAC)*. Hnitin mega vera í WGS 84 eða SWEREF 99 TM; mest 5.000 punktar í
+  einu, og punktur utan líkansins fær enga hæð.
 
 Allar fjórar eru skref í uppskriftinni sem má afturkalla og keyra aftur. Í SQL-útflutningnum birtast þær sem köll á föll
 Dataspatium (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` og fleiri); R-útflutningurinn gefur samsvarandi kóða með

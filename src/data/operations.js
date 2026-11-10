@@ -545,6 +545,31 @@
       toR(p) { const file = `presets/geo/${this.file(p)}.geojson`; return `# ${D.t('code.geo.region.r', { file })}\ngranser <- sf::st_read(${rstr(file)}, quiet = TRUE)\npts <- sf::st_as_sf(df, coords = c(${rstr(p.lonColumn)}, ${rstr(p.latColumn)}), crs = 4326, remove = FALSE)\ndf <- sf::st_drop_geometry(sf::st_join(pts, granser[, c(${this.fields(p).map(rstr).join(', ')})], join = sf::st_within))`; },
     });
 
+    define({
+      id: 'geo_height', group: 'geo',
+      params: [{ name: 'lonColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_X }, { name: 'latColumn', type: 'column', required: true, kinds: NUMERIC, prefer: PREFER_Y }, { name: 'name', type: 'text', default: 'hojd' }],
+      // Heights from Lantmäteriet's terrain model through the preset lantmateriet-stac (api/heights): the key and the
+      // consent are asked for as for any fetch, and a point outside the model gets no height.
+      async apply(ctx, p) {
+        const res = await ctx.engine.exec(`select rowid, ${q(p.lonColumn)}, ${q(p.latColumn)} from data`);
+        const rows = res[0] ? res[0].values : [];
+        const { heights } = await D.require('api/heights').at(rows.map((r) => (r[1] === null || r[2] === null ? null : [Number(r[1]), Number(r[2])])));
+        const name = await addColumnOf(ctx, p.name || 'hojd', 'number');
+        await ctx.engine.run('create temp table if not exists _heights (id integer primary key, v real)');
+        await ctx.engine.run('delete from _heights');
+        const found = rows.map((r, i) => [r[0], heights[i]]).filter((x) => x[1] !== null);
+        for (let k = 0; k < found.length; k += 400) {
+          const part = found.slice(k, k + 400);
+          await ctx.engine.run(`insert into _heights (id, v) values ${part.map(() => '(?, ?)').join(', ')}`, part.flat());
+        }
+        await ctx.engine.run(`update data set ${q(name)} = (select v from _heights where _heights.id = data.rowid)`);
+        await ctx.engine.run('drop table _heights');
+        return { rows: rows.length, matched: found.length };
+      },
+      toSQL(p) { return [`ALTER TABLE data ADD COLUMN ${q(p.name || 'hojd')} REAL;`, `-- ${D.t('code.geo.height')}`]; },
+      toR(p) { return `# ${D.t('code.geo.height')}\ndf$${q(p.name || 'hojd')} <- NA_real_`; },
+    });
+
     /**
      * How a number typed in a cell is meant. 3.14 cannot be a thousands separator, whatever the language, while 1.234 is one
      * thousand two hundred and thirty-four in the Nordic languages and a little over one in English.

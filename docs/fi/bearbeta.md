@@ -184,6 +184,9 @@ Toimintoryhmä *Paikkatieto* käsittelee geometriasarakkeita (GeoJSON tai WKT te
   rajojen avulla ja lisää sarakkeet `kommunkod`, `kommun`, `lanskod` ja `lan` (tai vain läänin). SWEREF 99 TM -koordinaatit
   tunnistetaan. Rajat ovat SCB:n yksinkertaistettuja maarajoja teemakarttoja varten: järvissä, meressä tai Ruotsin
   ulkopuolella olevat pisteet jäävät tyhjiksi, ja hyvin lähellä rajaa olevat pisteet voivat osua naapurikuntaan.
+- **Korkeus maastomallista** lisää jokaisen pisteen korkeuden metreinä (RH 2000) Lantmäterietin maastomallista lähteen
+  *Lantmäteriet paikkatiedot avaimella (STAC)* avaimella. Koordinaatit voivat olla WGS 84- tai SWEREF 99 TM
+  -järjestelmässä; enintään 5 000 pistettä kerrallaan, ja mallin ulkopuolinen piste ei saa korkeutta.
 
 Kaikki neljä ovat reseptin vaiheita, jotka voi kumota ja ajaa uudelleen. SQL-viennissä ne näkyvät Dataspatiumin funktioiden
 kutsuina (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` ja muut); R-vienti tuottaa vastaavan koodin paketilla sf.

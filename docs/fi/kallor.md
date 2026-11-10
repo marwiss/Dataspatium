@@ -256,7 +256,8 @@ vektoriaineistot (rakennukset, maanpeite, paikannimet, kiinteistöjaotus ja osoi
 (maastomalli ja laseraineisto) ja kartat. Valitse kokoelma ja anna alue; tuloksena ovat tiedostojen alueet karttana ja
 tiedostojen osoitteet. Hallitse-tilan kortti **Lähteen tiedostot** hakee sitten tiedostot avaimella: vektoritiedostot luetaan
 aineistoiksi (ZIP puretaan, ja GeoPackagesta tulee yksi aineisto tasoa kohden), ja rasterit, pistepilvet ja muut tiedostot,
-joita sovellus ei lue, tallennetaan tietokoneelle, enintään 20 kerrallaan. Avain on kuluttaja-avain ja kuluttajasalaisuus
+joita sovellus ei lue, tallennetaan tietokoneelle, enintään 20 kerrallaan. Pisteiden korkeudet antaa Muokkaa-tilan toiminto
+*Korkeus maastomallista*, joka lukee maastomallin ruudut suoraan. Avain on kuluttaja-avain ja kuluttajasalaisuus
 maksuttomalta [Geotorget](https://geotorget.lantmateriet.se/)-tililtä; sovellus hakee niillä käyttötunnisteen, ja se
 lähetetään vain Lantmäterietin rajapintaan ja tiedostopalvelimelle dl1.lantmateriet.se.
 

@@ -245,7 +245,8 @@ vigurgögn (byggingar, landþekja, örnefni, fasteignaskipting og heimilisföng)
 leysigögn) og kort. Veldu safn og tilgreindu svæði; niðurstaðan er fletir skránna sem kort með vistföngum skránna. Spjaldið
 **Skrár í uppsprettunni** í Umsjón sækir síðan skrárnar með lyklinum: vigurskrárnar eru lesnar inn sem gagnasöfn (ZIP er
 afþjappað og GeoPackage gefur eitt gagnasafn fyrir hvert lag), og rastagögn, punktský og aðrar skrár sem forritið les ekki
-eru vistaðar á tölvunni, mest 20 í einu. Lykillinn er neytendalykillinn og neytendaleyndarmálið af ókeypis aðgangi í
+eru vistaðar á tölvunni, mest 20 í einu. Hæðir í punktum gefur aðgerðin *Hæð úr landlíkaninu* í Vinna, sem les reiti
+landlíkansins beint. Lykillinn er neytendalykillinn og neytendaleyndarmálið af ókeypis aðgangi í
 [Geotorget](https://geotorget.lantmateriet.se/); forritið sækir aðgangstákn með þeim, og það er aðeins sent til API
 Lantmäteriet og skráaþjónsins dl1.lantmateriet.se.
 

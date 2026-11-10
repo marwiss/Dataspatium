@@ -182,6 +182,9 @@ SWEREF 99 TM) och koordinatkolumner:
   medföljande gränser och lägger till `kommunkod`, `kommun`, `lanskod` och `lan` (eller bara län). Koordinater
   i SWEREF 99 TM känns igen. Gränserna är SCB:s förenklade landgränser för tematiska kartor: punkter i sjöar,
   hav eller utanför Sverige blir tomma, och punkter mycket nära en gräns kan hamna i grannkommunen.
+- **Höjd ur markhöjdmodellen** lägger till höjden i meter (RH 2000) för varje punkt ur Lantmäteriets markhöjdmodell, med
+  nyckeln till *Lantmäteriet geodata med nyckel (STAC)*. Koordinaterna kan vara i WGS 84 eller SWEREF 99 TM; högst 5 000
+  punkter åt gången, och en punkt utanför modellen får ingen höjd.
 
 Alla fyra är receptsteg som kan ångras och spelas upp igen. I SQL-exporten syns de som anrop till Dataspatiums
 funktioner (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` med flera); R-exporten ger motsvarande kod
