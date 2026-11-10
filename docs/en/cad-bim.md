@@ -251,7 +251,10 @@ the base version, new findings against the base, and every change that could not
 proposal), for instance that a value is no longer the one the proposal started from. When the trial is clean a *manager* of the project can
 press *Approve on the server*: the server makes the proposal the document's next version (with the base version, the proposer and
 the approver in the version's metadata) and closes the topic. The model in the app is not changed by that; fetch the new version from
-Dataregium to go on working on it.
+Dataregium to go on working on it. When the document has got newer versions since the base, the server tries the proposal again on
+the latest in the same step and approves against it when the trial is clean; when the changes collide with what came between, the
+server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
+whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
 
 ## Compare versions
 

@@ -5667,6 +5667,8 @@
     'ai.change.approve.server.confirm': 'Gera tillöguna „{title}“ að næstu útgáfu skjalsins í {project}? Þjónninn beitir breytingunum á grunnútgáfuna og lokar málinu.',
     'ai.change.approve.server.done': 'Tillagan var samþykkt sem útgáfa {n} af {title} í {project}. Sæktu útgáfuna frá Dataregium til að vinna áfram með hana.',
     'ai.change.approved.server': 'Samþykkt á þjóninum sem útgáfa {n}.',
+    'ai.change.approve.server.conflict': 'Skjalið hefur fengið nýrri útgáfur og {k} af breytingunum rekast á þær ({keys}). Sæktu nýjustu útgáfuna, gerðu breytingarnar aftur og leggðu til á ný.',
+    'ai.change.approve.server.conflict.all': 'Skjalið hefur fengið nýja útgáfu hlaðna upp sem heila skrá síðan grunnurinn var, svo allt getur hafa breyst. Sæktu nýjustu útgáfuna, gerðu breytingarnar aftur og leggðu til á ný.',
     'opencde.err.changes.none': 'Tillagan hefur engar breytingar.',
     'opencde.err.changes.max': 'Tillagan hefur fleiri breytingar en þjónninn tekur við ({n}).',
     'compare.button': 'Bera saman',

@@ -243,7 +243,11 @@ með IFC-LPG-eininguna á) sýnir spjaldið niðurstöðu prófunarinnar undir m
 grunnútgáfuna, ný atriði miðað við grunninn, og hverja breytingu sem ekki var hægt að beita ásamt ástæðu (atriði af gerðinni proposal),
 til dæmis að gildi sé ekki lengur það sem tillagan gekk út frá. Sé prófunin hrein getur *manager* í verkefninu ýtt á *Samþykkja á
 þjóninum*: þjónninn gerir tillöguna að næstu útgáfu skjalsins (með grunnútgáfu, tillöguhöfundi og samþykkjanda í lýsigögnum
-útgáfunnar) og lokar málinu. Líkaninu í forritinu er ekki breytt við það; sæktu nýju útgáfuna frá Dataregium til að vinna áfram með hana.
+útgáfunnar) og lokar málinu. Líkaninu í forritinu er ekki breytt við það; sæktu nýju útgáfuna frá Dataregium til að vinna áfram með hana. Hafi skjalið fengið
+nýrri útgáfur síðan grunnurinn var, reynir þjónninn tillöguna aftur á nýjustu útgáfunni í sama skrefi og samþykkir gagnvart henni þegar
+prófunin er hrein; rekist breytingarnar á það sem kom á milli hafnar þjónninn (412) og spjaldið telur upp lyklana sem rekast á
+(tilvik og eigindi), eða segir að allt geti hafa breyst þegar heil skrá var hlaðin upp á milli. Sæktu þá nýjustu útgáfuna, gerðu
+breytingarnar aftur og leggðu til á ný.
 
 ## Bera saman útgáfur
 

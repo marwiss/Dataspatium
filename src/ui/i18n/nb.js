@@ -5667,6 +5667,8 @@
     'ai.change.approve.server.confirm': 'Gjør forslaget «{title}» til neste versjon av dokumentet i {project}? Serveren bruker endringene på basisversjonen og lukker saken.',
     'ai.change.approve.server.done': 'Forslaget ble godkjent som versjon {n} av {title} i {project}. Hent versjonen fra Dataregium for å arbeide videre på den.',
     'ai.change.approved.server': 'Godkjent på serveren som versjon {n}.',
+    'ai.change.approve.server.conflict': 'Dokumentet har fått nyere versjoner, og {k} av endringene kolliderer med dem ({keys}). Hent den nyeste versjonen, gjør endringene på nytt og foreslå igjen.',
+    'ai.change.approve.server.conflict.all': 'Dokumentet har fått en ny versjon lastet opp som hel fil siden basen, så alt kan ha endret seg. Hent den nyeste versjonen, gjør endringene på nytt og foreslå igjen.',
     'opencde.err.changes.none': 'Forslaget har ingen endringer.',
     'opencde.err.changes.max': 'Forslaget har flere endringer enn serveren tar imot ({n}).',
     'compare.button': 'Sammenlign',

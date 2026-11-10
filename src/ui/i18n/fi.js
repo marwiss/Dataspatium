@@ -5667,6 +5667,8 @@
     'ai.change.approve.server.confirm': 'Tehdäänkö ehdotuksesta ”{title}” asiakirjan seuraava versio projektissa {project}? Palvelin soveltaa muutokset perusversioon ja sulkee asian.',
     'ai.change.approve.server.done': 'Ehdotus hyväksyttiin versioksi {n} asiakirjasta {title} projektissa {project}. Hae versio Dataregiumista jatkaaksesi työtä sen parissa.',
     'ai.change.approved.server': 'Hyväksytty palvelimella versioksi {n}.',
+    'ai.change.approve.server.conflict': 'Asiakirja on saanut uudempia versioita, ja {k} muutoksista on ristiriidassa niiden kanssa ({keys}). Hae uusin versio, tee muutokset uudelleen ja ehdota uudelleen.',
+    'ai.change.approve.server.conflict.all': 'Asiakirjaan on ladattu perusversion jälkeen uusi versio kokonaisena tiedostona, joten mikä tahansa on voinut muuttua. Hae uusin versio, tee muutokset uudelleen ja ehdota uudelleen.',
     'opencde.err.changes.none': 'Ehdotuksessa ei ole muutoksia.',
     'opencde.err.changes.max': 'Ehdotuksessa on enemmän muutoksia kuin palvelin ottaa vastaan ({n}).',
     'compare.button': 'Vertaa',

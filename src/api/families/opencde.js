@@ -401,7 +401,7 @@
         let data = null;
         try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
         const { code, message, text } = describeError(data);
-        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined });
+        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined, conflicts: data && Array.isArray(data.conflicts) ? data.conflicts.map(String) : undefined });
       }
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
@@ -712,8 +712,10 @@
     /**
      * A manager makes a clean proposal the document's next version (Dataregium's OB-27): POST at the capability's approve_url. The
      * answer is the new version in the Documents API's form, with base_version_index, change_set_id, proposed_by and approved_by in its
-     * metadata. 403 for other roles, 409 when the trial is not clean or was approved already, 412 version_conflict when the document
-     * has got a newer version than the base.
+     * metadata. 403 for other roles, 409 when the trial is not clean or was approved already. Against a stale base (OB-17 there) the
+     * server tries the changes again on the latest version in the same call and approves against it when clean; when they collide with
+     * what came between it answers 412 version_conflict with `conflicts`, keys like "#123.Name" or "<guid>/<path>.Name", or ["*"] when a
+     * whole file was uploaded in between; the error carries them.
      * @param {any} connector @param {string} approveUrl from proposeChanges
      */
     const approveProposal = (connector, approveUrl) => api(connector, approveUrl, { method: 'POST' });

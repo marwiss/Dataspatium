@@ -242,7 +242,7 @@
   test('ai change: a previewed change set goes to Dataregium as a change proposal, a BCF topic with the snippet in the server\'s form', async (assert) => {
     const CDE = 'dataspatium-asset://tests/ai-change-cde3';
     const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
-    const hits = []; const bodies = {}; let trials = 0; let cleanTrial = false;
+    const hits = []; const bodies = {}; let trials = 0; let cleanTrial = false; let approveAnswer = 'ok';
     // The virtual server sees only addresses; the bodies are read off fetch itself.
     const realFetch = globalThis.fetch;
     globalThis.fetch = (url, init) => { const u = String(url); if (u.startsWith(CDE) && init && init.body !== undefined) bodies[u.slice(CDE.length).split('?')[0]] = { method: init.method, body: String(init.body), headers: init.headers || {} }; return realFetch(url, init); };
@@ -259,7 +259,11 @@
       if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-1', title: 'x' }, 201));
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/snippet') return Promise.resolve({ kind: 'text', data: '' });
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal') { trials++; return Promise.resolve(json(trials < 2 ? { state: 'queued', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2 } : cleanTrial ? { state: 'clean', base: { document_id: 'doc-1', version_index: 2 }, change_count: 1, applied: 1, issue_count: 0, error_count: 0, issues: [] } : { state: 'issues', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2, applied: 1, issue_count: 1, error_count: 1, issues: [{ kind: 'proposal', severity: 'error', message: 'change 1: RelatedElements has no member #99' }] })); }
-      if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve') return Promise.resolve(json({ version_index: 3, version_number: '3', title: 'Hus', file_name: 'hus.ifc', metadata: { base_version_index: 2, change_set_id: 't-1', proposed_by: 'anna', approved_by: 'anna' } }, 201));
+      if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve') {
+        if (approveAnswer === 'conflict') return Promise.resolve(json({ message: 'The document has 2 newer versions and 1 of its changes collide with what came between', code: 'version_conflict', conflicts: ['#170.NominalValue'] }, 412));
+        if (approveAnswer === 'stale') { cleanTrial = false; trials = 0; return Promise.resolve(json({ message: 'On version 4 the trial is issues; see the trial' }, 409)); }
+        return Promise.resolve(json({ version_index: 3, version_number: '3', title: 'Hus', file_name: 'hus.ifc', metadata: { base_version_index: 2, change_set_id: 't-1', proposed_by: 'anna', approved_by: 'anna' } }, 201));
+      }
       return Promise.resolve(json({ message: 'Not Found' }, 404));
     });
     const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
@@ -324,6 +328,28 @@
       const approved = panel.el.querySelector('[data-ai-approved-server]');
       assert.ok(approved && approved.getAttribute('data-ai-approved-server') === '3' && approved.textContent.includes('3'), 'the new version shown: ' + (approved && approved.textContent));
       assert.ok(!panel.el.querySelector('[data-ai-approve-server]'), 'approved once');
+      // A stale base: the changes collide with what came between (412 with the keys), told with the keys under the topic.
+      for (const answer of ['conflict', 'stale']) {
+        approveAnswer = answer; cleanTrial = true; trials = 0;
+        await panel.reject();
+        world.calls = 0;
+        await panel.ask('Sätt brandklass EI90 på väggen');
+        await panel.preview();
+        await panel.propose({ title: 'Brandklass EI90 igen', description: '' });
+        await waitFor(() => panel.state.proposed && panel.state.proposed.trial && panel.state.proposed.trial.state === 'clean', 8000, 'the clean trial');
+        await panel.approveOnServer({ confirmed: true });
+        if (answer === 'conflict') {
+          assert.ok(panel.state.error.includes('#170.NominalValue') && panel.state.error === t('ai.change.approve.server.conflict', { k: '1', keys: '#170.NominalValue' }), 'the colliding keys in the person\'s words: ' + panel.state.error);
+          const list = panel.el.querySelector('[data-ai-approve-conflicts]');
+          assert.ok(list && list.getAttribute('data-ai-approve-conflicts') === '1' && list.textContent.includes('#170.NominalValue'), 'the keys listed');
+          assert.ok(!panel.el.querySelector('[data-ai-approved-server]'), 'not approved');
+        } else {
+          assert.ok(panel.state.error.includes('version 4'), 'the server\'s words on the retried trial: ' + panel.state.error);
+          await waitFor(() => panel.state.proposed && panel.state.proposed.trial && panel.state.proposed.trial.state === 'issues', 8000, 'the trial on the latest version fetched again');
+          assert.ok(panel.el.querySelector('[data-ai-trial]').getAttribute('data-ai-trial') === 'issues', 'the new verdict shown');
+        }
+      }
+      approveAnswer = 'ok';
       // A change set that only creates: nothing in the server's form, and the button says so.
       cleanTrial = false; proposal.changes = [];
       await panel.reject();
@@ -341,7 +367,7 @@
       await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
     }
     return 'ok';
-  }, 50000);
+  }, 70000);
 
   test('ai change: cleanup', async () => {
     if (provider) await providers.remove(provider.id);

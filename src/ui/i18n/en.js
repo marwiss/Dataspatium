@@ -5667,6 +5667,8 @@
     'ai.change.approve.server.confirm': 'Make the proposal “{title}” the next version of the document in {project}? The server applies the changes to the base version and closes the topic.',
     'ai.change.approve.server.done': 'The proposal was approved as version {n} of {title} in {project}. Fetch the version from Dataregium to go on working on it.',
     'ai.change.approved.server': 'Approved on the server as version {n}.',
+    'ai.change.approve.server.conflict': 'The document has got newer versions and {k} of the changes collide with them ({keys}). Fetch the newest version, redo the changes and propose again.',
+    'ai.change.approve.server.conflict.all': 'The document has got a new version uploaded as a whole file since the base, so anything may have changed. Fetch the newest version, redo the changes and propose again.',
     'opencde.err.changes.none': 'The proposal has no changes.',
     'opencde.err.changes.max': 'The proposal has more changes than the server takes ({n}).',
     'compare.button': 'Compare',

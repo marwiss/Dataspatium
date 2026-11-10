@@ -10,7 +10,8 @@
  * change set can go to the server as a change proposal: a BCF topic whose snippet holds the changes of existing instances in the
  * server's form (DataregiumIfcChangeSet), with the base version, the signed-in user and the AI model as its provenance; the server's
  * trial of the proposal against the base version (state, applied changes, findings) is shown under the topic, and a manager can make
- * a clean proposal the document's next version from here (OB-27 on the server's side). The
+ * a clean proposal the document's next version from here (OB-27 on the server's side); against a stale base the server retries the
+ * trial on the latest version, and its 412 with the colliding keys is told under the topic. The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers).
  */
@@ -200,11 +201,23 @@
           try {
             const version = await opencde.approveProposal(connector, mine.approveUrl);
             if (s.proposed === mine) {
+              mine.conflicts = null;
               mine.approved = { index: Number(version && version.version_index) || 0, number: String((version && (version.version_number || version.version_index)) || ''), title: String((version && version.title) || '') };
               const msg = t('ai.change.approve.server.done', { n: mine.approved.number, title: mine.approved.title || mine.title, project });
               log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
             }
-          } catch (err) { fail(err); }
+          } catch (err) {
+            fail(err);
+            if (s.proposed === mine && err && err.status === 412 && Array.isArray(err.conflicts)) {
+              // The document moved on and the changes collide with what came between: the keys, or everything after a whole file.
+              mine.conflicts = err.conflicts;
+              s.error = err.conflicts.includes('*') ? t('ai.change.approve.server.conflict.all') : t('ai.change.approve.server.conflict', { k: i18n.formatNumber(err.conflicts.length), keys: err.conflicts.slice(0, 10).join(', ') + (err.conflicts.length > 10 ? ' …' : '') });
+            } else if (s.proposed === mine && err && err.status === 409 && mine.approveUrl && mine.trial) {
+              // The trial on the latest version was not clean: the server's findings replace the old verdict.
+              mine.trial = { state: 'queued' };
+              trialOf(connector, mine.approveUrl.replace(/\/approve$/, ''), mine);
+            }
+          }
           s.approvingServer = false; render();
         }
         const trialText = (trial) => t('ai.change.trial.' + (trial.state === 'running' ? 'queued' : trial.state), { applied: i18n.formatNumber(trial.applied || 0), n: i18n.formatNumber(trial.count || 0), issues: i18n.formatNumber(trial.issues || 0), errors: i18n.formatNumber(trial.errors || 0), error: trial.error || '' });
@@ -266,7 +279,8 @@
               s.proposed && s.proposed.trial ? h('p', { class: s.proposed.trial.state === 'issues' || s.proposed.trial.state === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-trial': s.proposed.trial.state, text: trialText(s.proposed.trial) }) : null,
               s.proposed && s.proposed.trial && (s.proposed.trial.list || []).length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-trial-issues': '' }, s.proposed.trial.list.slice(0, 10).map((f) => h('li', { class: 'dm-xs', text: `${f.kind || ''}${f.rule ? ' ' + f.rule : ''}${f.step_id ? ' #' + f.step_id : ''}: ${f.message || ''}` }))) : null,
               s.proposed && s.proposed.trial && s.proposed.trial.state === 'clean' && s.proposed.approveUrl && !s.proposed.approved ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.approve.server'), icon: 'circle-check', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.approve.server.hint'), 'data-ai-approve-server': '', onClick: () => approveOnServer() })) : null,
-              s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null) : null,
+              s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null,
+              s.proposed && s.proposed.conflicts ? h('ul', { class: 'dm-list dm-xs', 'data-ai-approve-conflicts': String(s.proposed.conflicts.length) }, s.proposed.conflicts.slice(0, 10).map((k) => h('li', { class: 'dm-xs', text: k }))) : null) : null,
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),

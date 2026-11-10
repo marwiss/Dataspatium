@@ -246,7 +246,11 @@ IFC-LPG-modulet slået til), viser panelet afprøvningens udfald under sagen: hv
 nye fund mod basen, og hver ændring, der ikke kunne anvendes, med årsagen (et fund af arten proposal), for eksempel at en værdi ikke
 længere er den, forslaget gik ud fra. Er afprøvningen ren, kan en *manager* i projektet trykke *Godkend på serveren*: serveren gør
 forslaget til dokumentets næste version (med basisversion, forslagsstiller og godkender i versionens metadata) og lukker sagen.
-Modellen i appen ændres ikke af det; hent den nye version fra Dataregium for at arbejde videre på den.
+Modellen i appen ændres ikke af det; hent den nye version fra Dataregium for at arbejde videre på den. Har dokumentet fået nyere
+versioner siden basen, afprøver serveren forslaget igen mod den nyeste i samme trin og godkender mod den, når afprøvningen er ren;
+kolliderer ændringerne med det, der er kommet imellem, afviser serveren (412), og panelet viser de kolliderende nøgler (instans og
+attribut) eller siger, at alt kan være ændret, når en hel fil er uploadet imellem. Hent da den nyeste version, gentag ændringerne og
+foreslå igen.
 
 ## Sammenlign versioner
 

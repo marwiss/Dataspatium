@@ -248,7 +248,11 @@ Dataregium når tenaren gjev kapabiliteten `ifc_changes`, og modellen vert ikkje
 basisversjonen, nye funn mot basen, og kvar endring som ikkje kunne brukast, med årsaka (eit funn av slaget proposal), til dømes at ein
 verdi ikkje lenger er den framlegget gjekk ut frå. Er prøvinga rein, kan ein *manager* i prosjektet trykkje *Godkjenn på tenaren*:
 tenaren gjer framlegget til neste versjon av dokumentet (med basisversjon, framleggsstillar og godkjennar i metadataa til versjonen) og
-lukkar saka. Modellen i appen vert ikkje endra av det; hent den nye versjonen frå Dataregium for å arbeide vidare på han.
+lukkar saka. Modellen i appen vert ikkje endra av det; hent den nye versjonen frå Dataregium for å arbeide vidare på han. Har dokumentet fått
+nyare versjonar sidan basen, prøver tenaren framlegget på nytt mot den nyaste i same steg og godkjenner mot han når prøvinga er rein;
+kolliderer endringane med det som har kome imellom, avviser tenaren (412), og panelet viser dei kolliderande nøklane (instans og
+attributt) eller seier at alt kan ha endra seg når ei heil fil er lasta opp imellom. Hent då den nyaste versjonen, gjer endringane på
+nytt og foreslå igjen.
 
 ## Samanlikn versjonar
 

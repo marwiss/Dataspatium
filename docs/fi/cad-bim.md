@@ -251,7 +251,11 @@ jossa IFC-LPG-moduuli on päällä), paneeli näyttää kokeilun tuloksen asian 
 uudet löydökset perusversioon nähden ja jokainen muutos, jota ei voitu soveltaa, syineen (löydös lajia proposal), esimerkiksi että
 arvo ei enää ole se, josta ehdotus lähti. Jos kokeilu on puhdas, projektin *manager* voi painaa *Hyväksy palvelimella*: palvelin tekee
 ehdotuksesta asiakirjan seuraavan version (perusversio, ehdottaja ja hyväksyjä version metatiedoissa) ja sulkee asian. Sovelluksen
-mallia se ei muuta; hae uusi versio Dataregiumista jatkaaksesi työtä sen parissa.
+mallia se ei muuta; hae uusi versio Dataregiumista jatkaaksesi työtä sen parissa. Jos asiakirja on saanut uudempia versioita perusversion
+jälkeen, palvelin kokeilee ehdotusta uudelleen uusinta vasten samassa vaiheessa ja hyväksyy sitä vasten, kun kokeilu on puhdas; jos
+muutokset ovat ristiriidassa välissä tulleen kanssa, palvelin kieltäytyy (412) ja paneeli luettelee ristiriitaiset avaimet (instanssi
+ja attribuutti) tai sanoo, että mikä tahansa on voinut muuttua, kun välissä on ladattu kokonainen tiedosto. Hae silloin uusin versio,
+tee muutokset uudelleen ja ehdota uudelleen.
 
 ## Vertaa versioita
 

@@ -246,7 +246,10 @@ IFC-LPG-modulen på), viser panelet utfallet av prøvingen under saken: hvor man
 funn mot basen, og hver endring som ikke kunne brukes, med årsaken (et funn av slaget proposal), for eksempel at en verdi ikke lenger
 er den forslaget gikk ut fra. Er prøvingen ren, kan en *manager* i prosjektet trykke *Godkjenn på serveren*: serveren gjør forslaget
 til dokumentets neste versjon (med basisversjon, forslagsstiller og godkjenner i versjonens metadata) og lukker saken. Modellen i appen
-endres ikke av det; hent den nye versjonen fra Dataregium for å arbeide videre på den.
+endres ikke av det; hent den nye versjonen fra Dataregium for å arbeide videre på den. Har dokumentet fått nyere versjoner siden
+basen, prøver serveren forslaget på nytt mot den nyeste i samme steg og godkjenner mot den når prøvingen er ren; kolliderer endringene
+med det som har kommet imellom, avviser serveren (412), og panelet viser de kolliderende nøklene (instans og attributt) eller sier at
+alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste versjonen, gjør endringene på nytt og foreslå igjen.
 
 ## Sammenlign versjoner
 
