@@ -40,6 +40,8 @@ Every control has an automated test in `tests/` or a pointer to the code that ca
 | All rendered data is escaped; no `innerHTML` with user data; documents and published pages escape | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; code convention |
 | Service worker and PWA only in server mode; from file:// nothing depends on them | — | the localhost step of the test matrix |
 | No secrets, personal data or the author's identity in the repository or its history | — | the release scripts' identity check before every commit, `CONTRIBUTING.md` |
+| An AI provider is called only after consent for its host (purpose ai) and as the policy allows: *Local only* refuses every host outside the user's own computer; the key lives in api/secrets and never travels with the question, the log or the setting | OWASP ASVS 8.3, 2.10 | `ai.test.js`: *providers are saved without their key, the key goes to api/secrets, and the policy Local only refuses a cloud host* |
+| The AI can only read the model: the tools answer with data from the dataset's tables, the answers are cut and marked as data, never as instructions, and the loop has a budget of turns and tokens and can be cancelled | OWASP LLM01, LLM06 | `ai.test.js`: *the agent asks, runs the tool the model called, hands the result back as data and collects the elements* and *a question can be cancelled, and the budget of turns ends a loop that never answers* |
 
 ## Personal data and retention
 

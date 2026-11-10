@@ -203,3 +203,18 @@ taulukon `data` tavallisten muotojen lisäksi. Mallien kaaviot viedään PNG-, S
 - Hyvin suuren mallin ensimmäinen piirto voi lukita sivun hetkeksi, kun näytönohjain vastaanottaa kolmioita.
 - Määrät eivät ole minkään säännöstön mukainen määrälaskenta. Tarkista ne lähteestä ennen käyttöä.
 - DXF luetaan kaksiulotteisena. DWG on ensin tallennettava DXF-muotoon.
+
+## Kysy tekoälyltä mallista
+
+Mallinäkymän painike *Kysy tekoälyltä* avaa tarkastelijaan paneelin, jossa esität kysymyksen avoinna olevasta IFC-mallista, esimerkiksi
+"mistä ovista puuttuu paloluokka kerroksessa 2?". Tekoälymalli lukee työkaluilla (mallin yleiskuva, kerrokset, elementit luokan, kerroksen,
+nimen ja ominaisuuden mukaan, yksi elementti kaikkine ominaisuuksineen sekä se, mitä olet merkinnyt 3D-näkymässä) ja vastaa niillä
+elementeillä, joihin se nojaa. *Merkitse n elementtiä* vie vastauksen elementit valintaan, jota 3D-näkymä, taulukko ja muut tilat seuraavat.
+Paneeli näyttää jokaisen työkalukutsun ja kulutetut tokenit. Tekoäly voi vain lukea: mitään ei muuteta, tallenneta tai julkaista, ja
+seuraava kysymys jatkaa keskustelua.
+
+*Palvelut* lisää pilvipalvelun tai paikallisen mallin: Anthropic Messages tai OpenAI-yhteensopiva rajapinta (OpenAI, Gemini, Ollama, vLLM,
+llama.cpp ja muut) osoitteineen, malleineen ja API-avaimineen. Avain säilytetään istunnossa tai salattuna salasanalauseellasi, ei koskaan
+selväkielisenä eikä koskaan kysymyksessä. *Käytäntö* ratkaisee, mitä saa kutsua: *Kysy* pyytää suostumuksen palvelua kohden ensimmäisellä
+kerralla, *Pilvi* sallii pilvipalvelut ja *Vain paikallinen* sallii vain omalla tietokoneella olevat mallit. Lähetettävää ovat kysymyksesi ja
+mallin pyytämät työkaluvastaukset; työkaluvastaukset ovat mallin dataa, eivät koskaan ohjeita, ja ne katkaistaan, kun ne ovat suuria.

@@ -41,6 +41,8 @@ Jokaisella kontrollilla on automaattinen testi kansiossa `tests/` tai osoitin si
 | Kaikki näytettävä data escapataan; ei `innerHTML`:ää käyttäjädatalla; asiakirjat ja julkaistut sivut escapaavat | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; koodikäytäntö |
 | Service worker ja PWA vain palvelintilassa; file:// ei ole niistä riippuvainen | — | testimatriisin localhost-vaihe |
 | Ei salaisuuksia, henkilötietoja tai tekijän identiteettiä repossa tai sen historiassa | — | julkaisuskriptien identiteettitarkistus ennen jokaista commitia, `CONTRIBUTING.md` |
+| Tekoälypalvelua kutsutaan vain sen isännän suostumuksen (tarkoitus ai) ja käytännön mukaan: *Vain paikallinen* hylkää jokaisen isännän oman tietokoneen ulkopuolella; avain on api/secretsissä eikä koskaan kulje kysymyksen, lokin tai asetuksen mukana | OWASP ASVS 8.3, 2.10 | `ai.test.js`: *providers are saved without their key, the key goes to api/secrets, and the policy Local only refuses a cloud host* |
+| Tekoäly voi vain lukea mallia: työkalut vastaavat aineiston taulukoiden datalla, vastaukset katkaistaan ja merkitään dataksi, ei koskaan ohjeiksi, ja silmukalla on askel- ja tokenbudjetti ja se voidaan peruuttaa | OWASP LLM01, LLM06 | `ai.test.js`: *the agent asks, runs the tool the model called, hands the result back as data and collects the elements* ja *a question can be cancelled, and the budget of turns ends a loop that never answers* |
 
 ## Henkilötiedot ja säilytys
 

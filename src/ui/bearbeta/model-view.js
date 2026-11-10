@@ -23,6 +23,7 @@
       let ds = null; let slots = null; let handle = null; let host = null; let table = null; let seq = 0; let searchTimer = 0;
       let svgEl = null; let box = null; let removeDrag = null;
       /** The issues panel, when open. */ let issues = null;
+      /** The panel Fråga AI, when open. */ let ai = null;
 
       const isDxf = () => model.isDxf(ds);
       const whereSql = () => model.whereOf(s.filter, isDxf());
@@ -34,7 +35,7 @@
         clearTimeout(searchTimer);
         if (handle) { handle.destroy(); handle = null; }
         if (removeDrag) { removeDrag(); removeDrag = null; }
-        if (issues) { issues.destroy(); issues = null; }
+        if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; }
         slots = null; host = null; table = null; svgEl = null;
       }
 
@@ -44,7 +45,7 @@
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); if (issues) { issues.destroy(); issues = null; } }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } }
         ds = dataset;
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
@@ -87,6 +88,7 @@
             h('h1', null, ui.icon('box', 20), dataset.name, ' ', h('dm-badge', { text: t(dxfView ? 'model.entities.n' : 'model.elements.n', { n: i18n.formatNumber(dxfView ? (dataset.rowCount || 0) : (facts().elements || 0)) }) })),
             h('div', { class: 'dm-toolbar' }, classify, useBtn,
               isDxf() ? null : ui.button({ label: t('issues.title'), icon: 'message-square', title: t('issues.button.hint'), 'data-model-issues-toggle': '', onClick: toggleIssues }),
+              isDxf() ? null : ui.button({ label: t('ai.button'), icon: 'cpu', title: t('ai.button.hint'), 'data-model-ai-toggle': '', onClick: toggleAi }),
               selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
@@ -117,6 +119,11 @@
       }
       function toggleIssues() {
         if (issues) { issues.destroy(); issues = null; if (handle) handle.setColors([]); } else openIssues();
+        renderInspector();
+      }
+      /** The panel Fråga AI om modellen, in the inspector; the elements of an answer are marked through data/selection. */
+      function toggleAi() {
+        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id });
         renderInspector();
       }
       function fitAll() {
@@ -301,6 +308,7 @@
         }
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
+        if (ai) parts.unshift(ai.el);
         if (issues) parts.unshift(issues.el);
         if (selected) {
           parts.push(...(isDxf() ? dxfSelected(selected) : await ifcSelected(selected)));

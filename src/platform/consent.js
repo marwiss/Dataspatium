@@ -10,7 +10,7 @@
   'use strict';
   const D = globalThis.Dataspatium;
   D.define('platform/consent', ['platform/storage/idb'], (idb) => {
-    const PURPOSES = ['api', 'url', 'github', 'components', 'basemaps', 'databases', 'neo4j', 'opencde', 'stun'];
+    const PURPOSES = ['api', 'url', 'github', 'components', 'basemaps', 'databases', 'neo4j', 'opencde', 'stun', 'ai'];
     const key = (purpose) => 'consent.' + purpose;
     /** @type {Map<string, 'granted'|'denied'|null>} */
     const cache = new Map();

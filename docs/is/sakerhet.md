@@ -40,6 +40,8 @@ Hver stýring hefur sjálfvirka prófun í `tests/` eða bendir á kóðann sem 
 | Öll gögn sem eru sýnd eru sloppin út; ekkert `innerHTML` með notandagögnum; skjöl og birtar síður sleppa út | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; kóðaregla |
 | Service worker og PWA aðeins í þjónsham; frá file:// er ekkert háð þeim | — | localhost-skref prófunarfylkisins |
 | Engin leyndarmál, persónuupplýsingar eða auðkenni höfundar í safninu eða sögu þess | — | auðkennisathugun útgáfuskriftanna fyrir hverja færslu, `CONTRIBUTING.md` |
+| Gervigreindarþjónusta er aðeins kölluð eftir samþykki fyrir hýsil hennar (tilgangurinn ai) og samkvæmt stefnunni: *Aðeins staðbundið* hafnar hverjum hýsli utan eigin tölvu; lykillinn er í api/secrets og fylgir aldrei spurningunni, skránni eða stillingunni | OWASP ASVS 8.3, 2.10 | `ai.test.js`: *providers are saved without their key, the key goes to api/secrets, and the policy Local only refuses a cloud host* |
+| Gervigreindin getur aðeins lesið líkanið: tólin svara með gögnum úr töflum gagnasafnsins, svörin eru stytt og merkt sem gögn, aldrei sem fyrirmæli, og lykkjan hefur fjárhagsáætlun fyrir skref og tóka og má hætta við | OWASP LLM01, LLM06 | `ai.test.js`: *the agent asks, runs the tool the model called, hands the result back as data and collects the elements* og *a question can be cancelled, and the budget of turns ends a loop that never answers* |
 
 ## Persónuupplýsingar og geymsla
 

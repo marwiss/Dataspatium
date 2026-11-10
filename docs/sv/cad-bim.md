@@ -197,3 +197,17 @@ vanliga tabellformaten för `data`. Diagram av modeller exporteras som PNG, SVG 
 - Den första ritningen av en mycket stor modell kan låsa sidan en stund medan grafikkortet tar emot trianglarna.
 - Mängderna är inte mängdavtagning enligt något regelverk. Kontrollera mot källan innan de används skarpt.
 - DXF läses i två dimensioner. DWG måste först sparas som DXF.
+
+## Fråga AI om modellen
+
+Knappen *Fråga AI* i modellvyn öppnar en panel i inspektören där du ställer en fråga om den öppna IFC-modellen, till exempel "vilka dörrar
+saknar brandklass på plan 2?". AI-modellen läser med verktyg (modellens översikt, våningarna, element per klass, våning, namn och
+egenskap, ett element med alla egenskaper, och det du markerat i 3D-vyn) och svarar med de element den stöder sig på. *Markera n element*
+lägger svarets element i urvalet, som 3D-vyn, tabellen och de andra lägena följer. Panelen visar varje verktygsanrop och hur många token
+som gick åt. AI:n kan bara läsa: ingenting ändras, sparas eller publiceras, och nästa fråga fortsätter samtalet.
+
+*Leverantörer* lägger till en molntjänst eller en lokal modell: Anthropic Messages eller ett OpenAI-kompatibelt API (OpenAI, Gemini,
+Ollama, vLLM, llama.cpp med flera), med adress, modell och API-nyckel. Nyckeln hålls i sessionen eller krypterad med din lösenfras, aldrig
+i klartext och aldrig i frågan. *Policy* avgör vad som får anropas: *Fråga* ber om samtycke per leverantör första gången, *Moln* tillåter
+molntjänster, och *Endast lokal* tillåter bara modeller på den egna datorn. Det som skickas är din fråga och de verktygssvar modellen
+begär; verktygssvaren är data ur modellen, aldrig instruktioner, och kapas när de är stora.

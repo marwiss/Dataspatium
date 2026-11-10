@@ -199,3 +199,17 @@ vanlige tabellformatene for `data`. Diagrammer av modeller eksporteres som PNG, 
 - Den første tegningen av en svært stor modell kan låse siden et øyeblikk mens grafikkortet tar imot trekantene.
 - Mengdene er ikke en mengdeberegning etter noe regelverk. Kontroller dem mot kilden før de brukes.
 - DXF leses i to dimensjoner. DWG må først lagres som DXF.
+
+## Spør AI om modellen
+
+Knappen *Spør AI* i modellvisningen åpner et panel i inspektøren der du stiller et spørsmål om den åpne IFC-modellen, for eksempel
+"hvilke dører mangler brannklasse i etasje 2?". AI-modellen leser med verktøy (modellens oversikt, etasjene, elementer etter klasse, etasje,
+navn og egenskap, ett element med alle egenskaper, og det du har markert i 3D-visningen) og svarer med elementene den bygger på. *Marker n
+elementer* legger svarets elementer i utvalget, som 3D-visningen, tabellen og de andre modusene følger. Panelet viser hvert verktøykall og
+hvor mange token som gikk med. AI-en kan bare lese: ingenting endres, lagres eller publiseres, og neste spørsmål fortsetter samtalen.
+
+*Leverandører* legger til en skytjeneste eller en lokal modell: Anthropic Messages eller et OpenAI-kompatibelt API (OpenAI, Gemini,
+Ollama, vLLM, llama.cpp med flere), med adresse, modell og API-nøkkel. Nøkkelen holdes i økten eller kryptert med passordfrasen din, aldri i
+klartekst og aldri i spørsmålet. *Policy* avgjør hva som får kalles: *Spør* ber om samtykke per leverandør første gang, *Sky* tillater
+skytjenester, og *Bare lokal* tillater bare modeller på din egen datamaskin. Det som sendes, er spørsmålet ditt og verktøysvarene modellen
+ber om; verktøysvarene er data fra modellen, aldri instruksjoner, og kappes når de er store.

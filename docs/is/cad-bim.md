@@ -196,3 +196,17 @@ töflusniða fyrir `data`. Gröf af líkönum eru flutt út sem PNG, SVG og PDF;
 - Fyrsta teikning mjög stórs líkans getur læst síðunni um stund á meðan skjákortið tekur við þríhyrningunum.
 - Magnið er ekki magntaka samkvæmt neinum reglum. Berðu það saman við heimildina áður en það er notað.
 - DXF er lesið í tveimur víddum. DWG þarf fyrst að vista sem DXF.
+
+## Spyrja gervigreind um líkanið
+
+Hnappurinn *Spyrja gervigreind* í líkanssýninni opnar spjald í skoðaranum þar sem þú spyrð spurningar um opna IFC-líkanið, til dæmis
+"hvaða hurðir vantar brunaflokk á hæð 2?". Gervigreindarlíkanið les með tólum (yfirlit líkansins, hæðirnar, einingar eftir flokki, hæð,
+nafni og eiginleika, eina einingu með öllum eiginleikum, og það sem þú merktir í 3D-sýninni) og svarar með þeim einingum sem það byggir á.
+*Merkja n einingar* setur einingar svarsins í valið, sem 3D-sýnin, taflan og hinir hamirnir fylgja. Spjaldið sýnir hvert tólakall og þá tóka
+sem fóru í svarið. Gervigreindin getur aðeins lesið: engu er breytt, vistað eða birt, og næsta spurning heldur samtalinu áfram.
+
+*Þjónustur* bætir við skýjaþjónustu eða staðbundnu líkani: Anthropic Messages eða OpenAI-samhæfðum forritaskilum (OpenAI, Gemini, Ollama,
+vLLM, llama.cpp og fleiri), með vistfangi, líkani og API-lykli. Lykillinn er geymdur í setunni eða dulritaður með lykilsetningunni þinni,
+aldrei í hreinum texta og aldrei í spurningunni. *Stefna* ræður hvað má kalla: *Spyrja* biður um samþykki fyrir hverja þjónustu í fyrsta
+sinn, *Ský* leyfir skýjaþjónustur, og *Aðeins staðbundið* leyfir aðeins líkön á þinni eigin tölvu. Það sem er sent er spurningin þín og þau
+tólasvör sem líkanið biður um; tólasvörin eru gögn úr líkaninu, aldrei fyrirmæli, og eru stytt þegar þau eru stór.

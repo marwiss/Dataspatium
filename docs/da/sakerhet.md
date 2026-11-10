@@ -39,6 +39,8 @@ Hver kontrol har en automatisk test i `tests/` eller en henvisning til den kode,
 | Alle data, der vises, escapes; ingen `innerHTML` med brugerdata; dokumenter og publicerede sider escaper | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; kodekonvention |
 | Service worker og PWA kun i servertilstand; fra file:// afhænger intet af dem | — | localhost-trinnet i testmatricen |
 | Ingen hemmeligheder, personoplysninger eller ophavspersonens identitet i repoet eller dets historik | — | udgivelsesscriptenes identitetskontrol før commit, `CONTRIBUTING.md` |
+| En AI-udbyder kaldes kun efter samtykke til dens vært (formålet ai) og efter politikken: *Kun lokal* afviser enhver vært uden for egen computer; nøglen ligger i api/secrets og følger aldrig med i spørgsmålet, loggen eller indstillingen | OWASP ASVS 8.3, 2.10 | `ai.test.js`: *providers are saved without their key, the key goes to api/secrets, and the policy Local only refuses a cloud host* |
+| AI'en kan kun læse modellen: værktøjerne svarer med data fra datasættets tabeller, svarene kappes og mærkes som data, aldrig som instruktioner, og løkken har budget for trin og tokens og kan afbrydes | OWASP LLM01, LLM06 | `ai.test.js`: *the agent asks, runs the tool the model called, hands the result back as data and collects the elements* og *a question can be cancelled, and the budget of turns ends a loop that never answers* |
 
 ## Personoplysninger og opbevaring
 

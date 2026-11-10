@@ -306,6 +306,11 @@
     'src/ui/share/devices-panel.js',
     'src/data/kinds.js',
     'src/data/selection.js',
+    // Fråga AI om modellen: the providers, the read tools and the agent loop; the panel lives in Bearbeta's model view
+    'src/ai/providers.js',
+    'src/ai/model-tools.js',
+    'src/ai/agent.js',
+    'src/ui/bearbeta/ai-panel.js',
     'src/data/spatial-search.js',
     'src/data/media.js',
     'src/data/facets.js',
