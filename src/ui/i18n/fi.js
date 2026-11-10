@@ -5390,6 +5390,7 @@
     'neo4j.example.topics': 'Asiat tilan mukaan',
     'neo4j.example.issue_elements': 'Asiat ja niiden rakennusosat',
     'neo4j.example.element_issues': 'Rakennusosaa koskevat asiat',
+    'neo4j.example.nearby': 'Rakennusosat rakennusosan lähellä (1,2 m:n sisällä; vaatii palvelimen tilakerroksen)',
     'neo4j.example.graph': 'Asiat, viewpointit ja komponentit graafina',
     'cde.send.what.bundle': 'Työtilapaketti',
     'cde.send.what.bundle.hint': 'Pakettivalintaikkuna valitsee aineistot ja sisällön. Paketti käy tarkistuksen läpi ja lähetetään tiedostona; vastaanottaja ottaa sen vastaan lähteen tiedostoluettelosta.',

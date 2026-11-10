@@ -5412,6 +5412,7 @@
     'neo4j.example.topics': 'Ärenden per status',
     'neo4j.example.issue_elements': 'Ärenden och deras byggdelar',
     'neo4j.example.element_issues': 'Ärenden som rör en byggdel',
+    'neo4j.example.nearby': 'Byggdelar nära en byggdel (inom 1,2 m; kräver serverns rumsliga lager)',
     'neo4j.example.graph': 'Ärenden, viewpoints och komponenter som graf',
     'cde.send.what.bundle': 'Arbetsytepaket',
     'cde.send.what.bundle.hint': 'Paketdialogen väljer datamängder och innehåll. Paketet går genom granskningen och skickas som en fil; mottagaren tar emot det i källans fillista.',

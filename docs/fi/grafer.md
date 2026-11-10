@@ -177,6 +177,12 @@ palvelin vastaa kaikella Cypherillä koko verkkoon eikä osajoukolla kopioon.
 Dataregiumista haetulla IFC-mallilla on painike **IFC-LPG** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
 kohdassa Nouda, saman koneen Neo4j-lähteessä, jos sellainen on, muuten OpenCDE-lähteessä.
 
+IFC-LPG:n versiosta `d042134` palvelin voi laskea laatikon jokaiselle rakennusosalle projektikoordinaateissa (metreinä): `bbox_min`,
+`bbox_max` ja `bbox_centre` pisteinä rakennusosan solmussa, ja mallisolmu kertoo, milloin laatikot laskettiin (`spatial_at`), kuinka
+monelle rakennusosalle (`spatial_products`) ja kuinka monta epäonnistui (`spatial_failed`). Laatikot ovat olemassa vain, kun palvelin on
+ajanut laskennan, joten kysele ehdolla `bbox_centre IS NOT NULL`. Esimerkki *Rakennusosat rakennusosan lähellä* Neo4j-lähteessä
+luettelee sen, mikä on 1,2 m:n sisällä rakennusosan keskipisteestä, funktiolla `point.distance`, samoin Neo4j:ssä ja Memgraphissa.
+
 ## Lisää työkaluja Verkko-välilehdellä
 
 - **PageRank** (vaimennus 0,85), **Yhteisöt** (tunnisteiden leviäminen, numeroitu koon mukaan) ja **Keskeisyys**

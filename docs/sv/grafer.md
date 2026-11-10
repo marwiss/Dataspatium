@@ -175,6 +175,12 @@ servern med all Cypher mot hela grafen i stället för delmängden mot kopian.
 En IFC-modell som hämtats från Dataregium har knappen **IFC-LPG** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
 modellens graf i Inhämta, i en Neo4j-källa på samma dator om det finns någon, annars i OpenCDE-källan.
 
+Från IFC-LPG `d042134` kan servern räkna ut en låda per byggdel i projektkoordinater (meter): `bbox_min`, `bbox_max` och
+`bbox_centre` som punkter på byggdelens nod, och modellnoden anger när lådorna räknades (`spatial_at`), för hur många byggdelar
+(`spatial_products`) och hur många som inte gick (`spatial_failed`). Lådorna finns bara när servern har kört beräkningen, så fråga med
+`bbox_centre IS NOT NULL`. Exemplet *Byggdelar nära en byggdel* i Neo4j-källan listar det som ligger inom 1,2 m av en byggdels mitt
+med `point.distance`, lika i Neo4j och Memgraph.
+
 ## Fler verktyg i fliken Graf
 
 - **PageRank** (dämpning 0,85), **Samhällen** (etikettspridning, numrerade efter storlek) och **Centralitet** (harmonisk

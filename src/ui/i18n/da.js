@@ -5390,6 +5390,7 @@
     'neo4j.example.topics': 'Sager per status',
     'neo4j.example.issue_elements': 'Sager og deres bygningsdele',
     'neo4j.example.element_issues': 'Sager, der vedrører en bygningsdel',
+    'neo4j.example.nearby': 'Bygningsdele nær en bygningsdel (inden for 1,2 m; kræver serverens rumlige lag)',
     'neo4j.example.graph': 'Sager, viewpoints og komponenter som graf',
     'cde.send.what.bundle': 'Arbejdsområdepakke',
     'cde.send.what.bundle.hint': 'Pakkedialogen vælger datasæt og indhold. Pakken går gennem kontrollen og sendes som en fil; modtageren modtager den i kildens filliste.',

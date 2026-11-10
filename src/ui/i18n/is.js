@@ -5390,6 +5390,7 @@
     'neo4j.example.topics': 'Mál eftir stöðu',
     'neo4j.example.issue_elements': 'Mál og byggingarhlutar þeirra',
     'neo4j.example.element_issues': 'Mál sem varða byggingarhluta',
+    'neo4j.example.nearby': 'Byggingarhlutar nálægt byggingarhluta (innan 1,2 m; krefst rýmislags þjónsins)',
     'neo4j.example.graph': 'Mál, viewpoints og íhlutir sem graf',
     'cde.send.what.bundle': 'Vinnusvæðispakki',
     'cde.send.what.bundle.hint': 'Pakkagluggi velur gagnasöfn og innihald. Pakkinn fer í gegnum yfirferðina og er sendur sem skrá; viðtakandinn tekur á móti honum í skráalista uppsprettunnar.',

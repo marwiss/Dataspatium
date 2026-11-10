@@ -277,7 +277,7 @@
 
   test('opencde IV: Cypher starters for Dataregium\'s IFC graph in the Neo4j view', async (assert) => {
     const neo4j = D.require('api/families/neo4j');
-    assert.equal(neo4j.EXAMPLES.length, 8);
+    assert.equal(neo4j.EXAMPLES.length, 9, 'with the products near a product from the spatial layer');
     for (const x of neo4j.EXAMPLES) assert.ok(/^MATCH /.test(x.cypher) && t('neo4j.example.' + x.id) !== 'neo4j.example.' + x.id, x.id);
     const r = await families.createConnector('neo4j', { baseUrl: 'bolt://127.0.0.1:7697/', database: 'neo4j', username: 'neo4j', password: 'hemligt' }, { discover: false });
     const int = (n) => ({ low: n, high: 0, toNumber: () => n, inSafeRange: () => true });

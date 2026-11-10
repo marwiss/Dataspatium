@@ -178,6 +178,12 @@ server then answers with all of Cypher against the whole graph, instead of the s
 An IFC model fetched from Dataregium has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
 graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
+From IFC-LPG `d042134` the server can compute a box per product in project coordinates (metres): `bbox_min`, `bbox_max` and
+`bbox_centre` as points on the product's node, and the model node says when the boxes were computed (`spatial_at`), for how many
+products (`spatial_products`) and how many failed (`spatial_failed`). The boxes exist only where the server has run the computation,
+so query with `bbox_centre IS NOT NULL`. The example *Products near a product* in the Neo4j source lists what lies within 1.2 m of a
+product's centre with `point.distance`, the same in Neo4j and Memgraph.
+
 ## More tools in the Graph tab
 
 - **PageRank** (damping 0.85), **Communities** (label propagation, numbered by size) and **Centrality** (harmonic

@@ -175,6 +175,12 @@ grafen i staden for delmengda mot kopien.
 Ein IFC-modell henta frå Dataregium har knappen **IFC-LPG** i Handter, og for ein vald bygningsdel i Bearbeid. Han opnar grafen til
 modellen i Hent, i ei Neo4j-kjelde på same datamaskin viss det finst ei, elles i OpenCDE-kjelda.
 
+Frå IFC-LPG `d042134` kan tenaren rekne ut ein boks per bygningsdel i prosjektkoordinatar (meter): `bbox_min`, `bbox_max` og
+`bbox_centre` som punkt på noden til bygningsdelen, og modellnoden seier når boksane vart rekna ut (`spatial_at`), for kor mange
+bygningsdelar (`spatial_products`) og kor mange som mislukkast (`spatial_failed`). Boksane finst berre der tenaren har køyrt
+utrekninga, så spør med `bbox_centre IS NOT NULL`. Dømet *Bygningsdelar nær ein bygningsdel* i Neo4j-kjelda listar det som ligg innan
+1,2 m frå midten av ein bygningsdel, med `point.distance`, likt i Neo4j og Memgraph.
+
 ## Fleire verktøy i fana Graf
 
 - **PageRank** (demping 0,85), **Fellesskap** (etikettspreiing, nummererte etter storleik) og **Sentralitet** (harmonisk

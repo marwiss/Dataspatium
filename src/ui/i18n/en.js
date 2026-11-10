@@ -5390,6 +5390,7 @@
     'neo4j.example.topics': 'Issues per status',
     'neo4j.example.issue_elements': 'Issues and their elements',
     'neo4j.example.element_issues': 'Issues that touch an element',
+    'neo4j.example.nearby': 'Products near a product (within 1.2 m; needs the server\'s spatial layer)',
     'neo4j.example.graph': 'Issues, viewpoints and components as a graph',
     'cde.send.what.bundle': 'Workspace bundle',
     'cde.send.what.bundle.hint': 'The bundle dialog chooses datasets and contents. The bundle goes through the review and is sent as a file; the recipient receives it in the source\'s file list.',

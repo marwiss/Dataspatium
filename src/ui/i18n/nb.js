@@ -5390,6 +5390,7 @@
     'neo4j.example.topics': 'Saker per status',
     'neo4j.example.issue_elements': 'Saker og deres bygningsdeler',
     'neo4j.example.element_issues': 'Saker som gjelder en bygningsdel',
+    'neo4j.example.nearby': 'Bygningsdeler nær en bygningsdel (innen 1,2 m; krever serverens romlige lag)',
     'neo4j.example.graph': 'Saker, viewpoints og komponenter som graf',
     'cde.send.what.bundle': 'Arbeidsområdepakke',
     'cde.send.what.bundle.hint': 'Pakkedialogen velger datasett og innhold. Pakken går gjennom kontrollen og sendes som en fil; mottakeren tar imot den i kildens filliste.',

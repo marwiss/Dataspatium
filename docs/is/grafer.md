@@ -172,6 +172,12 @@ kveikt á **Keyra á þjóninum** fyrir net sem var vistað héðan, og þá sva
 IFC-líkan sótt úr Dataregium hefur hnappinn **IFC-LPG** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
 á sömu tölvu ef hún er til, annars í OpenCDE-uppsprettunni.
 
+Frá IFC-LPG `d042134` getur þjónninn reiknað kassa fyrir hvern byggingarhluta í verkefnishnitum (metrar): `bbox_min`, `bbox_max` og
+`bbox_centre` sem punkta á hnút byggingarhlutans, og líkanshnúturinn segir hvenær kassarnir voru reiknaðir (`spatial_at`), fyrir hve
+marga byggingarhluta (`spatial_products`) og hve margir mistókust (`spatial_failed`). Kassarnir eru aðeins til þar sem þjónninn hefur
+keyrt útreikninginn, svo spurðu með `bbox_centre IS NOT NULL`. Dæmið *Byggingarhlutar nálægt byggingarhluta* í Neo4j-uppsprettunni
+telur upp það sem liggur innan 1,2 m frá miðju byggingarhluta með `point.distance`, eins í Neo4j og Memgraph.
+
 ## Fleiri tól í flipanum Net
 
 - **PageRank** (deyfing 0,85), **Samfélög** (merkimiðadreifing, númeruð eftir stærð) og **Miðlægni** (harmónísk nálægð

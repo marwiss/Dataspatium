@@ -162,7 +162,8 @@
     /**
      * Starter queries for Dataregium's IFC graph (its docs/ifc-lpg.md and graph-schema.md): the models, the latest finished model per
      * document (Documents API versions share document_id; a BCF document is one of its own), the elements, the issues and what
-     * joins them. Entities hang on the model by model_id. Other graphs have their own words; the user edits.
+     * joins them, and the products within 1.2 m of one, from the spatial layer's boxes. Entities hang on the model by model_id. Other
+     * graphs have their own words; the user edits.
      */
     const EXAMPLES = [
       { id: 'models', cypher: 'MATCH (m:Model)\nRETURN m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.ifc_project_guid AS ifc_project, m.done_at AS klar\nORDER BY fil, version' },
@@ -173,6 +174,8 @@
       { id: 'issue_elements', cypher: "MATCH (m:Model {state: 'done'})\nWITH coalesce(m.document_id, m.bcf_document_guid) AS dokument, m\nORDER BY m.version_index DESC, m.done_at DESC\nWITH dokument, collect(m)[0] AS senaste\nMATCH (t:Topic)-[:HAS_VIEWPOINT]->(:Viewpoint)-[:HAS_COMPONENT]->(c:Component)-[:SAME_AS]->(e:IfcProduct {model_id: senaste.id})\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status, e.ifc_class AS klass, e.Name AS byggdel, e.GlobalId AS guid, senaste.file_name AS modell" },
       { id: 'element_issues', cypher: "MATCH (e:Entity {GlobalId: 'GUID'})<-[:SAME_AS]-(:Component)<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
       { id: 'graph', cypher: 'MATCH (t:Topic)-[r:HAS_VIEWPOINT]->(v:Viewpoint)\nOPTIONAL MATCH (v)-[h:HAS_COMPONENT]->(c:Component)\nRETURN t, r, v, h, c\nLIMIT 200' },
+      // IFC-LPG's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
+      { id: 'nearby', cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
     ];
     function describe(connector, text) { return t('neo4j.source', { host: hostOf(connector.baseUrl), text: String(text).trim().slice(0, 120) }); }
 
