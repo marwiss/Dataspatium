@@ -62,6 +62,13 @@
         case 'apiKey': {
           const value = (auth.prefix || '') + values.apiKey;
           if (auth.in === 'query') { const u = new URL(out.url); u.searchParams.set(auth.name, value); out.url = u.toString(); }
+          // In the body (Trafikverket's <LOGIN authenticationkey="{authenticationkey}"/>): the placeholder of that name is filled
+          // here, escaped for the body's type, so the key is in the request that is sent and nowhere else.
+          else if (auth.in === 'body') {
+            const type = String(out.headers['Content-Type'] || '');
+            const safe = /xml/i.test(type) ? D.require('platform/text').escapeHtml(value) : (/json/i.test(type) ? JSON.stringify(value).slice(1, -1) : value);
+            out.body = String(out.body || '').split('{' + auth.name + '}').join(safe);
+          }
           else out.headers[auth.name] = value;
           break;
         }

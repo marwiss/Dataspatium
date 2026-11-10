@@ -324,6 +324,12 @@ Dataspatium.assets.addEntries({
   "size": 2937,
   "library": "dataspatium"
  },
+ "presets/api/trafikverket-nvdb.api.json": {
+  "file": "presets/api/trafikverket-nvdb.api.json.js",
+  "encoding": "text",
+  "size": 185102,
+  "library": "dataspatium"
+ },
  "presets/api/vedur-observations.api.json": {
   "file": "presets/api/vedur-observations.api.json.js",
   "encoding": "text",
@@ -381,7 +387,7 @@ Dataspatium.assets.addEntries({
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
-  "size": 25955,
+  "size": 27712,
   "library": "dataspatium"
  },
  "presets/bibliotek/index.json": {
@@ -531,13 +537,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 18704,
+  "size": 19714,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21907,
+  "size": 22790,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -639,7 +645,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8474,
+  "size": 9085,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -699,13 +705,13 @@ Dataspatium.assets.addEntries({
  "docs/da/api-konfiguration.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 10996,
+  "size": 11024,
   "library": "dataspatium"
  },
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 21506,
+  "size": 22382,
   "library": "dataspatium"
  },
  "docs/da/snabbstart.md": {
@@ -807,7 +813,7 @@ Dataspatium.assets.addEntries({
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 8510,
+  "size": 9139,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -867,13 +873,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/api-konfiguration.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 10870,
+  "size": 10898,
   "library": "dataspatium"
  },
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 21342,
+  "size": 22214,
   "library": "dataspatium"
  },
  "docs/nb/snabbstart.md": {
@@ -975,7 +981,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 8424,
+  "size": 9048,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1035,13 +1041,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/api-konfiguration.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 11035,
+  "size": 11063,
   "library": "dataspatium"
  },
  "docs/nn/kallor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 21527,
+  "size": 22436,
   "library": "dataspatium"
  },
  "docs/nn/snabbstart.md": {
@@ -1143,7 +1149,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 8552,
+  "size": 9201,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1203,13 +1209,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/api-konfiguration.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 11469,
+  "size": 11499,
   "library": "dataspatium"
  },
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 22979,
+  "size": 23971,
   "library": "dataspatium"
  },
  "docs/fi/snabbstart.md": {
@@ -1311,7 +1317,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9158,
+  "size": 9794,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1371,13 +1377,13 @@ Dataspatium.assets.addEntries({
  "docs/is/api-konfiguration.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 11906,
+  "size": 11936,
   "library": "dataspatium"
  },
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 22829,
+  "size": 23793,
   "library": "dataspatium"
  },
  "docs/is/snabbstart.md": {
@@ -1479,7 +1485,7 @@ Dataspatium.assets.addEntries({
  "docs/is/sakerhet.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9059,
+  "size": 9708,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1539,13 +1545,13 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 19250,
+  "size": 20286,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21592,
+  "size": 22524,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1647,7 +1653,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8420,
+  "size": 9047,
   "library": "dataspatium"
  }
 });

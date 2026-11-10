@@ -37,7 +37,7 @@
         const values = request.normalizeParams(endpoint, params);
         let req = request.build(connector, endpoint, values);
         const runtimeOptions = req.options;
-        const state = pagination.start(pag, req);
+        const state = pagination.start(pag, req, (extra) => request.build(connector, endpoint, Object.assign({}, values, extra)));
         const acc = { columns: [], rows: [], types: {}, meta: {} };
         const requests = [];
         let pages = 0; let truncated = false; let firstData = null; let lastMeta = null;

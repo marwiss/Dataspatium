@@ -154,9 +154,10 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
 - **Navigera i modellen**: vy-kub och standardvyer, ortografisk vy, snittlåda och snitt vid våning, vridpunkt med dubbelklick och
   tangentbordet; kameran och snittet följer med ärendenas viewpoints, och kartor och planer har skalstock (se [CAD och
   BIM](docs/sv/cad-bim.md#vyer-och-tangentbordet)).
-- **Fler geodatakällor**: artfynd från SLU Artdatabanken och byggnader, strandskydd, kulturhistoriska lämningar och gränsen för
-  fjällnära skog från den nationella geodataplattformen; källistan visar när en källa inte nås där appen körs, och paket tar bara
-  med diagram och anteckningsböcker för de valda datamängderna (se [Källor](docs/sv/kallor.md)).
+- **Fler geodatakällor**: vägdata ur Trafikverkets NVDB (hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, med
+  nyckel), artfynd från SLU Artdatabanken och byggnader, strandskydd, kulturhistoriska lämningar och gränsen för fjällnära skog
+  från den nationella geodataplattformen; källistan visar när en källa inte nås där appen körs, och paket tar bara med diagram och
+  anteckningsböcker för de valda datamängderna (se [Källor](docs/sv/kallor.md)).
 - **Python och statistik utan kod**: en Python-konsol och formulär för statistik och tidsserier som skriver och visar koden (se
   [Statistik](docs/sv/statistik.md) och [Python](docs/sv/python.md)).
 - **Ordning och flöden**: mappar, taggar och åtgärder på många datamängder, sparade flöden som körs med ett klick och källor som säger

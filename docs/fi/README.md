@@ -157,7 +157,8 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 - **Liiku mallissa**: näkymäkuutio ja vakionäkymät, ortografinen näkymä, leikkauslaatikko ja leikkaus kerroksen kohdalta,
   kiertopiste kaksoisnapsautuksella ja näppäimistö; kamera ja leikkaus seuraavat asioiden viewpointeja, ja kartoissa ja kaavoissa
   on mittakaavajana (ks. [CAD ja BIM](cad-bim.md#näkymät-ja-näppäimistö)).
-- **Lisää paikkatietolähteitä**: lajihavainnot SLU Artdatabankenilta sekä rakennukset, rantojensuojelu, kulttuurihistorialliset
+- **Lisää paikkatietolähteitä**: tietiedot Trafikverketin NVDB:stä (nopeusrajoitukset, tienumerot, kantavuus ja 42 muuta
+  kohdetyyppiä, avaimella), lajihavainnot SLU Artdatabankenilta sekä rakennukset, rantojensuojelu, kulttuurihistorialliset
   jäännökset ja tunturien läheisen metsän raja kansallisesta paikkatietoalustasta; lähdeluettelo kertoo, kun lähdettä ei tavoiteta
   siellä, missä sovellus toimii, ja paketit ottavat kaaviot ja muistikirjat mukaan vain valituista aineistoista (ks.
   [Lähteet](kallor.md)).

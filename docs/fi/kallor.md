@@ -140,6 +140,10 @@ projektinsa ja niiden jäsenet rooleineen: lukija, osallistuja, toimittaja tai v
 käyttäjätunnuksellaan, muutat roolin, poistat jäsenen ja nimeät projektin uudelleen; jokainen muutos vahvistetaan ensin. Palvelin ei
 salli projektin jäädä ilman vastuuhenkilöä ja kertoo siitä; projekteja ei poisteta täältä, ja uudet tilit luo ylläpitäjä.
 
+Asiat haetaan 500 kohteen sivuina. Palvelimen katkaisema luettelo (Dataregium katkaisee 1 000 kohteen kohdalla) luetaan
+loppuun palvelimen Link-otsakkeen rel="next" -linkkien kautta, mutta vain samalta palvelimelta, joten tunnisteesi ei koskaan
+mene muualle.
+
 Kortti *IFC-LPG* näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-lpg-dataregium-palvelimella).
 
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
@@ -216,6 +220,13 @@ Riksantikvarieämbetetin muinaisjäännökset, Skogsstyrelsen, Kartverketin hall
 sekä Tilastokeskus ja SYKE (Suomi). Tasot luetaan palvelusta, kun lähde avataan ensimmäisen kerran, ja ne voi lukea
 uudelleen painikkeella *Lue tasot uudelleen*; luettelo tallennetaan omaan kopioosi lähteestä. Lantmäterietin
 paikkatietoalusta (asemakaavat, rakennukset, rantojensuojelu, kulttuurihistorialliset jäännökset ja tunturien läheisen metsän raja) on tasolla 2 Bearer-avaimella, jonka saa alustaan liittyneeltä organisaatiolta.
+
+**Trafikverketin NVDB** (*Trafikverket NVDB: tietiedot*) antaa 45 kohdetyyppiä Ruotsin kansallisesta tietietokannasta, kuten
+nopeusrajoitukset, tienumerot, kantavuuden, kaistojen määrän, kadunnimet, liittymät ja levähdysalueet, yksi päätepiste
+kohdetyyppiä kohden. Se vaatii maksuttoman avaimen osoitteesta [data.trafikverket.se](https://data.trafikverket.se/); avain
+lähetetään pyynnön rungossa eikä koskaan osoitteessa. Anna alue WGS 84 -järjestelmässä kuten muissakin lähteissä; sovellus
+muuntaa sen SWEREF 99 TM -järjestelmään, ja ilman aluetta haetaan koko maa. Vastaukset luetaan 5 000 kohteen sivuina, ja
+geometria muunnetaan WGS 84 -järjestelmään, joten aineisto avautuu karttana. Aineisto on CC0.
 
 **Geodataportalen** (geodata.se) on Ruotsin kansallinen luettelo viranomaisten, alueiden ja kuntien paikkatiedoista. Lähde
 *Geodataportalen (sök geodata)* hakee luettelosta ja näyttää yhden tietueen osumaa kohden: otsikko, organisaatio, kuvaus

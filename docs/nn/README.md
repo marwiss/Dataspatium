@@ -153,9 +153,10 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 - **Naviger i modellen**: visingskube og standardvisingar, ortografisk vising, snittboks og snitt ved etasje, dreiepunkt med
   dobbeltklikk og tastaturet; kameraet og snittet følgjer med viewpointane til sakene, og kart og planar har målestokk (sjå [CAD
   og BIM](cad-bim.md#visingar-og-tastaturet)).
-- **Fleire geodatakjelder**: artsfunn frå SLU Artdatabanken og bygningar, strandvern, kulturhistoriske leivningar og grensa for
-  fjellnær skog frå den nasjonale geodataplattforma; kjeldelista viser når ei kjelde ikkje kan nåast der appen køyrer, og pakkar
-  tek berre med diagram og notatbøker for dei valde datasetta (sjå [Kjelder](kallor.md)).
+- **Fleire geodatakjelder**: vegdata frå Trafikverkets NVDB (fartsgrenser, vegnummer, bereevne og 42 objekttypar til, med nøkkel),
+  artsfunn frå SLU Artdatabanken og bygningar, strandvern, kulturhistoriske leivningar og grensa for fjellnær skog frå den
+  nasjonale geodataplattforma; kjeldelista viser når ei kjelde ikkje kan nåast der appen køyrer, og pakkar tek berre med diagram
+  og notatbøker for dei valde datasetta (sjå [Kjelder](kallor.md)).
 - **Python og statistikk utan kode**: ein Python-konsoll og skjema for statistikk og tidsseriar som skriv og viser koden (sjå
   [Statistikk](statistik.md) og [Python](python.md)).
 - **Orden og flytar**: mapper, taggar og handlingar på mange datasett, lagra flytar som køyrer med eitt klikk, og kjelder som seier frå

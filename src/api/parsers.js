@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types'], (jsonImp, csv, jsonstat, sdmx, types) => {
+  D.define('api/parsers', ['io/importers/json', 'io/importers/csv', 'api/jsonstat', 'api/sdmx', 'data/types', 'data/geo'], (jsonImp, csv, jsonstat, sdmx, types, geo) => {
     function resolvePath(data, path) {
       if (!path) return data;
       // A key that itself contains dots (OData's "@odata.nextLink") is tried whole before the path is split.
@@ -41,7 +41,28 @@
       if (!Array.isArray(records)) records = records === undefined || records === null ? [] : [records];
       if (spec.explode) records = explode(records, spec.explode);
       if (spec.lift) records = lift(records, spec.lift);
+      if (spec.geometry) records = geometryRecords(records, spec.geometry);
       return records;
+    }
+
+    /**
+     * Records with their geometry as WKT (or GeoJSON) at `path`, in `crs` (NVDB: "Geometry.WKT-SWEREF99TM-3D" in EPSG:3006),
+     * get the columns the geojson format gives, geometri_typ and geometri in WGS 84, so that the dataset opens as a map. The
+     * object the path starts in is dropped. A system the app cannot convert gives no geometry rather than a wrong place.
+     * @param {any[]} records @param {{path: string, crs?: string}} spec
+     */
+    function geometryRecords(records, spec) {
+      const top = String(spec.path || '').split('.')[0];
+      return records.map((r) => {
+        if (!r || typeof r !== 'object') return r;
+        const raw = resolvePath(r, spec.path);
+        let g = raw === undefined || raw === null ? null : geo.parseGeometry(raw);
+        if (g && spec.crs) g = geo.toWgs84(g, spec.crs);
+        const rec = omit(r, top);
+        rec.geometri_typ = g ? g.type : null;
+        rec.geometri = g ? JSON.stringify(g) : null;
+        return rec;
+      });
     }
 
     function geojsonRecords(data, options = {}) {
@@ -193,10 +214,17 @@
       return table;
     }
 
+    /** A service that reports errors inside an answer it otherwise sends as data (Trafikverket: RESPONSE.RESULT.0.ERROR.MESSAGE). */
+    function serviceError(data, spec) {
+      if (!spec.errorPath) return;
+      const e = resolvePath(data, spec.errorPath);
+      if (e !== undefined && e !== null && e !== '') throw new Error(D.t('api.err.service', { message: typeof e === 'object' ? JSON.stringify(e) : String(e) }));
+    }
+
     /**
      * Parse a response body.
      * @param {string} text
-     * @param {{format?: string, path?: string, explode?: string, constants?: any, rename?: any, convert?: any, drop?: string[], recordTag?: string, options?: any}} [spec]
+     * @param {{format?: string, path?: string, explode?: string, geometry?: {path: string, crs?: string}, errorPath?: string, constants?: any, rename?: any, convert?: any, drop?: string[], recordTag?: string, options?: any}} [spec]
      * @param {{options?: Record<string, any>}} [ctx] runtime options (from params with in: "option")
      * @returns {Promise<{columns: string[], rows: any[][], data: any, types?: Record<string, string>, meta?: any}>}
      */
@@ -206,7 +234,7 @@
       let data = null;
       let table;
       const parseJson = () => { try { return jsonImp.parseJsonText(text); } catch (err) { throw new Error(D.t('api.err.json', { text: String(text || '').slice(0, 120) })); } };
-      if (format === 'json') { data = parseJson(); table = jsonImp.tabulate(jsonRecords(data, spec)); }
+      if (format === 'json') { data = parseJson(); serviceError(data, spec); table = jsonImp.tabulate(jsonRecords(data, spec)); }
       else if (format === 'jsonstat') { data = parseJson(); const t = jsonstat.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
       else if (format === 'sdmx') { data = parseJson(); const t = sdmx.toTable(data, options); table = { columns: t.columns, rows: t.rows, types: t.types, meta: t.meta }; }
       else if (format === 'geojson') { data = parseJson(); table = jsonImp.tabulate(geojsonRecords(spec.path ? resolvePath(data, spec.path) : data, options)); }
@@ -261,6 +289,6 @@
       });
     }
 
-    return { parse, resolvePath, explode, lift, jsonRecords, geojsonRecords, xmlRecords, entryscapeRecords, geonetworkRecords, postProcess, epochToIso, graphqlPath, sparqlTable, influxTable };
+    return { parse, resolvePath, explode, lift, jsonRecords, geometryRecords, geojsonRecords, xmlRecords, entryscapeRecords, geonetworkRecords, postProcess, epochToIso, graphqlPath, sparqlTable, influxTable };
   });
 })();

@@ -97,6 +97,27 @@
    }
   },
   {
+   "id": "trafikverket-nvdb",
+   "preset": "trafikverket-nvdb",
+   "name": "Vägdata (Trafikverket NVDB)",
+   "publisher": "Trafikverket",
+   "country": "SE",
+   "kind": "api",
+   "key": true,
+   "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+   "docs": "https://data.trafikverket.se/",
+   "license": "CC0 1.0",
+   "about": {
+    "sv": "45 objekttyper ur Nationella vägdatabasen, som hastighetsgränser, vägnummer, bärighet och korsningar, i ett område du anger; kräver en kostnadsfri nyckel från data.trafikverket.se.",
+    "en": "45 object types from the national road database, such as speed limits, road numbers, bearing capacity and junctions, in an area you give; requires a free key from data.trafikverket.se.",
+    "da": "45 objekttyper fra den svenske nationale vejdatabase, som hastighedsgrænser, vejnumre, bæreevne og kryds, i et område du angiver; kræver en gratis nøgle fra data.trafikverket.se.",
+    "nb": "45 objekttyper fra den svenske nasjonale vegdatabasen, som fartsgrenser, vegnummer, bæreevne og kryss, i et område du angir; krever en gratis nøkkel fra data.trafikverket.se.",
+    "nn": "45 objekttypar frå den svenske nasjonale vegdatabasen, som fartsgrenser, vegnummer, bereevne og kryss, i eit område du gjev; krev ein gratis nøkkel frå data.trafikverket.se.",
+    "fi": "45 kohdetyyppiä Ruotsin kansallisesta tietietokannasta, kuten nopeusrajoitukset, tienumerot, kantavuus ja liittymät, antamallasi alueella; vaatii maksuttoman avaimen osoitteesta data.trafikverket.se.",
+    "is": "45 hlutategundir úr sænska landsvegagagnagrunninum, eins og hámarkshraði, vegnúmer, burðarþol og gatnamót, á svæði sem þú tilgreinir; krefst ókeypis lykils frá data.trafikverket.se."
+   }
+  },
+  {
    "id": "raa-arkreg",
    "preset": "raa-arkreg",
    "name": "Fornlämningar (Fornsök)",

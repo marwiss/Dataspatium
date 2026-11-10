@@ -39,7 +39,7 @@ to siste svenske krev nøkkel.
 | Internasjonalt | OECD | Arbeidsløyse, BNP-vekst og den andre statistikken til OECD (SDMX) | Vel land, eller oppgje dataflyt og serienøkkel |
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, vel verdiar |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, geodatakatalogen til Lantmäteriet, Sveriges dataportal | Folkehelse, helse, nøkkeltal for kommunar, vêr, luftkvalitet, verneområde, geodata | Sjå den svenske rettleiinga |
-| Sverige | Lantmäteriet Direkt, Boverket | Stadnamn, energiattestar | Krev nøkkel |
+| Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB | Stadnamn, energiattestar, vegdata | Krev nøkkel |
 
 Ikkje med: Frost (MET) i Noreg og DMI i Danmark krev nøkkel; data.norge.no og Energi Data Service manglar CORS; opingogn.is
 har ikkje lenger eit søkje-API. Kjelder utan CORS kan ikkje nåast direkte frå nettlesaren; dei krev ein eigen proxy, sjå nedanfor.

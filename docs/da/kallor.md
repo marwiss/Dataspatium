@@ -136,6 +136,9 @@ medlemmer med rolle: læser, bidragyder, redaktør eller projektansvarlig. Du ti
 ændrer en rolle, fjerner et medlem og omdøber projektet; hver ændring bekræftes først. Serveren lader ikke projektet stå uden
 projektansvarlig og siger det; projekter slettes ikke herfra, og nye konti oprettes af en administrator.
 
+Sager hentes i sider på 500. En liste, som serveren har afkortet (Dataregium afkorter ved 1.000 poster), læses til ende
+gennem serverens Link-header med rel="next", men kun på samme server, så dit token aldrig sendes andre steder hen.
+
 Kortet *IFC-LPG* vises, når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
 Under *Filer i projektet* viser kilden de modeller og dokumenter, serveren har for projektet. *Hent* laver et datasæt af
@@ -213,6 +216,13 @@ Riksantikvarieämbetets fortidsminder, Skogsstyrelsen, Kartverkets administrativ
 Statistikcentralen og SYKE (Finland). Lagene læses fra tjenesten, første gang kilden åbnes, og kan genlæses med *Genlæs
 lagene*; listen gemmes i din kopi af kilden. Lantmäteriets geodataplatform (lokalplaner, bygninger, strandbeskyttelse, kulturhistoriske levn og grænsen for fjeldnær skov) findes som niveau 2 med
 Bearer-nøgle fra en tilsluttet organisation.
+
+**Trafikverkets NVDB** (*Trafikverket NVDB: vejdata*) giver 45 objekttyper fra den svenske nationale vejdatabase, som
+hastighedsgrænser, vejnumre, bæreevne, antal kørespor, gadenavne, kryds og rastepladser, med ét endpoint pr. objekttype. Den
+kræver en gratis nøgle fra [data.trafikverket.se](https://data.trafikverket.se/), som sendes i forespørgslens krop og aldrig
+i adressen. Angiv området i WGS 84 som for de andre kilder; appen regner det om til SWEREF 99 TM, og uden område hentes hele
+landet. Svarene læses i sider på 5.000 objekter, og geometrien regnes om til WGS 84, så datasættet åbnes som kort. Data er
+CC0.
 
 **Geodataportalen** (geodata.se) er Sveriges nationale katalog over myndigheders, regioners og kommuners geodata. Kilden
 *Geodataportalen (sök geodata)* søger i kataloget og viser en post pr. resultat med titel, organisation, beskrivelse og
