@@ -234,6 +234,13 @@ fått en nyare version under tiden avvisar servern publiceringen (412 version_co
 kandidaten (schema, buildingSMART-regler och projektets IDS) när källan är inloggad, och ett projekt som inte tar emot filer med
 valideringsfel avvisar publiceringen (422) med serverns fynd i meddelandet och på kortet Validera modellen.
 
+*Föreslå på servern* skickar ett förhandsvisat ändringsset till Dataregium som ett ändringsförslag i stället för att publicera: ett
+BCF-ärende i projektet med ändringarna som bilaga i serverns form (snippet-typen DataregiumIfcChangeSet, som servern håller mot sitt
+schema). Formen anger ändringar av befintliga instanser, en per attribut: egenskapsvärden, placeringar, tillhörighet till våning och
+liknande, med dokumentets basversion, ditt namn på servern och AI-modellen som proveniens. Nya element, raderingar och nya samband
+kan inte anges i formen än; panelen räknar dem och de står i ärendets beskrivning. Knappen finns för en modell hämtad från Dataregium
+när servern anger kapabiliteten `ifc_changes`, och modellen ändras inte av förslaget.
+
 ## Jämför versioner
 
 Knappen *Jämför* i modellvyn jämför den öppna modellen med en sparad version av samma datamängd (Versioner i Bearbeta) eller med en

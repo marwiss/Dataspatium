@@ -678,6 +678,36 @@
       return report;
     }
     /**
+     * Dataregium's change proposal (its OB-25/OB-26): a BCF topic whose bim_snippet is a change set of the type
+     * DataregiumIfcChangeSet, held to the schema the capabilities name (`ifc_changes`). The snippet is uploaded after the topic;
+     * when the server refuses it (400 with what is wrong) the topic is removed again. Null when the server has no `ifc_changes`.
+     * @param {any} connector @param {string} projectId
+     * @param {{title: string, description?: string, topicType?: string, changeSet: {base: any, provenance: any, changes: any[]}}} options
+     * @returns {Promise<{topic: any, schemaUrl: string, snippetType: string}|null>}
+     */
+    async function proposeChanges(connector, projectId, options) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_changes')) return null;
+      const ext = caps.extensions.ifc_changes;
+      const schemaPath = String(ext.schema || '/documents/1.0/ifc-changes/schema');
+      const schemaUrl = /^[a-z][a-z0-9+.-]*:/i.test(schemaPath) ? schemaPath : trimUrl(connector.baseUrl) + schemaPath;
+      const changes = options.changeSet && Array.isArray(options.changeSet.changes) ? options.changeSet.changes : [];
+      if (!changes.length) throw new Error(t('opencde.err.changes.none'));
+      const max = Number(ext.max_changes) || 10000;
+      if (changes.length > max) throw new Error(t('opencde.err.changes.max', { n: String(max) }));
+      const snippetType = String(ext.snippet_type || 'DataregiumIfcChangeSet');
+      const body = { title: String(options.title || '').trim() || snippetType, description: options.description || '', bim_snippet: { snippet_type: snippetType, is_external: false, reference: 'changes.json', reference_schema: schemaUrl } };
+      if (options.topicType) body.topic_type = options.topicType;
+      const topic = await createTopic(connector, projectId, body);
+      try {
+        await bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topic.guid)}/snippet`, { method: 'PUT', body: JSON.stringify(Object.assign({ schema: schemaUrl }, options.changeSet)), headers: { 'Content-Type': 'application/json' } });
+      } catch (err) {
+        await deleteTopic(connector, projectId, topic.guid).catch(() => {});
+        throw err;
+      }
+      return { topic, schemaUrl, snippetType };
+    }
+    /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
      * and, for a confidential client, the secret, which the caller keeps in api/secrets.
      * @param {string} baseUrl @param {{redirectUri: string, name?: string, bcfVersion?: string}} options
@@ -743,6 +773,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

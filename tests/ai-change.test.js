@@ -4,7 +4,8 @@
  * Tests for Ändra med AI (step 2 of the AI modelling): the write tools check every call and fill a change set with refs, the agent in
  * change mode fills it through a mocked provider, the panel previews the candidate in 3D and approves it as the recipe step
  * ifc_changeset with the wheel stubbed (Pyodide never runs in the suite), undo restores the file exactly, a change set with schema
- * errors cannot be approved, and a publish on a stale base is refused with 412 version_conflict by a mocked Dataregium.
+ * errors cannot be approved, a publish on a stale base is refused with 412 version_conflict by a mocked Dataregium, the preview asks
+ * the server's precheck, and a change set goes to the server as a change proposal (a BCF topic with the snippet in its form).
  */
 (function () {
   'use strict';
@@ -231,6 +232,84 @@
       assert.deepEqual(validation.counts(report), { findings: 3, errors: 2 }, 'the report counts for the message and the card');
       await panel.reject();
     } finally {
+      bridge.runIfcChangeset = real; panel.destroy(); panel.el.remove();
+      await datasets.updateMeta(ds.id, { source: meta.source || { kind: 'file' } });
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 30000);
+
+  test('ai change: a previewed change set goes to Dataregium as a change proposal, a BCF topic with the snippet in the server\'s form', async (assert) => {
+    const CDE = 'dataspatium-asset://tests/ai-change-cde3';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const hits = []; const bodies = {};
+    // The virtual server sees only addresses; the bodies are read off fetch itself.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (url, init) => { const u = String(url); if (u.startsWith(CDE) && init && init.body !== undefined) bodies[u.slice(CDE.length).split('?')[0]] = { method: init.method, body: String(init.body), headers: init.headers || {} }; return realFetch(url, init); };
+    D.net.virtual('tests/ai-change-cde3/', (url) => {
+      const rest = url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname;
+      const path = rest.split('?')[0];
+      hits.push(path);
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions: { ifc_changes: { enabled: true, schema: '/documents/1.0/ifc-changes/schema', snippet_type: 'DataregiumIfcChangeSet', max_changes: 10000 } } }));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      if (path === '/foundation/1.0/current-user') return Promise.resolve(json({ id: 'anna', name: 'Anna' }));
+      if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Change proposal'], topic_status: ['Open'] }));
+      if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-1', title: 'x' }, 201));
+      if (path === '/bcf/3.0/projects/p-1/topics/t-1/snippet') return Promise.resolve({ kind: 'text', data: '' });
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const meta = await datasets.get(ds.id);
+    const changed = new TextEncoder().encode(fixtures.ifcText({ walls: 2 }));
+    const real = bridge.runIfcChangeset;
+    const proposal = { changes: [{ step_id: 170, attribute: 'NominalValue', op: 'set', old: { type: 'IfcLabel', value: 'EI60' }, new: { type: 'IfcLabel', value: 'EI90' } }, { step_id: 71, attribute: 'RelatedElements', op: 'remove', old: { step_id: 99 } }], truncated: false, instances: 2, unexpressed: { created: 1, deleted: 0, relations: 1 } };
+    bridge.runIfcChangeset = async (changes) => ({ bytes: changed, info: { elements: 6, entities: 1, file: 'testhus.ifc', operations: changes.length, created: [{ id: 200, ifc_class: 'IfcWall' }], changed: [{ id: 99, ifc_class: 'IfcWall' }], deleted: [], findings: [], errors: 0, proposal }, log: [] });
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log: () => {} } }, { datasetId: ds.id, preview: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      await datasets.updateMeta(ds.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', projectName: 'Testprojekt', documentId: 'doc-1', versionIndex: 2 } }) });
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      await waitFor(() => panel.state.providers.length, 3000, 'the providers loaded');
+      panel.state.providerId = provider.id; panel.setMode('change');
+      world.calls = 0;
+      await panel.ask('Sätt brandklass EI90 på väggen');
+      await panel.preview();
+      const line = panel.el.querySelector('[data-ai-proposal]');
+      assert.ok(line && line.getAttribute('data-ai-proposal') === '2' && line.textContent.includes('1'), 'the proposal\'s form and what it leaves out: ' + (line && line.textContent));
+      const btn = /** @type {any} */ (panel.el.querySelector('[data-ai-propose]'));
+      assert.ok(btn && !btn.disabled, 'the button Föreslå på servern for a fetched model');
+      await panel.propose({ title: 'Brandklass EI90 på väggen', description: 'Väggen får EI90.' });
+      assert.equal(panel.state.error, '', 'no error');
+      assert.ok(hits.includes('/bcf/3.0/projects/p-1/topics') && hits.includes('/bcf/3.0/projects/p-1/topics/t-1/snippet'), 'the topic and then its snippet: ' + hits.join(' '));
+      const topic = JSON.parse(bodies['/bcf/3.0/projects/p-1/topics'].body);
+      assert.equal(topic.title, 'Brandklass EI90 på väggen'); assert.equal(topic.topic_type, 'Change proposal', 'the project\'s type for proposals');
+      assert.deepEqual(topic.bim_snippet, { snippet_type: 'DataregiumIfcChangeSet', is_external: false, reference: 'changes.json', reference_schema: CDE + '/documents/1.0/ifc-changes/schema' }, 'the bim_snippet names the type and the schema');
+      const put = bodies['/bcf/3.0/projects/p-1/topics/t-1/snippet'];
+      assert.equal(put.method, 'PUT'); assert.equal(String(put.headers['Content-Type'] || put.headers['content-type']), 'application/json');
+      const snippet = JSON.parse(put.body);
+      assert.equal(snippet.schema, CDE + '/documents/1.0/ifc-changes/schema');
+      assert.deepEqual(snippet.base, { document_id: 'doc-1', version_index: 2 }, 'the base version the model was fetched as');
+      assert.equal(snippet.provenance.user, 'Anna', 'the signed-in user'); assert.equal(snippet.provenance.ai_model, 'claude-test');
+      assert.ok(snippet.provenance.tool_call.includes('create_storeys_and_grid') && /^\d{4}-\d\d-\d\dT/.test(snippet.provenance.created_at), 'the tools and the time');
+      assert.deepEqual(snippet.changes, proposal.changes, 'the wheel\'s changes as they are');
+      assert.ok(Object.keys(snippet).sort().join() === 'base,changes,provenance,schema', 'nothing else in the snippet');
+      const sent = panel.el.querySelector('[data-ai-proposed]');
+      assert.ok(sent && sent.getAttribute('data-ai-proposed') === 't-1' && sent.textContent.includes('Brandklass'), 'the topic shown');
+      assert.ok((/** @type {any} */ (panel.el.querySelector('[data-ai-propose]'))).disabled, 'sent once');
+      // A change set that only creates: nothing in the server's form, and the button says so.
+      proposal.changes = [];
+      await panel.reject();
+      world.calls = 0;
+      await panel.ask('Lägg till en vägg');
+      await panel.preview();
+      assert.ok((/** @type {any} */ (panel.el.querySelector('[data-ai-propose]'))).disabled, 'nothing to propose');
+      await panel.propose({ title: 'x' });
+      assert.ok(panel.state.error && panel.state.error === t('ai.change.propose.none'), 'told why: ' + panel.state.error);
+      await panel.reject();
+    } finally {
+      globalThis.fetch = realFetch;
       bridge.runIfcChangeset = real; panel.destroy(); panel.el.remove();
       await datasets.updateMeta(ds.id, { source: meta.source || { kind: 'file' } });
       await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);

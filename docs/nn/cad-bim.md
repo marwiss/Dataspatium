@@ -238,6 +238,13 @@ endringane på nytt og publiser igjen. For ein modell henta frå Dataregium spø
 av kandidaten (skjema, buildingSMART-reglar og IDS-en til prosjektet) når kjelda er innlogga, og eit prosjekt som ikkje tek imot filer
 med valideringsfeil avviser publiseringa (422) med funna til tenaren i meldinga og på kortet Valider modellen.
 
+*Foreslå på tenaren* sender eit førehandsvist endringssett til Dataregium som eit endringsframlegg i staden for å publisere: ei
+BCF-sak i prosjektet med endringane vedlagde i forma til tenaren (snippet-typen DataregiumIfcChangeSet, som tenaren held mot skjemaet
+sitt). Forma gjev endringar av eksisterande instansar, éin per attributt: eigenskapsverdiar, plasseringar, tilhøyrsle til etasje og
+liknande, med basisversjonen til dokumentet, namnet ditt på tenaren og AI-modellen som proveniens. Nye element, slettingar og nye
+relasjonar kan enno ikkje gjevast i forma; panelet tel dei, og dei står i skildringa av saka. Knappen finst for ein modell henta frå
+Dataregium når tenaren gjev kapabiliteten `ifc_changes`, og modellen vert ikkje endra av framlegget.
+
 ## Samanlikn versjonar
 
 Knappen *Samanlikn* i modellvisinga samanliknar den opne modellen med ein lagra versjon av same datasett (Versjonar i Arbeid) eller

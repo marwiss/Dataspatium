@@ -236,6 +236,13 @@ endringene på nytt og publiser igjen. For en modell hentet fra Dataregium spør
 kandidaten (skjema, buildingSMART-regler og prosjektets IDS) når kilden er logget inn, og et prosjekt som ikke tar imot filer med
 valideringsfeil avviser publiseringen (422) med serverens funn i meldingen og på kortet Valider modellen.
 
+*Foreslå på serveren* sender et forhåndsvist endringssett til Dataregium som et endringsforslag i stedet for å publisere: en BCF-sak
+i prosjektet med endringene vedlagt i serverens form (snippet-typen DataregiumIfcChangeSet, som serveren holder mot skjemaet sitt).
+Formen angir endringer av eksisterende instanser, én per attributt: egenskapsverdier, plasseringer, tilhørighet til etasje og lignende,
+med dokumentets basisversjon, navnet ditt på serveren og AI-modellen som proveniens. Nye elementer, slettinger og nye relasjoner kan
+ennå ikke angis i formen; panelet teller dem, og de står i sakens beskrivelse. Knappen finnes for en modell hentet fra Dataregium når
+serveren angir kapabiliteten `ifc_changes`, og modellen endres ikke av forslaget.
+
 ## Sammenlign versjoner
 
 Knappen *Sammenlign* i modellvisningen sammenligner den åpne modellen med en lagret versjon av samme datasett (Versjoner i Bearbeid)

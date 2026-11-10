@@ -1739,12 +1739,211 @@ class _ChangeSet:
                             "attribute": _ifc_text(s.get("attribute")), "message": str(s.get("message", ""))})
         return out, errors
 
+    MAX_PROPOSAL = 10000
+
+    def proposal(self, base):
+        """The changed elements against the base, in the form Dataregium takes as a change proposal (see _Proposal)."""
+        p = _Proposal(base, self.m)
+        for rec in list(self.changed.values()):
+            p.element(rec["id"])
+        return {"changes": p.changes[:self.MAX_PROPOSAL], "truncated": len(p.changes) > self.MAX_PROPOSAL, "instances": len(p.instances),
+                "unexpressed": {"created": len(self.created), "deleted": len(self.deleted), "relations": p.unexpressed}}
+
+
+class _Proposal:
+    """The attribute-level form of a change, as Dataregium takes it in a BCF topic's snippet (DataregiumIfcChangeSet).
+
+    Compares the instances that exist in both the base and the candidate, each change on one attribute of one instance named
+    by its STEP id: a scalar, a typed value ({"type", "value"}), an enumeration ({"enum"}), a reference ({"step_id"}) or a list
+    of them. A sub-instance that the candidate replaced with a new one of the same class (a moved placement's point) is told
+    as changes of the old instance, with "copy" when others share it: such a change names the instance by the element's GlobalId
+    and the path from it, since the server copies the instance and points the parent at the copy. What only new instances carry
+    (created elements, new relationships, property sets and properties) cannot be said in this form and is counted as unexpressed.
+    """
+
+    DEPTH = 8
+    SKIP = ("OwnerHistory", "Representation", "RepresentationMaps", "Items")
+    MEMBERSHIPS = (("ContainedInStructure", "RelatedElements"), ("HasAssociations", "RelatedObjects"), ("IsDefinedBy", "RelatedObjects"),
+                   ("Decomposes", "RelatedObjects"))
+
+    def __init__(self, base, candidate):
+        self.base = base
+        self.cand = candidate
+        self.changes = []
+        self.unexpressed = 0
+        self.instances = set()
+        self.seen = set()
+        self.guid = None
+
+    @staticmethod
+    def instance(v):
+        import ifcopenshell
+        return isinstance(v, ifcopenshell.entity_instance)
+
+    def in_base(self, e):
+        """The base instance with the same id and class, or None for an instance the candidate made."""
+        if not self.instance(e) or e.id() == 0:
+            return None
+        try:
+            b = self.base.by_id(e.id())
+        except Exception:
+            return None
+        return b if b is not None and b.is_a() == e.is_a() else None
+
+    def in_cand(self, b):
+        try:
+            c = self.cand.by_id(b.id())
+        except Exception:
+            return None
+        return c if c is not None and c.is_a() == b.is_a() else None
+
+    def same(self, a, b):
+        if self.instance(a) or self.instance(b):
+            if not (self.instance(a) and self.instance(b)):
+                return False
+            if a.id() == 0 or b.id() == 0:
+                return a.id() == 0 and b.id() == 0 and a.is_a() == b.is_a() and a.wrappedValue == b.wrappedValue
+            return a.id() == b.id()
+        if isinstance(a, (tuple, list)) or isinstance(b, (tuple, list)):
+            if not (isinstance(a, (tuple, list)) and isinstance(b, (tuple, list))) or len(a) != len(b):
+                return False
+            return all(self.same(x, y) for x, y in zip(a, b))
+        return a == b
+
+    def value(self, v, kind):
+        """A value in the change set's form; raises KeyError for a reference to an instance the base does not have."""
+        if v is None:
+            return None
+        if self.instance(v):
+            if v.id() == 0:
+                return {"type": v.is_a(), "value": _ifc_value(v.wrappedValue)}
+            if self.in_base(v) is None:
+                raise KeyError(v.id())
+            return {"step_id": v.id()}
+        if isinstance(v, (tuple, list)):
+            return [self.value(x, kind) for x in v]
+        if isinstance(v, str) and kind == "ENUMERATION":
+            return {"enum": v}
+        return _ifc_value(v)
+
+    def change(self, inst, attribute, op, old=None, new=None, copy=False, path=()):
+        if copy and path and self.guid:
+            rec = {"guid": self.guid, "path": ".".join(path), "attribute": attribute, "op": op}
+        else:
+            rec = {"step_id": inst.id(), "attribute": attribute, "op": op}
+            copy = False
+        if op in ("set", "remove"):
+            rec["old"] = old
+        if op in ("set", "add"):
+            rec["new"] = new
+        if copy:
+            rec["copy"] = True
+        self.changes.append(rec)
+        self.instances.add(inst.id())
+
+    def shared(self, b):
+        try:
+            return len(self.base.get_inverse(b)) > 1
+        except Exception:
+            return False
+
+    def diff(self, b, c, depth=0, copy=False, path=()):
+        """The attributes of a base instance against its candidate, into the sub-instances it owns; path leads here from the element."""
+        if b.id() in self.seen or depth > self.DEPTH:
+            return
+        self.seen.add(b.id())
+        for i in range(len(b)):
+            try:
+                name, kind = b.attribute_name(i), b.attribute_type(i)
+            except Exception:
+                continue
+            if kind == "DERIVED" or name in self.SKIP:
+                continue
+            try:
+                bv, cv = b[i], c[i]
+            except Exception:
+                continue
+            if self.instance(bv) and bv.id() != 0 and self.instance(cv) and cv.id() != 0 and bv.is_a() == cv.is_a() and not hasattr(bv, "GlobalId"):
+                if cv.id() == bv.id():
+                    self.diff(bv, cv, depth + 1, copy, path + (name,))
+                elif self.in_base(cv) is None:
+                    # replaced by a new instance of the same class: the old one's attributes, on a copy when others share it
+                    self.diff(bv, cv, depth + 1, copy or self.shared(bv), path + (name,))
+                else:
+                    self.change(b, name, "set", old={"step_id": bv.id()}, new={"step_id": cv.id()}, copy=copy, path=path)
+                continue
+            if kind.startswith("AGGREGATE OF ENTITY INSTANCE") and isinstance(bv, (tuple, list)) and isinstance(cv, (tuple, list)):
+                self.members(b, name, bv, cv, depth, copy, path)
+                continue
+            if self.same(bv, cv):
+                continue
+            try:
+                self.change(b, name, "set", old=self.value(bv, kind), new=self.value(cv, kind), copy=copy, path=path)
+            except KeyError:
+                self.unexpressed += 1
+
+    def members(self, b, name, bv, cv, depth, copy, path=()):
+        """An aggregate of instances: the members both have are compared, the others added or removed."""
+        bids = {x.id(): x for x in bv if self.instance(x)}
+        cids = {y.id(): y for y in cv if self.instance(y)}
+        for i, x in enumerate(bv):
+            if self.instance(x):
+                if x.id() in cids:
+                    if not hasattr(x, "GlobalId"):
+                        self.diff(x, cids[x.id()], depth + 1, copy, path + ("%s[%d]" % (name, i),))
+                else:
+                    self.change(b, name, "remove", old={"step_id": x.id()}, copy=copy, path=path)
+        for y in cv:
+            if self.instance(y) and y.id() not in bids:
+                if self.in_base(y) is None:
+                    self.unexpressed += 1
+                else:
+                    self.change(b, name, "add", new={"step_id": y.id()}, copy=copy, path=path)
+
+    def memberships(self, b, c):
+        """The relationships the element is a member of (container, material, property sets, aggregate): changed membership."""
+        for inverse, attribute in self.MEMBERSHIPS:
+            brels = [r for r in (getattr(b, inverse, None) or ()) if self.instance(r)]
+            crels = [r for r in (getattr(c, inverse, None) or ()) if self.instance(r)]
+            bids = {r.id() for r in brels}
+            cids = {r.id() for r in crels}
+            for i, r in enumerate(brels):
+                if r.id() not in cids:
+                    self.change(r, attribute, "remove", old={"step_id": b.id()})
+                elif inverse == "IsDefinedBy" and getattr(r, "RelatingPropertyDefinition", None) is not None:
+                    # a property set both have: its properties' values, on a copy when other elements share the set
+                    pd = r.RelatingPropertyDefinition
+                    cpd = self.in_cand(pd)
+                    if cpd is not None:
+                        self.diff(pd, cpd, 1, False, ("IsDefinedBy[%d]" % i, "RelatingPropertyDefinition"))
+            for r in crels:
+                if r.id() not in bids:
+                    if self.in_base(r) is None:
+                        self.unexpressed += 1
+                    else:
+                        self.change(r, attribute, "add", new={"step_id": b.id()})
+
+    def element(self, step_id):
+        """A changed rooted element: its own attributes, its placement and its memberships."""
+        try:
+            b = self.base.by_id(int(step_id))
+        except Exception:
+            b = None
+        c = self.in_cand(b) if b is not None else None
+        if b is None or c is None:
+            self.unexpressed += 1
+            return
+        self.guid = str(getattr(b, "GlobalId", "") or "") or None
+        self.diff(b, c)
+        self.memberships(b, c)
+
 
 def _ifc_changeset(in_file, changeset_json, out_file):
     """The recipe step "AI-ändring": a change set's operations on the model, checked against the schema and written as IFC.
 
     Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
-    report: what was created (with refs), changed and deleted, the schema findings and counts for the log.
+    report: what was created (with refs), changed and deleted, the schema findings and counts for the log, and the changes of
+    existing instances in Dataregium's proposal form (`proposal`).
     """
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
@@ -1754,6 +1953,12 @@ def _ifc_changeset(in_file, changeset_json, out_file):
     cs.apply(ops)
     findings, errors = cs.findings()
     model.write(out_file)
+    try:
+        # The proposal form for Dataregium: the base opened once more, so that the old values are the file's.
+        proposal = cs.proposal(_ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-base.ifc"), data))
+    except Exception as exc:
+        proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
     return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
-                       "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors},
+                       "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
+                       "proposal": proposal},
                       ensure_ascii=False, default=str)

@@ -241,6 +241,13 @@ muutokset uudelleen ja julkaise uudelleen. Dataregiumista haetulle mallille *Esi
 ehdokkaalle (skeema, buildingSMARTin säännöt ja projektin IDS), kun lähteeseen on kirjauduttu, ja projekti, joka ei ota vastaan
 tiedostoja validointivirheineen, hylkää julkaisun (422) palvelimen löydöksillä viestissä ja kortilla Validoi malli.
 
+*Ehdota palvelimella* lähettää esikatsellun muutosjoukon Dataregiumiin muutosehdotuksena julkaisemisen sijaan: projektiin BCF-asia,
+jonka liitteenä muutokset ovat palvelimen muodossa (snippet-tyyppi DataregiumIfcChangeSet, jonka palvelin tarkistaa skeemaansa vasten).
+Muoto ilmaisee olemassa olevien instanssien muutokset, yhden attribuuttia kohden: ominaisuusarvot, sijoittelut, kerrokseen kuulumisen
+ja vastaavat, ja kantaa asiakirjan perusversion, nimesi palvelimella ja tekoälymallin alkuperätietoina. Uusia elementtejä, poistoja ja
+uusia suhteita ei voi vielä ilmaista muodossa; paneeli laskee ne, ja ne ovat asian kuvauksessa. Painike näkyy Dataregiumista haetulle
+mallille, kun palvelin ilmoittaa kyvykkyyden `ifc_changes`, eikä ehdotus muuta mallia.
+
 ## Vertaa versioita
 
 Mallinäkymän painike *Vertaa* vertaa avointa mallia saman aineiston tallennettuun versioon (Versiot Käsittele-tilassa) tai toiseen

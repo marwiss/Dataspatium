@@ -240,6 +240,13 @@ the changes and publish again. For a model fetched from Dataregium, *Preview* al
 schema, buildingSMART's rules and the project's IDS) when the source is signed in, and a project that does not accept files with
 validation errors refuses the publish (422) with the server's findings in the message and on the card Validate the model.
 
+*Propose on the server* sends a previewed change set to Dataregium as a change proposal instead of publishing it: a BCF topic in
+the project with the changes attached in the server's form (the snippet type DataregiumIfcChangeSet, which the server holds to its
+schema). The form names changes of existing instances, one per attribute: property values, placements, the storey an element belongs
+to and the like, with the document's base version, your name on the server and the AI model as provenance. New elements, deletions and
+new relationships cannot be said in the form yet; the panel counts them and they go into the topic's description. The button appears
+for a model fetched from Dataregium when the server announces the capability `ifc_changes`, and the proposal does not change the model.
+
 ## Compare versions
 
 The button *Compare* in the model view compares the open model with a saved version of the same dataset (Versions in Process) or with

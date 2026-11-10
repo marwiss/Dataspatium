@@ -233,6 +233,13 @@ og birtu á ný. Fyrir líkan sem sótt var frá Dataregium spyr *Forskoða* lí
 buildingSMART og IDS verkefnisins) þegar uppsprettan er innskráð, og verkefni sem tekur ekki við skrám með villum hafnar birtingunni
 (422) með atriðum þjónsins í skilaboðunum og á spjaldinu Prófa líkanið.
 
+*Leggja til á þjóninum* sendir forskoðað breytingasett til Dataregium sem breytingatillögu í stað þess að birta: BCF-mál í verkefninu
+með breytingunum í viðhengi á formi þjónsins (snippet-gerðin DataregiumIfcChangeSet, sem þjónninn ber saman við skema sitt). Formið
+tilgreinir breytingar á fyrirliggjandi tilvikum, eina á hvert eigindi: eiginleikagildi, staðsetningar, hvaða hæð stak tilheyrir og
+þess háttar, með grunnútgáfu skjalsins, nafni þínu á þjóninum og gervigreindarlíkaninu sem uppruna. Ný stök, eyðingar og ný vensl er
+ekki enn hægt að tilgreina á forminu; spjaldið telur þau og þau standa í lýsingu málsins. Hnappurinn er til fyrir líkan sem sótt var frá
+Dataregium þegar þjónninn tilgreinir getuna `ifc_changes`, og tillagan breytir ekki líkaninu.
+
 ## Bera saman útgáfur
 
 Hnappurinn *Bera saman* í líkansýninni ber opna líkanið saman við vistaða útgáfu sama gagnasafns (Útgáfur í Vinna) eða við annað
