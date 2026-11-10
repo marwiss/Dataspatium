@@ -3,7 +3,7 @@
 /**
  * Runtime capability detection. The app adapts to what the browser offers instead of assuming.
  * Verified 2026-11-02: under file:// Edge lacks OPFS and module workers, Firefox lacks File System
- * Access pickers, neither has SharedArrayBuffer. See docs/plan.md section 1.1.
+ * Access pickers, neither has SharedArrayBuffer. See the file:// spike notes kept outside the repo (.claude/plans/underlag/spik-fas0.md).
  */
 (function () {
   'use strict';

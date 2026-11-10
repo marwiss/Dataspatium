@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The checks of an IFC model and their latest results, for the card Validera modellen in Hantera. Two kinds of check:
- * the server's, which Kontroll (from 3.0.0) makes of every IFC file uploaded as a document version and reports in the
+ * the server's, which Dataregium (from 3.0.0) makes of every IFC file uploaded as a document version and reports in the
  * version's metadata (`ifc_validation_*`) with a report of every error; and the checks run here with IfcOpenShell
  * (validation against the schema, and IDS). The latest result of each is kept as a setting per dataset
  * (`validation:<id>`), so that showing or recording one never changes the dataset itself.
@@ -16,7 +16,7 @@
     const STATUSES = ['pending', 'passed', 'warnings', 'issues', 'unknown'];
     /**
      * What found an issue, in the report's words: parts of the IFC schema, `gherkin` for one of buildingSMART's rules, or `ids` for a
-     * specification in one of the project's IDS documents (Kontroll 3.0.0).
+     * specification in one of the project's IDS documents (Dataregium 3.0.0).
      */
     const KINDS = ['schema', 'entity_rule', 'simpletype_rule', 'global_rule', 'gherkin', 'ids'];
     /** The report's own field names, kept as the table's columns. */
@@ -90,7 +90,7 @@
           findings: Number(c.issue_count) || 0,
           notRun: (Array.isArray(c.rules_not_run) ? c.rules_not_run : []).map((r) => String((r && r.rule) || r || '')).filter(Boolean),
         };
-        // Kontroll writes both lists, empty, on every check: only the IDS check (or a check that has some) gets them.
+        // Dataregium writes both lists, empty, on every check: only the IDS check (or a check that has some) gets them.
         const some = (v) => Array.isArray(v) && v.length > 0;
         if (out.name === 'ids' || some(c.documents) || some(c.specifications)) {
           const documents = (Array.isArray(c.documents) ? c.documents : []).filter(Boolean).map((d) => ({ id: String(d.document_id || ''), version: Number.isInteger(d.version_index) ? d.version_index : null, title: String(d.title || '') }));

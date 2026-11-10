@@ -47,7 +47,7 @@
   /** What the mocked server knows; the walls are filled in once the model is imported, so that the report can name them. */
   const world = { walls: [], asked: [], tokens: 0 };
   const entry = (name, value, type) => ({ name, value: [value], data_type: type });
-  /** The IDS check as Kontroll 3.0.0 reports it: the project's IDS documents, every specification with its verdict, and a document it could not read. */
+  /** The IDS check as Dataregium 3.0.0 reports it: the project's IDS documents, every specification with its verdict, and a document it could not read. */
   const IDS_CHECK = {
     name: 'ids', state: 'done', ruleset: 'IfcTester 0.9.0', issue_count: 1,
     rules_not_run: [{ rule: 'trasig.ids', error: 'XMLSchemaValidationError', document_id: 'doc-broken' }],
@@ -120,14 +120,14 @@
     assert.equal(table.rows.length, 4);
     assert.equal(table.rows[0][4], 12);
     assert.equal(table.rows[3][5], null);
-    // Kontroll's vocabulary from 3.0.0: warnings only, two rulesets, error counts and the checks with rules that could not run.
+    // Dataregium's vocabulary from 3.0.0: warnings only, two rulesets, error counts and the checks with rules that could not run.
     const two = validation.fromMetadata([entry('ifc_validation_status', 'warnings', 'string'), { name: 'ifc_validation_ruleset', value: ['A', 'B'], data_type: 'string' }]);
     assert.deepEqual([two.status, two.ruleset], ['warnings', 'A; B']);
     assert.equal(validation.badgeKind('warnings'), 'warn');
     assert.deepEqual(validation.counts({ issue_count: 12, error_count: 1, issues: [{ severity: 'warning' }] }), { findings: 12, errors: 1 }, 'the report\'s own counts go beyond its list');
     assert.deepEqual(validation.counts({ issues: [{ severity: 'warning' }, { severity: 'error' }, {}] }), { findings: 3, errors: 2 }, 'counted from the list when the report has no counts');
     assert.deepEqual(validation.checksOf({ checks: [{ name: 'gherkin', state: 'done', ruleset: 'R', issue_count: 4, rules_not_run: [{ rule: 'GEM004', error: 'x' }] }] }), [{ name: 'gherkin', state: 'done', ruleset: 'R', findings: 4, notRun: ['GEM004'] }]);
-    // The IDS check (Kontroll 3.0.0): its documents and every specification's verdict, a document it could not read among the rules not run.
+    // The IDS check (Dataregium 3.0.0): its documents and every specification's verdict, a document it could not read among the rules not run.
     const [ids] = validation.checksOf({ checks: [IDS_CHECK] });
     assert.deepEqual([ids.name, ids.findings, ids.notRun], ['ids', 1, ['trasig.ids']]);
     assert.deepEqual(ids.documents, [{ id: 'doc-ids', version: 2, title: 'krav.ids' }]);

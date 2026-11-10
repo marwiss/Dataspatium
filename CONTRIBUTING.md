@@ -1,7 +1,7 @@
 # Bidra till Dataspatium
 
 Tack för att du vill hjälpa till. Dataspatium är licensierad under PolyForm Strict 1.0.0 (se [LICENSE](LICENSE) och
-[docs/licenser.md](docs/licenser.md)). Licensen tillåter inte att andra ändrar koden eller sprider den vidare, och det
+[docs/sv/licenser.md](docs/sv/licenser.md)). Licensen tillåter inte att andra ändrar koden eller sprider den vidare, och det
 styr hur bidrag kan tas emot.
 
 ## Felrapporter och förslag
@@ -17,7 +17,7 @@ bidragsgivare skriftligen ge licensgivaren rätt att använda, ändra och licens
 bidragsavtal, CLA). Utan det kan projektet inte fortsätta att licensiera koden som helhet. Skriv i ärendet att du
 godtar det, så får du en mall.
 
-Riktlinjer för koden finns i [docs/utveckling.md](docs/utveckling.md): klassiska skript som fungerar från file://,
+Riktlinjer för koden: klassiska skript som fungerar från file://,
 designvariabler och komponenter för allt UI, svenska UI-texter via `t()`, engelska kodkommentarer, tester i
 `tests/` och svensk dokumentation i `docs/`.
 

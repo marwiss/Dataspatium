@@ -119,9 +119,9 @@ knuder og relationer fladgøres til deres egenskaber. Indeholder svaret knuder o
 som et grafdatasæt; ellers *Gem som datasæt*. **Gem forespørgslen** lægger forespørgslen på kilden, så den kan køres igen
 med ét klik. Bolt over WebSocket er ikke omfattet af CORS; en egen server uden TLS (`bolt://`) nås kun fra en side over http://. Indeholder svaret knuder, tegnes de også som en graf.
 
-## IFC-LPG på en Kontroll-server
+## IFC-LPG på en Dataregium-server
 
-Kontroll gør hver uploadet IFC-fil til en graf: én knude per entitet, med klassen og alle dens overklasser som etiketter og
+Dataregium gør hver uploadet IFC-fil til en graf: én knude per entitet, med klassen og alle dens overklasser som etiketter og
 IFC-attributterne som egenskaber, og relationer, der hedder som attributterne (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
 `HAS_PROPERTIES`). Grafen ligger på serveren og kan være langt større, end det er rimeligt at hente hjem. Derfor tegnes og
 forespørges den direkte fra *Hent*, og intet gemmes, før du beder om det.
@@ -158,14 +158,14 @@ hvis modellen findes i arbejdsområdet.
 I feltet skriver du din egen Cypher, alt hvad serveren forstår, men kun læsende. Spørger du kun efter knuder (`RETURN c, w`), henter
 appen også relationerne mellem dem, som Neo4j Browser gør. Appen siger til, når et svar har nået forespørgslens `LIMIT` eller er
 klippet, og læsningen stopper ved 20.000 rækker. Svar med mere end 1.500 knuder tegnes ikke her, men kan gemmes og åbnes som oversigt
-i Bearbejd. Grafen fra Kontroll 3.0.0 bærer også det, der skal til for at skrive filen tilbage (`<attribut>__type`, `<attribut>__step` og `StepBlock`-knuder med deres tekst). Det udelades, når en knude vises eller gemmes, men kan forespørges med navn.
+i Bearbejd. Grafen fra Dataregium 3.0.0 bærer også det, der skal til for at skrive filen tilbage (`<attribut>__type`, `<attribut>__step` og `StepBlock`-knuder med deres tekst). Det udelades, når en knude vises eller gemmes, men kan forespørges med navn.
 
 **Gem som graf** gør det, du ser, til et almindeligt grafdatasæt: grafvisningen i Bearbejd, fanerne Cypher og Graf i Analysér og
 grafdiagrammer i Visualisér. Klassen bliver knudens etiket, og alle etiketter følger med, så `MATCH (w:IfcWall)` også finder en
 `IfcWallStandardCase` i kopien. I fanen Cypher kan du slå **Kør på serveren** til for en graf, der er gemt herfra, og så svarer serveren
 med al Cypher mod hele grafen i stedet for delmængden mod kopien.
 
-En IFC-model hentet fra Kontroll har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
+En IFC-model hentet fra Dataregium har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
 Hent, i en Neo4j-kilde på samme computer, hvis der er en, ellers i OpenCDE-kilden.
 
 ## Flere værktøjer i fanen Graf

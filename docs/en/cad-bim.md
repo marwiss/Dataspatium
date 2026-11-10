@@ -48,9 +48,9 @@ panel. The tool *Issues* in the Quantities tab of Analyse counts issues, open is
 assignee, element type or storey from such a table, and the SQL starters get queries for the join. *Save as chart* saves the view
 with its colours as a model chart, which dashboards, documents and Publish show with a legend.
 
-The model's graph on the server is drawn and queried from *Import*, and the button *IFC-LPG* takes you there, see [grafer.md](grafer.md#ifc-lpg-on-a-kontroll-server).
+The model's graph on the server is drawn and queried from *Import*, and the button *IFC-LPG* takes you there, see [grafer.md](grafer.md#ifc-lpg-on-a-dataregium-server).
 
-The graph's model, relations and the queries from Dataspatium's side are in Kontroll's [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/ifc-lpg.md).
+The graph's model, relations and the queries from Dataspatium's side are in Dataregium's [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/ifc-lpg.md).
 
 ## The tables
 
@@ -91,7 +91,7 @@ Every result can be saved as a dataset.
 
 ## IfcOpenShell in the app
 
-The app reads, checks and changes IFC models with IfcOpenShell, the library Kontroll is built on. It runs in Python
+The app reads, checks and changes IFC models with IfcOpenShell, the library Dataregium is built on. It runs in Python
 in the browser, is fetched the first time it is used (about 13 MB, after your consent for components) and is then kept in the
 browser. Nothing is sent anywhere; the model does not leave the computer.
 
@@ -136,7 +136,7 @@ IfcOpenShell is LGPL-3.0 and is fetched unchanged as pinned wheels from IfcOpenS
 
 The card **Validate the model** in Manage gathers the checks of an IFC model, with the latest result of each.
 
-- **The server's check** is there for a model fetched as a document version from a CDE. Kontroll (from 3.0.0) checks every
+- **The server's check** is there for a model fetched as a document version from a CDE. Dataregium (from 3.0.0) checks every
   uploaded IFC file against the IFC schema and, when the server has them installed, against buildingSMART's rules
   (ifc-gherkin-rules), and puts the result in the version's metadata. *Fetch the server's check* reads it: no findings, findings that
   are only warnings, findings with errors, waiting to be checked or could not be checked, and when and with which rules. The app asks

@@ -1,11 +1,11 @@
-# Quick start: Kontroll and Dataspatium together
+# Quick start: Dataregium and Dataspatium together
 
-From an empty machine to signed in to Kontroll from Dataspatium, with an issue
+From an empty machine to signed in to Dataregium from Dataspatium, with an issue
 created in a 3D view and visible in the server's logs. It takes about twenty
 minutes, most of it the first build. Follow the steps in order and use the
 addresses and ports exactly as written: almost every problem comes from a skipped
 setting or another address. [Troubleshooting](#troubleshooting) says what to do
-if something goes wrong. The same page exists in Kontroll's repository; the
+if something goes wrong. The same page exists in Dataregium's repository; the
 two are kept identical.
 
 ## What you need
@@ -13,21 +13,21 @@ two are kept identical.
 - Docker: Docker Desktop on Windows and macOS, Docker Engine with the compose
   plugin on Linux. It must be running: `docker version` answers for both client
   and server.
-- Git, or the source code ZIP from Kontroll's
-  [latest release](https://github.com/marwiss/Kontroll/releases/latest) in place
+- Git, or the source code ZIP from Dataregium's
+  [latest release](https://github.com/marwiss/Dataregium/releases/latest) in place
   of `git clone` below.
 - Python 3, as a small local web server.
 - Microsoft Edge, Google Chrome or Firefox.
 - The ports 8000, 7484, 7697 and 8080 free on your machine.
 
-If you have tried Kontroll on this machine before, begin with
+If you have tried Dataregium on this machine before, begin with
 [Start over](#start-over).
 
-## 1. Start Kontroll
+## 1. Start Dataregium
 
 ```sh
-git clone https://github.com/marwiss/Kontroll.git
-cd Kontroll
+git clone https://github.com/marwiss/Dataregium.git
+cd Dataregium
 cp .env.example .env
 ```
 
@@ -51,14 +51,14 @@ OPENCDE_IFC_LPG_ENABLED=true
 | `OPENCDE_REQUEST_LOG_ENABLED` | Records the app's calls | The request log in step 5 stays empty |
 | `OPENCDE_IFC_LPG_ENABLED` | Turns uploaded models into a graph | No graph in step 5 |
 
-These settings are for trying Kontroll on your own machine, not for a server that
+These settings are for trying Dataregium on your own machine, not for a server that
 others use.
 
 Start the server and load the demonstration data:
 
 ```sh
-docker compose -f compose.yaml -f compose.dev.yaml up -d --build --wait
-docker compose -f compose.yaml -f compose.dev.yaml exec api opencde seed
+docker compose up -d --build --wait
+docker compose exec api opencde seed
 ```
 
 The first command takes a few minutes the first time and returns when the server
@@ -90,7 +90,7 @@ does not read the file.
    ```
 
    The command may be `python3` on macOS and Linux and `py` on Windows. Keep the
-   terminal open while you use the app. Always give the port: without it Python takes 8000, which is Kontroll's port.
+   terminal open while you use the app. Always give the port: without it Python takes 8000, which is Dataregium's port.
 4. Open <http://127.0.0.1:8080/>, written just like that: the server sends the browser back after the sign-in to `127.0.0.1`, not to `localhost`. Do not double-click `index.html`: opened from
    the folder, the app cannot register itself. The app reloads once at its first
    start.
@@ -98,7 +98,7 @@ does not read the file.
    page uses the English names. The panel *Welcome to Dataspatium* offers a course:
    press *Not now*.
 
-## 3. Sign in to Kontroll from Dataspatium
+## 3. Sign in to Dataregium from Dataspatium
 
 1. Choose the mode *Import*. In the left column, under *Add sources*, choose
    *OpenCDE*.
@@ -107,7 +107,7 @@ does not read the file.
    speaks of a client id from the administrator. Press *Add source*.
 3. The app asks *Allow internet access?* up to three times, once per purpose. Here
    it concerns only your own server: press *Allow* each time.
-4. The source opens and is listed under *Added sources*. The line "Server: Kontroll
+4. The source opens and is listed under *Added sources*. The line "Server: Dataregium
    OpenCDE server <version>. Extensions: …" comes from the server's capabilities
    document and says which extensions are on. The label *Requires a key* can be
    ignored: what it takes is the sign-in.
@@ -170,25 +170,25 @@ Each row quotes the screen as it reads with the English names.
 | What you see | Why | What to do |
 |---|---|---|
 | `Cannot connect to the Docker daemon`, `error during connect` or `docker: command not found` | Docker is not running | Start Docker Desktop, wait until it says it is running, and run the command again |
-| `dependency failed to start: container kontroll-graph-1 is unhealthy` | A password of fewer than 16 characters, which Neo4j refuses (`docker compose -f compose.yaml -f compose.dev.yaml logs graph` says `A password must be at least 16 characters`), or a database volume left by an earlier installation with another password | Correct the password and run the `up` command again. For the old volume, see [Start over](#start-over) |
-| `port is already allocated`, `Ports are not available` or `address already in use` | Another program holds 8000, 7484 or 7697, perhaps an earlier Kontroll (`docker ps` shows it) | Stop it, or set other ports with `OPENCDE_DEV_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` and `OPENCDE_DEV_NEO4J_BOLT_PORT` in `.env` and use your port instead of 8000 from then on |
-| The containers of another folder are replaced | Two checkouts on one machine share the Compose project name `kontroll` | Give the second one `COMPOSE_PROJECT_NAME=kontroll-2` and other `OPENCDE_DEV_*` ports in its `.env` |
-| `the database is not empty` | `opencde seed` has already run and printed the passwords then | Get a new password with `docker compose -f compose.yaml -f compose.dev.yaml exec api opencde user set-password inspection_manager`, or [start over](#start-over) |
+| `dependency failed to start: container dataregium-graph-1 is unhealthy` | A password of fewer than 16 characters, which Neo4j refuses (`docker compose logs graph` says `A password must be at least 16 characters`), or a database volume left by an earlier installation with another password | Correct the password and run the `up` command again. For the old volume, see [Start over](#start-over) |
+| `port is already allocated`, `Ports are not available` or `address already in use` | Another program holds 8000, 7484 or 7697, perhaps an earlier Dataregium (`docker ps` shows it) | Stop it, or set other ports with `OPENCDE_DEV_PORT`, `OPENCDE_DEV_NEO4J_HTTP_PORT` and `OPENCDE_DEV_NEO4J_BOLT_PORT` in `.env` and use your port instead of 8000 from then on |
+| The containers of another folder are replaced | Two checkouts on one machine share the Compose project name `dataregium` | Give the second one `COMPOSE_PROJECT_NAME=dataregium-2` and other `OPENCDE_DEV_*` ports in its `.env` |
+| `the database is not empty` | `opencde seed` has already run and printed the passwords then | Get a new password with `docker compose exec api opencde user set-password inspection_manager`, or [start over](#start-over) |
 | `python` is not found, or the Microsoft Store opens | The command has another name on this machine | Use `py` or `python3` |
 | A list of files instead of the app | The web server runs in the outer folder | Stop it with Ctrl+C and start it in the folder that holds `index.html` |
 | An old version of the app, or something else entirely | Something else answers on port 8080; on Windows a second web server can start on the same port without an error | Use another port, `python -m http.server 8090 --bind 127.0.0.1`, and open `http://127.0.0.1:8090/` |
 | *The app can register itself with the server only when it runs from a web server …* | The app was opened from the folder | Open `http://127.0.0.1:8080/` |
-| *Could not reach 127.0.0.1:8000 …* | Kontroll is not running, or the address is mistyped | <http://127.0.0.1:8000/readyz> must answer. The address is `http://127.0.0.1:8000` with nothing after it |
+| *Could not reach 127.0.0.1:8000 …* | Dataregium is not running, or the address is mistyped | <http://127.0.0.1:8000/readyz> must answer. The address is `http://127.0.0.1:8000` with nothing after it |
 | *The server does not let the app register itself …* | `OPENCDE_DYNAMIC_CLIENT_REGISTRATION` is not `true` | Change `.env`, run the `up` command again, and press *Add source* again |
 | *The registration failed:* … `Redirect URIs to http://localhost are not allowed here` | The app was opened on `localhost`, which the server does not accept as the way back | Open `http://127.0.0.1:8080/` and add the source there |
-| *The registration failed:* … `rate_limited` | More than 60 registrations within an hour; every *Add source* with an empty *Client id* is one | `docker compose -f compose.yaml -f compose.dev.yaml restart api` empties the counter |
+| *The registration failed:* … `rate_limited` | More than 60 registrations within an hour; every *Add source* with an empty *Client id* is one | `docker compose restart api` empties the counter |
 | *Internet access for … is not allowed.* | *Deny* was pressed | Allow it under *Manage*, *Workspace*, *Internet access*, and try again |
 | *The browser blocked the sign-in window …* | The browser's pop-up blocker | Allow pop-ups for `http://127.0.0.1:8080` and press *Sign in* again |
 | In the pop-up: *Cannot continue* and *Unknown client.* | The server has forgotten the app's registration, usually after `down -v` | Close the pop-up and reload the app, since *Sign in* otherwise keeps spinning for five minutes. Delete the source with the cross beside it under *Added sources* and add it again |
 | In the pop-up: *Cannot continue* and *The redirect URI is not registered for this client.* | *Client id* was filled in, for instance from the output of `opencde seed` | Close the pop-up and reload the app. Delete the source with the cross beside it under *Added sources* and add it again with *Client id* empty |
 | In the pop-up: *The user name or password is not correct.* | Every user has their own password from `opencde seed` | Use the right one, or get a new one as above |
 | *Too many failed attempts for this user name …* | Five wrong passwords in a row make the server wait, at most 15 minutes | Wait for as long as it says, and use the password from `opencde seed` |
-| *The form has expired. Please try again.* on `/signin`, or in the pop-up *Cannot continue* and *The sign-in form has expired or was tampered with. Start again.*, although you just opened the page. `docker compose -f compose.yaml -f compose.dev.yaml logs api` shows `GET /sw.js` with 404 | A service worker in your browser from another web app that once ran on `http://127.0.0.1:8000`, for instance one started with `python -m http.server` without a port. It answers with old copies of Kontroll's pages | Reload the page and try again, since Kontroll's pages remove such a worker by themselves. If the message stays, remove it by hand: `about:debugging#/runtime/this-firefox` in Firefox, `edge://serviceworker-internals` in Edge, `chrome://serviceworker-internals` in Chrome; find `127.0.0.1:8000` and choose *Unregister*. Every browser has its own, also one built into an editor. A private window has none, which shows quickly whether this is the cause. Keep other apps off port 8000 |
+| *The form has expired. Please try again.* on `/signin`, or in the pop-up *Cannot continue* and *The sign-in form has expired or was tampered with. Start again.*, although you just opened the page. `docker compose logs api` shows `foreign_service_worker_removed` | A service worker in your browser from another web app that once ran on `http://127.0.0.1:8000`, for instance one started with `python -m http.server` without a port. It answers with old copies of Dataregium's pages | Wait a few seconds, until the page has reloaded by itself, and try again, since Dataregium removes such a worker. If the message stays, remove it by hand: `about:debugging#/runtime/this-firefox` in Firefox, `edge://serviceworker-internals` in Edge, `chrome://serviceworker-internals` in Chrome; find `127.0.0.1:8000` and choose *Unregister*. Every browser has its own, also one built into an editor. A private window has none, which shows quickly whether this is the cause. Keep other apps off port 8000 |
 | *You are not a member of any project on the server.* | You signed in as `admin`, who is in no project | Press *Sign out* and then *Sign in* as `inspection_manager` |
 | *Sign in* keeps spinning | The pop-up was closed before the sign-in was finished | Reload the page |
 | The pop-up says *Kopiera adressen … / Copy the address …* | It could not reach the app's window, which was perhaps closed or reloaded meanwhile | Close the pop-up and press *Sign in* again |
@@ -196,11 +196,10 @@ Each row quotes the screen as it reads with the English names.
 
 ## Start over
 
-In the folder you started from (or anywhere, with `-p kontroll` in place of the
-two `-f` options):
+In the folder you started from (or anywhere, with `-p dataregium`):
 
 ```sh
-docker compose -f compose.yaml -f compose.dev.yaml down -v
+docker compose down -v
 ```
 
 This deletes the database and the files of the demonstration. Then run the `up` and
@@ -213,9 +212,6 @@ Ctrl+C.
 
 ## What next
 
-- [docs/client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/client-guide.md) for the APIs, the capabilities
+- [docs/en/client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/client-guide.md) for the APIs, the capabilities
   document and the error codes.
-- [docs/acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) for the checklists the pair is tested
-  with, and [docs/dataspatium-coordination.md](https://github.com/marwiss/Kontroll/blob/main/docs/dataspatium-coordination.md)
-  for what the two projects coordinate.
-- [docs/deploy/](https://github.com/marwiss/Kontroll/tree/main/docs/deploy) when the server is to run for others.
+- [docs/en/deploy/](https://github.com/marwiss/Dataregium/tree/main/docs/en/deploy) when the server is to run for others.

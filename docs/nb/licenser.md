@@ -63,6 +63,6 @@ Kartdata og de finske fra Statistikcentralen, begge under CC BY 4.0 (kildeangive
 Statistikcentralen»). Se `presets/geo/KALLA.md`. Data som hentes fra de åpne
 API-ene, omfattes av den enkelte utgiverens lisens, som vises sammen med kilden i appen.
 
-## Kontroll og Dataspatium
+## Dataregium og Dataspatium
 
-[Kontroll OpenCDE server](https://github.com/marwiss/Kontroll) er et eget verk under AGPL-3.0 og ingen del av Dataspatium. Samme person har opphavsretten til begge verkene og har 2026-11-05 tillatt to ting mellom dem: Kontroll gjengir Dataspatiums utseende (designvariablene i `src/ui/design/tokens.css` og komponentenes stiler er skrevet av der under AGPL, slik at de to ser ut som ett produkt), og Dataspatium får bruke kode og ressurser fra Kontroll, for eksempel testfiler, eksempeltekster og API-beskrivelser. Lisensene for hvert verk gjelder for øvrig uendret; alt annet de har felles (ordliste, README-struktur, feilkoder, kapabilitetsdokument), gjenskapes som fakta i hvert repositorium.
+[Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) er et eget verk under AGPL-3.0 og ingen del av Dataspatium. Samme person har opphavsretten til begge verkene og har 2026-11-05 tillatt to ting mellom dem: Dataregium gjengir Dataspatiums utseende (designvariablene i `src/ui/design/tokens.css` og komponentenes stiler er skrevet av der under AGPL, slik at de to ser ut som ett produkt), og Dataspatium får bruke kode og ressurser fra Dataregium, for eksempel testfiler, eksempeltekster og API-beskrivelser. Lisensene for hvert verk gjelder for øvrig uendret; alt annet de har felles (ordliste, README-struktur, feilkoder, kapabilitetsdokument), gjenskapes som fakta i hvert repositorium.

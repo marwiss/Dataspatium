@@ -4,7 +4,7 @@
  * Tests for a server's IFC graph in the app: what a node shows, the models and the views, hashes kept out, the answer read as a stream and
  * cut at a limit, the graph query's JSON, the workbench in Inhämta with a fake driver (the real Cytoscape draws), the card in an OpenCDE
  * source against a mocked server, the way from a model to its graph, and the local Cypher on a saved graph. The labels and the relationship
- * names are those of Kontroll's sample model, read from a real server. The real server is in opencde-live.test.js.
+ * names are those of Dataregium's sample model, read from a real server. The real server is in opencde-live.test.js.
  */
 (function () {
   'use strict';
@@ -51,7 +51,7 @@
     ['r1', 'project', 'agg', 'IS_DECOMPOSED_BY'], ['r2', 'agg', 'storey', 'RELATED_OBJECTS'], ['r3', 'wall', 'rel', 'IS_DEFINED_BY'], ['r4', 'rel', 'wall', 'RELATED_OBJECTS'],
     ['r5', 'rel', 'pset', 'RELATING_PROPERTY_DEFINITION'], ['r6', 'pset', 'gtin', 'HAS_PROPERTIES'], ['r7', 'topic', 'viewpoint', 'HAS_VIEWPOINT'], ['r8', 'viewpoint', 'component', 'HAS_COMPONENT'], ['r9', 'component', 'wall', 'SAME_AS'],
   ];
-  // The graph query's JSON (Kontroll's client guide §7).
+  // The graph query's JSON (Dataregium's client guide §7).
   const jsonNode = (key) => ({ identity: idOf(key), labels: NODES[key].labels, properties: NODES[key].properties });
   const jsonRel = (r) => ({ identity: '5:db:' + r[0], type: r[3], start: idOf(r[1]), end: idOf(r[2]), properties: {} });
   const relBy = (id) => RELS.find((r) => r[0] === id);
@@ -395,7 +395,7 @@
     const path = url.slice(BASE.length).split('?')[0].split('#')[0] || '/';
     const init = spied[spied.length - 1] || {};
     const r = (x) => Promise.resolve(x);
-    if (path === '/.well-known/kontroll') return r(world.caps ? json(world.caps) : json({ message: 'Not Found' }, 404));
+    if (path === '/.well-known/dataregium') return r(world.caps ? json(world.caps) : json({ message: 'Not Found' }, 404));
     if (path === '/foundation/versions') return r(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
     if (path === '/foundation/1.0/auth') return r(json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token', oauth2_revocation_url: BASE + '/foundation/oauth2/revoke' }));
     if (path === '/foundation/oauth2/token') return r(json({ access_token: 'tok', refresh_token: 'ref', expires_in: 3600, scope: world.scope }));
@@ -408,7 +408,7 @@
     return r(json({ message: 'Not Found', code: 'not_found' }, 404));
   });
   const fakePopup = (url) => { const u = new URL(url); world.scope = u.searchParams.get('scope') || ''; return Promise.resolve(`${u.searchParams.get('redirect_uri')}?code=abc&state=${u.searchParams.get('state')}`); };
-  const capsWith = (extensions) => ({ server: { name: 'Kontroll', version: '2.6.0' }, apis: { bcf: '3.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'], extensions, limits: {}, links: {} });
+  const capsWith = (extensions) => ({ server: { name: 'Dataregium', version: '2.6.0' }, apis: { bcf: '3.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'], extensions, limits: {}, links: {} });
   let cdeSource = null;
   async function cardView(caps) {
     world.caps = caps;
@@ -436,9 +436,9 @@
     assert.ok(v.card().querySelector('[data-ifcgraph-bolt]'), 'but a Neo4j source can');
     v.view.destroy(); v.host.remove();
     // Bolt announced: the address is told, and offered to the dialog.
-    v = await cardView(capsWith({ ifcgraph: { enabled: true, bolt: 'bolt+s://kontroll.example.org:7687' } }));
+    v = await cardView(capsWith({ ifcgraph: { enabled: true, bolt: 'bolt+s://dataregium.example.org:7687' } }));
     await settle(v.view);
-    assert.ok(v.card().textContent.includes(t('ifcgraph.card.bolt', { url: 'bolt+s://kontroll.example.org:7687' })), 'the announced address');
+    assert.ok(v.card().textContent.includes(t('ifcgraph.card.bolt', { url: 'bolt+s://dataregium.example.org:7687' })), 'the announced address');
     v.view.destroy(); v.host.remove();
     return 'ok';
   }, 30000);
@@ -479,10 +479,10 @@
   }, 90000);
 
   test('ifc graph: a model from a CDE opens its graph, on a Neo4j source of the same machine if there is one', async (assert) => {
-    assert.equal(graphSource.machineOf('127.0.0.1:8010'), 'localhost'); assert.equal(graphSource.machineOf('LOCALHOST:7707'), 'localhost'); assert.equal(graphSource.machineOf('[::1]:7707'), 'localhost'); assert.equal(graphSource.machineOf('kontroll.example.org:443'), 'kontroll.example.org');
-    const cde = { connectorId: cdeSource.id, host: 'kontroll.example.org', documentId: 'doc-1', versionIndex: 1 };
+    assert.equal(graphSource.machineOf('127.0.0.1:8010'), 'localhost'); assert.equal(graphSource.machineOf('LOCALHOST:7707'), 'localhost'); assert.equal(graphSource.machineOf('[::1]:7707'), 'localhost'); assert.equal(graphSource.machineOf('dataregium.example.org:443'), 'dataregium.example.org');
+    const cde = { connectorId: cdeSource.id, host: 'dataregium.example.org', documentId: 'doc-1', versionIndex: 1 };
     assert.equal((await graphSource.connectorFor(cde)).id, cdeSource.id, 'no Neo4j source there: the CDE source itself');
-    const bolt = await boltSource('bolt://kontroll.example.org:7687');
+    const bolt = await boltSource('bolt://dataregium.example.org:7687');
     assert.equal((await graphSource.connectorFor(cde)).id, bolt.id, 'a Neo4j source on the same machine goes first');
     assert.equal(await graphSource.connectorFor({ connectorId: 'gone', host: 'nowhere.example.org' }), null);
     // The request goes through the store, and is taken once by the source it names.
@@ -529,7 +529,7 @@
     assert.equal((await cypher.run(meta.id, 'MATCH (w:IfcWallStandardCase) RETURN w.Name')).rows.length, 1, 'and its own class');
     assert.equal((await cypher.run(meta.id, 'MATCH (w:IfcSlab) RETURN w.Name')).rows.length, 0, 'but not another');
     const report = await cypher.run(meta.id, "MATCH (w:IfcWall)-[:IS_DEFINED_BY]->(:IfcRelDefinesByProperties)-[:RELATING_PROPERTY_DEFINITION]->(:IfcPropertySet {Name: 'Reuse'})-[:HAS_PROPERTIES]->(p:IfcPropertySingleValue {Name: 'GTIN'}) RETURN w.GlobalId, w.Name, p.NominalValue");
-    assert.deepEqual(report.rows, [['1Xezbq735AdBO_4DerG66G', 'YVT-A', '7350000000017']], 'the query from Kontroll\'s documentation, on the copy');
+    assert.deepEqual(report.rows, [['1Xezbq735AdBO_4DerG66G', 'YVT-A', '7350000000017']], 'the query from Dataregium\'s documentation, on the copy');
     const optional = await cypher.run(meta.id, 'MATCH (t:Topic) OPTIONAL MATCH (t)-[:HAS_VIEWPOINT]->(v:Viewpoint) RETURN t.title, v.guid');
     assert.deepEqual(optional.rows, [['Check the reuse marking', 'v-1']], 'labels inside OPTIONAL MATCH too');
     const plain = cypher.translate('MATCH (a:Person) RETURN a.name');

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Connector configuration format (`*.api.json`, format id "dataspatium-api/1") and a small validator.
- * The schema object doubles as documentation (see docs/api-konfiguration.md). Only the subset of
+ * The schema object doubles as documentation (see docs/sv/api-konfiguration.md). Only the subset of
  * JSON Schema that the format needs is implemented: type, required, properties, additionalProperties,
  * enum, items, pattern, minimum, minItems.
  */

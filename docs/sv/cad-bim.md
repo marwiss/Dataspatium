@@ -47,9 +47,9 @@ till panelen. Verktyget *Ärenden* i Analyseras flik Mängder räknar ärenden, 
 prioritet, ansvarig, byggdelstyp eller våning ur en sådan tabell, och SQL-startkoden får frågor för kopplingen. *Spara som
 diagram* sparar vyn med färgerna som ett modelldiagram, som dashboards, dokument och Publicera visar med teckenförklaring.
 
-Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-LPG* tar dig dit, se [grafer.md](grafer.md#ifc-lpg-på-en-kontroll-server).
+Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-LPG* tar dig dit, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
 
-Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Kontrolls [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/sv/ifc-lpg.md).
+Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/ifc-lpg.md).
 
 ## Tabellerna
 
@@ -90,7 +90,7 @@ Varje resultat kan sparas som datamängd.
 
 ## IfcOpenShell i appen
 
-Appen kan läsa, kontrollera och ändra IFC-modeller med IfcOpenShell, samma bibliotek som Kontroll bygger på. Det
+Appen kan läsa, kontrollera och ändra IFC-modeller med IfcOpenShell, samma bibliotek som Dataregium bygger på. Det
 körs i Python i webbläsaren, hämtas första gången det används (cirka 13 MB, efter ditt samtycke för komponenter) och sparas
 sedan i webbläsaren. Inget skickas någonstans; modellen lämnar inte datorn.
 
@@ -133,7 +133,7 @@ IfcOpenShell är LGPL-3.0 och hämtas oförändrat som pinnade hjul från IfcOpe
 
 Kortet **Validera modellen** i Hantera samlar kontrollerna av en IFC-modell, med det senaste resultatet av varje.
 
-- **Serverns kontroll** finns för en modell som hämtats som dokumentversion från ett CDE. Kontroll (från 3.0.0) kontrollerar
+- **Serverns kontroll** finns för en modell som hämtats som dokumentversion från ett CDE. Dataregium (från 3.0.0) kontrollerar
   varje uppladdad IFC-fil mot IFC-schemat och, när servern har dem installerade, mot buildingSMART:s regler (ifc-gherkin-rules), och
   lägger resultatet i versionens metadata. *Hämta serverns kontroll* läser det: inga fynd, fynd som bara är varningar, fynd med fel,
   väntar på kontroll eller kunde inte kontrolleras, och när och med vilka regler. Appen frågar servern först när du trycker på

@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * A server's graph, live, in Inhämta: a Cypher editor, the answer as a table and as a drawing, and the IFC models on Kontroll with ready-made
+ * A server's graph, live, in Inhämta: a Cypher editor, the answer as a table and as a drawing, and the IFC models on Dataregium with ready-made
  * views. A node's neighbours, properties and issues are fetched from the server when asked for and added to the drawing; what is kept
  * becomes a dataset with "Spara som graf" or "Spara som datamängd". Nothing is stored until then. The transport comes from the caller
  * (`api/graph-source`), so the same view serves a Neo4j source over Bolt and the graph query of an OpenCDE source.
@@ -216,7 +216,7 @@
         const list = connector.queries || [];
         replace(keptEl, list.length ? h('div', { class: 'dm-row-wrap' }, h('span', { class: 'dm-help dm-xs', text: t('neo4j.query.saved') }), list.slice(0, 8).map((q) => basic.button({ label: q.name, size: 'sm', variant: 'ghost', title: q.cypher, onClick: () => { s.query = q.cypher; editor.value = q.cypher; run(); } }))) : null);
       }
-      /** Starter queries for Kontroll's IFC graph; choosing one puts it in the editor, to edit and run. */
+      /** Starter queries for Dataregium's IFC graph; choosing one puts it in the editor, to edit and run. */
       function examplesRow() {
         const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('neo4j.examples'), inline: true, 'data-neo4j-example': '' }));
         sel.options = [{ value: '', label: t('neo4j.examples') }].concat(neo4j.EXAMPLES.map((x) => ({ value: x.id, label: t('neo4j.example.' + x.id) })));

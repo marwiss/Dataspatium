@@ -1,6 +1,6 @@
-# Dataspatium R helpers, sourced into every R session. User documentation (Swedish): docs/r-guide.md.
+# Dataspatium R helpers, sourced into every R session. User documentation (Swedish): docs/sv/r-guide.md.
 #
-# Datasets are exchanged with the app as SQLite files in /data (see docs/format.md for the schema):
+# Datasets are exchanged with the app as SQLite files in /data (see docs/sv/format.md for the schema):
 #   dm_list()            datasets available in this session
 #   dm_read("Namn")      read a dataset as a data.frame with restored types
 #   dm_write(df, "Namn") hand a data.frame back to the app as a new dataset

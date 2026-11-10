@@ -3,7 +3,7 @@
 /**
  * Performance measurements (tests/perf.html): a large dataset is created in chunks, then paging, SQL
  * aggregation and dm_read() in R are timed. Targets from the plan are reported, not enforced, except for
- * correctness; the numbers end up in docs/utveckling.md.
+ * correctness; the numbers end up in the development notes kept outside the repo (.claude/plans/underlag/utveckling.md).
  */
 (function () {
   'use strict';

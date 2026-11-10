@@ -1,6 +1,6 @@
 # Licenser
 
-Det här är en förklaring på svenska. Den fullständiga licenstexten i [LICENSE](../LICENSE) gäller. Texten är ingen
+Det här är en förklaring på svenska. Den fullständiga licenstexten i [LICENSE](../../LICENSE) gäller. Texten är ingen
 juridisk rådgivning.
 
 ## Dataspatiums egen kod
@@ -30,7 +30,7 @@ Vill du använda Dataspatium på andra villkor, öppna ett ärende (issue) i rep
 ## Tredjepartskomponenter
 
 Allt under `vendor/` är tredjepartskod med egna licenser som inte påverkas av Dataspatiums licens. Varje bibliotek,
-dess version och licens finns i [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md), tillsammans med
+dess version och licens finns i [THIRD_PARTY_LICENSES.md](../../THIRD_PARTY_LICENSES.md), tillsammans med
 licenstexterna.
 
 | Komponent | Licens | Vad det innebär |
@@ -64,6 +64,6 @@ och spridas med källangivelse; de norska kommer ur Kartverkets N1000 Kartdata o
 båda under CC BY 4.0 (källangivelse "© Kartverket" respektive "Tilastokeskus / Statistikcentralen"). Se
 `presets/geo/KALLA.md`.
 
-## Kontroll och Dataspatium
+## Dataregium och Dataspatium
 
-[Kontroll OpenCDE server](https://github.com/marwiss/Kontroll) är ett eget verk under AGPL-3.0 och ingen del av Dataspatium. Samma person äger upphovsrätten till båda verken och har 2026-11-05 tillåtit två saker mellan dem: Kontroll återger Dataspatiums utseende (designvariablerna i `src/ui/design/tokens.css` och komponenternas stilar är avskrivna där under AGPL, så att de två ser ut som en produkt), och Dataspatium får använda kod och resurser ur Kontroll, till exempel testfiler, exempeltexter och API-beskrivningar. Licenserna för respektive verk gäller i övrigt oförändrade; allt annat som är gemensamt (ordlista, README-struktur, felkoder, kapabilitetsdokument) återskapas som fakta i vardera repot.
+[Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) är ett eget verk under AGPL-3.0 och ingen del av Dataspatium. Samma person äger upphovsrätten till båda verken och har 2026-11-05 tillåtit två saker mellan dem: Dataregium återger Dataspatiums utseende (designvariablerna i `src/ui/design/tokens.css` och komponenternas stilar är avskrivna där under AGPL, så att de två ser ut som en produkt), och Dataspatium får använda kod och resurser ur Dataregium, till exempel testfiler, exempeltexter och API-beskrivningar. Licenserna för respektive verk gäller i övrigt oförändrade; allt annat som är gemensamt (ordlista, README-struktur, felkoder, kapabilitetsdokument) återskapas som fakta i vardera repot.

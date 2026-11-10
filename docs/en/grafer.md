@@ -122,9 +122,9 @@ graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query
 runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
 only from a page over http://. When the answer holds nodes, they are drawn as a graph as well.
 
-## IFC-LPG on a Kontroll server
+## IFC-LPG on a Dataregium server
 
-Kontroll turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
+Dataregium turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
 the IFC attributes as properties, and relationships named after the attributes (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
 `HAS_PROPERTIES`). The graph lives on the server and can be far larger than is reasonable to fetch. So it is drawn and queried
 directly from *Import*, and nothing is saved until you ask for it.
@@ -161,14 +161,14 @@ the element in 3D if the model is in the workspace.
 In the box you write your own Cypher, all the server understands, but only reading. If you ask only for nodes (`RETURN c, w`), the
 app also fetches the relationships between them, as Neo4j Browser does. The app says when an answer has reached the query's
 `LIMIT` or was cut, and reading stops at 20,000 rows. Answers with more than 1,500 nodes are not drawn here, but can be saved and
-opened as an overview in Process. The graph from Kontroll 3.0.0 also holds what it takes to write the file back (`<attribute>__type`, `<attribute>__step` and `StepBlock` nodes with their text). It stays out when a node is shown or saved, and can be asked for by name.
+opened as an overview in Process. The graph from Dataregium 3.0.0 also holds what it takes to write the file back (`<attribute>__type`, `<attribute>__step` and `StepBlock` nodes with their text). It stays out when a node is shown or saved, and can be asked for by name.
 
 **Save as graph** makes what you see an ordinary graph dataset: the graph view in Process, the tabs Cypher and Graph in Analyse and
 graph charts in Visualise. The class becomes the node's label and all labels stay, so `MATCH (w:IfcWall)` also finds an
 `IfcWallStandardCase` in the copy. In the Cypher tab you can turn on **Run on the server** for a graph saved from here, and the
 server then answers with all of Cypher against the whole graph, instead of the subset against the copy.
 
-An IFC model fetched from Kontroll has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
+An IFC model fetched from Dataregium has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
 graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
 ## More tools in the Graph tab

@@ -1,6 +1,6 @@
-"""The shared glossary: the words Dataspatium and Kontroll have in common, in seven languages, as presets/i18n-shared.json. The keys
+"""The shared glossary: the words Dataspatium and Dataregium have in common, in seven languages, as presets/i18n-shared.json. The keys
 are listed in presets/shared-keys.txt (one per line, # comments); the values come from src/ui/i18n/<lang>.js, so the app's own
-translations are the source and Kontroll compares its files against the JSON. Run from the repo root; --check fails when the JSON on
+translations are the source and Dataregium compares its files against the JSON. Run from the repo root; --check fails when the JSON on
 disk differs from what the i18n files give (CI and tests)."""
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def build() -> dict:
     if missing:
         raise SystemExit('missing in i18n files: ' + ', '.join(f'{l}:{k}' for l, k in missing[:20]))
     return {
-        'name': 'Dataspatium and Kontroll shared glossary',
+        'name': 'Dataspatium and Dataregium shared glossary',
         'version': 1,
         'source': 'Dataspatium src/ui/i18n/<lang>.js, chosen by presets/shared-keys.txt; regenerate with python tools/shared_glossary.py',
         'languages': LANGS,

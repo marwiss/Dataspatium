@@ -120,9 +120,9 @@ dem som et grafdatasett; ellers *Lagre som datasett*. **Lagre spørringen** legg
 kjøres igjen med ett klikk. Bolt over WebSocket omfattes ikke av CORS; en egen server uten TLS (`bolt://`) nås bare fra
 en side over http://. Inneholder svaret noder, tegnes de også som en graf.
 
-## IFC-LPG på en Kontroll-server
+## IFC-LPG på en Dataregium-server
 
-Kontroll gjør hver opplastet IFC-fil til en graf: én node per entitet, med klassen og alle dens overklasser som etiketter og
+Dataregium gjør hver opplastet IFC-fil til en graf: én node per entitet, med klassen og alle dens overklasser som etiketter og
 IFC-attributtene som egenskaper, og relasjoner som heter som attributtene (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Grafen ligger på serveren og kan være langt større enn det er rimelig å hente hjem. Derfor tegnes og spørres den direkte fra
 *Hent*, og ingenting lagres før du ber om det.
@@ -158,14 +158,14 @@ modellen finnes i arbeidsområdet.
 
 I feltet skriver du din egen Cypher, alt serveren forstår, men bare lesende. Spør du bare etter noder (`RETURN c, w`), henter appen
 også relasjonene mellom dem, slik Neo4j Browser gjør. Appen sier fra når et svar har nådd spørringens `LIMIT` eller er klippet, og
-lesingen stopper ved 20 000 rader. Svar med mer enn 1 500 noder tegnes ikke her, men kan lagres og åpnes som oversikt i Bearbeid. Grafen fra Kontroll 3.0.0 bærer også det som trengs for å skrive filen tilbake (`<attributt>__type`, `<attributt>__step` og `StepBlock`-noder med teksten sin). Det utelates når en node vises eller lagres, men kan spørres etter med navn.
+lesingen stopper ved 20 000 rader. Svar med mer enn 1 500 noder tegnes ikke her, men kan lagres og åpnes som oversikt i Bearbeid. Grafen fra Dataregium 3.0.0 bærer også det som trengs for å skrive filen tilbake (`<attributt>__type`, `<attributt>__step` og `StepBlock`-noder med teksten sin). Det utelates når en node vises eller lagres, men kan spørres etter med navn.
 
 **Lagre som graf** gjør det du ser, til et vanlig grafdatasett: grafvisningen i Bearbeid, fanene Cypher og Graf i Analyser og
 grafdiagrammer i Visualiser. Klassen blir nodens etikett og alle etiketter følger med, så `MATCH (w:IfcWall)` også finner en
 `IfcWallStandardCase` i kopien. I fanen Cypher kan du slå på **Kjør på serveren** for en graf som er lagret herfra, og da svarer
 serveren med all Cypher mot hele grafen i stedet for delmengden mot kopien.
 
-En IFC-modell hentet fra Kontroll har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbeid. Den åpner modellens
+En IFC-modell hentet fra Dataregium har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbeid. Den åpner modellens
 graf i Hent, i en Neo4j-kilde på samme datamaskin hvis det finnes en, ellers i OpenCDE-kilden.
 
 ## Flere verktøy i fanen Graf

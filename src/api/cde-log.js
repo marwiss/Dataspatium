@@ -22,7 +22,7 @@
 
     /** Path patterns to the API and operation of the specifications, most specific first. */
     const OPERATIONS = [
-      [/\/\.well-known\/kontroll$/, 'kontroll', 'capabilities'],
+      [/\/\.well-known\/(dataregium|kontroll)$/, 'dataregium', 'capabilities'],
       [/\/foundation\/versions$/, 'foundation', 'versions'],
       [/\/bcf\/versions$/, 'bcf', 'versions'],
       [/\/bcf\/[\d.]+\/auth$/, 'bcf', 'auth'],

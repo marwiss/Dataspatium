@@ -48,9 +48,9 @@ rakennusosat tilan, tyypin, prioriteetin, vastuuhenkilön, rakennusosatyypin tai
 SQL-aloituskoodi saa kyselyt liitokselle. *Tallenna kaaviona* tallentaa näkymän väreineen mallikaaviona, jonka koontinäytöt,
 asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
-Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-LPG* vie sinut sinne, katso [grafer.md](grafer.md#ifc-lpg-kontroll-palvelimella).
+Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-LPG* vie sinut sinne, katso [grafer.md](grafer.md#ifc-lpg-dataregium-palvelimella).
 
-Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Kontrollin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/ifc-lpg.md).
+Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Dataregiumin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/ifc-lpg.md).
 
 ## Taulukot
 
@@ -91,7 +91,7 @@ Jokaisen tuloksen voi tallentaa aineistona.
 
 ## IfcOpenShell sovelluksessa
 
-Sovellus voi lukea, tarkistaa ja muokata IFC-malleja IfcOpenShellillä, samalla kirjastolla, johon Kontroll
+Sovellus voi lukea, tarkistaa ja muokata IFC-malleja IfcOpenShellillä, samalla kirjastolla, johon Dataregium
 perustuu. Se toimii Pythonissa selaimessa, haetaan ensimmäisellä käyttökerralla (noin 13 Mt, komponenttien käyttöluvan jälkeen) ja
 tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei poistu koneelta.
 
@@ -137,7 +137,7 @@ luettelosta, katso [Lisenssit](licenser.md).
 
 Hallitse-tilan kortti **Validoi malli** kokoaa IFC-mallin tarkistukset ja kunkin viimeisimmän tuloksen.
 
-- **Palvelimen tarkistus** on mallilla, joka on haettu asiakirjaversiona CDE:stä. Kontroll (3.0.0:sta alkaen) tarkistaa jokaisen
+- **Palvelimen tarkistus** on mallilla, joka on haettu asiakirjaversiona CDE:stä. Dataregium (3.0.0:sta alkaen) tarkistaa jokaisen
   ladatun IFC-tiedoston IFC-skeemaa vasten ja, kun palvelimelle on asennettu ne, buildingSMARTin sääntöjä (ifc-gherkin-rules)
   vasten, ja tallentaa tuloksen version metatietoihin. *Hae palvelimen tarkistus* lukee sen: ei löydöksiä, vain varoituksia, löydöksiä
   myös virheineen, odottaa tarkistusta tai ei voitu tarkistaa, sekä milloin ja millä säännöillä. Sovellus kysyy palvelimelta vasta,

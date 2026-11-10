@@ -99,7 +99,7 @@ so there you are told what they hold and choose yourself whether they come along
 
 ## To the CDE
 
-The tab *To the CDE* sends a dataset to a project on an OpenCDE server such as Kontroll. Choose the server, sign in and choose
+The tab *To the CDE* sends a dataset to a project on an OpenCDE server such as Dataregium. Choose the server, sign in and choose
 the project; then choose whether the dataset is written in a file format or the original file is sent, and whether it goes
 through the Documents API, where the server's own page asks for title, version and project and the file then goes up in parts,
 or as a BCF document, which takes the file only. The dataset is written from a copy that has been through the review, and

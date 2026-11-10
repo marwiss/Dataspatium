@@ -12,7 +12,7 @@
   const D = globalThis.Dataspatium;
   D.define('ui/help', ['ui/base', 'ui/basic', 'ui/overlays', 'docgen/markdown'], (base, basic, overlays, markdown) => {
     const { h, t, i18n, replace } = base;
-    /** Documents in reading order (file names without .md; Swedish in docs/, other languages in docs/<lang>/). */
+    /** Documents in reading order (file names without .md; every language in its own folder docs/<lang>/). */
     const DOCS = ['kom-igang', 'anvandarguide', 'lagen', 'soka', 'bearbeta', 'visualisera', 'anteckningsbok', 'regex', 'format', 'api-konfiguration', 'kallor', 'snabbstart', 'r-guide', 'python', 'dokument', 'kartor', 'planer', 'grafer', 'cad-bim', 'floden', 'statistik', 'insamling', 'dokumentmallar', 'dela', 'mobil', 'faq', 'licenser', 'sakerhet'];
     /** Modes with a document of their own; the others open the chapter of docs/lagen.md that carries the mode's name. */
     const MODE_DOCS = { soka: 'soka', bearbeta: 'bearbeta', visualisera: 'visualisera', dela: 'dela' };
@@ -35,7 +35,7 @@
 
     /** A path relative to a document's folder, normalised to a repository path such as docs/images/x.png. */
     function resolvePath(lang, href) {
-      const segs = lang === 'sv' ? ['docs'] : ['docs', lang];
+      const segs = ['docs', lang];
       for (const part of String(href).split('/')) {
         if (part === '..') segs.pop();
         else if (part && part !== '.') segs.push(part);
@@ -54,8 +54,8 @@
       const [path, hash] = href.split('#');
       const section = hash ? decodeURIComponent(hash) : undefined;
       const full = resolvePath(lang, path);
-      const m = full.match(/^docs(?:\/([a-z]{2}))?\/([a-z0-9-]+)\.md$/);
-      if (m && DOCS.includes(m[2]) && (m[1] || 'sv') === lang) return { doc: m[2], section };
+      const m = full.match(/^docs\/([a-z]{2})\/([a-z0-9-]+)\.md$/);
+      if (m && DOCS.includes(m[2]) && m[1] === lang) return { doc: m[2], section };
       return { url: REPO + full + (hash ? '#' + hash : '') };
     }
 

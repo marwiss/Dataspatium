@@ -385,7 +385,7 @@
           const { mode, object } = route;
           const state = this.store.get();
           const byName = (o) => state.datasets.find((d) => d.shortName === o || d.id === o || d.name === o) || null;
-          // #/inhamta/opencde?server=https://…[&project=…&document=…&version=…] : a server (Kontroll's "Open in Dataspatium") lands in
+          // #/inhamta/opencde?server=https://…[&project=…&document=…&version=…] : a server (Dataregium's "Open in Dataspatium") lands in
           // the source dialog, filled in, or opens directly when it is a source already; a named project is chosen and a document fetched.
           if (mode === 'inhamta' && /^opencde(\?|$)/.test(object)) {
             const q = new URLSearchParams(object.split('?')[1] || '');

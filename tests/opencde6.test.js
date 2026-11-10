@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Tests for 2.34 part 1 against a mocked server: the capabilities document (/.well-known/kontroll) read and cached, a server without it,
+ * Tests for 2.34 part 1 against a mocked server: the capabilities document (/.well-known/dataregium) read and cached, a server without it,
  * the server's error codes in the user's words, the source view naming the extensions, and the log card pointing at the server's log.
  */
 (function () {
@@ -16,6 +16,7 @@
   const http = D.require('api/http');
   const BASE = 'dataspatium-asset://tests/opencde6';
   const PLAIN = 'dataspatium-asset://tests/opencde6-plain';
+  const OLD = 'dataspatium-asset://tests/opencde6-old';
   const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   async function waitFor(fn, timeoutMs = 5000, label = 'condition') {
@@ -28,7 +29,7 @@
   const spyRequest = (req) => { spy.requests.push(req); return realRequest(req); };
   http.request = spyRequest;
   const json = (data, status) => ({ kind: 'text', data: JSON.stringify(data), status });
-  const CAPS = { server: { name: 'Kontroll OpenCDE server', version: '0.1.0', public_url: 'http://localhost:8000' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'],
+  const CAPS = { server: { name: 'Dataregium OpenCDE server', version: '0.1.0', public_url: 'http://localhost:8000' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, scopes: ['profile', 'bcf', 'documents', 'admin'],
     extensions: { dynamic_client_registration: { enabled: true, public_clients: true, unused_days: 30, url: '/foundation/oauth2/reg' }, request_log: { enabled: true, retention_hours: 72, url: '/admin/api/requests' }, admin_api: { enabled: true, version: 1, url: '/admin/api', scope: 'admin' }, ifcgraph: { enabled: true, bolt: null }, graph_query: { enabled: false } },
     limits: { max_upload_bytes: 104857600, max_image_bytes: 10485760, access_token_ttl_seconds: 3600 }, links: { dataspatium: null } };
   const world = { tokens: 0, capsHits: 0 };
@@ -46,7 +47,7 @@
   D.net.virtual('tests/opencde6/', (url) => {
     const rest = url.startsWith(BASE) ? url.slice(BASE.length) : new URL(url).pathname;
     const path = rest.split('?')[0].split('#')[0] || '/';
-    if (path === '/.well-known/kontroll') { world.capsHits++; return Promise.resolve(json(CAPS)); }
+    if (path === '/.well-known/dataregium') { world.capsHits++; return Promise.resolve(json(CAPS)); }
     const c = common(path);
     return Promise.resolve(c || { kind: 'text', data: JSON.stringify({ message: 'Not Found' }), status: 404 });
   });
@@ -56,6 +57,14 @@
     if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: PLAIN + '/a', oauth2_token_url: PLAIN + '/t' }));
     // The token endpoint keeps RFC 6749's shape: this server has forgotten the client.
     if (path === '/t') return Promise.resolve(json({ error: 'invalid_client', error_description: 'Unknown client' }, 401));
+    const c = common(path);
+    return Promise.resolve(c || { kind: 'text', data: JSON.stringify({ message: 'Not Found' }), status: 404 });
+  });
+  // A server from before the name change: the document only at the old address.
+  D.net.virtual('tests/opencde6-old/', (url) => {
+    const rest = url.startsWith(OLD) ? url.slice(OLD.length) : new URL(url).pathname;
+    const path = rest.split('?')[0].split('#')[0] || '/';
+    if (path === '/.well-known/kontroll') return Promise.resolve(json({ ...CAPS, server: { name: 'Kontroll OpenCDE server', version: '3.0.0' } }));
     const c = common(path);
     return Promise.resolve(c || { kind: 'text', data: JSON.stringify({ message: 'Not Found' }), status: 404 });
   });
@@ -76,7 +85,11 @@
     const none = await opencde.capabilities(plain);
     assert.equal(none.present, false); assert.deepEqual(none.extensions, {}); assert.equal(opencde.hasExtension(none, 'admin_api'), false);
     const entry = cdeLog.list(connector.id).find((e) => e.operation === 'capabilities');
-    assert.ok(entry && entry.api === 'kontroll', 'the request is in the log as kontroll.capabilities');
+    assert.ok(entry && entry.api === 'dataregium', 'the request is in the log as dataregium.capabilities');
+    const old = (await families.createConnector('opencde', { baseUrl: OLD, clientId: 'dataspatium', clientSecret: '' })).connector;
+    const legacy = await opencde.capabilities(old);
+    assert.equal(legacy.present, true, 'an older server answers on /.well-known/kontroll'); assert.equal(legacy.server.version, '3.0.0');
+    assert.ok(cdeLog.list(old.id).filter((e) => e.operation === 'capabilities').length >= 2, 'both addresses were asked and logged as capabilities');
     return 'ok';
   }, 30000);
 
@@ -130,11 +143,11 @@
     return 'ok';
   }, 30000);
 
-  test('opencde VI: the popup addresses carry the app\'s language for Kontroll and are left alone for other servers', async (assert) => {
+  test('opencde VI: the popup addresses carry the app\'s language for Dataregium and are left alone for other servers', async (assert) => {
     const seen = [];
     const spyPopup = (url) => { seen.push(url); return fakePopup(url); };
     await opencde.login(connector, { popup: spyPopup, redirectUri: REDIRECT });
-    assert.equal(new URL(seen[0]).searchParams.get('lang'), D.require('ui/i18n').language(), 'Kontroll gets lang: ' + seen[0]);
+    assert.equal(new URL(seen[0]).searchParams.get('lang'), D.require('ui/i18n').language(), 'Dataregium gets lang: ' + seen[0]);
     assert.equal(new URL(seen[0]).searchParams.get('response_type'), 'code', 'the OAuth parameters stay');
     assert.equal(new URL(seen[0]).searchParams.get('code_challenge_method'), 'S256');
     await opencde.login(plain, { popup: spyPopup, redirectUri: REDIRECT }).catch(() => null);
@@ -194,6 +207,33 @@
         assert.ok(err instanceof Error && err.message === t('opencde.err.closed'), 'closed by the user: ' + (err && err.message));
       }
     } finally { window.open = realOpen; page.close(); }
+    return 'ok';
+  }, 20000);
+
+  test('opencde VI: the client id is optional, and a waiting popup can be cancelled from the view', async (assert) => {
+    assert.ok(!opencde.FAMILY.fields.find((f) => f.name === 'clientId').required, 'the dialog does not demand a client id: the app registers itself when it is left empty');
+    await opencde.logout(plain).catch(() => {});
+    const realOpen = window.open; const realLogin = opencde.login; const realRedirect = opencde.redirectUri;
+    const fake = { closed: false, close() { this.closed = true; } };
+    window.open = () => /** @type {any} */ (fake);
+    opencde.redirectUri = () => REDIRECT;
+    opencde.login = () => opencde.popupFlow('https://cde.example.org/auth');
+    const view = D.require('ui/api/opencde-view');
+    const ui = view.create({ connector: plain, ctx: {}, log: () => {}, onDataset: () => {} });
+    document.body.appendChild(ui.el);
+    try {
+      const p = ui.signIn();
+      const cancel = await waitFor(() => ui.el.querySelector('[data-opencde-cancel]'), 3000, 'the cancel button while the popup is open');
+      await waitFor(() => opencde.popupPending(), 3000, 'the popup flow waiting');
+      /** @type {HTMLElement} */ (cancel).click();
+      await p;
+      assert.equal(ui.state.busy, '', 'the view is free again');
+      assert.equal(ui.state.error, '', 'stopping the wait is not an error');
+      assert.ok(!ui.state.manual, 'and no fallback to the manual flow');
+      assert.ok(fake.closed, 'the popup was closed');
+      assert.equal(opencde.popupPending(), false, 'nothing waits any more');
+      assert.ok(!ui.el.querySelector('[data-opencde-cancel]'), 'the cancel button is gone');
+    } finally { window.open = realOpen; opencde.login = realLogin; opencde.redirectUri = realRedirect; ui.destroy(); ui.el.remove(); }
     return 'ok';
   }, 20000);
 

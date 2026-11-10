@@ -125,7 +125,7 @@ och **Punktkarta** (punkter på koordinater, med storlek och färg efter värden
 Sverige, Danmark, Norge och Finland följer med appen, så en karta över kommunerna eller länen kräver ingen
 nedladdning.
 
-![Koropletkarta över folkmängd per kommun och punktkarta över mätstationer i en dashboard](images/kartor.png)
+![Koropletkarta över folkmängd per kommun och punktkarta över mätstationer i en dashboard](../images/kartor.png)
 
 ### Koropletkarta (Karta)
 

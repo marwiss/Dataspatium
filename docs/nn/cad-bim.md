@@ -47,9 +47,9 @@ status, type, ansvarleg, prioritet og månad bak felles filter, og knappen *Vis 
 eller etasje frå ein slik tabell, og SQL-startkoden får spørjingar for koplinga. *Lagre som diagram* lagrar visinga med fargane
 som eit modelldiagram, som dashbord, dokument og Publiser viser med teiknforklaring.
 
-Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IFC-LPG* tek deg dit, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-kontroll-tenar).
+Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IFC-LPG* tek deg dit, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
 
-Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/nn/ifc-lpg.md) hos Kontroll.
+Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/ifc-lpg.md) hos Dataregium.
 
 ## Tabellane
 
@@ -90,7 +90,7 @@ Kvart resultat kan lagrast som datasett.
 
 ## IfcOpenShell i appen
 
-Appen kan lese, kontrollere og endre IFC-modellar med IfcOpenShell, det same biblioteket som Kontroll byggjer på. Det
+Appen kan lese, kontrollere og endre IFC-modellar med IfcOpenShell, det same biblioteket som Dataregium byggjer på. Det
 køyrer i Python i nettlesaren, blir henta første gongen det blir brukt (om lag 13 MB, etter samtykket ditt til komponentar) og
 lagra i nettlesaren. Ingenting blir sendt nokon stad; modellen forlèt ikkje datamaskina.
 
@@ -135,7 +135,7 @@ IfcOpenShell er LGPL-3.0 og blir henta uendra som fastlåste wheels frå IfcOpen
 
 Kortet **Valider modellen** i Handter samlar kontrollane av ein IFC-modell, med det siste resultatet av kvar.
 
-- **Kontrollen til tenaren** finst for ein modell som er henta som dokumentversjon frå eit CDE. Kontroll (frå 3.0.0) kontrollerer
+- **Kontrollen til tenaren** finst for ein modell som er henta som dokumentversjon frå eit CDE. Dataregium (frå 3.0.0) kontrollerer
   kvar opplasta IFC-fil mot IFC-skjemaet og, når tenaren har dei installerte, mot reglane til buildingSMART (ifc-gherkin-rules), og
   legg resultatet i metadataa til versjonen. *Hent kontrollen til tenaren* les det: ingen funn, funn som berre er åtvaringar, funn
   med feil, ventar på kontroll eller kunne ikkje kontrollerast, og når og med kva reglar. Appen spør tenaren først når du trykkjer på

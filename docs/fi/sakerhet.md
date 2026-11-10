@@ -1,9 +1,9 @@
 # Turvallisuus
 
 Turvallisuus on sovelluksen ensimmäinen vaatimus. Dataspatium pitää datamääräsi, API-avaimesi ja tunnuksesi selaimessa ja
-puhuu palvelimille (avoimet rajapinnat, OpenCDE-palvelimet kuten Kontroll) vain, kun pyydät sitä. Politiikka on sama kuin
-Kontrollin, koska kahta kehitetään parina ja julkaistaan samoilla numeroilla; Kontrollin puolisko on sen repossa kansiossa
-[docs/security/](https://github.com/marwiss/Kontroll/tree/main/docs/fi/security). Haavoittuvuuden ilmoittaminen kuvataan
+puhuu palvelimille (avoimet rajapinnat, OpenCDE-palvelimet kuten Dataregium) vain, kun pyydät sitä. Politiikka on sama kuin
+Dataregiumin, koska kahta kehitetään parina ja julkaistaan samoilla numeroilla; Dataregiumin puolisko on sen repossa kansiossa
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/fi/README.md#henkilötiedot). Haavoittuvuuden ilmoittaminen kuvataan
 tiedostossa [SECURITY.md](../../SECURITY.md).
 
 ## Uhkamalli
@@ -45,8 +45,8 @@ Jokaisella kontrollilla on automaattinen testi kansiossa `tests/` tai osoitin si
 ## Henkilötiedot ja säilytys
 
 Mitä sovellus tallentaa, minne ja kuinka pitkäksi aikaa. Kaikki pysyy tietokoneellasi; sovelluksen tekijälle ei lähetetä
-mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Kontrollin puolisko (mitä palvelin tallentaa sinusta) on tiedostossa
-[personal-data.md](https://github.com/marwiss/Kontroll/blob/main/docs/fi/security/personal-data.md).
+mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Dataregiumin puolisko (mitä palvelin tallentaa sinusta) on tiedostossa
+[README](https://github.com/marwiss/Dataregium/blob/main/docs/fi/README.md#henkilötiedot).
 
 | Tieto | Missä | Sisältö | Säilytys |
 |---|---|---|---|
@@ -64,7 +64,7 @@ mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Kontrollin puolis
 - Chromiumissa file://-alkuperästä kaikki paikallisesti avatut HTML-tiedostot jakavat tallennustilan. Salaisuudet on salattu,
   mutta arkaluonteinen työtila kannattaa ajaa paikalliselta palvelimelta (`python -m http.server`) tai peilata siirrettävään kansioon.
 - Chromium soveltaa palvelimen `form-action`-sääntöä myös kirjautumisen jälkeiseen uudelleenohjaukseen; palvelimen on sallittava
-  sovelluksen paluuosoite (Kontroll sallii sen).
+  sovelluksen paluuosoite (Dataregium sallii sen).
 
 ## Haavoittuvuuden ilmoittaminen
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * Tests for the shared glossary (2.34): presets/i18n-shared.json is embedded, lists seven languages, and every value is what the app's own
- * translation says, so Kontroll can compare its files against it. Also the deep link that hands a server to Inhämta.
+ * translation says, so Dataregium can compare its files against it. Also the deep link that hands a server to Inhämta.
  */
 (function () {
   'use strict';

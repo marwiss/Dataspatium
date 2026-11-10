@@ -103,7 +103,7 @@ Lähde kuvataan JSON-tiedostolla, jonka pääte on `.api.json`. Omat määrityks
 ja ne voi viedä toiminnolla **Vie määritys** jaettaviksi. Valmisasetukset ovat sovelluskansion kansiossa `presets/api/`, ja ne
 ovat hyviä lähtökohtia. Tiedoston peruskieli on ruotsi; käännökset lisätään kenttään `i18n` kielittäin, ja sovellus näyttää
 tekstit omalla kielellään. Muoto on kuvattu kokonaisuudessaan [englanninkielisessä oppaassa](../en/api-konfiguration.md) ja
-[ruotsinkielisessä](../api-konfiguration.md); kentät ovat:
+[ruotsinkielisessä](../sv/api-konfiguration.md); kentät ovat:
 
 - ylin taso: `format`, `id`, `name`, `publisher`, `description`, `docs`, `license`, `notes`, `level` (1 = ei avainta,
   2 = avain), `country` (`SE`, `DK`, `NO`, `FI`, `IS`, `FO`, `GL`, `AX`, `NORDIC`, `EU`, `INT`), `i18n`, `baseUrl`, `headers`, `auth`,

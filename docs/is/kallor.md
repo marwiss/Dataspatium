@@ -112,7 +112,7 @@ fyrirspurnir má vista á uppsprettunni. Tengingin krefst samþykkis (tilganguri
 ### OpenCDE-þjónn (BCF og Documents API)
 
 Valið **OpenCDE** undir *Bæta við uppsprettum* (fjölskyldan **OpenCDE (BCF, Documents)**, sem er einnig í *Gagnagrunnsuppspretta*) tengist þjóni sem fylgir OpenCDE-skilum
-buildingSMART, til dæmis [Kontroll](https://github.com/marwiss/Kontroll). Sláðu inn vistfang þjónsins og
+buildingSMART, til dæmis [Dataregium](https://github.com/marwiss/Dataregium). Sláðu inn vistfang þjónsins. Skildu biðlaraauðkennið eftir autt þegar þjónninn leyfir forritinu að skrá sig sjálft (sjá neðar), annars
 biðlaraauðkennið sem stjórnandi þjónsins skráði fyrir Dataspatium (opinber biðlari með endurbeiningarvistfangið
 `http://127.0.0.1:8080/oauth-callback.html` eða samsvarandi fyrir vistfangið sem forritið er þjónað frá). Uppsprettan
 opnar sýn þar sem þú skráir þig inn á þjóninn (OAuth2 með PKCE í sprettiglugga; frá file:// límir þú inn vistfangið sem
@@ -127,7 +127,7 @@ Documents API, svo forritið les útgáfuna úr `/bcf/versions` og innskráninga
 geturðu valið útgáfu sjálfur, og ef þjónninn býður fleiri geturðu skipt í sýn uppsprettunnar. Í 2.1 listar *Skrár í verkefninu* aðeins BCF-skjölin, mál hafa ekki
 raðnúmer þjónsins og ekki er hægt að eyða sjónarhorni. Á móti getur athugasemd verið svar við annarri: hnappurinn *Svara* í spjaldinu *Mál*.
 
-Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-kontroll-þjóni).
+Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
 
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
 gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla, og gagnasafnið man frá hvaða þjóni, verkefni og
@@ -136,12 +136,14 @@ gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla
 til dæmis búa til mál eða hlaða upp skjölum. Þegar gagnalindin er búin til spyr glugginn þjóninn hvar skráð er inn; svari
 þjónninn ekki þá spyr forritið aftur við fyrstu innskráningu.
 
+Meðan eigin síða þjónsins er opin í sprettiglugga (innskráning, val skjala, upphleðsla) sýnir forritið hnappinn *Hætta við*, svo að þú getir hætt að bíða ef glugginn var lokaður eða týndist.
+
 Leyfi þjónninn það skráir forritið sig sjálft sem biðlara þegar þú lætur biðlaraauðkennið vera autt, svo enginn stjórnandi þarf
 að afhenda neitt. Gagnasöfn geta einnig farið aftur til þjónsins: flipinn *Til CDE* í Deila sendir gagnasafn á hvaða sniði sem er,
 eða upprunalegu skrána, í verkefni, annaðhvort í gegnum Documents API, þar sem eigin síða þjónsins spyr um titil og útgáfu, eða sem
 BCF-skjal. Gagnasafn sem sótt var frá þjóninum má senda sem nýja útgáfu af skjali sínu.
 
-Fyrir IFC-graf Kontroll er upphafskóði í sýninni: líkönin í grafinu og nýjasta fullgerða á hvert skjal, byggingarhlutar eftir flokki, GTIN veggjanna, mál eftir stöðu,
+Fyrir IFC-graf Dataregium er upphafskóði í sýninni: líkönin í grafinu og nýjasta fullgerða á hvert skjal, byggingarhlutar eftir flokki, GTIN veggjanna, mál eftir stöðu,
 mál og byggingarhlutar þeirra, mál sem varða byggingarhluta og graf af málum, viewpoints og íhlutum. Veldu fyrirspurn, breyttu og
 keyrðu. Það krefst þess að sá sem rekur þjóninn hafi gert Bolt aðgengilegt; þróunarstaflinn gerir það, framleiðsluþjónn sjaldan.
 
@@ -155,18 +157,18 @@ einnig innihald beiðni og svars (texti, mest 64 kB; aldrei tókakall). Skráin 
 JSON eða sem gagnasafn. Forritið setur hausinn X-Request-Id á hvert kall svo að eigin skrá þjónsins megi para við skrá forritsins;
 hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
 
-Hlið þjónsins er lýst í skjölum Kontroll: [client-guide.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/client-guide.md) (hvernig biðlari tengist), [acceptance.md](https://github.com/marwiss/Kontroll/blob/main/docs/acceptance.md) (prófkeyrslur parsins) og [deploy/local.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
+Hlið þjónsins er lýst í skjölum Dataregium: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/client-guide.md) (hvernig biðlari tengist) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
 
-Kontroll lýsir viðbótum sínum í `GET /.well-known/kontroll`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
+Dataregium lýsir viðbótum sínum í `GET /.well-known/dataregium`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
 fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-LPG, graffyrirspurnir). Þjónn
 án skjalsins hefur engar viðbætur, og allt samkvæmt forskriftunum virkar þó. Villukóðar þjónsins (`code` í svarinu, til dæmis
 `reauthentication_required`) birtast á þínu tungumáli; óþekktir kóðar sýna eigin texta þjónsins. Tengillinn *Opna í Dataspatium* á
 síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…` og opnar gluggann fyrir nýja uppsprettu með slóðina
 útfyllta. Sé þjónninn þegar uppspretta opnast hann beint. Tengillinn getur einnig bent á verkefni og skjal
-(`&project=…&document=…&version=…`): verkefnið er valið og skjalið sótt sem gagnasafn þegar þú ert innskráður. Síður sem Kontroll
+(`&project=…&document=…&version=…`): verkefnið er valið og skjalið sótt sem gagnasafn þegar þú ert innskráður. Síður sem Dataregium
 opnar í sprettiglugga (innskráning, upphal, val skjala) birtast á tungumáli forritsins.
 
-**Stjórnun.** Ef þú ert stjórnandi á Kontroll-þjóni sýnir sýn uppsprettunnar spjaldið *Stjórnun* (þegar getuskjal þjónsins segir að stjórnunarforritaskilin séu virk). Hnappurinn *Skrá inn sem stjórnandi* biður um réttindin `admin`; síðan koma fliparnir Yfirlit, Notendur (stofna, breyta, gera óvirkan, endurstilla lykilorð, eyða), Verkefni (stofna, endurnefna, þátttakendur og hlutverk, eyða), Biðlarar (skrá, breyta, skipta um leyndarmál, afturkalla tóka, eyða), Setur (ljúka einni eða öllum setum notanda), Atvikaskrá, Stillingar og Heilsa, auk Graffyrirspurnar þegar þjónninn leyfir lesandi Cypher gegn IFC-grafinu. Hættulegar aðgerðir krefjast nýlegrar innskráningar: þjónninn svarar `reauthentication_required`, forritið opnar innskráninguna aftur og endurtekur kallið. Einnota gildi (fyrsta lykilorð, biðlaraleyndarmál) eru sýnd einu sinni með hnappinum Afrita og aldrei skrifuð í atvikaskrána. Hvern lista má vista sem gagnasafn og sækja aftur úr Hantera.
+**Stjórnun.** Ef þú ert stjórnandi á Dataregium-þjóni sýnir sýn uppsprettunnar spjaldið *Stjórnun* (þegar getuskjal þjónsins segir að stjórnunarforritaskilin séu virk). Hnappurinn *Skrá inn sem stjórnandi* biður um réttindin `admin`; síðan koma fliparnir Yfirlit, Notendur (stofna, breyta, gera óvirkan, endurstilla lykilorð, eyða), Verkefni (stofna, endurnefna, þátttakendur og hlutverk, eyða), Biðlarar (skrá, breyta, skipta um leyndarmál, afturkalla tóka, eyða), Setur (ljúka einni eða öllum setum notanda), Atvikaskrá, Stillingar og Heilsa, auk Graffyrirspurnar þegar þjónninn leyfir lesandi Cypher gegn IFC-grafinu. Hættulegar aðgerðir krefjast nýlegrar innskráningar: þjónninn svarar `reauthentication_required`, forritið opnar innskráninguna aftur og endurtekur kallið. Einnota gildi (fyrsta lykilorð, biðlaraleyndarmál) eru sýnd einu sinni með hnappinum Afrita og aldrei skrifuð í atvikaskrána. Hvern lista má vista sem gagnasafn og sækja aftur úr Hantera.
 
 ## Opin landupplýsingagögn
 

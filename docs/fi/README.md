@@ -15,7 +15,7 @@ omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan 
 - [Lataa ja aloita](#lataa-ja-aloita)
 - [Vaatimukset](#vaatimukset)
 - [Mitä voit tehdä](#mitä-voit-tehdä)
-- [Dataspatium ja Kontroll](#dataspatium-ja-kontroll)
+- [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)
 - [Lue lisää](#lue-lisää)
 - [Rajoitukset lyhyesti](#rajoitukset-lyhyesti)
 - [Virheet ja ehdotukset](#virheet-ja-ehdotukset)
@@ -121,9 +121,9 @@ paketilla.
 - **Koodiluettelot, kuvaukset ja oppaat**: nimikkeet luetteloista SNI, SSYK, NACE ja muista yhdellä napsautuksella, datapaketit, DCAT-AP-SE, laatuseloste ja neljä opasta oikealla datalla (ks. [lagen.md](lagen.md)).
 - **Teksti kuvista**: skannatut PDF-tiedostot, kuvat ja kuvat taulukoista luetaan tekstintunnistuksella selaimessa, kaikilla seitsemällä kielellä.
 - **Alkuperä, yhteistyö ja kirjasto**: näe, mistä aineisto on peräisin ja mitä siitä on tullut, tee yhteistyötä GitHubin kautta ilman että mitään katoaa, hae reseptejä ja malleja lisensseineen ja julkaise työtila verkkosivustona.
-- **Kontroll ja OpenCDE**: OpenCDE-palvelin kuten [Kontroll](https://github.com/marwiss/Kontroll) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa, sekä hallinnoi palvelinta (käyttäjät, projektit, asiakkaat, istunnot, tapahtumaloki, asetukset, kunto ja graafikyselyt) kortista Hallinta, kun olet järjestelmänvalvoja (ks. kohta [Dataspatium ja Kontroll](#dataspatium-ja-kontroll) alla).
+- **Dataregium ja OpenCDE**: OpenCDE-palvelin kuten [Dataregium](https://github.com/marwiss/Dataregium) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa, sekä hallinnoi palvelinta (käyttäjät, projektit, asiakkaat, istunnot, tapahtumaloki, asetukset, kunto ja graafikyselyt) kortista Hallinta, kun olet järjestelmänvalvoja (ks. kohta [Dataspatium ja Dataregium](#dataspatium-ja-dataregium) alla).
 - **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
-- **Yhteensovitus Kontrollin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston seitsemällä kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
+- **Yhteensovitus Dataregiumin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston seitsemällä kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
 - **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
   PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
   PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
@@ -150,21 +150,23 @@ paketilla.
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
-## Dataspatium ja Kontroll
+## Dataspatium ja Dataregium
 
-Dataspatium (selaimessa toimiva sovellus) ja [Kontroll](https://github.com/marwiss/Kontroll) (palvelin buildingSMARTin OpenCDE-rajapinnoille Foundation, BCF
+*Dataregiumin nimi oli Kontroll 8. marraskuuta 2026 asti.*
+
+Dataspatium (selaimessa toimiva sovellus) ja [Dataregium](https://github.com/marwiss/Dataregium) (palvelin buildingSMARTin OpenCDE-rajapinnoille Foundation, BCF
 ja Documents) on kehitetty toimimaan yhdessä asiakkaana ja palvelimena. Sovellus lisää palvelimen lähteeksi Nouda-tilassa, kirjautuu
 OAuth2:lla ja rekisteröi itsensä asiakkaaksi, kun palvelin sallii sen, noutaa projektin mallit ja asiakirjat, lukee ja kirjoittaa
 asioita viewpointeineen 3D-näkymästä, lähettää aineistoja, tiedostoja ja työtilapaketteja takaisin Documents API:n kautta, kyselee
 palvelimen IFC-graafia Cypherillä ja kirjaa jokaisen kutsun samalla X-Request-Id-tunnisteella, jonka palvelin kirjoittaa omaan
 pyyntölokiinsa. Graafikyselyt ja hallinta ovat määrittelyjen ulkopuolisia lisäyksiä; kaikki muu kulkee kolmen OpenCDE-rajapinnan kautta, joten
-myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin osiin: ilman palvelinta kaikki muu toimii kuten ennen. Kontrollin README ja
+myös muut OpenCDE-asiakkaat toimivat. Palvelinta ei tarvita sovelluksen muihin osiin: ilman palvelinta kaikki muu toimii kuten ennen. Dataregiumin README ja
 `docs/client-guide.md` kuvaavat yhteistyön palvelimen puolelta; tässä se kuvataan tiedostoissa [kallor.md](kallor.md) ja
 [cad-bim.md](cad-bim.md).
 
 Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös palvelimiin, joilla on vain 2.1, ja se piirtää palvelimen IFC-verkon ja tekee siihen kyselyjä suoraan kohdasta Nouda.
 
-Dataspatium 3.0.0 toimii Kontroll 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
+Dataspatium 3.0.0 toimii Dataregium 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
 [snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
 
 ## Lue lisää
@@ -176,7 +178,7 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
 - **Peruskurssi** sovelluksessa: vuorovaikutteinen läpikäynti kaikista tiloista esimerkkidatalla; avaa se ohjeesta (?)
   tai näppäimillä Ctrl+K.
 - [Aloitusopas](kom-igang.md): vaihe vaiheelta ja yleiset kysymykset.
-- [Pika-aloitus Kontrollin kanssa](snabbstart.md): kaksikymmentä minuuttia tyhjästä 3D-näkymässä luotuun asiaan, joka näkyy palvelimella.
+- [Pika-aloitus Dataregiumin kanssa](snabbstart.md): kaksikymmentä minuuttia tyhjästä 3D-näkymässä luotuun asiaan, joka näkyy palvelimella.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
 - [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
 - [Kahdeksan tilaa](lagen.md): mitä on missä ja miksi.
@@ -194,8 +196,7 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
 - [Asiakirjat ja mallit](dokumentmallar.md): mallikieli ja tulostusmuodot.
 - [Turvallisuus](sakerhet.md): uhkamalli, kontrollit ja niitä todistavat testit, henkilötiedot ja säilytys sekä miten haavoittuvuudesta ilmoitetaan.
 - [Lisenssit](licenser.md): mitä sovelluksella saa tehdä ja mitkä lisenssit kolmannen osapuolen osilla on.
-- [Kehitys](../utveckling.md), [Arkkitehtuuri](../arkitektur.md) ja [Tyyliopas](../stilguide.md) koodista kiinnostuneille
-  (ruotsiksi); miten osallistumiset otetaan vastaan, kerrotaan tiedostossa [CONTRIBUTING.md](../../CONTRIBUTING.md) (ruotsiksi).
+- Miten osallistumiset otetaan vastaan, kerrotaan tiedostossa [CONTRIBUTING.md](../../CONTRIBUTING.md) (ruotsiksi).
 - Ulkoiset lähteet: [WebR](https://docs.r-wasm.org/webr/latest/), [R aloittelijoille](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [Tilastokeskuksen rajapinnat](https://stat.fi/fi/palvelut/tilastodatapalvelut/avoin-data-ja-rajapinnat).
 
@@ -225,8 +226,9 @@ ilmoita [SECURITY.md](../../SECURITY.md):n mukaan sen sijaan, että avaisit issu
 ## Kehitys
 
 - Ei käännösvaihetta, ei node.js:ää. Avaa `index.html` suoraan tai tarjoile kansio komennolla `python -m http.server 8080`.
+- Arkkitehtuuri lyhyesti: kaikki sovelluksen oma koodi on perinteisiä skriptejä, jotka rekisteröidään `Dataspatium.define`-kutsulla tiedoston `src/boot.js` järjestyksessä; `src/platform` sisältää kaiken file://-kohtaisen (resurssit, shimit, workerit, tallennus, suostumus); moottorit SQLite, R (WebR) ja Python (Pyodide) toimivat workereissa; `src/ui` sisältää suunnittelumuuttujat, komponentit (`dm-*`), kuoren ja yhden tilan tiedostoa kohti. Kaikki näytettävä escapetaan, eikä mitään haeta verkosta ilman toimintaasi ja suostumustasi.
 - Kolmannen osapuolen osat: `python tools/fetch_vendor.py` ja sen jälkeen `python tools/wrap_assets.py`.
-- Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox). Ks. [utveckling.md](../utveckling.md) (ruotsiksi).
+- Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox).
 - Turvallisuus: suostumuksen, salaisuuksien, jakamista edeltävän tarkistuksen, OAuth2:n (PKCE, state, paluu) ja lokin peittämisen testit kuuluvat testisarjaan; ks. [sakerhet.md](sakerhet.md).
 
 ## Lisenssi

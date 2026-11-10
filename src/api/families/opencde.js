@@ -26,7 +26,8 @@
     /** The family entry for the dialog: address and client id; the token comes from signing in. */
     const FAMILY = {
       id: 'opencde', name: 'OpenCDE (BCF, Documents)', docs: 'https://github.com/buildingSMART/foundation-API',
-      fields: [{ name: 'baseUrl', type: 'url', required: true, placeholder: 'https://cde.example.org' }, { name: 'clientId', type: 'text', required: true }, { name: 'clientSecret', type: 'secret' },
+      // The client id is optional: left empty, the dialog registers the app with the server (RFC 7591) when the server allows it.
+      fields: [{ name: 'baseUrl', type: 'url', required: true, placeholder: 'https://cde.example.org' }, { name: 'clientId', type: 'text' }, { name: 'clientSecret', type: 'secret' },
         { name: 'bcfVersion', type: 'select', advanced: true, options: [{ value: 'auto', labelKey: 'families.bcfVersion.auto' }].concat(BCF_VERSIONS.map((v) => ({ value: v, label: 'BCF API ' + v }))) }],
       auth: (v) => ({ type: 'oauth2_pkce', clientId: String(v.clientId || '').trim(), scope: SCOPES }),
       secrets: (v) => (v.clientSecret ? { clientSecret: v.clientSecret } : null),
@@ -171,6 +172,16 @@
      * app is cross-origin isolated (sw-coi.js on http) and the popup lands in another browsing context group, where `win` looks
      * closed and the page has no opener. The app acknowledges on the channel so that the page may close itself.
      */
+    /** The popup flows waiting for a callback page, so that the user can stop waiting (an isolated app cannot see a closed popup). */
+    const pendingPopups = new Set();
+    /** Stops every waiting popup flow: the popup is closed and the flow fails with `opencde.err.cancelled`. Returns how many. */
+    function cancelPopup() {
+      const flows = Array.from(pendingPopups);
+      for (const flow of flows) flow.cancel();
+      return flows.length;
+    }
+    /** Whether a popup flow is waiting for the user. */
+    const popupPending = () => pendingPopups.size > 0;
     function popupFlow(url) {
       return new Promise((resolve, reject) => {
         try { localStorage.removeItem(CALLBACK_KEY); } catch (_e) { /* storage blocked */ }
@@ -178,7 +189,10 @@
         if (!win) { reject(new Error(t('opencde.err.popup'))); return; }
         const isolated = !!globalThis.crossOriginIsolated;
         let channel = null;
+        const flow = { cancel: () => { cleanup(); try { win.close(); } catch (_e) { /* already gone */ } reject(new Error(t('opencde.err.cancelled'))); } };
+        pendingPopups.add(flow);
         const cleanup = () => {
+          pendingPopups.delete(flow);
           clearTimeout(timer); clearInterval(poll);
           window.removeEventListener('message', onMessage); window.removeEventListener('storage', onStorage);
           if (channel) { const c = channel; channel = null; setTimeout(() => c.close(), 2000); }
@@ -203,7 +217,7 @@
       });
     }
     /**
-     * Kontroll renders the pages it opens in a popup (sign-in, upload, document selection) in the app's language when asked with
+     * Dataregium renders the pages it opens in a popup (sign-in, upload, document selection) in the app's language when asked with
      * `lang=`; the parameter wins over its cookie and an unknown code falls back quietly. Decided from the capabilities the source's
      * view already read (no request of its own, so the log stays as it was); other servers' addresses are left alone.
      */
@@ -302,9 +316,10 @@
     const CAPS_TTL = 5 * 60 * 1000;
     const EMPTY_CAPS = { present: false, server: null, apis: {}, scopes: [], extensions: {}, limits: {}, links: {} };
     /**
-     * Kontroll describes its extensions in GET /.well-known/kontroll (no sign-in, outside the specifications): the server's version, the
-     * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links. A server
-     * without the document has no extensions; unknown keys count as absent. Cached a few minutes per connector.
+     * Dataregium describes its extensions in GET /.well-known/dataregium (no sign-in, outside the specifications): the server's version, the
+     * enabled extensions (dynamic_client_registration, request_log, admin_api, ifcgraph, graph_query), limits and links. A server from
+     * before the name change (Kontroll, up to 3.0.0) only answers on /.well-known/kontroll, which is asked when the first address gives
+     * no document. A server without the document has no extensions; unknown keys count as absent. Cached a few minutes per connector.
      * @param {any} connector @param {{force?: boolean}} [options]
      * @returns {Promise<{present: boolean, server: any, apis: any, scopes: string[], extensions: Record<string, any>, limits: any, links: any}>}
      */
@@ -314,7 +329,9 @@
       if (hit && !options.force && Date.now() - hit.at < CAPS_TTL) return hit.caps;
       let caps = EMPTY_CAPS;
       try {
-        const res = await send(connector, { url: trimUrl(connector.baseUrl) + '/.well-known/kontroll', method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
+        const ask = (path) => send(connector, { url: trimUrl(connector.baseUrl) + path, method: 'GET', headers: { Accept: 'application/json' }, retries: 0, rateKey: connector.id });
+        let res = await ask('/.well-known/dataregium');
+        if (!res.ok) res = await ask('/.well-known/kontroll');
         if (res.ok) {
           const data = JSON.parse(res.text || '{}') || {};
           caps = { present: true, server: data.server || null, apis: data.apis || {}, bcfVersions: Array.isArray(data.bcf_versions) ? data.bcf_versions : null, scopes: Array.isArray(data.scopes) ? data.scopes : [], extensions: data.extensions && typeof data.extensions === 'object' ? data.extensions : {}, limits: data.limits || {}, links: data.links || {} };
@@ -490,7 +507,7 @@
       return info.map((entry) => {
         const f = entry.file || {};
         const shown = (name) => { const d = (entry.display_information || []).find((x) => x.field_display_name === name); return d ? String(d.field_value || '') : ''; };
-        // Kontroll names the document and the version in display fields; other servers may only give the address.
+        // Dataregium names the document and the version in display fields; other servers may only give the address.
         const m = /\/documents\/([^/]+)\/versions\/(\d+)\/download/.exec(String(f.reference || ''));
         const fromApi = /documents api/i.test(shown('Source')) || !!m;
         const documentId = fromApi ? (shown('Document id') || (m ? decodeURIComponent(m[1]) : null) || null) : null;
@@ -546,7 +563,7 @@
     }
     const versionPath = (documentId, versionIndex) => `/documents/1.0/documents/${encode(documentId)}/versions/${encode(String(versionIndex))}`;
     /**
-     * A document version's metadata (Documents API): the entries given at upload and, on Kontroll from 3.0.0, the server's
+     * A document version's metadata (Documents API): the entries given at upload and, on Dataregium from 3.0.0, the server's
      * check of an IFC file (`ifc_validation_*`).
      * @param {any} connector @param {string} documentId @param {number} versionIndex @returns {Promise<any[]>} DocumentMetadataEntry objects
      */
@@ -555,7 +572,7 @@
       return (out && Array.isArray(out.metadata)) ? out.metadata : [];
     }
     /**
-     * The server's report of its check of an IFC version, an extension of Kontroll's; null when the version was never checked.
+     * The server's report of its check of an IFC version, an extension of Dataregium's; null when the version was never checked.
      * The address is built here and never taken from the metadata, so the token goes to the source's own server only.
      * @param {any} connector @param {string} documentId @param {number} versionIndex @returns {Promise<any|null>}
      */
@@ -695,6 +712,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

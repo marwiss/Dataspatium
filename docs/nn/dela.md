@@ -97,7 +97,7 @@ du vite kva dei inneheld, og vel sjølv om dei skal vere med.
 
 ## Til CDE
 
-Fana *Til CDE* sender eit datasett til eit prosjekt på ein OpenCDE-tenar som Kontroll. Vel tenar, logg inn og vel prosjekt;
+Fana *Til CDE* sender eit datasett til eit prosjekt på ein OpenCDE-tenar som Dataregium. Vel tenar, logg inn og vel prosjekt;
 vel så om datasettet skal skrivast i eit filformat eller om originalfila skal sendast, og om det skal gå gjennom Documents API,
 der den eigne sida til tenaren spør om tittel, versjon og prosjekt og fila deretter blir lasta opp i delar, eller som BCF-dokument, som
 berre tek fila. Datasettet blir skrive frå ein kopi som har vore gjennom kontrollen, og originalfiler får same åtvaring som i

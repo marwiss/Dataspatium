@@ -46,9 +46,9 @@ nafn og hæð fylgja með), sem Umsjón þekkir sem mál: kortið *Mál* sýnir 
 byggingarhluta eða hæð úr slíkri töflu, og SQL-upphafskóðinn fær fyrirspurnir fyrir tengingina. *Vista sem rit* vistar sýnina með
 litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
-Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-LPG* fer með þig þangað, sjá [grafer.md](grafer.md#ifc-lpg-á-kontroll-þjóni).
+Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-LPG* fer með þig þangað, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
 
-Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Kontroll/blob/main/docs/is/ifc-lpg.md) hjá Kontroll.
+Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-lpg.md) hjá Dataregium.
 
 ## Töflurnar
 
@@ -88,7 +88,7 @@ Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
 ## IfcOpenShell í forritinu
 
-Forritið getur lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Kontroll byggir á. Það
+Forritið getur lesið, sannprófað og breytt IFC-líkönum með IfcOpenShell, sama safni sem Dataregium byggir á. Það
 keyrir í Python í vafranum, er sótt í fyrsta sinn sem það er notað (um 13 MB, eftir samþykki þitt fyrir íhluti) og síðan vistað í
 vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
 
@@ -131,7 +131,7 @@ IfcOpenShell er LGPL-3.0 og er sótt óbreytt sem fest wheel-skjöl úr skrá If
 
 Spjaldið **Sannprófa líkanið** í Umsjón safnar saman prófunum á IFC-líkani, með nýjustu niðurstöðu hverrar.
 
-- **Prófun þjónsins** er til fyrir líkan sem sótt var sem skjalaútgáfa úr CDE. Kontroll (frá 3.0.0) prófar hverja IFC-skrá sem er
+- **Prófun þjónsins** er til fyrir líkan sem sótt var sem skjalaútgáfa úr CDE. Dataregium (frá 3.0.0) prófar hverja IFC-skrá sem er
   hlaðið upp gagnvart IFC-skemanu og, þegar þjónninn hefur þær uppsettar, gagnvart reglum buildingSMART (ifc-gherkin-rules), og setur
   niðurstöðuna í lýsigögn útgáfunnar. *Sækja prófun þjónsins* les hana: ekkert fannst, aðeins viðvaranir, niðurstöður með villum, bíður
   eftir prófun eða ekki tókst að prófa, og hvenær og með hvaða reglum. Forritið spyr þjóninn ekki fyrr en þú ýtir á hnappinn. Séu

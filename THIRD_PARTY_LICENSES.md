@@ -3,7 +3,7 @@
 Dataspatium levereras med följande komponenter från tredje part, oförändrade och under sina egna licenser.
 Binärer och ESM-moduler är inbäddade som JavaScript-filer i `vendor/` (se `vendor/manifest.js`); det ändrar
 inte licensvillkoren. Filen genereras av `tools/wrap_assets.py` från `vendor/vendor.json`.
-Dataspatiums egen kod är licensierad under PolyForm Strict 1.0.0 (se `LICENSE` och `docs/licenser.md`);
+Dataspatiums egen kod är licensierad under PolyForm Strict 1.0.0 (se `LICENSE` och `docs/sv/licenser.md`);
 det påverkar inte komponenterna nedan.
 
 ## webr 0.5.9

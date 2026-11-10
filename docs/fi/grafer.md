@@ -123,9 +123,9 @@ tallentaa ne verkkoaineistona; muuten *Tallenna aineistona*. **Tallenna kysely**
 uudelleen yhdellä napsautuksella. Bolt WebSocketin yli ei kuulu CORS:n piiriin; oma palvelin ilman TLS:ää (`bolt://`)
 tavoitetaan vain http://-sivulta. Jos vastaus sisältää solmuja, ne piirretään myös verkkona.
 
-## IFC-LPG Kontroll-palvelimella
+## IFC-LPG Dataregium-palvelimella
 
-Kontroll tekee jokaisesta ladatusta IFC-tiedostosta verkon: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
+Dataregium tekee jokaisesta ladatusta IFC-tiedostosta verkon: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
 IFC-attribuutit ominaisuuksina, ja suhteet on nimetty attribuuttien mukaan (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Verkko on palvelimella ja voi olla paljon suurempi kuin on järkevää hakea. Siksi se piirretään ja siihen tehdään kyselyjä suoraan
 kohdasta *Nouda*, eikä mitään tallenneta ennen kuin pyydät.
@@ -160,14 +160,14 @@ kuvaan. Rakennusosalla on myös **Ominaisuudet**, **Asiat** ja **Näytä malliss
 
 Kenttään kirjoitat oman Cypherin, kaiken mitä palvelin ymmärtää, mutta vain lukevana. Jos kysyt vain solmuja (`RETURN c, w`), sovellus hakee
 myös niiden väliset suhteet, kuten Neo4j Browser. Sovellus kertoo, kun vastaus on saavuttanut kyselyn `LIMIT`-rajan tai katkaistu, ja lukeminen
-pysähtyy 20 000 riviin. Yli 1 500 solmun vastauksia ei piirretä tässä, mutta ne voi tallentaa ja avata yleiskuvana kohdassa Muokkaa. Kontroll 3.0.0:n verkossa on myös se, mitä tiedoston takaisinkirjoitus vaatii (`<attribuutti>__type`, `<attribuutti>__step` ja `StepBlock`-solmut teksteineen). Ne jätetään pois, kun solmu näytetään tai tallennetaan, mutta niitä voi kysyä nimellä.
+pysähtyy 20 000 riviin. Yli 1 500 solmun vastauksia ei piirretä tässä, mutta ne voi tallentaa ja avata yleiskuvana kohdassa Muokkaa. Dataregium 3.0.0:n verkossa on myös se, mitä tiedoston takaisinkirjoitus vaatii (`<attribuutti>__type`, `<attribuutti>__step` ja `StepBlock`-solmut teksteineen). Ne jätetään pois, kun solmu näytetään tai tallennetaan, mutta niitä voi kysyä nimellä.
 
 **Tallenna verkkona** tekee näkemästäsi tavallisen verkkodatamäärän: verkkonäkymä kohdassa Muokkaa, välilehdet Cypher ja Verkko kohdassa
 Analysoi ja verkkokaaviot kohdassa Visualisoi. Luokasta tulee solmun tunniste ja kaikki tunnisteet säilyvät, joten `MATCH (w:IfcWall)` löytää
 kopiosta myös `IfcWallStandardCase`-solmun. Cypher-välilehdellä voit kytkeä päälle **Aja palvelimella** täältä tallennetulle verkolle, ja silloin
 palvelin vastaa kaikella Cypherillä koko verkkoon eikä osajoukolla kopioon.
 
-Kontrollista haetulla IFC-mallilla on painike **IFC-LPG** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
+Dataregiumista haetulla IFC-mallilla on painike **IFC-LPG** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
 kohdassa Nouda, saman koneen Neo4j-lähteessä, jos sellainen on, muuten OpenCDE-lähteessä.
 
 ## Lisää työkaluja Verkko-välilehdellä

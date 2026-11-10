@@ -15,7 +15,7 @@ installasjon, ingen kontoer. Dataene dine forlater aldri datamaskinen med mindre
 - [Last ned og kom i gang](#last-ned-og-kom-i-gang)
 - [Hva som kreves](#hva-som-kreves)
 - [Hva du kan gjøre](#hva-du-kan-gjøre)
-- [Dataspatium og Kontroll](#dataspatium-og-kontroll)
+- [Dataspatium og Dataregium](#dataspatium-og-dataregium)
 - [Lær mer](#lær-mer)
 - [Begrensninger i korte trekk](#begrensninger-i-korte-trekk)
 - [Feil og forslag](#feil-og-forslag)
@@ -116,9 +116,9 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klikk, datapakker, DCAT-AP-SE, kvalitetserklæring og fire guider med ekte data (se [lagen.md](lagen.md)).
 - **Tekst fra bilder**: skannede PDF-filer, bilder og bilder av tabeller leses med tekstgjenkjenning i nettleseren, på alle sju språk.
 - **Opprinnelse, samarbeid og bibliotek**: se hvor et datasett kommer fra og hva det har blitt til, samarbeid via GitHub uten at noe forsvinner, hent oppskrifter og maler med lisens, og publiser arbeidsområdet som et nettsted.
-- **Kontroll og OpenCDE**: en OpenCDE-server som [Kontroll](https://github.com/marwiss/Kontroll) blir en kilde i Hent med innlogging via OAuth2 og selvregistrering der serveren tillater det. Appen henter prosjektets modeller og dokumenter og sier til når en nyere versjon finnes, viser sakene som peker på bygningsdelene, oppretter saker fra markeringen i 3D-visningen med visningen som viewpoint, kommenterer og bytter status, farger modellen etter sakstatus, lagrer sakene som tabell med verktøyet Saker og dashbordet Sakstatus, leser og skriver BCF-filer, sender datasett, filer og arbeidsområdepakker til serveren, spør serverens IFC-graf med Cypher, leser hva serveren tilbyr og forklarer feilkodene dens, og logger hvert kall med en X-Request-Id som pares med serverens forespørselslogg, og administrerer serveren (brukere, prosjekter, klienter, sesjoner, revisjon, innstillinger, helse og grafspørringer) fra kortet Administrasjon når du er administrator (se avsnittet [Dataspatium og Kontroll](#dataspatium-og-kontroll) nedenfor).
+- **Dataregium og OpenCDE**: en OpenCDE-server som [Dataregium](https://github.com/marwiss/Dataregium) blir en kilde i Hent med innlogging via OAuth2 og selvregistrering der serveren tillater det. Appen henter prosjektets modeller og dokumenter og sier til når en nyere versjon finnes, viser sakene som peker på bygningsdelene, oppretter saker fra markeringen i 3D-visningen med visningen som viewpoint, kommenterer og bytter status, farger modellen etter sakstatus, lagrer sakene som tabell med verktøyet Saker og dashbordet Sakstatus, leser og skriver BCF-filer, sender datasett, filer og arbeidsområdepakker til serveren, spør serverens IFC-graf med Cypher, leser hva serveren tilbyr og forklarer feilkodene dens, og logger hvert kall med en X-Request-Id som pares med serverens forespørselslogg, og administrerer serveren (brukere, prosjekter, klienter, sesjoner, revisjon, innstillinger, helse og grafspørringer) fra kortet Administrasjon når du er administrator (se avsnittet [Dataspatium og Dataregium](#dataspatium-og-dataregium) nedenfor).
 - **Lett start**: store deler som R og Python lastes først når de brukes, og statuslinjen viser hva som lastes i mellomtiden.
-- **Samordning med Kontroll, steg 1**: appen leser serverens kapabilitetsdokument, oversetter feilkodene, bærer en felles ordliste på sju språk og åpner en kilde fra lenken Åpne i Dataspatium.
+- **Samordning med Dataregium, steg 1**: appen leser serverens kapabilitetsdokument, oversetter feilkodene, bærer en felles ordliste på sju språk og åpner en kilde fra lenken Åpne i Dataspatium.
 - **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
   PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
   [visualisera.md](visualisera.md)).
@@ -145,19 +145,21 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Grunnkurs**: en interaktiv gjennomgang av alle åtte moduser med eksempeldata, på alle sju språk. Det vises første
   gang appen åpnes og kan åpnes når som helst fra hjelpen eller kommandopaletten.
 
-## Dataspatium og Kontroll
+## Dataspatium og Dataregium
 
-Dataspatium (appen i nettleseren) og [Kontroll](https://github.com/marwiss/Kontroll) (en server for buildingSMARTs OpenCDE-API-er Foundation, BCF og
+*Dataregium het Kontroll fram til 8. november 2026.*
+
+Dataspatium (appen i nettleseren) og [Dataregium](https://github.com/marwiss/Dataregium) (en server for buildingSMARTs OpenCDE-API-er Foundation, BCF og
 Documents) er utviklet for å fungere sammen som klient og server. Appen legger til serveren som kilde i Hent, logger inn med OAuth2 og
 registrerer seg selv som klient når serveren tillater det, henter prosjektets modeller og dokumenter, leser og skriver saker med
 viewpoints fra 3D-visningen, sender datasett, filer og arbeidsområdepakker tilbake gjennom Documents API, spør serverens IFC-graf med
 Cypher og logger hvert kall med samme X-Request-Id som serveren skriver i sin forespørselslogg. Spørringene mot grafen og administrasjonen er tillegg utenfor spesifikasjonene; alt annet går gjennom de tre OpenCDE-API-ene, så
-andre OpenCDE-klienter fungerer også. Serveren trengs ikke for resten av appen: uten server fungerer alt annet som før. Kontrolls README og `docs/client-guide.md` beskriver samarbeidet fra serverens side;
+andre OpenCDE-klienter fungerer også. Serveren trengs ikke for resten av appen: uten server fungerer alt annet som før. Dataregiums README og `docs/client-guide.md` beskriver samarbeidet fra serverens side;
 her beskrives det i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
 
 Appen snakker BCF API 3.0 og 2.1, så den også kobler seg til servere som bare har 2.1, og den tegner og spør serverens IFC-graf direkte fra Hent.
 
-Dataspatium 3.0.0 fungerer med Kontroll 3.0.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
+Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
 [snabbstart.md](snabbstart.md) tar paret fra ingenting til en sak på tjue minutter.
 
 ## Lær mer
@@ -168,7 +170,7 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - **Grunnkurset** i appen: en interaktiv gjennomgang av alle moduser med eksempeldata; åpne det fra hjelpen (?) eller
   med Ctrl+K.
 - [Kom i gang](kom-igang.md): trinn for trinn med vanlige spørsmål.
-- [Hurtigstart med Kontroll](snabbstart.md): tjue minutter fra ingenting til en sak opprettet i 3D-visningen og synlig på serveren.
+- [Hurtigstart med Dataregium](snabbstart.md): tjue minutter fra ingenting til en sak opprettet i 3D-visningen og synlig på serveren.
 - [Brukerveiledning](anvandarguide.md): hele arbeidsflyten fra fil til rapport.
 - [Vanlige spørsmål](faq.md): lagring, sikkerhet, R, API-er og oppdateringer.
 - [De åtte modusene](lagen.md): hva som finnes hvor og hvorfor.
@@ -186,8 +188,7 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - [Dokumenter og maler](dokumentmallar.md): malspråket og utdataformatene.
 - [Sikkerhet](sakerhet.md): trusselmodell, kontrollene og testene som viser dem, personopplysninger og lagring, og hvordan en sårbarhet rapporteres.
 - [Lisenser](licenser.md): hva du kan gjøre med appen, og hvilke lisenser tredjepartskomponentene har.
-- [Utvikling](../utveckling.md), [Arkitektur](../arkitektur.md) og [Stilguide](../stilguide.md) for dem som vil forstå
-  koden (på svensk); hvordan bidrag tas imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
+- Hvordan bidrag tas imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
 - Eksterne ressurser: [WebR](https://docs.r-wasm.org/webr/latest/), [R for nybegynnere](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [SSBs API](https://www.ssb.no/api).
 
@@ -216,8 +217,9 @@ sikkerhetssårbarhet, følg [SECURITY.md](../../SECURITY.md) i stedet for å åp
 ## Utvikling
 
 - Ingen byggetrinn, ingen node.js. Åpne `index.html` direkte, eller server mappen med `python -m http.server 8080`.
+- Arkitektur i korte trekk: all egen kode er klassiske skript som registreres med `Dataspatium.define` i rekkefølgen i `src/boot.js`; `src/platform` bærer alt som er spesifikt for file:// (ressurser, shims, workers, lagring, samtykke); motorene SQLite, R (WebR) og Python (Pyodide) kjører i workers; `src/ui` har designvariablene, komponentene (`dm-*`), skallet og én modus per fil. Alt som rendres escapes, og ingenting hentes fra nettet uten din handling og ditt samtykke.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` etterfulgt av `python tools/wrap_assets.py`.
-- Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Se [utveckling.md](../utveckling.md) (svensk).
+- Tester: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox).
 - Sikkerhet: testene for samtykke, hemmeligheter, gjennomgang før deling, OAuth2 (PKCE, state, tilbakekall) og loggens maskering er med i suiten; se [sakerhet.md](sakerhet.md).
 
 ## Lisens

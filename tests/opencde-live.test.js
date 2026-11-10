@@ -1,13 +1,13 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Dataspatium against a real Kontroll OpenCDE server (checklist C in Kontroll's docs/acceptance.md, and more): discovery,
+ * Dataspatium against a real Dataregium OpenCDE server (checklist C of Dataregium's acceptance checklists, kept outside its repo, and more): discovery,
  * sign-in with PKCE, the BCF tables, writing topics, comments, viewpoints and references, both document APIs with upload and
  * download, the model import, the project's files, the family's own uploads, a BCF file out and in, registration, refresh,
- * revocation and the refused redirect. Kontroll III: the issues as a table with the model's elements, the board Ärendeläge,
+ * revocation and the refused redirect. Dataregium III: the issues as a table with the model's elements, the board Ärendeläge,
  * Cypher against the IFC graph (only with ?cdegraph=bolt://host:port, cdegraphuser, cdegraphpass) and a bundle through the CDE.
  * 2.32: the CDE log over the whole run, and with ?cdeadminhelper=<helper signed in as an administrator> the server's request log.
- * 2.34: the capabilities document (/.well-known/kontroll) and the server's error codes in the user's words. Runs only when the page is
+ * 2.34: the capabilities document (/.well-known/dataregium) and the server's error codes in the user's words. Runs only when the page is
  * served over http and given ?cde=<server>&cdehelper=<helper>&cdeclient=<client id>[&cdeproject=<name>][&cdebcf=2.1]; otherwise it is
  * skipped. With cdebcf=2.1 the suite speaks BCF API 2.1, and checks that each version's answers hold what its specification says. The helper (tools/cde-helper.py) plays the user at the server's own pages. See docs/utveckling.md.
  */
@@ -28,7 +28,7 @@
   const params = new URLSearchParams(location.search);
   const BASE = (params.get('cde') || '').replace(/\/+$/, '');
   const HELPER = (params.get('cdehelper') || '').replace(/\/+$/, '');
-  /** The id of the user the helper signs in as (Kontroll's seed has dm_manager; a CI job may create another). */
+  /** The id of the user the helper signs in as (Dataregium's seed has dm_manager; a CI job may create another). */
   const CDE_USER = params.get('cdeuser') || 'dm_manager';
   const CLIENT = params.get('cdeclient') || '';
   const PROJECT_NAME = params.get('cdeproject') || 'Dataspatium-prov';
@@ -422,7 +422,7 @@
 
   test('opencde live: save a table as a dataset and fetch it again (C4)', async (assert) => {
     const tb = shared.topicsTable;
-    const meta = await runner.toDataset({ columns: tb.columns, rows: tb.rows, meta: {} }, { name: 'Kontroll: ärenden', source: { kind: 'api', connectorId: shared.connector.id, connectorName: shared.connector.name, family: 'opencde', opencde: { kind: 'topics', projectId: shared.projectId } } });
+    const meta = await runner.toDataset({ columns: tb.columns, rows: tb.rows, meta: {} }, { name: 'Dataregium: ärenden', source: { kind: 'api', connectorId: shared.connector.id, connectorName: shared.connector.name, family: 'opencde', opencde: { kind: 'topics', projectId: shared.projectId } } });
     shared.created.push(meta.id);
     const again = await timed('refetch', () => runner.refetch(meta.source));
     assert.equal(again.rows.length, tb.rows.length, 'same count');
@@ -548,7 +548,7 @@
     assert.ok(around.graph.nodes.length >= 2, 'a step from the wall: ' + around.graph.nodes.length);
     const props = await neo4j.run(r.connector, ifcGraph.stepFrom('properties', wallNode.id));
     log(`from the wall: ${around.graph.nodes.length} neighbours, ${props.rows.length} property rows`);
-    // The form from Kontroll 3.0.0: what only writes the file back stays out of what is shown and saved. A server with the earlier form has no blocks.
+    // The form from Dataregium 3.0.0: what only writes the file back stays out of what is shown and saved. A server with the earlier form has no blocks.
     const blocks = await neo4j.run(r.connector, 'MATCH (:IfcModel)-[:HAS_STEP_BLOCK]->(b:StepBlock) RETURN b LIMIT 3');
     log(`blocks in the graph: ${blocks.rows.length}`);
     if (blocks.rows.length) {
@@ -705,7 +705,7 @@
 
   test('opencde live V: the capabilities document, when the server has one, and the error codes in the user\'s words', async (assert) => {
     const caps = await opencde.capabilities(shared.connector, { force: true });
-    if (!caps.present) { log('capabilities: the server has no /.well-known/kontroll yet'); } else {
+    if (!caps.present) { log('capabilities: the server has no /.well-known/dataregium yet'); } else {
       const on = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k));
       log(`capabilities: ${caps.server ? caps.server.name + ' ' + caps.server.version : '?'}; extensions on: ${on.join(', ')}; scopes ${caps.scopes.join(' ')}; max upload ${caps.limits.max_upload_bytes}`);
       assert.ok(caps.apis && caps.apis.bcf, 'the document names the BCF API');
