@@ -108,11 +108,14 @@
         } catch (err) { s.serverError = String((err && err.message) || err); }
         s.serverBusy = false; render();
       }
-      /** The instances the server's changes name by STEP id, into the shared selection. */
+      /** The instances the server's changes name, by GlobalId (the rooted entity a path starts from) or by STEP id, into the shared selection. */
       async function markServer() {
-        const ids = s.server ? Array.from(new Set(s.server.changes.map((c) => Number(c.step_id)).filter((n) => Number.isFinite(n) && n > 0))) : [];
-        if (!ids.length) return;
-        const made = await selection.setFromWhere(ds.id, `id in (${ids.join(', ')})`, [], t('compare.selection.label'));
+        const changes = s.server ? s.server.changes : [];
+        const ids = Array.from(new Set(changes.map((c) => Number(c.step_id)).filter((n) => Number.isFinite(n) && n > 0)));
+        const guids = Array.from(new Set(changes.map((c) => String(c.guid || '')).filter((g) => /^[0-9A-Za-z_$]{22}$/.test(g))));
+        if (!ids.length && !guids.length) return;
+        const where = [ids.length ? `id in (${ids.join(', ')})` : '', guids.length ? `guid in (${guids.map((g) => "'" + g + "'").join(', ')})` : ''].filter(Boolean).join(' or ');
+        const made = await selection.setFromWhere(ds.id, where, [], t('compare.selection.label'));
         overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
       /** A value of the change set's form in words: a reference, a typed value, an enumeration, a list or a scalar. */

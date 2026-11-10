@@ -25,8 +25,8 @@
         parameters: { type: 'object', properties: { ifc_class: str(), storey: str(), name_contains: str(), property_set: str(), property_name: str(), property_value: str(), missing_property: bool(), limit: int() } } },
       { name: 'get_element', description: 'One element by id (STEP id) or guid (GlobalId): its attributes, every property grouped by set, and its quantities.', parameters: { type: 'object', properties: { id: int(), guid: str() } } },
       { name: 'get_view_context', description: 'What the user has marked in the model right now: the marked elements (id, ifc_class, name, storey), or none.', parameters: { type: 'object', properties: {} } },
-      { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
-        parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str() } } },
+      { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it), entity (global_id required; one rooted entity with all its literal attributes, references and referenced_by per IFC attribute, STEP id and class), changed-since (since required, a version index; what the versions after it changed: version_index, change_set_id, author, approved_by, whole_file, guid, step_id, path, attribute, op; a row with whole_file true for a version uploaded as a whole file). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
+        parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
     ];
     const names = () => TOOLS.map((tool) => tool.name);
     const q = (s) => "'" + String(s).replace(/'/g, "''") + "'";
@@ -107,7 +107,7 @@
       const base = `/documents/1.0/documents/${encodeURIComponent(cde.documentId)}/versions/${encodeURIComponent(String(cde.versionIndex))}/ifc-queries`;
       if (!args.name) { const list = await opencde.api(connector, base); return { queries: list && list.queries ? list.queries : list, model_state: list && list.model_state }; }
       const params = new URLSearchParams();
-      for (const key of ['class', 'pset', 'property']) if (args[key]) params.set(key, String(args[key]));
+      for (const key of ['class', 'pset', 'property', 'global_id', 'since']) if (args[key] !== null && args[key] !== undefined && args[key] !== '') params.set(key, String(args[key]));
       const qs = params.toString();
       const out = await opencde.api(connector, `${base}/${encodeURIComponent(String(args.name))}${qs ? '?' + qs : ''}`);
       const rows = (out && out.rows) || [];

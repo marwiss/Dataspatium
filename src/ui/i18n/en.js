@@ -4576,7 +4576,7 @@
     'cdelog.op.bcf.auth': 'GET /bcf/2.1/auth: the addresses for OAuth2 (sign-in, token, revocation, registration) according to BCF API 2.1.',
     'cdelog.op.bcf.current_user': 'GET /bcf/2.1/current-user: the signed-in user, so that the app knows whom it speaks for.',
     'families.field.clientSecret': 'Client secret (confidential clients only)',
-    'families.opencde.desc': 'An OpenCDE server as specified by buildingSMART: BCF API 3.0 or 2.1 (projects, topics, comments, viewpoints) and Documents API 1.0 (documents). You sign in to the server with OAuth2. Leave the client id empty when the server lets the app register itself; otherwise enter the client id the server\'s administrator registered for Dataspatium.',
+    'families.opencde.desc': 'An OpenCDE server as specified by buildingSMART: BCF API 3.0 or 2.1 (projects, topics, comments, viewpoints) and Documents API 1.0 (documents). You sign in to the server with OAuth2. Leave the client id empty when the server lets the app register itself; otherwise enter the client id the server\'s administrator registered for Dataspatium. A local Dataregium on your own computer answers at http://127.0.0.1:8000.',
     'families.opencde.cors': 'The server must allow requests from the browser (CORS) and have Dataspatium\'s address registered as a redirect URI; from file:// you paste the result of the sign-in yourself.',
     'consent.purpose.opencde': 'OpenCDE server',
     'consent.purpose.opencde.body': 'Sign in to and fetch topics and documents from an OpenCDE server (BCF, Documents API).',

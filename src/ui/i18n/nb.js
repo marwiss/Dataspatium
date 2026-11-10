@@ -4576,7 +4576,7 @@
     'cdelog.op.bcf.auth': 'GET /bcf/2.1/auth: adressene for OAuth2 (innlogging, token, tilbakekalling, registrering) etter BCF API 2.1.',
     'cdelog.op.bcf.current_user': 'GET /bcf/2.1/current-user: den innloggede brukeren, slik at appen vet hvem den snakker for.',
     'families.field.clientSecret': 'Klienthemmelighet (bare konfidensielle klienter)',
-    'families.opencde.desc': 'OpenCDE-server etter buildingSMART: BCF API 3.0 eller 2.1 (prosjekter, saker, kommentarer, viewpoints) og Documents API 1.0 (dokumenter). Du logger inn på serveren med OAuth2. La klient-id stå tom når serveren lar appen registrere seg selv; ellers oppgir du klient-id-en som serverens administrator har registrert for Dataspatium.',
+    'families.opencde.desc': 'OpenCDE-server etter buildingSMART: BCF API 3.0 eller 2.1 (prosjekter, saker, kommentarer, viewpoints) og Documents API 1.0 (dokumenter). Du logger inn på serveren med OAuth2. La klient-id stå tom når serveren lar appen registrere seg selv; ellers oppgir du klient-id-en som serverens administrator har registrert for Dataspatium. En lokal Dataregium på din egen datamaskin svarer på http://127.0.0.1:8000.',
     'families.opencde.cors': 'Serveren må tillate kall fra nettleseren (CORS) og ha Dataspatiums adresse registrert som omdirigeringsadresse; fra file:// limer du selv inn svaret fra innloggingen.',
     'consent.purpose.opencde': 'OpenCDE-server',
     'consent.purpose.opencde.body': 'Logge inn på og hente saker og dokumenter fra en OpenCDE-server (BCF, Documents API).',

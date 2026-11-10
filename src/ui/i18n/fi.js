@@ -4576,7 +4576,7 @@
     'cdelog.op.bcf.auth': 'GET /bcf/2.1/auth: OAuth2:n osoitteet (kirjautuminen, token, peruutus, rekisteröinti) BCF API 2.1:n mukaan.',
     'cdelog.op.bcf.current_user': 'GET /bcf/2.1/current-user: kirjautunut käyttäjä, jotta sovellus tietää, kenen puolesta se puhuu.',
     'families.field.clientSecret': 'Asiakassalaisuus (vain luottamukselliset asiakkaat)',
-    'families.opencde.desc': 'buildingSMARTin mukainen OpenCDE-palvelin: BCF API 3.0 tai 2.1 (projektit, asiat, kommentit, näkymät) ja Documents API 1.0 (asiakirjat). Kirjaudut palvelimelle OAuth2:lla. Jätä asiakastunnus tyhjäksi, kun palvelin sallii sovelluksen rekisteröityä itse; muuten anna asiakastunnus, jonka palvelimen pääkäyttäjä on rekisteröinyt Dataspatiumille.',
+    'families.opencde.desc': 'buildingSMARTin mukainen OpenCDE-palvelin: BCF API 3.0 tai 2.1 (projektit, asiat, kommentit, näkymät) ja Documents API 1.0 (asiakirjat). Kirjaudut palvelimelle OAuth2:lla. Jätä asiakastunnus tyhjäksi, kun palvelin sallii sovelluksen rekisteröityä itse; muuten anna asiakastunnus, jonka palvelimen pääkäyttäjä on rekisteröinyt Dataspatiumille. Paikallinen Dataregium omalla tietokoneella vastaa osoitteessa http://127.0.0.1:8000.',
     'families.opencde.cors': 'Palvelimen on sallittava kutsut selaimesta (CORS) ja Dataspatiumin osoitteen on oltava rekisteröity uudelleenohjausosoitteeksi; file://-osoitteesta liität kirjautumisen vastauksen itse.',
     'consent.purpose.opencde': 'OpenCDE-palvelin',
     'consent.purpose.opencde.body': 'Kirjautua OpenCDE-palvelimelle ja hakea sieltä asioita ja asiakirjoja (BCF, Documents API).',

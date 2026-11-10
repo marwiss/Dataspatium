@@ -120,6 +120,11 @@ hämtas och importeras som om du släppt dem i appen, så en IFC-modell blir en 
 sessionen och exporteras aldrig med källan. Anslutningen kräver samtycke (ändamålet OpenCDE-server) och att servern
 tillåter anrop från webbläsaren (CORS).
 
+En **lokal Dataregium** på den egna datorn (serverns on premise-läge, `opencde init --local`) svarar på `http://127.0.0.1:8000`.
+Ange den adressen och lämna klient-id tomt: den lokala servern låter appen registrera sig själv, tillåter anrop från appen öppnad från
+file:// och från `http://127.0.0.1:8080`, kräver PKCE som vanligt och svarar bara när adressen i anropet är den egna datorns. Appen ser
+på adressen att servern är lokal; allt annat fungerar som mot en server på nätet.
+
 Appen talar BCF API 3.0 och 2.1. Den väljer den nyaste version som servern erbjuder, och en server med bara 2.1 fungerar också: en sådan
 saknar ofta Foundation API och Documents API, så appen läser versionen ur `/bcf/versions` och inloggningsadresserna ur `/bcf/2.1/auth`, och
 lämnar bort *Hämta dokument*. Under *Fler alternativ* i dialogen kan du välja version själv, och erbjuder servern flera kan du byta i källans vy.

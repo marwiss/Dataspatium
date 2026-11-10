@@ -124,6 +124,11 @@ downloaded and imported as if dropped on the app, so an IFC model becomes a mode
 session only and are never exported with the source. The connection needs consent (purpose OpenCDE server) and a server
 that allows requests from the browser (CORS).
 
+A **local Dataregium** on your own computer (the server's on-premise mode, `opencde init --local`) answers at `http://127.0.0.1:8000`.
+Enter that address and leave the client id empty: the local server lets the app register itself, allows calls from the app opened from
+file:// and from `http://127.0.0.1:8080`, requires PKCE as usual and answers only when the address in the call is the computer's own.
+The app sees from the address that the server is local; everything else works as against a server on the network.
+
 The app speaks BCF API 3.0 and 2.1. It chooses the newest version the server offers, and a server of 2.1 alone works too: such a server often
 has neither the Foundation API nor the Documents API, so the app reads the version from `/bcf/versions` and the sign-in addresses from
 `/bcf/2.1/auth`, and leaves out *Fetch documents*. Under *More options* in the dialog you can choose the version yourself, and when the server offers

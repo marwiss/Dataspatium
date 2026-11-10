@@ -128,6 +128,12 @@ riviä kohti), tapahtumat ja tiedostot taulukoina. *Hae asiakirjat* avaa palveli
 malliaineistoksi. Käyttöoikeustunnukset ovat vain istunnossa eikä niitä viedä lähteen mukana. Yhteys vaatii
 suostumuksen (tarkoitus OpenCDE-palvelin) ja palvelimen, joka sallii kutsut selaimesta (CORS).
 
+**Paikallinen Dataregium** omalla tietokoneella (palvelimen on premise -tila, `opencde init --local`) vastaa osoitteessa
+`http://127.0.0.1:8000`. Anna se osoite ja jätä asiakastunnus tyhjäksi: paikallinen palvelin antaa sovelluksen rekisteröidä itsensä,
+sallii kutsut file://-osoitteesta avatusta sovelluksesta ja osoitteesta `http://127.0.0.1:8080`, vaatii PKCE:n kuten tavallisesti ja
+vastaa vain, kun kutsun osoite on tietokoneen oma. Sovellus näkee osoitteesta, että palvelin on paikallinen; kaikki muu toimii kuten
+verkossa olevaa palvelinta vastaan.
+
 Sovellus puhuu BCF API -versioita 3.0 ja 2.1. Se valitsee uusimman version, jota palvelin tarjoaa, ja myös pelkän 2.1:n palvelin toimii: sellaisesta
 puuttuvat usein Foundation API ja Documents API, joten sovellus lukee version osoitteesta `/bcf/versions` ja kirjautumisosoitteet osoitteesta `/bcf/2.1/auth` ja
 jättää pois kohdan *Hae asiakirjat*. Valintaikkunan kohdassa *Lisää asetuksia* voit valita version itse, ja jos palvelin tarjoaa useita, voit vaihtaa lähteen

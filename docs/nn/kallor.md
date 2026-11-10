@@ -124,6 +124,11 @@ blir henta og importerte som om du hadde sleppt dei i appen, så ein IFC-modell 
 finst berre i sesjonen og blir aldri eksporterte med kjelda. Tilkoplinga krev samtykke (føremålet OpenCDE-tenar) og at
 tenaren tillèt kall frå nettlesaren (CORS).
 
+Ein **lokal Dataregium** på di eiga datamaskin (on premise-modusen til tenaren, `opencde init --local`) svarar på `http://127.0.0.1:8000`.
+Oppgje den adressa og la klient-id stå tomt: den lokale tenaren lèt appen registrere seg sjølv, tillèt kall frå appen opna frå file://
+og frå `http://127.0.0.1:8080`, krev PKCE som vanleg og svarar berre når adressa i kallet er maskina si eiga. Appen ser på adressa at
+tenaren er lokal; alt anna fungerer som mot ein tenar på nettet.
+
 Appen snakkar BCF API 3.0 og 2.1. Han vel den nyaste versjonen tenaren tilbyr, og ein tenar med berre 2.1 verkar òg: ein slik tenar manglar ofte
 Foundation API og Documents API, så appen les versjonen frå `/bcf/versions` og innloggingsadressene frå `/bcf/2.1/auth` og utelèt *Hent dokument*.
 Under *Fleire alternativ* i dialogen kan du velje versjon sjølv, og tilbyr tenaren fleire, kan du byte i visinga til kjelda. I 2.1 viser *Filer i prosjektet*

@@ -122,6 +122,11 @@ sóttar og fluttar inn eins og þeim hefði verið sleppt í forritið, svo IFC-
 aðeins í setunni og eru aldrei fluttir út með uppsprettunni. Tengingin krefst samþykkis (tilgangurinn OpenCDE-þjónn) og
 þjóns sem leyfir köll úr vafranum (CORS).
 
+**Staðbundinn Dataregium** á eigin tölvu (on premise-hamur þjónsins, `opencde init --local`) svarar á `http://127.0.0.1:8000`. Sláðu
+inn það vistfang og skildu biðlarakenni eftir autt: staðbundni þjónninn leyfir forritinu að skrá sig sjálft, leyfir köll frá forritinu
+opnuðu frá file:// og frá `http://127.0.0.1:8080`, krefst PKCE eins og venjulega og svarar aðeins þegar vistfangið í kallinu er tölvunnar
+eigið. Forritið sér á vistfanginu að þjónninn er staðbundinn; allt annað virkar eins og gagnvart þjóni á netinu.
+
 Forritið talar BCF API 3.0 og 2.1. Það velur nýjustu útgáfuna sem þjónninn býður, og þjónn með aðeins 2.1 virkar líka: slíkan þjón vantar oft Foundation API og
 Documents API, svo forritið les útgáfuna úr `/bcf/versions` og innskráningarvistföngin úr `/bcf/2.1/auth` og sleppir *Sækja skjöl*. Undir *Fleiri valkostir* í glugganum
 geturðu valið útgáfu sjálfur, og ef þjónninn býður fleiri geturðu skipt í sýn uppsprettunnar. Í 2.1 listar *Skrár í verkefninu* aðeins BCF-skjölin, mál hafa ekki

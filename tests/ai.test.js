@@ -170,6 +170,8 @@
       if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
       if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries') return Promise.resolve(json({ model_state: 'done', queries: [{ name: 'property', parameters: ['pset', 'property', 'class'] }] }));
       if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries/property') { hits.push(query); return Promise.resolve(json({ name: 'property', columns: ['global_id', 'class', 'name', 'value', 'type'], rows: [['1Xezbq735AdBO_4DerG66G', 'IfcWall', 'Vägg 1.1', 'EI60', 'IFCLABEL']], truncated: false })); }
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries/entity') { hits.push(query); return Promise.resolve(json({ name: 'entity', columns: ['global_id', 'class', 'step_id', 'attributes', 'references', 'referenced_by'], rows: [['1Xezbq735AdBO_4DerG66G', 'IfcWall', 99, { Name: 'Vägg 1.1' }, { ObjectPlacement: [120] }, { RelatedElements: [71] }]], truncated: false })); }
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries/changed-since') { hits.push(query); return Promise.resolve(json({ name: 'changed-since', columns: ['version_index', 'change_set_id', 'author', 'approved_by', 'whole_file', 'guid', 'step_id', 'path', 'attribute', 'op'], rows: [[3, 't-1', 'anna', 'bo', false, '1Xezbq735AdBO_4DerG66G', 170, null, 'NominalValue', 'set']], truncated: false })); }
       return Promise.resolve(json({ message: 'Not Found' }, 404));
     });
     const before = await tools.call(model.id, 'server_query', { name: 'property', class: null, pset: 'Pset_WallCommon', property: 'FireRating' });
@@ -184,6 +186,10 @@
       const answer = await tools.call(model.id, 'server_query', { name: 'property', class: null, pset: 'Pset_WallCommon', property: 'FireRating' });
       assert.deepEqual(answer.columns, ['global_id', 'class', 'name', 'value', 'type']); assert.equal(answer.count, 1); assert.equal(answer.rows[0][3], 'EI60'); assert.equal(answer.truncated, false);
       assert.equal(hits[0], 'pset=Pset_WallCommon&property=FireRating', 'the parameters as the server wants them');
+      const entity = await tools.call(model.id, 'server_query', { name: 'entity', class: null, pset: null, property: null, global_id: '1Xezbq735AdBO_4DerG66G', since: null });
+      assert.ok(entity.rows.length === 1 && entity.rows[0][2] === 99 && hits[1] === 'global_id=1Xezbq735AdBO_4DerG66G', 'one rooted entity by GlobalId: ' + hits[1]);
+      const since = await tools.call(model.id, 'server_query', { name: 'changed-since', class: null, pset: null, property: null, global_id: null, since: '2' });
+      assert.ok(since.rows.length === 1 && since.columns.includes('whole_file') && hits[2] === 'since=2', 'what the versions after 2 changed: ' + hits[2]);
       const list = await tools.call(model.id, 'server_query', { name: null, class: null, pset: null, property: null });
       assert.equal(list.model_state, 'done'); assert.equal(list.queries[0].name, 'property');
       assert.ok(tools.TOOLS.some((tool) => tool.name === 'server_query'), 'offered to the model');

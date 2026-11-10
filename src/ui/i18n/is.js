@@ -4576,7 +4576,7 @@
     'cdelog.op.bcf.auth': 'GET /bcf/2.1/auth: vistföng fyrir OAuth2 (innskráning, tóki, afturköllun, skráning) samkvæmt BCF API 2.1.',
     'cdelog.op.bcf.current_user': 'GET /bcf/2.1/current-user: innskráði notandinn, svo að forritið viti fyrir hvern það talar.',
     'families.field.clientSecret': 'Biðlaraleyndarmál (aðeins trúnaðarbiðlarar)',
-    'families.opencde.desc': 'OpenCDE-þjónn samkvæmt buildingSMART: BCF API 3.0 eða 2.1 (verkefni, mál, athugasemdir, sjónarhorn) og Documents API 1.0 (skjöl). Þú skráir þig inn á þjóninn með OAuth2. Skildu biðlaraauðkennið eftir autt þegar þjónninn leyfir forritinu að skrá sig sjálft; annars slærðu inn biðlaraauðkennið sem stjórnandi þjónsins skráði fyrir Dataspatium.',
+    'families.opencde.desc': 'OpenCDE-þjónn samkvæmt buildingSMART: BCF API 3.0 eða 2.1 (verkefni, mál, athugasemdir, sjónarhorn) og Documents API 1.0 (skjöl). Þú skráir þig inn á þjóninn með OAuth2. Skildu biðlaraauðkennið eftir autt þegar þjónninn leyfir forritinu að skrá sig sjálft; annars slærðu inn biðlaraauðkennið sem stjórnandi þjónsins skráði fyrir Dataspatium. Staðbundinn Dataregium á eigin tölvu svarar á http://127.0.0.1:8000.',
     'families.opencde.cors': 'Þjónninn þarf að leyfa köll úr vafranum (CORS) og hafa vistfang Dataspatium skráð sem endurbeiningarvistfang; frá file:// límir þú svarið frá innskráningunni inn sjálf.',
     'consent.purpose.opencde': 'OpenCDE-þjónn',
     'consent.purpose.opencde.body': 'Skrá sig inn á og sækja mál og skjöl frá OpenCDE-þjóni (BCF, Documents API).',

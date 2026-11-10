@@ -1754,11 +1754,14 @@ class _Proposal:
     """The attribute-level form of a change, as Dataregium takes it in a BCF topic's snippet (DataregiumIfcChangeSet).
 
     Compares the instances that exist in both the base and the candidate, each change on one attribute of one instance named
-    by its STEP id: a scalar, a typed value ({"type", "value"}), an enumeration ({"enum"}), a reference ({"step_id"}) or a list
-    of them. A sub-instance that the candidate replaced with a new one of the same class (a moved placement's point) is told
-    as changes of the old instance, with "copy" when others share it: such a change names the instance by the element's GlobalId
-    and the path from it, since the server copies the instance and points the parent at the copy. What only new instances carry
-    (created elements, new relationships, property sets and properties) cannot be said in this form and is counted as unexpressed.
+    by the GlobalId of the nearest rooted entity and the path from it in IFC's attribute names with 0-based indexes (no path for
+    the rooted entity itself), and by STEP id only when no GlobalId reaches the instance; the collision keys of the server's merge
+    are then the same between clients (Martin's rule). A value is a scalar, a typed value ({"type", "value"}), an enumeration
+    ({"enum"}), a reference (named by GlobalId and path the same way, {"step_id"} only when no GlobalId reaches it) or a list of
+    them. A sub-instance that the
+    candidate replaced with a new one of the same class (a moved placement's point) is told as changes of the old instance, with
+    "copy" when others share it. What only new instances carry (created elements, new relationships, property sets and properties)
+    cannot be said in this form and is counted as unexpressed.
     """
 
     DEPTH = 8
@@ -1773,7 +1776,6 @@ class _Proposal:
         self.unexpressed = 0
         self.instances = set()
         self.seen = set()
-        self.guid = None
 
     @staticmethod
     def instance(v):
@@ -1819,16 +1821,27 @@ class _Proposal:
                 return {"type": v.is_a(), "value": _ifc_value(v.wrappedValue)}
             if self.in_base(v) is None:
                 raise KeyError(v.id())
-            return {"step_id": v.id()}
+            return self.ref(self.in_base(v))
         if isinstance(v, (tuple, list)):
             return [self.value(x, kind) for x in v]
         if isinstance(v, str) and kind == "ENUMERATION":
             return {"enum": v}
         return _ifc_value(v)
 
-    def change(self, inst, attribute, op, old=None, new=None, copy=False, path=()):
-        if copy and path and self.guid:
-            rec = {"guid": self.guid, "path": ".".join(path), "attribute": attribute, "op": op}
+    @staticmethod
+    def guid_of(inst):
+        try:
+            return str(inst.GlobalId) if hasattr(inst, "GlobalId") and inst.GlobalId else None
+        except Exception:
+            return None
+
+    def change(self, inst, attribute, op, old=None, new=None, copy=False, root=None, path=()):
+        """A change of `inst`: named by the GlobalId `root` of the rooted entity the `path` leads from, by STEP id without one."""
+        own = self.guid_of(inst)
+        if own:
+            rec = {"guid": own, "attribute": attribute, "op": op}
+        elif root and path:
+            rec = {"guid": root, "path": ".".join(path), "attribute": attribute, "op": op}
         else:
             rec = {"step_id": inst.id(), "attribute": attribute, "op": op}
             copy = False
@@ -1847,11 +1860,15 @@ class _Proposal:
         except Exception:
             return False
 
-    def diff(self, b, c, depth=0, copy=False, path=()):
-        """The attributes of a base instance against its candidate, into the sub-instances it owns; path leads here from the element."""
+    def diff(self, b, c, depth=0, copy=False, root=None, path=()):
+        """The attributes of a base instance against its candidate, into the sub-instances it owns; `path` leads here from the rooted
+        entity `root` (a rooted instance starts a path of its own)."""
         if b.id() in self.seen or depth > self.DEPTH:
             return
         self.seen.add(b.id())
+        own = self.guid_of(b)
+        if own:
+            root, path = own, ()
         for i in range(len(b)):
             try:
                 name, kind = b.attribute_name(i), b.attribute_type(i)
@@ -1865,24 +1882,74 @@ class _Proposal:
                 continue
             if self.instance(bv) and bv.id() != 0 and self.instance(cv) and cv.id() != 0 and bv.is_a() == cv.is_a() and not hasattr(bv, "GlobalId"):
                 if cv.id() == bv.id():
-                    self.diff(bv, cv, depth + 1, copy, path + (name,))
+                    self.diff(bv, cv, depth + 1, copy, root, path + (name,))
                 elif self.in_base(cv) is None:
                     # replaced by a new instance of the same class: the old one's attributes, on a copy when others share it
-                    self.diff(bv, cv, depth + 1, copy or self.shared(bv), path + (name,))
+                    self.diff(bv, cv, depth + 1, copy or self.shared(bv), root, path + (name,))
                 else:
-                    self.change(b, name, "set", old={"step_id": bv.id()}, new={"step_id": cv.id()}, copy=copy, path=path)
+                    self.change(b, name, "set", old=self.ref(bv), new=self.ref(cv), copy=copy, root=root, path=path)
                 continue
             if kind.startswith("AGGREGATE OF ENTITY INSTANCE") and isinstance(bv, (tuple, list)) and isinstance(cv, (tuple, list)):
-                self.members(b, name, bv, cv, depth, copy, path)
+                self.members(b, name, bv, cv, depth, copy, root, path)
                 continue
             if self.same(bv, cv):
                 continue
             try:
-                self.change(b, name, "set", old=self.value(bv, kind), new=self.value(cv, kind), copy=copy, path=path)
+                self.change(b, name, "set", old=self.value(bv, kind), new=self.value(cv, kind), copy=copy, root=root, path=path)
             except KeyError:
                 self.unexpressed += 1
 
-    def members(self, b, name, bv, cv, depth, copy, path=()):
+    def ref(self, inst):
+        """A base instance as a value: its own GlobalId, the GlobalId and path of a rooted entity that reaches it, or its STEP id."""
+        guid = self.guid_of(inst)
+        if guid:
+            return {"guid": guid}
+        found = self.locate(inst)
+        return {"guid": found[0], "path": found[1]} if found else {"step_id": inst.id()}
+
+    LOCATE_DEPTH = 6
+
+    def locate(self, inst, depth=0, seen=None):
+        """(GlobalId, path) of a rooted base entity whose forward attributes lead to `inst`, found backwards through the inverses."""
+        seen = seen if seen is not None else set()
+        if depth > self.LOCATE_DEPTH or inst.id() in seen:
+            return None
+        seen.add(inst.id())
+        try:
+            referrers = list(self.base.get_inverse(inst))
+        except Exception:
+            return None
+        steps = []
+        for r in referrers:
+            segment = None
+            for i in range(len(r)):
+                try:
+                    v = r[i]
+                except Exception:
+                    continue
+                if self.instance(v) and v.id() == inst.id():
+                    segment = r.attribute_name(i)
+                elif isinstance(v, (tuple, list)):
+                    for k, x in enumerate(v):
+                        if self.instance(x) and x.id() == inst.id():
+                            segment = "%s[%d]" % (r.attribute_name(i), k)
+                            break
+                if segment:
+                    break
+            if segment:
+                steps.append((r, segment))
+        # the rooted owner first (the storey's own ObjectPlacement), the longer way through other instances only without one
+        for r, segment in steps:
+            guid = self.guid_of(r)
+            if guid:
+                return guid, segment
+        for r, segment in steps:
+            up = self.locate(r, depth + 1, seen)
+            if up:
+                return up[0], up[1] + "." + segment
+        return None
+
+    def members(self, b, name, bv, cv, depth, copy, root=None, path=()):
         """An aggregate of instances: the members both have are compared, the others added or removed."""
         bids = {x.id(): x for x in bv if self.instance(x)}
         cids = {y.id(): y for y in cv if self.instance(y)}
@@ -1890,15 +1957,15 @@ class _Proposal:
             if self.instance(x):
                 if x.id() in cids:
                     if not hasattr(x, "GlobalId"):
-                        self.diff(x, cids[x.id()], depth + 1, copy, path + ("%s[%d]" % (name, i),))
+                        self.diff(x, cids[x.id()], depth + 1, copy, root, path + ("%s[%d]" % (name, i),))
                 else:
-                    self.change(b, name, "remove", old={"step_id": x.id()}, copy=copy, path=path)
+                    self.change(b, name, "remove", old=self.ref(x), copy=copy, root=root, path=path)
         for y in cv:
             if self.instance(y) and y.id() not in bids:
                 if self.in_base(y) is None:
                     self.unexpressed += 1
                 else:
-                    self.change(b, name, "add", new={"step_id": y.id()}, copy=copy, path=path)
+                    self.change(b, name, "add", new=self.ref(y), copy=copy, root=root, path=path)
 
     def memberships(self, b, c):
         """The relationships the element is a member of (container, material, property sets, aggregate): changed membership."""
@@ -1909,19 +1976,19 @@ class _Proposal:
             cids = {r.id() for r in crels}
             for i, r in enumerate(brels):
                 if r.id() not in cids:
-                    self.change(r, attribute, "remove", old={"step_id": b.id()})
+                    self.change(r, attribute, "remove", old=self.ref(b))
                 elif inverse == "IsDefinedBy" and getattr(r, "RelatingPropertyDefinition", None) is not None:
-                    # a property set both have: its properties' values, on a copy when other elements share the set
+                    # a property set both have: its properties' values (the set is rooted, so its own GlobalId names them)
                     pd = r.RelatingPropertyDefinition
                     cpd = self.in_cand(pd)
                     if cpd is not None:
-                        self.diff(pd, cpd, 1, False, ("IsDefinedBy[%d]" % i, "RelatingPropertyDefinition"))
+                        self.diff(pd, cpd, 1, False, self.guid_of(b), ("IsDefinedBy[%d]" % i, "RelatingPropertyDefinition"))
             for r in crels:
                 if r.id() not in bids:
                     if self.in_base(r) is None:
                         self.unexpressed += 1
                     else:
-                        self.change(r, attribute, "add", new={"step_id": b.id()})
+                        self.change(r, attribute, "add", new=self.ref(b))
 
     def element(self, step_id):
         """A changed rooted element: its own attributes, its placement and its memberships."""
@@ -1933,7 +2000,6 @@ class _Proposal:
         if b is None or c is None:
             self.unexpressed += 1
             return
-        self.guid = str(getattr(b, "GlobalId", "") or "") or None
         self.diff(b, c)
         self.memberships(b, c)
 
