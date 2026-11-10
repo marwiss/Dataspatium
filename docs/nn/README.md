@@ -4,16 +4,28 @@
 
 # Dataspatium OpenCDE-klient
 
-Dataspatium er ein nettapp for data frå kjelde til rapport: hent data frå filer og opne API-ar, lagre og handter datasett,
-gå gjennom og rett verdiar, analyser med R, visualiser og eksporter. Alt køyrer i din eigen nettlesar. Ingen tenar, ingen
-installasjon, ingen kontoar. Dataa dine forlèt aldri datamaskina med mindre du sjølv eksporterer dei. Tryggleiken er det første kravet: ingen nettverkskall utan di handling og ditt samtykke, løyndomar berre krypterte, komponentar låste og kontrollerte, og alt som blir delt, blir gått gjennom først.
+Dataspatium er eit program for å arbeide med data, som du opnar i den vanlege nettlesaren din. Du hentar inn ein tabell, eit kart, ein
+plan, ein bygningsmodell eller statistikk frå ei styresmakt, rettar og reknar på han, lagar diagram og rapportar og sender resultatet
+vidare. Alt skjer på din eigen datamaskin: ingen installasjon, ingen konto og ingen tenar. Ingenting forlèt datamaskinen med mindre du
+sjølv eksporterer eller deler det, og appen spør alltid før han brukar internett.
 
-![Dataspatium i modusen Bearbeid med ein tabell over svenske kommunar](../images/bearbeta.png)
+Dataspatium kan også arbeide mot [Dataregium](https://github.com/marwiss/Dataregium), ein tenar der eit byggjeprosjekt deler modellar,
+dokument og saker. Då kan du hente bygningsmodellane til prosjektet, peike ut problem i 3D, kontrollere modellane og, med hjelp av AI,
+føreslå endringar som dei ansvarlege i prosjektet godkjenner. Utan Dataregium fungerer alt anna akkurat som før.
+
+**For den teknisk kunnige:** ein statisk nettapp utan byggjesteg som køyrer frå `file://` i Edge, Chrome og Firefox eller frå kva statisk
+nettenar som helst. Kvart datasett er ei SQLite-fil (sql.js) i IndexedDB; R køyrer i WebR 0.5.9 og Python i Pyodide 0.29.5, begge i
+workers; IFC blir lesen med web-ifc og IfcOpenShell (wasm). Mot ein tenar er appen ein OpenCDE-klient: Foundation API 1.0 med OAuth2
+authorization code og PKCE, BCF API 3.0 og 2.1 og Documents API 1.0. Ingen nettverkskall skjer utan samtykke per føremål, og løyndomar
+blir berre lagra krypterte (AES-GCM).
+
+![Dataspatium i modusen Bearbeid med ein tabell over kommunane i Sverige](../images/bearbeta.png)
 
 **Innhald**
 
 - [Last ned og kom i gang](#last-ned-og-kom-i-gang)
 - [Kva som krevst](#kva-som-krevst)
+- [Ord du bør kjenne](#ord-du-bør-kjenne)
 - [Kva du kan gjere](#kva-du-kan-gjere)
 - [OpenCDE-API-ane og klientane deira](#opencde-api-ane-og-klientane-deira)
 - [Dataspatium og Dataregium](#dataspatium-og-dataregium)
@@ -25,41 +37,89 @@ installasjon, ingen kontoar. Dataa dine forlèt aldri datamaskina med mindre du 
 - [Utvikling](#utvikling)
 - [Lisens](#lisens)
 
-Brukargrensesnittet finst på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og engelsk. Skjermbileta i
-dokumentasjonen viser appen på svensk.
-
 ## Last ned og kom i gang
 
-1. **Last ned.** Gå til den [siste utgåva](https://github.com/marwiss/Dataspatium/releases/latest), og hent ZIP-fila
-   under *Assets* (`dataspatium-<versjon>.zip`, om lag 100 MB; R og alle R-pakkane er med).
-2. **Pakk ut.** Høgreklikk på ZIP-fila, og vel *Pakk ut alle* (Windows), eller dobbeltklikk på henne (macOS). Legg mappa
-   der du vil ha henne, til dømes i Dokument. Appen fungerer ikkje direkte inne i ZIP-fila.
-3. **Opne.** Dobbeltklikk på `index.html` i mappa, eller dra fila til eit nettlesarvindauge. Om Windows spør kva app som
-   skal brukast, vel du Edge, Chrome eller Firefox. Første gongen spør appen kva språk du vil ha (det kan endrast med
-   språkknappen øvst til høgre), og startar deretter **grunnkurset**, ein interaktiv gjennomgang av alle modusar med
-   dømedata som tek om lag ti minutt. Opne det igjen frå hjelpa (?).
-4. **Importer.** I modusen *Hent* slepper du ei fil på flata (eller klikkar på *Prøv med dømedata*), kontrollerer
-   kolonnetypane og klikkar på *Importer*. Datasettet blir lagra i nettlesaren på datamaskina di.
-5. **Arbeid vidare.** Byt modus øvst: *Handter* viser datasetta dine og arbeidsområdet, *Søk* finn rader i dei,
-   *Bearbeid* viser tabellen med sortering, filter og handlingar, *Analyser* opnar R- og SQL-konsollen, *Visualiser*
-   lagar diagram, *Eksporter* lastar ned data, diagram og dokument, og *Del* gjev dei til andre.
+1. **Last ned.** Gå til [siste utgjevinga](https://github.com/marwiss/Dataspatium/releases/latest) og hent ZIP-fila under *Assets*
+   (`dataspatium-<version>.zip`, om lag 100 MB; R og dei vanlegaste R-pakkane følgjer med).
+2. **Pakk ut.** Høgreklikk på ZIP-fila og vel *Pakk ut alle* (Windows), eller dobbeltklikk på henne (macOS). Legg mappa der du vil ha
+   henne, til dømes i Dokument. Appen verkar ikkje direkte inne i ZIP-fila.
+3. **Opne.** Dobbeltklikk på `index.html` i mappa, eller dra fila inn i eit nettlesarvindauge. Om Windows spør kva app som skal brukast,
+   vel du Edge, Chrome eller Firefox. Første gongen vel du språk, og deretter blir **grunnkurset** tilbode: ein gjennomgang av alle
+   modusane med dømedata som tek om lag ti minutt og kan opnast igjen frå hjelpa (?).
+4. **Hent inn data.** I modusen *Hent* slepper du ei fil på flata, eller klikkar på *Prøv med dømedata*. Appen viser kva fila
+   inneheld; klikk på *Importer*. Datasettet blir lagra i nettlesaren på datamaskinen din.
+5. **Arbeid vidare.** Modusane øvst er stega i arbeidet: *Handter* held orden på datasetta dine, *Søk* finn rader utan kode, *Bearbeid*
+   viser tabellen, kartet eller modellen med knappar for å rette og rekne, *Analyser* har statistikk og kode (R, Python og SQL),
+   *Visualiser* lagar diagram og kart, *Eksporter* lagrar filer på datamaskinen, og *Del* sender til andre.
 
-Data blir lagra i den eigne databasen til nettlesaren. Slettar du nettstaddata, forsvinn dei, så ta tryggingskopi
-regelmessig under *Handter > Arbeidsområde*. Tryggingskopien er ei ZIP-fil som kan gjenopprettast på same eller ei anna
+Det du lagrar, ligg i den eigne databasen til nettlesaren på datamaskinen. Slettar du nettstaddata i nettlesaren, forsvinn det, så ta
+jamleg ein tryggingskopi under *Handter > Arbeidsområde*. Tryggingskopien er ei ZIP-fil som kan gjenopprettast på same eller ein annan
 datamaskin. Steg for steg med fleire detaljar: [kom-igang.md](kom-igang.md).
 
-Appen finst òg direkte på nettet, utan nedlasting: <https://marwiss.github.io/Dataspatium/>. Frå ein nettenar kan han
-installerast som eigen app (Edge og Chrome: *Installer* i adressefeltet) og fungerer deretter òg utan nettverk.
-Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei med ein tryggingskopi eller ein pakke.
+Appen finst også direkte på nettet, utan nedlasting: <https://marwiss.github.io/Dataspatium/>. Derifrå kan han installerast som eigen app
+(Edge og Chrome: *Installer* i adressefeltet) og verkar då også utan nettverk. Nettversjonen og mappeversjonen har kvart sitt
+arbeidsområde; flytt data mellom dei med ein tryggingskopi eller ein pakke.
+
+### For den teknisk kunnige
+
+- **Køyr:** pakk ut ZIP-fila og opne `index.html` (file://), eller server mappa: `python -m http.server 8080 --bind 127.0.0.1` og opne
+  <http://127.0.0.1:8080/>. Frå ein nettenar finst service worker, ein app som kan installerast, og R og Python som kan avbrytast.
+- **Kontroller ZIP-fila:** samanlikn SHA-256 med den i teksten til utgjevinga (`Get-FileHash` i PowerShell, `shasum -a 256` på macOS og
+  Linux).
+- **Med ein tenar:** start Dataregium med Docker eller Podman (`docker compose up -d --build --wait` og
+  `docker compose exec api opencde seed` i repoet til Dataregium), server Dataspatium på port 8080 og legg til tenaren under *Hent >
+  Legg til kjelde > OpenCDE*. Klient-id kan stå tomt når tenaren tillèt sjølvregistrering. Heile vegen på tjue minutt:
+  [snabbstart.md](snabbstart.md).
+- **Grafen:** IFC-grafen til tenaren (Neo4j eller Memgraph) blir spurd med Cypher frå *Hent*, gjennom grafspørjinga til tenaren eller
+  direkte over Bolt; dei namngjevne spørjingane til tenaren blir nådde frå AI-panelet.
+- **AI:** legg inn ein nøkkel for Anthropic eller eit OpenAI-kompatibelt API (også Ollama, vLLM og llama.cpp på din eigen datamaskin) i
+  panelet *Spør AI* i modellvisinga; nøkkelen blir lagra kryptert, og policyen til prosjektet kan avgrense til lokale modellar.
+- **Prøver:** `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` køyrer heile suiten i headless Edge og Firefox.
 
 ## Kva som krevst
 
 - Windows, macOS eller Linux.
-- Microsoft Edge eller Google Chrome (versjon 120 eller nyare) eller Firefox (versjon 128 eller nyare). Safari blir ikkje støtta.
-- Om lag 300 MB ledig plass til appmappa og minst 4 GB minne (8 GB er tilrådd for store datasett). Det krevst ingen
-  administratorrettar.
-- Internett trengst berre når du hentar data frå opne API-ar, sender til GitHub, ser etter oppdateringar eller hentar ein
-  komponent eller ein R-pakke som ikkje følgjer med i mappa; appen spør om løyve først.
+- Microsoft Edge eller Google Chrome (versjon 120 eller nyare), eller Firefox (versjon 128 eller nyare). Safari er ikkje støtta for
+  heile appen.
+- Om lag 300 MB ledig plass til appmappa og minst 4 GB minne (8 GB er tilrådd for store datasett og modellar). Ingen
+  administratorrettar trengst.
+- Internett trengst berre når du sjølv vel noko som krev det, og appen spør om lov først for kvart føremål: hente data frå opne API-ar
+  og kart, kople til ein Dataregium-tenar eller GitHub, spørje ein AI-modell i skya, sjå etter oppdatering eller hente ein del som
+  ikkje følgjer med i mappa (Python, IfcOpenShell og R-pakkar utover dei vanlegaste).
+- Dataregium treng ein tenar. Å køyre din eigen krev Docker eller Podman; det skildrar README-en til Dataregium.
+
+## Ord du bør kjenne
+
+Du treng ikkje kunne orda nedanfor for å bruke appen, men dei finst i teksten.
+
+- **API**: ein måte for program å hente data frå kvarandre over nettet. Appen hentar statistikk frå API-ane til styresmakter og snakkar
+  med Dataregium gjennom API-ane hans.
+- **Datasett**: det appen lagrar når du hentar inn noko: ein tabell, eit kart, ein plan, ein graf, ein modell eller ei samling dokument
+  eller bilete.
+- **Oppskrift**: lista over alt du har gjort med eit datasett, steg for steg, slik at det kan angrast eller gjerast om att på nye data.
+- **R, Python og SQL**: språk for å analysere data. Appen har dei innebygde, men det meste blir gjort med knappar og skjema som skriv
+  koden for deg.
+- **BIM**: å skildre ein bygning som ein digital modell der kvar vegg, dør og kvart rom har opplysningar, ikkje berre som strekar på ei
+  teikning.
+- **IFC**: det opne filformatet for bygningsmodellar, som alle dei store programma for byggjeprosjektering kan lese og skrive.
+- **CAD**: teikningar laga i eit teikneprogram; appen les dei i det opne formatet DXF.
+- **IDS**: ei open fil som seier kva opplysningar ein modell må ha, slik at modellen kan kontrollerast automatisk.
+- **BCF**: eit ope format for saker om ein modell, til dømes «ventilasjonen går gjennom bjelken», med eit bilete og visinga som viser
+  staden.
+- **OpenCDE**: dei opne reglane til buildingSMART for korleis program deler modellane, dokumenta og sakene i eit byggjeprosjekt, slik at
+  program frå ulike produsentar fungerer saman.
+- **Tenar**: eit program som andre koplar seg til over nettet. Dataregium er ein tenar; Dataspatium treng ingen.
+- **Graf og grafdatabase**: data som ting og sambanda mellom dei, til dømes at ei dør sit i ein vegg i ein etasje. Dataregium kan lagre
+  kvar modell som ein graf i Neo4j eller Memgraph ved hjelp av modulen IFC-LPG.
+- **Container**: eit ferdigpakka program som blir starta med Docker eller Podman utan at delane blir installerte kvar for seg.
+  Dataregium køyrer slik; Dataspatium treng ingen containerar.
+- **Versjon og endringssett**: ein versjon er ein lagra tilstand av ein modell; eit endringssett er ei samling føreslegne endringar som du
+  ser og godkjenner før dei blir ein ny versjon.
+- **AI-modell**: ei teneste som Claude eller ChatGPT, eller ein modell på din eigen datamaskin, som svarar på spørsmål og føreslår
+  endringar. Appen brukar han berre med din eigen nøkkel og ditt samtykke.
+- **OAuth2-pålogging**: den vanlege måten å logge på ei teneste frå ein annan app utan at appen ser passordet ditt.
+- **file:// og CORS**: file:// tyder at appen blir opna direkte frå ei mappe. CORS er regelen i nettlesaren for kva nettenester ein
+  nettapp får hente data frå; ei teneste utan CORS kan ikkje nåast direkte.
 
 ## Kva du kan gjere
 
@@ -67,108 +127,122 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 
 ### Versjon 1 (med Dataregium 1)
 
-- **Hente**: filer i rundt førti format, frå rekneark og statistikkfiler til geodata og tabellar i dokument, og data frå opne API-ar
-  hos nordiske og europeiske styresmakter, med lagra hentingar (sjå [Opne API-ar](api-konfiguration.md)).
-- **Bearbeide**: sortere, filtrere, reinse, setje typar, omkode, pivotere og kople, med reglar for datakvalitet, pseudonymisering,
-  angre, versjonar og oppskrifter (sjå [Bearbeid](bearbeta.md)).
-- **Analysere**: R med ggplot2 og tidyverse, SQL, notatbøker som blir rapportar, og regulære uttrykk, heilt i nettlesaren (sjå
-  [R](r-guide.md)).
-- **Planar**: svenske detaljplanar og översiktsplanar som plankart med fargane og teikna til Boverket (sjå [Planar](planer.md)).
-- **Visualisere og dokumentere**: diagram med Vega-Lite, D3 eller R, dashbord og rapportar frå malar som HTML, Word, PDF, PowerPoint
-  eller LaTeX (sjå [Visualiser](visualisera.md)).
-- **Eksportere og dele**: data i rundt ti format, pakkar, kommentarar, tryggingskopi, synkronisering med GitHub og ei portabel mappe.
-- **Dataregium som kjelde**: dokument blir henta som datasett, og datasett og filer blir sende tilbake (Documents API).
-- **Seks språk og grunnkurs**: svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk, eit interaktivt kurs gjennom alle modusane og
-  kommandopaletten (Ctrl+K) som finn alt.
+- **Hent inn data**: filer i kring førti format, frå Excel og CSV til statistikkfiler, geodata og tabellar i Word og nettsider, og
+  statistikk frå styresmakter i Sverige, Norden og Europa med eitt klikk (sjå [Opne API-ar](api-konfiguration.md)). *Teknisk:* teiknkoding
+  og kolonnetypar blir kjende att; SPSS, Stata, SAS, PX, Parquet og RDS via R; eigne kjelder som `*.api.json`.
+- **Rett og rekn**: kring femti handlingar med knappar, som å reinske, byte type, omkode, rekne delar, pivotere og kople tabellar, med
+  kvalitetsreglar, pseudonymisering av personnummer, angre og versjonar (sjå [Bearbeid](bearbeta.md)). *Teknisk:* kvart steg blir lagra
+  i ei oppskrift som kan eksporterast som R- eller SQL-kode.
+- **Analyser**: R med ggplot2 og tidyverse, SQL på tvers av datasett, regulære uttrykk og notatbøker som blir rapportar, heilt i
+  nettlesaren (sjå [R](r-guide.md) og [Regulære uttrykk](regex.md)).
+- **Planar**: svenske detaljplanar og oversiktsplanar som plankart med fargane og teikna til Boverket, i det eigne koordinatsystemet til
+  planen (sjå [Planar](planer.md)).
+- **Diagram, kart og dokument**: diagram og kart med Vega-Lite, D3 eller R, dashboards og rapportar frå malar som HTML, Word, PDF,
+  PowerPoint, Markdown eller LaTeX (sjå [Visualiser](visualisera.md)).
+- **Lagre og dele**: data i kring ti format, delingspakkar, kommentarar, tryggingskopi, synkronisering med GitHub og ei berbar mappe.
+- **Dataregium som dokumentarkiv**: hent dokument frå tenaren som datasett, og send datasett og filer tilbake som nye versjonar.
+  *Teknisk:* Foundation API og Documents API.
+- **Seks språk og eit grunnkurs**: svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk, og kommandopaletten (Ctrl+K) som finn alt.
 
 ### Også i versjon 2 (med Dataregium 2)
 
-- **Fleire kjelder**: databasar, opne geodata og WMS, dokument og bilete som samlingar, og tekst frå skanna sider (sjå
-  [Kjelder](kallor.md)).
-- **Kart, planar og grafar**: kartvisingar med lag og geoverktøy, planar frå heile Norden, og grafar som blir teikna, spurde med
-  Cypher og redigerte (sjå [Kart](kartor.md) og [Grafar](grafer.md)).
-- **CAD og BIM**: IFC-modellar i 3D med tabellar, eigenskapar og mengder, og DXF-teikningar (sjå [CAD og BIM](cad-bim.md)).
-- **Python og statistikk utan kode**: ein Python-konsoll og skjema for statistikk og tidsseriar som skriv koden for deg (sjå
-  [Statistikk](statistik.md)).
-- **Søkje og halde orden**: modusen *Søk* med fasettar og lagra lister, spørjingar utan kode, mapper, taggar og batchhandlingar (sjå
-  [Søk](soka.md)).
-- **Del og Mobil**: modusen *Del* med pakkar og publisering, gjennomgang av personopplysningar før deling, overføring med QR-kode og
-  *Dataspatium Mobil* for å vise og samle inn i felt (sjå [Del](dela.md)).
-- **Flytar og slag**: lagra kjeder som blir køyrde med eitt klikk, overvaka kjelder, og modusar som kjenner att kva eit datasett er og
-  tilbyr dei rette visingane og verktøya (sjå [Modusar](lagen.md)).
-- **Dataregium med saker**: modellar og saker frå tenaren, saker frå 3D-visinga, BCF-filer, IFC-grafen til tenaren,
-  administrasjonen og kortet Medlemmene i prosjektet for den prosjektansvarlege (sjå [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
-- **Sju språk**: også nynorsk, med handboka i appen og grunnkurset gjennom alle dei åtte modusane.
+- **Søk og Del**: to nye modusar. *Søk* finn og listar rader utan kode; *Del* sender pakkar, publiserer dashboards og dokument som
+  nettsider og overfører til telefonar med ein QR-kode, etter ein gjennomgang av personopplysningar (sjå [Søk](soka.md) og
+  [Del](dela.md)).
+- **Fleire kjelder**: Access-filer, databasar, opne geodata, bakgrunnskart, dokument og bilete som samlingar og tekst frå skanna sider
+  (sjå [Kjelder](kallor.md)). *Teknisk:* ei lokal bru til SQL Server og ODBC, PostgREST, OData, GraphQL, SPARQL med fleire over HTTP,
+  WFS, OGC API Features, ArcGIS og Neo4j over Bolt.
+- **Kart, planar og grafar**: kart med lag og geoverktøy, planar frå heile Norden og grafar som blir teikna, spurde og redigerte (sjå
+  [Kart](kartor.md) og [Grafar](grafer.md)).
+- **Bygningsmodellar**: IFC-modellar i 3D med tabellar, eigenskapar og mengder, kontroll mot skjemaet og mot IDS, og DXF-teikningar (sjå
+  [CAD og BIM](cad-bim.md)). *Teknisk:* web-ifc og three.js for visinga, IfcOpenShell og ifctester i Python i appen.
+- **Python og statistikk utan kode**: ein Python-konsoll og skjema for statistikk og tidsseriar som skriv og viser koden (sjå
+  [Statistikk](statistik.md) og [Python](python.md)).
+- **Orden og flytar**: mapper, taggar og handlingar på mange datasett, lagra flytar som køyrer med eitt klikk, og kjelder som seier frå
+  når dei har nye data (sjå [Modusar](lagen.md)).
+- **Dataspatium Mobil**: telefonen tek imot og viser data og samlar inn rader i felt, også utan nett (sjå [Mobil](mobil.md)).
+- **Dataregium med saker**: modellane og sakene til prosjektet, nye saker som peikar ut staden i 3D, BCF-filer, IFC-grafen til tenaren,
+  kortet *Administrasjon* for administratoren og kortet *Medlemmene i prosjektet* for den prosjektansvarlege (sjå
+  [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Teknisk:* BCF API 3.0 og 2.1 med viewpoints.
+- **Sju språk**: også nynorsk, med handboka i appen og grunnkurset gjennom alle åtte modusane.
 
 ### Også i versjon 3 (med Dataregium 3)
 
-- **Kontroll av modellar**: kortet *Valider modellen* med kontrollane til tenaren og appen, og kollisjonskontroll med resultata som
-  BCF-saker (sjå [CAD og BIM](cad-bim.md)).
-- **AI-modellering**: *Spør AI om modellen* og *Endre med AI*, der AI-en føreslår, og du førehandsviser i 3D og godkjenner; AI-en kan
-  aldri lagre eller publisere.
-- **Versjonar mot Dataregium**: publisering med basisversjon, førehandskontroll, endringsframlegg som tenaren prøver og ein manager
-  godkjenner, og *Samanlikn versjonar* markert i 3D.
-- **Meir**: kollisjonar ved godkjenning som du avgjer i appen, ein kontroll av relasjonane i modellen som sperrar det eit
-  endringssett øydelegg, AI-en som førehandsviser og rettar sitt eige endringssett, IFC-grafen til tenaren i skjelettform med
-  bygningsdelar nær ein bygningsdel, ein lokal Dataregium på di eiga datamaskin og WFS-en til Sundsvall blant geodatakjeldene.
+- **Kontroll av modellar**: kortet *Valider modellen* viser kontrollen til tenaren mot IFC-skjemaet, reglane til buildingSMART og
+  IDS-filene til prosjektet, og appen finn bygningsdelar som kolliderer eller ligg for nær kvarandre, og gjer dei til saker (sjå
+  [CAD og BIM](cad-bim.md)).
+- **Spør AI om modellen**: still eit spørsmål som «kor mange dører er det i 2. etasje?» og få svaret med bygningsdelane merkte i 3D.
+- **Endre med AI**: be AI-en til dømes lage veggar, dekke, dører og vindauge. Du ser framlegget i 3D, appen kontrollerer det, og du
+  godkjenner; AI-en kan aldri lagre eller publisere sjølv. *Teknisk:* skriveverktøya fyller eit endringssett som modelleringshjulet
+  brukar med IfcOpenShell; skjemafeil og nye feil i sambanda i modellen sperrar godkjenninga.
+- **Versjonar mot Dataregium**: send ei endring som eit framlegg som tenaren prøver og ein prosjektansvarleg godkjenner; tenaren slår
+  saman endringar frå fleire, og ved ein konflikt vel du kva som gjeld. *Teknisk:* publisering med basisversjon (412 ved ein nyare
+  versjon), snippet med GlobalId og sti som nøkkel.
+- **Samanlikn versjonar**: sjå kva som er lagt til, fjerna og endra mellom to versjonar av ein modell, farga i 3D, også mot versjonane
+  på tenaren.
+- **Meir**: IFC-grafen til tenaren i ei lettare form med spørjinga *bygningsdelar nær ein bygningsdel*, ein Dataregium på din eigen
+  datamaskin som kjelde og karta til Sundsvall blant geodatakjeldene.
 
-![Dataspatium i modusen Bearbeid: ein IFC-modell i 3D med Samanlikn versjonar, der ein ny vegg er grøn og ein endra brannklasse er vist](../images/jamfor.png)
+![Dataspatium i modusen Bearbeid: ein IFC-modell i 3D med Samanlikn versjonar, der ein ny vegg er grøn og ein endra brannklasse står i lista](../images/jamfor.png)
 
 ## OpenCDE-API-ane og klientane deira
 
-OpenCDE er buildingSMART Internationals familie av opne web-API-ar for eit felles datamiljø, staden der eit prosjekt deler modellane,
-dokumenta og sakene sine. Ein klient og ein tenar som følgjer dei same spesifikasjonane, kan arbeide saman, same kven som har bygd
-dei. Dataspatium brukar alle tre:
+OpenCDE er dei opne reglane til buildingSMART International for korleis program deler modellane, dokumenta og sakene i eit
+byggjeprosjekt. Eit program som følgjer reglane, kan arbeide med kvar tenar som også gjer det, same kven som har laga dei. Dataspatium er
+eit slikt program, ein klient, og brukar alle tre API-ane:
 
 | API | Kva appen gjer med det | Spesifikasjon |
 |---|---|---|
-| Foundation API 1.0 | Les kva API-ar tenaren tilbyr, kvar ein loggar inn og kven brukaren er; registrerer appen som klient når tenaren tillèt det | [foundation-API](https://github.com/buildingSMART/foundation-API) |
+| Foundation API 1.0 | Les kva API-ar tenaren tilbyr, kvar ein loggar på og kven brukaren er; registrerer appen som klient når tenaren tillèt det | [foundation-API](https://github.com/buildingSMART/foundation-API) |
 | BCF API 3.0 og 2.1 | Les og skriv saker om ein modell, med kommentarar og viewpoints (kamera, komponentar og bilete) frå 3D-visinga; vel den nyaste versjonen tenaren tilbyr | [BCF-API](https://github.com/buildingSMART/BCF-API) |
-| Documents API 1.0 | Vel og hentar dokument og versjonar via tenaren sine eigne sider, slik at ein IFC-modell vert eit datasett, og lastar opp nye versjonar, datasett og pakkar | [documents-API](https://github.com/buildingSMART/documents-API) |
+| Documents API 1.0 | Vel og hentar dokument og versjonar via dei eigne sidene til tenaren, slik at ein IFC-modell blir eit datasett, og lastar opp nye versjonar, datasett og pakkar | [documents-API](https://github.com/buildingSMART/documents-API) |
 
-**Dataregium er éin tenar, ikkje den einaste.** Appen skal kunne kople til kvar tenar som følgjer spesifikasjonane: ingenting i
-appen er avhengig av Dataregium, og utvidingane til Dataregium utanfor spesifikasjonane (kapabilitetsdokumentet, dei namngjevne
-grafspørjingane, førehandskontrollen, basisversjonen, endringsframlegga og diffen mellom versjonar) vert berre viste når tenaren
-sjølv seier frå om dei. Appen treng tre ting av ein tenar:
+**Dataregium er éin tenar, ikkje den einaste.** Ingenting i appen er avhengig av Dataregium. Utvidingane til Dataregium utanfor
+spesifikasjonane (kapabilitetsdokumentet, dei namngjevne grafspørjingane, førehandskontrollen, basisversjonen, endringsframlegga, diffen
+mellom versjonar og prosjektadministrasjonen) blir berre viste når tenaren sjølv oppgjev dei.
 
-- at tenaren tillèt kall frå nettlesaren (CORS) frå adressa til appen: `null` når appen vert opna frå file://, `http://127.0.0.1:8080`
-  frå ein lokal webtenar og `https://marwiss.github.io` frå nettet, med hovuda Authorization, Content-Type og X-Request-ID;
+**For den teknisk kunnige:** av ein tenar treng appen tre ting:
+
+- CORS frå opphavet til appen: `null` frå file://, `http://127.0.0.1:8080` frå ein lokal nettenar og `https://marwiss.github.io` frå
+  nettet, med hovuda Authorization, Content-Type og X-Request-ID;
 - ei klientregistrering, gjord av administratoren til tenaren (ein offentleg klient med omdirigeringsadressa
-  `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarande for adressa appen vert servert frå) eller av appen sjølv når tenaren
-  tillèt det, og innlogging med OAuth2 authorization code med PKCE `S256`; frå file:// limer du inn adressa du hamnar på etter
-  innlogginga;
-- BCF API 3.0 eller 2.1; Documents API er valfritt, men utan det kan appen verken hente eller publisere dokument.
+  `http://127.0.0.1:8080/oauth-callback.html`, eller tilsvarande for adressa til appen) eller av appen sjølv (RFC 7591) når tenaren
+  tillèt det, og OAuth2 authorization code med PKCE `S256`; frå file:// limer du inn adressa du hamnar på etter pålogginga;
+- BCF API 3.0 eller 2.1; Documents API er valfritt, men utan det kan appen ikkje hente eller publisere dokument.
 
-Så langt er det vist mot Dataregium: live-suiten vert køyrd mot tenaren i begge versjonane av BCF API, og ein tenar med berre 2.1
-fungerer. Andre tenarar er ikkje prøvde; fortel korleis det gjekk under [Feil og framlegg](#feil-og-framlegg). Når appen og ein
-spesifikasjon ikkje stemmer overeins, avgjer spesifikasjonen. Sida til tenaren er skildra i Dataregiums README og klientguide; sida
-til appen i [kallor.md](kallor.md).
+Så langt er det vist mot Dataregium: livesuiten blir køyrd mot tenaren i begge versjonane av BCF API, og ein tenar med berre 2.1 verkar.
+Andre tenarar er ikkje prøvde; fortel korleis det gjekk under [Feil og framlegg](#feil-og-framlegg). Når appen og ein spesifikasjon ikkje
+stemmer overeins, avgjer spesifikasjonen. Sida til appen er skildra i [kallor.md](kallor.md), sida til tenaren i README-en til Dataregium.
 
 ## Dataspatium og Dataregium
 
 *Dataregium heitte Kontroll fram til 8. november 2026.*
 
-Dataspatium (appen i nettlesaren) og [Dataregium](https://github.com/marwiss/Dataregium) (ein tenar for buildingSMARTs OpenCDE-API-ar Foundation, BCF og
-Documents) er utvikla for å fungere saman som klient og tenar. Appen legg til tenaren som kjelde i Hent, loggar inn med OAuth2 og
-registrerer seg sjølv som klient når tenaren tillèt det, hentar modellane og dokumenta til prosjektet, les og skriv saker med
-viewpoints frå 3D-visinga, sender datasett, filer og arbeidsområdepakkar tilbake gjennom Documents API, spør IFC-grafen til tenaren med
-Cypher og loggar kvart kall med same X-Request-Id som tenaren skriv i førespurnadsloggen sin. Spørjingane mot grafen og administrasjonen er tillegg utanfor spesifikasjonane; alt anna går gjennom dei tre OpenCDE-API-ane, så
-andre OpenCDE-klientar fungerer òg. Tenaren trengst ikkje for resten av appen: utan tenar fungerer alt anna som før. Dataregiums README og `docs/client-guide.md` skildrar samarbeidet frå tenaren si side;
-her blir det skildra i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md).
+Dataspatium er appen du arbeider i, og [Dataregium](https://github.com/marwiss/Dataregium) er tenaren der eit prosjekt samlar modellar,
+dokument og saker. Dei er bygde for kvarandre, men følgjer opne reglar, så andre program verkar også. Du legg til tenaren som kjelde i
+*Hent* og loggar på; deretter hentar du modellane og dokumenta til prosjektet, peikar ut problem i 3D som saker, sender datasett og filer
+tilbake, stiller spørsmål til grafen over modellane på tenaren og, i versjon 3, føreslår endringar som tenaren prøver. Utan tenar verkar
+resten av appen som vanleg.
+
+**For den teknisk kunnige:** alt unnateke grafspørjingane og administrasjonen går gjennom dei tre OpenCDE-API-ane. Kvart kall ber ein
+`X-Request-Id` som tenaren skriv i førespurnadsloggen sin, slik at loggen i appen og loggen til tenaren kan parast. Samarbeidet er
+skildra frå sida til appen i [kallor.md](kallor.md) og [cad-bim.md](cad-bim.md) og frå sida til tenaren i README-en til Dataregium og
+`docs/client-guide.md`.
 
 Slik heng dei saman:
 
 ```mermaid
 flowchart LR
     subgraph app ["Dataspatium, i nettlesaren"]
-        source["Kjelde og innlogging"]
+        source["Kjelde og pålogging"]
         issues["Saker i 3D-visinga"]
         files["Modellar og dokument"]
+        changes["Endringsframlegg og versjonar"]
         queries["Spørjingar mot IFC-grafen"]
         log["Loggen i appen"]
-        admin["Kortet Administrasjon"]
+        admin["Administrasjon og medlemmer"]
     end
-    subgraph server ["Dataregium, serveren"]
+    subgraph server ["Dataregium, tenaren"]
         foundation["Foundation API, OAuth2"]
         bcf["BCF API"]
         documents["Documents API"]
@@ -179,15 +253,15 @@ flowchart LR
     source <--> foundation
     issues <--> bcf
     files <--> documents
+    changes <--> bcf
+    changes <--> documents
     queries --> ifcgraph
     log <-- "X-Request-ID" --> requests
     admin --> adminapi
 ```
 
-Appen snakkar BCF API 3.0 og 2.1, så han også koplar seg til tenarar som berre har 2.1, og han teiknar og spør IFC-grafen til tenaren direkte frå Hent.
-
-Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får same utgåvenummer, så same nummer høyrer saman. Snøggstarten
-[snabbstart.md](snabbstart.md) tek paret frå ingenting til ei sak på tjue minutt.
+Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Same nummer høyrer saman. Snøggstarten [snabbstart.md](snabbstart.md) tek paret frå
+ingenting til ei sak på tjue minutt.
 
 ### Utgjevingane 1, 2 og 3
 
@@ -195,63 +269,68 @@ Det finst éi utgjeving per hovudnummer, og Dataspatium og Dataregium med same n
 
 | Dataspatium | Kva ho har | Høyrer saman med |
 |---|---|---|
-| 1.0.0 | Heile 1-serien: datainnhenting, handsaming, R, Python, kart, diagram, dokument og deling, og planar. Mot ein tenar berre Documents API: hent dokument som datasett, og send datasett og filer tilbake. Ingen saker og ingen modellar | Dataregium 1.0.0 (berre Documents API) |
-| 2.0.0 | Heile 2-serien: IFC-modellar i 3D med tabellar, eigenskapar og mengder, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren (IFC-LPG) teikna og spurd, og planar frå planleggingsverktøy fullt ut, og kortet Medlemmene i prosjektet for den prosjektansvarlege | Dataregium 2.0.0 |
-| 3.0.0 | 3-serien: kortet *Valider modellen*, kollisjonskontroll i nettlesaren, BCF-kamera i koordinatane til modellen, grafen i skjelettform, Spør AI og Endre med AI, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som vert prøvde og godkjende på tenaren | Dataregium 3.0.0 |
+| 1.0.0 | Data frå filer og opne API-ar, bearbeiding, R, SQL og regulære uttrykk, svenske planar, diagram og kart i diagram, dashboards, dokument, eksport og deling. Mot ein tenar berre Documents API: hent dokument som datasett og send datasett og filer tilbake. Ingen saker, ingen modellar og ingen Python | Dataregium 1.0.0 (berre Documents API) |
+| 2.0.0 | Alt i 1.0.0 og dessutan modusane Søk og Del, Python og statistikk utan kode, fleire kjelder, kartvisingar, nordiske planar, grafar, IFC-modellar i 3D med kontroll mot IDS, flytar, Dataspatium Mobil, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren, kortet *Administrasjon* og kortet *Medlemmene i prosjektet* | Dataregium 2.0.0 |
+| 3.0.0 | Alt i 2.0.0 og dessutan kortet *Valider modellen*, kollisjonskontroll, Spør AI og Endre med AI, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som blir prøvde og godkjende på tenaren med val ved konfliktar, og grafen i ei lettare form | Dataregium 3.0.0 |
 
-Ei ny utgjeving i same hovudnummer erstattar den førre; berre den nyaste i kvar serie vert retta. Oppdateringskontrollen i appen
-tilbyr neste hovudnummer, og datasett, lister, diagram, malar og skript følgjer med når du opnar `index.html` i den nye versjonen.
+Ei ny utgjeving med same hovudnummer erstattar den førre; berre den siste i kvar serie blir retta. Oppdateringskontrollen i appen tilbyr
+neste hovudnummer, og datasett, lister, diagram, malar og skript følgjer med når du opnar `index.html` i den nye versjonen.
 
 ## Lær meir
 
-Filnamna er dei same på alle språk (dei svenske originalane), så lenkjene verkar likt overalt.
+Filnamna er dei same på alle språk (dei er dei svenske originalane), så lenkjer verkar likt overalt.
 
+**Byrj her**
+
+- **Grunnkurset** i appen: ein gjennomgang av alle modusane med dømedata; opne det frå hjelpa (?) eller med Ctrl+K.
 - **Handboka** i appen: den same dokumentasjonen som her, med søk; opne henne med ? øvst til høgre eller F1.
-- **Grunnkurset** i appen: ein interaktiv gjennomgang av alle modusar med dømedata; opne det frå hjelpa (?) eller
-  med Ctrl+K.
 - [Kom i gang](kom-igang.md): steg for steg med vanlege spørsmål.
-- [Snøggstart med Dataregium](snabbstart.md): tjue minutt frå ingenting til ei sak oppretta i 3D-visinga og synleg på serveren.
 - [Brukarrettleiing](anvandarguide.md): heile arbeidsflyten frå fil til rapport.
+- [Dei åtte modusane](lagen.md): kva som finst kvar, og kvifor.
 - [Vanlege spørsmål](faq.md): lagring, tryggleik, R, API-ar og oppdateringar.
-- [Dei åtte modusane](lagen.md): kva som finst kvar og kvifor.
-- [Søk](soka.md) og [Del](dela.md): finn utan kode, og gje data til andre.
-- [Dataspatium Mobil](mobil.md): telefonen som kurér, mottakar og visar; overføring mellom einingar.
-- [Notatbok](anteckningsbok.md): tekst, R og SQL i celler som blir ein rapport.
-- [Dokument og bilete](dokument.md): PDF, Word, OpenDocument, Markdown og bilete som datasett; dokumentvising, galleri og verktøya Tekst og Bilete.
-- [Kart](kartor.md): kartet i Bearbeid, kartvisingar i Visualiser, geoverktøya og QGIS-prosjekt.
-- [Regulære uttrykk](regex.md): mønster for å analysere, rette og dele opp tekst i datasett.
-- [Format og import](format.md): filformat, teiknkoding, desimalteikn, datoar og kolonnetypar.
-- [Opne API-ar](api-konfiguration.md): dei førehandsinnstilte kjeldene, nøklar og eigne konfigurasjonar.
-- [R i Dataspatium](r-guide.md): R-konsollen, `dm_read()`, `dm_write()` og pakkane som følgjer med.
-- [Python i Dataspatium](python.md): Python-konsollen, `dm_read()`, `dm_write()` og pakkar som blir henta ved behov.
-- [Visualiser](visualisera.md): diagrambyggjaren, D3-malar, R-diagram, kart og dashbord.
-- [Dokument og malar](dokumentmallar.md): malspråket og utdataformata.
-- [Tryggleik](sakerhet.md): trugsmålsmodell, kontrollane og prova som viser dei, personopplysningar og lagring, og korleis ein sårbarheit blir rapportert.
-- [Lisensar](licenser.md): kva du kan gjere med appen, og kva lisensar tredjepartskomponentane har.
-- Korleis bidrag blir tekne imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
+
+**Etter område**
+
+- [Format og import](format.md) og [Opne API-ar](api-konfiguration.md): filformat, teiknkoding, dei førehandsinnstilte kjeldene, nøklar
+  og eigne konfigurasjonar.
+- [Kjelder](kallor.md): databasar, brua, opne geodata, lenkja filer og OpenCDE-tenarar.
+- [Bearbeid](bearbeta.md), [Søk](soka.md) og [Regulære uttrykk](regex.md): rett, rekn og finn.
+- [Statistikk](statistik.md), [R i Dataspatium](r-guide.md), [Python i Dataspatium](python.md) og [Notatbok](anteckningsbok.md): analyse
+  med og utan kode.
+- [Visualiser](visualisera.md), [Kart](kartor.md) og [Dokument og malar](dokumentmallar.md): diagram, kart, dashboards og rapportar.
+- [Planar](planer.md), [Grafar](grafer.md) og [CAD og BIM](cad-bim.md): planar, grafar, bygningsmodellar, kontrollar, AI og versjonar.
+- [Dokument og bilete](dokument.md): PDF, Word, OpenDocument, Markdown og bilete som datasett.
+- [Flytar](floden.md), [Del](dela.md), [Dataspatium Mobil](mobil.md) og [Innsamling](insamling.md): automatiser, del og samle inn.
+- [Snøggstart med Dataregium](snabbstart.md): tjue minutt frå ingenting til ei sak oppretta i 3D-visinga og synleg på tenaren.
+- [Tryggleik](sakerhet.md) og [Lisensar](licenser.md): trusselmodell, kontrollar og prøver, og kva du får gjere med appen.
+- Korleis bidrag blir tekne imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (på svensk).
 
 ### Vidare lesing
 
 - [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) og [Documents API](https://github.com/buildingSMART/documents-API): spesifikasjonane appen følgjer mot ein tenar.
-- [IFC](https://github.com/buildingSMART/IFC4.x-development): filformatet for bygningsmodellar, og [IDS](https://github.com/buildingSMART/IDS): kravspesifikasjonar som modellar vert kontrollerte mot.
-- Eksterne ressursar: [WebR](https://docs.r-wasm.org/webr/latest/), [R for nybegynnarar](https://www.r-project.org/),
-  [Vega-Lite](https://vega.github.io/vega-lite/), [SSBs API](https://www.ssb.no/api).
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): filformatet for bygningsmodellar, og [IDS](https://github.com/buildingSMART/IDS): kravspesifikasjonar som modellar blir kontrollerte mot.
+- Eksterne ressursar: [WebR](https://docs.r-wasm.org/webr/latest/), [Pyodide](https://pyodide.org/), [IfcOpenShell](https://ifcopenshell.org/),
+  [Vega-Lite](https://vega.github.io/vega-lite/), [API-et til SCB](https://www.scb.se/en/services/open-data-api/).
 
 ## Avgrensingar i korte trekk
 
-- Appen må opnast frå ei utpakka mappe (file://) eller ein vanleg nettenar; han fungerer ikkje direkte inne i ei ZIP-fil.
-- API-ar utan CORS-støtte (til dømes data.norge.no) kan ikkje kallast direkte frå nettlesaren.
-- Eit datasett bør halde seg under eit par millionar rader; minnet til nettlesaren set grensa.
-- Når appen blir opna frå ei mappe, kan R-kode ikkje avbrytast midt i ei utrekning; bruk *Start R på nytt*. Frå ein
-  nettenar (localhost eller https) finst knappen *Avbryt*.
-- Fleire faner fungerer og held kvarandre oppdaterte, men ikkje rediger same datasett i to faner samtidig: den som lagrar
-  sist, vinn.
-- Den portable mappa krev Edge eller Chrome; Firefox manglar mappetilgang (File System Access). Tryggingskopi som ZIP
-  fungerer overalt.
-- Heile appen er laga for datamaskiner; på telefonar og nettbrett blir Dataspatium Mobil brukt
-  (<https://marwiss.github.io/Dataspatium/m/>), som tek imot, viser og sender vidare. Safari blir ikkje støtta for heile
-  appen. I smale vindauge blir panela opna som ark over arbeidsflata.
-- Dømedataa og kartgrensene som følgjer med, er svenske; sjølve appen fungerer med data frå kvar som helst.
+- Appen må opnast frå ei utpakka mappe eller ein vanleg nettenar; han verkar ikkje direkte inne i ZIP-fila.
+- Nettenester som ikkje tillèt kall frå nettlesarar (manglar CORS, til dømes den svenske Riksbanken), kan ikkje nåast direkte; ein eigen
+  proxy kan oppgjevast.
+- Eit datasett bør halde seg under eit par millionar rader, og svært store bygningsmodellar kan vere for tunge for nettlesaren; minnet
+  set grensa.
+- Når appen blir opna frå ei mappe, kan R- og Python-kode ikkje avbrytast midt i ei utrekning; bruk *Start R på nytt* eller *Start Python
+  på nytt*. Frå ein nettenar finst knappen *Avbryt*.
+- Python og IfcOpenShell følgjer ikkje med i ZIP-fila; dei blir henta første gongen dei trengst, etter samtykke, og blir deretter lagra
+  i nettlesaren.
+- AI-funksjonane krev din eigen nøkkel til ei AI-teneste, eller ein AI-modell på din eigen datamaskin. AI-en kan endre etasjar,
+  rutenett, veggar, dekke, opningar med dører og vindauge, eigenskapar, materiale og plassering, ikkje alt i ein modell.
+- Fleire faner verkar og held kvarandre orienterte, men ikkje rediger same datasett i to faner samstundes: den som lagrar sist, vinn.
+- Den berbare mappa krev Edge eller Chrome; Firefox manglar mappetilgang. Tryggingskopi som ZIP verkar overalt.
+- Heile appen er laga for datamaskiner. På telefonar og nettbrett blir Dataspatium Mobil (<https://marwiss.github.io/Dataspatium/m/>)
+  brukt, som tek imot, viser, samlar inn og sender vidare. I smale vindauge blir panela opna som ark over arbeidsflata.
+- Dømedata og kartgrenser som følgjer med, dekkjer Sverige, Danmark, Noreg og Finland, og dei førehandsinnstilte kjeldene er nordiske og
+  europeiske; data frå andre land kan du like gjerne hente inn sjølv.
 
 ## Personopplysningar
 
@@ -267,31 +346,32 @@ Kontrollane og prøvene som viser dei står i [sakerhet.md](sakerhet.md).
 
 ## Neste i 3-serien
 
-3.0.0 er den fyrste utgjevinga i 3-serien, laga saman med Dataregium 3.0.0: kontrollen av modellar, kollisjonskontrollen, AI-stega
-og versjonssamanlikninga, som [Kva du kan gjere](#kva-du-kan-gjere) skildrar. Som kvart hovudnummer har serien éi utgjeving, som vert
-gjeven ut på nytt når ho veks. Det som følgjer, gjer appen til klienten som redigerer modellen til tenaren og viser versjonane hans:
-AI-en føreslår, mennesket går gjennom og godkjenner, tenaren prøver og flettar saman. Dette avsnittet seier kva som er avgjort, for
-den, menneske eller AI-agent, som fører ein del av det vidare; sida til tenaren står i Dataregiums README under same overskrift.
+3.0.0 er utgjevinga i 3-serien, laga saman med Dataregium 3.0.0, og blir gjeven ut att når serien veks. Retninga er at modellar skal
+kunne lagast og endrast ved at du skildrar kva du vil ha, medan eit menneske alltid går gjennom og godkjenner og tenaren held orden på
+versjonane. Dette avsnittet seier kva som er avgjort, for den, menneske eller AI-agent, som fører ein del av det vidare; sida til
+tenaren står i README-en til Dataregium under same overskrift.
 
 ### Avgjort
 
-- **Modelleringa skjer i appen, ikkje på tenaren.** Modelleringshjulet (skriveverktøya og IfcOpenShell i Python i appen) er
-  Dataspatiums eige, under Dataspatiums lisens, og ber ingen kode frå IFC-LPG; tenaren når det berre gjennom API-ane.
-- **AI-en føreslår, mennesket godkjenner.** Eit endringssett vert førehandsvist i 3D, kontrollert lokalt og av førehandskontrollen
-  til tenaren, og brukt fyrst når du godkjenner; sletting vert stadfesta éin gong til; publisering og framlegg til tenaren er knappar,
-  aldri verktøy AI-en kan kalle. Bygd i 3.0.0.
-- **Versjonsmodellen.** Eit endringssett vert sendt til tenaren som ei BCF-sak med ein snippet i forma til tenaren (GlobalId og sti
-  som nøkkel), tenaren prøver det mot basisversjonen, og ein *manager* godkjenner det til neste versjon; ei publisering med utdatert
-  basis vert avvist (412), og kollisjonane vert viste. Bygd i 3.0.0, i likskap med valet ved kollisjonar som
-  tenaren ikkje kan flette, endringssettet til tenaren per versjon og ei BCF-sak per godkjent endringssett.
-- **Samanlikn versjonar** frå tre kjelder: augneblinksbilete og andre modellar i appen, endringssettet til tenaren per versjon og
+- **Modelleringa skjer i appen.** Modelleringshjulet (skriveverktøya og IfcOpenShell i Python i appen) er Dataspatium sitt eige, under
+  lisensen til Dataspatium; Dataregium får bruke det.
+- **AI-en føreslår, mennesket godkjenner.** Eit endringssett blir førehandsvist i 3D, kontrollert mot skjemaet, sambanda i modellen og
+  førehandskontrollen til tenaren, og blir brukt først når du godkjenner; sletting blir stadfesta éin gong til; publisering og framlegg
+  til tenaren er knappar, aldri verktøy AI-en kan kalle. Bygd i 3.0.0.
+- **Tenaren slår saman.** Eit endringssett blir sendt som ei BCF-sak med snippet i forma til tenaren (GlobalId og sti som nøkkel),
+  tenaren prøver det mot basisversjonen, og ein *manager* godkjenner det til neste versjon; tenaren tek med det som ikkje er i konflikt,
+  og ved ein konflikt vel du i appen mellom verdien i basen, i den siste versjonen og i framlegget. Inga samanslåing av heile modellar i
+  nettlesaren. Bygd i 3.0.0.
+- **Samanlikn versjonar** med tre kjelder: augneblinksbilete og andre modellar i appen, endringssettet til tenaren per versjon og
   diffen til tenaren mellom versjonar. Bygd i 3.0.0.
-- **Forvaltaren av prosjektet** har kortet *Medlemmene i prosjektet* i appen: medlemmer, roller og namnet på prosjektet. Bygd i
-  2.0.0 og 3.0.0.
-- **Steg 4 og 5, etter steg 3:** repomodus per prosjekt med ein lokal Dataregium på eiga datamaskin og hent og publiser mellom den
-  lokale og den fjerne; store modellar teikna frå geometri-API-et til tenaren når nettlesaren ikkje strekk til; prosjektprofilar med
-  IDS og bSDD, IDS skrivne av AI-en og buildingSMART-reglar knytte til element.
-- **Opne format** gjeld utvekslingsformat og lagra data, ikkje AI-API-ar; AI-leverandør vel brukaren med eigen nøkkel, lagra
+- **Forvaltarane av prosjektet** har kortet *Medlemmene i prosjektet* i appen: medlemmer, roller og namnet på prosjektet. Bygd i 2.0.0
+  og 3.0.0.
+- **Éin Dataregium er nok**, på din eigen datamaskin eller på ein tenar: du hentar ein versjon, arbeider i kopien i appen og publiserer
+  med basisversjon eller føreslår endringar, som tenaren slår saman. Inga synkronisering mellom fleire tenarar.
+- **Neste, når steg 1–3 er prøvde i praksis:** store modellar teikna frå geometri-API-et til tenaren når nettlesaren ikkje strekk til
+  (steg 4), og prosjektprofilar med IDS og bSDD, IDS som AI-en skriv, og buildingSMART-reglar knytte til bygningsdelar (steg 5).
+  Deretter blir AI-en målt mot dei opne oppgåvene i forskinga for modellredigering.
+- **Opne format** gjeld utvekslingsformat og lagra data, ikkje AI-API-ar; AI-leverandøren blir vald av brukaren med eigen nøkkel, lagra
   kryptert, og policyen til prosjektet kan avgrense til lokale modellar.
 
 ## Feil og framlegg
@@ -302,11 +382,16 @@ tryggleikssårbarheit, følg [SECURITY.md](../../SECURITY.md) i staden for å op
 
 ## Utvikling
 
-- Ingen byggjesteg, ingen node.js. Opne `index.html` direkte, eller server mappa med `python -m http.server 8080`.
-- Arkitektur i korte trekk: all eigen kode er klassiske skript som blir registrerte med `Dataspatium.define` i rekkjefølgja i `src/boot.js`; `src/platform` ber alt som er spesifikt for file:// (ressursar, shims, workers, lagring, samtykke); motorane SQLite, R (WebR) og Python (Pyodide) køyrer i workers; `src/ui` har designvariablane, komponentane (`dm-*`), skalet og éin modus per fil. Alt som blir teikna blir escapa, og ingenting blir henta frå nettet utan handlinga og samtykket ditt.
-- Tredjepartskomponentar: `python tools/fetch_vendor.py` følgt av `python tools/wrap_assets.py`.
-- Testar: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox).
-- Tryggleik: prova for samtykke, løyndomar, gjennomgang før deling, OAuth2 (PKCE, state, tilbakekall) og maskeringa i loggen er med i suiten; sjå [sakerhet.md](sakerhet.md).
+- Ikkje noko byggjesteg, ikkje node.js. Opne `index.html` direkte, eller server mappa med `python -m http.server 8080`.
+- Arkitektur i korte trekk: all eigen kode er klassiske skript som blir registrerte med `Dataspatium.define` i rekkjefølgja i
+  `src/boot.js`; `src/platform` ber alt som er særskilt for file:// (ressursar, shims, workers, lagring, samtykke); motorane SQLite, R
+  (WebR) og Python (Pyodide) køyrer i workers; `src/ui` har designvariablane, komponentane (`dm-*`), skalet og éin modus per fil. Alt
+  som blir vist, blir escapa, og ingenting blir henta frå nettet utan handlinga og samtykket ditt.
+- Tredjepartskomponentar: `python tools/fetch_vendor.py` følgd av `python tools/wrap_assets.py`.
+- Prøver: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Prøvene går aldri mot nettet;
+  ekte tenester blir berre prøvde med eigne parametrar (`?cde=` mot ein Dataregium, `?python=1` med Pyodide).
+- Tryggleik: prøvene for samtykke, løyndomar, gjennomgang før deling, OAuth2 (PKCE, state, tilbakehopp) og maskeringa i loggen er med i
+  suiten; sjå [sakerhet.md](sakerhet.md).
 
 ## Lisens
 
