@@ -318,12 +318,6 @@ ihmiselle tai tekoälyagentille, joka vie osan siitä eteenpäin; palvelimen puo
 - **Avoimet formaatit** koskevat vaihtoformaatteja ja tallennettua dataa, eivät tekoälyrajapintoja; käyttäjä valitsee
   tekoälytoimittajan omalla avaimellaan, joka tallennetaan salattuna, ja projektin käytäntö voi rajata paikallisiin malleihin.
 
-### Ehdotettu, ei päätetty
-
-- Oma repositorio törmäysytimelle, samalla raporttimuodolla kuin palvelimen IfcClash.
-- IFC5-lukija (IFCX) sovellukseen, kun Dataregium lukitsee sen sisältävään IFC-LPG-versioon.
-- Mallinnustyökalut MCP-päätepisteenä paikallisessa moottorissa, jotta muut tekoälyasiakkaat voivat käyttää niitä.
-
 ## Virheet ja ehdotukset
 
 Ilmoita virheistä tai toiveista *Issues*-kohdassa täällä GitHubissa. Kerro selain, Dataspatiumin versio (näkyy

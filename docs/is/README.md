@@ -304,12 +304,6 @@ gervigreindin leggur til, manneskjan fer yfir og samþykkir, þjónninn reynir o
 - **Opin snið** eiga við skiptisnið og vistuð gögn, ekki gervigreindarforritaskil; notandinn velur gervigreindarveitu með eigin lykli,
   vistuðum dulkóðuðum, og stefna verkefnisins getur takmarkað við staðbundin líkön.
 
-### Lagt til, ekki ákveðið
-
-- Eigin geymsla fyrir árekstrarkjarnann, með sama skýrsluformi og IfcClash þjónsins.
-- IFC5-lesarinn (IFCX) í forritinu, þegar Dataregium læsir við þá IFC-LPG-útgáfu sem hefur hann.
-- Líkanatólin sem MCP-endapunktur í staðbundnu vélinni, svo að aðrir gervigreindarbiðlarar geti notað þau.
-
 ## Villur og tillögur
 
 Tilkynntu villur eða óskir sem *Issues* hér á GitHub. Lýstu vafranum, útgáfu Dataspatium (birtist undir hjálparhnappnum) og

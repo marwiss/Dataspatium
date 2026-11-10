@@ -308,12 +308,6 @@ den, menneske eller AI-agent, som fører ein del av det vidare; sida til tenaren
 - **Opne format** gjeld utvekslingsformat og lagra data, ikkje AI-API-ar; AI-leverandør vel brukaren med eigen nøkkel, lagra
   kryptert, og policyen til prosjektet kan avgrense til lokale modellar.
 
-### Føreslått, ikkje avgjort
-
-- Eit eige repo for kollisjonskjernen, med same rapportform som IfcClash på tenaren.
-- IFC5-lesaren (IFCX) i appen, når Dataregium låser ved den IFC-LPG-versjonen som har han.
-- Modelleringsverktøya som MCP-endepunkt i den lokale motoren, slik at andre AI-klientar kan bruke dei.
-
 ## Feil og framlegg
 
 Rapporter feil eller ønske som *Issues* her på GitHub. Skildre nettlesar, versjon av Dataspatium (blir vist under

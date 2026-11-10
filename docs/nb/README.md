@@ -308,12 +308,6 @@ menneske eller AI-agent, som fører en del av det videre; serverens side står i
 - **Åpne formater** gjelder utvekslingsformater og lagrede data, ikke AI-API-er; AI-leverandør velges av brukeren med egen nøkkel,
   lagret kryptert, og prosjektets policy kan begrense til lokale modeller.
 
-### Foreslått, ikke besluttet
-
-- Et eget repo for kollisjonskjernen, med samme rapportform som serverens IfcClash.
-- IFC5-leseren (IFCX) i appen, når Dataregium låser ved den IFC-LPG-versjonen som har den.
-- Modelleringsverktøyene som MCP-endepunkt i den lokale motoren, slik at andre AI-klienter kan bruke dem.
-
 ## Feil og forslag
 
 Rapporter feil eller ønsker som *Issues* her på GitHub. Beskriv nettleser, versjon av Dataspatium (vises under

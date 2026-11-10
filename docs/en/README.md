@@ -318,12 +318,6 @@ whoever, person or AI agent, carries a part of it on; the server's side is in Da
 - **Open formats** apply to exchange formats and stored data, not to AI APIs; the AI provider is chosen by the user with their own
   key, stored encrypted, and the project's policy can restrict to local models.
 
-### Proposed, not decided
-
-- A repository of its own for the clash core, with the same report form as the server's IfcClash.
-- The IFC5 reader (IFCX) in the app, when Dataregium locks at the IFC-LPG version that has it.
-- The modelling tools as an MCP endpoint in the local engine, so that other AI clients can use them.
-
 ## Bugs and suggestions
 
 Report bugs or requests as *Issues* here on GitHub. Describe the browser, the Dataspatium version (shown under the
