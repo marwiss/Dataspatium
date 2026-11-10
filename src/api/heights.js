@@ -63,13 +63,17 @@
       const pad = 0.0005;
       const box = [Math.min(...ll.map((c) => c[0])) - pad, Math.min(...ll.map((c) => c[1])) - pad, Math.max(...ll.map((c) => c[0])) + pad, Math.max(...ll.map((c) => c[1])) + pad];
       const list = await tiles(connector, box);
-      const inside = (b, c) => c[0] >= b[0] && c[0] < b[2] && c[1] > b[1] && c[1] <= b[3];
-      const byTile = new Map();
-      xy.forEach((c, i) => { if (!c) return; const k = list.findIndex((tile) => inside(tile.bbox, c)); if (k >= 0) { if (!byTile.has(k)) byTile.set(k, []); byTile.get(k).push(i); } });
+      // The catalogue's extent picks the tiles to open (with a margin, as an extent from WGS 84 corners is approximate); the
+      // tile's own grid then decides which points it has.
+      const near = (b, c) => c[0] >= b[0] - 100 && c[0] <= b[2] + 100 && c[1] >= b[1] - 100 && c[1] <= b[3] + 100;
       const GeoTIFF = await lib();
       const hosts = (connector.files && connector.files.hosts) || [];
-      for (const [k, indices] of byTile) {
-        const tile = list[k];
+      let opened = 0;
+      for (const tile of list) {
+        const indices = [];
+        xy.forEach((c, i) => { if (c && heights[i] === null && near(tile.bbox, c)) indices.push(i); });
+        if (!indices.length) continue;
+        opened++;
         const host = new URL(tile.url).host;
         if (!/^dataspatium-asset:/.test(tile.url)) await consent.require('api', { host });
         // The key only for the file host the preset names.
@@ -88,7 +92,7 @@
           heights[i] = Math.round(v * 100) / 100;
         }
       }
-      return { heights, tiles: byTile.size };
+      return { heights, tiles: opened };
     }
 
     /**
