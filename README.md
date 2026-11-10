@@ -68,7 +68,7 @@ skilda arbetsytor; flytta data mellan dem med en säkerhetskopia eller ett paket
   Linux).
 - **Med en server:** starta Dataregium med Docker eller Podman (`docker compose up -d --build --wait` och
   `docker compose exec api opencde seed` i Dataregiums repo), servera Dataspatium på port 8080 och lägg till servern under *Inhämta >
-  Lägg till källa > OpenCDE*. Klient-id kan lämnas tomt när servern tillåter självregistrering. Hela vägen på tjugo minuter:
+  Lägg till källor > OpenCDE*. Klient-id kan lämnas tomt när servern tillåter självregistrering. Hela vägen på tjugo minuter:
   [snabbstart.md](docs/sv/snabbstart.md).
 - **Grafen:** serverns IFC-graf (Neo4j eller Memgraph) frågas med Cypher från *Inhämta*, genom serverns graffråga eller direkt över
   Bolt; serverns namngivna frågor nås från AI-panelen.
@@ -174,7 +174,8 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   [CAD och BIM](docs/sv/cad-bim.md)).
 - **Fråga AI om modellen**: ställ en fråga som "hur många dörrar finns på plan 2?" och få svaret med byggdelarna markerade i 3D.
 - **Ändra med AI**: be AI:n till exempel skapa väggar, bjälklag, dörrar och fönster. Du ser förslaget i 3D, appen kontrollerar det och
-  du godkänner; AI:n kan aldrig spara eller publicera själv. *Tekniskt:* skrivverktygen fyller ett ändringsset som modelleringshjulet
+  du godkänner; AI:n kan aldrig spara eller publicera själv. Du kan också börja från en ny, tom modell i IFC4X3_ADD2, IFC4
+  eller IFC2X3 (*Inhämta > Ny byggnadsmodell*). *Tekniskt:* skrivverktygen fyller ett ändringsset som modelleringshjulet
   tillämpar med IfcOpenShell; schemafel och nya fel i modellens samband spärrar godkännandet.
 - **Versioner mot Dataregium**: skicka en ändring som ett förslag som servern prövar och en projektansvarig godkänner; servern
   sammanfogar ändringar från flera, och vid en krock väljer du vad som gäller. *Tekniskt:* publicering med basversion (412 vid en
@@ -272,7 +273,7 @@ Det finns en utgåva per huvudnummer, och Dataspatium och Dataregium med samma n
 |---|---|---|
 | 1.0.0 | Datainhämtning från filer och öppna API:er, bearbetning, R, SQL och reguljära uttryck, svenska planer, diagram och kartor i diagram, dashboards, dokument, export och delning. Mot en server bara Documents API: hämta dokument som datamängder och skicka tillbaka datamängder och filer. Inga ärenden, inga modeller och ingen Python | Dataregium 1.0.0 (bara Documents API) |
 | 2.0.0 | Allt i 1.0.0 och dessutom lägena Söka och Dela, Python och statistik utan kod, fler källor, kartvyer, nordiska planer, grafer, IFC-modeller i 3D med kontroll mot IDS, flöden, Dataspatium Mobil, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf, kortet *Administration* och kortet *Projektets medlemmar* | Dataregium 2.0.0 |
-| 3.0.0 | Allt i 2.0.0 och dessutom kortet *Validera modellen*, kollisionskontroll, Fråga AI och Ändra med AI, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form | Dataregium 3.0.0 |
+| 3.0.0 | Allt i 2.0.0 och dessutom kortet *Validera modellen*, kollisionskontroll, Fråga AI och Ändra med AI, nya tomma modeller i valfritt schema, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form | Dataregium 3.0.0 |
 
 En ny utgåva i samma huvudnummer ersätter den förra; bara den senaste i varje serie rättas. Appens uppdateringskontroll erbjuder
 nästa huvudnummer, och datamängder, listor, diagram, mallar och skript följer med när du öppnar den nya versionens `index.html`.

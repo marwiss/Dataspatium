@@ -191,11 +191,22 @@ töflusniða fyrir `data`. Gröf af líkönum eru flutt út sem PNG, SVG og PDF;
 
 ## Takmarkanir
 
-- Ekki er hægt að breyta líkaninu og engin ný IFC-skrá er skrifuð. Breytingar á töflunum hafa ekki áhrif á upprunalegu skrána.
+- Ekki er hægt að breyta töflunum beint. Líkaninu er breytt með uppskriftarskrefum IfcOpenShell og með *Breyta með gervigreind*,
+  sem skrifa nýja útgáfu IFC-skrárinnar.
 - Líkan er teiknað aftur úr upprunalegu skránni í hverri nýrri lotu. 57 MB líkanið sem forritið var prófað með tekur 4–6 sekúndur.
 - Fyrsta teikning mjög stórs líkans getur læst síðunni um stund á meðan skjákortið tekur við þríhyrningunum.
 - Magnið er ekki magntaka samkvæmt neinum reglum. Berðu það saman við heimildina áður en það er notað.
 - DXF er lesið í tveimur víddum. DWG þarf fyrst að vista sem DXF.
+
+## Nýtt líkan
+
+Nýtt, autt líkan er búið til í Sækja með *Nýtt byggingarlíkan*. Veldu skema (IFC4X3_ADD2 er sjálfgefið; IFC4 og IFC2X3 eru fyrir
+forrit sem lesa ekki það nýjasta) og heiti verkefnis, lóðar, byggingar og fyrstu hæðar. Forritið skrifar líkanið með IfcOpenShell
+í Python forritsins, í metrum og með samhengjum líkansins, og líkanið stenst skemaprófun. Í fyrsta sinn eru Python og IfcOpenShell
+sótt eftir samþykki.
+
+Líkanið verður venjulegt líkanagagnasafn. Opnaðu það í Vinna og byggðu í því með *Breyta með gervigreind*, til dæmis „tvær hæðir og
+hnitanet 6×4 m með útveggjum eftir netinu“. Það má flytja út sem IFC og birta á Dataregium eins og önnur líkön.
 
 ## Spyrja gervigreind um líkanið
 

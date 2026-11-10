@@ -67,7 +67,7 @@ færðu gögn á milli þeirra með afriti eða pakka.
 - **Prófaðu ZIP-skrána:** berðu SHA-256 hennar saman við það sem stendur í texta útgáfunnar (`Get-FileHash` í PowerShell,
   `shasum -a 256` á macOS og Linux).
 - **Með þjóni:** ræstu Dataregium með Docker eða Podman (`docker compose up -d --build --wait` og `docker compose exec api opencde seed`
-  í geymslu Dataregium), þjónaðu Dataspatium á porti 8080 og bættu þjóninum við undir *Sækja > Bæta við uppsprettu > OpenCDE*. Auðkenni
+  í geymslu Dataregium), þjónaðu Dataspatium á porti 8080 og bættu þjóninum við undir *Sækja > Bæta við uppsprettum > OpenCDE*. Auðkenni
   biðlara má vera autt þegar þjónninn leyfir sjálfskráningu. Öll leiðin á tuttugu mínútum: [snabbstart.md](snabbstart.md).
 - **Grafið:** IFC-graf þjónsins (Neo4j eða Memgraph) er spurt með Cypher úr *Sækja*, með grafafyrirspurn þjónsins eða beint yfir Bolt;
   nafngreindar fyrirspurnir þjónsins nást úr gervigreindarspjaldinu.
@@ -172,7 +172,8 @@ færðu gögn á milli þeirra með afriti eða pakka.
 - **Spyrja gervigreind um líkanið**: spurðu til dæmis „hversu margar hurðir eru á 2. hæð?“ og fáðu svarið með byggingarhlutana merkta í
   þrívídd.
 - **Breyta með gervigreind**: biddu gervigreindina til dæmis að búa til veggi, plötur, hurðir og glugga. Þú sérð tillöguna í þrívídd,
-  forritið prófar hana og þú samþykkir; gervigreindin getur aldrei vistað eða birt sjálf. *Tæknilega:* ritverkfærin fylla breytingasett
+  forritið prófar hana og þú samþykkir; gervigreindin getur aldrei vistað eða birt sjálf. Þú getur líka byrjað á nýju, auðu líkani í IFC4X3_ADD2,
+  IFC4 eða IFC2X3 (*Sækja > Nýtt byggingarlíkan*). *Tæknilega:* ritverkfærin fylla breytingasett
   sem líkanagerðareiningin beitir með IfcOpenShell; skemavillur og nýjar villur í tengslum líkansins hindra samþykki.
 - **Útgáfur með Dataregium**: sendu breytingu sem tillögu sem þjónninn prófar og verkefnisstjóri samþykkir; þjónninn sameinar breytingar
   frá mörgum, og við árekstur velurðu hvað gildir. *Tæknilega:* birting með grunnútgáfu (412 við nýrri útgáfu), snippet með GlobalId og
@@ -269,7 +270,7 @@ engu í mál á tuttugu mínútum.
 |---|---|---|
 | 1.0.0 | Gögn úr skrám og opnum forritaskilum, vinnsla, R, SQL og reglulegar segðir, sænskt skipulag, myndrit og kort í myndritum, mælaborð, skjöl, útflutningur og deiling. Gagnvart þjóni aðeins Documents API: sækja skjöl sem gagnasöfn og senda gagnasöfn og skrár til baka. Engin mál, engin líkön og ekkert Python | Dataregium 1.0.0 (aðeins Documents API) |
 | 2.0.0 | Allt í 1.0.0 og auk þess hamirnir Leita og Deila, Python og tölfræði án kóða, fleiri uppsprettur, kortasýnir, norrænt skipulag, gröf, IFC-líkön í þrívídd með prófun gegn IDS, flæði, Dataspatium Farsími, mál með viewpoints (BCF API 3.0 og 2.1), IFC-graf þjónsins, kortið *Stjórnun* og kortið *Meðlimir verkefnisins* | Dataregium 2.0.0 |
-| 3.0.0 | Allt í 2.0.0 og auk þess kortið *Sannprófa líkanið*, árekstrarprófun, Spyrja gervigreind og Breyta með gervigreind, Bera saman útgáfur, birting með grunnútgáfu og forprófun, breytingatillögur sem eru prófaðar og samþykktar á þjóninum með vali við árekstra, og grafið í léttara formi | Dataregium 3.0.0 |
+| 3.0.0 | Allt í 2.0.0 og auk þess kortið *Sannprófa líkanið*, árekstrarprófun, Spyrja gervigreind og Breyta með gervigreind, ný auð líkön á völdu skema, Bera saman útgáfur, birting með grunnútgáfu og forprófun, breytingatillögur sem eru prófaðar og samþykktar á þjóninum með vali við árekstra, og grafið í léttara formi | Dataregium 3.0.0 |
 
 Ný útgáfa með sama aðalnúmeri kemur í stað þeirrar fyrri; aðeins sú nýjasta í hverri röð er leiðrétt. Uppfærsluathugun forritsins býður
 næsta aðalnúmer, og gagnasöfn, listar, myndrit, sniðmát og skriftur fylgja með þegar þú opnar `index.html` nýju útgáfunnar.

@@ -71,7 +71,7 @@ version and the folder version have separate workspaces; move data between them 
   and Linux).
 - **With a server:** start Dataregium with Docker or Podman (`docker compose up -d --build --wait` and
   `docker compose exec api opencde seed` in Dataregium's repository), serve Dataspatium on port 8080 and add the server under *Import >
-  Add source > OpenCDE*. The client id can be left empty when the server allows self-registration. The whole way in twenty minutes:
+  Add sources > OpenCDE*. The client id can be left empty when the server allows self-registration. The whole way in twenty minutes:
   [snabbstart.md](snabbstart.md) (Quick start).
 - **The graph:** the server's IFC graph (Neo4j or Memgraph) is queried with Cypher from *Import*, through the server's graph query or
   directly over Bolt; the server's named queries are reached from the AI panel.
@@ -181,7 +181,8 @@ What works in one version also works in the next. Each version goes with the sam
 - **Ask AI about the model**: ask a question such as "how many doors are there on level 2?" and get the answer with the elements
   marked in 3D.
 - **Change with AI**: ask the AI, for example, to create walls, slabs, doors and windows. You see the proposal in 3D, the app checks it
-  and you approve; the AI can never save or publish by itself. *Technically:* the write tools fill a change set that the modelling
+  and you approve; the AI can never save or publish by itself. You can also start from a new, empty model in IFC4X3_ADD2,
+  IFC4 or IFC2X3 (*Import > New building model*). *Technically:* the write tools fill a change set that the modelling
   wheel applies with IfcOpenShell; schema errors and new errors in the model's relationships block the approval.
 - **Versions with Dataregium**: send a change as a proposal that the server tries and a project manager approves; the server merges
   changes from several people, and at a conflict you choose what applies. *Technically:* publishing with a base version (412 at a
@@ -280,7 +281,7 @@ There is one release per major number, and Dataspatium and Dataregium with the s
 |---|---|---|
 | 1.0.0 | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium 1.0.0 (Documents API only) |
 | 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members* | Dataregium 2.0.0 |
-| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
+| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
 
 A new release in the same major number replaces the previous one; only the latest in each series is corrected. The app's update check
 offers the next major number, and datasets, lists, charts, templates and scripts come along when you open the new version's

@@ -27,6 +27,7 @@
     /** What a source that is not another dataset is called, or null. */
     function originOf(source) {
       if (!source) return null;
+      if (source.kind === 'new') return { kind: 'file', label: t('provenance.source.new', { schema: source.schema || '' }) };
       if (source.fileName) return { kind: 'file', label: source.fileName };
       if (Array.isArray(source.files) && source.files.length) return { kind: 'file', label: source.files.length === 1 ? source.files[0].name : t('provenance.files', { n: source.files.length }), detail: source.files.map((f) => f.name).join(', ') };
       if (source.connectorName) return { kind: 'api', label: source.connectorName, detail: source.publisher || '' };

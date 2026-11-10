@@ -198,11 +198,23 @@ taulukon `data` tavallisten muotojen lisäksi. Mallien kaaviot viedään PNG-, S
 
 ## Rajoitukset
 
-- Mallia ei voi muokata, eikä uutta IFC-tiedostoa kirjoiteta. Taulukoiden muutokset eivät vaikuta alkuperäiseen tiedostoon.
+- Taulukoita ei voi muokata suoraan. Mallia muutetaan IfcOpenShellin reseptivaiheilla ja *Muuta tekoälyllä* -toiminnolla, jotka
+  kirjoittavat IFC-tiedostosta uuden version.
 - Malli piirretään alkuperäisestä tiedostosta uudelleen jokaisessa uudessa istunnossa. Sovelluksella kokeiltu 57 Mt:n malli vie 4–6 sekuntia.
 - Hyvin suuren mallin ensimmäinen piirto voi lukita sivun hetkeksi, kun näytönohjain vastaanottaa kolmioita.
 - Määrät eivät ole minkään säännöstön mukainen määrälaskenta. Tarkista ne lähteestä ennen käyttöä.
 - DXF luetaan kaksiulotteisena. DWG on ensin tallennettava DXF-muotoon.
+
+## Uusi malli
+
+Uusi, tyhjä malli luodaan Nouda-tilassa kohdasta *Uusi rakennusmalli*. Valitse skeema (IFC4X3_ADD2 on oletus; IFC4 ja IFC2X3 ovat
+ohjelmille, jotka eivät lue uusinta) sekä projektin, tontin, rakennuksen ja ensimmäisen kerroksen nimet. Sovellus kirjoittaa mallin
+IfcOpenShellillä sovelluksen Pythonissa, metreinä ja mallin konteksteineen, ja malli läpäisee skeematarkistuksen. Ensimmäisellä
+kerralla Python ja IfcOpenShell noudetaan suostumuksen jälkeen.
+
+Mallista tulee tavallinen malliaineisto. Avaa se Muokkaa-tilassa ja rakenna siihen *Muuta tekoälyllä* -toiminnolla, esimerkiksi
+”kaksi kerrosta ja 6×4 m:n ruudukko, ulkoseinät ruudukon mukaan”. Sen voi viedä IFC-muodossa ja julkaista Dataregiumiin kuten
+muutkin mallit.
 
 ## Kysy tekoälyltä mallista
 

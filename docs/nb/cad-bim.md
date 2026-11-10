@@ -194,11 +194,22 @@ vanlige tabellformatene for `data`. Diagrammer av modeller eksporteres som PNG, 
 
 ## Begrensninger
 
-- Modellen kan ikke redigeres, og ingen ny IFC-fil skrives. Endringer i tabellene påvirker ikke originalfilen.
+- Tabellene kan ikke redigeres direkte. Modellen endres med oppskriftsstegene for IfcOpenShell og med *Endre med AI*, som skriver en
+  ny versjon av IFC-filen.
 - En modell tegnes på nytt fra originalfilen i hver ny økt. Modellen på 57 MB som appen er prøvd med, tar 4–6 sekunder.
 - Den første tegningen av en svært stor modell kan låse siden et øyeblikk mens grafikkortet tar imot trekantene.
 - Mengdene er ikke en mengdeberegning etter noe regelverk. Kontroller dem mot kilden før de brukes.
 - DXF leses i to dimensjoner. DWG må først lagres som DXF.
+
+## Ny modell
+
+En ny, tom modell lages i Hent med *Ny bygningsmodell*. Velg skjema (IFC4X3_ADD2 er standard; IFC4 og IFC2X3 finnes for programmer
+som ikke leser det nyeste) og navn på prosjekt, tomt, bygning og første etasje. Appen skriver modellen med IfcOpenShell i appens
+Python, i meter og med modellens kontekster, og modellen består skjemakontrollen. Første gang hentes Python og IfcOpenShell etter
+samtykke.
+
+Modellen blir et vanlig modelldatasett. Åpne det i Bearbeid og bygg i det med *Endre med AI*, for eksempel «to etasjer og et
+rutenett på 6×4 m med yttervegger langs rutenettet». Det kan eksporteres som IFC og publiseres på en Dataregium som andre modeller.
 
 ## Spør AI om modellen
 

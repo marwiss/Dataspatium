@@ -102,7 +102,8 @@
           group('import.sources.common', [
             sourceItem('file', 'folder-open', t('import.sources.files'), t('import.sources.files.hint')),
             sourceItem('paste', 'clipboard-paste', t('import.sources.paste'), t('import.sources.paste.hint')),
-            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint'))]),
+            sourceItem('url', 'link', t('import.sources.url'), t('import.sources.url.hint')),
+            sourceItem('newmodel', 'box', t('import.sources.newmodel'), t('import.sources.newmodel.hint'))]),
           group('import.sources.addgroup', [
             sourceItem('bridge', 'database', t('bridge.title'), t('bridge.hint')),
             sourceItem('catalog', 'globe', t('api.sources'), t('api.catalog.hint')),
@@ -249,6 +250,7 @@
         if (source === 'bridge') { renderBridge(); return; }
         if (source === 'field') { renderField(); return; }
         if (source === 'guides') { renderGuides(); return; }
+        if (source === 'newmodel') { renderNewModel(); return; }
         if (fieldUi) { fieldUi.destroy(); fieldUi = null; }
         const stepper = /** @type {any} */ (h('dm-stepper'));
         stepper.steps = STEPS; stepper.active = wiz.step === 'sort' ? 'options' : wiz.step;
@@ -350,6 +352,50 @@
         render();
       }
       /** The local database bridge (api/bridge): connection, source, tables, preview, own SQL and import. */
+      // ---- a new, empty building model (OB-06 Schemaval för nya modeller) ----
+      const newModel = { schema: '', values: {}, busy: false, error: '', result: null };
+      function renderNewModel() {
+        const ifcNew = D.require('data/ifc-new');
+        const field = (key, extra) => {
+          const el = /** @type {any} */ (h('dm-input', Object.assign({ label: t('newmodel.' + key), 'data-newmodel': key, value: newModel.values[key] || '' }, extra || {})));
+          el.addEventListener('input', () => { newModel.values[key] = el.value; });
+          return el;
+        };
+        const schema = /** @type {any} */ (h('dm-select', { label: t('newmodel.schema'), help: t('newmodel.schema.hint'), 'data-newmodel': 'schema' }));
+        schema.options = ifcNew.SCHEMAS.map((s) => ({ value: s, label: t('newmodel.schema.' + s.toLowerCase()) }));
+        schema.value = newModel.schema || ifcNew.DEFAULT_SCHEMA;
+        schema.addEventListener('change', () => { newModel.schema = schema.value; });
+        const create = async () => {
+          if (newModel.busy) return;
+          newModel.busy = true; newModel.error = ''; newModel.result = null; renderNewModel();
+          try {
+            const res = await ifcNew.create(Object.assign({}, newModel.values, { schema: newModel.schema || ifcNew.DEFAULT_SCHEMA }));
+            newModel.result = res.dataset;
+            const msg = t('newmodel.done', { name: res.dataset.name, schema: (res.dataset.source && res.dataset.source.schema) || '' });
+            shell.log(msg, 'ok'); ui.toast.show(msg, { kind: 'ok' });
+          } catch (err) {
+            newModel.error = (err && err.message) || String(err);
+            shell.log(t('newmodel.error', { message: newModel.error }), 'error');
+          }
+          newModel.busy = false; renderNewModel();
+        };
+        const done = newModel.result;
+        replace(slots.center,
+          h('div', { class: 'dm-page-head' }, h('h1', null, ui.icon('box', 20), t('newmodel.title'))),
+          h('div', { class: 'dm-stack', 'data-newmodel-form': '' },
+            h('p', { class: 'dm-help', text: t('newmodel.lead') }),
+            field('name', { placeholder: t('newmodel.default.project') }), schema,
+            field('project', { placeholder: t('newmodel.default.project') }), field('site', { placeholder: t('newmodel.default.site') }),
+            field('building', { placeholder: t('newmodel.default.building') }), field('storey', { placeholder: t('newmodel.default.storey') }),
+            field('elevation', { type: 'number', placeholder: '0' }),
+            newModel.error ? h('p', { class: 'dm-error dm-small', 'data-newmodel-error': '', text: newModel.error }) : null,
+            h('div', { class: 'dm-row' }, ui.button({ label: newModel.busy ? t('newmodel.creating') : t('newmodel.create'), icon: 'box', variant: 'primary', loading: newModel.busy, title: t('newmodel.create.hint'), 'data-newmodel-create': '', onClick: create })),
+            h('p', { class: 'dm-help dm-xs', text: t('newmodel.python') }),
+            done ? h('div', { class: 'dm-success dm-stack', 'data-newmodel-done': '' },
+              h('p', { text: t('newmodel.done', { name: done.name, schema: (done.source && done.source.schema) || '' }) }),
+              h('div', { class: 'dm-row' }, ui.button({ label: t('newmodel.open'), icon: 'pencil', title: t('newmodel.open.hint'), onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
+      }
+
       function renderGuides() {
         if (!guidesUi) guidesUi = D.require('ui/guides/guides-view').create(ctx);
         guidesUi.render(slots.center);
@@ -989,6 +1035,7 @@
       function renderRight() {
         if (source === 'field') return;
         if (source === 'guides') { replace(slots.right, h('h4', { text: t('guides.title') }), h('p', { class: 'dm-help', text: t('guides.right') })); return; }
+        if (source === 'newmodel') { replace(slots.right, h('h4', { text: t('newmodel.title') }), h('p', { class: 'dm-help', text: t('newmodel.right') })); return; }
         if (source.startsWith('api:')) { if (apiUi) apiUi.renderRight(slots.right); else replace(slots.right); return; }
         if (source === 'saved') { replace(slots.right, h('h4', { text: t('api.saved.title') }), h('p', { class: 'dm-help', text: t('api.saved.help') })); return; }
         if (source === 'catalog') { replace(slots.right, h('h4', { text: t('api.sources') }), h('p', { class: 'dm-help', text: t('api.catalog.hint') })); return; }

@@ -197,11 +197,22 @@ addition to the usual table formats for `data`. Charts of models are exported as
 
 ## Limitations
 
-- The model cannot be edited, and no new IFC file is written. Changes in the tables do not affect the original file.
+- The tables cannot be edited directly. The model is changed with the IfcOpenShell recipe steps and with *Change with AI*, which
+  write a new version of the IFC file.
 - A model is drawn again from the original file in each new session. The 57 MB model the app was tried with takes 4–6 seconds.
 - The first drawing of a very large model can lock the page for a moment while the graphics card takes in the triangles.
 - The quantities are not a take-off under any set of rules. Check them against the source before relying on them.
 - DXF is read in two dimensions. DWG must first be saved as DXF.
+
+## New model
+
+A new, empty model is created in Import with *New building model*. Choose the schema (IFC4X3_ADD2 is the default; IFC4 and IFC2X3
+are there for programs that do not read the newest) and the names of the project, site, building and first storey. The app writes
+the model with IfcOpenShell in the app's Python, in metres and with the model's contexts, and the model passes the schema check. The
+first time, Python and IfcOpenShell are fetched after consent.
+
+The model becomes an ordinary model dataset. Open it in Process and build in it with *Change with AI*, for example "two storeys and
+a 6×4 m grid with external walls along the grid". It can be exported as IFC and published to a Dataregium like other models.
 
 ## Ask AI about the model
 

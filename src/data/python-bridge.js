@@ -381,6 +381,21 @@
         });
       }
 
+      /**
+       * A new, empty model written by the wheel (OB-06 Schemaval för nya modeller): project, units, contexts, site, building and a
+       * first storey in the schema chosen.
+       * @param {string} schema IFC4X3_ADD2, IFC4 or IFC2X3 @param {{project: string, site: string, building: string, storey: string, elevation: number}} names
+       * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
+       */
+      async runIfcNewModel(schema, names) {
+        return this.ifcJob(async () => {
+          await this.ensurePackages(['ifcopenshell']);
+          this.streams = [];
+          const info = await this.engine.evalJson(`_dataspatium._ifc_new_model(${JSON.stringify(String(schema))}, ${JSON.stringify(JSON.stringify(names || {}))}, "/data/step/new-model.ifc")`);
+          return this.takeIfc('/data/step/new-model.ifc', info, []);
+        });
+      }
+
       async ifcJob(fn) {
         await this.start();
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));

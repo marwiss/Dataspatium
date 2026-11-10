@@ -129,6 +129,7 @@
     'src/data/operations-timeseries.js',
     'src/data/operations-kinds.js',
     'src/data/ifc-ops.js',
+    'src/data/ifc-new.js',
     'src/data/models.js',
     'src/data/graph-ops.js',
     'src/data/recipes.js',

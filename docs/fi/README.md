@@ -70,7 +70,7 @@ kummallakin oma työtilansa; siirrä dataa niiden välillä varmuuskopiolla tai 
   `shasum -a 256` macOS:ssä ja Linuxissa).
 - **Palvelimen kanssa:** käynnistä Dataregium Dockerilla tai Podmanilla (`docker compose up -d --build --wait` ja
   `docker compose exec api opencde seed` Dataregiumin repossa), tarjoile Dataspatium portissa 8080 ja lisää palvelin kohdassa *Nouda >
-  Lisää lähde > OpenCDE*. Asiakastunnuksen voi jättää tyhjäksi, kun palvelin sallii itserekisteröinnin. Koko matka kahdessakymmenessä
+  Lisää lähteitä > OpenCDE*. Asiakastunnuksen voi jättää tyhjäksi, kun palvelin sallii itserekisteröinnin. Koko matka kahdessakymmenessä
   minuutissa: [snabbstart.md](snabbstart.md).
 - **Graafi:** palvelimen IFC-graafia (Neo4j tai Memgraph) kysytään Cypherillä *Nouda*-tilasta, palvelimen graafikyselyn kautta tai
   suoraan Boltin yli; palvelimen nimettyihin kyselyihin päästään tekoälypaneelista.
@@ -180,7 +180,8 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
   [CAD ja BIM](cad-bim.md)).
 - **Kysy tekoälyltä mallista**: kysy esimerkiksi ”montako ovea 2. kerroksessa on?” ja saat vastauksen rakennusosat merkittyinä 3D:ssä.
 - **Muuta tekoälyllä**: pyydä tekoälyä esimerkiksi luomaan seiniä, laattoja, ovia ja ikkunoita. Näet ehdotuksen 3D:ssä, sovellus
-  tarkastaa sen ja sinä hyväksyt; tekoäly ei voi koskaan tallentaa eikä julkaista itse. *Teknisesti:* kirjoitustyökalut täyttävät
+  tarkastaa sen ja sinä hyväksyt; tekoäly ei voi koskaan tallentaa eikä julkaista itse. Voit myös aloittaa uudesta, tyhjästä mallista
+  skeemalla IFC4X3_ADD2, IFC4 tai IFC2X3 (*Nouda > Uusi rakennusmalli*). *Teknisesti:* kirjoitustyökalut täyttävät
   muutosjoukon, jonka mallinnusmoduuli soveltaa IfcOpenShellillä; skeemavirheet ja uudet virheet mallin suhteissa estävät hyväksynnän.
 - **Versiot Dataregiumin kanssa**: lähetä muutos ehdotuksena, jonka palvelin kokeilee ja hankkeen vastuuhenkilö hyväksyy; palvelin
   yhdistää useiden muutokset, ja ristiriidassa valitset, mikä on voimassa. *Teknisesti:* julkaisu perusversion kanssa (412 uudemman
@@ -279,7 +280,7 @@ Kullakin päänumerolla on yksi julkaisu, ja samanumeroiset Dataspatium ja Datar
 |---|---|---|
 | 1.0.0 | Data tiedostoista ja avoimista rajapinnoista, käsittely, R, SQL ja säännölliset lausekkeet, Ruotsin kaavat, kaaviot ja kartat kaavioissa, koontinäytöt, asiakirjat, vienti ja jakaminen. Palvelinta vasten vain Documents API: asiakirjojen noutaminen aineistoiksi sekä aineistojen ja tiedostojen lähettäminen takaisin. Ei asioita, ei malleja eikä Pythonia | Dataregium 1.0.0 (vain Documents API) |
 | 2.0.0 | Kaikki 1.0.0:n sisältö sekä tilat Hae ja Jaa, Python ja tilastot ilman koodia, lisää lähteitä, karttanäkymät, Pohjoismaiden kaavat, graafit, IFC-mallit 3D:nä ja tarkistus IDS:ää vasten, työnkulut, Dataspatium Mobiili, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi, kortti *Hallinta* ja kortti *Projektin jäsenet* | Dataregium 2.0.0 |
-| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa | Dataregium 3.0.0 |
+| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa | Dataregium 3.0.0 |
 
 Uusi julkaisu samalla päänumerolla korvaa edellisen; vain kunkin sarjan uusinta korjataan. Sovelluksen päivitystarkistus tarjoaa
 seuraavaa päänumeroa, ja aineistot, listat, kaaviot, mallipohjat ja skriptit tulevat mukaan, kun avaat uuden version `index.html`-tiedoston.

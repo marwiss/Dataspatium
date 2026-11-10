@@ -2087,3 +2087,73 @@ def _ifc_changeset(in_file, changeset_json, out_file):
                        "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
                        "proposal": proposal},
                       ensure_ascii=False, default=str)
+
+
+# The schemas a new model can be written in (OB-06): the newest first, which is the default.
+IFC_NEW_SCHEMAS = ("IFC4X3_ADD2", "IFC4", "IFC2X3")
+
+
+def _ifc_new_owner(model):
+    """IFC2X3 needs an owner history on every IfcRoot: the application as its own user, with no person's name."""
+    import time
+    import ifcopenshell.api.owner
+    organisation = ifcopenshell.api.owner.add_organisation(model, identification="Dataspatium", name="Dataspatium")
+    person = ifcopenshell.api.owner.add_person(model, identification="user", family_name="User", given_name="")
+    user = ifcopenshell.api.owner.add_person_and_organisation(model, person=person, organisation=organisation)
+    application = ifcopenshell.api.owner.add_application(model, application_developer=organisation, version="3",
+                                                         application_full_name="Dataspatium", application_identifier="Dataspatium")
+    return model.createIfcOwnerHistory(OwningUser=user, OwningApplication=application, ChangeAction="ADDED", CreationDate=int(time.time()))
+
+
+def _ifc_new_model(schema, settings_json, out_file):
+    """A new, empty building model (OB-06): a project with metre units and the model contexts, a site, a building and a
+    first storey, written in the schema chosen (IFC4X3_ADD2 by default, IFC4 or IFC2X3).
+
+    The names come from settings_json ({"project", "site", "building", "storey", "elevation"}); the storeys, walls and the rest
+    are added afterwards by Ändra med AI, whose change sets work on this file like on any other. Returns the report: the schema,
+    the counts and the schema check's findings.
+    """
+    import ifcopenshell.api.aggregate
+    import ifcopenshell.api.context
+    import ifcopenshell.api.project
+    import ifcopenshell.api.unit
+    import ifcopenshell.guid
+    schema = str(schema or IFC_NEW_SCHEMAS[0]).upper()
+    if schema not in IFC_NEW_SCHEMAS:
+        raise DataspatiumError("unknown schema %r; choose one of %s" % (schema, ", ".join(IFC_NEW_SCHEMAS)))
+    opts = json.loads(settings_json or "{}")
+
+    def name(key, default):
+        value = str(opts.get(key) or "").strip()
+        return value[:255] if value else default
+
+    model = ifcopenshell.api.project.create_file(version=schema)
+    owner = _ifc_new_owner(model) if schema == "IFC2X3" else None
+    project = model.create_entity("IfcProject", GlobalId=ifcopenshell.guid.new(), Name=name("project", "Project"))
+    if owner is not None:
+        project.OwnerHistory = owner
+    units = [ifcopenshell.api.unit.add_si_unit(model, unit_type=kind) for kind in ("LENGTHUNIT", "AREAUNIT", "VOLUMEUNIT", "PLANEANGLEUNIT")]
+    cs = _ChangeSet(model)
+    previous = cs.owner_settings()
+    try:
+        ifcopenshell.api.unit.assign_unit(model, units=units)
+        context = ifcopenshell.api.context.add_context(model, context_type="Model")
+        ifcopenshell.api.context.add_context(model, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=context)
+        site = cs.root("IfcSite", name("site", "Site"))
+        site.CompositionType = "ELEMENT"
+        site.ObjectPlacement = cs.placement(None, 0, 0, 0)
+        ifcopenshell.api.aggregate.assign_object(model, products=[site], relating_object=project)
+        building = cs.root("IfcBuilding", name("building", "Building"))
+        building.CompositionType = "ELEMENT"
+        building.ObjectPlacement = cs.placement(site.ObjectPlacement, 0, 0, 0)
+        ifcopenshell.api.aggregate.assign_object(model, products=[building], relating_object=site)
+    finally:
+        cs.restore_owner_settings(previous)
+    cs.scale = 1.0
+    cs.apply([{"tool": "create_storeys_and_grid", "storeys": [{"name": name("storey", "Level 1"), "elevation": _cs_num(opts, "elevation", 0.0)}]}])
+    findings, errors = cs.findings()
+    os.makedirs(os.path.dirname(out_file) or ".", exist_ok=True)
+    model.write(out_file)
+    return json.dumps({"schema": model.schema_identifier if hasattr(model, "schema_identifier") else schema, "entities": len(list(model)),
+                       "storeys": len(model.by_type("IfcBuildingStorey")), "findings": findings[:20], "errors": errors},
+                      ensure_ascii=False, default=str)

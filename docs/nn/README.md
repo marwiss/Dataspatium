@@ -68,7 +68,7 @@ arbeidsområde; flytt data mellom dei med ein tryggingskopi eller ein pakke.
   Linux).
 - **Med ein tenar:** start Dataregium med Docker eller Podman (`docker compose up -d --build --wait` og
   `docker compose exec api opencde seed` i repoet til Dataregium), server Dataspatium på port 8080 og legg til tenaren under *Hent >
-  Legg til kjelde > OpenCDE*. Klient-id kan stå tomt når tenaren tillèt sjølvregistrering. Heile vegen på tjue minutt:
+  Legg til kjelder > OpenCDE*. Klient-id kan stå tomt når tenaren tillèt sjølvregistrering. Heile vegen på tjue minutt:
   [snabbstart.md](snabbstart.md).
 - **Grafen:** IFC-grafen til tenaren (Neo4j eller Memgraph) blir spurd med Cypher frå *Hent*, gjennom grafspørjinga til tenaren eller
   direkte over Bolt; dei namngjevne spørjingane til tenaren blir nådde frå AI-panelet.
@@ -173,7 +173,8 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
   [CAD og BIM](cad-bim.md)).
 - **Spør AI om modellen**: still eit spørsmål som «kor mange dører er det i 2. etasje?» og få svaret med bygningsdelane merkte i 3D.
 - **Endre med AI**: be AI-en til dømes lage veggar, dekke, dører og vindauge. Du ser framlegget i 3D, appen kontrollerer det, og du
-  godkjenner; AI-en kan aldri lagre eller publisere sjølv. *Teknisk:* skriveverktøya fyller eit endringssett som modelleringshjulet
+  godkjenner; AI-en kan aldri lagre eller publisere sjølv. Du kan også byrje frå ein ny, tom modell i IFC4X3_ADD2, IFC4 eller
+  IFC2X3 (*Hent > Ny bygningsmodell*). *Teknisk:* skriveverktøya fyller eit endringssett som modelleringshjulet
   brukar med IfcOpenShell; skjemafeil og nye feil i sambanda i modellen sperrar godkjenninga.
 - **Versjonar mot Dataregium**: send ei endring som eit framlegg som tenaren prøver og ein prosjektansvarleg godkjenner; tenaren slår
   saman endringar frå fleire, og ved ein konflikt vel du kva som gjeld. *Teknisk:* publisering med basisversjon (412 ved ein nyare
@@ -271,7 +272,7 @@ Det finst éi utgjeving per hovudnummer, og Dataspatium og Dataregium med same n
 |---|---|---|
 | 1.0.0 | Data frå filer og opne API-ar, bearbeiding, R, SQL og regulære uttrykk, svenske planar, diagram og kart i diagram, dashboards, dokument, eksport og deling. Mot ein tenar berre Documents API: hent dokument som datasett og send datasett og filer tilbake. Ingen saker, ingen modellar og ingen Python | Dataregium 1.0.0 (berre Documents API) |
 | 2.0.0 | Alt i 1.0.0 og dessutan modusane Søk og Del, Python og statistikk utan kode, fleire kjelder, kartvisingar, nordiske planar, grafar, IFC-modellar i 3D med kontroll mot IDS, flytar, Dataspatium Mobil, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren, kortet *Administrasjon* og kortet *Medlemmene i prosjektet* | Dataregium 2.0.0 |
-| 3.0.0 | Alt i 2.0.0 og dessutan kortet *Valider modellen*, kollisjonskontroll, Spør AI og Endre med AI, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som blir prøvde og godkjende på tenaren med val ved konfliktar, og grafen i ei lettare form | Dataregium 3.0.0 |
+| 3.0.0 | Alt i 2.0.0 og dessutan kortet *Valider modellen*, kollisjonskontroll, Spør AI og Endre med AI, nye tomme modellar i valfritt skjema, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som blir prøvde og godkjende på tenaren med val ved konfliktar, og grafen i ei lettare form | Dataregium 3.0.0 |
 
 Ei ny utgjeving med same hovudnummer erstattar den førre; berre den siste i kvar serie blir retta. Oppdateringskontrollen i appen tilbyr
 neste hovudnummer, og datasett, lister, diagram, malar og skript følgjer med når du opnar `index.html` i den nye versjonen.
