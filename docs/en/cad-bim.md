@@ -234,6 +234,11 @@ workspace, the tables are rebuilt, and the step can be undone exactly. The step 
 questions). A change set with schema errors cannot be approved, deletions are confirmed once more, and *Reject* drops the change set
 without touching the model. The AI can never save or publish: you do that with the buttons.
 
+The preview also checks the model's relationships: an opening without a wall, a door or window without an opening, an element outside
+the storeys and a relationship with nothing in it count as errors, but only when the change set caused them; what was already in the
+model blocks nothing. When a wall is deleted, its doors and windows go with it. When the app's Python is already running, the AI
+previews its change set itself before you see it and mends what the wheel finds, at most twice; the approval is still yours.
+
 A model fetched from Dataregium is published as a new version in Share with the document's base version, the version you fetched. If
 the document has got a newer version meanwhile, the server refuses the publish (412 version_conflict); fetch the newest version, redo
 the changes and publish again. For a model fetched from Dataregium, *Preview* also asks the server's precheck of the candidate (the

@@ -227,6 +227,11 @@ vinnusvæðinu, töflurnar eru endurbyggðar og skrefið má afturkalla nákvæm
 Breytingasett með skemavillum er ekki hægt að samþykkja, eyðingar eru staðfestar einu sinni enn, og *Hafna* fleygir breytingasettinu án
 þess að snerta líkanið. Gervigreindin getur aldrei vistað eða birt: það gerir þú með hnöppunum.
 
+Forskoðunin athugar einnig vensl líkansins: op án veggjar, hurð eða gluggi án ops, byggingarhluti utan hæðanna og vensl án innihalds
+teljast villur, en aðeins þegar breytingasettið olli þeim; það sem þegar var í líkaninu hindrar ekkert. Sé veggur eyddur fylgja hurðir
+hans og gluggar með. Þegar Python forritsins er þegar í gangi forskoðar gervigreindin sjálf breytingasettið áður en þú sérð það og
+lagar það sem hjólið finnur, mest tvisvar; samþykktin er áfram þín.
+
 Líkan sem sótt var frá Dataregium er birt sem ný útgáfa í Deila með grunnútgáfu skjalsins, þeirri útgáfu sem þú sóttir. Hafi skjalið
 fengið nýrri útgáfu á meðan hafnar þjónninn birtingunni (412 version_conflict); sæktu þá nýjustu útgáfuna, gerðu breytingarnar aftur
 og birtu á ný. Fyrir líkan sem sótt var frá Dataregium spyr *Forskoða* líka forathugun þjónsins á tillögunni (skema, reglur

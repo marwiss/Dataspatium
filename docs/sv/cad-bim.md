@@ -228,6 +228,11 @@ gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad 
 bekräftas en gång till, och *Avvisa* kastar ändringssetet utan att röra modellen. AI:n kan aldrig spara eller publicera: det gör du med
 knapparna.
 
+Förhandsvisningen kontrollerar också modellens samband: en öppning utan vägg, en dörr eller ett fönster utan öppning, en byggdel
+utanför våningarna och ett samband utan innehåll räknas som fel, men bara när ändringssetet har orsakat dem; det som redan fanns i
+modellen spärrar ingenting. Raderas en vägg följer dess dörrar och fönster med. När appens Python redan är igång förhandsvisar AI:n
+själv sitt ändringsset innan du ser det och rättar det som hjulet hittar, högst två gånger; godkännandet är fortfarande ditt.
+
 En modell hämtad från Dataregium publiceras som ny version i Dela med dokumentets basversion, den version du hämtade. Har dokumentet
 fått en nyare version under tiden avvisar servern publiceringen (412 version_conflict); hämta då den nyaste versionen, gör om
 ändringarna och publicera igen. För en modell hämtad från Dataregium frågar *Förhandsvisa* också serverns förhandskontroll av

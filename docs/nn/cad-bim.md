@@ -232,6 +232,11 @@ tabellane vert bygde om, og steget kan angrast nøyaktig. Steget ber proveniense
 skjemafeil kan ikkje godkjennast, slettingar vert stadfesta ein gong til, og *Avvis* kastar endringssettet utan å røre modellen. AI-en
 kan aldri lagre eller publisere: det gjer du med knappane.
 
+Førehandsvisinga kontrollerer også relasjonane i modellen: ei opning utan vegg, ei dør eller eit vindauge utan opning, ein
+bygningsdel utanfor etasjane og ein relasjon utan innhald tel som feil, men berre når endringssettet har ført til dei; det som alt var
+i modellen, sperrar ingenting. Vert ein vegg sletta, følgjer dørene og vindauga med. Når Python i appen alt køyrer, førehandsviser AI-en
+sjølv endringssettet før du ser det, og rettar det hjulet finn, høgst to gonger; godkjenninga er framleis di.
+
 Ein modell henta frå Dataregium vert publisert som ny versjon i Del med basisversjonen til dokumentet, den versjonen du henta. Har
 dokumentet fått ein nyare versjon i mellomtida, avviser tenaren publiseringa (412 version_conflict); hent då den nyaste versjonen, gjer
 endringane på nytt og publiser igjen. For ein modell henta frå Dataregium spør *Førehandsvis* også førehandskontrollen til tenaren

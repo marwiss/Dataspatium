@@ -235,6 +235,11 @@ taulukot rakennetaan uudelleen ja vaihe voidaan kumota tarkasti. Vaihe kantaa al
 Muutosjoukkoa, jossa on skeemavirheitä, ei voi hyväksyä, poistot vahvistetaan vielä kerran, ja *Hylkää* heittää muutosjoukon pois
 koskematta malliin. Tekoäly ei voi koskaan tallentaa tai julkaista: sen teet sinä painikkeilla.
 
+Esikatselu tarkistaa myös mallin suhteet: aukko ilman seinää, ovi tai ikkuna ilman aukkoa, rakennusosa kerrosten ulkopuolella ja
+suhde ilman sisältöä lasketaan virheiksi, mutta vain kun muutosjoukko on aiheuttanut ne; mallissa jo ollut ei estä mitään. Kun seinä
+poistetaan, sen ovet ja ikkunat poistuvat mukana. Kun sovelluksen Python on jo käynnissä, tekoäly esikatselee muutosjoukkonsa itse
+ennen kuin näet sen ja korjaa sen, minkä pyörä löytää, enintään kahdesti; hyväksyntä on edelleen sinun.
+
 Dataregiumista haettu malli julkaistaan uutena versiona Jaa-tilassa asiakirjan perusversiolla, sillä versiolla, jonka hait. Jos
 asiakirja on saanut sillä välin uudemman version, palvelin hylkää julkaisun (412 version_conflict); hae silloin uusin versio, tee
 muutokset uudelleen ja julkaise uudelleen. Dataregiumista haetulle mallille *Esikatsele* kysyy myös palvelimen esitarkistusta

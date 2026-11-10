@@ -230,6 +230,11 @@ trinnet kan angres nøyaktig. Trinnet bærer proveniensen (leverandør, modell o
 godkjennes, slettinger bekreftes en gang til, og *Avvis* kaster endringssettet uten å røre modellen. AI-en kan aldri lagre eller
 publisere: det gjør du med knappene.
 
+Forhåndsvisningen kontrollerer også modellens relasjoner: en åpning uten vegg, en dør eller et vindu uten åpning, en bygningsdel
+utenfor etasjene og en relasjon uten innhold teller som feil, men bare når endringssettet har forårsaket dem; det som allerede var i
+modellen, sperrer ingenting. Slettes en vegg, følger dørene og vinduene med. Når appens Python allerede kjører, forhåndsviser AI-en
+selv endringssettet før du ser det, og retter det hjulet finner, høyst to ganger; godkjenningen er fortsatt din.
+
 En modell hentet fra Dataregium publiseres som ny versjon i Del med dokumentets basisversjon, den versjonen du hentet. Har dokumentet
 fått en nyere versjon i mellomtiden, avviser serveren publiseringen (412 version_conflict); hent da den nyeste versjonen, gjør
 endringene på nytt og publiser igjen. For en modell hentet fra Dataregium spør *Forhåndsvis* også serverens forhåndskontroll av

@@ -230,6 +230,11 @@ kan fortrydes præcist. Trinnet bærer proveniensen (udbyder, model og spørgsm�
 sletninger bekræftes en gang til, og *Afvis* kasserer ændringssættet uden at røre modellen. AI'en kan aldrig gemme eller publicere: det
 gør du med knapperne.
 
+Forhåndsvisningen kontrollerer også modellens relationer: en åbning uden væg, en dør eller et vindue uden åbning, en bygningsdel uden
+for etagerne og en relation uden indhold tæller som fejl, men kun når ændringssættet har forårsaget dem; det, der allerede var i
+modellen, spærrer ikke for noget. Slettes en væg, følger dens døre og vinduer med. Når appens Python allerede kører, forhåndsviser
+AI'en selv sit ændringssæt, før du ser det, og retter det, hjulet finder, højst to gange; godkendelsen er stadig din.
+
 En model hentet fra Dataregium publiceres som ny version i Del med dokumentets basisversion, den version du hentede. Har dokumentet
 fået en nyere version i mellemtiden, afviser serveren publiceringen (412 version_conflict); hent da den nyeste version, gentag
 ændringerne og publicer igen. For en model hentet fra Dataregium spørger *Forhåndsvis* også serverens forhåndskontrol af kandidaten

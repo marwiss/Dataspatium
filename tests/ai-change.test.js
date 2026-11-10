@@ -95,6 +95,54 @@
     return 'ok';
   }, 20000);
 
+  test('ai change: the agent previews its own change set and mends what the wheel finds, but never starts Python itself', async (assert) => {
+    const PRE = 'dataspatium-asset://tests/ai-preview';
+    let calls = 0; const seen = [];
+    D.net.virtual('tests/ai-preview/', (url, init) => {
+      calls++;
+      const r = (content, stop) => Promise.resolve(json({ id: 'p' + calls, content, stop_reason: stop || 'tool_use', usage: { input_tokens: 10, output_tokens: 5 } }));
+      if (calls === 1) return r([{ type: 'tool_use', id: 'a1', name: 'create_wall', input: { storey: 'Plan 9', start: [0, 0], end: [4, 0], thickness: 0.2, height: 3, name: 'Vägg X' } }]);
+      if (calls === 2) return r([{ type: 'tool_use', id: 'a2', name: 'preview_changeset', input: {} }]);
+      if (calls === 3) return r([{ type: 'tool_use', id: 'a3', name: 'manage_changeset', input: { action: 'remove_last' } }, { type: 'tool_use', id: 'a4', name: 'create_wall', input: { storey: 'Plan 1', start: [0, 0], end: [4, 0], thickness: 0.2, height: 3, name: 'Vägg X' } }]);
+      if (calls === 4) return r([{ type: 'tool_use', id: 'a5', name: 'preview_changeset', input: {} }]);
+      return r([{ type: 'text', text: 'Ändringssetet har en vägg på Plan 1.' }], 'end_turn');
+    });
+    const pre = await providers.save({ id: 'ai-preview-anthropic', kind: 'anthropic', name: 'Mock preview', baseUrl: PRE, model: 'claude-test' });
+    providers.setKey(pre.id, 'sk-test-preview');
+    const real = bridge.runIfcChangeset; const state = bridge.state;
+    bridge.runIfcChangeset = async (changes) => {
+      seen.push(changes.map((op) => op.storey));
+      if (changes.some((op) => op.storey === 'Plan 9')) throw new Error("step 1 (create_wall): no storey named 'Plan 9'; the storeys are Plan 1, Plan 2");
+      return { bytes: new Uint8Array(4), info: { created: [{ id: 900, ifc_class: 'IfcWall' }], changed: [], deleted: [], findings: [], errors: 0 }, log: [] };
+    };
+    try {
+      bridge.state = 'ready';
+      const cs = writeTools.create(ds.id);
+      const out = await agent.ask({ provider: pre, datasetId: ds.id, question: 'En vägg på plan 9', changeset: cs });
+      assert.equal(out.stopped, 'answered');
+      const previews = out.steps.filter((s) => s.name === 'preview_changeset');
+      assert.equal(previews.length, 2, 'previewed twice');
+      assert.ok(previews[0].error && previews[0].error.includes('Plan 9'), 'the first preview told the agent what was wrong: ' + previews[0].error);
+      assert.ok(!previews[1].error, 'the second preview was clean');
+      assert.deepEqual(cs.ops.map((op) => op.storey), ['Plan 1'], 'the agent mended its change set');
+      assert.deepEqual(seen, [['Plan 9'], ['Plan 1']], 'the wheel ran on each version of the set');
+      const fed = JSON.stringify(out.messages);
+      assert.ok(fed.includes('\\"errors\\":0') && fed.includes('\\"created\\":1'), 'the verdict went back to the agent as data');
+      // Without a running Python the tool says so and starts nothing.
+      calls = 0; seen.length = 0; bridge.state = 'idle';
+      const cs2 = writeTools.create(ds.id);
+      const out2 = await agent.ask({ provider: pre, datasetId: ds.id, question: 'En vägg på plan 9', changeset: cs2 });
+      const p2 = out2.steps.find((s) => s.name === 'preview_changeset');
+      assert.ok(p2 && p2.error && p2.error.includes('Python'), 'told that Python does not run: ' + (p2 && p2.error));
+      assert.equal(seen.length, 0, 'the wheel did not run');
+      assert.ok(agent.SYSTEM_CHANGE.includes('preview_changeset') && agent.MAX_PREVIEWS === 3, 'the agent is told to preview, within a limit');
+    } finally {
+      bridge.runIfcChangeset = real; bridge.state = state;
+      await providers.remove(pre.id);
+    }
+    return 'ok';
+  }, 20000);
+
   test('ai change: the panel previews the candidate in 3D, approves it as a recipe step with provenance, undo restores the file exactly, and schema errors block approval', async (assert) => {
     const engine = (await datasets.ensureOpen(ds.id)).engine;
     const wallId = Number((await engine.exec("select id from data where namn = 'Vägg 1.1'"))[0].values[0][0]);

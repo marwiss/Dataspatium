@@ -1680,13 +1680,26 @@ class _ChangeSet:
             self.touch(e)
 
     def op_delete_elements(self, op):
+        """Delete elements; the doors and windows in an element's openings go with it, so nothing is left hanging in the air."""
         import ifcopenshell.api.root
         if op.get("confirm") is not True:
             raise DataspatiumError("deleting needs confirm: true, which the person gives")
-        for e in self.elements(op):
-            self.deleted.append(self.record(e, self.container(e)))
-            self.changed.pop(e.id(), None)
-            ifcopenshell.api.root.remove_product(self.m, product=e)
+        targets = self.elements(op)
+        ids = {e.id() for e in targets}
+        for e in targets:
+            fillings = []
+            for rel in (getattr(e, "HasOpenings", None) or ()):
+                opening = rel.RelatedOpeningElement
+                for f in (getattr(opening, "HasFillings", None) or ()):
+                    if f.RelatedBuildingElement.id() not in ids:
+                        fillings.append(f.RelatedBuildingElement)
+            for f in fillings + [e]:
+                rec = self.record(f, self.container(f))
+                if f is not e:
+                    rec["with"] = e.id()
+                self.deleted.append(rec)
+                self.changed.pop(f.id(), None)
+                ifcopenshell.api.root.remove_product(self.m, product=f)
 
     def apply(self, ops):
         if not isinstance(ops, list):
@@ -2004,11 +2017,49 @@ class _Proposal:
         self.memberships(b, c)
 
 
+def _ifc_integrity(model):
+    """What breaks the model's relationships, keyed so that a base and its candidate can be compared: openings without a host,
+    doors and windows without an opening, elements outside the spatial structure, and relationships with nothing on one side."""
+    out = {}
+
+    def add(kind, e, message):
+        key = "%s:%s" % (kind, getattr(e, "GlobalId", None) or e.id())
+        out[key] = {"level": "error", "kind": "integrity", "ifc_class": e.is_a(), "id": e.id(), "attribute": None, "message": message}
+
+    for o in model.by_type("IfcOpeningElement"):
+        if not (getattr(o, "VoidsElements", None) or ()):
+            add("opening", o, "opening without a host element")
+    for cls in ("IfcDoor", "IfcWindow"):
+        for e in model.by_type(cls):
+            if not (getattr(e, "FillsVoids", None) or ()):
+                add("filling", e, "%s without an opening" % cls)
+    for e in model.by_type("IfcElement"):
+        if e.is_a("IfcFeatureElement"):
+            continue
+        if (getattr(e, "ContainedInStructure", None) or ()) or (getattr(e, "Decomposes", None) or ()) or (getattr(e, "FillsVoids", None) or ()):
+            continue
+        if getattr(e, "Nests", None):
+            continue
+        add("container", e, "element outside the spatial structure")
+    for cls, attr in (("IfcRelContainedInSpatialStructure", "RelatedElements"), ("IfcRelAggregates", "RelatedObjects"),
+                      ("IfcRelDefinesByProperties", "RelatedObjects"), ("IfcRelAssociatesMaterial", "RelatedObjects"),
+                      ("IfcRelDefinesByType", "RelatedObjects")):
+        try:
+            rels = model.by_type(cls)
+        except Exception:
+            continue
+        for r in rels:
+            if not (getattr(r, attr, None) or ()):
+                add("empty", r, "%s with no %s" % (cls, attr))
+    return out
+
+
 def _ifc_changeset(in_file, changeset_json, out_file):
     """The recipe step "AI-ändring": a change set's operations on the model, checked against the schema and written as IFC.
 
     Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
-    report: what was created (with refs), changed and deleted, the schema findings and counts for the log, and the changes of
+    report: what was created (with refs), changed and deleted, the schema findings and what the change set broke in the model's
+    relationships (new against the base, counted as errors), counts for the log, and the changes of
     existing instances in Dataregium's proposal form (`proposal`).
     """
     file_name, data = _ifc_original_from(in_file)
@@ -2019,9 +2070,17 @@ def _ifc_changeset(in_file, changeset_json, out_file):
     cs.apply(ops)
     findings, errors = cs.findings()
     model.write(out_file)
+    # The base opened once more: the old values for the proposal are the file's, and only what the change set broke counts.
+    base = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-base.ifc"), data)
     try:
-        # The proposal form for Dataregium: the base opened once more, so that the old values are the file's.
-        proposal = cs.proposal(_ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-base.ifc"), data))
+        before = _ifc_integrity(base)
+        broken = [f for key, f in _ifc_integrity(model).items() if key not in before]
+    except Exception as exc:
+        broken = [{"level": "error", "kind": "integrity", "ifc_class": None, "id": None, "attribute": None, "message": "integrity check failed: %s" % exc}]
+    findings = broken[:20] + findings
+    errors += len(broken)
+    try:
+        proposal = cs.proposal(base)
     except Exception as exc:
         proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
     return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
