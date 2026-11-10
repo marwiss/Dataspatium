@@ -237,7 +237,9 @@ koskematta malliin. Tekoäly ei voi koskaan tallentaa tai julkaista: sen teet si
 
 Dataregiumista haettu malli julkaistaan uutena versiona Jaa-tilassa asiakirjan perusversiolla, sillä versiolla, jonka hait. Jos
 asiakirja on saanut sillä välin uudemman version, palvelin hylkää julkaisun (412 version_conflict); hae silloin uusin versio, tee
-muutokset uudelleen ja julkaise uudelleen.
+muutokset uudelleen ja julkaise uudelleen. Dataregiumista haetulle mallille *Esikatsele* kysyy myös palvelimen esitarkistusta
+ehdokkaalle (skeema, buildingSMARTin säännöt ja projektin IDS), kun lähteeseen on kirjauduttu, ja projekti, joka ei ota vastaan
+tiedostoja validointivirheineen, hylkää julkaisun (422) palvelimen löydöksillä viestissä ja kortilla Validoi malli.
 
 ## Vertaa versioita
 

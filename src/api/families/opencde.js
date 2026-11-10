@@ -401,7 +401,7 @@
         let data = null;
         try { data = JSON.parse(res.text); } catch (_e) { /* not JSON */ }
         const { code, message, text } = describeError(data);
-        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code });
+        throw new http.ApiError(`${connector.name}: ${http.describeStatus(res.status)}${text ? ' ' + text : ''}`, { kind: 'http', status: res.status, url, detail: message, code, report: data && typeof data.report === 'string' ? data.report : undefined });
       }
       if (options.responseType === 'arraybuffer') return res.buffer;
       const text = (res.text || '').trim();
@@ -646,7 +646,36 @@
         done += (end - start + 1);
         if (options.onProgress) options.onProgress({ done: Math.min(done, file.size), total: file.size });
       }
-      return api(connector, todo.upload_completion.url, { method: 'POST' });
+      const finished = await api(connector, todo.upload_completion.url, { method: 'POST' });
+      // Dataregium's OB-28: a project may refuse a file with validation errors at the completion (422 ifc_validation_failed with the
+      // report's address). A check that took long comes as 200 with the same code in the body, so the code decides, not the status.
+      if (finished && typeof finished.code === 'string' && finished.code === 'ifc_validation_failed') {
+        const d = describeError(finished);
+        throw new http.ApiError(`${connector.name}: ${d.text || d.message}`, { kind: 'http', status: 422, url: todo.upload_completion.url, detail: d.message, code: d.code, report: typeof finished.report === 'string' ? finished.report : undefined });
+      }
+      return finished;
+    }
+    /**
+     * Dataregium's precheck (OB-28): the server checks an IFC file against the schema, buildingSMART's rules and the project's IDS
+     * without making it a version. The report has the form of a version's validation report with `status` pending, passed, warnings,
+     * issues or unknown; this polls until it is done. Null when the server has no precheck.
+     * @param {any} connector @param {string} projectId @param {Uint8Array|ArrayBuffer} bytes @param {string} fileName
+     * @param {{signal?: AbortSignal, pollMs?: number, timeoutMs?: number, onStatus?: (status: string) => void}} [options]
+     */
+    async function precheck(connector, projectId, bytes, fileName, options = {}) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_precheck')) return null;
+      const path = String(caps.extensions.ifc_precheck.url || '/documents/1.0/projects/{project_id}/ifc-precheck').replace('{project_id}', encode(projectId));
+      const safe = String(fileName || 'model.ifc').replace(/["\\\r\n]/g, '_');
+      let report = await api(connector, path, { method: 'POST', body: bytes, headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${safe}"` }, signal: options.signal });
+      const t0 = Date.now();
+      while (report && report.status === 'pending' && report.url && Date.now() - t0 < (options.timeoutMs || 180000)) {
+        if (options.onStatus) options.onStatus('pending');
+        await new Promise((resolve) => setTimeout(resolve, options.pollMs || 2000));
+        if (options.signal && options.signal.aborted) break;
+        report = await api(connector, report.url, { signal: options.signal });
+      }
+      return report;
     }
     /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
@@ -714,6 +743,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

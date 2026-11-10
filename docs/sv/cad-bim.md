@@ -230,7 +230,9 @@ knapparna.
 
 En modell hämtad från Dataregium publiceras som ny version i Dela med dokumentets basversion, den version du hämtade. Har dokumentet
 fått en nyare version under tiden avvisar servern publiceringen (412 version_conflict); hämta då den nyaste versionen, gör om
-ändringarna och publicera igen.
+ändringarna och publicera igen. För en modell hämtad från Dataregium frågar *Förhandsvisa* också serverns förhandskontroll av
+kandidaten (schema, buildingSMART-regler och projektets IDS) när källan är inloggad, och ett projekt som inte tar emot filer med
+valideringsfel avvisar publiceringen (422) med serverns fynd i meddelandet och på kortet Validera modellen.
 
 ## Jämför versioner
 

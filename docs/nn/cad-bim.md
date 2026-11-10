@@ -234,7 +234,9 @@ kan aldri lagre eller publisere: det gjer du med knappane.
 
 Ein modell henta frå Dataregium vert publisert som ny versjon i Del med basisversjonen til dokumentet, den versjonen du henta. Har
 dokumentet fått ein nyare versjon i mellomtida, avviser tenaren publiseringa (412 version_conflict); hent då den nyaste versjonen, gjer
-endringane på nytt og publiser igjen.
+endringane på nytt og publiser igjen. For ein modell henta frå Dataregium spør *Førehandsvis* også førehandskontrollen til tenaren
+av kandidaten (skjema, buildingSMART-reglar og IDS-en til prosjektet) når kjelda er innlogga, og eit prosjekt som ikkje tek imot filer
+med valideringsfeil avviser publiseringa (422) med funna til tenaren i meldinga og på kortet Valider modellen.
 
 ## Samanlikn versjonar
 

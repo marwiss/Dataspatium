@@ -106,8 +106,21 @@
             // Sharing is part of the dataset's history, as with bundles.
             try { await datasets.appendLog(await datasets.ensureOpen(d.id), 'shared', { name: t('cde.send.log', { host: opencde.hostOf(s.connector.baseUrl) }) }); datasets.scheduleSave(d.id); } catch (err) { D.log('cde', err); }
           }
-        } catch (err) { if (isCancelled(err)) s.done = t('cde.send.cancelled'); else fail(err); }
+        } catch (err) {
+          if (isCancelled(err)) s.done = t('cde.send.cancelled');
+          else { fail(err); if (err && err.code === 'ifc_validation_failed' && err.report) refusedReport(String(err.report)).catch((e) => D.log('cde', e)); }
+        }
         s.busy = ''; s.progress = null; render();
+      }
+      /** The report of a refused upload (Dataregium's OB-28): its counts in the message, and the dataset's card shows the server's check. */
+      async function refusedReport(url) {
+        const validation = D.require('data/ifc-validation');
+        const report = await opencde.api(s.connector, url);
+        const c = validation.counts(report);
+        s.error = t('cde.send.refused.validation', { findings: i18n.formatNumber(c.findings), errors: i18n.formatNumber(c.errors) }) + ' ' + s.error;
+        const d = ds();
+        if (d) await validation.record(d.id, 'server', { status: report && report.status ? report.status : 'issues', findings: c.findings, errors: c.errors, refused: true });
+        render();
       }
       const isCancelled = (err) => String((err && err.message) || '') === t('opencde.err.cancelled');
       /** While the server's page is open in a popup (sign-in, upload): stop waiting instead of sitting out the five minutes. */

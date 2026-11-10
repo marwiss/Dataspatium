@@ -236,7 +236,9 @@ without touching the model. The AI can never save or publish: you do that with t
 
 A model fetched from Dataregium is published as a new version in Share with the document's base version, the version you fetched. If
 the document has got a newer version meanwhile, the server refuses the publish (412 version_conflict); fetch the newest version, redo
-the changes and publish again.
+the changes and publish again. For a model fetched from Dataregium, *Preview* also asks the server's precheck of the candidate (the
+schema, buildingSMART's rules and the project's IDS) when the source is signed in, and a project that does not accept files with
+validation errors refuses the publish (422) with the server's findings in the message and on the card Validate the model.
 
 ## Compare versions
 

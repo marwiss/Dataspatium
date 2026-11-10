@@ -5,15 +5,16 @@
  * the open IFC model, follow the tools the AI used, and mark the elements the answer rests on in the 3D view and the table. In the
  * mode Ändra the AI proposes changes through the write tools instead: they fill a change set that the person previews (the candidate
  * file drawn in 3D, new elements green and changed ones yellow, the schema findings listed) and approves or rejects. An approved
- * change set becomes the recipe step ifc_changeset, with undo and a new version of the model; deletions are confirmed once more. The
+ * change set becomes the recipe step ifc_changeset, with undo and a new version of the model; deletions are confirmed once more. For a
+ * model fetched from Dataregium the preview also asks the server's precheck (OB-28) of the candidate, when the source is signed in. The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'data/selection', 'data/recipes', 'data/ifc-ops', 'platform/storage/idb'],
-    (base, basic, overlays, icons, providers, agent, writeTools, selection, recipes, ifcOps, idb) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb'],
+    (base, basic, overlays, icons, providers, agent, writeTools, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change'];
@@ -88,10 +89,27 @@
           s.previewing = true; s.error = ''; render();
           try {
             const out = await ifcOps.previewChangeset(options.datasetId, writeTools.toWheel(s.changeset));
-            s.preview = { report: out.report || {}, bytes: out.bytes };
+            s.preview = { report: out.report || {}, bytes: out.bytes, server: null };
             if (options.preview) await options.preview({ bytes: out.bytes, colors: colorsOf(out.report) });
+            await precheckOf(out.bytes);
           } catch (err) { fail(err); }
           s.previewing = false; render();
+        }
+        /** The server's precheck of the candidate, for a model fetched from a Dataregium the user is signed in to; its failure is a line, not an error. */
+        async function precheckOf(bytes) {
+          const meta = await datasets.get(options.datasetId);
+          const cde = meta && meta.source && meta.source.cde;
+          if (!cde || !cde.connectorId || !cde.projectId || !s.preview) return;
+          const connector = await connectors.get(cde.connectorId);
+          if (!connector || !opencde.isOpenCde(connector) || !opencde.signedIn(connector)) return;
+          const mine = s.preview;
+          mine.server = { status: 'pending' }; render();
+          try {
+            const report = await opencde.precheck(connector, cde.projectId, bytes, (meta.model && meta.model.file) || 'model.ifc', { onStatus: () => {} });
+            if (s.preview !== mine) return;
+            mine.server = report ? { status: validation.STATUSES.includes(report.status) ? report.status : 'unknown', counts: validation.counts(report), report } : null;
+          } catch (err) { if (s.preview === mine) mine.server = { status: 'failed', error: String((err && err.message) || err) }; }
+          render();
         }
         const deletions = () => s.changeset.ops.filter((op) => op.tool === 'delete_elements').reduce((n, op) => n + op.ids.length, 0);
         /** The previewed change set as a recipe step: undoable, logged with its provenance, a new version of the model. */
@@ -142,7 +160,9 @@
             report ? h('div', { class: 'dm-stack-sm', 'data-ai-report': '' },
               h('p', { class: 'dm-small', text: t('ai.change.report', { created: i18n.formatNumber((report.created || []).length), changed: i18n.formatNumber((report.changed || []).length), deleted: i18n.formatNumber((report.deleted || []).length) }) }),
               h('p', { class: errors ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-findings': String(errors), text: errors ? t('ai.change.findings', { n: i18n.formatNumber(errors) }) : t('ai.change.findings.none') }),
-              Array.isArray(report.findings) && report.findings.length ? h('ul', { class: 'dm-list dm-xs' }, report.findings.slice(0, 10).map(finding)) : null) : null,
+              Array.isArray(report.findings) && report.findings.length ? h('ul', { class: 'dm-list dm-xs' }, report.findings.slice(0, 10).map(finding)) : null,
+              s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,
+                text: t('ai.change.precheck.' + s.preview.server.status, { n: i18n.formatNumber((s.preview.server.counts || {}).findings || 0), errors: i18n.formatNumber((s.preview.server.counts || {}).errors || 0), error: s.preview.server.error || '' }) }) : null) : null,
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),

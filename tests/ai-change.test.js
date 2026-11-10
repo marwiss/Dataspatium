@@ -180,6 +180,64 @@
     return 'ok';
   }, 20000);
 
+  test('ai change: the preview asks Dataregium\'s precheck of the candidate for a fetched model, and a refused upload carries the report', async (assert) => {
+    const CDE = 'dataspatium-asset://tests/ai-change-cde2';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const hits = []; let polls = 0;
+    D.net.virtual('tests/ai-change-cde2/', (url) => {
+      const rest = url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname;
+      const path = rest.split('?')[0];
+      hits.push(path);
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', documents: '1.0' }, extensions: { ifc_precheck: { enabled: true, url: '/documents/1.0/projects/{project_id}/ifc-precheck' } } }));
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      if (path === '/documents/1.0/projects/p-1/ifc-precheck') return Promise.resolve(json({ id: 'pc1', status: 'pending', file_name: 'testhus.ifc', url: CDE + '/precheck/pc1' }, 202));
+      if (path === '/precheck/pc1') { polls++; return Promise.resolve(json(polls < 2 ? { id: 'pc1', status: 'pending', url: CDE + '/precheck/pc1' } : { id: 'pc1', status: 'warnings', issue_count: 1, error_count: 0, issues: [{ kind: 'gherkin', rule: 'ALB001', severity: 'warning', message: 'Alignment', step_id: 1, global_id: null }] })); }
+      if (path === '/documents/1.0/upload-documents') return Promise.resolve(json({ upload_ui_url: CDE + '/ui', expires_in: 600, max_size_in_bytes: 0 }));
+      if (path === '/documents/1.0/upload-instructions') return Promise.resolve(json({ documents_to_upload: [{ session_file_id: 'f1', upload_file_parts: [{ url: CDE + '/part', http_method: 'PUT', content_range_start: 0, content_range_end: 9 }], upload_completion: { url: CDE + '/complete' } }] }));
+      if (path === '/part') return Promise.resolve({ kind: 'text', data: '' });
+      // A check that took long: 200 with the refusal in the body.
+      if (path === '/complete') return Promise.resolve(json({ message: 'The file has 2 validation errors', code: 'ifc_validation_failed', report: CDE + '/precheck/pc2' }));
+      if (path === '/precheck/pc2') return Promise.resolve(json({ id: 'pc2', status: 'issues', issue_count: 3, error_count: 2, issues: [] }));
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const meta = await datasets.get(ds.id);
+    const changed = new TextEncoder().encode(fixtures.ifcText({ walls: 2 }));
+    const real = bridge.runIfcChangeset;
+    bridge.runIfcChangeset = async (changes) => ({ bytes: changed, info: { elements: 6, entities: 1, file: 'testhus.ifc', operations: changes.length, created: [], changed: [], deleted: [], findings: [], errors: 0 }, log: [] });
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log: () => {} } }, { datasetId: ds.id, preview: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      await datasets.updateMeta(ds.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', projectId: 'p-1', documentId: 'doc-1', versionIndex: 1 } }) });
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      await waitFor(() => panel.state.providers.length, 3000, 'the providers loaded');
+      panel.state.providerId = provider.id; panel.setMode('change');
+      world.calls = 0;
+      await panel.ask('Lägg till plan 3 med en vägg');
+      await panel.preview();
+      assert.ok(hits.includes('/documents/1.0/projects/p-1/ifc-precheck'), 'the candidate went to the precheck'); assert.equal(polls, 2, 'polled until done');
+      const line = panel.el.querySelector('[data-ai-precheck]');
+      assert.ok(line && line.getAttribute('data-ai-precheck') === 'warnings' && line.textContent.includes('1'), 'the server\'s verdict shown: ' + (line && line.textContent));
+      assert.ok(!(/** @type {any} */ (panel.el.querySelector('[data-ai-approve]'))).disabled, 'warnings do not block approval');
+      // The refusal at publish: the code in the body decides, and the report's address comes along.
+      const file = new File(['0123456789'], 'hus.ifc', { type: 'application/octet-stream' });
+      const err = await opencde.uploadDocument(connector, file, { documentId: 'doc-1', baseVersionIndex: 1, redirectUri: REDIRECT, popup: () => Promise.resolve(`${REDIRECT}?upload_documents_url=${encodeURIComponent(CDE + '/documents/1.0/upload-instructions')}`) }).catch((e) => e);
+      assert.ok(err instanceof Error && err.code === 'ifc_validation_failed' && err.status === 422 && err.report === CDE + '/precheck/pc2', 'refused with the report: ' + err.message);
+      assert.ok(err.message.includes(t('opencde.err.code.ifc_validation_failed', { detail: '' }).trim()), 'told in the user\'s words');
+      const validation = D.require('data/ifc-validation');
+      const report = await opencde.api(connector, err.report);
+      assert.deepEqual(validation.counts(report), { findings: 3, errors: 2 }, 'the report counts for the message and the card');
+      await panel.reject();
+    } finally {
+      bridge.runIfcChangeset = real; panel.destroy(); panel.el.remove();
+      await datasets.updateMeta(ds.id, { source: meta.source || { kind: 'file' } });
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 30000);
+
   test('ai change: cleanup', async () => {
     if (provider) await providers.remove(provider.id);
     if (ds) await datasets.remove(ds.id);

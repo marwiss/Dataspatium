@@ -229,7 +229,9 @@ Breytingasett með skemavillum er ekki hægt að samþykkja, eyðingar eru stað
 
 Líkan sem sótt var frá Dataregium er birt sem ný útgáfa í Deila með grunnútgáfu skjalsins, þeirri útgáfu sem þú sóttir. Hafi skjalið
 fengið nýrri útgáfu á meðan hafnar þjónninn birtingunni (412 version_conflict); sæktu þá nýjustu útgáfuna, gerðu breytingarnar aftur
-og birtu á ný.
+og birtu á ný. Fyrir líkan sem sótt var frá Dataregium spyr *Forskoða* líka forathugun þjónsins á tillögunni (skema, reglur
+buildingSMART og IDS verkefnisins) þegar uppsprettan er innskráð, og verkefni sem tekur ekki við skrám með villum hafnar birtingunni
+(422) með atriðum þjónsins í skilaboðunum og á spjaldinu Prófa líkanið.
 
 ## Bera saman útgáfur
 

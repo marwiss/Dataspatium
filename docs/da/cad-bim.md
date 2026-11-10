@@ -232,7 +232,9 @@ gør du med knapperne.
 
 En model hentet fra Dataregium publiceres som ny version i Del med dokumentets basisversion, den version du hentede. Har dokumentet
 fået en nyere version i mellemtiden, afviser serveren publiceringen (412 version_conflict); hent da den nyeste version, gentag
-ændringerne og publicer igen.
+ændringerne og publicer igen. For en model hentet fra Dataregium spørger *Forhåndsvis* også serverens forhåndskontrol af kandidaten
+(skema, buildingSMART-regler og projektets IDS), når kilden er logget ind, og et projekt, der ikke tager imod filer med valideringsfejl,
+afviser publiceringen (422) med serverens fund i meddelelsen og på kortet Validér modellen.
 
 ## Sammenlign versioner
 
