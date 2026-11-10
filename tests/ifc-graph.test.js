@@ -31,15 +31,15 @@
 
   // ------------------------------------------------------------------------------------------------- a small IFC graph
   const MODEL = 'model-1';
-  const WALL_LABELS = ['IfcEntity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProduct', 'IfcWall', 'IfcElement', 'IfcBuildingElement', 'IfcWallStandardCase'];
+  const WALL_LABELS = ['Entity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProduct', 'IfcWall', 'IfcElement', 'IfcBuildingElement', 'IfcWallStandardCase'];
   const NODES = {
-    project: { labels: ['IfcEntity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProject'], properties: { ifc_class: 'IfcProject', step_id: 91, model_id: MODEL, id: MODEL + ':91', Name: 'Prosjektnavn', GlobalId: '1CGyzxdzHaJybf9L4wHy3R' } },
-    agg: { labels: ['IfcEntity', 'IfcRelDecomposes', 'IfcRoot', 'IfcRelAggregates', 'IfcRelationship'], properties: { ifc_class: 'IfcRelAggregates', step_id: 116, model_id: MODEL, GlobalId: '2F2UAtyl4uWjrKORQfJcEW' } },
-    storey: { labels: ['IfcEntity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProduct', 'IfcSpatialStructureElement', 'IfcBuildingStorey'], properties: { ifc_class: 'IfcBuildingStorey', step_id: 167, model_id: MODEL, Name: '1. etasje', GlobalId: '0St1hMhFUHZyrAECcby7I2' } },
+    project: { labels: ['Entity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProject'], properties: { ifc_class: 'IfcProject', step_id: 91, model_id: MODEL, id: MODEL + ':91', Name: 'Prosjektnavn', GlobalId: '1CGyzxdzHaJybf9L4wHy3R' } },
+    agg: { labels: ['Entity', 'IfcRelDecomposes', 'IfcRoot', 'IfcRelAggregates', 'IfcRelationship'], properties: { ifc_class: 'IfcRelAggregates', step_id: 116, model_id: MODEL, GlobalId: '2F2UAtyl4uWjrKORQfJcEW' } },
+    storey: { labels: ['Entity', 'IfcRoot', 'IfcObject', 'IfcObjectDefinition', 'IfcProduct', 'IfcSpatialStructureElement', 'IfcBuildingStorey'], properties: { ifc_class: 'IfcBuildingStorey', step_id: 167, model_id: MODEL, Name: '1. etasje', GlobalId: '0St1hMhFUHZyrAECcby7I2' } },
     wall: { labels: WALL_LABELS, properties: { ifc_class: 'IfcWallStandardCase', step_id: 459, model_id: MODEL, id: MODEL + ':459', Name: 'YVT-A', GlobalId: '1Xezbq735AdBO_4DerG66G', Description: '' } },
-    rel: { labels: ['IfcEntity', 'IfcRelDefines', 'IfcRoot', 'IfcRelDefinesByProperties', 'IfcRelationship'], properties: { ifc_class: 'IfcRelDefinesByProperties', step_id: 470, model_id: MODEL } },
-    pset: { labels: ['IfcEntity', 'IfcRoot', 'IfcPropertyDefinition', 'IfcPropertySetDefinition', 'IfcPropertySet'], properties: { ifc_class: 'IfcPropertySet', step_id: 471, model_id: MODEL, Name: 'Reuse' } },
-    gtin: { labels: ['IfcEntity', 'IfcPropertySingleValue', 'IfcSimpleProperty', 'IfcProperty'], properties: { ifc_class: 'IfcPropertySingleValue', step_id: 480, model_id: MODEL, Name: 'GTIN', NominalValue: '7350000000017' } },
+    rel: { labels: ['Entity', 'IfcRelDefines', 'IfcRoot', 'IfcRelDefinesByProperties', 'IfcRelationship'], properties: { ifc_class: 'IfcRelDefinesByProperties', step_id: 470, model_id: MODEL } },
+    pset: { labels: ['Entity', 'IfcRoot', 'IfcPropertyDefinition', 'IfcPropertySetDefinition', 'IfcPropertySet'], properties: { ifc_class: 'IfcPropertySet', step_id: 471, model_id: MODEL, Name: 'Reuse' } },
+    gtin: { labels: ['Entity', 'IfcPropertySingleValue', 'IfcSimpleProperty', 'IfcProperty'], properties: { ifc_class: 'IfcPropertySingleValue', step_id: 480, model_id: MODEL, Name: 'GTIN', NominalValue: '7350000000017' } },
     topic: { labels: ['Topic'], properties: { guid: 't-1', title: 'Check the reuse marking', topic_status: 'Open' } },
     viewpoint: { labels: ['Viewpoint'], properties: { guid: 'v-1' } },
     component: { labels: ['Component'], properties: { id: 'c-1', ifc_guid: '1Xezbq735AdBO_4DerG66G' } },
@@ -57,13 +57,13 @@
   const relBy = (id) => RELS.find((r) => r[0] === id);
   /** An answer per query, by what the query asks for, as the columns and rows of the graph query. */
   function answerFor(text) {
-    if (/m:IfcModel/.test(text)) {
-      const columns = ['id', 'fil', 'tillstand', 'version', 'entiteter', 'relationer', 'schema', 'fel', 'dokument', 'projekt', 'klar', 'geometri', 'forlustfri'];
+    if (/m:Model/.test(text)) {
+      const columns = ['id', 'fil', 'tillstand', 'version', 'entiteter', 'relationer', 'schema', 'fel', 'dokument', 'projekt', 'klar', 'geometri', 'forlustfri', 'form', 'format'];
       return { columns, rows: [
-        ['model-0', 'three_walls_gtin.ifc', 'done', 1, 140, 190, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-05T10:00:00.000Z', null, true],
-        [MODEL, 'three_walls_gtin.ifc', 'done', 2, 150, 206, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-06T10:00:00.000Z', 'skeleton', true],
-        ['model-2', 'other.ifc', 'running', 1, null, null, null, null, 'doc-2', 'Building permit', '2026-11-06T11:00:00.000Z', null, null],
-        ['model-3', 'broken.ifc', 'failed', 1, null, null, null, 'parse error', 'doc-3', 'Building permit', '2026-11-06T11:00:00.000Z', 'odd', false],
+        ['model-0', 'three_walls_gtin.ifc', 'done', 1, 140, 190, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-05T10:00:00.000Z', null, true, null, null],
+        [MODEL, 'three_walls_gtin.ifc', 'done', 2, 150, 206, 'IFC2X3', null, 'doc-1', 'Building permit', '2026-11-06T10:00:00.000Z', 'skeleton', true, 1, 'step'],
+        ['model-2', 'other.ifc', 'running', 1, null, null, null, null, 'doc-2', 'Building permit', '2026-11-06T11:00:00.000Z', null, null, 1, 'ifcx'],
+        ['model-3', 'broken.ifc', 'failed', 1, null, null, null, 'parse error', 'doc-3', 'Building permit', '2026-11-06T11:00:00.000Z', 'odd', false, null, null],
       ] };
     }
     if (/IS_DECOMPOSED_BY\|RELATED_OBJECTS/.test(text)) return { columns: ['x', 'r', 'y'], rows: [['project', 'r1', 'agg'], ['agg', 'r2', 'storey'], ['storey', null, null]].map(([x, r, y]) => [jsonNode(x), r ? jsonRel(relBy(r)) : null, y ? jsonNode(y) : null]) };
@@ -121,8 +121,8 @@
 
   test('ifc graph: a node shows its class and name whatever the order of its labels, and a family that colours it', async (assert) => {
     const wall = { label: 'IfcWallStandardCase', properties: Object.assign({ etiketter: WALL_LABELS }, NODES.wall.properties) };
-    assert.equal(ifcGraph.classOf(WALL_LABELS, NODES.wall.properties), 'IfcWallStandardCase', 'the concrete class, though IfcEntity comes first');
-    assert.equal(ifcGraph.classOf(['IfcEntity', 'Other'], {}), 'Other');
+    assert.equal(ifcGraph.classOf(WALL_LABELS, NODES.wall.properties), 'IfcWallStandardCase', 'the concrete class, though Entity comes first');
+    assert.equal(ifcGraph.classOf(['Entity', 'Other'], {}), 'Other');
     assert.equal(ifcGraph.classOf(['Topic'], { title: 'x' }), 'Topic');
     assert.equal(ifcGraph.nameOf(NODES.wall.properties), 'YVT-A');
     assert.equal(ifcGraph.nameOf(NODES.rel.properties), 'IfcRelDefinesByProperties #470', 'an entity without a name');
@@ -137,7 +137,7 @@
     assert.equal(family('project'), 'spatial'); assert.equal(family('storey'), 'spatial', 'a storey is a product too, but spatial first');
     assert.equal(family('agg'), 'relation'); assert.equal(family('pset'), 'property'); assert.equal(family('gtin'), 'property');
     assert.equal(ifcGraph.familyOf({ label: 'IfcMaterial', properties: { ifc_class: 'IfcMaterial' } }), 'material');
-    assert.equal(ifcGraph.familyOf({ label: 'IfcWallType', properties: { ifc_class: 'IfcWallType', etiketter: ['IfcEntity', 'IfcTypeObject', 'IfcWallType'] } }), 'type');
+    assert.equal(ifcGraph.familyOf({ label: 'IfcWallType', properties: { ifc_class: 'IfcWallType', etiketter: ['Entity', 'IfcTypeObject', 'IfcWallType'] } }), 'type');
     assert.equal(ifcGraph.familyOf({ label: 'IfcSIUnit', properties: { ifc_class: 'IfcSIUnit' } }), 'other');
     assert.equal(ifcGraph.familyOf({ label: 'Topic', properties: { title: 'x' } }), null, 'not an IFC entity');
     assert.equal(ifcGraph.colorKey(wall), 'ifc:element'); assert.equal(ifcGraph.colorKey({ label: 'Topic', properties: {} }), 'Topic');
@@ -146,7 +146,7 @@
   });
 
   test('ifc graph: models are read by version, every view has a name and a limit, and values cannot break out of a query', async (assert) => {
-    const list = ifcGraph.modelsOf(answerFor('MATCH (m:IfcModel)'));
+    const list = ifcGraph.modelsOf(answerFor('MATCH (m:Model)'));
     assert.deepEqual(list.models.map((m) => [m.id, m.latest]), [[MODEL, true], ['model-0', false]], 'finished models, the newest version first and marked');
     assert.equal(list.waiting, 1); assert.equal(list.failed, 1);
     assert.equal(ifcGraph.pickModel(list.models, null).id, MODEL);
@@ -160,11 +160,12 @@
       assert.ok(v.graph === false || ifcGraph.limitOf(view.cypher), v.id + ' has a limit');
     }
     assert.equal(ifcGraph.viewOf('nothing', MODEL), null);
-    assert.deepEqual(list.models.map((m) => m.geometry), ['skeleton', 'blocks'], 'the form the geometry has, by IfcModel.geometry, or blocks when an older lossless model lacks it');
+    assert.deepEqual(list.models.map((m) => [m.form, m.format]), [[1, 'step'], [0, '']], 'the form version and the origin, empty for a model before 61a2d69');
+    assert.deepEqual(list.models.map((m) => m.geometry), ['skeleton', 'blocks'], 'the form the geometry has, by Model.geometry, or blocks when an older lossless model lacks it');
     assert.ok(ifcGraph.viewOf('whole', MODEL).cypher.includes("WHERE none(l IN labels(a) WHERE l IN ['IfcRepresentationItem'"), 'the whole model leaves the geometry skeleton out');
     assert.ok(ifcGraph.viewOf('classes', MODEL).cypher.includes('WHERE none(l IN labels(e)'), 'so does the count per class');
     assert.ok(ifcGraph.viewOf('geometry', MODEL).cypher.includes('WHERE any(l IN labels(e)') && ifcGraph.viewOf('geometry', MODEL).graph === false, 'and the geometry view counts it, as a table');
-    assert.ok(ifcGraph.isGeometry(['IfcEntity', 'IfcGeometricRepresentationItem', 'IfcRepresentationItem', 'IfcExtrudedAreaSolid']) && ifcGraph.isGeometry(['StepBlock']) && !ifcGraph.isGeometry(WALL_LABELS), 'what counts as geometry');
+    assert.ok(ifcGraph.isGeometry(['Entity', 'IfcGeometricRepresentationItem', 'IfcRepresentationItem', 'IfcExtrudedAreaSolid']) && ifcGraph.isGeometry(['StepBlock']) && !ifcGraph.isGeometry(WALL_LABELS), 'what counts as geometry');
     assert.equal(ifcGraph.quote("a'b\\c"), "'a\\'b\\\\c'");
     assert.ok(ifcGraph.stepFrom('neighbours', "x' OR 1=1").includes("'x\\' OR 1=1'"), 'an id is a literal');
     assert.ok(ifcGraph.element("g'1", MODEL).includes("GlobalId: 'g\\'1'"), 'a guid is a literal');
@@ -220,7 +221,7 @@
   });
 
   test('ifc graph: what only writes the file back stays out of what is shown and saved, and can still be asked for by name', async (assert) => {
-    assert.deepEqual(ifcGraph.readable(['IfcEntity', 'IfcWall'], { Name: 'A', NominalValue: '3', NominalValue__type: 'IFCLABEL', Representation__step: 1234, text: 'stays on an entity' }), { Name: 'A', NominalValue: '3', text: 'stays on an entity' });
+    assert.deepEqual(ifcGraph.readable(['Entity', 'IfcWall'], { Name: 'A', NominalValue: '3', NominalValue__type: 'IFCLABEL', Representation__step: 1234, text: 'stays on an entity' }), { Name: 'A', NominalValue: '3', text: 'stays on an entity' });
     assert.deepEqual(ifcGraph.readable(['StepBlock'], { id: 'm:1', first_step: 1, instances: 40, text: 'x'.repeat(1000) }), { id: 'm:1', first_step: 1, instances: 40 });
     const wall = { identity: '4:db:1', labels: WALL_LABELS, properties: { ifc_class: 'IfcWallStandardCase', Name: 'YVT-A', GlobalId: 'G', Representation__step: 1234, ObjectPlacement__step: 77 } };
     const prop = { identity: '4:db:2', labels: NODES.gtin.labels, properties: { ifc_class: 'IfcPropertySingleValue', Name: 'GTIN', NominalValue: '7350', NominalValue__type: 'IFCLABEL' } };
@@ -333,7 +334,7 @@
         made.datasets.push(saved.id);
         assert.equal(saved.graph.nodes, view.state.result.graph.nodes.length, 'with everything that was drawn');
         assert.ok(saved.graph.labels.some((l) => l.name === 'IfcWallStandardCase'), 'and classes as its labels');
-        assert.ok(!saved.graph.labels.some((l) => l.name === 'IfcEntity'), 'not IfcEntity for everything');
+        assert.ok(!saved.graph.labels.some((l) => l.name === 'Entity'), 'not Entity for everything');
         await view.showView('classes');
         assert.equal(view.drawing(), null, 'counts are a table');
         assert.ok(!view.el.querySelector('[data-graph-canvas]'), 'without a canvas');
@@ -554,7 +555,7 @@
     try {
       const sw = await waitFor(() => host.querySelector('[data-cypher-server]'), 5000, 'the switch');
       assert.ok(sw.getAttribute('label') || sw.textContent, 'it has a label');
-      /** @type {any} */ (host.querySelector('dm-code')).value = 'MATCH (m:IfcModel) WITH m RETURN m.id AS id, m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.relationships AS relationer, m.schema AS schema, m.error AS fel, m.document_id AS dokument, m.project_id AS projekt, m.done_at AS klar';
+      /** @type {any} */ (host.querySelector('dm-code')).value = 'MATCH (m:Model) WITH m RETURN m.id AS id, m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.relationships AS relationer, m.schema AS schema, m.error AS fel, m.document_id AS dokument, m.project_id AS projekt, m.done_at AS klar';
       await withDriver(fake, async () => {
         panel.state.onServer = true;
         await panel.runCypher();

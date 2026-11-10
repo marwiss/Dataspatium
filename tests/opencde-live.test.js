@@ -537,7 +537,7 @@
     const spatial = await timed('spatial view', () => neo4j.run(r.connector, ifcGraph.viewOf('spatial', model.id).cypher));
     assert.ok(spatial.graph && spatial.graph.nodes.some((n) => n.label === 'IfcProject'), 'the project at the top: ' + JSON.stringify(spatial.graph && spatial.graph.nodes.map((n) => n.label)));
     assert.ok(spatial.graph.nodes.every((n) => n.name), 'every node has a name to show');
-    assert.ok(!spatial.graph.nodes.some((n) => n.label === 'IfcEntity' || n.label === 'IfcRoot'), 'the class, not a supertype');
+    assert.ok(!spatial.graph.nodes.some((n) => n.label === 'Entity' || n.label === 'IfcRoot'), 'the class, not a supertype');
     assert.ok(spatial.graph.edges.length >= 1, 'with its relationships');
     shared.spatialIds = spatial.graph.nodes.map((n) => n.id).sort();
     const wall = await neo4j.run(r.connector, `MATCH (w:IfcWall {model_id: ${ifcGraph.quote(model.id)}}) RETURN w LIMIT 1`);
@@ -549,7 +549,7 @@
     const props = await neo4j.run(r.connector, ifcGraph.stepFrom('properties', wallNode.id));
     log(`from the wall: ${around.graph.nodes.length} neighbours, ${props.rows.length} property rows`);
     // The form from Dataregium 3.0.0: what only writes the file back stays out of what is shown and saved. A server with the earlier form has no blocks.
-    const blocks = await neo4j.run(r.connector, 'MATCH (:IfcModel)-[:HAS_STEP_BLOCK]->(b:StepBlock) RETURN b LIMIT 3');
+    const blocks = await neo4j.run(r.connector, 'MATCH (:Model)-[:HAS_STEP_BLOCK]->(b:StepBlock) RETURN b LIMIT 3');
     log(`blocks in the graph: ${blocks.rows.length}`);
     if (blocks.rows.length) {
       assert.ok(blocks.graph.nodes.every((n) => n.label === 'StepBlock' && !('text' in n.properties)), 'no block text: ' + JSON.stringify(blocks.graph.nodes[0]).slice(0, 200));
@@ -558,7 +558,7 @@
       assert.ok(!stepped.columns.some((c) => c.startsWith('w.') && /__(type|step)$/.test(c)), 'no helper columns: ' + stepped.columns.join(','));
       assert.ok(Number.isFinite(Number(stepped.rows[0][stepped.columns.indexOf('steg')])), 'but it can be asked for by name');
       assert.ok(!around.graph.nodes.some((n) => n.label === 'StepBlock'), 'a step from a node leaves the blocks out');
-      const fromModel = await neo4j.run(r.connector, `MATCH (m:IfcModel {id: ${ifcGraph.quote(model.id)}}) RETURN m`);
+      const fromModel = await neo4j.run(r.connector, `MATCH (m:Model {id: ${ifcGraph.quote(model.id)}}) RETURN m`);
       const steps = await neo4j.run(r.connector, ifcGraph.stepFrom('neighbours', fromModel.graph.nodes[0].id));
       assert.ok(!steps.graph.nodes.some((n) => n.label === 'StepBlock'), 'also from the model itself');
     }
