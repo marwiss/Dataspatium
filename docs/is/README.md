@@ -67,115 +67,49 @@ Dataregium með sama aðalnúmer eiga saman.
 
 ### Útgáfa 1 (með Dataregium 1)
 
-- **Sækja**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-skrár, töflur í HTML-, Markdown-, Word- og LaTeX-skjölum, kortaskrár á KML-, KMZ-, GPX- og TopoJSON-sniði, SQL-skriftur, eldri töflureiknissnið (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), texta með fastri
-  dálkbreidd, tölfræðiskrár úr SPSS, Stata og SAS (með gildismerkimiðum) og PX-sniði auk Parquet og RDS (gegnum R), límdan texta, skrár af vefslóðum
-  og gögn beint úr opnum vefþjónustum hjá Hagstofu Íslands, Veðurstofu Íslands, hagstofum Danmerkur, Noregs, Finnlands,
-  Svíþjóðar, Grænlands, Færeyja og Álandseyja, Nordic Statistics, Eurostat, Seðlabanka Evrópu, OECD og fleiri stofnunum,
-  með landasíu og vistuðum sóknum sem uppfærast með einum smelli og keyra uppskriftir sínar aftur (sjá
-  [api-konfiguration.md](api-konfiguration.md)). Sýnigögn og mörk sveitarfélaga og svæða fyrir Svíþjóð, Danmörku, Noreg
-  og Finnland fylgja með.
-- **Vinna**: fletta, raða og sía stórar töflur, breyta reitum, hreinsa, ákvarða gerðir, endurkóða, skipta í flokka, raða í sæti, reikna hlutföll, uppsafnaðar summur og breytingar, snúa og tengja gögn, athuga
-  gagnagæði með sniði og reglum (meðal annars snið gilda, norræn auðkennisnúmer, tilvísanir í önnur gagnasöfn og frávik), dulnefna kennitölur áður en deilt er, með afturköllun, útgáfum og uppskriftum sem má flytja
-  út sem R eða SQL (sjá [bearbeta.md](bearbeta.md)).
-- **Greina**: innbyggt R-stjórnborð með ggplot2 og tidyverse (sjá [r-guide.md](r-guide.md)), SQL-stjórnborð þar sem
-  gagnasöfn eru tengd með join gegnum stuttheiti sín, og minnisbækur með texta-, R- og SQL-reitum sem verða að skýrslum í
-  HTML, Word, PDF, Markdown eða LaTeX (sjá [anteckningsbok.md](anteckningsbok.md)), og Regex-flipi þar sem reglulegar segðir eru prófaðar á dálki og notaðar til að sía, draga út, skipta út og skipta upp (sjá [regex.md](regex.md)), allt í vafranum.
-- **Skipulag**: sænskt stafrænt deiliskipulag (landsforskriftin, landupplýsingavettvangur Lantmäteriet) opnast sem
-  skipulagskort með litum og merkingum Boverket, ákvæðin eru flett upp í skrá Boverket yfir skipulagsákvæði (innbyggt
-  eintak), og aðalskipulag (forskriftin eða ÖP-líkan Boverket) er sýnt þema fyrir þema (sjá [planer.md](planer.md)).
-- **Myndgera**: myndrit með Vega-Lite (þar með talið þemakort og punktakort, föst ásamörk, lograkvarði, viðmiðunarlínur og leitnilínur), D3-sniðum eða R, flutt út sem SVG, PNG, PDF og
-  PowerPoint, líka í hópkeyrslu eftir hópum, og mælaborð með sameiginlegum síum sem verða HTML eða PowerPoint (sjá
-  [visualisera.md](visualisera.md)).
-- **Skjalfesta**: skýrslur og kóðabækur úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX, líka eitt skjal fyrir hvert
-  sveitarfélag eða ár (sjá [dokumentmallar.md](dokumentmallar.md)).
-- **Flytja út og deila**: gögn í CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakka með völdum
-  gagnasöfnum og hlutum ásamt skilaboðum og breytingaskrá, athugasemdir við gagnasöfn og dálka, afrit af vinnusvæðinu
-  sem ZIP, samstillingu við GitHub-safn og, í Edge og Chrome, færanlega möppu með venjulegum skrám.
-- **Finna hratt**: skipanaspjaldið (Ctrl+K) skiptir um ham, opnar gagnasöfn, myndrit og mælaborð og keyrir aðgerðir úr einum
-  leitarreit.
-- **Dataregium sem uppspretta**: OpenCDE-þjónn eins og [Dataregium](https://github.com/marwiss/Dataregium) verður uppspretta í Sækja með
-  innskráningu um OAuth2 með PKCE og sjálfskráningu þar sem þjónninn leyfir það; skjöl eru valin á síðu þjónsins og sótt sem gagnasöfn,
-  og gagnasöfn og skrár eru send til baka sem ný skjöl eða útgáfur (Documents API).
-- **Sex tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli), finnsku, íslensku og ensku.
-- **Grunnnámskeið**: gagnvirk yfirferð yfir alla sex hamina með sýnigögnum, á öllum sex tungumálunum. Það birtist í
-  fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
+- **Sækja**: skrár á um fjörutíu sniðum, frá töflureiknum og tölfræðiskrám til landupplýsinga og taflna í skjölum, og gögn úr opnum
+  forritaskilum norrænna og evrópskra stofnana, með vistuðum sóknum (sjá [Opin forritaskil](api-konfiguration.md)).
+- **Vinna**: raða, sía, hreinsa, ákvarða gerðir, endurkóða, snúa og tengja, með reglum um gagnagæði, dulnefnum, afturköllun,
+  útgáfum og uppskriftum (sjá [Vinna](bearbeta.md)).
+- **Greina**: R með ggplot2 og tidyverse, SQL, minnisbækur sem verða að skýrslum og reglulegar segðir, allt í vafranum (sjá
+  [R](r-guide.md)).
+- **Skipulag**: sænskar deiliskipulags- og aðalskipulagsáætlanir sem skipulagskort með litum og táknum Boverket (sjá
+  [Skipulag](planer.md)).
+- **Myndgera og skrá**: myndrit með Vega-Lite, D3 eða R, mælaborð og skýrslur úr sniðmátum sem HTML, Word, PDF, PowerPoint eða LaTeX
+  (sjá [Myndgera](visualisera.md)).
+- **Flytja út og deila**: gögn á um tíu sniðum, pakkar, athugasemdir, afrit, samstilling við GitHub og færanleg mappa.
+- **Dataregium sem uppspretta**: skjöl eru sótt sem gagnasöfn, og gagnasöfn og skrár eru send til baka (Documents API).
+- **Sex tungumál og námskeið**: sænska, danska, norska (bókmál), finnska, íslenska og enska, gagnvirkt námskeið um alla hamina og
+  skipanaspjaldið (Ctrl+K) sem finnur allt.
 
 ### Einnig í útgáfu 2 (með Dataregium 2)
 
-- **Python**: Python-stjórnborð með pandas og matplotlib sem er sótt í fyrsta sinn, við hlið R og SQL í Greina (sjá
-  [python.md](python.md)).
-- **Gagnagrunnar**: Access-skrár eru lesnar beint í vafranum; gagnagrunnar á tölvunni eða í netinu (SQL Server, ODBC,
-  Excel, SQLite) nást um staðbundna brú, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
-  SPARQL, InfluxDB, Google Sheets og Airtable verða uppsprettur með einum smelli. Skrár má tengja og lesa aftur af
-  diski (sjá [kallor.md](kallor.md)).
-- **Skjöl og myndir**: PDF, Word, OpenDocument, Markdown og texti verða skjalasöfn sem eru lesin í lestrarsýn, síðu fyrir síðu
-  eða í heild; myndir verða myndasafn með EXIF-upplýsingum og myndasafni. Tólin Texti (orðtíðni, leitarorð í
-  samhengi, samtíðni) og Myndir (yfirlit, tvítök) virka án kóða (sjá [dokument.md](dokument.md)).
-- **Kort**: landupplýsingasöfn opnast sem kort til að þysja, kortasýnir með mörgum lögum og bakgrunnskorti eftir
-  samþykki verða stjórnborð og birt HTML, landfræðitólin reikna flatarmál, punkta í svæðum, næsta, jaðarsvæði og
-  yfirlögn án kóða, og QGIS-verkefni verða kortasýnir (sjá [kartor.md](kartor.md)).
-- **Opin landupplýsingagögn**: WFS-, OGC API Features- og ArcGIS-þjónustur verða uppsprettur þar sem lögin eru sótt sem
-  kort, með forstillingum fyrir SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Hagstofu Finnlands og SYKE, leit í
-  Geodataportalen og WMS-þjónustum sem bakgrunnskorti eða lagi (sjá [kallor.md](kallor.md)).
-- **Norrænt skipulag**: staðbundið skipulag og rammar sveitarfélagsskipulags Danmerkur (Plandata.dk), finnska
-  skipulagsgagnalíkanið og skipulagsskráin (Ryhti), stafrænt deili- og aðalskipulag Íslands (Skipulagsstofnun) og norskt
-  reguleringsplan (GeoPackage) opnast sem skipulag með litum hvers lands; heilt skipulag er sótt með númeri sínu frá Plandata og Skipulagsstofnun.
-- **Net**: GraphML, GEXF, JSON með hnútum og leggjum og Cypher-skriftur opnast sem net með yfirliti eftir merkimiða, fókus-
-  og heildarsýn (Cytoscape og sigma), Cypher-hlutmengi þýddu í SQL, netmælingum í bakgrunni og útflutningi í öllum fjórum
-  sniðum; tvær töflur verða net (sjá [grafer.md](grafer.md)).
-  Netinu er breytt í Vinna og með skrifandi Cypher (uppskriftarskref), Neo4j er uppspretta yfir Bolt, flipinn Net hefur PageRank,
-  samfélög, miðlægni, mynsturfyrirspurnir og uppröðun, og net verða myndir í Myndgera, mælaborðum og Birta.
-- **CAD og BIM**: IFC-líkön opnast í þrívídd (web-ifc og three.js) fyrir ofan töflu yfir byggingarhlutana og valið fylgir í báðar áttir.
-  Eiginleikar og magn verða að töflum, flipinn Magn reiknar eftir gerð, hæð og efni og DXF-teikningar birtast sem SVG með lögum (sjá [cad-bim.md](cad-bim.md)).
-- **Flæði og vöktun**: vistuð keðja (sókn, uppskriftir, skriftur, listar, gröf, mælaborð, skjöl, útflutningur) er keyrð með einum smelli
-  eða við ræsingu og vaktaðar heimildir láta vita á stöðustikunni þegar ný gögn eru til (sjá [floden.md](floden.md)).
-- **Tölfræði án kóða**: flipinn Tölfræði gerir lýsandi tölfræði, krosstöflur, fylgni, tilgátupróf, aðhvarf og klasagreiningu með eyðublöðum sem
-  skrifa og sýna R- eða Python-kóðann. Tímaraðaaðgerðir í Vinna (tímabil, breyting, vísitala, hlaupandi meðaltal, árstíðaleiðrétting), og aðhvarf má
-  vista og nota sem uppskriftarskrefið Spá (sjá [statistik.md](statistik.md)).
-- **Söfnun á vettvangi**: eyðublað byggt á dálkum og reglum gagnasafns er sent í Dataspatium Mobil. Síminn safnar röðum án nets, með mynd og staðsetningu, og
-  raðirnar koma aftur sem ný útgáfa. Myndirnar verða að myndasafni og staðsetningarnar lenda á kortinu (sjá [insamling.md](insamling.md)).
-- **Hamirnir fylgja tegund gagnasafnsins**: forritið segir hvað skrá er og hvað gagnasafn getur líka nýst sem, spyr um hnit, hnitakerfi og tengingar við innlestur, flokkar blandaðar möppur og sýnir mynd fyrir hvert gagnasafn í Umsjón. Leitarniðurstöður opnast þar sem þær eru (síða, mynd, hnútur, byggingarhluti, skipulagshlutur eða staður), þú getur leitað eftir stað, fundið hnúta gegnum leggi sína og byggingarhluta gegnum eiginleika sína, skrifað athugasemd við síðu, mynd, hnút eða stað, lagað texta, sett stað á myndir, gert við rúmfræði, fundið tvítök í netum og flokkað byggingarhluta. Greina opnast í rétta tólinu með upphafskóða skrifuðum fyrir gagnasafnið, sýnir leitni tímaraðar og telur staði eftir svæðum, og val fylgir með milli hamanna (sjá [lagen.md](lagen.md)).
-- **Myndgera, Flytja út og Deila fylgja tegundinni**: tillögur að gröfum með raunverulegum myndum fyrir hverja tegund, krosssíur í mælaborðum og sniðorð sem setja kort, net, líkan eða skipulag inn í skjal; KML, GPX og GeoPackage fyrir staði, yfirlitsblað fyrir myndir, skipulagsuppdráttur og skipulagsákvæði fyrir skipulag, magntölur í Excel og glTF fyrir líkön og PDF fyrir teikningar; í Deila velur þú hvort skrárnar fylgi með í pakkanum, gerir gagnasafn að eigin síðu til að senda og sérð hverja tegund í sinni eigin mynd í símanum (sjá [visualisera.md](visualisera.md) og [dela.md](dela.md)).
-- **Yfirferð áður en deilt er**: allt sem fer úr forritinu er yfirfarið í heild, með dálkum, lesmáli, hliðartöflum, upprunaskrám, staðsetningu mynda, leggjum neta, athugasemdum og höfundum; persónuupplýsingar má halda, dulnefna eða fjarlægja í afritinu, og gagnasafnið sjálft breytist aldrei (sjá [dela.md](dela.md)).
-- **Kóðalistar, lýsingar og leiðbeiningar**: merkingar úr SNI, SSYK, NACE og öðrum listum með smelli, gagnapakkar, DCAT-AP-SE, gæðayfirlýsing og fjórar leiðbeiningar með raunverulegum gögnum (sjá [lagen.md](lagen.md)).
-- **Texti úr myndum**: skannaðar PDF-skrár, myndir og myndir af töflum eru lesnar með textagreiningu í vafranum, á öllum sjö tungumálunum.
-- **Uppruni, samvinna og safn**: sjáðu hvaðan gagnasafn kemur og hvað það hefur orðið að, vinndu saman í gegnum GitHub án þess að neitt tapist, sæktu uppskriftir og sniðmát með leyfi og birtu vinnusvæðið sem vefsvæði.
-- **Dataregium og OpenCDE**: OpenCDE-þjónn eins og [Dataregium](https://github.com/marwiss/Dataregium) verður uppspretta í Sækja með innskráningu um OAuth2 og sjálfskráningu þar sem þjónninn leyfir það. Forritið sækir líkön og skjöl verkefnisins og segir til þegar nýrri útgáfa er til, sýnir málin sem benda á byggingarhlutana, stofnar mál úr valinu í þrívíddarsýninni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, litar líkanið eftir stöðu mála, vistar málin sem töflu með verkfærinu Mál og mælaborðinu Staða mála, les og skrifar BCF-skrár, sendir gagnasöfn, skrár og vinnusvæðispakka til þjónsins, spyr IFC-graf þjónsins með Cypher, les hvað þjónninn býður og skýrir villukóða hans, og skráir hvert kall með X-Request-Id sem er parað við beiðnaskrá þjónsins, og stjórnar þjóninum (notendur, verkefni, biðlarar, setur, atvikaskrá, stillingar, heilsa og graffyrirspurnir) úr spjaldinu Stjórnun þegar þú ert stjórnandi (sjá kaflann [Dataspatium og Dataregium](#dataspatium-og-dataregium) hér fyrir neðan).
-- **Létt ræsing**: stórir hlutar eins og R og Python hlaðast fyrst þegar þeir eru notaðir, og stöðustikan sýnir hvað hleðst á meðan.
-- **Samræming við Dataregium, 1. skref**: forritið les getuskjal þjónsins, þýðir villukóða hans, ber sameiginlegt orðasafn á sjö tungumálum og opnar uppsprettu úr tenglinum Opna í Dataspatium.
-- **Deila**: hamurinn *Deila* með pökkum, deilivalmynd tölvunnar og birtingu mælaborða og skjala sem sjálfstæðra HTML-skráa (sjá
-  [dela.md](dela.md)); beinan flutning í síma og aðrar tölvur á sama neti með QR-kóða og staðfestingarkóða, og *Dataspatium Farsíma*,
-  sem tekur á móti, sýnir og sendir áfram í símanum (sjá [mobil.md](mobil.md)).
-- **Halda röð og reglu**: möppur og merki fyrir gagnasöfn, síun og röðun, og hópaðgerðir á fleiri gagnasöfn í einu
-  (raða, pakka, flytja út, sækja aftur, keyra uppskrift, eyða).
-- **Leita**: hamurinn *Leita* leitar í öllum dálkum í einu eða öllum gagnasöfnum, með flokkum sem afmarka og
-  vistuðum listum (sjá [soka.md](soka.md)).
-- **Fyrirspurn án kóða**: flipinn *Fyrirspurn* í Leita tengir gagnasöfn, velur dálka og útreikninga, setur skilyrði
-  og sýnir þá SQL sem verður til; vistaðir listar afmarka töfluna í Vinna og raðir myndrita.
-- **Hjálp í forritinu og kynning**: öll handbókin með leit opnast með ? eða F1 við kaflann fyrir haminn sem þú ert
-  í, og **Kynna** sýnir mælaborð í öllum glugganum eitt myndrit í einu.
-- **Sjö tungumál**: viðmót, skilaboð og skjölun á sænsku, dönsku, norsku (bókmáli og nýnorsku), finnsku, íslensku og ensku.
-- **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
-  fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
+- **Fleiri uppsprettur**: gagnagrunnar, opnar landupplýsingar og WMS, skjöl og myndir sem söfn og texti af skönnuðum síðum (sjá
+  [Uppsprettur](kallor.md)).
+- **Kort, skipulag og net**: kortasýnir með lögum og landupplýsingatólum, skipulag frá öllum Norðurlöndunum og net sem eru teiknuð,
+  spurð með Cypher og breytt (sjá [Kort](kartor.md) og [Net](grafer.md)).
+- **CAD og BIM**: IFC-líkön í þrívídd með töflum, eiginleikum og magni, og DXF-teikningar (sjá [CAD og BIM](cad-bim.md)).
+- **Python og tölfræði án kóða**: Python-stjórnborð og eyðublöð fyrir tölfræði og tímaraðir sem skrifa kóðann fyrir þig (sjá
+  [Tölfræði](statistik.md)).
+- **Leita og halda reglu**: hamurinn *Leita* með flokkum og vistuðum listum, fyrirspurnir án kóða, möppur, merki og runuaðgerðir (sjá
+  [Leita](soka.md)).
+- **Deila og farsími**: hamurinn *Deila* með pökkum og birtingu, yfirferð persónuupplýsinga fyrir deilingu, flutningur með QR-kóða og
+  *Dataspatium Farsími* til að sýna og safna á vettvangi (sjá [Deila](dela.md)).
+- **Flæði og gerðir**: vistaðar keðjur sem keyra með einum smelli, vaktaðar uppsprettur og hamir sem þekkja hvað gagnasafn er og bjóða
+  réttu sýnirnar og tólin (sjá [Hamir](lagen.md)).
+- **Dataregium með málum**: líkön og mál frá þjóninum, mál úr þrívíddarsýninni, BCF-skrár, IFC-graf þjónsins og stjórnunin (sjá
+  [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
+- **Sjö tungumál**: einnig nýnorska, með handbókinni í forritinu og námskeiðinu um alla átta hamina.
 
 ### Einnig í útgáfu 3 (með Dataregium 3)
 
-- **Sannprófa líkanið og árekstraprófun**: spjaldið *Sannprófa líkanið* safnar saman athugun þjónsins (IFC-skemanu, reglum buildingSMART og IDS-skrám verkefnisins) og athugunum
-  forritsins, og *Árekstraprófun* finnur byggingarhluta sem ganga hver inn í annan eða liggja of þétt og getur sent þá sem BCF-mál (sjá [cad-bim.md](cad-bim.md)).
-- **Gervigreindarlíkanagerð og útgáfur**: spjaldið *Spyrja gervigreind um líkanið* lætur mállíkan (Anthropic eða OpenAI-samhæf
-  forritaskil, með eigin lykli vistuðum dulkóðuðum) svara spurningum um IFC-líkan gegnum tól sem lesa töflur líkansins og, fyrir líkan
-  frá Dataregium, nefndar fyrirspurnir þjónsins. Í hamnum *Breyta* leggur gervigreindin til breytingasett (hæðir, möskva, veggi, plötur,
-  op, eiginleika, færslur) sem er forskoðað í þrívídd, athugað staðbundið og með forathugun þjónsins og beitt sem uppskriftarskrefi fyrst
-  þegar þú samþykkir; gervigreindin getur aldrei vistað eða birt. Breytingasett má senda til Dataregium sem breytingatillögu, reyna þar
-  á grunnútgáfunni og *manager* getur samþykkt það sem næstu útgáfu skjalsins, með árekstra talda upp þegar skjalið hefur breyst á
-  meðan. *Bera saman útgáfur* sýnir hvað er nýtt, horfið og breytt milli líkans og svipmyndar, annars líkans, breytingasetts þjónsins
-  fyrir hverja útgáfu eða mismunar þjónsins, merkt í þrívídd. Líkan frá Dataregium er birt með grunnútgáfu sinni, svo að þjónninn hafnar
-  þegar einhver var á undan.
-- **Dataregium 3**: líkan frá Dataregium er birt með grunnútgáfu sinni, og þjónninn hafnar (412) þegar einhver var á undan og (422)
-  þegar verkefnið tekur ekki við skrám með villum; forathugun þjónsins reynir tillögu án þess að vista hana; IFC-graf þjónsins er
-  teiknað á beinagrindarformi með uppruna og formútgáfu líkansins;
-  staðbundinn Dataregium á eigin tölvu virkar sem uppspretta einnig frá file://; BCF-myndavélar eru skrifaðar í hnitum líkansins.
-- **Opin landupplýsingagögn**: WFS Sundsvall-sveitarfélagsins meðal tilbúnu landupplýsingauppsprettnanna, meðal annars með deiliskipulagi.
+- **Prófun líkana**: spjaldið *Sannprófa líkanið* með athugunum þjónsins og forritsins, og árekstraprófun með niðurstöðunum sem
+  BCF-málum (sjá [CAD og BIM](cad-bim.md)).
+- **Gervigreindarlíkanagerð**: *Spyrja gervigreind um líkanið* og *Breyta með gervigreind*, þar sem gervigreindin leggur til og þú
+  forskoðar í þrívídd og samþykkir; gervigreindin getur aldrei vistað eða birt.
+- **Útgáfur gagnvart Dataregium**: birting með grunnútgáfu, forathugun, breytingatillögur sem þjónninn reynir og manager samþykkir, og
+  *Bera saman útgáfur* merkt í þrívídd.
+- **Meira**: IFC-graf þjónsins á beinagrindarformi, staðbundinn Dataregium á eigin tölvu og WFS Sundsvall meðal landupplýsingauppsprettna.
 
 ## OpenCDE-forritaskilin og biðlarar þeirra
 

@@ -68,119 +68,48 @@ Dataregium med samme hovednummer hører sammen.
 
 ### Versjon 1 (med Dataregium 1)
 
-- **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabeller i HTML-, Markdown-, Word- og LaTeX-dokumenter, kartfiler i KML, KMZ, GPX og TopoJSON, SQL-skript, eldre regnearkformater (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst med fast
-  kolonnebredde, statistikkfiler fra SPSS, Stata og SAS (med verdietiketter) og PX-formatet samt Parquet og RDS (via R), innlimt tekst, filer fra
-  nettadresser og data direkte fra åpne API-er hos SSB, Folkehelseinstituttet, Brønnøysundregistrene, Kartverket, MET
-  Norway, Danmarks Statistik, Open Data DK, Statistikcentralen, THL, PRH, Fintraffic, Meteorologiska institutet, Hagstofa
-  Íslands, Veðurstofa Íslands, Grønlands Statistik, Hagstova Føroya, ÅSUB, Nordic Statistics, Eurostat, ECB, OECD og svenske
-  etater som SCB, Kolada og SMHI, med landfilter og lagrede hentinger som oppdateres med ett klikk og spiller av
-  oppskriftene sine (se [api-konfiguration.md](api-konfiguration.md)). Eksempeldata og kommune- og regiongrenser for
-  Sverige, Danmark, Norge og Finland følger med.
-- **Bearbeide**: bla gjennom, sortere og filtrere store tabeller, redigere celler, rense, sette typer, omkode, dele inn i klasser, rangere, beregne andeler, løpende summer og endringer, pivotere og
-  koble data, kontrollere datakvalitet med profil og regler (blant annet formater, nordiske identitetsnumre, referanser til andre datasett og avvikende verdier), pseudonymisere personnumre før deling, med angre, versjoner og
-  oppskrifter som kan eksporteres som R eller SQL (se [bearbeta.md](bearbeta.md)).
-- **Analysere**: en innebygd R-konsoll med ggplot2 og tidyverse (se [r-guide.md](r-guide.md)), en SQL-konsoll der datasett
-  kobles med join via kortnavnene sine, og notatbøker med tekst-, R- og SQL-celler som blir rapporter i HTML, Word, PDF,
-  Markdown eller LaTeX (se [anteckningsbok.md](anteckningsbok.md)), og en Regex-fane der regulære uttrykk prøves på en kolonne og brukes til å filtrere, hente ut, erstatte og dele opp (se [regex.md](regex.md)), helt i nettleseren.
-- **Planer**: svenske digitale reguleringsplaner (den nasjonale spesifikasjonen, Lantmäteriets geodataplattform) åpnes
-  som plankart med Boverkets farger og betegnelser, bestemmelsene slås opp i Boverkets Planbestämmelsekatalog (innebygd
-  kopi), og kommuneplaner (spesifikasjonen eller Boverkets ÖP-modell) vises tema for tema (se [planer.md](planer.md)).
-- **Visualisere**: diagrammer med Vega-Lite (inkludert koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-maler eller R, eksportert som SVG,
-  PNG, PDF og PowerPoint, også i batch per gruppe, og dashbord med felles filtre som blir HTML eller PowerPoint (se
-  [visualisera.md](visualisera.md)).
-- **Dokumentere**: rapporter og kodebøker fra maler som HTML, Word, PDF, Markdown eller LaTeX, også ett dokument per kommune
-  eller år (se [dokumentmallar.md](dokumentmallar.md)).
-- **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakker med
-  valgte datasett og objekter, en melding og en endringslogg, kommentarer til datasett og kolonner, sikkerhetskopi av
-  arbeidsområdet som ZIP, synkronisering med et GitHub-repository og, i Edge og Chrome, en portabel mappe med vanlige
-  filer.
-- **Finne raskt**: kommandopaletten (Ctrl+K) bytter modus, åpner datasett, diagrammer og dashbord og kjører handlinger fra
-  ett søkefelt.
-- **Dataregium som kilde**: en OpenCDE-server som [Dataregium](https://github.com/marwiss/Dataregium) blir en kilde i Hent med innlogging
-  via OAuth2 med PKCE og selvregistrering der serveren tillater det; dokumenter velges på serverens side og hentes som datasett, og
-  datasett og filer sendes tilbake som nye dokumenter eller versjoner (Documents API).
-- **Seks språk**: brukergrensesnitt, meldinger og dokumentasjon på svensk, dansk, norsk (bokmål), finsk, islandsk og
-  engelsk.
-- **Grunnkurs**: en interaktiv gjennomgang av alle seks moduser med eksempeldata, på alle seks språk. Det vises første
-  gang appen åpnes og kan åpnes når som helst fra hjelpen eller kommandopaletten.
+- **Hente**: filer i rundt førti formater, fra regneark og statistikkfiler til geodata og tabeller i dokumenter, og data fra åpne
+  API-er hos nordiske og europeiske myndigheter, med lagrede hentinger (se [Åpne API-er](api-konfiguration.md)).
+- **Bearbeide**: sortere, filtrere, rense, sette typer, omkode, pivotere og koble, med regler for datakvalitet, pseudonymisering,
+  angre, versjoner og oppskrifter (se [Bearbeid](bearbeta.md)).
+- **Analysere**: R med ggplot2 og tidyverse, SQL, notatbøker som blir rapporter, og regulære uttrykk, helt i nettleseren (se
+  [R](r-guide.md)).
+- **Planer**: svenske detaljplaner og översiktsplaner som plankart med Boverkets farger og betegnelser (se [Planer](planer.md)).
+- **Visualisere og dokumentere**: diagrammer med Vega-Lite, D3 eller R, dashbord og rapporter fra maler som HTML, Word, PDF,
+  PowerPoint eller LaTeX (se [Visualiser](visualisera.md)).
+- **Eksportere og dele**: data i rundt ti formater, pakker, kommentarer, sikkerhetskopi, synkronisering med GitHub og en portabel mappe.
+- **Dataregium som kilde**: dokumenter hentes som datasett, og datasett og filer sendes tilbake (Documents API).
+- **Seks språk og grunnkurs**: svensk, dansk, norsk (bokmål), finsk, islandsk og engelsk, et interaktivt kurs gjennom alle moduser og
+  kommandopaletten (Ctrl+K) som finner alt.
 
 ### Også i versjon 2 (med Dataregium 2)
 
-- **Python**: en Python-konsoll med pandas og matplotlib som hentes første gang, ved siden av R og SQL i Analyser (se
-  [python.md](python.md)).
-- **Databaser**: Access-filer leses rett i nettleseren; databaser på datamaskinen eller i nettverket (SQL Server, ODBC,
-  Excel, SQLite) nås gjennom en lokal bro, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
-  SPARQL, InfluxDB, Google Sheets og Airtable blir kilder med ett klikk. Filer kan lenkes og leses inn igjen fra disken
-  (se [kallor.md](kallor.md)).
-- **Dokumenter og bilder**: PDF, Word, OpenDocument, Markdown og tekst blir dokumentsamlinger som leses i en lesevisning, side for
-  side eller i sin helhet; bilder blir en bildesamling med EXIF-opplysninger og galleri. Verktøyene Tekst (ordfrekvens,
-  nøkkelord i kontekst, samforekomster) og Bilder (oversikt, duplikater) fungerer uten kode (se [dokument.md](dokument.md)).
-- **Kart**: geodatasett åpnes som kart å zoome i, kartvisninger med flere lag og bakgrunnskart etter samtykke blir
-  dashboards og publisert HTML, geoverktøyene regner areal, punkter i områder, nærmeste, buffer og overlagring uten
-  kode, og QGIS-prosjekter blir kartvisninger (se [kartor.md](kartor.md)).
-- **Åpne geodata**: WFS-, OGC API Features- og ArcGIS-tjenester blir kilder der lagene hentes som kart, med
-  forhåndsinnstillinger for SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE, søk i
-  Geodataportalen og WMS-tjenester som bakgrunnskart eller lag (se [kallor.md](kallor.md)).
-- **Nordiske planer**: Danmarks lokalplaner og kommuneplanrammer (Plandata.dk), Finlands plandatamodell og planindeks
-  (Ryhti), Islands digitale regulerings- og kommuneplaner (Skipulagsstofnun) og Norges reguleringsplaner (GeoPackage) åpnes
-  som planer med hvert lands farger; en hel plan hentes med nummeret sitt fra Plandata og Skipulagsstofnun.
-- **Grafer**: GraphML, GEXF, JSON med noder og kanter og Cypher-skript åpnes som grafer med oversikt per etikett, fokus og
-  helgrafvisning (Cytoscape og sigma), en Cypher-delmengde oversatt til SQL, grafmål i bakgrunnen og eksport i alle fire
-  formater; to tabeller blir en graf (se [grafer.md](grafer.md)).
-  Grafen redigeres i Bearbeid og med skrivende Cypher (reseptsteg), Neo4j er en kilde via Bolt, fanen Graf har PageRank,
-  fellesskap, sentralitet, mønsterspørringer og layout, og grafer blir diagrammer i Visualiser, dashboards og Publiser.
-- **CAD og BIM**: IFC-modeller åpnes i 3D (web-ifc og three.js) over en tabell med bygningsdelene, og utvalget følger med begge veier.
-  Egenskaper og mengder blir tabeller, fanen Mengder beregner per type, etasje og materiale, og DXF-tegninger vises som SVG med
-  lag (se [cad-bim.md](cad-bim.md)).
-- **Flyter og overvåking**: en lagret kjede (hent, resepter, skript, lister, diagrammer, dashboards, dokumenter, eksport) kjøres med ett
-  klikk eller ved start, og overvåkede kilder sier fra i statuslinjen når de har nye data (se [floden.md](floden.md)).
-- **Statistikk uten kode**: fanen Statistikk gjør beskrivende statistikk, krysstabeller, korrelasjon, hypotesetester, regresjon og klyngeanalyse
-  med skjemaer som skriver og viser R- eller Python-koden. Tidsserieoperasjoner i Bearbeid (perioder, endring, indeks, glidende gjennomsnitt,
-  sesongjustering), og en regresjon kan lagres og brukes som reseptsteget Prediksjon (se [statistik.md](statistik.md)).
-- **Innsamling i felt**: et skjema bygd på et datasetts kolonner og regler sendes til Dataspatium Mobil. Telefonen samler inn rader uten nett, med bilde og
-  posisjon, og radene kommer tilbake som en ny versjon. Bildene blir en bildesamling, og posisjonene havner på kartet (se [insamling.md](insamling.md)).
-- **Modusene følger datasettets type**: appen sier hva en fil er og hva et datasett også kan brukes som, spør om koordinater, koordinatsystem og koblinger ved innlesing, sorterer blandede mapper og viser et bilde per datasett i Håndter. Søketreff åpnes der de finnes (side, bilde, node, bygningsdel, planobjekt eller sted), du kan søke etter sted, finne noder via kantene sine og bygningsdeler via egenskapene sine, kommentere en side, et bilde, en node eller et sted, rette tekst, sette sted på bilder, reparere geometrier, finne duplikater i grafer og klassifisere bygningsdeler. Analyser åpner i riktig verktøy med startkode skrevet for datasettet, viser trenden i en tidsserie og teller steder per område, og et utvalg følger med mellom modusene (se [lagen.md](lagen.md)).
-- **Visualiser, Eksporter og Del følger typen**: diagramforslag med ekte bilder for hver type, kryssfiltre i dashboards og malord som legger inn et kart, en graf, en modell eller en plan i et dokument; KML, GPX og GeoPackage for steder, kontaktkart for bilder, plankart og planbestemmelser for planer, mengder i Excel og glTF for modeller og PDF for tegninger; i Del velger du om filene skal følge med i pakken, gjør et datasett til en egen side å sende, og ser hver type i sin egen form på telefonen (se [visualisera.md](visualisera.md) og [dela.md](dela.md)).
-- **Gjennomgang før deling**: alt som forlater appen gjennomgås i sin helhet, med kolonner, løpende tekst, sidetabeller, originalfiler, bilders posisjoner, grafers kanter, kommentarer og forfattere; personopplysninger kan beholdes, pseudonymiseres eller fjernes i kopien, og datasettet endres aldri (se [dela.md](dela.md)).
-- **Kodelister, beskrivelser og guider**: etiketter fra SNI, SSYK, NACE og andre lister med et klikk, datapakker, DCAT-AP-SE, kvalitetserklæring og fire guider med ekte data (se [lagen.md](lagen.md)).
-- **Tekst fra bilder**: skannede PDF-filer, bilder og bilder av tabeller leses med tekstgjenkjenning i nettleseren, på alle sju språk.
-- **Opprinnelse, samarbeid og bibliotek**: se hvor et datasett kommer fra og hva det har blitt til, samarbeid via GitHub uten at noe forsvinner, hent oppskrifter og maler med lisens, og publiser arbeidsområdet som et nettsted.
-- **Dataregium og OpenCDE**: en OpenCDE-server som [Dataregium](https://github.com/marwiss/Dataregium) blir en kilde i Hent med innlogging via OAuth2 og selvregistrering der serveren tillater det. Appen henter prosjektets modeller og dokumenter og sier til når en nyere versjon finnes, viser sakene som peker på bygningsdelene, oppretter saker fra markeringen i 3D-visningen med visningen som viewpoint, kommenterer og bytter status, farger modellen etter sakstatus, lagrer sakene som tabell med verktøyet Saker og dashbordet Sakstatus, leser og skriver BCF-filer, sender datasett, filer og arbeidsområdepakker til serveren, spør serverens IFC-graf med Cypher, leser hva serveren tilbyr og forklarer feilkodene dens, og logger hvert kall med en X-Request-Id som pares med serverens forespørselslogg, og administrerer serveren (brukere, prosjekter, klienter, sesjoner, revisjon, innstillinger, helse og grafspørringer) fra kortet Administrasjon når du er administrator (se avsnittet [Dataspatium og Dataregium](#dataspatium-og-dataregium) nedenfor).
-- **Lett start**: store deler som R og Python lastes først når de brukes, og statuslinjen viser hva som lastes i mellomtiden.
-- **Samordning med Dataregium, steg 1**: appen leser serverens kapabilitetsdokument, oversetter feilkodene, bærer en felles ordliste på sju språk og åpner en kilde fra lenken Åpne i Dataspatium.
-- **Del**: modusen *Del* med pakker, datamaskinens delingsmeny og publisering av dashbord og dokumenter som frittstående HTML (se
-  [dela.md](dela.md)); direkte overføring til telefoner og andre datamaskiner på samme nettverk med QR-kode og kontrollkode, og
-  *Dataspatium Mobil*, som tar imot, viser og sender videre på telefonen (se [mobil.md](mobil.md)).
-- **Holde orden**: mapper og tagger for datasett, filter og sortering, og batchhandlinger på flere datasett på én gang
-  (ordne, pakke, eksportere, hente igjen, kjøre oppskrift, slette).
-- **Søk**: modusen *Søk* leter i alle kolonner i ett eller alle datasett, med fasetter som avgrenser, og lagrede
-  lister (se [soka.md](soka.md)).
-- **Spør uten kode**: fanen *Spørring* i Søk kobler datasett, velger kolonner og beregninger, setter betingelser og
-  viser SQL-koden som lages; lagrede lister avgrenser tabellen i Bearbeid og radene i diagrammer.
-- **Hjelp i appen og presentasjon**: hele håndboken med søk åpnes med ? eller F1 ved kapittelet for modusen du står
-  i, og **Presenter** viser et dashbord i hele vinduet ett diagram om gangen.
-- **Sju språk**: brukergrensesnitt, meldinger og dokumentasjon på svensk, dansk, norsk (bokmål og nynorsk), finsk, islandsk og
-  engelsk.
-- **Grunnkurs**: en interaktiv gjennomgang av alle åtte moduser med eksempeldata, på alle sju språk. Det vises første
-  gang appen åpnes og kan åpnes når som helst fra hjelpen eller kommandopaletten.
+- **Flere kilder**: databaser, åpne geodata og WMS, dokumenter og bilder som samlinger, og tekst fra skannede sider (se
+  [Kilder](kallor.md)).
+- **Kart, planer og grafer**: kartvisninger med lag og geoverktøy, planer fra hele Norden, og grafer som tegnes, spørres med Cypher og
+  redigeres (se [Kart](kartor.md) og [Grafer](grafer.md)).
+- **CAD og BIM**: IFC-modeller i 3D med tabeller, egenskaper og mengder, og DXF-tegninger (se [CAD og BIM](cad-bim.md)).
+- **Python og statistikk uten kode**: en Python-konsoll og skjemaer for statistikk og tidsserier som skriver koden for deg (se
+  [Statistikk](statistik.md)).
+- **Søke og holde orden**: modusen *Søk* med fasetter og lagrede lister, spørringer uten kode, mapper, tagger og batchhandlinger (se
+  [Søk](soka.md)).
+- **Del og Mobil**: modusen *Del* med pakker og publisering, gjennomgang av personopplysninger før deling, overføring med QR-kode og
+  *Dataspatium Mobil* for å vise og samle inn i felt (se [Del](dela.md)).
+- **Flyter og slag**: lagrede kjeder som kjøres med ett klikk, overvåkede kilder, og moduser som kjenner igjen hva et datasett er og
+  tilbyr de riktige visningene og verktøyene (se [Moduser](lagen.md)).
+- **Dataregium med saker**: modeller og saker fra serveren, saker fra 3D-visningen, BCF-filer, serverens IFC-graf og administrasjonen
+  (se [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
+- **Sju språk**: også nynorsk, med håndboken i appen og grunnkurset gjennom alle åtte modusene.
 
 ### Også i versjon 3 (med Dataregium 3)
 
-- **Valider modellen og kollisjonskontroll**: kortet *Valider modellen* samler serverens kontroll (IFC-skjemaet, buildingSMARTs regler og prosjektets IDS-filer) og kontrollene i appen, og
-  *Kollisjonskontroll* finner bygningsdeler som går inn i hverandre eller ligger for tett, og kan sende dem som BCF-saker (se [cad-bim.md](cad-bim.md)).
-- **AI-modellering og versjoner**: panelet *Spør AI om modellen* lar en språkmodell (Anthropic eller et OpenAI-kompatibelt API, med din
-  egen nøkkel lagret kryptert) svare på spørsmål om en IFC-modell gjennom verktøy som leser modellens tabeller og, for en modell fra
-  Dataregium, serverens navngitte spørringer. I modusen *Endre* foreslår AI-en et endringssett (etasjer, rutenett, vegger, dekker,
-  åpninger, egenskaper, flyttinger) som forhåndsvises i 3D, kontrolleres lokalt og av serverens forhåndskontroll og brukes som et
-  oppskriftssteg først når du godkjenner; AI-en kan aldri lagre eller publisere. Et endringssett kan sendes til Dataregium som
-  endringsforslag, prøves der mot basisversjonen og godkjennes av en *manager* til dokumentets neste versjon, med kollisjoner listet
-  når dokumentet har gått videre. *Sammenlign versjoner* viser hva som er nytt, borte og endret mellom en modell og et øyeblikksbilde,
-  en annen modell, serverens endringssett per versjon eller serverens diff, markert i 3D. En modell fra Dataregium publiseres med
-  basisversjonen sin, slik at serveren avviser når noen har kommet først.
-- **Dataregium 3**: en modell fra Dataregium publiseres med basisversjonen sin, og serveren avviser (412) når noen har kommet først, og
-  (422) når prosjektet ikke tar imot filer med valideringsfeil; serverens forhåndskontroll prøver en kandidat uten å lagre den;
-  serverens IFC-graf tegnes i skjelettform med modellens opprinnelse og formversjon; en lokal Dataregium på din egen datamaskin virker som kilde også fra file://; BCF-kameraer skrives i modellens koordinater.
-- **Åpne geodata**: Sundsvall kommunes WFS blant de ferdige geodatakildene, blant annet med detaljplaner.
+- **Kontroll av modeller**: kortet *Valider modellen* med serverens og appens kontroller, og kollisjonskontroll med resultatene som
+  BCF-saker (se [CAD og BIM](cad-bim.md)).
+- **AI-modellering**: *Spør AI om modellen* og *Endre med AI*, der AI-en foreslår, og du forhåndsviser i 3D og godkjenner; AI-en kan
+  aldri lagre eller publisere.
+- **Versjoner mot Dataregium**: publisering med basisversjon, forhåndskontroll, endringsforslag som serveren prøver og en manager
+  godkjenner, og *Sammenlign versjoner* markert i 3D.
+- **Mer**: serverens IFC-graf i skjelettform, en lokal Dataregium på din egen datamaskin og Sundsvalls WFS blant geodatakildene.
 
 ## OpenCDE-API-ene og klientene deres
 
