@@ -63,6 +63,11 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
 
 ## Kva du kan gjere
 
+Det som verkar i versjon 1, verkar også i versjon 2, og det som verkar i versjon 2, verkar også i versjon 3. Dataspatium og
+Dataregium med same hovudnummer høyrer saman.
+
+### Versjon 1 (med Dataregium 1)
+
 - **Hente**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- og shapefile-filer, tabellar i HTML-, Markdown-, Word- og LaTeX-dokument, kartfiler i KML, KMZ, GPX og TopoJSON, SQL-skript, eldre reknearkformat (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), tekst med fast
   kolonnebreidd, statistikkfiler frå SPSS, Stata og SAS (med verdietikettar) og PX-formatet og dessutan Parquet og RDS (via R), innlimd tekst, filer frå
   nettadresser og data direkte frå opne API-ar hos SSB, Folkehelseinstituttet, Brønnøysundregistera, Kartverket, MET
@@ -71,6 +76,38 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
   etatar som SCB, Kolada og SMHI, med landfilter og lagra hentingar som blir oppdaterte med eitt klikk og spelar av
   oppskriftene sine (sjå [api-konfiguration.md](api-konfiguration.md)). Dømedata og kommune- og regiongrenser for
   Sverige, Danmark, Noreg og Finland følgjer med.
+- **Bearbeide**: bla gjennom, sortere og filtrere store tabellar, redigere celler, rense, setje typar, omkode, dele inn i klassar, rangere, rekne ut andelar, løpande summar og endringar, pivotere og
+  kople data, kontrollere datakvalitet med profil og reglar (mellom anna format, nordiske identitetsnummer, referansar til andre datasett og avvikande verdiar), pseudonymisere personnummer før deling, med angre, versjonar og
+  oppskrifter som kan eksporterast som R eller SQL (sjå [bearbeta.md](bearbeta.md)).
+- **Analysere**: ein innebygd R-konsoll med ggplot2 og tidyverse (sjå [r-guide.md](r-guide.md)), ein SQL-konsoll der datasett
+  blir kopla med join via kortnamna sine, og notatbøker med tekst-, R- og SQL-celler som blir rapportar i HTML, Word, PDF,
+  Markdown eller LaTeX (sjå [anteckningsbok.md](anteckningsbok.md)), og ei Regex-fane der regulære uttrykk blir prøvde på ein kolonne og brukte til å filtrere, hente ut, erstatte og dele opp (sjå [regex.md](regex.md)), heilt i nettlesaren.
+- **Planar**: svenske digitale reguleringsplanar (den nasjonale spesifikasjonen, Lantmäteriets geodataplattform) blir opna
+  som plankart med Boverkets fargar og nemningar, føresegnene blir slegne opp i Boverkets Planbestämmelsekatalog (innebygd
+  kopi), og kommuneplanar (spesifikasjonen eller Boverkets ÖP-modell) blir viste tema for tema (sjå [planer.md](planer.md)).
+- **Visualisere**: diagram med Vega-Lite (medrekna koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-malar eller R, eksporterte som SVG,
+  PNG, PDF og PowerPoint, òg i batch per gruppe, og dashbord med felles filter som blir HTML eller PowerPoint (sjå
+  [visualisera.md](visualisera.md)).
+- **Dokumentere**: rapportar og kodebøker frå malar som HTML, Word, PDF, Markdown eller LaTeX, òg eitt dokument per kommune
+  eller år (sjå [dokumentmallar.md](dokumentmallar.md)).
+- **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; pakkar med
+  valde datasett og objekt, ei melding og ein endringslogg, kommentarar til datasett og kolonnar, tryggingskopi av
+  arbeidsområdet som ZIP, synkronisering med eit GitHub-repositorium og, i Edge og Chrome, ei portabel mappe med vanlege
+  filer.
+- **Finne raskt**: kommandopaletten (Ctrl+K) byter modus, opnar datasett, diagram og dashbord og køyrer handlingar frå
+  eitt søkjefelt.
+- **Dataregium som kjelde**: ein OpenCDE-tenar som [Dataregium](https://github.com/marwiss/Dataregium) blir ei kjelde i Hent med
+  innlogging via OAuth2 med PKCE og sjølvregistrering der tenaren tillèt det; dokument blir valde på sida til tenaren og henta som
+  datasett, og datasett og filer blir sende tilbake som nye dokument eller versjonar (Documents API).
+- **Seks språk**: brukargrensesnitt, meldingar og dokumentasjon på svensk, dansk, norsk (bokmål), finsk, islandsk og
+  engelsk.
+- **Grunnkurs**: ein interaktiv gjennomgang av alle dei seks modusane med eksempeldata, på alle dei seks språka. Han blir
+  vist første gongen appen blir opna, og kan opnast når som helst frå hjelpa eller kommandopaletten.
+
+### Også i versjon 2 (med Dataregium 2)
+
+- **Python**: ein Python-konsoll med pandas og matplotlib som blir henta første gongen, ved sida av R og SQL i Analyser (sjå
+  [python.md](python.md)).
 - **Databasar**: Access-filer blir lesne rett i nettlesaren; databasar på datamaskina eller i nettverket (SQL Server, ODBC,
   Excel, SQLite) blir nådde gjennom ei lokal bru, og PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse, Elasticsearch,
   SPARQL, InfluxDB, Google Sheets og Airtable blir kjelder med eitt klikk. Filer kan lenkjast og lesast inn igjen frå disken
@@ -78,22 +115,12 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
 - **Dokument og bilete**: PDF, Word, OpenDocument, Markdown og tekst blir dokumentsamlingar som blir lesne i ei lesevising, side for
   side eller i sin heilskap; bilete blir ei biletsamling med EXIF-opplysningar og galleri. Verktøya Tekst (ordfrekvens,
   nøkkelord i kontekst, samførekomstar) og Bilete (oversyn, duplikat) fungerer utan kode (sjå [dokument.md](dokument.md)).
-- **Bearbeide**: bla gjennom, sortere og filtrere store tabellar, redigere celler, rense, setje typar, omkode, dele inn i klassar, rangere, rekne ut andelar, løpande summar og endringar, pivotere og
-  kople data, kontrollere datakvalitet med profil og reglar (mellom anna format, nordiske identitetsnummer, referansar til andre datasett og avvikande verdiar), pseudonymisere personnummer før deling, med angre, versjonar og
-  oppskrifter som kan eksporterast som R eller SQL (sjå [bearbeta.md](bearbeta.md)).
-- **Analysere**: ein innebygd R-konsoll med ggplot2 og tidyverse (sjå [r-guide.md](r-guide.md)), ein Python-konsoll med
-  pandas og matplotlib som blir henta første gongen (sjå [python.md](python.md)), ein SQL-konsoll der datasett
-  blir kopla med join via kortnamna sine, og notatbøker med tekst-, R- og SQL-celler som blir rapportar i HTML, Word, PDF,
-  Markdown eller LaTeX (sjå [anteckningsbok.md](anteckningsbok.md)), og ei Regex-fane der regulære uttrykk blir prøvde på ein kolonne og brukte til å filtrere, hente ut, erstatte og dele opp (sjå [regex.md](regex.md)), heilt i nettlesaren.
 - **Kart**: geodatasett blir opna som kart å zoome i, kartvisingar med fleire lag og bakgrunnskart etter samtykke blir
   dashbord og publisert HTML, geoverktøya reknar areal, punkt i område, nærmaste, buffer og overlagring utan
   kode, og QGIS-prosjekt blir kartvisingar (sjå [kartor.md](kartor.md)).
 - **Opne geodata**: WFS-, OGC API Features- og ArcGIS-tenester blir kjelder der laga blir henta som kart, med
   førehandsinnstillingar for SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Statistikcentralen og SYKE, søk i
   Geodataportalen og WMS-tenester som bakgrunnskart eller lag (sjå [kallor.md](kallor.md)).
-- **Planar**: svenske digitale reguleringsplanar (den nasjonale spesifikasjonen, Lantmäteriets geodataplattform) blir opna
-  som plankart med Boverkets fargar og nemningar, føresegnene blir slegne opp i Boverkets Planbestämmelsekatalog (innebygd
-  kopi), og kommuneplanar (spesifikasjonen eller Boverkets ÖP-modell) blir viste tema for tema (sjå [planer.md](planer.md)).
 - **Nordiske planar**: Danmarks lokalplanar og kommuneplanrammer (Plandata.dk), Finlands plandatamodell og planindeks
   (Ryhti), Islands digitale regulerings- og kommuneplanar (Skipulagsstofnun) og Noregs reguleringsplanar (GeoPackage) blir opna
   som planar med fargane til kvart land; ein heil plan blir henta med nummeret sitt frå Plandata og Skipulagsstofnun.
@@ -104,17 +131,7 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
   fellesskap, sentralitet, mønsterspørjingar og layout, og grafar blir diagram i Visualiser, dashbord og Publiser.
 - **CAD og BIM**: IFC-modellar blir opna i 3D (web-ifc og three.js) over ein tabell med bygningsdelane, og utvalet følgjer med begge vegar.
   Eigenskapar og mengder blir tabellar, fana Mengder reknar per type, etasje og materiale, og DXF-teikningar blir viste som SVG med
-  lag. Kortet *Valider modellen* samlar kontrollen til tenaren (IFC-skjemaet, reglane til buildingSMART og IDS-filene til prosjektet) og kontrollane i appen,
-  og *Kollisjonskontroll* finn bygningsdelar som går inn i kvarandre eller ligg for tett, og kan sende dei som BCF-saker (sjå [cad-bim.md](cad-bim.md)).
-- **AI-modellering og versjonar**: panelet *Spør AI om modellen* lèt ein språkmodell (Anthropic eller eit OpenAI-kompatibelt API, med din
-  eigen nøkkel lagra kryptert) svare på spørsmål om ein IFC-modell gjennom verktøy som les tabellane til modellen og, for ein modell
-  frå Dataregium, dei namngjevne spørjingane til tenaren. I modusen *Endre* føreslår AI-en eit endringssett (etasjar, rutenett, veggar,
-  dekke, opningar, eigenskapar, flyttingar) som vert førehandsvist i 3D, kontrollert lokalt og av førehandskontrollen til tenaren og
-  brukt som eit oppskriftssteg fyrst når du godkjenner; AI-en kan aldri lagre eller publisere. Eit endringssett kan sendast til
-  Dataregium som endringsframlegg, prøvast der mot basisversjonen og godkjennast av ein *manager* til neste versjon av dokumentet, med
-  kollisjonar lista når dokumentet har gått vidare. *Samanlikn versjonar* viser kva som er nytt, borte og endra mellom ein modell og
-  eit augneblinksbilete, ein annan modell, endringssettet til tenaren per versjon eller diffen til tenaren, markert i 3D. Ein modell
-  frå Dataregium vert publisert med basisversjonen sin, slik at tenaren avviser når nokon har kome fyrst.
+  lag (sjå [cad-bim.md](cad-bim.md)).
 - **Flytar og overvaking**: ei lagra kjede (hent, oppskrifter, skript, lister, diagram, dashbord, dokument, eksport) blir køyrd med eitt
   klikk eller ved start, og overvaka kjelder seier frå i statuslinja når dei har nye data (sjå [floden.md](floden.md)).
 - **Statistikk utan kode**: fana Statistikk gjer skildrande statistikk, krysstabellar, korrelasjon, hypotesetestar, regresjon og klyngeanalyse
@@ -131,23 +148,13 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
 - **Dataregium og OpenCDE**: ein OpenCDE-tenar som [Dataregium](https://github.com/marwiss/Dataregium) blir ei kjelde i Hent med innlogging via OAuth2 og sjølvregistrering der tenaren tillèt det. Appen hentar modellane og dokumenta til prosjektet og seier til når ein nyare versjon finst, viser sakene som peikar på bygningsdelane, opprettar saker frå markeringa i 3D-visinga med visinga som viewpoint, kommenterer og byter status, fargar modellen etter sakstatus, lagrar sakene som tabell med verktøyet Saker og dashbordet Sakstatus, les og skriv BCF-filer, sender datasett, filer og arbeidsområdepakkar til tenaren, spør IFC-grafen til tenaren med Cypher, les kva tenaren tilbyr og forklarar feilkodane hans, og loggar kvart kall med ein X-Request-Id som blir para med førespurnadsloggen til tenaren, og administrerer tenaren (brukarar, prosjekt, klientar, sesjonar, revisjon, innstillingar, helse og grafspørjingar) frå kortet Administrasjon når du er administrator (sjå avsnittet [Dataspatium og Dataregium](#dataspatium-og-dataregium) nedanfor).
 - **Lett start**: store delar som R og Python blir lasta først når dei blir brukte, og statuslinja viser kva som blir lasta i mellomtida.
 - **Samordning med Dataregium, steg 1**: appen les kapabilitetsdokumentet til tenaren, set om feilkodane, ber ei felles ordliste på sju språk og opnar ei kjelde frå lenkja Opne i Dataspatium.
-- **Visualisere**: diagram med Vega-Lite (medrekna koroplettkart og punktkart, faste aksegrenser, logaritmisk skala, referanselinjer og trendlinjer), D3-malar eller R, eksporterte som SVG,
-  PNG, PDF og PowerPoint, òg i batch per gruppe, og dashbord med felles filter som blir HTML eller PowerPoint (sjå
-  [visualisera.md](visualisera.md)).
-- **Dokumentere**: rapportar og kodebøker frå malar som HTML, Word, PDF, Markdown eller LaTeX, òg eitt dokument per kommune
-  eller år (sjå [dokumentmallar.md](dokumentmallar.md)).
-- **Eksportere og dele**: data til CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata og RDS; i modusen
-  *Del* pakkar med valde datasett og objekt, ei melding og ein endringslogg, synkronisering med eit GitHub-repositorium,
-  delingsmenyen til datamaskina og publisering av dashbord og dokument som frittståande HTML (sjå [dela.md](dela.md));
-  direkte overføring til telefonar og andre datamaskiner på same nettverk med QR-kode og kontrollkode, og
-  *Dataspatium Mobil*, som tek imot, viser og sender vidare på telefonen (sjå [mobil.md](mobil.md)); gjennomgang av
-  personopplysningar før noko blir delt; kommentarar til datasett og kolonnar, tryggingskopi av arbeidsområdet som ZIP
-  og, i Edge og Chrome, ei portabel mappe med vanlege filer.
+- **Del**: modusen *Del* med pakkar, delingsmenyen til datamaskina og publisering av dashbord og dokument som frittståande HTML (sjå
+  [dela.md](dela.md)); direkte overføring til telefonar og andre datamaskiner på same nettverk med QR-kode og kontrollkode, og
+  *Dataspatium Mobil*, som tek imot, viser og sender vidare på telefonen (sjå [mobil.md](mobil.md)).
 - **Halde orden**: mapper og taggar for datasett, filter og sortering, og massehandlingar på fleire datasett på éin gong
   (ordne, pakke, eksportere, hente igjen, køyre oppskrift, slette).
-- **Finne raskt**: modusen *Søk* leitar i alle kolonnar i eitt eller alle datasett, med fasettar som avgrensar, og lagra
-  lister (sjå [soka.md](soka.md)); kommandopaletten (Ctrl+K) byter modus, opnar datasett, diagram og dashbord og
-  køyrer handlingar frå eitt søkjefelt.
+- **Søk**: modusen *Søk* leitar i alle kolonnar i eitt eller alle datasett, med fasettar som avgrensar, og lagra
+  lister (sjå [soka.md](soka.md)).
 - **Spør utan kode**: fana *Spørjing* i Søk koplar datasett, vel kolonnar og utrekningar, set vilkår og
   viser SQL-koden som blir laga; lagra lister avgrensar tabellen i Bearbeid og radene i diagram.
 - **Hjelp i appen og presentasjon**: heile handboka med søk blir opna med ? eller F1 ved kapittelet for modusen du står
@@ -156,6 +163,26 @@ Nettversjonen og mappeversjonen har skilde arbeidsområde; flytt data mellom dei
   engelsk.
 - **Grunnkurs**: ein interaktiv gjennomgang av alle åtte modusane med dømedata, på alle sju språka. Det blir vist første
   gongen appen blir opna og kan opnast når som helst frå hjelpa eller kommandopaletten.
+
+### Også i versjon 3 (med Dataregium 3)
+
+- **Valider modellen og kollisjonskontroll**: kortet *Valider modellen* samlar kontrollen til tenaren (IFC-skjemaet, reglane til buildingSMART og IDS-filene til prosjektet) og kontrollane i appen,
+  og *Kollisjonskontroll* finn bygningsdelar som går inn i kvarandre eller ligg for tett, og kan sende dei som BCF-saker (sjå [cad-bim.md](cad-bim.md)).
+- **AI-modellering og versjonar**: panelet *Spør AI om modellen* lèt ein språkmodell (Anthropic eller eit OpenAI-kompatibelt API, med din
+  eigen nøkkel lagra kryptert) svare på spørsmål om ein IFC-modell gjennom verktøy som les tabellane til modellen og, for ein modell
+  frå Dataregium, dei namngjevne spørjingane til tenaren. I modusen *Endre* føreslår AI-en eit endringssett (etasjar, rutenett, veggar,
+  dekke, opningar, eigenskapar, flyttingar) som vert førehandsvist i 3D, kontrollert lokalt og av førehandskontrollen til tenaren og
+  brukt som eit oppskriftssteg fyrst når du godkjenner; AI-en kan aldri lagre eller publisere. Eit endringssett kan sendast til
+  Dataregium som endringsframlegg, prøvast der mot basisversjonen og godkjennast av ein *manager* til neste versjon av dokumentet, med
+  kollisjonar lista når dokumentet har gått vidare. *Samanlikn versjonar* viser kva som er nytt, borte og endra mellom ein modell og
+  eit augneblinksbilete, ein annan modell, endringssettet til tenaren per versjon eller diffen til tenaren, markert i 3D. Ein modell
+  frå Dataregium vert publisert med basisversjonen sin, slik at tenaren avviser når nokon har kome fyrst.
+- **Dataregium 3**: ein modell frå Dataregium blir publisert med basisversjonen sin, og tenaren avviser (412) når nokon har kome først,
+  og (422) når prosjektet ikkje tek imot filer med valideringsfeil; førehandskontrollen til tenaren prøver ein kandidat utan å lagre han;
+  IFC-grafen til tenaren blir teikna i skjelettform med opphavet og formversjonen til modellen, og ei startspørjing finn bygningsdelar
+  nær ein bygningsdel; ein lokal Dataregium på di eiga datamaskin verkar som kjelde også frå file://; BCF-kamera blir skrivne i
+  koordinatane til modellen.
+- **Opne geodata**: WFS-en til Sundsvall kommune blant dei ferdige geodatakjeldene, mellom anna med detaljplanar.
 
 ## OpenCDE-API-ane og klientane deira
 

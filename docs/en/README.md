@@ -66,6 +66,11 @@ with a backup or a bundle.
 
 ## What you can do
 
+What works in version 1 also works in version 2, and what works in version 2 also works in version 3. Dataspatium and Dataregium
+with the same major number belong together.
+
+### Version 1 (with Dataregium 1)
+
 - **Import**: CSV, Excel, ODS, JSON, JSON-stat, SDMX-JSON, GeoJSON, XML, SQLite, GeoPackage and shapefile files, tables in HTML, Markdown, Word and LaTeX documents, KML, KMZ, GPX and TopoJSON map files, SQL scripts, older spreadsheet formats (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF), fixed-width
   text, statistical files from SPSS, Stata and SAS (with value labels) and Statistics Sweden's PX format, Parquet and RDS (via R), pasted
   text, files from web addresses, and data straight from open APIs at Statistics Sweden (SCB), the Public Health
@@ -73,6 +78,38 @@ with a backup or a bundle.
   Protection Agency, Lantmäteriet and Sweden's data portal as well as the ECB and the OECD, with saved fetches that
   update with one click and replay their recipes (see [api-konfiguration.md](api-konfiguration.md)). Example data
   and municipality and region boundaries for Sweden, Denmark, Norway and Finland are included.
+- **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
+  check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
+  municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
+  [bearbeta.md](bearbeta.md)).
+- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), an SQL console
+  where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
+  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
+- **Plans**: Swedish digital detailed plans (the national specification, Lantmäteriet's geodata platform) open as plan
+  maps with Boverket's colours and designations, the provisions are looked up in Boverket's catalogue of plan provisions
+  (embedded copy), and comprehensive plans (the specification or Boverket's ÖP model) are shown theme by theme (see
+- **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
+  county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
+  dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
+- **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
+  municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
+- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; bundles
+  with chosen datasets and objects, a message and a change log, comments on datasets and columns, a workspace backup
+  as ZIP, sync with a GitHub repository and, in Edge and Chrome, a portable folder with ordinary files.
+- **Find things fast**: the command palette (Ctrl+K) switches mode, opens datasets, charts and dashboards and runs
+  actions from a single search field.
+- **Dataregium as a source**: an OpenCDE server such as [Dataregium](https://github.com/marwiss/Dataregium) becomes a source in Import, with
+  OAuth2 sign-in with PKCE and self-registration where the server allows it; documents are chosen on the server's page and fetched as
+  datasets, and datasets and files are sent back as new documents or versions (Documents API).
+- **Six languages**: the interface, the messages and the documentation are available in Swedish, Danish,
+  Norwegian (Bokmål), Finnish, Icelandic and English.
+- **Beginner's course**: an interactive walkthrough of all six modes with example data, in all six languages. It is
+  shown the first time the app is opened and can be opened at any time from the help or the command palette.
+
+### Also in version 2 (with Dataregium 2)
+
+- **Python**: a Python console with pandas and matplotlib, fetched the first time, beside R and SQL in Analyse (see
+  [python.md](python.md)).
 - **Databases**: Access files are read directly in the browser; databases on the computer or in the network (SQL
   Server, ODBC, Excel, SQLite) are reached through a local bridge, and PostgREST/Supabase, OData, GraphQL, CouchDB,
   ClickHouse, Elasticsearch, SPARQL, InfluxDB, Google Sheets and Airtable become sources with one click. Files can be
@@ -80,23 +117,12 @@ with a backup or a bundle.
 - **Documents and images**: PDF, Word, OpenDocument, Markdown and text become document collections read in a reading view, page by
   page or as a whole; pictures become an image collection with EXIF details and a gallery. The tools Text (word
   frequency, keywords in context, co-occurrences) and Images (overview, duplicates) work without code (see [dokument.md](dokument.md)).
-- **Process**: browse, sort and filter large tables, edit cells, clean, type, recode, group into classes, rank, compute shares, running totals and changes, pivot and join data,
-  check data quality with a profile and rules (among them formats, Nordic identity numbers, references to other datasets and outliers), pseudonymise personal identity numbers before sharing, look up
-  municipality and county from coordinates, with undo, versions and recipes that can be exported as R or SQL (see
-  [bearbeta.md](bearbeta.md)).
-- **Analyse**: a built-in R console with ggplot2 and the tidyverse (see [r-guide.md](r-guide.md)), a Python console
-  with pandas and matplotlib fetched the first time (see [python.md](python.md)), an SQL console
-  where datasets are joined by their short names, and notebooks with text, R and SQL cells that become reports in
-  HTML, Word, PDF, Markdown or LaTeX (see [anteckningsbok.md](anteckningsbok.md)), and a Regex tab where regular expressions are tried on a column and used to filter, extract, replace and split (see [regex.md](regex.md)), entirely in the browser.
 - **Maps**: geodatasets open as maps to zoom in, map views with several layers and a background map after consent
   become dashboards and published HTML, the geo tools compute area, points in areas, nearest, buffers and overlays
   without code, and QGIS projects become map views (see [kartor.md](kartor.md)).
 - **Open geodata**: WFS, OGC API Features and ArcGIS services become sources whose layers are fetched as maps, with
   presets for SCB, SGU, HaV, RAÄ, the Forest Agency, Kartverket, Statistics Finland and SYKE, search in
   Geodataportalen, and WMS services as background map or layer (see [kallor.md](kallor.md)).
-- **Plans**: Swedish digital detailed plans (the national specification, Lantmäteriet's geodata platform) open as plan
-  maps with Boverket's colours and designations, the provisions are looked up in Boverket's catalogue of plan provisions
-  (embedded copy), and comprehensive plans (the specification or Boverket's ÖP model) are shown theme by theme (see
 - **Nordic plans**: Denmark's local plans and municipal plan frames (Plandata.dk), Finland's plan data model and plan
   index (Ryhti), Iceland's digital detailed and master plans (Skipulagsstofnun) and Norway's reguleringsplaner
   (GeoPackage) open as plans in each country's colours; a whole plan is fetched by its number from Plandata and Skipulagsstofnun.
@@ -108,17 +134,7 @@ with a backup or a bundle.
   [planer.md](planer.md)).
 - **CAD and BIM**: IFC models open in 3D (web-ifc and three.js) above a table of the building elements, and the selection follows
   both ways. Properties and quantities become tables, the Quantities tab counts per type, storey and material, and DXF drawings
-  show as SVG with layers. The card *Validate the model* gathers the server's check (the IFC schema, buildingSMART's rules and the project's IDS files) and the
-  checks in the app, and *Clash check* finds building parts that run into each other or lie too close and can send them as BCF topics (see [cad-bim.md](cad-bim.md)).
-- **AI modelling and versions**: the panel *Ask AI about the model* lets a language model (Anthropic or an OpenAI-compatible API, with
-  your own key stored encrypted) answer questions about an IFC model through tools that read the model's tables and, for a model from
-  Dataregium, the server's named queries. In the mode *Change* the AI proposes a change set (storeys, grids, walls, slabs, openings,
-  properties, moves) that is previewed in 3D, checked locally and by the server's precheck, and applied as a recipe step only when you
-  approve; the AI can never save or publish. A change set can be sent to Dataregium as a change proposal, tried there against the base
-  version and approved by a *manager* into the document's next version, with collisions listed when the document has moved on.
-  *Compare versions* shows what is new, gone and changed between a model and a snapshot, another model, the server's change set per
-  version or the server's diff, marked in 3D. A model from Dataregium is published with its base version, so that the server refuses
-  when someone got there first.
+  show as SVG with layers (see [cad-bim.md](cad-bim.md)).
 - **Flows and watches**: a saved chain (fetch, recipes, scripts, lists, charts, dashboards, documents, export) runs with one click or at
   start, and watched sources say so in the status bar when they have new data (see [floden.md](floden.md)).
 - **Statistics without code**: the Statistics tab does descriptive statistics, crosstabs, correlation, hypothesis tests, regression and
@@ -135,23 +151,13 @@ with a backup or a bundle.
 - **Dataregium and OpenCDE**: an OpenCDE server such as [Dataregium](https://github.com/marwiss/Dataregium) becomes a source in Import, with OAuth2 sign-in and self-registration where the server allows it. The app fetches the project's models and documents and says when a newer version exists, shows the issues that point at the elements, creates issues from the selection in the 3D view with the view as viewpoint, comments and changes status, colours the model by issue status, saves the issues as a table with the tool Issues and the dashboard Issue status, reads and writes BCF files, sends datasets, files and workspace bundles to the server, queries the server's IFC graph with Cypher, reads what the server offers and explains its error codes, and logs every request with an X-Request-Id that pairs with the server's request log, and administers the server (users, projects, clients, sessions, audit, settings, health and graph queries) from the card Administration when you are an administrator (see [Dataspatium and Dataregium](#dataspatium-and-dataregium) below).
 - **Light start**: big parts such as R and Python load when they are first used, and the status bar shows what is loading meanwhile.
 - **Coordination with Dataregium, step 1**: the app reads the server's capabilities document, translates its error codes, carries a shared glossary in seven languages and opens a source from the link Open in Dataspatium.
-- **Visualise**: charts with Vega-Lite (including choropleth and point maps with the bundled municipality and
-  county boundaries, fixed axis limits, logarithmic scale, reference lines and trend lines), D3 templates or R, exported as SVG, PNG, PDF and PowerPoint, also in batch per group, and
-  dashboards with shared filters that become HTML or PowerPoint (see [visualisera.md](visualisera.md)).
-- **Document**: reports and codebooks from templates as HTML, Word, PDF, Markdown or LaTeX, also one document per
-  municipality or year (see [dokumentmallar.md](dokumentmallar.md)).
-- **Export and share**: data to CSV, Excel, ODS, JSON, GeoJSON, XML, SQLite, Parquet, SPSS, Stata and RDS; in the
-  *Share* mode bundles with chosen datasets and objects, a message and a change log, sync with a GitHub repository, the
-  computer's share menu and publishing of dashboards and documents as standalone HTML (see [dela.md](dela.md));
-  direct transfer to phones and other computers on the same network with a QR code and a verification code, and
-  *Dataspatium Mobile*, which receives, shows and forwards on the phone (see [mobil.md](mobil.md)); a review of
-  personal data before anything is shared; comments on datasets and columns, a workspace backup as ZIP and, in Edge
-  and Chrome, a portable folder with ordinary files.
+- **Share**: the *Share* mode with bundles, the computer's share menu and publishing of dashboards and documents as standalone HTML
+  (see [dela.md](dela.md)); direct transfer to phones and other computers on the same network with a QR code and a verification code,
+  and *Dataspatium Mobile*, which receives, shows and forwards on the phone (see [mobil.md](mobil.md)).
 - **Keeping order**: folders and tags for datasets, filter and sorting, and batch actions on several datasets at
   once (organise, bundle, export, re-fetch, run recipe, delete).
-- **Find things fast**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
-  the hits and saved lists (see [soka.md](soka.md)); the command palette (Ctrl+K) switches mode, opens datasets,
-  charts and dashboards and runs actions from a single search field.
+- **Search**: the *Search* mode looks through every column of one or all datasets, with facets that narrow
+  the hits and saved lists (see [soka.md](soka.md)).
 - **Query without code**: the *Query* tab in Search joins datasets, picks columns and calculations, sets conditions
   and shows the SQL it creates; saved lists narrow the table in Process and the rows of charts.
 - **Help in the app and presentation**: the whole handbook with search opens with ? or F1 at the chapter of the mode
@@ -160,6 +166,26 @@ with a backup or a bundle.
   Norwegian (Bokmål and Nynorsk), Finnish, Icelandic and English.
 - **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
+
+### Also in version 3 (with Dataregium 3)
+
+- **Validate the model and clash check**: the card *Validate the model* gathers the server's check (the IFC schema, buildingSMART's rules and the project's IDS files) and the
+  checks in the app, and *Clash check* finds building parts that run into each other or lie too close and can send them as BCF topics (see [cad-bim.md](cad-bim.md)).
+- **AI modelling and versions**: the panel *Ask AI about the model* lets a language model (Anthropic or an OpenAI-compatible API, with
+  your own key stored encrypted) answer questions about an IFC model through tools that read the model's tables and, for a model from
+  Dataregium, the server's named queries. In the mode *Change* the AI proposes a change set (storeys, grids, walls, slabs, openings,
+  properties, moves) that is previewed in 3D, checked locally and by the server's precheck, and applied as a recipe step only when you
+  approve; the AI can never save or publish. A change set can be sent to Dataregium as a change proposal, tried there against the base
+  version and approved by a *manager* into the document's next version, with collisions listed when the document has moved on.
+  *Compare versions* shows what is new, gone and changed between a model and a snapshot, another model, the server's change set per
+  version or the server's diff, marked in 3D. A model from Dataregium is published with its base version, so that the server refuses
+  when someone got there first.
+- **Dataregium 3**: a model from Dataregium is published with its base version, and the server refuses (412) when someone got there
+  first and (422) when the project does not take files with validation errors; the server's precheck tries a candidate without storing
+  it; the server's IFC graph is drawn in its skeleton form with the model's origin and form version, and a starter query finds the
+  products near a product; a local Dataregium on your own computer works as a source also from file://; BCF cameras are written in
+  the model's coordinates.
+- **Open geodata**: Sundsvall municipality's WFS among the ready geodata sources, with detailed development plans among others.
 
 ## The OpenCDE APIs and their clients
 

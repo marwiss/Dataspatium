@@ -65,6 +65,11 @@ paketilla.
 
 ## Mitä voit tehdä
 
+Mikä toimii versiossa 1, toimii myös versiossa 2, ja mikä toimii versiossa 2, toimii myös versiossa 3. Samannumeroiset
+Dataspatium ja Dataregium kuuluvat yhteen.
+
+### Versio 1 (Dataregium 1:n kanssa)
+
 - **Noutaa**: CSV-, Excel-, ODS-, JSON-, JSON-stat-, SDMX-JSON-, GeoJSON-, XML-, SQLite-, GeoPackage- ja shapefile-tiedostoja, taulukoita HTML-, Markdown-, Word- ja LaTeX-asiakirjoista, KML-, KMZ-, GPX- ja TopoJSON-karttatiedostoja, SQL-skriptejä, vanhempia taulukkolaskentamuotoja (dBase, Lotus 1-2-3, Quattro Pro, SYLK, DIF),
   kiinteälevyistä tekstiä, tilastotiedostoja SPSS:stä, Statasta ja SAS:sta (arvoselitteineen) ja PX-muodosta sekä Parquet- ja RDS-tiedostoja (R:n
   kautta), liitettyä tekstiä, tiedostoja verkko-osoitteista ja dataa suoraan avoimista rajapinnoista: Tilastokeskus,
@@ -73,6 +78,40 @@ paketilla.
   maasuodattimella ja tallennetuilla hauilla, jotka päivittyvät yhdellä napsautuksella ja toistavat reseptinsä (ks.
   [api-konfiguration.md](api-konfiguration.md)). Esimerkkidata sekä Ruotsin, Tanskan, Norjan ja Suomen kuntien ja
   alueiden rajat ovat mukana.
+- **Muokata**: selata, lajitella ja suodattaa suuria taulukoita, muokata soluja, puhdistaa, tyypittää, koodata arvoja uudelleen, luokitella, järjestää sijoille, laskea osuuksia, kumulatiivisia summia ja muutoksia, pivotoida ja
+  yhdistää dataa, tarkistaa datan laadun profiililla ja säännöillä (muun muassa muodot, pohjoismaiset tunnukset, viittaukset muihin aineistoihin ja poikkeavat arvot), pseudonymisoida henkilötunnukset ennen jakamista, ja
+  kaikessa on kumoaminen, versiot ja reseptit, jotka voi viedä R- tai SQL-koodina (ks. [bearbeta.md](bearbeta.md)).
+- **Analysoida**: sisäänrakennettu R-konsoli, jossa on ggplot2 ja tidyverse (ks. [r-guide.md](r-guide.md)), SQL-konsoli,
+  jossa aineistoja yhdistetään join-liitoksilla niiden lyhytnimien avulla, ja muistikirjat, joiden teksti-, R- ja
+  SQL-soluista syntyy raportteja HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)),
+  sekä Regex-välilehti, jossa säännöllisiä lausekkeita kokeillaan sarakkeeseen ja käytetään suodattamiseen,
+  poimimiseen, korvaamiseen ja jakamiseen (ks. [regex.md](regex.md)), kaikki selaimessa.
+- **Kaavat**: ruotsalaiset digitaaliset asemakaavat (kansallinen määrittely, Lantmäterietin paikkatietoalusta) avautuvat
+  kaavakarttoina Boverketin väreillä ja merkinnöillä, määräykset haetaan Boverketin kaavamääräysluettelosta (upotettu
+  kopio), ja yleiskaavat (määrittely tai Boverketin ÖP-malli) näytetään teema kerrallaan (katso [planer.md](planer.md)).
+- **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
+  PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
+  PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
+- **Dokumentoida**: raportteja ja koodikirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa, myös yksi
+  asiakirja kuntaa tai vuotta kohden (ks. [dokumentmallar.md](dokumentmallar.md)).
+- **Viedä ja jakaa**: dataa CSV-, Excel-, ODS-, JSON-, GeoJSON-, XML-, SQLite-, Parquet-, SPSS-, Stata- ja RDS-muotoon;
+  paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, kommentit aineistoihin ja sarakkeisiin,
+  työtilan varmuuskopio ZIP-tiedostona, synkronointi GitHub-repositorioon ja Edgessä ja Chromessa siirrettävä kansio
+  tavallisina tiedostoina.
+- **Löytää nopeasti**: komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja, kaavioita ja kojelautoja ja suorittaa
+  toimintoja yhdestä hakukentästä.
+- **Dataregium lähteenä**: OpenCDE-palvelin kuten [Dataregium](https://github.com/marwiss/Dataregium) tulee lähteeksi Nouda-tilaan
+  OAuth2-kirjautumisella PKCE:n kanssa ja itserekisteröinnillä, jos palvelin sallii sen; asiakirjat valitaan palvelimen sivulla ja
+  haetaan aineistoiksi, ja aineistot ja tiedostot lähetetään takaisin uusina asiakirjoina tai versioina (Documents API).
+- **Kuusi kieltä**: käyttöliittymä, viestit ja dokumentaatio ruotsiksi, tanskaksi, norjaksi (bokmål), suomeksi, islanniksi ja
+  englanniksi.
+- **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kuudesta tilasta esimerkkidatalla kaikilla kuudella kielellä.
+  Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
+
+### Myös versiossa 2 (Dataregium 2:n kanssa)
+
+- **Python**: Python-konsoli, jossa on pandas ja matplotlib ja joka haetaan ensimmäisellä kerralla, R:n ja SQL:n rinnalla
+  Analysoi-tilassa (ks. [python.md](python.md)).
 - **Tietokannat**: Access-tiedostot luetaan suoraan selaimessa; tietokoneen tai verkon tietokannat (SQL Server, ODBC,
   Excel, SQLite) tavoitetaan paikallisen sillan kautta, ja PostgREST/Supabase, OData, GraphQL, CouchDB, ClickHouse,
   Elasticsearch, SPARQL, InfluxDB, Google Sheets ja Airtable muuttuvat lähteiksi yhdellä napsautuksella. Tiedostoja voi
@@ -80,15 +119,6 @@ paketilla.
 - **Asiakirjat ja kuvat**: PDF, Word, OpenDocument, Markdown ja teksti muuttuvat asiakirjakokoelmiksi, joita luetaan
   lukunäkymässä sivu kerrallaan tai kokonaan; kuvista tulee kuvakokoelma EXIF-tietoineen ja gallerioineen. Työkalut
   Teksti (sanafrekvenssi, avainsanat kontekstissa, yhteisesiintymät) ja Kuvat (yleiskatsaus, kaksoiskappaleet) toimivat ilman koodia (katso [dokument.md](dokument.md)).
-- **Muokata**: selata, lajitella ja suodattaa suuria taulukoita, muokata soluja, puhdistaa, tyypittää, koodata arvoja uudelleen, luokitella, järjestää sijoille, laskea osuuksia, kumulatiivisia summia ja muutoksia, pivotoida ja
-  yhdistää dataa, tarkistaa datan laadun profiililla ja säännöillä (muun muassa muodot, pohjoismaiset tunnukset, viittaukset muihin aineistoihin ja poikkeavat arvot), pseudonymisoida henkilötunnukset ennen jakamista, ja
-  kaikessa on kumoaminen, versiot ja reseptit, jotka voi viedä R- tai SQL-koodina (ks. [bearbeta.md](bearbeta.md)).
-- **Analysoida**: sisäänrakennettu R-konsoli, jossa on ggplot2 ja tidyverse (ks. [r-guide.md](r-guide.md)), Python-konsoli,
-  jossa on pandas ja matplotlib ja joka haetaan ensimmäisellä kerralla (ks. [python.md](python.md)), SQL-konsoli,
-  jossa aineistoja yhdistetään join-liitoksilla niiden lyhytnimien avulla, ja muistikirjat, joiden teksti-, R- ja
-  SQL-soluista syntyy raportteja HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa (ks. [anteckningsbok.md](anteckningsbok.md)),
-  sekä Regex-välilehti, jossa säännöllisiä lausekkeita kokeillaan sarakkeeseen ja käytetään suodattamiseen,
-  poimimiseen, korvaamiseen ja jakamiseen (ks. [regex.md](regex.md)), kaikki selaimessa.
 - **Kartat**: paikkatietoaineistot avautuvat lähennettävinä karttoina, karttanäkymistä useine tasoineen ja
   suostumuksen jälkeen taustakarttoineen tulee koontinäyttöjä ja julkaistua HTML:ää, paikkatietotyökalut laskevat
   pinta-alan, pisteet alueissa, lähimmän, puskurit ja päällekkäisyydet ilman koodia, ja QGIS-projekteista tulee
@@ -96,9 +126,6 @@ paketilla.
 - **Avoin paikkatieto**: WFS-, OGC API Features- ja ArcGIS-palveluista tulee lähteitä, joiden tasot noudetaan karttoina,
   valmiina SCB, SGU, HaV, RAÄ, Skogsstyrelsen, Kartverket, Tilastokeskus ja SYKE, haku Geodataportalenista sekä
   WMS-palvelut taustakarttana tai tasona (katso [kallor.md](kallor.md)).
-- **Kaavat**: ruotsalaiset digitaaliset asemakaavat (kansallinen määrittely, Lantmäterietin paikkatietoalusta) avautuvat
-  kaavakarttoina Boverketin väreillä ja merkinnöillä, määräykset haetaan Boverketin kaavamääräysluettelosta (upotettu
-  kopio), ja yleiskaavat (määrittely tai Boverketin ÖP-malli) näytetään teema kerrallaan (katso [planer.md](planer.md)).
 - **Pohjoismaiset kaavat**: Tanskan paikalliskaavat ja kuntakaavan kehykset (Plandata.dk), Suomen kaavatietomalli ja
   kaavahakemisto (Ryhti), Islannin digitaaliset asema- ja yleiskaavat (Skipulagsstofnun) ja Norjan reguleringsplan-kaavat
   (GeoPackage) avautuvat kaavoina kunkin maan väreillä; koko kaava noudetaan numerollaan Plandatasta ja Skipulagsstofnunilta.
@@ -109,17 +136,7 @@ paketilla.
   on PageRank, yhteisöt, keskeisyys, kuviokyselyt ja asettelu, ja verkoista tulee kaavioita Visualisoi-tilaan, koontinäyttöihin ja Julkaise-tilaan.
 - **CAD ja BIM**: IFC-mallit avautuvat 3D:nä (web-ifc ja three.js) rakennusosien taulukon yläpuolella, ja valinta seuraa molempiin
   suuntiin. Ominaisuuksista ja määristä tulee taulukoita, Määrät-välilehti laskee tyypeittäin, kerroksittain ja materiaaleittain, ja
-  DXF-piirustukset näkyvät SVG:nä tasoineen. Kortti *Validoi malli* kokoaa palvelimen tarkistuksen (IFC-skeema, buildingSMARTin säännöt ja projektin IDS-tiedostot) ja sovelluksen
-  tarkistukset, ja *Törmäystarkistus* löytää rakennusosat, jotka menevät toistensa sisään tai ovat liian lähellä, ja voi lähettää ne BCF-tehtävinä (katso [cad-bim.md](cad-bim.md)).
-- **Tekoälymallinnus ja versiot**: paneeli *Kysy tekoälyltä mallista* antaa kielimallin (Anthropic tai OpenAI-yhteensopiva rajapinta,
-  omalla salattuna tallennetulla avaimellasi) vastata kysymyksiin IFC-mallista työkaluilla, jotka lukevat mallin taulukoita ja,
-  Dataregiumista haetulle mallille, palvelimen nimettyjä kyselyjä. Tilassa *Muuta* tekoäly ehdottaa muutosjoukon (kerrokset, ruudukot,
-  seinät, laatat, aukot, ominaisuudet, siirrot), joka esikatsellaan 3D:nä, tarkistetaan paikallisesti ja palvelimen esitarkistuksella ja
-  sovelletaan reseptivaiheena vasta, kun hyväksyt; tekoäly ei koskaan voi tallentaa tai julkaista. Muutosjoukon voi lähettää
-  Dataregiumiin muutosehdotuksena, kokeilla siellä perusversiota vasten ja *manager* voi hyväksyä sen asiakirjan seuraavaksi versioksi,
-  ristiriidat lueteltuina, kun asiakirja on ehtinyt muuttua. *Vertaa versioita* näyttää, mikä on uutta, poistunut ja muuttunut mallin ja
-  tilannekuvan, toisen mallin, palvelimen versiokohtaisen muutosjoukon tai palvelimen diffin välillä, merkittynä 3D:nä. Dataregiumista
-  haettu malli julkaistaan perusversiollaan, jolloin palvelin kieltäytyy, jos joku on ehtinyt ensin.
+  DXF-piirustukset näkyvät SVG:nä tasoineen (katso [cad-bim.md](cad-bim.md)).
 - **Työnkulut ja seurannat**: tallennettu ketju (nouto, reseptit, skriptit, luettelot, kaaviot, koontinäytöt, asiakirjat, vienti) ajetaan
   yhdellä napsautuksella tai käynnistyksessä, ja seuratut lähteet kertovat tilarivillä uusista tiedoista (katso [floden.md](floden.md)).
 - **Tilastot ilman koodia**: Tilastot-välilehti tekee kuvailevat tilastot, ristiintaulukot, korrelaation, hypoteesitestit, regression ja klusteroinnin
@@ -136,23 +153,13 @@ paketilla.
 - **Dataregium ja OpenCDE**: OpenCDE-palvelin kuten [Dataregium](https://github.com/marwiss/Dataregium) tulee lähteeksi Nouda-tilaan OAuth2-kirjautumisella ja itserekisteröinnillä, kun palvelin sallii sen. Sovellus noutaa projektin mallit ja asiakirjat ja kertoo, kun uudempi versio on olemassa, näyttää rakennusosiin viittaavat asiat, luo asioita 3D-näkymän valinnasta näkymä viewpointina, kommentoi ja vaihtaa tilaa, värittää mallin asian tilan mukaan, tallentaa asiat taulukkona työkalulla Asiat ja koontinäytöllä Asioiden tila, lukee ja kirjoittaa BCF-tiedostoja, lähettää aineistoja, tiedostoja ja työtilapaketteja palvelimelle, kyselee palvelimen IFC-graafia Cypherillä, lukee, mitä palvelin tarjoaa, ja selittää sen virhekoodit, ja kirjaa jokaisen kutsun X-Request-Id-tunnisteella, joka paritetaan palvelimen pyyntölokin kanssa, sekä hallinnoi palvelinta (käyttäjät, projektit, asiakkaat, istunnot, tapahtumaloki, asetukset, kunto ja graafikyselyt) kortista Hallinta, kun olet järjestelmänvalvoja (ks. kohta [Dataspatium ja Dataregium](#dataspatium-ja-dataregium) alla).
 - **Kevyt käynnistys**: suuret osat, kuten R ja Python, ladataan vasta käytettäessä, ja tilarivi näyttää sillä välin, mitä ladataan.
 - **Yhteensovitus Dataregiumin kanssa, vaihe 1**: sovellus lukee palvelimen kyvykkyysasiakirjan, kääntää sen virhekoodit, sisältää yhteisen sanaston seitsemällä kielellä ja avaa lähteen linkistä Avaa Dataspatiumissa.
-- **Visualisoida**: kaavioita Vega-Litellä (myös teemakartat ja pistekartat, kiinteät akselirajat, logaritminen asteikko, vertailuviivat ja trendiviivat), D3-malleilla tai R:llä, vietynä SVG-, PNG-,
-  PDF- ja PowerPoint-muotoon, myös eräajona ryhmittäin, ja kojelautoja yhteisillä suodattimilla HTML- tai
-  PowerPoint-muodossa (ks. [visualisera.md](visualisera.md)).
-- **Dokumentoida**: raportteja ja koodikirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa, myös yksi
-  asiakirja kuntaa tai vuotta kohden (ks. [dokumentmallar.md](dokumentmallar.md)).
-- **Viedä ja jakaa**: dataa CSV-, Excel-, ODS-, JSON-, GeoJSON-, XML-, SQLite-, Parquet-, SPSS-, Stata- ja RDS-muotoon;
-  *Jaa*-tilassa paketteja valituista aineistoista ja kohteista viestin ja muutoslokin kera, synkronointi
-  GitHub-repositorioon, tietokoneen jakovalikko ja kojelautojen ja asiakirjojen julkaiseminen itsenäisenä HTML:nä
-  (ks. [dela.md](dela.md)); suora siirto puhelimiin ja toisiin tietokoneisiin samassa verkossa QR-koodilla ja
-  tarkistuskoodilla sekä *Dataspatium Mobiili*, joka vastaanottaa, näyttää ja jakaa edelleen puhelimessa (ks.
-  [mobil.md](mobil.md)); henkilötietojen tarkistus ennen jakamista; kommentit aineistoihin ja sarakkeisiin, työtilan
-  varmuuskopio ZIP-tiedostona ja Edgessä ja Chromessa siirrettävä kansio tavallisina tiedostoina.
+- **Jaa**: *Jaa*-tila paketteineen, tietokoneen jakovalikko ja kojelautojen ja asiakirjojen julkaiseminen itsenäisenä HTML:nä (ks.
+  [dela.md](dela.md)); suora siirto puhelimiin ja toisiin tietokoneisiin samassa verkossa QR-koodilla ja tarkistuskoodilla sekä
+  *Dataspatium Mobiili*, joka vastaanottaa, näyttää ja jakaa edelleen puhelimessa (ks. [mobil.md](mobil.md)).
 - **Pitää järjestystä**: kansiot ja tunnisteet aineistoille, suodatus ja lajittelu sekä erätoiminnot usealle
   aineistolle kerralla (järjestä, paketoi, vie, nouda uudelleen, suorita resepti, poista).
-- **Löytää nopeasti**: *Hae*-tila etsii kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaavilla faseteilla
-  ja tallennetuilla listoilla (ks. [soka.md](soka.md)); komentopaletti (Ctrl+K) vaihtaa tilaa, avaa aineistoja,
-  kaavioita ja kojelautoja ja suorittaa toimintoja yhdestä hakukentästä.
+- **Hae**: *Hae*-tila etsii kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaavilla faseteilla
+  ja tallennetuilla listoilla (ks. [soka.md](soka.md)).
 - **Kysely ilman koodia**: Hae-tilan *Kysely*-välilehti yhdistää aineistoja, valitsee sarakkeet ja laskennat,
   asettaa ehdot ja näyttää luomansa SQL:n; tallennetut listat rajaavat Muokkaa-tilan taulukon ja kaavioiden rivit.
 - **Ohje sovelluksessa ja esitys**: koko käsikirja hakuineen avautuu ?-painikkeella tai F1:llä sen tilan luvusta,
@@ -161,6 +168,26 @@ paketilla.
   englanniksi.
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
+
+### Myös versiossa 3 (Dataregium 3:n kanssa)
+
+- **Validoi malli ja törmäystarkistus**: kortti *Validoi malli* kokoaa palvelimen tarkistuksen (IFC-skeema, buildingSMARTin säännöt ja projektin IDS-tiedostot) ja sovelluksen
+  tarkistukset, ja *Törmäystarkistus* löytää rakennusosat, jotka menevät toistensa sisään tai ovat liian lähellä, ja voi lähettää ne BCF-tehtävinä (katso [cad-bim.md](cad-bim.md)).
+- **Tekoälymallinnus ja versiot**: paneeli *Kysy tekoälyltä mallista* antaa kielimallin (Anthropic tai OpenAI-yhteensopiva rajapinta,
+  omalla salattuna tallennetulla avaimellasi) vastata kysymyksiin IFC-mallista työkaluilla, jotka lukevat mallin taulukoita ja,
+  Dataregiumista haetulle mallille, palvelimen nimettyjä kyselyjä. Tilassa *Muuta* tekoäly ehdottaa muutosjoukon (kerrokset, ruudukot,
+  seinät, laatat, aukot, ominaisuudet, siirrot), joka esikatsellaan 3D:nä, tarkistetaan paikallisesti ja palvelimen esitarkistuksella ja
+  sovelletaan reseptivaiheena vasta, kun hyväksyt; tekoäly ei koskaan voi tallentaa tai julkaista. Muutosjoukon voi lähettää
+  Dataregiumiin muutosehdotuksena, kokeilla siellä perusversiota vasten ja *manager* voi hyväksyä sen asiakirjan seuraavaksi versioksi,
+  ristiriidat lueteltuina, kun asiakirja on ehtinyt muuttua. *Vertaa versioita* näyttää, mikä on uutta, poistunut ja muuttunut mallin ja
+  tilannekuvan, toisen mallin, palvelimen versiokohtaisen muutosjoukon tai palvelimen diffin välillä, merkittynä 3D:nä. Dataregiumista
+  haettu malli julkaistaan perusversiollaan, jolloin palvelin kieltäytyy, jos joku on ehtinyt ensin.
+- **Dataregium 3**: Dataregiumista haettu malli julkaistaan perusversiollaan, ja palvelin kieltäytyy (412), jos joku on ehtinyt ensin,
+  ja (422), jos projekti ei ota vastaan tiedostoja validointivirheineen; palvelimen esitarkistus kokeilee ehdokasta tallentamatta sitä;
+  palvelimen IFC-graafi piirretään runkomuodossa mallin alkuperän ja muotoversion kanssa, ja aloituskysely löytää rakennusosan lähellä
+  olevat rakennusosat; paikallinen Dataregium omalla tietokoneella toimii lähteenä myös file://-osoitteesta; BCF-kamerat kirjoitetaan
+  mallin koordinaatteihin.
+- **Avoin paikkatieto**: Sundsvallin kunnan WFS valmiiden paikkatietolähteiden joukossa, muun muassa asemakaavoineen.
 
 ## OpenCDE-rajapinnat ja niiden asiakasohjelmat
 
