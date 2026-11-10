@@ -99,8 +99,8 @@ What works in one version also works in the next. Each version belongs with the 
   code and *Dataspatium Mobile* to show and collect in the field (see [Share](dela.md)).
 - **Flows and kinds**: saved chains that run with one click, watched sources, and modes that recognise what a dataset is and offer the
   right views and tools (see [Modes](lagen.md)).
-- **Dataregium with issues**: models and topics from the server, topics from the 3D view, BCF files, the server's IFC graph and the
-  administration (see [Dataspatium and Dataregium](#dataspatium-and-dataregium)).
+- **Dataregium with issues**: models and topics from the server, topics from the 3D view, BCF files, the server's IFC graph, the
+  administration and the card The project's members for the project's manager (see [Dataspatium and Dataregium](#dataspatium-and-dataregium)).
 - **Seven languages**: Nynorsk as well, with the handbook in the app and the course through all eight modes.
 
 ### Also in version 3 (with Dataregium 3)
@@ -111,8 +111,9 @@ What works in one version also works in the next. Each version belongs with the 
   never save or publish.
 - **Versions against Dataregium**: publishing with a base version, a precheck, change proposals that the server tries and a manager
   approves, and *Compare versions* marked in 3D.
-- **More**: the server's IFC graph in its skeleton form, a local Dataregium on your own computer and Sundsvall's WFS among the geodata
-  sources.
+- **More**: collisions at approval that you decide in the app, a check of the model's relationships that blocks what a change set
+  breaks, the AI previewing and mending its own change set, the server's IFC graph in its skeleton form with the products near a
+  product, a local Dataregium on your own computer and Sundsvall's WFS among the geodata sources.
 
 ![Dataspatium in Process mode: an IFC model in 3D with Compare versions, where a new wall is green and a changed fire rating is listed](../images/jamfor.png)
 
@@ -200,7 +201,7 @@ There is one release per major number, and Dataspatium and Dataregium with the s
 | Dataspatium | What it has | Belongs with |
 |---|---|---|
 | 1.0.0 | The whole 1 series: data import, processing, R, Python, maps, charts, documents and sharing, and plans. Against a server only the Documents API: fetch documents as datasets and send datasets and files back. No issues and no models | Dataregium 1.0.0 (Documents API only) |
-| 2.0.0 | The whole 2 series: IFC models in 3D with tables, properties and quantities, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph (IFC-LPG) drawn and queried, and plans from planning tools in full | Dataregium 2.0.0 |
+| 2.0.0 | The whole 2 series: IFC models in 3D with tables, properties and quantities, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph (IFC-LPG) drawn and queried, and plans from planning tools in full, and the card The project's members for the project's manager | Dataregium 2.0.0 |
 | 3.0.0 | The 3 series: the card *Validate the model*, the clash check in the browser, BCF cameras in the model's coordinates, the graph in its skeleton form, Ask AI and Change with AI, Compare versions, publishing with a base version and a precheck, change proposals tried and approved on the server | Dataregium 3.0.0 |
 
 A new release in the same major number replaces the previous one; only the newest in each series gets fixes. The app's update check
@@ -290,11 +291,12 @@ whoever, person or AI agent, carries a part of it on; the server's side is in Da
   the AI can call. Built in 3.0.0.
 - **The version model.** A change set goes to the server as a BCF topic with a snippet in the server's form (GlobalId and path as
   the key), the server tries it against the base version and a *manager* approves it into the next version; a publish with a stale
-  base is refused (412) and the collisions are shown. Built in 3.0.0. Next: a three-way merge in the app at a collision, the version
-  history per document and a BCF topic per approved change set.
+  base is refused (412) and the collisions are shown. Built in 3.0.0, as are the choice at collisions the
+  server cannot merge, the server's change set per version and a BCF topic per approved change set.
 - **Compare versions** from three sources: snapshots and other models in the app, the server's change set per version and the
   server's diff between versions. Built in 3.0.0.
-- **The project's manager** gets a page in the app when Dataregium's API for members and roles exists.
+- **The project's manager** has the card *The project's members* in the app: members, roles and the project's name. Built in 2.0.0
+  and 3.0.0.
 - **Steps 4 and 5, after step 3:** a repository mode per project with a local Dataregium on your own computer and fetch and publish
   between the local and the remote one; large models drawn from the server's geometry API when the browser is not enough; project
   profiles with IDS and bSDD, IDS written by the AI and buildingSMART rules tied to elements.

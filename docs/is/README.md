@@ -96,7 +96,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   *Dataspatium Farsími* til að sýna og safna á vettvangi (sjá [Deila](dela.md)).
 - **Flæði og gerðir**: vistaðar keðjur sem keyra með einum smelli, vaktaðar uppsprettur og hamir sem þekkja hvað gagnasafn er og bjóða
   réttu sýnirnar og tólin (sjá [Hamir](lagen.md)).
-- **Dataregium með málum**: líkön og mál frá þjóninum, mál úr þrívíddarsýninni, BCF-skrár, IFC-graf þjónsins og stjórnunin (sjá
+- **Dataregium með málum**: líkön og mál frá þjóninum, mál úr þrívíddarsýninni, BCF-skrár, IFC-graf þjónsins, stjórnunin og spjaldið Meðlimir verkefnisins fyrir ábyrgðarmann verkefnisins (sjá
   [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
 - **Sjö tungumál**: einnig nýnorska, með handbókinni í forritinu og námskeiðinu um alla átta hamina.
 
@@ -108,7 +108,9 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
   forskoðar í þrívídd og samþykkir; gervigreindin getur aldrei vistað eða birt.
 - **Útgáfur gagnvart Dataregium**: birting með grunnútgáfu, forathugun, breytingatillögur sem þjónninn reynir og manager samþykkir, og
   *Bera saman útgáfur* merkt í þrívídd.
-- **Meira**: IFC-graf þjónsins á beinagrindarformi, staðbundinn Dataregium á eigin tölvu og WFS Sundsvall meðal landupplýsingauppsprettna.
+- **Meira**: árekstrar við samþykkt sem þú sker úr í forritinu, prófun á venslum líkansins sem stöðvar það sem breytingasett
+  brýtur, gervigreind sem forskoðar og lagar eigið breytingasett, IFC-graf þjónsins á beinagrindarformi með byggingarhlutum nálægt
+  byggingarhluta, staðbundinn Dataregium á eigin tölvu og WFS Sundsvall meðal landupplýsingauppsprettna.
 
 ![Dataspatium í hamnum Vinna: IFC-líkan í þrívídd með Bera saman útgáfur, þar sem nýr veggur er grænn og breyttur brunaflokkur er sýndur](../images/jamfor.png)
 
@@ -194,7 +196,7 @@ Ein útgáfa er fyrir hvert aðalnúmer, og Dataspatium og Dataregium með sama 
 | Dataspatium | Hvað hún hefur | Á saman við |
 |---|---|---|
 | 1.0.0 | Öll 1-röðin: gagnaöflun, úrvinnsla, R, Python, kort, gröf, skjöl og deiling, auk skipulagsáætlana. Gagnvart þjóni aðeins Documents API: sækja skjöl sem gagnasöfn og senda gagnasöfn og skrár til baka. Engin mál og engin líkön | Dataregium 1.0.0 (aðeins Documents API) |
-| 2.0.0 | Öll 2-röðin: IFC-líkön í þrívídd með töflum, eiginleikum og magni, mál með sjónarhornum (BCF API 3.0 og 2.1), IFC-graf þjónsins (IFC-LPG) teiknað og spurt, og skipulagsáætlanir úr skipulagsverkfærum að fullu | Dataregium 2.0.0 |
+| 2.0.0 | Öll 2-röðin: IFC-líkön í þrívídd með töflum, eiginleikum og magni, mál með sjónarhornum (BCF API 3.0 og 2.1), IFC-graf þjónsins (IFC-LPG) teiknað og spurt, og skipulagsáætlanir úr skipulagsverkfærum að fullu, og spjaldið Meðlimir verkefnisins fyrir ábyrgðarmann | Dataregium 2.0.0 |
 | 3.0.0 | 3-röðin: spjaldið *Prófa líkanið*, árekstrarprófun í vafranum, BCF-myndavélar í hnitum líkansins, grafið á beinagrindarformi, Spyrja gervigreind og Breyta með gervigreind, Bera saman útgáfur, birting með grunnútgáfu og forathugun, breytingatillögur sem eru reyndar og samþykktar á þjóninum | Dataregium 3.0.0 |
 
 Ný útgáfa í sama aðalnúmeri kemur í stað þeirrar fyrri; aðeins sú nýjasta í hverri röð fær lagfæringar. Uppfærsluathugun forritsins
@@ -280,11 +282,12 @@ gervigreindin leggur til, manneskjan fer yfir og samþykkir, þjónninn reynir o
   tól sem gervigreindin getur kallað. Smíðað í 3.0.0.
 - **Útgáfulíkanið.** Breytingasett er sent til þjónsins sem BCF-mál með snippet á formi þjónsins (GlobalId og slóð sem lykill),
   þjónninn reynir það á grunnútgáfunni og *manager* samþykkir það sem næstu útgáfu; birting með úreltum grunni er hafnað (412) og
-  árekstrarnir sýndir. Smíðað í 3.0.0. Næst: þríhliða sameining í forritinu við árekstur, útgáfusaga hvers skjals og BCF-mál fyrir
-  hvert samþykkt breytingasett.
+  árekstrarnir sýndir. Smíðað í 3.0.0, eins og valið við árekstra sem
+  þjónninn getur ekki sameinað, breytingasett þjónsins fyrir hverja útgáfu og BCF-mál fyrir hvert samþykkt breytingasett.
 - **Bera saman útgáfur** úr þremur uppsprettum: svipmyndum og öðrum líkönum í forritinu, breytingasetti þjónsins fyrir hverja útgáfu
   og mismun þjónsins milli útgáfa. Smíðað í 3.0.0.
-- **Umsjónarmaður verkefnisins** fær síðu í forritinu þegar forritaskil Dataregium fyrir meðlimi og hlutverk eru til.
+- **Umsjónarmaður verkefnisins** hefur spjaldið *Meðlimir verkefnisins* í forritinu: meðlimir, hlutverk og heiti verkefnisins.
+  Smíðað í 2.0.0 og 3.0.0.
 - **Skref 4 og 5, eftir skref 3:** geymsluhamur fyrir hvert verkefni með staðbundnum Dataregium á eigin tölvu og sækja og birta milli
   staðbundna og fjarlæga þjónsins; stór líkön teiknuð úr rúmfræðiforritaskilum þjónsins þegar vafrinn dugar ekki; verkefnissnið með
   IDS og bSDD, IDS sem gervigreindin skrifar og buildingSMART-reglur tengdar stökum.

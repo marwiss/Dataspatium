@@ -96,8 +96,8 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
   *Dataspatium Mobil* for å vise og samle inn i felt (sjå [Del](dela.md)).
 - **Flytar og slag**: lagra kjeder som blir køyrde med eitt klikk, overvaka kjelder, og modusar som kjenner att kva eit datasett er og
   tilbyr dei rette visingane og verktøya (sjå [Modusar](lagen.md)).
-- **Dataregium med saker**: modellar og saker frå tenaren, saker frå 3D-visinga, BCF-filer, IFC-grafen til tenaren og
-  administrasjonen (sjå [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
+- **Dataregium med saker**: modellar og saker frå tenaren, saker frå 3D-visinga, BCF-filer, IFC-grafen til tenaren,
+  administrasjonen og kortet Medlemmene i prosjektet for den prosjektansvarlege (sjå [Dataspatium og Dataregium](#dataspatium-og-dataregium)).
 - **Sju språk**: også nynorsk, med handboka i appen og grunnkurset gjennom alle dei åtte modusane.
 
 ### Også i versjon 3 (med Dataregium 3)
@@ -108,8 +108,9 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
   aldri lagre eller publisere.
 - **Versjonar mot Dataregium**: publisering med basisversjon, førehandskontroll, endringsframlegg som tenaren prøver og ein manager
   godkjenner, og *Samanlikn versjonar* markert i 3D.
-- **Meir**: IFC-grafen til tenaren i skjelettform, ein lokal Dataregium på di eiga datamaskin og WFS-en til Sundsvall blant
-  geodatakjeldene.
+- **Meir**: kollisjonar ved godkjenning som du avgjer i appen, ein kontroll av relasjonane i modellen som sperrar det eit
+  endringssett øydelegg, AI-en som førehandsviser og rettar sitt eige endringssett, IFC-grafen til tenaren i skjelettform med
+  bygningsdelar nær ein bygningsdel, ein lokal Dataregium på di eiga datamaskin og WFS-en til Sundsvall blant geodatakjeldene.
 
 ![Dataspatium i modusen Bearbeid: ein IFC-modell i 3D med Samanlikn versjonar, der ein ny vegg er grøn og ein endra brannklasse er vist](../images/jamfor.png)
 
@@ -195,7 +196,7 @@ Det finst éi utgjeving per hovudnummer, og Dataspatium og Dataregium med same n
 | Dataspatium | Kva ho har | Høyrer saman med |
 |---|---|---|
 | 1.0.0 | Heile 1-serien: datainnhenting, handsaming, R, Python, kart, diagram, dokument og deling, og planar. Mot ein tenar berre Documents API: hent dokument som datasett, og send datasett og filer tilbake. Ingen saker og ingen modellar | Dataregium 1.0.0 (berre Documents API) |
-| 2.0.0 | Heile 2-serien: IFC-modellar i 3D med tabellar, eigenskapar og mengder, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren (IFC-LPG) teikna og spurd, og planar frå planleggingsverktøy fullt ut | Dataregium 2.0.0 |
+| 2.0.0 | Heile 2-serien: IFC-modellar i 3D med tabellar, eigenskapar og mengder, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren (IFC-LPG) teikna og spurd, og planar frå planleggingsverktøy fullt ut, og kortet Medlemmene i prosjektet for den prosjektansvarlege | Dataregium 2.0.0 |
 | 3.0.0 | 3-serien: kortet *Valider modellen*, kollisjonskontroll i nettlesaren, BCF-kamera i koordinatane til modellen, grafen i skjelettform, Spør AI og Endre med AI, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som vert prøvde og godkjende på tenaren | Dataregium 3.0.0 |
 
 Ei ny utgjeving i same hovudnummer erstattar den førre; berre den nyaste i kvar serie vert retta. Oppdateringskontrollen i appen
@@ -281,11 +282,12 @@ den, menneske eller AI-agent, som fører ein del av det vidare; sida til tenaren
   aldri verktøy AI-en kan kalle. Bygd i 3.0.0.
 - **Versjonsmodellen.** Eit endringssett vert sendt til tenaren som ei BCF-sak med ein snippet i forma til tenaren (GlobalId og sti
   som nøkkel), tenaren prøver det mot basisversjonen, og ein *manager* godkjenner det til neste versjon; ei publisering med utdatert
-  basis vert avvist (412), og kollisjonane vert viste. Bygd i 3.0.0. Neste: trevegs samanfletting i appen ved kollisjon,
-  versjonshistorikken per dokument og ei BCF-sak per godkjent endringssett.
+  basis vert avvist (412), og kollisjonane vert viste. Bygd i 3.0.0, i likskap med valet ved kollisjonar som
+  tenaren ikkje kan flette, endringssettet til tenaren per versjon og ei BCF-sak per godkjent endringssett.
 - **Samanlikn versjonar** frå tre kjelder: augneblinksbilete og andre modellar i appen, endringssettet til tenaren per versjon og
   diffen til tenaren mellom versjonar. Bygd i 3.0.0.
-- **Forvaltaren av prosjektet** får ei side i appen når API-et til Dataregium for medlemmer og roller finst.
+- **Forvaltaren av prosjektet** har kortet *Medlemmene i prosjektet* i appen: medlemmer, roller og namnet på prosjektet. Bygd i
+  2.0.0 og 3.0.0.
 - **Steg 4 og 5, etter steg 3:** repomodus per prosjekt med ein lokal Dataregium på eiga datamaskin og hent og publiser mellom den
   lokale og den fjerne; store modellar teikna frå geometri-API-et til tenaren når nettlesaren ikkje strekk til; prosjektprofilar med
   IDS og bSDD, IDS skrivne av AI-en og buildingSMART-reglar knytte til element.

@@ -99,7 +99,7 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Kukin versio kuuluu y
   *Dataspatium Mobiili* näyttämiseen ja keräämiseen maastossa (ks. [Jaa](dela.md)).
 - **Työnkulut ja lajit**: tallennetut ketjut, jotka ajetaan yhdellä napsautuksella, seuratut lähteet ja tilat, jotka tunnistavat
   aineiston lajin ja tarjoavat oikeat näkymät ja työkalut (ks. [Tilat](lagen.md)).
-- **Dataregium asioineen**: mallit ja asiat palvelimelta, asiat 3D-näkymästä, BCF-tiedostot, palvelimen IFC-graafi ja ylläpito (ks.
+- **Dataregium asioineen**: mallit ja asiat palvelimelta, asiat 3D-näkymästä, BCF-tiedostot, palvelimen IFC-graafi, ylläpito ja kortti Projektin jäsenet projektin vastuuhenkilölle (ks.
   [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)).
 - **Seitsemän kieltä**: myös nynorsk, sovelluksen käsikirjan ja kaikkien kahdeksan tilan peruskurssin kanssa.
 
@@ -111,8 +111,9 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Kukin versio kuuluu y
   hyväksyt; tekoäly ei koskaan voi tallentaa tai julkaista.
 - **Versiot Dataregiumia vasten**: julkaisu perusversiolla, esitarkistus, muutosehdotukset, joita palvelin kokeilee ja manager
   hyväksyy, sekä *Vertaa versioita* 3D:nä merkittynä.
-- **Lisäksi**: palvelimen IFC-graafi runkomuodossa, paikallinen Dataregium omalla tietokoneella ja Sundsvallin WFS paikkatietolähteiden
-  joukossa.
+- **Lisäksi**: hyväksynnän ristiriidat, jotka ratkaiset sovelluksessa, mallin suhteiden tarkistus, joka estää sen, minkä
+  muutosjoukko rikkoo, tekoäly, joka esikatselee ja korjaa oman muutosjoukkonsa, palvelimen IFC-graafi runkomuodossa ja
+  rakennusosan lähellä olevat rakennusosat, paikallinen Dataregium omalla tietokoneella ja Sundsvallin WFS paikkatietolähteiden joukossa.
 
 ![Dataspatium Muokkaa-tilassa: IFC-malli 3D:nä ja Vertaa versioita, jossa uusi seinä on vihreä ja muuttunut paloluokka näkyy](../images/jamfor.png)
 
@@ -201,7 +202,7 @@ Jokaista päänumeroa kohden on yksi julkaisu, ja samannumeroiset Dataspatium ja
 | Dataspatium | Mitä siinä on | Kuuluu yhteen |
 |---|---|---|
 | 1.0.0 | Koko 1-sarja: tiedonhaku, käsittely, R, Python, kartat, kaaviot, asiakirjat ja jakaminen sekä kaavat. Palvelinta vasten vain Documents API: hae asiakirjoja aineistoiksi ja lähetä aineistoja ja tiedostoja takaisin. Ei asioita eikä malleja | Dataregium 1.0.0 (vain Documents API) |
-| 2.0.0 | Koko 2-sarja: IFC-mallit 3D:nä taulukoineen, ominaisuuksineen ja määrineen, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi (IFC-LPG) piirrettynä ja kyseltynä sekä kaavat suunnittelutyökaluista täysin | Dataregium 2.0.0 |
+| 2.0.0 | Koko 2-sarja: IFC-mallit 3D:nä taulukoineen, ominaisuuksineen ja määrineen, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi (IFC-LPG) piirrettynä ja kyseltynä sekä kaavat suunnittelutyökaluista täysin sekä kortti Projektin jäsenet projektin vastuuhenkilölle | Dataregium 2.0.0 |
 | 3.0.0 | 3-sarja: kortti *Validoi malli*, törmäystarkastus selaimessa, BCF-kamerat mallin koordinaateissa, graafi runkomuodossa, Kysy tekoälyltä ja Muuta tekoälyllä, Vertaa versioita, julkaisu perusversiolla ja esitarkistus, muutosehdotukset, jotka kokeillaan ja hyväksytään palvelimella | Dataregium 3.0.0 |
 
 Uusi julkaisu samassa päänumerossa korvaa edellisen; vain kunkin sarjan uusin korjataan. Sovelluksen päivitystarkistus tarjoaa
@@ -289,11 +290,12 @@ ihmiselle tai tekoälyagentille, joka vie osan siitä eteenpäin; palvelimen puo
   koskaan työkaluja, joita tekoäly voi kutsua. Rakennettu 3.0.0:ssa.
 - **Versiomalli.** Muutosjoukko lähetetään palvelimelle BCF-asiana, jonka snippet on palvelimen muodossa (GlobalId ja polku
   avaimena), palvelin kokeilee sitä perusversiota vasten ja *manager* hyväksyy sen seuraavaksi versioksi; vanhentuneella perusversiolla
-  tehty julkaisu hylätään (412) ja ristiriidat näytetään. Rakennettu 3.0.0:ssa. Seuraavaksi: kolmisuuntainen yhdistäminen sovelluksessa
-  ristiriidassa, versiohistoria asiakirjaa kohden ja BCF-asia jokaista hyväksyttyä muutosjoukkoa kohden.
+  tehty julkaisu hylätään (412) ja ristiriidat näytetään. Rakennettu 3.0.0:ssa, samoin kuin valinta ristiriidoissa,
+  joita palvelin ei voi yhdistää, palvelimen muutosjoukko versiota kohden ja BCF-asia jokaista hyväksyttyä muutosjoukkoa kohden.
 - **Vertaa versioita** kolmesta lähteestä: tilannekuvat ja muut mallit sovelluksessa, palvelimen muutosjoukko versiota kohden ja
   palvelimen diff versioiden välillä. Rakennettu 3.0.0:ssa.
-- **Projektin hallinnoija** saa sivun sovellukseen, kun Dataregiumin rajapinta jäsenille ja rooleille on olemassa.
+- **Projektin hallinnoijalla** on sovelluksessa kortti *Projektin jäsenet*: jäsenet, roolit ja projektin nimi. Rakennettu
+  versioissa 2.0.0 ja 3.0.0.
 - **Vaiheet 4 ja 5, vaiheen 3 jälkeen:** repositoriotila projektia kohden paikallisella Dataregiumilla omalla tietokoneella sekä haku
   ja julkaisu paikallisen ja etäpalvelimen välillä; suuret mallit piirrettynä palvelimen geometriarajapinnasta, kun selain ei riitä;
   projektiprofiilit IDS:llä ja bSDD:llä, tekoälyn kirjoittamat IDS:t ja elementteihin sidotut buildingSMART-säännöt.

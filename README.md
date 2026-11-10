@@ -96,7 +96,7 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   *Dataspatium Mobil* för att visa och samla in i fält (se [Dela](docs/sv/dela.md)).
 - **Flöden och slag**: sparade kedjor som körs med ett klick, bevakade källor, och lägen som känner igen vad en datamängd är och erbjuder
   rätt vyer och verktyg (se [Lägen](docs/sv/lagen.md)).
-- **Dataregium med ärenden**: modeller och ärenden från servern, ärenden ur 3D-vyn, BCF-filer, serverns IFC-graf och administrationen
+- **Dataregium med ärenden**: modeller och ärenden från servern, ärenden ur 3D-vyn, BCF-filer, serverns IFC-graf, administrationen och kortet Projektets medlemmar för den projektansvarige
   (se [Dataspatium och Dataregium](#dataspatium-och-dataregium)).
 - **Sju språk**: också nynorska, med handboken i appen och grundkursen genom alla åtta lägen.
 
@@ -108,7 +108,9 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
   spara eller publicera.
 - **Versioner mot Dataregium**: publicering med basversion, förhandskontroll, ändringsförslag som servern prövar och en manager
   godkänner, och *Jämför versioner* markerat i 3D.
-- **Mer**: serverns IFC-graf i skelettform, en lokal Dataregium på den egna datorn och Sundsvalls WFS bland geodatakällorna.
+- **Mer**: krockar vid godkännande som du avgör i appen, en kontroll av modellens samband som spärrar det ett ändringsset förstör, AI:n
+  som förhandsvisar och rättar sitt eget ändringsset, serverns IFC-graf i skelettform med byggdelar nära en byggdel, en lokal
+  Dataregium på den egna datorn och Sundsvalls WFS bland geodatakällorna.
 
 ![Dataspatium i läget Bearbeta: en IFC-modell i 3D med Jämför versioner, där en ny vägg är grön och en ändrad brandklass listas](docs/images/jamfor.png)
 
@@ -194,7 +196,7 @@ Det finns en utgåva per huvudnummer, och Dataspatium och Dataregium med samma n
 | Dataspatium | Vad den har | Hör ihop med |
 |---|---|---|
 | 1.0.0 | Hela 1-serien: datainhämtning, bearbetning, R, Python, kartor, diagram, dokument och delning, samt planer. Mot en server bara Documents API: hämta dokument som datamängder och skicka tillbaka datamängder och filer. Inga ärenden och inga modeller | Dataregium 1.0.0 (bara Documents API) |
-| 2.0.0 | Hela 2-serien: IFC-modeller i 3D med tabeller, egenskaper och mängder, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf (IFC-LPG) ritad och frågad, och planer ur planeringsverktyg fullt ut | Dataregium 2.0.0 |
+| 2.0.0 | Hela 2-serien: IFC-modeller i 3D med tabeller, egenskaper och mängder, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf (IFC-LPG) ritad och frågad, och planer ur planeringsverktyg fullt ut, och kortet Projektets medlemmar för den projektansvarige | Dataregium 2.0.0 |
 | 3.0.0 | 3-serien: kortet *Validera modellen*, kollisionskontroll i webbläsaren, BCF-kameror i modellens koordinater, grafen i skelettform, Fråga AI och Ändra med AI, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern | Dataregium 3.0.0 |
 
 En ny utgåva i samma huvudnummer ersätter den förra; bara den senaste i varje serie rättas. Appens uppdateringskontroll erbjuder
@@ -279,11 +281,11 @@ människa eller AI-agent, som för en del av det vidare; serverns sida står i D
   verktyg AI:n kan anropa. Byggt i 3.0.0.
 - **Versionsmodellen.** Ett ändringsset skickas till servern som ett BCF-ärende med snippet i serverns form (GlobalId och sökväg
   som nyckel), servern prövar det mot basversionen och en *manager* godkänner det till nästa version; en publicering med inaktuell
-  bas avvisas (412), och krockarna visas. Byggt i 3.0.0. Härnäst: trevägsmerge i appen vid krock, versionshistoriken per dokument
-  och ett BCF-ärende per godkänt ändringsset.
+  bas avvisas (412), och krockarna visas. Byggt i 3.0.0, liksom valet vid krockar som servern
+  inte kan sammanfoga, serverns ändringsset per version och ett BCF-ärende per godkänt ändringsset.
 - **Jämför versioner** med tre källor: ögonblicksbilder och andra modeller i appen, serverns ändringsset per version och serverns
   diff mellan versioner. Byggt i 3.0.0.
-- **Projektets förvaltare** får en sida i appen när Dataregiums API för medlemmar och roller finns.
+- **Projektets förvaltare** har kortet *Projektets medlemmar* i appen: medlemmar, roller och projektets namn. Byggt i 2.0.0 och 3.0.0.
 - **Steg 4 och 5, efter steg 3:** repoläge per projekt med en lokal Dataregium på den egna datorn och hämta och publicera mellan den
   lokala och den fjärran; stora modeller ritade från serverns geometri-API när webbläsaren inte räcker; projektprofiler med IDS och
   bSDD, IDS som AI:n skriver och buildingSMART-regler kopplade till element.
