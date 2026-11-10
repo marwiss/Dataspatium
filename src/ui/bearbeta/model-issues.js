@@ -116,6 +116,9 @@
           const [comments, viewpoints] = await Promise.all([opencde.comments(s.connector, s.projectId, tp.guid), opencde.viewpoints(s.connector, s.projectId, tp.guid)]);
           if (s.selected !== tp.guid) return;
           s.comments = comments; s.viewpoints = viewpoints;
+          // The view goes where the viewpoint's camera stood; without a camera it stays on the elements.
+          const withCamera = viewpoints.find((v) => v.perspective_camera || v.orthogonal_camera);
+          if (withCamera && hooks.camera) hooks.camera(withCamera);
           const withPicture = viewpoints.find((v) => v.snapshot);
           if (withPicture) {
             const got = await opencde.binary(s.connector, `${opencde.bcfBase(s.connector)}/projects/${encodeURIComponent(s.projectId)}/topics/${encodeURIComponent(tp.guid)}/viewpoints/${encodeURIComponent(withPicture.guid)}/snapshot`, 'image/*');
@@ -195,7 +198,12 @@
         const guids = await guidsOf(ids || []);
         const vp = {};
         // BCF cameras are in the model's own coordinates with Z up, so that Bonsai and other clients show the same place.
-        if (view) vp.perspective_camera = view.ifc ? bcfXml.cameraFromView(Object.assign({}, view, view.ifc), { worldUp: [0, 0, 1] }) : bcfXml.cameraFromView(view);
+        if (view) Object.assign(vp, bcfXml.cameraOfView(view.ifc ? Object.assign({}, view, view.ifc) : view, view.ifc ? { worldUp: [0, 0, 1] } : {}));
+        // A section goes with the viewpoint as BCF clipping planes, in the model's coordinates as the drawing keeps them.
+        if (view && Array.isArray(view.section) && view.section.length) {
+          const pt = (v) => ({ x: Math.round(v[0] * 1000) / 1000, y: Math.round(v[1] * 1000) / 1000, z: Math.round(v[2] * 1000) / 1000 });
+          vp.clipping_planes = view.section.map((c) => ({ location: pt(c.location), direction: pt(c.direction) }));
+        }
         if (picture) vp.snapshot = { snapshot_type: 'png', snapshot_data: picture.split(',')[1] };
         vp.components = { selection: guids.map((g) => ({ ifc_guid: g, originating_system: 'Dataspatium' })), visibility: { default_visibility: true } };
         if (!view && !picture && !guids.length) return null;

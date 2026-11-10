@@ -187,6 +187,9 @@ What works in one version also works in the next. Each version goes with the sam
 - **Versions with Dataregium**: send a change as a proposal that the server tries and a project manager approves; the server merges
   changes from several people, and at a conflict you choose what applies. *Technically:* publishing with a base version (412 at a
   newer version), a snippet with GlobalId and path as key.
+- **Navigate the model**: a view cube and standard views, an orthographic view, a section box and a section at a storey, a pivot
+  by double click and the keyboard; the camera and the section travel with the issues' viewpoints, and maps and plans have a scale
+  bar (see [CAD and BIM](cad-bim.md#views-and-the-keyboard)).
 - **Compare versions**: see what has been added, removed and changed between two versions of a model, coloured in 3D, also against the
   server's versions.
 - **More**: the server's IFC graph in a lighter form with the query *elements near an element*, a Dataregium on your own computer as a
@@ -281,7 +284,7 @@ There is one release per major number, and Dataspatium and Dataregium with the s
 |---|---|---|
 | 1.0.0 | Data from files and open APIs, processing, R, SQL and regular expressions, Swedish plans, charts and maps in charts, dashboards, documents, export and sharing. Against a server only Documents API: fetch documents as datasets and send datasets and files back. No issues, no models and no Python | Dataregium 1.0.0 (Documents API only) |
 | 2.0.0 | Everything in 1.0.0 and also the modes Search and Share, Python and statistics without code, more sources, map views, Nordic plans, graphs, IFC models in 3D with IDS checks, flows, Dataspatium Mobile, issues with viewpoints (BCF API 3.0 and 2.1), the server's IFC graph, the card *Administration* and the card *The project's members* | Dataregium 2.0.0 |
-| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
+| 3.0.0 | Everything in 2.0.0 and also the card *Validate the model*, clash detection, navigation with a view cube and sections, Ask AI and Change with AI, new empty models in the schema of your choice, Compare versions, publishing with a base version and precheck, change proposals that are tried and approved on the server with a choice at conflicts, and the graph in a lighter form | Dataregium 3.0.0 |
 
 A new release in the same major number replaces the previous one; only the latest in each series is corrected. The app's update check
 offers the next major number, and datasets, lists, charts, templates and scripts come along when you open the new version's

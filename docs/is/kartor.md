@@ -26,7 +26,7 @@ Ef hnitin eru í öðru kerfi en SWEREF 99 TM velur þú það við innflutning,
 
 ## Kortið í Vinna
 
-Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga, og
+Kortið sýnir fitjur gagnasafnsins í lit forritsins. Þysjaðu með hjólinu eða hnöppunum, færðu með því að draga (kvarðinn neðst til vinstri sýnir fjarlægðina í metrum), og
 smelltu á fitju til að sjá eigindi hennar í skoðaranum; *Breyta í töflunni* fer með þig á röðina í töflunni.
 Tækjastikan hefur bakgrunnskort (ekkert eða OpenStreetMap), *Þysja að öllu*, *Vista sem kortasýn* (vistar kortið með
 lögum og núverandi sýn sem myndrit í Myndgera) og *Sýna sem töflu*. Allt sem þú gerir í töflunni (sía, leiðrétta, eyða

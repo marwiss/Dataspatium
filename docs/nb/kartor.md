@@ -26,7 +26,7 @@ Er koordinatene i et annet system enn SWEREF 99 TM, velger du det når du import
 
 ## Kartet i Bearbeid
 
-Kartet viser datasettets objekter i appens farge. Zoom med hjulet eller knappene, panorer ved å dra, og klikk på et
+Kartet viser datasettets objekter i appens farge. Zoom med hjulet eller knappene, panorer ved å dra (målestokken nede til venstre viser avstanden i meter), og klikk på et
 objekt så viser inspektøren attributtene; *Rediger i tabellen* tar deg til raden i tabellen. Verktøylinjen har
 bakgrunnskart (ingen eller OpenStreetMap), *Zoom til alt*, *Lagre som kartvisning* (lagrer kartet med lag og gjeldende
 visning som et diagram i Visualiser) og *Vis som tabell*. Alt du gjør i tabellen (filtrere, rette, slette rader) vises

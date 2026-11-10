@@ -27,7 +27,7 @@ Jos koordinaatit ovat muussa koordinaatistossa kuin SWEREF 99 TM, valitset sen t
 
 ## Kartta Muokkaa-tilassa
 
-Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä ja
+Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä (mittakaavajana vasemmassa alakulmassa näyttää etäisyyden metreinä) ja
 napsauta kohdetta, niin tarkastelupaneeli näyttää sen ominaisuudet; *Muokkaa taulukossa* vie riville taulukossa.
 Työkalupalkissa ovat taustakartta (ei mitään tai OpenStreetMap), *Sovita kaikki*, *Tallenna karttanäkymänä*
 (tallentaa kartan tasoineen ja nykyisine näkymineen kaaviona Visualisoi-tilaan) ja *Näytä taulukkona*. Kaikki, mitä

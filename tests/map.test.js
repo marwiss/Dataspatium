@@ -70,6 +70,8 @@
       assert.ok(el.querySelector('.leaflet-overlay-pane canvas'), 'canvas renderer for the vector layers');
       await assertLayerVisible(assert, el.querySelector('.leaflet-overlay-pane canvas'), 'render');
       assert.ok(!el.querySelector('.leaflet-tile-pane img'), 'no tiles without a background map');
+      const scale = el.querySelector('.leaflet-control-scale-line');
+      assert.ok(scale && /\d\s*k?m$/.test(scale.textContent.trim()), 'a scale bar in metres: ' + (scale && scale.textContent));
       assert.equal(hd.info.rows, 3 + 4 + 21, 'three areas, four points and the 21 counties');
       assert.equal(hd.legend.length, 3);
       const areaLegend = hd.legend.find((l) => l.name === 'Testområden');

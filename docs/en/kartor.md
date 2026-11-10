@@ -26,7 +26,7 @@ If the coordinates are in another system than SWEREF 99 TM, you choose it when y
 
 ## The map in Process
 
-The map shows the dataset's features in the app's colour. Zoom with the wheel or the buttons, pan by dragging, and
+The map shows the dataset's features in the app's colour. Zoom with the wheel or the buttons, pan by dragging (the scale bar at the bottom left gives the distance in metres), and
 click a feature to see its attributes in the inspector; *Edit in the table* takes you to the row in the table. The
 toolbar has the background map (none or OpenStreetMap), *Zoom to all*, *Save as map view* (saves the map with its
 layers and current view as a chart in Visualise) and *Show as table*. Everything you do in the table (filter,

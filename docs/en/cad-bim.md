@@ -13,8 +13,10 @@ counts per type), and *Import* creates the dataset. IFC2X3, IFC4 and IFC4X3 in S
 
 ## The model in Process
 
-The model opens as a 3D view with a table of the building elements below it. Drag to turn, scroll to zoom and drag with
-the right button to move. The frame button shows the whole model; the odd object far from the building is not counted.
+The model opens as a 3D view with a table of the building elements below it. Drag to turn, scroll to zoom towards the
+pointer, and drag with the right button or with Shift to move; on a touch screen one finger turns, and two pinch and move.
+Double-click an element to turn about that very point. The frame button shows everything shown; the odd object far from the
+building is not counted. More ways to look at the model are under [Views and the keyboard](#views-and-the-keyboard).
 
 - **Select**: click an element in the model or a row in the table. The selection follows, and the inspector shows the
   type, storey, material, classification, properties and quantities, and the surface and volume measured on the geometry.
@@ -25,17 +27,42 @@ the right button to move. The frame button shows the whole model; the odd object
 The geometry is computed from the original file the first time the model opens in a session, and it is used only for
 drawing and measuring. The tables remain even if the computer has no WebGL, and a message then replaces the 3D view.
 
+### Views and the keyboard
+
+- **The view cube** in the corner turns with the model. Click a face to see the model from above, the front, the right, the
+  back, the left or below, and the button under the cube to see it from above at an angle. The front view looks along the
+  model's Y axis, that is north when the model is drawn with north up. The views show what the filter shows.
+- **Orthographic view**: the button with the square switches between perspective and an orthographic view, where elements do
+  not shrink with distance. The view from above becomes a plan and the front view an elevation. A chart and a viewpoint keep
+  which view it was.
+- **Section**: the button with the layers opens the section in the inspector. Drag the sliders for east–west, south–north and
+  height to cut away what lies outside a box, or choose a storey under *Section at storey* to see it from its floor up to 1.2 m as
+  a plan. *Remove the section* shows everything again. The section goes along with a chart and a viewpoint, and a viewpoint from
+  another program shows its section.
+- **Zoom to marked** shows the marked elements, and **Show only marked** hides everything else so that you can turn around
+  them; click again to show everything.
+- **The keyboard** works when the 3D view has focus: click in it or go there with Tab.
+
+| Key | Does |
+|---|---|
+| Arrows | move the view |
+| Ctrl or Shift and the arrows | turn |
+| + and − | zoom |
+| F | zooms to the marked |
+| Home | shows everything |
+| 1–7 | from above, front, right, back, left, below, from above at an angle |
+| O | switches the orthographic view |
+
 ## Issues from a CDE
 
 A model fetched from an OpenCDE server, or any model when such a server is a source, can show its issues: the button
 *Issues* in the model view opens a panel in the inspector with the project's BCF topics. Those that point at elements in
 this model come first, with their status and the number of elements. Click an issue and the elements are marked in the 3D
 view, and the panel shows the description, the snapshot and the comments. The issues are fetched when you ask and are not
-stored in the dataset; to count on them, save them as a table in Import. This is reading; creating and changing issues
-comes in the next release.
+stored in the dataset; to count on them, save them as a table in Import. When the issue has a viewpoint with a camera, the view goes there, in perspective or orthographic and with its section.
 
 With the rights for it, you can also write. *New issue* creates an issue on the server with title, type, status and labels
-from the project's lists, and the view goes along as the viewpoint: the camera, a snapshot and the marked elements as components.
+from the project's lists, and the view goes along as the viewpoint: the camera (perspective or orthographic) with the section, a snapshot and the marked elements as components.
 In a chosen issue you can write a comment, change the status and add the current view as a new viewpoint. *Save as BCF* gives all
 the project's issues with comments, viewpoints and snapshots as a BCF file, which tools without an API can open. A BCF file can
 also be read in Import: the issues become a table, comments and components tables beside it.
@@ -184,7 +211,7 @@ broken surfaces can give uncertain depths. Curved surfaces are split into triang
 ## DXF drawings
 
 A DXF file becomes a table with one drawing object per row (type, layer, colour, length, area, text and position) and an
-SVG drawing. The drawing opens in Process, where you zoom with the wheel and pan by dragging. Layers are turned on and off
+SVG drawing. The drawing opens in Process, where you zoom with the wheel or by pinching and pan by dragging; when the drawing has focus the arrows move, + and − zoom, Home shows everything and F zooms to the marked object. A row in the table zooms to its object. Layers are turned on and off
 in the inspector, and a click selects the object and its row. The Quantities tab gives count, length and area per layer and type.
 
 Lines, polylines with arcs, circles, arcs, ellipses, splines, points, texts, solids, 3D faces, blocks and the blocks of

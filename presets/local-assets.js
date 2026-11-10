@@ -567,7 +567,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kartor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 8819,
+  "size": 8877,
   "library": "dataspatium"
  },
  "docs/sv/planer.md": {
@@ -585,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 23997,
+  "size": 26175,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -735,7 +735,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kartor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 8757,
+  "size": 8816,
   "library": "dataspatium"
  },
  "docs/da/planer.md": {
@@ -753,7 +753,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 23940,
+  "size": 26067,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -903,7 +903,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kartor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 8631,
+  "size": 8687,
   "library": "dataspatium"
  },
  "docs/nb/planer.md": {
@@ -921,7 +921,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 23717,
+  "size": 25847,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1071,7 +1071,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/kartor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 8712,
+  "size": 8768,
   "library": "dataspatium"
  },
  "docs/nn/planer.md": {
@@ -1089,7 +1089,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 24041,
+  "size": 26202,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1239,7 +1239,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kartor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9567,
+  "size": 9640,
   "library": "dataspatium"
  },
  "docs/fi/planer.md": {
@@ -1257,7 +1257,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 25541,
+  "size": 27929,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1407,7 +1407,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kartor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 8812,
+  "size": 8874,
   "library": "dataspatium"
  },
  "docs/is/planer.md": {
@@ -1425,7 +1425,7 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 25407,
+  "size": 27664,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1575,7 +1575,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kartor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 8777,
+  "size": 8841,
   "library": "dataspatium"
  },
  "docs/en/planer.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 24147,
+  "size": 26276,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {

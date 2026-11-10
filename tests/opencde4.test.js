@@ -90,7 +90,7 @@
     if (m(/^\/bcf\/3\.0\/projects\/[^/]+\/topics\/[^/]+\/comments$/)) return json([]);
     if ((r = m(/^\/bcf\/3\.0\/projects\/[^/]+\/topics\/([^/]+)\/viewpoints$/))) {
       const list = world.viewpoints.get(r[1]) || [];
-      return json(list.map((vp) => ({ guid: vp.guid, snapshot: { snapshot_type: 'png' }, perspective_camera: { camera_view_point: { x: 1, y: 1, z: 1 }, camera_direction: { x: -1, y: -1, z: -1 }, camera_up_vector: { x: 0, y: 1, z: 0 }, field_of_view: 45, aspect_ratio: 1.6 } })));
+      return json(list.map((vp) => Object.assign({ guid: vp.guid, snapshot: { snapshot_type: 'png' } }, vp.ortho ? { orthogonal_camera: { camera_view_point: { x: 2, y: -30, z: 4 }, camera_direction: { x: 0, y: 1, z: 0 }, camera_up_vector: { x: 0, y: 0, z: 1 }, view_to_world_scale: 12, aspect_ratio: 1.6 } } : { perspective_camera: { camera_view_point: { x: 1, y: 1, z: 1 }, camera_direction: { x: -1, y: -1, z: -1 }, camera_up_vector: { x: 0, y: 1, z: 0 }, field_of_view: 45, aspect_ratio: 1.6 } })));
     }
     if ((r = m(/^\/bcf\/3\.0\/projects\/[^/]+\/topics\/([^/]+)\/viewpoints\/([^/]+)\/(selection|coloring|visibility|snapshot)$/))) {
       const vp = (world.viewpoints.get(r[1]) || []).find((x) => x.guid === r[2]) || { components: {} };
@@ -183,7 +183,7 @@
     world.topics = [topic(1, 'Spricka i vägg', 'Open'), topic(2, 'Dörr saknas', 'Closed'), topic(3, 'Fukt', 'In progress')];
     world.viewpoints.set(uuid(101), [{ guid: uuid(701), components: { selection: [{ ifc_guid: wallGuids[0] }, { ifc_guid: wallGuids[1] }] } }]);
     world.viewpoints.set(uuid(102), [{ guid: uuid(702), components: { selection: [{ ifc_guid: wallGuids[1] }] } }]);
-    world.viewpoints.set(uuid(103), [{ guid: uuid(703), components: { selection: [{ ifc_guid: wallGuids[2] }] } }]);
+    world.viewpoints.set(uuid(103), [{ guid: uuid(703), ortho: true, components: { selection: [{ ifc_guid: wallGuids[2] }] } }]);
     await withApp(async (shell, root) => {
       await waitFor(() => shell.store.get().datasets.some((d) => d.id === model.id), 3000, 'dataset');
       shell.activate('bearbeta');
@@ -199,6 +199,10 @@
       const items = Array.from(legend.querySelectorAll('li')).map((li) => li.textContent.trim());
       assert.equal(items.length, 2, 'Open and In progress colour the walls; Closed loses its shared wall: ' + items.join(' | '));
       assert.ok(items[0].startsWith('Open (2)') && items[1].startsWith('In progress (1)'), items.join(' | '));
+      // While the model is shown, an issue opens at its viewpoint's camera: an orthogonal one turns the view orthographic.
+      assert.ok(!root.querySelector('[data-model-ortho][active]'), 'perspective before');
+      panel.querySelector('[data-issue="' + uuid(103) + '"]').click();
+      await waitFor(() => root.querySelector('[data-model-ortho][active]'), 8000, 'the orthogonal camera of the viewpoint');
       panel.querySelector('[data-issue-table]').click();
       savedTable = await waitFor(async () => (await datasets.list()).find((d) => d.name === t('issues.table.name', { model: 'Kvartershuset' }) && d.source && d.source.cde), 10000, 'the saved table');
       created.push(savedTable.id);

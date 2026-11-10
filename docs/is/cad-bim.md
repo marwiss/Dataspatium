@@ -12,8 +12,10 @@ tekur um fjórðung úr mínútu og það opnast síðan á nokkrum sekúndum.
 
 ## Líkanið í Vinna
 
-Líkanið opnast sem þrívíddarsýn með töflu yfir byggingarhlutana fyrir neðan. Dragðu til að snúa, skrunaðu til að þysja og
-dragðu með hægri hnappi til að færa. Ramminn sýnir allt líkanið; stakir hlutir langt frá byggingunni eru ekki taldir með.
+Líkanið opnast sem þrívíddarsýn með töflu yfir byggingarhlutana fyrir neðan. Dragðu til að snúa, skrunaðu til að þysja
+að bendlinum og dragðu með hægri hnappi eða með Shift til að færa; á snertiskjá snýr einn fingur og tveir klípa og færa.
+Tvísmelltu á byggingarhluta til að snúa um nákvæmlega þann punkt. Ramminn sýnir allt sem er sýnt; stakir hlutir langt frá
+byggingunni eru ekki taldir með. Fleiri leiðir til að skoða líkanið eru undir [Sýnir og lyklaborðið](#sýnir-og-lyklaborðið).
 
 - **Velja**: smelltu á byggingarhluta í líkaninu eða röð í töflunni. Valið fylgir og skoðarinn sýnir gerð, hæð, efni, flokkun,
   eiginleika og magn, ásamt yfirborði og rúmmáli mældu á rúmfræðinni.
@@ -24,16 +26,40 @@ dragðu með hægri hnappi til að færa. Ramminn sýnir allt líkanið; stakir 
 Rúmfræðin er reiknuð úr upprunalegu skránni í fyrsta sinn sem líkanið opnast í lotu og er aðeins notuð til að teikna og mæla.
 Töflurnar eru áfram til þótt tölvuna vanti WebGL; þá birtast skilaboð í stað þrívíddarsýnarinnar.
 
+### Sýnir og lyklaborðið
+
+- **Sýnarkubburinn** í horninu snýst með líkaninu. Smelltu á hlið til að sjá líkanið ofan frá, framan frá, frá hægri, aftan frá,
+  frá vinstri eða neðan frá, og á hnappinn undir kubbnum til að sjá það á ská ofan frá. Framan frá horfir eftir Y-ás líkansins,
+  það er til norðurs þegar líkanið er teiknað með norður upp. Sýnirnar sýna það sem sían sýnir.
+- **Hornrétt sýn**: hnappurinn með ferningnum skiptir á milli fjarvíddar og hornréttrar sýnar, þar sem byggingarhlutar minnka
+  ekki með fjarlægð. Ofan frá verður þá grunnmynd og framan frá útlitsmynd. Myndrit og viewpoint muna hvaða sýn það var.
+- **Snið**: hnappurinn með lögunum opnar sniðið í skoðaranum. Dragðu sleðana fyrir austur–vestur, suður–norður og hæð til að skera
+  burt það sem er utan kassa, eða veldu hæð undir *Snið við hæð* til að sjá hana frá gólfi upp í 1,2 m sem grunnmynd. *Fjarlægja
+  sniðið* sýnir allt aftur. Sniðið fylgir myndriti og viewpoint, og viewpoint úr öðru forriti sýnir sitt snið.
+- **Þysja að merktu** sýnir merktu byggingarhlutana, og **Sýna aðeins merkt** felur allt annað svo að þú getir snúið í kringum
+  þá; smelltu aftur til að sýna allt.
+- **Lyklaborðið** virkar þegar þrívíddarsýnin hefur fókus: smelltu í hana eða farðu þangað með Tab.
+
+| Lykill | Gerir |
+|---|---|
+| Örvarnar | færa sýnina |
+| Ctrl eða Shift og örvarnar | snúa |
+| + og − | þysja |
+| F | þysjar að merktu |
+| Home | sýnir allt |
+| 1–7 | ofan frá, framan frá, frá hægri, aftan frá, frá vinstri, neðan frá, á ská ofan frá |
+| O | skiptir um hornrétta sýn |
+
 ## Mál frá CDE
 
 Líkan sem sótt var frá OpenCDE-þjóni, eða hvaða líkan sem er þegar slíkur þjónn er gagnalind, getur sýnt málin sín:
 hnappurinn *Mál* í líkansýninni opnar spjald í skoðaranum með BCF-málum verkefnisins. Þau sem vísa á byggingarhluta í þessu
 líkani koma fyrst, með stöðu og fjölda byggingarhluta. Smelltu á mál, þá eru byggingarhlutarnir merktir í 3D-sýninni og
 spjaldið sýnir lýsingu, skyndimynd og athugasemdir. Málin eru sótt þegar þú biður um það og eru ekki vistuð í gagnasafninu;
-til að reikna með þeim vistar þú þau sem töflu í Sækja. Þetta er lestur; að búa til og breyta málum kemur í næstu útgáfu.
+til að reikna með þeim vistar þú þau sem töflu í Sækja. Ef málið hefur viewpoint með myndavél fer sýnin þangað, í fjarvídd eða hornrétt og með sniði sínu.
 
 Með réttindum til þess er einnig hægt að skrifa. *Nýtt mál* býr til mál á þjóninum með fyrirsögn, tegund, stöðu og merkjum úr
-listum verkefnisins, og sýnin fylgir með sem viewpoint: myndavélin, skyndimynd og merktu byggingarhlutarnir sem íhlutir. Í völdu
+listum verkefnisins, og sýnin fylgir með sem viewpoint: myndavélin (í fjarvídd eða hornrétt) með sniðinu, skyndimynd og merktu byggingarhlutarnir sem íhlutir. Í völdu
 máli getur þú skrifað athugasemd, breytt stöðu og bætt núverandi sýn við sem nýju viewpoint. *Vista sem BCF* gefur öll mál
 verkefnisins með athugasemdum, viewpoints og skyndimyndum sem BCF-skrá, sem verkfæri án API geta opnað. BCF-skrá má einnig lesa
 inn í Sækja: málin verða tafla, athugasemdir og íhlutir töflur við hliðina.
@@ -178,7 +204,7 @@ gallaða fleti getur gefið óvissa dýpt. Bognir fletir eru skipt í þríhyrni
 ## DXF-teikningar
 
 DXF-skrá verður að töflu með einum teikningarhlut í hverri röð (gerð, lag, litur, lengd, flatarmál, texti og staðsetning) og
-SVG-teikningu. Teikningin opnast í Vinna, þar sem þú þysjar með hjólinu og færir með því að draga. Kveikt er og slökkt á
+SVG-teikningu. Teikningin opnast í Vinna, þar sem þú þysjar með hjólinu eða með því að klípa og færir með því að draga; þegar teikningin hefur fókus færa örvarnar, + og − þysja, Home sýnir allt og F þysjar að merkta hlutnum. Röð í töflunni þysjar að hlut sínum. Kveikt er og slökkt á
 lögum í skoðaranum og smellur velur hlutinn og röð hans. Flipinn Magn gefur fjölda, lengd og flatarmál eftir lagi og gerð.
 
 Línur, fjöllínur með bogum, hringir, bogar, sporbaugar, splínur, punktar, textar, heilflötur, þrívíddarfletir, blokkir og

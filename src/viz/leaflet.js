@@ -385,6 +385,8 @@
         grid ? { crs: grid, minZoom: 0, maxZoom: GRID_RESOLUTIONS.length - 1 } : {}));
       // The map on its element, for the tests (as Cytoscape's graphs carry theirs).
       /** @type {any} */ (el)._dmMap = map;
+      // A scale bar in metres on every interactive map: plans and maps are read to scale.
+      if (interactive) L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
       const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
       const tiles = await tileLayer(def, options, info, !!grid);
       if (tiles) tiles.addTo(map);

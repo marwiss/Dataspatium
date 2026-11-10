@@ -12,8 +12,10 @@ eit kvart minutt å importere og blir deretter opna på nokre sekund.
 
 ## Modellen i Bearbeid
 
-Modellen blir opna som 3D-vising med ein tabell over bygningsdelane under. Dra for å dreie, rull for å zoome og dra med høgre
-knapp for å flytte. Knappen med ramma viser heile modellen; einskilde objekt langt frå bygningen blir ikkje rekna med.
+Modellen blir opna som 3D-vising med ein tabell over bygningsdelane under. Dra for å dreie, rull for å zoome mot peikaren,
+og dra med høgre knapp eller med Skift for å flytte; på ein berøringsskjerm dreier éin finger, og to klyp og flyttar.
+Dobbeltklikk på ein bygningsdel for å dreie rundt akkurat det punktet. Knappen med ramma viser alt som blir vist; einskilde
+objekt langt frå bygningen blir ikkje rekna med. Fleire måtar å sjå modellen på står under [Visingar og tastaturet](#visingar-og-tastaturet).
 
 - **Merk**: klikk på ein bygningsdel i modellen eller ei rad i tabellen. Merkinga følgjer med, og inspektøren viser
   type, etasje, materiale, klassifikasjon, eigenskapar og mengder og dessutan overflate og volum målt på geometrien.
@@ -24,17 +26,41 @@ knapp for å flytte. Knappen med ramma viser heile modellen; einskilde objekt la
 Geometrien blir rekna ut frå originalfila første gongen modellen blir opna i ein sesjon, og blir berre brukt til å teikne og måle. Tabellane
 finst framleis sjølv om datamaskina manglar WebGL; då blir ei melding vist i staden for 3D-visinga.
 
+### Visingar og tastaturet
+
+- **Visingskuben** i hjørnet dreier med modellen. Klikk på ei side for å sjå modellen ovanfrå, framanfrå, frå høgre, bakanfrå,
+  frå venstre eller nedanfrå, og på knappen under kuben for å sjå han skrått ovanfrå. Framanfrå ser langs Y-aksen til modellen,
+  det vil seie mot nord når modellen er teikna med nord opp. Visingane viser det filteret viser.
+- **Ortografisk vising**: knappen med kvadratet byter mellom perspektiv og ortografisk vising, der bygningsdelane ikkje krympar
+  med avstanden. Ovanfrå blir då ei planteikning og framanfrå ein fasade. Eit diagram og eit viewpoint hugsar kva vising det var.
+- **Snitt**: knappen med laga opnar snittet i inspektøren. Dra i glidebrytarane for aust–vest, sør–nord og høgd for å skjere bort
+  det som ligg utanfor ein boks, eller vel ein etasje under *Snitt ved etasje* for å sjå han frå golvet opp til 1,2 m som ei
+  planteikning. *Fjern snittet* viser alt igjen. Snittet følgjer med eit diagram og eit viewpoint, og eit viewpoint frå eit anna
+  program viser snittet sitt.
+- **Zoom til merkte** viser dei merkte bygningsdelane, og **Vis berre merkte** gøymer alt anna slik at du kan dreie rundt dei;
+  klikk igjen for å vise alt.
+- **Tastaturet** verkar når 3D-visinga har fokus: klikk i ho eller gå dit med Tab.
+
+| Tast | Gjer |
+|---|---|
+| Pilene | flyttar visinga |
+| Ctrl eller Skift og pilene | dreier |
+| + og − | zoomar |
+| F | zoomar til dei merkte |
+| Home | viser alt |
+| 1–7 | ovanfrå, framanfrå, frå høgre, bakanfrå, frå venstre, nedanfrå, skrått ovanfrå |
+| O | byter ortografisk vising |
+
 ## Saker frå eit CDE
 
 Ein modell henta frå ein OpenCDE-tenar, eller kva modell som helst når ein slik tenar finst som kjelde, kan vise sakene
 sine: knappen *Saker* i modellvisinga opnar eit panel i inspektøren med BCF-sakene i prosjektet. Dei som peikar på
 bygningsdelar i denne modellen står først, med status og tal på bygningsdelar. Klikk på ei sak, så blir bygningsdelane merkte i
 3D-visinga, og panelet viser skildring, augneblinksbilete og kommentarar. Sakene blir henta når du ber om det og blir ikkje lagra i
-datasettet; for å rekne på dei lagrar du dei som ein tabell i Hent. Dette er lesing; å opprette og endre saker kjem i
-neste utgåve.
+datasettet; for å rekne på dei lagrar du dei som ein tabell i Hent. Har saka eit viewpoint med kamera, går visinga dit, i perspektiv eller ortografisk og med snittet sitt.
 
 Med rettane til det kan du òg skrive. *Ny sak* opprettar ei sak på tenaren med tittel, type, status og etikettar frå
-listene i prosjektet, og visinga følgjer med som viewpoint: kameraet, eit augneblinksbilete og dei merkte bygningsdelane som
+listene i prosjektet, og visinga følgjer med som viewpoint: kameraet (perspektiv eller ortografisk) med snittet, eit augneblinksbilete og dei merkte bygningsdelane som
 komponentar. I ei vald sak kan du skrive ein kommentar, byte status og leggje til den aktuelle visinga som eit nytt viewpoint.
 *Lagre som BCF* gjev alle sakene i prosjektet med kommentarar, viewpoints og augneblinksbilete som ei BCF-fil, som verktøy utan API
 kan opne. Ei BCF-fil kan òg lesast inn i Hent: sakene blir ein tabell, kommentarar og komponentar tabellar ved sida av.
@@ -183,7 +209,7 @@ flater kan gi usikre djupner. Bøygde flater er delte opp i trekantar, så ein t
 ## DXF-teikningar
 
 Ei DXF-fil blir ein tabell med eitt teikningsobjekt per rad (type, lag, farge, lengd, areal, tekst og plassering) og ei
-SVG-teikning. Teikninga blir opna i Bearbeid, der du zoomar med hjulet og panorerer ved å dra. Laga blir slått av og på i inspektøren,
+SVG-teikning. Teikninga blir opna i Bearbeid, der du zoomar med hjulet eller ved å klype og panorerer ved å dra; når teikninga har fokus, flyttar pilene, + og − zoomar, Home viser alt og F zoomar til det merkte objektet. Ei rad i tabellen zoomar til objektet sitt. Laga blir slått av og på i inspektøren,
 og eit klikk merkjer objektet og rada. Fana Mengder gjev tal, lengd og areal per lag og type.
 
 Linjer, polylinjer med bogar, sirklar, bogar, ellipsar, splines, punkt, tekstar, solid, 3D-flater, blokker og

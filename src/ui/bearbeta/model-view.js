@@ -22,6 +22,9 @@
       const s = { id: null, filter: { typ: '', vaning: '', lager: '', search: '' }, selected: null, count: 0, hidden: new Set(), error: '', progress: null, preview: null };
       let ds = null; let slots = null; let handle = null; let host = null; let table = null; let seq = 0; let searchTimer = 0;
       let svgEl = null; let box = null; let removeDrag = null;
+      /** The button for the orthographic view, whose state follows the view (the key O changes it too). */ let orthoBtn = null;
+      /** The button Visa bara markerade. */ let isolateBtn = null;
+      /** The button Snitt and the section panel in the inspector, when open. */ let sectionBtn = null; let sectionEl = null;
       /** The issues panel, when open. */ let issues = null;
       /** The panel Fråga AI, when open. */ let ai = null;
       /** The panel Jämför versioner, when open. */ let compare = null;
@@ -42,11 +45,12 @@
 
       /** @param {any} dataset @param {{center: HTMLElement, right: HTMLElement}} target */
       async function render(dataset, target) {
-        if (handle) { handle.destroy(); handle = null; }
+        // A new drawing of the same model (a store update, a saved table) keeps the camera, its projection and its section.
+        if (handle) { if (s.id === dataset.id && !(s.preview && s.preview.bytes)) s.lastView = handle.view(); handle.destroy(); handle = null; }
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; } }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; s.isolated = null; s.sectionOpen = false; s.sectionPlanes = null; s.lastView = null; s.pendingViewpoint = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; } }
         ds = dataset;
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
@@ -93,6 +97,10 @@
               isDxf() ? null : ui.button({ label: t('compare.button'), icon: 'history', title: t('compare.button.hint'), 'data-model-compare-toggle': '', onClick: toggleCompare }),
               selects, search,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('model.fit.hint'), onClick: fitAll }),
+              ui.button({ label: t('model.zoom.marked'), icon: 'circle-dot', 'icon-only': true, title: t('model.zoom.marked.hint'), 'data-model-zoom-marked': '', onClick: () => { if (handle) handle.fit(handle.marked()); else if (!zoomDxfTo(s.selected)) fitAll(); } }),
+              isDxf() ? null : (isolateBtn = ui.button({ label: t('model.isolate'), icon: 'eye', 'icon-only': true, title: t('model.isolate.hint'), 'data-model-isolate': '', onClick: () => toggleIsolate().catch((err) => shell.log(String((err && err.message) || err), 'error')) })),
+              isDxf() ? null : (sectionBtn = ui.button({ label: t('model.section'), icon: 'layers', 'icon-only': true, title: t('model.section.hint'), 'data-model-section': '', onClick: toggleSection })),
+              isDxf() ? null : (orthoBtn = ui.button({ label: t('model.ortho'), icon: 'square', 'icon-only': true, title: t('model.ortho.hint'), 'data-model-ortho': '', onClick: () => { if (handle) handle.setProjection(handle.projection() === 'orthographic' ? 'perspective' : 'orthographic'); } })),
               ui.button({ label: t('viz.save.as.chart'), icon: 'chart-column', title: t('model.chart.save.hint'), onClick: saveChart }),
               options.onActions && !isDxf() ? ui.button({ label: t('bearbeta.actions'), icon: 'sparkles', title: t('model.actions.hint'), 'data-model-actions': '', onClick: () => options.onActions() }) : null,
               ui.button({ label: t('bearbeta.view.table'), icon: 'table', title: t('model.table.hint'), onClick: options.onTable }))),
@@ -107,11 +115,12 @@
         if (issues) return;
         issues = D.require('ui/bearbeta/model-issues').create(ctx, ds, {
           select: (ids, fit) => { if (handle) handle.select(ids, { fit }); },
+          camera: (vp) => { if (handle) return handle.setViewpoint(vp); s.pendingViewpoint = vp; return true; },
           view: () => {
             if (!handle) return null;
             const v = handle.view();
             // The camera also in the model's own coordinates, for BCF: other clients put it where the view had it.
-            return Object.assign(v, { fov: handle.camera ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }, handle.toIfc ? { ifc: { position: handle.toIfc(v.position), target: handle.toIfc(v.target) } } : {});
+            return Object.assign(v, { fov: handle.camera && handle.camera.fov ? handle.camera.fov : 45, aspect: handle.camera ? Math.round(handle.camera.aspect * 100) / 100 : 1.6 }, handle.toIfc ? { ifc: { position: handle.toIfc(v.position), target: handle.toIfc(v.target) } } : {});
           },
           png: () => (handle ? handle.png() : ''),
           marked: () => (handle ? handle.marked() : (s.selected ? [s.selected] : [])),
@@ -146,6 +155,108 @@
         if (compare) { compare.destroy(); compare = null; } else compare = D.require('ui/bearbeta/model-compare').create(ctx, ds, { preview: setPreview });
         renderInspector();
       }
+      function setIsolated(ids) {
+        s.isolated = ids && ids.length ? ids.slice() : null;
+        if (isolateBtn) isolateBtn.toggleAttribute('active', !!s.isolated);
+      }
+      /** Visa bara markerade: only the marked elements, with the view turning about them; again shows what the filter shows. */
+      async function toggleIsolate() {
+        if (!handle) return;
+        if (s.isolated) {
+          setIsolated(null);
+          const where = whereSql();
+          if (!where) handle.setVisible(null);
+          else { const res = await (await datasets.ensureOpen(ds.id)).engine.exec(`select id from data${where}`); if (handle) handle.setVisible(res[0] ? res[0].values.map((r) => Number(r[0])) : []); }
+          handle.fit();
+          return;
+        }
+        const ids = handle.marked();
+        if (!ids.length) { ui.toast.show(t('model.isolate.none'), { kind: 'info' }); return; }
+        setIsolated(ids);
+        handle.setVisible(ids);
+        handle.fit(ids);
+      }
+      function toggleSection() {
+        s.sectionOpen = !s.sectionOpen;
+        sectionEl = s.sectionOpen && handle ? sectionPanel() : null;
+        renderInspector();
+      }
+      /**
+       * The panel Snitt: a section box with two sliders per axis of the model (east–west, south–north, height), a cut at a storey
+       * from its floor up to 1.2 m (a plan), and the button that takes the section away. The box is in the model's own coordinates.
+       */
+      function sectionPanel() {
+        const bounds = handle.boundsIfc(null);
+        const lo = bounds.min.map((v, k) => v - Math.max((bounds.max[k] - bounds.min[k]) * 0.02, 0.1));
+        const hi = bounds.max.map((v, k) => v + Math.max((bounds.max[k] - bounds.min[k]) * 0.02, 0.1));
+        const box = draw.boxOfPlanes(handle.section(), { min: lo, max: hi });
+        const el = h('div', { class: 'dm-stack-sm', 'data-model-section-panel': '' }, h('h4', { text: t('model.section.title') }));
+        const rebuild = () => { sectionEl = sectionPanel(); renderInspector(); };
+        const clear = ui.button({ label: t('model.section.clear'), icon: 'x', size: 'sm', title: t('model.section.clear.hint'), 'data-model-section-clear': '', onClick: () => { if (handle) handle.setSection([]); rebuild(); } });
+        if (!box) {
+          el.append(h('p', { class: 'dm-help', text: t('model.section.other') }), clear);
+          return el;
+        }
+        const fmt2 = (v) => i18n.formatNumber(Math.round(v * 100) / 100);
+        const apply = () => { if (handle) handle.setSection(draw.boxPlanes(box)); };
+        const storeys = (facts().storeys || []).slice().reverse();
+        if (storeys.length) {
+          const pick = /** @type {any} */ (h('dm-select', { label: t('model.section.storey'), help: t('model.section.storey.help'), 'data-model-section-storey': '' }));
+          pick.options = [{ value: '', label: t('model.section.storey.none') }].concat(storeys.map((x) => ({ value: x.name, label: x.name })));
+          pick.addEventListener('change', async () => {
+            if (!pick.value || !handle) return;
+            const res = await (await datasets.ensureOpen(ds.id)).engine.exec('select id from data where vaning = ?', [pick.value]);
+            const ids = res[0] ? res[0].values.map((r) => Number(r[0])) : [];
+            if (!ids.length || !handle) return;
+            const floor = handle.boundsIfc(ids).min[2];
+            box.min = lo.slice(); box.max = hi.slice();
+            box.min[2] = floor - 0.05; box.max[2] = floor + 1.2;
+            apply();
+            rebuild();
+          });
+          el.append(pick);
+        }
+        el.append(h('p', { class: 'dm-help', text: t('model.section.help') }));
+        for (let k = 0; k < 3; k++) {
+          const axis = t('model.section.axis.' + 'xyz'[k]);
+          const text = h('span', { class: 'dm-help' });
+          const show = () => { text.textContent = t('model.section.range', { from: fmt2(box.min[k]), to: fmt2(box.max[k]) }); };
+          const slider = (which) => {
+            const input = /** @type {any} */ (h('dm-input', { type: 'range', min: '0', max: '100', step: '0.1', 'aria-label': t('model.section.' + which, { axis }), ['data-model-section-' + which + '-' + 'xyz'[k]]: '' }));
+            const at = which === 'from' ? box.min[k] : box.max[k];
+            input.value = String(Math.round(Math.max(0, Math.min(1, (at - lo[k]) / (hi[k] - lo[k]))) * 1000) / 10);
+            input.addEventListener('input', () => {
+              const v = lo[k] + (hi[k] - lo[k]) * Number(input.value) / 100;
+              if (which === 'from') box.min[k] = Math.min(v, box.max[k] - 0.01); else box.max[k] = Math.max(v, box.min[k] + 0.01);
+              show();
+              apply();
+            });
+            return input;
+          };
+          show();
+          el.append(h('div', { class: 'dm-stack-sm dm-model-section-axis' }, h('strong', { text: axis }), slider('from'), slider('to'), text));
+        }
+        el.append(h('div', { class: 'dm-row-wrap' }, clear));
+        return el;
+      }
+      function applyDxfBox() { if (svgEl && box) svgEl.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`); }
+      /** The drawing zoomed to an element with room around it; false when it is not drawn (a hidden layer, an unknown id). */
+      function zoomDxfTo(id) {
+        if (!svgEl || !box || !id) return false;
+        const el = svgEl.querySelector(`[data-id="${Number(id)}"]`);
+        if (!el) return false;
+        const r = el.getBoundingClientRect(); const sr = svgEl.getBoundingClientRect();
+        if (!sr.width || !sr.height || (!r.width && !r.height)) return false;
+        // The viewBox is drawn with "meet": one scale for both axes and the rest as margins.
+        const k = Math.min(sr.width / box.w, sr.height / box.h);
+        const ox = (sr.width - box.w * k) / 2; const oy = (sr.height - box.h * k) / 2;
+        const cx = box.x + (r.left - sr.left - ox + r.width / 2) / k; const cy = box.y + (r.top - sr.top - oy + r.height / 2) / k;
+        const home = svgEl.dmHome || box;
+        const w = Math.max(r.width / k * 1.6, home.w * 0.02); const h = Math.max(r.height / k * 1.6, home.h * 0.02);
+        box = { x: cx - w / 2, y: cy - h / 2, w, h };
+        applyDxfBox();
+        return true;
+      }
       function fitAll() {
         if (handle) handle.fit();
         else if (svgEl && box) { box = Object.assign({}, svgEl.dmHome); svgEl.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`); }
@@ -169,8 +280,9 @@
           },
         });
       }
-      /** Filters narrow the table and the drawing together. */
+      /** Filters narrow the table and the drawing together; a new filter ends an isolation. */
       async function applyFilter() {
+        setIsolated(null);
         fillTable();
         if (isDxf()) { applyLayers(); return; }
         if (!handle) return;
@@ -186,6 +298,7 @@
         s.selected = id;
         if (handle && from !== 'draw') handle.select(id ? [id] : [], { fit: from === 'table' && !!id });
         if (svgEl) markDxf(id);
+        if (svgEl && from === 'table' && id) zoomDxfTo(id);
         if (from === 'draw' && id && table) {
           const engine = (await datasets.ensureOpen(ds.id)).engine;
           const where = whereSql();
@@ -206,13 +319,32 @@
           const candidate = s.preview && s.preview.bytes ? s.preview.bytes : null;
           // A candidate holds elements the table does not know yet, so a filter cannot narrow it.
           if (where && !candidate) { const res = await (await datasets.ensureOpen(ds.id)).engine.exec(`select id from data${where}`); visible = res[0] ? res[0].values.map((r) => Number(r[0])) : []; }
-          const hd = await draw.render(host, { datasetId: ds.id, visible, selected: s.selected ? [s.selected] : [], bytes: candidate, colors: s.preview && s.preview.colors ? s.preview.colors : null }, {
+          if (s.isolated && !candidate) visible = s.isolated;
+          const kept = !candidate && s.lastView ? s.lastView : null;
+          s.lastView = null;
+          const hd = await draw.render(host, { datasetId: ds.id, visible, selected: s.selected ? [s.selected] : [], bytes: candidate, colors: s.preview && s.preview.colors ? s.preview.colors : null, view: kept }, {
+            navigation: true,
+            label: t('model.canvas'),
+            onProjection: (kind) => { if (orthoBtn) orthoBtn.toggleAttribute('active', kind === 'orthographic'); },
+            onSection: (planes) => { s.sectionPlanes = planes.length ? planes : null; if (sectionBtn) sectionBtn.toggleAttribute('active', planes.length > 0); },
             onSelect: (id) => selectElement(id, 'draw'),
             onProgress: (n) => { if (my === seq) note.textContent = t('model.loading.n', { n: i18n.formatNumber(n) }); },
           });
           if (my !== seq || !host) { hd.destroy(); return; }
           host.querySelector('.dm-model-loading')?.remove();
           handle = hd;
+          if (s.pendingViewpoint) { hd.setViewpoint(s.pendingViewpoint); s.pendingViewpoint = null; }
+          if (orthoBtn) orthoBtn.toggleAttribute('active', hd.projection() === 'orthographic');
+          // A new drawing of the same model (a preview) keeps the section.
+          if (s.sectionPlanes && !candidate) hd.setSection(s.sectionPlanes);
+          if (sectionBtn) sectionBtn.toggleAttribute('active', hd.section().length > 0);
+          if (s.sectionOpen) sectionEl = sectionPanel();
+          if (isolateBtn) isolateBtn.toggleAttribute('active', !!s.isolated);
+          // The view cube turns with the camera and takes it to the standard views.
+          const cube = /** @type {any} */ (h('dm-viewcube'));
+          host.appendChild(cube);
+          cube.addEventListener('dm-view', (ev) => { if (handle) handle.standardView(ev.detail.view); });
+          hd.onView((cam) => { cube.orientation = cam.matrixWorldInverse.elements; });
           // A new drawing of the same model keeps the issue colours the panel chose.
           if (issues && issues.currentColors) { const groups = issues.currentColors(); if (groups.length) hd.setColors(groups); }
           s.error = '';
@@ -248,20 +380,39 @@
         replace(host, svgEl);
         applyLayers();
         if (s.selected) markDxf(s.selected);
-        const setBox = () => svgEl.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`);
+        const setBox = applyDxfBox;
         const scaleOf = () => { const r = host.getBoundingClientRect(); return Math.max(box.w / Math.max(r.width, 1), box.h / Math.max(r.height, 1)); };
-        const onWheel = (ev) => {
-          ev.preventDefault();
+        /** Zooms by k (below 1 comes closer) about a point of the screen. */
+        const zoomAt = (clientX, clientY, k) => {
           const r = host.getBoundingClientRect();
-          const k = ev.deltaY > 0 ? 1.2 : 1 / 1.2;
-          const px = (ev.clientX - r.left) / Math.max(r.width, 1); const py = (ev.clientY - r.top) / Math.max(r.height, 1);
+          const px = (clientX - r.left) / Math.max(r.width, 1); const py = (clientY - r.top) / Math.max(r.height, 1);
           const nw = box.w * k; const nh = box.h * k;
           box.x += (box.w - nw) * px; box.y += (box.h - nh) * py; box.w = nw; box.h = nh;
           setBox();
         };
-        let down = null;
-        const onDown = (ev) => { down = { x: ev.clientX, y: ev.clientY, sx: box.x, sy: box.y, moved: false }; };
+        const onWheel = (ev) => { ev.preventDefault(); zoomAt(ev.clientX, ev.clientY, ev.deltaY > 0 ? 1.2 : 1 / 1.2); };
+        // One pointer pans; two pinch to zoom about their middle (a touch screen).
+        /** @type {Map<number, number[]>} */ const pointers = new Map();
+        let down = null; let pinch = 0;
+        const onDown = (ev) => {
+          pointers.set(ev.pointerId, [ev.clientX, ev.clientY]);
+          if (pointers.size === 2) {
+            const [a, b] = Array.from(pointers.values());
+            pinch = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), 1);
+            if (down) down.moved = true;
+            return;
+          }
+          down = { x: ev.clientX, y: ev.clientY, sx: box.x, sy: box.y, moved: false };
+        };
         const onMove = (ev) => {
+          if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, [ev.clientX, ev.clientY]);
+          if (pinch && pointers.size === 2) {
+            const [a, b] = Array.from(pointers.values());
+            const d = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), 1);
+            zoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, pinch / d);
+            pinch = d;
+            return;
+          }
           if (!down) return;
           const k = scaleOf();
           if (Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 3) down.moved = true;
@@ -269,6 +420,14 @@
           setBox();
         };
         const onUp = (ev) => {
+          pointers.delete(ev.pointerId);
+          if (pointers.size < 2) pinch = 0;
+          if (pointers.size) {
+            // A finger left after a pinch pans on from where it is, and is no click.
+            const [p] = Array.from(pointers.values());
+            down = { x: p[0], y: p[1], sx: box.x, sy: box.y, moved: true };
+            return;
+          }
           const wasClick = down && !down.moved;
           down = null;
           if (!wasClick) return;
@@ -276,11 +435,29 @@
           const hit = target && target.closest ? target.closest('[data-id]') : null;
           selectElement(hit ? Number(hit.getAttribute('data-id')) : null, 'draw');
         };
+        // The keys, while the drawing has focus: the arrows move, + and − zoom, Home shows all and F the marked object.
+        const onKey = (ev) => {
+          if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+          const k = ev.key;
+          let done = true;
+          if (k === 'ArrowLeft') box.x -= box.w * 0.1;
+          else if (k === 'ArrowRight') box.x += box.w * 0.1;
+          else if (k === 'ArrowUp') box.y -= box.h * 0.1;
+          else if (k === 'ArrowDown') box.y += box.h * 0.1;
+          else if (k === '+' || k === '=' || k === '-' || k === '_') { const r = host.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, k === '+' || k === '=' ? 1 / 1.2 : 1.2); }
+          else if (k === 'Home') box = Object.assign({}, svgEl.dmHome);
+          else if (k === 'f' || k === 'F') { if (!zoomDxfTo(s.selected)) box = Object.assign({}, svgEl.dmHome); }
+          else done = false;
+          if (done) { ev.preventDefault(); setBox(); }
+        };
+        host.tabIndex = 0;
+        host.addEventListener('keydown', onKey);
         host.addEventListener('wheel', onWheel, { passive: false });
         host.addEventListener('pointerdown', onDown);
         globalThis.addEventListener('pointermove', onMove);
         globalThis.addEventListener('pointerup', onUp);
-        removeDrag = () => { globalThis.removeEventListener('pointermove', onMove); globalThis.removeEventListener('pointerup', onUp); };
+        globalThis.addEventListener('pointercancel', onUp);
+        removeDrag = () => { globalThis.removeEventListener('pointermove', onMove); globalThis.removeEventListener('pointerup', onUp); globalThis.removeEventListener('pointercancel', onUp); };
       }
       function applyLayers() {
         if (!svgEl) return;
@@ -330,6 +507,7 @@
         }
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
+        if (s.sectionOpen && sectionEl && !isDxf()) parts.unshift(sectionEl);
         if (ai) parts.unshift(ai.el);
         if (compare) parts.unshift(compare.el);
         if (issues) parts.unshift(issues.el);

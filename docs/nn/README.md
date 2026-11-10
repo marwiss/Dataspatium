@@ -179,6 +179,9 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 - **Versjonar mot Dataregium**: send ei endring som eit framlegg som tenaren prøver og ein prosjektansvarleg godkjenner; tenaren slår
   saman endringar frå fleire, og ved ein konflikt vel du kva som gjeld. *Teknisk:* publisering med basisversjon (412 ved ein nyare
   versjon), snippet med GlobalId og sti som nøkkel.
+- **Naviger i modellen**: visingskube og standardvisingar, ortografisk vising, snittboks og snitt ved etasje, dreiepunkt med
+  dobbeltklikk og tastaturet; kameraet og snittet følgjer med viewpointane til sakene, og kart og planar har målestokk (sjå [CAD
+  og BIM](cad-bim.md#visingar-og-tastaturet)).
 - **Samanlikn versjonar**: sjå kva som er lagt til, fjerna og endra mellom to versjonar av ein modell, farga i 3D, også mot versjonane
   på tenaren.
 - **Meir**: IFC-grafen til tenaren i ei lettare form med spørjinga *bygningsdelar nær ein bygningsdel*, ein Dataregium på din eigen
@@ -272,7 +275,7 @@ Det finst éi utgjeving per hovudnummer, og Dataspatium og Dataregium med same n
 |---|---|---|
 | 1.0.0 | Data frå filer og opne API-ar, bearbeiding, R, SQL og regulære uttrykk, svenske planar, diagram og kart i diagram, dashboards, dokument, eksport og deling. Mot ein tenar berre Documents API: hent dokument som datasett og send datasett og filer tilbake. Ingen saker, ingen modellar og ingen Python | Dataregium 1.0.0 (berre Documents API) |
 | 2.0.0 | Alt i 1.0.0 og dessutan modusane Søk og Del, Python og statistikk utan kode, fleire kjelder, kartvisingar, nordiske planar, grafar, IFC-modellar i 3D med kontroll mot IDS, flytar, Dataspatium Mobil, saker med viewpoints (BCF API 3.0 og 2.1), IFC-grafen til tenaren, kortet *Administrasjon* og kortet *Medlemmene i prosjektet* | Dataregium 2.0.0 |
-| 3.0.0 | Alt i 2.0.0 og dessutan kortet *Valider modellen*, kollisjonskontroll, Spør AI og Endre med AI, nye tomme modellar i valfritt skjema, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som blir prøvde og godkjende på tenaren med val ved konfliktar, og grafen i ei lettare form | Dataregium 3.0.0 |
+| 3.0.0 | Alt i 2.0.0 og dessutan kortet *Valider modellen*, kollisjonskontroll, navigasjon med visingskube og snitt, Spør AI og Endre med AI, nye tomme modellar i valfritt skjema, Samanlikn versjonar, publisering med basisversjon og førehandskontroll, endringsframlegg som blir prøvde og godkjende på tenaren med val ved konfliktar, og grafen i ei lettare form | Dataregium 3.0.0 |
 
 Ei ny utgjeving med same hovudnummer erstattar den førre; berre den siste i kvar serie blir retta. Oppdateringskontrollen i appen tilbyr
 neste hovudnummer, og datasett, lister, diagram, malar og skript følgjer med når du opnar `index.html` i den nye versjonen.

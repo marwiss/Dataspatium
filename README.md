@@ -180,6 +180,9 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
 - **Versioner mot Dataregium**: skicka en ändring som ett förslag som servern prövar och en projektansvarig godkänner; servern
   sammanfogar ändringar från flera, och vid en krock väljer du vad som gäller. *Tekniskt:* publicering med basversion (412 vid en
   nyare version), snippet med GlobalId och sökväg som nyckel.
+- **Navigera i modellen**: vy-kub och standardvyer, ortografisk vy, snittlåda och snitt vid våning, vridpunkt med dubbelklick och
+  tangentbordet; kameran och snittet följer med ärendenas viewpoints, och kartor och planer har skalstock (se [CAD och
+  BIM](docs/sv/cad-bim.md#vyer-och-tangentbordet)).
 - **Jämför versioner**: se vad som har lagts till, tagits bort och ändrats mellan två versioner av en modell, färgat i 3D, också mot
   serverns versioner.
 - **Mer**: serverns IFC-graf i en lättare form med frågan *byggdelar nära en byggdel*, en Dataregium på den egna datorn som källa och
@@ -273,7 +276,7 @@ Det finns en utgåva per huvudnummer, och Dataspatium och Dataregium med samma n
 |---|---|---|
 | 1.0.0 | Datainhämtning från filer och öppna API:er, bearbetning, R, SQL och reguljära uttryck, svenska planer, diagram och kartor i diagram, dashboards, dokument, export och delning. Mot en server bara Documents API: hämta dokument som datamängder och skicka tillbaka datamängder och filer. Inga ärenden, inga modeller och ingen Python | Dataregium 1.0.0 (bara Documents API) |
 | 2.0.0 | Allt i 1.0.0 och dessutom lägena Söka och Dela, Python och statistik utan kod, fler källor, kartvyer, nordiska planer, grafer, IFC-modeller i 3D med kontroll mot IDS, flöden, Dataspatium Mobil, ärenden med viewpoints (BCF API 3.0 och 2.1), serverns IFC-graf, kortet *Administration* och kortet *Projektets medlemmar* | Dataregium 2.0.0 |
-| 3.0.0 | Allt i 2.0.0 och dessutom kortet *Validera modellen*, kollisionskontroll, Fråga AI och Ändra med AI, nya tomma modeller i valfritt schema, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form | Dataregium 3.0.0 |
+| 3.0.0 | Allt i 2.0.0 och dessutom kortet *Validera modellen*, kollisionskontroll, navigering med vy-kub och snitt, Fråga AI och Ändra med AI, nya tomma modeller i valfritt schema, Jämför versioner, publicering med basversion och förhandskontroll, ändringsförslag som prövas och godkänns på servern med val vid krockar, och grafen i lättare form | Dataregium 3.0.0 |
 
 En ny utgåva i samma huvudnummer ersätter den förra; bara den senaste i varje serie rättas. Appens uppdateringskontroll erbjuder
 nästa huvudnummer, och datamängder, listor, diagram, mallar och skript följer med när du öppnar den nya versionens `index.html`.

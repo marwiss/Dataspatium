@@ -26,7 +26,7 @@ Er koordinaterne i et andet system end SWEREF 99 TM, vælger du det, når du imp
 
 ## Kortet i Bearbejd
 
-Kortet viser datasættets objekter i appens farve. Zoom med hjulet eller knapperne, panorér ved at trække, og klik på
+Kortet viser datasættets objekter i appens farve. Zoom med hjulet eller knapperne, panorér ved at trække (målestokken nederst til venstre viser afstanden i meter), og klik på
 et objekt, så viser inspektøren dets attributter; *Redigér i tabellen* fører dig til rækken i tabellen.
 Værktøjslinjen har baggrundskort (intet eller OpenStreetMap), *Zoom til alt*, *Gem som kortvisning* (gemmer kortet med
 lag og aktuel visning som et diagram i Visualisér) og *Vis som tabel*. Alt, hvad du gør i tabellen (filtrere, rette,
