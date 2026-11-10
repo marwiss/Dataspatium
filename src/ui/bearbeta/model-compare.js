@@ -5,8 +5,9 @@
  * dataset or with another model in the workspace (a newer version fetched from a CDE), see what is only here, only there and changed
  * (attribute by attribute, property by property), colour the 3D view (green only here, yellow changed), draw the other version instead
  * (red only there), and mark the elements. For a model fetched from Dataregium the panel also shows the server's change set of the
- * fetched version (the topic it was approved from, who proposed and approved it, and every change), a third source beside the
- * snapshots and the other models. Pure reading: nothing is changed; the diff comes from data/model-diff.
+ * fetched version (the topic it was approved from, who proposed and approved it, and every change), and the server's own diff of the
+ * fetched version against any other version of the document (its OB-30), sources beside the snapshots and the other models. Pure
+ * reading: nothing is changed; the diff comes from data/model-diff, or from the server in the same shape.
  */
 (function () {
   'use strict';
@@ -25,9 +26,10 @@
       const s = { choices: [], choice: '', busy: false, result: null, showOther: false, error: '', server: null, serverBusy: false, serverError: '' };
       const cde = ds && ds.source && ds.source.cde && ds.source.cde.connectorId && ds.source.cde.documentId && ds.source.cde.versionIndex ? ds.source.cde : null;
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-compare-panel': '' });
-      const keyOf = (c) => (c.snapshot ? `v${c.snapshot}` : c.datasetId);
+      const keyOf = (c) => (c.server ? `server:${c.server}` : c.snapshot ? `v${c.snapshot}` : c.datasetId);
+      let serverChoices = [];
       async function load() {
-        s.choices = await modelDiff.choices(ds.id);
+        s.choices = (await modelDiff.choices(ds.id)).concat(serverChoices);
         if (!s.choices.some((c) => keyOf(c) === s.choice)) s.choice = s.choices[0] ? keyOf(s.choices[0]) : '';
       }
       /** The colours: on this version green for only here and yellow for changed; on the other red for only there and yellow for changed. */
@@ -44,7 +46,7 @@
         if (!c || s.busy) return;
         s.busy = true; s.error = ''; s.result = null; s.showOther = false; render();
         try {
-          s.result = await modelDiff.diff(ds.id, c);
+          s.result = c.server ? await serverDiff(c) : await modelDiff.diff(ds.id, c);
           if (options.preview) await options.preview({ colors: colors(false) });
         } catch (err) { s.error = String((err && err.message) || err); }
         s.busy = false; render();
@@ -65,14 +67,42 @@
         const made = await selection.setFromWhere(ds.id, `id in (${ids.join(', ')})`, [], t('compare.selection.label'));
         overlays.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
       }
+      async function connectorOf() {
+        const connector = await connectors.get(cde.connectorId);
+        if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+        if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+        return connector;
+      }
+      /** The document's other versions on the server as choices, compared through the server's diff (Dataregium's OB-30). */
+      async function loadServerVersions() {
+        if (!cde || s.serverBusy) return;
+        s.serverBusy = true; s.serverError = ''; render();
+        try {
+          const connector = await connectorOf();
+          const caps = await opencde.capabilities(connector);
+          if (!opencde.hasExtension(caps, 'ifc_diff')) throw new Error(t('compare.server.nodiff'));
+          const versions = await opencde.documentVersions(connector, [cde.documentId]);
+          serverChoices = versions.filter((v) => Number(v.version_index) !== Number(cde.versionIndex)).map((v) => ({ datasetId: ds.id, server: Number(v.version_index), label: t('compare.server.version', { n: String(v.version_number || v.version_index) }) }))
+            .sort((x, y) => y.server - x.server);
+          if (!serverChoices.length) throw new Error(t('compare.server.noversions'));
+          await load();
+          s.choice = keyOf(serverChoices[0]);
+        } catch (err) { s.serverError = String((err && err.message) || err); }
+        s.serverBusy = false; render();
+      }
+      async function serverDiff(c) {
+        const connector = await connectorOf();
+        const json = await opencde.versionDiff(connector, cde.documentId, Number(cde.versionIndex), c.server);
+        if (!json) throw new Error(t('compare.server.nodiff'));
+        const here = await D.require('data/datasets').ensureOpen(ds.id);
+        return modelDiff.fromServer(here.engine, json, c.label, c);
+      }
       /** The server's change set of the fetched version: a third source, read from Dataregium; a whole-file version has none. */
       async function loadServer() {
         if (!cde || s.serverBusy) return;
         s.serverBusy = true; s.serverError = ''; render();
         try {
-          const connector = await connectors.get(cde.connectorId);
-          if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
-          if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+          const connector = await connectorOf();
           const set = await opencde.versionChanges(connector, cde.documentId, Number(cde.versionIndex));
           s.server = { version: Number(cde.versionIndex), set: set || null, changes: set && Array.isArray(set.changes) ? set.changes : [] };
         } catch (err) { s.serverError = String((err && err.message) || err); }
@@ -103,7 +133,8 @@
         const sv = s.server;
         return h('div', { class: 'dm-stack-sm', 'data-compare-server': '' },
           h('h4', { text: t('compare.server.title') }),
-          h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('compare.server.load', { n: String(cde.versionIndex) }), icon: 'download', size: 'sm', loading: s.serverBusy, title: t('compare.server.hint'), 'data-compare-server-load': '', onClick: loadServer }),
+          h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('compare.server.versions'), icon: 'history', size: 'sm', loading: s.serverBusy, title: t('compare.server.versions.hint'), 'data-compare-server-versions': '', onClick: loadServerVersions }),
+            basic.button({ label: t('compare.server.load', { n: String(cde.versionIndex) }), icon: 'download', size: 'sm', loading: s.serverBusy, title: t('compare.server.hint'), 'data-compare-server-load': '', onClick: loadServer }),
             sv && sv.changes.length ? basic.button({ label: t('compare.server.mark', { n: i18n.formatNumber(sv.changes.length) }), icon: 'list-checks', size: 'sm', 'data-compare-server-mark': '', onClick: markServer }) : null),
           s.serverError ? h('p', { class: 'dm-error', text: s.serverError }) : null,
           sv && !sv.set ? h('p', { class: 'dm-help dm-small', 'data-compare-server-none': '', text: t('compare.server.none', { n: String(sv.version) }) }) : null,
@@ -147,7 +178,7 @@
       }
       function destroy() { if (s.result && options.preview) { s.result = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
       load().then(render);
-      return { el, destroy, state: s, load, run, toggleOther, mark, loadServer, markServer };
+      return { el, destroy, state: s, load, run, toggleOther, mark, loadServer, markServer, loadServerVersions };
     }
     return { create };
   });

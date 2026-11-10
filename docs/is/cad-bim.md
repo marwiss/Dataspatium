@@ -261,3 +261,7 @@ Fyrir líkan sem sótt var frá Dataregium sýnir spjaldið líka *Breytingasett
 þjóninum, þegar hún var samþykkt úr breytingatillögu, með málinu, hver lagði til og samþykkti, grunnútgáfunni (útgáfunni sem tillagan
 var reynd á) og hverri breytingu með tilviki, eigindi, gömlu og nýju gildi. *Merkja* merkir tilvikin í líkaninu. Útgáfa sem hlaðið var
 upp sem heilli skrá hefur ekkert breytingasett. Það er þriðja uppsprettan við hlið svipmyndanna og hinna líkananna.
+
+Með *Útgáfur þjónsins* eru hinar útgáfur skjalsins á Dataregium sóttar sem valkostir í listann *Bera saman við*. Veljir þú eina
+þeirra reiknar þjónninn samanburðinn (mismun hans milli útgáfa, eftir GlobalId og eigindi, með staðsetningu, lögun, íláti og gerð sem
+eigin reitum) og hann er sýndur sem sömu listar og litir hér, en án hinnar útgáfunnar í þrívídd; sæktu þá útgáfu til að sjá hana.

@@ -132,6 +132,32 @@
         return Object.assign(result, { other: { label: other.label, bytes: other.bytes, ref } });
       } finally { other.release(); }
     }
-    return { FIELDS, MAX_LIST, compare, openOther, choices, diff };
+    /** A value of the server's diff in words: a reference by GlobalId, an instance by its class, a list in brief, or the scalar. */
+    function serverValue(v) {
+      if (v === null || v === undefined || v === '') return null;
+      if (Array.isArray(v)) { const s = JSON.stringify(v); return s.length > 60 ? s.slice(0, 57) + '…' : s; }
+      if (typeof v === 'object') return v.guid !== undefined ? String(v.guid) : String(v.type || JSON.stringify(v).slice(0, 60));
+      return String(v);
+    }
+    /**
+     * Dataregium's diff (its OB-30) of this version (`a`) against another (`b`) in the shape `compare` gives: removed is only here,
+     * added only there, the attributes that differ become fields; the ids of this file come from the table by GlobalId, the other
+     * file's ids are unknown (0) and there are no bytes to draw it.
+     * @param {any} here the engine of this version @param {any} json the server's answer @param {string} label @param {any} ref
+     */
+    async function fromServer(here, json, label, ref) {
+      const a = await elementsOf(here);
+      const of = (e) => { const own = a.get(String(e.guid)); return { guid: String(e.guid), id: own ? own.id : 0, typ: String(e.type || ''), namn: String(e.name || ''), vaning: String(e.storey || '') }; };
+      const removed = Array.isArray(json.removed) ? json.removed : []; const added = Array.isArray(json.added) ? json.added : []; const changedIn = Array.isArray(json.changed) ? json.changed : [];
+      const changed = changedIn.slice(0, MAX_LIST).map((e) => {
+        const fields = (Array.isArray(e.attributes) ? e.attributes : []).map((x) => ({ name: String(x.path || ''), here: serverValue(x.old), there: serverValue(x.new) }));
+        return Object.assign(of(e), { idThere: 0, fields: fields.slice(0, MAX_FIELDS), moreFields: Math.max(0, fields.length - MAX_FIELDS) });
+      });
+      const same = Number(json.same) || 0;
+      return { onlyHere: removed.slice(0, MAX_LIST).map(of), onlyThere: added.slice(0, MAX_LIST).map(of), changed,
+        counts: { here: removed.length + changedIn.length + same, there: added.length + changedIn.length + same, onlyHere: removed.length, onlyThere: added.length, changed: changedIn.length },
+        truncated: !!json.truncated || removed.length > MAX_LIST || added.length > MAX_LIST || changedIn.length > MAX_LIST, other: { label, bytes: null, ref } };
+    }
+    return { FIELDS, MAX_LIST, compare, openOther, choices, diff, fromServer };
   });
 })();

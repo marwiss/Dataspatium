@@ -269,3 +269,7 @@ Dataregiumista haetulle mallille paneeli näyttää myös *Palvelimen muutosjouk
 palvelimella, kun se hyväksyttiin muutosehdotuksesta, asian, kuka ehdotti ja hyväksyi, perusversion (version, jota vasten ehdotusta
 kokeiltiin) ja jokaisen muutoksen instansseineen, attribuutteineen sekä vanhoine ja uusine arvoineen. *Merkitse* merkitsee instanssit
 malliin. Kokonaisena tiedostona ladatulla versiolla ei ole muutosjoukkoa. Se on kolmas lähde tilannekuvien ja muiden mallien rinnalla.
+
+*Palvelimen versiot* hakee asiakirjan muut versiot Dataregiumista vaihtoehdoiksi luetteloon *Vertaa*. Kun valitset niistä yhden,
+vertailun laskee palvelin (sen versioiden välinen diff GlobalId:n ja attribuutin mukaan, sijoittelu, muoto, säiliö ja tyyppi omina
+kenttinään), ja se näytetään täällä samoina luetteloina ja väreinä, mutta ilman toisen version 3D-kuvaa; hae se versio nähdäksesi sen.

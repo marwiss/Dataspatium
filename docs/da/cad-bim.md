@@ -264,3 +264,7 @@ For en model hentet fra Dataregium viser panelet også *Serverens ændringssæt*
 når den blev godkendt fra et ændringsforslag, med sagen, hvem der foreslog og godkendte, basisversionen (den version forslaget blev
 afprøvet mod) og hver ændring med instans, attribut, gammel og ny værdi. *Markér* markerer instanserne i modellen. En version uploadet
 som hel fil har intet ændringssæt. Det er en tredje kilde ved siden af øjebliksbillederne og de andre modeller.
+
+Med *Serverens versioner* hentes dokumentets øvrige versioner på Dataregium som valg i listen *Sammenlign med*. Vælger du en af dem,
+beregnes sammenligningen af serveren (dens diff mellem versioner, efter GlobalId og attribut, med placering, form, beholder og type
+som egne felter) og vises som de samme lister og farver her, men uden den anden version i 3D; hent den version, hvis du vil se den.

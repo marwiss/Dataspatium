@@ -79,7 +79,7 @@
     return 'ok';
   }, 20000);
 
-  test('model compare: the server\'s change set of the fetched version is a third source, and a whole-file version has none', async (assert) => {
+  test('model compare: the server\'s change set of the fetched version and its diff against another version are sources, and a whole-file version has no change set', async (assert) => {
     const opencde = D.require('api/families/opencde');
     const families = D.require('api/families/databases');
     const connectors = D.require('api/connectors');
@@ -89,7 +89,9 @@
     const set = { change_set_id: 't-9', base: { document_id: 'doc-1', version_index: 1 }, proposed_by: 'anna', approved_by: 'bo', changes: [{ step_id: 170, attribute: 'NominalValue', op: 'set', old: { type: 'IfcLabel', value: 'EI60' }, new: { type: 'IfcLabel', value: 'EI90' } }, { guid: '1Xezbq735AdBO_4DerG66G', path: 'ObjectPlacement.RelativePlacement.Location', attribute: 'Coordinates', op: 'set', old: [0, 0, 0], new: [0, 0, 100], copy: true }] };
     D.net.virtual('tests/compare-cde/', (url) => {
       const path = (url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname).split('?')[0];
-      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', documents: '1.0' }, extensions: {} }));
+      if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', documents: '1.0' }, extensions: { ifc_diff: { enabled: true, url: '/documents/1.0/documents/{document_id}/versions/{version_index}/ifc-diff/{other_index}', max_entries: 10000 } } }));
+      if (path === '/documents/1.0/document-versions') return Promise.resolve(json({ versions: [{ document_id: 'doc-1', version_index: 1, version_number: '1' }, { document_id: 'doc-1', version_index: 2, version_number: '2' }, { document_id: 'doc-1', version_index: 3, version_number: '3' }] }));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-diff/3') return Promise.resolve(json({ a: { document_id: 'doc-1', version_index: 2 }, b: { document_id: 'doc-1', version_index: 3 }, added: [{ guid: '0NewSlab00000000000000', type: 'IfcSlab', name: 'Platta ny', storey: 'Plan 1' }], removed: [{ guid: diff.onlyHere[0].guid, type: 'IfcSlab', name: 'Platta', storey: 'Plan 1' }], changed: [{ guid: diff.changed[0].guid, type: 'IfcWall', name: diff.changed[0].namn, storey: 'Plan 2', attributes: [{ path: 'Pset_WallCommon.FireRating', old: 'EI60', new: 'EI30' }, { path: 'ObjectPlacement', old: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], new: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0.5, 1]] }, { path: 'Container', old: { guid: 'StoreyA000000000000000' }, new: { guid: 'StoreyB000000000000000' } }] }], same: 7, truncated: false }));
       if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'documents', version_id: '1.0' }] }));
       if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
       if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
@@ -112,6 +114,26 @@
       assert.ok(items[0].textContent.includes('#170 NominalValue') && items[0].textContent.includes('EI60 (IfcLabel)') && items[0].textContent.includes('EI90'), 'a typed value by step id: ' + items[0].textContent);
       assert.ok(items[1].textContent.includes('1Xezbq735AdBO_4DerG66G/ObjectPlacement.RelativePlacement.Location Coordinates') && items[1].textContent.includes('0, 0, 100') && items[1].textContent.includes('(copy)'), 'a copy by guid and path: ' + items[1].textContent);
       assert.ok(panel.el.querySelector('[data-compare-server-mark]'), 'the mark button');
+      // The server's diff of the fetched version against another version of the document, in the panel's own lists and colours.
+      const previews = [];
+      panel.destroy(); panel.el.remove();
+      panel = D.require('ui/bearbeta/model-compare').create({ shell: { log: () => {} } }, Object.assign({}, a, { source: source(2) }), { preview: (p) => { previews.push(p); } });
+      document.body.appendChild(panel.el);
+      await waitFor(() => panel.el.querySelector('[data-compare-server-versions]'), 3000, 'the versions button');
+      await panel.loadServerVersions();
+      assert.equal(panel.state.serverError, '', 'the versions came');
+      assert.deepEqual(panel.state.choices.filter((c) => c.server).map((c) => c.server), [3, 1], 'the other versions, newest first');
+      assert.equal(panel.state.choice, 'server:3', 'the newest chosen');
+      await panel.run();
+      assert.equal(panel.state.error, '');
+      const counts = panel.el.querySelector('[data-compare-counts]');
+      assert.ok(counts && counts.textContent.includes(t('compare.server.version', { n: '3' })) && counts.textContent.includes('9'), 'the counts from the server (removed + changed + same here, added + changed + same there): ' + counts.textContent);
+      assert.equal(panel.el.querySelectorAll('[data-compare-only-there] > ul > li').length, 1); assert.equal(panel.el.querySelectorAll('[data-compare-only-here] > ul > li').length, 1); assert.equal(panel.el.querySelectorAll('[data-compare-changed] > ul > li').length, 1);
+      const changedText = panel.el.querySelector('[data-compare-changed]').textContent;
+      assert.ok(changedText.includes('EI30') && changedText.includes('StoreyB000000000000000') && changedText.includes('ObjectPlacement'), 'the attributes in words: ' + changedText);
+      assert.ok(panel.state.result.onlyHere[0].id > 0 && panel.state.result.changed[0].id > 0 && panel.state.result.onlyThere[0].id === 0, 'ids of this file by GlobalId, none for the other');
+      assert.ok(previews[0] && !previews[0].bytes && previews[0].colors.length === 2, 'green and yellow on this version');
+      assert.ok((/** @type {any} */ (panel.el.querySelector('[data-compare-other]'))).disabled, 'no 3D of the other version');
       panel.destroy(); panel.el.remove();
       panel = D.require('ui/bearbeta/model-compare').create({ shell: { log: () => {} } }, Object.assign({}, a, { source: source(3) }), { preview: () => {} });
       document.body.appendChild(panel.el);

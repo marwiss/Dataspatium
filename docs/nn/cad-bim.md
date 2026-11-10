@@ -266,3 +266,7 @@ For ein modell henta frå Dataregium viser panelet også *Endringssettet til ten
 tenaren, når han vart godkjend frå eit endringsframlegg, med saka, kven som føreslo og godkjende, basisversjonen (den versjonen
 framlegget vart prøvd mot) og kvar endring med instans, attributt, gammal og ny verdi. *Marker* markerer instansane i modellen. Ein
 versjon lasta opp som heil fil har ingen endringssett. Det er ei tredje kjelde ved sida av augneblinksbileta og dei andre modellane.
+
+Med *Versjonane til tenaren* vert dei andre versjonane av dokumentet på Dataregium henta som val i lista *Samanlikn med*. Vel du ein
+av dei, vert samanlikninga rekna av tenaren (diffen mellom versjonar, etter GlobalId og attributt, med plassering, form, behaldar og
+type som eigne felt) og vist som dei same listene og fargane her, men utan den andre versjonen i 3D; hent den versjonen om du vil sjå han.

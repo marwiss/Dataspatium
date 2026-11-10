@@ -753,6 +753,21 @@
       }
     }
     /**
+     * Dataregium's diff of two document versions (its OB-30): added (only in the other), removed (only in this one) and changed
+     * elements by GlobalId with the attributes that differ (`path`, `old`, `new`), `same` unchanged rooted entities and `truncated`.
+     * Null when the server has no `ifc_diff`; 400 for the same version or a file that is not IFC.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex @param {number} otherIndex
+     * @param {{otherDocumentId?: string, signal?: AbortSignal}} [options]
+     */
+    async function versionDiff(connector, documentId, versionIndex, otherIndex, options = {}) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_diff')) return null;
+      const path = String(caps.extensions.ifc_diff.url || '/documents/1.0/documents/{document_id}/versions/{version_index}/ifc-diff/{other_index}')
+        .replace('{document_id}', encode(documentId)).replace('{version_index}', encode(String(versionIndex))).replace('{other_index}', encode(String(otherIndex)));
+      const query = options.otherDocumentId ? '?other_document_id=' + encode(options.otherDocumentId) : '';
+      return api(connector, path + query, { signal: options.signal });
+    }
+    /**
      * Register this app as a client (Foundation API 2.2.3, RFC 7591) when the server allows it; the answer holds the client id
      * and, for a confidential client, the secret, which the caller keeps in api/secrets.
      * @param {string} baseUrl @param {{redirectUri: string, name?: string, bcfVersion?: string}} options
@@ -818,6 +833,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, proposalTrial, approveProposal, versionChanges, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

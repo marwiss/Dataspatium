@@ -268,3 +268,7 @@ For a model fetched from Dataregium the panel also shows *The server's change se
 server, when it was approved from a change proposal, with the topic, who proposed and approved it, the base version (the version the
 proposal was tried against) and every change with instance, attribute, old and new value. *Mark* marks the instances in the model. A
 version uploaded as a whole file has no change set. It is a third source beside the snapshots and the other models.
+
+*The server's versions* fetches the document's other versions on Dataregium as choices in *Compare with*. When you choose one, the
+comparison is computed by the server (its diff between versions, by GlobalId and attribute, with placement, shape, container and type
+as fields of their own) and shown as the same lists and colours here, but without the other version in 3D; fetch that version to see it.
