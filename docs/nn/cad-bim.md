@@ -206,7 +206,8 @@ vanlege tabellformata for `data`. Diagram av modellar blir eksporterte som PNG, 
 
 Knappen *Spør AI* i modellvisinga opnar eit panel i inspektøren der du stiller eit spørsmål om den opne IFC-modellen, til dømes "kva
 dører manglar brannklasse i etasje 2?". AI-modellen les med verktøy (oversynet over modellen, etasjane, element etter klasse, etasje, namn og
-eigenskap, eitt element med alle eigenskapar, og det du har markert i 3D-visinga) og svarar med elementa han byggjer på. *Marker n element*
+eigenskap, eitt element med alle eigenskapar, det du har markert i 3D-visinga og, for ein modell henta frå Dataregium, dei namngjevne
+spørjingane til tenaren) og svarar med elementa han byggjer på. *Marker n element*
 legg elementa i svaret i utvalet, som 3D-visinga, tabellen og dei andre modusane følgjer. Panelet viser kvart verktøykall og kor mange token
 som gjekk med. AI-en kan berre lese: ingenting blir endra, lagra eller publisert, og neste spørsmål held fram samtalen.
 

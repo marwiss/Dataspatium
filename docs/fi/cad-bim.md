@@ -208,7 +208,8 @@ taulukon `data` tavallisten muotojen lisäksi. Mallien kaaviot viedään PNG-, S
 
 Mallinäkymän painike *Kysy tekoälyltä* avaa tarkastelijaan paneelin, jossa esität kysymyksen avoinna olevasta IFC-mallista, esimerkiksi
 "mistä ovista puuttuu paloluokka kerroksessa 2?". Tekoälymalli lukee työkaluilla (mallin yleiskuva, kerrokset, elementit luokan, kerroksen,
-nimen ja ominaisuuden mukaan, yksi elementti kaikkine ominaisuuksineen sekä se, mitä olet merkinnyt 3D-näkymässä) ja vastaa niillä
+nimen ja ominaisuuden mukaan, yksi elementti kaikkine ominaisuuksineen, se, mitä olet merkinnyt 3D-näkymässä, sekä Dataregiumista
+noudetulle mallille palvelimen nimetyt kyselyt) ja vastaa niillä
 elementeillä, joihin se nojaa. *Merkitse n elementtiä* vie vastauksen elementit valintaan, jota 3D-näkymä, taulukko ja muut tilat seuraavat.
 Paneeli näyttää jokaisen työkalukutsun ja kulutetut tokenit. Tekoäly voi vain lukea: mitään ei muuteta, tallenneta tai julkaista, ja
 seuraava kysymys jatkaa keskustelua.

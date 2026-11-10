@@ -155,6 +155,45 @@
     return 'ok';
   }, 20000);
 
+  test('ai: the tool server_query asks Dataregium\'s named queries for a model fetched from a server the user is signed in to', async (assert) => {
+    const opencde = D.require('api/families/opencde');
+    const families = D.require('api/families/databases');
+    const connectors = D.require('api/connectors');
+    const CDE = 'dataspatium-asset://tests/ai-cde';
+    const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+    const hits = [];
+    D.net.virtual('tests/ai-cde/', (url) => {
+      const rest = url.startsWith(CDE) ? url.slice(CDE.length) : new URL(url).pathname;
+      const path = rest.split('?')[0]; const query = rest.includes('?') ? rest.split('?')[1] : '';
+      if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
+      if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: CDE + '/foundation/oauth2/auth', oauth2_token_url: CDE + '/foundation/oauth2/token' }));
+      if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries') return Promise.resolve(json({ model_state: 'done', queries: [{ name: 'property', parameters: ['pset', 'property', 'class'] }] }));
+      if (path === '/documents/1.0/documents/doc-1/versions/2/ifc-queries/property') { hits.push(query); return Promise.resolve(json({ name: 'property', columns: ['global_id', 'class', 'name', 'value', 'type'], rows: [['1Xezbq735AdBO_4DerG66G', 'IfcWall', 'Vägg 1.1', 'EI60', 'IFCLABEL']], truncated: false })); }
+      return Promise.resolve(json({ message: 'Not Found' }, 404));
+    });
+    const before = await tools.call(model.id, 'server_query', { name: 'property', class: null, pset: 'Pset_WallCommon', property: 'FireRating' });
+    assert.ok(before.error && before.error.includes('not fetched'), 'a local model has no server: ' + before.error);
+    const { connector } = await families.createConnector('opencde', { baseUrl: CDE, clientId: 'dataspatium', clientSecret: '' });
+    const meta = await datasets.get(model.id);
+    await datasets.updateMeta(model.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: connector.id, connectorName: connector.name, host: 'tests', documentId: 'doc-1', versionIndex: 2 } }) });
+    try {
+      const out = await tools.call(model.id, 'server_query', { name: 'property', class: null, pset: 'Pset_WallCommon', property: 'FireRating' });
+      assert.ok(out.error && out.error.includes('sign in'), 'signed out: ' + out.error);
+      await opencde.login(connector, { popup: (url) => Promise.resolve(`${new URL(url).searchParams.get('redirect_uri')}?code=abc&state=${new URL(url).searchParams.get('state')}`), redirectUri: REDIRECT });
+      const answer = await tools.call(model.id, 'server_query', { name: 'property', class: null, pset: 'Pset_WallCommon', property: 'FireRating' });
+      assert.deepEqual(answer.columns, ['global_id', 'class', 'name', 'value', 'type']); assert.equal(answer.count, 1); assert.equal(answer.rows[0][3], 'EI60'); assert.equal(answer.truncated, false);
+      assert.equal(hits[0], 'pset=Pset_WallCommon&property=FireRating', 'the parameters as the server wants them');
+      const list = await tools.call(model.id, 'server_query', { name: null, class: null, pset: null, property: null });
+      assert.equal(list.model_state, 'done'); assert.equal(list.queries[0].name, 'property');
+      assert.ok(tools.TOOLS.some((tool) => tool.name === 'server_query'), 'offered to the model');
+    } finally {
+      await datasets.updateMeta(model.id, { source: meta.source || { kind: 'file' } });
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 20000);
+
   test('ai: cleanup', async () => {
     selection.clear();
     for (const p of [a, o]) if (p) await providers.remove(p.id);

@@ -207,7 +207,8 @@ addition to the usual table formats for `data`. Charts of models are exported as
 
 The button *Ask AI* in the model view opens a panel in the inspector where you ask a question about the open IFC model, for example
 "which doors lack a fire rating on storey 2?". The AI model reads with tools (the model's overview, the storeys, elements by class, storey,
-name and property, one element with all its properties, and what you marked in the 3D view) and answers with the elements it rests on.
+name and property, one element with all its properties, what you marked in the 3D view and, for a model fetched from Dataregium, the
+server's named queries) and answers with the elements it rests on.
 *Mark n elements* puts the answer's elements in the selection, which the 3D view, the table and the other modes follow. The panel shows
 every tool call and the tokens spent. The AI can only read: nothing is changed, saved or published, and the next question continues the
 conversation.

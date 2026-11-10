@@ -201,7 +201,8 @@ töflusniða fyrir `data`. Gröf af líkönum eru flutt út sem PNG, SVG og PDF;
 
 Hnappurinn *Spyrja gervigreind* í líkanssýninni opnar spjald í skoðaranum þar sem þú spyrð spurningar um opna IFC-líkanið, til dæmis
 "hvaða hurðir vantar brunaflokk á hæð 2?". Gervigreindarlíkanið les með tólum (yfirlit líkansins, hæðirnar, einingar eftir flokki, hæð,
-nafni og eiginleika, eina einingu með öllum eiginleikum, og það sem þú merktir í 3D-sýninni) og svarar með þeim einingum sem það byggir á.
+nafni og eiginleika, eina einingu með öllum eiginleikum, það sem þú merktir í 3D-sýninni og, fyrir líkan sótt frá Dataregium, nefndar
+fyrirspurnir þjónsins) og svarar með þeim einingum sem það byggir á.
 *Merkja n einingar* setur einingar svarsins í valið, sem 3D-sýnin, taflan og hinir hamirnir fylgja. Spjaldið sýnir hvert tólakall og þá tóka
 sem fóru í svarið. Gervigreindin getur aðeins lesið: engu er breytt, vistað eða birt, og næsta spurning heldur samtalinu áfram.
 
