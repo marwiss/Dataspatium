@@ -16,9 +16,12 @@ yourself. Security is the first requirement: no network call without your action
 - [Download and get started](#download-and-get-started)
 - [Requirements](#requirements)
 - [What you can do](#what-you-can-do)
+- [The OpenCDE APIs and their clients](#the-opencde-apis-and-their-clients)
 - [Dataspatium and Dataregium](#dataspatium-and-dataregium)
 - [Learn more](#learn-more)
 - [Limitations in brief](#limitations-in-brief)
+- [Personal data](#personal-data)
+- [Next in the 3 series](#next-in-the-3-series)
 - [Bugs and suggestions](#bugs-and-suggestions)
 - [Development](#development)
 - [Licence](#licence)
@@ -158,7 +161,7 @@ with a backup or a bundle.
 - **Beginner's course**: an interactive walkthrough of all eight modes with example data, in all seven languages. It is
   shown the first time the app is opened and can be opened at any time from the help or the command palette.
 
-## The OpenCDE APIs and their servers
+## The OpenCDE APIs and their clients
 
 OpenCDE is buildingSMART International's family of open web APIs for a common data environment, the place where a project shares
 its models, documents and issues. A client and a server that follow the same specifications can work together, whoever built them.
@@ -207,7 +210,7 @@ The app speaks BCF API 3.0 and 2.1, so it also connects to servers that have onl
 Dataspatium 3.0.0 works with Dataregium 3.0.0. Both carry the same release number, so equal numbers belong together. The quick start
 [snabbstart.md](snabbstart.md) takes the pair from nothing to an issue in twenty minutes.
 
-### The releases 1.0.0, 2.0.0 and 3.0.0
+### The releases 1, 2 and 3
 
 There is one release per major number, and Dataspatium and Dataregium with the same number belong together:
 
@@ -249,6 +252,11 @@ everywhere.
 - [Licences](licenser.md): what you may do with the app and which licences the third-party components have.
 - How contributions are received is in
   [CONTRIBUTING.md](../../CONTRIBUTING.md) (Swedish).
+
+### Further reading
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) and [Documents API](https://github.com/buildingSMART/documents-API): the specifications the app follows against a server.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): the file format for building models, and [IDS](https://github.com/buildingSMART/IDS): requirement specifications that models are checked against.
 - External resources: [WebR](https://docs.r-wasm.org/webr/latest/), [R for beginners](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [Statistics Sweden's API](https://www.scb.se/en/services/open-data-api/).
 
@@ -269,6 +277,18 @@ everywhere.
   app. In narrow windows the panels open as sheets over the work area.
 - The bundled example data, API presets and map boundaries are Swedish; the app itself works with data from
   anywhere.
+
+## Personal data
+
+Dataspatium runs in your browser, and you are responsible for the data you put in. Everything the app saves (datasets and their
+versions, lists, charts, documents, notebooks, comments and settings) lives in the browser's storage on your computer and leaves it
+only when you export, share or publish; everything is then reviewed in full first, and personal data can be kept, pseudonymised or
+removed in the copy. To a Dataregium server the app sends your sign-in (tokens are kept in the session or encrypted with your
+passphrase, never in clear text), the topics, comments, proposals and files you create under your name on the server, and an
+X-Request-ID per call; the server's own processing is in Dataregium's README. To an AI provider the app sends only what you ask and
+the answers the tools read from the model, after consent for the purpose AI, with your own key stored encrypted; the project's policy
+can restrict to local models. Comments and bundles carry the name you give yourself. The controls and the tests that show them are in
+[sakerhet.md](sakerhet.md).
 
 ## Next in the 3 series
 

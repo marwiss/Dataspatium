@@ -15,9 +15,12 @@ installasjon, ingen kontoer. Dataene dine forlater aldri datamaskinen med mindre
 - [Last ned og kom i gang](#last-ned-og-kom-i-gang)
 - [Hva som kreves](#hva-som-kreves)
 - [Hva du kan gjøre](#hva-du-kan-gjøre)
+- [OpenCDE-API-ene og klientene deres](#opencde-api-ene-og-klientene-deres)
 - [Dataspatium og Dataregium](#dataspatium-og-dataregium)
 - [Lær mer](#lær-mer)
 - [Begrensninger i korte trekk](#begrensninger-i-korte-trekk)
+- [Personopplysninger](#personopplysninger)
+- [Neste i 3-serien](#neste-i-3-serien)
 - [Feil og forslag](#feil-og-forslag)
 - [Utvikling](#utvikling)
 - [Lisens](#lisens)
@@ -154,7 +157,7 @@ Nettversjonen og mappeversjonen har atskilte arbeidsområder; flytt data mellom 
 - **Grunnkurs**: en interaktiv gjennomgang av alle åtte moduser med eksempeldata, på alle sju språk. Det vises første
   gang appen åpnes og kan åpnes når som helst fra hjelpen eller kommandopaletten.
 
-## OpenCDE-API-ene og serverne deres
+## OpenCDE-API-ene og klientene deres
 
 OpenCDE er buildingSMART Internationals familie av åpne web-API-er for et felles datamiljø, stedet der et prosjekt deler modellene,
 dokumentene og sakene sine. En klient og en server som følger de samme spesifikasjonene, kan arbeide sammen, uansett hvem som har
@@ -201,7 +204,7 @@ Appen snakker BCF API 3.0 og 2.1, så den også kobler seg til servere som bare 
 Dataspatium 3.0.0 fungerer med Dataregium 3.0.0. Begge får samme utgavenummer, så samme nummer hører sammen. Hurtigstarten
 [snabbstart.md](snabbstart.md) tar paret fra ingenting til en sak på tjue minutter.
 
-### Utgivelsene 1.0.0, 2.0.0 og 3.0.0
+### Utgivelsene 1, 2 og 3
 
 Det finnes én utgivelse per hovednummer, og Dataspatium og Dataregium med samme nummer hører sammen:
 
@@ -241,6 +244,11 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
 - [Sikkerhet](sakerhet.md): trusselmodell, kontrollene og testene som viser dem, personopplysninger og lagring, og hvordan en sårbarhet rapporteres.
 - [Lisenser](licenser.md): hva du kan gjøre med appen, og hvilke lisenser tredjepartskomponentene har.
 - Hvordan bidrag tas imot, står i [CONTRIBUTING.md](../../CONTRIBUTING.md) (svensk).
+
+### Videre lesning
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) og [Documents API](https://github.com/buildingSMART/documents-API): spesifikasjonene appen følger mot en server.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): filformatet for bygningsmodeller, og [IDS](https://github.com/buildingSMART/IDS): kravspesifikasjoner som modeller kontrolleres mot.
 - Eksterne ressurser: [WebR](https://docs.r-wasm.org/webr/latest/), [R for nybegynnere](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [SSBs API](https://www.ssb.no/api).
 
@@ -259,6 +267,18 @@ Filnavnene er de samme på alle språk (de svenske originalene), så lenkene vir
   (<https://marwiss.github.io/Dataspatium/m/>), som tar imot, viser og sender videre. Safari støttes ikke for hele
   appen. I smale vinduer åpnes panelene som ark over arbeidsflaten.
 - De medfølgende eksempeldataene og kartgrensene er svenske; selve appen fungerer med data fra hvor som helst.
+
+## Personopplysninger
+
+Dataspatium kjører i nettleseren din, og du er selv ansvarlig for opplysningene du legger inn. Alt appen lagrer (datasett og
+versjonene deres, lister, diagrammer, dokumenter, notatbøker, kommentarer og innstillinger) ligger i nettleserens lager på din
+datamaskin og forlater den bare når du eksporterer, deler eller publiserer; da gjennomgås alt i sin helhet først, og personopplysninger
+kan beholdes, pseudonymiseres eller fjernes i kopien. Til en Dataregium-server sendes innloggingen din (token holdes i økten eller
+kryptert med passfrasen din, aldri i klartekst), sakene, kommentarene, forslagene og filene du oppretter under navnet ditt på
+serveren, og en X-Request-ID per kall; serverens egen behandling står i Dataregiums README. Til en AI-leverandør sendes bare det du
+spør om og svarene verktøyene henter fra modellen, etter samtykke til formålet AI, med din egen nøkkel lagret kryptert; prosjektets
+policy kan begrense til lokale modeller. Kommentarer og pakker bærer navnet du selv oppgir. Kontrollene og prøvene som viser dem står
+i [sakerhet.md](sakerhet.md).
 
 ## Neste i 3-serien
 

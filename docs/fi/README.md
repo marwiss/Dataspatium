@@ -15,9 +15,12 @@ omassa selaimessasi. Ei palvelinta, ei asennusta, ei tilejä. Datasi ei koskaan 
 - [Lataa ja aloita](#lataa-ja-aloita)
 - [Vaatimukset](#vaatimukset)
 - [Mitä voit tehdä](#mitä-voit-tehdä)
+- [OpenCDE-rajapinnat ja niiden asiakasohjelmat](#opencde-rajapinnat-ja-niiden-asiakasohjelmat)
 - [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)
 - [Lue lisää](#lue-lisää)
 - [Rajoitukset lyhyesti](#rajoitukset-lyhyesti)
+- [Henkilötiedot](#henkilötiedot)
+- [Seuraavaksi 3-sarjassa](#seuraavaksi-3-sarjassa)
 - [Virheet ja ehdotukset](#virheet-ja-ehdotukset)
 - [Kehitys](#kehitys)
 - [Lisenssi](#lisenssi)
@@ -159,7 +162,7 @@ paketilla.
 - **Peruskurssi**: vuorovaikutteinen läpikäynti kaikista kahdeksasta tilasta esimerkkidatalla kaikilla seitsemällä kielellä.
   Se näytetään, kun sovellus avataan ensimmäisen kerran, ja sen voi avata milloin tahansa ohjeesta tai komentopaletista.
 
-## OpenCDE-rajapinnat ja niiden palvelimet
+## OpenCDE-rajapinnat ja niiden asiakasohjelmat
 
 OpenCDE on buildingSMART Internationalin avointen web-rajapintojen perhe yhteiselle dataympäristölle, paikalle, jossa projekti jakaa
 mallinsa, asiakirjansa ja asiansa. Asiakasohjelma ja palvelin, jotka noudattavat samoja määrittelyjä, voivat toimia yhdessä riippumatta
@@ -209,7 +212,7 @@ Sovellus puhuu BCF API -versioita 3.0 ja 2.1, joten se muodostaa yhteyden myös 
 Dataspatium 3.0.0 toimii Dataregium 3.0.0:n kanssa. Molemmat saavat saman julkaisunumeron, joten sama numero kuuluu yhteen. Pika-aloitus
 [snabbstart.md](snabbstart.md) vie parin tyhjästä asiaan kahdessakymmenessä minuutissa.
 
-### Julkaisut 1.0.0, 2.0.0 ja 3.0.0
+### Julkaisut 1, 2 ja 3
 
 Jokaista päänumeroa kohden on yksi julkaisu, ja samannumeroiset Dataspatium ja Dataregium kuuluvat yhteen:
 
@@ -250,6 +253,11 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
 - [Turvallisuus](sakerhet.md): uhkamalli, kontrollit ja niitä todistavat testit, henkilötiedot ja säilytys sekä miten haavoittuvuudesta ilmoitetaan.
 - [Lisenssit](licenser.md): mitä sovelluksella saa tehdä ja mitkä lisenssit kolmannen osapuolen osilla on.
 - Miten osallistumiset otetaan vastaan, kerrotaan tiedostossa [CONTRIBUTING.md](../../CONTRIBUTING.md) (ruotsiksi).
+
+### Lisälukemista
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) ja [Documents API](https://github.com/buildingSMART/documents-API): määrittelyt, joita sovellus noudattaa palvelinta vasten.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): rakennusmallien tiedostomuoto, ja [IDS](https://github.com/buildingSMART/IDS): vaatimusmäärittelyt, joita vasten malleja tarkistetaan.
 - Ulkoiset lähteet: [WebR](https://docs.r-wasm.org/webr/latest/), [R aloittelijoille](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [Tilastokeskuksen rajapinnat](https://stat.fi/fi/palvelut/tilastodatapalvelut/avoin-data-ja-rajapinnat).
 
@@ -269,6 +277,18 @@ Tiedostonimet ovat samat kaikilla kielillä (ruotsinkieliset alkuperäiset), jot
   (<https://marwiss.github.io/Dataspatium/m/>), joka vastaanottaa, näyttää ja jakaa edelleen. Safaria ei tueta koko
   sovelluksen osalta. Kapeissa ikkunoissa paneelit avautuvat työalueen päälle.
 - Mukana tulevat esimerkkidata ja karttarajat ovat ruotsalaisia; itse sovellus toimii datan kanssa mistä tahansa.
+
+## Henkilötiedot
+
+Dataspatium toimii selaimessasi, ja vastaat itse syöttämistäsi tiedoista. Kaikki, mitä sovellus tallentaa (aineistot versioineen,
+luettelot, kaaviot, asiakirjat, muistikirjat, kommentit ja asetukset), on selaimen tallennustilassa tietokoneellasi ja lähtee sieltä
+vain, kun viet, jaat tai julkaiset; silloin kaikki tarkastetaan ensin kokonaisuudessaan, ja henkilötiedot voidaan säilyttää,
+pseudonymisoida tai poistaa kopiosta. Dataregium-palvelimelle lähetetään kirjautumisesi (tunnukset pidetään istunnossa tai salattuina
+salalauseellasi, ei koskaan selväkielisinä), nimelläsi palvelimelle luomasi asiat, kommentit, ehdotukset ja tiedostot sekä
+X-Request-ID jokaista kutsua kohden; palvelimen oma käsittely on kuvattu Dataregiumin README:ssä. Tekoälytoimittajalle lähetetään
+vain se, mitä kysyt, ja vastaukset, jotka työkalut lukevat mallista, AI-tarkoitukseen annetun suostumuksen jälkeen, omalla
+salattuna tallennetulla avaimellasi; projektin käytäntö voi rajata paikallisiin malleihin. Kommentit ja paketit kantavat itse
+antamaasi nimeä. Kontrollit ja ne osoittavat testit ovat tiedostossa [sakerhet.md](sakerhet.md).
 
 ## Seuraavaksi 3-sarjassa
 

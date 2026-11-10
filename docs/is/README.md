@@ -15,9 +15,12 @@ Enginn þjónn, engin uppsetning, engir aðgangar. Gögnin þín yfirgefa aldrei
 - [Sækja og hefjast handa](#sækja-og-hefjast-handa)
 - [Kröfur](#kröfur)
 - [Hvað þú getur gert](#hvað-þú-getur-gert)
+- [OpenCDE-forritaskilin og biðlarar þeirra](#opencde-forritaskilin-og-biðlarar-þeirra)
 - [Dataspatium og Dataregium](#dataspatium-og-dataregium)
 - [Lærðu meira](#lærðu-meira)
 - [Takmarkanir í stuttu máli](#takmarkanir-í-stuttu-máli)
+- [Persónuupplýsingar](#persónuupplýsingar)
+- [Næst í 3-röðinni](#næst-í-3-röðinni)
 - [Villur og tillögur](#villur-og-tillögur)
 - [Þróun](#þróun)
 - [Leyfi](#leyfi)
@@ -150,7 +153,7 @@ möppuútgáfan hafa aðskilin vinnusvæði; færðu gögn á milli þeirra með
 - **Grunnnámskeið**: gagnvirk yfirferð yfir alla átta hamina með sýnigögnum, á öllum sjö tungumálunum. Það birtist í
   fyrsta skipti sem forritið er opnað og má opna hvenær sem er úr hjálpinni eða af skipanaspjaldinu.
 
-## OpenCDE-forritaskilin og þjónar þeirra
+## OpenCDE-forritaskilin og biðlarar þeirra
 
 OpenCDE er fjölskylda opinna vefforritaskila frá buildingSMART International fyrir sameiginlegt gagnaumhverfi, staðinn þar sem
 verkefni deilir líkönum sínum, skjölum og málum. Biðlari og þjónn sem fylgja sömu forskriftum geta unnið saman, hver sem smíðaði þá.
@@ -197,7 +200,7 @@ Forritið talar BCF API 3.0 og 2.1, svo það tengist líka þjónum sem hafa a�
 Dataspatium 3.0.0 virkar með Dataregium 3.0.0. Bæði fá sama útgáfunúmer, svo sama númer á saman. Fljótlega byrjunin
 [snabbstart.md](snabbstart.md) fer með parið frá engu að máli á tuttugu mínútum.
 
-### Útgáfurnar 1.0.0, 2.0.0 og 3.0.0
+### Útgáfurnar 1, 2 og 3
 
 Ein útgáfa er fyrir hvert aðalnúmer, og Dataspatium og Dataregium með sama númeri eiga saman:
 
@@ -237,6 +240,11 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
 - [Öryggi](sakerhet.md): ógnarlíkan, stýringarnar og prófanirnar sem sanna þær, persónuupplýsingar og geymsla, og hvernig veikleiki er tilkynntur.
 - [Leyfi](licenser.md): hvað þú mátt gera með forritið og hvaða leyfi íhlutir þriðja aðila hafa.
 - Hvernig framlögum er tekið kemur fram í [CONTRIBUTING.md](../../CONTRIBUTING.md) (á sænsku).
+
+### Frekari lesning
+
+- [BCF API](https://github.com/buildingSMART/BCF-API), [Foundation API](https://github.com/buildingSMART/foundation-API) og [Documents API](https://github.com/buildingSMART/documents-API): forskriftirnar sem forritið fylgir gagnvart þjóni.
+- [IFC](https://github.com/buildingSMART/IFC4.x-development): skráarsnið byggingarlíkana, og [IDS](https://github.com/buildingSMART/IDS): kröfulýsingar sem líkön eru prófuð gegn.
 - Ytri upprunar: [WebR](https://docs.r-wasm.org/webr/latest/), [R fyrir byrjendur](https://www.r-project.org/),
   [Vega-Lite](https://vega.github.io/vega-lite/), [opin gögn Hagstofu Íslands](https://hagstofa.is/).
 
@@ -255,6 +263,18 @@ Skráarheitin eru þau sömu á öllum tungumálum (sænsku frumheitin), svo ten
   (<https://marwiss.github.io/Dataspatium/m/>), sem tekur á móti, sýnir og sendir áfram. Safari er ekki stutt fyrir
   allt forritið. Í þröngum gluggum opnast spjöldin sem yfirlagsspjöld yfir vinnuflötinn.
 - Meðfylgjandi sýnigögn og kortamörk eru sænsk; forritið sjálft virkar með gögn hvaðan sem er.
+
+## Persónuupplýsingar
+
+Dataspatium keyrir í vafranum þínum og þú berð sjálf(ur) ábyrgð á gögnunum sem þú setur inn. Allt sem forritið vistar (gagnasöfn og
+útgáfur þeirra, listar, gröf, skjöl, minnisbækur, athugasemdir og stillingar) liggur í geymslu vafrans á tölvunni þinni og fer þaðan
+aðeins þegar þú flytur út, deilir eða birtir; þá er allt fyrst yfirfarið í heild og persónuupplýsingar má halda, dulnefna eða fjarlægja
+í afritinu. Til Dataregium-þjóns er innskráning þín send (tákn eru geymd í setunni eða dulkóðuð með lykilsetningu þinni, aldrei í
+hreinum texta), málin, athugasemdirnar, tillögurnar og skrárnar sem þú stofnar undir nafni þínu á þjóninum, og X-Request-ID fyrir
+hvert kall; vinnsla þjónsins sjálfs er lýst í README Dataregium. Til gervigreindarveitu er aðeins sent það sem þú spyrð og svörin sem
+tólin lesa úr líkaninu, eftir samþykki fyrir tilganginn gervigreind, með eigin lykli vistuðum dulkóðuðum; stefna verkefnisins getur
+takmarkað við staðbundin líkön. Athugasemdir og pakkar bera nafnið sem þú gefur sjálf(ur) upp. Eftirlitið og prófin sem sýna það eru í
+[sakerhet.md](sakerhet.md).
 
 ## Næst í 3-röðinni
 
