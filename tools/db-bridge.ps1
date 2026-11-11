@@ -26,7 +26,8 @@ Protocol (JSON): GET / (info), GET /sources (DSNs, ODBC drivers, OLE DB provider
   GET /log, GET or POST /stop, POST /fetch {url, method, headers, body (base64)} -> {status, statusText, headers, body}.
   With -AllowCommands: POST /commands {name, args} -> {id, state} from a program on this computer, GET /commands/<id> its state
   and answer, GET /commands/catalog the app's commands; the app registers them (POST /commands/catalog {commands}), picks
-  commands up (GET /commands/next) and answers (POST /commands/<id>/result {ok, result, error}). One thread: a poll answers at once.
+  commands up (GET /commands/next) and answers (POST /commands/<id>/result {ok, result, error}). POST /commands/<id>/cancel takes a queued command out of
+  the queue and marks a running one cancelling, which the app stops at its next check. One thread: a poll answers at once.
   A source is {kind: access|excel|sqlserver|dsn|odbc|oledb, ...} with path, password,
   server, database, user, dsn or connectionString depending on the kind.
 #>
@@ -41,7 +42,7 @@ param(
   [switch]$AllowCommands
 )
 $ErrorActionPreference = "Stop"
-$Version = "2.5.0"
+$Version = "2.6.0"
 $Kinds = @("access", "excel", "sqlserver", "dsn", "odbc", "oledb")
 if ($Port -eq 0) { $Port = Get-Random -Minimum 49152 -Maximum 65535 }
 if ($Token -eq "") {
@@ -82,7 +83,7 @@ function Invoke-CommandRoute($ctx, $method, $path, $body) {
     if ($name.Trim() -eq "") { Send-Json $ctx 400 @{ error = "Ange name" }; return }
     $Commands.Seq++
     $id = "c" + $Commands.Seq + "-" + ([Guid]::NewGuid().ToString("N").Substring(0, 8))
-    $Commands.Items[$id] = @{ id = $id; name = $name.Trim(); args = $body.args; state = "queued"; ok = $null; result = $null; error = $null }
+    $Commands.Items[$id] = @{ id = $id; name = $name.Trim(); args = $body.args; state = "queued"; ok = $null; result = $null; error = $null; cancelled = $false }
     [void]$Commands.Queue.Add($id)
     Send-Json $ctx 202 @{ id = $id; state = "queued" }
     return
@@ -91,15 +92,25 @@ function Invoke-CommandRoute($ctx, $method, $path, $body) {
     $id = $path.Substring(10); $id = $id.Substring(0, $id.Length - 7)
     $it = $Commands.Items[$id]
     if ($null -eq $it) { Send-Json $ctx 404 @{ error = "Okänt kommando " + $id }; return }
+    $it.cancelled = ($it.state -eq "cancelling")
     $it.state = "done"; $it.ok = [bool]$body.ok; $it.result = $body.result; $it.error = $body.error; $Commands.Seen = Get-Date
     Send-Json $ctx 200 @{ id = $id; state = "done" }
+    return
+  }
+  if ($method -eq "POST" -and $path -like "/commands/*/cancel") {
+    $id = $path.Substring(10); $id = $id.Substring(0, $id.Length - 7)
+    $it = $Commands.Items[$id]
+    if ($null -eq $it) { Send-Json $ctx 404 @{ error = "Okänt kommando " + $id }; return }
+    if ($it.state -eq "queued") { $Commands.Queue.Remove($id); $it.state = "cancelled"; $it.cancelled = $true; $it.ok = $false; $it.error = "Avbrutet"; Send-Json $ctx 200 @{ id = $id; state = "cancelled" }; return }
+    if ($it.state -eq "running" -or $it.state -eq "cancelling") { $it.state = "cancelling"; Send-Json $ctx 202 @{ id = $id; state = "cancelling" }; return }
+    Send-Json $ctx 409 @{ error = "Kommandot är redan klart"; id = $id; state = $it.state }
     return
   }
   if ($method -eq "GET" -and $path -like "/commands/*") {
     $id = $path.Substring(10)
     $it = $Commands.Items[$id]
     if ($null -eq $it) { Send-Json $ctx 404 @{ error = "Okänt kommando " + $id }; return }
-    Send-Json $ctx 200 @{ id = $it.id; name = $it.name; state = $it.state; ok = $it.ok; result = $it.result; error = $it.error }
+    Send-Json $ctx 200 @{ id = $it.id; name = $it.name; state = $it.state; ok = $it.ok; result = $it.result; error = $it.error; cancelled = [bool]$it.cancelled }
     return
   }
   Send-Json $ctx 404 @{ error = "Okänd sökväg " + $path }

@@ -152,6 +152,31 @@
       });
     }
 
-    return { at, along, samples, tiles, CONNECTOR, MAX_POINTS };
+    /**
+     * The height profile along each geometry (decision F37 c): a point every `step` metres with its distance from the start, in
+     * SWEREF 99 TM, and its height (null where the model has none), at most `max` points per geometry and MAX_POINTS in all.
+     * @param {Array<any>} geometries @param {{step?: number, max?: number, connector?: any}} [options]
+     * @returns {Promise<Array<{points: Array<{distance: number, height: number|null, x: number, y: number}>, length: number}>>}
+     */
+    async function profile(geometries, options = {}) {
+      const step = Math.max(1, Number(options.step) || 10);
+      const perGeometry = Math.max(2, Math.min(Number(options.max) || 1000, Math.floor(MAX_POINTS / Math.max(1, geometries.length))));
+      const lists = geometries.map((g) => samples(g, step, perGeometry));
+      const flat = [].concat(...lists);
+      if (flat.length > MAX_POINTS) throw new Error(D.t('heights.err.many', { max: MAX_POINTS }));
+      const { heights } = flat.length ? await at(flat, options) : { heights: [] };
+      let k = 0;
+      return lists.map((list) => {
+        let distance = 0;
+        const points = list.map((p, i) => {
+          if (i) distance += Math.hypot(p[0] - list[i - 1][0], p[1] - list[i - 1][1]);
+          return { distance: Math.round(distance * 10) / 10, height: heights[k + i], x: Math.round(p[0] * 100) / 100, y: Math.round(p[1] * 100) / 100 };
+        });
+        k += list.length;
+        return { points, length: points.length ? points[points.length - 1].distance : 0 };
+      });
+    }
+
+    return { at, along, samples, profile, tiles, CONNECTOR, MAX_POINTS };
   });
 })();

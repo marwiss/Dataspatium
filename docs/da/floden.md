@@ -33,10 +33,16 @@ kommandoer, som AI'en i appen også bruger, med argumenterne som JSON. Hedder tr
 Kommandoerne, der kun læser, er `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Dem, der ændrer noget eller laver filer, er `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` kører kun én
 sætning, der læser.
 
+Flere kommandoer (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` og `make_document` laver diagrammer, kort og
+dokumenter fra bunden (dokumentet bliver en fil, der hentes som de andre); `list_cde_sources`, `cde_projects`, `cde_topics` og `cde_files`
+læser fra en OpenCDE-kilde, der er logget ind under Hent, og `cde_create_topic`, `cde_comment` og `cde_fetch_file` skriver sager og
+kommentarer og henter filer efter godkendelse. Grafer redigeres med `apply_operation` og handlingerne `graph_add_node`, `graph_set_node`,
+`graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` og `graph_merge_nodes`.
+
 | Trin | Sådan virker det |
 |---|---|
 | Hvis en betingelse holder | Kører trinnene under *Så*, hvis betingelsen holder, ellers trinnene under *Ellers* |
-| For hver værdi i en liste | Kører trinnene én gang for hver værdi i et tidligere svar, for eksempel `kommuner.rows`; værdien nås som `{{item}}`, og et tal n giver omgangene 1 til n |
+| For hver værdi i en liste | Kører trinnene én gang for hver værdi i et tidligere svar, for eksempel `kommuner.rows`; værdien nås som `{{item}}`, og et tal n giver omgangene 1 til n; et datasæt i stedet for listen giver én række pr. omgang med kolonnerne som felter (`{{item.kommune}}`) |
 | Gentag, indtil en betingelse holder | Kører trinnene og prøver betingelsen efter hver omgang, med en pause mellem omgangene; omgangen nås som `{{round}}` |
 | Spørg mig | Viser et spørgsmål med svarmuligheder, én pr. linje, og venter på svaret, som nås som `{{navn.answer}}` |
 | Afslut flowet | Afslutter flowet med en meddelelse i loggen; det tæller ikke som en fejl |

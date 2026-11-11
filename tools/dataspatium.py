@@ -64,19 +64,37 @@ class Client:
     def catalog(self):
         return self.call("GET", "/commands/catalog")
 
+    def cancel(self, cid):
+        """Cancels a queued command at once; a running one is stopped by the app at its next check."""
+        return self.call("POST", "/commands/%s/cancel" % cid, {})
+
     def run(self, name, args, timeout=None):
-        """Queues the command and waits for the answer: {ok, result, error}."""
+        """Queues the command and waits for the answer: {ok, result, error}. Ctrl+C cancels it on the bridge and waits for the app's
+        last word, briefly."""
         started = self.call("POST", "/commands", {"name": name, "args": args or {}})
         cid = started["id"]
-        end = time.time() + (timeout or self.timeout)
+        try:
+            return self.wait(cid, timeout or self.timeout)
+        except KeyboardInterrupt:
+            try:
+                self.cancel(cid)
+                out = self.wait(cid, 10)
+            except (BridgeError, KeyboardInterrupt):
+                out = {}
+            if out.get("state") == "done":
+                return out
+            return {"ok": False, "error": "Avbrutet", "cancelled": True, "id": cid}
+
+    def wait(self, cid, timeout):
+        end = time.time() + timeout
         while True:
             left = end - time.time()
             if left <= 0:
-                return {"ok": False, "error": "Inget svar inom %d s; kommandot kan vänta på ett godkännande i appen" % (timeout or self.timeout)}
+                return {"ok": False, "error": "Inget svar inom %d s; kommandot kan vänta på ett godkännande i appen" % timeout, "id": cid}
             status = self.call("GET", "/commands/%s?wait=%d" % (cid, max(1, min(30, int(left)))))
-            if status.get("state") == "done":
-                return {"ok": bool(status.get("ok")), "result": status.get("result"), "error": status.get("error")}
-            time.sleep(0.2)
+            if status.get("state") in ("done", "cancelled"):
+                return {"ok": bool(status.get("ok")), "result": status.get("result"), "error": status.get("error"), "cancelled": bool(status.get("cancelled")), "state": "done"}
+            time.sleep(0.5 if status.get("state") == "cancelling" else 0.2)
 
 
 def flow_steps(path):
@@ -162,7 +180,14 @@ class Mcp:
 
 # ---------------------------------------------------------------------------- the command line
 def main(argv=None):
-    p = argparse.ArgumentParser(description="Dataspatium through the database bridge: list, run, plan or serve MCP")
+    # Pipes get UTF-8, which programs expect (the MCP client, a shell script); a console keeps its own code page.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            if not stream.isatty():
+                stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+    p = argparse.ArgumentParser(description="Dataspatium through the database bridge: list, run, cancel, plan or serve MCP")
     p.add_argument("--bridge", default=os.environ.get("DATASPATIUM_BRIDGE", "http://127.0.0.1:8765"))
     p.add_argument("--token", default=os.environ.get("DATASPATIUM_TOKEN", ""))
     p.add_argument("--timeout", type=float, default=300.0, help="seconds to wait for the app's answer")
@@ -171,6 +196,8 @@ def main(argv=None):
     r = sub.add_parser("run", help="run one command")
     r.add_argument("command")
     r.add_argument("--args", default="{}", help="the arguments as a JSON object")
+    c = sub.add_parser("cancel", help="cancel a queued or running command by its id")
+    c.add_argument("id")
     pl = sub.add_parser("plan", help="run a flow file as a plan (the person approves it once in the app)")
     pl.add_argument("file")
     pl.add_argument("--name", default="")
@@ -185,6 +212,9 @@ def main(argv=None):
             return 0
         if a.what == "mcp":
             Mcp(client).serve()
+            return 0
+        if a.what == "cancel":
+            print(json.dumps(client.cancel(a.id), ensure_ascii=False, indent=2))
             return 0
         if a.what == "run":
             try:

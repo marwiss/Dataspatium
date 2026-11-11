@@ -154,6 +154,13 @@
     assert.equal(ifcGraph.pickModel(list.models, { documentId: 'doc-1', versionIndex: 1 }).id, 'model-0', 'the version the model came from');
     assert.equal(ifcGraph.pickModel(list.models, { documentId: 'doc-1', versionIndex: 9 }).id, MODEL, 'otherwise the newest of the document');
     assert.equal(ifcGraph.pickModel([], null), null);
+    // Dataregium's own facts moved from Model to Conversion (its step two of IFC-LPG's F38 a): the queries read both forms.
+    assert.ok(/OPTIONAL MATCH \(c:Conversion \{model_id: m\.id\}\)/.test(ifcGraph.MODELS) && /coalesce\(c\.state, m\.state/.test(ifcGraph.MODELS) && /HAS_CONVERSION/.test(ifcGraph.MODELS) && /HAS_MODEL/.test(ifcGraph.MODELS), 'MODELS reads Conversion when it exists and Model otherwise');
+    const presets = D.require('api/families/neo4j').EXAMPLES;
+    for (const id of ['models', 'latest', 'classes', 'issue_elements']) {
+      const ex = presets.find((e) => e.id === id);
+      assert.ok(ex && /Conversion \{model_id: m\.id\}/.test(ex.cypher) && !/Model \{state/.test(ex.cypher), 'the preset ' + id + ' reads both forms');
+    }
     for (const v of ifcGraph.VIEWS) {
       assert.ok(t('ifcgraph.view.' + v.id) !== 'ifcgraph.view.' + v.id, 'a name for the view ' + v.id);
       const view = ifcGraph.viewOf(v.id, MODEL);

@@ -50,7 +50,7 @@
     return 'ok';
   });
 
-  test('plans: each runs once per value of an answer or up to a number, and stops at max_rounds', async (assert) => {
+  test('plans: each runs once per value of an answer, per row of a dataset, or up to a number, and stops at max_rounds', async (assert) => {
     const meta = await table('Planprov each');
     const flow = await saved({ name: 'Planprov each', steps: [
       cmd('k', 'run_sql', { dataset: meta.id, sql: 'select kommun, sum(antal) from data group by kommun order by kommun' }),
@@ -59,10 +59,18 @@
       { type: 'each', id: 'tal', params: { items: '3' }, steps: [] },
       { type: 'each', id: 'tak', params: { items: '50', max_rounds: 4 }, steps: [] },
       { type: 'if', params: { condition: "tal.rounds = 3 and tak.rounds = 4 and tak.reason = 'rounds'" }, steps: [], otherwise: [{ type: 'stop', params: { message: 'fel tak' } }] },
+      // A dataset as the list (by id or by name): a row per round, the columns as fields.
+      { type: 'each', id: 'rader', params: { dataset: meta.id, as: 'rad' }, steps: [cmd('rr', 'read_rows', { dataset: meta.id, columns: ['antal'], filters: [{ column: 'kommun', op: '=', value: '{{rad.kommun}}' }], order_by: null, descending: null, limit: null, offset: null })] },
+      { type: 'each', id: 'namn', params: { dataset: 'Planprov each', as: 'rad', max_rounds: 2 }, steps: [] },
+      { type: 'if', params: { condition: "rader.rounds = 3 and rader.reason = 'done' and rr.total = 2 and namn.rounds = 2 and namn.reason = 'rounds'" }, steps: [], otherwise: [{ type: 'stop', params: { message: 'fel rader' } }] },
     ] });
     const r = await flows.run(flow);
     assert.ok(r.ok && !r.stopped, JSON.stringify(r.steps.slice(-4)) + ' ' + r.stopped);
     assert.ok(r.steps.some((s) => s.path === '2#1.1') && r.steps.some((s) => s.path === '2#2.1'), 'a log line per round');
+    assert.ok(r.steps.some((s) => s.path === '7#3.1' && s.ok), 'the third row of the dataset ran its step');
+    const missing = await flows.run(await saved({ name: 'Planprov each saknad', steps: [{ type: 'each', params: { dataset: 'Finns inte' }, steps: [] }] }));
+    assert.equal(missing.ok, false, 'a dataset that does not exist fails the step');
+    assert.ok(missing.steps.some((s) => s.message === t('flows.err.dataset.named', { name: 'Finns inte' })), JSON.stringify(missing.steps));
     return 'ok';
   });
 

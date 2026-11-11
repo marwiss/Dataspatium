@@ -685,6 +685,38 @@
       }
     }
     const CLASH = '/documents/1.0/projects/{project_id}/ifc-clash';
+    const GEOMETRY = '/documents/1.0/documents/{document_id}/versions/{version_index}/ifc-geometry';
+    const QUERIES = '/documents/1.0/documents/{document_id}/versions/{version_index}/ifc-queries';
+    /** Whether the server gives a version's geometry as binary glTF (Dataregium's ifc_geometry). @param {any} connector */
+    async function canGeometry(connector) { return hasExtension(await capabilities(connector), 'ifc_geometry'); }
+    /**
+     * A version's geometry as binary glTF (Dataregium's ifc_geometry, step 4): `lod` full or box, `classes` IFC classes comma-separated,
+     * `storey` a GlobalId. The server answers 404 when it has no geometry for the version and 409 while it converts.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex @param {{lod?: string, classes?: string, storey?: string}} [options]
+     * @returns {Promise<ArrayBuffer>}
+     */
+    async function ifcGeometry(connector, documentId, versionIndex, options = {}) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_geometry')) throw new Error(t('large.err.unsupported'));
+      const q = new URLSearchParams();
+      q.set('lod', options.lod === 'box' ? 'box' : 'full');
+      if (options.classes) q.set('classes', String(options.classes));
+      if (options.storey) q.set('storey', String(options.storey));
+      const path = capPath(caps, 'ifc_geometry', 'url', GEOMETRY, { document_id: documentId, version_index: versionIndex });
+      return api(connector, path + '?' + q.toString(), { responseType: 'arraybuffer', headers: { Accept: 'model/gltf-binary' } });
+    }
+    /**
+     * A named query of a version's model (Dataregium's ifc_queries): {name, columns, rows, truncated}.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex @param {string} name @param {Record<string, any>} [params]
+     */
+    async function ifcQuery(connector, documentId, versionIndex, name, params = {}) {
+      const caps = await capabilities(connector);
+      const base = capPath(caps, 'ifc_queries', 'url', QUERIES, { document_id: documentId, version_index: versionIndex });
+      const q = new URLSearchParams();
+      for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
+      const qs = q.toString();
+      return api(connector, base + '/' + encode(String(name)) + (qs ? '?' + qs : ''));
+    }
     /** Whether the server checks for clashes itself (Dataregium's ifc_clash). @param {any} connector */
     async function canClash(connector) { return hasExtension(await capabilities(connector), 'ifc_clash'); }
     /**
@@ -1006,6 +1038,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

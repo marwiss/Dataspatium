@@ -36,14 +36,18 @@
       const key = datasetId + '|' + meta.updatedAt;
       if (cache && cache.key === key) return cache.meshes;
       const file = await model.original(datasetId);
-      if (!file) throw new Error(D.t('model.err.nofile'));
-      const meshes = ifc.meshes(file.bytes, { onProgress: options.onProgress }).then((m) => { ifc.release(); return indexed(m); });
+      // A large model from the server (data/model-server) has no IFC file: its glTF is read instead (engines/gltf).
+      const server = file || !D.has('data/model-server') ? null : await D.require('data/model-server').geometry(datasetId);
+      if (!file && !server) throw new Error(D.t('model.err.nofile'));
+      const meshes = file
+        ? ifc.meshes(file.bytes, { onProgress: options.onProgress }).then((m) => { ifc.release(); return indexed(m); })
+        : D.require('engines/gltf').meshes(server.bytes, { onProgress: options.onProgress }).then(indexed);
       cache = { key, meshes };
       meshes.catch(() => { if (cache && cache.key === key) cache = null; });
       return meshes;
     }
     /** Forget the kept meshes (the dataset was removed, or memory is needed). */
-    function clearCache() { cache = null; ifc.terminate(); }
+    function clearCache() { cache = null; ifc.terminate(); if (D.has('engines/gltf')) D.require('engines/gltf').terminate(); }
 
     function indexed(m) {
       /** @type {Map<number, number[]>} element -> flat [batch, first index, index count] */

@@ -32,10 +32,16 @@ som AI:n i appen också använder, med argumenten som JSON. Heter steget `antal`
 
 Kommandona som bara läser är `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. De som ändrar eller gör filer är `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` kör bara en sats som läser.
 
+Fler kommandon (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` och `make_document` gör diagram, kartor och
+dokument från grunden (dokumentet blir en fil som hämtas som andra); `list_cde_sources`, `cde_projects`, `cde_topics` och `cde_files` läser
+från en OpenCDE-källa som är inloggad under Inhämta, och `cde_create_topic`, `cde_comment` och `cde_fetch_file` skriver ärenden,
+kommentarer och hämtar filer efter godkännande. Grafer redigeras med `apply_operation` och åtgärderna `graph_add_node`,
+`graph_set_node`, `graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` och `graph_merge_nodes`.
+
 | Steg | Så fungerar det |
 |---|---|
 | Om ett villkor håller | Kör stegen under *Då* om villkoret håller, annars stegen under *Annars* |
-| För varje värde i en lista | Kör stegen en gång för varje värde i ett tidigare svar, till exempel `kommuner.rows`; värdet nås som `{{item}}`, och ett tal n ger varven 1 till n |
+| För varje värde i en lista | Kör stegen en gång för varje värde i ett tidigare svar, till exempel `kommuner.rows`; värdet nås som `{{item}}`, och ett tal n ger varven 1 till n; en datamängd i stället för listan ger en rad per varv, med kolumnerna som fält (`{{item.kommun}}`) |
 | Upprepa tills ett villkor håller | Kör stegen och prövar villkoret efter varje varv, med en paus mellan varven; varvet nås som `{{round}}` |
 | Fråga mig | Visar en fråga med svarsalternativ, ett per rad, och väntar på svaret, som nås som `{{namn.answer}}` |
 | Avsluta flödet | Avslutar flödet med ett meddelande i loggen; det räknas inte som ett fel |

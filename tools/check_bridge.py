@@ -3,7 +3,7 @@
 """Checks the bridge's command queue, the CLI and the MCP server without a browser: this script plays the app.
 
 It starts a bridge with --allow-commands, registers a small catalog as the app would, answers the commands it is handed, and
-drives tools/dataspatium.py (list, run, plan and mcp) against it. Standard library only.
+drives tools/dataspatium.py (list, run, cancel, plan and mcp) against it. Standard library only.
 
 Usage:
     python tools/check_bridge.py            # the Python bridge (tools/db_bridge.py)
@@ -58,22 +58,52 @@ def main():
                    {"name": "run_plan", "writes": True, "description": "Runs a plan.", "parameters": {"type": "object", "properties": {"name": {"type": "string"}, "steps": {"type": "string"}}, "required": ["name", "steps"], "additionalProperties": False}}]
         status, out = call("POST", "/commands/catalog", {"commands": catalog})
         assert status == 200 and out["registered"] == 2, out
+        # A queued command is cancelled at once and never reaches the app.
+        status, out = call("POST", "/commands", {"name": "list_datasets", "args": {}})
+        assert status == 202, (status, out)
+        queued = out["id"]
+        status, out = call("POST", "/commands/%s/cancel" % queued, {})
+        assert status == 200 and out["state"] == "cancelled", (status, out)
+        status, out = call("GET", "/commands/%s" % queued)
+        assert out["state"] == "cancelled" and out["ok"] is False and out["cancelled"] is True, out
 
         def page():
             deadline = time.time() + 60
-            while time.time() < deadline and len(seen) < 4:
+            while time.time() < deadline and len(seen) < 5:
                 try:
                     _, nxt = call("GET", "/commands/next?wait=5")
                 except Exception:  # noqa: BLE001 - the bridge is gone
                     break
                 if nxt.get("id"):
                     seen.append(nxt)
+                    if nxt["name"] == "run_plan" and (nxt.get("args") or {}).get("name") == "Långsam":
+                        time.sleep(1.5)
                     result = {"ok": True, "result": {"datasets": [{"id": "d1", "name": "Befolkning"}]}} if nxt["name"] == "list_datasets" else {"ok": False, "error": "not approved"}
                     call("POST", "/commands/%s/result" % nxt["id"], result)
                 else:
                     time.sleep(0.2)
         th = threading.Thread(target=page, daemon=True)
         th.start()
+        # A running command is marked cancelling; the app's answer closes it, and the bridge remembers the cancel.
+        status, out = call("POST", "/commands", {"name": "run_plan", "args": {"name": "Långsam", "steps": "[]"}})
+        slow = out["id"]
+        st = {}
+        for _ in range(100):
+            _, st = call("GET", "/commands/%s" % slow)
+            if st["state"] == "running":
+                break
+            time.sleep(0.1)
+        assert st["state"] == "running", st
+        status, out = call("POST", "/commands/%s/cancel" % slow, {})
+        assert status == 202 and out["state"] == "cancelling", (status, out)
+        for _ in range(100):
+            _, st = call("GET", "/commands/%s?wait=1" % slow)
+            if st["state"] == "done":
+                break
+            time.sleep(0.1)
+        assert st["state"] == "done" and st["cancelled"] is True, st
+        status, out = call("POST", "/commands/%s/cancel" % slow, {})
+        assert status == 409, (status, out)
         cli = [sys.executable, "-I", str(ROOT / "tools/dataspatium.py")]
         out = subprocess.run(cli + ["list"], capture_output=True, text=True, encoding="utf-8", env=env)
         assert out.returncode == 0 and '"connected": true' in out.stdout and "run_plan" in out.stdout, out.stdout + out.stderr
@@ -107,6 +137,9 @@ def main():
             raise AssertionError("no 401")
         except urllib.error.HTTPError as e:
             assert e.code == 401
+        # The CLI cancels by id: what is done is refused with the bridge's reason.
+        out = subprocess.run(cli + ["cancel", slow], capture_output=True, text=True, encoding="utf-8", env=env)
+        assert out.returncode == 2 and "redan klart" in out.stderr, out.stdout + out.stderr
         print("check_bridge %s: ok (%d commands served)" % (KIND, len(seen)))
         return 0
     finally:

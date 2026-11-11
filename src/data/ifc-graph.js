@@ -108,7 +108,10 @@
      * StepBlock nodes. `Model.geometry` says which form a model has: skeleton (the default), blocks or nodes; `Model.form_version` the
      * version of the graph's form (1 since IFC-LPG 61a2d69), `Model.format` the origin ('step' or 'ifcx') and `Model.schema` IFC's version. The views of what a
      * model holds leave the skeleton out, so that a thousand relationships show elements and not solids; the view `geometry` counts it.
-     * A model converted before Dataregium wrote `geometry` has the blocks form when `lossless` is true.
+     * A model converted before Dataregium wrote `geometry` has the blocks form when `lossless` is true. Dataregium keeps its own facts
+     * about a conversion (document, version, state, file, times, error) on a node Conversion with `model_id` (and CONVERTS to the Model
+     * when both live in one database) since its step two of IFC-LPG's F38 a; older servers keep them on Model, so MODELS reads
+     * Conversion when it exists and Model otherwise, and a model the library imported on its own counts as done by `imported_at`.
      */
     const GEOMETRY_LABELS = ['IfcRepresentationItem', 'IfcRepresentation', 'IfcProductRepresentation', 'IfcRepresentationMap', 'IfcObjectPlacement', 'IfcProfileDef', 'IfcRepresentationContext', 'IfcPresentationStyle', 'IfcPresentationStyleAssignment', 'IfcPresentationLayerAssignment', 'IfcPresentationItem', 'IfcColourSpecification', 'IfcSurfaceStyleShading', 'IfcSurfaceStyleLighting', 'IfcSurfaceStyleRefraction', 'IfcSurfaceStyleWithTextures', 'IfcSurfaceTexture', 'IfcCurveStyleFont', 'IfcCurveStyleFontPattern', 'IfcTextStyleTextModel', 'IfcTextStyleWithBoxCharacteristics', 'IfcPreDefinedItem', 'IfcGeometricRepresentationContext', 'StepBlock'];
     const GEOMETRY_LIST = '[' + GEOMETRY_LABELS.map(quote).join(', ') + ']';
@@ -120,7 +123,7 @@
     const GEOMETRY_FORMS = ['skeleton', 'blocks', 'nodes'];
 
     /** Every model the graph knows, with what the app shows of it. Read by the columns' names in `modelsOf`. */
-    const MODELS = "MATCH (m:Model)\nOPTIONAL MATCH (p:Project)-[:HAS_MODEL]->(m)\nRETURN m.id AS id, m.file_name AS fil, m.state AS tillstand, m.version_index AS version, m.entities AS entiteter, m.relationships AS relationer, m.schema AS schema, m.error AS fel, coalesce(m.document_id, m.bcf_document_guid) AS dokument, p.name AS projekt, coalesce(m.done_at, m.created_at) AS klar, m.geometry AS geometri, m.lossless AS forlustfri, m.form_version AS form, m.format AS format\nORDER BY projekt, fil, version DESC, klar DESC";
+    const MODELS = "MATCH (m:Model)\nOPTIONAL MATCH (c:Conversion {model_id: m.id})\nOPTIONAL MATCH (p1:Project)-[:HAS_CONVERSION]->(c)\nOPTIONAL MATCH (p2:Project)-[:HAS_MODEL]->(m)\nRETURN m.id AS id, coalesce(c.file_name, m.file_name) AS fil, coalesce(c.state, m.state, CASE WHEN m.imported_at IS NOT NULL THEN 'done' END) AS tillstand, coalesce(c.version_index, m.version_index) AS version, coalesce(m.entities, c.entities) AS entiteter, coalesce(m.relationships, c.relationships) AS relationer, coalesce(m.schema, c.schema) AS schema, coalesce(c.error, m.error) AS fel, coalesce(c.document_id, m.document_id, c.bcf_document_guid, m.bcf_document_guid) AS dokument, coalesce(p1.name, p2.name) AS projekt, coalesce(c.done_at, m.done_at, m.imported_at, c.created_at, m.created_at) AS klar, coalesce(m.geometry, c.geometry) AS geometri, coalesce(m.lossless, c.lossless) AS forlustfri, coalesce(m.form_version, c.form_version) AS form, coalesce(m.format, c.format) AS format\nORDER BY projekt, fil, version DESC, klar DESC";
     /**
      * The answer to MODELS as lists: finished models, the newest version of each document first and marked `latest` (older versions stay
      * in the graph until pruned), and how many wait or failed.

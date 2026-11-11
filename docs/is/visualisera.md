@@ -157,6 +157,15 @@ skipting Hagstofu Finnlands 1:1 000 000 fyrir Finnland (sjá `presets/geo/KALLA.
 mælaborð og keyrð í hópkeyrslu eins og öll önnur myndrit smiðsins; síur í mælaborðum virka líka á kort. Gagnasafn með
 rúmfræði má flytja út sem GeoJSON úr Flytja út.
 
+## Hæðarsnið eftir línu
+
+*Nýtt myndrit* býður **Hæðarsnið eftir línu** fyrir gagnasafn með rúmfræðidálki. Veldu dálkinn, hvernig línurnar eru nefndar, hve
+margar raðir frá byrjun á að teikna (í mesta lagi 50) og skrefið í metrum (sjálfgefið 10). Forritið tekur einn punkt á skref eftir
+hverri línu, sækir hæðina úr landlíkani Lantmäteriet með lyklinum í gagnalindinni *Lantmäteriet STAC* (sjá [kallor.md](kallor.md))
+og vistar útkomuna sem nýtt gagnasafn með dálkunum `linje`, `avstand_m`, `hojd_m`, `ost` og `nord` (SWEREF 99 TM) og sem línurit
+með fjarlægðina á x-ás og hæðina á y-ás, eina línu á röð. Punktar utan líkansins fá enga hæð, og alls eru í mesta lagi 5.000
+punktar sóttir í einu. Myndritið og gagnasafnið eru venjuleg: þeim má breyta í myndritasmiðnum, setja á mælaborð og flytja út.
+
 ## Mælaborð
 
 Mælaborð er nefnt úrval vistaðra myndrita í hnitaneti með sameiginlegum síum. Búðu til eitt með **Nýtt mælaborð** í

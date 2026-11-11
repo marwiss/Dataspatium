@@ -211,7 +211,9 @@ vel neste steg etter det han får vite. Stega vert viste i panelet medan dei ver
   godkjenner aldri noko.
 - For ei oppgåve som skal gjerast igjen, kan AI-en foreslå ein heil flyt, som du lagrar med *Lagre som flyt*. Etter ei oppgåve kan
   du òg lagre dei godkjende stega som ein flyt. Begge vert deretter køyrde utan AI under *Flytar og vakting*.
-- AI-en svarar på språket i appen. *Stopp* avbryt før neste steg, og *Ny samtale* byrjar på nytt.
+- AI-en svarar på språket i appen. *Stopp* avbryt før neste steg. AI-en hugsar samtalen mellom økter: han vert lagra som notatboka
+  *AI-assistent* under Analyser, som du kan lese og slette, og følgjer aldri med i ein pakke til andre. *Ny samtale* byrjar på nytt og
+  gløymer han.
 
 Det AI-en les i datasetta, vert rekna som data, aldri som instruksjonar. Det som vert sendt til ei skyteneste, forlèt
 datamaskina, så vel ein lokal modell for sensitive oppgåver.

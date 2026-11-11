@@ -10,6 +10,17 @@ Pudota `.ifc`-, `.ifczip`- tai `.dxf`-tiedosto Nouda-tilaan. Tiedoston tiedot n�
 lukumäärät tyypeittäin), ja *Tuo* luo aineiston. Tuettuja ovat IFC2X3, IFC4 ja IFC4X3 STEP-muodossa. Noin 50 Mt:n mallin tuonti
 kestää noin neljännesminuutin, minkä jälkeen se avautuu muutamassa sekunnissa.
 
+## Suuret mallit palvelimelta
+
+Mallin, joka on liian suuri luettavaksi selaimessa, voi hakea Dataregiumista ilman IFC-tiedostoa. Lähteen tiedostoluettelossa kohdassa
+*Nouda → OpenCDE* mallilla on painike **Suuri malli**, kun palvelimella on geometriarajapinta (`ifc_geometry`). Valitse
+yksityiskohtaisuus: *Koko geometria* antaa rakennusosien verkot, *Laatikot rakennusosaa kohden* vain laatikon kullekin nopeaa yleiskuvaa
+varten. Sovellus hakee geometrian binäärisenä glTF:nä, lukee sen taustasäikeessä ja tekee mallitietoaineiston, jossa on rivi rakennusosaa
+kohden (id, GlobalId, luokka, nimi ja kerros palvelimen nimetyistä kyselyistä). Geometria tallennetaan tietoaineiston mukana, joten
+3D-näkymä, korostus, valinnat ja asiat toimivat kuten tiedostosta luetulla mallilla. Ominaisuudet ja määrät eivät tule mukana, ja se, mikä
+tarvitsee IFC-tiedoston, kuten sovelluksen törmäystarkistus ja alkuperäisen vienti, puuttuu; palvelimen törmäystesti ja kyselyt toimivat
+tavalliseen tapaan. Hallitse-tilan kortti näyttää *Geometria: Palvelimelta*.
+
 ## Malli Muokkaa-tilassa
 
 Malli avautuu 3D-näkymänä, jonka alla on rakennusosien taulukko. Kierrä vetämällä, zoomaa osoitinta kohti vierittämällä ja
@@ -188,6 +199,25 @@ Löydökset koskevat tiedostoa sellaisena kuin se ladattiin, eikä palvelin kosk
 löydökset ovat pelkkiä varoituksia, buildingSMARTin validointipalvelu pitää kelvollisena. Jos palvelimella ei ole tällaista
 tarkistusta, kortti kertoo, ettei palvelin ole tarkistanut versiota.
 
+## Projektiprofiili
+
+Kortti **Projektiprofiili** lähteen näkymässä kohdassa *Nouda → OpenCDE* näyttää valitun projektin profiilin: projektin
+IDS-asiakirjat (projektin tiedostoista ne, joiden pääte on `.ids`) ja projektille valitsemasi bSDD-sanakirjat, jotka tallennetaan
+tähän selaimeen palvelinta ja projektia kohden.
+
+- **Kirjoita IDS tekoälyllä** kirjoittaa Information Delivery Specification -määrittelyn sanallisesta kuvauksesta. Valitse
+  toimittaja, malli, jota vasten vaatimukset tarkistetaan, ja kuvaile vaatimukset. Tekoäly antaa tiedoston sovellukselle, joka
+  tarkistaa sen (ensin muodon, sitten ifctesterillä mallia vasten, Pythonissa selaimessa) ja vastaa korjattavalla virheellä tai
+  tuloksella määrittelyä kohden. Se etenee kierros kierrokselta, kunnes tiedosto on ajettavissa, enintään neljä kierrosta, eikä
+  vaatimuksia koskaan lievennetä läpimenon vuoksi. Tuloksen voi tallentaa `.ids`-tiedostona tai ladata projektiin asiakirjaksi.
+- **Hae bSDD:stä** hakee luokkia buildingSMART Data Dictionarysta, kun olet antanut suostumuksen isännälle
+  `api.bsdd.buildingsmart.org`, valituista sanakirjoista tai kaikista; *Sanakirjat* luettelee sanakirjat, jotta voit lisätä ne
+  profiiliin. *Muuta tekoälyllä* -tilassa tekoäly voi hakea työkalulla `search_bsdd` ja luokitella rakennusosia työkalulla
+  `set_classification`, joka kirjoitetaan `IfcClassificationReference`-viittauksena hyväksymääsi muutosjoukkoon.
+
+Palvelimen buildingSMART-säännöt näkyvät kortissa *Validoi malli* Hallitse-tilassa; valitse sääntö luettelosta painikkeen *Merkitse malliin*
+vieressä, niin vain sen säännön osumat rakennusosat merkitään.
+
 ## Törmäystarkistus
 
 Analysoi-tilan (välilehti Määrät) työkalu **Törmäykset** etsii rakennusosat, jotka menevät toistensa sisään tai tulevat liian lähelle
@@ -214,7 +244,7 @@ mallin omissa koordinaateissa. Siitä:
   näkevät ne, esimerkiksi Bonsai.
 - *Luo aineisto* tallentaa taulukon.
 
-Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
+Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli, ja siitä näkyy, tehtiinkö se sovelluksessa vai palvelimella. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
 tai rikki, voi antaa epävarmoja syvyyksiä. Kaarevat pinnat on jaettu kolmioihin, joten alle millimetrin toleranssi on epävarma. Elementit, joita 3D-näkymä ei pysty piirtämään, eivät ole mukana, ja tulos kertoo, kuinka monta niitä on; Teklan esimerkkimallissa se koski kaikkia raudoitustankoja.
 
 ## DXF-piirustukset

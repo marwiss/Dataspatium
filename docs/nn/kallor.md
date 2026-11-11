@@ -90,13 +90,17 @@ Kommandolinja `tools/dataspatium.py` (Python 3, standardbiblioteket) brukar adre
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Folketal", "limit": 5}'
 python tools/dataspatium.py plan maanadsrapport.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` viser kommandoane med parametrane sine, `run` køyrer éin og skriv svaret som JSON, `plan` køyrer ei flytfil (same form som
 *Eksporter* under Flytar gjev) som ein plan du godkjenner éin gong, og `mcp` gjer kommandoane til verktøy for eit AI-program på
 datamaskina gjennom Model Context Protocol (over standardstraumane). Brua held køen i minnet, og ein kommando ventar på appen til du
-har godkjent han eller det har gått fem minutt. `python tools/check_bridge.py` prøver køen, kommandolinja og MCP utan nettlesar.
+har godkjent han eller det har gått fem minutt.
+`cancel` avbryt ein kommando som ventar i køen eller køyrer i appen (Ctrl+C under `run` gjer det same), og `POST /commands/<id>/cancel`
+er vegen for andre program.
+`python tools/check_bridge.py` prøver køen, kommandolinja og MCP utan nettlesar.
 
 ### Tryggleik
 
@@ -288,6 +292,7 @@ datamaskina, høgst 20 om gongen. Høgder i punkt gjev handlinga *Høgd frå ter
 terrengmodellen direkte. Nøkkelen er forbrukarnøkkelen og forbrukarløyndomen frå ein gratis konto i
 [Geotorget](https://geotorget.lantmateriet.se/); appen hentar eit tilgangstoken med dei, og det blir berre sendt til API-et
 til Lantmäteriet og filtenaren dl1.lantmateriet.se.
+Ein høgdeprofil langs ei linje teiknar Visualiser (*Nytt diagram* → *Høgdeprofil langs ei linje*).
 
 **Geodataportalen** (geodata.se) er den nasjonale katalogen i Sverige over geodata frå etatar, regionar og kommunar. Kjelda
 *Geodataportalen (sök geodata)* søkjer i katalogen og viser ein post per treff med tittel, organisasjon, skildring og

@@ -167,6 +167,16 @@ since Norwegian municipalities otherwise reach out to sea) and Statistics Finlan
 (see `presets/geo/KALLA.md`). Maps are exported, shared, placed in dashboards and run in batch like every other chart
 in the builder; filters in dashboards work on maps too. A dataset with geometry can be exported as GeoJSON from Export.
 
+## Height profile along a line
+
+*New chart* offers **Height profile along a line** for a dataset with a geometry column. Choose the column, how the lines are named,
+how many rows from the top to draw (at most 50) and the step in metres (10 by default). The app takes one point per step along each
+line, fetches the height from Lantmäteriet's terrain model with the key of the source *Lantmäteriet STAC* (see [kallor.md](kallor.md))
+and saves the result as a new dataset with the columns `linje`, `avstand_m`, `hojd_m`, `ost` and `nord` (SWEREF 99 TM) and as a
+line chart with the distance on the x axis and the height on the y axis, one line per row. Points outside the model get no height,
+and at most 5,000 points are fetched at a time. The chart and the dataset are ordinary ones: they can be changed in the chart
+builder, put on a dashboard and exported.
+
 ## Dashboards
 
 A dashboard is a named selection of saved charts in a grid with shared filters. Create one with **New dashboard** in

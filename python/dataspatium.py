@@ -1650,6 +1650,22 @@ class _ChangeSet:
             ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties=values)
             self.touch(e)
 
+    def op_set_classification(self, op):
+        import ifcopenshell.api.classification
+        system = str(op.get("system") or "").strip()
+        name = str(op.get("name") or "").strip()
+        if not system or not name:
+            raise DataspatiumError("system and name are required")
+        found = [c for c in self.m.by_type("IfcClassification") if str(c.Name or "") == system]
+        classification = found[0] if found else ifcopenshell.api.classification.add_classification(self.m, classification=system)
+        code = str(op.get("code") or "").strip() or None
+        uri = str(op.get("uri") or "").strip() or None
+        for e in self.elements(op):
+            ref = ifcopenshell.api.classification.add_reference(self.m, products=[e], identification=code, name=name, classification=classification)
+            if uri and ref is not None and hasattr(ref, "Location"):
+                ref.Location = uri
+            self.touch(e)
+
     def op_assign(self, op):
         import ifcopenshell.api.material
         storey = self.storey(op["storey"]) if op.get("storey") else None

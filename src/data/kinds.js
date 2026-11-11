@@ -114,6 +114,7 @@
         ds.kind === 'model' && isDxf(ds) ? { label: t('model.field.entities'), value: i18n.formatNumber(ds.rowCount || 0) } : null,
         ds.kind === 'model' && isDxf(ds) ? { label: t('model.layers'), value: i18n.formatNumber((ds.model.layers || []).length) } : null,
         ds.kind === 'model' && ds.model && !isDxf(ds) ? { label: t('model.field.format'), value: ds.model.schema || 'IFC' } : null,
+        ds.kind === 'model' && ds.model && ds.model.geometry === 'server' ? { label: t('model.field.geometry'), value: t('model.source.server.' + (ds.model.lod === 'box' ? 'box' : 'full')) } : null,
         ds.kind === 'model' && ds.model && !isDxf(ds) && ds.model.project ? { label: t('model.field.project'), value: ds.model.project } : null,
         ds.kind === 'model' && ds.model && !isDxf(ds) ? { label: t('model.field.elements'), value: i18n.formatNumber(ds.model.elements || 0) } : null,
         ds.kind === 'model' && ds.model && !isDxf(ds) ? { label: t('model.field.storeys'), value: (ds.model.storeys || []).map((x) => x.name).join(', ') } : null,

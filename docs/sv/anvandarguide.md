@@ -223,7 +223,9 @@ kolumner som finns, och väljer nästa steg efter vad den får veta. Stegen visa
   aldrig något.
 - För en uppgift som ska göras igen kan AI:n föreslå ett helt flöde, som du sparar med *Spara som flöde*. Efter en uppgift kan
   du också spara de godkända stegen som ett flöde. Båda körs sedan utan AI under *Flöden och bevakningar*.
-- AI:n svarar på appens språk. *Stoppa* avbryter före nästa steg, och *Nytt samtal* börjar om.
+- AI:n svarar på appens språk. *Stoppa* avbryter före nästa steg. AI:n minns samtalet mellan sessioner: det sparas som anteckningsboken
+  *AI-assistent* under Analysera, som du kan läsa och ta bort, och följer aldrig med i ett paket till andra. *Nytt samtal* börjar om och
+  glömmer det.
 
 Det AI:n läser i datamängderna räknas som data, aldrig som instruktioner. Det som skickas till en molntjänst lämnar datorn, så
 välj en lokal modell för känsliga uppgifter.

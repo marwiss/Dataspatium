@@ -9,7 +9,8 @@
  * given. Flows are stored as settings (`flow:<id>`) and travel in backups, not in bundles.
  * A step can also be one of the app's commands (data/commands), and plans can choose (decision F31 a, F33 b): a step with an id keeps
  * its answer for later steps; `if` runs `steps` or `otherwise` after a condition (data/conditions, read and never run as code);
- * `each` runs its steps for every value of a list and `repeat` until a condition holds, both within `max_rounds` and `max_seconds`
+ * `each` runs its steps for every value of a list or every row of a dataset (`dataset`, a row as an object by column) and
+ * `repeat` until a condition holds, both within `max_rounds` and `max_seconds`
  * and answering `rounds` and `reason`; `stop` ends the flow; `ask` asks the person through the asker the shell gives (F34 a), and a
  * flow that asks never runs at start. Cancelling is checked before every step and after every round, and a
  * pause ends at once.
@@ -177,7 +178,7 @@
           },
         },
         if: { icon: 'git-branch', branches: ['steps', 'otherwise'], fields: [{ name: 'condition', type: 'condition' }] },
-        each: { icon: 'list-ordered', branches: ['steps'], fields: [{ name: 'items', type: 'condition' }, { name: 'as', type: 'text', optional: true }, { name: 'max_rounds', type: 'number', optional: true }, { name: 'max_seconds', type: 'number', optional: true }] },
+        each: { icon: 'list-ordered', branches: ['steps'], fields: [{ name: 'items', type: 'condition' }, { name: 'dataset', type: 'dataset', optional: true }, { name: 'as', type: 'text', optional: true }, { name: 'max_rounds', type: 'number', optional: true }, { name: 'max_seconds', type: 'number', optional: true }] },
         repeat: { icon: 'repeat', branches: ['steps'], fields: [{ name: 'until', type: 'condition' }, { name: 'wait_seconds', type: 'number', optional: true }, { name: 'max_rounds', type: 'number', optional: true }, { name: 'max_seconds', type: 'number', optional: true }] },
         stop: { icon: 'octagon-x', fields: [{ name: 'message', type: 'text', optional: true }] },
         ask: {
@@ -268,12 +269,13 @@
       /**
        * Runs a flow's steps in order. It stops at the first error unless the flow says to go on.
        * @param {any} flow a stored flow
-       * @param {{fetch?: Function}} [options] fetch is injectable for tests
+       * @param {{fetch?: Function, signal?: AbortSignal}} [options] fetch is injectable for tests; signal stops the flow from outside, as Stoppa does
        * @returns {Promise<{flowId: string, name: string, ok: boolean, aborted: boolean, startedAt: string, endedAt: string, steps: any[], files: string[]}>}
        */
       async function run(flow, options = {}) {
         if (running) throw new Error(t('flows.err.busy', { name: running.flow.name }));
         const controller = new AbortController();
+        if (options.signal) { if (options.signal.aborted) controller.abort(); else options.signal.addEventListener('abort', () => controller.abort(), { once: true }); }
         const working = JSON.parse(JSON.stringify(flow));
         running = { flow: working, index: 0, controller };
         const result = { flowId: working.id, name: working.name, ok: true, aborted: false, startedAt: new Date().toISOString(), endedAt: '', steps: [], files: [] };
@@ -361,6 +363,15 @@
           }
         }
       }
+      /** The rows of the dataset named by id or exact name, as objects by column. @param {string} ref @param {number} limit */
+      async function rowsOf(ref, limit) {
+        const list = await datasets.list();
+        const d = list.find((x) => x.id === ref) || list.find((x) => x.name === ref);
+        if (!d) throw new Error(t('flows.err.dataset.named', { name: ref }));
+        const cols = (await datasets.columns(d.id)).map((c) => c.name);
+        const rows = await datasets.query(d.id, { limit: Math.max(1, Math.min(MAX_ROUNDS, limit)) });
+        return rows.map((r) => Object.fromEntries(cols.map((c, i) => [c, r[i]])));
+      }
       /**
        * `each` and `repeat`: rounds within the limits, the first limit reached ending the loop; cancelling is checked after
        * every round, and a pause ends at once. @returns {Promise<{rounds: number, reason: 'done'|'until'|'rounds'|'time'}>}
@@ -372,7 +383,10 @@
         const maxMs = Number(p.max_seconds) > 0 ? Math.min(MAX_SECONDS, Number(p.max_seconds)) * 1000 : Infinity;
         const left = () => maxMs - (performance.now() - t0);
         let items = null;
-        if (step.type === 'each') {
+        if (step.type === 'each' && p.dataset) {
+          // A dataset as the list: its rows in table order, each an object by column, at most MAX_ROUNDS of them.
+          items = await rowsOf(String(p.dataset), maxRounds);
+        } else if (step.type === 'each') {
           const v = conditions.value(String(p.items || ''), frame.scope);
           // A number n gives the rounds 1 … n, as for i in range.
           items = Array.isArray(v) ? v : typeof v === 'number' ? Array.from({ length: Math.max(0, Math.min(MAX_ROUNDS, Math.floor(v))) }, (_x, i) => i + 1) : v === null ? [] : [v];

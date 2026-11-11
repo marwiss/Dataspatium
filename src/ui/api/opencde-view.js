@@ -35,6 +35,7 @@
       const adminUi = adminPanel.create({ connector, ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); } });
       /** The project's members for a manager (Dataregium's project administration), hidden for servers without it. */
       const manageUi = managePanel.create({ connector, log });
+      const profileUi = D.require('ui/api/profile-card').create({ connector, log });
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
       let pendingLink = null;
@@ -136,7 +137,7 @@
       async function loadFiles() {
         if (s.busy || !s.projectId) return;
         s.busy = 'files'; s.error = ''; render();
-        try { s.files = await opencde.filesList(connector, s.projectId); log(t('opencde.files.loaded', { n: i18n.formatNumber(s.files.length) })); } catch (err) { fail(err); }
+        try { s.files = await opencde.filesList(connector, s.projectId); log(t('opencde.files.loaded', { n: i18n.formatNumber(s.files.length) })); s.canGeometry = await opencde.canGeometry(connector).catch(() => false); } catch (err) { fail(err); }
         s.busy = ''; render();
       }
       /** The link's request waits in the store until this source's view starts; it is taken once. */
@@ -186,6 +187,25 @@
           const meta = await opencde.importFile(connector, project() || { project_id: s.projectId, name: '' }, entry);
           log(t('opencde.file.imported', { name: meta.name }));
           overlays.toast.show(t('opencde.file.imported', { name: meta.name }), { kind: 'ok' });
+          if (api.onDataset) api.onDataset(meta);
+        } catch (err) { fail(err); }
+        s.fetching = ''; render();
+      }
+      /** A model too large to read here (step 4): the server's geometry and the elements from its queries, after a choice of detail. */
+      async function fetchLarge(entry) {
+        if (s.fetching) return;
+        const choice = { lod: 'full' };
+        const body = h('div', { class: 'dm-stack-sm', 'data-opencde-large': '' },
+          h('p', { class: 'dm-help dm-small', text: t('large.hint') }),
+          basic.select(t('large.lod'), [{ value: 'full', label: t('large.lod.full') }, { value: 'box', label: t('large.lod.box') }], choice.lod, (v) => { choice.lod = v; }));
+        const ok = await overlays.dialog.open({ title: t('large.title'), help: 'cad-bim#stora-modeller-från-servern', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('large.run'), variant: 'primary', value: true, primary: true }] });
+        if (ok !== true) return;
+        s.fetching = entry.reference; s.error = ''; render();
+        try {
+          log(t('large.working'));
+          const meta = await D.require('data/model-server').fetchLarge(connector, project() || { project_id: s.projectId, name: '' }, entry, { lod: choice.lod });
+          const done = t('large.done', { name: meta.name, n: i18n.formatNumber((meta.model && meta.model.rows) || 0), lod: t('large.lod.' + choice.lod) });
+          log(done); overlays.toast.show(done, { kind: 'ok' });
           if (api.onDataset) api.onDataset(meta);
         } catch (err) { fail(err); }
         s.fetching = ''; render();
@@ -268,7 +288,9 @@
             h('p', { class: 'dm-help dm-xs', text: t('opencde.components.hint') }),
             s.rights ? h('p', { class: 'dm-help dm-xs', 'data-opencde-rights': '', text: rightsText(s.rights) }) : null));
           nodes.push(filesCard());
-        }
+          profileUi.update({ projectId: s.projectId, projectName: (project() || {}).name || '', files: s.files || [] });
+          nodes.push(profileUi.el);
+        } else profileUi.update({ projectId: '', files: [] });
         const resultEl = h('div');
         nodes.push(resultEl, graphEl, manageUi.el, adminUi.el, logCard.el);
         renderGraphCard();
@@ -285,6 +307,7 @@
       function filesCard() {
         const rows = (s.files || []).map((f) => h('div', { class: 'dm-row dm-opencde-file', 'data-opencde-file': f.filename },
           h('span', { class: 'dm-grow dm-truncate' }, h('span', { text: f.filename }), h('span', { class: 'dm-help dm-xs', text: ' ' + [f.model ? t('opencde.file.model') : '', f.source, f.versionIndex ? t('opencde.file.version', { n: f.versionIndex }) : '', f.date ? i18n.formatDateTime(f.date) : ''].filter(Boolean).join(' · ') })),
+          f.model && s.canGeometry ? basic.button({ label: t('opencde.file.large'), icon: 'box', size: 'sm', loading: s.fetching === f.reference, title: t('opencde.file.large.hint'), 'data-opencde-large-button': f.filename, onClick: () => fetchLarge(f) }) : null,
           basic.button({ label: t(isBundle(f) ? 'opencde.file.receive' : 'opencde.file.fetch'), icon: isBundle(f) ? 'package' : 'download', size: 'sm', loading: s.fetching === f.reference, title: t(isBundle(f) ? 'opencde.file.receive.hint' : 'opencde.file.fetch.hint'), onClick: () => fetchFile(f) })));
         return h('div', { class: 'dm-card dm-stack-sm', 'data-opencde-files': '' },
           h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('opencde.files.title') }), basic.button({ label: s.files ? t('opencde.files.again') : t('opencde.files.show'), icon: 'folder-open', size: 'sm', loading: s.busy === 'files', onClick: loadFiles })),

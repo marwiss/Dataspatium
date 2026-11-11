@@ -33,10 +33,16 @@ skipunum sem gervigreindin í forritinu notar líka, með viðföngin sem JSON. 
 Skipanirnar sem aðeins lesa eru `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Þær sem breyta einhverju eða búa til skrár eru `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` keyrir aðeins
 eina setningu sem les.
 
+Fleiri skipanir (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` og `make_document` búa til myndrit, kort og skjöl
+frá grunni (skjalið verður skrá sem er sótt eins og hinar); `list_cde_sources`, `cde_projects`, `cde_topics` og `cde_files` lesa úr
+OpenCDE-gagnalind sem er innskráð undir Sækja, og `cde_create_topic`, `cde_comment` og `cde_fetch_file` skrifa mál og athugasemdir og
+sækja skrár eftir samþykki. Gröf eru breytt með `apply_operation` og aðgerðunum `graph_add_node`, `graph_set_node`, `graph_add_edge`,
+`graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` og `graph_merge_nodes`.
+
 | Skref | Svona virkar það |
 |---|---|
 | Ef skilyrði gildir | Keyrir skrefin undir *Þá* ef skilyrðið gildir, annars skrefin undir *Annars* |
-| Fyrir hvert gildi í lista | Keyrir skrefin einu sinni fyrir hvert gildi í fyrra svari, til dæmis `sveitarfelog.rows`; gildið næst sem `{{item}}`, og talan n gefur umferðirnar 1 til n |
+| Fyrir hvert gildi í lista | Keyrir skrefin einu sinni fyrir hvert gildi í fyrra svari, til dæmis `sveitarfelog.rows`; gildið næst sem `{{item}}`, og talan n gefur umferðirnar 1 til n; gagnasafn í stað listans gefur eina línu á umferð með dálkana sem reiti (`{{item.sveitarfelag}}`) |
 | Endurtaka þar til skilyrði gildir | Keyrir skrefin og prófar skilyrðið eftir hverja umferð, með hléi milli umferða; umferðin næst sem `{{round}}` |
 | Spyrja mig | Sýnir spurningu með svarmöguleikum, einum í hverri línu, og bíður eftir svarinu, sem næst sem `{{nafn.answer}}` |
 | Ljúka flæðinu | Lýkur flæðinu með skilaboðum í annálnum; það telst ekki villa |

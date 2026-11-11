@@ -33,10 +33,16 @@ commands the AI in the app uses too, with the arguments as JSON. If the step is 
 The commands that only read are `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. The ones that change something or make files are `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` runs only
 one statement that reads.
 
+More commands (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` and `make_document` make charts, maps and
+documents from scratch (the document becomes a file fetched like the others); `list_cde_sources`, `cde_projects`, `cde_topics` and
+`cde_files` read from an OpenCDE source signed in under Import, and `cde_create_topic`, `cde_comment` and `cde_fetch_file` write topics
+and comments and fetch files after approval. Graphs are edited with `apply_operation` and the operations `graph_add_node`,
+`graph_set_node`, `graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` and `graph_merge_nodes`.
+
 | Step | How it works |
 |---|---|
 | If a condition holds | Runs the steps under *Then* if the condition holds, otherwise the steps under *Otherwise* |
-| For each value in a list | Runs the steps once for every value of an earlier answer, for example `municipalities.rows`; the value is reached as `{{item}}`, and a number n gives the rounds 1 to n |
+| For each value in a list | Runs the steps once for every value of an earlier answer, for example `municipalities.rows`; the value is reached as `{{item}}`, and a number n gives the rounds 1 to n; a dataset instead of the list gives one row per round, with the columns as fields (`{{item.municipality}}`) |
 | Repeat until a condition holds | Runs the steps and tries the condition after every round, with a pause between rounds; the round is reached as `{{round}}` |
 | Ask me | Shows a question with answers to choose from, one per line, and waits for the answer, which is reached as `{{name.answer}}` |
 | End the flow | Ends the flow with a message in the log; it does not count as an error |
