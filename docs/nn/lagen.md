@@ -129,7 +129,9 @@ har nye data (sjå [floden.md](floden.md)).
 
 **Bibliotek.** Under Bibliotek finst ferdige oppskrifter, malar, skript og notatbøker, kvar med sin lisens. Du ser kva noko gjer før du legg det til. Fleire bibliotek blir henta frå ei nettadresse, og *Lagre eigne som biblioteksfil* lagar ei fil av det du sjølv har laga, til eit GitHub-repositorium eller kvar som helst.
 
-**Frå CDE.** Eit datasett henta frå ein OpenCDE-tenar viser tenar, prosjekt og versjon, kan spørje etter ein nyare versjon og opne sakene til modellen.
+**Frå CDE.** Eit datasett henta frå ein OpenCDE-tenar viser tenar, prosjekt og versjon, kan spørje etter ein nyare versjon og opne
+sakene til modellen. *Publisering* viser om ein versjon er publisert på tenaren, og den prosjektansvarlege kan publisere han éin
+gong etter ei stadfesting; arkivet med kontrollsummen kan så hentast.
 
 **Saker.** Ein tabell med saker frå eit CDE får kortet Saker: status per status, dashbordet Sakstatus og vegen til modellen. Sjå [cad-bim.md](cad-bim.md).
 

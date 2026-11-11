@@ -142,7 +142,9 @@ när de har nya data (se [floden.md](floden.md)).
 
 **Bibliotek.** Under Bibliotek finns färdiga recept, mallar, skript och anteckningsböcker, var och en med sin licens. Du ser vad något gör innan du lägger till det. Fler bibliotek hämtas från en webbadress, och *Spara egna som biblioteksfil* gör en fil av det du själv har skapat, att lägga ut i ett GitHub-repo eller var som helst.
 
-**Från CDE.** En datamängd som hämtats från en OpenCDE-server visar server, projekt och version, kan fråga efter en nyare version och öppna modellens ärenden.
+**Från CDE.** En datamängd som hämtats från en OpenCDE-server visar server, projekt och version, kan fråga efter en nyare version
+och öppna modellens ärenden. *Publicering* visar om en version är publicerad på servern, och den som är projektansvarig kan
+publicera den en gång efter en bekräftelse; arkivet med sin kontrollsumma kan sedan hämtas.
 
 **Ärenden.** En tabell med ärenden från ett CDE får kortet Ärenden: läget per status, dashboarden Ärendeläge och vägen till modellen. Se [cad-bim.md](cad-bim.md).
 

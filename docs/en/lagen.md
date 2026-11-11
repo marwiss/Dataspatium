@@ -132,7 +132,9 @@ new data (see [floden.md](floden.md)).
 
 **Library.** Under Library there are ready-made recipes, templates, scripts and notebooks, each with its licence. You see what something does before you add it. More libraries are fetched from an address, and *Save your own as a library file* makes a file of what you have made, to put in a GitHub repository or anywhere.
 
-**From the CDE.** A dataset fetched from an OpenCDE server shows server, project and version, can ask for a newer version and open the model's issues.
+**From the CDE.** A dataset fetched from an OpenCDE server shows server, project and version, can ask for a newer version and open
+the model's issues. *Publication* shows whether a version is published on the server, and a manager of the project can publish it
+once after a confirmation; the archive with its checksum can then be fetched.
 
 **Issues.** A table of issues from a CDE gets the card Issues: how they stand per status, the dashboard Issue status and the way to the model. See [cad-bim.md](cad-bim.md).
 

@@ -87,7 +87,7 @@
       const { ui, store, shell } = ctx;
       const opencde = D.require('api/families/opencde');
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'cde' });
-      const state = { checking: false, result: null, error: '', fetching: false };
+      const state = { checking: false, result: null, error: '', fetching: false, pub: null, pubBusy: '' };
       const connectorOf = async () => (await D.require('api/connectors').get(cde.connectorId)) || null;
       async function check() {
         state.checking = true; state.error = ''; state.result = null; draw();
@@ -113,6 +113,46 @@
         } catch (err) { state.error = String((err && err.message) || err); }
         state.fetching = false; draw();
       }
+      async function connected() {
+        const connector = await connectorOf();
+        if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+        if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+        return connector;
+      }
+      async function pubStep(name, fn) {
+        state.pubBusy = name; state.error = ''; draw();
+        try { await fn(); } catch (err) { state.error = String((err && err.message) || err); }
+        state.pubBusy = ''; draw();
+      }
+      // Publicering (Dataregium's publication): the status for every member; publishing for a manager, once, after a confirmation.
+      const loadPublication = () => pubStep('load', async () => {
+        const connector = await connected();
+        if (!(await opencde.canPublish(connector))) { state.pub = { unsupported: true }; return; }
+        state.pub = (await opencde.publication(connector, cde.documentId, cde.versionIndex)) || { none: true };
+      });
+      const doPublish = () => pubStep('publish', async () => {
+        const ok = await ui.dialog.confirm(t('cde.publication.confirm', { name: ds.name, version: String(cde.versionIndex), host: cde.host }), { okLabel: t('cde.publication.publish') });
+        if (!ok) return;
+        state.pub = await opencde.publish(await connected(), cde.documentId, cde.versionIndex);
+        const done = t('cde.publication.done', { name: ds.name, date: i18n.formatDateTime(state.pub.published_at) });
+        shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
+      });
+      const saveArchive = () => pubStep('download', async () => {
+        const file = await opencde.publicationFile(await connected(), cde.documentId, cde.versionIndex, state.pub.file_name);
+        D.require('platform/files').download(file, file.name);
+      });
+      function publicationPart() {
+        if (!cde.documentId || !cde.versionIndex) return null;
+        const p = state.pub;
+        if (!p) return h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('cde.publication'), icon: 'circle-check', size: 'sm', loading: state.pubBusy === 'load', title: t('cde.publication.hint'), 'data-cde-publication': '', onClick: loadPublication }));
+        if (p.unsupported) return h('p', { class: 'dm-help dm-small', text: t('cde.publication.unsupported') });
+        if (p.none) return h('div', { class: 'dm-row-wrap', 'data-cde-unpublished': '' }, h('span', { class: 'dm-help dm-small', text: t('cde.publication.none') }),
+          ui.button({ label: t('cde.publication.publish'), icon: 'circle-check', size: 'sm', loading: state.pubBusy === 'publish', title: t('cde.publication.publish.hint'), 'data-cde-publish': '', onClick: doPublish }));
+        return h('div', { class: 'dm-stack-xs', 'data-cde-published': '' },
+          h('span', { class: 'dm-small', text: t('cde.publication.status', { date: i18n.formatDateTime(p.published_at), user: p.published_by || '', file: p.file_name || '' }) }),
+          p.sha256 ? h('span', { class: 'dm-help dm-small dm-mono', text: 'SHA-256 ' + p.sha256 }) : null,
+          h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('cde.publication.download'), icon: 'download', size: 'sm', loading: state.pubBusy === 'download', title: t('cde.publication.download.hint'), 'data-cde-archive': '', onClick: saveArchive })));
+      }
       function draw() {
         const kv = /** @type {any} */ (h('dm-kv'));
         kv.items = [
@@ -133,6 +173,7 @@
             ds.kind === 'model' && !D.require('data/model').isDxf(ds) ? ui.button({ label: t('ifcgraph.title'), icon: 'network', size: 'sm', title: t('ifcgraph.open.hint'), 'data-cde-graph': '', onClick: async () => { if (!(await D.require('api/graph-source').open(ctx, ds))) ui.toast.show(t('cde.err.noconnector', { host: cde.host }), { kind: 'warn' }); } }) : null),
           r && r.newer ? h('div', { class: 'dm-row-wrap', 'data-cde-newer': '' }, h('span', { class: 'dm-warn', text: t('cde.newer', { have: String(r.have), latest: String(r.version.version_index) }) }), ui.button({ label: t('cde.fetch.version', { n: String(r.version.version_number || r.version.version_index) }), icon: 'download', size: 'sm', variant: 'primary', loading: state.fetching, onClick: fetchNew })) : null,
           r && !r.newer && r.version ? h('p', { class: 'dm-help dm-small', 'data-cde-current': '', text: t('cde.current') }) : null,
+          publicationPart(),
           state.error ? h('p', { class: 'dm-error dm-small', text: state.error }) : null);
       }
       draw();
@@ -283,6 +324,21 @@
         ui.toast.show(done, { kind: 'ok', action: { label: t('import.open.bearbeta'), onClick: () => { store.set({ selectedId: meta.id }); shell.activate('bearbeta'); } } });
       });
       const openTool = (tool) => { store.set({ selectedId: ds.id, openModelTool: { datasetId: ds.id, tool } }); shell.activate('analysera'); };
+      // What the server's check graph finds out of reach can be proposed for removal: a topic whose change set is tried and
+      // approved like any other, so this version keeps the instances.
+      const unreachable = () => step('unreachable', async () => {
+        const connector = await signedIn();
+        const ok = await ui.dialog.confirm(t('validation.unreachable.confirm', { name: ds.name, version: String(cde.versionIndex) }), { okLabel: t('validation.unreachable') });
+        if (!ok) return;
+        let res = null;
+        try { res = await D.require('api/families/opencde').proposeUnreachable(connector, cde.projectId, cde.documentId, cde.versionIndex); }
+        catch (err) { if (err && err.status === 409) { ui.toast.show(t('validation.unreachable.nothing'), { kind: 'info' }); return; } throw err; }
+        if (!res) throw new Error(t('validation.unreachable.unsupported'));
+        const done = t('validation.unreachable.done', { n: i18n.formatNumber(res.changes || 0), title: res.title || res.topic_guid });
+        shell.log(done, 'ok');
+        ui.toast.show(done, { kind: 'ok', action: { label: t('issues.title'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); shell.activate('bearbeta'); } } });
+      });
+      const reachCheck = (report) => validation.checksOf(report).some((c) => c.name === 'graph' && c.findings > 0);
 
       function serverPart() {
         const server = state.results.server;
@@ -327,7 +383,8 @@
               : issues.length > SHOWN ? h('p', { class: 'dm-help dm-small', text: t('validation.report.shown', { shown: i18n.formatNumber(SHOWN), n: i18n.formatNumber(issues.length) }) }) : null,
             h('div', { class: 'dm-row-wrap' },
               ui.button({ label: t('validation.mark'), icon: 'scan-line', size: 'sm', title: t('validation.mark.hint'), 'data-validation-mark': '', disabled: !issues.length, onClick: () => mark().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }),
-              ui.button({ label: t('validation.table'), icon: 'table', size: 'sm', loading: state.busy === 'table', title: t('validation.table.hint'), 'data-validation-table': '', disabled: !issues.length, onClick: saveTable }))) : null,
+              ui.button({ label: t('validation.table'), icon: 'table', size: 'sm', loading: state.busy === 'table', title: t('validation.table.hint'), 'data-validation-table': '', disabled: !issues.length, onClick: saveTable }),
+              reachCheck(report) ? ui.button({ label: t('validation.unreachable'), icon: 'trash-2', size: 'sm', loading: state.busy === 'unreachable', title: t('validation.unreachable.hint'), 'data-validation-unreachable': '', onClick: unreachable }) : null)) : null,
         ];
       }
       function localPart() {

@@ -176,6 +176,9 @@ The card **Validate the model** in Manage gathers the checks of an IFC model, wi
   document whose name ends in `.ids`), the report shows how many specifications passed, failed or did not apply to the file, and which
   failed, with the document's name and the number of findings. An IDS document that could not be read is among the rules that could not
   run.
+- **What no GlobalId reaches**: when the server’s check graph finds instances that nothing with a GlobalId reaches, the report
+  shows the button *Remove what no GlobalId reaches*. The server then proposes, after your confirmation, a change set that removes
+  them; the proposal becomes a topic that is tried and approved like others, and the version keeps everything.
 - **Checks here** shows the latest *Validation*, *IDS check* and clash check run in the app, and the buttons open them in Analyse.
   The results are kept in the app's settings, not in the dataset.
 

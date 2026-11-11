@@ -174,6 +174,9 @@ Kortet **Valider modellen** i Handter samlar kontrollane av ein IFC-modell, med 
   der namnet sluttar på `.ids`), viser rapporten kor mange spesifikasjonar som vart godkjende, ikkje godkjende eller ikkje galdt fila, og
   kva for nokre som ikkje vart godkjende, med namnet på dokumentet og talet på funn. Eit IDS-dokument som ikkje kunne lesast, står blant
   reglane som ikkje kunne køyrast.
+- **Det ingen GlobalId når**: finn kontrollen graph til tenaren instansar som ingenting med ein GlobalId når, viser rapporten
+  knappen *Fjern det ingen GlobalId når*. Tenaren føreslår då, etter stadfestinga di, eit endringssett som fjernar dei; framlegget
+  blir ei sak som blir prøvd og godkjend som andre, og versjonen held på alt.
 - **Kontrollar her** viser den siste *Validering*, *IDS-kontroll* og kollisjonskontroll som er køyrd i appen, og knappane opnar dei i
   Analyser. Resultata blir lagra i innstillingane til appen, ikkje i datasettet.
 
