@@ -166,6 +166,16 @@ kunnat ulottuvat muuten merelle) ja Tilastokeskuksen 1:1 000 000 -aluejako Suome
 Karttoja viedään, jaetaan, lisätään kojelautoihin ja ajetaan eräajoina kuten muitakin rakentajan kaavioita; kojelautojen
 suodattimet toimivat myös kartoissa. Geometriaa sisältävän aineiston voi viedä GeoJSON-muotoon Vie-tilasta.
 
+## Korkeusprofiili viivaa pitkin
+
+*Uusi kaavio* tarjoaa valinnan **Korkeusprofiili viivaa pitkin** tietoaineistolle, jossa on geometriasarake. Valitse sarake, miten
+viivat nimetään, kuinka monta riviä alusta piirretään (enintään 50) ja askel metreinä (oletus 10). Sovellus ottaa yhden pisteen
+askelta kohden jokaista viivaa pitkin, hakee korkeuden Lantmäterietin maastomallista lähteen *Lantmäteriet STAC* avaimella (ks.
+[kallor.md](kallor.md)) ja tallentaa tuloksen uutena tietoaineistona, jonka sarakkeet ovat `linje`, `avstand_m`, `hojd_m`, `ost` ja
+`nord` (SWEREF 99 TM), sekä viivakaaviona, jossa etäisyys on x-akselilla ja korkeus y-akselilla, yksi viiva riviä kohden. Mallin
+ulkopuoliset pisteet eivät saa korkeutta, ja kerralla haetaan yhteensä enintään 5 000 pistettä. Kaavio ja tietoaineisto ovat
+tavallisia: niitä voi muokata kaaviorakentajassa, lisätä kojelautaan ja viedä.
+
 ## Kojelaudat
 
 Kojelauta on nimetty valikoima tallennettuja kaavioita ruudukossa yhteisin suodattimin. Luo sellainen kohdepaneelin

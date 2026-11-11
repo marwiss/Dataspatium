@@ -511,7 +511,7 @@
     }
   }, 60000);
 
-  test('geodata: Höjd ur markhöjdmodellen reads each point in the terrain model tile that covers it, with the key', async (assert) => {
+  test('geodata: Höjd ur markhöjdmodellen reads each point in the terrain model tile that covers it, with the key, and a height profile along a line becomes a dataset and a line chart', async (assert) => {
     const recipes = D.require('data/recipes');
     const http = D.require('api/http');
     if (!globalThis.GeoTIFF) await D.assets.loadVendorScript('vendor/geotiff/geotiff.js');
@@ -535,7 +535,7 @@
     http.request = (req) => { sent.push({ url: String(req.url), auth: String((req.headers || {}).Authorization || '') }); return real(req); };
     const realFetch = globalThis.fetch; const fetched = [];
     globalThis.fetch = (input, init) => { fetched.push({ url: String(input), auth: String(((init && init.headers) || {}).Authorization || '') }); return realFetch(input, init); };
-    let id = null; let id2 = null;
+    let id = null; let id2 = null; let made = null;
     try {
       const middle = D.require('data/geo').swerefToWgs84(674015, 6580025, 3006);
       const csv = `namn;x;y\nhörnet;674005;6580035\nmotsatt;674035;6580005\nmitten;${middle[0].toFixed(7)};${middle[1].toFixed(7)}\nutanför;690000;6600000\n`;
@@ -560,11 +560,29 @@
       const pick = (r) => ['hojd_min', 'hojd_max', 'hojd_medel'].map((n) => r[cols2.indexOf(n)]);
       assert.deepEqual(rows2.map(pick), [[10, 13, 11.5], [null, null, null]], 'lowest, highest and mean along the line');
       assert.ok(res2 && res2.matched === 1, JSON.stringify(res2));
+      // A height profile along the lines (F37 c): a derived dataset with a point every 10 m, named by the namn column, and a line chart.
+      const profile = D.require('viz/profile');
+      assert.ok(await profile.likely(id2), 'a geometry column is likely');
+      assert.deepEqual((await profile.columns(id2)).map((c) => c.name), ['geometri', 'namn'], 'the geometry column first');
+      made = await profile.build(lines, { column: 'geometri', label: 'namn', rows: 2, step: 10 });
+      assert.ok(made && made.lines === 2 && made.found === 4 && made.points === 15, JSON.stringify(made && { lines: made.lines, found: made.found, points: made.points }));
+      assert.equal(made.dataset.name, t('profile.name', { name: 'Höjdlinjer' }));
+      assert.deepEqual((await datasets.columns(made.dataset.id)).map((c) => c.name), ['linje', 'avstand_m', 'hojd_m', 'ost', 'nord']);
+      const prows = await datasets.query(made.dataset.id);
+      assert.deepEqual(prows.filter((r) => r[0] === 'linjen').map((r) => [r[1], r[2], r[3], r[4]]), [[0, 10, 674005, 6580035], [10, 11, 674015, 6580035], [20, 12, 674025, 6580035], [30, 13, 674035, 6580035]], 'distance, height and place every 10 m');
+      assert.ok(prows.filter((r) => r[0] === 'utanför').length === 11 && prows.filter((r) => r[0] === 'utanför').every((r) => r[2] === null), 'the line outside the model keeps its points without heights');
+      const st = made.chart.vega.state;
+      assert.ok(made.chart.id && made.chart.datasetId === made.dataset.id && made.chart.vega.type === 'line' && st.x.field === 'avstand_m' && st.y.field === 'hojd_m' && st.y.aggregate === 'none' && st.color.field === 'linje', 'a saved line chart over the profile: ' + JSON.stringify(st));
+      assert.ok((await charts.list(made.dataset.id)).some((c) => c.id === made.chart.id), 'listed for the dataset');
+      const none = await profile.build(lines, { column: 'geometri', rows: 1, step: 10 }).catch((err) => err);
+      assert.ok(none && none.found === 4 && !none.chart.vega.state.color, 'one line gives no colour channel');
+      await datasets.remove(none.dataset.id); await charts.remove(none.chart.id);
       return h.join(', ');
     } finally {
       http.request = real; globalThis.fetch = realFetch;
       if (id) await datasets.remove(id).catch(() => {});
       if (id2) await datasets.remove(id2).catch(() => {});
+      if (made) { await datasets.remove(made.dataset.id).catch(() => {}); await charts.remove(made.chart.id).catch(() => {}); }
       await connectors.remove('lantmateriet-stac');
       await secrets.forget('lantmateriet-stac');
       D.require('api/auth').clearToken('lantmateriet-stac');

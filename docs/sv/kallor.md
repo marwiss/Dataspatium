@@ -289,6 +289,7 @@ GeoPackage ger en datamängd per lager), och raster, punktmoln och andra filer s
 Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt konto i
 [Geotorget](https://geotorget.lantmateriet.se/); appen hämtar en åtkomsttoken med dem, och den skickas bara till
 Lantmäteriets API och filservern dl1.lantmateriet.se.
+En höjdprofil längs en linje ritar Visualisera (*Nytt diagram* → *Höjdprofil längs en linje*).
 
 **Geodataportalen** (geodata.se) är den nationella katalogen över myndigheters, regioners och kommuners geodata. Källan
 *Geodataportalen (sök geodata)* söker i katalogen och visar en post per träff med titel, organisation, beskrivning och

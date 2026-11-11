@@ -293,6 +293,7 @@ giver ét datasæt pr. lag), og raster, punktskyer og andre filer, som appen ikk
 gangen. Højder i punkter giver handlingen *Højde fra terrænmodellen* i Bearbejd, som læser terrænmodellens fliser direkte.
 Nøglen er forbrugernøglen og forbrugerhemmeligheden fra en gratis konto i [Geotorget](https://geotorget.lantmateriet.se/);
 appen henter et adgangstoken med dem, og det sendes kun til Lantmäteriets API og filserveren dl1.lantmateriet.se.
+En højdeprofil langs en linje tegner Visualisér (*Nyt diagram* → *Højdeprofil langs en linje*).
 
 **Geodataportalen** (geodata.se) er Sveriges nationale katalog over myndigheders, regioners og kommuners geodata. Kilden
 *Geodataportalen (sök geodata)* søger i kataloget og viser en post pr. resultat med titel, organisation, beskrivelse og

@@ -162,6 +162,16 @@ Statistikcentralens inddeling 1:1 000 000 for Finland (se `presets/geo/KALLA.md`
 dashboards og køres i batch som alle andre diagrammer i byggeren; filtre i dashboards virker også på kort. Et datasæt med
 geometri kan eksporteres som GeoJSON fra Eksportér.
 
+## Højdeprofil langs en linje
+
+*Nyt diagram* tilbyder **Højdeprofil langs en linje** for et datasæt med en geometrikolonne. Vælg kolonnen, hvordan linjerne navngives,
+hvor mange rækker fra toppen der skal tegnes (højst 50) og trinnet i meter (10 som standard). Appen tager ét punkt pr. trin langs hver
+linje, henter højden fra Lantmäteriets terrænmodel med nøglen i kilden *Lantmäteriet STAC* (se [kallor.md](kallor.md)) og gemmer
+resultatet som et nyt datasæt med kolonnerne `linje`, `avstand_m`, `hojd_m`, `ost` og `nord` (SWEREF 99 TM) og som et linjediagram
+med afstanden på x-aksen og højden på y-aksen, én linje pr. række. Punkter uden for modellen får ingen højde, og der hentes i alt
+højst 5.000 punkter ad gangen. Diagrammet og datasættet er almindelige: de kan ændres i diagrambyggeren, lægges på et dashboard og
+eksporteres.
+
 ## Dashboards
 
 Et dashboard er et navngivet udvalg af gemte diagrammer i et gitter med fælles filtre. Opret et med **Nyt dashboard** i

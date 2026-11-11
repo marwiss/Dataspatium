@@ -117,7 +117,9 @@
           /** A chart of its own kind needs a dataset of that kind; the panel can pick another one than the selected. */
           const stands = (k) => (k === 'graph' || k === 'model') && ds.kind !== k && !all.some((d) => d.kind === k);
           const fits = (k) => k === D.require('data/kinds').of(ds).chart || (k === 'map' && onMap);
-          const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].slice().sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
+          // A height profile along the lines of a geometry column (F37 c) is offered where a geometry is likely.
+          const profiles = ds.kind !== 'graph' && ds.kind !== 'model' && await D.require('viz/profile').likely(ds.id).catch(() => false);
+          const order = ['vega', 'map', 'graph', 'model', 'd3', 'r', 'python'].concat(profiles ? ['profile'] : []).sort((a, b) => (Number(stands(a)) - Number(stands(b))) || (Number(fits(b)) - Number(fits(a))));
           // What fits this dataset comes first, as real pictures, drawn one at a time while the dialog is open.
           let suggested = null;
           let closeDialog = null;
@@ -140,6 +142,7 @@
           await ui.dialog.open({ title: t('viz.new.title'), help: 'visualisera#skapa-ett-diagram', body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }] });
           if (suggested) { await openChart(suggested, true); return; }
           if (!kind) return;
+          if (kind === 'profile') { const made = await D.require('ui/viz/profile-dialog').open({ shell }, ds); if (made) await openChart(made.chart); return; }
           // A graph or model chart starts from a dataset it can draw.
           const source = (kind === 'graph' || kind === 'model') && ds.kind !== kind ? store.get().datasets.find((d) => d.kind === kind) : ds;
           const record = charts.create(kind, source, `${source.name}: ${t('viz.kind.badge.' + kind)}`);

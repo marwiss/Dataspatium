@@ -296,6 +296,7 @@ files the app does not read are saved on the computer, at most 20 at a time. Hei
 *Height from the terrain model* in Process, which reads the terrain model’s tiles directly. The key is the consumer key and
 consumer secret from a free account in [Geotorget](https://geotorget.lantmateriet.se/); the app fetches an access token with
 them, and it is sent only to Lantmäteriet’s API and the file server dl1.lantmateriet.se.
+A height profile along a line is drawn by Visualise (*New chart* → *Height profile along a line*).
 
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
 The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,

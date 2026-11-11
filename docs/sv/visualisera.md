@@ -168,6 +168,16 @@ kommuner annars sträcker sig ut till havs) och Statistikcentralens indelning 1:
 i byggaren; filter i dashboards fungerar också på kartor. En datamängd med geometri kan exporteras som GeoJSON
 från Exportera.
 
+## Höjdprofil längs en linje
+
+*Nytt diagram* visar valet **Höjdprofil längs en linje** för en datamängd med en geometrikolumn. Välj kolumnen, hur linjerna ska
+namnges, hur många rader från början som ska ritas (högst 50) och steget i meter (förvalt 10). Appen tar en punkt per steg längs
+varje linje, hämtar höjden ur Lantmäteriets markhöjdmodell med nyckeln i källan *Lantmäteriet STAC* (se [kallor.md](kallor.md)) och
+sparar resultatet som en ny datamängd med kolumnerna `linje`, `avstand_m`, `hojd_m`, `ost` och `nord` (SWEREF 99 TM) och som ett
+linjediagram med avståndet på x-axeln och höjden på y-axeln, en linje per rad. Punkter utanför modellen får ingen höjd, och
+sammanlagt hämtas högst 5 000 punkter åt gången. Diagrammet och datamängden är vanliga: de kan ändras i diagrambyggaren, läggas i
+en dashboard och exporteras.
+
 ## Dashboards
 
 En dashboard är ett namngivet urval av sparade diagram i ett rutnät med gemensamma filter. Skapa en med **Ny

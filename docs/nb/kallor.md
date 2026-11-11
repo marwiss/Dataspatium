@@ -291,6 +291,7 @@ ett datasett per lag), og raster, punktskyer og andre filer appen ikke leser, la
 Høyder i punkter gir handlingen *Høyde fra terrengmodellen* i Bearbeid, som leser terrengmodellens ruter direkte. Nøkkelen er
 forbrukernøkkelen og forbrukerhemmeligheten fra en gratis konto i [Geotorget](https://geotorget.lantmateriet.se/); appen
 henter et tilgangstoken med dem, og det sendes bare til Lantmäteriets API og filserveren dl1.lantmateriet.se.
+En høydeprofil langs en linje tegner Visualiser (*Nytt diagram* → *Høydeprofil langs en linje*).
 
 **Geodataportalen** (geodata.se) er Sveriges nasjonale katalog over etaters, regioners og kommuners geodata. Kilden
 *Geodataportalen (sök geodata)* søker i katalogen og viser en post per treff med tittel, organisasjon, beskrivelse og

@@ -292,6 +292,7 @@ datamaskina, høgst 20 om gongen. Høgder i punkt gjev handlinga *Høgd frå ter
 terrengmodellen direkte. Nøkkelen er forbrukarnøkkelen og forbrukarløyndomen frå ein gratis konto i
 [Geotorget](https://geotorget.lantmateriet.se/); appen hentar eit tilgangstoken med dei, og det blir berre sendt til API-et
 til Lantmäteriet og filtenaren dl1.lantmateriet.se.
+Ein høgdeprofil langs ei linje teiknar Visualiser (*Nytt diagram* → *Høgdeprofil langs ei linje*).
 
 **Geodataportalen** (geodata.se) er den nasjonale katalogen i Sverige over geodata frå etatar, regionar og kommunar. Kjelda
 *Geodataportalen (sök geodata)* søkjer i katalogen og viser ein post per treff med tittel, organisasjon, skildring og

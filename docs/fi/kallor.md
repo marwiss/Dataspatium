@@ -299,6 +299,7 @@ joita sovellus ei lue, tallennetaan tietokoneelle, enintään 20 kerrallaan. Pis
 *Korkeus maastomallista*, joka lukee maastomallin ruudut suoraan. Avain on kuluttaja-avain ja kuluttajasalaisuus
 maksuttomalta [Geotorget](https://geotorget.lantmateriet.se/)-tililtä; sovellus hakee niillä käyttötunnisteen, ja se
 lähetetään vain Lantmäterietin rajapintaan ja tiedostopalvelimelle dl1.lantmateriet.se.
+Korkeusprofiilin viivaa pitkin piirtää Visualisoi (*Uusi kaavio* → *Korkeusprofiili viivaa pitkin*).
 
 **Geodataportalen** (geodata.se) on Ruotsin kansallinen luettelo viranomaisten, alueiden ja kuntien paikkatiedoista. Lähde
 *Geodataportalen (sök geodata)* hakee luettelosta ja näyttää yhden tietueen osumaa kohden: otsikko, organisaatio, kuvaus

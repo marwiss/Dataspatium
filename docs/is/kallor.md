@@ -286,6 +286,7 @@ eru vistaðar á tölvunni, mest 20 í einu. Hæðir í punktum gefur aðgerðin
 landlíkansins beint. Lykillinn er neytendalykillinn og neytendaleyndarmálið af ókeypis aðgangi í
 [Geotorget](https://geotorget.lantmateriet.se/); forritið sækir aðgangstákn með þeim, og það er aðeins sent til API
 Lantmäteriet og skráaþjónsins dl1.lantmateriet.se.
+Hæðarsnið eftir línu teiknar Myndgera (*Nýtt myndrit* → *Hæðarsnið eftir línu*).
 
 **Geodataportalen** (geodata.se) er sænska landsskráin yfir landupplýsingar stofnana, landshluta og sveitarfélaga.
 Uppsprettan *Geodataportalen (sök geodata)* leitar í skránni og sýnir eina færslu á hverja niðurstöðu með titli, stofnun,
