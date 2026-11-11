@@ -213,6 +213,18 @@
       return { orthogonal_camera: Object.assign(camera, { view_to_world_scale: Math.round((Number(view.height) || 1) * 1000) / 1000 }) };
     }
 
-    return { write, read, sniff, viewpointXml, markupXml, newGuid, cameraFromView, cameraOfView };
+    /**
+     * A perspective camera that frames a box in the model's own coordinates (Z up) from the south-east above, as a clash's viewpoint
+     * looks at its point: the camera of a finding's element (decision F44 a). @param {{min: number[], max: number[]}} box @returns {any}
+     */
+    function cameraOfBox(box) {
+      const centre = [0, 1, 2].map((k) => (box.min[k] + box.max[k]) / 2);
+      const size = Math.hypot(box.max[0] - box.min[0], box.max[1] - box.min[1], box.max[2] - box.min[2]);
+      const dist = Math.min(200, Math.max(2.5, size * 1.2 + 1));
+      const dir = [-1, 1, -1].map((v) => v / Math.sqrt(3));
+      return cameraFromView({ position: centre.map((v, k) => v - dir[k] * dist), target: centre, fov: 60, aspect: 1.6 }, { worldUp: [0, 0, 1] });
+    }
+
+    return { write, read, sniff, viewpointXml, markupXml, newGuid, cameraFromView, cameraOfView, cameraOfBox };
   });
 })();

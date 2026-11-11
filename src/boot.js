@@ -331,6 +331,7 @@
     'src/ai/ids-writer.js',
     'src/ui/api/profile-card.js',
     'src/ai/write-tools.js',
+    'src/ai/check-tools.js',
     'src/ai/agent.js',
     'src/ai/assistant.js',
     'src/ui/bearbeta/ai-panel.js',
