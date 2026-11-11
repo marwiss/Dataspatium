@@ -306,6 +306,23 @@ dataset also give the footprint's south-west corner on the map, so that the AI p
 SWEREF 99 TM), and with *With the ground height at the corners*, shown when Lantmäteriet's source is added, the ground height at every
 corner from the terrain model: a network call with your key after consent.
 
+## Check with AI
+
+The mode **Check** in the AI panel tries an existing building's model against photos of damage and wear, taken with Dataspatium
+Mobile, a camera or a drone, and against measurements from a field form. Attach the photos in the panel, labelled with their façade or
+the inside, or add the pictures of an image collection you imported in Import; a photo whose file carries a position and a time (EXIF)
+gets them in its caption, and *Facts from a dataset* puts measurements and notes from a field form into the question. The AI reads the
+model with the same tools as in *Ask*, finds the element each photo shows and writes a finding for each defect with a title, a
+description, the condition (good, fair, poor or critical), the priority (low, medium, high or urgent) and the recommended action; a
+photo without visible damage gives no finding. The element's condition goes into the property set Pset_Condition (assessment date,
+condition and a short description) in a change set that you preview and approve as in *Change*, and no elements are created, moved or
+deleted. The findings are listed under the answer, and *Save the findings as a table* makes a new dataset with one finding per row:
+photo, element, title, description, condition, priority, action, date and the photo's position. *Export as BCF* downloads a BCF file
+with one issue per finding, with the photo as the viewpoint's snapshot and the element marked, and for a model fetched from a server
+you are signed in to, *Create issues on the server* creates the same issues in the model's project after a confirmation. The photos go
+to the provider with the question after the consent for the provider's host, and they leave the computer again only when you create
+issues on the server yourself.
+
 ## Ask AI about the model
 
 The button *Ask AI* in the model view opens a panel in the inspector where you ask a question about the open IFC model, for example

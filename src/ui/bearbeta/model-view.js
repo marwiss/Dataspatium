@@ -62,7 +62,7 @@
         const askedAi = ctx.store.get().openModelAi;
         if (askedAi && askedAi.datasetId === dataset.id) {
           ctx.store.set({ openModelAi: null });
-          if (!isDxf()) { if (ai) ai.destroy(); ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: dataset.id, preview: setPreview, mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
+          if (!isDxf()) { if (ai) ai.destroy(); ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: dataset.id, preview: setPreview, bounds: boundsOf, mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
         }
         s.error = '';
         // A search hit: the element chosen, whatever a filter would have hidden.
@@ -156,8 +156,13 @@
       }
       /** The panel Fråga AI om modellen, in the inspector; the elements of an answer are marked through data/selection. */
       function toggleAi() {
-        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview });
+        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview, bounds: boundsOf });
         renderInspector();
+      }
+      /** The box of drawn elements in the model's own coordinates, for the camera of a finding's viewpoint (F44 a); null when none is drawn. */
+      function boundsOf(ids) {
+        const drawn = handle && handle.meshes ? (ids || []).filter((id) => handle.meshes.stats.has(id)) : [];
+        return drawn.length ? handle.boundsIfc(drawn) : null;
       }
       /** The panel Jämför versioner, in the inspector; it colours the model or draws the other version through setPreview. */
       function toggleCompare() {

@@ -16,35 +16,42 @@
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
  * removes providers (Anthropic Messages, OpenAI-compatible, local servers). The mode Bygg ur brief (decision F43 a) builds a whole
  * building in an empty model from a brief, with photos and scanned drawings attached as pictures, the AI's questions answered in the
- * panel, and the same preview and approval as Ändra.
+ * panel, and the same preview and approval as Ändra. The mode Kontrollera (decision F44 a) tries an existing building's model against
+ * photos and a field form's measurements with the same attachments: the findings are listed under the answer (ui/bearbeta/ai-check)
+ * and each element's condition (Pset_Condition) is previewed and approved as in Ändra.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb'],
-    (base, basic, overlays, icons, providers, agent, writeTools, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
-      const MODES = ['ask', 'change', 'build'];
+      const MODES = ['ask', 'change', 'build', 'check'];
       const cssColor = (name) => ((globalThis.getComputedStyle ? getComputedStyle(document.documentElement).getPropertyValue(name) : '') || '').trim() || '#888888';
 
       /**
        * @param {any} ctx shell context
-       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function}} options
+       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function, bounds?: (ids: number[]) => ({min: number[], max: number[]}|null)}} options
        */
       function create(ctx, options) {
         const { shell } = ctx;
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined };
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
+          findings: checkTools.create(options.datasetId) };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
         const log = (msg, kind) => { if (shell && shell.log) shell.log(msg, kind || 'ok'); };
         const fail = (err) => { s.error = String((err && err.message) || err); log(`AI: ${s.error}`, 'error'); };
-        const changing = () => s.mode === 'change' || s.mode === 'build';
+        const changing = () => s.mode === 'change' || s.mode === 'build' || s.mode === 'check';
         const building = () => s.mode === 'build';
+        const checking = () => s.mode === 'check';
+        // Pictures go with the brief and with a check (decision F44 a), each with its caption.
+        const withPictures = () => building() || checking();
+        const check = aiCheck.create(ctx, { datasetId: options.datasetId, findings: () => s.findings, bounds: options.bounds, busy: () => s.busy, log, fail: (err) => { fail(err); render(); }, render: () => render() });
 
         async function load() {
           s.providers = await providers.list();
@@ -64,6 +71,7 @@
             const c = await connectors.get(cde.connectorId).catch(() => null);
             if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.material = { cde, connector: c, name: meta.name };
           }
+          await check.load(meta);
         }
         /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
         async function uploadMaterial() {
@@ -87,8 +95,9 @@
           const p = provider();
           const brief = s.question.trim();
           // In the build mode the building's facts and the level of detail open the brief (decision F43 b); facts alone are enough to start.
-          const question = building() ? [factsBlock(), brief].filter(Boolean).join('\n\n') : brief;
-          if (s.busy || !p || !(building() ? brief || factsGiven() : brief)) return;
+          // A check may start from the photos alone.
+          const question = building() ? [factsBlock(), brief].filter(Boolean).join('\n\n') : checking() && !brief ? t('ai.check.question.default') : brief;
+          if (s.busy || !p || !(building() ? brief || factsGiven() : checking() ? brief || s.attachments.length : brief)) return;
           // A project that allows only local models (Dataregium's F29 a) refuses a cloud provider for its model, before anything is sent.
           if (s.material && !providers.isLocal(p.baseUrl)) {
             if (s.projectPolicy === undefined) s.projectPolicy = await opencde.aiPolicy(s.material.connector, s.material.cde.projectId).catch(() => null);
@@ -97,7 +106,7 @@
           s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
           abort = new AbortController();
           try {
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), images: building() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1) })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), check: checking(), findings: checking() ? s.findings : undefined, images: withPictures() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1), name: a.name, where: a.where, when: a.when })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.elements = out.elements; s.usage = out.usage;
             // The next question continues the conversation, but only the words: the tool traffic is not carried on.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
@@ -106,6 +115,7 @@
               // A preview shows one change set; a changed set needs a new one.
               if (out.steps.some((step) => writeTools.has(step.name))) await dropPreview();
               log(t('ai.log.changes', { n: i18n.formatNumber(s.changeset.ops.length), tools: String(out.steps.length) }), out.stopped === 'answered' ? 'ok' : 'warn');
+              if (checking()) log(t('ai.check.log', { n: i18n.formatNumber(s.findings.findings.length) }), 'ok');
             } else log(t('ai.log.answered', { tools: String(out.steps.length), input: i18n.formatNumber(out.usage.input), output: i18n.formatNumber(out.usage.output) }), out.stopped === 'answered' ? 'ok' : 'warn');
             await idb.setSetting(LAST_SETTING, p.id);
           } catch (err) { fail(err); }
@@ -194,7 +204,7 @@
           if (!datasetId) return;
           try {
             // The ground heights only when the person has turned them on: a call to Lantmäteriet with their key, after consent.
-            const got = await D.require('ai/build-input').facts(datasetId, { heights: !!(s.factsHeights && s.heightsSource) });
+            const got = await D.require('ai/build-input').facts(datasetId, { heights: !!(building() && s.factsHeights && s.heightsSource) });
             s.question = (s.question ? s.question.replace(/\s+$/, '') + '\n\n' : '') + got.text;
             log(t('ai.build.facts.added', { name: got.name, n: i18n.formatNumber(got.rows), g: i18n.formatNumber(got.geometries) }), 'ok');
             if (got.heights) log(t('ai.build.facts.heights.added', { h: i18n.formatNumber(got.heights) }), 'ok');
@@ -266,18 +276,20 @@
           const albums = s.albums || [];
           const pick = albums.length ? basic.select(t('ai.build.pictures'), [{ value: '', label: '–' }].concat(albums.map((a) => ({ value: a.id, label: a.name }))), s.picturesFrom, (v) => { s.picturesFrom = v; }) : null;
           const labelPick = basic.select(t('ai.build.label'), LABELS.map((k) => ({ value: k, label: t('ai.build.label.' + k) })), s.nextLabel, (v) => { s.nextLabel = LABELS.includes(v) ? v : 'photo'; }, { 'data-ai-label': '' });
+          // A check sends the pictures with its question, not with a brief; the material and the ground heights belong to the brief.
+          const hint = t(checking() ? 'ai.check.attach.hint' : 'ai.build.attach.hint');
           return h('div', { class: 'dm-stack-xs', 'data-ai-attachments': String(s.attachments.length) },
             h('div', { class: 'dm-row-wrap' },
               labelPick,
-              basic.button({ label: t('ai.build.attach'), icon: 'images', size: 'sm', title: t('ai.build.attach.hint'), 'data-ai-attach': '', onClick: () => input.click() }),
+              basic.button({ label: t('ai.build.attach'), icon: 'images', size: 'sm', title: hint, 'data-ai-attach': '', onClick: () => input.click() }),
               pick, pick ? basic.button({ label: t('ai.build.pictures.add'), icon: 'image', size: 'sm', disabled: !s.picturesFrom, 'data-ai-pictures-add': '', onClick: () => addPictures(s.picturesFrom) }) : null, input,
-              s.material && D.has('data/model-material') ? basic.button({ label: t('ai.build.material'), icon: 'upload', size: 'sm', title: t('ai.build.material.hint'), loading: s.uploading, disabled: !s.question.trim() && !s.attachments.length, 'data-ai-material': '', onClick: uploadMaterial }) : null),
+              s.material && building() && D.has('data/model-material') ? basic.button({ label: t('ai.build.material'), icon: 'upload', size: 'sm', title: t('ai.build.material.hint'), loading: s.uploading, disabled: !s.question.trim() && !s.attachments.length, 'data-ai-material': '', onClick: uploadMaterial }) : null),
             s.tables.length ? h('div', { class: 'dm-row-wrap' },
               basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; }),
-              basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t('ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) }),
-              s.heightsSource ? heightsSwitch() : null) : null,
+              basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t(checking() ? 'ai.check.facts.hint' : 'ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) }),
+              s.heightsSource && building() ? heightsSwitch() : null) : null,
             s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.label && a.label !== 'photo' ? `${a.name} · ${t('ai.build.label.' + a.label)}` : a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, 'data-ai-attachment-label': a.label || 'photo', onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
-            h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t('ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : t('ai.build.attach.hint') }));
+            h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t(checking() ? 'ai.check.consent' : 'ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : hint }));
         }
         function questionView() {
           const { q, resolve } = s.questionBox;
@@ -619,27 +631,28 @@
           mode.options = MODES.map((id) => ({ value: id, label: t('ai.mode.' + id) }));
           mode.value = s.mode;
           mode.addEventListener('change', () => { s.mode = MODES.includes(mode.value) ? mode.value : 'ask'; render(); });
-          const q = /** @type {any} */ (h('dm-input', { label: t(building() ? 'ai.build.brief' : 'ai.question'), rows: building() ? '6' : '3', placeholder: t(building() ? 'ai.build.placeholder' : changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
+          const q = /** @type {any} */ (h('dm-input', { label: t(building() ? 'ai.build.brief' : 'ai.question'), rows: building() ? '6' : '3', placeholder: t(building() ? 'ai.build.placeholder' : checking() ? 'ai.check.placeholder' : changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
           q.value = s.question;
           q.addEventListener('input', () => { s.question = q.value; });
           q.addEventListener('keydown', (ev) => { if (/** @type {KeyboardEvent} */ (ev).key === 'Enter' && (/** @type {KeyboardEvent} */ (ev).ctrlKey || /** @type {KeyboardEvent} */ (ev).metaKey)) { ev.preventDefault(); askNow(); } });
           stepsEl = h('div');
           const p = provider();
           replace(el,
-            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(building() ? 'ai.title.build' : changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
-            h('p', { class: 'dm-help dm-xs', text: t(building() ? 'ai.hint.build' : changing() ? 'ai.hint.change' : 'ai.hint') }),
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(building() ? 'ai.title.build' : checking() ? 'ai.title.check' : changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
+            h('p', { class: 'dm-help dm-xs', text: t(building() ? 'ai.hint.build' : checking() ? 'ai.hint.check' : changing() ? 'ai.hint.change' : 'ai.hint') }),
             s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
             p && !providers.hasKey(p.id) && !providers.isLocal(p.baseUrl) ? h('p', { class: 'dm-help dm-xs', text: t('ai.key.missing', { name: p.name }) }) : null,
             building() ? formView() : null,
             q,
-            building() ? attachRow() : null,
+            withPictures() ? attachRow() : null,
             s.questionBox ? questionView() : null,
             h('div', { class: 'dm-row-wrap' },
-              basic.button({ label: t(building() ? 'ai.build.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
+              basic.button({ label: t(building() ? 'ai.build.run' : checking() ? 'ai.check.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
               s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', 'data-ai-cancel': '', onClick: cancel }) : null,
               s.elements.length && !s.busy ? basic.button({ label: t('ai.mark', { n: i18n.formatNumber(s.elements.length) }), icon: 'list-checks', size: 'sm', 'data-ai-mark': '', onClick: mark }) : null),
             s.error ? h('p', { class: 'dm-error', 'data-ai-error': '', text: s.error }) : null,
             s.answer ? h('div', { class: 'dm-stack-sm', 'data-ai-answer': '' }, s.answer.split(/\n{2,}/).map((para) => h('p', { class: 'dm-small', text: para }))) : null,
+            checking() ? check.view() : null,
             stepsEl,
             changing() ? renderChanges() : null,
             s.usage ? h('p', { class: 'dm-help dm-xs', 'data-ai-usage': '', text: t('ai.usage', { input: i18n.formatNumber(s.usage.input), output: i18n.formatNumber(s.usage.output) }) }) : null,
@@ -648,7 +661,7 @@
         }
         function destroy() { unsubscribe(); cancel(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, check, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */

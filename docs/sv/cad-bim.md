@@ -295,6 +295,22 @@ bild bifogas som foto, fasad mot norr, öster, söder eller väster, insida elle
 kartan, så att AI:n placerar modellen med `set_site` (läge, höjd och SWEREF 99 TM), och med *Med markhöjd i hörnen*, som visas när
 Lantmäteriets källa är tillagd, markhöjden i varje hörn ur höjdmodellen: ett nätanrop med din nyckel efter samtycke.
 
+## Kontrollera med AI
+
+Läget **Kontrollera** i AI-panelen prövar en befintlig byggnads modell mot foton av skador och slitage, tagna med Dataspatium Mobil,
+en kamera eller en drönare, och mot mått ur ett fältformulär. Bifoga fotona i panelen, märkta med fasad eller insida, eller lägg till
+bilderna ur en bildsamling som du har importerat i Inhämta; ett foto med position och tidpunkt i filen (EXIF) får dem i sin bildtext,
+och *Uppgifter ur en datamängd* lägger mått och anteckningar ur ett fältformulär i frågan. AI:n läser modellen med samma verktyg som i
+*Fråga*, letar upp elementet som varje foto visar och skriver ett fynd per skada med titel, beskrivning, skick (bra, godtagbart,
+dåligt eller kritiskt), prioritet (låg, medel, hög eller akut) och föreslagen åtgärd; ett foto utan synlig skada ger inget fynd.
+Elementets skick hamnar i egenskapsmängden Pset_Condition (bedömningsdatum, skick och en kort beskrivning) i ett ändringsset som du
+förhandsvisar och godkänner som i *Ändra*, och inga element skapas, flyttas eller tas bort. Fynden listas under svaret, och *Spara
+fynden som tabell* gör en ny datamängd med ett fynd per rad: foto, element, titel, beskrivning, skick, prioritet, åtgärd, datum och
+fotots position. *Exportera som BCF* laddar ned en BCF-fil med ett ärende per fynd, där fotot är vyns ögonblicksbild och elementet är
+markerat, och för en modell hämtad från en server du är inloggad på skapar *Skapa ärenden på servern* samma ärenden i modellens
+projekt efter en bekräftelse. Fotona skickas till leverantören tillsammans med frågan efter samtycket för leverantörens värd, och de
+lämnar datorn igen bara när du själv skapar ärenden på servern.
+
 ## Fråga AI om modellen
 
 Knappen *Fråga AI* i modellvyn öppnar en panel i inspektören där du ställer en fråga om den öppna IFC-modellen, till exempel "vilka dörrar

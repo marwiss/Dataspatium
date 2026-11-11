@@ -300,6 +300,22 @@ sydvestlige hjørne på kortet, så AI'en placerer modellen med `set_site` (plac
 hjørnerne*, som vises når Lantmäteriets kilde er tilføjet, terrænhøjden i hvert hjørne fra højdemodellen: et netværkskald med din nøgle
 efter samtykke.
 
+## Kontrollér med AI
+
+Tilstanden **Kontrollér** i AI-panelet afprøver en eksisterende bygnings model mod fotos af skader og slid, taget med Dataspatium
+Mobil, et kamera eller en drone, og mod mål fra en feltformular. Vedhæft fotoene i panelet, mærket med facade eller indvendigt, eller
+tilføj billederne fra en billedsamling, du har importeret i Hent; et foto med position og tidspunkt i filen (EXIF) får dem i sin
+billedtekst, og *Oplysninger fra et datasæt* lægger mål og noter fra en feltformular i spørgsmålet. AI'en læser modellen med de samme
+værktøjer som i *Spørg*, finder elementet, som hvert foto viser, og skriver et fund for hver skade med titel, beskrivelse, stand (god,
+acceptabel, dårlig eller kritisk), prioritet (lav, middel, høj eller akut) og anbefalet tiltag; et foto uden synlig skade giver intet
+fund. Elementets stand lægges i egenskabssættet Pset_Condition (vurderingsdato, stand og en kort beskrivelse) i et ændringssæt, som du
+forhåndsviser og godkender som i *Ændr*, og ingen elementer oprettes, flyttes eller slettes. Fundene vises under svaret, og *Gem
+fundene som tabel* opretter et nyt datasæt med ét fund per række: foto, element, titel, beskrivelse, stand, prioritet, tiltag, dato og
+fotoets position. *Eksportér som BCF* downloader en BCF-fil med én sag per fund, hvor fotoet er visningens øjebliksbillede og
+elementet er markeret, og for en model hentet fra en server, du er logget ind på, opretter *Opret sager på serveren* de samme sager i
+modellens projekt efter en bekræftelse. Fotoene sendes til leverandøren sammen med spørgsmålet efter samtykket for leverandørens vært,
+og de forlader kun computeren igen, når du selv opretter sager på serveren.
+
 ## Spørg AI om modellen
 
 Knappen *Spørg AI* i modelvisningen åbner et panel i inspektøren, hvor du stiller et spørgsmål om den åbne IFC-model, for eksempel

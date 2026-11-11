@@ -309,6 +309,23 @@ tiedot antavat myös rakennuksen pohjan lounaiskulman kartalla, joten tekoäly s
 ja SWEREF 99 TM), ja valinnalla *Maanpinnan korkeus kulmissa mukaan*, joka näkyy kun Lantmäterietin lähde on lisätty, maanpinnan
 korkeuden jokaisessa kulmassa korkeusmallista: verkkokutsu avaimellasi suostumuksen jälkeen.
 
+## Tarkista tekoälyllä
+
+Tekoälypaneelin tila **Tarkista** vertaa olemassa olevan rakennuksen mallia valokuviin vaurioista ja kulumisesta, jotka on otettu
+Dataspatium Mobiililla, kameralla tai droonilla, sekä kenttälomakkeen mittoihin. Liitä valokuvat paneelissa julkisivun tai sisätilan
+mukaan merkittyinä tai lisää Nouda-tilassa tuodun kuvakokoelman kuvat; valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF),
+saa ne kuvatekstiinsä, ja *Tiedot tietoaineistosta* lisää kenttälomakkeen mitat ja muistiinpanot kysymykseen. Tekoäly lukee mallin
+samoilla työkaluilla kuin *Kysy*, etsii elementin, jonka kukin valokuva näyttää, ja kirjaa jokaisesta vauriosta löydöksen, jossa on
+otsikko, kuvaus, kunto (hyvä, tyydyttävä, huono tai kriittinen), prioriteetti (matala, keskitaso, korkea tai kiireellinen) ja
+suositeltu toimenpide; valokuva, jossa ei näy vauriota, ei tuota löydöstä. Elementin kunto kirjataan ominaisuusjoukkoon Pset_Condition
+(arviointipäivä, kunto ja lyhyt kuvaus) muutosjoukossa, jonka esikatselet ja hyväksyt kuten *Muuta*-tilassa, eikä elementtejä luoda,
+siirretä tai poisteta. Löydökset luetellaan vastauksen alla, ja *Tallenna löydökset taulukkona* luo uuden aineiston, jossa on yksi
+löydös riviä kohti: valokuva, elementti, otsikko, kuvaus, kunto, prioriteetti, toimenpide, päivämäärä ja kuvan sijainti. *Vie
+BCF-muodossa* lataa BCF-tiedoston, jossa on yksi asia löydöstä kohti, valokuva näkymän tilannekuvana ja elementti merkittynä, ja kun
+malli on haettu palvelimelta, jolle olet kirjautunut, *Luo asiat palvelimelle* luo samat asiat mallin projektiin vahvistuksen jälkeen.
+Valokuvat lähetetään toimittajalle kysymyksen mukana toimittajan isännän suostumuksen jälkeen, ja ne lähtevät tietokoneelta uudelleen
+vain, kun itse luot asiat palvelimelle.
+
 ## Kysy tekoälyltä mallista
 
 Mallinäkymän painike *Kysy tekoälyltä* avaa tarkastelijaan paneelin, jossa esität kysymyksen avoinna olevasta IFC-mallista, esimerkiksi
