@@ -128,7 +128,10 @@
             .concat(g.edges.map(edgeEl));
           await mountCy(elements);
           if (!h.cy) return;
-          h.ec = h.cy.expandCollapse({ layoutBy: layoutOptions(def.layout), fisheye: false, animate: false, undoable: false, cueEnabled: false, groupEdgesOfSameTypeOnCollapse: true, allowNestedEdgeCollapse: false, zIndex: 999 });
+          // The extension lays out again a moment after a collapse or an expand (setTimeout 0): by then the view may be gone, and a
+          // layout on a destroyed core throws from inside cytoscape (seen in Firefox when the person leaves the graph at once).
+          const rearrange = () => { if (h.destroyed || !h.cy || h.cy.destroyed()) return; h.cy.layout(layoutOptions(def.layout)).run(); };
+          h.ec = h.cy.expandCollapse({ layoutBy: rearrange, fisheye: false, animate: false, undoable: false, cueEnabled: false, groupEdgesOfSameTypeOnCollapse: true, allowNestedEdgeCollapse: false, zIndex: 999 });
           h.cy.layout(layoutOptions(def.layout)).run();
           if (labels.length > 1 || g.nodes.length > 60) h.ec.collapseAll();
           h.cy.on('dbltap', 'node', (ev) => { const n = ev.target; if (h.ec.isCollapsible(n)) h.ec.collapse(n); else if (h.ec.isExpandable(n)) h.ec.expand(n); });
