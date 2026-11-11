@@ -1485,7 +1485,7 @@ def _cs_roof_faces(shape, length, width, overhang, ridge):
 class _ChangeSet:
     """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted."""
 
-    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening")
+    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces")
     ROOF_TYPES = {"gable": "GABLE_ROOF", "hip": "HIP_ROOF", "shed": "SHED_ROOF", "flat": "FLAT_ROOF"}
 
     def __init__(self, model):
@@ -1954,6 +1954,198 @@ class _ChangeSet:
         if storey is not None:
             self.contain(e, storey)
         self.register(e, storey)
+        # A door or window in a wall that already bounds spaces bounds the one whose edge it stands on, as create_spaces would have.
+        mid = self.plan_point(e, self.u(width) / 2.0)
+        for b in list(getattr(wall, "ProvidesBoundaries", None) or ()):
+            outline = self.space_outline(b.RelatingSpace) if b.RelatingSpace.is_a("IfcSpace") else None
+            if mid is not None and outline is not None and outline.boundary.distance(_topo_point(mid)) <= thickness * self.scale / 2.0 + 0.05:
+                self.bound(b.RelatingSpace, e, b.InternalOrExternalBoundary == "EXTERNAL")
+
+    # -- spaces and their boundaries
+    def bound(self, space, element, external):
+        """A physical IfcRelSpaceBoundary of a space against a wall, door or window, without connection geometry for now."""
+        import ifcopenshell.guid
+        rel = self.m.create_entity("IfcRelSpaceBoundary", GlobalId=ifcopenshell.guid.new(), RelatingSpace=space, RelatedBuildingElement=element,
+                                   PhysicalOrVirtualBoundary="PHYSICAL", InternalOrExternalBoundary="EXTERNAL" if external else "INTERNAL")
+        if self.owner is not None:
+            rel.OwnerHistory = self.owner
+        return rel
+
+    @staticmethod
+    def fillings(wall):
+        """The doors and windows in a wall's openings."""
+        return [f.RelatedBuildingElement for v in (getattr(wall, "HasOpenings", None) or ()) for f in (getattr(v.RelatedOpeningElement, "HasFillings", None) or ())]
+
+    def plan_point(self, e, along=0.0):
+        """Where an element's placement stands in the world's plan, `along` file units along its x axis, in metres; None if unknown."""
+        m = _cs_placement(getattr(e, "ObjectPlacement", None))
+        if m is None:
+            return None
+        p = _cs_at(m, (along, 0.0, 0.0))
+        return p[0] * self.scale, p[1] * self.scale
+
+    def space_outline(self, space):
+        """A space's footprint in the world's plan in metres (shapely): the profile of an extruded body, else the hull of its body's
+        corners; None without a body the app can read."""
+        from shapely.geometry import MultiPoint, Polygon
+        m = _cs_placement(space.ObjectPlacement)
+        rep = space.Representation
+        pts = []
+        for r in (rep.Representations if rep is not None and m is not None else ()):
+            if (r.RepresentationIdentifier or "Body") != "Body":
+                continue
+            for item in (r.Items or ()):
+                corners = [_cs_at(m, p) for p in _cs_item_points(item)]
+                if item.is_a("IfcExtrudedAreaSolid") and len(corners) >= 6:
+                    return Polygon([(q[0] * self.scale, q[1] * self.scale) for q in corners[::2]])
+                pts += corners
+        hull = MultiPoint([(q[0] * self.scale, q[1] * self.scale) for q in pts]).convex_hull if len(pts) >= 3 else None
+        return hull if hull is not None and hull.geom_type == "Polygon" else None
+
+    def storey_height(self, storey):
+        """The default height of a storey's spaces in metres: up to the next storey, else to the top of its walls, else 3."""
+        z = _topo_elevation(storey, self.scale)
+        above = sorted(e for e in (_topo_elevation(s, self.scale) for s in self.m.by_type("IfcBuildingStorey")) if e > z + 1e-6)
+        if above:
+            return above[0] - z
+        top = self.wall_extent(storey)[1]
+        return top if top and top > 0 else 3.0
+
+    def pick_rooms(self, topo, rooms, frame):
+        """The listed rooms of one storey's topology, as (room, name, long name): each by a point inside it in the storey's plane, or by
+        its index in get_topology. A point that hits no room, an index that does not exist and a room named twice are errors."""
+        storey = _ifc_text(topo["_storey"].Name)
+        back = _cs_invert(frame)
+
+        def where(r):
+            p = r["polygon"].representative_point()
+            q = _cs_at(back, (p.x / self.scale, p.y / self.scale, frame[3][2]))
+            return "%d at (%.2f, %.2f)" % (r["index"], q[0] * self.scale, q[1] * self.scale)
+        out, seen = [], {}
+        for i, entry in enumerate(rooms):
+            if not isinstance(entry, dict) or not str(entry.get("name") or "").strip():
+                raise DataspatiumError("room %d needs a name" % (i + 1))
+            if entry.get("at") is not None:
+                x, y = _cs_xy(entry.get("at"), "at")
+                w = _cs_at(frame, (x / self.scale, y / self.scale, 0.0))
+                hit = [r for r in topo["rooms"] if r["polygon"].contains(_topo_point((w[0] * self.scale, w[1] * self.scale)))]
+                if not hit:
+                    raise DataspatiumError("room %d: no closed room on storey %r has (%g, %g) inside; its rooms are %s" % (i + 1, storey, x, y, "; ".join(where(r) for r in topo["rooms"])))
+                room = hit[0]
+            else:
+                index = entry.get("index")
+                if isinstance(index, bool) or not isinstance(index, (int, float)) or int(index) != index or not 1 <= int(index) <= len(topo["rooms"]):
+                    raise DataspatiumError("room %d: storey %r has rooms 1 to %d, not %r" % (i + 1, storey, len(topo["rooms"]), index))
+                room = topo["rooms"][int(index) - 1]
+            if room["index"] in seen:
+                raise DataspatiumError("rooms %d and %d are the same room (%s)" % (seen[room["index"]], i + 1, where(room)))
+            seen[room["index"]] = i + 1
+            out.append((room, str(entry["name"]).strip()[:255], str(entry.get("long_name") or "").strip()[:255] or None))
+        return out
+
+    def make_space(self, storey, frame, room, name, long_name, height):
+        """An IfcSpace with the room's outline (holes as voids) in the storey's plane, extruded height metres up from the storey."""
+        back = _cs_invert(frame)
+
+        def curve(ring):
+            pts = [_cs_at(back, (c[0] / self.scale, c[1] / self.scale, frame[3][2])) for c in ring.coords]
+            return self.m.createIfcPolyline([self.point(p[0], p[1]) for p in pts])
+        poly = room["polygon"]
+        if poly.interiors:
+            profile = self.m.createIfcArbitraryProfileDefWithVoids("AREA", None, curve(poly.exterior), [curve(r) for r in poly.interiors])
+        else:
+            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, curve(poly.exterior))
+        space = self.root("IfcSpace", name)
+        space.LongName = long_name
+        space.CompositionType = "ELEMENT"
+        if self.m.schema == "IFC2X3":
+            space.InteriorOrExteriorSpace = "INTERNAL"
+        else:
+            self.predefined(space, "INTERNAL")
+        space.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
+        space.Representation = self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, 0), self.direction(0, 0, 1), self.u(height)))
+        return space
+
+    def space_quantities(self, space, room, height):
+        """Qto_SpaceBaseQuantities in the file's units: the outline's area and perimeter, the area inside the walls' faces, the volumes."""
+        import ifcopenshell.api.pset
+        import ifcopenshell.util.unit
+
+        def per(kind):
+            try:
+                return float(ifcopenshell.util.unit.calculate_unit_scale(self.m, kind) or 1.0)
+            except Exception:
+                return 1.0
+        area, volume = per("AREAUNIT"), per("VOLUMEUNIT")
+        gross, net = room["polygon"].area, room["net_area"]
+        qto = ifcopenshell.api.pset.add_qto(self.m, product=space, name="Qto_SpaceBaseQuantities")
+        ifcopenshell.api.pset.edit_qto(self.m, qto=qto, properties={
+            "Height": self.u(height), "GrossPerimeter": self.u(room["polygon"].length), "GrossFloorArea": gross / area, "NetFloorArea": net / area,
+            "GrossVolume": gross * height / volume, "NetVolume": net * height / volume})
+
+    def op_create_spaces(self, op):
+        """The rooms the walls enclose as spaces, from the topology of the file as it stands at this step, so that walls made earlier
+        in the change set count: per room an IfcSpace aggregated in its storey, with the room's outline extruded to the height (by
+        default up to the next storey, or to the top of the walls), Qto_SpaceBaseQuantities, and physical space boundaries to the walls
+        along its edge (external where the topology finds the wall external) and to the doors and windows in them that stand on that
+        edge. Listed rooms need the storey and get a ref each, in their order; without a list every room on the storey (or on every
+        storey with rooms) is made, named by default_name with its index for {n}, and none gets a ref."""
+        import ifcopenshell.api.aggregate
+        rooms = op.get("rooms")
+        listed = rooms is not None
+        if listed and (not isinstance(rooms, list) or not rooms):
+            raise DataspatiumError("rooms must be a list of {at or index, name, long_name}, or null for every room")
+        named = str(op.get("storey") or "").strip()
+        if listed and not named:
+            raise DataspatiumError("name the storey the rooms are on; storey null goes with rooms null")
+        storey = self.storey(named) if named else None
+        height = None if op.get("height") is None else _cs_num(op, "height", positive=True)
+        found = [x for x in _ifc_topology(self.m, storeys={_ifc_text(storey.Name)} if storey is not None else None, shapes=True)
+                 if x["rooms"] and (storey is None or x["_storey"].id() == storey.id())]
+        if not found:
+            raise DataspatiumError("the walls enclose no room on %s; close the walls first (the preview's topology shows the open ends)"
+                                   % ("storey %r" % _ifc_text(storey.Name) if storey is not None else "any storey"))
+        template = str(op.get("default_name") or "Room {n}")
+        made = 0
+        for topo in found:
+            s = topo["_storey"]
+            frame = _cs_placement(s.ObjectPlacement)
+            if frame is None:
+                raise DataspatiumError("the placement of storey %r cannot be followed" % _ifc_text(s.Name))
+            chosen = self.pick_rooms(topo, rooms, frame) if listed else [(r, template.replace("{n}", str(r["index"])), None) for r in topo["rooms"]]
+            # The storey's spaces so far: a room one of them covers is not made twice, and a name is not given twice.
+            others = [(p, self.space_outline(p)) for rel in (getattr(s, "IsDecomposedBy", None) or ()) for p in rel.RelatedObjects if p.is_a("IfcSpace")]
+            covered = [(room, name, next((p for p, o in others if o is not None and o.contains(room["polygon"].representative_point())), None)) for room, name, _ in chosen]
+            for room, name, space in covered:
+                if space is not None and listed:
+                    raise DataspatiumError("room %d on storey %r lies in the space %r already" % (room["index"], _ifc_text(s.Name), _ifc_text(space.Name)))
+                if space is not None:
+                    self.notes.append("room %d on storey %s was left out: the space %s covers it already" % (room["index"], _ifc_text(s.Name), _ifc_text(space.Name)))
+            chosen = [c for c, (_, _, space) in zip(chosen, covered) if space is None]
+            twice = [n for _, n, _ in chosen if n in {str(p.Name or "") for p, _ in others}]
+            if twice:
+                raise DataspatiumError("storey %r has a space named %r already" % (_ifc_text(s.Name), twice[0]))
+            if not chosen:
+                continue
+            made += len(chosen)
+            h = height or self.storey_height(s)
+            external = {e["wall"] for e in topo["external"]}
+            spaces = []
+            for room, name, long_name in chosen:
+                space = self.make_space(s, frame, room, name, long_name, h)
+                spaces.append(space)
+                for wall in (self.m.by_id(i) for i in room["walls"]):
+                    self.bound(space, wall, wall.id() in external)
+                    for f in self.fillings(wall):
+                        mid = self.plan_point(f, float(getattr(f, "OverallWidth", None) or 0.0) / 2.0)
+                        if mid is not None and room["polygon"].boundary.distance(_topo_point(mid)) <= topo["tolerance"]:
+                            self.bound(space, f, wall.id() in external)
+            ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
+            for space, (room, _, _) in zip(spaces, chosen):
+                self.space_quantities(space, room, h)
+                self.register(space, s, ref=listed)
+        if not made:
+            raise DataspatiumError("every room the walls enclose has a space already")
 
     def op_set_properties(self, op):
         import ifcopenshell.api.pset
@@ -2496,6 +2688,12 @@ def _topo_north(model):
     return 1.0, 0.0, "model"
 
 
+def _topo_point(p):
+    """A shapely point of (x, y)."""
+    from shapely.geometry import Point
+    return Point(float(p[0]), float(p[1]))
+
+
 def _topo_facing(dx, dy, north):
     """The compass sector (N, NE, ... NW) a direction in the plan points to."""
     a, b = north[0], north[1]
@@ -2742,12 +2940,14 @@ def _topo_outward(union, part, tol, north):
     return None
 
 
-def _topo_plan(walls, tol, north=(1.0, 0.0, "model")):
+def _topo_plan(walls, tol, north=(1.0, 0.0, "model"), shapes=False):
     """One storey's plan from its walls' centrelines, with shapely alone: `walls` are dicts {"id", "guid", "name", "line": [(x, y),
     ...], "width"} in metres (width may be None). Rooms are the polygons over TOPOLOGY_MIN_ROOM and TOPOLOGY_MIN_WIDTH. A wall
     belongs to a room, and is external, when it runs along the room's boundary (or the union's) for longer than one that only meets
-    it there; two rooms are neighbours when their boundaries share such a stretch."""
+    it there; two rooms are neighbours when their boundaries share such a stretch. With shapes, every room also has its "polygon"
+    (shapely, counter-clockwise) and its "net_area" inside the walls' faces, for create_spaces; neither goes into JSON."""
     from shapely.geometry import LineString
+    from shapely.geometry.polygon import orient
     from shapely.ops import polygonize_full, unary_union
     from shapely.strtree import STRtree
     snapped = _topo_snap([w["line"] for w in walls], tol, [w.get("width") for w in walls])
@@ -2766,7 +2966,7 @@ def _topo_plan(walls, tol, north=(1.0, 0.0, "model")):
     dangles = sorted([round(x, 3), round(y, 3)] for (x, y), n in degree.items() if n == 1)
     polygons = list(polygonize_full(edges)[0].geoms)
     rooms = sorted((p for p in polygons if p.area > TOPOLOGY_MIN_ROOM and not p.buffer(-TOPOLOGY_MIN_WIDTH / 2.0).is_empty),
-                   key=lambda p: (round(p.centroid.y), p.centroid.x))
+                   key=lambda p: (round(p.centroid.y), round(p.centroid.x, 6), -round(p.area, 6)))  # a room around another comes first
     tree = STRtree(geoms)
     meets = 2.0 * tol + 0.01  # a wall that only meets a boundary runs at most 2 * tol inside its buffer
 
@@ -2785,9 +2985,16 @@ def _topo_plan(walls, tol, north=(1.0, 0.0, "model")):
             if k > i and r.boundary.intersection(rooms[k].boundary).length > meets:
                 neighbours[i].add(k)
                 neighbours[k].add(i)
-    out_rooms = [{"index": i + 1, "area": round(r.area, 2), "perimeter": round(r.length, 2),
-                  "walls": sorted({walls[j]["id"] for j, _ in along(r.boundary.buffer(tol))}), "neighbours": sorted(k + 1 for k in neighbours[i])}
-                 for i, r in enumerate(rooms)]
+    out_rooms = []
+    for i, r in enumerate(rooms):
+        members = along(r.boundary.buffer(tol))
+        rec = {"index": i + 1, "area": round(r.area, 2), "perimeter": round(r.length, 2), "walls": sorted({walls[j]["id"] for j, _ in members}),
+               "neighbours": sorted(k + 1 for k in neighbours[i])}
+        if shapes:
+            # inside the faces: the outline less a band of half each wall's thickness along it
+            bands = unary_union([geoms[j].buffer(float(walls[j].get("width") or 0.2) / 2.0, cap_style="flat") for j, _ in members])
+            rec["polygon"], rec["net_area"] = orient(r, sign=1.0), r.difference(bands).area
+        out_rooms.append(rec)
     external = []
     if rooms:
         union = unary_union(polygons)  # with the slivers between the layers of a wall, which are inside too
@@ -2809,7 +3016,7 @@ def _topo_elevation(storey, scale):
         return 0.0
 
 
-def _ifc_topology(model, tolerance=None, storeys=None):
+def _ifc_topology(model, tolerance=None, storeys=None, shapes=False):
     """The building's topology per storey (decision F46 a), as a list in the storeys' order of elevation:
 
         {"storey", "elevation" (m), "rooms": [{"index" (from 1), "area" (m²), "perimeter" (m), "walls": [wall ids], "neighbours":
@@ -2819,7 +3026,8 @@ def _ifc_topology(model, tolerance=None, storeys=None):
 
     A wall's centreline is its 'Axis' representation through its placement, else the long axis of its body's footprint
     (ifcopenshell.geom). The ends are snapped within `tolerance` metres (by default half the storey's thickest wall plus 0.05 m).
-    `storeys` (names) limits the storeys read. At most TOPOLOGY_MAX_WALLS walls.
+    `storeys` (names) limits the storeys read. At most TOPOLOGY_MAX_WALLS walls. With shapes (for create_spaces, never for JSON) the
+    rooms carry their polygons and net areas (_topo_plan) and every storey its entity as "_storey".
     """
     import ifcopenshell.util.unit
     try:
@@ -2860,8 +3068,10 @@ def _ifc_topology(model, tolerance=None, storeys=None):
                 widths.append(width)
         tol = float(tolerance) if tolerance else max([x for x in widths if x <= 1.0] or [0.2]) / 2.0 + 0.05
         rec = {"storey": _ifc_text(s.Name), "elevation": round(_topo_elevation(s, scale), 3)}
-        rec.update(_topo_plan(read, tol, north))
+        rec.update(_topo_plan(read, tol, north, shapes))
         rec.update({"walls": len(walls), "unread": unread, "tolerance": round(tol, 3), "north": north[2]})
+        if shapes:
+            rec["_storey"] = s
         out.append(rec)
     return out
 
