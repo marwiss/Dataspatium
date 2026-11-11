@@ -69,6 +69,10 @@ When a fetch fails like a network error and a bridge is connected, the app sends
 the page can never add one. It refuses addresses on this computer or the local network, sends only a few headers and no
 cookies, follows at most three redirects to allowed hosts and stops at `--max-fetch-mb` (50 MB by default). The bridge’s log
 shows the host and the path, never the query, the headers or the body. The consent for the purpose applies as before.
+Two presets are reached only this way: *Riksbank interest and exchange rates (SWEA)* and *World Bank: indicators*. The source
+list marks them *Requires the bridge*; start the bridge with `--allow-host api.riksbank.se --allow-host api.worldbank.org` to
+fetch from them.
+
 ### Security
 
 - The bridge answers on 127.0.0.1 only, requires the token in every call and allows CORS only for the app's own addresses.

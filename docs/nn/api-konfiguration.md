@@ -40,6 +40,7 @@ to siste svenske krev nøkkel.
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, vel verdiar |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, geodatakatalogen til Lantmäteriet, Sveriges dataportal | Folkehelse, helse, nøkkeltal for kommunar, vêr, luftkvalitet, verneområde, geodata | Sjå den svenske rettleiinga |
 | Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stadnamn, energiattestar, vegdata, geodatafiler | Krev nøkkel |
+| Sverige, internasjonalt | Riksbanken (SWEA), Verdsbanken | Renter, valutakursar, utviklingsindikatorar | Berre via brua |
 
 Ikkje med: Frost (MET) i Noreg og DMI i Danmark krev nøkkel; data.norge.no og Energi Data Service manglar CORS; opingogn.is
 har ikkje lenger eit søkje-API. Kjelder utan CORS kan ikkje nåast direkte frå nettlesaren; dei krev ein eigen proxy, sjå nedanfor.

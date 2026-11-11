@@ -71,6 +71,10 @@ aldri legge til noen. Den avviser adresser på denne datamaskinen eller det loka
 ingen informasjonskapsler, følger høyst tre omdirigeringer til tillatte verter og stopper ved `--max-fetch-mb` (50 MB som
 standard). Broens logg viser verten og stien, aldri spørringen, headerne eller kroppen. Samtykket for formålet gjelder som
 før.
+To forhåndsinnstillinger nås bare slik: *Riksbanken renter og valutakurser (SWEA)* og *Verdensbanken: indikatorer*.
+Kildelisten merker dem *Krever broen*; start broen med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for å
+hente fra dem.
+
 ### Sikkerhet
 
 - Broen svarer bare på 127.0.0.1, krever token i hvert kall og tillater CORS bare for appens egne adresser.

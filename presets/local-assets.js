@@ -234,6 +234,12 @@ Dataspatium.assets.addEntries({
   "size": 2974,
   "library": "dataspatium"
  },
+ "presets/api/riksbanken-swea.api.json": {
+  "file": "presets/api/riksbanken-swea.api.json.js",
+  "encoding": "text",
+  "size": 12431,
+  "library": "dataspatium"
+ },
  "presets/api/ryhti-kaavat.api.json": {
   "file": "presets/api/ryhti-kaavat.api.json.js",
   "encoding": "text",
@@ -340,6 +346,12 @@ Dataspatium.assets.addEntries({
   "file": "presets/api/vedur-observations.api.json.js",
   "encoding": "text",
   "size": 6711,
+  "library": "dataspatium"
+ },
+ "presets/api/worldbank.api.json": {
+  "file": "presets/api/worldbank.api.json.js",
+  "encoding": "text",
+  "size": 8707,
   "library": "dataspatium"
  },
  "presets/geo/fylker-no.geojson": {
@@ -543,13 +555,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/api-konfiguration.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 20129,
+  "size": 20512,
   "library": "dataspatium"
  },
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 24993,
+  "size": 25262,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -711,13 +723,13 @@ Dataspatium.assets.addEntries({
  "docs/da/api-konfiguration.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 11058,
+  "size": 11183,
   "library": "dataspatium"
  },
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 24498,
+  "size": 24756,
   "library": "dataspatium"
  },
  "docs/da/snabbstart.md": {
@@ -879,13 +891,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/api-konfiguration.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 10932,
+  "size": 11058,
   "library": "dataspatium"
  },
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 24315,
+  "size": 24573,
   "library": "dataspatium"
  },
  "docs/nb/snabbstart.md": {
@@ -1047,13 +1059,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/api-konfiguration.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 11097,
+  "size": 11221,
   "library": "dataspatium"
  },
  "docs/nn/kallor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 24579,
+  "size": 24842,
   "library": "dataspatium"
  },
  "docs/nn/snabbstart.md": {
@@ -1215,13 +1227,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/api-konfiguration.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 11541,
+  "size": 11671,
   "library": "dataspatium"
  },
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 26225,
+  "size": 26524,
   "library": "dataspatium"
  },
  "docs/fi/snabbstart.md": {
@@ -1383,13 +1395,13 @@ Dataspatium.assets.addEntries({
  "docs/is/api-konfiguration.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 11979,
+  "size": 12102,
   "library": "dataspatium"
  },
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 26044,
+  "size": 26322,
   "library": "dataspatium"
  },
  "docs/is/snabbstart.md": {
@@ -1551,13 +1563,13 @@ Dataspatium.assets.addEntries({
  "docs/en/api-konfiguration.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 20736,
+  "size": 21174,
   "library": "dataspatium"
  },
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 24750,
+  "size": 25020,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {

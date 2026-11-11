@@ -68,6 +68,10 @@ kan aldrig lägga till någon. Den vägrar adresser som pekar på den egna dator
 rubriker och inga kakor, följer högst tre omdirigeringar till tillåtna värdar och stannar vid `--max-fetch-mb` (50 MB som
 förval). Bryggans logg visar värden och sökvägen, aldrig frågan, rubrikerna eller kroppen. Samtycket för ändamålet gäller som
 förut.
+Två förinställningar nås bara så: *Riksbanken räntor och valutakurser (SWEA)* och *Världsbanken: indikatorer*. Källistan
+märker dem *Kräver bryggan*; starta bryggan med `--allow-host api.riksbank.se --allow-host api.worldbank.org` för att hämta
+från dem.
+
 ### Säkerhet
 
 - Bryggan svarar bara på 127.0.0.1, kräver token i varje anrop och tillåter CORS bara för appens egna adresser.

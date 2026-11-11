@@ -1,0 +1,472 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "riksbanken-swea",
+ "name": "Riksbanken räntor och valutakurser (SWEA)",
+ "publisher": "Sveriges riksbank",
+ "description": "Styrräntan, marknadsräntor och valutakurser från Riksbankens SWEA-API: en lista över serierna, observationerna för en serie under en period, den senaste observationen och korskurser mellan två valutor.",
+ "docs": "https://www.riksbank.se/sv/statistik/rantor-och-valutakurser/",
+ "license": {
+  "name": "Fri användning med källangivelse (Riksbanken)",
+  "url": "https://www.riksbank.se/sv/statistik/"
+ },
+ "level": 1,
+ "country": "SE",
+ "baseUrl": "https://api.riksbank.se/swea/v1",
+ "auth": {
+  "type": "none"
+ },
+ "rateLimit": {
+  "requests": 1,
+  "perSeconds": 2
+ },
+ "cors": {
+  "file": false,
+  "web": false
+ },
+ "endpoints": [
+  {
+   "id": "serier",
+   "name": "Serier",
+   "description": "Alla serier med id, beskrivning, grupp och period.",
+   "method": "GET",
+   "path": "/Series",
+   "response": {
+    "format": "json"
+   },
+   "dataset": {
+    "name": "Riksbanken serier"
+   }
+  },
+  {
+   "id": "observationer",
+   "name": "Observationer för en serie",
+   "description": "Värdena för en serie från ett datum, till ett datum eller till i dag.",
+   "method": "GET",
+   "path": "/Observations/{seriesId}/{from}/{to}",
+   "params": [
+    {
+     "name": "seriesId",
+     "in": "path",
+     "label": "Serie",
+     "type": "string",
+     "required": true,
+     "example": "SECBREPOEFF",
+     "optionsFrom": {
+      "endpoint": "serier",
+      "value": "seriesId",
+      "label": "shortDescription"
+     }
+    },
+    {
+     "name": "from",
+     "in": "path",
+     "label": "Från datum",
+     "type": "date",
+     "required": true,
+     "example": "2024-01-01"
+    },
+    {
+     "name": "to",
+     "in": "path",
+     "label": "Till datum",
+     "type": "date",
+     "help": "Tomt = till i dag."
+    }
+   ],
+   "response": {
+    "format": "json"
+   },
+   "dataset": {
+    "name": "Riksbanken {seriesId}"
+   }
+  },
+  {
+   "id": "senaste",
+   "name": "Senaste observationen",
+   "method": "GET",
+   "path": "/Observations/Latest/{seriesId}",
+   "params": [
+    {
+     "name": "seriesId",
+     "in": "path",
+     "label": "Serie",
+     "type": "string",
+     "required": true,
+     "example": "SEKEURPMI",
+     "optionsFrom": {
+      "endpoint": "serier",
+      "value": "seriesId",
+      "label": "shortDescription"
+     }
+    }
+   ],
+   "response": {
+    "format": "json"
+   },
+   "dataset": {
+    "name": "Riksbanken {seriesId} senaste"
+   }
+  },
+  {
+   "id": "korskurser",
+   "name": "Korskurser",
+   "description": "Kursen mellan två valutor räknad ur deras kurser mot kronan.",
+   "method": "GET",
+   "path": "/CrossRates/{series1}/{series2}/{from}/{to}",
+   "params": [
+    {
+     "name": "series1",
+     "in": "path",
+     "label": "Första valutan",
+     "type": "string",
+     "required": true,
+     "example": "SEKEURPMI"
+    },
+    {
+     "name": "series2",
+     "in": "path",
+     "label": "Andra valutan",
+     "type": "string",
+     "required": true,
+     "example": "SEKUSDPMI"
+    },
+    {
+     "name": "from",
+     "in": "path",
+     "label": "Från datum",
+     "type": "date",
+     "required": true,
+     "example": "2024-01-01"
+    },
+    {
+     "name": "to",
+     "in": "path",
+     "label": "Till datum",
+     "type": "date",
+     "help": "Tomt = till i dag."
+    }
+   ],
+   "response": {
+    "format": "json"
+   },
+   "dataset": {
+    "name": "Riksbanken {series1}/{series2}"
+   }
+  }
+ ],
+ "notes": "Tjänsten tillåter inte anrop från webbläsaren (ingen CORS), så den nås bara via bryggan: starta bryggan med --allow-host api.riksbank.se (-AllowHosts api.riksbank.se i PowerShell), anslut den under Inhämta och slå på Hämta via bryggan i Internetåtkomst.",
+ "i18n": {
+  "en": {
+   "name": "Riksbank interest and exchange rates (SWEA)",
+   "publisher": "Sveriges Riksbank",
+   "description": "The policy rate, market rates and exchange rates from the Riksbank’s SWEA API: a list of the series, the observations of a series over a period, the latest observation and cross rates between two currencies.",
+   "notes": "The service does not allow requests from the browser (no CORS), so it is reached only through the bridge: start the bridge with --allow-host api.riksbank.se (-AllowHosts api.riksbank.se in PowerShell), connect it under Import and turn on Fetch through the bridge in Internet access.",
+   "endpoints": {
+    "serier": {
+     "name": "Series"
+    },
+    "observationer": {
+     "name": "Observations of a series",
+     "params": {
+      "seriesId": {
+       "label": "Series"
+      },
+      "from": {
+       "label": "From date"
+      },
+      "to": {
+       "label": "To date",
+       "help": "Empty = until today."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Latest observation",
+     "params": {
+      "seriesId": {
+       "label": "Series"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Cross rates",
+     "params": {
+      "series1": {
+       "label": "First currency"
+      },
+      "series2": {
+       "label": "Second currency"
+      },
+      "from": {
+       "label": "From date"
+      },
+      "to": {
+       "label": "To date",
+       "help": "Empty = until today."
+      }
+     }
+    }
+   }
+  },
+  "da": {
+   "name": "Riksbanken renter og valutakurser (SWEA)",
+   "publisher": "Sveriges riksbank",
+   "description": "Styringsrenten, markedsrenter og valutakurser fra Riksbankens SWEA-API: en liste over serierne, observationerne for en serie i en periode, den seneste observation og krydskurser mellem to valutaer.",
+   "notes": "Tjenesten tillader ikke kald fra browseren (ingen CORS), så den nås kun via broen: start broen med --allow-host api.riksbank.se (-AllowHosts api.riksbank.se i PowerShell), forbind den under Hent, og slå Hent via broen til under Internetadgang.",
+   "endpoints": {
+    "serier": {
+     "name": "Serier"
+    },
+    "observationer": {
+     "name": "Observationer for en serie",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      },
+      "from": {
+       "label": "Fra dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tom = til i dag."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Seneste observation",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Krydskurser",
+     "params": {
+      "series1": {
+       "label": "Første valuta"
+      },
+      "series2": {
+       "label": "Anden valuta"
+      },
+      "from": {
+       "label": "Fra dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tom = til i dag."
+      }
+     }
+    }
+   }
+  },
+  "nb": {
+   "name": "Riksbanken renter og valutakurser (SWEA)",
+   "publisher": "Sveriges riksbank",
+   "description": "Styringsrenten, markedsrenter og valutakurser fra Riksbankens SWEA-API: en liste over seriene, observasjonene for en serie i en periode, den siste observasjonen og krysskurser mellom to valutaer.",
+   "notes": "Tjenesten tillater ikke kall fra nettleseren (ingen CORS), så den nås bare via broen: start broen med --allow-host api.riksbank.se (-AllowHosts api.riksbank.se i PowerShell), koble den til under Hent inn og slå på Hent via broen under Internettilgang.",
+   "endpoints": {
+    "serier": {
+     "name": "Serier"
+    },
+    "observationer": {
+     "name": "Observasjoner for en serie",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      },
+      "from": {
+       "label": "Fra dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tomt = til i dag."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Siste observasjon",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Krysskurser",
+     "params": {
+      "series1": {
+       "label": "Første valuta"
+      },
+      "series2": {
+       "label": "Andre valuta"
+      },
+      "from": {
+       "label": "Fra dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tomt = til i dag."
+      }
+     }
+    }
+   }
+  },
+  "nn": {
+   "name": "Riksbanken renter og valutakursar (SWEA)",
+   "publisher": "Sveriges riksbank",
+   "description": "Styringsrenta, marknadsrenter og valutakursar frå SWEA-API-et til Riksbanken: ei liste over seriane, observasjonane for ein serie i ein periode, den siste observasjonen og krysskursar mellom to valutaer.",
+   "notes": "Tenesta tillèt ikkje kall frå nettlesaren (ingen CORS), så ho blir berre nådd via brua: start brua med --allow-host api.riksbank.se (-AllowHosts api.riksbank.se i PowerShell), kople ho til under Hent og slå på Hent via brua under Internettilgang.",
+   "endpoints": {
+    "serier": {
+     "name": "Seriar"
+    },
+    "observationer": {
+     "name": "Observasjonar for ein serie",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      },
+      "from": {
+       "label": "Frå dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tomt = til i dag."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Siste observasjon",
+     "params": {
+      "seriesId": {
+       "label": "Serie"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Krysskursar",
+     "params": {
+      "series1": {
+       "label": "Første valuta"
+      },
+      "series2": {
+       "label": "Andre valuta"
+      },
+      "from": {
+       "label": "Frå dato"
+      },
+      "to": {
+       "label": "Til dato",
+       "help": "Tomt = til i dag."
+      }
+     }
+    }
+   }
+  },
+  "fi": {
+   "name": "Riksbankin korot ja valuuttakurssit (SWEA)",
+   "publisher": "Sveriges riksbank",
+   "description": "Ohjauskorko, markkinakorot ja valuuttakurssit Riksbankin SWEA-rajapinnasta: sarjojen luettelo, sarjan havainnot aikaväliltä, viimeisin havainto ja kahden valuutan ristikurssit.",
+   "notes": "Palvelu ei salli kutsuja selaimesta (ei CORSia), joten sen tavoittaa vain sillan kautta: käynnistä silta valinnalla --allow-host api.riksbank.se (PowerShellissä -AllowHosts api.riksbank.se), yhdistä se kohdassa Tuo ja kytke Hae sillan kautta päälle kohdassa Internetyhteys.",
+   "endpoints": {
+    "serier": {
+     "name": "Sarjat"
+    },
+    "observationer": {
+     "name": "Sarjan havainnot",
+     "params": {
+      "seriesId": {
+       "label": "Sarja"
+      },
+      "from": {
+       "label": "Alkupäivä"
+      },
+      "to": {
+       "label": "Loppupäivä",
+       "help": "Tyhjä = tähän päivään."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Viimeisin havainto",
+     "params": {
+      "seriesId": {
+       "label": "Sarja"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Ristikurssit",
+     "params": {
+      "series1": {
+       "label": "Ensimmäinen valuutta"
+      },
+      "series2": {
+       "label": "Toinen valuutta"
+      },
+      "from": {
+       "label": "Alkupäivä"
+      },
+      "to": {
+       "label": "Loppupäivä",
+       "help": "Tyhjä = tähän päivään."
+      }
+     }
+    }
+   }
+  },
+  "is": {
+   "name": "Vextir og gengi Riksbanken (SWEA)",
+   "publisher": "Sveriges riksbank",
+   "description": "Stýrivextir, markaðsvextir og gengi úr SWEA-API Riksbanken: listi yfir raðirnar, athuganir raðar á tímabili, nýjasta athugunin og krossgengi milli tveggja gjaldmiðla.",
+   "notes": "Þjónustan leyfir ekki köll úr vafranum (ekkert CORS), svo hún næst aðeins um brúna: ræstu brúna með --allow-host api.riksbank.se (-AllowHosts api.riksbank.se í PowerShell), tengdu hana undir Sækja og kveiktu á Sækja um brúna undir Netaðgangur.",
+   "endpoints": {
+    "serier": {
+     "name": "Raðir"
+    },
+    "observationer": {
+     "name": "Athuganir raðar",
+     "params": {
+      "seriesId": {
+       "label": "Röð"
+      },
+      "from": {
+       "label": "Frá dagsetningu"
+      },
+      "to": {
+       "label": "Til dagsetningar",
+       "help": "Tómt = til dagsins í dag."
+      }
+     }
+    },
+    "senaste": {
+     "name": "Nýjasta athugun",
+     "params": {
+      "seriesId": {
+       "label": "Röð"
+      }
+     }
+    },
+    "korskurser": {
+     "name": "Krossgengi",
+     "params": {
+      "series1": {
+       "label": "Fyrri gjaldmiðill"
+      },
+      "series2": {
+       "label": "Seinni gjaldmiðill"
+      },
+      "from": {
+       "label": "Frá dagsetningu"
+      },
+      "to": {
+       "label": "Til dagsetningar",
+       "help": "Tómt = til dagsins í dag."
+      }
+     }
+    }
+   }
+  }
+ }
+}
