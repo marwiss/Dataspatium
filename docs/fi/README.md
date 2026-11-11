@@ -185,6 +185,9 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 
 ### Myös versiossa 3 (Dataregium 3:n kanssa)
 
+- **Tarkista-tila**: yhdeksäs tila *Muokkaa*-tilan jälkeen. Taulukko tarkistetaan yksinkertaisia sääntöjä vasten (tyyppi ja tyhjät
+  arvot sarakkeittain, rivien kaksoiskappaleet), ja IFC-malli näyttää kortin *Validoi malli* ja paneelin *Vertaa versioita* (ks.
+  [Tilat](lagen.md#tarkista)).
 - **Mallien tarkastus**: kortti *Validoi malli* näyttää palvelimen tarkastuksen IFC-skeemaa, buildingSMARTin sääntöjä ja hankkeen
   IDS-tiedostoja vasten, ja sovellus löytää rakennusosat, jotka törmäävät tai ovat liian lähellä toisiaan, ja tekee niistä asioita (ks.
   [CAD ja BIM](cad-bim.md)).
@@ -193,9 +196,25 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
   tarkastaa sen ja sinä hyväksyt; tekoäly ei voi koskaan tallentaa eikä julkaista itse. Voit myös aloittaa uudesta, tyhjästä mallista
   skeemalla IFC4X3_ADD2, IFC4 tai IFC2X3 (*Nouda > Uusi rakennusmalli*). *Teknisesti:* kirjoitustyökalut täyttävät
   muutosjoukon, jonka mallinnusmoduuli soveltaa IfcOpenShellillä; skeemavirheet ja uudet virheet mallin suhteissa estävät hyväksynnän.
+- **Uusi rakennus briefistä**: kirjoita brief eli kuvaus rakennuksesta lomakkeeseen *Uusi rakennusmalli* ja valitse
+  *Rakenna briefistä tekoälyllä*. Tekoälypaneelin tilassa *Rakenna briefistä* tekoäly suunnittelee, kysyy, kun jotakin olennaista
+  on auki, ja rakentaa kerrokset, seinät, laatat ja aukot kirjoitustyökaluilla; malliin ei kirjoiteta mitään ennen kuin esikatselet
+  ja hyväksyt muutosjoukon (ks. [CAD ja BIM](cad-bim.md#uusi-rakennus-briefistä)).
+- **Olemassa olevan rakennuksen digitaalinen kaksonen**: *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus, leveys, korkeus,
+  perustus, katto) ja *Tarkkuus* (luonnos, pääpiirteet tai yksityiskohtainen) aloittavat briefin, ja julkisivujen ja sisätilojen
+  valokuvat sekä skannatut piirustukset menevät tekoälylle merkittyinä, ja kuvatekstiin tulevat tiedoston sijainti ja ajankohta;
+  Lantmäterietin rakennukset-tasolta haettu rakennusala antaa kulmat metreinä, mallin paikan maapallolla (SWEREF 99 TM) ja
+  pyydettäessä maanpinnan korkeuden kulmissa. Sanat ovat tavallista suomea, mutta niiden takana ovat ISO 19650:n tietovaatimukset
+  ja level of information need, ja malli on tarkoitettu rakennuksen ylläpitomalliksi.
 - **Versiot Dataregiumin kanssa**: lähetä muutos ehdotuksena, jonka palvelin kokeilee ja hankkeen vastuuhenkilö hyväksyy; palvelin
   yhdistää useiden muutokset, ja ristiriidassa valitset, mikä on voimassa. *Teknisesti:* julkaisu perusversion kanssa (412 uudemman
   version kohdalla), snippet, jonka avaimena on GlobalId ja polku.
+- **Useita asiakasohjelmia saman mallin parissa**: kortti *Muutosehdotukset palvelimella* listaa ehdotukset, jotka kohdistuvat
+  mallin asiakirjaan Dataregiumissa, ja se, joka saa hyväksyä, tekee kokeillusta ehdotuksesta seuraavan version; palvelin, joka
+  ottaa vastaan kirjoitustyökalujen oman muodon, saa ehdotukseen myös uudet elementit, poistot ja suhteet. Painikkeella
+  *Vie aineisto palvelimelle* brief ja kuvat viedään palvelimelle mallin aineistoksi asiaan *Aineisto*, kun olet käynyt läpi
+  tarkistuksen ennen jakamista, jotta muut mallin parissa työskentelevät näkevät, mistä se rakennettiin. *Teknisesti:* kyvykkyys
+  `ifc_proposals_url` ja muoto `ops_form` (`dataspatium-tools/1`).
 - **Vertaa versioita**: näe, mitä on lisätty, poistettu ja muutettu mallin kahden version välillä, väritettynä 3D:ssä, myös palvelimen
   versioita vasten.
 - **Lisää**: palvelimen IFC-graafi kevyemmässä muodossa ja kysely *rakennusosat lähellä rakennusosaa*, oma Dataregium omalla koneella

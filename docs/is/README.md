@@ -176,6 +176,8 @@ færðu gögn á milli þeirra með afriti eða pakka.
 
 ### Einnig í útgáfu 3 (með Dataregium 3)
 
+- **Hamurinn Athuga**: níundi hamurinn, á eftir *Vinna*. Tafla er prófuð gegn einföldum reglum (gerð og tóm gildi í hverjum dálki,
+  tvítök meðal raða), og IFC-líkan sýnir kortið *Sannprófa líkanið* og spjaldið *Bera saman útgáfur* (sjá [Hamir](lagen.md#athuga)).
 - **Prófun líkana**: kortið *Sannprófa líkanið* sýnir prófun þjónsins gegn IFC-skemanu, reglum buildingSMART og IDS-skrám verkefnisins,
   og forritið finnur byggingarhluta sem rekast á eða liggja of nálægt hver öðrum og gerir úr þeim mál (sjá [CAD og BIM](cad-bim.md)).
 - **Spyrja gervigreind um líkanið**: spurðu til dæmis „hversu margar hurðir eru á 2. hæð?“ og fáðu svarið með byggingarhlutana merkta í
@@ -184,9 +186,25 @@ færðu gögn á milli þeirra með afriti eða pakka.
   forritið prófar hana og þú samþykkir; gervigreindin getur aldrei vistað eða birt sjálf. Þú getur líka byrjað á nýju, auðu líkani í IFC4X3_ADD2,
   IFC4 eða IFC2X3 (*Sækja > Nýtt byggingarlíkan*). *Tæknilega:* ritverkfærin fylla breytingasett
   sem líkanagerðareiningin beitir með IfcOpenShell; skemavillur og nýjar villur í tengslum líkansins hindra samþykki.
+- **Ný bygging úr lýsingu**: skrifaðu lýsingu á byggingunni í eyðublaðið *Nýtt byggingarlíkan* og veldu
+  *Byggja úr lýsingunni með gervigreind*. Í hamnum *Byggja úr lýsingu* í gervigreindarspjaldinu skipuleggur gervigreindin, spyr
+  þegar lýsingin skilur eitthvað mikilvægt eftir opið og byggir hæðir, veggi, plötur og op með ritverkfærunum; ekkert er skrifað
+  í líkanið fyrr en þú forskoðar og samþykkir breytingasettið (sjá [CAD og BIM](cad-bim.md#ný-bygging-úr-lýsingu)).
+- **Stafrænn tvíburi byggingar sem þegar stendur**: *Upplýsingar um bygginguna* (hvaða bygging, hæðir, lengd, breidd, hæð,
+  undirstöður, þak) og *Nákvæmni* (skissa, aðaldrættir eða nákvæmt) hefja lýsinguna, og ljósmyndir af hliðum byggingarinnar og
+  innanhúss ásamt skönnuðum teikningum fara til gervigreindarinnar, merktar og með staðsetningu og tíma úr skránni; grunnflötur
+  úr lagi Lantmäteriet með byggingum gefur hornin í metrum, stað líkansins á jörðinni (SWEREF 99 TM) og, ef þú vilt, landhæðina
+  í hornunum. Orðin eru á venjulegri íslensku, en að baki þeim liggja upplýsingakröfur ISO 19650 og level of information need,
+  og líkanið er hugsað sem rekstrarlíkan byggingarinnar.
 - **Útgáfur með Dataregium**: sendu breytingu sem tillögu sem þjónninn prófar og verkefnisstjóri samþykkir; þjónninn sameinar breytingar
   frá mörgum, og við árekstur velurðu hvað gildir. *Tæknilega:* birting með grunnútgáfu (412 við nýrri útgáfu), snippet með GlobalId og
   slóð sem lykil.
+- **Margir biðlarar að sama líkani**: kortið *Breytingatillögur á þjóninum* listar tillögurnar gagnvart skjali líkansins á
+  Dataregium, og sá sem má samþykkja gerir prófaða tillögu að næstu útgáfu; þjónn sem tekur við eigin sniði ritverkfæranna fær
+  einnig aðgerðir þeirra, svo nýjar einingar, eyðingar og tengsl fylgja tillögunni. Með *Setja efniviðinn á þjóninn* fara
+  lýsingin og myndirnar á þjóninn sem efniviður líkansins, í málinu *Efniviður*, eftir yfirferðina fyrir deilingu, svo að aðrir
+  sem vinna með líkanið sjái úr hverju það var byggt. *Tæknilega:* getan `ifc_proposals_url` og sniðið `ops_form`
+  (`dataspatium-tools/1`).
 - **Bera saman útgáfur**: sjáðu hvað hefur bæst við, verið fjarlægt og breyst milli tveggja útgáfna líkans, litað í þrívídd, líka gagnvart
   útgáfum þjónsins.
 - **Meira**: IFC-graf þjónsins í léttara formi með fyrirspurninni *byggingarhlutar nálægt byggingarhluta*, Dataregium í þinni eigin

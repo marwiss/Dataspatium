@@ -177,6 +177,9 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
 
 ### Også i version 3 (med Dataregium 3)
 
+- **Tilstanden Kontrollér**: en niende tilstand, efter *Bearbejd*. En tabel prøves mod enkle regler (type og tomme værdier pr.
+  kolonne, dubletter blandt rækkerne), og en IFC-model viser kortet *Valider modellen* og panelet *Sammenlign versioner* (se
+  [Tilstande](lagen.md#kontrollér)).
 - **Kontrol af modeller**: kortet *Valider modellen* viser serverens kontrol mod IFC-skemaet, buildingSMARTs regler og projektets
   IDS-filer, og appen finder bygningsdele, der kolliderer eller ligger for tæt på hinanden, og gør dem til sager (se
   [CAD og BIM](cad-bim.md)).
@@ -185,9 +188,24 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
   godkender; AI'en kan aldrig gemme eller publicere selv. Du kan også begynde fra en ny, tom model i IFC4X3_ADD2, IFC4 eller
   IFC2X3 (*Hent > Ny bygningsmodel*). *Teknisk:* skriveværktøjerne fylder et ændringssæt, som modelleringshjulet
   anvender med IfcOpenShell; skemafejl og nye fejl i modellens sammenhænge spærrer godkendelsen.
+- **En ny bygning ud fra en brief**: skriv en brief, en beskrivelse af bygningen, i formularen *Ny bygningsmodel*, og vælg
+  *Byg ud fra briefen med AI*. I AI-panelets tilstand *Byg ud fra brief* planlægger AI'en, spørger, når noget væsentligt står
+  åbent, og bygger etager, vægge, dæk og åbninger med skriveværktøjerne; intet skrives i modellen, før du forhåndsviser og
+  godkender ændringssættet (se [CAD og BIM](cad-bim.md#en-ny-bygning-ud-fra-en-brief)).
+- **Den digitale tvilling af en eksisterende bygning**: *Bygningens oplysninger* (hvilken bygning, etager, længde, bredde, højde,
+  fundering, tag) og *Detaljeringsgrad* (skitse, hovedtræk eller detaljeret) indleder briefen, og fotos af facaderne og indefra
+  samt skannede tegninger følger med til AI'en, mærket og med position og tidspunkt fra filen; en bygningsflade fra Lantmäteriets
+  bygningslag giver hjørnerne i meter, modellens sted på jorden (SWEREF 99 TM) og efter ønske terrænhøjden i hjørnerne. Ordene er
+  almindeligt dansk, men bag dem ligger ISO 19650's informationskrav og level of information need, og modellen er tænkt som
+  bygningens driftsmodel.
 - **Versioner med Dataregium**: send en ændring som et forslag, som serveren afprøver og en projektansvarlig godkender; serveren fletter
   ændringer fra flere, og ved en konflikt vælger du, hvad der gælder. *Teknisk:* publicering med basisversion (412 ved en nyere version),
   snippet med GlobalId og sti som nøgle.
+- **Flere klienter på samme model**: kortet *Ændringsforslag på serveren* lister forslagene mod modellens dokument på Dataregium,
+  og den, der må godkende, gør et afprøvet forslag til næste version; en server, der tager imod skriveværktøjernes egen form, får
+  også nye elementer, sletninger og relationer med i forslaget. Med *Læg grundlaget på serveren* lægges briefen og billederne på
+  serveren som modellens grundlag, i sagen *Grundlag*, efter gennemgangen før deling, så andre, der arbejder med modellen, ser,
+  hvad den blev bygget af. *Teknisk:* kapabiliteten `ifc_proposals_url` og formen `ops_form` (`dataspatium-tools/1`).
 - **Sammenlign versioner**: se, hvad der er tilføjet, fjernet og ændret mellem to versioner af en model, farvet i 3D, også mod serverens
   versioner.
 - **Mere**: serverens IFC-graf i en lettere form med forespørgslen *bygningsdele nær en bygningsdel*, en Dataregium på din egen computer

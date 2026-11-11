@@ -184,6 +184,8 @@ What works in one version also works in the next. Each version goes with the sam
 
 ### Also in version 3 (with Dataregium 3)
 
+- **Check mode**: a ninth mode, after *Process*. A table is tried against simple rules (type and empty values per column, duplicate
+  rows), and an IFC model shows the card *Validate the model* and the panel *Compare versions* (see [Modes](lagen.md#check)).
 - **Checking models**: the card *Validate the model* shows the server's check against the IFC schema, buildingSMART's rules and the
   project's IDS files, and the app finds building elements that clash or lie too close to each other and turns them into issues (see
   [CAD and BIM](cad-bim.md)).
@@ -193,9 +195,25 @@ What works in one version also works in the next. Each version goes with the sam
   and you approve; the AI can never save or publish by itself. You can also start from a new, empty model in IFC4X3_ADD2,
   IFC4 or IFC2X3 (*Import > New building model*). *Technically:* the write tools fill a change set that the modelling
   wheel applies with IfcOpenShell; schema errors and new errors in the model's relationships block the approval.
+- **A new building from a brief**: write a brief, a description of the building, in the form *New building model* and choose
+  *Build from the brief with AI*. In the AI panel's mode *Build from brief* the AI plans, asks when something essential is open
+  and builds storeys, walls, slabs and openings with the write tools; nothing is written into the model until you preview and
+  approve the change set (see [CAD and BIM](cad-bim.md#a-new-building-from-a-brief)).
+- **The digital twin of an existing building**: *The building's facts* (which building, storeys, length, width, height,
+  foundation, roof) and the *Level of detail* (sketch, main features or detailed) open the brief, and photos of the façades and
+  the inside as well as scanned drawings go along to the AI, labelled and with the position and time from the file; a footprint
+  from Lantmäteriet's building layer gives the corners in metres, the model's place on earth (SWEREF 99 TM) and, on request, the
+  ground height at the corners. The words are plain English, but behind them lie ISO 19650's information requirements and level
+  of information need, and the model is meant as the building's asset information model.
 - **Versions with Dataregium**: send a change as a proposal that the server tries and a project manager approves; the server merges
   changes from several people, and at a conflict you choose what applies. *Technically:* publishing with a base version (412 at a
   newer version), a snippet with GlobalId and path as key.
+- **Several clients on the same model**: the card *Change proposals on the server* lists the proposals against the model's
+  document on Dataregium, and those allowed to approve make a tried proposal the next version; a server that takes the write
+  tools' own form also gets new elements, deletions and relationships in the proposal. With *Put the material on the server* the
+  brief and the pictures go to the server as the model's material, in the topic *Material*, after the review before sharing, so
+  that others who work on the model see what it was built from. *Technically:* the capability `ifc_proposals_url` and the form
+  `ops_form` (`dataspatium-tools/1`).
 - **Compare versions**: see what has been added, removed and changed between two versions of a model, coloured in 3D, also against the
   server's versions.
 - **More**: the server's IFC graph in a lighter form with the query *elements near an element*, a Dataregium on your own computer as a
