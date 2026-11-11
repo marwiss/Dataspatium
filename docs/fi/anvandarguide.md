@@ -211,6 +211,28 @@ Kaikki, mikä on tarkoitettu muille ihmisille, on *Jaa*-tilassa (ks. [dela.md](d
 - API-määritykset (`.api.json`), kaaviot ja asiakirjamallit (JSON) ja reseptit (JSON, R tai SQL) viedään ja ladataan
   tiedostoina. Avaimet eivät koskaan kulje mukana.
 
+## Tekoälyavustaja
+
+Tilarivin *Tekoälyavustaja* tai komentopaletin (Ctrl+K) *Tekoälyavustaja* avaa paneelin, jossa tekoäly tekee tehtäviä puolestasi
+sovelluksen komennoilla kaikissa tiloissa. Se käyttää tekoälypalvelua, jonka olet lisännyt kohdassa *Palvelut*, joko
+pilvipalvelua omalla avaimellasi tai paikallista mallia, ja siihen otetaan yhteys vasta, kun olet antanut suostumuksen palvelun
+osoitteelle.
+
+Kirjoita, mitä haluat tehdä, ja paina *Lähetä* (tai Ctrl+Enter). Tekoäly lukee ensin, esimerkiksi mitä aineistoja ja sarakkeita
+on, ja valitsee seuraavan vaiheen sen mukaan, mitä se saa tietää. Vaiheet näkyvät paneelissa sitä mukaa kuin ne suoritetaan.
+
+- Kaikki, mikä muuttaa jotakin, kuten Muokkaa-tilan toiminto, vienti tai R- tai Python-skripti, näytetään ensin omassa
+  valintaikkunassaan komentoineen ja argumentteineen. Se suoritetaan vain, jos painat *Hyväksy*, ja sen voi perua jälkikäteen.
+- Kun jatko riippuu siitä, mitä haluat, tekoäly kysyy sinulta paneelissa ja tarjoaa muutaman vastausvaihtoehdon. Vastaus
+  kysymykseen ei koskaan hyväksy mitään.
+- Toistuvaan tehtävään tekoäly voi ehdottaa kokonaista työnkulkua, jonka tallennat painikkeella *Tallenna työnkuluksi*. Tehtävän
+  jälkeen voit myös tallentaa hyväksytyt vaiheet työnkuluksi. Molemmat ajetaan sen jälkeen ilman tekoälyä kohdassa *Työnkulut ja
+  seurannat*.
+- Tekoäly vastaa sovelluksen kielellä. *Pysäytä* keskeyttää ennen seuraavaa vaihetta, ja *Uusi keskustelu* aloittaa alusta.
+
+Se, mitä tekoäly lukee aineistoista, on dataa eikä koskaan ohjeita. Pilvipalveluun lähetetty tieto lähtee tietokoneelta, joten
+valitse arkaluonteisiin tehtäviin paikallinen malli.
+
 ## Ohje sovelluksessa
 
 Koko käsikirja on sovelluksessa: oikean yläkulman **?**-painike, **F1**-näppäin tai komentopaletin komento *Ohje*

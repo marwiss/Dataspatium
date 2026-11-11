@@ -210,6 +210,26 @@ Everything meant for other people is in the *Share* mode (see [dela.md](dela.md)
 - API configurations (`.api.json`), charts and document templates (JSON) and recipes (JSON, R or SQL) are exported
   and loaded as files. Keys never come along.
 
+## The AI assistant
+
+*AI assistant* in the status bar, or *AI assistant* in the command palette (Ctrl+K), opens a panel where an AI does tasks for
+you with the app's commands, in every mode. It uses the AI provider you have added under *Providers*, a cloud service with your
+key or a local model, and is reached only after you have given consent for the provider's host.
+
+Write what you want done and press *Send* (or Ctrl+Enter). The AI reads first, for example which datasets and columns there are,
+and chooses its next step by what it learns. The steps show in the panel as they run.
+
+- Everything that changes something, such as an action in Process, an export or an R or Python script, is shown first in a
+  dialog of its own with the command and its arguments. It runs only if you press *Approve*, and it can be undone afterwards.
+- When the way on depends on what you want, the AI asks you in the panel with a few answers to choose from. An answer to a
+  question never approves anything.
+- For a task that will be done again, the AI can propose a whole flow, which you save with *Save as a flow*. After a task you can
+  also save the approved steps as a flow. Both then run without the AI under *Flows and watches*.
+- The AI answers in the app's language. *Stop* cancels before the next step, and *New conversation* starts again.
+
+What the AI reads in the datasets counts as data, never as instructions. What is sent to a cloud service leaves the computer, so
+choose a local model for sensitive tasks.
+
 ## Help in the app
 
 The whole handbook is in the app: the **?** button at the top right, the **F1** key or the *Help* command in the

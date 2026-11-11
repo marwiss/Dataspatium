@@ -196,6 +196,26 @@ Alt som skal til andre mennesker, finnes i modusen *Del* (se [dela.md](dela.md))
 - API-konfigurasjoner (`.api.json`), diagrammer og dokumentmaler (JSON) og oppskrifter (JSON, R eller SQL) eksporteres og
   lastes inn som filer. Nøkler følger aldri med.
 
+## AI-assistenten
+
+*AI-assistent* i statuslinjen, eller *AI-assistent* i kommandopaletten (Ctrl+K), åpner et panel der en AI gjør oppgaver for deg
+med appens kommandoer, i alle moduser. Den bruker AI-leverandøren du har lagt til under *Leverandører*, en skytjeneste med din
+nøkkel eller en lokal modell, og nås først når du har gitt samtykke for leverandørens vert.
+
+Skriv hva du vil få gjort, og trykk på *Send* (eller Ctrl+Enter). AI-en leser først, for eksempel hvilke datasett og kolonner
+som finnes, og velger neste steg etter det den får vite. Stegene vises i panelet mens de kjøres.
+
+- Alt som endrer noe, som en handling i Bearbeid, en eksport eller et R- eller Python-skript, vises først i en egen dialog med
+  kommandoen og argumentene. Det kjøres bare hvis du trykker på *Godkjenn*, og det kan angres etterpå.
+- Når veien avhenger av hva du vil, spør AI-en deg i panelet med noen svar å velge mellom. Et svar på et spørsmål godkjenner
+  aldri noe.
+- For en oppgave som skal gjøres igjen, kan AI-en foreslå en hel flyt, som du lagrer med *Lagre som flyt*. Etter en oppgave kan du
+  også lagre de godkjente stegene som en flyt. Begge kjøres deretter uten AI under *Flyter og overvåking*.
+- AI-en svarer på appens språk. *Stopp* avbryter før neste steg, og *Ny samtale* begynner på nytt.
+
+Det AI-en leser i datasettene, regnes som data, aldri som instruksjoner. Det som sendes til en skytjeneste, forlater datamaskinen,
+så velg en lokal modell for sensitive oppgaver.
+
 ## Hjelp i appen
 
 Hele håndboken finnes i appen: knappen **?** øverst til høyre, tasten **F1** eller kommandoen *Hjelp* i

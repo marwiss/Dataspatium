@@ -201,6 +201,26 @@ Alt, hvad der skal til andre mennesker, findes i tilstanden *Del* (se [dela.md](
 - API-konfigurationer (`.api.json`), diagrammer og dokumentskabeloner (JSON) og opskrifter (JSON, R eller SQL)
   eksporteres og indlæses som filer. Nøgler følger aldrig med.
 
+## AI-assistenten
+
+*AI-assistent* i statuslinjen, eller *AI-assistent* i kommandopaletten (Ctrl+K), åbner et panel, hvor en AI udfører opgaver for
+dig med appens kommandoer, i alle tilstande. Den bruger den AI-udbyder, du har tilføjet under *Udbydere*, en cloudtjeneste med
+din nøgle eller en lokal model, og kontaktes først, når du har givet samtykke for udbyderens vært.
+
+Skriv, hvad du vil have gjort, og tryk på *Send* (eller Ctrl+Enter). AI'en læser først, for eksempel hvilke datasæt og kolonner
+der findes, og vælger næste trin efter det, den får at vide. Trinnene vises i panelet, mens de køres.
+
+- Alt, der ændrer noget, som en handling i Bearbejd, en eksport eller et R- eller Python-script, vises først i en egen dialog med
+  kommandoen og dens argumenter. Det køres kun, hvis du trykker på *Godkend*, og det kan fortrydes bagefter.
+- Når vejen afhænger af, hvad du vil, spørger AI'en dig i panelet med nogle svar at vælge mellem. Et svar på et spørgsmål
+  godkender aldrig noget.
+- Til en opgave, der skal udføres igen, kan AI'en foreslå et helt flow, som du gemmer med *Gem som flow*. Efter en opgave kan du
+  også gemme de godkendte trin som et flow. Begge køres derefter uden AI under *Flows og overvågning*.
+- AI'en svarer på appens sprog. *Stop* afbryder før næste trin, og *Ny samtale* begynder forfra.
+
+Det, AI'en læser i datasættene, regnes som data, aldrig som instruktioner. Det, der sendes til en cloudtjeneste, forlader
+computeren, så vælg en lokal model til følsomme opgaver.
+
 ## Hjælp i appen
 
 Hele håndbogen findes i appen: knappen **?** øverst til højre, tasten **F1** eller kommandoen *Hjælp* i

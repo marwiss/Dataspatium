@@ -73,6 +73,8 @@
           this.loadingEl = h('span', { class: 'dm-sb dm-sb-optional dm-sb-loading', hidden: true, 'data-loading': '', title: t('shell.loading.hint') }, h('dm-progress', { indeterminate: '' }), h('span', { text: '' }),
             basic.button({ label: t('shell.loading.abort'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', 'data-loading-abort': '', onClick: () => { if (D.downloads) D.downloads.abortAll(); } }));
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
+          // AI-assistent (F35 a): the AI that works with the app's commands, in a floating panel in every mode.
+          this.assistantEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-assistant', 'aria-label': t('assistant.open'), title: t('assistant.open.hint'), onclick: () => this.openAssistant() }, icons.icon('sparkles', 14));
           // Stoppa: the flow stops before its next step or round (Martin's F33 b).
           this.flowStopEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow dm-sb-flow-stop', hidden: true, 'aria-label': t('flows.cancel'), title: t('flows.cancel.hint'), onclick: () => D.require('data/flows').cancel() }, icons.icon('octagon-x', 14));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
@@ -80,7 +82,7 @@
           this.selectionEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-selection', hidden: true, 'aria-label': t('selection.status.hint'), title: t('selection.status.hint'), onclick: () => this.selectionMenu() }, icons.icon('list-checks', 14), h('span'));
           selectionMod.subscribe((s) => this.showSelection(s));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.flowStopEl, this.watchEl, this.commentsEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.flowStopEl, this.assistantEl, this.watchEl, this.commentsEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.loadingEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -172,6 +174,8 @@
           this.activate('hantera');
           this.store.set({ selectedId: '__flows', flowsTab: tab });
         }
+        /** The floating AI assistant (ui/assistant); one per page, kept while the app is open. */
+        openAssistant() { return D.require('ui/assistant').open(this.ctx); }
         /** What a flow is doing, in the status bar and the log. */
         listenToFlows() {
           const flows = D.require('data/flows');
@@ -557,6 +561,7 @@
               navigator.clipboard.writeText(url).then(() => this.toast(t('shell.link.copied'), { kind: 'ok' })).catch(() => this.toast(url, { kind: 'info', timeout: 15000 }));
             },
           });
+          cmds.push({ id: 'assistant', label: t('assistant.title'), hint: t('assistant.open.hint'), group: t('palette.group.actions'), icon: 'sparkles', keywords: ['AI'], run: () => this.openAssistant() });
           cmds.push({ id: 'help', label: t('shell.help'), hint: t('app.version', { version: D.version }), group: t('palette.group.actions'), icon: 'circle-help', run: () => this.showHelp() });
           cmds.push({ id: 'lang', label: t('lang.title'), hint: 'Svenska · Dansk · Norsk · Suomi · Íslenska · English', group: t('palette.group.actions'), icon: 'languages', run: () => this.chooseLanguage() });
           cmds.push({ id: 'course', label: t('course.open'), hint: t('course.open.hint'), group: t('palette.group.actions'), icon: 'graduation-cap', keywords: [t('course.title')], run: () => this.course.open() });
