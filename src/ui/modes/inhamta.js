@@ -389,12 +389,15 @@
             field('project', { placeholder: t('newmodel.default.project') }), field('site', { placeholder: t('newmodel.default.site') }),
             field('building', { placeholder: t('newmodel.default.building') }), field('storey', { placeholder: t('newmodel.default.storey') }),
             field('elevation', { type: 'number', placeholder: '0' }),
+            field('brief', { type: 'textarea', rows: '5', placeholder: t('newmodel.brief.placeholder'), help: t('newmodel.brief.help') }),
             newModel.error ? h('p', { class: 'dm-error dm-small', 'data-newmodel-error': '', text: newModel.error }) : null,
             h('div', { class: 'dm-row' }, ui.button({ label: newModel.busy ? t('newmodel.creating') : t('newmodel.create'), icon: 'box', variant: 'primary', loading: newModel.busy, title: t('newmodel.create.hint'), 'data-newmodel-create': '', onClick: create })),
             h('p', { class: 'dm-help dm-xs', text: t('newmodel.python') }),
             done ? h('div', { class: 'dm-success dm-stack', 'data-newmodel-done': '' },
               h('p', { text: t('newmodel.done', { name: done.name, schema: (done.source && done.source.schema) || '' }) }),
-              h('div', { class: 'dm-row' }, ui.button({ label: t('newmodel.open'), icon: 'pencil', title: t('newmodel.open.hint'), onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
+              h('div', { class: 'dm-row' },
+                String(newModel.values.brief || '').trim() ? ui.button({ label: t('newmodel.build'), icon: 'cpu', variant: 'primary', title: t('newmodel.build.hint'), 'data-newmodel-build': '', onClick: () => { store.set({ selectedId: done.id, openModelAi: { datasetId: done.id, mode: 'build', brief: String(newModel.values.brief || '').trim() } }); shell.activate('bearbeta'); } }) : null,
+                ui.button({ label: t('newmodel.open'), icon: 'pencil', title: t('newmodel.open.hint'), onClick: () => { store.set({ selectedId: done.id }); shell.activate('bearbeta'); } }))) : null));
       }
 
       function renderGuides() {

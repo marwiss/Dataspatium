@@ -270,6 +270,21 @@ sótt eftir samþykki.
 Líkanið verður venjulegt líkanagagnasafn. Opnaðu það í Vinna og byggðu í því með *Breyta með gervigreind*, til dæmis „tvær hæðir og
 hnitanet 6×4 m með útveggjum eftir netinu“. Það má flytja út sem IFC og birta á Dataregium eins og önnur líkön.
 
+## Ný bygging úr lýsingu
+
+Skrifaðu lýsingu í eyðublaðið *Nýtt byggingarlíkan* ("tveggja hæða hús 12 × 8 m með risþaki, múrsteinshlið, inngangur mót suðri …") og
+veldu *Byggja úr lýsingunni með gervigreind* þegar líkanið er til: líkanið opnast í Vinna með gervigreindarspjaldið í hamnum **Byggja
+úr lýsingu**. Þar getur þú hengt við ljósmyndir og skannaðar teikningar (JPEG, PNG eða PDF; grunnteikning gefur réttu málin, ljósmynd
+útlitið, efnin og hvernig hlutarnir tengjast) eða bætt við myndum úr myndasafni, til dæmis þeim sem þú tókst með Dataspatium Mobil.
+Gervigreindin les tóma líkanið, segir áætlun sína, spyr í spjaldinu þegar lýsingin skilur eitthvað mikilvægt eftir opið (grunnflötur,
+fjöldi hæða, hæðarhæð, veggþykktir, efni) og byggir svo í hópum með sömu tólum og *Breyta*: hæðir og net, veggir á hverja hæð,
+plötur, op, eiginleikar og efni, með forskoðun og leiðréttingum eftir hvern hóp. Ekkert er skrifað í líkanið fyrr en þú forskoðar og
+samþykkir breytingasettið að venju, og þú getur bætt við með nýrri lýsingu í sama ham. Myndirnar eru sendar þjónustuveitandanum með
+lýsingunni eftir samþykki fyrir hýsil veitandans; staðbundið líkan sem sér myndir heldur öllu á tölvunni.
+Með *Upplýsingar úr gagnasafni* fara línur úr töflu í lýsinguna sem texti: grunnflötur sóttur af kortinu (Opin landupplýsingagögn) verður
+horn í metrum frá suðvesturhorninu, svo veggirnir fái rétt mál, og mál og athugasemdir úr vettvangseyðublaði í Dataspatium Mobil verða
+línur; umferð með símanum getur síðan gefið fleiri myndir og mál, og lýsingin er fyllt út í sama ham.
+
 ## Spyrja gervigreind um líkanið
 
 Hnappurinn *Spyrja gervigreind* í líkanssýninni opnar spjald í skoðaranum þar sem þú spyrð spurningar um opna IFC-líkanið, til dæmis

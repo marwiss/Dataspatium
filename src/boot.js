@@ -326,6 +326,7 @@
     // Fråga AI om modellen: the providers, the read tools and the agent loop; the panel lives in Bearbeta's model view
     'src/ai/providers.js',
     'src/ai/model-tools.js',
+    'src/ai/build-input.js',
     'src/ai/ids-writer.js',
     'src/ui/api/profile-card.js',
     'src/ai/write-tools.js',

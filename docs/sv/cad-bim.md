@@ -270,6 +270,21 @@ efter samtycke.
 Modellen blir en vanlig modelldatamängd. Öppna den i Bearbeta och bygg i den med *Ändra med AI*, till exempel "två våningar och ett
 rutnät 6×4 m med ytterväggar längs rutnätet". Den kan exporteras som IFC och publiceras på en Dataregium som andra modeller.
 
+## Ny byggnad ur en brief
+
+Skriv en brief i formuläret *Ny byggnadsmodell* ("ett tvåvåningshus 12 × 8 m med sadeltak, tegelfasad, entré mot söder …") och välj
+*Bygg ur briefen med AI* när modellen är skapad: modellen öppnas i Bearbeta med AI-panelen i läget **Bygg ur brief**. Där kan du
+bifoga foton och skannade ritningar (JPEG, PNG eller PDF; en planritning ger de riktiga måtten, ett foto utseende, material och hur
+delarna hör ihop) eller lägga till bilderna ur en bildsamling, till exempel de du tagit med Dataspatium Mobil. AI:n läser den tomma
+modellen, säger sin plan, frågar i panelen när briefen lämnar något väsentligt öppet (fotavtryck, antal våningar, våningshöjd,
+väggtjocklekar, material) och bygger sedan i grupper med samma verktyg som *Ändra*: våningar och rutnät, väggar per våning, bjälklag,
+öppningar, egenskaper och material, med förhandsvisning och rättning efter varje grupp. Ingenting skrivs i modellen förrän du
+förhandsgranskar och godkänner ändringssetet som vanligt, och du kan komplettera med en ny brief i samma läge. Bilderna skickas till
+leverantören tillsammans med briefen, efter samtycket för leverantörens värd; en lokal modell som ser bilder behåller allt på datorn.
+Med *Uppgifter ur en datamängd* läggs rader ur en tabell i briefen som text: en byggnadsyta hämtad ur kartan (Öppna geodata) blir
+hörn i meter från sydvästra hörnet, så att väggarna får riktiga mått, och mått och anteckningar ur ett fältformulär från Dataspatium
+Mobil blir rader; en runda med telefonen kan sedan ge fler bilder och mått, och briefen kompletteras i samma läge.
+
 ## Fråga AI om modellen
 
 Knappen *Fråga AI* i modellvyn öppnar en panel i inspektören där du ställer en fråga om den öppna IFC-modellen, till exempel "vilka dörrar

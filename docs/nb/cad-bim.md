@@ -273,6 +273,21 @@ samtykke.
 Modellen blir et vanlig modelldatasett. Åpne det i Bearbeid og bygg i det med *Endre med AI*, for eksempel «to etasjer og et
 rutenett på 6×4 m med yttervegger langs rutenettet». Det kan eksporteres som IFC og publiseres på en Dataregium som andre modeller.
 
+## En ny bygning fra en brief
+
+Skriv en brief i skjemaet *Ny bygningsmodell* ("et toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og velg *Bygg fra
+briefen med AI* når modellen er laget: modellen åpnes i Bearbeid med AI-panelet i modusen **Bygg fra brief**. Der kan du legge ved
+foto og skannede tegninger (JPEG, PNG eller PDF; en plantegning gir de riktige målene, et foto utseende, materialer og hvordan delene
+henger sammen) eller legge til bildene fra en bildesamling, for eksempel dem du har tatt med Dataspatium Mobil. AI-en leser den
+tomme modellen, sier planen sin, spør i panelet når briefen lar noe vesentlig stå åpent (fotavtrykk, antall etasjer, etasjehøyde,
+veggtykkelser, materialer) og bygger så i grupper med samme verktøy som *Endre*: etasjer og rutenett, vegger per etasje, dekker,
+åpninger, egenskaper og materialer, med forhåndsvisning og rettinger etter hver gruppe. Ingenting skrives i modellen før du
+forhåndsviser og godkjenner endringssettet som vanlig, og du kan supplere med en ny brief i samme modus. Bildene sendes til
+leverandøren sammen med briefen etter samtykket for leverandørens vert; en lokal modell som ser bilder beholder alt på datamaskinen.
+Med *Opplysninger fra et datasett* legges rader fra en tabell i briefen som tekst: en bygningsflate hentet fra kartet (Åpne geodata) blir
+hjørner i meter fra det sørvestlige hjørnet, så veggene får riktige mål, og mål og notater fra et feltskjema i Dataspatium Mobil blir
+rader; en runde med telefonen kan så gi flere bilder og mål, og briefen suppleres i samme modus.
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisningen åpner et panel i inspektøren der du stiller et spørsmål om den åpne IFC-modellen, for eksempel

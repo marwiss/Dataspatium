@@ -282,6 +282,22 @@ Mallista tulee tavallinen malliaineisto. Avaa se Muokkaa-tilassa ja rakenna siih
 ”kaksi kerrosta ja 6×4 m:n ruudukko, ulkoseinät ruudukon mukaan”. Sen voi viedä IFC-muodossa ja julkaista Dataregiumiin kuten
 muutkin mallit.
 
+## Uusi rakennus briefistä
+
+Kirjoita brief lomakkeeseen *Uusi rakennusmalli* ("kaksikerroksinen talo 12 × 8 m harjakatolla, tiilijulkisivu, sisäänkäynti etelään …")
+ja valitse *Rakenna briefistä tekoälyllä*, kun malli on luotu: malli avautuu Muokkaa-tilassa tekoälypaneelin tilassa **Rakenna
+briefistä**. Siellä voit liittää valokuvia ja skannattuja piirustuksia (JPEG, PNG tai PDF; pohjapiirustus antaa oikeat mitat, valokuva
+ulkonäön, materiaalit ja sen, miten osat liittyvät toisiinsa) tai lisätä kuvakokoelman kuvat, esimerkiksi Dataspatium Mobiililla
+otetut. Tekoäly lukee tyhjän mallin, kertoo suunnitelmansa, kysyy paneelissa, kun brief jättää jotakin olennaista auki (pohja,
+kerrosten määrä, kerroskorkeus, seinäpaksuudet, materiaalit), ja rakentaa sitten ryhmissä samoilla työkaluilla kuin *Muuta*:
+kerrokset ja ruudukko, seinät kerroksittain, laatat, aukot, ominaisuudet ja materiaalit, esikatselulla ja korjauksilla jokaisen ryhmän
+jälkeen. Malliin ei kirjoiteta mitään ennen kuin esikatselet ja hyväksyt muutosjoukon tavalliseen tapaan, ja voit täydentää uudella
+briefillä samassa tilassa. Kuvat lähetetään toimittajalle briefin mukana toimittajan isännän suostumuksen jälkeen; kuvia näkevä
+paikallinen malli pitää kaiken tietokoneella.
+Toiminnolla *Tiedot tietoaineistosta* taulukon rivit lisätään briefiin tekstinä: kartalta (Avoin paikkatieto) haettu rakennusala muuttuu
+kulmiksi metreinä lounaiskulmasta, jolloin seinät saavat oikeat mitat, ja Dataspatium Mobiilin kenttälomakkeen mitat ja muistiinpanot
+muuttuvat riveiksi; kierros puhelimen kanssa voi sitten antaa lisää kuvia ja mittoja, ja briefiä täydennetään samassa tilassa.
+
 ## Kysy tekoälyltä mallista
 
 Mallinäkymän painike *Kysy tekoälyltä* avaa tarkastelijaan paneelin, jossa esität kysymyksen avoinna olevasta IFC-mallista, esimerkiksi

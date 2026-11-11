@@ -83,6 +83,20 @@
       const props = (parameters && parameters.properties) || {};
       return { type: 'object', properties: props, required: Object.keys(props), additionalProperties: false };
     }
+    /**
+     * A user message's content in the provider's form: text, or blocks of text and images (base64, decision F43 a); a provider that
+     * cannot see images gets the text alone.
+     */
+    function userContent(content, kind) {
+      if (!Array.isArray(content)) return String(content);
+      return content.map((b) => {
+        if (b && b.type === 'image' && b.data) {
+          const mediaType = String(b.mediaType || 'image/jpeg');
+          return kind === 'anthropic' ? { type: 'image', source: { type: 'base64', media_type: mediaType, data: String(b.data) } } : { type: 'image_url', image_url: { url: `data:${mediaType};base64,${String(b.data)}` } };
+        }
+        return { type: 'text', text: String((b && b.text) || '') };
+      });
+    }
     /** The text of an assistant message's blocks. */
     const textOf = (content) => (typeof content === 'string' ? content : (content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n'));
 
@@ -91,7 +105,7 @@
       for (const m of req.messages) {
         if (m.role === 'tool') messages.push({ role: 'user', content: m.results.map((r) => ({ type: 'tool_result', tool_use_id: r.id, content: String(r.content) })) });
         else if (m.role === 'assistant') messages.push({ role: 'assistant', content: (typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : m.content).map((b) => (b.type === 'tool_use' ? { type: 'tool_use', id: b.id, name: b.name, input: b.input || {} } : { type: 'text', text: b.text || '' })).filter((b) => b.type === 'tool_use' || b.text) });
-        else messages.push({ role: 'user', content: String(m.content) });
+        else messages.push({ role: 'user', content: userContent(m.content, 'anthropic') });
       }
       const body = { model: provider.model, max_tokens: req.maxTokens || 1024, messages };
       if (req.system) body.system = req.system;
@@ -118,7 +132,7 @@
           const msg = { role: 'assistant', content: textOf(m.content) || null };
           if (calls.length) msg.tool_calls = calls;
           messages.push(msg);
-        } else messages.push({ role: 'user', content: String(m.content) });
+        } else messages.push({ role: 'user', content: userContent(m.content, 'openai') });
       }
       const body = { model: provider.model, messages, max_tokens: req.maxTokens || 1024 };
       if (req.tools && req.tools.length) body.tools = req.tools.map((tool) => ({ type: 'function', function: { name: tool.name, description: tool.description, parameters: strictSchema(tool.parameters), strict: true } }));

@@ -276,6 +276,21 @@ Modellen blir eit vanleg modelldatasett. Opne det i Bearbeid og byggj i det med 
 rutenett på 6×4 m med ytterveggar langs rutenettet». Det kan eksporterast som IFC og publiserast på ein Dataregium som andre
 modellar.
 
+## Ein ny bygning frå ein brief
+
+Skriv ein brief i skjemaet *Ny bygningsmodell* ("eit toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og vel *Bygg frå
+briefen med AI* når modellen er laga: modellen opnar i Bearbeid med AI-panelet i modusen **Bygg frå brief**. Der kan du leggje ved
+foto og skanna teikningar (JPEG, PNG eller PDF; ei planteikning gjev dei rette måla, eit foto utsjånad, materialar og korleis delane
+heng saman) eller leggje til bileta frå ei biletsamling, til dømes dei du har teke med Dataspatium Mobil. AI-en les den tomme
+modellen, seier planen sin, spør i panelet når briefen lèt noko vesentleg stå ope (fotavtrykk, tal på etasjar, etasjehøgd,
+veggtjukkleikar, materialar) og byggjer så i grupper med same verktøy som *Endre*: etasjar og rutenett, veggar per etasje, dekke,
+opningar, eigenskapar og materialar, med førehandsvising og rettingar etter kvar gruppe. Ingenting vert skrive i modellen før du
+førehandsviser og godkjenner endringssettet som vanleg, og du kan supplere med ein ny brief i same modus. Bileta vert sende til
+leverandøren saman med briefen etter samtykket for verten til leverandøren; ein lokal modell som ser bilete held alt på datamaskina.
+Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i briefen som tekst: ei bygningsflate henta frå kartet (Opne geodata)
+vert hjørne i meter frå det sørvestlege hjørnet, så veggane får rette mål, og mål og notat frå eit feltskjema i Dataspatium Mobil vert
+rader; ein runde med telefonen kan så gje fleire bilete og mål, og briefen vert supplert i same modus.
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisinga opnar eit panel i inspektøren der du stiller eit spørsmål om den opne IFC-modellen, til dømes "kva

@@ -14,7 +14,9 @@
  * trial on the latest version and merges what does not collide, and the person decides each collision here (base, what came between,
  * the proposal) before the proposal goes again (OB-19 d). The
  * keys live in api/secrets; nothing is sent without the consent for the provider's host. The dialog `providers` adds, changes and
- * removes providers (Anthropic Messages, OpenAI-compatible, local servers).
+ * removes providers (Anthropic Messages, OpenAI-compatible, local servers). The mode Bygg ur brief (decision F43 a) builds a whole
+ * building in an empty model from a brief, with photos and scanned drawings attached as pictures, the AI's questions answered in the
+ * panel, and the same preview and approval as Ändra.
  */
 (function () {
   'use strict';
@@ -23,27 +25,32 @@
     (base, basic, overlays, icons, providers, agent, writeTools, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
-      const MODES = ['ask', 'change'];
+      const MODES = ['ask', 'change', 'build'];
       const cssColor = (name) => ((globalThis.getComputedStyle ? getComputedStyle(document.documentElement).getPropertyValue(name) : '') || '').trim() || '#888888';
 
       /**
        * @param {any} ctx shell context
-       * @param {{datasetId: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function}} options
+       * @param {{datasetId: string, mode?: string, brief?: string, onMarked?: Function, preview?: (preview: {bytes?: Uint8Array|null, colors?: Array<{color: string, ids: number[]}>}|null) => any, onApproved?: Function}} options
        */
       function create(ctx, options) {
         const { shell } = ctx;
-        const s = { providers: [], providerId: '', policy: 'ask', mode: 'ask', question: '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
-          changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false };
+        const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
+          changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
+          attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [] };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
         const log = (msg, kind) => { if (shell && shell.log) shell.log(msg, kind || 'ok'); };
         const fail = (err) => { s.error = String((err && err.message) || err); log(`AI: ${s.error}`, 'error'); };
-        const changing = () => s.mode === 'change';
+        const changing = () => s.mode === 'change' || s.mode === 'build';
+        const building = () => s.mode === 'build';
 
         async function load() {
           s.providers = await providers.list();
           s.policy = await providers.policy();
+          const all = await datasets.list();
+          s.albums = all.filter((d) => d.kind === 'images');
+          s.tables = all.filter((d) => d.id !== options.datasetId && (!d.kind || d.kind === 'table' || d.kind === 'plan'));
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = s.providers.some((p) => p.id === last) ? last : (s.providers[0] ? s.providers[0].id : '');
         }
@@ -55,7 +62,7 @@
           s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
           abort = new AbortController();
           try {
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), images: building() ? s.attachments.map((a) => ({ mediaType: a.mediaType, data: a.data })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.elements = out.elements; s.usage = out.usage;
             // The next question continues the conversation, but only the words: the tool traffic is not carried on.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
@@ -70,6 +77,100 @@
           abort = null; s.busy = false; s.question = ''; render();
         }
         function cancel() { if (abort) abort.abort(); }
+        // ---- build mode (decision F43 a): a question to the person, and pictures and drawings as the brief's material ----
+        const MAX_IMAGES = 16; const MAX_SIDE = 1600; const MAX_PAGES = 8;
+        /** A question from the AI, shown in the panel until the person answers or closes it. */
+        function askPerson(q) {
+          return new Promise((resolve) => {
+            s.questionBox = { q, resolve: (v) => { s.questionBox = null; resolve(v); render(); } };
+            if (q.signal) q.signal.addEventListener('abort', () => { if (s.questionBox) s.questionBox.resolve(null); }, { once: true });
+            render();
+          });
+        }
+        /** A picture as a JPEG no larger than MAX_SIDE on its longer side, base64 without the prefix. */
+        async function shrink(blob) {
+          const bitmap = await createImageBitmap(blob);
+          const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          bitmap.close();
+          return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        }
+        /** The pages of a scanned drawing as pictures, at most MAX_PAGES. */
+        async function pdfPages(bytes, name) {
+          const pdf = D.require('engines/pdf');
+          await pdf.load();
+          const doc = await pdf.open(bytes);
+          const out = [];
+          for (let pageNo = 1; pageNo <= Math.min(doc.numPages, MAX_PAGES); pageNo++) {
+            const canvas = document.createElement('canvas');
+            await pdf.render(doc, pageNo, canvas, { width: MAX_SIDE });
+            out.push({ name: `${name} (${pageNo})`, mediaType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1] });
+          }
+          return out;
+        }
+        async function attachFiles(fileList) {
+          for (const f of Array.from(fileList || [])) {
+            if (s.attachments.length >= MAX_IMAGES) break;
+            try {
+              if (/pdf$/i.test(String(f.type)) || /\.pdf$/i.test(String(f.name))) s.attachments = s.attachments.concat((await pdfPages(new Uint8Array(await f.arrayBuffer()), f.name)).slice(0, MAX_IMAGES - s.attachments.length));
+              else if (/^image\//.test(String(f.type))) s.attachments.push({ name: f.name, mediaType: 'image/jpeg', data: await shrink(f) });
+            } catch (err) { fail(err); }
+          }
+          render();
+        }
+        /** The pictures of an image collection (their previews), for example those taken with Dataspatium Mobil. */
+        async function addPictures(datasetId) {
+          if (!datasetId) return;
+          const handle = await datasets.ensureOpen(datasetId);
+          const r = await handle.engine.exec('select fil from data limit ' + MAX_IMAGES);
+          const files = D.require('data/dataset-files');
+          for (const row of (r[0] ? r[0].values : [])) {
+            if (s.attachments.length >= MAX_IMAGES) break;
+            const name = String(row[0]);
+            const f = (await files.read(datasetId, name, 'preview').catch(() => null)) || (await files.read(datasetId, name, 'thumb').catch(() => null));
+            if (!f) continue;
+            try { s.attachments.push({ name, mediaType: 'image/jpeg', data: await shrink(new Blob([f.bytes], { type: f.type })) }); } catch (err) { fail(err); }
+          }
+          render();
+        }
+        /** Facts from a dataset into the brief (F43 b): a footprint from the map or measurements from a field form, as text. */
+        async function addFacts(datasetId) {
+          if (!datasetId) return;
+          try {
+            const got = await D.require('ai/build-input').facts(datasetId);
+            s.question = (s.question ? s.question.replace(/\s+$/, '') + '\n\n' : '') + got.text;
+            log(t('ai.build.facts.added', { name: got.name, n: i18n.formatNumber(got.rows), g: i18n.formatNumber(got.geometries) }), 'ok');
+          } catch (err) { fail(err); }
+          render();
+        }
+        function attachRow() {
+          const input = /** @type {any} */ (h('input', { type: 'file', accept: 'image/*,.pdf', multiple: '', hidden: '', 'data-ai-attach-input': '' }));
+          input.addEventListener('change', () => { attachFiles(input.files); input.value = ''; });
+          const albums = s.albums || [];
+          const pick = albums.length ? basic.select(t('ai.build.pictures'), [{ value: '', label: '–' }].concat(albums.map((a) => ({ value: a.id, label: a.name }))), s.picturesFrom, (v) => { s.picturesFrom = v; }) : null;
+          return h('div', { class: 'dm-stack-xs', 'data-ai-attachments': String(s.attachments.length) },
+            h('div', { class: 'dm-row-wrap' },
+              basic.button({ label: t('ai.build.attach'), icon: 'images', size: 'sm', title: t('ai.build.attach.hint'), 'data-ai-attach': '', onClick: () => input.click() }),
+              pick, pick ? basic.button({ label: t('ai.build.pictures.add'), icon: 'image', size: 'sm', disabled: !s.picturesFrom, 'data-ai-pictures-add': '', onClick: () => addPictures(s.picturesFrom) }) : null, input),
+            s.tables.length ? h('div', { class: 'dm-row-wrap' },
+              basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; }),
+              basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t('ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) })) : null,
+            s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
+            h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t('ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : t('ai.build.attach.hint') }));
+        }
+        function questionView() {
+          const { q, resolve } = s.questionBox;
+          const free = q.free ? /** @type {any} */ (h('dm-input', { label: t('ask.free') })) : null;
+          return h('div', { class: 'dm-card dm-stack-sm dm-ask', 'data-ask': '' },
+            h('p', { class: 'dm-ask-question', text: String(q.question || '').slice(0, 500) }),
+            (q.options || []).slice(0, 6).map((o, i) => h('div', { class: 'dm-stack-sm dm-ask-option', 'data-ask-option': String(i) },
+              basic.button({ label: String(o.label).slice(0, 80), title: o.description || o.label, onClick: () => resolve({ answer: o.label, index: i, free: false }) }),
+              o.description ? h('p', { class: 'dm-help dm-small', text: String(o.description).slice(0, 200) }) : null)),
+            free ? h('div', { class: 'dm-row-wrap dm-ask-free' }, free, basic.button({ label: t('ask.answer'), title: t('ask.answer.hint'), onClick: () => { const v = String(free.value || '').trim().slice(0, 500); if (v) resolve({ answer: v, index: null, free: true }); } })) : null,
+            basic.button({ label: t('common.cancel'), variant: 'ghost', size: 'sm', title: t('assistant.question.cancel'), onClick: () => resolve(null) }));
+        }
         /** The elements of the answer into the shared selection, which the 3D view and the table follow. */
         async function mark() {
           if (!s.elements.length) return;
@@ -376,20 +477,22 @@
           mode.options = MODES.map((id) => ({ value: id, label: t('ai.mode.' + id) }));
           mode.value = s.mode;
           mode.addEventListener('change', () => { s.mode = MODES.includes(mode.value) ? mode.value : 'ask'; render(); });
-          const q = /** @type {any} */ (h('dm-input', { label: t('ai.question'), rows: '3', placeholder: t(changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
+          const q = /** @type {any} */ (h('dm-input', { label: t(building() ? 'ai.build.brief' : 'ai.question'), rows: building() ? '6' : '3', placeholder: t(building() ? 'ai.build.placeholder' : changing() ? 'ai.question.placeholder.change' : 'ai.question.placeholder'), 'data-ai-question': '' }));
           q.value = s.question;
           q.addEventListener('input', () => { s.question = q.value; });
           q.addEventListener('keydown', (ev) => { if (/** @type {KeyboardEvent} */ (ev).key === 'Enter' && (/** @type {KeyboardEvent} */ (ev).ctrlKey || /** @type {KeyboardEvent} */ (ev).metaKey)) { ev.preventDefault(); askNow(); } });
           stepsEl = h('div');
           const p = provider();
           replace(el,
-            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
-            h('p', { class: 'dm-help dm-xs', text: t(changing() ? 'ai.hint.change' : 'ai.hint') }),
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t(building() ? 'ai.title.build' : changing() ? 'ai.title.change' : 'ai.title') }), basic.button({ label: t('ai.providers.manage'), icon: 'settings', size: 'sm', 'data-ai-providers': '', onClick: () => manage(ctx).then(() => load().then(render)) })),
+            h('p', { class: 'dm-help dm-xs', text: t(building() ? 'ai.hint.build' : changing() ? 'ai.hint.change' : 'ai.hint') }),
             s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
             p && !providers.hasKey(p.id) && !providers.isLocal(p.baseUrl) ? h('p', { class: 'dm-help dm-xs', text: t('ai.key.missing', { name: p.name }) }) : null,
             q,
+            building() ? attachRow() : null,
+            s.questionBox ? questionView() : null,
             h('div', { class: 'dm-row-wrap' },
-              basic.button({ label: t(changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
+              basic.button({ label: t(building() ? 'ai.build.run' : changing() ? 'ai.propose' : 'ai.ask'), icon: 'cpu', variant: 'primary', size: 'sm', loading: s.busy, disabled: !s.providers.length, 'data-ai-ask': '', onClick: askNow }),
               s.busy ? basic.button({ label: t('common.cancel'), size: 'sm', 'data-ai-cancel': '', onClick: cancel }) : null,
               s.elements.length && !s.busy ? basic.button({ label: t('ai.mark', { n: i18n.formatNumber(s.elements.length) }), icon: 'list-checks', size: 'sm', 'data-ai-mark': '', onClick: mark }) : null),
             s.error ? h('p', { class: 'dm-error', 'data-ai-error': '', text: s.error }) : null,
@@ -402,7 +505,7 @@
         }
         function destroy() { unsubscribe(); cancel(); if (s.preview && options.preview) { s.preview = null; Promise.resolve(options.preview(null)).catch(() => {}); } }
         load().then(render);
-        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
+        return { el, destroy, state: s, ask: (question) => { s.question = question; return askNow(); }, attach: (list) => { s.attachments = s.attachments.concat(list || []); render(); }, addFacts, mark, load, preview: previewNow, approve: approveNow, reject: rejectNow, propose: proposeNow, approveOnServer, resolveConflicts: resolveNow, setMode: (m) => { s.mode = MODES.includes(m) ? m : 'ask'; render(); } };
       }
 
       /** The dialog that lists the providers and adds, changes or removes one; the key is written, never shown. */

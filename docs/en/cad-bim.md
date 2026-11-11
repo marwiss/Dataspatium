@@ -278,6 +278,23 @@ first time, Python and IfcOpenShell are fetched after consent.
 The model becomes an ordinary model dataset. Open it in Process and build in it with *Change with AI*, for example "two storeys and
 a 6×4 m grid with external walls along the grid". It can be exported as IFC and published to a Dataregium like other models.
 
+## A new building from a brief
+
+Write a brief in the form *New building model* ("a two-storey house 12 × 8 m with a gable roof, brick façade, entrance to the south …")
+and choose *Build from the brief with AI* once the model is made: it opens in Process with the AI panel in the mode **Build from
+brief**. There you can attach photos and scanned drawings (JPEG, PNG or PDF; a plan drawing gives the real dimensions, a photo the
+look, the materials and how the parts relate) or add the pictures of an image collection, for example those taken with Dataspatium
+Mobile. The AI reads the empty model, says its plan, asks in the panel when the brief leaves something essential open (footprint,
+number of storeys, storey height, wall thicknesses, materials) and then builds in groups with the same tools as *Change*: storeys
+and grid, walls per storey, slabs, openings, properties and materials, with a preview and corrections after each group. Nothing is
+written into the model until you preview and approve the change set as usual, and you can add to it with a new brief in the same
+mode. The pictures go to the provider with the brief, after the consent for the provider's host; a local model that sees pictures
+keeps everything on the computer.
+With *Facts from a dataset* rows of a table go into the brief as text: a building footprint fetched from the map (Open geodata) becomes
+corners in metres from the south-west corner, so that the walls get real dimensions, and measurements and notes from a field form
+in Dataspatium Mobile become rows; a round with the phone can then give more pictures and measurements, and the brief is added to
+in the same mode.
+
 ## Ask AI about the model
 
 The button *Ask AI* in the model view opens a panel in the inspector where you ask a question about the open IFC model, for example

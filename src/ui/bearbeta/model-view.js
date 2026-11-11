@@ -55,6 +55,12 @@
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
         if (askedIssues && askedIssues.datasetId === dataset.id) { ctx.store.set({ openModelIssues: null }); if (!issues && !isDxf()) openIssues(); }
+        // Inhämta hands over a brief for a new building (F43 a): the AI panel opens in the mode Bygg ur brief with it.
+        const askedAi = ctx.store.get().openModelAi;
+        if (askedAi && askedAi.datasetId === dataset.id) {
+          ctx.store.set({ openModelAi: null });
+          if (!isDxf()) { if (ai) ai.destroy(); ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: dataset.id, preview: setPreview, mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
+        }
         s.error = '';
         // A search hit: the element chosen, whatever a filter would have hidden.
         const pending = ctx.store.get().openElement;

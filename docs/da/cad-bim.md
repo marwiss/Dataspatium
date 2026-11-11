@@ -274,6 +274,21 @@ samtykke.
 Modellen bliver et almindeligt modeldatasæt. Åbn det i Bearbejd og byg i det med *Ændr med AI*, for eksempel "to etager og et
 gitter på 6×4 m med ydervægge langs gitteret". Det kan eksporteres som IFC og publiceres på en Dataregium som andre modeller.
 
+## En ny bygning ud fra en brief
+
+Skriv en brief i formularen *Ny bygningsmodel* ("et toetagers hus 12 × 8 m med sadeltag, teglfacade, entré mod syd …"), og vælg *Byg ud
+fra briefen med AI*, når modellen er oprettet: modellen åbnes i Bearbejd med AI-panelet i tilstanden **Byg ud fra brief**. Der kan du
+vedhæfte fotos og skannede tegninger (JPEG, PNG eller PDF; en plantegning giver de rigtige mål, et foto udseende, materialer og
+hvordan delene hænger sammen) eller tilføje billederne fra en billedsamling, for eksempel dem du har taget med Dataspatium Mobil.
+AI'en læser den tomme model, siger sin plan, spørger i panelet, når briefen lader noget væsentligt stå åbent (fodaftryk, antal etager,
+etagehøjde, vægtykkelser, materialer), og bygger derefter i grupper med samme værktøjer som *Ændr*: etager og net, vægge pr. etage,
+dæk, åbninger, egenskaber og materialer, med forhåndsvisning og rettelser efter hver gruppe. Intet skrives i modellen, før du
+forhåndsviser og godkender ændringssættet som sædvanligt, og du kan supplere med en ny brief i samme tilstand. Billederne sendes til
+leverandøren sammen med briefen efter samtykket til leverandørens vært; en lokal model, der ser billeder, beholder alt på computeren.
+Med *Oplysninger fra et datasæt* lægges rækker fra en tabel i briefen som tekst: en bygningsflade hentet fra kortet (Åbne geodata) bliver
+hjørner i meter fra det sydvestlige hjørne, så væggene får rigtige mål, og mål og noter fra en feltformular i Dataspatium Mobil bliver
+rækker; en runde med telefonen kan derefter give flere billeder og mål, og briefen suppleres i samme tilstand.
+
 ## Spørg AI om modellen
 
 Knappen *Spørg AI* i modelvisningen åbner et panel i inspektøren, hvor du stiller et spørgsmål om den åbne IFC-model, for eksempel
