@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * AI-assistent: the floating panel where the AI works with the app's commands (Martin's F35 a, on trial; F30 a, F32 a, F34 a). It
+ * AI-assistent: the floating panel where the AI works with the app's commands (decision F35 a, on trial; F30 a, F32 a, F34 a). It
  * opens from the status bar and the palette in every mode and keeps the conversation while the app is open. The person writes a
  * task; the steps the AI takes show as they happen; a writing command is approved in the app's own dialog with the real command and
  * its arguments; a question from the AI shows in the panel with a button per answer; a proposed plan can be saved as a flow, and so

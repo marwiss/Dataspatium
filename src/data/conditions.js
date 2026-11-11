@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Conditions in flows (Martin's F31 a): a small language of its own that the app reads and never runs as code, so that a plan
+ * Conditions in flows (decision F31 a): a small language of its own that the app reads and never runs as code, so that a plan
  * from an AI or a file can do no more than its commands. It has numbers, text in quotes, true, false and null, references to
  * earlier answers (`check.total`, `rows.rows[0][1]`, `item` in a loop), the comparisons = == != < <= > >= and contains, and
  * and, or, not and parentheses. `fill` puts answers into a step's arguments: "{{ref}}" alone gives the value itself, inside other

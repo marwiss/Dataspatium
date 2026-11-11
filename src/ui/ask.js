@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * A question to the person with a few answers to choose from, and optionally one of their own (Martin's F34 a). Flows ask with it
+ * A question to the person with a few answers to choose from, and optionally one of their own (decision F34 a). Flows ask with it
  * (the step `ask`), and so will the AI in the app. Everything in it is text from a flow or an AI, so it is shown as text only, cut to
  * its limits; an answer here never approves anything, which the app's own dialogs do.
  */

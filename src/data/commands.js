@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Commands: what the app can do without its UI, as one registry (Martin's F30 a). A command has a name, a description for people
+ * Commands: what the app can do without its UI, as one registry (decision F30 a). A command has a name, a description for people
  * and for an AI, parameters as JSON Schema, whether it writes, and an answer that is data. It is built from what the app already
  * has: reading datasets, the operations of Bearbeta (through the recipes, with undo), the steps of flows and the code engines.
  * Every caller (flows, the AI in the app, later the bridge) runs the same commands under the same rules:

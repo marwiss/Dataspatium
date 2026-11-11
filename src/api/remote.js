@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Styrning utifrån (Martin's F30 a, the third layer): programs on the computer run the app's commands through the bridge. The
+ * Styrning utifrån (decision F30 a, the third layer): programs on the computer run the app's commands through the bridge. The
  * page cannot listen, so it polls the bridge for queued commands (GET /commands/next), runs each through data/commands under the
  * app's own rules and posts the answer back (POST /commands/<id>/result); first it tells the bridge which commands exist
  * (POST /commands/catalog), so that the CLI and the MCP server (tools/dataspatium.py) can list them. Off at every start: the switch

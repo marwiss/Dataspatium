@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * The AI in the app works with the app's commands (Martin's F30 a, F32 a, F34 a). The task goes to the provider the person chose,
+ * The AI in the app works with the app's commands (decision F30 a, F32 a, F34 a). The task goes to the provider the person chose,
  * with the commands of data/commands as tools, and every answer goes back as data; the AI chooses its next command by what it got,
  * until it answers in words or the budget is spent. Commands that read run at once; a writing command runs only when the person
  * approves it in the app's own dialog (`approve`), which shows the real command and its arguments. `ask_person` asks the person a

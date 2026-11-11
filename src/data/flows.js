@@ -7,7 +7,7 @@
  * the user fetches them: a flow never sends anything out of the app, since everything that leaves goes through the
  * review in Dela. A flow that runs at start skips itself rather than ask for anything: it needs its consents already
  * given. Flows are stored as settings (`flow:<id>`) and travel in backups, not in bundles.
- * A step can also be one of the app's commands (data/commands), and plans can choose (Martin's F31 a, F33 b): a step with an id keeps
+ * A step can also be one of the app's commands (data/commands), and plans can choose (decision F31 a, F33 b): a step with an id keeps
  * its answer for later steps; `if` runs `steps` or `otherwise` after a condition (data/conditions, read and never run as code);
  * `each` runs its steps for every value of a list and `repeat` until a condition holds, both within `max_rounds` and `max_seconds`
  * and answering `rounds` and `reason`; `stop` ends the flow; `ask` asks the person through the asker the shell gives (F34 a), and a

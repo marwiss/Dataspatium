@@ -77,7 +77,7 @@
           this.assistantEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-assistant', 'aria-label': t('assistant.open'), title: t('assistant.open.hint'), onclick: () => this.openAssistant() }, icons.icon('sparkles', 14));
           // Styrning utifrån (F30 a): shown while programs on the computer may run commands through the bridge; opens the settings.
           this.remoteEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-remote', hidden: true, 'aria-label': t('remote.sb.hint'), title: t('remote.sb.hint'), onclick: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } }, icons.icon('terminal', 14));
-          // Stoppa: the flow stops before its next step or round (Martin's F33 b).
+          // Stoppa: the flow stops before its next step or round (decision F33 b).
           this.flowStopEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow dm-sb-flow-stop', hidden: true, 'aria-label': t('flows.cancel'), title: t('flows.cancel.hint'), onclick: () => D.require('data/flows').cancel() }, icons.icon('octagon-x', 14));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));

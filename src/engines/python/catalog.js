@@ -20,7 +20,7 @@
     const INDEX_URL = 'dataspatium-asset://' + PREFIX;
     /**
      * The runtime, pinned (regenerate with tools/pyodide_catalog.py when upgrading). Pyodide 0.29.5 is the last line on
-     * Python 3.13 (ABI 2025_0): IfcOpenShell's WebAssembly wheels are built for it (Martin 2026-11-06), so the app's Python
+     * Python 3.13 (ABI 2025_0): IfcOpenShell's WebAssembly wheels are built for it (decision B-37, 2026-11-06), so the app's Python
      * follows those wheels and moves to 3.14 when they do.
      */
     const RUNTIME = [
