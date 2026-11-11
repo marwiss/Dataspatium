@@ -60,15 +60,17 @@
 
     /**
      * Run a read-only statement with short names resolved. Rows are capped at `limit`; `truncated` tells
-     * whether more existed. PRAGMA and EXPLAIN cannot be wrapped and run as they are.
+     * whether more existed. PRAGMA and EXPLAIN cannot be wrapped and run as they are. `readOnly` lets the worker run only one
+     * statement that reads, with the database locked against writes (for statements no person wrote, such as an AI's).
      * @returns {Promise<{columns: string[], values: any[][], truncated: boolean, others: string[]}>}
      */
     async function select(primaryId, sql, options = {}) {
       const limit = options.limit || LIMIT;
       const { handle, names, self } = await attach(primaryId, sql);
       let res;
-      try { res = await handle.engine.query(`select * from (${sql}) limit ${limit + 1}`, undefined, names, self); }
-      catch (_wrapErr) { res = await handle.engine.query(sql, undefined, names, self); }
+      const readOnly = !!options.readOnly;
+      try { res = await handle.engine.query(`select * from (${sql}) limit ${limit + 1}`, undefined, names, self, readOnly); }
+      catch (_wrapErr) { res = await handle.engine.query(sql, undefined, names, self, readOnly); }
       const r = res[0] || { columns: [], values: [] };
       return { columns: r.columns, values: r.values.slice(0, limit), truncated: r.values.length > limit, others: names };
     }

@@ -258,6 +258,8 @@
     'src/ui/help/help-panel.js',
     'src/ui/shell/course.js',
     'src/data/flows.js',
+    'src/data/conditions.js',
+    'src/data/commands.js',
     'src/data/field-collect.js',
     'src/data/watches.js',
     'src/ui/shell/shell.js',
