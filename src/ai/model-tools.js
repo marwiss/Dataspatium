@@ -25,6 +25,8 @@
         parameters: { type: 'object', properties: { ifc_class: str(), storey: str(), name_contains: str(), property_set: str(), property_name: str(), property_value: str(), missing_property: bool(), limit: int() } } },
       { name: 'get_element', description: 'One element by id (STEP id) or guid (GlobalId): its attributes, every property grouped by set, and its quantities.', parameters: { type: 'object', properties: { id: int(), guid: str() } } },
       { name: 'get_view_context', description: 'What the user has marked in the model right now: the marked elements (id, ifc_class, name, storey), or none.', parameters: { type: 'object', properties: {} } },
+      { name: 'search_bsdd', description: 'Search the buildingSMART Data Dictionary (bSDD) for classes by text: answers uri, name, code, dictionary and description for each, for set_classification. The person consents to the call to api.bsdd.buildingsmart.org once.',
+        parameters: { type: 'object', properties: { text: { type: 'string' }, limit: int() } } },
       { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it), entity (global_id required; one rooted entity with all its literal attributes, references and referenced_by per IFC attribute, STEP id and class), changed-since (since required, a version index; what the versions after it changed: version_index, change_set_id, author, approved_by, whole_file, guid, step_id, path, attribute, op; a row with whole_file true for a version uploaded as a whole file). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
         parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
     ];
@@ -127,6 +129,7 @@
           case 'get_element': return await element(datasetId, a);
           case 'get_view_context': return await viewContext(datasetId);
           case 'server_query': return await serverQuery(datasetId, a);
+          case 'search_bsdd': { const limit = Math.max(1, Math.min(50, Number(a.limit) || 10)); const classes = await D.require('api/bsdd').search(String(a.text || ''), { limit }); return { classes, truncated: classes.length >= limit }; }
           default: return { error: 'unknown tool ' + name };
         }
       } catch (err) { return { error: String((err && err.message) || err).slice(0, 300) }; }

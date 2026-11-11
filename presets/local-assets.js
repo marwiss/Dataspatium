@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 104254,
+  "size": 105200,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -609,13 +609,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 27509,
+  "size": 29960,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 7655,
+  "size": 8313,
   "library": "dataspatium"
  },
  "docs/sv/statistik.md": {
@@ -777,13 +777,13 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 27396,
+  "size": 29878,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 7692,
+  "size": 8342,
   "library": "dataspatium"
  },
  "docs/da/statistik.md": {
@@ -945,13 +945,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 27164,
+  "size": 29626,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 7557,
+  "size": 8202,
   "library": "dataspatium"
  },
  "docs/nb/statistik.md": {
@@ -1113,13 +1113,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 27545,
+  "size": 30058,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 7595,
+  "size": 8244,
   "library": "dataspatium"
  },
  "docs/nn/statistik.md": {
@@ -1281,13 +1281,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 29434,
+  "size": 32193,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 8146,
+  "size": 8843,
   "library": "dataspatium"
  },
  "docs/fi/statistik.md": {
@@ -1449,13 +1449,13 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 29115,
+  "size": 31869,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 7975,
+  "size": 8620,
   "library": "dataspatium"
  },
  "docs/is/statistik.md": {
@@ -1617,13 +1617,13 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 27644,
+  "size": 30182,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 7358,
+  "size": 8001,
   "library": "dataspatium"
  },
  "docs/en/statistik.md": {

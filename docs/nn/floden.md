@@ -33,6 +33,12 @@ som AI-en i appen òg brukar, med argumenta som JSON. Heiter steget `tal` og kø
 Kommandoane som berre les, er `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Dei som endrar noko eller lagar filer, er `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` køyrer berre éi
 setning som les.
 
+Fleire kommandoar (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` og `make_document` lagar diagram, kart og
+dokument frå grunnen (dokumentet vert ei fil som vert henta som dei andre); `list_cde_sources`, `cde_projects`, `cde_topics` og `cde_files`
+les frå ei OpenCDE-kjelde som er logga inn under Hent, og `cde_create_topic`, `cde_comment` og `cde_fetch_file` skriv saker og
+kommentarar og hentar filer etter godkjenning. Grafar vert redigerte med `apply_operation` og handlingane `graph_add_node`,
+`graph_set_node`, `graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` og `graph_merge_nodes`.
+
 | Steg | Slik verkar det |
 |---|---|
 | Viss eit vilkår held | Køyrer stega under *Då* viss vilkåret held, elles stega under *Elles* |

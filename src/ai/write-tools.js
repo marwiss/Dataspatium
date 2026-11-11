@@ -34,6 +34,8 @@
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
+      { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of a classification system such as a bSDD dictionary: system is the dictionary\'s name, name the class name, code its code and uri its address (a bSDD class uri). Written as an IfcClassificationReference. Use search_bsdd first to find the class.',
+        parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str() } } },
       { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null.',
         parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str() } } },
       { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres.',
@@ -121,6 +123,11 @@
           }
           return { tool: name, ids: idList(cs, a.ids), pset, properties };
         }
+        case 'set_classification': {
+          const system = text(a, 'system', { required: true });
+          const className = text(a, 'name', { required: true });
+          return { tool: name, ids: idList(cs, a.ids), system, code: text(a, 'code'), name: className, uri: text(a, 'uri') };
+        }
         case 'assign': {
           const storey = text(a, 'storey'); const material = text(a, 'material');
           if (!storey && !material) throw new Error('give a storey, a material or both');
@@ -176,6 +183,7 @@
         case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: fmt(op.thickness), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') });
         case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
+        case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: op.system, cls: [op.code, op.name].filter(Boolean).join(' ') });
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });

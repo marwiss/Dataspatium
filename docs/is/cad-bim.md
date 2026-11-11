@@ -10,6 +10,16 @@ Slepptu `.ifc`-, `.ifczip`- eða `.dxf`-skrá í Sækja. Upplýsingar um skrána
 eftir gerð) og *Flytja inn* býr til gagnasafnið. IFC2X3, IFC4 og IFC4X3 á STEP-sniði eru studd. Innflutningur um 50 MB líkans
 tekur um fjórðung úr mínútu og það opnast síðan á nokkrum sekúndum.
 
+## Stór líkön frá þjóninum
+
+Líkan sem er of stórt til að lesa í vafranum má sækja frá Dataregium án IFC-skrárinnar. Í skráalista gagnalindarinnar undir *Sækja →
+OpenCDE* hefur líkan hnappinn **Stórt líkan** þegar þjónninn hefur rúmfræði-API (`ifc_geometry`). Veldu smáatriðastig: *Öll rúmfræðin*
+gefur net byggingarhlutanna, *Kassar á byggingarhluta* aðeins einn kassa hver fyrir skjótt yfirlit. Forritið sækir rúmfræðina sem
+tvíundar-glTF, les hana í bakgrunnsþræði og býr til líkansgagnasafn með einni línu á byggingarhluta (auðkenni, GlobalId, flokkur, nafn og
+hæð úr nefndum fyrirspurnum þjónsins). Rúmfræðin er geymd með gagnasafninu, svo að þrívíddarsýnin, auðkenning, val og mál virka eins og
+fyrir líkan úr skrá. Eiginleikar og magn fylgja ekki með, og það sem þarf IFC-skrána, eins og árekstraprófun forritsins og útflutningur
+frumritsins, vantar; árekstraprófun og fyrirspurnir þjónsins virka sem fyrr. Spjaldið í Umsjón sýnir *Rúmfræði: Frá þjóninum*.
+
 ## Líkanið í Vinna
 
 Líkanið opnast sem þrívíddarsýn með töflu yfir byggingarhlutana fyrir neðan. Dragðu til að snúa, skrunaðu til að þysja
@@ -178,6 +188,25 @@ Spjaldið **Sannprófa líkanið** í Umsjón safnar saman prófunum á IFC-lík
 Niðurstöðurnar eiga við skrána eins og henni var hlaðið upp, og þjónninn stöðvar aldrei skrá vegna þeirra. Skrá þar sem allar
 niðurstöður eru viðvaranir telst gild hjá sannprófunarþjónustu buildingSMART. Hafi þjónninn enga slíka prófun segir spjaldið að
 þjónninn hafi ekki prófað útgáfuna.
+
+## Verkefnissnið
+
+Spjaldið **Verkefnissnið** í sýn gagnalindarinnar undir *Sækja → OpenCDE* sýnir snið valda verkefnisins: IDS-skjöl verkefnisins
+(skrár með endingunni `.ids` meðal skráa verkefnisins) og bSDD-orðabækurnar sem þú hefur valið fyrir verkefnið, geymdar í þessum vafra
+á hvern þjón og verkefni.
+
+- **Skrifa IDS með gervigreind** skrifar Information Delivery Specification úr lýsingu með orðum. Veldu þjónustuveitanda, líkanið sem
+  kröfurnar eru prófaðar gegn, og lýstu kröfunum. Gervigreindin afhendir forritinu skrána, sem prófar hana (fyrst formið, svo með
+  ifctester gegn líkaninu, í Python í vafranum) og svarar með villunni sem þarf að laga eða niðurstöðunni á hverja forskrift. Það
+  gengur umferð fyrir umferð þar til hægt er að keyra skrána, í mesta lagi fjórar umferðir, og kröfurnar eru aldrei mildaðar til að
+  komast í gegn. Útkomuna má vista sem `.ids`-skrá eða hlaða upp í verkefnið sem skjali.
+- **Leita í bSDD** flettir upp flokkum í buildingSMART Data Dictionary eftir samþykki fyrir hýsilinn `api.bsdd.buildingsmart.org`, í
+  völdu orðabókunum eða öllum; *Orðabækur* sýnir orðabækurnar svo þú getir bætt þeim við sniðið. Í *Breyta með gervigreind* getur
+  gervigreindin leitað með tólinu `search_bsdd` og flokkað byggingarhluta með `set_classification`, sem er skrifað sem
+  `IfcClassificationReference` í breytingasettið sem þú samþykkir.
+
+buildingSMART-reglur þjónsins sjást á spjaldinu *Sannprófa líkanið* í Umsjón; veldu reglu í listanum við hlið *Merkja í líkaninu* til að
+auðkenna aðeins byggingarhlutana sem sú regla hittir.
 
 ## Árekstraprófun
 

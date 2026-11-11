@@ -10,6 +10,16 @@ Slipp en `.ifc`-, `.ifczip`- eller `.dxf`-fil i Hent. Filens opplysninger vises 
 per type), og *Importer* lager datasettet. IFC2X3, IFC4 og IFC4X3 i STEP-format støttes. En modell på rundt 50 MB tar omtrent
 et kvarter minutt å importere og åpnes deretter på noen sekunder.
 
+## Store modeller fra serveren
+
+En modell som er for stor til å leses i nettleseren kan hentes fra Dataregium uten IFC-filen. I kildens filliste under *Hent →
+OpenCDE* har en modell knappen **Stor modell** når serveren har geometri-API-et (`ifc_geometry`). Velg detaljnivå: *Hele geometrien* gir
+bygningsdelenes nett, *Bokser per bygningsdel* bare en boks hver for en rask oversikt. Appen henter geometrien som binær glTF, leser den
+i en bakgrunnstråd og lager et modelldatasett med en rad per bygningsdel (id, GlobalId, klasse, navn og etasje fra serverens navngitte
+spørringer). Geometrien lagres med datasettet, så 3D-visningen, markering, utvalg og saker fungerer som for en modell fra en fil.
+Egenskaper og mengder følger ikke med, og det som trenger IFC-filen, som kollisjonskontrollen i appen og eksport av originalen, mangler;
+serverens kollisjonstest og spørringer går som vanlig. Kortet i Håndter viser *Geometri: Fra serveren*.
+
 ## Modellen i Bearbeid
 
 Modellen åpnes som 3D-visning med en tabell over bygningsdelene under. Dra for å dreie, rull for å zoome mot pekeren, og
@@ -181,6 +191,25 @@ Kortet **Valider modellen** i Håndter samler kontrollene av en IFC-modell, med 
 Funnene gjelder filen slik den ble lastet opp, og serveren stopper aldri en fil på grunn av dem. En fil der alle funn er advarsler,
 regnes som gyldig av buildingSMARTs valideringstjeneste. Har serveren ingen slik kontroll, sier kortet at serveren ikke har
 kontrollert versjonen.
+
+## Prosjektprofil
+
+Kortet **Prosjektprofil** i kildens visning under *Hent → OpenCDE* viser det valgte prosjektets profil: prosjektets IDS-dokumenter
+(filer med endelsen `.ids` blant prosjektets filer) og de bSDD-ordbøkene du har valgt for prosjektet, lagret i denne nettleseren per
+server og prosjekt.
+
+- **Skriv IDS med AI** skriver en Information Delivery Specification ut fra en beskrivelse i ord. Velg leverandør, modellen kravene
+  skal prøves mot, og beskriv kravene. AI-en gir filen til appen, som kontrollerer den (først formen, så med ifctester mot modellen,
+  i Python i nettleseren) og svarer med feilen som skal rettes eller med utfallet per spesifikasjon. Det går runde for runde til
+  filen kan kjøres, høyst fire runder, og kravene mykes aldri opp for å gå gjennom. Resultatet kan lagres som `.ids`-fil eller lastes
+  opp til prosjektet som et dokument.
+- **Søk i bSDD** slår opp klasser i buildingSMART Data Dictionary etter samtykke for verten `api.bsdd.buildingsmart.org`, i de valgte
+  ordbøkene eller alle; *Ordbøker* lister ordbøkene så du kan legge dem til i profilen. I *Endre med AI* kan AI-en søke med verktøyet
+  `search_bsdd` og klassifisere bygningsdeler med `set_classification`, som skrives som `IfcClassificationReference` i endringssettet
+  du godkjenner.
+
+Serverens buildingSMART-regler vises på kortet *Valider modellen* i Håndter; velg en regel i listen ved siden av *Marker i modellen* for å
+markere bare de bygningsdelene som den regelen treffer.
 
 ## Kollisjonskontroll
 

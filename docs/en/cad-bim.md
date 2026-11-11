@@ -11,6 +11,17 @@ Drop an `.ifc`, `.ifczip` or `.dxf` file in Import. The facts of the file are sh
 counts per type), and *Import* creates the dataset. IFC2X3, IFC4 and IFC4X3 in STEP format are supported. A model of about
 50 MB takes around a quarter of a minute to import and then opens in a few seconds.
 
+## Large models from the server
+
+A model too large to read in the browser can be fetched from Dataregium without the IFC file. In the source's file list under
+*Import → OpenCDE*, a model has the button **Large model** when the server has the geometry API (`ifc_geometry`). Choose the level
+of detail: *The whole geometry* gives the elements' meshes, *Boxes per element* just a box each for a quick overview. The app fetches the
+geometry as binary glTF, reads it in a background thread and makes a model dataset with a row per element (id, GlobalId, class, name
+and storey from the server's named queries). The geometry is kept with the dataset, so the 3D view, highlighting, selections and issues
+work as for a model from a file. Properties and quantities do not come along, and what needs the IFC file, such as the clash check in
+the app and the export of the original, is missing; the server's clash test and queries work as usual. The card in Manage shows
+*Geometry: From the server*.
+
 ## The model in Process
 
 The model opens as a 3D view with a table of the building elements below it. Drag to turn, scroll to zoom towards the
@@ -185,6 +196,25 @@ The card **Validate the model** in Manage gathers the checks of an IFC model, wi
 The findings concern the file as it was uploaded, and the server never stops a file for them. A file whose findings are all warnings
 counts as valid with buildingSMART's validation service. When the server has no such check, the card says that the server has not
 checked the version.
+
+## Project profile
+
+The card **Project profile** in the source's view under *Import → OpenCDE* shows the chosen project's profile: the project's IDS
+documents (files ending in `.ids` among the project's files) and the bSDD dictionaries you have chosen for the project, kept in this
+browser per server and project.
+
+- **Write IDS with AI** writes an Information Delivery Specification from a description in words. Choose the provider, the model the
+  requirements are checked against, and describe the requirements. The AI hands the file to the app, which checks it (the structure
+  first, then with ifctester against the model, in Python in the browser) and answers with the error to fix or the outcome per
+  specification. It goes round by round until the file runs, at most four rounds, and the requirements are never softened to pass.
+  The result can be saved as an `.ids` file or uploaded to the project as a document.
+- **Search bSDD** looks up classes in the buildingSMART Data Dictionary after the consent for the host `api.bsdd.buildingsmart.org`,
+  in the chosen dictionaries or all; *Dictionaries* lists the dictionaries so that you can add them to the profile. In *Change with
+  AI* the AI can search with the tool `search_bsdd` and classify elements with `set_classification`, written as an
+  `IfcClassificationReference` in the change set you approve.
+
+The server's buildingSMART rules show on the card *Validate the model* in Manage; choose a rule in the list beside *Mark in the model* to
+mark only the elements that rule hits.
 
 ## Clash check
 

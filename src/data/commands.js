@@ -415,6 +415,181 @@
         },
       });
 
+      // ---------------------------------------------------------------------------- charts, maps and documents from scratch (decision F42 b)
+      const CHART_TYPES = ['bar', 'barh', 'line', 'timeseries', 'area', 'point', 'histogram', 'heatmap', 'boxplot', 'pie'];
+      const COUNT = { field: null, type: 'quantitative', aggregate: 'count', bin: false, timeUnit: '', sort: '', title: '', format: '' };
+      define({
+        name: 'create_chart', writes: true,
+        description: `Makes and saves a chart of a dataset in the chart builder (Vega-Lite): type one of ${CHART_TYPES.join(', ')}; x and y are column names (y null counts the rows for bar, barh, histogram and pie), color a column that gives one series per value or null, aggregate sum, mean, min, max, count or none for y (null: the type's own). Answers the chart's id; the person finds it under Visualisera.`,
+        parameters: S.obj({ dataset: DATASET, name: S.str('the chart\'s name'), type: S.str('the chart type'), x: S.str('the column on the x axis'), y: S.strOrNull('the column on the y axis, or null to count rows'), color: S.strOrNull('the column that colours the series, or null'), aggregate: S.strOrNull('the aggregate for y, or null') }),
+        async run(a) {
+          const d = await dataset(a.dataset);
+          const type = String(a.type || '');
+          if (!CHART_TYPES.includes(type)) throw new Error(t('commands.err.chart.type', { types: CHART_TYPES.join(', ') }));
+          const columns = await datasets.columns(d.id);
+          const col = (n) => { const c = columns.find((x) => x.name === n); if (!c) throw new Error(t('commands.err.column', { name: String(n) })); return c; };
+          const builder = D.require('viz/vega-builder');
+          const state = builder.defaultState(type, columns);
+          state.x = builder.channel(col(a.x));
+          if (a.y) state.y = builder.channel(col(a.y), a.aggregate ? { aggregate: String(a.aggregate) } : {});
+          else state.y = Object.assign({}, COUNT);
+          state.color = a.color ? builder.channel(col(a.color)) : null;
+          const chart = charts.create('vega', d, String(a.name || ''));
+          chart.vega.type = type; chart.vega.state = state;
+          const saved = await charts.save(chart);
+          return { id: saved.id, name: saved.name, type };
+        },
+      });
+      const mapLayerFor = (leaflet, columns, d, index) => {
+        if (!leaflet.mappable(columns)) throw new Error(t('commands.err.map.places', { name: d.name }));
+        return leaflet.layerFor(columns, d, index);
+      };
+      define({
+        name: 'create_map', writes: true,
+        description: 'Makes and saves a map chart with one layer from a dataset that has geometry or coordinates; basemap none or osm (OpenStreetMap, drawn after the person\'s consent). Answers the chart\'s id.',
+        parameters: S.obj({ dataset: DATASET, name: S.str('the map\'s name'), basemap: S.strOrNull('none or osm') }),
+        async run(a) {
+          const d = await dataset(a.dataset);
+          const leaflet = D.require('viz/leaflet');
+          const columns = await datasets.columns(d.id);
+          const layer = mapLayerFor(leaflet, columns, d, 0);
+          const chart = charts.create('map', d, String(a.name || ''));
+          chart.map = Object.assign(leaflet.defaultMap(columns, null), { layers: [layer], basemap: a.basemap === 'osm' ? 'osm' : 'none' });
+          const saved = await charts.save(chart);
+          return { id: saved.id, name: saved.name, layers: 1 };
+        },
+      });
+      define({
+        name: 'add_map_layer', writes: true,
+        description: 'Adds a layer from a dataset with geometry or coordinates to a saved map chart (by id or exact name). Answers the number of layers.',
+        parameters: S.obj({ chart: S.str('the map chart\'s id or exact name'), dataset: DATASET }),
+        async run(a) {
+          const chart = await item('charts', a.chart, 'chart');
+          if (chart.kind !== 'map') throw new Error(t('commands.err.map.chart', { name: chart.name }));
+          const d = await dataset(a.dataset);
+          const leaflet = D.require('viz/leaflet');
+          const columns = await datasets.columns(d.id);
+          if (!chart.map) chart.map = leaflet.defaultMap(columns, null);
+          chart.map.layers.push(mapLayerFor(leaflet, columns, d, chart.map.layers.length));
+          await charts.save(chart);
+          return { id: chart.id, layers: chart.map.layers.length };
+        },
+      });
+      define({
+        name: 'create_document', writes: true,
+        description: 'Saves a document template (Markdown with the app\'s tags, such as {{tabell}}, {{diagram:namn}} or {{antal}}) under Dokument; make_document renders it with a dataset. Answers the template\'s id.',
+        parameters: S.obj({ name: S.str('the template\'s name'), body: S.str('the template: Markdown with tags') }),
+        async run(a) {
+          const saved = await documents.save(documents.create(String(a.name || ''), String(a.body || '')));
+          return { id: saved.id, name: saved.name };
+        },
+      });
+      define({
+        name: 'make_document', writes: true,
+        description: 'Renders a document template (by id or exact name) with a dataset into a file: format docx, pdf, html or md. The file stays in the app until the person fetches it (list_files). Answers the file\'s name.',
+        parameters: S.obj({ document: S.str('the template\'s id or exact name'), dataset: DATASET, format: S.str('docx, pdf, html or md') }),
+        async run(a) {
+          const doc = await item('documents', a.document, 'document');
+          const d = await dataset(a.dataset);
+          const out = await D.require('docgen/generate').generate(doc, d.id, String(a.format || 'html'));
+          return { files: keep([{ name: out.filename, blob: out.blob }]) };
+        },
+      });
+
+      // ---------------------------------------------------------------------------- the CDE (decision F42 b): OpenCDE sources signed in under Inhämta
+      const hostOf = (url) => { try { return new URL(String(url)).host; } catch (_e) { return String(url || ''); } };
+      const cdeSources = async () => { const opencde = D.require('api/families/opencde'); return (await D.require('api/connectors').list()).filter((c) => opencde.isOpenCde(c)); };
+      /** A signed-in OpenCDE source by id or name; signing in happens under Inhämta, never through a command. */
+      async function cde(ref) {
+        const opencde = D.require('api/families/opencde');
+        const connector = pick(await cdeSources(), ref, 'connector');
+        if (!opencde.signedIn(connector)) throw new Error(t('commands.err.cde.signin', { name: connector.name }));
+        return { opencde, connector };
+      }
+      const one = (list, ref, idOf, nameOf, what) => {
+        const byId = list.find((x) => idOf(x) === ref);
+        if (byId) return byId;
+        const named = list.filter((x) => sameName(nameOf(x), ref));
+        if (named.length === 1) return named[0];
+        throw new Error(t(named.length ? 'commands.err.ambiguous' : 'commands.err.missing', { what: t('commands.what.' + what), ref: String(ref) }));
+      };
+      const cdeProject = async (opencde, connector, ref) => one(await opencde.projects(connector), ref, (p) => p.project_id, (p) => p.name, 'project');
+      const SOURCE = S.str('the OpenCDE source\'s id or name (list_cde_sources); it must be signed in under Inhämta');
+      const PROJECT = S.str('the project\'s id or exact name (cde_projects)');
+      define({
+        name: 'list_cde_sources', writes: false,
+        description: 'The OpenCDE sources the app knows (Dataregium and other servers): id, name, host, and whether each is signed in. Signing in happens under Inhämta, never here.',
+        parameters: S.obj({}),
+        async run() { const opencde = D.require('api/families/opencde'); return { sources: (await cdeSources()).map((c) => ({ id: c.id, name: c.name, host: hostOf(c.baseUrl), signed_in: opencde.signedIn(c) })) }; },
+      });
+      define({
+        name: 'cde_projects', writes: false,
+        description: 'The projects of a signed-in OpenCDE source: id and name.',
+        parameters: S.obj({ source: SOURCE }),
+        async run(a) { const { opencde, connector } = await cde(a.source); return { projects: (await opencde.projects(connector)).map((p) => ({ id: p.project_id, name: p.name })) }; },
+      });
+      define({
+        name: 'cde_topics', writes: false,
+        description: `The BCF topics (issues) of a project as a table: number, guid, title, type, status, priority, assigned to and dates; at most ${MAX_ROWS} rows.`,
+        parameters: S.obj({ source: SOURCE, project: PROJECT }),
+        async run(a) {
+          const { opencde, connector } = await cde(a.source);
+          const p = await cdeProject(opencde, connector, a.project);
+          const tbl = await opencde.fetchTopics(connector, p.project_id);
+          return { columns: tbl.columns, rows: tbl.rows.slice(0, MAX_ROWS), total: tbl.rows.length, truncated: tbl.rows.length > MAX_ROWS };
+        },
+      });
+      define({
+        name: 'cde_create_topic', writes: true,
+        description: 'Creates a BCF topic (issue) in a project: a title, and optionally a description, a status, a priority and a type among the values the server allows. Answers the topic\'s guid and number.',
+        parameters: S.obj({ source: SOURCE, project: PROJECT, title: S.str('the title'), description: S.strOrNull('the description'), status: S.strOrNull('topic_status'), priority: S.strOrNull('priority'), type: S.strOrNull('topic_type') }),
+        async run(a) {
+          const { opencde, connector } = await cde(a.source);
+          const p = await cdeProject(opencde, connector, a.project);
+          const body = { title: String(a.title || '') };
+          if (a.description) body.description = String(a.description);
+          if (a.status) body.topic_status = String(a.status);
+          if (a.priority) body.priority = String(a.priority);
+          if (a.type) body.topic_type = String(a.type);
+          const topic = await opencde.createTopic(connector, p.project_id, body);
+          return { guid: topic.guid, number: topic.server_assigned_id || null, title: topic.title };
+        },
+      });
+      define({
+        name: 'cde_comment', writes: true,
+        description: 'Adds a comment to a BCF topic (by guid or exact title) in a project. Answers the comment\'s guid.',
+        parameters: S.obj({ source: SOURCE, project: PROJECT, topic: S.str('the topic\'s guid or exact title'), comment: S.str('the comment') }),
+        async run(a) {
+          const { opencde, connector } = await cde(a.source);
+          const p = await cdeProject(opencde, connector, a.project);
+          const tp = one(await opencde.allTopics(connector, p.project_id), a.topic, (x) => x.guid, (x) => x.title, 'topic');
+          const c = await opencde.createComment(connector, p.project_id, tp.guid, { comment: String(a.comment || '') });
+          return { guid: c.guid, topic: tp.guid };
+        },
+      });
+      define({
+        name: 'cde_files', writes: false,
+        description: 'The files of a project on the server: name, whether it is a model, its version, date and document id.',
+        parameters: S.obj({ source: SOURCE, project: PROJECT }),
+        async run(a) {
+          const { opencde, connector } = await cde(a.source);
+          const p = await cdeProject(opencde, connector, a.project);
+          return { files: (await opencde.filesList(connector, p.project_id)).map((f) => ({ name: f.filename, model: !!f.model, version: f.versionIndex || null, date: f.date || null, document_id: f.documentId || null })) };
+        },
+      });
+      define({
+        name: 'cde_fetch_file', writes: true,
+        description: 'Fetches a project file (by exact name or document id) into the app as a dataset of its kind: a model, a document, a table. Answers the dataset\'s id and name.',
+        parameters: S.obj({ source: SOURCE, project: PROJECT, file: S.str('the file\'s exact name or document id') }),
+        async run(a) {
+          const { opencde, connector } = await cde(a.source);
+          const p = await cdeProject(opencde, connector, a.project);
+          const entry = one(await opencde.filesList(connector, p.project_id), a.file, (f) => f.documentId, (f) => f.filename, 'file');
+          const meta = await opencde.importFile(connector, p, entry);
+          return { id: meta.id, name: meta.name, kind: meta.kind || 'table' };
+        },
+      });
+
       // ---------------------------------------------------------------------------- code
       /** What a run of R or Python gave, as data: text, the error, new datasets and the number of plots. */
       function codeAnswer(res) {

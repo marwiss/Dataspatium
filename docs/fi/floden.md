@@ -35,6 +35,12 @@ on `maara.rows[0][0]`.
 Vain lukevat komennot ovat `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Muuttavat tai tiedostoja tekevät komennot ovat `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` suorittaa vain
 yhden lukevan lauseen.
 
+Lisää komentoja (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` ja `make_document` tekevät kaavioita, karttoja ja
+asiakirjoja alusta (asiakirjasta tulee tiedosto, joka noudetaan kuten muutkin); `list_cde_sources`, `cde_projects`, `cde_topics` ja
+`cde_files` lukevat OpenCDE-lähteestä, johon on kirjauduttu kohdassa Nouda, ja `cde_create_topic`, `cde_comment` ja `cde_fetch_file`
+kirjoittavat asioita ja kommentteja ja noutavat tiedostoja hyväksynnän jälkeen. Graafeja muokataan komennolla `apply_operation` ja toiminnoilla
+`graph_add_node`, `graph_set_node`, `graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` ja `graph_merge_nodes`.
+
 | Vaihe | Miten se toimii |
 |---|---|
 | Jos ehto täyttyy | Suorittaa kohdan *Silloin* vaiheet, jos ehto täyttyy, muuten kohdan *Muuten* vaiheet |

@@ -279,7 +279,7 @@
       const onServer = !!(cde && cde.documentId && cde.versionIndex);
       const SHOWN = 5;
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'validation' });
-      const state = { results: /** @type {any} */ ({}), busy: '', error: '', report: null };
+      const state = { results: /** @type {any} */ ({}), busy: '', error: '', report: null, rule: '' };
       const when = (iso) => (iso ? i18n.formatDateTime(iso) : '');
       async function signedIn() {
         const connector = (await D.require('api/connectors').get(cde.connectorId)) || null;
@@ -303,7 +303,9 @@
         if (!state.report) throw new Error(t('validation.status.none'));
       });
       async function mark() {
-        const where = validation.whereOf(state.report);
+        // One of the server's rules at a time, when chosen (F41 a): the elements that rule hits.
+        const report = state.rule && state.report ? Object.assign({}, state.report, { issues: (state.report.issues || []).filter((i) => String(i.rule || '') === state.rule) }) : state.report;
+        const where = validation.whereOf(report);
         const made = where ? await D.require('data/selection').setFromWhere(ds.id, where, [], t('validation.title')) : null;
         if (!made || !made.rowids.length) { ui.toast.show(t('validation.mark.none'), { kind: 'info' }); return; }
         ui.toast.show(t('selection.made', { n: i18n.formatNumber(made.rowids.length) }), { kind: 'ok' });
@@ -340,6 +342,17 @@
         ui.toast.show(done, { kind: 'ok', action: { label: t('issues.title'), onClick: () => { store.set({ selectedId: ds.id, openModelIssues: { datasetId: ds.id } }); shell.activate('bearbeta'); } } });
       });
       const reachCheck = (report) => validation.checksOf(report).some((c) => c.name === 'graph' && c.findings > 0);
+      /** The rules the report names, with counts, to mark one at a time; nothing when the report names none. */
+      function ruleSelect(issues) {
+        const counts = new Map();
+        for (const i of issues) { const r = String(i.rule || ''); if (r) counts.set(r, (counts.get(r) || 0) + 1); }
+        if (!counts.size) return null;
+        const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('validation.rule'), inline: true, 'data-validation-rule': '' }));
+        sel.options = [{ value: '', label: t('validation.rule.all') }].concat(Array.from(counts, ([r, n]) => ({ value: r, label: `${r} · ${i18n.formatNumber(n)}` })));
+        sel.value = counts.has(state.rule) ? state.rule : '';
+        sel.addEventListener('change', () => { state.rule = sel.value; });
+        return sel;
+      }
 
       function serverPart() {
         const server = state.results.server;
@@ -383,6 +396,7 @@
             report.truncated || Number(report.issue_count) > issues.length ? h('p', { class: 'dm-help dm-small', text: t('validation.report.truncated', { listed: i18n.formatNumber(issues.length), n: i18n.formatNumber(Number(report.issue_count) || issues.length) }) })
               : issues.length > SHOWN ? h('p', { class: 'dm-help dm-small', text: t('validation.report.shown', { shown: i18n.formatNumber(SHOWN), n: i18n.formatNumber(issues.length) }) }) : null,
             h('div', { class: 'dm-row-wrap' },
+              ruleSelect(issues),
               ui.button({ label: t('validation.mark'), icon: 'scan-line', size: 'sm', title: t('validation.mark.hint'), 'data-validation-mark': '', disabled: !issues.length, onClick: () => mark().catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' })) }),
               ui.button({ label: t('validation.table'), icon: 'table', size: 'sm', loading: state.busy === 'table', title: t('validation.table.hint'), 'data-validation-table': '', disabled: !issues.length, onClick: saveTable }),
               reachCheck(report) ? ui.button({ label: t('validation.unreachable'), icon: 'trash-2', size: 'sm', loading: state.busy === 'unreachable', title: t('validation.unreachable.hint'), 'data-validation-unreachable': '', onClick: unreachable }) : null)) : null,

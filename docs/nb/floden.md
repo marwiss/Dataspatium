@@ -33,6 +33,12 @@ kommandoene som AI-en i appen også bruker, med argumentene som JSON. Heter steg
 Kommandoene som bare leser, er `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. De som endrer noe eller lager filer, er `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` kjører bare én
 setning som leser.
 
+Flere kommandoer (F42 b): `create_chart`, `create_map`, `add_map_layer`, `create_document` og `make_document` lager diagrammer, kart og
+dokumenter fra grunnen (dokumentet blir en fil som hentes som de andre); `list_cde_sources`, `cde_projects`, `cde_topics` og `cde_files`
+leser fra en OpenCDE-kilde som er logget inn under Hent, og `cde_create_topic`, `cde_comment` og `cde_fetch_file` skriver saker og
+kommentarer og henter filer etter godkjenning. Grafer redigeres med `apply_operation` og handlingene `graph_add_node`, `graph_set_node`,
+`graph_add_edge`, `graph_set_edge`, `graph_delete_nodes`, `graph_delete_edges` og `graph_merge_nodes`.
+
 | Steg | Slik virker det |
 |---|---|
 | Hvis en betingelse holder | Kjører stegene under *Da* hvis betingelsen holder, ellers stegene under *Ellers* |
