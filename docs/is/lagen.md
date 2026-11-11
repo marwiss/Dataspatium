@@ -182,6 +182,8 @@ fleiri ekki fyrr en þú ýtir á *Keyra athugunina*. Eiginleikaspjaldið sýnir
 Vinna* fer með þig þangað til að lagfæra það. IFC-líkan sýnir kortið *Sannprófa líkanið* og spjaldið *Bera saman útgáfur* (sjá
 [cad-bim.md](cad-bim.md)); aðrar tegundir hafa engar athuganir enn. Gervigreindarspjaldið fær fjórða ham, *Athuga*, fyrir
 ljósmyndir af skemmdum (fyrirhugað).
+Kortið *Grannfræði* les veggi líkansins með *Athuga grannfræðina* (Python forritsins ræsist í fyrsta sinn) og sýnir á hverri hæð hve
+mörg herbergi veggirnir loka, hvort hæðin er lokuð, veggenda sem standa lausir og útveggina eftir áttum.
 
 ## Greina
 

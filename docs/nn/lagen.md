@@ -183,6 +183,8 @@ for kvar kolonne og talet på duplikat blant radene. Ein liten tabell blir kontr
 og *Opne i Bearbeid* tek deg dit for å rette det. Ein IFC-modell viser kortet *Valider modellen* og panelet *Samanlikn
 versjonar* (sjå [cad-bim.md](cad-bim.md)); andre slag har ingen kontrollar enno. AI-panelet får ein fjerde modus,
 *Kontroller*, for foto av skadar (planlagt).
+Kortet *Topologi* les veggane i modellen med *Kontroller topologien* (Python i appen startar første gongen) og viser per etasje kor
+mange rom veggane lukkar, om etasjen er lukka, veggendar som står lause, og ytterveggane per himmelretning.
 
 ## Analyser
 

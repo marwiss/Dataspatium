@@ -183,6 +183,8 @@ flere først når du trykker på *Kjør kontrollen*. Inspektøren viser det valg
 tar deg dit for å rette det. En IFC-modell viser kortet *Valider modellen* og panelet *Sammenlign versjoner* (se
 [cad-bim.md](cad-bim.md)); andre slag har ingen kontroller ennå. AI-panelet får en fjerde modus, *Kontroller*, for foto av
 skader (planlagt).
+Kortet *Topologi* leser modellens vegger med *Kontroller topologien* (appens Python starter første gang) og viser per etasje hvor mange
+rom veggene lukker, om etasjen er lukket, veggender som står løse, og ytterveggene per himmelretning.
 
 ## Analyser
 

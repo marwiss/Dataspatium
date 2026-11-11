@@ -301,6 +301,10 @@ fila (EXIF) får dei i biletteksten sin, så AI-en veit kva han ser. Opplysninga
 bygningsflata på kartet, så AI-en plasserer modellen med `set_site` (posisjon, høgd og SWEREF 99 TM), og med *Med terrenghøgd i
 hjørna*, som vert vist når kjelda til Lantmäteriet er lagd til, terrenghøgda i kvart hjørne frå høgdemodellen: eit nettverkskall med
 nøkkelen din etter samtykke.
+Etter veggane på kvar etasje les førehandsvisinga topologien til bygningen: midtlinjene til veggane blir rom, og etasjen er lukka når
+veggane lukkar minst eitt rom og ingen veggende står laus; AI-en rettar lause endar ved å flytte eller leggje til veggar før han legg
+dekka. Ytterveggane med himmelretningane sine lèt AI-en pare eit foto av fasaden mot sør med dei rette veggane (lesverktøyet
+`get_topology`), og den same topologien blir vist på kortet *Topologi* i Kontroller.
 
 ## Spør AI om modellen
 

@@ -299,6 +299,10 @@ filen (EXIF) får dem med i sin billedtekst, så AI'en ved, hvad den ser. Oplysn
 sydvestlige hjørne på kortet, så AI'en placerer modellen med `set_site` (placering, højde og SWEREF 99 TM), og med *Med terrænhøjde i
 hjørnerne*, som vises når Lantmäteriets kilde er tilføjet, terrænhøjden i hvert hjørne fra højdemodellen: et netværkskald med din nøgle
 efter samtykke.
+Efter væggene på hver etage læser forhåndsvisningen bygningens topologi: væggenes midterlinjer bliver til rum, og etagen er lukket, når
+væggene lukker om mindst ét rum, og ingen vægende står løs; AI'en retter løse ender ved at flytte eller tilføje vægge, før den lægger
+dækkene. Ydervæggene med deres verdenshjørner lader AI'en parre et foto af facaden mod syd med de rigtige vægge (læseværktøjet
+`get_topology`), og den samme topologi vises på kortet *Topologi* i Kontrollér.
 
 ## Spørg AI om modellen
 
