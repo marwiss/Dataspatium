@@ -49,8 +49,9 @@ leyndarmál eru aðeins geymd dulkóðuð (AES-GCM).
 4. **Sæktu gögn.** Í hamnum *Sækja* sleppirðu skrá á flötinn, eða smellir á *Prófa með sýnigögnum*. Forritið sýnir hvað skráin
    inniheldur; smelltu á *Flytja inn*. Gagnasafnið er geymt í vafranum í tölvunni þinni.
 5. **Haltu áfram.** Hamirnir efst eru skref vinnunnar: *Umsjón* heldur gagnasöfnunum þínum í röð og reglu, *Leita* finnur raðir án
-   kóða, *Vinna* sýnir töfluna, kortið eða líkanið með hnöppum til að leiðrétta og reikna, *Greina* hefur tölfræði og kóða (R, Python og
-   SQL), *Myndgera* gerir myndrit og kort, *Flytja út* vistar skrár í tölvunni og *Deila* sendir til annarra.
+   kóða, *Vinna* sýnir töfluna, kortið eða líkanið með hnöppum til að leiðrétta og reikna, *Athuga* prófar töflur og líkön gegn
+   kröfum, *Greina* hefur tölfræði og kóða (R, Python og SQL), *Myndgera* gerir myndrit og kort, *Flytja út* vistar skrár í
+   tölvunni og *Deila* sendir til annarra.
 
 Það sem þú vistar er geymt í eigin gagnagrunni vafrans í tölvunni. Ef þú hreinsar vefsvæðisgögn vafrans hverfur það, svo taktu reglulega
 afrit undir *Umsjón > Vinnusvæði*. Afritið er ZIP-skrá sem má endurheimta í sömu eða annarri tölvu. Skref fyrir skref með fleiri
@@ -171,7 +172,7 @@ færðu gögn á milli þeirra með afriti eða pakka.
 - **Dataregium með málum**: líkön og mál verkefnisins, ný mál sem benda á staðinn í þrívídd, BCF-skrár, IFC-graf þjónsins, kortið
   *Stjórnun* fyrir stjórnandann og kortið *Meðlimir verkefnisins* fyrir verkefnisstjórann (sjá
   [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Tæknilega:* BCF API 3.0 og 2.1 með viewpoints.
-- **Sjö tungumál**: líka nýnorska, með handbókinni í forritinu og grunnnámskeiðinu um alla átta hamina.
+- **Sjö tungumál**: líka nýnorska, með handbókinni í forritinu og grunnnámskeiðinu um hamina.
 
 ### Einnig í útgáfu 3 (með Dataregium 3)
 
@@ -293,7 +294,7 @@ Skráarheitin eru þau sömu á öllum tungumálum (þau eru sænsku frumritin),
 - **Handbókin** í forritinu: sömu skjöl og hér, með leit; opnaðu hana með ? efst til hægri eða F1.
 - [Að hefjast handa](kom-igang.md): skref fyrir skref með algengum spurningum.
 - [Notendaleiðbeiningar](anvandarguide.md): allt vinnuferlið frá skrá til skýrslu.
-- [Hamirnir átta](lagen.md): hvað er hvar og hvers vegna.
+- [Hamirnir níu](lagen.md): hvað er hvar og hvers vegna.
 - [Algengar spurningar](faq.md): geymsla, öryggi, R, forritaskil og uppfærslur.
 
 **Eftir sviðum**

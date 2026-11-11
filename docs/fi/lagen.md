@@ -1,9 +1,9 @@
-# Kahdeksan tilaa
+# Yhdeksän tilaa
 
-Dataspatium on jaettu kahdeksaan tilaan, jotka seuraavat työn kulkua tilastotuotannon hengessä: kerää, käsittele,
-analysoi ja julkaise: Nouda, Hallitse, Hae, Muokkaa, Analysoi, Visualisoi, Vie, Jaa. Kaikilla tiloilla on sama
+Dataspatium on jaettu yhdeksään tilaan, jotka seuraavat työn kulkua tilastotuotannon hengessä: kerää, käsittele,
+analysoi ja julkaise: Nouda, Hallitse, Hae, Muokkaa, Tarkista, Analysoi, Visualisoi, Vie, Jaa. Kaikilla tiloilla on sama
 runko: tilanvalitsin ylhäällä, kohdepaneeli vasemmalla (paneeliotsikkona tilan oma nimi: Lähteet Nouda-tilassa, Aineistot muissa), työalue keskellä, tarkastelupaneeli oikealla ja tilarivi
-alhaalla, loki sen yläpuolelle taitettuna. Paneelit eivät koskaan vaihda paikkaa. Alt+1 … Alt+8 vaihtaa tilaa. Tyhjä
+alhaalla, loki sen yläpuolelle taitettuna. Paneelit eivät koskaan vaihda paikkaa. Alt+1 … Alt+9 vaihtaa tilaa. Tyhjä
 työtila avautuu Nouda-tilaan, aineistoja sisältävä työtila Hallitse-tilaan. Oikean yläkulman painikkeet avaavat
 komentopaletin, vaihtavat kieltä, vaihtavat teemaa (vaalea, tumma, järjestelmän mukaan) ja avaavat ohjeen.
 
@@ -179,6 +179,15 @@ Hae-tilasta tehty valinta merkitään 3D-malliin, ja kamera kääntyy sitä koht
 **Asiat.** Mallinäkymä näyttää projektin BCF-asiat CDE:stä ja merkitsee rakennusosat, joihin ne osoittavat. Katso [cad-bim.md](cad-bim.md).
 
 **Asioiden kirjoittaminen.** Mallinäkymä luo asioita valinnasta näkymällä viewpointina, kommentoi ja vaihtaa tilan sekä tallentaa projektin asiat BCF-tiedostona. Katso [cad-bim.md](cad-bim.md).
+
+## Tarkista
+
+Tarkista dataa vaatimuksia vasten. Taulukko tarkistetaan yksinkertaisia sääntöjä vasten: jokaisen sarakkeen tyyppi ja tyhjien
+arvojen määrä (arvo puuttuu tai sisältää vain välilyöntejä) sekä rivien kaksoiskappaleiden määrä. Pieni taulukko tarkistetaan
+heti, kun se valitaan, ja taulukko, jossa on 10 000 riviä tai enemmän, vasta kun painat *Suorita tarkistus*. Tarkastelupaneeli
+näyttää valitun löydöksen ja sen osuuden riveistä, ja *Avaa Muokkaa-tilassa* vie sinut korjaamaan sen. IFC-malli näyttää kortin
+*Validoi malli* ja paneelin *Vertaa versioita* (katso [cad-bim.md](cad-bim.md)); muille lajeille ei ole vielä tarkistuksia.
+Tekoälypaneeli saa neljännen tilan, *Tarkista*, vaurioista otettuja valokuvia varten (suunniteltu).
 
 ## Analysoi
 

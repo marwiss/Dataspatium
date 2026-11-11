@@ -21,7 +21,7 @@ kommandopaletten. Skrifttyper og ikoner indlæses fra mappen; det tager et øjeb
 ### Grundkurset
 
 Efter sprogvalget starter **grundkurset**, en interaktiv gennemgang i et panel nederst til højre. Det tager omkring ti
-minutter og følger eksemplet *Befolkning pr. kommune 2024 (Sverige)* gennem alle otte tilstande: hent data, se på
+minutter og følger eksemplet *Befolkning pr. kommune 2024 (Sverige)* gennem tilstandene: hent data, se på
 datasættet, søg, beregn en kolonne, spørg med SQL, regn med R, lav et diagram, eksportér og del. Hvert trin forklarer et begreb
 og giver en opgave. En ramme viser, hvor du skal klikke, og trinnet bliver krydset af, når du har gjort det. *Gør det
 for mig* udfører trinnet for dig, hvis du hellere vil se, hvordan det gøres.
@@ -31,10 +31,10 @@ eller fra kommandopaletten (Ctrl+K, *Åbn grundkurset*). Det fortsætter, hvor d
 
 ## 3. Tilstandene
 
-Øverst findes otte tilstande. Panelet til venstre viser objekter (datasæt og kilder), midten er arbejdsfladen,
+Øverst findes ni tilstande. Panelet til venstre viser objekter (datasæt og kilder), midten er arbejdsfladen,
 panelet til højre viser egenskaber og statistik, og nederst findes statuslinjen med gemmestatus, lager, det valgte
 datasæt, R-motoren og knapperne, der folder panelerne ind og åbner loggen. Panelernes bredde ændres ved at trække i
-kanten mod arbejdsfladen. Alt+1 til Alt+8 skifter tilstand med tastaturet.
+kanten mod arbejdsfladen. Alt+1 til Alt+9 skifter tilstand med tastaturet.
 
 | Tilstand | Hvad du gør der |
 |---|---|
@@ -42,6 +42,7 @@ kanten mod arbejdsfladen. Alt+1 til Alt+8 skifter tilstand med tastaturet.
 | Håndter | Ser dine datasæt i mapper med tags, omdøber, sletter, gemmer versioner, kører batchhandlinger på flere datasæt, tager backup af og gendanner arbejdsområdet |
 | Søg | Søger i alle kolonner i ét eller alle datasæt, indsnævrer med facetter og gemmer søgninger som lister ([soka.md](soka.md)) |
 | Bearbejd | Redigerer celler, sorterer og filtrerer, renser og sætter typer, beregner kolonner, pivoterer, sammenkobler datasæt; alt med fortryd, versioner og recepter ([bearbeta.md](bearbeta.md)) |
+| Kontrollér | Prøver en tabel mod enkle regler (type og tomme værdier pr. kolonne, dubletter blandt rækkerne) og viser en IFC-models kontroller: *Valider modellen* og *Sammenlign versioner* |
 | Analysér | R-konsol med ggplot2 og tidyverse, gemte scripts og diagrameksport; Python-konsol med pandas og matplotlib; SQL-konsol mod det valgte datasæt; regulære udtryk; notesbog, der bliver til rapport |
 | Visualisér | Bygger diagrammer med Vega-Lite, D3-skabeloner eller R-scripts, gemmer, eksporterer og opretter dem i batch ([visualisera.md](visualisera.md)) |
 | Eksportér | Downloader data som CSV, Excel, JSON eller SQLite, gemte diagrammer som SVG, PNG eller PDF og dokumenter fra skabeloner som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |

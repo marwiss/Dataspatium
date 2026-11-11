@@ -22,7 +22,7 @@ komentopaletista. Fontit ja kuvakkeet ladataan kansiosta; se kestää hetken. Mi
 ### Peruskurssi
 
 Kielen valinnan jälkeen alkaa **peruskurssi**, vuorovaikutteinen läpikäynti oikean alakulman paneelissa. Se kestää noin
-kymmenen minuuttia ja seuraa esimerkkiä *Väestö kunnittain 2024 (Ruotsi)* kaikkien kahdeksan tilan läpi: nouda dataa,
+kymmenen minuuttia ja seuraa esimerkkiä *Väestö kunnittain 2024 (Ruotsi)* tilojen läpi: nouda dataa,
 tutki aineistoa, hae, laske sarake, kysy SQL:llä, laske R:llä, tee kaavio, vie ja jaa. Jokainen vaihe selittää käsitteen ja
 antaa tehtävän. Kehys näyttää, mitä napsauttaa, ja vaihe kuitataan tehdyksi, kun olet tehnyt sen. *Tee se puolestani*
 tekee vaiheen puolestasi, jos haluat mieluummin katsoa, miten se tehdään.
@@ -32,10 +32,10 @@ yläkulmassa) tai komentopaletista (Ctrl+K, *Avaa peruskurssi*). Se jatkuu siit�
 
 ## 3. Tilat
 
-Yläreunassa on kahdeksan tilaa. Vasemmanpuoleinen paneeli näyttää kohteet (aineistot ja lähteet), keskellä on
+Yläreunassa on yhdeksän tilaa. Vasemmanpuoleinen paneeli näyttää kohteet (aineistot ja lähteet), keskellä on
 työalue, oikeanpuoleinen paneeli näyttää ominaisuudet ja tilastot, ja alareunassa on tilarivi, jossa ovat tallennuksen
 tila, tallennustila, valittu aineisto, R-moottori ja painikkeet, jotka piilottavat paneelit ja avaavat lokin.
-Paneelien leveyttä muutetaan vetämällä reunaa työaluetta kohti. Alt+1 … Alt+8 vaihtaa tilaa näppäimistöltä.
+Paneelien leveyttä muutetaan vetämällä reunaa työaluetta kohti. Alt+1 … Alt+9 vaihtaa tilaa näppäimistöltä.
 
 | Tila | Mitä siellä tehdään |
 |---|---|
@@ -43,6 +43,7 @@ Paneelien leveyttä muutetaan vetämällä reunaa työaluetta kohti. Alt+1 … A
 | Hallitse | Näet aineistosi kansioissa tunnisteineen, nimeät uudelleen, poistat, tallennat versioita, suoritat erätoimintoja usealle aineistolle, varmuuskopioit ja palautat työtilan |
 | Hae | Haet kaikista sarakkeista yhdessä tai kaikissa aineistoissa, rajaat faseteilla ja tallennat hakuja listoiksi ([soka.md](soka.md)) |
 | Muokkaa | Muokkaat soluja, lajittelet ja suodatat, puhdistat ja tyypität, lasket sarakkeita, pivotoit ja yhdistät aineistoja; kaikessa on kumoaminen, versiot ja reseptit ([bearbeta.md](bearbeta.md)) |
+| Tarkista | Tarkistat taulukon yksinkertaisia sääntöjä vasten (tyyppi ja tyhjät arvot sarakkeittain, rivien kaksoiskappaleet) ja näet IFC-mallin tarkistukset: *Validoi malli* ja *Vertaa versioita* |
 | Analysoi | R-konsoli, jossa on ggplot2 ja tidyverse, tallennetut skriptit ja kaavioiden vienti; Python-konsoli, jossa on pandas ja matplotlib; SQL-konsoli valittua aineistoa vastaan; säännölliset lausekkeet; muistikirja, josta syntyy raportti |
 | Visualisoi | Rakennat kaavioita Vega-Litellä, D3-malleilla tai R-skripteillä, tallennat, viet ja luot niitä eräajona ([visualisera.md](visualisera.md)) |
 | Vie | Lataat dataa CSV-, Excel-, JSON- tai SQLite-muodossa, tallennettuja kaavioita SVG-, PNG- tai PDF-muodossa ja asiakirjoja malleista HTML-, Word-, PDF-, Markdown- tai LaTeX-muodossa ([dokumentmallar.md](dokumentmallar.md)) |

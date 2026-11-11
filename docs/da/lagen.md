@@ -1,9 +1,9 @@
-# De otte tilstande
+# De ni tilstande
 
-Dataspatium er delt op i otte tilstande, der følger arbejdets gang, i samme ånd som statistikproduktionens indsaml,
-bearbejd, analysér og formidl: Hent, Håndter, Søg, Bearbejd, Analysér, Visualisér, Eksportér, Del. Alle tilstande
+Dataspatium er delt op i ni tilstande, der følger arbejdets gang, i samme ånd som statistikproduktionens indsaml,
+bearbejd, analysér og formidl: Hent, Håndter, Søg, Bearbejd, Kontrollér, Analysér, Visualisér, Eksportér, Del. Alle tilstande
 har samme skelet: tilstandsvælgeren øverst, objektpanelet til venstre (med tilstandens egen overskrift i panelhovedet: Kilder i Hent, Datasæt i de øvrige), arbejdsfladen i midten, inspektøren til højre
-og statuslinjen nederst, med loggen foldet ind over den. Panelerne skifter aldrig plads. Alt+1 til Alt+8 skifter
+og statuslinjen nederst, med loggen foldet ind over den. Panelerne skifter aldrig plads. Alt+1 til Alt+9 skifter
 tilstand. Et tomt arbejdsområde åbnes i Hent, et arbejdsområde med datasæt i Håndter. Knapperne øverst til højre
 åbner kommandopaletten, skifter sprog, skifter tema (lyst, mørkt, følg systemet) og åbner hjælpen.
 
@@ -173,6 +173,15 @@ Et udvalg fra Søg markeres i 3D-modellen, og kameraet rettes mod det.
 **Sager.** Modelvisningen viser projektets BCF-sager fra et CDE og markerer de bygningsdele, de peger på. Se [cad-bim.md](cad-bim.md).
 
 **Skrive sager.** Modelvisningen opretter sager fra markeringen med visningen som viewpoint, kommenterer og skifter status, og gemmer projektets sager som BCF-fil. Se [cad-bim.md](cad-bim.md).
+
+## Kontrollér
+
+Prøv data mod krav. En tabel prøves mod enkle regler: hver kolonnes type og antal tomme værdier (manglende eller kun
+mellemrum) og antallet af dubletter blandt rækkerne. En lille tabel kontrolleres, så snart den vælges, en tabel med 10 000
+rækker eller flere først, når du trykker på *Kør kontrollen*. Inspektøren viser det valgte fund med dets andel af rækkerne, og
+*Åbn i Bearbejd* fører dig derhen for at rette det. En IFC-model viser kortet *Valider modellen* og panelet *Sammenlign
+versioner* (se [cad-bim.md](cad-bim.md)); andre slags har endnu ingen kontroller. AI-panelet får en fjerde tilstand,
+*Kontrollér*, til fotos af skader (planlagt).
 
 ## Analysér
 

@@ -1,9 +1,9 @@
-# Dei åtte modusane
+# Dei ni modusane
 
-Dataspatium er delt inn i åtte modusar som følgjer gangen i arbeidet, i same ånd som samle inn, bearbeide,
-analysere og formidle i statistikkproduksjonen: Hent, Handter, Søk, Bearbeid, Analyser, Visualiser, Eksporter, Del. Alle
+Dataspatium er delt inn i ni modusar som følgjer gangen i arbeidet, i same ånd som samle inn, bearbeide,
+analysere og formidle i statistikkproduksjonen: Hent, Handter, Søk, Bearbeid, Kontroller, Analyser, Visualiser, Eksporter, Del. Alle
 modusar har same skjelett: modusveljaren øvst, objektpanelet til venstre (med den eigne overskrifta til modusen i panelhovudet: Kjelder i Hent, Datasett i dei andre), arbeidsflata i midten, inspektøren til
-høgre og statuslinja nedst, med loggen falda inn over henne. Panela byter aldri plass. Alt+1 til Alt+8 byter
+høgre og statuslinja nedst, med loggen falda inn over henne. Panela byter aldri plass. Alt+1 til Alt+9 byter
 modus. Eit tomt arbeidsområde blir opna i Hent, eit arbeidsområde med datasett i Handter. Knappane øvst til høgre opnar
 kommandopaletten, byter språk, byter tema (lyst, mørkt, følg systemet) og opnar hjelpa.
 
@@ -174,6 +174,15 @@ Eit utval frå Søk blir merkt i 3D-modellen, og kameraet blir retta mot det.
 **Saker.** Modellvisinga viser BCF-sakene i prosjektet frå eit CDE og merkjer bygningsdelane dei peikar på. Sjå [cad-bim.md](cad-bim.md).
 
 **Skrive saker.** Modellvisinga opprettar saker frå merkinga med visinga som viewpoint, kommenterer og byter status, og lagrar sakene i prosjektet som BCF-fil. Sjå [cad-bim.md](cad-bim.md).
+
+## Kontroller
+
+Prøv data mot krav. Ein tabell blir prøvd mot enkle reglar: typen og talet på tomme verdiar (manglande eller berre mellomrom)
+for kvar kolonne og talet på duplikat blant radene. Ein liten tabell blir kontrollert så snart han blir vald, ein tabell med
+10 000 rader eller fleire først når du trykkjer på *Køyr kontrollen*. Inspektøren viser det valde funnet med delen av radene,
+og *Opne i Bearbeid* tek deg dit for å rette det. Ein IFC-modell viser kortet *Valider modellen* og panelet *Samanlikn
+versjonar* (sjå [cad-bim.md](cad-bim.md)); andre slag har ingen kontrollar enno. AI-panelet får ein fjerde modus,
+*Kontroller*, for foto av skadar (planlagt).
 
 ## Analyser
 

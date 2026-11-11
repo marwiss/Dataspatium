@@ -86,7 +86,7 @@
     } finally { host.remove(); }
   }, 20000);
 
-  test('app: shell renders eight modes, imports a dataset and shows it in the table', async (assert) => {
+  test('app: shell renders nine modes, imports a dataset and shows it in the table', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
     document.body.appendChild(root);
@@ -94,7 +94,7 @@
     try {
       history.replaceState(null, '', location.pathname + location.search); // earlier tests may have left a #/mode hash
       const shell = await D.require('app').start(root);
-      assert.equal(root.querySelectorAll('.dm-mode-btn').length, 8);
+      assert.equal(root.querySelectorAll('.dm-mode-btn').length, 9);
       assert.equal(shell.store.get().mode, 'inhamta');
       assert.ok(root.querySelector('dm-dropzone'), 'dropzone in Inhämta');
       const file = new File(['kommun;befolkning;andel\nStockholm;984748;9,37\nGöteborg;596841;5,68\n'], 'test.csv', { type: 'text/csv' });

@@ -1,9 +1,9 @@
-# De åtte modusene
+# De ni modusene
 
-Dataspatium er delt inn i åtte moduser som følger arbeidets gang, i samme ånd som statistikkproduksjonens samle
-inn, bearbeide, analysere og formidle: Hent, Håndter, Søk, Bearbeid, Analyser, Visualiser, Eksporter, Del. Alle
+Dataspatium er delt inn i ni moduser som følger arbeidets gang, i samme ånd som statistikkproduksjonens samle
+inn, bearbeide, analysere og formidle: Hent, Håndter, Søk, Bearbeid, Kontroller, Analyser, Visualiser, Eksporter, Del. Alle
 moduser har samme skjelett: modusvelgeren øverst, objektpanelet til venstre (med modusens egen overskrift i panelhodet: Kilder i Hent, Datasett i de øvrige), arbeidsflaten i midten, inspektøren til
-høyre og statuslinjen nederst, med loggen foldet inn over den. Panelene bytter aldri plass. Alt+1 til Alt+8 bytter
+høyre og statuslinjen nederst, med loggen foldet inn over den. Panelene bytter aldri plass. Alt+1 til Alt+9 bytter
 modus. Et tomt arbeidsområde åpnes i Hent, et arbeidsområde med datasett i Håndter. Knappene øverst til høyre åpner
 kommandopaletten, bytter språk, bytter tema (lyst, mørkt, følg systemet) og åpner hjelpen.
 
@@ -174,6 +174,15 @@ Et utvalg fra Søk markeres i 3D-modellen, og kameraet rettes mot det.
 **Saker.** Modellvisningen viser prosjektets BCF-saker fra et CDE og markerer bygningsdelene de peker på. Se [cad-bim.md](cad-bim.md).
 
 **Skrive saker.** Modellvisningen oppretter saker fra markeringen med visningen som viewpoint, kommenterer og bytter status, og lagrer prosjektets saker som BCF-fil. Se [cad-bim.md](cad-bim.md).
+
+## Kontroller
+
+Prøv data mot krav. En tabell prøves mot enkle regler: hver kolonnes type og antall tomme verdier (manglende eller bare
+mellomrom) og antall duplikater blant radene. En liten tabell kontrolleres så snart den velges, en tabell med 10 000 rader eller
+flere først når du trykker på *Kjør kontrollen*. Inspektøren viser det valgte funnet med andelen av radene, og *Åpne i Bearbeid*
+tar deg dit for å rette det. En IFC-modell viser kortet *Valider modellen* og panelet *Sammenlign versjoner* (se
+[cad-bim.md](cad-bim.md)); andre slag har ingen kontroller ennå. AI-panelet får en fjerde modus, *Kontroller*, for foto av
+skader (planlagt).
 
 ## Analyser
 

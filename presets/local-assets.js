@@ -501,19 +501,19 @@ Dataspatium.assets.addEntries({
  "docs/sv/kom-igang.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 9138,
+  "size": 9322,
   "library": "dataspatium"
  },
  "docs/sv/anvandarguide.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 21225,
+  "size": 21238,
   "library": "dataspatium"
  },
  "docs/sv/lagen.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 26495,
+  "size": 27175,
   "library": "dataspatium"
  },
  "docs/sv/soka.md": {
@@ -669,19 +669,19 @@ Dataspatium.assets.addEntries({
  "docs/da/kom-igang.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 9045,
+  "size": 9232,
   "library": "dataspatium"
  },
  "docs/da/anvandarguide.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 20852,
+  "size": 20865,
   "library": "dataspatium"
  },
  "docs/da/lagen.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 26180,
+  "size": 26873,
   "library": "dataspatium"
  },
  "docs/da/soka.md": {
@@ -837,19 +837,19 @@ Dataspatium.assets.addEntries({
  "docs/nb/kom-igang.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 9008,
+  "size": 9193,
   "library": "dataspatium"
  },
  "docs/nb/anvandarguide.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 20620,
+  "size": 20632,
   "library": "dataspatium"
  },
  "docs/nb/lagen.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 25709,
+  "size": 26376,
   "library": "dataspatium"
  },
  "docs/nb/soka.md": {
@@ -1005,19 +1005,19 @@ Dataspatium.assets.addEntries({
  "docs/nn/kom-igang.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 9054,
+  "size": 9237,
   "library": "dataspatium"
  },
  "docs/nn/anvandarguide.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 20848,
+  "size": 20860,
   "library": "dataspatium"
  },
  "docs/nn/lagen.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 26107,
+  "size": 26797,
   "library": "dataspatium"
  },
  "docs/nn/soka.md": {
@@ -1173,19 +1173,19 @@ Dataspatium.assets.addEntries({
  "docs/fi/kom-igang.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9567,
+  "size": 9756,
   "library": "dataspatium"
  },
  "docs/fi/anvandarguide.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 22372,
+  "size": 22382,
   "library": "dataspatium"
  },
  "docs/fi/lagen.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 28022,
+  "size": 28809,
   "library": "dataspatium"
  },
  "docs/fi/soka.md": {
@@ -1341,19 +1341,19 @@ Dataspatium.assets.addEntries({
  "docs/is/kom-igang.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9582,
+  "size": 9766,
   "library": "dataspatium"
  },
  "docs/is/anvandarguide.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 21798,
+  "size": 21806,
   "library": "dataspatium"
  },
  "docs/is/lagen.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 27141,
+  "size": 27885,
   "library": "dataspatium"
  },
  "docs/is/soka.md": {
@@ -1509,19 +1509,19 @@ Dataspatium.assets.addEntries({
  "docs/en/kom-igang.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 9095,
+  "size": 9259,
   "library": "dataspatium"
  },
  "docs/en/anvandarguide.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 21029,
+  "size": 21036,
   "library": "dataspatium"
  },
  "docs/en/lagen.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 26379,
+  "size": 27035,
   "library": "dataspatium"
  },
  "docs/en/soka.md": {

@@ -23,7 +23,7 @@ a second. Nothing is fetched from the internet.
 ### The beginner's course
 
 After the language choice, the **beginner's course** starts: an interactive walkthrough in a panel at the bottom
-right. It takes about ten minutes and follows the example *Population per municipality 2024 (Sweden)* through all eight
+right. It takes about ten minutes and follows the example *Population per municipality 2024 (Sweden)* through the
 modes: get data, look at the dataset, search, calculate a column, query with SQL, calculate with R, make a chart,
 export and share.
 Each step explains a concept and gives a task. A frame shows where to click, and the step is ticked off when you have
@@ -34,10 +34,10 @@ top right) or from the command palette (Ctrl+K, *Open the beginner's course*). I
 
 ## 3. The modes
 
-At the top there are eight modes. The panel on the left shows objects (datasets and sources), the middle is the
+At the top there are nine modes. The panel on the left shows objects (datasets and sources), the middle is the
 work area, the panel on the right shows properties and statistics, and at the bottom is the status bar with the save
 state, storage, the selected dataset, the R engine and the buttons that collapse the panels and open the log. Panel
-widths are changed by dragging the edge towards the work area. Alt+1 to Alt+8 switch mode from the keyboard.
+widths are changed by dragging the edge towards the work area. Alt+1 to Alt+9 switch mode from the keyboard.
 
 | Mode | What you do there |
 |---|---|
@@ -45,6 +45,7 @@ widths are changed by dragging the edge towards the work area. Alt+1 to Alt+8 sw
 | Manage | See your datasets in folders with tags, rename, delete, save versions, run batch actions on several datasets, back up and restore the workspace |
 | Search | Search every column of one or all datasets, narrow with facets and save searches as lists ([soka.md](soka.md)) |
 | Process | Edit cells, sort and filter, clean and type, calculate columns, pivot, join datasets; all with undo, versions and recipes ([bearbeta.md](bearbeta.md)) |
+| Check | Try a table against simple rules (type and empty values per column, duplicate rows) and see an IFC model's checks: *Validate the model* and *Compare versions* |
 | Analyse | R console with ggplot2 and the tidyverse, saved scripts and chart export; Python console with pandas and matplotlib; SQL console against the selected dataset; regular expressions; a notebook that becomes a report |
 | Visualise | Build charts with Vega-Lite, D3 templates or R scripts, save, export and create them in batch ([visualisera.md](visualisera.md)) |
 | Export | Download data as CSV, Excel, JSON or SQLite, saved charts as SVG, PNG or PDF and documents from templates as HTML, Word, PDF, Markdown or LaTeX ([dokumentmallar.md](dokumentmallar.md)) |
