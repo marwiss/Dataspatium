@@ -296,6 +296,23 @@ ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatexta
 og SWEREF 99 TM), og með *Með landhæð í hornunum*, sem birtist þegar heimild Lantmäteriet hefur verið bætt við, landhæðina í hverju
 horni úr hæðarlíkaninu: netkall með lyklinum þínum eftir samþykki.
 
+## Athuga með gervigreind
+
+Hamurinn **Athuga** í gervigreindarspjaldinu ber líkan af byggingu sem þegar stendur saman við ljósmyndir af skemmdum og sliti, teknar
+með Dataspatium Mobil, myndavél eða dróna, og við mál úr vettvangseyðublaði. Hengdu ljósmyndirnar við í spjaldinu, merktar með
+framhlið eða innanhúss, eða bættu við myndum úr myndasafni sem þú fluttir inn í Sækja; ljósmynd með staðsetningu og tíma í skránni
+(EXIF) fær þau í myndatextann, og *Upplýsingar úr gagnasafni* setur mál og athugasemdir úr vettvangseyðublaði í spurninguna.
+Gervigreindin les líkanið með sömu tólum og í *Spyrja*, finnur eininguna sem hver mynd sýnir og skráir atriði fyrir hverja skemmd með
+titli, lýsingu, ástandi (gott, viðunandi, lélegt eða alvarlegt), forgangi (lítill, miðlungs, mikill eða brýnn) og ráðlagðri aðgerð;
+ljósmynd án sýnilegrar skemmdar gefur ekkert atriði. Ástand einingarinnar fer í eiginleikasafnið Pset_Condition (matsdagsetning,
+ástand og stutt lýsing) í breytingasetti sem þú forskoðar og samþykkir eins og í *Breyta*, og engar einingar eru búnar til, færðar eða
+eyddar. Atriðin birtast undir svarinu, og *Vista atriðin sem töflu* býr til nýtt gagnasafn með einu atriði í hverri línu: ljósmynd,
+eining, titill, lýsing, ástand, forgangur, aðgerð, dagsetning og staðsetning myndarinnar. *Flytja út sem BCF* hleður niður BCF-skrá
+með einu máli á hvert atriði, þar sem ljósmyndin er skyndimynd sýnarinnar og einingin er merkt, og fyrir líkan sem var sótt af þjóni
+sem þú hefur skráð þig inn á stofnar *Stofna mál á þjóninum* sömu mál í verkefni líkansins eftir staðfestingu. Ljósmyndirnar eru
+sendar þjónustuveitandanum með spurningunni eftir samþykki fyrir hýsil veitandans, og þær fara aftur af tölvunni aðeins þegar þú
+stofnar mál á þjóninum.
+
 ## Spyrja gervigreind um líkanið
 
 Hnappurinn *Spyrja gervigreind* í líkanssýninni opnar spjald í skoðaranum þar sem þú spyrð spurningar um opna IFC-líkanið, til dæmis

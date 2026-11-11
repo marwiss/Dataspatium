@@ -302,6 +302,22 @@ bygningsflata på kartet, så AI-en plasserer modellen med `set_site` (posisjon,
 hjørna*, som vert vist når kjelda til Lantmäteriet er lagd til, terrenghøgda i kvart hjørne frå høgdemodellen: eit nettverkskall med
 nøkkelen din etter samtykke.
 
+## Kontroller med AI
+
+Modusen **Kontroller** i AI-panelet prøver modellen av ein eksisterande bygning mot foto av skadar og slitasje, tekne med Dataspatium
+Mobil, eit kamera eller ein drone, og mot mål frå eit feltskjema. Legg ved fotoa i panelet, merkte med fasade eller innvendig, eller
+legg til bileta frå ei biletsamling du har importert i Hent; eit foto med posisjon og tidspunkt i fila (EXIF) får dei i biletteksten,
+og *Opplysningar frå eit datasett* legg mål og notat frå eit feltskjema i spørsmålet. AI-en les modellen med dei same verktøya som i
+*Spør*, finn elementet som kvart foto viser, og skriv eitt funn for kvar skade med tittel, skildring, tilstand (god, akseptabel,
+dårleg eller kritisk), prioritet (låg, middels, høg eller akutt) og tilrådd tiltak; eit foto utan synleg skade gjev ikkje noko funn.
+Tilstanden til elementet vert lagd i eigenskapssettet Pset_Condition (vurderingsdato, tilstand og ei kort skildring) i eit
+endringssett som du førehandsviser og godkjenner som i *Endre*, og ingen element vert oppretta, flytte eller sletta. Funna vert lista
+under svaret, og *Lagre funna som tabell* opprettar eit nytt datasett med eitt funn per rad: foto, element, tittel, skildring,
+tilstand, prioritet, tiltak, dato og posisjonen til fotoet. *Eksporter som BCF* lastar ned ei BCF-fil med éi sak per funn, der fotoet
+er augneblinksbiletet i visinga og elementet er merkt, og for ein modell henta frå ein tenar du er logga inn på, opprettar *Opprett
+saker på tenaren* dei same sakene i prosjektet til modellen etter ei stadfesting. Fotoa vert sende til leverandøren saman med
+spørsmålet etter samtykket for verten til leverandøren, og dei forlèt datamaskina igjen berre når du sjølv opprettar saker på tenaren.
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisinga opnar eit panel i inspektøren der du stiller eit spørsmål om den opne IFC-modellen, til dømes "kva

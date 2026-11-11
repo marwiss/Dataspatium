@@ -299,6 +299,22 @@ på kartet, så AI-en plasserer modellen med `set_site` (posisjon, høyde og SWE
 vises når Lantmäteriets kilde er lagt til, terrenghøyden i hvert hjørne fra høydemodellen: et nettverkskall med nøkkelen din etter
 samtykke.
 
+## Kontroller med AI
+
+Modusen **Kontroller** i AI-panelet prøver en eksisterende bygnings modell mot foto av skader og slitasje, tatt med Dataspatium Mobil,
+et kamera eller en drone, og mot mål fra et feltskjema. Legg ved fotoene i panelet, merket med fasade eller innvendig, eller legg til
+bildene fra en bildesamling du har importert i Hent; et foto med posisjon og tidspunkt i filen (EXIF) får dem i bildeteksten, og
+*Opplysninger fra et datasett* legger mål og notater fra et feltskjema i spørsmålet. AI-en leser modellen med de samme verktøyene som
+i *Spør*, finner elementet hvert foto viser, og skriver et funn for hver skade med tittel, beskrivelse, tilstand (god, akseptabel,
+dårlig eller kritisk), prioritet (lav, middels, høy eller akutt) og anbefalt tiltak; et foto uten synlig skade gir ikke noe funn.
+Elementets tilstand legges i egenskapssettet Pset_Condition (vurderingsdato, tilstand og en kort beskrivelse) i et endringssett som du
+forhåndsviser og godkjenner som i *Endre*, og ingen elementer opprettes, flyttes eller slettes. Funnene listes under svaret, og *Lagre
+funnene som tabell* oppretter et nytt datasett med ett funn per rad: foto, element, tittel, beskrivelse, tilstand, prioritet, tiltak,
+dato og fotoets posisjon. *Eksporter som BCF* laster ned en BCF-fil med én sak per funn, der fotoet er visningens øyeblikksbilde og
+elementet er markert, og for en modell hentet fra en server du er logget inn på, oppretter *Opprett saker på serveren* de samme sakene
+i modellens prosjekt etter en bekreftelse. Fotoene sendes til leverandøren sammen med spørsmålet etter samtykket for leverandørens
+vert, og de forlater datamaskinen igjen bare når du selv oppretter saker på serveren.
+
 ## Spør AI om modellen
 
 Knappen *Spør AI* i modellvisningen åpner et panel i inspektøren der du stiller et spørsmål om den åpne IFC-modellen, for eksempel
