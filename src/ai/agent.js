@@ -10,7 +10,8 @@
  * wheel finds in the schema or the model's relationships before the person sees it, at most MAX_PREVIEWS times (decision F3 a).
  * In build mode (decision F43 a) the loop builds a whole building in an empty model from the person's brief, with pictures and
  * scanned drawings as images in the first message, a larger budget, ask_person for what the brief leaves open, and the plan said
- * before the building starts; the person still previews and approves the change set.
+ * before the building starts; the person still previews and approves the change set. The preview tells the agent the topology of
+ * the storeys its walls are on (decision F46 a): the rooms, whether the storey is closed and where walls end in the open.
  */
 (function () {
   'use strict';
@@ -64,6 +65,7 @@
       'elevation is the first floor\'s level above sea: the highest ground height at the corners plus about 0.3 m unless the brief says',
       'otherwise, and the first storey stays at elevation 0. When the ground falls more than 0.5 m across the footprint, say so and ask',
       'whether the building has a basement or a plinth on the low side.',
+      'After the walls of a storey, the preview\'s topology says whether the storey is closed; mend open ends (dangles) by moving or adding walls before the slabs.',
     ].join(' ');
     const ASK_TOOL = {
       name: 'ask_person',
@@ -78,9 +80,23 @@
     const MAX_PREVIEWS_BUILD = 8;
     const PREVIEW_TOOL = {
       name: 'preview_changeset',
-      description: 'Run the open change set on a copy of the model with IfcOpenShell, as the person\'s Preview does, and get what would be created, changed and deleted and the errors in the schema or the model\'s relationships that block approval. Nothing is changed. Works only when the app\'s Python is already running.',
+      description: 'Run the open change set on a copy of the model with IfcOpenShell, as the person\'s Preview does, and get what would be created, changed and deleted, the errors in the schema or the model\'s relationships that block approval, and for each storey of its walls the topology: rooms, whether the storey is closed, open wall ends (dangles) and the external walls by facing. Nothing is changed. Works only when the app\'s Python is already running.',
       parameters: { type: 'object', properties: {}, required: [] },
     };
+    /**
+     * The preview's topology in brief: per storey with walls the number of rooms, whether it is closed, the open ends (up to five)
+     * and the external walls counted by facing; an error stays an error. @param {any} topology the report's (python/ `_ifc_topology`)
+     */
+    function topologyBrief(topology) {
+      if (!topology) return null;
+      if (!Array.isArray(topology)) return { error: String(topology.error || 'the topology could not be computed') };
+      return topology.filter((s) => s && (s.walls || s.unread)).map((s) => {
+        const external = {};
+        for (const w of s.external || []) external[w.facing] = (external[w.facing] || 0) + 1;
+        const ends = Array.isArray(s.dangles) ? s.dangles : [];
+        return Object.assign({ storey: s.storey, rooms: (s.rooms || []).length, closed: !!s.closed, dangles: ends.length, open_ends: ends.slice(0, 5), external }, s.unread ? { unread: s.unread } : {});
+      });
+    }
     /** The agent's own preview: the wheel's verdict on the change set, in brief, without starting Python on its own. */
     async function previewFor(datasetId, changeset) {
       if (!changeset.ops.length) return { error: 'the change set is empty' };
@@ -90,8 +106,10 @@
         const out = await D.require('data/ifc-ops').previewChangeset(datasetId, writeTools.toWheel(changeset));
         const r = out.report || {};
         const errors = (r.findings || []).filter((f) => String(f.level) === 'error');
-        return { errors: Number(r.errors) || 0, created: (r.created || []).length, changed: (r.changed || []).length, deleted: (r.deleted || []).length,
+        const brief = { errors: Number(r.errors) || 0, created: (r.created || []).length, changed: (r.changed || []).length, deleted: (r.deleted || []).length,
           findings: errors.slice(0, 10).map((f) => ({ class: f.ifc_class || null, id: f.id || null, attribute: f.attribute || null, message: String(f.message || '') })) };
+        const topology = topologyBrief(r.topology);
+        return topology && (!Array.isArray(topology) || topology.length) ? Object.assign(brief, { topology }) : brief;
       } catch (err) {
         // A step the wheel refuses (no such storey, a wall without length) is an answer the agent can act on.
         return { error: String((err && err.message) || err) };
@@ -172,6 +190,6 @@
       const got = await ask({ question: String(a.question || '').slice(0, 500), options, free: !!a.allow_free, signal });
       return got ? { answer: got.answer, index: got.index, own_text: !!got.free } : { error: 'the person closed the question without answering' };
     }
-    return { ask, SYSTEM, SYSTEM_CHANGE, SYSTEM_BUILD, ASK_TOOL, MAX_RESULT_CHARS, MAX_PREVIEWS, MAX_PREVIEWS_BUILD, PREVIEW_TOOL };
+    return { ask, previewFor, topologyBrief, SYSTEM, SYSTEM_CHANGE, SYSTEM_BUILD, ASK_TOOL, MAX_RESULT_CHARS, MAX_PREVIEWS, MAX_PREVIEWS_BUILD, PREVIEW_TOOL };
   });
 })();

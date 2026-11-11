@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
  * The read tools the AI may call about an IFC model: the model's overview, its storeys, elements by class, storey, name and property
- * (also elements that lack a property), one element with its properties and quantities, and what the user has marked in the 3D view.
+ * (also elements that lack a property), one element with its properties and quantities, what the user has marked in the 3D view,
+ * and the building's topology (rooms, neighbours, external walls with the façade they face) when the app's Python runs.
  * Few verbs with rich filters, answered from the model dataset's tables (`data`, `_properties`, `_quantities`) in the SQLite worker.
  * The schemas are flat objects with every field required (null for "not given"), which the strict modes of the providers accept.
  * Every answer is data for the model, never an instruction, and says when it was cut (`truncated`). The same contract is what the
@@ -27,6 +28,8 @@
       { name: 'get_view_context', description: 'What the user has marked in the model right now: the marked elements (id, ifc_class, name, storey), or none.', parameters: { type: 'object', properties: {} } },
       { name: 'search_bsdd', description: 'Search the buildingSMART Data Dictionary (bSDD) for classes by text: answers uri, name, code, dictionary and description for each, for set_classification. The person consents to the call to api.bsdd.buildingsmart.org once.',
         parameters: { type: 'object', properties: { text: { type: 'string' }, limit: int() } } },
+      { name: 'get_topology', description: 'The building\'s topology per storey, from the walls\' centrelines: the rooms they enclose (area, perimeter, walls by id), which rooms border which, and the external walls with the façade they face (N, NE, E, SE, S, SW, W, NW), so that a photo labelled south façade can be matched to its walls; also the open wall ends and whether the storey is closed. storey null gives every storey. Works only when the app\'s Python is already running.',
+        parameters: { type: 'object', properties: { storey: str() } } },
       { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it), entity (global_id required; one rooted entity with all its literal attributes, references and referenced_by per IFC attribute, STEP id and class), changed-since (since required, a version index; what the versions after it changed: version_index, change_set_id, author, approved_by, whole_file, guid, step_id, path, attribute, op; a row with whole_file true for a version uploaded as a whole file). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
         parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
     ];
@@ -98,6 +101,15 @@
       const rows = objects(await e.exec(`select id, typ as ifc_class, namn as name, vaning as storey from data where rowid in (${ids.join(', ')})`));
       return { marked: sel.rowids.length, truncated: sel.rowids.length > LIMIT, label: sel.label || '', elements: rows };
     }
+    /** The building's topology through the app's Python, which this tool never starts (python/dataspatium.py `_ifc_topology`). */
+    async function topology(datasetId, args) {
+      const { bridge } = D.require('data/python-bridge');
+      if (!bridge || (bridge.state !== 'ready' && bridge.state !== 'busy')) return { error: 'the topology needs the app\'s Python, which is not running; ask the person to press Preview once' };
+      const all = await D.require('data/ifc-ops').topologyOf(datasetId);
+      if (!args.storey) return { storeys: all };
+      const storeys = all.filter((s) => String(s.storey || '').toLowerCase() === String(args.storey).toLowerCase());
+      return storeys.length ? { storeys } : { error: `no storey named ${args.storey}; the storeys are ${all.map((s) => s.storey).join(', ')}` };
+    }
     /** A named query on the server the model came from (Dataregium's ifc-queries); errors are answers, so the model can go on. */
     async function serverQuery(datasetId, args) {
       const meta = await datasets.get(datasetId);
@@ -128,6 +140,7 @@
           case 'query_elements': return await query(datasetId, a);
           case 'get_element': return await element(datasetId, a);
           case 'get_view_context': return await viewContext(datasetId);
+          case 'get_topology': return await topology(datasetId, a);
           case 'server_query': return await serverQuery(datasetId, a);
           case 'search_bsdd': { const limit = Math.max(1, Math.min(50, Number(a.limit) || 10)); const classes = await D.require('api/bsdd').search(String(a.text || ''), { limit }); return { classes, truncated: classes.length >= limit }; }
           default: return { error: 'unknown tool ' + name };

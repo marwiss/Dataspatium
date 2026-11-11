@@ -5,8 +5,9 @@
  * number of empty values and the number of duplicate rows, counted in the dataset's SQL engine: at once for a small table,
  * on the button for a large one. An IFC model shows the checks that exist elsewhere, reused as they are: the card Validera
  * modellen (the server's check of the file, the schema, IDS and clash detection with their latest results; the checks
- * themselves run in Analysera under Mängder) and the panel Jämför versioner. Other kinds have no checks yet. The inspector
- * shows the chosen finding.
+ * themselves run in Analysera under Mängder) and the panel Jämför versioner, and the card Topologi (the rooms the walls
+ * enclose per storey, open wall ends and the external walls per compass direction, on the button). Other kinds have no checks
+ * yet. The inspector shows the chosen finding.
  */
 (function () {
   'use strict';
@@ -16,6 +17,8 @@
     /** A table with fewer rows than this is checked as soon as it is chosen; a larger one waits for the button. */
     const AUTO_ROWS = 10000;
     const ICON = 'list-checks';
+    /** The compass sectors the topology names, in the order of kontrollera.topology.facings. */
+    const FACINGS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
     /**
      * The rules a table is tried against, counted in its SQL engine: the empty values of every column (null, or text that
@@ -201,8 +204,54 @@
         compare = compareModule.create(ctx, ds, {});
         const openBtn = ui.button({ label: t('import.open.bearbeta'), icon: 'box', title: t('kontrollera.model.open.hint'), onClick: () => { store.set({ selectedId: ds.id }); shell.activate('bearbeta'); } });
         replace(slots.center, head(ds, openBtn), h('p', { class: 'dm-help', text: t('kontrollera.model.help') }),
-          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el));
+          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds)));
         replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.model.inspector') }));
+      }
+
+      /**
+       * The card Topologi (decision F46 a): per storey with walls the rooms they enclose, closed or open, the open wall ends and the
+       * external walls per compass direction, read by the wheel (data/ifc-ops.topologyOf). The button is the person's action, so
+       * it may start Python, as the preview of Ändra med AI does.
+       */
+      function topologyCard(ds) {
+        const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'topology' });
+        const state = { busy: false, error: '', storeys: /** @type {any[]|null} */ (null) };
+        const names = t('kontrollera.topology.facings').split(',');
+        const num = (v) => i18n.formatNumber(Number(v) || 0, { maximumFractionDigits: 2 });
+        async function run() {
+          if (state.busy) return;
+          state.busy = true; state.error = ''; draw();
+          try { state.storeys = await D.require('data/ifc-ops').topologyOf(ds.id); } catch (err) { state.error = String((err && err.message) || err); }
+          state.busy = false; draw();
+        }
+        function storey(s) {
+          const counts = new Map();
+          for (const w of s.external || []) counts.set(w.facing, (counts.get(w.facing) || 0) + 1);
+          const ends = s.dangles || [];
+          const kv = /** @type {any} */ (h('dm-kv'));
+          kv.items = [
+            { label: t('kontrollera.topology.walls'), value: num(s.walls) + (s.unread ? ' ' + t('kontrollera.topology.unread', { n: num(s.unread) }) : '') },
+            { label: t('kontrollera.topology.rooms'), value: num((s.rooms || []).length) },
+            { label: t('kontrollera.topology.dangles'), value: [num(ends.length)].concat(ends.slice(0, 5).map((p) => `(${num(p[0])}; ${num(p[1])})`)).join(' ') + (ends.length > 5 ? ' …' : '') },
+            { label: t('kontrollera.topology.external'), value: FACINGS.filter((f) => counts.has(f)).map((f) => `${names[FACINGS.indexOf(f)] || f} ${num(counts.get(f))}`).join(' · ') || '–' },
+          ];
+          return h('div', { class: 'dm-stack-xs', 'data-topology-storey': String(s.storey || ''), 'data-topology-closed': String(!!s.closed), 'data-topology-rooms': String((s.rooms || []).length), 'data-topology-dangles': String(ends.length) },
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: String(s.storey || '') }), h('dm-badge', { text: t(s.closed ? 'kontrollera.topology.closed' : 'kontrollera.topology.open'), kind: s.closed ? 'ok' : 'warn' })),
+            kv);
+        }
+        function draw() {
+          const shown = (state.storeys || []).filter((s) => s && (s.walls || s.unread));
+          replace(el,
+            h('h3', { text: t('kontrollera.topology') }),
+            h('p', { class: 'dm-help', text: t('kontrollera.topology.help') }),
+            h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('kontrollera.topology.run'), icon: 'scan-line', size: 'sm', loading: state.busy, title: t('kontrollera.topology.run.hint'), 'data-topology-run': '', onClick: run })),
+            state.error ? h('p', { class: 'dm-error dm-small', 'data-topology-error': '', text: state.error }) : null,
+            state.storeys && !shown.length ? h('p', { class: 'dm-help dm-small', 'data-topology-none': '', text: t('kontrollera.topology.none') }) : null,
+            shown.map(storey),
+            shown.length ? h('p', { class: 'dm-help dm-xs', text: t('kontrollera.topology.north.' + (['map', 'true_north'].includes(shown[0].north) ? shown[0].north : 'model')) }) : null);
+        }
+        draw();
+        return el;
       }
 
       return { id: 'kontrollera', activate, deactivate };

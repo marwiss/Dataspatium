@@ -8,6 +8,7 @@
  * so the step is logged, undoable and replayable like any other, and the original file in `_files` is always the
  * current version of the model. The dataset is never changed by Python directly. `ifc_changeset` is the approved change set of
  * Ändra med AI (ai/write-tools), applied by the wheel's _ifc_changeset with the schema check; `previewChangeset` runs it on a copy.
+ * `topologyOf` reads the building's topology (rooms, neighbours, external walls with their facing, open wall ends) from the model.
  */
 (function () {
   'use strict';
@@ -102,6 +103,19 @@
       const res = await bridge().runIfcChangeset(parseChanges(changes), await handle.engine.export(), { name: meta.name });
       return { bytes: res.bytes, report: res.info || {}, log: res.log || [] };
     }
-    return { python, applyTable, changeset, previewChangeset, IDS: ['ifc_apply_table', 'ifc_python'] };
+    /**
+     * The building's topology (decision F46 a) for the read tool get_topology and the card Topologi in Kontrollera: per storey the
+     * rooms, which rooms border which, the external walls with the façade they face and the open wall ends. Like the preview it
+     * starts Python when it is not running, so only the person's action may call it while Python is idle. The dataset is untouched.
+     * @param {string} datasetId @returns {Promise<any[]>} one entry per storey (python/dataspatium.py `_ifc_topology`)
+     */
+    async function topologyOf(datasetId) {
+      const meta = await datasets.get(datasetId);
+      if (!meta || !model.isModel(meta) || model.isDxf(meta)) throw new Error(D.t('op.err.ifc.notmodel'));
+      const handle = await datasets.ensureOpen(datasetId);
+      const out = await bridge().runIfcTopology(await handle.engine.export());
+      return Array.isArray(out) ? out : [];
+    }
+    return { python, applyTable, changeset, previewChangeset, topologyOf, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();
