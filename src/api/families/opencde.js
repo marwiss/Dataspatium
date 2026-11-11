@@ -660,7 +660,8 @@
     }
     /**
      * An address the server hands out for a job or a report, used only when it is on the server itself (else the path the app
-     * builds), so that the token never goes elsewhere. @param {any} connector @param {string} url @param {string} path
+     * builds), so that the token never goes elsewhere. Behind a proxy the server may name another host than the connector's; then
+     * the app's own path is the one that holds. @param {any} connector @param {string} url @param {string} path
      */
     function ownUrl(connector, url, path) {
       const base = trimUrl(connector.baseUrl);
@@ -739,7 +740,10 @@
     /** A copy of B migrated to A's schema and unit, for a day: the job, whose `merge_id` goes into `other.prepared`. */
     async function prepareMerge(connector, projectId, body, options = {}) {
       const paths = await mergePaths(connector, projectId);
-      const job = await api(connector, paths.prepare, { method: 'POST', json: { base: body.base, other: body.other } });
+      // A copy made earlier is not named when preparing again: the server refuses `prepared` here (400).
+      const other = Object.assign({}, body.other);
+      delete other.prepared;
+      const job = await api(connector, paths.prepare, { method: 'POST', json: { base: body.base, other } });
       return untilOver(() => api(connector, ownUrl(connector, job && job.url, paths.url + '/' + encode(String(job && job.merge_id)))), options);
     }
     // ---------------------------------------------------------------------------- writing

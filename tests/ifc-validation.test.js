@@ -385,6 +385,10 @@
         assert.deepEqual(merged.choices, { [world.walls[0].guid]: 'b' }, 'the choice made');
         for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
       });
+      // Preparing again never names the copy made before: the server would refuse it.
+      await opencde.prepareMerge(connector, PROJECT, { base: { document_id: 'doc-ifc', version_index: 1 }, other: { project_id: PROJECT, document_id: 'doc-b', version_index: 1, prepared: 'p1' } });
+      const again = JSON.parse(world.bodies.filter((x) => /\/ifc-merge\/prepare$/.test(x.url)).pop().body);
+      assert.ok(!('prepared' in again.other), 'no prepared copy named: ' + JSON.stringify(again.other));
       return 'ok';
     } finally {
       http.request = real;
