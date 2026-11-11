@@ -6129,6 +6129,7 @@
     'ai.change.propose.send': 'Lähetä',
     'ai.change.propose.summary': 'Ehdotus: {n} attribuuttimuutosta {m} instanssissa.',
     'ai.change.propose.unexpressed': 'Vain kuvauksessa, ei ehdotuksen muodossa: {created} luotua, {deleted} poistettua, {relations} uutta suhdetta.',
+    'ai.change.propose.ops': 'Palvelin saa myös kirjoitustyökalujen {n} toimintoa ja rakentaa ehdotuksen niistä perusversion päälle, joten uudet elementit, poistot ja suhteet tulevat mukaan.',
     'ai.change.propose.none': 'Muutosjoukko ei muuta olemassa olevia instansseja; uusia elementtejä ei voi vielä ehdottaa palvelimen muodossa. Julkaise sen sijaan.',
     'ai.change.propose.unsupported': 'Palvelin ei ota vastaan muutosehdotuksia (ifc_changes puuttuu sen kyvykkyyksistä).',
     'ai.change.propose.done': 'Muutosehdotus lähetettiin asiana ”{title}” projektiin {project}.',

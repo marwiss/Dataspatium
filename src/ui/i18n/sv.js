@@ -6151,6 +6151,7 @@
     'ai.change.propose.send': 'Skicka',
     'ai.change.propose.summary': 'Förslaget: {n} attributändringar på {m} instanser.',
     'ai.change.propose.unexpressed': 'Bara i beskrivningen, inte i förslagets form: {created} skapade, {deleted} raderade, {relations} nya samband.',
+    'ai.change.propose.ops': 'Servern får också skrivverktygens {n} operationer och bygger förslaget ur dem på basversionen, så att nya element, raderingar och samband kommer med.',
     'ai.change.propose.none': 'Ändringssetet ändrar inga befintliga instanser; nya element kan inte föreslås i serverns form än. Publicera i stället.',
     'ai.change.propose.unsupported': 'Servern tar inte emot ändringsförslag (ifc_changes saknas i dess kapabiliteter).',
     'ai.change.propose.done': 'Ändringsförslaget skickades som ärendet ”{title}” till {project}.',

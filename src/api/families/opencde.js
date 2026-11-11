@@ -880,8 +880,12 @@
      * DataregiumIfcChangeSet, held to the schema the capabilities name (`ifc_changes`). The snippet is uploaded after the topic;
      * when the server refuses it (400 with what is wrong) the topic is removed again. Null when the server has no `ifc_changes`.
      * @param {any} connector @param {string} projectId
-     * @param {{title: string, description?: string, topicType?: string, changeSet: {base: any, provenance: any, changes: any[]}}} options
-     * @returns {Promise<{topic: any, schemaUrl: string, snippetType: string}|null>}
+     * With `ops` (the write tools' operations, `ai/write-tools.toWheel`) and a server whose capability names `ops_form`
+     * "dataspatium-tools/1", the snippet also carries `ops_form` and `ops`, so that created elements, deletions and relationships
+     * are part of the proposal; `changes` then may be empty.
+     * @param {any} connector @param {string} projectId
+     * @param {{title: string, description?: string, topicType?: string, changeSet: {base: any, provenance: any, changes: any[]}, ops?: any[]}} options
+     * @returns {Promise<{topic: any, schemaUrl: string, snippetType: string, tried: boolean, proposalUrl: string|null, approveUrl: string|null, changeSet: any, opsForm: string|null}|null>}
      */
     async function proposeChanges(connector, projectId, options) {
       const caps = await capabilities(connector);
@@ -890,28 +894,39 @@
       const schemaPath = String(ext.schema || '/documents/1.0/ifc-changes/schema');
       const schemaUrl = /^[a-z][a-z0-9+.-]*:/i.test(schemaPath) ? schemaPath : trimUrl(connector.baseUrl) + schemaPath;
       const changes = options.changeSet && Array.isArray(options.changeSet.changes) ? options.changeSet.changes : [];
-      if (!changes.length) throw new Error(t('opencde.err.changes.none'));
+      // A server that announces the write tools' own form takes their operations as well (decision F43 b, step 5): created
+      // elements, deletions and relationships reach the proposal, and the server applies them to the base with the same code.
+      const ops = ext.ops_form === OPS_FORM && Array.isArray(options.ops) && options.ops.length ? options.ops : null;
+      if (!changes.length && !ops) throw new Error(t('opencde.err.changes.none'));
       const max = Number(ext.max_changes) || 10000;
-      if (changes.length > max) throw new Error(t('opencde.err.changes.max', { n: String(max) }));
+      if (changes.length > max || (ops && ops.length > max)) throw new Error(t('opencde.err.changes.max', { n: String(max) }));
+      const changeSet = ops ? Object.assign({}, options.changeSet, { ops_form: OPS_FORM, ops }) : options.changeSet;
       const snippetType = String(ext.snippet_type || 'DataregiumIfcChangeSet');
       const body = { title: String(options.title || '').trim() || snippetType, description: options.description || '', bim_snippet: { snippet_type: snippetType, is_external: false, reference: 'changes.json', reference_schema: schemaUrl } };
       if (options.topicType) body.topic_type = options.topicType;
       const topic = await createTopic(connector, projectId, body);
       try {
-        await putChangeSet(connector, projectId, topic.guid, schemaUrl, options.changeSet);
+        await putChangeSet(connector, projectId, topic.guid, schemaUrl, changeSet);
       } catch (err) {
         await deleteTopic(connector, projectId, topic.guid).catch(() => {});
         throw err;
       }
       const fill = (template) => (template ? String(template).replace('{project_id}', encode(projectId)).replace('{topic_guid}', encode(topic.guid)) : null);
       const proposalUrl = fill(ext.proposal_url);
-      return { topic, schemaUrl, snippetType, tried: !!ext.tried && !!proposalUrl, proposalUrl, approveUrl: fill(ext.approve_url) };
+      return { topic, schemaUrl, snippetType, tried: !!ext.tried && !!proposalUrl, proposalUrl, approveUrl: fill(ext.approve_url), changeSet, opsForm: ops ? OPS_FORM : null };
     }
     /**
      * The change set of a proposal's topic, uploaded as its snippet; a new one replaces the server's trial (Dataregium's OB-26).
      * @param {any} connector @param {string} projectId @param {string} topicGuid @param {string} schemaUrl
      * @param {{base: any, provenance: any, changes: any[]}} changeSet
      */
+    /** The form of the write tools' operations a proposal can carry, when the server's capability names it (`ifc_changes.ops_form`). */
+    const OPS_FORM = 'dataspatium-tools/1';
+    /** OPS_FORM when the server takes the operations in a proposal, otherwise null. @param {any} connector */
+    async function opsForm(connector) {
+      const caps = await capabilities(connector);
+      return hasExtension(caps, 'ifc_changes') && caps.extensions.ifc_changes.ops_form === OPS_FORM ? OPS_FORM : null;
+    }
     const putChangeSet = (connector, projectId, topicGuid, schemaUrl, changeSet) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/snippet`, { method: 'PUT', body: JSON.stringify(Object.assign({ schema: schemaUrl }, changeSet)), headers: { 'Content-Type': 'application/json' } });
     /**
      * A manager makes a clean proposal the document's next version (Dataregium's OB-27): POST at the capability's approve_url. The
@@ -1053,6 +1068,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { ifcProposals, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { ifcProposals, opsForm, OPS_FORM, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

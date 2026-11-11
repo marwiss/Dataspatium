@@ -6129,6 +6129,7 @@
     'ai.change.propose.send': 'Senda',
     'ai.change.propose.summary': 'Tillagan: {n} eigindabreytingar á {m} tilvikum.',
     'ai.change.propose.unexpressed': 'Aðeins í lýsingunni, ekki á formi tillögunnar: {created} stofnuð, {deleted} eydd, {relations} ný vensl.',
+    'ai.change.propose.ops': 'Þjónninn fær einnig {n} aðgerðir skrifverkfæranna og byggir tillöguna úr þeim á grunnútgáfunni, svo nýjar einingar, eyðingar og tengsl fylgja með.',
     'ai.change.propose.none': 'Breytingasettið breytir engum fyrirliggjandi tilvikum; ný stök er ekki enn hægt að leggja til á formi þjónsins. Birtu í staðinn.',
     'ai.change.propose.unsupported': 'Þjónninn tekur ekki við breytingatillögum (ifc_changes vantar í getu hans).',
     'ai.change.propose.done': 'Breytingatillagan var send sem málið „{title}“ til {project}.',

@@ -6129,6 +6129,7 @@
     'ai.change.propose.send': 'Send',
     'ai.change.propose.summary': 'Forslaget: {n} attributtendringer på {m} instanser.',
     'ai.change.propose.unexpressed': 'Bare i beskrivelsen, ikke i forslagets form: {created} opprettet, {deleted} slettet, {relations} nye relasjoner.',
+    'ai.change.propose.ops': 'Serveren får også skriveverktøyenes {n} operasjoner og bygger forslaget ut fra dem på basisversjonen, så nye elementer, slettinger og relasjoner kommer med.',
     'ai.change.propose.none': 'Endringssettet endrer ingen eksisterende instanser; nye elementer kan ennå ikke foreslås i serverens form. Publiser i stedet.',
     'ai.change.propose.unsupported': 'Serveren tar ikke imot endringsforslag (ifc_changes mangler i kapabilitetene).',
     'ai.change.propose.done': 'Endringsforslaget ble sendt som saken «{title}» til {project}.',

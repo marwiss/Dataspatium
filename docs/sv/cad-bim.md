@@ -350,7 +350,10 @@ eller säger att allt kan ha ändrats när en hel fil laddats upp emellan. Hämt
 igen.
 Kortet *Ändringsförslag på servern* i modellvyn visar, för en modell hämtad från Dataregium, alla förslag mot dokumentet när servern
 anger kapabiliteten `ifc_proposals_url`: titel, tillstånd, vem som föreslog, hur många ändringar och mot vilken version; *Godkänn* gör
-ett prövat förslag till nästa version för den som får godkänna, så att flera personer med varsin klient kan arbeta mot samma modell.
+ett prövat förslag till nästa version för den som får godkänna, så att flera personer med varsin klient kan arbeta mot samma modell. En
+server som anger formen `ops_form` (`dataspatium-tools/1`) får dessutom skrivverktygens operationer, så att nya element, raderingar och
+samband kommer med i förslaget: servern bygger dem på basversionen med samma kod som appen, och en krockande nyckel som du ger upp
+skickas med som `keep_theirs`.
 
 Har projektet team (kortet *Projektets medlemmar* i Hantera) visar panelen vilka team ändringen rör. Rör den bara ett teams del
 godkänner teamets ansvarige, även med rollen redaktör, och servern nekar (403) en projektansvarig; rör den flera teams delar, eller

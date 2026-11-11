@@ -353,7 +353,9 @@ alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste 
 Kortet *Endringsforslag på serveren* i modellvisningen viser, for en modell hentet fra Dataregium, alle forslag mot dokumentet når
 serveren angir kapabiliteten `ifc_proposals_url`: tittel, tilstand, hvem som foreslo, hvor mange endringer og mot hvilken versjon;
 *Godkjenn* gjør et prøvd forslag til neste versjon for den som får godkjenne, så flere personer med hver sin klient kan arbeide mot
-samme modell.
+samme modell. En server som oppgir formen `ops_form` (`dataspatium-tools/1`), får dessuten skriveverktøyenes operasjoner, så nye
+elementer, slettinger og relasjoner kommer med i forslaget: serveren bygger dem på basisversjonen med samme kode som appen, og en
+kolliderende nøkkel du gir opp, sendes med som `keep_theirs`.
 
 Har prosjektet team (kortet *Prosjektets medlemmer* i Håndter), viser panelet hvilke team endringen rører. Rører den bare ett teams
 del, godkjenner teamets ansvarlige, også med rollen redaktør, og serveren nekter (403) en prosjektansvarlig; rører den flere teams

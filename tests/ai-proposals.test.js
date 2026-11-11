@@ -19,14 +19,19 @@
   const json = (data, status = 200) => ({ kind: 'text', data: JSON.stringify(data), status });
   const CDE = 'dataspatium-asset://tests/ai-proposals-cde';
   const BARE = 'dataspatium-asset://tests/ai-proposals-bare';
+  const OPS = 'dataspatium-asset://tests/ai-proposals-ops';
   const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
+  const http = D.require('api/http');
+  const writeTools = D.require('ai/write-tools');
   const hits = []; let approveAnswer = 'ok';
+  /** The bodies the virtual servers were sent, by path; the virtual handler itself only sees addresses. */
+  const sent = {}; let realRequest = null;
   const rows = [
     { topic_guid: 't-2', title: 'Brandklass EI90', description: 'Dörrarna på plan 2', state: 'clean', base_version_index: 4, change_count: 3, author: 'bo', checked_at: '2026-11-11T20:00:00Z', proposal_url: CDE + '/bcf/3.0/projects/p-1/topics/t-2/ifc-proposal', approve_url: CDE + '/bcf/3.0/projects/p-1/topics/t-2/ifc-proposal/approve' },
     { topic_guid: 't-1', title: 'Nya fönster', state: 'approved', base_version_index: 3, change_count: 12, author: 'anna', checked_at: '2026-11-10T09:00:00Z', version_index: 4, proposal_url: CDE + '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal', approve_url: CDE + '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve' },
   ];
-  /** A virtual Dataregium: with the list's template in its capability, or without it. */
-  function server(base, withList) {
+  /** A virtual Dataregium: with the list's template in its capability, or without it, and with the write tools' form or without it. */
+  function server(base, withList, withOps) {
     return (url) => {
       const rest = url.startsWith(base) ? url.slice(base.length) : new URL(url).pathname;
       const path = rest.split('?')[0];
@@ -34,6 +39,7 @@
       if (path === '/.well-known/dataregium') {
         const changes = { enabled: true, schema: '/documents/1.0/ifc-changes/schema', proposal_url: base + '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal', approve_url: base + '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal/approve' };
         if (withList) changes.ifc_proposals_url = base + '/documents/1.0/documents/{document_id}/ifc-proposals';
+        if (withOps) changes.ops_form = 'dataspatium-tools/1';
         return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions: { ifc_changes: changes } }));
       }
       if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
@@ -41,6 +47,9 @@
       if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
       if (path === '/foundation/1.0/current-user') return Promise.resolve(json({ id: 'anna', name: 'Anna' }));
       if (path === '/documents/1.0/documents/doc-1/ifc-proposals') return Promise.resolve(json(rows));
+      if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Change proposal'], topic_status: ['Open'] }));
+      if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-9', title: 'x' }, 201));
+      if (path === '/bcf/3.0/projects/p-1/topics/t-9/snippet') return Promise.resolve({ kind: 'text', data: '' });
       if (path === '/bcf/3.0/projects/p-1/topics/t-2/ifc-proposal/approve') {
         if (approveAnswer === 'team') return Promise.resolve(json({ message: 'Only the responsible of the team Stomme approves it', code: 'forbidden' }, 403));
         rows[0] = Object.assign({}, rows[0], { state: 'approved', version_index: 5 });
@@ -103,10 +112,59 @@
     return 'ok';
   }, 20000);
 
+  let withOps = null;
+  test('proposals: a server that takes the write tools\' form gets their operations in the snippet, also for created elements alone', async (assert) => {
+    D.net.virtual('tests/ai-proposals-ops/', server(OPS, false, true));
+    realRequest = http.request;
+    http.request = (req) => { const u = String(req.url); if (u.startsWith(OPS) && req.body !== undefined) sent[u.slice(OPS.length).split('?')[0]] = { method: req.method, body: String(req.body) }; return realRequest(req); };
+    withOps = (await families.createConnector('opencde', { baseUrl: OPS, clientId: 'dataspatium', clientSecret: '' })).connector;
+    await signIn(withOps);
+    assert.equal(await opencde.opsForm(withOps), opencde.OPS_FORM);
+    assert.equal(await opencde.opsForm(connector), null, 'a server without the form');
+    const ops = [{ tool: 'create_storeys_and_grid', storeys: [{ name: 'Plan 1', elevation: 0 }], grid: null }, { tool: 'create_wall', storey: 'Plan 1', start: [0, 0], end: [12, 0], thickness: 0.3, height: 2.7, name: 'Yttervägg syd' }];
+    const changeSet = { base: { document_id: 'doc-1', version_index: 4 }, provenance: { user: 'Anna', ai_model: null, tool_call: 'create_wall', created_at: new Date().toISOString() }, changes: [] };
+    const out = await opencde.proposeChanges(withOps, 'p-1', { title: 'Nytt hus', changeSet, ops });
+    assert.equal(out.opsForm, 'dataspatium-tools/1');
+    const put = sent['/bcf/3.0/projects/p-1/topics/t-9/snippet'];
+    assert.ok(put && put.method === 'PUT', 'the snippet was sent');
+    const snippet = JSON.parse(put.body);
+    assert.ok(snippet.ops_form === 'dataspatium-tools/1' && JSON.stringify(snippet.ops) === JSON.stringify(ops) && Array.isArray(snippet.changes) && !snippet.changes.length, put.body.slice(0, 300));
+    assert.equal(JSON.stringify(out.changeSet.ops), JSON.stringify(ops), 'the panel keeps what was sent');
+    // Without the form the operations stay at home, and created elements alone are no proposal: refused before any topic.
+    let refused = null;
+    try { await opencde.proposeChanges(connector, 'p-1', { title: 'Nytt hus', changeSet, ops }); } catch (err) { refused = err; }
+    assert.ok(refused && refused.message === t('opencde.err.changes.none'), String(refused && refused.message));
+    // The panel: a previewed change set of a new wall goes with its operations, without the refs.
+    const meta = await datasets.get(ds.id);
+    await datasets.updateMeta(ds.id, { source: Object.assign({}, meta.source || { kind: 'file' }, { cde: { connectorId: withOps.id, connectorName: withOps.name, host: 'tests', projectId: 'p-1', projectName: 'Testprojekt', documentId: 'doc-1', versionIndex: 4 } }) });
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: ds.id, preview: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      panel.setMode('change');
+      writeTools.call(panel.state.changeset, 'create_wall', { storey: 'Plan 1', start: [0, 0], end: [8, 0], thickness: 0.3, height: 2.7, name: 'Ny vägg' });
+      panel.state.cde = (await datasets.get(ds.id)).source.cde;
+      panel.state.opsForm = opencde.OPS_FORM;
+      panel.state.preview = { report: { proposal: { changes: [], instances: 0, unexpressed: { created: 1, deleted: 0, relations: 0 } }, created: [{ id: 300, ifc_class: 'IfcWall', ref: 'new-1' }], changed: [], deleted: [], findings: [], errors: 0 } };
+      panel.attach([]);
+      const line = panel.el.querySelector('[data-ai-proposal]');
+      assert.ok(line && line.textContent.includes(t('ai.change.propose.ops', { n: '1' })), 'the line says the operations go along: ' + (line && line.textContent));
+      const btn = /** @type {any} */ (panel.el.querySelector('[data-ai-propose]'));
+      assert.ok(btn && !btn.disabled, 'Föreslå på servern is possible without attribute changes');
+      delete sent['/bcf/3.0/projects/p-1/topics/t-9/snippet'];
+      await panel.propose({ title: 'Ny vägg', description: 'En vägg.' });
+      assert.equal(panel.state.error, '', 'no error');
+      const fromPanel = JSON.parse(sent['/bcf/3.0/projects/p-1/topics/t-9/snippet'].body);
+      assert.ok(fromPanel.ops.length === 1 && fromPanel.ops[0].tool === 'create_wall' && !('ref' in fromPanel.ops[0]) && fromPanel.ops_form === opencde.OPS_FORM, JSON.stringify(fromPanel.ops));
+      assert.ok(panel.state.proposed && JSON.stringify(panel.state.proposed.changeSet.ops) === JSON.stringify(fromPanel.ops), 'the proposal kept as sent');
+    } finally { panel.destroy(); panel.el.remove(); }
+    return 'ok';
+  }, 20000);
+
   test('proposals: cleanup', async (assert) => {
     if (ds) await datasets.remove(ds.id).catch(() => {});
-    for (const c of [connector, bare]) { if (c) { await opencde.logout(c).catch(() => {}); await connectors.remove(c.id).catch(() => {}); } }
-    D.net.unvirtual('tests/ai-proposals-cde/'); D.net.unvirtual('tests/ai-proposals-bare/');
+    for (const c of [connector, bare, withOps]) { if (c) { await opencde.logout(c).catch(() => {}); await connectors.remove(c.id).catch(() => {}); } }
+    if (realRequest) http.request = realRequest;
+    D.net.unvirtual('tests/ai-proposals-cde/'); D.net.unvirtual('tests/ai-proposals-bare/'); D.net.unvirtual('tests/ai-proposals-ops/');
     assert.ok(true);
   });
 })();

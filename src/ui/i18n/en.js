@@ -6129,6 +6129,7 @@
     'ai.change.propose.send': 'Send',
     'ai.change.propose.summary': 'The proposal: {n} attribute changes on {m} instances.',
     'ai.change.propose.unexpressed': 'Only in the description, not in the proposal\'s form: {created} created, {deleted} deleted, {relations} new relationships.',
+    'ai.change.propose.ops': 'The server also gets the write tools' {n} operations and builds the proposal from them on the base version, so that new elements, deletions and relationships are included.',
     'ai.change.propose.none': 'The change set changes no existing instances; new elements cannot be proposed in the server\'s form yet. Publish instead.',
     'ai.change.propose.unsupported': 'The server does not take change proposals (ifc_changes is missing from its capabilities).',
     'ai.change.propose.done': 'The change proposal was sent as the topic “{title}” to {project}.',

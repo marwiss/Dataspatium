@@ -351,7 +351,9 @@ breytingarnar aftur og leggðu til á ný.
 Kortið *Breytingatillögur á þjóninum* í líkanssýninni sýnir, fyrir líkan sótt frá Dataregium, allar tillögur gagnvart skjalinu þegar
 þjónninn tilgreinir getuna `ifc_proposals_url`: titil, stöðu, hver lagði til, hve margar breytingar og gagnvart hvaða útgáfu;
 *Samþykkja* gerir prófaða tillögu að næstu útgáfu fyrir þann sem má samþykkja, svo að fleiri með hver sinn biðlara geti unnið með sama
-líkan.
+líkan. Þjónn sem gefur upp sniðið `ops_form` (`dataspatium-tools/1`) fær auk þess aðgerðir skrifverkfæranna, svo nýjar einingar,
+eyðingar og tengsl fylgja tillögunni: þjónninn byggir þær á grunnútgáfunni með sama kóða og appið, og lykill í árekstri sem þú gefur
+eftir er sendur með sem `keep_theirs`.
 
 Hafi verkefnið teymi (spjaldið *Meðlimir verkefnisins* í Sýsla) sýnir spjaldið hvaða teymi breytingin snertir. Snerti hún aðeins hluta
 eins teymis samþykkir ábyrgðarmaður þess teymis, líka með hlutverkið ritstjóri, og þjónninn hafnar (403) verkefnisstjóra; snerti hún

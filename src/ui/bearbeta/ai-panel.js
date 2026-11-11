@@ -37,7 +37,7 @@
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false };
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
@@ -309,6 +309,7 @@
           if (!s.cde || !s.preview) return;
           const connector = await connectors.get(cde.connectorId);
           if (!connector || !opencde.isOpenCde(connector) || !opencde.signedIn(connector)) return;
+          s.opsForm = await opencde.opsForm(connector).catch(() => null);
           const mine = s.preview;
           mine.server = { status: 'pending' }; render();
           try {
@@ -323,7 +324,8 @@
         function proposalText(proposal) {
           const un = proposal.unexpressed || {};
           const lines = [t('ai.change.propose.summary', { n: i18n.formatNumber(proposal.changes.length), m: i18n.formatNumber(Number(proposal.instances) || 0) })];
-          if (un.created || un.deleted || un.relations) lines.push(t('ai.change.propose.unexpressed', { created: i18n.formatNumber(un.created || 0), deleted: i18n.formatNumber(un.deleted || 0), relations: i18n.formatNumber(un.relations || 0) }));
+          if (s.opsForm && s.changeset.ops.length) lines.push(t('ai.change.propose.ops', { n: i18n.formatNumber(s.changeset.ops.length) }));
+          else if (un.created || un.deleted || un.relations) lines.push(t('ai.change.propose.unexpressed', { created: i18n.formatNumber(un.created || 0), deleted: i18n.formatNumber(un.deleted || 0), relations: i18n.formatNumber(un.relations || 0) }));
           return lines.join(' ');
         }
         async function proposeDialog(defaults) {
@@ -348,7 +350,8 @@
           const proposal = proposalOf(report);
           const cde = s.cde;
           if (s.proposing || s.busy || !proposal || !cde) return;
-          if (!proposal.changes.length) { fail(new Error(t('ai.change.propose.none'))); render(); return; }
+          const withOps = !!s.opsForm && s.changeset.ops.length > 0;
+          if (!proposal.changes.length && !withOps) { fail(new Error(t('ai.change.propose.none'))); render(); return; }
           const connector = await connectors.get(cde.connectorId);
           if (!connector) { fail(new Error(t('cde.err.noconnector', { host: cde.host }))); render(); return; }
           const project = cde.projectName || cde.projectId;
@@ -369,10 +372,10 @@
               provenance: { user: String((me && (me.name || me.id)) || 'Dataspatium'), ai_model: p ? p.model : null, tool_call: s.changeset.ops.map((op) => op.tool).join(',').slice(0, 200) || null, created_at: new Date().toISOString() },
               changes: proposal.changes,
             };
-            const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet });
+            const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet, ops: withOps ? writeTools.toWheel(s.changeset) : undefined });
             if (!out) throw new Error(t('ai.change.propose.unsupported'));
             s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null,
-              proposalUrl: out.proposalUrl || null, schemaUrl: out.schemaUrl, changeSet, details: null, picks: [] };
+              proposalUrl: out.proposalUrl || null, schemaUrl: out.schemaUrl, changeSet: out.changeSet || changeSet, details: null, picks: [] };
             const msg = t('ai.change.propose.done', { title: s.proposed.title, project });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
             if (out.tried) trialOf(connector, out.proposalUrl, s.proposed);
@@ -457,8 +460,11 @@
               kept++;
               changes.push(c.op === 'set' ? Object.assign({}, c, { old: mine.details[i].theirs === undefined ? null : mine.details[i].theirs }) : c);
             }
-            if (!changes.length) throw new Error(t('ai.change.conflict.empty'));
-            const changeSet = Object.assign({}, mine.changeSet, { base: Object.assign({}, mine.changeSet.base, { version_index: latest || mine.changeSet.base.version_index }), changes });
+            const hasOps = Array.isArray(mine.changeSet.ops) && mine.changeSet.ops.length > 0;
+            if (!changes.length && !hasOps) throw new Error(t('ai.change.conflict.empty'));
+            const theirs = mine.details.filter((d, i) => picks[i] === 'theirs').map((d) => String(d.key || (d.guid ? `${d.guid}${d.path ? '/' + d.path : ''}.${d.attribute}` : `#${d.step_id}.${d.attribute}`)));
+            const changeSet = Object.assign({}, mine.changeSet, { base: Object.assign({}, mine.changeSet.base, { version_index: latest || mine.changeSet.base.version_index }), changes },
+              hasOps ? { keep_theirs: Array.from(new Set((mine.changeSet.keep_theirs || []).concat(theirs))) } : {});
             await opencde.putChangeSet(connector, cde.projectId, mine.guid, mine.schemaUrl, changeSet);
             mine.changeSet = changeSet; mine.details = null; mine.picks = []; mine.conflicts = null;
             log(t('ai.change.conflict.resent', { n: String(changeSet.base.version_index), kept: i18n.formatNumber(kept), dropped: i18n.formatNumber(dropped) }), 'ok');
@@ -559,7 +565,7 @@
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
-              s.cde && proposal ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !proposal.changes.length || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
+              s.cde && proposal ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.ops.length || s.busy, title: t('ai.change.reject.hint'), 'data-ai-reject': '', onClick: rejectNow })),
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }

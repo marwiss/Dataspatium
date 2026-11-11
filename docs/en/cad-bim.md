@@ -362,7 +362,9 @@ whole file was uploaded in between. Fetch the newest version then, redo the chan
 The card *Change proposals on the server* in the model view shows, for a model fetched from Dataregium, every proposal against the
 document when the server states the capability `ifc_proposals_url`: title, state, who proposed it, how many changes and against which
 version; *Approve* makes a tried proposal the next version for those allowed to approve, so that several people with their own clients
-can work on the same model.
+can work on the same model. A server that states the form `ops_form` (`dataspatium-tools/1`) also gets the write tools' operations, so
+that new elements, deletions and relationships are part of the proposal: the server builds them on the base version with the same code
+as the app, and a colliding key you give up is sent along as `keep_theirs`.
 
 When the project has teams (the card *The project's members* in Manage) the panel shows which teams the change touches. When it
 touches one team's part, that team's responsible approves, even with the role editor, and the server refuses (403) a manager; when it

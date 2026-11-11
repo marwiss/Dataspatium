@@ -355,7 +355,9 @@ foreslå igen.
 Kortet *Ændringsforslag på serveren* i modelvisningen viser, for en model hentet fra Dataregium, alle forslag mod dokumentet, når
 serveren angiver kapabiliteten `ifc_proposals_url`: titel, tilstand, hvem der foreslog, hvor mange ændringer og mod hvilken version;
 *Godkend* gør et afprøvet forslag til næste version for den, der må godkende, så flere personer med hver sin klient kan arbejde på
-samme model.
+samme model. En server, der angiver formen `ops_form` (`dataspatium-tools/1`), får desuden skriveværktøjernes operationer, så nye
+elementer, sletninger og relationer kommer med i forslaget: serveren bygger dem på basisversionen med samme kode som appen, og en
+kolliderende nøgle, du opgiver, sendes med som `keep_theirs`.
 
 Har projektet teams (kortet *Projektets medlemmer* i Håndtér), viser panelet, hvilke teams ændringen rører. Rører den kun et teams
 del, godkender teamets ansvarlige, også med rollen redaktør, og serveren afviser (403) en projektansvarlig; rører den flere teams dele,

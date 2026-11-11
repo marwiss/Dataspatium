@@ -357,7 +357,9 @@ nytt og foreslå igjen.
 Kortet *Endringsframlegg på tenaren* i modellvisinga viser, for ein modell henta frå Dataregium, alle framlegg mot dokumentet når
 tenaren gjev kapabiliteten `ifc_proposals_url`: tittel, tilstand, kven som foreslo, kor mange endringar og mot kva versjon; *Godkjenn*
 gjer eit prøvd framlegg til neste versjon for den som får godkjenne, så fleire personar med kvar sin klient kan arbeide mot same
-modell.
+modell. Ein tenar som oppgjev forma `ops_form` (`dataspatium-tools/1`), får dessutan operasjonane til skriveverktøya, så nye element,
+slettingar og relasjonar kjem med i framlegget: tenaren byggjer dei på basisversjonen med same kode som appen, og ein kolliderande
+nøkkel du gjev opp, vert send med som `keep_theirs`.
 
 Har prosjektet team (kortet *Medlemmene i prosjektet* i Handter), viser panelet kva team endringa rører. Rører ho berre delen til
 eitt team, godkjenner den ansvarlege i teamet, òg med rolla redaktør, og tenaren nektar (403) ein prosjektansvarleg; rører ho delane

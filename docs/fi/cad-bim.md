@@ -365,7 +365,9 @@ tee muutokset uudelleen ja ehdota uudelleen.
 Mallinäkymän kortti *Muutosehdotukset palvelimella* näyttää Dataregiumista haetulle mallille kaikki asiakirjaan kohdistuvat ehdotukset,
 kun palvelin ilmoittaa kyvykkyyden `ifc_proposals_url`: otsikon, tilan, ehdottajan, muutosten määrän ja version, jota vasten ne on
 tehty; *Hyväksy* tekee kokeillusta ehdotuksesta seuraavan version sille, joka saa hyväksyä, jotta useampi henkilö omine
-asiakasohjelmineen voi työskennellä saman mallin parissa.
+asiakasohjelmineen voi työskennellä saman mallin parissa. Palvelin, joka ilmoittaa muodon `ops_form` (`dataspatium-tools/1`), saa
+lisäksi kirjoitustyökalujen toiminnot, joten uudet elementit, poistot ja suhteet tulevat mukaan ehdotukseen: palvelin rakentaa ne
+perusversion päälle samalla koodilla kuin sovellus, ja ristiriitainen avain, josta luovut, lähetetään mukana nimellä `keep_theirs`.
 
 Jos projektissa on tiimejä (kortti *Projektin jäsenet* Hallitse-tilassa), paneeli näyttää, mitä tiimejä muutos koskee. Jos se
 koskee vain yhden tiimin osaa, tiimin vastuuhenkilö hyväksyy, myös toimittajan roolissa, ja palvelin kieltäytyy (403) projektin
