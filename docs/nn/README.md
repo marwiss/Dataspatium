@@ -49,8 +49,9 @@ blir berre lagra krypterte (AES-GCM).
 4. **Hent inn data.** I modusen *Hent* slepper du ei fil på flata, eller klikkar på *Prøv med dømedata*. Appen viser kva fila
    inneheld; klikk på *Importer*. Datasettet blir lagra i nettlesaren på datamaskinen din.
 5. **Arbeid vidare.** Modusane øvst er stega i arbeidet: *Handter* held orden på datasetta dine, *Søk* finn rader utan kode, *Bearbeid*
-   viser tabellen, kartet eller modellen med knappar for å rette og rekne, *Analyser* har statistikk og kode (R, Python og SQL),
-   *Visualiser* lagar diagram og kart, *Eksporter* lagrar filer på datamaskinen, og *Del* sender til andre.
+   viser tabellen, kartet eller modellen med knappar for å rette og rekne, *Kontroller* prøver tabellar og modellar mot krav,
+   *Analyser* har statistikk og kode (R, Python og SQL), *Visualiser* lagar diagram og kart, *Eksporter* lagrar filer på
+   datamaskinen, og *Del* sender til andre.
 
 Det du lagrar, ligg i den eigne databasen til nettlesaren på datamaskinen. Slettar du nettstaddata i nettlesaren, forsvinn det, så ta
 jamleg ein tryggingskopi under *Handter > Arbeidsområde*. Tryggingskopien er ei ZIP-fil som kan gjenopprettast på same eller ein annan
@@ -172,7 +173,7 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 - **Dataregium med saker**: modellane og sakene til prosjektet, nye saker som peikar ut staden i 3D, BCF-filer, IFC-grafen til tenaren,
   kortet *Administrasjon* for administratoren og kortet *Medlemmene i prosjektet* for den prosjektansvarlege (sjå
   [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Teknisk:* BCF API 3.0 og 2.1 med viewpoints.
-- **Sju språk**: også nynorsk, med handboka i appen og grunnkurset gjennom alle åtte modusane.
+- **Sju språk**: også nynorsk, med handboka i appen og grunnkurset gjennom modusane.
 
 ### Også i versjon 3 (med Dataregium 3)
 
@@ -295,7 +296,7 @@ Filnamna er dei same på alle språk (dei er dei svenske originalane), så lenkj
 - **Handboka** i appen: den same dokumentasjonen som her, med søk; opne henne med ? øvst til høgre eller F1.
 - [Kom i gang](kom-igang.md): steg for steg med vanlege spørsmål.
 - [Brukarrettleiing](anvandarguide.md): heile arbeidsflyten frå fil til rapport.
-- [Dei åtte modusane](lagen.md): kva som finst kvar, og kvifor.
+- [Dei ni modusane](lagen.md): kva som finst kvar, og kvifor.
 - [Vanlege spørsmål](faq.md): lagring, tryggleik, R, API-ar og oppdateringar.
 
 **Etter område**

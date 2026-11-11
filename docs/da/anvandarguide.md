@@ -8,8 +8,8 @@ dokumenter i [dokumentmallar.md](dokumentmallar.md). Almindelige spørgsmål bes
 
 ## Arbejdsområdet
 
-Skærmen ser ens ud i alle tilstande. Øverst skifter du tilstand (Hent, Håndter, Søg, Bearbejd, Analysér, Visualisér,
-Eksportér, Del; Alt+1 til Alt+8 virker også) og når kommandopaletten (forstørrelsesglasset eller Ctrl+K),
+Skærmen ser ens ud i alle tilstande. Øverst skifter du tilstand (Hent, Håndter, Søg, Bearbejd, Kontrollér, Analysér,
+Visualisér, Eksportér, Del; Alt+1 til Alt+9 virker også) og når kommandopaletten (forstørrelsesglasset eller Ctrl+K),
 sprogknappen, tema (lyst eller mørkt) og hjælpeknappen med versionsnummer og *Søg efter opdateringer*.
 Kommandopaletten er den hurtigste vej til det meste: skriv nogle bogstaver for at skifte tilstand, åbne et datasæt,
 et diagram eller et dashboard, søge i data eller køre en handling på det valgte datasæt. Til venstre findes
@@ -233,7 +233,7 @@ opdateringer* og linket til dokumentationen på GitHub.
 
 ## Tastatur
 
-Alt+1 til Alt+8 skifter tilstand, Ctrl+K åbner kommandopaletten, og F1 åbner håndbogen. Kanten mellem et panel og arbejdsfladen kan få
+Alt+1 til Alt+9 skifter tilstand, Ctrl+K åbner kommandopaletten, og F1 åbner håndbogen. Kanten mellem et panel og arbejdsfladen kan få
 fokus med Tab og flyttes med piletasterne (Skift for større trin, Home og End for mindste og største bredde). Første tryk på Tab på siden viser linket *Spring til
 indhold*, der flytter fokus forbi tilstandsvælgeren og objektpanelet. Alt kan nås med Tab og Enter; dialoger lukkes med
 Esc. I tabellen flytter piletasterne mellem celler, og Enter redigerer. Appen følger systemindstillingen for reduceret

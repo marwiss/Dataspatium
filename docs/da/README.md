@@ -49,8 +49,9 @@ hemmeligheder gemmes kun krypteret (AES-GCM).
 4. **Hent data ind.** I tilstanden *Hent* slipper du en fil på fladen, eller klikker på *Prøv med eksempeldata*. Appen viser, hvad
    filen indeholder; klik på *Importér*. Datasættet gemmes i browseren på din computer.
 5. **Arbejd videre.** Tilstandene øverst er trinene i arbejdet: *Håndter* holder orden på dine datasæt, *Søg* finder rækker uden kode,
-   *Bearbejd* viser tabellen, kortet eller modellen med knapper til at rette og regne, *Analysér* har statistik og kode (R, Python og
-   SQL), *Visualisér* laver diagrammer og kort, *Eksportér* gemmer filer på computeren, og *Del* sender til andre.
+   *Bearbejd* viser tabellen, kortet eller modellen med knapper til at rette og regne, *Kontrollér* prøver tabeller og modeller mod
+   krav, *Analysér* har statistik og kode (R, Python og SQL), *Visualisér* laver diagrammer og kort, *Eksportér* gemmer filer på
+   computeren, og *Del* sender til andre.
 
 Det, du gemmer, ligger i browserens egen database på computeren. Rydder du browserens webstedsdata, forsvinder det, så tag jævnligt en
 sikkerhedskopi under *Håndter > Arbejdsområde*. Sikkerhedskopien er en ZIP-fil, der kan gendannes på samme eller en anden computer.
@@ -172,7 +173,7 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
 - **Dataregium med sager**: projektets modeller og sager, nye sager, der udpeger stedet i 3D, BCF-filer, serverens IFC-graf, kortet
   *Administration* for administratoren og kortet *Projektets medlemmer* for den projektansvarlige (se
   [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Teknisk:* BCF API 3.0 og 2.1 med viewpoints.
-- **Syv sprog**: også nynorsk, med håndbogen i appen og grundkurset gennem alle otte tilstande.
+- **Syv sprog**: også nynorsk, med håndbogen i appen og grundkurset gennem tilstandene.
 
 ### Også i version 3 (med Dataregium 3)
 
@@ -294,7 +295,7 @@ Filnavnene er de samme på alle sprog (det er de svenske originaler), så links 
 - **Håndbogen** i appen: den samme dokumentation som her, med søgning; åbn den med ? øverst til højre eller F1.
 - [Kom i gang](kom-igang.md): trin for trin med almindelige spørgsmål.
 - [Brugervejledning](anvandarguide.md): hele arbejdsgangen fra fil til rapport.
-- [De otte tilstande](lagen.md): hvad der er hvor og hvorfor.
+- [De ni tilstande](lagen.md): hvad der er hvor og hvorfor.
 - [Ofte stillede spørgsmål](faq.md): lagring, sikkerhed, R, API'er og opdateringer.
 
 **Efter område**

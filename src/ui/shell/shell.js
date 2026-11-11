@@ -1,7 +1,7 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 /**
- * Application shell: builds the fixed layout (top bar with the eight modes, object panel, workspace,
+ * Application shell: builds the fixed layout (top bar with the nine modes, object panel, workspace,
  * inspector, log drawer, status bar), owns the store and hands each mode the same slots and services.
  *
  * Mode contract: { id, activate(slots), deactivate(), update?(state, changed) } created by
@@ -12,8 +12,8 @@
   const D = globalThis.Dataspatium;
   D.define('ui/shell', ['ui/components', 'ui/base', 'ui/icons', 'ui/basic', 'ui/overlays', 'ui/theme', 'ui/state', 'ui/dataset-list', 'data/datasets', 'data/workspace', 'io/import', 'io/export', 'platform/files', 'platform/storage/idb', 'ui/command-palette', 'ui/course', 'data/r-bridge', 'data/python-bridge', 'data/selection'], (_components, base, icons, basic, overlays, theme, stateMod, datasetList, datasets, workspace, importer, exporter, files, idb, paletteMod, courseMod, rBridge, pyBridge, selectionMod) => {
       const { h, t, i18n, replace } = base;
-      const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela'];
-      const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
+      const MODES = ['inhamta', 'hantera', 'soka', 'bearbeta', 'kontrollera', 'analysera', 'visualisera', 'exportera', 'dela'];
+      const MODE_ICONS = { inhamta: 'download', hantera: 'database', soka: 'text-search', bearbeta: 'wand-sparkles', kontrollera: 'list-checks', analysera: 'terminal', visualisera: 'chart-column', exportera: 'file-output', dela: 'share-2' };
       const THEME_ICON = { auto: 'sun', light: 'sun', dark: 'moon' };
       const ENGINE_STATES = { idle: 'shell.engine.state.idle', starting: 'shell.engine.state.starting', ready: 'shell.engine.state.ready', busy: 'shell.engine.state.busy', error: 'shell.engine.state.error' };
       /** Settings keys for the panel widths set with the splitters. */
@@ -497,7 +497,7 @@
         }
 
         onKey(e) {
-          if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
+          if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); this.activate(MODES[Number(e.key) - 1]); }
           else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); this.palette.open(); }
           else if (e.key === 'F1' && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); this.showHelp(); }
         }

@@ -21,7 +21,7 @@ skipanaspjaldið. Leturgerðir og tákn eru hlaðin úr möppunni; það tekur a
 ### Grunnnámskeiðið
 
 Eftir tungumálavalið hefst **grunnnámskeiðið**, gagnvirk yfirferð í spjaldi neðst til hægri. Það tekur um tíu mínútur
-og fylgir dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* gegnum alla átta hamina: sækja gögn, skoða
+og fylgir dæminu *Mannfjöldi eftir sveitarfélögum 2024 (Svíþjóð)* gegnum hamina: sækja gögn, skoða
 gagnasafnið, leita, reikna dálk, spyrja með SQL, reikna með R, búa til myndrit, flytja út og deila. Hvert skref útskýrir hugtak og
 gefur verkefni. Rammi sýnir hvar á að smella og skrefið er merkt lokið þegar þú hefur gert það. *Gera það fyrir mig*
 framkvæmir skrefið ef þú vilt frekar sjá hvernig það er gert.
@@ -31,10 +31,10 @@ hægri) eða af skipanaspjaldinu (Ctrl+K, *Opna grunnnámskeiðið*). Það held
 
 ## 3. Hamirnir
 
-Efst eru átta hamir. Spjaldið til vinstri sýnir hluti (gagnasöfn og uppruna), í miðjunni er vinnuflöturinn, spjaldið
+Efst eru níu hamir. Spjaldið til vinstri sýnir hluti (gagnasöfn og uppruna), í miðjunni er vinnuflöturinn, spjaldið
 til hægri sýnir eiginleika og tölfræði og neðst er stöðustikan með vistunarstöðu, geymslu, valda gagnasafninu,
 R-vélinni og hnöppunum sem fella spjöldin inn og opna dagbókina. Breidd spjaldanna er breytt með því að draga brúnina
-að vinnuflötinum. Alt+1 til Alt+8 skipta um ham með lyklaborðinu.
+að vinnuflötinum. Alt+1 til Alt+9 skipta um ham með lyklaborðinu.
 
 | Hamur | Hvað þú gerir þar |
 |---|---|
@@ -42,6 +42,7 @@ að vinnuflötinum. Alt+1 til Alt+8 skipta um ham með lyklaborðinu.
 | Umsjón | Sérð gagnasöfnin þín í möppum með merkjum, endurnefnir, eyðir, vistar útgáfur, keyrir hópaðgerðir á fleiri gagnasöfn, tekur afrit af og endurheimtir vinnusvæðið |
 | Leita | Leitar í öllum dálkum í einu eða öllum gagnasöfnum, afmarkar með flokkum og vistar leitir sem lista ([soka.md](soka.md)) |
 | Vinna | Breytir reitum, raðar og síar, hreinsar og ákvarðar gerðir, reiknar dálka, snýrð og tengir gagnasöfn; allt með afturköllun, útgáfum og uppskriftum ([bearbeta.md](bearbeta.md)) |
+| Athuga | Prófar töflu gegn einföldum reglum (gerð og tóm gildi í hverjum dálki, tvítök meðal raða) og sýnir athuganir IFC-líkans: *Sannprófa líkanið* og *Bera saman útgáfur* |
 | Greina | R-stjórnborð með ggplot2 og tidyverse, vistaðar skriftur og útflutningur myndrita; Python-stjórnborð með pandas og matplotlib; SQL-stjórnborð á valda gagnasafnið; reglulegar segðir; minnisbók sem verður að skýrslu |
 | Myndgera | Býrð til myndrit með Vega-Lite, D3-sniðum eða R-skriftum, vistar, flytur út og býrð þau til í hópkeyrslu ([visualisera.md](visualisera.md)) |
 | Flytja út | Hleður niður gögnum sem CSV, Excel, JSON eða SQLite, vistuðum myndritum sem SVG, PNG eða PDF og skjölum úr sniðum sem HTML, Word, PDF, Markdown eða LaTeX ([dokumentmallar.md](dokumentmallar.md)) |

@@ -1,10 +1,10 @@
-# De åtta lägena
+# De nio lägena
 
-Dataspatium är uppdelat i åtta lägen som följer arbetets gång, i samma anda som statistikproduktionens
-samla in, bearbeta, analysera och sprida: Inhämta, Hantera, Söka, Bearbeta, Analysera, Visualisera, Exportera,
-Dela. Alla lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänster (med lägets egen rubrik i panelhuvudet: Källor i Inhämta, Datamängder i de övriga), arbetsytan i mitten,
+Dataspatium är uppdelat i nio lägen som följer arbetets gång, i samma anda som statistikproduktionens
+samla in, bearbeta, analysera och sprida: Inhämta, Hantera, Söka, Bearbeta, Kontrollera, Analysera, Visualisera,
+Exportera, Dela. Alla lägen har samma skelett: lägesväxlaren högst upp, objektpanelen till vänster (med lägets egen rubrik i panelhuvudet: Källor i Inhämta, Datamängder i de övriga), arbetsytan i mitten,
 inspektören till höger och statusraden längst ned, med loggen infälld ovanför den. Panelerna byter aldrig plats.
-Alt+1 till Alt+8 växlar läge. En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera.
+Alt+1 till Alt+9 växlar läge. En tom arbetsyta öppnas i Inhämta, en arbetsyta med datamängder i Hantera.
 Knapparna uppe till höger öppnar kommandopaletten, byter språk, byter tema (ljust, mörkt, följ systemet) och
 öppnar hjälpen.
 
@@ -188,6 +188,15 @@ Ett urval från Söka markeras i 3D-modellen, och kameran riktas mot det.
 **Ärenden.** Modellvyn visar projektets BCF-ärenden från ett CDE och markerar byggdelarna de pekar på. Se [cad-bim.md](cad-bim.md).
 
 **Skriva ärenden.** Modellvyn skapar ärenden ur markeringen med vyn som viewpoint, kommenterar och byter status, och sparar projektets ärenden som BCF-fil. Se [cad-bim.md](cad-bim.md).
+
+## Kontrollera
+
+Pröva data mot krav. En tabell prövas mot enkla regler: varje kolumns typ och antal tomma värden (saknade eller bara
+mellanslag) och antalet dubbletter bland raderna. En liten tabell kontrolleras så fort den väljs, en tabell med 10 000 rader
+eller fler först när du trycker på *Kör kontrollen*. Inspektören visar det valda fyndet med dess andel av raderna, och *Öppna i
+Bearbeta* tar dig dit för att rätta det. En IFC-modell visar kortet *Validera modellen* och panelen *Jämför versioner* (se
+[cad-bim.md](cad-bim.md)); andra slag har inga kontroller än. AI-panelen får ett fjärde läge, *Kontrollera*, för foton av
+skador (planerat).
 
 ## Analysera
 

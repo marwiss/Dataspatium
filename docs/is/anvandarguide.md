@@ -8,8 +8,8 @@ skráarsnið í [format.md](format.md), um vefþjónustur í [api-konfiguration.
 
 ## Vinnusvæðið
 
-Skjárinn lítur eins út í öllum hömum. Efst skiptirðu um ham (Sækja, Umsjón, Leita, Vinna, Greina, Myndgera, Flytja
-út, Deila; Alt+1 til Alt+8 virka líka) og nærð skipanaspjaldinu (stækkunarglerið eða Ctrl+K), tungumálahnappinum,
+Skjárinn lítur eins út í öllum hömum. Efst skiptirðu um ham (Sækja, Umsjón, Leita, Vinna, Athuga, Greina, Myndgera,
+Flytja út, Deila; Alt+1 til Alt+9 virka líka) og nærð skipanaspjaldinu (stækkunarglerið eða Ctrl+K), tungumálahnappinum,
 þemanu (ljóst eða dökkt) og hjálparhnappinum með útgáfunúmeri og *Leita að uppfærslum*. Skipanaspjaldið er
 fljótlegasta leiðin að flestu: skrifaðu nokkra stafi til að skipta um ham, opna gagnasafn, myndrit eða mælaborð,
 leita í gögnum eða keyra aðgerð á valda gagnasafnið. Til vinstri eru hlutir hamsins (gagnasöfn, upprunar, myndrit,
@@ -228,7 +228,7 @@ leitarreitur sem leitar í öllum köflum, og tenglum milli skjala er fylgt inni
 
 ## Lyklaborð
 
-Alt+1 til Alt+8 skipta um ham, Ctrl+K opnar skipanaspjaldið og F1 opnar handbókina. Brúnin milli spjalds og vinnuflatar getur fengið fókus
+Alt+1 til Alt+9 skipta um ham, Ctrl+K opnar skipanaspjaldið og F1 opnar handbókina. Brúnin milli spjalds og vinnuflatar getur fengið fókus
 með Tab og er færð með örvalyklunum (Shift fyrir stærri skref, Home og End fyrir minnstu og mestu breidd). Fyrsta ýting á Tab á síðunni sýnir tengilinn *Fara í efnið*, sem
 færir fókus framhjá hamavalinu og hlutaspjaldinu. Allt næst með Tab og Enter; gluggum er lokað með Esc. Í töflunni færa
 örvalyklarnir milli reita og Enter breytir. Forritið fylgir kerfisstillingunni um minni hreyfingu.

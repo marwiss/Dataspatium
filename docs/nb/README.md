@@ -49,8 +49,9 @@ hemmeligheter lagres bare kryptert (AES-GCM).
 4. **Hent inn data.** I modusen *Hent* slipper du en fil på flaten, eller klikker på *Prøv med eksempeldata*. Appen viser hva filen
    inneholder; klikk på *Importer*. Datasettet lagres i nettleseren på datamaskinen din.
 5. **Arbeid videre.** Modusene øverst er stegene i arbeidet: *Håndter* holder orden på datasettene dine, *Søk* finner rader uten kode,
-   *Bearbeid* viser tabellen, kartet eller modellen med knapper for å rette og regne, *Analyser* har statistikk og kode (R, Python og
-   SQL), *Visualiser* lager diagrammer og kart, *Eksporter* lagrer filer på datamaskinen, og *Del* sender til andre.
+   *Bearbeid* viser tabellen, kartet eller modellen med knapper for å rette og regne, *Kontroller* prøver tabeller og modeller mot
+   krav, *Analyser* har statistikk og kode (R, Python og SQL), *Visualiser* lager diagrammer og kart, *Eksporter* lagrer filer på
+   datamaskinen, og *Del* sender til andre.
 
 Det du lagrer, ligger i nettleserens egen database på datamaskinen. Sletter du nettleserens nettstedsdata, forsvinner det, så ta jevnlig
 en sikkerhetskopi under *Håndter > Arbeidsområde*. Sikkerhetskopien er en ZIP-fil som kan gjenopprettes på samme eller en annen
@@ -171,7 +172,7 @@ Det som virker i én versjon, virker også i den neste. Hver versjon hører samm
 - **Dataregium med saker**: prosjektets modeller og saker, nye saker som peker ut stedet i 3D, BCF-filer, serverens IFC-graf, kortet
   *Administrasjon* for administratoren og kortet *Prosjektets medlemmer* for den prosjektansvarlige (se
   [Dataspatium og Dataregium](#dataspatium-og-dataregium)). *Teknisk:* BCF API 3.0 og 2.1 med viewpoints.
-- **Sju språk**: også nynorsk, med håndboken i appen og grunnkurset gjennom alle åtte moduser.
+- **Sju språk**: også nynorsk, med håndboken i appen og grunnkurset gjennom modusene.
 
 ### Også i versjon 3 (med Dataregium 3)
 
@@ -294,7 +295,7 @@ Filnavnene er de samme på alle språk (de er de svenske originalene), så lenke
 - **Håndboken** i appen: den samme dokumentasjonen som her, med søk; åpne den med ? øverst til høyre eller F1.
 - [Kom i gang](kom-igang.md): steg for steg med vanlige spørsmål.
 - [Brukerveiledning](anvandarguide.md): hele arbeidsflyten fra fil til rapport.
-- [De åtte modusene](lagen.md): hva som finnes hvor, og hvorfor.
+- [De ni modusene](lagen.md): hva som finnes hvor, og hvorfor.
 - [Vanlige spørsmål](faq.md): lagring, sikkerhet, R, API-er og oppdateringer.
 
 **Etter område**

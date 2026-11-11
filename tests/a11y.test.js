@@ -56,7 +56,7 @@
     return checked + ' pairs';
   });
 
-  test('a11y: landmarks, skip link and accessible names in all eight modes and their tabs', async (assert) => {
+  test('a11y: landmarks, skip link and accessible names in all nine modes and their tabs', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';
     document.body.appendChild(root);
@@ -81,7 +81,7 @@
       const check = (where) => { for (const p of a11y.audit(root)) problems.push(`${where}: ${p.rule}: ${p.element}`); };
       // The mode's own tabs; a tool in a tab may have tabs of its own.
       const tabs = () => { const own = root.querySelector('.dm-center dm-tabs'); return own ? Array.from(own.querySelectorAll('[role="tab"]')) : []; };
-      for (const mode of ['inhamta', 'hantera', 'bearbeta', 'analysera', 'visualisera', 'exportera']) {
+      for (const mode of ['inhamta', 'hantera', 'bearbeta', 'kontrollera', 'analysera', 'visualisera', 'exportera']) {
         shell.activate(mode);
         await wait(600);
         check(mode);
@@ -110,7 +110,7 @@
       key('End');
       await wait(100);
       assert.equal(document.activeElement && document.activeElement.textContent.trim(), t('analysera.tabs.notebook'), 'End goes to the last tab (the notebook is always last)');
-      return 'eight modes';
+      return 'nine modes';
     } finally {
       if (meta) await datasets.remove(meta.id);
       root.remove();

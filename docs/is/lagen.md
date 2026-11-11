@@ -1,9 +1,9 @@
-# Hamirnir átta
+# Hamirnir níu
 
-Dataspatium er skipt í átta hami sem fylgja gangi vinnunnar, í sama anda og hagskýrslugerðin safna, vinna, greina
-og miðla: Sækja, Umsjón, Leita, Vinna, Greina, Myndgera, Flytja út, Deila. Allir hamir hafa sömu beinagrind:
+Dataspatium er skipt í níu hami sem fylgja gangi vinnunnar, í sama anda og hagskýrslugerðin safna, vinna, greina
+og miðla: Sækja, Umsjón, Leita, Vinna, Athuga, Greina, Myndgera, Flytja út, Deila. Allir hamir hafa sömu beinagrind:
 hamavalið efst, hlutaspjaldið til vinstri (með eigin fyrirsögn hamsins í spjaldhausnum: Upprunar í Sækja, Gagnasöfn í hinum), vinnuflötinn í miðjunni, eiginleikaspjaldið til hægri og stöðustikuna
-neðst, með dagbókina fellda inn fyrir ofan hana. Spjöldin skipta aldrei um stað. Alt+1 til Alt+8 skipta um ham. Tómt
+neðst, með dagbókina fellda inn fyrir ofan hana. Spjöldin skipta aldrei um stað. Alt+1 til Alt+9 skipta um ham. Tómt
 vinnusvæði opnast í Sækja, vinnusvæði með gagnasöfnum í Umsjón. Hnapparnir efst til hægri opna skipanaspjaldið,
 skipta um tungumál, skipta um þema (ljóst, dökkt, fylgja kerfinu) og opna hjálpina.
 
@@ -173,6 +173,15 @@ Val úr Leita er merkt í þrívíddarlíkaninu, og myndavélinni er beint að �
 **Mál.** Líkansýnin sýnir BCF-mál verkefnisins frá CDE og merkir byggingarhlutana sem þau vísa á. Sjá [cad-bim.md](cad-bim.md).
 
 **Að skrifa mál.** Líkansýnin býr til mál úr merkingunni með sýnina sem viewpoint, skrifar athugasemdir og breytir stöðu, og vistar mál verkefnisins sem BCF-skrá. Sjá [cad-bim.md](cad-bim.md).
+
+## Athuga
+
+Prófa gögn gegn kröfum. Tafla er prófuð gegn einföldum reglum: gerð hvers dálks og fjöldi tómra gilda (sem vantar eða
+innihalda aðeins bil) og fjöldi tvítaka meðal raða. Lítil tafla er athuguð um leið og hún er valin, en tafla með 10 000 röðum eða
+fleiri ekki fyrr en þú ýtir á *Keyra athugunina*. Eiginleikaspjaldið sýnir valið frávik með hlutfalli þess af röðunum, og *Opna í
+Vinna* fer með þig þangað til að lagfæra það. IFC-líkan sýnir kortið *Sannprófa líkanið* og spjaldið *Bera saman útgáfur* (sjá
+[cad-bim.md](cad-bim.md)); aðrar tegundir hafa engar athuganir enn. Gervigreindarspjaldið fær fjórða ham, *Athuga*, fyrir
+ljósmyndir af skemmdum (fyrirhugað).
 
 ## Greina
 

@@ -8,8 +8,8 @@ dokument i [dokumentmallar.md](dokumentmallar.md). Vanliga frågor besvaras i [f
 
 ## Arbetsytan
 
-Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Söka, Bearbeta, Analysera,
-Visualisera, Exportera, Dela; Alt+1 till Alt+8 fungerar också) och når kommandopaletten (förstoringsglaset eller
+Skärmen ser likadan ut i alla lägen. Överst växlar du läge (Inhämta, Hantera, Söka, Bearbeta, Kontrollera,
+Analysera, Visualisera, Exportera, Dela; Alt+1 till Alt+9 fungerar också) och når kommandopaletten (förstoringsglaset eller
 Ctrl+K), språkknappen, tema (ljust eller mörkt) och hjälpknappen med versionsnummer och *Sök efter uppdatering*.
 Kommandopaletten är den snabbaste vägen till det mesta: skriv några bokstäver för att växla läge, öppna en
 datamängd, ett diagram eller en dashboard, söka i data eller köra en bearbetningsåtgärd på den valda datamängden.
@@ -240,7 +240,7 @@ rätt avsnitt direkt. Handboken följer appens språk och behöver inget nätver
 
 ## Tangentbord
 
-Alt+1 till Alt+8 växlar läge, Ctrl+K öppnar kommandopaletten och F1 öppnar handboken. Kanten mellan en panel och arbetsytan kan få
+Alt+1 till Alt+9 växlar läge, Ctrl+K öppnar kommandopaletten och F1 öppnar handboken. Kanten mellan en panel och arbetsytan kan få
 fokus med Tabb och flyttas med piltangenterna (Skift för större steg, Home och End för minsta och största bredd). Första Tabb-trycket på sidan visar länken
 *Hoppa till innehållet*, som flyttar fokus förbi lägesväxlaren och objektpanelen. Allt nås med Tabb och Enter;
 dialoger stängs med Esc. I tabellen flyttar piltangenterna mellan celler och Enter redigerar. Appen följer

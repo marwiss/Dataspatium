@@ -1,10 +1,10 @@
-# The eight modes
+# The nine modes
 
-Dataspatium is divided into eight modes that follow the flow of the work, in the spirit of statistics production's
-collect, process, analyse and disseminate: Import, Manage, Search, Process, Analyse, Visualise, Export, Share. All
+Dataspatium is divided into nine modes that follow the flow of the work, in the spirit of statistics production's
+collect, process, analyse and disseminate: Import, Manage, Search, Process, Check, Analyse, Visualise, Export, Share. All
 modes share the same skeleton: the mode switcher at the top, the object panel on the left (headed with the mode's own title: Sources in Import, Datasets elsewhere), the work area in the
 middle, the inspector on the right and the status bar at the bottom, with the log folded in above it. The panels
-never change places. Alt+1 to Alt+8 switch mode. An empty workspace opens in Import, a workspace with datasets in
+never change places. Alt+1 to Alt+9 switch mode. An empty workspace opens in Import, a workspace with datasets in
 Manage. The buttons at the top right open the command palette, change language, change theme (light, dark, follow
 the system) and open the help.
 
@@ -177,6 +177,15 @@ A selection from Search is marked in the 3D model, and the camera turns to it.
 **Issues.** The model view shows the project's BCF issues from a CDE and marks the elements they point at. See [cad-bim.md](cad-bim.md).
 
 **Writing issues.** The model view creates issues from the selection with the view as viewpoint, comments and changes status, and saves the project's issues as a BCF file. See [cad-bim.md](cad-bim.md).
+
+## Check
+
+Try data against requirements. A table is tried against simple rules: every column's type and number of empty values (missing
+or only spaces) and the number of duplicate rows. A small table is checked as soon as it is chosen, a table with 10,000 rows or
+more only when you press *Run the check*. The inspector shows the chosen finding with its share of the rows, and *Open in
+Process* takes you there to correct it. An IFC model shows the card *Validate the model* and the panel *Compare versions* (see
+[cad-bim.md](cad-bim.md)); other kinds have no checks yet. The AI panel will get a fourth mode, *Check*, for photos of damage
+(planned).
 
 ## Analyse
 

@@ -21,7 +21,7 @@ kommandopaletten. Skrifttypar og ikon blir lasta frå mappa; det tek ei augnebli
 ### Grunnkurset
 
 Etter språkvalet startar **grunnkurset**, ein interaktiv gjennomgang i eit panel nedst til høgre. Det tek om lag ti
-minutt og følgjer dømet *Folketal per kommune 2024 (Sverige)* gjennom alle åtte modusane: hent data, sjå på
+minutt og følgjer dømet *Folketal per kommune 2024 (Sverige)* gjennom modusane: hent data, sjå på
 datasettet, søk, rekn ut ein kolonne, spør med SQL, rekn med R, lag eit diagram, eksporter og del. Kvart steg forklarar eit omgrep og
 gjev ei oppgåve. Ei ramme viser kvar du skal klikke, og steget blir kryssa av når du har gjort det. *Gjer det for meg* utfører
 steget for deg om du heller vil sjå korleis det blir gjort.
@@ -31,10 +31,10 @@ eller frå kommandopaletten (Ctrl+K, *Opne grunnkurset*). Det held fram der du s
 
 ## 3. Modusane
 
-Øvst finst åtte modusar. Panelet til venstre viser objekt (datasett og kjelder), midten er arbeidsflata, panelet
+Øvst finst ni modusar. Panelet til venstre viser objekt (datasett og kjelder), midten er arbeidsflata, panelet
 til høgre viser eigenskapar og statistikk, og nedst finst statuslinja med lagringsstatus, lagring, det valde
 datasettet, R-motoren og knappane som faldar panela inn og opnar loggen. Breidda på panela blir endra ved å dra i kanten
-mot arbeidsflata. Alt+1 til Alt+8 byter modus med tastaturet.
+mot arbeidsflata. Alt+1 til Alt+9 byter modus med tastaturet.
 
 | Modus | Kva du gjer der |
 |---|---|
@@ -42,6 +42,7 @@ mot arbeidsflata. Alt+1 til Alt+8 byter modus med tastaturet.
 | Handter | Ser datasetta dine i mapper med taggar, gjev nytt namn, slettar, lagrar versjonar, køyrer batchhandlingar på fleire datasett, tek tryggingskopi av og gjenopprettar arbeidsområdet |
 | Søk | Søkjer i alle kolonnar i eitt eller alle datasett, avgrensar med fasettar og lagrar søk som lister ([soka.md](soka.md)) |
 | Bearbeid | Redigerer celler, sorterer og filtrerer, reinsar og set typar, reknar ut kolonnar, pivoterer, koplar datasett; alt med angre, versjonar og oppskrifter ([bearbeta.md](bearbeta.md)) |
+| Kontroller | Prøver ein tabell mot enkle reglar (type og tomme verdiar per kolonne, duplikat blant radene) og viser kontrollane til ein IFC-modell: *Valider modellen* og *Samanlikn versjonar* |
 | Analyser | R-konsoll med ggplot2 og tidyverse, lagra skript og diagrameksport; Python-konsoll med pandas og matplotlib; SQL-konsoll mot det valde datasettet; regulære uttrykk; notatbok som blir rapport |
 | Visualiser | Lagar diagram med Vega-Lite, D3-malar eller R-skript, lagrar, eksporterer og lagar dei i batch ([visualisera.md](visualisera.md)) |
 | Eksporter | Lastar ned data som CSV, Excel, JSON eller SQLite, lagra diagram som SVG, PNG eller PDF og dokument frå malar som HTML, Word, PDF, Markdown eller LaTeX ([dokumentmallar.md](dokumentmallar.md)) |

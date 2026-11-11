@@ -8,8 +8,8 @@ dokumenter i [dokumentmallar.md](dokumentmallar.md). Vanlige spørsmål besvares
 
 ## Arbeidsområdet
 
-Skjermen ser lik ut i alle moduser. Øverst bytter du modus (Hent, Håndter, Søk, Bearbeid, Analyser, Visualiser,
-Eksporter, Del; Alt+1 til Alt+8 virker også) og når kommandopaletten (forstørrelsesglasset eller Ctrl+K),
+Skjermen ser lik ut i alle moduser. Øverst bytter du modus (Hent, Håndter, Søk, Bearbeid, Kontroller, Analyser,
+Visualiser, Eksporter, Del; Alt+1 til Alt+9 virker også) og når kommandopaletten (forstørrelsesglasset eller Ctrl+K),
 språkknappen, tema (lyst eller mørkt) og hjelpeknappen med versjonsnummer og *Se etter oppdateringer*.
 Kommandopaletten er den raskeste veien til det meste: skriv noen bokstaver for å bytte modus, åpne et datasett, et
 diagram eller et dashbord, søke i data eller kjøre en handling på det valgte datasettet. Til venstre finnes modusens
@@ -228,7 +228,7 @@ oppdateringer* og lenken til dokumentasjonen på GitHub.
 
 ## Tastatur
 
-Alt+1 til Alt+8 bytter modus, Ctrl+K åpner kommandopaletten, og F1 åpner håndboken. Kanten mellom et panel og arbeidsflaten kan få fokus
+Alt+1 til Alt+9 bytter modus, Ctrl+K åpner kommandopaletten, og F1 åpner håndboken. Kanten mellom et panel og arbeidsflaten kan få fokus
 med Tab og flyttes med piltastene (Skift for større steg, Home og End for minste og største bredde). Første trykk på Tab på siden viser lenken *Gå til innholdet*,
 som flytter fokus forbi modusvelgeren og objektpanelet. Alt nås med Tab og Enter; dialoger lukkes med Esc. I tabellen
 flytter piltastene mellom celler, og Enter redigerer. Appen følger systeminnstillingen for redusert bevegelse.

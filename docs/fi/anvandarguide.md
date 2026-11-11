@@ -9,8 +9,8 @@ avannut sovelluksen tiedoston [kom-igang.md](kom-igang.md) ohjeiden mukaan. Kunk
 
 ## Työtila
 
-Näkymä on samanlainen kaikissa tiloissa. Ylhäällä vaihdat tilaa (Nouda, Hallitse, Hae, Muokkaa, Analysoi,
-Visualisoi, Vie, Jaa; myös Alt+1 … Alt+8 toimii) ja tavoitat komentopaletin (suurennuslasi tai Ctrl+K),
+Näkymä on samanlainen kaikissa tiloissa. Ylhäällä vaihdat tilaa (Nouda, Hallitse, Hae, Muokkaa, Tarkista, Analysoi,
+Visualisoi, Vie, Jaa; myös Alt+1 … Alt+9 toimii) ja tavoitat komentopaletin (suurennuslasi tai Ctrl+K),
 kielipainikkeen, teeman (vaalea tai tumma) ja ohjepainikkeen versionumeroineen ja toimintoineen *Tarkista
 päivitykset*. Komentopaletti on nopein tie useimpiin asioihin: kirjoita muutama kirjain vaihtaaksesi tilaa,
 avataksesi aineiston, kaavion tai kojelaudan, hakeaksesi datasta tai suorittaaksesi muokkaustoiminnon valitulle
@@ -245,7 +245,7 @@ oikean osion suoraan. Käsikirja seuraa sovelluksen kieltä eikä tarvitse verkk
 
 ## Näppäimistö
 
-Alt+1 … Alt+8 vaihtaa tilaa, Ctrl+K avaa komentopaletin ja F1 avaa käsikirjan. Paneelin ja työalueen välinen reuna voi saada kohdistuksen
+Alt+1 … Alt+9 vaihtaa tilaa, Ctrl+K avaa komentopaletin ja F1 avaa käsikirjan. Paneelin ja työalueen välinen reuna voi saada kohdistuksen
 Sarkaimella, ja sitä siirretään nuolinäppäimillä (Vaihto suuremmille askelille, Home ja End pienimmälle ja
 suurimmalle leveydelle). Ensimmäinen Sarkain-painallus sivulla näyttää linkin *Siirry
 sisältöön*, joka siirtää kohdistuksen tilanvalitsimen ja kohdepaneelin ohi. Kaiken voi tavoittaa Sarkaimella ja Enterillä;

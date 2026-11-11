@@ -6,8 +6,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/soka', 'ui/modes/bearbeta', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera', 'ui/modes/dela'],
-    (shellMod, fonts, _theme, inhamta, hantera, soka, bearbeta, analysera, visualisera, exportera, dela) => ({
+  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/soka', 'ui/modes/bearbeta', 'ui/modes/kontrollera', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera', 'ui/modes/dela'],
+    (shellMod, fonts, _theme, inhamta, hantera, soka, bearbeta, kontrollera, analysera, visualisera, exportera, dela) => ({
       /** @param {HTMLElement} root */
       async start(root) {
         fonts.loadFonts();
@@ -16,6 +16,7 @@
         shell.registerMode(hantera.createMode(shell.ctx));
         shell.registerMode(soka.createMode(shell.ctx));
         shell.registerMode(bearbeta.createMode(shell.ctx));
+        shell.registerMode(kontrollera.createMode(shell.ctx));
         shell.registerMode(analysera.createMode(shell.ctx));
         shell.registerMode(visualisera.createMode(shell.ctx));
         shell.registerMode(exportera.createMode(shell.ctx));

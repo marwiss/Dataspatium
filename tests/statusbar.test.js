@@ -1,6 +1,6 @@
 // @ts-check
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
-/** Tests of the 2.0 shell: status bar, eight modes with Alt+1..8, panel toggles per breakpoint and the splitters. */
+/** Tests of the 2.0 shell: status bar, nine modes with Alt+1..9, panel toggles per breakpoint and the splitters. */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
@@ -52,16 +52,16 @@
     } finally { root.remove(); }
   });
 
-  test('shell: eight modes in order, Alt+1..8 and #/mode hashes', async (assert) => {
+  test('shell: nine modes in order, Alt+1..9 and #/mode hashes', async (assert) => {
     const { root, shell } = await startApp();
     try {
       const ids = Array.from(root.querySelectorAll('.dm-mode-btn')).map((b) => b.getAttribute('data-mode'));
-      assert.deepEqual(ids, ['inhamta', 'hantera', 'soka', 'bearbeta', 'analysera', 'visualisera', 'exportera', 'dela']);
+      assert.deepEqual(ids, ['inhamta', 'hantera', 'soka', 'bearbeta', 'kontrollera', 'analysera', 'visualisera', 'exportera', 'dela']);
       document.dispatchEvent(new KeyboardEvent('keydown', { key: '3', altKey: true, bubbles: true }));
       assert.equal(shell.store.get().mode, 'soka');
       assert.equal(location.hash, '#/soka');
       assert.ok(root.querySelector('.dm-center dm-empty-state'), 'Söka frame');
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: '8', altKey: true, bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '9', altKey: true, bubbles: true }));
       assert.equal(shell.store.get().mode, 'dela');
       assert.ok(root.querySelector('.dm-center h1').textContent.includes(t('dela.title')));
       return 'ok';

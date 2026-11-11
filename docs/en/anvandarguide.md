@@ -9,8 +9,8 @@ have opened the app as described in [kom-igang.md](kom-igang.md). Details about 
 
 ## The workspace
 
-The screen looks the same in every mode. At the top you switch mode (Import, Manage, Search, Process, Analyse,
-Visualise, Export, Share; Alt+1 to Alt+8 work too) and reach the command palette (the magnifying glass or Ctrl+K),
+The screen looks the same in every mode. At the top you switch mode (Import, Manage, Search, Process, Check, Analyse,
+Visualise, Export, Share; Alt+1 to Alt+9 work too) and reach the command palette (the magnifying glass or Ctrl+K),
 the language button, the theme (light or dark) and the help button with the version number and *Check for updates*.
 The command palette is the fastest way to most things: type a few letters to switch mode, open a dataset, a chart
 or a dashboard, search in data or run a processing action on the selected dataset. On the left are the objects of
@@ -242,7 +242,7 @@ bottom are the version, *Check for updates* and the link to the documentation on
 
 ## Keyboard
 
-Alt+1 to Alt+8 switch mode, Ctrl+K opens the command palette and F1 opens the handbook. The edge between a panel and the work area can
+Alt+1 to Alt+9 switch mode, Ctrl+K opens the command palette and F1 opens the handbook. The edge between a panel and the work area can
 receive focus with Tab and be moved with the arrow keys (Shift for larger steps, Home and End for the smallest and
 largest width). The first Tab press on the page shows the link
 *Skip to content*, which moves focus past the mode switcher and the object panel. Everything is reachable with

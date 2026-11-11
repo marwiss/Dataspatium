@@ -52,8 +52,9 @@ documentation show the app in Swedish.
 4. **Bring in data.** In *Import* mode, drop a file on the surface, or click *Try with example data*. The app shows what the file
    contains; click *Import*. The dataset is stored in the browser on your computer.
 5. **Carry on.** The modes at the top are the steps of the work: *Manage* keeps your datasets in order, *Search* finds rows without
-   code, *Process* shows the table, the map or the model with buttons to correct and calculate, *Analyse* has statistics and code (R,
-   Python and SQL), *Visualise* makes charts and maps, *Export* saves files on the computer and *Share* sends to others.
+   code, *Process* shows the table, the map or the model with buttons to correct and calculate, *Check* tries tables and models
+   against requirements, *Analyse* has statistics and code (R, Python and SQL), *Visualise* makes charts and maps, *Export* saves
+   files on the computer and *Share* sends to others.
 
 What you save is kept in the browser's own database on the computer. If you clear the browser's site data it disappears, so back up
 regularly under *Manage > Workspace*. The backup is a ZIP file that can be restored on the same or another computer. Step by step with
@@ -179,7 +180,7 @@ What works in one version also works in the next. Each version goes with the sam
 - **Dataregium with issues**: the project's models and issues, new issues that point out the place in 3D, BCF files, the server's IFC
   graph, the card *Administration* for the administrator and the card *The project's members* for the project manager (see
   [Dataspatium and Dataregium](#dataspatium-and-dataregium)). *Technically:* BCF API 3.0 and 2.1 with viewpoints.
-- **Seven languages**: also Nynorsk, with the handbook in the app and the beginner's course through all eight modes.
+- **Seven languages**: also Nynorsk, with the handbook in the app and the beginner's course through the modes.
 
 ### Also in version 3 (with Dataregium 3)
 
@@ -305,7 +306,7 @@ The file names are the same in every language (they are the Swedish originals), 
 - **The handbook** in the app: the same documentation as here, with search; open it with ? at the top right or F1.
 - [Getting started](kom-igang.md): step by step with common questions.
 - [User guide](anvandarguide.md): the whole workflow from file to report.
-- [The eight modes](lagen.md): what is where and why.
+- [The nine modes](lagen.md): what is where and why.
 - [FAQ](faq.md): storage, security, R, APIs and updates.
 
 **By area**

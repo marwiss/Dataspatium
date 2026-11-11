@@ -49,8 +49,9 @@ hemligheter lagras bara krypterade (AES-GCM).
 4. **Hämta in data.** I läget *Inhämta* släpper du en fil på ytan, eller klickar på *Prova med exempeldata*. Appen visar vad filen
    innehåller; klicka på *Importera*. Datamängden sparas i webbläsaren på din dator.
 5. **Arbeta vidare.** Lägena högst upp är stegen i arbetet: *Hantera* håller ordning på dina datamängder, *Söka* hittar rader utan
-   kod, *Bearbeta* visar tabellen, kartan eller modellen med knappar för att rätta och räkna, *Analysera* har statistik och kod (R,
-   Python och SQL), *Visualisera* gör diagram och kartor, *Exportera* sparar filer på datorn och *Dela* skickar till andra.
+   kod, *Bearbeta* visar tabellen, kartan eller modellen med knappar för att rätta och räkna, *Kontrollera* prövar tabeller och
+   modeller mot krav, *Analysera* har statistik och kod (R, Python och SQL), *Visualisera* gör diagram och kartor, *Exportera*
+   sparar filer på datorn och *Dela* skickar till andra.
 
 Det du sparar ligger i webbläsarens egen databas på datorn. Rensar du webbläsarens webbplatsdata försvinner det, så ta regelbundet
 en säkerhetskopia under *Hantera > Arbetsyta*. Säkerhetskopian är en ZIP-fil som kan återställas på samma eller en annan dator. Steg
@@ -173,7 +174,7 @@ Det som går i en version går också i nästa. Varje version hör ihop med samm
 - **Dataregium med ärenden**: projektets modeller och ärenden, nya ärenden som pekar ut platsen i 3D, BCF-filer, serverns IFC-graf,
   kortet *Administration* för administratören och kortet *Projektets medlemmar* för den projektansvarige (se
   [Dataspatium och Dataregium](#dataspatium-och-dataregium)). *Tekniskt:* BCF API 3.0 och 2.1 med viewpoints.
-- **Sju språk**: också nynorska, med handboken i appen och grundkursen genom alla åtta lägen.
+- **Sju språk**: också nynorska, med handboken i appen och grundkursen genom lägena.
 
 ### Också i version 3 (med Dataregium 3)
 
@@ -294,7 +295,7 @@ nästa huvudnummer, och datamängder, listor, diagram, mallar och skript följer
 - **Handboken** i appen: samma dokumentation som här, med sökning; öppna den med ? uppe till höger eller F1.
 - [Kom igång](docs/sv/kom-igang.md): steg för steg med vanliga frågor.
 - [Användarguide](docs/sv/anvandarguide.md): hela arbetsflödet från fil till rapport.
-- [De åtta lägena](docs/sv/lagen.md): vad som finns var och varför.
+- [De nio lägena](docs/sv/lagen.md): vad som finns var och varför.
 - [Vanliga frågor](docs/sv/faq.md): lagring, säkerhet, R, API:er och uppdateringar.
 
 **Per område**

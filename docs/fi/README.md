@@ -51,8 +51,9 @@ API 1.0. Verkkokutsuja ei tehdä ilman käyttötarkoituskohtaista suostumusta, j
 4. **Tuo dataa.** *Nouda*-tilassa pudotat tiedoston pinnalle tai napsautat *Kokeile esimerkkidatalla*. Sovellus näyttää, mitä tiedosto
    sisältää; napsauta *Tuo*. Aineisto tallentuu selaimeen omalle tietokoneellesi.
 5. **Jatka.** Ylhäällä olevat tilat ovat työn vaiheet: *Hallitse* pitää aineistosi järjestyksessä, *Hae* löytää rivejä ilman koodia,
-   *Muokkaa* näyttää taulukon, kartan tai mallin painikkeineen korjaamista ja laskemista varten, *Analysoi* sisältää tilastot ja koodin
-   (R, Python ja SQL), *Visualisoi* tekee kaavioita ja karttoja, *Vie* tallentaa tiedostoja tietokoneelle ja *Jaa* lähettää muille.
+   *Muokkaa* näyttää taulukon, kartan tai mallin painikkeineen korjaamista ja laskemista varten, *Tarkista* tarkistaa taulukot ja
+   mallit vaatimuksia vasten, *Analysoi* sisältää tilastot ja koodin (R, Python ja SQL), *Visualisoi* tekee kaavioita ja karttoja,
+   *Vie* tallentaa tiedostoja tietokoneelle ja *Jaa* lähettää muille.
 
 Tallentamasi tiedot ovat selaimen omassa tietokannassa tietokoneella. Jos tyhjennät selaimen sivustotiedot, ne katoavat, joten ota
 säännöllisesti varmuuskopio kohdassa *Hallitse > Työtila*. Varmuuskopio on ZIP-tiedosto, jonka voi palauttaa samalle tai toiselle
@@ -180,7 +181,7 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 - **Dataregium ja asiat**: hankkeen mallit ja asiat, uudet asiat, jotka osoittavat paikan 3D:ssä, BCF-tiedostot, palvelimen IFC-graafi,
   kortti *Hallinta* ylläpitäjälle ja kortti *Projektin jäsenet* hankkeen vastuuhenkilölle (ks.
   [Dataspatium ja Dataregium](#dataspatium-ja-dataregium)). *Teknisesti:* BCF API 3.0 ja 2.1 viewpointeineen.
-- **Seitsemän kieltä**: myös nynorsk, käsikirja sovelluksessa ja peruskurssi kaikkien kahdeksan tilan läpi.
+- **Seitsemän kieltä**: myös nynorsk, käsikirja sovelluksessa ja peruskurssi tilojen läpi.
 
 ### Myös versiossa 3 (Dataregium 3:n kanssa)
 
@@ -304,7 +305,7 @@ Tiedostonimet ovat samat kaikilla kielillä (ne ovat ruotsinkielisiä alkuperäi
 - **Käsikirja** sovelluksessa: sama dokumentaatio kuin täällä, haun kanssa; avaa se oikean yläkulman ?-painikkeesta tai F1:llä.
 - [Aloitus](kom-igang.md): vaihe vaiheelta tavallisine kysymyksineen.
 - [Käyttöopas](anvandarguide.md): koko työnkulku tiedostosta raporttiin.
-- [Kahdeksan tilaa](lagen.md): mitä on missä ja miksi.
+- [Yhdeksän tilaa](lagen.md): mitä on missä ja miksi.
 - [Usein kysytyt kysymykset](faq.md): tallennus, tietoturva, R, rajapinnat ja päivitykset.
 
 **Aiheittain**

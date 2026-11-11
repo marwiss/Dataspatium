@@ -388,6 +388,7 @@
     'src/ui/soka/query-tab.js',
     'src/ui/modes/soka.js',
     'src/ui/modes/bearbeta.js',
+    'src/ui/modes/kontrollera.js',
     'src/ui/modes/analysera.js',
     'src/ui/viz/profile-dialog.js',
     'src/ui/modes/visualisera.js',
