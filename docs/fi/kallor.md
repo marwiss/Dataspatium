@@ -77,6 +77,31 @@ Kaksi esiasetusta tavoitetaan vain näin: *Riksbankin korot ja valuuttakurssit (
 Lähdeluettelo merkitsee ne tekstillä *Vaatii sillan*; käynnistä silta valinnoilla `--allow-host api.riksbank.se --allow-host
 api.worldbank.org`, jotta voit hakea niistä.
 
+### Sovelluksen ohjaus ulkopuolelta
+
+Tietokoneen ohjelmat voivat suorittaa sovelluksen komentoja sillan kautta: samoja komentoja, joita työnkulut ja tekoälyavustaja
+käyttävät (aineistojen lukeminen, Muokkaa-tilan toiminnot, vienti, R, Python, työnkulut). Se on pois päältä jokaisessa käynnistyksessä
+ja vaatii kaksi vaihetta: käynnistä silta valitsimella `--allow-commands` (`-AllowCommands`) ja kytke päälle **Anna tietokoneen
+ohjelmien ohjata sovellusta sillan kautta** kohdassa *Internet-yhteydet* Hallitse-tilassa, jossa vahvistat kerran istuntoa kohti. Vain
+lukevat komennot suoritetaan heti; kaikki, mikä muuttaa jotakin, näytetään valintaikkunassa komentoineen ja argumentteineen ja
+suoritetaan vain, jos hyväksyt sen. Tilarivi näyttää terminaalikuvakkeen, kun ohjaus on päällä.
+
+Komentorivi `tools/dataspatium.py` (Python 3, vakiokirjasto) käyttää sillan osoitetta ja tunnistetta (`--bridge` ja `--token` tai
+`DATASPATIUM_BRIDGE` ja `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Väestö", "limit": 5}'
+python tools/dataspatium.py plan kuukausiraportti.json
+python tools/dataspatium.py mcp
+```
+
+`list` näyttää komennot parametreineen, `run` suorittaa yhden ja tulostaa vastauksen JSON-muodossa, `plan` suorittaa
+työnkulkutiedoston (saman muodon, jonka *Vie* antaa kohdassa Työnkulut) suunnitelmana, jonka hyväksyt kerran, ja `mcp` tekee
+komennoista työkaluja tietokoneen tekoälyohjelmalle Model Context Protocol -yhteyskäytännöllä (vakiovirtojen yli). Silta pitää jonon
+muistissa, ja komento odottaa sovellusta, kunnes olet hyväksynyt sen tai viisi minuuttia on kulunut. `python tools/check_bridge.py`
+kokeilee jonoa, komentoriviä ja MCP:tä ilman selainta.
+
 ### Turvallisuus
 
 - Silta vastaa vain osoitteessa 127.0.0.1, vaatii tunnisteen jokaisessa kutsussa ja sallii CORSin vain

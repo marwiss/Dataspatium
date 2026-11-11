@@ -73,6 +73,31 @@ Two presets are reached only this way: *Riksbank interest and exchange rates (SW
 list marks them *Requires the bridge*; start the bridge with `--allow-host api.riksbank.se --allow-host api.worldbank.org` to
 fetch from them.
 
+### Controlling the app from outside
+
+Programs on the computer can run the app's commands through the bridge: the same commands the flows and the AI assistant use
+(reading datasets, actions in Process, export, R, Python, flows). It is off at every start and takes two steps: start the bridge with
+`--allow-commands` (`-AllowCommands`) and turn on **Let programs on this computer control the app through the bridge** under
+*Internet access* in Manage, where you confirm once for the session. Commands that only read run at once; everything that changes
+something is shown in a dialog with the command and its arguments and runs only if you approve it. The status bar shows a terminal
+icon while the control is on.
+
+The command line `tools/dataspatium.py` (Python 3, standard library) uses the bridge's address and token (`--bridge` and `--token`, or
+`DATASPATIUM_BRIDGE` and `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Population", "limit": 5}'
+python tools/dataspatium.py plan monthly-report.json
+python tools/dataspatium.py mcp
+```
+
+`list` shows the commands with their parameters, `run` runs one and prints the answer as JSON, `plan` runs a flow file (the form
+*Export* under Flows gives) as a plan you approve once, and `mcp` makes the commands tools for an AI program on the computer through
+the Model Context Protocol (over the standard streams). The bridge keeps the queue in memory, and a command waits for the app until
+you have approved it or five minutes have passed. `python tools/check_bridge.py` tries the queue, the command line and MCP without a
+browser.
+
 ### Security
 
 - The bridge answers on 127.0.0.1 only, requires the token in every call and allows CORS only for the app's own addresses.

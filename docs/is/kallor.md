@@ -72,6 +72,29 @@ Tvær forstillingar nást aðeins svona: *Vextir og gengi Riksbanken (SWEA)* og 
 uppsprettur merkir þær *Krefst brúarinnar*; ræstu brúna með `--allow-host api.riksbank.se --allow-host api.worldbank.org` til
 að sækja frá þeim.
 
+### Stýra forritinu utan frá
+
+Forrit á tölvunni geta keyrt skipanir forritsins um brúna: sömu skipanir sem flæðin og gervigreindaraðstoðin nota (lesa gagnasöfn,
+aðgerðir í Vinna, útflutning, R, Python, flæði). Það er slökkt við hverja ræsingu og krefst tveggja skrefa: ræsa brúna með
+`--allow-commands` (`-AllowCommands`) og kveikja á **Leyfa forritum á tölvunni að stýra forritinu um brúna** undir *Netaðgangur* í
+Sýsla, þar sem þú staðfestir einu sinni fyrir setuna. Skipanir sem aðeins lesa eru keyrðar strax; allt sem breytir einhverju er sýnt í
+glugga með skipuninni og viðföngum hennar og aðeins keyrt ef þú samþykkir það. Stöðustikan sýnir skjáhermistákn meðan stýringin er á.
+
+Skipanalínan `tools/dataspatium.py` (Python 3, staðalbókasafnið) notar vistfang og tákn brúarinnar (`--bridge` og `--token`, eða
+`DATASPATIUM_BRIDGE` og `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Mannfjöldi", "limit": 5}'
+python tools/dataspatium.py plan manadarskyrsla.json
+python tools/dataspatium.py mcp
+```
+
+`list` sýnir skipanirnar með færibreytum sínum, `run` keyrir eina og skrifar svarið sem JSON, `plan` keyrir flæðisskrá (sama snið sem
+*Flytja út* undir Flæði gefur) sem áætlun sem þú samþykkir einu sinni, og `mcp` gerir skipanirnar að tólum fyrir gervigreindarforrit
+á tölvunni um Model Context Protocol (yfir staðalstraumana). Brúin heldur biðröðinni í minni, og skipun bíður eftir forritinu þar til
+þú hefur samþykkt hana eða fimm mínútur eru liðnar. `python tools/check_bridge.py` prófar biðröðina, skipanalínuna og MCP án vafra.
+
 ### Öryggi
 
 - Brúin svarar aðeins á 127.0.0.1, krefst tákns í hverju kalli og leyfir CORS aðeins fyrir eigin vistföng forritsins.

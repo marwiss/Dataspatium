@@ -249,6 +249,17 @@
         return save({ id: obj.id, name: obj.name, description: obj.description, onStart: false, continueOnError: obj.continueOnError, steps: obj.steps });
       }
 
+      /** What is wrong with a list of steps (a type the app lacks, a command it lacks, too deep), or null when it can run. */
+      function check(steps, depth = 0) {
+        if (!Array.isArray(steps)) return t('flows.err.steps');
+        if (depth > MAX_DEPTH) return t('flows.err.deep');
+        for (const s of steps) {
+          if (!s || typeof s !== 'object' || !STEP_TYPES.includes(s.type)) return t('flows.err.step.type', { type: String(s && s.type) });
+          if (s.type === 'command' && !D.require('data/commands').get(s.params && s.params.command)) return t('flows.err.step.command', { name: String((s.params && s.params.command) || '') });
+          for (const b of STEPS[s.type].branches || []) { const problem = check(s[b] || [], depth + 1); if (problem) return problem; }
+        }
+        return null;
+      }
       /** The flow running now, or null. */
       function current() { return running ? { id: running.flow.id, name: running.flow.name, index: running.index, total: running.flow.steps.length } : null; }
       /** Stops the running flow before its next step. */
@@ -435,6 +446,6 @@
         return results;
       }
 
-      return { STEPS, STEP_TYPES, DEFAULT_ROUNDS, MAX_ROUNDS, MAX_SECONDS, setAsker, list, get, blank, save, remove, exportJson, importJson, current, cancel, run, output, hasOutput, blockers, runOnStart, subscribe };
+      return { STEPS, STEP_TYPES, DEFAULT_ROUNDS, MAX_ROUNDS, MAX_SECONDS, setAsker, check, list, get, blank, save, remove, exportJson, importJson, current, cancel, run, output, hasOutput, blockers, runOnStart, subscribe };
     });
 })();

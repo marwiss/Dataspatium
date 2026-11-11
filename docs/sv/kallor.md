@@ -72,6 +72,29 @@ Två förinställningar nås bara så: *Riksbanken räntor och valutakurser (SWE
 märker dem *Kräver bryggan*; starta bryggan med `--allow-host api.riksbank.se --allow-host api.worldbank.org` för att hämta
 från dem.
 
+### Styra appen utifrån
+
+Program på datorn kan köra appens kommandon genom bryggan: samma kommandon som flödena och AI-assistenten använder (läsa
+datamängder, åtgärder i Bearbeta, export, R, Python, flöden). Det är av vid varje start och kräver två steg: starta bryggan med
+`--allow-commands` (`-AllowCommands`) och slå på **Låt program på datorn styra appen via bryggan** under *Internetåtkomst* i Hantera,
+där du bekräftar en gång för sessionen. Kommandon som bara läser körs direkt; allt som ändrar något visas i en dialog med kommandot och
+dess argument och körs bara om du godkänner det. Statusraden visar en terminalikon medan styrningen är på.
+
+Kommandoraden `tools/dataspatium.py` (Python 3, standardbiblioteket) använder bryggans adress och token (`--bridge` och `--token`, eller
+`DATASPATIUM_BRIDGE` och `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
+python tools/dataspatium.py plan manadsrapport.json
+python tools/dataspatium.py mcp
+```
+
+`list` visar kommandona med sina parametrar, `run` kör ett och skriver svaret som JSON, `plan` kör en flödesfil (samma form som
+*Exportera* under Flöden ger) som en plan du godkänner en gång, och `mcp` gör kommandona till verktyg för ett AI-program på datorn
+genom Model Context Protocol (över standardströmmarna). Bryggan håller kön i minnet, och ett kommando väntar på appen tills du
+godkänt eller det gått fem minuter. `python tools/check_bridge.py` prövar kön, kommandoraden och MCP utan webbläsare.
+
 ### Säkerhet
 
 - Bryggan svarar bara på 127.0.0.1, kräver token i varje anrop och tillåter CORS bara för appens egna adresser.

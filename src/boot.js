@@ -261,6 +261,7 @@
     'src/data/flows.js',
     'src/data/conditions.js',
     'src/data/commands.js',
+    'src/api/remote.js',
     'src/data/field-collect.js',
     'src/data/watches.js',
     'src/ui/shell/shell.js',

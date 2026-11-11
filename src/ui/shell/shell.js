@@ -75,6 +75,8 @@
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
           // AI-assistent (F35 a): the AI that works with the app's commands, in a floating panel in every mode.
           this.assistantEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-assistant', 'aria-label': t('assistant.open'), title: t('assistant.open.hint'), onclick: () => this.openAssistant() }, icons.icon('sparkles', 14));
+          // Styrning utifrån (F30 a): shown while programs on the computer may run commands through the bridge; opens the settings.
+          this.remoteEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-remote', hidden: true, 'aria-label': t('remote.sb.hint'), title: t('remote.sb.hint'), onclick: () => { this.activate('hantera'); this.store.set({ selectedId: '__workspace' }); } }, icons.icon('terminal', 14));
           // Stoppa: the flow stops before its next step or round (Martin's F33 b).
           this.flowStopEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow dm-sb-flow-stop', hidden: true, 'aria-label': t('flows.cancel'), title: t('flows.cancel.hint'), onclick: () => D.require('data/flows').cancel() }, icons.icon('octagon-x', 14));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
@@ -82,7 +84,7 @@
           this.selectionEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-selection', hidden: true, 'aria-label': t('selection.status.hint'), title: t('selection.status.hint'), onclick: () => this.selectionMenu() }, icons.icon('list-checks', 14), h('span'));
           selectionMod.subscribe((s) => this.showSelection(s));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.flowStopEl, this.assistantEl, this.watchEl, this.commentsEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.flowStopEl, this.assistantEl, this.remoteEl, this.watchEl, this.commentsEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.loadingEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -182,6 +184,14 @@
           const watches = D.require('data/watches');
           // The step ask shows its question here (F34 a); a test may put its own answerer in place.
           flows.setAsker((q) => D.require('ui/ask').ask(q));
+          // Styrning utifrån: the confirmation when it goes on, the approval of a writing command, the log line per command.
+          const remote = D.require('api/remote');
+          remote.setAsker({
+            confirm: () => overlays.dialog.confirm(t('remote.confirm'), { title: t('remote.switch') }),
+            approve: (cmd, args, options) => D.require('ui/assistant').approve(cmd, args, options),
+            log: (text, kind) => this.log(text, kind),
+          });
+          remote.subscribe((s) => { this.remoteEl.hidden = !s.on; this.remoteEl.classList.toggle('dm-sb-remote-off', !s.connected); });
           flows.subscribe((type, p) => {
             if (type === 'step') {
               this.flowEl.hidden = false; this.flowStopEl.hidden = false;

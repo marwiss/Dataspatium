@@ -74,6 +74,30 @@ To forudindstillinger nås kun sådan: *Riksbanken renter og valutakurser (SWEA)
 markerer dem *Kræver broen*; start broen med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for at hente fra
 dem.
 
+### Styr appen udefra
+
+Programmer på computeren kan køre appens kommandoer gennem broen: de samme kommandoer, som flows og AI-assistenten bruger (læse
+datasæt, handlinger i Bearbejd, eksport, R, Python, flows). Det er slået fra ved hver start og kræver to trin: start broen med
+`--allow-commands` (`-AllowCommands`), og slå **Lad programmer på computeren styre appen via broen** til under *Internetadgang* i
+Håndtér, hvor du bekræfter én gang for sessionen. Kommandoer, der kun læser, køres straks; alt, der ændrer noget, vises i en dialog
+med kommandoen og dens argumenter og køres kun, hvis du godkender det. Statuslinjen viser et terminalikon, mens styringen er slået til.
+
+Kommandolinjen `tools/dataspatium.py` (Python 3, standardbiblioteket) bruger broens adresse og token (`--bridge` og `--token`, eller
+`DATASPATIUM_BRIDGE` og `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
+python tools/dataspatium.py plan maanedsrapport.json
+python tools/dataspatium.py mcp
+```
+
+`list` viser kommandoerne med deres parametre, `run` kører én og skriver svaret som JSON, `plan` kører en flowfil (samme form, som
+*Eksportér* under Flows giver) som en plan, du godkender én gang, og `mcp` gør kommandoerne til værktøjer for et AI-program på
+computeren gennem Model Context Protocol (over standardstrømmene). Broen holder køen i hukommelsen, og en kommando venter på appen,
+indtil du har godkendt den, eller der er gået fem minutter. `python tools/check_bridge.py` prøver køen, kommandolinjen og MCP uden
+browser.
+
 ### Sikkerhed
 
 - Broen svarer kun på 127.0.0.1, kræver token i hvert kald og tillader kun CORS for appens egne adresser.
