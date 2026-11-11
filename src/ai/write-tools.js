@@ -83,13 +83,16 @@
       if (v.length > MAX_IDS) throw new Error(`at most ${MAX_IDS} ids in one step`);
       return v.map((x) => idOrRef(cs, x, 'ids'));
     }
+    /** An IFC GlobalId: 22 characters of IFC's base 64 (a proposal to a server names elements so; decision F34 a at Dataregium). */
+    const GUID = /^[0-9A-Za-z_$]{22}$/;
     function idOrRef(cs, x, key) {
       if (typeof x === 'string' && /^new-\d+$/.test(x)) {
         if (Number(x.slice(4)) < 1 || Number(x.slice(4)) > cs.refs) throw new Error(`${x} is not a ref of this change set (${cs.refs ? 'new-1 to new-' + cs.refs : 'none yet'})`);
         return x;
       }
       const n = typeof x === 'string' && /^\d+$/.test(x) ? Number(x) : x;
-      if (!Number.isInteger(n) || n < 1) throw new Error(`${key} must hold element ids (integers) or refs (new-1, …)`);
+      if (typeof n === 'string' && GUID.test(n)) return n;
+      if (!Number.isInteger(n) || n < 1) throw new Error(`${key} must hold element ids (integers), GlobalIds or refs (new-1, …)`);
       return n;
     }
     /** The bounding box [x0, y0, x1, y1] of [x, y] points. @param {number[][]} pts */
@@ -256,8 +259,22 @@
     /** What a change set holds, in numbers. @param {{ops: any[]}} cs */
     const summary = (cs) => ({ steps: cs.ops.length, creates: cs.ops.filter((op) => CREATES.includes(op.tool) || op.tool === 'create_storeys_and_grid').length, deletes: cs.ops.filter((op) => op.tool === 'delete_elements').length });
     /** The operations as the wheel reads them (without the refs the panel shows). @param {{ops: any[]}} cs */
+    /**
+     * The operations with every element named by its GlobalId where one is known, the STEP id where none is, and the refs as they
+     * are: a server applies a proposal to its own copy of the file, whose STEP ids need not be the app's (decision F34 a at Dataregium).
+     * @param {any[]} ops toWheel's list @param {(id: number) => (string|null)} guidOf
+     */
+    function withGuids(ops, guidOf) {
+      const swap = (x) => (Number.isInteger(x) ? (guidOf(x) || x) : x);
+      return ops.map((op) => {
+        const o = Object.assign({}, op);
+        if (Array.isArray(o.ids)) o.ids = o.ids.map(swap);
+        if (o.wall_id !== undefined && o.wall_id !== null) o.wall_id = swap(o.wall_id);
+        return o;
+      });
+    }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; return o; });
 
-    return { TOOLS, CREATES, MAX_OPS, has, create, call, describe, summary, toWheel };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, has, create, call, describe, summary, toWheel };
   });
 })();

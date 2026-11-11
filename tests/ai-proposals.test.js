@@ -142,6 +142,11 @@
     try {
       panel.setMode('change');
       writeTools.call(panel.state.changeset, 'create_wall', { storey: 'Plan 1', start: [0, 0], end: [8, 0], thickness: 0.3, height: 2.7, name: 'Ny vägg' });
+      // An existing element by its STEP id: the proposal names it by GlobalId (decision F34 a at Dataregium).
+      const handle = await datasets.ensureOpen(ds.id);
+      const wallRow = (await handle.engine.exec("select id, guid from data where typ like 'IfcWall%' and guid is not null limit 1"))[0].values[0];
+      writeTools.call(panel.state.changeset, 'set_properties', { ids: [Number(wallRow[0])], pset: 'Pset_WallCommon', properties: [{ name: 'FireRating', value: 'EI60' }] });
+      assert.ok(typeof writeTools.call(panel.state.changeset, 'set_properties', { ids: [String(wallRow[1])], pset: 'Pset_WallCommon', properties: [{ name: 'FireRating', value: 'EI90' }] }).error !== 'string', 'a GlobalId is taken as an id');
       panel.state.cde = (await datasets.get(ds.id)).source.cde;
       panel.state.opsForm = opencde.OPS_FORM;
       panel.state.preview = { report: { proposal: { changes: [], instances: 0, unexpressed: { created: 1, deleted: 0, relations: 0 } }, created: [{ id: 300, ifc_class: 'IfcWall', ref: 'new-1' }], changed: [], deleted: [], findings: [], errors: 0 } };
@@ -154,7 +159,8 @@
       await panel.propose({ title: 'Ny vägg', description: 'En vägg.' });
       assert.equal(panel.state.error, '', 'no error');
       const fromPanel = JSON.parse(sent['/bcf/3.0/projects/p-1/topics/t-9/snippet'].body);
-      assert.ok(fromPanel.ops.length === 1 && fromPanel.ops[0].tool === 'create_wall' && !('ref' in fromPanel.ops[0]) && fromPanel.ops_form === opencde.OPS_FORM, JSON.stringify(fromPanel.ops));
+      assert.ok(fromPanel.ops.length === 3 && fromPanel.ops[0].tool === 'create_wall' && !('ref' in fromPanel.ops[0]) && fromPanel.ops_form === opencde.OPS_FORM, JSON.stringify(fromPanel.ops));
+      assert.ok(fromPanel.ops[1].tool === 'set_properties' && fromPanel.ops[1].ids[0] === String(wallRow[1]) && fromPanel.ops[2].ids[0] === String(wallRow[1]), 'the STEP id became the GlobalId: ' + JSON.stringify(fromPanel.ops[1]));
       assert.ok(panel.state.proposed && JSON.stringify(panel.state.proposed.changeSet.ops) === JSON.stringify(fromPanel.ops), 'the proposal kept as sent');
     } finally { panel.destroy(); panel.el.remove(); }
     return 'ok';

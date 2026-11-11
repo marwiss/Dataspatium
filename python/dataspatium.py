@@ -1510,9 +1510,18 @@ class _ChangeSet:
         return float(metres) / self.scale
 
     def entity(self, ref):
-        """An element by its STEP id, or by a ref of this change set."""
+        """An element by its STEP id, its GlobalId (22 characters: a proposal names elements so, decision F34 a at Dataregium), or a
+        ref of this change set."""
         if isinstance(ref, str) and ref in self.refs:
             return self.refs[ref]
+        if isinstance(ref, str) and len(ref) == 22 and not ref.isdigit():
+            try:
+                e = self.m.by_guid(ref)
+            except Exception:
+                e = None
+            if e is None:
+                raise DataspatiumError("no element with GlobalId %r" % (ref,))
+            return e
         try:
             e = self.m.by_id(int(ref))
         except Exception:

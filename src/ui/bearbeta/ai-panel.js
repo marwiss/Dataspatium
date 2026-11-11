@@ -387,15 +387,29 @@
               provenance: { user: String((me && (me.name || me.id)) || 'Dataspatium'), ai_model: p ? p.model : null, tool_call: s.changeset.ops.map((op) => op.tool).join(',').slice(0, 200) || null, created_at: new Date().toISOString() },
               changes: proposal.changes,
             };
-            const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet, ops: withOps ? writeTools.toWheel(s.changeset) : undefined });
+            const out = await opencde.proposeChanges(connector, cde.projectId, { title: values.title || defaults.title, description: values.description || defaults.description, topicType, changeSet, ops: withOps ? await guidOps(writeTools.toWheel(s.changeset)) : undefined });
             if (!out) throw new Error(t('ai.change.propose.unsupported'));
             s.proposed = { guid: out.topic.guid, title: values.title || defaults.title, trial: out.tried ? { state: 'queued' } : null, approveUrl: out.approveUrl || null, approved: null,
               proposalUrl: out.proposalUrl || null, schemaUrl: out.schemaUrl, changeSet: out.changeSet || changeSet, details: null, picks: [] };
             const msg = t('ai.change.propose.done', { title: s.proposed.title, project });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
             if (out.tried) trialOf(connector, out.proposalUrl, s.proposed);
-          } catch (err) { fail(err); }
+          } catch (err) { fail(err); if (err && err.status === 403) s.error = t('ai.change.propose.role'); }
           s.proposing = false; render();
+        }
+        /** The operations with the model's GlobalIds for its STEP ids, read from the dataset's own table (decision F34 a at Dataregium). */
+        async function guidOps(ops) {
+          const ids = new Set();
+          for (const op of ops) { for (const x of Array.isArray(op.ids) ? op.ids : []) if (Number.isInteger(x)) ids.add(x); if (Number.isInteger(op.wall_id)) ids.add(op.wall_id); }
+          if (!ids.size) return ops;
+          const map = new Map();
+          const handle = await datasets.ensureOpen(options.datasetId);
+          const list = Array.from(ids);
+          for (let i = 0; i < list.length; i += 500) {
+            const r = await handle.engine.exec(`select id, guid from data where id in (${list.slice(i, i + 500).join(',')})`);
+            for (const row of (r[0] ? r[0].values : [])) if (row[1]) map.set(Number(row[0]), String(row[1]));
+          }
+          return writeTools.withGuids(ops, (id) => map.get(id) || null);
         }
         /** The server's trial of the proposal, polled until it is final; its failure is a line under the topic, not an error. */
         async function trialOf(connector, proposalUrl, mine) {
