@@ -70,6 +70,10 @@ Når en hentning mislykkes som en netværksfejl, og en bro er forbundet, sender 
 aldrig tilføje nogen. Den afviser adresser på denne computer eller det lokale net, sender kun få headere og ingen cookies,
 følger højst tre omdirigeringer til tilladte værter og stopper ved `--max-fetch-mb` (50 MB som standard). Broens log viser
 værten og stien, aldrig forespørgslen, headerne eller kroppen. Samtykket for formålet gælder som før.
+To forudindstillinger nås kun sådan: *Riksbanken renter og valutakurser (SWEA)* og *Verdensbanken: indikatorer*. Kildelisten
+markerer dem *Kræver broen*; start broen med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for at hente fra
+dem.
+
 ### Sikkerhed
 
 - Broen svarer kun på 127.0.0.1, kræver token i hvert kald og tillader kun CORS for appens egne adresser.

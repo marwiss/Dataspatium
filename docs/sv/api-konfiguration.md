@@ -27,9 +27,11 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Boverket energideklarationer | Energideklarationer för byggnader | Ja, nyckel från Boverkets API-portal | Ange nyckel, anropa enligt portalens dokumentation |
 | Trafikverket NVDB | Vägdata: hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, som karta | Ja, kostnadsfri nyckel från data.trafikverket.se | Välj objekttyp, ange område, Hämta |
 | Lantmäteriet geodata med nyckel (STAC) | Vektordata, ortofoton, höjddata och kartor som filer | Ja, konto i Geotorget (OAuth2) | Välj samling, ange område, Hämta; filerna hämtas i Hantera med *Filer i källan* |
+| Riksbanken räntor och valutakurser (SWEA) | Styrräntan, marknadsräntor och valutakurser | Nej, men nås bara via bryggan | Välj serie och period, Hämta |
+| Världsbanken: indikatorer | Folkmängd, BNP, utsläpp och andra indikatorer per land och år | Nej, men nås bara via bryggan | Ange länder, indikator och år, Hämta |
 
-Källor utan CORS, till exempel Riksbanken och Världsbanken, kan inte nås direkt från webbläsaren. För dem
-behövs en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
+Riksbanken och Världsbanken tillåter inte anrop från webbläsaren (ingen CORS); de nås via bryggan (se
+[Hämta via bryggan](kallor.md#hämta-via-bryggan)) eller via en egen proxy, se nedan. Myndigheten för civilt försvar (MCF, tidigare MSB) har inget dokumenterat
 öppet API; deras statistik importeras som filer.
 
 ### Övriga Norden

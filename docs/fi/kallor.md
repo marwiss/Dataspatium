@@ -73,6 +73,10 @@ koskaan lisätä niitä. Se hylkää tämän tietokoneen ja lähiverkon osoittee
 seuraa enintään kolmea uudelleenohjausta sallituille palvelimille ja pysähtyy rajaan `--max-fetch-mb` (oletuksena 50 Mt).
 Sillan loki näyttää palvelimen ja polun, ei koskaan kyselyä, otsakkeita tai runkoa. Käyttötarkoituksen suostumus pätee kuten
 ennenkin.
+Kaksi esiasetusta tavoitetaan vain näin: *Riksbankin korot ja valuuttakurssit (SWEA)* ja *Maailmanpankki: indikaattorit*.
+Lähdeluettelo merkitsee ne tekstillä *Vaatii sillan*; käynnistä silta valinnoilla `--allow-host api.riksbank.se --allow-host
+api.worldbank.org`, jotta voit hakea niistä.
+
 ### Turvallisuus
 
 - Silta vastaa vain osoitteessa 127.0.0.1, vaatii tunnisteen jokaisessa kutsussa ja sallii CORSin vain

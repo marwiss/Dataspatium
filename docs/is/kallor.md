@@ -68,6 +68,10 @@ hana og skilar svarinu. Brúin sækir aðeins yfir https og aðeins frá hýslun
 neinum við. Hún hafnar vistföngum á þessari tölvu eða staðarnetinu, sendir aðeins fáa hausa og engar vafrakökur, fylgir í
 mesta lagi þremur tilvísunum til leyfðra hýsla og stöðvast við `--max-fetch-mb` (50 MB sjálfgefið). Skrá brúarinnar sýnir
 hýsilinn og slóðina, aldrei fyrirspurnina, hausana eða meginmálið. Samþykkið fyrir tilganginn gildir eins og áður.
+Tvær forstillingar nást aðeins svona: *Vextir og gengi Riksbanken (SWEA)* og *Alþjóðabankinn: vísar*. Listinn yfir
+uppsprettur merkir þær *Krefst brúarinnar*; ræstu brúna með `--allow-host api.riksbank.se --allow-host api.worldbank.org` til
+að sækja frá þeim.
+
 ### Öryggi
 
 - Brúin svarar aðeins á 127.0.0.1, krefst tákns í hverju kalli og leyfir CORS aðeins fyrir eigin vistföng forritsins.
