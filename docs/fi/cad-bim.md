@@ -356,9 +356,11 @@ ja korkeuden, ja EPSG-koodilla, kuten 3006 (SWEREF 99 TM), myös karttamuunnokse
 kierron (ei IFC2X3:ssa, josta se puuttuu). Työkalu `create_roof` tekee kerroksen seinille (jos kerrosta ei anneta, ylimmän kerroksen
 seinille) harjakaton, aumakaton, pulpettikaton tai tasakaton, jolla on kaltevuus, räystäs ja paksuus: IfcRoof-katon kattolaatoista
 (IfcSlab, tyyppi ROOF), yksi kutakin lapetta kohti, seinien ympäröivän suorakulmion tai annetun suorakulmion päälle (muu ääriviiva
-korvataan toistaiseksi sitä ympäröivällä suorakulmiolla). Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli
-luettelee vaihe vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1, new-2 …, kunnes tiedosto on antanut niille
-tunnisteet).
+korvataan toistaiseksi sitä ympäröivällä suorakulmiolla). Työkalu `create_spaces` tekee seinien rajaamista huoneista tiloja (IfcSpace),
+joiden nimet tulevat huoneohjelmasta ja jotka valitaan sisällä olevalla pisteellä tai topologian numerolla; tiloilla on korkeus
+seuraavaan kerrokseen, pinta-alat (Qto_SpaceBaseQuantities) ja rajat seiniin sekä niiden oviin ja ikkunoihin. Työkalut eivät muuta
+mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1,
+new-2 …, kunnes tiedosto on antanut niille tunnisteet).
 
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,

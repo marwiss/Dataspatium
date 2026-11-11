@@ -352,9 +352,11 @@ deletions. The tool `set_site` sets the model's place on earth: the site's latit
 3006 for SWEREF 99 TM also the map conversion, that is the model's origin in eastings and northings and its rotation (not in IFC2X3,
 which lacks it). The tool `create_roof` puts a gable, hip, shed or flat roof with a pitch, an overhang and a thickness on a storey's
 walls (the top storey when none is named): an IfcRoof of roof slabs (IfcSlab of the type ROOF), one per roof face, over the bounding
-box of the walls or a given rectangle (another outline is replaced by its bounding box for now). The tools change nothing: they fill a
-change set that the panel lists step by step (lengths in metres; new elements get the refs new-1, new-2 … until the file has given
-them ids).
+box of the walls or a given rectangle (another outline is replaced by its bounding box for now). The tool `create_spaces` makes the
+rooms the walls enclose into spaces (IfcSpace) with names from the room programme, chosen by a point inside or their number in the
+topology, with the height up to the next storey, room areas (Qto_SpaceBaseQuantities) and boundaries to the walls and their doors and
+windows. The tools change nothing: they fill a change set that the panel lists step by step (lengths in metres; new elements get the
+refs new-1, new-2 … until the file has given them ids).
 
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted

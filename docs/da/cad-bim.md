@@ -344,9 +344,11 @@ værktøjer til etager og net, vægge, dæk, åbninger med dør eller vindue, eg
 kortkonverteringen, det vil sige modellens origo i øst- og nordkoordinater og dens drejning (ikke i IFC2X3, som mangler den).
 Værktøjet `create_roof` lægger et sadeltag, valmtag, pulttag eller fladt tag med hældning, udhæng og tykkelse på en etages vægge (uden
 angivet etage den øverste): et IfcRoof af tagplader (IfcSlab af typen ROOF), én per tagflade, over væggenes omskrevne rektangel eller
-et angivet rektangel (en anden kontur erstattes indtil videre af sit omskrevne rektangel). Værktøjerne ændrer ingenting: de fylder et
-ændringssæt, som panelet lister trin for trin (mål i meter; nye elementer får referencerne new-1, new-2 …, indtil filen har givet dem
-id).
+et angivet rektangel (en anden kontur erstattes indtil videre af sit omskrevne rektangel). Værktøjet `create_spaces` opretter de rum,
+væggene lukker om, som IfcSpace med navne fra rumprogrammet, valgt med et punkt indeni eller deres nummer i topologien, med højden op
+til næste etage, rumarealer (Qto_SpaceBaseQuantities) og grænser mod væggene og deres døre og vinduer. Værktøjerne ændrer ingenting: de
+fylder et ændringssæt, som panelet lister trin for trin (mål i meter; nye elementer får referencerne new-1, new-2 …, indtil filen har
+givet dem id).
 
 *Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
 gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.
