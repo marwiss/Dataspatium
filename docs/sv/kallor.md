@@ -241,7 +241,8 @@ landet. Svaren läses i sidor om 5 000 objekt, och geometrin räknas om till WGS
 kartor. Välj samling och ange ett område; resultatet är filernas ytor som karta med adresserna till filerna. Kortet **Filer i
 källan** i Hantera hämtar sedan filerna med nyckeln: vektorfilerna läses in som datamängder (en ZIP packas upp och en
 GeoPackage ger en datamängd per lager), och raster, punktmoln och andra filer som appen inte läser sparas på datorn, högst 20
-åt gången. Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt konto i
+åt gången. Höjder i punkter ger åtgärden *Höjd ur markhöjdmodellen* i Bearbeta, som läser markhöjdmodellens rutor direkt.
+Nyckeln är konsumentnyckeln och konsumenthemligheten från ett kostnadsfritt konto i
 [Geotorget](https://geotorget.lantmateriet.se/); appen hämtar en åtkomsttoken med dem, och den skickas bara till
 Lantmäteriets API och filservern dl1.lantmateriet.se.
 

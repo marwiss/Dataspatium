@@ -180,6 +180,11 @@ og koordinatkolonner:
   medfølgende grænser og tilføjer `kommunkod`, `kommun`, `lanskod` og `lan` (eller kun län). Koordinater i SWEREF 99 TM
   genkendes. Grænserne er SCB's forenklede landgrænser til tematiske kort: punkter i søer, havet eller uden for Sverige
   bliver tomme, og punkter meget tæt på en grænse kan havne i nabokommunen.
+- **Højde fra terrænmodellen** tilføjer højden i meter (RH 2000) for hvert punkt fra Lantmäteriets terrænmodel med
+  nøglen til *Lantmäteriet geodata med nøgle (STAC)*. Koordinaterne kan være i WGS 84 eller SWEREF 99 TM; højst 5.000
+  punkter ad gangen, og et punkt uden for modellen får ingen højde.
+- **Højder langs geometrien** tilføjer laveste, højeste og gennemsnitlige højde langs hver linje og polygonkant med et
+  punkt for hver tiende meter som standard (højst 200 pr. geometri) i kolonnerne `hojd_min`, `hojd_max` og `hojd_medel`.
 
 Alle fire er trin i recepten, der kan fortrydes og afspilles igen. I SQL-eksporten vises de som kald til Dataspatiums
 funktioner (`dm_geo_lon`, `dm_geo_area`, `dm_to_lon`, `dm_region` med flere); R-eksporten giver tilsvarende kode med pakken

@@ -511,6 +511,66 @@
     }
   }, 60000);
 
+  test('geodata: Höjd ur markhöjdmodellen reads each point in the terrain model tile that covers it, with the key', async (assert) => {
+    const recipes = D.require('data/recipes');
+    const http = D.require('api/http');
+    if (!globalThis.GeoTIFF) await D.assets.loadVendorScript('vendor/geotiff/geotiff.js');
+    const GeoTIFF = /** @type {any} */ (globalThis).GeoTIFF;
+    // A tile of 4 × 4 cells of 10 m in SWEREF 99 TM, upper left corner E 674 000, N 6 580 040; the heights are 10 to 25 row by row.
+    const tif = GeoTIFF.writeArrayBuffer(Array.from({ length: 16 }, (_, i) => 10 + i), { width: 4, height: 4, ModelPixelScale: [10, 10, 0], ModelTiepoint: [0, 0, 0, 674000, 6580040, 0], ProjectedCSTypeGeoKey: 3006, GTModelTypeGeoKey: 1, GTRasterTypeGeoKey: 1 });
+    // The preset itself, pointed at a simulated Lantmäteriet; the user's copy with the preset's id takes its place until it is removed.
+    const preset = await connectors.get('lantmateriet-stac');
+    const copy = JSON.parse(JSON.stringify(preset));
+    Object.assign(copy, { baseUrl: BASE + '/lmh' });
+    copy.auth.tokenUrl = BASE + '/lmh/token';
+    copy.files.hosts = ['tests'];
+    await connectors.save(copy);
+    secrets.set('lantmateriet-stac', { clientId: 'nyckel', clientSecret: 'hemlighet' });
+    serve('tests/geo/lmh/token', () => ({ access_token: 'hojd-token', expires_in: 3600 }));
+    serve('tests/geo/lmh/stac-hojd/v1/search', () => ({ type: 'FeatureCollection', links: [], features: [
+      { type: 'Feature', id: '658_67', properties: { 'proj:bbox': [674000, 6580000, 674040, 6580040] }, geometry: null, assets: { data: { href: BASE + '/lmh-files/dtm.tif', type: 'image/tiff; application=geotiff; profile=cloud-optimized' } } }] }));
+    D.net.virtual('tests/geo/lmh-files/dtm.tif', () => Promise.resolve({ kind: 'binary', data: tif }));
+    names.push('tests/geo/lmh-files/dtm.tif');
+    const sent = []; const real = http.request;
+    http.request = (req) => { sent.push({ url: String(req.url), auth: String((req.headers || {}).Authorization || '') }); return real(req); };
+    const realFetch = globalThis.fetch; const fetched = [];
+    globalThis.fetch = (input, init) => { fetched.push({ url: String(input), auth: String(((init && init.headers) || {}).Authorization || '') }); return realFetch(input, init); };
+    let id = null; let id2 = null;
+    try {
+      const middle = D.require('data/geo').swerefToWgs84(674015, 6580025, 3006);
+      const csv = `namn;x;y\nhörnet;674005;6580035\nmotsatt;674035;6580005\nmitten;${middle[0].toFixed(7)};${middle[1].toFixed(7)}\nutanför;690000;6600000\n`;
+      const meta = await D.require('io/import').run(new File([csv], 'punkter.csv'), {}, null, 'Höjdpunkter');
+      id = meta.id;
+      const res = await recipes.apply(id, 'geo_height', { lonColumn: 'x', latColumn: 'y', name: 'hojd' });
+      const rows = await datasets.query(id);
+      const cols = (await datasets.columns(id)).map((c) => c.name);
+      const h = rows.map((r) => r[cols.indexOf('hojd')]);
+      assert.deepEqual(h, [10, 25, 15, null], 'the cell under each point; nothing outside the model');
+      assert.ok(res && res.matched === 3, 'three of four points: ' + JSON.stringify(res));
+      assert.ok(sent.some((s) => /stac-hojd\/v1\/search/.test(s.url) && /collections=dtm-cog/.test(s.url) && s.auth === 'Bearer hojd-token'), 'the terrain model searched with the key');
+      const tile = fetched.find((f) => /lmh-files\/dtm\.tif/.test(f.url));
+      assert.ok(tile && tile.auth === 'Bearer hojd-token', 'the tile read with the key from the file host');
+      // Along a line of 30 m in the top row of the tile: a point every 10 m reads 10, 11, 12 and 13.
+      const lineCsv = ['namn;geometri', 'linjen;LINESTRING (674005 6580035, 674035 6580035)', 'utanför;LINESTRING (690000 6600000, 690100 6600000)', ''].join(String.fromCharCode(10));
+      const lines = await D.require('io/import').run(new File([lineCsv], 'linjer.csv'), {}, null, 'Höjdlinjer');
+      id2 = lines.id;
+      const res2 = await recipes.apply(id2, 'geo_height_along', { column: 'geometri', step: 10, prefix: 'hojd' });
+      const cols2 = (await datasets.columns(id2)).map((c) => c.name);
+      const rows2 = await datasets.query(id2);
+      const pick = (r) => ['hojd_min', 'hojd_max', 'hojd_medel'].map((n) => r[cols2.indexOf(n)]);
+      assert.deepEqual(rows2.map(pick), [[10, 13, 11.5], [null, null, null]], 'lowest, highest and mean along the line');
+      assert.ok(res2 && res2.matched === 1, JSON.stringify(res2));
+      return h.join(', ');
+    } finally {
+      http.request = real; globalThis.fetch = realFetch;
+      if (id) await datasets.remove(id).catch(() => {});
+      if (id2) await datasets.remove(id2).catch(() => {});
+      await connectors.remove('lantmateriet-stac');
+      await secrets.forget('lantmateriet-stac');
+      D.require('api/auth').clearToken('lantmateriet-stac');
+    }
+  }, 60000);
+
   test('geodata: cleanup', async (assert) => {
     for (const n of names) D.net.unvirtual(n);
     assert.ok(true);

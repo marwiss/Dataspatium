@@ -61,6 +61,8 @@
         case 'geo_area': return D.t('recipe.geo_area', { column: params.column, name: params.name || 'area_km2', n });
         case 'geo_reproject': return D.t('recipe.geo_reproject', { x: params.xColumn, y: params.yColumn, crs: params.direction === 'to_sweref' ? 'SWEREF 99 TM' : 'WGS 84', n });
         case 'geo_region': return D.t(params.level === 'lan' ? 'recipe.geo_region.lan' : 'recipe.geo_region.kommun', { lon: params.lonColumn, lat: params.latColumn, n: result && typeof result.matched === 'number' ? D.t('recipe.geo_region.matched', { matched: result.matched, rows: result.rows }) : n });
+        case 'geo_height': return D.t('recipe.geo_height', { lon: params.lonColumn, lat: params.latColumn, name: params.name || 'hojd', matched: result && typeof result.matched === 'number' ? result.matched : '', rows: result && typeof result.rows === 'number' ? result.rows : '' });
+        case 'geo_height_along': return D.t('recipe.geo_height_along', { column: params.column, step: params.step || 10, matched: result && typeof result.matched === 'number' ? result.matched : '', rows: result && typeof result.rows === 'number' ? result.rows : '' });
         case 'duplicate_column': return D.t('recipe.duplicate_column', { column: params.column, name: params.name });
         case 'clean_names': return D.t('recipe.clean_names', { count: result && typeof result.columns === 'number' ? result.columns : '' });
         case 'round_numbers': return D.t('recipe.round_numbers', { cols, decimals: Number(params.decimals) || 0, n });

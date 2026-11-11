@@ -246,9 +246,10 @@ data (buildings, land cover, place names, property division and addresses), orth
 and laser data) and maps. Choose a collection and give an area; the result is the files’ footprints as a map with the
 addresses of the files. The card **Files in the source** in Manage then fetches the files with the key: the vector files are
 read in as datasets (a ZIP is unpacked and a GeoPackage gives one dataset per layer), and rasters, point clouds and other
-files the app does not read are saved on the computer, at most 20 at a time. The key is the consumer key and consumer secret
-from a free account in [Geotorget](https://geotorget.lantmateriet.se/); the app fetches an access token with them, and it is
-sent only to Lantmäteriet’s API and the file server dl1.lantmateriet.se.
+files the app does not read are saved on the computer, at most 20 at a time. Heights at points come from the operation
+*Height from the terrain model* in Process, which reads the terrain model’s tiles directly. The key is the consumer key and
+consumer secret from a free account in [Geotorget](https://geotorget.lantmateriet.se/); the app fetches an access token with
+them, and it is sent only to Lantmäteriet’s API and the file server dl1.lantmateriet.se.
 
 **Geodataportalen** (geodata.se) is Sweden's national catalogue of the geodata of agencies, regions and municipalities.
 The source *Geodataportalen (sök geodata)* searches the catalogue and shows one record per hit with title,

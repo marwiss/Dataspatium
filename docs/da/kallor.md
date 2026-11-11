@@ -245,9 +245,9 @@ CC0.
 kort. Vælg samling, og angiv et område; resultatet er filernes flader som kort med adresserne til filerne. Kortet **Filer i
 kilden** i Håndter henter derefter filerne med nøglen: vektorfilerne indlæses som datasæt (en ZIP pakkes ud, og en GeoPackage
 giver ét datasæt pr. lag), og raster, punktskyer og andre filer, som appen ikke læser, gemmes på computeren, højst 20 ad
-gangen. Nøglen er forbrugernøglen og forbrugerhemmeligheden fra en gratis konto i
-[Geotorget](https://geotorget.lantmateriet.se/); appen henter et adgangstoken med dem, og det sendes kun til Lantmäteriets
-API og filserveren dl1.lantmateriet.se.
+gangen. Højder i punkter giver handlingen *Højde fra terrænmodellen* i Bearbejd, som læser terrænmodellens fliser direkte.
+Nøglen er forbrugernøglen og forbrugerhemmeligheden fra en gratis konto i [Geotorget](https://geotorget.lantmateriet.se/);
+appen henter et adgangstoken med dem, og det sendes kun til Lantmäteriets API og filserveren dl1.lantmateriet.se.
 
 **Geodataportalen** (geodata.se) er Sveriges nationale katalog over myndigheders, regioners og kommuners geodata. Kilden
 *Geodataportalen (sök geodata)* søger i kataloget og viser en post pr. resultat med titel, organisation, beskrivelse og
