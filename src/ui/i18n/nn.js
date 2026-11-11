@@ -2210,6 +2210,8 @@
     'review.continue': 'Hald fram',
     'review.material.title': 'Gå gjennom grunnlaget',
     'review.material.remove': 'Fjern i kopien',
+    'review.findings.title': 'Gå gjennom funna',
+    'review.findings.help': 'Dette forlèt datamaskina og vert lagt i {project} på {server}: {n} funn som saker med bileta sine.',
     'review.material.help': 'Dette forlèt datamaskina og vert lagt i {project} på {server}: briefen og {n} bilete.',
     'review.material.people': 'Personar og skilt på bileta er personopplysningar. Fjern slike bilete i panelet før du held fram.',
     'review.material.places': 'Posisjon og tid for {n} bilete',

@@ -23,8 +23,11 @@
   const fakePopup = (url) => { const u = new URL(url); return Promise.resolve(`${u.searchParams.get('redirect_uri')}?code=abc&state=${u.searchParams.get('state')}`); };
   /** Every request, so that the virtual server can read the method, the headers and the body of the one it answers. */
   const spy = { requests: [] };
+  // Installed when the file loads and never put back: the files loaded after this one wrap http.request too, and putting this
+  // file's original back in its cleanup would cut their spies out of the chain. The cleanup only stops the recording.
+  let spying = true;
   const realRequest = http.request;
-  http.request = (req) => { spy.requests.push(req); return realRequest(req); };
+  http.request = (req) => { if (spying && String(req.url).startsWith(BASE)) spy.requests.push(req); return realRequest(req); };
   const last = () => spy.requests[spy.requests.length - 1] || {};
   const world = { documents: [], topics: [], references: [], refuse: '' };
   const toB64 = (bytes) => { let s = ''; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
@@ -152,7 +155,7 @@
   }, 20000);
 
   test('model material: cleanup', async () => {
-    http.request = realRequest;
+    spying = false;
     D.net.unvirtual('tests/model-material/');
     if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id); }
     return 'ok';

@@ -2210,6 +2210,8 @@
     'review.continue': 'Fortsett',
     'review.material.title': 'Gå gjennom grunnlaget',
     'review.material.remove': 'Fjern i kopien',
+    'review.findings.title': 'Gå gjennom funnene',
+    'review.findings.help': 'Dette forlater datamaskinen og legges i {project} på {server}: {n} funn som saker med bildene sine.',
     'review.material.help': 'Dette forlater datamaskinen og legges i {project} på {server}: briefen og {n} bilder.',
     'review.material.people': 'Personer og skilt på bildene er personopplysninger. Fjern slike bilder i panelet før du fortsetter.',
     'review.material.places': 'Posisjon og tid for {n} bilder',

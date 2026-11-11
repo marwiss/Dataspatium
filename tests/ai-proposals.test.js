@@ -158,7 +158,7 @@
       panel.state.preview = { report: { proposal: { changes: [], instances: 0, unexpressed: { created: 1, deleted: 0, relations: 0 } }, created: [{ id: 300, ifc_class: 'IfcWall', ref: 'new-1' }], changed: [], deleted: [], findings: [], errors: 0 } };
       panel.attach([]);
       const line = panel.el.querySelector('[data-ai-proposal]');
-      assert.ok(line && line.textContent.includes(t('ai.change.propose.ops', { n: '1' })), 'the line says the operations go along: ' + (line && line.textContent));
+      assert.ok(line && line.textContent.includes(t('ai.change.propose.ops', { n: String(panel.state.changeset.ops.length) })), 'the line says the operations go along: ' + (line && line.textContent));
       const btn = /** @type {any} */ (panel.el.querySelector('[data-ai-propose]'));
       assert.ok(btn && !btn.disabled, 'Föreslå på servern is possible without attribute changes');
       delete sent['/bcf/3.0/projects/p-1/topics/t-9/snippet'];

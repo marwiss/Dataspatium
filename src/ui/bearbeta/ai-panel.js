@@ -368,7 +368,7 @@
           const description = /** @type {any} */ (h('dm-input', { label: t('ai.change.propose.description'), rows: '6' }));
           description.value = defaults.description;
           const ok = await overlays.dialog.open({
-            title: t('ai.change.propose.title'), help: 'cad-bim#andra-med-ai',
+            title: t('ai.change.propose.title'), help: 'cad-bim#ändra-med-ai',
             body: h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('ai.change.propose.hint.dialog', { project: defaults.project }) }), title, description),
             actions: [{ label: t('common.cancel'), value: false }, { label: t('ai.change.propose.send'), variant: 'primary', value: true, primary: true }],
           });

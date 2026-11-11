@@ -257,6 +257,7 @@
       const topics = bodiesTo('/projects/p-1/topics');
       assert.equal(topics.length, 2, 'two topics tried');
       assert.ok(topics[0].title === 'Spricka i putsen' && topics[0].priority === 'High' && topics[0].topic_type === 'Inspection' && topics[0].description.includes('En spricka från sockeln'), JSON.stringify(topics[0]).slice(0, 300));
+      assert.ok(!topics[0].description.includes('59.329'), 'the photo\'s position stays out unless kept: ' + topics[0].description);
       const vps = bodiesTo('/topics/t-1/viewpoints');
       assert.equal(vps.length, 1, 'a viewpoint on the topic');
       assert.ok(vps[0].snapshot && vps[0].snapshot.snapshot_type === 'jpg' && vps[0].snapshot.snapshot_data === PIXEL, 'the photo as the snapshot');

@@ -2232,6 +2232,8 @@
     'review.continue': 'Fortsätt',
     'review.material.title': 'Granska underlaget',
     'review.material.remove': 'Ta bort i kopian',
+    'review.findings.title': 'Granska fynden',
+    'review.findings.help': 'Det här lämnar datorn och läggs i {project} på {server}: {n} fynd som ärenden med sina foton.',
     'review.material.help': 'Det här lämnar datorn och läggs i {project} på {server}: briefen och {n} bilder.',
     'review.material.people': 'Personer och registreringsskyltar på bilderna är personuppgifter. Ta bort sådana bilder i panelen innan du fortsätter.',
     'review.material.places': 'Position och tid för {n} bilder',

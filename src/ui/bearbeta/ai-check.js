@@ -86,9 +86,9 @@
           return { viewpoint, snapshot };
         }
         /** The words of a finding's topic: what the AI saw, the condition and the priority, the action, the element and the photo. */
-        function descriptionOf(f) {
+        function descriptionOf(f, places = true) {
           const element = checkTools.elementText(f);
-          const where = Number.isFinite(f.lat) && Number.isFinite(f.lon) ? t('ai.build.caption.where', { lat: f.lat.toFixed(5), lon: f.lon.toFixed(5) }) : '';
+          const where = places && Number.isFinite(f.lat) && Number.isFinite(f.lon) ? t('ai.build.caption.where', { lat: f.lat.toFixed(5), lon: f.lon.toFixed(5) }) : '';
           return [f.description,
             `${t('ai.check.badge.condition', { condition: word('ai.check.condition', f.condition) })} · ${t('ai.check.badge.priority', { priority: word('ai.check.priority', f.priority) })}`,
             f.action ? t('ai.check.action', { action: f.action }) : '',
@@ -137,13 +137,10 @@
           return blob;
         }
         const failedText = () => t('ai.check.server.failed', { n: i18n.formatNumber(s.failed.length), errors: s.failed.slice(0, 5).map((x) => `${x.n}. ${x.title}: ${x.error}`).join('; ') + (s.failed.length > 5 ? ' …' : '') });
-        async function confirmSend(n, server) {
-          const ok = await overlays.dialog.open({
-            title: t('ai.check.server'), help: 'cad-bim#kontrollera-med-ai',
-            body: h('p', { class: 'dm-help', text: t('ai.check.server.confirm', { n: i18n.formatNumber(n), project: server.project, server: server.connector.name }) }),
-            actions: [{ label: t('common.cancel'), value: false }, { label: t('ai.check.server.send'), variant: 'primary', value: true, primary: true }],
-          });
-          return ok === true;
+        /** Through the sharing review, as everything that leaves the app: the photos' positions stay out of the topics unless kept. */
+        async function confirmSend(todo, server) {
+          const places = todo.filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lon)).length;
+          return D.require('ui/share/review').material(_ctx, { kind: 'findings', pictures: todo.length, places, server: server.connector.name, project: server.project });
         }
         /**
          * One BCF topic per finding on the server the model came from, each with a viewpoint of the photo and the element, after the
@@ -155,7 +152,10 @@
           const server = s.server;
           const todo = list().filter((f) => !f.issued);
           if (!server || !todo.length || blocked()) return null;
-          if (!opts.confirmed && !(await confirmSend(todo.length, server))) return null;
+          // Confirmed by the caller (a test, a command): positions only when it says so.
+          const choice = opts.confirmed ? { places: opts.places === true ? 'keep' : 'drop' } : await confirmSend(todo, server);
+          if (!choice) return null;
+          const places = choice.places === 'keep';
           s.busy = 'server'; s.failed = []; options.render();
           let made = 0;
           try {
@@ -165,7 +165,7 @@
             for (const f of todo) {
               try {
                 if (!f.topicGuid) {
-                  const body = { title: f.title.slice(0, 255), description: descriptionOf(f) };
+                  const body = { title: f.title.slice(0, 255), description: descriptionOf(f, places) };
                   if (type) body.topic_type = type;
                   const priority = priorityOn(f.priority, ext.priority);
                   if (priority) body.priority = priority;

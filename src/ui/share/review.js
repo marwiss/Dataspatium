@@ -128,7 +128,8 @@
      * that people and number plates on the pictures are personal data, and the choice for the pictures' positions and times
      * (dropped from the copy unless the person keeps them: the brief's lines and the files' EXIF). Resolves with
      * { places: 'keep' | 'drop' } or null when the person cancels.
-     * @param {any} ctx @param {{pictures: number, places: number, server: string, project: string}} info
+     * With `kind: 'findings'` the same review is for a check's findings on their way to the server as issues with their photos.
+     * @param {any} ctx @param {{pictures: number, places: number, server: string, project: string, kind?: 'material'|'findings'}} info
      */
     function placesPicker(label, start, onChange) {
       const sel = /** @type {any} */ (h('dm-select', { label, 'data-review-material-places': '' }));
@@ -141,11 +142,11 @@
       let places = 'drop';
       const dialog = (ctx && ctx.ui && ctx.ui.dialog) || D.require('ui/overlays').dialog;
       const body = h('div', { class: 'dm-stack', 'data-review-material': '' },
-        h('p', { text: t('review.material.help', { n: i18n.formatNumber(info.pictures || 0), project: String(info.project || ''), server: String(info.server || '') }) }),
+        h('p', { text: t(info.kind === 'findings' ? 'review.findings.help' : 'review.material.help', { n: i18n.formatNumber(info.pictures || 0), project: String(info.project || ''), server: String(info.server || '') }) }),
         h('p', { class: 'dm-help dm-small', text: t('review.material.people') }),
         info.places ? placesPicker(t('review.material.places', { n: i18n.formatNumber(info.places) }), places, (v) => { places = v === 'keep' ? 'keep' : 'drop'; }) : null,
         info.places ? h('p', { class: 'dm-help dm-small', text: t('review.material.places.help') }) : null);
-      const ok = await dialog.open({ title: t('review.material.title'), help: 'dela#granskning-före-delning', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
+      const ok = await dialog.open({ title: t(info.kind === 'findings' ? 'review.findings.title' : 'review.material.title'), help: 'dela#granskning-före-delning', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
       return ok === true ? { places } : null;
     }
 

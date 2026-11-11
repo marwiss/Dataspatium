@@ -2210,6 +2210,8 @@
     'review.continue': 'Jatka',
     'review.material.title': 'Tarkista aineisto',
     'review.material.remove': 'Poista kopiosta',
+    'review.findings.title': 'Tarkista löydökset',
+    'review.findings.help': 'Tämä lähtee tietokoneelta projektiin {project} palvelimella {server}: {n} löydöstä asioina kuvineen.',
     'review.material.help': 'Tämä lähtee tietokoneelta projektiin {project} palvelimella {server}: brief ja {n} kuvaa.',
     'review.material.people': 'Kuvissa näkyvät ihmiset ja rekisterikilvet ovat henkilötietoja. Poista tällaiset kuvat paneelista ennen kuin jatkat.',
     'review.material.places': '{n} kuvan sijainti ja aika',

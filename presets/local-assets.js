@@ -663,7 +663,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15482,
+  "size": 15930,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -831,7 +831,7 @@ Dataspatium.assets.addEntries({
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 15497,
+  "size": 15928,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -999,7 +999,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 15332,
+  "size": 15761,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1167,7 +1167,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 15639,
+  "size": 16074,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1335,7 +1335,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 16458,
+  "size": 16885,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1503,7 +1503,7 @@ Dataspatium.assets.addEntries({
  "docs/is/sakerhet.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 16420,
+  "size": 16870,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1671,7 +1671,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15449,
+  "size": 15874,
   "library": "dataspatium"
  }
 });

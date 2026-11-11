@@ -2210,6 +2210,8 @@
     'review.continue': 'Halda áfram',
     'review.material.title': 'Yfirfara gögnin',
     'review.material.remove': 'Fjarlægja í afritinu',
+    'review.findings.title': 'Yfirfara atriðin',
+    'review.findings.help': 'Þetta fer af tölvunni og í {project} á {server}: {n} atriði sem mál með myndum sínum.',
     'review.material.help': 'Þetta fer af tölvunni og í {project} á {server}: lýsingin og {n} myndir.',
     'review.material.people': 'Fólk og bílnúmer á myndunum eru persónuupplýsingar. Fjarlægðu slíkar myndir í spjaldinu áður en þú heldur áfram.',
     'review.material.places': 'Staðsetning og tími {n} mynda',

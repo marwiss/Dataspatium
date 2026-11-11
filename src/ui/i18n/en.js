@@ -2210,6 +2210,8 @@
     'review.continue': 'Continue',
     'review.material.title': 'Review the material',
     'review.material.remove': 'Remove in the copy',
+    'review.findings.title': 'Review the findings',
+    'review.findings.help': 'This leaves the computer and goes to {project} on {server}: {n} findings as issues with their photos.',
     'review.material.help': 'This leaves the computer and goes to {project} on {server}: the brief and {n} pictures.',
     'review.material.people': 'People and number plates in the pictures are personal data. Remove such pictures in the panel before you go on.',
     'review.material.places': 'Position and time of {n} pictures',
