@@ -297,7 +297,10 @@ klientar ser kva han vart bygd av. Knappen heiter *Legg grunnlaget på tenaren*.
 (skisse, hovudtrekk eller detaljert): fyll inn det du veit, så innleier det briefen og AI-en spør om resten. Orda er vanlege, men bak
 dei ligg informasjonskrava i ISO 19650 og level of information need, og modellen er tenkt som forvaltningsmodellen til bygningen. Kvart
 bilete vert lagt ved som foto, fasade mot nord, aust, sør eller vest, innvendig eller teikning, og eit foto med posisjon og tidspunkt i
-fila (EXIF) får dei i biletteksten sin, så AI-en veit kva han ser.
+fila (EXIF) får dei i biletteksten sin, så AI-en veit kva han ser. Opplysningane frå eit datasett gjev òg det sørvestlege hjørnet til
+bygningsflata på kartet, så AI-en plasserer modellen med `set_site` (posisjon, høgd og SWEREF 99 TM), og med *Med terrenghøgd i
+hjørna*, som vert vist når kjelda til Lantmäteriet er lagd til, terrenghøgda i kvart hjørne frå høgdemodellen: eit nettverkskall med
+nøkkelen din etter samtykke.
 
 ## Spør AI om modellen
 

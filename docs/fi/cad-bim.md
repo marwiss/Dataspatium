@@ -304,7 +304,10 @@ Paneelin yläosassa ovat *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus
 (luonnos, pääpiirteet tai yksityiskohtainen): täytä se minkä tiedät, niin se aloittaa briefin ja tekoäly kysyy loput. Sanat ovat
 tavallisia, mutta niiden takana ovat ISO 19650:n tietovaatimukset ja level of information need, ja malli on tarkoitettu rakennuksen
 ylläpitomalliksi. Jokainen kuva liitetään valokuvana, pohjois-, itä-, etelä- tai länsijulkisivuna, sisätilana tai piirustuksena, ja
-valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF), saa ne kuvatekstiinsä, jotta tekoäly tietää, mitä se näkee.
+valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF), saa ne kuvatekstiinsä, jotta tekoäly tietää, mitä se näkee. Aineiston
+tiedot antavat myös rakennuksen pohjan lounaiskulman kartalla, joten tekoäly sijoittaa mallin työkalulla `set_site` (sijainti, korkeus
+ja SWEREF 99 TM), ja valinnalla *Maanpinnan korkeus kulmissa mukaan*, joka näkyy kun Lantmäterietin lähde on lisätty, maanpinnan
+korkeuden jokaisessa kulmassa korkeusmallista: verkkokutsu avaimellasi suostumuksen jälkeen.
 
 ## Kysy tekoälyltä mallista
 

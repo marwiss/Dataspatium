@@ -159,6 +159,30 @@
       const wgs = input.outline({ type: 'Point', coordinates: [12.0, 57.9] });
       assert.ok(wgs && wgs.corners.length === 1 && !wgs.projected, 'a WGS 84 point is projected');
       assert.equal(input.outline('nonsense'), null);
+      // The south-west corner's place on earth, for set_site (step 1): SWEREF 99 TM for unnamed projected coordinates.
+      assert.ok(o.epsg === 3006 && o.origin[0] === 674000 && o.origin[1] === 6580000 && o.lat > 59 && o.lat < 60 && o.lon > 17.5 && o.lon < 18.5, JSON.stringify(o));
+      assert.ok(got.text.includes(t('ai.build.facts.origin', { epsg: '3006', e: '674000', n: '6580000', lat: o.lat.toFixed(6), lon: o.lon.toFixed(6) })), 'the corner\'s place in the brief');
+      assert.equal(wgs.epsg, 3006);
+      // Web Mercator is projected anew, so that the metres are true.
+      const merc = input.outline('POINT (2011000 8260000)', 'EPSG:3857');
+      assert.ok(merc && merc.epsg === 3006 && merc.lat > 59 && merc.lat < 60, JSON.stringify(merc));
+      // The ground heights at the corners only on request, through api/heights (stubbed: no network in the suite).
+      const heights = D.require('api/heights');
+      const realAt = heights.at;
+      const asked = [];
+      try {
+        heights.at = async (points) => { asked.push(points); return { heights: points.map((p, i) => 10 + i), tiles: 1 }; };
+        const plain = await input.facts(meta.id);
+        assert.ok(!asked.length && plain.heights === 0, 'no heights without the request');
+        const withHeights = await input.facts(meta.id, { heights: true });
+        assert.equal(asked.length, 1, 'one call for all corners');
+        assert.ok(asked[0].length === 8 && asked[0][0][0] === 674000 && asked[0][0][1] === 6580000 && asked[0][2][0] === 674012 && asked[0][2][1] === 6580008, JSON.stringify(asked[0]));
+        assert.equal(withHeights.heights, 8);
+        assert.ok(withHeights.text.includes(t('ai.build.facts.heights', { heights: '10, 11, 12, 13', low: '10', high: '13' })) && withHeights.text.includes(t('ai.build.facts.heights', { heights: '14, 15, 16, 17', low: '14', high: '17' })), withHeights.text);
+        heights.at = async () => { throw new Error('nyckel saknas'); };
+        const failed = await input.facts(meta.id, { heights: true });
+        assert.ok(failed.heightsError === 'nyckel saknas' && failed.heights === 0 && !failed.text.includes('RH 2000'), 'a failed lookup leaves the facts without heights');
+      } finally { heights.at = realAt; }
       const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: ds.id, mode: 'build', brief: 'Ett hus' });
       document.body.appendChild(panel.el);
       try {

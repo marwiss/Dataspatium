@@ -291,7 +291,9 @@ ser vad den byggdes av. Knappen heter *Lägg underlaget på servern*.
 (skiss, huvuddrag eller detaljerad): fyll i det du vet, så inleder det briefen och AI:n frågar om resten. Orden är vanliga, men bakom
 dem ligger ISO 19650:s informationskrav och level of information need, och modellen är tänkt som byggnadens förvaltningsmodell. Varje
 bild bifogas som foto, fasad mot norr, öster, söder eller väster, insida eller ritning, och ett foto med position och tidpunkt i filen
-(EXIF) får dem i sin bildtext, så att AI:n vet vad den ser.
+(EXIF) får dem i sin bildtext, så att AI:n vet vad den ser. Uppgifterna ur en datamängd ger också byggnadsytans sydvästra hörn på
+kartan, så att AI:n placerar modellen med `set_site` (läge, höjd och SWEREF 99 TM), och med *Med markhöjd i hörnen*, som visas när
+Lantmäteriets källa är tillagd, markhöjden i varje hörn ur höjdmodellen: ett nätanrop med din nyckel efter samtycke.
 
 ## Fråga AI om modellen
 

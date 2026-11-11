@@ -58,7 +58,12 @@
       '(which building, storeys, length, width, height, foundation, roof) and a level of detail: sketch means storeys, outer walls and slabs',
       'only; main features means walls, slabs, roof and openings with plausible measures and materials as names; detailed adds properties,',
       'materials per element and classification. Build to that level and no further. A caption before each picture says what it shows',
-      '(which façade, the inside, a drawing) and where and when it was taken.',
+      '(which façade, the inside, a drawing) and where and when it was taken. When the facts give the south-west corner\'s place (an',
+      'EPSG code with E and N, and WGS 84), call set_site once before the storeys with crs "EPSG:<code>", eastings and northings of that',
+      'corner, its latitude and longitude, and rotation 0, so that the model\'s (0, 0) is that corner and its x axis points east; the',
+      'elevation is the first floor\'s level above sea: the highest ground height at the corners plus about 0.3 m unless the brief says',
+      'otherwise, and the first storey stays at elevation 0. When the ground falls more than 0.5 m across the footprint, say so and ask',
+      'whether the building has a basement or a plinth on the low side.',
     ].join(' ');
     const ASK_TOOL = {
       name: 'ask_person',

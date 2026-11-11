@@ -301,7 +301,10 @@ At the top of the panel stand *The building's facts* (which building, storeys, l
 detail* (sketch, main features or detailed): fill in what you know, it opens the brief and the AI asks about the rest. The words are
 plain, but behind them lie ISO 19650's information requirements and level of information need, and the model is meant as the building's
 asset information model. Each picture is attached as a photo, the north, east, south or west façade, the inside or a drawing, and a
-photo whose file carries a position and a time (EXIF) gets them in its caption, so that the AI knows what it sees.
+photo whose file carries a position and a time (EXIF) gets them in its caption, so that the AI knows what it sees. The facts from a
+dataset also give the footprint's south-west corner on the map, so that the AI places the model with `set_site` (position, height and
+SWEREF 99 TM), and with *With the ground height at the corners*, shown when Lantmäteriet's source is added, the ground height at every
+corner from the terrain model: a network call with your key after consent.
 
 ## Ask AI about the model
 

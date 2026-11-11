@@ -294,7 +294,10 @@ hva den ble bygd av. Knappen heter *Legg grunnlaget på serveren*.
 (skisse, hovedtrekk eller detaljert): fyll inn det du vet, så innleder det briefen og AI-en spør om resten. Ordene er vanlige, men bak
 dem ligger informasjonskravene i ISO 19650 og level of information need, og modellen er tenkt som bygningens forvaltningsmodell. Hvert
 bilde legges ved som foto, fasade mot nord, øst, sør eller vest, innvendig eller tegning, og et foto med posisjon og tidspunkt i filen
-(EXIF) får dem i bildeteksten sin, så AI-en vet hva den ser.
+(EXIF) får dem i bildeteksten sin, så AI-en vet hva den ser. Opplysningene fra et datasett gir også bygningsflatens sørvestlige hjørne
+på kartet, så AI-en plasserer modellen med `set_site` (posisjon, høyde og SWEREF 99 TM), og med *Med terrenghøyde i hjørnene*, som
+vises når Lantmäteriets kilde er lagt til, terrenghøyden i hvert hjørne fra høydemodellen: et nettverkskall med nøkkelen din etter
+samtykke.
 
 ## Spør AI om modellen
 

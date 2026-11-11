@@ -37,7 +37,7 @@
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null };
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
@@ -54,6 +54,8 @@
           s.tables = all.filter((d) => d.id !== options.datasetId && (!d.kind || d.kind === 'table' || d.kind === 'plan'));
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = s.providers.some((p) => p.id === last) ? last : (s.providers[0] ? s.providers[0].id : '');
+          // Lantmäteriet's terrain model can give the ground heights at a footprint's corners when its source is added (no call here).
+          s.heightsSource = !!(await connectors.get('lantmateriet-stac').catch(() => null));
           // The brief and the pictures can go to the model's server as its material (F43 b, step 5) when the model came from one the person is signed in to.
           s.material = null;
           const meta = all.find((d) => d.id === options.datasetId) || (await datasets.get(options.datasetId));
@@ -183,9 +185,12 @@
         async function addFacts(datasetId) {
           if (!datasetId) return;
           try {
-            const got = await D.require('ai/build-input').facts(datasetId);
+            // The ground heights only when the person has turned them on: a call to Lantmäteriet with their key, after consent.
+            const got = await D.require('ai/build-input').facts(datasetId, { heights: !!(s.factsHeights && s.heightsSource) });
             s.question = (s.question ? s.question.replace(/\s+$/, '') + '\n\n' : '') + got.text;
             log(t('ai.build.facts.added', { name: got.name, n: i18n.formatNumber(got.rows), g: i18n.formatNumber(got.geometries) }), 'ok');
+            if (got.heights) log(t('ai.build.facts.heights.added', { h: i18n.formatNumber(got.heights) }), 'ok');
+            if (got.heightsError) log(t('ai.build.facts.heights.failed', { error: got.heightsError }), 'warn');
           } catch (err) { fail(err); }
           render();
         }
@@ -241,6 +246,12 @@
             h('div', { class: 'dm-row-wrap' }, choice('foundation', 'ai.build.foundation.', FOUNDATIONS), choice('roof', 'ai.build.roof.', ROOFS),
               basic.select(t('ai.build.detail'), DETAILS.map((k) => ({ value: k, label: t('ai.build.detail.' + k) })), s.detail, (v) => { s.detail = DETAILS.includes(v) ? v : 'main'; }, { 'data-ai-detail': '', title: t('ai.build.detail.hint') })));
         }
+        function heightsSwitch() {
+          const sw = /** @type {any} */ (h('dm-switch', { label: t('ai.build.facts.heights.switch'), title: t('ai.build.facts.heights.hint'), 'data-ai-facts-heights': '' }));
+          sw.checked = !!s.factsHeights;
+          sw.addEventListener('change', () => { s.factsHeights = !!sw.checked; });
+          return sw;
+        }
         function attachRow() {
           const input = /** @type {any} */ (h('input', { type: 'file', accept: 'image/*,.pdf', multiple: '', hidden: '', 'data-ai-attach-input': '' }));
           input.addEventListener('change', () => { attachFiles(input.files); input.value = ''; });
@@ -255,7 +266,8 @@
               s.material && D.has('data/model-material') ? basic.button({ label: t('ai.build.material'), icon: 'upload', size: 'sm', title: t('ai.build.material.hint'), loading: s.uploading, disabled: !s.question.trim() && !s.attachments.length, 'data-ai-material': '', onClick: uploadMaterial }) : null),
             s.tables.length ? h('div', { class: 'dm-row-wrap' },
               basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; }),
-              basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t('ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) })) : null,
+              basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t('ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) }),
+              s.heightsSource ? heightsSwitch() : null) : null,
             s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.label && a.label !== 'photo' ? `${a.name} · ${t('ai.build.label.' + a.label)}` : a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, 'data-ai-attachment-label': a.label || 'photo', onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
             h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t('ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : t('ai.build.attach.hint') }));
         }

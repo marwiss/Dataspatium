@@ -291,7 +291,10 @@ Efst í spjaldinu standa *Upplýsingar um bygginguna* (hvaða bygging, hæðir, 
 aðaldrættir eða nákvæmt): fylltu inn það sem þú veist, svo verður það upphaf lýsingarinnar og gervigreindin spyr um afganginn. Orðin
 eru hversdagsleg, en að baki þeim liggja upplýsingakröfur ISO 19650 og level of information need, og líkanið er hugsað sem
 rekstrarlíkan byggingarinnar. Hver mynd er hengd við sem ljósmynd, norður-, austur-, suður- eða vesturhlið, innanhúss eða teikning, og
-ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatextann sinn, svo að gervigreindin viti hvað hún sér.
+ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatextann sinn, svo að gervigreindin viti hvað hún sér. Upplýsingarnar
+úr gagnasafni gefa einnig suðvesturhorn grunnflatarins á kortinu, svo gervigreindin staðsetur líkanið með `set_site` (staðsetning, hæð
+og SWEREF 99 TM), og með *Með landhæð í hornunum*, sem birtist þegar heimild Lantmäteriet hefur verið bætt við, landhæðina í hverju
+horni úr hæðarlíkaninu: netkall með lyklinum þínum eftir samþykki.
 
 ## Spyrja gervigreind um líkanið
 
