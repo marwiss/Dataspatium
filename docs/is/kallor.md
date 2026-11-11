@@ -87,13 +87,17 @@ Skipanalínan `tools/dataspatium.py` (Python 3, staðalbókasafnið) notar vistf
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Mannfjöldi", "limit": 5}'
 python tools/dataspatium.py plan manadarskyrsla.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` sýnir skipanirnar með færibreytum sínum, `run` keyrir eina og skrifar svarið sem JSON, `plan` keyrir flæðisskrá (sama snið sem
 *Flytja út* undir Flæði gefur) sem áætlun sem þú samþykkir einu sinni, og `mcp` gerir skipanirnar að tólum fyrir gervigreindarforrit
 á tölvunni um Model Context Protocol (yfir staðalstraumana). Brúin heldur biðröðinni í minni, og skipun bíður eftir forritinu þar til
-þú hefur samþykkt hana eða fimm mínútur eru liðnar. `python tools/check_bridge.py` prófar biðröðina, skipanalínuna og MCP án vafra.
+þú hefur samþykkt hana eða fimm mínútur eru liðnar.
+`cancel` hættir við skipun sem bíður í biðröðinni eða keyrir í forritinu (Ctrl+C meðan `run` keyrir gerir það sama), og
+`POST /commands/<id>/cancel` er leiðin fyrir önnur forrit.
+`python tools/check_bridge.py` prófar biðröðina, skipanalínuna og MCP án vafra.
 
 ### Öryggi
 

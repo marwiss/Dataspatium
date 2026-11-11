@@ -228,7 +228,9 @@ on, ja valitsee seuraavan vaiheen sen mukaan, mitä se saa tietää. Vaiheet nä
 - Toistuvaan tehtävään tekoäly voi ehdottaa kokonaista työnkulkua, jonka tallennat painikkeella *Tallenna työnkuluksi*. Tehtävän
   jälkeen voit myös tallentaa hyväksytyt vaiheet työnkuluksi. Molemmat ajetaan sen jälkeen ilman tekoälyä kohdassa *Työnkulut ja
   seurannat*.
-- Tekoäly vastaa sovelluksen kielellä. *Pysäytä* keskeyttää ennen seuraavaa vaihetta, ja *Uusi keskustelu* aloittaa alusta.
+- Tekoäly vastaa sovelluksen kielellä. *Pysäytä* keskeyttää ennen seuraavaa vaihetta. Tekoäly muistaa keskustelun istuntojen välillä:
+  se tallennetaan muistikirjana *Tekoälyavustaja* Analysoi-tilaan, jonka voit lukea ja poistaa, eikä se koskaan lähde paketissa muille.
+  *Uusi keskustelu* aloittaa alusta ja unohtaa sen.
 
 Se, mitä tekoäly lukee aineistoista, on dataa eikä koskaan ohjeita. Pilvipalveluun lähetetty tieto lähtee tietokoneelta, joten
 valitse arkaluonteisiin tehtäviin paikallinen malli.

@@ -89,13 +89,17 @@ Kommandolinjen `tools/dataspatium.py` (Python 3, standardbiblioteket) bruger bro
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
 python tools/dataspatium.py plan maanedsrapport.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` viser kommandoerne med deres parametre, `run` kører én og skriver svaret som JSON, `plan` kører en flowfil (samme form, som
 *Eksportér* under Flows giver) som en plan, du godkender én gang, og `mcp` gør kommandoerne til værktøjer for et AI-program på
 computeren gennem Model Context Protocol (over standardstrømmene). Broen holder køen i hukommelsen, og en kommando venter på appen,
-indtil du har godkendt den, eller der er gået fem minutter. `python tools/check_bridge.py` prøver køen, kommandolinjen og MCP uden
+indtil du har godkendt den, eller der er gået fem minutter.
+`cancel` afbryder en kommando, der venter i køen eller kører i appen (Ctrl+C under `run` gør det samme), og `POST /commands/<id>/cancel`
+er vejen for andre programmer.
+`python tools/check_bridge.py` prøver køen, kommandolinjen og MCP uden
 browser.
 
 ### Sikkerhed

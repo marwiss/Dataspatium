@@ -93,13 +93,17 @@ Komentorivi `tools/dataspatium.py` (Python 3, vakiokirjasto) käyttää sillan o
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Väestö", "limit": 5}'
 python tools/dataspatium.py plan kuukausiraportti.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` näyttää komennot parametreineen, `run` suorittaa yhden ja tulostaa vastauksen JSON-muodossa, `plan` suorittaa
 työnkulkutiedoston (saman muodon, jonka *Vie* antaa kohdassa Työnkulut) suunnitelmana, jonka hyväksyt kerran, ja `mcp` tekee
 komennoista työkaluja tietokoneen tekoälyohjelmalle Model Context Protocol -yhteyskäytännöllä (vakiovirtojen yli). Silta pitää jonon
-muistissa, ja komento odottaa sovellusta, kunnes olet hyväksynyt sen tai viisi minuuttia on kulunut. `python tools/check_bridge.py`
+muistissa, ja komento odottaa sovellusta, kunnes olet hyväksynyt sen tai viisi minuuttia on kulunut.
+`cancel` keskeyttää komennon, joka odottaa jonossa tai on käynnissä sovelluksessa (Ctrl+C `run`-komennon aikana tekee saman), ja
+`POST /commands/<id>/cancel` on tie muille ohjelmille.
+`python tools/check_bridge.py`
 kokeilee jonoa, komentoriviä ja MCP:tä ilman selainta.
 
 ### Turvallisuus

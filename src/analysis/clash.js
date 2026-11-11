@@ -158,7 +158,7 @@
      * @param {any} result @returns {{mode: string, count: number, pairs: number, setA: number, setB: number, seconds: number, tolerance: number, clearance: number}}
      */
     function summaryOf(result) {
-      return { mode: result.spec.mode, count: (result.clashes || []).length, pairs: result.pairs, setA: result.setA, setB: result.setB, missing: result.missing || 0, seconds: result.seconds, tolerance: result.spec.tolerance, clearance: result.spec.clearance };
+      return { mode: result.spec.mode, server: !!result.server, count: (result.clashes || []).length, pairs: result.pairs, setA: result.setA, setB: result.setB, missing: result.missing || 0, seconds: result.seconds, tolerance: result.spec.tolerance, clearance: result.spec.clearance };
     }
     /**
      * The server's clash report (Dataregium's ifc_clash) in the form of a check run here, so that the same table, marking, BCF

@@ -49,7 +49,7 @@ try:
 except ImportError:  # pragma: no cover - optional
     pyodbc = None
 
-VERSION = "2.5.0"
+VERSION = "2.6.0"
 KINDS = ["sqlite"] + (["dsn", "odbc", "access", "excel"] if pyodbc else [])
 
 
@@ -205,7 +205,9 @@ class Commands:
     """POST /commands from a program on this computer (the CLI tools/dataspatium.py, an MCP client), picked up by the app that has
     Styrning utifrån on (GET /commands/next), run there under the app's own rules (a writing command is approved by the person)
     and answered back (POST /commands/<id>/result). The app registers its commands first (POST /commands/catalog); without an app
-    that polled within PAGE_TIMEOUT seconds a command is refused. Everything is behind the token, on 127.0.0.1 only."""
+    that polled within PAGE_TIMEOUT seconds a command is refused. POST /commands/<id>/cancel takes a queued command out of the queue
+    and marks a running one cancelling, which the app sees in GET /commands/<id> and stops at its next check. Everything is behind
+    the token, on 127.0.0.1 only."""
 
     MAX_QUEUE = 100
     MAX_WAIT = 60.0
@@ -276,7 +278,7 @@ class Commands:
             it = self.items.get(cid)
             if not it:
                 return 404, {"error": "Okänt kommando " + cid}
-            it.update({"state": "done", "ok": bool(body.get("ok")), "result": body.get("result"), "error": body.get("error"), "done_at": time.time()})
+            it.update({"state": "done", "cancelled": it["state"] == "cancelling", "ok": bool(body.get("ok")), "result": body.get("result"), "error": body.get("error"), "done_at": time.time()})
             self.seen = time.time()
             self.lock.notify_all()
             return 200, {"id": cid, "state": "done"}
@@ -289,9 +291,26 @@ class Commands:
                 it = self.items.get(cid)
                 if not it:
                     return 404, {"error": "Okänt kommando " + cid}
-                if it["state"] == "done" or time.time() >= end:
-                    return 200, {k: it.get(k) for k in ("id", "name", "state", "ok", "result", "error")}
+                if it["state"] in ("done", "cancelled", "cancelling") or time.time() >= end:
+                    return 200, {k: it.get(k) for k in ("id", "name", "state", "ok", "result", "error", "cancelled")}
                 self.lock.wait(min(end - time.time(), 5.0))
+
+    def cancel(self, cid):
+        """A queued command is cancelled at once; a running one is marked, and the app stops it at its next check."""
+        with self.lock:
+            it = self.items.get(cid)
+            if not it:
+                return 404, {"error": "Okänt kommando " + cid}
+            if it["state"] == "queued":
+                self.queue.remove(cid)
+                it.update({"state": "cancelled", "cancelled": True, "ok": False, "error": "Avbrutet", "done_at": time.time()})
+                self.lock.notify_all()
+                return 200, {"id": cid, "state": "cancelled"}
+            if it["state"] in ("running", "cancelling"):
+                it["state"] = "cancelling"
+                self.lock.notify_all()
+                return 202, {"id": cid, "state": "cancelling"}
+            return 409, {"error": "Kommandot är redan klart", "id": cid, "state": it["state"]}
 
     def _expire(self):
         now = time.time()
@@ -619,6 +638,10 @@ def make_handler(bridge, token, allow_origins, server_box):
                 elif self.path.startswith("/commands/") and self.path.endswith("/result"):
                     if self.commands_allowed():
                         status, result = bridge.commands.finish(self.path[len("/commands/"):-len("/result")], b)
+                        self.send_json(status, result)
+                elif self.path.startswith("/commands/") and self.path.endswith("/cancel"):
+                    if self.commands_allowed():
+                        status, result = bridge.commands.cancel(self.path[len("/commands/"):-len("/cancel")])
                         self.send_json(status, result)
                 elif self.path == "/stop":
                     self.send_json(200, {"stopping": True})

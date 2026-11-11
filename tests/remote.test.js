@@ -3,8 +3,9 @@
 /**
  * Tests for Styrning utifrån (api/remote, F30 a): the page tells a fake bridge its commands and polls for queued ones, a reading
  * command runs at once, a writing command waits for the person's approval and a refusal goes back, a plan runs once as a flow with
- * its files kept in the app, a plan with a step the app lacks is refused, a bridge without --allow-commands is told, and the switch
- * off stops the polling. Nothing touches the net: the bridge is a transport function.
+ * its files kept in the app, a plan with a step the app lacks is refused, a cancel from the program removes a queued command and
+ * stops a running plan (F37 b), a bridge without --allow-commands is told, and the switch off stops the polling. Nothing touches the
+ * net: the bridge is a transport function.
  */
 (function () {
   'use strict';
@@ -21,7 +22,7 @@
     const t0 = performance.now();
     for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(50); }
   }
-  /** A bridge with the command queue of tools/db_bridge.py 2.5.0, answering a poll at once (as the PowerShell bridge does). */
+  /** A bridge with the command queue of tools/db_bridge.py 2.6.0, answering a poll at once (as the PowerShell bridge does). */
   function fakeBridge(options = {}) {
     const srv = { token: 'hemlig-token', commands: options.commands !== false, catalog: null, queue: [], items: new Map(), calls: [], seq: 0 };
     const json = (status, obj) => ({ ok: status >= 200 && status < 300, status, json: async () => obj });
@@ -31,15 +32,25 @@
       const body = init.body ? JSON.parse(init.body) : {};
       srv.calls.push({ path: u.pathname, body });
       if ((init.headers || {}).Authorization !== 'Bearer ' + srv.token) return json(401, { error: 'Fel eller saknad token' });
-      if (u.pathname === '/') return json(200, { name: 'Dataspatium-databasbrygga', version: '2.5.0', platform: 'linux', allowWrite: false, kinds: ['sqlite'], maxRows: 100000, fetch: true, commands: srv.commands });
+      if (u.pathname === '/') return json(200, { name: 'Dataspatium-databasbrygga', version: '2.6.0', platform: 'linux', allowWrite: false, kinds: ['sqlite'], maxRows: 100000, fetch: true, commands: srv.commands });
       if (u.pathname.startsWith('/commands') && !srv.commands) return json(403, { error: 'Bryggan startades utan --allow-commands' });
       if (u.pathname === '/commands/catalog') { if (init.method === 'POST') { srv.catalog = body.commands; return json(200, { registered: srv.catalog.length }); } return json(200, { connected: !!srv.catalog, commands: srv.catalog || [], queued: srv.queue.length }); }
       if (u.pathname === '/commands/next') { const id = srv.queue.shift(); if (!id) return json(200, {}); const it = srv.items.get(id); it.state = 'running'; return json(200, { id, name: it.name, args: it.args }); }
       const result = /^\/commands\/([^/]+)\/result$/.exec(u.pathname);
-      if (result && init.method === 'POST') { const it = srv.items.get(decodeURIComponent(result[1])); if (!it) return json(404, { error: 'Okänt kommando' }); Object.assign(it, { state: 'done', ok: body.ok, result: body.result, error: body.error }); return json(200, { id: it.id, state: 'done' }); }
+      if (result && init.method === 'POST') { const it = srv.items.get(decodeURIComponent(result[1])); if (!it) return json(404, { error: 'Okänt kommando' }); Object.assign(it, { cancelled: it.state === 'cancelling', state: 'done', ok: body.ok, result: body.result, error: body.error }); return json(200, { id: it.id, state: 'done' }); }
+      const one = /^\/commands\/([^/]+)$/.exec(u.pathname);
+      if (one && init.method !== 'POST') { const it = srv.items.get(decodeURIComponent(one[1])); return it ? json(200, { id: it.id, name: it.name, state: it.state, ok: it.ok, result: it.result, error: it.error, cancelled: !!it.cancelled }) : json(404, { error: 'Okänt kommando' }); }
       return json(404, { error: 'Okänd sökväg ' + u.pathname });
     };
     srv.done = (id) => { const it = srv.items.get(id); return it && it.state === 'done' ? it : null; };
+    /** POST /commands/<id>/cancel as the bridges answer it: 200 queued and gone, 202 running and marked, 409 done, 404 unknown. */
+    srv.cancel = (id) => {
+      const it = srv.items.get(id);
+      if (!it) return 404;
+      if (it.state === 'queued') { srv.queue = srv.queue.filter((x) => x !== id); Object.assign(it, { state: 'cancelled', cancelled: true, ok: false, error: 'Avbrutet' }); return 200; }
+      if (it.state === 'running' || it.state === 'cancelling') { it.state = 'cancelling'; return 202; }
+      return 409;
+    };
     return srv;
   }
   async function table(name) {
@@ -108,6 +119,41 @@
     }
     return 'ok';
   }, 40000);
+
+  test('remote: a cancel from the program removes a queued command before the page sees it and stops a running plan before its next step', async (assert) => {
+    const srv = fakeBridge();
+    bridge.setTransport(srv.transport);
+    remote.setAsker({ confirm: async () => true, approve: async () => true, log: () => {} });
+    try {
+      await bridge.connect('http://127.0.0.1:1', srv.token);
+      await remote.setOn(true);
+      await waitFor(() => remote.status().connected, 5000, 'connected to the bridge');
+      // A plan that would run for a long time: a pause of a second between many rounds.
+      const slow = srv.enqueue('run_plan', { name: 'Långsam', steps: JSON.stringify([{ type: 'repeat', id: 'u', params: { until: 'round >= 500', wait_seconds: 1, max_rounds: 500 }, steps: [{ type: 'command', params: { command: 'list_datasets', args: {} } }] }]) });
+      await waitFor(() => srv.items.get(slow).state === 'running' && remote.status().running === 'run_plan', 8000, 'the plan running');
+      // Meanwhile a queued command is cancelled before the page sees it.
+      const queued = srv.enqueue('list_datasets', {});
+      assert.equal(srv.cancel(queued), 200);
+      assert.equal(srv.items.get(queued).state, 'cancelled');
+      assert.equal(srv.cancel(slow), 202, 'the running one is marked');
+      const done = await waitFor(() => srv.done(slow), 8000, 'the plan answered after the cancel');
+      assert.equal(done.ok, false);
+      assert.equal(done.error, t('commands.err.aborted'));
+      assert.ok(done.cancelled, 'the bridge remembers the cancel');
+      assert.equal(srv.cancel(slow), 409, 'what is done cannot be cancelled');
+      await wait(300);
+      assert.ok(!srv.calls.some((c) => c.path === '/commands/' + queued + '/result'), 'the cancelled queued command never ran');
+      assert.equal(remote.status().running, '', 'nothing running');
+      assert.equal(remote.status().count, 1, 'one command counted');
+      assert.ok(srv.calls.some((c) => c.path === '/commands/' + slow), 'the running command was watched');
+    } finally {
+      await remote.setOn(false);
+      remote.setAsker(null);
+      await bridge.disconnect().catch(() => {});
+      bridge.setTransport(null);
+    }
+    return 'ok';
+  }, 30000);
 
   test('remote: a bridge started without --allow-commands is told, and the switch shows the state in Internetåtkomst', async (assert) => {
     const srv = fakeBridge({ commands: false });

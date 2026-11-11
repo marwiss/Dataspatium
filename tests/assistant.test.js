@@ -3,7 +3,8 @@
 /**
  * Tests for the AI in the app with the app's commands (ai/assistant, F30 a, F32 a, F34 a) against a mocked Anthropic Messages
  * server (a virtual dataspatium-asset:// address, no network) that answers by call count: it reads, asks for a writing command
- * that the person approves or refuses, asks the person a question, proposes a plan and answers in words. Own test data only.
+ * that the person approves or refuses, asks the person a question, proposes a plan and answers in words; the conversation is
+ * remembered between sessions as a notebook (F37 b). Own test data only.
  */
 (function () {
   'use strict';
@@ -146,6 +147,52 @@
       assert.ok(made, 'one command step');
       await flows.remove(made.id);
       assert.equal(ui.open(ctx), handle, 'one panel per page');
+    } finally { handle.panel.close(); }
+    return 'ok';
+  }, 30000);
+
+  test('assistant: the conversation is remembered between sessions as a notebook of the workspace, goes into no bundle, reaches the provider as history, and Nytt samtal forgets it', async (assert) => {
+    const notebooks = D.require('analysis/notebooks');
+    const workspace = D.require('data/workspace');
+    await assistant.forget();
+    assert.deepEqual(await assistant.recall(), [], 'nothing remembered at the start');
+    await assistant.remember({ task: 'Hur många rader har Assistentprov?', answer: 'Två rader.' });
+    await assistant.remember({ task: 'Och  kolumner?', answer: 'Två kolumner: kommun och invånare.\n' });
+    const got = await assistant.recall();
+    assert.deepEqual(got.map((x) => x.task + ' / ' + x.answer), ['Hur många rader har Assistentprov? / Två rader.', 'Och kolumner? / Två kolumner: kommun och invånare.']);
+    assert.ok(got.every((x) => /^\d{4}-\d\d-\d\dT/.test(x.at)), 'each with its time');
+    const history = assistant.historyOf(got);
+    assert.deepEqual(history.map((m) => m.role), ['user', 'assistant', 'user', 'assistant']);
+    assert.equal(history[3].content[0].text, 'Två kolumner: kommun och invånare.');
+    const nb = (await notebooks.list()).find((x) => x.kind === assistant.MEMORY_KIND);
+    assert.ok(nb && nb.name === D.t('assistant.title') && nb.cells.length === 2 && nb.cells[0].type === 'markdown' && /Hur många rader/.test(nb.cells[0].source), 'a notebook the person can read');
+    const meta = await datasets.create({ name: 'Assistentprov minne', columns: [{ name: 'a', type: 'text' }], rows: [['x']] });
+    created.push(meta.id);
+    const bundle = await workspace.collect({ kind: 'bundle', datasetIds: [meta.id], listAll: false });
+    assert.ok(!Object.keys(bundle.files).includes('notebooks/' + nb.id + '.nb.json'), 'not in a bundle for others');
+    const backup = await workspace.collect({});
+    assert.ok(Object.keys(backup.files).includes('notebooks/' + nb.id + '.nb.json'), 'in the person\'s own backup');
+    // The panel shows the memory, sends it to the provider as earlier turns, remembers the new exchange, and forgets on Nytt samtal.
+    world.calls = 0; world.bodies = [];
+    world.script = [() => words('Tre rader nu.')];
+    const ctx = { shell: { log() {}, openFlows() {} } };
+    const ui = D.require('ui/assistant');
+    const handle = ui.open(ctx);
+    try {
+      await waitFor(() => handle.state.providers.length && handle.state.earlier.length, 3000, 'the providers and the memory');
+      assert.equal(handle.panel.el.querySelector('[data-assistant-memory]').getAttribute('data-assistant-memory'), '2', 'the memory shown');
+      handle.state.providerId = provider.id;
+      handle.state.task = 'Och nu?';
+      await handle.send();
+      const sent = JSON.parse(world.bodies[0]);
+      assert.equal(sent.messages[0].content, 'Hur många rader har Assistentprov?', 'the earlier task first');
+      assert.equal(sent.messages[4].content, 'Och nu?', 'then the new one');
+      await waitFor(async () => (await assistant.recall()).length === 3, 3000, 'the new exchange remembered');
+      const fresh = Array.from(handle.panel.el.querySelectorAll('dm-button')).find((b) => b.textContent.trim() === D.t('assistant.new'));
+      assert.ok(fresh, 'Nytt samtal offered');
+      /** @type {HTMLElement} */ (fresh.querySelector('button')).click();
+      await waitFor(async () => (await assistant.recall()).length === 0, 3000, 'forgotten');
+      assert.equal(handle.panel.el.querySelector('[data-assistant-memory]'), null, 'the memory line gone');
     } finally { handle.panel.close(); }
     return 'ok';
   }, 30000);

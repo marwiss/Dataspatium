@@ -36,7 +36,7 @@ eina setningu sem les.
 | Skref | Svona virkar það |
 |---|---|
 | Ef skilyrði gildir | Keyrir skrefin undir *Þá* ef skilyrðið gildir, annars skrefin undir *Annars* |
-| Fyrir hvert gildi í lista | Keyrir skrefin einu sinni fyrir hvert gildi í fyrra svari, til dæmis `sveitarfelog.rows`; gildið næst sem `{{item}}`, og talan n gefur umferðirnar 1 til n |
+| Fyrir hvert gildi í lista | Keyrir skrefin einu sinni fyrir hvert gildi í fyrra svari, til dæmis `sveitarfelog.rows`; gildið næst sem `{{item}}`, og talan n gefur umferðirnar 1 til n; gagnasafn í stað listans gefur eina línu á umferð með dálkana sem reiti (`{{item.sveitarfelag}}`) |
 | Endurtaka þar til skilyrði gildir | Keyrir skrefin og prófar skilyrðið eftir hverja umferð, með hléi milli umferða; umferðin næst sem `{{round}}` |
 | Spyrja mig | Sýnir spurningu með svarmöguleikum, einum í hverri línu, og bíður eftir svarinu, sem næst sem `{{nafn.answer}}` |
 | Ljúka flæðinu | Lýkur flæðinu með skilaboðum í annálnum; það telst ekki villa |

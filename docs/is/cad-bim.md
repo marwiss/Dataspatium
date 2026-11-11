@@ -205,7 +205,7 @@ Niðurstaðan er tafla með auðkenni, GlobalId, tegund og heiti beggja eininga,
   þau, til dæmis Bonsai.
 - *Búa til gagnasafn* vistar töfluna.
 
-Nýjasta niðurstaðan stendur á spjaldinu Sannprófa líkanið í Umsjón. Mælingin gerir ráð fyrir lokuðum flötum: eining með opna eða
+Nýjasta niðurstaðan stendur á spjaldinu Sannprófa líkanið í Umsjón, með því hvort það var gert í forritinu eða á þjóninum. Mælingin gerir ráð fyrir lokuðum flötum: eining með opna eða
 gallaða fleti getur gefið óvissa dýpt. Bognir fletir eru skipt í þríhyrninga, svo vikmörk undir millimetra verða óviss. Einingar sem þrívíddarsýnin getur ekki teiknað eru ekki með, og niðurstaðan segir hve margar þær eru; í sýnilíkani frá Tekla átti það við um allt bendistál.
 
 ## DXF-teikningar

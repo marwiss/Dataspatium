@@ -212,7 +212,7 @@ point in the model's own coordinates. From there:
   every client sees them, Bonsai for example.
 - *Create dataset* saves the table.
 
-The latest result shows on the card Validate the model in Manage. The measuring assumes closed surfaces: an element with open or
+The latest result shows on the card Validate the model in Manage, and whether the app or the server did it. The measuring assumes closed surfaces: an element with open or
 broken surfaces can give uncertain depths. Curved surfaces are split into triangles, so a tolerance below a millimetre is uncertain. Elements the 3D view cannot draw take no part, and the result says how many there are; in a sample model from Tekla that was every reinforcing bar.
 
 ## DXF drawings

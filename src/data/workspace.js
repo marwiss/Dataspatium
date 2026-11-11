@@ -115,7 +115,8 @@
       // Notebooks travel with their cells and saved outputs.
       const nbMod = optional('analysis/notebooks');
       const nbList = inc.notebooks && nbMod ? await nbMod.list() : [];
-      const notebooks = bundling ? nbList.filter((nb) => !nb.datasetId || only.has(nb.datasetId)) : nbList;
+      // The AI assistant's memory (ai/assistant) is the person's own: it stays out of every bundle for others.
+      const notebooks = bundling ? nbList.filter((nb) => nb.kind !== 'assistant' && (!nb.datasetId || only.has(nb.datasetId))) : nbList;
       const nbEntries = [];
       for (const nb of notebooks) {
         const path = `notebooks/${nb.id}.nb.json`;

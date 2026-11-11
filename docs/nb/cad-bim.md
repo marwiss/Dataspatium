@@ -208,7 +208,7 @@ modellens egne koordinater. Derfra:
   alle klienter dem, for eksempel Bonsai.
 - *Opprett datasett* lagrer tabellen.
 
-Det siste resultatet står på kortet Valider modellen i Håndter. Målingen forutsetter lukkede flater: et element med åpne eller
+Det siste resultatet står på kortet Valider modellen i Håndter, med om det ble gjort i appen eller på serveren. Målingen forutsetter lukkede flater: et element med åpne eller
 ødelagte flater kan gi usikre dybder. Buede flater er delt opp i trekanter, så en toleranse under en millimeter blir usikker. Elementer som 3D-visningen ikke kan tegne, er ikke med, og resultatet sier hvor mange de er; i en prøvemodell fra Tekla gjaldt det alle armeringsjernene.
 
 ## DXF-tegninger

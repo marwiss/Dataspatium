@@ -211,7 +211,9 @@ eru til, og velur næsta skref eftir því sem hún fær að vita. Skrefin birta
   spurningu samþykkir aldrei neitt.
 - Fyrir verk sem á að endurtaka getur gervigreindin lagt til heilt flæði, sem þú vistar með *Vista sem flæði*. Eftir verk getur
   þú líka vistað samþykktu skrefin sem flæði. Hvort tveggja er síðan keyrt án gervigreindar undir *Flæði og vöktun*.
-- Gervigreindin svarar á tungumáli forritsins. *Stöðva* hættir fyrir næsta skref og *Nýtt samtal* byrjar upp á nýtt.
+- Gervigreindin svarar á tungumáli forritsins. *Stöðva* hættir fyrir næsta skref. Gervigreindin man samtalið milli lota: það er geymt
+  sem minnisbókin *Gervigreindaraðstoð* undir Greina, sem þú getur lesið og eytt, og fer aldrei í pakka til annarra. *Nýtt samtal*
+  byrjar upp á nýtt og gleymir því.
 
 Það sem gervigreindin les í gagnasöfnunum telst gögn, aldrei fyrirmæli. Það sem er sent til skýjaþjónustu fer af tölvunni, svo
 veldu staðbundið líkan fyrir viðkvæm verk.

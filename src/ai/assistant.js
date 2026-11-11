@@ -7,8 +7,10 @@
  * approves it in the app's own dialog (`approve`), which shows the real command and its arguments. `ask_person` asks the person a
  * question with answers to choose from; an answer never approves a command. `propose_plan` hands the person a whole plan as a draft
  * flow, which they save or run themselves. The person's language is named in the system text. The writing commands that ran can
- * become a flow afterwards (`toFlow`). Nothing here runs code from the AI: commands are looked up by name and checked against
- * their schemas, and tool results are marked as data.
+ * become a flow afterwards (`toFlow`). The conversation is remembered between sessions (decision F37 b, on trial) as the notebook
+ * *AI-assistent* in the workspace: Markdown cells the person can read, change or delete, never part of a bundle for others; the
+ * last exchanges go to the provider as earlier turns. Nothing here runs code from the AI: commands are looked up by name and
+ * checked against their schemas, and tool results are marked as data.
  */
 (function () {
   'use strict';
@@ -26,7 +28,7 @@
     };
     const PLAN_TOOL = {
       name: 'propose_plan',
-      description: 'Hand the person a whole plan for a task they will run again, as a draft flow they save or run themselves. steps is a JSON array of flow steps as text: {"type": "command", "id": "name", "params": {"command": "...", "args": {...}}}, {"type": "if", "params": {"condition": "name.field > 0"}, "steps": [...], "otherwise": [...]}, {"type": "each", "id": "loop", "params": {"items": "name.rows", "as": "item", "max_rounds": 100}, "steps": [...]}, {"type": "repeat", "params": {"until": "...", "wait_seconds": 60, "max_seconds": 1800}, "steps": [...]}, {"type": "ask", "id": "q", "params": {"question": "...", "options": "label | meaning\\nlabel"}}, {"type": "stop", "params": {"message": "..."}}. Arguments may hold {{name.field}}.',
+      description: 'Hand the person a whole plan for a task they will run again, as a draft flow they save or run themselves. steps is a JSON array of flow steps as text: {"type": "command", "id": "name", "params": {"command": "...", "args": {...}}}, {"type": "if", "params": {"condition": "name.field > 0"}, "steps": [...], "otherwise": [...]}, {"type": "each", "id": "loop", "params": {"items": "name.rows", "as": "item", "max_rounds": 100}, "steps": [...]} or {"type": "each", "params": {"dataset": "dataset name or id", "as": "row"}, "steps": [...]} for every row of a dataset, {"type": "repeat", "params": {"until": "...", "wait_seconds": 60, "max_seconds": 1800}, "steps": [...]}, {"type": "ask", "id": "q", "params": {"question": "...", "options": "label | meaning\\nlabel"}}, {"type": "stop", "params": {"message": "..."}}. Arguments may hold {{name.field}}.',
       parameters: { type: 'object', properties: { name: { type: 'string', description: 'the flow\'s name' }, steps: { type: 'string', description: 'the steps as a JSON array' } }, required: ['name', 'steps'], additionalProperties: false },
     };
     /** The system text, with the person's language. @param {{code: string, label: string}} lang */
@@ -135,6 +137,46 @@
       flow.steps = steps.filter((s) => s.ok && s.writes).map((s) => ({ type: 'command', params: { command: s.command, args: s.args || {} } }));
       return flow;
     }
-    return { run, toFlow, system, ASK_TOOL, PLAN_TOOL, MAX_RESULT_CHARS };
+
+    // ---------------------------------------------------------------------------- memory between sessions (F37 b, on trial)
+    const MEMORY_KIND = 'assistant';
+    const MEMORY_MAX = 20;
+    const MEMORY_TURNS = 10;
+    const notebooks = () => (D.has('analysis/notebooks') ? D.require('analysis/notebooks') : null);
+    /** The notebook that holds the conversation, or null. */
+    async function memoryBook() {
+      const nbs = notebooks();
+      if (!nbs) return null;
+      return (await nbs.list()).find((nb) => nb.kind === MEMORY_KIND) || null;
+    }
+    /** One exchange as a Markdown cell: the time and the task on the heading line, the answer below. */
+    function cellText(ex) { return `### ${ex.at} · ${String(ex.task).replace(/\s+/g, ' ').trim()}\n\n${String(ex.answer || '').trim()}`; }
+    function parseCell(c) {
+      const m = /^### (\S+) · ([^\n]*)\n\n([\s\S]*)$/.exec(String((c && c.source) || ''));
+      return m ? { at: m[1], task: m[2], answer: m[3].trim() } : null;
+    }
+    /** The exchanges saved from earlier sessions, oldest first: {task, answer, at}. @returns {Promise<any[]>} */
+    async function recall() {
+      const nb = await memoryBook();
+      return nb ? (nb.cells || []).map(parseCell).filter(Boolean) : [];
+    }
+    /** Adds an exchange to the memory, keeping the last MEMORY_MAX. @param {{task: string, answer: string, at?: string}} ex */
+    async function remember(ex) {
+      const nbs = notebooks();
+      if (!nbs || !ex || !String(ex.task || '').trim() || !String(ex.answer || '').trim()) return null;
+      const nb = (await memoryBook()) || Object.assign(nbs.create(D.t('assistant.title'), null), { kind: MEMORY_KIND, cells: [] });
+      nb.cells = (nb.cells || []).concat([nbs.cell('markdown', cellText(Object.assign({ at: new Date().toISOString() }, ex)))]).slice(-MEMORY_MAX);
+      return nbs.save(nb);
+    }
+    /** Forgets everything: the notebook is removed. */
+    async function forget() {
+      const nb = await memoryBook();
+      if (nb) await notebooks().remove(nb.id);
+    }
+    /** Earlier exchanges as the provider's history, the last MEMORY_TURNS: a turn by the person and one by the assistant each. */
+    function historyOf(exchanges) {
+      return (exchanges || []).slice(-MEMORY_TURNS).flatMap((ex) => [{ role: 'user', content: String(ex.task) }, { role: 'assistant', content: [{ type: 'text', text: String(ex.answer) }] }]);
+    }
+    return { run, toFlow, recall, remember, forget, historyOf, system, ASK_TOOL, PLAN_TOOL, MAX_RESULT_CHARS, MEMORY_KIND };
   });
 })();

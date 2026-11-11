@@ -394,7 +394,7 @@
         kv.items = [
           { label: t('validation.local.schema'), value: schema ? t('validation.local.schema.result', { n: i18n.formatNumber(schema.findings || 0), date: when(schema.at) }) : t('validation.local.never') },
           { label: t('validation.local.ids'), value: ids ? t('validation.local.ids.result', { file: ids.file || 'IDS', pass: i18n.formatNumber(ids.pass || 0), checks: i18n.formatNumber(ids.checks || 0), date: when(ids.at) }) : t('validation.local.never') },
-          { label: t('validation.local.clash'), value: clash ? t('validation.local.clash.result', { n: i18n.formatNumber(clash.count || 0), mode: t('clash.mode.' + (clash.mode || 'intersection')), date: when(clash.at) }) : t('validation.local.never') },
+          { label: t('validation.local.clash'), value: clash ? t('validation.local.clash.result' + (clash.server ? '.server' : ''), { n: i18n.formatNumber(clash.count || 0), mode: t('clash.mode.' + (clash.mode || 'intersection')), date: when(clash.at) }) : t('validation.local.never') },
         ];
         return [
           h('h4', { text: t('validation.local') }), kv,

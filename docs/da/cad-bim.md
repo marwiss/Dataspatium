@@ -209,7 +209,7 @@ modellens egne koordinater. Derfra:
   klienter dem, for eksempel Bonsai.
 - *Opret datasæt* gemmer tabellen.
 
-Det seneste resultat står på kortet Valider modellen i Håndter. Målingen forudsætter lukkede flader: et element med åbne eller
+Det seneste resultat står på kortet Valider modellen i Håndter, med om det blev gjort i appen eller på serveren. Målingen forudsætter lukkede flader: et element med åbne eller
 ødelagte flader kan give usikre dybder. Krumme flader er delt op i trekanter, så en tolerance under en millimeter bliver usikker. Elementer, som 3D-visningen ikke kan tegne, er ikke med, og resultatet siger, hvor mange de er; i en prøvemodel fra Tekla gjaldt det alle armeringsjern.
 
 ## DXF-tegninger

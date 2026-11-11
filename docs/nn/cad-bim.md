@@ -210,7 +210,7 @@ i dei eigne koordinatane til modellen. Derifrå:
   alle klientar dei, til dømes Bonsai.
 - *Opprett datasett* lagrar tabellen.
 
-Det siste resultatet står på kortet Valider modellen i Handter. Målinga føreset lukka flater: eit element med opne eller øydelagde
+Det siste resultatet står på kortet Valider modellen i Handter, med om det vart gjort i appen eller på tenaren. Målinga føreset lukka flater: eit element med opne eller øydelagde
 flater kan gi usikre djupner. Bøygde flater er delte opp i trekantar, så ein toleranse under ein millimeter blir usikker. Element som 3D-visinga ikkje kan teikne, er ikkje med, og resultatet seier kor mange dei er; i ein prøvemodell frå Tekla gjaldt det alle armeringsjerna.
 
 ## DXF-teikningar

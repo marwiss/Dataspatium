@@ -216,7 +216,9 @@ der findes, og vælger næste trin efter det, den får at vide. Trinnene vises i
   godkender aldrig noget.
 - Til en opgave, der skal udføres igen, kan AI'en foreslå et helt flow, som du gemmer med *Gem som flow*. Efter en opgave kan du
   også gemme de godkendte trin som et flow. Begge køres derefter uden AI under *Flows og overvågning*.
-- AI'en svarer på appens sprog. *Stop* afbryder før næste trin, og *Ny samtale* begynder forfra.
+- AI'en svarer på appens sprog. *Stop* afbryder før næste trin. AI'en husker samtalen mellem sessioner: den gemmes som notesbogen
+  *AI-assistent* under Analysér, som du kan læse og slette, og den følger aldrig med i en pakke til andre. *Ny samtale* begynder forfra
+  og glemmer den.
 
 Det, AI'en læser i datasættene, regnes som data, aldrig som instruktioner. Det, der sendes til en cloudtjeneste, forlader
 computeren, så vælg en lokal model til følsomme opgaver.

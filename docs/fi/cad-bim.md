@@ -214,7 +214,7 @@ mallin omissa koordinaateissa. Siitä:
   näkevät ne, esimerkiksi Bonsai.
 - *Luo aineisto* tallentaa taulukon.
 
-Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
+Viimeisin tulos näkyy Hallitse-tilan kortissa Validoi malli, ja siitä näkyy, tehtiinkö se sovelluksessa vai palvelimella. Mittaus edellyttää suljettuja pintoja: elementti, jonka pinnat ovat auki
 tai rikki, voi antaa epävarmoja syvyyksiä. Kaarevat pinnat on jaettu kolmioihin, joten alle millimetrin toleranssi on epävarma. Elementit, joita 3D-näkymä ei pysty piirtämään, eivät ole mukana, ja tulos kertoo, kuinka monta niitä on; Teklan esimerkkimallissa se koski kaikkia raudoitustankoja.
 
 ## DXF-piirustukset

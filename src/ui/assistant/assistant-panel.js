@@ -5,7 +5,8 @@
  * opens from the status bar and the palette in every mode and keeps the conversation while the app is open. The person writes a
  * task; the steps the AI takes show as they happen; a writing command is approved in the app's own dialog with the real command and
  * its arguments; a question from the AI shows in the panel with a button per answer; a proposed plan can be saved as a flow, and so
- * can the writing steps that ran. Everything from the AI is shown as text only.
+ * can the writing steps that ran. The conversation is remembered between sessions as a notebook of the workspace (F37 b, on
+ * trial): earlier exchanges go to the provider as history, and Nytt samtal forgets them. Everything from the AI is shown as text only.
  */
 (function () {
   'use strict';
@@ -37,13 +38,14 @@
       /** @param {any} ctx shell context */
       function open(ctx) {
         if (current) { current.panel.collapse(false); current.panel.focus(); return current; }
-        const s = { providers: [], providerId: '', task: '', busy: false, error: '', exchanges: [], messages: [], question: null, controller: null };
+        const s = { providers: [], providerId: '', task: '', busy: false, error: '', exchanges: [], messages: [], earlier: [], question: null, controller: null };
         const panel = overlays.floating({ onClose: () => { if (s.controller) s.controller.abort(); if (s.question) s.question.resolve(null); current = null; } });
         panel.el.setAttribute('data-assistant', '');
         const log = (msg, kind) => { if (ctx && ctx.shell && ctx.shell.log) ctx.shell.log(msg, kind || 'ok'); };
 
         async function load() {
           s.providers = await providers.list();
+          s.earlier = await assistant.recall().catch(() => []);
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = (s.providers.find((p) => p.id === last) || s.providers[0] || { id: '' }).id;
         }
@@ -66,11 +68,12 @@
           render();
           try {
             const r = await assistant.run({
-              provider, task, history: s.messages, approve, ask, signal: s.controller.signal,
+              provider, task, history: assistant.historyOf(s.earlier).concat(s.messages), approve, ask, signal: s.controller.signal,
               onEvent: (ev) => { if (ev.type === 'step') { ex.steps.push(ev.step); render(); } else if (ev.type === 'plan') { ex.plan = ev.plan; render(); } },
             });
             ex.answer = r.answer; ex.usage = r.usage; ex.all = r.steps;
             s.messages = r.messages;
+            if (r.stopped === 'answered' && r.answer) assistant.remember({ task, answer: r.answer }).catch((err) => console.error('[assistant] memory', err));
           } catch (err) {
             ex.error = String((err && err.message) || err);
           } finally {
@@ -123,6 +126,7 @@
             body.push(basic.select(t('ai.provider'), s.providers.map((p) => ({ value: p.id, label: p.name })), s.providerId, (v) => { s.providerId = v; render(); }));
           }
           if (!s.exchanges.length) body.push(h('p', { class: 'dm-help dm-small', text: t('assistant.intro', { n: commands.list().length }) }));
+          if (s.earlier.length) body.push(h('p', { class: 'dm-help dm-small', 'data-assistant-memory': String(s.earlier.length), text: t('assistant.memory', { n: s.earlier.length, name: t('assistant.title') }) }));
           for (const ex of s.exchanges) body.push(exchangeView(ex));
           if (s.question) body.push(questionView());
           if (s.busy && !s.question) body.push(h('p', { class: 'dm-help', text: t('assistant.working') }));
@@ -139,7 +143,7 @@
               s.busy ? basic.button({ label: t('flows.cancel'), icon: 'octagon-x', title: t('assistant.stop.hint'), onClick: () => { if (s.controller) s.controller.abort(); } })
                 : basic.button({ label: t('assistant.send'), icon: 'sparkles', variant: 'primary', title: t('assistant.send.hint'), disabled: !provider, onClick: send }),
               basic.button({ label: t('ai.providers.manage'), icon: 'settings', variant: 'ghost', title: t('ai.providers.title'), onClick: async () => { await D.require('ui/bearbeta/ai-panel').manage(ctx); await load(); render(); } }),
-              s.exchanges.length && !s.busy ? basic.button({ label: t('assistant.new'), icon: 'plus', variant: 'ghost', title: t('assistant.new.hint'), onClick: () => { s.exchanges = []; s.messages = []; render(); } }) : null,
+              (s.exchanges.length || s.earlier.length) && !s.busy ? basic.button({ label: t('assistant.new'), icon: 'plus', variant: 'ghost', title: t('assistant.new.hint'), onClick: () => { s.exchanges = []; s.messages = []; s.earlier = []; assistant.forget().catch((err) => console.error('[assistant] memory', err)); render(); } }) : null,
             ].filter(Boolean),
           });
         }

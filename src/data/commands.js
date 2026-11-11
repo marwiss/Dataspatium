@@ -399,16 +399,17 @@
 
       define({
         name: 'run_plan', writes: true,
-        description: 'Runs a plan once without saving it: steps as flows store them (command, if, each, repeat, stop, ask) as a JSON array in text. Answers how each step went and the files it made. The person approves the whole plan once.',
+        description: 'Runs a plan once without saving it: steps as flows store them (command, if, each over a list or a dataset, repeat, stop, ask) as a JSON array in text. Answers how each step went and the files it made. The person approves the whole plan once.',
         parameters: S.obj({ name: S.str('what the plan is called'), steps: S.str('the steps as a JSON array') }),
-        async run(a) {
+        async run(a, options = {}) {
           let steps;
           try { steps = JSON.parse(a.steps); } catch (_e) { throw new Error(t('commands.err.json')); }
           const problem = flows.check(steps);
           if (problem) throw new Error(problem);
           // A plan is a flow that is never stored: its own id keeps its files apart, and run() writes nothing back for it.
           const flow = Object.assign(flows.blank(String(a.name || '')), { id: 'plan_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), steps });
-          const r = await flows.run(flow);
+          const r = await flows.run(flow, { signal: options.signal });
+          if (r.aborted && options.signal && options.signal.aborted) throw new Error(t('commands.err.aborted'));
           const out = await flows.output(flow.id);
           return { ok: r.ok, stopped: r.stopped || null, steps: r.steps.map((s) => ({ path: s.path, type: s.type, ok: s.ok, message: s.message })), files: out ? keep([out]) : [] };
         },

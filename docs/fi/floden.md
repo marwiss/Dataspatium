@@ -38,7 +38,7 @@ yhden lukevan lauseen.
 | Vaihe | Miten se toimii |
 |---|---|
 | Jos ehto täyttyy | Suorittaa kohdan *Silloin* vaiheet, jos ehto täyttyy, muuten kohdan *Muuten* vaiheet |
-| Jokaiselle luettelon arvolle | Suorittaa vaiheet kerran jokaiselle aiemman vastauksen arvolle, esimerkiksi `kunnat.rows`; arvon saa muodossa `{{item}}`, ja luku n antaa kierrokset 1–n |
+| Jokaiselle luettelon arvolle | Suorittaa vaiheet kerran jokaiselle aiemman vastauksen arvolle, esimerkiksi `kunnat.rows`; arvon saa muodossa `{{item}}`, ja luku n antaa kierrokset 1–n; luettelon sijasta valittu tietoaineisto antaa yhden rivin kierrosta kohden sarakkeet kenttinä (`{{item.kunta}}`) |
 | Toista, kunnes ehto täyttyy | Suorittaa vaiheet ja kokeilee ehtoa jokaisen kierroksen jälkeen, kierrosten välissä tauko; kierroksen saa muodossa `{{round}}` |
 | Kysy minulta | Näyttää kysymyksen vastausvaihtoehtoineen, yksi riviä kohden, ja odottaa vastausta, jonka saa muodossa `{{nimi.answer}}` |
 | Lopeta työnkulku | Lopettaa työnkulun ja jättää viestin lokiin; sitä ei lasketa virheeksi |

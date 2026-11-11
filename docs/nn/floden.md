@@ -36,7 +36,7 @@ setning som les.
 | Steg | Slik verkar det |
 |---|---|
 | Viss eit vilkår held | Køyrer stega under *Då* viss vilkåret held, elles stega under *Elles* |
-| For kvar verdi i ei liste | Køyrer stega éin gong for kvar verdi i eit tidlegare svar, til dømes `kommunar.rows`; verdien når ein som `{{item}}`, og eit tal n gjev rundane 1 til n |
+| For kvar verdi i ei liste | Køyrer stega éin gong for kvar verdi i eit tidlegare svar, til dømes `kommunar.rows`; verdien når ein som `{{item}}`, og eit tal n gjev rundane 1 til n; eit datasett i staden for lista gjev éi rad per runde med kolonnane som felt (`{{item.kommune}}`) |
 | Gjenta til eit vilkår held | Køyrer stega og prøver vilkåret etter kvar runde, med ein pause mellom rundane; runden når ein som `{{round}}` |
 | Spør meg | Viser eit spørsmål med svaralternativ, eitt per line, og ventar på svaret, som ein når som `{{namn.answer}}` |
 | Avslutt flyten | Avsluttar flyten med ei melding i loggen; det vert ikkje rekna som ein feil |

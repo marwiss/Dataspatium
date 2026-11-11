@@ -89,13 +89,17 @@ The command line `tools/dataspatium.py` (Python 3, standard library) uses the br
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Population", "limit": 5}'
 python tools/dataspatium.py plan monthly-report.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` shows the commands with their parameters, `run` runs one and prints the answer as JSON, `plan` runs a flow file (the form
 *Export* under Flows gives) as a plan you approve once, and `mcp` makes the commands tools for an AI program on the computer through
 the Model Context Protocol (over the standard streams). The bridge keeps the queue in memory, and a command waits for the app until
-you have approved it or five minutes have passed. `python tools/check_bridge.py` tries the queue, the command line and MCP without a
+you have approved it or five minutes have passed.
+`cancel` cancels a command that is waiting in the queue or running in the app (Ctrl+C during `run` does the same), and
+`POST /commands/<id>/cancel` is the way for other programs.
+`python tools/check_bridge.py` tries the queue, the command line and MCP without a
 browser.
 
 ### Security

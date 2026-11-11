@@ -35,7 +35,7 @@ Kommandona som bara läser är `list_datasets`, `describe_dataset`, `read_rows`,
 | Steg | Så fungerar det |
 |---|---|
 | Om ett villkor håller | Kör stegen under *Då* om villkoret håller, annars stegen under *Annars* |
-| För varje värde i en lista | Kör stegen en gång för varje värde i ett tidigare svar, till exempel `kommuner.rows`; värdet nås som `{{item}}`, och ett tal n ger varven 1 till n |
+| För varje värde i en lista | Kör stegen en gång för varje värde i ett tidigare svar, till exempel `kommuner.rows`; värdet nås som `{{item}}`, och ett tal n ger varven 1 till n; en datamängd i stället för listan ger en rad per varv, med kolumnerna som fält (`{{item.kommun}}`) |
 | Upprepa tills ett villkor håller | Kör stegen och prövar villkoret efter varje varv, med en paus mellan varven; varvet nås som `{{round}}` |
 | Fråga mig | Visar en fråga med svarsalternativ, ett per rad, och väntar på svaret, som nås som `{{namn.answer}}` |
 | Avsluta flödet | Avslutar flödet med ett meddelande i loggen; det räknas inte som ett fel |

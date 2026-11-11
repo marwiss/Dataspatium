@@ -36,7 +36,7 @@ sætning, der læser.
 | Trin | Sådan virker det |
 |---|---|
 | Hvis en betingelse holder | Kører trinnene under *Så*, hvis betingelsen holder, ellers trinnene under *Ellers* |
-| For hver værdi i en liste | Kører trinnene én gang for hver værdi i et tidligere svar, for eksempel `kommuner.rows`; værdien nås som `{{item}}`, og et tal n giver omgangene 1 til n |
+| For hver værdi i en liste | Kører trinnene én gang for hver værdi i et tidligere svar, for eksempel `kommuner.rows`; værdien nås som `{{item}}`, og et tal n giver omgangene 1 til n; et datasæt i stedet for listen giver én række pr. omgang med kolonnerne som felter (`{{item.kommune}}`) |
 | Gentag, indtil en betingelse holder | Kører trinnene og prøver betingelsen efter hver omgang, med en pause mellem omgangene; omgangen nås som `{{round}}` |
 | Spørg mig | Viser et spørgsmål med svarmuligheder, én pr. linje, og venter på svaret, som nås som `{{navn.answer}}` |
 | Afslut flowet | Afslutter flowet med en meddelelse i loggen; det tæller ikke som en fejl |

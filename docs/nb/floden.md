@@ -36,7 +36,7 @@ setning som leser.
 | Steg | Slik virker det |
 |---|---|
 | Hvis en betingelse holder | Kjører stegene under *Da* hvis betingelsen holder, ellers stegene under *Ellers* |
-| For hver verdi i en liste | Kjører stegene én gang for hver verdi i et tidligere svar, for eksempel `kommuner.rows`; verdien nås som `{{item}}`, og et tall n gir rundene 1 til n |
+| For hver verdi i en liste | Kjører stegene én gang for hver verdi i et tidligere svar, for eksempel `kommuner.rows`; verdien nås som `{{item}}`, og et tall n gir rundene 1 til n; et datasett i stedet for listen gir én rad per runde med kolonnene som felt (`{{item.kommune}}`) |
 | Gjenta til en betingelse holder | Kjører stegene og prøver betingelsen etter hver runde, med en pause mellom rundene; runden nås som `{{round}}` |
 | Spør meg | Viser et spørsmål med svaralternativer, ett per linje, og venter på svaret, som nås som `{{navn.answer}}` |
 | Avslutt flyten | Avslutter flyten med en melding i loggen; det regnes ikke som en feil |

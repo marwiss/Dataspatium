@@ -225,7 +225,9 @@ and chooses its next step by what it learns. The steps show in the panel as they
   question never approves anything.
 - For a task that will be done again, the AI can propose a whole flow, which you save with *Save as a flow*. After a task you can
   also save the approved steps as a flow. Both then run without the AI under *Flows and watches*.
-- The AI answers in the app's language. *Stop* cancels before the next step, and *New conversation* starts again.
+- The AI answers in the app's language. *Stop* cancels before the next step. The AI remembers the conversation between sessions: it is
+  kept as the notebook *AI assistant* under Analyse, which you can read and delete, and never goes into a bundle for others. *New
+  conversation* starts again and forgets it.
 
 What the AI reads in the datasets counts as data, never as instructions. What is sent to a cloud service leaves the computer, so
 choose a local model for sensitive tasks.

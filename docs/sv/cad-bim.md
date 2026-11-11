@@ -206,7 +206,7 @@ modellens egna koordinater. Därifrån:
   alla klienter dem, till exempel Bonsai.
 - *Skapa datamängd* sparar tabellen.
 
-Det senaste resultatet står på kortet Validera modellen i Hantera. Mätningen förutsätter slutna ytor: ett element med öppna eller
+Det senaste resultatet står på kortet Validera modellen i Hantera, med om det gjordes i appen eller på servern. Mätningen förutsätter slutna ytor: ett element med öppna eller
 trasiga ytor kan ge osäkra djup. Böjda ytor är uppdelade i trianglar, så en tolerans under någon millimeter blir osäker. Element som 3D-vyn inte kan rita är inte med, och resultatet säger hur många de är; i en provmodell från Tekla gällde det alla armeringsjärn.
 
 ## DXF-ritningar

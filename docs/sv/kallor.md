@@ -87,13 +87,17 @@ Kommandoraden `tools/dataspatium.py` (Python 3, standardbiblioteket) använder b
 python tools/dataspatium.py list
 python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
 python tools/dataspatium.py plan manadsrapport.json
+python tools/dataspatium.py cancel c3-1a2b3c4d
 python tools/dataspatium.py mcp
 ```
 
 `list` visar kommandona med sina parametrar, `run` kör ett och skriver svaret som JSON, `plan` kör en flödesfil (samma form som
 *Exportera* under Flöden ger) som en plan du godkänner en gång, och `mcp` gör kommandona till verktyg för ett AI-program på datorn
 genom Model Context Protocol (över standardströmmarna). Bryggan håller kön i minnet, och ett kommando väntar på appen tills du
-godkänt eller det gått fem minuter. `python tools/check_bridge.py` prövar kön, kommandoraden och MCP utan webbläsare.
+godkänt eller det gått fem minuter.
+`cancel` avbryter ett kommando som väntar i kön eller körs i appen (Ctrl+C under `run` gör detsamma), och `POST /commands/<id>/cancel`
+är vägen för andra program.
+`python tools/check_bridge.py` prövar kön, kommandoraden och MCP utan webbläsare.
 
 ### Säkerhet
 
