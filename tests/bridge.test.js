@@ -181,6 +181,52 @@
     }
   });
 
+  test('bridge: Riksbanken and the World Bank need the bridge, and their tables come through it', async (assert) => {
+    const connectors = D.require('api/connectors');
+    const reach = D.require('api/reach');
+    const schema = D.require('api/schema');
+    const rb = await connectors.get('riksbanken-swea');
+    const wb = await connectors.get('worldbank');
+    assert.ok(rb && wb, 'both presets');
+    assert.equal(schema.validate(rb).length + schema.validate(wb).length, 0, 'both validate');
+    assert.equal(reach.blocked(rb, 'file'), 'bridge'); assert.equal(reach.blocked(wb, 'web'), 'bridge');
+    const srv = fakeBridge();
+    const inner = srv.transport;
+    const relayed = [];
+    const answer = (status, obj) => ({ ok: status >= 200 && status < 300, status, json: async () => obj });
+    srv.transport = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/') { const res = await inner(url, init); return answer(res.status, Object.assign({}, await res.json(), { fetch: true })); }
+      if (path !== '/fetch') return inner(url, init);
+      const b = JSON.parse(init.body);
+      relayed.push(b.url);
+      const u = new URL(b.url);
+      const page = Number(u.searchParams.get('page') || '1');
+      const data = u.host === 'api.riksbank.se' ? [{ date: '2026-11-02', value: 1.75 }, { date: '2026-11-03', value: 1.75 }]
+        : [{ page, pages: 2 }, [{ country: { id: page === 1 ? 'SE' : 'NO' }, date: '2024', value: page === 1 ? 10587710 : 5572279 }]];
+      return answer(200, { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' }, body: btoa(JSON.stringify(data)) });
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (input, init) => (/^https:\/\/api\.(riksbank\.se|worldbank\.org)\//.test(String(input)) ? Promise.reject(new TypeError('Failed to fetch')) : realFetch(input, init));
+    bridge.setTransport(srv.transport);
+    try {
+      await bridge.connect('127.0.0.1:8731', 'hemlig-token');
+      await bridge.setRelay(true);
+      const t1 = await runner.fetchTable(rb, rb.endpoints.find((e) => e.id === 'observationer'), { seriesId: 'SECBREPOEFF', from: '2026-11-01' });
+      assert.equal(t1.rows.length, 2, 'the observations');
+      assert.ok(/^https:\/\/api\.riksbank\.se\/swea\/v1\/Observations\/SECBREPOEFF\/2026-11-01\/?$/.test(relayed[0]), relayed[0]);
+      const t2 = await runner.fetchTable(wb, wb.endpoints.find((e) => e.id === 'indikator'), { country: 'SE;NO', indicator: 'SP.POP.TOTL' });
+      assert.equal(t2.rows.length, 2, 'both pages');
+      assert.ok(relayed.some((u) => /\/country\/SE;NO\/indicator\/SP\.POP\.TOTL\?.*page=2/.test(u)), relayed.join(' '));
+      return relayed.length + ' relayed';
+    } finally {
+      await bridge.setRelay(false);
+      await bridge.disconnect();
+      globalThis.fetch = realFetch;
+      bridge.setTransport(null);
+    }
+  });
+
   test('bridge: the Inhämta view connects, lists tables, previews and imports; the SQL console runs against the bridge', async (assert) => {
     const root = document.createElement('div');
     root.style.cssText = 'position:absolute; left:-10000px; width:1400px; height:900px;';

@@ -71,6 +71,10 @@ aldri leggje til nokon. Ho avviser adresser på denne datamaskina eller det loka
 ingen informasjonskapslar, følgjer høgst tre omdirigeringar til tillatne vertar og stoppar ved `--max-fetch-mb` (50 MB som
 standard). Loggen til brua viser verten og stien, aldri spørjinga, headerane eller kroppen. Samtykket for føremålet gjeld som
 før.
+To førehandsinnstillingar blir berre nådde slik: *Riksbanken renter og valutakursar (SWEA)* og *Verdsbanken: indikatorar*.
+Kjeldelista merkjer dei *Krev brua*; start brua med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for å hente
+frå dei.
+
 ### Tryggleik
 
 - Brua svarar berre på 127.0.0.1, krev token i kvart kall og tillèt CORS berre for dei eigne adressene til appen.

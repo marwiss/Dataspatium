@@ -22,6 +22,7 @@ to siste svenske krev nøkkel.
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Offisiell statistikk | Bla eller søk, vel verdiar |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, geodatakatalogen til Lantmäteriet, Sveriges dataportal | Folkehelse, helse, nøkkeltal for kommunar, vêr, luftkvalitet, verneområde, geodata | Sjå den svenske rettleiinga |
 | Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stadnamn, energiattestar, vegdata, geodatafiler | Krev nøkkel |
+| Sverige, internasjonalt | Riksbanken (SWEA), Verdsbanken | Renter, valutakursar, utviklingsindikatorar | Berre via brua |
 
 ### Resten av Norden
 

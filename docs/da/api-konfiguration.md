@@ -22,6 +22,7 @@ CORS i november 2026, og kun de to sidste svenske kræver nøgle.
 | Sverige | SCB Statistikdatabasen (API v1 og v2) | Officiel statistik | Gennemse eller søg, vælg værdier |
 | Sverige | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäteriets geodatakatalog, Sveriges dataportal | Folkesundhed, sundhed, nøgletal for kommuner, vejr, luftkvalitet, beskyttede områder, geodata | Se den svenske vejledning |
 | Sverige | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Stednavne, energimærker, vejdata, geodatafiler | Kræver nøgle |
+| Sverige, internationalt | Riksbanken (SWEA), Verdensbanken | Renter, valutakurser, udviklingsindikatorer | Kun via broen |
 
 ### Øvrige Norden
 

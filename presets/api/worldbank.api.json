@@ -1,0 +1,240 @@
+{
+ "format": "dataspatium-api/1",
+ "id": "worldbank",
+ "name": "Världsbanken: indikatorer (World Development Indicators)",
+ "publisher": "Världsbanken",
+ "description": "Världsbankens indikatorer för länder och år, till exempel folkmängd, BNP och koldioxidutsläpp: en rad per land och år med indikatorns värde.",
+ "docs": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392",
+ "license": {
+  "name": "CC BY 4.0",
+  "url": "https://datacatalog.worldbank.org/public-licenses"
+ },
+ "level": 1,
+ "country": "INT",
+ "baseUrl": "https://api.worldbank.org/v2",
+ "auth": {
+  "type": "none"
+ },
+ "rateLimit": {
+  "requests": 2,
+  "perSeconds": 1
+ },
+ "cors": {
+  "file": false,
+  "web": false
+ },
+ "endpoints": [
+  {
+   "id": "indikator",
+   "name": "En indikator för länder",
+   "description": "Indikatorns värden per land och år; länderna avgränsas med semikolon.",
+   "method": "GET",
+   "path": "/country/{country}/indicator/{indicator}",
+   "params": [
+    {
+     "name": "country",
+     "in": "path",
+     "label": "Länder (ISO-koder)",
+     "type": "string",
+     "required": true,
+     "raw": true,
+     "default": "SE;NO;DK;FI;IS",
+     "example": "SE;NO;DK;FI;IS"
+    },
+    {
+     "name": "indicator",
+     "in": "path",
+     "label": "Indikator",
+     "type": "string",
+     "required": true,
+     "default": "SP.POP.TOTL",
+     "example": "NY.GDP.MKTP.CD",
+     "help": "SP.POP.TOTL folkmängd, NY.GDP.MKTP.CD BNP i US-dollar, EN.GHG.CO2.MT.CE.AR5 koldioxid."
+    },
+    {
+     "name": "date",
+     "in": "query",
+     "label": "År",
+     "type": "string",
+     "example": "2000:2024",
+     "help": "Ett år eller ett intervall, till exempel 2000:2024."
+    },
+    {
+     "name": "format",
+     "in": "query",
+     "type": "string",
+     "default": "json",
+     "hidden": true
+    },
+    {
+     "name": "per_page",
+     "in": "query",
+     "type": "number",
+     "default": 1000,
+     "hidden": true
+    }
+   ],
+   "pagination": {
+    "type": "page",
+    "param": "page",
+    "start": 1,
+    "totalPagesPath": "0.pages",
+    "maxPages": 50
+   },
+   "response": {
+    "format": "json",
+    "path": "1"
+   },
+   "dataset": {
+    "name": "Världsbanken {indicator}"
+   }
+  }
+ ],
+ "notes": "Tjänsten tillåter inte anrop från webbläsaren (ingen CORS), så den nås bara via bryggan: starta bryggan med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), anslut den under Inhämta och slå på Hämta via bryggan i Internetåtkomst.",
+ "i18n": {
+  "en": {
+   "name": "World Bank: indicators (World Development Indicators)",
+   "publisher": "World Bank",
+   "description": "The World Bank’s indicators for countries and years, such as population, GDP and carbon dioxide emissions: one row per country and year with the indicator’s value.",
+   "notes": "The service does not allow requests from the browser (no CORS), so it is reached only through the bridge: start the bridge with --allow-host api.worldbank.org (-AllowHosts api.worldbank.org in PowerShell), connect it under Import and turn on Fetch through the bridge in Internet access.",
+   "endpoints": {
+    "indikator": {
+     "name": "One indicator for countries",
+     "params": {
+      "country": {
+       "label": "Countries (ISO codes)"
+      },
+      "indicator": {
+       "label": "Indicator",
+       "help": "SP.POP.TOTL population, NY.GDP.MKTP.CD GDP in US dollars, EN.GHG.CO2.MT.CE.AR5 carbon dioxide."
+      },
+      "date": {
+       "label": "Year",
+       "help": "One year or a range, for example 2000:2024."
+      }
+     }
+    }
+   }
+  },
+  "da": {
+   "name": "Verdensbanken: indikatorer (World Development Indicators)",
+   "publisher": "Verdensbanken",
+   "description": "Verdensbankens indikatorer for lande og år, for eksempel befolkning, BNP og CO2-udledning: én række pr. land og år med indikatorens værdi.",
+   "notes": "Tjenesten tillader ikke kald fra browseren (ingen CORS), så den nås kun via broen: start broen med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), forbind den under Hent, og slå Hent via broen til under Internetadgang.",
+   "endpoints": {
+    "indikator": {
+     "name": "Én indikator for lande",
+     "params": {
+      "country": {
+       "label": "Lande (ISO-koder)"
+      },
+      "indicator": {
+       "label": "Indikator",
+       "help": "SP.POP.TOTL befolkning, NY.GDP.MKTP.CD BNP i US-dollar, EN.GHG.CO2.MT.CE.AR5 CO2."
+      },
+      "date": {
+       "label": "År",
+       "help": "Et år eller et interval, for eksempel 2000:2024."
+      }
+     }
+    }
+   }
+  },
+  "nb": {
+   "name": "Verdensbanken: indikatorer (World Development Indicators)",
+   "publisher": "Verdensbanken",
+   "description": "Verdensbankens indikatorer for land og år, for eksempel folketall, BNP og CO2-utslipp: én rad per land og år med indikatorens verdi.",
+   "notes": "Tjenesten tillater ikke kall fra nettleseren (ingen CORS), så den nås bare via broen: start broen med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), koble den til under Hent inn og slå på Hent via broen under Internettilgang.",
+   "endpoints": {
+    "indikator": {
+     "name": "Én indikator for land",
+     "params": {
+      "country": {
+       "label": "Land (ISO-koder)"
+      },
+      "indicator": {
+       "label": "Indikator",
+       "help": "SP.POP.TOTL folketall, NY.GDP.MKTP.CD BNP i US-dollar, EN.GHG.CO2.MT.CE.AR5 CO2."
+      },
+      "date": {
+       "label": "År",
+       "help": "Ett år eller et intervall, for eksempel 2000:2024."
+      }
+     }
+    }
+   }
+  },
+  "nn": {
+   "name": "Verdsbanken: indikatorar (World Development Indicators)",
+   "publisher": "Verdsbanken",
+   "description": "Indikatorane til Verdsbanken for land og år, til dømes folketal, BNP og CO2-utslepp: éi rad per land og år med verdien til indikatoren.",
+   "notes": "Tenesta tillèt ikkje kall frå nettlesaren (ingen CORS), så ho blir berre nådd via brua: start brua med --allow-host api.worldbank.org (-AllowHosts api.worldbank.org i PowerShell), kople ho til under Hent og slå på Hent via brua under Internettilgang.",
+   "endpoints": {
+    "indikator": {
+     "name": "Éin indikator for land",
+     "params": {
+      "country": {
+       "label": "Land (ISO-kodar)"
+      },
+      "indicator": {
+       "label": "Indikator",
+       "help": "SP.POP.TOTL folketal, NY.GDP.MKTP.CD BNP i US-dollar, EN.GHG.CO2.MT.CE.AR5 CO2."
+      },
+      "date": {
+       "label": "År",
+       "help": "Eitt år eller eit intervall, til dømes 2000:2024."
+      }
+     }
+    }
+   }
+  },
+  "fi": {
+   "name": "Maailmanpankki: indikaattorit (World Development Indicators)",
+   "publisher": "Maailmanpankki",
+   "description": "Maailmanpankin indikaattorit maittain ja vuosittain, esimerkiksi väkiluku, BKT ja hiilidioksidipäästöt: yksi rivi maata ja vuotta kohden indikaattorin arvolla.",
+   "notes": "Palvelu ei salli kutsuja selaimesta (ei CORSia), joten sen tavoittaa vain sillan kautta: käynnistä silta valinnalla --allow-host api.worldbank.org (PowerShellissä -AllowHosts api.worldbank.org), yhdistä se kohdassa Tuo ja kytke Hae sillan kautta päälle kohdassa Internetyhteys.",
+   "endpoints": {
+    "indikator": {
+     "name": "Yksi indikaattori maille",
+     "params": {
+      "country": {
+       "label": "Maat (ISO-koodit)"
+      },
+      "indicator": {
+       "label": "Indikaattori",
+       "help": "SP.POP.TOTL väkiluku, NY.GDP.MKTP.CD BKT Yhdysvaltain dollareina, EN.GHG.CO2.MT.CE.AR5 hiilidioksidi."
+      },
+      "date": {
+       "label": "Vuosi",
+       "help": "Yksi vuosi tai väli, esimerkiksi 2000:2024."
+      }
+     }
+    }
+   }
+  },
+  "is": {
+   "name": "Alþjóðabankinn: vísar (World Development Indicators)",
+   "publisher": "Alþjóðabankinn",
+   "description": "Vísar Alþjóðabankans fyrir lönd og ár, til dæmis mannfjöldi, verg landsframleiðsla og koltvísýringslosun: ein röð fyrir hvert land og ár með gildi vísisins.",
+   "notes": "Þjónustan leyfir ekki köll úr vafranum (ekkert CORS), svo hún næst aðeins um brúna: ræstu brúna með --allow-host api.worldbank.org (-AllowHosts api.worldbank.org í PowerShell), tengdu hana undir Sækja og kveiktu á Sækja um brúna undir Netaðgangur.",
+   "endpoints": {
+    "indikator": {
+     "name": "Einn vísir fyrir lönd",
+     "params": {
+      "country": {
+       "label": "Lönd (ISO-kóðar)"
+      },
+      "indicator": {
+       "label": "Vísir",
+       "help": "SP.POP.TOTL mannfjöldi, NY.GDP.MKTP.CD VLF í Bandaríkjadölum, EN.GHG.CO2.MT.CE.AR5 koltvísýringur."
+      },
+      "date": {
+       "label": "Ár",
+       "help": "Eitt ár eða bil, til dæmis 2000:2024."
+      }
+     }
+    }
+   }
+  }
+ }
+}

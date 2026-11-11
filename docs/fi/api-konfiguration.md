@@ -19,6 +19,7 @@ olevat lähteet on tarkistettu CORS-tuen osalta marraskuussa 2026, ja vain kaksi
 | Ruotsi | SCB Statistikdatabasen (API v1 ja v2) | Virallinen tilasto | Selaa tai hae, valitse arvot |
 | Ruotsi | Folkhälsomyndigheten, Socialstyrelsen, Kolada, SMHI, Naturvårdsverket, Lantmäterietin geodatakatalogi, Ruotsin dataportaali | Kansanterveys, terveys, kuntien tunnusluvut, sää, ilmanlaatu, suojelualueet, paikkatieto | Ks. ruotsinkielinen opas |
 | Ruotsi | Lantmäteriet Direkt, Boverket, Trafikverket NVDB, Lantmäteriet STAC | Paikannimet, energiatodistukset, tietiedot, paikkatietotiedostot | Vaativat avaimen |
+| Ruotsi, kansainvälinen | Riksbank (SWEA), Maailmanpankki | Korot, valuuttakurssit, kehitysindikaattorit | Vain sillan kautta |
 | EU | Eurostat | EU-tilastot | Anna aineiston koodi ja suodattimet |
 | EU | Euroopan keskuspankki (EKP) | Valuuttakurssit ja EKP:n tilastot (SDMX) | Valitse valuutat ja tiheys valuuttakursseille tai anna tietovirta ja sarja-avain |
 | Kansainvälinen | OECD | Työttömyys, BKT:n kasvu ja OECD:n muut tilastot (SDMX) | Valitse maat tai anna tietovirta ja sarja-avain |
