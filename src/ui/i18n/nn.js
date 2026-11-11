@@ -6152,6 +6152,8 @@
     'ai.change.propose.unexpressed': 'Berre i skildringa, ikkje i forma til framlegget: {created} oppretta, {deleted} sletta, {relations} nye relasjonar.',
     'ai.change.propose.ops': 'Tenaren får òg dei {n} operasjonane til skriveverktøya og byggjer framlegget ut frå dei på basisversjonen, så nye element, slettingar og relasjonar kjem med.',
     'ai.change.propose.role': 'Kontoen din kan ikkje gjere endringsframlegg i prosjektet: det krev rolla editor. Be ein prosjektansvarleg om rolla.',
+    'ai.change.propose.role.none': 'Å gjere endringsframlegg på tenaren krev rolla editor i prosjektet.',
+    'ai.err.policy.project': 'Prosjektet {project} kan berre bruke ein AI-modell på din eigen datamaskin, og {host} er ikkje lokal. Vel ein lokal leverandør.',
     'ai.change.propose.none': 'Endringssettet endrar ingen eksisterande instansar; nye element kan enno ikkje foreslåast i forma til tenaren. Publiser i staden.',
     'ai.change.propose.unsupported': 'Tenaren tek ikkje imot endringsframlegg (ifc_changes manglar i kapabilitetane).',
     'ai.change.propose.done': 'Endringsframlegget vart sendt som saka «{title}» til {project}.',

@@ -930,6 +930,36 @@
      * @param {any} connector @param {string} projectId @param {string} topicGuid @param {string} schemaUrl
      * @param {{base: any, provenance: any, changes: any[]}} changeSet
      */
+    /**
+     * Whether the signed-in person may propose changes in a project: Dataregium's floor is the role editor (its decision F35 a), which
+     * the BCF project's `authorization.project_actions` shows as "createDocument" (contributor has only "createTopic"). True when the
+     * server says nothing about it, so that an older server's own answer decides.
+     * @param {any} connector @param {string} projectId @returns {Promise<boolean>}
+     */
+    async function canPropose(connector, projectId) {
+      const project = await bcf(connector, `/projects/${encode(projectId)}`);
+      const actions = project && project.authorization && Array.isArray(project.authorization.project_actions) ? project.authorization.project_actions : null;
+      return actions === null ? true : actions.includes('createDocument');
+    }
+    /**
+     * A project's AI policy on Dataregium (its decision F29 a): "local" (only a model on the person's own computer) or "cloud", read at
+     * the capability's template `extensions.mcp.ai_policy_url` ({project_id}); the capability's `default_ai_policy` (local) when that
+     * fails; null when the server announces no policy, so that only the app's own policy applies.
+     * @param {any} connector @param {string} projectId @returns {Promise<'local'|'cloud'|null>}
+     */
+    async function aiPolicy(connector, projectId) {
+      const caps = await capabilities(connector);
+      const mcp = caps && caps.extensions && caps.extensions.mcp;
+      if (!mcp || !mcp.ai_policy_url) return null;
+      const fallback = mcp.default_ai_policy === 'cloud' ? 'cloud' : 'local';
+      try {
+        const got = await api(connector, String(mcp.ai_policy_url).replace('{project_id}', encode(projectId)));
+        return got && (got.ai_policy === 'local' || got.ai_policy === 'cloud') ? got.ai_policy : fallback;
+      } catch (err) {
+        D.log('opencde', 'the AI policy could not be read', err);
+        return fallback;
+      }
+    }
     /** The form of the write tools' operations a proposal can carry, when the server's capability names it (`ifc_changes.ops_form`). */
     const OPS_FORM = 'dataspatium-tools/1';
     /** OPS_FORM when the server takes the operations in a proposal, otherwise null. @param {any} connector */
@@ -1078,6 +1108,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { ifcProposals, opsForm, OPS_FORM, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference };
+    return { ifcProposals, opsForm, OPS_FORM, canPropose, aiPolicy, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY, createDocumentReference };
   });
 })();

@@ -37,7 +37,7 @@
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false };
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
@@ -89,6 +89,11 @@
           // In the build mode the building's facts and the level of detail open the brief (decision F43 b); facts alone are enough to start.
           const question = building() ? [factsBlock(), brief].filter(Boolean).join('\n\n') : brief;
           if (s.busy || !p || !(building() ? brief || factsGiven() : brief)) return;
+          // A project that allows only local models (Dataregium's F29 a) refuses a cloud provider for its model, before anything is sent.
+          if (s.material && !providers.isLocal(p.baseUrl)) {
+            if (s.projectPolicy === undefined) s.projectPolicy = await opencde.aiPolicy(s.material.connector, s.material.cde.projectId).catch(() => null);
+            if (s.projectPolicy === 'local') { s.error = t('ai.err.policy.project', { project: s.material.cde.projectName || s.material.cde.projectId, host: providers.hostOf(p.baseUrl) }); render(); return; }
+          }
           s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
           abort = new AbortController();
           try {
@@ -325,6 +330,8 @@
           const connector = await connectors.get(cde.connectorId);
           if (!connector || !opencde.isOpenCde(connector) || !opencde.signedIn(connector)) return;
           s.opsForm = await opencde.opsForm(connector).catch(() => null);
+          // Dataregium's floor for proposing is the role editor (its F35 a): without it the button is not offered.
+          s.canPropose = await opencde.canPropose(connector, cde.projectId).catch(() => true);
           const mine = s.preview;
           mine.server = { status: 'pending' }; render();
           try {
@@ -594,7 +601,8 @@
             h('div', { class: 'dm-row-wrap' },
               basic.button({ label: t('ai.change.preview'), icon: 'eye', size: 'sm', loading: s.previewing, disabled: !cs.ops.length || s.busy, title: t('ai.change.preview.hint'), 'data-ai-preview': '', onClick: previewNow }),
               basic.button({ label: t('ai.change.approve'), icon: 'check', size: 'sm', loading: s.approving, disabled: !report || errors > 0 || s.busy, title: t('ai.change.approve.hint'), 'data-ai-approve': '', onClick: approveNow }),
-              s.cde && proposal ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
+              s.cde && proposal && s.canPropose === false ? h('p', { class: 'dm-help dm-xs', 'data-ai-propose-role': '', text: t('ai.change.propose.role.none') }) : null,
+              s.cde && proposal && s.canPropose !== false ? basic.button({ label: t('ai.change.propose'), icon: 'share-2', size: 'sm', loading: s.proposing, disabled: !(proposal.changes.length || (s.opsForm && cs.ops.length)) || s.busy || !!s.proposed, title: t('ai.change.propose.hint'), 'data-ai-propose': '', onClick: () => proposeNow() }) : null,
               basic.button({ label: t('ai.change.reject'), icon: 'x', size: 'sm', variant: 'ghost', disabled: !cs.ops.length || s.busy, title: t('ai.change.reject.hint'), 'data-ai-reject': '', onClick: rejectNow })),
             h('p', { class: 'dm-help dm-xs', text: t('ai.change.python') }));
         }

@@ -6174,6 +6174,8 @@
     'ai.change.propose.unexpressed': 'Bara i beskrivningen, inte i förslagets form: {created} skapade, {deleted} raderade, {relations} nya samband.',
     'ai.change.propose.ops': 'Servern får också skrivverktygens {n} operationer och bygger förslaget ur dem på basversionen, så att nya element, raderingar och samband kommer med.',
     'ai.change.propose.role': 'Ditt konto får inte föreslå ändringar i projektet: det kräver rollen editor. Be en projektansvarig om rollen.',
+    'ai.change.propose.role.none': 'Att föreslå ändringar på servern kräver rollen editor i projektet.',
+    'ai.err.policy.project': 'Projektet {project} får bara använda en AI-modell på den egna datorn, och {host} är inte lokal. Välj en lokal leverantör.',
     'ai.change.propose.none': 'Ändringssetet ändrar inga befintliga instanser; nya element kan inte föreslås i serverns form än. Publicera i stället.',
     'ai.change.propose.unsupported': 'Servern tar inte emot ändringsförslag (ifc_changes saknas i dess kapabiliteter).',
     'ai.change.propose.done': 'Ändringsförslaget skickades som ärendet ”{title}” till {project}.',

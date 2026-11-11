@@ -26,6 +26,8 @@
   const hits = []; let approveAnswer = 'ok';
   /** The bodies the virtual servers were sent, by path; the virtual handler itself only sees addresses. */
   const sent = {}; let realRequest = null;
+  /** What the virtual servers answer for the project's role and AI policy. */
+  const project = { actions: ['createTopic', 'createDocument'], policy: 'local', policyStatus: 200 };
   const rows = [
     { topic_guid: 't-2', title: 'Brandklass EI90', description: 'Dörrarna på plan 2', state: 'clean', base_version_index: 4, change_count: 3, author: 'bo', checked_at: '2026-11-11T20:00:00Z', proposal_url: CDE + '/bcf/3.0/projects/p-1/topics/t-2/ifc-proposal', approve_url: CDE + '/bcf/3.0/projects/p-1/topics/t-2/ifc-proposal/approve' },
     { topic_guid: 't-1', title: 'Nya fönster', state: 'approved', base_version_index: 3, change_count: 12, author: 'anna', checked_at: '2026-11-10T09:00:00Z', version_index: 4, proposal_url: CDE + '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal', approve_url: CDE + '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve' },
@@ -40,13 +42,17 @@
         const changes = { enabled: true, schema: '/documents/1.0/ifc-changes/schema', proposal_url: base + '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal', approve_url: base + '/bcf/3.0/projects/{project_id}/topics/{topic_guid}/ifc-proposal/approve' };
         if (withList) changes.ifc_proposals_url = base + '/documents/1.0/documents/{document_id}/ifc-proposals';
         if (withOps) changes.ops_form = 'dataspatium-tools/1';
-        return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions: { ifc_changes: changes } }));
+        const extensions = { ifc_changes: changes };
+        if (withOps) extensions.mcp = { enabled: true, ai_policy_url: base + '/documents/1.0/projects/{project_id}/ai-policy', default_ai_policy: 'local' };
+        return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions }));
       }
       if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
       if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: base + '/foundation/oauth2/auth', oauth2_token_url: base + '/foundation/oauth2/token' }));
       if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600 }));
       if (path === '/foundation/1.0/current-user') return Promise.resolve(json({ id: 'anna', name: 'Anna' }));
       if (path === '/documents/1.0/documents/doc-1/ifc-proposals') return Promise.resolve(json(rows));
+      if (path === '/bcf/3.0/projects/p-1') return Promise.resolve(json({ project_id: 'p-1', name: 'Testprojekt', authorization: { project_actions: project.actions } }));
+      if (path === '/documents/1.0/projects/p-1/ai-policy') return Promise.resolve(json(project.policyStatus === 200 ? { project_id: 'p-1', ai_policy: project.policy } : { message: 'Not Found' }, project.policyStatus));
       if (path === '/bcf/3.0/projects/p-1/extensions') return Promise.resolve(json({ topic_type: ['Issue', 'Change proposal'], topic_status: ['Open'] }));
       if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-9', title: 'x' }, 201));
       if (path === '/bcf/3.0/projects/p-1/topics/t-9/snippet') return Promise.resolve({ kind: 'text', data: '' });
@@ -163,6 +169,45 @@
       assert.ok(fromPanel.ops[1].tool === 'set_properties' && fromPanel.ops[1].ids[0] === String(wallRow[1]) && fromPanel.ops[2].ids[0] === String(wallRow[1]), 'the STEP id became the GlobalId: ' + JSON.stringify(fromPanel.ops[1]));
       assert.ok(panel.state.proposed && JSON.stringify(panel.state.proposed.changeSet.ops) === JSON.stringify(fromPanel.ops), 'the proposal kept as sent');
     } finally { panel.destroy(); panel.el.remove(); }
+    return 'ok';
+  }, 20000);
+
+  test('proposals: the button needs the role editor, and a local-only project refuses a cloud provider before anything is sent', async (assert) => {
+    // The role: createDocument in the BCF project's actions means editor or higher (Dataregium's F35 a).
+    project.actions = ['createTopic', 'createDocument'];
+    assert.equal(await opencde.canPropose(withOps, 'p-1'), true);
+    project.actions = ['createTopic'];
+    assert.equal(await opencde.canPropose(withOps, 'p-1'), false, 'a contributor');
+    // The AI policy (Dataregium's F29 a): the project's own, the default when the endpoint fails, none from a server without it.
+    project.policy = 'cloud'; project.policyStatus = 200;
+    assert.equal(await opencde.aiPolicy(withOps, 'p-1'), 'cloud');
+    project.policyStatus = 404;
+    assert.equal(await opencde.aiPolicy(withOps, 'p-1'), 'local', 'the default when the endpoint fails');
+    assert.equal(await opencde.aiPolicy(connector, 'p-1'), null, 'a server without a policy');
+    project.policy = 'local'; project.policyStatus = 200;
+    const providers = D.require('ai/providers');
+    const cloud = await providers.save({ id: 'proposals-cloud', kind: 'anthropic', name: 'Moln', baseUrl: 'dataspatium-asset://tests/ai-proposals-cloud/', model: 'claude-test' });
+    providers.setKey(cloud.id, 'sk-test-proposals');
+    const panel = D.require('ui/bearbeta/ai-panel').create({ shell: { log() {} } }, { datasetId: ds.id, preview: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      for (let i = 0; i < 100 && !panel.state.providers.length; i++) await new Promise((r) => setTimeout(r, 30));
+      for (let i = 0; i < 100 && !panel.state.material; i++) await new Promise((r) => setTimeout(r, 30));
+      assert.ok(panel.state.material && panel.state.material.connector.id === withOps.id, 'the panel knows the model\'s server');
+      panel.state.providerId = cloud.id;
+      const before = hits.length;
+      await panel.ask('Vilka väggar saknar brandklass?');
+      assert.equal(panel.state.error, t('ai.err.policy.project', { project: 'Testprojekt', host: providers.hostOf(cloud.baseUrl) }), panel.state.error);
+      assert.ok(!hits.slice(before).some((h) => /messages/.test(h)), 'nothing went to the provider');
+      // The propose button is not offered without the role.
+      panel.setMode('change');
+      writeTools.call(panel.state.changeset, 'create_wall', { storey: 'Plan 1', start: [0, 0], end: [4, 0], thickness: 0.3, height: 2.7, name: 'Vägg' });
+      panel.state.cde = (await datasets.get(ds.id)).source.cde;
+      panel.state.opsForm = opencde.OPS_FORM; panel.state.canPropose = false;
+      panel.state.preview = { report: { proposal: { changes: [], instances: 0, unexpressed: { created: 1, deleted: 0, relations: 0 } }, created: [], changed: [], deleted: [], findings: [], errors: 0 } };
+      panel.attach([]);
+      assert.ok(!panel.el.querySelector('[data-ai-propose]') && panel.el.querySelector('[data-ai-propose-role]'), 'no button, a line about the role');
+    } finally { panel.destroy(); panel.el.remove(); await providers.remove(cloud.id).catch(() => {}); }
     return 'ok';
   }, 20000);
 

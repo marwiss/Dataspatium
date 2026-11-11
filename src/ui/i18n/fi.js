@@ -6152,6 +6152,8 @@
     'ai.change.propose.unexpressed': 'Vain kuvauksessa, ei ehdotuksen muodossa: {created} luotua, {deleted} poistettua, {relations} uutta suhdetta.',
     'ai.change.propose.ops': 'Palvelin saa myös kirjoitustyökalujen {n} toimintoa ja rakentaa ehdotuksen niistä perusversion päälle, joten uudet elementit, poistot ja suhteet tulevat mukaan.',
     'ai.change.propose.role': 'Tilisi ei saa ehdottaa muutoksia projektissa: se vaatii roolin editor. Pyydä roolia projektin vastuuhenkilöltä.',
+    'ai.change.propose.role.none': 'Muutosten ehdottaminen palvelimella vaatii projektissa roolin editor.',
+    'ai.err.policy.project': 'Projekti {project} saa käyttää vain omalla tietokoneellasi olevaa tekoälymallia, eikä {host} ole paikallinen. Valitse paikallinen palveluntarjoaja.',
     'ai.change.propose.none': 'Muutosjoukko ei muuta olemassa olevia instansseja; uusia elementtejä ei voi vielä ehdottaa palvelimen muodossa. Julkaise sen sijaan.',
     'ai.change.propose.unsupported': 'Palvelin ei ota vastaan muutosehdotuksia (ifc_changes puuttuu sen kyvykkyyksistä).',
     'ai.change.propose.done': 'Muutosehdotus lähetettiin asiana ”{title}” projektiin {project}.',
