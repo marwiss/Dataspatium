@@ -298,6 +298,10 @@ bilde legges ved som foto, fasade mot nord, øst, sør eller vest, innvendig ell
 på kartet, så AI-en plasserer modellen med `set_site` (posisjon, høyde og SWEREF 99 TM), og med *Med terrenghøyde i hjørnene*, som
 vises når Lantmäteriets kilde er lagt til, terrenghøyden i hvert hjørne fra høydemodellen: et nettverkskall med nøkkelen din etter
 samtykke.
+Etter veggene på hver etasje leser forhåndsvisningen bygningens topologi: veggenes senterlinjer blir rom, og etasjen er lukket når
+veggene lukker minst ett rom og ingen veggende står løs; AI-en retter løse ender ved å flytte eller legge til vegger før den legger
+dekkene. Ytterveggene med himmelretningene sine lar AI-en pare et foto av fasaden mot sør med de riktige veggene (leseverktøyet
+`get_topology`), og den samme topologien vises på kortet *Topologi* i Kontroller.
 
 ## Kontroller med AI
 

@@ -382,6 +382,26 @@
       }
 
       /**
+       * The building's topology (decision F46 a) of the model kept in a dataset file: per storey the rooms the walls enclose, which
+       * rooms border which, the external walls with the façade they face and the open wall ends (the wheel's `_ifc_topology_file`).
+       * Read-only: nothing is written back.
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file
+       * @returns {Promise<any[]>} one entry per storey
+       */
+      async runIfcTopology(bytes) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson('_dataspatium._ifc_topology_file("/data/step/model.sqlite", "/data/step/topology.json")');
+          } finally {
+            for (const p of ['/data/step/model.sqlite', '/data/step/topology-in.ifc', '/data/step/topology.json']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
+      /**
        * A new, empty model written by the wheel (OB-06 Schemaval för nya modeller): project, units, contexts, site, building and a
        * first storey in the schema chosen.
        * @param {string} schema IFC4X3_ADD2, IFC4 or IFC2X3 @param {{project: string, site: string, building: string, storey: string, elevation: number}} names

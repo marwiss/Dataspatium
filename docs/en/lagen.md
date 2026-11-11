@@ -186,6 +186,8 @@ more only when you press *Run the check*. The inspector shows the chosen finding
 Process* takes you there to correct it. An IFC model shows the card *Validate the model* and the panel *Compare versions* (see
 [cad-bim.md](cad-bim.md)); other kinds have no checks yet. The AI panel will get a fourth mode, *Check*, for photos of damage
 (planned).
+The card *Topology* reads the model's walls with *Check the topology* (the app's Python starts the first time) and shows per storey how
+many rooms the walls enclose, whether the storey is closed, wall ends left open and the external walls per compass direction.
 
 ## Analyse
 

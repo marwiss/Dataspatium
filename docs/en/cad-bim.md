@@ -305,6 +305,10 @@ photo whose file carries a position and a time (EXIF) gets them in its caption, 
 dataset also give the footprint's south-west corner on the map, so that the AI places the model with `set_site` (position, height and
 SWEREF 99 TM), and with *With the ground height at the corners*, shown when Lantmäteriet's source is added, the ground height at every
 corner from the terrain model: a network call with your key after consent.
+After the walls of each storey the preview reads the building's topology: the walls' centrelines become rooms, and the storey is closed
+when the walls enclose at least one room and no wall end is left open; the AI mends open ends by moving or adding walls before it lays
+the slabs. The external walls with their compass directions let the AI match a photo of the south façade to the right walls (the read
+tool `get_topology`), and the same topology is shown on the card *Topology* in Check.
 
 ## Check with AI
 

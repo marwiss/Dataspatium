@@ -1504,6 +1504,7 @@ class _ChangeSet:
         owners = model.by_type("IfcOwnerHistory")
         self.owner = owners[0] if owners else None
         self._body = None
+        self._axis = None
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -1670,6 +1671,18 @@ class _ChangeSet:
         self._body = ifcopenshell.api.context.add_context(self.m, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=self.model_context())
         return self._body
 
+    def axis_context(self):
+        """The sub-context of the walls' 'Axis' representations (Model/Axis/GRAPH_VIEW), made when the file has none."""
+        if self._axis is not None:
+            return self._axis
+        subs = [c for c in self.m.by_type("IfcGeometricRepresentationSubContext") if (c.ContextIdentifier or "") == "Axis"]
+        if subs:
+            self._axis = subs[0]
+            return subs[0]
+        import ifcopenshell.api.context
+        self._axis = ifcopenshell.api.context.add_context(self.m, context_type="Model", context_identifier="Axis", target_view="GRAPH_VIEW", parent=self.model_context())
+        return self._axis
+
     def contain(self, e, storey):
         import ifcopenshell.api.spatial
         ifcopenshell.api.spatial.assign_container(self.m, products=[e], relating_structure=storey)
@@ -1814,6 +1827,9 @@ class _ChangeSet:
         wall = self.root("IfcWall", op.get("name") or "Wall")
         wall.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x1), self.u(y1), 0, (x2 - x1) / length, (y2 - y1) / length)
         wall.Representation = self.box(self.u(length), self.u(thickness), self.u(height), 0, -self.u(thickness) / 2.0, 0)
+        # The centreline as the wall's 'Axis' (Curve2D), after the body, so that the topology reads it without the geometry kernel.
+        axis = self.m.createIfcPolyline([self.point(0, 0), self.point(self.u(length), 0)])
+        wall.Representation.Representations = list(wall.Representation.Representations) + [self.m.createIfcShapeRepresentation(self.axis_context(), "Axis", "Curve2D", [axis])]
         self.predefined(wall, "STANDARD")
         self.contain(wall, storey)
         self.register(wall, storey)
@@ -2443,14 +2459,422 @@ def _ifc_integrity(model):
     return out
 
 
+# ---- the building's topology (decision F46 a) -------------------------------------------------------
+# The walls' centrelines per storey become rooms with shapely (which comes with IfcOpenShell): the line ends are snapped to each
+# other within a tolerance, the lines noded and polygonized. Rooms that share a stretch of boundary border each other, the walls
+# along the rooms' union are the external walls with the compass sector they face, and the lines' free ends are the open ends
+# that a closed storey cannot have. Lengths are metres, coordinates the model's plan.
+
+TOPOLOGY_MAX_WALLS = 2000
+TOPOLOGY_MIN_ROOM = 0.5  # m²; smaller polygons are slivers between lines, not rooms
+TOPOLOGY_MIN_WIDTH = 0.5  # m; so are narrower ones, such as the gap between the layers of a wall
+_FACINGS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+
+
+def _topo_north(model):
+    """(a, b, source): the model's plan turned to the map, east = a*dx - b*dy and north = b*dx + a*dy. From IfcMapConversion's
+    XAxisAbscissa and XAxisOrdinate when the file has one (it takes precedence over TrueNorth, as IFC 4.3 says), else from the
+    model context's TrueNorth, else the model's +y is north."""
+    contexts = [c for c in model.by_type("IfcGeometricRepresentationContext") if not c.is_a("IfcGeometricRepresentationSubContext")]
+    context = next((c for c in contexts if (c.ContextType or "Model") == "Model"), contexts[0] if contexts else None)
+    try:
+        conversions = model.by_type("IfcMapConversion")
+    except Exception:  # IFC2X3 has no IfcMapConversion
+        conversions = []
+    own = [c for c in conversions if context is not None and c.SourceCRS is not None and c.SourceCRS.id() == context.id()]
+    conversion = own[0] if own else (conversions[0] if len(conversions) == 1 else None)
+    if conversion is not None:
+        a = 1.0 if conversion.XAxisAbscissa is None else float(conversion.XAxisAbscissa)
+        b = 0.0 if conversion.XAxisOrdinate is None else float(conversion.XAxisOrdinate)
+        if math.hypot(a, b) > 0:
+            return a / math.hypot(a, b), b / math.hypot(a, b), "map"
+    north = getattr(context, "TrueNorth", None) if context is not None else None
+    if north is not None:
+        r = [float(v) for v in north.DirectionRatios] + [0.0, 0.0]
+        if math.hypot(r[0], r[1]) > 0:
+            return r[1] / math.hypot(r[0], r[1]), r[0] / math.hypot(r[0], r[1]), "true_north"
+    return 1.0, 0.0, "model"
+
+
+def _topo_facing(dx, dy, north):
+    """The compass sector (N, NE, ... NW) a direction in the plan points to."""
+    a, b = north[0], north[1]
+    bearing = math.degrees(math.atan2(a * dx - b * dy, b * dx + a * dy)) % 360.0
+    return _FACINGS[int((bearing + 22.5) // 45.0) % 8]
+
+
+def _topo_curve(item):
+    """The (x, y) points of an axis curve in its own coordinates: an IfcPolyline, an IfcIndexedPolyCurve or an IfcTrimmedCurve of an
+    IfcLine; None for another curve."""
+    if item.is_a("IfcPolyline"):
+        return [(float(p.Coordinates[0]), float(p.Coordinates[1])) for p in item.Points]
+    if item.is_a("IfcIndexedPolyCurve"):
+        coords = [(float(c[0]), float(c[1])) for c in item.Points.CoordList]
+        if not getattr(item, "Segments", None):
+            return coords
+        out = []
+        for segment in item.Segments:
+            for i in segment.wrappedValue:
+                if not out or out[-1] != coords[int(i) - 1]:
+                    out.append(coords[int(i) - 1])
+        return out
+    if item.is_a("IfcTrimmedCurve") and item.BasisCurve.is_a("IfcLine"):
+        line = item.BasisCurve
+        p0 = [float(v) for v in line.Pnt.Coordinates]
+        o = [float(v) for v in line.Dir.Orientation.DirectionRatios]
+        step = float(line.Dir.Magnitude) / (math.sqrt(sum(v * v for v in o)) or 1.0)
+
+        def at(trim):
+            for t in trim:
+                if hasattr(t, "is_a") and t.is_a("IfcCartesianPoint"):
+                    return float(t.Coordinates[0]), float(t.Coordinates[1])
+            for t in trim:
+                u = float(getattr(t, "wrappedValue", t))  # an IfcParameterValue along the line
+                return p0[0] + u * step * o[0], p0[1] + u * step * o[1]
+            return None
+        ends = at(item.Trim1), at(item.Trim2)
+        return list(ends) if ends[0] and ends[1] else None
+    return None
+
+
+def _topo_axis(wall, scale):
+    """The wall's 'Axis' representation in plan, in metres in world coordinates through its placement; None without one."""
+    import ifcopenshell.util.placement as placement
+    rep = getattr(wall, "Representation", None)
+    for r in (rep.Representations if rep is not None else ()):
+        if (r.RepresentationIdentifier or "") != "Axis":
+            continue
+        for item in (r.Items or ()):
+            pts = _topo_curve(item)
+            if pts and len(pts) >= 2:
+                m = placement.get_local_placement(wall.ObjectPlacement)
+                return [((m[0][0] * x + m[0][1] * y + m[0][3]) * scale, (m[1][0] * x + m[1][1] * y + m[1][3]) * scale) for x, y in pts]
+    return None
+
+
+def _topo_thickness(wall, scale):
+    """The wall's thickness in metres: the narrow side of an extruded rectangle, else its material layers; None when unknown."""
+    rep = getattr(wall, "Representation", None)
+    for r in (rep.Representations if rep is not None else ()):
+        for item in (r.Items or ()):
+            if item.is_a("IfcExtrudedAreaSolid") and item.SweptArea.is_a("IfcRectangleProfileDef"):
+                return min(float(item.SweptArea.XDim), float(item.SweptArea.YDim)) * scale
+    try:
+        import ifcopenshell.util.element as el
+        mat = el.get_material(wall)
+        layers = mat.ForLayerSet if mat is not None and mat.is_a("IfcMaterialLayerSetUsage") else mat
+        if layers is not None and layers.is_a("IfcMaterialLayerSet"):
+            return sum(float(x.LayerThickness or 0) for x in layers.MaterialLayers) * scale or None
+    except Exception:
+        pass
+    return None
+
+
+def _topo_settings():
+    import ifcopenshell.geom
+    settings = ifcopenshell.geom.settings()
+    settings.set("use-world-coords", True)
+    try:
+        settings.set("disable-opening-subtractions", True)  # the footprint needs no openings, and the booleans are slow
+    except Exception:
+        pass
+    return settings
+
+
+def _topo_footprint(wall, settings):
+    """(centreline, width) from the body's footprint: its vertices (world coordinates, metres) projected to the plan, their minimum
+    rotated rectangle and its long axis."""
+    import ifcopenshell.geom
+    import ifcopenshell.util.shape as shape_util
+    import shapely
+    verts = shape_util.get_vertices(ifcopenshell.geom.create_shape(settings, wall).geometry)
+    if len(verts) < 2:
+        return None, None
+    rect = shapely.oriented_envelope(shapely.MultiPoint([(float(v[0]), float(v[1])) for v in verts]))
+    if rect.geom_type == "LineString":
+        return [rect.coords[0], rect.coords[-1]], 0.0
+    if rect.geom_type != "Polygon" or rect.is_empty:
+        return None, None
+    c = list(rect.exterior.coords)
+
+    def mid(p, q):
+        return (p[0] + q[0]) / 2.0, (p[1] + q[1]) / 2.0
+    if math.dist(c[0], c[1]) >= math.dist(c[1], c[2]):
+        return [mid(c[0], c[3]), mid(c[1], c[2])], math.dist(c[1], c[2])
+    return [mid(c[0], c[1]), mid(c[3], c[2])], math.dist(c[0], c[1])
+
+
+def _topo_cross(p, d, a, b):
+    """(t, x): where the line through p along the unit vector d crosses the line through a and b, p + t * d; None when parallel."""
+    rx, ry = b[0] - a[0], b[1] - a[1]
+    den = d[0] * ry - d[1] * rx
+    if abs(den) < 1e-9 * (math.hypot(rx, ry) or 1.0):
+        return None
+    t = ((a[0] - p[0]) * ry - (a[1] - p[1]) * rx) / den
+    return t, (round(p[0] + t * d[0], 6), round(p[1] + t * d[1], 6))
+
+
+def _topo_pairs(pts, radius):
+    """The pairs (distance, a, b) of points at most radius apart, closest first, found on a grid of cells radius wide."""
+    cells = {}
+    size = max(radius, 1e-6)
+    out = []
+    for n, p in enumerate(pts):
+        cx, cy = math.floor(p[0] / size), math.floor(p[1] / size)
+        for cell in [(cx + dx, cy + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]:
+            out.extend((math.dist(pts[m], p), m, n) for m in cells.get(cell, ()) if math.dist(pts[m], p) <= radius)
+        cells.setdefault((cx, cy), []).append(n)
+    return sorted(out)
+
+
+def _topo_snap(lines, tol, widths=None):
+    """The lines with their ends snapped, in three steps. Ends that coincide within a centimetre meet at their mean. Another end goes
+    along its own line, extended or trimmed, to the nearest crossing with a line near it (a T junction; or a corner, where that
+    line's free end goes there too, as when both walls of a corner stop at the other's face), moving at most half the thickness of
+    the wall it meets plus 0.05 m, and never more than tol. Ends still free pair up within tol, closest first, unless their walls run
+    side by side as the layers of a wall do. A point that lands inside a line is inserted in it, so that noding joins the two exactly."""
+    from shapely.geometry import LineString, Point
+    from shapely.strtree import STRtree
+    out = [[(round(float(c[0]), 6), round(float(c[1]), 6)) for c in line] for line in lines]
+    reach = [min(tol, float(w or 0.2) / 2.0 + 0.05) for w in (widths or [None] * len(out))]
+    ends = [(i, k) for i in range(len(out)) for k in (0, -1)]
+
+    def end(m):
+        return out[ends[m][0]][ends[m][1]]
+
+    def direction(m):
+        """The unit vector along the line out of its end m, or None."""
+        i, k = ends[m]
+        p, q = out[i][k], (out[i][1] if k == 0 else out[i][-2])
+        n = math.dist(p, q)
+        return ((p[0] - q[0]) / n, (p[1] - q[1]) / n) if n > 0 else None
+
+    def meet(group):
+        mean = (round(sum(end(m)[0] for m in group) / len(group), 6), round(sum(end(m)[1] for m in group) / len(group), 6))
+        for m in group:
+            out[ends[m][0]][ends[m][1]] = mean
+
+    parent = list(range(len(ends)))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for _, a, b in _topo_pairs([end(m) for m in range(len(ends))], 0.01):
+        parent[find(a)] = find(b)
+    groups = {}
+    for m in range(len(ends)):
+        groups.setdefault(find(m), []).append(m)
+    free = {g[0] for g in groups.values() if len(g) == 1}
+    for g in groups.values():
+        if len(g) > 1:
+            meet(g)
+    geoms = [LineString(c) for c in out]
+    tree = STRtree(geoms)
+    inserted = {}
+    for m in sorted(free):
+        d = direction(m)
+        if m not in free or d is None:
+            continue  # taken to a corner by the other wall's end, or a line without length
+        i, k = ends[m]
+        p = end(m)
+        best = None
+        for j in (int(x) for x in tree.query(Point(p).buffer(2.0 * tol)) if int(x) != i):
+            for a, b in zip(out[j], out[j][1:]):
+                hit = _topo_cross(p, d, a, b)
+                if hit is None or abs(hit[0]) > reach[j] or (best is not None and abs(hit[0]) >= best[0]):
+                    continue
+                corner = None
+                off = LineString([a, b]).distance(Point(hit[1]))
+                if off > 1e-6:  # beyond the other line's end: a corner, when that end is free and near enough
+                    corner = 2 * j + (0 if math.dist(hit[1], out[j][0]) < math.dist(hit[1], out[j][-1]) else 1)
+                    if off > reach[i] or corner not in free:
+                        continue
+                best = (abs(hit[0]), j, hit[1], corner)
+        if best is None:
+            continue
+        _, j, x, corner = best
+        free.discard(m)
+        out[i][k] = x
+        if corner is None:
+            inserted.setdefault(j, []).append(x)
+        else:
+            free.discard(corner)
+            out[j][ends[corner][1]] = x
+    left = sorted(free)
+    for _, a, b in _topo_pairs([end(m) for m in left], tol):
+        ma, mb = left[a], left[b]
+        if ma not in free or mb not in free:
+            continue
+        da, db = direction(ma), direction(mb)
+        pa, pb = end(ma), end(mb)
+        if da and db and abs(da[0] * db[1] - da[1] * db[0]) < 0.17 and abs((pb[0] - pa[0]) * da[1] - (pb[1] - pa[1]) * da[0]) > 0.05:
+            continue  # parallel within 10 degrees and side by side
+        free.difference_update((ma, mb))
+        meet([ma, mb])
+    for j, points in inserted.items():
+        first, last = out[j][0], out[j][-1]
+        inner = sorted(set(out[j][1:-1]) | set(points), key=lambda c: geoms[j].project(Point(c)))
+        out[j] = [first] + [c for c in inner if c != first and c != last] + [last]
+    return out
+
+
+def _topo_outward(union, part, tol, north):
+    """The compass sector a wall along the rooms' union faces: the normal of its longest piece there that points out of the rooms."""
+    from shapely.geometry import Point
+    pieces = [g for g in getattr(part, "geoms", [part]) if g.geom_type == "LineString" and g.length > 0]
+    if not pieces:
+        return None
+    piece = max(pieces, key=lambda g: g.length)
+    (x0, y0), (x1, y1) = piece.coords[0][:2], piece.coords[-1][:2]
+    n = math.hypot(x1 - x0, y1 - y0)
+    if n == 0:
+        return None
+    nx, ny = -(y1 - y0) / n, (x1 - x0) / n
+    mid = piece.interpolate(0.5, normalized=True)
+    for eps in (0.05, tol + 0.05):
+        left = union.covers(Point(mid.x + nx * eps, mid.y + ny * eps))
+        right = union.covers(Point(mid.x - nx * eps, mid.y - ny * eps))
+        if left != right:
+            return _topo_facing(-nx, -ny, north) if left else _topo_facing(nx, ny, north)
+    return None
+
+
+def _topo_plan(walls, tol, north=(1.0, 0.0, "model")):
+    """One storey's plan from its walls' centrelines, with shapely alone: `walls` are dicts {"id", "guid", "name", "line": [(x, y),
+    ...], "width"} in metres (width may be None). Rooms are the polygons over TOPOLOGY_MIN_ROOM and TOPOLOGY_MIN_WIDTH. A wall
+    belongs to a room, and is external, when it runs along the room's boundary (or the union's) for longer than one that only meets
+    it there; two rooms are neighbours when their boundaries share such a stretch."""
+    from shapely.geometry import LineString
+    from shapely.ops import polygonize_full, unary_union
+    from shapely.strtree import STRtree
+    snapped = _topo_snap([w["line"] for w in walls], tol, [w.get("width") for w in walls])
+    keep = [i for i, c in enumerate(snapped) if LineString(c).length > 1e-6]
+    if not keep:
+        return {"rooms": [], "external": [], "dangles": [], "closed": False}
+    walls = [walls[i] for i in keep]
+    geoms = [LineString(snapped[i]) for i in keep]
+    noded = unary_union(geoms)
+    edges = [g for g in getattr(noded, "geoms", [noded]) if g.geom_type == "LineString"]
+    degree = {}
+    for e in edges:
+        for c in (e.coords[0], e.coords[-1]):
+            key = (round(c[0], 6), round(c[1], 6))
+            degree[key] = degree.get(key, 0) + 1
+    dangles = sorted([round(x, 3), round(y, 3)] for (x, y), n in degree.items() if n == 1)
+    polygons = list(polygonize_full(edges)[0].geoms)
+    rooms = sorted((p for p in polygons if p.area > TOPOLOGY_MIN_ROOM and not p.buffer(-TOPOLOGY_MIN_WIDTH / 2.0).is_empty),
+                   key=lambda p: (round(p.centroid.y), p.centroid.x))
+    tree = STRtree(geoms)
+    meets = 2.0 * tol + 0.01  # a wall that only meets a boundary runs at most 2 * tol inside its buffer
+
+    def along(zone):
+        out = []
+        for j in tree.query(zone):
+            part = geoms[int(j)].intersection(zone)
+            if part.length > meets:
+                out.append((int(j), part))
+        return out
+
+    neighbours = [set() for _ in rooms]
+    room_tree = STRtree(rooms)
+    for i, r in enumerate(rooms):
+        for k in (int(x) for x in room_tree.query(r)):
+            if k > i and r.boundary.intersection(rooms[k].boundary).length > meets:
+                neighbours[i].add(k)
+                neighbours[k].add(i)
+    out_rooms = [{"index": i + 1, "area": round(r.area, 2), "perimeter": round(r.length, 2),
+                  "walls": sorted({walls[j]["id"] for j, _ in along(r.boundary.buffer(tol))}), "neighbours": sorted(k + 1 for k in neighbours[i])}
+                 for i, r in enumerate(rooms)]
+    external = []
+    if rooms:
+        union = unary_union(polygons)  # with the slivers between the layers of a wall, which are inside too
+        for j, part in along(union.boundary.buffer(tol)):
+            facing = _topo_outward(union, part, tol, north)
+            if facing:
+                external.append({"wall": walls[j]["id"], "guid": walls[j].get("guid"), "name": walls[j].get("name"), "facing": facing, "length": round(part.length, 2)})
+        external.sort(key=lambda e: (_FACINGS.index(e["facing"]), e["wall"]))
+    return {"rooms": out_rooms, "external": external, "dangles": dangles, "closed": bool(rooms) and not dangles}
+
+
+def _topo_elevation(storey, scale):
+    if storey.Elevation is not None:
+        return float(storey.Elevation) * scale
+    try:
+        import ifcopenshell.util.placement as placement
+        return float(placement.get_local_placement(storey.ObjectPlacement)[2][3]) * scale
+    except Exception:
+        return 0.0
+
+
+def _ifc_topology(model, tolerance=None, storeys=None):
+    """The building's topology per storey (decision F46 a), as a list in the storeys' order of elevation:
+
+        {"storey", "elevation" (m), "rooms": [{"index" (from 1), "area" (m²), "perimeter" (m), "walls": [wall ids], "neighbours":
+         [room indices]}], "external": [{"wall", "guid", "name", "facing" (N, NE, E, SE, S, SW, W, NW), "length" (m)}], "dangles":
+         [[x, y], ...] (open wall ends, metres), "closed" (at least one room and nothing dangles), "walls" (on the storey), "unread"
+         (walls whose centreline could not be read), "tolerance" (m), "north" (map, true_north or model)}
+
+    A wall's centreline is its 'Axis' representation through its placement, else the long axis of its body's footprint
+    (ifcopenshell.geom). The ends are snapped within `tolerance` metres (by default half the storey's thickest wall plus 0.05 m).
+    `storeys` (names) limits the storeys read. At most TOPOLOGY_MAX_WALLS walls.
+    """
+    import ifcopenshell.util.unit
+    try:
+        scale = float(ifcopenshell.util.unit.calculate_unit_scale(model) or 1.0)  # metres per file unit
+    except Exception:
+        scale = 1.0
+    north = _topo_north(model)
+    chosen = []
+    for s in model.by_type("IfcBuildingStorey"):
+        if storeys is not None and _ifc_text(s.Name) not in storeys:
+            continue
+        chosen.append((s, [e for rel in (getattr(s, "ContainsElements", None) or ()) for e in (rel.RelatedElements or ()) if e.is_a("IfcWall")]))
+    total = sum(len(walls) for _, walls in chosen)
+    if total > TOPOLOGY_MAX_WALLS:
+        raise DataspatiumError("the topology reads at most %d walls; there are %d" % (TOPOLOGY_MAX_WALLS, total))
+    settings = None
+    out = []
+    for s, walls in sorted(chosen, key=lambda x: _topo_elevation(x[0], scale)):
+        read, widths, unread = [], [], 0
+        for w in walls:
+            try:
+                line = _topo_axis(w, scale)
+                width = _topo_thickness(w, scale) if line else None
+            except Exception:
+                line = None
+            if not line:
+                try:
+                    if settings is None:
+                        settings = _topo_settings()
+                    line, width = _topo_footprint(w, settings)
+                except Exception:
+                    line = None
+            if not line or math.dist(line[0], line[-1]) <= 1e-6:
+                unread += 1
+                continue
+            read.append({"id": w.id(), "guid": getattr(w, "GlobalId", None), "name": _ifc_text(getattr(w, "Name", None)), "line": line, "width": width})
+            if width:
+                widths.append(width)
+        tol = float(tolerance) if tolerance else max([x for x in widths if x <= 1.0] or [0.2]) / 2.0 + 0.05
+        rec = {"storey": _ifc_text(s.Name), "elevation": round(_topo_elevation(s, scale), 3)}
+        rec.update(_topo_plan(read, tol, north))
+        rec.update({"walls": len(walls), "unread": unread, "tolerance": round(tol, 3), "north": north[2]})
+        out.append(rec)
+    return out
+
+
 def _ifc_changeset(in_file, changeset_json, out_file):
     """The recipe step "AI-ändring": a change set's operations on the model, checked against the schema and written as IFC.
 
     Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
     report: what was created (with refs), changed and deleted, the schema findings and what the change set broke in the model's
     relationships (new against the base, counted as errors), counts for the log, the changes of
-    existing instances in Dataregium's proposal form (`proposal`), and `notes` about what an operation could not do in the
-    file's schema (the map conversion in IFC2X3).
+    existing instances in Dataregium's proposal form (`proposal`), `notes` about what an operation could not do in the
+    file's schema (the map conversion in IFC2X3), and the candidate's `topology` (_ifc_topology) on the storeys of the walls the
+    change set created, changed or deleted, or {"error"} when it could not be computed.
     """
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
@@ -2473,10 +2897,28 @@ def _ifc_changeset(in_file, changeset_json, out_file):
         proposal = cs.proposal(base)
     except Exception as exc:
         proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
+    # Only the storeys whose walls the change set touched: a preview of other changes on a large model stays quick.
+    storeys = {r.get("storey") for r in cs.created + list(cs.changed.values()) + cs.deleted if str(r.get("ifc_class") or "").startswith("IfcWall")}
+    try:
+        topology = _ifc_topology(model, storeys=storeys) if storeys else []
+    except Exception as exc:
+        topology = {"error": str(exc) or type(exc).__name__}
     return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
                        "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
-                       "proposal": proposal, "notes": cs.notes},
+                       "proposal": proposal, "notes": cs.notes, "topology": topology},
                       ensure_ascii=False, default=str)
+
+
+def _ifc_topology_file(in_file, out_file):
+    """The topology (_ifc_topology) of the model kept in a dataset file, for the read tool get_topology and the card Topologi in
+    Kontrollera: the original IFC is read from the SQLite file, and the JSON list is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "topology-in.ifc"), data)
+    text = json.dumps(_ifc_topology(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
 
 
 # The schemas a new model can be written in (OB-06): the newest first, which is the default.

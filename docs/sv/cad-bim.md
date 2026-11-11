@@ -294,6 +294,10 @@ bild bifogas som foto, fasad mot norr, öster, söder eller väster, insida elle
 (EXIF) får dem i sin bildtext, så att AI:n vet vad den ser. Uppgifterna ur en datamängd ger också byggnadsytans sydvästra hörn på
 kartan, så att AI:n placerar modellen med `set_site` (läge, höjd och SWEREF 99 TM), och med *Med markhöjd i hörnen*, som visas när
 Lantmäteriets källa är tillagd, markhöjden i varje hörn ur höjdmodellen: ett nätanrop med din nyckel efter samtycke.
+Efter väggarna på varje våning läser förhandsvisningen byggnadens topologi: väggarnas mittlinjer blir rum, och våningen är sluten när
+väggarna sluter minst ett rum och ingen väggände står lös; AI:n lagar lösa ändar genom att flytta eller lägga till väggar innan den
+lägger bjälklagen. Ytterväggarna med sina väderstreck låter AI:n para ett foto av fasaden mot söder med rätt väggar (läsverktyget
+`get_topology`), och samma topologi visas på kortet *Topologi* i Kontrollera.
 
 ## Kontrollera med AI
 

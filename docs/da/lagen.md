@@ -182,6 +182,8 @@ rækker eller flere først, når du trykker på *Kør kontrollen*. Inspektøren 
 *Åbn i Bearbejd* fører dig derhen for at rette det. En IFC-model viser kortet *Valider modellen* og panelet *Sammenlign
 versioner* (se [cad-bim.md](cad-bim.md)); andre slags har endnu ingen kontroller. AI-panelet får en fjerde tilstand,
 *Kontrollér*, til fotos af skader (planlagt).
+Kortet *Topologi* læser modellens vægge med *Kontrollér topologien* (appens Python starter første gang) og viser pr. etage, hvor mange
+rum væggene lukker om, om etagen er lukket, vægender der står løse, og ydervæggene pr. verdenshjørne.
 
 ## Analysér
 

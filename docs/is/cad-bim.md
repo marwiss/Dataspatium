@@ -295,6 +295,10 @@ ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatexta
 úr gagnasafni gefa einnig suðvesturhorn grunnflatarins á kortinu, svo gervigreindin staðsetur líkanið með `set_site` (staðsetning, hæð
 og SWEREF 99 TM), og með *Með landhæð í hornunum*, sem birtist þegar heimild Lantmäteriet hefur verið bætt við, landhæðina í hverju
 horni úr hæðarlíkaninu: netkall með lyklinum þínum eftir samþykki.
+Eftir veggi hverrar hæðar les forskoðunin grannfræði byggingarinnar: miðlínur veggjanna verða að herbergjum, og hæðin er lokuð þegar
+veggirnir loka að minnsta kosti einu herbergi og enginn veggendi stendur laus; gervigreindin lagar lausa enda með því að færa veggi eða
+bæta við veggjum áður en hún leggur plöturnar. Útveggirnir með áttum sínum gera gervigreindinni kleift að para ljósmynd af
+suðurhliðinni við réttu veggina (lestrartólið `get_topology`), og sama grannfræði birtist á kortinu *Grannfræði* í Athuga.
 
 ## Athuga með gervigreind
 

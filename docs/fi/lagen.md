@@ -188,6 +188,9 @@ heti, kun se valitaan, ja taulukko, jossa on 10 000 riviä tai enemmän, vasta k
 näyttää valitun löydöksen ja sen osuuden riveistä, ja *Avaa Muokkaa-tilassa* vie sinut korjaamaan sen. IFC-malli näyttää kortin
 *Validoi malli* ja paneelin *Vertaa versioita* (katso [cad-bim.md](cad-bim.md)); muille lajeille ei ole vielä tarkistuksia.
 Tekoälypaneeli saa neljännen tilan, *Tarkista*, vaurioista otettuja valokuvia varten (suunniteltu).
+Kortti *Topologia* lukee mallin seinät painikkeella *Tarkista topologia* (sovelluksen Python käynnistyy ensimmäisellä kerralla) ja
+näyttää kerroksittain, kuinka monta huonetta seinät rajaavat, onko kerros suljettu, avoimeksi jääneet seinänpäät ja ulkoseinät
+ilmansuunnittain.
 
 ## Analysoi
 
