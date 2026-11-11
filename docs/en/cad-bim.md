@@ -294,6 +294,9 @@ With *Facts from a dataset* rows of a table go into the brief as text: a buildin
 corners in metres from the south-west corner, so that the walls get real dimensions, and measurements and notes from a field form
 in Dataspatium Mobile become rows; a round with the phone can then give more pictures and measurements, and the brief is added to
 in the same mode.
+The brief and the pictures can also be put on the server as the model's material when the model was fetched from a CDE: the topic
+*Material* in the model's project gets the brief as a text document and every picture as a document, so that others who work on the
+model in clients of their own see what it was built from.
 
 ## Ask AI about the model
 

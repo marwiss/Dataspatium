@@ -290,6 +290,9 @@ leverandøren saman med briefen etter samtykket for verten til leverandøren; ei
 Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i briefen som tekst: ei bygningsflate henta frå kartet (Opne geodata)
 vert hjørne i meter frå det sørvestlege hjørnet, så veggane får rette mål, og mål og notat frå eit feltskjema i Dataspatium Mobil vert
 rader; ein runde med telefonen kan så gje fleire bilete og mål, og briefen vert supplert i same modus.
+Briefen og bileta kan òg leggjast på tenaren som grunnlaget til modellen når modellen er henta frå eit CDE: saka *Grunnlag* i
+prosjektet til modellen får briefen som tekstdokument og kvart bilete som dokument, så andre som arbeider med modellen i eigne
+klientar ser kva han vart bygd av.
 
 ## Spør AI om modellen
 

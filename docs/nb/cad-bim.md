@@ -287,6 +287,9 @@ leverandøren sammen med briefen etter samtykket for leverandørens vert; en lok
 Med *Opplysninger fra et datasett* legges rader fra en tabell i briefen som tekst: en bygningsflate hentet fra kartet (Åpne geodata) blir
 hjørner i meter fra det sørvestlige hjørnet, så veggene får riktige mål, og mål og notater fra et feltskjema i Dataspatium Mobil blir
 rader; en runde med telefonen kan så gi flere bilder og mål, og briefen suppleres i samme modus.
+Briefen og bildene kan også legges på serveren som modellens grunnlag når modellen er hentet fra et CDE: saken *Grunnlag* i
+modellens prosjekt får briefen som tekstdokument og hvert bilde som dokument, så andre som arbeider med modellen i egne klienter ser
+hva den ble bygd av.
 
 ## Spør AI om modellen
 

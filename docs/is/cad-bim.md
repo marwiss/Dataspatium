@@ -284,6 +284,9 @@ lýsingunni eftir samþykki fyrir hýsil veitandans; staðbundið líkan sem sé
 Með *Upplýsingar úr gagnasafni* fara línur úr töflu í lýsinguna sem texti: grunnflötur sóttur af kortinu (Opin landupplýsingagögn) verður
 horn í metrum frá suðvesturhorninu, svo veggirnir fái rétt mál, og mál og athugasemdir úr vettvangseyðublaði í Dataspatium Mobil verða
 línur; umferð með símanum getur síðan gefið fleiri myndir og mál, og lýsingin er fyllt út í sama ham.
+Lýsinguna og myndirnar má einnig setja á þjóninn sem efnivið líkansins þegar líkanið var sótt úr CDE: málið *Efniviður* í verkefni
+líkansins fær lýsinguna sem textaskjal og hverja mynd sem skjal, svo að aðrir sem vinna með líkanið í eigin biðlurum sjái úr hverju
+það var byggt.
 
 ## Spyrja gervigreind um líkanið
 

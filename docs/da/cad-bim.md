@@ -288,6 +288,9 @@ leverandøren sammen med briefen efter samtykket til leverandørens vært; en lo
 Med *Oplysninger fra et datasæt* lægges rækker fra en tabel i briefen som tekst: en bygningsflade hentet fra kortet (Åbne geodata) bliver
 hjørner i meter fra det sydvestlige hjørne, så væggene får rigtige mål, og mål og noter fra en feltformular i Dataspatium Mobil bliver
 rækker; en runde med telefonen kan derefter give flere billeder og mål, og briefen suppleres i samme tilstand.
+Briefen og billederne kan også lægges på serveren som modellens grundlag, når modellen er hentet fra et CDE: sagen *Grundlag* i
+modellens projekt får briefen som tekstdokument og hvert billede som dokument, så andre, der arbejder med modellen i egne klienter,
+ser, hvad den blev bygget af.
 
 ## Spørg AI om modellen
 

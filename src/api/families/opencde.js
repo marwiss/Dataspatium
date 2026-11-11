@@ -797,11 +797,21 @@
       if (bcfVersion(connector) === '2.1') throw new Error(t('opencde.err.bcf21.deleteviewpoint'));
       return bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/viewpoints/${encode(vpGuid)}`, { method: 'DELETE' });
     }
-    /** A file as a BCF document of the project (3.8.2): the body is the file, the name travels in Content-Disposition. */
-    async function uploadBcfDocument(connector, projectId, file) {
+    /**
+     * A file as a BCF document of the project (3.8.2): the body is the file, its media type (octet-stream when the file has none) in
+     * Content-Type, the name in Content-Disposition. @param {any} connector @param {string} projectId @param {File} file
+     * @param {{signal?: AbortSignal}} [options] @returns {Promise<any>} the document {guid, filename}
+     */
+    async function uploadBcfDocument(connector, projectId, file, options = {}) {
       const name = String(file.name || 'document').replace(/["\\\r\n]/g, '_');
-      return bcf(connector, `/projects/${encode(projectId)}/documents`, { method: 'POST', body: await file.arrayBuffer(), headers: { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}` } });
+      return bcf(connector, `/projects/${encode(projectId)}/documents`, { method: 'POST', body: await file.arrayBuffer(), signal: options.signal, headers: { 'Content-Type': String(file.type || '').split(';')[0].trim() || 'application/octet-stream', 'Content-Disposition': `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}` } });
     }
+    /**
+     * A document reference on a topic (3.7.2): `{document_guid, description}` for a document of the project, `{url, description}` for an
+     * address elsewhere; a server of 2.1 takes `{referenced_document, description}` with an address (4.7.2). The body goes as given.
+     * @param {any} connector @param {string} projectId @param {string} topicGuid @param {any} body @param {{signal?: AbortSignal}} [options]
+     */
+    const createDocumentReference = (connector, projectId, topicGuid, body, options = {}) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}/document_references`, { method: 'POST', json: body, signal: options.signal });
 
     // ---------------------------------------------------------------------------- Documents API: upload
     /**
@@ -1038,6 +1048,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, createDocumentReference, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

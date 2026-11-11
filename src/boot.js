@@ -197,6 +197,7 @@
     'src/api/families/neo4j.js',
     'src/api/cde-log.js',
     'src/api/families/opencde.js',
+    'src/data/model-material.js',
     'src/api/families/opencde-admin.js',
     'src/api/families/opencde-manage.js',
     'src/api/graph-source.js',

@@ -284,6 +284,9 @@ leverantören tillsammans med briefen, efter samtycket för leverantörens värd
 Med *Uppgifter ur en datamängd* läggs rader ur en tabell i briefen som text: en byggnadsyta hämtad ur kartan (Öppna geodata) blir
 hörn i meter från sydvästra hörnet, så att väggarna får riktiga mått, och mått och anteckningar ur ett fältformulär från Dataspatium
 Mobil blir rader; en runda med telefonen kan sedan ge fler bilder och mått, och briefen kompletteras i samma läge.
+Briefen och bilderna kan också läggas på servern som modellens underlag när modellen hämtats från ett CDE: ärendet *Underlag* i
+modellens projekt får briefen som textdokument och varje bild som dokument, så att andra som arbetar med modellen i egna klienter
+ser vad den byggdes av.
 
 ## Fråga AI om modellen
 
