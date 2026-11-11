@@ -658,6 +658,90 @@
       const path = capPath(caps, 'ifc_changes', 'unreachable_url', '/documents/1.0/projects/{project_id}/ifc-unreachable', { project_id: projectId, id: projectId });
       return api(connector, path, { method: 'POST', json: { document_id: documentId, version_index: Number(versionIndex) } });
     }
+    /**
+     * An address the server hands out for a job or a report, used only when it is on the server itself (else the path the app
+     * builds), so that the token never goes elsewhere. @param {any} connector @param {string} url @param {string} path
+     */
+    function ownUrl(connector, url, path) {
+      const base = trimUrl(connector.baseUrl);
+      try { const u = new URL(String(url || ''), base + '/'); if (url && u.origin === new URL(base).origin) return u.href; } catch (_e) { /* not an address */ }
+      return base + path;
+    }
+    /**
+     * Ask again until a job is over: `done`, `failed`, `conflict` or `expired` end it, `queued` and `running` go on. The wait
+     * grows from one to five seconds, and ends with an error after `timeoutMs` (ten minutes).
+     * @param {() => Promise<any>} once @param {{timeoutMs?: number, onState?: (job: any) => void, signal?: AbortSignal}} [options]
+     */
+    async function untilOver(once, options = {}) {
+      const end = Date.now() + (options.timeoutMs || 600000);
+      for (let wait = 1000; ; wait = Math.min(5000, wait + 1000)) {
+        const job = await once();
+        if (options.onState) options.onState(job);
+        if (!job || !['queued', 'running', 'pending'].includes(String(job.state))) return job;
+        if (Date.now() > end) throw new Error(t('opencde.job.timeout'));
+        if (options.signal && options.signal.aborted) throw new http.ApiError('Avbrutet.', { kind: 'aborted' });
+        await http.sleep(wait, options.signal);
+      }
+    }
+    const CLASH = '/documents/1.0/projects/{project_id}/ifc-clash';
+    /** Whether the server checks for clashes itself (Dataregium's ifc_clash). @param {any} connector */
+    async function canClash(connector) { return hasExtension(await capabilities(connector), 'ifc_clash'); }
+    /**
+     * The server's clash check between two versions of the project: started, waited for, and its report with the clashes.
+     * @param {any} connector @param {string} projectId
+     * @param {{a: {document_id: string, version_index: number, types?: string[]}, b: any, mode: string, tolerance?: number, clearance?: number}} body
+     * @param {{onState?: (job: any) => void, signal?: AbortSignal, timeoutMs?: number}} [options]
+     */
+    async function serverClash(connector, projectId, body, options = {}) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_clash')) throw new Error(t('clash.server.unsupported'));
+      const path = capPath(caps, 'ifc_clash', 'url', CLASH, { project_id: projectId });
+      const job = await api(connector, path, { method: 'POST', json: body });
+      const url = ownUrl(connector, job && job.url, path + '/' + encode(String(job && job.id)));
+      const report = await untilOver(() => api(connector, url), options);
+      return Object.assign({ id: job.id }, report);
+    }
+    /** Topics of chosen clashes of a server report, a hundred at a time, each with its viewpoint. @returns {Promise<any[]>} */
+    async function serverClashTopics(connector, projectId, clashId, indices) {
+      const caps = await capabilities(connector);
+      const path = capPath(caps, 'ifc_clash', 'url', CLASH, { project_id: projectId }) + '/' + encode(String(clashId)) + '/topics';
+      const out = [];
+      for (let i = 0; i < indices.length; i += 100) out.push(...((await api(connector, path, { method: 'POST', json: { clashes: indices.slice(i, i + 100) } })) || []));
+      return out;
+    }
+    const MERGE = '/documents/1.0/projects/{project_id}/ifc-merge';
+    /** Whether the server can bring a building of one model into another (Dataregium's ifc_merge). @param {any} connector */
+    async function canMerge(connector) { return hasExtension(await capabilities(connector), 'ifc_merge'); }
+    async function mergePaths(connector, projectId) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_merge')) throw new Error(t('merge.unsupported'));
+      const values = { project_id: projectId };
+      const url = capPath(caps, 'ifc_merge', 'url', MERGE, values);
+      return { url, report: capPath(caps, 'ifc_merge', 'report_url', MERGE + '/report', values), prepare: capPath(caps, 'ifc_merge', 'prepare_url', MERGE + '/prepare', values) };
+    }
+    /**
+     * What bringing B's building into A's model would do: `objects`, `instances`, `collisions` [{global_id, ifc_class, same,
+     * choice}], `left_out`, `contexts` and `placements`. 422 when it cannot be done, such as for another schema or unit.
+     * @param {any} connector @param {string} projectId @param {any} body {base, other, building, site?, choices?, default?}
+     */
+    async function mergeReport(connector, projectId, body) {
+      return api(connector, (await mergePaths(connector, projectId)).report, { method: 'POST', json: body });
+    }
+    /**
+     * The merge itself, as a manager of A's project: a job that ends `done` with the new `version_index` of A's document,
+     * `conflict` with what still lacks a choice, or `failed`. 412 when A's version is not the latest.
+     */
+    async function merge(connector, projectId, body, options = {}) {
+      const paths = await mergePaths(connector, projectId);
+      const job = await api(connector, paths.url, { method: 'POST', json: body });
+      return untilOver(() => api(connector, ownUrl(connector, job && job.url, paths.url + '/' + encode(String(job && job.merge_id)))), options);
+    }
+    /** A copy of B migrated to A's schema and unit, for a day: the job, whose `merge_id` goes into `other.prepared`. */
+    async function prepareMerge(connector, projectId, body, options = {}) {
+      const paths = await mergePaths(connector, projectId);
+      const job = await api(connector, paths.prepare, { method: 'POST', json: { base: body.base, other: body.other } });
+      return untilOver(() => api(connector, ownUrl(connector, job && job.url, paths.url + '/' + encode(String(job && job.merge_id)))), options);
+    }
     // ---------------------------------------------------------------------------- writing
     const createTopic = (connector, projectId, body) => bcf(connector, `/projects/${encode(projectId)}/topics`, { method: 'POST', json: body });
     const updateTopic = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'PUT', json: body });
@@ -918,6 +1002,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

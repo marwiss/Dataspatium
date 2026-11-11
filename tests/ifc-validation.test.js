@@ -101,12 +101,37 @@
     if (world.extensions && path === '/.well-known/dataregium') {
       return Promise.resolve(json({ server: 'Dataregium', apis: {}, extensions: {
         publication: { enabled: true, url: '/documents/1.0/documents/{document_id}/versions/{version_index}/publication', roles: ['manager'] },
-        ifc_changes: { enabled: true, unreachable_url: '/documents/1.0/projects/{project_id}/ifc-unreachable' } } }));
+        ifc_changes: { enabled: true, unreachable_url: '/documents/1.0/projects/{project_id}/ifc-unreachable' },
+        ifc_clash: { enabled: true, url: '/documents/1.0/projects/{project_id}/ifc-clash', modes: ['intersection', 'clearance'] },
+        ifc_merge: { enabled: true, url: '/documents/1.0/projects/{project_id}/ifc-merge', report_url: '/documents/1.0/projects/{project_id}/ifc-merge/report', prepare_url: '/documents/1.0/projects/{project_id}/ifc-merge/prepare', choices: ['a', 'b', 'new'] } } }));
     }
     if (world.extensions && path === doc('doc-ifc') + '/publication') {
       if (world.method === 'POST') world.published = { published_at: '2026-11-11T02:30:00Z', published_by: 'checker', file_name: 'hus.ifczip', size_in_bytes: 12, sha256: 'ab'.repeat(32), download_url: BASE + doc('doc-ifc') + '/publication/download' };
       return Promise.resolve(world.published ? Object.assign(json(world.published), world.method === 'POST' ? { status: 201 } : {}) : { kind: 'text', data: JSON.stringify({ message: 'This version is not published' }), status: 404 });
     }
+    const clashPath = `/documents/1.0/projects/${PROJECT}/ifc-clash`;
+    if (world.extensions && path === clashPath) return Promise.resolve(Object.assign(json({ id: 'c1', state: 'queued', url: BASE + clashPath + '/c1' }), { status: 202 }));
+    if (world.extensions && path === clashPath + '/c1') {
+      world.polls = (world.polls || 0) + 1;
+      if (world.polls < 2) return Promise.resolve(json({ id: 'c1', state: 'running', url: BASE + clashPath + '/c1' }));
+      const [a, b] = world.walls;
+      const el = (w, n) => ({ document_id: 'doc-ifc', version_index: 1, id: w.id, guid: w.guid, type: 'IfcWall', name: 'Vägg ' + n, storey: 'Plan 1' });
+      return Promise.resolve(json({ id: 'c1', state: 'done', count: 1, set_a: 3, set_b: 3, missing: 0, seconds: 0.4, truncated: false, url: BASE + clashPath + '/c1',
+        request: { a: { document_id: 'doc-ifc', version_index: 1 }, b: { document_id: 'doc-ifc', version_index: 1 }, mode: 'intersection', tolerance: 0.002, clearance: 0.05 },
+        clashes: [{ a: el(a, 1), b: el(b, 2), kind: 'intersection', depth: 0.05, distance: 0, point: [1, 2, 3], extent: null }] }));
+    }
+    if (world.extensions && path === clashPath + '/c1/topics') return Promise.resolve(Object.assign(json([{ clash: 0, topic_guid: 'bb11cc22-dd33-4e44-8f55-001122334455', viewpoint_guid: 'cc11dd22-ee33-4f44-8a55-112233445566', title: 'IfcWall mot IfcWall' }]), { status: 201 }));
+    const mergePath = `/documents/1.0/projects/${PROJECT}/ifc-merge`;
+    if (world.extensions && path === mergePath + '/report') {
+      if (world.mergeNeedsPrep && !world.prepared) return Promise.resolve({ kind: 'text', data: JSON.stringify({ message: 'The building cannot be brought in: the schema differs' }), status: 422 });
+      return Promise.resolve(json({ base: { document_id: 'doc-ifc', version_index: 1 }, other: { project_id: PROJECT, document_id: 'doc-b', version_index: 1 }, building: world.building, objects: 12, instances: 340,
+        collisions: [{ global_id: world.walls[0].guid, ifc_class: 'IfcWall', same: false, choice: null }, { global_id: world.walls[1].guid, ifc_class: 'IfcWall', same: true, choice: 'a' }],
+        left_out: [{ global_id: '0aaaaaaaaaaaaaaaaaaaaa', ifc_class: 'IfcRelAggregates' }], contexts: { shared: 2, added: 0 }, placements: 3 }));
+    }
+    if (world.extensions && path === mergePath + '/prepare') { world.prepared = true; return Promise.resolve(Object.assign(json({ merge_id: 'p1', kind: 'prepare', state: 'done', expires_at: '2026-11-12T08:00:00Z', url: BASE + mergePath + '/p1' }), { status: 202 })); }
+    if (world.extensions && path === mergePath + '/p1') return Promise.resolve(json({ merge_id: 'p1', kind: 'prepare', state: 'done', expires_at: '2026-11-12T08:00:00Z', url: BASE + mergePath + '/p1' }));
+    if (world.extensions && path === mergePath) return Promise.resolve(Object.assign(json({ merge_id: 'm1', kind: 'merge', state: 'queued', url: BASE + mergePath + '/m1' }), { status: 202 }));
+    if (world.extensions && path === mergePath + '/m1') return Promise.resolve(json({ merge_id: 'm1', kind: 'merge', state: 'done', version_index: 2, url: BASE + mergePath + '/m1' }));
     if (world.extensions && path === `/documents/1.0/projects/${PROJECT}/ifc-unreachable`) {
       return Promise.resolve(Object.assign(json({ topic_guid: 'aa11bb22-cc33-4d44-8e55-ff6677889900', title: 'Ta bort det som inget GlobalId når', changes: 2, proposal_url: BASE + '/bcf/3.0/projects/' + PROJECT + '/topics/aa11bb22-cc33-4d44-8e55-ff6677889900/ifc-proposal' }), { status: 201 }));
     }
@@ -302,6 +327,71 @@
       await opencde.capabilities(connector, { force: true });
     }
   }, 60000);
+
+  test('validation: the server checks for clashes like the app, makes the topics itself, and brings a building of another model in after its report', async (assert) => {
+    const http = D.require('api/http');
+    const real = http.request;
+    http.request = (req) => { world.method = String(req.method || 'GET').toUpperCase(); if (req.body) world.bodies.push({ url: String(req.url), body: String(req.body) }); return real(req); };
+    world.extensions = true; world.polls = 0; world.bodies = []; world.mergeNeedsPrep = true; world.prepared = false;
+    // Model B: the same file as another document of the project, with a building to bring in.
+    const b = await opencde.importFile(connector, { project_id: PROJECT, name: 'Kontrollen' }, { filename: 'hus-b.ifc', reference: BASE + '/documents/1.0/documents/doc-ifc/versions/1/download', documentId: 'doc-b', versionIndex: 1, source: 'Documents API' }, { name: 'Hus B' });
+    created.push(b.id);
+    const bcols = await datasets.columns(b.id);
+    const brows = await datasets.query(b.id, { where: { sql: '"typ" = ?', params: ['IfcBuilding'] } });
+    world.building = brows.length ? String(brows[0][bcols.findIndex((c) => c.name === 'guid')]) : '';
+    const press = async (label) => {
+      const dlgs = await waitFor(() => { const all = Array.from(document.querySelectorAll('dialog[open]')); return all.length ? all : null; }, 5000, label);
+      /** @type {HTMLElement} */ (dlgs[dlgs.length - 1].querySelectorAll('.dm-dialog-actions dm-button button')[1]).click();
+    };
+    try {
+      await opencde.capabilities(connector, { force: true });
+      await withApp(async (shell, root) => {
+        await waitFor(() => shell.store.get().datasets.some((d) => d.id === model.id), 3000, 'dataset');
+        shell.store.set({ selectedId: model.id, openModelTool: { datasetId: model.id, tool: 'clash' } });
+        shell.activate('analysera');
+        const where = /** @type {any} */ (await waitFor(() => root.querySelector('[data-clash-where]'), 8000, 'where the check runs'));
+        where.value = 'server'; where.dispatchEvent(new Event('change', { bubbles: true }));
+        /** @type {any} */ (await waitFor(() => root.querySelector('[data-clash-run]'), 5000, 'the button')).click();
+        const result = await waitFor(() => root.querySelector('[data-clash-result]'), 20000, 'the server\'s result');
+        assert.ok(result.textContent.includes(t('clash.server.note', { n: '1', a: '3', b: '3', s: '0,4', host: model.source.cde.host }).split('.')[0]), result.textContent);
+        const asked = world.bodies.find((x) => /\/ifc-clash$/.test(x.url));
+        assert.deepEqual(JSON.parse(asked.body).a, { document_id: 'doc-ifc', version_index: 1 }, 'the version goes to the server');
+        assert.ok(world.polls >= 2, 'the job is waited for');
+        /** @type {any} */ (root.querySelector('[data-clash-send]')).click();
+        await press('the confirmation of the topics');
+        await waitFor(() => world.bodies.some((x) => /ifc-clash\/c1\/topics/.test(x.url)), 8000, 'the topics asked for');
+        assert.deepEqual(JSON.parse(world.bodies.find((x) => /topics/.test(x.url)).body), { clashes: [0] }, 'the server makes the topic of its own clash');
+        // The merge: B and its building, the report after preparing B, a choice for what differs, and the new version.
+        shell.activate('hantera');
+        shell.store.set({ selectedId: model.id });
+        const card = await waitFor(() => root.querySelector('[data-card="cde"] [data-cde-merge]'), 5000, 'the merge button');
+        /** @type {any} */ (card).click();
+        const other = /** @type {any} */ (await waitFor(() => document.querySelector('dialog[open] [data-merge-other]'), 5000, 'the dialog'));
+        other.value = b.id; other.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => { const s = /** @type {any} */ (document.querySelector('dialog[open] [data-merge-building]')); return s && s.value; }, 5000, 'the building');
+        /** @type {any} */ (document.querySelector('dialog[open] [data-merge-show]')).click();
+        /** @type {any} */ (await waitFor(() => document.querySelector('dialog[open] [data-merge-prepare]'), 8000, 'B needs preparing')).click();
+        const summary = await waitFor(() => document.querySelector('dialog[open] [data-merge-summary]'), 8000, 'the report');
+        assert.ok(summary.textContent.includes('340'), summary.textContent);
+        const choice = /** @type {any} */ (document.querySelector(`dialog[open] [data-merge-choice="${world.walls[0].guid}"]`));
+        assert.ok(choice && !document.querySelector(`dialog[open] [data-merge-choice="${world.walls[1].guid}"]`), 'only what differs asks for a choice');
+        choice.value = 'b'; choice.dispatchEvent(new Event('change', { bubbles: true }));
+        /** @type {any} */ (document.querySelector('dialog[open] [data-merge-run]')).click();
+        await press('the confirmation of the merge');
+        await waitFor(() => document.querySelector('dialog[open] [data-merge-done]'), 10000, 'the new version');
+        const merged = JSON.parse(world.bodies.filter((x) => /\/ifc-merge$/.test(x.url)).pop().body);
+        assert.equal(merged.building, world.building, 'B\'s building');
+        assert.equal(merged.other.prepared, 'p1', 'the prepared copy stands in for B');
+        assert.deepEqual(merged.choices, { [world.walls[0].guid]: 'b' }, 'the choice made');
+        for (const el of Array.from(document.querySelectorAll('dialog[open]'))) /** @type {any} */ (el).close();
+      });
+      return 'ok';
+    } finally {
+      http.request = real;
+      world.extensions = false; world.mergeNeedsPrep = false;
+      await opencde.capabilities(connector, { force: true });
+    }
+  }, 90000);
 
   test('validation: cleanup', async () => {
     if (connector) { await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id); }

@@ -131,7 +131,9 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 
 **Frá CDE.** Gagnasafn sótt frá OpenCDE-þjóni sýnir þjón, verkefni og útgáfu, getur spurt um nýrri útgáfu og opnað mál líkansins.
 *Birting* sýnir hvort útgáfa er birt á þjóninum, og verkefnisstjóri getur birt hana einu sinni eftir staðfestingu; síðan má sækja
-safnskrána með vartölu sinni.
+safnskrána með vartölu sinni. Fyrir líkan opnar *Færa inn byggingu* glugga þar sem þjónninn færir byggingu úr öðru líkani inn sem
+næstu útgáfu: skýrslan sýnir hvað fylgir með og hvaða hluti bæði hafa, þú velur A, B eða bæði fyrir það sem er ólíkt, líkan með
+annað skema eða aðra lengdareiningu er undirbúið fyrst, og verkefnisstjóri hefur sameininguna.
 
 **Mál.** Tafla með málum frá CDE fær kortið Mál: staðan eftir stöðu, mælaborðið Staða mála og leiðin að líkaninu. Sjá [cad-bim.md](cad-bim.md).
 

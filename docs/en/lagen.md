@@ -134,7 +134,10 @@ new data (see [floden.md](floden.md)).
 
 **From the CDE.** A dataset fetched from an OpenCDE server shows server, project and version, can ask for a newer version and open
 the model's issues. *Publication* shows whether a version is published on the server, and a manager of the project can publish it
-once after a confirmation; the archive with its checksum can then be fetched.
+once after a confirmation; the archive with its checksum can then be fetched. For a model, *Bring in a building* opens a dialog
+where the server brings a building of another model in as the next version: the report shows what comes along and which objects
+both have, you choose A’s, B’s or both for what differs, a model with another schema or length unit is prepared first, and a
+manager of the project starts the merge.
 
 **Issues.** A table of issues from a CDE gets the card Issues: how they stand per status, the dashboard Issue status and the way to the model. See [cad-bim.md](cad-bim.md).
 

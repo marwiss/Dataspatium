@@ -189,6 +189,10 @@ arbeider på de samme trekantene som 3D-visningen viser, i en egen tråd, og tre
 
 - **Mengde A og mengde B** er alle bygningsdeler eller en type, for eksempel kanaler mot bjelker. B kan ligge i samme modell eller i en
   annen modell i samme prosjekt, og modellene må da dele koordinatsystem. Åpninger teller ikke.
+- **På serveren**: for en modell fra Dataregium (fra 3.0.0, når serveren har kollisjonskontrollen slått på) velger *Hvor* om appen
+  regner selv eller om serveren gjør samme kontroll av versjonene. Serveren arbeider i en kø; appen venter og viser rapporten som
+  sin egen, med samme tabell, markering og BCF-fil, og *Send som saker* lar serveren lage sakene med et viewpoint hver. Den andre
+  modellen må da være en versjon i samme prosjekt.
 - **Skjæring** teller par der det ene elementet når dypere inn i det andre enn toleransen (2 mm hvis ikke annet er angitt). Dybden
   måles som hvor langt hjørner og kanter når inn i det andre elementet, så flater som bare møtes, teller ikke. *Innelukking* er et
   element som ligger helt inne i et annet.

@@ -131,7 +131,10 @@ har nye data (se [floden.md](floden.md)).
 
 **Fra CDE.** Et datasett hentet fra en OpenCDE-server viser server, prosjekt og versjon, kan spørre etter en nyere versjon og åpne
 modellens saker. *Publisering* viser om en versjon er publisert på serveren, og den prosjektansvarlige kan publisere den én gang
-etter en bekreftelse; arkivet med kontrollsummen kan så hentes.
+etter en bekreftelse; arkivet med kontrollsummen kan så hentes. For en modell åpner *Før inn en bygning* en dialog der serveren
+fører inn en bygning fra en annen modell som neste versjon: rapporten viser hva som følger med og hvilke objekter begge har, du
+velger As, Bs eller begge for det som er ulikt, en modell med annet skjema eller annen lengdeenhet forberedes først, og den
+prosjektansvarlige starter sammenslåingen.
 
 **Saker.** En tabell med saker fra et CDE får kortet Saker: status per status, dashbordet Sakstatus og veien til modellen. Se [cad-bim.md](cad-bim.md).
 

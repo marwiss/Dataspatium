@@ -186,6 +186,10 @@ vinnur á sömu þríhyrningum og þrívíddarsýnin sýnir, í eigin þræði, 
 
 - **Mengi A og mengi B** eru allir byggingarhlutar eða ein tegund, til dæmis loftstokkar gagnvart bitum. B getur verið í sama líkani
   eða í öðru líkani í sama verkefni, og þá þurfa líkönin að deila hnitakerfi. Op teljast ekki.
+- **Á þjóninum**: fyrir líkan frá Dataregium (frá 3.0.0, þegar kveikt er á árekstraprófun þjónsins) velur *Hvar* hvort forritið
+  reiknar sjálft eða þjónninn gerir sömu prófun á útgáfunum. Þjónninn vinnur í biðröð; forritið bíður og sýnir skýrsluna sem sína
+  eigin, með sömu töflu, merkingu og BCF-skrá, og *Senda sem mál* lætur þjóninn búa til málin með einu viewpoint hvert. Hitt
+  líkanið verður þá að vera útgáfa í sama verkefni.
 - **Skurður** telur pör þar sem önnur einingin nær dýpra inn í hina en vikmörkin (2 mm nema annað sé gefið). Dýptin er mæld sem hve
   langt horn og brúnir ná inn í hina eininguna, svo fletir sem aðeins snertast teljast ekki. *Innilokun* er eining sem liggur öll inni
   í annarri.

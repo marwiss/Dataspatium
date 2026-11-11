@@ -193,6 +193,10 @@ works on the same triangles the 3D view shows, in a thread of its own, and needs
 
 - **Set A and set B** are all building parts or one type, for example ducts against beams. B can be in the same model or in another
   model of the same project, and the models must then share a coordinate system. Openings do not count.
+- **On the server**: for a model from Dataregium (from 3.0.0, when the server has its clash check turned on) *Where* chooses
+  whether the app does the work or the server checks the versions the same way. The server works through a queue; the app waits
+  and shows the report as its own, with the same table, marking and BCF file, and *Send as issues* lets the server make the issues
+  with a viewpoint each. The other model must then be a version in the same project.
 - **Intersection** counts pairs where one element reaches into the other deeper than the tolerance (2 mm unless set otherwise). The
   depth is how far corners and edges reach into the other element, so faces that only meet do not count. *Containment* is an element
   that lies wholly inside another.

@@ -195,6 +195,10 @@ toisiaan. Se toimii samoilla kolmioilla, jotka 3D-näkymä näyttää, omassa s�
 
 - **Joukko A ja joukko B** ovat kaikki rakennusosat tai yksi tyyppi, esimerkiksi kanavat palkkeja vastaan. B voi olla samassa mallissa
   tai toisessa saman projektin mallissa, ja silloin mallien on käytettävä samaa koordinaatistoa. Aukkoja ei lasketa.
+- **Palvelimella**: Dataregiumista haetulle mallille (3.0.0:sta alkaen, kun palvelimen törmäystarkistus on päällä) *Missä*
+  valitsee, laskeeko sovellus itse vai tekeekö palvelin saman tarkistuksen versioille. Palvelin työskentelee jonossa; sovellus
+  odottaa ja näyttää raportin kuin omansa, samalla taulukolla, merkinnällä ja BCF-tiedostolla, ja *Lähetä asioina* antaa
+  palvelimen tehdä asiat, kullekin oma näkymä. Toisen mallin on silloin oltava saman projektin versio.
 - **Leikkaus** laskee parit, joissa toinen elementti ulottuu toiseen toleranssia syvemmälle (2 mm, ellei muuta anneta). Syvyys mitataan
   sen mukaan, kuinka syvälle kulmat ja särmät ulottuvat toiseen elementtiin, joten vain kohtaavia pintoja ei lasketa. *Sisältyminen*
   on elementti, joka on kokonaan toisen sisällä.

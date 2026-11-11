@@ -191,6 +191,10 @@ arbeider på dei same trekantane som 3D-visinga viser, i ein eigen tråd, og tre
 
 - **Mengd A og mengd B** er alle bygningsdelar eller ein type, til dømes kanalar mot bjelkar. B kan liggje i same modell eller i ein
   annan modell i same prosjekt, og modellane må då dele koordinatsystem. Opningar tel ikkje.
+- **På tenaren**: for ein modell frå Dataregium (frå 3.0.0, når tenaren har kollisjonskontrollen slått på) vel *Kvar* om appen
+  reknar sjølv eller om tenaren gjer same kontrollen av versjonane. Tenaren arbeider i ein kø; appen ventar og viser rapporten som
+  sin eigen, med same tabell, markering og BCF-fil, og *Send som saker* lèt tenaren lage sakene med eitt viewpoint kvar. Den andre
+  modellen må då vere ein versjon i same prosjekt.
 - **Skjering** tel par der det eine elementet når djupare inn i det andre enn toleransen (2 mm om ikkje anna er oppgitt). Djupna blir
   målt som kor langt hjørne og kantar når inn i det andre elementet, så flater som berre møtest, tel ikkje. *Innelukking* er eit
   element som ligg heilt inne i eit anna.

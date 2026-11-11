@@ -266,6 +266,7 @@
     'src/ui/api/variable-picker.js',
     'src/ui/api/auth-panel.js',
     'src/ui/api/endpoint-form.js',
+    'src/ui/api/merge-dialog.js',
     'src/ui/api/pxweb-view.js',
     'src/ui/api/sos-view.js',
     'src/ui/api/geodata-view.js',

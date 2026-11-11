@@ -187,6 +187,10 @@ arbetar på samma trianglar som 3D-vyn visar, i en egen tråd, och behöver vark
 
 - **Mängd A och mängd B** är alla byggdelar eller en typ, till exempel kanaler mot balkar. B kan ligga i samma modell eller i en annan
   modell i samma projekt, och modellerna måste då dela koordinatsystem. Öppningar räknas inte.
+- **På servern**: för en modell från Dataregium (från 3.0.0, när servern har kollisionskontrollen påslagen) väljer *Var* om appen
+  räknar själv eller om servern gör samma kontroll av versionerna. Servern arbetar i en kö; appen väntar och visar rapporten som
+  sin egen, med samma tabell, markering och BCF-fil, och *Skicka som ärenden* låter servern göra ärendena med en viewpoint var.
+  Den andra modellen ska då vara en version i samma projekt.
 - **Skärning** räknar par där det ena elementet når in i det andra djupare än toleransen (2 mm om inget annat anges). Djupet mäts som
   hur långt in i det andra elementet hörn och kanter når, så ytor som bara möts räknas inte. *Inneslutning* är ett element som ligger
   helt inne i ett annat.
