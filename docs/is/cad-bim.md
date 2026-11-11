@@ -169,6 +169,9 @@ Spjaldið **Sannprófa líkanið** í Umsjón safnar saman prófunum á IFC-lík
 - **IDS-skrár verkefnisins**: athugi þjónninn skrána einnig gagnvart IDS-skjölum verkefnisins (nýjustu útgáfu hvers skjals sem endar á
   `.ids`), sýnir skýrslan hve margar forskriftir voru samþykktar, ekki samþykktar eða áttu ekki við skrána, og hverjar voru ekki samþykktar,
   með heiti skjalsins og fjölda niðurstaðna. IDS-skjal sem ekki var hægt að lesa er meðal reglnanna sem ekki var hægt að keyra.
+- **Það sem ekkert GlobalId nær til**: finni prófun þjónsins graph tilvik sem ekkert með GlobalId nær til, sýnir skýrslan hnappinn
+  *Fjarlægja það sem ekkert GlobalId nær til*. Þjónninn leggur þá til, eftir staðfestingu þína, breytingasett sem fjarlægir þau;
+  tillagan verður mál sem er prófað og samþykkt eins og önnur, og útgáfan heldur öllu.
 - **Prófanir hér** sýnir nýjustu *Sannprófun*, *IDS-prófun* og árekstraprófun sem keyrðar voru í forritinu, og hnapparnir opna þær í
   Greina. Niðurstöðurnar eru vistaðar í stillingum forritsins, ekki í gagnasafninu.
 
@@ -183,6 +186,10 @@ vinnur á sömu þríhyrningum og þrívíddarsýnin sýnir, í eigin þræði, 
 
 - **Mengi A og mengi B** eru allir byggingarhlutar eða ein tegund, til dæmis loftstokkar gagnvart bitum. B getur verið í sama líkani
   eða í öðru líkani í sama verkefni, og þá þurfa líkönin að deila hnitakerfi. Op teljast ekki.
+- **Á þjóninum**: fyrir líkan frá Dataregium (frá 3.0.0, þegar kveikt er á árekstraprófun þjónsins) velur *Hvar* hvort forritið
+  reiknar sjálft eða þjónninn gerir sömu prófun á útgáfunum. Þjónninn vinnur í biðröð; forritið bíður og sýnir skýrsluna sem sína
+  eigin, með sömu töflu, merkingu og BCF-skrá, og *Senda sem mál* lætur þjóninn búa til málin með einu viewpoint hvert. Hitt
+  líkanið verður þá að vera útgáfa í sama verkefni.
 - **Skurður** telur pör þar sem önnur einingin nær dýpra inn í hina en vikmörkin (2 mm nema annað sé gefið). Dýptin er mæld sem hve
   langt horn og brúnir ná inn í hina eininguna, svo fletir sem aðeins snertast teljast ekki. *Innilokun* er eining sem liggur öll inni
   í annarri.
@@ -290,6 +297,11 @@ nýrri útgáfur síðan grunnurinn var, reynir þjónninn tillöguna aftur á n
 prófunin er hrein; rekist breytingarnar á það sem kom á milli hafnar þjónninn (412) og spjaldið telur upp lyklana sem rekast á
 (tilvik og eigindi), eða segir að allt geti hafa breyst þegar heil skrá var hlaðin upp á milli. Sæktu þá nýjustu útgáfuna, gerðu
 breytingarnar aftur og leggðu til á ný.
+
+Hafi verkefnið teymi (spjaldið *Meðlimir verkefnisins* í Sýsla) sýnir spjaldið hvaða teymi breytingin snertir. Snerti hún aðeins hluta
+eins teymis samþykkir ábyrgðarmaður þess teymis, líka með hlutverkið ritstjóri, og þjónninn hafnar (403) verkefnisstjóra; snerti hún
+hluta fleiri teyma, eða engan, samþykkir verkefnisstjóri eins og áður. Þegar IDS-skjal fær nýja útgáfu athugar þjónninn nýjustu
+IFC-útgáfur verkefnisins aftur, og skýrslur þeirra standa sem í bið á meðan.
 
 Gefi þjónninn gildin fyrir hvern árekstur sýnir spjaldið fyrir hvern þeirra gildið í grunninum, það sem kom á milli og tillögu þína,
 og þú velur fyrir hvern árekstur hvort þú heldur tillögu þinni eða tekur það sem kom á milli. *Leggja til aftur með mínu vali* sendir

@@ -176,6 +176,9 @@ The card **Validate the model** in Manage gathers the checks of an IFC model, wi
   document whose name ends in `.ids`), the report shows how many specifications passed, failed or did not apply to the file, and which
   failed, with the document's name and the number of findings. An IDS document that could not be read is among the rules that could not
   run.
+- **What no GlobalId reaches**: when the server’s check graph finds instances that nothing with a GlobalId reaches, the report
+  shows the button *Remove what no GlobalId reaches*. The server then proposes, after your confirmation, a change set that removes
+  them; the proposal becomes a topic that is tried and approved like others, and the version keeps everything.
 - **Checks here** shows the latest *Validation*, *IDS check* and clash check run in the app, and the buttons open them in Analyse.
   The results are kept in the app's settings, not in the dataset.
 
@@ -190,6 +193,10 @@ works on the same triangles the 3D view shows, in a thread of its own, and needs
 
 - **Set A and set B** are all building parts or one type, for example ducts against beams. B can be in the same model or in another
   model of the same project, and the models must then share a coordinate system. Openings do not count.
+- **On the server**: for a model from Dataregium (from 3.0.0, when the server has its clash check turned on) *Where* chooses
+  whether the app does the work or the server checks the versions the same way. The server works through a queue; the app waits
+  and shows the report as its own, with the same table, marking and BCF file, and *Send as issues* lets the server make the issues
+  with a viewpoint each. The other model must then be a version in the same project.
 - **Intersection** counts pairs where one element reaches into the other deeper than the tolerance (2 mm unless set otherwise). The
   depth is how far corners and edges reach into the other element, so faces that only meet do not count. *Containment* is an element
   that lies wholly inside another.
@@ -298,6 +305,11 @@ Dataregium to go on working on it. When the document has got newer versions sinc
 the latest in the same step and approves against it when the trial is clean; when the changes collide with what came between, the
 server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
 whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
+
+When the project has teams (the card *The project's members* in Manage) the panel shows which teams the change touches. When it
+touches one team's part, that team's responsible approves, even with the role editor, and the server refuses (403) a manager; when it
+touches the parts of several teams, or of none, a manager approves as before. When an IDS document gets a new version the server
+checks the project's latest IFC versions again, and their reports stand as pending meanwhile.
 
 When the server gives the values per collision, the panel shows for each the value in the base, what came between and your proposal,
 and you choose per collision to keep your proposal or take what came between. *Propose again with my choices* sends the proposal

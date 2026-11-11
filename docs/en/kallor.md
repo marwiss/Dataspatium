@@ -69,6 +69,35 @@ When a fetch fails like a network error and a bridge is connected, the app sends
 the page can never add one. It refuses addresses on this computer or the local network, sends only a few headers and no
 cookies, follows at most three redirects to allowed hosts and stops at `--max-fetch-mb` (50 MB by default). The bridge’s log
 shows the host and the path, never the query, the headers or the body. The consent for the purpose applies as before.
+Two presets are reached only this way: *Riksbank interest and exchange rates (SWEA)* and *World Bank: indicators*. The source
+list marks them *Requires the bridge*; start the bridge with `--allow-host api.riksbank.se --allow-host api.worldbank.org` to
+fetch from them.
+
+### Controlling the app from outside
+
+Programs on the computer can run the app's commands through the bridge: the same commands the flows and the AI assistant use
+(reading datasets, actions in Process, export, R, Python, flows). It is off at every start and takes two steps: start the bridge with
+`--allow-commands` (`-AllowCommands`) and turn on **Let programs on this computer control the app through the bridge** under
+*Internet access* in Manage, where you confirm once for the session. Commands that only read run at once; everything that changes
+something is shown in a dialog with the command and its arguments and runs only if you approve it. The status bar shows a terminal
+icon while the control is on.
+
+The command line `tools/dataspatium.py` (Python 3, standard library) uses the bridge's address and token (`--bridge` and `--token`, or
+`DATASPATIUM_BRIDGE` and `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Population", "limit": 5}'
+python tools/dataspatium.py plan monthly-report.json
+python tools/dataspatium.py mcp
+```
+
+`list` shows the commands with their parameters, `run` runs one and prints the answer as JSON, `plan` runs a flow file (the form
+*Export* under Flows gives) as a plan you approve once, and `mcp` makes the commands tools for an AI program on the computer through
+the Model Context Protocol (over the standard streams). The bridge keeps the queue in memory, and a command waits for the app until
+you have approved it or five minutes have passed. `python tools/check_bridge.py` tries the queue, the command line and MCP without a
+browser.
+
 ### Security
 
 - The bridge answers on 127.0.0.1 only, requires the token in every call and allows CORS only for the app's own addresses.
@@ -156,6 +185,12 @@ who need not be a server administrator, signs in with *Sign in as project manage
 with roles: viewer, contributor, editor or manager. You add a person by their exact user name on the server, change a role, remove a
 member and rename the project; every change is confirmed first. The server does not let the project be left without a manager and
 says so; projects are not deleted from here, and an administrator creates new accounts.
+
+When the project has teams the card shows them too: name, responsible, members and the IDS document whose specifications mark
+the team's part of the model. You add a team with a name, a responsible (an editor or manager), the members' user names and the IDS
+document, picked among the project's files or given by its id, and remove a team; the server checks that what you named is in the
+project. A change that touches one team's part is approved by that team's responsible, not by a manager (see *Change with AI* in CAD
+and BIM).
 
 Topics are fetched in pages of 500. A list the server has capped (Dataregium caps at 1,000 items) is read to the end through
 the server’s Link header with rel="next", but only on the same server, so that your token never goes anywhere else.

@@ -142,7 +142,10 @@
       if (extra.size) {
         records.forEach((rec, i) => { for (const [k, set] of extra) { const v = rec.get(k); const props = (isNode(v, neo4j) || isRel(v, neo4j)) ? propsOf(v) : {}; for (const pk of set) { const val = props[pk]; rows[i].push(val !== null && typeof val === 'object' ? JSON.stringify(val) : (val === undefined ? null : val)); } } });
       }
-      const g = nodes.size ? graph.normalise({ nodes: Array.from(nodes.values()), edges: Array.from(edges.values()).filter((e) => nodes.has(e.source) && nodes.has(e.target)), directed: true }) : null;
+      // The app's own lines between BCF components and the entities with their GUIDs come with every answer, drawn and saved alike.
+      const list = Array.from(nodes.values());
+      const rels = Array.from(edges.values()).filter((e) => nodes.has(e.source) && nodes.has(e.target));
+      const g = nodes.size ? graph.normalise({ nodes: list, edges: rels.concat(ifcGraph.componentLines(list)), directed: true }) : null;
       return { columns, rows, graph: g };
     }
     /**
@@ -171,8 +174,8 @@
       { id: 'classes', cypher: "MATCH (m:Model {state: 'done'})\nWITH coalesce(m.document_id, m.bcf_document_guid) AS dokument, m\nORDER BY m.version_index DESC, m.done_at DESC\nWITH dokument, collect(m)[0] AS senaste\nMATCH (e:IfcProduct {model_id: senaste.id})\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC" },
       { id: 'walls_gtin', cypher: "MATCH (w:IfcWall)-[:IS_DEFINED_BY]->(:IfcRelDefinesByProperties)-[:RELATING_PROPERTY_DEFINITION]->(:IfcPropertySet {Name: 'Reuse'})-[:HAS_PROPERTIES]->(p:IfcPropertySingleValue {Name: 'GTIN'})\nRETURN DISTINCT w.GlobalId AS guid, w.Name AS namn, p.NominalValue AS gtin" },
       { id: 'topics', cypher: 'MATCH (t:Topic)\nRETURN t.topic_status AS status, count(*) AS antal\nORDER BY antal DESC' },
-      { id: 'issue_elements', cypher: "MATCH (m:Model {state: 'done'})\nWITH coalesce(m.document_id, m.bcf_document_guid) AS dokument, m\nORDER BY m.version_index DESC, m.done_at DESC\nWITH dokument, collect(m)[0] AS senaste\nMATCH (t:Topic)-[:HAS_VIEWPOINT]->(:Viewpoint)-[:HAS_COMPONENT]->(c:Component)-[:SAME_AS]->(e:IfcProduct {model_id: senaste.id})\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status, e.ifc_class AS klass, e.Name AS byggdel, e.GlobalId AS guid, senaste.file_name AS modell" },
-      { id: 'element_issues', cypher: "MATCH (e:Entity {GlobalId: 'GUID'})<-[:SAME_AS]-(:Component)<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
+      { id: 'issue_elements', cypher: "MATCH (m:Model {state: 'done'})\nWITH coalesce(m.document_id, m.bcf_document_guid) AS dokument, m\nORDER BY m.version_index DESC, m.done_at DESC\nWITH dokument, collect(m)[0] AS senaste\nMATCH (t:Topic)-[:HAS_VIEWPOINT]->(:Viewpoint)-[:HAS_COMPONENT]->(c:Component)\nMATCH (e:IfcProduct {model_id: senaste.id, GlobalId: c.ifc_guid})\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status, e.ifc_class AS klass, e.Name AS byggdel, e.GlobalId AS guid, senaste.file_name AS modell" },
+      { id: 'element_issues', cypher: "MATCH (c:Component {ifc_guid: 'GUID'})<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
       { id: 'graph', cypher: 'MATCH (t:Topic)-[r:HAS_VIEWPOINT]->(v:Viewpoint)\nOPTIONAL MATCH (v)-[h:HAS_COMPONENT]->(c:Component)\nRETURN t, r, v, h, c\nLIMIT 200' },
       // IFC-LPG's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
       { id: 'nearby', cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },

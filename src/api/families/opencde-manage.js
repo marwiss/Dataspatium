@@ -18,7 +18,8 @@
       const caps = await opencde.capabilities(connector);
       if (!opencde.hasExtension(caps, 'project_administration')) return null;
       const ext = caps.extensions.project_administration || {};
-      return { url: String(ext.url || DEFAULT.url).replace(/\/+$/, ''), scope: String(ext.scope || DEFAULT.scope), roles: Array.isArray(ext.roles) && ext.roles.length ? ext.roles.map(String) : DEFAULT.roles };
+      // teams_url (Dataregium 3.0.0): the teams of a project, whose parts of the model an IDS document marks.
+      return { teamsUrl: ext.teams_url ? String(ext.teams_url).replace(/\/+$/, '') : null, url: String(ext.url || DEFAULT.url).replace(/\/+$/, ''), scope: String(ext.scope || DEFAULT.scope), roles: Array.isArray(ext.roles) && ext.roles.length ? ext.roles.map(String) : DEFAULT.roles };
     }
     /** Whether the session's token carries the scope. @param {any} connector @param {string} scope */
     function hasScope(connector, scope) {
@@ -52,6 +53,16 @@
     /** Renames the project through the BCF API (3.0 and 2.1 alike). */
     const rename = (connector, projectId, name) => opencde.api(connector, `${opencde.bcfBase(connector)}/projects/${enc(projectId)}`, { method: 'PUT', json: { name: String(name).trim() } });
 
-    return { DEFAULT, extension, hasScope, signIn, projects, members, addMember, setRole, removeMember, rename };
+    /** The address of a project's teams, from the extension's template. */
+    const teamsUrl = (ext, projectId) => String(ext.teamsUrl || `${ext.url}/{project_id}/teams`).replace('{project_id}', enc(projectId));
+    /** A project's teams: team_id, name, responsible and members (user names) and the IDS document whose specifications mark the part. */
+    async function teams(connector, ext, projectId) { return listOf(await opencde.api(connector, teamsUrl(ext, projectId))); }
+    /** The body the server wants: user names for the responsible and the members, the IDS document by id. */
+    const teamBody = (team) => ({ name: String(team.name || '').trim(), responsible: String(team.responsible || '').trim(), members: (team.members || []).map((x) => String(x).trim()).filter(Boolean), ids_document_id: String(team.ids_document_id || '').trim() });
+    const addTeam = (connector, ext, projectId, team) => opencde.api(connector, teamsUrl(ext, projectId), { method: 'POST', json: teamBody(team) });
+    const setTeam = (connector, ext, projectId, teamId, team) => opencde.api(connector, `${teamsUrl(ext, projectId)}/${enc(teamId)}`, { method: 'PUT', json: teamBody(team) });
+    const removeTeam = (connector, ext, projectId, teamId) => opencde.api(connector, `${teamsUrl(ext, projectId)}/${enc(teamId)}`, { method: 'DELETE' });
+
+    return { DEFAULT, extension, hasScope, signIn, projects, members, addMember, setRole, removeMember, rename, teamsUrl, teams, addTeam, setTeam, removeTeam };
   });
 })();

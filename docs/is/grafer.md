@@ -144,7 +144,7 @@ Tvær leiðir liggja að netinu og báðar gefa sömu sýn:
 | Byggingarhlutar og gerðir | Byggingarhlutana og gerðir þeirra |
 | Byggingarhlutar og efni | Byggingarhlutana og efni þeirra |
 | Eiginleikar og magn | Eiginleikasöfn og magn byggingarhlutanna |
-| Mál og byggingarhlutar | BCF-mál, sjónarhorn þeirra og íhluti, og byggingarhlutana sem þau vísa á |
+| Mál og byggingarhlutar | BCF-mál, sjónarhorn þeirra og íhluti, og byggingarhlutana sem þau vísa á; íhluturinn og byggingarhlutinn hafa sama GUID, og línuna `IFC_GUID` á milli þeirra teiknar forritið sjálft |
 | Allt líkanið | Allt að 1.000 vensl í líkaninu |
 | Fjöldi eftir flokki | Tafla með fjölda eininga eftir flokki |
 | Rúmfræði eftir flokki | Tafla með fjölda rúmfræðihnúta eftir flokki: framsetningar, rúmhlutir, snið, staðsetningar, stílar og lög |

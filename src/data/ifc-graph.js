@@ -4,8 +4,10 @@
  * Dataregium's IFC graph as the app reads it (the server's docs/ifc-lpg.md and graph-schema.md). Every IFC entity is a node labelled
  * Entity, its class and all its supertypes, in no particular order, with `ifc_class`, `step_id`, `model_id` and the literal attributes
  * by their IFC names; relationships are named after the attributes, forward and inverse. Pure logic: which class and name a node shows,
- * which family colours it, the models on the server, the ready-made views of one model, the steps from one element, and the properties
- * that never leave an answer.
+ * which family colours it, the models on the server, the ready-made views of one model, the steps from one element, the properties
+ * that never leave an answer, and the line between a BCF component and the entity with its GUID, which the app draws itself: the server
+ * stores no relationship there but joins them on Component.ifc_guid = Entity.GlobalId within a model (Dataregium's step one of
+ * IFC-LPG's F38 a, 2026-11-11).
  */
 (function () {
   'use strict';
@@ -156,7 +158,7 @@
       { id: 'types', layout: 'fcose', cypher: (m) => `MATCH (e:IfcProduct {model_id: ${m}})-[a:IS_DEFINED_BY]->(r:IfcRelDefinesByType)-[b:RELATING_TYPE]->(y)\nRETURN e, a, r, b, y\nLIMIT 1000` },
       { id: 'materials', layout: 'fcose', cypher: (m) => `MATCH (e:IfcProduct {model_id: ${m}})-[a:HAS_ASSOCIATIONS]->(r:IfcRelAssociatesMaterial)-[b:RELATING_MATERIAL]->(x)\nRETURN e, a, r, b, x\nLIMIT 1000` },
       { id: 'properties', layout: 'fcose', cypher: (m) => `MATCH (e:IfcProduct {model_id: ${m}})-[a:IS_DEFINED_BY]->(r:IfcRelDefinesByProperties)-[b:RELATING_PROPERTY_DEFINITION]->(s)-[c:HAS_PROPERTIES|QUANTITIES]->(p)\nRETURN e, a, r, b, s, c, p\nLIMIT 1000` },
-      { id: 'issues', layout: 'dagre', cypher: (m) => `MATCH (t:Topic)-[a:HAS_VIEWPOINT]->(v:Viewpoint)-[b:HAS_COMPONENT]->(c:Component)-[d:SAME_AS]->(e:Entity {model_id: ${m}})\nRETURN t, a, v, b, c, d, e\nLIMIT 1000` },
+      { id: 'issues', layout: 'dagre', cypher: (m) => `MATCH (t:Topic)-[a:HAS_VIEWPOINT]->(v:Viewpoint)-[b:HAS_COMPONENT]->(c:Component)\nMATCH (e:Entity {model_id: ${m}, GlobalId: c.ifc_guid})\nRETURN t, a, v, b, c, e\nLIMIT 1000` },
       { id: 'whole', layout: 'fcose', cypher: (m) => `MATCH (a:Entity {model_id: ${m}})-[r]->(b:Entity)\nWHERE ${notGeometry('a')} AND ${notGeometry('b')}\nRETURN a, r, b\nLIMIT 1000` },
       { id: 'classes', layout: 'fcose', graph: false, cypher: (m) => `MATCH (e:Entity {model_id: ${m}})\nWHERE ${notGeometry('e')}\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC` },
       { id: 'geometry', layout: 'fcose', graph: false, cypher: (m) => `MATCH (e:Entity {model_id: ${m}})\nWHERE any(l IN labels(e) WHERE l IN ${GEOMETRY_LIST})\nRETURN e.ifc_class AS klass, count(*) AS antal\nORDER BY antal DESC` },
@@ -172,7 +174,7 @@
     const STEPS = {
       neighbours: (n) => `MATCH (n)-[r]-(m)\nWHERE elementId(n) = ${n} AND NOT m:StepBlock\nRETURN n, r, m\nLIMIT 200`,
       properties: (n) => `MATCH (n)-[a:IS_DEFINED_BY]->(r:IfcRelDefinesByProperties)-[b:RELATING_PROPERTY_DEFINITION]->(s)-[c:HAS_PROPERTIES|QUANTITIES]->(p)\nWHERE elementId(n) = ${n}\nRETURN n, a, r, b, s, c, p\nLIMIT 500`,
-      issues: (n) => `MATCH (t:Topic)-[a:HAS_VIEWPOINT]->(v:Viewpoint)-[b:HAS_COMPONENT]->(c:Component)-[d:SAME_AS]->(n)\nWHERE elementId(n) = ${n}\nRETURN t, a, v, b, c, d, n\nLIMIT 200`,
+      issues: (n) => `MATCH (n)\nWHERE elementId(n) = ${n}\nMATCH (c:Component {ifc_guid: n.GlobalId})<-[b:HAS_COMPONENT]-(v:Viewpoint)<-[a:HAS_VIEWPOINT]-(t:Topic)\nRETURN t, a, v, b, c, n\nLIMIT 200`,
     };
     /** The Cypher of a step from a node. @param {'neighbours'|'properties'|'issues'} step @param {string} nodeId the database's element id */
     const stepFrom = (step, nodeId) => STEPS[step](quote(nodeId));
@@ -180,12 +182,39 @@
     const element = (guid, modelId) => `MATCH (n:Entity {GlobalId: ${quote(guid)}${modelId ? `, model_id: ${quote(modelId)}` : ''}})-[r]-(m)\nRETURN n, r, m\nLIMIT 200`;
     /** The relationships among some nodes, with the ids in the parameter `ids`. An answer that names only nodes shows how they hang together. */
     const CONNECTING = 'MATCH (a)-[r]->(b)\nWHERE elementId(a) IN $ids AND elementId(b) IN $ids\nRETURN a, r, b\nLIMIT 2000';
+    /** The type of the line the app draws from a BCF component to the entity with its GUID; the server has no relationship there. */
+    const COMPONENT_LINE = 'IFC_GUID';
+    /**
+     * The drawn lines of one answer: from every Component node with `ifc_guid` to every node with that `GlobalId`, as edges for
+     * data/graph. Nothing is asked of the server; an answer that names only components and entities still hangs together.
+     * @param {Array<{id: string, label?: string, properties?: Record<string, any>}>} nodes
+     * @returns {Array<{id: string, source: string, target: string, type: string, properties: {}}>}
+     */
+    function componentLines(nodes) {
+      const byGuid = new Map();
+      for (const n of nodes) {
+        const guid = n.properties && n.properties.GlobalId;
+        if (guid === undefined || guid === null || guid === '') continue;
+        const key = String(guid);
+        if (!byGuid.has(key)) byGuid.set(key, []);
+        byGuid.get(key).push(n);
+      }
+      const out = [];
+      if (!byGuid.size) return out;
+      for (const c of nodes) {
+        const p = c.properties || {};
+        const labels = Array.isArray(p.etiketter) ? p.etiketter : [c.label];
+        if (!labels.includes('Component') || !p.ifc_guid) continue;
+        for (const e of byGuid.get(String(p.ifc_guid)) || []) if (e !== c) out.push({ id: `${COMPONENT_LINE}:${c.id}:${e.id}`, source: String(c.id), target: String(e.id), type: COMPONENT_LINE, properties: {} });
+      }
+      return out;
+    }
     /** The limit a query ends with, if any. @param {string} text @returns {number|null} */
     function limitOf(text) {
       const m = /\bLIMIT\s+(\d+)\s*;?\s*$/i.exec(String(text));
       return m ? Number(m[1]) : null;
     }
 
-    return { classOf, nameOf, familyOf, colorKey, redact, readable, isProtected, quote, GEOMETRY_LABELS, GEOMETRY_FORMS, notGeometry, isGeometry, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, limitOf };
+    return { classOf, nameOf, familyOf, colorKey, redact, readable, isProtected, quote, GEOMETRY_LABELS, GEOMETRY_FORMS, notGeometry, isGeometry, MODELS, modelsOf, pickModel, VIEWS, viewOf, stepFrom, element, CONNECTING, COMPONENT_LINE, componentLines, limitOf };
   });
 })();

@@ -53,14 +53,17 @@
         s.busy = false; renderButtons();
         await renderResult();
       }
-      /** `RETURN c, w` names no relationships, but the picture is about how the two hang together. Failing here costs only the lines. */
+      /**
+       * `RETURN c, w` names no relationships, but the picture is about how the two hang together. The app's own lines between
+       * components and entities do not count as the server's. Failing here costs only the lines.
+       */
       async function joinNodes(out) {
-        if (!out.graph || out.graph.edges.length || out.graph.nodes.length < 2 || out.graph.nodes.length > MAX_JOINED) return;
+        if (!out.graph || out.graph.edges.some((e) => e.type !== ifcGraph.COMPONENT_LINE) || out.graph.nodes.length < 2 || out.graph.nodes.length > MAX_JOINED) return;
         const ids = out.graph.nodes.map((n) => n.id);
         const known = new Set(ids);
         try {
           const more = await api.run(ifcGraph.CONNECTING, { maxRows: 2000, params: { ids } });
-          if (more.graph) out.graph = graph.normalise({ nodes: out.graph.nodes, edges: more.graph.edges.filter((e) => known.has(e.source) && known.has(e.target)), directed: true });
+          if (more.graph) out.graph = graph.normalise({ nodes: out.graph.nodes, edges: out.graph.edges.concat(more.graph.edges.filter((e) => known.has(e.source) && known.has(e.target))), directed: true });
         } catch (err) { D.log('graph-workbench', 'join', err); }
       }
       /** The editor's query. */

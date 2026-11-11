@@ -7,7 +7,7 @@
  * tools named are collected so that the answer can be marked in the model. With a change set (ai/write-tools) the loop is in change
  * mode: the write tools fill the set, which the person previews and approves in the model view; the loop itself still changes nothing.
  * In change mode the agent may also preview its own set (preview_changeset) when the app's Python already runs, and mend what the
- * wheel finds in the schema or the model's relationships before the person sees it, at most MAX_PREVIEWS times (Martin's F3 a).
+ * wheel finds in the schema or the model's relationships before the person sees it, at most MAX_PREVIEWS times (decision F3 a).
  */
 (function () {
   'use strict';

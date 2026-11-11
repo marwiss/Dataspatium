@@ -514,8 +514,12 @@ body.dm-presenting { overflow: hidden; }
 
 /* Flows and watches (ui/flows/flows-view) and their place in the status bar */
 .dm-flow-add { align-items: flex-end; }
+.dm-flow-add-in { align-items: flex-end; }
+.dm-flow-branch { border-inline-start: 1px solid var(--dm-border-strong); padding-inline-start: var(--dm-s-3); margin-inline-start: var(--dm-s-1); }
+.dm-flow-branch-title { font-weight: var(--dm-weight-semibold); color: var(--dm-text-muted); margin: 0; }
 .dm-flow-log { list-style: none; padding: 0; margin: 0; font-size: var(--dm-text-sm); }
-.dm-sb-flow, .dm-sb-watch, .dm-sb-comments, .dm-sb-selection { color: var(--dm-accent); }
+.dm-sb-flow, .dm-sb-watch, .dm-sb-comments, .dm-sb-selection, .dm-sb-remote { color: var(--dm-accent); }
+.dm-sb-remote-off { color: var(--dm-text-muted); }
 
 /* The Statistik tab (ui/analysis/stats-panel) */
 .dm-stats-code { height: 180px; }

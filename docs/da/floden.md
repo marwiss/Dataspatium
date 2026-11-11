@@ -18,13 +18,45 @@ Tryk på *Nyt flow*, giv det et navn, og tilføj trin. Trinnene køres oppefra o
 | Eksportér et dashboard | Skriver dashboardet som en selvstændig HTML-fil |
 | Opret et dokument | Fylder en dokumentskabelon; med en grupperingskolonne ét dokument pr. værdi |
 | Eksportér et datasæt | Skriver datasættet som en fil |
+| Kør en kommando | Kører en af appens kommandoer med argumenter som JSON; svaret er kommandoens data |
 
 Et diagram eller dokument, der bygger på et datasæt, tegnes med de data, der findes, når trinnet køres, så læg dem efter de
 trin, der henter og bearbejder.
 
+## Betingelser, løkker og spørgsmål
+
+Et flow kan vælge vej efter det, tidligere trin gav. Giv et trin et *Navn på svaret*, så når senere trin svaret som
+`{{navn.felt}}` i argumenter, spørgsmål og meddelelser og som `navn.felt` i betingelser. *Kør en kommando* kører en af de
+kommandoer, som AI'en i appen også bruger, med argumenterne som JSON. Hedder trinnet `antal` og kører `run_sql` med
+`{"dataset": "Befolkning", "sql": "select count(*) from data"}`, er antallet `antal.rows[0][0]`.
+
+Kommandoerne, der kun læser, er `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Dem, der ændrer noget eller laver filer, er `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` kører kun én
+sætning, der læser.
+
+| Trin | Sådan virker det |
+|---|---|
+| Hvis en betingelse holder | Kører trinnene under *Så*, hvis betingelsen holder, ellers trinnene under *Ellers* |
+| For hver værdi i en liste | Kører trinnene én gang for hver værdi i et tidligere svar, for eksempel `kommuner.rows`; værdien nås som `{{item}}`, og et tal n giver omgangene 1 til n |
+| Gentag, indtil en betingelse holder | Kører trinnene og prøver betingelsen efter hver omgang, med en pause mellem omgangene; omgangen nås som `{{round}}` |
+| Spørg mig | Viser et spørgsmål med svarmuligheder, én pr. linje, og venter på svaret, som nås som `{{navn.answer}}` |
+| Afslut flowet | Afslutter flowet med en meddelelse i loggen; det tæller ikke som en fejl |
+
+En betingelse skrives med sammenligningerne `=`, `!=`, `<`, `<=`, `>`, `>=` og `contains`, ordene `and`, `or` og `not`, parenteser,
+tal, tekst i anførselstegn og henvisninger til svar, for eksempel `antal.rows[0][0] > 0 and navn = 'Ale'`. Appen læser selv
+betingelsen og kører den aldrig som kode. Et svar, der mangler, regnes som tomt, og en betingelse, der ikke kan læses, vises
+straks i redigeringen.
+
+Begge løkker har en grænse, *Højst antal omgange* (standard 100, højst 1.000) og *Højst antal sekunder*, og den grænse, der nås
+først, gælder. Løkkens svar siger, hvor mange omgange den gik (`rounds`), og hvorfor den sluttede (`reason`: `done`, `until`,
+`rounds` eller `time`), så en senere betingelse kan vælge efter det.
+
+*Stop*, i flowvisningen og i statuslinjen, stopper flowet før næste trin og efter hver omgang, og en igangværende pause afbrydes
+straks. Et trin, der allerede er begyndt, køres færdigt. Loggen siger, hvor flowet blev stoppet, for eksempel *Stoppet af dig i
+omgang 37 af 250*, og det, der nåede at blive gjort, kan fortrydes som sædvanligt.
+
 ## Kør et flow
 
-*Kør* starter flowet. Statuslinjen viser, hvilket trin der køres, og loggen får én linje pr. trin. *Afbryd* stopper flowet før
+*Kør* starter flowet. Statuslinjen viser, hvilket trin der køres, og loggen får én linje pr. trin. *Stop* stopper flowet før
 næste trin. Et flow stopper ved første fejl, medmindre du har slået *Fortsæt med næste trin efter en fejl* til. Kørslen tæller
 så stadig som mislykket. Inspektøren viser den seneste kørsel trin for trin med fejlen, hvor den opstod.
 
@@ -40,6 +72,7 @@ Med *Kør når appen starter* køres flowet kort efter, at appen er åbnet. Det 
 - Trin, der henter fra nettet, kræver, at samtykket allerede er givet.
 - Trin, der læser gennem databasebroen, køres ikke ved start, da broen forbindes manuelt.
 - Python-scripts kræver, at Python allerede er hentet.
+- Et flow, der spørger dig (*Spørg mig*), køres aldrig ved start.
 
 Ellers springes flowet over, og loggen siger hvorfor. Intet køres, mens appen er lukket.
 
@@ -69,5 +102,6 @@ arbejdsområde. Et flow fra en sikkerhedskopi starter aldrig af sig selv, før d
 
 - Kontrollen henter hele svaret fra kilden. Store kilder tager lige så lang tid som en almindelig hentning.
 - Kun ét flow køres ad gangen.
-- Et trin kan ikke bruge resultatet af et andet ud over det, der havner i datasættene.
+- Kun trin med et navn giver svar, som senere trin kan læse: en kommando giver sine data, en løkke `rounds` og `reason`, et
+  spørgsmål `answer`, og andre trin deres meddelelse og filer.
 - Opdatering af flere datasæt i ét trin afbrydes ikke midt i en hentning.

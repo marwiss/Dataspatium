@@ -237,6 +237,6 @@
     /** Tests replace the network with a function (url, init) => Response-like {ok, status, json()}. */
     function setTransport(fn) { transport = fn || null; infoCache = null; }
 
-    return { ID, TYPES, BridgeError, relayEnabled, setRelay, canRelay, relay, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
+    return { ID, TYPES, BridgeError, call, relayEnabled, setRelay, canRelay, relay, connect, disconnect, persist, rememberedUrl, remembered, remember, forget, isConnected, connection, info, sources, tables, columns, rows, query, importTable, refetch, toTable, sanitize, sourceLabel, setCurrent, getCurrent, subscribe, setTransport };
   });
 })();

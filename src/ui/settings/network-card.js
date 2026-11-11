@@ -46,12 +46,27 @@
         await bridge.setRelay(!!relay.checked);
         shell.log(t(relay.checked ? 'bridge.relay.on' : 'bridge.relay.off'), 'ok');
       });
+      // Styrning utifrån (F30 a): programs on the computer run the app's commands through the bridge; off at every start.
+      const remote = D.require('api/remote');
+      const rs = remote.status();
+      const remoteSw = /** @type {any} */ (h('dm-switch', { label: t('remote.switch'), title: t('remote.switch.hint'), 'data-remote': '' }));
+      remoteSw.checked = rs.on;
+      remoteSw.addEventListener('change', async () => {
+        const before = remote.status().on;
+        const on = await remote.setOn(!!remoteSw.checked);
+        remoteSw.checked = on;
+        if (on !== before) shell.log(t(on ? 'remote.on' : 'remote.off'), 'ok');
+        rerender();
+      });
+      const remoteText = (s) => (!s.on ? t('remote.state.off') : s.connected ? t('remote.state.connected', { n: i18n.formatNumber(s.count) }) : s.reason === 'bridge' ? t('remote.state.bridge') : s.reason === 'flag' ? t('remote.state.flag') : s.reason === 'error' ? t('remote.state.error', { error: s.error }) : t('remote.state.waiting'));
+      const remoteState = h('p', { class: 'dm-help dm-small', 'data-remote-state': !rs.on ? 'off' : rs.connected ? 'connected' : rs.reason || 'waiting', text: remoteText(rs) });
       return h('div', { class: 'dm-card dm-stack', 'data-settings': 'network' },
         h('h3', null, ui.icon('wifi', 18), ' ', t('consent.settings.title')),
         h('p', { class: 'dm-help', text: t('consent.settings.hint') }),
         consent.override() ? h('p', { class: 'dm-warn dm-small', text: t('consent.override') }) : null,
         h('div', { class: 'dm-form-grid' }, rows),
         h('div', { class: 'dm-stack-sm' }, relay, h('p', { class: 'dm-help dm-small', text: t('bridge.relay.help') })),
+        h('div', { class: 'dm-stack-sm' }, remoteSw, remoteState, h('p', { class: 'dm-help dm-small', text: t('remote.help') })),
         h('div', { class: 'dm-row' }, h('h4', { class: 'dm-grow', text: t('consent.log.title') }), ui.button({ label: t('consent.log.refresh'), icon: 'refresh-cw', size: 'sm', variant: 'ghost', onClick: fillLog })),
         logEl);
     }

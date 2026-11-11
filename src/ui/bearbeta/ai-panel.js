@@ -185,7 +185,9 @@
             const report = await opencde.proposalTrial(connector, proposalUrl, { onStatus: (state) => { if (s.proposed === mine) { mine.trial = { state }; render(); } } });
             if (s.proposed !== mine) return;
             const state = report && ['queued', 'running', 'clean', 'issues', 'failed'].includes(report.state) ? report.state : 'failed';
-            mine.trial = { state, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [] };
+            mine.trial = { state, applied: Number(report && report.applied) || 0, count: Number(report && report.change_count) || 0, issues: Number(report && report.issue_count) || 0, errors: Number(report && report.error_count) || 0, error: (report && report.error) || '', list: Array.isArray(report && report.issues) ? report.issues : [],
+              // Dataregium 3.0.0: the teams whose part the change set touches; one team's part is approved by its responsible.
+              teams: Array.isArray(report && report.teams) ? report.teams.map((x) => ({ id: String(x.team_id || ''), name: String(x.name || x.team_id || '') })) : [], teamsError: String((report && report.teams_error) || '') };
             log(trialText(mine.trial), state === 'clean' ? 'ok' : 'warn');
           } catch (err) { if (s.proposed === mine) mine.trial = { state: 'failed', error: String((err && err.message) || err), list: [] }; }
           render();
@@ -210,6 +212,8 @@
             }
           } catch (err) {
             fail(err);
+            // A change that touches one team's part is the team's responsible's to approve, not a manager's (403).
+            if (s.proposed === mine && err && err.status === 403) s.error = t('ai.change.approve.server.team', { detail: String((err && (err.detail || err.message)) || '') });
             if (s.proposed === mine && err && err.status === 412 && Array.isArray(err.conflicts)) {
               // The document moved on and the changes collide with what came between: the keys, or everything after a whole file.
               mine.conflicts = err.conflicts;
@@ -345,6 +349,8 @@
               s.cde && proposal ? h('p', { class: 'dm-help dm-xs', 'data-ai-proposal': String(proposal.changes.length), text: proposalText(proposal) }) : null,
               s.proposed ? h('p', { class: 'dm-small', 'data-ai-proposed': s.proposed.guid, text: t('ai.change.proposed', { title: s.proposed.title }) }) : null,
               s.proposed && s.proposed.trial ? h('p', { class: s.proposed.trial.state === 'issues' || s.proposed.trial.state === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-trial': s.proposed.trial.state, text: trialText(s.proposed.trial) }) : null,
+              s.proposed && s.proposed.trial && (s.proposed.trial.teams || []).length ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams': String(s.proposed.trial.teams.length), text: t(s.proposed.trial.teams.length === 1 ? 'ai.change.trial.team' : 'ai.change.trial.teams', { names: s.proposed.trial.teams.map((x) => x.name).join(', ') }) }) : null,
+              s.proposed && s.proposed.trial && s.proposed.trial.teamsError ? h('p', { class: 'dm-help dm-xs', 'data-ai-trial-teams-error': '', text: t('ai.change.trial.teams.error', { error: s.proposed.trial.teamsError }) }) : null,
               s.proposed && s.proposed.trial && (s.proposed.trial.list || []).length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-trial-issues': '' }, s.proposed.trial.list.slice(0, 10).map((f) => h('li', { class: 'dm-xs', text: `${f.kind || ''}${f.rule ? ' ' + f.rule : ''}${f.step_id ? ' #' + f.step_id : ''}: ${f.message || ''}` }))) : null,
               s.proposed && s.proposed.trial && s.proposed.trial.state === 'clean' && s.proposed.approveUrl && !s.proposed.approved ? h('div', { class: 'dm-row-wrap' }, basic.button({ label: t('ai.change.approve.server'), icon: 'circle-check', size: 'sm', loading: s.approvingServer, disabled: s.busy, title: t('ai.change.approve.server.hint'), 'data-ai-approve-server': '', onClick: () => approveOnServer() })) : null,
               s.proposed && s.proposed.approved ? h('p', { class: 'dm-small', 'data-ai-approved-server': String(s.proposed.approved.index), text: t('ai.change.approved.server', { n: s.proposed.approved.number }) }) : null,

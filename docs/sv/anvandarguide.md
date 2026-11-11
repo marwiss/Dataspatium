@@ -208,6 +208,26 @@ Allt som ska till andra människor finns i läget *Dela* (se [dela.md](dela.md))
 - API-konfigurationer (`.api.json`), diagram och dokumentmallar (JSON) och recept (JSON, R eller SQL) exporteras
   och läses in som filer. Nycklar följer aldrig med.
 
+## AI-assistenten
+
+*AI-assistent* i statusraden, eller *AI-assistent* i kommandopaletten (Ctrl+K), öppnar en panel där en AI gör uppgifter åt dig
+med appens kommandon, i alla lägen. Den använder den AI-leverantör du har lagt till under *Leverantörer*, en molntjänst med din
+nyckel eller en lokal modell, och nås först när du har gett samtycke för leverantörens värd.
+
+Skriv vad du vill få gjort och tryck på *Skicka* (eller Ctrl+Enter). AI:n läser först, till exempel vilka datamängder och
+kolumner som finns, och väljer nästa steg efter vad den får veta. Stegen visas i panelen medan de körs.
+
+- Allt som ändrar något, som en åtgärd i Bearbeta, en export eller ett R- eller Python-skript, visas först i en egen dialog med
+  kommandot och dess argument. Det körs bara om du trycker på *Godkänn*, och det kan ångras efteråt.
+- När vägen beror på vad du vill frågar AI:n dig i panelen med några svar att välja mellan. Ett svar på en fråga godkänner
+  aldrig något.
+- För en uppgift som ska göras igen kan AI:n föreslå ett helt flöde, som du sparar med *Spara som flöde*. Efter en uppgift kan
+  du också spara de godkända stegen som ett flöde. Båda körs sedan utan AI under *Flöden och bevakningar*.
+- AI:n svarar på appens språk. *Stoppa* avbryter före nästa steg, och *Nytt samtal* börjar om.
+
+Det AI:n läser i datamängderna räknas som data, aldrig som instruktioner. Det som skickas till en molntjänst lämnar datorn, så
+välj en lokal modell för känsliga uppgifter.
+
 ## Hjälp i appen
 
 Hela handboken finns i appen: knappen **?** uppe till höger, tangenten **F1** eller kommandot *Hjälp* i

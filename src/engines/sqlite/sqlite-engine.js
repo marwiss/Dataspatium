@@ -87,8 +87,11 @@
       mounted() { return this.call('mounted'); }
       /** Make the short names usable in the current connection (views on data and on mounted datasets). */
       attach(names, self) { return this.call('attach', { names, self }); }
-      /** exec() with the short names attached first. */
-      query(sql, params, names, self) { return this.call('query', { sql, params, names, self }); }
+      /**
+       * exec() with the short names attached first. With `readOnly` the worker runs one statement that reads (SELECT, WITH, VALUES)
+       * with the database locked against writes (PRAGMA query_only), and refuses anything else.
+       */
+      query(sql, params, names, self, readOnly) { return this.call('query', { sql, params, names, self, readOnly: !!readOnly }); }
       /** @returns {Promise<ArrayBuffer>} the database file */
       export() { return this.call('export'); }
       /** @returns {Promise<string>} */

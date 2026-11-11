@@ -145,7 +145,7 @@ Det finnes to veier til grafen, og begge gir samme visning:
 | Bygningsdeler og typer | Bygningsdelene og typene deres |
 | Bygningsdeler og materialer | Bygningsdelene og materialene deres |
 | Egenskaper og mengder | Bygningsdelenes egenskapssett og mengder |
-| Saker og bygningsdeler | BCF-saker, viewpointene og komponentene deres, og bygningsdelene de peker på |
+| Saker og bygningsdeler | BCF-saker, viewpointene og komponentene deres, og bygningsdelene de peker på; komponenten og bygningsdelen har samme GUID, og linjen `IFC_GUID` mellom dem tegner appen selv |
 | Hele modellen | Opptil 1 000 relasjoner i modellen |
 | Antall per klasse | En tabell med antall entiteter per klasse |
 | Geometri per klasse | En tabell med antall geometrinoder per klasse: representasjoner, solider, profiler, plasseringer, stiler og lag |

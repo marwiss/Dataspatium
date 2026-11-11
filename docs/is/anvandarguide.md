@@ -195,6 +195,27 @@ Allt sem á að fara til annars fólks er í hamnum *Deila* (sjá [dela.md](dela
 - API-uppsetningar (`.api.json`), myndrit og skjalasnið (JSON) og uppskriftir (JSON, R eða SQL) eru fluttar út og hlaðnar inn
   sem skrár. Lyklar fylgja aldrei með.
 
+## Gervigreindaraðstoðin
+
+*Gervigreindaraðstoð* á stöðustikunni, eða *Gervigreindaraðstoð* í skipanaspjaldinu (Ctrl+K), opnar spjald þar sem gervigreind
+vinnur verk fyrir þig með skipunum forritsins, í öllum hömum. Hún notar gervigreindarþjónustuna sem þú hefur bætt við undir
+*Þjónustur*, skýjaþjónustu með lyklinum þínum eða staðbundið líkan, og er aðeins höfð samband við hana eftir að þú hefur
+samþykkt hýsil þjónustunnar.
+
+Skrifaðu hvað þú vilt fá gert og ýttu á *Senda* (eða Ctrl+Enter). Gervigreindin les fyrst, til dæmis hvaða gagnasöfn og dálkar
+eru til, og velur næsta skref eftir því sem hún fær að vita. Skrefin birtast á spjaldinu meðan þau eru keyrð.
+
+- Allt sem breytir einhverju, eins og aðgerð í Vinna, útflutningur eða R- eða Python-skrifta, birtist fyrst í eigin glugga með
+  skipuninni og viðföngum hennar. Það er aðeins keyrt ef þú ýtir á *Samþykkja*, og það má afturkalla á eftir.
+- Þegar leiðin veltur á því hvað þú vilt, spyr gervigreindin þig á spjaldinu og býður nokkur svör til að velja á milli. Svar við
+  spurningu samþykkir aldrei neitt.
+- Fyrir verk sem á að endurtaka getur gervigreindin lagt til heilt flæði, sem þú vistar með *Vista sem flæði*. Eftir verk getur
+  þú líka vistað samþykktu skrefin sem flæði. Hvort tveggja er síðan keyrt án gervigreindar undir *Flæði og vöktun*.
+- Gervigreindin svarar á tungumáli forritsins. *Stöðva* hættir fyrir næsta skref og *Nýtt samtal* byrjar upp á nýtt.
+
+Það sem gervigreindin les í gagnasöfnunum telst gögn, aldrei fyrirmæli. Það sem er sent til skýjaþjónustu fer af tölvunni, svo
+veldu staðbundið líkan fyrir viðkvæm verk.
+
 ## Hjálp í forritinu
 
 Öll handbókin er í forritinu: hnappurinn **?** efst til hægri, lykillinn **F1** eða skipunin *Hjálp* í

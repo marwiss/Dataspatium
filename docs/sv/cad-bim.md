@@ -170,6 +170,9 @@ Kortet **Validera modellen** i Hantera samlar kontrollerna av en IFC-modell, med
 - **Projektets IDS-filer**: kontrollerar servern också filen mot projektets IDS-dokument (den senaste versionen av varje dokument vars
   namn slutar på `.ids`), visar rapporten hur många specifikationer som godkändes, inte godkändes eller inte gällde filen, och vilka som
   inte godkändes, med dokumentets namn och antal fynd. Ett IDS-dokument som inte kunde läsas står bland reglerna som inte kunde köras.
+- **Det som inget GlobalId når**: hittar serverns kontroll graph instanser som inget med ett GlobalId når, visar rapporten knappen
+  *Ta bort det som inget GlobalId når*. Servern föreslår då, efter din bekräftelse, ett ändringsset som tar bort dem; förslaget
+  blir ett ärende som prövas och godkänns som andra, och versionen behåller allt.
 - **Kontroller här** visar den senaste *Validering*, *IDS-kontroll* och kollisionskontroll som körts i appen, och knapparna öppnar
   dem i Analysera. Resultaten sparas i appens inställningar, inte i datamängden.
 
@@ -184,6 +187,10 @@ arbetar på samma trianglar som 3D-vyn visar, i en egen tråd, och behöver vark
 
 - **Mängd A och mängd B** är alla byggdelar eller en typ, till exempel kanaler mot balkar. B kan ligga i samma modell eller i en annan
   modell i samma projekt, och modellerna måste då dela koordinatsystem. Öppningar räknas inte.
+- **På servern**: för en modell från Dataregium (från 3.0.0, när servern har kollisionskontrollen påslagen) väljer *Var* om appen
+  räknar själv eller om servern gör samma kontroll av versionerna. Servern arbetar i en kö; appen väntar och visar rapporten som
+  sin egen, med samma tabell, markering och BCF-fil, och *Skicka som ärenden* låter servern göra ärendena med en viewpoint var.
+  Den andra modellen ska då vara en version i samma projekt.
 - **Skärning** räknar par där det ena elementet når in i det andra djupare än toleransen (2 mm om inget annat anges). Djupet mäts som
   hur långt in i det andra elementet hörn och kanter når, så ytor som bara möts räknas inte. *Inneslutning* är ett element som ligger
   helt inne i ett annat.
@@ -291,6 +298,11 @@ nyare versioner sedan basen prövar servern förslaget om mot den senaste i samm
 krockar ändringarna med det som kommit emellan vägrar servern (412) och panelen listar de krockande nycklarna (instans och attribut),
 eller säger att allt kan ha ändrats när en hel fil laddats upp emellan. Hämta då den nyaste versionen, gör om ändringarna och föreslå
 igen.
+
+Har projektet team (kortet *Projektets medlemmar* i Hantera) visar panelen vilka team ändringen rör. Rör den bara ett teams del
+godkänner teamets ansvarige, även med rollen redaktör, och servern nekar (403) en projektansvarig; rör den flera teams delar, eller
+ingen, godkänner en projektansvarig som förut. När ett IDS-dokument får en ny version kontrollerar servern om projektets senaste
+IFC-versioner, och deras rapporter står som väntande under tiden.
 
 Anger servern värdena per krock visar panelen för varje krock värdet i basen, det som kom emellan och ditt förslag, och du väljer
 per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå igen med mina val* skickar förslaget mot den senaste

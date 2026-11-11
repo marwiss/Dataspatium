@@ -290,7 +290,7 @@
   test('ai change: a previewed change set goes to Dataregium as a change proposal, a BCF topic with the snippet in the server\'s form', async (assert) => {
     const CDE = 'dataspatium-asset://tests/ai-change-cde3';
     const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
-    const hits = []; const bodies = {}; let trials = 0; let cleanTrial = false; let approveAnswer = 'ok';
+    const hits = []; const bodies = {}; let trials = 0; let cleanTrial = false; let approveAnswer = 'ok'; let trialTeams = null;
     // The virtual server sees only addresses; the bodies are read off fetch itself.
     const realFetch = globalThis.fetch;
     globalThis.fetch = (url, init) => { const u = String(url); if (u.startsWith(CDE) && init && init.body !== undefined) bodies[u.slice(CDE.length).split('?')[0]] = { method: init.method, body: String(init.body), headers: init.headers || {} }; return realFetch(url, init); };
@@ -307,8 +307,9 @@
       if (path === '/bcf/3.0/projects/p-1/topics') return Promise.resolve(json({ guid: 't-1', title: 'x' }, 201));
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/snippet') return Promise.resolve({ kind: 'text', data: '' });
       if (path === '/documents/1.0/document-versions') return Promise.resolve(json({ versions: [{ document_id: 'doc-1', version_index: 2, version_number: '2' }, { document_id: 'doc-1', version_index: 4, version_number: '4' }] }));
-      if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal') { trials++; return Promise.resolve(json(trials < 2 ? { state: 'queued', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2 } : cleanTrial ? { state: 'clean', base: { document_id: 'doc-1', version_index: 2 }, change_count: 1, applied: 1, issue_count: 0, error_count: 0, issues: [] } : { state: 'issues', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2, applied: 1, issue_count: 1, error_count: 1, issues: [{ kind: 'proposal', severity: 'error', message: 'change 1: RelatedElements has no member #99' }] })); }
+      if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal') { trials++; return Promise.resolve(json(trials < 2 ? { state: 'queued', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2 } : cleanTrial ? { state: 'clean', teams: trialTeams || [], base: { document_id: 'doc-1', version_index: 2 }, change_count: 1, applied: 1, issue_count: 0, error_count: 0, issues: [] } : { state: 'issues', base: { document_id: 'doc-1', version_index: 2 }, change_count: 2, applied: 1, issue_count: 1, error_count: 1, issues: [{ kind: 'proposal', severity: 'error', message: 'change 1: RelatedElements has no member #99' }] })); }
       if (path === '/bcf/3.0/projects/p-1/topics/t-1/ifc-proposal/approve') {
+        if (approveAnswer === 'team') return Promise.resolve(json({ message: 'Only the responsible of the team Stomme approves a change that touches only its part', code: 'forbidden' }, 403));
         if (approveAnswer === 'conflict') return Promise.resolve(json({ message: 'The document has 2 newer versions and 1 of its changes collide with what came between', code: 'version_conflict', conflicts: ['#170.NominalValue'] }, 412));
         if (approveAnswer === 'stale') { cleanTrial = false; trials = 0; return Promise.resolve(json({ message: 'On version 4 the trial is issues; see the trial' }, 409)); }
         if (approveAnswer === 'details') return Promise.resolve(json({ message: 'The document has 2 newer versions and 1 of its changes collide with what came between', code: 'version_conflict', conflicts: ['#170.NominalValue'], conflict_details: [{ key: '#170.NominalValue', step_id: 170, attribute: 'NominalValue', op: 'set', base: { type: 'IfcLabel', value: 'EI60' }, theirs: { type: 'IfcLabel', value: 'EI120' }, ours: { type: 'IfcLabel', value: 'EI90' }, version_index: 4 }] }, 412));
@@ -379,8 +380,10 @@
       assert.ok(approved && approved.getAttribute('data-ai-approved-server') === '3' && approved.textContent.includes('3'), 'the new version shown: ' + (approved && approved.textContent));
       assert.ok(!panel.el.querySelector('[data-ai-approve-server]'), 'approved once');
       // A stale base: the changes collide with what came between (412 with the keys), told with the keys under the topic.
-      for (const answer of ['conflict', 'stale', 'details']) {
+      for (const answer of ['team', 'conflict', 'stale', 'details']) {
         approveAnswer = answer; cleanTrial = true; trials = 0;
+        // Dataregium 3.0.0: a change that touches one team's part is its responsible's to approve, and the trial names the team.
+        trialTeams = answer === 'team' ? [{ team_id: 'team-1', name: 'Stomme' }] : null;
         await panel.reject();
         world.calls = 0;
         await panel.ask('Sätt brandklass EI90 på väggen');
@@ -404,6 +407,12 @@
           approveAnswer = 'ok';
           await panel.approveOnServer({ confirmed: true });
           assert.ok(panel.el.querySelector('[data-ai-approved-server]'), 'approved after the choice');
+        } else if (answer === 'team') {
+          const teams = panel.el.querySelector('[data-ai-trial-teams]');
+          assert.ok(teams && teams.getAttribute('data-ai-trial-teams') === '1' && teams.textContent.includes('Stomme'), 'the team the change touches: ' + (teams && teams.textContent));
+          const tail = t('ai.change.approve.server.team', { detail: '' }); const rule = tail.slice(tail.indexOf(':') + 1).trim();
+          assert.ok(panel.state.error.includes('Stomme') && panel.state.error.endsWith(rule), 'the server\'s words and the rule: ' + panel.state.error);
+          assert.ok(!panel.el.querySelector('[data-ai-approved-server]'), 'not approved');
         } else if (answer === 'conflict') {
           assert.ok(panel.state.error.includes('#170.NominalValue') && panel.state.error === t('ai.change.approve.server.conflict', { k: '1', keys: '#170.NominalValue' }), 'the colliding keys in the person\'s words: ' + panel.state.error);
           const list = panel.el.querySelector('[data-ai-approve-conflicts]');

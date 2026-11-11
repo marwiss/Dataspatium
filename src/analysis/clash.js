@@ -160,6 +160,24 @@
     function summaryOf(result) {
       return { mode: result.spec.mode, count: (result.clashes || []).length, pairs: result.pairs, setA: result.setA, setB: result.setB, missing: result.missing || 0, seconds: result.seconds, tolerance: result.spec.tolerance, clearance: result.spec.clearance };
     }
-    return { KINDS, MODES, LEFT_OUT, COLUMNS, idsOf, infoOf, run, tableOf, whereOf, viewpointOf, topicText, bcfFile, summaryOf };
+    /**
+     * The server's clash report (Dataregium's ifc_clash) in the form of a check run here, so that the same table, marking, BCF
+     * file and topics work: each element goes to the dataset of its document version, and `index` keeps its place in the report.
+     * @param {any} report @param {Array<{datasetId: string, documentId: string, versionIndex: number}>} models
+     */
+    function fromServer(report, models) {
+      const which = (e) => (models.find((m) => m.documentId === e.document_id && Number(m.versionIndex) === Number(e.version_index)) || models[0]).datasetId;
+      const side = (e) => ({ id: Number(e.id), guid: e.guid || '', typ: e.type || '', namn: e.name || '', vaning: e.storey || '', datasetId: which(e) });
+      const req = report.request || {};
+      const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+      return {
+        spec: { a: { datasetId: models[0].datasetId, types: (req.a && req.a.types) || null }, b: { datasetId: (models[1] || models[0]).datasetId, types: (req.b && req.b.types) || null }, mode: req.mode || 'intersection', tolerance: req.tolerance, clearance: req.clearance },
+        seconds: n(report.seconds), pairs: null, setA: n(report.set_a), setB: n(report.set_b), missing: n(report.missing), truncated: !!report.truncated,
+        server: { id: report.id },
+        clashes: (report.clashes || []).map((c, index) => ({ a: side(c.a), b: side(c.b), kind: c.kind, depth: c.depth === undefined ? null : c.depth, distance: c.distance === undefined ? null : c.distance, point: c.point, extent: c.extent === undefined ? null : c.extent, index })),
+      };
+    }
+
+    return { KINDS, MODES, LEFT_OUT, COLUMNS, idsOf, infoOf, run, tableOf, whereOf, viewpointOf, topicText, bcfFile, summaryOf, fromServer };
   });
 })();

@@ -68,6 +68,33 @@ hana og skilar svarinu. Brúin sækir aðeins yfir https og aðeins frá hýslun
 neinum við. Hún hafnar vistföngum á þessari tölvu eða staðarnetinu, sendir aðeins fáa hausa og engar vafrakökur, fylgir í
 mesta lagi þremur tilvísunum til leyfðra hýsla og stöðvast við `--max-fetch-mb` (50 MB sjálfgefið). Skrá brúarinnar sýnir
 hýsilinn og slóðina, aldrei fyrirspurnina, hausana eða meginmálið. Samþykkið fyrir tilganginn gildir eins og áður.
+Tvær forstillingar nást aðeins svona: *Vextir og gengi Riksbanken (SWEA)* og *Alþjóðabankinn: vísar*. Listinn yfir
+uppsprettur merkir þær *Krefst brúarinnar*; ræstu brúna með `--allow-host api.riksbank.se --allow-host api.worldbank.org` til
+að sækja frá þeim.
+
+### Stýra forritinu utan frá
+
+Forrit á tölvunni geta keyrt skipanir forritsins um brúna: sömu skipanir sem flæðin og gervigreindaraðstoðin nota (lesa gagnasöfn,
+aðgerðir í Vinna, útflutning, R, Python, flæði). Það er slökkt við hverja ræsingu og krefst tveggja skrefa: ræsa brúna með
+`--allow-commands` (`-AllowCommands`) og kveikja á **Leyfa forritum á tölvunni að stýra forritinu um brúna** undir *Netaðgangur* í
+Sýsla, þar sem þú staðfestir einu sinni fyrir setuna. Skipanir sem aðeins lesa eru keyrðar strax; allt sem breytir einhverju er sýnt í
+glugga með skipuninni og viðföngum hennar og aðeins keyrt ef þú samþykkir það. Stöðustikan sýnir skjáhermistákn meðan stýringin er á.
+
+Skipanalínan `tools/dataspatium.py` (Python 3, staðalbókasafnið) notar vistfang og tákn brúarinnar (`--bridge` og `--token`, eða
+`DATASPATIUM_BRIDGE` og `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Mannfjöldi", "limit": 5}'
+python tools/dataspatium.py plan manadarskyrsla.json
+python tools/dataspatium.py mcp
+```
+
+`list` sýnir skipanirnar með færibreytum sínum, `run` keyrir eina og skrifar svarið sem JSON, `plan` keyrir flæðisskrá (sama snið sem
+*Flytja út* undir Flæði gefur) sem áætlun sem þú samþykkir einu sinni, og `mcp` gerir skipanirnar að tólum fyrir gervigreindarforrit
+á tölvunni um Model Context Protocol (yfir staðalstraumana). Brúin heldur biðröðinni í minni, og skipun bíður eftir forritinu þar til
+þú hefur samþykkt hana eða fimm mínútur eru liðnar. `python tools/check_bridge.py` prófar biðröðina, skipanalínuna og MCP án vafra.
+
 ### Öryggi
 
 - Brúin svarar aðeins á 127.0.0.1, krefst tákns í hverju kalli og leyfir CORS aðeins fyrir eigin vistföng forritsins.
@@ -153,6 +180,12 @@ Spjaldið *Meðlimir verkefnisins* birtist þegar þjónninn hefur verkefnastjó
 meðlimi þeirra með hlutverkum: lesandi, þátttakandi, ritstjóri eða ábyrgðarmaður. Þú bætir við manneskju með nákvæmu notandanafni
 hennar á þjóninum, breytir hlutverki, fjarlægir meðlim og endurnefnir verkefnið; hver breyting er staðfest fyrst. Þjónninn leyfir ekki
 að verkefnið sé án ábyrgðarmanns og segir frá því; verkefnum er ekki eytt héðan, og stjórnandi stofnar nýja aðganga.
+
+Hafi verkefnið teymi sýnir spjaldið þau líka: nafn, ábyrgðarmann, meðlimi og IDS-skjalið sem forskriftir þess afmarka hluta teymisins
+af líkaninu. Þú bætir við teymi með nafni, ábyrgðarmanni (ritstjóra eða verkefnisstjóra), notendanöfnum meðlimanna og IDS-skjalinu,
+sem er valið meðal skráa verkefnisins eða gefið upp með auðkenni sínu, og fjarlægir teymi; þjónninn athugar að það sem gefið er upp
+sé í verkefninu. Breytingu sem snertir aðeins hluta eins teymis samþykkir ábyrgðarmaður þess teymis, ekki verkefnisstjóri (sjá
+*Breyta með gervigreind* í CAD og BIM).
 
 Mál eru sótt í síðum með 500. Listi sem þjónninn hefur stytt (Dataregium styttir við 1.000 færslur) er lesinn til enda með
 Link-haus þjónsins með rel="next", en aðeins á sama þjóni, svo að táknið þitt fer aldrei annað.

@@ -68,6 +68,33 @@ kan aldrig lägga till någon. Den vägrar adresser som pekar på den egna dator
 rubriker och inga kakor, följer högst tre omdirigeringar till tillåtna värdar och stannar vid `--max-fetch-mb` (50 MB som
 förval). Bryggans logg visar värden och sökvägen, aldrig frågan, rubrikerna eller kroppen. Samtycket för ändamålet gäller som
 förut.
+Två förinställningar nås bara så: *Riksbanken räntor och valutakurser (SWEA)* och *Världsbanken: indikatorer*. Källistan
+märker dem *Kräver bryggan*; starta bryggan med `--allow-host api.riksbank.se --allow-host api.worldbank.org` för att hämta
+från dem.
+
+### Styra appen utifrån
+
+Program på datorn kan köra appens kommandon genom bryggan: samma kommandon som flödena och AI-assistenten använder (läsa
+datamängder, åtgärder i Bearbeta, export, R, Python, flöden). Det är av vid varje start och kräver två steg: starta bryggan med
+`--allow-commands` (`-AllowCommands`) och slå på **Låt program på datorn styra appen via bryggan** under *Internetåtkomst* i Hantera,
+där du bekräftar en gång för sessionen. Kommandon som bara läser körs direkt; allt som ändrar något visas i en dialog med kommandot och
+dess argument och körs bara om du godkänner det. Statusraden visar en terminalikon medan styrningen är på.
+
+Kommandoraden `tools/dataspatium.py` (Python 3, standardbiblioteket) använder bryggans adress och token (`--bridge` och `--token`, eller
+`DATASPATIUM_BRIDGE` och `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
+python tools/dataspatium.py plan manadsrapport.json
+python tools/dataspatium.py mcp
+```
+
+`list` visar kommandona med sina parametrar, `run` kör ett och skriver svaret som JSON, `plan` kör en flödesfil (samma form som
+*Exportera* under Flöden ger) som en plan du godkänner en gång, och `mcp` gör kommandona till verktyg för ett AI-program på datorn
+genom Model Context Protocol (över standardströmmarna). Bryggan håller kön i minnet, och ett kommando väntar på appen tills du
+godkänt eller det gått fem minuter. `python tools/check_bridge.py` prövar kön, kommandoraden och MCP utan webbläsare.
+
 ### Säkerhet
 
 - Bryggan svarar bara på 127.0.0.1, kräver token i varje anrop och tillåter CORS bara för appens egna adresser.
@@ -153,6 +180,12 @@ Kortet *Projektets medlemmar* visas när servern har projektadministration (Data
 deras medlemmar med roll: läsare, bidragsgivare, redaktör eller projektansvarig. Du lägger till en person med det exakta
 användarnamnet på servern, ändrar en roll, tar bort en medlem och byter projektets namn; varje ändring bekräftas först. Servern låter
 inte projektet bli utan projektansvarig och säger till; projekt tas inte bort härifrån, och nya konton skapar en administratör.
+
+Har projektet team visar kortet också dem: namn, ansvarig, medlemmar och det IDS-dokument vars specifikationer avgränsar
+teamets del av modellen. Du lägger till ett team med namn, ansvarig (en redaktör eller projektansvarig), medlemmarnas användarnamn
+och IDS-dokumentet, som väljs bland projektets filer eller anges med sitt id, och tar bort ett team; servern kontrollerar att de
+angivna finns i projektet. En ändring som bara rör ett teams del godkänns av teamets ansvarige, inte av en projektansvarig (se
+*Ändra med AI* i CAD och BIM).
 
 Ärenden hämtas i sidor om 500. En lista som servern har kapat (Dataregium kapar vid 1 000 poster) läses till slut genom
 serverns rubrik Link med rel="next", men bara på samma server, så att din token aldrig går någon annanstans.

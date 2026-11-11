@@ -24,6 +24,9 @@ Parameters: -Port (0 = random), -Token (default random), -AllowWrite, -MaxRows (
 Protocol (JSON): GET / (info), GET /sources (DSNs, ODBC drivers, OLE DB providers), POST /tables {source},
   POST /columns {source, table}, POST /rows {source, table, limit}, POST /query {source, sql, limit, approved},
   GET /log, GET or POST /stop, POST /fetch {url, method, headers, body (base64)} -> {status, statusText, headers, body}.
+  With -AllowCommands: POST /commands {name, args} -> {id, state} from a program on this computer, GET /commands/<id> its state
+  and answer, GET /commands/catalog the app's commands; the app registers them (POST /commands/catalog {commands}), picks
+  commands up (GET /commands/next) and answers (POST /commands/<id>/result {ok, result, error}). One thread: a poll answers at once.
   A source is {kind: access|excel|sqlserver|dsn|odbc|oledb, ...} with path, password,
   server, database, user, dsn or connectionString depending on the kind.
 #>
@@ -34,10 +37,11 @@ param(
   [string[]]$AllowOrigins = @("null", "https://marwiss.github.io"),
   [int]$MaxRows = 100000,
   [string[]]$AllowHosts = @(),
-  [int]$MaxFetchMb = 50
+  [int]$MaxFetchMb = 50,
+  [switch]$AllowCommands
 )
 $ErrorActionPreference = "Stop"
-$Version = "2.4.0"
+$Version = "2.5.0"
 $Kinds = @("access", "excel", "sqlserver", "dsn", "odbc", "oledb")
 if ($Port -eq 0) { $Port = Get-Random -Minimum 49152 -Maximum 65535 }
 if ($Token -eq "") {
@@ -54,6 +58,52 @@ Write-Output ("Token: " + $Token)
 Write-Output "Klistra in adressen och token i appen under Inhämta -> Databas via bryggan. Stäng fönstret för att stoppa."
 if ($AllowHosts.Count -gt 0) { Write-Output ("Hämtar via bryggan från: " + ($AllowHosts -join ", ")) }
 if ($AllowWrite) { Write-Output "Skrivning TILLÅTEN (-AllowWrite); varje skrivning kräver ändå godkännande i appen." } else { Write-Output "Skrivskyddad: bara SELECT." }
+if ($AllowCommands) { Write-Output "Kommandon TILLÅTNA (-AllowCommands): program på datorn kan köra appens kommandon när Styrning utifrån är på i appen." }
+
+# ---- the command queue (-AllowCommands): programs on this computer -> the app that has Styrning utifrån on ----
+$Commands = @{ Catalog = $null; Seen = [DateTime]::MinValue; Queue = New-Object System.Collections.ArrayList; Items = @{}; Seq = 0 }
+function Test-CommandsConnected() { return (($null -ne $Commands.Catalog) -and (((Get-Date) - $Commands.Seen).TotalSeconds -lt 90)) }
+function Invoke-CommandRoute($ctx, $method, $path, $body) {
+  if ($method -eq "GET" -and $path -eq "/commands/catalog") { Send-Json $ctx 200 @{ connected = (Test-CommandsConnected); commands = $(if ($null -eq $Commands.Catalog) { @() } else { @($Commands.Catalog) }); queued = $Commands.Queue.Count }; return }
+  if ($method -eq "GET" -and $path -eq "/commands/next") {
+    $Commands.Seen = Get-Date
+    if ($Commands.Queue.Count -gt 0) {
+      $id = [string]$Commands.Queue[0]; $Commands.Queue.RemoveAt(0)
+      $it = $Commands.Items[$id]; $it.state = "running"
+      Send-Json $ctx 200 @{ id = $id; name = $it.name; args = $it.args }
+    } else { Send-Json $ctx 200 @{} }
+    return
+  }
+  if ($method -eq "POST" -and $path -eq "/commands/catalog") { $Commands.Catalog = @($body.commands); $Commands.Seen = Get-Date; Send-Json $ctx 200 @{ registered = $Commands.Catalog.Count }; return }
+  if ($method -eq "POST" -and $path -eq "/commands") {
+    if (-not (Test-CommandsConnected)) { Send-Json $ctx 409 @{ error = "Ingen app är ansluten: öppna Dataspatium, anslut bryggan och slå på Styrning utifrån under Hantera -> Internetåtkomst" }; return }
+    if ($Commands.Queue.Count -ge 100) { Send-Json $ctx 429 @{ error = "Kön är full" }; return }
+    $name = [string]$body.name
+    if ($name.Trim() -eq "") { Send-Json $ctx 400 @{ error = "Ange name" }; return }
+    $Commands.Seq++
+    $id = "c" + $Commands.Seq + "-" + ([Guid]::NewGuid().ToString("N").Substring(0, 8))
+    $Commands.Items[$id] = @{ id = $id; name = $name.Trim(); args = $body.args; state = "queued"; ok = $null; result = $null; error = $null }
+    [void]$Commands.Queue.Add($id)
+    Send-Json $ctx 202 @{ id = $id; state = "queued" }
+    return
+  }
+  if ($method -eq "POST" -and $path -like "/commands/*/result") {
+    $id = $path.Substring(10); $id = $id.Substring(0, $id.Length - 7)
+    $it = $Commands.Items[$id]
+    if ($null -eq $it) { Send-Json $ctx 404 @{ error = "Okänt kommando " + $id }; return }
+    $it.state = "done"; $it.ok = [bool]$body.ok; $it.result = $body.result; $it.error = $body.error; $Commands.Seen = Get-Date
+    Send-Json $ctx 200 @{ id = $id; state = "done" }
+    return
+  }
+  if ($method -eq "GET" -and $path -like "/commands/*") {
+    $id = $path.Substring(10)
+    $it = $Commands.Items[$id]
+    if ($null -eq $it) { Send-Json $ctx 404 @{ error = "Okänt kommando " + $id }; return }
+    Send-Json $ctx 200 @{ id = $it.id; name = $it.name; state = $it.state; ok = $it.ok; result = $it.result; error = $it.error }
+    return
+  }
+  Send-Json $ctx 404 @{ error = "Okänd sökväg " + $path }
+}
 
 function Send-Json($ctx, $status, $obj) {
   $json = $obj | ConvertTo-Json -Depth 8 -Compress
@@ -316,8 +366,13 @@ while ($listener.IsListening) {
     $path = $req.Url.AbsolutePath
     $body = $null
     if ($req.HasEntityBody) { $sr = New-Object IO.StreamReader($req.InputStream, $req.ContentEncoding); $text = $sr.ReadToEnd(); $sr.Close(); if ($text.Trim() -ne "") { $body = $text | ConvertFrom-Json } }
+    if ($path -eq "/commands" -or $path -like "/commands/*") {
+      if (-not $AllowCommands) { Send-Json $ctx 403 @{ error = "Bryggan startades utan -AllowCommands" }; continue }
+      Invoke-CommandRoute $ctx $req.HttpMethod $path $body
+      continue
+    }
     switch ($path) {
-      "/" { Send-Json $ctx 200 @{ name = "Dataspatium-databasbrygga"; version = $Version; platform = "windows"; allowWrite = [bool]$AllowWrite; kinds = $Kinds; maxRows = $MaxRows; fetch = $true; allowHosts = $AllowHosts } }
+      "/" { Send-Json $ctx 200 @{ name = "Dataspatium-databasbrygga"; version = $Version; platform = "windows"; allowWrite = [bool]$AllowWrite; kinds = $Kinds; maxRows = $MaxRows; fetch = $true; commands = [bool]$AllowCommands; allowHosts = $AllowHosts } }
       "/sources" { Send-Json $ctx 200 (Get-Sources) }
       "/tables" { $cn = Open-Connection $body.source; try { $t = @(Get-Tables $cn); Send-Json $ctx 200 @{ tables = $t; count = $t.Count } } finally { $cn.Close() } }
       "/columns" { $cn = Open-Connection $body.source; try { $c = @(Get-Columns $cn ([string]$body.table)); Send-Json $ctx 200 @{ columns = $c } } finally { $cn.Close() } }

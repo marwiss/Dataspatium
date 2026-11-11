@@ -71,6 +71,33 @@ aldri legge til noen. Den avviser adresser på denne datamaskinen eller det loka
 ingen informasjonskapsler, følger høyst tre omdirigeringer til tillatte verter og stopper ved `--max-fetch-mb` (50 MB som
 standard). Broens logg viser verten og stien, aldri spørringen, headerne eller kroppen. Samtykket for formålet gjelder som
 før.
+To forhåndsinnstillinger nås bare slik: *Riksbanken renter og valutakurser (SWEA)* og *Verdensbanken: indikatorer*.
+Kildelisten merker dem *Krever broen*; start broen med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for å
+hente fra dem.
+
+### Styre appen utenfra
+
+Programmer på datamaskinen kan kjøre appens kommandoer gjennom broen: de samme kommandoene som flytene og AI-assistenten bruker (lese
+datasett, handlinger i Bearbeid, eksport, R, Python, flyter). Det er av ved hver start og krever to steg: start broen med
+`--allow-commands` (`-AllowCommands`), og slå på **La programmer på datamaskinen styre appen via broen** under *Internettilgang* i
+Håndter, der du bekrefter én gang for sesjonen. Kommandoer som bare leser, kjøres straks; alt som endrer noe, vises i en dialog med
+kommandoen og argumentene og kjøres bare hvis du godkjenner det. Statuslinjen viser et terminalikon mens styringen er på.
+
+Kommandolinjen `tools/dataspatium.py` (Python 3, standardbiblioteket) bruker broens adresse og token (`--bridge` og `--token`, eller
+`DATASPATIUM_BRIDGE` og `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Befolkning", "limit": 5}'
+python tools/dataspatium.py plan maanedsrapport.json
+python tools/dataspatium.py mcp
+```
+
+`list` viser kommandoene med parameterne sine, `run` kjører én og skriver svaret som JSON, `plan` kjører en flytfil (samme form som
+*Eksporter* under Flyter gir) som en plan du godkjenner én gang, og `mcp` gjør kommandoene til verktøy for et AI-program på
+datamaskinen gjennom Model Context Protocol (over standardstrømmene). Broen holder køen i minnet, og en kommando venter på appen til du
+har godkjent den eller det har gått fem minutter. `python tools/check_bridge.py` prøver køen, kommandolinjen og MCP uten nettleser.
+
 ### Sikkerhet
 
 - Broen svarer bare på 127.0.0.1, krever token i hvert kall og tillater CORS bare for appens egne adresser.
@@ -157,6 +184,12 @@ Kortet *Prosjektets medlemmer* vises når serveren har prosjektadministrasjon (e
 medlemmene med rolle: leser, bidragsyter, redaktør eller prosjektansvarlig. Du legger til en person med det nøyaktige brukernavnet på
 serveren, endrer en rolle, fjerner et medlem og gir prosjektet nytt navn; hver endring bekreftes først. Serveren lar ikke prosjektet stå
 uten prosjektansvarlig og sier fra; prosjekter slettes ikke herfra, og nye kontoer opprettes av en administrator.
+
+Har prosjektet team, viser kortet også dem: navn, ansvarlig, medlemmer og IDS-dokumentet hvis spesifikasjoner avgrenser teamets
+del av modellen. Du legger til et team med navn, ansvarlig (en redaktør eller prosjektansvarlig), medlemmenes brukernavn og
+IDS-dokumentet, som velges blant prosjektets filer eller oppgis med id-en sin, og fjerner et team; serveren kontrollerer at de oppgitte
+finnes i prosjektet. En endring som bare rører ett teams del, godkjennes av teamets ansvarlige, ikke av en prosjektansvarlig (se
+*Endre med AI* i CAD og BIM).
 
 Saker hentes i sider på 500. En liste som serveren har kuttet (Dataregium kutter ved 1 000 poster), leses til ende gjennom
 serverens Link-header med rel="next", men bare på samme server, slik at tokenet ditt aldri går andre steder.

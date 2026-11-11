@@ -33,6 +33,8 @@ browsed in the app's language when the service has it.
 | Boverket energy performance certificates | Energy performance certificates for buildings | Yes, key from Boverket's API portal | Give the key, call according to the portal's documentation |
 | Trafikverket NVDB | Road data: speed limits, road numbers, bearing capacity and 42 more object types, as a map | Yes, free key from data.trafikverket.se | Choose an object type, give an area, Fetch |
 | Lantmäteriet geodata with a key (STAC) | Vector data, orthophotos, elevation data and maps as files | Yes, account in Geotorget (OAuth2) | Choose a collection, give an area, Fetch; the files are fetched in Manage with *Files in the source* |
+| Riksbank interest and exchange rates (SWEA) | The policy rate, market rates and exchange rates | No, but reached only through the bridge | Choose a series and a period, Fetch |
+| World Bank: indicators | Population, GDP, emissions and other indicators per country and year | No, but reached only through the bridge | Give countries, indicator and years, Fetch |
 
 ### The other Nordic countries
 
@@ -62,8 +64,8 @@ All have been checked for CORS (requests with an `Origin` header) in November 20
 | Nordic region | Nordic Statistics database | Comparable Nordic statistics, English | Browse, choose values |
 
 Not included: Denmark's DMI and Norway's Frost (MET) require a key; Energi Data Service and data.norge.no lack CORS;
-opingogn.is no longer has a search API. Sources without CORS, for example the Riksbank and the World Bank, cannot be
-reached directly from the browser; they need your own proxy, see below. The Swedish Civil Defence and Resilience
+opingogn.is no longer has a search API. The Riksbank and the World Bank do not allow requests from
+the browser (no CORS); they are reached through the bridge (see [Fetching through the bridge](kallor.md#fetching-through-the-bridge)) or your own proxy, see below. The Swedish Civil Defence and Resilience
 Agency (MCF, formerly MSB) has no documented open API; its statistics are imported as files.
 
 Geodata sources (the family `geodata` with `kind` `wfs`, `ogcapi` or `arcgis`) ship without endpoints: the layers are read

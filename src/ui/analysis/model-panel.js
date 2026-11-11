@@ -20,7 +20,7 @@
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
       const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null,
-        clash: { typeA: '', other: '', typeB: '', mode: 'intersection', tolerance: 2, clearance: 50, busy: false, progress: '', error: '', result: null, resultFor: '' } };
+        clash: { typeA: '', other: '', typeB: '', mode: 'intersection', tolerance: 2, clearance: 50, busy: false, progress: '', error: '', result: null, resultFor: '', where: 'here' } };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
 
@@ -198,9 +198,14 @@
       }
       // ---- clash detection ------------------------------------------------------------------------------------
       const typeOptions = (d) => [{ value: '', label: t('clash.set.all') }].concat(((d && d.model && d.model.elementTypes) || []).map((x) => ({ value: String(x.name), label: `${x.name} (${i18n.formatNumber(x.count || 0)})` })));
+      /** A model from a CDE: the server can check it, with another version of the same project. */
+      const onServer = (d) => { const cde = d && d.source && d.source.cde; return !!(cde && cde.connectorId && cde.projectId && cde.documentId && cde.versionIndex); };
       function clashFields(ds) {
         const c = s.clash;
-        const models = store.get().datasets.filter((d) => d.kind === 'model' && !model.isDxf(d) && d.id !== ds.id);
+        if (!onServer(ds)) c.where = 'here';
+        const server = c.where === 'server';
+        const sameProject = (d) => onServer(d) && d.source.cde.connectorId === ds.source.cde.connectorId && d.source.cde.projectId === ds.source.cde.projectId;
+        const models = store.get().datasets.filter((d) => d.kind === 'model' && !model.isDxf(d) && d.id !== ds.id && (!server || sameProject(d)));
         if (c.other && !models.some((d) => d.id === c.other)) { c.other = ''; c.typeB = ''; }
         const other = c.other ? models.find((d) => d.id === c.other) : ds;
         const clearance = c.mode === 'clearance';
@@ -213,6 +218,7 @@
             select(t('clash.against'), [{ value: '', label: t('clash.same') }].concat(models.map((d) => ({ value: d.id, label: d.name }))), c.other, (v) => { c.other = v; c.typeB = ''; renderFields(); }, { 'data-clash-model': '' }),
             select(t('clash.set.b'), typeOptions(other), c.typeB, (v) => { c.typeB = v; }, { 'data-clash-b': '' })),
           h('div', { class: 'dm-row-wrap' },
+            onServer(ds) ? select(t('clash.where'), [{ value: 'here', label: t('clash.where.here') }, { value: 'server', label: t('clash.where.server', { host: ds.source.cde.host || '' }) }], c.where, (v) => { c.where = v; renderFields(); }, { 'data-clash-where': '', title: t('clash.where.hint') }) : null,
             select(t('clash.mode'), ['intersection', 'clearance'].map((m) => ({ value: m, label: t('clash.mode.' + m) })), c.mode, (v) => { c.mode = v; renderFields(); }, { 'data-clash-mode': '' }),
             amount,
             ui.button({ label: t('clash.run'), icon: 'scan-line', size: 'sm', loading: c.busy, title: t('clash.run.hint'), 'data-clash-run': '', onClick: () => runClash() })),
@@ -225,6 +231,7 @@
         const clash = D.require('analysis/clash');
         c.busy = true; c.error = ''; c.progress = t('clash.progress.start');
         renderFields(); renderClash(ds);
+        if (c.where === 'server' && onServer(ds)) { await runServerClash(ds); return; }
         try {
           const result = await clash.run({
             a: { datasetId: ds.id, types: c.typeA ? [c.typeA] : null }, b: { datasetId: c.other || ds.id, types: c.typeB ? [c.typeB] : null },
@@ -238,6 +245,39 @@
           c.result = result; c.resultFor = ds.id;
           D.require('data/ifc-validation').record(ds.id, 'clash', clash.summaryOf(result)).catch((err) => D.log('validation', err));
           shell.log(t('clash.done', { n: i18n.formatNumber(result.clashes.length), pairs: i18n.formatNumber(result.pairs), s: i18n.formatNumber(result.seconds) }), 'ok');
+        } catch (err) {
+          c.error = String((err && err.message) || err);
+          shell.log(c.error, 'error');
+        }
+        c.busy = false;
+        if (selected() && selected().id === ds.id) { renderFields(); renderClash(ds); }
+      }
+      /**
+       * The same check on the server (Dataregium's ifc_clash): the two versions, the sets and the mode go there, the job is waited
+       * for, and its report is shown as a check run here. Nothing is asked of the server before the user presses the button.
+       */
+      async function runServerClash(ds) {
+        const c = s.clash;
+        const cde = ds.source.cde;
+        const other = c.other ? store.get().datasets.find((d) => d.id === c.other) : ds;
+        const sideOf = (d, type) => Object.assign({ document_id: d.source.cde.documentId, version_index: Number(d.source.cde.versionIndex) }, type ? { types: [type] } : {});
+        const opencde = D.require('api/families/opencde');
+        try {
+          const connector = await D.require('api/connectors').get(cde.connectorId);
+          if (!connector) throw new Error(t('cde.err.noconnector', { host: cde.host }));
+          if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+          const report = await opencde.serverClash(connector, cde.projectId, {
+            a: sideOf(ds, c.typeA), b: sideOf(other, c.typeB), mode: c.mode, tolerance: c.tolerance / 1000, clearance: Math.max(0.001, c.clearance / 1000),
+          }, { onState: (job) => {
+            c.progress = t('clash.server.state.' + (job && job.state === 'running' ? 'running' : 'queued'), { host: cde.host });
+            const bar = resultEl && resultEl.querySelector('[data-clash-progress]');
+            if (bar) bar.setAttribute('label', c.progress);
+          } });
+          if (report.state !== 'done') throw new Error(t('clash.server.failed', { reason: report.error || report.state || '' }));
+          const models = [ds, other].map((d) => ({ datasetId: d.id, documentId: d.source.cde.documentId, versionIndex: Number(d.source.cde.versionIndex) }));
+          c.result = D.require('analysis/clash').fromServer(report, models); c.resultFor = ds.id;
+          D.require('data/ifc-validation').record(ds.id, 'clash', D.require('analysis/clash').summaryOf(c.result)).catch((err) => D.log('validation', err));
+          shell.log(t('clash.server.done', { n: i18n.formatNumber(c.result.clashes.length), host: cde.host, s: i18n.formatNumber(c.result.seconds) }), 'ok');
         } catch (err) {
           c.error = String((err && err.message) || err);
           shell.log(c.error, 'error');
@@ -262,7 +302,8 @@
         out.columns = out.columns.map((col) => Object.assign(col, { label: t('clash.col.' + col.name) }));
         out.rows = out.rows.map((row) => { const copy = row.slice(); copy[8] = t('clash.kind.' + row[8]); return copy; });
         out.name = `${ds.name}: ${t('model.tool.clash')}`;
-        out.note = t('clash.note', { n: i18n.formatNumber(r.clashes.length), pairs: i18n.formatNumber(r.pairs), a: i18n.formatNumber(r.setA), b: i18n.formatNumber(r.setB), s: i18n.formatNumber(r.seconds) })
+        out.note = (r.server ? t('clash.server.note', { n: i18n.formatNumber(r.clashes.length), a: i18n.formatNumber(r.setA), b: i18n.formatNumber(r.setB), s: i18n.formatNumber(r.seconds), host: (ds.source && ds.source.cde && ds.source.cde.host) || '' }) + (r.truncated ? ' ' + t('clash.server.truncated') : '')
+          : t('clash.note', { n: i18n.formatNumber(r.clashes.length), pairs: i18n.formatNumber(r.pairs), a: i18n.formatNumber(r.setA), b: i18n.formatNumber(r.setB), s: i18n.formatNumber(r.seconds) }))
           + (r.missing ? ' ' + t('clash.missing', { n: i18n.formatNumber(r.missing) }) : '');
         const cde = ds.source && ds.source.cde;
         const none = !r.clashes.length;
@@ -307,6 +348,13 @@
           const ok = await ui.dialog.confirm(t('clash.send.confirm', { n: i18n.formatNumber(r.clashes.length), project: cde.projectName || cde.projectId, host: cde.host }), { okLabel: t('clash.send') });
           if (!ok) return;
           if (!opencde.signedIn(connector)) { if (!opencde.redirectUri()) throw new Error(t('issues.err.file')); await opencde.login(connector); }
+          // The server's own report makes its topics itself, with a viewpoint each.
+          if (r.server) {
+            const made = await opencde.serverClashTopics(connector, cde.projectId, r.server.id, r.clashes.map((x) => x.index));
+            const done = t('clash.send.done', { n: i18n.formatNumber(made.length), project: cde.projectName || cde.projectId });
+            shell.log(done, 'ok'); ui.toast.show(done, { kind: 'ok' });
+            return;
+          }
           const ext = (await opencde.extensions(connector, cde.projectId).catch(() => null)) || {};
           const pick = (list, wanted) => { const l = Array.isArray(list) ? list : []; return l.find((x) => wanted.test(String(x))) || l[0] || null; };
           const type = pick(ext.topic_type, /clash|kollision/i); const status = pick(ext.topic_status, /open|öppen/i);

@@ -172,6 +172,9 @@ Kortet **Valider modellen** i Håndter samler kontrollene av en IFC-modell, med 
 - **Prosjektets IDS-filer**: kontrollerer serveren også filen mot prosjektets IDS-dokumenter (den nyeste versjonen av hvert dokument der
   navnet slutter på `.ids`), viser rapporten hvor mange spesifikasjoner som ble godkjent, ikke godkjent eller ikke gjaldt filen, og hvilke
   som ikke ble godkjent, med dokumentets navn og antall funn. Et IDS-dokument som ikke kunne leses, står blant reglene som ikke kunne kjøres.
+- **Det ingen GlobalId når**: finner serverens kontroll graph instanser som ingenting med en GlobalId når, viser rapporten knappen
+  *Fjern det ingen GlobalId når*. Serveren foreslår da, etter din bekreftelse, et endringssett som fjerner dem; forslaget blir en
+  sak som prøves og godkjennes som andre, og versjonen beholder alt.
 - **Kontroller her** viser den siste *Validering*, *IDS-kontroll* og kollisjonskontroll som er kjørt i appen, og knappene åpner dem i
   Analyser. Resultatene lagres i appens innstillinger, ikke i datasettet.
 
@@ -186,6 +189,10 @@ arbeider på de samme trekantene som 3D-visningen viser, i en egen tråd, og tre
 
 - **Mengde A og mengde B** er alle bygningsdeler eller en type, for eksempel kanaler mot bjelker. B kan ligge i samme modell eller i en
   annen modell i samme prosjekt, og modellene må da dele koordinatsystem. Åpninger teller ikke.
+- **På serveren**: for en modell fra Dataregium (fra 3.0.0, når serveren har kollisjonskontrollen slått på) velger *Hvor* om appen
+  regner selv eller om serveren gjør samme kontroll av versjonene. Serveren arbeider i en kø; appen venter og viser rapporten som
+  sin egen, med samme tabell, markering og BCF-fil, og *Send som saker* lar serveren lage sakene med et viewpoint hver. Den andre
+  modellen må da være en versjon i samme prosjekt.
 - **Skjæring** teller par der det ene elementet når dypere inn i det andre enn toleransen (2 mm hvis ikke annet er angitt). Dybden
   måles som hvor langt hjørner og kanter når inn i det andre elementet, så flater som bare møtes, teller ikke. *Innelukking* er et
   element som ligger helt inne i et annet.
@@ -292,6 +299,11 @@ endres ikke av det; hent den nye versjonen fra Dataregium for å arbeide videre 
 basen, prøver serveren forslaget på nytt mot den nyeste i samme steg og godkjenner mot den når prøvingen er ren; kolliderer endringene
 med det som har kommet imellom, avviser serveren (412), og panelet viser de kolliderende nøklene (instans og attributt) eller sier at
 alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste versjonen, gjør endringene på nytt og foreslå igjen.
+
+Har prosjektet team (kortet *Prosjektets medlemmer* i Håndter), viser panelet hvilke team endringen rører. Rører den bare ett teams
+del, godkjenner teamets ansvarlige, også med rollen redaktør, og serveren nekter (403) en prosjektansvarlig; rører den flere teams
+deler, eller ingen, godkjenner en prosjektansvarlig som før. Når et IDS-dokument får en ny versjon, kontrollerer serveren prosjektets
+siste IFC-versjoner på nytt, og rapportene deres står som ventende imens.
 
 Oppgir serveren verdiene per kollisjon, viser panelet for hver kollisjon verdien i basen, det som kom imellom, og forslaget ditt, og
 du velger per kollisjon å beholde forslaget ditt eller ta det som kom imellom. *Foreslå igjen med mine valg* sender forslaget mot den

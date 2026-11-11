@@ -71,6 +71,33 @@ aldri leggje til nokon. Ho avviser adresser på denne datamaskina eller det loka
 ingen informasjonskapslar, følgjer høgst tre omdirigeringar til tillatne vertar og stoppar ved `--max-fetch-mb` (50 MB som
 standard). Loggen til brua viser verten og stien, aldri spørjinga, headerane eller kroppen. Samtykket for føremålet gjeld som
 før.
+To førehandsinnstillingar blir berre nådde slik: *Riksbanken renter og valutakursar (SWEA)* og *Verdsbanken: indikatorar*.
+Kjeldelista merkjer dei *Krev brua*; start brua med `--allow-host api.riksbank.se --allow-host api.worldbank.org` for å hente
+frå dei.
+
+### Styre appen utanfrå
+
+Program på datamaskina kan køyre kommandoane i appen gjennom brua: dei same kommandoane som flytane og AI-assistenten brukar (lese
+datasett, handlingar i Bearbeid, eksport, R, Python, flytar). Det er av ved kvar start og krev to steg: start brua med
+`--allow-commands` (`-AllowCommands`), og slå på **La program på datamaskina styre appen via brua** under *Internettilgang* i Handter,
+der du stadfestar éin gong for sesjonen. Kommandoar som berre les, vert køyrde straks; alt som endrar noko, vert vist i ein dialog med
+kommandoen og argumenta og køyrt berre viss du godkjenner det. Statuslinja viser eit terminalikon medan styringa er på.
+
+Kommandolinja `tools/dataspatium.py` (Python 3, standardbiblioteket) brukar adressa og tokenet til brua (`--bridge` og `--token`, eller
+`DATASPATIUM_BRIDGE` og `DATASPATIUM_TOKEN`):
+
+```
+python tools/dataspatium.py list
+python tools/dataspatium.py run read_rows --args '{"dataset": "Folketal", "limit": 5}'
+python tools/dataspatium.py plan maanadsrapport.json
+python tools/dataspatium.py mcp
+```
+
+`list` viser kommandoane med parametrane sine, `run` køyrer éin og skriv svaret som JSON, `plan` køyrer ei flytfil (same form som
+*Eksporter* under Flytar gjev) som ein plan du godkjenner éin gong, og `mcp` gjer kommandoane til verktøy for eit AI-program på
+datamaskina gjennom Model Context Protocol (over standardstraumane). Brua held køen i minnet, og ein kommando ventar på appen til du
+har godkjent han eller det har gått fem minutt. `python tools/check_bridge.py` prøver køen, kommandolinja og MCP utan nettlesar.
+
 ### Tryggleik
 
 - Brua svarar berre på 127.0.0.1, krev token i kvart kall og tillèt CORS berre for dei eigne adressene til appen.
@@ -157,6 +184,12 @@ prosjektet (manager), som ikkje treng å vere tenaradministrator, loggar inn med
 og medlemmene med rolle: lesar, bidragsytar, redaktør eller prosjektansvarleg. Du legg til ein person med det nøyaktige brukarnamnet på
 tenaren, endrar ei rolle, fjernar eit medlem og gjev prosjektet nytt namn; kvar endring vert stadfesta først. Tenaren lèt ikkje
 prosjektet stå utan prosjektansvarleg og seier frå; prosjekt vert ikkje sletta herifrå, og nye kontoar opprettar ein administrator.
+
+Har prosjektet team, viser kortet òg dei: namn, ansvarleg, medlemer og IDS-dokumentet som spesifikasjonane i avgrensar delen til
+teamet i modellen. Du legg til eit team med namn, ansvarleg (ein redaktør eller prosjektansvarleg), brukarnamna til medlemene og
+IDS-dokumentet, som vert valt mellom filene i prosjektet eller oppgjeve med id-en sin, og fjernar eit team; tenaren kontrollerer at dei
+oppgjevne finst i prosjektet. Ei endring som berre rører delen til eitt team, vert godkjend av den ansvarlege i teamet, ikkje av ein
+prosjektansvarleg (sjå *Endre med AI* i CAD og BIM).
 
 Saker blir henta i sider på 500. Ei liste som tenaren har korta av (Dataregium kortar av ved 1 000 postar), blir lesen til
 endes gjennom Link-headeren til tenaren med rel="next", men berre på same tenar, slik at tokenet ditt aldri går andre stader.

@@ -115,14 +115,16 @@
      * @returns {{el: HTMLElement, update: (content: {title?: string, meta?: string, body?: Array<Node|string>, actions?: Node[]}) => void, collapse: (on: boolean) => void, collapsed: () => boolean, focus: () => void, close: () => void}}
      */
     function floating(options = {}) {
-      const titleEl = h('h2', { class: 'dm-floating-title', id: 'dm-floating-title', tabindex: '-1' });
+      // Every floating panel has its own title id: the course and the AI assistant can be open at once.
+      const titleId = uid('dm-floating-title');
+      const titleEl = h('h2', { class: 'dm-floating-title', id: titleId, tabindex: '-1' });
       const metaEl = h('span', { class: 'dm-floating-meta' });
       const body = h('div', { class: 'dm-floating-body' });
       const actions = h('div', { class: 'dm-floating-actions' });
       let collapsed = false; let closed = false;
       const collapseLabel = options.collapseLabel || t('floating.collapse');
       const toggle = basic.button({ label: collapseLabel, icon: 'chevron-down', 'icon-only': true, variant: 'ghost', size: 'sm', onClick: () => collapse(!collapsed) });
-      const el = h('section', { class: 'dm-floating', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'dm-floating-title' },
+      const el = h('section', { class: 'dm-floating', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': titleId },
         h('div', { class: 'dm-floating-head' },
           h('div', { class: 'dm-floating-titles' }, metaEl, titleEl),
           toggle,

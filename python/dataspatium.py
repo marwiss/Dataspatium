@@ -1769,7 +1769,7 @@ class _Proposal:
     Compares the instances that exist in both the base and the candidate, each change on one attribute of one instance named
     by the GlobalId of the nearest rooted entity and the path from it in IFC's attribute names with 0-based indexes (no path for
     the rooted entity itself), and by STEP id only when no GlobalId reaches the instance; the collision keys of the server's merge
-    are then the same between clients (Martin's rule). A value is a scalar, a typed value ({"type", "value"}), an enumeration
+    are then the same between clients (a project rule). A value is a scalar, a typed value ({"type", "value"}), an enumeration
     ({"enum"}), a reference (named by GlobalId and path the same way, {"step_id"} only when no GlobalId reaches it) or a list of
     them. A sub-instance that the
     candidate replaced with a new one of the same class (a moved placement's point) is told as changes of the old instance, with

@@ -174,6 +174,9 @@ Kortet **Valider modellen** i Handter samlar kontrollane av ein IFC-modell, med 
   der namnet sluttar på `.ids`), viser rapporten kor mange spesifikasjonar som vart godkjende, ikkje godkjende eller ikkje galdt fila, og
   kva for nokre som ikkje vart godkjende, med namnet på dokumentet og talet på funn. Eit IDS-dokument som ikkje kunne lesast, står blant
   reglane som ikkje kunne køyrast.
+- **Det ingen GlobalId når**: finn kontrollen graph til tenaren instansar som ingenting med ein GlobalId når, viser rapporten
+  knappen *Fjern det ingen GlobalId når*. Tenaren føreslår då, etter stadfestinga di, eit endringssett som fjernar dei; framlegget
+  blir ei sak som blir prøvd og godkjend som andre, og versjonen held på alt.
 - **Kontrollar her** viser den siste *Validering*, *IDS-kontroll* og kollisjonskontroll som er køyrd i appen, og knappane opnar dei i
   Analyser. Resultata blir lagra i innstillingane til appen, ikkje i datasettet.
 
@@ -188,6 +191,10 @@ arbeider på dei same trekantane som 3D-visinga viser, i ein eigen tråd, og tre
 
 - **Mengd A og mengd B** er alle bygningsdelar eller ein type, til dømes kanalar mot bjelkar. B kan liggje i same modell eller i ein
   annan modell i same prosjekt, og modellane må då dele koordinatsystem. Opningar tel ikkje.
+- **På tenaren**: for ein modell frå Dataregium (frå 3.0.0, når tenaren har kollisjonskontrollen slått på) vel *Kvar* om appen
+  reknar sjølv eller om tenaren gjer same kontrollen av versjonane. Tenaren arbeider i ein kø; appen ventar og viser rapporten som
+  sin eigen, med same tabell, markering og BCF-fil, og *Send som saker* lèt tenaren lage sakene med eitt viewpoint kvar. Den andre
+  modellen må då vere ein versjon i same prosjekt.
 - **Skjering** tel par der det eine elementet når djupare inn i det andre enn toleransen (2 mm om ikkje anna er oppgitt). Djupna blir
   målt som kor langt hjørne og kantar når inn i det andre elementet, så flater som berre møtest, tel ikkje. *Innelukking* er eit
   element som ligg heilt inne i eit anna.
@@ -296,6 +303,11 @@ nyare versjonar sidan basen, prøver tenaren framlegget på nytt mot den nyaste 
 kolliderer endringane med det som har kome imellom, avviser tenaren (412), og panelet viser dei kolliderande nøklane (instans og
 attributt) eller seier at alt kan ha endra seg når ei heil fil er lasta opp imellom. Hent då den nyaste versjonen, gjer endringane på
 nytt og foreslå igjen.
+
+Har prosjektet team (kortet *Medlemmene i prosjektet* i Handter), viser panelet kva team endringa rører. Rører ho berre delen til
+eitt team, godkjenner den ansvarlege i teamet, òg med rolla redaktør, og tenaren nektar (403) ein prosjektansvarleg; rører ho delane
+til fleire team, eller ingen, godkjenner ein prosjektansvarleg som før. Når eit IDS-dokument får ein ny versjon, kontrollerer tenaren
+dei siste IFC-versjonane i prosjektet på nytt, og rapportane deira står som ventande imens.
 
 Gjev tenaren verdiane per kollisjon, viser panelet for kvar kollisjon verdien i basen, det som kom imellom, og framlegget ditt, og du
 vel per kollisjon å halde på framlegget ditt eller ta det som kom imellom. *Foreslå igjen med vala mine* sender framlegget mot den

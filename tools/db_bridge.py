@@ -38,6 +38,7 @@ import sqlite3
 import ssl
 import sys
 import threading
+import time
 import http.client
 import ipaddress
 import urllib.parse
@@ -48,7 +49,7 @@ try:
 except ImportError:  # pragma: no cover - optional
     pyodbc = None
 
-VERSION = "2.4.0"
+VERSION = "2.5.0"
 KINDS = ["sqlite"] + (["dsn", "odbc", "access", "excel"] if pyodbc else [])
 
 
@@ -61,6 +62,7 @@ def parse_args():
     p.add_argument("--allow-origin", action="append", default=None)
     p.add_argument("--allow-host", action="append", default=None)
     p.add_argument("--max-fetch-mb", type=int, default=50)
+    p.add_argument("--allow-commands", action="store_true", help="let programs on this computer run the app's commands through the bridge")
     return p.parse_args()
 
 
@@ -199,12 +201,116 @@ def convert(value):
     return value
 
 
+class Commands:
+    """POST /commands from a program on this computer (the CLI tools/dataspatium.py, an MCP client), picked up by the app that has
+    Styrning utifrån on (GET /commands/next), run there under the app's own rules (a writing command is approved by the person)
+    and answered back (POST /commands/<id>/result). The app registers its commands first (POST /commands/catalog); without an app
+    that polled within PAGE_TIMEOUT seconds a command is refused. Everything is behind the token, on 127.0.0.1 only."""
+
+    MAX_QUEUE = 100
+    MAX_WAIT = 60.0
+    TTL = 300.0
+    PAGE_TIMEOUT = 90.0
+
+    def __init__(self):
+        self.lock = threading.Condition()
+        self.items = {}
+        self.queue = []
+        self.catalog = None
+        self.seen = 0.0
+        self.seq = 0
+
+    def connected(self):
+        return self.catalog is not None and time.time() - self.seen < self.PAGE_TIMEOUT
+
+    def register(self, commands):
+        with self.lock:
+            self.catalog = [c for c in (commands or []) if isinstance(c, dict) and c.get("name")]
+            self.seen = time.time()
+            self.lock.notify_all()
+        return {"registered": len(self.catalog)}
+
+    def shown(self):
+        with self.lock:
+            self._expire()
+            return {"connected": self.connected(), "commands": list(self.catalog or []), "queued": len(self.queue)}
+
+    def submit(self, body):
+        with self.lock:
+            self._expire()
+            if not self.connected():
+                return 409, {"error": "Ingen app är ansluten: öppna Dataspatium, anslut bryggan och slå på Styrning utifrån under Hantera → Internetåtkomst"}
+            if len(self.queue) >= self.MAX_QUEUE:
+                return 429, {"error": "Kön är full"}
+            name = str(body.get("name") or "").strip()
+            if not name:
+                return 400, {"error": "Ange name"}
+            args = body.get("args")
+            self.seq += 1
+            cid = "c%d-%s" % (self.seq, secrets.token_hex(4))
+            self.items[cid] = {"id": cid, "name": name, "args": args if isinstance(args, dict) else {}, "state": "queued", "at": time.time()}
+            self.queue.append(cid)
+            self.lock.notify_all()
+            return 202, {"id": cid, "state": "queued"}
+
+    def next(self, wait):
+        """The next queued command for the app, or {} after `wait` seconds."""
+        with self.lock:
+            end = time.time() + wait
+            while True:
+                self.seen = time.time()
+                self._expire()
+                if self.queue:
+                    cid = self.queue.pop(0)
+                    it = self.items[cid]
+                    it["state"] = "running"
+                    it["started"] = time.time()
+                    return {"id": cid, "name": it["name"], "args": it["args"]}
+                left = end - time.time()
+                if left <= 0:
+                    return {}
+                self.lock.wait(min(left, 5.0))
+
+    def finish(self, cid, body):
+        with self.lock:
+            it = self.items.get(cid)
+            if not it:
+                return 404, {"error": "Okänt kommando " + cid}
+            it.update({"state": "done", "ok": bool(body.get("ok")), "result": body.get("result"), "error": body.get("error"), "done_at": time.time()})
+            self.seen = time.time()
+            self.lock.notify_all()
+            return 200, {"id": cid, "state": "done"}
+
+    def status(self, cid, wait):
+        """A command's state, waited for up to `wait` seconds when it is not done."""
+        with self.lock:
+            end = time.time() + wait
+            while True:
+                it = self.items.get(cid)
+                if not it:
+                    return 404, {"error": "Okänt kommando " + cid}
+                if it["state"] == "done" or time.time() >= end:
+                    return 200, {k: it.get(k) for k in ("id", "name", "state", "ok", "result", "error")}
+                self.lock.wait(min(end - time.time(), 5.0))
+
+    def _expire(self):
+        now = time.time()
+        for cid in list(self.items):
+            it = self.items[cid]
+            old = (it.get("done_at") and now - it["done_at"] > self.TTL) or (not it.get("done_at") and now - it["at"] > 2 * self.TTL)
+            if old:
+                self.items.pop(cid, None)
+                if cid in self.queue:
+                    self.queue.remove(cid)
+
+
 class Bridge:
     def __init__(self, args):
         self.allow_write = args.allow_write
         self.max_rows = args.max_rows
         self.allow_hosts = sorted({h.strip().lower() for h in (getattr(args, "allow_host", None) or []) if h.strip()})
         self.max_fetch = max(1, int(getattr(args, "max_fetch_mb", 50) or 50)) * 1024 * 1024
+        self.commands = Commands() if getattr(args, "allow_commands", False) else None
         self.log = []
         self.lock = threading.Lock()
 
@@ -252,7 +358,7 @@ class Bridge:
 
     # ---- endpoints ----
     def info(self):
-        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": KINDS, "maxRows": self.max_rows, "pyodbc": bool(pyodbc), "fetch": True, "allowHosts": self.allow_hosts}
+        return {"name": "Dataspatium-databasbrygga", "version": VERSION, "platform": sys.platform, "allowWrite": self.allow_write, "kinds": KINDS, "maxRows": self.max_rows, "pyodbc": bool(pyodbc), "commands": bool(self.commands), "fetch": True, "allowHosts": self.allow_hosts}
 
     def fetch(self, request):
         """POST /fetch: the go-between. The log has the host and the path, never the query, headers or body."""
@@ -439,11 +545,34 @@ def make_handler(bridge, token, allow_origins, server_box):
                 return {}
             return json.loads(self.rfile.read(n).decode("utf-8") or "{}")
 
+        def wait_of(self, query):
+            try:
+                return max(0.0, min(float(urllib.parse.parse_qs(query).get("wait", ["0"])[0] or 0), Commands.MAX_WAIT))
+            except ValueError:
+                return 0.0
+
+        def commands_allowed(self):
+            if bridge.commands:
+                return True
+            self.send_json(403, {"error": "Bryggan startades utan --allow-commands"})
+            return False
+
         def do_GET(self):
             if not self.guard():
                 return
+            path, _, query = self.path.partition("?")
             try:
-                if self.path == "/":
+                if path == "/commands/catalog":
+                    if self.commands_allowed():
+                        self.send_json(200, bridge.commands.shown())
+                elif path == "/commands/next":
+                    if self.commands_allowed():
+                        self.send_json(200, bridge.commands.next(self.wait_of(query)))
+                elif path.startswith("/commands/"):
+                    if self.commands_allowed():
+                        status, result = bridge.commands.status(path[len("/commands/"):], self.wait_of(query))
+                        self.send_json(status, result)
+                elif self.path == "/":
                     self.send_json(200, bridge.info())
                 elif self.path == "/sources":
                     self.send_json(200, bridge.sources())
@@ -480,6 +609,17 @@ def make_handler(bridge, token, allow_origins, server_box):
                 elif self.path == "/fetch":
                     status, result = bridge.fetch(b)
                     self.send_json(status, result)
+                elif self.path == "/commands":
+                    if self.commands_allowed():
+                        status, result = bridge.commands.submit(b)
+                        self.send_json(status, result)
+                elif self.path == "/commands/catalog":
+                    if self.commands_allowed():
+                        self.send_json(200, bridge.commands.register(b.get("commands")))
+                elif self.path.startswith("/commands/") and self.path.endswith("/result"):
+                    if self.commands_allowed():
+                        status, result = bridge.commands.finish(self.path[len("/commands/"):-len("/result")], b)
+                        self.send_json(status, result)
                 elif self.path == "/stop":
                     self.send_json(200, {"stopping": True})
                     threading.Thread(target=server_box[0].shutdown, daemon=True).start()
@@ -511,6 +651,8 @@ def main():
     print("Skrivning TILLÅTEN (--allow-write); varje skrivning kräver ändå godkännande i appen." if args.allow_write else "Skrivskyddad: bara SELECT.")
     if bridge.allow_hosts:
         print("Hämtar via bryggan från: " + ", ".join(bridge.allow_hosts))
+    if bridge.commands:
+        print("Kommandon TILLÅTNA (--allow-commands): program på datorn kan köra appens kommandon när Styrning utifrån är på i appen.")
     if not pyodbc:
         print("pyodbc saknas: bara SQLite-filer kan öppnas (pip install pyodbc för ODBC-källor).")
     sys.stdout.flush()

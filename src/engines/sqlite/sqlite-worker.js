@@ -795,6 +795,7 @@
         case 'query': {
           var dq = requireDb();
           ensureAttached(dq, args.names || [], args.self || null);
+          if (args.readOnly) return { value: readOnlyQuery(dq, args.sql, args.params) };
           return { value: dq.exec(args.sql, args.params).map(function (r) { return { columns: r.columns, values: r.values }; }) };
         }
         case 'export': {
@@ -813,6 +814,23 @@
         default:
           throw new Error('Unknown operation: ' + op);
       }
+    }
+
+    // A statement nobody at the keyboard wrote (an AI's): exactly one, and one that reads, run with the database locked against
+    // writes, so that neither a second statement nor WITH … DELETE can change anything.
+    function readOnlyQuery(d, sql, params) {
+      var count = 0;
+      for (var st of d.iterateStatements(String(sql))) {
+        count++;
+        var text = String(st.getSQL()).replace(/^(\s*(--[^\n]*(\n|$)|\/\*[\s\S]*?\*\/))*/, '');
+        var reads = /^\s*(select|with|values)\b/i.test(text);
+        st.free();
+        if (!reads || count > 1) throw new Error('DM_READ_ONLY: one statement that only reads');
+      }
+      if (count !== 1) throw new Error('DM_READ_ONLY: one statement that only reads');
+      d.run('pragma query_only = 1');
+      try { return d.exec(sql, params).map(function (r) { return { columns: r.columns, values: r.values }; }); }
+      finally { d.run('pragma query_only = 0'); }
     }
 
     self.onmessage = function (ev) {

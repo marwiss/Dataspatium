@@ -177,6 +177,10 @@ Hallitse-tilan kortti **Validoi malli** kokoaa IFC-mallin tarkistukset ja kunkin
 - **Projektin IDS-tiedostot**: jos palvelin tarkistaa tiedoston myös projektin IDS-asiakirjoja vasten (jokaisen `.ids`-päätteisen
   asiakirjan uusin versio), raportti näyttää, montako määrittelyä hyväksyttiin, hylättiin tai ei koskenut tiedostoa, ja mitkä hylättiin,
   asiakirjan nimen ja löydösten määrän kanssa. IDS-asiakirja, jota ei voitu lukea, on niiden sääntöjen joukossa, joita ei voitu suorittaa.
+- **Se, mihin mikään GlobalId ei ulotu**: jos palvelimen tarkistus graph löytää instansseja, joihin mikään
+  GlobalId-tunnisteellinen ei ulotu, raportti näyttää painikkeen *Poista se, mihin mikään GlobalId ei ulotu*. Palvelin ehdottaa
+  silloin vahvistuksesi jälkeen muutosjoukkoa, joka poistaa ne; ehdotuksesta tulee asia, joka koetellaan ja hyväksytään kuten
+  muutkin, ja versio säilyttää kaiken.
 - **Tarkistukset täällä** näyttää sovelluksessa viimeksi ajetun *Validointi*-, *IDS-tarkistus*- ja törmäystarkistustuloksen, ja
   painikkeet avaavat ne Analysoi-tilassa. Tulokset tallennetaan sovelluksen asetuksiin, ei tietoaineistoon.
 
@@ -191,6 +195,10 @@ toisiaan. Se toimii samoilla kolmioilla, jotka 3D-näkymä näyttää, omassa s�
 
 - **Joukko A ja joukko B** ovat kaikki rakennusosat tai yksi tyyppi, esimerkiksi kanavat palkkeja vastaan. B voi olla samassa mallissa
   tai toisessa saman projektin mallissa, ja silloin mallien on käytettävä samaa koordinaatistoa. Aukkoja ei lasketa.
+- **Palvelimella**: Dataregiumista haetulle mallille (3.0.0:sta alkaen, kun palvelimen törmäystarkistus on päällä) *Missä*
+  valitsee, laskeeko sovellus itse vai tekeekö palvelin saman tarkistuksen versioille. Palvelin työskentelee jonossa; sovellus
+  odottaa ja näyttää raportin kuin omansa, samalla taulukolla, merkinnällä ja BCF-tiedostolla, ja *Lähetä asioina* antaa
+  palvelimen tehdä asiat, kullekin oma näkymä. Toisen mallin on silloin oltava saman projektin versio.
 - **Leikkaus** laskee parit, joissa toinen elementti ulottuu toiseen toleranssia syvemmälle (2 mm, ellei muuta anneta). Syvyys mitataan
   sen mukaan, kuinka syvälle kulmat ja särmät ulottuvat toiseen elementtiin, joten vain kohtaavia pintoja ei lasketa. *Sisältyminen*
   on elementti, joka on kokonaan toisen sisällä.
@@ -301,6 +309,11 @@ jälkeen, palvelin kokeilee ehdotusta uudelleen uusinta vasten samassa vaiheessa
 muutokset ovat ristiriidassa välissä tulleen kanssa, palvelin kieltäytyy (412) ja paneeli luettelee ristiriitaiset avaimet (instanssi
 ja attribuutti) tai sanoo, että mikä tahansa on voinut muuttua, kun välissä on ladattu kokonainen tiedosto. Hae silloin uusin versio,
 tee muutokset uudelleen ja ehdota uudelleen.
+
+Jos projektissa on tiimejä (kortti *Projektin jäsenet* Hallitse-tilassa), paneeli näyttää, mitä tiimejä muutos koskee. Jos se
+koskee vain yhden tiimin osaa, tiimin vastuuhenkilö hyväksyy, myös toimittajan roolissa, ja palvelin kieltäytyy (403) projektin
+vastuuhenkilöltä; jos se koskee usean tiimin osia tai ei minkään, projektin vastuuhenkilö hyväksyy kuten ennen. Kun IDS-asiakirja saa
+uuden version, palvelin tarkistaa projektin uusimmat IFC-versiot uudelleen, ja niiden raportit ovat sillä aikaa odottavia.
 
 Kun palvelin antaa arvot ristiriitaa kohden, paneeli näyttää kunkin ristiriidan arvon perusversiossa, välissä tulleen arvon ja
 ehdotuksesi, ja valitset ristiriita kerrallaan, pidätkö ehdotuksesi vai otatko välissä tulleen. *Ehdota uudelleen valinnoillani*
