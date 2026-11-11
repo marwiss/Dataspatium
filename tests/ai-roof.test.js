@@ -4,7 +4,9 @@
  * Tests for create_roof, the write tool that puts a roof on a storey's walls (F45): the four shapes land as steps with their defaults
  * filled in and a ref each, the checks refuse an unknown shape, a pitch of 80°, a negative thickness and an outline of fewer than three
  * corners, an outline that is not a rectangle is answered with a note, the description names the shape (in the words of the facts
- * form) and the pitch in all seven languages, the summary counts the roof as a create and the wheel keeps every field.
+ * form) and the pitch in all seven languages, the summary counts the roof as a create and the wheel keeps every field. With the real
+ * Pyodide (`?python=1` or cached components) the wheel builds a gable roof on four new walls of the fixture model: an IfcRoof with the
+ * ref, contained in the storey, aggregating two roof slabs.
  */
 (function () {
   'use strict';
@@ -13,6 +15,21 @@
   const writeTools = D.require('ai/write-tools');
   const agent = D.require('ai/agent');
   const i18n = D.require('ui/i18n');
+  const catalog = D.require('engines/python/catalog');
+  const { bridge } = D.require('data/python-bridge');
+  const datasets = D.require('data/datasets');
+  const importer = D.require('io/import');
+  const ifcOps = D.require('data/ifc-ops');
+  const fixtures = D.require('tests/fixtures/ifc');
+  const created = [];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const wantReal = () => { try { return new URLSearchParams(location.search).get('python') === '1'; } catch (_e) { return false; } };
+  async function waitFor(fn, timeoutMs = 5000, label = 'condition') {
+    const t0 = performance.now();
+    for (;;) { const v = await fn(); if (v) return v; if (performance.now() - t0 > timeoutMs) throw new Error('timeout waiting for ' + label); await wait(30); }
+  }
+  /** The written IFC of a preview as text (the bridge answers bytes). */
+  const textOf = (res) => (typeof res.bytes === 'string' ? res.bytes : res.bytes ? new TextDecoder().decode(res.bytes) : '');
   const BOX = [[0, 0], [12, 0], [12, 8], [0, 8]];
   const ARGS = { storey: 'Plan 3', shape: 'gable', outline: null, pitch: null, overhang: null, thickness: null, ridge: null, base: null, name: null };
   const roof = (cs, patch) => writeTools.call(cs, 'create_roof', Object.assign({}, ARGS, patch));
@@ -95,6 +112,43 @@
       }
       assert.equal(new Set(seen).size, 7, 'seven different texts: ' + seen.join(' | '));
     } finally { i18n.setLanguage(before, { persist: false }); }
+    return 'ok';
+  });
+
+  test('ai roof: Python builds a gable roof on four new walls of the fixture model: an IfcRoof with the ref in the storey and two roof slabs', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
+    const meta = await importer.run(fixtures.ifcFile({ walls: 2 }), { format: 'model' }, null, 'Takprov');
+    created.push(meta.id);
+    await bridge.start();
+    await waitFor(() => bridge.state !== 'busy', 60000, 'Python free');
+    const cs = writeTools.create(meta.id);
+    assert.ok(writeTools.call(cs, 'create_storeys_and_grid', { storeys: [{ name: 'Plan 3', elevation: 6 }], grid: null }).ok);
+    const corners = [[0, 0], [12, 0], [12, 8], [0, 8]];
+    for (let i = 0; i < 4; i++) assert.ok(writeTools.call(cs, 'create_wall', { storey: 'Plan 3', start: corners[i], end: corners[(i + 1) % 4], thickness: 0.2, height: 2.7, name: 'Vägg ' + (i + 1) }).ok);
+    const call = roof(cs, { storey: null, name: 'Tak' });
+    assert.ok(call.ok && call.ref === 'new-5', JSON.stringify(call));
+    const res = await ifcOps.previewChangeset(meta.id, writeTools.toWheel(cs));
+    const report = res.report;
+    assert.equal(report.errors, 0, 'no errors: ' + JSON.stringify(report.findings));
+    assert.equal(report.operations, 6);
+    const roofs = (report.created || []).filter((e) => e.ifc_class === 'IfcRoof');
+    assert.ok(roofs.length === 1 && roofs[0].ref === 'new-5' && roofs[0].name === 'Tak' && roofs[0].storey === 'Plan 3', 'the roof among the created, with the ref, on the top storey: ' + JSON.stringify(report.created));
+    const slabs = (report.created || []).filter((e) => e.ifc_class === 'IfcSlab');
+    assert.equal(slabs.length, 2, 'two roof slabs: ' + JSON.stringify(report.created));
+    assert.ok(slabs.every((e) => !e.ref), 'only the roof gets a ref');
+    const text = textOf(res);
+    assert.ok(text.includes('IFCROOF(') && text.includes('.GABLE_ROOF.'), 'the file has a gable roof');
+    const lines = text.split('\n');
+    assert.equal(lines.filter((x) => x.includes('IFCSLAB(') && x.includes('.ROOF.')).length, 2, 'two IfcSlab ROOF');
+    const parts = lines.map((x) => x.match(new RegExp('IFCRELAGGREGATES\\(.*,#' + roofs[0].id + ',\\(([^)]*)\\)\\)'))).find(Boolean);
+    assert.ok(parts, 'the roof aggregates its parts');
+    assert.deepEqual(parts[1].split(',').map((x) => Number(x.replace('#', ''))).sort((a, b) => a - b), slabs.map((e) => e.id).sort((a, b) => a - b), 'and the parts are the two slabs');
+    assert.ok(lines.some((x) => x.includes('IFCRELCONTAINEDINSPATIALSTRUCTURE(') && new RegExp('[(,]#' + roofs[0].id + '[,)]').test(x)), 'the roof is contained in a storey');
+    return 'ok';
+  }, 900000);
+
+  test('ai roof: cleanup', async () => {
+    for (const id of created) await datasets.remove(id).catch(() => {});
     return 'ok';
   });
 })();

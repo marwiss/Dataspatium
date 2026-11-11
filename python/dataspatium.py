@@ -1278,7 +1278,7 @@ def _ifc_apply(in_file, table_file, key, out_file):
 # The AI's write tools never touch the model themselves: they fill a change set (a JSON list of operations) that the person
 # previews and approves in the app; only then does _ifc_changeset() apply it, as a recipe step with undo. Lengths are metres and
 # are scaled to the file's unit. A created element gets a ref ("new-1", "new-2", ...) in the order of the operations
-# create_wall, create_slab and create_opening, so that a later operation can name it before the file has given it an id.
+# create_wall, create_slab, create_roof and create_opening, so that a later operation can name it before the file has given it an id.
 
 
 def _cs_num(op, key, default=None, positive=False, unit="metres"):
@@ -1354,10 +1354,139 @@ def _cs_crs_facts(crs):
     return None, None, None
 
 
+# Placements as matrices [X, Y, Z, origin] (the axes as columns, in file units), for reading where the walls stand.
+def _cs_unit(v):
+    n = math.sqrt(sum(c * c for c in v))
+    return [c / n for c in v] if n > 1e-12 else None
+
+
+def _cs_dot(u, v):
+    return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]
+
+
+def _cs_turn(m, v):
+    """The direction v of the matrix m's coordinates in its parent's."""
+    return [m[0][i] * v[0] + m[1][i] * v[1] + m[2][i] * v[2] for i in range(3)]
+
+
+def _cs_at(m, p):
+    """The point p of the matrix m's coordinates in its parent's."""
+    return [a + b for a, b in zip(_cs_turn(m, p), m[3])]
+
+
+def _cs_compose(a, b):
+    return [_cs_turn(a, b[0]), _cs_turn(a, b[1]), _cs_turn(a, b[2]), _cs_at(a, b[3])]
+
+
+def _cs_invert(m):
+    """The inverse of a rigid placement: the rotation transposed and the origin turned back."""
+    x, y, z, o = m
+    return [[x[0], y[0], z[0]], [x[1], y[1], z[1]], [x[2], y[2], z[2]], [-_cs_dot(x, o), -_cs_dot(y, o), -_cs_dot(z, o)]]
+
+
+def _cs_axes(position):
+    """An IfcAxis2Placement3D or 2D as a matrix; the identity for none."""
+    if position is None:
+        return [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]]
+    origin = ([float(c) for c in position.Location.Coordinates] + [0.0, 0.0])[:3]
+    if position.is_a("IfcAxis2Placement2D"):
+        z = [0.0, 0.0, 1.0]
+        ref = ([float(c) for c in position.RefDirection.DirectionRatios] + [0.0])[:3] if position.RefDirection is not None else [1.0, 0.0, 0.0]
+    else:
+        z = _cs_unit([float(c) for c in position.Axis.DirectionRatios]) if position.Axis is not None else [0.0, 0.0, 1.0]
+        ref = [float(c) for c in position.RefDirection.DirectionRatios] if position.RefDirection is not None else ([0.0, 1.0, 0.0] if abs(z[0]) > 0.9 else [1.0, 0.0, 0.0])
+    x = _cs_unit([a - _cs_dot(ref, z) * b for a, b in zip(ref, z)])
+    return [x, [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]], z, origin]
+
+
+def _cs_placement(placement, depth=0):
+    """The absolute matrix of an object placement (a chain of IfcLocalPlacement); None for one the app cannot follow."""
+    if placement is None:
+        return _cs_axes(None)
+    if depth > 64 or not placement.is_a("IfcLocalPlacement"):
+        return None
+    parent = _cs_placement(placement.PlacementRelTo, depth + 1)
+    return None if parent is None else _cs_compose(parent, _cs_axes(placement.RelativePlacement))
+
+
+def _cs_profile_points(profile):
+    """The outer corners of a profile in its plane: rectangles and polyline outlines; [] for curves the app does not read."""
+    if profile.is_a("IfcRectangleProfileDef"):
+        hx, hy = float(profile.XDim) / 2.0, float(profile.YDim) / 2.0
+        m = _cs_axes(profile.Position)
+        return [_cs_at(m, (x, y, 0.0))[:2] for x, y in ((-hx, -hy), (hx, -hy), (hx, hy), (-hx, hy))]
+    curve = profile.OuterCurve if profile.is_a("IfcArbitraryClosedProfileDef") else None
+    if curve is not None and curve.is_a("IfcPolyline"):
+        return [[float(c) for c in p.Coordinates][:2] for p in curve.Points]
+    if curve is not None and curve.is_a("IfcIndexedPolyCurve"):
+        return [[float(c) for c in p][:2] for p in curve.Points.CoordList]
+    return []
+
+
+def _cs_item_points(item, depth=0):
+    """The corners of a body item in its own coordinates: extruded rectangles and polylines, Boolean results by their first operand,
+    faceted and tessellated solids; [] for what the app does not read."""
+    if item is None or depth > 16:
+        return []
+    if item.is_a("IfcBooleanResult"):
+        return _cs_item_points(item.FirstOperand, depth + 1)
+    if item.is_a("IfcExtrudedAreaSolid"):
+        d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+        m = _cs_axes(item.Position)
+        return [_cs_at(m, (x + d[0] * k, y + d[1] * k, d[2] * k)) for x, y in _cs_profile_points(item.SweptArea) for k in (0.0, float(item.Depth))]
+    if item.is_a("IfcFacetedBrep"):
+        return [[float(c) for c in p.Coordinates] for f in item.Outer.CfsFaces for b in f.Bounds if b.Bound.is_a("IfcPolyLoop") for p in b.Bound.Polygon]
+    if item.is_a("IfcTessellatedFaceSet"):
+        return [[float(c) for c in p] for p in item.Coordinates.CoordList]
+    return []
+
+
+def _cs_rectangle(points):
+    """Whether (x, y) points are the four corners of their bounding box (a closing corner may repeat the first)."""
+    pts = list(points[:-1]) if len(points) > 4 and tuple(points[0]) == tuple(points[-1]) else list(points)
+    if len(pts) != 4:
+        return False
+    x0, y0, x1, y1 = min(p[0] for p in pts), min(p[1] for p in pts), max(p[0] for p in pts), max(p[1] for p in pts)
+    corners = set()
+    for x, y in pts:
+        cx = 0 if abs(x - x0) < 1e-3 else 1 if abs(x - x1) < 1e-3 else None
+        cy = 0 if abs(y - y0) < 1e-3 else 1 if abs(y - y1) < 1e-3 else None
+        if cx is None or cy is None:
+            return False
+        corners.add((cx, cy))
+    return len(corners) == 4
+
+
+def _cs_roof_faces(shape, length, width, overhang, ridge):
+    """The faces of a roof over the rectangle [0, length] x [0, width] in metres: (fall, corners), fall the horizontal direction the
+    face falls toward and corners its outline in plan, the eaves first and then the upper corners back, with the overhang beyond the
+    rectangle on every side. A shed falls toward negative y (ridge x: negative x); a gable's ridge runs along the longer side unless
+    ridge says x or y; a hip roof's hips run at 45 degrees in plan, so its ridge lies along the longer side (a point over a square)."""
+    a, b, o = float(length), float(width), float(overhang)
+    sw, se, ne, nw = (-o, -o), (a + o, -o), (a + o, b + o), (-o, b + o)
+    south, north, west, east = (0.0, -1.0), (0.0, 1.0), (-1.0, 0.0), (1.0, 0.0)
+    if shape == "flat" or (shape == "shed" and ridge != "x"):
+        return [(south, [sw, se, ne, nw])]
+    if shape == "shed":
+        return [(west, [nw, sw, se, ne])]
+    if shape == "gable":
+        if ridge == "x" or (ridge != "y" and a >= b):
+            return [(south, [sw, se, (a + o, b / 2.0), (-o, b / 2.0)]), (north, [ne, nw, (-o, b / 2.0), (a + o, b / 2.0)])]
+        return [(west, [nw, sw, (a / 2.0, -o), (a / 2.0, b + o)]), (east, [se, ne, (a / 2.0, b + o), (a / 2.0, -o)])]
+    if a >= b:
+        r1, r2 = (b / 2.0, b / 2.0), (a - b / 2.0, b / 2.0)
+        faces = [(south, [sw, se, r2, r1]), (north, [ne, nw, r1, r2]), (west, [nw, sw, r1]), (east, [se, ne, r2])]
+    else:
+        r1, r2 = (a / 2.0, a / 2.0), (a / 2.0, b - a / 2.0)
+        faces = [(west, [nw, sw, r1, r2]), (east, [se, ne, r2, r1]), (south, [sw, se, r1]), (north, [ne, nw, r2])]
+    return [(fall, [p for i, p in enumerate(c) if i == 0 or abs(p[0] - c[i - 1][0]) + abs(p[1] - c[i - 1][1]) > 1e-6]) for fall, c in faces]
+
+
 class _ChangeSet:
     """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted."""
 
-    CREATES = ("create_wall", "create_slab", "create_opening")
+    CREATES = ("create_wall", "create_slab", "create_roof", "create_opening")
+    ROOF_TYPES = {"gable": "GABLE_ROOF", "hip": "HIP_ROOF", "shed": "SHED_ROOF", "flat": "FLAT_ROOF"}
 
     def __init__(self, model):
         import ifcopenshell.util.unit
@@ -1398,12 +1527,14 @@ class _ChangeSet:
             raise DataspatiumError("ids must be a list of element ids or refs")
         return [self.entity(x) for x in ids]
 
-    def storey(self, name):
+    def storey(self, name, top=False):
+        """A storey by its name; without one the lowest, or with top the highest."""
         storeys = self.m.by_type("IfcBuildingStorey")
         if not storeys:
             raise DataspatiumError("the model has no storey; create one with create_storeys_and_grid first")
         if name is None or str(name).strip() == "":
-            return sorted(storeys, key=lambda s: float(s.Elevation or 0))[0]
+            ordered = sorted(storeys, key=lambda s: float(s.Elevation or 0))
+            return ordered[-1] if top else ordered[0]
         for exact in (True, False):
             for s in storeys:
                 a, b = str(s.Name or ""), str(name)
@@ -1588,6 +1719,34 @@ class _ChangeSet:
         ys = [p[1] for p in pts]
         return [(min(xs), min(ys)), (max(xs), min(ys)), (max(xs), max(ys)), (min(xs), max(ys))]
 
+    def wall_extent(self, storey):
+        """The bounding box (x0, y0, x1, y1) of the storey's walls in its plane and the height of their tops above it, in metres;
+        (None, None) when no wall on the storey has a body the app can read."""
+        frame = _cs_placement(storey.ObjectPlacement)
+        if frame is None:
+            return None, None
+        back = _cs_invert(frame)
+        pts = []
+        for wall in self.m.by_type("IfcWall"):
+            container = self.container(wall)
+            if container is None or container.id() != storey.id():
+                continue
+            try:
+                m = _cs_placement(wall.ObjectPlacement)
+                rep = wall.Representation
+                if m is None or rep is None:
+                    continue
+                m = _cs_compose(back, m)
+                for r in rep.Representations or ():
+                    if (r.RepresentationIdentifier or "") == "Body":
+                        pts += [_cs_at(m, p) for item in (r.Items or ()) for p in _cs_item_points(item)]
+            except Exception:
+                continue
+        if not pts:
+            return None, None
+        s = self.scale
+        return (min(p[0] for p in pts) * s, min(p[1] for p in pts) * s, max(p[0] for p in pts) * s, max(p[1] for p in pts) * s), max(p[2] for p in pts) * s
+
     # -- the operations
     def op_create_storeys_and_grid(self, op):
         import ifcopenshell.api.aggregate
@@ -1663,6 +1822,76 @@ class _ChangeSet:
         self.predefined(slab, "FLOOR")
         self.contain(slab, storey)
         self.register(slab, storey)
+
+    def op_create_roof(self, op):
+        """A roof over a rectangle: an IfcRoof in the storey (the highest when none is named) that aggregates one roof slab (IfcSlab
+        ROOF) per face, the roof alone with a ref. The rectangle is the outline's bounding box or the storey's walls'; the eaves lie on
+        its sides at base above the storey (by default the top of the walls, else 2.7 m), every face rises inward at the pitch (the
+        ridge base + half the span x tan(pitch) high), and the overhang reaches beyond the sides. A face is the polygon of its outline
+        in its own plane (Axis the face's normal, RefDirection along the eaves), extruded straight up by thickness / cos(pitch): its
+        thickness at right angles is the given one, and neighbouring faces meet in the vertical planes through the ridge and the hips
+        without a gap or an overlap."""
+        import ifcopenshell.api.aggregate
+        shape = str(op.get("shape") or "").strip().lower()
+        if shape not in self.ROOF_TYPES:
+            raise DataspatiumError("shape must be gable, hip, shed or flat")
+        storey = self.storey(op.get("storey"), top=True)
+        flat = shape == "flat"
+        pitch = 0.0 if flat else _cs_num(op, "pitch", 10.0 if shape == "shed" else 30.0, unit="degrees")
+        if not flat and not 0.0 < pitch <= 75.0:
+            raise DataspatiumError("pitch must be more than 0 and at most 75 degrees; use shape flat for a flat roof")
+        overhang = _cs_num(op, "overhang", 0.0 if flat else 0.4)
+        if overhang < 0:
+            raise DataspatiumError("overhang must be zero or more (metres)")
+        thickness = _cs_num(op, "thickness", 0.25, positive=True)
+        ridge = str(op.get("ridge") or "").strip().lower() or None
+        if ridge not in (None, "x", "y"):
+            raise DataspatiumError("ridge must be x, y or null")
+        outline = op.get("outline")
+        extent, top = self.wall_extent(storey) if not outline or op.get("base") is None else (None, None)
+        if outline:
+            if not isinstance(outline, (list, tuple)) or len(outline) < 3:
+                raise DataspatiumError("outline must be at least three [x, y] points")
+            pts = [_cs_xy(p, "outline") for p in outline]
+            extent = (min(p[0] for p in pts), min(p[1] for p in pts), max(p[0] for p in pts), max(p[1] for p in pts))
+            if not _cs_rectangle(pts):
+                self.notes.append("the roof's outline is not a rectangle along x and y (%d corners), so the roof covers its bounding box" % len(pts))
+        elif extent is None:
+            raise DataspatiumError("give an outline: storey %r has no walls whose shape the app can read" % _ifc_text(storey.Name))
+        x0, y0, x1, y1 = extent
+        length, width = x1 - x0, y1 - y0
+        if length < 0.1 or width < 0.1:
+            raise DataspatiumError("the roof must span at least 0.1 m along x and along y, not %.3g x %.3g m" % (length, width))
+        base = _cs_num(op, "base", 2.7 if top is None else top)
+        name = op.get("name") or "Roof"
+        roof = self.root("IfcRoof", name)
+        roof.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x0), self.u(y0), self.u(base))
+        if self.m.schema == "IFC2X3":
+            roof.ShapeType = self.ROOF_TYPES[shape]
+        else:
+            self.predefined(roof, self.ROOF_TYPES[shape])
+        self.contain(roof, storey)
+        self.register(roof, storey)
+        p = math.radians(pitch)
+        sin, cos, tan = math.sin(p), math.cos(p), math.tan(p)
+        slabs = []
+        for i, (fall, corners) in enumerate(_cs_roof_faces(shape, length, width, overhang, ridge)):
+            fx, fy = fall
+            eaves = max(x * fx + y * fy for x, y in ((0.0, 0.0), (length, 0.0), (length, width), (0.0, width)))
+            pts = [(x, y, (eaves - x * fx - y * fy) * tan) for x, y in corners]  # metres in the roof's placement
+            along, up, normal = (-fy, fx, 0.0), (-fx * cos, -fy * cos, sin), (fx * sin, fy * sin, cos)
+            o = pts[0]
+            face = [[self.u(_cs_dot([q[k] - o[k] for k in range(3)], axis)) for axis in (along, up)] for q in pts]  # in the face's plane
+            profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.m.createIfcPolyline([self.point(u, v) for u, v in face + face[:1]]))
+            position = self.m.createIfcAxis2Placement3D(self.point(self.u(o[0]), self.u(o[1]), self.u(o[2])), self.direction(*normal), self.direction(*along))
+            slab = self.root("IfcSlab", "%s %d" % (name, i + 1))
+            slab.ObjectPlacement = self.placement(roof.ObjectPlacement, 0, 0, 0)
+            slab.Representation = self.shape(self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0.0, sin, cos), self.u(thickness / cos)))
+            self.predefined(slab, "ROOF")
+            slabs.append(slab)
+        ifcopenshell.api.aggregate.assign_object(self.m, products=slabs, relating_object=roof)
+        for slab in slabs:
+            self.register(slab, storey, ref=False)
 
     def op_create_opening(self, op):
         import ifcopenshell.api.feature
