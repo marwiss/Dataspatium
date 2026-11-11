@@ -70,7 +70,7 @@
       /** The table, or the document, gallery or map view. */
       function renderMain(ds) {
         const mod = viewId ? KIND_VIEWS[viewId] : null;
-        if (showTable || !mod) { renderTable(ds); renderInspector(ds); return; }
+        if (showTable || !mod) { drawTable(ds); renderInspector(ds); return; }
         table = null;
         if (kindView && kindViewFor !== viewId) { kindView.destroy(); kindView = null; }
         if (!kindView) {
@@ -116,6 +116,16 @@
         });
       }
 
+      /**
+       * The table, drawn without waiting. The dataset can be removed (here, in another tab or by a test's cleanup) while the table
+       * loads; only other errors are reported, so that no rejection is left unhandled.
+       */
+      function drawTable(ds) {
+        renderTable(ds).catch(async (err) => {
+          if (ds && (await services.datasets.get(ds.id).catch(() => null))) shell.log(String((err && err.message) || err), 'error');
+          else D.log('bearbeta', 'the dataset went away while its table loaded', err);
+        });
+      }
       async function renderTable(ds) {
         const cols = await services.datasets.columns(ds.id);
         const ownView = await viewFor(ds, cols);
@@ -145,7 +155,7 @@
           if (listWhere) { parts.push(listWhere.sql); params.push(...listWhere.params); }
           const made = await selectionMod.setFromWhere(ds.id, parts.map((p) => `(${p})`).join(' and '), params);
           ui.toast.show(made ? t('selection.made', { n: i18n.formatNumber(made.rowids.length) }) : t('selection.none'), { kind: made ? 'ok' : 'info' });
-          renderTable(current());
+          drawTable(current());
         } });
         undoBtn = ui.button({ label: t('common.undo'), icon: 'history', onClick: async () => { try { const label = await recipes.undo(ds.id); shell.log(t('bearbeta.undone', { label }), 'ok'); refresh(current()); if (selectedColumn) showStats(current(), selectedColumn); } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'warn' }); } updateUndo(); } });
         table = /** @type {any} */ (h('dm-table'));
