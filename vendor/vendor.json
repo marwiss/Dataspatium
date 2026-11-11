@@ -559,6 +559,18 @@
           "bundle": "icons"
         },
         {
+          "path": "icons/repeat.svg",
+          "as": "icons/repeat.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
+          "path": "icons/octagon-x.svg",
+          "as": "icons/octagon-x.svg",
+          "wrap": "text",
+          "bundle": "icons"
+        },
+        {
           "path": "icons/square.svg",
           "as": "icons/square.svg",
           "wrap": "text",

@@ -615,7 +615,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/floden.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 4585,
+  "size": 7551,
   "library": "dataspatium"
  },
  "docs/sv/statistik.md": {
@@ -783,7 +783,7 @@ Dataspatium.assets.addEntries({
  "docs/da/floden.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 4508,
+  "size": 7584,
   "library": "dataspatium"
  },
  "docs/da/statistik.md": {
@@ -951,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/floden.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 4459,
+  "size": 7458,
   "library": "dataspatium"
  },
  "docs/nb/statistik.md": {
@@ -1119,7 +1119,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/floden.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 4482,
+  "size": 7495,
   "library": "dataspatium"
  },
  "docs/nn/statistik.md": {
@@ -1287,7 +1287,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/floden.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 4824,
+  "size": 8031,
   "library": "dataspatium"
  },
  "docs/fi/statistik.md": {
@@ -1455,7 +1455,7 @@ Dataspatium.assets.addEntries({
  "docs/is/floden.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 4713,
+  "size": 7869,
   "library": "dataspatium"
  },
  "docs/is/statistik.md": {
@@ -1623,7 +1623,7 @@ Dataspatium.assets.addEntries({
  "docs/en/floden.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 4232,
+  "size": 7249,
   "library": "dataspatium"
  },
  "docs/en/statistik.md": {

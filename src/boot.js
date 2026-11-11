@@ -245,6 +245,7 @@
     'src/ui/components/fields.js',
     'src/ui/components/layout.js',
     'src/ui/components/overlays.js',
+    'src/ui/ask.js',
     'src/ui/components/dropzone.js',
     'src/ui/components/table.js',
     'src/ui/components/code-editor.js',

@@ -19,13 +19,46 @@ Paina *Uusi työnkulku*, anna sille nimi ja lisää vaiheet. Vaiheet ajetaan ylh
 | Vie koontinäyttö | Kirjoittaa koontinäytön erillisenä HTML-tiedostona |
 | Luo asiakirja | Täyttää asiakirjamallin; ryhmittelysarakkeella yksi asiakirja arvoa kohti |
 | Vie aineisto | Kirjoittaa aineiston tiedostoksi |
+| Suorita komento | Suorittaa yhden sovelluksen komennoista, argumentit JSON-muodossa; vastaus on komennon tiedot |
 
 Aineistoon perustuva kaavio tai asiakirja piirretään tiedoilla, jotka ovat olemassa vaiheen ajon aikana, joten sijoita ne
 noutavien ja käsittelevien vaiheiden jälkeen.
 
+## Ehdot, silmukat ja kysymykset
+
+Työnkulku voi valita reitin aiempien vaiheiden tulosten mukaan. Anna vaiheelle *Vastauksen nimi*, niin myöhemmät vaiheet saavat
+vastauksen muodossa `{{nimi.kenttä}}` argumenteissa, kysymyksissä ja viesteissä ja muodossa `nimi.kenttä` ehdoissa. *Suorita
+komento* suorittaa yhden niistä komennoista, joita myös sovelluksen tekoäly käyttää, argumentit JSON-muodossa. Jos vaiheen nimi
+on `maara` ja se suorittaa komennon `run_sql` argumentein `{"dataset": "Väestö", "sql": "select count(*) from data"}`, määrä
+on `maara.rows[0][0]`.
+
+Vain lukevat komennot ovat `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Muuttavat tai tiedostoja tekevät komennot ovat `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` suorittaa vain
+yhden lukevan lauseen.
+
+| Vaihe | Miten se toimii |
+|---|---|
+| Jos ehto täyttyy | Suorittaa kohdan *Silloin* vaiheet, jos ehto täyttyy, muuten kohdan *Muuten* vaiheet |
+| Jokaiselle luettelon arvolle | Suorittaa vaiheet kerran jokaiselle aiemman vastauksen arvolle, esimerkiksi `kunnat.rows`; arvon saa muodossa `{{item}}`, ja luku n antaa kierrokset 1–n |
+| Toista, kunnes ehto täyttyy | Suorittaa vaiheet ja kokeilee ehtoa jokaisen kierroksen jälkeen, kierrosten välissä tauko; kierroksen saa muodossa `{{round}}` |
+| Kysy minulta | Näyttää kysymyksen vastausvaihtoehtoineen, yksi riviä kohden, ja odottaa vastausta, jonka saa muodossa `{{nimi.answer}}` |
+| Lopeta työnkulku | Lopettaa työnkulun ja jättää viestin lokiin; sitä ei lasketa virheeksi |
+
+Ehto kirjoitetaan vertailuilla `=`, `!=`, `<`, `<=`, `>`, `>=` ja `contains`, sanoilla `and`, `or` ja `not`, sulkeilla, luvuilla,
+lainausmerkeissä olevalla tekstillä ja viittauksilla vastauksiin, esimerkiksi `maara.rows[0][0] > 0 and nimi = 'Ale'`. Sovellus
+lukee ehdon itse eikä koskaan suorita sitä koodina. Puuttuva vastaus lasketaan tyhjäksi, ja ehto, jota ei voi lukea, näkyy heti
+muokkaimessa.
+
+Molemmilla silmukoilla on raja, *Enintään kierroksia* (oletus 100, enintään 1 000) ja *Enintään sekunteja*, ja ensin täyttyvä raja
+pätee. Silmukan vastaus kertoo, montako kierrosta se kävi (`rounds`) ja miksi se päättyi (`reason`: `done`, `until`, `rounds` tai
+`time`), jotta myöhempi ehto voi valita sen mukaan.
+
+*Pysäytä* työnkulkunäkymässä ja tilarivillä pysäyttää työnkulun ennen seuraavaa vaihetta ja jokaisen kierroksen jälkeen, ja
+käynnissä oleva tauko keskeytyy heti. Jo alkanut vaihe suoritetaan loppuun. Loki kertoo, mihin työnkulku pysähtyi, esimerkiksi
+*Pysäytit kierroksella 37/250*, ja tehdyt muutokset voi perua tavalliseen tapaan.
+
 ## Työnkulun ajaminen
 
-*Aja* käynnistää työnkulun. Tilarivi näyttää, mikä vaihe on käynnissä, ja lokiin tulee yksi rivi vaihetta kohti. *Keskeytä*
+*Aja* käynnistää työnkulun. Tilarivi näyttää, mikä vaihe on käynnissä, ja lokiin tulee yksi rivi vaihetta kohti. *Pysäytä*
 pysäyttää työnkulun ennen seuraavaa vaihetta. Työnkulku pysähtyy ensimmäiseen virheeseen, ellet ole ottanut käyttöön kohtaa
 *Jatka seuraavaan vaiheeseen virheen jälkeen*. Ajo lasketaan silloinkin epäonnistuneeksi. Tarkastelija näyttää viimeisimmän ajon
 vaihe vaiheelta ja virheen siellä, missä se syntyi.
@@ -44,6 +77,7 @@ tarvitse kysyä mitään:
 - Verkosta noutavat vaiheet vaativat, että suostumus on jo annettu.
 - Tietokantasillan kautta lukevia vaiheita ei ajeta käynnistyksessä, koska silta yhdistetään käsin.
 - Python-skriptit vaativat, että Python on jo noudettu.
+- Työnkulkua, joka kysyy sinulta (*Kysy minulta*), ei koskaan ajeta käynnistyksessä.
 
 Muuten työnkulku ohitetaan, ja loki kertoo syyn. Mitään ei ajeta, kun sovellus on suljettu.
 
@@ -73,5 +107,6 @@ viittaavat työtilasi aineistoihin. Varmuuskopiosta tuleva työnkulku ei koskaan
 
 - Tarkistus noutaa lähteestä koko vastauksen. Suuret lähteet vievät yhtä kauan kuin tavallinen nouto.
 - Vain yksi työnkulku ajetaan kerrallaan.
-- Vaihe ei voi käyttää toisen tulosta muuten kuin aineistoihin päätyneen kautta.
+- Vain nimetyt vaiheet antavat vastauksia, joita myöhemmät vaiheet voivat lukea: komento antaa tietonsa, silmukka `rounds` ja
+  `reason`, kysymys `answer` ja muut vaiheet viestinsä ja tiedostonsa.
 - Useiden aineistojen päivitystä yhdessä vaiheessa ei keskeytetä kesken noudon.

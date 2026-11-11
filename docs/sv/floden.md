@@ -18,13 +18,44 @@ Tryck på *Nytt flöde*, ge det ett namn och lägg till steg. Stegen körs uppif
 | Exportera en dashboard | Skriver dashboarden som en fristående HTML-fil |
 | Skapa ett dokument | Fyller en dokumentmall; med en grupperingskolumn ett dokument per värde |
 | Exportera en datamängd | Skriver datamängden som fil |
+| Kör ett kommando | Kör ett av appens kommandon med argument som JSON; svaret är kommandots data |
 
 Ett diagram eller dokument som bygger på en datamängd ritas med de data som finns när steget körs, så lägg dem efter de
 steg som hämtar och bearbetar.
 
+## Villkor, slingor och frågor
+
+Ett flöde kan välja väg efter vad tidigare steg gav. Ge ett steg ett *Namn på svaret*, så når senare steg svaret som
+`{{namn.fält}}` i argument, frågor och meddelanden och som `namn.fält` i villkor. *Kör ett kommando* kör ett av de kommandon
+som AI:n i appen också använder, med argumenten som JSON. Heter steget `antal` och kör `run_sql` med
+`{"dataset": "Befolkning", "sql": "select count(*) from data"}`, så är antalet `antal.rows[0][0]`.
+
+Kommandona som bara läser är `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. De som ändrar eller gör filer är `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` kör bara en sats som läser.
+
+| Steg | Så fungerar det |
+|---|---|
+| Om ett villkor håller | Kör stegen under *Då* om villkoret håller, annars stegen under *Annars* |
+| För varje värde i en lista | Kör stegen en gång för varje värde i ett tidigare svar, till exempel `kommuner.rows`; värdet nås som `{{item}}`, och ett tal n ger varven 1 till n |
+| Upprepa tills ett villkor håller | Kör stegen och prövar villkoret efter varje varv, med en paus mellan varven; varvet nås som `{{round}}` |
+| Fråga mig | Visar en fråga med svarsalternativ, ett per rad, och väntar på svaret, som nås som `{{namn.answer}}` |
+| Avsluta flödet | Avslutar flödet med ett meddelande i loggen; det räknas inte som ett fel |
+
+Ett villkor skrivs med jämförelserna `=`, `!=`, `<`, `<=`, `>`, `>=` och `contains`, orden `and`, `or` och `not`, parenteser, tal,
+text inom citattecken och hänvisningar till svar, till exempel `antal.rows[0][0] > 0 and namn = 'Ale'`. Appen läser villkoret
+själv och kör det aldrig som kod. Ett svar som saknas räknas som tomt, och ett villkor som inte går att läsa syns direkt i
+redigeraren.
+
+Båda slingorna har ett tak, *Högst antal varv* (förvalt 100, högst 1 000) och *Högst antal sekunder*, och den gräns som nås först
+gäller. Slingans svar säger hur många varv den gick (`rounds`) och varför den slutade (`reason`: `done`, `until`, `rounds` eller
+`time`), så att ett senare villkor kan välja efter det.
+
+*Stoppa*, i flödesvyn och i statusraden, stoppar flödet före nästa steg och efter varje varv, och en pågående paus avbryts direkt.
+Ett steg som redan har börjat körs klart. Loggen säger var flödet stoppades, till exempel *Stoppad av dig i varv 37 av 250*, och
+det som hann göras kan ångras som vanligt.
+
 ## Köra ett flöde
 
-*Kör* startar flödet. Statusraden visar vilket steg som körs, och loggen får en rad per steg. *Avbryt* stoppar flödet före
+*Kör* startar flödet. Statusraden visar vilket steg som körs, och loggen får en rad per steg. *Stoppa* stoppar flödet före
 nästa steg. Ett flöde stannar vid första felet, om du inte har slagit på *Fortsätt med nästa steg efter ett fel*. Då räknas
 körningen ändå som misslyckad. Inspektören visar den senaste körningen steg för steg, med felet där det uppstod.
 
@@ -40,6 +71,7 @@ Med *Kör när appen startar* körs flödet strax efter att appen öppnats. Det 
 - Steg som hämtar från nätet kräver att samtycket redan är givet.
 - Steg som läser genom databasbryggan körs inte vid start, eftersom bryggan kopplas upp för hand.
 - Python-skript kräver att Python redan är hämtat.
+- Ett flöde som frågar dig (*Fråga mig*) körs aldrig vid start.
 
 Annars hoppas flödet över och loggen säger varför. Inget körs när appen är stängd.
 
@@ -69,5 +101,6 @@ din arbetsyta. Ett flöde ur en säkerhetskopia startar aldrig av sig självt f�
 
 - Kontrollen hämtar hela svaret från källan. Stora källor tar lika lång tid som en vanlig hämtning.
 - Bara ett flöde körs åt gången.
-- Ett steg kan inte använda resultatet av ett annat utöver det som hamnar i datamängderna.
+- Bara steg med ett namn ger svar som senare steg kan läsa: ett kommando ger sina data, en slinga `rounds` och `reason`, en fråga
+  `answer`, och övriga steg sitt meddelande och sina filer.
 - Uppdatering av flera datamängder i samma steg avbryts inte mitt i en hämtning.

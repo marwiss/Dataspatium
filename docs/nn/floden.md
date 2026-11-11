@@ -18,13 +18,45 @@ Trykk på *Ny flyt*, gje han eit namn og legg til steg. Stega blir køyrde ovanf
 | Eksporter eit dashbord | Skriv dashbordet som ei frittståande HTML-fil |
 | Lag eit dokument | Fyller ein dokumentmal; med ein grupperingskolonne eitt dokument per verdi |
 | Eksporter eit datasett | Skriv datasettet som ei fil |
+| Køyr ein kommando | Køyrer ein av kommandoane i appen med argument som JSON; svaret er dataa til kommandoen |
 
 Eit diagram eller dokument som byggjer på eit datasett, blir teikna med dei dataa som finst når steget blir køyrt, så legg dei etter
 stega som hentar og bearbeider.
 
+## Vilkår, løkker og spørsmål
+
+Ein flyt kan velje veg etter det tidlegare steg gav. Gje eit steg eit *Namn på svaret*, så når seinare steg svaret som
+`{{namn.felt}}` i argument, spørsmål og meldingar og som `namn.felt` i vilkår. *Køyr ein kommando* køyrer ein av kommandoane
+som AI-en i appen òg brukar, med argumenta som JSON. Heiter steget `tal` og køyrer `run_sql` med
+`{"dataset": "Folketal", "sql": "select count(*) from data"}`, er talet `tal.rows[0][0]`.
+
+Kommandoane som berre les, er `list_datasets`, `describe_dataset`, `read_rows`, `column_stats`, `run_sql`, `list_operations`, `describe_operation`, `list_items`, `list_files`. Dei som endrar noko eller lagar filer, er `apply_operation`, `undo`, `refresh_dataset`, `replay_recipe`, `run_script`, `list_to_dataset`, `render_chart`, `dashboard_html`, `generate_document`, `export_dataset`, `run_flow`, `run_r`, `run_python`. `run_sql` køyrer berre éi
+setning som les.
+
+| Steg | Slik verkar det |
+|---|---|
+| Viss eit vilkår held | Køyrer stega under *Då* viss vilkåret held, elles stega under *Elles* |
+| For kvar verdi i ei liste | Køyrer stega éin gong for kvar verdi i eit tidlegare svar, til dømes `kommunar.rows`; verdien når ein som `{{item}}`, og eit tal n gjev rundane 1 til n |
+| Gjenta til eit vilkår held | Køyrer stega og prøver vilkåret etter kvar runde, med ein pause mellom rundane; runden når ein som `{{round}}` |
+| Spør meg | Viser eit spørsmål med svaralternativ, eitt per line, og ventar på svaret, som ein når som `{{namn.answer}}` |
+| Avslutt flyten | Avsluttar flyten med ei melding i loggen; det vert ikkje rekna som ein feil |
+
+Eit vilkår vert skrive med samanlikningane `=`, `!=`, `<`, `<=`, `>`, `>=` og `contains`, orda `and`, `or` og `not`, parentesar,
+tal, tekst i hermeteikn og tilvisingar til svar, til dømes `tal.rows[0][0] > 0 and namn = 'Ale'`. Appen les vilkåret sjølv og
+køyrer det aldri som kode. Eit svar som manglar, vert rekna som tomt, og eit vilkår som ikkje kan lesast, vert vist med ein gong i
+redigeringa.
+
+Begge løkkene har ei grense, *Høgst tal på rundar* (standard 100, høgst 1 000) og *Høgst tal på sekund*, og grensa som vert nådd
+først, gjeld. Svaret frå løkka seier kor mange rundar ho gjekk (`rounds`), og kvifor ho slutta (`reason`: `done`, `until`,
+`rounds` eller `time`), så eit seinare vilkår kan velje etter det.
+
+*Stopp*, i flytvisinga og i statuslinja, stoppar flyten før neste steg og etter kvar runde, og ein pause som går føre seg, vert
+avbroten med ein gong. Eit steg som alt har byrja, vert køyrt ferdig. Loggen seier kvar flyten vart stoppa, til dømes *Stoppa av
+deg i runde 37 av 250*, og det som rakk å bli gjort, kan angrast som vanleg.
+
 ## Køyr ein flyt
 
-*Køyr* startar flyten. Statuslinja viser kva steg som blir køyrt, og loggen får éi linje per steg. *Avbryt* stoppar flyten før
+*Køyr* startar flyten. Statuslinja viser kva steg som blir køyrt, og loggen får éi linje per steg. *Stopp* stoppar flyten før
 neste steg. Ein flyt stoppar ved første feil, med mindre du har slått på *Hald fram med neste steg etter ein feil*. Køyringa
 tel då framleis som mislukka. Inspektøren viser den siste køyringa steg for steg, med feilen der han oppstod.
 
@@ -40,6 +72,7 @@ Med *Køyr når appen startar* blir flyten køyrd kort tid etter at appen er opn
 - Steg som hentar frå nettet, krev at samtykket allereie er gjeve.
 - Steg som les gjennom databasebrua, blir ikkje køyrde ved start, sidan brua blir kopla til manuelt.
 - Python-skript krev at Python allereie er henta.
+- Ein flyt som spør deg (*Spør meg*), vert aldri køyrd ved start.
 
 Elles blir flyten hoppa over, og loggen seier kvifor. Ingenting blir køyrt medan appen er lukka.
 
@@ -69,5 +102,6 @@ arbeidsområdet ditt. Ein flyt frå ein tryggingskopi startar aldri av seg sjøl
 
 - Kontrollen hentar heile svaret frå kjelda. Store kjelder tek like lang tid som ei vanleg henting.
 - Berre éin flyt blir køyrd om gongen.
-- Eit steg kan ikkje bruke resultatet av eit anna utover det som hamnar i datasetta.
+- Berre steg med eit namn gjev svar som seinare steg kan lese: ein kommando gjev data sine, ei løkke `rounds` og `reason`, eit
+  spørsmål `answer`, og andre steg meldinga og filene sine.
 - Oppdatering av fleire datasett i eitt steg blir ikkje avbroten midt i ei henting.

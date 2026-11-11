@@ -73,12 +73,14 @@
           this.loadingEl = h('span', { class: 'dm-sb dm-sb-optional dm-sb-loading', hidden: true, 'data-loading': '', title: t('shell.loading.hint') }, h('dm-progress', { indeterminate: '' }), h('span', { text: '' }),
             basic.button({ label: t('shell.loading.abort'), icon: 'x', 'icon-only': true, size: 'sm', variant: 'ghost', 'data-loading-abort': '', onClick: () => { if (D.downloads) D.downloads.abortAll(); } }));
           this.flowEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow', hidden: true, 'aria-label': t('shell.flow.hint'), title: t('shell.flow.hint'), onclick: () => this.openFlows('flows') }, icons.icon('play', 14), h('span'));
+          // Stoppa: the flow stops before its next step or round (Martin's F33 b).
+          this.flowStopEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-flow dm-sb-flow-stop', hidden: true, 'aria-label': t('flows.cancel'), title: t('flows.cancel.hint'), onclick: () => D.require('data/flows').cancel() }, icons.icon('octagon-x', 14));
           this.commentsEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-comments', hidden: true, 'aria-label': t('shell.comments.hint'), title: t('shell.comments.hint'), onclick: () => this.openUnread() }, icons.icon('message-square', 14), h('span'));
           this.watchEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-watch', hidden: true, 'aria-label': t('shell.watch.hint'), title: t('shell.watch.hint'), onclick: () => this.openFlows('watches') }, icons.icon('eye', 14), h('span'));
           this.selectionEl = h('button', { type: 'button', class: 'dm-sb dm-sb-btn dm-sb-selection', hidden: true, 'aria-label': t('selection.status.hint'), title: t('selection.status.hint'), onclick: () => this.selectionMenu() }, icons.icon('list-checks', 14), h('span'));
           selectionMod.subscribe((s) => this.showSelection(s));
           this.statusBar = h('footer', { class: 'dm-statusbar', 'aria-label': t('shell.statusbar') },
-            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.watchEl, this.commentsEl,
+            this.statusEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }), this.storageEl, this.datasetEl, this.selectionEl, this.flowEl, this.flowStopEl, this.watchEl, this.commentsEl,
             h('span', { class: 'dm-sb-grow' }),
             this.engineEls.r, this.engineEls.python, this.loadingEl, this.netEl, h('span', { class: 'dm-sb-sep', 'aria-hidden': 'true' }),
             basic.button({ label: t('shell.toggle.left'), icon: 'panel-left', 'icon-only': true, size: 'sm', variant: 'ghost', onClick: () => this.toggle('left') }),
@@ -174,13 +176,17 @@
         listenToFlows() {
           const flows = D.require('data/flows');
           const watches = D.require('data/watches');
+          // The step ask shows its question here (F34 a); a test may put its own answerer in place.
+          flows.setAsker((q) => D.require('ui/ask').ask(q));
           flows.subscribe((type, p) => {
             if (type === 'step') {
-              this.flowEl.hidden = false;
+              this.flowEl.hidden = false; this.flowStopEl.hidden = false;
               this.flowEl.lastChild.textContent = t('shell.flow.step', { name: p.name, n: p.index + 1, total: p.total, step: p.label });
             } else if (type === 'end') {
-              this.flowEl.hidden = true;
-              for (const x of p.steps) this.log(`${p.name}: ${t('flows.step.' + x.type)}: ${x.message}`, x.ok ? 'info' : 'error');
+              this.flowEl.hidden = true; this.flowStopEl.hidden = true;
+              // A long run with loops logs what failed and how it ended, not every round.
+              const lines = p.steps.length > 30 ? p.steps.filter((x, i) => !x.ok || i === p.steps.length - 1) : p.steps;
+              for (const x of lines) this.log(`${p.name}: ${x.path ? x.path + ' ' : ''}${t('flows.step.' + x.type)}: ${x.message}`, x.ok ? 'info' : 'error');
               const text = t(p.ok ? 'flows.finished.ok' : (p.aborted ? 'flows.finished.aborted' : 'flows.finished.failed'), { name: p.name });
               this.log(text, p.ok ? 'ok' : 'error');
               overlays.toast.show(text, { kind: p.ok ? 'ok' : 'error', action: p.files.length ? { label: t('flows.fetch'), onClick: async () => { const out = await flows.output(p.flowId); if (out) D.require('platform/files').download(out.blob, out.name); } } : undefined });

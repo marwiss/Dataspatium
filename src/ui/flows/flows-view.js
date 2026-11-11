@@ -3,12 +3,13 @@
 /**
  * Flows and watches in Hantera. Flöden: the saved flows with their last run, and an editor where steps are added and
  * filled in. Bevakningar: the datasets whose source can be read again, whether they are watched, and what has changed.
- * The logic lives in data/flows and data/watches; running a flow shows in the status bar and in the log.
+ * The logic lives in data/flows and data/watches; running a flow shows in the status bar and in the log. Steps that hold other
+ * steps (if, each, repeat) show them indented under their branches, each with its own place to add a step.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/flows/flows-view', ['ui/base', 'ui/basic', 'data/flows', 'data/watches', 'data/lists', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'platform/storage/idb', 'platform/files'], (base, basic, flows, watches, lists, charts, dashboards, documents, idb, files) => {
+  D.define('ui/flows/flows-view', ['ui/base', 'ui/basic', 'data/flows', 'data/watches', 'data/lists', 'viz/charts', 'viz/dashboards', 'docgen/documents', 'platform/storage/idb', 'platform/files', 'data/conditions'], (base, basic, flows, watches, lists, charts, dashboards, documents, idb, files, conditions) => {
     const { h, t, i18n, replace } = base;
 
     /** @param {any} ctx shell context */
@@ -110,6 +111,41 @@
         const label = t('flows.field.' + (step.type === 'recipe' ? 'recipe.' : '') + field.name);
         const value = step.params[field.name];
         const set = (v) => { step.params[field.name] = v; };
+        if (field.type === 'number') {
+          const el = /** @type {any} */ (h('dm-input', { label, type: 'number', help: t('flows.field.' + field.name + '.help') }));
+          el.value = value === undefined || value === null ? '' : String(value);
+          el.addEventListener('input', () => { const n = Number(el.value); if (el.value === '' || !Number.isFinite(n)) delete step.params[field.name]; else set(n); });
+          return el;
+        }
+        if (field.type === 'condition' || field.type === 'json') {
+          const json = field.type === 'json';
+          const el = /** @type {any} */ (h('dm-input', json ? { label, type: 'textarea', rows: '3', mono: '', help: t('flows.field.' + field.name + '.help') } : { label, mono: '', help: t('flows.field.' + field.name + '.help') }));
+          el.value = value && typeof value === 'object' ? JSON.stringify(value, null, 2) : (value || '');
+          // What does not read is told at once; the flow can still be saved and says so again when it runs.
+          const verify = () => {
+            const text = String(el.value || '').trim();
+            let problem = '';
+            if (text && json) { try { const v = JSON.parse(text); if (!v || typeof v !== 'object' || Array.isArray(v)) problem = t('flows.err.args'); } catch (_e) { problem = t('flows.err.args'); } }
+            else if (text) problem = conditions.check(text) || '';
+            if (problem) el.setAttribute('error', problem); else el.removeAttribute('error');
+          };
+          el.addEventListener('input', () => { set(el.value); verify(); });
+          verify();
+          return el;
+        }
+        if (field.type === 'lines') {
+          const el = /** @type {any} */ (h('dm-input', { label, type: 'textarea', rows: '4', help: t('flows.field.' + field.name + '.help') }));
+          el.value = value || '';
+          el.addEventListener('input', () => set(el.value));
+          return el;
+        }
+        if (field.type === 'switch') {
+          const el = /** @type {any} */ (h('dm-switch', { label }));
+          el.checked = !!value;
+          el.addEventListener('change', () => set(!!el.checked));
+          return el;
+        }
+        if (field.type === 'command') return select(label, [{ value: '', label: '–' }].concat(D.require('data/commands').list().map((c) => ({ value: c.name, label: c.name }))), value || '', set);
         if (field.type === 'text') {
           const el = /** @type {any} */ (h('dm-input', { label, help: t('flows.field.' + field.name + '.help') }));
           el.value = value || '';
@@ -138,15 +174,7 @@
         goOn.addEventListener('change', () => { flow.continueOnError = goOn.checked; });
         let addType = 'refresh';
         const add = select(t('flows.add.type'), flows.STEP_TYPES.map((x) => ({ value: x, label: t('flows.step.' + x) })), addType, (v) => { addType = v; });
-        const steps = flow.steps.map((step, i) => h('div', { class: 'dm-card dm-stack-sm dm-flow-step' },
-          h('div', { class: 'dm-row' },
-            ui.icon(flows.STEPS[step.type].icon, 16),
-            h('strong', { class: 'dm-grow', text: `${i + 1}. ${t('flows.step.' + step.type)}` }),
-            ui.button({ label: t('flows.step.up'), icon: 'arrow-up', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.up'), disabled: i === 0, onClick: () => { flow.steps.splice(i - 1, 0, flow.steps.splice(i, 1)[0]); draw(); } }),
-            ui.button({ label: t('flows.step.down'), icon: 'arrow-down', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.down'), disabled: i === flow.steps.length - 1, onClick: () => { flow.steps.splice(i + 1, 0, flow.steps.splice(i, 1)[0]); draw(); } }),
-            ui.button({ label: t('flows.step.remove'), icon: 'trash-2', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.remove'), onClick: () => { flow.steps.splice(i, 1); draw(); } })),
-          h('p', { class: 'dm-help dm-small', text: t('flows.step.' + step.type + '.hint') }),
-          h('div', { class: 'dm-row-wrap' }, flows.STEPS[step.type].fields.map((f) => fieldOf(f, step)))));
+        const steps = stepCards(flow.steps, 0);
         return h('div', { class: 'dm-stack' },
           h('div', { class: 'dm-card dm-stack-sm' }, name, desc, onStart, h('p', { class: 'dm-help dm-small', text: t('flows.onstart.help') }), goOn),
           steps.length ? h('div', { class: 'dm-stack-sm' }, steps) : h('p', { class: 'dm-help', text: t('flows.steps.none') }),
@@ -154,6 +182,40 @@
           h('div', { class: 'dm-row' },
             ui.button({ label: t('common.save'), icon: 'save', variant: 'primary', onClick: saveEditing }),
             ui.button({ label: t('common.cancel'), onClick: () => { s.editing = null; draw(); } })));
+      }
+      /** The cards of a list of steps; a step that holds others shows its branches indented, each with a place to add a step. */
+      function stepCards(list, depth) {
+        const flow = s.editing;
+        void flow;
+        return list.map((step, i) => {
+          const def = flows.STEPS[step.type];
+          const named = step.type !== 'if' && step.type !== 'stop';
+          const idField = named ? /** @type {any} */ (h('dm-input', { label: t('flows.field.id'), help: t('flows.field.id.help') })) : null;
+          if (idField) { idField.value = step.id || ''; idField.addEventListener('input', () => { const v = String(idField.value || '').trim(); if (v) step.id = v; else delete step.id; }); }
+          const branches = (def.branches || []).map((b) => {
+            if (!Array.isArray(step[b])) step[b] = [];
+            return h('div', { class: 'dm-stack-sm dm-flow-branch', 'data-branch': b },
+              h('p', { class: 'dm-small dm-flow-branch-title', text: t('flows.branch.' + (step.type === 'if' ? b : 'loop')) }),
+              step[b].length ? stepCards(step[b], depth + 1) : h('p', { class: 'dm-help dm-small', text: t('flows.steps.none') }),
+              addRow(step[b], 'dm-flow-add-in'));
+          });
+          return h('div', { class: 'dm-card dm-stack-sm dm-flow-step', 'data-depth': String(depth) },
+            h('div', { class: 'dm-row' },
+              ui.icon(def.icon, 16),
+              h('strong', { class: 'dm-grow', text: `${i + 1}. ${t('flows.step.' + step.type)}` }),
+              ui.button({ label: t('flows.step.up'), icon: 'arrow-up', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.up'), disabled: i === 0, onClick: () => { list.splice(i - 1, 0, list.splice(i, 1)[0]); draw(); } }),
+              ui.button({ label: t('flows.step.down'), icon: 'arrow-down', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.down'), disabled: i === list.length - 1, onClick: () => { list.splice(i + 1, 0, list.splice(i, 1)[0]); draw(); } }),
+              ui.button({ label: t('flows.step.remove'), icon: 'trash-2', 'icon-only': true, variant: 'ghost', size: 'sm', title: t('flows.step.remove'), onClick: () => { list.splice(i, 1); draw(); } })),
+            h('p', { class: 'dm-help dm-small', text: t('flows.step.' + step.type + '.hint') }),
+            h('div', { class: 'dm-row-wrap' }, def.fields.map((f) => fieldOf(f, step)), idField),
+            branches);
+        });
+      }
+      /** The place to add a step inside a branch or a loop. */
+      function addRow(list, cls) {
+        let type = 'command';
+        const pick = select(t('flows.add.type'), flows.STEP_TYPES.map((x) => ({ value: x, label: t('flows.step.' + x) })), type, (v) => { type = v; });
+        return h('div', { class: 'dm-row-wrap ' + cls }, pick, ui.button({ label: t('flows.add.here'), icon: 'plus', size: 'sm', title: t('flows.add.hint'), onClick: () => { list.push({ type, params: {} }); draw(); } }));
       }
       async function saveEditing() {
         try {
@@ -231,7 +293,9 @@
         if (!last) { parts.push(h('p', { class: 'dm-help', text: t('flows.last.never') })); return parts; }
         parts.push(h('p', { class: 'dm-help', text: i18n.formatDateTime(last.endedAt) }));
         parts.push(h('ul', { class: 'dm-stack-sm dm-flow-log' }, last.steps.map((x) => h('li', { class: x.ok ? '' : 'dm-error' },
-          h('strong', { text: t('flows.step.' + x.type) + ': ' }), h('span', { text: x.message })))));
+          h('strong', { text: (x.path ? x.path + ' ' : '') + t('flows.step.' + x.type) + ': ' }), h('span', { text: x.message })))));
+        if (last.cut) parts.push(h('p', { class: 'dm-help dm-small', text: t('flows.log.cut', { n: i18n.formatNumber(last.cut) }) }));
+        if (last.stopped) parts.push(h('p', { class: 'dm-help', text: last.stopped }));
         if (last.aborted) parts.push(h('p', { class: 'dm-help', text: t('flows.last.aborted.note') }));
         return parts;
       }
