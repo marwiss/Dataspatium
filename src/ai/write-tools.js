@@ -4,8 +4,9 @@
  * The write tools of "Ändra med AI": the AI proposes, the person decides. A call never touches the model; it is checked and put into
  * an open change set (a list of operations, JSON) that the person previews and approves in the model view, where it becomes the recipe
  * step ifc_changeset (python/dataspatium.py applies it with IfcOpenShell, checks the schema and reports). Lengths are metres. A created
- * wall, slab or opening gets a ref (new-1, new-2, …) so that later calls can name it before the file has given it an id; the wheel gives
- * the same refs in the same order. Deleting needs confirm: true from the AI and is confirmed again by the person before approval.
+ * wall, slab, roof or opening gets a ref (new-1, new-2, …) so that later calls can name it before the file has given it an id; the wheel
+ * gives the same refs in the same order. Deleting needs confirm: true from the AI and is confirmed again by the person before approval.
+ * create_roof covers a rectangle (the outline's bounding box, or the storey's walls') with a gable, hip, shed or flat roof of roof slabs.
  * set_site places the model on earth (the site's WGS 84 position and, with an EPSG code, the map conversion); it is a change, not a
  * create, so it gets no ref. Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
  * "not given").
@@ -21,7 +22,8 @@
     const num = () => ({ type: ['number', 'null'] });
     const xy = () => ({ type: ['array', 'null'], items: { type: 'number' } });
     const ids = () => ({ type: 'array', items: { type: ['integer', 'string'] } });
-    const CREATES = ['create_wall', 'create_slab', 'create_opening'];
+    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening'];
+    const ROOF_SHAPES = ['gable', 'hip', 'shed', 'flat'];
     /** The tools as the providers see them. */
     const TOOLS = [
       { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept. Either may be null.',
@@ -32,6 +34,8 @@
         parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str() } } },
       { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. Answers the ref of the slab.',
         parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str() } } },
+      { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). Answers the ref of the roof.',
+        parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str() } } },
       { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. Answers the ref of the door or window, or of the opening.',
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
@@ -88,6 +92,18 @@
       if (!Number.isInteger(n) || n < 1) throw new Error(`${key} must hold element ids (integers) or refs (new-1, …)`);
       return n;
     }
+    /** The bounding box [x0, y0, x1, y1] of [x, y] points. @param {number[][]} pts */
+    const bounds = (pts) => pts.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [Infinity, Infinity, -Infinity, -Infinity]);
+    /** Whether [x, y] points are the four corners of their bounding box (a closing corner may repeat the first). @param {number[][]} pts */
+    function rectangular(pts) {
+      const last = pts[pts.length - 1];
+      const p = pts.length > 4 && last[0] === pts[0][0] && last[1] === pts[0][1] ? pts.slice(0, -1) : pts;
+      if (p.length !== 4) return false;
+      const [x0, y0, x1, y1] = bounds(p);
+      const side = (v, lo, hi) => (Math.abs(v - lo) < 1e-3 ? 'lo' : Math.abs(v - hi) < 1e-3 ? 'hi' : '');
+      const hit = new Set(p.map((q) => side(q[0], x0, x1) + ',' + side(q[1], y0, y1)));
+      return hit.size === 4 && Array.from(hit).every((k) => !k.startsWith(',') && !k.endsWith(','));
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
@@ -111,6 +127,21 @@
           const outline = given(a.outline) ? (Array.isArray(a.outline) ? a.outline.map((p) => point(p, 'outline')) : null) : null;
           if (given(a.outline) && (!outline || outline.length < 3)) throw new Error('outline must be at least three [x, y] points, or null for the grid\'s extent');
           return { tool: name, storey: text(a, 'storey'), outline, thickness: number(a, 'thickness', { fallback: 0.25, positive: true }), name: text(a, 'name') };
+        }
+        case 'create_roof': {
+          const shape = given(a.shape) ? String(a.shape).toLowerCase() : '';
+          if (!ROOF_SHAPES.includes(shape)) throw new Error('shape must be gable, hip, shed or flat');
+          const outline = given(a.outline) ? (Array.isArray(a.outline) ? a.outline.map((p) => point(p, 'outline')) : null) : null;
+          if (given(a.outline) && (!outline || outline.length < 3)) throw new Error('outline must be at least three [x, y] points, or null for the bounding box of the storey\'s walls');
+          if (outline) { const b = bounds(outline); if (b[2] - b[0] < 0.1 || b[3] - b[1] < 0.1) throw new Error('outline must span at least 0.1 m along x and along y'); }
+          const flat = shape === 'flat';
+          const pitch = flat ? 0 : number(a, 'pitch', { fallback: shape === 'shed' ? 10 : 30, unit: 'degrees' });
+          if (!flat && (pitch <= 0 || pitch > 75)) throw new Error('pitch must be more than 0 and at most 75 degrees; use shape flat for a flat roof');
+          const overhang = number(a, 'overhang', { fallback: flat ? 0 : 0.4 });
+          if (overhang < 0) throw new Error('overhang must be zero or more (metres)');
+          const ridge = given(a.ridge) ? String(a.ridge).toLowerCase() : null;
+          if (ridge && ridge !== 'x' && ridge !== 'y') throw new Error('ridge must be x, y or null');
+          return { tool: name, storey: text(a, 'storey'), shape, outline, pitch, overhang, thickness: number(a, 'thickness', { fallback: 0.25, positive: true }), ridge: shape === 'gable' || shape === 'shed' ? ridge : null, base: number(a, 'base'), name: text(a, 'name') };
         }
         case 'create_opening': {
           const fill = given(a.fill) ? String(a.fill).toLowerCase() : null;
@@ -189,6 +220,10 @@
       cs.ops.push(op);
       const out = { ok: true, step: cs.ops.length, description: describe(op) };
       if (op.ref) out.ref = op.ref;
+      if (op.tool === 'create_roof' && op.outline && !rectangular(op.outline)) {
+        const b = bounds(op.outline);
+        out.note = `the outline is not a rectangle along x and y (${op.outline.length} corners), so for now the roof covers its bounding box: ${fmt(b[2] - b[0])} × ${fmt(b[3] - b[1])} m from (${fmt(b[0])}, ${fmt(b[1])})`;
+      }
       return out;
     }
     const fmt = (v) => (typeof v === 'number' ? String(Math.round(v * 1000) / 1000) : String(v === null || v === undefined ? '' : v));
@@ -199,6 +234,11 @@
         case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
         case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: fmt(op.thickness), height: fmt(op.height) });
         case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: fmt(op.thickness), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') });
+        case 'create_roof': {
+          const b = op.outline ? bounds(op.outline) : null;
+          return t('ai.change.create_roof', { ref: op.ref || '', name: op.name ? ' ' + op.name : '', storey: op.storey || t('ai.change.storey.top'), shape: t('ai.change.roof.' + op.shape), pitch: op.shape === 'flat' ? '' : ` ${fmt(op.pitch)}°`,
+            extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' });
+        }
         case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
         case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: op.system, cls: [op.code, op.name].filter(Boolean).join(' ') });
