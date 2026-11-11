@@ -925,6 +925,21 @@
      */
     const approveProposal = (connector, approveUrl) => api(connector, approveUrl, { method: 'POST' });
     /**
+     * The change proposals the server holds against a document (Dataregium's list): one row per topic with a proposal against the
+     * document, newest first: topic_guid, title, description, state (queued, running, clean, issues, failed, approved),
+     * base_version_index, change_count, author, checked_at, version_index when approved, proposal_url and approve_url. The address is
+     * the capability's template `ifc_changes.ifc_proposals_url` ({project_id}, {document_id}); null when the server has no list.
+     * @param {any} connector @param {string} projectId @param {string} documentId
+     * @returns {Promise<any[]|null>}
+     */
+    async function ifcProposals(connector, projectId, documentId) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'ifc_changes') || !caps.extensions.ifc_changes.ifc_proposals_url) return null;
+      const url = String(caps.extensions.ifc_changes.ifc_proposals_url).replace('{project_id}', encode(projectId)).replace('{document_id}', encode(documentId));
+      const got = await api(connector, url);
+      return Array.isArray(got) ? got : (got && Array.isArray(got.proposals) ? got.proposals : []);
+    }
+    /**
      * The server's trial of a change proposal (Dataregium's OB-26): after the snippet is uploaded the server applies the changes to
      * the base version's file and checks the result. The report has state queued, running, clean, issues or failed, `applied` of
      * `change_count`, and `issues` in the form of the validation report (kind "proposal" for a change that could not be applied,
@@ -1038,6 +1053,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { ifcProposals, canGeometry, ifcGeometry, ifcQuery, canClash, serverClash, serverClashTopics, canMerge, mergeReport, merge, prepareMerge, untilOver, ownUrl, publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

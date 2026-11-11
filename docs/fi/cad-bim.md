@@ -297,6 +297,11 @@ paikallinen malli pitää kaiken tietokoneella.
 Toiminnolla *Tiedot tietoaineistosta* taulukon rivit lisätään briefiin tekstinä: kartalta (Avoin paikkatieto) haettu rakennusala muuttuu
 kulmiksi metreinä lounaiskulmasta, jolloin seinät saavat oikeat mitat, ja Dataspatium Mobiilin kenttälomakkeen mitat ja muistiinpanot
 muuttuvat riveiksi; kierros puhelimen kanssa voi sitten antaa lisää kuvia ja mittoja, ja briefiä täydennetään samassa tilassa.
+Paneelin yläosassa ovat *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus, leveys, korkeus, perustus, katto) ja *Tarkkuus*
+(luonnos, pääpiirteet tai yksityiskohtainen): täytä se minkä tiedät, niin se aloittaa briefin ja tekoäly kysyy loput. Sanat ovat
+tavallisia, mutta niiden takana ovat ISO 19650:n tietovaatimukset ja level of information need, ja malli on tarkoitettu rakennuksen
+ylläpitomalliksi. Jokainen kuva liitetään valokuvana, pohjois-, itä-, etelä- tai länsijulkisivuna, sisätilana tai piirustuksena, ja
+valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF), saa ne kuvatekstiinsä, jotta tekoäly tietää, mitä se näkee.
 
 ## Kysy tekoälyltä mallista
 
@@ -355,6 +360,10 @@ jälkeen, palvelin kokeilee ehdotusta uudelleen uusinta vasten samassa vaiheessa
 muutokset ovat ristiriidassa välissä tulleen kanssa, palvelin kieltäytyy (412) ja paneeli luettelee ristiriitaiset avaimet (instanssi
 ja attribuutti) tai sanoo, että mikä tahansa on voinut muuttua, kun välissä on ladattu kokonainen tiedosto. Hae silloin uusin versio,
 tee muutokset uudelleen ja ehdota uudelleen.
+Mallinäkymän kortti *Muutosehdotukset palvelimella* näyttää Dataregiumista haetulle mallille kaikki asiakirjaan kohdistuvat ehdotukset,
+kun palvelin ilmoittaa kyvykkyyden `ifc_proposals_url`: otsikon, tilan, ehdottajan, muutosten määrän ja version, jota vasten ne on
+tehty; *Hyväksy* tekee kokeillusta ehdotuksesta seuraavan version sille, joka saa hyväksyä, jotta useampi henkilö omine
+asiakasohjelmineen voi työskennellä saman mallin parissa.
 
 Jos projektissa on tiimejä (kortti *Projektin jäsenet* Hallitse-tilassa), paneeli näyttää, mitä tiimejä muutos koskee. Jos se
 koskee vain yhden tiimin osaa, tiimin vastuuhenkilö hyväksyy, myös toimittajan roolissa, ja palvelin kieltäytyy (403) projektin

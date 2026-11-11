@@ -28,6 +28,7 @@
       /** The issues panel, when open. */ let issues = null;
       /** The panel Fråga AI, when open. */ let ai = null;
       /** The panel Jämför versioner, when open. */ let compare = null;
+      /** The card Ändringsförslag på servern, for a model fetched from a Dataregium (decision F43 b, step 5). */ let proposals = null;
 
       const isDxf = () => model.isDxf(ds);
       const whereSql = () => model.whereOf(s.filter, isDxf());
@@ -40,6 +41,7 @@
         if (handle) { handle.destroy(); handle = null; }
         if (removeDrag) { removeDrag(); removeDrag = null; }
         if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; }
+        if (proposals) { proposals.destroy(); proposals = null; }
         slots = null; host = null; table = null; svgEl = null;
       }
 
@@ -50,8 +52,9 @@
         if (removeDrag) { removeDrag(); removeDrag = null; }
         slots = target;
         const my = ++seq;
-        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; s.isolated = null; s.sectionOpen = false; s.sectionPlanes = null; s.lastView = null; s.pendingViewpoint = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; } }
+        if (s.id !== dataset.id) { s.id = dataset.id; s.filter = { typ: '', vaning: '', lager: '', search: '' }; s.selected = null; s.hidden = new Set(); s.preview = null; s.isolated = null; s.sectionOpen = false; s.sectionPlanes = null; s.lastView = null; s.pendingViewpoint = null; if (issues) { issues.destroy(); issues = null; } if (ai) { ai.destroy(); ai = null; } if (compare) { compare.destroy(); compare = null; } if (proposals) { proposals.destroy(); proposals = null; } }
         ds = dataset;
+        if (!proposals && !isDxf()) proposals = D.require('ui/bearbeta/proposals-card').create(ctx, ds);
         // Hantera asks for the issues of the model; the panel opens with the view.
         const askedIssues = ctx.store.get().openModelIssues;
         if (askedIssues && askedIssues.datasetId === dataset.id) { ctx.store.set({ openModelIssues: null }); if (!issues && !isDxf()) openIssues(); }
@@ -511,6 +514,7 @@
             handle ? { label: t('model.field.triangles'), value: i18n.formatNumber(handle.info.triangles) } : null,
           ]));
         }
+        if (proposals && !isDxf()) parts.push(proposals.el);
         const selected = s.selected ? await model.element(ds.id, s.selected) : null;
         if (my !== seq || !slots) return;
         if (s.sectionOpen && sectionEl && !isDxf()) parts.unshift(sectionEl);

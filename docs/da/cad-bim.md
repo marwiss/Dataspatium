@@ -288,6 +288,11 @@ leverandøren sammen med briefen efter samtykket til leverandørens vært; en lo
 Med *Oplysninger fra et datasæt* lægges rækker fra en tabel i briefen som tekst: en bygningsflade hentet fra kortet (Åbne geodata) bliver
 hjørner i meter fra det sydvestlige hjørne, så væggene får rigtige mål, og mål og noter fra en feltformular i Dataspatium Mobil bliver
 rækker; en runde med telefonen kan derefter give flere billeder og mål, og briefen suppleres i samme tilstand.
+Øverst i panelet står *Bygningens oplysninger* (hvilken bygning, etager, længde, bredde, højde, fundering, tag) og *Detaljeringsgrad*
+(skitse, hovedtræk eller detaljeret): udfyld det du ved, så indleder det briefen, og AI'en spørger om resten. Ordene er almindelige,
+men bag dem ligger ISO 19650's informationskrav og level of information need, og modellen er tænkt som bygningens driftsmodel. Hvert
+billede vedhæftes som foto, facade mod nord, øst, syd eller vest, indvendigt eller tegning, og et foto med position og tidspunkt i
+filen (EXIF) får dem med i sin billedtekst, så AI'en ved, hvad den ser.
 
 ## Spørg AI om modellen
 
@@ -345,6 +350,10 @@ versioner siden basen, afprøver serveren forslaget igen mod den nyeste i samme 
 kolliderer ændringerne med det, der er kommet imellem, afviser serveren (412), og panelet viser de kolliderende nøgler (instans og
 attribut) eller siger, at alt kan være ændret, når en hel fil er uploadet imellem. Hent da den nyeste version, gentag ændringerne og
 foreslå igen.
+Kortet *Ændringsforslag på serveren* i modelvisningen viser, for en model hentet fra Dataregium, alle forslag mod dokumentet, når
+serveren angiver kapabiliteten `ifc_proposals_url`: titel, tilstand, hvem der foreslog, hvor mange ændringer og mod hvilken version;
+*Godkend* gør et afprøvet forslag til næste version for den, der må godkende, så flere personer med hver sin klient kan arbejde på
+samme model.
 
 Har projektet teams (kortet *Projektets medlemmer* i Håndtér), viser panelet, hvilke teams ændringen rører. Rører den kun et teams
 del, godkender teamets ansvarlige, også med rollen redaktør, og serveren afviser (403) en projektansvarlig; rører den flere teams dele,

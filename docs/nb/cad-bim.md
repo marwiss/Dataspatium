@@ -287,6 +287,11 @@ leverandøren sammen med briefen etter samtykket for leverandørens vert; en lok
 Med *Opplysninger fra et datasett* legges rader fra en tabell i briefen som tekst: en bygningsflate hentet fra kartet (Åpne geodata) blir
 hjørner i meter fra det sørvestlige hjørnet, så veggene får riktige mål, og mål og notater fra et feltskjema i Dataspatium Mobil blir
 rader; en runde med telefonen kan så gi flere bilder og mål, og briefen suppleres i samme modus.
+Øverst i panelet står *Bygningens opplysninger* (hvilken bygning, etasjer, lengde, bredde, høyde, fundamentering, tak) og *Nøyaktighet*
+(skisse, hovedtrekk eller detaljert): fyll inn det du vet, så innleder det briefen og AI-en spør om resten. Ordene er vanlige, men bak
+dem ligger informasjonskravene i ISO 19650 og level of information need, og modellen er tenkt som bygningens forvaltningsmodell. Hvert
+bilde legges ved som foto, fasade mot nord, øst, sør eller vest, innvendig eller tegning, og et foto med posisjon og tidspunkt i filen
+(EXIF) får dem i bildeteksten sin, så AI-en vet hva den ser.
 
 ## Spør AI om modellen
 
@@ -343,6 +348,10 @@ endres ikke av det; hent den nye versjonen fra Dataregium for å arbeide videre 
 basen, prøver serveren forslaget på nytt mot den nyeste i samme steg og godkjenner mot den når prøvingen er ren; kolliderer endringene
 med det som har kommet imellom, avviser serveren (412), og panelet viser de kolliderende nøklene (instans og attributt) eller sier at
 alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste versjonen, gjør endringene på nytt og foreslå igjen.
+Kortet *Endringsforslag på serveren* i modellvisningen viser, for en modell hentet fra Dataregium, alle forslag mot dokumentet når
+serveren angir kapabiliteten `ifc_proposals_url`: tittel, tilstand, hvem som foreslo, hvor mange endringer og mot hvilken versjon;
+*Godkjenn* gjør et prøvd forslag til neste versjon for den som får godkjenne, så flere personer med hver sin klient kan arbeide mot
+samme modell.
 
 Har prosjektet team (kortet *Prosjektets medlemmer* i Håndter), viser panelet hvilke team endringen rører. Rører den bare ett teams
 del, godkjenner teamets ansvarlige, også med rollen redaktør, og serveren nekter (403) en prosjektansvarlig; rører den flere teams

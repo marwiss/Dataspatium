@@ -290,6 +290,11 @@ leverandøren saman med briefen etter samtykket for verten til leverandøren; ei
 Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i briefen som tekst: ei bygningsflate henta frå kartet (Opne geodata)
 vert hjørne i meter frå det sørvestlege hjørnet, så veggane får rette mål, og mål og notat frå eit feltskjema i Dataspatium Mobil vert
 rader; ein runde med telefonen kan så gje fleire bilete og mål, og briefen vert supplert i same modus.
+Øvst i panelet står *Opplysningane om bygningen* (kva bygning, etasjar, lengd, breidd, høgd, fundamentering, tak) og *Nøyaktigheit*
+(skisse, hovudtrekk eller detaljert): fyll inn det du veit, så innleier det briefen og AI-en spør om resten. Orda er vanlege, men bak
+dei ligg informasjonskrava i ISO 19650 og level of information need, og modellen er tenkt som forvaltningsmodellen til bygningen. Kvart
+bilete vert lagt ved som foto, fasade mot nord, aust, sør eller vest, innvendig eller teikning, og eit foto med posisjon og tidspunkt i
+fila (EXIF) får dei i biletteksten sin, så AI-en veit kva han ser.
 
 ## Spør AI om modellen
 
@@ -347,6 +352,10 @@ nyare versjonar sidan basen, prøver tenaren framlegget på nytt mot den nyaste 
 kolliderer endringane med det som har kome imellom, avviser tenaren (412), og panelet viser dei kolliderande nøklane (instans og
 attributt) eller seier at alt kan ha endra seg når ei heil fil er lasta opp imellom. Hent då den nyaste versjonen, gjer endringane på
 nytt og foreslå igjen.
+Kortet *Endringsframlegg på tenaren* i modellvisinga viser, for ein modell henta frå Dataregium, alle framlegg mot dokumentet når
+tenaren gjev kapabiliteten `ifc_proposals_url`: tittel, tilstand, kven som foreslo, kor mange endringar og mot kva versjon; *Godkjenn*
+gjer eit prøvd framlegg til neste versjon for den som får godkjenne, så fleire personar med kvar sin klient kan arbeide mot same
+modell.
 
 Har prosjektet team (kortet *Medlemmene i prosjektet* i Handter), viser panelet kva team endringa rører. Rører ho berre delen til
 eitt team, godkjenner den ansvarlege i teamet, òg med rolla redaktør, og tenaren nektar (403) ein prosjektansvarleg; rører ho delane

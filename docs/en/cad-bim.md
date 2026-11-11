@@ -294,6 +294,11 @@ With *Facts from a dataset* rows of a table go into the brief as text: a buildin
 corners in metres from the south-west corner, so that the walls get real dimensions, and measurements and notes from a field form
 in Dataspatium Mobile become rows; a round with the phone can then give more pictures and measurements, and the brief is added to
 in the same mode.
+At the top of the panel stand *The building's facts* (which building, storeys, length, width, height, foundation, roof) and *Level of
+detail* (sketch, main features or detailed): fill in what you know, it opens the brief and the AI asks about the rest. The words are
+plain, but behind them lie ISO 19650's information requirements and level of information need, and the model is meant as the building's
+asset information model. Each picture is attached as a photo, the north, east, south or west façade, the inside or a drawing, and a
+photo whose file carries a position and a time (EXIF) gets them in its caption, so that the AI knows what it sees.
 
 ## Ask AI about the model
 
@@ -352,6 +357,10 @@ Dataregium to go on working on it. When the document has got newer versions sinc
 the latest in the same step and approves against it when the trial is clean; when the changes collide with what came between, the
 server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
 whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
+The card *Change proposals on the server* in the model view shows, for a model fetched from Dataregium, every proposal against the
+document when the server states the capability `ifc_proposals_url`: title, state, who proposed it, how many changes and against which
+version; *Approve* makes a tried proposal the next version for those allowed to approve, so that several people with their own clients
+can work on the same model.
 
 When the project has teams (the card *The project's members* in Manage) the panel shows which teams the change touches. When it
 touches one team's part, that team's responsible approves, even with the role editor, and the server refuses (403) a manager; when it

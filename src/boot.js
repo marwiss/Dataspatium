@@ -333,6 +333,7 @@
     'src/ai/agent.js',
     'src/ai/assistant.js',
     'src/ui/bearbeta/ai-panel.js',
+    'src/ui/bearbeta/proposals-card.js',
     'src/ui/assistant/assistant-panel.js',
     'src/data/spatial-search.js',
     'src/data/media.js',

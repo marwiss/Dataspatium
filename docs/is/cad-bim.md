@@ -284,6 +284,11 @@ lýsingunni eftir samþykki fyrir hýsil veitandans; staðbundið líkan sem sé
 Með *Upplýsingar úr gagnasafni* fara línur úr töflu í lýsinguna sem texti: grunnflötur sóttur af kortinu (Opin landupplýsingagögn) verður
 horn í metrum frá suðvesturhorninu, svo veggirnir fái rétt mál, og mál og athugasemdir úr vettvangseyðublaði í Dataspatium Mobil verða
 línur; umferð með símanum getur síðan gefið fleiri myndir og mál, og lýsingin er fyllt út í sama ham.
+Efst í spjaldinu standa *Upplýsingar um bygginguna* (hvaða bygging, hæðir, lengd, breidd, hæð, undirstöður, þak) og *Nákvæmni* (skissa,
+aðaldrættir eða nákvæmt): fylltu inn það sem þú veist, svo verður það upphaf lýsingarinnar og gervigreindin spyr um afganginn. Orðin
+eru hversdagsleg, en að baki þeim liggja upplýsingakröfur ISO 19650 og level of information need, og líkanið er hugsað sem
+rekstrarlíkan byggingarinnar. Hver mynd er hengd við sem ljósmynd, norður-, austur-, suður- eða vesturhlið, innanhúss eða teikning, og
+ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatextann sinn, svo að gervigreindin viti hvað hún sér.
 
 ## Spyrja gervigreind um líkanið
 
@@ -341,6 +346,10 @@ nýrri útgáfur síðan grunnurinn var, reynir þjónninn tillöguna aftur á n
 prófunin er hrein; rekist breytingarnar á það sem kom á milli hafnar þjónninn (412) og spjaldið telur upp lyklana sem rekast á
 (tilvik og eigindi), eða segir að allt geti hafa breyst þegar heil skrá var hlaðin upp á milli. Sæktu þá nýjustu útgáfuna, gerðu
 breytingarnar aftur og leggðu til á ný.
+Kortið *Breytingatillögur á þjóninum* í líkanssýninni sýnir, fyrir líkan sótt frá Dataregium, allar tillögur gagnvart skjalinu þegar
+þjónninn tilgreinir getuna `ifc_proposals_url`: titil, stöðu, hver lagði til, hve margar breytingar og gagnvart hvaða útgáfu;
+*Samþykkja* gerir prófaða tillögu að næstu útgáfu fyrir þann sem má samþykkja, svo að fleiri með hver sinn biðlara geti unnið með sama
+líkan.
 
 Hafi verkefnið teymi (spjaldið *Meðlimir verkefnisins* í Sýsla) sýnir spjaldið hvaða teymi breytingin snertir. Snerti hún aðeins hluta
 eins teymis samþykkir ábyrgðarmaður þess teymis, líka með hlutverkið ritstjóri, og þjónninn hafnar (403) verkefnisstjóra; snerti hún

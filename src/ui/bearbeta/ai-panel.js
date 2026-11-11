@@ -36,7 +36,8 @@
         const { shell } = ctx;
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
-          attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [] };
+          attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
         const unsubscribe = providers.subscribe(() => load().then(render));
@@ -53,16 +54,40 @@
           s.tables = all.filter((d) => d.id !== options.datasetId && (!d.kind || d.kind === 'table' || d.kind === 'plan'));
           const last = await idb.getSetting(LAST_SETTING, '');
           if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = s.providers.some((p) => p.id === last) ? last : (s.providers[0] ? s.providers[0].id : '');
+          // The brief and the pictures can go to the model's server as its material (F43 b, step 5) when the model came from one the person is signed in to.
+          s.material = null;
+          const meta = all.find((d) => d.id === options.datasetId) || (await datasets.get(options.datasetId));
+          const cde = meta && meta.source && meta.source.cde;
+          if (cde && cde.connectorId && cde.projectId && cde.documentId) {
+            const c = await connectors.get(cde.connectorId).catch(() => null);
+            if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.material = { cde, connector: c, name: meta.name };
+          }
+        }
+        /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
+        async function uploadMaterial() {
+          const brief = s.question.trim();
+          if (!s.material || s.uploading || (!brief && !s.attachments.length) || !D.has('data/model-material')) return;
+          const project = s.material.cde.projectName || s.material.cde.projectId;
+          if (!(await overlays.dialog.confirm(t('ai.build.material.confirm', { n: i18n.formatNumber(s.attachments.length), project })))) return;
+          s.uploading = true; s.error = ''; render();
+          try {
+            const out = await D.require('data/model-material').upload(s.material.connector, s.material.cde.projectId, s.material.cde.documentId, { brief, attachments: s.attachments, name: s.material.name }, { onStatus: (text) => log(String(text)) });
+            const msg = t('material.done', { server: s.material.connector.name, title: String((out && out.topic && out.topic.title) || ''), n: i18n.formatNumber(out && out.documents ? out.documents.length : 0) });
+            log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
+          } catch (err) { fail(err); }
+          s.uploading = false; render();
         }
         const provider = () => s.providers.find((p) => p.id === s.providerId) || null;
         async function askNow() {
           const p = provider();
-          const question = s.question.trim();
-          if (s.busy || !p || !question) return;
+          const brief = s.question.trim();
+          // In the build mode the building's facts and the level of detail open the brief (decision F43 b); facts alone are enough to start.
+          const question = building() ? [factsBlock(), brief].filter(Boolean).join('\n\n') : brief;
+          if (s.busy || !p || !(building() ? brief || factsGiven() : brief)) return;
           s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
           abort = new AbortController();
           try {
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), images: building() ? s.attachments.map((a) => ({ mediaType: a.mediaType, data: a.data })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), images: building() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1) })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.elements = out.elements; s.usage = out.usage;
             // The next question continues the conversation, but only the words: the tool traffic is not carried on.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
@@ -78,7 +103,13 @@
         }
         function cancel() { if (abort) abort.abort(); }
         // ---- build mode (decision F43 a): a question to the person, and pictures and drawings as the brief's material ----
-        const MAX_IMAGES = 16; const MAX_SIDE = 1600; const MAX_PAGES = 8;
+        const MAX_IMAGES = 16; const MAX_SIDE = 1600; const MAX_PAGES = 8; const MAX_RAW_BYTES = 4 * 1024 * 1024;
+        /** Bytes as base64 without a prefix, in slices so that a large picture does not overflow the call stack. */
+        function base64Of(bytes) {
+          let s = '';
+          for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 0x8000)));
+          return btoa(s);
+        }
         /** A question from the AI, shown in the panel until the person answers or closes it. */
         function askPerson(q) {
           return new Promise((resolve) => {
@@ -106,7 +137,7 @@
           for (let pageNo = 1; pageNo <= Math.min(doc.numPages, MAX_PAGES); pageNo++) {
             const canvas = document.createElement('canvas');
             await pdf.render(doc, pageNo, canvas, { width: MAX_SIDE });
-            out.push({ name: `${name} (${pageNo})`, mediaType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1] });
+            out.push({ name: `${name} (${pageNo})`, mediaType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], label: 'drawing' });
           }
           return out;
         }
@@ -115,7 +146,17 @@
             if (s.attachments.length >= MAX_IMAGES) break;
             try {
               if (/pdf$/i.test(String(f.type)) || /\.pdf$/i.test(String(f.name))) s.attachments = s.attachments.concat((await pdfPages(new Uint8Array(await f.arrayBuffer()), f.name)).slice(0, MAX_IMAGES - s.attachments.length));
-              else if (/^image\//.test(String(f.type))) s.attachments.push({ name: f.name, mediaType: 'image/jpeg', data: await shrink(f) });
+              else if (/^image\//.test(String(f.type))) {
+                const bytes = new Uint8Array(await f.arrayBuffer());
+                const meta = /jpe?g$/i.test(String(f.type)) ? exifOf(bytes) : {};
+                // A picture the browser cannot decode (an odd JPEG from a camera) still goes along as it is, up to MAX_RAW_BYTES.
+                let picture = null;
+                try { picture = { mediaType: 'image/jpeg', data: await shrink(new Blob([bytes], { type: f.type })) }; } catch (err) {
+                  if (!/^image\/(jpeg|png|webp|gif)$/.test(String(f.type)) || bytes.length > MAX_RAW_BYTES) throw err;
+                  picture = { mediaType: String(f.type), data: base64Of(bytes) };
+                }
+                s.attachments.push(Object.assign({ name: f.name, label: s.nextLabel }, picture, meta));
+              }
             } catch (err) { fail(err); }
           }
           render();
@@ -124,14 +165,17 @@
         async function addPictures(datasetId) {
           if (!datasetId) return;
           const handle = await datasets.ensureOpen(datasetId);
-          const r = await handle.engine.exec('select fil from data limit ' + MAX_IMAGES);
+          // The collection's own columns carry the position and the time of each picture (the images importer reads them from EXIF).
+          const r = await handle.engine.exec('select fil, lat, lon, altitud, datum from data limit ' + MAX_IMAGES).catch(() => handle.engine.exec('select fil from data limit ' + MAX_IMAGES));
           const files = D.require('data/dataset-files');
           for (const row of (r[0] ? r[0].values : [])) {
             if (s.attachments.length >= MAX_IMAGES) break;
             const name = String(row[0]);
             const f = (await files.read(datasetId, name, 'preview').catch(() => null)) || (await files.read(datasetId, name, 'thumb').catch(() => null));
             if (!f) continue;
-            try { s.attachments.push({ name, mediaType: 'image/jpeg', data: await shrink(new Blob([f.bytes], { type: f.type })) }); } catch (err) { fail(err); }
+            const where = row[1] !== null && row[1] !== undefined && row[2] !== null && row[2] !== undefined && Number.isFinite(Number(row[1])) && Number.isFinite(Number(row[2]))
+              ? { lat: Number(row[1]), lon: Number(row[2]), alt: row[3] === null || row[3] === undefined || !Number.isFinite(Number(row[3])) ? null : Number(row[3]) } : null;
+            try { s.attachments.push(Object.assign({ name, mediaType: 'image/jpeg', data: await shrink(new Blob([f.bytes], { type: f.type })), label: s.nextLabel }, where ? { where } : null, row[4] ? { when: String(row[4]) } : null)); } catch (err) { fail(err); }
           }
           render();
         }
@@ -145,19 +189,74 @@
           } catch (err) { fail(err); }
           render();
         }
+        // ---- the building's facts, the level of detail and the captions (decision F43 b: plain words, the ISO 19650 notions behind them) ----
+        const FOUNDATIONS = ['slab', 'crawl', 'basement', 'piers']; const ROOFS = ['gable', 'hip', 'shed', 'flat', 'mansard'];
+        const DETAILS = ['sketch', 'main', 'detailed']; const LABELS = ['photo', 'north', 'east', 'south', 'west', 'inside', 'drawing'];
+        const factsGiven = () => Object.values(s.form).some((v) => String(v || '').trim());
+        /** The building's facts and the level of detail as the opening of the brief. */
+        function factsBlock() {
+          const f = s.form; const parts = [];
+          const add = (key) => { const v = String(f[key] || '').trim(); if (v) parts.push(`${t('ai.build.form.' + key)}: ${v}`); };
+          ['building', 'storeys', 'length', 'width', 'height'].forEach(add);
+          if (FOUNDATIONS.includes(f.foundation)) parts.push(`${t('ai.build.form.foundation')}: ${t('ai.build.foundation.' + f.foundation)}`);
+          if (ROOFS.includes(f.roof)) parts.push(`${t('ai.build.form.roof')}: ${t('ai.build.roof.' + f.roof)}`);
+          const level = DETAILS.includes(s.detail) ? s.detail : 'main';
+          const lines = parts.length ? [t('ai.build.form.block', { facts: parts.join('; ') })] : [];
+          lines.push(t('ai.build.detail.block', { level: t('ai.build.detail.' + level), text: t('ai.build.detail.' + level + '.text') }));
+          return lines.join('\n');
+        }
+        /** The caption that goes before a picture: what it shows, and where and when it was taken when the file says so. */
+        function captionOf(a, n) {
+          const bits = [t('ai.build.caption', { n: String(n), label: t('ai.build.label.' + (LABELS.includes(a.label) ? a.label : 'photo')), name: String(a.name || '') })];
+          if (a.when) bits.push(t('ai.build.caption.when', { when: String(a.when) }));
+          if (a.where && Number.isFinite(a.where.lat) && Number.isFinite(a.where.lon)) {
+            bits.push(t('ai.build.caption.where', { lat: a.where.lat.toFixed(5), lon: a.where.lon.toFixed(5) }));
+            if (Number.isFinite(a.where.alt)) bits.push(t('ai.build.caption.alt', { alt: String(Math.round(a.where.alt)) }));
+          }
+          return bits.join(', ');
+        }
+        /** Position and time out of a JPEG's EXIF, for the caption; nothing when the file has none. */
+        function exifOf(bytes) {
+          try {
+            const meta = D.require('data/exif').parse(bytes);
+            const out = {};
+            if (meta && Number.isFinite(meta.lat) && Number.isFinite(meta.lon)) out.where = { lat: meta.lat, lon: meta.lon, alt: Number.isFinite(meta.altitude) ? meta.altitude : null };
+            if (meta && meta.dateTimeOriginal) out.when = meta.dateTimeOriginal;
+            return out;
+          } catch (_e) { return {}; }
+        }
+        function formView() {
+          const field = (key, type) => {
+            const el = /** @type {any} */ (h('dm-input', { label: t('ai.build.form.' + key), type: type || 'text', placeholder: key === 'building' ? t('ai.build.form.building.placeholder') : '', 'data-ai-form': key }));
+            el.value = s.form[key];
+            el.addEventListener('input', () => { s.form[key] = String(el.value || ''); });
+            return el;
+          };
+          const choice = (key, prefix, keys) => basic.select(t('ai.build.form.' + key), [{ value: '', label: t('ai.build.form.unknown') }].concat(keys.map((k) => ({ value: k, label: t(prefix + k) }))), s.form[key], (v) => { s.form[key] = v; }, { 'data-ai-form': key });
+          return h('div', { class: 'dm-stack-xs', 'data-ai-form-box': '' },
+            h('strong', { class: 'dm-small', text: t('ai.build.form') }),
+            h('p', { class: 'dm-help dm-xs', text: t('ai.build.form.hint') }),
+            h('div', { class: 'dm-row-wrap' }, field('building'), field('storeys', 'number')),
+            h('div', { class: 'dm-row-wrap' }, field('length', 'number'), field('width', 'number'), field('height', 'number')),
+            h('div', { class: 'dm-row-wrap' }, choice('foundation', 'ai.build.foundation.', FOUNDATIONS), choice('roof', 'ai.build.roof.', ROOFS),
+              basic.select(t('ai.build.detail'), DETAILS.map((k) => ({ value: k, label: t('ai.build.detail.' + k) })), s.detail, (v) => { s.detail = DETAILS.includes(v) ? v : 'main'; }, { 'data-ai-detail': '', title: t('ai.build.detail.hint') })));
+        }
         function attachRow() {
           const input = /** @type {any} */ (h('input', { type: 'file', accept: 'image/*,.pdf', multiple: '', hidden: '', 'data-ai-attach-input': '' }));
           input.addEventListener('change', () => { attachFiles(input.files); input.value = ''; });
           const albums = s.albums || [];
           const pick = albums.length ? basic.select(t('ai.build.pictures'), [{ value: '', label: '–' }].concat(albums.map((a) => ({ value: a.id, label: a.name }))), s.picturesFrom, (v) => { s.picturesFrom = v; }) : null;
+          const labelPick = basic.select(t('ai.build.label'), LABELS.map((k) => ({ value: k, label: t('ai.build.label.' + k) })), s.nextLabel, (v) => { s.nextLabel = LABELS.includes(v) ? v : 'photo'; }, { 'data-ai-label': '' });
           return h('div', { class: 'dm-stack-xs', 'data-ai-attachments': String(s.attachments.length) },
             h('div', { class: 'dm-row-wrap' },
+              labelPick,
               basic.button({ label: t('ai.build.attach'), icon: 'images', size: 'sm', title: t('ai.build.attach.hint'), 'data-ai-attach': '', onClick: () => input.click() }),
-              pick, pick ? basic.button({ label: t('ai.build.pictures.add'), icon: 'image', size: 'sm', disabled: !s.picturesFrom, 'data-ai-pictures-add': '', onClick: () => addPictures(s.picturesFrom) }) : null, input),
+              pick, pick ? basic.button({ label: t('ai.build.pictures.add'), icon: 'image', size: 'sm', disabled: !s.picturesFrom, 'data-ai-pictures-add': '', onClick: () => addPictures(s.picturesFrom) }) : null, input,
+              s.material && D.has('data/model-material') ? basic.button({ label: t('ai.build.material'), icon: 'upload', size: 'sm', title: t('ai.build.material.hint'), loading: s.uploading, disabled: !s.question.trim() && !s.attachments.length, 'data-ai-material': '', onClick: uploadMaterial }) : null),
             s.tables.length ? h('div', { class: 'dm-row-wrap' },
               basic.select(t('ai.build.facts'), [{ value: '', label: '–' }].concat(s.tables.map((d) => ({ value: d.id, label: d.name }))), s.factsFrom, (v) => { s.factsFrom = v; }),
               basic.button({ label: t('ai.build.facts.add'), icon: 'table', size: 'sm', disabled: !s.factsFrom, title: t('ai.build.facts.hint'), 'data-ai-facts-add': '', onClick: () => addFacts(s.factsFrom) })) : null,
-            s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
+            s.attachments.length ? h('div', { class: 'dm-row-wrap' }, s.attachments.map((a, i) => h('dm-badge', { text: a.label && a.label !== 'photo' ? `${a.name} · ${t('ai.build.label.' + a.label)}` : a.name, title: t('ai.build.remove'), 'data-ai-attachment': a.name, 'data-ai-attachment-label': a.label || 'photo', onclick: () => { s.attachments.splice(i, 1); render(); } }))) : null,
             h('p', { class: 'dm-help dm-xs', text: s.attachments.length ? t('ai.build.consent', { n: i18n.formatNumber(s.attachments.length) }) : t('ai.build.attach.hint') }));
         }
         function questionView() {
@@ -488,6 +587,7 @@
             h('p', { class: 'dm-help dm-xs', text: t(building() ? 'ai.hint.build' : changing() ? 'ai.hint.change' : 'ai.hint') }),
             s.providers.length ? h('div', { class: 'dm-row-wrap' }, sel, pol, mode) : h('p', { class: 'dm-help', 'data-ai-none': '', text: t('ai.providers.none') }),
             p && !providers.hasKey(p.id) && !providers.isLocal(p.baseUrl) ? h('p', { class: 'dm-help dm-xs', text: t('ai.key.missing', { name: p.name }) }) : null,
+            building() ? formView() : null,
             q,
             building() ? attachRow() : null,
             s.questionBox ? questionView() : null,

@@ -77,11 +77,12 @@
     openai = await providers.save({ id: 'ai-build-openai', kind: 'openai', name: 'Mock build OpenAI', baseUrl: BASE + '/o/', model: 'gpt-test' });
     providers.setKey(openai.id, 'sk-test-build-2');
     world.calls = 0; world.bodies = []; world.script = [() => openaiWords('Klart.')];
-    const plain = await agent.ask({ provider: openai, datasetId: ds.id, question: 'Hej', images: [{ mediaType: 'image/png', data: PIXEL }], budget: { turns: 1 } });
+    const plain = await agent.ask({ provider: openai, datasetId: ds.id, question: 'Hej', images: [{ mediaType: 'image/png', data: PIXEL, caption: 'Bild 1: foto, test.png' }], budget: { turns: 1 } });
     assert.equal(plain.stopped, 'answered');
     const body = JSON.parse(world.bodies[0]);
     const user = body.messages.find((m) => m.role === 'user');
-    assert.ok(Array.isArray(user.content) && user.content[1].type === 'image_url' && user.content[1].image_url.url.startsWith('data:image/png;base64,'), 'the picture as an OpenAI image block');
+    assert.ok(Array.isArray(user.content) && user.content[1].type === 'text' && user.content[1].text === 'Bild 1: foto, test.png', 'the caption before the picture');
+    assert.ok(user.content[2].type === 'image_url' && user.content[2].image_url.url.startsWith('data:image/png;base64,'), 'the picture as an OpenAI image block');
     return 'ok';
   }, 20000);
 
@@ -97,6 +98,27 @@
       panel.attach([{ name: 'fasad.jpg', mediaType: 'image/jpeg', data: PIXEL }]);
       assert.equal(panel.el.querySelector('[data-ai-attachments]').getAttribute('data-ai-attachments'), '1');
       assert.ok(panel.el.querySelector('[data-ai-attachment="fasad.jpg"]'), 'the attachment listed');
+      // The building's facts and the level of detail open the brief, and a labelled picture with a position gets a caption (decision F43 b).
+      const storeys = /** @type {any} */ (panel.el.querySelector('[data-ai-form="storeys"]')); storeys.value = '2'; storeys.dispatchEvent(new Event('input'));
+      const roof = /** @type {any} */ (panel.el.querySelector('[data-ai-form="roof"]')); roof.value = 'gable'; roof.dispatchEvent(new Event('change'));
+      const detail = /** @type {any} */ (panel.el.querySelector('[data-ai-detail]')); detail.value = 'sketch'; detail.dispatchEvent(new Event('change'));
+      const labelPick = /** @type {any} */ (panel.el.querySelector('[data-ai-label]')); labelPick.value = 'south'; labelPick.dispatchEvent(new Event('change'));
+      assert.ok(panel.state.form.storeys === '2' && panel.state.form.roof === 'gable' && panel.state.detail === 'sketch', JSON.stringify(panel.state.form));
+      const exif = D.require('data/exif');
+      const raw = Uint8Array.from(atob(PIXEL), (c) => c.charCodeAt(0));
+      const withPosition = exif.insertApp1(raw, exif.buildApp1({ lat: 59.3293, lon: 18.0686, altitude: 25, dateTimeOriginal: '2026-05-03T10:15:00' }));
+      const fileInput = /** @type {any} */ (panel.el.querySelector('[data-ai-attach-input]'));
+      const dt = new DataTransfer(); dt.items.add(new File([withPosition], 'sydfasad.jpg', { type: 'image/jpeg' })); fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change'));
+      await waitFor(() => panel.el.querySelector('[data-ai-attachments]').getAttribute('data-ai-attachments') === '2', 5000, 'the labelled picture (' + (panel.state.error || 'no error') + ', ' + panel.state.attachments.map((a) => a.name).join('|') + ')');
+      const south = panel.state.attachments.find((a) => a.name === 'sydfasad.jpg');
+      assert.ok(south && south.label === 'south' && south.where && Math.abs(south.where.lat - 59.3293) < 1e-4 && Math.abs(south.where.lon - 18.0686) < 1e-4 && south.where.alt === 25 && /^2026-05-03/.test(String(south.when)), JSON.stringify(south && { label: south.label, where: south.where, when: south.when }));
+      assert.ok(panel.el.querySelector('[data-ai-attachment="sydfasad.jpg"][data-ai-attachment-label="south"]'), 'the badge says which façade');
+      // The material goes to the server only for a model from one: no button for a model from a file, the button once the panel knows the server.
+      assert.ok(!panel.el.querySelector('[data-ai-material]'), 'no upload for a model from a file');
+      panel.state.material = { cde: { connectorId: 'c', projectId: 'p-1', projectName: 'Testprojekt', documentId: 'doc-1' }, connector: { name: 'Testservern' }, name: 'Brief-hus' };
+      panel.attach([]);
+      assert.equal(!!panel.el.querySelector('[data-ai-material]'), D.has('data/model-material'), 'the upload button when the module is there');
+      panel.state.material = null; panel.attach([]);
       panel.state.providerId = anthropic.id;
       world.calls = 0; world.bodies = [];
       world.script = [
@@ -112,7 +134,12 @@
       assert.ok(/tegel/.test(panel.state.answer), panel.state.answer);
       assert.equal(panel.state.changeset.ops.length, 1, 'the change set holds the storey');
       const sent = JSON.parse(world.bodies[0]);
-      assert.ok(Array.isArray(sent.messages[0].content) && sent.messages[0].content[1].type === 'image', 'the attachment went with the brief');
+      const content = sent.messages[0].content;
+      assert.ok(Array.isArray(content) && content[0].type === 'text' && content[0].text.startsWith(t('ai.build.form.block', { facts: `${t('ai.build.form.storeys')}: 2; ${t('ai.build.form.roof')}: ${t('ai.build.roof.gable')}` })), content[0].text);
+      assert.ok(content[0].text.includes(t('ai.build.detail.block', { level: t('ai.build.detail.sketch'), text: t('ai.build.detail.sketch.text') })) && content[0].text.endsWith('Ett tvåvåningshus 12 × 8 m'), 'the level of detail and the brief after the facts');
+      assert.ok(content[1].type === 'text' && content[1].text === t('ai.build.caption', { n: '1', label: t('ai.build.label.photo'), name: 'fasad.jpg' }) && content[2].type === 'image', 'the first picture with its caption');
+      assert.ok(content[3].type === 'text' && content[3].text.includes(t('ai.build.label.south')) && content[3].text.includes('59.32930, 18.06860') && content[3].text.includes(t('ai.build.caption.alt', { alt: '25' })) && content[4].type === 'image', content[3].text);
+      assert.ok(/Ett tvåvåningshus/.test(panel.state.history[0].content) && panel.state.exchanges.length === 1, 'the brief in the history');
       assert.ok(panel.el.querySelector('[data-ai-preview]'), 'preview and approval as in Ändra');
     } finally { panel.destroy(); panel.el.remove(); }
     return 'ok';
