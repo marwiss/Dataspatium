@@ -299,6 +299,11 @@ krockar ändringarna med det som kommit emellan vägrar servern (412) och panele
 eller säger att allt kan ha ändrats när en hel fil laddats upp emellan. Hämta då den nyaste versionen, gör om ändringarna och föreslå
 igen.
 
+Har projektet team (kortet *Projektets medlemmar* i Hantera) visar panelen vilka team ändringen rör. Rör den bara ett teams del
+godkänner teamets ansvarige, även med rollen redaktör, och servern nekar (403) en projektansvarig; rör den flera teams delar, eller
+ingen, godkänner en projektansvarig som förut. När ett IDS-dokument får en ny version kontrollerar servern om projektets senaste
+IFC-versioner, och deras rapporter står som väntande under tiden.
+
 Anger servern värdena per krock visar panelen för varje krock värdet i basen, det som kom emellan och ditt förslag, och du väljer
 per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå igen med mina val* skickar förslaget mot den senaste
 versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Sammanfogningen

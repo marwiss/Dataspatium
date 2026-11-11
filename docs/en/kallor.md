@@ -161,6 +161,12 @@ with roles: viewer, contributor, editor or manager. You add a person by their ex
 member and rename the project; every change is confirmed first. The server does not let the project be left without a manager and
 says so; projects are not deleted from here, and an administrator creates new accounts.
 
+When the project has teams the card shows them too: name, responsible, members and the IDS document whose specifications mark
+the team's part of the model. You add a team with a name, a responsible (an editor or manager), the members' user names and the IDS
+document, picked among the project's files or given by its id, and remove a team; the server checks that what you named is in the
+project. A change that touches one team's part is approved by that team's responsible, not by a manager (see *Change with AI* in CAD
+and BIM).
+
 Topics are fetched in pages of 500. A list the server has capped (Dataregium caps at 1,000 items) is read to the end through
 the server’s Link header with rel="next", but only on the same server, so that your token never goes anywhere else.
 

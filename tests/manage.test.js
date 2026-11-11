@@ -4,6 +4,8 @@
  * Tests for the card Projektets medlemmar (Dataregium's project administration, its OB-41) against a mocked server: the scope project
  * asked for at sign-in, the projects the user manages and their members, adding by user name, a user who does not exist, changing a
  * role, removing a member, the refusal to leave a project without a manager, renaming through the BCF API, and a server without it.
+ * Teams (Dataregium 3.0.0): listed, added in the server's form with the IDS document picked among the project's files, refused with the
+ * server's words, and removed.
  */
 (function () {
   'use strict';
@@ -18,7 +20,7 @@
   const BASE = 'dataspatium-asset://tests/manage';
   const REDIRECT = 'http://127.0.0.1:8080/oauth-callback.html';
   const json = (data, status) => ({ kind: 'text', data: JSON.stringify(data), status });
-  const world = { on: true, scopeAsked: '', requests: [], project: { project_id: 'p1', name: 'Bygglovet' },
+  const world = { on: true, teamsOn: false, teams: [], scopeAsked: '', requests: [], project: { project_id: 'p1', name: 'Bygglovet' },
     members: [{ user_id: 'u1', username: 'anna', name: 'Anna', role: 'manager' }, { user_id: 'u2', username: 'bo', name: 'Bo', role: 'editor' }],
     users: { anna: 'u1', bo: 'u2', cecilia: 'u3' } };
   const fakePopup = (url) => { const u = new URL(url); world.scopeAsked = u.searchParams.get('scope') || ''; return Promise.resolve(`${u.searchParams.get('redirect_uri')}?code=abc&state=${u.searchParams.get('state')}`); };
@@ -30,7 +32,7 @@
     const method = String(req.method || 'GET').toUpperCase();
     let body = {}; try { body = typeof req.body === 'string' ? JSON.parse(req.body) : {}; } catch (_e) { body = {}; }
     if (path === '/.well-known/dataregium') return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, scopes: ['profile', 'bcf', 'documents', 'project'],
-      extensions: world.on ? { project_administration: { enabled: true, url: '/manage/1.0/projects', scope: 'project', roles: ['viewer', 'contributor', 'editor', 'manager'], for: 'manager' } } : {} }));
+      extensions: world.on ? { project_administration: { enabled: true, url: '/manage/1.0/projects', scope: 'project', roles: ['viewer', 'contributor', 'editor', 'manager'], for: 'manager', teams_url: world.teamsOn ? '/manage/1.0/projects/{project_id}/teams' : undefined } } : {} }));
     if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
     if (path === '/foundation/1.0/auth') return Promise.resolve(json({ oauth2_auth_url: BASE + '/foundation/oauth2/auth', oauth2_token_url: BASE + '/foundation/oauth2/token' }));
     if (path === '/foundation/oauth2/token') return Promise.resolve(json({ access_token: 'tok', refresh_token: 'r', expires_in: 3600, scope: world.scopeAsked }));
@@ -47,6 +49,24 @@
       }
       return Promise.resolve(json({ items: world.members, total: world.members.length }));
     }
+    if (path === '/manage/1.0/projects/p1/teams') {
+      if (method === 'POST') {
+        const r = world.members.find((m) => m.username === body.responsible);
+        if (!r || (r.role !== 'editor' && r.role !== 'manager')) return Promise.resolve(json({ message: 'The responsible must be a member of the project with the role editor or manager' }, 400));
+        const missing = (body.members || []).filter((u) => !world.members.some((m) => m.username === u));
+        if (missing.length) return Promise.resolve(json({ message: 'Not members of the project: ' + missing.join(', ') }, 400));
+        if (body.ids_document_id !== 'doc-ids') return Promise.resolve(json({ message: 'ids_document_id names no IDS document of the project' }, 400));
+        const team = { team_id: 't' + (world.teams.length + 1), name: body.name, responsible: body.responsible, responsible_user_id: r.user_id, members: (body.members || []).slice().sort(), ids_document_id: body.ids_document_id };
+        world.teams.push(team);
+        return Promise.resolve(json(team, 201));
+      }
+      return Promise.resolve(json({ items: world.teams, total: world.teams.length }));
+    }
+    const team = /^\/manage\/1\.0\/projects\/p1\/teams\/(.+)$/.exec(path);
+    if (team && method === 'DELETE') { world.teams = world.teams.filter((x) => x.team_id !== team[1]); return Promise.resolve({ kind: 'text', data: '' }); }
+    if (path === '/bcf/3.0/projects/p1/files_information') return Promise.resolve(json([
+      { display_information: [{ field_display_name: 'Source', field_value: 'Documents API' }, { field_display_name: 'Document id', field_value: 'doc-ids' }], file: { filename: 'stomme.ids', reference: BASE + '/documents/1.0/documents/doc-ids/versions/1/download' } },
+      { display_information: [{ field_display_name: 'Source', field_value: 'Documents API' }, { field_display_name: 'Document id', field_value: 'doc-1' }], file: { filename: 'hus.ifc', reference: BASE + '/documents/1.0/documents/doc-1/versions/1/download' } }]));
     const member = /^\/manage\/1\.0\/projects\/p1\/members\/(.+)$/.exec(path);
     if (member) {
       const m = world.members.find((x) => x.user_id === member[1]);
@@ -111,6 +131,46 @@
       await connectors.remove(other.id);
     } finally {
       http.request = realRequest; world.on = true;
+      panel.el.remove();
+      await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
+    }
+    return 'ok';
+  }, 20000);
+
+  test('manage: a project\'s teams are listed with their responsible, members and IDS document, added in the server\'s form, refused in its words and removed', async (assert) => {
+    world.teamsOn = true; world.teams = []; world.requests = [];
+    world.members = [{ user_id: 'u1', username: 'anna', name: 'Anna', role: 'manager' }, { user_id: 'u2', username: 'bo', name: 'Bo', role: 'editor' }, { user_id: 'u3', username: 'cecilia', name: 'Cecilia', role: 'contributor' }];
+    const realRequest = http.request;
+    http.request = (req) => { world.requests.push(req); return realRequest(req); };
+    const { connector } = await families.createConnector('opencde', { baseUrl: BASE, clientId: 'dataspatium', clientSecret: '' });
+    const panel = D.require('ui/api/manage-panel').create({ connector, log: () => {} });
+    document.body.appendChild(panel.el);
+    try {
+      // The capabilities are cached per server address, and the test before left them without the extension.
+      await opencde.capabilities(connector, { force: true });
+      await panel.start();
+      await manage.signIn(connector, 'project', { popup: fakePopup, redirectUri: REDIRECT });
+      await panel.loadProjects();
+      assert.equal(panel.state.ext.teamsUrl, '/manage/1.0/projects/{project_id}/teams', 'the teams announced');
+      assert.ok(panel.el.querySelector('[data-manage-teams="0"]'), 'no teams yet');
+      assert.deepEqual(panel.state.idsDocs, [{ id: 'doc-ids', name: 'stomme.ids' }], 'the IDS document among the project\'s files');
+      const responsible = panel.el.querySelector('[data-manage-team-responsible]');
+      assert.deepEqual(/** @type {any} */ (responsible).options.map((o) => o.value), ['', 'anna', 'bo'], 'editors and managers can be responsible');
+      assert.ok(!(await panel.addTeam({ name: 'Stomme', responsible: 'bo', members: 'anna\nnobody', ids: 'doc-ids' })), 'a member outside the project is refused');
+      assert.ok(/nobody/.test(panel.state.error), 'in the server\'s words: ' + panel.state.error);
+      assert.ok(!(await panel.addTeam({ name: '', responsible: 'bo', members: '', ids: 'doc-ids' })), 'a team needs a name');
+      assert.equal(panel.state.error, t('manage.team.err.form'));
+      assert.ok(await panel.addTeam({ name: 'Stomme', responsible: 'bo', members: 'anna, bo', ids: 'doc-ids' }), 'added');
+      const post = world.requests.filter((r) => String(r.method).toUpperCase() === 'POST' && String(r.url).endsWith('/teams')).pop();
+      assert.deepEqual(JSON.parse(post.body), { name: 'Stomme', responsible: 'bo', members: ['anna', 'bo'], ids_document_id: 'doc-ids' }, 'the body the server wants: user names and the document id');
+      assert.equal(panel.el.querySelector('[data-manage-teams]').getAttribute('data-manage-teams'), '1');
+      const row = panel.el.querySelector('[data-manage-team="t1"]');
+      assert.ok(row && row.textContent.includes('Stomme') && row.textContent.includes('bo') && row.textContent.includes('stomme.ids'), 'name, responsible and the IDS document by name: ' + (row && row.textContent));
+      assert.ok(await panel.removeTeam('t1', { confirmed: true }), 'removed');
+      assert.equal(world.teams.length, 0);
+      assert.ok(panel.el.querySelector('[data-manage-teams="0"]'), 'none left');
+    } finally {
+      http.request = realRequest; world.teamsOn = false;
       panel.el.remove();
       await opencde.logout(connector).catch(() => {}); await connectors.remove(connector.id);
     }

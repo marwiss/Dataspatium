@@ -161,6 +161,12 @@ medlemmer med rolle: læser, bidragyder, redaktør eller projektansvarlig. Du ti
 ændrer en rolle, fjerner et medlem og omdøber projektet; hver ændring bekræftes først. Serveren lader ikke projektet stå uden
 projektansvarlig og siger det; projekter slettes ikke herfra, og nye konti oprettes af en administrator.
 
+Har projektet teams, viser kortet også dem: navn, ansvarlig, medlemmer og det IDS-dokument, hvis specifikationer afgrænser
+teamets del af modellen. Du tilføjer et team med navn, ansvarlig (en redaktør eller projektansvarlig), medlemmernes brugernavne og
+IDS-dokumentet, der vælges blandt projektets filer eller angives med sit id, og fjerner et team; serveren kontrollerer, at de angivne
+findes i projektet. En ændring, der kun rører et teams del, godkendes af teamets ansvarlige, ikke af en projektansvarlig (se *Ændr
+med AI* i CAD og BIM).
+
 Sager hentes i sider på 500. En liste, som serveren har afkortet (Dataregium afkorter ved 1.000 poster), læses til ende
 gennem serverens Link-header med rel="next", men kun på samme server, så dit token aldrig sendes andre steder hen.
 

@@ -298,6 +298,11 @@ prófunin er hrein; rekist breytingarnar á það sem kom á milli hafnar þjón
 (tilvik og eigindi), eða segir að allt geti hafa breyst þegar heil skrá var hlaðin upp á milli. Sæktu þá nýjustu útgáfuna, gerðu
 breytingarnar aftur og leggðu til á ný.
 
+Hafi verkefnið teymi (spjaldið *Meðlimir verkefnisins* í Sýsla) sýnir spjaldið hvaða teymi breytingin snertir. Snerti hún aðeins hluta
+eins teymis samþykkir ábyrgðarmaður þess teymis, líka með hlutverkið ritstjóri, og þjónninn hafnar (403) verkefnisstjóra; snerti hún
+hluta fleiri teyma, eða engan, samþykkir verkefnisstjóri eins og áður. Þegar IDS-skjal fær nýja útgáfu athugar þjónninn nýjustu
+IFC-útgáfur verkefnisins aftur, og skýrslur þeirra standa sem í bið á meðan.
+
 Gefi þjónninn gildin fyrir hvern árekstur sýnir spjaldið fyrir hvern þeirra gildið í grunninum, það sem kom á milli og tillögu þína,
 og þú velur fyrir hvern árekstur hvort þú heldur tillögu þinni eða tekur það sem kom á milli. *Leggja til aftur með mínu vali* sendir
 tillöguna gagnvart nýjustu útgáfunni með þeim breytingum sem haldið er og án þeirra sem strikaðar eru, og þjónninn reynir hana aftur

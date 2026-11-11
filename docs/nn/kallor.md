@@ -162,6 +162,12 @@ og medlemmene med rolle: lesar, bidragsytar, redaktør eller prosjektansvarleg. 
 tenaren, endrar ei rolle, fjernar eit medlem og gjev prosjektet nytt namn; kvar endring vert stadfesta først. Tenaren lèt ikkje
 prosjektet stå utan prosjektansvarleg og seier frå; prosjekt vert ikkje sletta herifrå, og nye kontoar opprettar ein administrator.
 
+Har prosjektet team, viser kortet òg dei: namn, ansvarleg, medlemer og IDS-dokumentet som spesifikasjonane i avgrensar delen til
+teamet i modellen. Du legg til eit team med namn, ansvarleg (ein redaktør eller prosjektansvarleg), brukarnamna til medlemene og
+IDS-dokumentet, som vert valt mellom filene i prosjektet eller oppgjeve med id-en sin, og fjernar eit team; tenaren kontrollerer at dei
+oppgjevne finst i prosjektet. Ei endring som berre rører delen til eitt team, vert godkjend av den ansvarlege i teamet, ikkje av ein
+prosjektansvarleg (sjå *Endre med AI* i CAD og BIM).
+
 Saker blir henta i sider på 500. Ei liste som tenaren har korta av (Dataregium kortar av ved 1 000 postar), blir lesen til
 endes gjennom Link-headeren til tenaren med rel="next", men berre på same tenar, slik at tokenet ditt aldri går andre stader.
 

@@ -304,6 +304,11 @@ kolliderer endringane med det som har kome imellom, avviser tenaren (412), og pa
 attributt) eller seier at alt kan ha endra seg når ei heil fil er lasta opp imellom. Hent då den nyaste versjonen, gjer endringane på
 nytt og foreslå igjen.
 
+Har prosjektet team (kortet *Medlemmene i prosjektet* i Handter), viser panelet kva team endringa rører. Rører ho berre delen til
+eitt team, godkjenner den ansvarlege i teamet, òg med rolla redaktør, og tenaren nektar (403) ein prosjektansvarleg; rører ho delane
+til fleire team, eller ingen, godkjenner ein prosjektansvarleg som før. Når eit IDS-dokument får ein ny versjon, kontrollerer tenaren
+dei siste IFC-versjonane i prosjektet på nytt, og rapportane deira står som ventande imens.
+
 Gjev tenaren verdiane per kollisjon, viser panelet for kvar kollisjon verdien i basen, det som kom imellom, og framlegget ditt, og du
 vel per kollisjon å halde på framlegget ditt eller ta det som kom imellom. *Foreslå igjen med vala mine* sender framlegget mot den
 nyaste versjonen med dei haldne endringane og utan dei strokne, og tenaren prøver det på nytt før det kan godkjennast.

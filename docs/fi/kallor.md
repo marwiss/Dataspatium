@@ -167,6 +167,12 @@ projektinsa ja niiden jäsenet rooleineen: lukija, osallistuja, toimittaja tai v
 käyttäjätunnuksellaan, muutat roolin, poistat jäsenen ja nimeät projektin uudelleen; jokainen muutos vahvistetaan ensin. Palvelin ei
 salli projektin jäädä ilman vastuuhenkilöä ja kertoo siitä; projekteja ei poisteta täältä, ja uudet tilit luo ylläpitäjä.
 
+Jos projektissa on tiimejä, kortti näyttää myös ne: nimen, vastuuhenkilön, jäsenet ja IDS-asiakirjan, jonka määritykset rajaavat
+tiimin osan mallista. Lisäät tiimin antamalla nimen, vastuuhenkilön (toimittajan tai projektin vastuuhenkilön), jäsenten
+käyttäjätunnukset ja IDS-asiakirjan, joka valitaan projektin tiedostoista tai annetaan tunnisteella, ja poistat tiimin; palvelin
+tarkistaa, että annetut ovat projektissa. Muutoksen, joka koskee vain yhden tiimin osaa, hyväksyy tiimin vastuuhenkilö, ei projektin
+vastuuhenkilö (ks. *Muuta tekoälyllä* kohdassa CAD ja BIM).
+
 Asiat haetaan 500 kohteen sivuina. Palvelimen katkaisema luettelo (Dataregium katkaisee 1 000 kohteen kohdalla) luetaan
 loppuun palvelimen Link-otsakkeen rel="next" -linkkien kautta, mutta vain samalta palvelimelta, joten tunnisteesi ei koskaan
 mene muualle.

@@ -306,6 +306,11 @@ the latest in the same step and approves against it when the trial is clean; whe
 server refuses (412) and the panel lists the colliding keys (instance and attribute), or says that anything may have changed when a
 whole file was uploaded in between. Fetch the newest version then, redo the changes and propose again.
 
+When the project has teams (the card *The project's members* in Manage) the panel shows which teams the change touches. When it
+touches one team's part, that team's responsible approves, even with the role editor, and the server refuses (403) a manager; when it
+touches the parts of several teams, or of none, a manager approves as before. When an IDS document gets a new version the server
+checks the project's latest IFC versions again, and their reports stand as pending meanwhile.
+
 When the server gives the values per collision, the panel shows for each the value in the base, what came between and your proposal,
 and you choose per collision to keep your proposal or take what came between. *Propose again with my choices* sends the proposal
 against the latest version, with the kept changes and without the dropped ones, and the server tries it again before it can be

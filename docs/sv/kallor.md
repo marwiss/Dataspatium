@@ -158,6 +158,12 @@ deras medlemmar med roll: läsare, bidragsgivare, redaktör eller projektansvari
 användarnamnet på servern, ändrar en roll, tar bort en medlem och byter projektets namn; varje ändring bekräftas först. Servern låter
 inte projektet bli utan projektansvarig och säger till; projekt tas inte bort härifrån, och nya konton skapar en administratör.
 
+Har projektet team visar kortet också dem: namn, ansvarig, medlemmar och det IDS-dokument vars specifikationer avgränsar
+teamets del av modellen. Du lägger till ett team med namn, ansvarig (en redaktör eller projektansvarig), medlemmarnas användarnamn
+och IDS-dokumentet, som väljs bland projektets filer eller anges med sitt id, och tar bort ett team; servern kontrollerar att de
+angivna finns i projektet. En ändring som bara rör ett teams del godkänns av teamets ansvarige, inte av en projektansvarig (se
+*Ändra med AI* i CAD och BIM).
+
 Ärenden hämtas i sidor om 500. En lista som servern har kapat (Dataregium kapar vid 1 000 poster) läses till slut genom
 serverns rubrik Link med rel="next", men bara på samma server, så att din token aldrig går någon annanstans.
 

@@ -300,6 +300,11 @@ basen, prøver serveren forslaget på nytt mot den nyeste i samme steg og godkje
 med det som har kommet imellom, avviser serveren (412), og panelet viser de kolliderende nøklene (instans og attributt) eller sier at
 alt kan ha endret seg når en hel fil er lastet opp imellom. Hent da den nyeste versjonen, gjør endringene på nytt og foreslå igjen.
 
+Har prosjektet team (kortet *Prosjektets medlemmer* i Håndter), viser panelet hvilke team endringen rører. Rører den bare ett teams
+del, godkjenner teamets ansvarlige, også med rollen redaktør, og serveren nekter (403) en prosjektansvarlig; rører den flere teams
+deler, eller ingen, godkjenner en prosjektansvarlig som før. Når et IDS-dokument får en ny versjon, kontrollerer serveren prosjektets
+siste IFC-versjoner på nytt, og rapportene deres står som ventende imens.
+
 Oppgir serveren verdiene per kollisjon, viser panelet for hver kollisjon verdien i basen, det som kom imellom, og forslaget ditt, og
 du velger per kollisjon å beholde forslaget ditt eller ta det som kom imellom. *Foreslå igjen med mine valg* sender forslaget mot den
 nyeste versjonen med de beholdte endringene og uten de strøkne, og serveren prøver det på nytt før det kan godkjennes.

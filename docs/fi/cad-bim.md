@@ -310,6 +310,11 @@ muutokset ovat ristiriidassa välissä tulleen kanssa, palvelin kieltäytyy (412
 ja attribuutti) tai sanoo, että mikä tahansa on voinut muuttua, kun välissä on ladattu kokonainen tiedosto. Hae silloin uusin versio,
 tee muutokset uudelleen ja ehdota uudelleen.
 
+Jos projektissa on tiimejä (kortti *Projektin jäsenet* Hallitse-tilassa), paneeli näyttää, mitä tiimejä muutos koskee. Jos se
+koskee vain yhden tiimin osaa, tiimin vastuuhenkilö hyväksyy, myös toimittajan roolissa, ja palvelin kieltäytyy (403) projektin
+vastuuhenkilöltä; jos se koskee usean tiimin osia tai ei minkään, projektin vastuuhenkilö hyväksyy kuten ennen. Kun IDS-asiakirja saa
+uuden version, palvelin tarkistaa projektin uusimmat IFC-versiot uudelleen, ja niiden raportit ovat sillä aikaa odottavia.
+
 Kun palvelin antaa arvot ristiriitaa kohden, paneeli näyttää kunkin ristiriidan arvon perusversiossa, välissä tulleen arvon ja
 ehdotuksesi, ja valitset ristiriita kerrallaan, pidätkö ehdotuksesi vai otatko välissä tulleen. *Ehdota uudelleen valinnoillani*
 lähettää ehdotuksen uusinta versiota vasten pidetyin muutoksin ja ilman poistettuja, ja palvelin kokeilee sen uudelleen ennen kuin

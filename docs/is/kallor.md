@@ -158,6 +158,12 @@ meðlimi þeirra með hlutverkum: lesandi, þátttakandi, ritstjóri eða ábyrg
 hennar á þjóninum, breytir hlutverki, fjarlægir meðlim og endurnefnir verkefnið; hver breyting er staðfest fyrst. Þjónninn leyfir ekki
 að verkefnið sé án ábyrgðarmanns og segir frá því; verkefnum er ekki eytt héðan, og stjórnandi stofnar nýja aðganga.
 
+Hafi verkefnið teymi sýnir spjaldið þau líka: nafn, ábyrgðarmann, meðlimi og IDS-skjalið sem forskriftir þess afmarka hluta teymisins
+af líkaninu. Þú bætir við teymi með nafni, ábyrgðarmanni (ritstjóra eða verkefnisstjóra), notendanöfnum meðlimanna og IDS-skjalinu,
+sem er valið meðal skráa verkefnisins eða gefið upp með auðkenni sínu, og fjarlægir teymi; þjónninn athugar að það sem gefið er upp
+sé í verkefninu. Breytingu sem snertir aðeins hluta eins teymis samþykkir ábyrgðarmaður þess teymis, ekki verkefnisstjóri (sjá
+*Breyta með gervigreind* í CAD og BIM).
+
 Mál eru sótt í síðum með 500. Listi sem þjónninn hefur stytt (Dataregium styttir við 1.000 færslur) er lesinn til enda með
 Link-haus þjónsins með rel="next", en aðeins á sama þjóni, svo að táknið þitt fer aldrei annað.
 

@@ -302,6 +302,11 @@ kolliderer ændringerne med det, der er kommet imellem, afviser serveren (412), 
 attribut) eller siger, at alt kan være ændret, når en hel fil er uploadet imellem. Hent da den nyeste version, gentag ændringerne og
 foreslå igen.
 
+Har projektet teams (kortet *Projektets medlemmer* i Håndtér), viser panelet, hvilke teams ændringen rører. Rører den kun et teams
+del, godkender teamets ansvarlige, også med rollen redaktør, og serveren afviser (403) en projektansvarlig; rører den flere teams dele,
+eller ingen, godkender en projektansvarlig som før. Når et IDS-dokument får en ny version, kontrollerer serveren projektets seneste
+IFC-versioner igen, og deres rapporter står som ventende imens.
+
 Angiver serveren værdierne pr. kollision, viser panelet for hver kollision værdien i basen, det der kom imellem, og dit forslag, og
 du vælger pr. kollision at beholde dit forslag eller tage det, der kom imellem. *Foreslå igen med mine valg* sender forslaget mod den
 nyeste version med de beholdte ændringer og uden de strøgne, og serveren afprøver det igen, før det kan godkendes. Sammenfletningen
