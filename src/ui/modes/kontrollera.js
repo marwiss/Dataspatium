@@ -220,7 +220,7 @@
         const num = (v) => i18n.formatNumber(Number(v) || 0, { maximumFractionDigits: 2 });
         async function run() {
           if (state.busy) return;
-          state.busy = true; state.error = ''; draw();
+          state.busy = true; state.error = ''; state.storeys = null; draw();
           try { state.storeys = await D.require('data/ifc-ops').topologyOf(ds.id); } catch (err) { state.error = String((err && err.message) || err); }
           state.busy = false; draw();
         }
