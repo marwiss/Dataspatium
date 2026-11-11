@@ -317,9 +317,12 @@ Hamurinn *Breyta* í sama spjaldi lætur gervigreindina leggja til breytingar á
 útveggi eftir netinu, eina plötu á hæð og hurð í hverjum vegg á hæð 1". Gervigreindin les líkanið með sömu tólum og í Spyrja og skrifar
 með tólum fyrir hæðir og hnitanet, veggi, plötur, op með hurð eða glugga, eiginleika, efni, færslur og eyðingar. Tólið `set_site` setur
 stað líkansins á jörðinni: breiddargráðu, lengdargráðu og hæð lóðarinnar, og með EPSG-kóða eins og 3006 fyrir SWEREF 99 TM einnig
-kortavörpunina, það er upphafspunkt líkansins í austur- og norðurhnitum og snúning hans (ekki í IFC2X3, sem vantar hana). Tólin breyta
-engu: þau fylla breytingasett sem spjaldið telur upp skref fyrir skref (mál í metrum; nýjar einingar fá tilvísanirnar new-1, new-2 … þar
-til skráin hefur gefið þeim auðkenni).
+kortavörpunina, það er upphafspunkt líkansins í austur- og norðurhnitum og snúning hans (ekki í IFC2X3, sem vantar hana). Tólið
+`create_roof` setur risþak, valmaþak, einhalla þak eða flatt þak með halla, þakskeggi og þykkt á veggi hæðar (efstu hæðina ef engin er
+nefnd): IfcRoof úr þakplötum (IfcSlab af gerðinni ROOF), einni á hvern þakflöt, yfir umlykjandi rétthyrningi veggjanna eða gefnum
+rétthyrningi (önnur útlína víkur enn sem komið er fyrir umlykjandi rétthyrningi sínum). Tólin breyta engu: þau fylla breytingasett sem
+spjaldið telur upp skref fyrir skref (mál í metrum; nýjar einingar fá tilvísanirnar new-1, new-2 … þar til skráin hefur gefið þeim
+auðkenni).
 
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum

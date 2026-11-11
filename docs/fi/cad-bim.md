@@ -332,8 +332,12 @@ ulkoseinät verkon mukaan, yksi laatta kerrosta kohti ja ovi jokaiseen seinään
 kuin Kysy-tilassa ja kirjoittaa työkaluilla, jotka tekevät kerroksia ja moduuliverkon, seiniä, laattoja, aukkoja ovella tai ikkunalla,
 ominaisuuksia, materiaaleja, siirtoja ja poistoja. Työkalu `set_site` asettaa mallin paikan maapallolla: tontin leveys- ja pituusasteen
 ja korkeuden, ja EPSG-koodilla, kuten 3006 (SWEREF 99 TM), myös karttamuunnoksen eli mallin origon itä- ja pohjoiskoordinaatteina ja sen
-kierron (ei IFC2X3:ssa, josta se puuttuu). Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe
-vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1, new-2 …, kunnes tiedosto on antanut niille tunnisteet).
+kierron (ei IFC2X3:ssa, josta se puuttuu). Työkalu `create_roof` tekee kerroksen seinille (jos kerrosta ei anneta, ylimmän kerroksen
+seinille) harjakaton, aumakaton, pulpettikaton tai tasakaton, jolla on kaltevuus, räystäs ja paksuus: IfcRoof-katon kattolaatoista
+(IfcSlab, tyyppi ROOF), yksi kutakin lapetta kohti, seinien ympäröivän suorakulmion tai annetun suorakulmion päälle (muu ääriviiva
+korvataan toistaiseksi sitä ympäröivällä suorakulmiolla). Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli
+luettelee vaihe vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1, new-2 …, kunnes tiedosto on antanut niille
+tunnisteet).
 
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
