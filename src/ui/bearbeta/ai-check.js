@@ -12,8 +12,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-check', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/check-tools', 'data/datasets', 'data/bcf-xml', 'api/connectors', 'api/families/opencde', 'platform/files'],
-    (base, basic, overlays, checkTools, datasets, bcfXml, connectors, opencde, files) => {
+  D.define('ui/bearbeta/ai-check', ['ui/base', 'ui/basic', 'ui/overlays', 'ai/check-tools', 'data/datasets', 'data/bcf-xml', 'data/exif', 'api/connectors', 'api/families/opencde', 'platform/files'],
+    (base, basic, overlays, checkTools, datasets, bcfXml, exif, connectors, opencde, files) => {
       const { h, t, i18n } = base;
       /** Badge colours: the worse the condition or the sooner the action, the stronger. */
       const KIND = { good: 'ok', fair: 'accent', poor: 'warn', critical: 'error', low: null, medium: 'accent', high: 'warn', urgent: 'error' };
@@ -26,6 +26,12 @@
       /** Without a drawn model the camera looks at a building-sized box at the model's origin, for a server that wants a camera with the selection. */
       const AROUND_ORIGIN = { min: [-10, -10, 0], max: [10, 10, 6] };
       const bytesOf = (b64) => Uint8Array.from(atob(String(b64)), (c) => c.charCodeAt(0));
+      /** Bytes as base64, in slices so that a large picture does not overflow the call stack. */
+      function base64Of(bytes) {
+        let s = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 0x8000)));
+        return btoa(s);
+      }
       const word = (prefix, value) => t(prefix + '.' + value);
       /** The table's columns; condition and priority are codes with their words as value labels. */
       function columns() {
@@ -66,10 +72,13 @@
           if (!f.elementId || !options.bounds) return null;
           try { return options.bounds([f.elementId]); } catch (_e) { return null; }
         }
-        /** A finding's view: a camera on the element (or on the model's origin), the element selected, and the photo as the snapshot. */
+        /**
+         * A finding's view: a camera on the element (or on the model's origin), the element selected, and the photo as the snapshot,
+         * without what its file can say about where and by whom it was taken (a picture the browser could not shrink keeps its EXIF).
+         */
         function viewOf(f) {
           const box = boxOf(f);
-          const snapshot = f.picture && /^image\/(jpeg|png)$/.test(f.picture.mediaType) ? f.picture : null;
+          const snapshot = f.picture && /^image\/(jpeg|png)$/.test(f.picture.mediaType) ? { mediaType: f.picture.mediaType, bytes: exif.strip(bytesOf(f.picture.data)) } : null;
           if (!box && !f.elementGuid && !snapshot) return null;
           const viewpoint = {};
           if (box || f.elementGuid) viewpoint.perspective_camera = bcfXml.cameraOfBox(box || AROUND_ORIGIN);
@@ -117,7 +126,7 @@
             const header = meta && meta.model && meta.model.file ? [{ filename: String(meta.model.file), date: now }] : [];
             const items = found.map((f) => {
               const view = viewOf(f);
-              return { topic: topicOf(f, now), comments: [], header, viewpoints: view ? [{ viewpoint: Object.assign({ guid: bcfXml.newGuid() }, view.viewpoint), snapshot: view.snapshot ? { bytes: bytesOf(view.snapshot.data), type: view.snapshot.mediaType } : null }] : [] };
+              return { topic: topicOf(f, now), comments: [], header, viewpoints: view ? [{ viewpoint: Object.assign({ guid: bcfXml.newGuid() }, view.viewpoint), snapshot: view.snapshot ? { bytes: view.snapshot.bytes, type: view.snapshot.mediaType } : null }] : [] };
             });
             const cde = meta && meta.source && meta.source.cde;
             blob = await bcfXml.write(items, cde && cde.projectId ? { projectName: String(cde.projectName || name), projectId: String(cde.projectId) } : { projectName: name });
@@ -165,7 +174,7 @@
                   f.topicGuid = String(topic.guid);
                 }
                 const view = viewOf(f);
-                if (view) await opencde.createViewpoint(server.connector, server.cde.projectId, f.topicGuid, Object.assign({}, view.viewpoint, view.snapshot ? { snapshot: { snapshot_type: view.snapshot.mediaType === 'image/png' ? 'png' : 'jpg', snapshot_data: view.snapshot.data } } : {}));
+                if (view) await opencde.createViewpoint(server.connector, server.cde.projectId, f.topicGuid, Object.assign({}, view.viewpoint, view.snapshot ? { snapshot: { snapshot_type: view.snapshot.mediaType === 'image/png' ? 'png' : 'jpg', snapshot_data: base64Of(view.snapshot.bytes) } } : {}));
                 f.issued = true; made++;
               } catch (err) { s.failed.push({ n: f.n, title: f.title, error: String((err && err.message) || err) }); }
             }

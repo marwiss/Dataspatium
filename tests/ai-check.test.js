@@ -3,8 +3,9 @@
 /**
  * Tests for Kontrollera med AI (decision F44 a): record_finding checks each call and resolves the photo and the element, a check writes
  * only Pset_Condition, the agent in check mode records findings and sets the condition through set_properties while create_wall is
- * refused, the panel in the mode Kontrollera lists the findings and saves them as a table and as a BCF file read back with bcf-xml, and
- * Skapa ärenden på servern creates one topic per finding with a viewpoint on a virtual Dataregium. Mocked provider, no network.
+ * refused, the panel in the mode Kontrollera lists the findings and saves them as a table and as a BCF file read back with bcf-xml (the
+ * photos without their EXIF), and Skapa ärenden på servern creates one topic per finding with a viewpoint on a virtual Dataregium.
+ * Mocked provider, no network.
  */
 (function () {
   'use strict';
@@ -220,6 +221,14 @@
       const vp = read.viewpoints.find((x) => x.topic_guid === topic.guid);
       const p = vp && vp.perspective_camera && vp.perspective_camera.camera_view_point;
       assert.ok(p && p.x > 2 && p.y < 0.1 && p.z > 1.25, 'the camera frames the wall from the south-east above: ' + JSON.stringify(p));
+      // A picture that kept its EXIF (one the browser could not shrink) leaves without its position.
+      const exif = D.require('data/exif');
+      const tagged = exif.insertApp1(Uint8Array.from(atob(PIXEL), (ch) => ch.charCodeAt(0)), exif.buildApp1({ lat: 59.3293, lon: 18.0686, dateTimeOriginal: '2026-05-03T10:15:00' }));
+      assert.ok(Number.isFinite(exif.parse(tagged).lat), 'the photo carries a position');
+      const view = panel.check.viewOf({ picture: { mediaType: 'image/jpeg', data: btoa(String.fromCharCode(...tagged)) }, elementGuid: null, elementId: null });
+      let lat = null;
+      try { const m = exif.parse(view.snapshot.bytes); lat = m && m.lat; } catch (_e) { lat = null; }
+      assert.ok(!Number.isFinite(lat) && btoa(String.fromCharCode(...view.snapshot.bytes)) === PIXEL, 'the snapshot is the picture without its EXIF');
     } finally { platformFiles.download = realDownload; panel.destroy(); panel.el.remove(); }
     return 'ok';
   }, 30000);
