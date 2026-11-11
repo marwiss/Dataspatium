@@ -7,6 +7,8 @@
  * wall, slab, roof or opening gets a ref (new-1, new-2, …) so that later calls can name it before the file has given it an id; the wheel
  * gives the same refs in the same order. Deleting needs confirm: true from the AI and is confirmed again by the person before approval.
  * create_roof covers a rectangle (the outline's bounding box, or the storey's walls') with a gable, hip, shed or flat roof of roof slabs.
+ * create_spaces makes the rooms the walls enclose into spaces (decision B-57.1) with names from the room programme, from the topology
+ * the wheel computes at that step; it gets one ref per listed room (op.refs), and none when every room is made.
  * set_site places the model on earth (the site's WGS 84 position and, with an EPSG code, the map conversion); it is a change, not a
  * create, so it gets no ref. Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
  * "not given").
@@ -22,8 +24,9 @@
     const num = () => ({ type: ['number', 'null'] });
     const xy = () => ({ type: ['array', 'null'], items: { type: 'number' } });
     const ids = () => ({ type: 'array', items: { type: ['integer', 'string'] } });
-    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening'];
+    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces'];
     const ROOF_SHAPES = ['gable', 'hip', 'shed', 'flat'];
+    const MAX_ROOMS = 200;
     /** The tools as the providers see them. */
     const TOOLS = [
       { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept. Either may be null.',
@@ -38,6 +41,8 @@
         parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str() } } },
       { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. Answers the ref of the door or window, or of the opening.',
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
+      { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
+        parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str() }, required: ['at', 'index', 'name', 'long_name'], additionalProperties: false } }, height: num() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
       { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of a classification system such as a bSDD dictionary: system is the dictionary\'s name, name the class name, code its code and uri its address (a bSDD class uri). Written as an IfcClassificationReference. Use search_bsdd first to find the class.',
@@ -152,6 +157,28 @@
           if (!given(a.wall_id)) throw new Error('wall_id is required');
           return { tool: name, wall_id: idOrRef(cs, a.wall_id, 'wall_id'), offset: number(a, 'offset', { fallback: 0 }), width: number(a, 'width', { fallback: 0.9, positive: true }), height: number(a, 'height', { fallback: 2.1, positive: true }), sill: number(a, 'sill', { fallback: 0 }), fill, name: text(a, 'name') };
         }
+        case 'create_spaces': {
+          const storey = text(a, 'storey');
+          let rooms = null;
+          if (given(a.rooms)) {
+            if (!Array.isArray(a.rooms) || !a.rooms.length) throw new Error('rooms must be a list of {at or index, name, long_name}, or null for every room');
+            if (a.rooms.length > MAX_ROOMS) throw new Error(`at most ${MAX_ROOMS} rooms in one step`);
+            if (!storey) throw new Error('name the storey the rooms are on; storey null goes with rooms null (every room on every storey)');
+            const indexes = new Set();
+            rooms = a.rooms.map((r, i) => {
+              const which = `room ${i + 1}`;
+              if (!r || typeof r !== 'object') throw new Error(`${which} must be {at or index, name, long_name}`);
+              if (given(r.at) === given(r.index)) throw new Error(`${which} needs either at, an [x, y] point inside it in metres, or index, its index in get_topology`);
+              if (!given(r.name)) throw new Error(`${which} needs a name`);
+              if (given(r.index) && (!Number.isInteger(r.index) || r.index < 1)) throw new Error(`${which}: index must be a whole number from 1`);
+              if (given(r.index) && indexes.has(r.index)) throw new Error(`${which}: index ${r.index} is listed twice`);
+              if (given(r.index)) indexes.add(r.index);
+              return { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') };
+            });
+          }
+          // Without a list the wheel names the rooms itself: the person's word for a room with {n} for its index.
+          return { tool: name, storey, rooms, height: number(a, 'height', { positive: true }), default_name: rooms ? null : t('ai.change.spaces.name') };
+        }
         case 'set_properties': {
           const pset = text(a, 'pset', { required: true });
           if (!Array.isArray(a.properties) || !a.properties.length) throw new Error('properties must be a list of {name, value}');
@@ -209,20 +236,23 @@
         if (action === 'clear') { cs.ops = []; cs.refs = 0; return { ok: true, steps: 0 }; }
         if (action === 'remove_last') {
           const last = cs.ops.pop();
-          if (last && last.ref) cs.refs--;
+          if (last) cs.refs -= last.refs ? last.refs.length : last.ref ? 1 : 0;
           return { ok: true, removed: last ? describe(last) : null, steps: cs.ops.length };
         }
         if (action !== 'list') return err('action must be list, remove_last or clear');
-        return { steps: cs.ops.map((op, i) => ({ step: i + 1, tool: op.tool, ref: op.ref || null, description: describe(op) })) };
+        return { steps: cs.ops.map((op, i) => ({ step: i + 1, tool: op.tool, ref: op.ref || (op.refs && op.refs.length ? op.refs.join(', ') : null), description: describe(op) })) };
       }
       if (!has(name)) return err(`unknown tool ${name}`);
       if (cs.ops.length >= MAX_OPS) return err(`the change set holds ${MAX_OPS} steps already; ask the person to approve it first`);
       let op;
       try { op = build(cs, name, args); } catch (e) { return err(String((e && e.message) || e)); }
-      if (CREATES.includes(name)) { cs.refs++; op.ref = `new-${cs.refs}`; }
+      // create_spaces gets a ref per listed room, in their order, as the wheel numbers them; the other creates one each.
+      if (name === 'create_spaces') op.refs = (op.rooms || []).map(() => `new-${++cs.refs}`);
+      else if (CREATES.includes(name)) { cs.refs++; op.ref = `new-${cs.refs}`; }
       cs.ops.push(op);
       const out = { ok: true, step: cs.ops.length, description: describe(op) };
       if (op.ref) out.ref = op.ref;
+      if (op.refs && op.refs.length) out.refs = op.refs;
       if (op.tool === 'create_roof' && op.outline && !rectangular(op.outline)) {
         const b = bounds(op.outline);
         out.note = `the outline is not a rectangle along x and y (${op.outline.length} corners), so for now the roof covers its bounding box: ${fmt(b[2] - b[0])} × ${fmt(b[3] - b[1])} m from (${fmt(b[0])}, ${fmt(b[1])})`;
@@ -243,6 +273,12 @@
             extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' });
         }
         case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
+        case 'create_spaces': {
+          const rooms = op.rooms ? op.rooms.map((r) => (r.at ? t('ai.change.spaces.at', { name: r.name, x: fmt(r.at[0]), y: fmt(r.at[1]) }) : t('ai.change.spaces.index', { name: r.name, index: fmt(r.index) }))).join(', ')
+            : t('ai.change.spaces.all', { names: [1, 2].map((n) => t('ai.change.spaces.name', { n })).join(', ') });
+          const refs = op.refs || [];
+          return t('ai.change.create_spaces', { ref: refs.length > 1 ? `${refs[0]}–${refs[refs.length - 1]}` : refs[0] || '', storey: op.storey || t('ai.change.spaces.every'), rooms, height: op.height ? t('ai.change.spaces.height', { height: fmt(op.height) }) : '' });
+        }
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
         case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: op.system, cls: [op.code, op.name].filter(Boolean).join(' ') });
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
@@ -273,7 +309,7 @@
         return o;
       });
     }
-    const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; return o; });
+    const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
     return { withGuids, TOOLS, CREATES, MAX_OPS, has, create, call, describe, summary, toWheel };
   });

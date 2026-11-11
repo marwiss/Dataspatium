@@ -72,6 +72,7 @@
       'otherwise, and the first storey stays at elevation 0. When the ground falls more than 0.5 m across the footprint, say so and ask',
       'whether the building has a basement or a plinth on the low side.',
       'After the walls of a storey, the preview\'s topology says whether the storey is closed; mend open ends (dangles) by moving or adding walls before the slabs.',
+      'When the storeys are closed and the brief or the room programme names rooms, create them with create_spaces after the walls and before the slabs.',
     ].join(' ');
     const SYSTEM_CHECK = [
       'You check an existing building\'s IFC model inside the app Dataspatium against photos of damage or wear and the measurements of a',
