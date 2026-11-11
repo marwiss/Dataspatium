@@ -170,6 +170,9 @@ Kortet **Validera modellen** i Hantera samlar kontrollerna av en IFC-modell, med
 - **Projektets IDS-filer**: kontrollerar servern också filen mot projektets IDS-dokument (den senaste versionen av varje dokument vars
   namn slutar på `.ids`), visar rapporten hur många specifikationer som godkändes, inte godkändes eller inte gällde filen, och vilka som
   inte godkändes, med dokumentets namn och antal fynd. Ett IDS-dokument som inte kunde läsas står bland reglerna som inte kunde köras.
+- **Det som inget GlobalId når**: hittar serverns kontroll graph instanser som inget med ett GlobalId når, visar rapporten knappen
+  *Ta bort det som inget GlobalId når*. Servern föreslår då, efter din bekräftelse, ett ändringsset som tar bort dem; förslaget
+  blir ett ärende som prövas och godkänns som andra, och versionen behåller allt.
 - **Kontroller här** visar den senaste *Validering*, *IDS-kontroll* och kollisionskontroll som körts i appen, och knapparna öppnar
   dem i Analysera. Resultaten sparas i appens inställningar, inte i datamängden.
 

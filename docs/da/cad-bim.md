@@ -173,6 +173,9 @@ Kortet **Valider modellen** i Håndter samler kontrollerne af en IFC-model, med 
 - **Projektets IDS-filer**: kontrollerer serveren også filen mod projektets IDS-dokumenter (den seneste version af hvert dokument, hvis
   navn ender på `.ids`), viser rapporten, hvor mange specifikationer der blev godkendt, ikke godkendt eller ikke gjaldt filen, og hvilke der
   ikke blev godkendt, med dokumentets navn og antal fund. Et IDS-dokument, der ikke kunne læses, står blandt reglerne, der ikke kunne køres.
+- **Det, som intet GlobalId når**: finder serverens kontrol graph instanser, som intet med et GlobalId når, viser rapporten
+  knappen *Fjern det, som intet GlobalId når*. Serveren foreslår så, efter din bekræftelse, et ændringssæt, der fjerner dem;
+  forslaget bliver en sag, der afprøves og godkendes som andre, og versionen beholder alt.
 - **Kontroller her** viser den seneste *Validering*, *IDS-kontrol* og kollisionskontrol, der er kørt i appen, og knapperne åbner dem
   i Analysér. Resultaterne gemmes i appens indstillinger, ikke i datasættet.
 

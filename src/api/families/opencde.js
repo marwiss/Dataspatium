@@ -606,6 +606,58 @@
       try { return await api(connector, versionPath(documentId, versionIndex) + '/ifc-validation'); }
       catch (err) { if (err && err.status === 404) return null; throw err; }
     }
+    /**
+     * A capability's address on the server, its placeholders filled in. Only a path is taken from the capabilities, never a whole
+     * address, so the token stays with the source's own server.
+     */
+    function capPath(caps, name, field, fallback, values) {
+      const raw = caps && caps.extensions && caps.extensions[name] ? caps.extensions[name][field] : null;
+      let path = typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//') ? raw : fallback;
+      for (const [k, v] of Object.entries(values)) path = path.split('{' + k + '}').join(encode(String(v)));
+      return path;
+    }
+    const PUBLICATION = '/documents/1.0/documents/{document_id}/versions/{version_index}/publication';
+    /**
+     * How a version is published (Dataregium's publication): {published_at, published_by, file_name, size_in_bytes, sha256}, or null
+     * when it is not published or the server has no publication. Every member may ask.
+     * @param {any} connector @param {string} documentId @param {number} versionIndex
+     */
+    async function publication(connector, documentId, versionIndex) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'publication')) return null;
+      try { return await api(connector, capPath(caps, 'publication', 'url', PUBLICATION, { document_id: documentId, version_index: versionIndex })); }
+      catch (err) { if (err && err.status === 404) return null; throw err; }
+    }
+    /** Whether the server can publish versions at all. @param {any} connector */
+    async function canPublish(connector) { return hasExtension(await capabilities(connector), 'publication'); }
+    /**
+     * Publish a version, as a manager of the project: once, and not while the version is checked or after its check found
+     * errors (409). @param {any} connector @param {string} documentId @param {number} versionIndex
+     */
+    async function publish(connector, documentId, versionIndex) {
+      const caps = await capabilities(connector);
+      if (!hasExtension(caps, 'publication')) throw new Error(t('cde.publication.unsupported'));
+      return api(connector, capPath(caps, 'publication', 'url', PUBLICATION, { document_id: documentId, version_index: versionIndex }), { method: 'POST' });
+    }
+    /** The published archive (.ifczip, or .zip for another file) as a File. */
+    async function publicationFile(connector, documentId, versionIndex, fileName) {
+      const caps = await capabilities(connector);
+      const got = await binary(connector, capPath(caps, 'publication', 'url', PUBLICATION, { document_id: documentId, version_index: versionIndex }) + '/download', '*/*');
+      return new File([got.buffer], fileName || 'publicering.zip', { type: got.contentType || 'application/zip' });
+    }
+    /**
+     * Ask the server to propose removing what no GlobalId reaches in a version (Dataregium's ifc-unreachable): a topic whose change
+     * set deletes those instances, tried and approved like any other. Null when the server has no such proposal; 409 when nothing
+     * is out of reach, 404 when the version has no converted model.
+     * @returns {Promise<{topic_guid: string, title: string, changes: number, proposal_url: string}|null>}
+     */
+    async function proposeUnreachable(connector, projectId, documentId, versionIndex) {
+      const caps = await capabilities(connector);
+      const changes = caps && caps.extensions && caps.extensions.ifc_changes;
+      if (!changes || !changes.enabled || !changes.unreachable_url) return null;
+      const path = capPath(caps, 'ifc_changes', 'unreachable_url', '/documents/1.0/projects/{project_id}/ifc-unreachable', { project_id: projectId, id: projectId });
+      return api(connector, path, { method: 'POST', json: { document_id: documentId, version_index: Number(versionIndex) } });
+    }
     // ---------------------------------------------------------------------------- writing
     const createTopic = (connector, projectId, body) => bcf(connector, `/projects/${encode(projectId)}/topics`, { method: 'POST', json: body });
     const updateTopic = (connector, projectId, topicGuid, body) => bcf(connector, `/projects/${encode(projectId)}/topics/${encode(topicGuid)}`, { method: 'PUT', json: body });
@@ -866,6 +918,6 @@
     }
 
     const tables = { topics: topicsTable, comments: commentsTable, components: componentsTable, events: eventsTable };
-    return { FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
+    return { publication, canPublish, publish, publicationFile, proposeUnreachable, FAMILY, BCF_VERSIONS, bcfVersion, bcfBase, bcfVersionsOf, setBcfVersion, hasDocuments, allTopics, viewpointFor, isOpenCde, discover, capabilities, hasExtension, describeError, describeOAuthError, ensureAuthUrls, redirectUri, cancelPopup, popupPending, binary, filesList, rights, downloadFile, importFile, documentVersions, newerVersion, versionMetadata, validationReport, createTopic, updateTopic, deleteTopic, createComment, updateComment, createViewpoint, deleteViewpoint, uploadBcfDocument, uploadDocument, precheck, proposeChanges, putChangeSet, proposalTrial, approveProposal, versionChanges, versionDiff, register, tables, login, manualStart, manualFinish, signedIn, ensureToken, logout, api, currentUser, projects, extensions, topics, comments, viewpoints, topicEvents, bcfDocuments, filesInformation, fetchTopics, fetchComments, fetchComponents, fetchEvents, fetchFiles, FETCHERS, refetch, selectDocuments, downloadVersion, topicsTable, commentsTable, componentsTable, eventsTable, parseCallback, verifier, challenge, describe, hostOf, SCOPES, CALLBACK_PAGE, popupFlow, CALLBACK_CHANNEL, CALLBACK_KEY };
   });
 })();

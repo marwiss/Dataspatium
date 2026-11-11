@@ -169,6 +169,9 @@ Spjaldið **Sannprófa líkanið** í Umsjón safnar saman prófunum á IFC-lík
 - **IDS-skrár verkefnisins**: athugi þjónninn skrána einnig gagnvart IDS-skjölum verkefnisins (nýjustu útgáfu hvers skjals sem endar á
   `.ids`), sýnir skýrslan hve margar forskriftir voru samþykktar, ekki samþykktar eða áttu ekki við skrána, og hverjar voru ekki samþykktar,
   með heiti skjalsins og fjölda niðurstaðna. IDS-skjal sem ekki var hægt að lesa er meðal reglnanna sem ekki var hægt að keyra.
+- **Það sem ekkert GlobalId nær til**: finni prófun þjónsins graph tilvik sem ekkert með GlobalId nær til, sýnir skýrslan hnappinn
+  *Fjarlægja það sem ekkert GlobalId nær til*. Þjónninn leggur þá til, eftir staðfestingu þína, breytingasett sem fjarlægir þau;
+  tillagan verður mál sem er prófað og samþykkt eins og önnur, og útgáfan heldur öllu.
 - **Prófanir hér** sýnir nýjustu *Sannprófun*, *IDS-prófun* og árekstraprófun sem keyrðar voru í forritinu, og hnapparnir opna þær í
   Greina. Niðurstöðurnar eru vistaðar í stillingum forritsins, ekki í gagnasafninu.
 

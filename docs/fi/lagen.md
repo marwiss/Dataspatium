@@ -131,7 +131,9 @@ lähteet, jotka kertovat uusista tiedoista (katso [floden.md](floden.md)).
 
 **Kirjasto.** Kirjastossa on valmiita reseptejä, malleja, skriptejä ja muistikirjoja, kullakin oma lisenssinsä. Näet, mitä kohde tekee, ennen kuin lisäät sen. Lisää kirjastoja haetaan verkko-osoitteesta, ja *Tallenna omat kirjastotiedostona* tekee tiedoston omista töistäsi GitHub-repoon tai minne tahansa.
 
-**CDE:stä.** OpenCDE-palvelimelta haettu aineisto näyttää palvelimen, projektin ja version, voi kysyä uudempaa versiota ja avata mallin asiat.
+**CDE:stä.** OpenCDE-palvelimelta haettu aineisto näyttää palvelimen, projektin ja version, voi kysyä uudempaa versiota ja avata
+mallin asiat. *Julkaisu* näyttää, onko versio julkaistu palvelimella, ja projektin vastuuhenkilö voi julkaista sen kerran
+vahvistuksen jälkeen; arkiston tarkistussummineen voi sitten hakea.
 
 **Asiat.** CDE:stä tulleiden asioiden taulukko saa kortin Asiat: tilanne tilan mukaan, koontinäyttö Asioiden tila ja tie malliin. Katso [cad-bim.md](cad-bim.md).
 

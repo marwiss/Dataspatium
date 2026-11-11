@@ -130,6 +130,8 @@ yfirlitsflipanum, og með hnappinum *Lesa* eða *Sýna myndir* sem opnar lestrar
 **Safn.** Undir Safn eru tilbúnar uppskriftir, sniðmát, skriftur og minnisbækur, hvert með sitt leyfi. Þú sérð hvað eitthvað gerir áður en þú bætir því við. Fleiri söfn eru sótt af vefslóð og *Vista eigin sem safnskrá* býr til skrá úr því sem þú hefur gert, til að setja í GitHub-geymslu eða hvert sem er.
 
 **Frá CDE.** Gagnasafn sótt frá OpenCDE-þjóni sýnir þjón, verkefni og útgáfu, getur spurt um nýrri útgáfu og opnað mál líkansins.
+*Birting* sýnir hvort útgáfa er birt á þjóninum, og verkefnisstjóri getur birt hana einu sinni eftir staðfestingu; síðan má sækja
+safnskrána með vartölu sinni.
 
 **Mál.** Tafla með málum frá CDE fær kortið Mál: staðan eftir stöðu, mælaborðið Staða mála og leiðin að líkaninu. Sjá [cad-bim.md](cad-bim.md).
 

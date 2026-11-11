@@ -45,7 +45,7 @@
   const fakePopup = (url) => { const u = new URL(url); return Promise.resolve(`${u.searchParams.get('redirect_uri')}?code=abc&state=${u.searchParams.get('state')}`); };
   const json = (data) => ({ kind: 'text', data: JSON.stringify(data) });
   /** What the mocked server knows; the walls are filled in once the model is imported, so that the report can name them. */
-  const world = { walls: [], asked: [], tokens: 0 };
+  const world = { walls: [], asked: [], tokens: 0, extensions: false, graph: false, published: null, method: 'GET', bodies: [] };
   const entry = (name, value, type) => ({ name, value: [value], data_type: type });
   /** The IDS check as Dataregium 3.0.0 reports it: the project's IDS documents, every specification with its verdict, and a document it could not read. */
   const IDS_CHECK = {
@@ -68,7 +68,7 @@
         { name: 'schema', state: 'done', ruleset: 'IfcOpenShell 0.9.0.post1: schema and EXPRESS rules', issue_count: 2, rules_not_run: [], documents: [], specifications: [] },
         { name: 'gherkin', state: 'done', ruleset: 'ifc-gherkin-rules 893f827 with IfcOpenShell 0.8.6', issue_count: 1, rules_not_run: [{ rule: 'GEM004', error: 'FileNotFoundError' }], documents: [], specifications: [] },
         IDS_CHECK,
-      ],
+      ].concat(world.graph ? [{ name: 'graph', state: 'done', ruleset: 'IFC-LPG', issue_count: 2, rules_not_run: [], documents: [], specifications: [] }] : []),
       issues: [
         { kind: 'schema', severity: 'error', message: `On instance:\n    #${a.id}=IfcWall('${a.guid}',$,$)\nRule IfcRoot.UR1:\n    The attribute GlobalId should be unique`, step_id: a.id, global_id: a.guid },
         { kind: 'entity_rule', severity: 'error', message: 'IfcWall.WR1: the wall has no body', global_id: b.guid },
@@ -98,6 +98,18 @@
         entry('ifc_validation_report', 'https://elsewhere.example/collect', 'url')] }));
     }
     if (path === doc('doc-ifc') + '/ifc-validation') return Promise.resolve(json(report()));
+    if (world.extensions && path === '/.well-known/dataregium') {
+      return Promise.resolve(json({ server: 'Dataregium', apis: {}, extensions: {
+        publication: { enabled: true, url: '/documents/1.0/documents/{document_id}/versions/{version_index}/publication', roles: ['manager'] },
+        ifc_changes: { enabled: true, unreachable_url: '/documents/1.0/projects/{project_id}/ifc-unreachable' } } }));
+    }
+    if (world.extensions && path === doc('doc-ifc') + '/publication') {
+      if (world.method === 'POST') world.published = { published_at: '2026-11-11T02:30:00Z', published_by: 'checker', file_name: 'hus.ifczip', size_in_bytes: 12, sha256: 'ab'.repeat(32), download_url: BASE + doc('doc-ifc') + '/publication/download' };
+      return Promise.resolve(world.published ? Object.assign(json(world.published), world.method === 'POST' ? { status: 201 } : {}) : { kind: 'text', data: JSON.stringify({ message: 'This version is not published' }), status: 404 });
+    }
+    if (world.extensions && path === `/documents/1.0/projects/${PROJECT}/ifc-unreachable`) {
+      return Promise.resolve(Object.assign(json({ topic_guid: 'aa11bb22-cc33-4d44-8e55-ff6677889900', title: 'Ta bort det som inget GlobalId når', changes: 2, proposal_url: BASE + '/bcf/3.0/projects/' + PROJECT + '/topics/aa11bb22-cc33-4d44-8e55-ff6677889900/ifc-proposal' }), { status: 201 }));
+    }
     if (path === doc('doc-plain') + '/metadata') return Promise.resolve(json({ metadata: [entry('file_name', 'plain.ifc', 'string')] }));
     return Promise.resolve({ kind: 'text', data: JSON.stringify({ message: 'Not Found' }), status: 404 });
   });
@@ -242,6 +254,53 @@
       assert.equal(shell.store.get().openModelTool, null, 'the wish is taken once');
     });
     return 'ok';
+  }, 60000);
+
+  test('validation: Publicering shows the status and publishes after a confirmation, and the graph check offers to remove what no GlobalId reaches', async (assert) => {
+    const http = D.require('api/http');
+    const real = http.request;
+    http.request = (req) => { world.method = String(req.method || 'GET').toUpperCase(); if (req.body) world.bodies.push({ url: String(req.url), body: String(req.body) }); return real(req); };
+    world.extensions = true; world.graph = true; world.published = null;
+    const press = async (label) => {
+      const dlg = await waitFor(() => document.querySelector('dialog[open]'), 5000, label);
+      /** @type {HTMLElement} */ (dlg.querySelectorAll('.dm-dialog-actions dm-button button')[1]).click();
+    };
+    try {
+      await opencde.capabilities(connector, { force: true });
+      await withApp(async (shell, root) => {
+        await waitFor(() => shell.store.get().datasets.some((d) => d.id === model.id), 3000, 'dataset');
+        shell.activate('hantera');
+        shell.store.set({ selectedId: model.id });
+        const cde = await waitFor(() => root.querySelector('[data-card="cde"]'), 5000, 'Från CDE');
+        world.asked = [];
+        await wait(200);
+        assert.ok(!world.asked.some((a) => /publication/.test(a)), 'the card asks nothing until the user does');
+        /** @type {any} */ (cde.querySelector('[data-cde-publication]')).click();
+        await waitFor(() => cde.querySelector('[data-cde-unpublished]'), 8000, 'not published');
+        /** @type {any} */ (cde.querySelector('[data-cde-publish]')).click();
+        await press('the confirmation');
+        const done = await waitFor(() => cde.querySelector('[data-cde-published]'), 8000, 'published');
+        assert.ok(done.textContent.includes('hus.ifczip') && done.textContent.includes('checker') && done.textContent.includes('ab'.repeat(32)), done.textContent);
+        assert.ok(world.published, 'the server published it');
+        assert.ok(cde.querySelector('[data-cde-archive]'), 'and the archive can be fetched');
+        // The server's check graph found something out of reach: the button asks the server for a proposal.
+        const card = await waitFor(() => root.querySelector('[data-card="validation"]'), 5000, 'the card');
+        /** @type {any} */ (card.querySelector('[data-validation-fetch]')).click();
+        await waitFor(() => card.querySelector('[data-validation-report]'), 8000, 'the status');
+        /** @type {any} */ (card.querySelector('[data-validation-report]')).click();
+        const button = await waitFor(() => card.querySelector('[data-validation-unreachable]'), 8000, 'the removal');
+        /** @type {any} */ (button).click();
+        await press('the confirmation of the removal');
+        await waitFor(() => world.bodies.some((b) => /ifc-unreachable/.test(b.url)), 8000, 'the proposal asked for');
+        const asked = world.bodies.find((b) => /ifc-unreachable/.test(b.url));
+        assert.deepEqual(JSON.parse(asked.body), { document_id: 'doc-ifc', version_index: 1 }, 'the version as the base');
+      });
+      return 'ok';
+    } finally {
+      http.request = real;
+      world.extensions = false; world.graph = false;
+      await opencde.capabilities(connector, { force: true });
+    }
   }, 60000);
 
   test('validation: cleanup', async () => {

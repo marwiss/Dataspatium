@@ -177,6 +177,10 @@ Hallitse-tilan kortti **Validoi malli** kokoaa IFC-mallin tarkistukset ja kunkin
 - **Projektin IDS-tiedostot**: jos palvelin tarkistaa tiedoston myös projektin IDS-asiakirjoja vasten (jokaisen `.ids`-päätteisen
   asiakirjan uusin versio), raportti näyttää, montako määrittelyä hyväksyttiin, hylättiin tai ei koskenut tiedostoa, ja mitkä hylättiin,
   asiakirjan nimen ja löydösten määrän kanssa. IDS-asiakirja, jota ei voitu lukea, on niiden sääntöjen joukossa, joita ei voitu suorittaa.
+- **Se, mihin mikään GlobalId ei ulotu**: jos palvelimen tarkistus graph löytää instansseja, joihin mikään
+  GlobalId-tunnisteellinen ei ulotu, raportti näyttää painikkeen *Poista se, mihin mikään GlobalId ei ulotu*. Palvelin ehdottaa
+  silloin vahvistuksesi jälkeen muutosjoukkoa, joka poistaa ne; ehdotuksesta tulee asia, joka koetellaan ja hyväksytään kuten
+  muutkin, ja versio säilyttää kaiken.
 - **Tarkistukset täällä** näyttää sovelluksessa viimeksi ajetun *Validointi*-, *IDS-tarkistus*- ja törmäystarkistustuloksen, ja
   painikkeet avaavat ne Analysoi-tilassa. Tulokset tallennetaan sovelluksen asetuksiin, ei tietoaineistoon.
 

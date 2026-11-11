@@ -128,7 +128,9 @@ har nye data (se [floden.md](floden.md)).
 
 **Bibliotek.** Under Bibliotek findes færdige opskrifter, skabeloner, scripts og notesbøger, hver med sin licens. Du ser, hvad noget gør, før du tilføjer det. Flere biblioteker hentes fra en webadresse, og *Gem egne som biblioteksfil* laver en fil af det, du selv har lavet, til et GitHub-repo eller hvor som helst.
 
-**Fra CDE.** Et datasæt hentet fra en OpenCDE-server viser server, projekt og version, kan spørge efter en nyere version og åbne modellens sager.
+**Fra CDE.** Et datasæt hentet fra en OpenCDE-server viser server, projekt og version, kan spørge efter en nyere version og åbne
+modellens sager. *Offentliggørelse* viser, om en version er offentliggjort på serveren, og den projektansvarlige kan offentliggøre
+den én gang efter en bekræftelse; arkivet med sin kontrolsum kan derefter hentes.
 
 **Sager.** En tabel med sager fra et CDE får kortet Sager: status per status, dashboardet Sagsstatus og vejen til modellen. Se [cad-bim.md](cad-bim.md).
 
