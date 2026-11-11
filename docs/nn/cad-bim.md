@@ -324,8 +324,11 @@ langs rutenettet, eitt dekke per etasje og ei dør i kvar vegg i etasje 1". AI-e
 med verktøy for etasjar og rutenett, veggar, dekke, opningar med dør eller vindauge, eigenskapar, material, flytting og sletting.
 Verktøyet `set_site` gjev staden til modellen på jorda: breiddegrad, lengdegrad og høgd for tomta, og med ein EPSG-kode som 3006 for
 SWEREF 99 TM òg kartkonverteringa, det vil seie origo til modellen i aust- og nordkoordinatar og rotasjonen hans (ikkje i IFC2X3, som
-manglar henne). Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får
-referansane new-1, new-2 … til fila har gjeve dei id).
+manglar henne). Verktøyet `create_roof` legg eit saltak, valmtak, pulttak eller flatt tak med takvinkel, takutstikk og tjukn på
+veggane i ein etasje (utan oppgjeven etasje den øvste): eit IfcRoof av takplater (IfcSlab av typen ROOF), éi per takflate, over det
+omskrivne rektangelet til veggane eller eit oppgjeve rektangel (ein annan kontur blir inntil vidare bytt ut med det omskrivne
+rektangelet sitt). Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element
+får referansane new-1, new-2 … til fila har gjeve dei id).
 
 *Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
 første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna
