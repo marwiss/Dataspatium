@@ -177,6 +177,9 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
 
 ### Også i versjon 3 (med Dataregium 3)
 
+- **Modusen Kontroller**: ein niande modus, etter *Bearbeid*. Ein tabell blir prøvd mot enkle reglar (type og tomme verdiar per
+  kolonne, duplikat blant radene), og ein IFC-modell viser kortet *Valider modellen* og panelet *Samanlikn versjonar* (sjå
+  [Modusar](lagen.md#kontroller)).
 - **Kontroll av modellar**: kortet *Valider modellen* viser kontrollen til tenaren mot IFC-skjemaet, reglane til buildingSMART og
   IDS-filene til prosjektet, og appen finn bygningsdelar som kolliderer eller ligg for nær kvarandre, og gjer dei til saker (sjå
   [CAD og BIM](cad-bim.md)).
@@ -185,9 +188,24 @@ Det som verkar i éin versjon, verkar også i den neste. Kvar versjon høyrer sa
   godkjenner; AI-en kan aldri lagre eller publisere sjølv. Du kan også byrje frå ein ny, tom modell i IFC4X3_ADD2, IFC4 eller
   IFC2X3 (*Hent > Ny bygningsmodell*). *Teknisk:* skriveverktøya fyller eit endringssett som modelleringshjulet
   brukar med IfcOpenShell; skjemafeil og nye feil i sambanda i modellen sperrar godkjenninga.
+- **Ein ny bygning frå ein brief**: skriv ein brief, ei skildring av bygningen, i skjemaet *Ny bygningsmodell* og vel
+  *Bygg frå briefen med AI*. I modusen *Bygg frå brief* i AI-panelet planlegg AI-en, spør når noko vesentleg står ope, og byggjer
+  etasjar, veggar, dekke og opningar med skriveverktøya; ingenting blir skrive i modellen før du førehandsviser og godkjenner
+  endringssettet (sjå [CAD og BIM](cad-bim.md#ein-ny-bygning-frå-ein-brief)).
+- **Den digitale tvillingen av ein eksisterande bygning**: *Opplysningane om bygningen* (kva bygning, etasjar, lengd, breidd,
+  høgd, fundamentering, tak) og *Nøyaktigheit* (skisse, hovudtrekk eller detaljert) innleier briefen, og foto av fasadane og
+  innanfrå samt skanna teikningar følgjer med til AI-en, merkte og med posisjon og tidspunkt frå fila; ei bygningsflate frå
+  bygningslaget til Lantmäteriet gjev hjørna i meter, staden til modellen på jorda (SWEREF 99 TM) og etter ønske terrenghøgda i
+  hjørna. Orda er vanleg norsk, men bak dei ligg informasjonskrava i ISO 19650 og level of information need, og modellen er
+  tenkt som forvaltningsmodellen til bygningen.
 - **Versjonar mot Dataregium**: send ei endring som eit framlegg som tenaren prøver og ein prosjektansvarleg godkjenner; tenaren slår
   saman endringar frå fleire, og ved ein konflikt vel du kva som gjeld. *Teknisk:* publisering med basisversjon (412 ved ein nyare
   versjon), snippet med GlobalId og sti som nøkkel.
+- **Fleire klientar mot same modell**: kortet *Endringsframlegg på tenaren* listar framlegga mot dokumentet til modellen på
+  Dataregium, og den som får godkjenne, gjer eit prøvd framlegg til neste versjon; ein tenar som tek imot forma til skriveverktøya
+  sjølve, får også nye element, slettingar og relasjonar med i framlegget. Med *Legg grunnlaget på tenaren* blir briefen og bileta
+  lagde på tenaren som grunnlaget til modellen, i saka *Grunnlag*, etter gjennomgangen før deling, så andre som arbeider med
+  modellen, ser kva han vart bygd av. *Teknisk:* kapabiliteten `ifc_proposals_url` og forma `ops_form` (`dataspatium-tools/1`).
 - **Samanlikn versjonar**: sjå kva som er lagt til, fjerna og endra mellom to versjonar av ein modell, farga i 3D, også mot versjonane
   på tenaren.
 - **Meir**: IFC-grafen til tenaren i ei lettare form med spørjinga *bygningsdelar nær ein bygningsdel*, ein Dataregium på din eigen
