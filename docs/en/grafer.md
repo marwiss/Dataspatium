@@ -147,7 +147,7 @@ There are two ways to the graph, and both give the same view:
 | Elements and types | The elements and their types |
 | Elements and materials | The elements and their materials |
 | Properties and quantities | The elements' property sets and quantities |
-| Issues and elements | BCF issues, their viewpoints and components, and the elements they point at |
+| Issues and elements | BCF issues, their viewpoints and components, and the elements they point at; the component and the element share a GUID, and the app draws the line `IFC_GUID` between them itself |
 | The whole model | Up to 1,000 relationships in the model |
 | Count per class | A table of the number of entities per class |
 | Geometry per class | A table of the number of geometry nodes per class: representations, solids, profiles, placements, styles and layers |

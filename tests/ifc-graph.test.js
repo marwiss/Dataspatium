@@ -49,7 +49,7 @@
   const idOf = (key) => `4:db:${ids.indexOf(key)}`;
   const RELS = [
     ['r1', 'project', 'agg', 'IS_DECOMPOSED_BY'], ['r2', 'agg', 'storey', 'RELATED_OBJECTS'], ['r3', 'wall', 'rel', 'IS_DEFINED_BY'], ['r4', 'rel', 'wall', 'RELATED_OBJECTS'],
-    ['r5', 'rel', 'pset', 'RELATING_PROPERTY_DEFINITION'], ['r6', 'pset', 'gtin', 'HAS_PROPERTIES'], ['r7', 'topic', 'viewpoint', 'HAS_VIEWPOINT'], ['r8', 'viewpoint', 'component', 'HAS_COMPONENT'], ['r9', 'component', 'wall', 'SAME_AS'],
+    ['r5', 'rel', 'pset', 'RELATING_PROPERTY_DEFINITION'], ['r6', 'pset', 'gtin', 'HAS_PROPERTIES'], ['r7', 'topic', 'viewpoint', 'HAS_VIEWPOINT'], ['r8', 'viewpoint', 'component', 'HAS_COMPONENT'],
   ];
   // The graph query's JSON (Dataregium's client guide §7).
   const jsonNode = (key) => ({ identity: idOf(key), labels: NODES[key].labels, properties: NODES[key].properties });
@@ -69,7 +69,8 @@
     if (/IS_DECOMPOSED_BY\|RELATED_OBJECTS/.test(text)) return { columns: ['x', 'r', 'y'], rows: [['project', 'r1', 'agg'], ['agg', 'r2', 'storey'], ['storey', null, null]].map(([x, r, y]) => [jsonNode(x), r ? jsonRel(relBy(r)) : null, y ? jsonNode(y) : null]) };
     if (/ifc_class AS klass/.test(text)) return { columns: ['klass', 'antal'], rows: [['IfcWallStandardCase', 3]] };
     if (/HAS_PROPERTIES/.test(text)) return { columns: ['n', 'a', 'r', 'b', 's', 'c', 'p'], rows: [[jsonNode('wall'), jsonRel(relBy('r3')), jsonNode('rel'), jsonRel(relBy('r5')), jsonNode('pset'), jsonRel(relBy('r6')), jsonNode('gtin')]] };
-    if (/SAME_AS/.test(text)) return { columns: ['t', 'a', 'v', 'b', 'c', 'd', 'n'], rows: [[jsonNode('topic'), jsonRel(relBy('r7')), jsonNode('viewpoint'), jsonRel(relBy('r8')), jsonNode('component'), jsonRel(relBy('r9')), jsonNode('wall')]] };
+    // Since Dataregium's step one of IFC-LPG's F38 a there is no SAME_AS: the component and the entity are joined on the GUID.
+    if (/ifc_guid/.test(text)) return { columns: ['t', 'a', 'v', 'b', 'c', 'n'], rows: [[jsonNode('topic'), jsonRel(relBy('r7')), jsonNode('viewpoint'), jsonRel(relBy('r8')), jsonNode('component'), jsonNode('wall')]] };
     if (/elementId\(n\)/.test(text) || /GlobalId/.test(text)) return { columns: ['n', 'r', 'm'], rows: [[jsonNode('wall'), jsonRel(relBy('r3')), jsonNode('rel')]] };
     if (/\(u:User\)/.test(text)) return { columns: ['u', 'hemlighet'], rows: [[jsonNode('user'), NODES.user.properties.password_hash]] };
     return { columns: ['n', 'r', 'm'], rows: RELS.map((r) => [jsonNode(r[1]), jsonRel(r), jsonNode(r[2])]) };
@@ -315,7 +316,7 @@
         assert.ok(view.state.result.graph.nodes.length > before);
         assert.equal(await view.act('properties'), 0, 'asked twice, nothing new');
         await view.act('issues');
-        assert.ok(view.state.result.graph.edges.some((e) => e.type === 'SAME_AS'), 'the issue reaches the wall');
+        assert.ok(view.state.result.graph.edges.some((e) => e.type === 'IFC_GUID' && e.target === idOf('wall')), 'the issue reaches the wall through the line the app draws');
         assert.ok(view.el.querySelector('[data-graph-count]').textContent.includes(String(view.state.result.graph.nodes.length)), 'the count follows');
         // A double-click does the same.
         const calls = fake.calls.length;
@@ -358,7 +359,7 @@
       await view.run();
       const g = view.state.result.graph;
       assert.equal(g.nodes.length, 2, 'the same two nodes, none added');
-      assert.deepEqual(g.edges.map((e) => e.type), ['SAME_AS'], 'and the line between them');
+      assert.deepEqual(g.edges.map((e) => e.type), ['IFC_GUID'], 'and the line the app draws between them, since the server has none');
       assert.deepEqual(seen[1].options.params.ids.sort(), [idOf('component'), idOf('wall')].sort(), 'asked about exactly those');
       assert.equal(view.drawing().cy.edges().length, 1, 'drawn');
     } finally { view.destroy(); host.remove(); }

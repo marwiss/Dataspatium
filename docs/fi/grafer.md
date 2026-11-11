@@ -148,7 +148,7 @@ Verkkoon on kaksi tietä, ja molemmat antavat saman näkymän:
 | Rakennusosat ja tyypit | Rakennusosat ja niiden tyypit |
 | Rakennusosat ja materiaalit | Rakennusosat ja niiden materiaalit |
 | Ominaisuudet ja määrät | Rakennusosien ominaisuusjoukot ja määrät |
-| Asiat ja rakennusosat | BCF-asiat, niiden viewpointit ja komponentit sekä rakennusosat, joihin ne viittaavat |
+| Asiat ja rakennusosat | BCF-asiat, niiden viewpointit ja komponentit sekä rakennusosat, joihin ne viittaavat; komponentilla ja rakennusosalla on sama GUID, ja sovellus piirtää niiden välisen viivan `IFC_GUID` itse |
 | Koko malli | Enintään 1 000 suhdetta mallissa |
 | Määrä luokittain | Taulukko entiteettien määrästä luokittain |
 | Geometria luokittain | Taulukko geometriasolmujen määrästä luokittain: esitykset, kappaleet, profiilit, sijoitukset, tyylit ja tasot |
