@@ -338,10 +338,12 @@ Fråga och skriver med verktyg för våningar och rutnät, väggar, bjälklag, �
 och radering. Verktyget `set_site` anger modellens plats på jorden: tomtens latitud, longitud och höjd, och med ett EPSG-nummer som
 3006 för SWEREF 99 TM även kartkonverteringen, det vill säga modellens origo i öst- och nordkoordinater och dess vridning (inte i
 IFC2X3, som saknar den). Verktyget `create_roof` lägger ett sadeltak, valmat tak, pulpettak eller platt tak med lutning, takfot och
-tjocklek på en vånings väggar (utan angiven våning den översta): ett IfcRoof av takskivor (IfcSlab av typen ROOF), en per takfall,
-över väggarnas omskrivande rektangel eller en angiven rektangel (en annan kontur ersätts än så länge av sin omskrivande rektangel).
-Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element får referenserna
-new-1, new-2 … tills filen har gett dem id).
+tjocklek på en vånings väggar (utan angiven våning den översta): ett IfcRoof av takskivor (IfcSlab av typen ROOF), en per takfall, över
+väggarnas omskrivande rektangel eller en angiven rektangel (en annan kontur ersätts än så länge av sin omskrivande rektangel).
+Verktyget `create_spaces` gör rummen som väggarna sluter till utrymmen (IfcSpace) med namn ur rumsprogrammet, valda med en punkt inuti
+eller sitt nummer i topologin, med höjden upp till nästa våning, rumsytor (Qto_SpaceBaseQuantities) och gränser mot väggarna och deras
+dörrar och fönster. Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element
+får referenserna new-1, new-2 … tills filen har gett dem id).
 
 *Förhandsvisa* kör ändringssetet på en kopia av modellen med IfcOpenShell i appens Python (komponenterna hämtas efter samtycke första
 gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad som skapas, ändras och raderas samt schemakontrollens fynd.
