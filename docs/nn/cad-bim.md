@@ -316,8 +316,10 @@ ber om; verktøysvara er data frå modellen, aldri instruksjonar, og blir kappa 
 Modusen *Endre* i same panel lèt AI-en føreslå endringar i modellen, til dømes "lag to etasjar og eit rutenett på 6×4 m, ytterveggar
 langs rutenettet, eitt dekke per etasje og ei dør i kvar vegg i etasje 1". AI-en les modellen med dei same verktøya som i Spør og skriv
 med verktøy for etasjar og rutenett, veggar, dekke, opningar med dør eller vindauge, eigenskapar, material, flytting og sletting.
-Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får referansane new-1,
-new-2 … til fila har gjeve dei id).
+Verktøyet `set_site` gjev staden til modellen på jorda: breiddegrad, lengdegrad og høgd for tomta, og med ein EPSG-kode som 3006 for
+SWEREF 99 TM òg kartkonverteringa, det vil seie origo til modellen i aust- og nordkoordinatar og rotasjonen hans (ikkje i IFC2X3, som
+manglar henne). Verktøya endrar ingenting: dei fyller eit endringssett som panelet listar steg for steg (mål i meter; nye element får
+referansane new-1, new-2 … til fila har gjeve dei id).
 
 *Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
 første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna

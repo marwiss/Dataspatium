@@ -324,7 +324,9 @@ mallin pyytämät työkaluvastaukset; työkaluvastaukset ovat mallin dataa, eiv�
 Saman paneelin tila *Muuta* antaa tekoälyn ehdottaa muutoksia malliin, esimerkiksi "luo kaksi kerrosta ja 6×4 m moduuliverkko,
 ulkoseinät verkon mukaan, yksi laatta kerrosta kohti ja ovi jokaiseen seinään kerroksessa 1". Tekoäly lukee mallia samoilla työkaluilla
 kuin Kysy-tilassa ja kirjoittaa työkaluilla, jotka tekevät kerroksia ja moduuliverkon, seiniä, laattoja, aukkoja ovella tai ikkunalla,
-ominaisuuksia, materiaaleja, siirtoja ja poistoja. Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe
+ominaisuuksia, materiaaleja, siirtoja ja poistoja. Työkalu `set_site` asettaa mallin paikan maapallolla: tontin leveys- ja pituusasteen
+ja korkeuden, ja EPSG-koodilla, kuten 3006 (SWEREF 99 TM), myös karttamuunnoksen eli mallin origon itä- ja pohjoiskoordinaatteina ja sen
+kierron (ei IFC2X3:ssa, josta se puuttuu). Työkalut eivät muuta mitään: ne täyttävät muutosjoukon, jonka paneeli luettelee vaihe
 vaiheelta (mitat metreinä; uudet elementit saavat viitteet new-1, new-2 …, kunnes tiedosto on antanut niille tunnisteet).
 
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen

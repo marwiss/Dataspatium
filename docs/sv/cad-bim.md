@@ -310,8 +310,10 @@ begär; verktygssvaren är data ur modellen, aldrig instruktioner, och kapas nä
 Läget *Ändra* i samma panel låter AI:n föreslå ändringar i modellen, till exempel "skapa två våningar och ett rutnät 6×4 m,
 ytterväggar längs rutnätet, ett bjälklag per våning och en dörr i varje vägg på plan 1". AI:n läser modellen med samma verktyg som i
 Fråga och skriver med verktyg för våningar och rutnät, väggar, bjälklag, öppningar med dörr eller fönster, egenskaper, material, flytt
-och radering. Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element får
-referenserna new-1, new-2 … tills filen har gett dem id).
+och radering. Verktyget `set_site` anger modellens plats på jorden: tomtens latitud, longitud och höjd, och med ett EPSG-nummer som
+3006 för SWEREF 99 TM även kartkonverteringen, det vill säga modellens origo i öst- och nordkoordinater och dess vridning (inte i
+IFC2X3, som saknar den). Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya
+element får referenserna new-1, new-2 … tills filen har gett dem id).
 
 *Förhandsvisa* kör ändringssetet på en kopia av modellen med IfcOpenShell i appens Python (komponenterna hämtas efter samtycke första
 gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad som skapas, ändras och raderas samt schemakontrollens fynd.
