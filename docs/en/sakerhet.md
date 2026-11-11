@@ -40,6 +40,7 @@ Every control has an automated test in `tests/` or a pointer to the code that ca
 | A key that the service wants in the request body (Trafikverket’s NVDB) is filled in only when the request is sent, escaped for the body’s format, and never ends up in the address, the log or the source’s details | OWASP ASVS 8.3 | `geodata`: *NVDB sends its key in the XML body and a box in SWEREF 99 TM, pages with skip and opens as a map in WGS 84* |
 | A key that goes with the files of a search result (Lantmäteriet’s STAC) is sent only to the hosts the source names; a file on another host is fetched without the key | OWASP ASVS 8.3 | `geodata`: *Lantmäteriet STAC searches an area with the key, and Filer i källan reads the vector files in, with the key only for the file host* |
 | The bridge as a go-between is off by default and fetches only over https from the hosts the user starts it with, never from this computer or the local network, with few headers and no cookies, and never logs queries, headers or bodies | OWASP ASVS 12.6 (SSRF) | `bridge`: *with the switch on, a service that refuses the browser is fetched through the bridge, and only then*; `tools/db_bridge.py` and `tools/db-bridge.ps1` tried against a real service |
+| The content policy allows no inline scripts and no scripts from elsewhere; only the app’s own files, blob workers and WebAssembly run | OWASP ASVS 14.4 | the whole suite under the policy in Edge and Firefox (`tests/setup.js` writes every breach to the log) |
 | A list the server has capped is read to the end through Link rel="next", but only on the same server, so the token never goes anywhere else | — | `opencde`: *a list the server has capped is read to the end through Link rel="next", and only on the same server* |
 | An archive package's files are compared with the checksums (SHA-256) in `PREMIS.xml` when the package is read, and a changed or missing file is shown; a place that points outside the package is not checked and never read | PREMIS 3.0 | `plan files`: *an archive package, as a folder or a ZIP, opens as the plan with its documents and the check of its files* |
 | All rendered data is escaped; no `innerHTML` with user data; documents and published pages escape | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; code convention |
@@ -66,8 +67,9 @@ no update check is made without your action. Dataregium's half (what the server 
 
 ## Known gaps
 
-- No Content-Security-Policy yet: the app runs classic scripts, blob workers and WebAssembly, and the web-ifc bundle needs
-  `eval`. A meta CSP without `'unsafe-eval'` is added when web-ifc can be loaded without it.
+- Content-Security-Policy without inline scripts: the app’s pages, the mobile page and the test page load scripts only from
+  the app’s own files, blob workers and WebAssembly. `eval` is still allowed, since the web-ifc bundle and Vega need it; that
+  part goes when both can run without it.
 - From file:// in Chromium every locally opened HTML file shares storage. Secrets are encrypted, but a sensitive workspace
   should run from a local server (`python -m http.server`) or be mirrored to a portable folder.
 - Chromium applies the server's `form-action` to the redirect after the sign-in too; the server must allow the app's

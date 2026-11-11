@@ -39,6 +39,7 @@ Hver kontroll har en automatisk test i `tests/` eller en peker til koden som bæ
 | En nøkkel som tjenesten vil ha i forespørselens kropp (Trafikverkets NVDB), fylles inn først når forespørselen sendes, escapes etter kroppens format og havner aldri i adressen, loggen eller kildens opplysninger | OWASP ASVS 8.3 | `geodata`: *NVDB sends its key in the XML body and a box in SWEREF 99 TM, pages with skip and opens as a map in WGS 84* |
 | En nøkkel som følger med filene i et søkeresultat (Lantmäteriets STAC), sendes bare til vertene kilden angir; en fil på en annen vert hentes uten nøkkel | OWASP ASVS 8.3 | `geodata`: *Lantmäteriet STAC searches an area with the key, and Filer i källan reads the vector files in, with the key only for the file host* |
 | Broen som mellomledd er av som standard og henter bare over https fra vertene brukeren starter den med, aldri fra denne datamaskinen eller det lokale nettet, med få headere og ingen informasjonskapsler, og logger aldri spørringer, headere eller kropper | OWASP ASVS 12.6 (SSRF) | `bridge`: *with the switch on, a service that refuses the browser is fetched through the bridge, and only then*; `tools/db_bridge.py` and `tools/db-bridge.ps1` tried against a real service |
+| Innholdspolicyen tillater ingen innebygde skript og ingen skript utenfra; bare appens egne filer, blob-workers og WebAssembly kjører | OWASP ASVS 14.4 | the whole suite under the policy in Edge and Firefox (`tests/setup.js` writes every breach to the log) |
 | En liste som serveren har kuttet, leses til ende gjennom Link rel="next", men bare på samme server, slik at token aldri går andre steder | — | `opencde`: *a list the server has capped is read to the end through Link rel="next", and only on the same server* |
 | En arkivpakkes filer sammenlignes med kontrollsummene (SHA-256) i `PREMIS.xml` når pakken leses, og en endret eller manglende fil vises; et sted som peker utenfor pakken, kontrolleres ikke og leses aldri | PREMIS 3.0 | `plan files`: *an archive package, as a folder or a ZIP, opens as the plan with its documents and the check of its files* |
 | Alle data som vises, escapes; ingen `innerHTML` med brukerdata; dokumenter og publiserte sider escaper | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; kodekonvensjon |
@@ -65,8 +66,9 @@ oppdateringskontroll gjøres uten din handling. Dataregiums halvdel (hva servere
 
 ## Kjente hull
 
-- Ingen Content-Security-Policy enda: appen kjører klassiske skript, blob-workers og WebAssembly, og web-ifc-bygget krever
-  `eval`. En meta-CSP uten `'unsafe-eval'` legges til når web-ifc kan lastes uten den.
+- Content-Security-Policy uten innebygde skript: appens sider, mobilsiden og testsiden laster bare skript fra appens egne
+  filer, blob-workers og WebAssembly. `eval` tillates fortsatt, fordi web-ifc-bygget og Vega trenger det; den delen fjernes
+  når begge kan kjøre uten.
 - Fra file:// i Chromium deler alle lokalt åpnede HTML-filer lagring. Hemmeligheter er kryptert, men et sensitivt arbeidsområde
   bør kjøres fra en lokal server (`python -m http.server`) eller speiles til en portabel mappe.
 - Chromium anvender serverens `form-action` også på omdirigeringen etter innloggingen; serveren må tillate appens

@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  <!-- The content policy (F26): no inline scripts; eval only because web-ifc and Vega need it. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: blob: data:; script-src 'self' file: blob: 'unsafe-eval' 'wasm-unsafe-eval'; worker-src 'self' file: blob:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob: https: http://127.0.0.1:* http://localhost:*; font-src 'self' file: data: blob:; connect-src 'self' file: blob: data: https: http://127.0.0.1:* http://localhost:* ws: wss:; media-src 'self' file: blob: mediastream:; frame-src 'self' file: blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Dataspatium</title>
   <link rel="icon" type="image/svg+xml" href="src/ui/design/favicon.svg">
   <!-- Installable when served from a web server (the manifest is ignored when the page is opened from a folder). -->
@@ -22,16 +24,6 @@
   <div id="app">
     <p class="dm-muted" style="padding: 24px">Dataspatium …</p>
   </div>
-  <script>
-    document.addEventListener('dataspatium:ready', function () {
-      Dataspatium.require('app').start(document.getElementById('app')).catch(function (err) {
-        console.error(err);
-        document.getElementById('app').textContent = 'Dataspatium kunde inte starta: ' + (err && err.message || err);
-      });
-    });
-    document.addEventListener('dataspatium:boot-error', function (ev) {
-      document.getElementById('app').textContent = 'Dataspatium kunde inte starta: ' + ev.detail;
-    });
-  </script>
+  <script src="src/start.js"></script>
 </body>
 </html>

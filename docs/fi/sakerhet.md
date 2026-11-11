@@ -41,6 +41,7 @@ Jokaisella kontrollilla on automaattinen testi kansiossa `tests/` tai osoitin si
 | Avain, jonka palvelu haluaa pyynnön runkoon (Trafikverketin NVDB), täytetään vasta kun pyyntö lähetetään, koodataan rungon muodon mukaan eikä se koskaan päädy osoitteeseen, lokiin tai lähteen tietoihin | OWASP ASVS 8.3 | `geodata`: *NVDB sends its key in the XML body and a box in SWEREF 99 TM, pages with skip and opens as a map in WGS 84* |
 | Hakutuloksen tiedostojen avain (Lantmäterietin STAC) lähetetään vain lähteen nimeämille palvelimille; muulla palvelimella oleva tiedosto haetaan ilman avainta | OWASP ASVS 8.3 | `geodata`: *Lantmäteriet STAC searches an area with the key, and Filer i källan reads the vector files in, with the key only for the file host* |
 | Silta välittäjänä on oletuksena pois päältä ja hakee vain https-yhteydellä käyttäjän antamilta palvelimilta, ei koskaan tältä tietokoneelta tai lähiverkosta, vähin otsakkein ja ilman evästeitä, eikä koskaan kirjaa kyselyjä, otsakkeita tai runkoja | OWASP ASVS 12.6 (SSRF) | `bridge`: *with the switch on, a service that refuses the browser is fetched through the bridge, and only then*; `tools/db_bridge.py` and `tools/db-bridge.ps1` tried against a real service |
+| Sisältökäytäntö ei salli upotettuja skriptejä eikä skriptejä muualta; vain sovelluksen omat tiedostot, blob-workerit ja WebAssembly ajetaan | OWASP ASVS 14.4 | the whole suite under the policy in Edge and Firefox (`tests/setup.js` writes every breach to the log) |
 | Palvelimen katkaisema luettelo luetaan loppuun Link rel="next" -linkkien kautta, mutta vain samalta palvelimelta, joten tunniste ei koskaan mene muualle | — | `opencde`: *a list the server has capped is read to the end through Link rel="next", and only on the same server* |
 | Arkistopaketin tiedostoja verrataan tiedoston `PREMIS.xml` tarkistussummiin (SHA-256), kun paketti luetaan, ja muuttunut tai puuttuva tiedosto näytetään; paketin ulkopuolelle osoittavaa paikkaa ei tarkisteta eikä koskaan lueta | PREMIS 3.0 | `plan files`: *an archive package, as a folder or a ZIP, opens as the plan with its documents and the check of its files* |
 | Kaikki näytettävä data escapataan; ei `innerHTML`:ää käyttäjädatalla; asiakirjat ja julkaistut sivut escapaavat | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; koodikäytäntö |
@@ -67,8 +68,9 @@ mitään, eikä päivitystarkistusta tehdä ilman toimintaasi. Dataregiumin puol
 
 ## Tunnetut puutteet
 
-- Ei vielä Content-Security-Policya: sovellus ajaa klassisia skriptejä, blob-workereita ja WebAssemblya, ja web-ifc:n paketti
-  vaatii `eval`in. Meta-CSP ilman `'unsafe-eval'`-arvoa lisätään, kun web-ifc voidaan ladata ilman sitä.
+- Content-Security-Policy ilman upotettuja skriptejä: sovelluksen sivut, mobiilisivu ja testisivu lataavat skriptejä vain
+  sovelluksen omista tiedostoista, blob-workereista ja WebAssemblysta. `eval` sallitaan vielä, koska web-ifc:n paketti ja
+  Vega tarvitsevat sitä; se osa poistetaan, kun molemmat toimivat ilman sitä.
 - Chromiumissa file://-alkuperästä kaikki paikallisesti avatut HTML-tiedostot jakavat tallennustilan. Salaisuudet on salattu,
   mutta arkaluonteinen työtila kannattaa ajaa paikalliselta palvelimelta (`python -m http.server`) tai peilata siirrettävään kansioon.
 - Chromium soveltaa palvelimen `form-action`-sääntöä myös kirjautumisen jälkeiseen uudelleenohjaukseen; palvelimen on sallittava

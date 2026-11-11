@@ -40,6 +40,7 @@ Hver stýring hefur sjálfvirka prófun í `tests/` eða bendir á kóðann sem 
 | Lykill sem þjónustan vill fá í meginmáli beiðninnar (NVDB hjá Trafikverket) er fylltur inn fyrst þegar beiðnin er send, kóðaður eftir sniði meginmálsins og lendir aldrei í vistfanginu, skránni eða upplýsingum um uppsprettuna | OWASP ASVS 8.3 | `geodata`: *NVDB sends its key in the XML body and a box in SWEREF 99 TM, pages with skip and opens as a map in WGS 84* |
 | Lykill sem fylgir skrám í leitarniðurstöðu (STAC hjá Lantmäteriet) er aðeins sendur til hýsla sem uppsprettan tilgreinir; skrá á öðrum hýsli er sótt án lykils | OWASP ASVS 8.3 | `geodata`: *Lantmäteriet STAC searches an area with the key, and Filer i källan reads the vector files in, with the key only for the file host* |
 | Brúin sem milliliður er sjálfgefið óvirk og sækir aðeins yfir https frá hýslum sem notandinn ræsir hana með, aldrei frá þessari tölvu eða staðarnetinu, með fáa hausa og engar vafrakökur, og skráir aldrei fyrirspurnir, hausa eða meginmál | OWASP ASVS 12.6 (SSRF) | `bridge`: *with the switch on, a service that refuses the browser is fetched through the bridge, and only then*; `tools/db_bridge.py` and `tools/db-bridge.ps1` tried against a real service |
+| Efnisstefnan leyfir engar innfelldar skriftur og engar skriftur annars staðar frá; aðeins eigin skrár forritsins, blob-workerar og WebAssembly keyra | OWASP ASVS 14.4 | the whole suite under the policy in Edge and Firefox (`tests/setup.js` writes every breach to the log) |
 | Listi sem þjónninn hefur stytt er lesinn til enda með Link rel="next", en aðeins á sama þjóni, svo að táknið fer aldrei annað | — | `opencde`: *a list the server has capped is read to the end through Link rel="next", and only on the same server* |
 | Skrár skjalasafnspakka eru bornar saman við gátsummurnar (SHA-256) í `PREMIS.xml` þegar pakkinn er lesinn, og breytt eða vantandi skrá er sýnd; staður sem vísar út fyrir pakkann er ekki athugaður og aldrei lesinn | PREMIS 3.0 | `plan files`: *an archive package, as a folder or a ZIP, opens as the plan with its documents and the check of its files* |
 | Öll gögn sem eru sýnd eru sloppin út; ekkert `innerHTML` með notandagögnum; skjöl og birtar síður sleppa út | OWASP ASVS 5.3 | `published page`: *everything escaped*; `docgen`: *builders escape and structure the content*; kóðaregla |
@@ -66,8 +67,9 @@ uppfærsluathugun er gerð án aðgerðar þinnar. Helmingur Dataregium (hvað �
 
 ## Þekktar gloppur
 
-- Engin Content-Security-Policy enn: forritið keyrir hefðbundin skriftur, blob-workera og WebAssembly, og web-ifc-pakkinn
-  krefst `eval`. Meta-CSP án `'unsafe-eval'` verður bætt við þegar web-ifc getur hlaðist án hennar.
+- Content-Security-Policy án innfelldra skrifta: síður forritsins, farsímasíðan og prófunarsíðan hlaða aðeins skriftum úr
+  eigin skrám forritsins, blob-workerum og WebAssembly. `eval` er enn leyft, því web-ifc-pakkinn og Vega þurfa það; sá hluti
+  hverfur þegar bæði geta keyrt án þess.
 - Frá file:// í Chromium deila allar HTML-skrár sem opnaðar eru á tölvunni geymslu. Leyndarmál eru dulrituð, en viðkvæmt
   vinnusvæði ætti að keyra frá staðbundnum þjóni (`python -m http.server`) eða speglast í færanlega möppu.
 - Chromium beitir `form-action` þjónsins einnig á áframsendinguna eftir innskráningu; þjónninn þarf að leyfa afturhvarfsvistfang

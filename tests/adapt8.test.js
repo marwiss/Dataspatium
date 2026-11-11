@@ -58,6 +58,12 @@
     document.body.appendChild(frame);
     try {
       await new Promise((resolve) => { frame.onload = resolve; });
+      // A published page is opened on its own, where its inline script runs. In a srcdoc frame it inherits this page's content
+      // policy, which has no inline scripts, so the test runs the page's scripts itself (eval is allowed for web-ifc and Vega).
+      if (document.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
+        const win = /** @type {any} */ (frame.contentWindow);
+        for (const s of Array.from(frame.contentDocument.querySelectorAll('script:not([src])'))) if (!s.type || /javascript/.test(s.type)) win.eval(s.textContent);
+      }
       return await fn(frame.contentDocument);
     } finally { frame.remove(); }
   }
