@@ -120,6 +120,37 @@
     return 'ok';
   }, 20000);
 
+  test('model material: through the sharing review, positions and times stay out of the copy unless kept, also from the files\' EXIF', async (assert) => {
+    const review = D.require('ui/share/review');
+    const exif = D.require('data/exif');
+    // The review dialog: what leaves, and the positions dropped unless the person keeps them; cancelling sends nothing.
+    const asked = review.material({ shell: { log() {} } }, { pictures: 2, places: 1, server: 'Testservern', project: 'Testprojekt' });
+    const wait = async () => { for (let i = 0; i < 100; i++) { const d = document.querySelector('dialog.dm-dialog [data-review-material]'); if (d) return d.closest('dialog'); await new Promise((r) => setTimeout(r, 20)); } return null; };
+    const dlg = await wait();
+    assert.ok(dlg && /Testprojekt/.test(dlg.textContent) && dlg.textContent.includes(t('review.material.people')), 'what leaves and the reminder about people');
+    const sel = /** @type {any} */ (dlg.querySelector('[data-review-material-places]'));
+    assert.equal(sel.value, 'drop', 'positions and times dropped by default');
+    /** @type {HTMLElement} */ (dlg.querySelector('.dm-dialog-actions dm-button button')).click();
+    assert.equal(await asked, null, 'cancelled');
+    const keepAsked = review.material({ shell: { log() {} } }, { pictures: 1, places: 1, server: 'Testservern', project: 'Testprojekt' });
+    const dlg2 = await wait();
+    const sel2 = /** @type {any} */ (dlg2.querySelector('[data-review-material-places]'));
+    sel2.value = 'keep'; sel2.dispatchEvent(new Event('change'));
+    /** @type {HTMLElement} */ (Array.from(dlg2.querySelectorAll('.dm-dialog-actions dm-button button')).pop()).click();
+    assert.deepEqual(await keepAsked, { places: 'keep' });
+    // Without the places the brief's line keeps only the label, and a JPEG goes up without its EXIF.
+    const jpeg = exif.insertApp1(Uint8Array.from(atob('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='), (c) => c.charCodeAt(0)), exif.buildApp1({ lat: 59.334, lon: 18.0632, dateTimeOriginal: '2026-11-10T14:02:00' }));
+    assert.ok(exif.parse(jpeg) && exif.parse(jpeg).lat, 'the picture has a position before');
+    const from = world.documents.length;
+    world.refuse = '';
+    await material.upload(connector, PROJECT, null, { brief: 'Fasaden', attachments: [{ name: 'fasad.jpg', mediaType: 'image/jpeg', data: toB64(jpeg), label: 'Fasad mot söder', when: '2026-11-10T14:02:00', where: { lat: 59.334, lon: 18.0632 } }], name: 'Villa Ek' }, { places: false });
+    const md = new TextDecoder().decode(world.documents[from].bytes);
+    assert.ok(md.includes('\n- fasad.jpg (Fasad mot söder)\n') && !md.includes('59.33') && !md.includes('2026-11-10'), md);
+    const sent = world.documents[from + 1].bytes;
+    assert.ok(sent.length && sent.length < jpeg.length && !exif.parse(sent), 'the EXIF stripped from the file');
+    return 'ok';
+  }, 20000);
+
   test('model material: cleanup', async () => {
     http.request = realRequest;
     D.net.unvirtual('tests/model-material/');

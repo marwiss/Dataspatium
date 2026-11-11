@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('data/model-material', ['api/families/opencde', 'api/http'], (opencde, http) => {
+  D.define('data/model-material', ['api/families/opencde', 'api/http', 'data/exif'], (opencde, http, exif) => {
     const t = (k, p) => D.t(k, p);
     /** The most the brief and the pictures may weigh together, in bytes. */
     const MAX_BYTES = 64 * 1024 * 1024;
@@ -72,20 +72,20 @@
       return `${Number(where.lat).toFixed(5)}, ${Number(where.lon).toFixed(5)}${alt}`;
     }
     /** The line of a picture in the brief: its name and, in brackets, its label, time and position when given. @param {MaterialAttachment} a */
-    function pictureLine(a) {
+    function pictureLine(a, places = true) {
       const name = safeName(a && a.name, 'bild');
-      const details = [oneLine(a && a.label), oneLine(a && a.when), whereText(a && a.where)].filter(Boolean);
+      const details = [oneLine(a && a.label), places ? oneLine(a && a.when) : '', places ? whereText(a && a.where) : ''].filter(Boolean);
       return details.length ? t('material.line', { name, details: details.join(', ') }) : name;
     }
     /**
      * The brief as a Markdown document: a heading with the model's name, the text as the person wrote it, and the pictures as a list.
      * @param {Material} material @returns {string}
      */
-    function briefText(material) {
+    function briefText(material, places = true) {
       const attachments = Array.isArray(material && material.attachments) ? material.attachments : [];
       const name = oneLine(material && material.name);
       const lines = [`# ${t('material.brief.name')}${name ? ': ' + name : ''}`, '', String((material && material.brief) || '').replace(/\r\n?/g, '\n').trim()];
-      if (attachments.length) lines.push('', `## ${t('material.pictures')}`, '', ...attachments.map((a) => `- ${pictureLine(a)}`));
+      if (attachments.length) lines.push('', `## ${t('material.pictures')}`, '', ...attachments.map((a) => `- ${pictureLine(a, places)}`));
       return lines.join('\n') + '\n';
     }
     /** What the brief and the pictures weigh together, in bytes, without decoding the pictures. @param {Material} material */
@@ -109,12 +109,15 @@
      * stay on the server when the topic cannot be made, since the BCF API has no way to remove them.
      * @param {any} connector a signed-in OpenCDE source @param {string} projectId the model's project
      * @param {string|null} documentId the model's document on the server (a Documents API document id or a BCF document guid), or null
-     * @param {Material} material @param {{onStatus?: (text: string) => void, signal?: AbortSignal}} [options]
+     * With `places: false` (the sharing review's choice) the pictures' times and positions stay out: the brief's lines omit them and
+     * every picture's EXIF, XMP and comments are stripped (data/exif.strip).
+     * @param {Material} material @param {{onStatus?: (text: string) => void, signal?: AbortSignal, places?: boolean}} [options]
      * @returns {Promise<MaterialUpload>}
      */
     async function upload(connector, projectId, documentId, material, options = {}) {
       const onStatus = typeof options.onStatus === 'function' ? options.onStatus : () => {};
       const signal = options.signal;
+      const places = options.places !== false;
       const check = () => { if (signal && signal.aborted) throw new http.ApiError(t('opencde.err.cancelled'), { kind: 'aborted' }); };
       const attachments = Array.isArray(material && material.attachments) ? material.attachments : [];
       if (sizeOf(material) > MAX_BYTES) throw new Error(t('material.err.size'));
@@ -122,7 +125,7 @@
       // The brief first: without it there is no material, so its failure ends the call before any picture goes up.
       const name = briefName(material);
       check(); onStatus(t('material.status.upload', { name }));
-      const brief = await opencde.uploadBcfDocument(connector, projectId, new File([new TextEncoder().encode(briefText(material))], name, { type: 'text/markdown' }), { signal });
+      const brief = await opencde.uploadBcfDocument(connector, projectId, new File([new TextEncoder().encode(briefText(material, places))], name, { type: 'text/markdown' }), { signal });
       documents.push({ id: brief.guid, name }); refs.push({ id: brief.guid, description: t('material.brief.name') });
       for (const a of attachments) {
         const fileName = safeName(a && a.name, 'bild');
@@ -130,7 +133,7 @@
         if (!a || !clean(a.data)) { skipped.push(fileName); continue; }
         check(); onStatus(t('material.status.upload', { name: fileName }));
         try {
-          const doc = await opencde.uploadBcfDocument(connector, projectId, new File([fromBase64(a && a.data)], fileName, { type: String((a && a.mediaType) || 'application/octet-stream') }), { signal });
+          const doc = await opencde.uploadBcfDocument(connector, projectId, new File([places ? fromBase64(a && a.data) : exif.strip(fromBase64(a && a.data))], fileName, { type: String((a && a.mediaType) || 'application/octet-stream') }), { signal });
           documents.push({ id: doc.guid, name: fileName }); refs.push({ id: doc.guid, description: oneLine(a && a.label) || fileName });
         } catch (err) {
           if (isAborted(err)) throw err;

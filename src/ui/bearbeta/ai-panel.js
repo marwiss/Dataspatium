@@ -70,10 +70,13 @@
           const brief = s.question.trim();
           if (!s.material || s.uploading || (!brief && !s.attachments.length) || !D.has('data/model-material')) return;
           const project = s.material.cde.projectName || s.material.cde.projectId;
-          if (!(await overlays.dialog.confirm(t('ai.build.material.confirm', { n: i18n.formatNumber(s.attachments.length), project })))) return;
+          // Through the sharing review, as everything that leaves the app: positions and times are dropped from the copy unless kept.
+          const places = s.attachments.filter((a) => a.when || (a.where && Number.isFinite(a.where.lat))).length;
+          const choice = await D.require('ui/share/review').material(ctx, { pictures: s.attachments.length, places, server: s.material.connector.name, project });
+          if (!choice) return;
           s.uploading = true; s.error = ''; render();
           try {
-            const out = await D.require('data/model-material').upload(s.material.connector, s.material.cde.projectId, s.material.cde.documentId, { brief, attachments: s.attachments, name: s.material.name }, { onStatus: (text) => log(String(text)) });
+            const out = await D.require('data/model-material').upload(s.material.connector, s.material.cde.projectId, s.material.cde.documentId, { brief, attachments: s.attachments, name: s.material.name }, { onStatus: (text) => log(String(text)), places: choice.places === 'keep' });
             const msg = t('material.done', { server: s.material.connector.name, title: String((out && out.topic && out.topic.title) || ''), n: i18n.formatNumber(out && out.documents ? out.documents.length : 0) });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
           } catch (err) { fail(err); }
@@ -155,7 +158,7 @@
                 let picture = null;
                 try { picture = { mediaType: 'image/jpeg', data: await shrink(new Blob([bytes], { type: f.type })) }; } catch (err) {
                   if (!/^image\/(jpeg|png|webp|gif)$/.test(String(f.type)) || bytes.length > MAX_RAW_BYTES) throw err;
-                  picture = { mediaType: String(f.type), data: base64Of(bytes) };
+                  picture = { mediaType: String(f.type), data: base64Of(D.require('data/exif').strip(bytes)) };
                 }
                 s.attachments.push(Object.assign({ name: f.name, label: s.nextLabel }, picture, meta));
               }

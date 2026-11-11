@@ -123,6 +123,32 @@
       return ok === true;
     }
 
+    /**
+     * The material behind a building model on its way to the model's server (decision F43 b, step 5): what leaves, the reminder
+     * that people and number plates on the pictures are personal data, and the choice for the pictures' positions and times
+     * (dropped from the copy unless the person keeps them: the brief's lines and the files' EXIF). Resolves with
+     * { places: 'keep' | 'drop' } or null when the person cancels.
+     * @param {any} ctx @param {{pictures: number, places: number, server: string, project: string}} info
+     */
+    function placesPicker(label, start, onChange) {
+      const sel = /** @type {any} */ (h('dm-select', { label, 'data-review-material-places': '' }));
+      sel.options = [{ value: 'drop', label: t('review.material.remove') }, { value: 'keep', label: t('review.choice.keep') }];
+      sel.value = start;
+      sel.addEventListener('change', () => onChange(sel.value));
+      return sel;
+    }
+    async function material(ctx, info) {
+      let places = 'drop';
+      const dialog = (ctx && ctx.ui && ctx.ui.dialog) || D.require('ui/overlays').dialog;
+      const body = h('div', { class: 'dm-stack', 'data-review-material': '' },
+        h('p', { text: t('review.material.help', { n: i18n.formatNumber(info.pictures || 0), project: String(info.project || ''), server: String(info.server || '') }) }),
+        h('p', { class: 'dm-help dm-small', text: t('review.material.people') }),
+        info.places ? placesPicker(t('review.material.places', { n: i18n.formatNumber(info.places) }), places, (v) => { places = v === 'keep' ? 'keep' : 'drop'; }) : null,
+        info.places ? h('p', { class: 'dm-help dm-small', text: t('review.material.places.help') }) : null);
+      const ok = await dialog.open({ title: t('review.material.title'), help: 'dela#granskning-före-delning', body, actions: [{ label: t('common.cancel'), value: false }, { label: t('review.continue'), variant: 'primary', value: true, primary: true }] });
+      return ok === true ? { places } : null;
+    }
+
     /** A short line for the log: what was changed in the copy. */
     function summary(transform) {
       let hash = 0; let drop = 0; let other = 0;
@@ -134,6 +160,6 @@
       return other ? `${t('review.applied', { hash, drop })} ${t('review.applied.more', { n: other })}` : t('review.applied', { hash, drop });
     }
 
-    return { findings, scan, review, warn, summary, PHONE_NAME: shareScan.PHONE_NAME };
+    return { findings, scan, review, warn, material, summary, PHONE_NAME: shareScan.PHONE_NAME };
   });
 })();
