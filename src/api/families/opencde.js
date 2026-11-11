@@ -943,18 +943,22 @@
     }
     /**
      * A project's AI policy on Dataregium (its decision F29 a): "local" (only a model on the person's own computer) or "cloud", read at
-     * the capability's template `extensions.mcp.ai_policy_url` ({project_id}); the capability's `default_ai_policy` (local) when that
-     * fails; null when the server announces no policy, so that only the app's own policy applies.
+     * the capability's template `extensions.ai_policy.url` ({project_id}; also `extensions.mcp.ai_policy_url`), where an unknown or
+     * missing value reads as local; the capability's default (local) when the endpoint fails; null when the server announces no
+     * policy, so that only the app's own policy applies.
      * @param {any} connector @param {string} projectId @returns {Promise<'local'|'cloud'|null>}
      */
     async function aiPolicy(connector, projectId) {
       const caps = await capabilities(connector);
-      const mcp = caps && caps.extensions && caps.extensions.mcp;
-      if (!mcp || !mcp.ai_policy_url) return null;
-      const fallback = mcp.default_ai_policy === 'cloud' ? 'cloud' : 'local';
+      const ext = (caps && caps.extensions) || {};
+      const own = ext.ai_policy && ext.ai_policy.enabled !== false && ext.ai_policy.url ? ext.ai_policy : null;
+      const mcp = ext.mcp && ext.mcp.ai_policy_url ? ext.mcp : null;
+      if (!own && !mcp) return null;
+      const url = own ? own.url : mcp.ai_policy_url;
+      const fallback = (own ? own.default : mcp.default_ai_policy) === 'cloud' ? 'cloud' : 'local';
       try {
-        const got = await api(connector, String(mcp.ai_policy_url).replace('{project_id}', encode(projectId)));
-        return got && (got.ai_policy === 'local' || got.ai_policy === 'cloud') ? got.ai_policy : fallback;
+        const got = await api(connector, String(url).replace('{project_id}', encode(projectId)));
+        return got && got.ai_policy === 'cloud' ? 'cloud' : 'local';
       } catch (err) {
         D.log('opencde', 'the AI policy could not be read', err);
         return fallback;

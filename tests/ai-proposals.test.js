@@ -43,7 +43,7 @@
         if (withList) changes.ifc_proposals_url = base + '/documents/1.0/documents/{document_id}/ifc-proposals';
         if (withOps) changes.ops_form = 'dataspatium-tools/1';
         const extensions = { ifc_changes: changes };
-        if (withOps) extensions.mcp = { enabled: true, ai_policy_url: base + '/documents/1.0/projects/{project_id}/ai-policy', default_ai_policy: 'local' };
+        if (withOps) extensions.ai_policy = { enabled: true, url: '/documents/1.0/projects/{project_id}/ai-policy', default: 'local' };
         return Promise.resolve(json({ server: { name: 'Dataregium', version: '3.0.0' }, apis: { foundation: '1.0', bcf: '3.0', documents: '1.0' }, extensions }));
       }
       if (path === '/foundation/versions') return Promise.resolve(json({ versions: [{ api_id: 'foundation', version_id: '1.0' }, { api_id: 'bcf', version_id: '3.0' }, { api_id: 'documents', version_id: '1.0' }] }));
@@ -181,6 +181,8 @@
     // The AI policy (Dataregium's F29 a): the project's own, the default when the endpoint fails, none from a server without it.
     project.policy = 'cloud'; project.policyStatus = 200;
     assert.equal(await opencde.aiPolicy(withOps, 'p-1'), 'cloud');
+    project.policy = 'later'; project.policyStatus = 200;
+    assert.equal(await opencde.aiPolicy(withOps, 'p-1'), 'local', 'an unknown value reads as local');
     project.policyStatus = 404;
     assert.equal(await opencde.aiPolicy(withOps, 'p-1'), 'local', 'the default when the endpoint fails');
     assert.equal(await opencde.aiPolicy(connector, 'p-1'), null, 'a server without a policy');
