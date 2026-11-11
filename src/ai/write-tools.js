@@ -6,7 +6,9 @@
  * step ifc_changeset (python/dataspatium.py applies it with IfcOpenShell, checks the schema and reports). Lengths are metres. A created
  * wall, slab or opening gets a ref (new-1, new-2, …) so that later calls can name it before the file has given it an id; the wheel gives
  * the same refs in the same order. Deleting needs confirm: true from the AI and is confirmed again by the person before approval.
- * Publishing is never a tool. The schemas are flat where they can be, with every field required (null for "not given").
+ * set_site places the model on earth (the site's WGS 84 position and, with an EPSG code, the map conversion); it is a change, not a
+ * create, so it gets no ref. Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
+ * "not given").
  */
 (function () {
   'use strict';
@@ -42,6 +44,8 @@
         parameters: { type: 'object', properties: { ids: ids(), dx: num(), dy: num(), dz: num() } } },
       { name: 'delete_elements', description: 'Delete elements (ids or refs) with what depends on them. Only when the person asked for it in this conversation; confirm must be true to say so, and the person confirms again before approval.',
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
+      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid north to the model\'s X axis (counter-clockwise positive; 0 when null). crs, eastings and northings go together; site_name renames the site. One call per model is enough: a second call replaces the first.',
+        parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str() } } },
       { name: 'manage_changeset', description: 'The open change set: action list shows its steps, remove_last drops the last step, clear empties it.',
         parameters: { type: 'object', properties: { action: { type: 'string' } } } },
     ];
@@ -55,8 +59,9 @@
     const err = (message) => ({ error: message });
     function number(args, key, options = {}) {
       const v = args[key];
-      if (!given(v)) { if (options.required) throw new Error(`${key} is required (metres)`); return options.fallback === undefined ? null : options.fallback; }
-      if (!finite(v)) throw new Error(`${key} must be a number (metres)`);
+      const unit = options.unit || 'metres';
+      if (!given(v)) { if (options.required) throw new Error(`${key} is required (${unit})`); return options.fallback === undefined ? null : options.fallback; }
+      if (!finite(v)) throw new Error(`${key} must be a number (${unit})`);
       if (options.positive && v <= 0) throw new Error(`${key} must be greater than zero`);
       return v;
     }
@@ -142,6 +147,19 @@
           if (a.confirm !== true) throw new Error('deleting needs confirm: true, and only when the person asked for it in this conversation');
           return { tool: name, ids: idList(cs, a.ids), confirm: true };
         }
+        case 'set_site': {
+          const latitude = number(a, 'latitude', { required: true, unit: 'degrees' });
+          const longitude = number(a, 'longitude', { required: true, unit: 'degrees' });
+          if (latitude < -90 || latitude > 90) throw new Error('latitude must be between -90 and 90 degrees');
+          if (longitude < -180 || longitude > 180) throw new Error('longitude must be between -180 and 180 degrees');
+          const crs = text(a, 'crs');
+          const eastings = number(a, 'eastings'); const northings = number(a, 'northings');
+          if (crs) {
+            if (!/^EPSG:\d+$/i.test(crs)) throw new Error('crs must be an EPSG code such as EPSG:3006');
+            if (eastings === null || northings === null) throw new Error('eastings and northings (metres) are required with crs');
+          } else if (eastings !== null || northings !== null) throw new Error('eastings and northings need a crs such as EPSG:3006');
+          return { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') };
+        }
         default: throw new Error(`unknown tool ${name}`);
       }
     }
@@ -187,6 +205,11 @@
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });
+        case 'set_site': {
+          const deg = (v) => String(Math.round(v * 1e6) / 1e6);
+          const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
+          return t('ai.change.set_site', { name: op.site_name ? ' ' + op.site_name : '', lat: deg(op.latitude), lon: deg(op.longitude), elevation: op.elevation === null ? '' : t('ai.change.set_site.elevation', { elevation: fmt(op.elevation) }), crs });
+        }
         default: return String(op.tool);
       }
     }

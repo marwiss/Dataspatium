@@ -1281,16 +1281,16 @@ def _ifc_apply(in_file, table_file, key, out_file):
 # create_wall, create_slab and create_opening, so that a later operation can name it before the file has given it an id.
 
 
-def _cs_num(op, key, default=None, positive=False):
+def _cs_num(op, key, default=None, positive=False, unit="metres"):
     v = op.get(key)
     if v is None:
         if default is None:
-            raise DataspatiumError("%s is required" % key)
+            raise DataspatiumError("%s is required (%s)" % (key, unit))
         v = default
     try:
         v = float(v)
     except (TypeError, ValueError):
-        raise DataspatiumError("%s must be a number (metres)" % key)
+        raise DataspatiumError("%s must be a number (%s)" % (key, unit))
     if positive and v <= 0:
         raise DataspatiumError("%s must be greater than zero" % key)
     return v
@@ -1315,6 +1315,45 @@ def _cs_label(i):
     return out
 
 
+def _cs_angle(degrees):
+    """An IfcCompoundPlaneAngleMeasure: degrees, minutes, seconds and millionths of a second, every part carrying the sign."""
+    sign = -1 if float(degrees) < 0 else 1
+    micro = int(round(abs(float(degrees)) * 3600.0 * 1000000.0))
+    d, micro = divmod(micro, 3600 * 1000000)
+    m, micro = divmod(micro, 60 * 1000000)
+    s, micro = divmod(micro, 1000000)
+    return [sign * d, sign * m, sign * s, sign * micro]
+
+
+def _cs_crs_facts(crs):
+    """The datum, projection and zone an EPSG code stands for, for the projected systems the Nordic countries draw in; (None, None,
+    None) for a code outside the table. IFC4 requires the datum on IfcProjectedCRS, IFC4X3 does not."""
+    code = int(crs[5:])
+    if code == 3006:
+        return "SWEREF99", "Transverse Mercator", "TM"
+    if 3007 <= code <= 3018:
+        return "SWEREF99", "Transverse Mercator", ("12 00", "13 30", "15 00", "16 30", "18 00", "14 15", "15 45", "17 15", "18 45", "20 15", "21 45", "23 15")[code - 3007]
+    if 25828 <= code <= 25838:
+        return "ETRS89", "Transverse Mercator", "UTM %dN" % (code - 25800)
+    if code == 3067:
+        return "ETRS89", "Transverse Mercator", "TM35FIN"
+    if 3873 <= code <= 3885:
+        return "ETRS89", "Transverse Mercator", "GK%dFIN" % (code - 3854)
+    if 5105 <= code <= 5130:
+        return "ETRS89", "Transverse Mercator", "NTM zone %d" % (code - 5100)
+    if code == 3057:
+        return "ISN93", "Lambert Conformal Conic", "Lambert 1993"
+    if code == 8088:
+        return "ISN2016", "Lambert Conformal Conic", "Lambert 2016"
+    if 32601 <= code <= 32660:
+        return "WGS84", "Transverse Mercator", "UTM %dN" % (code - 32600)
+    if 32701 <= code <= 32760:
+        return "WGS84", "Transverse Mercator", "UTM %dS" % (code - 32700)
+    if code == 3857:
+        return "WGS84", "Pseudo-Mercator", None
+    return None, None, None
+
+
 class _ChangeSet:
     """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted."""
 
@@ -1331,6 +1370,7 @@ class _ChangeSet:
         self.created = []
         self.changed = {}
         self.deleted = []
+        self.notes = []  # what an operation could not do in the file's schema, for the report
         self.n_created = 0
         owners = model.by_type("IfcOwnerHistory")
         self.owner = owners[0] if owners else None
@@ -1434,23 +1474,50 @@ class _ChangeSet:
         buildings = self.m.by_type("IfcBuilding")
         if buildings:
             return buildings[0]
-        projects = self.m.by_type("IfcProject")
-        if not projects:
-            raise DataspatiumError("the model has no IfcProject")
-        sites = self.m.by_type("IfcSite")
-        if sites:
-            site = sites[0]
-        else:
-            site = self.root("IfcSite", "Site")
-            site.CompositionType = "ELEMENT"
-            site.ObjectPlacement = self.placement(None, 0, 0, 0)
-            ifcopenshell.api.aggregate.assign_object(self.m, products=[site], relating_object=projects[0])
+        site = self.site()
         building = self.root("IfcBuilding", "Building")
         building.CompositionType = "ELEMENT"
         building.ObjectPlacement = self.placement(site.ObjectPlacement, 0, 0, 0)
         ifcopenshell.api.aggregate.assign_object(self.m, products=[building], relating_object=site)
         self.register(building, ref=False)
         return building
+
+    def site(self, name=None):
+        """The file's site: the first IfcSite, or a new one under the project, with the buildings that hung on the project moved under it."""
+        import ifcopenshell.api.aggregate
+        sites = self.m.by_type("IfcSite")
+        if sites:
+            return sites[0]
+        projects = self.m.by_type("IfcProject")
+        if not projects:
+            raise DataspatiumError("the model has no IfcProject")
+        site = self.root("IfcSite", name or "Site")
+        site.CompositionType = "ELEMENT"
+        site.ObjectPlacement = self.placement(None, 0, 0, 0)
+        ifcopenshell.api.aggregate.assign_object(self.m, products=[site], relating_object=projects[0])
+        for building in self.m.by_type("IfcBuilding"):
+            if any(rel.RelatingObject.id() == projects[0].id() for rel in (building.Decomposes or ())):
+                ifcopenshell.api.aggregate.assign_object(self.m, products=[building], relating_object=site)
+                self.touch(building)
+        self.register(site, ref=False)
+        return site
+
+    def model_context(self):
+        """The 3D model context (ContextType Model, not a sub-context), made when the file has none."""
+        parents = [c for c in self.m.by_type("IfcGeometricRepresentationContext") if not c.is_a("IfcGeometricRepresentationSubContext") and (c.ContextType or "Model") == "Model"]
+        if parents:
+            return parents[0]
+        import ifcopenshell.api.context
+        return ifcopenshell.api.context.add_context(self.m, context_type="Model")
+
+    def length_unit(self):
+        """The project's length unit (an IfcNamedUnit), or None."""
+        for project in self.m.by_type("IfcProject"):
+            units = project.UnitsInContext
+            for unit in ((units.Units or ()) if units is not None else ()):
+                if unit.is_a("IfcNamedUnit") and getattr(unit, "UnitType", None) == "LENGTHUNIT":
+                    return unit
+        return None
 
     def body(self):
         if self._body is not None:
@@ -1460,9 +1527,7 @@ class _ChangeSet:
             self._body = subs[0]
             return subs[0]
         import ifcopenshell.api.context
-        parents = [c for c in self.m.by_type("IfcGeometricRepresentationContext") if not c.is_a("IfcGeometricRepresentationSubContext") and (c.ContextType or "Model") == "Model"]
-        parent = parents[0] if parents else ifcopenshell.api.context.add_context(self.m, context_type="Model")
-        self._body = ifcopenshell.api.context.add_context(self.m, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=parent)
+        self._body = ifcopenshell.api.context.add_context(self.m, context_type="Model", context_identifier="Body", target_view="MODEL_VIEW", parent=self.model_context())
         return self._body
 
     def contain(self, e, storey):
@@ -1716,6 +1781,76 @@ class _ChangeSet:
                 self.deleted.append(rec)
                 self.changed.pop(f.id(), None)
                 ifcopenshell.api.root.remove_product(self.m, product=f)
+
+    def op_set_site(self, op):
+        """The model's place on earth: the site's WGS 84 position (compound plane angles, every part signed), its height above the sea
+        and its name, and with a crs the map conversion of the model context to that projected CRS (IFC4 and IFC4X3; IFC2X3 has none,
+        which the report notes). The site goes into the changed list; a CRS or conversion that had to be made into the created list."""
+        latitude = _cs_num(op, "latitude", unit="degrees")
+        longitude = _cs_num(op, "longitude", unit="degrees")
+        if not -90.0 <= latitude <= 90.0:
+            raise DataspatiumError("latitude must be between -90 and 90 degrees")
+        if not -180.0 <= longitude <= 180.0:
+            raise DataspatiumError("longitude must be between -180 and 180 degrees")
+        elevation = None if op.get("elevation") is None else _cs_num(op, "elevation")
+        crs = str(op.get("crs") or "").strip().upper() or None
+        eastings = northings = None
+        if crs is not None:
+            if not (crs.startswith("EPSG:") and crs[5:].isdigit()):
+                raise DataspatiumError("crs must be an EPSG code such as EPSG:3006")
+            eastings = _cs_num(op, "eastings")
+            northings = _cs_num(op, "northings")
+        elif op.get("eastings") is not None or op.get("northings") is not None:
+            raise DataspatiumError("eastings and northings need a crs such as EPSG:3006")
+        rotation = _cs_num(op, "rotation", 0.0, unit="degrees")
+        site_name = str(op.get("site_name") or "").strip()[:255] or None
+        site = self.site(site_name)
+        site.RefLatitude = _cs_angle(latitude)
+        site.RefLongitude = _cs_angle(longitude)
+        if elevation is not None:
+            site.RefElevation = self.u(elevation)
+        if site_name:
+            site.Name = site_name
+        self.touch(site)
+        if crs is None:
+            return
+        if self.m.schema == "IFC2X3":
+            self.notes.append("the map conversion to %s was skipped: IFC2X3 has no IfcMapConversion; the site's latitude, longitude and elevation were set" % crs)
+            return
+        self.map_conversion(crs, eastings, northings, 0.0 if elevation is None else elevation, rotation)
+
+    def map_conversion(self, crs, eastings, northings, height, rotation):
+        """One IfcProjectedCRS named by the EPSG code and one IfcMapConversion from the model context to it, made or updated, never
+        doubled. Lengths come in metres and are written in the file's unit, which is also the map unit."""
+        context = self.model_context()
+        conversions = self.m.by_type("IfcMapConversion")
+        conversion = next((c for c in conversions if c.SourceCRS is not None and c.SourceCRS.id() == context.id()), conversions[0] if conversions else None)
+        target = conversion.TargetCRS if conversion is not None and conversion.TargetCRS is not None and conversion.TargetCRS.is_a("IfcProjectedCRS") else None
+        if target is None:
+            found = self.m.by_type("IfcProjectedCRS")
+            target = found[0] if found else None
+        datum, projection, zone = _cs_crs_facts(crs)
+        if datum is None and self.m.schema == "IFC4":
+            datum = ""  # IFC4 requires a datum; an empty identifier says the app does not know this code's
+            self.notes.append("the geodetic datum of %s is not known to the app; IFC4 requires one, so it is written empty" % crs)
+        values = {"Name": crs, "GeodeticDatum": datum, "MapProjection": projection, "MapZone": zone, "MapUnit": self.length_unit()}
+        if target is None:
+            target = self.m.create_entity("IfcProjectedCRS", **values)
+            self.register(target, ref=False)
+        else:
+            for key, value in values.items():
+                setattr(target, key, value)
+            self.touch(target)
+        angle = math.radians(rotation)
+        values = {"SourceCRS": context, "TargetCRS": target, "Eastings": self.u(eastings), "Northings": self.u(northings), "OrthogonalHeight": self.u(height),
+                  "XAxisAbscissa": math.cos(angle), "XAxisOrdinate": math.sin(angle), "Scale": 1.0}
+        if conversion is None:
+            conversion = self.m.create_entity("IfcMapConversion", **values)
+            self.register(conversion, ref=False)
+        else:
+            for key, value in values.items():
+                setattr(conversion, key, value)
+            self.touch(conversion)
 
     def apply(self, ops):
         if not isinstance(ops, list):
@@ -2075,8 +2210,9 @@ def _ifc_changeset(in_file, changeset_json, out_file):
 
     Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
     report: what was created (with refs), changed and deleted, the schema findings and what the change set broke in the model's
-    relationships (new against the base, counted as errors), counts for the log, and the changes of
-    existing instances in Dataregium's proposal form (`proposal`).
+    relationships (new against the base, counted as errors), counts for the log, the changes of
+    existing instances in Dataregium's proposal form (`proposal`), and `notes` about what an operation could not do in the
+    file's schema (the map conversion in IFC2X3).
     """
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
@@ -2101,7 +2237,7 @@ def _ifc_changeset(in_file, changeset_json, out_file):
         proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
     return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
                        "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
-                       "proposal": proposal},
+                       "proposal": proposal, "notes": cs.notes},
                       ensure_ascii=False, default=str)
 
 
