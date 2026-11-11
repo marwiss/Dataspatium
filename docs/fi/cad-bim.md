@@ -297,6 +297,9 @@ paikallinen malli pitää kaiken tietokoneella.
 Toiminnolla *Tiedot tietoaineistosta* taulukon rivit lisätään briefiin tekstinä: kartalta (Avoin paikkatieto) haettu rakennusala muuttuu
 kulmiksi metreinä lounaiskulmasta, jolloin seinät saavat oikeat mitat, ja Dataspatium Mobiilin kenttälomakkeen mitat ja muistiinpanot
 muuttuvat riveiksi; kierros puhelimen kanssa voi sitten antaa lisää kuvia ja mittoja, ja briefiä täydennetään samassa tilassa.
+Brief ja kuvat voidaan myös viedä palvelimelle mallin aineistoksi, kun malli on haettu CDE:stä: mallin projektin asia *Aineisto*
+saa briefin tekstiasiakirjana ja jokaisen kuvan asiakirjana, jotta muut, jotka työstävät mallia omilla asiakasohjelmillaan, näkevät,
+mistä se rakennettiin. Painike on *Vie aineisto palvelimelle*.
 Paneelin yläosassa ovat *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus, leveys, korkeus, perustus, katto) ja *Tarkkuus*
 (luonnos, pääpiirteet tai yksityiskohtainen): täytä se minkä tiedät, niin se aloittaa briefin ja tekoäly kysyy loput. Sanat ovat
 tavallisia, mutta niiden takana ovat ISO 19650:n tietovaatimukset ja level of information need, ja malli on tarkoitettu rakennuksen

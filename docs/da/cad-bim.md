@@ -288,6 +288,9 @@ leverandøren sammen med briefen efter samtykket til leverandørens vært; en lo
 Med *Oplysninger fra et datasæt* lægges rækker fra en tabel i briefen som tekst: en bygningsflade hentet fra kortet (Åbne geodata) bliver
 hjørner i meter fra det sydvestlige hjørne, så væggene får rigtige mål, og mål og noter fra en feltformular i Dataspatium Mobil bliver
 rækker; en runde med telefonen kan derefter give flere billeder og mål, og briefen suppleres i samme tilstand.
+Briefen og billederne kan også lægges på serveren som modellens grundlag, når modellen er hentet fra et CDE: sagen *Grundlag* i
+modellens projekt får briefen som tekstdokument og hvert billede som dokument, så andre, der arbejder med modellen i egne klienter,
+ser, hvad den blev bygget af. Knappen hedder *Læg grundlaget på serveren*.
 Øverst i panelet står *Bygningens oplysninger* (hvilken bygning, etager, længde, bredde, højde, fundering, tag) og *Detaljeringsgrad*
 (skitse, hovedtræk eller detaljeret): udfyld det du ved, så indleder det briefen, og AI'en spørger om resten. Ordene er almindelige,
 men bag dem ligger ISO 19650's informationskrav og level of information need, og modellen er tænkt som bygningens driftsmodel. Hvert

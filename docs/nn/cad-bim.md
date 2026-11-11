@@ -290,6 +290,9 @@ leverandøren saman med briefen etter samtykket for verten til leverandøren; ei
 Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i briefen som tekst: ei bygningsflate henta frå kartet (Opne geodata)
 vert hjørne i meter frå det sørvestlege hjørnet, så veggane får rette mål, og mål og notat frå eit feltskjema i Dataspatium Mobil vert
 rader; ein runde med telefonen kan så gje fleire bilete og mål, og briefen vert supplert i same modus.
+Briefen og bileta kan òg leggjast på tenaren som grunnlaget til modellen når modellen er henta frå eit CDE: saka *Grunnlag* i
+prosjektet til modellen får briefen som tekstdokument og kvart bilete som dokument, så andre som arbeider med modellen i eigne
+klientar ser kva han vart bygd av. Knappen heiter *Legg grunnlaget på tenaren*.
 Øvst i panelet står *Opplysningane om bygningen* (kva bygning, etasjar, lengd, breidd, høgd, fundamentering, tak) og *Nøyaktigheit*
 (skisse, hovudtrekk eller detaljert): fyll inn det du veit, så innleier det briefen og AI-en spør om resten. Orda er vanlege, men bak
 dei ligg informasjonskrava i ISO 19650 og level of information need, og modellen er tenkt som forvaltningsmodellen til bygningen. Kvart
