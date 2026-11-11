@@ -70,6 +70,33 @@
     } finally { await notebooks.remove(book.id).catch(() => {}); }
   });
 
+  test('bundle: the review finds identity numbers and phone numbers, and only the copy in the package changes', async (assert) => {
+    const review = D.require('ui/share/review');
+    const { SqliteEngine } = D.require('engines/sqlite');
+    const csv = 'namn;personnummer;anteckning\nAnna;19121212-1212;Ring 070-123 45 67\nBo;19640823-3234;Inget att säga\n';
+    const a = await importer.run(new File([csv], 'personer.csv'), {}, null, 'Personer');
+    created.push(a.id);
+    // The dialog answered at once with what it proposes: the identity number hashed, the phone number masked.
+    const ctx = { store: { get: () => ({ datasets: [{ id: a.id, name: 'Personer' }] }) }, ui: { dialog: { open: async () => true } } };
+    const checked = await review.review(ctx, [a.id], { include: { charts: false, dashboards: false, documents: false, notebooks: false, scripts: false } });
+    const tr = checked.transform[a.id];
+    assert.ok(tr && tr.hash.includes('personnummer'), 'the identity number is hashed: ' + JSON.stringify(tr));
+    assert.ok(tr.mask.includes('anteckning'), 'the phone number in the note is masked');
+    const res = await workspace.bundle({ name: 'Granskat', datasetIds: [a.id], include: { charts: false, dashboards: false, documents: false, notebooks: false, scripts: false }, transform: checked.transform, extras: checked.extras });
+    const entries = await zip.readZip(res.blob);
+    const engine = new SqliteEngine(); await engine.start(); await engine.open(entries[`datasets/${a.id}.sqlite`].slice().buffer);
+    try {
+      const rows = (await engine.exec('select personnummer, anteckning from data order by rowid'))[0].values;
+      assert.ok(rows.every((r) => !String(r[0]).includes('1212') && !String(r[0]).includes('3234')), 'no identity number in the copy: ' + JSON.stringify(rows));
+      assert.ok(String(rows[0][1]).includes('[***]') && !String(rows[0][1]).includes('070'), 'the phone number masked: ' + rows[0][1]);
+      assert.equal(String(rows[1][1]), 'Inget att säga', 'other text untouched');
+    } finally { engine.terminate(); }
+    const own = await datasets.query(a.id);
+    assert.ok(String(own[0][1]).includes('1212') && String(own[0][2]).includes('070'), 'the dataset itself is unchanged');
+    assert.ok(review.summary(checked.transform), 'a line for the log');
+    return 'ok';
+  }, 60000);
+
   test('bundle: cleanup', async (assert) => {
     for (const id of chartIds) { try { await charts.remove(id); } catch (_err) { /* ignore */ } }
     for (const id of created) { try { await datasets.remove(id); } catch (_err) { /* ignore */ } }

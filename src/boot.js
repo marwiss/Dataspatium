@@ -66,6 +66,7 @@
     'src/data/changelog.js',
     'src/data/comments.js',
     'src/data/workspace.js',
+    'src/data/share-scan.js',
     'src/data/r-bridge.js',
     // Import and export
     'src/io/importers/csv.js',
@@ -163,6 +164,7 @@
     'src/ui/bearbeta/plan-view.js',
     'src/ui/analysis/plan-panel.js',
     'src/ui/modes/inhamta.js',
+    'src/ui/share/review.js',
     'src/ui/modes/hantera.js',
     'src/ui/modes/bearbeta.js',
     'src/ui/modes/analysera.js',

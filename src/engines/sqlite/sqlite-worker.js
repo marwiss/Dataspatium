@@ -548,12 +548,48 @@
       }
     }
 
+    /**
+     * Personal data inside running text: e-mail addresses, Nordic identity numbers that pass their own checks, and phone
+     * numbers in the international or mobile form. Names and addresses cannot be recognised this way.
+     */
+    var PERSONAL = [
+      { re: /[^\s@<>"',;:()\[\]{}]+@[^\s@<>"',;:()\[\]{}]+\.[A-Za-z]{2,}/g },
+      { re: /\b\d{6}[-+ABCDEFUVWXY]\d{3}[0-9A-Y]\b/g, kinds: ['fi_hetu'] },
+      { re: /\b\d{6} ?\d{5}\b/g, kinds: ['no_fnr'] },
+      { re: /\b(?:\d{2})?\d{6}[-+]?\d{4}\b/g, kinds: ['se_pnr', 'is_kt'] },
+      { re: /\b\d{6}-\d{4}\b/g, kinds: ['dk_cpr'] },
+      { re: /\+\d{1,3}[ -]?\d(?:[ -]?\d){6,11}\b/g },
+      { re: /\b07\d[- ]?\d{3}[- ]?\d{2}[- ]?\d{2}\b/g },
+    ];
+    var MASK = '[***]';
+    function isPersonal(pattern, match) {
+      return !pattern.kinds || pattern.kinds.some(function (kind) { return validId(match, kind) === 1; });
+    }
+    function hasPersonal(x) {
+      if (x === null || x === undefined || typeof x !== 'string') return 0;
+      for (var i = 0; i < PERSONAL.length; i++) {
+        var hits = x.match(PERSONAL[i].re);
+        if (hits && hits.some(function (m) { return isPersonal(PERSONAL[i], m); })) return 1;
+      }
+      return 0;
+    }
+    function maskPersonal(x) {
+      if (x === null || x === undefined || typeof x !== 'string') return x;
+      var out = x;
+      PERSONAL.forEach(function (pattern) {
+        out = out.replace(pattern.re, function (m) { return isPersonal(pattern, m) ? MASK : m; });
+      });
+      return out;
+    }
+
     function registerFunctions(database) {
       database.create_function('dm_round', function (x, decimals, mode) { return roundNumber(x, decimals, mode); });
       database.create_function('dm_pad', function (x, length, ch, side) { return padText(x, length, ch, side); });
       database.create_function('dm_date_part', function (x, part) { return datePart(x, part); });
       database.create_function('dm_date_diff', function (a, b, unit) { return dateDiff(a, b, unit); });
       database.create_function('dm_valid_id', function (x, kind) { return validId(x, kind); });
+      database.create_function('dm_has_personal', function (x) { return hasPersonal(x); });
+      database.create_function('dm_mask_personal', function (x) { return maskPersonal(x); });
       database.create_function('dm_hash', function (text, salt, length) {
         if (text === null) return null;
         var key = salt === null || salt === undefined || salt === '' ? String(text) : String(salt) + '|' + String(text);

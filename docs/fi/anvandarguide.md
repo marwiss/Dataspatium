@@ -155,9 +155,12 @@ automaattisesti jokaisen muutoksen yhteydessä.
   viimeksi jaettiin, ja ratkaisemattomat kommentit. Vastaanottaja lataa sen kohdassa *Palauta ZIP-tiedostosta*, näkee
   viestin ja muutokset ja valitsee jo olemassa oleville aineistoille, korvataanko ne paketin versiolla (oma versio
   tallennetaan kohtaan *Versiot*); muut ohitetaan.
-- Kaaviot, koontinäytöt ja muistikirjat tulevat mukaan vain valituille aineistoille. Versio 1 ei tarkista
-  henkilötietoja ennen jakamista, joten tarkista paketin sisältö itse tai käytä versiota 2.0.0 tai uudempaa, joka
-  tarkistaa sen.
+- Kaaviot, koontinäytöt ja muistikirjat tulevat mukaan vain valituille aineistoille. Ennen paketin tekemistä
+  tarkistetaan, mikä voi olla henkilötietoja: henkilötunnukset ja muut tunnisteet, sähköposti, puhelin ja henkilöiden
+  nimet sarakkeissa, tällaiset tiedot juoksevassa tekstissä ja sivutauluissa, alkuperäinen tiedosto, kommentit ja
+  aineiston nimi sekä se, mitä kaavioissa, koontinäytöissä, muistikirjoissa, malleissa ja skripteissä tulee mukaan.
+  Valitset kullekin osalle, säilytetäänkö, pseudonymisoidaanko, peitetäänkö vai poistetaanko se kopiossa; aineistoa ei
+  koskaan muuteta.
 - Kommentit: jokaisella aineistolla on Hallitse-tilassa välilehti *Kommentit*, ja Muokkaa-tilassa kommentoit saraketta
   ominaisuuspaneelista. Kommentit ovat aineiston tiedostossa ja kulkevat mukana paketeissa, varmuuskopioissa,
   siirrettävässä kansiossa ja GitHubissa. Näytettävän nimen annat itse; se tallennetaan vain selaimeen.

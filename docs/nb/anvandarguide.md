@@ -145,9 +145,11 @@ arbeidsområdet dessuten speiles til en portabel mappe på disken, automatisk ve
   melding og en endringslogg: det som er gjort med hvert datasett siden det sist ble delt, og kommentarene som ikke er
   løst. Mottakeren laster den inn under *Gjenopprett fra ZIP*, ser meldingen og endringene og velger for datasett som
   allerede finnes, om de skal erstattes med pakkens versjon (den egne lagres under *Versjoner*); resten hoppes over.
-- Diagrammer, dashbord og notatbøker følger bare med for de valgte datasettene. Versjon 1 gjennomgår ikke
-  personopplysninger før deling, så kontroller selv hva pakken inneholder, eller bruk 2.0.0 eller senere, som
-  gjennomgår den.
+- Diagrammer, dashbord og notatbøker følger bare med for de valgte datasettene. Før pakken lages, gjennomgås det som kan
+  være personopplysninger: personnummer og andre identitetsnummer, e-post, telefon og personnavn i kolonner, slike
+  opplysninger i løpende tekst og sidetabeller, originalfilen, kommentarene og datasettets navn, og dessuten det som
+  følger med i diagrammer, dashbord, notatbøker, maler og skript. For hver del velger du å beholde, pseudonymisere,
+  maskere eller fjerne i kopien; datasettet endres aldri.
 - Kommentarer: hvert datasett har fanen *Kommentarer* i Håndter, og i Bearbeid kommenterer du en kolonne fra
   egenskapspanelet. Kommentarene ligger i datasettets fil og følger med i pakker, sikkerhetskopier, den portable mappen
   og GitHub. Navnet som vises, angir du selv; det lagres bare i nettleseren.

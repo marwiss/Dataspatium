@@ -285,7 +285,7 @@ Dataspatium.assets.addEntries({
  "presets/plan/no-arealformal.json": {
   "file": "presets/plan/no-arealformal.json.js",
   "encoding": "gzip+base64",
-  "size": 8573,
+  "size": 8337,
   "library": "dataspatium"
  },
  "presets/plan/planbestammelsekatalogen.json": {

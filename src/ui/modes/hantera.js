@@ -411,11 +411,18 @@
           h('h4', { text: t('bundle.include') }), h('div', { class: 'dm-row-wrap' }, incSwitches));
         const ok = await ui.dialog.open({ title: t('bundle.title'), body, size: 'lg', actions: [{ label: t('common.cancel'), value: false }, { label: t('bundle.create'), variant: 'primary', value: true, primary: true }] });
         if (ok !== true) return;
+        // The review before sharing (F28 a): what may be personal data in the datasets and in what follows them, with a choice for
+        // each; only the copy in the package changes.
+        const review = D.require('ui/share/review');
+        const checked = await review.review(ctx, Array.from(chosen), { include: inc });
+        if (!checked) return;
         try {
           shell.setStatus('saving');
           const label = name.value.trim() || t('bundle.default.name');
           if (authorIn.value.trim() !== author) await comments.setAuthor(authorIn.value);
-          const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc, author: authorIn.value.trim(), message: message.value });
+          const res = await services.workspace.bundle({ name: label, datasetIds: Array.from(chosen), include: inc, author: authorIn.value.trim(), message: message.value, transform: checked.transform, extras: checked.extras });
+          const changed = review.summary(checked.transform);
+          if (changed) shell.log(changed, 'info');
           const file = services.files.safeName(label, 'dataspatium.zip');
           services.files.download(res.blob, file);
           shell.log(t('bundle.done', { name: file, n: res.counts.datasets }), 'ok');

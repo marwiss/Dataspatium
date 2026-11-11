@@ -151,9 +151,11 @@ arbejdsområdet desuden spejles til en portabel mappe på disken, automatisk ved
   en besked og en ændringslog: det, der er gjort med hvert datasæt, siden det sidst blev delt, og de kommentarer, der ikke
   er løst. Modtageren indlæser den under *Gendan fra ZIP*, ser beskeden og ændringerne og vælger for datasæt, der allerede
   findes, om de skal erstattes med pakkens version (den egen gemmes under *Versioner*); resten springes over.
-- Diagrammer, dashboards og notesbøger følger kun med for de valgte datasæt. Version 1 gennemgår ikke
-  personoplysninger før deling, så kontrollér selv, hvad pakken indeholder, eller brug 2.0.0 eller senere, som
-  gennemgår den.
+- Diagrammer, dashboards og notesbøger følger kun med for de valgte datasæt. Før pakken laves, gennemgås det, der kan
+  være personoplysninger: personnumre og andre identitetsnumre, e-mail, telefon og personnavne i kolonner, sådanne
+  oplysninger i løbende tekst og sidetabeller, originalfilen, kommentarerne og datasættets navn, og desuden det, der
+  følger med i diagrammer, dashboards, notesbøger, skabeloner og scripts. For hver del vælger du at beholde,
+  pseudonymisere, maskere eller fjerne i kopien; datasættet ændres aldrig.
 - Kommentarer: hvert datasæt har fanen *Kommentarer* i Håndter, og i Bearbejd kommenterer du en kolonne fra inspektøren.
   Kommentarerne ligger i datasættets fil og følger med i pakker, backupper, den portable mappe og GitHub. Navnet, der
   vises, angiver du selv; det gemmes kun i browseren.

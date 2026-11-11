@@ -609,6 +609,45 @@
 
     /** @returns {Promise<ArrayBuffer>} the SQLite file */
     async function exportBytes(id) { const handle = await ensureOpen(id); return handle.engine.export(); }
+    /**
+     * The file of a dataset with columns pseudonymised or dropped in the copy only (the review before sharing);
+     * the dataset itself is untouched. Hashing uses dm_hash with the salt (random when not given), dropped columns
+     * leave _columns too and the remaining positions close up.
+     * @param {string} id @param {{drop?: string[], hash?: string[], salt?: string}} [options]
+     * @returns {Promise<ArrayBuffer>}
+     */
+    async function exportBytesTransformed(id, options = {}) {
+      const drop = (options.drop || []).filter(Boolean);
+      const hash = (options.hash || []).filter((c) => c && !drop.includes(c));
+      const bytes = await exportBytes(id);
+      const engine = await newEngine(bytes);
+      try {
+        const names = (await readColumns(engine)).map((c) => c.name);
+        const salt = options.salt || Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+        for (const name of hash) {
+          if (!names.includes(name)) continue;
+          await engine.run(`update data set ${q(name)} = dm_hash(cast(${q(name)} as text), ?, 16) where ${q(name)} is not null`, [salt]);
+          await engine.run("update _columns set type = 'text', value_labels = null where name = ?", [name]);
+        }
+        if (drop.some((n) => names.includes(n))) {
+          // Indexes made for sorting and filtering would block the drop; the copy does not need them.
+          const idx = await engine.exec("select name from sqlite_master where type = 'index' and tbl_name = 'data' and sql is not null");
+          for (const row of (idx[0] ? idx[0].values : [])) await engine.run(`drop index if exists ${q(String(row[0]))}`);
+          for (const name of drop) {
+            if (!names.includes(name)) continue;
+            await engine.run(`alter table data drop column ${q(name)}`);
+            await engine.run('delete from _columns where name = ?', [name]);
+          }
+          const left = await engine.exec('select name from _columns order by position');
+          let position = 0;
+          for (const row of (left[0] ? left[0].values : [])) await engine.run('update _columns set position = ? where name = ?', [position++, row[0]]);
+        }
+        if (options.after) await options.after(engine);
+        // SQLite keeps removed values in free pages until told otherwise, and this copy leaves the app.
+        await engine.run('vacuum');
+        return await engine.export();
+      } finally { engine.terminate(); }
+    }
 
     /** All rows in column order (for exporters). */
     async function allRows(id) { return query(id); }
@@ -650,7 +689,7 @@
       replaceBytes, rebuild, snapshot, listVersions, restoreVersion, deleteVersion, compareVersion, createFromQuery, copyInto, appendRows,
       createEmpty, appendImportRows, finishImport, abortImport,
       shortNameFrom, uniqueShortName, validateShortName, ensureShortNames, bytesOf, version,
-      updateMeta, remove, exportBytes, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
+      updateMeta, remove, exportBytes, exportBytesTransformed, allRows, columns, importBytes, close, subscribe, quoteIdent: q, ensureIndex, dropIndexes, indexing, valueLabelsText,
     };
   });
 })();
