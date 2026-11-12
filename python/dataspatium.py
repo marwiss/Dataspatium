@@ -2478,13 +2478,13 @@ class _ChangeSet:
         else:
             setattr(owner, attribute, self.point(*coords))
 
-    def set_direction(self, owner, attribute, ratios, default):
+    def set_direction(self, owner, attribute, ratios, default=None):
         """Set the IfcDirection in owner's `attribute` to ratios like set_point; an attribute left out stays out while the ratios are its
-        default."""
+        default (None: it is always written)."""
         d = getattr(owner, attribute)
         ratios = [float(c) for c in ratios]
-        now = [float(c) for c in d.DirectionRatios] if d is not None else list(default)
-        if len(now) == len(ratios) and all(abs(a - b) < 1e-12 for a, b in zip(now, ratios)):
+        now = [float(c) for c in d.DirectionRatios] if d is not None else (list(default) if default is not None else None)
+        if now is not None and len(now) == len(ratios) and all(abs(a - b) < 1e-12 for a, b in zip(now, ratios)):
             return
         if d is not None and len(d.DirectionRatios) == len(ratios) and self.m.get_total_inverses(d) == 1:
             d.DirectionRatios = ratios
@@ -2776,8 +2776,11 @@ class _ChangeSet:
         placement: its point and directions in place when nothing else uses them, else new ones."""
         pos = self.own(pl, "RelativePlacement")
         self.set_point(pos, "Location", [round(c, 9) for c in local[3]])
-        self.set_direction(pos, "Axis", [round(c, 12) for c in local[2]], (0.0, 0.0, 1.0))
-        self.set_direction(pos, "RefDirection", [round(c, 12) for c in local[0]], (1.0, 0.0, 0.0))
+        axis, ref = [round(c, 12) for c in local[2]], [round(c, 12) for c in local[0]]
+        # Axis and RefDirection are both given or both left out (IfcAxis2Placement3D's rule AxisAndRefDirProvision).
+        both = pos.Axis is not None or pos.RefDirection is not None or axis != [0.0, 0.0, 1.0] or ref != [1.0, 0.0, 0.0]
+        self.set_direction(pos, "Axis", axis, None if both else (0.0, 0.0, 1.0))
+        self.set_direction(pos, "RefDirection", ref, None if both else (1.0, 0.0, 0.0))
 
     def loose_fillings(self, opening):
         """The doors and windows of an opening that are not placed in it, with their absolute matrices, for follow; a refusal for one
