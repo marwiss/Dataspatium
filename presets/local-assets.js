@@ -633,7 +633,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 70735,
+  "size": 70932,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -687,7 +687,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 17749,
+  "size": 17786,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -801,7 +801,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 70643,
+  "size": 70798,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -855,7 +855,7 @@ Dataspatium.assets.addEntries({
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 17704,
+  "size": 17732,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -969,7 +969,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 69818,
+  "size": 69993,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1023,7 +1023,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 17526,
+  "size": 17558,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1137,7 +1137,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 71175,
+  "size": 71311,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1191,7 +1191,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 17899,
+  "size": 17925,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1305,7 +1305,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 75774,
+  "size": 75936,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1359,7 +1359,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 18793,
+  "size": 18825,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
