@@ -262,7 +262,7 @@
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
     const { res, facts } = await typedBuild();
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
-    assert.deepEqual(res.report.notes || [], [], 'nothing left out in IFC4');
+    assert.deepEqual((res.report.notes || []).filter((n) => !String(n).startsWith('GRF003')), [], 'nothing left out in IFC4 (the note that the model has no CRS yet, GRF003, aside)');
     const types = (res.report.created || []).filter((e) => /Type$/.test(e.ifc_class));
     assert.deepEqual(types.map((e) => [e.ref, e.ifc_class, e.name]), [['new-1', 'IfcWallType', 'YV1'], ['new-2', 'IfcSlabType', 'BJ1'], ['new-3', 'IfcSlabType', 'TAK1']], 'the types with the refs the panel gave');
     // Millimetres: the 300 mm wall's layers run from −150 mm across its axis, and IFC4 calls both finishes Finish.
@@ -327,7 +327,7 @@
     for (const [name, start, end] of BOX) assert.ok(wall(cs, name, start, end, 'new-1').ok, name);
     const first = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs));
     assert.equal(first.report.errors, 0, 'no errors: ' + JSON.stringify(first.report.findings));
-    assert.deepEqual(first.report.notes || [], [], 'every corner resolved');
+    assert.deepEqual((first.report.notes || []).filter((n) => !String(n).startsWith('GRF003')), [], 'every corner resolved (the note that the model has no CRS yet, GRF003, aside)');
     const box = await factsOf(first.bytes, JOINS);
     assert.deepEqual(box.joins, [['Norr', 'ATEND', 'Väst', 'ATSTART'], ['Norr', 'ATSTART', 'Öst', 'ATEND'], ['Syd', 'ATEND', 'Öst', 'ATSTART'], ['Syd', 'ATSTART', 'Väst', 'ATEND']], 'four L-corners, the longer walls relating');
     assert.deepEqual(['Syd', 'Öst', 'Norr', 'Väst'].map((n) => box.walls[n].length), [12.3, 7.7, 12.3, 7.7], 'the long walls reach past the corners and the short ones stop at them');

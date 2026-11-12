@@ -332,6 +332,44 @@ Mallista tulee tavallinen malliaineisto. Avaa se Muokkaa-tilassa ja rakenna siih
 ”kaksi kerrosta ja 6×4 m:n ruudukko, ulkoseinät ruudukon mukaan”. Sen voi viedä IFC-muodossa ja julkaista Dataregiumiin kuten
 muutkin mallit.
 
+### Tunnukset, numerot ja sijainti
+
+Lomakkeen kohdassa *Tunnukset* täytät sen, minkä tiedät; vain se kirjoitetaan tiedostoon:
+- *Kiinteistötunnus* tulee tontin nimeksi (IfcSite.Name) ja sen kiinteistötunnukseksi (Pset_LandRegistration.LandID); kohtaan
+  *Tontti* kirjoittamasi tulee silloin tontin pitkäksi nimeksi.
+- *Rakennusnumero* tulee rakennuksen nimeksi (IfcBuilding.Name) ja *Rakennuksen nimi* sen pitkäksi nimeksi (LongName).
+- *Kansallinen rakennustunnus* kirjoitetaan kenttään Pset_BuildingCommon.BuildingID yhdessä IsPermanentID:n kanssa, jotta malli ja
+  rekisterit tarkoittavat samaa rakennusta.
+- *Ensimmäisen kerroksen kuvaus* tulee kerroksen kuvaukseksi (Description), esimerkiksi että se on sisäänkäyntikerros.
+- *Tekijä* ja *Organisaatio* kirjoitetaan IFC-tiedoston otsakkeeseen vain, jos täytät ne; nimi on henkilötieto.
+
+Malli saa myös seinien akseleiden Axis-kontekstin alusta alkaen, ja raportti muistuttaa, että mallista puuttuu
+koordinaattijärjestelmä (buildingSMARTin sääntö GRF003), kunnes `set_site` on antanut sen.
+
+Tekoäly numeroi kerrokset korkeusjärjestyksessä koko projektille (Plan 1, Plan 2 …) ja kirjoittaa sisäänkäyntikerroksen kerroksen
+kuvaukseen; `create_storeys_and_grid` ottaa kerroksittain kentät `description` ja `long_name`. `create_spaces` ottaa jokaiselle
+huoneelle numeron (`number`), joka on yksilöllinen rakennuksessa: numerosta tulee huoneen Name, huoneen nimestä sen LongName ja
+kentästä `long_name` sen kuvaus, ja huonetyyppi (`room_type`) kirjoitetaan ObjectType-kenttään PredefinedType-arvolla USERDEFINED.
+Ilman numeroa nimet toimivat kuten ennen.
+
+`set_site` tuntee yhdistetyt EPSG-koodit SWEREF 99:lle korkeuksin RH 2000 -järjestelmässä: 5845 SWEREF 99 TM:lle ja 5846–5857
+kahdelletoista paikalliselle vyöhykkeelle samassa järjestyksessä kuin 3007–3018 (esimerkiksi 5850 SWEREF 99 18 00 + RH 2000).
+Ruotsissa sijaitsevalle rakennukselle tekoäly suosii paikallista vyöhykettä, kun koordinaatit ovat siinä; se ei koskaan muunna
+koordinaatteja itse. Koordinaattijärjestelmä (IfcProjectedCRS) saa selväkielisen kuvauksen ja, kun koodi ei kerro
+korkeusjärjestelmää, VerticalDatum-arvoksi RH 2000 (muun kentällä `vertical_datum`). Karttayksikkö on aina metri ja muunnoksen
+Scale tiedoston pituusyksikkö metreinä (GRF005), joten millimetreissä oleva malli saa Scale-arvon 0,001. Jokainen ylätason
+konteksti (Model, Plan) saa oman IfcMapConversionin samoin arvoin (GRF001). Rakennuksen korkeus merenpinnasta on muunnoksen
+OrthogonalHeight; IFC4:ssä ja IFC2X3:ssa myös IfcBuilding.ElevationOfRefHeight, jonka IFC4X3 on poistanut käytöstä.
+
+Tiedoston otsake: jokainen IFC-tiedosto, jonka sovellus kirjoittaa tai tallentaa, saa FILE_DESCRIPTION-osan näkymämäärittelyineen
+ja tasolla 2;1 sekä FILE_NAME-osan, jossa ovat tiedoston nimi, aika ISO 8601 -muodossa, esikäsittelijä (Dataspatium ja
+IfcOpenShell versioineen) ja alkuperäinen ohjelma muodossa *Dataspatium - Dataspatium - versio*. Näkymämäärittely on
+CoordinationView_V2.0 IFC2X3:lle ja ReferenceView_V1.2 IFC4:lle. IFC4X3:lle ei ole virallista näkymää koko skeeman mallille
+(Reference View jättää pois muun muassa pursotetut kappaleet), joten otsakkeessa lukee `notYetAssigned` sellaisen näkymän sijaan,
+jota tiedosto ei noudata; buildingSMARTin validointipalvelu merkitsee sen, ja vastaanottaja, joka vaatii näkymän, nimeää sen.
+Tiedosto, jota sovellus muuttaa, säilyttää oman tekijänsä, organisaationsa ja alkuperäisen ohjelmansa sekä näkymänsä, kun
+validointipalvelu hyväksyy sen.
+
 ## Uusi rakennus briefistä
 
 Kirjoita brief lomakkeeseen *Uusi rakennusmalli* ("kaksikerroksinen talo 12 × 8 m harjakatolla, tiilijulkisivu, sisäänkäynti etelään …")

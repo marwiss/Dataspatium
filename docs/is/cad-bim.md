@@ -318,6 +318,42 @@ sótt eftir samþykki.
 Líkanið verður venjulegt líkanagagnasafn. Opnaðu það í Vinna og byggðu í því með *Breyta með gervigreind*, til dæmis „tvær hæðir og
 hnitanet 6×4 m með útveggjum eftir netinu“. Það má flytja út sem IFC og birta á Dataregium eins og önnur líkön.
 
+### Auðkenni, númer og staðsetning
+
+Undir *Auðkenni* í eyðublaðinu fyllir þú út það sem þú veist; aðeins það er skrifað í skrána:
+- *Landeignarnúmer* verður heiti lóðarinnar (IfcSite.Name) og auðkenni hennar (Pset_LandRegistration.LandID); það sem þú
+  skrifaðir undir *Lóð* verður þá langt heiti lóðarinnar.
+- *Byggingarnúmer* verður heiti byggingarinnar (IfcBuilding.Name) og *Heiti byggingarinnar* langt heiti hennar (LongName).
+- *Opinbert auðkenni byggingar* er skrifað í Pset_BuildingCommon.BuildingID með IsPermanentID, svo að líkanið og skrárnar eigi við
+  sömu byggingu.
+- *Lýsing fyrstu hæðar* verður Description hæðarinnar, til dæmis að hún sé inngangshæð.
+- *Höfundur* og *Stofnun* eru aðeins skrifuð í haus IFC-skrárinnar ef þú fyllir þau út; nafn eru persónuupplýsingar.
+
+Líkanið fær einnig samhengið Axis fyrir ása veggjanna frá upphafi, og skýrslan minnir á að líkanið vantar hnitakerfi
+(buildingSMART-reglan GRF003) þar til `set_site` hefur gefið því eitt.
+
+Gervigreindin númerar hæðirnar í hæðarröð fyrir allt verkefnið (Plan 1, Plan 2 …) og skrifar inngangshæðina í lýsingu hæðarinnar;
+`create_storeys_and_grid` tekur `description` og `long_name` fyrir hverja hæð. `create_spaces` tekur `number` fyrir hvert rými,
+einkvæmt í byggingunni: númerið verður Name rýmisins, heiti rýmisins LongName þess og `long_name` lýsing þess, og rýmisgerð
+(`room_type`) er skrifuð sem ObjectType með PredefinedType USERDEFINED. Án númers gilda heitin eins og áður.
+
+`set_site` þekkir samsettu EPSG-kóðana fyrir SWEREF 99 með hæðum í RH 2000: 5845 fyrir SWEREF 99 TM og 5846–5857 fyrir tólf
+staðbundnu beltin í sömu röð og 3007–3018 (til dæmis 5850 fyrir SWEREF 99 18 00 + RH 2000). Fyrir byggingu í Svíþjóð velur
+gervigreindin helst staðbundna beltið þegar hnitin eru í því; hún umreiknar aldrei hnit sjálf. Hnitakerfið (IfcProjectedCRS) fær
+lýsingu á venjulegu máli og, þegar kóðinn tilgreinir ekki hæðarkerfið, RH 2000 sem VerticalDatum (annað með `vertical_datum`).
+Kortaeiningin er alltaf metri og Scale umbreytingarinnar lengdareining skrárinnar í metrum (GRF005), svo líkan í millimetrum fær
+Scale 0,001. Hvert yfirsamhengi (Model, Plan) fær sína eigin IfcMapConversion með sömu gildum (GRF001). Hæð byggingarinnar yfir
+sjávarmáli er OrthogonalHeight umbreytingarinnar; í IFC4 og IFC2X3 einnig IfcBuilding.ElevationOfRefHeight, sem IFC4X3 hefur
+lagt af.
+
+Skráarhausinn: hver IFC-skrá sem forritið skrifar eða vistar fær FILE_DESCRIPTION með sýnarskilgreiningu og stiginu 2;1, og
+FILE_NAME með heiti skrárinnar, tímanum samkvæmt ISO 8601, forvinnsluforritinu (Dataspatium og IfcOpenShell með útgáfum) og
+upprunaforritinu á forminu *Dataspatium - Dataspatium - útgáfa*. Sýnarskilgreiningin er CoordinationView_V2.0 fyrir IFC2X3 og
+ReferenceView_V1.2 fyrir IFC4. IFC4X3 hefur enga opinbera sýn fyrir líkan í öllu skemanu (Reference View sleppir meðal annars
+útpressuðum formum), svo hausinn segir `notYetAssigned` í stað sýnar sem skráin fylgir ekki; staðfestingarþjónusta buildingSMART
+merkir það, og viðtakandi sem krefst sýnar tilgreinir hana. Skrá sem forritið breytir heldur eigin höfundi, stofnun og
+upprunaforriti, og sýn sinni þegar staðfestingarþjónustan samþykkir hana.
+
 ## Ný bygging úr lýsingu
 
 Skrifaðu lýsingu í eyðublaðið *Nýtt byggingarlíkan* ("tveggja hæða hús 12 × 8 m með risþaki, múrsteinshlið, inngangur mót suðri …") og

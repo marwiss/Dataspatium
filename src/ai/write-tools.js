@@ -18,6 +18,9 @@
  * them in the common set and sets IsExternal itself from the topology. set_properties refuses a number with its unit in the value and
  * advises the guidance's naming for a set of the model's own, and the wheel checks IFC's own sets against the schema's templates;
  * assign takes the material's category (recommendation 13 of the native IFC study, 4, 8 and 9 of the Praxi study).
+ * Since recommendations 2 and 3 of the Praxi study a storey takes a description and a long name, a listed room a number
+ * (its Name, with the name as its long name) and a room type, and set_site a vertical datum and the compound codes of SWEREF 99 with
+ * RH 2000; each lands on the operation only when given, so older change sets keep their form (dataspatium-tools/1, additive).
  */
 (function () {
   'use strict';
@@ -53,9 +56,9 @@
     const PASCAL = /^[A-Z][A-Za-z0-9]*$/;
     /** The tools as the providers see them. */
     const TOOLS = [
-      { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept. Either may be null.',
+      { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. Name the storeys with one numbering for the whole project that follows their height from the lowest up (such as Plan 1, Plan 2 …, a basement below them), and say the entrance level in the description, such as "Plan 2 (Entré)"; description and long_name (a longer name) are optional, null when not given. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept, and gets the description and long_name given. Either may be null.',
         parameters: { type: 'object', properties: {
-          storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' } }, required: ['name', 'elevation'], additionalProperties: false } },
+          storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' }, description: str(), long_name: str() }, required: ['name', 'elevation', 'description', 'long_name'], additionalProperties: false } },
           grid: { type: ['object', 'null'], properties: { x_spacing: { type: 'number' }, x_count: { type: 'integer' }, y_spacing: { type: 'number' }, y_count: { type: 'integer' } }, required: ['x_spacing', 'x_count', 'y_spacing', 'y_count'], additionalProperties: false } } } },
       { name: 'define_type', description: 'Define a wall, slab or roof type with its material layers, before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType) or roof (an IfcSlabType ROOF for the roof slabs of create_roof); name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab or a roof from the top down. category is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall and FLOOR or BASESLAB for a slab (null: NOTDEFINED for a wall, FLOOR for a slab; a roof type is ROOF). Answers the ref of the type, which create_wall, create_slab and create_roof take as type; put shared properties on the type with set_properties and its ref.',
         parameters: { type: 'object', properties: { kind: { type: 'string' }, name: { type: 'string' }, layers: { type: 'array', items: { type: 'object', properties: { material: { type: 'string' }, thickness: { type: 'number' }, category: str(), role: str() }, required: ['material', 'thickness', 'category', 'role'], additionalProperties: false } }, predefined_type: str() } } },
@@ -67,8 +70,8 @@
         parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str(), type: typeRef(), status: str() } } },
       { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. Answers the ref of the door or window, or of the opening.',
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
-      { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
-        parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str() }, required: ['at', 'index', 'name', 'long_name'], additionalProperties: false } }, height: num() } } },
+      { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. Give each listed room a number, unique in the building (such as the storey\'s number and two digits: 101, 102 … on Plan 1): the number becomes the space\'s Name, the name its LongName and long_name its description; with number null the name is the Name and long_name the LongName. room_type is the room\'s type when the brief gives one (such as Bedroom), written as ObjectType with PredefinedType USERDEFINED; null when not given. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
+        parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str(), number: str(), room_type: str() }, required: ['at', 'index', 'name', 'long_name', 'number', 'room_type'], additionalProperties: false } }, height: num() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset) on elements or types (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Use IFC\'s own sets first (Pset_… for properties, Qto_… for quantities, such as Pset_WallCommon): the app checks them against the schema\'s templates when the change set is applied, so give the template\'s property names; a boolean is true or false, a measure a number without its unit (40, not "40 dB"; lengths in metres, areas m², volumes m³, angles degrees), an enumeration one of its values. A set of your own must never start with Pset_ or Qto_: name it country-origin-project_Name (such as SE-ACME-42_Acoustics), its properties in PascalCase without å, ä or ö, and its values without units. Never set IsExternal on walls, doors, windows or roofs, which the app sets from the topology, nor the base quantities, which it computes. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
       { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of the classification system the person names; never assume a system. The IFC class with its PredefinedType is the classification itself (choose it with search_ifc_class); this adds a system on top. system is that system\'s name, name the class name, code its code and uri its address (for a bSDD class its uri). Written as an IfcClassificationReference under the system\'s IfcClassification, shared only when the system, the code and the uri match. edition, source and dictionary_uri describe the system (its edition, its publisher and the dictionary\'s address) and are written on its IfcClassification; the same system with another edition or dictionary_uri is another IfcClassification. search_bsdd finds a class in a free bSDD dictionary: take its dictionary as system with its edition, source and dictionary_uri. Never invent a code or an edition; null when not known.',
@@ -79,8 +82,8 @@
         parameters: { type: 'object', properties: { ids: ids(), dx: num(), dy: num(), dz: num() } } },
       { name: 'delete_elements', description: 'Delete elements (ids or refs) with what depends on them. Only when the person asked for it in this conversation; confirm must be true to say so, and the person confirms again before approval.',
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
-      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. One call per model is enough: a second call replaces the first.',
-        parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str() } } },
+      { name: 'set_site', description: 'Set the model\'s place on earth: the site\'s latitude and longitude in WGS 84 degrees (south and west negative), its elevation in metres above sea level, and, when the model is drawn in a projected coordinate system, the map conversion: crs is the EPSG code (such as EPSG:3006 for SWEREF 99 TM), eastings and northings the coordinates of the model\'s origin in metres, and rotation the angle in degrees from grid east (the map\'s x axis, along the eastings) to the model\'s X axis, counter-clockwise positive, as IfcMapConversion measures it (0 when null: the model\'s X axis points east and its Y axis north). crs, eastings and northings go together; site_name renames the site. For a building in Sweden prefer the local SWEREF 99 zone with RH 2000 heights as one compound code, EPSG:5846 to EPSG:5857 for the zones 12 00 to 23 15 in the order of EPSG:3007 to EPSG:3018 (such as EPSG:5850 for SWEREF 99 18 00 + RH 2000), when the eastings and northings are in that zone; coordinates in SWEREF 99 TM take EPSG:5845 (TM + RH 2000). Never convert coordinates between zones yourself: use the code of the coordinates you were given. vertical_datum is the height system of the elevation when the code does not give one (null: RH 2000 for EPSG:3006 to EPSG:3018). One call per model is enough: a second call replaces the first.',
+        parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, elevation: num(), crs: str(), eastings: num(), northings: num(), rotation: num(), site_name: str(), vertical_datum: str() } } },
       { name: 'manage_changeset', description: 'The open change set: action list shows its steps, remove_last drops the last step, clear empties it.',
         parameters: { type: 'object', properties: { action: { type: 'string' } } } },
     ];
@@ -204,12 +207,51 @@
       if (odd.length) tips.push(`give its properties PascalCase names without spaces, å, ä or ö, such as SoundReduction, rather than ${odd.join(', ')}`);
       return tips.length ? `advice: ${tips.join('; ')}. Use IFC's own sets (Pset_…) first when one has the property.` : null;
     }
+    /**
+     * A storey's optional description and long_name on its operation, each only when given, so that older change sets keep their
+     * form (recommendation 2 of the Praxi study). @param {any} s the call's storey @param {{name: string, elevation: number}} op
+     */
+    function storeyTexts(s, op) {
+      for (const key of ['description', 'long_name']) { const v = text(s, key); if (v && v.trim()) op[key] = v.trim(); }
+      return op;
+    }
+    /**
+     * A listed room's optional number and room_type on its operation, each only when given: with a number the wheel names the space
+     * by it, with the name as its long name (recommendation 2 of the Praxi study). @param {any} r the call's room @param {any} room
+     */
+    function roomExtras(r, room) {
+      const number = given(r.number) ? String(r.number).trim().slice(0, 60) : '';
+      if (number) room.number = number;
+      const type = text(r, 'room_type');
+      if (type && type.trim()) room.room_type = type.trim();
+      return room;
+    }
+    /** The compound EPSG codes of SWEREF 99 with RH 2000 heights: 5845 (TM) to 5857 (the local zones in the order of 3007 to 3018). */
+    const RH2000_CODES = [5845, 5857];
+    /**
+     * set_site's optional vertical_datum on its operation, only when given (recommendation 3 of the Praxi study): the height system of
+     * the elevation for a code without heights. A compound code names its own, so RH 2000 with one is dropped and another refused.
+     * @param {any} a the call @param {string|null} crs @param {any} op
+     */
+    function verticalDatum(a, crs, op) {
+      const v = text(a, 'vertical_datum');
+      const datum = v ? v.trim() : '';
+      if (!datum) return op;
+      if (!crs) throw new Error('vertical_datum goes with a crs, such as EPSG:3006 with RH 2000');
+      const code = Number(String(crs).slice(5));
+      if (code >= RH2000_CODES[0] && code <= RH2000_CODES[1]) {
+        if (datum.replace(/\s+/g, '').toUpperCase() === 'RH2000') return op;
+        throw new Error(`${crs.toUpperCase()} gives its heights in RH 2000 already; leave vertical_datum null, or give the plan code EPSG:${code - 2839} with vertical_datum ${datum}`);
+      }
+      op.vertical_datum = datum.slice(0, 60);
+      return op;
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
       switch (name) {
         case 'create_storeys_and_grid': {
-          const storeys = Array.isArray(a.storeys) ? a.storeys.map((s) => { if (!s || !given(s.name)) throw new Error('every storey needs a name'); return { name: String(s.name).slice(0, 200), elevation: finite(s.elevation) ? s.elevation : 0 }; }) : [];
+          const storeys = Array.isArray(a.storeys) ? a.storeys.map((s) => { if (!s || !given(s.name)) throw new Error('every storey needs a name'); return storeyTexts(s, { name: String(s.name).slice(0, 200), elevation: finite(s.elevation) ? s.elevation : 0 }); }) : [];
           let grid = null;
           if (a.grid && typeof a.grid === 'object') {
             grid = { x_spacing: number(a.grid, 'x_spacing', { required: true, positive: true }), x_count: number(a.grid, 'x_count', { fallback: 1, positive: true }), y_spacing: number(a.grid, 'y_spacing', { required: true, positive: true }), y_count: number(a.grid, 'y_count', { fallback: 1, positive: true }) };
@@ -301,8 +343,10 @@
               if (given(r.index) && (!Number.isInteger(r.index) || r.index < 1)) throw new Error(`${which}: index must be a whole number from 1`);
               if (given(r.index) && indexes.has(r.index)) throw new Error(`${which}: index ${r.index} is listed twice`);
               if (given(r.index)) indexes.add(r.index);
-              return { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') };
+              return roomExtras(r, { at: given(r.at) ? point(r.at, `${which}: at`) : null, index: given(r.index) ? r.index : null, name: String(r.name).slice(0, 200), long_name: text(r, 'long_name') });
             });
+            const twice = rooms.find((r, i) => r.number && rooms.findIndex((o) => o.number === r.number) !== i);
+            if (twice) throw new Error(`room number ${twice.number} is listed twice; a room number is unique in the building`);
           }
           // Without a list the wheel names the rooms itself: the person's word for a room with {n} for its index.
           return { tool: name, storey, rooms, height: number(a, 'height', { positive: true }), default_name: rooms ? null : t('ai.change.spaces.name') };
@@ -359,7 +403,7 @@
             if (!/^EPSG:\d+$/i.test(crs)) throw new Error('crs must be an EPSG code such as EPSG:3006');
             if (eastings === null || northings === null) throw new Error('eastings and northings (metres) are required with crs');
           } else if (eastings !== null || northings !== null) throw new Error('eastings and northings need a crs such as EPSG:3006');
-          return { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') };
+          return verticalDatum(a, crs, { tool: name, latitude, longitude, elevation: number(a, 'elevation'), crs: crs ? crs.toUpperCase() : null, eastings, northings, rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), site_name: text(a, 'site_name') });
         }
         default: throw new Error(`unknown tool ${name}`);
       }
@@ -413,7 +457,7 @@
     /** One line about an operation, for the panel's list and the log. @param {any} op */
     function describe(op) {
       switch (op.tool) {
-        case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
+        case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name}${s.description ? ` – ${s.description}` : ''} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
         case 'define_type': return t('ai.change.define_type', { ref: op.ref || '', kind: t('ai.change.type.' + op.kind), name: op.name, predefined: op.predefined_type ? ' ' + op.predefined_type : '',
           layers: (op.layers || []).map((l) => `${l.material} ${fmt(l.thickness)} m`).join(', '), thickness: fmt(layersThickness(op.layers || [])) });
         case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: thick(op), height: fmt(op.height) }) + typedText(op) + (op.partition ? t('ai.change.wall.partition') : '') + commonText(op);
@@ -425,7 +469,8 @@
         }
         case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
         case 'create_spaces': {
-          const rooms = op.rooms ? op.rooms.map((r) => (r.at ? t('ai.change.spaces.at', { name: r.name, x: fmt(r.at[0]), y: fmt(r.at[1]) }) : t('ai.change.spaces.index', { name: r.name, index: fmt(r.index) }))).join(', ')
+          const roomName = (r) => (r.number ? `${r.number} ${r.name}` : r.name);
+          const rooms = op.rooms ? op.rooms.map((r) => (r.at ? t('ai.change.spaces.at', { name: roomName(r), x: fmt(r.at[0]), y: fmt(r.at[1]) }) : t('ai.change.spaces.index', { name: roomName(r), index: fmt(r.index) }))).join(', ')
             : t('ai.change.spaces.all', { names: [1, 2].map((n) => t('ai.change.spaces.name', { n })).join(', ') });
           const refs = op.refs || [];
           return t('ai.change.create_spaces', { ref: refs.length > 1 ? `${refs[0]}–${refs[refs.length - 1]}` : refs[0] || '', storey: op.storey || t('ai.change.spaces.every'), rooms, height: op.height ? t('ai.change.spaces.height', { height: fmt(op.height) }) : '' });
@@ -437,7 +482,7 @@
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });
         case 'set_site': {
           const deg = (v) => String(Math.round(v * 1e6) / 1e6);
-          const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
+          const crs = op.crs ? t('ai.change.set_site.crs', { crs: op.vertical_datum ? `${op.crs} + ${op.vertical_datum}` : op.crs, eastings: fmt(op.eastings), northings: fmt(op.northings) }) + (op.rotation ? t('ai.change.set_site.rotation', { rotation: fmt(op.rotation) }) : '') : '';
           return t('ai.change.set_site', { name: op.site_name ? ' ' + op.site_name : '', lat: deg(op.latitude), lon: deg(op.longitude), elevation: op.elevation === null ? '' : t('ai.change.set_site.elevation', { elevation: fmt(op.elevation) }), crs });
         }
         default: return String(op.tool);

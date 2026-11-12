@@ -598,6 +598,8 @@
               h('p', { class: 'dm-small', text: t('ai.change.report', { created: i18n.formatNumber((report.created || []).length), changed: i18n.formatNumber((report.changed || []).length), deleted: i18n.formatNumber((report.deleted || []).length) }) }),
               h('p', { class: errors ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-findings': String(errors), text: errors ? t('ai.change.findings', { n: i18n.formatNumber(errors) }) : t('ai.change.findings.none') }),
               Array.isArray(report.findings) && report.findings.length ? h('ul', { class: 'dm-list dm-xs' }, report.findings.slice(0, 10).map(finding)) : null,
+              // The wheel's notes: what it could not do in the file's schema, and what the model still lacks (no CRS, GRF003).
+              Array.isArray(report.notes) && report.notes.length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-notes': String(report.notes.length) }, report.notes.slice(0, 10).map((n) => h('li', { class: 'dm-help dm-xs', text: String(n) }))) : null,
               s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,
                 text: t('ai.change.precheck.' + s.preview.server.status, { n: i18n.formatNumber((s.preview.server.counts || {}).findings || 0), errors: i18n.formatNumber((s.preview.server.counts || {}).errors || 0), error: s.preview.server.error || '' }) }) : null,
               s.cde && proposal ? h('p', { class: 'dm-help dm-xs', 'data-ai-proposal': String(proposal.changes.length), text: proposalText(proposal) }) : null,

@@ -41,6 +41,32 @@
       };
     }
 
+    /** The optional fields of the section Beteckningar in the form (identity), in their order there. */
+    const IDENTITY_FIELDS = ['property', 'building_number', 'building_name', 'building_id', 'storey_description', 'author', 'organization'];
+
+    /**
+     * The Swedish names and numbers of a new model for the wheel (recommendations 2, 11 and 15 of the Praxi and native IFC studies,
+     * B3 of Boverket's report 2024:26), each key only when its field is filled in: a property designation names the site (IfcSite.Name,
+     * with a site name entered as its LongName) and is its Pset_LandRegistration.LandID; a building number names the building
+     * (IfcBuilding.Name) and the building's name is its LongName (else the building entered, when there is a number); the national
+     * building id goes to Pset_BuildingCommon.BuildingID; the first storey's description to its Description; author and organisation,
+     * personal data, to the file's header only when entered.
+     * @param {{[key: string]: any}} input the form's values
+     * @returns {{site?: string, site_long_name?: string, land_id?: string, building?: string, building_long_name?: string, building_id?: string, storey_description?: string, author?: string, organization?: string}}
+     */
+    function identity(input = {}) {
+      const v = (key) => clean(input[key], '');
+      /** @type {any} */
+      const out = {};
+      const property = v('property'); const number = v('building_number');
+      if (property) { out.site = property; out.land_id = property; if (v('site')) out.site_long_name = v('site'); }
+      if (number) out.building = number;
+      const longName = v('building_name') || (number ? v('building') : '');
+      if (longName) out.building_long_name = longName;
+      for (const key of ['building_id', 'storey_description', 'author', 'organization']) if (v(key)) out[key] = v(key);
+      return out;
+    }
+
     /** A file name from the dataset name: letters, digits, dashes and underscores, ending in .ifc. */
     function fileNameOf(name) {
       const base = String(name || 'model').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -49,13 +75,13 @@
 
     /**
      * Write a new model with the wheel and keep it as a model dataset.
-     * @param {Parameters<typeof settings>[0]} input
+     * @param {Parameters<typeof settings>[0] & {[key: string]: any}} input the settings, and the optional fields of identity()
      * @param {{onProgress?: (share: number) => void}} [options]
      * @returns {Promise<{dataset: any, info: any}>}
      */
     async function create(input, options = {}) {
       const s = settings(input);
-      const job = await bridge().runIfcNewModel(s.schema, { project: s.project, site: s.site, building: s.building, storey: s.storey, elevation: s.elevation });
+      const job = await bridge().runIfcNewModel(s.schema, Object.assign({ project: s.project, site: s.site, building: s.building, storey: s.storey, elevation: s.elevation }, identity(input)), { fileName: fileNameOf(s.name) });
       const info = job.info || {};
       if (Number(info.errors) > 0) throw new Error(D.t('newmodel.err.invalid', { n: Number(info.errors) }));
       const fileName = fileNameOf(s.name);
@@ -67,6 +93,6 @@
       return { dataset: await datasets.get(meta.id), info };
     }
 
-    return { SCHEMAS, DEFAULT_SCHEMA, settings, fileNameOf, create };
+    return { SCHEMAS, DEFAULT_SCHEMA, IDENTITY_FIELDS, settings, identity, fileNameOf, create };
   });
 })();

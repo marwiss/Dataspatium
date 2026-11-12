@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 251541,
+  "size": 268484,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -615,7 +615,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 46028,
+  "size": 49246,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -669,7 +669,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16325,
+  "size": 16926,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -783,7 +783,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 45932,
+  "size": 49136,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -837,7 +837,7 @@ Dataspatium.assets.addEntries({
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 16311,
+  "size": 16888,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -951,7 +951,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 45454,
+  "size": 48617,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1005,7 +1005,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 16149,
+  "size": 16712,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1119,7 +1119,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 46298,
+  "size": 49501,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1173,7 +1173,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 16483,
+  "size": 17061,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1287,7 +1287,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 49107,
+  "size": 52706,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1341,7 +1341,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 17287,
+  "size": 17898,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1455,7 +1455,7 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 49066,
+  "size": 52479,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1509,7 +1509,7 @@ Dataspatium.assets.addEntries({
  "docs/is/sakerhet.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 17300,
+  "size": 17927,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1623,7 +1623,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 46605,
+  "size": 49942,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
@@ -1677,7 +1677,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 16280,
+  "size": 16876,
   "library": "dataspatium"
  }
 });

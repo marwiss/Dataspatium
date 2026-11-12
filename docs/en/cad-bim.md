@@ -329,6 +329,42 @@ first time, Python and IfcOpenShell are fetched after consent.
 The model becomes an ordinary model dataset. Open it in Process and build in it with *Change with AI*, for example "two storeys and
 a 6×4 m grid with external walls along the grid". It can be exported as IFC and published to a Dataregium like other models.
 
+### Designations, numbers and place
+
+Under *Designations and ids* in the form, fill in what you know; only that is written to the file:
+- *Property designation* becomes the site's name (IfcSite.Name) and its land id (Pset_LandRegistration.LandID); what you wrote
+  under *Site* then becomes the site's long name.
+- *Building number* becomes the building's name (IfcBuilding.Name) and *Building name* its long name (LongName).
+- *National building id* is written to Pset_BuildingCommon.BuildingID with IsPermanentID, so that the model and the registers mean
+  the same building.
+- *First storey's description* becomes the storey's Description, for example that it is the entrance level.
+- *Author* and *Organisation* are written to the IFC file's header only if you fill them in; a name is personal data.
+
+The model also gets the Axis context for the walls' axes from the start, and the report reminds you that the model has no
+coordinate reference system (buildingSMART rule GRF003) until `set_site` has given it one.
+
+The AI numbers the storeys in order of height for the whole project (Plan 1, Plan 2 …) and writes the entrance level in the
+storey's description; `create_storeys_and_grid` takes `description` and `long_name` per storey. `create_spaces` takes a `number`
+per room, unique in the building: the number becomes the room's Name, the room name its LongName and `long_name` its description,
+and a room type (`room_type`) is written as ObjectType with PredefinedType USERDEFINED. Without a number the names work as before.
+
+`set_site` knows the compound EPSG codes for SWEREF 99 with heights in RH 2000: 5845 for SWEREF 99 TM and 5846–5857 for the twelve
+local zones in the same order as 3007–3018 (for example 5850 for SWEREF 99 18 00 + RH 2000). For a building in Sweden the AI
+prefers the local zone when the coordinates are in it; it never converts coordinates itself. The coordinate reference system
+(IfcProjectedCRS) gets a description in plain words and, when the code does not give the height system, RH 2000 as VerticalDatum
+(another one with `vertical_datum`). The map unit is always the metre and the conversion's Scale the file's length unit in metres
+(GRF005), so a model in millimetres gets Scale 0.001. Every parent context (Model, Plan) gets its own IfcMapConversion with the same
+values (GRF001). The building's height above sea level is the conversion's OrthogonalHeight; in IFC4 and IFC2X3 also
+IfcBuilding.ElevationOfRefHeight, which IFC4X3 has deprecated.
+
+The file header: every IFC file the app writes or saves gets FILE_DESCRIPTION with the view definition and the level 2;1, and
+FILE_NAME with the file's name, the time in ISO 8601, the preprocessor (Dataspatium and IfcOpenShell with their versions) and the
+originating system in the form *Dataspatium - Dataspatium - version*. The view definition is CoordinationView_V2.0 for IFC2X3 and
+ReferenceView_V1.2 for IFC4. IFC4X3 has no official view for a model in the full schema (the Reference View leaves out extruded
+solids among others), so the header says `notYetAssigned` instead of a view the file does not follow; buildingSMART's validation
+service flags it, and a recipient who requires a view names it. A file the app changes keeps its own author, organisation and
+originating system, and its view when the validation service accepts it.
+
 ## A new building from a brief
 
 Write a brief in the form *New building model* ("a two-storey house 12 × 8 m with a gable roof, brick façade, entrance to the south …")
