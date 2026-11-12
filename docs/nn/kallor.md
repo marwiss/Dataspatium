@@ -198,7 +198,7 @@ prosjektansvarleg (sjå *Endre med AI* i CAD og BIM).
 Saker blir henta i sider på 500. Ei liste som tenaren har korta av (Dataregium kortar av ved 1 000 postar), blir lesen til
 endes gjennom Link-headeren til tenaren med rel="next", men berre på same tenar, slik at tokenet ditt aldri går andre stader.
 
-Kortet *IFC-LPG* blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
+Kortet *IFC–DB* (tidlegare IFC-LPG) blir vist når tenaren har ein graf, sjå [grafer.md](grafer.md#ifcdb-på-ein-dataregium-tenar).
 
 Under *Filer i prosjektet* listar kjelda modellane og dokumenta tenaren har for prosjektet. *Hent* lagar eit datasett av
 det eige slaget til fila, så ei IFC-fil blir ein modell og ei CSV-fil ein tabell, og datasettet hugsar kva tenar, kva prosjekt
@@ -232,7 +232,7 @@ parast med loggen i appen; avviser ein tenar hovudet, blir det slått av for den
 Tenarsida er skildra i dokumentasjonen til Dataregium: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/client-guide.md) (korleis ein klient koplar seg til) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/deploy/local.md) (utviklingsstakken og korleis appen blir testa mot han).
 
 Dataregium skildrar tillegga sine i `GET /.well-known/dataregium`; appen les dokumentet når kjelda blir opna og skriv under
-overskrifta kva tenar det er og kva tillegg han har (sjølvregistrering, førespurnadslogg, administrasjon, IFC-LPG,
+overskrifta kva tenar det er og kva tillegg han har (sjølvregistrering, førespurnadslogg, administrasjon, IFC–DB,
 grafspørjingar). Ein tenar utan dokumentet har ingen tillegg, og alt etter spesifikasjonane fungerer likevel. Feilkodane til tenaren
 (`code` i svaret, til dømes `reauthentication_required`) blir viste på ditt språk; ukjende kodar viser den eigne teksten til tenaren. Lenkja
 *Opne i Dataspatium* på sidene til tenaren har forma `index.html#/inhamta/opencde?server=https://…` og opnar dialogen for ei ny kjelde

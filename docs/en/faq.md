@@ -268,7 +268,7 @@ computer unless you save it as JSON or a dataset yourself. See [kallor.md](kallo
 
 ## Can I see a model's IFC graph and query it with Cypher?
 
-Yes, if the model is on a Dataregium server. Open the source in Import, the card *IFC-LPG* or a Neo4j source, and choose a model and a view.
+Yes, if the model is on a Dataregium server. Open the source in Import, the card *IFC–DB* (formerly IFC-LPG) or a Neo4j source, and choose a model and a view.
 Nodes and relationships are drawn, you fetch neighbours with a double click and write your own Cypher in the box. See [grafer.md](grafer.md).
 
 ## Does the app work with a server that has only BCF API 2.1?

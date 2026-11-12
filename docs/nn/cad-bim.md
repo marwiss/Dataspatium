@@ -83,7 +83,7 @@ status, type, ansvarleg, prioritet og månad bak felles filter, og knappen *Vis 
 eller etasje frå ein slik tabell, og SQL-startkoden får spørjingar for koplinga. *Lagre som diagram* lagrar visinga med fargane
 som eit modelldiagram, som dashbord, dokument og Publiser viser med teiknforklaring.
 
-Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IFC-LPG* tek deg dit, sjå [grafer.md](grafer.md#ifc-lpg-på-ein-dataregium-tenar).
+Grafen til modellen på tenaren blir teikna og spurd frå *Hent*, og knappen *IFC–DB* (tidlegare IFC-LPG) tek deg dit, sjå [grafer.md](grafer.md#ifcdb-på-ein-dataregium-tenar).
 
 Modellen til grafen, relasjonane og spørjingane frå Dataspatium si side finst i [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nn/ifc-lpg.md) hos Dataregium.
 
@@ -666,7 +666,7 @@ sitt). Forma gjev endringar av eksisterande instansar, éin per attributt: eigen
 liknande, med basisversjonen til dokumentet, namnet ditt på tenaren og AI-modellen som proveniens. Nye element, slettingar og nye
 relasjonar kan enno ikkje gjevast i forma; panelet tel dei, og dei står i skildringa av saka. Knappen finst for ein modell henta frå
 Dataregium når tenaren gjev kapabiliteten `ifc_changes`, og modellen vert ikkje endra av framlegget. Prøver tenaren framlegg
-(Dataregium med IFC-LPG-modulen på), viser panelet utfallet av prøvinga under saka: kor mange endringar som kunne brukast på
+(Dataregium med IFC–DB-modulen på), viser panelet utfallet av prøvinga under saka: kor mange endringar som kunne brukast på
 basisversjonen, nye funn mot basen, og kvar endring som ikkje kunne brukast, med årsaka (eit funn av slaget proposal), til dømes at ein
 verdi ikkje lenger er den framlegget gjekk ut frå. Er prøvinga rein, kan ein *manager* i prosjektet trykkje *Godkjenn på tenaren*:
 tenaren gjer framlegget til neste versjon av dokumentet (med basisversjon, framleggsstillar og godkjennar i metadataa til versjonen) og

@@ -120,16 +120,16 @@ graf** dem som en grafdatamängd; annars *Spara som datamängd*. **Spara frågan
 köras igen med ett klick. Bolt över WebSocket omfattas inte av CORS; en egen server utan TLS (`bolt://`) nås bara från
 en sida över http://. Innehåller svaret noder ritas de också som en graf.
 
-## IFC-LPG på en Dataregium-server
+## IFC–DB på en Dataregium-server
 
-Dataregium gör varje uppladdad IFC-fil till en graf: en nod per entitet, med klassen och alla dess överklasser som etiketter och
+Dataregium gör varje uppladdad IFC-fil till en graf med biblioteket IFC–DB (tidigare IFC-LPG): en nod per entitet, med klassen och alla dess överklasser som etiketter och
 IFC-attributen som egenskaper, och relationer som heter som attributen (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Grafen finns på servern och kan vara mycket större än vad som är rimligt att hämta hem. Därför ritas och frågas den direkt från
 *Inhämta*, och inget sparas förrän du ber om det.
 
 Det finns två vägar till grafen, och båda ger samma vy:
 
-- **Kortet IFC-LPG i OpenCDE-källan.** Frågorna går genom serverns läsande graffråga, som kräver att du loggar in som
+- **Kortet IFC–DB i OpenCDE-källan.** Frågorna går genom serverns läsande graffråga, som kräver att du loggar in som
   administratör och att servern har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det är vägen i drift: ingen databasport behöver vara
   öppen, servern sätter tak för rader och tid, tar bort lagrade hashvärden och loggar varje fråga.
 - **En Neo4j-källa.** Bolt med databasens adress, användarnamn och lösenord, till exempel `bolt://127.0.0.1:7697` på en
@@ -172,10 +172,10 @@ grafdiagram i Visualisera. Klassen blir nodens etikett och alla etiketter följe
 `IfcWallStandardCase` i kopian. I fliken Cypher kan du slå på **Kör på servern** för en graf som sparats härifrån, och då svarar
 servern med all Cypher mot hela grafen i stället för delmängden mot kopian.
 
-En IFC-modell som hämtats från Dataregium har knappen **IFC-LPG** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
+En IFC-modell som hämtats från Dataregium har knappen **IFC–DB** i Hantera, och för en vald byggdel i Bearbeta. Den öppnar
 modellens graf i Inhämta, i en Neo4j-källa på samma dator om det finns någon, annars i OpenCDE-källan.
 
-Från IFC-LPG `d042134` kan servern räkna ut en låda per byggdel i projektkoordinater (meter): `bbox_min`, `bbox_max` och
+Från IFC–DB `d042134` kan servern räkna ut en låda per byggdel i projektkoordinater (meter): `bbox_min`, `bbox_max` och
 `bbox_centre` som punkter på byggdelens nod, och modellnoden anger när lådorna räknades (`spatial_at`), för hur många byggdelar
 (`spatial_products`) och hur många som inte gick (`spatial_failed`). Lådorna finns bara när servern har kört beräkningen, så fråga med
 `bbox_centre IS NOT NULL`. Exemplet *Byggdelar nära en byggdel* i Neo4j-källan listar det som ligger inom 1,2 m av en byggdels mitt
@@ -183,7 +183,7 @@ med `point.distance`, lika i Neo4j och Memgraph.
 
 Servern anger i sitt kapabilitetsdokument vilken databas som håller grafen (`graph_store`: `neo4j` eller `memgraph`, senare `grafeo`
 eller `postgresql`). I en annan databas än Neo4j och Memgraph, som Grafeo, är lådorna listor med tal och inte punkter: då lämnar kortet
-IFC-LPG ute exemplen som behöver punkter, som *Byggdelar nära en byggdel*, och en låda visas ändå som `x y z`, precis som en punkt.
+IFC–DB ute exemplen som behöver punkter, som *Byggdelar nära en byggdel*, och en låda visas ändå som `x y z`, precis som en punkt.
 
 ## Fler verktyg i fliken Graf
 

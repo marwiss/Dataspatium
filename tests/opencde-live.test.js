@@ -801,7 +801,7 @@
    * (python=1 fetches Pyodide and IfcOpenShell after consent; components cached from an earlier run do as well; not with cdebcf=2.1,
    * since proposals are BCF 3.0). The server: Dataregium 3.0.0 in its fourteenth release, whose ifc_changes takes the ops form as
    * Dataspatium 437982f writes it (define_type with door and column types, create_element, edit_element, the storey's description),
-   * with the IFC-LPG module on (`ifc_changes.tried`), and the helper's user a manager of the project. The proposals' topics go in the
+   * with the IFC–DB module on (`ifc_changes.tried`), and the helper's user a manager of the project. The proposals' topics go in the
    * cleanup; the documents and their versions stay, since the Documents API removes none.
    */
   const writeTools = D.require('ai/write-tools');
@@ -905,7 +905,7 @@
     assert.ok(shared.projectId && opencde.signedIn(shared.connector), 'signed in with a project from the tests before');
     const caps = await opencde.capabilities(shared.connector, { force: true });
     const ext = (caps.extensions || {}).ifc_changes || null;
-    assert.ok(opencde.hasExtension(caps, 'ifc_changes') && ext.tried && ext.proposal_url && ext.approve_url && ext.ifc_proposals_url, 'the server tries and approves change proposals (ifc_changes, the IFC-LPG module on): ' + JSON.stringify(ext).slice(0, 300));
+    assert.ok(opencde.hasExtension(caps, 'ifc_changes') && ext.tried && ext.proposal_url && ext.approve_url && ext.ifc_proposals_url, 'the server tries and approves change proposals (ifc_changes, the IFC–DB module on): ' + JSON.stringify(ext).slice(0, 300));
     assert.equal(await opencde.opsForm(shared.connector), opencde.OPS_FORM, 'the server takes the write tools\' operations');
     if (Array.isArray(ext.ops_tools)) for (const tool of ['create_storeys_and_grid', 'define_type', 'create_wall', 'create_slab', 'create_opening', 'create_element', 'edit_element']) assert.ok(ext.ops_tools.includes(tool), 'ops_tools names ' + tool + ': ' + ext.ops_tools.join(','));
     assert.equal(await opencde.canPropose(shared.connector, shared.projectId), true, 'the helper\'s user may propose');

@@ -84,7 +84,7 @@ med status, type, ansvarlig, prioritet og måned bag fælles filtre, og knappen 
 eller etage fra en sådan tabel, og SQL-startkoden får forespørgsler til koblingen. *Gem som diagram* gemmer visningen med farverne
 som et modeldiagram, som dashboards, dokumenter og Publicér viser med signaturforklaring.
 
-Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC-LPG* fører dig dertil, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Modellens graf på serveren tegnes og forespørges fra *Hent*, og knappen *IFC–DB* (tidligere IFC-LPG) fører dig dertil, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Grafens model, relationerne og forespørgslerne fra Dataspatiums side findes i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/ifc-lpg.md).
 
@@ -663,7 +663,7 @@ Formen angiver ændringer af eksisterende instanser, én pr. attribut: egenskabs
 med dokumentets basisversion, dit navn på serveren og AI-modellen som proveniens. Nye elementer, sletninger og nye relationer kan endnu
 ikke angives i formen; panelet tæller dem, og de står i sagens beskrivelse. Knappen findes for en model hentet fra Dataregium, når
 serveren angiver kapabiliteten `ifc_changes`, og modellen ændres ikke af forslaget. Afprøver serveren forslag (Dataregium med
-IFC-LPG-modulet slået til), viser panelet afprøvningens udfald under sagen: hvor mange ændringer der kunne anvendes på basisversionen,
+IFC–DB-modulet slået til), viser panelet afprøvningens udfald under sagen: hvor mange ændringer der kunne anvendes på basisversionen,
 nye fund mod basen, og hver ændring, der ikke kunne anvendes, med årsagen (et fund af arten proposal), for eksempel at en værdi ikke
 længere er den, forslaget gik ud fra. Er afprøvningen ren, kan en *manager* i projektet trykke *Godkend på serveren*: serveren gør
 forslaget til dokumentets næste version (med basisversion, forslagsstiller og godkender i versionens metadata) og lukker sagen.

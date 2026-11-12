@@ -198,7 +198,7 @@ finnes i prosjektet. En endring som bare rører ett teams del, godkjennes av tea
 Saker hentes i sider på 500. En liste som serveren har kuttet (Dataregium kutter ved 1 000 poster), leses til ende gjennom
 serverens Link-header med rel="next", men bare på samme server, slik at tokenet ditt aldri går andre steder.
 
-Kortet *IFC-LPG* vises når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Kortet *IFC–DB* (tidligere IFC-LPG) vises når serveren har en graf, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Under *Filer i prosjektet* lister kilden modellene og dokumentene serveren har for prosjektet. *Hent* lager et datasett av
 filens eget slag, så en IFC-fil blir en modell og en CSV-fil en tabell, og datasettet husker hvilken server, hvilket prosjekt
@@ -232,7 +232,7 @@ pares med appens; avviser en server headeren, slås den av for den kilden.
 Serverens side beskrives i Dataregiums dokumentasjon: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/client-guide.md) (hvordan en klient kobler seg til) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/deploy/local.md) (utviklingsstakken og hvordan appen testes mot den).
 
 Dataregium beskriver tilleggene sine i `GET /.well-known/dataregium`; appen leser dokumentet når kilden åpnes og skriver under
-overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC-LPG,
+overskriften hvilken server det er og hvilke tillegg den har (selvregistrering, forespørselslogg, administrasjon, IFC–DB,
 grafspørringer). En server uten dokumentet har ingen tillegg, og alt etter spesifikasjonene fungerer likevel. Serverens feilkoder
 (`code` i svaret, for eksempel `reauthentication_required`) vises på ditt språk; ukjente koder viser serverens egen tekst. Lenken
 *Åpne i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åpner dialogen for en ny kilde

@@ -194,7 +194,7 @@ sé í verkefninu. Breytingu sem snertir aðeins hluta eins teymis samþykkir á
 Mál eru sótt í síðum með 500. Listi sem þjónninn hefur stytt (Dataregium styttir við 1.000 færslur) er lesinn til enda með
 Link-haus þjónsins með rel="next", en aðeins á sama þjóni, svo að táknið þitt fer aldrei annað.
 
-Spjaldið *IFC-LPG* birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifc-lpg-á-dataregium-þjóni).
+Spjaldið *IFC–DB* (áður IFC-LPG) birtist þegar þjónninn hefur net, sjá [grafer.md](grafer.md#ifcdb-á-dataregium-þjóni).
 
 Undir *Skrár í verkefninu* telur gagnalindin upp líkönin og skjölin sem þjónninn hefur fyrir verkefnið. *Sækja* býr til
 gagnasafn af tegund skrárinnar, svo IFC-skrá verður líkan og CSV-skrá tafla, og gagnasafnið man frá hvaða þjóni, verkefni og
@@ -227,7 +227,7 @@ hafni þjónn hausnum er slökkt á honum fyrir þá uppsprettu.
 Hlið þjónsins er lýst í skjölum Dataregium: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/client-guide.md) (hvernig biðlari tengist) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/deploy/local.md) (þróunarstaflinn og hvernig forritið er prófað gegn honum).
 
 Dataregium lýsir viðbótum sínum í `GET /.well-known/dataregium`; forritið les skjalið þegar uppsprettan er opnuð og skrifar undir
-fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC-LPG, graffyrirspurnir). Þjónn
+fyrirsögnina hver þjónninn er og hvaða viðbætur hann hefur (sjálfskráning, beiðnaskrá, stjórnun, IFC–DB, graffyrirspurnir). Þjónn
 án skjalsins hefur engar viðbætur, og allt samkvæmt forskriftunum virkar þó. Villukóðar þjónsins (`code` í svarinu, til dæmis
 `reauthentication_required`) birtast á þínu tungumáli; óþekktir kóðar sýna eigin texta þjónsins. Tengillinn *Opna í Dataspatium* á
 síðum þjónsins hefur formið `index.html#/inhamta/opencde?server=https://…` og opnar gluggann fyrir nýja uppsprettu með slóðina

@@ -120,15 +120,15 @@ niðurstöðuna sem töflu þar sem hnútar og vensl eru flött niður í eiginl
 uppsprettuna svo hana megi keyra aftur með einum smelli. Bolt yfir WebSocket fellur ekki undir CORS; eigin þjónn án TLS
 (`bolt://`) næst aðeins frá síðu yfir http://. Innihaldi svarið hnúta eru þeir líka teiknaðir sem net.
 
-## IFC-LPG á Dataregium-þjóni
+## IFC–DB á Dataregium-þjóni
 
-Dataregium gerir hverja upphlaðna IFC-skrá að neti: einn hnút fyrir hverja einingu, með flokkinn og alla yfirflokka hans sem merkimiða og
+Dataregium gerir hverja upphlaðna IFC-skrá að neti með forritasafninu IFC–DB (áður IFC-LPG): einn hnút fyrir hverja einingu, með flokkinn og alla yfirflokka hans sem merkimiða og
 IFC-eigindin sem eiginleika, og vensl sem heita eftir eigindunum (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`). Netið er á þjóninum og
 getur verið miklu stærra en sanngjarnt er að sækja. Þess vegna er það teiknað og spurt beint úr *Sækja*, og ekkert er vistað fyrr en þú biður um það.
 
 Tvær leiðir liggja að netinu og báðar gefa sömu sýn:
 
-- **Spjaldið IFC-LPG í OpenCDE-uppsprettunni.** Fyrirspurnirnar fara í gegnum lesandi netfyrirspurn þjónsins, sem krefst þess að þú skráir þig
+- **Spjaldið IFC–DB í OpenCDE-uppsprettunni.** Fyrirspurnirnar fara í gegnum lesandi netfyrirspurn þjónsins, sem krefst þess að þú skráir þig
   inn sem stjórnandi og að þjónninn hafi `OPENCDE_GRAPH_QUERY_ENABLED=true`. Þetta er leiðin í rekstri: engin gagnagrunnsgátt þarf að vera opin,
   þjónninn setur mörk á raðir og tíma, fjarlægir vistuð tætigildi og skráir hverja fyrirspurn.
 - **Neo4j-uppspretta.** Bolt með vistfangi, notandanafni og lykilorði gagnagrunnsins, til dæmis `bolt://127.0.0.1:7697` á þróunarumhverfi. Bolt veitir
@@ -169,10 +169,10 @@ milli þeirra, eins og Neo4j Browser gerir. Forritið segir frá þegar svar hef
 verður merkimiði hnútsins og allir merkimiðar fylgja með, svo `MATCH (w:IfcWall)` finnur líka `IfcWallStandardCase` í afritinu. Í flipanum Cypher geturðu
 kveikt á **Keyra á þjóninum** fyrir net sem var vistað héðan, og þá svarar þjónninn með öllu Cypher gegn öllu netinu í stað hlutmengisins gegn afritinu.
 
-IFC-líkan sótt úr Dataregium hefur hnappinn **IFC-LPG** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
+IFC-líkan sótt úr Dataregium hefur hnappinn **IFC–DB** í Umsjón, og fyrir valinn byggingarhluta í Vinna. Hann opnar net líkansins í Sækja, í Neo4j-uppsprettu
 á sömu tölvu ef hún er til, annars í OpenCDE-uppsprettunni.
 
-Frá IFC-LPG `d042134` getur þjónninn reiknað kassa fyrir hvern byggingarhluta í verkefnishnitum (metrar): `bbox_min`, `bbox_max` og
+Frá IFC–DB `d042134` getur þjónninn reiknað kassa fyrir hvern byggingarhluta í verkefnishnitum (metrar): `bbox_min`, `bbox_max` og
 `bbox_centre` sem punkta á hnút byggingarhlutans, og líkanshnúturinn segir hvenær kassarnir voru reiknaðir (`spatial_at`), fyrir hve
 marga byggingarhluta (`spatial_products`) og hve margir mistókust (`spatial_failed`). Kassarnir eru aðeins til þar sem þjónninn hefur
 keyrt útreikninginn, svo spurðu með `bbox_centre IS NOT NULL`. Dæmið *Byggingarhlutar nálægt byggingarhluta* í Neo4j-uppsprettunni
@@ -180,7 +180,7 @@ telur upp það sem liggur innan 1,2 m frá miðju byggingarhluta með `point.di
 
 Þjónninn segir í getuskjali sínu hvaða gagnagrunnur geymir netið (`graph_store`: `neo4j` eða `memgraph`, síðar `grafeo` eða
 `postgresql`). Í öðrum gagnagrunni en Neo4j og Memgraph, eins og Grafeo, eru kassarnir listar af tölum en ekki punktar: þá sleppir
-spjaldið IFC-LPG dæmunum sem þurfa punkta, eins og *Byggingarhlutar nálægt byggingarhluta*, og kassi birtist samt sem `x y z`,
+spjaldið IFC–DB dæmunum sem þurfa punkta, eins og *Byggingarhlutar nálægt byggingarhluta*, og kassi birtist samt sem `x y z`,
 alveg eins og punktur.
 
 ## Fleiri tól í flipanum Net

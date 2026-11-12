@@ -86,7 +86,7 @@ panel. The tool *Issues* in the Quantities tab of Analyse counts issues, open is
 assignee, element type or storey from such a table, and the SQL starters get queries for the join. *Save as chart* saves the view
 with its colours as a model chart, which dashboards, documents and Publish show with a legend.
 
-The model's graph on the server is drawn and queried from *Import*, and the button *IFC-LPG* takes you there, see [grafer.md](grafer.md#ifc-lpg-on-a-dataregium-server).
+The model's graph on the server is drawn and queried from *Import*, and the button *IFC–DB* (formerly IFC-LPG) takes you there, see [grafer.md](grafer.md#ifcdb-on-a-dataregium-server).
 
 The graph's model, relations and the queries from Dataspatium's side are in Dataregium's [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/ifc-lpg.md).
 
@@ -675,7 +675,7 @@ schema). The form names changes of existing instances, one per attribute: proper
 to and the like, with the document's base version, your name on the server and the AI model as provenance. New elements, deletions and
 new relationships cannot be said in the form yet; the panel counts them and they go into the topic's description. The button appears
 for a model fetched from Dataregium when the server announces the capability `ifc_changes`, and the proposal does not change the model. When the server tries proposals
-(Dataregium with the IFC-LPG module on) the panel shows the trial's outcome under the topic: how many changes could be applied to
+(Dataregium with the IFC–DB module on) the panel shows the trial's outcome under the topic: how many changes could be applied to
 the base version, new findings against the base, and every change that could not be applied with its reason (a finding of the kind
 proposal), for instance that a value is no longer the one the proposal started from. When the trial is clean a *manager* of the project can
 press *Approve on the server*: the server makes the proposal the document's next version (with the base version, the proposer and

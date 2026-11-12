@@ -90,7 +90,7 @@
     const isPath = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isPath ? neo4j.isPath(v) : ((Array.isArray(v.segments) && v.start) || (Array.isArray(v.nodes) && Array.isArray(v.relationships)))));
     const idOf = (ent) => String(ent.elementId !== undefined ? ent.elementId : (ent.identity && typeof ent.identity.toNumber === 'function' ? ent.identity.toNumber() : ent.identity));
     /**
-     * A box of IFC-LPG's spatial layer (`bbox_min`, `bbox_max`, `bbox_centre`) that a store without spatial points (Grafeo) keeps as a
+     * A box of IFC–DB's spatial layer (`bbox_min`, `bbox_max`, `bbox_centre`) that a store without spatial points (Grafeo) keeps as a
      * list of two or three numbers, as a point reads: `x y` or `x y z`. Null for every other list, which stays a list.
      * @param {string|undefined} name the property's name @param {any[]} list plain values @returns {string|null}
      */
@@ -103,7 +103,7 @@
       if (Array.isArray(v)) { const list = v.map((x) => plain(x, neo4j)); const box = boxPoint(key, list); return box === null ? list : box; }
       if (typeof v === 'object') {
         if (isNode(v, neo4j) || isRel(v, neo4j)) return v;
-        // A spatial point (IFC-LPG's point lists in the nodes form) reads as its coordinates, `x y` or `x y z`.
+        // A spatial point (IFC–DB's point lists in the nodes form) reads as its coordinates, `x y` or `x y z`.
         if (typeof v.x === 'number' && typeof v.y === 'number' && v.srid !== undefined) return [v.x, v.y, v.z].filter((n) => typeof n === 'number').join(' ');
         if (typeof v.toString === 'function' && v.constructor && /Date|Time|Duration|Point/.test(v.constructor.name)) return v.toString();
         const out = {}; for (const [k, x] of Object.entries(v)) out[k] = plain(x, neo4j, k); return out;
@@ -184,7 +184,7 @@
       { id: 'issue_elements', cypher: "MATCH (m:Model)\nOPTIONAL MATCH (c:Conversion {model_id: m.id})\nWITH m, c WHERE coalesce(c.state, m.state) = 'done'\nWITH coalesce(c.document_id, m.document_id, c.bcf_document_guid, m.bcf_document_guid) AS dokument, m, c\nORDER BY coalesce(c.version_index, m.version_index) DESC, coalesce(c.done_at, m.done_at) DESC\nWITH dokument, collect({m: m, c: c})[0] AS s\nWITH s.m AS senaste, s.c AS k\nMATCH (t:Topic)-[:HAS_VIEWPOINT]->(:Viewpoint)-[:HAS_COMPONENT]->(komp:Component)\nMATCH (e:IfcProduct {model_id: senaste.id, GlobalId: komp.ifc_guid})\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status, e.ifc_class AS klass, e.Name AS byggdel, e.GlobalId AS guid, coalesce(k.file_name, senaste.file_name) AS modell" },
       { id: 'element_issues', cypher: "MATCH (c:Component {ifc_guid: 'GUID'})<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
       { id: 'graph', cypher: 'MATCH (t:Topic)-[r:HAS_VIEWPOINT]->(v:Viewpoint)\nOPTIONAL MATCH (v)-[h:HAS_COMPONENT]->(c:Component)\nRETURN t, r, v, h, c\nLIMIT 200' },
-      // IFC-LPG's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
+      // IFC–DB's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
       // `spatial`: it needs the boxes as spatial points (point.distance), which only Neo4j and Memgraph have.
       { id: 'nearby', spatial: true, cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
     ];

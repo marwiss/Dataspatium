@@ -83,7 +83,7 @@ till panelen. Verktyget *Ärenden* i Analyseras flik Mängder räknar ärenden, 
 prioritet, ansvarig, byggdelstyp eller våning ur en sådan tabell, och SQL-startkoden får frågor för kopplingen. *Spara som
 diagram* sparar vyn med färgerna som ett modelldiagram, som dashboards, dokument och Publicera visar med teckenförklaring.
 
-Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC-LPG* tar dig dit, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Modellens graf på servern ritas och frågas från *Inhämta*, och knappen *IFC–DB* (tidigare IFC-LPG) tar dig dit, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Grafens modell, relationerna och frågorna från Dataspatiums sida finns i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/ifc-lpg.md).
 
@@ -653,7 +653,7 @@ schema). Formen anger ändringar av befintliga instanser, en per attribut: egens
 liknande, med dokumentets basversion, ditt namn på servern och AI-modellen som proveniens. Nya element, raderingar och nya samband
 kan inte anges i formen än; panelen räknar dem och de står i ärendets beskrivning. Knappen finns för en modell hämtad från Dataregium
 när servern anger kapabiliteten `ifc_changes`, och modellen ändras inte av förslaget. Prövar servern förslag (Dataregium med
-IFC-LPG-modulen på) visar panelen prövningens utfall under ärendet: hur många ändringar som gick att tillämpa på basversionen, nya
+IFC–DB-modulen på) visar panelen prövningens utfall under ärendet: hur många ändringar som gick att tillämpa på basversionen, nya
 fynd mot basen, och varje ändring som inte gick att tillämpa med orsaken (ett fynd av slaget proposal), till exempel att ett värde
 inte längre är det förslaget utgick från. Är prövningen ren kan en *manager* i projektet trycka *Godkänn på servern*: servern gör
 förslaget till dokumentets nästa version (med basversion, förslagsställare och godkännare i versionens metadata) och stänger ärendet.
