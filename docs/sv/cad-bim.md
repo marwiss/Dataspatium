@@ -499,6 +499,30 @@ mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de �
 och fönster som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities och Qto_WindowBaseQuantities) räknade ur måtten, med öppningarna avdragna och med namnen ur schemats mallar.
 
+Verktyget `create_element` gör de byggdelar som inte har ett eget verktyg, av den mest specifika IFC-klassen och aldrig som
+IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som reglar och takstolar (IfcMember), grundsulor och plintar
+(IfcFooting), pålar (IfcPile), beklädnader som golv, undertak, fasadbeklädnad, taktäckning och isolering (IfcCovering), räcken
+(IfcRailing), skorstenar (IfcChimney), solskydd (IfcShadingDevice), sanitetsdon (IfcSanitaryTerminal), möbler (IfcFurniture, i IFC2X3
+IfcFurnishingElement) och raka trappor (IfcStair). Klassen och dess PredefinedType kontrolleras mot modellens schema som i de andra
+verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
+våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Elementet ligger i
+våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
+inte direkt i våningen. En beklädnad kan ange vad den täcker (`host`): en byggdel (IfcRelCoversBldgElements) eller ett rum
+(IfcRelCoversSpaces). En rak trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg,
+steghöjd, stegdjup och bredd som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista
+steghöjden är vilplanets eller bjälklagets framkant.
+
+`define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
+fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3
+IfcDoorStyle och IfcWindowStyle) med material. En dörrtyp har sitt öppningssätt (OperationType, till exempel SINGLE_SWING_LEFT, med
+gångjärnen till vänster sett i den riktning dörren öppnas), en fönstertyp sin indelning (PartitioningType, till exempel SINGLE_PANEL
+eller DOUBLE_PANEL_VERTICAL), och båda bredd, höjd och karmdjup. Geometrin med karm, dörrblad eller bågar och glas ritas av
+IfcOpenShell en gång på typen och återanvänds av varje dörr och fönster av typen (mappad geometri), och typen får karmens och
+dörrbladens egenskaper (IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tar typen: dörren
+eller fönstret får typens storlek och geometri och står i liv med väggens vänstra sida, sett från väggens start mot dess slut (insidan
+av en yttervägg som ritas moturs), och en dörr öppnas åt det hållet, en vänsterhängd med gångjärnen på den sida av öppningen som är
+närmast väggens start. Med `side: right` vänds den: i liv med högra sidan och öppnad åt det hållet. En karm lika djup som väggen är
+tjock fyller hela smygen.
 Verktyget `edit_element` ändrar ett befintligt element på plats, så att det behåller sitt GlobalId hela sin livstid: en väggs start,
 slut, tjocklek, höjd och typ, ett bjälklags kontur, tjocklek och typ, en öppnings läge, bredd, höjd och underkant tillsammans med dess
 dörr eller fönster, ett taks lutning, takfot och takfotens höjd, och vilket elements namn som helst. Måtten läses ur elementets egen

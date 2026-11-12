@@ -524,6 +524,31 @@ Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkuna
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
 vähennettyinä ja skeeman mallien nimillä.
 
+Työkalu `create_element` tekee rakennusosat, joilla ei ole omaa työkalua, tarkimmasta IFC-luokasta eikä koskaan
+IfcBuildingElementProxy-luokkana: pilarit (IfcColumn), palkit (IfcBeam), sauvat kuten tolpat ja kattotuolien osat (IfcMember), anturat
+(IfcFooting), paalut (IfcPile), verhoukset kuten lattiapäällysteet, alakatot, julkisivuverhoukset, kattopäällysteet ja eristeet
+(IfcCovering), kaiteet (IfcRailing), savupiiput (IfcChimney), aurinkosuojat (IfcShadingDevice), saniteettikalusteet
+(IfcSanitaryTerminal), kalusteet (IfcFurniture, IFC2X3:ssa IfcFurnishingElement) ja suorat portaat (IfcStair). Luokka ja sen
+PredefinedType tarkistetaan mallin skeemaa vasten kuten muissakin työkaluissa. Kappale on pursotettu profiili: suorakaide, ympyrä tai
+ääriviiva kerroksen tasossa, pystyssä ylöspäin korkeudelta kerroksen yläpuolella (pilarit, anturat, verhoukset, kalusteet) tai
+vaakasuorassa johonkin suuntaan (palkit, sauvat ja kaiteet). Elementti on kerroksessa tai osa kokonaisuutta (`part_of`), esimerkiksi
+portaan kaide, ja on silloin kokonaisuudessa ja sen kerroksessa mutta ei suoraan kerroksessa. Verhous voi kertoa, mitä se verhoaa
+(`host`): rakennusosan (IfcRelCoversBldgElements) tai tilan (IfcRelCoversSpaces). Suora porras (STRAIGHT_RUN_STAIR) on kalteva
+porrassyöksy (IfcStairFlight, STRAIGHT), jonka askelmien määrä, nousu, etenemä ja leveys ovat attribuutteina ja
+Pset_StairFlightCommonissa, ja pyydettäessä ylhäällä lepotaso (IfcSlab, LANDING); viimeinen nousu on lepotason tai yläpuolisen laatan
+etureuna.
+
+`define_type` tekee myös tyypit verhouksille (kerroksineen kuten laattatyyppi), pilareille, palkeille, anturoille, kaiteille, oville ja
+ikkunoille (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType ja IfcWindowType; IFC2X3:ssa
+IfcDoorStyle ja IfcWindowStyle) materiaaleineen. Ovityypillä on avautumistapansa (OperationType, esimerkiksi SINGLE_SWING_LEFT, saranat
+vasemmalla oven avautumissuuntaan katsottuna), ikkunatyypillä jakonsa (PartitioningType, esimerkiksi SINGLE_PANEL tai
+DOUBLE_PANEL_VERTICAL), ja molemmilla leveys, korkeus ja karmin syvyys. IfcOpenShell piirtää geometrian karmeineen, ovilehtineen tai
+puitteineen ja laseineen kerran tyypille, ja jokainen tyypin ovi ja ikkuna käyttää sitä uudelleen (kuvattu geometria), ja tyyppi saa
+karmin ja ovilehtien ominaisuudet (IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` ottaa
+tyypin: ovi tai ikkuna saa tyypin koon ja geometrian ja on samassa tasossa seinän vasemman pinnan kanssa seinän alusta sen loppuun
+katsottuna (vastapäivään piirretyn ulkoseinän sisäpinta), ja ovi avautuu sille puolelle, vasenkätinen ovi saranat aukon sillä reunalla,
+joka on lähinnä seinän alkua. Arvolla `side: right` se käännetään: samaan tasoon oikean pinnan kanssa ja avautumaan sitä kohti. Seinän
+paksuinen karmi täyttää koko aukon pielen.
 Työkalu `edit_element` muuttaa olemassa olevaa elementtiä paikallaan, niin että se säilyttää GlobalId-tunnuksensa koko elinkaarensa
 ajan: seinän alun, lopun, paksuuden, korkeuden ja tyypin, laatan ääriviivan, paksuuden ja tyypin, aukon paikan, leveyden, korkeuden ja
 alareunan yhdessä sen oven tai ikkunan kanssa, katon kaltevuuden, räystään ulottuman ja räystään korkeuden sekä minkä tahansa elementin

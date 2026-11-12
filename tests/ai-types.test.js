@@ -48,7 +48,8 @@
   async function factsOf(bytes, code) {
     await bridge.writeFile('/data/step/types-facts.ifc', bytes);
     const out = await bridge.run(['import json', 'import math', 'import ifcopenshell', 'import ifcopenshell.util.element as el', 'import ifcopenshell.util.placement as pl',
-      'import ifcopenshell.util.unit', 'm = ifcopenshell.open("/data/step/types-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)'].concat(code).join('\n'));
+      'import ifcopenshell.util.unit', 'm = ifcopenshell.open("/data/step/types-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)',
+      'matrix = getattr(pl, "get_placement", None) or pl.get_local_placement'].concat(code).join('\n'));  // get_placement since IfcOpenShell 0.9.1
     const error = out.entries.find((e) => e.kind === 'error');
     if (error) throw new Error(String(error.text));
     return JSON.parse(stdoutOf(out).trim().split('\n').pop() || 'null');
@@ -81,7 +82,7 @@
     '        p = body(e).SweptArea',
     '        cx, cy = [float(c) for c in p.Position.Location.Coordinates][:2]',
     '        rec["body_y"] = [round(cy - p.YDim / 2, 6), round(cy + p.YDim / 2, 6)]',
-    '        M = pl.get_local_placement(e.ObjectPlacement)',
+    '        M = matrix(e.ObjectPlacement)',
     '        y = rec["usage"]["offset"] + rec["usage"]["layers"][0][1] / 2',
     '        rec["first_at"] = [round((M[0][0] * cx + M[0][1] * y + M[0][3]) * scale, 6), round((M[1][0] * cx + M[1][1] * y + M[1][3]) * scale, 6)]',
     '    if e.is_a("IfcSlab") and rec["usage"]:',
@@ -99,7 +100,7 @@
     'from shapely.ops import unary_union',
     'walls, feet = {}, []',
     'for w in m.by_type("IfcWall"):',
-    '    M = pl.get_local_placement(w.ObjectPlacement)',
+    '    M = matrix(w.ObjectPlacement)',
     '    def at(x, y):',
     '        return [round((M[0][0] * x + M[0][1] * y + M[0][3]) * scale, 6), round((M[1][0] * x + M[1][1] * y + M[1][3]) * scale, 6)]',
     '    reps = {r.RepresentationIdentifier: r for r in w.Representation.Representations}',
@@ -126,7 +127,7 @@
   test('ai types: define_type is a create with a ref, and checks its kind, name, layers with their category and role, and PredefinedType', async (assert) => {
     assert.ok(writeTools.has('define_type') && writeTools.CREATES.includes('define_type'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'define_type');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type', 'material', 'material_category', 'operation', 'partitioning', 'width', 'height', 'lining_depth']);
     assert.deepEqual(tool.parameters.properties.layers.items.required, ['material', 'thickness', 'category', 'role'], 'every field of a layer is required, null when not known');
     assert.deepEqual(writeTools.MATERIAL_CATEGORIES, ['concrete', 'steel', 'aluminium', 'block', 'brick', 'stone', 'wood', 'glass', 'gypsum', 'plastic', 'earth'], 'the categories IfcOpenShell recommends');
     assert.deepEqual(writeTools.LAYER_ROLES, ['load_bearing', 'insulation', 'inner_finish', 'outer_finish'], 'the roles of IfcMaterialLayer.Category');
@@ -143,7 +144,7 @@
     const refused = (args, label) => { const out = writeTools.call(cs, 'define_type', args); assert.ok(out.error, label + ': ' + JSON.stringify(out)); return String(out.error || ''); };
     const one = (patch) => Object.assign({ kind: 'wall', name: 'X', layers: [layer('Betong', 0.2, null, null)], predefined_type: null }, patch);
     const with1 = (patch) => one({ layers: [Object.assign(layer('Betong', 0.2, null, null), patch)] });
-    assert.ok(refused(one({ kind: 'door' }), 'a door type').includes('wall, slab or roof'));
+    assert.ok(refused(one({ kind: 'stair' }), 'a stair type').includes('wall, slab, roof, covering'));
     assert.ok(refused(one({ name: ' ' }), 'no name').includes('name'));
     assert.ok(refused(one({ layers: [] }), 'no layers').includes('layers'));
     assert.ok(refused(with1({ material: '' }), 'a layer without its material').includes('material'));

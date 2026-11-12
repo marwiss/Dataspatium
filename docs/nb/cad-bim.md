@@ -502,6 +502,29 @@ hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de v
 endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
 
+Verktøyet `create_element` lager bygningsdelene som ikke har et eget verktøy, av den mest spesifikke IFC-klassen og aldri som
+IfcBuildingElementProxy: søyler (IfcColumn), bjelker (IfcBeam), staver som stendere og sperrer (IfcMember), fundamenter (IfcFooting),
+peler (IfcPile), kledninger som gulvbelegg, himlinger, fasadekledning, taktekking og isolasjon (IfcCovering), rekkverk (IfcRailing),
+skorsteiner (IfcChimney), solskjerming (IfcShadingDevice), sanitærutstyr (IfcSanitaryTerminal), møbler (IfcFurniture, i IFC2X3
+IfcFurnishingElement) og rette trapper (IfcStair). Klassen og dens PredefinedType kontrolleres mot modellens skjema som i de andre
+verktøyene. Kroppen er en ekstrudert profil: et rektangel, en sirkel eller et omriss i etasjens plan, stående oppover fra en høyde over
+etasjen (søyler, fundamenter, kledninger, møbler) eller liggende i en retning (bjelker, staver og rekkverk). Elementet ligger i etasjen
+eller er en del av en helhet (`part_of`), for eksempel et rekkverk i en trapp, og ligger da i helheten og i dens etasje, men ikke
+direkte i etasjen. En kledning kan angi hva den kler (`host`): en bygningsdel (IfcRelCoversBldgElements) eller et rom
+(IfcRelCoversSpaces). En rett trapp (STRAIGHT_RUN_STAIR) består av et skrånende trappeløp (IfcStairFlight, STRAIGHT) med antall trinn,
+opptrinn, inntrinn og bredde som attributter og i Pset_StairFlightCommon og på forespørsel en repos (IfcSlab, LANDING) øverst; det
+siste opptrinnet er reposens eller dekkets forkant.
+
+`define_type` lager også typer for kledninger (med sjikt, som en dekketype), søyler, bjelker, fundamenter, rekkverk, dører og vinduer
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og
+IfcWindowStyle) med materiale. En dørtype har sin åpningsmåte (OperationType, for eksempel SINGLE_SWING_LEFT, med hengslene til venstre
+sett i retningen døren åpnes), en vindustype sin oppdeling (PartitioningType, for eksempel SINGLE_PANEL eller DOUBLE_PANEL_VERTICAL),
+og begge bredde, høyde og karmdybde. Geometrien med karm, dørblad eller rammer og glass tegnes av IfcOpenShell én gang på typen og
+gjenbrukes av hver dør og hvert vindu av typen (mappet geometri), og typen får karmens og dørbladenes egenskaper
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tar typen: døren eller vinduet får
+typens størrelse og geometri og står i liv med veggens venstre side, sett fra veggens start mot slutten (innsiden av en yttervegg
+tegnet mot klokken), og en dør åpnes mot den siden, en venstrehengslet med hengslene på den siden av åpningen som er nærmest veggens
+start. Med `side: right` snus den: i liv med høyre side og åpnet mot den. En karm like dyp som veggen er tykk, fyller hele smygen.
 Verktøyet `edit_element` endrer et eksisterende element på stedet, slik at det beholder sin GlobalId hele levetiden: en veggs start,
 slutt, tykkelse, høyde og type, et dekkes omriss, tykkelse og type, en åpnings plassering, bredde, høyde og underkant sammen med døren
 eller vinduet i den, et taks takvinkel, takutstikk og gesimshøyde, og navnet på ethvert element. Målene leses ut fra elementets egen
