@@ -431,9 +431,10 @@
           nameIn.value = id ? id.name : '';
           const save = button({ label: t('common.save'), icon: 'check', onClick: async () => { await p2p.setDeviceName(nameIn.value); this.state.identity = await p2p.identity(); toast.show(t('devices.copied').replace(/.*/, t('common.save')), { kind: 'ok' }); this.render(); } });
           const lang = /** @type {any} */ (h('dm-select', { label: t('mobile.language') }));
-          lang.options = i18n.LANGUAGES.map((l) => ({ value: l.code, label: l.native || l.name || l.code }));
+          // Each language in its own name; the reload loads only the chosen language's dictionary (src/boot.js).
+          lang.options = i18n.LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
           lang.value = i18n.language();
-          lang.addEventListener('change', async () => { try { await i18n.loadLanguage(lang.value); } catch (_err) { /* bundled */ } i18n.setLanguage(lang.value); location.reload(); });
+          lang.addEventListener('change', () => { i18n.setLanguage(lang.value); location.reload(); });
           const appLink = h('a', { class: 'dm-help', href: '../', text: t('mobile.open.app') });
           return [h('section', { class: 'dm-m-card' }, h('div', { class: 'dm-row-wrap' }, nameIn, save), h('p', { class: 'dm-help', text: t('mobile.identity') }), h('p', { class: 'dm-m-identity', text: id ? id.code : '' }), lang, appLink)];
         }

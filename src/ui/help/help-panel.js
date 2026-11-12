@@ -271,8 +271,10 @@
     }
 
     /** The chapter for a mode: the mode's own document, or the chapter of docs/lagen.md with the mode's (Swedish) name. */
-    function openForMode(mode) {
+    async function openForMode(mode) {
       if (MODE_DOCS[mode]) return open({ doc: MODE_DOCS[mode] });
+      // Only the active language's dictionary is loaded at the start; the Swedish mode name comes on demand.
+      await i18n.loadLanguage('sv');
       return open({ doc: 'lagen', section: slug(i18n.tIn('sv', 'mode.' + mode)) });
     }
 
