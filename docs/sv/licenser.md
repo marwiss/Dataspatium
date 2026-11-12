@@ -75,6 +75,10 @@ forår © Klimadatastyrelsen"), Ortokuva från Maanmittauslaitos ("Ortokuva © M
 Náttúrufræðistofnun ("Grunnkort – Loftmynd © Náttúrufræðistofnun"). Källangivelsen och licensen visas i kartans hörn och ska följa med
 en bild av kartan som du använder vidare. Förinställningarna står i `presets/geodata/orthophotos.json`; se [kartor.md](kartor.md#ortofoton).
 
+Lantmäteriets ortofoton (Sverige) läses ur Lantmäteriets filer med din nyckel och följer inte heller med i appen. De är CC BY 4.0 enligt
+Lantmäteriets användningsvillkor för värdefulla datamängder, som ber om produktnamnet, ©Lantmäteriet, att informationen har bearbetats
+och licensen; kartans hörn visar därför "Ortofoto © Lantmäteriet (år), bearbetad för kartan (CC BY 4.0)".
+
 ## Dataregium och Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) är ett eget verk under AGPL-3.0 och ingen del av Dataspatium. Samma person äger upphovsrätten till båda verken och har 2026-11-05 tillåtit två saker mellan dem: Dataregium återger Dataspatiums utseende (designvariablerna i `src/ui/design/tokens.css` och komponenternas stilar är avskrivna där under AGPL, så att de två ser ut som en produkt), och Dataspatium får använda kod och resurser ur Dataregium, till exempel testfiler, exempeltexter och API-beskrivningar. Licenserna för respektive verk gäller i övrigt oförändrade; allt annat som är gemensamt (ordlista, README-struktur, felkoder, kapabilitetsdokument) återskapas som fakta i vardera repot.

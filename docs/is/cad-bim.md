@@ -479,9 +479,10 @@ ljósmynd með staðsetningu og tíma í skránni (EXIF) fær þau í myndatexta
 og SWEREF 99 TM), og með *Með landhæð í hornunum*, sem birtist þegar heimild Lantmäteriet hefur verið bætt við, landhæðina í hverju
 horni úr hæðarlíkaninu: netkall með lyklinum þínum eftir samþykki.
 Þegar gagnasafn er valið sýnir *Staðurinn á kortinu* grunnflötinn í návígi, og í vali á bakgrunnskorti er loftmyndin sem nær yfir
-staðinn: þú sérð bygginguna að ofan meðan þú staðsetur hana. Kortið er teiknað þegar þú opnar það, og myndirnar eru aðeins sóttar
-þegar þú velur bakgrunn og gefur samþykki; Danmörk, Finnland og Ísland hafa opnar loftmyndir, Svíþjóð og Noregur ekki (sjá
-[kartor.md](kartor.md#loftmyndir)).
+staðinn: þú sérð bygginguna að ofan meðan þú staðsetur hana. Kortið er teiknað þegar þú opnar það, og myndirnar eru aðeins sóttar þegar
+þú velur bakgrunn og gefur samþykki. Danmörk, Finnland og Ísland hafa opnar loftmyndir sem tígla; í Svíþjóð les forritið loftmynd
+Lantmäteriet fyrir staðinn og 250 m í kring úr skrám Lantmäteriet með lyklinum þínum frá Geotorget (sá sami og fyrir landhæðina);
+Noregur hefur enga opna loftmynd (sjá [kartor.md](kartor.md#loftmyndir)).
 Eftir veggi hverrar hæðar les forskoðunin grannfræði byggingarinnar: miðlínur veggjanna verða að herbergjum, og hæðin er lokuð þegar
 veggirnir loka að minnsta kosti einu herbergi og enginn veggendi stendur laus; gervigreindin lagar lausa enda með því að færa veggi eða
 bæta við veggjum áður en hún leggur plöturnar. Útveggirnir með áttum sínum gera gervigreindinni kleift að para ljósmynd af

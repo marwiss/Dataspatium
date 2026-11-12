@@ -60,7 +60,7 @@ HTML får Leaflet indlejret og objekterne som GeoJSON, og baggrundskortet hentes
 
 ## Ortofotos
 
-Et ortofoto er et luftfoto, der er rettet op, så det ligger som et kort. Tre åbne ortofotos findes i valget af baggrundskort i Bearbejd,
+Et ortofoto er et luftfoto, der er rettet op, så det ligger som et kort. Fire åbne ortofotos findes i valget af baggrundskort i Bearbejd,
 i kortvisningerne i Visualisér, på plankortet og under stedet for en ny bygning (se [cad-bim.md](cad-bim.md)):
 
 | Ortofoto | Udgiver og tjeneste | Koordinatsystemer | Licens og kildeangivelse | Nøgle |
@@ -68,6 +68,7 @@ i kortvisningerne i Visualisér, på plankortet og under stedet for en ny bygnin
 | Danmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS på `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Gratis API-nøgle fra Datafordeleren: opret en bruger med e-mail på portal.datafordeler.dk og derefter en API-nøgle (gælder i to år) |
 | Finland: Ortokuva | Maanmittauslaitos, WMTS på `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Gratis API-nøgle fra Maanmittauslaitos: opret en konto i Oma tili (omatili.maanmittauslaitos.fi) og derefter en ny API-nøgle |
 | Island: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS på `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ingen |
+| Sverige: Ortofoto (STAC) | Lantmäteriet, cloud-optimerede GeoTIFF-filer i STAC-kataloget på `api.lantmateriet.se/stac-bild`, filerne på `dl1.lantmateriet.se` | Web Mercator (omregnet), SWEREF 99 TM (3006) | CC BY 4.0, "Ortofoto © Lantmäteriet (år)", bearbejdet til kortet | Forbrugernøgle og forbrugerhemmelighed fra en gratis konto i Geotorget (geotorget.lantmateriet.se), hvor Ortofoto Nedladdning er bestilt; den samme nøgle som til højdemodellen |
 
 - Kildeangivelsen og licensen står i kortets hjørne, så længe ortofotoet vises.
 - Billederne hentes først, når du vælger et ortofoto, efter samtykke til *Baggrundskort*; spørgsmålet nævner tjenestens vært.
@@ -77,9 +78,35 @@ i kortvisningerne i Visualisér, på plankortet og under stedet for en ny bygnin
 - På plankortet i planens eget koordinatsystem findes de ortofotos, hvis tjeneste tilbyder det system (Danmark i UTM 32N, Island i ISN93).
 - Islands mosaik dækker endnu ikke hele landet og udbygges hvert år. Finlands åbne tjeneste giver billederne op til zoomniveau 16 og
   forstørrer dem derefter.
-- Sverige og Norge har ingen åbne ortofototjenester: Lantmäteriets Ortofoto Visning har et licensgebyr, og Norge i bilder er kun åben for
-  medlemmerne af Norge digitalt. Lantmäteriets ortofotos er åbne data (CC BY 4.0) som filer til download (STAC), men dem viser appen ikke
-  som kort endnu.
+- Norge har ingen åben ortofototjeneste: Norge i bilder er kun åben for medlemmerne af Norge digitalt. Sverige har ingen åben tjeneste
+  med fliser (Lantmäteriets Ortofoto Visning har et licensgebyr), men Lantmäteriets ortofotos er åbne data som filer, og dem læser appen
+  for én visning ad gangen (nedenfor).
+
+### Sverige: Lantmäteriets ortofotos
+
+- Vælg *Ortofoto – Lantmäteriet (STAC)*. Det findes i valget af baggrundskort i Bearbejd, i kortvisningerne i Visualisér, på plankortet
+  (i Web Mercator eller SWEREF 99 TM) og, når stedet ligger i Sverige, under stedet for en ny bygning.
+- Appen søger i Lantmäteriets billedkatalog (STAC, samlingerne `orto-<område>-<år>`) efter de nyeste farvebilleder over det, kortet
+  viser, og læser kun det udsnit, der skal bruges, fra filerne. Filerne er felter på 2,5 × 2,5 km i SWEREF 99 TM med 16 cm pr. pixel
+  siden 2019 (25 eller 50 cm før); en større visning læses fra et grovere oversigtsniveau i filen. Hvor den nyeste flyvning slutter,
+  udfylder den næstnyeste.
+- Billedet gælder den visning, du hentede det til, højst 1 km² (for stedet for en ny bygning stedet og 250 m omkring det). Den længste
+  side er højst 2.048 pixel og aldrig finere end filen. Flytter du kortet, henter knappen *Hent ortofoto for visningen* billedet til den
+  nye visning; et kort, der tegnes igen over samme visning, bruger det billede, der allerede er hentet. En større visning giver en
+  besked om at zoome ind.
+- På et kort i Web Mercator omregnes billedet pixel for pixel fra SWEREF 99 TM, så det ligger rigtigt (mindre end en pixel fra); på
+  plankortet i SWEREF 99 TM ligger det som i filen.
+- Filerne kræver en nøgle: forbrugernøgle og forbrugerhemmelighed fra en gratis konto i Geotorget, hvor produktet Ortofoto Nedladdning
+  er bestilt (Lantmäteriet behandler bestillingen, og vilkårene skal godkendes). Det er den samme nøgle, som kilden *Lantmäteriet
+  geodata med nøgle (STAC)* og højdemodellen bruger; mangler den, spørger appen efter den, når du vælger ortofotoet, med et link til
+  Geotorget. Med nøglen henter appen et adgangstoken fra `apimanager.lantmateriet.se`, og tokenet sendes kun til `dl1.lantmateriet.se`.
+  Søgningen i kataloget kræver ingen nøgle.
+- Intet hentes, før du vælger ortofotoet eller trykker på knappen. Så spørger appen én gang om samtykke til *API-hentning* og nævner
+  værterne. En gemt kortvisning henter intet, når den åbnes; den viser knappen.
+- Kildeangivelsen i kortets hjørne følger Lantmäteriets vilkår: "Ortofoto © Lantmäteriet (år), bearbejdet til kortet (CC BY 4.0)".
+  Billedet kommer ikke med i eksport (SVG, PNG, PDF), gemte kortvisninger eller publiceret HTML.
+- Filerne læses ét felt ad gangen med en pause imellem, og omregningen sker i omgange, så siden ikke låser; en visning på 1 km² tager
+  nogle sekunder.
 
 ## Geoværktøjer i Analysér
 

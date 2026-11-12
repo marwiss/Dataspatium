@@ -483,7 +483,9 @@ vises når Lantmäteriets kilde er lagt til, terrenghøyden i hvert hjørne fra 
 samtykke.
 Når et datasett er valgt, viser *Stedet på kartet* bygningsflaten tett på, og valget av bakgrunnskart tilbyr ortofotoet som dekker
 stedet: du ser bygningen ovenfra mens du plasserer den. Kartet tegnes når du åpner det, og bildene hentes først når du velger bakgrunn
-og gir samtykke; Danmark, Finland og Island har åpne ortofoto, Sverige og Norge har ikke (se [kartor.md](kartor.md#ortofoto)).
+og gir samtykke. Danmark, Finland og Island har åpne ortofoto som fliser; i Sverige leser appen Lantmäteriets ortofoto for stedet og 250
+m rundt det fra Lantmäteriets filer med nøkkelen din fra Geotorget (den samme som for terrenghøyden); Norge har ikke noe åpent ortofoto
+(se [kartor.md](kartor.md#ortofoto)).
 Etter veggene på hver etasje leser forhåndsvisningen bygningens topologi: veggenes senterlinjer blir rom, og etasjen er lukket når
 veggene lukker minst ett rom og ingen veggende står løs; AI-en retter løse ender ved å flytte eller legge til vegger før den legger
 dekkene. Ytterveggene med himmelretningene sine lar AI-en pare et foto av fasaden mot sør med de riktige veggene (leseverktøyet

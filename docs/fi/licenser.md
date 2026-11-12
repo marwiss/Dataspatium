@@ -77,6 +77,10 @@ Loftmynd Náttúrufræðistofnunilta ("Grunnkort – Loftmynd © Náttúrufræð
 ja niiden on seurattava kartasta otettua kuvaa, jota käytät edelleen. Esiasetukset ovat tiedostossa
 `presets/geodata/orthophotos.json`; ks. [kartor.md](kartor.md#ortokuvat).
 
+Lantmäterietin ortokuvat (Ruotsi) luetaan Lantmäterietin tiedostoista avaimellasi, eivätkä nekään sisälly sovellukseen. Ne ovat CC BY
+4.0 Lantmäterietin arvokkaiden tietoaineistojen käyttöehtojen mukaan, jotka edellyttävät tuotteen nimeä, merkintää ©Lantmäteriet, tietoa
+käsittelystä ja lisenssiä; siksi kartan kulmassa lukee "Ortofoto © Lantmäteriet (vuosi), käsitelty karttaa varten (CC BY 4.0)".
+
 ## Dataregium ja Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) on erillinen teos AGPL-3.0-lisenssillä eikä osa Dataspatiumia. Sama henkilö omistaa molempien teosten tekijänoikeuden ja on 2026-11-05 sallinut kaksi asiaa niiden välillä: Dataregium toistaa Dataspatiumin ulkoasun (tiedoston `src/ui/design/tokens.css` suunnittelumuuttujat ja komponenttien tyylit on kirjoitettu sinne AGPL:n alaisina, jotta kaksi näyttävät yhdeltä tuotteelta), ja Dataspatium saa käyttää Dataregiumin koodia ja resursseja, esimerkiksi testitiedostoja, esimerkkitekstejä ja API-kuvauksia. Kummankin teoksen lisenssit pysyvät muuten muuttumattomina; kaikki muu yhteinen (sanasto, README-rakenne, virhekoodit, kyvykkyysdokumentti) luodaan uudelleen faktoina kumpaankin repositorioon.
