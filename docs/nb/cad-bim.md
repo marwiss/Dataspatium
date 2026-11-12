@@ -442,6 +442,39 @@ veggene lukker minst ett rom og ingen veggende står løs; AI-en retter løse en
 dekkene. Ytterveggene med himmelretningene sine lar AI-en pare et foto av fasaden mot sør med de riktige veggene (leseverktøyet
 `get_topology`), og den samme topologien vises på kortet *Topologi* i Kontroller.
 
+### Formål, fase og krav
+
+Under *Bygningens opplysninger* finnes også *Formål*, *Fase* og *Krav (IDS)*. Formålet er det modellen skal brukes til, og det velger
+nøyaktighet og krav, som du kan endre etterpå:
+
+| Formål | Nøyaktighet | Krav |
+|---|---|---|
+| Volumstudie | Skisse | SE-Dataspatium_Grund |
+| Byggesøknad | Hovedtrekk | SE-Dataspatium_Grund |
+| Klimaerklæring | Hovedtrekk | SE-Dataspatium_Klimatdeklaration |
+| Forvaltning | Detaljert | SE-Dataspatium_Grund |
+| Avfallshåndtering | Detaljert | SE-Dataspatium_Avfallshantering |
+| Annet (med egen tekst) | Hovedtrekk | ingen |
+
+Fasen sier hvor i byggets liv modellen hører hjemme: mulighetsstudie, forslag, arbeidstegninger, under bygging eller eksisterende bygg.
+Formål, fase og krav innleder briefen. Med krav prøver hver forhåndsvisning, AI-ens egen og din, kandidaten mot IDS-filen, og AI-en får
+spesifikasjonene som ikke er oppfylt, slik at den kan rette dem. Kravene hindrer ikke godkjenningen; panelet viser hvor mange
+spesifikasjoner som er oppfylt, og hvilke som ikke er det.
+
+Nøyaktigheten følger informasjonsbehovet i ISO 7817-1 (avsnitt 6), som deler det i geometri, alfanumerisk informasjon og
+dokumentasjon. Med appens egne ord betyr de tre nivåene dette per aspekt:
+
+| Aspekt | Skisse | Hovedtrekk | Detaljert |
+|---|---|---|---|
+| Detalj | etasjer, yttervegger og dekker som enkle legemer, ingen åpninger | alle vegger med typenes tykkelse, dekker, takets form og åpninger med rimelige mål | sjikt per type, dører og vinduer med karm og ramme, vegger som møtes i hjørnene |
+| Dimensjoner | legemer i 3D og veggens akse | som skissen | som skissen; plansymboler kan komme senere |
+| Plassering | etasjenes høyder, rutenettet og tomten når den er kjent | mål fra tegning eller brief, georeferert når opplysningene finnes | innmålte eller målsatte plasseringer, åpninger på nøyaktig sted |
+| Utseende | standardfarger | farge etter materialets kategori | en overflatestil per materiale, atskilt fra materialet |
+| Parametrisk oppførsel | ekstruderinger der målene kan endres | typer (bytt typen, så endres alle) og sjikt | forbindelser som regner om hjørnene, dører og vinduer med parametre |
+| Identifikasjon | navn, IFC-klasse med PredefinedType og GlobalId | typer med navn, rom med nummer og navn | deler og romklasser, Tag på dører og vinduer |
+| Informasjonsinnhold | etasjer og høyder | IsExternal, LoadBearing og materialer på typene, basismengder | brann, U-verdi og klimadata per type eller materiale, tilstanden i et eksisterende bygg |
+| Dokumentasjon | briefen | briefen og bildene som modellens grunnlag | EPD-referanser og produktblad |
+
 ## Kontroller med AI
 
 Modusen **Kontroller** i AI-panelet prøver en eksisterende bygnings modell mot foto av skader og slitasje, tatt med Dataspatium Mobil,
@@ -615,6 +648,68 @@ IfcOpenShell, og endringssettet godtar bare klasser som finnes og ikke er abstra
 liste. Kortet *IFC-klasser* i Kontroller (og leseverktøyet `get_class_report`) teller proxyelementer (IfcBuildingElementProxy),
 USERDEFINED uten navn, elementer uten type, PredefinedType på både type og element (regelen OJT001) og elementer utenfor den romlige
 strukturen (SPS007), med eksempler.
+
+## buildingSMARTs regler i forhåndsvisningen
+
+Forhåndsvisningen prøver også det endringssettet oppretter eller endrer mot et utvalg av buildingSMARTs normative regler, de samme
+reglene som buildingSMARTs valideringstjeneste bruker (ifc-gherkin-rules), overført til appens egen Python:
+
+- **IFC102**: ingen utfasede entiteter, attributter eller verdier i filens skjema, for eksempel IfcWallStandardCase, veggen STANDARD
+  eller IfcBuildingStorey.Elevation i IFC 4.3;
+- **GEM111**: ingen gjentatte punkter i polylinjer og polyløkker, og en lukket polylinje slutter i sitt eget første punkt;
+- **SWE001**: profiler som ikke krysser seg selv (prøvd med shapely);
+- **PSE001** og **PSE002**: et standardsett (Pset_) har skjemamalens navn, egenskaper, typer og klasser, og et eget sett begynner ikke
+  som Pset;
+- **QTY001**: et mengdesett (Qto_) følger malen og har MethodOfMeasurement BaseQuantities;
+- **GRF001**, **GRF003** og **GRF005**: alle kontekster har samme koordinatoperasjon, en modell med et bygg har et koordinatsystem, og
+  kartkonverteringens skala stemmer med enhetene;
+- **SPS007**: bygningsdeler ligger i den romlige strukturen, og en del av en bygningsdel ligger ikke samtidig i en etasje;
+- **OJT001**: PredefinedType står på typen eller på elementet, ikke på begge, og USERDEFINED har et navn;
+- **PJS003**: hver GlobalId har 22 tillatte tegn og begynner med 0–3, og ingen GlobalId brukes to ganger.
+
+Hvert funn bærer regelens kode. Det buildingSMART regner som avtaler, gir feil, som hindrer godkjenningen akkurat som skjemafeil;
+bransjepraksis (PSE002, GRF003 og GRF005) gir advarsler, som står for seg. Bare det endringssettet forårsaker, teller: det som allerede
+fantes i modellen, sperrer ingenting. AI-en får reglene som ikke holder, etter hver forhåndsvisning og retter dem, slik den gjør med
+topologien. Appen har ikke hele regelsettet: GRF005 kjenner koordinatsystemets enhet for de nordiske kodene appen skriver eller ut fra
+dets MapUnit, og SWE001 følger polylinjer, indekserte kurver og sammensatte kurver av dem. Hele settet hører hjemme på serveren.
+
+Derfor skriver appen heller ikke selv det IFC102 faser ut. I IFC4 og senere blir en kledning med `host` en del av bygningsdelen
+den kler (IfcRelAggregates) eller ligger i rommet, i stedet for IfcRelCoversBldgElements og IfcRelCoversSpaces, og trappens antall
+trinn og mål står bare i Pset_StairFlightCommon. I IFC 4.3 står karmens og dørbladenes egenskaper i Pset_DoorLiningProperties,
+Pset_DoorPanelProperties og Pset_WindowLiningProperties, som erstatter IfcDoorLiningProperties og de andre.
+Et standardsett som først kom med IFC4, for eksempel Pset_Condition i en IFC2X3-fil, gir bare en advarsel fra PSE001.
+
+*Godkjenn* kjører i tillegg skjemaets EXPRESS-regler (WHERE-regler og funksjoner) med IfcOpenShell; pytest hentes til dem som komponent
+første gang. Et endringssett som bryter en regel modellen oppfylte før, godkjennes ikke, og meldingen nevner regelen; be AI-en rette
+endringssettet, og godkjenn på nytt. I en modell med mer enn 300 000 instanser hoppes EXPRESS-reglene over, og loggen sier det.
+
+## Grunnopplysninger
+
+Kortet **Grunnopplysninger** i Kontroller prøver en modell mot grunnreglene i Praxi, BIM Alliances veiledning for IFC, her med appens
+egne ord; ingen tekster, verdilister eller maler fra Praxi følger med appen. Kortet leser modellen når du trykker på knappen:
+
+- filhodet angir visning (MVD), programmet som skrev filen, forprosessoren og tidspunktet (forfatter og organisasjon vises ikke);
+- modellen har et projisert koordinatsystem med én EPSG-kode, en kartkonvertering og et høydesystem;
+- prosjektet, tomten, bygget og etasjene har navn, bygget også et langt navn og etasjene en beskrivelse;
+- hvert rom har et nummer i Name, og ingen numre brukes to ganger i samme bygg;
+- et eget egenskapssett begynner ikke som IFCs (Pset_, Qto_), begynner med en landkode (SE-…), har bare A–Z, sifre, - og _, og
+  egenskaper i PascalCase uten å, ä og ö;
+- ingen verdi bærer enheten sin: 40, ikke «40 dB».
+
+Hver kontroll vises som oppfylt, bør ses på eller feil, med de første eksemplene. IDS kan ikke prøve filhodet eller at noe er unikt, og
+derfor er det et eget kort.
+
+## Appens IDS-filer
+
+Appen har egne IDS-filer i `presets/ids/`, skrevet ut fra åpne regler:
+
+- **SE-Dataspatium_Grund.ids**: navn på tomt, bygg, etasjer og rom, ingen proxyelementer og en PredefinedType på dekker, tak, dører,
+  vinduer og kledninger (USERDEFINED godtas med et navn).
+- **SE-Dataspatium_Klimatdeklaration.ids**: LoadBearing på vegger, dekker, tak, søyler og bjelker, IsExternal på vegger, dører og
+  vinduer, materialer på bygningsdelene, en kategori på hvert materiale og basismengder: det den foreløpige klimaerklæringen leser.
+
+IDS nevner en klasse uten underklassene, så IFC4s klasser …StandardCase har egne spesifikasjoner, og en spesifikasjon gjelder bare de
+IFC-versjonene den angir. Briefen velger en fil etter formålet, og IDS-kontroll i Analyser kan kjøre dem.
 
 ## Sammenlign versjoner
 

@@ -18,13 +18,16 @@
  * building in an empty model from a brief, with photos and scanned drawings attached as pictures, the AI's questions answered in the
  * panel, and the same preview and approval as Ändra. The mode Kontrollera (decision F44 a) tries an existing building's model against
  * photos and a field form's measurements with the same attachments: the findings are listed under the answer (ui/bearbeta/ai-check)
- * and each element's condition (Pset_Condition) is previewed and approved as in Ändra.
+ * and each element's condition (Pset_Condition) is previewed and approved as in Ändra. The brief's form also takes the model's
+ * purpose and stage (recommendation 10 of the native IFC study and 12 of the Praxi study): the purpose picks the default level of
+ * detail and one of the app's IDS files, which the AI's previews and the person's try the candidate against. The preview lists
+ * buildingSMART's rules with their codes, errors and warnings apart, and the approval runs the schema's EXPRESS rules too.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb'],
-    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb) => {
+  D.define('ui/bearbeta/ai-panel', ['ui/base', 'ui/basic', 'ui/overlays', 'ui/icons', 'ai/providers', 'ai/agent', 'ai/write-tools', 'ai/check-tools', 'ui/bearbeta/ai-check', 'data/selection', 'data/recipes', 'data/ifc-ops', 'data/datasets', 'data/ifc-validation', 'api/connectors', 'api/families/opencde', 'platform/storage/idb', 'analysis/ids-presets'],
+    (base, basic, overlays, icons, providers, agent, writeTools, checkTools, aiCheck, selection, recipes, ifcOps, datasets, validation, connectors, opencde, idb, idsPresets) => {
       const { h, t, i18n, replace } = base;
       const LAST_SETTING = 'ai.lastProvider';
       const MODES = ['ask', 'change', 'build', 'check'];
@@ -39,7 +42,7 @@
         const s = { providers: [], providerId: '', policy: 'ask', mode: MODES.includes(String(options.mode)) ? String(options.mode) : 'ask', question: options.brief ? String(options.brief) : '', busy: false, answer: '', steps: [], elements: [], usage: null, error: '', history: [], exchanges: [],
           changeset: writeTools.create(options.datasetId), preview: null, previewing: false, approving: false, proposing: false, proposed: null, cde: null, approvingServer: false,
           attachments: [], questionBox: null, picturesFrom: '', albums: [], factsFrom: '', tables: [],
-          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '' }, detail: 'main', nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
+          form: { building: '', storeys: '', length: '', width: '', height: '', foundation: '', roof: '', purpose: '', purposeText: '', stage: '' }, detail: 'main', ids: '', idsTitles: {}, nextLabel: 'photo', material: null, uploading: false, opsForm: null, heightsSource: false, factsHeights: false, canPropose: null, projectPolicy: undefined,
           findings: checkTools.create(options.datasetId) };
         const el = h('div', { class: 'dm-card dm-stack-sm', 'data-ai-panel': '' });
         let abort = null;
@@ -72,6 +75,7 @@
             if (c && opencde.isOpenCde(c) && opencde.signedIn(c)) s.material = { cde, connector: c, name: meta.name };
           }
           await check.load(meta);
+          s.idsTitles = Object.fromEntries((await idsPresets.list().catch(() => [])).map((x) => [x.file, x.title]));
         }
         /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
         async function uploadMaterial() {
@@ -106,7 +110,7 @@
           s.busy = true; s.error = ''; s.answer = ''; s.steps = []; s.elements = []; s.usage = null; render();
           abort = new AbortController();
           try {
-            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), check: checking(), findings: checking() ? s.findings : undefined, images: withPictures() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1), name: a.name, where: a.where, when: a.when })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
+            const out = await agent.ask({ provider: p, datasetId: options.datasetId, question, history: s.history, changeset: changing() ? s.changeset : null, build: building(), check: checking(), findings: checking() ? s.findings : undefined, ids: building() ? await requirements() : null, images: withPictures() ? s.attachments.map((a, i) => ({ mediaType: a.mediaType, data: a.data, caption: captionOf(a, i + 1), name: a.name, where: a.where, when: a.when })) : undefined, ask: building() ? askPerson : undefined, signal: abort.signal, onEvent: (ev) => { if (ev.type === 'tool') { s.steps.push(ev.step); renderSteps(); } } });
             s.answer = out.answer; s.steps = out.steps; s.elements = out.elements; s.usage = out.usage;
             // The next question continues the conversation, but only the words: the tool traffic is not carried on.
             s.history = s.history.concat([{ role: 'user', content: question }, { role: 'assistant', content: out.answer }]).slice(-10);
@@ -215,6 +219,24 @@
         // ---- the building's facts, the level of detail and the captions (decision F43 b: plain words, the ISO 19650 notions behind them) ----
         const FOUNDATIONS = ['slab', 'crawl', 'basement', 'piers']; const ROOFS = ['gable', 'hip', 'shed', 'flat', 'mansard'];
         const DETAILS = ['sketch', 'main', 'detailed']; const LABELS = ['photo', 'north', 'east', 'south', 'west', 'inside', 'drawing'];
+        // The purpose picks the level of detail and the IDS file it starts from; the person may change both afterwards.
+        const PURPOSES = ['volume', 'permit', 'climate', 'management', 'waste', 'other'];
+        const PURPOSE_DEFAULTS = { volume: ['sketch', 'SE-Dataspatium_Grund.ids'], permit: ['main', 'SE-Dataspatium_Grund.ids'], climate: ['main', 'SE-Dataspatium_Klimatdeklaration.ids'],
+          management: ['detailed', 'SE-Dataspatium_Grund.ids'], waste: ['detailed', 'SE-Dataspatium_Avfallshantering.ids'], other: ['main', ''] };
+        const STAGES = ['feasibility', 'proposal', 'documents', 'construction', 'existing'];
+        // The app's IDS files (analysis/ids-presets), by file name; their titles label the choice once read.
+        const idsFiles = () => D.assets.names(idsPresets.PREFIX).filter((n) => /\.ids$/i.test(n)).map((n) => n.slice(idsPresets.PREFIX.length)).sort();
+        function choosePurpose(v) {
+          s.form.purpose = PURPOSES.includes(v) ? v : '';
+          const d = PURPOSE_DEFAULTS[s.form.purpose];
+          if (d) { s.detail = d[0]; s.ids = idsFiles().includes(d[1]) ? d[1] : ''; }
+          render();
+        }
+        /** The IDS file the brief names, as the name and text the preview takes; null without one or when it cannot be read. */
+        async function requirements() {
+          if (!s.ids) return null;
+          try { const got = await idsPresets.load(idsPresets.PREFIX + s.ids); return { name: got.name, text: got.text }; } catch (err) { log(String((err && err.message) || err), 'warn'); return null; }
+        }
         const factsGiven = () => Object.values(s.form).some((v) => String(v || '').trim());
         /** The building's facts and the level of detail as the opening of the brief. */
         function factsBlock() {
@@ -225,7 +247,11 @@
           if (ROOFS.includes(f.roof)) parts.push(`${t('ai.build.form.roof')}: ${t('ai.build.roof.' + f.roof)}`);
           const level = DETAILS.includes(s.detail) ? s.detail : 'main';
           const lines = parts.length ? [t('ai.build.form.block', { facts: parts.join('; ') })] : [];
+          const purpose = f.purpose === 'other' ? String(f.purposeText || '').trim() : PURPOSES.includes(f.purpose) ? t('ai.build.purpose.' + f.purpose) : '';
+          if (purpose) lines.push(t('ai.build.purpose.block', { purpose }));
+          if (STAGES.includes(f.stage)) lines.push(t('ai.build.stage.block', { stage: t('ai.build.stage.' + f.stage) }));
           lines.push(t('ai.build.detail.block', { level: t('ai.build.detail.' + level), text: t('ai.build.detail.' + level + '.text') }));
+          if (s.ids) lines.push(t('ai.build.ids.block', { file: s.ids }));
           return lines.join('\n');
         }
         /** The caption that goes before a picture: what it shows, and where and when it was taken when the file says so. */
@@ -262,7 +288,22 @@
             h('div', { class: 'dm-row-wrap' }, field('building'), field('storeys', 'number')),
             h('div', { class: 'dm-row-wrap' }, field('length', 'number'), field('width', 'number'), field('height', 'number')),
             h('div', { class: 'dm-row-wrap' }, choice('foundation', 'ai.build.foundation.', FOUNDATIONS), choice('roof', 'ai.build.roof.', ROOFS),
-              basic.select(t('ai.build.detail'), DETAILS.map((k) => ({ value: k, label: t('ai.build.detail.' + k) })), s.detail, (v) => { s.detail = DETAILS.includes(v) ? v : 'main'; }, { 'data-ai-detail': '', title: t('ai.build.detail.hint') })));
+              basic.select(t('ai.build.detail'), DETAILS.map((k) => ({ value: k, label: t('ai.build.detail.' + k) })), s.detail, (v) => { s.detail = DETAILS.includes(v) ? v : 'main'; }, { 'data-ai-detail': '', title: t('ai.build.detail.hint') })),
+            purposeRow());
+        }
+        /** Purpose, stage and the IDS file of the brief (the brief's own section of the form). */
+        function purposeRow() {
+          const purpose = basic.select(t('ai.build.purpose'), [{ value: '', label: t('ai.build.form.unknown') }].concat(PURPOSES.map((k) => ({ value: k, label: t('ai.build.purpose.' + k) }))), s.form.purpose, choosePurpose, { 'data-ai-form': 'purpose', title: t('ai.build.purpose.hint') });
+          let own = null;
+          if (s.form.purpose === 'other') {
+            own = /** @type {any} */ (h('dm-input', { label: t('ai.build.purpose.text'), 'data-ai-form': 'purposeText' }));
+            own.value = s.form.purposeText;
+            own.addEventListener('input', () => { s.form.purposeText = String(own.value || ''); });
+          }
+          const stage = basic.select(t('ai.build.stage'), [{ value: '', label: t('ai.build.form.unknown') }].concat(STAGES.map((k) => ({ value: k, label: t('ai.build.stage.' + k) }))), s.form.stage, (v) => { s.form.stage = STAGES.includes(v) ? v : ''; }, { 'data-ai-form': 'stage', title: t('ai.build.stage.hint') });
+          const files = idsFiles();
+          const ids = basic.select(t('ai.build.ids'), [{ value: '', label: t('ai.build.ids.none') }].concat(files.map((n) => ({ value: n, label: s.idsTitles[n] || n.replace(/\.ids$/, '') }))), files.includes(s.ids) ? s.ids : '', (v) => { s.ids = files.includes(v) ? v : ''; }, { 'data-ai-ids': '', title: t('ai.build.ids.hint') });
+          return h('div', { class: 'dm-row-wrap' }, purpose, own, stage, ids);
         }
         function heightsSwitch() {
           const sw = /** @type {any} */ (h('dm-switch', { label: t('ai.build.facts.heights.switch'), title: t('ai.build.facts.heights.hint'), 'data-ai-facts-heights': '' }));
@@ -326,7 +367,7 @@
           if (s.previewing || s.busy || !s.changeset.ops.length) return;
           s.previewing = true; s.error = ''; render();
           try {
-            const out = await ifcOps.previewChangeset(options.datasetId, writeTools.toWheel(s.changeset));
+            const out = await ifcOps.previewChangeset(options.datasetId, writeTools.toWheel(s.changeset), { ids: building() ? await requirements() : null });
             s.preview = { report: out.report || {}, bytes: out.bytes, server: null };
             if (options.preview) await options.preview({ bytes: out.bytes, colors: colorsOf(out.report) });
             await precheckOf(out.bytes);
@@ -566,6 +607,8 @@
             s.preview = null;
             if (options.preview) await options.preview(colors.length ? { colors } : null);
             const result = await recipes.apply(options.datasetId, 'ifc_changeset', { changes: JSON.stringify(writeTools.toWheel(s.changeset)), provenance: JSON.stringify(provenance) });
+            const express = result && result.report && result.report.express;
+            if (express) log(express.ran ? t('ai.change.express.ok') : t('ai.change.express.skipped', { note: String(express.note || '') }), express.ran ? 'ok' : 'warn');
             s.changeset = writeTools.create(options.datasetId);
             const msg = t('ai.change.approved', { created: i18n.formatNumber((report.created || []).length), changed: i18n.formatNumber((report.changed || []).length), deleted: i18n.formatNumber((report.deleted || []).length) });
             log(msg, 'ok'); overlays.toast.show(msg, { kind: 'ok', timeout: 8000 });
@@ -593,7 +636,10 @@
           const report = s.preview && s.preview.report;
           const errors = report ? Number(report.errors) || 0 : 0;
           const proposal = s.cde && !s.cde.documentId ? null : proposalOf(report);
-          const finding = (f) => h('li', { class: 'dm-xs', text: `${f.ifc_class || ''}${f.id ? ' #' + f.id : ''}${f.attribute ? ' ' + f.attribute : ''}: ${f.message || ''}` });
+          // A rule's finding carries its code, and a warning is shown apart from the errors.
+          const finding = (f) => h('li', { class: f.kind === 'rule' && f.level !== 'error' ? 'dm-xs dm-help' : 'dm-xs', 'data-ai-rule': f.rule || null, text: `${f.rule ? f.rule + ' · ' : ''}${f.ifc_class || ''}${f.id ? ' #' + f.id : ''}${f.attribute ? ' ' + f.attribute : ''}: ${f.message || ''}` });
+          const ruleWarnings = report && report.rules ? Number(report.rules.warnings) || 0 : 0;
+          const ids = report && report.ids;
           return h('div', { class: 'dm-stack-sm', 'data-ai-changeset': '' },
             h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('ai.change.title') }), h('span', { class: 'dm-help dm-xs', 'data-ai-change-count': '', text: t('ai.change.steps', { n: i18n.formatNumber(cs.ops.length) }) })),
             cs.ops.length ? h('ol', { class: 'dm-list dm-xs', 'data-ai-changes': '' }, cs.ops.map((op) => h('li', { class: op.tool === 'delete_elements' ? 'dm-small dm-error' : 'dm-small', text: writeTools.describe(op) }))) : h('p', { class: 'dm-help dm-xs', text: t('ai.change.empty') }),
@@ -601,6 +647,9 @@
               h('p', { class: 'dm-small', text: t('ai.change.report', { created: i18n.formatNumber((report.created || []).length), changed: i18n.formatNumber((report.changed || []).length), deleted: i18n.formatNumber((report.deleted || []).length) }) }),
               h('p', { class: errors ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-findings': String(errors), text: errors ? t('ai.change.findings', { n: i18n.formatNumber(errors) }) : t('ai.change.findings.none') }),
               Array.isArray(report.findings) && report.findings.length ? h('ul', { class: 'dm-list dm-xs' }, report.findings.slice(0, 10).map(finding)) : null,
+              ruleWarnings ? h('p', { class: 'dm-help dm-xs', 'data-ai-rule-warnings': String(ruleWarnings), text: t('ai.change.rules.warnings', { n: i18n.formatNumber(ruleWarnings) }) }) : null,
+              ids ? h('p', { class: ids.error || (ids.failed || []).length ? 'dm-small' : 'dm-help dm-xs', 'data-ai-ids-result': ids.error ? 'error' : String((ids.failed || []).length),
+                text: ids.error ? t('ai.change.ids.error', { file: ids.file || '', error: ids.error }) : t('ai.change.ids.result', { file: ids.file || '', passed: i18n.formatNumber(Number(ids.passed) || 0), n: i18n.formatNumber(Number(ids.specifications) || 0), failed: (ids.failed || []).map((x) => x.name).slice(0, 5).join('; ') || '–' }) }) : null,
               // The wheel's notes: what it could not do in the file's schema, and what the model still lacks (no CRS, GRF003).
               Array.isArray(report.notes) && report.notes.length ? h('ul', { class: 'dm-list dm-xs', 'data-ai-notes': String(report.notes.length) }, report.notes.slice(0, 10).map((n) => h('li', { class: 'dm-help dm-xs', text: String(n) }))) : null,
               s.preview.server ? h('p', { class: s.preview.server.status === 'issues' || s.preview.server.status === 'failed' ? 'dm-error dm-small' : 'dm-help dm-xs', 'data-ai-precheck': s.preview.server.status,

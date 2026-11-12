@@ -7,8 +7,8 @@
  * modellen (the server's check of the file, the schema, IDS and clash detection with their latest results; the checks
  * themselves run in Analysera under Mängder) and the panel Jämför versioner, and the card Topologi (the rooms the walls
  * enclose per storey, open wall ends and the external walls per compass direction, on the button), and the card IFC-klasser (the
- * model against the right IFC class, on the button; decision B-57.2). Other kinds have no checks yet. The inspector shows the
- * chosen finding.
+ * model against the right IFC class, on the button; decision B-57.2), and the card Grunduppgifter (the basic requirements of the
+ * guidance Praxi in the app's own words, on the button). Other kinds have no checks yet. The inspector shows the chosen finding.
  */
 (function () {
   'use strict';
@@ -22,6 +22,9 @@
     const FACINGS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     /** The checks of the class report (python/dataspatium.py `_ifc_class_report`), in the card's order. */
     const CLASS_CHECKS = ['proxies', 'userdefined', 'untyped', 'type_conflicts', 'outside'];
+    /** The checks of the basic requirements (python/dataspatium.py `_ifc_basics`), in the card's order, and the badge per status. */
+    const BASICS_CHECKS = ['header', 'crs', 'names', 'rooms', 'psets', 'units'];
+    const BASICS_BADGE = { ok: 'ok', warn: 'warn', fail: 'error' };
 
     /**
      * The rules a table is tried against, counted in its SQL engine: the empty values of every column (null, or text that
@@ -207,7 +210,7 @@
         compare = compareModule.create(ctx, ds, {});
         const openBtn = ui.button({ label: t('import.open.bearbeta'), icon: 'box', title: t('kontrollera.model.open.hint'), onClick: () => { store.set({ selectedId: ds.id }); shell.activate('bearbeta'); } });
         replace(slots.center, head(ds, openBtn), h('p', { class: 'dm-help', text: t('kontrollera.model.help') }),
-          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds), classCard(ds)));
+          h('div', { class: 'dm-stack', 'data-kontrollera-model': '' }, cards.validationCard(ctx, ds), compare.el, topologyCard(ds), classCard(ds), basicsCard(ds)));
         replace(slots.right, h('p', { class: 'dm-help', text: t('kontrollera.model.inspector') }));
       }
 
@@ -296,6 +299,50 @@
             state.error ? h('p', { class: 'dm-error dm-small', 'data-classes-error': '', text: state.error }) : null,
             r ? h('p', { class: 'dm-help dm-small', 'data-classes-summary': '', text: t('kontrollera.classes.summary', { n: i18n.formatNumber(Number(r.elements) || 0), schema: String(r.schema || '') }) }) : null,
             r ? CLASS_CHECKS.map(check) : null);
+        }
+        draw();
+        return el;
+      }
+
+      /**
+       * The card Grunduppgifter (recommendation 5 of the Praxi study): the model's basic requirements after the rules of BIM Alliance's
+       * guidance Praxi, in the app's own words, read by the wheel (data/ifc-ops.basicsOf) on the button, which may start Python as the
+       * other cards do. Each check shows its status, its facts and its faults with the first examples.
+       */
+      function basicsCard(ds) {
+        const el = h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'basics' });
+        const state = { busy: false, error: '', report: /** @type {any} */ (null) };
+        const SHOWN = 5;
+        async function run() {
+          if (state.busy) return;
+          state.busy = true; state.error = ''; state.report = null; draw();
+          try { state.report = await D.require('data/ifc-ops').basicsOf(ds.id); } catch (err) { state.error = String((err && err.message) || err); }
+          state.busy = false; draw();
+        }
+        function check(key) {
+          const c = ((state.report && state.report.checks) || []).find((x) => x && x.key === key) || { status: 'ok', facts: {}, faults: [] };
+          const status = BASICS_BADGE[c.status] ? c.status : 'ok';
+          const facts = Object.entries(c.facts || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
+          const kv = facts.length ? /** @type {any} */ (h('dm-kv')) : null;
+          if (kv) kv.items = facts.map(([k, v]) => ({ label: t('kontrollera.basics.fact.' + k), value: typeof v === 'number' ? i18n.formatNumber(v) : String(v) }));
+          return h('div', { class: 'dm-stack-xs', 'data-basics-check': key, 'data-basics-status': status },
+            h('div', { class: 'dm-row' }, h('strong', { class: 'dm-grow', text: t('kontrollera.basics.' + key) }), h('dm-badge', { text: t('kontrollera.basics.status.' + status), kind: BASICS_BADGE[status] })),
+            h('p', { class: 'dm-help dm-xs', text: t('kontrollera.basics.' + key + '.help') }),
+            kv,
+            (c.faults || []).map((f) => h('div', { class: 'dm-stack-xs', 'data-basics-fault': String(f.code), 'data-basics-count': String(Number(f.count) || 0) },
+              h('p', { class: f.level === 'fail' ? 'dm-small dm-error' : 'dm-small', text: t('kontrollera.basics.fault.' + f.code, { n: i18n.formatNumber(Number(f.count) || 0) }) }),
+              h('ul', { class: 'dm-stack-xs' }, (f.examples || []).slice(0, SHOWN).map((x) => h('li', { class: 'dm-small', text: String(x) }))),
+              Number(f.count) > SHOWN ? h('p', { class: 'dm-help dm-xs', text: t('kontrollera.classes.more', { n: i18n.formatNumber(Number(f.count) - SHOWN) }) }) : null)));
+        }
+        function draw() {
+          const r = state.report;
+          replace(el,
+            h('h3', { text: t('kontrollera.basics') }),
+            h('p', { class: 'dm-help', text: t('kontrollera.basics.help') }),
+            h('div', { class: 'dm-row-wrap' }, ui.button({ label: t('kontrollera.basics.run'), icon: 'square-check', size: 'sm', loading: state.busy, title: t('kontrollera.basics.run.hint'), 'data-basics-run': '', onClick: run })),
+            state.error ? h('p', { class: 'dm-error dm-small', 'data-basics-error': '', text: state.error }) : null,
+            r ? h('p', { class: 'dm-help dm-small', 'data-basics-summary': '', text: t('kontrollera.basics.summary', { schema: String(r.schema || '') }) }) : null,
+            r ? BASICS_CHECKS.map(check) : null);
         }
         draw();
         return el;

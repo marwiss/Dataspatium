@@ -99,10 +99,15 @@
     '    rec = {"class": e.is_a(), "pt": getattr(e, "PredefinedType", None), "storey": c.Name if c else None, "part_of": e.Decomposes[0].RelatingObject.Name if e.Decomposes else None,',
     '           "type": t.Name if t else None, "type_class": t.is_a() if t else None, "type_pt": getattr(t, "PredefinedType", None) if t else None,',
     '           "material": getattr(mat, "Name", None) if mat is not None else None, "rep": [r.RepresentationType for r in e.Representation.Representations] if e.Representation else [],',
-    '           "box": box(world(e, items(e))), "frame": frame(e), "covers": [r.RelatingBuildingElement.Name for r in getattr(e, "CoversElements", None) or ()]}',
+    // IFC4 deprecates IfcRelCoversBldgElements (IFC102): a covering is then part of the element it covers.
+    '           "box": box(world(e, items(e))), "frame": frame(e), "covers": [r.RelatingBuildingElement.Name for r in getattr(e, "CoversElements", None) or ()]',
+    '                    + [r.RelatingObject.Name for r in getattr(e, "Decomposes", None) or () if e.is_a("IfcCovering") and r.RelatingObject.is_a("IfcElement")]}',
     '    if e.is_a("IfcStairFlight"):',
     '        rec["pset"] = {k: v for k, v in el.get_psets(e).get("Pset_StairFlightCommon", {}).items() if k != "id"}',
-    '        rec["counts"] = [e.NumberOfRisers, e.NumberOfTreads, round(e.RiserHeight * scale, 6), round(e.TreadLength * scale, 6)]',
+    // IFC4 deprecates the flight's own counts (IFC102): they are read from Pset_StairFlightCommon there.
+    '        sf = el.get_pset(e, "Pset_StairFlightCommon") or {}',
+    '        rec["counts"] = [e.NumberOfRisers if e.NumberOfRisers is not None else sf.get("NumberOfRiser"), e.NumberOfTreads if e.NumberOfTreads is not None else sf.get("NumberOfTreads"),',
+    '                         round((e.RiserHeight if e.RiserHeight is not None else sf.get("RiserHeight")) * scale, 6), round((e.TreadLength if e.TreadLength is not None else sf.get("TreadLength")) * scale, 6)]',
     '    facts[e.Name] = rec',
     'print(json.dumps({"scale": scale, "elements": facts}))',
   ];
@@ -119,7 +124,9 @@
     '           "frame": frame(e), "all": box(world(e, items(e))),',
     '           "panel": box([p for i, b in parts if abs(b[3] - b[0] - 0.95) < 1e-3 for p in world(e, [i])]),',
     '           "handles": box([p for i, b in parts if b[3] - b[0] < 0.15 and b[2] - frame(e)["origin"][2] > 0.5 for p in world(e, [i])]),',
-    '           "lining": [p.LiningDepth * scale for p in (t.HasPropertySets or ()) if p.is_a("IfcDoorLiningProperties") or p.is_a("IfcWindowLiningProperties")] if t else [],',
+    // IFC4.3 deprecates IfcDoorLiningProperties and IfcWindowLiningProperties (IFC102) for the standard sets of the same name.
+    '           "lining": ([p.LiningDepth * scale for p in (t.HasPropertySets or ()) if p.is_a("IfcDoorLiningProperties") or p.is_a("IfcWindowLiningProperties")]',
+    '                      + [v * scale for v in (el.get_pset(t, "Pset_DoorLiningProperties", "LiningDepth"), el.get_pset(t, "Pset_WindowLiningProperties", "LiningDepth")) if v]) if t else [],',
     '           "qto": {q.Name: round(float(q[3]), 6) for r in e.IsDefinedBy or () if r.is_a("IfcRelDefinesByProperties") and r.RelatingPropertyDefinition.is_a("IfcElementQuantity") for q in r.RelatingPropertyDefinition.Quantities}}',
     '    facts[e.Name] = rec',
     'print(json.dumps({"scale": scale, "fills": facts}))',
