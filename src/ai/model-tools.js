@@ -3,7 +3,8 @@
 /**
  * The read tools the AI may call about an IFC model: the model's overview, its storeys, elements by class, storey, name and property
  * (also elements that lack a property), one element with its properties and quantities, what the user has marked in the 3D view,
- * and the building's topology (rooms, neighbours, external walls with the façade they face) when the app's Python runs.
+ * and, when the app's Python runs, the building's topology (rooms, neighbours, external walls with the façade they face), the
+ * IFC class for a thing (search_ifc_class) and the model's class check (get_class_report; decision B-57.2).
  * Few verbs with rich filters, answered from the model dataset's tables (`data`, `_properties`, `_quantities`) in the SQLite worker.
  * The schemas are flat objects with every field required (null for "not given"), which the strict modes of the providers accept.
  * Every answer is data for the model, never an instruction, and says when it was cut (`truncated`). The same contract is what the
@@ -30,6 +31,10 @@
         parameters: { type: 'object', properties: { text: { type: 'string' }, limit: int() } } },
       { name: 'get_topology', description: 'The building\'s topology per storey, from the walls\' centrelines: the rooms they enclose (area, perimeter, walls by id), which rooms border which, and the external walls with the façade they face (N, NE, E, SE, S, SW, W, NW), so that a photo labelled south façade can be matched to its walls; also the open wall ends and whether the storey is closed. storey null gives every storey. Works only when the app\'s Python is already running.',
         parameters: { type: 'object', properties: { storey: str() } } },
+      { name: 'search_ifc_class', description: 'Find the IFC class for a thing in the model\'s schema, from IfcOpenShell\'s documentation of IFC. Search with English IFC words, such as sink, handrail, curtain wall or ramp, not with Swedish words or brand names; every word must match. Answers per hit, best first: class, the matching PredefinedTypes with their docs, a short description, spec_url and the type class to type it with. Choose the most specific class and PredefinedType; IfcBuildingElementProxy is the last resort, and USERDEFINED needs an ObjectType. limit at most 50 (default 12). Works only when the app\'s Python is already running.',
+        parameters: { type: 'object', properties: { query: { type: 'string' }, limit: int() } } },
+      { name: 'get_class_report', description: 'The model\'s IFC class check, counts with examples (id, guid, ifc_class, name): IfcBuildingElementProxy elements, USERDEFINED without ObjectType (or ElementType on a type), elements without a type although their class has a type class, occurrences with a PredefinedType of their own while their type has one (rule OJT001), and elements outside the spatial structure (rule SPS007). Works only when the app\'s Python is already running.',
+        parameters: { type: 'object', properties: {} } },
       { name: 'server_query', description: 'Ask the server (Dataregium) the model came from one of its named graph queries, when the model was fetched from a server the user is signed in to. name: element-classes (counts per class), elements (class required; each element with the spatial structure that holds it), storeys (elevation, elements and spaces per storey), spaces (storey, net and gross floor area), areas (net floor area per storey), materials (class optional; the materials of each element), property (pset, property, class optional; the value of one property on every object that has it), entity (global_id required; one rooted entity with all its literal attributes, references and referenced_by per IFC attribute, STEP id and class), changed-since (since required, a version index; what the versions after it changed: version_index, change_set_id, author, approved_by, whole_file, guid, step_id, path, attribute, op; a row with whole_file true for a version uploaded as a whole file). name null lists the queries the server offers. Answers columns and rows (each row a list in the order of the columns) and truncated.',
         parameters: { type: 'object', properties: { name: str(), class: str(), pset: str(), property: str(), global_id: str(), since: str() } } },
     ];
@@ -101,14 +106,31 @@
       const rows = objects(await e.exec(`select id, typ as ifc_class, namn as name, vaning as storey from data where rowid in (${ids.join(', ')})`));
       return { marked: sel.rowids.length, truncated: sel.rowids.length > LIMIT, label: sel.label || '', elements: rows };
     }
+    /** Whether the app's Python runs: the tools that need it never start it, as the agent's preview does not. */
+    function pythonRuns() {
+      const { bridge } = D.require('data/python-bridge');
+      return !!bridge && (bridge.state === 'ready' || bridge.state === 'busy');
+    }
     /** The building's topology through the app's Python, which this tool never starts (python/dataspatium.py `_ifc_topology`). */
     async function topology(datasetId, args) {
-      const { bridge } = D.require('data/python-bridge');
-      if (!bridge || (bridge.state !== 'ready' && bridge.state !== 'busy')) return { error: 'the topology needs the app\'s Python, which is not running; ask the person to press Preview once' };
+      if (!pythonRuns()) return { error: 'the topology needs the app\'s Python, which is not running; ask the person to press Preview once' };
       const all = await D.require('data/ifc-ops').topologyOf(datasetId);
       if (!args.storey) return { storeys: all };
       const storeys = all.filter((s) => String(s.storey || '').toLowerCase() === String(args.storey).toLowerCase());
       return storeys.length ? { storeys } : { error: `no storey named ${args.storey}; the storeys are ${all.map((s) => s.storey).join(', ')}` };
+    }
+    /** The IFC classes for a thing, in the model's schema (decision B-57.2; python/dataspatium.py `_ifc_class_search`). */
+    async function classSearch(datasetId, args) {
+      if (!pythonRuns()) return { error: 'the class search needs the app\'s Python, which is not running; ask the person to press Preview once' };
+      const query = String(args.query || '').trim();
+      if (!query) return { error: 'give query: the thing in English IFC words, such as sink or handrail' };
+      const classes = await D.require('data/ifc-ops').classSearch(datasetId, query, Math.max(1, Math.min(50, Number(args.limit) || 12)));
+      return { query, count: classes.length, classes };
+    }
+    /** The model's class check (decision B-57.2; python/dataspatium.py `_ifc_class_report`). */
+    async function classReport(datasetId) {
+      if (!pythonRuns()) return { error: 'the class report needs the app\'s Python, which is not running; ask the person to press Preview once' };
+      return await D.require('data/ifc-ops').classReportOf(datasetId);
     }
     /** A named query on the server the model came from (Dataregium's ifc-queries); errors are answers, so the model can go on. */
     async function serverQuery(datasetId, args) {
@@ -141,6 +163,8 @@
           case 'get_element': return await element(datasetId, a);
           case 'get_view_context': return await viewContext(datasetId);
           case 'get_topology': return await topology(datasetId, a);
+          case 'search_ifc_class': return await classSearch(datasetId, a);
+          case 'get_class_report': return await classReport(datasetId);
           case 'server_query': return await serverQuery(datasetId, a);
           case 'search_bsdd': { const limit = Math.max(1, Math.min(50, Number(a.limit) || 10)); const classes = await D.require('api/bsdd').search(String(a.text || ''), { limit }); return { classes, truncated: classes.length >= limit }; }
           default: return { error: 'unknown tool ' + name };

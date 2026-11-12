@@ -402,6 +402,39 @@
       }
 
       /**
+       * The IFC classes of a schema for a thing named in English words (decision B-57.2; the wheel's `_ifc_class_search` on
+       * IfcOpenShell's documentation of the schema). No model is read.
+       * @param {string} schema the model's schema, such as IFC4 @param {string} query @param {number} [limit]
+       * @returns {Promise<any[]>} the hits, best first
+       */
+      async runIfcClassSearch(schema, query, limit = 12) {
+        return this.ifcJob(async () => {
+          await this.ensurePackages(['ifcopenshell']);
+          this.streams = [];
+          return await this.engine.evalJson(`__import__("json").dumps(_dataspatium._ifc_class_search(${JSON.stringify(String(schema))}, ${JSON.stringify(String(query))}, ${Number(limit) || 12}), ensure_ascii=False)`);
+        });
+      }
+
+      /**
+       * The class report of the model kept in a dataset file (decision B-57.2; the wheel's `_ifc_class_report_file`): proxies,
+       * USERDEFINED without a name, untyped elements, type and occurrence conflicts and elements outside the spatial structure.
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file
+       * @returns {Promise<any>}
+       */
+      async runIfcClassReport(bytes) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson('_dataspatium._ifc_class_report_file("/data/step/model.sqlite", "/data/step/classes.json")');
+          } finally {
+            for (const p of ['/data/step/model.sqlite', '/data/step/classes-in.ifc', '/data/step/classes.json']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
+      /**
        * A new, empty model written by the wheel (OB-06 Schemaval för nya modeller): project, units, contexts, site, building and a
        * first storey in the schema chosen.
        * @param {string} schema IFC4X3_ADD2, IFC4 or IFC2X3 @param {{project: string, site: string, building: string, storey: string, elevation: number}} names

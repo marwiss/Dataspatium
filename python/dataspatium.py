@@ -3181,12 +3181,16 @@ CLASS_RULES = {
 
 
 def _ifc_schema(name):
-    """IfcOpenShell's definition of a schema by its name (IFC2X3, IFC4, IFC4X3_ADD2 ...)."""
+    """IfcOpenShell's definition of a schema by its name (IFC2X3, IFC4, IFC4X3_ADD2 ...), or by the one of its line that the app's
+    IfcOpenShell carries (a file header's IFC4X3 or IFC2X3_TC1)."""
     import ifcopenshell
-    try:
-        return ifcopenshell.schema_by_name(str(name))
-    except Exception:
-        raise DataspatiumError("unknown IFC schema %r; the app writes %s" % (name, ", ".join(IFC_NEW_SCHEMAS)))
+    upper = str(name or "").upper()
+    for candidate in (str(name), next((s for s in IFC_NEW_SCHEMAS if upper.startswith(s.split("_")[0])), None)):
+        try:
+            return ifcopenshell.schema_by_name(candidate)
+        except Exception:
+            continue
+    raise DataspatiumError("unknown IFC schema %r; the app reads %s" % (name, ", ".join(IFC_NEW_SCHEMAS)))
 
 
 def _ifc_declaration(schema, name):
