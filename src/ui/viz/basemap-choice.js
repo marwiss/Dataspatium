@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/orthophoto-cog', 'platform/text'], (base, overlays, authPanel, orthophotos, connectors, cog, text) => {
+  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/orthophoto-cog'], (base, overlays, authPanel, orthophotos, connectors, cog) => {
     const { h, t } = base;
 
     /**
@@ -162,7 +162,7 @@
       if (old) map.removeLayer(old);
       // Lantmäteriet's terms: the product, © Lantmäteriet, the year, that the image was processed (resampled and placed on the
       // map) and the licence.
-      const attribution = `${orthophotos.attributionHtml(Object.assign({}, preset, { attribution: result.attribution }))}, ${text.escapeHtml(t('ortho.se.processed'))}`;
+      const attribution = orthophotos.attributionHtml(Object.assign({}, preset, { attribution: `${result.attribution}, ${t('ortho.se.processed')}` }));
       const layer = L.imageOverlay(result.url, L.latLngBounds(result.bounds[0], result.bounds[1]), { pane: 'tilePane', interactive: false, alt: t('map.basemap.' + id), attribution, className: 'dm-ortho-image' });
       layer.addTo(map);
       layers.set(map, layer);
