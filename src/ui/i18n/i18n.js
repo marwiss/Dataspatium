@@ -66,19 +66,12 @@
     }
 
     /**
-     * The first of the browser's languages among the seven ('no' is bokmål), else Swedish: the same rule as src/boot.js,
-     * which loads that dictionary at the first start.
+     * The first of the browser's languages among the seven ('no' is bokmål), else Swedish. The rule lives in src/boot.js,
+     * which loads that language's dictionary at the first start, so that both always agree.
      * @param {ReadonlyArray<string>} prefs
+     * @returns {string}
      */
-    function browserLanguage(prefs) {
-      if (D.boot && D.boot.browserLanguage) return D.boot.browserLanguage(prefs);
-      for (const p of prefs) {
-        const base = String(p).toLowerCase().split('-')[0];
-        const code = base === 'no' ? 'nb' : base;
-        if (isCode(code)) return code;
-      }
-      return 'sv';
-    }
+    function browserLanguage(prefs) { return D.boot && D.boot.browserLanguage ? D.boot.browserLanguage(prefs) : 'sv'; }
 
     /**
      * The saved language, else the first browser language among the seven, else Swedish. A `?lang=xx`
