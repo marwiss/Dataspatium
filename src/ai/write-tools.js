@@ -28,6 +28,9 @@
  * own (columns, beams, members, footings, piles, coverings, railings, chimneys, shading devices, sanitary terminals, furniture and
  * straight stairs) of the most specific IFC class, with a ref; define_type also makes covering, column, beam, footing, railing, door
  * and window types, and create_opening takes a door or window type, whose size and geometry the filling gets.
+ * A glass façade is create_element's IfcCurtainWall: `curtain` gives its axis like a wall's and its grid of bays and rows, and the
+ * wheel makes its mullions, transoms and panels as its parts; define_type's curtain_wall type gives their materials and sizes. The
+ * op carries `curtain` and `part_names` (the parts' words in the person's language) only for a curtain wall (additive).
  */
 (function () {
   'use strict';
@@ -46,17 +49,24 @@
     const MAX_ROOMS = 200;
     /** The kinds of define_type: with material layers, and without (a material at most; doors and windows with their geometry). */
     const LAYERED_KINDS = ['wall', 'slab', 'roof', 'covering'];
-    const ELEMENT_KINDS = ['column', 'beam', 'footing', 'railing', 'door', 'window'];
+    const ELEMENT_KINDS = ['column', 'beam', 'footing', 'railing', 'door', 'window', 'curtain_wall'];
     const TYPE_KINDS = LAYERED_KINDS.concat(ELEMENT_KINDS);
     /** The type class of each kind (IFC4 and later); slab and roof types are both IfcSlabType, so their names must differ. */
-    const TYPE_CLASS = { wall: 'IfcWallType', slab: 'IfcSlabType', roof: 'IfcSlabType', covering: 'IfcCoveringType', column: 'IfcColumnType', beam: 'IfcBeamType', footing: 'IfcFootingType', railing: 'IfcRailingType', door: 'IfcDoorType', window: 'IfcWindowType' };
+    const TYPE_CLASS = { wall: 'IfcWallType', slab: 'IfcSlabType', roof: 'IfcSlabType', covering: 'IfcCoveringType', column: 'IfcColumnType', beam: 'IfcBeamType', footing: 'IfcFootingType', railing: 'IfcRailingType', door: 'IfcDoorType', window: 'IfcWindowType', curtain_wall: 'IfcCurtainWallType' };
     /** The door OperationTypes and window PartitioningTypes whose geometry IfcOpenShell draws; the first is the default. */
     const DOOR_OPERATIONS = ['SINGLE_SWING_LEFT', 'SINGLE_SWING_RIGHT', 'DOUBLE_SWING_LEFT', 'DOUBLE_SWING_RIGHT', 'DOUBLE_DOOR_SINGLE_SWING', 'DOUBLE_DOOR_DOUBLE_SWING', 'SLIDING_TO_LEFT', 'SLIDING_TO_RIGHT', 'DOUBLE_DOOR_SLIDING'];
     const WINDOW_PARTITIONS = ['SINGLE_PANEL', 'DOUBLE_PANEL_VERTICAL', 'DOUBLE_PANEL_HORIZONTAL', 'TRIPLE_PANEL_VERTICAL', 'TRIPLE_PANEL_HORIZONTAL', 'TRIPLE_PANEL_BOTTOM', 'TRIPLE_PANEL_TOP', 'TRIPLE_PANEL_LEFT', 'TRIPLE_PANEL_RIGHT'];
     /** The classes create_element makes (IfcFurniture is IfcFurnishingElement in IFC2X3), and the define_type kind of those that have one. */
-    const ELEMENT_CLASSES = ['IfcColumn', 'IfcBeam', 'IfcMember', 'IfcFooting', 'IfcPile', 'IfcCovering', 'IfcRailing', 'IfcChimney', 'IfcShadingDevice', 'IfcSanitaryTerminal', 'IfcFurniture', 'IfcFurnishingElement', 'IfcStair'];
-    const CLASS_KIND = { IfcColumn: 'column', IfcBeam: 'beam', IfcFooting: 'footing', IfcCovering: 'covering', IfcRailing: 'railing' };
+    const ELEMENT_CLASSES = ['IfcColumn', 'IfcBeam', 'IfcMember', 'IfcFooting', 'IfcPile', 'IfcCovering', 'IfcRailing', 'IfcChimney', 'IfcShadingDevice', 'IfcSanitaryTerminal', 'IfcFurniture', 'IfcFurnishingElement', 'IfcStair', 'IfcCurtainWall'];
+    const CLASS_KIND = { IfcColumn: 'column', IfcBeam: 'beam', IfcFooting: 'footing', IfcCovering: 'covering', IfcRailing: 'railing', IfcCurtainWall: 'curtain_wall' };
     const MAX_RISERS = 60;
+    /** A curtain wall's members' width and depth and its panels' thickness in metres without a type, as python/ CURTAIN_SIZES. */
+    const CURTAIN_SIZES = { member_width: 0.05, member_depth: 0.15, panel_thickness: 0.03 };
+    /** The most a bay is wide or a row high without a count or a spacing, and the most bays, rows and panels (python/ the same). */
+    const CURTAIN_SPACING = 1.5;
+    const MAX_BAYS = 100;
+    const MAX_ROWS = 40;
+    const MAX_PANELS = 200;
     const MAX_OUTLINE = 500;
     const MAX_LAYERS = 20;
     /** IfcMaterial.Category as IfcOpenShell recommends it, and the roles of IfcMaterialLayer.Category (the wheel spells them per schema). */
@@ -80,9 +90,10 @@
         parameters: { type: 'object', properties: {
           storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' }, description: str(), long_name: str() }, required: ['name', 'elevation', 'description', 'long_name'], additionalProperties: false } },
           grid: { type: ['object', 'null'], properties: { x_spacing: { type: 'number' }, x_count: { type: 'integer' }, y_spacing: { type: 'number' }, y_count: { type: 'integer' } }, required: ['x_spacing', 'x_count', 'y_spacing', 'y_count'], additionalProperties: false } } } },
-      { name: 'define_type', description: 'Define a type before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType), roof (an IfcSlabType ROOF for the roof slabs of create_roof) or covering (an IfcCoveringType), each with its material layers; or column, beam, footing, railing, door or window (an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType or IfcWindowType; IfcDoorStyle and IfcWindowStyle in IFC2X3) with layers null and, when known, its material as material and material_category. name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab, a roof or a covering from the top down (a cladding from its outer face in). category (and material_category) is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall, FLOOR or BASESLAB for a slab, FLOORING, CEILING or CLADDING for a covering, PAD_FOOTING or STRIP_FOOTING for a footing and HANDRAIL or GUARDRAIL for a railing (null: FLOOR for a slab, COLUMN, BEAM, DOOR and WINDOW, NOTDEFINED for the others; a roof type is ROOF). A door type has operation, its OperationType: SINGLE_SWING_LEFT (the default), SINGLE_SWING_RIGHT, DOUBLE_SWING_LEFT, DOUBLE_SWING_RIGHT, DOUBLE_DOOR_SINGLE_SWING, DOUBLE_DOOR_DOUBLE_SWING, SLIDING_TO_LEFT, SLIDING_TO_RIGHT or DOUBLE_DOOR_SLIDING, LEFT with the hinges on the left as seen in the direction it opens. A window type has partitioning, its PartitioningType: SINGLE_PANEL (the default), DOUBLE_PANEL_VERTICAL, DOUBLE_PANEL_HORIZONTAL, TRIPLE_PANEL_VERTICAL, TRIPLE_PANEL_HORIZONTAL, TRIPLE_PANEL_BOTTOM, TRIPLE_PANEL_TOP, TRIPLE_PANEL_LEFT or TRIPLE_PANEL_RIGHT. Both have width and height in metres (null: 0.9 × 2.1 for a door, 1.2 × 1.2 for a window) and lining_depth, the depth of the lining across the wall (at least 0.05 m, the default; the wall\'s thickness fills the reveal), and get their geometry from these. Answers the ref of the type, which create_wall, create_slab, create_roof, create_element and create_opening take as type; put shared properties on the type with set_properties and its ref.',
+      { name: 'define_type', description: 'Define a type before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType), roof (an IfcSlabType ROOF for the roof slabs of create_roof) or covering (an IfcCoveringType), each with its material layers; or column, beam, footing, railing, door, window or curtain_wall (an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType, IfcWindowType or IfcCurtainWallType; IfcDoorStyle and IfcWindowStyle in IFC2X3) with layers null and, when known, its material as material and material_category. name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab, a roof or a covering from the top down (a cladding from its outer face in). category (and material_category) is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall, FLOOR or BASESLAB for a slab, FLOORING, CEILING or CLADDING for a covering, PAD_FOOTING or STRIP_FOOTING for a footing and HANDRAIL or GUARDRAIL for a railing (null: FLOOR for a slab, COLUMN, BEAM, DOOR and WINDOW, NOTDEFINED for the others; a roof type is ROOF). A door type has operation, its OperationType: SINGLE_SWING_LEFT (the default), SINGLE_SWING_RIGHT, DOUBLE_SWING_LEFT, DOUBLE_SWING_RIGHT, DOUBLE_DOOR_SINGLE_SWING, DOUBLE_DOOR_DOUBLE_SWING, SLIDING_TO_LEFT, SLIDING_TO_RIGHT or DOUBLE_DOOR_SLIDING, LEFT with the hinges on the left as seen in the direction it opens. A window type has partitioning, its PartitioningType: SINGLE_PANEL (the default), DOUBLE_PANEL_VERTICAL, DOUBLE_PANEL_HORIZONTAL, TRIPLE_PANEL_VERTICAL, TRIPLE_PANEL_HORIZONTAL, TRIPLE_PANEL_BOTTOM, TRIPLE_PANEL_TOP, TRIPLE_PANEL_LEFT or TRIPLE_PANEL_RIGHT. Both have width and height in metres (null: 0.9 × 2.1 for a door, 1.2 × 1.2 for a window) and lining_depth, the depth of the lining across the wall (at least 0.05 m, the default; the wall\'s thickness fills the reveal), and get their geometry from these. A curtain wall type\'s material and material_category are its frame\'s, the mullions\' and transoms\' (null: Aluminium), panel_material is its panels\' glass (null: Glass), member_width and member_depth the members\' width in the façade and depth across it (null: 0.05 and 0.15 m) and panel_thickness the panels\' (null: 0.03 m, less than the depth); predefined_type stays null, and the app gives its panels an IfcPlateType CURTAIN_PANEL and its mullions and transoms an IfcMemberType MULLION of its name. Answers the ref of the type, which create_wall, create_slab, create_roof, create_element and create_opening take as type; put shared properties on the type with set_properties and its ref.',
         parameters: { type: 'object', properties: { kind: { type: 'string' }, name: { type: 'string' }, layers: { type: ['array', 'null'], items: { type: 'object', properties: { material: { type: 'string' }, thickness: { type: 'number' }, category: str(), role: str() }, required: ['material', 'thickness', 'category', 'role'], additionalProperties: false } }, predefined_type: str(),
-          material: str(), material_category: str(), operation: str(), partitioning: str(), width: num(), height: num(), lining_depth: num() } } },
+          material: str(), material_category: str(), operation: str(), partitioning: str(), width: num(), height: num(), lining_depth: num(),
+          panel_material: str(), member_width: num(), member_depth: num(), panel_thickness: num() } } },
       { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. partition true makes a non-load-bearing interior wall (PredefinedType PARTITIONING) when the wall has no type; otherwise the wall is SOLIDWALL or takes its PredefinedType from the type. With type (the ref of a define_type wall type, or a wall type\'s GlobalId or id) the wall takes its thickness from the type\'s layers, so leave thickness null. Walls whose lines meet at a corner, or that end on another wall\'s line, are joined by the app when the change set is applied: let them meet on their lines, and never lengthen or overlap them to close a corner. load_bearing is true for a wall that bears load and false for one that does not, as the brief or the person says; null when they do not say, never assumed. status is NEW, EXISTING, DEMOLISH or TEMPORARY as the brief says (EXISTING for a wall of an existing building), else null. The app sets IsExternal itself from the storey\'s topology. Answers the ref of the wall.',
         parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str(), type: typeRef(), partition: bool(), load_bearing: bool(), status: str() } } },
       { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. With type (the ref of a define_type slab type, or a slab type\'s GlobalId or id) the slab takes its thickness from the type\'s layers, so leave thickness null. load_bearing is true for a slab that bears load and false for one that does not, as the brief or the person says; null when they do not say, never assumed. status is NEW, EXISTING, DEMOLISH or TEMPORARY as the brief says, else null. Answers the ref of the slab.',
@@ -91,10 +102,11 @@
         parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str(), type: typeRef(), status: str() } } },
       { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. With type (the ref of a define_type door or window type, or such a type\'s GlobalId or id, with fill door or window) the door or window takes its width, height and geometry from the type, so leave width and height null; it stands flush with the wall\'s left face as seen from the wall\'s start toward its end (the inside of an outer wall drawn counter-clockwise), and a door opens toward that side, a LEFT door with its hinges at the opening\'s side nearest the wall\'s start; side right turns it around, flush with the right face and opening toward it (side null: left). Answers the ref of the door or window, or of the opening.',
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str(), type: typeRef(), side: str() } } },
-      { name: 'create_element', description: 'Add a building element that has no tool of its own, of the most specific IFC class: IfcColumn, IfcBeam, IfcMember, IfcFooting, IfcPile, IfcCovering, IfcRailing, IfcChimney, IfcShadingDevice, IfcSanitaryTerminal, IfcFurniture (IfcFurnishingElement in IFC2X3) or IfcStair for a straight stair; never IfcBuildingElementProxy. predefined_type is a value of the class\'s list (search_ifc_class gives them), such as COLUMN; BEAM or LINTEL; STUD or RAFTER; PAD_FOOTING or STRIP_FOOTING; BORED or DRIVEN; FLOORING, CEILING, CLADDING, ROOFING or INSULATION; HANDRAIL, GUARDRAIL or BALUSTRADE; JALOUSIE or AWNING; WASHHANDBASIN or TOILETPAN; TABLE or BED; null for NOTDEFINED or the type\'s, and USERDEFINED only with object_type. type is the ref of a define_type step of the class\'s kind (column, beam, footing, covering or railing) or a type\'s GlobalId or id. at is [x, y] metres in the storey\'s plane, z metres above the storey and rotation degrees counter-clockwise from x. shape is the body: profile rectangle (x by y metres), circle (radius) or polygon (outline, [x, y] corners in the storey\'s plane; at and rotation are then ignored), extruded depth metres. along z (the default) stands the profile in the plan centred on at and extrudes it up from z: a column, footing, pile, covering, chimney, sanitary terminal or furniture (give a footing or a pile a negative z to reach down). along x lays the profile across, centred on a line at height z, and extrudes it from at in the direction of rotation, x its width and y its height: a beam, member or railing. A covering with a type takes its depth from the type\'s layers, so leave depth null. part_of (a ref, GlobalId or id) makes the element a part of a whole, such as a railing of a stair: aggregated in it and on its storey, not in the storey itself, so leave storey null. host (only for IfcCovering) is the element or space it covers. For IfcStair shape is null and stair is the flight: risers (the number of risers, from 2), riser_height and tread_length in metres, width (default 1), thickness (the waist at right angles to the slope, at least riser_height; default 0.2) and landing (the length in metres of a landing at the top, or null); at is the foot of the first riser\'s middle and rotation the direction it rises, and the last riser is the front edge of the landing or of the floor above. Answers the ref of the element.',
+      { name: 'create_element', description: 'Add a building element that has no tool of its own, of the most specific IFC class: IfcColumn, IfcBeam, IfcMember, IfcFooting, IfcPile, IfcCovering, IfcRailing, IfcChimney, IfcShadingDevice, IfcSanitaryTerminal, IfcFurniture (IfcFurnishingElement in IFC2X3), IfcStair for a straight stair or IfcCurtainWall for a glass façade; never IfcBuildingElementProxy. predefined_type is a value of the class\'s list (search_ifc_class gives them), such as COLUMN; BEAM or LINTEL; STUD or RAFTER; PAD_FOOTING or STRIP_FOOTING; BORED or DRIVEN; FLOORING, CEILING, CLADDING, ROOFING or INSULATION; HANDRAIL, GUARDRAIL or BALUSTRADE; JALOUSIE or AWNING; WASHHANDBASIN or TOILETPAN; TABLE or BED; null for NOTDEFINED or the type\'s, and USERDEFINED only with object_type. type is the ref of a define_type step of the class\'s kind (column, beam, footing, covering, railing or curtain_wall) or a type\'s GlobalId or id. at is [x, y] metres in the storey\'s plane, z metres above the storey and rotation degrees counter-clockwise from x. shape is the body: profile rectangle (x by y metres), circle (radius) or polygon (outline, [x, y] corners in the storey\'s plane; at and rotation are then ignored), extruded depth metres. along z (the default) stands the profile in the plan centred on at and extrudes it up from z: a column, footing, pile, covering, chimney, sanitary terminal or furniture (give a footing or a pile a negative z to reach down). along x lays the profile across, centred on a line at height z, and extrudes it from at in the direction of rotation, x its width and y its height: a beam, member or railing. A covering with a type takes its depth from the type\'s layers, so leave depth null. part_of (a ref, GlobalId or id) makes the element a part of a whole, such as a railing of a stair: aggregated in it and on its storey, not in the storey itself, so leave storey null. host (only for IfcCovering) is the element or space it covers. For IfcStair shape is null and stair is the flight: risers (the number of risers, from 2), riser_height and tread_length in metres, width (default 1), thickness (the waist at right angles to the slope, at least riser_height; default 0.2) and landing (the length in metres of a landing at the top, or null); at is the foot of the first riser\'s middle and rotation the direction it rises, and the last riser is the front edge of the landing or of the floor above. For IfcCurtainWall at, z, rotation, shape and stair are null and curtain is the façade, along its axis as a wall is: start and end [x, y] metres in the storey\'s plane, height (default 3) and base metres above the storey (default 0), and its even grid: bays, the number of bays along it, or bay_width, the most a bay is wide in metres, and rows or row_height up it the same way (both null: 1.5 m); predefined_type is null. The app makes its mullions and transoms (IfcMember MULLION) and its glass panels (IfcPlate CURTAIN_PANEL) as its parts, with the sizes and materials of its type (define_type curtain_wall; without one 0.05 × 0.15 m aluminium and 0.03 m glass), and sets its IsExternal from the topology, where it counts as a wall: let it meet the walls on their lines, as walls meet. Answers the ref of the element.',
         parameters: { type: 'object', properties: { storey: str(), ifc_class: { type: 'string' }, predefined_type: str(), object_type: str(), type: typeRef(), name: str(), at: xy(), z: num(), rotation: num(),
           shape: { type: ['object', 'null'], properties: { profile: { type: 'string' }, x: num(), y: num(), radius: num(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, depth: num(), along: str() }, required: ['profile', 'x', 'y', 'radius', 'outline', 'depth', 'along'], additionalProperties: false },
           stair: { type: ['object', 'null'], properties: { risers: { type: ['integer', 'null'] }, riser_height: num(), tread_length: num(), width: num(), thickness: num(), landing: num() }, required: ['risers', 'riser_height', 'tread_length', 'width', 'thickness', 'landing'], additionalProperties: false },
+          curtain: { type: ['object', 'null'], properties: { start: xy(), end: xy(), height: num(), base: num(), bays: { type: ['integer', 'null'] }, bay_width: num(), rows: { type: ['integer', 'null'] }, row_height: num() }, required: ['start', 'end', 'height', 'base', 'bays', 'bay_width', 'rows', 'row_height'], additionalProperties: false },
           part_of: typeRef(), host: typeRef() } } },
       { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. Give each listed room a number, unique in the building (such as the storey\'s number and two digits: 101, 102 … on Plan 1): the number becomes the space\'s Name, the name its LongName and long_name its description; with number null the name is the Name and long_name the LongName. room_type is the room\'s type when the brief gives one (such as Bedroom), written as ObjectType with PredefinedType USERDEFINED; null when not given. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
         parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str(), number: str(), room_type: str() }, required: ['at', 'index', 'name', 'long_name', 'number', 'room_type'], additionalProperties: false } }, height: num() } } },
@@ -359,20 +371,56 @@
       return typed[key] !== null ? typed[key] : own;
     }
     /**
-     * The type of create_element, as {ref, kind, thickness}: a define_type ref of the class's kind (a covering's with its layers'
-     * thickness), or a type of the model, which the wheel checks; null without a type.
+     * The type of create_element, as {ref, kind, thickness, member_width}: a define_type ref of the class's kind (a covering's with
+     * its layers' thickness, a curtain wall's with its members' width), or a type of the model, which the wheel checks; null without
+     * a type.
      * @param {{ops: any[], refs: number}} cs @param {any} a @param {string} cls
      */
     function elementType(cs, a, cls) {
       if (!given(a.type)) return null;
       const ref = idOrRef(cs, a.type, 'type');
       const kind = CLASS_KIND[cls] || null;
-      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) return { ref, kind, thickness: null };
+      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) return { ref, kind, thickness: null, member_width: null };
       const def = stepOf(cs, ref);
       if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id or GlobalId`);
       if (!kind) throw new Error(`define_type makes no type for ${cls}; give a type of the model by its GlobalId or id, or null`);
       if (def.kind !== kind) throw new Error(`type ${ref} is a ${def.kind} type; ${cls} takes a ${kind} type`);
-      return { ref, kind, thickness: def.layers ? layersThickness(def.layers) : null };
+      return { ref, kind, thickness: def.layers ? layersThickness(def.layers) : null, member_width: def.member_width || null };
+    }
+    /** How many bays (or rows) divide a span evenly: the count, else as many as keep each within the spacing (python/ curtain_count). */
+    const curtainCount = (count, spacing, span) => (count !== null ? count : Math.max(1, Math.ceil(span / spacing - 1e-9)));
+    /** A curtain's [bays, rows]. @param {any} c */
+    const curtainGrid = (c) => [curtainCount(c.bays, c.bay_width, Math.hypot(c.end[0] - c.start[0], c.end[1] - c.start[1])), curtainCount(c.rows, c.row_height, c.height)];
+    /**
+     * create_element's curtain, checked: the axis from start to end, height and base, and per direction a count or a spacing (both
+     * null: CURTAIN_SPACING), with room for the panels between members of the type's width (or the default).
+     * @param {any} c @param {{member_width: number|null}|null} typed
+     */
+    function curtainOf(c, typed) {
+      if (!c || typeof c !== 'object' || Array.isArray(c)) throw new Error('an IfcCurtainWall needs curtain: {start, end, height, base, bays, bay_width, rows, row_height}');
+      const num = (key, options) => { try { return number(c, key, options); } catch (e) { throw new Error('curtain.' + String((e && e.message) || e)); } };
+      const start = point(c.start, 'curtain.start'); const end = point(c.end, 'curtain.end');
+      const length = Math.hypot(end[0] - start[0], end[1] - start[1]);
+      if (length < 0.3) throw new Error('curtain.start and curtain.end must be at least 0.3 m apart');
+      const out = { start, end, height: num('height', { fallback: 3, positive: true }), base: num('base', { fallback: 0 }), bays: null, bay_width: null, rows: null, row_height: null };
+      if (out.height > 200) throw new Error('curtain.height must be at most 200 m');
+      for (const [countKey, spacingKey, span, most] of [['bays', 'bay_width', length, MAX_BAYS], ['rows', 'row_height', out.height, MAX_ROWS]]) {
+        if (given(c[countKey]) && given(c[spacingKey])) throw new Error(`give curtain.${countKey} or curtain.${spacingKey}, not both`);
+        if (given(c[countKey])) {
+          if (!Number.isInteger(c[countKey]) || c[countKey] < 1 || c[countKey] > most) throw new Error(`curtain.${countKey} must be a whole number from 1 to ${most}`);
+          out[countKey] = c[countKey];
+          continue;
+        }
+        const spacing = out[spacingKey] = num(spacingKey, { fallback: CURTAIN_SPACING, positive: true });
+        const n = curtainCount(null, spacing, span);
+        if (n > most) throw new Error(`curtain.${spacingKey} ${fmt(spacing)} m divides ${fmt(span)} m into ${n}; at most ${most}, so give a larger spacing`);
+      }
+      const [n, m] = curtainGrid(out);
+      if (n * m > MAX_PANELS) throw new Error(`${n} bays by ${m} rows are ${n * m} panels; at most ${MAX_PANELS} in one curtain wall, so give fewer or make several`);
+      const w = typed && typed.member_width ? typed.member_width : CURTAIN_SIZES.member_width;
+      const width = (length - w) / n - w; const high = (out.height - w) / m - w;
+      if (width < 0.05 || high < 0.05) throw new Error(`the panels would be ${fmt(width)} m wide and ${fmt(high)} m high between members ${fmt(w)} m wide; give fewer bays or rows`);
+      return out;
     }
     /** create_element's shape, checked; its depth from a covering type's layers. @param {any} s @param {{kind: string|null, thickness: number|null, ref: any}|null} typed */
     function shapeOf(s, typed) {
@@ -422,6 +470,20 @@
       const twin = cs.ops.find((op) => op.tool === 'define_type' && TYPE_CLASS[op.kind] === TYPE_CLASS[kind] && op.name.toLowerCase() === typeName.toLowerCase());
       if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type of the same name already; give its ref as type, or choose another name`);
     }
+    /**
+     * define_type's curtain wall type: NOTDEFINED (its parts' types carry CURTAIN_PANEL and MULLION), the panels' material when given,
+     * and the members' width and depth and the panels' thickness (CURTAIN_SIZES when not given), as python/ curtain_sizes checks them.
+     * @param {any} a the call @param {any} op @param {string|null} predefined
+     */
+    function curtainTypeOp(a, op, predefined) {
+      if (predefined && predefined !== 'NOTDEFINED') throw new Error('a curtain wall type is NOTDEFINED: the app gives its panels CURTAIN_PANEL and its mullions and transoms MULLION on types of their own; leave predefined_type null');
+      const panel = text(a, 'panel_material') ? text(a, 'panel_material').trim() : '';
+      if (panel) op.panel_material = panel;
+      for (const key of ['member_width', 'member_depth', 'panel_thickness']) op[key] = number(a, key, { fallback: CURTAIN_SIZES[key], positive: true });
+      if (op.member_width < 0.02 || op.member_width > 0.5 || op.member_depth < 0.02 || op.member_depth > 1) throw new Error('member_width must be 0.02 to 0.5 m and member_depth 0.02 to 1 m');
+      if (op.panel_thickness < 0.004 || op.panel_thickness >= op.member_depth) throw new Error(`panel_thickness must be at least 0.004 m and less than member_depth (${fmt(op.member_depth)} m)`);
+      return op;
+    }
     /** define_type for a kind without layers: its material, and a door's operation or a window's partitioning with the size and lining. */
     function elementTypeOp(cs, tool, kind, typeName, a) {
       if (Array.isArray(a.layers) ? a.layers.length : given(a.layers)) throw new Error(`a ${kind} type has no layers; give its material as material, or null`);
@@ -434,6 +496,7 @@
       const category = given(a.material_category) ? String(a.material_category).trim().toLowerCase() : null;
       if (category && !MATERIAL_CATEGORIES.includes(category)) throw new Error(`material_category must be ${MATERIAL_CATEGORIES.join(', ')} or null`);
       if (material) { op.material = material; op.material_category = category || null; }
+      if (kind === 'curtain_wall') return curtainTypeOp(a, op, predefined);
       if (kind !== 'door' && kind !== 'window') return op;
       const key = kind === 'door' ? 'operation' : 'partitioning';
       const values = kind === 'door' ? DOOR_OPERATIONS : WINDOW_PARTITIONS;
@@ -498,13 +561,24 @@
             z: number(a, 'z', { fallback: 0 }), rotation: number(a, 'rotation', { fallback: 0, unit: 'degrees' }), shape: null, stair: null, part_of: null, host: null };
           if (typed) op.type = typed.ref;
           if (cls === 'IfcStair') {
-            if (given(a.shape)) throw new Error('an IfcStair takes stair, not shape');
+            if (given(a.shape) || given(a.curtain)) throw new Error('an IfcStair takes stair, not shape or curtain');
             if (given(a.part_of) || given(a.host)) throw new Error('a stair is not part_of another element and covers nothing, so part_of and host must be null');
             if (predefined && predefined !== 'STRAIGHT_RUN_STAIR') throw new Error('create_element makes straight stairs of one flight: predefined_type STRAIGHT_RUN_STAIR or null');
             op.at = point(a.at, 'at');
             op.stair = stairOf(a.stair);
             return op;
           }
+          if (cls === 'IfcCurtainWall') {
+            if (given(a.shape) || given(a.stair)) throw new Error('an IfcCurtainWall takes curtain, not shape or stair');
+            if (given(a.at) || (given(a.z) && a.z !== 0) || (given(a.rotation) && a.rotation !== 0)) throw new Error('a curtain wall runs along its axis as a wall does: give curtain.start, curtain.end and curtain.base, and at, z and rotation null');
+            if (given(a.part_of) || given(a.host)) throw new Error('a curtain wall is not part_of another element and covers nothing, so part_of and host must be null');
+            if (predefined && predefined !== 'NOTDEFINED' && predefined !== 'USERDEFINED') throw new Error('an IfcCurtainWall is NOTDEFINED (null), or USERDEFINED with object_type; the app gives its panels CURTAIN_PANEL and its mullions and transoms MULLION');
+            Object.assign(op, { z: null, rotation: null, curtain: curtainOf(a.curtain, typed) });
+            // The parts' names in the person's language, as create_spaces names its rooms (the wheel falls back on English).
+            op.part_names = { panel: t('ai.change.curtain.panel'), mullion: t('ai.change.curtain.mullion'), transom: t('ai.change.curtain.transom') };
+            return op;
+          }
+          if (given(a.curtain)) throw new Error(`curtain is for IfcCurtainWall; ${cls} takes shape`);
           if (given(a.stair)) throw new Error(`stair is for IfcStair; ${cls} takes shape`);
           op.shape = shapeOf(a.shape, typed);
           if (op.shape.profile !== 'polygon') op.at = point(a.at, 'at');
@@ -716,14 +790,20 @@
           const base = { ref: op.ref || '', kind: t('ai.change.type.' + op.kind), name: op.name, predefined: op.predefined_type ? ' ' + op.predefined_type : '' };
           if (!op.layers) {
             return t('ai.change.define_type.element', base) + (op.width ? t('ai.change.define_type.size', { operation: op.operation || op.partitioning, width: fmt(op.width), height: fmt(op.height) }) : '')
-              + (op.material ? t('ai.change.define_type.material', { material: op.material }) : '');
+              + (op.member_width ? t('ai.change.define_type.curtain', { width: fmt(op.member_width), depth: fmt(op.member_depth), thickness: fmt(op.panel_thickness) }) : '')
+              + (op.material ? t('ai.change.define_type.material', { material: op.material }) : '')
+              + (op.panel_material ? t('ai.change.define_type.panel', { material: op.panel_material }) : '');
           }
           return t('ai.change.define_type', Object.assign(base, { layers: op.layers.map((l) => `${l.material} ${fmt(l.thickness)} m`).join(', '), thickness: fmt(layersThickness(op.layers)) }));
         }
         case 'create_element': {
           const s = op.shape;
           const depth = s && s.depth !== null ? fmt(s.depth) : '–';
-          const body = op.stair
+          const c = op.curtain;
+          const grid = c ? curtainGrid(c) : null;
+          const body = c
+            ? t('ai.change.curtain', { x1: fmt(c.start[0]), y1: fmt(c.start[1]), x2: fmt(c.end[0]), y2: fmt(c.end[1]), height: fmt(c.height), bays: fmt(grid[0]), rows: fmt(grid[1]) }) + (c.base ? t('ai.change.curtain.base', { base: fmt(c.base) }) : '')
+            : op.stair
             ? t('ai.change.stair', { risers: fmt(op.stair.risers), riser: fmt(op.stair.riser_height), tread: fmt(op.stair.tread_length), width: fmt(op.stair.width), rotation: fmt(op.rotation) }) + (op.stair.landing ? t('ai.change.stair.landing', { landing: fmt(op.stair.landing) }) : '')
             : t('ai.change.shape.' + s.profile, { x: fmt(s.x), y: fmt(s.y), radius: fmt(s.radius), n: String((s.outline || []).length) }) + (s.along === 'x' ? t('ai.change.shape.along', { depth, rotation: fmt(op.rotation) }) : t('ai.change.shape.up', { depth }));
           return t('ai.change.create_element', { ref: op.ref || '', cls: op.ifc_class, predefined: op.predefined_type ? ' ' + op.predefined_type : '', name: op.name ? ' ' + op.name : '',
@@ -782,6 +862,6 @@
     }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
-    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, EDITS, TYPE_KINDS, ELEMENT_CLASSES, DOOR_OPERATIONS, WINDOW_PARTITIONS, has, create, call, describe, summary, toWheel, unitIn };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, EDITS, TYPE_KINDS, ELEMENT_CLASSES, DOOR_OPERATIONS, WINDOW_PARTITIONS, CURTAIN_SIZES, has, create, call, describe, summary, toWheel, unitIn };
   });
 })();

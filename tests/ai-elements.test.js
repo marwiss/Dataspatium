@@ -137,10 +137,10 @@
   test('ai elements: create_element is a create with a ref for the classes without a tool of their own, never a proxy, and checks its shape, PredefinedType, type, part_of and host', async (assert) => {
     assert.ok(writeTools.has('create_element') && writeTools.CREATES.includes('create_element'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'create_element');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['storey', 'ifc_class', 'predefined_type', 'object_type', 'type', 'name', 'at', 'z', 'rotation', 'shape', 'stair', 'part_of', 'host']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['storey', 'ifc_class', 'predefined_type', 'object_type', 'type', 'name', 'at', 'z', 'rotation', 'shape', 'stair', 'curtain', 'part_of', 'host']);
     assert.deepEqual(tool.parameters.properties.shape.required, ['profile', 'x', 'y', 'radius', 'outline', 'depth', 'along'], 'every field of the shape is required, null when not given');
     assert.deepEqual(tool.parameters.properties.stair.required, ['risers', 'riser_height', 'tread_length', 'width', 'thickness', 'landing']);
-    assert.deepEqual(writeTools.ELEMENT_CLASSES, ['IfcColumn', 'IfcBeam', 'IfcMember', 'IfcFooting', 'IfcPile', 'IfcCovering', 'IfcRailing', 'IfcChimney', 'IfcShadingDevice', 'IfcSanitaryTerminal', 'IfcFurniture', 'IfcFurnishingElement', 'IfcStair']);
+    assert.deepEqual(writeTools.ELEMENT_CLASSES, ['IfcColumn', 'IfcBeam', 'IfcMember', 'IfcFooting', 'IfcPile', 'IfcCovering', 'IfcRailing', 'IfcChimney', 'IfcShadingDevice', 'IfcSanitaryTerminal', 'IfcFurniture', 'IfcFurnishingElement', 'IfcStair', 'IfcCurtainWall']);
     assert.ok(writeTools.ELEMENT_CLASSES.every((c) => tool.description.includes(c)) && tool.description.includes('never IfcBuildingElementProxy'), 'the tool names its classes and never a proxy');
     assert.ok(['FLOORING', 'CEILING', 'CLADDING', 'ROOFING', 'INSULATION', 'search_ifc_class', 'USERDEFINED only with object_type'].every((w) => tool.description.includes(w)), 'the coverings\' values and how to choose');
     const cs = writeTools.create('elements-test');
@@ -189,7 +189,7 @@
   });
 
   test('ai elements: define_type makes covering, column, beam, footing, railing, door and window types, a door with its operation and a window with its partitioning and size', async (assert) => {
-    assert.deepEqual(writeTools.TYPE_KINDS, ['wall', 'slab', 'roof', 'covering', 'column', 'beam', 'footing', 'railing', 'door', 'window']);
+    assert.deepEqual(writeTools.TYPE_KINDS, ['wall', 'slab', 'roof', 'covering', 'column', 'beam', 'footing', 'railing', 'door', 'window', 'curtain_wall']);
     const tool = writeTools.TOOLS.find((x) => x.name === 'define_type');
     assert.ok(writeTools.DOOR_OPERATIONS.concat(writeTools.WINDOW_PARTITIONS, ['IfcDoorStyle', 'IfcWindowStyle', 'lining_depth', 'create_element', 'create_opening']).every((w) => tool.description.includes(w)), 'the tool names the operations, partitionings and IFC2X3\'s styles');
     assert.ok(['material', 'material_category', 'operation', 'partitioning', 'width', 'height', 'lining_depth'].every((k) => k in tool.parameters.properties), 'the new fields');
@@ -205,7 +205,7 @@
     assert.ok(writeTools.call(cs, 'define_type', { kind: 'covering', name: 'Golv1', layers: [layer('Ek', 0.014, 'wood', null)], predefined_type: 'FLOORING' }).ok, 'a covering type is layered');
     assert.deepEqual(Object.keys(cs.ops[6]), ['tool', 'kind', 'name', 'layers', 'predefined_type', 'ref'], 'as a slab type is');
     const refused = (args, label) => { const out = writeTools.call(cs, 'define_type', args); assert.ok(out.error, label + ': ' + JSON.stringify(out)); return String(out.error || ''); };
-    assert.ok(refused({ kind: 'stair', name: 'T', layers: null, predefined_type: null }, 'a stair type').includes('wall, slab, roof, covering, column, beam, footing, railing, door or window'));
+    assert.ok(refused({ kind: 'stair', name: 'T', layers: null, predefined_type: null }, 'a stair type').includes('wall, slab, roof, covering, column, beam, footing, railing, door, window or curtain_wall'));
     assert.ok(refused({ kind: 'column', name: 'X', layers: [layer('Stål', 0.3, null, null)], predefined_type: null }, 'a column with layers').includes('no layers'));
     assert.ok(refused({ kind: 'covering', name: 'X', layers: null, predefined_type: null }, 'a covering without layers').includes('layers'));
     assert.ok(refused({ kind: 'beam', name: 'X', layers: null, predefined_type: null, material: 'Trä', material_category: 'timber' }, 'a category outside the list').includes('material_category'));
