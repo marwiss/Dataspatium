@@ -462,25 +462,25 @@ hovudet seier `notYetAssigned` i staden for ei vising fila ikkje følgjer; valid
 mottakar som krev ei vising, gjev ho. Ei fil appen endrar, held på sin eigen forfattar, organisasjon og sitt opphavsprogram, og
 visinga si når valideringstenesta godtek ho.
 
-## Ein ny bygning frå ein brief
+## Ein ny bygning frå ei oppdragsskildring
 
-Skriv ein brief i skjemaet *Ny bygningsmodell* ("eit toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og vel *Bygg frå
-briefen med AI* når modellen er laga: modellen opnar i Bearbeid med AI-panelet i modusen **Bygg frå brief**. Der kan du leggje ved
+Skriv ei oppdragsskildring i skjemaet *Ny bygningsmodell* ("eit toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og vel *Bygg frå
+oppdragsskildringa med AI* når modellen er laga: modellen opnar i Bearbeid med AI-panelet i modusen **Bygg frå skildring**. Der kan du leggje ved
 foto og skanna teikningar (JPEG, PNG eller PDF; ei planteikning gjev dei rette måla, eit foto utsjånad, materialar og korleis delane
 heng saman) eller leggje til bileta frå ei biletsamling, til dømes dei du har teke med Dataspatium Mobil. AI-en les den tomme
-modellen, seier planen sin, spør i panelet når briefen lèt noko vesentleg stå ope (fotavtrykk, tal på etasjar, etasjehøgd,
+modellen, seier planen sin, spør i panelet når skildringa lèt noko vesentleg stå ope (fotavtrykk, tal på etasjar, etasjehøgd,
 veggtjukkleikar, materialar) og byggjer så i grupper med same verktøy som *Endre*: etasjar og rutenett, veggar per etasje, dekke,
 opningar, eigenskapar og materialar, med førehandsvising og rettingar etter kvar gruppe. Ingenting vert skrive i modellen før du
-førehandsviser og godkjenner endringssettet som vanleg, og du kan supplere med ein ny brief i same modus. Bileta vert sende til
-leverandøren saman med briefen etter samtykket for verten til leverandøren; ein lokal modell som ser bilete held alt på datamaskina.
-Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i briefen som tekst: ei bygningsflate henta frå kartet (Opne geodata)
+førehandsviser og godkjenner endringssettet som vanleg, og du kan supplere med ei ny skildring i same modus. Bileta vert sende til
+leverandøren saman med skildringa etter samtykket for verten til leverandøren; ein lokal modell som ser bilete held alt på datamaskina.
+Med *Opplysningar frå eit datasett* vert rader frå ein tabell lagde i skildringa som tekst: ei bygningsflate henta frå kartet (Opne geodata)
 vert hjørne i meter frå det sørvestlege hjørnet, så veggane får rette mål, og mål og notat frå eit feltskjema i Dataspatium Mobil vert
-rader; ein runde med telefonen kan så gje fleire bilete og mål, og briefen vert supplert i same modus.
-Briefen og bileta kan òg leggjast på tenaren som grunnlaget til modellen når modellen er henta frå eit CDE: saka *Grunnlag* i
-prosjektet til modellen får briefen som tekstdokument og kvart bilete som dokument, så andre som arbeider med modellen i eigne
+rader; ein runde med telefonen kan så gje fleire bilete og mål, og skildringa vert supplert i same modus.
+Oppdragsskildringa og bileta kan òg leggjast på tenaren som grunnlaget til modellen når modellen er henta frå eit CDE: saka *Grunnlag* i
+prosjektet til modellen får skildringa som tekstdokument og kvart bilete som dokument, så andre som arbeider med modellen i eigne
 klientar ser kva han vart bygd av. Knappen heiter *Legg grunnlaget på tenaren*.
 Øvst i panelet står *Opplysningane om bygningen* (kva bygning, etasjar, lengd, breidd, høgd, fundamentering, tak) og *Nøyaktigheit*
-(skisse, hovudtrekk eller detaljert): fyll inn det du veit, så innleier det briefen og AI-en spør om resten. Orda er vanlege, men bak
+(skisse, hovudtrekk eller detaljert): fyll inn det du veit, så innleier det skildringa og AI-en spør om resten. Orda er vanlege, men bak
 dei ligg informasjonskrava i ISO 19650 og level of information need, og modellen er tenkt som forvaltningsmodellen til bygningen. Kvart
 bilete vert lagt ved som foto, fasade mot nord, aust, sør eller vest, innvendig eller teikning, og eit foto med posisjon og tidspunkt i
 fila (EXIF) får dei i biletteksten sin, så AI-en veit kva han ser. Opplysningane frå eit datasett gjev òg det sørvestlege hjørnet til
@@ -507,7 +507,7 @@ nøyaktigheit og krav, som du kan endre etterpå:
 | Anna (med eigen tekst) | Hovudtrekk | ingen |
 
 Fasen seier kvar i livet til bygget modellen høyrer heime: moglegheitsstudie, forslag, arbeidsteikningar, under bygging eller
-eksisterande bygg. Føremål, fase og krav opnar briefen. Med krav prøver kvar førehandsvising, den til AI-en og di, kandidaten mot
+eksisterande bygg. Føremål, fase og krav opnar oppdragsskildringa. Med krav prøver kvar førehandsvising, den til AI-en og di, kandidaten mot
 IDS-fila, og AI-en får spesifikasjonane som ikkje er oppfylte, slik at han kan rette dei. Krava hindrar ikkje godkjenninga; panelet
 viser kor mange spesifikasjonar som er oppfylte, og kva for nokre som ikkje er det.
 
@@ -518,12 +518,12 @@ dokumentasjon. Med eigne ord til appen tyder dei tre nivåa dette per aspekt:
 |---|---|---|---|
 | Detalj | etasjar, ytterveggar og dekke som enkle lekamar, ingen opningar | alle veggar med tjukna til typane, dekke, forma på taket og opningar med rimelege mål | sjikt per type, dører og vindauge med karm og ramme, veggar som møtest i hjørna |
 | Dimensjonar | lekamar i 3D og aksen til veggen | som skissa | som skissa; plansymbol kan kome seinare |
-| Plassering | høgdene til etasjane, rutenettet og tomta når ho er kjend | mål frå teikning eller brief, georeferert når opplysningane finst | innmålte eller målsette plasseringar, opningar på nøyaktig stad |
+| Plassering | høgdene til etasjane, rutenettet og tomta når ho er kjend | mål frå teikning eller oppdragsskildring, georeferert når opplysningane finst | innmålte eller målsette plasseringar, opningar på nøyaktig stad |
 | Utsjånad | standardfargar | farge etter kategorien til materialet | ein overflatestil per materiale, skild frå materialet |
 | Parametrisk åtferd | ekstruderingar der måla kan endrast | typar (byt typen, så blir alle endra) og sjikt | samband som reknar om hjørna, dører og vindauge med parametrar |
 | Identifikasjon | namn, IFC-klasse med PredefinedType og GlobalId | typar med namn, rom med nummer og namn | delar og romklassar, Tag på dører og vindauge |
 | Informasjonsinnhald | etasjar og høgder | IsExternal, LoadBearing og materiale på typane, basismengder | brann, U-verdi og klimadata per type eller materiale, tilstanden i eit eksisterande bygg |
-| Dokumentasjon | briefen | briefen og bileta som grunnlaget for modellen | EPD-referansar og produktblad |
+| Dokumentasjon | oppdragsskildringa | oppdragsskildringa og bileta som grunnlaget for modellen | EPD-referansar og produktblad |
 
 ## Kontroller med AI
 
@@ -626,7 +626,7 @@ Produktidentitetar skriv AI-en berre når du oppgjev dei, og han finn aldri på 
 (Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikkje GTIN.
 **Berande, status og eigenskapar.** `create_wall` og `create_slab` tek `load_bearing` (berande eller ikkje), og dei og `create_roof`
-tek `status` (NEW ny, EXISTING eksisterande, DEMOLISH blir riven, TEMPORARY mellombels), men berre når briefen eller du seier det:
+tek `status` (NEW ny, EXISTING eksisterande, DEMOLISH blir riven, TEMPORARY mellombels), men berre når oppdragsskildringa eller du seier det:
 AI-en gjettar aldri, og ein digital tvilling av ein eksisterande bygning får EXISTING. Verdiane blir skrivne som LoadBearing og Status
 i Pset_WallCommon, Pset_SlabCommon og Pset_RoofCommon, på typen når alle element av typen seier det same, og elles på elementet;
 IFC2X3 har ikkje Status, og rapporten seier det. Når endringssettet køyrer, set appen sjølv IsExternal ut frå topologien på veggene
@@ -764,7 +764,7 @@ Appen har eigne IDS-filer i `presets/ids/`, skrivne ut frå opne reglar:
   vindauge, materiale på bygningsdelane, ein kategori på kvart materiale og basismengder: det den førebelse klimaerklæringa les.
 
 IDS nemner ein klasse utan underklassane, så IFC4-klassane …StandardCase har eigne spesifikasjonar, og ein spesifikasjon gjeld berre
-dei IFC-versjonane han oppgir. Briefen vel ei fil etter føremålet, og IDS-kontroll i Analyser kan køyre dei.
+dei IFC-versjonane han oppgir. Oppdragsskildringa vel ei fil etter føremålet, og IDS-kontroll i Analyser kan køyre dei.
 
 ## Samanlikn versjonar
 

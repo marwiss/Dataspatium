@@ -452,25 +452,25 @@ har ingen officiell vy för en modell i hela schemat (Reference View utesluter b
 kräver en vy anger den. En fil som appen ändrar behåller sin egen upphovsperson, organisation och sitt ursprungsprogram, och sin vy
 när valideringstjänsten godtar den.
 
-## Ny byggnad ur en brief
+## Ny byggnad från en uppdragsbeskrivning
 
-Skriv en brief i formuläret *Ny byggnadsmodell* ("ett tvåvåningshus 12 × 8 m med sadeltak, tegelfasad, entré mot söder …") och välj
-*Bygg ur briefen med AI* när modellen är skapad: modellen öppnas i Bearbeta med AI-panelen i läget **Bygg ur brief**. Där kan du
+Skriv en uppdragsbeskrivning i formuläret *Ny byggnadsmodell* ("ett tvåvåningshus 12 × 8 m med sadeltak, tegelfasad, entré mot söder …") och välj
+*Bygg från uppdragsbeskrivningen med AI* när modellen är skapad: modellen öppnas i Bearbeta med AI-panelen i läget **Bygg från beskrivning**. Där kan du
 bifoga foton och skannade ritningar (JPEG, PNG eller PDF; en planritning ger de riktiga måtten, ett foto utseende, material och hur
 delarna hör ihop) eller lägga till bilderna ur en bildsamling, till exempel de du tagit med Dataspatium Mobil. AI:n läser den tomma
-modellen, säger sin plan, frågar i panelen när briefen lämnar något väsentligt öppet (fotavtryck, antal våningar, våningshöjd,
+modellen, säger sin plan, frågar i panelen när beskrivningen lämnar något väsentligt öppet (fotavtryck, antal våningar, våningshöjd,
 väggtjocklekar, material) och bygger sedan i grupper med samma verktyg som *Ändra*: våningar och rutnät, väggar per våning, bjälklag,
 öppningar, egenskaper och material, med förhandsvisning och rättning efter varje grupp. Ingenting skrivs i modellen förrän du
-förhandsgranskar och godkänner ändringssetet som vanligt, och du kan komplettera med en ny brief i samma läge. Bilderna skickas till
-leverantören tillsammans med briefen, efter samtycket för leverantörens värd; en lokal modell som ser bilder behåller allt på datorn.
-Med *Uppgifter ur en datamängd* läggs rader ur en tabell i briefen som text: en byggnadsyta hämtad ur kartan (Öppna geodata) blir
+förhandsgranskar och godkänner ändringssetet som vanligt, och du kan komplettera med en ny beskrivning i samma läge. Bilderna skickas till
+leverantören tillsammans med beskrivningen, efter samtycket för leverantörens värd; en lokal modell som ser bilder behåller allt på datorn.
+Med *Uppgifter ur en datamängd* läggs rader ur en tabell i beskrivningen som text: en byggnadsyta hämtad ur kartan (Öppna geodata) blir
 hörn i meter från sydvästra hörnet, så att väggarna får riktiga mått, och mått och anteckningar ur ett fältformulär från Dataspatium
-Mobil blir rader; en runda med telefonen kan sedan ge fler bilder och mått, och briefen kompletteras i samma läge.
-Briefen och bilderna kan också läggas på servern som modellens underlag när modellen hämtats från ett CDE: ärendet *Underlag* i
-modellens projekt får briefen som textdokument och varje bild som dokument, så att andra som arbetar med modellen i egna klienter
+Mobil blir rader; en runda med telefonen kan sedan ge fler bilder och mått, och beskrivningen kompletteras i samma läge.
+Uppdragsbeskrivningen och bilderna kan också läggas på servern som modellens underlag när modellen hämtats från ett CDE: ärendet *Underlag* i
+modellens projekt får beskrivningen som textdokument och varje bild som dokument, så att andra som arbetar med modellen i egna klienter
 ser vad den byggdes av. Knappen heter *Lägg underlaget på servern*.
 Överst i panelen står *Byggnadens uppgifter* (vilken byggnad, våningar, längd, bredd, höjd, grundläggning, tak) och *Noggrannhet*
-(skiss, huvuddrag eller detaljerad): fyll i det du vet, så inleder det briefen och AI:n frågar om resten. Orden är vanliga, men bakom
+(skiss, huvuddrag eller detaljerad): fyll i det du vet, så inleder det beskrivningen och AI:n frågar om resten. Orden är vanliga, men bakom
 dem ligger ISO 19650:s informationskrav och level of information need, och modellen är tänkt som byggnadens förvaltningsmodell. Varje
 bild bifogas som foto, fasad mot norr, öster, söder eller väster, insida eller ritning, och ett foto med position och tidpunkt i filen
 (EXIF) får dem i sin bildtext, så att AI:n vet vad den ser. Uppgifterna ur en datamängd ger också byggnadsytans sydvästra hörn på
@@ -496,7 +496,7 @@ noggrannhet och krav, som du kan ändra efteråt:
 | Annat (med egen text) | Huvuddrag | inga |
 
 Skedet säger var i byggnadens liv modellen hör hemma: förstudie, förslag, bygghandlingar, under byggnad eller befintlig byggnad.
-Syfte, skede och krav inleder briefen. Med ett krav prövar varje förhandsvisning, AI:ns egen och din, kandidaten mot IDS-filen, och
+Syfte, skede och krav inleder uppdragsbeskrivningen. Med ett krav prövar varje förhandsvisning, AI:ns egen och din, kandidaten mot IDS-filen, och
 AI:n får de specifikationer som inte uppfylls så att den kan rätta dem. Kraven hindrar inte godkännandet; panelen visar hur många
 specifikationer som uppfylls och vilka som inte gör det.
 
@@ -507,12 +507,12 @@ dokumentation. Med appens egna ord betyder de tre nivåerna detta per aspekt:
 |---|---|---|---|
 | Detalj | våningar, ytterväggar och bjälklag som enkla kroppar, inga öppningar | alla väggar med typernas tjocklek, bjälklag, takets form och öppningar med rimliga mått | skikt per typ, dörrar och fönster med karm och båge, väggar som möts i hörnen |
 | Dimensioner | kroppar i 3D och väggens axel | som skissen | som skissen; symboler i plan kan komma senare |
-| Läge | våningarnas höjder, rutnätet och platsen när den är känd | mått ur ritning eller brief, georefererad när uppgifterna finns | inmätta eller måttsatta lägen, öppningar på exakt plats |
+| Läge | våningarnas höjder, rutnätet och platsen när den är känd | mått ur ritning eller uppdragsbeskrivning, georefererad när uppgifterna finns | inmätta eller måttsatta lägen, öppningar på exakt plats |
 | Utseende | standardfärger | färg efter materialets kategori | en ytstil per material, skild från materialet |
 | Parametriskt beteende | extruderingar vars mått kan ändras | typer (byt typen så ändras alla) och skikt | anslutningar som räknar om hörnen, dörrar och fönster med parametrar |
 | Identifiering | namn, IFC-klass med PredefinedType och GlobalId | typer med namn, rum med nummer och namn | delar och rumsklasser, Tag på dörrar och fönster |
 | Informationsinnehåll | våningar och höjder | IsExternal, LoadBearing och material på typerna, basmängder | brand, U-värde och klimatdata per typ eller material, skicket i en befintlig byggnad |
-| Dokumentation | briefen | briefen och bilderna som modellens underlag | EPD-referenser och produktblad |
+| Dokumentation | uppdragsbeskrivningen | uppdragsbeskrivningen och bilderna som modellens underlag | EPD-referenser och produktblad |
 
 ## Kontrollera med AI
 
@@ -614,7 +614,7 @@ Produktidentiteter skriver AI:n bara när du anger dem, och den hittar aldrig p�
 (Manufacturer) och modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, och serienummer (SerialNumber) och streckkod
 (BarCode) i Pset_ManufacturerOccurrence på byggdelen. IFC2X3 har inget GTIN.
 **Bärande, status och egenskaper.** `create_wall` och `create_slab` tar `load_bearing` (bärande eller inte), och de och `create_roof`
-tar `status` (NEW ny, EXISTING befintlig, DEMOLISH rivs, TEMPORARY tillfällig), men bara när briefen eller du säger det: AI:n gissar
+tar `status` (NEW ny, EXISTING befintlig, DEMOLISH rivs, TEMPORARY tillfällig), men bara när uppdragsbeskrivningen eller du säger det: AI:n gissar
 aldrig, och en digital tvilling av en befintlig byggnad får EXISTING. Värdena skrivs som LoadBearing och Status i Pset_WallCommon,
 Pset_SlabCommon och Pset_RoofCommon, på typen när alla element av typen säger samma sak och annars på elementet; IFC2X3 saknar Status,
 och rapporten säger det. När ändringssetet körs sätter appen själv IsExternal ur topologin på de väggar det skapat eller ändrat: sant
@@ -749,7 +749,7 @@ Appen har egna IDS-filer i `presets/ids/`, skrivna efter öppna regler:
   fönster, material på byggdelarna, en kategori på varje material och basmängder: det som den preliminära klimatdeklarationen läser.
 
 IDS nämner en klass utan dess underklasser, så IFC4:s klasser …StandardCase har egna specifikationer, och en specifikation gäller bara
-de IFC-versioner den anger. Briefen väljer en fil efter syftet, och IDS-kontroll i Analysera kan köra dem.
+de IFC-versioner den anger. Uppdragsbeskrivningen väljer en fil efter syftet, och IDS-kontroll i Analysera kan köra dem.
 
 ## Jämför versioner
 

@@ -196,12 +196,12 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
   tarkastaa sen ja sinä hyväksyt; tekoäly ei voi koskaan tallentaa eikä julkaista itse. Voit myös aloittaa uudesta, tyhjästä mallista
   skeemalla IFC4X3_ADD2, IFC4 tai IFC2X3 (*Nouda > Uusi rakennusmalli*). *Teknisesti:* kirjoitustyökalut täyttävät
   muutosjoukon, jonka mallinnusmoduuli soveltaa IfcOpenShellillä; skeemavirheet ja uudet virheet mallin suhteissa estävät hyväksynnän.
-- **Uusi rakennus briefistä**: kirjoita brief eli kuvaus rakennuksesta lomakkeeseen *Uusi rakennusmalli* ja valitse
-  *Rakenna briefistä tekoälyllä*. Tekoälypaneelin tilassa *Rakenna briefistä* tekoäly suunnittelee, kysyy, kun jotakin olennaista
+- **Uusi rakennus toimeksiannon kuvauksesta**: kirjoita toimeksiannon kuvaus rakennuksesta lomakkeeseen *Uusi rakennusmalli* ja valitse
+  *Rakenna toimeksiannon kuvauksesta tekoälyllä*. Tekoälypaneelin tilassa *Rakenna kuvauksesta* tekoäly suunnittelee, kysyy, kun jotakin olennaista
   on auki, ja rakentaa kerrokset, seinät, laatat ja aukot kirjoitustyökaluilla; malliin ei kirjoiteta mitään ennen kuin esikatselet
-  ja hyväksyt muutosjoukon (ks. [CAD ja BIM](cad-bim.md#uusi-rakennus-briefistä)).
+  ja hyväksyt muutosjoukon (ks. [CAD ja BIM](cad-bim.md#uusi-rakennus-toimeksiannon-kuvauksesta)).
 - **Olemassa olevan rakennuksen digitaalinen kaksonen**: *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus, leveys, korkeus,
-  perustus, katto) ja *Tarkkuus* (luonnos, pääpiirteet tai yksityiskohtainen) aloittavat briefin, ja julkisivujen ja sisätilojen
+  perustus, katto) ja *Tarkkuus* (luonnos, pääpiirteet tai yksityiskohtainen) aloittavat toimeksiannon kuvauksen, ja julkisivujen ja sisätilojen
   valokuvat sekä skannatut piirustukset menevät tekoälylle merkittyinä, ja kuvatekstiin tulevat tiedoston sijainti ja ajankohta;
   Lantmäterietin rakennukset-tasolta haettu rakennusala antaa kulmat metreinä, mallin paikan maapallolla (SWEREF 99 TM) ja
   pyydettäessä maanpinnan korkeuden kulmissa. Sanat ovat tavallista suomea, mutta niiden takana ovat ISO 19650:n tietovaatimukset
@@ -212,7 +212,7 @@ Mikä toimii yhdessä versiossa, toimii myös seuraavassa. Jokainen versio kuulu
 - **Useita asiakasohjelmia saman mallin parissa**: kortti *Muutosehdotukset palvelimella* listaa ehdotukset, jotka kohdistuvat
   mallin asiakirjaan Dataregiumissa, ja se, joka saa hyväksyä, tekee kokeillusta ehdotuksesta seuraavan version; palvelin, joka
   ottaa vastaan kirjoitustyökalujen oman muodon, saa ehdotukseen myös uudet elementit, poistot ja suhteet. Painikkeella
-  *Vie aineisto palvelimelle* brief ja kuvat viedään palvelimelle mallin aineistoksi asiaan *Aineisto*, kun olet käynyt läpi
+  *Vie aineisto palvelimelle* toimeksiannon kuvaus ja kuvat viedään palvelimelle mallin aineistoksi asiaan *Aineisto*, kun olet käynyt läpi
   tarkistuksen ennen jakamista, jotta muut mallin parissa työskentelevät näkevät, mistä se rakennettiin. *Teknisesti:* kyvykkyys
   `ifc_proposals_url` ja muoto `ops_form` (`dataspatium-tools/1`).
 - **Vertaa versioita**: näe, mitä on lisätty, poistettu ja muutettu mallin kahden version välillä, väritettynä 3D:ssä, myös palvelimen
@@ -309,7 +309,7 @@ Kullakin päänumerolla on yksi julkaisu, ja samanumeroiset Dataspatium ja Datar
 |---|---|---|
 | 1.0.0 | Data tiedostoista ja avoimista rajapinnoista, käsittely, R, SQL ja säännölliset lausekkeet, Ruotsin kaavat, kaaviot ja kartat kaavioissa, koontinäytöt, asiakirjat, vienti ja jakaminen. Palvelinta vasten vain Documents API: asiakirjojen noutaminen aineistoiksi sekä aineistojen ja tiedostojen lähettäminen takaisin. Ei asioita, ei malleja eikä Pythonia | Dataregium 1.0.0 (vain Documents API) |
 | 2.0.0 | Kaikki 1.0.0:n sisältö sekä tilat Hae ja Jaa, Python ja tilastot ilman koodia, lisää lähteitä, karttanäkymät, Pohjoismaiden kaavat, graafit, IFC-mallit 3D:nä ja tarkistus IDS:ää vasten, työnkulut, Dataspatium Mobiili, asiat viewpointeineen (BCF API 3.0 ja 2.1), palvelimen IFC-graafi, kortti *Hallinta* ja kortti *Projektin jäsenet*, navigointi näkymäkuutiolla ja leikkauksilla, lisää paikkatietolähteitä | Dataregium 2.0.0 |
-| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa sekä uudelleenjulkaisujen jälkeen tekoälyavustaja, komennot, ehdolliset ja toistuvat työnkulut, ohjaus sillan kautta ja Dataregiumin tiimit; lisäksi uusi rakennus briefistä, digitaalinen kaksonen, Tarkista-tila, topologia, tilat ja oikea IFC-luokka; edelleen materiaalikerroksiset tyypit, ominaisuudet ja ruotsalaiset tunnukset, elementtien muokkaus, lisää rakennusosia, ilmastoselvitys, materiaali-inventaario, buildingSMARTin säännöt, BCF 3.0 ja henkilötiedot IFC-malleissa | Dataregium 3.0.0 |
+| 3.0.0 | Kaikki 2.0.0:n sisältö sekä kortti *Validoi malli*, törmäystarkastus, Kysy tekoälyltä ja Muuta tekoälyllä, uudet tyhjät mallit valitulla skeemalla, Vertaa versioita, julkaisu perusversion ja ennakkotarkastuksen kanssa, muutosehdotukset, joita palvelimella kokeillaan ja hyväksytään ja joissa ristiriidat ratkaistaan valinnalla, sekä graafi kevyemmässä muodossa sekä uudelleenjulkaisujen jälkeen tekoälyavustaja, komennot, ehdolliset ja toistuvat työnkulut, ohjaus sillan kautta ja Dataregiumin tiimit; lisäksi uusi rakennus toimeksiannon kuvauksesta, digitaalinen kaksonen, Tarkista-tila, topologia, tilat ja oikea IFC-luokka; edelleen materiaalikerroksiset tyypit, ominaisuudet ja ruotsalaiset tunnukset, elementtien muokkaus, lisää rakennusosia, ilmastoselvitys, materiaali-inventaario, buildingSMARTin säännöt, BCF 3.0 ja henkilötiedot IFC-malleissa | Dataregium 3.0.0 |
 
 Uusi julkaisu samalla päänumerolla korvaa edellisen; vain kunkin sarjan uusinta korjataan. Sovelluksen päivitystarkistus tarjoaa
 seuraavaa päänumeroa, ja aineistot, listat, kaaviot, mallipohjat ja skriptit tulevat mukaan, kun avaat uuden version `index.html`-tiedoston.

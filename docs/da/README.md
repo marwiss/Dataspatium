@@ -188,12 +188,12 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
   godkender; AI'en kan aldrig gemme eller publicere selv. Du kan også begynde fra en ny, tom model i IFC4X3_ADD2, IFC4 eller
   IFC2X3 (*Hent > Ny bygningsmodel*). *Teknisk:* skriveværktøjerne fylder et ændringssæt, som modelleringshjulet
   anvender med IfcOpenShell; skemafejl og nye fejl i modellens sammenhænge spærrer godkendelsen.
-- **En ny bygning ud fra en brief**: skriv en brief, en beskrivelse af bygningen, i formularen *Ny bygningsmodel*, og vælg
-  *Byg ud fra briefen med AI*. I AI-panelets tilstand *Byg ud fra brief* planlægger AI'en, spørger, når noget væsentligt står
+- **En ny bygning ud fra en opgavebeskrivelse**: skriv en opgavebeskrivelse for bygningen i formularen *Ny bygningsmodel*, og vælg
+  *Byg ud fra opgavebeskrivelsen med AI*. I AI-panelets tilstand *Byg ud fra beskrivelse* planlægger AI'en, spørger, når noget væsentligt står
   åbent, og bygger etager, vægge, dæk og åbninger med skriveværktøjerne; intet skrives i modellen, før du forhåndsviser og
-  godkender ændringssættet (se [CAD og BIM](cad-bim.md#en-ny-bygning-ud-fra-en-brief)).
+  godkender ændringssættet (se [CAD og BIM](cad-bim.md#en-ny-bygning-ud-fra-en-opgavebeskrivelse)).
 - **Den digitale tvilling af en eksisterende bygning**: *Bygningens oplysninger* (hvilken bygning, etager, længde, bredde, højde,
-  fundering, tag) og *Detaljeringsgrad* (skitse, hovedtræk eller detaljeret) indleder briefen, og fotos af facaderne og indefra
+  fundering, tag) og *Detaljeringsgrad* (skitse, hovedtræk eller detaljeret) indleder opgavebeskrivelsen, og fotos af facaderne og indefra
   samt skannede tegninger følger med til AI'en, mærket og med position og tidspunkt fra filen; en bygningsflade fra Lantmäteriets
   bygningslag giver hjørnerne i meter, modellens sted på jorden (SWEREF 99 TM) og efter ønske terrænhøjden i hjørnerne. Ordene er
   almindeligt dansk, men bag dem ligger ISO 19650's informationskrav og level of information need, og modellen er tænkt som
@@ -203,7 +203,7 @@ Det, der virker i én version, virker også i den næste. Hver version hører sa
   snippet med GlobalId og sti som nøgle.
 - **Flere klienter på samme model**: kortet *Ændringsforslag på serveren* lister forslagene mod modellens dokument på Dataregium,
   og den, der må godkende, gør et afprøvet forslag til næste version; en server, der tager imod skriveværktøjernes egen form, får
-  også nye elementer, sletninger og relationer med i forslaget. Med *Læg grundlaget på serveren* lægges briefen og billederne på
+  også nye elementer, sletninger og relationer med i forslaget. Med *Læg grundlaget på serveren* lægges opgavebeskrivelsen og billederne på
   serveren som modellens grundlag, i sagen *Grundlag*, efter gennemgangen før deling, så andre, der arbejder med modellen, ser,
   hvad den blev bygget af. *Teknisk:* kapabiliteten `ifc_proposals_url` og formen `ops_form` (`dataspatium-tools/1`).
 - **Sammenlign versioner**: se, hvad der er tilføjet, fjernet og ændret mellem to versioner af en model, farvet i 3D, også mod serverens
@@ -298,7 +298,7 @@ Der er én udgivelse pr. hovednummer, og Dataspatium og Dataregium med samme num
 |---|---|---|
 | 1.0.0 | Data fra filer og åbne API'er, bearbejdning, R, SQL og regulære udtryk, svenske planer, diagrammer og kort i diagrammer, dashboards, dokumenter, eksport og deling. Mod en server kun Documents API: hent dokumenter som datasæt og send datasæt og filer tilbage. Ingen sager, ingen modeller og ingen Python | Dataregium 1.0.0 (kun Documents API) |
 | 2.0.0 | Alt i 1.0.0 og desuden tilstandene Søg og Del, Python og statistik uden kode, flere kilder, kortvisninger, nordiske planer, grafer, IFC-modeller i 3D med kontrol mod IDS, flows, Dataspatium Mobil, sager med viewpoints (BCF API 3.0 og 2.1), serverens IFC-graf, kortet *Administration* og kortet *Projektets medlemmer*, navigation med visningskube og snit, flere geodatakilder | Dataregium 2.0.0 |
-| 3.0.0 | Alt i 2.0.0 og desuden kortet *Valider modellen*, kollisionskontrol, Spørg AI og Ændr med AI, nye tomme modeller i valgfrit skema, Sammenlign versioner, publicering med basisversion og forhåndskontrol, ændringsforslag, der afprøves og godkendes på serveren med valg ved konflikter, og grafen i en lettere form, og efter genudgivelserne AI-assistenten, kommandoerne, flows med betingelser og løkker, styring via broen og Dataregiums teams; desuden ny bygning ud fra en brief, den digitale tvilling, tilstanden Kontrollér, topologien, rummene og den rigtige IFC-klasse; videre typer med materialelag, egenskaber og svenske betegnelser, redigering af elementer, flere bygningsdele, klimadeklaration, materialeopgørelse, buildingSMARTs regler, BCF 3.0 og personoplysninger i IFC-modeller | Dataregium 3.0.0 |
+| 3.0.0 | Alt i 2.0.0 og desuden kortet *Valider modellen*, kollisionskontrol, Spørg AI og Ændr med AI, nye tomme modeller i valgfrit skema, Sammenlign versioner, publicering med basisversion og forhåndskontrol, ændringsforslag, der afprøves og godkendes på serveren med valg ved konflikter, og grafen i en lettere form, og efter genudgivelserne AI-assistenten, kommandoerne, flows med betingelser og løkker, styring via broen og Dataregiums teams; desuden ny bygning ud fra en opgavebeskrivelse, den digitale tvilling, tilstanden Kontrollér, topologien, rummene og den rigtige IFC-klasse; videre typer med materialelag, egenskaber og svenske betegnelser, redigering af elementer, flere bygningsdele, klimadeklaration, materialeopgørelse, buildingSMARTs regler, BCF 3.0 og personoplysninger i IFC-modeller | Dataregium 3.0.0 |
 
 En ny udgivelse med samme hovednummer erstatter den forrige; kun den seneste i hver serie rettes. Appens opdateringskontrol tilbyder
 næste hovednummer, og datasæt, lister, diagrammer, skabeloner og scripts følger med, når du åbner den nye versions `index.html`.

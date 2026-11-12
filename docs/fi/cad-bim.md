@@ -475,26 +475,26 @@ jota tiedosto ei noudata; buildingSMARTin validointipalvelu merkitsee sen, ja va
 Tiedosto, jota sovellus muuttaa, säilyttää oman tekijänsä, organisaationsa ja alkuperäisen ohjelmansa sekä näkymänsä, kun
 validointipalvelu hyväksyy sen.
 
-## Uusi rakennus briefistä
+## Uusi rakennus toimeksiannon kuvauksesta
 
-Kirjoita brief lomakkeeseen *Uusi rakennusmalli* ("kaksikerroksinen talo 12 × 8 m harjakatolla, tiilijulkisivu, sisäänkäynti etelään …")
-ja valitse *Rakenna briefistä tekoälyllä*, kun malli on luotu: malli avautuu Muokkaa-tilassa tekoälypaneelin tilassa **Rakenna
-briefistä**. Siellä voit liittää valokuvia ja skannattuja piirustuksia (JPEG, PNG tai PDF; pohjapiirustus antaa oikeat mitat, valokuva
+Kirjoita toimeksiannon kuvaus lomakkeeseen *Uusi rakennusmalli* ("kaksikerroksinen talo 12 × 8 m harjakatolla, tiilijulkisivu, sisäänkäynti etelään …")
+ja valitse *Rakenna toimeksiannon kuvauksesta tekoälyllä*, kun malli on luotu: malli avautuu Muokkaa-tilassa tekoälypaneelin tilassa **Rakenna
+kuvauksesta**. Siellä voit liittää valokuvia ja skannattuja piirustuksia (JPEG, PNG tai PDF; pohjapiirustus antaa oikeat mitat, valokuva
 ulkonäön, materiaalit ja sen, miten osat liittyvät toisiinsa) tai lisätä kuvakokoelman kuvat, esimerkiksi Dataspatium Mobiililla
-otetut. Tekoäly lukee tyhjän mallin, kertoo suunnitelmansa, kysyy paneelissa, kun brief jättää jotakin olennaista auki (pohja,
+otetut. Tekoäly lukee tyhjän mallin, kertoo suunnitelmansa, kysyy paneelissa, kun kuvaus jättää jotakin olennaista auki (pohja,
 kerrosten määrä, kerroskorkeus, seinäpaksuudet, materiaalit), ja rakentaa sitten ryhmissä samoilla työkaluilla kuin *Muuta*:
 kerrokset ja ruudukko, seinät kerroksittain, laatat, aukot, ominaisuudet ja materiaalit, esikatselulla ja korjauksilla jokaisen ryhmän
 jälkeen. Malliin ei kirjoiteta mitään ennen kuin esikatselet ja hyväksyt muutosjoukon tavalliseen tapaan, ja voit täydentää uudella
-briefillä samassa tilassa. Kuvat lähetetään toimittajalle briefin mukana toimittajan isännän suostumuksen jälkeen; kuvia näkevä
+kuvauksella samassa tilassa. Kuvat lähetetään toimittajalle kuvauksen mukana toimittajan isännän suostumuksen jälkeen; kuvia näkevä
 paikallinen malli pitää kaiken tietokoneella.
-Toiminnolla *Tiedot tietoaineistosta* taulukon rivit lisätään briefiin tekstinä: kartalta (Avoin paikkatieto) haettu rakennusala muuttuu
+Toiminnolla *Tiedot tietoaineistosta* taulukon rivit lisätään kuvaukseen tekstinä: kartalta (Avoin paikkatieto) haettu rakennusala muuttuu
 kulmiksi metreinä lounaiskulmasta, jolloin seinät saavat oikeat mitat, ja Dataspatium Mobiilin kenttälomakkeen mitat ja muistiinpanot
-muuttuvat riveiksi; kierros puhelimen kanssa voi sitten antaa lisää kuvia ja mittoja, ja briefiä täydennetään samassa tilassa.
-Brief ja kuvat voidaan myös viedä palvelimelle mallin aineistoksi, kun malli on haettu CDE:stä: mallin projektin asia *Aineisto*
-saa briefin tekstiasiakirjana ja jokaisen kuvan asiakirjana, jotta muut, jotka työstävät mallia omilla asiakasohjelmillaan, näkevät,
+muuttuvat riveiksi; kierros puhelimen kanssa voi sitten antaa lisää kuvia ja mittoja, ja kuvausta täydennetään samassa tilassa.
+Toimeksiannon kuvaus ja kuvat voidaan myös viedä palvelimelle mallin aineistoksi, kun malli on haettu CDE:stä: mallin projektin asia *Aineisto*
+saa kuvauksen tekstiasiakirjana ja jokaisen kuvan asiakirjana, jotta muut, jotka työstävät mallia omilla asiakasohjelmillaan, näkevät,
 mistä se rakennettiin. Painike on *Vie aineisto palvelimelle*.
 Paneelin yläosassa ovat *Rakennuksen tiedot* (mikä rakennus, kerrokset, pituus, leveys, korkeus, perustus, katto) ja *Tarkkuus*
-(luonnos, pääpiirteet tai yksityiskohtainen): täytä se minkä tiedät, niin se aloittaa briefin ja tekoäly kysyy loput. Sanat ovat
+(luonnos, pääpiirteet tai yksityiskohtainen): täytä se minkä tiedät, niin se aloittaa kuvauksen ja tekoäly kysyy loput. Sanat ovat
 tavallisia, mutta niiden takana ovat ISO 19650:n tietovaatimukset ja level of information need, ja malli on tarkoitettu rakennuksen
 ylläpitomalliksi. Jokainen kuva liitetään valokuvana, pohjois-, itä-, etelä- tai länsijulkisivuna, sisätilana tai piirustuksena, ja
 valokuva, jonka tiedostossa on sijainti ja ajankohta (EXIF), saa ne kuvatekstiinsä, jotta tekoäly tietää, mitä se näkee. Aineiston
@@ -521,7 +521,7 @@ käytetään, ja se valitsee tarkkuuden ja vaatimukset, joita voit muuttaa jälk
 | Muu (omalla tekstillä) | Pääpiirteet | ei mitään |
 
 Vaihe kertoo, mihin rakennuksen elinkaaren kohtaan malli kuuluu: esiselvitys, ehdotus, toteutussuunnitelmat, rakenteilla tai olemassa
-oleva rakennus. Käyttötarkoitus, vaihe ja vaatimukset aloittavat briefin. Kun vaatimukset on valittu, jokainen esikatselu, tekoälyn
+oleva rakennus. Käyttötarkoitus, vaihe ja vaatimukset aloittavat toimeksiannon kuvauksen. Kun vaatimukset on valittu, jokainen esikatselu, tekoälyn
 oma ja sinun, koettelee ehdokasta IDS-tiedostoa vasten, ja tekoäly saa täyttymättömät spesifikaatiot korjattavakseen. Vaatimukset
 eivät estä hyväksymistä; paneeli näyttää, kuinka moni spesifikaatio täyttyy ja mitkä eivät.
 
@@ -532,12 +532,12 @@ Sovelluksen omin sanoin kolme tasoa tarkoittavat näkökohdittain seuraavaa:
 |---|---|---|---|
 | Yksityiskohtaisuus | kerrokset, ulkoseinät ja laatat yksinkertaisina kappaleina, ei aukkoja | kaikki seinät tyyppien paksuisina, laatat, katon muoto ja aukot järkevin mitoin | kerrokset tyypeittäin, ovet ja ikkunat karmeineen ja puitteineen, nurkissa kohtaavat seinät |
 | Ulottuvuudet | kappaleet 3D:nä ja seinän akseli | kuten luonnos | kuten luonnos; tasosymbolit voivat tulla myöhemmin |
-| Sijainti | kerrosten korot, ruudukko ja tontti, kun se tiedetään | mitat piirustuksesta tai briefistä, georeferoitu, kun tiedot ovat olemassa | mitatut tai mitoitetut sijainnit, aukot tarkalla paikallaan |
+| Sijainti | kerrosten korot, ruudukko ja tontti, kun se tiedetään | mitat piirustuksesta tai toimeksiannon kuvauksesta, georeferoitu, kun tiedot ovat olemassa | mitatut tai mitoitetut sijainnit, aukot tarkalla paikallaan |
 | Ulkoasu | oletusvärit | väri materiaalin luokan mukaan | pintatyyli materiaalia kohden, erillään materiaalista |
 | Parametrinen käyttäytyminen | ekstruusiot, joiden mittoja voi muuttaa | tyypit (vaihda tyyppi, niin kaikki muuttuvat) ja kerrokset | liitokset, jotka laskevat nurkat uudelleen, parametriset ovet ja ikkunat |
 | Tunnistaminen | nimi, IFC-luokka PredefinedTypeineen ja GlobalId | nimetyt tyypit, huoneet numeroineen ja nimineen | osat ja tilaluokat, Tag ovissa ja ikkunoissa |
 | Tietosisältö | kerrokset ja korot | IsExternal, LoadBearing ja materiaalit tyypeissä, perusmäärät | palo, U-arvo ja ilmastotiedot tyypeittäin tai materiaaleittain, olemassa olevan rakennuksen kunto |
-| Dokumentaatio | brief | brief ja kuvat mallin aineistona | EPD-viitteet ja tuotekortit |
+| Dokumentaatio | toimeksiannon kuvaus | toimeksiannon kuvaus ja kuvat mallin aineistona | EPD-viitteet ja tuotekortit |
 
 ## Tarkista tekoälyllä
 
@@ -646,7 +646,7 @@ Tuotetunnisteet tekoäly kirjoittaa vain, kun annat ne, eikä se koskaan keksi n
 viivakoodi (BarCode) joukossa Pset_ManufacturerOccurrence rakennusosassa. IFC2X3:ssa ei ole GTIN:ää.
 **Kantavuus, tila ja ominaisuudet.** `create_wall` ja `create_slab` ottavat `load_bearing`-arvon (kantava tai ei), ja ne sekä
 `create_roof` ottavat `status`-arvon (NEW uusi, EXISTING olemassa oleva, DEMOLISH purettava, TEMPORARY tilapäinen), mutta vain kun
-brief tai sinä sanot sen: tekoäly ei koskaan arvaa, ja olemassa olevan rakennuksen digitaalinen kaksonen saa arvon EXISTING. Arvot
+toimeksiannon kuvaus tai sinä sanot sen: tekoäly ei koskaan arvaa, ja olemassa olevan rakennuksen digitaalinen kaksonen saa arvon EXISTING. Arvot
 kirjoitetaan LoadBearing- ja Status-ominaisuuksina joukkoihin Pset_WallCommon, Pset_SlabCommon ja Pset_RoofCommon, tyyppiin kun kaikki
 tyypin elementit sanovat saman ja muuten elementtiin; IFC2X3:ssa ei ole Statusta, ja raportti kertoo sen. Kun muutosjoukko ajetaan,
 sovellus asettaa itse IsExternal-arvon topologian perusteella seinille, jotka se on luonut tai joita se on muuttanut: tosi kerroksen
@@ -788,7 +788,7 @@ Sovelluksella on omat IDS-tiedostot kansiossa `presets/ids/`, kirjoitettuina avo
   lukee.
 
 IDS nimeää luokan ilman sen aliluokkia, joten IFC4:n …StandardCase-luokilla on omat spesifikaationsa, ja spesifikaatio koskee vain
-mainitsemiaan IFC-versioita. Brief valitsee tiedoston käyttötarkoituksen mukaan, ja Analysoi-tilan IDS-tarkistus voi ajaa ne.
+mainitsemiaan IFC-versioita. Toimeksiannon kuvaus valitsee tiedoston käyttötarkoituksen mukaan, ja Analysoi-tilan IDS-tarkistus voi ajaa ne.
 
 ## Vertaa versioita
 
