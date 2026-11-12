@@ -385,7 +385,12 @@
           this.remindBackup();
           this.versionNotice();
           // An installed app (served from a web server, added to the home screen) asks the browser to keep its storage.
-          if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) idb.requestPersist().catch(() => {});
+          if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) {
+            idb.requestPersist().catch(() => {});
+            // It works without a network after the first use only with every file in the service worker's cache (sw-coi.js keeps
+            // what was fetched), so it loads the groups of scripts too, once the page has settled. The mobile app has its own page.
+            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile')).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
+          }
         }
 
         /** Download a backup of the workspace (the action of reminders and notices). */
