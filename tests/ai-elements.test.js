@@ -64,7 +64,7 @@
   const stdoutOf = (out) => out.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('');
   /** Facts of a written IFC, read back with IfcOpenShell in the app's Python: the code ends by printing one line of JSON. */
   async function factsOf(bytes, code) {
-    await bridge.writeFile('/data/step/elements-facts.ifc', bytes);
+    await bridge.writeFile('/data/step/elements-facts.ifc', bytes.slice());  // the engine transfers, and a browser detaches, the buffer
     const out = await bridge.run(['import json', 'import ifcopenshell', 'import ifcopenshell.util.element as el', 'import ifcopenshell.util.placement as pl', 'import ifcopenshell.util.unit',
       'm = ifcopenshell.open("/data/step/elements-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)',
       'matrix = getattr(pl, "get_placement", None) or pl.get_local_placement',

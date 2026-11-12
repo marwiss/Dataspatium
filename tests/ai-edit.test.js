@@ -46,7 +46,7 @@
   const BOX = [['Syd', [0, 0], [12, 0]], ['Öst', [12, 0], [12, 8]], ['Norr', [12, 8], [0, 8]], ['Väst', [0, 8], [0, 0]]];
   const stdoutOf = (out) => out.entries.filter((e) => e.kind === 'stdout').map((e) => e.text).join('');
   async function factsOf(bytes, code) {
-    await bridge.writeFile('/data/step/edit-facts.ifc', bytes);
+    await bridge.writeFile('/data/step/edit-facts.ifc', bytes.slice());  // the engine transfers, and a browser detaches, the buffer
     const out = await bridge.run(['import json', 'import ifcopenshell', 'import ifcopenshell.util.element as el', 'import ifcopenshell.util.placement as pl',
       'import ifcopenshell.util.unit', 'm = ifcopenshell.open("/data/step/edit-facts.ifc")', 'scale = ifcopenshell.util.unit.calculate_unit_scale(m)'].concat(code).join('\n'));
     const error = out.entries.find((e) => e.kind === 'error');
@@ -254,7 +254,7 @@
     for (const [name, args] of steps) { const out = name === 'edit_element' ? edit(cs, args) : writeTools.call(cs, name, args); assert.ok(out.ok, name + ': ' + JSON.stringify(out)); }
     const res = await ifcOps.previewChangeset(meta.id, writeTools.toWheel(cs));
     assert.equal(res.report.errors, 0, 'no errors: ' + JSON.stringify(res.report.findings));
-    assert.deepEqual(res.report.notes || [], [], 'nothing left out');
+    assert.deepEqual((res.report.notes || []).filter((n) => !String(n).startsWith('GRF003')), [], 'nothing left out (the note that the model has no CRS yet, GRF003, aside)');
     assert.deepEqual((res.report.created || []).map((e) => [e.ref, e.ifc_class, e.name]), [['new-1', 'IfcWallType', 'YV2']], 'only the new type is created');
     assert.deepEqual(res.report.deleted || [], [], 'nothing is deleted');
     const changed = new Set((res.report.changed || []).map((e) => e.guid));
