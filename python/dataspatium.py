@@ -1505,6 +1505,7 @@ class _ChangeSet:
         self.owner = owners[0] if owners else None
         self._body = None
         self._axis = None
+        self._schema = None
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -1577,9 +1578,49 @@ class _ChangeSet:
             return
         self.changed[e.id()] = self.record(e, self.container(e))
 
+    # -- the right class (decision B-57.2): every class and enumeration value an operation sets is checked against the schema
+    def schema_def(self):
+        if self._schema is None:
+            self._schema = _ifc_schema(getattr(self.m, "schema_identifier", None) or self.m.schema)
+        return self._schema
+
+    def check_class(self, ifc_class):
+        """The entity's declaration in the file's schema; a DataspatiumError, with the classes to use instead, when it does not exist
+        there or is abstract."""
+        schema = self.schema_def()
+        decl = _ifc_declaration(schema, ifc_class)
+        if decl is not None and decl.as_entity() is not None and not decl.is_abstract():
+            return decl
+        if decl is not None and decl.as_entity() is not None:
+            raise DataspatiumError("%s is abstract in %s; use one of %s" % (ifc_class, schema.name(), ", ".join(_ifc_concrete(decl)[:30])))
+        import difflib
+        near = difflib.get_close_matches(str(ifc_class), [d.name() for d in schema.declarations() if d.as_entity() is not None and not d.is_abstract()], 8, 0.6)
+        raise DataspatiumError("%s is not an entity of %s%s" % (ifc_class, schema.name(), "; near: " + ", ".join(near) if near else ""))
+
+    def check_enum(self, e, value, attribute="PredefinedType"):
+        """Whether the schema gives the element the enumeration `attribute`; a DataspatiumError that lists the allowed values for one
+        it does not take, and for USERDEFINED without the name of the type (ObjectType on an occurrence, ElementType on a type)."""
+        items = _ifc_enum_items(self.check_class(e.is_a()), attribute)
+        if items is None:
+            return False
+        if value not in items:
+            raise DataspatiumError("%s is not a %s of %s in %s; it takes %s" % (value, attribute, e.is_a(), self.schema_def().name(), ", ".join(items)))
+        if value == "USERDEFINED" and attribute == "PredefinedType":
+            named = "ElementType" if e.is_a("IfcTypeObject") else "ObjectType"
+            if not str(getattr(e, named, None) or "").strip():
+                raise DataspatiumError("%s USERDEFINED needs %s, the name of the user-defined type; or use one of %s" % (e.is_a(), named, ", ".join(i for i in items if i not in ("USERDEFINED", "NOTDEFINED"))))
+        return True
+
+    def predefined(self, e, value):
+        """Set the element's PredefinedType after check_enum; an entity whose schema has none (walls, doors and windows in IFC2X3)
+        takes nothing."""
+        if self.check_enum(e, value):
+            e.PredefinedType = value
+
     # -- the file's structure
     def root(self, ifc_class, name):
         import ifcopenshell.guid
+        self.check_class(ifc_class)
         e = self.m.create_entity(ifc_class, GlobalId=ifcopenshell.guid.new(), Name=str(name))
         if self.owner is not None:
             e.OwnerHistory = self.owner
@@ -1602,13 +1643,6 @@ class _ChangeSet:
             return
         import ifcopenshell.api.owner.settings as settings
         settings.get_user, settings.get_application = previous
-
-    @staticmethod
-    def predefined(e, value):
-        try:
-            e.PredefinedType = value
-        except Exception:
-            pass
 
     def building(self):
         import ifcopenshell.api.aggregate
@@ -1892,7 +1926,8 @@ class _ChangeSet:
         roof = self.root("IfcRoof", name)
         roof.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x0), self.u(y0), self.u(base))
         if self.m.schema == "IFC2X3":
-            roof.ShapeType = self.ROOF_TYPES[shape]
+            if self.check_enum(roof, self.ROOF_TYPES[shape], "ShapeType"):
+                roof.ShapeType = self.ROOF_TYPES[shape]
         else:
             self.predefined(roof, self.ROOF_TYPES[shape])
         self.contain(roof, storey)
@@ -2059,7 +2094,8 @@ class _ChangeSet:
         space.LongName = long_name
         space.CompositionType = "ELEMENT"
         if self.m.schema == "IFC2X3":
-            space.InteriorOrExteriorSpace = "INTERNAL"
+            if self.check_enum(space, "INTERNAL", "InteriorOrExteriorSpace"):
+                space.InteriorOrExteriorSpace = "INTERNAL"
         else:
             self.predefined(space, "INTERNAL")
         space.ObjectPlacement = self.placement(storey.ObjectPlacement, 0, 0, 0)
@@ -3126,6 +3162,222 @@ def _ifc_topology_file(in_file, out_file):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "topology-in.ifc"), data)
     text = json.dumps(_ifc_topology(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+# ---- the right IFC class (decision B-57.2) ------------------------------------------------------------
+# In native IFC the class is the first classification: the most specific entity with its PredefinedType, an ObjectType only for
+# USERDEFINED, and a type object; CoClass and other systems come on top. _ifc_class_search finds the class for a thing from its
+# English words in IfcOpenShell's documentation of the schema; _ifc_class_report lists what in a model falls short of that.
+
+CLASS_ROOTS = ("IfcElement", "IfcSpatialElement", "IfcSpatialStructureElement", "IfcTypeProduct")
+CLASS_RULES = {
+    "userdefined": "IFC CorrectPredefinedType; ifc-gherkin-rules OJT001 Object Predefined Type",
+    "type_conflicts": "ifc-gherkin-rules OJT001 Object Predefined Type (concept template 4.1.3.2)",
+    "outside": "ifc-gherkin-rules SPS007 Spatial Containment",
+}
+
+
+def _ifc_schema(name):
+    """IfcOpenShell's definition of a schema by its name (IFC2X3, IFC4, IFC4X3_ADD2 ...)."""
+    import ifcopenshell
+    try:
+        return ifcopenshell.schema_by_name(str(name))
+    except Exception:
+        raise DataspatiumError("unknown IFC schema %r; the app writes %s" % (name, ", ".join(IFC_NEW_SCHEMAS)))
+
+
+def _ifc_declaration(schema, name):
+    """A declaration of the schema by name; None for one it lacks."""
+    try:
+        return schema.declaration_by_name(str(name))
+    except Exception:
+        return None
+
+
+def _ifc_enum_items(decl, attribute="PredefinedType"):
+    """The items of an entity's enumeration attribute; None when the entity has no such attribute."""
+    import ifcopenshell.util.attribute
+    attr = next((a for a in decl.all_attributes() if a.name() == attribute), None)
+    if attr is None:
+        return None
+    try:
+        return list(ifcopenshell.util.attribute.get_enum_items(attr))
+    except Exception:
+        return None
+
+
+def _ifc_concrete(decl):
+    """The names of the non-abstract entities at or below a declaration, in order."""
+    out, stack = set(), [decl]
+    while stack:
+        d = stack.pop()
+        if not d.is_abstract():
+            out.add(d.name())
+        stack.extend(d.subtypes())
+    return sorted(out)
+
+
+def _ifc_below(decl, name):
+    """Whether a declaration is the entity `name` or one of its subtypes."""
+    while decl is not None:
+        if decl.name() == name:
+            return True
+        decl = decl.supertype()
+    return False
+
+
+def _ifc_clip(text, n=300):
+    text = " ".join(str(text or "").split())
+    return text if len(text) <= n else text[:n].rsplit(" ", 1)[0] + " …"
+
+
+def _ifc_class_search(schema, query, limit=12):
+    """The classes of a schema for a thing named in English IFC words (decision B-57.2). Every word of the query must occur, in any
+    case, in the class's name, its description, a PredefinedType's name or doc, or a name IfcOpenShell suggests for the class
+    (ifcopenshell.util.doc; without its data the schema's names and enumerations alone). Among the non-abstract elements, spatial
+    elements and type products, hits on the class's own name come first, then those on a PredefinedType's name, then the rest, and
+    occurrences before types; a type whose occurrence class is a hit is left out. Per hit: class, the matching PredefinedTypes with
+    their docs (all of them when the class's name matched), a description clipped to about 300 characters, spec_url when known, and
+    the type class (for a type, the occurrence class)."""
+    import re
+    import ifcopenshell.util.doc as doc
+    import ifcopenshell.util.type as types
+    s = _ifc_schema(schema)
+    words = [w for w in re.split(r"[^0-9a-z]+", str(query).lower()) if w]
+    if not words:
+        raise DataspatiumError("give the thing to look for in English IFC words, such as sink, handrail or curtain wall")
+    try:
+        docs = (doc.get_db(s.name()) or {}).get("entities") or {}
+    except Exception:
+        docs = {}
+    roots = [d for d in (_ifc_declaration(s, n) for n in CLASS_ROOTS) if d is not None]
+    found = []
+    for name in sorted({n for r in roots for n in _ifc_concrete(r)}):
+        decl = s.declaration_by_name(name)
+        info = docs.get(name) or {}
+        pt_docs = info.get("predefined_types") or {}
+        pts = list(dict.fromkeys((_ifc_enum_items(decl) or []) + list(pt_docs)))
+        try:
+            suggested = doc.get_class_suggestions(s.name(), name) or []
+        except Exception:
+            suggested = []
+        lname, ldesc = name.lower(), str(info.get("description") or "").lower()
+
+        def in_pt(w, pt):
+            return w in pt.lower() or w in str(pt_docs.get(pt) or "").lower()
+        said = [x for x in suggested if any(w in str(x.get("name", "")).lower() for w in words)]
+        if not all(w in lname or w in ldesc or any(in_pt(w, pt) for pt in pts) or any(w in str(x.get("name", "")).lower() for x in said) for w in words):
+            continue
+        by_name = all(w in lname for w in words)
+        tier = 0 if by_name else 1 if all(w in lname or any(w in pt.lower() for pt in pts) for w in words) else 2
+        chosen = pts if by_name else [pt for pt in pts if any(in_pt(w, pt) for w in words) or any(x.get("predefined_type") == pt for x in said)]
+        hit = {"class": name, "predefined_types": [{"name": pt, "doc": _ifc_clip(pt_docs.get(pt), 200) or None} for pt in chosen],
+               "description": _ifc_clip(info.get("description")) or None}
+        if info.get("spec_url"):
+            hit["spec_url"] = info["spec_url"]
+        if said:
+            hit["known_as"] = [str(x.get("name")) for x in said]
+        is_type = _ifc_below(decl, "IfcTypeProduct")
+        try:
+            pair = types.get_applicable_entities(name, schema=s.name()) if is_type else types.get_applicable_types(name, schema=s.name())
+        except Exception:
+            pair = []
+        pair = [getattr(x, "ifc_class", x) for x in pair]
+        hit["occurrence_class" if is_type else "type_class"] = pair[0] if pair else None
+        if len(pair) > 1:
+            hit["occurrence_classes" if is_type else "type_classes"] = pair[:8]
+        found.append(((tier, is_type, len(name), name), hit))
+    found.sort(key=lambda x: x[0])
+    # A type is left out when its occurrence class matched as well (IFC2X3 keeps IfcSanitaryTerminalType over IfcFlowTerminal).
+    tiers = {h["class"]: key[0] for key, h in found}
+    hits = [h for key, h in found if tiers.get(h.get("occurrence_class"), 9) > key[0]]
+    return hits[:max(1, min(50, int(limit or 12)))]
+
+
+def _ifc_class_report(model, limit=50):
+    """What in a model falls short of the right IFC class (decision B-57.2), as counts and up to `limit` examples each: proxies
+    (IfcBuildingElementProxy); USERDEFINED without the name of the type, ObjectType on an occurrence or ElementType on a type (the
+    schema's CorrectPredefinedType and OJT001); elements without a type although their class has a type class; occurrences with a
+    PredefinedType of their own while their type has one other than NOTDEFINED (OJT001: the occurrence's must then be empty; IFC4
+    and later); and elements outside the spatial structure, neither contained nor part of an element that is (SPS007). Feature
+    elements (openings) are left out of the last three, as SPS007 does."""
+    import ifcopenshell.util.element as el
+    import ifcopenshell.util.type as types
+    schema = getattr(model, "schema_identifier", None) or model.schema
+    pairs = {}
+
+    def type_classes(cls):
+        if cls not in pairs:
+            try:
+                pairs[cls] = list(types.get_applicable_types(cls, schema=schema))[:5]
+            except Exception:
+                pairs[cls] = []
+        return pairs[cls]
+
+    def bucket(rule=None):
+        return dict({"count": 0, "examples": []}, **({"rule": rule} if rule else {}))
+
+    def add(b, e, **extra):
+        b["count"] += 1
+        if len(b["examples"]) < limit:
+            rec = {"id": e.id(), "guid": getattr(e, "GlobalId", None), "ifc_class": e.is_a(), "name": _ifc_text(getattr(e, "Name", None))}
+            rec.update({k: v for k, v in extra.items() if v is not None})
+            b["examples"].append(rec)
+
+    def located(e, depth=0):
+        if getattr(e, "ContainedInStructure", None):
+            return True
+        wholes = [r.RelatingObject for inverse in ("Decomposes", "Nests") for r in (getattr(e, inverse, None) or ())]
+        return depth < 32 and any(hasattr(w, "ContainsElements") or located(w, depth + 1) for w in wholes)
+
+    proxies, untyped = bucket(), dict(bucket(), by_class={})
+    userdefined = dict(bucket(CLASS_RULES["userdefined"]), occurrences=0, types=0)
+    conflicts, outside = bucket(CLASS_RULES["type_conflicts"]), bucket(CLASS_RULES["outside"])
+    elements = model.by_type("IfcElement")
+    for e in elements:
+        if e.is_a("IfcBuildingElementProxy"):
+            add(proxies, e, object_type=_ifc_text(getattr(e, "ObjectType", None)), predefined_type=getattr(e, "PredefinedType", None))
+        if e.is_a("IfcFeatureElement"):
+            continue
+        if el.get_type(e) is None and type_classes(e.is_a()):
+            add(untyped, e, type_classes=type_classes(e.is_a()))
+            untyped["by_class"][e.is_a()] = untyped["by_class"].get(e.is_a(), 0) + 1
+        if not located(e):
+            add(outside, e)
+    untyped["by_class"] = dict(sorted(untyped["by_class"].items(), key=lambda x: (-x[1], x[0]))[:30])
+    for o in model.by_type("IfcObject"):
+        if getattr(o, "PredefinedType", None) == "USERDEFINED" and not str(getattr(o, "ObjectType", None) or "").strip():
+            userdefined["occurrences"] += 1
+            add(userdefined, o, kind="occurrence")
+    for t in model.by_type("IfcTypeObject"):
+        named = next((a for a in ("ElementType", "ProcessType", "ResourceType") if hasattr(t, a)), None)
+        if named and getattr(t, "PredefinedType", None) == "USERDEFINED" and not str(getattr(t, named, None) or "").strip():
+            userdefined["types"] += 1
+            add(userdefined, t, kind="type")
+    if model.schema != "IFC2X3":
+        for rel in model.by_type("IfcRelDefinesByType"):
+            t = rel.RelatingType
+            tpt = getattr(t, "PredefinedType", None)
+            if tpt is None or str(tpt).startswith("NOTDEFINED"):
+                continue
+            for o in (rel.RelatedObjects or ()):
+                if getattr(o, "PredefinedType", None) is not None:
+                    add(conflicts, o, predefined_type=o.PredefinedType, differs=o.PredefinedType != tpt,
+                        type={"id": t.id(), "ifc_class": t.is_a(), "name": _ifc_text(getattr(t, "Name", None)), "predefined_type": tpt})
+    return {"schema": schema, "elements": len(elements), "proxies": proxies, "userdefined": userdefined, "untyped": untyped,
+            "type_conflicts": conflicts, "outside": outside}
+
+
+def _ifc_class_report_file(in_file, out_file):
+    """The class report (_ifc_class_report) of the model kept in a dataset file, for the read tool get_class_report and the card
+    IFC-klasser in Kontrollera: the original IFC is read from the SQLite file, and the JSON is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "classes-in.ifc"), data)
+    text = json.dumps(_ifc_class_report(model), ensure_ascii=False, default=str)
     with open(out_file, "w", encoding="utf-8") as fh:
         fh.write(text)
     return text
