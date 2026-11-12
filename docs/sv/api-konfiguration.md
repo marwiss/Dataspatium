@@ -25,6 +25,7 @@ tjänsten tillåter anrop från webbläsare (CORS); alla förinställningar neda
 | Sveriges dataportal | Sök datamängder hos alla myndigheter | Nej | Sök, läs tabellen, ladda ned och importera som fil |
 | Lantmäteriet Direkt (Ortnamn) | Ortnamnssökning | Ja, konto i Geotorget (OAuth2) | Ange klient-id och klienthemlighet, sök |
 | Boverket energideklarationer | Energideklarationer för byggnader | Ja, nyckel från Boverkets API-portal | Ange nyckel, anropa enligt portalens dokumentation |
+| Boverkets klimatdatabas | Generiska klimatdata för byggprodukter (GWP för A1–A5) | Nej | Hämta senaste version och dess resurser; verktyget Klimatdeklaration för modeller använder samma data |
 | Trafikverket NVDB | Vägdata: hastighetsgränser, vägnummer, bärighet och 42 objekttyper till, som karta | Ja, kostnadsfri nyckel från data.trafikverket.se | Välj objekttyp, ange område, Hämta |
 | Lantmäteriet geodata med nyckel (STAC) | Vektordata, ortofoton, höjddata och kartor som filer | Ja, konto i Geotorget (OAuth2) | Välj samling, ange område, Hämta; filerna hämtas i Hantera med *Filer i källan* |
 | Riksbanken räntor och valutakurser (SWEA) | Styrräntan, marknadsräntor och valutakurser | Nej, men nås bara via bryggan | Välj serie och period, Hämta |

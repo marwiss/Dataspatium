@@ -121,6 +121,7 @@ I R och Python ger `dm_read()` byggdelarna, `dm_read_properties()` egenskaperna 
 - **Mängdlista**: varje mängdnamn i filen per typ, med summa. Här ser du exakt vad filen anger.
 - **Egenskaper**: vilka värden en egenskap har, och hos hur många byggdelar av varje typ.
 - **Entiteter**: hur många entiteter av varje slag filen består av.
+- **Klimatdeklaration**: en preliminär klimatdeklaration ur modellen per kategori och skikt, se *Preliminär klimatdeklaration* nedan.
 
 Varje resultat kan sparas som datamängd.
 
@@ -236,6 +237,51 @@ modellens egna koordinater. Därifrån:
 
 Det senaste resultatet står på kortet Validera modellen i Hantera, med om det gjordes i appen eller på servern. Mätningen förutsätter slutna ytor: ett element med öppna eller
 trasiga ytor kan ge osäkra djup. Böjda ytor är uppdelade i trianglar, så en tolerans under någon millimeter blir osäker. Element som 3D-vyn inte kan rita är inte med, och resultatet säger hur många de är; i en provmodell från Tekla gällde det alla armeringsjärn.
+
+## Preliminär klimatdeklaration
+
+Verktyget **Klimatdeklaration** i Analysera (fliken Mängder) räknar fram en preliminär klimatdeklaration ur modellen: klimatpåverkan för
+A1–A3, A4 och A5 i kg CO₂e per kategori och per skikt i byggnaden. Det är ett underlag i projekteringen, inte en deklaration att
+registrera hos Boverket.
+
+**Kategori och skikt.** Varje byggdel får en av Boverkets fyra kategorier (bärande konstruktionsdelar – grundläggning, bärande
+konstruktionsdelar – övriga, klimatskärm, innerväggar) eller *Ingår inte*, och ett av byggnadens sex skikt enligt Boverkets rapport
+2024:26: 1 plats och grundläggning, 2 stomme och övriga bärande konstruktioner, 3 klimatskärm, yttertak och fasad, 4 tekniska
+installationer, 5 innertak, innerväggar och ytskikt inomhus, 6 fast inredning. Reglerna läser bara IFC-klassen, PredefinedType
+(byggdelens eller typens) och LoadBearing och IsExternal i Pset_*Common; ingen klassifikation läses. De följer Boverkets lista över
+byggdelar som ingår: pålar, markarbeten, installationer, fast inredning, flyttbara innerväggar, invändiga ytskikt och solavskärmning
+ingår inte; trappor, ramper och räcken är bärande; innertak, undertak och innerdörrar hör till innerväggarna. Kolumnen *Regel* visar
+vad som avgjorde.
+
+- **Osäker**: byggdelen ingår men kategorin är osäker, till exempel en innervägg utan LoadBearing eller en dörr utan IsExternal. Den
+  räknas i den kategori som står och listas under *Att avgöra*. En yttervägg är klimatskärm oavsett LoadBearing.
+- **Kan inte avgöras**: reglerna kan inte säga om byggdelen ingår, till exempel ett proxyelement eller solceller (som ingår bara när
+  de är integrerade i tak eller fasad). Den räknas inte förrän du har avgjort den.
+- **Härledd IsExternal**: när filen inte anger IsExternal får en dörr eller ett fönster värdet från väggen den sitter i. *Härled
+  IsExternal* läser byggnadens topologi med appens Python, som startar då (första gången hämtas dess komponenter efter ditt samtycke):
+  väggarna längs en vånings yttre gräns är yttre, och på en sluten våning är rummens övriga väggar inre. Regeln säger när ett värde är
+  härlett.
+- En sammansatt byggdel, till exempel ett tak av takplattor, räknas i sina delar, och en del som reglerna inte kan avgöra tar
+  helhetens kategori.
+
+Under **Att avgöra** väljer du kategori för en hel grupp byggdelar med samma klass, typ och regel. Valet sparas per byggdel (GlobalId)
+i webbläsaren tills du låter reglerna avgöra igen.
+
+**Mängder.** Volym, area och vikt tas ur filens mängder, nettomått före bruttomått och väggens sidoarea. Har filen inga mängder räknas
+volymen ur geometrin när byggdelen är en enkel extrudering: profilens area gånger djupet (rektangel, cirkel, I-profil, polylinje med
+flera), också genom typens representation och före en klippning. Öppningar dras då inte av, och kolumnen *Mängdens källa* säger det.
+Dörrar och fönster räknas per kvadratmeter ur sina mått. En byggdel med materialskikt delas per material efter skiktens tjocklek.
+Annars har raden ingen mängd och räknas inte.
+
+**Klimatdata.** *Hämta klimatdatabasen* hämtar Boverkets klimatdatabas (cirka 0,9 MB) från api.boverket.se efter ditt samtycke för
+API-hämtning och sparar den i webbläsaren; inget om modellen skickas. Under *Material och resurser* väljer du en resurs för varje
+material. Förslagen bygger först på materialets kategori i IFC (IfcMaterial.Category, till exempel concrete, steel, wood, glass eller
+gypsum) och sedan på namnet; dörrar och fönster föreslås efter typens namn. *Godta förslagen* sparar förslagen som dina val, som
+gäller alla modeller. Klimatpåverkan är massan (volymen gånger densiteten eller arean gånger vikten per kvadratmeter) gånger
+databasens värden för A1–A3, A4 och A5 (spill). Boverket anger att klimatdata för byggprodukter är konservativt satta, cirka 25
+procent över genomsnittet; verktyget räknar med det konservativa värdet och visar det typiska på begäran.
+
+Varje vy kan sparas som datamängd. Källa: Boverket, klimatdatabasen (öppna data, se [licenser.md](licenser.md)).
 
 ## DXF-ritningar
 

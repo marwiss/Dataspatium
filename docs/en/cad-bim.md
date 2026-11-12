@@ -124,6 +124,7 @@ In R and Python `dm_read()` gives the elements, `dm_read_properties()` the prope
 - **Quantity list**: every quantity name in the file per type, with a sum. Here you see exactly what the file states.
 - **Properties**: which values a property has, and on how many elements of each type.
 - **Entities**: how many entities of each kind the file consists of.
+- **Climate declaration**: a preliminary climate declaration from the model per category and layer, see *Preliminary climate declaration* below.
 
 Every result can be saved as a dataset.
 
@@ -244,6 +245,53 @@ point in the model's own coordinates. From there:
 
 The latest result shows on the card Validate the model in Manage, and whether the app or the server did it. The measuring assumes closed surfaces: an element with open or
 broken surfaces can give uncertain depths. Curved surfaces are split into triangles, so a tolerance below a millimetre is uncertain. Elements the 3D view cannot draw take no part, and the result says how many there are; in a sample model from Tekla that was every reinforcing bar.
+
+## Preliminary climate declaration
+
+The tool **Climate declaration** in Analyse (the tab Quantities) works out a preliminary climate declaration from the model: the climate
+impact for A1–A3, A4 and A5 in kg CO₂e per category and per layer of the building. It supports the design work; it is not a
+declaration to register with Boverket.
+
+**Category and layer.** Every building element gets one of Boverket's four categories (load-bearing parts – foundation, load-bearing
+parts – other, building envelope, interior walls) or *Not included*, and one of the six layers of a building from Boverket's report
+2024:26: 1 site and foundation, 2 frame and other load-bearing structures, 3 envelope, roof and facade, 4 building services, 5 ceilings,
+interior walls and interior surface layers, 6 fixed furnishings. The rules read only the IFC class, the PredefinedType (the element's or
+its type's) and LoadBearing and IsExternal in Pset_*Common; no classification is read. They follow Boverket's list of the parts that
+are included: piles, groundworks, services, fixed furnishings, movable interior walls, interior surface layers and shading are not;
+stairs, ramps and railings are load-bearing; ceilings, suspended ceilings and interior doors belong to the interior walls. The column
+*Rule* shows what decided.
+
+- **Uncertain**: the element is included but its category is uncertain, for example an interior wall without LoadBearing or a door
+  without IsExternal. It counts in the category shown and is listed under *To settle*. An external wall is envelope whatever
+  LoadBearing says.
+- **Cannot be decided**: the rules cannot say whether the element is included, for example a proxy element or solar cells (which are
+  included only when integrated in the roof or facade). It does not count until you have settled it.
+- **Derived IsExternal**: when the file does not give IsExternal, a door or a window takes the value of the wall it sits in. *Derive
+  IsExternal* reads the building's topology with the app's Python, which starts then (the first time its components are fetched with
+  your consent): the walls along a storey's outer boundary are external, and on a closed storey the rooms' other walls are internal.
+  The rule says when a value is derived.
+- A composite element, for example a roof made of roof slabs, is counted in its parts, and a part the rules cannot decide takes the
+  category of its whole.
+
+Under **To settle** you choose the category for a whole group of elements with the same class, type and rule. The choice is kept per
+element (GlobalId) in the browser until you let the rules decide again.
+
+**Quantities.** Volume, area and weight come from the file's quantity sets, net before gross and a wall's side area. When the file has
+no quantities, the volume is counted from the geometry when the element is a simple extrusion: the profile's area times the depth
+(rectangle, circle, I-profile, polyline and more), also through the type's representation and before a clipping. Openings are then
+not deducted, and the column *Source of the quantity* says so. Doors and windows are counted per square metre from their size. An
+element with material layers is split per material by the layers' thickness. Otherwise the row has no quantity and is not counted.
+
+**Climate data.** *Fetch the climate database* fetches Boverket's climate database (about 0.9 MB) from api.boverket.se with your
+consent for API fetches and keeps it in the browser; nothing about the model is sent. Under *Materials and resources* you choose a
+resource for every material. The proposals rest first on the material's category in IFC (IfcMaterial.Category, for example concrete,
+steel, wood, glass or gypsum) and then on its name; doors and windows are proposed by their type's name. *Accept the proposals* keeps
+the proposals as your choices, which apply to every model. The climate impact is the mass (the volume times the density, or the area
+times the weight per square metre) times the database's values for A1–A3, A4 and A5 (waste). Boverket states that its climate data for
+building products are set conservatively, about 25 per cent above the average; the tool counts with the conservative value and shows
+the typical one when asked.
+
+Every view can be saved as a dataset. Source: Boverket, the climate database (open data, see [licenser.md](licenser.md)).
 
 ## DXF drawings
 
