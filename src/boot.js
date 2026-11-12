@@ -642,8 +642,8 @@
     list: () => groups.map((g) => ({ name: g.name, needs: g.needs.slice(), scripts: g.scripts.slice() })),
     /** Whether the group's scripts have run. @param {string} name */
     loaded: (name) => loaded.has(name),
-    /** The scripts this page loads at start. */
-    start: () => scripts.slice(),
+    /** The start list of this page (MOBILE, or the app's without the groups even when they were loaded with it). */
+    start: () => (PAGE === 'mobile' ? MOBILE : full).slice(),
     /** True when every group was loaded at start (the test page, ?groups=all). */
     everything,
     /**
