@@ -5,7 +5,8 @@
  * colours by category or class, labels, a background map after consent (OpenStreetMap, an orthophoto, an XYZ template
  * or a WMS), the saved view; the live map on the right
  * with a click showing a feature's attributes in the inspector. Export and thumbnails are drawn headless by
- * viz/leaflet (no tiles).
+ * viz/leaflet (no tiles). Sweden's orthophoto is read for the map's view when the person chooses it or asks for the view,
+ * never when a saved map view is opened; the image is not part of the map view.
  */
 (function () {
   'use strict';
@@ -54,7 +55,16 @@
       let orthos = [];
       basemapChoice.options().then((list) => { orthos = list; renderSide(); }).catch(() => {});
 
+      /** Sweden's orthophoto: read on the next drawing, because the person chose it. */
+      let orthoLoad = false;
       const changed = (redraw = true) => { options.onChange(def); if (redraw) schedule(); };
+      /** Sweden's orthophoto for the live map's view, and what the line under the map says about it. */
+      async function drawOrtho(hd, load) {
+        const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
+        const note = status === 'idle' ? t('ortho.se.idle') : '';
+        info.textContent = [info.textContent.split(' · ').filter((p) => p !== t('ortho.se.idle')).join(' · '), note].filter(Boolean).join(' · ');
+        return status;
+      }
       function schedule(delay = 300) { clearTimeout(timer); timer = setTimeout(draw, delay); }
       async function draw() {
         const my = ++seq;
@@ -68,9 +78,10 @@
           const parts = [t('viz.rows.used', { rows: i18n.formatNumber(hd.info.rows), total: i18n.formatNumber(hd.info.total) })];
           if (hd.info.truncated) parts.push(t('map.truncated', { n: i18n.formatNumber(Math.max(...def.layers.map((l) => l.maxRows || leaflet.MAX_ROWS))) }));
           if (hd.info.basemapDenied) parts.push(t('map.basemap.denied'));
-          if (hd.info.basemapKey) { parts.push(basemapChoice.keyNotice(hd.info)); basemapChoice.notifyKey(hd.info, draw); }
+          if (hd.info.basemapKey) { parts.push(basemapChoice.keyNotice(hd.info)); basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); }); }
           if (hd.info.crsUnknown && hd.info.crsUnknown.length) parts.push(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }));
           info.textContent = parts.join(' · ');
+          if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await drawOrtho(hd, load); }
           if (options.onInspect) options.onInspect();
         } catch (err) {
           if (my !== seq) return;
@@ -86,9 +97,11 @@
           select(t('map.basemap'), leaflet.BASEMAPS.slice(0, 2).map((b) => ({ value: b, label: t('map.basemap.' + b) })).concat(orthos, leaflet.BASEMAPS.slice(2).map((b) => ({ value: b, label: t('map.basemap.' + b) }))), def.basemap || 'none', async (v) => {
             // An orthophoto that needs a key asks for it first; a cancelled key keeps the background map as it was.
             if (!(await basemapChoice.ensure(v))) { renderSide(); return; }
-            def.basemap = v; renderSide(); changed();
+            def.basemap = v; orthoLoad = basemapChoice.isView(v); renderSide(); changed();
           }, { 'data-map-basemap': '' }),
         ];
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
+        if (basemapChoice.isView(def.basemap)) items.push(basic.button({ label: t('ortho.se.load'), icon: 'image', size: 'sm', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) drawOrtho(handle, true); } }));
         if (def.basemap === 'custom') {
           items.push(input(t('map.custom.url'), def.custom.url, (v) => { def.custom.url = v.trim(); changed(); }, { placeholder: 'https://…/{z}/{x}/{y}.png', help: t('map.custom.url.help') }));
           items.push(input(t('map.custom.attribution'), def.custom.attribution, (v) => { def.custom.attribution = v.trim(); changed(); }));

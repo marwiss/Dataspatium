@@ -30,6 +30,13 @@
       const { ui, shell, store } = ctx;
       const s = { id: null, basemap: 'none', wms: null, projection: 'web', labels: true, hidden: new Set(), selected: null, rows: [], info: null, slag: 'detaljplan', updatedAt: null };
       let ds = null; let slots = null; let mapEl = null; let handle = null; let seq = 0; let groups = []; let labelLayer = null; let L = null;
+      /** Sweden's orthophoto: read on the next drawing, because the person chose it (for the plan's extent, at most a square kilometre). */
+      let orthoLoad = false;
+      async function loadOrtho(hd, load) {
+        const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
+        if (status === 'idle') ui.toast.show(t('ortho.se.idle'), { kind: 'info', timeout: 9000 });
+        return status;
+      }
 
       /** Read the plan's rows (objects) and facts. */
       async function load(dataset) {
@@ -105,8 +112,11 @@
             s.wms = w;
           }
           s.basemap = basemapSel.value;
+          orthoLoad = basemapChoice.isView(s.basemap);
           render(dataset, target);
         });
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
+        const orthoBtn = basemapChoice.isView(s.basemap) ? ui.button({ label: t('ortho.se.load'), icon: 'image', 'icon-only': true, title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } }) : null;
         const wmsEdit = s.basemap === 'wms' ? ui.button({ label: t('map.wms.edit'), icon: 'pencil', 'icon-only': true, title: t('map.wms.edit.hint'), 'data-plan-wms-edit': '', onClick: async () => { const w = await wmsDialog(); if (w) { s.wms = w; draw(); } } }) : null;
         const labels = /** @type {any} */ (h('dm-switch', { label: t('plan.labels') }));
         labels.checked = s.labels;
@@ -116,7 +126,7 @@
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('layers', 20), dataset.name, ' ', h('dm-badge', { text: t('plan.slag.' + s.slag) }), info.land && info.land !== 'SE' ? h('dm-badge', { text: t('plan.land.' + info.land) }) : null, info.status ? h('dm-badge', { kind: /laga kraft|antagen|vedtaget|í gildi|voimassa|^13$/i.test(info.status) ? 'ok' : 'accent', text: info.status }) : null),
-            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, labels,
+            h('div', { class: 'dm-toolbar' }, projectionSel, basemapSel, wmsEdit, orthoBtn, labels,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: fit }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('plan.save.chart.hint'), onClick: saveChart }),
               s.slag === 'detaljplan' ? ui.button({ label: t('plan.provisions.export'), icon: 'file-text', title: t('plan.provisions.export.hint'), onClick: exportProvisions }) : null,
@@ -142,7 +152,7 @@
           handle = hd;
           L = /** @type {any} */ (globalThis).L;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
-          basemapChoice.notifyKey(hd.info, draw);
+          basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); });
           if (hd.info.basemapProjection) ui.toast.show(t('map.projection.osm', { crs: geo.crsLabel(planGrid()) }), { kind: 'info', timeout: 9000 });
           for (const key of groupKeys()) {
             const rows = s.rows.filter((r) => keyOf(r) === key && r.geometri);
@@ -160,6 +170,8 @@
           fit();
           openPending();
           renderInspector();
+          // Sweden's orthophoto for the plan's extent, under the plan objects, once the map has fitted them.
+          if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await loadOrtho(hd, load); }
         } catch (err) {
           if (my !== seq) return;
           replace(mapEl, h('p', { class: 'dm-error dm-small', text: String((err && err.message) || err) }));

@@ -22,6 +22,14 @@
       const { ui, shell, store } = ctx;
       const s = { id: null, basemap: 'none', selected: null, chart: null };
       let ds = null; let columns = []; let slots = null; let mapEl = null; let handle = null; let seq = 0;
+      /** Sweden's orthophoto: read on the next drawing (the person chose it), and the button that reads it for the view. */
+      let orthoLoad = false; let orthoBtn = null;
+      /** Sweden's orthophoto for the map's view; read only with `load`, otherwise one read before for the same view. */
+      async function loadOrtho(hd, load) {
+        const status = await basemapChoice.drawView(hd, { load, redraw: () => { orthoLoad = true; draw(); } });
+        if (status === 'idle') ui.toast.show(t('ortho.se.idle'), { kind: 'info', timeout: 9000 });
+        return status;
+      }
 
       async function load(dataset) {
         ds = dataset;
@@ -53,13 +61,19 @@
         basemapSel.addEventListener('change', async () => {
           // An orthophoto that needs a key asks for it before anything is drawn; a cancelled key keeps the map as it was.
           if (!(await basemapChoice.ensure(basemapSel.value))) { basemapSel.value = s.basemap; return; }
-          s.basemap = basemapSel.value; s.chart.map.basemap = s.basemap; draw();
+          s.basemap = basemapSel.value; s.chart.map.basemap = s.basemap;
+          // Sweden's orthophoto is read for the view because the person chose it.
+          orthoLoad = basemapChoice.isView(s.basemap);
+          draw();
         });
+        // Sweden's orthophoto covers the view it was read for; after a move the person reads it for the new view.
+        orthoBtn = ui.button({ label: t('ortho.se.load'), icon: 'image', title: t('ortho.se.load.hint'), 'data-map-ortho-load': '', onClick: () => { if (handle) loadOrtho(handle, true); } });
+        orthoBtn.hidden = !basemapChoice.isView(s.basemap);
         mapEl = h('div', { class: 'dm-map-view dm-center-fill', 'aria-label': t('map.view') });
         replace(slots.center,
           h('div', { class: 'dm-page-head' },
             h('h1', null, ui.icon('map', 20), dataset.name, ' ', h('dm-badge', { text: t('common.rows', { n: i18n.formatNumber(dataset.rowCount || 0) }) })),
-            h('div', { class: 'dm-toolbar' }, basemapSel,
+            h('div', { class: 'dm-toolbar' }, basemapSel, orthoBtn,
               ui.button({ label: t('map.fit'), icon: 'scan-line', 'icon-only': true, title: t('map.fit.hint'), onClick: () => { if (handle) handle.fit(); } }),
               ui.button({ label: t('map.save.chart'), icon: 'save', title: t('map.save.chart.hint'), onClick: saveChart }),
               ui.button({ label: t('selection.use.map'), icon: 'list-checks', title: t('selection.use.map.hint'), onClick: () => useWhatShows().catch((err) => shell.log(String((err && err.message) || err), 'error')) }),
@@ -78,8 +92,10 @@
           const hd = await leaflet.render(mapEl, s.chart, { onSelect: (sel) => { s.selected = sel; renderInspector(); } });
           if (my !== seq) { hd.finalize(); return; }
           handle = hd;
+          if (orthoBtn) orthoBtn.hidden = !hd.info.basemapView;
           if (hd.info.basemapDenied) ui.toast.show(t('map.basemap.denied'), { kind: 'warn' });
-          basemapChoice.notifyKey(hd.info, draw);
+          basemapChoice.notifyKey(hd.info, () => { orthoLoad = true; draw(); });
+          if (hd.info.basemapView) { const load = orthoLoad; orthoLoad = false; await loadOrtho(hd, load); if (my !== seq) return; }
           if (hd.info.crsUnknown.length) ui.toast.show(t('map.crs.unknown', { crs: hd.info.crsUnknown.join(', ') }), { kind: 'warn', timeout: 9000 });
           await markSelection();
           await showPending();

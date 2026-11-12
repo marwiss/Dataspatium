@@ -4,7 +4,9 @@
  * The place of a new building on a map (decision B-64, the brief's step 1 in F43 b): the dataset whose facts go into the brief
  * (a footprint from Lantmäteriet's building layer, a point, a plan) drawn close up, with a choice of background map so that
  * the person can switch to an orthophoto and see the building from above while placing it. The map is drawn when the person
- * opens it, and nothing is fetched until a background map is chosen and the consent for background maps is given.
+ * opens it, and nothing is fetched until a background map is chosen and the consent for background maps is given. In Sweden
+ * the choice is Lantmäteriet's orthophoto, read once for the place and SITE_SIDE metres around it (ui/viz/basemap-choice
+ * `drawView`, after the consent for API fetches and with the key of the connector lantmateriet-stac).
  */
 (function () {
   'use strict';
@@ -14,6 +16,8 @@
     /** Close enough to see a house on an orthophoto. */
     const FIT_ZOOM = 19;
     const HEIGHT = 260;
+    /** Sweden's orthophoto is read for a square of at least this many metres around the place, so the map can be moved a little. */
+    const SITE_SIDE = 250;
 
     /**
      * @param {any} _ctx shell context
@@ -21,7 +25,7 @@
      * @returns {{el: HTMLElement, setDataset: (id: string) => void, choose: (id: string) => Promise<boolean>, refresh: () => void, draw: () => Promise<void>, destroy: () => void, state: any, readonly handle: any}}
      */
     function create(_ctx, options = {}) {
-      const s = { datasetId: '', basemap: 'none', orthos: [], note: '', drawn: false };
+      const s = { datasetId: '', basemap: 'none', orthos: [], note: '', drawn: false, load: false, image: '' };
       const el = /** @type {HTMLDetailsElement} */ (h('details', { class: 'dm-more', 'data-site-map': '' }));
       const head = h('summary', { text: t('map.site') });
       const bar = h('div', { class: 'dm-row-wrap' });
@@ -43,6 +47,8 @@
       async function choose(id) {
         if (!(await basemapChoice.ensure(id))) return false;
         s.basemap = id;
+        // Sweden's orthophoto is read because the person chose it.
+        s.load = basemapChoice.isView(id);
         await draw();
         return true;
       }
@@ -65,10 +71,17 @@
           const b = hd.map.getBounds();
           s.orthos = await basemapChoice.options({ box: { minX: b.getWest(), minY: b.getSouth(), maxX: b.getEast(), maxY: b.getNorth() } });
           if (my !== seq) return;
+          s.image = '';
+          if (hd.info.basemapView) {
+            const load = s.load; s.load = false;
+            s.image = await basemapChoice.drawView(hd, { load, minSide: SITE_SIDE, redraw: () => { s.load = true; draw(); } });
+            if (my !== seq) return;
+          }
           const notes = [];
           if (!s.orthos.length) notes.push(t('map.site.ortho.none'));
           if (hd.info.basemapDenied) notes.push(t('map.basemap.denied'));
           if (hd.info.basemapKey) notes.push(basemapChoice.keyNotice(hd.info));
+          if (hd.info.basemapImage) notes.push(t('ortho.se.shown', { years: hd.info.basemapImage.years.join(', '), resolution: base.i18n.formatNumber(hd.info.basemapImage.resolution) }));
           s.note = notes.join(' ');
           renderBar();
         } catch (err) {
