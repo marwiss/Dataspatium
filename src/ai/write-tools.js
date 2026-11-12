@@ -388,7 +388,7 @@
       return { ref, kind, thickness: def.layers ? layersThickness(def.layers) : null, member_width: def.member_width || null };
     }
     /** How many bays (or rows) divide a span evenly: the count, else as many as keep each within the spacing (python/ curtain_count). */
-    const curtainCount = (count, spacing, span) => (count !== null ? count : Math.max(1, Math.ceil(span / spacing - 1e-9)));
+    const curtainCount = (count, spacing, span) => (Number.isInteger(count) ? count : Math.max(1, Math.ceil(span / (finite(spacing) && spacing > 0 ? spacing : CURTAIN_SPACING) - 1e-9)));
     /** A curtain's [bays, rows]. @param {any} c */
     const curtainGrid = (c) => [curtainCount(c.bays, c.bay_width, Math.hypot(c.end[0] - c.start[0], c.end[1] - c.start[1])), curtainCount(c.rows, c.row_height, c.height)];
     /**
