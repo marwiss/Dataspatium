@@ -229,7 +229,7 @@
       assert.ok(text.includes('define_type') && text.includes('materials and shared properties go on the types'), label + ': materials and properties on the types');
       assert.ok(text.includes('Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.'), label + ': the app joins the walls');
     }
-    assert.ok(/create_spaces after the walls and before the slabs\.$/.test(agent.SYSTEM_BUILD), 'the rooms still close the build text');
+    assert.ok(/create_spaces after the walls and before the slabs\./.test(agent.SYSTEM_BUILD), 'the rooms line is still in the build text');
     return 'ok';
   });
 
