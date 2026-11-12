@@ -25,6 +25,11 @@ None of this loads when the app starts, only when it is used: R ships in the app
 time the R tab opens, Python is fetched as components the first time you press Start Python, and 3D models, PDF and maps load the same
 way when needed. Meanwhile the status bar says what is loading, and the R console shows which file it is waiting for.
 
+The same goes for the app's own parts: the start loads Import and Manage and what all modes share, while the other modes, the views
+of the sources, the panel *Ask AI about the model* and the *AI assistant* load the first time they are opened. Meanwhile the work
+area says *Loading …*; if a file cannot be loaded, the app says which, and you can try again. From a web server the start is
+shorter, since fewer files are fetched before the app is drawn.
+
 When something is fetched over the network, that is the app's own files when it runs from a web server and components such as
 Python, IfcOpenShell and OCR, the status bar shows how much of the whole has arrived, the speed and roughly how long is left at that
 rate, with a button to cancel. Whatever was waiting for the download then gets a message that it was cancelled and can be started again

@@ -25,6 +25,11 @@ Intet af dette indlæses, når appen starter, kun når det bruges: R ligger i ap
 åbnes, Python hentes som komponenter, første gang du trykker Start Python, og 3D-modeller, PDF og kort indlæses på samme måde, når der
 er brug for dem. I mellemtiden står der i statuslinjen, hvad der indlæses, og R-konsollen viser, hvilken fil den venter på.
 
+Det samme gælder appens egne dele: ved start indlæses Hent og Håndter og det, som alle tilstande deler, mens de andre tilstande,
+kildernes visninger, panelet *Spørg AI om modellen* og *AI-assistent* indlæses, første gang de åbnes. I mellemtiden står der
+*Indlæser …* på arbejdsfladen; kan en fil ikke indlæses, siger appen hvilken, og du kan prøve igen. Fra en webserver bliver starten
+kortere, fordi færre filer hentes, før appen tegnes.
+
 Når noget hentes over nettet, det vil sige appens egne filer, når den kører fra en webserver, og komponenter som Python, IfcOpenShell
 og OCR, viser statuslinjen, hvor meget der er hentet af det hele, hastigheden og omtrent hvor lang tid der er tilbage i det tempo, med
 en knap til at afbryde. Det, der ventede på hentningen, får så en besked om, at den blev afbrudt, og kan startes igen senere. Fra

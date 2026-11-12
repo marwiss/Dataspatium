@@ -25,6 +25,11 @@ Ingenting av dette lastes når appen starter, bare når det brukes: R ligger i a
 fanen R åpnes, Python hentes som komponenter første gang du trykker Start Python, og 3D-modeller, PDF og kart lastes på samme måte når de
 trengs. I mellomtiden står det i statuslinjen hva som lastes, og R-konsollen viser hvilken fil den venter på.
 
+Det samme gjelder appens egne deler: ved start lastes Hent og Håndter og det alle modusene deler, mens de andre modusene, kildenes
+visninger, panelet *Spør AI om modellen* og *AI-assistent* lastes første gang de åpnes. I mellomtiden står det *Laster …* på
+arbeidsflaten; kan en fil ikke lastes, sier appen hvilken, og du kan prøve igjen. Fra en webserver blir starten kortere, fordi færre
+filer hentes før appen tegnes.
+
 Når noe hentes over nettet, det vil si appens egne filer når den kjøres fra en webserver, og komponenter som Python, IfcOpenShell og
 OCR, viser statuslinjen hvor mye som er hentet av det hele, hastigheten og omtrent hvor lang tid som er igjen i det tempoet, med en knapp
 for å avbryte. Det som ventet på hentingen får da en melding om at den ble avbrutt, og kan startes igjen senere. Fra mappen (file://)

@@ -415,6 +415,9 @@ tryggleikssårbarheit, følg [SECURITY.md](../../SECURITY.md) i staden for å op
   `src/boot.js`; `src/platform` ber alt som er særskilt for file:// (ressursar, shims, workers, lagring, samtykke); motorane SQLite, R
   (WebR) og Python (Pyodide) køyrer i workers; `src/ui` har designvariablane, komponentane (`dm-*`), skalet og éin modus per fil. Alt
   som blir vist, blir escapa, og ingenting blir henta frå nettet utan handlinga og samtykket ditt.
+- Lasting: ved start lastar `src/boot.js` plattforma, skalet, Hent og Handter med det dei krev, og dei andre modusane og store
+  delar som grupper første gongen dei blir brukte (`Dataspatium.ensure`); `python tools/check_groups.py` kontrollerer at kvar modul
+  berre krev det som blir lasta saman med han. Prøvesida lastar alt ved start.
 - Tredjepartskomponentar: `python tools/fetch_vendor.py` følgd av `python tools/wrap_assets.py`.
 - Prøver: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Prøvene går aldri mot nettet;
   ekte tenester blir berre prøvde med eigne parametrar (`?cde=` mot ein Dataregium, `?python=1` med Pyodide).

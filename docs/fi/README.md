@@ -428,6 +428,9 @@ ilmoita [SECURITY.md](../../SECURITY.md):n mukaan sen sijaan, että avaisit issu
   järjestyksessä; `src/platform` sisältää kaiken file://-kohtaisen (resurssit, shimit, workerit, tallennus, suostumus); moottorit SQLite,
   R (WebR) ja Python (Pyodide) toimivat workereissa; `src/ui` sisältää suunnittelumuuttujat, komponentit (`dm-*`), kuoren ja yhden tilan
   tiedostoa kohden. Kaikki näytettävä escapoidaan, eikä mitään noudeta verkosta ilman toimintaasi ja suostumustasi.
+- Lataus: käynnistyksessä `src/boot.js` lataa alustan, kuoren sekä Nouda- ja Hallitse-tilat ja niiden tarvitsemat osat, ja muut
+  tilat ja suuret osat ryhminä, kun niitä käytetään ensimmäisen kerran (`Dataspatium.ensure`); `python tools/check_groups.py`
+  tarkistaa, että jokainen moduuli tarvitsee vain sen, mikä ladataan sen kanssa. Testisivu lataa kaiken käynnistyksessä.
 - Kolmannen osapuolen komponentit: `python tools/fetch_vendor.py` ja sen jälkeen `python tools/wrap_assets.py`.
 - Testit: `powershell -File tools/run-tests.ps1` tai `tools/run-tests.sh` (headless Edge ja Firefox). Testit eivät koskaan käytä
   verkkoa; oikeita palveluja kokeillaan vain omilla parametreilla (`?cde=` Dataregiumia vasten, `?python=1` Pyodiden kanssa).
