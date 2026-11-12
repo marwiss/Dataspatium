@@ -5,7 +5,8 @@
  * with a geometry column (GeoJSON or WKT text) or longitude/latitude columns, or one of the bundled boundary sets,
  * drawn with the app's palette (one colour, by category or graduated) over an optional background map. Tiles come
  * from the net only after consent for the purpose "basemaps"; without a background map nothing leaves the browser. The
- * orthophotos (viz/orthophotos) are background maps too, each with its provider's attribution and, where asked, a key.
+ * orthophotos (viz/orthophotos) are background maps too, each with its provider's attribution and, where asked, a key; Sweden's,
+ * read from files for a view, is drawn by ui/viz/basemap-choice once the map is there (`info.basemapView`).
  * Export (SVG, PNG, PDF) is drawn headless in Web Mercator by this module, without tiles; published HTML gets the
  * library inlined and the features as GeoJSON with their styles.
  */
@@ -346,6 +347,9 @@
       if (!preset) return null;
       const src = orthophotos.sourceFor(preset, grid || 3857);
       if (!src) { info.basemapProjection = true; return null; }
+      // Sweden's orthophoto has no tiles: it is read for the map's view on the person's action (ui/viz/basemap-choice), so the map
+      // only says so here, and nothing is contacted.
+      if (orthophotos.isView(preset)) { info.basemapView = preset.id; if (!orthophotos.ready(preset)) info.basemapKey = preset.id; return null; }
       const key = orthophotos.keyOf(preset);
       if (preset.key && !key) { info.basemapKey = preset.id; return null; }
       try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url, label: `${preset.name} · ${preset.publisher} · ${preset.license.name}` }); } catch (err) {
@@ -434,7 +438,7 @@
       /** @type {any} */ (el)._dmMap = map;
       // A scale bar in metres on every interactive map: plans and maps are read to scale.
       if (interactive) L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
-      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, basemapKey: '', crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
+      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, basemapKey: '', basemapView: '', crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
       // The grid's EPSG code (0 for Web Mercator): a background map is asked for in that grid, or left out when its service has none.
       const gridCode = grid ? geo.crsCode(def.crs) || -1 : 0;
       const tiles = await tileLayer(def, options, info, gridCode);

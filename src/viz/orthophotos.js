@@ -6,6 +6,9 @@
  * where the provider asks for one, a free key. The key lives in api/secrets under `basemap:<id>` and goes only into the
  * image addresses of its own service (viz/leaflet), never into a saved map view, the log or published HTML. Nothing here
  * contacts the net: viz/leaflet asks the consent for background maps before the first tile.
+ * Sweden's orthophoto (service `stac`) is no tile service but Lantmäteriet's files: it is drawn as one image over the map's
+ * view on the person's action (api/orthophoto-cog, ui/viz/basemap-choice), with the key of the connector its `key.connector`
+ * names, which api/secrets keeps under the connector's id.
  */
 (function () {
   'use strict';
@@ -18,20 +21,22 @@
     /** @type {any[]} */ let loaded = [];
 
     /**
-     * The presets of a file's text, checked: every one has an id with the prefix, a name, a publisher, a service (wms or
-     * xyz), a source in Web Mercator, an open licence with its address and an attribution. Throws on a malformed file.
+     * The presets of a file's text, checked: every one has an id with the prefix, a name, a publisher, a service (wms, xyz,
+     * or stac for files read per view), a source in Web Mercator (an address, except for stac, which names its connector and
+     * search), an open licence with its address and an attribution. Throws on a malformed file.
      * @param {string} text @returns {any[]}
      */
     function parse(text) {
       const doc = JSON.parse(text);
       if (!doc || doc.format !== FORMAT || !Array.isArray(doc.basemaps)) throw new Error('orthophotos: unknown format');
       return doc.basemaps.map((b) => {
-        const ok = b && typeof b.id === 'string' && b.id.startsWith(PREFIX) && b.name && b.publisher && (b.service === 'wms' || b.service === 'xyz')
-          && b.sources && b.sources['3857'] && /^https:\/\//.test(b.sources['3857'].url || '')
+        const stac = !!b && b.service === 'stac';
+        const ok = b && typeof b.id === 'string' && b.id.startsWith(PREFIX) && b.name && b.publisher && (b.service === 'wms' || b.service === 'xyz' || stac)
+          && b.sources && b.sources['3857'] && (stac ? !!(b.stac && b.stac.connector && /^https:\/\//.test(b.stac.search || '')) : /^https:\/\//.test(b.sources['3857'].url || ''))
           && b.license && b.license.name && /^https:\/\//.test(b.license.url || '') && b.attribution;
         if (!ok) throw new Error('orthophotos: incomplete preset ' + (b && b.id));
         if (b.service === 'wms' && Object.values(b.sources).some((s) => !s.layers)) throw new Error('orthophotos: a WMS source without layers in ' + b.id);
-        if (b.key && !(b.key.param && /^https:\/\//.test(b.key.signupUrl || ''))) throw new Error('orthophotos: a key without its parameter or sign-up page in ' + b.id);
+        if (b.key && !((b.key.param || b.key.connector) && /^https:\/\//.test(b.key.signupUrl || ''))) throw new Error('orthophotos: a key without its parameter or sign-up page in ' + b.id);
         return Object.freeze(Object.assign({}, b));
       });
     }
@@ -57,21 +62,49 @@
     }
     /** The EPSG codes a preset can be drawn in. @param {any} preset @returns {number[]} */
     function grids(preset) { return Object.keys((preset && preset.sources) || {}).map(Number); }
-    /** Presets whose area meets a box {minX, minY, maxX, maxY} in degrees (all of them without a box). */
+    /**
+     * Presets whose area meets a box {minX, minY, maxX, maxY} in degrees (all of them without a box): its bounds and, when the
+     * preset has one, its outline (`area`, a ring of [lon, lat] drawn with a margin), so that Sweden's is not offered in Copenhagen.
+     */
     function covering(presets, box) {
       if (!box) return presets.slice();
-      return presets.filter((b) => !Array.isArray(b.bounds) || (box.maxX >= b.bounds[0] && box.minX <= b.bounds[2] && box.maxY >= b.bounds[1] && box.minY <= b.bounds[3]));
+      return presets.filter((b) => (!Array.isArray(b.bounds) || (box.maxX >= b.bounds[0] && box.minX <= b.bounds[2] && box.maxY >= b.bounds[1] && box.minY <= b.bounds[3]))
+        && (!Array.isArray(b.area) || meetsRing(box, b.area)));
+    }
+    /** True when a point [x, y] lies inside a ring. */
+    function inRing(p, ring) {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [x1, y1] = ring[i]; const [x2, y2] = ring[j];
+        if ((y1 > p[1]) !== (y2 > p[1]) && p[0] < ((x2 - x1) * (p[1] - y1)) / (y2 - y1) + x1) inside = !inside;
+      }
+      return inside;
+    }
+    /** True when a box meets a ring: a corner or the centre of the box inside it, or a corner of the ring inside the box. */
+    function meetsRing(box, ring) {
+      const pts = [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY], [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2]];
+      return pts.some((p) => inRing(p, ring)) || ring.some((p) => p[0] >= box.minX && p[0] <= box.maxX && p[1] >= box.minY && p[1] <= box.maxY);
     }
     /** The secret's id of a preset's key. @param {any} preset */
     const secretId = (preset) => 'basemap:' + preset.id;
-    /** The key of a preset in this session, or '' (also for a preset without a key). @param {any} preset */
+    /** The key of a preset in this session, or '' (also for a preset without a key or with a connector's key). @param {any} preset */
     function keyOf(preset) {
-      if (!preset || !preset.key) return '';
+      if (!preset || !preset.key || preset.key.connector) return '';
       const values = secrets.get(secretId(preset));
       return values && values.apiKey ? String(values.apiKey) : '';
     }
-    /** True when a preset can be drawn now: it needs no key, or its key is in the session. @param {any} preset */
-    function ready(preset) { return !!preset && (!preset.key || !!keyOf(preset)); }
+    /**
+     * True when a preset can be drawn now: it needs no key, or its key is in the session (for a connector's key, both of the
+     * client credentials). @param {any} preset
+     */
+    function ready(preset) {
+      if (!preset) return false;
+      if (!preset.key) return true;
+      if (preset.key.connector) { const v = secrets.get(preset.key.connector); return !!(v && v.clientId && v.clientSecret); }
+      return !!keyOf(preset);
+    }
+    /** True for a preset drawn as one image over the map's view (Sweden's files) instead of tiles. @param {any} preset */
+    function isView(preset) { return !!preset && preset.service === 'stac'; }
     /**
      * The preset as a connector for the credentials panel (ui/api/auth-panel): one API key, the provider's sign-up page.
      * @param {any} preset @param {string} [help]
@@ -87,6 +120,6 @@
       return `${esc(preset.attribution)} (<a href="${esc(preset.license.url)}" target="_blank" rel="noopener noreferrer">${esc(preset.license.name)}</a>)`;
     }
 
-    return { ASSET, FORMAT, PREFIX, parse, list, cached, isPreset, get, sourceFor, grids, covering, secretId, keyOf, ready, connector, attributionText, attributionHtml };
+    return { ASSET, FORMAT, PREFIX, parse, list, cached, isPreset, get, sourceFor, grids, covering, secretId, keyOf, ready, isView, connector, attributionText, attributionHtml };
   });
 })();
