@@ -11,6 +11,8 @@
  *   pair counts when the depth exceeds the tolerance, so touching faces and overlaps below it do not.
  * - clearance: the smallest distance between the two surfaces, triangle against triangle; a pair counts when it is below the
  *   clearance.
+ * - duplicates: elements of different models (federated models of one building) of the same group whose overlap reaches a
+ *   threshold, by box and, through the same ray parity, by volume.
  * Coordinates are metres; callers move them near the origin first, so that the arithmetic keeps its precision.
  */
 (function () {
@@ -468,7 +470,118 @@
       return { pairs: list.length, clashes: out };
     }
 
-    return { part: part, element: element, pair: pair, candidates: candidates, clash: clash, insidePart: insidePart, distanceToPart: distanceToPart, surfaceDistance: surfaceDistance, crossings: crossings };
+    // ---------------------------------------------------------------------------------------------- duplicates
+    // Fractions of a grid cell that move the sample points off the cells' middles, so that a point seldom lies on a face.
+    var JITTER = [0.013, -0.021, 0.017];
+    function boxVolume(b) {
+      var v = 1;
+      for (var k = 0; k < 3; k++) { var e = b[3 + k] - b[k]; if (!(e > 0)) return 0; v *= e; }
+      return v;
+    }
+    function volumeOf(E) { var v = 0; for (var i = 0; i < E.parts.length; i++) v += E.parts[i].volume; return v; }
+    /**
+     * Whether a point is inside an element by the votes of the six rays per part: 1 inside, 0 outside, and -1 when the clean rays of
+     * one part disagree, which on a closed mesh never happens, so the mesh is open there.
+     */
+    function vote(p, E) {
+      var inside = false;
+      for (var i = 0; i < E.parts.length; i++) {
+        var P = E.parts[i];
+        if (!P.n || pointBoxDistance(p, P.box, 0) > 0) continue;
+        var len = 0;
+        for (var k = 0; k < 3; k++) len = Math.max(len, Math.abs(P.box[3 + k] - P.box[k]));
+        len = len * 2 + 1;
+        var odd = 0; var even = 0;
+        for (var r = 0; r < RAYS.length; r++) {
+          var c = crossings(p, RAYS[r], len, P);
+          if (c.grazed) continue;
+          if (c.ts.length % 2) odd++; else even++;
+        }
+        if (odd && even) return -1;
+        if (odd >= 3) inside = true;
+      }
+      return inside ? 1 : 0;
+    }
+    /**
+     * How much two elements share. By their boxes: the common box's volume as a share of the larger box. By their volumes, when
+     * both meshes are closed where it matters: points on a grid over the common box that lie inside both, as a share of the larger
+     * element's volume. `volume` is null when it cannot be measured: no volume, or rays that disagree, which shows an open mesh.
+     * @param {any} A @param {any} B @param {number} [steps] grid points per axis
+     * @returns {{box: number, volume: number|null, point: number[], extent: number}}
+     */
+    function overlap(A, B, steps) {
+      var ib = [Math.max(A.box[0], B.box[0]), Math.max(A.box[1], B.box[1]), Math.max(A.box[2], B.box[2]), Math.min(A.box[3], B.box[3]), Math.min(A.box[4], B.box[4]), Math.min(A.box[5], B.box[5])];
+      var iv = boxVolume(ib);
+      var big = Math.max(boxVolume(A.box), boxVolume(B.box));
+      var ext = 0;
+      for (var e = 0; e < 3; e++) { var d = ib[3 + e] - ib[e]; if (d > 0) ext += d * d; }
+      var res = { box: big > 0 ? Math.min(1, iv / big) : 0, volume: null, point: [(ib[0] + ib[3]) / 2, (ib[1] + ib[4]) / 2, (ib[2] + ib[5]) / 2], extent: Math.sqrt(ext) };
+      var va = volumeOf(A); var vb = volumeOf(B);
+      if (!(iv > 0 && va > 0 && vb > 0)) return res;
+      // Two elements that fill their boxes (a wall or a slab along the axes) share exactly the common box: no points needed.
+      var fills = function (v, E) { var bv = boxVolume(E.box); return Math.abs(v - bv) <= 1e-6 * bv; };
+      if (fills(va, A) && fills(vb, B)) { res.volume = Math.min(1, iv / Math.max(va, vb)); return res; }
+      var k = steps || 8; var n = 0; var na = 0; var nb = 0; var nab = 0; var open = 0;
+      for (var i = 0; i < k; i++) for (var j = 0; j < k; j++) for (var l = 0; l < k; l++) {
+        var p = [ib[0] + (i + 0.5 + JITTER[0]) / k * (ib[3] - ib[0]), ib[1] + (j + 0.5 + JITTER[1]) / k * (ib[4] - ib[1]), ib[2] + (l + 0.5 + JITTER[2]) / k * (ib[5] - ib[2])];
+        var a = vote(p, A); var b = vote(p, B);
+        n++;
+        if (a < 0 || b < 0) { open++; continue; }
+        if (a) na++; if (b) nb++; if (a && b) nab++;
+      }
+      if (na && nb && open <= Math.max(2, n * 0.02)) res.volume = Math.min(1, (nab / n) * iv / Math.max(va, vb));
+      return res;
+    }
+    /**
+     * Elements of different models that are the same thing twice: the same group (an IFC class, or classes that model the same
+     * thing) and an overlap at or above the threshold, by volume when it can be measured, else by box. Pairs with the same GlobalId
+     * are left out, since they are a finding of their own; `pairs` names such pairs ([model, id, model, id]) to be measured anyway.
+     * Elements need `key`, `model`, `group` and `guid`.
+     * @param {any[][]} models the elements of each model
+     * @param {{threshold?: number, steps?: number, pairs?: any[][]}} options threshold as a share, 0–1
+     * @param {(done: number, total: number) => void} [onProgress]
+     * @returns {{pairs: number, duplicates: any[], measured: any[]}}
+     */
+    function duplicates(models, options, onProgress) {
+      var opts = options || {};
+      var limit = opts.threshold === undefined ? 0.9 : opts.threshold;
+      var list = [];
+      for (var i = 0; i < models.length; i++) for (var j = i + 1; j < models.length; j++) {
+        var c = candidates(models[i], models[j], 0);
+        for (var x = 0; x < c.length; x++) {
+          var A0 = c[x][0]; var B0 = c[x][1];
+          if (!A0.group || A0.group !== B0.group || (A0.guid && A0.guid === B0.guid)) continue;
+          list.push(c[x]);
+        }
+      }
+      var out = [];
+      for (var y = 0; y < list.length; y++) {
+        var A = list[y][0]; var B = list[y][1];
+        // The common box bounds both measures: a pair whose common box is too small for either is passed over unmeasured.
+        var ib = [Math.max(A.box[0], B.box[0]), Math.max(A.box[1], B.box[1]), Math.max(A.box[2], B.box[2]), Math.min(A.box[3], B.box[3]), Math.min(A.box[4], B.box[4]), Math.min(A.box[5], B.box[5])];
+        var iv = boxVolume(ib);
+        if (iv < limit * Math.max(boxVolume(A.box), boxVolume(B.box)) && iv < limit * Math.max(volumeOf(A), volumeOf(B))) continue;
+        var o = overlap(A, B, opts.steps);
+        var share = o.volume === null ? o.box : o.volume;
+        if (share + 1e-9 >= limit) out.push({ a: A.id, b: B.id, am: A.model, bm: B.model, box: o.box, volume: o.volume, share: share, point: o.point, extent: o.extent });
+        if (onProgress && (y % 50 === 49 || y === list.length - 1)) onProgress(y + 1, list.length);
+      }
+      var byKey = {};
+      for (var m = 0; m < models.length; m++) for (var q = 0; q < models[m].length; q++) byKey[models[m][q].model + ':' + models[m][q].id] = models[m][q];
+      var measured = [];
+      for (var r = 0; r < (opts.pairs || []).length; r++) {
+        var pr = opts.pairs[r];
+        var P = byKey[pr[0] + ':' + pr[1]]; var Q = byKey[pr[2] + ':' + pr[3]];
+        if (!P || !Q) continue;
+        var mo = overlap(P, Q, opts.steps);
+        // The two may lie apart: the point and the size are those of the box around both, so that a camera shows them both.
+        var ub = [Math.min(P.box[0], Q.box[0]), Math.min(P.box[1], Q.box[1]), Math.min(P.box[2], Q.box[2]), Math.max(P.box[3], Q.box[3]), Math.max(P.box[4], Q.box[4]), Math.max(P.box[5], Q.box[5])];
+        measured.push({ am: pr[0], a: pr[1], bm: pr[2], b: pr[3], box: mo.box, volume: mo.volume, share: mo.volume === null ? mo.box : mo.volume, point: [(ub[0] + ub[3]) / 2, (ub[1] + ub[4]) / 2, (ub[2] + ub[5]) / 2], extent: Math.hypot(ub[3] - ub[0], ub[4] - ub[1], ub[5] - ub[2]) });
+      }
+      return { pairs: list.length, duplicates: out, measured: measured };
+    }
+
+    return { part: part, element: element, pair: pair, candidates: candidates, clash: clash, insidePart: insidePart, distanceToPart: distanceToPart, surfaceDistance: surfaceDistance, crossings: crossings, overlap: overlap, duplicates: duplicates };
   }
 
   D.define('analysis/clash-core', [], () => ({ source: dataspatiumClashCore.toString(), create: dataspatiumClashCore }));

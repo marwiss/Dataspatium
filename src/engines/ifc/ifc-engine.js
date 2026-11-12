@@ -159,16 +159,15 @@
       api.CloseModel(model);
       return byId;
     }
-    /** Set A against set B over one or two files, with the core from analysis/clash-core (its source comes first). */
-    function clashes(msg, report) {
-      var core = dataspatiumClashCore();
-      var setA = []; var setB = []; var origin = null; var drawn = [];
-      for (var f = 0; f < msg.files.length; f++) {
-        var file = msg.files[f];
-        var inA = file.a === null ? null : new Set(file.a || []);
-        var inB = file.b === null ? null : new Set(file.b || []);
-        var wanted = inA === null || inB === null ? null : new Set(Array.from(inA).concat(Array.from(inB)));
-        var byId = elementsOf(new Uint8Array(file.bytes), wanted, report);
+    /**
+     * The core's elements of each file, all moved by one origin (the first vertex read) so that the files line up and the
+     * arithmetic keeps its precision. `wantedOf(file)` gives the ids to read from a file, or null for every element.
+     */
+    function build(core, files, wantedOf, report) {
+      var models = []; var origin = null; var drawn = [];
+      for (var f = 0; f < files.length; f++) {
+        var list = [];
+        var byId = elementsOf(new Uint8Array(files[f].bytes), wantedOf(files[f]), report);
         byId.forEach(function (parts, id) {
           if (!origin) origin = [parts[0].pos[0], parts[0].pos[1], parts[0].pos[2]];
           var built = [];
@@ -180,9 +179,28 @@
           var el = core.element(id, built);
           el.key = f + ':' + id; el.model = f;
           drawn.push(el.key);
-          if (inA === null || inA.has(id)) setA.push(el);
-          if (inB === null || inB.has(id)) setB.push(el);
+          list.push(el);
         });
+        models.push(list);
+      }
+      return { models: models, origin: origin || [0, 0, 0], drawn: drawn };
+    }
+    /** Set A against set B over one or two files, with the core from analysis/clash-core (its source comes first). */
+    function clashes(msg, report) {
+      var core = dataspatiumClashCore();
+      var setA = []; var setB = [];
+      var sets = msg.files.map(function (file) { return { a: file.a === null ? null : new Set(file.a || []), b: file.b === null ? null : new Set(file.b || []) }; });
+      var loaded = build(core, msg.files, function (file) {
+        var s = sets[msg.files.indexOf(file)];
+        return s.a === null || s.b === null ? null : new Set(Array.from(s.a).concat(Array.from(s.b)));
+      }, report);
+      var origin = loaded.origin; var drawn = loaded.drawn;
+      for (var f = 0; f < loaded.models.length; f++) {
+        for (var e = 0; e < loaded.models[f].length; e++) {
+          var el = loaded.models[f][e];
+          if (sets[f].a === null || sets[f].a.has(el.id)) setA.push(el);
+          if (sets[f].b === null || sets[f].b.has(el.id)) setB.push(el);
+        }
       }
       report({ phase: 'clash', done: 0, total: 0 });
       var res = core.clash(setA, setB, msg.options || {}, function (done, total) { report({ phase: 'clash', done: done, total: total }); });
@@ -192,12 +210,34 @@
       }
       return { pairs: res.pairs, clashes: res.clashes, a: setA.length, b: setB.length, drawn: drawn };
     }
+    /**
+     * Duplicates across federated models: each file's chosen elements with their group and GlobalId, every pair of files against
+     * each other with the core; points back in the models' coordinates.
+     */
+    function duplicateJob(msg, report) {
+      var core = dataspatiumClashCore();
+      var loaded = build(core, msg.files, function (file) { return new Set(file.ids || []); }, report);
+      for (var f = 0; f < loaded.models.length; f++) {
+        var file = msg.files[f]; var at = new Map();
+        for (var i = 0; i < (file.ids || []).length; i++) at.set(file.ids[i], i);
+        for (var e = 0; e < loaded.models[f].length; e++) {
+          var el = loaded.models[f][e]; var k = at.get(el.id);
+          el.group = k === undefined ? '' : file.groups[k]; el.guid = k === undefined ? '' : file.guids[k];
+        }
+      }
+      report({ phase: 'duplicates', done: 0, total: 0 });
+      var res = core.duplicates(loaded.models, msg.options || {}, function (done, total) { report({ phase: 'duplicates', done: done, total: total }); });
+      var o = loaded.origin;
+      var back = function (x) { x.point = [x.point[0] + o[0], x.point[1] + o[1], x.point[2] + o[2]]; };
+      res.duplicates.forEach(back); res.measured.forEach(back);
+      return { pairs: res.pairs, duplicates: res.duplicates, measured: res.measured, elements: loaded.models.map(function (m) { return m.length; }), drawn: loaded.drawn };
+    }
     self.onmessage = function (ev) {
       var msg = ev.data || {};
       var report = function (p) { self.postMessage({ id: msg.id, progress: p }); };
-      if (msg.type === 'clash') {
+      if (msg.type === 'clash' || msg.type === 'duplicates') {
         start().then(function () {
-          self.postMessage({ id: msg.id, ok: true, result: clashes(msg, report) });
+          self.postMessage({ id: msg.id, ok: true, result: msg.type === 'clash' ? clashes(msg, report) : duplicateJob(msg, report) });
         }).catch(function (err) { self.postMessage({ id: msg.id, ok: false, error: String((err && err.message) || err) }); });
         return;
       }
@@ -271,6 +311,25 @@
         worker.postMessage({ type: 'clash', id, files: sent, options: options || {} }, sent.map((f) => f.bytes));
       });
     }
-    return { meshes, clash, terminate, release };
+    /**
+     * Duplicates across federated models in the worker (analysis/clash-core `duplicates`): every file against every other.
+     * @param {Array<{bytes: Uint8Array, ids: number[], groups: string[], guids: string[]}>} files the elements to read from each file,
+     *   with each one's group (classes that model the same thing share one) and GlobalId, in the same order
+     * @param {{threshold?: number, steps?: number, pairs?: any[][]}} options threshold as a share, 0–1; pairs [file, id, file, id]
+     *   to measure whatever they are
+     * @param {{onProgress?: (p: {phase: string, done: number, total?: number}) => void}} [hooks]
+     * @returns {Promise<{pairs: number, duplicates: any[], measured: any[], elements: number[], drawn: string[]}>} points in the
+     *   models' coordinates, Z up, metres
+     */
+    async function duplicates(files, options, hooks = {}) {
+      await ensureWorker();
+      const sent = files.map((f) => ({ bytes: f.bytes.slice().buffer, ids: f.ids || [], groups: f.groups || [], guids: f.guids || [] }));
+      return new Promise((resolve, reject) => {
+        const id = ++seq;
+        pending.set(id, { resolve, reject, onProgress: hooks.onProgress });
+        worker.postMessage({ type: 'duplicates', id, files: sent, options: options || {} }, sent.map((f) => f.bytes));
+      });
+    }
+    return { meshes, clash, duplicates, terminate, release };
   });
 })();
