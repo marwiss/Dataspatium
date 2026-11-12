@@ -198,7 +198,7 @@
           const saved = kept || (await save());
           if (!saved) return null;
           const findings = D.require('docgen/findings');
-          D.require('ui/docs/document-panel').open(_ctx, saved.id, which === 'plan' ? findings.PLAN : findings.REPORT);
+          D.ensure(['exportera'], () => D.require('ui/docs/document-panel').open(_ctx, saved.id, which === 'plan' ? findings.PLAN : findings.REPORT));
           return saved.id;
         }
         /**

@@ -426,6 +426,9 @@ you did. See [CONTRIBUTING.md](../../CONTRIBUTING.md). Attach no personal data a
   `src/platform` carries everything specific to file:// (resources, shims, workers, storage, consent); the engines SQLite, R (WebR) and
   Python (Pyodide) run in workers; `src/ui` has the design variables, the components (`dm-*`), the shell and one mode per file. Everything
   rendered is escaped, and nothing is fetched from the network without your action and your consent.
+- Loading: at start `src/boot.js` loads the platform, the shell, Import and Manage with what they require, and the other modes and
+  large parts as groups the first time they are used (`Dataspatium.ensure`); `python tools/check_groups.py` checks that every module
+  requires only what is loaded with it. The test page loads everything at start.
 - Third-party components: `python tools/fetch_vendor.py` followed by `python tools/wrap_assets.py`.
 - Tests: `powershell -File tools/run-tests.ps1` or `tools/run-tests.sh` (headless Edge and Firefox). The tests never go to the network;
   real services are tried only with their own parameters (`?cde=` against a Dataregium, `?python=1` with Pyodide).

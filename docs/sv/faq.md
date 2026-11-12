@@ -25,6 +25,11 @@ Inget av detta laddas när appen startar, bara när det används: R ligger med i
 gången fliken R öppnas, Python hämtas som komponenter första gången du trycker Starta Python, och 3D-modeller, PDF och kartor laddas
 på samma sätt när de behövs. Under tiden står det i statusraden vad som laddas, och R-konsolen visar vilken fil den väntar på.
 
+Detsamma gäller appens egna delar: vid start laddas Inhämta och Hantera och det som alla lägen delar, medan de andra lägena,
+källornas vyer, panelen *Fråga AI om modellen* och *AI-assistent* laddas första gången de öppnas. Under tiden står det *Laddar …* i
+arbetsytan; går en fil inte att ladda säger appen vilken, och du kan försöka igen. Från en webbserver blir starten kortare, eftersom
+färre filer hämtas innan appen ritas.
+
 När något hämtas över nätet, det vill säga appens egna filer när den körs från en webbserver och komponenter som Python, IfcOpenShell
 och OCR, visar statusraden hur mycket som hämtats av det hela, hastigheten och ungefär hur lång tid som är kvar i den takten, med en
 knapp för att avbryta. Det som väntade på hämtningen får då ett meddelande om att den avbröts och kan startas om senare. Från mappen

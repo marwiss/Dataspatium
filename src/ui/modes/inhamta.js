@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'ui/api/api-view', 'platform/files', 'ui/api/bridge-view', 'ui/api/family-dialog', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, bridge, apiView, files, bridgeView, familyDialog, linked, qgis, kinds, fileSense, leaflet, sketches) => {
+  D.define('ui/modes/inhamta', ['ui/base', 'io/importers/csv', 'data/encoding', 'data/types', 'api/connectors', 'api/bridge', 'platform/files', 'data/linked', 'io/importers/qgis', 'data/kinds', 'io/file-sense', 'viz/leaflet', 'ui/kinds/sketches'], (base, csv, encoding, types, connectors, bridge, files, linked, qgis, kinds, fileSense, leaflet, sketches) => {
     const { h, t, i18n, replace } = base;
     const STEPS = [{ id: 'file', label: t('import.step.file') }, { id: 'options', label: t('import.step.options') }, { id: 'columns', label: t('import.step.columns') }, { id: 'done', label: t('import.step.done') }];
     const DECIMALS = [{ value: 'auto', label: t('import.decimal.auto') }, { value: 'comma', label: t('import.decimal.comma') }, { value: 'point', label: t('import.decimal.point') }];
@@ -310,10 +310,11 @@
         const id = source.slice(4);
         const connector = connectorList.find((c) => c.id === id);
         if (!connector) { replace(slots.center, h('p', { class: 'dm-help', text: t('common.loading') })); return; }
+        if (!sourcesReady()) return;
         if (!apiUi || apiId !== id) {
           if (apiUi) apiUi.destroy();
           apiId = id;
-          apiUi = apiView.create(ctx, connector, {
+          apiUi = D.require('ui/api/api-view').create(ctx, connector, {
             onDataset: () => {},
             onRemoved: () => { apiUi = null; apiId = null; source = 'file'; reloadConnectors().then(render); },
             // A geodata source added from a catalogue search opens in place of the search.
@@ -325,6 +326,19 @@
       }
 
       /**
+       * The views of the sources are a group of scripts (src/boot.js, 'sources'): true when it is loaded; otherwise the
+       * workspace says that it is loading, and the centre is drawn again once it has, unless another source was chosen.
+       */
+      function sourcesReady() {
+        if (D.groups.loaded('sources')) return true;
+        const wanted = source;
+        replace(slots.center, h('p', { class: 'dm-help', text: t('common.loading') }));
+        D.ensure(['sources']).then(() => { if (slots && source === wanted) renderCenter(); }, (err) => shell.partFailed(err));
+        return false;
+      }
+      /** The dialog for a new source (ui/api/family-dialog in the group 'sources'), opened at once when the group is loaded. */
+      function familyDialog(options) { return D.ensure(['sources'], () => D.require('ui/api/family-dialog').open(ctx, options)); }
+      /**
        * A server handed over by a deep link (#/inhamta/opencde?server=…&project=…&document=…&version=…): a server the workspace already
        * has as a source opens directly, a new one goes through the source dialog with the address filled in, once. A named project and
        * document wait in the store for the source's view (ui/api/opencde-view), which chooses and fetches them.
@@ -335,14 +349,14 @@
         if (!p || !p.baseUrl) return;
         const same = (u) => String(u || '').trim().replace(/\/+$/, '').toLowerCase();
         const known = connectorList.find((c) => c.family && c.family.type === (p.family || 'opencde') && same(c.baseUrl) === same(p.baseUrl));
-        const connector = known || (await familyDialog.open(ctx, { family: p.family || 'opencde', values: { baseUrl: p.baseUrl } }));
+        const connector = known || (await familyDialog({ family: p.family || 'opencde', values: { baseUrl: p.baseUrl } }));
         if (!connector) return;
         if (p.projectId || p.documentId) store.set({ pendingCde: { connectorId: connector.id, projectId: p.projectId || null, documentId: p.documentId || null, versionIndex: p.versionIndex == null ? null : p.versionIndex, at: Date.now() } });
         await openConnector(connector);
       }
       /** A connector for a database family (PostgREST, OData, ...) or a geodata service (WFS, OGC API Features, ArcGIS) from an address and a key; it opens when created. */
       async function addFamily(group, family) {
-        const connector = await familyDialog.open(ctx, Object.assign({}, group ? { group } : {}, family ? { family } : {}));
+        const connector = await familyDialog(Object.assign({}, group ? { group } : {}, family ? { family } : {}));
         if (!connector) return;
         await openConnector(connector);
       }
@@ -424,7 +438,8 @@
         fieldUi.render({ center: slots.center, right: slots.right }).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
       }
       function renderBridge(remembered) {
-        if (!bridgeUi) { bridgeUi = bridgeView.create(ctx, remembered ? { source: remembered.source } : {}); bridgeUi.start(); }
+        if (!sourcesReady()) return;
+        if (!bridgeUi) { bridgeUi = D.require('ui/api/bridge-view').create(ctx, remembered ? { source: remembered.source } : {}); bridgeUi.start(); }
         else if (remembered) bridgeUi.select(remembered.source).catch((err) => ui.toast.show(String((err && err.message) || err), { kind: 'error' }));
         replace(slots.center, bridgeUi.el);
       }

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'ui/analysis/graph-panel', 'data/kinds'], (base, flowsView, watches, folder, share, batch, settings, graphPanel, kinds) => {
+  D.define('ui/modes/hantera', ['ui/base', 'ui/flows/flows-view', 'data/watches', 'platform/storage/folder', 'ui/share/bundle', 'ui/batch-actions', 'ui/settings/network', 'data/kinds'], (base, flowsView, watches, folder, share, batch, settings, kinds) => {
     const { h, t, i18n, replace } = base;
     const WORKSPACE = '__workspace';
     const FLOWS = '__flows';
@@ -87,11 +87,11 @@
               // A dataset with a view of its own opens there: the reading view, the gallery, the model.
               kinds.of(ds).open ? ui.button({ label: t(kinds.of(ds).open.label), icon: kinds.of(ds).open.icon, variant: 'primary', title: t(kinds.of(ds).open.hint), onClick: () => openView(ds) }) : null,
               // Two tables (nodes and edges) become a graph dataset.
-              !kinds.isCollection(ds) ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => graphPanel.fromTablesDialog(ctx, ds.id).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }) }) : null,
+              !kinds.isCollection(ds) ? ui.button({ label: t('graph.from.button'), icon: 'share-2', title: t('graph.from.button.hint'), onClick: () => D.ensure(['bearbeta'], () => D.require('ui/analysis/graph-panel').fromTablesDialog(ctx, ds.id)).then((meta) => { if (meta) { store.set({ selectedId: meta.id }); render(); } }, (err) => shell.partFailed(err)) }) : null,
               ds.source && (ds.source.kind === 'api' || ds.source.kind === 'bridge') ? ui.button({ label: t('api.refetch'), icon: 'refresh-cw', onClick: () => refetch(ds) }) : null,
               watches.watchable(ds) ? watchButton(ds) : null,
               ds.source && ds.source.kind === 'file' && ds.source.linked ? ui.button({ label: t('linked.refresh'), icon: 'refresh-cw', onClick: () => refreshLinked(ds) }) : null,
-              ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns: await services.datasets.columns(ds.id), onApplied: () => render() }) }),
+              ui.button({ label: t('bearbeta.versions'), icon: 'history', onClick: async () => { const columns = await services.datasets.columns(ds.id); return D.ensure(['bearbeta'], () => D.require('ui/dialogs').versionsDialog({ datasetId: ds.id, columns, onApplied: () => render() })); } }),
               ui.button({ label: t('common.rename'), icon: 'pencil', onClick: () => rename(ds) }),
               ui.button({ label: t('datasets.organize'), icon: 'folder', onClick: () => batch.organize(ctx, [ds.id]) }),
               ui.button({ label: t('common.export'), icon: 'file-output', onClick: () => shell.activate('exportera') }),

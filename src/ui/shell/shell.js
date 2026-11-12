@@ -5,7 +5,8 @@
  * inspector, log drawer, status bar), owns the store and hands each mode the same slots and services.
  *
  * Mode contract: { id, activate(slots), deactivate(), update?(state, changed) } created by
- * `createMode(ctx)` in src/ui/modes/*.js.
+ * `createMode(ctx)` in src/ui/modes/*.js. The modes beyond the start are registered with `registerLazyMode` and created
+ * when their group of scripts (src/boot.js) has loaded; `activate` and `openRoute` wait for it.
  */
 (function () {
   'use strict';
@@ -26,6 +27,11 @@
         constructor(root) {
           this.root = root;
           this.modes = new Map();
+          /** Modes whose scripts are a group loaded at first use: id → {group, module} (registerLazyMode). */
+          this.lazyModes = new Map();
+          /** The mode asked for last, and a lazy one on its way ({id, done}); a mode that loads late opens only if still wanted. */
+          this.wanted = null;
+          this.pending = null;
           this.active = null;
           this.store = stateMod.createStore({ mode: null, datasets: [], selectedId: null, selectedIds: [], status: 'saved', pendingCode: null, openChartId: null, lastRun: null, lastExport: null, pendingSearch: null, lastSearch: null, pendingDocument: null });
           this.ctx = {
@@ -40,6 +46,13 @@
           this.palette.register(() => this.builtinCommands());
           // The handbook's documents (ui/help), loaded when the palette first opens.
           this.palette.register(() => (D.has('ui/help') ? D.require('ui/help').commands() : []));
+          // The modes not yet used add their commands when created: the first opening loads their groups, and the open
+          // palette lists the commands as they come.
+          this.palette.register(() => {
+            const missing = Array.from(this.lazyModes.keys()).filter((id) => !this.modes.has(id));
+            if (missing.length) Promise.all(missing.map((id) => this.loadMode(id))).then(() => this.palette.refresh()).catch((err) => D.log('shell', 'modes for the palette', err));
+            return [];
+          });
           // Beginner's course (Grundkurs): opened at the first start, from the help dialog and the palette.
           this.course = courseMod.create(this);
           // Internet access is asked for per purpose the first time it is needed (platform/consent).
@@ -176,8 +189,16 @@
           this.activate('hantera');
           this.store.set({ selectedId: '__flows', flowsTab: tab });
         }
-        /** The floating AI assistant (ui/assistant); one per page, kept while the app is open. */
-        openAssistant() { return D.require('ui/assistant').open(this.ctx); }
+        /** The floating AI assistant (ui/assistant, the group 'assistant'); one per page, kept while the app is open. */
+        openAssistant() {
+          return D.ensure(['assistant'], () => D.require('ui/assistant').open(this.ctx)).catch((err) => this.partFailed(err));
+        }
+        /** A group of scripts that did not load (src/boot.js), or another error: in the log and a toast, in words the user can act on. */
+        partFailed(err) {
+          const message = err && err.path ? t('shell.part.failed', { file: err.path }) : String((err && err.message) || err);
+          this.log(message, 'error');
+          this.toast(message, { kind: 'error' });
+        }
         /** What a flow is doing, in the status bar and the log. */
         listenToFlows() {
           const flows = D.require('data/flows');
@@ -188,7 +209,7 @@
           const remote = D.require('api/remote');
           remote.setAsker({
             confirm: () => overlays.dialog.confirm(t('remote.confirm'), { title: t('remote.switch') }),
-            approve: (cmd, args, options) => D.require('ui/assistant').approve(cmd, args, options),
+            approve: (cmd, args, options) => D.ensure(['assistant'], () => D.require('ui/assistant').approve(cmd, args, options)),
             log: (text, kind) => this.log(text, kind),
           });
           remote.subscribe((s) => { this.remoteEl.hidden = !s.on; this.remoteEl.classList.toggle('dm-sb-remote-off', !s.connected); });
@@ -315,6 +336,28 @@
         }
 
         registerMode(mode) { this.modes.set(mode.id, mode); }
+        /**
+         * A mode whose scripts are a group loaded at first use (src/boot.js GROUPS): created when the group has run, at once
+         * when it has already (the test page loads every group at start).
+         * @param {string} id the mode's id @param {string} group the group's name @param {string} moduleName the module with createMode
+         */
+        registerLazyMode(id, group, moduleName) {
+          this.lazyModes.set(id, { group, module: moduleName });
+          if (D.groups.loaded(group)) this.loadMode(id).catch((err) => this.partFailed(err));
+        }
+        /**
+         * The mode, its group loaded first for a lazy one; created synchronously when the group is loaded already.
+         * @param {string} id
+         * @returns {Promise<any>} the mode, or null for an unknown id
+         */
+        loadMode(id) {
+          const lazy = this.lazyModes.get(id);
+          if (this.modes.has(id) || !lazy) return Promise.resolve(this.modes.get(id) || null);
+          return D.ensure([lazy.group], () => {
+            if (!this.modes.has(id)) this.registerMode(D.require(lazy.module).createMode(this.ctx));
+            return this.modes.get(id);
+          });
+        }
 
         async init() {
           // The very first start: let the user pick the language before anything else is shown.
@@ -327,21 +370,27 @@
           this.listenToFlows();
           // Land where the user most likely wants to be: an empty workspace starts in Inhämta, one with
           // datasets in Hantera. An explicit #/mode in the URL wins.
+          // A mode loaded at first use is active once its group has run; the object of the route waits for that.
           const route = this.parseRoute();
           const landing = this.store.get().datasets.length ? 'hantera' : 'inhamta';
-          this.activate(MODES.includes(route.mode) ? route.mode : landing);
-          if (route.object) this.openRoute(route).catch((err) => D.log('shell', 'route', err));
+          const shown = this.activate(MODES.includes(route.mode) ? route.mode : landing);
+          if (route.object) shown.then(() => this.openRoute(route)).catch((err) => D.log('shell', 'route', err));
           window.addEventListener('hashchange', () => {
             const r = this.parseRoute();
             if (!MODES.includes(r.mode)) return;
-            if (r.mode !== this.store.get().mode) this.activate(r.mode);
-            if (r.object) this.openRoute(r).catch((err) => D.log('shell', 'route', err));
+            const there = r.mode !== this.store.get().mode ? this.activate(r.mode) : Promise.resolve();
+            if (r.object) there.then(() => this.openRoute(r)).catch((err) => D.log('shell', 'route', err));
           });
           this.course.autoStart();
           this.remindBackup();
           this.versionNotice();
           // An installed app (served from a web server, added to the home screen) asks the browser to keep its storage.
-          if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) idb.requestPersist().catch(() => {});
+          if (!D.capabilities.isFileProtocol && matchMedia('(display-mode: standalone)').matches) {
+            idb.requestPersist().catch(() => {});
+            // It works without a network after the first use only with every file in the service worker's cache (sw-coi.js keeps
+            // what was fetched), so it loads the groups of scripts too, once the page has settled. The mobile app has its own page.
+            setTimeout(() => { D.ensure(D.groups.list().map((g) => g.name).filter((name) => name !== 'mobile')).catch((err) => D.log('shell', 'groups for use offline', err)); }, 5000);
+          }
         }
 
         /** Download a backup of the workspace (the action of reminders and notices). */
@@ -403,6 +452,8 @@
         /** Apply the object part of a route in the mode that is already active. */
         async openRoute(route) {
           const { mode, object } = route;
+          // A lazy mode's group first: its views pick up what the route leaves in the store.
+          await this.loadMode(mode);
           const state = this.store.get();
           const byName = (o) => state.datasets.find((d) => d.shortName === o || d.id === o || d.name === o) || null;
           // #/inhamta/opencde?server=https://…[&project=…&document=…&version=…] : a server (Dataregium's "Open in Dataspatium") lands in
@@ -425,10 +476,28 @@
           if (location.hash !== wanted) history.replaceState(null, '', wanted);
         }
 
-        /** Switch mode. */
+        /**
+         * Switch mode. A lazy mode whose group has not run yet shows that it is loading and opens once the group has run,
+         * unless another mode was asked for meanwhile; one whose group has run is created and opened at once.
+         * @param {string} id
+         * @returns {Promise<void>} resolved when the mode is active, or when the workspace says that it could not be loaded
+         */
         activate(id) {
+          this.wanted = id;
+          const lazy = this.lazyModes.get(id);
+          if (lazy && !this.modes.has(id) && !D.groups.loaded(lazy.group)) {
+            this.showModeLoading(id);
+            if (this.pending && this.pending.id === id) return this.pending.done;
+            const done = this.loadMode(id).then(
+              () => { if (this.wanted === id) this.activate(id); },
+              (err) => { if (this.wanted === id) this.showModeFailed(id, err); },
+            ).finally(() => { if (this.pending && this.pending.id === id) this.pending = null; });
+            this.pending = { id, done };
+            return done;
+          }
+          if (lazy && !this.modes.has(id)) this.loadMode(id).catch((err) => this.partFailed(err));
           const mode = this.modes.get(id);
-          if (!mode) return;
+          if (!mode) return Promise.resolve();
           if (this.active && this.active.deactivate) this.active.deactivate();
           for (const slot of Object.values(this.slots)) slot.replaceChildren();
           this.active = mode;
@@ -440,6 +509,28 @@
           for (const btn of this.modeNav.children) btn.setAttribute('aria-current', btn.getAttribute('data-mode') === id ? 'page' : 'false');
           if (location.hash !== '#/' + id) history.replaceState(null, '', '#/' + id);
           mode.activate(this.slots);
+          return Promise.resolve();
+        }
+
+        /** The workspace while a mode's group loads: the mode's name and that it is loading; the mode before is closed. */
+        showModeLoading(id) {
+          if (this.active && this.active.deactivate) this.active.deactivate();
+          this.active = null;
+          for (const slot of Object.values(this.slots)) slot.replaceChildren();
+          this.slots.center.append(h('dm-empty-state', { icon: MODE_ICONS[id], heading: t('mode.' + id), text: t('common.loading'), role: 'status', 'data-mode-loading': id }, h('dm-progress', { indeterminate: '' })));
+          // The modes loaded at first use keep the datasets in the object panel (only Inhämta, in the start, names it otherwise).
+          if (this.leftTitle) this.leftTitle.textContent = t('shell.datasets');
+          if (this.leftAside) this.leftAside.setAttribute('aria-label', t('shell.datasets'));
+          for (const btn of this.modeNav.children) btn.setAttribute('aria-current', btn.getAttribute('data-mode') === id ? 'page' : 'false');
+        }
+        /** The workspace when a mode's group did not load: what happened and a way to try again. */
+        showModeFailed(id, err) {
+          console.error('[shell] mode ' + id + ' did not load', err);
+          const text = err && err.path ? t('shell.part.failed', { file: err.path }) : String((err && err.message) || err);
+          const heading = t('shell.mode.failed', { mode: t('mode.' + id) });
+          this.log(heading + ': ' + text, 'error');
+          replace(this.slots.center, h('dm-empty-state', { icon: 'triangle-alert', heading, text, 'data-mode-failed': id },
+            basic.button({ label: t('shell.mode.retry'), icon: 'refresh-cw', variant: 'primary', title: t('shell.mode.retry.hint'), onClick: () => this.activate(id) })));
         }
 
         onState(state, changed) {

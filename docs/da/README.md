@@ -413,6 +413,9 @@ sikkerhedssårbarhed, følg [SECURITY.md](../../SECURITY.md) i stedet for at åb
   `src/platform` bærer alt, der er specifikt for file:// (ressourcer, shims, workers, lagring, samtykke); motorerne SQLite, R (WebR) og
   Python (Pyodide) kører i workers; `src/ui` har designvariablerne, komponenterne (`dm-*`), skallen og én tilstand pr. fil. Alt, der
   vises, escapes, og intet hentes fra nettet uden din handling og dit samtykke.
+- Indlæsning: ved start indlæser `src/boot.js` platformen, skallen, Hent og Håndter med det, de kræver, og de andre tilstande og
+  store dele som grupper, første gang de bruges (`Dataspatium.ensure`); `python tools/check_groups.py` kontrollerer, at hvert modul kun
+  kræver det, der indlæses sammen med det. Prøvesiden indlæser alt ved start.
 - Tredjepartskomponenter: `python tools/fetch_vendor.py` efterfulgt af `python tools/wrap_assets.py`.
 - Prøver: `powershell -File tools/run-tests.ps1` eller `tools/run-tests.sh` (headless Edge og Firefox). Prøverne går aldrig mod nettet;
   rigtige tjenester afprøves kun med egne parametre (`?cde=` mod en Dataregium, `?python=1` med Pyodide).

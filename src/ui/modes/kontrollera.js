@@ -151,7 +151,7 @@
       /** Rapport och underhållsplan: a table of findings in the document generator, with the template for findings. */
       function reportCard(ds) {
         const findings = D.require('docgen/findings');
-        const open = (templateId) => D.require('ui/docs/document-panel').open(ctx, ds.id, templateId);
+        const open = (templateId) => D.ensure(['exportera'], () => D.require('ui/docs/document-panel').open(ctx, ds.id, templateId));
         return h('div', { class: 'dm-card dm-stack-sm', 'data-kontrollera-report': '' },
           h('h3', { text: t('kontrollera.report') }),
           h('p', { class: 'dm-help', text: t('kontrollera.report.help') }),

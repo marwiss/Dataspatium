@@ -30,7 +30,7 @@
           });
           const why = f.reason ? t(f.reason, f.params || {}) : t('facets.reason.user');
           return h('div', { class: 'dm-stack-xs' }, sw, h('p', { class: 'dm-help dm-small', text: why }),
-            f.on && f.id === 'network' ? h('div', null, ctx.ui.button({ label: t('graph.from.button'), icon: 'share-2', size: 'sm', title: t('graph.from.button.hint'), onClick: () => D.require('ui/analysis/graph-panel').fromTablesDialog(ctx, ds.id).then((meta) => { if (meta) { ctx.store.set({ selectedId: meta.id }); ctx.shell.activate('hantera'); } }) })) : null);
+            f.on && f.id === 'network' ? h('div', null, ctx.ui.button({ label: t('graph.from.button'), icon: 'share-2', size: 'sm', title: t('graph.from.button.hint'), onClick: () => D.ensure(['bearbeta'], () => D.require('ui/analysis/graph-panel').fromTablesDialog(ctx, ds.id)).then((meta) => { if (meta) { ctx.store.set({ selectedId: meta.id }); ctx.shell.activate('hantera'); } }, (err) => ctx.shell.partFailed(err)) })) : null);
         });
         replace(el, h('div', { class: 'dm-card dm-stack-sm', 'data-card': 'facets' }, h('h3', { text: t('facets.title') }), h('p', { class: 'dm-help', text: t('facets.help') }), rows));
       };

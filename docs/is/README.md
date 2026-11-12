@@ -411,6 +411,9 @@ fylgdu [SECURITY.md](../../SECURITY.md) í stað þess að opna issue.
   `src/platform` ber allt sem er sérstakt fyrir file:// (tilföng, shims, workerar, geymsla, samþykki); vélarnar SQLite, R (WebR) og Python
   (Pyodide) keyra í workerum; `src/ui` hefur hönnunarbreyturnar, íhlutina (`dm-*`), skelina og einn ham í hverri skrá. Allt sem birtist er
   escapað, og ekkert er sótt af netinu án aðgerðar þinnar og samþykkis.
+- Hleðsla: við ræsingu hleður `src/boot.js` grunninum, skelinni, Sækja og Umsjón með því sem þau þurfa, og hinum hömunum og
+  stórum hlutum sem hópum þegar þeir eru notaðir fyrst (`Dataspatium.ensure`); `python tools/check_groups.py` prófar að hver eining
+  þurfi aðeins það sem hleðst með henni. Prófunarsíðan hleður öllu við ræsingu.
 - Íhlutir þriðja aðila: `python tools/fetch_vendor.py` og síðan `python tools/wrap_assets.py`.
 - Prófanir: `powershell -File tools/run-tests.ps1` eða `tools/run-tests.sh` (headless Edge og Firefox). Prófanirnar fara aldrei á netið;
   raunverulegar þjónustur eru aðeins prófaðar með eigin breytum (`?cde=` gegn Dataregium, `?python=1` með Pyodide).

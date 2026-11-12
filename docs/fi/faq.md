@@ -27,6 +27,11 @@ R-välilehti avataan ensimmäisen kerran, Python noudetaan komponentteina, kun p
 PDF ja kartat ladataan samalla tavalla tarvittaessa. Sillä välin tilarivillä näkyy, mitä ladataan, ja R-konsoli näyttää, mitä tiedostoa
 se odottaa.
 
+Sama koskee sovelluksen omia osia: käynnistyksessä ladataan Nouda ja Hallitse sekä se, mikä on kaikille tiloille yhteistä, kun taas
+muut tilat, lähteiden näkymät, paneeli *Kysy tekoälyltä mallista* ja *Tekoälyavustaja* ladataan, kun ne avataan ensimmäisen kerran.
+Sillä välin työalueella lukee *Ladataan …*; jos jotakin tiedostoa ei voida ladata, sovellus kertoo mikä, ja voit yrittää uudelleen.
+Verkkopalvelimelta käynnistys on lyhyempi, koska ennen sovelluksen piirtämistä noudetaan vähemmän tiedostoja.
+
 Kun jotakin haetaan verkosta, eli sovelluksen omia tiedostoja, kun se ajetaan verkkopalvelimelta, ja komponentteja kuten Python,
 IfcOpenShell ja OCR, tilarivi näyttää, paljonko kokonaisuudesta on haettu, nopeuden ja suunnilleen kuinka paljon aikaa on jäljellä sillä
 vauhdilla, sekä painikkeen keskeyttämiseen. Latausta odottanut toiminto saa silloin ilmoituksen keskeytyksestä ja voidaan käynnistää

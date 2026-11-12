@@ -3,9 +3,10 @@
 /**
  * Dataspatium boot loader.
  *
- * Loads every application script as a classic <script> tag in dependency order and then
- * dispatches the `dataspatium:ready` event. Pages opened via file:// cannot use ES modules or
- * fetch() against local files, so this is the only loading mechanism that works everywhere.
+ * Loads the scripts of the start (the platform, the shell, Inhämta and Hantera and what they require) as classic <script>
+ * tags in order and then dispatches the `dataspatium:ready` event; the other modes and large parts are groups of scripts
+ * loaded the same way the first time they are used (`Dataspatium.loadGroup`, `Dataspatium.ensure`). Pages opened via
+ * file:// cannot use ES modules or fetch() against local files, so this is the only loading mechanism that works everywhere.
  *
  * `script.async = false` keeps insertion order while letting the browser prefetch in parallel.
  */
@@ -138,7 +139,6 @@
     'src/platform/storage/folder-store.js',
     'src/platform/storage/github-store.js',
     'src/platform/updates.js',
-    'src/platform/p2p.js',
     // Engines
     'src/engines/sqlite/sqlite-worker.js',
     'src/engines/sqlite/sqlite-engine.js',
@@ -163,8 +163,6 @@
     'src/data/model.js',
     'src/data/datasets.js',
     'src/analysis/regex.js',
-    'src/analysis/text.js',
-    'src/analysis/images.js',
     'src/data/query.js',
     'src/data/operations.js',
     'src/data/operations-extra.js',
@@ -175,7 +173,6 @@
     'src/data/ifc-ops.js',
     'src/data/ifc-new.js',
     'src/data/models.js',
-    'src/data/graph-ops.js',
     'src/data/recipes.js',
     'src/data/derive.js',
     'src/data/profile.js',
@@ -218,7 +215,6 @@
     'src/api/schema.js',
     'src/api/secrets.js',
     'src/api/http.js',
-    'src/api/bsdd.js',
     'src/api/websocket.js',
     'src/api/auth.js',
     'src/api/jsonstat.js',
@@ -229,7 +225,6 @@
     'src/api/reach.js',
     'src/api/files.js',
     'src/api/heights.js',
-    'src/api/orthophoto-cog.js',
     'src/api/connectors.js',
     'src/api/families/common.js',
     'src/api/families/pxweb.js',
@@ -241,13 +236,9 @@
     'src/api/families/neo4j.js',
     'src/api/cde-log.js',
     'src/api/families/opencde.js',
-    'src/data/model-material.js',
     'src/api/families/opencde-admin.js',
-    'src/api/families/opencde-manage.js',
     'src/api/graph-source.js',
-    'src/api/families/geodata.js',
     'src/api/runner.js',
-    'src/api/klimatdatabas.js',
     'src/api/bridge.js',
     // Visualisation
     'src/viz/locale.js',
@@ -268,13 +259,6 @@
     'src/engines/ocr/ocr-engine.js',
     'src/viz/model-draw.js',
     'src/analysis/model.js',
-    'src/analysis/climate.js',
-    'src/analysis/inventory.js',
-    'src/analysis/ids-presets.js',
-    'src/analysis/geo.js',
-    'src/analysis/graph.js',
-    'src/analysis/cypher.js',
-    'src/analysis/cypher-write.js',
     'src/viz/render.js',
     'src/viz/plotly.js',
     'src/viz/code-charts.js',
@@ -319,91 +303,26 @@
     'src/data/field-collect.js',
     'src/data/watches.js',
     'src/ui/shell/shell.js',
-    'src/ui/op-dialog.js',
-    'src/ui/dialogs.js',
-    'src/ui/api/variable-picker.js',
     'src/ui/api/auth-panel.js',
-    'src/ui/api/endpoint-form.js',
     'src/ui/api/merge-dialog.js',
-    'src/ui/api/pxweb-view.js',
-    'src/ui/api/sos-view.js',
-    'src/ui/api/geodata-view.js',
-    'src/ui/api/geoportal-view.js',
-    'src/ui/api/graph-workbench.js',
-    'src/ui/api/neo4j-view.js',
-    'src/ui/api/cde-log-card.js',
-    'src/ui/api/admin-panel.js',
-    'src/ui/api/manage-panel.js',
-    'src/ui/api/opencde-view.js',
-    'src/ui/api/api-view.js',
-    'src/ui/api/bridge-view.js',
-    'src/ui/api/family-dialog.js',
-    'src/ui/viz/basemap-choice.js',
-    'src/ui/viz/export-dialog.js',
-    'src/ui/viz/vega-controls.js',
-    'src/ui/viz/d3-controls.js',
-    'src/ui/viz/r-panel.js',
-    'src/ui/viz/python-panel.js',
-    'src/ui/viz/map-panel.js',
-    'src/ui/viz/graph-chart-panel.js',
-    'src/ui/viz/model-chart-panel.js',
-    'src/ui/viz/gallery.js',
-    'src/ui/viz/present.js',
-    'src/ui/viz/dashboard-view.js',
-    'src/ui/docs/document-panel.js',
-    'src/ui/analysis/notebook-panel.js',
-    'src/ui/analysis/regex-panel.js',
-    'src/analysis/stats.js',
-    'src/ui/analysis/stats-panel.js',
-    'src/ui/analysis/text-panel.js',
-    'src/ui/analysis/images-panel.js',
-    'src/ui/analysis/geo-panel.js',
-    'src/ui/analysis/plan-panel.js',
-    'src/ui/analysis/graph-panel.js',
-    'src/ui/analysis/climate-panel.js',
-    'src/ui/analysis/inventory-panel.js',
-    'src/ui/analysis/model-panel.js',
-    'src/ui/bearbeta/document-view.js',
-    'src/ui/bearbeta/gallery-view.js',
-    'src/ui/bearbeta/map-view.js',
-    'src/ui/bearbeta/plan-view.js',
-    'src/ui/bearbeta/graph-view.js',
     'src/data/issues.js',
     'src/data/ifc-validation.js',
     'src/ui/bearbeta/issue-fields.js',
     'src/ui/bearbeta/model-issues.js',
-    'src/ui/bearbeta/model-compare.js',
-    'src/ui/bearbeta/model-view.js',
     'src/ui/share/review.js',
-    'src/ui/share/devices-panel.js',
     'src/data/kinds.js',
     'src/data/selection.js',
-    // Fråga AI om modellen: the providers, the read tools and the agent loop; the panel lives in Bearbeta's model view
-    'src/ai/providers.js',
-    'src/ai/model-tools.js',
-    'src/ai/build-input.js',
-    'src/ai/ids-writer.js',
-    'src/ui/api/profile-card.js',
-    'src/ai/write-tools.js',
-    'src/ai/check-tools.js',
-    'src/ai/agent.js',
-    'src/ai/assistant.js',
-    'src/ui/bearbeta/site-map.js',
-    'src/ui/bearbeta/ai-check.js',
-    'src/ui/bearbeta/ai-panel.js',
-    'src/ui/bearbeta/proposals-card.js',
-    'src/ui/assistant/assistant-panel.js',
+    // What Inhämta and Hantera require while they run: the pages of a dataset, guides, the library, field forms
     'src/data/spatial-search.js',
-    'src/data/media.js',
     'src/data/facets.js',
     'src/io/file-sense.js',
     'src/data/version-diff.js',
-    'src/data/model-diff.js',
     'src/ui/kinds/sketches.js',
     'src/ui/kinds/dataset-picture.js',
     'src/data/ocr.js',
     'src/data/bcf-xml.js',
     'src/analysis/clash.js',
+    'src/analysis/climate.js',
     'src/analysis/federated.js',
     'src/data/collab.js',
     'src/data/provenance.js',
@@ -415,28 +334,20 @@
     'src/data/guides.js',
     'src/ui/guides/guides-view.js',
     'src/analysis/starters.js',
-    'src/docgen/viewers.js',
-    'src/docgen/site.js',
     'src/viz/plan-map.js',
     'src/io/export-kinds.js',
     'src/viz/suggest.js',
-    'src/viz/profile.js',
     'src/ui/soka/place-form.js',
     'src/ui/kinds/ocr-dialog.js',
     'src/ui/kinds/provenance-view.js',
     'src/ui/library/library-view.js',
-    'src/ui/share/github-merge.js',
-    'src/ui/share/cde-send.js',
     'src/ui/kinds/comment-block.js',
-    'src/ui/kinds/row-pictures.js',
     'src/data/kind-health.js',
     'src/ui/kinds/insight-cards.js',
     'src/ui/kinds/federated-card.js',
     'src/data/share-scan.js',
     'src/data/protected-columns.js',
     'src/ui/share/bundle-dialog.js',
-    'src/ui/share/github-card.js',
-    'src/ui/share/qr.js',
     'src/ui/datasets/batch-actions.js',
     'src/ui/settings/network-card.js',
     'src/ui/field/field-view.js',
@@ -444,23 +355,155 @@
     'src/ui/modes/inhamta.js',
     'src/ui/flows/flows-view.js',
     'src/ui/modes/hantera.js',
-    'src/ui/soka/query-tab.js',
-    'src/ui/modes/soka.js',
-    'src/ui/modes/bearbeta.js',
-    'src/ui/modes/kontrollera.js',
-    'src/ui/modes/analysera.js',
-    'src/ui/viz/profile-dialog.js',
-    'src/ui/modes/visualisera.js',
-    'src/ui/modes/exportera.js',
-    'src/ui/modes/dela.js',
     'src/app.js',
-    // The mobile app is small and part of the test page; m/index.html loads it through the MOBILE list above.
     'src/data/field-form.js',
-    'src/mobile/kind-views.js',
-    'src/mobile/field.js',
-    'src/mobile/app.js',
   ]);
-  const scripts = globalThis.DATASPATIUM_PROFILE === 'mobile' ? MOBILE : full;  // The page may live anywhere; resolve paths relative to this script's own src attribute.
+  /**
+   * Groups (PLAN 4 step 2): the other seven modes and the large parts that the start does not need, loaded the first time
+   * they are used through Dataspatium.loadGroup(name) or Dataspatium.ensure(names[, then]); the shell awaits a mode's group
+   * before the mode is created. `needs` names the groups loaded with it, all earlier in the list. tools/check_groups.py
+   * checks that a module requires only modules of the start, its own group or a group it needs (or awaits the group with
+   * ensure in its file), and that every file is in exactly one list. The test page (DATASPATIUM_PROFILE = 'all',
+   * tests/setup.js) and `?groups=all` load every group at start; the mobile app has the MOBILE list and no groups. The
+   * mobile app's own files are a group too, since the test page runs it next to the app.
+   */
+  const GROUPS = [
+    { name: 'ai-tools', needs: [], scripts: [
+      'src/api/bsdd.js',
+      'src/ai/providers.js',
+      'src/ai/model-tools.js',
+      'src/ai/ids-writer.js',
+      'src/ui/api/profile-card.js',
+    ] },
+    { name: 'sources', needs: ['ai-tools'], scripts: [
+      'src/api/families/opencde-manage.js',
+      'src/api/families/geodata.js',
+      'src/ui/api/variable-picker.js',
+      'src/ui/api/endpoint-form.js',
+      'src/ui/api/pxweb-view.js',
+      'src/ui/api/sos-view.js',
+      'src/ui/api/geodata-view.js',
+      'src/ui/api/geoportal-view.js',
+      'src/ui/api/graph-workbench.js',
+      'src/ui/api/neo4j-view.js',
+      'src/ui/api/cde-log-card.js',
+      'src/ui/api/admin-panel.js',
+      'src/ui/api/manage-panel.js',
+      'src/ui/api/opencde-view.js',
+      'src/ui/api/api-view.js',
+      'src/ui/api/bridge-view.js',
+      'src/ui/api/family-dialog.js',
+    ] },
+    { name: 'bearbeta', needs: [], scripts: [
+      'src/analysis/text.js',
+      'src/analysis/images.js',
+      'src/data/graph-ops.js',
+      'src/api/orthophoto-cog.js',
+      'src/analysis/ids-presets.js',
+      'src/analysis/graph.js',
+      'src/analysis/cypher.js',
+      'src/analysis/cypher-write.js',
+      'src/ui/op-dialog.js',
+      'src/ui/dialogs.js',
+      'src/ui/viz/basemap-choice.js',
+      'src/ui/analysis/graph-panel.js',
+      'src/ui/bearbeta/document-view.js',
+      'src/ui/bearbeta/gallery-view.js',
+      'src/ui/bearbeta/map-view.js',
+      'src/ui/bearbeta/plan-view.js',
+      'src/ui/bearbeta/graph-view.js',
+      'src/ui/bearbeta/model-compare.js',
+      'src/ui/bearbeta/model-view.js',
+      'src/ui/bearbeta/proposals-card.js',
+      'src/data/media.js',
+      'src/data/model-diff.js',
+      'src/ui/kinds/row-pictures.js',
+      'src/ui/modes/bearbeta.js',
+    ] },
+    { name: 'soka', needs: [], scripts: [
+      'src/ui/soka/query-tab.js',
+      'src/ui/modes/soka.js',
+    ] },
+    { name: 'ai', needs: ['bearbeta', 'ai-tools'], scripts: [
+      'src/data/model-material.js',
+      'src/ai/build-input.js',
+      'src/ai/write-tools.js',
+      'src/ai/check-tools.js',
+      'src/ai/agent.js',
+      'src/ui/bearbeta/site-map.js',
+      'src/ui/bearbeta/ai-check.js',
+      'src/ui/bearbeta/ai-panel.js',
+    ] },
+    { name: 'kontrollera', needs: ['bearbeta'], scripts: [
+      'src/ui/modes/kontrollera.js',
+    ] },
+    { name: 'analysera', needs: ['bearbeta'], scripts: [
+      'src/api/klimatdatabas.js',
+      'src/analysis/inventory.js',
+      'src/analysis/geo.js',
+      'src/ui/analysis/notebook-panel.js',
+      'src/ui/analysis/regex-panel.js',
+      'src/analysis/stats.js',
+      'src/ui/analysis/stats-panel.js',
+      'src/ui/analysis/text-panel.js',
+      'src/ui/analysis/images-panel.js',
+      'src/ui/analysis/geo-panel.js',
+      'src/ui/analysis/plan-panel.js',
+      'src/ui/analysis/climate-panel.js',
+      'src/ui/analysis/inventory-panel.js',
+      'src/ui/analysis/model-panel.js',
+      'src/ui/modes/analysera.js',
+    ] },
+    { name: 'visualisera', needs: ['bearbeta'], scripts: [
+      'src/ui/viz/export-dialog.js',
+      'src/ui/viz/vega-controls.js',
+      'src/ui/viz/d3-controls.js',
+      'src/ui/viz/r-panel.js',
+      'src/ui/viz/python-panel.js',
+      'src/ui/viz/map-panel.js',
+      'src/ui/viz/graph-chart-panel.js',
+      'src/ui/viz/model-chart-panel.js',
+      'src/ui/viz/gallery.js',
+      'src/ui/viz/present.js',
+      'src/ui/viz/dashboard-view.js',
+      'src/viz/profile.js',
+      'src/ui/viz/profile-dialog.js',
+      'src/ui/modes/visualisera.js',
+    ] },
+    { name: 'exportera', needs: ['visualisera'], scripts: [
+      'src/ui/docs/document-panel.js',
+      'src/ui/modes/exportera.js',
+    ] },
+    { name: 'dela', needs: [], scripts: [
+      'src/platform/p2p.js',
+      'src/ui/share/devices-panel.js',
+      'src/docgen/viewers.js',
+      'src/docgen/site.js',
+      'src/ui/share/github-merge.js',
+      'src/ui/share/cde-send.js',
+      'src/ui/share/github-card.js',
+      'src/ui/share/qr.js',
+      'src/ui/modes/dela.js',
+    ] },
+    { name: 'assistant', needs: ['ai'], scripts: [
+      'src/ai/assistant.js',
+      'src/ui/assistant/assistant-panel.js',
+    ] },
+    { name: 'mobile', needs: ['dela'], scripts: [
+      'src/mobile/kind-views.js',
+      'src/mobile/field.js',
+      'src/mobile/app.js',
+    ] },
+  ];
+  const PAGE = globalThis.DATASPATIUM_PROFILE;
+  /** Every group at start: the test page, and `?groups=all` for debugging and screenshot scripts (never the mobile page). */
+  let everything = PAGE === 'all';
+  try { everything = everything || new URLSearchParams(location.search).get('groups') === 'all'; } catch (_e) { /* the start list only */ }
+  everything = everything && PAGE !== 'mobile';
+  /** The groups of this page: none on the mobile page, whose list is complete. */
+  const groups = PAGE === 'mobile' ? [] : GROUPS.map((g) => ({ name: g.name, needs: g.needs.slice(), scripts: g.scripts.slice() }));
+  const scripts = PAGE === 'mobile' ? MOBILE : (everything ? full.concat(...groups.map((g) => g.scripts)) : full);
+  // The page may live anywhere; resolve paths relative to this script's own src attribute.
   const current = /** @type {HTMLScriptElement|null} */ (document.currentScript);
   const src = (current && current.getAttribute('src')) || 'src/boot.js';
   const base = src.replace(/src\/boot\.js(\?.*)?$/, '');
@@ -513,47 +556,153 @@
   const IN_FLIGHT = 8;
   /** Over http(s) a failed start is tried once more by reloading the page, as one file in hundreds may fail on the way. */
   const RETRY = 'dataspatium.boot.retry';
+  /** path → the promise that the script has run; one that failed is forgotten, so that the next load tries it again. */
+  const runs = new Map();
+  /** Scripts waiting for a place among those in flight. @type {{path: string, resolve: Function, reject: Function}[]} */
+  const queue = [];
+  let inFlight = 0;
 
   /**
    * The scripts go in a few at a time: with `async = false` the browser fetches those added in parallel and runs them in
    * the order they were added, and each one that has run lets the next one in. So a page from a web server waits for a
    * fraction of the round trips, and the server is never asked for every file at once (GitHub Pages then drops some).
-   * The page is ready when the last one has run; the first one that fails ends the start with its path, after one reload
-   * over http(s).
+   * The start and the groups share the queue, so that never more than IN_FLIGHT are on their way.
    */
-  function loadAll() {
-    let left = scripts.length;
-    let next = 0;
-    let failed = false;
-    const web = /^https?:$/.test(location.protocol);
-    if (!left) { announce('dataspatium:ready'); return; }
-    function add() {
-      if (failed || next >= scripts.length) return;
-      const path = scripts[next++];
+  function pump() {
+    while (inFlight < IN_FLIGHT && queue.length) {
+      const job = /** @type {{path: string, resolve: Function, reject: Function}} */ (queue.shift());
       const el = document.createElement('script');
-      el.src = base + path;
+      el.src = base + job.path;
       el.async = false;
+      inFlight += 1;
       el.onload = function () {
-        if (PROFILE) mark('load:' + path);
-        left -= 1;
-        if (left) { add(); return; }
-        if (failed) return;
-        try { sessionStorage.removeItem(RETRY); } catch (_e) { /* no session storage */ }
-        announce('dataspatium:ready');
+        if (PROFILE) mark('load:' + job.path);
+        inFlight -= 1;
+        job.resolve();
+        pump();
       };
       el.onerror = function () {
         console.error('[boot] failed to load', el.src);
-        if (failed) return;
-        failed = true;
-        let again = false;
-        try { again = web && sessionStorage.getItem(RETRY) !== '1'; if (again) sessionStorage.setItem(RETRY, '1'); } catch (_e) { again = false; }
-        if (again) { location.reload(); return; }
-        announce('dataspatium:boot-error', path);
+        inFlight -= 1;
+        runs.delete(job.path);
+        el.remove();
+        job.reject(Object.assign(new Error(job.path), { path: job.path }));
+        pump();
       };
-      if (PROFILE) mark('insert:' + path);
+      if (PROFILE) mark('insert:' + job.path);
       document.head.appendChild(el);
     }
-    for (let i = 0; i < IN_FLIGHT; i++) add();
   }
-  isolate().then(loadAll);
+
+  /**
+   * Scripts loaded in their order, each once: one already loaded or on its way is not added again. Resolves when all have
+   * run; the first that fails rejects with its path (as the message and as `path`), and those of the list not yet added
+   * are dropped.
+   * @param {string[]} paths relative to the page's base
+   * @returns {Promise<void>}
+   */
+  function load(paths) {
+    /** @type {{path: string, resolve: Function, reject: Function}[]} */
+    const mine = [];
+    const all = paths.map((path) => {
+      const known = runs.get(path);
+      if (known) return known;
+      /** @type {any} */ let job = null;
+      const run = new Promise((resolve, reject) => { job = { path, resolve, reject }; });
+      runs.set(path, run);
+      queue.push(job);
+      mine.push(job);
+      return run;
+    });
+    pump();
+    return Promise.all(all).then(() => undefined, (err) => {
+      for (const job of mine) {
+        const i = queue.indexOf(job);
+        if (i < 0) continue;
+        queue.splice(i, 1);
+        runs.delete(job.path);
+        job.reject(err);
+      }
+      throw err;
+    });
+  }
+
+  /** Names of the groups whose scripts have all run, with those of the groups they need. */
+  const loaded = new Set();
+  /** name → the promise of a group on its way; a failed one is forgotten, so that it can be tried again. */
+  const loading = new Map();
+
+  /**
+   * Load a group (GROUPS above), the groups it needs first. Safe to call again: the same promise while it loads, a
+   * resolved one once it has, and a new try after a failure (the scripts that did run are not added again).
+   * @param {string} name
+   * @returns {Promise<void>}
+   */
+  function loadGroup(name) {
+    if (loaded.has(name)) return Promise.resolve();
+    const known = loading.get(name);
+    if (known) return known;
+    const group = groups.find((g) => g.name === name);
+    if (!group) return Promise.reject(new Error('Unknown group of scripts: ' + name));
+    const run = Promise.all([ensure(group.needs), load(group.scripts)]).then(() => { loaded.add(name); loading.delete(name); });
+    run.catch(() => { loading.delete(name); });
+    loading.set(name, run);
+    return run;
+  }
+
+  /**
+   * The groups loaded, then `then` run and its result given. When they all have been loaded already `then` runs at once,
+   * in the caller's own task, so that code on the test page (every group loaded at start) and in a part already used goes
+   * on exactly as before.
+   * @param {string|string[]} names
+   * @param {() => any} [then]
+   * @returns {Promise<any>}
+   */
+  function ensure(names, then) {
+    const list = typeof names === 'string' ? [names] : Array.from(names || []);
+    if (list.every((n) => loaded.has(n))) {
+      if (!then) return Promise.resolve();
+      try { return Promise.resolve(then()); } catch (err) { return Promise.reject(err); }
+    }
+    return Promise.all(list.map(loadGroup)).then(() => (then ? then() : undefined));
+  }
+
+  D.loadGroup = loadGroup;
+  D.ensure = ensure;
+  D.groups = {
+    /** The groups of this page in load order, as copies {name, needs, scripts}. */
+    list: () => groups.map((g) => ({ name: g.name, needs: g.needs.slice(), scripts: g.scripts.slice() })),
+    /** Whether the group's scripts have run. @param {string} name */
+    loaded: (name) => loaded.has(name),
+    /** The start list of this page (MOBILE, or the app's without the groups even when they were loaded with it). */
+    start: () => (PAGE === 'mobile' ? MOBILE : full).slice(),
+    /** True when every group was loaded at start (the test page, ?groups=all). */
+    everything,
+    /**
+     * Another group, after those of the list (the tests' own). @param {{name: string, needs?: string[], scripts: string[]}} group
+     */
+    add(group) {
+      if (groups.some((g) => g.name === group.name)) throw new Error('Group already defined: ' + group.name);
+      groups.push({ name: group.name, needs: (group.needs || []).slice(), scripts: group.scripts.slice() });
+    },
+  };
+
+  /**
+   * The start: the page is ready when the last script of its list has run; the first one that fails ends the start with
+   * its path, after one reload over http(s).
+   */
+  function start() {
+    const web = /^https?:$/.test(location.protocol);
+    load(scripts).then(() => {
+      if (everything) for (const g of groups) loaded.add(g.name);
+      try { sessionStorage.removeItem(RETRY); } catch (_e) { /* no session storage */ }
+      announce('dataspatium:ready');
+    }, (err) => {
+      let again = false;
+      try { again = web && sessionStorage.getItem(RETRY) !== '1'; if (again) sessionStorage.setItem(RETRY, '1'); } catch (_e) { again = false; }
+      if (again) { location.reload(); return; }
+      announce('dataspatium:boot-error', err.message);
+    });
+  }
+  isolate().then(start);
 })();
