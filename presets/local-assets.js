@@ -414,6 +414,12 @@ Dataspatium.assets.addEntries({
   "size": 30962,
   "library": "dataspatium"
  },
+ "presets/ids/SE-Dataspatium_Avfallshantering.ids": {
+  "file": "presets/ids/SE-Dataspatium_Avfallshantering.ids.js",
+  "encoding": "text",
+  "size": 19192,
+  "library": "dataspatium"
+ },
  "presets/bibliotek/index.json": {
   "file": "presets/bibliotek/index.json.js",
   "encoding": "gzip+base64",
@@ -615,7 +621,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 44045,
+  "size": 49335,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -783,7 +789,7 @@ Dataspatium.assets.addEntries({
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 43921,
+  "size": 49321,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -951,7 +957,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 43493,
+  "size": 48811,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1119,7 +1125,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 44256,
+  "size": 49678,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1287,7 +1293,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 46929,
+  "size": 52754,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1455,7 +1461,7 @@ Dataspatium.assets.addEntries({
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 46923,
+  "size": 52583,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1623,7 +1629,7 @@ Dataspatium.assets.addEntries({
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 44624,
+  "size": 50242,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {

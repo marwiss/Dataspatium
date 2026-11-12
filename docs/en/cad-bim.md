@@ -125,6 +125,9 @@ In R and Python `dm_read()` gives the elements, `dm_read_properties()` the prope
 - **Properties**: which values a property has, and on how many elements of each type.
 - **Entities**: how many entities of each kind the file consists of.
 - **Climate declaration**: a preliminary climate declaration from the model per category and layer, see *Preliminary climate declaration* below.
+- **Material inventory**: a basis for the waste management plan from the model, with the building products that can be reused, the
+  waste per fraction and layer and the hazardous substances the model names, see *Material inventory for the waste management plan*
+  below.
 
 Every result can be saved as a dataset.
 
@@ -149,6 +152,8 @@ browser. Nothing is sent anywhere; the model does not leave the computer.
   ifctester, IfcOpenShell's own checker: choose the .ids file and you get a row per requirement and element with passed, failed
   or not applicable and the reason, plus a tally. The file stays in the browser. ifctester travels with the app without its web
   app, so nothing is fetched beyond Python itself.
+  Under *IDS in the app* you choose one of the app's own IDS files instead, for instance *Avfallshantering* (see *Material inventory
+  for the waste management plan*), which is checked the same way; *Save the IDS file* saves the chosen one on the computer.
 
 **In Process** the model has two actions under *Actions* (the button is in the model view and in the table view), in the group
 *Model*:
@@ -296,6 +301,59 @@ the typical one when asked.
 
 Every view can be saved as a dataset. Source: Boverket, the climate database (open data, see [licenser.md](licenser.md)).
 
+## Material inventory for the waste management plan
+
+The tool **Material inventory** in Analyse (the Quantities tab) gathers what the model knows as a basis for the waste management
+plan (avfallshanteringsplan). Under the Swedish PBL 10 kap. 8 a §, in force since 1 July 2026, the developer must make sure there is
+a waste management plan stating
+
+1. which building products can be reused and how they are taken care of, and
+2. which waste the measure can give rise to and how it is taken care of, in particular how the developer intends to make possible a)
+   high-quality material recycling and b) the safe handling and removal of hazardous substances.
+
+No plan is needed when it is obviously not needed, and the certified inspector (kontrollansvarig) has the same task for it as for
+the control plan. Boverket proposed the plan in its report 2024:26 under the name resource management plan. The tool gives the
+basis; the plan and the assessments are the developer's. The views follow the provision's two points.
+
+**1. Building products that can be reused.** The elements with a type, those with product data first: the manufacturer
+(Manufacturer), the model (ModelLabel) and the GTIN (GlobalTradeItemNumber) from Pset_ManufacturerTypeInformation, preferably on the
+type, and the serial number (SerialNumber) and barcode (BarCode) from Pset_ManufacturerOccurrence on the element. The GTIN's check
+digit is checked by GS1's rule; an error is shown but never mended. Every row has the layer of the building, the materials, the
+fractions and the hazardous substances the model names. IFC2X3 has no GTIN.
+
+**2 a. Waste per fraction and per layer and fraction.** Every material of every element gets a waste fraction of the Swedish Waste
+Ordinance (avfallsförordningen 3 kap. 10 §), which, besides hazardous waste, requires wood, mineral (concrete, brick, clinker,
+ceramics and stone), metal, glass, plastic and gypsum to be sorted out. The fraction comes first from the material's category in IFC
+(IfcMaterial.Category, for instance concrete, steel, wood, glass, gypsum or plastic) and otherwise from the material's name
+(concrete, glulam, plasterboard, insulating glass and the like, in the Nordic languages and English). Mineral wool, glass wool and
+stone wool belong to neither mineral nor glass, and composites such as glass-fibre reinforced plastic, names that name several
+fractions (wood/aluminium) or none, and elements without a material become *Other / to decide*. The column *Rule* shows what
+decided. The sums give elements, rows, volume, area and mass per fraction, and per layer of the building (the climate declaration's
+six layers) and fraction. No classification is read.
+
+**2 b. Hazardous substances.** Only what a property in the model says: a property whose name or set is about hazardous substances or
+hazardous waste (for instance Pset_EnvironmentalImpactValues.HazardousWaste, or an own set with asbestos or PCB) and whose value
+says yes, on the element, the type or the material. The app never guesses. When the model names no hazardous substances the tool
+says so, and an inventory of hazardous substances is still needed.
+
+**All elements and materials** are the rows behind the sums: the quantity, the material's category, the thickness, the fraction with
+its rule, the layer, the density and the mass.
+
+**Quantities and mass.** The quantities are the climate declaration's: the file's quantities, otherwise the geometry of simple
+extrusions, and an element with material layers is split by the layers' thickness; doors and windows are counted per material here.
+The mass is the file's weight, otherwise the volume times the material's density (Pset_MaterialCommon.MassDensity in kg/m³). Without
+a density the row has no mass, and the note says how many rows that is.
+
+**IDS for waste management.** *IDS waste management* opens the IDS check with the app's IDS file
+`SE-Dataspatium_Avfallshantering.ids` and checks the model against it in the app's Python: a material with one of IFC's recommended
+categories on every element; the base quantity for volume on walls, slabs, beams, columns, members and plates, footings and stair
+flights, and for area on doors, windows, coverings, roofs and curtain walls; the manufacturer and the model on doors, windows and
+installations, and a GTIN of the right form when there is one. The file is for IFC4 and IFC4.3, since IFC2X3 has no material
+category, no templates for base quantities and no GTIN. ifctester passes the material requirement when at least one of the element's
+materials has a category, and composed elements (roofs, stairs, ramps and curtain walls) are checked in their parts.
+
+Every view can be saved as a dataset. Nothing is fetched from the network.
+
 ## DXF drawings
 
 A DXF file becomes a table with one drawing object per row (type, layer, colour, length, area, text and position) and an
@@ -423,6 +481,10 @@ and no volume is counted twice. The walls' centrelines stay as drawn, and corner
 Finally the walls, slabs, roofs, doors and windows the change set created or changed get base quantities (Qto_WallBaseQuantities,
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
 with the openings deducted and with the names of the schema's templates.
+
+The AI writes product identities only when you give them, and never invents them: the GTIN (GlobalTradeItemNumber), the manufacturer
+(Manufacturer) and the model (ModelLabel) in Pset_ManufacturerTypeInformation on the type, and the serial number (SerialNumber) and
+barcode (BarCode) in Pset_ManufacturerOccurrence on the element. IFC2X3 has no GTIN.
 
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted

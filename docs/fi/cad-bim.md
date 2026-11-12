@@ -126,6 +126,8 @@ R:ssä ja Pythonissa `dm_read()` antaa rakennusosat, `dm_read_properties()` omin
 - **Ominaisuudet**: mitä arvoja ominaisuudella on ja kuinka monella kunkin tyypin rakennusosalla.
 - **Entiteetit**: kuinka monesta kunkin lajin entiteetistä tiedosto koostuu.
 - **Ilmastoselvitys**: alustava ilmastoselvitys mallista luokittain ja kerroksittain, katso *Alustava ilmastoselvitys* alla.
+- **Materiaali-inventointi**: pohja jätehuoltosuunnitelmalle mallista: uudelleenkäytettävät rakennustuotteet, jäte jakeittain ja
+  kerroksittain sekä mallin ilmoittamat vaaralliset aineet, katso *Materiaali-inventointi jätehuoltosuunnitelmaa varten* alla.
 
 Jokaisen tuloksen voi tallentaa aineistona.
 
@@ -150,6 +152,9 @@ tallennetaan sitten selaimeen. Mitään ei lähetetä minnekään; malli ei pois
   ifctesterillä, IfcOpenShellin omalla tarkistimella: valitse .ids-tiedosto, niin saat rivin vaatimusta ja elementtiä kohti,
   tilana hyväksytty, hylätty tai ei sovellettavissa, sekä syyn ja yhteenvedon. Tiedosto pysyy selaimessa. ifctester kulkee
   sovelluksen mukana ilman verkkosovellustaan, joten mitään ei haeta Pythonin itsensä lisäksi.
+  Kohdassa *Sovelluksen IDS* valitset sen sijaan jonkin sovelluksen omista IDS-tiedostoista, esimerkiksi *Avfallshantering* (katso
+  *Materiaali-inventointi jätehuoltosuunnitelmaa varten*), joka tarkistetaan samalla tavalla; *Tallenna IDS-tiedosto* tallentaa
+  valitun tietokoneelle.
 
 **Muokkaa-tilassa** mallilla on kaksi toimintoa kohdassa *Toiminnot* (painike on sekä mallinäkymässä että taulukkonäkymässä),
 ryhmässä *Malli*:
@@ -297,6 +302,60 @@ pyydettäessä.
 
 Jokaisen näkymän voi tallentaa aineistoksi. Lähde: Boverket, ilmastotietokanta (avoin data, katso [licenser.md](licenser.md)).
 
+## Materiaali-inventointi jätehuoltosuunnitelmaa varten
+
+Työkalu **Materiaali-inventointi** Analysoi-tilassa (Määrät-välilehti) kokoaa sen, mitä malli tietää, pohjaksi
+jätehuoltosuunnitelmalle (avfallshanteringsplan). Ruotsin PBL 10 kap. 8 a §:n mukaan, joka on voimassa 1.7.2026 alkaen,
+rakennuttajan on huolehdittava, että on olemassa jätehuoltosuunnitelma, jossa kerrotaan
+
+1. mitkä rakennustuotteet voidaan käyttää uudelleen ja miten ne käsitellään, ja
+2. mitä jätettä toimenpiteestä voi syntyä ja miten se käsitellään, erityisesti miten rakennuttaja aikoo mahdollistaa a) laadukkaan
+   materiaalikierrätyksen ja b) vaarallisten aineiden turvallisen käsittelyn ja poiston.
+
+Suunnitelmaa ei vaadita, kun se ei selvästikään ole tarpeen, ja vastaavalla tarkastajalla (kontrollansvarig) on sen suhteen sama
+tehtävä kuin tarkastussuunnitelman. Boverket ehdotti suunnitelmaa raportissa 2024:26 nimellä resurssienhallintasuunnitelma. Työkalu
+antaa pohjan; suunnitelma ja arviot ovat rakennuttajan. Näkymät seuraavat säännöksen kahta kohtaa.
+
+**1. Uudelleenkäytettävät rakennustuotteet.** Rakennusosat, joilla on tyyppi, tuotetietoja sisältävät ensin: valmistaja
+(Manufacturer), malli (ModelLabel) ja GTIN (GlobalTradeItemNumber) joukosta Pset_ManufacturerTypeInformation, mieluiten tyypissä,
+sekä sarjanumero (SerialNumber) ja viivakoodi (BarCode) joukosta Pset_ManufacturerOccurrence rakennusosassa. GTIN:n tarkistusnumero
+tarkistetaan GS1:n säännöllä; virhe näytetään mutta sitä ei koskaan korjata. Jokaisella rivillä on rakennuksen kerros, materiaalit,
+jakeet ja mallin ilmoittamat vaaralliset aineet. IFC2X3:ssa ei ole GTIN:ää.
+
+**2 a. Jäte jakeittain sekä kerroksittain ja jakeittain.** Jokaisen rakennusosan jokainen materiaali saa jätejakeen Ruotsin
+jäteasetuksen (avfallsförordningen 3 kap. 10 §) mukaan; asetus edellyttää vaarallisen jätteen lisäksi puun, mineraalien (betoni,
+tiili, klinkkeri, keramiikka ja kivi), metallin, lasin, muovin ja kipsin lajittelua. Jae otetaan ensin materiaalin luokasta IFC:ssä
+(IfcMaterial.Category, esimerkiksi concrete, steel, wood, glass, gypsum tai plastic) ja muuten materiaalin nimestä (betoni,
+liimapuu, kipsilevy, eristyslasi ja vastaavat pohjoismaisilla kielillä ja englanniksi). Mineraalivilla, lasivilla ja kivivilla eivät
+kuulu mineraaleihin eivätkä lasiin, ja komposiitit kuten lasikuituvahvisteinen muovi, nimet, jotka ilmoittavat useita jakeita
+(puu/alumiini) tai ei yhtään, sekä rakennusosat ilman materiaalia saavat jakeen *Muu / ratkaistava*. Sarake *Sääntö* näyttää, mikä
+ratkaisi. Summat antavat rakennusosat, rivit, tilavuuden, pinta-alan ja massan jakeittain sekä rakennuksen kerroksittain
+(ilmastoselvityksen kuusi kerrosta) ja jakeittain. Luokitusjärjestelmiä ei lueta.
+
+**2 b. Vaaralliset aineet.** Vain se, mitä mallin ominaisuus sanoo: ominaisuus, jonka nimi tai joukko koskee vaarallisia aineita tai
+vaarallista jätettä (esimerkiksi Pset_EnvironmentalImpactValues.HazardousWaste tai oma joukko, jossa on asbesti tai PCB), ja jonka
+arvo sanoo kyllä, rakennusosassa, tyypissä tai materiaalissa. Sovellus ei koskaan arvaa. Jos malli ei ilmoita vaarallisia aineita,
+työkalu kertoo sen, ja haitta-ainekartoitus tarvitaan silti.
+
+**Kaikki rakennusosat ja materiaalit** ovat summien taustalla olevat rivit: määrä, materiaalin luokka, paksuus, jae sääntöineen,
+kerros, tiheys ja massa.
+
+**Määrät ja massa.** Määrät ovat ilmastoselvityksen: tiedoston määrät, muuten yksinkertaisten pursotusten geometria, ja
+materiaalikerroksista koostuva rakennusosa jaetaan kerrosten paksuuden mukaan; ovet ja ikkunat lasketaan tässä materiaaleittain.
+Massa on tiedoston paino, muuten tilavuus kertaa materiaalin tiheys (Pset_MaterialCommon.MassDensity, kg/m³). Ilman tiheyttä rivillä
+ei ole massaa, ja huomautus kertoo, kuinka monta riviä tämä koskee.
+
+**Jätehuollon IDS.** *IDS Jätehuolto* avaa IDS-tarkistuksen sovelluksen IDS-tiedostolla `SE-Dataspatium_Avfallshantering.ids` ja
+tarkistaa mallin sitä vasten sovelluksen Pythonissa: jokaisella rakennusosalla materiaali, jolla on jokin IFC:n suosittelemista
+luokista; tilavuuden perusmäärä seinissä, laatoissa, palkeissa, pilareissa, sauvoissa ja levyissä (IfcMember ja IfcPlate),
+anturoissa ja porrassyöksyissä sekä pinta-alan perusmäärä ovissa, ikkunoissa, verhouksissa, katoissa ja lasijulkisivuissa;
+valmistaja ja malli ovissa, ikkunoissa ja laitteissa sekä GTIN oikeassa muodossa, jos sellainen on. Tiedosto koskee IFC4:ää ja
+IFC4.3:a, koska IFC2X3:sta puuttuvat materiaaliluokka, perusmäärien mallipohjat ja GTIN. ifctester hyväksyy materiaalivaatimuksen,
+kun ainakin yhdellä rakennusosan materiaalilla on luokka, ja kootut rakennusosat (katot, portaat, rampit ja lasijulkisivut)
+tarkistetaan osissaan.
+
+Jokaisen näkymän voi tallentaa aineistoksi. Verkosta ei haeta mitään.
+
 ## DXF-piirustukset
 
 DXF-tiedostosta tulee taulukko, jossa on yksi piirustusobjekti riviä kohti (tyyppi, taso, väri, pituus, pinta-ala, teksti ja
@@ -426,6 +485,10 @@ lasketa kahdesti. Seinien keskilinjat pysyvät piirrettyinä, ja muussa kuin suo
 Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkunat saavat perusmäärät (Qto_WallBaseQuantities,
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
 vähennettyinä ja skeeman mallien nimillä.
+
+Tuotetunnisteet tekoäly kirjoittaa vain, kun annat ne, eikä se koskaan keksi niitä: GTIN (GlobalTradeItemNumber), valmistaja
+(Manufacturer) ja malli (ModelLabel) joukossa Pset_ManufacturerTypeInformation tyypissä sekä sarjanumero (SerialNumber) ja
+viivakoodi (BarCode) joukossa Pset_ManufacturerOccurrence rakennusosassa. IFC2X3:ssa ei ole GTIN:ää.
 
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
