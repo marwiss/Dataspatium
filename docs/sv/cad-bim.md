@@ -395,6 +395,16 @@ per krock att behålla ditt förslag eller ta det som kom emellan. *Föreslå ig
 versionen, med de behållna ändringarna och utan de strukna, och servern prövar det på nytt innan det kan godkännas. Sammanfogningen
 sker på servern; webbläsaren hanterar bara själva krockarna.
 
+## Rätt IFC-klass
+
+I IFC är klassen den första klassificeringen: den mest specifika klassen med sin PredefinedType, ObjectType bara när PredefinedType är
+USERDEFINED, och ett typobjekt; andra klassificeringssystem läggs ovanpå. AI:n söker klassen för en sak med läsverktyget
+`search_ifc_class`, med engelska IFC-ord som *sink* eller *handrail*, i dokumentationen av modellens schema som följer med
+IfcOpenShell, och ändringssetet godtar bara klasser som finns och inte är abstrakta i modellens schema och PredefinedType ur klassens
+lista. Kortet *IFC-klasser* i Kontrollera (och läsverktyget `get_class_report`) räknar proxyelement (IfcBuildingElementProxy),
+USERDEFINED utan namn, element utan typ, PredefinedType på både typ och element (regeln OJT001) och element utanför den rumsliga
+strukturen (SPS007), med exempel.
+
 ## Jämför versioner
 
 Knappen *Jämför* i modellvyn jämför den öppna modellen med en sparad version av samma datamängd (Versioner i Bearbeta) eller med en

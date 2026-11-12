@@ -408,6 +408,16 @@ and you choose per collision to keep your proposal or take what came between. *P
 against the latest version, with the kept changes and without the dropped ones, and the server tries it again before it can be
 approved. The merge happens on the server; the browser handles only the collisions themselves.
 
+## The right IFC class
+
+In IFC the class is the first classification: the most specific class with its PredefinedType, an ObjectType only when the
+PredefinedType is USERDEFINED, and a type object; other classification systems come on top. The AI looks up the class for a thing with
+the read tool `search_ifc_class`, in English IFC words such as *sink* or *handrail*, in the documentation of the model's schema that
+comes with IfcOpenShell, and the change set takes only classes that exist and are not abstract in the model's schema, and
+PredefinedTypes from the class's list. The card *IFC classes* in Check (and the read tool `get_class_report`) counts proxy elements
+(IfcBuildingElementProxy), USERDEFINED without a name, elements without a type, PredefinedType on both type and element (rule OJT001)
+and elements outside the spatial structure (SPS007), with examples.
+
 ## Compare versions
 
 The button *Compare* in the model view compares the open model with a saved version of the same dataset (Versions in Process) or with

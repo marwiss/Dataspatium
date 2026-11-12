@@ -400,6 +400,16 @@ du vælger pr. kollision at beholde dit forslag eller tage det, der kom imellem.
 nyeste version med de beholdte ændringer og uden de strøgne, og serveren afprøver det igen, før det kan godkendes. Sammenfletningen
 sker på serveren; browseren håndterer kun selve kollisionerne.
 
+## Den rigtige IFC-klasse
+
+I IFC er klassen den første klassifikation: den mest specifikke klasse med sin PredefinedType, ObjectType kun når PredefinedType er
+USERDEFINED, og et typeobjekt; andre klassifikationssystemer lægges ovenpå. AI'en finder klassen for en ting med læseværktøjet
+`search_ifc_class`, med engelske IFC-ord som *sink* eller *handrail*, i dokumentationen af modellens skema, som følger med
+IfcOpenShell, og ændringssættet accepterer kun klasser, der findes og ikke er abstrakte i modellens skema, og PredefinedType fra
+klassens liste. Kortet *IFC-klasser* i Kontrollér (og læseværktøjet `get_class_report`) tæller proxyelementer
+(IfcBuildingElementProxy), USERDEFINED uden navn, elementer uden type, PredefinedType på både type og element (reglen OJT001) og
+elementer uden for den rumlige struktur (SPS007), med eksempler.
+
 ## Sammenlign versioner
 
 Knappen *Sammenlign* i modelvisningen sammenligner den åbne model med en gemt version af samme datasæt (Versioner i Bearbejd) eller med

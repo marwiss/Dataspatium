@@ -397,6 +397,16 @@ og þú velur fyrir hvern árekstur hvort þú heldur tillögu þinni eða tekur
 tillöguna gagnvart nýjustu útgáfunni með þeim breytingum sem haldið er og án þeirra sem strikaðar eru, og þjónninn reynir hana aftur
 áður en hægt er að samþykkja hana. Sameiningin fer fram á þjóninum; vafrinn sér aðeins um sjálfa árekstrana.
 
+## Réttur IFC-flokkur
+
+Í IFC er flokkurinn fyrsta flokkunin: nákvæmasti flokkurinn með PredefinedType sínu, ObjectType aðeins þegar PredefinedType er
+USERDEFINED, og gerðarhlutur; önnur flokkunarkerfi koma ofan á. Gervigreindin finnur flokkinn fyrir hlut með lestrartólinu
+`search_ifc_class`, með enskum IFC-orðum eins og *sink* eða *handrail*, í skjölun skema líkansins sem fylgir IfcOpenShell, og
+breytingasettið tekur aðeins við flokkum sem eru til og eru ekki óhlutbundnir í skema líkansins, og PredefinedType af lista flokksins.
+Kortið *IFC-flokkar* í Athuga (og lestrartólið `get_class_report`) telur staðgengilshluta (IfcBuildingElementProxy), USERDEFINED án
+nafns, byggingarhluta án gerðar, PredefinedType bæði á gerð og hluta (reglan OJT001) og hluta utan rýmisskipanarinnar (SPS007), með
+dæmum.
+
 ## Bera saman útgáfur
 
 Hnappurinn *Bera saman* í líkansýninni ber opna líkanið saman við vistaða útgáfu sama gagnasafns (Útgáfur í Vinna) eða við annað

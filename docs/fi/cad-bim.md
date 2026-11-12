@@ -412,6 +412,16 @@ ehdotuksesi, ja valitset ristiriita kerrallaan, pidätkö ehdotuksesi vai otatko
 lähettää ehdotuksen uusinta versiota vasten pidetyin muutoksin ja ilman poistettuja, ja palvelin kokeilee sen uudelleen ennen kuin
 sen voi hyväksyä. Yhdistäminen tapahtuu palvelimella; selain käsittelee vain itse ristiriidat.
 
+## Oikea IFC-luokka
+
+IFC:ssä luokka on ensimmäinen luokitus: tarkin luokka PredefinedTypeineen, ObjectType vain kun PredefinedType on USERDEFINED, ja
+tyyppiobjekti; muut luokitusjärjestelmät tulevat sen päälle. Tekoäly etsii asialle luokan lukutyökalulla `search_ifc_class`
+englanninkielisillä IFC-sanoilla, kuten *sink* tai *handrail*, IfcOpenShellin mukana tulevasta mallin skeeman dokumentaatiosta, ja
+muutosjoukko hyväksyy vain luokat, jotka ovat mallin skeemassa eivätkä ole abstrakteja, ja PredefinedTypen luokan luettelosta.
+Tarkista-tilan kortti *IFC-luokat* (ja lukutyökalu `get_class_report`) laskee proxy-elementit (IfcBuildingElementProxy), nimettömät
+USERDEFINED-arvot, tyypittömät elementit, PredefinedTypen sekä tyypissä että elementissä (sääntö OJT001) ja spatiaalisen rakenteen
+ulkopuoliset elementit (SPS007) esimerkkeineen.
+
 ## Vertaa versioita
 
 Mallinäkymän painike *Vertaa* vertaa avointa mallia saman aineiston tallennettuun versioon (Versiot Käsittele-tilassa) tai toiseen
