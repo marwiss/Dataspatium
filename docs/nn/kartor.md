@@ -28,7 +28,7 @@ Er koordinatane i eit anna system enn SWEREF 99 TM, vel du det når du importere
 
 Kartet viser objekta i datasettet i fargen til appen. Zoom med hjulet eller knappane, panorer ved å dra (målestokken nede til venstre viser avstanden i meter), og klikk på eit
 objekt så viser inspektøren attributta; *Rediger i tabellen* tek deg til rada i tabellen. Verktøylinja har
-bakgrunnskart (ingen eller OpenStreetMap), *Zoom til alt*, *Lagre som kartvising* (lagrar kartet med lag og gjeldande
+bakgrunnskart (ingen, OpenStreetMap eller eit [ortofoto](#ortofoto)), *Zoom til alt*, *Lagre som kartvising* (lagrar kartet med lag og gjeldande
 vising som eit diagram i Visualiser) og *Vis som tabell*. Alt du gjer i tabellen (filtrere, rette, slette rader) blir vist
 på kartet.
 
@@ -41,7 +41,7 @@ Biletsamlingar med posisjon har knappen *Vis på kartet*. Klikk på ein stad, s�
 
 *Nytt diagram → Kart* lagar ei kartvising med det valde datasettet som første lag. Innstillingane til venstre:
 
-- **Bakgrunnskart**: ingen (standard), OpenStreetMap eller ein eigen karttenar med ein adressemal som
+- **Bakgrunnskart**: ingen (standard), OpenStreetMap, eit [ortofoto](#ortofoto) eller ein eigen karttenar med ein adressemal som
   `https://…/{z}/{x}/{y}.png` og kjeldetekst, eller ei **WMS-teneste** (adresse, lag, biletformat og gjennomsikt; *Les lag* hentar laglista
   til tenesta). Bakgrunnskart blir henta frå nettet og spør om samtykke første gongen (føremålet
   *Bakgrunnskart* under Handter → Internettilgang).
@@ -57,6 +57,29 @@ Inspektøren viser teiknforklaringa og objektet du klikka på. Kartvisinga blir 
 batch per gruppe, blir PowerPoint og kan leggjast inn i dokumentmalar med `{{diagram "Namn"}}`. Eksporten teiknar laga
 utan bakgrunnskart. I dashbord, presentasjonar og publisert HTML er kartet interaktivt; publisert HTML får Leaflet
 innebygd og objekta som GeoJSON, og bakgrunnskartet blir då henta av nettlesaren til lesaren.
+
+## Ortofoto
+
+Eit ortofoto er eit flybilete som er retta opp slik at det ligg som eit kart. Tre opne ortofoto finst i valet av bakgrunnskart i
+Bearbeid, i kartvisingane i Visualiser, på plankartet og under staden for ein ny bygning (sjå [cad-bim.md](cad-bim.md)):
+
+| Ortofoto | Utgjevar og teneste | Koordinatsystem | Lisens og kjeldetilvising | Nøkkel |
+|---|---|---|---|---|
+| Danmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS på `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Gratis API-nøkkel frå Datafordeleren: opprett ein brukar med e-post på portal.datafordeler.dk og deretter ein API-nøkkel (gjeld i to år) |
+| Finland: Ortokuva | Maanmittauslaitos, WMTS på `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Gratis API-nøkkel frå Maanmittauslaitos: opprett ein konto i Oma tili (omatili.maanmittauslaitos.fi) og deretter ein ny API-nøkkel |
+| Island: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS på `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ingen |
+
+- Kjeldetilvisinga og lisensen står i hjørnet av kartet så lenge ortofotoet blir vist.
+- Bileta blir henta først når du vel eit ortofoto, etter samtykke til *Bakgrunnskart*; spørsmålet nemner verten til tenesta.
+- Krev ortofotoet ein nøkkel, spør appen etter han når du vel det. Nøkkelen gjeld økta eller blir lagra kryptert med ei passordfrase som
+  dei andre nøklane i appen, blir berre send til si eiga teneste i adressene til bileta og blir aldri lagra i kartvisinga. Publisert HTML
+  tek berre med ortofoto som ikkje krev nøkkel.
+- På plankartet i planen sitt eige koordinatsystem finst dei ortofotoa som tenesta tilbyr i det systemet (Danmark i UTM 32N, Island i ISN93).
+- Mosaikken til Island dekkjer enno ikkje heile landet og blir bygd ut kvart år. Den opne tenesta i Finland gjev bileta opp til zoomnivå 16
+  og forstørrar dei deretter.
+- Sverige og Noreg har ingen opne ortofototenester: Ortofoto Visning frå Lantmäteriet har ei lisensavgift, og Norge i bilder er open
+  berre for medlemmene i Norge digitalt. Ortofotoa til Lantmäteriet er opne data (CC BY 4.0) som filer for nedlasting (STAC), men dei
+  viser ikkje appen som kart enno.
 
 ## Geoverktøy i Analyser
 

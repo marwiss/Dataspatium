@@ -68,6 +68,13 @@ Kartdata og de finske fra Statistikcentralen, begge under CC BY 4.0 (kildeangive
 Statistikcentralen»). Se `presets/geo/KALLA.md`. Data som hentes fra de åpne
 API-ene, omfattes av den enkelte utgiverens lisens, som vises sammen med kilden i appen.
 
+Ortofotoene i valget av bakgrunnskart følger ikke med appen: nettleseren din henter bildene fra utgivernes tjenester når du velger
+dem, etter samtykke. Alle tre er CC BY 4.0: GeoDanmark ortofoto forår fra Klimadatastyrelsen (kildeangivelse «GeoDanmark ortofoto
+forår © Klimadatastyrelsen»), Ortokuva fra Maanmittauslaitos («Ortokuva © Maanmittauslaitos») og Grunnkort – Loftmynd fra
+Náttúrufræðistofnun («Grunnkort – Loftmynd © Náttúrufræðistofnun»). Kildeangivelsen og lisensen vises i hjørnet av kartet og skal
+følge med et bilde av kartet som du bruker videre. Forhåndsinnstillingene står i `presets/geodata/orthophotos.json`; se
+[kartor.md](kartor.md#ortofoto).
+
 ## Dataregium og Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) er et eget verk under AGPL-3.0 og ingen del av Dataspatium. Samme person har opphavsretten til begge verkene og har 2026-11-05 tillatt to ting mellom dem: Dataregium gjengir Dataspatiums utseende (designvariablene i `src/ui/design/tokens.css` og komponentenes stiler er skrevet av der under AGPL, slik at de to ser ut som ett produkt), og Dataspatium får bruke kode og ressurser fra Dataregium, for eksempel testfiler, eksempeltekster og API-beskrivelser. Lisensene for hvert verk gjelder for øvrig uendret; alt annet de har felles (ordliste, README-struktur, feilkoder, kapabilitetsdokument), gjenskapes som fakta i hvert repositorium.

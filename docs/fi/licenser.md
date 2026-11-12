@@ -70,6 +70,13 @@ mainiten; Norjan rajat ovat Kartverketin N1000 Kartdata -aineistosta ja Suomen r
 CC BY 4.0 -lisenssillä (lähdemaininta "© Kartverket" ja "Tilastokeskus"). Ks. `presets/geo/KALLA.md`. Avoimista rajapinnoista noudettuun dataan sovelletaan kunkin julkaisijan lisenssiä, joka näytetään
 lähteen yhteydessä sovelluksessa.
 
+Taustakartan valinnan ortokuvat eivät sisälly sovellukseen: selaimesi hakee kuvat julkaisijoiden palveluista, kun valitset ne,
+suostumuksen jälkeen. Kaikki kolme ovat CC BY 4.0 -lisenssillä: GeoDanmark ortofoto forår Klimadatastyrelsenilta (lähdemaininta
+"GeoDanmark ortofoto forår © Klimadatastyrelsen"), Ortokuva Maanmittauslaitokselta ("Ortokuva © Maanmittauslaitos") ja Grunnkort –
+Loftmynd Náttúrufræðistofnunilta ("Grunnkort – Loftmynd © Náttúrufræðistofnun"). Lähdemaininta ja lisenssi näytetään kartan kulmassa,
+ja niiden on seurattava kartasta otettua kuvaa, jota käytät edelleen. Esiasetukset ovat tiedostossa
+`presets/geodata/orthophotos.json`; ks. [kartor.md](kartor.md#ortokuvat).
+
 ## Dataregium ja Dataspatium
 
 [Dataregium OpenCDE server](https://github.com/marwiss/Dataregium) on erillinen teos AGPL-3.0-lisenssillä eikä osa Dataspatiumia. Sama henkilö omistaa molempien teosten tekijänoikeuden ja on 2026-11-05 sallinut kaksi asiaa niiden välillä: Dataregium toistaa Dataspatiumin ulkoasun (tiedoston `src/ui/design/tokens.css` suunnittelumuuttujat ja komponenttien tyylit on kirjoitettu sinne AGPL:n alaisina, jotta kaksi näyttävät yhdeltä tuotteelta), ja Dataspatium saa käyttää Dataregiumin koodia ja resursseja, esimerkiksi testitiedostoja, esimerkkitekstejä ja API-kuvauksia. Kummankin teoksen lisenssit pysyvät muuten muuttumattomina; kaikki muu yhteinen (sanasto, README-rakenne, virhekoodit, kyvykkyysdokumentti) luodaan uudelleen faktoina kumpaankin repositorioon.

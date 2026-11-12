@@ -29,7 +29,7 @@ Jos koordinaatit ovat muussa koordinaatistossa kuin SWEREF 99 TM, valitset sen t
 
 Kartta näyttää aineiston kohteet sovelluksen värillä. Lähennä rullalla tai painikkeilla, panoroi vetämällä (mittakaavajana vasemmassa alakulmassa näyttää etäisyyden metreinä) ja
 napsauta kohdetta, niin tarkastelupaneeli näyttää sen ominaisuudet; *Muokkaa taulukossa* vie riville taulukossa.
-Työkalupalkissa ovat taustakartta (ei mitään tai OpenStreetMap), *Sovita kaikki*, *Tallenna karttanäkymänä*
+Työkalupalkissa ovat taustakartta (ei mitään, OpenStreetMap tai [ortokuva](#ortokuvat)), *Sovita kaikki*, *Tallenna karttanäkymänä*
 (tallentaa kartan tasoineen ja nykyisine näkymineen kaaviona Visualisoi-tilaan) ja *Näytä taulukkona*. Kaikki, mitä
 teet taulukossa (suodatat, korjaat, poistat rivejä), näkyy kartalla.
 
@@ -42,7 +42,7 @@ Kuvakokoelmissa, joissa on sijainteja, on painike *Näytä kartalla*. Napsauta p
 
 *Uusi kaavio → Kartta* luo karttanäkymän, jonka ensimmäinen taso on valittu aineisto. Asetukset vasemmalla:
 
-- **Taustakartta**: ei mitään (oletus), OpenStreetMap tai oma karttapalvelin osoitemallilla, kuten
+- **Taustakartta**: ei mitään (oletus), OpenStreetMap, [ortokuva](#ortokuvat) tai oma karttapalvelin osoitemallilla, kuten
   `https://…/{z}/{x}/{y}.png`, ja lähdetekstillä, tai **WMS-palvelu** (osoite, tasot, kuvamuoto ja läpinäkyvyys; *Lue tasot* hakee palvelun
   tasoluettelon). Taustakartat noudetaan verkosta, ja ensimmäisellä kerralla kysytään
   suostumus (tarkoitus *Taustakartat* kohdassa Hallitse → Internet-yhteys).
@@ -59,6 +59,30 @@ eräajona ryhmää kohti, muuttuu PowerPointiksi ja voidaan sijoittaa asiakirjam
 `{{diagram "Nimi"}}`. Vienti piirtää tasot ilman taustakarttaa. Koontinäytöissä, esityksissä ja julkaistussa
 HTML:ssä kartta on vuorovaikutteinen; julkaistuun HTML:ään upotetaan Leaflet ja kohteet GeoJSON-muodossa, ja
 taustakartan noutaa silloin lukijan selain.
+
+## Ortokuvat
+
+Ortokuva on ilmakuva, joka on oikaistu niin, että se asettuu kuin kartta. Kolme avointa ortokuvaa on taustakartan valinnassa
+Muokkaa-tilan kartassa, Visualisoi-tilan karttanäkymissä, kaavakartalla ja uuden rakennuksen paikan alla (katso [cad-bim.md](cad-bim.md)):
+
+| Ortokuva | Julkaisija ja palvelu | Koordinaattijärjestelmät | Lisenssi ja lähdemaininta | Avain |
+|---|---|---|---|---|
+| Tanska: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS osoitteessa `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Maksuton API-avain Datafordelerenilta: luo käyttäjä sähköpostiosoitteella osoitteessa portal.datafordeler.dk ja sitten API-avain (voimassa kaksi vuotta) |
+| Suomi: Ortokuva | Maanmittauslaitos, WMTS osoitteessa `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Maksuton API-avain Maanmittauslaitokselta: luo tili Oma tili -palveluun (omatili.maanmittauslaitos.fi) ja sitten uusi API-avain |
+| Islanti: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS osoitteessa `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ei tarvita |
+
+- Lähdemaininta ja lisenssi näkyvät kartan kulmassa niin kauan kuin ortokuva on näkyvissä.
+- Kuvat haetaan vasta, kun valitset ortokuvan, *Taustakartat*-suostumuksen jälkeen; kysymys nimeää palvelun palvelimen.
+- Jos ortokuva vaatii avaimen, sovellus kysyy sitä, kun valitset kuvan. Avain on voimassa istunnon ajan tai tallennetaan salattuna
+  tunnuslauseella kuten sovelluksen muut avaimet, lähetetään vain omaan palveluunsa kuvien osoitteissa eikä sitä koskaan tallenneta
+  karttanäkymään. Julkaistu HTML ottaa mukaan vain ortokuvat, jotka eivät vaadi avainta.
+- Kaavakartalla kaavan omassa koordinaattijärjestelmässä ovat ne ortokuvat, joiden palvelu tarjoaa järjestelmän (Tanska UTM 32N:ssä,
+  Islanti ISN93:ssa).
+- Islannin mosaiikki ei vielä kata koko maata, ja sitä laajennetaan joka vuosi. Suomen avoin palvelu antaa kuvat zoomaustasolle 16 asti ja
+  suurentaa niitä sen jälkeen.
+- Ruotsilla ja Norjalla ei ole avoimia ortokuvapalveluja: Lantmäterietin Ortofoto Visning on lisenssimaksullinen, ja Norge i bilder on
+  avoin vain Norge digitalt -yhteistyön jäsenille. Lantmäterietin ortokuvat ovat avointa dataa (CC BY 4.0) ladattavina tiedostoina
+  (STAC), mutta sovellus ei vielä näytä niitä karttana.
 
 ## Paikkatietotyökalut Analysoi-tilassa
 

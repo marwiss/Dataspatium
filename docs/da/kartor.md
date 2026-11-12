@@ -28,7 +28,7 @@ Er koordinaterne i et andet system end SWEREF 99 TM, vælger du det, når du imp
 
 Kortet viser datasættets objekter i appens farve. Zoom med hjulet eller knapperne, panorér ved at trække (målestokken nederst til venstre viser afstanden i meter), og klik på
 et objekt, så viser inspektøren dets attributter; *Redigér i tabellen* fører dig til rækken i tabellen.
-Værktøjslinjen har baggrundskort (intet eller OpenStreetMap), *Zoom til alt*, *Gem som kortvisning* (gemmer kortet med
+Værktøjslinjen har baggrundskort (intet, OpenStreetMap eller et [ortofoto](#ortofotos)), *Zoom til alt*, *Gem som kortvisning* (gemmer kortet med
 lag og aktuel visning som et diagram i Visualisér) og *Vis som tabel*. Alt, hvad du gør i tabellen (filtrere, rette,
 slette rækker), ses på kortet.
 
@@ -41,7 +41,7 @@ Billedsamlinger med position har knappen *Vis på kortet*. Klik på et sted, så
 
 *Nyt diagram → Kort* opretter en kortvisning med det valgte datasæt som første lag. Indstillingerne til venstre:
 
-- **Baggrundskort**: intet (standard), OpenStreetMap eller en egen kortserver med en adresseskabelon som
+- **Baggrundskort**: intet (standard), OpenStreetMap, et [ortofoto](#ortofotos) eller en egen kortserver med en adresseskabelon som
   `https://…/{z}/{x}/{y}.png` og kildetekst, eller en **WMS-tjeneste** (adresse, lag, billedformat og gennemsigtighed; *Læs lag* henter tjenestens
   lagliste). Baggrundskort hentes fra nettet og beder om samtykke første gang
   (formålet *Baggrundskort* under Håndter → Internetadgang).
@@ -57,6 +57,29 @@ Inspektøren viser signaturforklaringen og det objekt, du klikkede på. Kortvisn
 køres i batch pr. gruppe, bliver PowerPoint og kan indsættes i dokumentskabeloner med `{{diagram "Navn"}}`. Eksporten
 tegner lagene uden baggrundskort. I dashboards, præsentationer og publiceret HTML er kortet interaktivt; publiceret
 HTML får Leaflet indlejret og objekterne som GeoJSON, og baggrundskortet hentes så af læserens browser.
+
+## Ortofotos
+
+Et ortofoto er et luftfoto, der er rettet op, så det ligger som et kort. Tre åbne ortofotos findes i valget af baggrundskort i Bearbejd,
+i kortvisningerne i Visualisér, på plankortet og under stedet for en ny bygning (se [cad-bim.md](cad-bim.md)):
+
+| Ortofoto | Udgiver og tjeneste | Koordinatsystemer | Licens og kildeangivelse | Nøgle |
+|---|---|---|---|---|
+| Danmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS på `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Gratis API-nøgle fra Datafordeleren: opret en bruger med e-mail på portal.datafordeler.dk og derefter en API-nøgle (gælder i to år) |
+| Finland: Ortokuva | Maanmittauslaitos, WMTS på `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Gratis API-nøgle fra Maanmittauslaitos: opret en konto i Oma tili (omatili.maanmittauslaitos.fi) og derefter en ny API-nøgle |
+| Island: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS på `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ingen |
+
+- Kildeangivelsen og licensen står i kortets hjørne, så længe ortofotoet vises.
+- Billederne hentes først, når du vælger et ortofoto, efter samtykke til *Baggrundskort*; spørgsmålet nævner tjenestens vært.
+- Kræver ortofotoet en nøgle, spørger appen efter den, når du vælger det. Nøglen gælder sessionen eller gemmes krypteret med en
+  adgangssætning som appens andre nøgler, sendes kun til sin egen tjeneste i billedernes adresser og gemmes aldrig i kortvisningen.
+  Publiceret HTML tager kun ortofotos med, der ikke kræver nøgle.
+- På plankortet i planens eget koordinatsystem findes de ortofotos, hvis tjeneste tilbyder det system (Danmark i UTM 32N, Island i ISN93).
+- Islands mosaik dækker endnu ikke hele landet og udbygges hvert år. Finlands åbne tjeneste giver billederne op til zoomniveau 16 og
+  forstørrer dem derefter.
+- Sverige og Norge har ingen åbne ortofototjenester: Lantmäteriets Ortofoto Visning har et licensgebyr, og Norge i bilder er kun åben for
+  medlemmerne af Norge digitalt. Lantmäteriets ortofotos er åbne data (CC BY 4.0) som filer til download (STAC), men dem viser appen ikke
+  som kort endnu.
 
 ## Geoværktøjer i Analysér
 

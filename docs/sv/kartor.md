@@ -28,7 +28,7 @@ Namnen räcker inte. Appen kontrollerar också värdena: en geometrikolumn måst
 
 Kartan visar datamängdens objekt i appens färg. Zooma med hjulet eller knapparna, panorera genom att dra (skalstocken nere till vänster visar avståndet i meter), och klicka
 på ett objekt så visar inspektören dess attribut; *Redigera i tabellen* tar dig till raden i tabellen. Verktygsraden
-har bakgrundskarta (ingen eller OpenStreetMap), *Zooma till allt*, *Spara som kartvy* (sparar kartan med lager och
+har bakgrundskarta (ingen, OpenStreetMap eller ett [ortofoto](#ortofoton)), *Zooma till allt*, *Spara som kartvy* (sparar kartan med lager och
 aktuell vy som ett diagram i Visualisera) och *Visa som tabell*. Allt du gör i tabellen (filtrera, rätta, ta bort
 rader) syns på kartan.
 
@@ -41,7 +41,7 @@ Bildsamlingar med position har knappen *Visa på kartan*. Klicka på en plats s�
 
 *Nytt diagram → Karta* skapar en kartvy med den valda datamängden som första lager. Inställningarna till vänster:
 
-- **Bakgrundskarta**: ingen (standard), OpenStreetMap, eller en egen kartserver med en adressmall som
+- **Bakgrundskarta**: ingen (standard), OpenStreetMap, ett [ortofoto](#ortofoton), eller en egen kartserver med en adressmall som
   `https://…/{z}/{x}/{y}.png` och källtext, eller en **WMS-tjänst** (adress, lager, bildformat och genomskinlighet; *Läs lager* hämtar tjänstens
   lagerlista). Bakgrundskartor hämtas från nätet och frågar efter samtycke första
   gången (ändamålet *Bakgrundskartor* under Hantera → Internetåtkomst).
@@ -57,6 +57,29 @@ Inspektören visar teckenförklaringen och det objekt du klickat på. Kartvyn ex
 batch per grupp, blir PowerPoint och kan läggas in i dokumentmallar med `{{diagram "Namn"}}`. Exporten ritar lagren
 utan bakgrundskarta. I dashboards, presentationer och publicerad HTML är kartan interaktiv; publicerad HTML får
 Leaflet inbäddat och objekten som GeoJSON, och bakgrundskartan hämtas då av läsarens webbläsare.
+
+## Ortofoton
+
+Ett ortofoto är en flygbild som är rättad så att den ligger som en karta. Tre öppna ortofoton finns i valet av bakgrundskarta i
+Bearbeta, i kartvyerna i Visualisera, på plankartan och under platsen för en ny byggnad (se [cad-bim.md](cad-bim.md)):
+
+| Ortofoto | Utgivare och tjänst | Koordinatsystem | Licens och källangivelse | Nyckel |
+|---|---|---|---|---|
+| Danmark: GeoDanmark ortofoto forår | Klimadatastyrelsen, WMS på `wms.datafordeler.dk` | Web Mercator, ETRS89 / UTM 32N (25832) | CC BY 4.0, "GeoDanmark ortofoto forår © Klimadatastyrelsen" | Gratis API-nyckel från Datafordeleren: skapa en användare med e-post på portal.datafordeler.dk och sedan en API-nyckel (gäller två år) |
+| Finland: Ortokuva | Maanmittauslaitos, WMTS på `avoin-karttakuva.maanmittauslaitos.fi` | Web Mercator | CC BY 4.0, "Ortokuva © Maanmittauslaitos" | Gratis API-nyckel från Maanmittauslaitos: skapa ett konto i Oma tili (omatili.maanmittauslaitos.fi) och sedan en ny API-nyckel |
+| Island: Grunnkort – Loftmynd | Náttúrufræðistofnun, WMS på `gis.natt.is` | Web Mercator, ISN93 (3057) | CC BY 4.0, "Grunnkort – Loftmynd © Náttúrufræðistofnun" | Ingen |
+
+- Källangivelsen och licensen står i kartans hörn så länge ortofotot visas.
+- Bilderna hämtas först när du väljer ett ortofoto, efter samtycke för *Bakgrundskartor*; frågan namnger tjänstens värd.
+- Behöver ortofotot en nyckel frågar appen efter den när du väljer det. Nyckeln gäller sessionen eller sparas krypterad med lösenfras som
+  appens andra nycklar, skickas bara till sin egen tjänst i bildernas adresser och sparas aldrig i kartvyn. Publicerad HTML tar bara med
+  ortofoton som inte behöver nyckel.
+- På plankartan i planens eget koordinatsystem finns de ortofoton vars tjänst ger det systemet (Danmark i UTM 32N, Island i ISN93).
+- Islands mosaik täcker ännu inte hela landet och byggs ut varje år. Finlands öppna tjänst ger bilderna till zoomnivå 16 och förstorar
+  dem därefter.
+- Sverige och Norge saknar öppna ortofototjänster: Lantmäteriets Ortofoto Visning har en licensavgift, och Norge i bilder är öppen bara
+  för medlemmarna i Norge digitalt. Lantmäteriets ortofoton är öppna data (CC BY 4.0) som filer att ladda ned (STAC), men dem visar
+  appen inte som karta än.
 
 ## Geoverktyg i Analysera
 
