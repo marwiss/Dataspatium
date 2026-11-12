@@ -1514,6 +1514,42 @@ def _cs_qto_names(schema, name):
     return _QTO_NAMES[key]
 
 
+_PSET_TEMPLATES = {}
+# The units a value might carry after its number ("40 dB"), in lower case without spaces. A value never carries its unit: IFC gives
+# a property its unit (the Praxi study, recommendation 8; the native IFC study, recommendation 13).
+_CS_UNITS = frozenset((
+    "mm", "cm", "dm", "m", "km", "mm2", "cm2", "dm2", "m2", "km2", "mm²", "cm²", "dm²", "m²", "km²", "mm3", "cm3", "dm3", "m3", "mm³", "cm³",
+    "dm³", "m³", "l", "liter", "litre", "g", "kg", "t", "ton", "n", "kn", "pa", "kpa", "mpa", "gpa", "db", "dba", "db(a)", "w", "kw", "mw",
+    "wh", "kwh", "mwh", "w/m2k", "w/m²k", "w/(m2k)", "w/(m²k)", "w/m2,k", "w/m²,k", "w/(m2·k)", "w/(m²·k)", "w/m²·k", "w/mk", "w/(mk)",
+    "w/m·k", "w/(m·k)", "m2k/w", "m²k/w", "°c", "°", "deg", "k", "%", "h", "min", "s", "l/s", "m3/h", "m³/h", "m3/s", "m³/s", "kg/m3",
+    "kg/m³", "kg/m2", "kg/m²", "kg/m", "lux", "lx", "st", "pcs", "kr", "sek", "nok", "dkk", "isk", "eur", "kgco2e", "kgco2-ekv"))
+
+
+def _cs_pset_templates(schema):
+    """IfcOpenShell's property and quantity set templates of a schema (as in file.schema_identifier) by their names in lower case;
+    empty when it has none."""
+    key = str(schema)
+    if key not in _PSET_TEMPLATES:
+        try:
+            import ifcopenshell.util.pset
+            files = ifcopenshell.util.pset.get_template(key).templates
+            _PSET_TEMPLATES[key] = {str(t.Name).lower(): t for f in files for t in f.by_type("IfcPropertySetTemplate") if t.Name}
+        except Exception:
+            _PSET_TEMPLATES[key] = {}
+    return _PSET_TEMPLATES[key]
+
+
+def _cs_unit_in(value):
+    """(number, unit) of a text that is a number with one of _CS_UNITS written after it ("40 dB" gives ("40", "dB")); None otherwise."""
+    if not isinstance(value, str):
+        return None
+    import re
+    m = re.match(r"^\s*([-+]?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?)\s*([^\d\s.,+-].*?)\s*$", value)
+    if not m or m.group(2).replace(" ", "").lower() not in _CS_UNITS:
+        return None
+    return m.group(1), m.group(2)
+
+
 class _ChangeSet:
     """Applies a change set to an IfcOpenShell model and reports what it created, changed and deleted.
 
@@ -1533,6 +1569,21 @@ class _ChangeSet:
 
     At the end of apply the walls the change set created are joined where their axes meet (join_walls), and what it created or
     changed gets its base quantities (base_quantities).
+
+    Since recommendation 13 of the native IFC study and 4, 8 and 9 of the Praxi study (2026-11-12):
+
+        create_wall, create_slab {..., load_bearing, status}, create_roof {..., status}
+            load_bearing (optional) true or false writes Pset_WallCommon.LoadBearing or Pset_SlabCommon.LoadBearing, and status
+            (optional: NEW, EXISTING, DEMOLISH or TEMPORARY) Status in the common set (the roof's slabs and the IfcRoof too), on the
+            type when every occurrence of it says the same, else on the element (write_marked); null or missing writes nothing.
+        assign {..., category}
+            category (optional) is the material's IfcMaterial.Category, one of MATERIAL_CATEGORIES, with material.
+        set_properties
+            a set named Pset_... or Qto_... is checked against IfcOpenShell's template of the file's schema: unknown sets and
+            properties, values of the wrong type and numbers with their unit written after them are refused (op_set_properties).
+
+    At the end of apply IsExternal follows the topology on the walls the change set created or changed, on their doors and windows,
+    and on its roofs and roof slabs (write_external).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type")
@@ -1556,6 +1607,8 @@ class _ChangeSet:
         self._body = None
         self._axis = None
         self._schema = None
+        self.marks = {"LoadBearing": {}, "Status": {}}  # element id -> what its create step gave (write_marked)
+        self.written = set()  # (element id, set, property) that set_properties wrote, which write_external may replace
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -1932,6 +1985,7 @@ class _ChangeSet:
         self.predefined(wall, "PARTITIONING" if op.get("partition") is True else "SOLIDWALL")
         self.contain(wall, storey)
         self.register(wall, storey)
+        self.mark_common(wall, op)
         self.give_type(wall, typ, "AXIS2", "POSITIVE", -thickness / 2.0)  # the layers centred on the axis, the first on the right
 
     def op_create_slab(self, op):
@@ -1948,6 +2002,7 @@ class _ChangeSet:
         self.predefined(slab, "FLOOR")
         self.contain(slab, storey)
         self.register(slab, storey)
+        self.mark_common(slab, op)
         self.give_type(slab, typ, "AXIS3", "NEGATIVE", 0.0)  # the top at the storey, the first layer at the top
 
     def op_create_roof(self, op):
@@ -2023,6 +2078,8 @@ class _ChangeSet:
             self.register(slab, storey, ref=False)
         for slab in slabs:  # the layers rise from the face's underside, the plane of the slab's profile
             self.give_type(slab, typ, "AXIS3", "POSITIVE", 0.0)
+        for e in [roof] + slabs:
+            self.mark_common(e, op)
 
     def op_create_opening(self, op):
         import ifcopenshell.api.feature
@@ -2260,17 +2317,19 @@ class _ChangeSet:
             raise DataspatiumError("every room the walls enclose has a space already")
 
     def op_set_properties(self, op):
-        import ifcopenshell.api.pset
-        import ifcopenshell.util.element as el
-        name = op.get("pset")
+        """Properties of one set on elements or types. A set named Pset_... or Qto_... must be IfcOpenShell's template of that name in
+        the file's schema (property_template), and its properties are spelled and checked as the template says (checked_properties); a
+        Qto_ set becomes an IfcElementQuantity. A set of the model's own takes text, numbers and booleans as they come, though not a
+        number with its unit written after it. The element's own set of the name is edited, never its type's (put_properties)."""
+        name = str(op.get("pset") or "").strip()
         props = op.get("properties")
         if not name or not isinstance(props, dict) or not props:
             raise DataspatiumError("pset and properties (an object of name: value) are required")
-        values = {str(k): _ifc_value(v) for k, v in props.items()}
+        template, name = self.property_template(name)
+        values = self.checked_properties(template, name, props)
         for e in self.elements(op):
-            existing = el.get_psets(e, psets_only=True).get(str(name))
-            pset = self.m.by_id(existing["id"]) if existing and existing.get("id") else ifcopenshell.api.pset.add_pset(self.m, product=e, name=str(name))
-            ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties=values)
+            self.put_properties(e, template, name, values)
+            self.written.update((e.id(), name, key) for key in values)
             self.touch(e)
 
     def op_set_classification(self, op):
@@ -2340,12 +2399,12 @@ class _ChangeSet:
         material = op.get("material")
         if storey is None and not material:
             raise DataspatiumError("give a storey, a material or both")
+        category = self.material_category(op, material)
         for e in self.elements(op):
             if storey is not None:
                 self.contain(e, storey)
             if material:
-                found = [x for x in self.m.by_type("IfcMaterial") if str(x.Name or "") == str(material)]
-                mat = found[0] if found else ifcopenshell.api.material.add_material(self.m, name=str(material))
+                mat = self.named_material(str(material), category)  # the file's material of the name, or a new one
                 try:
                     ifcopenshell.api.material.unassign_material(self.m, products=[e])
                 except Exception:
@@ -2606,6 +2665,17 @@ class _ChangeSet:
                 step()
             except Exception as exc:
                 self.notes.append("%s could not be made: %s: %s" % (what, type(exc).__name__, exc))
+        self.finish_properties()
+
+    def finish_properties(self):
+        """After the base quantities: LoadBearing and Status as the create steps gave them (write_marked) and IsExternal from the
+        topology (write_external). A fault becomes a note in the report, and the operations stand."""
+        for step, what in ((lambda: self.write_marked("LoadBearing"), "LoadBearing"), (lambda: self.write_marked("Status"), "Status"),
+                           (self.write_external, "IsExternal")):
+            try:
+                step()
+            except Exception as exc:
+                self.note_once("%s could not be set: %s: %s" % (what, type(exc).__name__, exc))
 
     JOIN_RIGHT = 0.02  # |cos| of the angle between two walls below which they meet at right angles (about one degree)
     JOIN_LINE = 0.98  # and above which they run in line or side by side (about eleven degrees)
@@ -2982,6 +3052,375 @@ class _ChangeSet:
             return None
         w, h = float(w) * self.scale, float(h) * self.scale
         return {"Width": ("length", w), "Height": ("length", h), "Perimeter": ("length", 2.0 * (w + h)), "Area": ("area", w * h)}
+
+    # -- LoadBearing, IsExternal, the material's category and the checked property sets (recommendation 13 of the native IFC study,
+    # 4, 8 and 9 of the Praxi study): the climate declaration tells its categories apart by them.
+    COMMON_SETS = (("IfcWall", "Pset_WallCommon"), ("IfcWallType", "Pset_WallCommon"), ("IfcSlab", "Pset_SlabCommon"),
+                   ("IfcSlabType", "Pset_SlabCommon"), ("IfcDoor", "Pset_DoorCommon"), ("IfcWindow", "Pset_WindowCommon"), ("IfcRoof", "Pset_RoofCommon"))
+    LENGTH_MEASURES = ("IfcLengthMeasure", "IfcPositiveLengthMeasure", "IfcNonNegativeLengthMeasure")
+    ANGLE_MEASURES = ("IfcPlaneAngleMeasure", "IfcPositivePlaneAngleMeasure")
+    VALUE_KINDS = {"P_BOUNDEDVALUE": "a bounded value (a range)", "P_LISTVALUE": "a list of values", "P_TABLEVALUE": "a table",
+                   "P_REFERENCEVALUE": "a reference to another entity"}
+    QUANTITY_MEASURES = {"Q_LENGTH": "IfcLengthMeasure", "Q_AREA": "IfcAreaMeasure", "Q_VOLUME": "IfcVolumeMeasure", "Q_COUNT": "IfcCountMeasure",
+                         "Q_WEIGHT": "IfcMassMeasure", "Q_TIME": "IfcTimeMeasure"}
+
+    def material_category(self, op, material):
+        """The IfcMaterial.Category assign gives with its material, checked against MATERIAL_CATEGORIES; None without one, and in IFC2X3,
+        which has no category (with a note)."""
+        category = str(op.get("category") or "").strip().lower() or None
+        if category is None:
+            return None
+        if not material:
+            raise DataspatiumError("category goes with a material")
+        if category not in self.MATERIAL_CATEGORIES:
+            raise DataspatiumError("category must be one of %s, or null" % ", ".join(self.MATERIAL_CATEGORIES))
+        if self.m.schema == "IFC2X3":
+            self.note_once("IFC2X3 has no material categories, so the category %s of %s was left out" % (category, material))
+            return None
+        return category
+
+    def note_once(self, text):
+        if text not in self.notes:
+            self.notes.append(text)
+
+    def element_label(self, e):
+        """An element as the notes name it: its ref in this change set, else its id, and its name."""
+        ref = next((r["ref"] for r in self.created if r["id"] == e.id() and r.get("ref")), None)
+        return "%s %r" % (ref or "#%d" % e.id(), _ifc_text(getattr(e, "Name", None)) or "")
+
+    def property_template(self, name):
+        """(template, name) of a set: for one named Pset_... or Qto_... (in any case) IfcOpenShell's template of that name in the file's
+        schema and the name as the template spells it; an IFC2X3 file, whose templates lack Pset_Condition and the Qto_ sets, takes
+        IFC4's, with a note. A name the schema does not define is an error with the nearest names: a set of the model's own must not
+        start with Pset_ or Qto_. (None, name) for any other name, a set of the model's own."""
+        if not name.lower().startswith(("pset_", "qto_")):
+            return None, name
+        known = _cs_pset_templates(getattr(self.m, "schema_identifier", None) or self.m.schema)
+        template = known.get(name.lower())
+        if template is None and self.m.schema == "IFC2X3":
+            template = _cs_pset_templates("IFC4").get(name.lower())
+            if template is not None:
+                self.note_once("%s is not a set of IFC2X3, so it was written as IFC4 defines it" % template.Name)
+        if template is None:
+            import difflib
+            near = difflib.get_close_matches(name, [str(t.Name) for t in known.values()], 5, 0.6)
+            raise DataspatiumError("%s is not a property or quantity set of %s%s; a set of your own must not start with Pset_ or Qto_: name it "
+                                   "country-origin-project_Name, such as SE-ACME-42_%s" % (name, self.m.schema, "; nearest: " + ", ".join(near) if near else "",
+                                                                                            name.split("_", 1)[1] or "Name"))
+        return template, str(template.Name)
+
+    def checked_properties(self, template, name, props):
+        """{property: value} to write: for a template's set each property spelled as the template has it, with its value checked
+        (property_value), and a property the template lacks an error with the nearest names; for a set of the model's own the values as
+        they come, but never a number with its unit written after it."""
+        out = {}
+        props_of = {str(p.Name).lower(): p for p in ((template.HasPropertyTemplates or ()) if template is not None else ()) if p.Name}
+        for key, value in props.items():
+            key = str(key).strip()
+            if not key:
+                raise DataspatiumError("every property needs a name")
+            if template is None:
+                self.no_unit("%s.%s" % (name, key), value)
+                out[key] = _ifc_value(value)
+                continue
+            prop = props_of.get(key.lower())
+            if prop is None:
+                import difflib
+                names = [str(p.Name) for p in template.HasPropertyTemplates or () if p.Name]
+                near = difflib.get_close_matches(key, names, 3, 0.6)
+                raise DataspatiumError("%s has no property %s%s; its properties are %s; put another property in a set of your own, whose name does "
+                                       "not start with Pset_ or Qto_" % (name, key, " (nearest: %s)" % ", ".join(near) if near else "", ", ".join(names)))
+            out[str(prop.Name)] = self.property_value(name, prop, value)
+        return out
+
+    @staticmethod
+    def no_unit(where, value):
+        """An error for a text that is a number with its unit written after it ("40 dB")."""
+        unit = _cs_unit_in(value)
+        if unit is not None:
+            raise DataspatiumError("%s: give the number only, without its unit (%s, not %r): IFC gives the property its unit"
+                                   % (where, unit[0].replace(",", "."), value))
+
+    def number_of(self, where, value, measure):
+        """A value as a number: a number, or a text of a number alone (a decimal comma too); an error for a number with its unit
+        after it, or other text."""
+        if isinstance(value, bool) or value is None:
+            raise DataspatiumError("%s is a number (%s), not %r" % (where, measure, value))
+        if isinstance(value, (int, float)):
+            return float(value)
+        self.no_unit(where, value)
+        text = str(value).strip()
+        if text.count(",") == 1 and "." not in text:
+            text = text.replace(",", ".")
+        try:
+            number = float(text)
+        except ValueError:
+            raise DataspatiumError("%s is a number (%s), not %r" % (where, measure, value))
+        if not math.isfinite(number):
+            raise DataspatiumError("%s is a number (%s), not %r" % (where, measure, value))
+        return number
+
+    def base_type(self, measure):
+        """The simple type under a measure in the file's schema (STRING, DOUBLE, INT, BOOL, LOGICAL ...), as edit_pset reads it; None
+        for an entity or a name the schema lacks."""
+        decl = _ifc_declaration(self.schema_def(), measure)
+        if decl is None or decl.as_type_declaration() is None:
+            return None
+        try:
+            return self.m.create_entity(measure).attribute_type(0)
+        except Exception:
+            return None
+
+    def property_value(self, pset, prop, value):
+        """One value checked against its property template, as the file takes it. A boolean is true or false (also as the text true or
+        false). A measure is a number, without a unit written after it: above zero for a positive measure, at least zero for a
+        non-negative one and 0 to 1 for a normalised ratio, a whole number for an integer or a count; lengths, areas and volumes come in
+        metres, m² and m³ and angles in degrees, and are written in the file's units. A label or an identifier is text without a unit
+        after a number (a number becomes its text), a date YYYY-MM-DD, and an enumeration one of its values in any case. A quantity
+        (Q_LENGTH, Q_AREA ...) is a number of zero or more in the same units. A bounded, list, table or reference value is refused:
+        set_properties writes single values. A measure the file's schema lacks (IFC4's date in IFC2X3) is written as a label or a real."""
+        where = "%s.%s" % (pset, prop.Name)
+        kind = str(prop.TemplateType or "P_SINGLEVALUE").strip()
+        measure = str(prop.PrimaryMeasureType or "").strip() or None
+        if kind.startswith("Ifc"):  # three properties of IFC4's templates name their measure as the template type
+            kind, measure = "P_SINGLEVALUE", measure or kind
+        per = {"length": self.scale, "area": self.unit_scale("AREAUNIT"), "volume": self.unit_scale("VOLUMEUNIT")}
+        if kind.startswith("Q_"):
+            number = self.number_of(where, value, kind)
+            if number < 0:
+                raise DataspatiumError("%s is a quantity of zero or more, not %g" % (where, number))
+            if kind == "Q_COUNT" and number != int(number):
+                raise DataspatiumError("%s is a count, a whole number, not %g" % (where, number))
+            # As a measure, so that edit_qto takes the quantity's class from it (IfcLengthMeasure gives IfcQuantityLength).
+            spelled = self.QUANTITY_MEASURES.get(kind, "IfcLengthMeasure")
+            if kind == "Q_COUNT":
+                return self.m.create_entity(spelled, int(number) if self.base_type(spelled) == "INT" else float(int(number)))  # an integer in IFC4.3
+            return self.m.create_entity(spelled, round(number / per.get(kind[2:].lower(), 1.0), 9))
+        if kind == "P_ENUMERATEDVALUE":
+            enumerators = prop.Enumerators
+            items = [str(getattr(v, "wrappedValue", v)) for v in ((enumerators.EnumerationValues or ()) if enumerators is not None else ())]
+            hit = None if isinstance(value, bool) else next((i for i in items if i.lower() == str(value).strip().lower()), None)
+            if hit is None:
+                raise DataspatiumError("%s takes one of %s, not %r" % (where, ", ".join(items), value))
+            return ("enum", hit, "IfcLabel", str(getattr(enumerators, "Name", None) or "PEnum_" + str(prop.Name)), items)
+        if kind != "P_SINGLEVALUE":
+            raise DataspatiumError("%s is %s, which set_properties does not write; leave it out" % (where, self.VALUE_KINDS.get(kind, kind)))
+        measure = measure or "IfcLabel"
+        base = self.base_type(measure)
+        if base is None and _ifc_declaration(self.schema_def(), measure) is None:  # a measure of a later schema
+            base = "BOOL" if measure in ("IfcBoolean", "IfcLogical") else "STRING" if measure in ("IfcDate", "IfcDateTime", "IfcTime", "IfcDuration", "IfcURIReference") else "DOUBLE"
+            spelled = {"BOOL": "IfcBoolean", "STRING": "IfcLabel"}.get(base, "IfcReal")
+        else:
+            spelled = measure
+        if base in ("BOOL", "LOGICAL"):
+            flag = value if isinstance(value, bool) else {"true": True, "false": False}.get(str(value).strip().lower())
+            if flag is None:
+                raise DataspatiumError("%s is true or false, not %r" % (where, value))
+            return self.m.create_entity(spelled, flag)
+        if base in ("DOUBLE", "INT"):
+            number = self.number_of(where, value, measure)
+            whole = base == "INT" or "Count" in measure
+            if whole and number != int(number):
+                raise DataspatiumError("%s is a whole number (%s), not %g" % (where, measure, number))
+            if ("Positive" in measure and number <= 0) or ("NonNegative" in measure and number < 0) or (measure == "IfcNormalisedRatioMeasure" and not 0 <= number <= 1):
+                raise DataspatiumError("%s is %s (%s), not %g" % (where, "0 to 1" if "Normalised" in measure else "above zero" if "Positive" in measure else "zero or more", measure, number))
+            if measure in self.LENGTH_MEASURES:
+                number /= per["length"]
+            elif measure == "IfcAreaMeasure":
+                number /= per["area"]
+            elif measure == "IfcVolumeMeasure":
+                number /= per["volume"]
+            elif measure in self.ANGLE_MEASURES:
+                number = math.radians(number) / self.unit_scale("PLANEANGLEUNIT")
+            return self.m.create_entity(spelled, int(number) if base == "INT" else round(float(number), 12))
+        if base == "STRING":
+            if isinstance(value, bool) or value is None:
+                raise DataspatiumError("%s is text (%s), not %r" % (where, measure, value))
+            text = (str(int(value)) if float(value).is_integer() else repr(float(value))) if isinstance(value, (int, float)) else str(value).strip()
+            if measure == "IfcDate" and not (len(text) == 10 and text[4] == "-" and text[7] == "-" and text.replace("-", "").isdigit()):
+                raise DataspatiumError("%s is a date, YYYY-MM-DD, not %r" % (where, value))
+            if measure in ("IfcLabel", "IfcIdentifier"):
+                self.no_unit(where, text)
+                text = text[:255]
+            return self.m.create_entity(spelled, text)
+        raise DataspatiumError("%s is a %s, which set_properties does not write; leave it out" % (where, measure))
+
+    def put_properties(self, e, template, name, values):
+        """Checked values on one element or type: a Qto_ set as an IfcElementQuantity (add_qto, edit_qto), another as an IfcPropertySet.
+        The element's own set of the name is edited, never its type's, and one it shares with other elements is first made its own
+        (unshare_pset); an enumeration is written as an IfcPropertyEnumeratedValue unless the set holds it as a single value already."""
+        import ifcopenshell.api.pset
+        import ifcopenshell.util.element as el
+        qto = template is not None and name.lower().startswith("qto_")
+        own = el.get_psets(e, psets_only=not qto, qtos_only=qto, should_inherit=False).get(name)
+        pset = self.m.by_id(own["id"]) if own and own.get("id") else None
+        rels = (getattr(pset, "DefinesOccurrence", None) or getattr(pset, "PropertyDefinitionOf", None) or ()) if pset is not None else ()
+        if not e.is_a("IfcTypeObject") and sum(len(r.RelatedObjects or ()) for r in rels) > 1:
+            pset = ifcopenshell.api.pset.unshare_pset(self.m, products=[e], pset=pset)[0]
+        # Every value is typed already (property_value), so the API needs no template: IFC2X3 writes IFC4's sets as well.
+        if qto:
+            pset = pset or ifcopenshell.api.pset.add_qto(self.m, product=e, name=name)
+            ifcopenshell.api.pset.edit_qto(self.m, qto=pset, properties=values)
+            return
+        pset = pset or ifcopenshell.api.pset.add_pset(self.m, product=e, name=name)
+        held = {str(p.Name): p for p in (getattr(pset, "HasProperties", None) or ())}
+        out = {}
+        for key, value in values.items():
+            if isinstance(value, tuple) and value and value[0] == "enum":
+                _, hit, measure, enum_name, items = value
+                prop = held.get(key)
+                if prop is not None and prop.is_a("IfcPropertyEnumeratedValue"):
+                    value = [hit]  # edit_pset keeps the property's enumeration
+                elif prop is not None:
+                    value = self.m.create_entity(measure, hit)  # the set holds it as a single value
+                else:
+                    value = self.m.create_entity("IfcPropertyEnumeratedValue", Name=key, EnumerationValues=[self.m.create_entity(measure, hit)],
+                                                 EnumerationReference=self.enumeration(enum_name, measure, items))
+            out[key] = value
+        ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties=out)
+
+    def enumeration(self, name, measure, items):
+        """The file's IfcPropertyEnumeration of the name and values, made once: its name is unique in the file."""
+        for e in self.m.by_type("IfcPropertyEnumeration"):
+            if str(e.Name or "") == name:
+                return e if [str(getattr(v, "wrappedValue", v)) for v in (e.EnumerationValues or ())] == list(items) else None
+        return self.m.create_entity("IfcPropertyEnumeration", Name=name, EnumerationValues=[self.m.create_entity(measure, i) for i in items])
+
+    def own_value(self, e, pset, prop):
+        """The value of a property in the element's (or the type's) own set, not inherited; None when it has none."""
+        import ifcopenshell.util.element as el
+        return el.get_psets(e, psets_only=True, should_inherit=False).get(pset, {}).get(prop)
+
+    def common_set(self, e):
+        return next((name for cls, name in self.COMMON_SETS if e.is_a(cls)), None)
+
+    def put_common(self, e, prop, value):
+        """One property of the element's or type's common set (Pset_WallCommon ...), through the template check."""
+        template, name = self.property_template(self.common_set(e))
+        self.put_properties(e, template, name, self.checked_properties(template, name, {prop: value}))
+        self.touch(e)
+
+    STATUSES = ("NEW", "EXISTING", "DEMOLISH", "TEMPORARY")
+
+    def mark_common(self, e, op):
+        """Keep the load_bearing (true, false or null) and the status (NEW, EXISTING, DEMOLISH, TEMPORARY or null) of a create step for
+        write_marked; a partition is not load-bearing."""
+        value = op.get("load_bearing")
+        if value is not None:
+            if not isinstance(value, bool):
+                raise DataspatiumError("load_bearing must be true, false or null (not given)")
+            if value and op.get("partition") is True:
+                raise DataspatiumError("partition true makes a non-load-bearing wall; leave partition out for a load-bearing wall")
+            self.marks["LoadBearing"][e.id()] = value
+        status = str(op.get("status") or "").strip().upper() or None
+        if status is not None:
+            if status not in self.STATUSES:
+                raise DataspatiumError("status must be %s, or null" % ", ".join(self.STATUSES))
+            self.marks["Status"][e.id()] = status
+
+    @staticmethod
+    def plain(value):
+        """A property value as get_psets gives it, an enumeration's one value unwrapped."""
+        return value[0] if isinstance(value, (list, tuple)) and len(value) == 1 else value
+
+    def write_marked(self, prop):
+        """LoadBearing or Status of the elements whose create step gave it (mark_common). An element without a type gets it on itself.
+        A typed element's type gets it when the type has none and every occurrence of the type says the same, from its step or its
+        own set; otherwise each element gets its own, unless the type says the same already. Nothing for null: the app never guesses
+        whether a part bears load or what its status is. A common set whose template in the file's schema lacks the property
+        (Status in IFC2X3) is left alone, with a note."""
+        import ifcopenshell.util.element as el
+        groups = {}
+        for i, value in self.marks[prop].items():
+            try:
+                e = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            t = el.get_type(e)
+            groups.setdefault(t.id() if t is not None else -i, (t, []))[1].append((e, value))
+        for t, items in groups.values():
+            name = self.common_set(items[0][0])
+            template = self.property_template(name)[0]
+            if template is not None and not any(str(p.Name) == prop for p in template.HasPropertyTemplates or ()):
+                self.note_once("%s has no %s in %s, so it was left out" % (name, prop, self.m.schema))
+                continue
+            on_type = None
+            if t is not None:
+                said = {e.id(): value for e, value in items}
+                on_type = self.plain(self.own_value(t, name, prop))
+                values = {said[o.id()] if o.id() in said else self.plain(self.own_value(o, name, prop)) for o in el.get_types(t)}
+                if on_type is None and len(values) == 1 and None not in values:
+                    self.put_common(t, prop, values.pop())
+                    continue
+            for e, value in items:
+                if on_type is None or on_type != value:
+                    self.put_common(e, prop, value)
+
+    def roof_slab(self, e):
+        import ifcopenshell.util.element as el
+        try:
+            return str(el.get_predefined_type(e) or "") == "ROOF"
+        except Exception:
+            return str(getattr(e, "PredefinedType", None) or "") == "ROOF"
+
+    def set_external(self, e, value):
+        """IsExternal on an element, in its common set; the element's value afterwards. A value the element had before the change set
+        (not one set_properties wrote in it) is kept, with a note when the app's differs."""
+        name = self.common_set(e)
+        if name is None:
+            return value
+        own = self.own_value(e, name, "IsExternal")
+        if own is not None and (e.id(), name, "IsExternal") not in self.written:
+            if bool(own) != value:
+                self.note_once("%s %s keeps the model's IsExternal %s; the topology says %s" % (e.is_a(), self.element_label(e), str(bool(own)).lower(), str(value).lower()))
+            return bool(own)
+        if own is None or bool(own) != value:
+            self.put_common(e, "IsExternal", value)
+        return value
+
+    def write_external(self):
+        """IsExternal at the end of apply. The walls the change set created or changed are external when they run along the outer
+        boundary of their storey's topology (_ifc_topology: the union of its rooms, a courtyard's walls too) and internal when they
+        bound its rooms otherwise, and the doors and windows in them take their wall's value; on a storey whose walls do not close,
+        or that has walls the topology cannot read, they are left alone, and so is a wall that bounds no room, with a note. The roof
+        slabs and roofs the change set created or changed are external. A value that was in the model already stays (set_external)."""
+        walls, storeys = [], {}
+        for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
+            try:
+                e = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            if e.is_a("IfcRoof") or (e.is_a("IfcSlab") and self.roof_slab(e)):
+                self.set_external(e, True)
+            elif e.is_a("IfcWall"):
+                s = self.container(e)
+                if s is not None and s.is_a("IfcBuildingStorey"):
+                    walls.append((e, s.id()))
+                    storeys.setdefault(s.id(), s)
+        if not walls:
+            return
+        found = {rec["_storey"].id(): rec for rec in _ifc_topology(self.m, storeys={_ifc_text(s.Name) for s in storeys.values()}, shapes=True)}
+        for sid, s in storeys.items():
+            rec = found.get(sid)
+            mine = [w for w, at in walls if at == sid]
+            why = ("the app could not read its walls" if rec is None else "%d of its walls could not be read" % rec["unread"] if rec["unread"]
+                   else "%d wall ends stand open" % len(rec["dangles"]) if rec["dangles"] else "its walls enclose no room" if not rec["closed"] else None)
+            if why is not None:
+                self.note_once("IsExternal was left out on the walls of storey %s that the change set made or changed, and on their doors and windows: "
+                          "%s, so the app cannot tell outside from inside" % (_ifc_text(s.Name), why))
+                continue
+            outer = {x["wall"] for x in rec["external"]}
+            inner = {w for room in rec["rooms"] for w in room["walls"]} - outer
+            alone = []
+            for w in mine:
+                if w.id() not in outer and w.id() not in inner:
+                    alone.append(w)
+                    continue
+                value = self.set_external(w, w.id() in outer)
+                for f in self.fillings(w):
+                    self.set_external(f, value)
+            if alone:
+                self.note_once("IsExternal was left out on walls %s of storey %s: they bound no room" % (", ".join(self.element_label(w) for w in alone), _ifc_text(s.Name)))
 
     def apply(self, ops):
         if not isinstance(ops, list):

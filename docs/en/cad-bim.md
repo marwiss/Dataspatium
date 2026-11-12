@@ -424,6 +424,24 @@ Finally the walls, slabs, roofs, doors and windows the change set created or cha
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
 with the openings deducted and with the names of the schema's templates.
 
+**Load-bearing, status and properties.** `create_wall` and `create_slab` take `load_bearing` (load-bearing or not), and they and
+`create_roof` take `status` (NEW, EXISTING, DEMOLISH or TEMPORARY), but only when the brief or you say so: the AI never guesses, and a
+digital twin of an existing building gets EXISTING. The values are written as LoadBearing and Status in Pset_WallCommon,
+Pset_SlabCommon and Pset_RoofCommon, on the type when every element of the type says the same and on the element otherwise; IFC2X3 has
+no Status, and the report says so. When the change set runs, the app sets IsExternal itself from the topology on the walls it created
+or changed: true along the storey's outer boundary and false inside the building, and the doors and windows in the walls take their
+wall's value. Roofs and roof slabs are external. A storey whose walls do not close gets no IsExternal, and the report and the AI's
+preview say why; a value the model had already is kept. LoadBearing and IsExternal are what the climate declaration tells its
+categories apart by.
+
+`set_properties` checks a property set named Pset_… or Qto_… against IfcOpenShell's templates for the model's schema: a set or
+property the template lacks is refused with the nearest names, true and false, measures and enumerations must have the right type, and
+a number with its unit written in the value ("40 dB") is refused. Give the number only, lengths in metres, areas in m², volumes in m³
+and angles in degrees, and the app writes them in the file's units. A set named Qto_… becomes a quantity set (IfcElementQuantity). A
+property set of your own must not start with Pset_ or Qto_, and the AI is advised to name it country-origin-project_Name, for example
+SE-ACME-42_Acoustics, with property names in PascalCase without å, ä and ö. The properties go in the element's own set, never in its
+type's. `assign` takes the material's category (IfcMaterial.Category, the same eleven as in `define_type`).
+
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted
 together with the schema check's findings. *Approve* makes the changes the recipe step *AI change*: the model gets a new version in the

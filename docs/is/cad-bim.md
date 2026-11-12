@@ -410,6 +410,24 @@ veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða br
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
 úr sniðmátum skemans.
 
+**Burður, staða og eiginleikar.** `create_wall` og `create_slab` taka `load_bearing` (burðarvirki eða ekki), og þau og `create_roof`
+taka `status` (NEW nýtt, EXISTING núverandi, DEMOLISH verður rifið, TEMPORARY tímabundið), en aðeins þegar lýsingin eða þú segir það:
+gervigreindin giskar aldrei, og stafrænn tvíburi núverandi byggingar fær EXISTING. Gildin eru skrifuð sem LoadBearing og Status í
+Pset_WallCommon, Pset_SlabCommon og Pset_RoofCommon, á gerðina þegar allir hlutir gerðarinnar segja það sama og annars á hlutinn;
+IFC2X3 hefur ekkert Status, og skýrslan segir það. Þegar breytingasafnið er keyrt setur forritið sjálft IsExternal út frá
+grannfræðinni á veggina sem það bjó til eða breytti: satt meðfram ytri mörkum hæðarinnar og ósatt inni í byggingunni, og hurðirnar og
+gluggarnir í veggjunum fá gildi síns veggjar. Þök og þakplötur eru ytri. Hæð þar sem veggirnir lokast ekki fær ekkert IsExternal, og
+skýrslan og forskoðun gervigreindarinnar segja hvers vegna; gildi sem líkanið hafði þegar heldur sér. Það er með LoadBearing og
+IsExternal sem loftslagsyfirlýsingin greinir flokkana að.
+
+`set_properties` prófar eiginleikasafn sem heitir Pset_… eða Qto_… á móti sniðmátum IfcOpenShell fyrir skema líkansins: safni eða
+eiginleika sem sniðmátið vantar er hafnað með nálægustu nöfnunum, satt og ósatt, mælingar og upptalningar verða að hafa rétta tegund,
+og tölu með einingunni skrifaðri í gildið („40 dB“) er hafnað. Gefðu aðeins töluna, lengdir í metrum, flatarmál í m², rúmmál í m³ og
+horn í gráðum, og forritið skrifar þau í einingum skrárinnar. Safn sem heitir Qto_… verður magnsafn (IfcElementQuantity). Eigið
+eiginleikasafn má ekki byrja á Pset_ eða Qto_, og gervigreindin fær það ráð að nefna það land-uppruni-verkefni_Nafn, til dæmis
+SE-ACME-42_Hljodvist, með eiginleikanöfnum í PascalCase án å, ä og ö. Eiginleikarnir fara í eigið safn hlutarins, aldrei í safn
+gerðarinnar. `assign` tekur flokk efnisins (IfcMaterial.Category, sömu ellefu og í `define_type`).
+
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
 skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í

@@ -36,6 +36,7 @@
       'and approves it in the app, so end by saying briefly what the change set holds. Lengths are metres. Coordinates are in the',
       'storey\'s plane with the grid\'s A1 at (0, 0) unless the model says otherwise, and a storey\'s elevation is metres above the first.',
       'Give new walls, slabs and roofs a type, defined first with define_type and its material layers (the preview names a type the model has of that name already, to give by its GlobalId instead); materials and shared properties go on the types. Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.',
+      'Give load_bearing and status on new walls and slabs only when the person or the model says them, otherwise null; never assume them. The app sets IsExternal itself from the topology of the closed storeys, so never set it on walls, doors, windows or roofs.',
       'A wall runs from start to end with its thickness centred on that line; a door is an opening with fill door, offset along the wall',
       'from its start. Use the refs the write tools answer (new-1, …) to name what you created. Never delete unless the person asked for',
       'it in this conversation; confirm: true states that they did, and they confirm again before approval. Publishing is not yours to',
@@ -76,6 +77,9 @@
       'otherwise, and the first storey stays at elevation 0. When the ground falls more than 0.5 m across the footprint, say so and ask',
       'whether the building has a basement or a plinth on the low side.',
       'Define the wall, slab and roof types first with define_type, with their material layers, and give every wall, slab and roof its type; materials and shared properties go on the types (set_properties takes a type\'s ref), not on each element. Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.',
+      'Give load_bearing on walls and slabs only when the brief or the person says whether they bear load, otherwise null; never assume it. The app sets IsExternal itself from the topology of the closed storeys, on the walls, their doors and windows and the roof, so never set it with set_properties.',
+      'For a digital twin of an existing building give its walls, slabs and roof status EXISTING, for a new building NEW; leave status null when the brief does not say which.',
+      'Put properties in IFC\'s own sets (Pset_…) with the template\'s names and values without units; a set of your own never starts with Pset_ or Qto_ and is named country-origin-project_Name.',
       'After the walls of a storey, the preview\'s topology says whether the storey is closed; mend open ends (dangles) by moving or adding walls before the slabs.',
       'When the storeys are closed and the brief or the room programme names rooms, create them with create_spaces after the walls and before the slabs.',
       'Choose the most specific IFC class and PredefinedType, look it up with search_ifc_class when unsure, never use IfcBuildingElementProxy when a class fits, and use USERDEFINED only with an ObjectType.',
@@ -107,7 +111,7 @@
     const MAX_PREVIEWS_BUILD = 8;
     const PREVIEW_TOOL = {
       name: 'preview_changeset',
-      description: 'Run the open change set on a copy of the model with IfcOpenShell, as the person\'s Preview does, and get what would be created, changed and deleted, the errors in the schema or the model\'s relationships that block approval, and for each storey of its walls the topology: rooms, whether the storey is closed, open wall ends (dangles) and the external walls by facing. Nothing is changed. Works only when the app\'s Python is already running.',
+      description: 'Run the open change set on a copy of the model with IfcOpenShell, as the person\'s Preview does, and get what would be created, changed and deleted, the errors in the schema or the model\'s relationships that block approval, and for each storey of its walls the topology: rooms, whether the storey is closed, open wall ends (dangles) and the external walls by facing, and notes on what the app left out (such as IsExternal on a storey whose walls do not close). Nothing is changed. Works only when the app\'s Python is already running.',
       parameters: { type: 'object', properties: {}, required: [] },
     };
     /**
@@ -135,6 +139,7 @@
         const errors = (r.findings || []).filter((f) => String(f.level) === 'error');
         const brief = { errors: Number(r.errors) || 0, created: (r.created || []).length, changed: (r.changed || []).length, deleted: (r.deleted || []).length,
           findings: errors.slice(0, 10).map((f) => ({ class: f.ifc_class || null, id: f.id || null, attribute: f.attribute || null, message: String(f.message || '') })) };
+        if (Array.isArray(r.notes) && r.notes.length) brief.notes = r.notes.slice(0, 10).map(String);  // what the wheel left out, such as IsExternal on an open storey
         const topology = topologyBrief(r.topology);
         return topology && (!Array.isArray(topology) || topology.length) ? Object.assign(brief, { topology }) : brief;
       } catch (err) {

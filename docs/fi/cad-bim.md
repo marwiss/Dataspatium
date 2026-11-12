@@ -427,6 +427,25 @@ Lopuksi muutosjoukon luomat tai muuttamat seinät, laatat, katot, ovet ja ikkuna
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities ja Qto_WindowBaseQuantities) mitoista laskettuina, aukot
 vähennettyinä ja skeeman mallien nimillä.
 
+**Kantavuus, tila ja ominaisuudet.** `create_wall` ja `create_slab` ottavat `load_bearing`-arvon (kantava tai ei), ja ne sekä
+`create_roof` ottavat `status`-arvon (NEW uusi, EXISTING olemassa oleva, DEMOLISH purettava, TEMPORARY tilapäinen), mutta vain kun
+brief tai sinä sanot sen: tekoäly ei koskaan arvaa, ja olemassa olevan rakennuksen digitaalinen kaksonen saa arvon EXISTING. Arvot
+kirjoitetaan LoadBearing- ja Status-ominaisuuksina joukkoihin Pset_WallCommon, Pset_SlabCommon ja Pset_RoofCommon, tyyppiin kun kaikki
+tyypin elementit sanovat saman ja muuten elementtiin; IFC2X3:ssa ei ole Statusta, ja raportti kertoo sen. Kun muutosjoukko ajetaan,
+sovellus asettaa itse IsExternal-arvon topologian perusteella seinille, jotka se on luonut tai joita se on muuttanut: tosi kerroksen
+ulkorajalla ja epätosi rakennuksen sisällä, ja seinien ovet ja ikkunat saavat seinänsä arvon. Katot ja kattolaatat ovat ulkoisia.
+Kerros, jonka seinät eivät sulkeudu, ei saa IsExternal-arvoa, ja raportti ja tekoälyn esikatselu kertovat miksi; mallissa jo ollut
+arvo säilyy. Juuri LoadBearingin ja IsExternalin avulla ilmastoselvitys erottaa luokat toisistaan.
+
+`set_properties` tarkistaa ominaisuusjoukon, jonka nimi on Pset_… tai Qto_…, IfcOpenShellin mallin skeeman pohjia vasten: joukko tai
+ominaisuus, jota pohjassa ei ole, hylätään lähimpien nimien kera, toden ja epätoden, mittojen ja luetteloarvojen on oltava oikeaa
+tyyppiä, ja luku, jonka arvoon on kirjoitettu yksikkö ("40 dB"), hylätään. Anna pelkkä luku, pituudet metreinä, alat neliömetreinä,
+tilavuudet kuutiometreinä ja kulmat asteina, niin sovellus kirjoittaa ne tiedoston yksiköissä. Joukosta, jonka nimi on Qto_…, tulee
+määräjoukko (IfcElementQuantity). Oma ominaisuusjoukko ei saa alkaa Pset_- tai Qto_-etuliitteellä, ja tekoäly saa neuvon nimetä sen
+muotoon maa-alkuperä-projekti_Nimi, esimerkiksi SE-ACME-42_Akustiikka, ominaisuusnimet PascalCase-muodossa ilman å-, ä- ja
+ö-kirjaimia. Ominaisuudet kirjoitetaan elementin omaan joukkoon, ei koskaan tyypin joukkoon. `assign` ottaa materiaalin luokan
+(IfcMaterial.Category, samat yksitoista kuin `define_type`-työkalussa).
+
 *Esikatsele* ajaa muutosjoukon mallin kopiolle IfcOpenShellillä sovelluksen Pythonissa (komponentit haetaan suostumuksen jälkeen
 ensimmäisellä kerralla), piirtää tuloksen 3D:nä uudet vihreinä ja muutetut keltaisina ja näyttää, mitä luodaan, muutetaan ja poistetaan,
 sekä skeematarkistuksen löydökset. *Hyväksy* tekee muutoksista reseptivaiheen *Tekoälymuutos*: malli saa uuden version työtilaan,

@@ -413,6 +413,24 @@ ikke, og hjørner i andre vinkler end rette forbindes, som de er tegnet. Til sid
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ud fra målene, med åbningerne trukket fra og med navnene fra skemaets
 skabeloner.
 
+**Bærende, status og egenskaber.** `create_wall` og `create_slab` tager `load_bearing` (bærende eller ej), og de og `create_roof`
+tager `status` (NEW ny, EXISTING eksisterende, DEMOLISH nedrives, TEMPORARY midlertidig), men kun når briefen eller du siger det:
+AI'en gætter aldrig, og en digital tvilling af en eksisterende bygning får EXISTING. Værdierne skrives som LoadBearing og Status i
+Pset_WallCommon, Pset_SlabCommon og Pset_RoofCommon, på typen når alle elementer af typen siger det samme, og ellers på elementet;
+IFC2X3 har ingen Status, og rapporten siger det. Når ændringssættet køres, sætter appen selv IsExternal ud fra topologien på de vægge,
+det har oprettet eller ændret: sand langs etagens ydre grænse og falsk inde i bygningen, og dørene og vinduerne i væggene får deres
+vægs værdi. Tage og tagplader er ydre. En etage, hvis vægge ikke slutter sig, får ingen IsExternal, og rapporten og AI'ens
+forhåndsvisning siger hvorfor; en værdi, som modellen allerede havde, bevares. Det er med LoadBearing og IsExternal, at
+klimaerklæringen skelner mellem kategorierne.
+
+`set_properties` prøver et egenskabssæt, der hedder Pset_… eller Qto_…, mod IfcOpenShells skabeloner for modellens skema: et sæt eller
+en egenskab, som skabelonen mangler, afvises med de nærmeste navne, sand og falsk, mål og opregninger skal have den rigtige type, og
+et tal med enheden skrevet i værdien ("40 dB") afvises. Angiv kun tallet, længder i meter, arealer i m², rumfang i m³ og vinkler i
+grader, så skriver appen dem i filens enheder. Et sæt, der hedder Qto_…, bliver et mængdesæt (IfcElementQuantity). Et eget
+egenskabssæt må ikke begynde med Pset_ eller Qto_, og AI'en får det råd at kalde det land-oprindelse-projekt_Navn, for eksempel
+SE-ACME-42_Akustik, med egenskabsnavne i PascalCase uden å, ä og ö. Egenskaberne skrives i elementets eget sæt, aldrig i typens.
+`assign` tager materialets kategori (IfcMaterial.Category, de samme elleve som i `define_type`).
+
 *Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
 gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.
 *Godkend* gør ændringerne til opskriftstrinnet *AI-ændring*: modellen får en ny version i arbejdsområdet, tabellerne bygges om, og trinnet
