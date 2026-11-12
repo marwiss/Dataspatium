@@ -2675,7 +2675,7 @@ class _ChangeSet:
             try:
                 step()
             except Exception as exc:
-                self.note("%s could not be set: %s: %s" % (what, type(exc).__name__, exc))
+                self.note_once("%s could not be set: %s: %s" % (what, type(exc).__name__, exc))
 
     JOIN_RIGHT = 0.02  # |cos| of the angle between two walls below which they meet at right angles (about one degree)
     JOIN_LINE = 0.98  # and above which they run in line or side by side (about eleven degrees)
@@ -3075,15 +3075,15 @@ class _ChangeSet:
         if category not in self.MATERIAL_CATEGORIES:
             raise DataspatiumError("category must be one of %s, or null" % ", ".join(self.MATERIAL_CATEGORIES))
         if self.m.schema == "IFC2X3":
-            self.note("IFC2X3 has no material categories, so the category %s of %s was left out" % (category, material))
+            self.note_once("IFC2X3 has no material categories, so the category %s of %s was left out" % (category, material))
             return None
         return category
 
-    def note(self, text):
+    def note_once(self, text):
         if text not in self.notes:
             self.notes.append(text)
 
-    def named(self, e):
+    def element_label(self, e):
         """An element as the notes name it: its ref in this change set, else its id, and its name."""
         ref = next((r["ref"] for r in self.created if r["id"] == e.id() and r.get("ref")), None)
         return "%s %r" % (ref or "#%d" % e.id(), _ifc_text(getattr(e, "Name", None)) or "")
@@ -3100,7 +3100,7 @@ class _ChangeSet:
         if template is None and self.m.schema == "IFC2X3":
             template = _cs_pset_templates("IFC4").get(name.lower())
             if template is not None:
-                self.note("%s is not a set of IFC2X3, so it was written as IFC4 defines it" % template.Name)
+                self.note_once("%s is not a set of IFC2X3, so it was written as IFC4 defines it" % template.Name)
         if template is None:
             import difflib
             near = difflib.get_close_matches(name, [str(t.Name) for t in known.values()], 5, 0.6)
@@ -3342,7 +3342,7 @@ class _ChangeSet:
             name = self.common_set(items[0][0])
             template = self.property_template(name)[0]
             if template is not None and not any(str(p.Name) == prop for p in template.HasPropertyTemplates or ()):
-                self.note("%s has no %s in %s, so it was left out" % (name, prop, self.m.schema))
+                self.note_once("%s has no %s in %s, so it was left out" % (name, prop, self.m.schema))
                 continue
             on_type = None
             if t is not None:
@@ -3372,7 +3372,7 @@ class _ChangeSet:
         own = self.own_value(e, name, "IsExternal")
         if own is not None and (e.id(), name, "IsExternal") not in self.written:
             if bool(own) != value:
-                self.note("%s %s keeps the model's IsExternal %s; the topology says %s" % (e.is_a(), self.named(e), str(bool(own)).lower(), str(value).lower()))
+                self.note_once("%s %s keeps the model's IsExternal %s; the topology says %s" % (e.is_a(), self.element_label(e), str(bool(own)).lower(), str(value).lower()))
             return bool(own)
         if own is None or bool(own) != value:
             self.put_common(e, "IsExternal", value)
@@ -3406,7 +3406,7 @@ class _ChangeSet:
             why = ("the app could not read its walls" if rec is None else "%d of its walls could not be read" % rec["unread"] if rec["unread"]
                    else "%d wall ends stand open" % len(rec["dangles"]) if rec["dangles"] else "its walls enclose no room" if not rec["closed"] else None)
             if why is not None:
-                self.note("IsExternal was left out on the walls of storey %s that the change set made or changed, and on their doors and windows: "
+                self.note_once("IsExternal was left out on the walls of storey %s that the change set made or changed, and on their doors and windows: "
                           "%s, so the app cannot tell outside from inside" % (_ifc_text(s.Name), why))
                 continue
             outer = {x["wall"] for x in rec["external"]}
@@ -3420,7 +3420,7 @@ class _ChangeSet:
                 for f in self.fillings(w):
                     self.set_external(f, value)
             if alone:
-                self.note("IsExternal was left out on walls %s of storey %s: they bound no room" % (", ".join(self.named(w) for w in alone), _ifc_text(s.Name)))
+                self.note_once("IsExternal was left out on walls %s of storey %s: they bound no room" % (", ".join(self.element_label(w) for w in alone), _ifc_text(s.Name)))
 
     def apply(self, ops):
         if not isinstance(ops, list):
