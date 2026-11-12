@@ -30,6 +30,17 @@ Python, IfcOpenShell and OCR, the status bar shows how much of the whole has arr
 rate, with a button to cancel. Whatever was waiting for the download then gets a message that it was cancelled and can be started again
 later. From the folder (file://) nothing is fetched; the files are on disk.
 
+How long the app itself takes to start is shown by the start profile. Add `?profil=start` to the address (`index.html?profil=start`,
+or `m/index.html?profil=start` for Dataspatium Mobile), and the app writes a table of the scripts to the browser's console with the
+time from when each was added until it had run and the share of the start it alone accounted for, the time per folder, the time to
+ready and to the first render, long tasks over 50 ms (in Edge and Chrome) and, when the app runs from a web server, the size of each
+file; without the parameter nothing is measured. With `&profil-exit=1` the measurement ends like a test, so that it can run without a
+window from the folder: `powershell -File tools/run-tests.ps1 -Browsers edge -Url "index.html?lang=sv&profil=start&profil-exit=1"`,
+and with `-Url "m/index.html?lang=sv&profil=start&profil-exit=1"` for the mobile page (`-Browsers firefox` for Firefox). Against a web
+server (`python -m http.server 8092 --bind 127.0.0.1` in the folder) the address becomes
+`http://127.0.0.1:8092/index.html?lang=sv&profil=start&profil-exit=1`. `lang=sv` (or `lang=en`) picks the language in advance, since
+the very first start loads all seven languages and waits for the language choice.
+
 ## Can I interrupt R code that is stuck?
 
 Yes, when the app runs from a web server (for example `python -m http.server 8080` on your own computer, or https on
