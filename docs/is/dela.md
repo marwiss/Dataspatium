@@ -71,6 +71,36 @@ undir *Það sem fylgir pakkanum* og huldar í afritinu nema þú veljir að hal
 Samstillingu við **GitHub** þarf að vera hægt að sækja aftur eins og hún var, svo þar er ekkert hægt að dulnefna. Forritið sýnir þess í stað hvað geta verið persónuupplýsingar áður en þú sendir.
 **Birta** býr til HTML-síðu með þeim gildum sem gröfin sýna, svo athugaðu þau áður en þú setur síðuna út.
 
+### Persónuupplýsingar í IFC-líkani
+
+Líkan sem er afhent stjórnvaldi verður opinbert skjal, og IFC-skráin geymir meira en sést í þrívíddarsýninni. Fyrir IFC-líkan skoðar yfirferðin því inn í sjálfa
+skrána. Töflurnar með einingum og eiginleikum eru byggðar úr skránni og eru ekki sýndar sérstaklega.
+
+| Hluti líkansins | Það sem finnst |
+|---|---|
+| Einstaklingar (IfcPerson) | Nöfn, auðkenni og heimilisföng einstaklingsins með netfangi og síma |
+| Heimilisföng stofnana | Póstföng, netföng og símanúmer (IfcPostalAddress, IfcTelecomAddress) |
+| Eigendasagan (IfcOwnerHistory) | Notandinn sem á eða breytti síðast hlutunum, og forritið |
+| Skráarhausinn (FILE_NAME) | Höfundur, stofnun og sá sem samþykkti skrána |
+| Gerendur og íbúar (IfcActor, IfcOccupant) | Hlutverkin og einstaklingarnir sem þau vísa á |
+| Frjáls texti | Netföng, kennitölur og símanúmer í nöfnum, lýsingum og eiginleikum, með sömu prófunum og í töflum |
+
+Hverjum hluta má halda, dulnefna eða fjarlægja í afritinu. Sjálfgefið er að dulnefna einstaklinga, eigendasögu og gerendur og að fjarlægja heimilisföng,
+skráarhausinn og það sem finnst í frjálsum texta.
+
+- *Dulnefna* setur kóða í stað nafna, auðkenna og heimilisfanga. Sama gildi gefur sama kóða í skránni og í töflunum. Forritið í eigendasögunni stendur eftir.
+- *Fjarlægja í afritinu* tæmir skráarhausinn og fjarlægir heimilisföngin, gerendurna og eigendasöguna. Í IFC2X3, þar sem hver hlutur verður að hafa eigendasögu,
+  fá hlutirnir hlutlausa sögu appsins í staðinn. Einstaklingar sem eftir eru verða hlutlaus notandi appsins, og það sem finnst í frjálsum texta verður [***].
+- Einstaklingur sem stóð aðeins í eigendasögunni eða hjá gerenda hverfur með henni.
+- GlobalId, hæðir, einingar, gerðir og rúmfræði haldast, og töflur afritsins eru byggðar á ný úr hreinsuðu skránni.
+
+Þetta gerir IfcOpenShell í Python appsins. Ef Python er ekki í gangi getur þú aðeins haldið hlutunum eða hætt við, og glugginn segir hvers vegna. *Ræsa Python*
+ræsir það (í fyrsta sinn er það sótt eftir samþykki þitt), og þá fá hlutarnir alla valkosti. Nöfn sem standa sem venjulegur texti í eiginleikum þekkjast ekki,
+svo þú metur þau sjálf.
+
+Yfirferð líkansins gildir um allar leiðir út: pakka, tæki, deilivalmyndina, birtingu og OpenCDE, líka þegar eigin IFC-skrá líkansins er send. Samstilling við
+GitHub getur engu breytt, svo þar sýnir yfirferðin aðeins hvað fylgir með.
+
 ## Deilivalmynd
 
 Eigin deilivalmynd tölvunnar eða símans: sendu skrá í tölvupóst, Teams, skilaboðaforrit eða önnur forrit. Veldu

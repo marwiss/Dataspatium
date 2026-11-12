@@ -72,6 +72,37 @@ under *What else the package carries* and masked in the copy, unless you choose 
 A sync to **GitHub** must be able to come back as it was, so nothing can be pseudonymised there. Instead the app shows what may be personal data before you send. **Publish** creates an HTML page with
 the values the charts show, so check them before you put the page out.
 
+### Personal data in an IFC model
+
+A model handed to an authority becomes a public record, and the IFC file carries more than the 3D view shows. For an IFC model the review therefore looks inside the
+file itself. The tables of elements and properties are built from the file and are not listed apart.
+
+| Part of the model | What is found |
+|---|---|
+| People (IfcPerson) | Names, identification and the person's addresses with e-mail and phone |
+| The organisations' addresses | Postal addresses, e-mail and phone (IfcPostalAddress, IfcTelecomAddress) |
+| The owner history (IfcOwnerHistory) | The user who owns or last changed the objects, and the application |
+| The file header (FILE_NAME) | Author, organisation and the person who authorised the file |
+| Actors and occupants (IfcActor, IfcOccupant) | The roles and the people they point to |
+| Free text | E-mail addresses, identity numbers and phone numbers in names, descriptions and properties, with the same checks as in tables |
+
+Each part can be kept, pseudonymised or removed in the copy. The default is to pseudonymise people, owner history and actors, and to remove addresses, the
+header and the matches in free text.
+
+- *Pseudonymise* replaces names, identities and addresses with codes. The same value gives the same code in the file and in the tables. The application in the
+  owner history stays.
+- *Remove in the copy* empties the header and removes the addresses, the actors and the owner history. In IFC2X3, where every object must have an owner history,
+  the objects get the app's neutral one instead. People who remain become the app's neutral user, and the matches in free text become [***].
+- A person who only stood in the owner history or with an actor goes with it.
+- GlobalIds, storeys, elements, types and geometry are kept, and the copy's tables are rebuilt from the cleaned file.
+
+This is done by IfcOpenShell in the app's Python. If Python is not running you can only keep the parts or cancel, and the dialog says why. *Start Python* starts it
+(the first time it is fetched after your consent), and then the parts get every choice. Names written as plain text in properties are not recognised, so judge
+those yourself.
+
+The review of the model applies to every way out: bundles, devices, the share menu, publishing and OpenCDE, also when the model's own IFC file is sent. A sync to
+GitHub cannot change anything, so there the review only shows what comes along.
+
 ## Share menu
 
 The computer's or phone's own share menu: send a file to e-mail, Teams, messaging apps or other apps. Choose whether

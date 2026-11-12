@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 359529,
+  "size": 372377,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -651,7 +651,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/dela.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 9326,
+  "size": 11729,
   "library": "dataspatium"
  },
  "docs/sv/mobil.md": {
@@ -675,7 +675,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/sakerhet.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 16926,
+  "size": 17749,
   "library": "dataspatium"
  },
  "docs/da/kom-igang.md": {
@@ -819,7 +819,7 @@ Dataspatium.assets.addEntries({
  "docs/da/dela.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 9114,
+  "size": 11510,
   "library": "dataspatium"
  },
  "docs/da/mobil.md": {
@@ -843,7 +843,7 @@ Dataspatium.assets.addEntries({
  "docs/da/sakerhet.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 16888,
+  "size": 17704,
   "library": "dataspatium"
  },
  "docs/nb/kom-igang.md": {
@@ -987,7 +987,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/dela.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 9009,
+  "size": 11370,
   "library": "dataspatium"
  },
  "docs/nb/mobil.md": {
@@ -1011,7 +1011,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/sakerhet.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 16712,
+  "size": 17526,
   "library": "dataspatium"
  },
  "docs/nn/kom-igang.md": {
@@ -1155,7 +1155,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/dela.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 9241,
+  "size": 11695,
   "library": "dataspatium"
  },
  "docs/nn/mobil.md": {
@@ -1179,7 +1179,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/sakerhet.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 17061,
+  "size": 17899,
   "library": "dataspatium"
  },
  "docs/fi/kom-igang.md": {
@@ -1323,7 +1323,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/dela.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 9779,
+  "size": 12413,
   "library": "dataspatium"
  },
  "docs/fi/mobil.md": {
@@ -1347,7 +1347,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/sakerhet.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 17898,
+  "size": 18793,
   "library": "dataspatium"
  },
  "docs/is/kom-igang.md": {
@@ -1491,7 +1491,7 @@ Dataspatium.assets.addEntries({
  "docs/is/dela.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 9752,
+  "size": 12329,
   "library": "dataspatium"
  },
  "docs/is/mobil.md": {
@@ -1515,7 +1515,7 @@ Dataspatium.assets.addEntries({
  "docs/is/sakerhet.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 17927,
+  "size": 18793,
   "library": "dataspatium"
  },
  "docs/en/kom-igang.md": {
@@ -1659,7 +1659,7 @@ Dataspatium.assets.addEntries({
  "docs/en/dela.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 9253,
+  "size": 11700,
   "library": "dataspatium"
  },
  "docs/en/mobil.md": {
@@ -1683,7 +1683,7 @@ Dataspatium.assets.addEntries({
  "docs/en/sakerhet.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 16876,
+  "size": 17704,
   "library": "dataspatium"
  }
 });

@@ -473,6 +473,30 @@
         });
       }
 
+      /**
+       * Personal data out of a model's copy before it leaves the app (the review before sharing, data/share-scan; the wheel's
+       * `_ifc_scrub`): per part ('persons', 'organizations', 'owner', 'header', 'actors', 'text') 'hash' writes codes (salted SHA-256,
+       * as dm_hash) and 'remove' takes it away; `matches` are the pieces of free text the app's detectors found. The options go
+       * through a file, never through the code, and are removed with it. GlobalIds and the model's parts stay.
+       * @param {ArrayBuffer|Uint8Array} bytes the copy's SQLite file
+       * @param {{persons?: string, organizations?: string, owner?: string, header?: string, actors?: string, text?: string, matches?: string[], salt?: string}} options
+       * @returns {Promise<{bytes: Uint8Array, info: any, log: Array<{kind: string, text: string}>}>}
+       */
+      async runIfcScrub(bytes, options) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          await this.engine.writeFile('/data/step/scrub.json', new TextEncoder().encode(JSON.stringify(options || {})).buffer);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            const info = await this.engine.evalJson('_dataspatium._ifc_scrub("/data/step/model.sqlite", "/data/step/scrub.json", "/data/step/scrub-out.ifc")');
+            return await this.takeIfc('/data/step/scrub-out.ifc', info, ['/data/step/model.sqlite', '/data/step/scrub-in.ifc']);
+          } finally {
+            for (const p of ['/data/step/scrub.json', '/data/step/model.sqlite', '/data/step/scrub-in.ifc', '/data/step/scrub-out.ifc']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
       async ifcJob(fn) {
         await this.start();
         if (this.state === 'busy') throw new Error(D.t('python.err.busy'));

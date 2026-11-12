@@ -4,7 +4,9 @@
  * What a dataset would bring along if it left the app, all of it: not only the columns of the main table but running text,
  * side tables (graph edges, model properties), original files, pictures with their positions, comments and authors in the
  * metadata. inspect() lists it with the choices that make sense, copy() applies the choices to a copy. The dataset itself
- * is never changed. A pseudonymised copy holds no change log, because the log can hold the original values, and it is
+ * is never changed. In an IFC model the file is the model, so the review looks inside it (people, addresses, owner history,
+ * the header, actors and free text) and IfcOpenShell in the app's Python cleans the copy's file, from which its tables are built
+ * anew; without Python running the choice is to keep or to stop. A pseudonymised copy holds no change log, because the log can hold the original values, and it is
  * vacuumed, because SQLite otherwise keeps old values in free pages of the file.
  */
 (function () {
@@ -18,6 +20,10 @@
     /** Tables with their own part, or without free text. */
     const NOT_SCANNED = new Set(['data', '_columns', '_meta', '_log', FILES, '_layout', '_comments']);
     const POSITION_COLUMNS = ['lon', 'lat', 'altitud'];
+    /** What the review finds inside an IFC model, in the order the dialog shows it (ifcParts). */
+    const IFC_PARTS = ['persons', 'organizations', 'owner', 'header', 'actors', 'text'];
+    /** The tables of an IFC model that are built from its file. */
+    const IFC_TABLES = new Set(['_properties', '_quantities', '_entities']);
     const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
     const number = (res) => (res[0] && res[0].values[0] ? Number(res[0].values[0][0]) || 0 : 0);
 
@@ -71,17 +77,20 @@
     async function inspect(id) {
       const handle = await datasets.ensureOpen(id);
       const engine = handle.engine;
-      const columns = await columnFindings(id);
+      // In an IFC model the tables show what the file holds: the file is what is reviewed, and cleaning it cleans them (ifcParts).
+      const ifc = await ifcOriginal(handle);
+      const derived = new Set(ifc ? D.require('data/model').IFC_COLUMNS.map((c) => c.name) : []);
+      const columns = (await columnFindings(id)).filter((f) => !derived.has(f.column));
       const parts = [];
       const flagged = new Set(columns.map((f) => f.column));
       for (const c of handle.columns) {
-        if (c.type !== 'text' || flagged.has(c.name)) continue;
+        if (c.type !== 'text' || flagged.has(c.name) || derived.has(c.name)) continue;
         const n = number(await engine.exec(`select count(*) from data where dm_has_personal(${q(c.name)}) = 1`));
         if (n) parts.push({ id: 'text:' + c.name, kind: 'text', column: c.name, count: n, choices: ['keep', 'mask', 'drop'], start: 'mask' });
       }
       const tables = await tablesIn(engine);
       for (const table of tables) {
-        if (NOT_SCANNED.has(table)) continue;
+        if (NOT_SCANNED.has(table) || (ifc && IFC_TABLES.has(table))) continue;
         const cols = await textColumnsOf(engine, table);
         if (!cols.length) continue;
         const hit = cols.map((c) => `dm_has_personal(${q(c)}) = 1`).join(' or ');
@@ -96,7 +105,7 @@
         }
         const pictures = tables.includes(FILES) ? number(await engine.exec(`select count(distinct name) from ${FILES}`)) : 0;
         if (pictures) parts.push({ id: 'pictures', kind: 'pictures', count: pictures, choices: ['keep', 'remove'], start: 'keep' });
-      } else if (tables.includes(FILES)) {
+      } else if (tables.includes(FILES) && !ifc) {
         const r = await engine.exec(`select distinct name from ${FILES} where kind = 'original'`);
         const names = r[0] ? r[0].values.map((row) => String(row[0])) : [];
         // A cleaned table beside the untouched original would be no protection at all.
@@ -114,13 +123,106 @@
       const labels = [handle.meta.name, source.fileName, source.name].filter((x) => typeof x === 'string' && x);
       const named = labels.length ? await engine.exec(`select ${labels.map(() => 'dm_has_personal(?)').join(' + ')}`, labels) : null;
       if (named && number(named)) parts.push({ id: 'filename', kind: 'filename', count: 1, names: labels.slice(0, 2), choices: ['mask', 'keep'], start: 'mask' });
+      if (ifc) parts.push(...(await ifcParts(handle, ifc)));
       return { columns, parts };
     }
+
+    /** Whether the app's Python runs now, so that IfcOpenShell can clean a model's copy (it starts only on the person's action). */
+    function pythonRuns() {
+      try { const state = D.require('data/python-bridge').bridge.state; return state === 'ready' || state === 'busy'; } catch (_err) { return false; }
+    }
+    /** The original file of an IFC model (not a DXF drawing, not a model drawn from its server): {name, size}, or null. */
+    async function ifcOriginal(handle) {
+      const meta = handle.meta || {};
+      if (meta.kind !== 'model' || (meta.model && meta.model.format === 'dxf')) return null;
+      if (!(await tablesIn(handle.engine)).includes(FILES)) return null;
+      const r = await handle.engine.exec(`select name, size from ${FILES} where kind = 'original' order by name limit 1`);
+      const row = r[0] && r[0].values[0];
+      return row ? { name: String(row[0]), size: Number(row[1]) || 0 } : null;
+    }
+    async function originalBytes(engine) {
+      const r = await engine.exec(`select bytes from ${FILES} where kind = 'original' order by name limit 1`);
+      return r[0] && r[0].values[0] ? r[0].values[0][0] : null;
+    }
+    /**
+     * What an IFC file holds that can be personal data (data/ifc-step `personal`), with the free texts confirmed by the app's own
+     * detectors on the given engine (dm_has_personal), and the pieces they recognise (dm_personal_matches) for IfcOpenShell.
+     * @param {any} engine @param {Uint8Array} bytes @returns {Promise<{raw: any, texts: string[], matches: string[]}>}
+     */
+    async function ifcScan(engine, bytes) {
+      const raw = await D.require('data/ifc-step').personal(bytes);
+      const texts = []; const matches = [];
+      if (raw.texts.length) {
+        const r = await engine.exec('select value, dm_personal_matches(value) from json_each(?) where dm_has_personal(value) = 1', [JSON.stringify(raw.texts)]);
+        for (const row of r[0] ? r[0].values : []) {
+          texts.push(String(row[0]));
+          for (const m of JSON.parse(String(row[1] || '[]'))) if (!matches.includes(m)) matches.push(m);
+        }
+      }
+      return { raw, texts, matches };
+    }
+    /** The last scans, by dataset and version: a review opens often, and the file only changes with a new version. */
+    const ifcScans = new Map();
+    /**
+     * The parts of an IFC model's review. With Python running each can be kept, pseudonymised (codes; the same value gives the same
+     * code) or removed in the copy; without it only kept, and `needsPython` says why (the dialog can start Python).
+     * @param {any} handle @param {{name: string, size: number}} file
+     */
+    async function ifcParts(handle, file) {
+      const key = `${handle.meta.id}|${handle.meta.updatedAt || ''}|${file.size}`;
+      let found = ifcScans.get(key);
+      if (!found) {
+        const bytes = await originalBytes(handle.engine);
+        if (!bytes) return [];
+        found = await ifcScan(handle.engine, bytes);
+        if (ifcScans.size > 8) ifcScans.clear();
+        ifcScans.set(key, found);
+      }
+      const { raw, texts, matches } = found;
+      const python = pythonRuns();
+      const all = ['keep', 'hash', 'remove'];
+      const part = (name, count, names, start, extra) => (count ? Object.assign({ id: 'ifc:' + name, kind: 'ifc.' + name, count, names: names.filter(Boolean).slice(0, 5),
+        choices: python ? all : ['keep'], start: python ? start : 'keep', withPython: { choices: all, start }, needsPython: !python }, extra || {}) : null);
+      return [
+        part('persons', raw.persons.length, raw.persons.map((p) => p.label), 'hash'),
+        part('organizations', raw.organizations.reduce((n, o) => n + (o.addresses || 1), 0), raw.organizations.map((o) => o.label), 'remove'),
+        part('owner', raw.owner.users.length, raw.owner.users.concat(raw.owner.applications), 'hash'),
+        part('header', raw.header.length, raw.header, 'remove'),
+        part('actors', raw.actors.length, raw.actors.map((a) => a.label), 'hash'),
+        part('text', texts.length, [], 'remove', { matches }),
+      ].filter(Boolean);
+    }
+    /** The IFC parts to change in the copy ({persons: 'hash', ...}), or null when everything is kept. */
+    function ifcScrubs(choices) {
+      if (!choices) return null;
+      const out = {};
+      for (const k of IFC_PARTS) if (choices[k] === 'hash' || choices[k] === 'remove') out[k] = choices[k];
+      return Object.keys(out).length ? out : null;
+    }
+    /**
+     * An IFC model's file cleaned in the copy by IfcOpenShell (data/python-bridge `runIfcScrub`), before the columns are hashed or
+     * dropped: the tables are built anew from the cleaned file (data/model.replaceOriginal), GlobalIds and the model's parts stay,
+     * and rows chosen by rowid follow their elements. The pieces of free text come from the review, or are found again here.
+     */
+    async function scrubModel(engine, work, scrub) {
+      if (!(await tablesIn(engine)).includes(FILES)) return;
+      const r = await engine.exec(`select name, bytes from ${FILES} where kind = 'original' order by name limit 1`);
+      const row = r[0] && r[0].values[0];
+      if (!row || !row[1]) return;
+      let matches = work.ifc && Array.isArray(work.ifc.matches) ? work.ifc.matches : null;
+      if (scrub.text && !matches) matches = (await ifcScan(engine, row[1])).matches;
+      const valuesOf = async (sql) => { const res = await engine.exec(sql); return res[0] ? res[0].values.map((x) => x[0]) : []; };
+      const ids = work.only && work.only.length ? await valuesOf(`select id from data where rowid in (${work.only.map(Number).join(',')})`) : null;
+      const res = await D.require('data/python-bridge').bridge.runIfcScrub(await engine.export(), Object.assign({}, scrub, { matches: matches || [], salt: work.salt || '' }));
+      await D.require('data/model').replaceOriginal({ engine }, res.bytes, String(row[0]));
+      if (ids) work.only = await valuesOf(`select rowid from data where id in (${ids.map(Number).join(',') || 'null'})`);
+    }
+    const randomSalt = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
 
     /** Whether a set of choices changes anything in the copy. */
     function changes(tr) {
       if (!tr) return false;
-      return !!(tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
+      return !!(ifcScrubs(tr.ifc) || tr.filename || (tr.only || []).length || (tr.drop || []).length || (tr.hash || []).length || (tr.mask || []).length || Object.keys(tr.side || {}).length || tr.originals || tr.pictures || tr.positions || tr.comments || tr.authors);
     }
 
     async function metaValue(engine, key) {
@@ -271,7 +373,10 @@
      * @param {string} id @param {any} [tr] from the review @returns {Promise<Uint8Array>}
      */
     async function copy(id, tr = {}) {
-      return datasets.exportBytesTransformed(id, Object.assign({}, tr, { after: changes(tr) ? (engine) => applyParts(engine, tr) : null }));
+      // The model's file is cleaned first, with the salt the hashed columns use, so that a name gives the same code in both.
+      const scrub = ifcScrubs(tr.ifc);
+      const work = scrub ? Object.assign({}, tr, { salt: tr.salt || randomSalt() }) : tr;
+      return datasets.exportBytesTransformed(id, Object.assign({}, work, { before: scrub ? (engine) => scrubModel(engine, work, scrub) : null, after: changes(work) ? (engine) => applyParts(engine, work) : null }));
     }
 
     /**
@@ -287,6 +392,9 @@
       finally { await datasets.remove(temp.id, { quiet: true }); }
     }
 
-    return { PHONE_NAME, columnFindings, columnChoices, inspect, changes, copy, exportCopy, extras, cleanJson, personalCount, maskText };
+    /** Whether a dataset is an IFC model with its file, whose review looks inside the file. @param {string} id */
+    async function isIfc(id) { return !!(await ifcOriginal(await datasets.ensureOpen(id))); }
+
+    return { PHONE_NAME, IFC_PARTS, columnFindings, columnChoices, inspect, changes, copy, exportCopy, extras, cleanJson, personalCount, maskText, pythonRuns, isIfc };
   });
 })();

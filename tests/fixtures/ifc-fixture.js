@@ -13,19 +13,29 @@
     const guid = (n) => ('0Dataspatium' + String(n).padStart(10, '0')).slice(0, 22);
 
     /**
-     * The IFC text. @param {{walls?: number, name?: string, classes?: boolean}} [options] walls per storey (at least 2); classes adds
-     * a proxy, a USERDEFINED covering without ObjectType and furniture outside the spatial structure on the first storey
+     * The IFC text. @param {{walls?: number, name?: string, classes?: boolean, persons?: boolean}} [options] walls per storey (at least 2);
+     * classes adds a proxy, a USERDEFINED covering without ObjectType and furniture outside the spatial structure on the first storey;
+     * persons gives made-up people for the review before sharing: the header's author, organisation and authorisation, a person with
+     * a home address, e-mail and phone as the owner, an organisation with its own address, an actor and an occupant (other people),
+     * an e-mail address in a wall's description and an identity number in a property of the type
      */
     function ifcText(options = {}) {
       const walls = Math.max(2, options.walls || 2);
       const lines = [];
       let next = 1000;
       const add = (text) => { const id = next++; lines.push(`#${id}=${text};`); return id; };
+      const people = !!options.persons;
       const head = ["ISO-10303-21;", "HEADER;", "FILE_DESCRIPTION(('ViewDefinition [DesignTransferView]'),'2;1');",
-        `FILE_NAME('${options.name || 'testhus.ifc'}','2026-11-04T12:00:00',('Testare'),('Testbolaget'),'Testverktyg','Testprogram 1.0','');`,
+        people ? `FILE_NAME('${options.name || 'testhus.ifc'}','2026-11-04T12:00:00',('Anna Andersson'),('Arkitektkontoret Test AB'),'Testverktyg','Testprogram 1.0','Bo Berg');`
+          : `FILE_NAME('${options.name || 'testhus.ifc'}','2026-11-04T12:00:00',('Testare'),('Testbolaget'),'Testverktyg','Testprogram 1.0','');`,
         "FILE_SCHEMA(('IFC4'));", 'ENDSEC;', 'DATA;'];
-      const person = add("IFCPERSON($,'Testare',$,$,$,$,$,$)");
-      const org = add("IFCORGANIZATION($,'Testbolaget',$,$,$)");
+      // Made-up people for the review before sharing: a person with a home address, e-mail and phone, an organisation with its own.
+      const person = people
+        ? add(`IFCPERSON('AA1','Andersson','Anna',$,$,$,$,(#${add("IFCPOSTALADDRESS(.HOME.,$,$,$,('Testgatan 1'),$,'Ume\\X2\\00E5\\X0\\',$,'90000','Sverige')")},#${add("IFCTELECOMADDRESS(.OFFICE.,$,$,('+46 70 000 00 01'),$,$,('anna.andersson@example.se'),$,$)")}))`)
+        : add("IFCPERSON($,'Testare',$,$,$,$,$,$)");
+      const org = people
+        ? add(`IFCORGANIZATION($,'Arkitektkontoret Test AB',$,$,(#${add("IFCTELECOMADDRESS(.OFFICE.,$,$,('+46 90 000 00 02'),$,$,('info@arkitekt.example.se'),$,$)")}))`)
+        : add("IFCORGANIZATION($,'Testbolaget',$,$,$)");
       const po = add(`IFCPERSONANDORGANIZATION(#${person},#${org},$)`);
       const app = add(`IFCAPPLICATION(#${org},'1.0','Testprogram','TP')`);
       const owner = add(`IFCOWNERHISTORY(#${po},#${app},$,.ADDED.,$,$,$,1320688800)`);
@@ -52,6 +62,12 @@
       const storeyPl = [placeAt(0, 0, 0, buildingPl), placeAt(0, 0, 3000, buildingPl)];
       const storeys = [add(`IFCBUILDINGSTOREY('${G()}',#${owner},'Plan 1',$,$,#${storeyPl[0]},$,$,.ELEMENT.,0.)`), add(`IFCBUILDINGSTOREY('${G()}',#${owner},'Plan 2',$,$,#${storeyPl[1]},$,$,.ELEMENT.,3000.)`)];
       add(`IFCRELAGGREGATES('${G()}',#${owner},$,$,#${building},(#${storeys[0]},#${storeys[1]}))`);
+      if (people) {
+        const bo = add("IFCPERSON($,'Berg','Bo',$,$,$,$,$)");
+        add(`IFCACTOR('${G()}',#${owner},'Byggherre',$,$,#${add(`IFCPERSONANDORGANIZATION(#${bo},#${org},$)`)})`);
+        const tenant = add(`IFCOCCUPANT('${G()}',#${owner},'Hyresg\\X2\\00E4\\X0\\st',$,$,#${add("IFCPERSON($,'Ek','Cecilia',$,$,$,$,$)")},.TENANT.)`);
+        add(`IFCRELASSIGNSTOACTOR('${G()}',#${owner},$,$,(#${building}),$,#${tenant},$)`);
+      }
       const solid = (xDim, yDim, depth) => {
         const p2d = add(`IFCAXIS2PLACEMENT2D(#${add('IFCCARTESIANPOINT((0.,0.))')},#${add('IFCDIRECTION((1.,0.))')})`);
         const profile = add(`IFCRECTANGLEPROFILEDEF(.AREA.,$,#${p2d},${xDim}.,${yDim}.)`);
@@ -65,7 +81,8 @@
         add(`IFCSTYLEDITEM(#${s},(#${style}),$)`);
       };
       // The wall type carries a property set that its walls inherit.
-      const typePset = add(`IFCPROPERTYSET('${G()}',#${owner},'Typens egenskaper',$,(#${add("IFCPROPERTYSINGLEVALUE('Tillverkare',$,IFCLABEL('Testfabriken'),$)")}))`);
+      const typeProps = [add("IFCPROPERTYSINGLEVALUE('Tillverkare',$,IFCLABEL('Testfabriken'),$)")].concat(people ? [add("IFCPROPERTYSINGLEVALUE('Ansvarig',$,IFCTEXT('Kontrollant 19121212-1212'),$)")] : []);
+      const typePset = add(`IFCPROPERTYSET('${G()}',#${owner},'Typens egenskaper',$,(${typeProps.map((x) => '#' + x).join(',')}))`);
       const wallType = add(`IFCWALLTYPE('${G()}',#${owner},'Yttervägg 200',$,$,(#${typePset}),$,$,$,.STANDARD.)`);
       const material = add("IFCMATERIAL('Betong',$,$)");
       const insulation = add("IFCMATERIAL('Mineralull',$,$)");
@@ -78,7 +95,8 @@
         for (let w = 0; w < walls; w++) {
           const s = solid(4000, 200, 2500);
           if (w === 0) colored(s, 0.8, 0.2, 0.2);
-          const wall = add(`IFCWALL('${G()}',#${owner},'Vägg ${si + 1}.${w + 1}',\$,'Yttervägg',#${placeAt(w * 5000, 0, 0, storeyPl[si])},#${shapeOf(s)},'V${si + 1}${w + 1}',.SOLIDWALL.)`);
+          const about = people && si === 0 && w === 0 ? "'Kontakt bo.berg@example.se'" : '$';
+          const wall = add(`IFCWALL('${G()}',#${owner},'Vägg ${si + 1}.${w + 1}',${about},'Yttervägg',#${placeAt(w * 5000, 0, 0, storeyPl[si])},#${shapeOf(s)},'V${si + 1}${w + 1}',.SOLIDWALL.)`);
           contained.push(wall); allWalls.push(wall);
           const pset = add(`IFCPROPERTYSET('${G()}',#${owner},'Pset_WallCommon',$,(#${add(`IFCPROPERTYSINGLEVALUE('LoadBearing',$,IFCBOOLEAN(.T.),$)`)},#${add(`IFCPROPERTYSINGLEVALUE('FireRating',$,IFCLABEL('EI60'),$)`)},#${add(`IFCPROPERTYSINGLEVALUE('ThermalTransmittance',$,IFCTHERMALTRANSMITTANCEMEASURE(0.17),$)`)}))`);
           add(`IFCRELDEFINESBYPROPERTIES('${G()}',#${owner},$,$,(#${wall}),#${pset})`);

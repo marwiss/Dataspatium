@@ -5693,6 +5693,275 @@ def _ifc_parameters_file(in_file, ids_json, out_file):
     return text
 
 
+# ---- personal data out of a model's copy (the review before sharing) ----------------------------------------------------
+# A model handed to an authority becomes a public record (Boverket 2023:4), so the copy that leaves the app can lose what names
+# people. The app finds it (data/ifc-step `personalOf`, data/share-scan) and the person chooses per part: "hash" writes codes
+# (salted SHA-256, the same as dm_hash, so a value gives the same code in the file and in the tables), "remove" takes it away.
+# GlobalIds, the spatial structure and the elements stay; the dataset itself is never touched.
+SCRUB_MASK = "[***]"
+SCRUB_PLACEHOLDERS = ("", "none", "unknown", "undefined", "not defined", "not specified", "nobody", "n/a", "-", "?")
+
+
+def _scrub_code(salt, value):
+    import hashlib
+    key = (str(salt) + "|" + str(value)) if salt else str(value)
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+
+
+def _scrub_id_attr(entity):
+    """The identification attribute of a person or organisation: Identification from IFC4, Id in IFC2X3."""
+    return "Identification" if hasattr(entity, "Identification") else "Id"
+
+
+def _scrub_neutral_person(p):
+    """The app's own neutral owner (identification "user", family name "User", no address) names nobody."""
+    ident = getattr(p, _scrub_id_attr(p), None)
+    names = [p.GivenName] + list(p.MiddleNames or ()) + list(p.PrefixTitles or ()) + list(p.SuffixTitles or ())
+    return (not ident or ident == "user") and p.FamilyName in (None, "", "User") and not any(names) and not p.Addresses
+
+
+def _scrub_person_key(p):
+    parts = [getattr(p, _scrub_id_attr(p), None), p.GivenName] + list(p.MiddleNames or ()) + [p.FamilyName]
+    return " ".join(str(x) for x in parts if x) or "#%d" % p.id()
+
+
+def _scrub_address(model, owner, choice, salt):
+    """The postal and telecom addresses of a person or organisation: codes in every field that says where, or gone."""
+    addresses = list(owner.Addresses or ())
+    if choice == "remove":
+        owner.Addresses = None
+        for a in addresses:
+            if not model.get_total_inverses(a):
+                model.remove(a)
+        return len(addresses)
+    code = lambda v: _scrub_code(salt, v) if v else v  # noqa: E731
+    for a in addresses:
+        if a.is_a("IfcTelecomAddress"):
+            for attr in ("TelephoneNumbers", "FacsimileNumbers", "ElectronicMailAddresses", "MessagingIDs"):
+                if hasattr(a, attr) and getattr(a, attr):
+                    setattr(a, attr, tuple(code(v) for v in getattr(a, attr)))
+            for attr in ("PagerNumber", "WWWHomePageURL"):
+                if getattr(a, attr, None):
+                    setattr(a, attr, code(getattr(a, attr)))
+        elif a.is_a("IfcPostalAddress"):
+            if a.AddressLines:
+                a.AddressLines = tuple(code(v) for v in a.AddressLines)
+            for attr in ("InternalLocation", "PostalBox", "Town", "Region", "PostalCode"):
+                if getattr(a, attr, None):
+                    setattr(a, attr, code(getattr(a, attr)))
+    return len(addresses)
+
+
+def _scrub_person(model, p, choice, salt):
+    """A person with a code for names and identification ("hash"), or as the app's neutral user ("remove"); IFC2X3 needs a name."""
+    value = _scrub_code(salt, _scrub_person_key(p)) if choice == "hash" else None
+    setattr(p, _scrub_id_attr(p), value or "user")
+    p.FamilyName = value or "User"
+    for attr in ("GivenName", "MiddleNames", "PrefixTitles", "SuffixTitles"):
+        setattr(p, attr, None)
+    _scrub_address(model, p, choice, salt)
+
+
+def _scrub_stand_in(model, who, salt, made):
+    """For "hash" of an owner or actor: a new user with a coded person in place of the one named (the same person gives the same
+    stand-in); an organisation alone stays, since it names no person. Returns the entity to point at."""
+    if who is None or not (who.is_a("IfcPerson") or who.is_a("IfcPersonAndOrganization")):
+        return who
+    person = who if who.is_a("IfcPerson") else who.ThePerson
+    if person is None or _scrub_neutral_person(person):
+        return who
+    code = _scrub_code(salt, _scrub_person_key(person))
+    key = (code, who.TheOrganization.id() if who.is_a("IfcPersonAndOrganization") and who.TheOrganization else 0)
+    if key not in made:
+        stand_in = model.create_entity("IfcPerson", **{"Id" if model.schema == "IFC2X3" else "Identification": code, "FamilyName": code})
+        made["persons"].add(stand_in.id())
+        if who.is_a("IfcPersonAndOrganization"):
+            stand_in = model.create_entity("IfcPersonAndOrganization", ThePerson=stand_in, TheOrganization=who.TheOrganization)
+        made[key] = stand_in
+    return made[key]
+
+
+def _scrub_orphans(model, ids):
+    """Who an owner history or actor named and nothing names any more: gone, with their addresses."""
+    for cls in ("IfcPersonAndOrganization", "IfcApplication", "IfcPerson", "IfcOrganization"):
+        for e in list(model.by_type(cls)):
+            if e.id() in ids and not model.get_total_inverses(e):
+                addresses = list(getattr(e, "Addresses", None) or ())
+                model.remove(e)
+                for a in addresses:
+                    if not model.get_total_inverses(a):
+                        model.remove(a)
+
+
+def _scrub_named(entity):
+    """The ids an owner history's users and applications, or an actor's TheActor, point at (to clear the orphans afterwards)."""
+    out = set()
+    for i in range(len(entity)):
+        v = entity[i]
+        if hasattr(v, "is_a") and v.id() and (v.is_a("IfcPersonAndOrganization") or v.is_a("IfcPerson") or v.is_a("IfcOrganization") or v.is_a("IfcApplication")):
+            out.add(v.id())
+            for j in range(len(v)):
+                inner = v[j]
+                if hasattr(inner, "is_a") and inner.id():
+                    out.add(inner.id())
+    return out
+
+
+def _scrub_owner(model, choice, salt, made):
+    """The owner histories: their users get stand-ins ("hash"; the applications stay), or the histories go ("remove"; IFC2X3,
+    where every object must have one, gets the app's neutral owner instead)."""
+    histories = list(model.by_type("IfcOwnerHistory"))
+    named = set()
+    for h in histories:
+        named |= _scrub_named(h)
+    if choice == "hash":
+        for h in histories:
+            for attr in ("OwningUser", "LastModifyingUser"):
+                user = getattr(h, attr)
+                stand_in = _scrub_stand_in(model, user, salt, made)
+                if stand_in is not user:
+                    setattr(h, attr, stand_in)
+    else:
+        neutral = _ifc_new_owner(model) if model.schema == "IFC2X3" and histories else None
+        for h in histories:
+            if neutral is not None:
+                for e in model.get_inverse(h):
+                    if hasattr(e, "OwnerHistory") and e.OwnerHistory == h:
+                        e.OwnerHistory = neutral
+            model.remove(h)
+    _scrub_orphans(model, named)
+    return len(histories)
+
+
+def _scrub_header(model, choice, salt):
+    """FILE_NAME's author, organisation and authorisation: codes, or empty as IfcOpenShell writes them."""
+    fn = model.header.file_name
+    real = lambda v: str(v or "").strip().lower() not in SCRUB_PLACEHOLDERS  # noqa: E731
+    if choice == "hash":
+        fn.author = tuple(_scrub_code(salt, v) if real(v) else v for v in (fn.author or ("",)))
+        fn.organization = tuple(_scrub_code(salt, v) if real(v) else v for v in (fn.organization or ("",)))
+        fn.authorization = _scrub_code(salt, fn.authorization) if real(fn.authorization) else fn.authorization
+    else:
+        fn.author = ("",)
+        fn.organization = ("",)
+        fn.authorization = ""
+    return 1
+
+
+def _scrub_dangling(model, rels):
+    """Relationships left without their relating or related side after an object went."""
+    for rel in rels:
+        try:
+            info = rel.get_info(recursive=False)
+        except Exception:
+            continue
+        if any((k.startswith("Relating") and v is None) or (k.startswith("Related") and k != "RelatedObjectsType" and v in (None, ()))
+               for k, v in info.items()):
+            model.remove(rel)
+
+
+def _scrub_actors(model, choice, salt, made):
+    """IfcActor and IfcOccupant: a code for the name and a stand-in for the person ("hash"), or gone with their assignments."""
+    actors = list(model.by_type("IfcActor"))
+    named = set()
+    for a in actors:
+        named |= _scrub_named(a)
+        if choice == "hash":
+            if a.Name:
+                a.Name = _scrub_code(salt, a.Name)
+            a.Description = None
+            stand_in = _scrub_stand_in(model, a.TheActor, salt, made)
+            if stand_in is not a.TheActor:
+                a.TheActor = stand_in
+        else:
+            rels = [r for r in model.get_inverse(a) if r.is_a("IfcRelationship")]
+            model.remove(a)
+            _scrub_dangling(model, rels)
+    _scrub_orphans(model, named)
+    return len(actors)
+
+
+def _scrub_value(model, value, clean):
+    """A string, a wrapped value (IfcLabel, IfcText ...) or a list of them, with the pieces cleaned; the same object if nothing changed."""
+    if isinstance(value, str):
+        out = clean(value)
+        return value if out == value else out
+    if isinstance(value, tuple):
+        out = tuple(_scrub_value(model, v, clean) for v in value)
+        return value if all(a is b for a, b in zip(out, value)) else out
+    if hasattr(value, "is_a") and not value.id() and isinstance(getattr(value, "wrappedValue", None), str):
+        text = value.wrappedValue
+        out = clean(text)
+        return value if out == text else model.create_entity(value.is_a(), out)
+    return value
+
+
+def _scrub_text(model, choice, matches, salt):
+    """The pieces of free text the app's detectors found, in Name and Description of every object and in the properties: a code
+    each ("hash") or [***] ("remove"), the rest of the text as it was."""
+    found = sorted({str(m) for m in matches or () if m}, key=len, reverse=True)
+    if not found:
+        return 0
+
+    def clean(s):
+        for m in found:
+            if m in s:
+                s = s.replace(m, _scrub_code(salt, m) if choice == "hash" else SCRUB_MASK)
+        return s
+    changed = 0
+    for e in model.by_type("IfcRoot"):
+        for attr in ("Name", "Description"):
+            v = getattr(e, attr, None)
+            if isinstance(v, str):
+                out = clean(v)
+                if out != v:
+                    setattr(e, attr, out)
+                    changed += 1
+    for e in model.by_type("IfcProperty"):
+        for i in range(len(e)):
+            v = e[i]
+            out = _scrub_value(model, v, clean)
+            if out is not v:
+                e[i] = out
+                changed += 1
+    return changed
+
+
+def _ifc_scrub(in_file, options_file, out_file):
+    """The review before sharing: personal data out of the copy's model, by the parts the person chose (see above).
+
+    options_file holds {"persons", "organizations", "owner", "header", "actors", "text": "hash" | "remove" | absent, "matches":
+    [pieces of free text], "salt"}. The original IFC is read from the copy's SQLite file and the cleaned one written to out_file;
+    the app builds the copy's tables from it. Returns what was changed per part.
+    """
+    file_name, data = _ifc_original_from(in_file)
+    with open(options_file, encoding="utf-8") as fh:
+        opts = json.load(fh) or {}
+    salt = str(opts.get("salt") or "")
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "scrub-in.ifc"), data)
+    choice = lambda k: opts.get(k) if opts.get(k) in ("hash", "remove") else None  # noqa: E731
+    made = {"persons": set()}
+    done = {}
+    if choice("header"):
+        done["header"] = _scrub_header(model, choice("header"), salt)
+    if choice("owner"):
+        done["owner"] = _scrub_owner(model, choice("owner"), salt, made)
+    if choice("actors"):
+        done["actors"] = _scrub_actors(model, choice("actors"), salt, made)
+    if choice("persons"):
+        people = [p for p in model.by_type("IfcPerson") if not _scrub_neutral_person(p) and not (choice("persons") == "hash" and p.id() in made["persons"])]
+        for p in people:
+            _scrub_person(model, p, choice("persons"), salt)
+        done["persons"] = len(people)
+    if choice("organizations"):
+        done["organizations"] = sum(_scrub_address(model, o, choice("organizations"), salt) for o in model.by_type("IfcOrganization") if o.Addresses)
+    if choice("text"):
+        done["text"] = _scrub_text(model, choice("text"), opts.get("matches") or [], salt)
+    model.write(out_file)
+    return json.dumps({"file": file_name, "changed": done, "elements": len(model.by_type("IfcElement")), "entities": len(list(model))}, ensure_ascii=False)
+
+
 # ---- the right IFC class (decision B-57.2) ------------------------------------------------------------
 # In native IFC the class is the classification (decision B-59): the most specific entity with its PredefinedType, an ObjectType
 # only for USERDEFINED, and a type object; a system the person names comes on top through set_classification. _ifc_class_search
