@@ -16,7 +16,7 @@
 'use strict';
 
 /** Changes with every release (release procedure in CLAUDE.md, outside the repo), so old caches are dropped on activation. */
-const CACHE = 'dataspatium-3.0.0-2026-11-12c'; // 3.0.0 is re-released with the same number; a new cache name makes installed apps fetch the new files
+const CACHE = 'dataspatium-3.0.0-2026-11-12d'; // 3.0.0 is re-released with the same number; a new cache name makes installed apps fetch the new files
 const CACHE_FIRST = /\/(vendor|presets|src|r|python)\//;
 /** Files shared into the mobile page (manifest share_target) wait here until m/index.html reads them. */
 const INBOX = 'dataspatium-inbox';
