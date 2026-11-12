@@ -350,6 +350,21 @@ til næste etage, rumarealer (Qto_SpaceBaseQuantities) og grænser mod væggene 
 fylder et ændringssæt, som panelet lister trin for trin (mål i meter; nye elementer får referencerne new-1, new-2 …, indtil filen har
 givet dem id).
 
+Værktøjet `define_type` opretter en vægtype, dæktype eller tagtype (IfcWallType, IfcSlabType eller IfcSlabType af typen ROOF til
+tagpladerne) med materialelag i meter, for en væg fra højre side til venstre set fra start mod slut og for dæk og tag oppefra og ned.
+Hvert lag kan få materialets kategori (IFC's anbefalede: concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic
+og earth) og lagets rolle (bærende, isolering, indre eller ydre overflade), men kun når de er kendt. `create_wall`, `create_slab` og
+`create_roof` tager typen: elementet får typen (IfcRelDefinesByType), sin tykkelse fra lagene og lagene lagt på sig
+(IfcMaterialLayerSetUsage: væggens centreret på linjen, dækkets nedad fra oversiden i etagens højde og tagpladernes opad fra
+undersiden), og dets PredefinedType står på typen. Materialer og fælles egenskaber hører til typen, og AI'en definerer typerne først.
+Når ændringssættet køres, forbindes de vægge, det opretter, med de vægge, de møder (IfcRelConnectsPathElements): i et hjørne går den
+tykkeste væg (ved samme tykkelse den længste) forbi hjørnet, og den anden slutter mod den, og en væg, der ender på en andens linje,
+slutter mod dens side, så hjørnerne hverken får sprækker eller overlap, og intet volumen tælles to gange. Væggenes midterlinjer ændres
+ikke, og hjørner i andre vinkler end rette forbindes, som de er tegnet. Til sidst får de vægge, dæk, tage, døre og vinduer, som
+ændringssættet har oprettet eller ændret, basismængder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
+Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ud fra målene, med åbningerne trukket fra og med navnene fra skemaets
+skabeloner.
+
 *Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
 gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.
 *Godkend* gør ændringerne til opskriftstrinnet *AI-ændring*: modellen får en ny version i arbejdsområdet, tabellerne bygges om, og trinnet

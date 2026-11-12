@@ -345,6 +345,20 @@ eller sitt nummer i topologin, med höjden upp till nästa våning, rumsytor (Qt
 dörrar och fönster. Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element
 får referenserna new-1, new-2 … tills filen har gett dem id).
 
+Verktyget `define_type` gör en väggtyp, bjälklagstyp eller taktyp (IfcWallType, IfcSlabType eller IfcSlabType av typen ROOF för
+takskivorna) med materialskikt i meter, för en vägg från höger sida till vänster sett från start mot slut och för bjälklag och tak
+uppifrån och ned. Varje skikt kan få materialets kategori (IFC:s rekommenderade: concrete, steel, aluminium, block, brick, stone, wood,
+glass, gypsum, plastic och earth) och skiktets roll (bärande, isolering, inre eller yttre ytskikt), men bara när de är kända.
+`create_wall`, `create_slab` och `create_roof` tar typen: elementet får typen (IfcRelDefinesByType), sin tjocklek ur skikten och
+skikten lagda på sig (IfcMaterialLayerSetUsage: väggens centrerade på linjen, bjälklagets nedåt från ovansidan i våningens höjd och
+takskivornas uppåt från undersidan), och dess PredefinedType står på typen. Material och gemensamma egenskaper hör till typen, och AI:n
+definierar typerna först. När ändringssetet körs knyts de väggar det skapar ihop med väggarna de möter (IfcRelConnectsPathElements): i
+ett hörn går den tjockare väggen (vid samma tjocklek den längre) förbi hörnet och den andra slutar mot den, och en vägg som slutar mot
+en annans linje slutar mot dess sida, så att hörnen varken får glipor eller överlapp och ingen volym räknas två gånger. Väggarnas
+mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de är ritade. Till sist får de väggar, bjälklag, tak, dörrar
+och fönster som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
+Qto_DoorBaseQuantities och Qto_WindowBaseQuantities) räknade ur måtten, med öppningarna avdragna och med namnen ur schemats mallar.
+
 *Förhandsvisa* kör ändringssetet på en kopia av modellen med IfcOpenShell i appens Python (komponenterna hämtas efter samtycke första
 gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad som skapas, ändras och raderas samt schemakontrollens fynd.
 *Godkänn* gör ändringarna till receptsteget *AI-ändring*: modellen får en ny version i arbetsytan, tabellerna byggs om, och steget kan

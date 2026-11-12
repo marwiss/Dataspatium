@@ -358,6 +358,21 @@ topology, with the height up to the next storey, room areas (Qto_SpaceBaseQuanti
 windows. The tools change nothing: they fill a change set that the panel lists step by step (lengths in metres; new elements get the
 refs new-1, new-2 … until the file has given them ids).
 
+The tool `define_type` makes a wall, slab or roof type (IfcWallType, IfcSlabType, or IfcSlabType ROOF for the roof slabs) with its
+material layers in metres, for a wall from its right side to its left as seen from its start toward its end, and for a slab or a roof
+from the top down. Each layer can carry its material's category (IFC's recommended ones: concrete, steel, aluminium, block, brick,
+stone, wood, glass, gypsum, plastic and earth) and its role (load-bearing, insulation, inner or outer finish), but only when they are
+known. `create_wall`, `create_slab` and `create_roof` take the type: the element gets the type (IfcRelDefinesByType), its thickness from
+the layers and the layers laid on it (IfcMaterialLayerSetUsage: a wall's centred on its line, a slab's downward from its top at the
+storey's level and the roof slabs' upward from their undersides), and its PredefinedType stays on the type. Materials and shared
+properties belong to the type, and the AI defines the types first. When the change set runs, the walls it creates are joined to the
+walls they meet (IfcRelConnectsPathElements): at a corner the thicker wall (for equal thickness the longer) reaches past the corner and
+the other stops against it, and a wall that ends on another's line stops at its side, so that corners have neither gaps nor overlaps
+and no volume is counted twice. The walls' centrelines stay as drawn, and corners at other than right angles are joined as drawn.
+Finally the walls, slabs, roofs, doors and windows the change set created or changed get base quantities (Qto_WallBaseQuantities,
+Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
+with the openings deducted and with the names of the schema's templates.
+
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted
 together with the schema check's findings. *Approve* makes the changes the recipe step *AI change*: the model gets a new version in the

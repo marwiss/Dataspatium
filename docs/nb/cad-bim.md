@@ -349,6 +349,20 @@ opp til neste etasje, romarealer (Qto_SpaceBaseQuantities) og grenser mot veggen
 ingenting: de fyller et endringssett som panelet lister trinn for trinn (mål i meter; nye elementer får referansene new-1, new-2 … til
 filen har gitt dem id).
 
+Verktøyet `define_type` lager en veggtype, dekketype eller taktype (IfcWallType, IfcSlabType eller IfcSlabType av typen ROOF for
+takplatene) med materialsjikt i meter, for en vegg fra høyre side til venstre sett fra start mot slutt og for dekke og tak ovenfra og
+ned. Hvert sjikt kan få materialets kategori (IFCs anbefalte: concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum,
+plastic og earth) og sjiktets rolle (bærende, isolasjon, indre eller ytre overflate), men bare når de er kjent. `create_wall`,
+`create_slab` og `create_roof` tar typen: elementet får typen (IfcRelDefinesByType), tykkelsen sin fra sjiktene og sjiktene lagt på seg
+(IfcMaterialLayerSetUsage: veggens sentrert på linjen, dekkets nedover fra oversiden i etasjens høyde og takplatenes oppover fra
+undersiden), og PredefinedType står på typen. Materialer og felles egenskaper hører til typen, og AI-en definerer typene først. Når
+endringssettet kjøres, kobles veggene det lager, til veggene de møter (IfcRelConnectsPathElements): i et hjørne går den tykkeste veggen
+(ved lik tykkelse den lengste) forbi hjørnet og den andre slutter mot den, og en vegg som ender på en annens linje, slutter mot dens
+side, slik at hjørnene verken får glipper eller overlapp og ikke noe volum telles to ganger. Veggenes midtlinjer endres ikke, og
+hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de veggene, dekkene, takene, dørene og vinduene som
+endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
+Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
+
 *Forhåndsvis* kjører endringssettet på en kopi av modellen med IfcOpenShell i appens Python (komponentene hentes etter samtykke første
 gang), tegner resultatet i 3D med nytt grønt og endret gult, og viser hva som opprettes, endres og slettes samt skjemakontrollens funn.
 *Godkjenn* gjør endringene til oppskriftstrinnet *AI-endring*: modellen får en ny versjon i arbeidsområdet, tabellene bygges om, og
