@@ -20,10 +20,13 @@
     const message = (err) => String((err && err.message) || err);
 
     /**
-     * @param {{connector: any, run: (text: string, options?: any) => Promise<any>, via?: 'admin', hint: string, ctx?: any, log?: Function, onDataset?: Function, onInspector?: Function}} api
+     * `store` is the graph store the server announces (opencde.graphStore); the ready-made queries are those that work there.
+     * @param {{connector: any, run: (text: string, options?: any) => Promise<any>, via?: 'admin', hint: string, store?: string, ctx?: any, log?: Function, onDataset?: Function, onInspector?: Function}} api
      */
     function create(api) {
       const { connector } = api;
+      const examples = neo4j.queriesFor(api.store || '');
+      const views = neo4j.queriesFor(api.store || '', ifcGraph.VIEWS);
       const kept = (connector.queries && connector.queries[0] && connector.queries[0].cypher) || 'MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50';
       const s = { query: kept, busy: false, result: null, error: '', saving: false, saved: '', models: null, waiting: 0, failed: 0, modelId: '', modelsBusy: false, modelsError: '', viewId: '', layout: 'fcose', labels: true, selected: null, acting: '', drawError: '' };
       const el = h('div', { class: 'dm-stack', 'data-graph-workbench': '' });
@@ -204,7 +207,7 @@
           modelSel.value = s.modelId;
           modelSel.addEventListener('change', () => { s.modelId = modelSel.value; if (s.viewId) showView(s.viewId); });
           viewSel = /** @type {any} */ (h('dm-select', { label: t('ifcgraph.view'), inline: true, 'data-ifcgraph-view': '' }));
-          viewSel.options = [{ value: '', label: t('ifcgraph.view.pick') }].concat(ifcGraph.VIEWS.map((v) => ({ value: v.id, label: t('ifcgraph.view.' + v.id) })));
+          viewSel.options = [{ value: '', label: t('ifcgraph.view.pick') }].concat(views.map((v) => ({ value: v.id, label: t('ifcgraph.view.' + v.id) })));
           viewSel.value = s.viewId;
           viewSel.addEventListener('change', () => { if (viewSel.value) showView(viewSel.value); });
           nodes.push(h('div', { class: 'dm-row-wrap' }, modelSel, viewSel));
@@ -222,10 +225,10 @@
       /** Starter queries for Dataregium's IFC graph; choosing one puts it in the editor, to edit and run. */
       function examplesRow() {
         const sel = /** @type {any} */ (h('dm-select', { 'aria-label': t('neo4j.examples'), inline: true, 'data-neo4j-example': '' }));
-        sel.options = [{ value: '', label: t('neo4j.examples') }].concat(neo4j.EXAMPLES.map((x) => ({ value: x.id, label: t('neo4j.example.' + x.id) })));
+        sel.options = [{ value: '', label: t('neo4j.examples') }].concat(examples.map((x) => ({ value: x.id, label: t('neo4j.example.' + x.id) })));
         sel.value = '';
         sel.addEventListener('change', () => {
-          const x = neo4j.EXAMPLES.find((e) => e.id === sel.value);
+          const x = examples.find((e) => e.id === sel.value);
           if (!x) return;
           s.query = x.cypher; if (editor) editor.value = x.cypher;
           sel.value = '';

@@ -178,10 +178,23 @@
       { id: 'element_issues', cypher: "MATCH (c:Component {ifc_guid: 'GUID'})<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
       { id: 'graph', cypher: 'MATCH (t:Topic)-[r:HAS_VIEWPOINT]->(v:Viewpoint)\nOPTIONAL MATCH (v)-[h:HAS_COMPONENT]->(c:Component)\nRETURN t, r, v, h, c\nLIMIT 200' },
       // IFC-LPG's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
-      { id: 'nearby', cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
+      // `spatial`: it needs the boxes as spatial points (point.distance), which only Neo4j and Memgraph have.
+      { id: 'nearby', spatial: true, cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
     ];
+    /** The graph stores that keep a box as a spatial point, so that point.distance works. */
+    const POINT_STORES = ['neo4j', 'memgraph'];
+    /**
+     * The ready-made queries that work in the graph store a server announces (opencde.graphStore): all of them when none is announced
+     * or the store has spatial points, otherwise those without `spatial` (Grafeo keeps a box as a list of numbers).
+     * @param {string} store @param {Array<{id: string, spatial?: boolean}>} [list] EXAMPLES, or the views of data/ifc-graph
+     * @returns {any[]}
+     */
+    function queriesFor(store, list = EXAMPLES) {
+      const name = String(store || '').trim().toLowerCase();
+      return !name || POINT_STORES.includes(name) ? list : list.filter((q) => !q.spatial);
+    }
     function describe(connector, text) { return t('neo4j.source', { host: hostOf(connector.baseUrl), text: String(text).trim().slice(0, 120) }); }
 
-    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, answerToTable, plain, hostOf, describe, EXAMPLES, VENDOR, MAX_ROWS };
+    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, answerToTable, plain, hostOf, describe, EXAMPLES, queriesFor, VENDOR, MAX_ROWS };
   });
 })();
