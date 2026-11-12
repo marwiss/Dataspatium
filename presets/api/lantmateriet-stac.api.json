@@ -22,6 +22,9 @@
   "column": "asset_data",
   "hosts": [
    "dl1.lantmateriet.se"
+  ],
+  "basic": [
+   "dl1.lantmateriet.se"
   ]
  },
  "endpoints": [

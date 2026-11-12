@@ -183,7 +183,7 @@ Dataspatium.assets.addEntries({
  "presets/api/lantmateriet-stac.api.json": {
   "file": "presets/api/lantmateriet-stac.api.json.js",
   "encoding": "text",
-  "size": 27453,
+  "size": 27496,
   "library": "dataspatium"
  },
  "presets/api/luftkvalitet.api.json": {

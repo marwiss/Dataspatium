@@ -3,6 +3,8 @@
 /**
  * Credentials panel for a connector: enter a key for this session, save it encrypted with a
  * passphrase, unlock saved keys, forget. Shown only for connectors whose auth type needs credentials.
+ * A connector whose file hosts also take a user name and password (`files.basic`, api/auth fileLogin) gets those two
+ * optional fields under their own heading; they are kept and saved with the key.
  */
 (function () {
   'use strict';
@@ -12,14 +14,17 @@
 
     /**
      * @param {any} connector
-     * @param {{onChange?: Function, quiet?: boolean}} [hooks] quiet: plain buttons, for views that already have their primary button
+     * @param {{onChange?: Function, quiet?: boolean, login?: boolean}} [hooks] quiet: plain buttons, for views that already have
+     *   their primary button; login: open with the file hosts' login fields shown (the file host refused the key)
      */
     function create(connector, hooks = {}) {
       const main = hooks.quiet ? 'default' : 'primary';
       const el = h('div', { class: 'dm-card dm-stack-sm dm-auth-panel' });
-      let editing = false;
+      let editing = !!hooks.login && auth.hasCredentials(connector);
       let persisted = false;
       const fields = auth.requiredFields(connector.auth);
+      const loginFields = auth.fileLoginFields(connector);
+      const loginHosts = auth.fileLoginHosts(connector).join(', ');
       const unsubscribe = secrets.subscribe(() => render());
       secrets.isPersisted(connector.id).then((p) => { persisted = p; render(); });
 
@@ -37,9 +42,24 @@
         if (connector.auth && connector.auth.help) nodes.push(h('p', { class: 'dm-help', text: connector.auth.help }));
         if (!has && persisted && !editing) nodes.push(h('div', { class: 'dm-row' }, basic.button({ label: t('api.key.unlock'), icon: 'lock', variant: main, onClick: unlock }), basic.button({ label: t('api.key.use'), onClick: () => { editing = true; render(); } })));
         if ((!has && !persisted) || editing) {
-          const inputs = fields.map((f) => { const inp = /** @type {any} */ (h('dm-input', { label: f.label, type: f.secret ? 'password' : 'text', autocomplete: 'off' })); const current = secrets.get(connector.id); if (current && current[f.key]) inp.value = current[f.key]; return [f, inp]; });
-          const values = () => { const out = {}; for (const [f, inp] of inputs) { out[f.key] = inp.value.trim(); if (!out[f.key]) throw new Error(t('op.missing', { fields: f.label })); } return out; };
+          const current = secrets.get(connector.id) || {};
+          const inputs = fields.map((f) => { const inp = /** @type {any} */ (h('dm-input', { label: f.label, type: f.secret ? 'password' : 'text', autocomplete: 'off' })); if (current[f.key]) inp.value = current[f.key]; return [f, inp]; });
+          const logins = loginFields.map((f) => { const inp = /** @type {any} */ (h('dm-input', { label: f.label, type: f.secret ? 'password' : 'text', autocomplete: 'off', 'data-file-login': f.key })); if (current[f.key]) inp.value = current[f.key]; return [f, inp]; });
+          const values = () => {
+            const out = {};
+            for (const [f, inp] of inputs) { out[f.key] = inp.value.trim(); if (!out[f.key]) throw new Error(t('op.missing', { fields: f.label })); }
+            // The file hosts' login: both or neither; the password as typed.
+            const missing = logins.filter(([, inp]) => !inp.value.trim());
+            if (missing.length && missing.length < logins.length) throw new Error(t('op.missing', { fields: missing.map(([f]) => f.label).join(', ') }));
+            if (!missing.length) for (const [f, inp] of logins) out[f.key] = f.secret ? inp.value : inp.value.trim();
+            return out;
+          };
           nodes.push(h('div', { class: 'dm-form-grid' }, inputs.map(([, inp]) => inp)));
+          if (logins.length) {
+            nodes.push(h('details', { class: 'dm-more', open: !!(hooks.login || current.fileUser), 'data-file-login-section': '' },
+              h('summary', { text: t('api.files.login', { hosts: loginHosts }) }),
+              h('div', { class: 'dm-stack-sm' }, h('p', { class: 'dm-help', text: t('api.files.login.help', { hosts: loginHosts }) }), h('div', { class: 'dm-form-grid' }, logins.map(([, inp]) => inp)))));
+          }
           nodes.push(h('div', { class: 'dm-row-wrap' },
             basic.button({ label: t('api.key.use'), icon: 'check', variant: main, onClick: () => { try { secrets.set(connector.id, values()); editing = false; render(); if (hooks.onChange) hooks.onChange(); } catch (err) { overlays.toast.show(String(err.message || err), { kind: 'warn' }); } } }),
             basic.button({ label: t('api.key.save'), icon: 'save', onClick: async () => { try { const v = values(); const pass = await askPassphrase(t('api.key.save')); if (pass === null) return; await secrets.persist(connector.id, v, pass); persisted = true; editing = false; render(); overlays.toast.show(t('api.key.saved.toast'), { kind: 'ok' }); if (hooks.onChange) hooks.onChange(); } catch (err) { overlays.toast.show(String(err.message || err), { kind: 'warn' }); } } }),
