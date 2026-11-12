@@ -181,6 +181,11 @@ bygningsdelar (`spatial_products`) og kor mange som mislukkast (`spatial_failed`
 utrekninga, så spør med `bbox_centre IS NOT NULL`. Dømet *Bygningsdelar nær ein bygningsdel* i Neo4j-kjelda listar det som ligg innan
 1,2 m frå midten av ein bygningsdel, med `point.distance`, likt i Neo4j og Memgraph.
 
+Tenaren oppgir i kapabilitetsdokumentet sitt kva database som held grafen (`graph_store`: `neo4j` eller `memgraph`, seinare `grafeo`
+eller `postgresql`). I ein annan database enn Neo4j og Memgraph, som Grafeo, er boksane lister med tal og ikkje punkt: då utelèt
+kortet IFC-LPG døma som treng punkt, som *Bygningsdelar nær ein bygningsdel*, og ein boks blir likevel vist som `x y z`, akkurat som
+eit punkt.
+
 ## Fleire verktøy i fana Graf
 
 - **PageRank** (demping 0,85), **Fellesskap** (etikettspreiing, nummererte etter storleik) og **Sentralitet** (harmonisk

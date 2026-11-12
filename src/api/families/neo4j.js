@@ -89,18 +89,24 @@
     // A driver's path has segments; the JSON of Dataregium's graph query has {nodes, relationships, length}.
     const isPath = (v, neo4j) => !!(v && typeof v === 'object' && (neo4j && neo4j.isPath ? neo4j.isPath(v) : ((Array.isArray(v.segments) && v.start) || (Array.isArray(v.nodes) && Array.isArray(v.relationships)))));
     const idOf = (ent) => String(ent.elementId !== undefined ? ent.elementId : (ent.identity && typeof ent.identity.toNumber === 'function' ? ent.identity.toNumber() : ent.identity));
-    /** Driver values → plain JSON: integers to numbers, temporal values to strings. */
-    function plain(v, neo4j) {
+    /**
+     * A box of IFC-LPG's spatial layer (`bbox_min`, `bbox_max`, `bbox_centre`) that a store without spatial points (Grafeo) keeps as a
+     * list of two or three numbers, as a point reads: `x y` or `x y z`. Null for every other list, which stays a list.
+     * @param {string|undefined} name the property's name @param {any[]} list plain values @returns {string|null}
+     */
+    const boxPoint = (name, list) => (typeof name === 'string' && name.startsWith('bbox_') && (list.length === 2 || list.length === 3) && list.every((n) => typeof n === 'number' && Number.isFinite(n)) ? list.join(' ') : null);
+    /** Driver values → plain JSON: integers to numbers, temporal values to strings. `key` is the property's name, for a box as a list. */
+    function plain(v, neo4j, key) {
       if (v === null || v === undefined) return null;
       if (neo4j && neo4j.isInt && neo4j.isInt(v)) return v.inSafeRange() ? v.toNumber() : v.toString();
       if (typeof v === 'object' && typeof v.toNumber === 'function' && v.low !== undefined) return v.toNumber();
-      if (Array.isArray(v)) return v.map((x) => plain(x, neo4j));
+      if (Array.isArray(v)) { const list = v.map((x) => plain(x, neo4j)); const box = boxPoint(key, list); return box === null ? list : box; }
       if (typeof v === 'object') {
         if (isNode(v, neo4j) || isRel(v, neo4j)) return v;
         // A spatial point (IFC-LPG's point lists in the nodes form) reads as its coordinates, `x y` or `x y z`.
         if (typeof v.x === 'number' && typeof v.y === 'number' && v.srid !== undefined) return [v.x, v.y, v.z].filter((n) => typeof n === 'number').join(' ');
         if (typeof v.toString === 'function' && v.constructor && /Date|Time|Duration|Point/.test(v.constructor.name)) return v.toString();
-        const out = {}; for (const [k, x] of Object.entries(v)) out[k] = plain(x, neo4j); return out;
+        const out = {}; for (const [k, x] of Object.entries(v)) out[k] = plain(x, neo4j, k); return out;
       }
       return v;
     }
@@ -122,7 +128,8 @@
         return id;
       };
       const addRel = (r) => { const id = idOf(r); if (!edges.has(id)) edges.set(id, { id, source: String(r.startNodeElementId !== undefined ? r.startNodeElementId : plain(r.start, neo4j)), target: String(r.endNodeElementId !== undefined ? r.endNodeElementId : plain(r.end, neo4j)), type: r.type || '', properties: propsOf(r) }); return id; };
-      const cell = (v) => {
+      // `column` names the property a column holds (`n.bbox_centre`), so that a box as a list reads as a point there too.
+      const cell = (v, column) => {
         if (isPath(v, neo4j)) {
           if (Array.isArray(v.segments)) for (const seg of v.segments) { addNode(seg.start); addNode(seg.end); addRel(seg.relationship); }
           else { for (const n of v.nodes) addNode(n); for (const r of v.relationships) addRel(r); }
@@ -130,13 +137,13 @@
         }
         if (isNode(v, neo4j)) return addNode(v);
         if (isRel(v, neo4j)) return addRel(v);
-        if (Array.isArray(v)) { const out = v.map(cell); return JSON.stringify(out); }
+        if (Array.isArray(v)) { const out = v.map((x) => cell(x)); const box = boxPoint(column === undefined ? undefined : String(column).split('.').pop(), out); return box === null ? JSON.stringify(out) : box; }
         const p = ifcGraph.redact(plain(v, neo4j));
         return p !== null && typeof p === 'object' ? JSON.stringify(p) : p;
       };
       const keys = records.length ? records[0].keys : [];
       const extra = new Map(); // column → set of property keys for node/rel columns
-      const rows = records.map((rec) => keys.map((k) => { const v = rec.get(k); if (ifcGraph.isProtected(k)) return null; if (isNode(v, neo4j) || isRel(v, neo4j)) { if (!extra.has(k)) extra.set(k, new Set()); for (const pk of Object.keys(propsOf(v))) extra.get(k).add(pk); } return cell(v); }));
+      const rows = records.map((rec) => keys.map((k) => { const v = rec.get(k); if (ifcGraph.isProtected(k)) return null; if (isNode(v, neo4j) || isRel(v, neo4j)) { if (!extra.has(k)) extra.set(k, new Set()); for (const pk of Object.keys(propsOf(v))) extra.get(k).add(pk); } return cell(v, k); }));
       const columns = keys.slice();
       for (const [k, set] of extra) for (const pk of set) columns.push(`${k}.${pk}`);
       if (extra.size) {
@@ -178,10 +185,23 @@
       { id: 'element_issues', cypher: "MATCH (c:Component {ifc_guid: 'GUID'})<-[:HAS_COMPONENT]-(:Viewpoint)<-[:HAS_VIEWPOINT]-(t:Topic)\nRETURN DISTINCT t.server_assigned_id AS arende, t.title AS titel, t.topic_status AS status" },
       { id: 'graph', cypher: 'MATCH (t:Topic)-[r:HAS_VIEWPOINT]->(v:Viewpoint)\nOPTIONAL MATCH (v)-[h:HAS_COMPONENT]->(c:Component)\nRETURN t, r, v, h, c\nLIMIT 200' },
       // IFC-LPG's spatial layer (d042134): a box per product in project coordinates, metres, only where the server has computed it.
-      { id: 'nearby', cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
+      // `spatial`: it needs the boxes as spatial points (point.distance), which only Neo4j and Memgraph have.
+      { id: 'nearby', spatial: true, cypher: "MATCH (n:Entity {GlobalId: 'GUID'})\nMATCH (d:IfcProduct {model_id: n.model_id})\nWHERE n.bbox_centre IS NOT NULL AND d.bbox_centre IS NOT NULL AND d <> n AND point.distance(n.bbox_centre, d.bbox_centre) < 1.2\nRETURN d.GlobalId AS guid, d.ifc_class AS klass, d.Name AS namn, round(point.distance(n.bbox_centre, d.bbox_centre) * 100) / 100 AS avstand\nORDER BY avstand\nLIMIT 100" },
     ];
+    /** The graph stores that keep a box as a spatial point, so that point.distance works. */
+    const POINT_STORES = ['neo4j', 'memgraph'];
+    /**
+     * The ready-made queries that work in the graph store a server announces (opencde.graphStore): all of them when none is announced
+     * or the store has spatial points, otherwise those without `spatial` (Grafeo keeps a box as a list of numbers).
+     * @param {string} store @param {Array<{id: string, spatial?: boolean}>} [list] EXAMPLES, or the views of data/ifc-graph
+     * @returns {any[]}
+     */
+    function queriesFor(store, list = EXAMPLES) {
+      const name = String(store || '').trim().toLowerCase();
+      return !name || POINT_STORES.includes(name) ? list : list.filter((q) => !q.spatial);
+    }
     function describe(connector, text) { return t('neo4j.source', { host: hostOf(connector.baseUrl), text: String(text).trim().slice(0, 120) }); }
 
-    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, answerToTable, plain, hostOf, describe, EXAMPLES, VENDOR, MAX_ROWS };
+    return { FAMILY, isNeo4j, ensureDriver, run, recordsToTable, answerToTable, plain, hostOf, describe, EXAMPLES, queriesFor, VENDOR, MAX_ROWS };
   });
 })();

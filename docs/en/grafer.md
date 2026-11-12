@@ -184,6 +184,10 @@ products (`spatial_products`) and how many failed (`spatial_failed`). The boxes 
 so query with `bbox_centre IS NOT NULL`. The example *Products near a product* in the Neo4j source lists what lies within 1.2 m of a
 product's centre with `point.distance`, the same in Neo4j and Memgraph.
 
+The server states in its capabilities document which database holds the graph (`graph_store`: `neo4j` or `memgraph`, later `grafeo`
+or `postgresql`). In a database other than Neo4j and Memgraph, such as Grafeo, the boxes are lists of numbers and not points: the card
+IFC-LPG then leaves out the examples that need points, such as *Products near a product*, and a box still reads as `x y z`, just like a point.
+
 ## More tools in the Graph tab
 
 - **PageRank** (damping 0.85), **Communities** (label propagation, numbered by size) and **Centrality** (harmonic

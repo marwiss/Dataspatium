@@ -48,7 +48,7 @@
         if (!graphBench) {
           graphBench = workbench.create({
             connector, via: 'admin', ctx: api.ctx, log, onDataset: (m) => { if (api.onDataset) api.onDataset(m); }, onInspector: () => { if (api.refreshRight) api.refreshRight(); },
-            run: graphSource.adminRunner(connector),
+            run: graphSource.adminRunner(connector), store: opencde.graphStoreOf(s.caps),
             hint: t('ifcgraph.card.hint', { host: opencde.hostOf(connector.baseUrl) }),
           });
           graphBench.start();

@@ -3,7 +3,8 @@
 /**
  * Tests for a server's IFC graph in the app: what a node shows, the models and the views, hashes kept out, the answer read as a stream and
  * cut at a limit, the graph query's JSON, the workbench in Inhämta with a fake driver (the real Cytoscape draws), the card in an OpenCDE
- * source against a mocked server, the way from a model to its graph, and the local Cypher on a saved graph. The labels and the relationship
+ * source against a mocked server, the graph store it announces and the queries that work there, a box kept as a list (Grafeo), the way
+ * from a model to its graph, and the local Cypher on a saved graph. The labels and the relationship
  * names are those of Dataregium's sample model, read from a real server. The real server is in opencde-live.test.js.
  */
 (function () {
@@ -225,6 +226,46 @@
     const point = (x, y, z) => ({ srid: int(z === undefined ? 7203 : 9157), x, y, z });
     const points = await withDriver(fakeLib(() => ({ columns: ['c', 'p'], rows: [[[point(0, 0, 0), point(1, 0, 0.5)], point(2, 3)]] })), () => neo4j.run(source, 'MATCH (n) RETURN n.CoordList AS c, n.Location AS p'));
     assert.equal(points.rows[0][0], '["0 0 0","1 0 0.5"]', 'a point list reads as coordinates'); assert.equal(points.rows[0][1], '2 3', 'a 2D point as two');
+    return 'ok';
+  });
+
+  test('ifc graph: a box kept as a list of numbers (Grafeo) reads as a point does, and every other list stays a list', async (assert) => {
+    const wall = { identity: '4:db:70', labels: WALL_LABELS, properties: { ifc_class: 'IfcWall', GlobalId: 'G70', bbox_min: [0, 0, 0], bbox_max: [1.5, 0.2, 3], bbox_centre: [0.75, 0.1], CoordList: [1, 2, 3], bbox_note: [1, 'a', 2], bbox_many: [1, 2, 3, 4] } };
+    const out = neo4j.answerToTable({ columns: ['w', 'd.bbox_centre', 'c'], rows: [[wall, [0.75, 0.1, 1.5], [1, 2, 3]]] });
+    const p = out.graph.nodes[0].properties;
+    assert.equal(p.bbox_min, '0 0 0'); assert.equal(p.bbox_max, '1.5 0.2 3', 'three numbers as x y z'); assert.equal(p.bbox_centre, '0.75 0.1', 'two as x y');
+    assert.deepEqual(p.CoordList, [1, 2, 3], 'another property keeps its list');
+    assert.deepEqual(p.bbox_note, [1, 'a', 2], 'a list that is not all numbers stays a list'); assert.deepEqual(p.bbox_many, [1, 2, 3, 4], 'and so do four numbers');
+    const at = (c) => out.rows[0][out.columns.indexOf(c)];
+    assert.equal(at('w.bbox_max'), '1.5 0.2 3', 'the column of a node\'s box'); assert.equal(at('w.CoordList'), '[1,2,3]');
+    assert.equal(at('d.bbox_centre'), '0.75 0.1 1.5', 'a box asked for by name'); assert.equal(at('c'), '[1,2,3]', 'a list under another name');
+    const fromDriver = neo4j.recordsToTable([{ keys: ['w'], get: () => ({ identity: int(1), elementId: '4:db:71', labels: ['Entity', 'IfcWall'], properties: { bbox_min: [int(0), int(1), int(2)], Tags: [int(1), int(2)] } }) }], fakeHelpers);
+    assert.equal(fromDriver.graph.nodes[0].properties.bbox_min, '0 1 2', 'integers from a driver as well');
+    assert.deepEqual(fromDriver.graph.nodes[0].properties.Tags, [1, 2]);
+    return 'ok';
+  });
+
+  test('ifc graph: the ready-made queries are those that work in the graph store, and those with spatial points only in Neo4j and Memgraph', async (assert) => {
+    const ids = (list) => list.map((q) => q.id);
+    const all = ids(neo4j.EXAMPLES);
+    assert.ok(all.includes('nearby'));
+    assert.deepEqual(ids(neo4j.queriesFor('')), all, 'nothing announced: every query, as before');
+    assert.deepEqual(ids(neo4j.queriesFor('neo4j')), all, 'Neo4j has spatial points');
+    assert.deepEqual(ids(neo4j.queriesFor('memgraph')), all, 'and so has Memgraph');
+    assert.deepEqual(ids(neo4j.queriesFor('grafeo')), all.filter((id) => id !== 'nearby'), 'Grafeo keeps a box as a list: no distance between points');
+    assert.deepEqual(ids(neo4j.queriesFor('postgresql')), ids(neo4j.queriesFor('grafeo')), 'nor another store');
+    assert.ok(neo4j.EXAMPLES.every((q) => !!q.spatial === /point\./.test(q.cypher)), 'exactly the queries with point functions are marked');
+    assert.deepEqual(ids(neo4j.queriesFor('grafeo', ifcGraph.VIEWS)), ids(ifcGraph.VIEWS), 'the views of a model need no points');
+    const wb = D.require('ui/api/graph-workbench');
+    const offered = (store) => {
+      const view = wb.create({ connector: { id: 'g', name: 'g', baseUrl: 'bolt://h:1' }, hint: '', store, run: async () => ({ columns: [], rows: [], graph: null }) });
+      view.start();
+      const list = /** @type {any} */ (view.el.querySelector('[data-neo4j-example]')).options.map((o) => o.value).filter(Boolean);
+      view.destroy();
+      return list;
+    };
+    assert.deepEqual(offered(undefined), all, 'the workbench offers every query when nothing is announced');
+    assert.deepEqual(offered('grafeo'), all.filter((id) => id !== 'nearby'), 'and leaves the spatial one out over Grafeo');
     return 'ok';
   });
 
@@ -494,6 +535,31 @@
     } finally { v.view.destroy(); v.host.remove(); }
     return 'ok';
   }, 90000);
+
+  test('ifc graph: the capabilities name the graph store, and the card offers only the queries that work there', async (assert) => {
+    const query = { graph_query: { enabled: true, url: '/admin/api/graph/query', max_rows: 1000, timeout_seconds: 10 }, admin_api: { enabled: true, url: '/admin/api' } };
+    const storeIn = async (extensions) => { world.caps = capsWith(extensions); await opencde.capabilities(cdeSource, { force: true }); return opencde.graphStore(cdeSource); };
+    if (!cdeSource) { cdeSource = (await families.createConnector('opencde', { baseUrl: BASE, clientId: 'dataspatium', clientSecret: '' })).connector; made.connectors.push(cdeSource.id); }
+    assert.equal(await storeIn({ ifcgraph: { enabled: true, graph_store: 'neo4j' } }), 'neo4j');
+    assert.equal(await storeIn({ ifcgraph: { enabled: true, graph_store: 'Memgraph' } }), 'memgraph', 'in lower case');
+    assert.equal(await storeIn({ ifcgraph: { enabled: true } }), '', 'a server that does not say');
+    assert.equal(await storeIn({}), '', 'nor without a graph');
+    assert.equal(opencde.graphStoreOf(null), '');
+    if (!admin.hasAdminScope(cdeSource)) { await opencde.login(cdeSource, { popup: fakePopup, redirectUri: REDIRECT }); await admin.signInAsAdmin(cdeSource, { popup: fakePopup, redirectUri: REDIRECT }); }
+    const offered = async (ifcgraph) => {
+      const v = await cardView(capsWith(Object.assign({ ifcgraph }, query)));
+      try {
+        await settle(v.view);
+        const sel = await waitFor(() => v.card().querySelector('[data-neo4j-example]'), 5000, 'the workbench');
+        return /** @type {any} */ (sel).options.map((o) => o.value).filter(Boolean);
+      } finally { v.view.destroy(); v.host.remove(); }
+    };
+    const grafeo = await offered({ enabled: true, bolt: null, graph_store: 'grafeo' });
+    assert.ok(grafeo.length && !grafeo.includes('nearby'), 'over Grafeo no query needs spatial points: ' + grafeo.join(','));
+    assert.ok((await offered({ enabled: true, bolt: null, graph_store: 'memgraph' })).includes('nearby'), 'over Memgraph it is there');
+    assert.ok((await offered({ enabled: true, bolt: null })).includes('nearby'), 'and when nothing is announced');
+    return 'ok';
+  }, 60000);
 
   test('ifc graph: a model from a CDE opens its graph, on a Neo4j source of the same machine if there is one', async (assert) => {
     assert.equal(graphSource.machineOf('127.0.0.1:8010'), 'localhost'); assert.equal(graphSource.machineOf('LOCALHOST:7707'), 'localhost'); assert.equal(graphSource.machineOf('[::1]:7707'), 'localhost'); assert.equal(graphSource.machineOf('dataregium.example.org:443'), 'dataregium.example.org');

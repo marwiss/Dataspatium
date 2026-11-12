@@ -181,6 +181,10 @@ Från IFC-LPG `d042134` kan servern räkna ut en låda per byggdel i projektkoor
 `bbox_centre IS NOT NULL`. Exemplet *Byggdelar nära en byggdel* i Neo4j-källan listar det som ligger inom 1,2 m av en byggdels mitt
 med `point.distance`, lika i Neo4j och Memgraph.
 
+Servern anger i sitt kapabilitetsdokument vilken databas som håller grafen (`graph_store`: `neo4j` eller `memgraph`, senare `grafeo`
+eller `postgresql`). I en annan databas än Neo4j och Memgraph, som Grafeo, är lådorna listor med tal och inte punkter: då lämnar kortet
+IFC-LPG ute exemplen som behöver punkter, som *Byggdelar nära en byggdel*, och en låda visas ändå som `x y z`, precis som en punkt.
+
 ## Fler verktyg i fliken Graf
 
 - **PageRank** (dämpning 0,85), **Samhällen** (etikettspridning, numrerade efter storlek) och **Centralitet** (harmonisk
