@@ -6,8 +6,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/soka', 'ui/modes/bearbeta', 'ui/modes/kontrollera', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera', 'ui/modes/dela'],
-    (shellMod, fonts, _theme, inhamta, hantera, soka, bearbeta, kontrollera, analysera, visualisera, exportera, dela) => ({
+  D.define('app', ['ui/shell', 'ui/fonts', 'ui/theme', 'ui/modes/inhamta', 'ui/modes/hantera', 'ui/modes/soka', 'ui/modes/bearbeta', 'ui/modes/kontrollera', 'ui/modes/analysera', 'ui/modes/visualisera', 'ui/modes/exportera', 'ui/modes/dela', 'platform/startup-profile'],
+    (shellMod, fonts, _theme, inhamta, hantera, soka, bearbeta, kontrollera, analysera, visualisera, exportera, dela, startupProfile) => ({
       /** @param {HTMLElement} root */
       async start(root) {
         fonts.loadFonts();
@@ -22,6 +22,8 @@
         shell.registerMode(exportera.createMode(shell.ctx));
         shell.registerMode(dela.createMode(shell.ctx));
         await shell.init();
+        // The start profile (?profil=start, platform/startup-profile) notes the first render; nothing happens without it.
+        startupProfile.rendered();
         // Resume auto-save to the portable folder when it was on (Chromium only, see data/workspace.js).
         D.require('data/workspace').initFolder().catch((err) => D.log('folder', 'init failed', err));
         // Exposed on the Dataspatium namespace for debugging and for tools/screenshot.ps1 -EvalFile scripts.

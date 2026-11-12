@@ -12,6 +12,19 @@
 (function () {
   'use strict';
   /**
+   * The start profile (`?profil=start`, read by platform/startup-profile): marks in the browser's performance timeline
+   * for the loader's start, each script's insertion and load (named by its path), DOMContentLoaded, ready and a failed
+   * start. Without the parameter this one check is all it costs.
+   */
+  let PROFILE = false;
+  try { PROFILE = new URLSearchParams(location.search).getAll('profil').indexOf('start') >= 0; } catch (_e) { PROFILE = false; }
+  /** @param {string} name */
+  function mark(name) { try { performance.mark('dataspatium:' + name); } catch (_e) { /* no user timing */ } }
+  if (PROFILE) {
+    mark('boot');
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => mark('dom-content-loaded'), { once: true });
+  }
+  /**
    * Languages: Swedish (the source language) always, plus the chosen one. The choice lives in localStorage
    * (`dataspatium.lang`) or in a ?lang= parameter. Before the first choice every language is loaded, so that the
    * first-start chooser can show each language in itself; afterwards other languages load on demand through
@@ -32,6 +45,7 @@
    */
   const MOBILE = [
     'src/platform/registry.js',
+    'src/platform/startup-profile.js',
     'src/platform/capabilities.js',
     'src/platform/downloads.js',
   ].concat(languageScripts, [
@@ -73,6 +87,7 @@
   const full = [
     // Platform
     'src/platform/registry.js',
+    'src/platform/startup-profile.js',
     'src/platform/capabilities.js',
     'src/platform/downloads.js',
     // Languages first: every later module may build user-facing text with Dataspatium.t at load time.
@@ -451,7 +466,10 @@
    * @param {string} type @param {any} [detail]
    */
   function announce(type, detail) {
-    const send = () => document.dispatchEvent(new CustomEvent(type, { detail }));
+    const send = () => {
+      if (PROFILE) mark(type.replace('dataspatium:', ''));
+      document.dispatchEvent(new CustomEvent(type, { detail }));
+    };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', send, { once: true });
     else send();
   }
@@ -481,6 +499,7 @@
       el.src = base + path;
       el.async = false;
       el.onload = function () {
+        if (PROFILE) mark('load:' + path);
         left -= 1;
         if (left) { add(); return; }
         if (failed) return;
@@ -496,6 +515,7 @@
         if (again) { location.reload(); return; }
         announce('dataspatium:boot-error', path);
       };
+      if (PROFILE) mark('insert:' + path);
       document.head.appendChild(el);
     }
     for (let i = 0; i < IN_FLIGHT; i++) add();

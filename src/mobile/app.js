@@ -10,8 +10,8 @@
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('mobile/app', ['ui/base', 'ui/components', 'ui/icons', 'ui/overlays', 'ui/basic', 'ui/fonts', 'ui/theme', 'platform/p2p', 'ui/qr', 'platform/storage/idb', 'platform/storage/zip', 'platform/files', 'engines/sqlite', 'mobile/field'],
-    (base, _components, icons, overlays, basic, fonts, _theme, p2p, qr, idb, zip, files, sqlite, fieldMod) => {
+  D.define('mobile/app', ['ui/base', 'ui/components', 'ui/icons', 'ui/overlays', 'ui/basic', 'ui/fonts', 'ui/theme', 'platform/p2p', 'ui/qr', 'platform/storage/idb', 'platform/storage/zip', 'platform/files', 'engines/sqlite', 'mobile/field', 'platform/startup-profile'],
+    (base, _components, icons, overlays, basic, fonts, _theme, p2p, qr, idb, zip, files, sqlite, fieldMod, startupProfile) => {
       const { h, t, i18n, replace } = base;
       const { dialog, toast } = overlays;
       const icon = icons.icon;
@@ -451,6 +451,8 @@
         fonts.loadFonts();
         const app = new Mobile(root, options);
         await app.init();
+        // The start profile (?profil=start, platform/startup-profile) notes the first render; nothing happens without it.
+        startupProfile.rendered();
         D.mobile = app;
         return app;
       }
