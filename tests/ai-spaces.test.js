@@ -44,7 +44,7 @@
     assert.ok(writeTools.has('create_spaces') && writeTools.CREATES.includes('create_spaces'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'create_spaces');
     assert.deepEqual(Object.keys(tool.parameters.properties), ['storey', 'rooms', 'height']);
-    assert.deepEqual(tool.parameters.properties.rooms.items.required, ['at', 'index', 'name', 'long_name'], 'every field of a room is required, null for not given');
+    assert.deepEqual(tool.parameters.properties.rooms.items.required, ['at', 'index', 'name', 'long_name', 'number', 'room_type'], 'every field of a room is required, null for not given (number and room_type: tests/ai-names.test.js)');
     const { cs, out } = box('spaces-test');
     assert.ok(out.ok && !out.ref, JSON.stringify(out));
     assert.deepEqual(out.refs, ['new-7', 'new-8'], 'one ref per room, after the walls and the door');

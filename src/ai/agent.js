@@ -75,6 +75,8 @@
       'elevation is the first floor\'s level above sea: the highest ground height at the corners plus about 0.3 m unless the brief says',
       'otherwise, and the first storey stays at elevation 0. When the ground falls more than 0.5 m across the footprint, say so and ask',
       'whether the building has a basement or a plinth on the low side.',
+      'For a building in Sweden the heights are in RH 2000 and the crs is one compound code for plan and height: EPSG:5845 for coordinates in SWEREF 99 TM (the facts\' EPSG:3006), and EPSG:5846 to EPSG:5857 for the local zones 12 00 to 23 15, such as EPSG:5850 for SWEREF 99 18 00; prefer the local zone when the brief or the facts give coordinates in it, and never convert coordinates yourself.',
+      'Number the storeys for the whole project by height from the lowest up (Plan 1, Plan 2 …) and say the entrance level in the storey\'s description, such as "Plan 1 (Entré)"; give every space a number unique in the building, the storey\'s number and two digits (101, 102 … on Plan 1), its name from the room programme, and its room_type when the brief names one.',
       'Define the wall, slab and roof types first with define_type, with their material layers, and give every wall, slab and roof its type; materials and shared properties go on the types (set_properties takes a type\'s ref), not on each element. Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.',
       'After the walls of a storey, the preview\'s topology says whether the storey is closed; mend open ends (dangles) by moving or adding walls before the slabs.',
       'When the storeys are closed and the brief or the room programme names rooms, create them with create_spaces after the walls and before the slabs.',
@@ -135,6 +137,8 @@
         const errors = (r.findings || []).filter((f) => String(f.level) === 'error');
         const brief = { errors: Number(r.errors) || 0, created: (r.created || []).length, changed: (r.changed || []).length, deleted: (r.deleted || []).length,
           findings: errors.slice(0, 10).map((f) => ({ class: f.ifc_class || null, id: f.id || null, attribute: f.attribute || null, message: String(f.message || '') })) };
+        // What the wheel could not do, or what the model still lacks (no CRS: GRF003), for the agent to act on.
+        if (Array.isArray(r.notes) && r.notes.length) brief.notes = r.notes.slice(0, 5).map(String);
         const topology = topologyBrief(r.topology);
         return topology && (!Array.isArray(topology) || topology.length) ? Object.assign(brief, { topology }) : brief;
       } catch (err) {
