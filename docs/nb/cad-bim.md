@@ -122,6 +122,8 @@ I R og Python gir `dm_read()` bygningsdelene, `dm_read_properties()` egenskapene
 - **Egenskaper**: hvilke verdier en egenskap har, og hos hvor mange bygningsdeler av hver type.
 - **Entiteter**: hvor mange entiteter av hvert slag filen består av.
 - **Klimaerklæring**: en foreløpig klimaerklæring ut fra modellen per kategori og lag, se *Foreløpig klimaerklæring* nedenfor.
+- **Materialkartlegging**: grunnlag for avfallshåndteringsplanen ut fra modellen, med byggevarer som kan ombrukes, avfallet per
+  fraksjon og lag og de farlige stoffene modellen oppgir, se *Materialkartlegging for avfallshåndteringsplanen* nedenfor.
 
 Hvert resultat kan lagres som datasett.
 
@@ -146,6 +148,8 @@ deretter i nettleseren. Ingenting sendes noe sted; modellen forlater ikke datama
   ifctester, IfcOpenShells egen kontrollør: velg .ids-filen, så får du en rad per krav og element med godkjent, ikke godkjent
   eller ikke relevant og årsaken, samt en opptelling. Filen blir i nettleseren. ifctester følger med appen uten webappen sin, så
   ingenting hentes utover Python selv.
+  Under *IDS i appen* velger du i stedet en av appens egne IDS-filer, for eksempel *Avfallshantering* (se *Materialkartlegging for
+  avfallshåndteringsplanen*), som prøves på samme måte; *Lagre IDS-filen* lagrer den valgte på datamaskinen.
 
 **I Bearbeid** har modellen to handlinger under *Handlinger* (knappen finnes i modellvisningen og i tabellvisningen), i gruppen
 *Modell*:
@@ -287,6 +291,57 @@ databasens verdier for A1–A3, A4 og A5 (svinn). Boverket oppgir at klimadata f
 over gjennomsnittet; verktøyet regner med den konservative verdien og viser den typiske ved behov.
 
 Hver visning kan lagres som datasett. Kilde: Boverket, klimadatabasen (åpne data, se [licenser.md](licenser.md)).
+
+## Materialkartlegging for avfallshåndteringsplanen
+
+Verktøyet **Materialkartlegging** i Analyser (fanen Mengder) samler det modellen vet, som grunnlag for avfallshåndteringsplanen
+(avfallshanteringsplan). Etter den svenske PBL 10 kap. 8 a §, som gjelder siden 1. juli 2026, skal byggherren sørge for at det
+finnes en avfallshåndteringsplan med opplysninger om
+
+1. hvilke byggevarer som kan ombrukes, og hvordan de tas hånd om, og
+2. hvilket avfall tiltaket kan gi opphav til, og hvordan det tas hånd om, særlig hvordan byggherren vil gjøre mulig a)
+   materialgjenvinning av høy kvalitet og b) sikker håndtering og fjerning av farlige stoffer.
+
+Planen kreves ikke når den åpenbart ikke trengs, og den kontrollansvarlige (kontrollansvarig) har samme oppgave for den som for
+kontrollplanen. Boverket foreslo planen i rapport 2024:26 under navnet ressursforvaltningsplan. Verktøyet gir grunnlaget; planen og
+vurderingene er byggherrens. Visningene følger bestemmelsens to punkter.
+
+**1. Byggevarer som kan ombrukes.** Bygningsdelene med en type, de med produktdata først: produsent (Manufacturer), modell
+(ModelLabel) og GTIN (GlobalTradeItemNumber) fra Pset_ManufacturerTypeInformation, helst på typen, og serienummer (SerialNumber) og
+strekkode (BarCode) fra Pset_ManufacturerOccurrence på bygningsdelen. Kontrollsifferet i GTIN prøves etter GS1; en feil vises, men
+rettes aldri. Hver rad har laget i bygningen, materialene, fraksjonene og de farlige stoffene modellen oppgir. IFC2X3 har ikke GTIN.
+
+**2 a. Avfall per fraksjon og per lag og fraksjon.** Hvert materiale i hver bygningsdel får en avfallsfraksjon etter den svenske
+avfallsforskriften (avfallsförordningen 3 kap. 10 §), som i tillegg til farlig avfall krever at tre, mineral (betong, tegl, klinker,
+keramikk og stein), metall, glass, plast og gips sorteres ut. Fraksjonen tas først fra materialets kategori i IFC
+(IfcMaterial.Category, for eksempel concrete, steel, wood, glass, gypsum eller plastic) og ellers fra materialets navn (betong,
+limtre, gipsplate, isolerglass og lignende, på de nordiske språkene og engelsk). Mineralull, glassull og steinull hører verken til
+mineral eller glass, og kompositter som glassfiberarmert plast, navn som oppgir flere fraksjoner (tre/aluminium) eller ingen, og
+bygningsdeler uten materiale blir *Annet / avgjøres*. Kolonnen *Regel* viser hva som avgjorde. Summene gir bygningsdeler, rader,
+volum, areal og masse per fraksjon og per lag i bygningen (klimaerklæringens seks lag) og fraksjon. Ingen klassifikasjon leses.
+
+**2 b. Farlige stoffer.** Bare det en egenskap i modellen sier: en egenskap der navnet eller settet gjelder farlige stoffer eller
+farlig avfall (for eksempel Pset_EnvironmentalImpactValues.HazardousWaste, eller et eget sett med asbest eller PCB), og der verdien
+sier ja, på bygningsdelen, typen eller materialet. Appen gjetter aldri. Oppgir modellen ingen farlige stoffer, sier verktøyet det,
+og en kartlegging av farlige stoffer trengs likevel.
+
+**Alle bygningsdeler og materialer** er radene bak summene: mengden, materialets kategori, tykkelsen, fraksjonen med regelen, laget,
+densiteten og massen.
+
+**Mengder og masse.** Mengdene er klimaerklæringens: filens mengder, ellers geometrien for enkle ekstruderinger, og en bygningsdel
+med materialsjikt deles etter sjiktenes tykkelse; dører og vinduer telles her per materiale. Massen er filens vekt, ellers volumet
+ganger materialets densitet (Pset_MaterialCommon.MassDensity i kg/m³). Mangler densiteten, har raden ingen masse, og merknaden sier
+hvor mange rader det gjelder.
+
+**IDS for avfallshåndtering.** *IDS Avfallshåndtering* åpner IDS-kontroll med appens IDS-fil `SE-Dataspatium_Avfallshantering.ids`
+og prøver modellen mot den i appens Python: et materiale med en av IFCs anbefalte kategorier på hver bygningsdel; basismengden for
+volum på vegger, dekker, bjelker, søyler, staver og plater (IfcMember og IfcPlate), fundamenter og trappeløp og for areal på dører,
+vinduer, kledninger, tak og glassfasader; produsent og modell på dører, vinduer og installasjoner og GTIN i riktig form når det
+finnes. Filen gjelder IFC4 og IFC4.3, fordi IFC2X3 mangler materialkategori, maler for basismengder og GTIN. ifctester godkjenner
+materialkravet når minst ett av bygningsdelens materialer har en kategori, og sammensatte bygningsdeler (tak, trapper, ramper og
+glassfasader) prøves i delene sine.
+
+Hver visning kan lagres som datasett. Ingenting hentes fra nettet.
 
 ## DXF-tegninger
 
@@ -447,6 +502,9 @@ hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de v
 endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
 
+Produktidentiteter skriver AI-en bare når du oppgir dem, og den finner aldri på dem: GTIN (GlobalTradeItemNumber), produsent
+(Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
+(BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikke GTIN.
 **Bærende, status og egenskaper.** `create_wall` og `create_slab` tar `load_bearing` (bærende eller ikke), og de og `create_roof` tar
 `status` (NEW ny, EXISTING eksisterende, DEMOLISH rives, TEMPORARY midlertidig), men bare når briefen eller du sier det: AI-en gjetter
 aldri, og en digital tvilling av en eksisterende bygning får EXISTING. Verdiene skrives som LoadBearing og Status i Pset_WallCommon,
@@ -456,7 +514,6 @@ eller endret: sann langs etasjens ytre grense og usann inne i bygningen, og dør
 takplater er ytre. En etasje der veggene ikke slutter seg, får ingen IsExternal, og rapporten og AI-ens forhåndsvisning sier hvorfor;
 en verdi som modellen allerede hadde, beholdes. Det er med LoadBearing og IsExternal at klimaerklæringen skiller kategoriene fra
 hverandre.
-
 `set_properties` prøver et egenskapssett som heter Pset_… eller Qto_…, mot IfcOpenShells maler for modellens skjema: et sett eller en
 egenskap som malen mangler, avvises med de nærmeste navnene, sann og usann, mål og oppramsinger må ha riktig type, og et tall med
 enheten skrevet i verdien («40 dB») avvises. Oppgi bare tallet, lengder i meter, arealer i m², volumer i m³ og vinkler i grader, så

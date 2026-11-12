@@ -120,6 +120,8 @@ GROUP BY 1, 2 ORDER BY 1, 2
 - **Eiginleikar**: hvaða gildi eiginleiki hefur og á hve mörgum byggingarhlutum af hverri gerð.
 - **Einingar**: úr hve mörgum einingum af hverri tegund skráin samanstendur.
 - **Loftslagsyfirlýsing**: bráðabirgðaloftslagsyfirlýsing út frá líkaninu eftir flokki og lagi, sjá *Bráðabirgðaloftslagsyfirlýsing* hér fyrir neðan.
+- **Efnisúttekt**: grunnur að úrgangsstjórnunaráætluninni úr líkaninu, með byggingarvörum sem má endurnota, úrganginum eftir flokkum
+  og lögum og þeim hættulegu efnum sem líkanið tilgreinir, sjá *Efnisúttekt fyrir úrgangsstjórnunaráætlun* hér fyrir neðan.
 
 Hægt er að vista hverja niðurstöðu sem gagnasafn.
 
@@ -143,6 +145,8 @@ vafranum. Engu er sent neitt; líkanið fer ekki af tölvunni.
   eigin prófara IfcOpenShell: veldu .ids-skrána og þú færð eina röð á kröfu og einingu með stóðst, féll eða á ekki við og
   ástæðunni, auk samantektar. Skráin verður í vafranum. ifctester fylgir forritinu án vefforrits síns, svo ekkert er sótt umfram
   Python sjálft.
+  Undir *IDS í forritinu* velur þú í staðinn eina af IDS-skrám forritsins, til dæmis *Avfallshantering* (sjá *Efnisúttekt fyrir
+  úrgangsstjórnunaráætlun*), sem er prófuð á sama hátt; *Vista IDS-skrána* vistar þá völdu á tölvunni.
 
 **Í Vinna** hefur líkanið tvær aðgerðir undir *Aðgerðir* (hnappurinn er bæði í líkansýn og töflusýn), í hópnum *Líkan*:
 
@@ -284,6 +288,58 @@ gildi gagnagrunnsins fyrir A1–A3, A4 og A5 (rýrnun). Boverket segir að lofts
 yfir meðaltali; tólið reiknar með varfærna gildinu og sýnir það dæmigerða ef beðið er um það.
 
 Hverja sýn má vista sem gagnasafn. Heimild: Boverket, loftslagsgagnagrunnurinn (opin gögn, sjá [licenser.md](licenser.md)).
+
+## Efnisúttekt fyrir úrgangsstjórnunaráætlun
+
+Tólið **Efnisúttekt** í Greina (flipinn Magn) tekur saman það sem líkanið veit sem grunn að úrgangsstjórnunaráætluninni
+(avfallshanteringsplan). Samkvæmt sænsku PBL 10 kap. 8 a §, sem gildir frá 1. júlí 2026, skal byggjandinn sjá til þess að til sé
+úrgangsstjórnunaráætlun með upplýsingum um
+
+1. hvaða byggingarvörur má endurnota og hvernig þær eru meðhöndlaðar, og
+2. hvaða úrgangur getur hlotist af framkvæmdinni og hvernig hann er meðhöndlaður, einkum hvernig byggjandinn hyggst gera mögulega a)
+   hágæða endurvinnslu efna og b) örugga meðhöndlun og fjarlægingu hættulegra efna.
+
+Áætlunar er ekki krafist þegar hún er augljóslega óþörf, og eftirlitsaðilinn (kontrollansvarig) hefur sama hlutverk gagnvart henni
+og eftirlitsáætluninni. Boverket lagði áætlunina til í skýrslu 2024:26 undir heitinu auðlindastjórnunaráætlun. Tólið gefur grunninn;
+áætlunin og matið eru byggjandans. Sýnirnar fylgja tveimur liðum ákvæðisins.
+
+**1. Byggingarvörur sem má endurnota.** Byggingarhlutarnir með gerð, þeir með vörugögn fyrst: framleiðandi (Manufacturer), gerð
+(ModelLabel) og GTIN (GlobalTradeItemNumber) úr Pset_ManufacturerTypeInformation, helst á gerðinni, og raðnúmer (SerialNumber) og
+strikamerki (BarCode) úr Pset_ManufacturerOccurrence á byggingarhlutanum. Vartala GTIN er prófuð samkvæmt reglu GS1; villa er sýnd
+en aldrei leiðrétt. Hver lína hefur lag byggingarinnar, efnin, flokkana og þau hættulegu efni sem líkanið tilgreinir. IFC2X3 hefur
+ekkert GTIN.
+
+**2 a. Úrgangur eftir flokkum og eftir lögum og flokkum.** Hvert efni í hverjum byggingarhluta fær úrgangsflokk samkvæmt sænsku
+úrgangsreglugerðinni (avfallsförordningen 3 kap. 10 §), sem auk spilliefna krefst þess að timbur, steinefni (steypa, múrsteinn,
+klinker, keramik og steinn), málmar, gler, plast og gifs séu flokkuð frá. Flokkurinn er fyrst tekinn úr flokki efnisins í IFC
+(IfcMaterial.Category, til dæmis concrete, steel, wood, glass, gypsum eða plastic) og annars úr heiti efnisins (steypa, límtré,
+gifsplata, einangrunargler og þess háttar, á norrænu málunum og ensku). Steinull, glerull og steinefnaull tilheyra hvorki steinefnum
+né gleri, og samsett efni eins og trefjastyrkt plast, heiti sem tilgreina fleiri flokka (timbur/ál) eða engan, og byggingarhlutar án
+efnis fá flokkinn *Annað / ákveða*. Dálkurinn *Regla* sýnir hvað réð. Summurnar gefa byggingarhluta, línur, rúmmál, flatarmál og
+massa eftir flokkum og eftir lögum byggingarinnar (sex lögum loftslagsyfirlýsingarinnar) og flokkum. Ekkert flokkunarkerfi er lesið.
+
+**2 b. Hættuleg efni.** Aðeins það sem eiginleiki í líkaninu segir: eiginleiki sem varðar hættuleg efni eða spilliefni að heiti eða
+mengi (til dæmis Pset_EnvironmentalImpactValues.HazardousWaste, eða eigið mengi með asbesti eða PCB) og hefur gildi sem segir já, á
+byggingarhlutanum, gerðinni eða efninu. Forritið giskar aldrei. Tilgreini líkanið engin hættuleg efni segir tólið það, og úttekt á
+hættulegum efnum þarf samt.
+
+**Allir byggingarhlutar og efni** eru línurnar á bak við summurnar: magnið, flokkur efnisins, þykktin, úrgangsflokkurinn með
+reglunni, lagið, eðlismassinn og massinn.
+
+**Magn og massi.** Magnið er loftslagsyfirlýsingarinnar: magn skrárinnar, annars rúmfræði einfaldra útpressana, og byggingarhluta
+með efnislögum er skipt eftir þykkt laganna; hurðir og gluggar eru hér taldir eftir efni. Massinn er þyngd skrárinnar, annars
+rúmmálið sinnum eðlismassi efnisins (Pset_MaterialCommon.MassDensity í kg/m³). Án eðlismassa hefur línan engan massa, og
+athugasemdin segir hve margar línur það á við.
+
+**IDS fyrir úrgangsstjórnun.** *IDS Úrgangsstjórnun* opnar IDS-prófun með IDS-skrá forritsins `SE-Dataspatium_Avfallshantering.ids`
+og prófar líkanið gegn henni í Python forritsins: efni með einum af ráðlögðum flokkum IFC á hverjum byggingarhluta; grunnmagn
+rúmmáls á veggjum, plötum, bitum, súlum, stöngum og plötuhlutum (IfcMember og IfcPlate), undirstöðum og stigaköflum, og flatarmáls á
+hurðum, gluggum, klæðningum, þökum og glerveggjum; framleiðanda og gerð á hurðum, gluggum og lagnabúnaði og GTIN á réttu formi þegar
+það er til. Skráin gildir fyrir IFC4 og IFC4.3, því að IFC2X3 vantar efnisflokk, sniðmát fyrir grunnmagn og GTIN. ifctester
+samþykkir efniskröfuna þegar að minnsta kosti eitt af efnum byggingarhlutans hefur flokk, og samsettir byggingarhlutar (þök, stigar,
+rampar og glerveggir) eru prófaðir í hlutum sínum.
+
+Vista má hverja sýn sem gagnasafn. Ekkert er sótt af netinu.
 
 ## DXF-teikningar
 
@@ -446,6 +502,9 @@ veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða br
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
 úr sniðmátum skemans.
 
+Vöruauðkenni skrifar gervigreindin aðeins þegar þú gefur þau upp, og hún býr þau aldrei til: GTIN (GlobalTradeItemNumber),
+framleiðanda (Manufacturer) og gerð (ModelLabel) í Pset_ManufacturerTypeInformation á gerðinni, og raðnúmer (SerialNumber) og
+strikamerki (BarCode) í Pset_ManufacturerOccurrence á byggingarhlutanum. IFC2X3 hefur ekkert GTIN.
 **Burður, staða og eiginleikar.** `create_wall` og `create_slab` taka `load_bearing` (burðarvirki eða ekki), og þau og `create_roof`
 taka `status` (NEW nýtt, EXISTING núverandi, DEMOLISH verður rifið, TEMPORARY tímabundið), en aðeins þegar lýsingin eða þú segir það:
 gervigreindin giskar aldrei, og stafrænn tvíburi núverandi byggingar fær EXISTING. Gildin eru skrifuð sem LoadBearing og Status í
@@ -455,7 +514,6 @@ grannfræðinni á veggina sem það bjó til eða breytti: satt meðfram ytri m
 gluggarnir í veggjunum fá gildi síns veggjar. Þök og þakplötur eru ytri. Hæð þar sem veggirnir lokast ekki fær ekkert IsExternal, og
 skýrslan og forskoðun gervigreindarinnar segja hvers vegna; gildi sem líkanið hafði þegar heldur sér. Það er með LoadBearing og
 IsExternal sem loftslagsyfirlýsingin greinir flokkana að.
-
 `set_properties` prófar eiginleikasafn sem heitir Pset_… eða Qto_… á móti sniðmátum IfcOpenShell fyrir skema líkansins: safni eða
 eiginleika sem sniðmátið vantar er hafnað með nálægustu nöfnunum, satt og ósatt, mælingar og upptalningar verða að hafa rétta tegund,
 og tölu með einingunni skrifaðri í gildið („40 dB“) er hafnað. Gefðu aðeins töluna, lengdir í metrum, flatarmál í m², rúmmál í m³ og

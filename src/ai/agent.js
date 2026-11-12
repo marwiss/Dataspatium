@@ -37,6 +37,7 @@
       'storey\'s plane with the grid\'s A1 at (0, 0) unless the model says otherwise, and a storey\'s elevation is metres above the first.',
       'Give new walls, slabs and roofs a type, defined first with define_type and its material layers (the preview names a type the model has of that name already, to give by its GlobalId instead); materials and shared properties go on the types. Walls meet on their axes at corners and junctions and the app joins them, so never lengthen or overlap walls to close a corner.',
       'Give load_bearing and status on new walls and slabs only when the person or the model says them, otherwise null; never assume them. The app sets IsExternal itself from the topology of the closed storeys, so never set it on walls, doors, windows or roofs.',
+      'Write product identities only when the person gives them, and never invent them: GlobalTradeItemNumber (the GTIN), Manufacturer and ModelLabel in Pset_ManufacturerTypeInformation on the type, SerialNumber and BarCode in Pset_ManufacturerOccurrence on the element; IFC2X3 has no GlobalTradeItemNumber.',
       'A wall runs from start to end with its thickness centred on that line; a door is an opening with fill door, offset along the wall',
       'from its start. Use the refs the write tools answer (new-1, …) to name what you created. Never delete unless the person asked for',
       'it in this conversation; confirm: true states that they did, and they confirm again before approval. Publishing is not yours to',

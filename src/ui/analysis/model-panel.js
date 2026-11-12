@@ -6,26 +6,30 @@
  * and the entity types of the file. For a DXF drawing: count, length and area per layer and type. Every result can be
  * saved as a dataset. The logic lives in analysis/model. The tool Ärenden counts the issues of a saved issue table (from the
  * model view's panel) per status, type, element type or storey; data/issues does the counting. The tool Klimatdeklaration is
- * ui/analysis/climate-panel.
+ * ui/analysis/climate-panel and the tool Materialinventering ui/analysis/inventory-panel; IDS-kontroll lists the app's own IDS files
+ * (analysis/ids-presets) beside the person's.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel'], (base, basic, datasets, model, analysis, issuesLogic, climateModule) => {
+  D.define('ui/analysis/model-panel', ['ui/base', 'ui/basic', 'data/datasets', 'data/model', 'analysis/model', 'data/issues', 'ui/analysis/climate-panel', 'ui/analysis/inventory-panel', 'analysis/ids-presets'], (base, basic, datasets, model, analysis, issuesLogic, climateModule, inventoryModule, idsPresets) => {
     const { h, t, i18n, replace } = base;
     const PREVIEW_ROWS = 2000;
-    const IFC_TOOLS = ['summary', 'quantities', 'list', 'climate', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
+    const IFC_TOOLS = ['summary', 'quantities', 'list', 'climate', 'inventory', 'properties', 'entities', 'issues', 'validate', 'ids', 'clash', 'structure', 'psets', 'select', 'geometry'];
     const DXF_TOOLS = ['summary', 'quantities', 'entities'];
 
     /** @param {any} ctx shell context @param {{rerenderRight?: () => void}} [options] */
     function create(ctx, options = {}) {
       const { ui, store, shell } = ctx;
-      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null,
+      const s = { tool: 'summary', group1: 'typ', group2: '', source: 'file', category: 'byggdel', property: '', layer1: 'lager', layer2: '', issuesId: '', igroup1: 'topic_status', igroup2: 'element_typ', express: false, ifcClass: 'IfcElement', qtos: false, query: '', ids: null, idsPreset: '',
         clash: { typeA: '', other: '', typeB: '', mode: 'intersection', tolerance: 2, clearance: 50, busy: false, progress: '', error: '', result: null, resultFor: '', where: 'here' } };
       let fieldsEl = null; let resultEl = null; let seq = 0;
       /** @type {{id: string, list: any[]}|null} */ let names = null;
       /** @type {any} */ let clPanel = null;
       const climatePanel = () => clPanel || (clPanel = climateModule.create(ctx, { refresh: () => { renderFields(); run(); if (options.rerenderRight) options.rerenderRight(); } }));
+      /** @type {any} */ let invPanel = null;
+      const inventoryPanel = () => invPanel || (invPanel = inventoryModule.create(ctx, { refresh: () => { renderFields(); run(); if (options.rerenderRight) options.rerenderRight(); }, openIds: (name) => openIds(name) }));
+      /** @type {any} */ let tabsEl = null;
 
       const selected = () => { const st = store.get(); return st.datasets.find((d) => d.id === st.selectedId) || null; };
       const usable = (ds) => !!ds && ds.kind === 'model';
@@ -43,6 +47,7 @@
         if (!list.includes(s.tool)) s.tool = 'summary';
         tabs.tabs = list.map((id) => ({ id, label: t('model.tool.' + id) }));
         tabs.active = s.tool;
+        tabsEl = tabs;
         tabs.addEventListener('dm-change', (e) => { s.tool = /** @type {any} */ (e).detail.id; renderFields(); run(); if (options.rerenderRight) options.rerenderRight(); });
         fieldsEl = h('div', { class: 'dm-stack-sm' });
         resultEl = h('div', { class: 'dm-tool-result dm-center-fill' });
@@ -93,8 +98,16 @@
             const file = input.files && input.files[0];
             if (!file) return;
             s.ids = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+            s.idsPreset = '';
             renderFields(); run();
           });
+          const presets = await idsPresets.list().catch(() => []);
+          if (!fieldsEl || s.tool !== 'ids') return;
+          if (presets.length) {
+            parts.push(h('div', { class: 'dm-row-wrap' },
+              select(t('model.ids.preset'), [{ value: '', label: t('model.ids.preset.own') }].concat(presets.map((p) => ({ value: p.name, label: p.title }))), s.idsPreset || '', (v) => { choosePreset(v).then(() => { renderFields(); run(); }); }, { 'data-ifc-ids-preset': '', title: t('model.ids.preset.hint') }),
+              s.idsPreset && s.ids ? ui.button({ label: t('model.ids.preset.save'), icon: 'download', size: 'sm', variant: 'ghost', title: t('model.ids.preset.save.hint'), 'data-ifc-ids-save': '', onClick: () => D.require('platform/files').download(new Blob([s.ids.bytes], { type: 'application/xml' }), s.ids.name) }) : null));
+          }
           parts.push(h('div', { class: 'dm-row-wrap' },
             ui.button({ label: t('model.ids.pick'), icon: 'folder-open', size: 'sm', 'data-ifc-ids-pick': '', onClick: () => input.click() }),
             h('span', { class: 'dm-help', text: s.ids ? t('model.ids.file', { name: s.ids.name }) : t('model.ids.none') }),
@@ -105,6 +118,10 @@
         } else if (s.tool === 'climate') {
           const own = await climatePanel().fields(ds);
           if (!fieldsEl || s.tool !== 'climate') return;
+          parts.push(...own);
+        } else if (s.tool === 'inventory') {
+          const own = await inventoryPanel().fields(ds);
+          if (!fieldsEl || s.tool !== 'inventory') return;
           parts.push(...own);
         } else if (s.tool === 'psets' || s.tool === 'geometry') {
           const classes = ['IfcElement', 'IfcProduct'].concat(((ds.model && ds.model.elementTypes) || []).map((x) => String(x.name))).filter((v, i, a) => a.indexOf(v) === i);
@@ -137,6 +154,7 @@
         // Clash detection is heavy, so it runs on the button, not on choosing the tool.
         if (s.tool === 'clash') { renderClash(ds); return; }
         if (s.tool === 'climate') { await climatePanel().run(ds, resultEl, { isCurrent: () => my === seq && !!resultEl, showTable, createDataset }); return; }
+        if (s.tool === 'inventory') { await inventoryPanel().run(ds, resultEl, { isCurrent: () => my === seq && !!resultEl, showTable }); return; }
         const facts = ds.model || {};
         try {
           let out;
@@ -419,8 +437,26 @@
         const ds = selected();
         const items = [h('h4', { text: t('model.tool.' + s.tool) }), h('p', { class: 'dm-help', text: t('model.tool.about.' + s.tool) })];
         if (s.tool === 'climate') items.push(...climatePanel().inspector());
+        if (s.tool === 'inventory') items.push(...inventoryPanel().inspector());
         if (usable(ds)) items.push(h('p', { class: 'dm-help', text: ds.name }));
         return items;
+      }
+      /** Choose one of the app's IDS files for IDS-kontroll ('' for the person's own file). @param {string} name */
+      async function choosePreset(name) {
+        if (!name) { s.idsPreset = ''; s.ids = null; return; }
+        try {
+          const p = await idsPresets.load(name);
+          s.ids = { name: p.name, bytes: p.bytes };
+          s.idsPreset = name;
+        } catch (err) { ui.toast.show(String((err && err.message) || err), { kind: 'error' }); }
+      }
+      /** Open IDS-kontroll with one of the app's IDS files, from another tool (Materialinventering); the check runs as on a picked file. */
+      async function openIds(name) {
+        await choosePreset(name);
+        s.tool = 'ids';
+        if (tabsEl) tabsEl.active = 'ids';
+        renderFields(); run();
+        if (options.rerenderRight) options.rerenderRight();
       }
       function datasetChanged() { names = null; if (fieldsEl) { renderFields(); run(); } }
       function destroy() { seq++; fieldsEl = null; resultEl = null; }

@@ -520,9 +520,10 @@
         if (k < 0 || depth > 6) return null;
         var n = nameOfType(k); var a = argsOf(f, k);
         var each = function (list, fn) { return refs(list).map(function (x) { var j = at(x); return j < 0 ? null : fn(argsOf(f, j)); }).filter(Boolean); };
-        // Every item: [name, thickness m, fraction, the item's category (layer, profile, constituent), the material's own category].
-        var item = function (matRef, thickness, fraction, category) { var m = materialOfRef(matRef); return [m[0], thickness, fraction, category, m[1]]; };
-        if (n === 'IFCMATERIAL') return { kind: 'single', items: [[String(a[0] || ''), null, null, null, text(a[2])]] };
+        // Every item: [name, thickness m, fraction, the item's category (layer, profile, constituent), the material's own category,
+        // the IfcMaterial's id (for its properties in materialProps)].
+        var item = function (matRef, thickness, fraction, category) { var m = materialOfRef(matRef); return [m[0], thickness, fraction, category, m[1], at(matRef) >= 0 ? matRef : null]; };
+        if (n === 'IFCMATERIAL') return { kind: 'single', items: [[String(a[0] || ''), null, null, null, text(a[2]), id]] };
         if (n === 'IFCMATERIALLAYERSETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGE' || n === 'IFCMATERIALPROFILESETUSAGETAPERING') return materialSet(ref(a[0]), depth + 1);
         if (n === 'IFCMATERIALLAYERSET') return { kind: 'layers', items: each(a[0], function (la) { var th = num(la[1]); return item(ref(la[0]), th === null ? null : th * L, null, text(la[5])); }) };
         if (n === 'IFCMATERIALPROFILESET') return { kind: 'profiles', items: each(a[2], function (pa) { return item(ref(pa[2]), null, null, text(pa[5])); }) };
@@ -657,7 +658,43 @@
         var hostId = opening !== null && openingHost.has(opening) ? openingHost.get(opening) : null;
         out.push([el.id, enumFrom(a, 8), typePredefined, mat, overall, volume, flags.clipped, geometry, parentOf.has(el.id) ? parentOf.get(el.id) : null, hasParts.has(el.id), voids.get(el.id) || 0, hostId]);
       }
-      return { elements: out };
+      return { elements: out, materialProps: materialPropsOf(f) };
+    }
+
+    /**
+     * The properties of the materials, for the material inventory (analysis/inventory): IFC4's IfcMaterialProperties (such as
+     * Pset_MaterialCommon with MassDensity), IFC2X3's IfcExtendedMaterialProperties, and the MassDensity of IFC2X3's
+     * IfcGeneralMaterialProperties under Pset_MaterialCommon. One row per single or enumerated value: [material id, set, name, value].
+     */
+    function materialPropsOf(f) {
+      var wanted = {};
+      f.typeNames.forEach(function (n, i) { if (n === 'IFCMATERIALPROPERTIES' || n === 'IFCEXTENDEDMATERIALPROPERTIES' || n === 'IFCGENERALMATERIALPROPERTIES') wanted[i] = n; });
+      var out = [];
+      if (!Object.keys(wanted).length) return out;
+      var ref = function (v) { return v && v.r !== undefined ? v.r : null; };
+      var at = function (id) { var k = id === null || id === undefined ? -1 : f.indexOf[id]; return k === undefined || k < 0 ? -1 : k; };
+      var valueOf = function (k) {
+        var n = f.typeNames[f.types[k]]; var a = argsOf(f, k);
+        if (n !== 'IFCPROPERTYSINGLEVALUE' && n !== 'IFCPROPERTYENUMERATEDVALUE') return null;
+        var v = plain(a[2]);
+        return [String(a[0] || ''), Array.isArray(v) ? v.join(', ') : v];
+      };
+      for (var k = 0; k < f.count; k++) {
+        var n = wanted[f.types[k]];
+        if (!n) continue;
+        var a = argsOf(f, k);
+        if (n === 'IFCGENERALMATERIALPROPERTIES') { var d = plain(a[3]); if (ref(a[0]) !== null && typeof d === 'number') out.push([ref(a[0]), 'Pset_MaterialCommon', 'MassDensity', d]); continue; }
+        var four = n === 'IFCMATERIALPROPERTIES';
+        var material = ref(four ? a[3] : a[0]); var set = String((four ? a[0] : a[3]) || '');
+        var list = four ? a[2] : a[1];
+        if (material === null || !Array.isArray(list)) continue;
+        for (var i = 0; i < list.length; i++) {
+          var j = at(ref(list[i]));
+          var pv = j >= 0 ? valueOf(j) : null;
+          if (pv && pv[0] && pv[1] !== null && pv[1] !== undefined && pv[1] !== '') out.push([material, set, pv[0], pv[1]]);
+        }
+      }
+      return out;
     }
 
     var parts = null;
@@ -746,10 +783,11 @@
     }
     /**
      * The facts the climate declaration reads from the file, one row per element: [id, predefined, typePredefined, materials
-     * ({kind, items: [name, thickness m, fraction, item category, material category][]}), overall [height, width] m, extruded
-     * volume m³, clipped, geometry ('none'|'extrusion'|'other'), parent element id, has parts, openings, host element id (the
-     * element a door or window fills an opening in)]. The worker stays for the next call.
-     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options] @returns {Promise<{elements: any[][]}>}
+     * ({kind, items: [name, thickness m, fraction, item category, material category, material id][]}), overall [height, width] m,
+     * extruded volume m³, clipped, geometry ('none'|'extrusion'|'other'), parent element id, has parts, openings, host element id
+     * (the element a door or window fills an opening in)]; and the materials' properties, [material id, set, name, value] (the
+     * mass density in the file's values, taken as kg/m³). The worker stays for the next call.
+     * @param {Uint8Array} bytes @param {{onProgress?: (share: number) => void}} [options] @returns {Promise<{elements: any[][], materialProps: any[][]}>}
      */
     async function climate(bytes, options = {}) {
       const copy = bytes.slice().buffer;

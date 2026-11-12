@@ -25,6 +25,7 @@ LOCAL_GLOBS = [
     "presets/geo/*.geojson",
     "presets/api/*.api.json",
     "presets/geodata/*.json",
+    "presets/ids/*.ids",
 ]
 # Larger text files travel gzip+base64 (platform/assets gunzips them with DecompressionStream): the plan catalogue.
 LOCAL_GZIP_GLOBS = [
