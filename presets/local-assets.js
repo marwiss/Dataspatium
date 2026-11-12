@@ -9,7 +9,7 @@ Dataspatium.assets.addEntries({
  "python/dataspatium.py": {
   "file": "python/dataspatium.py.js",
   "encoding": "text",
-  "size": 222501,
+  "size": 278903,
   "library": "dataspatium"
  },
  "presets/exempeldata/befolkning-kommuner-2024.csv": {
@@ -412,6 +412,18 @@ Dataspatium.assets.addEntries({
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
   "size": 30962,
+  "library": "dataspatium"
+ },
+ "presets/ids/SE-Dataspatium_Grund.ids": {
+  "file": "presets/ids/SE-Dataspatium_Grund.ids.js",
+  "encoding": "text",
+  "size": 9094,
+  "library": "dataspatium"
+ },
+ "presets/ids/SE-Dataspatium_Klimatdeklaration.ids": {
+  "file": "presets/ids/SE-Dataspatium_Klimatdeklaration.ids.js",
+  "encoding": "text",
+  "size": 11489,
   "library": "dataspatium"
  },
  "presets/bibliotek/index.json": {

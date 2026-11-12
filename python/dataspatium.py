@@ -1155,7 +1155,7 @@ def dm_ifc_ids(model, source, name=None):
         ids = ifctester.ids.open(path)
     except Exception as e:
         raise DataspatiumError(_msg("ids.invalid", str(e)[:200]))
-    ids.validate(m)
+    ids.validate(m, should_filter_version=True)  # a specification applies only to the IFC versions it names
     res = ifctester.reporter.Json(ids).report()
     rows = []
     for spec in res.get("specifications", []):
@@ -3337,6 +3337,760 @@ def _ifc_integrity(model):
     return out
 
 
+# ---- buildingSMART's normative rules (recommendation 8 of the native IFC study, 2026-11-12) -------------------------
+# A selection of the rules of buildingSMART's validation service, ifc-gherkin-rules (https://github.com/buildingSMART/ifc-gherkin-rules,
+# read at commit 893f827 of 2026-07-29), ported to the app's own Python without behave, pyproj or rtree: IFC102, GEM111, SWE001,
+# PSE001, PSE002, QTY001, GRF001, GRF003, GRF005, SPS007, OJT001 and PJS003. The tables of IFC102 are the rule's own. PSE001 and QTY001
+# read IfcOpenShell's property set templates instead of the rule's CSV tables, SWE001 asks shapely whether a profile is valid, GRF005
+# knows a CRS's unit from the Nordic codes the app writes or from the CRS's MapUnit where the rule asks pyproj, and PJS003 also
+# counts a GlobalId used twice. Every finding carries its rule; implementer agreements and informal propositions are errors and
+# industry practice warnings, as the validation service grades them. The preview of a change set (_ifc_changeset) tries what the
+# change set made or changed and counts only what the base did not have already.
+#
+# The ported rules are under the rules' own licence:
+#
+#   MIT License
+#
+#   Copyright (c) buildingSMART International Ltd
+#
+#   Permission is hereby granted, free of charge, to any person obtaining a copy
+#   of this software and associated documentation files (the "Software"), to deal
+#   in the Software without restriction, including without limitation the rights
+#   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#   copies of the Software, and to permit persons to whom the Software is
+#   furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in all
+#   copies or substantial portions of the Software.
+#
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#   SOFTWARE.
+
+RULE_SOURCE = "buildingSMART ifc-gherkin-rules 893f827"
+RULE_LEVELS = {"IFC102": "error", "GEM111": "error", "SWE001": "error", "PSE001": "error", "PSE002": "warning", "QTY001": "error",
+               "GRF001": "error", "GRF003": "warning", "GRF005": "warning", "SPS007": "error", "OJT001": "error", "PJS003": "error"}
+RULE_TITLES = {
+    "IFC102": "Absence of deprecated entities", "GEM111": "No duplicated points within a polyloop or polyline",
+    "SWE001": "Arbitrary profile boundary no self-intersections", "PSE001": "Standard properties and property sets validation",
+    "PSE002": "Custom properties and property sets validation", "QTY001": "Standard quantities and quantity sets validation",
+    "GRF001": "Identical coordinate operations", "GRF003": "CRS presence with spatial entities", "GRF005": "CRS unit type differences",
+    "SPS007": "Spatial containment", "OJT001": "Object predefined type", "PJS003": "Globally unique identifiers"}
+_RULE_IFC102_IFC4_ATTRIBUTES = (
+    ("IfcDoorLiningProperties", "ShapeAspectStyle"), ("IfcDoorPanelProperties", "ShapeAspectStyle"),
+    ("IfcFillAreaStyleHatching", "PointOfReferenceHatchLine"), ("IfcReinforcingElement", "SteelGrade"),
+    ("IfcRelAssignsToActor", "RelatedObjectsType"), ("IfcRelAssignsToControl", "RelatedObjectsType"), ("IfcRelAssignsToGroup", "RelatedObjectsType"),
+    ("IfcRelAssignsToGroupByFactor", "RelatedObjectsType"), ("IfcRelAssignsToProcess", "RelatedObjectsType"),
+    ("IfcRelAssignsToProduct", "RelatedObjectsType"), ("IfcRelAssignsToResource", "RelatedObjectsType"),
+    ("IfcStairFlight", "NumberOfRisers"), ("IfcStairFlight", "NumberOfTreads"), ("IfcStairFlight", "RiserHeight"), ("IfcStairFlight", "TreadLength"),
+    ("IfcWindowPanelProperties", "ShapeAspectStyle"), ("IfcWindowLiningProperties", "ShapeAspectStyle"),
+    ("IfcTendon", "SteelGrade"), ("IfcTendon", "NominalDiameter"), ("IfcTendon", "CrossSectionArea"), ("IfcTendon", "TensionForce"),
+    ("IfcTendon", "PreStress"), ("IfcTendon", "FrictionCoefficient"), ("IfcTendon", "AnchorageSlip"), ("IfcTendon", "MinCurvatureRadius"),
+    ("IfcTendonAnchor", "SteelGrade"), ("IfcTendonType", "NominalDiameter"), ("IfcTendonType", "CrossSectionArea"), ("IfcTendonType", "SheathDiameter"))
+_RULE_IFC102_EXACT = ("IfcFlowFitting", "IfcFlowSegment", "IfcFlowTerminal", "IfcFlowController", "IfcFlowMovingDevice", "IfcFlowStorageDevice",
+                      "IfcFlowTreatmentDevice", "IfcEnergyConversionDevice")
+# IFC102 by the file's schema family, from the rule's tables: entities never written (excluding subtypes; names that are no entity
+# of the schema are kept as the rule has them and skipped), attributes left empty, (entity, attribute, values) never written, and
+# entities never instantiated as themselves (only as a subtype).
+RULE_IFC102 = {
+    "IFC4X3": {
+        "entities": ("IfcBuildingSystem", "IfcCivilElement", "IfcCivilElementType", "IfcDoorLiningProperties", "IfcDoorPanelProperties",
+                     "IfcElectricDistributionBoard", "IfcElectricDistributionBoardType", "IfcFaceBasedSurfaceModel", "IfcMaterialClassificationRelationship",
+                     "IfcMaterialList", "IfcPermeableCoveringProperties", "IfcPostalAddress", "IfcRelConnectsPortToElement", "IfcRelCoversBldgElements",
+                     "IfcRelServicesBuildings", "IfcRelCoversSpaces", "IfcTelecomAddress", "IfcTextLiteral", "IfcTrapeziumProfileDef",
+                     "IfcWallStandardCase", "IfcWindowLiningProperties", "IfcWindowPanelProperties", "IfcWindowStandardCase"),
+        "attributes": (("IfcBuilding", "BuildingAddress"), ("IfcBuilding", "ElevationOfRefHeight"), ("IfcBuilding", "ElevationOfTerrain"),
+                       ("IfcBuildingStorey", "Elevation"), ("IfcFillAreaStyleHatching", "PointOfReferenceHatchLine"), ("IfcOrganization", "Addresses"),
+                       ("IfcPerson", "Addresses"), ("IfcPile", "ConstructionType"), ("IfcReinforcingElement", "SteelGrade"), ("IfcRelAssigns", "RelatedObjectsType"),
+                       ("IfcSite", "LandTitleNumber"), ("IfcSite", "SiteAddress"), ("IfcStairFlight", "NumberOfRisers"), ("IfcStairFlight", "NumberOfTreads"),
+                       ("IfcStairFlight", "RiserHeight"), ("IfcStairFlight", "TreadLength"), ("IfcSurfaceStyleRendering", "DiffuseTransmissionColour"),
+                       ("IfcSurfaceStyleRendering", "ReflectionColour"), ("IfcSurfaceStyleRendering", "TransmissionColour"), ("IfcSurfaceTexture", "Parameter"),
+                       ("IfcTendon", "NominalDiameter"), ("IfcTendon", "CrossSectionArea"), ("IfcTextureCoordinateGenerator", "Parameter")),
+        "values": (("IfcBuildingElementProxy", "PredefinedType", ("PROVISIONFORSPACE", "PROVISIONFORVOID")),
+                   ("IfcFireSuppressionTerminal", "PredefinedType", ("SPRINKLERDEFLECTOR",)), ("IfcFireSuppressionTerminalType", "PredefinedType", ("SPRINKLERDEFLECTOR",)),
+                   ("IfcCableCarrierFitting", "PredefinedType", ("TEE", "CROSS", "REDUCER")), ("IfcCableCarrierFittingType", "PredefinedType", ("TEE", "CROSS", "REDUCER")),
+                   ("IfcGeographicElement", "PredefinedType", ("SOIL_BORING_POINT",)), ("IfcGeographicElementType", "PredefinedType", ("SOIL_BORING_POINT",)),
+                   ("IfcSpace", "PredefinedType", ("INTERNAL", "EXTERNAL")), ("IfcSpaceType", "PredefinedType", ("INTERNAL", "EXTERNAL")),
+                   ("IfcWall", "PredefinedType", ("POLYGONAL", "STANDARD")), ("IfcWallType", "PredefinedType", ("POLYGONAL", "STANDARD")),
+                   ("IfcShapeRepresentation", "RepresentationType", ("PointCloud",)), ("IfcPropertySet", "Name", ("Pset_Draughting",))),
+        "exact": _RULE_IFC102_EXACT,
+    },
+    "IFC4": {
+        "entities": ("Ifc2DCompositeCurve", "IfcBeamStandardCase", "IfcConnectionPortGeometry", "IfcColumnStandardCase", "IfcDoorStandardCase",
+                     "IfcDoorStyle", "IfcDoorStyleOperationEnum", "IfcElectricalElement", "IfcEquipmentElement", "IfcFaceBasedSurfaceModel",
+                     "IfcMaterialClassificationRelationship", "IfcMaterialList", "IfcMemberStandardCase", "IfcNullStyle", "IfcObjectTypeEnum",
+                     "IfcOpeningStandardCase", "IfcPlateStandardCase", "IfcPresentationStyleAssignment", "IfcProxy", "IfcRelCoversBldgElements",
+                     "IfcRelCoversSpaces", "IfcSlabElementedCase", "IfcSlabStandardCase", "IfcTextLiteral", "IfcWallElementedCase", "IfcWallStandardCase",
+                     "IfcWindowStandardCase", "IfcWindowStyle", "IfcWindowStyleOperationEnum"),
+        "attributes": _RULE_IFC102_IFC4_ATTRIBUTES,
+        "values": (("IfcWall", "PredefinedType", ("POLYGONAL", "STANDARD", "ELEMENTEDWALL")), ("IfcWallType", "PredefinedType", ("POLYGONAL", "STANDARD", "ELEMENTEDWALL")),
+                   ("IfcPropertySet", "Name", ("Pset_Draughting",))),
+        "exact": _RULE_IFC102_EXACT,
+    },
+    "IFC2X3": {
+        "entities": ("Ifc2DCompositeCurve", "IfcConnectionPortGeometry", "IfcElectricalElement", "IfcEquipmentElement", "IfcObjectTypeEnum", "IfcTextLiteral"),
+        "attributes": (("IfcFillAreaStyleHatching", "PointOfReferenceHatchLine"),),
+        "values": (("IfcOwnerHistory", "ChangeAction", ("MODIFIEDADDED", "MODIFIEDDELETED")), ("IfcPropertySet", "Name", ("Pset_Draughting",))),
+        "exact": ("IfcProductRepresentation", "IfcRepresentation", "IfcRepresentationContext", "IfcRelAssociates"),
+    },
+}
+RULE_GUID_CHARS = frozenset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$")
+RULE_PROPERTY_KINDS = {"P_SINGLEVALUE": "IfcPropertySingleValue", "P_ENUMERATEDVALUE": "IfcPropertyEnumeratedValue",
+                       "P_BOUNDEDVALUE": "IfcPropertyBoundedValue", "P_LISTVALUE": "IfcPropertyListValue", "P_TABLEVALUE": "IfcPropertyTableValue",
+                       "P_REFERENCEVALUE": "IfcPropertyReferenceValue", "Q_LENGTH": "IfcQuantityLength", "Q_AREA": "IfcQuantityArea",
+                       "Q_VOLUME": "IfcQuantityVolume", "Q_COUNT": "IfcQuantityCount", "Q_WEIGHT": "IfcQuantityWeight", "Q_TIME": "IfcQuantityTime",
+                       "Q_NUMBER": "IfcQuantityNumber"}
+RULE_MAX_FINDINGS = 200
+EXPRESS_MAX_ENTITIES = 300000  # the schema's rules at approval are left out above this, with a note
+
+
+class _Rules:
+    """The rules above on one model: `of(e)` tries one instance against the rules that concern its class, `model_level()` the rules
+    that concern the whole model (GRF001, GRF003, GRF005), and `run(scope)` both, on every instance or on the step ids in scope. A
+    finding is {level, kind "rule", rule, ifc_class, id, guid, attribute, message}, keyed so that a base and its candidate compare."""
+
+    def __init__(self, model):
+        self.m = model
+        schema = str(getattr(model, "schema", "") or "").upper()
+        self.family = "IFC4X3" if schema.startswith("IFC4X3") else "IFC2X3" if schema.startswith("IFC2X3") else "IFC4"
+        table = RULE_IFC102[self.family]
+        self.deprecated = set(table["entities"])
+        self.exact = set(table["exact"])
+        self.attributes = table["attributes"]
+        self.values = table["values"]
+        self._precision = None
+        self._templates = False
+        self._guids = None
+
+    # -- helpers
+    @property
+    def precision(self):
+        """The largest Precision of the model's own contexts, in the file's units; 1e-5 without one, as the rules take it."""
+        if self._precision is None:
+            values = [float(c.Precision) for c in self.m.by_type("IfcGeometricRepresentationContext") if getattr(c, "Precision", None)]
+            self._precision = max(values) if values else 1e-5
+        return self._precision
+
+    @property
+    def templates(self):
+        if self._templates is False:
+            try:
+                import ifcopenshell.util.pset
+                self._templates = ifcopenshell.util.pset.get_template(getattr(self.m, "schema_identifier", None) or self.m.schema)
+            except Exception:
+                self._templates = None
+        return self._templates
+
+    @property
+    def guids(self):
+        if self._guids is None:
+            self._guids = {}
+            for e in self.m.by_type("IfcRoot"):
+                g = getattr(e, "GlobalId", None)
+                self._guids[g] = self._guids.get(g, 0) + 1
+        return self._guids
+
+    @staticmethod
+    def finding(rule, e, attribute, message, key=None):
+        return {"level": RULE_LEVELS[rule], "kind": "rule", "rule": rule, "ifc_class": e.is_a() if e is not None else None,
+                "id": e.id() if e is not None else None, "guid": getattr(e, "GlobalId", None) if e is not None else None,
+                "attribute": attribute, "message": message,
+                "_key": "%s:%s:%s" % (rule, e.id() if e is not None else "model", key if key is not None else attribute)}
+
+    def wanted(self):
+        """The classes whose instances a full run tries."""
+        names = {"IfcRoot", "IfcPolyline", "IfcPolyLoop", "IfcArbitraryClosedProfileDef", "IfcShapeRepresentation"}
+        names |= self.deprecated | self.exact | {a[0] for a in self.attributes} | {v[0] for v in self.values}
+        return names
+
+    def run(self, scope=None):
+        """{key: finding} of every instance (scope None) or of the step ids in scope, and of the model-level rules."""
+        out = {}
+        if scope is None:
+            seen = set()
+            items = []
+            for name in sorted(self.wanted()):
+                try:
+                    found = self.m.by_type(name)
+                except Exception:
+                    continue  # a name the schema does not have
+                for e in found:
+                    if e.id() not in seen:
+                        seen.add(e.id())
+                        items.append(e)
+        else:
+            items = []
+            for i in sorted(scope):
+                try:
+                    items.append(self.m.by_id(int(i)))
+                except Exception:
+                    continue
+        for e in items:
+            for f in self.of(e):
+                out.setdefault(f["_key"], f)
+        for f in self.model_level():
+            out.setdefault(f["_key"], f)
+        return out
+
+    def of(self, e):
+        """The findings of one instance."""
+        out = []
+        cls = e.is_a()
+        try:
+            out += self.ifc102(e, cls)
+            if e.is_a("IfcPolyline") or e.is_a("IfcPolyLoop"):
+                out += self.gem111(e)
+            if e.is_a("IfcArbitraryClosedProfileDef"):
+                out += self.swe001(e)
+            if e.is_a("IfcPropertySet"):
+                out += self.pse(e)
+            if e.is_a("IfcElementQuantity") and self.family != "IFC2X3":
+                out += self.qty001(e)
+            if e.is_a("IfcProduct"):
+                out += self.sps007(e)
+            if self.family != "IFC2X3" and (e.is_a("IfcObject") or e.is_a("IfcTypeObject")):
+                out += self.ojt001(e)
+            if e.is_a("IfcRoot"):
+                out += self.pjs003(e)
+        except Exception as exc:  # a rule that cannot read an odd instance says so instead of failing the preview
+            out.append({"level": "warning", "kind": "rule", "rule": None, "ifc_class": cls, "id": e.id(), "guid": getattr(e, "GlobalId", None),
+                        "attribute": None, "message": "the rules could not read this instance: %s: %s" % (type(exc).__name__, exc), "_key": "read:%s" % e.id()})
+        return out
+
+    # -- IFC102 Absence of deprecated entities
+    def ifc102(self, e, cls):
+        out = []
+        if cls in self.deprecated:
+            out.append(self.finding("IFC102", e, None, "%s is deprecated in %s; it is never written" % (cls, self.family), "entity"))
+        if cls in self.exact:
+            out.append(self.finding("IFC102", e, None, "%s is not instantiated as itself in %s; use the specific subtype" % (cls, self.family), "exact"))
+        for owner, attr in self.attributes:
+            if e.is_a(owner) and getattr(e, attr, None) not in (None, (), []):
+                out.append(self.finding("IFC102", e, attr, "%s.%s is deprecated in %s and stays empty" % (owner, attr, self.family)))
+        for owner, attr, values in self.values:
+            if e.is_a(owner) and getattr(e, attr, None) in values:
+                out.append(self.finding("IFC102", e, attr, "%s %s is deprecated for %s in %s" % (attr, getattr(e, attr), owner, self.family)))
+        return out
+
+    # -- GEM111 No duplicated points within a polyloop or polyline
+    def gem111(self, e):
+        points = list((e.Polygon if e.is_a("IfcPolyLoop") else e.Points) or ())
+        coords = [tuple(float(c) for c in p.Coordinates) for p in points]
+        if len(coords) < 2:
+            return []
+        out = []
+        loop = e.is_a("IfcPolyLoop")
+        closed = not loop and math.dist(coords[0], coords[-1]) < self.precision
+        pair = _rule_duplicate(coords, self.precision, skip=(0, len(coords) - 1) if closed else None)
+        if pair is not None:
+            what = "polyloop" if loop else "closed polyline" if closed else "open polyline"
+            out.append(self.finding("GEM111", e, "Polygon" if loop else "Points", "the %s repeats a point: %d and %d are %s and %s" % (
+                what, pair[0] + 1, pair[1] + 1, list(coords[pair[0]]), list(coords[pair[1]]))))
+        if closed and points[0].id() != points[-1].id():
+            out.append(self.finding("GEM111", e, "Points", "the closed polyline ends on #%d, a copy of its first point #%d, instead of the first point itself" % (
+                points[-1].id(), points[0].id()), "closing"))
+        return out
+
+    # -- SWE001 Arbitrary profile boundary no self-intersections
+    def swe001(self, e):
+        from shapely.geometry import Polygon
+        from shapely.validation import explain_validity
+        out = []
+        curves = [("OuterCurve", e.OuterCurve)]
+        if e.is_a("IfcArbitraryProfileDefWithVoids"):
+            curves += [("InnerCurves", c) for c in (e.InnerCurves or ())]
+        for n, (attr, curve) in enumerate(curves):
+            ring = _rule_curve_points(curve)
+            if ring is None or len(ring) < 3:
+                continue  # a curve the app cannot trace (circles, trimmed curves) is left to the server's check
+            polygon = Polygon(ring)
+            what = "outer curve" if attr == "OuterCurve" else "inner curve #%d" % curve.id()
+            if not polygon.is_valid:
+                out.append(self.finding("SWE001", e, attr, "the profile's %s is not a simple closed boundary: %s" % (what, explain_validity(polygon)), "%s:%d" % (attr, n)))
+            else:
+                near = _rule_near_edges(ring, self.precision)
+                if near is not None:
+                    out.append(self.finding("SWE001", e, attr, "the profile's %s comes within the precision of itself between edges %d and %d" % (what, near[0] + 1, near[1] + 1), "%s:%d" % (attr, n)))
+        return out
+
+    # -- PSE001 Standard property sets, PSE002 custom property sets
+    def related(self, pset):
+        """(occurrences, types) a property set or quantity set is given to."""
+        rels = list(getattr(pset, "DefinesOccurrence", None) or getattr(pset, "PropertyDefinitionOf", None) or ())
+        objects = [o for r in rels for o in (r.RelatedObjects or ())]
+        types = [o for o in objects if o.is_a("IfcTypeObject")] + list(getattr(pset, "DefinesType", None) or ())
+        return [o for o in objects if not o.is_a("IfcTypeObject")], types
+
+    @staticmethod
+    def predefined(obj):
+        """The object's predefined type as the rules read it: its own, USERDEFINED read as its ObjectType, else its type's."""
+        import ifcopenshell.util.element as el
+        if not obj.is_a("IfcTypeObject"):
+            pt = getattr(obj, "PredefinedType", None)
+            if pt:
+                return getattr(obj, "ObjectType", None) if pt == "USERDEFINED" else pt
+            obj = el.get_type(obj)
+        if obj is not None and getattr(obj, "PredefinedType", None):
+            return getattr(obj, "ElementType", None) if obj.PredefinedType == "USERDEFINED" else obj.PredefinedType
+        return None
+
+    def applies(self, rule, template, sets, obj, kind):
+        """The findings when a standard set is given to an object its template does not apply to."""
+        import ifcopenshell.util.type as types
+        tt = str(template.TemplateType or "")
+        if kind == "occurrence" and tt in ("PSET_TYPEDRIVENONLY", "QTO_TYPEDRIVENONLY"):
+            return [self.finding(rule, sets, None, "%s is for type objects only, not for %s #%d" % (sets.Name, obj.is_a(), obj.id()), "only:%d" % obj.id())]
+        if kind == "type" and tt in ("PSET_OCCURRENCEDRIVEN", "PSET_PERFORMANCEDRIVEN", "QTO_OCCURRENCEDRIVEN"):
+            return [self.finding(rule, sets, None, "%s is for occurrences only, not for the type %s #%d" % (sets.Name, obj.is_a(), obj.id()), "only:%d" % obj.id())]
+        q = self.templates
+        try:
+            decl = q.schema.declaration_by_name(obj.is_a()).as_entity()
+        except Exception:
+            return []
+        applicable = str(template.ApplicableEntity or "IfcRoot")
+        pt = str(self.predefined(obj) or "")
+        ok = q.is_applicable(decl, applicable, pt, tt, self.family)
+        if not ok and kind == "type":
+            try:
+                ok = any(q.is_applicable(q.schema.declaration_by_name(c).as_entity(), applicable, pt, "", self.family) for c in types.get_applicable_entities(obj.is_a(), self.family))
+            except Exception:
+                ok = False
+        if ok:
+            return []
+        return [self.finding(rule, sets, None, "%s does not apply to %s #%d%s; it applies to %s" % (sets.Name, obj.is_a(), obj.id(), " (%s)" % pt if pt else "", applicable), "applies:%d" % obj.id())]
+
+    def pse(self, e):
+        import re
+        name = str(getattr(e, "Name", None) or "")
+        if not name.startswith("Pset_"):
+            if re.match(r"^[Pp][Ss][Ee][Tt]", name):
+                return [self.finding("PSE002", e, "Name", "%r is a property set of its own whose name starts like a standard one; only IFC's own sets start with Pset_" % name)]
+            return []
+        if self.templates is None:
+            return []
+        template = self.templates.get_by_name(name)
+        if template is None:
+            return [self.finding("PSE001", e, "Name", "%s is not a standard property set of %s; a set of your own has a name without Pset_" % (name, self.family))]
+        out = self.members("PSE001", e, template, list(getattr(e, "HasProperties", None) or ()))
+        occurrences, types = self.related(e)
+        for o in occurrences:
+            out += self.applies("PSE001", template, e, o, "occurrence")
+        for o in types:
+            out += self.applies("PSE001", template, e, o, "type")
+        return out
+
+    def members(self, rule, sets, template, members):
+        """The properties or quantities of a standard set against its template: name, kind and, for single and enumerated values, type."""
+        out = []
+        known = {t.Name: t for t in (template.HasPropertyTemplates or ())}
+        for p in members:
+            t = known.get(p.Name)
+            if t is None:
+                out.append(self.finding(rule, sets, p.Name, "%s is not a %s of %s" % (p.Name, "quantity" if rule == "QTY001" else "property", sets.Name)))
+                continue
+            kind = RULE_PROPERTY_KINDS.get(str(getattr(t, "TemplateType", None) or ""))
+            if kind and not p.is_a(kind):
+                out.append(self.finding(rule, sets, p.Name, "%s.%s is an %s; the template has an %s" % (sets.Name, p.Name, p.is_a(), kind), p.Name + ":kind"))
+            elif p.is_a("IfcPropertySingleValue") and p.NominalValue is not None and getattr(t, "PrimaryMeasureType", None) and not p.NominalValue.is_a(t.PrimaryMeasureType):
+                out.append(self.finding(rule, sets, p.Name, "%s.%s is an %s; the template has an %s" % (sets.Name, p.Name, p.NominalValue.is_a(), t.PrimaryMeasureType), p.Name + ":type"))
+            elif p.is_a("IfcPropertyEnumeratedValue") and getattr(t, "Enumerators", None) is not None:
+                allowed = {getattr(v, "wrappedValue", v) for v in (t.Enumerators.EnumerationValues or ())}
+                wrong = [getattr(v, "wrappedValue", v) for v in (p.EnumerationValues or ()) if getattr(v, "wrappedValue", v) not in allowed]
+                if wrong:
+                    out.append(self.finding(rule, sets, p.Name, "%s.%s takes %s, not %s" % (sets.Name, p.Name, ", ".join(sorted(map(str, allowed))), ", ".join(map(str, wrong))), p.Name + ":value"))
+        return out
+
+    # -- QTY001 Standard quantity sets
+    def qty001(self, e):
+        name = str(getattr(e, "Name", None) or "")
+        if not name.startswith("Qto_") or self.templates is None:
+            return []
+        template = self.templates.get_by_name(name)
+        if template is None:
+            return [self.finding("QTY001", e, "Name", "%s is not a standard quantity set of %s; a set of your own has a name without Qto_" % (name, self.family))]
+        out = self.members("QTY001", e, template, list(getattr(e, "Quantities", None) or ()))
+        if getattr(e, "MethodOfMeasurement", None) != "BaseQuantities":
+            out.append(self.finding("QTY001", e, "MethodOfMeasurement", "%s has MethodOfMeasurement %r; a standard quantity set has 'BaseQuantities'" % (name, getattr(e, "MethodOfMeasurement", None))))
+        occurrences, types = self.related(e)
+        for o in occurrences:
+            out += self.applies("QTY001", template, e, o, "occurrence")
+        for o in types:
+            out += self.applies("QTY001", template, e, o, "type")
+        return out
+
+    # -- SPS007 Spatial containment
+    def sps007(self, e):
+        # The containment through the inverse ContainedInStructure, as the rule reads it: a spatial element that a file puts in an
+        # IfcRelContainedInSpatialStructure has no such inverse, and the rule does not see it.
+        within = [r.RelatingStructure for r in (getattr(e, "ContainedInStructure", None) or ())]
+        held = any(s.is_a("IfcSpatialStructureElement") for s in within)
+        if e.is_a("IfcGrid") or e.is_a("IfcAnnotation"):
+            if e.is_a("IfcAnnotation") and any(r.RelatingObject.is_a("IfcAnnotation") for r in (getattr(e, "Nests", None) or ())):
+                return []
+            return [] if held else [self.finding("SPS007", e, "ContainedInStructure", "%s is not contained in a spatial structure element (a storey)" % e.is_a())]
+        if e.is_a("IfcElement"):
+            out = []
+            parts = [r for r in (getattr(e, "Decomposes", None) or ())]
+            if not e.is_a("IfcFeatureElement") and not parts and not held:
+                out.append(self.finding("SPS007", e, "ContainedInStructure", "%s is neither contained in a spatial structure element nor part of another element" % e.is_a()))
+            if within and any(r.is_a("IfcRelAggregates") and r.RelatingObject.is_a("IfcElement") for r in parts):
+                out.append(self.finding("SPS007", e, "ContainedInStructure", "%s is part of another element and must not be contained in a spatial structure as well" % e.is_a(), "part"))
+            return out
+        if within:
+            return [self.finding("SPS007", e, "ContainedInStructure", "%s is no element and must not be contained in a spatial structure; aggregate it instead" % e.is_a())]
+        return []
+
+    # -- OJT001 Object predefined type (IFC4 and IFC4.3)
+    def ojt001(self, e):
+        out = []
+        pt = getattr(e, "PredefinedType", None)
+        if e.is_a("IfcTypeObject"):
+            if pt == "USERDEFINED" and hasattr(e, "ElementType") and not str(e.ElementType or "").strip():
+                out.append(self.finding("OJT001", e, "ElementType", "the type is USERDEFINED without an ElementType to name it"))
+            return out
+        typed = [r.RelatingType for r in (getattr(e, "IsTypedBy", None) or ())]
+        if not typed and pt == "USERDEFINED" and not str(getattr(e, "ObjectType", None) or "").strip():
+            out.append(self.finding("OJT001", e, "ObjectType", "the element is USERDEFINED without an ObjectType to name it"))
+        for t in typed:
+            tpt = getattr(t, "PredefinedType", None)
+            if tpt and not str(tpt).startswith("NOTDEFINED") and pt is not None:
+                out.append(self.finding("OJT001", e, "PredefinedType", "the element has PredefinedType %s while its type %s #%d has %s; the element's stays empty" % (pt, t.is_a(), t.id(), tpt)))
+        return out
+
+    # -- PJS003 Globally unique identifiers
+    def pjs003(self, e):
+        g = getattr(e, "GlobalId", None)
+        if not isinstance(g, str):
+            return [self.finding("PJS003", e, "GlobalId", "the GlobalId is missing")]
+        out = []
+        if len(g) != 22:
+            out.append(self.finding("PJS003", e, "GlobalId", "the GlobalId %r has %d characters, not 22" % (g, len(g)), "length"))
+        if any(c not in RULE_GUID_CHARS for c in g):
+            out.append(self.finding("PJS003", e, "GlobalId", "the GlobalId %r has characters outside 0-9, A-Z, a-z, _ and $" % g, "chars"))
+        if not g[:1] or g[0] not in "0123":
+            out.append(self.finding("PJS003", e, "GlobalId", "the GlobalId %r starts with %r, not 0, 1, 2 or 3" % (g, g[:1]), "start"))
+        if self.guids.get(g, 0) > 1:
+            out.append(self.finding("PJS003", e, "GlobalId", "the GlobalId %s is used by %d instances" % (g, self.guids[g]), "unique"))
+        return out
+
+    # -- GRF001, GRF003, GRF005: the model's georeferencing
+    def model_level(self):
+        out = []
+        try:
+            out += self.grf001()
+            out += self.grf003()
+            out += self.grf005()
+        except Exception as exc:
+            out.append({"level": "warning", "kind": "rule", "rule": None, "ifc_class": None, "id": None, "guid": None, "attribute": None,
+                        "message": "the georeferencing rules could not run: %s: %s" % (type(exc).__name__, exc), "_key": "read:model"})
+        return out
+
+    @staticmethod
+    def operation(op):
+        """A coordinate operation's values without its SourceCRS, entities by their step id."""
+        def plain(v):
+            if hasattr(v, "is_a") and hasattr(v, "id"):
+                return ("#", v.id()) if v.id() else (v.is_a(), getattr(v, "wrappedValue", None))
+            return v
+        info = op.get_info(recursive=False)
+        return (op.is_a(),) + tuple(sorted((k, plain(v)) for k, v in info.items() if k not in ("id", "type", "SourceCRS")))
+
+    def grf001(self):
+        if self.family != "IFC4X3":
+            return []
+        contexts = list(self.m.by_type("IfcGeometricRepresentationContext", include_subtypes=False))
+        if len(contexts) < 2:
+            return []
+        sigs = [tuple(sorted((self.operation(op) for op in (getattr(c, "HasCoordinateOperation", None) or ())), key=repr)) for c in contexts]
+        if all(s == sigs[0] for s in sigs):
+            return []
+        odd = next(c for c, s in zip(contexts, sigs) if s != sigs[0])
+        return [self.finding("GRF001", odd, "HasCoordinateOperation", "the %d geometric representation contexts do not share one coordinate operation: %s" % (
+            len(contexts), ", ".join("#%d %s" % (c.id(), "none" if not s else s[0][0]) for c, s in zip(contexts, sigs))), "model")]
+
+    def grf003(self):
+        if self.family == "IFC4" and self.m.by_type("IfcBuilding") and not self.m.by_type("IfcProjectedCRS"):
+            return [self.finding("GRF003", self.m.by_type("IfcBuilding")[0], None, "the model has a building but no IfcProjectedCRS", "model")]
+        if self.family == "IFC4X3" and self.m.by_type("IfcFacility") and not self.m.by_type("IfcCoordinateReferenceSystem"):
+            return [self.finding("GRF003", self.m.by_type("IfcFacility")[0], None, "the model has a facility but no coordinate reference system", "model")]
+        return []
+
+    def crs_unit(self, crs):
+        """The CRS's horizontal unit in metres: metres for the Nordic codes the app knows, else from its MapUnit; None when unknown."""
+        name = str(getattr(crs, "Name", None) or "")
+        try:
+            if name.upper().startswith("EPSG:") and _cs_crs_facts(name)[0] is not None:
+                return 1.0
+        except Exception:
+            pass
+        unit = getattr(crs, "MapUnit", None)
+        if unit is None:
+            return None
+        if unit.is_a("IfcSIUnit"):
+            import ifcopenshell.util.unit
+            return float(ifcopenshell.util.unit.get_prefix_multiplier(unit.Prefix)) if unit.Prefix else 1.0
+        if unit.is_a("IfcConversionBasedUnit") and unit.ConversionFactor is not None:
+            factor = float(unit.ConversionFactor.ValueComponent.wrappedValue)
+            base = unit.ConversionFactor.UnitComponent
+            return factor * (self.crs_unit_of_si(base) or 1.0)
+        return None
+
+    @staticmethod
+    def crs_unit_of_si(unit):
+        import ifcopenshell.util.unit
+        return float(ifcopenshell.util.unit.get_prefix_multiplier(unit.Prefix)) if getattr(unit, "Prefix", None) else 1.0
+
+    def grf005(self):
+        if self.family == "IFC2X3":
+            return []
+        import ifcopenshell.util.unit
+        out = []
+        project = float(ifcopenshell.util.unit.calculate_unit_scale(self.m, "LENGTHUNIT") or 1.0)
+        for conv in self.m.by_type("IfcMapConversion"):
+            crs = self.crs_unit(conv.TargetCRS) if conv.TargetCRS is not None else None
+            if crs is None:
+                continue
+            scale = getattr(conv, "Scale", None)
+            if not scale or float(scale) == 1.0:
+                if not math.isclose(crs, project, rel_tol=1e-9):
+                    out.append(self.finding("GRF005", conv, "Scale", "the map conversion has no scale, but the project's length unit (%g m) differs from the CRS's (%g m); the rule wants Scale %g" % (project, crs, crs / project)))
+            elif not math.isclose(crs / project, float(scale), rel_tol=1e-9):
+                out.append(self.finding("GRF005", conv, "Scale", "the map conversion's Scale %g is not the CRS's unit (%g m) divided by the project's (%g m), %g" % (float(scale), crs, project, crs / project)))
+        return out
+
+
+def _rule_duplicate(coords, tolerance, skip=None):
+    """The first pair (i, j) of points closer than the tolerance, the pair `skip` (a closed polyline's ends) excepted; None."""
+    n = len(coords)
+    if n <= 64:
+        for i in range(n):
+            for j in range(i + 1, n):
+                if (i, j) != skip and math.dist(coords[i], coords[j]) < tolerance:
+                    return (i, j)
+        return None
+    cells = {}
+    size = max(tolerance, 1e-12)
+    for j, c in enumerate(coords):
+        key = tuple(int(math.floor(v / size)) for v in c)
+        for near in _rule_neighbours(key):
+            for i in cells.get(near, ()):
+                if (i, j) != skip and math.dist(coords[i], c) < tolerance:
+                    return (i, j)
+        cells.setdefault(key, []).append(j)
+    return None
+
+
+def _rule_near_edges(ring, tolerance, most=120):
+    """Two edges of a closed ring that are not neighbours and come closer than the tolerance (the rule's precision), as their
+    indices; None, also for a ring of more than `most` edges, which shapely's validity alone covers."""
+    from shapely.geometry import LineString
+    pts = [p for i, p in enumerate(ring) if i == 0 or p != ring[i - 1]]
+    if len(pts) > 1 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    n = len(pts)
+    if n < 4 or n > most:
+        return None
+    edges = [LineString([pts[i], pts[(i + 1) % n]]) for i in range(n)]
+    for i in range(n):
+        for j in range(i + 2, n):
+            if i == 0 and j == n - 1:
+                continue
+            if edges[i].distance(edges[j]) < tolerance:
+                return (i, j)
+    return None
+
+
+def _rule_neighbours(key):
+    out = [()]
+    for k in key:
+        out = [o + (k + d,) for o in out for d in (-1, 0, 1)]
+    return out
+
+
+def _rule_curve_points(curve):
+    """A profile curve as 2D points in order, for the curves the app can trace: polylines, indexed poly curves (arcs sampled) and
+    composite curves of those; None for the others."""
+    if curve is None:
+        return None
+    if curve.is_a("IfcPolyline"):
+        return [tuple(float(v) for v in p.Coordinates[:2]) for p in (curve.Points or ())]
+    if curve.is_a("IfcIndexedPolyCurve"):
+        pts = [tuple(float(v) for v in c[:2]) for c in (curve.Points.CoordList or ())]
+        segments = getattr(curve, "Segments", None)
+        if not segments:
+            return pts
+        out = []
+        for seg in segments:
+            idx = [int(i) - 1 for i in (seg.wrappedValue if hasattr(seg, "wrappedValue") else seg[0])]
+            if any(i < 0 or i >= len(pts) for i in idx):
+                return None
+            run = [pts[i] for i in idx]
+            if seg.is_a("IfcArcIndex") and len(run) == 3:
+                run = _rule_arc(*run)
+            out += run if not out else run[1:]
+        return out
+    if curve.is_a("IfcCompositeCurve"):
+        out = []
+        for seg in (curve.Segments or ()):
+            part = _rule_curve_points(getattr(seg, "ParentCurve", None))
+            if part is None:
+                return None
+            if getattr(seg, "SameSense", True) is False:
+                part = part[::-1]
+            out += part if not out else part[1:]
+        return out
+    return None
+
+
+def _rule_arc(a, b, c, n=8):
+    """An arc through three points as n segments; the three points when they are in line."""
+    ax, ay = a
+    bx, by = b
+    cx, cy = c
+    d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+    if abs(d) < 1e-12:
+        return [a, b, c]
+    ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d
+    uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
+    r = math.hypot(ax - ux, ay - uy)
+    t0, t1, t2 = (math.atan2(p[1] - uy, p[0] - ux) for p in (a, b, c))
+    sweep = (t2 - t0) % (2 * math.pi)
+    if (t1 - t0) % (2 * math.pi) > sweep:
+        sweep -= 2 * math.pi
+    return [(ux + r * math.cos(t0 + sweep * k / n), uy + r * math.sin(t0 + sweep * k / n)) for k in range(n + 1)]
+
+
+def _ifc_rules(model, scope=None, limit=RULE_MAX_FINDINGS):
+    """The rules on a model (every instance, or the step ids in scope): {"findings": [...], "errors", "warnings", "rules": {code:
+    {level, title, count}}, "source"}, errors first."""
+    found = _Rules(model).run(scope)
+    return _rule_report(list(found.values()), limit)
+
+
+def _rule_report(findings, limit=RULE_MAX_FINDINGS):
+    findings = sorted(findings, key=lambda f: (f["level"] != "error", str(f.get("rule") or "~"), f.get("id") or 0))
+    by_rule = {}
+    for f in findings:
+        code = f.get("rule") or "read"
+        r = by_rule.setdefault(code, {"level": f["level"], "title": RULE_TITLES.get(code), "count": 0})
+        r["count"] += 1
+    return {"findings": [{k: v for k, v in f.items() if k != "_key"} for f in findings[:limit]], "errors": sum(1 for f in findings if f["level"] == "error"),
+            "warnings": sum(1 for f in findings if f["level"] != "error"), "rules": by_rule, "source": RULE_SOURCE}
+
+
+def _ifc_max_id(model):
+    try:
+        return int(model.get_max_id())
+    except Exception:
+        return max((e.id() for e in model), default=0)
+
+
+def _ifc_rules_new(base, model, touched=()):
+    """The rules' findings on a candidate that its base did not have (_ifc_changeset): the instances the change set added (step ids
+    above the base's), the ones it touched with their property and quantity sets and their types are tried, a finding on an instance
+    the base has counts only when the base's instance lacks it, and the model-level rules count when the base passed them."""
+    top = _ifc_max_id(base)
+    scope = set(range(top + 1, _ifc_max_id(model) + 1))
+    for i in touched:
+        try:
+            e = model.by_id(int(i))
+        except Exception:
+            continue
+        scope.add(e.id())
+        for rel in (getattr(e, "IsDefinedBy", None) or ()):
+            d = getattr(rel, "RelatingPropertyDefinition", None)
+            if d is not None and hasattr(d, "id"):
+                scope.add(d.id())
+        for rel in (getattr(e, "IsTypedBy", None) or ()):
+            scope.add(rel.RelatingType.id())
+    candidate = _Rules(model).run(scope)
+    old = [f for f in candidate.values() if f.get("id") is not None and f["id"] <= top]
+    before = {}
+    if old:
+        rules = _Rules(base)
+        for i in {f["id"] for f in old}:
+            try:
+                for f in rules.of(base.by_id(i)):
+                    before[f["_key"]] = f
+            except Exception:
+                continue
+    for f in _Rules(base).model_level():
+        before[f["_key"]] = f
+    return _rule_report([f for key, f in candidate.items() if key not in before])
+
+
+def _ifc_express(model):
+    """The schema's EXPRESS rules (ifcopenshell.validate with express_rules) as {key: finding}; the attribute names the rule."""
+    import ifcopenshell.validate
+    logger = ifcopenshell.validate.json_logger()
+    ifcopenshell.validate.validate(model, logger, express_rules=True)
+    out = {}
+    for s in logger.statements:
+        if not isinstance(s, dict) or str(s.get("level", "")).lower() != "error":
+            continue
+        inst = s.get("instance")
+        rule = _ifc_text(s.get("attribute"))
+        message = " ".join(str(s.get("message", "")).split("\n\n")[0].split())[:300]
+        key = "%s:%s:%s" % (rule, inst.id() if inst is not None else "model", message if rule is None else "")
+        out.setdefault(key, {"level": "error", "kind": "express", "rule": rule, "ifc_class": inst.is_a() if inst is not None else None,
+                             "id": inst.id() if inst is not None else None, "guid": getattr(inst, "GlobalId", None) if inst is not None else None,
+                             "attribute": rule, "message": message})
+    return out
+
+
+def _ifc_express_new(base, model, limit=20):
+    """The EXPRESS rules at approval: {"ran", "errors", "findings"} with only what the base did not break already (the base is checked
+    only when the candidate has findings), or {"ran": false, "note"} for a model above EXPRESS_MAX_ENTITIES or without the rules."""
+    try:
+        size = _ifc_max_id(model)
+        if size > EXPRESS_MAX_ENTITIES:
+            return {"ran": False, "errors": 0, "findings": [], "note": "the schema's rules were left out on a model of %d instances" % size}
+        found = _ifc_express(model)
+        before = _ifc_express(base) if found else {}
+    except Exception as exc:
+        return {"ran": False, "errors": 0, "findings": [], "note": "the schema's rules could not run: %s: %s" % (type(exc).__name__, exc)}
+    new = [f for key, f in found.items() if key not in before]
+    return {"ran": True, "errors": len(new), "findings": new[:limit]}
+
+
+def _ifc_ids_brief(model, path, limit=8):
+    """A candidate against an IDS file for the preview: the specifications that fail, each with its name, how many checks fail and
+    the first elements with the reason; {"error"} when ifctester cannot read the file or is missing."""
+    try:
+        import ifctester.ids
+        import ifctester.reporter
+        ids = ifctester.ids.open(path)
+        ids.validate(model, should_filter_version=True)
+        res = ifctester.reporter.Json(ids).report()
+    except Exception as exc:
+        return {"file": os.path.basename(str(path)), "error": "%s: %s" % (type(exc).__name__, str(exc)[:200])}
+    failed = []
+    for spec in res.get("specifications", []):
+        bad = [e for req in (spec.get("requirements") or []) for e in (req.get("failed_entities") or [])]
+        if spec.get("status") is False or bad:
+            failed.append({"name": spec.get("name") or "", "failed": len(bad),
+                           "examples": [{"class": e.get("class"), "id": e.get("id"), "name": e.get("name"), "reason": _ifc_clip(e.get("reason"), 160) or None} for e in bad[:3]]})
+    return {"file": os.path.basename(str(path)), "specifications": int(res.get("total_specifications") or 0),
+            "passed": int(res.get("total_specifications_pass") or 0), "failed": failed[:limit]}
+
+
+def _ifc_rule_findings(findings, errors, *reports):
+    """The schema's findings with the rules' (and the EXPRESS rules') new ones: errors after the schema's, warnings last, and the
+    errors counted, so that a rule error blocks approval as a schema error does."""
+    head, tail = list(findings), []
+    for r in reports:
+        if not r:
+            continue
+        head += [f for f in r.get("findings") or [] if f.get("level") == "error"][:20]
+        tail += [f for f in r.get("findings") or [] if f.get("level") != "error"][:10]
+        errors += int(r.get("errors") or 0)
+    return head + tail, errors
+
+
 # ---- the building's topology (decision F46 a) -------------------------------------------------------
 # The walls' centrelines per storey become rooms with shapely (which comes with IfcOpenShell): the line ends are snapped to each
 # other within a tolerance, the lines noded and polygonized. Rooms that share a stretch of boundary border each other, the walls
@@ -3762,7 +4516,7 @@ def _ifc_topology(model, tolerance=None, storeys=None, shapes=False):
     return out
 
 
-def _ifc_changeset(in_file, changeset_json, out_file):
+def _ifc_changeset(in_file, changeset_json, out_file, options_json=None):
     """The recipe step "AI-ändring": a change set's operations on the model, checked against the schema and written as IFC.
 
     Called by the app with the dataset as a SQLite file (also for the preview, which never touches the dataset). Returns the
@@ -3771,7 +4525,13 @@ def _ifc_changeset(in_file, changeset_json, out_file):
     existing instances in Dataregium's proposal form (`proposal`), `notes` about what an operation could not do in the
     file's schema (the map conversion in IFC2X3), and the candidate's `topology` (_ifc_topology) on the storeys of the walls the
     change set created, changed or deleted, or {"error"} when it could not be computed.
+
+    Also `rules`, buildingSMART's rules on what the change set made or changed (_ifc_rules_new: the new findings carry their rule
+    among the findings, errors counted and warnings apart). options_json (optional): {"express": true} runs the schema's EXPRESS rules
+    as well, at approval (`express`, _ifc_express_new; new errors counted), and {"ids": path} tries the candidate against an IDS file
+    (`ids`, _ifc_ids_brief; not counted as errors).
     """
+    opts = json.loads(options_json or "{}")
     file_name, data = _ifc_original_from(in_file)
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "changeset-in.ifc"), data)
@@ -3790,6 +4550,12 @@ def _ifc_changeset(in_file, changeset_json, out_file):
     findings = broken[:20] + findings
     errors += len(broken)
     try:
+        rules = _ifc_rules_new(base, model, [r.get("id") for r in cs.created + list(cs.changed.values())])
+    except Exception as exc:
+        rules = {"findings": [], "errors": 0, "warnings": 0, "rules": {}, "error": "%s: %s" % (type(exc).__name__, exc)}
+    express = _ifc_express_new(base, model) if opts.get("express") else None
+    findings, errors = _ifc_rule_findings(findings, errors, rules, express)
+    try:
         proposal = cs.proposal(base)
     except Exception as exc:
         proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
@@ -3799,9 +4565,14 @@ def _ifc_changeset(in_file, changeset_json, out_file):
         topology = _ifc_topology(model, storeys=storeys) if storeys else []
     except Exception as exc:
         topology = {"error": str(exc) or type(exc).__name__}
-    return json.dumps({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
-                       "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
-                       "proposal": proposal, "notes": cs.notes, "topology": topology},
+    extra = {"rules": {k: v for k, v in rules.items() if k != "findings"}}
+    if express is not None:
+        extra["express"] = {k: v for k, v in express.items() if k != "findings"}
+    if opts.get("ids"):
+        extra["ids"] = _ifc_ids_brief(model, opts["ids"])
+    return json.dumps(dict({"elements": len(model.by_type("IfcElement")), "entities": len(list(model)), "file": file_name, "operations": len(ops),
+                            "created": cs.created, "changed": list(cs.changed.values()), "deleted": cs.deleted, "findings": findings, "errors": errors,
+                            "proposal": proposal, "notes": cs.notes, "topology": topology}, **extra),
                       ensure_ascii=False, default=str)
 
 
@@ -4042,6 +4813,158 @@ def _ifc_class_report_file(in_file, out_file):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "classes-in.ifc"), data)
     text = json.dumps(_ifc_class_report(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+# ---- basic requirements (recommendation 5 of the Praxi study, 2026-11-12) ---------------------------------------------------
+# The card Grunduppgifter in Kontrollera tries a model against the basic rules of BIM Alliance's guidance Praxi for IFC, in the app's
+# own words (decision B-59.3: no text, value list or template of Praxi is copied): the file header names the view, the originating
+# system, the preprocessor and the time; the model has a projected CRS named by one EPSG code with a map conversion and a height
+# system; the site, the building (with its long name) and the storeys (with a description) have names; every space has a number
+# (Name) of its own within its building; a set of one's own neither starts like IFC's Pset_ and Qto_ nor uses other characters
+# than A-Z, digits, - and _, starts with a country code (SE-…) and names its properties in PascalCase; and no text value carries
+# its unit ("40 dB" instead of 40). IDS cannot try the header or uniqueness, which is why this is a check of its own.
+
+BASICS_CHECKS = ("header", "crs", "names", "rooms", "psets", "units")
+_BASICS_UNITS = ("mm", "cm", "dm", "m", "km", "m2", "m²", "m3", "m³", "kg", "g", "t", "kn", "n", "pa", "kpa", "mpa", "db", "db(a)",
+                 "°c", "°", "k", "w", "kw", "kwh", "w/m2k", "w/m²k", "w/(m2k)", "w/(m²k)", "w/mk", "l", "l/s", "m3/s", "m³/s", "h", "min", "s")
+
+
+def _ifc_basics(model, limit=8):
+    """The basic requirements of a model (the card Grunduppgifter): per check in BASICS_CHECKS its status (ok, warn or fail), facts
+    to show and its faults, each {code, level, count, examples} with up to `limit` examples as short technical lines."""
+    import re
+    schema = str(getattr(model, "schema", "") or "").upper()
+    family = "IFC4X3" if schema.startswith("IFC4X3") else "IFC2X3" if schema.startswith("IFC2X3") else "IFC4"
+
+    def label(e):
+        return "#%d %s %s" % (e.id(), e.is_a(), repr(str(getattr(e, "Name", None) or "")) if getattr(e, "Name", None) else "–")
+
+    def check(key, facts=None):
+        return {"key": key, "status": "ok", "facts": facts or {}, "faults": []}
+
+    def fault(c, code, level, items):
+        items = list(items)
+        if not items:
+            return
+        c["faults"].append({"code": code, "level": level, "count": len(items), "examples": [str(x) for x in items[:limit]]})
+        if level == "fail" or (level == "warn" and c["status"] == "ok"):
+            c["status"] = level
+
+    out = []
+    # The header: the view definition, the originating system, the preprocessor and the time (author and organisation are a
+    # person's facts and stay out of the card).
+    head = getattr(model, "header", None)
+    name = getattr(head, "file_name", None)
+    description = [str(x) for x in (getattr(getattr(head, "file_description", None), "description", None) or ())]
+    view = next((x for x in description if "viewdefinition" in x.lower().replace(" ", "")), "")
+    facts = {"view": view, "system": str(getattr(name, "originating_system", "") or ""), "preprocessor": str(getattr(name, "preprocessor_version", "") or ""),
+             "time": str(getattr(name, "time_stamp", "") or ""), "schema": ", ".join(str(x) for x in (getattr(getattr(head, "file_schema", None), "schema_identifiers", None) or ()))}
+    c = check("header", facts)
+    fault(c, "no_system", "fail", ["FILE_NAME originating_system"] if not facts["system"].strip() else [])
+    fault(c, "no_view", "warn", ["FILE_DESCRIPTION"] if not view else [])
+    fault(c, "no_preprocessor", "warn", ["FILE_NAME preprocessor_version"] if not facts["preprocessor"].strip() else [])
+    fault(c, "no_time", "warn", ["FILE_NAME time_stamp"] if not re.match(r"^\d{4}-\d\d-\d\dT\d\d:\d\d", facts["time"]) else [])
+    out.append(c)
+    # The coordinate system.
+    crs = [x for x in model.by_type("IfcCoordinateReferenceSystem")] if family != "IFC2X3" else []
+    conversions = model.by_type("IfcMapConversion") if family != "IFC2X3" else []
+    first = crs[0] if crs else None
+    c = check("crs", {"crs": str(getattr(first, "Name", "") or ""), "height": str(getattr(first, "VerticalDatum", "") or ""), "conversions": len(conversions)})
+    if family == "IFC2X3":
+        sites = model.by_type("IfcSite")
+        fault(c, "ifc2x3", "warn", ["IFC2X3"])
+        fault(c, "no_latlon", "fail", [label(s) for s in sites if not getattr(s, "RefLatitude", None) or not getattr(s, "RefLongitude", None)])
+    else:
+        fault(c, "no_crs", "fail", ["IfcProjectedCRS"] if not crs else [])
+        fault(c, "not_epsg", "fail", ["#%d %s %r" % (x.id(), x.is_a(), str(x.Name or "")) for x in crs if not re.match(r"^EPSG:\d+$", str(x.Name or "").strip())])
+        fault(c, "no_conversion", "fail", ["IfcMapConversion"] if crs and not conversions else [])
+
+        def has_height(x):
+            code = str(x.Name or "")[5:]
+            return bool(getattr(x, "VerticalDatum", None)) or (code.isdigit() and 5845 <= int(code) <= 5857)
+        fault(c, "no_height", "warn", ["#%d %s %r" % (x.id(), x.is_a(), str(x.Name or "")) for x in crs if x.is_a("IfcProjectedCRS") and not has_height(x)])
+    out.append(c)
+    # Names on the site, the building and the storeys.
+    c = check("names")
+    fault(c, "no_name", "fail", [label(e) for cls in ("IfcProject", "IfcSite", "IfcBuilding", "IfcBuildingStorey") for e in model.by_type(cls) if not str(e.Name or "").strip()])
+    fault(c, "no_long_name", "warn", [label(e) for e in model.by_type("IfcBuilding") if not str(getattr(e, "LongName", None) or "").strip()])
+    fault(c, "no_description", "warn", [label(e) for e in model.by_type("IfcBuildingStorey") if not str(e.Description or "").strip()])
+    buildings = model.by_type("IfcBuilding")
+    fault(c, "buildings", "warn", [label(e) for e in buildings] if len(buildings) > 1 else [])
+    c["facts"] = {"sites": len(model.by_type("IfcSite")), "buildings": len(buildings), "storeys": len(model.by_type("IfcBuildingStorey"))}
+    out.append(c)
+    # Room numbers: every space has a Name, unique within its building.
+    import ifcopenshell.util.element as el
+    spaces = model.by_type("IfcSpace")
+    c = check("rooms", {"spaces": len(spaces)})
+    fault(c, "no_number", "fail", [label(s) for s in spaces if not str(s.Name or "").strip()])
+    seen = {}
+    for s in spaces:
+        number = str(s.Name or "").strip()
+        if not number:
+            continue
+        p, building = s, None
+        for _ in range(32):
+            p = el.get_aggregate(p) or el.get_container(p)
+            if p is None or p.is_a("IfcBuilding"):
+                building = p
+                break
+        seen.setdefault(((building.id() if building is not None else 0), number), []).append(s)
+    fault(c, "duplicate", "fail", ["%r: %s" % (k[1], ", ".join("#%d" % s.id() for s in v[:6])) for k, v in sorted(seen.items(), key=lambda x: x[0][1]) if len(v) > 1])
+    out.append(c)
+    # The naming of one's own property and quantity sets.
+    try:
+        import ifcopenshell.util.pset
+        templates = ifcopenshell.util.pset.get_template(getattr(model, "schema_identifier", None) or model.schema)
+    except Exception:
+        templates = None
+    try:  # IFC2X3 has no quantity sets of its own; the base quantities written there carry IFC4's names
+        quantities = ifcopenshell.util.pset.get_template("IFC4") if family == "IFC2X3" else templates
+    except Exception:
+        quantities = templates
+    own = {}
+    for s in list(model.by_type("IfcPropertySet")) + list(model.by_type("IfcElementQuantity")):
+        n = str(s.Name or "")
+        known = quantities if s.is_a("IfcElementQuantity") else templates
+        if known is not None and known.get_by_name(n) is not None:
+            continue
+        rec = own.setdefault(n, set())
+        for p in (getattr(s, "HasProperties", None) or getattr(s, "Quantities", None) or ()):
+            rec.add(str(p.Name or ""))
+    c = check("psets", {"own": len(own)})
+    fault(c, "prefix", "fail", [n for n in sorted(own) if re.match(r"^(pset|qto)_?", n, re.I)])
+    fault(c, "chars", "warn", [n for n in sorted(own) if not re.match(r"^[A-Za-z0-9_-]+$", n)])
+    fault(c, "country", "warn", [n for n in sorted(own) if not re.match(r"^[A-Z]{2}-", n) and not re.match(r"^(pset|qto)_?", n, re.I)])
+    fault(c, "pascal", "warn", ["%s.%s" % (n, p) for n in sorted(own) for p in sorted(own[n]) if not re.match(r"^[A-Z][A-Za-z0-9]*$", p)])
+    out.append(c)
+    # Units written inside text values.
+    units = "|".join(re.escape(u) for u in sorted(_BASICS_UNITS, key=len, reverse=True))
+    pattern = re.compile(r"^\s*[-+]?\d+(?:[.,]\d+)?\s*(?:%s)\s*$" % units, re.I)
+    found = []
+    for p in model.by_type("IfcPropertySingleValue"):
+        v = p.NominalValue
+        if v is None or v.is_a() not in ("IfcLabel", "IfcText", "IfcIdentifier"):
+            continue
+        text = str(v.wrappedValue or "")
+        if pattern.match(text):
+            sets = [s.Name for s in (getattr(p, "PartOfPset", None) or ())]
+            found.append("%s.%s = %r" % (sets[0] if sets else "?", p.Name, text))
+    c = check("units")
+    fault(c, "unit", "warn", list(dict.fromkeys(found)))
+    out.append(c)
+    return {"schema": getattr(model, "schema_identifier", None) or model.schema, "checks": out}
+
+
+def _ifc_basics_file(in_file, out_file):
+    """The basic requirements (_ifc_basics) of the model kept in a dataset file, for the card Grunduppgifter in Kontrollera: the
+    original IFC is read from the SQLite file, and the JSON is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "basics-in.ifc"), data)
+    text = json.dumps(_ifc_basics(model), ensure_ascii=False, default=str)
     with open(out_file, "w", encoding="utf-8") as fh:
         fh.write(text)
     return text
