@@ -390,6 +390,8 @@
     const blob = await bcfXml.write(items, { projectName: PROJECT_NAME, projectId: shared.projectId });
     const read = await bcfXml.read(await blob.arrayBuffer());
     assert.equal(read.topics.length, topics.length, 'every topic in the file');
+    const invalid = await D.require('tests/bcf-schema-check').checkBlob(blob);
+    if (invalid) assert.deepEqual(invalid, [], "the file of the server's topics is valid BCF 3.0");
     assert.ok(read.snapshots.length >= 1 && read.snapshots[0].bytes.length > 100, 'a snapshot came along');
     assert.ok(read.components.some((c) => WALLS.includes(c.ifc_guid)), 'the walls are components');
     const meta = await importer.run(new File([blob], 'projektet.bcfzip'), {}, null, 'Projektets BCF');

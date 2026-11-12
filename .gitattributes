@@ -2,3 +2,5 @@
 *.png binary
 *.woff2 binary
 *.wasm binary
+# buildingSMART's BCF schemas (CC BY-ND 4.0) are only for the tests and stay out of the release ZIP.
+tests/fixtures/bcf-schemas/** export-ignore

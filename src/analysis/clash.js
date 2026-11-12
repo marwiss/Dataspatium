@@ -147,11 +147,12 @@
       const items = (result.clashes || []).map((c) => {
         const text = topicText(c, t);
         return {
-          topic: { guid: bcfXml.newGuid(), title: text.title, description: text.description, topic_type: 'Clash', topic_status: 'Open', labels: [t('clash.label')], creation_author: options.author || '', creation_date: new Date().toISOString() },
+          topic: { guid: bcfXml.newGuid(), title: text.title, description: text.description, topic_type: 'Clash', topic_status: 'Open', labels: [t('clash.label')], creation_date: new Date().toISOString() },
           comments: [], viewpoints: [{ viewpoint: Object.assign({ guid: bcfXml.newGuid() }, viewpointOf(c, options.colors)) }], header: options.header || [],
         };
       });
-      return bcfXml.write(items, { projectName: options.projectName });
+      // The writer gives every topic its author: the one given (see bcfXml.authorOf), or the tool's name.
+      return bcfXml.write(items, { projectName: options.projectName, author: options.author });
     }
     /**
      * A short account of a result for the card Validera modellen.
