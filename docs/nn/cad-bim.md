@@ -509,6 +509,18 @@ dørene og vindauga som endringssettet har laga eller endra, basismengder (Qto_W
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) rekna ut frå måla, med opningane trekte frå og med namna
 frå malane til skjemaet.
 
+Verktøyet `edit_element` endrar eit eksisterande element på staden, slik at det held på GlobalId-en sin heile levetida: start, slutt,
+tjukn, høgd og type for ein vegg, omriss, tjukn og type for eit dekke, plassering, breidd, høgd og underkant for ei opning saman med
+døra eller vindauget i ho, takvinkel, takutstikk og gesimshøgd for eit tak, og namnet på kva element som helst. Måla vert lesne ut frå
+den eigne geometrien til elementet (start og slutt for veggen frå aksen), og kroppen, aksen, sjikta, basismengdene og veggskøytane vert
+laga på nytt. Leseverktøyet `get_parameters` viser AI-en måla som `edit_element` endrar, lesne på same måte, slik at han kan endre eit
+element han ikkje sjølv har laga. Opningane i veggen held på plassen sin langs veggen så lenge han held på retninga (elles avstanden
+frå starten) og må få plass i han, og taket held på rektangelet sitt. Ein vegg eller eit dekke med type får tjukna frå typen, så ein
+tjukkare vegg får ein annan type. Eit element som ikkje er teikna slik skriveverktøya teiknar, kan berre få nytt namn, og svaret seier
+kva AI-en kan gjere i staden. AI-en endrar difor element i staden for å slette og lage dei på nytt, og slettar berre når du ber om det.
+Flytting med `transform_elements` skjer i planet til etasjen: ei dør eller eit vindauge vert flytt med opninga si, ein flytt vegg vert
+kopla til veggane han møter, ingen punkt vert liggjande ubrukte, og tomta, bygningen og etasjane vert aldri flytte, fordi plasseringa
+og høgdene deira gjeld heile prosjektet og berre vert endra etter avtale.
 Produktidentitetar skriv AI-en berre når du oppgjev dei, og han finn aldri på dei: GTIN (GlobalTradeItemNumber), produsent
 (Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikkje GTIN.

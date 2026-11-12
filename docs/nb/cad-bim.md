@@ -502,6 +502,18 @@ hjørner i andre vinkler enn rette kobles slik de er tegnet. Til slutt får de v
 endringssettet har laget eller endret, basismengder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ut fra målene, med åpningene trukket fra og med navnene fra skjemaets maler.
 
+Verktøyet `edit_element` endrer et eksisterende element på stedet, slik at det beholder sin GlobalId hele levetiden: en veggs start,
+slutt, tykkelse, høyde og type, et dekkes omriss, tykkelse og type, en åpnings plassering, bredde, høyde og underkant sammen med døren
+eller vinduet i den, et taks takvinkel, takutstikk og gesimshøyde, og navnet på ethvert element. Målene leses ut fra elementets egen
+geometri (veggens start og slutt fra aksen), og kroppen, aksen, sjiktene, basismengdene og veggskjøtene lages på nytt. Leseverktøyet
+`get_parameters` viser AI-en målene som `edit_element` endrer, lest på samme måte, slik at den kan endre et element den ikke selv har
+laget. Veggens åpninger beholder plassen sin langs veggen så lenge den beholder retningen (ellers avstanden fra starten) og må få plass
+i den, og taket beholder rektangelet sitt. En vegg eller et dekke med type får tykkelsen fra typen, så en tykkere vegg får en annen
+type. Et element som ikke er tegnet slik skriveverktøyene tegner, kan bare få nytt navn, og svaret sier hva AI-en kan gjøre i stedet.
+AI-en endrer derfor elementer i stedet for å slette og lage dem på nytt, og sletter bare når du ber om det. Flytting med
+`transform_elements` skjer i etasjens plan: en dør eller et vindu flyttes med åpningen sin, en flyttet vegg kobles til veggene den
+møter, ingen punkter blir liggende ubrukt, og tomten, bygningen og etasjene flyttes aldri, fordi plasseringen og høydene deres gjelder
+hele prosjektet og bare endres etter avtale.
 Produktidentiteter skriver AI-en bare når du oppgir dem, og den finner aldri på dem: GTIN (GlobalTradeItemNumber), produsent
 (Manufacturer) og modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og strekkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har ikke GTIN.

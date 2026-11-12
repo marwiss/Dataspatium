@@ -506,6 +506,18 @@ ikke, og hjørner i andre vinkler end rette forbindes, som de er tegnet. Til sid
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ud fra målene, med åbningerne trukket fra og med navnene fra skemaets
 skabeloner.
 
+Værktøjet `edit_element` ændrer et eksisterende element på stedet, så det beholder sit GlobalId hele sin levetid: en væggs start, slut,
+tykkelse, højde og type, et dæks omrids, tykkelse og type, en åbnings placering, bredde, højde og underkant sammen med dens dør eller
+vindue, et tags hældning, udhæng og tagfodens højde, og ethvert elements navn. Målene læses ud fra elementets egen geometri (væggens
+start og slut ud fra dens akse), og kroppen, aksen, lagene, basismængderne og vægsamlingerne laves på ny. Læseværktøjet
+`get_parameters` viser AI'en de mål, som `edit_element` ændrer, læst på samme måde, så den kan ændre et element, den ikke selv har
+oprettet. Væggens åbninger beholder deres plads langs væggen, så længe den beholder sin retning (ellers deres afstand fra starten), og
+skal kunne være i den, og taget beholder sit rektangel. En væg eller et dæk med type får sin tykkelse fra typen, så en tykkere væg får
+en anden type. Et element, der ikke er tegnet, som skriveværktøjerne tegner, kan kun få nyt navn, og svaret siger, hvad AI'en kan gøre
+i stedet. AI'en ændrer derfor elementer i stedet for at slette og oprette dem på ny og sletter kun, når du beder om det. Flytning med
+`transform_elements` sker i etagens plan: en dør eller et vindue flyttes med sin åbning, en flyttet væg forbindes med de vægge, den
+møder, intet punkt bliver tilbage uden brug, og grunden, bygningen og etagerne flyttes aldrig, fordi deres placering og højder gælder
+hele projektet og kun ændres efter aftale.
 Produktidentiteter skriver AI'en kun, når du angiver dem, og den finder aldrig på dem: GTIN (GlobalTradeItemNumber), producent
 (Manufacturer) og model (ModelLabel) i Pset_ManufacturerTypeInformation på typen, og serienummer (SerialNumber) og stregkode
 (BarCode) i Pset_ManufacturerOccurrence på bygningsdelen. IFC2X3 har intet GTIN.

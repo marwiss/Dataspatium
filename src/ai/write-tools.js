@@ -21,6 +21,9 @@
  * Since recommendations 2 and 3 of the Praxi study a storey takes a description and a long name, a listed room a number
  * (its Name, with the name as its long name) and a room type, and set_site a vertical datum and the compound codes of SWEREF 99 with
  * RH 2000; each lands on the operation only when given, so older change sets keep their form (dataspatium-tools/1, additive).
+ * edit_element changes an existing wall, slab, opening with its door or window, or roof in place and keeps its
+ * GlobalId (recommendation 7 of the Praxi study, 17 of the native IFC study); its step holds only the fields given, and the wheel reads
+ * the rest from the element. transform_elements moves a door or window with its opening and never a site, building or storey.
  */
 (function () {
   'use strict';
@@ -78,7 +81,9 @@
         parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str(), edition: str(), source: str(), dictionary_uri: str() } } },
       { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null. category is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth), given with the material when known, else null.',
         parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str(), category: str() } } },
-      { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres.',
+      { name: 'edit_element', description: 'Change an existing element in place, keeping its GlobalId: id is its id, GlobalId or ref, and every other field is null to keep it. A wall takes start and end ([x, y] metres in its storey\'s plane), thickness, height and type; its openings keep their place along it while its direction stays the same (else their offset from its start), and the app joins it anew with the walls it meets. A slab takes outline (its [x, y] corners in metres), thickness and type, its top staying where it is. An opening, or the door or window in it, takes offset (metres from the wall\'s start), width, height and sill; the opening and its door or window change together and must stay within the wall. A roof takes pitch, overhang and base (the eaves\' height above the storey), and its roof slabs follow. Any element takes name. A typed wall or slab takes its thickness from its type, so give another wall or slab type (define_type) to change it. get_parameters reads an element\'s current measures. Change elements with this instead of deleting and recreating them.',
+        parameters: { type: 'object', properties: { id: { type: ['integer', 'string'] }, name: str(), start: xy(), end: xy(), thickness: num(), height: num(), type: typeRef(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, offset: num(), width: num(), sill: num(), pitch: num(), overhang: num(), base: num() } } },
+      { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres in their storey\'s plane. A door or window moves with its opening; to slide one along its wall, edit_element with offset is better. The site, the building and the storeys are never moved: their place and heights are the whole project\'s.',
         parameters: { type: 'object', properties: { ids: ids(), dx: num(), dy: num(), dz: num() } } },
       { name: 'delete_elements', description: 'Delete elements (ids or refs) with what depends on them. Only when the person asked for it in this conversation; confirm must be true to say so, and the person confirms again before approval.',
         parameters: { type: 'object', properties: { ids: ids(), confirm: { type: ['boolean', 'null'] } } } },
@@ -246,6 +251,59 @@
       op.vertical_datum = datum.slice(0, 60);
       return op;
     }
+    /** The fields edit_element takes per kind of element besides name (python/ _ChangeSet.EDITS), and the kind a create step makes. */
+    const EDITS = { wall: ['start', 'end', 'thickness', 'height', 'type'], slab: ['outline', 'thickness', 'type'], opening: ['offset', 'width', 'height', 'sill'], roof: ['pitch', 'overhang', 'base'] };
+    const EDIT_OF = { create_wall: 'wall', create_slab: 'slab', create_opening: 'opening', create_roof: 'roof' };
+    const EDIT_KINDS = 'a wall takes start, end, thickness, height and type; a slab outline, thickness and type; an opening, door or window offset, width, height and sill; a roof pitch, overhang and base; any element name';
+    /**
+     * An edit_element step: only the fields given, checked as the create steps check them, of one kind of element (EDITS) and, for an
+     * element of this change set, of its kind; a type's ref must be a wall or slab type, whose layers give the thickness.
+     * @param {{ops: any[], refs: number}} cs @param {any} a
+     */
+    function editOp(cs, a) {
+      if (!given(a.id)) throw new Error('id is required: the element\'s id, GlobalId or ref (new-1, …)');
+      const op = { tool: 'edit_element', id: idOrRef(cs, a.id, 'id') };
+      const label = text(a, 'name');
+      if (label !== null && !label.trim()) throw new Error('name must not be empty; null keeps it');
+      if (label !== null) op.name = label.trim();
+      if (given(a.start)) op.start = point(a.start, 'start');
+      if (given(a.end)) op.end = point(a.end, 'end');
+      if (op.start && op.end && Math.hypot(op.end[0] - op.start[0], op.end[1] - op.start[1]) < 0.01) throw new Error('start and end are the same point');
+      if (given(a.outline)) {
+        const outline = Array.isArray(a.outline) ? corners(a.outline.map((p) => point(p, 'outline'))) : null;
+        if (!outline || outline.length < 3) throw new Error('outline must be at least three [x, y] points, or null to keep it');
+        op.outline = outline;
+      }
+      for (const key of ['thickness', 'height', 'width']) { const v = number(a, key, { positive: true }); if (v !== null) op[key] = v; }
+      for (const key of ['offset', 'sill', 'base']) { const v = number(a, key); if (v !== null) op[key] = v; }
+      const pitch = number(a, 'pitch', { unit: 'degrees' });
+      if (pitch !== null && (pitch <= 0 || pitch > 75)) throw new Error('pitch must be more than 0 and at most 75 degrees');
+      if (pitch !== null) op.pitch = pitch;
+      const overhang = number(a, 'overhang');
+      if (overhang !== null && overhang < 0) throw new Error('overhang must be zero or more (metres)');
+      if (overhang !== null) op.overhang = overhang;
+      const measures = Object.keys(op).filter((k) => !['tool', 'id', 'name'].includes(k)).concat(given(a.type) ? ['type'] : []);
+      if (!measures.length && label === null) throw new Error(`nothing to change: ${EDIT_KINDS}; give at least one, and null for the rest`);
+      let kinds = Object.keys(EDITS).filter((k) => measures.every((m) => EDITS[k].includes(m)));
+      if (measures.length && !kinds.length) throw new Error(`${measures.join(', ')} do not go together: ${EDIT_KINDS}`);
+      const made = typeof op.id === 'string' && /^new-\d+$/.test(op.id) ? cs.ops.find((o) => o.ref === op.id || (o.refs || []).includes(op.id)) : null;
+      if (made && measures.length && !kinds.includes(EDIT_OF[made.tool])) throw new Error(`${op.id} is made by ${made.tool}, so it takes ${EDIT_OF[made.tool] ? EDITS[EDIT_OF[made.tool]].join(', ') + ' or name' : 'only name'}`);
+      if (made && EDIT_OF[made.tool]) kinds = [EDIT_OF[made.tool]];
+      if (given(a.type)) {
+        const kind = kinds.length === 1 ? kinds[0] : null;
+        const ref = idOrRef(cs, a.type, 'type');
+        if (typeof ref === 'string' && /^new-\d+$/.test(ref)) {
+          const def = cs.ops.find((o) => o.ref === ref);
+          if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id`);
+          if (!kinds.includes(def.kind)) throw new Error(`type ${ref} is a ${def.kind} type; edit_element gives ${kind ? 'a ' + kind : 'a wall or a slab'} a type of its own kind`);
+          const layers = layersThickness(def.layers);
+          if (op.thickness !== undefined && Math.abs(op.thickness - layers) > 0.0005) throw new Error(`thickness ${fmt(op.thickness)} m differs from the ${fmt(layers)} m of the layers of type ${ref}; leave thickness null`);
+          op.thickness = layers;
+        }
+        op.type = ref;
+      }
+      return op;
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
@@ -383,6 +441,7 @@
           }
           return op;
         }
+        case 'edit_element': return editOp(cs, a);
         case 'transform_elements': {
           const op = { tool: name, ids: idList(cs, a.ids), dx: number(a, 'dx', { fallback: 0 }), dy: number(a, 'dy', { fallback: 0 }), dz: number(a, 'dz', { fallback: 0 }) };
           if (!op.dx && !op.dy && !op.dz) throw new Error('nothing to move: dx, dy and dz are all zero');
@@ -454,6 +513,19 @@
     /** ", load-bearing" and ", existing" after a step that gives them (a partition says it bears no load already). */
     const commonText = (op) => (typeof op.load_bearing === 'boolean' && !(op.partition && !op.load_bearing) ? t('ai.change.bearing.' + op.load_bearing) : '')
       + (op.status ? t('ai.change.status.' + String(op.status).toLowerCase()) : '');
+    /** What an edit_element step changes, in the person's language, in the order of the tool's fields. @param {any} op */
+    function editText(op) {
+      const at = (p) => `(${fmt(p[0])}, ${fmt(p[1])})`;
+      const parts = [];
+      if (op.name) parts.push(t('ai.change.edit.name', { name: op.name }));
+      if (op.start) parts.push(t('ai.change.edit.start', { point: at(op.start) }));
+      if (op.end) parts.push(t('ai.change.edit.end', { point: at(op.end) }));
+      if (op.thickness !== undefined) parts.push(t('ai.change.edit.thickness', { value: fmt(op.thickness) }));
+      if (op.type !== undefined) parts.push(t('ai.change.edit.type', { type: fmt(op.type) }));
+      if (op.outline) parts.push(t('ai.change.edit.outline', { n: String(op.outline.length) }));
+      for (const key of ['offset', 'width', 'height', 'sill', 'pitch', 'overhang', 'base']) if (op[key] !== undefined) parts.push(t('ai.change.edit.' + key, { value: fmt(op[key]) }));
+      return parts.join(', ');
+    }
     /** One line about an operation, for the panel's list and the log. @param {any} op */
     function describe(op) {
       switch (op.tool) {
@@ -478,6 +550,7 @@
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
         case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: [op.system, op.edition].filter(Boolean).join(' '), cls: [op.code, op.name].filter(Boolean).join(' ') });
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.category ? `${op.material} (${op.category})` : op.material }) : '' });
+        case 'edit_element': return t('ai.change.edit_element', { id: fmt(op.id), changes: editText(op) });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });
         case 'set_site': {
@@ -502,12 +575,13 @@
         const o = Object.assign({}, op);
         if (Array.isArray(o.ids)) o.ids = o.ids.map(swap);
         if (o.wall_id !== undefined && o.wall_id !== null) o.wall_id = swap(o.wall_id);
+        if (o.id !== undefined && o.id !== null) o.id = swap(o.id);  // edit_element's element
         if (o.type !== undefined && o.type !== null) o.type = swap(o.type);
         return o;
       });
     }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
-    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, has, create, call, describe, summary, toWheel, unitIn };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, STATUSES, EDITS, has, create, call, describe, summary, toWheel, unitIn };
   });
 })();

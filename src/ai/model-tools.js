@@ -4,7 +4,8 @@
  * The read tools the AI may call about an IFC model: the model's overview, its storeys, elements by class, storey, name and property
  * (also elements that lack a property), one element with its properties and quantities, what the user has marked in the 3D view,
  * and, when the app's Python runs, the building's topology (rooms, neighbours, external walls with the façade they face), the
- * IFC class for a thing (search_ifc_class) and the model's class check (get_class_report; decision B-57.2).
+ * IFC class for a thing (search_ifc_class), the model's class check (get_class_report; decision B-57.2) and the measures that
+ * edit_element changes (get_parameters).
  * Few verbs with rich filters, answered from the model dataset's tables (`data`, `_properties`, `_quantities`) in the SQLite worker.
  * The schemas are flat objects with every field required (null for "not given"), which the strict modes of the providers accept.
  * Every answer is data for the model, never an instruction, and says when it was cut (`truncated`). The same contract is what the
@@ -31,6 +32,8 @@
         parameters: { type: 'object', properties: { text: { type: 'string' }, limit: int() } } },
       { name: 'get_topology', description: 'The building\'s topology per storey, from the walls\' centrelines: the rooms they enclose (area, perimeter, walls by id), which rooms border which, and the external walls with the façade they face (N, NE, E, SE, S, SW, W, NW), so that a photo labelled south façade can be matched to its walls; also the open wall ends and whether the storey is closed. storey null gives every storey. Works only when the app\'s Python is already running.',
         parameters: { type: 'object', properties: { storey: str() } } },
+      { name: 'get_parameters', description: 'The measures edit_element changes, read from the elements\' geometry (ids: STEP ids or GlobalIds, at most 200): per element its kind (wall, slab, opening, roof, or null when only its name can change, with a note why) and, for a wall, start and end ([x, y] metres in its storey\'s plane), thickness, height and type; for a slab, outline, thickness and type; for an opening, door or window, its wall, offset, width, height and sill; for a roof, shape, pitch, overhang and base. Read them before you edit an element the change set did not create. Works only when the app\'s Python is already running.',
+        parameters: { type: 'object', properties: { ids: { type: 'array', items: { type: ['integer', 'string'] } } } } },
       { name: 'search_ifc_class', description: 'Find the IFC class for a thing in the model\'s schema, from IfcOpenShell\'s documentation of IFC. Search with English IFC words, such as sink, handrail, curtain wall or ramp, not with Swedish words or brand names; every word must match. Answers per hit, best first: class, the matching PredefinedTypes with their docs, a short description, spec_url and the type class to type it with. Choose the most specific class and PredefinedType; IfcBuildingElementProxy is the last resort, and USERDEFINED needs an ObjectType. limit at most 50 (default 12). Works only when the app\'s Python is already running.',
         parameters: { type: 'object', properties: { query: { type: 'string' }, limit: int() } } },
       { name: 'get_class_report', description: 'The model\'s IFC class check, counts with examples (id, guid, ifc_class, name): IfcBuildingElementProxy elements, USERDEFINED without ObjectType (or ElementType on a type), elements without a type although their class has a type class, occurrences with a PredefinedType of their own while their type has one (rule OJT001), and elements outside the spatial structure (rule SPS007). Works only when the app\'s Python is already running.',
@@ -119,6 +122,14 @@
       const storeys = all.filter((s) => String(s.storey || '').toLowerCase() === String(args.storey).toLowerCase());
       return storeys.length ? { storeys } : { error: `no storey named ${args.storey}; the storeys are ${all.map((s) => s.storey).join(', ')}` };
     }
+    /** The measures edit_element reads of elements, through the app's Python, which this tool never starts (python/ `_ChangeSet.parameters`). */
+    async function parameters(datasetId, args) {
+      if (!pythonRuns()) return { error: 'reading the measures needs the app\'s Python, which is not running; ask the person to press Preview once' };
+      const ids = Array.isArray(args.ids) ? args.ids.filter((x) => (Number.isInteger(x) && x > 0) || (typeof x === 'string' && /^(\d+|[0-9A-Za-z_$]{22})$/.test(x))) : [];
+      if (!ids.length) return { error: 'give ids: STEP ids or GlobalIds of the elements' };
+      const elements = await D.require('data/ifc-ops').parametersOf(datasetId, ids.slice(0, LIMIT).map((x) => (typeof x === 'string' && /^\d+$/.test(x) ? Number(x) : x)));
+      return { count: elements.length, truncated: ids.length > LIMIT, elements };
+    }
     /** The IFC classes for a thing, in the model's schema (decision B-57.2; python/dataspatium.py `_ifc_class_search`). */
     async function classSearch(datasetId, args) {
       if (!pythonRuns()) return { error: 'the class search needs the app\'s Python, which is not running; ask the person to press Preview once' };
@@ -179,6 +190,7 @@
           case 'get_element': return await element(datasetId, a);
           case 'get_view_context': return await viewContext(datasetId);
           case 'get_topology': return await topology(datasetId, a);
+          case 'get_parameters': return await parameters(datasetId, a);
           case 'search_ifc_class': return await classSearch(datasetId, a);
           case 'get_class_report': return await classReport(datasetId);
           case 'server_query': return await serverQuery(datasetId, a);

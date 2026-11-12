@@ -1647,6 +1647,23 @@ class _ChangeSet:
             are known; the CRS gets a Description in plain words and the metre as MapUnit, every parent representation context its
             own IfcMapConversion with the same values and the file's unit as Scale, and IFC4 and IFC2X3 buildings the height in
             ElevationOfRefHeight (map_conversion, building_height).
+
+    Since recommendation 7 of the Praxi study and 17 of the native IFC study (2026-11-12), elements are changed in place so that their
+    GlobalId stays for their whole life:
+
+        edit_element {id, name, start, end, thickness, height, type, outline, offset, width, sill, pitch, overhang, base}
+            changes an existing element (id: its id, GlobalId or a ref) and keeps its GlobalId; a field left out or null keeps its
+            value. A wall of create_wall's form takes start and end ([x, y] metres in its storey's plane), thickness, height and type;
+            a slab of create_slab's form outline, thickness and type, its top where it was; an opening of create_opening's form, or
+            the door or window in it, offset, width, height and sill, the two together; a roof of create_roof's form pitch, overhang
+            and base, its slabs following; any element name. The parameters are read from the element's representation (a wall's
+            start and end from its Axis), never from a store of their own. The body, the Axis, the layer usage, the base quantities
+            and the wall joins are made anew (op_edit_element); an element of another form, or a field its kind does not take, is an
+            error that says what to do instead.
+        transform_elements {ids, dx, dy, dz}
+            the displacement is in the storey's plane; a door or window moves with its opening (IfcRelFillsElement,
+            IfcRelVoidsElement), the site, the building and the storeys are refused, a point is moved in place or replaced so that
+            none is left unused (rule IFC106), and a moved wall is joined anew (op_transform_elements).
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type")
@@ -1672,6 +1689,7 @@ class _ChangeSet:
         self._schema = None
         self.marks = {"LoadBearing": {}, "Status": {}}  # element id -> what its create step gave (write_marked)
         self.written = set()  # (element id, set, property) that set_properties wrote, which write_external may replace
+        self.rejoin = set()  # ids of walls whose joins edit_element or transform_elements undid, for join_walls
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -2517,14 +2535,709 @@ class _ChangeSet:
             self.touch(e)
 
     def op_transform_elements(self, op):
+        """Move elements by dx, dy, dz metres in their storey's plane (an opening's: its host's; without a storey the world's), turned
+        into the frame each placement is relative to. A door or a window moves with its opening and an opening with its doors and
+        windows (IfcRelFillsElement, IfcRelVoidsElement), and what is placed in another moved element follows it instead of moving
+        twice. The site, the building and the storeys (IfcSpatialStructureElement other than IfcSpace) are refused: the site's place
+        and the storeys' heights are the whole project's and change only by agreement. A placement's point is moved itself when nothing
+        else uses it, else replaced, so that no point is left unused (bSI rule IFC106) and nothing else moves along; a moved wall's
+        joins are undone and made anew where it meets other walls (unjoin, join_walls)."""
         dx, dy, dz = _cs_num(op, "dx", 0.0), _cs_num(op, "dy", 0.0), _cs_num(op, "dz", 0.0)
+        moved = []
         for e in self.elements(op):
-            pl = getattr(e, "ObjectPlacement", None)
-            if pl is None or not pl.is_a("IfcLocalPlacement") or not pl.RelativePlacement.is_a("IfcAxis2Placement3D"):
+            if e.is_a("IfcSpatialStructureElement") and not e.is_a("IfcSpace"):
+                raise DataspatiumError("%s #%d %r is not moved: the site's place and the storeys' heights are the whole project's and change only by agreement with the person; move the elements on it instead"
+                                       % (e.is_a(), e.id(), _ifc_text(getattr(e, "Name", None)) or ""))
+            for x in self.with_fillings(e):
+                if all(x.id() != y.id() for y in moved):
+                    moved.append(x)
+        for e in moved:
+            if not self.movable(e):
                 raise DataspatiumError("element %d has no local placement to move" % e.id())
-            c = list(pl.RelativePlacement.Location.Coordinates) + [0.0, 0.0, 0.0]
-            pl.RelativePlacement.Location = self.point(c[0] + self.u(dx), c[1] + self.u(dy), c[2] + self.u(dz))
+        d = (self.u(dx), self.u(dy), self.u(dz))
+        for e in moved:
+            if not any(y.id() != e.id() and self.placed_in(e, y) for y in moved):
+                if e.is_a("IfcWall"):
+                    self.unjoin(e)
+                    for end in (0, 1):
+                        self.draw_out(e, end)
+                self.shift(e, self.plane_of(e), d)
             self.touch(e)
+            for rel in getattr(e, "VoidsElements", None) or ():
+                self.touch(rel.RelatingBuildingElement)  # the host's net quantities
+
+    # -- moving and changing in place: placements, points and items that only the element uses
+    @staticmethod
+    def movable(e):
+        """Whether an element has a local placement of a 3D axis placement relative to one the app can follow."""
+        pl = getattr(e, "ObjectPlacement", None)
+        return (pl is not None and pl.is_a("IfcLocalPlacement") and pl.RelativePlacement is not None and pl.RelativePlacement.is_a("IfcAxis2Placement3D")
+                and _cs_placement(pl.PlacementRelTo) is not None)
+
+    @staticmethod
+    def with_fillings(e):
+        """An element with what moves along with it: a door or a window with its opening and the opening's other doors and windows, an
+        opening with its doors and windows; any other element alone."""
+        openings = [r.RelatingOpeningElement for r in (getattr(e, "FillsVoids", None) or ())]
+        if e.is_a("IfcOpeningElement"):
+            openings.append(e)
+        if not openings:
+            return [e]
+        out = []
+        for o in openings:
+            for x in [o] + [r.RelatedBuildingElement for r in (getattr(o, "HasFillings", None) or ())]:
+                if all(x.id() != y.id() for y in out):
+                    out.append(x)
+        return out
+
+    @staticmethod
+    def placed_in(e, other):
+        """Whether the placement of e is relative, directly or through others, to the placement of the element `other`."""
+        target = getattr(other, "ObjectPlacement", None)
+        p = getattr(e, "ObjectPlacement", None)
+        for _ in range(64):
+            p = p.PlacementRelTo if p is not None and p.is_a("IfcLocalPlacement") else None
+            if p is None or target is None:
+                return False
+            if p.id() == target.id():
+                return True
+        return False
+
+    def plane_of(self, e):
+        """The absolute matrix of the plane a displacement of e is given in: its storey's (its container's), for an opening its host's,
+        else the world's."""
+        c = self.container(e)
+        if c is None:
+            host = next((r.RelatingBuildingElement for r in (getattr(e, "VoidsElements", None) or ())), None)
+            c = self.container(host) if host is not None else None
+        m = _cs_placement(getattr(c, "ObjectPlacement", None)) if c is not None else None
+        return m if m is not None else _cs_axes(None)
+
+    def shift(self, e, plane, d):
+        """Move e's placement (movable) by d, a displacement in file units in the frame of the absolute matrix `plane`, turned into the
+        frame its placement is relative to."""
+        pl = e.ObjectPlacement
+        local = _cs_turn(_cs_invert(_cs_placement(pl.PlacementRelTo)), _cs_turn(plane, d))
+        pos = self.own(pl, "RelativePlacement")
+        c = ([float(v) for v in pos.Location.Coordinates] + [0.0, 0.0, 0.0])[:3]
+        self.set_point(pos, "Location", [round(a + b, 9) for a, b in zip(c, local)])
+
+    def own(self, owner, attribute):
+        """The instance in owner's `attribute`, copied first when anything else uses it too, so that a change to it changes owner alone."""
+        inst = getattr(owner, attribute)
+        if inst is not None and self.m.get_total_inverses(inst) > 1:
+            import ifcopenshell.util.element
+            inst = ifcopenshell.util.element.copy(self.m, inst)
+            setattr(owner, attribute, inst)
+        return inst
+
+    def set_point(self, owner, attribute, coords):
+        """Set the IfcCartesianPoint in owner's `attribute` to coords (file units): the point itself when nothing else uses it, else a
+        new one, so that no point is left unused (bSI rule IFC106) and nothing else moves with it."""
+        p = getattr(owner, attribute)
+        coords = [float(c) for c in coords]
+        if p is not None and p.is_a("IfcCartesianPoint") and len(p.Coordinates) == len(coords) and self.m.get_total_inverses(p) == 1:
+            p.Coordinates = coords
+        else:
+            setattr(owner, attribute, self.point(*coords))
+
+    def set_direction(self, owner, attribute, ratios, default=None):
+        """Set the IfcDirection in owner's `attribute` to ratios like set_point; an attribute left out stays out while the ratios are its
+        default (None: it is always written)."""
+        d = getattr(owner, attribute)
+        ratios = [float(c) for c in ratios]
+        now = [float(c) for c in d.DirectionRatios] if d is not None else (list(default) if default is not None else None)
+        if now is not None and len(now) == len(ratios) and all(abs(a - b) < 1e-12 for a, b in zip(now, ratios)):
+            return
+        if d is not None and len(d.DirectionRatios) == len(ratios) and self.m.get_total_inverses(d) == 1:
+            d.DirectionRatios = ratios
+        else:
+            setattr(owner, attribute, self.direction(*ratios))
+
+    def drop(self, inst):
+        """Remove an instance that nothing uses any more, with what only it uses (remove_deep2), so that no resource is left without a
+        rooted entity (bSI rule IFC106)."""
+        if inst is not None and self.m.get_total_inverses(inst) == 0:
+            import ifcopenshell.util.element
+            ifcopenshell.util.element.remove_deep2(self.m, inst)
+
+    def replace_item(self, rep, old, new):
+        """Put the representation item new in old's place in rep, with old's styles and presentation layers, and drop old."""
+        rep.Items = [new if i.id() == old.id() else i for i in (rep.Items or ())]
+        for r in list(self.m.get_inverse(old)):
+            if r.is_a("IfcStyledItem"):
+                r.Item = new
+            elif r.is_a("IfcPresentationLayerAssignment"):
+                r.AssignedItems = [new if i.id() == old.id() else i for i in (r.AssignedItems or ())]
+        self.drop(old)
+
+    # -- joins undone, for walls that change or move
+    def path_joins(self, w):
+        """A wall's IfcRelConnectsPathElements with other walls: (relationship, the wall's connection type, the other wall, its type)."""
+        out = []
+        for attribute, mine, theirs in (("ConnectedTo", "Relating", "Related"), ("ConnectedFrom", "Related", "Relating")):
+            for rel in getattr(w, attribute, None) or ():
+                other = getattr(rel, theirs + "Element", None) if rel.is_a("IfcRelConnectsPathElements") else None
+                if other is not None and other.is_a("IfcWall"):
+                    out.append((rel, getattr(rel, mine + "ConnectionType", None), other, getattr(rel, theirs + "ConnectionType", None)))
+        return out
+
+    def unjoin(self, wall):
+        """Undo a wall's joins before its axis or thickness changes or it moves, so that join_walls makes them anew where the walls still
+        meet (rejoin): every IfcRelConnectsPathElements between it and another wall goes, and where the other wall joined it with an end
+        (ATSTART or ATEND), that end's other joins go as well and its body reaches its axis's end again (draw_out)."""
+        todo, seen = [(wall, None)], set()
+        while todo:
+            w, end = todo.pop()
+            if (w.id(), end) in seen:
+                continue
+            seen.add((w.id(), end))
+            self.rejoin.add(w.id())
+            for rel, mine, other, theirs in self.path_joins(w):
+                if end is not None and mine != self.end_type(end):
+                    continue
+                self.m.remove(rel)
+                if theirs in ("ATSTART", "ATEND"):
+                    todo.append((other, 0 if theirs == "ATSTART" else 1))
+            if end is not None:
+                self.draw_out(w, end)
+
+    def draw_out(self, w, end):
+        """Let the end of a wall's body (0 on its axis's start's side, 1 on its end's) reach its axis's end again, as before a join cut
+        it; nothing for a body of another form than create_wall's."""
+        j = self.join_wall(w, False)
+        if j is not None and j["box"] is not None and self.cut_end(j, end, j["a"] if end == 0 else j["b"]):
+            self.touch(w)
+
+    # -- edit_element (recommendation 7 of the Praxi study, 17 of the native IFC study)
+    EDITS = {"wall": ("start", "end", "thickness", "height", "type"), "slab": ("outline", "thickness", "type"),
+             "opening": ("offset", "width", "height", "sill"), "roof": ("pitch", "overhang", "base")}
+    EDIT_FIELDS = ("name", "start", "end", "thickness", "height", "type", "outline", "offset", "width", "sill", "pitch", "overhang", "base")
+
+    def op_edit_element(self, op):
+        """Change an existing element in place and keep its GlobalId. The fields given (not null) must be name or those of the element's
+        kind (EDITS): the measures go to edit_wall, edit_slab, edit_opening or edit_roof, which read the element's parameters from its
+        representation and refuse one of another form with what to do instead. The element and what changed with it are in the changed
+        list, so that finish gives them their base quantities."""
+        e = self.entity(op.get("id"))
+        fields = [k for k in self.EDIT_FIELDS if op.get(k) is not None and not (isinstance(op.get(k), str) and not op.get(k).strip())]
+        if not fields:
+            raise DataspatiumError("nothing to change: give the name or the measures to change, and null for the rest")
+        kind = self.edit_kind(e)
+        measures = [k for k in fields if k != "name"]
+        wrong = [k for k in measures if k not in self.EDITS.get(kind, ())]
+        if wrong:
+            raise DataspatiumError(self.edit_refusal(e, kind, wrong))
+        if "name" in fields and not e.is_a("IfcRoot"):
+            raise DataspatiumError("%s #%d has no name to change" % (e.is_a(), e.id()))
+        if measures:
+            getattr(self, "edit_" + kind)(e, op)
+        if "name" in fields:
+            e.Name = str(op["name"]).strip()[:255]
+            for rec in self.created:
+                if rec["id"] == e.id():
+                    rec["name"] = _ifc_text(e.Name)
+        self.touch(e)
+
+    def edit_kind(self, e):
+        """wall, slab, opening (also for a door or a window), roof, "roof slab" for a slab of a roof, or None."""
+        if e.is_a("IfcWall"):
+            return "wall"
+        if e.is_a("IfcRoof"):
+            return "roof"
+        if e.is_a("IfcOpeningElement") or e.is_a("IfcDoor") or e.is_a("IfcWindow"):
+            return "opening"
+        if e.is_a("IfcSlab"):
+            return "roof slab" if self.roof_of(e) is not None else "slab"
+        return None
+
+    @staticmethod
+    def roof_of(slab):
+        return next((r.RelatingObject for r in (getattr(slab, "Decomposes", None) or ()) if r.RelatingObject.is_a("IfcRoof")), None)
+
+    def edit_refusal(self, e, kind, wrong):
+        """Why edit_element does not take these fields for this element, and what the AI can do instead."""
+        what = "%s #%d %r" % (e.is_a(), e.id(), _ifc_text(getattr(e, "Name", None)) or "")
+        if kind == "roof slab":
+            roof = self.roof_of(e)
+            return "%s is a slab of roof #%d %r: edit the roof with pitch, overhang or base; the slab itself takes only name" % (what, roof.id(), _ifc_text(roof.Name) or "")
+        if kind is None:
+            return ("%s takes only name in edit_element (%s are for walls, slabs, openings with their doors and windows, and roofs); move it with transform_elements, and delete it and create it anew only when the person asks"
+                    % (what, ", ".join(wrong)))
+        return "%s takes %s or name, not %s" % (what, ", ".join(self.EDITS[kind]), ", ".join(wrong))
+
+    def cannot(self, e, why, tool):
+        """The refusal of measures for an element that is not of the write tools' form."""
+        return DataspatiumError("%s #%d %r cannot be changed in place: %s. edit_element can still change its name and transform_elements move it; delete it and draw it anew with %s only when the person asks"
+                                % (e.is_a(), e.id(), _ifc_text(getattr(e, "Name", None)) or "", why, tool))
+
+    def layers_of(self, e):
+        """(total thickness in metres, what gives it) of the material layers an element's own layer set usage or its type gives it;
+        None without."""
+        import ifcopenshell.util.element as el
+        own = [r.RelatingMaterial.ForLayerSet for r in (getattr(e, "HasAssociations", None) or ())
+               if r.is_a("IfcRelAssociatesMaterial") and r.RelatingMaterial.is_a("IfcMaterialLayerSetUsage")]
+        t = el.get_type(e)
+        layers = own[0] if own else (self.type_layers(t) if t is not None else None)
+        if layers is None:
+            return None
+        total = round(sum(float(x.LayerThickness or 0.0) for x in (layers.MaterialLayers or ())) * self.scale, 9)
+        return total, ("type %r" % _ifc_text(t.Name)) if t is not None else ("layer set %r" % _ifc_text(layers.LayerSetName))
+
+    def edit_thickness(self, e, op, kind, current):
+        """(thickness in metres, the new type or None) of an edited wall or slab: with a type (with_type) its layers', which a thickness
+        given must equal, and the type unless the element has it already; else, when its layers fix it, its own, which a thickness given
+        must equal; else the thickness given or the current one."""
+        import ifcopenshell.util.element as el
+        if op.get("type") not in (None, ""):
+            typed, t = self.with_type({"type": op["type"], "thickness": op.get("thickness")}, kind)
+            old = el.get_type(e)
+            return typed["thickness"], (None if old is not None and old.id() == t.id() else t)
+        fixed = self.layers_of(e)
+        if fixed is not None and fixed[0] > 0:
+            if op.get("thickness") is not None and abs(_cs_num(op, "thickness", positive=True) - fixed[0]) > 0.0005:
+                raise DataspatiumError("the thickness of %s #%d comes from its %s (%g m); to change it give another %s type as type (define_type makes one)"
+                                       % (e.is_a(), e.id(), fixed[1], fixed[0], kind))
+            return current, None
+        return (_cs_num(op, "thickness", positive=True) if op.get("thickness") is not None else current), None
+
+    def untype(self, e):
+        """Take an occurrence off its type before give_type gives it another: out of the type's IfcRelDefinesByType (which goes when it
+        relates nothing more), and its own material association removed, with a layer set usage or a material that nothing else uses."""
+        rels = list(getattr(e, "IsTypedBy", None) or ()) + [r for r in (getattr(e, "IsDefinedBy", None) or ()) if r.is_a("IfcRelDefinesByType")]
+        for rel in {r.id(): r for r in rels}.values():
+            rest = [o for o in (rel.RelatedObjects or ()) if o.id() != e.id()]
+            if rest:
+                rel.RelatedObjects = rest
+            else:
+                self.m.remove(rel)
+        for rel in [r for r in (getattr(e, "HasAssociations", None) or ()) if r.is_a("IfcRelAssociatesMaterial")]:
+            material = rel.RelatingMaterial
+            rest = [o for o in (rel.RelatedObjects or ()) if o.id() != e.id()]
+            if rest:
+                rel.RelatedObjects = rest
+                continue
+            self.m.remove(rel)
+            if material is not None and (material.is_a("IfcMaterialLayerSetUsage") or material.is_a("IfcMaterial")) and self.m.get_total_inverses(material) == 0:
+                self.m.remove(material)  # not deep: a layer set stays with its type
+
+    def wall_frame(self, wall):
+        """A wall of create_wall's form as edit_element reads it: its storey and the storey's absolute matrix S, its placement relative
+        to the storey (rel), its Axis (representation, item and two points along its x, file units), its body (wall_box), its start and
+        end in the storey's plane (metres), the storey-plane height of its axis (z, file units), its body's centre off the axis (off,
+        file units), its thickness and height (metres) and its body's base (file units); else the refusal of cannot."""
+        s = self.scale
+        storey = self.container(wall)
+        S = _cs_placement(storey.ObjectPlacement) if storey is not None else None
+        W = _cs_placement(getattr(wall, "ObjectPlacement", None)) if self.movable(wall) else None
+        rep = getattr(wall, "Representation", None)
+        axis_rep, axis_item = next(((r, i) for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Axis" for i in (r.Items or ())), (None, None))
+        line = _topo_curve(axis_item) if axis_item is not None else None
+        box = self.wall_box(wall)
+        rel = _cs_compose(_cs_invert(S), W) if S is not None and W is not None else None
+        why = None
+        if rel is None:
+            why = "it is in no storey, or its placement cannot be read"
+        elif not line or len(line) != 2 or abs(line[0][1] - line[1][1]) > self.u(1e-6) or abs(line[1][0] - line[0][0]) < self.u(0.01):
+            why = "it has no straight Axis of two points along its x"
+        elif box is None:
+            why = "its body is not one extruded rectangle along its axis"
+        elif len(getattr(rep, "ShapeOfProduct", None) or ()) > 1:
+            why = "it shares its shape with other elements"
+        elif abs(rel[2][2] - 1.0) > 1e-6:
+            why = "it does not stand upright in its storey"
+        if why:
+            raise self.cannot(wall, why, "create_wall")
+        a, b = _cs_at(rel, (line[0][0], line[0][1], 0.0)), _cs_at(rel, (line[1][0], line[1][1], 0.0))
+        p = box.SweptArea
+        return {"storey": storey, "S": S, "rel": rel, "axis_rep": axis_rep, "axis_item": axis_item, "line": line, "box": box,
+                "start": (a[0] * s, a[1] * s), "end": (b[0] * s, b[1] * s), "z": a[2], "off": float(p.Position.Location.Coordinates[1]) - line[0][1],
+                "thickness": float(p.YDim) * s, "height": float(box.Depth) * s, "base": _cs_axes(box.Position)[3][2]}
+
+    def edit_wall(self, wall, op):
+        """edit_element on a wall (wall_frame). start and end place it at the new start along the new axis and draw its Axis and body
+        anew from start to end; thickness and height size its body. Its openings keep their place along it when its direction stays the
+        same, else their offset from its start, get its new thickness and must stay within it. A new type types it with the layers
+        centred as create_wall lays them; a typed wall takes its thickness from its layers. Its joins are undone and made anew at the
+        end (unjoin, join_walls); the spaces it bounds keep their outlines, which the report notes."""
+        s = self.scale
+        f = self.wall_frame(wall)
+        start = _cs_xy(op["start"], "start") if op.get("start") is not None else f["start"]
+        end = _cs_xy(op["end"], "end") if op.get("end") is not None else f["end"]
+        length = math.dist(start, end)
+        if length < 0.01:
+            raise DataspatiumError("start and end are the same point")
+        thickness, typ = self.edit_thickness(wall, op, "wall", f["thickness"])
+        height = _cs_num(op, "height", positive=True) if op.get("height") is not None else f["height"]
+        moving = math.dist(start, f["start"]) > 1e-9 or math.dist(end, f["end"]) > 1e-9
+        resizing = abs(thickness - f["thickness"]) > 1e-9
+        line = f["line"]
+        u = ((end[0] - start[0]) / length, (end[1] - start[1]) / length)
+        was = math.dist(f["start"], f["end"])
+        same = was > 0 and ((f["end"][0] - f["start"][0]) * u[0] + (f["end"][1] - f["start"][1]) * u[1]) / was > 1.0 - 1e-9
+        new_line = [(0.0, 0.0), (self.u(length), 0.0)] if moving else line
+        lo, hi = min(new_line[0][0], new_line[1][0]), max(new_line[0][0], new_line[1][0])
+        top, tol = f["base"] + self.u(height), self.u(0.001)
+        plan = []
+        for rel in getattr(wall, "HasOpenings", None) or ():
+            o = rel.RelatedOpeningElement
+            box, item, opl = self.opening_box(o, wall), self.wall_box(o), getattr(o, "ObjectPlacement", None)
+            inside = self.movable(o) and opl.PlacementRelTo is not None and opl.PlacementRelTo.id() == wall.ObjectPlacement.id()
+            label = "opening #%d %r" % (o.id(), _ifc_text(o.Name) or "")
+            if box is None or item is None or not inside:
+                if moving or resizing:
+                    raise DataspatiumError("%s in wall #%d is not drawn and placed as create_opening does, so the wall's start, end and thickness cannot change with it; change its height or name, or ask the person what to do with the opening" % (label, wall.id()))
+                continue
+            ox, oy, oz = ([float(c) for c in opl.RelativePlacement.Location.Coordinates] + [0.0, 0.0, 0.0])[:3]
+            nx, ny = ox, oy
+            if moving and same:  # its place along the line stays
+                q = _cs_at(f["rel"], (ox, oy, oz))
+                nx, ny = (q[0] - self.u(start[0])) * u[0] + (q[1] - self.u(start[1])) * u[1], oy - line[0][1]
+            elif moving:  # its offset from the start stays
+                nx, ny = ox - line[0][0], oy - line[0][1]
+            x0, x1 = nx + box[0] - ox, nx + box[1] - ox
+            if x0 < lo - tol or x1 > hi + tol or box[3] > top + tol:
+                raise DataspatiumError("%s would reach beyond wall #%d (%.3g to %.3g m along a wall of %.3g m, its top %.3g m up in a wall %.3g m high); first move or resize it with edit_element (offset, width, height, sill), or ask the person whether to delete it"
+                                       % (label, wall.id(), (x0 - lo) * s, (x1 - lo) * s, (hi - lo) * s, (box[3] - f["base"]) * s, height))
+            plan.append((o, item, (nx, ny, oz), _cs_placement(opl), self.loose_fillings(o) if moving else []))
+        if moving or resizing:
+            self.unjoin(wall)
+        if moving:
+            self.place_wall(wall, f, start, u)
+            self.set_axis(f, new_line)
+        if moving or resizing:
+            p = self.own(f["box"], "SweptArea")
+            p.XDim = round(hi - lo, 9)
+            p.YDim = round(self.u(thickness), 9)
+            self.set_point(self.own(p, "Position"), "Location", (round((lo + hi) / 2.0, 9), round(new_line[0][1] + f["off"], 9)))
+        f["box"].Depth = round(self.u(height), 9)
+        for o, item, at, before, loose in plan:
+            if moving:
+                self.set_point(self.own(o.ObjectPlacement, "RelativePlacement"), "Location", [round(c, 9) for c in at])
+                self.follow(o, before, loose)
+            if resizing:
+                q = self.own(item, "SweptArea")
+                q.YDim = round(float(q.YDim) + self.u(thickness) - self.u(f["thickness"]), 9)
+            if moving or resizing:
+                self.touch(o)
+        if typ is not None:
+            self.untype(wall)
+            self.give_type(wall, typ, "AXIS2", "POSITIVE", f["off"] * s - thickness / 2.0)
+        if (moving or resizing) and getattr(wall, "ProvidesBoundaries", None):
+            self.notes.append("wall #%d %r bounds spaces whose outlines stay as they were" % (wall.id(), _ifc_text(wall.Name) or ""))
+        self.touch(wall)
+
+    def place_wall(self, wall, f, start, u):
+        """Set a wall's placement at start (metres in its storey's plane, at the height its axis had) with its x along u, relative to the
+        placement it was relative to."""
+        pl = wall.ObjectPlacement
+        target = [[u[0], u[1], 0.0], [-u[1], u[0], 0.0], [0.0, 0.0, 1.0], [self.u(start[0]), self.u(start[1]), f["z"]]]
+        self.set_local(pl, _cs_compose(_cs_invert(_cs_placement(pl.PlacementRelTo)), _cs_compose(f["S"], target)))
+
+    def set_local(self, pl, local):
+        """Write the matrix `local` (relative to the placement's PlacementRelTo, file units) into an IfcLocalPlacement's own axis
+        placement: its point and directions in place when nothing else uses them, else new ones."""
+        pos = self.own(pl, "RelativePlacement")
+        self.set_point(pos, "Location", [round(c, 9) for c in local[3]])
+        axis, ref = [round(c, 12) for c in local[2]], [round(c, 12) for c in local[0]]
+        # Axis and RefDirection are both given or both left out (IfcAxis2Placement3D's rule AxisAndRefDirProvision).
+        both = pos.Axis is not None or pos.RefDirection is not None or axis != [0.0, 0.0, 1.0] or ref != [1.0, 0.0, 0.0]
+        self.set_direction(pos, "Axis", axis, None if both else (0.0, 0.0, 1.0))
+        self.set_direction(pos, "RefDirection", ref, None if both else (1.0, 0.0, 0.0))
+
+    def loose_fillings(self, opening):
+        """The doors and windows of an opening that are not placed in it, with their absolute matrices, for follow; a refusal for one
+        without a local placement to move."""
+        out = []
+        for x in [r.RelatedBuildingElement for r in (getattr(opening, "HasFillings", None) or ())]:
+            if not self.placed_in(x, opening):
+                if not self.movable(x):
+                    raise self.cannot(x, "it is not placed in its opening and has no local placement to move with it", "create_opening")
+                out.append((x, _cs_placement(x.ObjectPlacement)))
+        return out
+
+    def follow(self, opening, before, loose):
+        """Move the doors and windows of loose_fillings as the opening moved from the absolute matrix `before`."""
+        turn = _cs_compose(_cs_placement(opening.ObjectPlacement), _cs_invert(before))
+        for x, m in loose:
+            self.set_local(x.ObjectPlacement, _cs_compose(_cs_invert(_cs_placement(x.ObjectPlacement.PlacementRelTo)), _cs_compose(turn, m)))
+            self.touch(x)
+
+    def set_axis(self, f, line):
+        """Draw a wall's Axis (wall_frame) anew as a polyline through two points of its own coordinates (file units)."""
+        rep, item = f["axis_rep"], f["axis_item"]
+        if not (item.is_a("IfcPolyline") and len(item.Points) == 2 and self.m.get_total_inverses(item) == 1):
+            self.replace_item(rep, item, self.m.createIfcPolyline([self.point(*q) for q in line]))
+            return
+        pts = []
+        for p, q in zip(item.Points, line):
+            if len(p.Coordinates) == 2 and self.m.get_total_inverses(p) == 1:
+                p.Coordinates = [round(float(c), 9) for c in q]
+                pts.append(p)
+            else:
+                pts.append(self.point(*q))
+        item.Points = pts
+
+    def slab_frame(self, slab):
+        """A slab of create_slab's form as edit_element reads it: its body (one outline of straight edges extruded straight up), the
+        matrix M of the body's position in the storey's plane, its outline there (metres), its thickness (metres) and the height of its
+        top in the slab's coordinates (file units); else the refusal of cannot."""
+        s = self.scale
+        storey = self.container(slab)
+        S = _cs_placement(storey.ObjectPlacement) if storey is not None else None
+        P = _cs_placement(getattr(slab, "ObjectPlacement", None))
+        rep = getattr(slab, "Representation", None)
+        bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
+        items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
+        item = items[0] if len(items) == 1 and items[0].is_a("IfcExtrudedAreaSolid") else None
+        profile = item.SweptArea if item is not None else None
+        curve = profile.OuterCurve if profile is not None and profile.is_a() == "IfcArbitraryClosedProfileDef" else None
+        why, M = None, None
+        if S is None or P is None:
+            why = "it is in no storey, or its placement cannot be read"
+        elif curve is None or not curve.is_a("IfcPolyline"):
+            why = "its body is not one outline of straight edges extruded"
+        elif len(getattr(rep, "ShapeOfProduct", None) or ()) > 1:
+            why = "it shares its shape with other elements"
+        else:
+            position = _cs_axes(item.Position)
+            M = _cs_compose(_cs_compose(_cs_invert(S), P), position)
+            d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+            if d is None or abs(d[2] - 1.0) > 1e-9 or abs(position[2][2] - 1.0) > 1e-9 or abs(M[2][2] - 1.0) > 1e-6:
+                why = "it is not extruded straight up"
+        if why:
+            raise self.cannot(slab, why, "create_slab")
+        pts = [[float(c) for c in p.Coordinates][:2] for p in curve.Points]
+        if len(pts) > 3 and math.dist(pts[0], pts[-1]) < 1e-9:
+            pts = pts[:-1]
+        return {"item": item, "M": M, "outline": [(q[0] * s, q[1] * s) for q in (_cs_at(M, (x, y, 0.0)) for x, y in pts)],
+                "thickness": float(item.Depth) * s, "top": _cs_axes(item.Position)[3][2] + float(item.Depth)}
+
+    def edit_slab(self, slab, op):
+        """edit_element on a slab (slab_frame): outline (corners in metres in the storey's plane) draws its profile anew, closed on its
+        first point (GEM111); thickness keeps its top where it is; a new type types it with the layers down from its top as create_slab
+        lays them; a typed slab takes its thickness from its layers."""
+        f = self.slab_frame(slab)
+        thickness, typ = self.edit_thickness(slab, op, "slab", f["thickness"])
+        item = f["item"]
+        if op.get("outline") is not None:
+            outline = op["outline"]
+            if not isinstance(outline, (list, tuple)) or len(outline) < 3:
+                raise DataspatiumError("outline must be at least three [x, y] points")
+            back = _cs_invert(f["M"])
+            local = [_cs_at(back, (self.u(x), self.u(y), f["M"][3][2]))[:2] for x, y in (_cs_xy(p, "outline") for p in outline)]
+            profile = self.own(item, "SweptArea")
+            old = profile.OuterCurve
+            profile.OuterCurve = self.closed([(round(x, 9), round(y, 9)) for x, y in local])
+            self.drop(old)
+        if abs(thickness - f["thickness"]) > 1e-9:
+            z = round(f["top"] - self.u(thickness), 9)
+            if item.Position is None:
+                item.Position = self.axis3(0, 0, z)
+            else:
+                pos = self.own(item, "Position")
+                c = ([float(v) for v in pos.Location.Coordinates] + [0.0, 0.0, 0.0])[:3]
+                self.set_point(pos, "Location", (c[0], c[1], z))
+            item.Depth = round(self.u(thickness), 9)
+        if typ is not None:
+            self.untype(slab)
+            self.give_type(slab, typ, "AXIS3", "NEGATIVE", 0.0)
+        self.touch(slab)
+
+    def opening_frame(self, e):
+        """An opening of create_opening's form in a wall of create_wall's form, or the door or window in it, as edit_element reads it:
+        the opening, its wall, its body (wall_box), its doors and windows, its offset from the wall's start, width, sill above the
+        wall's base and height (metres), and the extent of the wall's body along it and up (bx0, bx1, bz0, bz1, metres); else the refusal
+        of cannot."""
+        s = self.scale
+        opening = e if e.is_a("IfcOpeningElement") else next((r.RelatingOpeningElement for r in (getattr(e, "FillsVoids", None) or ())), None)
+        if opening is None:
+            raise self.cannot(e, "it fills no opening", "create_opening")
+        wall = next((r.RelatingBuildingElement for r in (getattr(opening, "VoidsElements", None) or ())), None)
+        box = self.opening_box(opening, wall) if wall is not None else None
+        item, body = self.wall_box(opening), (self.wall_box(wall) if wall is not None else None)
+        if wall is None or not wall.is_a("IfcWall") or box is None or item is None or body is None or not self.movable(opening):
+            raise self.cannot(e, "it is not an opening of create_opening's form in a wall of create_wall's form", "create_opening")
+        cx, half = float(body.SweptArea.Position.Location.Coordinates[0]), float(body.SweptArea.XDim) / 2.0
+        bz = _cs_axes(body.Position)[3][2]
+        return {"opening": opening, "wall": wall, "item": item, "fillings": [r.RelatedBuildingElement for r in (getattr(opening, "HasFillings", None) or ())],
+                "offset": box[0] * s, "width": (box[1] - box[0]) * s, "sill": box[2] * s, "height": (box[3] - box[2]) * s,
+                "bx0": (cx - half) * s, "bx1": (cx + half) * s, "bz0": bz * s, "bz1": (bz + float(body.Depth)) * s}
+
+    def edit_opening(self, e, op):
+        """edit_element on an opening (opening_frame) or the door or window in it: offset (metres from the wall's start, along it), sill
+        (above the wall's base), width and height, the opening and its doors and windows together; the opening must stay within the
+        wall's body. A door or window placed in the opening follows it (one placed elsewhere is moved as much), and their bodies,
+        OverallWidth and OverallHeight take the new size."""
+        f = self.opening_frame(e)
+        opening, wall, item, fillings = f["opening"], f["wall"], f["item"], f["fillings"]
+        offset, width, sill, height = f["offset"], f["width"], f["sill"], f["height"]
+        new = {k: (_cs_num(op, k, positive=k in ("width", "height")) if op.get(k) is not None else v)
+               for k, v in (("offset", offset), ("width", width), ("sill", sill), ("height", height))}
+        bx0, bx1, bz0, bz1 = f["bx0"], f["bx1"], f["bz0"], f["bz1"]
+        if new["offset"] < bx0 - 0.001 or new["offset"] + new["width"] > bx1 + 0.001 or new["sill"] < bz0 - 0.001 or new["sill"] + new["height"] > bz1 + 0.001:
+            raise DataspatiumError("%s #%d would reach beyond wall #%d %r, whose body runs from %.3g to %.3g m from its start and from %.3g to %.3g m up; give an offset, width, sill and height within it"
+                                   % (e.is_a(), e.id(), wall.id(), _ifc_text(wall.Name) or "", bx0, bx1, bz0, bz1))
+        resize = abs(new["width"] - width) > 1e-9 or abs(new["height"] - height) > 1e-9
+        boxes = [item]
+        for x in fillings:
+            b = self.wall_box(x)
+            if resize and b is None:
+                raise self.cannot(x, "its body is not the box create_opening draws, so its size cannot change", "create_opening")
+            boxes.append(b)
+        loose = self.loose_fillings(opening)
+        d = (self.u(new["offset"] - offset), 0.0, self.u(new["sill"] - sill))
+        if any(abs(c) > 1e-12 for c in d):
+            before = _cs_placement(opening.ObjectPlacement)
+            self.shift(opening, _cs_placement(wall.ObjectPlacement), d)
+            self.follow(opening, before, loose)
+        if resize:
+            for b in boxes:
+                self.resize_box(b, self.u(new["width"]), self.u(new["height"]))
+            for x in fillings:
+                if hasattr(x, "OverallWidth"):
+                    x.OverallWidth, x.OverallHeight = round(self.u(new["width"]), 9), round(self.u(new["height"]), 9)
+        for x in [opening] + fillings + [wall]:
+            self.touch(x)
+
+    def resize_box(self, item, width, height):
+        """A box of create_opening's form (wall_box) made width long along x from where it starts, and height high (file units)."""
+        p = self.own(item, "SweptArea")
+        cx, cy = [float(c) for c in p.Position.Location.Coordinates][:2]
+        x0 = cx - float(p.XDim) / 2.0
+        p.XDim = round(width, 9)
+        self.set_point(self.own(p, "Position"), "Location", (round(x0 + width / 2.0, 9), cy))
+        item.Depth = round(height, 9)
+
+    def roof_frame(self, roof):
+        """A roof of create_roof's form as edit_element reads it: its storey's absolute matrix S, its shape (PredefinedType, in IFC2X3
+        ShapeType), its base above the storey and, from its slabs' faces, the pitch, the rectangle it covers (length and width), the
+        overhang and the thickness (metres), the ridge, and per slab its body and the direction its face falls; else the refusal of
+        cannot."""
+        s = self.scale
+        storey = self.container(roof)
+        S = _cs_placement(storey.ObjectPlacement) if storey is not None else None
+        R = _cs_placement(roof.ObjectPlacement) if self.movable(roof) else None
+        shape = {v: k for k, v in self.ROOF_TYPES.items()}.get(str(getattr(roof, "ShapeType" if self.m.schema == "IFC2X3" else "PredefinedType", None) or ""))
+        parts = [o for rel in (getattr(roof, "IsDecomposedBy", None) or ()) for o in (rel.RelatedObjects or ()) if o.is_a("IfcSlab")]
+        why, faces = None, []
+        rel = _cs_compose(_cs_invert(S), R) if S is not None and R is not None else None
+        if rel is None or abs(rel[2][2] - 1.0) > 1e-6:
+            why = "it is in no storey, or its placement cannot be read"
+        elif shape is None:
+            why = "its shape is none of create_roof's (gable, hip, shed, flat)"
+        elif not parts:
+            why = "it has no roof slabs"
+        for slab in parts if why is None else ():
+            P = _cs_placement(getattr(slab, "ObjectPlacement", None))
+            rep = getattr(slab, "Representation", None)
+            bodies = [r for r in (rep.Representations if rep is not None else ()) if (r.RepresentationIdentifier or "") == "Body"]
+            items = list(bodies[0].Items or ()) if len(bodies) == 1 else []
+            item = items[0] if len(items) == 1 and items[0].is_a("IfcExtrudedAreaSolid") and items[0].SweptArea.is_a() == "IfcArbitraryClosedProfileDef" else None
+            inner = _cs_compose(_cs_invert(R), P) if P is not None else None
+            if item is None or inner is None or any(abs(inner[i][j] - (1.0 if i == j else 0.0)) > 1e-6 for i in range(3) for j in range(3)) or max(abs(c) for c in inner[3]) > self.u(1e-6):
+                why = "its slab #%d is not one of create_roof's faces" % slab.id()
+                break
+            M = _cs_compose(inner, _cs_axes(item.Position))
+            n, h = M[2], math.hypot(M[2][0], M[2][1])
+            d = _cs_unit([float(c) for c in item.ExtrudedDirection.DirectionRatios])
+            faces.append({"slab": slab, "rep": bodies[0], "item": item, "pitch": math.degrees(math.atan2(h, n[2])), "fall": (n[0] / h, n[1] / h) if h > 1e-9 else None,
+                          "thickness": float(item.Depth) * abs(d[2]) * s if d is not None else 0.0, "corners": [_cs_at(M, (q[0], q[1], 0.0)) for q in _cs_profile_points(item.SweptArea)]})
+        if why is None:
+            xs, ys = [c[0] * s for x in faces for c in x["corners"]], [c[1] * s for x in faces for c in x["corners"]]
+            overhang, pitch, thickness = -min(xs), faces[0]["pitch"], faces[0]["thickness"]
+            if abs(overhang + min(ys)) > 0.001 or overhang < -0.001 or thickness <= 0 or any(abs(x["pitch"] - pitch) > 0.01 or abs(x["thickness"] - thickness) > 0.0005 for x in faces):
+                why = "its faces are not of one pitch, overhang and thickness"
+        if why is None:
+            overhang = max(0.0, overhang)
+            length, width = max(xs) - overhang, max(ys) - overhang
+            falls = [x["fall"] for x in faces if x["fall"] is not None]
+            ridge = None
+            if shape == "gable":
+                ridge = "x" if all(abs(fall[0]) < 1e-6 for fall in falls) else "y"
+            elif shape == "shed" and falls and abs(falls[0][0]) > 0.5:
+                ridge = "x"
+            want = [fall for fall, _ in _cs_roof_faces(shape, length, width, overhang, ridge)]
+            if len(want) != len(faces) or (shape != "flat" and any(sum(1 for x in faces if x["fall"] and x["fall"][0] * w[0] + x["fall"][1] * w[1] > 0.999) != 1 for w in want)):
+                why = "its slabs are not the faces create_roof makes"
+        if why:
+            raise self.cannot(roof, why, "create_roof")
+        return {"S": S, "shape": shape, "base": rel[3][2] * s, "pitch": 0.0 if shape == "flat" else pitch, "length": length, "width": width,
+                "overhang": overhang, "thickness": thickness, "ridge": ridge, "faces": faces}
+
+    def edit_roof(self, roof, op):
+        """edit_element on a roof (roof_frame): base (the eaves' height above the storey) lifts it, and pitch and overhang make its faces
+        anew over the same rectangle as create_roof does (roof_solid), each slab keeping its GlobalId, its type and its layers with a
+        new body; a flat roof has no pitch."""
+        f = self.roof_frame(roof)
+        flat = f["shape"] == "flat"
+        if flat and op.get("pitch") is not None:
+            raise DataspatiumError("roof #%d is flat and has no pitch; another shape is a new roof, which only the person can ask for" % roof.id())
+        pitch = _cs_num(op, "pitch", unit="degrees") if op.get("pitch") is not None else f["pitch"]
+        if not flat and not 0.0 < pitch <= 75.0:
+            raise DataspatiumError("pitch must be more than 0 and at most 75 degrees")
+        overhang = _cs_num(op, "overhang") if op.get("overhang") is not None else f["overhang"]
+        if overhang < 0:
+            raise DataspatiumError("overhang must be zero or more (metres)")
+        base = _cs_num(op, "base") if op.get("base") is not None else f["base"]
+        if abs(base - f["base"]) > 1e-9:
+            self.shift(roof, f["S"], (0.0, 0.0, self.u(base - f["base"])))
+        if abs(pitch - f["pitch"]) > 1e-9 or abs(overhang - f["overhang"]) > 1e-9:
+            p = math.radians(pitch)
+            for fall, corners in _cs_roof_faces(f["shape"], f["length"], f["width"], overhang, f["ridge"]):
+                face = f["faces"][0] if flat else next(x for x in f["faces"] if x["fall"] and x["fall"][0] * fall[0] + x["fall"][1] * fall[1] > 0.999)
+                self.replace_item(face["rep"], face["item"], self.roof_solid(fall, corners, f["length"], f["width"], p, f["thickness"]))
+                self.touch(face["slab"])
+        self.touch(roof)
+
+    def roof_solid(self, fall, corners, length, width, pitch, thickness):
+        """The body of one face of a roof over [0, length] x [0, width] in metres, as op_create_roof draws it: the face's outline in its
+        own plane (Axis the normal, RefDirection along the eaves), extruded straight up by thickness / cos(pitch)."""
+        sin, cos, tan = math.sin(pitch), math.cos(pitch), math.tan(pitch)
+        fx, fy = fall
+        eaves = max(x * fx + y * fy for x, y in ((0.0, 0.0), (length, 0.0), (length, width), (0.0, width)))
+        pts = [(x, y, (eaves - x * fx - y * fy) * tan) for x, y in corners]
+        along, up, normal = (-fy, fx, 0.0), (-fx * cos, -fy * cos, sin), (fx * sin, fy * sin, cos)
+        o = pts[0]
+        face = [[self.u(_cs_dot([q[k] - o[k] for k in range(3)], axis)) for axis in (along, up)] for q in pts]
+        profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(face))
+        position = self.m.createIfcAxis2Placement3D(self.point(self.u(o[0]), self.u(o[1]), self.u(o[2])), self.direction(*normal), self.direction(*along))
+        return self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0.0, sin, cos), self.u(thickness / cos))
+
+    def parameters(self, e):
+        """What edit_element reads of an element, for the read tool get_parameters: its id, GlobalId, class, name and kind (wall, slab,
+        opening, roof, or null when edit_element can change only its name), and its kind's measures in metres and degrees: a wall's start
+        and end in its storey's plane, thickness, height and type; a slab's outline, thickness and type; an opening's (also for its door
+        or window) wall, offset, width, height and sill; a roof's shape, pitch, overhang and base. A note says why an element of another
+        form has no measures."""
+        import ifcopenshell.util.element as el
+        kind = self.edit_kind(e)
+        out = {"id": e.id(), "guid": getattr(e, "GlobalId", None), "ifc_class": e.is_a(), "name": _ifc_text(getattr(e, "Name", None)), "kind": kind if kind in self.EDITS else None}
+        t = el.get_type(e) if e.is_a("IfcObject") else None
+        typed = _ifc_text(t.Name) if t is not None else None
+
+        def r6(v):
+            return round(float(v), 6)
+        try:
+            if kind == "wall":
+                f = self.wall_frame(e)
+                out.update(start=[r6(v) for v in f["start"]], end=[r6(v) for v in f["end"]], thickness=r6(f["thickness"]), height=r6(f["height"]), type=typed)
+            elif kind == "slab":
+                f = self.slab_frame(e)
+                out.update(outline=[[r6(v) for v in p] for p in f["outline"]], thickness=r6(f["thickness"]), type=typed)
+            elif kind == "opening":
+                f = self.opening_frame(e)
+                out.update(wall=f["wall"].id(), offset=r6(f["offset"]), width=r6(f["width"]), height=r6(f["height"]), sill=r6(f["sill"]))
+            elif kind == "roof":
+                f = self.roof_frame(e)
+                out.update(shape=f["shape"], pitch=r6(f["pitch"]), overhang=r6(f["overhang"]), base=r6(f["base"]))
+            elif kind == "roof slab":
+                out["note"] = self.edit_refusal(e, kind, ["pitch"])
+            else:
+                out["note"] = "edit_element changes only the name of a %s" % e.is_a()
+        except DataspatiumError as exc:
+            out.update(kind=None, note=str(exc))
+        return out
 
     def op_delete_elements(self, op):
         """Delete elements; the doors and windows in an element's openings go with it, so nothing is left hanging in the air."""
@@ -2833,8 +3546,9 @@ class _ChangeSet:
         corner and the other stops half the main wall's thickness short of it, so that the corner has neither a gap outside nor an
         overlap inside, and at a T the abutting wall stops at the through wall's face, so that no volume is counted twice. Only
         bodies of create_wall's form are cut (wall_box); walls at another angle are joined as drawn, and ends the app cannot sort
-        out are left alone, both with a note. Walls joined before keep their joint."""
-        new = {r["id"] for r in self.created if r.get("ifc_class") == "IfcWall"}
+        out are left alone, both with a note. Walls joined before keep their joint; walls whose joins an edit or a move undid (rejoin)
+        count as new."""
+        new = {r["id"] for r in self.created if r.get("ifc_class") == "IfcWall"} | self.rejoin
         storeys = {}
         for i in sorted(new):
             try:
@@ -4394,6 +5108,29 @@ def _ifc_topology_file(in_file, out_file):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "topology-in.ifc"), data)
     text = json.dumps(_ifc_topology(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+PARAMETERS_MAX = 200
+
+
+def _ifc_parameters_file(in_file, ids_json, out_file):
+    """The measures edit_element reads of elements (_ChangeSet.parameters), for the read tool get_parameters: ids_json is a JSON list of
+    STEP ids or GlobalIds, at most PARAMETERS_MAX; an id the model lacks gives {"id", "error"}. The original IFC is read from the SQLite
+    file, nothing is written back, and the JSON list is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "parameters-in.ifc"), data)
+    cs = _ChangeSet(model)
+    out = []
+    for ref in (json.loads(ids_json or "[]") or [])[:PARAMETERS_MAX]:
+        try:
+            out.append(cs.parameters(cs.entity(ref)))
+        except DataspatiumError as exc:
+            out.append({"id": ref, "error": str(exc)})
+    text = json.dumps(out, ensure_ascii=False, default=str)
     with open(out_file, "w", encoding="utf-8") as fh:
         fh.write(text)
     return text

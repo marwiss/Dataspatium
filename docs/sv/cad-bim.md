@@ -499,6 +499,18 @@ mittlinjer ändras inte, och hörn i andra vinklar än räta knyts ihop som de �
 och fönster som ändringssetet skapat eller ändrat basmängder (Qto_WallBaseQuantities, Qto_SlabBaseQuantities, Qto_RoofBaseQuantities,
 Qto_DoorBaseQuantities och Qto_WindowBaseQuantities) räknade ur måtten, med öppningarna avdragna och med namnen ur schemats mallar.
 
+Verktyget `edit_element` ändrar ett befintligt element på plats, så att det behåller sitt GlobalId hela sin livstid: en väggs start,
+slut, tjocklek, höjd och typ, ett bjälklags kontur, tjocklek och typ, en öppnings läge, bredd, höjd och underkant tillsammans med dess
+dörr eller fönster, ett taks lutning, takfot och takfotens höjd, och vilket elements namn som helst. Måtten läses ur elementets egen
+geometri (väggens start och slut ur dess axel), och kroppen, axeln, skikten, basmängderna och väggskarvarna görs om. Läsverktyget
+`get_parameters` visar AI:n de mått som `edit_element` ändrar, lästa på samma sätt, så att den kan ändra ett element som den inte själv
+har skapat. Väggens öppningar behåller sin plats längs väggen så länge den behåller sin riktning (annars sitt avstånd från starten) och
+måste rymmas i den, och taket behåller sin rektangel. En vägg eller ett bjälklag med typ får sin tjocklek ur typen, så en tjockare vägg
+får en annan typ. Ett element som inte är ritat som skrivverktygen ritar kan bara få nytt namn, och svaret säger vad AI:n kan göra i
+stället. AI:n ändrar därför element i stället för att radera och skapa dem på nytt, och raderar bara när du ber om det. Flytt med
+`transform_elements` sker i våningens plan: en dörr eller ett fönster flyttas med sin öppning, en flyttad vägg knyts ihop med väggarna
+den möter, ingen punkt blir kvar utan användning, och tomten, byggnaden och våningarna flyttas aldrig, eftersom deras läge och höjder
+gäller hela projektet och bara ändras efter överenskommelse.
 Produktidentiteter skriver AI:n bara när du anger dem, och den hittar aldrig på dem: GTIN (GlobalTradeItemNumber), tillverkare
 (Manufacturer) och modell (ModelLabel) i Pset_ManufacturerTypeInformation på typen, och serienummer (SerialNumber) och streckkod
 (BarCode) i Pset_ManufacturerOccurrence på byggdelen. IFC2X3 har inget GTIN.
