@@ -206,7 +206,7 @@ Asiat haetaan 500 kohteen sivuina. Palvelimen katkaisema luettelo (Dataregium ka
 loppuun palvelimen Link-otsakkeen rel="next" -linkkien kautta, mutta vain samalta palvelimelta, joten tunnisteesi ei koskaan
 mene muualle.
 
-Kortti *IFC–DB* (aiemmin IFC-LPG) näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifcdb-dataregium-palvelimella).
+Kortti *IFC-DB* (aiemmin IFC-LPG) näkyy, kun palvelimella on verkko, katso [grafer.md](grafer.md#ifc-db-dataregium-palvelimella).
 
 Kohdassa *Projektin tiedostot* lähde luettelee mallit ja asiakirjat, jotka palvelimella on projektille. *Hae* tekee tiedoston
 omaa lajia olevan aineiston, joten IFC-tiedostosta tulee malli ja CSV-tiedostosta taulukko, ja aineisto muistaa, miltä
@@ -240,7 +240,7 @@ palvelin kieltää otsakkeen, se poistetaan käytöstä kyseiseltä lähteeltä.
 Palvelimen puoli kuvataan Dataregiumin dokumentaatiossa: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/client-guide.md) (miten asiakas yhdistää) ja [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/deploy/local.md) (kehityspino ja miten sovellusta testataan sitä vastaan).
 
 Dataregium kuvaa lisäyksensä osoitteessa `GET /.well-known/dataregium`; sovellus lukee asiakirjan, kun lähde avataan, ja kirjoittaa
-otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC–DB,
+otsikon alle, mikä palvelin on kyseessä ja mitä lisäyksiä sillä on (itserekisteröinti, pyyntöloki, hallinta, IFC-DB,
 graafikyselyt). Palvelimella ilman asiakirjaa ei ole lisäyksiä, ja kaikki määrittelyjen mukainen toimii silti. Palvelimen virhekoodit
 (`code` vastauksessa, esimerkiksi `reauthentication_required`) näytetään omalla kielelläsi; tuntemattomat koodit näyttävät palvelimen
 oman tekstin. Linkki *Avaa Dataspatiumissa* palvelimen sivuilla on muotoa `index.html#/inhamta/opencde?server=https://…` ja avaa uuden

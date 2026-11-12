@@ -87,7 +87,7 @@ rakennusosat tilan, tyypin, prioriteetin, vastuuhenkilön, rakennusosatyypin tai
 SQL-aloituskoodi saa kyselyt liitokselle. *Tallenna kaaviona* tallentaa näkymän väreineen mallikaaviona, jonka koontinäytöt,
 asiakirjat ja Julkaise näyttävät selitteen kanssa.
 
-Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC–DB* (aiemmin IFC-LPG) vie sinut sinne, katso [grafer.md](grafer.md#ifcdb-dataregium-palvelimella).
+Mallin verkko palvelimella piirretään ja siihen kysytään kohdasta *Nouda*, ja painike *IFC-DB* (aiemmin IFC-LPG) vie sinut sinne, katso [grafer.md](grafer.md#ifc-db-dataregium-palvelimella).
 
 Graafin malli, suhteet ja kyselyt Dataspatiumin puolelta ovat Dataregiumin tiedostossa [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/fi/ifc-lpg.md).
 
@@ -686,7 +686,7 @@ Muoto ilmaisee olemassa olevien instanssien muutokset, yhden attribuuttia kohden
 ja vastaavat, ja kantaa asiakirjan perusversion, nimesi palvelimella ja tekoälymallin alkuperätietoina. Uusia elementtejä, poistoja ja
 uusia suhteita ei voi vielä ilmaista muodossa; paneeli laskee ne, ja ne ovat asian kuvauksessa. Painike näkyy Dataregiumista haetulle
 mallille, kun palvelin ilmoittaa kyvykkyyden `ifc_changes`, eikä ehdotus muuta mallia. Jos palvelin kokeilee ehdotuksia (Dataregium,
-jossa IFC–DB-moduuli on päällä), paneeli näyttää kokeilun tuloksen asian alla: kuinka monta muutosta voitiin soveltaa perusversioon,
+jossa IFC-DB-moduuli on päällä), paneeli näyttää kokeilun tuloksen asian alla: kuinka monta muutosta voitiin soveltaa perusversioon,
 uudet löydökset perusversioon nähden ja jokainen muutos, jota ei voitu soveltaa, syineen (löydös lajia proposal), esimerkiksi että
 arvo ei enää ole se, josta ehdotus lähti. Jos kokeilu on puhdas, projektin *manager* voi painaa *Hyväksy palvelimella*: palvelin tekee
 ehdotuksesta asiakirjan seuraavan version (perusversio, ehdottaja ja hyväksyjä version metatiedoissa) ja sulkee asian. Sovelluksen

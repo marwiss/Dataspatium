@@ -166,13 +166,13 @@
    "is": "stjórnun"
   },
   "opencde.ext.ifcgraph": {
-   "sv": "IFC–DB",
-   "en": "IFC–DB",
-   "da": "IFC–DB",
-   "nb": "IFC–DB",
-   "nn": "IFC–DB",
-   "fi": "IFC–DB",
-   "is": "IFC–DB"
+   "sv": "IFC-DB",
+   "en": "IFC-DB",
+   "da": "IFC-DB",
+   "nb": "IFC-DB",
+   "nn": "IFC-DB",
+   "fi": "IFC-DB",
+   "is": "IFC-DB"
   },
   "opencde.ext.graph_query": {
    "sv": "graffrågor",

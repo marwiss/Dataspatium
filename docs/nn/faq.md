@@ -258,7 +258,7 @@ mindre du sjølv lagrar han som JSON eller datasett. Sjå [kallor.md](kallor.md)
 
 ## Kan eg sjå IFC-grafen til ein modell og spørje han med Cypher?
 
-Ja, viss modellen finst på ein Dataregium-tenar. Opne kjelda i Hent, kortet *IFC–DB* (tidlegare IFC-LPG) eller ei Neo4j-kjelde, og vel modell og vising.
+Ja, viss modellen finst på ein Dataregium-tenar. Opne kjelda i Hent, kortet *IFC-DB* (tidlegare IFC-LPG) eller ei Neo4j-kjelde, og vel modell og vising.
 Nodar og relasjonar blir teikna, du hentar naboar med eit dobbeltklikk og skriv din eigen Cypher i feltet. Sjå [grafer.md](grafer.md).
 
 ## Verkar appen mot ein tenar som berre har BCF API 2.1?

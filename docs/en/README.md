@@ -114,7 +114,7 @@ You do not need to know the words below to use the app, but they appear in the t
   from different makers work together.
 - **Server**: a program that others connect to over the network. Dataregium is a server; Dataspatium needs none.
 - **Graph and graph database**: data as things and the connections between them, for example that a door sits in a wall on a storey.
-  Dataregium can store each model as a graph in Neo4j or Memgraph, with the help of the module [IFC–DB](https://github.com/marwiss/IFC-DB) (formerly IFC-LPG).
+  Dataregium can store each model as a graph in Neo4j or Memgraph, with the help of the module [IFC-DB](https://github.com/marwiss/IFC-DB) (formerly IFC-LPG).
 - **Container**: a ready-packaged program started with Docker or Podman without installing its parts one by one. Dataregium runs that
   way; Dataspatium needs no containers.
 - **Version and change set**: a version is a saved state of a model; a change set is a collection of proposed changes that you see and

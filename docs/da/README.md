@@ -111,7 +111,7 @@ Du behøver ikke kende ordene nedenfor for at bruge appen, men de forekommer i t
   fra forskellige producenter fungerer sammen.
 - **Server**: et program, som andre forbinder til over nettet. Dataregium er en server; Dataspatium behøver ingen.
 - **Graf og grafdatabase**: data som ting og forbindelserne mellem dem, for eksempel at en dør sidder i en væg på en etage. Dataregium
-  kan gemme hver model som en graf i Neo4j eller Memgraph ved hjælp af modulet [IFC–DB](https://github.com/marwiss/IFC-DB) (tidligere IFC-LPG).
+  kan gemme hver model som en graf i Neo4j eller Memgraph ved hjælp af modulet [IFC-DB](https://github.com/marwiss/IFC-DB) (tidligere IFC-LPG).
 - **Container**: et færdigpakket program, der startes med Docker eller Podman, uden at delene installeres hver for sig. Dataregium kører
   sådan; Dataspatium behøver ingen containere.
 - **Version og ændringssæt**: en version er en gemt tilstand af en model; et ændringssæt er en samling foreslåede ændringer, som du ser

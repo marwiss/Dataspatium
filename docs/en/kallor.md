@@ -199,7 +199,7 @@ and BIM).
 Topics are fetched in pages of 500. A list the server has capped (Dataregium caps at 1,000 items) is read to the end through
 the server’s Link header with rel="next", but only on the same server, so that your token never goes anywhere else.
 
-The card *IFC–DB* (formerly IFC-LPG) appears when the server has a graph, see [grafer.md](grafer.md#ifcdb-on-a-dataregium-server).
+The card *IFC-DB* (formerly IFC-LPG) appears when the server has a graph, see [grafer.md](grafer.md#ifc-db-on-a-dataregium-server).
 
 Under *Files in the project* the source lists the models and documents the server holds for the project. *Fetch* makes a
 dataset of the file's own kind, so an IFC file becomes a model and a CSV file a table, and the dataset remembers which
@@ -236,7 +236,7 @@ so that the server's own log can be matched with the app's; if a server refuses 
 The server's side is described in Dataregium's documentation: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/client-guide.md) (how a client connects) and [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/en/deploy/local.md) (the development stack and how the app is tested against it).
 
 Dataregium describes its extensions in `GET /.well-known/dataregium`; the app reads the document when the source opens and writes under
-the heading which server it is and which extensions it has (self-registration, request log, administration, IFC–DB, graph
+the heading which server it is and which extensions it has (self-registration, request log, administration, IFC-DB, graph
 queries). A server without the document has no extensions, and everything in the specifications works anyway. The server's error
 codes (`code` in the answer, for example `reauthentication_required`) are shown in your language; unknown codes show the server's own
 text. The link *Open in Dataspatium* on the server's pages has the form `index.html#/inhamta/opencde?server=https://…` and opens

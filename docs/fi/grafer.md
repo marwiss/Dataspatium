@@ -123,16 +123,16 @@ tallentaa ne verkkoaineistona; muuten *Tallenna aineistona*. **Tallenna kysely**
 uudelleen yhdellä napsautuksella. Bolt WebSocketin yli ei kuulu CORS:n piiriin; oma palvelin ilman TLS:ää (`bolt://`)
 tavoitetaan vain http://-sivulta. Jos vastaus sisältää solmuja, ne piirretään myös verkkona.
 
-## IFC–DB Dataregium-palvelimella
+## IFC-DB Dataregium-palvelimella
 
-Dataregium tekee jokaisesta ladatusta IFC-tiedostosta verkon kirjaston IFC–DB (aiemmin IFC-LPG) avulla: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
+Dataregium tekee jokaisesta ladatusta IFC-tiedostosta verkon kirjaston IFC-DB (aiemmin IFC-LPG) avulla: yksi solmu entiteettiä kohti, luokka ja kaikki sen yläluokat tunnisteina ja
 IFC-attribuutit ominaisuuksina, ja suhteet on nimetty attribuuttien mukaan (`IS_DEFINED_BY`, `RELATED_OBJECTS`, `HAS_PROPERTIES`).
 Verkko on palvelimella ja voi olla paljon suurempi kuin on järkevää hakea. Siksi se piirretään ja siihen tehdään kyselyjä suoraan
 kohdasta *Nouda*, eikä mitään tallenneta ennen kuin pyydät.
 
 Verkkoon on kaksi tietä, ja molemmat antavat saman näkymän:
 
-- **Kortti IFC–DB OpenCDE-lähteessä.** Kyselyt kulkevat palvelimen lukevan verkkokyselyn kautta, mikä edellyttää, että kirjaudut
+- **Kortti IFC-DB OpenCDE-lähteessä.** Kyselyt kulkevat palvelimen lukevan verkkokyselyn kautta, mikä edellyttää, että kirjaudut
   järjestelmänvalvojana ja että palvelimella on `OPENCDE_GRAPH_QUERY_ENABLED=true`. Tämä on tuotannon tie: tietokantaporttia ei tarvitse
   avata, palvelin rajaa rivit ja ajan, poistaa tallennetut tiivisteet ja kirjaa jokaisen kyselyn.
 - **Neo4j-lähde.** Bolt tietokannan osoitteella, käyttäjätunnuksella ja salasanalla, esimerkiksi `bolt://127.0.0.1:7697` kehitysympäristössä.
@@ -174,10 +174,10 @@ Analysoi ja verkkokaaviot kohdassa Visualisoi. Luokasta tulee solmun tunniste ja
 kopiosta myös `IfcWallStandardCase`-solmun. Cypher-välilehdellä voit kytkeä päälle **Aja palvelimella** täältä tallennetulle verkolle, ja silloin
 palvelin vastaa kaikella Cypherillä koko verkkoon eikä osajoukolla kopioon.
 
-Dataregiumista haetulla IFC-mallilla on painike **IFC–DB** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
+Dataregiumista haetulla IFC-mallilla on painike **IFC-DB** kohdassa Hallitse ja valitulla rakennusosalla kohdassa Muokkaa. Se avaa mallin verkon
 kohdassa Nouda, saman koneen Neo4j-lähteessä, jos sellainen on, muuten OpenCDE-lähteessä.
 
-IFC–DB:n versiosta `d042134` palvelin voi laskea laatikon jokaiselle rakennusosalle projektikoordinaateissa (metreinä): `bbox_min`,
+IFC-DB:n versiosta `d042134` palvelin voi laskea laatikon jokaiselle rakennusosalle projektikoordinaateissa (metreinä): `bbox_min`,
 `bbox_max` ja `bbox_centre` pisteinä rakennusosan solmussa, ja mallisolmu kertoo, milloin laatikot laskettiin (`spatial_at`), kuinka
 monelle rakennusosalle (`spatial_products`) ja kuinka monta epäonnistui (`spatial_failed`). Laatikot ovat olemassa vain, kun palvelin on
 ajanut laskennan, joten kysele ehdolla `bbox_centre IS NOT NULL`. Esimerkki *Rakennusosat rakennusosan lähellä* Neo4j-lähteessä
@@ -185,7 +185,7 @@ luettelee sen, mikä on 1,2 m:n sisällä rakennusosan keskipisteestä, funktiol
 
 Palvelin kertoo kyvykkyysasiakirjassaan, mikä tietokanta säilyttää verkon (`graph_store`: `neo4j` tai `memgraph`, myöhemmin `grafeo`
 tai `postgresql`). Muussa tietokannassa kuin Neo4j:ssä ja Memgraphissa, kuten Grafeossa, laatikot ovat lukulistoja eivätkä pisteitä:
-silloin kortti IFC–DB jättää pois esimerkit, jotka tarvitsevat pisteitä, kuten *Rakennusosat rakennusosan lähellä*, ja laatikko
+silloin kortti IFC-DB jättää pois esimerkit, jotka tarvitsevat pisteitä, kuten *Rakennusosat rakennusosan lähellä*, ja laatikko
 näkyy silti muodossa `x y z`, aivan kuten piste.
 
 ## Lisää työkaluja Verkko-välilehdellä

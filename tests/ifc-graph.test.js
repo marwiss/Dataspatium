@@ -70,7 +70,7 @@
     if (/IS_DECOMPOSED_BY\|RELATED_OBJECTS/.test(text)) return { columns: ['x', 'r', 'y'], rows: [['project', 'r1', 'agg'], ['agg', 'r2', 'storey'], ['storey', null, null]].map(([x, r, y]) => [jsonNode(x), r ? jsonRel(relBy(r)) : null, y ? jsonNode(y) : null]) };
     if (/ifc_class AS klass/.test(text)) return { columns: ['klass', 'antal'], rows: [['IfcWallStandardCase', 3]] };
     if (/HAS_PROPERTIES/.test(text)) return { columns: ['n', 'a', 'r', 'b', 's', 'c', 'p'], rows: [[jsonNode('wall'), jsonRel(relBy('r3')), jsonNode('rel'), jsonRel(relBy('r5')), jsonNode('pset'), jsonRel(relBy('r6')), jsonNode('gtin')]] };
-    // Since Dataregium's step one of IFC–DB's F38 a there is no SAME_AS: the component and the entity are joined on the GUID.
+    // Since Dataregium's step one of IFC-DB's F38 a there is no SAME_AS: the component and the entity are joined on the GUID.
     if (/ifc_guid/.test(text)) return { columns: ['t', 'a', 'v', 'b', 'c', 'n'], rows: [[jsonNode('topic'), jsonRel(relBy('r7')), jsonNode('viewpoint'), jsonRel(relBy('r8')), jsonNode('component'), jsonNode('wall')]] };
     if (/elementId\(n\)/.test(text) || /GlobalId/.test(text)) return { columns: ['n', 'r', 'm'], rows: [[jsonNode('wall'), jsonRel(relBy('r3')), jsonNode('rel')]] };
     if (/\(u:User\)/.test(text)) return { columns: ['u', 'hemlighet'], rows: [[jsonNode('user'), NODES.user.properties.password_hash]] };
@@ -155,7 +155,7 @@
     assert.equal(ifcGraph.pickModel(list.models, { documentId: 'doc-1', versionIndex: 1 }).id, 'model-0', 'the version the model came from');
     assert.equal(ifcGraph.pickModel(list.models, { documentId: 'doc-1', versionIndex: 9 }).id, MODEL, 'otherwise the newest of the document');
     assert.equal(ifcGraph.pickModel([], null), null);
-    // Dataregium's own facts moved from Model to Conversion (its step two of IFC–DB's F38 a): the queries read both forms.
+    // Dataregium's own facts moved from Model to Conversion (its step two of IFC-DB's F38 a): the queries read both forms.
     assert.ok(/OPTIONAL MATCH \(c:Conversion \{model_id: m\.id\}\)/.test(ifcGraph.MODELS) && /coalesce\(c\.state, m\.state/.test(ifcGraph.MODELS) && /HAS_CONVERSION/.test(ifcGraph.MODELS) && /HAS_MODEL/.test(ifcGraph.MODELS), 'MODELS reads Conversion when it exists and Model otherwise');
     const presets = D.require('api/families/neo4j').EXAMPLES;
     for (const id of ['models', 'latest', 'classes', 'issue_elements']) {

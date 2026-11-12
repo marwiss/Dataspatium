@@ -82,7 +82,7 @@ nafn og hæð fylgja með), sem Umsjón þekkir sem mál: kortið *Mál* sýnir 
 byggingarhluta eða hæð úr slíkri töflu, og SQL-upphafskóðinn fær fyrirspurnir fyrir tengingina. *Vista sem rit* vistar sýnina með
 litunum sem líkansrit, sem mælaborð, skjöl og Birta sýna með skýringum.
 
-Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC–DB* (áður IFC-LPG) fer með þig þangað, sjá [grafer.md](grafer.md#ifcdb-á-dataregium-þjóni).
+Net líkansins á þjóninum er teiknað og spurt úr *Sækja*, og hnappurinn *IFC-DB* (áður IFC-LPG) fer með þig þangað, sjá [grafer.md](grafer.md#ifc-db-á-dataregium-þjóni).
 
 Líkan grafsins, venslin og fyrirspurnirnar frá hlið Dataspatium eru í [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/is/ifc-lpg.md) hjá Dataregium.
 
@@ -658,7 +658,7 @@ tilgreinir breytingar á fyrirliggjandi tilvikum, eina á hvert eigindi: eiginle
 þess háttar, með grunnútgáfu skjalsins, nafni þínu á þjóninum og gervigreindarlíkaninu sem uppruna. Ný stök, eyðingar og ný vensl er
 ekki enn hægt að tilgreina á forminu; spjaldið telur þau og þau standa í lýsingu málsins. Hnappurinn er til fyrir líkan sem sótt var frá
 Dataregium þegar þjónninn tilgreinir getuna `ifc_changes`, og tillagan breytir ekki líkaninu. Reyni þjónninn tillögur (Dataregium
-með IFC–DB-eininguna á) sýnir spjaldið niðurstöðu prófunarinnar undir málinu: hve mörgum breytingum var hægt að beita á
+með IFC-DB-eininguna á) sýnir spjaldið niðurstöðu prófunarinnar undir málinu: hve mörgum breytingum var hægt að beita á
 grunnútgáfuna, ný atriði miðað við grunninn, og hverja breytingu sem ekki var hægt að beita ásamt ástæðu (atriði af gerðinni proposal),
 til dæmis að gildi sé ekki lengur það sem tillagan gekk út frá. Sé prófunin hrein getur *manager* í verkefninu ýtt á *Samþykkja á
 þjóninum*: þjónninn gerir tillöguna að næstu útgáfu skjalsins (með grunnútgáfu, tillöguhöfundi og samþykkjanda í lýsigögnum

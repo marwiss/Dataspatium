@@ -21,7 +21,7 @@ Dataspatium.assets.addEntries({
  "presets/i18n-shared.json": {
   "file": "presets/i18n-shared.json.js",
   "encoding": "text",
-  "size": 10776,
+  "size": 10762,
   "library": "dataspatium"
  },
  "presets/api/asub-aland.api.json": {
@@ -585,7 +585,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/kallor.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 28473,
+  "size": 28470,
   "library": "dataspatium"
  },
  "docs/sv/snabbstart.md": {
@@ -627,13 +627,13 @@ Dataspatium.assets.addEntries({
  "docs/sv/grafer.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 15393,
+  "size": 15381,
   "library": "dataspatium"
  },
  "docs/sv/cad-bim.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 70951,
+  "size": 70948,
   "library": "dataspatium"
  },
  "docs/sv/floden.md": {
@@ -675,7 +675,7 @@ Dataspatium.assets.addEntries({
  "docs/sv/faq.md": {
   "file": "docs/help/sv.js",
   "encoding": "text",
-  "size": 18574,
+  "size": 18572,
   "library": "dataspatium"
  },
  "docs/sv/licenser.md": {
@@ -753,7 +753,7 @@ Dataspatium.assets.addEntries({
  "docs/da/kallor.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 27993,
+  "size": 27990,
   "library": "dataspatium"
  },
  "docs/da/snabbstart.md": {
@@ -795,13 +795,13 @@ Dataspatium.assets.addEntries({
  "docs/da/grafer.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 15474,
+  "size": 15462,
   "library": "dataspatium"
  },
  "docs/da/cad-bim.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 70818,
+  "size": 70815,
   "library": "dataspatium"
  },
  "docs/da/floden.md": {
@@ -843,7 +843,7 @@ Dataspatium.assets.addEntries({
  "docs/da/faq.md": {
   "file": "docs/help/da.js",
   "encoding": "text",
-  "size": 18262,
+  "size": 18260,
   "library": "dataspatium"
  },
  "docs/da/licenser.md": {
@@ -921,7 +921,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/kallor.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 27578,
+  "size": 27575,
   "library": "dataspatium"
  },
  "docs/nb/snabbstart.md": {
@@ -963,13 +963,13 @@ Dataspatium.assets.addEntries({
  "docs/nb/grafer.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 15259,
+  "size": 15247,
   "library": "dataspatium"
  },
  "docs/nb/cad-bim.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 70013,
+  "size": 70010,
   "library": "dataspatium"
  },
  "docs/nb/floden.md": {
@@ -1011,7 +1011,7 @@ Dataspatium.assets.addEntries({
  "docs/nb/faq.md": {
   "file": "docs/help/nb.js",
   "encoding": "text",
-  "size": 18201,
+  "size": 18199,
   "library": "dataspatium"
  },
  "docs/nb/licenser.md": {
@@ -1089,7 +1089,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/kallor.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 27962,
+  "size": 27959,
   "library": "dataspatium"
  },
  "docs/nn/snabbstart.md": {
@@ -1131,13 +1131,13 @@ Dataspatium.assets.addEntries({
  "docs/nn/grafer.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 15451,
+  "size": 15439,
   "library": "dataspatium"
  },
  "docs/nn/cad-bim.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 71331,
+  "size": 71328,
   "library": "dataspatium"
  },
  "docs/nn/floden.md": {
@@ -1179,7 +1179,7 @@ Dataspatium.assets.addEntries({
  "docs/nn/faq.md": {
   "file": "docs/help/nn.js",
   "encoding": "text",
-  "size": 18371,
+  "size": 18369,
   "library": "dataspatium"
  },
  "docs/nn/licenser.md": {
@@ -1257,7 +1257,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/kallor.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 29851,
+  "size": 29848,
   "library": "dataspatium"
  },
  "docs/fi/snabbstart.md": {
@@ -1299,13 +1299,13 @@ Dataspatium.assets.addEntries({
  "docs/fi/grafer.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 16399,
+  "size": 16387,
   "library": "dataspatium"
  },
  "docs/fi/cad-bim.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 75954,
+  "size": 75951,
   "library": "dataspatium"
  },
  "docs/fi/floden.md": {
@@ -1347,7 +1347,7 @@ Dataspatium.assets.addEntries({
  "docs/fi/faq.md": {
   "file": "docs/help/fi.js",
   "encoding": "text",
-  "size": 19604,
+  "size": 19602,
   "library": "dataspatium"
  },
  "docs/fi/licenser.md": {
@@ -1425,7 +1425,7 @@ Dataspatium.assets.addEntries({
  "docs/is/kallor.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 29587,
+  "size": 29584,
   "library": "dataspatium"
  },
  "docs/is/snabbstart.md": {
@@ -1467,13 +1467,13 @@ Dataspatium.assets.addEntries({
  "docs/is/grafer.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 16089,
+  "size": 16077,
   "library": "dataspatium"
  },
  "docs/is/cad-bim.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 74894,
+  "size": 74891,
   "library": "dataspatium"
  },
  "docs/is/floden.md": {
@@ -1515,7 +1515,7 @@ Dataspatium.assets.addEntries({
  "docs/is/faq.md": {
   "file": "docs/help/is.js",
   "encoding": "text",
-  "size": 19361,
+  "size": 19359,
   "library": "dataspatium"
  },
  "docs/is/licenser.md": {
@@ -1593,7 +1593,7 @@ Dataspatium.assets.addEntries({
  "docs/en/kallor.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 28272,
+  "size": 28269,
   "library": "dataspatium"
  },
  "docs/en/snabbstart.md": {
@@ -1635,13 +1635,13 @@ Dataspatium.assets.addEntries({
  "docs/en/grafer.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 15447,
+  "size": 15435,
   "library": "dataspatium"
  },
  "docs/en/cad-bim.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 71976,
+  "size": 71973,
   "library": "dataspatium"
  },
  "docs/en/floden.md": {
@@ -1683,7 +1683,7 @@ Dataspatium.assets.addEntries({
  "docs/en/faq.md": {
   "file": "docs/help/en.js",
   "encoding": "text",
-  "size": 18702,
+  "size": 18700,
   "library": "dataspatium"
  },
  "docs/en/licenser.md": {

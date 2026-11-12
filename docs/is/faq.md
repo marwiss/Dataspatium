@@ -258,7 +258,7 @@ hana sjálfur sem JSON eða gagnasafn. Sjá [kallor.md](kallor.md).
 
 ## Get ég séð IFC-net líkans og spurt það með Cypher?
 
-Já, ef líkanið er á Dataregium-þjóni. Opnaðu uppsprettuna í Sækja, spjaldið *IFC–DB* (áður IFC-LPG) eða Neo4j-uppsprettu, og veldu líkan og sýn.
+Já, ef líkanið er á Dataregium-þjóni. Opnaðu uppsprettuna í Sækja, spjaldið *IFC-DB* (áður IFC-LPG) eða Neo4j-uppsprettu, og veldu líkan og sýn.
 Hnútar og vensl eru teiknuð, þú sækir nágranna með tvísmelli og skrifar eigið Cypher í reitinn. Sjá [grafer.md](grafer.md).
 
 ## Virkar forritið með þjóni sem hefur aðeins BCF API 2.1?

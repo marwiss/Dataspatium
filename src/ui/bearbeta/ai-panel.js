@@ -57,13 +57,14 @@
         const check = aiCheck.create(ctx, { datasetId: options.datasetId, findings: () => s.findings, bounds: options.bounds, pictures: options.pictures, busy: () => s.busy, log, fail: (err) => { fail(err); render(); }, render: () => render() });
 
         async function load() {
-          s.providers = await providers.list();
+          // The providers are set last, so that a panel with its providers is one whose lists are all in place.
+          const list = await providers.list();
           s.policy = await providers.policy();
           const all = await datasets.list();
           s.albums = all.filter((d) => d.kind === 'images');
           s.tables = all.filter((d) => d.id !== options.datasetId && (!d.kind || d.kind === 'table' || d.kind === 'plan'));
           const last = await idb.getSetting(LAST_SETTING, '');
-          if (!s.providers.some((p) => p.id === s.providerId)) s.providerId = s.providers.some((p) => p.id === last) ? last : (s.providers[0] ? s.providers[0].id : '');
+          if (!list.some((p) => p.id === s.providerId)) s.providerId = list.some((p) => p.id === last) ? last : (list[0] ? list[0].id : '');
           // Lantmäteriet's terrain model can give the ground heights at a footprint's corners when its source is added (no call here).
           s.heightsSource = !!(await connectors.get('lantmateriet-stac').catch(() => null));
           // The brief and the pictures can go to the model's server as its material (F43 b, step 5) when the model came from one the person is signed in to.
@@ -76,6 +77,7 @@
           }
           await check.load(meta);
           s.idsTitles = Object.fromEntries((await idsPresets.list().catch(() => [])).map((x) => [x.file, x.title]));
+          s.providers = list;
         }
         /** Uploads the brief and the pictures as documents on the server, tied to the topic Underlag (data/model-material). */
         async function uploadMaterial() {
