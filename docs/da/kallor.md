@@ -198,7 +198,7 @@ med AI* i CAD og BIM).
 Sager hentes i sider på 500. En liste, som serveren har afkortet (Dataregium afkorter ved 1.000 poster), læses til ende
 gennem serverens Link-header med rel="next", men kun på samme server, så dit token aldrig sendes andre steder hen.
 
-Kortet *IFC-LPG* vises, når serveren har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Kortet *IFC–DB* (tidligere IFC-LPG) vises, når serveren har en graf, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Under *Filer i projektet* viser kilden de modeller og dokumenter, serveren har for projektet. *Hent* laver et datasæt af
 filens egen slags, så en IFC-fil bliver en model og en CSV-fil en tabel, og datasættet husker, hvilken server, hvilket
@@ -234,7 +234,7 @@ med appens; afviser en server headeren, slås den fra for den kilde.
 Serverens side beskrives i Dataregiums dokumentation: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/client-guide.md) (hvordan en klient forbinder) og [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/da/deploy/local.md) (udviklingsstakken og hvordan appen testes mod den).
 
 Dataregium beskriver sine tilføjelser i `GET /.well-known/dataregium`; appen læser dokumentet, når kilden åbnes, og skriver under
-overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistrering, forespørgselslog, administration, IFC-LPG,
+overskriften, hvilken server det er, og hvilke tilføjelser den har (selvregistrering, forespørgselslog, administration, IFC–DB,
 grafforespørgsler). En server uden dokumentet har ingen tilføjelser, og alt ifølge specifikationerne fungerer alligevel. Serverens
 fejlkoder (`code` i svaret, for eksempel `reauthentication_required`) vises på dit sprog; ukendte koder viser serverens egen tekst.
 Linket *Åbn i Dataspatium* på serverens sider har formen `index.html#/inhamta/opencde?server=https://…` og åbner dialogen for en ny

@@ -111,7 +111,7 @@ Du treng ikkje kunne orda nedanfor for å bruke appen, men dei finst i teksten.
   program frå ulike produsentar fungerer saman.
 - **Tenar**: eit program som andre koplar seg til over nettet. Dataregium er ein tenar; Dataspatium treng ingen.
 - **Graf og grafdatabase**: data som ting og sambanda mellom dei, til dømes at ei dør sit i ein vegg i ein etasje. Dataregium kan lagre
-  kvar modell som ein graf i Neo4j eller Memgraph ved hjelp av modulen IFC-LPG.
+  kvar modell som ein graf i Neo4j eller Memgraph ved hjelp av modulen [IFC–DB](https://github.com/marwiss/IFC-DB) (tidlegare IFC-LPG).
 - **Container**: eit ferdigpakka program som blir starta med Docker eller Podman utan at delane blir installerte kvar for seg.
   Dataregium køyrer slik; Dataspatium treng ingen containerar.
 - **Versjon og endringssett**: ein versjon er ein lagra tilstand av ein modell; eit endringssett er ei samling føreslegne endringar som du

@@ -83,7 +83,7 @@ status, type, ansvarlig, prioritet og måned bak felles filtre, og knappen *Vis 
 eller etasje fra en slik tabell, og SQL-startkoden får spørringer for koblingen. *Lagre som diagram* lagrer visningen med fargene
 som et modelldiagram, som dashbord, dokumenter og Publiser viser med tegnforklaring.
 
-Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC-LPG* tar deg dit, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Modellens graf på serveren tegnes og spørres fra *Hent*, og knappen *IFC–DB* (tidligere IFC-LPG) tar deg dit, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Grafens modell, relasjonene og spørringene fra Dataspatiums side finnes i Dataregiums [ifc-lpg.md](https://github.com/marwiss/Dataregium/blob/main/docs/nb/ifc-lpg.md).
 
@@ -658,7 +658,7 @@ Formen angir endringer av eksisterende instanser, én per attributt: egenskapsve
 med dokumentets basisversjon, navnet ditt på serveren og AI-modellen som proveniens. Nye elementer, slettinger og nye relasjoner kan
 ennå ikke angis i formen; panelet teller dem, og de står i sakens beskrivelse. Knappen finnes for en modell hentet fra Dataregium når
 serveren angir kapabiliteten `ifc_changes`, og modellen endres ikke av forslaget. Prøver serveren forslag (Dataregium med
-IFC-LPG-modulen på), viser panelet utfallet av prøvingen under saken: hvor mange endringer som kunne brukes på basisversjonen, nye
+IFC–DB-modulen på), viser panelet utfallet av prøvingen under saken: hvor mange endringer som kunne brukes på basisversjonen, nye
 funn mot basen, og hver endring som ikke kunne brukes, med årsaken (et funn av slaget proposal), for eksempel at en verdi ikke lenger
 er den forslaget gikk ut fra. Er prøvingen ren, kan en *manager* i prosjektet trykke *Godkjenn på serveren*: serveren gjør forslaget
 til dokumentets neste versjon (med basisversjon, forslagsstiller og godkjenner i versjonens metadata) og lukker saken. Modellen i appen

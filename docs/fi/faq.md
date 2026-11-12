@@ -270,7 +270,7 @@ ellet itse tallenna sitä JSON-tiedostona tai aineistona. Katso [kallor.md](kall
 
 ## Voinko nähdä mallin IFC-verkon ja tehdä siihen kyselyjä Cypherillä?
 
-Kyllä, jos malli on Dataregium-palvelimella. Avaa lähde kohdassa Nouda, kortti *IFC-LPG* tai Neo4j-lähde, ja valitse malli ja näkymä.
+Kyllä, jos malli on Dataregium-palvelimella. Avaa lähde kohdassa Nouda, kortti *IFC–DB* (aiemmin IFC-LPG) tai Neo4j-lähde, ja valitse malli ja näkymä.
 Solmut ja suhteet piirretään, haet naapurit kaksoisnapsautuksella ja kirjoitat oman Cypherin kenttään. Katso [grafer.md](grafer.md).
 
 ## Toimiiko sovellus palvelimella, jolla on vain BCF API 2.1?

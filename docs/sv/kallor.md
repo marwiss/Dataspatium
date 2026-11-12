@@ -194,7 +194,7 @@ angivna finns i projektet. En ändring som bara rör ett teams del godkänns av 
 Ärenden hämtas i sidor om 500. En lista som servern har kapat (Dataregium kapar vid 1 000 poster) läses till slut genom
 serverns rubrik Link med rel="next", men bara på samma server, så att din token aldrig går någon annanstans.
 
-Kortet *IFC-LPG* visas när servern har en graf, se [grafer.md](grafer.md#ifc-lpg-på-en-dataregium-server).
+Kortet *IFC–DB* (tidigare IFC-LPG) visas när servern har en graf, se [grafer.md](grafer.md#ifcdb-på-en-dataregium-server).
 
 Under *Filer i projektet* listar källan de modeller och dokument som servern har för projektet. *Hämta* gör en datamängd av
 filens eget slag, så en IFC-fil blir en modell och en CSV-fil en tabell, och datamängden minns vilken server, vilket projekt
@@ -230,7 +230,7 @@ logg kan paras ihop med appens; nekar en server rubriken stängs den av för den
 Serverns sida beskrivs i Dataregiums dokumentation: [client-guide.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/client-guide.md) (hur en klient ansluter) och [deploy/local.md](https://github.com/marwiss/Dataregium/blob/main/docs/sv/deploy/local.md) (utvecklingsstacken och hur appen provas mot den).
 
 Dataregium beskriver sina tillägg i `GET /.well-known/dataregium`; appen läser dokumentet när källan öppnas och skriver under rubriken
-vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC-LPG, graffrågor). En server
+vilken server det är och vilka tillägg den har (självregistrering, begärandelogg, administration, IFC–DB, graffrågor). En server
 utan dokumentet har inga tillägg, och allt enligt specifikationerna fungerar ändå. Serverns felkoder (`code` i svaret, till exempel
 `reauthentication_required`) visas på ditt språk; okända koder visar serverns egen text. Länken *Öppna i Dataspatium* på serverns
 sidor har formen `index.html#/inhamta/opencde?server=https://…` och öppnar dialogen för en ny källa med adressen ifylld. Finns servern redan som källa öppnas den direkt. Länken kan också peka ut ett projekt och ett dokument

@@ -110,7 +110,7 @@ færðu gögn á milli þeirra með afriti eða pakka.
   framleiðendum vinni saman.
 - **Þjónn**: forrit sem aðrir tengjast yfir netið. Dataregium er þjónn; Dataspatium þarf engan.
 - **Graf og grafagagnagrunnur**: gögn sem hlutir og tengslin milli þeirra, til dæmis að hurð sé í vegg á hæð. Dataregium getur geymt hvert
-  líkan sem graf í Neo4j eða Memgraph með hjálp einingarinnar IFC-LPG.
+  líkan sem graf í Neo4j eða Memgraph með hjálp einingarinnar [IFC–DB](https://github.com/marwiss/IFC-DB) (áður IFC-LPG).
 - **Gámur (container)**: tilbúið forrit sem er ræst með Docker eða Podman án þess að hlutar þess séu settir upp hver fyrir sig.
   Dataregium keyrir þannig; Dataspatium þarf enga gáma.
 - **Útgáfa og breytingasett**: útgáfa er vistuð staða líkans; breytingasett er safn tillagðra breytinga sem þú sérð og samþykkir áður en

@@ -119,16 +119,16 @@ knuder og relationer fladgøres til deres egenskaber. Indeholder svaret knuder o
 som et grafdatasæt; ellers *Gem som datasæt*. **Gem forespørgslen** lægger forespørgslen på kilden, så den kan køres igen
 med ét klik. Bolt over WebSocket er ikke omfattet af CORS; en egen server uden TLS (`bolt://`) nås kun fra en side over http://. Indeholder svaret knuder, tegnes de også som en graf.
 
-## IFC-LPG på en Dataregium-server
+## IFC–DB på en Dataregium-server
 
-Dataregium gør hver uploadet IFC-fil til en graf: én knude per entitet, med klassen og alle dens overklasser som etiketter og
+Dataregium gør hver uploadet IFC-fil til en graf med biblioteket IFC–DB (tidligere IFC-LPG): én knude per entitet, med klassen og alle dens overklasser som etiketter og
 IFC-attributterne som egenskaber, og relationer, der hedder som attributterne (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
 `HAS_PROPERTIES`). Grafen ligger på serveren og kan være langt større, end det er rimeligt at hente hjem. Derfor tegnes og
 forespørges den direkte fra *Hent*, og intet gemmes, før du beder om det.
 
 Der er to veje til grafen, og begge giver samme visning:
 
-- **Kortet IFC-LPG i OpenCDE-kilden.** Forespørgslerne går gennem serverens læsende grafforespørgsel, som kræver, at du logger
+- **Kortet IFC–DB i OpenCDE-kilden.** Forespørgslerne går gennem serverens læsende grafforespørgsel, som kræver, at du logger
   ind som administrator, og at serveren har `OPENCDE_GRAPH_QUERY_ENABLED=true`. Det er vejen i drift: ingen databaseport behøver
   at være åben, serveren sætter grænser for rækker og tid, fjerner lagrede hashværdier og logger hver forespørgsel.
 - **En Neo4j-kilde.** Bolt med databasens adresse, brugernavn og adgangskode, for eksempel `bolt://127.0.0.1:7697` på en
@@ -172,10 +172,10 @@ grafdiagrammer i Visualisér. Klassen bliver knudens etiket, og alle etiketter f
 `IfcWallStandardCase` i kopien. I fanen Cypher kan du slå **Kør på serveren** til for en graf, der er gemt herfra, og så svarer serveren
 med al Cypher mod hele grafen i stedet for delmængden mod kopien.
 
-En IFC-model hentet fra Dataregium har knappen **IFC-LPG** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
+En IFC-model hentet fra Dataregium har knappen **IFC–DB** i Håndter, og for en valgt bygningsdel i Bearbejd. Den åbner modellens graf i
 Hent, i en Neo4j-kilde på samme computer, hvis der er en, ellers i OpenCDE-kilden.
 
-Fra IFC-LPG `d042134` kan serveren beregne en kasse pr. bygningsdel i projektkoordinater (meter): `bbox_min`, `bbox_max` og
+Fra IFC–DB `d042134` kan serveren beregne en kasse pr. bygningsdel i projektkoordinater (meter): `bbox_min`, `bbox_max` og
 `bbox_centre` som punkter på bygningsdelens knude, og modelknuden angiver, hvornår kasserne blev beregnet (`spatial_at`), for hvor
 mange bygningsdele (`spatial_products`), og hvor mange der mislykkedes (`spatial_failed`). Kasserne findes kun, hvor serveren har kørt
 beregningen, så spørg med `bbox_centre IS NOT NULL`. Eksemplet *Bygningsdele nær en bygningsdel* i Neo4j-kilden viser det, der ligger
@@ -183,7 +183,7 @@ inden for 1,2 m af en bygningsdels midte, med `point.distance`, ens i Neo4j og M
 
 Serveren angiver i sit kapabilitetsdokument, hvilken database der rummer grafen (`graph_store`: `neo4j` eller `memgraph`, senere
 `grafeo` eller `postgresql`). I en anden database end Neo4j og Memgraph, som Grafeo, er kasserne lister med tal og ikke punkter: så
-udelader kortet IFC-LPG de eksempler, der kræver punkter, som *Bygningsdele nær en bygningsdel*, og en kasse vises stadig som `x y z`,
+udelader kortet IFC–DB de eksempler, der kræver punkter, som *Bygningsdele nær en bygningsdel*, og en kasse vises stadig som `x y z`,
 ligesom et punkt.
 
 ## Flere værktøjer i fanen Graf

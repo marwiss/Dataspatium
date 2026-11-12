@@ -122,16 +122,16 @@ graph** keeps them as a graph dataset; otherwise *Save as dataset*. **Keep query
 runs again with one click. Bolt over WebSocket is not subject to CORS; an own server without TLS (`bolt://`) is reached
 only from a page over http://. When the answer holds nodes, they are drawn as a graph as well.
 
-## IFC-LPG on a Dataregium server
+## IFC–DB on a Dataregium server
 
-Dataregium turns every uploaded IFC file into a graph: one node per entity, with its class and all its supertypes as labels and
+Dataregium turns every uploaded IFC file into a graph with the library IFC–DB (formerly IFC-LPG): one node per entity, with its class and all its supertypes as labels and
 the IFC attributes as properties, and relationships named after the attributes (`IS_DEFINED_BY`, `RELATED_OBJECTS`,
 `HAS_PROPERTIES`). The graph lives on the server and can be far larger than is reasonable to fetch. So it is drawn and queried
 directly from *Import*, and nothing is saved until you ask for it.
 
 There are two ways to the graph, and both give the same view:
 
-- **The card IFC-LPG in the OpenCDE source.** The queries go through the server's read-only graph query, which needs you to
+- **The card IFC–DB in the OpenCDE source.** The queries go through the server's read-only graph query, which needs you to
   sign in as an administrator and the server to have `OPENCDE_GRAPH_QUERY_ENABLED=true`. This is the way in production: no
   database port has to be open, the server limits rows and time, removes stored hashes and logs every query.
 - **A Neo4j source.** Bolt with the database's address, user name and password, for example `bolt://127.0.0.1:7697` on a
@@ -175,10 +175,10 @@ graph charts in Visualise. The class becomes the node's label and all labels sta
 `IfcWallStandardCase` in the copy. In the Cypher tab you can turn on **Run on the server** for a graph saved from here, and the
 server then answers with all of Cypher against the whole graph, instead of the subset against the copy.
 
-An IFC model fetched from Dataregium has the button **IFC-LPG** in Manage, and for a chosen element in Process. It opens the model's
+An IFC model fetched from Dataregium has the button **IFC–DB** in Manage, and for a chosen element in Process. It opens the model's
 graph in Import, in a Neo4j source on the same machine if there is one, otherwise in the OpenCDE source.
 
-From IFC-LPG `d042134` the server can compute a box per product in project coordinates (metres): `bbox_min`, `bbox_max` and
+From IFC–DB `d042134` the server can compute a box per product in project coordinates (metres): `bbox_min`, `bbox_max` and
 `bbox_centre` as points on the product's node, and the model node says when the boxes were computed (`spatial_at`), for how many
 products (`spatial_products`) and how many failed (`spatial_failed`). The boxes exist only where the server has run the computation,
 so query with `bbox_centre IS NOT NULL`. The example *Products near a product* in the Neo4j source lists what lies within 1.2 m of a
@@ -186,7 +186,7 @@ product's centre with `point.distance`, the same in Neo4j and Memgraph.
 
 The server states in its capabilities document which database holds the graph (`graph_store`: `neo4j` or `memgraph`, later `grafeo`
 or `postgresql`). In a database other than Neo4j and Memgraph, such as Grafeo, the boxes are lists of numbers and not points: the card
-IFC-LPG then leaves out the examples that need points, such as *Products near a product*, and a box still reads as `x y z`, just like a point.
+IFC–DB then leaves out the examples that need points, such as *Products near a product*, and a box still reads as `x y z`, just like a point.
 
 ## More tools in the Graph tab
 

@@ -113,7 +113,7 @@ Sinun ei tarvitse tuntea alla olevia sanoja käyttääksesi sovellusta, mutta ne
   valmistajien ohjelmat toimivat yhdessä.
 - **Palvelin**: ohjelma, johon muut ottavat yhteyden verkon yli. Dataregium on palvelin; Dataspatium ei tarvitse sellaista.
 - **Graafi ja graafitietokanta**: data asioina ja niiden välisinä yhteyksinä, esimerkiksi että ovi on seinässä jossakin kerroksessa.
-  Dataregium voi tallentaa jokaisen mallin graafiksi Neo4j- tai Memgraph-tietokantaan IFC-LPG-moduulin avulla.
+  Dataregium voi tallentaa jokaisen mallin graafiksi Neo4j- tai Memgraph-tietokantaan [IFC–DB](https://github.com/marwiss/IFC-DB)-moduulin (aiemmin IFC-LPG) avulla.
 - **Kontti**: valmiiksi paketoitu ohjelma, joka käynnistetään Dockerilla tai Podmanilla ilman että sen osia asennetaan erikseen.
   Dataregium toimii näin; Dataspatium ei tarvitse kontteja.
 - **Versio ja muutosjoukko**: versio on mallin tallennettu tila; muutosjoukko on joukko ehdotettuja muutoksia, jotka näet ja hyväksyt
