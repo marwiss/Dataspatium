@@ -325,6 +325,42 @@ Modellen blir eit vanleg modelldatasett. Opne det i Bearbeid og byggj i det med 
 rutenett på 6×4 m med ytterveggar langs rutenettet». Det kan eksporterast som IFC og publiserast på ein Dataregium som andre
 modellar.
 
+### Nemningar, nummer og plassering
+
+Under *Nemningar og id* i skjemaet fyller du ut det du veit; berre det vert skrive i fila:
+- *Eigedomsnemning* vert namnet på tomta (IfcSite.Name) og eigedoms-id-en (Pset_LandRegistration.LandID); det du skreiv under
+  *Tomt*, vert då det lange namnet på tomta.
+- *Bygningsnummer* vert namnet på bygningen (IfcBuilding.Name) og *Namnet på bygningen* det lange namnet (LongName).
+- *Nasjonal bygnings-id* vert skriven i Pset_BuildingCommon.BuildingID med IsPermanentID, slik at modellen og registera snakkar om
+  same bygning.
+- *Skildring av første etasje* vert Description for etasjen, til dømes at ho er inngangsplan.
+- *Forfattar* og *Organisasjon* vert skrivne i hovudet til IFC-fila berre om du fyller dei ut; eit namn er ei personopplysing.
+
+Modellen får òg konteksten Axis for aksane til veggene frå starten, og rapporten minner om at modellen manglar koordinatsystem
+(buildingSMART-regelen GRF003) til `set_site` har gjeve han eitt.
+
+AI-en nummererer etasjane i høgdeorden for heile prosjektet (Plan 1, Plan 2 …) og skriv inngangsplanet i skildringa av etasjen;
+`create_storeys_and_grid` tek `description` og `long_name` per etasje. `create_spaces` tek eit `number` per rom, eintydig i
+bygningen: nummeret vert Name for rommet, romnamnet LongName og `long_name` skildringa, og ein romtype (`room_type`) vert skriven
+som ObjectType med PredefinedType USERDEFINED. Utan nummer gjeld namna som før.
+
+`set_site` kjenner dei samansette EPSG-kodane for SWEREF 99 med høgder i RH 2000: 5845 for SWEREF 99 TM og 5846–5857 for dei tolv
+lokale sonene i same rekkjefølgje som 3007–3018 (til dømes 5850 for SWEREF 99 18 00 + RH 2000). For ein bygning i Sverige
+føretrekkjer AI-en den lokale sona når koordinatane er i ho; han reknar aldri om koordinatar sjølv. Koordinatsystemet
+(IfcProjectedCRS) får ei skildring i klartekst og, når koden ikkje gjev høgdesystemet, RH 2000 som VerticalDatum (eit anna med
+`vertical_datum`). Karteininga er alltid meter og Scale for konverteringa lengdeeininga til fila i meter (GRF005), så ein modell i
+millimeter får Scale 0,001. Kvar overordna kontekst (Model, Plan) får sin eigen IfcMapConversion med dei same verdiane (GRF001).
+Høgda over havet til bygningen står i OrthogonalHeight for konverteringa; i IFC4 og IFC2X3 òg i IfcBuilding.ElevationOfRefHeight,
+som IFC4X3 har fasa ut.
+
+Filhovudet: kvar IFC-fil appen skriv eller lagrar, får FILE_DESCRIPTION med visingsdefinisjon og nivået 2;1, og FILE_NAME med
+namnet på fila, tida etter ISO 8601, preprosessoren (Dataspatium og IfcOpenShell med versjonar) og opphavsprogrammet i forma
+*Dataspatium - Dataspatium - versjon*. Visingsdefinisjonen er CoordinationView_V2.0 for IFC2X3 og ReferenceView_V1.2 for IFC4.
+IFC4X3 har inga offisiell vising for ein modell i heile skjemaet (Reference View utelèt mellom anna ekstruderte lekamar), så
+hovudet seier `notYetAssigned` i staden for ei vising fila ikkje følgjer; valideringstenesta til buildingSMART merkjer det, og ein
+mottakar som krev ei vising, gjev ho. Ei fil appen endrar, held på sin eigen forfattar, organisasjon og sitt opphavsprogram, og
+visinga si når valideringstenesta godtek ho.
+
 ## Ein ny bygning frå ein brief
 
 Skriv ein brief i skjemaet *Ny bygningsmodell* ("eit toetasjes hus 12 × 8 m med saltak, teglfasade, inngang mot sør …") og vel *Bygg frå

@@ -4197,7 +4197,7 @@ IFC_NEW_SCHEMAS = ("IFC4X3_ADD2", "IFC4", "IFC2X3")
 # The view definition the header of a file the app writes declares, per schema family (recommendation 11 of the Praxi study). Only
 # the names buildingSMART's validation service accepts per schema count (github.com/buildingSMART/validate, header_policy
 # valid_descriptions.yaml; the header guide in github.com/buildingSMART/IFC4.x-IF, docs/IFC-file-header): CoordinationView_V2.0
-# for IFC2X3 and ReferenceView_V1.2 for IFC4, which cover the extrusions, openings, material layers and spaces the write tools make.
+# for IFC2X3 and ReferenceView_V1.2 for IFC4, the base views those schemas have, which no bSI rule holds a file's entities against.
 # IFC4X3_ADD2 accepts only ReferenceView and Alignment-basedView, and bSI rule IFC430 places IfcExtrudedAreaSolid,
 # IfcMaterialLayerSetUsage, IfcRelConnectsPathElements and IfcRelSpaceBoundary outside the IFC4.3 Reference View, so no official
 # view fits a model the app authors in the full schema. There the header says 'ViewDefinition [notYetAssigned]', the neutral form
