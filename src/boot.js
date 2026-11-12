@@ -444,22 +444,31 @@
     }).catch((err) => { console.warn('[boot] cross-origin isolation unavailable', err); });
   }
 
-  let index = 0;
-  function next() {
-    if (index >= scripts.length) {
-      document.dispatchEvent(new CustomEvent('dataspatium:ready'));
-      return;
+  /**
+   * Every script goes in at once: with `async = false` the browser fetches them in parallel and runs them in the order
+   * they were added, so a page from a web server waits for one round trip instead of one per file (several hundred).
+   * The page is ready when the last one has run; the first one that fails ends the start with its path.
+   */
+  function loadAll() {
+    let left = scripts.length;
+    let failed = false;
+    if (!left) { document.dispatchEvent(new CustomEvent('dataspatium:ready')); return; }
+    for (const path of scripts) {
+      const el = document.createElement('script');
+      el.src = base + path;
+      el.async = false;
+      el.onload = function () {
+        left -= 1;
+        if (!left && !failed) document.dispatchEvent(new CustomEvent('dataspatium:ready'));
+      };
+      el.onerror = function () {
+        console.error('[boot] failed to load', el.src);
+        if (failed) return;
+        failed = true;
+        document.dispatchEvent(new CustomEvent('dataspatium:boot-error', { detail: path }));
+      };
+      document.head.appendChild(el);
     }
-    const path = scripts[index++];
-    const el = document.createElement('script');
-    el.src = base + path;
-    el.async = false;
-    el.onload = next;
-    el.onerror = function () {
-      console.error('[boot] failed to load', el.src);
-      document.dispatchEvent(new CustomEvent('dataspatium:boot-error', { detail: path }));
-    };
-    document.head.appendChild(el);
   }
-  isolate().then(next);
+  isolate().then(loadAll);
 })();
