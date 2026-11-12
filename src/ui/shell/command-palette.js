@@ -53,6 +53,15 @@
         return out.sort((a, b) => rank(a) - rank(b));
       }
 
+      /** The commands collected again while the palette is open, for providers added since it opened (modes loaded later). */
+      async function refresh() {
+        if (!dlg) return;
+        const next = await collect();
+        if (!dlg) return;
+        items = next;
+        update();
+      }
+
       function close() { if (!dlg) return; const d = dlg; dlg = null; input = null; listEl = null; try { d.close(); } catch (_e) { /* ignore */ } d.remove(); }
 
       async function open() {
@@ -109,7 +118,7 @@
         try { await cmd.run(); } catch (err) { shell.log(String((err && err.message) || err), 'error'); }
       }
 
-      return { open, close, register, collect, score, run, isOpen: () => !!dlg, current: () => filtered.slice() };
+      return { open, close, register, collect, refresh, score, run, isOpen: () => !!dlg, current: () => filtered.slice() };
     }
     return { create, score };
   });

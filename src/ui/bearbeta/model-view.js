@@ -62,7 +62,17 @@
         const askedAi = ctx.store.get().openModelAi;
         if (askedAi && askedAi.datasetId === dataset.id) {
           ctx.store.set({ openModelAi: null });
-          if (!isDxf()) { if (ai) ai.destroy(); ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: dataset.id, preview: setPreview, bounds: boundsOf, pictures: picturesOf, mode: askedAi.mode || 'build', brief: askedAi.brief || '' }); }
+          // The AI panel is a group of scripts of its own (src/boot.js): loaded later, the inspector is drawn again with it.
+          if (!isDxf()) {
+            let later = false;
+            D.ensure(['ai'], () => {
+              if (!slots || !ds || ds.id !== dataset.id) return;
+              if (ai) ai.destroy();
+              ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: dataset.id, preview: setPreview, bounds: boundsOf, pictures: picturesOf, mode: askedAi.mode || 'build', brief: askedAi.brief || '' });
+              if (later) renderInspector();
+            }).catch((err) => ctx.shell.partFailed(err));
+            later = true;
+          }
         }
         s.error = '';
         // A search hit: the element chosen, whatever a filter would have hidden.
@@ -156,8 +166,13 @@
       }
       /** The panel Fråga AI om modellen, in the inspector; the elements of an answer are marked through data/selection. */
       function toggleAi() {
-        if (ai) { ai.destroy(); ai = null; } else ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview, bounds: boundsOf, pictures: picturesOf });
-        renderInspector();
+        if (ai) { ai.destroy(); ai = null; renderInspector(); return; }
+        // The panel is a group of scripts of its own (src/boot.js), created at once when it is loaded already.
+        D.ensure(['ai'], () => {
+          if (ai || !slots || !ds) return;
+          ai = D.require('ui/bearbeta/ai-panel').create(ctx, { datasetId: ds.id, preview: setPreview, bounds: boundsOf, pictures: picturesOf });
+          renderInspector();
+        }).catch((err) => ctx.shell.partFailed(err));
       }
       /** The box of drawn elements in the model's own coordinates, for the camera of a finding's viewpoint (F44 a); null when none is drawn. */
       function boundsOf(ids) {
