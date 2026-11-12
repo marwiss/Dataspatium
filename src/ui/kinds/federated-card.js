@@ -94,7 +94,7 @@
           none ? null : h('div', { class: 'dm-row-wrap', 'data-federated-result': '' }, marks,
             ui.button({ label: t('clash.bcf'), icon: 'download', size: 'sm', title: t('kontrollera.federated.bcf.hint'), 'data-federated-bcf': '', onClick: () => saveBcf(r) }),
             cde && cde.connectorId && cde.projectId ? ui.button({ label: t('clash.send'), icon: 'upload', size: 'sm', title: t('kontrollera.federated.send.hint'), 'data-federated-send': '', onClick: () => sendTopics(r) }) : null,
-            ui.button({ label: t('text.create.dataset'), icon: 'table', size: 'sm', 'data-federated-dataset': '', onClick: () => createDataset(r) })),
+            ui.button({ label: t('text.create.dataset'), icon: 'table', size: 'sm', title: t('text.create.dataset.hint'), 'data-federated-dataset': '', onClick: () => createDataset(r) })),
           none ? null : tableView(r));
       }
       function rowsOf(r) {
