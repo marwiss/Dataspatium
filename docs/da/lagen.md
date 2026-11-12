@@ -184,6 +184,9 @@ versioner* (se [cad-bim.md](cad-bim.md)); andre slags har endnu ingen kontroller
 *Kontrollér*, til fotos af skader (planlagt).
 Kortet *Topologi* læser modellens vægge med *Kontrollér topologien* (appens Python starter første gang) og viser pr. etage, hvor mange
 rum væggene lukker om, om etagen er lukket, vægender der står løse, og ydervæggene pr. verdenshjørne.
+Kortet *Dubletter mellem modeller* prøver modellen mod andre IFC-modeller af samme bygning i arbejdsfladen: samme GlobalId i flere
+modeller, samme bygningsdel i to modeller og etager med samme navn i forskellig højde, med fundene som tabel, markering i
+modelvisningen og BCF-sager (se [cad-bim.md](cad-bim.md)).
 
 ## Analysér
 

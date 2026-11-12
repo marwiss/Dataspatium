@@ -797,3 +797,34 @@ version uploaded as a whole file has no change set. It is a third source beside 
 *The server's versions* fetches the document's other versions on Dataregium as choices in *Compare with*. When you choose one, the
 comparison is computed by the server (its diff between versions, by GlobalId and attribute, with placement, shape, container and type
 as fields of their own) and shown as the same lists and colours here, but without the other version in 3D; fetch that version to see it.
+
+## Duplicates between models
+
+The card **Duplicates between models** in Check tries the chosen IFC model against other IFC models of the same building in the
+workspace, the architect's against the structural engineer's for example, when they are to be coordinated. Choose the models under
+*Try against* and press *Find duplicates*. The check works on the same triangles as the 3D view and the clash check, in a thread of
+its own, and needs neither Python nor the network. The models must share a coordinate system.
+
+- **Same GlobalId**: a building part or a room has the same GlobalId in more than one model. Every object should have its own; it
+  happens, for example, when a model has taken in elements from another. When both have geometry, their overlap is measured too.
+  A project, site, building or storey with the same GlobalId in several models is only counted, since models that start from the
+  same base keep them.
+- **The same building part twice**: building parts of the same class in two models that overlap by at least *Overlap* (90 % unless
+  you choose otherwise). StandardCase and ElementedCase count as their class, and a roof counts as a slab and a stair flight as a
+  stair, since they can stand for the same thing. The overlap is the shared volume divided by the larger element's volume, measured
+  with rays through points on a grid where the surfaces are closed; when the volume cannot be measured, the boxes around the
+  elements decide. A 200 mm wall inside a 250 mm one thus overlaps by 80 %. Pairs with the same GlobalId belong to the first check.
+- **Storeys at different elevations**: a storey of the same name (regardless of capitals and spaces) has elevations more than a
+  millimetre apart in two models.
+
+The findings show in a table with both elements' model, id, GlobalId, type and name, the overlap by volume and by the boxes, the
+storeys' elevations and a point in the models' coordinates. Choose a row to see the finding in the inspector, where *Show in* opens
+each of the elements in the model view in Process. From there:
+
+- *Mark in* marks one model's elements in the findings in the model view in Process.
+- *Save as BCF* saves one issue per finding in a BCF file, with a view of the place and the elements selected and coloured, and both
+  models' files in the issue's header. Storeys have no place and get no view.
+- *Send as issues* creates the issues in the model's project on the server, for a model fetched from a CDE.
+- *Create dataset* saves the table.
+
+Building parts the 3D view cannot draw are not tried as duplicates, and the result says how many they are.

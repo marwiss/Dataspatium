@@ -811,3 +811,35 @@ malliin. Kokonaisena tiedostona ladatulla versiolla ei ole muutosjoukkoa. Se on 
 *Palvelimen versiot* hakee asiakirjan muut versiot Dataregiumista vaihtoehdoiksi luetteloon *Vertaa*. Kun valitset niistä yhden,
 vertailun laskee palvelin (sen versioiden välinen diff GlobalId:n ja attribuutin mukaan, sijoittelu, muoto, säiliö ja tyyppi omina
 kenttinään), ja se näytetään täällä samoina luetteloina ja väreinä, mutta ilman toisen version 3D-kuvaa; hae se versio nähdäksesi sen.
+
+## Kaksoiskappaleet mallien välillä
+
+Kortti **Kaksoiskappaleet mallien välillä** Tarkista-tilassa koettelee valittua IFC-mallia saman rakennuksen muita työalueen
+IFC-malleja vasten, esimerkiksi arkkitehdin mallia rakennesuunnittelijan mallia vasten, kun ne sovitetaan yhteen. Valitse mallit
+kohdasta *Koettele vasten* ja paina *Etsi kaksoiskappaleet*. Tarkistus käyttää samoja kolmioita kuin 3D-näkymä ja
+törmäystarkistus, omassa säikeessään, eikä tarvitse Pythonia eikä verkkoa. Mallien on käytettävä samaa koordinaatistoa.
+
+- **Sama GlobalId**: rakennusosalla tai tilalla on sama GlobalId useammassa kuin yhdessä mallissa. Jokaisella objektilla pitää olla
+  oma; näin käy esimerkiksi, kun malliin on tullut elementtejä toisesta mallista. Jos molemmilla on geometria, myös niiden
+  päällekkäisyys mitataan. Projekti, tontti, rakennus ja kerrokset, joilla on sama GlobalId useassa mallissa, vain lasketaan, koska
+  samaan pohjaan perustuvat mallit säilyttävät ne.
+- **Sama rakennusosa kahdesti**: saman luokan rakennusosat kahdessa mallissa, jotka ovat päällekkäin vähintään *Päällekkäisyys*
+  (90 %, ellei toisin valita). StandardCase ja ElementedCase lasketaan luokakseen, ja katto lasketaan laataksi ja porrassyöksy
+  portaaksi, koska ne voivat tarkoittaa samaa asiaa. Päällekkäisyys on yhteinen tilavuus jaettuna suuremman elementin tilavuudella,
+  mitattuna säteillä ruudukon pisteiden läpi, kun pinnat ovat suljettuja; jos tilavuutta ei voi mitata, elementtejä ympäröivät
+  laatikot ratkaisevat. 200 mm:n seinä 250 mm:n seinän sisällä on siis 80-prosenttisesti päällekkäin. Parit, joilla on sama
+  GlobalId, kuuluvat ensimmäiseen tarkistukseen.
+- **Kerrokset eri korkeuksilla**: samannimisellä kerroksella (isoista kirjaimista ja välilyönneistä riippumatta) on kahdessa
+  mallissa korkeudet, jotka eroavat yli millimetrin.
+
+Löydökset näytetään taulukossa, jossa on molempien elementtien malli, id, GlobalId, tyyppi ja nimi, päällekkäisyys tilavuudesta ja
+laatikoista, kerrosten korkeudet ja piste mallien koordinaateissa. Valitse rivi nähdäksesi löydöksen tarkastelupaneelissa, jossa
+*Näytä mallissa* avaa kunkin elementin mallinäkymään Muokkaa-tilassa. Sieltä:
+
+- *Merkitse malliin* merkitsee yhden mallin löydösten elementit mallinäkymään Muokkaa-tilassa.
+- *Tallenna BCF:nä* tallentaa yhden asian löydöstä kohden BCF-tiedostoon, näkymä paikkaan ja elementit merkittyinä ja
+  väritettyinä, ja molempien mallien tiedostot asian otsakkeessa. Kerroksilla ei ole paikkaa, joten ne eivät saa näkymää.
+- *Lähetä asioina* luo asiat mallin projektiin palvelimella, kun malli on haettu CDE:stä.
+- *Luo aineisto* tallentaa taulukon.
+
+Rakennusosia, joita 3D-näkymä ei voi piirtää, ei koetella kaksoiskappaleina, ja tulos kertoo, kuinka monta niitä on.

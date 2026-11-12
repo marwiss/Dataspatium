@@ -191,6 +191,9 @@ Tekoälypaneeli saa neljännen tilan, *Tarkista*, vaurioista otettuja valokuvia 
 Kortti *Topologia* lukee mallin seinät painikkeella *Tarkista topologia* (sovelluksen Python käynnistyy ensimmäisellä kerralla) ja
 näyttää kerroksittain, kuinka monta huonetta seinät rajaavat, onko kerros suljettu, avoimeksi jääneet seinänpäät ja ulkoseinät
 ilmansuunnittain.
+Kortti *Kaksoiskappaleet mallien välillä* koettelee mallia saman rakennuksen muita työalueen IFC-malleja vasten: sama GlobalId
+useassa mallissa, sama rakennusosa kahdessa mallissa ja samannimiset kerrokset eri korkeuksilla; löydökset näytetään taulukkona,
+merkintänä mallinäkymässä ja BCF-asioina (katso [cad-bim.md](cad-bim.md)).
 
 ## Analysoi
 

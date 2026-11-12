@@ -199,6 +199,9 @@ Bearbeta* tar dig dit för att rätta det. En IFC-modell visar kortet *Validera 
 skador (planerat).
 Kortet *Topologi* läser modellens väggar med *Kontrollera topologin* (appens Python startar första gången) och visar per våning hur
 många rum väggarna sluter, om våningen är sluten, väggändar som står lösa och ytterväggarna per väderstreck.
+Kortet *Dubbletter mellan modeller* prövar modellen mot andra IFC-modeller av samma byggnad i arbetsytan: samma GlobalId i flera
+modeller, samma byggdel i två modeller och våningar med samma namn på olika höjd, med fynden som tabell, markering i modellvyn och
+BCF-ärenden (se [cad-bim.md](cad-bim.md)).
 
 ## Analysera
 

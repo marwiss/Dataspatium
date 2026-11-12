@@ -185,6 +185,9 @@ tar deg dit for å rette det. En IFC-modell viser kortet *Valider modellen* og p
 skader (planlagt).
 Kortet *Topologi* leser modellens vegger med *Kontroller topologien* (appens Python starter første gang) og viser per etasje hvor mange
 rom veggene lukker, om etasjen er lukket, veggender som står løse, og ytterveggene per himmelretning.
+Kortet *Duplikater mellom modeller* prøver modellen mot andre IFC-modeller av samme bygning i arbeidsflaten: samme GlobalId i flere
+modeller, samme bygningsdel i to modeller og etasjer med samme navn på ulik høyde, med funnene som tabell, markering i
+modellvisningen og BCF-saker (se [cad-bim.md](cad-bim.md)).
 
 ## Analyser
 
