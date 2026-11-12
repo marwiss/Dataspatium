@@ -610,7 +610,8 @@ Værktøjet `create_element` laver de bygningsdele, der ikke har et eget værkt�
 IfcBuildingElementProxy: søjler (IfcColumn), bjælker (IfcBeam), stænger som stolper og spær (IfcMember), fundamenter (IfcFooting), pæle
 (IfcPile), beklædninger som gulvbelægning, lofter, facadebeklædning, tagdækning og isolering (IfcCovering), rækværker (IfcRailing),
 skorstene (IfcChimney), solafskærmning (IfcShadingDevice), sanitet (IfcSanitaryTerminal), møbler (IfcFurniture, i IFC2X3
-IfcFurnishingElement) og lige trapper (IfcStair). Klassen og dens PredefinedType kontrolleres mod modellens skema som i de andre
+IfcFurnishingElement), lige trapper (IfcStair) og glasfacader (IfcCurtainWall). Klassen og dens PredefinedType kontrolleres mod
+modellens skema som i de andre
 værktøjer. Kroppen er en ekstruderet profil: et rektangel, en cirkel eller et omrids i etagens plan, stående opad fra en højde over
 etagen (søjler, fundamenter, beklædninger, møbler) eller liggende i en retning (bjælker, stænger og rækværker). Elementet ligger på
 etagen eller er en del af en helhed (`part_of`), for eksempel et rækværk på en trappe, og ligger da i helheden og på dens etage, men
@@ -619,6 +620,21 @@ den en del af bygningsdelen (IfcRelAggregates) eller ligger i rummet; kun i IFC2
 IfcRelCoversSpaces. En lige trappe (STRAIGHT_RUN_STAIR) består af et skrånende trappeløb (IfcStairFlight, STRAIGHT) med antal trin,
 trinhøjde, trindybde og bredde som attributter og i Pset_StairFlightCommon og efter ønske en repos (IfcSlab, LANDING) øverst; den
 sidste stigning er reposens eller dækkets forkant.
+
+En glasfacade (IfcCurtainWall) går langs sin akse som en væg, fra en start til en slutning i etagens plan, med sin højde fra en
+underkant over etagen. Aksen er dens repræsentation, men den har ingen egen krop: den består af sine dele, som ligger i den
+(IfcRelAggregates) og er placeret i forhold til den i et jævnt gitter af fag langs aksen og rækker opad, givet som antal eller som den
+største afstand i meter (uden nogen af dem højst 1,5 m). Posterne står på fagenes linjer fra underkant til overkant, de yderste i flugt
+med enderne; riglerne ligger mellem posterne på rækkernes linjer, den nederste på underkanten og den øverste under overkanten; og et
+glas (IfcPlate af typen CURTAIN_PANEL) fylder hvert felt midt i profilernes dybde. Poster og rigler er begge IfcMember af typen
+MULLION: IFC's MULLION er enhver profil mellem glassene, og IFC har ingen egen værdi for rigler. Delene er navngivet efter facaden,
+deres slags og deres plads, for eksempel Facade Post 1, Facade Rigel 1.1 og Facade Glas 1.1 (fag og række). En glasfacadetype fra
+`define_type` (IfcCurtainWallType) giver delene typer med typens navn: en IfcPlateType CURTAIN_PANEL med glasset som et materialelag og
+en IfcMemberType MULLION med rammens materiale, for eksempel aluminium eller stål, og profilens bredde og dybde som materialeprofil (i
+IFC2X3 kun materialet), så delene får deres slags, materiale og mål fra typerne. Uden type er posterne og riglerne 0,05 × 0,15 m
+aluminium og glassene 0,03 m glas, med PredefinedType på selve delene; IFC2X3 har ingen PredefinedType på IfcPlate og IfcMember, og
+rapporten siger det. Topologien læser en glasfacade som en væg, så den kan lukke en etage sammen med væggene; den får IsExternal ud fra
+topologien i Pset_CurtainWallCommon og basismængder i Qto_CurtainWallQuantities (længde, højde, dybde og sidens areal).
 
 `define_type` laver også typer for beklædninger (med lag, som en dæktype), søjler, bjælker, fundamenter, rækværker, døre og vinduer
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og

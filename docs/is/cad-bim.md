@@ -604,7 +604,8 @@ Verkfærið `create_element` gerir þá byggingarhluta sem hafa ekki eigið verk
 IfcBuildingElementProxy: súlur (IfcColumn), bita (IfcBeam), stoðir og sperrur (IfcMember), undirstöður (IfcFooting), staura (IfcPile),
 klæðningar eins og gólfefni, niðurhengd loft, utanhússklæðningu, þakklæðningu og einangrun (IfcCovering), handrið (IfcRailing),
 reykháfa (IfcChimney), sólskyggni (IfcShadingDevice), hreinlætistæki (IfcSanitaryTerminal), húsgögn (IfcFurniture, í IFC2X3
-IfcFurnishingElement) og beina stiga (IfcStair). Flokkurinn og PredefinedType hans eru prófuð gagnvart skema líkansins eins og í hinum
+IfcFurnishingElement), beina stiga (IfcStair) og glerveggi (IfcCurtainWall). Flokkurinn og PredefinedType hans eru prófuð gagnvart
+skema líkansins eins og í hinum
 verkfærunum. Formið er pressaður prófíll: rétthyrningur, hringur eða útlína í plani hæðarinnar, uppréttur frá hæð yfir hæðinni (súlur,
 undirstöður, klæðningar, húsgögn) eða liggjandi í stefnu (bitar, stoðir og handrið). Hlutinn er á hæðinni eða hluti af heild
 (`part_of`), til dæmis handrið stiga, og er þá í heildinni og á hæð hennar en ekki beint á hæðinni. Klæðning getur tilgreint hvað hún
@@ -612,6 +613,21 @@ klæðir (`host`): byggingarhluta eða rými. Í IFC4 og síðar verður hún hl
 rýminu; aðeins í IFC2X3 fær hún IfcRelCoversBldgElements eða IfcRelCoversSpaces. Beinn stigi (STRAIGHT_RUN_STAIR) er hallandi
 stigahluti (IfcStairFlight, STRAIGHT) með fjölda þrepa, uppstigi, framstigi og breidd sem eigindum og í Pset_StairFlightCommon og, ef
 óskað er, stigapalli (IfcSlab, LANDING) efst; síðasta uppstigið er frambrún pallsins eða plötunnar fyrir ofan.
+
+Glerveggur (IfcCurtainWall) liggur eftir ás sínum eins og veggur, frá upphafi til enda í plani hæðarinnar, með hæð sína frá neðri brún
+yfir hæðinni. Ásinn er framsetning hans, en hann hefur engan eigin búk: hann er gerður úr hlutum sínum, sem liggja í honum
+(IfcRelAggregates) og eru staðsettir miðað við hann í jöfnu neti reita eftir ásnum og raða upp á við, gefnu sem fjöldi eða sem mesta
+bil í metrum (án hvors tveggja mest 1,5 m). Póstarnir standa á línum reitanna frá neðri brún að efri brún, þeir ystu jafnir endunum;
+þverpóstarnir liggja milli póstanna á línum raðanna, sá neðsti á neðri brúninni og sá efsti undir efri brúninni; og rúða (IfcPlate af
+gerðinni CURTAIN_PANEL) fyllir hvern reit í miðri dýpt prófílanna. Póstar og þverpóstar eru báðir IfcMember af gerðinni MULLION:
+MULLION í IFC er hver prófíll milli rúðanna, og IFC hefur ekkert eigið gildi fyrir þverpósta. Hlutarnir heita eftir veggnum, tegund
+sinni og stað sínum, til dæmis Framhlið Póstur 1, Framhlið Þverpóstur 1.1 og Framhlið Rúða 1.1 (reitur og röð). Glerveggjargerð úr
+`define_type` (IfcCurtainWallType) gefur hlutunum gerðir með nafni gerðarinnar: IfcPlateType CURTAIN_PANEL með glerið sem efnislag og
+IfcMemberType MULLION með efni rammans, til dæmis ál eða stál, og breidd og dýpt prófílsins sem efnisprófíl (í IFC2X3 aðeins efnið),
+svo að hlutarnir fá tegund sína, efni og mál frá gerðunum. Án gerðar eru póstarnir og þverpóstarnir 0,05 × 0,15 m ál og rúðurnar 0,03 m
+gler, með PredefinedType á hlutunum sjálfum; IFC2X3 hefur enga PredefinedType á IfcPlate og IfcMember, og skýrslan segir það.
+Grannfræðin les glervegg sem vegg, svo að hann getur lokað hæð ásamt veggjunum; hann fær IsExternal út frá grannfræðinni í
+Pset_CurtainWallCommon og grunnmagn í Qto_CurtainWallQuantities (lengd, hæð, dýpt og flatarmál hliðarinnar).
 
 `define_type` gerir líka gerðir fyrir klæðningar (með lögum, eins og plötugerð), súlur, bita, undirstöður, handrið, hurðir og glugga
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; í IFC2X3 IfcDoorStyle og

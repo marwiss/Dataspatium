@@ -606,7 +606,8 @@ Verktøyet `create_element` lager bygningsdelene som ikke har et eget verktøy, 
 IfcBuildingElementProxy: søyler (IfcColumn), bjelker (IfcBeam), staver som stendere og sperrer (IfcMember), fundamenter (IfcFooting),
 peler (IfcPile), kledninger som gulvbelegg, himlinger, fasadekledning, taktekking og isolasjon (IfcCovering), rekkverk (IfcRailing),
 skorsteiner (IfcChimney), solskjerming (IfcShadingDevice), sanitærutstyr (IfcSanitaryTerminal), møbler (IfcFurniture, i IFC2X3
-IfcFurnishingElement) og rette trapper (IfcStair). Klassen og dens PredefinedType kontrolleres mot modellens skjema som i de andre
+IfcFurnishingElement), rette trapper (IfcStair) og glassfasader (IfcCurtainWall). Klassen og dens PredefinedType kontrolleres mot
+modellens skjema som i de andre
 verktøyene. Kroppen er en ekstrudert profil: et rektangel, en sirkel eller et omriss i etasjens plan, stående oppover fra en høyde over
 etasjen (søyler, fundamenter, kledninger, møbler) eller liggende i en retning (bjelker, staver og rekkverk). Elementet ligger i etasjen
 eller er en del av en helhet (`part_of`), for eksempel et rekkverk i en trapp, og ligger da i helheten og i dens etasje, men ikke
@@ -615,6 +616,21 @@ bygningsdelen (IfcRelAggregates) eller ligger i rommet; bare i IFC2X3 får den I
 rett trapp (STRAIGHT_RUN_STAIR) består av et skrånende trappeløp (IfcStairFlight, STRAIGHT) med antall trinn, opptrinn, inntrinn og
 bredde som attributter og i Pset_StairFlightCommon og på forespørsel en repos (IfcSlab, LANDING) øverst; det siste opptrinnet er
 reposens eller dekkets forkant.
+
+En glassfasade (IfcCurtainWall) går langs aksen sin som en vegg, fra en start til en slutt i etasjens plan, med høyden sin fra en
+underkant over etasjen. Aksen er representasjonen dens, men den har ingen egen kropp: den består av delene sine, som ligger i den
+(IfcRelAggregates) og er plassert i forhold til den i et jevnt rutenett av felt langs aksen og rader oppover, gitt som antall eller som
+den største avstanden i meter (uten noen av dem høyst 1,5 m). Postene står på feltenes linjer fra underkant til overkant, de ytterste i
+flukt med endene; losholtene ligger mellom postene på radenes linjer, den nederste på underkanten og den øverste under overkanten; og
+et glass (IfcPlate av typen CURTAIN_PANEL) fyller hvert felt midt i profilenes dybde. Poster og losholter er begge IfcMember av typen
+MULLION: IFCs MULLION er enhver profil mellom glassene, og IFC har ingen egen verdi for losholter. Delene heter etter fasaden, sitt
+slag og sin plass, for eksempel Fasade Post 1, Fasade Losholt 1.1 og Fasade Glass 1.1 (felt og rad). En glassfasadetype fra
+`define_type` (IfcCurtainWallType) gir delene typer med typens navn: en IfcPlateType CURTAIN_PANEL med glasset som et materialsjikt og
+en IfcMemberType MULLION med rammens materiale, for eksempel aluminium eller stål, og profilens bredde og dybde som materialprofil (i
+IFC2X3 bare materialet), slik at delene får slag, materiale og mål fra typene. Uten type er postene og losholtene 0,05 × 0,15 m
+aluminium og glassene 0,03 m glass, med PredefinedType på selve delene; IFC2X3 har ingen PredefinedType på IfcPlate og IfcMember, og
+rapporten sier det. Topologien leser en glassfasade som en vegg, slik at den kan lukke en etasje sammen med veggene; den får IsExternal
+ut fra topologien i Pset_CurtainWallCommon og basismengder i Qto_CurtainWallQuantities (lengde, høyde, dybde og sidens areal).
 
 `define_type` lager også typer for kledninger (med sjikt, som en dekketype), søyler, bjelker, fundamenter, rekkverk, dører og vinduer
 (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og

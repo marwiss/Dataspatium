@@ -629,7 +629,8 @@ Työkalu `create_element` tekee rakennusosat, joilla ei ole omaa työkalua, tark
 IfcBuildingElementProxy-luokkana: pilarit (IfcColumn), palkit (IfcBeam), sauvat kuten tolpat ja kattotuolien osat (IfcMember), anturat
 (IfcFooting), paalut (IfcPile), verhoukset kuten lattiapäällysteet, alakatot, julkisivuverhoukset, kattopäällysteet ja eristeet
 (IfcCovering), kaiteet (IfcRailing), savupiiput (IfcChimney), aurinkosuojat (IfcShadingDevice), saniteettikalusteet
-(IfcSanitaryTerminal), kalusteet (IfcFurniture, IFC2X3:ssa IfcFurnishingElement) ja suorat portaat (IfcStair). Luokka ja sen
+(IfcSanitaryTerminal), kalusteet (IfcFurniture, IFC2X3:ssa IfcFurnishingElement), suorat portaat (IfcStair) ja lasijulkisivut
+(IfcCurtainWall). Luokka ja sen
 PredefinedType tarkistetaan mallin skeemaa vasten kuten muissakin työkaluissa. Kappale on pursotettu profiili: suorakaide, ympyrä tai
 ääriviiva kerroksen tasossa, pystyssä ylöspäin korkeudelta kerroksen yläpuolella (pilarit, anturat, verhoukset, kalusteet) tai
 vaakasuorassa johonkin suuntaan (palkit, sauvat ja kaiteet). Elementti on kerroksessa tai osa kokonaisuutta (`part_of`), esimerkiksi
@@ -638,6 +639,22 @@ portaan kaide, ja on silloin kokonaisuudessa ja sen kerroksessa mutta ei suoraan
 IFC2X3:ssa se saa suhteen IfcRelCoversBldgElements tai IfcRelCoversSpaces. Suora porras (STRAIGHT_RUN_STAIR) on kalteva porrassyöksy
 (IfcStairFlight, STRAIGHT), jonka askelmien määrä, nousu, etenemä ja leveys ovat attribuutteina ja Pset_StairFlightCommonissa, ja
 pyydettäessä ylhäällä lepotaso (IfcSlab, LANDING); viimeinen nousu on lepotason tai yläpuolisen laatan etureuna.
+
+Lasijulkisivu (IfcCurtainWall) kulkee akselinsa mukaan kuten seinä, alkupisteestä loppupisteeseen kerroksen tasossa, ja sen korkeus
+alkaa alareunasta kerroksen yläpuolella. Akseli on sen esitys, mutta sillä ei ole omaa kappaletta: se koostuu osistaan, jotka kuuluvat
+siihen (IfcRelAggregates) ja on sijoitettu sen suhteen tasaiseen ruudukkoon, jossa on lohkoja akselin suunnassa ja rivejä ylöspäin,
+annettuina lukumäärinä tai suurimpana välinä metreinä (ilman kumpaakaan enintään 1,5 m). Tolpat seisovat lohkojen linjoilla alareunasta
+yläreunaan, uloimmat päiden tasalla; orret ovat tolppien välissä rivien linjoilla, alin alareunassa ja ylin yläreunan alla; ja lasi
+(IfcPlate, tyyppi CURTAIN_PANEL) täyttää jokaisen ruudun profiilien syvyyden keskellä. Tolpat ja orret ovat molemmat IfcMember-osia
+tyyppiä MULLION: IFC:n MULLION on mikä tahansa lasien välinen profiili, eikä IFC:ssä ole omaa arvoa orsille. Osat nimetään julkisivun,
+lajinsa ja paikkansa mukaan, esimerkiksi Julkisivu Tolppa 1, Julkisivu Orsi 1.1 ja Julkisivu Lasi 1.1 (lohko ja rivi).
+`define_type`-työkalun lasijulkisivutyyppi (IfcCurtainWallType) antaa osille tyypit, joilla on tyypin nimi: IfcPlateType CURTAIN_PANEL,
+jossa lasi on materiaalikerroksena, ja IfcMemberType MULLION, jossa on rungon materiaali, esimerkiksi alumiini tai teräs, ja profiilin
+leveys ja syvyys materiaaliprofiilina (IFC2X3:ssa vain materiaali), joten osat saavat lajinsa, materiaalinsa ja mittansa tyypeistä.
+Ilman tyyppiä tolpat ja orret ovat 0,05 × 0,15 m alumiinia ja lasit 0,03 m lasia, ja PredefinedType on osissa itsessään; IFC2X3:ssa
+IfcPlate- ja IfcMember-osilla ei ole PredefinedTypeä, ja raportti kertoo sen. Topologia lukee lasijulkisivun seinäksi, joten se voi
+sulkea kerroksen yhdessä seinien kanssa; se saa IsExternal-arvon topologian perusteella Pset_CurtainWallCommon-joukkoon ja perusmäärät
+Qto_CurtainWallQuantities-joukkoon (pituus, korkeus, syvyys ja sivun pinta-ala).
 
 `define_type` tekee myös tyypit verhouksille (kerroksineen kuten laattatyyppi), pilareille, palkeille, anturoille, kaiteille, oville ja
 ikkunoille (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType ja IfcWindowType; IFC2X3:ssa

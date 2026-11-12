@@ -127,7 +127,7 @@
   test('ai types: define_type is a create with a ref, and checks its kind, name, layers with their category and role, and PredefinedType', async (assert) => {
     assert.ok(writeTools.has('define_type') && writeTools.CREATES.includes('define_type'), 'a write tool that creates');
     const tool = writeTools.TOOLS.find((x) => x.name === 'define_type');
-    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type', 'material', 'material_category', 'operation', 'partitioning', 'width', 'height', 'lining_depth']);
+    assert.deepEqual(Object.keys(tool.parameters.properties), ['kind', 'name', 'layers', 'predefined_type', 'material', 'material_category', 'operation', 'partitioning', 'width', 'height', 'lining_depth', 'panel_material', 'member_width', 'member_depth', 'panel_thickness']);
     assert.deepEqual(tool.parameters.properties.layers.items.required, ['material', 'thickness', 'category', 'role'], 'every field of a layer is required, null when not known');
     assert.deepEqual(writeTools.MATERIAL_CATEGORIES, ['concrete', 'steel', 'aluminium', 'block', 'brick', 'stone', 'wood', 'glass', 'gypsum', 'plastic', 'earth'], 'the categories IfcOpenShell recommends');
     assert.deepEqual(writeTools.LAYER_ROLES, ['load_bearing', 'insulation', 'inner_finish', 'outer_finish'], 'the roles of IfcMaterialLayer.Category');

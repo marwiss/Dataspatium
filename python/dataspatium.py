@@ -1700,6 +1700,27 @@ class _ChangeSet:
         create_opening {..., type, side}
             type (optional) is a door or window type; the filling takes its size and its mapped geometry, stands flush with the
             wall's left face (side right: the right face) and a door opens toward that side (place_typed_fill).
+
+    Since recommendation 4 of the native IFC study, glass façades (2026-11-13), with one new class and new optional fields:
+
+        define_type {kind: ... | curtain_wall, ..., material, material_category, panel_material, member_width, member_depth,
+                     panel_thickness}
+            curtain_wall makes an IfcCurtainWallType (NOTDEFINED) with a ref, and its parts' types of the same name: an IfcPlateType
+            CURTAIN_PANEL with one material layer of panel_material (null: Glass, category glass) panel_thickness thick, and an
+            IfcMemberType MULLION, for mullions and transoms alike (IfcMemberTypeEnum has no TRANSOM), of material (null: Aluminium,
+            category aluminium; material_category for another) with a member_width by member_depth rectangle as its material
+            profile (IFC2X3: the material alone); metres, null: 0.05, 0.15 and 0.03 (curtain_types).
+        create_element {ifc_class: IfcCurtainWall, ..., curtain: {start: [x, y], end: [x, y], height, base, bays, bay_width, rows,
+                        row_height}, part_names: {panel, mullion, transom}}
+            a curtain wall with a ref along its axis from start to end in the storey's plane, height (null: 3) from base (null: 0)
+            metres above the storey, with an 'Axis' and no body of its own, aggregating its parts on an even grid: bays (a count) or
+            bay_width (the most a bay is wide; null and null: 1.5 m), rows or row_height likewise; at, shape, stair, part_of and
+            host are null. Its mullions, transoms (IfcMember MULLION) and panels (IfcPlate CURTAIN_PANEL) get no refs and are named
+            with part_names (optional, the person's words; null: Panel, Mullion, Transom). A curtain wall type types them and gives
+            their sizes and materials (create_curtain_wall). It gets Qto_CurtainWallQuantities, and IsExternal in
+            Pset_CurtainWallCommon from the topology, which reads it as a wall.
+        delete_elements
+            a whole goes with its parts (a curtain wall's, a stair's, a roof's), so that none is left in no storey and no whole.
     """
 
     CREATES = ("create_wall", "create_slab", "create_roof", "create_opening", "create_spaces", "define_type", "create_element")
@@ -3993,8 +4014,22 @@ class _ChangeSet:
             out.update(kind=None, note=str(exc))
         return out
 
+    @staticmethod
+    def parts_of(e):
+        """The parts an element aggregates, and theirs in turn (a curtain wall's mullions, transoms and panels, a stair's flight and
+        landing, a roof's slabs); none for a spatial element, whose spaces are not parts to delete with it."""
+        if not e.is_a("IfcElement"):
+            return []
+        out = []
+        for rel in getattr(e, "IsDecomposedBy", None) or ():
+            for p in rel.RelatedObjects or ():
+                if p.is_a("IfcElement"):
+                    out += [p] + _ChangeSet.parts_of(p)
+        return out
+
     def op_delete_elements(self, op):
-        """Delete elements; the doors and windows in an element's openings go with it, so nothing is left hanging in the air."""
+        """Delete elements; the doors and windows in an element's openings go with it, and so do the parts of a whole (parts_of), so
+        nothing is left hanging in the air."""
         import ifcopenshell.api.root
         if op.get("confirm") is not True:
             raise DataspatiumError("deleting needs confirm: true, which the person gives")
@@ -4007,7 +4042,9 @@ class _ChangeSet:
                 for f in (getattr(opening, "HasFillings", None) or ()):
                     if f.RelatedBuildingElement.id() not in ids:
                         fillings.append(f.RelatedBuildingElement)
-            for f in fillings + [e]:
+            parts = [p for p in self.parts_of(e) if p.id() not in ids]
+            ids |= {p.id() for p in parts}
+            for f in fillings + parts + [e]:
                 rec = self.record(f, self.container(f))
                 if f is not e:
                     rec["with"] = e.id()
@@ -4238,7 +4275,7 @@ class _ChangeSet:
         if kind in self.ELEMENT_TYPE_KINDS:
             return self.define_element_type(op, kind)
         if kind not in self.TYPE_KINDS:
-            raise DataspatiumError("kind must be wall, slab, roof, covering, column, beam, footing, railing, door or window")
+            raise DataspatiumError("kind must be wall, slab, roof, covering, column, beam, footing, railing, door, window or curtain_wall")
         ifc_class, default = self.TYPE_KINDS[kind]
         name = str(op.get("name") or "").strip()[:255]
         if not name:
@@ -4360,11 +4397,13 @@ class _ChangeSet:
             e.ObjectType = None
 
     # -- more building elements, straight stairs, and door and window types (recommendations 4 and 11 of the native IFC study)
-    # The classes create_element makes; IfcFurniture is IfcFurnishingElement in IFC2X3, and IfcStair is a straight stair.
+    # The classes create_element makes; IfcFurniture is IfcFurnishingElement in IFC2X3, IfcStair is a straight stair and
+    # IfcCurtainWall a glass façade of panels between mullions and transoms.
     ELEMENT_CLASSES = ("IfcColumn", "IfcBeam", "IfcMember", "IfcFooting", "IfcPile", "IfcCovering", "IfcRailing", "IfcChimney",
-                       "IfcShadingDevice", "IfcSanitaryTerminal", "IfcFurniture", "IfcFurnishingElement", "IfcStair")
+                       "IfcShadingDevice", "IfcSanitaryTerminal", "IfcFurniture", "IfcFurnishingElement", "IfcStair", "IfcCurtainWall")
     ELEMENT_TYPE_KINDS = {"column": ("IfcColumnType", "COLUMN"), "beam": ("IfcBeamType", "BEAM"), "footing": ("IfcFootingType", "NOTDEFINED"),
-                          "railing": ("IfcRailingType", "NOTDEFINED"), "door": ("IfcDoorType", "DOOR"), "window": ("IfcWindowType", "WINDOW")}
+                          "railing": ("IfcRailingType", "NOTDEFINED"), "door": ("IfcDoorType", "DOOR"), "window": ("IfcWindowType", "WINDOW"),
+                          "curtain_wall": ("IfcCurtainWallType", "NOTDEFINED")}
     # The OperationTypes and PartitioningTypes whose geometry IfcOpenShell draws; a window's as (panels, columns, rows).
     DOOR_OPERATIONS = ("SINGLE_SWING_LEFT", "SINGLE_SWING_RIGHT", "DOUBLE_SWING_LEFT", "DOUBLE_SWING_RIGHT", "DOUBLE_DOOR_SINGLE_SWING",
                        "DOUBLE_DOOR_DOUBLE_SWING", "SLIDING_TO_LEFT", "SLIDING_TO_RIGHT", "DOUBLE_DOOR_SLIDING")
@@ -4423,11 +4462,12 @@ class _ChangeSet:
                 e.ObjectType = None
 
     def define_element_type(self, op, kind):
-        """define_type for the kinds without layers: an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType or
-        IfcWindowType (IfcDoorStyle and IfcWindowStyle in IFC2X3) with a ref, its PredefinedType (by default COLUMN, BEAM,
-        NOTDEFINED, NOTDEFINED, DOOR and WINDOW) checked against the class's list, and the material, when given, as an IfcMaterial of
-        the type that its occurrences take. A door and a window get their geometry (door_geometry, window_geometry). A type of the
-        same class and name in the file is an error that names its GlobalId."""
+        """define_type for the kinds without layers: an IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType,
+        IfcWindowType (IfcDoorStyle and IfcWindowStyle in IFC2X3) or IfcCurtainWallType with a ref, its PredefinedType (by default
+        COLUMN, BEAM, NOTDEFINED, NOTDEFINED, DOOR, WINDOW and NOTDEFINED) checked against the class's list, and the material, when
+        given, as an IfcMaterial of the type that its occurrences take. A door and a window get their geometry (door_geometry,
+        window_geometry), and a curtain wall type its parts' types, which take the material (curtain_types). A type of the same class
+        and name in the file is an error that names its GlobalId."""
         ifc_class, default = self.ELEMENT_TYPE_KINDS[kind]
         old = self.m.schema == "IFC2X3"
         if old and kind in ("door", "window"):
@@ -4454,6 +4494,9 @@ class _ChangeSet:
             t.PredefinedType = value or default
         elif value:
             self.notes.append("type %s: %s has no PredefinedType in %s, so %s was left out" % (name, ifc_class, self.m.schema, value))
+        if kind == "curtain_wall":
+            self.register(t)
+            return self.curtain_types(t, op, category)
         material = str(op.get("material") or "").strip()[:255]
         if material:
             if old and category:
@@ -4627,11 +4670,13 @@ class _ChangeSet:
         rotation (element_placement), and contained in the storey, or for a part (part_of) aggregated in its whole and on the whole's
         storey, never both; a covering with a host is, in IFC4 and later, a part of that element (IfcRelAggregates) or contained in
         that space, and only in IFC2X3 gets IfcRelCoversBldgElements or IfcRelCoversSpaces (cover); and a type gets its
-        IfcRelDefinesByType (relate_type). IfcStair goes to create_stair."""
+        IfcRelDefinesByType (relate_type). IfcStair goes to create_stair, IfcCurtainWall to create_curtain_wall."""
         import ifcopenshell.api.aggregate
         cls = self.element_class(op.get("ifc_class"))
         if cls == "IfcStair":
             return self.create_stair(op)
+        if cls == "IfcCurtainWall":
+            return self.create_curtain_wall(op)
         if op.get("stair") is not None:
             raise DataspatiumError("stair is for IfcStair; %s takes shape" % cls)
         shape = self.element_shape(op.get("shape"))
@@ -4922,6 +4967,274 @@ class _ChangeSet:
         position = self.m.createIfcAxis2Placement3D(self.point(0.0, u(width) / 2.0, 0.0), self.direction(0, -1, 0), self.direction(1, 0, 0))
         return self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0, 0, 1), u(width))
 
+    # -- glass façades: a curtain wall of panels between mullions and transoms on an even grid, and its type with its parts' types
+    CURTAIN_SIZES = (0.05, 0.15, 0.03)  # metres: a member's width in the façade's plane and depth across it, and a panel's thickness
+    CURTAIN_SPACING = 1.5  # metres: the most a bay is wide, or a row high, when neither a count nor a spacing is given
+    MAX_BAYS = 100
+    MAX_ROWS = 40
+    MAX_PANELS = 200
+    CURTAIN_WORDS = {"panel": "Panel", "mullion": "Mullion", "transom": "Transom"}  # the parts' names when part_names gives none
+    CURTAIN_MATERIALS = (("Glass", "glass"), ("Aluminium", "aluminium"))  # the panels' and the members' when no type gives them
+
+    def curtain_memo(self):
+        """This change set's curtain walls: {"sizes": {type id: (member width, member depth, panel thickness)}, "facts": {curtain wall
+        id: (length, height, depth)}}, in metres."""
+        if getattr(self, "_curtain", None) is None:
+            self._curtain = {"sizes": {}, "facts": {}}
+        return self._curtain
+
+    def curtain_sizes(self, op):
+        """(member width, member depth, panel thickness) in metres of a curtain wall type's step, checked, CURTAIN_SIZES for those not
+        given: a panel stands in the middle of the members' depth, so it is thinner."""
+        w0, d0, t0 = self.CURTAIN_SIZES
+        w = _cs_num(op, "member_width", w0, positive=True)
+        d = _cs_num(op, "member_depth", d0, positive=True)
+        t = _cs_num(op, "panel_thickness", t0, positive=True)
+        if not 0.02 <= w <= 0.5 or not 0.02 <= d <= 1.0:
+            raise DataspatiumError("member_width must be 0.02 to 0.5 m and member_depth 0.02 to 1 m")
+        if not 0.004 <= t < d:
+            raise DataspatiumError("panel_thickness must be at least 0.004 m and less than member_depth (%g m)" % d)
+        return w, d, t
+
+    @staticmethod
+    def type_material(t, cls):
+        """The material of a class (IfcMaterialProfileSet ...) that the type's own IfcRelAssociatesMaterial gives; None without one."""
+        for rel in getattr(t, "HasAssociations", None) or ():
+            if rel.is_a("IfcRelAssociatesMaterial") and rel.RelatingMaterial.is_a(cls):
+                return rel.RelatingMaterial
+        return None
+
+    def curtain_types(self, t, op, category):
+        """A curtain wall type's parts' types, of the type's name: an IfcPlateType CURTAIN_PANEL whose IfcMaterialLayerSet is one layer
+        of the panels' material (panel_material, by default Glass of the category glass) as thick as panel_thickness, and an
+        IfcMemberType MULLION for the mullions and the transoms alike, since IFC's MULLION is any frame member between panels and
+        IfcMemberTypeEnum has no TRANSOM, whose IfcMaterialProfileSet is one rectangle of member_width by member_depth in the frame's
+        material (material and material_category, by default Aluminium of the category aluminium); IFC2X3, without profile sets, gives
+        the member type the material alone. A plate or member type of the name in the file is an error."""
+        name = str(t.Name)
+        for cls in ("IfcPlateType", "IfcMemberType"):
+            twin = next((x for x in self.m.by_type(cls) if str(x.Name or "").strip().lower() == name.lower()), None)
+            if twin is not None:
+                raise DataspatiumError("the model has an %s of the same name already (GlobalId %s, id %d), which the curtain wall type's parts would get; choose another name"
+                                       % (cls, twin.GlobalId, twin.id()))
+        w, d, thick = self.curtain_sizes(op)
+        old = self.m.schema == "IFC2X3"
+        (glass_name, glass_category), (frame_name, frame_category) = self.CURTAIN_MATERIALS
+        panel_material = str(op.get("panel_material") or "").strip()[:255]
+        material = str(op.get("material") or "").strip()[:255]
+        if old and category:
+            self.notes.append("type %s: IFC2X3 has no material categories, so it was left out" % name)
+        glass = self.named_material(panel_material or glass_name, None if old else glass_category)
+        frame = self.named_material(material or frame_name, None if old else category or (None if material else frame_category))
+        plate = self.root("IfcPlateType", name)
+        self.predefined(plate, "CURTAIN_PANEL")
+        layer = self.m.create_entity("IfcMaterialLayer", Material=glass, LayerThickness=round(self.u(thick), 9))
+        self.associate(plate, self.m.create_entity("IfcMaterialLayerSet", MaterialLayers=[layer], LayerSetName=name))
+        member = self.root("IfcMemberType", name)
+        self.predefined(member, "MULLION")
+        if old:
+            self.associate(member, frame)
+        else:
+            profile = self.m.create_entity("IfcRectangleProfileDef", ProfileType="AREA", ProfileName=name, XDim=round(self.u(w), 9), YDim=round(self.u(d), 9))
+            item = self.m.create_entity("IfcMaterialProfile", Material=frame, Profile=profile)
+            self.associate(member, self.m.create_entity("IfcMaterialProfileSet", Name=name, MaterialProfiles=[item]))
+        for x in (plate, member):
+            self.register(x, ref=False)
+        self.curtain_memo()["sizes"][t.id()] = (w, d, thick)
+
+    def curtain_parts(self, typ):
+        """(plate type, member type, (member width, member depth, panel thickness)) of a curtain wall type: its parts' types of its name
+        (curtain_types), with the sizes this change set gave them or that their layer and profile sets give; None, with a note, when
+        the file has no such pair, and the curtain wall's parts are then made as without a type."""
+        name = str(typ.Name or "")
+        plate = next((x for x in self.m.by_type("IfcPlateType") if str(x.Name or "") == name and str(x.PredefinedType or "") == "CURTAIN_PANEL"), None)
+        member = next((x for x in self.m.by_type("IfcMemberType") if str(x.Name or "") == name and str(x.PredefinedType or "") == "MULLION"), None)
+        if plate is None or member is None:
+            self.note_once("curtain wall type %s has no IfcPlateType CURTAIN_PANEL and IfcMemberType MULLION of its name, so the parts of its curtain walls are untyped, "
+                           "with the default sizes and materials" % _ifc_text(typ.Name))
+            return None
+        sizes = self.curtain_memo()["sizes"].get(typ.id())
+        if sizes is None:
+            w, d, thick = self.CURTAIN_SIZES
+            layers = self.type_layers(plate)
+            if layers is not None and layers.MaterialLayers:
+                thick = sum(float(x.LayerThickness or 0.0) for x in layers.MaterialLayers) * self.scale
+            profiles = self.type_material(member, "IfcMaterialProfileSet") if self.m.schema != "IFC2X3" else None
+            profile = next((p.Profile for p in (profiles.MaterialProfiles or ()) if p.Profile is not None and p.Profile.is_a("IfcRectangleProfileDef")), None) if profiles is not None else None
+            if profile is not None:
+                w, d = float(profile.XDim) * self.scale, float(profile.YDim) * self.scale
+            else:
+                self.note_once("member type %s gives no rectangle profile, so the members of its curtain walls are %g × %g m" % (_ifc_text(member.Name), w, d))
+            sizes = (w, d, thick)
+        return plate, member, sizes
+
+    def curtain_count(self, c, count_key, spacing_key, span, most):
+        """How many bays (or rows) divide `span` metres evenly: curtain's count, else as many as keep each within its spacing (by
+        default CURTAIN_SPACING), 1 to `most`."""
+        count, spacing = c.get(count_key), c.get(spacing_key)
+        if count is not None and spacing is not None:
+            raise DataspatiumError("give curtain.%s or curtain.%s, not both" % (count_key, spacing_key))
+        if count is None:
+            s = _cs_num(c, spacing_key, self.CURTAIN_SPACING, positive=True)
+            count = max(1, int(math.ceil(span / s - 1e-9)))
+            if count > most:
+                raise DataspatiumError("curtain.%s %g m divides %g m into %d; at most %d, so give a larger spacing" % (spacing_key, s, span, count, most))
+            return count
+        if isinstance(count, float) and count.is_integer():
+            count = int(count)
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= most:
+            raise DataspatiumError("curtain.%s must be a whole number from 1 to %d" % (count_key, most))
+        return count
+
+    def create_curtain_wall(self, op):
+        """create_element's IfcCurtainWall, a glass façade with a ref: along its axis from curtain.start to curtain.end in the storey's
+        plane, curtain.height high from curtain.base above the storey, contained in the storey, with its axis as its 'Axis' (Curve2D)
+        so that the topology reads it as a wall, and no body of its own: it aggregates its parts, each placed relative to it, on an
+        even grid of bays along the axis and rows up (curtain_count). The mullions stand on the bays' lines from the base to the top,
+        the outer ones flush with the ends; the transoms lie between the mullions on the rows' lines, the lowest on the base and the
+        highest under the top; and a panel fills each field between them in the middle of the members' depth (curtain_member,
+        curtain_panel). A type (an IfcCurtainWallType of define_type) gives the parts their types, sizes and materials (curtain_parts,
+        curtain_materials). The parts get no refs and are named by the curtain wall, their kind (part_names, in the person's language)
+        and their place: a mullion by its line from the start, a transom by its bay and its line from the base, a panel by its bay and
+        row. Qto_CurtainWallQuantities follows (qto_curtain_wall), and IsExternal from the topology (write_external)."""
+        import ifcopenshell.guid
+        if op.get("shape") is not None or op.get("stair") is not None:
+            raise DataspatiumError("an IfcCurtainWall takes curtain, not shape or stair")
+        if op.get("at") is not None or _cs_num(op, "z", 0.0) != 0 or _cs_num(op, "rotation", 0.0, unit="degrees") != 0:
+            raise DataspatiumError("a curtain wall runs along its axis as a wall does: give curtain.start, curtain.end and curtain.base, and at, z and rotation null")
+        if op.get("part_of") not in (None, "") or op.get("host") not in (None, ""):
+            raise DataspatiumError("a curtain wall is not part_of another element and covers nothing, so part_of and host must be null")
+        c = op.get("curtain")
+        if not isinstance(c, dict):
+            raise DataspatiumError("an IfcCurtainWall needs curtain: {start, end, height, base, bays, bay_width, rows, row_height}")
+        storey = self.storey(op.get("storey"))
+        x1, y1 = _cs_xy(c.get("start"), "curtain.start")
+        x2, y2 = _cs_xy(c.get("end"), "curtain.end")
+        length = math.hypot(x2 - x1, y2 - y1)
+        if length < 0.3:
+            raise DataspatiumError("curtain.start and curtain.end must be at least 0.3 m apart")
+        height = _cs_num(c, "height", 3.0, positive=True)
+        base = _cs_num(c, "base", 0.0)
+        typ = self.element_type(op, "IfcCurtainWall")
+        parts = self.curtain_parts(typ) if typ is not None else None
+        w, d, thick = parts[2] if parts is not None else self.CURTAIN_SIZES
+        n = self.curtain_count(c, "bays", "bay_width", length, self.MAX_BAYS)
+        m = self.curtain_count(c, "rows", "row_height", height, self.MAX_ROWS)
+        if n * m > self.MAX_PANELS:
+            raise DataspatiumError("%d bays by %d rows are %d panels; at most %d in one curtain wall, so give fewer or make several" % (n, m, n * m, self.MAX_PANELS))
+        step, rise = (length - w) / n, (height - w) / m  # between the members' centre lines
+        pw, ph = step - w, rise - w  # a panel between the members
+        if pw < 0.05 or ph < 0.05:
+            raise DataspatiumError("the panels would be %.3g m wide and %.3g m high between members %g m wide; give fewer bays or rows" % (pw, ph, w))
+        name = str(op.get("name") or "").strip()[:255] or "Curtain wall"
+        cw = self.root("IfcCurtainWall", name)
+        object_type = str(op.get("object_type") or "").strip()[:255]
+        if object_type:
+            cw.ObjectType = object_type
+        self.element_predefined(cw, typ, op.get("predefined_type"))
+        cw.ObjectPlacement = self.placement(storey.ObjectPlacement, self.u(x1), self.u(y1), self.u(base), (x2 - x1) / length, (y2 - y1) / length)
+        axis = self.m.createIfcPolyline([self.point(0, 0), self.point(self.u(length), 0)])
+        cw.Representation = self.m.createIfcProductDefinitionShape(None, None, [self.m.createIfcShapeRepresentation(self.axis_context(), "Axis", "Curve2D", [axis])])
+        self.contain(cw, storey)
+        self.register(cw, storey)
+        given = op.get("part_names") if isinstance(op.get("part_names"), dict) else {}
+        words = {k: str(given.get(k) or "").strip()[:60] or v for k, v in self.CURTAIN_WORDS.items()}
+        xs = [w / 2.0 + i * step for i in range(n + 1)]
+        zs = [w / 2.0 + j * rise for j in range(m + 1)]
+        members = [self.curtain_member(cw, "%s %s %d" % (name, words["mullion"], i + 1), xs[i], 0.0, True, height, w, d) for i in range(n + 1)]
+        members += [self.curtain_member(cw, "%s %s %d.%d" % (name, words["transom"], i + 1, j + 1), xs[i] + w / 2.0, zs[j], False, pw, w, d)
+                    for j in range(m + 1) for i in range(n)]
+        panels = [self.curtain_panel(cw, "%s %s %d.%d" % (name, words["panel"], i + 1, j + 1), xs[i] + w / 2.0, zs[j] + w / 2.0, pw, ph, thick)
+                  for j in range(m) for i in range(n)]
+        # One IfcRelAggregates of new parts placed relative to the whole already: aggregate.assign_object would place each anew.
+        self.m.create_entity("IfcRelAggregates", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatingObject=cw, RelatedObjects=members + panels)
+        for p in members + panels:
+            self.register(p, storey, ref=False)
+        self.curtain_materials(cw, typ, parts, members, panels)
+        self.curtain_memo()["facts"][cw.id()] = (length, height, d)
+
+    def curtain_member(self, cw, name, x, z, upright, length, w, d):
+        """An IfcMember at (x, 0, z) metres in its curtain wall's coordinates: a mullion (upright) with its placement's z up and x
+        along the axis, or a transom with its z along the axis and x up; its body a w by d rectangle centred on its placement, w in
+        the façade's plane and d across it, extruded `length` metres along its z, as IFC4's IfcMemberStandardCase is drawn (the
+        deprecated class itself is never written, IFC102)."""
+        e = self.root("IfcMember", name)
+        axis, ref = ((0, 0, 1), (1, 0, 0)) if upright else ((1, 0, 0), (0, 0, 1))
+        e.ObjectPlacement = self.m.createIfcLocalPlacement(cw.ObjectPlacement, self.m.createIfcAxis2Placement3D(self.point(self.u(x), 0.0, self.u(z)), self.direction(*axis), self.direction(*ref)))
+        profile = self.m.createIfcRectangleProfileDef("AREA", None, self.m.createIfcAxis2Placement2D(self.point(0.0, 0.0), None), self.u(w), self.u(d))
+        e.Representation = self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, 0), self.direction(0, 0, 1), self.u(length)))
+        return e
+
+    def curtain_panel(self, cw, name, x, z, width, height, thick):
+        """An IfcPlate whose lower corner nearest the curtain wall's start is at (x, z) metres along and up its curtain wall: its
+        placement's z across the façade toward the axis's right side (-y), its x along the axis and its y up, and its body the panel's
+        face, width by height, extruded `thick` metres along that z from y = thick / 2, so that it lies in the middle of the members'
+        depth and its layer set usage (AXIS3) runs through its thickness."""
+        e = self.root("IfcPlate", name)
+        e.ObjectPlacement = self.m.createIfcLocalPlacement(cw.ObjectPlacement, self.m.createIfcAxis2Placement3D(
+            self.point(self.u(x), self.u(thick / 2.0), self.u(z)), self.direction(0, -1, 0), self.direction(1, 0, 0)))
+        position = self.m.createIfcAxis2Placement2D(self.point(self.u(width / 2.0), self.u(height / 2.0)), None)
+        profile = self.m.createIfcRectangleProfileDef("AREA", None, position, self.u(width), self.u(height))
+        e.Representation = self.shape(self.m.createIfcExtrudedAreaSolid(profile, self.axis3(0, 0, 0), self.direction(0, 0, 1), self.u(thick)))
+        return e
+
+    def relate_all(self, es, t):
+        """Type many occurrences at once, as relate_type types one: the type's IfcRelDefinesByType (one per type) gets them all."""
+        import ifcopenshell.guid
+        rel = next(iter(getattr(t, "Types", None) or getattr(t, "ObjectTypeOf", None) or ()), None)
+        if rel is None:
+            self.m.create_entity("IfcRelDefinesByType", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedObjects=list(es), RelatingType=t)
+        else:
+            rel.RelatedObjects = list(rel.RelatedObjects or ()) + list(es)
+
+    def curtain_materials(self, cw, typ, parts, members, panels):
+        """The kinds and materials of a curtain wall and its parts. A type types the curtain wall. With its parts' types
+        (curtain_parts) the panels are typed by the plate type and share one IfcMaterialLayerSetUsage of its layers (AXIS3, through
+        their thickness), and the members by the member type with, in IFC4 and later, one IfcMaterialProfileSetUsage of its profiles
+        (CardinalPoint 5: the profile's centre on the member's axis); the kinds are then the types' (OJT001). Without them the panels
+        are IfcPlate CURTAIN_PANEL of Glass and the members IfcMember MULLION of Aluminium (CURTAIN_MATERIALS), one
+        IfcRelAssociatesMaterial each for all of them; IFC2X3 has no PredefinedType on plates and members, which a note says."""
+        import ifcopenshell.guid
+
+        def associate_all(products, material):
+            self.m.create_entity("IfcRelAssociatesMaterial", GlobalId=ifcopenshell.guid.new(), OwnerHistory=self.owner, RelatedObjects=list(products), RelatingMaterial=material)
+
+        if typ is not None:
+            self.relate_type(cw, typ)
+        if parts is not None:
+            plate, member, _ = parts
+            self.relate_all(panels, plate)
+            self.relate_all(members, member)
+            layers = self.type_layers(plate)
+            if layers is not None:
+                associate_all(panels, self.m.create_entity("IfcMaterialLayerSetUsage", ForLayerSet=layers, LayerSetDirection="AXIS3", DirectionSense="POSITIVE", OffsetFromReferenceLine=0.0))
+            profiles = self.type_material(member, "IfcMaterialProfileSet") if self.m.schema != "IFC2X3" else None
+            if profiles is not None:
+                associate_all(members, self.m.create_entity("IfcMaterialProfileSetUsage", ForProfileSet=profiles, CardinalPoint=5))
+            return
+        old = self.m.schema == "IFC2X3"
+        if old:
+            self.note_once("IFC2X3 has no PredefinedType on IfcPlate and IfcMember, so the panels (CURTAIN_PANEL) and the mullions and transoms (MULLION) of "
+                           "the curtain walls are told by their classes alone; a curtain wall type (define_type curtain_wall) gives them types that say it")
+        else:
+            for parts_of_kind, value in ((panels, "CURTAIN_PANEL"), (members, "MULLION")):
+                if self.check_enum(parts_of_kind[0], value):
+                    for p in parts_of_kind:
+                        p.PredefinedType = value
+        (glass_name, glass_category), (frame_name, frame_category) = self.CURTAIN_MATERIALS
+        associate_all(panels, self.named_material(glass_name, None if old else glass_category))
+        associate_all(members, self.named_material(frame_name, None if old else frame_category))
+
+    def qto_curtain_wall(self, e):
+        """A curtain wall that create_element made in this change set (curtain_memo): Length along its axis, Height, Width the members'
+        depth, and its side, gross and net alike since it has no openings; none for another."""
+        facts = self.curtain_memo()["facts"].get(e.id())
+        if facts is None:
+            return None
+        length, height, depth = facts
+        return {"Length": ("length", length), "Height": ("length", height), "Width": ("length", depth),
+                "GrossSideArea": ("area", length * height), "NetSideArea": ("area", length * height)}
+
     def finish(self):
         """After the operations: the joins of the walls the change set created (join_walls), the openings of the walls joined anew
         (check_openings) and the spaces along the walls it moved (fit_spaces), then the base quantities of what it created or changed
@@ -5175,10 +5488,10 @@ class _ChangeSet:
 
     QUANTITIES = (("IfcWall", "Qto_WallBaseQuantities", "qto_wall"), ("IfcSlab", "Qto_SlabBaseQuantities", "qto_slab"),
                   ("IfcRoof", "Qto_RoofBaseQuantities", "qto_roof"), ("IfcDoor", "Qto_DoorBaseQuantities", "qto_filling"),
-                  ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"))
+                  ("IfcWindow", "Qto_WindowBaseQuantities", "qto_filling"), ("IfcCurtainWall", "Qto_CurtainWallQuantities", "qto_curtain_wall"))
 
     def base_quantities(self):
-        """The base quantities of the walls, slabs, roofs, doors and windows the change set created or changed, from their
+        """The base quantities of the walls, slabs, roofs, doors, windows and curtain walls the change set created or changed, from their
         parameters without a geometry kernel, in the file's units and with MethodOfMeasurement BaseQuantities (add_qto): a set the
         element has of its own is updated, one it shares is left alone. Each quantity has the name in IfcOpenShell's template for the
         file's schema (IFC4X3 spells the wall's footprint areas GrossFootPrintArea and NetFootPrintArea), and one the template lacks
@@ -5218,6 +5531,8 @@ class _ChangeSet:
         if not props or any(len(r.RelatedObjects or ()) > 1 for r in rels):
             return
         qto = rels[0].RelatingPropertyDefinition if rels else ifcopenshell.api.pset.add_qto(self.m, product=e, name=name)
+        if not getattr(qto, "MethodOfMeasurement", None):
+            qto.MethodOfMeasurement = "BaseQuantities"  # add_qto sets it only for names that end so, and QTY001 asks it of every Qto_ set
         ifcopenshell.api.pset.edit_qto(self.m, qto=qto, properties=props)
 
     def qto_wall(self, wall):
@@ -5326,7 +5641,8 @@ class _ChangeSet:
     # -- LoadBearing, IsExternal, the material's category and the checked property sets (recommendation 13 of the native IFC study,
     # 4, 8 and 9 of the Praxi study): the climate declaration tells its categories apart by them.
     COMMON_SETS = (("IfcWall", "Pset_WallCommon"), ("IfcWallType", "Pset_WallCommon"), ("IfcSlab", "Pset_SlabCommon"),
-                   ("IfcSlabType", "Pset_SlabCommon"), ("IfcDoor", "Pset_DoorCommon"), ("IfcWindow", "Pset_WindowCommon"), ("IfcRoof", "Pset_RoofCommon"))
+                   ("IfcSlabType", "Pset_SlabCommon"), ("IfcDoor", "Pset_DoorCommon"), ("IfcWindow", "Pset_WindowCommon"), ("IfcRoof", "Pset_RoofCommon"),
+                   ("IfcCurtainWall", "Pset_CurtainWallCommon"), ("IfcCurtainWallType", "Pset_CurtainWallCommon"))
     LENGTH_MEASURES = ("IfcLengthMeasure", "IfcPositiveLengthMeasure", "IfcNonNegativeLengthMeasure")
     ANGLE_MEASURES = ("IfcPlaneAngleMeasure", "IfcPositivePlaneAngleMeasure")
     VALUE_KINDS = {"P_BOUNDEDVALUE": "a bounded value (a range)", "P_LISTVALUE": "a list of values", "P_TABLEVALUE": "a table",
@@ -5652,8 +5968,9 @@ class _ChangeSet:
         """IsExternal at the end of apply. The walls the change set created or changed are external when they run along the outer
         boundary of their storey's topology (_ifc_topology: the union of its rooms, a courtyard's walls too) and internal when they
         bound its rooms otherwise, and the doors and windows in them take their wall's value; on a storey whose walls do not close,
-        or that has walls the topology cannot read, they are left alone, and so is a wall that bounds no room, with a note. The roof
-        slabs and roofs the change set created or changed are external. A value that was in the model already stays (set_external)."""
+        or that has walls the topology cannot read, they are left alone, and so is a wall that bounds no room, with a note. A curtain
+        wall counts as a wall (Pset_CurtainWallCommon; its parts are parts of it). The roof slabs and roofs the change set created or
+        changed are external. A value that was in the model already stays (set_external)."""
         walls, storeys = [], {}
         for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
             try:
@@ -5662,7 +5979,7 @@ class _ChangeSet:
                 continue  # deleted later in the change set
             if e.is_a("IfcRoof") or (e.is_a("IfcSlab") and self.roof_slab(e)):
                 self.set_external(e, True)
-            elif e.is_a("IfcWall"):
+            elif e.is_a("IfcWall") or e.is_a("IfcCurtainWall"):
                 s = self.container(e)
                 if s is not None and s.is_a("IfcBuildingStorey"):
                     walls.append((e, s.id()))
@@ -6912,6 +7229,17 @@ def _topo_axis(wall, scale):
     return None
 
 
+def _topo_curtain(e, scale):
+    """Whether an element is a curtain wall that the topology reads as a wall: one with an 'Axis' (create_element draws it so). One
+    without, as other programs often write them, is left out rather than counted as a wall the topology cannot read."""
+    if not e.is_a("IfcCurtainWall"):
+        return False
+    try:
+        return bool(_topo_axis(e, scale))
+    except Exception:
+        return False
+
+
 def _topo_thickness(wall, scale):
     """The wall's thickness in metres: the narrow side of an extruded rectangle, else its material layers; None when unknown."""
     rep = getattr(wall, "Representation", None)
@@ -7187,7 +7515,8 @@ def _ifc_topology(model, tolerance=None, storeys=None, shapes=False):
          (walls whose centreline could not be read), "tolerance" (m), "north" (map, true_north or model)}
 
     A wall's centreline is its 'Axis' representation through its placement, else the long axis of its body's footprint
-    (ifcopenshell.geom). The ends are snapped within `tolerance` metres (by default half the storey's thickest wall plus 0.05 m).
+    (ifcopenshell.geom); a curtain wall with an 'Axis' (create_element's) counts as a wall, one without is left out (_topo_curtain).
+    The ends are snapped within `tolerance` metres (by default half the storey's thickest wall plus 0.05 m).
     `storeys` (names) limits the storeys read. At most TOPOLOGY_MAX_WALLS walls. With shapes (for create_spaces, never for JSON) the
     rooms carry their polygons and net areas (_topo_plan) and every storey its entity as "_storey".
     """
@@ -7201,7 +7530,7 @@ def _ifc_topology(model, tolerance=None, storeys=None, shapes=False):
     for s in model.by_type("IfcBuildingStorey"):
         if storeys is not None and _ifc_text(s.Name) not in storeys:
             continue
-        chosen.append((s, [e for rel in (getattr(s, "ContainsElements", None) or ()) for e in (rel.RelatedElements or ()) if e.is_a("IfcWall")]))
+        chosen.append((s, [e for rel in (getattr(s, "ContainsElements", None) or ()) for e in (rel.RelatedElements or ()) if e.is_a("IfcWall") or _topo_curtain(e, scale)]))
     total = sum(len(walls) for _, walls in chosen)
     if total > TOPOLOGY_MAX_WALLS:
         raise DataspatiumError("the topology reads at most %d walls; there are %d" % (TOPOLOGY_MAX_WALLS, total))
@@ -7286,7 +7615,7 @@ def _ifc_changeset(in_file, changeset_json, out_file, options_json=None):
     except Exception as exc:
         proposal = {"changes": [], "truncated": False, "instances": 0, "unexpressed": {"created": len(cs.created), "deleted": len(cs.deleted), "relations": 0}, "error": str(exc)}
     # Only the storeys whose walls the change set touched: a preview of other changes on a large model stays quick.
-    storeys = {r.get("storey") for r in cs.created + list(cs.changed.values()) + cs.deleted if str(r.get("ifc_class") or "").startswith("IfcWall")}
+    storeys = {r.get("storey") for r in cs.created + list(cs.changed.values()) + cs.deleted if str(r.get("ifc_class") or "").startswith(("IfcWall", "IfcCurtainWall"))}
     try:
         topology = _ifc_topology(model, storeys=storeys) if storeys else []
     except Exception as exc:

@@ -600,7 +600,8 @@ Verktyget `create_element` gör de byggdelar som inte har ett eget verktyg, av d
 IfcBuildingElementProxy: pelare (IfcColumn), balkar (IfcBeam), stänger som reglar och takstolar (IfcMember), grundsulor och plintar
 (IfcFooting), pålar (IfcPile), beklädnader som golv, undertak, fasadbeklädnad, taktäckning och isolering (IfcCovering), räcken
 (IfcRailing), skorstenar (IfcChimney), solskydd (IfcShadingDevice), sanitetsdon (IfcSanitaryTerminal), möbler (IfcFurniture, i IFC2X3
-IfcFurnishingElement) och raka trappor (IfcStair). Klassen och dess PredefinedType kontrolleras mot modellens schema som i de andra
+IfcFurnishingElement), raka trappor (IfcStair) och glasfasader (IfcCurtainWall). Klassen och dess PredefinedType kontrolleras mot
+modellens schema som i de andra
 verktygen. Kroppen är en extruderad profil: en rektangel, en cirkel eller en kontur i våningens plan, stående uppåt från en höjd över
 våningen (pelare, grundläggning, beklädnader, möbler) eller liggande i en riktning (balkar, stänger och räcken). Elementet ligger i
 våningen eller är en del av en helhet (`part_of`), till exempel ett räcke i en trappa, och ligger då i helheten och på dess våning men
@@ -609,6 +610,22 @@ byggdelen (IfcRelAggregates) eller ligger i rummet; bara i IFC2X3 får den IfcRe
 trappa (STRAIGHT_RUN_STAIR) består av ett lutande trapplopp (IfcStairFlight, STRAIGHT) med antal steg, steghöjd, stegdjup och bredd
 som attribut och i Pset_StairFlightCommon, och på begäran ett vilplan (IfcSlab, LANDING) överst; den sista steghöjden är vilplanets
 eller bjälklagets framkant.
+
+En glasfasad (IfcCurtainWall) går längs sin axel som en vägg, från en start till ett slut i våningens plan, med sin höjd från en
+underkant över våningen. Axeln är dess representation, men den har ingen egen kropp: den består av sina delar, som ligger i den
+(IfcRelAggregates) och är placerade i förhållande till den i ett jämnt rutnät av fack längs axeln och rader uppåt, givna som antal
+eller som det största avståndet i meter (utan något av dem högst 1,5 m). Posterna står på fackens linjer från underkant till överkant,
+de yttersta i liv med ändarna; reglarna ligger mellan posterna på radernas linjer, den nedersta på underkanten och den översta under
+överkanten; och ett glas (IfcPlate av typen CURTAIN_PANEL) fyller varje fält mitt i profilernas djup. Poster och reglar är båda
+IfcMember av typen MULLION: IFC:s MULLION är varje profil mellan glasen, och IFC har inget eget värde för reglar. Delarna heter efter
+fasaden, sitt slag och sin plats, till exempel Fasad Post 1, Fasad Regel 1.1 och Fasad Glas 1.1 (fack och rad). En glasfasadstyp från
+`define_type` (IfcCurtainWallType) ger delarna typer med typens namn: en IfcPlateType CURTAIN_PANEL med glaset som ett materialskikt
+och en IfcMemberType MULLION med ramens material, till exempel aluminium eller stål, och profilens bredd och djup som materialprofil (i
+IFC2X3 bara materialet), så att delarna får sitt slag, sitt material och sina mått från typerna. Utan typ är posterna och reglarna
+0,05 × 0,15 m aluminium och glasen 0,03 m glas, med PredefinedType på själva delarna; IFC2X3 har ingen PredefinedType på IfcPlate och
+IfcMember, och rapporten säger det. Topologin läser en glasfasad som en vägg, så att den kan sluta en våning tillsammans med väggarna;
+den får IsExternal ur topologin i Pset_CurtainWallCommon och basmängder i Qto_CurtainWallQuantities (längd, höjd, djup och sidans
+area).
 
 `define_type` gör också typer för beklädnader (med skikt, som en bjälklagstyp), pelare, balkar, grundläggning, räcken, dörrar och
 fönster (IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType och IfcWindowType; i IFC2X3
