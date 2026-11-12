@@ -451,7 +451,8 @@ IFC4X3 har faset ut.
 Filhodet: hver IFC-fil appen skriver eller lagrer, får FILE_DESCRIPTION med visningsdefinisjon og nivået 2;1, og FILE_NAME med
 filens navn, tiden etter ISO 8601, preprosessoren (Dataspatium og IfcOpenShell med versjoner) og opprinnelsesprogrammet i formen
 *Dataspatium - Dataspatium - versjon*. Visningsdefinisjonen er CoordinationView_V2.0 for IFC2X3 og ReferenceView_V1.2 for IFC4.
-IFC4X3 har ingen offisiell visning for en modell i hele skjemaet (Reference View utelater blant annet ekstruderte legemer), så
+IFC4X3 har ingen offisiell visning for en modell i hele skjemaet (Reference View utelater blant annet ekstruderte legemer og
+romgrenser, buildingSMART-regelen IFC430), så
 hodet sier `notYetAssigned` i stedet for en visning filen ikke følger; buildingSMARTs valideringstjeneste markerer det, og en
 mottaker som krever en visning, angir den. En fil appen endrer, beholder sin egen forfatter, organisasjon og sitt
 opprinnelsesprogram, og sin visning når valideringstjenesten godtar den.
@@ -570,7 +571,8 @@ Verktøyet `create_roof` legger et saltak, valmtak, pulttak eller flatt tak med 
 (uten angitt etasje den øverste): et IfcRoof av takplater (IfcSlab av typen ROOF), én per takflate, over veggenes omskrevne rektangel
 eller et angitt rektangel (en annen kontur erstattes inntil videre av sitt omskrevne rektangel). Verktøyet `create_spaces` lager
 rommene veggene lukker, som IfcSpace med navn fra romprogrammet, valgt med et punkt inni eller nummeret sitt i topologien, med høyden
-opp til neste etasje, romarealer (Qto_SpaceBaseQuantities) og grenser mot veggene og dørene og vinduene i dem. Verktøyene endrer
+opp til neste etasje, romarealer (Qto_SpaceBaseQuantities) og grenser mot veggene, dørene og vinduene i dem og dekkene under og over
+(se *Romgrenser* nedenfor). Verktøyene endrer
 ingenting: de fyller et endringssett som panelet lister trinn for trinn (mål i meter; nye elementer får referansene new-1, new-2 … til
 filen har gitt dem id).
 
@@ -649,6 +651,21 @@ skriver appen dem i filens enheter. Et sett som heter Qto_…, blir et mengdeset
 begynne med Pset_ eller Qto_, og AI-en får rådet å kalle det land-opphav-prosjekt_Navn, for eksempel SE-ACME-42_Akustikk, med
 egenskapsnavn i PascalCase uten å, ä og ö. Egenskapene skrives i elementets eget sett, aldri i typens. `assign` tar materialets
 kategori (IfcMaterial.Category, de samme elleve som i `define_type`).
+
+**Romgrenser.** Rommenes grenser (IfcRelSpaceBoundary) er av første nivå: IfcRelSpaceBoundary1stLevel i IFC4 og IFC4X3, og i IFC2X3,
+som mangler klassen, en IfcRelSpaceBoundary med navnet 1stLevel. Hver grense er en plan flate i rommets koordinater, et avgrenset plan
+(IfcConnectionSurfaceGeometry med IfcCurveBoundedPlane) der normalen peker bort fra rommet. Det er formen IFC angir for en plan grense
+i alle tre skjemaene, og IfcOpenShell tegner den; IfcFaceBasedSurfaceModel er avviklet i IFC4 og IFC4.3 (regelen IFC102). En vegg
+avgrenser rommet med siden sin mot rommet innenfor veggene, fra gulvets overside til takets underside, med én grense per rett del av
+veggen (rommets legeme går til veggenes midtlinjer). En dørs, et vindus eller en åpnings grense ligger i veggens flate der åpningen
+er, og overlapper veggens grense, som ikke skjæres ut, og i IFC4 og senere angir den veggens grense som sin forelder (ParentBoundary).
+En åpning uten dør eller vindu er en virtuell grense mot åpningen, unntatt i IFC2X3, der regelen ikke tillater det. Dekkene under og
+over avgrenser rommet med oversiden og undersiden sin innenfor veggene. En vegg er ytre eller indre etter topologien; et dekke er ytre
+når det har IsExternal, er et tak eller en bunnplate, eller er gulvet i den laveste etasjen eller taket over den høyeste. Når
+endringssettet kjøres, får rommene nær det som er opprettet, endret eller slettet, grensene sine på nytt, så en vegg eller et dekke
+som lages etter rommene, avgrenser dem, og flatene følger en dør eller en flyttet eller slettet vegg. En slettet veggs grenser
+forsvinner med den, og de andre grensene beholder sine GlobalId. Et rom der legemet ikke er en rett ekstrudering av en kontur, for
+eksempel fra et annet program, beholder grensene sine. Grenser av andre nivå (for energiberegning) skriver appen ikke.
 
 *Forhåndsvis* kjører endringssettet på en kopi av modellen med IfcOpenShell i appens Python (komponentene hentes etter samtykke første
 gang), tegner resultatet i 3D med nytt grønt og endret gult, og viser hva som opprettes, endres og slettes samt skjemakontrollens funn.

@@ -462,7 +462,7 @@ The file header: every IFC file the app writes or saves gets FILE_DESCRIPTION wi
 FILE_NAME with the file's name, the time in ISO 8601, the preprocessor (Dataspatium and IfcOpenShell with their versions) and the
 originating system in the form *Dataspatium - Dataspatium - version*. The view definition is CoordinationView_V2.0 for IFC2X3 and
 ReferenceView_V1.2 for IFC4. IFC4X3 has no official view for a model in the full schema (the Reference View leaves out extruded
-solids among others), so the header says `notYetAssigned` instead of a view the file does not follow; buildingSMART's validation
+solids and space boundaries among others, buildingSMART rule IFC430), so the header says `notYetAssigned` instead of a view the file does not follow; buildingSMART's validation
 service flags it, and a recipient who requires a view names it. A file the app changes keeps its own author, organisation and
 originating system, and its view when the validation service accepts it.
 
@@ -585,8 +585,8 @@ which lacks it). The tool `create_roof` puts a gable, hip, shed or flat roof wit
 walls (the top storey when none is named): an IfcRoof of roof slabs (IfcSlab of the type ROOF), one per roof face, over the bounding
 box of the walls or a given rectangle (another outline is replaced by its bounding box for now). The tool `create_spaces` makes the
 rooms the walls enclose into spaces (IfcSpace) with names from the room programme, chosen by a point inside or their number in the
-topology, with the height up to the next storey, room areas (Qto_SpaceBaseQuantities) and boundaries to the walls and their doors and
-windows. The tools change nothing: they fill a change set that the panel lists step by step (lengths in metres; new elements get the
+topology, with the height up to the next storey, room areas (Qto_SpaceBaseQuantities) and boundaries to the walls, their doors and
+windows and the slabs below and above (see *Space boundaries* below). The tools change nothing: they fill a change set that the panel lists step by step (lengths in metres; new elements get the
 refs new-1, new-2 … until the file has given them ids).
 
 The tool `define_type` makes a wall, slab or roof type (IfcWallType, IfcSlabType, or IfcSlabType ROOF for the roof slabs) with its
@@ -666,6 +666,22 @@ and angles in degrees, and the app writes them in the file's units. A set named 
 property set of your own must not start with Pset_ or Qto_, and the AI is advised to name it country-origin-project_Name, for example
 SE-ACME-42_Acoustics, with property names in PascalCase without å, ä and ö. The properties go in the element's own set, never in its
 type's. `assign` takes the material's category (IfcMaterial.Category, the same eleven as in `define_type`).
+
+**Space boundaries.** The rooms' boundaries (IfcRelSpaceBoundary) are first level: IfcRelSpaceBoundary1stLevel in IFC4 and IFC4X3,
+and in IFC2X3, which lacks the class, an IfcRelSpaceBoundary named 1stLevel. Each boundary is a planar face in the room's
+coordinates, a bounded plane (IfcConnectionSurfaceGeometry with an IfcCurveBoundedPlane) whose normal points away from the room. That
+is the form IFC gives for a planar boundary in all three schemas, and IfcOpenShell draws it; IfcFaceBasedSurfaceModel is deprecated in
+IFC4 and IFC4.3 (rule IFC102). A wall bounds the room with its side toward the room inside the walls, from the floor's top to the
+ceiling's underside, with one boundary per straight part of the wall (the room's body reaches the walls' centrelines). A door's, a
+window's or an opening's boundary lies in the wall's face where the opening is and overlaps the wall's boundary, which is not cut,
+and in IFC4 and later it names the wall's boundary as its parent (ParentBoundary). An opening without a door or window is a virtual
+boundary to the opening, except in IFC2X3, whose rule does not allow it. The slabs below and above bound the room with their top and
+their underside inside the walls. A wall is external or internal by the topology; a slab is external when it has IsExternal, is a
+roof or a base slab, or is the floor of the lowest storey or the ceiling over the highest. When the change set runs, the rooms near
+what it created, changed or deleted get their boundaries anew, so that a wall or slab made after the rooms bounds them and the faces
+follow a door or a moved or deleted wall. A deleted wall's boundaries go with it, and the other boundaries keep their GlobalIds. A
+room whose body is not a straight extrusion of an outline, for example from another program, keeps its boundaries. The app does not
+write second-level boundaries (for energy calculations).
 
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted

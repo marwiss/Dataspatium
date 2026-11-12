@@ -447,7 +447,8 @@ som IFC4X3 har avvecklat.
 Filhuvudet: varje IFC-fil som appen skriver eller sparar får FILE_DESCRIPTION med vydefinition och nivån 2;1, och FILE_NAME med
 filens namn, tiden enligt ISO 8601, förprocessorn (Dataspatium och IfcOpenShell med versioner) och ursprungsprogrammet i formen
 *Dataspatium - Dataspatium - version*. Vydefinitionen är CoordinationView_V2.0 för IFC2X3 och ReferenceView_V1.2 för IFC4. IFC4X3
-har ingen officiell vy för en modell i hela schemat (Reference View utesluter bland annat extruderade kroppar), så huvudet säger
+har ingen officiell vy för en modell i hela schemat (Reference View utesluter bland annat extruderade kroppar och rumsgränser,
+buildingSMART-regeln IFC430), så huvudet säger
 `notYetAssigned` i stället för en vy som filen inte följer; buildingSMARTs valideringstjänst flaggar det, och en mottagare som
 kräver en vy anger den. En fil som appen ändrar behåller sin egen upphovsperson, organisation och sitt ursprungsprogram, och sin vy
 när valideringstjänsten godtar den.
@@ -565,8 +566,8 @@ IFC2X3, som saknar den). Verktyget `create_roof` lägger ett sadeltak, valmat ta
 tjocklek på en vånings väggar (utan angiven våning den översta): ett IfcRoof av takskivor (IfcSlab av typen ROOF), en per takfall, över
 väggarnas omskrivande rektangel eller en angiven rektangel (en annan kontur ersätts än så länge av sin omskrivande rektangel).
 Verktyget `create_spaces` gör rummen som väggarna sluter till utrymmen (IfcSpace) med namn ur rumsprogrammet, valda med en punkt inuti
-eller sitt nummer i topologin, med höjden upp till nästa våning, rumsytor (Qto_SpaceBaseQuantities) och gränser mot väggarna och deras
-dörrar och fönster. Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element
+eller sitt nummer i topologin, med höjden upp till nästa våning, rumsytor (Qto_SpaceBaseQuantities) och gränser mot väggarna, deras
+dörrar och fönster och bjälklagen under och över (se *Rumsgränser* nedan). Verktygen ändrar ingenting: de fyller ett ändringsset som panelen listar steg för steg (mått i meter; nya element
 får referenserna new-1, new-2 … tills filen har gett dem id).
 
 Verktyget `define_type` gör en väggtyp, bjälklagstyp eller taktyp (IfcWallType, IfcSlabType eller IfcSlabType av typen ROOF för
@@ -644,6 +645,22 @@ skriver appen dem i filens enheter. En mängd som heter Qto_… blir en mängdsa
 börja med Pset_ eller Qto_, och AI:n får rådet att kalla den land-ursprung-projekt_Namn, till exempel SE-ACME-42_Akustik, med
 egenskapsnamn i PascalCase utan å, ä och ö. Egenskaperna skrivs i elementets egen mängd, aldrig i typens. `assign` tar materialets
 kategori (IfcMaterial.Category, samma elva som i `define_type`).
+
+**Rumsgränser.** Rummens gränser (IfcRelSpaceBoundary) är av första nivån: IfcRelSpaceBoundary1stLevel i IFC4 och IFC4X3, och i
+IFC2X3, som saknar klassen, en IfcRelSpaceBoundary med namnet 1stLevel. Varje gräns är en plan yta i rummets koordinater, ett begränsat
+plan (IfcConnectionSurfaceGeometry med IfcCurveBoundedPlane) vars normal pekar bort från rummet. Det är den form IFC anger för en plan
+gräns i alla tre scheman, och IfcOpenShell ritar den; IfcFaceBasedSurfaceModel är avvecklad i IFC4 och IFC4.3 (regeln IFC102). En
+vägg avgränsar rummet med sin sida mot rummet innanför väggarna, från golvets ovansida till takets undersida, med en gräns per rak del
+av väggen (rummets kropp går till väggarnas mittlinjer). En dörrs, ett fönsters eller en öppnings gräns ligger i väggens yta där
+öppningen är och överlappar väggens gräns, som inte skärs ut, och i IFC4 och senare anger den väggens gräns som sin förälder
+(ParentBoundary). En öppning utan dörr eller fönster är en virtuell gräns mot öppningen, utom i IFC2X3, vars regel inte tillåter det.
+Bjälklagen under och över avgränsar rummet med sin ovansida och sin undersida innanför väggarna. En vägg är yttre eller inre efter
+topologin; ett bjälklag är yttre när det har IsExternal, är ett tak eller en bottenplatta, eller är golvet på den lägsta våningen
+eller taket över den högsta. När ändringssetet körs får rummen nära det som skapats, ändrats eller raderats sina gränser på nytt, så
+att en vägg eller ett bjälklag som görs efter rummen avgränsar dem och ytorna följer en dörr eller en flyttad eller raderad vägg. En
+raderad väggs gränser försvinner med den, och de andra gränserna behåller sina GlobalId. Ett rum vars kropp inte är en rak
+extrudering av en kontur, till exempel från ett annat program, behåller sina gränser. Gränser av andra nivån (för energiberäkning)
+skriver appen inte.
 
 *Förhandsvisa* kör ändringssetet på en kopia av modellen med IfcOpenShell i appens Python (komponenterna hämtas efter samtycke första
 gången), ritar resultatet i 3D med nytt grönt och ändrat gult, och visar vad som skapas, ändras och raderas samt schemakontrollens fynd.

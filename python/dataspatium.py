@@ -1634,6 +1634,10 @@ class _ChangeSet:
     At the end of apply IsExternal follows the topology on the walls the change set created or changed, on their doors and windows,
     and on its roofs and roof slabs (write_external).
 
+    Since PLAN.md item 5 (2026-11-13), the space boundaries are first level with their faces: create_spaces bounds each space by the
+    faces of its walls and of the doors, windows and openings in them, and at the end of apply the spaces near what the change set
+    created or changed (a wall made after the rooms, a slab below or above, a door, a moved wall) get theirs anew (space_boundaries).
+
     Since recommendations 2 and 3 of the Praxi study and 14 of the native IFC study (2026-11-12), all optional:
 
         create_storeys_and_grid {storeys: [{..., description, long_name}]}
@@ -1713,6 +1717,7 @@ class _ChangeSet:
         self.moved = {}  # wall id -> (axis, thickness) before the change set first moved or resized it, for fit_spaces
         self.slid = set()  # ids of doors and windows that moved along a wall that stayed, for fit_spaces
         self.fill_sizes = {}  # (width, height) in metres of the door and window types this change set defines, by STEP id
+        self.unbounded = set()  # ids of spaces a deleted element bounded, whose other faces space_boundaries writes anew
 
     # -- units, lookups and bookkeeping
     def u(self, metres):
@@ -2252,14 +2257,439 @@ class _ChangeSet:
                 self.bound(b.RelatingSpace, e, b.InternalOrExternalBoundary == "EXTERNAL")
 
     # -- spaces and their boundaries
-    def bound(self, space, element, external):
-        """A physical IfcRelSpaceBoundary of a space against a wall, door or window, without connection geometry for now."""
+    # First-level boundaries (IFC4: IfcRelSpaceBoundary1stLevel; IFC2X3, which has no such class: IfcRelSpaceBoundary named '1stLevel',
+    # the implementer agreement's name): one per planar face where a wall, a slab, a door, a window or an opening bounds the space.
+    # A face is an IfcConnectionSurfaceGeometry with an IfcCurveBoundedPlane in the space's object coordinates (the form IFC gives for a
+    # planar boundary in all three schemas, which IfcOpenShell's kernel builds; IfcFaceBasedSurfaceModel is deprecated in IFC4 and
+    # IFC4.3, rule IFC102): an IfcPlane whose Axis points away from the space, and closed 2D IfcPolylines in its (u, v), the outer one
+    # counter-clockwise about the Axis and the inner ones clockwise. As IFC4 defines the first level, a door's, a window's or an
+    # opening's face overlaps its wall's, which is not cut, and names it as ParentBoundary (IFC4 and later).
+    BOUND_CLASSES = ("IfcWall", "IfcSlab", "IfcDoor", "IfcWindow", "IfcOpeningElement")
+    BOUND_EPS = 1e-5  # metres: how near a wall's face a stretch of the outline inside the walls must lie to be that face
+    BOUND_MIN = 0.01  # metres: the narrowest face written
+    BOUND_TOUCH = 0.05  # metres: how far a wall may stand from a space, or a slab from its floor or top, and still bound it
+
+    def bound(self, space, element, external, face=None, virtual=False, parent=None, reuse=None):
+        """A first-level space boundary of a space against an element: PHYSICAL (VIRTUAL for an opening without a door or window),
+        INTERNAL or EXTERNAL by `external` (True, False, or None for the value of the boundary reused, else NOTDEFINED), with the face
+        (face_geometry) as its ConnectionGeometry when given, and in IFC4 and later the boundary it lies in as ParentBoundary. `reuse` is
+        an earlier boundary of the pair, which keeps its GlobalId (an IfcRelSpaceBoundary of IFC4 becomes IfcRelSpaceBoundary1stLevel)."""
         import ifcopenshell.guid
-        rel = self.m.create_entity("IfcRelSpaceBoundary", GlobalId=ifcopenshell.guid.new(), RelatingSpace=space, RelatedBuildingElement=element,
-                                   PhysicalOrVirtualBoundary="PHYSICAL", InternalOrExternalBoundary="EXTERNAL" if external else "INTERNAL")
-        if self.owner is not None:
+        import ifcopenshell.util.element
+        first = self.m.schema != "IFC2X3"
+        cls = "IfcRelSpaceBoundary1stLevel" if first else "IfcRelSpaceBoundary"
+        side = "EXTERNAL" if external is True else "INTERNAL" if external is False else (reuse.InternalOrExternalBoundary if reuse is not None else None) or "NOTDEFINED"
+        guid = None
+        if reuse is not None and reuse.is_a() != cls:
+            guid = reuse.GlobalId
+            self.unbound(reuse)
+            reuse = None
+        rel = reuse if reuse is not None else self.m.create_entity(cls, GlobalId=guid or ifcopenshell.guid.new())
+        old = rel.ConnectionGeometry
+        if old is not None:
+            rel.ConnectionGeometry = None
+            ifcopenshell.util.element.remove_deep2(self.m, old)
+        rel.RelatingSpace = space
+        rel.RelatedBuildingElement = element
+        rel.PhysicalOrVirtualBoundary = "VIRTUAL" if virtual else "PHYSICAL"
+        rel.InternalOrExternalBoundary = side
+        rel.ConnectionGeometry = self.face_geometry(space, face) if face is not None else None
+        if first:
+            rel.ParentBoundary = parent
+        else:
+            rel.Name = "1stLevel"
+        if self.owner is not None and rel.OwnerHistory is None:
             rel.OwnerHistory = self.owner
         return rel
+
+    def unbound(self, rel):
+        """Remove a space boundary and its connection geometry."""
+        import ifcopenshell.api.boundary
+        ifcopenshell.api.boundary.remove_boundary(self.m, boundary=rel)
+
+    def face_geometry(self, space, face):
+        """The IfcConnectionSurfaceGeometry of a face in the space's object coordinates, in file units. face: "o" (the plane's origin),
+        "x" (its u direction) and "z" (its normal, away from the space) in the world in metres, and "rings": the outer ring and the
+        holes as 3D points in the world in metres, on the plane."""
+        from shapely.geometry import Polygon
+        from shapely.geometry.polygon import orient
+        back = _cs_invert(_cs_placement(space.ObjectPlacement))
+        s = self.scale
+
+        def local(p):
+            return _cs_at(back, [float(c) / s for c in p])
+        o = local(face["o"])
+        x = _cs_unit(_cs_turn(back, face["x"]))
+        z = _cs_unit(_cs_turn(back, face["z"]))
+        y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]
+
+        def uv(p):
+            q = [a - b for a, b in zip(local(p), o)]
+            return round(_cs_dot(q, x), 6) + 0.0, round(_cs_dot(q, y), 6) + 0.0
+        rings = [[uv(p) for p in ring] for ring in face["rings"]]
+        poly = orient(Polygon(rings[0], rings[1:]), sign=1.0)  # the outer ring counter-clockwise about the normal, the holes clockwise
+
+        def curve(ring):
+            pts = []
+            for c in list(ring.coords)[:-1]:
+                if not pts or pts[-1] != c:
+                    pts.append(c)
+            return self.closed(pts)
+        position = self.m.createIfcAxis2Placement3D(self.point(*[round(c, 9) + 0.0 for c in o]), self.direction(*[round(c, 12) + 0.0 for c in z]),
+                                                    self.direction(*[round(c, 12) + 0.0 for c in x]))
+        surface = self.m.createIfcCurveBoundedPlane(self.m.createIfcPlane(position), curve(poly.exterior), [curve(r) for r in poly.interiors])
+        return self.m.createIfcConnectionSurfaceGeometry(surface, None)
+
+    def maintained(self, rel):
+        """Whether the app writes a boundary anew: a first-level one (not IfcRelSpaceBoundary2ndLevel, not named '2ndLevel') against a
+        wall, slab, door, window or opening. Another program's second-level boundaries, and boundaries to other elements, stay."""
+        if rel.is_a("IfcRelSpaceBoundary2ndLevel") or str(rel.Name or "").strip().lower() == "2ndlevel":
+            return False
+        e = rel.RelatedBuildingElement
+        return e is not None and any(e.is_a(c) for c in self.BOUND_CLASSES)
+
+    def prism_of(self, product):
+        """(outline, bottom, top) of a product whose body is one extrusion straight up of a polygonal profile (a Boolean result by its
+        first operand): the outline a shapely polygon in the world's plan with the profile's voids as holes, the heights in the world,
+        all in metres; None for another body."""
+        from shapely.geometry import Polygon
+        m = _cs_placement(getattr(product, "ObjectPlacement", None))
+        rep = getattr(product, "Representation", None)
+        if m is None or rep is None:
+            return None
+        items = [i for r in (rep.Representations or ()) if (r.RepresentationIdentifier or "Body") == "Body" for i in (r.Items or ())]
+        while len(items) == 1 and items[0].is_a("IfcBooleanResult"):
+            items = [items[0].FirstOperand]
+        if len(items) != 1 or not items[0].is_a("IfcExtrudedAreaSolid"):
+            return None
+        item = items[0]
+        p = _cs_compose(m, _cs_axes(item.Position))
+        d = _cs_unit(_cs_turn(p, [float(c) for c in item.ExtrudedDirection.DirectionRatios]))
+        if d is None or abs(d[2]) < 0.9999 or abs(p[2][2]) < 0.9999:
+            return None
+        profile = item.SweptArea
+        rings = [_cs_profile_points(profile)]
+        for c in (getattr(profile, "InnerCurves", None) or ()):
+            pts = ([[float(v) for v in q.Coordinates][:2] for q in c.Points] if c.is_a("IfcPolyline")
+                   else [[float(v) for v in q][:2] for q in c.Points.CoordList] if c.is_a("IfcIndexedPolyCurve") else [])
+            if len(pts) >= 3:
+                rings.append(pts)
+        if len(rings[0]) < 3:
+            return None
+        s = self.scale
+        world = [[(q[0] * s, q[1] * s) for q in (_cs_at(p, (x, y, 0.0)) for x, y in ring)] for ring in rings]
+        poly = Polygon(world[0], world[1:])
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+        if poly.is_empty or poly.geom_type != "Polygon":
+            return None
+        z0 = p[3][2] * s
+        z1 = z0 + float(item.Depth) * d[2] * s
+        return poly, min(z0, z1), max(z0, z1)
+
+    def world_points(self, e):
+        """The corners of an element's body in the world, in metres (_cs_item_points); [] when the app cannot read them."""
+        m = _cs_placement(getattr(e, "ObjectPlacement", None))
+        rep = getattr(e, "Representation", None)
+        if m is None or rep is None:
+            return []
+        s = self.scale
+        return [[c * s for c in _cs_at(m, p)] for r in (rep.Representations or ()) if (r.RepresentationIdentifier or "Body") == "Body"
+                for item in (r.Items or ()) for p in _cs_item_points(item)]
+
+    def host_of(self, e):
+        """The element whose opening a door, window or opening is in; None for another element."""
+        opening = e
+        if not e.is_a("IfcOpeningElement"):
+            fills = list(getattr(e, "FillsVoids", None) or ())
+            opening = fills[0].RelatingOpeningElement if fills else None
+        voids = list(getattr(opening, "VoidsElements", None) or ()) if opening is not None else []
+        return voids[0].RelatingBuildingElement if voids else None
+
+    def space_storey(self, space):
+        """The storey a space is aggregated in, through spaces it is part of; None when it is in none."""
+        e = space
+        for _ in range(8):
+            rel = next(iter(getattr(e, "Decomposes", None) or ()), None)
+            if rel is None:
+                return None
+            e = rel.RelatingObject
+            if e.is_a("IfcBuildingStorey"):
+                return e
+        return None
+
+    def bound_context(self, external=None):
+        """The readings the boundaries of one step share: walls per storey, slabs, spaces' bodies and, per storey, the walls the
+        topology finds external and those it finds in rooms (external: {storey id: (external ids, room wall ids)}, given by
+        create_spaces, which has the topology)."""
+        return {"walls": {}, "slabs": None, "solids": {}, "sides": dict(external or {}), "settings": [None]}
+
+    def ctx_walls(self, ctx, storey):
+        """The walls of a storey as the boundaries read them, as the topology does: [{"e", "segs": [(a, b)], "w", "band", "z"}], the
+        straight pieces of the centreline, the thickness and the footprint in the world's plan and the body's bottom and top (None
+        when unread), in metres."""
+        if storey.id() in ctx["walls"]:
+            return ctx["walls"][storey.id()]
+        from shapely.geometry import LineString
+        from shapely.ops import unary_union
+        out = []
+        for w in (e for rel in (getattr(storey, "ContainsElements", None) or ()) for e in (rel.RelatedElements or ()) if e.is_a("IfcWall")):
+            try:
+                line = _topo_axis(w, self.scale)
+                width = _topo_thickness(w, self.scale) if line else None
+            except Exception:
+                line = None
+            if not line:
+                try:
+                    if ctx["settings"][0] is None:
+                        ctx["settings"][0] = _topo_settings()
+                    line, width = _topo_footprint(w, ctx["settings"][0])
+                except Exception:
+                    line = None
+            segs = [(tuple(a), tuple(b)) for a, b in zip(line or (), (line or ())[1:]) if math.dist(a, b) > 1e-6]
+            if not segs:
+                continue
+            width = float(width or 0.2)
+            zs = [p[2] for p in self.world_points(w)]
+            out.append({"e": w, "segs": segs, "w": width, "band": unary_union([LineString([a, b]).buffer(width / 2.0, cap_style="flat") for a, b in segs]),
+                        "z": (min(zs), max(zs)) if zs else None})
+        ctx["walls"][storey.id()] = out
+        return out
+
+    def ctx_slabs(self, ctx):
+        """The model's slabs that lie flat as the boundaries read them: [{"e", "foot", "z0", "z1"}] in metres (prism_of)."""
+        if ctx["slabs"] is None:
+            ctx["slabs"] = []
+            for e in self.m.by_type("IfcSlab"):
+                got = self.prism_of(e)
+                if got is not None:
+                    ctx["slabs"].append({"e": e, "foot": got[0], "z0": got[1], "z1": got[2]})
+        return ctx["slabs"]
+
+    def ctx_solid(self, ctx, space):
+        if space.id() not in ctx["solids"]:
+            ctx["solids"][space.id()] = self.prism_of(space)
+        return ctx["solids"][space.id()]
+
+    def ctx_sides(self, ctx, storey):
+        """(external wall ids, wall ids in rooms) of a storey's topology; None when it finds no room there or cannot be computed."""
+        if storey.id() not in ctx["sides"]:
+            try:
+                rec = next((r for r in _ifc_topology(self.m, storeys={_ifc_text(storey.Name)}, shapes=True) if r["_storey"].id() == storey.id()), None)
+            except Exception:
+                rec = None
+            ctx["sides"][storey.id()] = ({x["wall"] for x in rec["external"]}, {w for room in rec["rooms"] for w in room["walls"]}) if rec and rec["rooms"] else None
+        return ctx["sides"][storey.id()]
+
+    def slab_external(self, slab, storey, floor):
+        """Whether a slab is external to the spaces above it (floor) or below it: the slab's IsExternal when it has one; else true for a
+        roof slab and a base slab, and for a floor on the lowest storey and a ceiling over the highest."""
+        import ifcopenshell.util.element as el
+        try:
+            value = el.get_pset(slab, "Pset_SlabCommon", "IsExternal")
+        except Exception:
+            value = None
+        if isinstance(value, bool):
+            return value
+        try:
+            kind = str(el.get_predefined_type(slab) or "")
+        except Exception:
+            kind = str(getattr(slab, "PredefinedType", None) or "")
+        if kind == "ROOF" or (floor and kind == "BASESLAB"):
+            return True
+        levels = [_topo_elevation(s, self.scale) for s in self.m.by_type("IfcBuildingStorey")]
+        z = _topo_elevation(storey, self.scale)
+        return z <= min(levels) + 1e-6 if floor else z >= max(levels) - 1e-6
+
+    def wall_openings(self, wall):
+        """[(element, opening, virtual)]: the doors and windows in a wall's openings by their opening, and in IFC4 and later an opening
+        without one as a virtual boundary of the IfcOpeningElement (IFC2X3's rule WR1 takes no element for a virtual boundary);
+        recesses are left out."""
+        out = []
+        for v in (getattr(wall, "HasOpenings", None) or ()):
+            o = v.RelatedOpeningElement
+            if str(getattr(o, "PredefinedType", None) or "") == "RECESS":
+                continue
+            fills = [f.RelatedBuildingElement for f in (getattr(o, "HasFillings", None) or ()) if f.RelatedBuildingElement.is_a("IfcDoor") or f.RelatedBuildingElement.is_a("IfcWindow")]
+            if fills:
+                out += [(f, o, False) for f in fills]
+            elif self.m.schema != "IFC2X3":
+                out.append((o, o, True))
+        return out
+
+    def space_faces(self, space, ctx):
+        """The faces that bound a space, or None when its body is not an extrusion straight up of a polygon (prism_of) or it is in no
+        storey: (faces, read), read the ids of the elements the app read for it (the walls of its storey with their doors, windows and
+        openings, and the flat slabs), whose earlier boundaries the faces replace.
+
+        Inside the walls the space's outline is less the walls' footprints; a wall bounds the space along each straight piece of its
+        centreline where that outline runs along the piece's face (half the thickness to either side), from the floor's top (the slab
+        below, else the space's bottom) to the ceiling's underside (the slab above, else the space's top), within the wall's own height.
+        A door, window or opening in such a face bounds it where its opening's body lies, in the same plane. A slab lying flat whose
+        thickness reaches the space's bottom (top), within BOUND_TOUCH, bounds it with its top (underside) inside the walls."""
+        from shapely.geometry import LineString
+        from shapely.ops import unary_union
+        solid = self.ctx_solid(ctx, space)
+        storey = self.space_storey(space)
+        if solid is None or storey is None:
+            return None
+        P, z0, z1 = solid
+        walls = self.ctx_walls(ctx, storey)
+        near = [w for w in walls if w["band"].distance(P) <= self.BOUND_TOUCH]
+        inside = P.difference(unary_union([w["band"] for w in near])) if near else P
+        touch, eps, least = self.BOUND_TOUCH, self.BOUND_EPS, self.BOUND_MIN
+        slabs = [x for x in self.ctx_slabs(ctx) if x["foot"].intersects(inside)]
+        floors = [x for x in slabs if x["z0"] - touch <= z0 <= x["z1"] + touch]
+        ceilings = [x for x in slabs if x not in floors and x["z0"] - touch <= z1 <= x["z1"] + touch]
+        bottom = max([z0] + [x["z1"] for x in floors])
+        top = min([z1] + [x["z0"] for x in ceilings])
+        if top - bottom < least:
+            bottom, top = z0, z1
+        sides = self.ctx_sides(ctx, storey)
+        read = {w["e"].id() for w in walls} | {x["e"].id() for x in self.ctx_slabs(ctx)} | {e.id() for w in walls for e, _, _ in self.wall_openings(w["e"])}
+        edge = inside.boundary
+        faces = []
+        for w in near:
+            if sides is None:
+                external = None
+            else:
+                external = True if w["e"].id() in sides[0] else False if w["e"].id() in sides[1] else None
+            holes = self.wall_openings(w["e"])
+            lo, hi = (max(bottom, w["z"][0]), min(top, w["z"][1])) if w["z"] else (bottom, top)
+            if hi - lo < least:
+                continue
+            for a, b in w["segs"]:
+                length = math.dist(a, b)
+                d = ((b[0] - a[0]) / length, (b[1] - a[1]) / length)
+                n = (-d[1], d[0])
+                for sign in (1.0, -1.0):
+                    fa = (a[0] + n[0] * sign * w["w"] / 2.0, a[1] + n[1] * sign * w["w"] / 2.0)
+                    fb = (fa[0] + d[0] * length, fa[1] + d[1] * length)
+                    hit = edge.intersection(LineString([fa, fb]).buffer(eps, cap_style="flat"))
+                    spans = []
+                    for g in getattr(hit, "geoms", [hit]):
+                        ts = [(c[0] - fa[0]) * d[0] + (c[1] - fa[1]) * d[1] for c in getattr(g, "coords", ())]
+                        if ts:
+                            spans.append([max(0.0, min(ts)), min(length, max(ts))])
+                    merged = []
+                    for span in sorted(spans):
+                        if merged and span[0] <= merged[-1][1] + 2 * eps:
+                            merged[-1][1] = max(merged[-1][1], span[1])
+                        else:
+                            merged.append(span)
+
+                    def at(t, zz):
+                        return (fa[0] + d[0] * t, fa[1] + d[1] * t, zz)
+
+                    def rect(t0, t1, g0, g1):
+                        start = t0 if sign > 0 else t1  # u runs along the face as seen from the space, so that the normal points away
+                        return {"o": at(start, g0), "x": (sign * d[0], sign * d[1], 0.0), "z": (-sign * n[0], -sign * n[1], 0.0),
+                                "rings": [[at(t0, g0), at(t1, g0), at(t1, g1), at(t0, g1)]], "area": (t1 - t0) * (g1 - g0)}
+                    for s0, s1 in merged:
+                        if s1 - s0 < least:
+                            continue
+                        faces.append(dict(rect(s0, s1, lo, hi), e=w["e"], external=external))
+                        parent = len(faces) - 1
+                        for e, opening, virtual in holes:
+                            pts = self.world_points(opening) or self.world_points(e)
+                            if not pts:
+                                continue
+                            ts = [(p[0] - a[0]) * d[0] + (p[1] - a[1]) * d[1] for p in pts]
+                            off = sum((p[0] - a[0]) * n[0] + (p[1] - a[1]) * n[1] for p in pts) / len(pts)
+                            if abs(off) > w["w"] / 2.0 + touch:
+                                continue  # in another straight piece of the wall
+                            q0, q1 = max(min(ts), s0), min(max(ts), s1)
+                            g0, g1 = max(min(p[2] for p in pts), lo), min(max(p[2] for p in pts), hi)
+                            if q1 - q0 >= least and g1 - g0 >= least:
+                                faces.append(dict(rect(q0, q1, g0, g1), e=e, external=external, virtual=virtual, parent=parent))
+        for floor, group in ((True, floors), (False, ceilings)):
+            for x in group:
+                part = inside.intersection(x["foot"])
+                z = x["z1"] if floor else x["z0"]
+                for poly in getattr(part, "geoms", [part]):
+                    if poly.geom_type != "Polygon" or poly.area < least * least:
+                        continue
+                    minx, miny, _, maxy = poly.bounds
+                    rings = [[(c[0], c[1], z) for c in ring.coords[:-1]] for ring in [poly.exterior] + list(poly.interiors)]
+                    faces.append({"o": (minx, maxy if floor else miny, z), "x": (1.0, 0.0, 0.0), "z": (0.0, 0.0, -1.0 if floor else 1.0), "rings": rings,
+                                  "area": poly.area, "e": x["e"], "external": self.slab_external(x["e"], storey, floor)})
+        return faces, read
+
+    def bound_space(self, space, ctx):
+        """Write a space's first-level boundaries from its faces (space_faces): an earlier boundary of the space to an element the app
+        read is reused for that element's faces in order, so that it keeps its GlobalId, and one left over is removed; boundaries to
+        other elements stay. False, with nothing changed, when the faces cannot be read."""
+        got = self.space_faces(space, ctx)
+        if got is None:
+            return False
+        faces, read = got
+        old = {}
+        for rel in list(getattr(space, "BoundedBy", None) or ()):
+            e = rel.RelatedBuildingElement
+            if e is not None and e.id() in read and self.maintained(rel):
+                old.setdefault(e.id(), []).append(rel)
+        rels = []
+        for f in faces:
+            reuse = old.get(f["e"].id())
+            parent = rels[f["parent"]] if f.get("parent") is not None else None
+            rels.append(self.bound(space, f["e"], f["external"], f, f.get("virtual", False), parent, reuse.pop(0) if reuse else None))
+        for rest in old.values():
+            for rel in rest:
+                self.unbound(rel)
+        return True
+
+    def space_boundaries(self):
+        """At the end of apply, after the joins: the boundaries (bound_space) of the spaces that what the change set created or changed
+        bounds or bounded — a wall on their storey within BOUND_TOUCH of them, a slab at their floor or top, a door, window or
+        opening by its wall, and the spaces themselves — so that a wall made after the rooms bounds them and the faces follow a door
+        or a moved wall. A deleted element's boundaries went with it (remove_product), and the spaces it bounded (unbounded) get the
+        others anew, so that the faces next to a deleted wall or under a deleted ceiling reach as far as they now do; a space whose body
+        the app cannot read keeps its boundaries, with a note."""
+        everywhere = self.m.by_type("IfcSpace")
+        if not everywhere:
+            return
+        spaces, walls, slabs = {}, {}, {}
+        for i in sorted(self.unbounded):
+            try:
+                spaces[i] = self.m.by_id(i)
+            except Exception:
+                continue  # the space itself was deleted
+        for i in dict.fromkeys([r["id"] for r in self.created] + list(self.changed)):
+            try:
+                e = self.m.by_id(i)
+            except Exception:
+                continue  # deleted later in the change set
+            for x in (e, self.host_of(e) if e.is_a("IfcDoor") or e.is_a("IfcWindow") or e.is_a("IfcOpeningElement") else None):
+                for rel in (getattr(x, "ProvidesBoundaries", None) or ()):
+                    if rel.RelatingSpace is not None and rel.RelatingSpace.is_a("IfcSpace"):
+                        spaces[rel.RelatingSpace.id()] = rel.RelatingSpace
+                for kind, into in (("IfcSpace", spaces), ("IfcWall", walls), ("IfcSlab", slabs)):
+                    if x is not None and x.is_a(kind):
+                        into[x.id()] = x
+        if not (spaces or walls or slabs):
+            return
+        ctx = self.bound_context()
+        storeys = {}
+        for s in everywhere:
+            storey = self.space_storey(s)
+            if storey is not None:
+                storeys.setdefault(storey.id(), []).append(s)
+        for w in walls.values():
+            storey = self.container(w)
+            mine = next((x for x in self.ctx_walls(ctx, storey) if x["e"].id() == w.id()), None) if storey is not None and storey.id() in storeys else None
+            for s in (storeys[storey.id()] if mine is not None else ()):
+                solid = self.ctx_solid(ctx, s)
+                if solid is not None and mine["band"].distance(solid[0]) <= self.BOUND_TOUCH:
+                    spaces[s.id()] = s
+        for x in (x for x in self.ctx_slabs(ctx) if x["e"].id() in slabs):
+            for s in everywhere:
+                solid = self.ctx_solid(ctx, s)
+                if solid is not None and x["foot"].intersects(solid[0]) and any(x["z0"] - self.BOUND_TOUCH <= z <= x["z1"] + self.BOUND_TOUCH for z in solid[1:]):
+                    spaces[s.id()] = s
+        for s in sorted(spaces.values(), key=lambda s: s.id()):
+            if not self.bound_space(s, ctx):
+                self.note_once("the boundaries of space %s keep their faces: the app reads only a space in a storey whose body is extruded "
+                               "straight up from a polygon" % self.element_label(s))
 
     @staticmethod
     def fillings(wall):
@@ -2406,10 +2836,12 @@ class _ChangeSet:
     def op_create_spaces(self, op):
         """The rooms the walls enclose as spaces, from the topology of the file as it stands at this step, so that walls made earlier
         in the change set count: per room an IfcSpace aggregated in its storey, with the room's outline extruded to the height (by
-        default up to the next storey, or to the top of the walls), Qto_SpaceBaseQuantities, and physical space boundaries to the walls
-        along its edge (external where the topology finds the wall external) and to the doors and windows in them that stand on that
-        edge. Listed rooms need the storey and get a ref each, in their order; without a list every room on the storey (or on every
-        storey with rooms) is made, named by default_name with its index for {n}, and none gets a ref."""
+        default up to the next storey, or to the top of the walls), Qto_SpaceBaseQuantities, and first-level physical space boundaries
+        with their faces (bound_space) to the walls along its edge (external where the topology finds the wall external) and to the
+        doors, windows and openings in their faces toward it; the slabs below and above get theirs at the end of apply
+        (space_boundaries), as do walls made later. Listed rooms need the storey and get a ref each, in their order; without a list
+        every room on the storey (or on every storey with rooms) is made, named by default_name with its index for {n}, and none gets
+        a ref."""
         import ifcopenshell.api.aggregate
         rooms = op.get("rooms")
         listed = rooms is not None
@@ -2450,16 +2882,8 @@ class _ChangeSet:
             made += len(chosen)
             h = height or self.storey_height(s)
             external = {e["wall"] for e in topo["external"]}
-            spaces = []
-            for room, name, long_name in chosen:
-                space = self.make_space(s, frame, room, name, long_name, h)
-                spaces.append(space)
-                for wall in (self.m.by_id(i) for i in room["walls"]):
-                    self.bound(space, wall, wall.id() in external)
-                    for f in self.fillings(wall):
-                        mid = self.plan_point(f, float(getattr(f, "OverallWidth", None) or 0.0) / 2.0)
-                        if mid is not None and room["polygon"].boundary.distance(_topo_point(mid)) <= topo["tolerance"]:
-                            self.bound(space, f, wall.id() in external)
+            ctx = self.bound_context({s.id(): (external, {w for r in topo["rooms"] for w in r["walls"]})})
+            spaces = [self.make_space(s, frame, room, name, long_name, h) for room, name, long_name in chosen]
             ifcopenshell.api.aggregate.assign_object(self.m, products=spaces, relating_object=s)
             for space, (room, _, _) in zip(spaces, chosen):
                 self.space_quantities(space, room, h)
@@ -2467,6 +2891,13 @@ class _ChangeSet:
                     import ifcopenshell.api.pset
                     pset = ifcopenshell.api.pset.add_pset(self.m, product=space, name="Pset_SpaceCommon")
                     ifcopenshell.api.pset.edit_pset(self.m, pset=pset, properties={"IsExternal": False})
+                # The first-level boundaries with their faces (bound_space; walls, doors and windows now, slabs made later at the end
+                # of apply); a wall of the room's that the faces miss is bound without one, as before faces came.
+                self.bound_space(space, ctx)
+                faced = {r.RelatedBuildingElement.id() for r in (getattr(space, "BoundedBy", None) or ()) if r.RelatedBuildingElement is not None}
+                for i in room["walls"]:
+                    if i not in faced:
+                        self.bound(space, self.m.by_id(i), i in external)
                 self.register(space, s, ref=listed)
         if not made:
             raise DataspatiumError("every room the walls enclose has a space already")
@@ -3570,7 +4001,8 @@ class _ChangeSet:
                     rec["with"] = e.id()
                 self.deleted.append(rec)
                 self.changed.pop(f.id(), None)
-                ifcopenshell.api.root.remove_product(self.m, product=f)
+                self.unbounded.update(b.RelatingSpace.id() for b in (getattr(f, "ProvidesBoundaries", None) or ()) if b.RelatingSpace is not None)
+                ifcopenshell.api.root.remove_product(self.m, product=f)  # with its space boundaries (IfcOpenShell's remove_boundary)
 
     def op_set_site(self, op):
         """The model's place on earth: the site's WGS 84 position (compound plane angles, every part signed), its height above the sea
@@ -4390,9 +4822,11 @@ class _ChangeSet:
     def finish(self):
         """After the operations: the joins of the walls the change set created (join_walls), the openings of the walls joined anew
         (check_openings) and the spaces along the walls it moved (fit_spaces), then the base quantities of what it created or changed
-        (base_quantities). A fault in any becomes a note in the report, and the operations stand."""
+        (base_quantities) and last the space boundaries near it (space_boundaries), after the spaces have been fitted. A fault in any
+        becomes a note in the report, and the operations stand."""
         for step, what in ((self.join_walls, "the wall joins"), (self.check_openings, "the check of the openings in the joined walls"),
-                           (self.fit_spaces, "the spaces along the moved walls"), (self.base_quantities, "the base quantities")):
+                           (self.fit_spaces, "the spaces along the moved walls"), (self.base_quantities, "the base quantities"),
+                           (self.space_boundaries, "the space boundaries")):
             try:
                 step()
             except Exception as exc:
