@@ -2878,11 +2878,11 @@ class _ChangeSet:
             self.give_type(slab, typ, "AXIS3", "NEGATIVE", 0.0)
         self.touch(slab)
 
-    def edit_opening(self, e, op):
-        """edit_element on an opening of create_opening's form in a wall of create_wall's form, or on the door or window in it: offset
-        (metres from the wall's start, along it), sill (above the wall's base), width and height, the opening and its doors and windows
-        together; the opening must stay within the wall's body. A door or window placed in the opening follows it (one placed elsewhere
-        is moved as much), and their bodies, OverallWidth and OverallHeight take the new size."""
+    def opening_frame(self, e):
+        """An opening of create_opening's form in a wall of create_wall's form, or the door or window in it, as edit_element reads it:
+        the opening, its wall, its body (wall_box), its doors and windows, its offset from the wall's start, width, sill above the
+        wall's base and height (metres), and the extent of the wall's body along it and up (bx0, bx1, bz0, bz1, metres); else the refusal
+        of cannot."""
         s = self.scale
         opening = e if e.is_a("IfcOpeningElement") else next((r.RelatingOpeningElement for r in (getattr(e, "FillsVoids", None) or ())), None)
         if opening is None:
@@ -2892,13 +2892,23 @@ class _ChangeSet:
         item, body = self.wall_box(opening), (self.wall_box(wall) if wall is not None else None)
         if wall is None or not wall.is_a("IfcWall") or box is None or item is None or body is None or not self.movable(opening):
             raise self.cannot(e, "it is not an opening of create_opening's form in a wall of create_wall's form", "create_opening")
-        fillings = [r.RelatedBuildingElement for r in (getattr(opening, "HasFillings", None) or ())]
-        offset, width, sill, height = box[0] * s, (box[1] - box[0]) * s, box[2] * s, (box[3] - box[2]) * s
-        new = {k: (_cs_num(op, k, positive=k in ("width", "height")) if op.get(k) is not None else v)
-               for k, v in (("offset", offset), ("width", width), ("sill", sill), ("height", height))}
         cx, half = float(body.SweptArea.Position.Location.Coordinates[0]), float(body.SweptArea.XDim) / 2.0
         bz = _cs_axes(body.Position)[3][2]
-        bx0, bx1, bz0, bz1 = (cx - half) * s, (cx + half) * s, bz * s, (bz + float(body.Depth)) * s
+        return {"opening": opening, "wall": wall, "item": item, "fillings": [r.RelatedBuildingElement for r in (getattr(opening, "HasFillings", None) or ())],
+                "offset": box[0] * s, "width": (box[1] - box[0]) * s, "sill": box[2] * s, "height": (box[3] - box[2]) * s,
+                "bx0": (cx - half) * s, "bx1": (cx + half) * s, "bz0": bz * s, "bz1": (bz + float(body.Depth)) * s}
+
+    def edit_opening(self, e, op):
+        """edit_element on an opening (opening_frame) or the door or window in it: offset (metres from the wall's start, along it), sill
+        (above the wall's base), width and height, the opening and its doors and windows together; the opening must stay within the
+        wall's body. A door or window placed in the opening follows it (one placed elsewhere is moved as much), and their bodies,
+        OverallWidth and OverallHeight take the new size."""
+        f = self.opening_frame(e)
+        opening, wall, item, fillings = f["opening"], f["wall"], f["item"], f["fillings"]
+        offset, width, sill, height = f["offset"], f["width"], f["sill"], f["height"]
+        new = {k: (_cs_num(op, k, positive=k in ("width", "height")) if op.get(k) is not None else v)
+               for k, v in (("offset", offset), ("width", width), ("sill", sill), ("height", height))}
+        bx0, bx1, bz0, bz1 = f["bx0"], f["bx1"], f["bz0"], f["bz1"]
         if new["offset"] < bx0 - 0.001 or new["offset"] + new["width"] > bx1 + 0.001 or new["sill"] < bz0 - 0.001 or new["sill"] + new["height"] > bz1 + 0.001:
             raise DataspatiumError("%s #%d would reach beyond wall #%d %r, whose body runs from %.3g to %.3g m from its start and from %.3g to %.3g m up; give an offset, width, sill and height within it"
                                    % (e.is_a(), e.id(), wall.id(), _ifc_text(wall.Name) or "", bx0, bx1, bz0, bz1))
@@ -3027,6 +3037,41 @@ class _ChangeSet:
         profile = self.m.createIfcArbitraryClosedProfileDef("AREA", None, self.closed(face))
         position = self.m.createIfcAxis2Placement3D(self.point(self.u(o[0]), self.u(o[1]), self.u(o[2])), self.direction(*normal), self.direction(*along))
         return self.m.createIfcExtrudedAreaSolid(profile, position, self.direction(0.0, sin, cos), self.u(thickness / cos))
+
+    def parameters(self, e):
+        """What edit_element reads of an element, for the read tool get_parameters: its id, GlobalId, class, name and kind (wall, slab,
+        opening, roof, or null when edit_element can change only its name), and its kind's measures in metres and degrees: a wall's start
+        and end in its storey's plane, thickness, height and type; a slab's outline, thickness and type; an opening's (also for its door
+        or window) wall, offset, width, height and sill; a roof's shape, pitch, overhang and base. A note says why an element of another
+        form has no measures."""
+        import ifcopenshell.util.element as el
+        kind = self.edit_kind(e)
+        out = {"id": e.id(), "guid": getattr(e, "GlobalId", None), "ifc_class": e.is_a(), "name": _ifc_text(getattr(e, "Name", None)), "kind": kind if kind in self.EDITS else None}
+        t = el.get_type(e) if e.is_a("IfcObject") else None
+        typed = _ifc_text(t.Name) if t is not None else None
+
+        def r6(v):
+            return round(float(v), 6)
+        try:
+            if kind == "wall":
+                f = self.wall_frame(e)
+                out.update(start=[r6(v) for v in f["start"]], end=[r6(v) for v in f["end"]], thickness=r6(f["thickness"]), height=r6(f["height"]), type=typed)
+            elif kind == "slab":
+                f = self.slab_frame(e)
+                out.update(outline=[[r6(v) for v in p] for p in f["outline"]], thickness=r6(f["thickness"]), type=typed)
+            elif kind == "opening":
+                f = self.opening_frame(e)
+                out.update(wall=f["wall"].id(), offset=r6(f["offset"]), width=r6(f["width"]), height=r6(f["height"]), sill=r6(f["sill"]))
+            elif kind == "roof":
+                f = self.roof_frame(e)
+                out.update(shape=f["shape"], pitch=r6(f["pitch"]), overhang=r6(f["overhang"]), base=r6(f["base"]))
+            elif kind == "roof slab":
+                out["note"] = self.edit_refusal(e, kind, ["pitch"])
+            else:
+                out["note"] = "edit_element changes only the name of a %s" % e.is_a()
+        except DataspatiumError as exc:
+            out.update(kind=None, note=str(exc))
+        return out
 
     def op_delete_elements(self, op):
         """Delete elements; the doors and windows in an element's openings go with it, so nothing is left hanging in the air."""
@@ -4478,6 +4523,29 @@ def _ifc_topology_file(in_file, out_file):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "topology-in.ifc"), data)
     text = json.dumps(_ifc_topology(model), ensure_ascii=False, default=str)
+    with open(out_file, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+PARAMETERS_MAX = 200
+
+
+def _ifc_parameters_file(in_file, ids_json, out_file):
+    """The measures edit_element reads of elements (_ChangeSet.parameters), for the read tool get_parameters: ids_json is a JSON list of
+    STEP ids or GlobalIds, at most PARAMETERS_MAX; an id the model lacks gives {"id", "error"}. The original IFC is read from the SQLite
+    file, nothing is written back, and the JSON list is written to out_file and returned."""
+    _, data = _ifc_original_from(in_file)
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    model = _ifc_open_bytes(os.path.join(os.path.dirname(out_file), "parameters-in.ifc"), data)
+    cs = _ChangeSet(model)
+    out = []
+    for ref in (json.loads(ids_json or "[]") or [])[:PARAMETERS_MAX]:
+        try:
+            out.append(cs.parameters(cs.entity(ref)))
+        except DataspatiumError as exc:
+            out.append({"id": ref, "error": str(exc)})
+    text = json.dumps(out, ensure_ascii=False, default=str)
     with open(out_file, "w", encoding="utf-8") as fh:
         fh.write(text)
     return text

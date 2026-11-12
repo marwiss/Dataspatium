@@ -416,14 +416,15 @@ skabeloner.
 Værktøjet `edit_element` ændrer et eksisterende element på stedet, så det beholder sit GlobalId hele sin levetid: en væggs start, slut,
 tykkelse, højde og type, et dæks omrids, tykkelse og type, en åbnings placering, bredde, højde og underkant sammen med dens dør eller
 vindue, et tags hældning, udhæng og tagfodens højde, og ethvert elements navn. Målene læses ud fra elementets egen geometri (væggens
-start og slut ud fra dens akse), og kroppen, aksen, lagene, basismængderne og vægsamlingerne laves på ny. Væggens åbninger beholder
-deres plads langs væggen, så længe den beholder sin retning (ellers deres afstand fra starten), og skal kunne være i den, og taget
-beholder sit rektangel. En væg eller et dæk med type får sin tykkelse fra typen, så en tykkere væg får en anden type. Et element, der
-ikke er tegnet, som skriveværktøjerne tegner, kan kun få nyt navn, og svaret siger, hvad AI'en kan gøre i stedet. AI'en ændrer derfor
-elementer i stedet for at slette og oprette dem på ny og sletter kun, når du beder om det. Flytning med `transform_elements` sker i
-etagens plan: en dør eller et vindue flyttes med sin åbning, en flyttet væg forbindes med de vægge, den møder, intet punkt bliver
-tilbage uden brug, og grunden, bygningen og etagerne flyttes aldrig, fordi deres placering og højder gælder hele projektet og kun
-ændres efter aftale.
+start og slut ud fra dens akse), og kroppen, aksen, lagene, basismængderne og vægsamlingerne laves på ny. Læseværktøjet
+`get_parameters` viser AI'en de mål, som `edit_element` ændrer, læst på samme måde, så den kan ændre et element, den ikke selv har
+oprettet. Væggens åbninger beholder deres plads langs væggen, så længe den beholder sin retning (ellers deres afstand fra starten), og
+skal kunne være i den, og taget beholder sit rektangel. En væg eller et dæk med type får sin tykkelse fra typen, så en tykkere væg får
+en anden type. Et element, der ikke er tegnet, som skriveværktøjerne tegner, kan kun få nyt navn, og svaret siger, hvad AI'en kan gøre
+i stedet. AI'en ændrer derfor elementer i stedet for at slette og oprette dem på ny og sletter kun, når du beder om det. Flytning med
+`transform_elements` sker i etagens plan: en dør eller et vindue flyttes med sin åbning, en flyttet væg forbindes med de vægge, den
+møder, intet punkt bliver tilbage uden brug, og grunden, bygningen og etagerne flyttes aldrig, fordi deres placering og højder gælder
+hele projektet og kun ændres efter aftale.
 
 *Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
 gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.

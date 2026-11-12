@@ -402,6 +402,25 @@
       }
 
       /**
+       * The measures edit_element reads of elements of the model kept in a dataset file, for the read tool get_parameters (the
+       * wheel's `_ifc_parameters_file`). Read-only: nothing is written back.
+       * @param {ArrayBuffer|Uint8Array} bytes the model dataset's SQLite file @param {Array<number|string>} ids STEP ids or GlobalIds
+       * @returns {Promise<any[]>} one entry per id
+       */
+      async runIfcParameters(bytes, ids) {
+        return this.ifcJob(async () => {
+          await this.engine.writeFile('/data/step/model.sqlite', bytes);
+          try {
+            await this.ensurePackages(['ifcopenshell']);
+            this.streams = [];
+            return await this.engine.evalJson(`_dataspatium._ifc_parameters_file("/data/step/model.sqlite", ${JSON.stringify(JSON.stringify(ids))}, "/data/step/parameters.json")`);
+          } finally {
+            for (const p of ['/data/step/model.sqlite', '/data/step/parameters-in.ifc', '/data/step/parameters.json']) { try { await this.engine.unlink(p); } catch (_err) { /* ignore */ } }
+          }
+        });
+      }
+
+      /**
        * The IFC classes of a schema for a thing named in English words (decision B-57.2; the wheel's `_ifc_class_search` on
        * IfcOpenShell's documentation of the schema). No model is read.
        * @param {string} schema the model's schema, such as IFC4 @param {string} query @param {number} [limit]

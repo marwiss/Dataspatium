@@ -4,7 +4,8 @@
  * Tests for changing elements in place (recommendation 7 of the Praxi study, 17 of the native IFC study): edit_element is a write
  * tool without a ref whose step holds only the fields given, checked per kind of element and against the change set's refs and
  * types; the step list describes it in all seven languages; and the change text tells the AI to edit elements instead of deleting
- * and recreating them. With the real Pyodide (`?python=1` or cached components) the wheel moves an inner wall, gives an outer wall a
+ * and recreating them; the read tool get_parameters never starts Python. With the real Pyodide (`?python=1` or cached components)
+ * get_parameters reads a box's walls from their axes, its door, window, slab and roof, and the wheel moves an inner wall, gives an outer wall a
  * thicker type, widens a door, lowers a window, enlarges a slab and steepens a roof in a second change set, keeping every GlobalId,
  * with the joins, layers and base quantities made anew and no point left unused (rule IFC106); and transform_elements moves a window
  * with its opening and a wall with its joins, while it refuses a storey, as edit_element refuses what does not fit.
@@ -14,6 +15,7 @@
   const D = globalThis.Dataspatium;
   const { test } = D.require('tests/harness');
   const writeTools = D.require('ai/write-tools');
+  const tools = D.require('ai/model-tools');
   const agent = D.require('ai/agent');
   const i18n = D.require('ui/i18n');
   const catalog = D.require('engines/python/catalog');
@@ -164,8 +166,25 @@
 
   test('ai edit: the change text tells the AI to edit elements instead of recreating them, and transform_elements says what it moves', async (assert) => {
     assert.ok(agent.SYSTEM_CHANGE.includes('Change an existing element with edit_element') && agent.SYSTEM_CHANGE.includes('so that its GlobalId stays') && agent.SYSTEM_CHANGE.includes('delete only when the person asks for it'), 'edit, keep the GlobalId, delete only when asked');
+    assert.ok(agent.SYSTEM_CHANGE.includes('get_parameters reads its current measures'), 'and read the measures first');
     const move = writeTools.TOOLS.find((x) => x.name === 'transform_elements').description;
     assert.ok(move.includes('A door or window moves with its opening') && move.includes('The site, the building and the storeys are never moved'), move);
+    return 'ok';
+  });
+
+  test('ai edit: get_parameters is a read tool that reads the measures through the app\'s Python and never starts it', async (assert) => {
+    const tool = tools.TOOLS.find((x) => x.name === 'get_parameters');
+    assert.ok(tool && Object.keys(tool.parameters.properties).join() === 'ids' && tool.description.includes('Works only when the app\'s Python is already running'), 'a read tool of ids');
+    assert.ok(!writeTools.has('get_parameters'), 'not a write tool');
+    const state = bridge.state;
+    try {
+      bridge.state = 'idle';
+      const off = await tools.call('no-such-dataset', 'get_parameters', { ids: [12] });
+      assert.ok(off.error && off.error.includes('Python'), 'Python is not started: ' + JSON.stringify(off));
+      bridge.state = 'ready';
+      const none = await tools.call('no-such-dataset', 'get_parameters', { ids: ['not an id', -3] });
+      assert.ok(none.error && none.error.includes('give ids'), 'ids that are neither STEP ids nor GlobalIds: ' + JSON.stringify(none));
+    } finally { bridge.state = state; }
     return 'ok';
   });
 
@@ -199,6 +218,26 @@
     }
     return built;
   }
+
+  test('ai edit: Python reads the measures edit_element changes from the walls\' axes and the bodies, and says why a roof slab and a storey have none', async (assert) => {
+    if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;
+    const { meta, guid, facts } = await buildBox();
+    const keys = ['IfcWall Mitt', 'IfcWall Syd', 'IfcDoor Dörr', 'IfcWindow Fönster', 'IfcSlab Bjälklag', 'IfcRoof Tak', 'IfcSlab Tak 1'];
+    const out = await tools.call(meta.id, 'get_parameters', { ids: keys.map((k) => guid[k]).concat([facts.storeys['Plan 3'], 'AAAAAAAAAAAAAAAAAAAAAA']) });
+    assert.ok(out && Array.isArray(out.elements) && out.elements.length === 9, JSON.stringify(out));
+    const [mitt, syd, door, win, slab, roof, part, storey, missing] = out.elements;
+    const pick = (o, names) => names.reduce((x, n) => Object.assign(x, { [n]: o[n] }), {});
+    assert.deepEqual(pick(mitt, ['kind', 'name', 'start', 'end', 'thickness', 'height', 'type']), { kind: 'wall', name: 'Mitt', start: [6, 0], end: [6, 8], thickness: 0.095, height: 3, type: 'IV1' }, 'the inner wall from its axis, not its cut body');
+    assert.deepEqual(pick(syd, ['start', 'end', 'thickness', 'type']), { start: [0, 0], end: [12, 0], thickness: 0.3, type: 'YV1' }, 'the south wall');
+    assert.ok(door.kind === 'opening' && door.ifc_class === 'IfcDoor' && Number.isInteger(door.wall) && near(door.offset, 2) && near(door.width, 1) && near(door.height, 2.1) && near(door.sill, 0), 'the door by its opening: ' + JSON.stringify(door));
+    assert.ok(win.kind === 'opening' && near(win.offset, 3) && near(win.width, 1.2) && near(win.height, 1.2) && near(win.sill, 0.9), 'the window: ' + JSON.stringify(win));
+    assert.deepEqual(pick(slab, ['kind', 'outline', 'thickness', 'type']), { kind: 'slab', outline: [[0, 0], [12, 0], [12, 8], [0, 8]], thickness: 0.25, type: 'BJ1' }, 'the slab');
+    assert.deepEqual(pick(roof, ['kind', 'shape', 'pitch', 'overhang', 'base']), { kind: 'roof', shape: 'gable', pitch: 30, overhang: 0.4, base: 3 }, 'the roof from its slabs\' faces');
+    assert.ok(part.kind === null && String(part.note).includes('edit the roof'), 'a roof slab points to its roof: ' + JSON.stringify(part));
+    assert.ok(storey.kind === null && String(storey.note).includes('only the name'), 'a storey takes only a name: ' + JSON.stringify(storey));
+    assert.ok(missing.error && String(missing.error).includes('no element with GlobalId'), 'an unknown GlobalId: ' + JSON.stringify(missing));
+    return 'ok';
+  }, 900000);
 
   test('ai edit: Python changes walls, a door, a window, a slab and a roof in place, keeping their GlobalIds, with joins, layers and quantities made anew', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return SKIPPED;

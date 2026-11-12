@@ -428,10 +428,11 @@ The tool `edit_element` changes an existing element in place, so that it keeps i
 thickness, height and type, a slab's outline, thickness and type, an opening's position, width, height and sill together with its door
 or window, a roof's pitch, overhang and eaves height, and any element's name. The measures are read from the element's own geometry
 (the wall's start and end from its axis), and the body, the axis, the layers, the base quantities and the wall joins are made anew. The
-wall's openings keep their place along it as long as it keeps its direction (otherwise their distance from its start) and must fit
-within it, and the roof keeps its rectangle. A typed wall or slab takes its thickness from its type, so a thicker wall gets another
-type. An element not drawn the way the write tools draw it can only be renamed, and the answer says what the AI can do instead. The AI
-therefore changes elements instead of deleting and recreating them, and deletes only when you ask it to. A move with
+read tool `get_parameters` shows the AI the measures `edit_element` changes, read the same way, so that it can change an element it did
+not create itself. The wall's openings keep their place along it as long as it keeps its direction (otherwise their distance from its
+start) and must fit within it, and the roof keeps its rectangle. A typed wall or slab takes its thickness from its type, so a thicker
+wall gets another type. An element not drawn the way the write tools draw it can only be renamed, and the answer says what the AI can
+do instead. The AI therefore changes elements instead of deleting and recreating them, and deletes only when you ask it to. A move with
 `transform_elements` happens in the storey's plane: a door or window moves with its opening, a moved wall is joined with the walls it
 meets, no point is left unused, and the site, the building and the storeys are never moved, since their place and heights belong to the
 whole project and change only by agreement.

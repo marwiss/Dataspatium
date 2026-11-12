@@ -144,6 +144,18 @@
       const handle = await datasets.ensureOpen(datasetId);
       return (await bridge().runIfcClassReport(await handle.engine.export())) || {};
     }
-    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, IDS: ['ifc_apply_table', 'ifc_python'] };
+    /**
+     * The measures edit_element reads of elements, for the read tool get_parameters (python/ `_ChangeSet.parameters`): per element
+     * its kind and a wall's start, end, thickness, height and type, a slab's outline, thickness and type, an opening's offset, width,
+     * height and sill, a roof's shape, pitch, overhang and base. Python starts as for classSearch; the dataset is untouched.
+     * @param {string} datasetId @param {Array<number|string>} ids STEP ids or GlobalIds @returns {Promise<any[]>}
+     */
+    async function parametersOf(datasetId, ids) {
+      await modelMeta(datasetId);
+      const handle = await datasets.ensureOpen(datasetId);
+      const out = await bridge().runIfcParameters(await handle.engine.export(), ids);
+      return Array.isArray(out) ? out : [];
+    }
+    return { python, applyTable, changeset, previewChangeset, topologyOf, classSearch, classReportOf, parametersOf, IDS: ['ifc_apply_table', 'ifc_python'] };
   });
 })();
