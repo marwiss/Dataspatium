@@ -4,7 +4,7 @@
  * Browser for an OpenCDE source in Inhämta: sign in with the server's OAuth2 flow (popup, or paste the callback
  * address under file://), choose a project, and fetch its topics, comments, viewpoint components, events or files
  * as tables with "Spara som datamängd". "Hämta dokument" opens the server's own selection page (Documents API);
- * the chosen files are downloaded and imported like files dropped on the app (IFC models become model datasets). The card IFC-LPG shows
+ * the chosen files are downloaded and imported like files dropped on the app (IFC models become model datasets). The card IFC–DB shows
  * the server's graph through its read-only graph query (ui/api/graph-workbench), or says how to reach it when that is off.
  */
 (function () {
@@ -39,7 +39,7 @@
       const fail = (err) => { s.error = String((err && err.message) || err); log(`${connector.name}: ${s.error}`, 'error'); };
       /** A link that named a project and a document waits here while the user still has to sign in. */
       let pendingLink = null;
-      /** The card IFC-LPG, which appears when the server says it has a graph. */
+      /** The card IFC–DB, which appears when the server says it has a graph. */
       const graphEl = h('div', { class: 'dm-card dm-stack-sm', 'data-ifcgraph-card': '' });
       graphEl.hidden = true;
       /** The workbench, made once the session may use the graph query, and a model's request that waits for that sign-in. */

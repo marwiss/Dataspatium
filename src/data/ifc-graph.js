@@ -7,7 +7,7 @@
  * which family colours it, the models on the server, the ready-made views of one model, the steps from one element, the properties
  * that never leave an answer, and the line between a BCF component and the entity with its GUID, which the app draws itself: the server
  * stores no relationship there but joins them on Component.ifc_guid = Entity.GlobalId within a model (Dataregium's step one of
- * IFC-LPG's F38 a, 2026-11-11).
+ * IFC–DB's F38 a, 2026-11-11).
  */
 (function () {
   'use strict';
@@ -103,14 +103,14 @@
     /** A string as a Cypher literal. @param {any} value */
     const quote = (value) => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
     /**
-     * The labels of the geometry skeleton that the graph keeps as nodes from IFC-LPG 1.0.0 (Dataregium 3.0.0 locks it): representations,
+     * The labels of the geometry skeleton that the graph keeps as nodes from IFC–DB 1.0.0 (Dataregium 3.0.0 locks it): representations,
      * solids, mapped items, profiles, placements, contexts, styles, colours and layers. Points, meshes and curves stay STEP text in
      * StepBlock nodes. `Model.geometry` says which form a model has: skeleton (the default), blocks or nodes; `Model.form_version` the
-     * version of the graph's form (1 since IFC-LPG 61a2d69), `Model.format` the origin ('step' or 'ifcx') and `Model.schema` IFC's version. The views of what a
+     * version of the graph's form (1 since IFC–DB 61a2d69), `Model.format` the origin ('step' or 'ifcx') and `Model.schema` IFC's version. The views of what a
      * model holds leave the skeleton out, so that a thousand relationships show elements and not solids; the view `geometry` counts it.
      * A model converted before Dataregium wrote `geometry` has the blocks form when `lossless` is true. Dataregium keeps its own facts
      * about a conversion (document, version, state, file, times, error) on a node Conversion with `model_id` (and CONVERTS to the Model
-     * when both live in one database) since its step two of IFC-LPG's F38 a; older servers keep them on Model, so MODELS reads
+     * when both live in one database) since its step two of IFC–DB's F38 a; older servers keep them on Model, so MODELS reads
      * Conversion when it exists and Model otherwise, and a model the library imported on its own counts as done by `imported_at`.
      */
     const GEOMETRY_LABELS = ['IfcRepresentationItem', 'IfcRepresentation', 'IfcProductRepresentation', 'IfcRepresentationMap', 'IfcObjectPlacement', 'IfcProfileDef', 'IfcRepresentationContext', 'IfcPresentationStyle', 'IfcPresentationStyleAssignment', 'IfcPresentationLayerAssignment', 'IfcPresentationItem', 'IfcColourSpecification', 'IfcSurfaceStyleShading', 'IfcSurfaceStyleLighting', 'IfcSurfaceStyleRefraction', 'IfcSurfaceStyleWithTextures', 'IfcSurfaceTexture', 'IfcCurveStyleFont', 'IfcCurveStyleFontPattern', 'IfcTextStyleTextModel', 'IfcTextStyleWithBoxCharacteristics', 'IfcPreDefinedItem', 'IfcGeometricRepresentationContext', 'StepBlock'];
