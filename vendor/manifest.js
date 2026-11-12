@@ -1304,6 +1304,13 @@ Dataspatium.assets.manifest({
    "sha256": "0dfeecda2070b36da0cd4f6afa250af9453de528a983770f85b13d5d6b667572",
    "library": "sqljs"
   },
+  "geotiff/worker/geotiff.js": {
+   "file": "vendor/geotiff/worker/geotiff.js.js",
+   "encoding": "text",
+   "size": 317520,
+   "sha256": "cb5c9731bfee1f8bff1728e54e4436ada81ea3258b178a3d6603c61b58d99e6c",
+   "library": "geotiff"
+  },
   "fonts/inter-latin-400-normal.woff2": {
    "file": "vendor/fonts/inter-latin-400-normal.woff2.js",
    "encoding": "base64",
@@ -2840,8 +2847,8 @@ Dataspatium.assets.manifest({
    "direct": [
     "geotiff.js"
    ],
-   "assets": 0,
-   "notes": "Reads heights from Lantmäteriet's terrain model (cloud-optimised GeoTIFF) with range requests. The browser build is a classic script with the global GeoTIFF; its worker pool (a Blob worker) is never used, so decoding runs on the page in small windows."
+   "assets": 1,
+   "notes": "Reads Lantmäteriet's cloud-optimised GeoTIFF files with range requests. The browser build is a classic script with the global GeoTIFF: loaded on the page for the terrain model's heights (small windows), and the same file wrapped as text for the app's own Blob worker that decodes the orthophotos (api/orthophoto-cog). Its own worker pool is never used."
   },
   "fflate": {
    "version": "0.8.3",
