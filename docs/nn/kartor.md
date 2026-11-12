@@ -101,12 +101,18 @@ Bearbeid, i kartvisingane i Visualiser, på plankartet og under staden for ein n
   nøkkel (STAC)* og høgdemodellen brukar; manglar han, spør appen etter han når du vel ortofotoet, med ei lenkje til Geotorget. Med
   nøkkelen hentar appen eit tilgangstoken frå `apimanager.lantmateriet.se`, og tokenet blir berre sendt til `dl1.lantmateriet.se`. Søket
   i katalogen krev ingen nøkkel.
+- Godtek ikkje `dl1.lantmateriet.se` tokenet (svaret 401), spør appen éin gong om innlogginga di i Geotorget, som Lantmäteriet òg
+  godtek for nedlastinga: brukarnamnet og passordet ditt, eller for ein organisasjon systemkontoen som har bestilt Ortofoto
+  Nedladdning. Du oppgir ho i det same nøkkelpanelet under *Innlogging til filtenaren*. Ho gjeld økta eller blir lagra kryptert med
+  nøkkelen, og ho blir berre send til `dl1.lantmateriet.se`, som Basic-innlogging. Avbryt du, spør ikkje appen igjen i økta; meldinga
+  har då knappen *Oppgi innlogging*.
 - Ingenting blir henta før du vel ortofotoet eller trykkjer på knappen. Då spør appen éin gong om samtykke til *API-henting* og nemner
   vertane. Ei lagra kartvising hentar ingenting når ho blir opna; ho viser knappen.
 - Kjeldetilvisinga i hjørnet av kartet følgjer vilkåra til Lantmäteriet: "Ortofoto © Lantmäteriet (år), bearbeidd for kartet (CC BY
   4.0)". Biletet blir ikkje med i eksport (SVG, PNG, PDF), lagra kartvisingar eller publisert HTML.
-- Filene blir lesne éi rute om gongen med ein pause imellom, og omrekninga skjer i omgangar, slik at sida ikkje låser seg; ei vising på
-  1 km² tek nokre sekund.
+- Rutene blir dekoda, sette saman og rekna om i ein eigen tråd (ein worker), slik at sida ikkje låser seg. Sida hentar berre dei bytane
+  tråden ber om, med den same nøkkelen og det same samtykket, og tek imot det ferdige biletet; nøkkelen og innlogginga blir verande på
+  sida. Ei vising på 1 km² tek nokre sekund.
 
 ## Geoverktøy i Analyser
 

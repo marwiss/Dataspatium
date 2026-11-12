@@ -102,12 +102,18 @@ in Process, in the map views in Visualise, on the plan map and under the place o
   geodata with a key (STAC)* and the height model use; when it is missing, the app asks for it when you choose the orthophoto, with a
   link to Geotorget. With the key the app gets an access token from `apimanager.lantmateriet.se`, and the token goes only to
   `dl1.lantmateriet.se`. The search in the catalogue needs no key.
+- If `dl1.lantmateriet.se` does not accept the token (the answer 401), the app asks once for your Geotorget login, which Lantmäteriet
+  also accepts for the download: your user name and password, or for an organisation the system account that has ordered Ortofoto
+  Nedladdning. You enter it in the same key panel under *Login for the file server*. It holds for the session or is saved encrypted with
+  the key, and it goes only to `dl1.lantmateriet.se`, as a Basic login. If you cancel, the app does not ask again during the session;
+  the message then has the button *Enter login*.
 - Nothing is fetched until you choose the orthophoto or press the button. Then the app asks once for consent to *API fetches* and names
   the hosts. A saved map view fetches nothing when it is opened; it shows the button.
 - The attribution in the corner of the map follows Lantmäteriet's terms: "Ortofoto © Lantmäteriet (year), processed for the map (CC BY
   4.0)". The image is not included in export (SVG, PNG, PDF), saved map views or published HTML.
-- The files are read one tile at a time with a pause in between, and the conversion runs in rounds, so that the page does not freeze; a
-  view of 1 km² takes a few seconds.
+- The tiles are decoded, put together and converted in a thread of their own (a worker), so that the page does not freeze. The page
+  fetches only the bytes the thread asks for, with the same key and consent, and receives the finished image; the key and the login
+  stay on the page. A view of 1 km² takes a few seconds.
 
 ## Geo tools in Analyse
 

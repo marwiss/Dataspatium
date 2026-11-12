@@ -100,12 +100,18 @@ Bearbeta, i kartvyerna i Visualisera, på plankartan och under platsen för en n
   geodata med nyckel (STAC)* och höjdmodellen använder; saknas den frågar appen efter den när du väljer ortofotot, med en länk till
   Geotorget. Med nyckeln hämtar appen en åtkomsttoken från `apimanager.lantmateriet.se`, och token skickas bara till
   `dl1.lantmateriet.se`. Sökningen i katalogen går utan nyckel.
+- Godtar `dl1.lantmateriet.se` inte token (svaret 401) frågar appen en gång om din inloggning i Geotorget, som Lantmäteriet också
+  godtar för nedladdningen: ditt användarnamn och lösenord, eller för en organisation systemkontot som har beställt Ortofoto
+  Nedladdning. Du anger den i samma nyckelpanel under *Inloggning till filservern*. Den gäller sessionen eller sparas krypterad med
+  nyckeln, och den skickas bara till `dl1.lantmateriet.se`, som Basic-inloggning. Avbryter du frågar appen inte igen under sessionen;
+  meddelandet har då knappen *Ange inloggning*.
 - Inget hämtas förrän du väljer ortofotot eller trycker på knappen. Då frågar appen en gång om samtycke för *API-hämtning* och namnger
   värdarna. En sparad kartvy hämtar inget när den öppnas; den visar knappen.
 - Källangivelsen i kartans hörn följer Lantmäteriets villkor: "Ortofoto © Lantmäteriet (år), bearbetad för kartan (CC BY 4.0)". Bilden
   följer inte med i export (SVG, PNG, PDF), sparade kartvyer eller publicerad HTML.
-- Filerna läses en ruta i taget med en paus emellan, och omräkningen sker i omgångar, så att sidan inte låser sig; en vy på 1 km² tar
-  några sekunder.
+- Rutorna avkodas, läggs samman och räknas om i en egen tråd (en worker), så att sidan inte låser sig. Sidan hämtar bara de byte som
+  tråden ber om, med samma nyckel och samtycke, och tar emot den färdiga bilden; nyckeln och inloggningen stannar på sidan. En vy på
+  1 km² tar några sekunder.
 
 ## Geoverktyg i Analysera
 
