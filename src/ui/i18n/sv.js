@@ -6397,7 +6397,7 @@
     'opencde.err.code.conflict': 'Det finns redan ett objekt med samma id på servern; hämta om och försök igen.',
     'opencde.err.code.payload_too_large': 'Det du skickar är större än servern tar emot.',
     'opencde.err.code.internal_error': 'Ett fel inträffade på servern. Försök igen; ange begärans id om du anmäler felet.',
-    'opencde.err.code.unavailable': 'Servern når inte sin databas just nu. Försök igen om en stund.',
+    'opencde.err.code.unavailable': 'Servern når inte sin databas, eller databasen är full, just nu. Försök igen om en stund; är den full kan serverns administratör ge den mer utrymme.',
     'opencde.err.oauth.invalid_request': 'Inloggningsbegäran var ofullständig eller felaktig.',
     'opencde.err.oauth.invalid_client': 'Servern känner inte klienten längre; skapa källan igen så registrerar appen sig på nytt.',
     'opencde.err.oauth.invalid_grant': 'Inloggningskoden var ogiltig eller för gammal. Logga in igen.',

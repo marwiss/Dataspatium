@@ -6375,7 +6375,7 @@
     'opencde.err.code.conflict': 'Det finst allereie eit objekt med same id på tenaren; hent igjen og prøv på nytt.',
     'opencde.err.code.payload_too_large': 'Det du sender er større enn tenaren tek imot.',
     'opencde.err.code.internal_error': 'Ein feil oppstod på tenaren. Prøv igjen; oppgje id-en til førespurnaden om du melder feilen.',
-    'opencde.err.code.unavailable': 'Tenaren når ikkje databasen sin akkurat no. Prøv igjen om ei stund.',
+    'opencde.err.code.unavailable': 'Tenaren når ikkje databasen sin, eller databasen er full, akkurat no. Prøv igjen om ei stund; er han full, kan administratoren for tenaren gi han meir plass.',
     'opencde.err.oauth.invalid_request': 'Innloggingsførespurnaden var ufullstendig eller feil.',
     'opencde.err.oauth.invalid_client': 'Tenaren kjenner ikkje klienten lenger; opprett kjelda igjen, så registrerer appen seg på nytt.',
     'opencde.err.oauth.invalid_grant': 'Innloggingskoden var ugyldig eller for gammal. Logg inn igjen.',

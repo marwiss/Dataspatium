@@ -6375,7 +6375,7 @@
     'opencde.err.code.conflict': 'Hlutur með sama auðkenni er þegar til á þjóninum; sæktu aftur og reyndu á ný.',
     'opencde.err.code.payload_too_large': 'Það sem þú sendir er stærra en þjónninn tekur við.',
     'opencde.err.code.internal_error': 'Villa kom upp á þjóninum. Reyndu aftur; gefðu upp auðkenni beiðninnar ef þú tilkynnir villuna.',
-    'opencde.err.code.unavailable': 'Þjónninn nær ekki í gagnagrunn sinn núna. Reyndu aftur eftir augnablik.',
+    'opencde.err.code.unavailable': 'Þjónninn nær ekki í gagnagrunn sinn, eða gagnagrunnurinn er fullur, núna. Reyndu aftur eftir augnablik; ef hann er fullur getur stjórnandi þjónsins gefið honum meira pláss.',
     'opencde.err.oauth.invalid_request': 'Innskráningarbeiðnin var ófullkomin eða röng.',
     'opencde.err.oauth.invalid_client': 'Þjónninn þekkir biðlarann ekki lengur; búðu uppsprettuna til aftur svo forritið skrái sig á nýjan leik.',
     'opencde.err.oauth.invalid_grant': 'Innskráningarkóðinn var ógildur eða of gamall. Skráðu þig inn aftur.',

@@ -6375,7 +6375,7 @@
     'opencde.err.code.conflict': 'An object with the same id already exists on the server; fetch again and retry.',
     'opencde.err.code.payload_too_large': 'What you send is larger than the server accepts.',
     'opencde.err.code.internal_error': 'An error occurred on the server. Try again; give the request id if you report it.',
-    'opencde.err.code.unavailable': 'The server cannot reach its database right now. Try again in a moment.',
+    'opencde.err.code.unavailable': 'The server cannot reach its database, or the database is full, right now. Try again in a moment; if it is full, the server\'s administrator can give it more room.',
     'opencde.err.oauth.invalid_request': 'The sign-in request was incomplete or malformed.',
     'opencde.err.oauth.invalid_client': 'The server no longer knows the client; create the source again and the app registers anew.',
     'opencde.err.oauth.invalid_grant': 'The sign-in code was invalid or too old. Sign in again.',

@@ -6375,7 +6375,7 @@
     'opencde.err.code.conflict': 'Palvelimella on jo kohde samalla tunnuksella; nouda uudelleen ja yritä taas.',
     'opencde.err.code.payload_too_large': 'Lähettämäsi on suurempi kuin palvelin vastaanottaa.',
     'opencde.err.code.internal_error': 'Palvelimella tapahtui virhe. Yritä uudelleen; ilmoita pyynnön tunniste, jos raportoit virheen.',
-    'opencde.err.code.unavailable': 'Palvelin ei tavoita tietokantaansa juuri nyt. Yritä hetken päästä uudelleen.',
+    'opencde.err.code.unavailable': 'Palvelin ei tavoita tietokantaansa, tai tietokanta on täynnä, juuri nyt. Yritä hetken päästä uudelleen; jos se on täynnä, palvelimen ylläpitäjä voi antaa sille lisää tilaa.',
     'opencde.err.oauth.invalid_request': 'Kirjautumispyyntö oli puutteellinen tai virheellinen.',
     'opencde.err.oauth.invalid_client': 'Palvelin ei enää tunne asiakasta; luo lähde uudelleen, niin sovellus rekisteröityy uudestaan.',
     'opencde.err.oauth.invalid_grant': 'Kirjautumiskoodi oli virheellinen tai liian vanha. Kirjaudu uudelleen.',

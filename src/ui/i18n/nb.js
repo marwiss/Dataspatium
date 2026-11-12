@@ -6375,7 +6375,7 @@
     'opencde.err.code.conflict': 'Det finnes allerede et objekt med samme id på serveren; hent igjen og prøv på nytt.',
     'opencde.err.code.payload_too_large': 'Det du sender er større enn serveren tar imot.',
     'opencde.err.code.internal_error': 'En feil oppstod på serveren. Prøv igjen; oppgi forespørselens id om du melder feilen.',
-    'opencde.err.code.unavailable': 'Serveren når ikke databasen sin akkurat nå. Prøv igjen om en stund.',
+    'opencde.err.code.unavailable': 'Serveren når ikke databasen sin, eller databasen er full, akkurat nå. Prøv igjen om en stund; er den full, kan serverens administrator gi den mer plass.',
     'opencde.err.oauth.invalid_request': 'Innloggingsforespørselen var ufullstendig eller feil.',
     'opencde.err.oauth.invalid_client': 'Serveren kjenner ikke klienten lenger; opprett kilden igjen, så registrerer appen seg på nytt.',
     'opencde.err.oauth.invalid_grant': 'Innloggingskoden var ugyldig eller for gammel. Logg inn igjen.',
