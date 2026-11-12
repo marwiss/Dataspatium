@@ -20,7 +20,7 @@
       const el = h('div', { class: 'dm-card dm-stack-sm', 'data-manage-panel': '' });
       el.hidden = true;
       const log = (msg, kind) => { if (api.log) api.log(msg, kind || 'ok'); };
-      const roleName = (role) => { const key = 'manage.role.' + role; const x = t(key); return x === key ? role : x; };
+      const roleName = (role) => (base.i18n.has('manage.role.' + role) ? t('manage.role.' + role) : role);
       const project = () => s.projects.find((p) => p.project_id === s.projectId) || null;
       const memberName = (m) => (m ? String(m.name || m.username || m.user_id) : '');
       function fail(err, extra = {}) {

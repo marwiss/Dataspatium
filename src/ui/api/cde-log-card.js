@@ -33,8 +33,7 @@
       /** The operation's explanation: one text per operation when there is one, otherwise the API's. */
       const explain = (e) => {
         const key = `cdelog.op.${e.api}.${e.operation}`;
-        const text = t(key);
-        return text === key ? t(`cdelog.api.${e.api}`) : text;
+        return i18n.has(key) ? t(key) : t(`cdelog.api.${e.api}`);
       };
       const statusKind = (e) => (e.error || e.ok === false ? 'error' : e.ok === null ? undefined : 'ok');
 

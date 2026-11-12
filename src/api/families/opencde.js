@@ -16,6 +16,8 @@
   const D = globalThis.Dataspatium;
   D.define('api/families/opencde', ['api/families/databases', 'api/http', 'api/secrets', 'platform/consent', 'api/connectors', 'api/cde-log'], (databases, http, secrets, consent, connectors, cdeLog) => {
     const t = (k, p) => D.t(k, p);
+    /** Whether the UI has a text for a key the server's answer names (asking t() for an unknown key would load Swedish). */
+    const hasText = (k) => D.require('ui/i18n').has(k);
     const SCOPES = 'profile bcf documents';
     const CALLBACK_PAGE = 'oauth-callback.html';
     /** The versions of the BCF API this source speaks, the newest first. */
@@ -359,8 +361,7 @@
       const description = (data && data.error_description) || String(text || '').replace(/\s+/g, ' ').slice(0, 200);
       if (error) {
         const key = 'opencde.err.oauth.' + error;
-        const translated = t(key);
-        if (translated !== key) return { code: error, message: description, text: translated };
+        if (hasText(key)) return { code: error, message: description, text: t(key) };
       }
       return { code: error, message: description, text: description };
     }
@@ -369,8 +370,7 @@
       const message = (data && data.message) || '';
       if (code) {
         const key = 'opencde.err.code.' + code;
-        const text = t(key, { detail: message });
-        if (text !== key) return { code, message, text };
+        if (hasText(key)) return { code, message, text: t(key, { detail: message }) };
       }
       return { code, message, text: message };
     }

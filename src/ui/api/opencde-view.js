@@ -362,7 +362,7 @@
       /** What the server offers beyond the specifications, for the line under the heading. */
       function capsText(caps) {
         const server = caps.server ? `${caps.server.name || 'Dataregium'}${caps.server.version ? ' ' + caps.server.version : ''}` : 'Dataregium';
-        const list = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k)).map((k) => { const key = 'opencde.ext.' + k; const x = t(key); return x === key ? k : x; });
+        const list = Object.keys(caps.extensions).filter((k) => opencde.hasExtension(caps, k)).map((k) => (i18n.has('opencde.ext.' + k) ? t('opencde.ext.' + k) : k));
         return t('opencde.caps', { server, list: list.length ? list.join(', ') : t('opencde.caps.none') });
       }
       function start() {
