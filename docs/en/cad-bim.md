@@ -212,6 +212,9 @@ browser per server and project.
   in the chosen dictionaries or all; *Dictionaries* lists the dictionaries so that you can add them to the profile. In *Change with
   AI* the AI can search with the tool `search_bsdd` and classify elements with `set_classification`, written as an
   `IfcClassificationReference` in the change set you approve.
+  `search_bsdd` searches only free dictionaries whose licence has been read (IFC 4.3, Uniclass 2015 and ETIM 10.1) and answers each
+  class with its dictionary and licence, and `set_classification` writes the system's edition, publisher and address on its
+  `IfcClassification`.
 
 The server's buildingSMART rules show on the card *Validate the model* in Manage; choose a rule in the list beside *Mark in the model* to
 mark only the elements that rule hits.

@@ -204,6 +204,8 @@ Kortet **Projektprofil** i källans vy under *Inhämta → OpenCDE* visar det va
   ordböckerna eller alla; *Ordböcker* listar ordböckerna så att du kan lägga till dem i profilen. I *Ändra med AI* kan AI:n söka med
   verktyget `search_bsdd` och klassificera byggdelar med `set_classification`, som skrivs som `IfcClassificationReference` i
   ändringssetet du godkänner.
+  `search_bsdd` söker bara i fria ordböcker vars licens har lästs (IFC 4.3, Uniclass 2015 och ETIM 10.1) och svarar med ordbok och
+  licens för varje klass, och `set_classification` skriver systemets utgåva, utgivare och adress på dess `IfcClassification`.
 
 Serverns buildingSMART-regler visas på kortet *Validera modellen* i Hantera; välj en regel i listan bredvid *Markera i modellen* för att
 markera bara de byggdelar som den regeln träffar.

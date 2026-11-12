@@ -27,7 +27,7 @@
         parameters: { type: 'object', properties: { ifc_class: str(), storey: str(), name_contains: str(), property_set: str(), property_name: str(), property_value: str(), missing_property: bool(), limit: int() } } },
       { name: 'get_element', description: 'One element by id (STEP id) or guid (GlobalId): its attributes, every property grouped by set, and its quantities.', parameters: { type: 'object', properties: { id: int(), guid: str() } } },
       { name: 'get_view_context', description: 'What the user has marked in the model right now: the marked elements (id, ifc_class, name, storey), or none.', parameters: { type: 'object', properties: {} } },
-      { name: 'search_bsdd', description: 'Search the buildingSMART Data Dictionary (bSDD) for classes by text: answers uri, name, code, dictionary and description for each, for set_classification. The person consents to the call to api.bsdd.buildingsmart.org once.',
+      { name: 'search_bsdd', description: 'Search the free dictionaries of the buildingSMART Data Dictionary (bSDD) for classes by text: only IFC 4.3, Uniclass 2015 and ETIM 10.1, whose licences allow it, never any other. Answers for each class uri, name, code, description, and its dictionary (the system for set_classification) with edition, source, dictionary_uri and license. The person consents to the call to api.bsdd.buildingsmart.org once.',
         parameters: { type: 'object', properties: { text: { type: 'string' }, limit: int() } } },
       { name: 'get_topology', description: 'The building\'s topology per storey, from the walls\' centrelines: the rooms they enclose (area, perimeter, walls by id), which rooms border which, and the external walls with the façade they face (N, NE, E, SE, S, SW, W, NW), so that a photo labelled south façade can be matched to its walls; also the open wall ends and whether the storey is closed. storey null gives every storey. Works only when the app\'s Python is already running.',
         parameters: { type: 'object', properties: { storey: str() } } },
@@ -132,6 +132,22 @@
       if (!pythonRuns()) return { error: 'the class report needs the app\'s Python, which is not running; ask the person to press Preview once' };
       return await D.require('data/ifc-ops').classReportOf(datasetId);
     }
+    /**
+     * search_bsdd (decision B-59.1): classes from the open dictionaries only (api/bsdd OPEN_DICTIONARIES), each with its dictionary,
+     * edition, source and license as set_classification takes them; a class of any other dictionary is dropped, also when the
+     * service sends one.
+     */
+    async function bsddSearch(args) {
+      const bsdd = D.require('api/bsdd');
+      const limit = Math.max(1, Math.min(50, Number(args.limit) || 10));
+      const found = await bsdd.search(String(args.text || ''), { limit, dictionaries: bsdd.OPEN_DICTIONARIES.map((d) => d.uri) });
+      const classes = [];
+      for (const c of found) {
+        const d = bsdd.openDictionaryOf(c);
+        if (d) classes.push({ uri: c.uri, name: c.name, code: c.code, description: c.description, dictionary: d.name, edition: d.version, source: d.source, dictionary_uri: d.uri, license: d.license });
+      }
+      return { classes, truncated: found.length >= limit, dictionaries: bsdd.OPEN_DICTIONARIES.map((d) => `${d.name} ${d.version} (${d.license})`) };
+    }
     /** A named query on the server the model came from (Dataregium's ifc-queries); errors are answers, so the model can go on. */
     async function serverQuery(datasetId, args) {
       const meta = await datasets.get(datasetId);
@@ -166,7 +182,7 @@
           case 'search_ifc_class': return await classSearch(datasetId, a);
           case 'get_class_report': return await classReport(datasetId);
           case 'server_query': return await serverQuery(datasetId, a);
-          case 'search_bsdd': { const limit = Math.max(1, Math.min(50, Number(a.limit) || 10)); const classes = await D.require('api/bsdd').search(String(a.text || ''), { limit }); return { classes, truncated: classes.length >= limit }; }
+          case 'search_bsdd': return await bsddSearch(a);
           default: return { error: 'unknown tool ' + name };
         }
       } catch (err) { return { error: String((err && err.message) || err).slice(0, 300) }; }

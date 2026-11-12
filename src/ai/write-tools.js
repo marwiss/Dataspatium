@@ -46,8 +46,8 @@
         parameters: { type: 'object', properties: { storey: str(), rooms: { type: ['array', 'null'], items: { type: 'object', properties: { at: xy(), index: { type: ['integer', 'null'] }, name: { type: 'string' }, long_name: str() }, required: ['at', 'index', 'name', 'long_name'], additionalProperties: false } }, height: num() } } },
       { name: 'set_properties', description: 'Set properties in one property set (pset, such as Pset_WallCommon) on elements (ids: ids or refs): properties is a list of {name, value} with string, number or boolean values. Missing sets are created.',
         parameters: { type: 'object', properties: { ids: ids(), pset: { type: 'string' }, properties: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, value: { type: ['string', 'number', 'boolean'] } }, required: ['name', 'value'], additionalProperties: false } } } } },
-      { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of the classification system the person names; never assume a system. The IFC class with its PredefinedType is the classification itself (choose it with search_ifc_class); this adds a system on top. system is that system\'s name, name the class name, code its code and uri its address (for a bSDD class its uri). Written as an IfcClassificationReference under the system\'s IfcClassification, shared only when the system, the code and the uri match. search_bsdd finds a class in a bSDD dictionary.',
-        parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str() } } },
+      { name: 'set_classification', description: 'Classify elements (ids or refs) with a class of the classification system the person names; never assume a system. The IFC class with its PredefinedType is the classification itself (choose it with search_ifc_class); this adds a system on top. system is that system\'s name, name the class name, code its code and uri its address (for a bSDD class its uri). Written as an IfcClassificationReference under the system\'s IfcClassification, shared only when the system, the code and the uri match. edition, source and dictionary_uri describe the system (its edition, its publisher and the dictionary\'s address) and are written on its IfcClassification; the same system with another edition or dictionary_uri is another IfcClassification. search_bsdd finds a class in a free bSDD dictionary: take its dictionary as system with its edition, source and dictionary_uri. Never invent a code or an edition; null when not known.',
+        parameters: { type: 'object', properties: { ids: ids(), system: { type: 'string' }, name: { type: 'string' }, code: str(), uri: str(), edition: str(), source: str(), dictionary_uri: str() } } },
       { name: 'assign', description: 'Move elements (ids or refs) to a storey (by name) and/or give them a material (by name, created when missing). Either may be null.',
         parameters: { type: 'object', properties: { ids: ids(), storey: str(), material: str() } } },
       { name: 'transform_elements', description: 'Move elements (ids or refs) by dx, dy, dz metres.',
@@ -201,7 +201,9 @@
         case 'set_classification': {
           const system = text(a, 'system', { required: true });
           const className = text(a, 'name', { required: true });
-          return { tool: name, ids: idList(cs, a.ids), system, code: text(a, 'code'), name: className, uri: text(a, 'uri') };
+          const op = { tool: name, ids: idList(cs, a.ids), system, code: text(a, 'code'), name: className, uri: text(a, 'uri') };
+          for (const key of ['edition', 'source', 'dictionary_uri']) { const v = text(a, key); if (v) op[key] = v; }  // the system's facts, when given
+          return op;
         }
         case 'assign': {
           const storey = text(a, 'storey'); const material = text(a, 'material');
@@ -289,7 +291,7 @@
           return t('ai.change.create_spaces', { ref: refs.length > 1 ? `${refs[0]}–${refs[refs.length - 1]}` : refs[0] || '', storey: op.storey || t('ai.change.spaces.every'), rooms, height: op.height ? t('ai.change.spaces.height', { height: fmt(op.height) }) : '' });
         }
         case 'set_properties': return t('ai.change.set_properties', { pset: op.pset, ids: idsText(op.ids), props: Object.entries(op.properties || {}).map(([k, v]) => `${k} = ${fmt(v)}`).join(', ') });
-        case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: op.system, cls: [op.code, op.name].filter(Boolean).join(' ') });
+        case 'set_classification': return t('ai.change.set_classification', { ids: idsText(op.ids), system: [op.system, op.edition].filter(Boolean).join(' '), cls: [op.code, op.name].filter(Boolean).join(' ') });
         case 'assign': return t('ai.change.assign', { ids: idsText(op.ids), storey: op.storey ? t('ai.change.assign.storey', { storey: op.storey }) : '', material: op.material ? t('ai.change.assign.material', { material: op.material }) : '' });
         case 'transform_elements': return t('ai.change.transform_elements', { ids: idsText(op.ids), dx: fmt(op.dx), dy: fmt(op.dy), dz: fmt(op.dz) });
         case 'delete_elements': return t('ai.change.delete_elements', { ids: idsText(op.ids) });

@@ -204,6 +204,9 @@ Spjaldið **Verkefnissnið** í sýn gagnalindarinnar undir *Sækja → OpenCDE*
   völdu orðabókunum eða öllum; *Orðabækur* sýnir orðabækurnar svo þú getir bætt þeim við sniðið. Í *Breyta með gervigreind* getur
   gervigreindin leitað með tólinu `search_bsdd` og flokkað byggingarhluta með `set_classification`, sem er skrifað sem
   `IfcClassificationReference` í breytingasettið sem þú samþykkir.
+  `search_bsdd` leitar aðeins í frjálsum orðabókum þar sem leyfisskilmálarnir hafa verið lesnir (IFC 4.3, Uniclass 2015 og ETIM 10.1) og
+  gefur upp orðabók og leyfi hvers flokks, og `set_classification` skrifar útgáfu, útgefanda og vefslóð kerfisins á `IfcClassification`
+  þess.
 
 buildingSMART-reglur þjónsins sjást á spjaldinu *Sannprófa líkanið* í Umsjón; veldu reglu í listanum við hlið *Merkja í líkaninu* til að
 auðkenna aðeins byggingarhlutana sem sú regla hittir.

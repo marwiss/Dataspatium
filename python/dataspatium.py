@@ -2220,15 +2220,35 @@ class _ChangeSet:
         """A reference to a class of the system the person names, on the elements. A reference is reused only when its system, its
         code (Identification; ItemReference in IFC2X3) and its Location all match, and without a code its name too; otherwise it is
         made under that system's IfcClassification. (IfcOpenShell's add_reference reuses any reference with the same code in the
-        file, whatever its system, and any reference without a code when none is given.)"""
+        file, whatever its system, and any reference without a code when none is given.) The system's own facts, when given (edition,
+        source and dictionary_uri), go on its IfcClassification as Edition, Source and Location (IFC4) or Specification (IFC4.3); a
+        system of the same name with another edition or address is another IfcClassification. Nothing is fetched: the facts come from
+        the call. IFC2X3 requires Source and Edition, so an empty label stands for one not given, and its IfcClassification is not
+        related to the project (IFC2X3 relates only references)."""
         import ifcopenshell.api.classification
         import ifcopenshell.guid
         system = str(op.get("system") or "").strip()
         name = str(op.get("name") or "").strip()
         if not system or not name:
             raise DataspatiumError("system and name are required")
-        found = [c for c in self.m.by_type("IfcClassification") if str(c.Name or "") == system]
-        classification = found[0] if found else ifcopenshell.api.classification.add_classification(self.m, classification=system)
+        edition, source, address = (str(op.get(key) or "").strip() or None for key in ("edition", "source", "dictionary_uri"))
+        address_attribute = {"IFC4": "Location", "IFC4X3": "Specification"}.get(self.m.schema)
+
+        def same_system(c):
+            here = getattr(c, address_attribute, None) if address_attribute else None
+            return (str(c.Name or "") == system and not (edition and c.Edition and str(c.Edition) != edition)
+                    and not (address and here and str(here) != address))
+        classification = next((c for c in self.m.by_type("IfcClassification") if same_system(c)), None)
+        if classification is None and self.m.schema == "IFC2X3":
+            classification = self.m.create_entity("IfcClassification", Source=source or "", Edition=edition or "", Name=system)
+        elif classification is None:
+            classification = ifcopenshell.api.classification.add_classification(self.m, classification=system)
+        if edition and not classification.Edition:
+            classification.Edition = edition
+        if source and not classification.Source:
+            classification.Source = source
+        if address and address_attribute and not getattr(classification, address_attribute, None):
+            setattr(classification, address_attribute, address)
         code = str(op.get("code") or "").strip() or None
         uri = str(op.get("uri") or "").strip() or None
         code_attribute = "ItemReference" if self.m.schema == "IFC2X3" else "Identification"

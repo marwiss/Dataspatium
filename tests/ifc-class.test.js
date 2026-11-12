@@ -10,7 +10,9 @@
  * fixes: no tool text or prompt names a licensed classification system, set_site measures from grid east, a wall is SOLIDWALL or
  * PARTITIONING, an outline drops a repeated first corner and the importer takes IFC4.3 storeys' heights from their placements; with
  * the real Pyodide the wheel writes those walls, closes every polyline on its first point (GEM111), shares a classification reference
- * only for the same system, code and name, and writes IFC4.3 storeys without Elevation and spaces as SPACE (IFC102).
+ * only for the same system, code and name, writes the system's edition, source and address on its IfcClassification, and writes
+ * IFC4.3 storeys without Elevation and spaces as SPACE (IFC102). Decision B-59.1: search_bsdd asks for and answers only the open
+ * dictionaries, with their licences, and the build text keeps classification to the IFC class, the type objects and free dictionaries.
  */
 (function () {
   'use strict';
@@ -172,7 +174,46 @@
     return 'ok';
   }, 30000);
 
-  test('ifc class: Python writes SOLIDWALL and PARTITIONING, closes polylines on their first point, shares a classification reference only for the same class, and writes IFC4.3 storeys and spaces without deprecated values', async (assert) => {
+  test('ifc class: search_bsdd answers only from the open dictionaries with their licences, the build text keeps classification to the IFC class, the types and free dictionaries, and set_classification takes the system\'s edition, source and address', async (assert) => {
+    // Decision B-59.1. The service is a stub: it answers classes of two open dictionaries, of one kept out on purpose and of an unknown one.
+    const bsdd = D.require('api/bsdd');
+    const writeTools = D.require('ai/write-tools');
+    const ds = await theModel();
+    const OPEN = ['https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3', 'https://identifier.buildingsmart.org/uri/nbs/uniclass2015/1', 'https://identifier.buildingsmart.org/uri/etim/etim/10.1'];
+    assert.deepEqual(bsdd.OPEN_DICTIONARIES.map((d) => d.uri), OPEN, 'the dictionaries whose licence was read');
+    assert.ok(bsdd.OPEN_DICTIONARIES.every((d) => d.license && /^https:\/\//.test(d.licenseUrl) && /^\d{4}-\d\d-\d\d$/.test(d.read)), 'each with its licence, its licence URL and the day it was read');
+    const kept = bsdd.EXCLUDED_DICTIONARIES.map((d) => d.uri);
+    assert.ok(kept.length && kept.every((u) => !OPEN.includes(u)) && bsdd.EXCLUDED_DICTIONARIES.every((d) => d.reason), 'a dictionary bSDD labels free but whose licence URL says otherwise stays out, with the reason');
+    const asked = [];
+    const cls = (dictionaryUri, dictionaryName, code, name) => ({ uri: dictionaryUri + '/class/' + code, name, referenceCode: code, description: name, dictionaryUri, dictionaryName });
+    D.net.virtual('tests/ifc-class/', async (url) => {
+      asked.push(String(url));
+      return { kind: 'text', status: 200, data: JSON.stringify({ classes: [cls(OPEN[0], 'IFC', 'IfcWall', 'Wall'), cls(kept[0], 'Kept out', 'X1', 'Wall'), cls('https://identifier.buildingsmart.org/uri/test/test/1.0', 'Test', 'W1', 'Wall'), cls(OPEN[2], 'ETIM', 'EC000001', 'Wall element')] }) };
+    });
+    bsdd.setBase('dataspatium-asset://tests/ifc-class/bsdd');
+    try {
+      const got = await tools.call(ds.id, 'search_bsdd', { text: 'wall', limit: null });
+      assert.ok(!got.error && asked.length === 1, JSON.stringify(got));
+      const query = new URLSearchParams(asked[0].slice(asked[0].indexOf('?') + 1));
+      assert.deepEqual(query.getAll('DictionaryUris'), OPEN, 'the service is asked for the open dictionaries only, each as a parameter of its own');
+      assert.deepEqual(got.classes.map((c) => [c.code, c.dictionary, c.edition, c.source, c.dictionary_uri, c.license]),
+        [['IfcWall', 'IFC', '4.3', 'buildingSMART International', OPEN[0], 'CC BY-ND 4.0'], ['EC000001', 'ETIM', '10.1', 'ETIM International', OPEN[2], 'ODC-By']], 'a class of any other dictionary is dropped, also when the service sends it');
+      assert.deepEqual(got.dictionaries, ['IFC 4.3 (CC BY-ND 4.0)', 'Uniclass 2015 1 (CC BY-ND 4.0)', 'ETIM 10.1 (ODC-By)']);
+    } finally { bsdd.setBase(null); D.net.unvirtual('tests/ifc-class/'); }
+    assert.ok(/only IFC 4\.3, Uniclass 2015 and ETIM 10\.1, whose licences allow it, never any other/.test(tools.TOOLS.find((x) => x.name === 'search_bsdd').description), 'the tool names its dictionaries');
+    // The detailed level of the build text: the IFC class first, then classification on the types only, from a free dictionary or a named system.
+    assert.ok(/detailed adds properties and materials per element, and classification: the IFC class with its PredefinedType comes first, a classification goes on the type objects only, and only from a free dictionary found with search_bsdd or a system the person names; never invent a code\./.test(agent.SYSTEM_BUILD), 'the detailed level');
+    assert.ok(!/materials per element and classification\./.test(agent.SYSTEM_BUILD), 'no open invitation to classify');
+    // set_classification carries the system's edition, source and address only when given; the description shows the edition.
+    const cs = writeTools.create(ds.id);
+    const res = writeTools.call(cs, 'set_classification', { ids: [1], system: 'IFC', code: 'IfcWall', name: 'Wall', uri: OPEN[0] + '/class/IfcWall', edition: '4.3', source: 'buildingSMART International', dictionary_uri: OPEN[0] });
+    assert.ok(res.ok && /IFC 4\.3/.test(res.description) && /IfcWall Wall/.test(res.description), JSON.stringify(res));
+    assert.deepEqual(writeTools.toWheel(cs)[0], { tool: 'set_classification', ids: [1], system: 'IFC', code: 'IfcWall', name: 'Wall', uri: OPEN[0] + '/class/IfcWall', edition: '4.3', source: 'buildingSMART International', dictionary_uri: OPEN[0] });
+    assert.deepEqual(Object.keys(writeTools.TOOLS.find((x) => x.name === 'set_classification').parameters.properties), ['ids', 'system', 'name', 'code', 'uri', 'edition', 'source', 'dictionary_uri']);
+    return 'ok';
+  });
+
+  test('ifc class: Python writes SOLIDWALL and PARTITIONING, closes polylines on their first point, shares a classification reference only for the same class, writes the system\'s edition, source and address, and writes IFC4.3 storeys and spaces without deprecated values', async (assert) => {
     if (!wantReal() && !(await catalog.cachedRuntime())) return 'skipped: Python components not cached (open the page with ?python=1 to fetch them, about 13 MB more for IfcOpenShell)';
     const writeTools = D.require('ai/write-tools');
     const ifcOps = D.require('data/ifc-ops');
@@ -203,6 +244,11 @@
     for (const args of [{ ids: ['new-1'], system: 'System A', code: '21', name: 'Exterior', uri: null }, { ids: ['new-2'], system: 'System B', code: '21', name: 'Other', uri: null },
       { ids: ['new-1'], system: 'System A', code: null, name: 'No code 1', uri: null }, { ids: ['new-2'], system: 'System A', code: null, name: 'No code 2', uri: null },
       { ids: ['new-2'], system: 'System A', code: '21', name: 'Exterior', uri: null }]) assert.ok(writeTools.call(cs, 'set_classification', args).ok, JSON.stringify(args));
+    // The partition (new-5) in a free bSDD dictionary, with the system's edition, source and address (decision B-59.1).
+    const IFC = 'https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3';
+    const free = { ids: ['new-5'], system: 'IFC', code: 'IfcWallPARTITIONING', name: 'Partitioning Wall', uri: IFC + '/class/IfcWallPARTITIONING', edition: '4.3', source: 'buildingSMART International', dictionary_uri: IFC };
+    assert.ok(writeTools.call(cs, 'set_classification', free).ok);
+    const SYSTEM = /^#\d+=IFCCLASSIFICATION\('buildingSMART International','4\.3',\$,'IFC',\$,'https:\/\/identifier\.buildingsmart\.org\/uri\/buildingsmart\/ifc\/4\.3',\$\);$/m;
     const out = await ifcOps.previewChangeset(ds.id, writeTools.toWheel(cs));
     assert.equal(out.report.errors, 0, 'no errors: ' + JSON.stringify(out.report.findings));
     const text = new TextDecoder().decode(out.bytes);
@@ -217,10 +263,13 @@
     const exterior = refs.find((m) => m[3] === 'Exterior')[1];
     const sharing = Array.from(text.matchAll(/^#\d+=IFCRELASSOCIATESCLASSIFICATION\([^;]*\(([^)]*)\),#(\d+)\);$/gm)).filter((m) => m[2] === exterior);
     assert.ok(sharing.length === 1 && sharing[0][1].split(',').length === 2, 'both walls share the reference of the same class: ' + JSON.stringify(sharing.map((m) => m[1])));
-    // A new IFC4.3 model: storeys without Elevation, spaces SPACE with Pset_SpaceCommon.IsExternal false.
+    assert.ok(SYSTEM.test(text), 'IFC4: Source, Edition and Location on the IfcClassification');
+    // A new IFC4.3 model: storeys without Elevation, spaces SPACE with Pset_SpaceCommon.IsExternal false; the dictionary's address
+    // is the Specification.
     const { dataset } = await D.require('data/ifc-new').create({ name: 'Klassprov 4.3', schema: 'IFC4X3_ADD2', storey: 'Plan 1' });
     created.push(dataset.id);
     const cs43 = build('Plan 1');
+    assert.ok(writeTools.call(cs43, 'set_classification', free).ok);
     cs43.datasetId = dataset.id;
     const out43 = await ifcOps.previewChangeset(dataset.id, writeTools.toWheel(cs43));
     assert.equal(out43.report.errors, 0, 'IFC4.3: no errors: ' + JSON.stringify(out43.report.findings));
@@ -228,6 +277,7 @@
     assert.ok(/=IFCBUILDINGSTOREY\('[^']*',\$,'Plan 1',\$,\$,#\d+,\$,\$,\.ELEMENT\.,\$\);/.test(t43), 'the storey without Elevation');
     assert.ok(/=IFCSPACE\([^;]*\.ELEMENT\.,\.SPACE\.,\$\);/.test(t43) && !/=IFCSPACE\([^;]*\.INTERNAL\./.test(t43), 'the spaces are SPACE');
     assert.ok(t43.includes("'Pset_SpaceCommon'") && /IFCPROPERTYSINGLEVALUE\('IsExternal',\$,IFCBOOLEAN\(\.F\.\),\$\)/.test(t43), 'and not external');
+    assert.ok(SYSTEM.test(t43), 'IFC4.3: Source, Edition and Specification on the IfcClassification');
     assert.deepEqual(copies(t43), [], 'closed polylines in IFC4.3 too');
     return 'ok';
   }, 900000);

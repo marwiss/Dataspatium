@@ -208,6 +208,8 @@ projekt.
   ordbøger eller alle; *Ordbøger* viser ordbøgerne, så du kan føje dem til profilen. I *Ændr med AI* kan AI'en søge med værktøjet
   `search_bsdd` og klassificere bygningsdele med `set_classification`, som skrives som `IfcClassificationReference` i det
   ændringssæt, du godkender.
+  `search_bsdd` søger kun i frie ordbøger, hvis licens er læst (IFC 4.3, Uniclass 2015 og ETIM 10.1), og svarer med ordbog og licens for
+  hver klasse, og `set_classification` skriver systemets udgave, udgiver og adresse på dets `IfcClassification`.
 
 Serverens buildingSMART-regler vises på kortet *Valider modellen* i Håndter; vælg en regel i listen ved siden af *Markér i modellen* for kun
 at markere de bygningsdele, som den regel rammer.

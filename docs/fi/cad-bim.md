@@ -214,6 +214,9 @@ tähän selaimeen palvelinta ja projektia kohden.
   `api.bsdd.buildingsmart.org`, valituista sanakirjoista tai kaikista; *Sanakirjat* luettelee sanakirjat, jotta voit lisätä ne
   profiiliin. *Muuta tekoälyllä* -tilassa tekoäly voi hakea työkalulla `search_bsdd` ja luokitella rakennusosia työkalulla
   `set_classification`, joka kirjoitetaan `IfcClassificationReference`-viittauksena hyväksymääsi muutosjoukkoon.
+  `search_bsdd` hakee vain vapaista sanakirjoista, joiden lisenssi on luettu (IFC 4.3, Uniclass 2015 ja ETIM 10.1), ja kertoo jokaisen
+  luokan sanakirjan ja lisenssin, ja `set_classification` kirjoittaa järjestelmän painoksen, julkaisijan ja osoitteen sen
+  `IfcClassification`-kohteeseen.
 
 Palvelimen buildingSMART-säännöt näkyvät kortissa *Validoi malli* Hallitse-tilassa; valitse sääntö luettelosta painikkeen *Merkitse malliin*
 vieressä, niin vain sen säännön osumat rakennusosat merkitään.
