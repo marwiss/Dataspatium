@@ -6,13 +6,216 @@
  * the window that the box needs is read from the cloud-optimised GeoTIFF files with range requests through geotiff.js (vendor/
  * geotiff), from the overview whose pixel size fits the output. The search needs no key; the files take the key of the preset
  * lantmateriet-stac (Geotorget), which goes only to the file host the preset names, as the height model's tiles do (api/heights).
- * The tiles are decoded one at a time with a pause between them, and the image is drawn in rounds, so the page never waits long.
+ * When that host refuses the key's token (401), it takes the person's Geotorget login instead (`files.basic`, api/auth
+ * fileLogin): asked once per reading through `options.login` and sent as Basic only to that host.
+ *
+ * The decoding, the mosaic in SWEREF 99 TM, the warp to Web Mercator and the encoding run in a Blob worker
+ * (dataspatiumOrthoWorker), so the page never waits on a tile. The worker fetches nothing itself: each range it needs is asked
+ * of the page by the file's index in the job, and the page reads it with the page's fetch (counted in the status bar), the same
+ * consent, the same key and no cookies, so the key and the login never reach the worker. The page only answers those requests,
+ * computes the warp's control points with data/geo and makes the Blob URL of the bytes the worker hands over.
  * The result is a PNG or JPEG Blob with its address and the corners of the image in WGS 84, in Web Mercator (warped from SWEREF 99
  * TM, for maps in Web Mercator) or in SWEREF 99 TM (for maps in that grid).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
+
+  /**
+   * The level to read for a pixel size in metres: the coarsest whose pixels are at most √2 times the size asked for (the nearest
+   * on a scale of halvings), and the full image when even that is too coarse. Standalone: the worker gets its source too.
+   * @param {Array<{res: number}>} levels finest first @param {number} target
+   */
+  function chooseLevel(levels, target) {
+    let pickIndex = 0;
+    levels.forEach((l, i) => { if (l.res <= target * Math.SQRT2) pickIndex = i; });
+    return pickIndex;
+  }
+
+  /**
+   * The orthophoto worker: reads a job's files with geotiff.js through ranges that the page fetches, paints the mosaic, warps it
+   * with the control points the page computed and encodes it with OffscreenCanvas. Standalone (only `chooseLevel` beside it):
+   * serialised with Dataspatium.workers.functionSource.
+   *   page -> worker  {type: 'job', id, items: [{href, bbox, asset}], box, r, Wm, Hm, warp: null|{W, H, step, nx, ny, U, V}, keepPixels}
+   *                   {type: 'range', req, ok, status, headers, data} | {type: 'range', req, network|aborted: true}   {type: 'abort', job}
+   *   worker -> page  {type: 'range', job, req, index, range}   {type: 'progress', job, done}
+   *                   {type: 'done', job, ok: true, bytes, mime, pixels?, width, height, empty, read} | {type: 'done', job, ok: false, ...}
+   */
+  function dataspatiumOrthoWorker() {
+    'use strict';
+    const jobs = new Map();
+    const waiting = new Map();
+    let seq = 0;
+    const post = (msg, transfer) => self.postMessage(msg, transfer || []);
+    const abortError = () => { const e = new Error('aborted'); e.name = 'AbortError'; return e; };
+
+    // geotiff.js's client for one file: each range is asked of the page by the file's index, never by an address. What went
+    // wrong is kept in `failed`, since geotiff.js reports a failed range only as "Error fetching data".
+    function clientFor(job, index) {
+      const client = {
+        url: job.items[index].href,
+        failed: null,
+        request({ headers = {}, signal } = {}) {
+          if (signal && signal.aborted) return Promise.reject(abortError());
+          const req = ++seq;
+          return new Promise((resolve) => { waiting.set(req, resolve); post({ type: 'range', job: job.id, req, index, range: String(headers.Range || headers.range || '') }); })
+            .then((res) => {
+              if (res.aborted) throw abortError();
+              if (res.network) { client.failed = { network: true }; throw new TypeError('Failed to fetch'); }
+              if (!res.ok) client.failed = { status: res.status };
+              const h = res.headers || {};
+              return { ok: !!res.ok, status: res.status, getHeader: (name) => { const v = h[String(name).toLowerCase()]; return v === undefined ? null : v; }, getData: () => Promise.resolve(res.data) };
+            });
+        },
+      };
+      return client;
+    }
+    // The levels of a file, the full image first and then its overviews (masks left out), each with its pixel size in metres.
+    async function levelsOf(tiff) {
+      const first = await tiff.getImage(0);
+      const w0 = first.getWidth();
+      const res0 = Math.abs(first.getResolution()[0]);
+      const spp = first.getSamplesPerPixel();
+      const count = await tiff.getImageCount();
+      const out = [];
+      for (let i = 0; i < count; i++) {
+        const image = i ? await tiff.getImage(i) : first;
+        const sub = Number(image.fileDirectory.NewSubfileType || 0);
+        if ((sub & 4) || image.getSamplesPerPixel() !== spp) continue;
+        out.push({ image, width: image.getWidth(), height: image.getHeight(), res: (res0 * w0) / image.getWidth() });
+      }
+      return out.sort((a, b) => a.res - b.res);
+    }
+    // Copy RGB pixels into the RGBA mosaic at (mx0, my0); a pixel equal to the file's empty value stays as it was.
+    function paint(mosaic, Wm, Hm, rgb, mx0, my0, w, hgt, nodata, shift) {
+      for (let y = 0; y < hgt; y++) {
+        const ty = my0 + y;
+        if (ty < 0 || ty >= Hm) continue;
+        for (let x = 0; x < w; x++) {
+          const tx = mx0 + x;
+          if (tx < 0 || tx >= Wm) continue;
+          const s = (y * w + x) * 3;
+          if (nodata !== null && rgb[s] === nodata && rgb[s + 1] === nodata && rgb[s + 2] === nodata) continue;
+          const d = (ty * Wm + tx) * 4;
+          mosaic[d] = rgb[s] >> shift; mosaic[d + 1] = rgb[s + 1] >> shift; mosaic[d + 2] = rgb[s + 2] >> shift; mosaic[d + 3] = 255;
+        }
+      }
+    }
+    // One item's part of the box into the mosaic (RGBA in SWEREF 99 TM, its upper left corner at box[0], box[3], r metres per
+    // pixel), a tile (or a few small ones) at a time, with a progress message after each.
+    async function readItem(tiff, item, job, mosaic, state) {
+      const { box, r, Wm, Hm } = job;
+      const signal = job.controller.signal;
+      const levels = await levelsOf(tiff);
+      const level = levels[chooseLevel(levels, r)];
+      const first = levels[0].image;
+      const [ox, oy] = first.getOrigin();
+      const lr = level.res;
+      // The window of the level that the box and the item share, in the level's pixels.
+      const minE = Math.max(box[0], item.bbox[0]); const maxE = Math.min(box[2], item.bbox[2]);
+      const minN = Math.max(box[1], item.bbox[1]); const maxN = Math.min(box[3], item.bbox[3]);
+      if (minE >= maxE || minN >= maxN) return null;
+      const x0 = Math.max(0, Math.floor((minE - ox) / lr)); const x1 = Math.min(level.width, Math.ceil((maxE - ox) / lr));
+      const y0 = Math.max(0, Math.floor((oy - maxN) / lr)); const y1 = Math.min(level.height, Math.ceil((oy - minN) / lr));
+      if (x0 >= x1 || y0 >= y1) return null;
+      const image = level.image;
+      const tiled = !!image.isTiled;
+      const tw = tiled ? image.getTileWidth() : x1 - x0; const th = tiled ? image.getTileHeight() : Math.max(image.getTileHeight(), 256);
+      // Small tiles are read a few at a time.
+      const cw = tiled ? tw * Math.max(1, Math.floor(512 / tw)) : tw; const ch = tiled ? th * Math.max(1, Math.floor(512 / th)) : th;
+      const nodata = first.getGDALNoData();
+      // A level pixel's edge in the mosaic; neighbouring chunks share their edges, so no seam or overlap appears.
+      const mx = (x) => Math.round((ox + x * lr - box[0]) / r);
+      const my = (y) => Math.round((box[3] - (oy - y * lr)) / r);
+      const chunks = [];
+      for (let cy = Math.floor(y0 / ch) * ch; cy < y1; cy += ch) for (let cx = tiled ? Math.floor(x0 / cw) * cw : x0; cx < x1; cx += cw) chunks.push([Math.max(x0, cx), Math.max(y0, cy), Math.min(x1, cx + cw), Math.min(y1, cy + ch)]);
+      for (const [a0, b0, a1, b1] of chunks) {
+        if (signal.aborted) throw abortError();
+        const mx0 = mx(a0); const my0 = my(b0); const w = mx(a1) - mx0; const hgt = my(b1) - my0;
+        if (w > 0 && hgt > 0) {
+          const rgb = await image.readRGB({ window: [a0, b0, a1, b1], width: w, height: hgt, interleave: true, signal });
+          const shift = rgb instanceof Uint8Array || rgb instanceof Uint8ClampedArray ? 0 : Math.max(0, Number(image.getBitsPerSample ? image.getBitsPerSample(0) : 8) - 8);
+          paint(mosaic, Wm, Hm, rgb, mx0, my0, w, hgt, nodata, shift);
+        }
+        state.done++;
+        post({ type: 'progress', job: job.id, done: state.done });
+      }
+      return { level: level.res, tile: [tw, th] };
+    }
+    // The mosaic warped into the output grid: each output pixel's place in the mosaic, interpolated between the page's exactly
+    // computed control points `step` pixels apart.
+    function warp(mosaic, Wm, Hm, spec) {
+      const { W, H, step, nx, ny, U, V } = spec;
+      const out = new Uint8ClampedArray(W * H * 4);
+      const px = (a) => Math.min(a * step, W); const py = (b) => Math.min(b * step, H);
+      let empty = 0;
+      for (let j = 0; j < H; j++) {
+        const yc = j + 0.5; const b = Math.min(ny - 2, Math.floor(yc / step)); const fy = (yc - py(b)) / (py(b + 1) - py(b));
+        for (let i = 0; i < W; i++) {
+          const xc = i + 0.5; const a = Math.min(nx - 2, Math.floor(xc / step)); const fx = (xc - px(a)) / (px(a + 1) - px(a));
+          const k = b * nx + a;
+          const u = (U[k] * (1 - fx) + U[k + 1] * fx) * (1 - fy) + (U[k + nx] * (1 - fx) + U[k + nx + 1] * fx) * fy;
+          const v = (V[k] * (1 - fx) + V[k + 1] * fx) * (1 - fy) + (V[k + nx] * (1 - fx) + V[k + nx + 1] * fx) * fy;
+          const sx = Math.floor(u); const sy = Math.floor(v);
+          if (sx < 0 || sy < 0 || sx >= Wm || sy >= Hm) { empty++; continue; }
+          const s = (sy * Wm + sx) * 4; const d = (j * W + i) * 4;
+          out[d] = mosaic[s]; out[d + 1] = mosaic[s + 1]; out[d + 2] = mosaic[s + 2]; out[d + 3] = mosaic[s + 3];
+          if (!mosaic[s + 3]) empty++;
+        }
+      }
+      return { pixels: out, empty };
+    }
+    // JPEG when every pixel is covered, PNG (with its transparent parts) otherwise; null without OffscreenCanvas (the page encodes).
+    async function encode(pixels, W, H, empty) {
+      if (typeof OffscreenCanvas !== 'function') return null;
+      try {
+        const canvas = new OffscreenCanvas(W, H);
+        const g = canvas.getContext('2d');
+        if (!g) return null;
+        g.putImageData(new ImageData(pixels, W, H), 0, 0);
+        const blob = await canvas.convertToBlob({ type: empty ? 'image/png' : 'image/jpeg', quality: 0.9 });
+        return { bytes: await blob.arrayBuffer(), type: blob.type };
+      } catch (_e) { return null; }
+    }
+    async function run(job) {
+      const GeoTIFF = self.GeoTIFF;
+      const signal = job.controller.signal;
+      const mosaic = new Uint8ClampedArray(job.Wm * job.Hm * 4);
+      const state = { done: 0 };
+      const read = [];
+      for (let i = 0; i < job.items.length; i++) {
+        const client = clientFor(job, i);
+        let got;
+        try { got = await readItem(await GeoTIFF.fromCustomClient(client, { allowFullFile: !!job.items[i].asset }), job.items[i], job, mosaic, state); } catch (err) {
+          if (signal.aborted) throw abortError();
+          throw Object.assign(new Error(String((err && err.message) || err)), { failed: client.failed, index: i });
+        }
+        if (got) read.push({ index: i, level: got.level, tile: got.tile });
+      }
+      let pixels = mosaic; let width = job.Wm; let height = job.Hm; let empty = 0;
+      if (job.warp) { const w = warp(mosaic, job.Wm, job.Hm, job.warp); pixels = w.pixels; width = job.warp.W; height = job.warp.H; empty = w.empty; } else for (let k = 3; k < mosaic.length; k += 4) if (!mosaic[k]) empty++;
+      if (signal.aborted) throw abortError();
+      const image = await encode(pixels, width, height, empty);
+      const msg = { type: 'done', job: job.id, ok: true, width, height, empty, read, bytes: image ? image.bytes : null, mime: image ? image.type : '', pixels: null };
+      const transfer = image ? [image.bytes] : [];
+      if (!image || job.keepPixels) { msg.pixels = pixels.buffer; transfer.push(pixels.buffer); }
+      post(msg, transfer);
+    }
+
+    self.onmessage = (ev) => {
+      const msg = ev.data || {};
+      if (msg.type === 'range') { const resolve = waiting.get(msg.req); if (resolve) { waiting.delete(msg.req); resolve(msg); } return; }
+      if (msg.type === 'abort') { const job = jobs.get(msg.job); if (job) job.controller.abort(); return; }
+      if (msg.type !== 'job') return;
+      const job = Object.assign({}, msg, { controller: new AbortController() });
+      jobs.set(job.id, job);
+      run(job).catch((err) => post({ type: 'done', job: job.id, ok: false, aborted: job.controller.signal.aborted, failed: (err && err.failed) || null, index: err && typeof err.index === 'number' ? err.index : -1, error: String((err && err.message) || err) }))
+        .finally(() => jobs.delete(job.id));
+    };
+    self.__dataspatium.ready.then(() => { importScripts('dataspatium-asset://geotiff/worker/geotiff.js'); post({ ready: true }); })
+      .catch((err) => post({ ready: false, error: String((err && err.message) || err) }));
+  }
+
   D.define('api/orthophoto-cog', ['data/geo', 'api/connectors', 'api/auth', 'api/http', 'platform/consent'], (geo, connectors, auth, http, consent) => {
     const CONNECTOR = 'lantmateriet-stac';
     const SEARCH_PATH = '/stac-bild/v1/search';
@@ -28,21 +231,22 @@
     /** Sweden, with a margin, in degrees [west, south, east, north]. */
     const SWEDEN = [10.9, 55.3, 24.2, 69.1];
     const ATTRIBUTION = 'Ortofoto © Lantmäteriet';
-    /** Milliseconds of drawing before the page gets a turn. */
-    const BUDGET = 12;
-    /** Output pixels between two exactly computed points of the warp. */
-    const STEP = 16;
+    /**
+     * Output pixels between two exactly computed points of the warp. Over at most 1 km² the step from Web Mercator to SWEREF 99
+     * TM bends by well under a centimetre between them, and at most 33 × 33 points are computed on the page.
+     */
+    const STEP = 64;
+    /** The geotiff.js build the worker loads (vendor/geotiff, wrapped as text). */
+    const WORKER_LIB = 'geotiff/worker/geotiff.js';
+    /** A range request as geotiff.js makes it: one span of bytes. */
+    const RANGE = /^bytes=\d+-\d+$/;
     const R = 6378137;
 
-    const pause = () => new Promise((r) => setTimeout(r, 0));
     const hostOf = (url) => { try { return new URL(url).host; } catch (_e) { return ''; } };
     const isAsset = (url) => /^dataspatium-asset:/.test(String(url));
-    async function lib() {
-      if (!globalThis.GeoTIFF) await D.assets.loadVendorScript('vendor/geotiff/geotiff.js');
-      return /** @type {any} */ (globalThis).GeoTIFF;
-    }
-    /** An error the person can act on, with a code for the caller: outside, large, none, file. */
+    /** An error the person can act on, with a code for the caller: outside, large, none, file, login. */
     function fail(code, message, extra) { const err = /** @type {any} */ (new Error(message)); err.code = code; return Object.assign(err, extra || {}); }
+    const aborted = () => new http.ApiError('Avbrutet.', { kind: 'aborted' });
 
     // ---- grids --------------------------------------------------------------------------------------------
     const merc = (lon, lat) => [R * lon * Math.PI / 180, R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))];
@@ -112,172 +316,111 @@
       return items.filter((it) => chosen.includes(it));
     }
 
-    // ---- files --------------------------------------------------------------------------------------------
-    /**
-     * geotiff.js's client for one file: range requests through the page's fetch without cookies, the key only in `headers`. What
-     * went wrong is kept in `failed`, since geotiff.js reports a failed range only as "Request failed".
-     */
-    function clientFor(url, headers) {
-      const client = {
-        url,
-        /** @type {null|{status?: number, network?: boolean}} */ failed: null,
-        async request({ headers: extra = {}, signal } = {}) {
-          let res;
-          try { res = await globalThis.fetch(url, { headers: Object.assign({}, extra, headers), signal, credentials: 'omit' }); } catch (err) {
-            if (!(signal && signal.aborted)) client.failed = { network: true };
-            throw err;
-          }
-          if (!res.ok) client.failed = { status: res.status };
-          return { get ok() { return res.ok; }, get status() { return res.status; }, getHeader: (name) => res.headers.get(name), getData: () => res.arrayBuffer() };
-        },
-      };
-      return client;
+    // ---- the worker and its ranges ----------------------------------------------------------------------------
+    let worker = null; let ready = null; let jobSeq = 0;
+    /** Jobs in the worker by id: the files with their keys (on the page only), the signal, the hooks and the promise. */
+    const jobs = new Map();
+    /** File hosts that refused the key's token in this session and took the login: they get the login first. */
+    const loginFirst = new Set();
+
+    function ensureWorker() {
+      if (ready) return ready;
+      D.workers.provider('geotiff', { initial: async () => [WORKER_LIB] });
+      const w = D.workers.create({ namespace: 'geotiff', source: chooseLevel.toString() + '\n' + D.workers.functionSource(dataspatiumOrthoWorker), name: 'orthophoto' });
+      worker = w;
+      ready = new Promise((resolve, reject) => {
+        w.onmessage = (ev) => {
+          const msg = ev.data || {};
+          if ('ready' in msg) { if (msg.ready) resolve(w); else { reject(new Error('Orthophoto worker: ' + msg.error)); stop(); } return; }
+          onMessage(msg);
+        };
+        w.onerror = (ev) => { const err = new Error('Orthophoto worker: ' + ((ev && ev.message) || 'error')); reject(err); stop(err); };
+      });
+      return ready;
     }
-    /** The error to show for a file that could not be read: a refusal says what the key needs. */
-    function fileError(client, err) {
-      const f = client.failed;
-      if (!f) return err;
-      if (f.status === 401 || f.status === 403) return fail('file', D.t('ortho.se.err.file', { status: f.status }), { status: f.status });
-      if (f.status) return fail('file', D.t('geodata.err.http', { status: f.status }), { status: f.status });
-      return fail('file', D.t('api.err.network', { host: hostOf(client.url) }));
+    /** Stop the worker; the jobs in it fail. @param {Error} [err] */
+    function stop(err) {
+      if (worker) worker.terminate();
+      worker = null; ready = null;
+      for (const job of jobs.values()) { job.finish(); job.reject(err || aborted()); }
+      jobs.clear();
     }
-    /**
-     * The levels of a file, the full image first and then its overviews (masks left out), each with its pixel size in metres.
-     * @param {any} tiff @returns {Promise<Array<{image: any, width: number, height: number, res: number}>>}
-     */
-    async function levelsOf(tiff) {
-      const first = await tiff.getImage(0);
-      const w0 = first.getWidth();
-      const res0 = Math.abs(first.getResolution()[0]);
-      const spp = first.getSamplesPerPixel();
-      const count = await tiff.getImageCount();
-      const out = [];
-      for (let i = 0; i < count; i++) {
-        const image = i ? await tiff.getImage(i) : first;
-        const sub = Number(image.fileDirectory.NewSubfileType || 0);
-        if ((sub & 4) || image.getSamplesPerPixel() !== spp) continue;
-        out.push({ image, width: image.getWidth(), height: image.getHeight(), res: (res0 * w0) / image.getWidth() });
+    function onMessage(msg) {
+      const job = jobs.get(msg.job);
+      if (!job) return;
+      if (msg.type === 'range') serve(job, msg);
+      else if (msg.type === 'progress') { if (job.onProgress) { try { job.onProgress({ done: msg.done }); } catch (err) { D.log('orthophoto', err); } } }
+      else if (msg.type === 'done') {
+        jobs.delete(job.id); job.finish();
+        // An image finished after the reading was cancelled is not used.
+        if (msg.ok && !(job.signal && job.signal.aborted)) job.resolve(msg); else job.reject(job.error || errorOf(job, msg));
       }
-      return out.sort((a, b) => a.res - b.res);
+    }
+    /** The error to show for a job that failed: a refused file says what the key needs. */
+    function errorOf(job, msg) {
+      if (msg.aborted || (job.signal && job.signal.aborted)) return aborted();
+      const f = msg.failed;
+      if (f && (f.status === 401 || f.status === 403)) return fail('file', D.t('ortho.se.err.file', { status: f.status }), { status: f.status });
+      if (f && f.status) return fail('file', D.t('geodata.err.http', { status: f.status }), { status: f.status });
+      if (f && f.network) return fail('file', D.t('api.err.network', { host: hostOf((job.items[msg.index] || {}).href || '') }));
+      return new Error(msg.error || 'orthophoto');
     }
     /**
-     * The level to read for a pixel size in metres: the coarsest whose pixels are at most √2 times the size asked for (the nearest
-     * on a scale of halvings), and the full image when even that is too coarse.
-     * @param {Array<{res: number}>} levels finest first @param {number} target
+     * Answer one of the worker's ranges: only a file of the job, by its index, and only one span of bytes; read with the page's
+     * fetch, the key or login the page holds, and no cookies. The bytes go back by transfer.
      */
-    function chooseLevel(levels, target) {
-      let pickIndex = 0;
-      levels.forEach((l, i) => { if (l.res <= target * Math.SQRT2) pickIndex = i; });
-      return pickIndex;
+    async function serve(job, msg) {
+      const item = job.items[msg.index];
+      let answer;
+      if (!item || !RANGE.test(String(msg.range))) answer = { ok: false, status: 400, headers: {}, data: null };
+      else {
+        try { answer = await fetchRange(job, item, String(msg.range)); } catch (err) {
+          if (job.signal && job.signal.aborted) answer = { aborted: true };
+          else if (err && err.code === 'login') { job.error = job.error || err; answer = { ok: false, status: 401, headers: {}, data: null }; }
+          else answer = { network: true };
+        }
+      }
+      if (worker && jobs.has(job.id)) worker.postMessage(Object.assign({ type: 'range', req: msg.req }, answer), answer.data ? [answer.data] : []);
     }
-    /**
-     * Read one item's part of the box into the mosaic (RGBA in SWEREF 99 TM with its upper left corner at box[0], box[3] and `r`
-     * metres per pixel), a tile (or a few small ones) per round.
-     */
-    async function paintItem(GeoTIFF, item, ctx) {
-      const { connector, signal } = ctx;
+    /** One range of a file: with the key's headers, or the file host's login when that host refused the token. */
+    async function fetchRange(job, item, range) {
       const host = hostOf(item.href);
-      // The file host was named in the question at the start; another host is asked for on its own.
-      if (!isAsset(item.href) && !ctx.named.includes(host)) await consent.require('api', { host });
-      const hosts = (connector.files && connector.files.hosts) || [];
-      // The key only for the file host the preset names.
-      const headers = hosts.includes(host) ? (await auth.apply(connector, { url: item.href, method: 'GET', headers: {} })).headers : {};
-      const client = clientFor(item.href, headers);
-      try { return await readItem(await GeoTIFF.fromCustomClient(client, { allowFullFile: isAsset(item.href) }), item, ctx); } catch (err) {
-        if (signal && signal.aborted) throw err;
-        throw fileError(client, err);
+      const get = (login) => globalThis.fetch(item.href, { headers: Object.assign({}, login ? { Authorization: login } : item.headers, { Range: range }), signal: job.signal, credentials: 'omit' });
+      let login = loginFirst.has(host) ? auth.fileLogin(job.connector, item.href) : null;
+      let res = await get(login);
+      if (res.status === 401 && !login && auth.fileLoginHosts(job.connector).includes(host)) {
+        login = await loginFor(job, item.href);
+        if (!login) throw fail('login', D.t('ortho.se.err.login', { host }), { status: 401 });
+        res = await get(login);
+        if (res.ok) loginFirst.add(host);
       }
+      const headers = {};
+      for (const name of ['content-type', 'content-range', 'content-length']) { const v = res.headers.get(name); if (v !== null) headers[name] = v; }
+      return { ok: res.ok, status: res.status, headers, data: await res.arrayBuffer() };
     }
-    /** The reading of paintItem, from an opened file. */
-    async function readItem(tiff, item, ctx) {
-      const { box, r, mosaic, Wm, Hm, signal } = ctx;
-      const levels = await levelsOf(tiff);
-      const level = levels[chooseLevel(levels, r)];
-      const first = levels[0].image;
-      const [ox, oy] = first.getOrigin();
-      const lr = level.res;
-      // The window of the level that the box and the item share, in the level's pixels.
-      const minE = Math.max(box[0], item.bbox[0]); const maxE = Math.min(box[2], item.bbox[2]);
-      const minN = Math.max(box[1], item.bbox[1]); const maxN = Math.min(box[3], item.bbox[3]);
-      if (minE >= maxE || minN >= maxN) return null;
-      const x0 = Math.max(0, Math.floor((minE - ox) / lr)); const x1 = Math.min(level.width, Math.ceil((maxE - ox) / lr));
-      const y0 = Math.max(0, Math.floor((oy - maxN) / lr)); const y1 = Math.min(level.height, Math.ceil((oy - minN) / lr));
-      if (x0 >= x1 || y0 >= y1) return null;
-      const image = level.image;
-      const tiled = !!image.isTiled;
-      const tw = tiled ? image.getTileWidth() : x1 - x0; const th = tiled ? image.getTileHeight() : Math.max(image.getTileHeight(), 256);
-      // Small tiles are read a few at a time, so that a round has some work but stays short.
-      const cw = tiled ? tw * Math.max(1, Math.floor(512 / tw)) : tw; const ch = tiled ? th * Math.max(1, Math.floor(512 / th)) : th;
-      const nodata = first.getGDALNoData();
-      // A level pixel's edge in the mosaic; neighbouring chunks share their edges, so no seam or overlap appears.
-      const mx = (x) => Math.round((ox + x * lr - box[0]) / r);
-      const my = (y) => Math.round((box[3] - (oy - y * lr)) / r);
-      const chunks = [];
-      for (let cy = Math.floor(y0 / ch) * ch; cy < y1; cy += ch) for (let cx = tiled ? Math.floor(x0 / cw) * cw : x0; cx < x1; cx += cw) chunks.push([Math.max(x0, cx), Math.max(y0, cy), Math.min(x1, cx + cw), Math.min(y1, cy + ch)]);
-      for (const [a0, b0, a1, b1] of chunks) {
-        if (signal && signal.aborted) throw new http.ApiError('Avbrutet.', { kind: 'aborted' });
-        const mx0 = mx(a0); const my0 = my(b0); const w = mx(a1) - mx0; const hgt = my(b1) - my0;
-        if (w > 0 && hgt > 0) {
-          const rgb = await image.readRGB({ window: [a0, b0, a1, b1], width: w, height: hgt, interleave: true, signal });
-          const shift = rgb instanceof Uint8Array || rgb instanceof Uint8ClampedArray ? 0 : Math.max(0, Number(image.getBitsPerSample ? image.getBitsPerSample(0) : 8) - 8);
-          paint(mosaic, Wm, Hm, rgb, mx0, my0, w, hgt, nodata, shift);
-        }
-        ctx.done++;
-        if (ctx.onProgress) ctx.onProgress({ done: ctx.done });
-        await pause();
-      }
-      return { level: level.res, tile: [tw, th] };
-    }
-    /** Copy RGB pixels into the RGBA mosaic at (mx0, my0); a pixel equal to the file's empty value stays as it was. */
-    function paint(mosaic, Wm, Hm, rgb, mx0, my0, w, hgt, nodata, shift) {
-      for (let y = 0; y < hgt; y++) {
-        const ty = my0 + y;
-        if (ty < 0 || ty >= Hm) continue;
-        for (let x = 0; x < w; x++) {
-          const tx = mx0 + x;
-          if (tx < 0 || tx >= Wm) continue;
-          const s = (y * w + x) * 3;
-          const rr = rgb[s] >> shift; const gg = rgb[s + 1] >> shift; const bb = rgb[s + 2] >> shift;
-          if (nodata !== null && rgb[s] === nodata && rgb[s + 1] === nodata && rgb[s + 2] === nodata) continue;
-          const d = (ty * Wm + tx) * 4;
-          mosaic[d] = rr; mosaic[d + 1] = gg; mosaic[d + 2] = bb; mosaic[d + 3] = 255;
-        }
-      }
+    /** The file host's login: the one entered, or asked for once per reading through the caller's `login`; null without it. */
+    function loginFor(job, url) {
+      const now = auth.fileLogin(job.connector, url);
+      if (now || !job.login) return Promise.resolve(now);
+      if (!job.asking) job.asking = Promise.resolve().then(() => job.login()).catch((err) => { D.log('orthophoto', err); return false; });
+      return job.asking.then((ok) => (ok ? auth.fileLogin(job.connector, url) : null));
     }
     /**
-     * The mosaic warped into an output grid, in rounds: `toSweref(px, py)` gives a pixel's place in the mosaic's pixels, computed
-     * exactly every STEP pixels and interpolated between (well under a pixel apart over a few hundred metres).
+     * Run a job in the worker. `spec` goes to the worker (addresses, boxes, control points); `ctx` stays on the page (the files
+     * with their keys, the connector, the signal, the hooks).
      */
-    async function warp(mosaic, Wm, Hm, W, H, toMosaic, signal) {
-      const out = new Uint8ClampedArray(W * H * 4);
-      const nx = Math.ceil(W / STEP) + 1; const ny = Math.ceil(H / STEP) + 1;
-      const px = (a) => Math.min(a * STEP, W); const py = (b) => Math.min(b * STEP, H);
-      const U = new Float64Array(nx * ny); const V = new Float64Array(nx * ny);
-      for (let b = 0; b < ny; b++) for (let a = 0; a < nx; a++) { const uv = toMosaic(px(a), py(b)); U[b * nx + a] = uv[0]; V[b * nx + a] = uv[1]; }
-      let t0 = performance.now(); let empty = 0;
-      for (let j = 0; j < H; j++) {
-        const yc = j + 0.5; const b = Math.min(ny - 2, Math.floor(yc / STEP)); const fy = (yc - py(b)) / (py(b + 1) - py(b));
-        for (let i = 0; i < W; i++) {
-          const xc = i + 0.5; const a = Math.min(nx - 2, Math.floor(xc / STEP)); const fx = (xc - px(a)) / (px(a + 1) - px(a));
-          const k = b * nx + a;
-          const u = (U[k] * (1 - fx) + U[k + 1] * fx) * (1 - fy) + (U[k + nx] * (1 - fx) + U[k + nx + 1] * fx) * fy;
-          const v = (V[k] * (1 - fx) + V[k + 1] * fx) * (1 - fy) + (V[k + nx] * (1 - fx) + V[k + nx + 1] * fx) * fy;
-          const sx = Math.floor(u); const sy = Math.floor(v);
-          const d = (j * W + i) * 4;
-          if (sx < 0 || sy < 0 || sx >= Wm || sy >= Hm) { empty++; continue; }
-          const s = (sy * Wm + sx) * 4;
-          out[d] = mosaic[s]; out[d + 1] = mosaic[s + 1]; out[d + 2] = mosaic[s + 2]; out[d + 3] = mosaic[s + 3];
-          if (!mosaic[s + 3]) empty++;
-        }
-        if (performance.now() - t0 > BUDGET) {
-          await pause();
-          if (signal && signal.aborted) throw new http.ApiError('Avbrutet.', { kind: 'aborted' });
-          t0 = performance.now();
-        }
-      }
-      return { pixels: out, empty };
+    async function inWorker(spec, ctx, transfer) {
+      if (ctx.signal && ctx.signal.aborted) throw aborted();
+      const w = await ensureWorker();
+      return new Promise((resolve, reject) => {
+        const id = ++jobSeq;
+        const onAbort = () => { if (worker) worker.postMessage({ type: 'abort', job: id }); };
+        jobs.set(id, Object.assign({ id, resolve, reject, error: null, asking: null, finish: () => { if (ctx.signal) ctx.signal.removeEventListener('abort', onAbort); } }, ctx));
+        if (ctx.signal) ctx.signal.addEventListener('abort', onAbort);
+        w.postMessage(Object.assign({ type: 'job', id }, spec), transfer);
+      });
     }
-    /** RGBA pixels as an image Blob: JPEG when every pixel is covered, PNG (with its transparent parts) otherwise. */
+    /** RGBA pixels as an image Blob on the page, when the worker has no OffscreenCanvas: JPEG when every pixel is covered, PNG otherwise. */
     async function encode(pixels, W, H, empty) {
       const canvas = document.createElement('canvas');
       canvas.width = W; canvas.height = H;
@@ -294,11 +437,13 @@
     /**
      * The orthophoto of a box, read after consent with the key of the preset lantmateriet-stac. Nothing is contacted without the
      * key (the result is then `{needsKey: true}`), outside Sweden or for a box over MAX_AREA (both throw with `code` outside or
-     * large); a refused consent throws the ConsentError.
+     * large); a refused consent throws the ConsentError. When the file host refuses the token and no login for it is entered,
+     * `login` is called once (it resolves true when the person entered one); without it the error has `code` login.
      * @param {number[]} box [west, south, east, north] in WGS 84
-     * @param {{grid?: number, width?: number, height?: number, connector?: any, signal?: AbortSignal, onProgress?: Function, keepPixels?: boolean}} [options]
+     * @param {{grid?: number, width?: number, height?: number, connector?: any, signal?: AbortSignal, onProgress?: Function, login?: () => Promise<boolean>, keepPixels?: boolean}} [options]
      *   grid: 3857 (default, the image warped to Web Mercator) or 3006 (SWEREF 99 TM, as the files are); width/height: the output
-     *   in pixels (the longest side at most MAX_SIDE, never finer than the files); keepPixels: also return the RGBA pixels (tests)
+     *   in pixels (the longest side at most MAX_SIDE, never finer than the files); onProgress({done}) after each tile read;
+     *   keepPixels: also return the RGBA pixels (tests)
      * @returns {Promise<any>} {url, blob, type, bounds: [[lat, lon] north-west, [lat, lon] south-east], width, height, grid,
      *   resolution (metres per pixel read), items, years, attribution} or {needsKey: true}
      */
@@ -340,33 +485,47 @@
       // The mosaic in SWEREF 99 TM, a pixel of margin around the box so that the warp's edges are covered.
       const src = [src0[0] - r, src0[1] - r, src0[2] + r, src0[3] + r];
       const Wm = Math.ceil((src[2] - src[0]) / r); const Hm = Math.ceil((src[3] - src[1]) / r);
-      const mosaic = new Uint8ClampedArray(Wm * Hm * 4);
-      const GeoTIFF = await lib();
-      const ctx = { box: src, r, mosaic, Wm, Hm, connector, named: hosts, signal: options.signal, done: 0, onProgress: options.onProgress };
-      const read = [];
       // Oldest first, so that the newest is drawn last and lies on top.
-      for (const item of chosen.slice().reverse()) { const got = await paintItem(GeoTIFF, item, ctx); if (got) read.push(Object.assign({ item }, got)); }
-      let pixels; let width; let height; let bounds; let empty = 0;
-      if (grid === 3006) {
-        // The files' own grid: the mosaic as it is, its corners exact in a map in SWEREF 99 TM.
-        pixels = mosaic; width = Wm; height = Hm;
-        for (let k = 3; k < mosaic.length; k += 4) if (!mosaic[k]) empty++;
-        const nw = geo.swerefToWgs84(src[0], src[3], 3006); const se = geo.swerefToWgs84(src[0] + Wm * r, src[3] - Hm * r, 3006);
-        bounds = [[nw[1], nw[0]], [se[1], se[0]]];
-      } else {
-        // Web Mercator: each output pixel looks up its place in the mosaic, so the image lies right on a web map.
-        const warped = await warp(mosaic, Wm, Hm, W, H, (x, y) => {
+      const order = chosen.slice().reverse();
+      // Each file's key, on the page: a host other than those named at the start is asked for on its own, and the key goes only
+      // to the file host the preset names.
+      const fileHosts = (connector.files && connector.files.hosts) || [];
+      const files = [];
+      for (const item of order) {
+        const host = hostOf(item.href);
+        if (!isAsset(item.href) && !hosts.includes(host)) { await consent.require('api', { host }); hosts.push(host); }
+        const headers = fileHosts.includes(host) ? (await auth.apply(connector, { url: item.href, method: 'GET', headers: {} }, { signal: options.signal })).headers : {};
+        files.push({ href: item.href, headers });
+      }
+      // Web Mercator: each output pixel looks up its place in the mosaic, so the image lies right on a web map; the control points
+      // are computed here with data/geo, the pixels in the worker.
+      let warpSpec = null; const transfer = [];
+      if (grid !== 3006) {
+        const nx = Math.ceil(W / STEP) + 1; const ny = Math.ceil(H / STEP) + 1;
+        const U = new Float64Array(nx * ny); const V = new Float64Array(nx * ny);
+        for (let b = 0; b < ny; b++) for (let a = 0; a < nx; a++) {
+          const x = Math.min(a * STEP, W); const y = Math.min(b * STEP, H);
           const ll = unmerc(target[0] + (x * tw) / W, target[3] - (y * th) / H);
           const en = geo.wgs84ToSweref(ll[0], ll[1]);
-          return [(en[0] - src[0]) / r, (src[3] - en[1]) / r];
-        }, options.signal);
-        pixels = warped.pixels; width = W; height = H; empty = warped.empty;
-        bounds = [[n, w], [s, e]];
+          U[b * nx + a] = (en[0] - src[0]) / r; V[b * nx + a] = (src[3] - en[1]) / r;
+        }
+        warpSpec = { W, H, step: STEP, nx, ny, U, V };
+        transfer.push(U.buffer, V.buffer);
       }
-      const blob = await encode(pixels, width, height, empty);
+      const spec = { items: order.map((it) => ({ href: it.href, bbox: it.bbox, asset: isAsset(it.href) })), box: src, r, Wm, Hm, warp: warpSpec, keepPixels: !!options.keepPixels };
+      const done = await inWorker(spec, { items: files, connector, signal: options.signal, onProgress: options.onProgress, login: options.login }, transfer);
+      const pixels = done.pixels ? new Uint8ClampedArray(done.pixels) : null;
+      const blob = done.bytes ? new Blob([done.bytes], { type: done.mime }) : await encode(/** @type {Uint8ClampedArray} */ (pixels), done.width, done.height, done.empty);
+      let bounds;
+      if (grid === 3006) {
+        // The files' own grid: the mosaic as it is, its corners exact in a map in SWEREF 99 TM.
+        const nw = geo.swerefToWgs84(src[0], src[3], 3006); const se = geo.swerefToWgs84(src[0] + Wm * r, src[3] - Hm * r, 3006);
+        bounds = [[nw[1], nw[0]], [se[1], se[0]]];
+      } else bounds = [[n, w], [s, e]];
+      const read = done.read.map((x) => Object.assign({ item: order[x.index] }, x));
       const years = Array.from(new Set(read.map((x) => x.item.year).filter(Boolean))).sort((a, b) => b - a);
       const out = {
-        url: URL.createObjectURL(blob), blob, type: blob.type, bounds, width, height, grid, resolution: r,
+        url: URL.createObjectURL(blob), blob, type: blob.type, bounds, width: done.width, height: done.height, grid, resolution: r,
         items: read.map((x) => ({ id: x.item.id, collection: x.item.collection, year: x.item.year, kind: x.item.kind, res: x.item.res, level: x.level })),
         years, attribution: ATTRIBUTION + (years.length ? ` (${years.join(', ')})` : ''),
       };
@@ -376,6 +535,6 @@
     /** Let go of an image's address. @param {any} result */
     function release(result) { if (result && result.url) { try { URL.revokeObjectURL(result.url); } catch (_e) { /* already gone */ } } }
 
-    return { CONNECTOR, KINDS, FILTER, MAX_AREA, MAX_SIDE, SWEDEN, ATTRIBUTION, searchUrl, itemsOf, pick, levelsOf, chooseLevel, inSweden, load, release };
+    return { CONNECTOR, KINDS, FILTER, MAX_AREA, MAX_SIDE, SWEDEN, ATTRIBUTION, STEP, searchUrl, itemsOf, pick, chooseLevel, inSweden, load, release, stop };
   });
 })();
