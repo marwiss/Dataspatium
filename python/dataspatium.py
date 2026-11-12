@@ -2778,11 +2778,11 @@ class _ChangeSet:
         oy = rel[3][1] + float(q.Position.Location.Coordinates[1])
         label = "wall #%d %r" % (wall.id(), _ifc_text(wall.Name) or "")
         if box[0] < x0 - tol or box[1] > x1 + tol:
-            return "reach past the ends of %s (%.3g to %.3g m along it, whose body runs from %.3g to %.3g m)" % (label, box[0] * s, box[1] * s, x0 * s, x1 * s)
+            return "reach past the ends of %s (%.4g to %.4g m along it, whose body runs from %.4g to %.4g m)" % (label, box[0] * s, box[1] * s, x0 * s, x1 * s)
         if box[2] < z0 - tol or box[3] > z0 + float(body.Depth) + tol:
-            return "reach above or below %s (%.3g to %.3g m up in a body from %.3g to %.3g m)" % (label, box[2] * s, box[3] * s, z0 * s, (z0 + float(body.Depth)) * s)
+            return "reach above or below %s (%.4g to %.4g m up in a body from %.4g to %.4g m)" % (label, box[2] * s, box[3] * s, z0 * s, (z0 + float(body.Depth)) * s)
         if oy - float(q.YDim) / 2.0 > cy - float(p.YDim) / 2.0 + tol or oy + float(q.YDim) / 2.0 < cy + float(p.YDim) / 2.0 - tol:
-            return "no longer go through %s, %.3g m off its axis" % (label, (oy - cy) * s)
+            return "no longer go through %s, %.4g m off its axis" % (label, (oy - cy) * s)
         return None
 
     def check_openings(self):
@@ -2851,7 +2851,7 @@ class _ChangeSet:
             outline = self.space_outline(p)
             bounded = {b.RelatedBuildingElement.id() for b in (getattr(p, "BoundedBy", None) or ()) if getattr(b, "RelatedBuildingElement", None) is not None}
             edge = outline.boundary.buffer(tol) if outline is not None else None
-            if bounded & set(walls) or (edge is not None and any(x.intersection(edge).length > meets for pair in lines.values() for x in pair)):
+            if bounded & set(walls) or (edge is not None and any(self.runs_along(x, edge, meets) for pair in lines.values() for x in pair)):
                 affected.append((p, outline))
         rooms = topo["rooms"]
         best = {}
@@ -2874,6 +2874,13 @@ class _ChangeSet:
                 self.fit_space(p, body, outline, rooms[k], topo, any(walls[i][2] for i in rooms[k]["walls"] if i in walls))
             else:
                 self.loosen(p, outline, walls, lines, tol, meets, why)
+
+    @staticmethod
+    def runs_along(line, zone, meets):
+        """Whether a wall's axis (shapely) runs within zone, the buffer of a space's edge, for more than meets metres in one piece; a
+        wall that crosses the edge, or only meets it, does not."""
+        part = line.intersection(zone)
+        return max([g.length for g in getattr(part, "geoms", [part])] or [0.0]) > meets
 
     def space_body(self, space):
         """(the extruded solid, the absolute matrix of its profile's plane) of a space drawn as create_spaces draws it: one
@@ -2977,7 +2984,7 @@ class _ChangeSet:
             if host is None or host.id() not in walls:
                 continue
             if e.is_a("IfcWall"):
-                gone = lines[e.id()][1].intersection(outline.boundary.buffer(tol)).length <= meets
+                gone = not self.runs_along(lines[e.id()][1], outline.boundary.buffer(tol), meets)
             else:
                 mid = self.plan_point(e, float(getattr(e, "OverallWidth", None) or 0.0) / 2.0)
                 gone = mid is None or outline.boundary.distance(_topo_point(mid)) > tol
