@@ -103,12 +103,18 @@ Muokkaa-tilan kartassa, Visualisoi-tilan karttanäkymissä, kaavakartalla ja uud
   paikkatiedot avaimella (STAC)* ja korkeusmalli käyttävät; jos se puuttuu, sovellus kysyy sitä, kun valitset ortokuvan, ja antaa linkin
   Geotorgetiin. Avaimella sovellus hakee käyttötunnisteen osoitteesta `apimanager.lantmateriet.se`, ja tunniste lähetetään vain
   osoitteeseen `dl1.lantmateriet.se`. Haku luettelosta ei vaadi avainta.
+- Jos `dl1.lantmateriet.se` ei hyväksy tunnistetta (vastaus 401), sovellus kysyy kerran Geotorgetin kirjautumistietojasi, jotka
+  Lantmäteriet hyväksyy myös latauksessa: käyttäjätunnuksesi ja salasanasi tai organisaation järjestelmätilin, jolla Ortofoto
+  Nedladdning on tilattu. Annat ne samassa avainpaneelissa kohdassa *Kirjautuminen tiedostopalvelimelle*. Ne ovat voimassa istunnon
+  ajan tai tallennetaan salattuina avaimen kanssa, ja ne lähetetään vain osoitteeseen `dl1.lantmateriet.se` Basic-kirjautumisena. Jos
+  peruutat, sovellus ei kysy uudelleen istunnon aikana; viestissä on silloin painike *Anna kirjautumistiedot*.
 - Mitään ei haeta, ennen kuin valitset ortokuvan tai painat painiketta. Silloin sovellus kysyy kerran suostumusta *API-hakuun* ja nimeää
   palvelimet. Tallennettu karttanäkymä ei hae mitään, kun se avataan; se näyttää painikkeen.
 - Lähdemerkintä kartan kulmassa noudattaa Lantmäterietin ehtoja: "Ortofoto © Lantmäteriet (vuosi), käsitelty karttaa varten (CC BY
   4.0)". Kuva ei sisälly vientiin (SVG, PNG, PDF), tallennettuihin karttanäkymiin eikä julkaistuun HTML:ään.
-- Tiedostot luetaan ruutu kerrallaan tauon kanssa, ja muunnos tehdään erissä, joten sivu ei jumitu; 1 km²:n näkymä vie muutaman
-  sekunnin.
+- Ruudut puretaan, kootaan ja muunnetaan omassa säikeessään (workerissa), joten sivu ei jumitu. Sivu hakee vain ne tavut, joita säie
+  pyytää, samalla avaimella ja suostumuksella, ja ottaa vastaan valmiin kuvan; avain ja kirjautumistiedot pysyvät sivulla. 1 km²:n
+  näkymä vie muutaman sekunnin.
 
 ## Paikkatietotyökalut Analysoi-tilassa
 

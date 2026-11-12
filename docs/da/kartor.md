@@ -101,12 +101,18 @@ i kortvisningerne i Visualisér, på plankortet og under stedet for en ny bygnin
   geodata med nøgle (STAC)* og højdemodellen bruger; mangler den, spørger appen efter den, når du vælger ortofotoet, med et link til
   Geotorget. Med nøglen henter appen et adgangstoken fra `apimanager.lantmateriet.se`, og tokenet sendes kun til `dl1.lantmateriet.se`.
   Søgningen i kataloget kræver ingen nøgle.
+- Godtager `dl1.lantmateriet.se` ikke tokenet (svaret 401), spørger appen én gang om dit login i Geotorget, som Lantmäteriet også
+  godtager til download: dit brugernavn og din adgangskode eller, for en organisation, systemkontoen, der har bestilt Ortofoto
+  Nedladdning. Du angiver det i det samme nøglepanel under *Login til filserveren*. Det gælder sessionen eller gemmes krypteret med
+  nøglen, og det sendes kun til `dl1.lantmateriet.se` som Basic-login. Annullerer du, spørger appen ikke igen i sessionen; meddelelsen
+  har så knappen *Angiv login*.
 - Intet hentes, før du vælger ortofotoet eller trykker på knappen. Så spørger appen én gang om samtykke til *API-hentning* og nævner
   værterne. En gemt kortvisning henter intet, når den åbnes; den viser knappen.
 - Kildeangivelsen i kortets hjørne følger Lantmäteriets vilkår: "Ortofoto © Lantmäteriet (år), bearbejdet til kortet (CC BY 4.0)".
   Billedet kommer ikke med i eksport (SVG, PNG, PDF), gemte kortvisninger eller publiceret HTML.
-- Filerne læses ét felt ad gangen med en pause imellem, og omregningen sker i omgange, så siden ikke låser; en visning på 1 km² tager
-  nogle sekunder.
+- Felterne afkodes, sættes sammen og omregnes i en tråd for sig (en worker), så siden ikke låser. Siden henter kun de byte, tråden
+  beder om, med den samme nøgle og det samme samtykke, og modtager det færdige billede; nøglen og loginnet bliver på siden. En visning
+  på 1 km² tager nogle sekunder.
 
 ## Geoværktøjer i Analysér
 

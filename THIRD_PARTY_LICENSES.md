@@ -1304,7 +1304,7 @@ Apache License
 
 - Licens: MIT
 - Webbplats: https://github.com/geotiffjs/geotiff.js
-- Not: Reads heights from Lantmäteriet's terrain model (cloud-optimised GeoTIFF) with range requests. The browser build is a classic script with the global GeoTIFF; its worker pool (a Blob worker) is never used, so decoding runs on the page in small windows.
+- Not: Reads Lantmäteriet's cloud-optimised GeoTIFF files with range requests. The browser build is a classic script with the global GeoTIFF: loaded on the page for the terrain model's heights (small windows), and the same file wrapped as text for the app's own Blob worker that decodes the orthophotos (api/orthophoto-cog). Its own worker pool is never used.
 
 ```text
 The MIT License (MIT)

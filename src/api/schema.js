@@ -115,8 +115,9 @@
         },
         // What was measured for the service's CORS from a folder (file://, origin null) and from the web version (api/reach).
         cors: { type: 'object', properties: { file: { type: 'boolean' }, web: { type: 'boolean' } } },
-        // A column of file addresses in the result (STAC assets) and the hosts that may receive the connector's key with them.
-        files: { type: 'object', required: ['column'], properties: { column: { type: 'string' }, hosts: { type: 'array', items: { type: 'string' } } } },
+        // A column of file addresses in the result (STAC assets), the hosts that may receive the connector's key with them, and
+        // those that also take a user name and password (Basic) when they refuse the key (api/auth fileLogin).
+        files: { type: 'object', required: ['column'], properties: { column: { type: 'string' }, hosts: { type: 'array', items: { type: 'string' } }, basic: { type: 'array', items: { type: 'string' } } } },
         rateLimit: { type: 'object', required: ['requests', 'perSeconds'], properties: { requests: { type: 'number', minimum: 1 }, perSeconds: { type: 'number', minimum: 0.1 } } },
         // urls: one service root per UI language (API v1 puts the language in the URL); langs: the UI languages the
         // service's `lang` parameter accepts, as a list or as a map from UI code to the service's own code.

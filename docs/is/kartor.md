@@ -100,12 +100,18 @@ bakgrunnskorti í Vinna, í kortasýnum í Myndgera, á skipulagskortinu og undi
   Lantmäteriet með lykli (STAC)* og hæðarlíkanið nota; vanti hann spyr forritið um hann þegar þú velur loftmyndina, með tengli á
   Geotorget. Með lyklinum sækir forritið aðgangstákn frá `apimanager.lantmateriet.se`, og táknið er aðeins sent til
   `dl1.lantmateriet.se`. Leitin í skránni þarf engan lykil.
+- Samþykki `dl1.lantmateriet.se` ekki táknið (svarið 401) spyr forritið einu sinni um innskráningu þína í Geotorget, sem Lantmäteriet
+  samþykkir líka fyrir niðurhalið: notandanafn þitt og lykilorð, eða fyrir stofnun kerfisaðganginn sem hefur pantað Ortofoto
+  Nedladdning. Þú slærð hana inn í sama lyklaspjaldi undir *Innskráning á skráaþjóninn*. Hún gildir fyrir lotuna eða er vistuð
+  dulkóðuð með lyklinum, og hún er aðeins send til `dl1.lantmateriet.se`, sem Basic-innskráning. Hættir þú við spyr forritið ekki aftur
+  á lotunni; skilaboðin hafa þá hnappinn *Slá inn innskráningu*.
 - Ekkert er sótt fyrr en þú velur loftmyndina eða ýtir á hnappinn. Þá spyr forritið einu sinni um samþykki fyrir *Vefþjónustum* og
   nefnir hýslana. Vistuð kortasýn sækir ekkert þegar hún er opnuð; hún sýnir hnappinn.
 - Heimildin í horni kortsins fylgir skilmálum Lantmäteriet: "Ortofoto © Lantmäteriet (ár), unnin fyrir kortið (CC BY 4.0)". Myndin
   fylgir ekki með í útflutningi (SVG, PNG, PDF), vistuðum kortasýnum eða birtu HTML.
-- Skrárnar eru lesnar einn reit í einu með hléi á milli, og umreikningurinn fer fram í lotum, svo síðan frýs ekki; sýn upp á 1 km² tekur
-  nokkrar sekúndur.
+- Reitirnir eru afkóðaðir, settir saman og umreiknaðir í eigin þræði (worker), svo síðan frýs ekki. Síðan sækir aðeins þau bæti sem
+  þráðurinn biður um, með sama lykli og samþykki, og tekur við tilbúinni myndinni; lykillinn og innskráningin verða eftir á síðunni.
+  Sýn upp á 1 km² tekur nokkrar sekúndur.
 
 ## Landfræðitól í Greina
 

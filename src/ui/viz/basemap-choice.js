@@ -7,12 +7,14 @@
  * nothing; the map asks the consent for background maps before its first tile.
  * Sweden's orthophoto (Lantmäteriet's files, api/orthophoto-cog) is one image over what the map shows: `drawView` reads it when
  * the person chose it or asked for the view, after the consent for API fetches and with the key of the connector
- * lantmateriet-stac, and lays it under the features; a map drawn again over the same view takes the image read before.
+ * lantmateriet-stac, and lays it under the features; a map drawn again over the same view takes the image read before. When
+ * Lantmäteriet's file host refuses the key's token, the credentials panel asks for the Geotorget login (once a session; after a
+ * cancel the message has a button for it).
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/orthophoto-cog'], (base, overlays, authPanel, orthophotos, connectors, cog) => {
+  D.define('ui/viz/basemap-choice', ['ui/base', 'ui/overlays', 'ui/api/auth-panel', 'viz/orthophotos', 'api/connectors', 'api/auth', 'api/orthophoto-cog'], (base, overlays, authPanel, orthophotos, connectors, auth, cog) => {
     const { h, t } = base;
 
     /**
@@ -39,10 +41,8 @@
       if (orthophotos.ready(preset)) return true;
       let connector;
       if (preset.key.connector) {
-        // Sweden: the client credentials of the Lantmäteriet connector, the same key as the height model's.
-        const own = await connectors.get(preset.key.connector);
-        if (!own) return false;
-        connector = Object.assign({}, own, { auth: Object.assign({}, own.auth, { help: t('ortho.se.key.help', { hosts: hostsOf(own).join(', ') }), signupUrl: preset.key.signupUrl }) });
+        connector = await keyConnector(preset);
+        if (!connector) return false;
       } else connector = orthophotos.connector(preset, t('map.basemap.key.help', { name: preset.name, publisher: preset.publisher, host: hostOf(preset) }));
       let panel = null;
       const done = await overlays.dialog.open({
@@ -57,6 +57,37 @@
       });
       if (panel) panel.destroy();
       return done === true && orthophotos.ready(preset);
+    }
+    /** Sweden: the Lantmäteriet connector for the credentials panel, the same key as the height model's, with the orthophoto's help. */
+    async function keyConnector(preset) {
+      const own = await connectors.get(preset.key.connector);
+      return own ? Object.assign({}, own, { auth: Object.assign({}, own.auth, { help: t('ortho.se.key.help', { hosts: hostsOf(own).join(', ') }), signupUrl: preset.key.signupUrl }) }) : null;
+    }
+    /** Whether the person cancelled the file host's login in this session: then it is not asked again by itself. */
+    let loginDeclined = false;
+    /**
+     * Sweden's file host refused the key's token: the credentials panel with the file host's login (Geotorget's user name and
+     * password). Asked by itself once a session; `again` is the person's own button. Resolves true when the login is entered.
+     * @param {any} preset @param {{again?: boolean}} [opts]
+     */
+    async function askLogin(preset, opts = {}) {
+      if (loginDeclined && !opts.again) return false;
+      const connector = preset.key && preset.key.connector ? await keyConnector(preset) : null;
+      if (!connector) return false;
+      let panel = null;
+      const done = await overlays.dialog.open({
+        title: t('ortho.se.login.title'),
+        help: 'kartor#ortofoton',
+        body: (finish) => {
+          panel = authPanel.create(connector, { login: true, onChange: () => { if (auth.hasFileLogin(connector)) finish(true); } });
+          return h('div', { class: 'dm-stack-sm', 'data-ortho-login': preset.id }, h('p', { class: 'dm-help', text: t('ortho.se.login.why', { host: auth.fileLoginHosts(connector).join(', ') }) }), panel.el);
+        },
+        actions: [{ label: t('common.cancel'), value: false }],
+      });
+      if (panel) panel.destroy();
+      const ok = done === true && auth.hasFileLogin(connector);
+      if (!ok) loginDeclined = true;
+      return ok;
     }
     function hostOf(preset) { try { return new URL(orthophotos.sourceFor(preset, 3857).url).host; } catch (_e) { return ''; } }
     /** The hosts a connector's key goes to: the token's and the file host's. */
@@ -114,11 +145,12 @@
      * Sweden's orthophoto under the features of a map whose background map is it (`handle.info.basemapView`). An image read
      * before for the same view and grid is laid again without contacting anything; a new one is read only with `load` (the
      * person chose the orthophoto or asked for the view). Problems are told in a toast: a missing key with the button that asks
-     * for it (then `redraw`), a view that is too large or outside Sweden, a refused consent or file.
+     * for it (then `redraw`), a view that is too large or outside Sweden, a refused consent or file, a file host that wants the
+     * Geotorget login (asked in the credentials panel while reading, once a session; then the toast's button asks for it).
      * @param {any} handle viz/leaflet's handle
      * @param {{load?: boolean, minSide?: number, redraw?: () => any, quiet?: boolean}} [opts] quiet: no toasts (the caller says it)
      * @returns {Promise<string>} 'drawn', 'kept', 'idle' (not read without the person's action), 'key', 'large', 'outside', 'none',
-     *   'denied', 'failed', or '' when the map's background is no such orthophoto
+     *   'denied', 'login', 'failed', or '' when the map's background is no such orthophoto
      */
     async function drawView(handle, opts = {}) {
       const id = handle && handle.info && handle.info.basemapView;
@@ -132,11 +164,12 @@
       let result = images.get(key) || null;
       let status = result ? 'kept' : 'drawn';
       const say = (text, kind, action) => { if (!opts.quiet) overlays.toast.show(text, Object.assign({ kind, timeout: 9000 }, action ? { action } : {})); };
+      const again = opts.redraw || (() => drawView(handle, Object.assign({}, opts, { load: true })));
       if (!result) {
         if (!opts.load) return orthophotos.ready(preset) ? 'idle' : 'key';
         // Without the key nothing is contacted; the map's own drawing has already said so when it knew (`info.basemapKey`).
         if (!orthophotos.ready(preset)) {
-          if (!opts.quiet && handle.info.basemapKey !== id) notifyKey({ basemapKey: id }, opts.redraw || (() => drawView(handle, Object.assign({}, opts, { load: true }))));
+          if (!opts.quiet && handle.info.basemapKey !== id) notifyKey({ basemapKey: id }, again);
           return 'key';
         }
         // The output as large as the box on the screen, in the screen's own pixels.
@@ -144,15 +177,16 @@
         const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
         const busy = opts.quiet ? null : overlays.toast.show(t('ortho.se.loading'), { kind: 'info', timeout: 0 });
         try {
-          result = await cog.load(box, { grid, width: Math.abs(se.x - nw.x) * dpr, height: Math.abs(se.y - nw.y) * dpr });
+          result = await cog.load(box, { grid, width: Math.abs(se.x - nw.x) * dpr, height: Math.abs(se.y - nw.y) * dpr, login: () => askLogin(preset) });
         } catch (err) {
           const code = err && err.name === 'ConsentError' ? 'denied' : (err && err.code) || 'failed';
           if (code === 'denied') say(t('ortho.se.denied'), 'warn');
+          else if (code === 'login') say(String(err.message), 'warn', { label: t('ortho.se.login.enter'), onClick: () => { askLogin(preset, { again: true }).then((ok) => { if (ok) again(); }).catch((e) => D.log('basemaps', e)); } });
           else say(String((err && err.message) || err), code === 'failed' || code === 'file' ? 'error' : 'warn');
           D.log('basemaps', err);
           return code === 'file' ? 'failed' : code;
         } finally { if (busy) busy.remove(); }
-        if (result.needsKey) { if (!opts.quiet) notifyKey({ basemapKey: id }, opts.redraw || (() => drawView(handle, Object.assign({}, opts, { load: true })))); return 'key'; }
+        if (result.needsKey) { if (!opts.quiet) notifyKey({ basemapKey: id }, again); return 'key'; }
         remember(key, result);
       }
       // The map may have been closed while the image was read.
@@ -170,6 +204,6 @@
       return status;
     }
 
-    return { options, ensure, keyNotice, notifyKey, isView, drawView, viewBox };
+    return { options, ensure, askLogin, keyNotice, notifyKey, isView, drawView, viewBox };
   });
 })();

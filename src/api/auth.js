@@ -82,6 +82,35 @@
       return out;
     }
 
-    return { apply, token, clearToken, requiredFields, needsCredentials, hasCredentials };
+    // ---- the file hosts' own login ---------------------------------------------------------------------------
+    /**
+     * The file hosts that also take a user name and password (`files.basic`; Lantmäteriet's dl1 takes the Geotorget login when
+     * it refuses the key's token). @param {any} connector @returns {string[]}
+     */
+    function fileLoginHosts(connector) {
+      const list = connector && connector.files && connector.files.basic;
+      return Array.isArray(list) ? list.filter((x) => typeof x === 'string' && x) : [];
+    }
+    /** The optional login fields for those hosts, kept beside the key in api/secrets; none when the connector names no such host. */
+    function fileLoginFields(connector) {
+      return fileLoginHosts(connector).length ? [{ key: 'fileUser', label: D.t('api.auth.username'), secret: false }, { key: 'filePassword', label: D.t('api.auth.password'), secret: true }] : [];
+    }
+    /** True when the login for the file hosts is entered. @param {any} connector */
+    function hasFileLogin(connector) { const v = secrets.get(connector.id); return !!(v && v.fileUser && v.filePassword); }
+    /**
+     * The Basic header for a file, or null: only for a host in `files.basic` and only when the login is entered, so the user name
+     * and password never go anywhere else. UTF-8, so that å, ä and ö survive.
+     * @param {any} connector @param {string} url @returns {string|null}
+     */
+    function fileLogin(connector, url) {
+      let host = '';
+      try { host = new URL(url).host; } catch (_e) { return null; }
+      if (!fileLoginHosts(connector).includes(host) || !hasFileLogin(connector)) return null;
+      const v = secrets.get(connector.id);
+      const bytes = new TextEncoder().encode(`${v.fileUser}:${v.filePassword}`);
+      return 'Basic ' + btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''));
+    }
+
+    return { apply, token, clearToken, requiredFields, needsCredentials, hasCredentials, fileLoginHosts, fileLoginFields, hasFileLogin, fileLogin };
   });
 })();
