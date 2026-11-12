@@ -10,7 +10,10 @@
  * create_spaces makes the rooms the walls enclose into spaces (decision B-57.1) with names from the room programme, from the topology
  * the wheel computes at that step; it gets one ref per listed room (op.refs), and none when every room is made.
  * set_site places the model on earth (the site's WGS 84 position and, with an EPSG code, the map conversion); it is a change, not a
- * create, so it gets no ref. Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
+ * create, so it gets no ref. define_type makes a wall, slab or roof type with its material layers and a ref, which create_wall,
+ * create_slab and create_roof take as type: the element gets the type, its thickness from the layers and the layers laid on it, and the
+ * wheel joins the walls whose axes meet and writes the base quantities when it applies the change set (recommendations 3, 5 and 6 of
+ * the native IFC study). Publishing is never a tool. The schemas are flat where they can be, with every field required (null for
  * "not given").
  */
 (function () {
@@ -24,21 +27,29 @@
     const num = () => ({ type: ['number', 'null'] });
     const xy = () => ({ type: ['array', 'null'], items: { type: 'number' } });
     const ids = () => ({ type: 'array', items: { type: ['integer', 'string'] } });
-    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces'];
+    const CREATES = ['create_wall', 'create_slab', 'create_roof', 'create_opening', 'create_spaces', 'define_type'];
     const ROOF_SHAPES = ['gable', 'hip', 'shed', 'flat'];
     const MAX_ROOMS = 200;
+    const TYPE_KINDS = ['wall', 'slab', 'roof'];
+    const MAX_LAYERS = 20;
+    /** IfcMaterial.Category as IfcOpenShell recommends it, and the roles of IfcMaterialLayer.Category (the wheel spells them per schema). */
+    const MATERIAL_CATEGORIES = ['concrete', 'steel', 'aluminium', 'block', 'brick', 'stone', 'wood', 'glass', 'gypsum', 'plastic', 'earth'];
+    const LAYER_ROLES = ['load_bearing', 'insulation', 'inner_finish', 'outer_finish'];
+    const typeRef = () => ({ type: ['integer', 'string', 'null'] });
     /** The tools as the providers see them. */
     const TOOLS = [
       { name: 'create_storeys_and_grid', description: 'Add building storeys (name and elevation in metres above the first) and/or a grid to the change set. The grid has x_count bays of x_spacing metres along X (axes A, B, …) and y_count bays of y_spacing along Y (axes 1, 2, …), with A1 at (0, 0). A storey that already exists is kept. Either may be null.',
         parameters: { type: 'object', properties: {
           storeys: { type: ['array', 'null'], items: { type: 'object', properties: { name: { type: 'string' }, elevation: { type: 'number' } }, required: ['name', 'elevation'], additionalProperties: false } },
           grid: { type: ['object', 'null'], properties: { x_spacing: { type: 'number' }, x_count: { type: 'integer' }, y_spacing: { type: 'number' }, y_count: { type: 'integer' } }, required: ['x_spacing', 'x_count', 'y_spacing', 'y_count'], additionalProperties: false } } } },
-      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. Answers the ref of the wall.',
-        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str() } } },
-      { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. Answers the ref of the slab.',
-        parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str() } } },
-      { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). Answers the ref of the roof.',
-        parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str() } } },
+      { name: 'define_type', description: 'Define a wall, slab or roof type with its material layers, before the elements that use it. kind is wall (an IfcWallType), slab (an IfcSlabType) or roof (an IfcSlabType ROOF for the roof slabs of create_roof); name is the type\'s name, such as YV1. layers are its material layers, each {material, thickness in metres, category, role}: for a wall from its right side to its left as seen from its start toward its end (so the outside first when the outer walls run counter-clockwise), for a slab or a roof from the top down. category is the material\'s IFC category (concrete, steel, aluminium, block, brick, stone, wood, glass, gypsum, plastic or earth) and role the layer\'s (load_bearing, insulation, inner_finish or outer_finish); give them only when known, else null. predefined_type is the type\'s PredefinedType from its class\'s list, such as SOLIDWALL or PARTITIONING for a wall and FLOOR or BASESLAB for a slab (null: NOTDEFINED for a wall, FLOOR for a slab; a roof type is ROOF). Answers the ref of the type, which create_wall, create_slab and create_roof take as type; put shared properties on the type with set_properties and its ref.',
+        parameters: { type: 'object', properties: { kind: { type: 'string' }, name: { type: 'string' }, layers: { type: 'array', items: { type: 'object', properties: { material: { type: 'string' }, thickness: { type: 'number' }, category: str(), role: str() }, required: ['material', 'thickness', 'category', 'role'], additionalProperties: false } }, predefined_type: str() } } },
+      { name: 'create_wall', description: 'Add a wall on a storey (null: the lowest) from start [x, y] to end [x, y] in metres in the storey\'s plane, with its thickness centred on that line and its height from the storey. Defaults: thickness 0.2, height 3. With type (the ref of a define_type wall type, or a wall type\'s GlobalId or id) the wall takes its thickness from the type\'s layers, so leave thickness null. Walls whose lines meet at a corner, or that end on another wall\'s line, are joined by the app when the change set is applied: let them meet on their lines, and never lengthen or overlap them to close a corner. Answers the ref of the wall.',
+        parameters: { type: 'object', properties: { storey: str(), start: xy(), end: xy(), thickness: num(), height: num(), name: str(), type: typeRef() } } },
+      { name: 'create_slab', description: 'Add a floor slab on a storey, with its top at the storey\'s elevation. outline is a list of [x, y] corners in metres, or null to follow the grid\'s extent. Default thickness 0.25. With type (the ref of a define_type slab type, or a slab type\'s GlobalId or id) the slab takes its thickness from the type\'s layers, so leave thickness null. Answers the ref of the slab.',
+        parameters: { type: 'object', properties: { storey: str(), outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, thickness: num(), name: str(), type: typeRef() } } },
+      { name: 'create_roof', description: 'Add a roof on the walls of a storey (null: the top storey), as an IfcRoof of roof slabs: shape is gable, hip, shed or flat. outline is the [x, y] corners in metres of the rectangle it covers, or null for the bounding box of the storey\'s walls; an outline that is not a rectangle along x and y is replaced by its bounding box for now. pitch is degrees, more than 0 and at most 75 (defaults: 30 for gable and hip, 10 for shed; flat ignores it). overhang is metres beyond the outline at the eaves (default 0.4, for flat 0), thickness metres (default 0.25). ridge is x or y: for gable the direction of the ridge (null: along the longer side), for shed the axis it falls along, down toward negative x or y (null: y, so to the south when y points north); hip and flat ignore it. base is the eaves height in metres above the storey (null: the top of the storey\'s walls, else 2.7). With type (the ref of a define_type roof type, or a roof type\'s GlobalId or id) every roof slab takes its thickness from the type\'s layers, so leave thickness null. Answers the ref of the roof.',
+        parameters: { type: 'object', properties: { storey: str(), shape: { type: 'string' }, outline: { type: ['array', 'null'], items: { type: 'array', items: { type: 'number' } } }, pitch: num(), overhang: num(), thickness: num(), ridge: str(), base: num(), name: str(), type: typeRef() } } },
       { name: 'create_opening', description: 'Cut an opening in a wall (wall_id: its id or ref), offset metres from the wall\'s start, width by height metres, sill metres above the storey, and fill it with a door or a window (fill: door, window or null). Defaults: width 0.9, height 2.1, sill 0. Answers the ref of the door or window, or of the opening.',
         parameters: { type: 'object', properties: { wall_id: { type: ['integer', 'string'] }, offset: num(), width: num(), height: num(), sill: num(), fill: str(), name: str() } } },
       { name: 'create_spaces', description: 'Create the rooms the walls enclose as spaces (IfcSpace), from the topology of the model as it stands at this step, so that walls created earlier in the change set count. Each space gets the room\'s outline extruded to its height, is aggregated in its storey, gets Qto_SpaceBaseQuantities, and gets space boundaries to the walls along its edge and to the doors and windows in them (a door created later in such a wall joins them). storey is the storey\'s name; null makes every room on every storey with rooms, and then rooms must be null. rooms lists the rooms: each by at, an [x, y] point inside it in metres in the storey\'s plane, or by index, its index in get_topology (the other null), with name from the room programme (such as Kitchen) and long_name or null; null makes every room, named Room 1, Room 2 … in the person\'s language. A room that a space covers already is left out. height is metres (null: up to the next storey, or the walls\' height on the top storey). Answers one ref per listed room, in order; with rooms null the spaces get no refs.',
@@ -112,6 +123,28 @@
       const hit = new Set(p.map((q) => side(q[0], x0, x1) + ',' + side(q[1], y0, y1)));
       return hit.size === 4 && Array.from(hit).every((k) => !k.startsWith(',') && !k.endsWith(','));
     }
+    /** The total of a type's layers in metres. @param {Array<{thickness: number}>} layers */
+    const layersThickness = (layers) => Math.round(layers.reduce((s, l) => s + l.thickness, 0) * 1e6) / 1e6;
+    /**
+     * The type a create step names, as {ref, thickness}: the ref of a define_type step of the kind, checked here and with its layers'
+     * thickness, or a type's id or GlobalId in the model, which the wheel checks (thickness null); null without a type.
+     * @param {{ops: any[], refs: number}} cs @param {any} a @param {string} kind @param {string} tool
+     */
+    function typeOf(cs, a, kind, tool) {
+      if (!given(a.type)) return null;
+      const ref = idOrRef(cs, a.type, 'type');
+      if (typeof ref !== 'string' || !/^new-\d+$/.test(ref)) return { ref, thickness: null };
+      const def = cs.ops.find((op) => op.ref === ref);
+      if (!def || def.tool !== 'define_type') throw new Error(`type ${ref} is not a type; give the ref of a define_type step, or a type's id`);
+      if (def.kind !== kind) throw new Error(`type ${ref} is a ${def.kind} type; ${tool} takes a ${kind} type`);
+      return { ref, thickness: layersThickness(def.layers) };
+    }
+    /** A typed step's thickness: the layers', which a thickness given must match (within half a millimetre). */
+    function typedThickness(a, typed) {
+      const own = number(a, 'thickness', { positive: true });
+      if (own !== null && typed.thickness !== null && Math.abs(own - typed.thickness) > 0.0005) throw new Error(`thickness ${fmt(own)} m differs from the ${fmt(typed.thickness)} m of the layers of type ${typed.ref}; leave thickness null`);
+      return typed.thickness !== null ? typed.thickness : own;
+    }
     /** The operation for one call, checked, in the shape the wheel reads. */
     function build(cs, name, args) {
       const a = args || {};
@@ -126,15 +159,47 @@
           if (!storeys.length && !grid) throw new Error('give storeys, a grid or both');
           return { tool: name, storeys, grid };
         }
+        case 'define_type': {
+          const kind = given(a.kind) ? String(a.kind).trim().toLowerCase() : '';
+          if (!TYPE_KINDS.includes(kind)) throw new Error('kind must be wall, slab or roof');
+          const typeName = text(a, 'name', { required: true }).trim();
+          if (!typeName) throw new Error('name is required');
+          if (!Array.isArray(a.layers) || !a.layers.length || a.layers.length > MAX_LAYERS) throw new Error(`layers must be a list of 1 to ${MAX_LAYERS} {material, thickness, category, role}, the thickness in metres`);
+          const layers = a.layers.map((l, i) => {
+            const which = `layer ${i + 1}`;
+            if (!l || typeof l !== 'object' || !given(l.material) || !String(l.material).trim()) throw new Error(`${which} needs a material`);
+            if (!finite(l.thickness) || l.thickness <= 0) throw new Error(`${which}: thickness must be a number greater than zero (metres)`);
+            const category = given(l.category) ? String(l.category).trim().toLowerCase() : null;
+            if (category && !MATERIAL_CATEGORIES.includes(category)) throw new Error(`${which}: category must be ${MATERIAL_CATEGORIES.join(', ')} or null`);
+            const role = given(l.role) ? String(l.role).trim().toLowerCase().replace(/[\s-]+/g, '_') : null;
+            if (role && !LAYER_ROLES.includes(role)) throw new Error(`${which}: role must be ${LAYER_ROLES.join(', ')} or null`);
+            return { material: String(l.material).trim().slice(0, 200), thickness: l.thickness, category: category || null, role: role || null };
+          });
+          if (layersThickness(layers) > 5) throw new Error('the layers add up to more than 5 m');
+          const predefined = given(a.predefined_type) ? String(a.predefined_type).trim().toUpperCase() : null;
+          if (predefined && !/^[A-Z][A-Z0-9_]*$/.test(predefined)) throw new Error('predefined_type must be a PredefinedType such as SOLIDWALL, PARTITIONING, FLOOR or BASESLAB, or null');
+          if (predefined === 'USERDEFINED') throw new Error('USERDEFINED needs the name of a kind of its own, which define_type does not take; choose a value from the class\'s list, or NOTDEFINED');
+          if (kind === 'roof' && predefined && predefined !== 'ROOF') throw new Error('a roof type is an IfcSlabType ROOF; leave predefined_type null');
+          // Slab and roof types are both IfcSlabType, so their names must differ too.
+          const twin = cs.ops.find((op) => op.tool === 'define_type' && (op.kind === 'wall') === (kind === 'wall') && op.name.toLowerCase() === typeName.toLowerCase());
+          if (twin) throw new Error(`${twin.ref} is a ${twin.kind} type named ${twin.name} already; give its ref as type, or choose another name`);
+          return { tool: name, kind, name: typeName, layers, predefined_type: predefined || null };
+        }
         case 'create_wall': {
           const start = point(a.start, 'start'); const end = point(a.end, 'end');
           if (Math.hypot(end[0] - start[0], end[1] - start[1]) < 0.01) throw new Error('start and end are the same point');
-          return { tool: name, storey: text(a, 'storey'), start, end, thickness: number(a, 'thickness', { fallback: 0.2, positive: true }), height: number(a, 'height', { fallback: 3, positive: true }), name: text(a, 'name') };
+          const typed = typeOf(cs, a, 'wall', name);
+          const op = { tool: name, storey: text(a, 'storey'), start, end, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.2, positive: true }), height: number(a, 'height', { fallback: 3, positive: true }), name: text(a, 'name') };
+          if (typed) op.type = typed.ref;
+          return op;
         }
         case 'create_slab': {
           const outline = given(a.outline) ? (Array.isArray(a.outline) ? a.outline.map((p) => point(p, 'outline')) : null) : null;
           if (given(a.outline) && (!outline || outline.length < 3)) throw new Error('outline must be at least three [x, y] points, or null for the grid\'s extent');
-          return { tool: name, storey: text(a, 'storey'), outline, thickness: number(a, 'thickness', { fallback: 0.25, positive: true }), name: text(a, 'name') };
+          const typed = typeOf(cs, a, 'slab', name);
+          const op = { tool: name, storey: text(a, 'storey'), outline, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.25, positive: true }), name: text(a, 'name') };
+          if (typed) op.type = typed.ref;
+          return op;
         }
         case 'create_roof': {
           const shape = given(a.shape) ? String(a.shape).toLowerCase() : '';
@@ -149,7 +214,10 @@
           if (overhang < 0) throw new Error('overhang must be zero or more (metres)');
           const ridge = given(a.ridge) ? String(a.ridge).toLowerCase() : null;
           if (ridge && ridge !== 'x' && ridge !== 'y') throw new Error('ridge must be x, y or null');
-          return { tool: name, storey: text(a, 'storey'), shape, outline, pitch, overhang, thickness: number(a, 'thickness', { fallback: 0.25, positive: true }), ridge: shape === 'gable' || shape === 'shed' ? ridge : null, base: number(a, 'base'), name: text(a, 'name') };
+          const typed = typeOf(cs, a, 'roof', name);
+          const op = { tool: name, storey: text(a, 'storey'), shape, outline, pitch, overhang, thickness: typed ? typedThickness(a, typed) : number(a, 'thickness', { fallback: 0.25, positive: true }), ridge: shape === 'gable' || shape === 'shed' ? ridge : null, base: number(a, 'base'), name: text(a, 'name') };
+          if (typed) op.type = typed.ref;
+          return op;
         }
         case 'create_opening': {
           const fill = given(a.fill) ? String(a.fill).toLowerCase() : null;
@@ -261,16 +329,22 @@
     }
     const fmt = (v) => (typeof v === 'number' ? String(Math.round(v * 1000) / 1000) : String(v === null || v === undefined ? '' : v));
     const idsText = (list) => (list || []).map(fmt).join(', ');
+    /** The thickness of a step, a dash when the wheel takes it from a type of the model. */
+    const thick = (op) => (op.thickness === null || op.thickness === undefined ? '–' : fmt(op.thickness));
+    /** ", type new-1" after a typed wall, slab or roof. */
+    const typedText = (op) => (op.type !== undefined && op.type !== null ? t('ai.change.typed', { type: fmt(op.type) }) : '');
     /** One line about an operation, for the panel's list and the log. @param {any} op */
     function describe(op) {
       switch (op.tool) {
         case 'create_storeys_and_grid': return t('ai.change.create_storeys_and_grid', { storeys: (op.storeys || []).map((s) => `${s.name} (${fmt(s.elevation)} m)`).join(', ') || '–', grid: op.grid ? t('ai.change.grid', { x: fmt(op.grid.x_spacing), y: fmt(op.grid.y_spacing), nx: fmt(op.grid.x_count), ny: fmt(op.grid.y_count) }) : '' });
-        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: fmt(op.thickness), height: fmt(op.height) });
-        case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: fmt(op.thickness), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') });
+        case 'define_type': return t('ai.change.define_type', { ref: op.ref || '', kind: t('ai.change.type.' + op.kind), name: op.name, predefined: op.predefined_type ? ' ' + op.predefined_type : '',
+          layers: (op.layers || []).map((l) => `${l.material} ${fmt(l.thickness)} m`).join(', '), thickness: fmt(layersThickness(op.layers || [])) });
+        case 'create_wall': return t('ai.change.create_wall', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), x1: fmt(op.start[0]), y1: fmt(op.start[1]), x2: fmt(op.end[0]), y2: fmt(op.end[1]), thickness: thick(op), height: fmt(op.height) }) + typedText(op);
+        case 'create_slab': return t('ai.change.create_slab', { ref: op.ref || '', name: op.name || '', storey: op.storey || t('ai.change.storey.lowest'), thickness: thick(op), outline: op.outline ? t('ai.change.outline.points', { n: String(op.outline.length) }) : t('ai.change.outline.grid') }) + typedText(op);
         case 'create_roof': {
           const b = op.outline ? bounds(op.outline) : null;
           return t('ai.change.create_roof', { ref: op.ref || '', name: op.name ? ' ' + op.name : '', storey: op.storey || t('ai.change.storey.top'), shape: t('ai.change.roof.' + op.shape), pitch: op.shape === 'flat' ? '' : ` ${fmt(op.pitch)}°`,
-            extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' });
+            extent: b ? t('ai.change.roof.size', { x: fmt(b[2] - b[0]), y: fmt(b[3] - b[1]) }) : t('ai.change.roof.walls'), overhang: op.overhang ? t('ai.change.roof.overhang', { overhang: fmt(op.overhang) }) : '' }) + typedText(op);
         }
         case 'create_opening': return t('ai.change.create_opening', { ref: op.ref || '', fill: t('ai.change.fill.' + (op.fill || 'none')), name: op.name || '', wall: fmt(op.wall_id), width: fmt(op.width), height: fmt(op.height), offset: fmt(op.offset) });
         case 'create_spaces': {
@@ -306,11 +380,12 @@
         const o = Object.assign({}, op);
         if (Array.isArray(o.ids)) o.ids = o.ids.map(swap);
         if (o.wall_id !== undefined && o.wall_id !== null) o.wall_id = swap(o.wall_id);
+        if (o.type !== undefined && o.type !== null) o.type = swap(o.type);
         return o;
       });
     }
     const toWheel = (cs) => cs.ops.map((op) => { const o = Object.assign({}, op); delete o.ref; delete o.refs; return o; });
 
-    return { withGuids, TOOLS, CREATES, MAX_OPS, has, create, call, describe, summary, toWheel };
+    return { withGuids, TOOLS, CREATES, MAX_OPS, MATERIAL_CATEGORIES, LAYER_ROLES, has, create, call, describe, summary, toWheel };
   });
 })();
