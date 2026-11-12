@@ -4,14 +4,15 @@
  * Map view with Leaflet 1.9 (vendored, BSD-2-Clause): a chart of kind "map" is a list of layers, each a dataset
  * with a geometry column (GeoJSON or WKT text) or longitude/latitude columns, or one of the bundled boundary sets,
  * drawn with the app's palette (one colour, by category or graduated) over an optional background map. Tiles come
- * from the net only after consent for the purpose "basemaps"; without a background map nothing leaves the browser.
+ * from the net only after consent for the purpose "basemaps"; without a background map nothing leaves the browser. The
+ * orthophotos (viz/orthophotos) are background maps too, each with its provider's attribution and, where asked, a key.
  * Export (SVG, PNG, PDF) is drawn headless in Web Mercator by this module, without tiles; published HTML gets the
  * library inlined and the features as GeoJSON with their styles.
  */
 (function () {
   'use strict';
   const D = globalThis.Dataspatium;
-  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent'], (theme, vizExport, vizData, datasets, geo, boundaries, consent) => {
+  D.define('viz/leaflet', ['viz/theme', 'viz/export', 'viz/data', 'data/datasets', 'data/geo', 'data/boundaries', 'platform/consent', 'viz/orthophotos'], (theme, vizExport, vizData, datasets, geo, boundaries, consent, orthophotos) => {
     const VENDOR = 'vendor/leaflet/';
     const BASEMAPS = ['none', 'osm', 'custom', 'wms'];
     const WMS_DEFAULTS = { url: '', layers: '', format: 'image/png', transparent: false, attribution: '', version: '1.3.0' };
@@ -324,6 +325,7 @@
      */
     async function tileLayer(def, options, info, grid) {
       if (!def || !def.basemap || def.basemap === 'none' || options.noTiles) return null;
+      if (orthophotos.isPreset(def.basemap)) return presetLayer(def.basemap, options, info, grid);
       const src = tileSource(def);
       if (!src) return null;
       if (grid && !src.wms) { info.basemapProjection = true; return null; }
@@ -333,6 +335,34 @@
       }
       const factory = options.tileFactory || defaultFactory;
       return factory(src.url, tileOptions(src, grid ? { version: '1.1.1' } : null));
+    }
+    /**
+     * The tile layer of an orthophoto preset in the map's grid (an EPSG code, 0 for Web Mercator), or null: a grid the service
+     * does not offer sets info.basemapProjection, a missing key sets info.basemapKey (nothing is contacted then), and a refused
+     * consent sets info.basemapDenied. The key goes into the image addresses only, never into the consent's address.
+     */
+    async function presetLayer(id, options, info, grid) {
+      const preset = await orthophotos.get(id);
+      if (!preset) return null;
+      const src = orthophotos.sourceFor(preset, grid || 3857);
+      if (!src) { info.basemapProjection = true; return null; }
+      const key = orthophotos.keyOf(preset);
+      if (preset.key && !key) { info.basemapKey = preset.id; return null; }
+      try { await consent.require('basemaps', { host: hostOf(src.url), url: src.url, label: `${preset.name} · ${preset.publisher} · ${preset.license.name}` }); } catch (err) {
+        if (err && err.name === 'ConsentError') { info.basemapDenied = true; return null; }
+        throw err;
+      }
+      const factory = options.tileFactory || defaultFactory;
+      const opts = { attribution: orthophotos.attributionHtml(preset), maxZoom: preset.maxZoom || 19 };
+      if (src.maxNativeZoom) opts.maxNativeZoom = src.maxNativeZoom;
+      if (src.service === 'wms') {
+        Object.assign(opts, { layers: src.layers, format: src.format || 'image/png', transparent: false, version: grid ? '1.1.1' : '1.3.0' });
+        if (key) opts[preset.key.param] = key;
+        return factory(src.url, opts);
+      }
+      // An XYZ template takes the key as a parameter that Leaflet fills in per tile.
+      if (key) opts.dmkey = encodeURIComponent(key);
+      return factory(key ? src.url + (src.url.includes('?') ? '&' : '?') + encodeURIComponent(preset.key.param) + '={dmkey}' : src.url, opts);
     }
     /** The visible WMS overlay layers of a definition as tile layers, after consent for each (refusals set info.basemapDenied). */
     async function overlayLayers(def, options, info, grid) {
@@ -384,8 +414,9 @@
     // ---- live map -----------------------------------------------------------------------------------------
     /**
      * Draw a map chart into an element. Options: interactive (default true), height, extraFilters, onSelect(feature),
-     * tileFactory (tests), noTiles. `def.crs` (an EPSG code or name of a projected system the app reads) draws the map in
-     * that grid instead of Web Mercator, with a WMS background in the same grid. Returns a handle with the Leaflet map,
+     * tileFactory (tests), noTiles, fitMaxZoom (the closest zoom when the map fits its features; 14 by default). `def.crs` (an
+     * EPSG code or name of a projected system the app reads) draws the map in that grid instead of Web Mercator, with a WMS or
+     * orthophoto background in the same grid. Returns a handle with the Leaflet map,
      * legend, info, the map's EPSG code, export functions and finalize().
      */
     async function render(el, chart, options = {}) {
@@ -403,11 +434,13 @@
       /** @type {any} */ (el)._dmMap = map;
       // A scale bar in metres on every interactive map: plans and maps are read to scale.
       if (interactive) L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
-      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
-      const tiles = await tileLayer(def, options, info, !!grid);
+      const info = { rows: prepared.rows, layers: prepared.layers.length, total: prepared.layers.reduce((n, l) => n + l.total, 0), truncated: prepared.layers.some((l) => l.truncated), basemapDenied: false, basemapProjection: false, basemapKey: '', crsUnknown: Array.from(new Set(prepared.layers.map((l) => l.crsUnknown).filter(Boolean))) };
+      // The grid's EPSG code (0 for Web Mercator): a background map is asked for in that grid, or left out when its service has none.
+      const gridCode = grid ? geo.crsCode(def.crs) || -1 : 0;
+      const tiles = await tileLayer(def, options, info, gridCode);
       if (tiles) tiles.addTo(map);
       // WMS overlays live in the tile pane: under every feature, whatever their place in the layer list.
-      const overlays = await overlayLayers(def, options, info, !!grid);
+      const overlays = await overlayLayers(def, options, info, gridCode);
       for (const o of overlays) o.tiles.addTo(map);
       const groups = [];
       for (const item of prepared.layers) {
@@ -427,7 +460,7 @@
         // A saved view is in Web Mercator's zoom levels; a map in a grid of its own fits its features instead.
         if (!grid && def.view && def.view.center && def.view.zoom) { map.setView(def.view.center, def.view.zoom); return; }
         const b = prepared.bounds;
-        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom: grid ? 12 : 14 });
+        if (b) map.fitBounds([[b.minY, b.minX], [b.maxY, b.maxX]], { padding: [16, 16], maxZoom: options.fitMaxZoom || (grid ? 12 : 14) });
         else map.setView(DEFAULT_VIEW.center, grid ? 2 : DEFAULT_VIEW.zoom);
       };
       fit();
@@ -595,7 +628,7 @@
         type: 'FeatureCollection',
         features: item.features.map((f) => { const s = item.styleOf(f.properties || {}); const label = item.layer.label ? (f.properties || {})[item.layer.label] : null; return { type: 'Feature', geometry: f.geometry, properties: { __style: { color: s.color, fillColor: s.fillColor, weight: s.weight, opacity: s.opacity, fillOpacity: s.fillOpacity, radius: s.radius }, __label: label === null || label === undefined ? '' : String(label) } }; }),
       }));
-      const src = def.basemap && def.basemap !== 'none' ? tileSource(def) : null;
+      const src = def.basemap && def.basemap !== 'none' ? (orthophotos.isPreset(def.basemap) ? await publishedPreset(def.basemap) : tileSource(def)) : null;
       const tileJs = (s, extra) => (s.wms ? `L.tileLayer.wms(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);` : `L.tileLayer(${json(s.url)},${json(tileOptions(s, extra))}).addTo(m);`);
       const overlays = (def.layers || []).filter((l) => l.kind === 'wms' && l.visible !== false).map((l) => ({ src: wmsSource(l.wms), opacity: l.style && l.style.opacity !== undefined ? l.style.opacity : 0.8 })).filter((o) => o.src);
       const legend = def.legend === false ? '' : `<div class="dm-map-legend">${prepared.layers.flatMap((l) => (l.legend.length > 1 ? l.legend : l.legend.map((e) => Object.assign({}, e, { label: e.label || l.layer.name })))).slice(0, 24).map((e) => `<div><span style="background:${e.color}"></span>${String(e.label).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`).join('')}</div>`;
@@ -603,6 +636,16 @@
       return `<div class="dm-map-wrap"><div id="${id}" class="dm-map" style="height:${options.height || def.height || 480}px"></div>${legend}</div>`
         + `<script>(function(){var m=L.map(${json(id)},{preferCanvas:true});${src ? tileJs(src) : ''}${overlays.map((o) => tileJs(o.src, { opacity: o.opacity })).join('')}`
         + `var data=${json(data)};var b=null;data.forEach(function(fc){var g=L.geoJSON(fc,{style:function(f){return f.properties.__style},pointToLayer:function(f,ll){return L.circleMarker(ll,f.properties.__style)},onEachFeature:function(f,l){if(f.properties.__label)l.bindTooltip(f.properties.__label,{sticky:true})}}).addTo(m);var bb=g.getBounds();if(bb.isValid())b=b?b.extend(bb):bb});${view}})();</script>`;
+    }
+    /**
+     * The tile source of an orthophoto in published HTML (Web Mercator), or null for one that needs a key: a key is the
+     * person's own and never leaves the app in a page that others read.
+     */
+    async function publishedPreset(id) {
+      const preset = await orthophotos.get(id).catch(() => null);
+      const s = preset && !preset.key ? orthophotos.sourceFor(preset, 3857) : null;
+      if (!s) return null;
+      return Object.assign({ url: s.url, attribution: orthophotos.attributionHtml(preset), maxZoom: preset.maxZoom || 19 }, s.service === 'wms' ? { wms: { layers: s.layers, format: s.format || 'image/png', transparent: false, version: '1.3.0' } } : {});
     }
     /** CSS for maps in standalone HTML (the library's stylesheet is inlined separately). */
     function htmlCss() {

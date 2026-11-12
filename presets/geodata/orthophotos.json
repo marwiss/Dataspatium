@@ -1,0 +1,61 @@
+{
+ "format": "dataspatium-basemaps/1",
+ "note": "Open orthophotos for the background map (decision B-64), checked 2026-11-12. Tiles are images: Leaflet shows them without CORS, and the app never reads their pixels. Every service is contacted only after the consent for background maps, with its host named. A key lives in api/secrets under basemap:<id>, goes only into the image addresses of its own service, and never into a saved map view, the log or published HTML. Sweden and Norway have no open orthophoto view service: Lantmäteriet's Ortofoto Visning carries a licence fee (fee document 2026-10-20, version 2.32) and Norge i bilder is open only to the members of Norge digitalt.",
+ "basemaps": [
+  {
+   "id": "ortho-dk",
+   "kind": "orthophoto",
+   "country": "DK",
+   "name": "GeoDanmark ortofoto forår",
+   "publisher": "Klimadatastyrelsen",
+   "service": "wms",
+   "sources": {
+    "3857": { "url": "https://wms.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS", "layers": "orto_foraar", "format": "image/jpeg" },
+    "25832": { "url": "https://wms.datafordeler.dk/GeoDanmarkOrto/orto_foraar/1.0.0/WMS", "layers": "orto_foraar", "format": "image/jpeg" }
+   },
+   "bounds": [8.0, 54.5, 15.3, 57.8],
+   "maxZoom": 20,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "GeoDanmark ortofoto forår © Klimadatastyrelsen",
+   "terms": "https://www.klimadatastyrelsen.dk/om-klimadatastyrelsen/vilkaar-og-priser",
+   "docs": "https://confluence.kds.dk/pages/viewpage.action?pageId=153134324",
+   "key": { "param": "apikey", "signupUrl": "https://portal.datafordeler.dk/" }
+  },
+  {
+   "id": "ortho-fi",
+   "kind": "orthophoto",
+   "country": "FI",
+   "name": "Ortokuva",
+   "publisher": "Maanmittauslaitos",
+   "service": "xyz",
+   "sources": {
+    "3857": { "url": "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.jpg", "maxNativeZoom": 16 }
+   },
+   "bounds": [19.0, 59.4, 31.6, 70.1],
+   "maxZoom": 19,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "Ortokuva © Maanmittauslaitos",
+   "terms": "https://www.maanmittauslaitos.fi/en/opendata-licence-cc40",
+   "docs": "https://www.maanmittauslaitos.fi/en/rajapinnat/api-avaimen-ohje",
+   "key": { "param": "api-key", "signupUrl": "https://omatili.maanmittauslaitos.fi/" }
+  },
+  {
+   "id": "ortho-is",
+   "kind": "orthophoto",
+   "country": "IS",
+   "name": "Grunnkort – Loftmynd",
+   "publisher": "Náttúrufræðistofnun",
+   "service": "wms",
+   "sources": {
+    "3857": { "url": "https://gis.natt.is/mapcache/web-mercator/wms", "layers": "grunnkort-loftmynd", "format": "image/png" },
+    "3057": { "url": "https://gis.natt.is/mapcache/isn93/wms", "layers": "grunnkort-loftmynd", "format": "image/png" }
+   },
+   "bounds": [-24.6, 63.2, -13.3, 66.6],
+   "maxZoom": 19,
+   "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+   "attribution": "Grunnkort – Loftmynd © Náttúrufræðistofnun",
+   "terms": "https://www.natt.is/is/midlun/opin-gogn",
+   "docs": "https://gatt.natt.is/geonetwork/srv/api/records/bd0e7245-2f62-4b2a-82c3-3e6e10b7f9ee"
+  }
+ ]
+}

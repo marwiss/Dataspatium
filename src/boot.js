@@ -229,6 +229,7 @@
     'src/viz/d3-templates.js',
     'src/viz/export.js',
     'src/viz/charts.js',
+    'src/viz/orthophotos.js',
     'src/viz/leaflet.js',
     'src/viz/graph-draw.js',
     'src/analysis/clash-core.js',

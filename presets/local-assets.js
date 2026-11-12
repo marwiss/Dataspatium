@@ -408,6 +408,12 @@ Dataspatium.assets.addEntries({
   "size": 112022,
   "library": "dataspatium"
  },
+ "presets/geodata/orthophotos.json": {
+  "file": "presets/geodata/orthophotos.json.js",
+  "encoding": "text",
+  "size": 3255,
+  "library": "dataspatium"
+ },
  "presets/geodata/services.json": {
   "file": "presets/geodata/services.json.js",
   "encoding": "text",
