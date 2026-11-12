@@ -416,6 +416,31 @@ dørene og vindauga som endringssettet har laga eller endra, basismengder (Qto_W
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) rekna ut frå måla, med opningane trekte frå og med namna
 frå malane til skjemaet.
 
+Verktøyet `create_element` lagar bygningsdelane som ikkje har eit eige verktøy, av den mest spesifikke IFC-klassen og aldri som
+IfcBuildingElementProxy: søyler (IfcColumn), bjelkar (IfcBeam), stavar som stenderar og sperrer (IfcMember), fundament (IfcFooting),
+pelar (IfcPile), kledningar som golvbelegg, himlingar, fasadekledning, taktekking og isolasjon (IfcCovering), rekkverk (IfcRailing),
+skorsteinar (IfcChimney), solskjerming (IfcShadingDevice), sanitærutstyr (IfcSanitaryTerminal), møblar (IfcFurniture, i IFC2X3
+IfcFurnishingElement) og rette trapper (IfcStair). Klassen og PredefinedType-en hennar vert kontrollerte mot skjemaet til modellen som
+i dei andre verktøya. Kroppen er ein ekstrudert profil: eit rektangel, ein sirkel eller eit omriss i planet til etasjen, ståande
+oppover frå ei høgd over etasjen (søyler, fundament, kledningar, møblar) eller liggjande i ei retning (bjelkar, stavar og rekkverk).
+Elementet ligg i etasjen eller er ein del av ein heilskap (`part_of`), til dømes eit rekkverk i ei trapp, og ligg då i heilskapen og i
+etasjen til heilskapen, men ikkje direkte i etasjen. Ein kledning kan seie kva han kler (`host`): ein bygningsdel
+(IfcRelCoversBldgElements) eller eit rom (IfcRelCoversSpaces). Ei rett trapp (STRAIGHT_RUN_STAIR) er eit skrånande trappeløp
+(IfcStairFlight, STRAIGHT) med talet på trinn, opptrinn, inntrinn og breidd som attributt og i Pset_StairFlightCommon, og om du vil ein
+repos (IfcSlab, LANDING) øvst; det siste opptrinnet er framkanten på reposen eller dekket.
+
+`define_type` lagar òg typar for kledningar (med sjikt, som ein dekketype), søyler, bjelkar, fundament, rekkverk, dører og vindauge
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og
+IfcWindowStyle) med material. Ein dørtype har opningsmåten sin (OperationType, til dømes SINGLE_SWING_LEFT, med hengslene til venstre
+sett i retninga døra vert opna), ein vindaugstype oppdelinga si (PartitioningType, til dømes SINGLE_PANEL eller DOUBLE_PANEL_VERTICAL),
+og begge breidd, høgd og djupna på karmen. Geometrien med karm, dørblad eller rammer og glas vert teikna av IfcOpenShell éin gong på
+typen og brukt om att av kvar dør og kvart vindauge av typen (mappa geometri), og typen får eigenskapane til karmen og dørblada
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tek typen: døra eller vindauget får
+storleiken og geometrien til typen og står i liv med venstre side av veggen, sett frå starten på veggen mot slutten (innsida av ein
+yttervegg teikna mot klokka), og ei dør vert opna mot den sida, ei venstrehengsla med hengslene på den sida av opninga som er nærmast
+starten på veggen. Med `side: right` vert ho snudd: i liv med høgre side og opna mot henne. Ein karm like djup som veggen er tjukk,
+fyller heile smyget.
+
 *Førehandsvis* køyrer endringssettet på ein kopi av modellen med IfcOpenShell i Python i appen (komponentane vert henta etter samtykke
 første gongen), teiknar resultatet i 3D med nytt grønt og endra gult, og viser kva som vert oppretta, endra og sletta saman med funna
 frå skjemakontrollen. *Godkjenn* gjer endringane til oppskriftssteget *AI-endring*: modellen får ein ny versjon i arbeidsområdet,

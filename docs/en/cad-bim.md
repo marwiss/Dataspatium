@@ -424,6 +424,31 @@ Finally the walls, slabs, roofs, doors and windows the change set created or cha
 Qto_SlabBaseQuantities, Qto_RoofBaseQuantities, Qto_DoorBaseQuantities and Qto_WindowBaseQuantities) computed from their dimensions,
 with the openings deducted and with the names of the schema's templates.
 
+The tool `create_element` makes the building elements that have no tool of their own, of the most specific IFC class and never as
+IfcBuildingElementProxy: columns (IfcColumn), beams (IfcBeam), members such as studs and rafters (IfcMember), footings (IfcFooting),
+piles (IfcPile), coverings such as flooring, ceilings, cladding, roofing and insulation (IfcCovering), railings (IfcRailing), chimneys
+(IfcChimney), shading devices (IfcShadingDevice), sanitary terminals (IfcSanitaryTerminal), furniture (IfcFurniture,
+IfcFurnishingElement in IFC2X3) and straight stairs (IfcStair). The class and its PredefinedType are checked against the model's schema
+as in the other tools. The body is an extruded profile: a rectangle, a circle or an outline in the storey's plane, standing up from a
+height above the storey (columns, footings, coverings, furniture) or lying in a direction (beams, members and railings). The element
+lies in the storey, or is a part of a whole (`part_of`), such as a railing of a stair, and then lies in the whole and on its storey but
+not directly in the storey. A covering can name what it covers (`host`): a building element (IfcRelCoversBldgElements) or a space
+(IfcRelCoversSpaces). A straight stair (STRAIGHT_RUN_STAIR) is a sloped flight (IfcStairFlight, STRAIGHT) with the number of risers,
+the riser height, the tread length and the width as attributes and in Pset_StairFlightCommon, and on request a landing (IfcSlab,
+LANDING) at the top; the last riser is the front edge of the landing or of the floor above.
+
+`define_type` also makes types for coverings (with layers, as a slab type), columns, beams, footings, railings, doors and windows
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType and IfcWindowType; IfcDoorStyle and
+IfcWindowStyle in IFC2X3), with their material. A door type has its operation (OperationType, such as SINGLE_SWING_LEFT, with the
+hinges on the left as seen in the direction the door opens), a window type its partitioning (PartitioningType, such as SINGLE_PANEL or
+DOUBLE_PANEL_VERTICAL), and both a width, a height and a lining depth. The geometry, with the lining, the door panels or the window
+frames and glazing, is drawn by IfcOpenShell once on the type and reused by every door and window of the type (mapped geometry), and
+the type gets the properties of its lining and door panels (IfcDoorLiningProperties, IfcDoorPanelProperties,
+IfcWindowLiningProperties). `create_opening` takes the type: the door or window gets the type's size and geometry and stands flush with
+the wall's left face, seen from the wall's start toward its end (the inside of an outer wall drawn counter-clockwise), and a door opens
+toward that side, a LEFT door with its hinges at the side of the opening nearest the wall's start. With `side: right` it is turned
+around: flush with the right face and opening toward it. A lining as deep as the wall is thick fills the whole reveal.
+
 *Preview* runs the change set on a copy of the model with IfcOpenShell in the app's Python (the components are fetched after consent the
 first time), draws the result in 3D with new elements green and changed ones yellow, and shows what is created, changed and deleted
 together with the schema check's findings. *Approve* makes the changes the recipe step *AI change*: the model gets a new version in the

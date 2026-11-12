@@ -410,6 +410,30 @@ veggir, plötur, þök, hurðir og gluggar sem breytingasettið bjó til eða br
 Qto_RoofBaseQuantities, Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) reiknað út frá málunum, með opin dregin frá og með nöfnunum
 úr sniðmátum skemans.
 
+Verkfærið `create_element` gerir þá byggingarhluta sem hafa ekki eigið verkfæri, í nákvæmasta IFC-flokknum og aldrei sem
+IfcBuildingElementProxy: súlur (IfcColumn), bita (IfcBeam), stoðir og sperrur (IfcMember), undirstöður (IfcFooting), staura (IfcPile),
+klæðningar eins og gólfefni, niðurhengd loft, utanhússklæðningu, þakklæðningu og einangrun (IfcCovering), handrið (IfcRailing),
+reykháfa (IfcChimney), sólskyggni (IfcShadingDevice), hreinlætistæki (IfcSanitaryTerminal), húsgögn (IfcFurniture, í IFC2X3
+IfcFurnishingElement) og beina stiga (IfcStair). Flokkurinn og PredefinedType hans eru prófuð gagnvart skema líkansins eins og í hinum
+verkfærunum. Formið er pressaður prófíll: rétthyrningur, hringur eða útlína í plani hæðarinnar, uppréttur frá hæð yfir hæðinni (súlur,
+undirstöður, klæðningar, húsgögn) eða liggjandi í stefnu (bitar, stoðir og handrið). Hlutinn er á hæðinni eða hluti af heild
+(`part_of`), til dæmis handrið stiga, og er þá í heildinni og á hæð hennar en ekki beint á hæðinni. Klæðning getur tilgreint hvað hún
+klæðir (`host`): byggingarhluta (IfcRelCoversBldgElements) eða rými (IfcRelCoversSpaces). Beinn stigi (STRAIGHT_RUN_STAIR) er hallandi
+stigahluti (IfcStairFlight, STRAIGHT) með fjölda þrepa, uppstigi, framstigi og breidd sem eigindum og í Pset_StairFlightCommon og, ef
+óskað er, stigapalli (IfcSlab, LANDING) efst; síðasta uppstigið er frambrún pallsins eða plötunnar fyrir ofan.
+
+`define_type` gerir líka gerðir fyrir klæðningar (með lögum, eins og plötugerð), súlur, bita, undirstöður, handrið, hurðir og glugga
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; í IFC2X3 IfcDoorStyle og
+IfcWindowStyle) með efni. Hurðagerð hefur opnunarmáta sinn (OperationType, til dæmis SINGLE_SWING_LEFT, með lamirnar vinstra megin séð
+í þá stefnu sem hurðin opnast), gluggagerð skiptingu sína (PartitioningType, til dæmis SINGLE_PANEL eða DOUBLE_PANEL_VERTICAL), og
+báðar breidd, hæð og dýpt karmsins. IfcOpenShell teiknar formið, með karmi, hurðarblöðum eða gluggarömmum og gleri, einu sinni á
+gerðinni og hver hurð og gluggi gerðarinnar endurnýtir það (vörpuð lögun), og gerðin fær eiginleika karmsins og hurðarblaðanna
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tekur gerðina: hurðin eða glugginn fær
+stærð og form gerðarinnar og stendur í fleti við vinstri hlið veggjarins, séð frá upphafi veggjarins að enda hans (innhlið útveggjar
+sem er teiknaður rangsælis), og hurð opnast að þeirri hlið, vinstri hurð með lamirnar á þeirri hlið opsins sem er næst upphafi
+veggjarins. Með `side: right` er henni snúið: í fleti við hægri hliðina og opnast að henni. Karmur jafndjúpur og veggurinn er þykkur
+fyllir allt gatið.
+
 *Forskoða* keyrir breytingasettið á afriti af líkaninu með IfcOpenShell í Python forritsins (íhlutirnir eru sóttir eftir samþykki í
 fyrsta sinn), teiknar niðurstöðuna í þrívídd með nýtt grænt og breytt gult og sýnir hvað er búið til, breytt og eytt ásamt niðurstöðum
 skemaathugunarinnar. *Samþykkja* gerir breytingarnar að uppskriftarskrefinu *Gervigreindarbreyting*: líkanið fær nýja útgáfu í

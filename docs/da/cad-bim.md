@@ -413,6 +413,31 @@ ikke, og hjørner i andre vinkler end rette forbindes, som de er tegnet. Til sid
 Qto_DoorBaseQuantities og Qto_WindowBaseQuantities) beregnet ud fra målene, med åbningerne trukket fra og med navnene fra skemaets
 skabeloner.
 
+Værktøjet `create_element` laver de bygningsdele, der ikke har et eget værktøj, af den mest specifikke IFC-klasse og aldrig som
+IfcBuildingElementProxy: søjler (IfcColumn), bjælker (IfcBeam), stænger som stolper og spær (IfcMember), fundamenter (IfcFooting), pæle
+(IfcPile), beklædninger som gulvbelægning, lofter, facadebeklædning, tagdækning og isolering (IfcCovering), rækværker (IfcRailing),
+skorstene (IfcChimney), solafskærmning (IfcShadingDevice), sanitet (IfcSanitaryTerminal), møbler (IfcFurniture, i IFC2X3
+IfcFurnishingElement) og lige trapper (IfcStair). Klassen og dens PredefinedType kontrolleres mod modellens skema som i de andre
+værktøjer. Kroppen er en ekstruderet profil: et rektangel, en cirkel eller et omrids i etagens plan, stående opad fra en højde over
+etagen (søjler, fundamenter, beklædninger, møbler) eller liggende i en retning (bjælker, stænger og rækværker). Elementet ligger på
+etagen eller er en del af en helhed (`part_of`), for eksempel et rækværk på en trappe, og ligger da i helheden og på dens etage, men
+ikke direkte på etagen. En beklædning kan angive, hvad den beklæder (`host`): en bygningsdel (IfcRelCoversBldgElements) eller et rum
+(IfcRelCoversSpaces). En lige trappe (STRAIGHT_RUN_STAIR) består af et skrånende trappeløb (IfcStairFlight, STRAIGHT) med antal trin,
+trinhøjde, trindybde og bredde som attributter og i Pset_StairFlightCommon og efter ønske en repos (IfcSlab, LANDING) øverst; den
+sidste stigning er reposens eller dækkets forkant.
+
+`define_type` laver også typer for beklædninger (med lag, som en dæktype), søjler, bjælker, fundamenter, rækværker, døre og vinduer
+(IfcCoveringType, IfcColumnType, IfcBeamType, IfcFootingType, IfcRailingType, IfcDoorType og IfcWindowType; i IFC2X3 IfcDoorStyle og
+IfcWindowStyle) med materiale. En dørtype har sin åbningsmåde (OperationType, for eksempel SINGLE_SWING_LEFT, med hængslerne til
+venstre set i den retning, døren åbner), en vinduestype sin opdeling (PartitioningType, for eksempel SINGLE_PANEL eller
+DOUBLE_PANEL_VERTICAL), og begge bredde, højde og karmdybde. Geometrien med karm, dørblade eller rammer og glas tegnes af IfcOpenShell
+én gang på typen og genbruges af hver dør og hvert vindue af typen (mappet geometri), og typen får karmens og dørbladenes egenskaber
+(IfcDoorLiningProperties, IfcDoorPanelProperties, IfcWindowLiningProperties). `create_opening` tager typen: døren eller vinduet får
+typens størrelse og geometri og står i flugt med væggens venstre side, set fra væggens start mod dens slutning (indersiden af en
+ydervæg tegnet mod uret), og en dør åbner til den side, en venstrehængt med hængslerne i den side af åbningen, der er nærmest væggens
+start. Med `side: right` vendes den: i flugt med højre side og åbnende mod den. En karm så dyb, som væggen er tyk, fylder hele
+lysningen.
+
 *Forhåndsvis* kører ændringssættet på en kopi af modellen med IfcOpenShell i appens Python (komponenterne hentes efter samtykke første
 gang), tegner resultatet i 3D med nyt grønt og ændret gult og viser, hvad der oprettes, ændres og slettes, samt skemakontrollens fund.
 *Godkend* gør ændringerne til opskriftstrinnet *AI-ændring*: modellen får en ny version i arbejdsområdet, tabellerne bygges om, og trinnet
