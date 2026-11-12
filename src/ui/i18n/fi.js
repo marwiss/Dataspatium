@@ -5936,7 +5936,7 @@
     'issues.field.topic_status': 'Tila',
     'issues.field.priority': 'Prioriteetti',
     'issues.field.labels': 'Nimike',
-    'issues.field.assigned_to': 'Vastuuhenkilö',
+    'issues.field.assigned_to': 'Osoitettu',
     'issues.field.none': 'Ei mitään',
     'bcf.untitled': 'Nimetön asia',
     'issues.field.assignee': 'Osoitettu',

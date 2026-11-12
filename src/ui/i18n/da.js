@@ -5936,7 +5936,7 @@
     'issues.field.topic_status': 'Status',
     'issues.field.priority': 'Prioritet',
     'issues.field.labels': 'Etiket',
-    'issues.field.assigned_to': 'Ansvarlig',
+    'issues.field.assigned_to': 'Tildelt',
     'issues.field.none': 'Ingen',
     'bcf.untitled': 'Sag uden titel',
     'issues.field.assignee': 'Tildelt',

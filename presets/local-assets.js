@@ -21,7 +21,7 @@ Dataspatium.assets.addEntries({
  "presets/i18n-shared.json": {
   "file": "presets/i18n-shared.json.js",
   "encoding": "text",
-  "size": 10785,
+  "size": 10769,
   "library": "dataspatium"
  },
  "presets/api/asub-aland.api.json": {

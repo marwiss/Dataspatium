@@ -247,13 +247,13 @@
    "is": "Merki"
   },
   "issues.field.assigned_to": {
-   "sv": "Ansvarig",
+   "sv": "Tilldelad",
    "en": "Assigned to",
-   "da": "Ansvarlig",
-   "nb": "Ansvarlig",
-   "nn": "Ansvarleg",
-   "fi": "Vastuuhenkilö",
-   "is": "Ábyrgðaraðili"
+   "da": "Tildelt",
+   "nb": "Tildelt",
+   "nn": "Tildelt",
+   "fi": "Osoitettu",
+   "is": "Úthlutað"
   },
   "issues.status.none": {
    "sv": "Utan status",

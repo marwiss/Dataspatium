@@ -5958,7 +5958,7 @@
     'issues.field.topic_status': 'Status',
     'issues.field.priority': 'Prioritet',
     'issues.field.labels': 'Etikett',
-    'issues.field.assigned_to': 'Ansvarig',
+    'issues.field.assigned_to': 'Tilldelad',
     'issues.field.none': 'Ingen',
     'bcf.untitled': 'Ärende utan rubrik',
     'issues.field.assignee': 'Tilldelad',

@@ -5936,7 +5936,7 @@
     'issues.field.topic_status': 'Staða',
     'issues.field.priority': 'Forgangur',
     'issues.field.labels': 'Merki',
-    'issues.field.assigned_to': 'Ábyrgðaraðili',
+    'issues.field.assigned_to': 'Úthlutað',
     'issues.field.none': 'Enginn',
     'bcf.untitled': 'Mál án titils',
     'issues.field.assignee': 'Úthlutað',
