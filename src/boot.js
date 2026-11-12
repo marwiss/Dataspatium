@@ -358,6 +358,7 @@
     'src/ai/check-tools.js',
     'src/ai/agent.js',
     'src/ai/assistant.js',
+    'src/ui/bearbeta/site-map.js',
     'src/ui/bearbeta/ai-check.js',
     'src/ui/bearbeta/ai-panel.js',
     'src/ui/bearbeta/proposals-card.js',
